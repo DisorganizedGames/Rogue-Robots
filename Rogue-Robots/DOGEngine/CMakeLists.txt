@@ -1,5 +1,5 @@
 #Root/DOGEngine
-set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Application.h" "src/Application.cpp" "src/Physics/Physics.h" "src/Audio/Test.h")
+set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Application.h" "src/Application.cpp" "src/Physics/Physics.h" "src/common/Utils.h")
 set(LibraryName "DOGEngine")
 
 add_library("${LibraryName}" STATIC "${SourceFiles}")
