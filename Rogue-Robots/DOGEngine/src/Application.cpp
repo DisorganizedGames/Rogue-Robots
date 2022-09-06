@@ -1,7 +1,9 @@
 #include "Application.h"
+
 namespace DOG
 {
-	Application::Application()
+	Application::Application(const ApplicationSpecification& spec) noexcept
+		: m_Specification{spec}
 	{
 	}
 }

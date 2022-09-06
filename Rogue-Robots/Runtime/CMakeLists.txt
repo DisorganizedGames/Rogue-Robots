@@ -1,5 +1,5 @@
 #Root/Runtime
-set(SourceFiles "src/Core/RuntimeApp.h" "src/Core/RuntimeApp.cpp"  )
+set(SourceFiles  "src/Core/RuntimeApplication.cpp"   "src/Core/RuntimeApplication.h")
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")
 set (ExternalLibPath "${CMAKE_SOURCE_DIR}/Runtime/vendor/libs")

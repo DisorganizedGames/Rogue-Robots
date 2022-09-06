@@ -6,6 +6,8 @@ int main(int, char**)
 	hr.try_fail("Failed to initialize COM");
 
 	std::cout << "Hello World!" << std::endl;
+	auto app = CreateApplication();
+
 
 	CoUninitialize();
 
@@ -14,3 +16,5 @@ int main(int, char**)
 
 	return 0;
 }
+
+extern const std::unique_ptr<DOG::Application> CreateApplication() noexcept;
