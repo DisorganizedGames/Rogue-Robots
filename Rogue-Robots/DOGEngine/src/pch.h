@@ -3,7 +3,11 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <windowsx.h>
+#include <objbase.h>
 
 #include <iostream>
 #include <vector>
 #include <map>
+#include <cassert>
+
+#include "common/Utils.h"
