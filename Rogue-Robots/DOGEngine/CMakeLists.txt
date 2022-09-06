@@ -1,5 +1,8 @@
 #Root/DOGEngine
-set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Application.h" "src/Application.cpp"  "src/common/Utils.h" "src/Audio/AudioDevice.h" "src/Audio/AudioDevice.cpp")
+set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Application.h" "src/Application.cpp" 
+	"src/common/Utils.h" "src/Audio/AudioDevice.h" "src/Audio/AudioDevice.cpp" 
+	"src/Audio/SourceVoice.h" "src/Audio/SourceVoice.cpp" "src/Audio/AudioFileReader.h")
+
 set(LibraryName "DOGEngine")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/DOGEngine/vendor/includes/")
 set (ExternalLibPath "${CMAKE_SOURCE_DIR}/DOGEngine/vendor/libs")

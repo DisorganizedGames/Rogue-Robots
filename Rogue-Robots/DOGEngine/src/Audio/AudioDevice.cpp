@@ -31,3 +31,26 @@ DOG::AudioDevice::~AudioDevice()
 		xAudio->Release();
 	}
 }
+
+SourceVoice DOG::AudioDevice::CreateSourceVoice(const WAVProperties& options, const SourceVoiceSettings& settings)
+{
+	assert(xAudio);
+
+	WAVEFORMATEX wfx = {
+		.wFormatTag = WAVE_FORMAT_PCM,
+		.nChannels = options.channels,
+		.nSamplesPerSec = options.sampleRate,
+		.nAvgBytesPerSec = options.channels * options.sampleRate * options.bps / 8,
+		.nBlockAlign = static_cast<u16>(options.channels * options.bps / 8),
+		.wBitsPerSample = options.bps,
+		.cbSize = 0,
+	};
+
+	IXAudio2SourceVoice* source;
+	HR hr = xAudio->CreateSourceVoice(&source, &wfx);
+	hr.try_fail("Failed to create Source Voice");
+
+	SourceVoice sourceVoice(source, options, settings);
+	return sourceVoice;
+}
+
