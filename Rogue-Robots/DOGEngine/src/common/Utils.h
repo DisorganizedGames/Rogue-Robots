@@ -1,17 +1,17 @@
 #pragma once
 
-typedef char i8;
-typedef short i16;
-typedef int i32;
-typedef long long i64;
+using i8 = int8_t;
+using i16 = int16_t;
+using i32 = int32_t;
+using i64 = int64_t;
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned long long u64;
+using u8 = uint8_t;
+using u16 = uint16_t;
+using u32 = uint32_t;
+using u64 = uint64_t;
 
-typedef float f32;
-typedef double f64;
+using f32 = float;
+using f64 = double;
 
 class HR
 {
