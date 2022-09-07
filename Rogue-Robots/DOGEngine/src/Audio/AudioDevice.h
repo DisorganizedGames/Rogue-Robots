@@ -1,6 +1,5 @@
 #pragma once
-#include <xaudio2.h>
-#include <x3daudio.h>
+#include "SourceVoice.h"
 
 namespace DOG
 {
@@ -12,6 +11,9 @@ namespace DOG
 
 	private:
 		IXAudio2* xAudio = nullptr;
-		IXAudio2MasteringVoice *masteringVoice = nullptr;
+		IXAudio2MasteringVoice* masteringVoice = nullptr;
+
+	public:
+		SourceVoice CreateSourceVoice(const WAVProperties& options, const SourceVoiceSettings& settings = {});
 	};
 }
