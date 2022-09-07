@@ -1,5 +1,5 @@
+#pragma once
 #include <DOGEngine.h>
-
 class RuntimeApplication : public DOG::Application
 {
 public:

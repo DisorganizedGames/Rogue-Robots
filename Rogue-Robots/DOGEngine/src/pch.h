@@ -52,6 +52,7 @@
 #include <tuple>
 #include <variant>
 #include <optional>
+#include <DirectXMath.h>
 
 #include "common/Utils.h"
 
