@@ -46,11 +46,12 @@ SourceVoice DOG::AudioDevice::CreateSourceVoice(const WAVProperties& options, co
 		.cbSize = 0,
 	};
 
+	auto callback = std::make_unique<SourceVoiceCallback>();
+
 	IXAudio2SourceVoice* source;
-	HR hr = xAudio->CreateSourceVoice(&source, &wfx);
+	HR hr = xAudio->CreateSourceVoice(&source, &wfx, 0, 2.f, callback.get());
 	hr.try_fail("Failed to create Source Voice");
 
-	SourceVoice sourceVoice(source, options, settings);
-	return sourceVoice;
+	return SourceVoice(source, options, std::move(callback), settings);
 }
 

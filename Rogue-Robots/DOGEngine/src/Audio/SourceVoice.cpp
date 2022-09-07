@@ -1,7 +1,9 @@
 #include "SourceVoice.h"
 
-DOG::SourceVoice::SourceVoice(IXAudio2SourceVoice* sourceVoice, const WAVProperties& properties, const SourceVoiceSettings& settings)
-	: sourceVoice(sourceVoice), audioProperties(properties)
+DOG::SourceVoice::SourceVoice(IXAudio2SourceVoice* sourceVoice, const WAVProperties& properties,
+	std::unique_ptr<SourceVoiceCallback> callback, const SourceVoiceSettings& settings)
+
+	: sourceVoice(sourceVoice), audioProperties(properties), callback(std::move(callback))
 {
 	voiceSettings = settings;
 	sourceVoice->SetVolume(settings.volume);
@@ -15,16 +17,16 @@ DOG::SourceVoice::SourceVoice(SourceVoice&& other) noexcept
 
 DOG::SourceVoice::~SourceVoice()
 {
-	if(sourceVoice)
+	if (sourceVoice)
 		sourceVoice->DestroyVoice();
 }
 
-void DOG::SourceVoice::Play(const u8* buffer, size_t bufferSize)
+void DOG::SourceVoice::Play(std::vector<u8>&& buffer)
 {
 	XAUDIO2_BUFFER xAudioBuffer = {
 		.Flags = XAUDIO2_END_OF_STREAM,
-		.AudioBytes = static_cast<u32>(bufferSize),
-		.pAudioData = buffer,
+		.AudioBytes = static_cast<u32>(buffer.size()),
+		.pAudioData = buffer.data(),
 		.PlayBegin = 0,
 		.PlayLength = 0,
 		.LoopBegin = 0,
@@ -43,10 +45,12 @@ void DOG::SourceVoice::Play(const u8* buffer, size_t bufferSize)
 void DOG::SourceVoice::WaitForEnd()
 {
 	XAUDIO2_VOICE_STATE state;
-	do
+	sourceVoice->GetState(&state);
+	if (state.BuffersQueued > 0)
 	{
-		sourceVoice->GetState(&state);
-	} while (state.BuffersQueued > 0);
+		callback->WaitForStreamEnd();
+	}
+	return;
 }
 
 bool DOG::SourceVoice::HasFinished()

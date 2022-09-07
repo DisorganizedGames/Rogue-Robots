@@ -1,5 +1,6 @@
 #pragma once
 #include "AudioFileReader.h"
+#include "SourceVoiceCallback.h"
 
 namespace DOG
 {
@@ -12,7 +13,8 @@ namespace DOG
 	{
 
 	public:
-		SourceVoice(IXAudio2SourceVoice* sourceVoice, const WAVProperties& properties, const SourceVoiceSettings& settings = {});
+		SourceVoice(IXAudio2SourceVoice* sourceVoice, const WAVProperties& properties, 
+			std::unique_ptr<SourceVoiceCallback> callback, const SourceVoiceSettings& settings = {});
 		SourceVoice(SourceVoice&& other) noexcept;
 		~SourceVoice();
 
@@ -21,7 +23,7 @@ namespace DOG
 
 	public:
 		// Plays a single buffer to the end. Does not support additional buffers
-		void Play(const u8* buffer, size_t bufferSize);
+		void Play(std::vector<u8>&& buffer);
 
 		// Waits for all currently queued buffers to finish playing
 		void WaitForEnd();
@@ -34,6 +36,8 @@ namespace DOG
 		IXAudio2SourceVoice* sourceVoice = nullptr;
 		WAVProperties audioProperties;
 		SourceVoiceSettings voiceSettings;
+
+		std::unique_ptr<SourceVoiceCallback> callback;
 	};	
 }
 
