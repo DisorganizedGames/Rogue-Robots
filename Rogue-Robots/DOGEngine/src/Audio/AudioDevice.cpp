@@ -1,5 +1,4 @@
 #include "AudioDevice.h"
-
 using namespace DOG;
 
 AudioDevice::AudioDevice()

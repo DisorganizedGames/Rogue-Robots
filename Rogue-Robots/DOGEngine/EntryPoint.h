@@ -1,5 +1,5 @@
 #pragma once
-
+#include "src/Application.h"
 int main(int, char**)
 {
 	HR hr = CoInitialize(nullptr);
@@ -8,5 +8,9 @@ int main(int, char**)
 	std::cout << "Hello World!" << std::endl;
 
 	CoUninitialize();
+
+	DOG::Application app;
+
+
 	return 0;
 }

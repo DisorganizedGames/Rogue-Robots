@@ -3,6 +3,5 @@ namespace DOG
 {
 	Application::Application()
 	{
-
 	}
 }
