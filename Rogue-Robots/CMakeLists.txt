@@ -13,7 +13,7 @@ project("Rogue-Robots")
 
 set(CMAKE_CXX_STANDARD "20")
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 
 add_subdirectory("DOGEngine")
 add_subdirectory("Runtime")
