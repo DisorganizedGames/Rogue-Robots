@@ -7,7 +7,7 @@
 
 namespace DOG
 {
-	constexpr const u64 WAV_HEADER_LENGTH = 36;
+	constexpr const u64 WAV_HEADER_LENGTH = 44;
 
 	enum class WAVFormat : u32
 	{
@@ -32,8 +32,8 @@ namespace DOG
 		{
 			throw std::runtime_error("Provided file is not a WAV file");
 		}
-		
-		
+
+
 		WAVProperties out = {
 			.format = *reinterpret_cast<const WAVFormat*>(&data[8]),
 			.channels = *reinterpret_cast<const u16*>(&data[22]),
@@ -42,24 +42,9 @@ namespace DOG
 		};
 		return out;
 	}
-	
-	// Reads the properties of the specified WAV file.
-	// Does NOT read the whole file, only enough to gleam the header information needed.
-	static WAVProperties ReadWAVProperties(const char* filePath)
-	{
-		std::ifstream file(filePath, std::ios::binary);
-		if (!file)
-		{
-			// TODO: Make a proper error (FileNotFoundError?)
-			throw std::runtime_error(std::string("Failed to open file: ") + filePath);
-		}
 
-		u64 fileSize = std::filesystem::file_size(filePath);
-		std::unique_ptr<u8> data(new u8[fileSize]);
-		file.read(reinterpret_cast<char*>(data.get()), WAV_HEADER_LENGTH);
-		return ReadWAVProperties(data.get(), WAV_HEADER_LENGTH);
-	}
-
+	//Reads the provided WAV file and returns a tuple of it's properties, a pointer to the sound data, and
+	// the size of said data.
 	static std::tuple<WAVProperties, std::unique_ptr<u8>, u64> ReadWAV(const char* filePath)
 	{
 		std::ifstream file(filePath, std::ios::binary);
@@ -69,16 +54,18 @@ namespace DOG
 			throw std::runtime_error(std::string("Failed to open file: ") + filePath);
 		}
 
-		u64 fileSize = std::filesystem::file_size(filePath);
-		std::unique_ptr<u8> data(new u8[fileSize]);
-		file.read(reinterpret_cast<char*>(data.get()), fileSize);
+		const u64 fileSize = std::filesystem::file_size(filePath);
+		const size_t dataSize = fileSize - WAV_HEADER_LENGTH;
 
-		WAVProperties properties = ReadWAVProperties(data.get(), fileSize);
+		std::unique_ptr<u8> wavHeader(new u8[WAV_HEADER_LENGTH]);
+		std::unique_ptr<u8> data(new u8[dataSize]);
 
-		std::unique_ptr<u8> outData(new u8[fileSize-44]);
-		std::copy_n(data.get()+44, fileSize-44, outData.get());
+		file.read(reinterpret_cast<char*>(wavHeader.get()), WAV_HEADER_LENGTH);
+		file.read(reinterpret_cast<char*>(data.get()), dataSize);
 
-		return {properties, std::move(outData), fileSize-44};
+		WAVProperties properties = ReadWAVProperties(wavHeader.get(), WAV_HEADER_LENGTH);
+
+		return {properties, std::move(data), dataSize};
 	}
 }
 
