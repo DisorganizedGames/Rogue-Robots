@@ -17,3 +17,4 @@ namespace DOG
 		SourceVoice CreateSourceVoice(const WAVProperties& options, const SourceVoiceSettings& settings = {});
 	};
 }
+

@@ -37,3 +37,4 @@ namespace DOG
 		void OnVoiceProcessingPassStart(u32) override {}
 	};
 }
+

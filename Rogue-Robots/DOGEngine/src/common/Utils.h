@@ -50,3 +50,4 @@ public:
 		std::cout << out;
 	}
 };
+
