@@ -10,8 +10,8 @@ namespace DOG
 		~AudioDevice();
 
 	private:
-		IXAudio2* xAudio = nullptr;
-		IXAudio2MasteringVoice* masteringVoice = nullptr;
+		IXAudio2* m_xAudio = nullptr;
+		IXAudio2MasteringVoice* m_masteringVoice = nullptr;
 
 	public:
 		SourceVoice CreateSourceVoice(const WAVProperties& options, const SourceVoiceSettings& settings = {});

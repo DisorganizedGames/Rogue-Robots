@@ -33,11 +33,11 @@ namespace DOG
 
 
 	private:
-		IXAudio2SourceVoice* sourceVoice = nullptr;
-		WAVProperties audioProperties;
-		SourceVoiceSettings voiceSettings;
+		IXAudio2SourceVoice* m_sourceVoice = nullptr;
+		WAVProperties m_audioProperties;
+		SourceVoiceSettings m_voiceSettings;
 
-		std::unique_ptr<SourceVoiceCallback> callback;
+		std::unique_ptr<SourceVoiceCallback> m_callback;
 	};	
 }
 
