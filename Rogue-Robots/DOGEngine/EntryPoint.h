@@ -1,16 +1,24 @@
 #pragma once
-#include "src/Application.h"
+#include "src/Core/Application.h"
 int main(int, char**)
 {
 	HR hr = CoInitialize(nullptr);
 	hr.try_fail("Failed to initialize COM");
 
-	std::cout << "Hello World!" << std::endl;
+	std::unique_ptr<DOG::Application> app{ nullptr };
+	while (DOG::ApplicationManager::ShouldRestartApplication())
+	{
+		if (!DOG::ApplicationManager::ShouldRestartApplication())
+			app = std::move(CreateApplication());
+		else
+			app->OnRestart();
+
+		app->Run();
+	}
 
 	CoUninitialize();
 
-	DOG::Application app;
-
-
 	return 0;
 }
+
+extern std::unique_ptr<DOG::Application> CreateApplication() noexcept;

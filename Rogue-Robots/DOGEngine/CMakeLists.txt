@@ -1,7 +1,7 @@
 #Root/DOGEngine
-set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Application.h" "src/Application.cpp" 
+set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h" "src/Core/Application.cpp" "src/Core/Window.h" "src/Core/Window.cpp" 
 	"src/common/Utils.h" "src/Audio/AudioDevice.h" "src/Audio/AudioDevice.cpp" 
-	"src/Audio/SourceVoice.h" "src/Audio/SourceVoice.cpp" "src/Audio/AudioFileReader.h"  "src/Audio/SourceVoiceCallback.h")
+	"src/Audio/SourceVoice.h" "src/Audio/SourceVoice.cpp" "src/Audio/AudioFileReader.h"  "src/Audio/SourceVoiceCallback.h" "src/Input/Mouse.h" "src/Input/Mouse.cpp" "src/Input/Keyboard.h" "src/Input/Keyboard.cpp")
 
 set(LibraryName "DOGEngine")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/DOGEngine/vendor/includes/")
@@ -12,6 +12,7 @@ target_include_directories("${LibraryName}" PRIVATE "${CMAKE_SOURCE_DIR}/Core/sr
 target_compile_options("${LibraryName}" PRIVATE "/W4")
 set_target_properties("${LibraryName}" PROPERTIES LINKER_LANGUAGE "CXX")
 target_link_libraries("${LibraryName}" PRIVATE "xaudio2" "ole32")
+
 
 target_precompile_headers("${LibraryName}" PUBLIC "src/pch.h")
 

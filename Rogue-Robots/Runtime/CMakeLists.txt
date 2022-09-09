@@ -1,5 +1,5 @@
 #Root/Runtime
-set(SourceFiles "src/Core/RuntimeApp.h" "src/Core/RuntimeApp.cpp"  )
+set(SourceFiles  "src/Core/RuntimeApplication.cpp"   "src/Core/RuntimeApplication.h")
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")
 set (ExternalLibPath "${CMAKE_SOURCE_DIR}/Runtime/vendor/libs")
@@ -11,6 +11,8 @@ target_include_directories("${ExecutableName}" PRIVATE "${CMAKE_SOURCE_DIR}/DOGE
 
 target_link_libraries("${ExecutableName}" PRIVATE "DOGEngine")
 target_compile_options("${ExecutableName}" PRIVATE "/W4")
+
+target_compile_definitions("${ExecutableName}" PRIVATE RUNTIME_DIR="${CMAKE_CURRENT_SOURCE_DIR}/")
 
 ##### Section for linking external libraries #####
 file(GLOB_RECURSE libFiles

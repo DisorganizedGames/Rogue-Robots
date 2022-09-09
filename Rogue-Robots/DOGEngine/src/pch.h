@@ -1,5 +1,9 @@
 #pragma once
 
+//#ifndef NDEBUG
+//#define NDEBUG
+//#endif
+
 #ifndef UNICODE
 #define UNICODE
 #endif
@@ -52,6 +56,8 @@
 #include <tuple>
 #include <variant>
 #include <optional>
+#include <DirectXMath.h>
+#include <bitset>
 
 #include "common/Utils.h"
 

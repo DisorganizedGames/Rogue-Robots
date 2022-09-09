@@ -51,3 +51,47 @@ public:
 	}
 };
 
+#ifndef DELETE_COPY_CONSTRUCTOR
+#define DELETE_COPY_CONSTRUCTOR(T)	\
+			T(const T&) = delete;	\
+			T& operator=(const T&) = delete;
+#endif
+#ifndef DELETE_MOVE_CONSTRUCTOR
+#define DELETE_MOVE_CONSTRUCTOR(T)	\
+			T(T&&) = delete;	\
+			T& operator=(const T&&) = delete;
+#endif
+#ifndef DELETE_DEFAULT_CONSTRUCTOR
+#define DELETE_DEFAULT_CONSTRUCTOR(T)	\
+			T() = delete;	\
+			~T() = delete;
+#endif
+#ifndef STATIC_CLASS
+#define STATIC_CLASS(T)	\
+			DELETE_DEFAULT_CONSTRUCTOR(T)	\
+			DELETE_COPY_CONSTRUCTOR(T)	\
+			DELETE_MOVE_CONSTRUCTOR(T)
+#endif
+
+#if defined NDEBUG
+	#ifndef ASSERT
+		#define ASSERT(expression, errorString) (expression)
+	#endif
+#else
+	#ifndef ASSERT
+		#define ASSERT(expression, errorString) assert(expression && errorString)
+	#endif
+#endif
+	
+
+struct Vector2u
+{
+	u32 x;
+	u32 y;
+};
+
+struct Vector2i
+{
+	i32 x;
+	i32 y;
+};
