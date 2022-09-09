@@ -6,24 +6,25 @@
 int main(int, char**)
 {
 	DOG::Server serverTest;
-	//serverTest.StartTcpServer();
+	serverTest.StartTcpServer();
 
-	HR hr = CoInitialize(nullptr);
-	hr.try_fail("Failed to initialize COM");
+	//HR hr = CoInitialize(nullptr);
+	//hr.try_fail("Failed to initialize COM");
 
-	std::unique_ptr<DOG::Application> app{ nullptr };
-	while (DOG::ApplicationManager::ShouldRestartApplication())
-	{
-		if (!DOG::ApplicationManager::ShouldRestartApplication())
-			app = std::move(CreateApplication());
-		else
-			app->OnRestart();
+	//std::unique_ptr<DOG::Application> app{ nullptr };
+	//while (DOG::ApplicationManager::ShouldRestartApplication())
+	//{
+	//	if (!DOG::ApplicationManager::ShouldRestartApplication())
+	//		app = std::move(CreateApplication());
+	//	else
+	//		app->OnRestart();
 
-		app->Run();
-	}
+	//	app->Run();
+	//}
 
-	CoUninitialize();
-
+	//CoUninitialize();
+	while (true)
+		continue;
 	return 0;
 }
 
