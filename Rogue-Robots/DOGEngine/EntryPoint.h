@@ -5,6 +5,9 @@
 
 int main(int, char**)
 {
+	DOG::Server serverTest;
+	//serverTest.StartTcpServer();
+
 	HR hr = CoInitialize(nullptr);
 	hr.try_fail("Failed to initialize COM");
 
