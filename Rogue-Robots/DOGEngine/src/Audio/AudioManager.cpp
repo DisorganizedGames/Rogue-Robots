@@ -12,7 +12,7 @@ void AudioManager::Play(AudioPlayerComponent& audioPlayerComponent)
 	auto& [audioID, volume, _] = audioPlayerComponent;
 	
 	// TODO: HIGHLY TEMPORARY
-	auto [wavProp, data] = ReadWAV("example.wav");
+	auto [wavProp, data] = ReadWAV("chilling.wav");
 
 	u64 freeVoiceIndex = GetFreeVoice(wavProp);
 
@@ -51,53 +51,48 @@ void AudioManager::WaitForEnd(AudioPlayerComponent& audioPlayerComponent)
 
 u64 AudioManager::GetFreeVoice(const WAVProperties& wavProperties)
 {
-	u64 index = 0;
 	// Find compatible voice
-	for (auto& source: m_sources)
+	for (int i = 0; i < m_sources.size(); ++i)
 	{
+		auto& source = m_sources[i];
 		if (!source)
 			continue;
-
 		if (!source->HasFinished())
 			continue;
-
+		
 		auto sourceWAVProperties = source->GetWAVProperties();
 		if (memcmp(&wavProperties, &sourceWAVProperties, sizeof(WAVProperties)) == 0)
 		{
-			return index;
+			return i;
 		}
-		++index;
 	}
-	index = 0;
 
 	// Find empty voice and create a new one with the provided properties
-	for (auto& source: m_sources)
+	for (int i = 0; i < m_sources.size(); ++i)
 	{
+		auto& source = m_sources[i];
 		if (!source)
 		{
 			source = std::make_unique<SourceVoice>();
 			*source = m_device.CreateSourceVoice(wavProperties);
-			return index;
+			return i;
 		}
-		++index;
 	}
-	index = 0;
 
 	// Free unused voice(s?) and use the freed voice's place
-	for (auto& source: m_sources)
+	for (int i = 0; i < m_sources.size(); ++i)
 	{
+		auto& source = m_sources[i];
 		if (!source)
-			continue; // This really shouldn't happen since we just saw there were no free spots
-
+			continue;
+		
 		if (source->HasFinished())
 		{
 			source.reset();
-			return index;
+			return i;
 		}
-		++index;
 	}
 
-	// TODO: NoVoiceAvailableError
-	throw std::runtime_error("No available voice found");
+	throw NoVoiceAvailableError(); // TODO: Figure out a way to solve this... Software Mixing? More voices?
 }
 
