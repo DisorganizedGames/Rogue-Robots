@@ -6,7 +6,7 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
 	"src/EventSystem/Layer.h" "src/EventSystem/LayerStack.h" "src/EventSystem/LayerStack.cpp" "src/EventSystem/IEvent.h" "src/EventSystem/WindowEvents.h" 
 	"src/EventSystem/EventPublisher.h"  "src/EventSystem/EventBus.h" "src/EventSystem/EventBus.cpp" "src/Core/CoreUtils.h" "src/EventSystem/MouseEvents.h" 
 	"src/EventSystem/KeyboardEvents.h" "src/EventSystem/EventPublisher.cpp" "src/Network/Server.h" "src/Network/Server.cpp" "src/Network/Client.h" "src/Network/Client.cpp" "src/Core/Time.h"
-	"src/Audio/AudioManager.h" "src/Audio/AudioManager.cpp" "src/Audio/AudioPlayerComponent.h")
+	"src/Audio/AudioManager.h" "src/Audio/AudioManager.cpp" "src/Audio/AudioPlayerComponent.h" "src/common/ErrorTypes.h")
 
 	file(GLOB_RECURSE TempGraphics
     "src/Graphics/*.cpp")

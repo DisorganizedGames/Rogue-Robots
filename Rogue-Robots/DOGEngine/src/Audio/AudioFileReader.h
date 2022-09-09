@@ -125,8 +125,7 @@ namespace DOG
 		std::ifstream file(filePath, std::ios::binary);
 		if (!file)
 		{
-			// TODO: Make a proper error (FileNotFoundError?)
-			throw std::runtime_error(std::string("Failed to open file: ") + filePath);
+			throw FileNotFoundError(filePath);
 		}
 
 		const u64 fileSize = std::filesystem::file_size(filePath);
