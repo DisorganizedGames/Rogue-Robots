@@ -60,3 +60,4 @@ bool DOG::SourceVoice::HasFinished()
 
 	return state.BuffersQueued == 0;
 }
+

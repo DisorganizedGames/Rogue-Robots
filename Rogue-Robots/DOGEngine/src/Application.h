@@ -9,3 +9,4 @@ namespace DOG
 	private:
 	};
 }
+
