@@ -51,7 +51,7 @@ void SaveRuntimeSettings() noexcept
 	std::ifstream inFile(fullFilePath);
 
 	DOG::ApplicationSpecification spec;
-	spec.Name = "Rogue Robots";
+	spec.name = "Rogue Robots";
 	if (inFile.is_open())
 	{
 		std::string readData;
@@ -59,23 +59,23 @@ void SaveRuntimeSettings() noexcept
 		{
 			if (readData == "[WINDOW][DIMENSIONS]")
 			{
-				inFile >> spec.WindowDimensions.x;
-				inFile >> spec.WindowDimensions.y;
+				inFile >> spec.windowDimensions.x;
+				inFile >> spec.windowDimensions.y;
 			}
 			else if (readData == "[WINDOW][MODE]")
 			{
 				int mode = -1;
 				inFile >> mode;
-				spec.InitialWindowMode = static_cast<DOG::WindowMode>(mode);
+				spec.initialWindowMode = static_cast<DOG::WindowMode>(mode);
 			}
 		}
 		inFile.close();
 		return spec;
 	}
 
-	spec.WindowDimensions.x = 1280u;
-	spec.WindowDimensions.y = 720u;
-	spec.InitialWindowMode = DOG::WindowMode::Windowed;
+	spec.windowDimensions.x = 1280u;
+	spec.windowDimensions.y = 720u;
+	spec.initialWindowMode = DOG::WindowMode::Windowed;
 	return spec;
 }
 

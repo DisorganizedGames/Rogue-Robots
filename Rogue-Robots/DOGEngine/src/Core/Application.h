@@ -4,9 +4,9 @@ namespace DOG
 {
 	struct ApplicationSpecification
 	{
-		std::string Name;
-		Vector2u WindowDimensions;
-		WindowMode InitialWindowMode;
+		std::string name;
+		Vector2u windowDimensions;
+		WindowMode initialWindowMode;
 	};
 
 	class ApplicationManager

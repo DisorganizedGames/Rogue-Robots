@@ -6,10 +6,10 @@ namespace DOG
 {
 	struct WindowData
 	{
-		HWND WindowHandle;
-		RECT WindowRectangle;
-		Vector2u Dimensions;
-		WindowMode Mode;
+		HWND windowHandle;
+		RECT windowRectangle;
+		Vector2u dimensions;
+		WindowMode mode;
 	};
 	static WindowData s_windowData = {};
 
@@ -24,8 +24,8 @@ namespace DOG
 		}
 		case WM_SIZE:
 		{
-			s_windowData.Dimensions.x = LOWORD(lParam);
-			s_windowData.Dimensions.y = HIWORD(lParam);
+			s_windowData.dimensions.x = LOWORD(lParam);
+			s_windowData.dimensions.y = HIWORD(lParam);
 			break;
 		}
 		case WM_KEYDOWN:
@@ -103,14 +103,14 @@ namespace DOG
 
 	void Window::Initialize(const ApplicationSpecification& spec) noexcept
 	{
-		ASSERT((spec.WindowDimensions.x > 0 && spec.WindowDimensions.y > 0) 
+		ASSERT((spec.windowDimensions.x > 0 && spec.windowDimensions.y > 0)
 			,"Window dimensions are invalid.");
 
-		s_windowData.Dimensions.x = spec.WindowDimensions.x;
-		s_windowData.Dimensions.y = spec.WindowDimensions.y;
-		s_windowData.Mode = spec.InitialWindowMode;
+		s_windowData.dimensions.x = spec.windowDimensions.x;
+		s_windowData.dimensions.y = spec.windowDimensions.y;
+		s_windowData.mode = spec.initialWindowMode;
 		
-		std::string className = spec.Name + "Class";
+		std::string className = spec.name + "Class";
 		WNDCLASSEXA windowClass = {};
 		windowClass.cbSize = sizeof(WNDCLASSEXA);				//Size of struct
 		windowClass.style = CS_HREDRAW | CS_VREDRAW;			//Window styles
@@ -125,20 +125,20 @@ namespace DOG
 		windowClass.hIconSm = nullptr;							//Small icon
 		ASSERT(::RegisterClassExA(&windowClass), "Failed to register Window class.");
 
-		RECT windowRectangle = {0u, 0u, static_cast<LONG>(spec.WindowDimensions.x), static_cast<LONG>(spec.WindowDimensions.y)};
+		RECT windowRectangle = {0u, 0u, static_cast<LONG>(spec.windowDimensions.x), static_cast<LONG>(spec.windowDimensions.y)};
 		ASSERT(::AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW, FALSE), "Failed to adjust window rectangle.");
 	
 		DEVMODEA devMode = {};
 		devMode.dmSize = sizeof(DEVMODE);
 		ASSERT(::EnumDisplaySettingsA(nullptr, ENUM_CURRENT_SETTINGS, &devMode), "Failed to enumerate display settings.");
-		int windowCenterPosX = (devMode.dmPelsWidth / 2) - static_cast<int>((spec.WindowDimensions.x / 2));
-		int windowCenterPosY = (devMode.dmPelsHeight / 2) - static_cast<int>((spec.WindowDimensions.y / 2));
+		int windowCenterPosX = (devMode.dmPelsWidth / 2) - static_cast<int>((spec.windowDimensions.x / 2));
+		int windowCenterPosY = (devMode.dmPelsHeight / 2) - static_cast<int>((spec.windowDimensions.y / 2));
 
-		s_windowData.WindowHandle = ::CreateWindowExA
+		s_windowData.windowHandle = ::CreateWindowExA
 		(
 			0u,												//DwExStyle
 			className.c_str(),								//Class name
-			spec.Name.c_str(),								//Window name
+			spec.name.c_str(),								//Window name
 			WS_OVERLAPPEDWINDOW,							//Window styles
 			windowCenterPosX,								//Window center X
 			windowCenterPosY,								//Window center Y
@@ -149,7 +149,7 @@ namespace DOG
 			::GetModuleHandleA(nullptr),					//Instance
 			nullptr											//Data passed along
 		);
-		s_windowData.WindowRectangle = windowRectangle;
+		s_windowData.windowRectangle = windowRectangle;
 
 		//Register raw mouse input:
 		RAWINPUTDEVICE rawInputDevice = {};
@@ -160,7 +160,7 @@ namespace DOG
 		ASSERT(::RegisterRawInputDevices(&rawInputDevice, 1u, sizeof(rawInputDevice)) 
 			,"Failed to register raw mouse movement delta.");
 
-		::ShowWindow(s_windowData.WindowHandle, SW_SHOW);
+		::ShowWindow(s_windowData.windowHandle, SW_SHOW);
 	}
 
 	bool Window::OnUpdate() noexcept
@@ -179,21 +179,26 @@ namespace DOG
 
 	const u32 Window::GetWidth() noexcept
 	{
-		return s_windowData.Dimensions.x;
+		return s_windowData.dimensions.x;
 	}
 
 	const u32 Window::GetHeight() noexcept
 	{
-		return s_windowData.Dimensions.y;
+		return s_windowData.dimensions.y;
 	}
 
 	const std::pair<u32, u32> GetDimensions() noexcept
 	{
-		return std::make_pair(s_windowData.Dimensions.x, s_windowData.Dimensions.y);
+		return std::make_pair(s_windowData.dimensions.x, s_windowData.dimensions.y);
 	}
 
 	const WindowMode Window::GetMode() noexcept
 	{
-		return s_windowData.Mode;
+		return s_windowData.mode;
+	}
+
+	const HWND Window::GetHandle() noexcept
+	{
+		return s_windowData.windowHandle;
 	}
 }
