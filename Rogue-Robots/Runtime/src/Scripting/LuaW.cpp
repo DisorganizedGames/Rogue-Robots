@@ -1,6 +1,4 @@
 #include "LuaW.h"
-#include <iostream>
-#include <assert.h>
 
 LuaW::LuaW(lua_State* l)
 {
@@ -194,7 +192,7 @@ int LuaW::GetIntegerFromStack(int index)
 {
 	if (lua_isnumber(m_luaState, index))
 	{
-		int number = lua_tonumber(m_luaState, index);
+		int number = (int)lua_tonumber(m_luaState, index);
 		lua_pop(m_luaState, index);
 		return number;
 	}
@@ -210,7 +208,7 @@ float LuaW::GetFloatFromStack(int index)
 {
 	if (lua_isnumber(m_luaState, index))
 	{
-		float number = lua_tonumber(m_luaState, index);
+		float number = (float)lua_tonumber(m_luaState, index);
 		lua_pop(m_luaState, index);
 		return number;
 	}

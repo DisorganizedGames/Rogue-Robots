@@ -3,6 +3,8 @@
 
 class LuaContext
 {
+private:
+	LuaW m_luaW;
 public:
 	LuaContext(LuaW luaW);
 };

@@ -1,7 +1,4 @@
 #pragma once
-#include <string>
-#include <utility>
-#include <vector>
 
 extern "C"
 {
@@ -9,10 +6,6 @@ extern "C"
 #include "Lua/lauxlib.h"
 #include "Lua/lualib.h"
 }
-//#ifdef _WIN32
-//#pragma comment(lib, "Lua/liblua54.a")
-//#endif // _WIN32
-
 class LuaContext;
 
 struct ClassFunctionInfo
@@ -212,7 +205,6 @@ static inline int LuaW::ClassFunctionsHook(lua_State* luaState)
 
 	if (!luaW.IsUserData(1))
 	{
-		std::string errorMessage;
 		luaW.Error("Tried to access userdata and no userdata was found! Call object function with either object:function() or object.function(object)!");
 		return 0;
 	}
