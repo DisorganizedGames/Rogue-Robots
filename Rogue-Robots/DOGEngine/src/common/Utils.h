@@ -95,3 +95,10 @@ struct Vector2i
 	i32 x;
 	i32 y;
 };
+inline uint64_t GenerateRandomID()
+{
+	static std::random_device rdev;
+	static std::mt19937 gen(rdev());
+	static std::uniform_int_distribution<uint64_t> udis(1, std::numeric_limits<uint64_t>::max());
+	return udis(gen);
+}
