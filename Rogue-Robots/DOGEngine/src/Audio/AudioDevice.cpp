@@ -3,7 +3,7 @@ using namespace DOG;
 
 AudioDevice::AudioDevice()
 {
-	HR hr = XAudio2Create(&xAudio);
+	HR hr = XAudio2Create(&m_xAudio);
 	hr.try_fail("Failed to create XAudio2 Device");
 
 #ifdef _DEBUG
@@ -16,25 +16,25 @@ AudioDevice::AudioDevice()
 		.LogTiming = false,
 	};
 
-	xAudio->SetDebugConfiguration(&debugConfig);
+	m_xAudio->SetDebugConfiguration(&debugConfig);
 #endif
 
-	hr = xAudio->CreateMasteringVoice(&masteringVoice);
+	hr = m_xAudio->CreateMasteringVoice(&m_masteringVoice);
 	hr.try_fail("Failed to create XAudio2 Mastering Voice");
 }
 
 DOG::AudioDevice::~AudioDevice()
 {
-	masteringVoice->DestroyVoice();
-	if (xAudio)
+	m_masteringVoice->DestroyVoice();
+	if (m_xAudio)
 	{
-		xAudio->Release();
+		m_xAudio->Release();
 	}
 }
 
 SourceVoice DOG::AudioDevice::CreateSourceVoice(const WAVProperties& options, const SourceVoiceSettings& settings)
 {
-	assert(xAudio);
+	assert(m_xAudio);
 
 	WAVEFORMATEX wfx = {
 		.wFormatTag = WAVE_FORMAT_PCM,
@@ -49,7 +49,7 @@ SourceVoice DOG::AudioDevice::CreateSourceVoice(const WAVProperties& options, co
 	auto callback = std::make_unique<SourceVoiceCallback>();
 
 	IXAudio2SourceVoice* source;
-	HR hr = xAudio->CreateSourceVoice(&source, &wfx, 0, 2.f, callback.get());
+	HR hr = m_xAudio->CreateSourceVoice(&source, &wfx, 0, 2.f, callback.get());
 	hr.try_fail("Failed to create Source Voice");
 
 	return SourceVoice(source, options, std::move(callback), settings);

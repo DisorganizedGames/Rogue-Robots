@@ -3,22 +3,22 @@
 DOG::SourceVoice::SourceVoice(IXAudio2SourceVoice* sourceVoice, const WAVProperties& properties,
 	std::unique_ptr<SourceVoiceCallback> callback, const SourceVoiceSettings& settings)
 
-	: sourceVoice(sourceVoice), audioProperties(properties), callback(std::move(callback))
+	: m_sourceVoice(sourceVoice), m_audioProperties(properties), m_callback(std::move(callback))
 {
-	voiceSettings = settings;
+	m_voiceSettings = settings;
 	sourceVoice->SetVolume(settings.volume);
 }
 
 DOG::SourceVoice::SourceVoice(SourceVoice&& other) noexcept
-	: sourceVoice(other.sourceVoice), audioProperties(other.audioProperties), voiceSettings(other.voiceSettings)
+	: m_sourceVoice(other.m_sourceVoice), m_audioProperties(other.m_audioProperties), m_voiceSettings(other.m_voiceSettings)
 {
-	other.sourceVoice = nullptr;
+	other.m_sourceVoice = nullptr;
 }
 
 DOG::SourceVoice::~SourceVoice()
 {
-	if (sourceVoice)
-		sourceVoice->DestroyVoice();
+	if (m_sourceVoice)
+		m_sourceVoice->DestroyVoice();
 }
 
 void DOG::SourceVoice::Play(std::vector<u8>&& buffer)
@@ -35,20 +35,20 @@ void DOG::SourceVoice::Play(std::vector<u8>&& buffer)
 		.pContext = nullptr,
 	};
 
-	HR hr = sourceVoice->SubmitSourceBuffer(&xAudioBuffer);
+	HR hr = m_sourceVoice->SubmitSourceBuffer(&xAudioBuffer);
 	hr.try_fail("Failed to queue XAudio Buffer");
 
-	hr = sourceVoice->Start();
+	hr = m_sourceVoice->Start();
 	hr.try_fail("Failed to start playing queued XAudio Buffer");
 }
 
 void DOG::SourceVoice::WaitForEnd()
 {
 	XAUDIO2_VOICE_STATE state;
-	sourceVoice->GetState(&state);
+	m_sourceVoice->GetState(&state);
 	if (state.BuffersQueued > 0)
 	{
-		callback->WaitForStreamEnd();
+		m_callback->WaitForStreamEnd();
 	}
 	return;
 }
@@ -56,7 +56,7 @@ void DOG::SourceVoice::WaitForEnd()
 bool DOG::SourceVoice::HasFinished()
 {
 	XAUDIO2_VOICE_STATE state;
-	sourceVoice->GetState(&state);
+	m_sourceVoice->GetState(&state);
 
 	return state.BuffersQueued == 0;
 }

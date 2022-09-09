@@ -5,27 +5,27 @@ namespace DOG
 	class SourceVoiceCallback : public IXAudio2VoiceCallback
 	{
 	private:
-		HANDLE streamEndEvent;
+		HANDLE m_streamEndEvent;
 	public:
 		SourceVoiceCallback()
 		{
-			streamEndEvent = CreateEventA(nullptr, false, false, nullptr);
+			m_streamEndEvent = CreateEventA(nullptr, false, false, nullptr);
 		}
 		~SourceVoiceCallback()
 		{
-			if (streamEndEvent)
-				CloseHandle(streamEndEvent);
+			if (m_streamEndEvent)
+				CloseHandle(m_streamEndEvent);
 		};
 	public:
 		void OnStreamEnd() override
 		{
-			SetEvent(streamEndEvent);
+			SetEvent(m_streamEndEvent);
 		}
 
 		void WaitForStreamEnd()
 		{
-			WaitForSingleObjectEx(streamEndEvent, INFINITE, true);
-			ResetEvent(streamEndEvent);
+			WaitForSingleObjectEx(m_streamEndEvent, INFINITE, true);
+			ResetEvent(m_streamEndEvent);
 		}
 
 		// Unimplemented callbacks
