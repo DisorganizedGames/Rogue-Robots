@@ -7,9 +7,13 @@ namespace DOG
 	class Window
 	{
 	public:
-		void Initialize(const ApplicationSpecification& spec) noexcept;
+		static void Initialize(const ApplicationSpecification& spec) noexcept;
+		static bool OnUpdate() noexcept;
+		static const u32 GetWidth() noexcept;
+		static const u32 GetHeight() noexcept;
+		static const std::pair<u32, u32> GetDimensions() noexcept;
+		static const WindowMode GetMode() noexcept;
 	private:
 		STATIC_CLASS(Window);
-
 	};
 }

@@ -53,6 +53,7 @@
 #include <variant>
 #include <optional>
 #include <DirectXMath.h>
+#include <bitset>
 
 #include "common/Utils.h"
 

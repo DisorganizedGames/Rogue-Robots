@@ -5,7 +5,7 @@ namespace DOG
 	struct ApplicationSpecification
 	{
 		std::string Name;
-		DirectX::XMFLOAT2 WindowDimensions;
+		Vector2u WindowDimensions;
 		WindowMode InitialWindowMode;
 	};
 
@@ -14,8 +14,8 @@ namespace DOG
 	public:
 		static [[nodiscard]] const bool ShouldRestartApplication() noexcept;
 	private:
-		static bool s_ShouldRestart;
-		static bool s_InitialStartupDone;
+		static bool s_shouldRestart;
+		static bool s_initialStartupDone;
 	};
 
 	class Application

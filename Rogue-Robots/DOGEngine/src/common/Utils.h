@@ -75,6 +75,12 @@ public:
 
 struct Vector2u
 {
-	uint32_t x;
-	uint32_t y;
+	u32 x;
+	u32 y;
+};
+
+struct Vector2i
+{
+	i32 x;
+	i32 y;
 };

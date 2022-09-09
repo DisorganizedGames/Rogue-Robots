@@ -1,14 +1,15 @@
 #include "Application.h"
-
+#include "../Input/Mouse.h"
+#include "../Input/Keyboard.h"
 namespace DOG
 {
-	bool ApplicationManager::s_ShouldRestart{ false };
-	bool ApplicationManager::s_InitialStartupDone{ false };
+	bool ApplicationManager::s_shouldRestart{ false };
+	bool ApplicationManager::s_initialStartupDone{ false };
 
 	const bool ApplicationManager::ShouldRestartApplication() noexcept
 	{
-		bool toReturn = s_ShouldRestart || !s_InitialStartupDone;
-		s_InitialStartupDone = true;
+		bool toReturn = s_shouldRestart || !s_initialStartupDone;
+		s_initialStartupDone = true;
 		return toReturn;
 	}
 
@@ -27,7 +28,10 @@ namespace DOG
 	{
 		while (m_IsRunning)
 		{
-			//...
+			if (!Window::OnUpdate())
+				m_IsRunning = false;
+
+			Mouse::Reset();
 		}
 	}
 
@@ -38,7 +42,7 @@ namespace DOG
 
 	void Application::OnStartUp() noexcept
 	{
-		//...
+		Window::Initialize(m_Specification);
 	}
 
 	void Application::OnShutDown() noexcept
