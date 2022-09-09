@@ -103,8 +103,8 @@ namespace DOG
 
 	void Window::Initialize(const ApplicationSpecification& spec) noexcept
 	{
-		assert((spec.WindowDimensions.x > 0 && spec.WindowDimensions.y > 0) 
-			&& "Window dimensions are invalid.");
+		ASSERT((spec.WindowDimensions.x > 0 && spec.WindowDimensions.y > 0) 
+			,"Window dimensions are invalid.");
 
 		s_windowData.Dimensions.x = spec.WindowDimensions.x;
 		s_windowData.Dimensions.y = spec.WindowDimensions.y;
@@ -123,14 +123,14 @@ namespace DOG
 		windowClass.lpszMenuName = nullptr;						//Menu name
 		windowClass.lpszClassName = className.c_str();			//Class name
 		windowClass.hIconSm = nullptr;							//Small icon
-		assert(::RegisterClassExA(&windowClass) != 0 && "Failed to register Window class.");
+		ASSERT(::RegisterClassExA(&windowClass), "Failed to register Window class.");
 
 		RECT windowRectangle = {0u, 0u, static_cast<LONG>(spec.WindowDimensions.x), static_cast<LONG>(spec.WindowDimensions.y)};
-		assert(::AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW, FALSE) != 0 && "Failed to adjust window rectangle.");
-
+		ASSERT(::AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW, FALSE), "Failed to adjust window rectangle.");
+	
 		DEVMODEA devMode = {};
 		devMode.dmSize = sizeof(DEVMODE);
-		assert(::EnumDisplaySettingsA(nullptr, ENUM_CURRENT_SETTINGS, &devMode) && "Failed to enumerate display settings.");
+		ASSERT(::EnumDisplaySettingsA(nullptr, ENUM_CURRENT_SETTINGS, &devMode), "Failed to enumerate display settings.");
 		int windowCenterPosX = (devMode.dmPelsWidth / 2) - static_cast<int>((spec.WindowDimensions.x / 2));
 		int windowCenterPosY = (devMode.dmPelsHeight / 2) - static_cast<int>((spec.WindowDimensions.y / 2));
 
@@ -157,8 +157,8 @@ namespace DOG
 		rawInputDevice.usUsage = 0x02;
 		rawInputDevice.dwFlags = 0;
 		rawInputDevice.hwndTarget = nullptr;
-		assert(::RegisterRawInputDevices(&rawInputDevice, 1u, sizeof(rawInputDevice)) 
-			&& "Failed to register raw mouse movement delta.");
+		ASSERT(::RegisterRawInputDevices(&rawInputDevice, 1u, sizeof(rawInputDevice)) 
+			,"Failed to register raw mouse movement delta.");
 
 		::ShowWindow(s_windowData.WindowHandle, SW_SHOW);
 	}

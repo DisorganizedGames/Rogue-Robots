@@ -29,8 +29,8 @@ namespace DOG
 		void OnStartUp() noexcept;
 		void OnShutDown() noexcept;
 	private:
-		ApplicationSpecification m_Specification;
-		bool m_IsRunning;
+		ApplicationSpecification m_specification;
+		bool m_isRunning;
 	};
 }
 

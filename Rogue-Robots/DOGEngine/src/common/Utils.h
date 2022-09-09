@@ -73,6 +73,17 @@ public:
 			DELETE_MOVE_CONSTRUCTOR(T)
 #endif
 
+#if defined NDEBUG
+	#ifndef ASSERT
+		#define ASSERT(expression, errorString) (expression)
+	#endif
+#else
+	#ifndef ASSERT
+		#define ASSERT(expression, errorString) assert(expression && errorString)
+	#endif
+#endif
+	
+
 struct Vector2u
 {
 	u32 x;

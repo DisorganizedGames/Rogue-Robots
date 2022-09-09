@@ -14,7 +14,7 @@ namespace DOG
 	}
 
 	Application::Application(const ApplicationSpecification& spec) noexcept
-		: m_Specification{spec}, m_IsRunning{true}
+		: m_specification{spec}, m_isRunning{true}
 	{
 		OnStartUp();
 	}
@@ -26,10 +26,10 @@ namespace DOG
 
 	void Application::Run() noexcept
 	{
-		while (m_IsRunning)
+		while (m_isRunning)
 		{
 			if (!Window::OnUpdate())
-				m_IsRunning = false;
+				m_isRunning = false;
 
 			Mouse::Reset();
 		}
@@ -42,7 +42,7 @@ namespace DOG
 
 	void Application::OnStartUp() noexcept
 	{
-		Window::Initialize(m_Specification);
+		Window::Initialize(m_specification);
 	}
 
 	void Application::OnShutDown() noexcept

@@ -1,5 +1,9 @@
 #pragma once
 
+//#ifndef NDEBUG
+//#define NDEBUG
+//#endif
+
 #ifndef UNICODE
 #define UNICODE
 #endif
