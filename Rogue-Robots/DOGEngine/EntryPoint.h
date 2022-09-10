@@ -6,7 +6,9 @@
 int main(int, char**)
 {
 	DOG::Server serverTest;
+	DOG::Client clientTest;
 	serverTest.StartTcpServer();
+	clientTest.ConnectTcpServer("192.168.50.214");
 
 	//HR hr = CoInitialize(nullptr);
 	//hr.try_fail("Failed to initialize COM");
