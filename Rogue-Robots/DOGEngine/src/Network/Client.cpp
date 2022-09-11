@@ -76,11 +76,7 @@ namespace DOG
 		std::cout << "CLient: Waiting for more players to connect..." << std::endl;
 		check = recv(m_connectSocket, inputSend, sizeof(int), 0);
 
-		while (atoi(inputSend) != -2)
-		{
-			check = recv(m_connectSocket, inputSend, sizeof(int), 0);
-			continue;
-		}
+
 		std::cout << "CLient: All players connected, Starting " << std::endl;
 
 

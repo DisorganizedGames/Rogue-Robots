@@ -30,9 +30,10 @@ int main(int, char**)
 			if (GetAsyncKeyState(87))
 			{
 				testInput.w = true;
-				std::cout << testOutput[0].w << std::endl;
+				
 			}
 			testOutput = clientTest.SendandReciveTcp(testInput);
+			std::cout << testOutput[0].w << std::endl;
 			testInput.w = false;
 
 			continue;

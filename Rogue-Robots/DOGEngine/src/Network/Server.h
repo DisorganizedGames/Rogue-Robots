@@ -25,6 +25,7 @@ namespace DOG
 		void Lobby(SOCKET clientSocket, int playerIndex);
 		void ClientLoop(SOCKET clientSocket, int playerIndex);
 		void ServerSend();
+		void ServerPoll();
 		void ServerRecive(SOCKET clientSocket, int playerIndex);
 		float TickTimeLeft(LARGE_INTEGER t, LARGE_INTEGER frequency);
 
@@ -32,11 +33,13 @@ namespace DOG
 
 		fd_set m_connectedSockets;
 		fd_set m_holdSockets;
+		WSAPOLLFD m_clientPoll;
 		ClientsData m_playersServer[m_nrOfPlayers];
 		std::queue<std::function<void()>> m_clientThreadsQueue;
 		std::mutex m_clientMutex;
 		std::condition_variable m_clientMutexCondition;
 		std::vector<std::thread>  m_clientThreads;
 		std::vector<int>	m_playerIds;
+		std::vector<WSAPOLLFD> m_clientsSockets;
 	};
 }
