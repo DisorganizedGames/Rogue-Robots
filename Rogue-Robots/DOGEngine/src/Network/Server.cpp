@@ -15,8 +15,10 @@ namespace DOG
 		}
 
 		//Change denominator to set tick rate
-		m_tickrate = 1.0f / 60.0f;
+		m_tickrate = 1.0f / 1.0f;
 
+		FD_ZERO(&m_connectedSockets);
+		FD_ZERO(&m_holdSockets);
 	}
 
 	Server::~Server()
@@ -55,23 +57,22 @@ namespace DOG
 		assert(check != SOCKET_ERROR);
 
 		//Create a new thread for each connecting client
-		std::thread test = std::thread(&Server::ServerLoop, this, listenSocket);
+		std::thread test = std::thread(&Server::ServerReciveConnections, this, listenSocket);
 		test.detach();
 		std::cout << "Server: Server started" << std::endl;
 
 	}
 
-	void Server::ServerLoop(SOCKET listenSocket)
+	void Server::ServerReciveConnections(SOCKET listenSocket)
 	{
-		//std::function<void()> job = &Network::ClientLoop;
+
 
 		char* inputSend = new char[sizeof(int)];
-		//SOCKET clientSocket = INVALID_SOCKET;
-
 		while (true)
 		{
-			std::cout << "Server: Before accepting a connection: " << std::endl;
+			std::cout << "Server: Waiting for connections: " << std::endl;
 			SOCKET clientSocket = accept(listenSocket, NULL, NULL);
+			//Check if server full
 			if (m_playerIds.empty())
 			{
 				sprintf(inputSend, "%d", -1);
@@ -79,22 +80,23 @@ namespace DOG
 			}
 			else
 			{
-
-
-				std::cout << "Server: Thread Accept:" << std::this_thread::get_id() << std::endl;
-
-				std::unique_lock<std::mutex> lock(m_clientMutex);
-				std::cout << "\nServer: Accept a connection from clientSocket: " << clientSocket << ", From player: " << m_playerIds.front() + 1 << std::endl;
-				int playerId = m_playerIds.front();
-				std::function<void()> job = [this, clientSocket, playerId]()
 				{
-					Server::ClientLoop(clientSocket, playerId);
-				};
-				m_playerIds.erase(m_playerIds.begin());
-				m_clientThreadsQueue.push(job);
+					std::cout << "Server: Connection Accepted" << std::endl;
 
+					std::unique_lock<std::mutex> lock(m_clientMutex);
+					std::cout << "\nServer: Accept a connection from clientSocket: " << clientSocket << ", From player: " << m_playerIds.front() + 1 << std::endl;
+					int playerId = m_playerIds.front();
+					FD_SET(clientSocket, &m_connectedSockets);
+					std::function<void()> job = [this, clientSocket, playerId]()
+					{
+						Server::Lobby(clientSocket, playerId);
+					};
+					m_playerIds.erase(m_playerIds.begin());
+					m_clientThreadsQueue.push(job);
+
+				}
+				m_clientMutexCondition.notify_one();
 			}
-			m_clientMutexCondition.notify_one();
 		}
 
 		closesocket(listenSocket);
@@ -126,11 +128,30 @@ namespace DOG
 		return float(now.QuadPart - t.QuadPart) / float(frequency.QuadPart);
 	}
 
+	void Server::Lobby(SOCKET clientSocket, int playerIndex)
+	{
+		char* inputSend = new char[sizeof(m_playersServer)];
+		int status;
+
+		//give client player number
+		sprintf(inputSend, "%d", m_playersServer[playerIndex].player_nr);
+		send(clientSocket, inputSend, sizeof(int), 0);
+
+		std::cout << "Server: Lobby:\nServer: Waiting for " << (m_playerIds.size()) << " more players to connect..." << std::endl;
+
+		while (m_nrOfPlayers - (m_playerIds.size()) < m_nrOfPlayers)
+		{
+			continue;
+		}
+		sprintf(inputSend, "%d", -2);
+		send(clientSocket, inputSend, sizeof(int), 0);
+		std::cout << "Server: All players connected, Starting " << std::endl;
+		ClientLoop(clientSocket, playerIndex);
+	}
+
 	void Server::ClientLoop(SOCKET clientSocket, int playerIndex)
 	{
 		std::cout << "Server: connected to ClientLoop" << std::endl;
-		char optval[1];
-		socklen_t optlen = sizeof(optval);
 		BOOL turn = true;
 
 
@@ -148,20 +169,7 @@ namespace DOG
 		LARGE_INTEGER clockFrequency;
 		QueryPerformanceFrequency(&clockFrequency);
 
-		//give client player number
-		sprintf(inputSend, "%d", m_playersServer[playerIndex].player_nr);
-		send(clientSocket, inputSend, sizeof(int), 0);
-
-		std::cout << "Server: Lobby:\nServer: Waiting for " << (m_playerIds.size()) << " more players to connect..." << std::endl;
-
-		while (m_nrOfPlayers - (m_playerIds.size()) < m_nrOfPlayers)
-		{
-			status = send(clientSocket, inputSend, sizeof(int), 0);
-			continue;
-		}
-		sprintf(inputSend, "%d", -2);
-		send(clientSocket, inputSend, sizeof(int), 0);
-		std::cout << "Server: All players connected, Starting " << std::endl;
+		
 
 		do {
 
@@ -201,6 +209,106 @@ namespace DOG
 			}
 		} while (status > 0);
 		std::cout << "Server: server thread closes..." << std::endl;
+		m_playerIds.push_back(playerIndex);
+		if (closesocket(clientSocket) == SOCKET_ERROR)
+			std::cout << "Server: AAaAAA Nåt är jävligt fel" << WSAGetLastError() << std::endl;
+	}
+
+	void Server::ServerSend()
+	{
+		std::cout << "Server: connected to ServerSend" << std::endl;
+		BOOL turn = true;
+
+
+		//setsockopt(clientSocket, SOL_SOCKET, TCP_NODELAY, (char*)&turn, sizeof(bool));
+
+		LARGE_INTEGER tickStartTime;
+		LARGE_INTEGER timeNow;
+		SOCKET clientSocket;
+		int playerIndex = 0;
+		const UINT sleepGranularityMs = 1;
+		char* clientData = new char[sizeof(ClientsData)];
+		char* inputSend = new char[sizeof(m_playersServer)];
+
+		int status;
+
+
+		LARGE_INTEGER clockFrequency;
+		QueryPerformanceFrequency(&clockFrequency);
+
+
+		do {
+			QueryPerformanceCounter(&tickStartTime);
+			memcpy(inputSend, m_playersServer, sizeof(m_playersServer));
+			m_holdSockets = m_connectedSockets;
+			if (select(m_nrOfPlayers, NULL, &m_holdSockets, NULL, NULL) < 0)
+			{
+				//ERROR
+				continue;
+			}
+			for (int i = 0; i < m_nrOfPlayers; i++) {
+				if (FD_ISSET(i, &m_holdSockets))
+				{
+					status = send(i, inputSend, sizeof(m_playersServer), 0);
+					FD_CLR(i, &m_connectedSockets);
+				}
+			}
+			
+
+			//send all clients input
+			
+
+			//wait untill tick is done 
+			float timeTakenS = TickTimeLeft(tickStartTime, clockFrequency);
+
+			while (timeTakenS < m_tickrate)
+			{
+				float timeToWaitMs = (m_tickrate - timeTakenS) * 1000;
+
+				if (timeToWaitMs > 0)
+				{
+
+					Sleep(timeToWaitMs);
+				}
+				timeTakenS = TickTimeLeft(tickStartTime, clockFrequency);
+			}
+		} while (status > 0);
+		std::cout << "Server: server thread closes..." << std::endl;
+		m_playerIds.push_back(playerIndex);
+		if (closesocket(clientSocket) == SOCKET_ERROR)
+			std::cout << "Server: AAaAAA Nåt är jävligt fel" << WSAGetLastError() << std::endl;
+	}
+	
+	void Server::ServerRecive(SOCKET clientSocket, int playerIndex)
+	{
+		std::cout << "Server: connected to ServerRecive" << std::endl;
+		BOOL turn = true;
+
+
+		setsockopt(clientSocket, SOL_SOCKET, TCP_NODELAY, (char*)&turn, sizeof(bool));
+
+		LARGE_INTEGER tickStartTime;
+		LARGE_INTEGER timeNow;
+		const UINT sleepGranularityMs = 1;
+		char* clientData = new char[sizeof(ClientsData)];
+		char* inputSend = new char[sizeof(m_playersServer)];
+
+		int status;
+
+
+		LARGE_INTEGER clockFrequency;
+		QueryPerformanceFrequency(&clockFrequency);
+
+		do {
+
+			QueryPerformanceCounter(&tickStartTime);
+			status = recv(clientSocket, clientData, sizeof(ClientsData), 0);
+
+			//get client input
+			memcpy(&m_playersServer[playerIndex], (void*)clientData, sizeof(ClientsData));
+
+		} while (status > 0);
+		std::cout << "Server: ServerRecive server thread closes..." << std::endl;
 		m_playerIds.push_back(playerIndex);
 		if (closesocket(clientSocket) == SOCKET_ERROR)
 			std::cout << "Server: AAaAAA Nåt är jävligt fel" << WSAGetLastError() << std::endl;

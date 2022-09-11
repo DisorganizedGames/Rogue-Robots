@@ -1,7 +1,7 @@
 #pragma once
 namespace DOG
 {
-	constexpr int m_nrOfPlayers = 4;
+	constexpr int m_nrOfPlayers = 1;
 	class Server
 	{
 	public:
@@ -12,20 +12,26 @@ namespace DOG
 			bool a = false;
 			bool s = false;
 			bool d = false;
+			char inputs[256];
+			int input_lentgh;
 		};
-
 		Server();
 		~Server();
 
 		void StartTcpServer();
 	private:
-		void ServerLoop(SOCKET listenSocket);
+		void ServerReciveConnections(SOCKET listenSocket);
 		void ClientThreadIdle();
+		void Lobby(SOCKET clientSocket, int playerIndex);
 		void ClientLoop(SOCKET clientSocket, int playerIndex);
+		void ServerSend();
+		void ServerRecive(SOCKET clientSocket, int playerIndex);
 		float TickTimeLeft(LARGE_INTEGER t, LARGE_INTEGER frequency);
 
 		float m_tickrate;
 
+		fd_set m_connectedSockets;
+		fd_set m_holdSockets;
 		ClientsData m_playersServer[m_nrOfPlayers];
 		std::queue<std::function<void()>> m_clientThreadsQueue;
 		std::mutex m_clientMutex;

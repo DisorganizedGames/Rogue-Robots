@@ -12,6 +12,8 @@ namespace DOG
 			bool a = false;
 			bool s = false;
 			bool d = false;
+			char inputs[256];
+			int input_lentgh;
 		};
 		Client();
 		~Client();
@@ -21,5 +23,6 @@ namespace DOG
 	private:
 		ClientsData m_playersClient[m_nrOfPlayers];
 		SOCKET m_connectSocket;
+		
 	};
 }

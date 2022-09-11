@@ -97,6 +97,8 @@ namespace DOG
 		return m_playersClient;
 	}
 
+
+
 	struct Client::ClientsData* Client::GetClientsData()
 	{
 		return m_playersClient;

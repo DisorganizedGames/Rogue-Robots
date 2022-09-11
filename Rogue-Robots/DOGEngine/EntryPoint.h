@@ -10,24 +10,34 @@ int main(int, char**)
 	serverTest.StartTcpServer();
 	clientTest.ConnectTcpServer("192.168.50.214");
 
-	//HR hr = CoInitialize(nullptr);
-	//hr.try_fail("Failed to initialize COM");
+		//HR hr = CoInitialize(nullptr);
+		//hr.try_fail("Failed to initialize COM");
 
-	//std::unique_ptr<DOG::Application> app{ nullptr };
-	//while (DOG::ApplicationManager::ShouldRestartApplication())
-	//{
-	//	if (!DOG::ApplicationManager::ShouldRestartApplication())
-	//		app = std::move(CreateApplication());
-	//	else
-	//		app->OnRestart();
+		//std::unique_ptr<DOG::Application> app{ nullptr };
+		//while (DOG::ApplicationManager::ShouldRestartApplication())
+		//{
+		//	if (!DOG::ApplicationManager::ShouldRestartApplication())
+		//		app = std::move(CreateApplication());
+		//	else
+		//		app->OnRestart();
 
-	//	app->Run();
-	//}
+		//	app->Run();
+		//}
 
-	//CoUninitialize();
-	while (true)
-		continue;
-	return 0;
-}
+		//CoUninitialize();
+		while (true) {
+			
+			if (GetAsyncKeyState(87))
+			{
+				testInput.w = true;
+				std::cout << testOutput[0].w << std::endl;
+			}
+			testOutput = clientTest.SendandReciveTcp(testInput);
+			testInput.w = false;
 
-extern std::unique_ptr<DOG::Application> CreateApplication() noexcept;
+			continue;
+		}
+		return 0;
+	}
+
+	extern std::unique_ptr<DOG::Application> CreateApplication() noexcept;
