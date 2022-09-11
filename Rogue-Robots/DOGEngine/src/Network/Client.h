@@ -12,7 +12,7 @@ namespace DOG
 			bool a = false;
 			bool s = false;
 			bool d = false;
-			char inputs[256];
+			char inputs[32];
 			int input_lentgh;
 		};
 		Client();

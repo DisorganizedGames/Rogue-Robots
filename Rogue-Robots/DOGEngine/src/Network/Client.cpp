@@ -69,18 +69,20 @@ namespace DOG
 			std::cout << "\nCLient: Server Full: " << atoi(inputSend) << std::endl;
 			return -1;
 		}
+		else
+		{
+			std::cout << "\nCLient: Player nr: " << atoi(inputSend) +1 << std::endl;
+			assert(m_connectSocket != INVALID_SOCKET);
 
-		std::cout << "\nCLient: Player nr: " << atoi(inputSend) << std::endl;
-		assert(m_connectSocket != INVALID_SOCKET);
-
-		std::cout << "CLient: Waiting for more players to connect..." << std::endl;
-		check = recv(m_connectSocket, inputSend, sizeof(int), 0);
-
-
-		std::cout << "CLient: All players connected, Starting " << std::endl;
+			//std::cout << "CLient: Waiting for more players to connect..." << std::endl;
+			check = recv(m_connectSocket, inputSend, sizeof(int), 0);
 
 
-		return atoi(inputSend);
+			//std::cout << "CLient: All players connected, Starting " << std::endl;
+
+
+			return atoi(inputSend);
+		}
 	}
 
 	struct Client::ClientsData* Client::SendandReciveTcp(ClientsData input) {
