@@ -123,14 +123,14 @@ namespace DOG
 		windowClass.lpszMenuName = nullptr;						//Menu name
 		windowClass.lpszClassName = className.c_str();			//Class name
 		windowClass.hIconSm = nullptr;							//Small icon
-		ASSERT(::RegisterClassExA(&windowClass), "Failed to register Window class.");
+		ASSERT_FUNC(::RegisterClassExA(&windowClass), "Failed to register Window class.");
 
 		RECT windowRectangle = {0u, 0u, static_cast<LONG>(spec.windowDimensions.x), static_cast<LONG>(spec.windowDimensions.y)};
-		ASSERT(::AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW, FALSE), "Failed to adjust window rectangle.");
+		ASSERT_FUNC(::AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW, FALSE), "Failed to adjust window rectangle.");
 	
 		DEVMODEA devMode = {};
 		devMode.dmSize = sizeof(DEVMODE);
-		ASSERT(::EnumDisplaySettingsA(nullptr, ENUM_CURRENT_SETTINGS, &devMode), "Failed to enumerate display settings.");
+		ASSERT_FUNC(::EnumDisplaySettingsA(nullptr, ENUM_CURRENT_SETTINGS, &devMode), "Failed to enumerate display settings.");
 		int windowCenterPosX = (devMode.dmPelsWidth / 2) - static_cast<int>((spec.windowDimensions.x / 2));
 		int windowCenterPosY = (devMode.dmPelsHeight / 2) - static_cast<int>((spec.windowDimensions.y / 2));
 
@@ -157,7 +157,7 @@ namespace DOG
 		rawInputDevice.usUsage = 0x02;
 		rawInputDevice.dwFlags = 0;
 		rawInputDevice.hwndTarget = nullptr;
-		ASSERT(::RegisterRawInputDevices(&rawInputDevice, 1u, sizeof(rawInputDevice)) 
+		ASSERT_FUNC(::RegisterRawInputDevices(&rawInputDevice, 1u, sizeof(rawInputDevice)) 
 			,"Failed to register raw mouse movement delta.");
 
 		::ShowWindow(s_windowData.windowHandle, SW_SHOW);

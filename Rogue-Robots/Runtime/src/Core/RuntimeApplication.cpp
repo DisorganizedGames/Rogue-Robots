@@ -6,12 +6,27 @@ void SaveRuntimeSettings() noexcept;
 RuntimeApplication::RuntimeApplication(const DOG::ApplicationSpecification& spec) noexcept
 	: DOG::Application{ spec }
 {
-
+	OnStartUp();
 }
 
 RuntimeApplication::~RuntimeApplication()
 {
+	OnShutDown();
+}
+
+void RuntimeApplication::OnStartUp() noexcept
+{
+	PushLayer(&m_gameLayer);
+}
+
+void RuntimeApplication::OnShutDown() noexcept
+{
 	SaveRuntimeSettings();
+}
+
+void RuntimeApplication::OnRestart() noexcept
+{
+	//...
 }
 
 void SaveRuntimeSettings() noexcept

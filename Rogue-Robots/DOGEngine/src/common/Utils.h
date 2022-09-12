@@ -61,6 +61,11 @@ public:
 			T(T&&) = delete;	\
 			T& operator=(const T&&) = delete;
 #endif
+#ifndef DELETE_COPY_MOVE_CONSTRUCTOR
+	#define DELETE_COPY_MOVE_CONSTRUCTOR(T)	\
+			DELETE_COPY_CONSTRUCTOR(T);	\
+			DELETE_MOVE_CONSTRUCTOR(T);
+#endif
 #ifndef DELETE_DEFAULT_CONSTRUCTOR
 #define DELETE_DEFAULT_CONSTRUCTOR(T)	\
 			T() = delete;	\
@@ -74,15 +79,24 @@ public:
 #endif
 
 #if defined NDEBUG
+	#ifndef ASSERT_FUNC
+		#define ASSERT_FUNC(expression, errorString) (expression)
+	#endif
+#else
+	#ifndef ASSERT_FUNC
+		#define ASSERT_FUNC(expression, errorString) assert(expression && errorString)
+	#endif
+#endif
+
+#if defined NDEBUG
 	#ifndef ASSERT
-		#define ASSERT(expression, errorString) (expression)
+		#define ASSERT(expression, errorString) 
 	#endif
 #else
 	#ifndef ASSERT
 		#define ASSERT(expression, errorString) assert(expression && errorString)
 	#endif
 #endif
-	
 
 struct Vector2u
 {

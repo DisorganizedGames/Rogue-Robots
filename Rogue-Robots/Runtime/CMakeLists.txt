@@ -1,6 +1,6 @@
 #Root/Runtime
 set(SourceFiles  "src/Core/RuntimeApplication.cpp" "src/Core/RuntimeApplication.h" "src/Scripting/LuaContext.cpp" "src/Scripting/LuaContext.h" "src/Scripting/LuaW.cpp"
-    "src/Scripting/LuaW.h")
+    "src/Scripting/LuaW.h" "src/Game/GameLayer.h" "src/Game/GameLayer.cpp"  )
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")
 set (ExternalLibPath "${CMAKE_SOURCE_DIR}/Runtime/vendor/libs")
