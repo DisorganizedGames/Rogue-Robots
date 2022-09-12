@@ -11,7 +11,7 @@ PI = 3.141592653589793
 #######################################################
 
 
-
+# Base class for the builder panel
 class PANEL_PT_builder(Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -26,6 +26,7 @@ class PANEL_PT_builder(Panel):
     def draw(self, context):
         pass
 
+# Grid settings panel
 class PANEL_PT_builder_grid(PANEL_PT_builder, Panel):
     bl_idname = "PANEL_PT_builder_grid"
     bl_label = "Grid"
@@ -39,6 +40,7 @@ class PANEL_PT_builder_grid(PANEL_PT_builder, Panel):
         layout.row().prop(settings, "scale")
         layout.row().operator("object.create_grid")
 
+# Panel to choose your block to paint with
 class PANEL_PT_builder_brush(PANEL_PT_builder, Panel):
     bl_idname = "PANEL_PT_builder_brush"
     bl_label = "Brush"
@@ -56,6 +58,7 @@ class PANEL_PT_builder_brush(PANEL_PT_builder, Panel):
             row = layout.row()
             row.operator("object.select_block")
 
+# Panel with actions to edit the map
 class PANEL_PT_builder_paint(PANEL_PT_builder, Panel):
     bl_idname = "PANEL_PT_builder_paint"
     bl_label = "Painter"
@@ -78,6 +81,7 @@ class PANEL_PT_builder_paint(PANEL_PT_builder, Panel):
         row = layout.row()
         row.operator("object.clear_map")
 
+# The export/analysis button
 class PANEL_PT_builder_analyze(PANEL_PT_builder, Panel):
     bl_idname = "PANEL_PT_builder_analyze"
     bl_label = "Analyze"
@@ -92,8 +96,9 @@ class PANEL_PT_builder_analyze(PANEL_PT_builder, Panel):
 #                OPERATORS
 #######################################################
 
+# Operator for toggling visibility of grid tiles
 class GridToggleXray(bpy.types.Operator):
-    """Toggles X-ray on selected grid tiles"""
+    """Selectors to toggle visibility of grid positions"""
     bl_idname = "object.grid_toggle_xray"
     bl_label = "Toggle X-ray"
 
@@ -107,6 +112,7 @@ class GridToggleXray(bpy.types.Operator):
                 obj.hide_viewport = not obj.hide_viewport
         return {'FINISHED'}
 
+# Generate the grid
 class CreateGrid(bpy.types.Operator):
     """Generate the base grid for the map"""
     bl_idname = "object.create_grid"
@@ -120,7 +126,7 @@ class CreateGrid(bpy.types.Operator):
         generate_grid()
         return {'FINISHED'}
 
-
+# Adding blocks to the map
 class AddBlock(bpy.types.Operator):
     """Add a block at selected position"""
     bl_idname = "object.add_block"
@@ -162,6 +168,7 @@ class AddBlock(bpy.types.Operator):
         context.view_layer.objects.active = gizmo
         return {'FINISHED'}
 
+# Rotating blocks
 class RotateBlock(bpy.types.Operator):
     """Rotate selected blocks 90 degrees"""
     bl_idname = "object.rotate_block"
@@ -196,8 +203,9 @@ class RotateBlock(bpy.types.Operator):
         context.view_layer.objects.active = gizmo
         return {'FINISHED'}
 
+# Flip blocks over x-axis
 class FlipBlock(bpy.types.Operator):
-    """Flip selected blocks about x-axix"""
+    """Flip selected blocks over x-axix"""
     bl_idname = "object.flip_block"
     bl_label = "Flip Block"
 
@@ -232,6 +240,7 @@ class FlipBlock(bpy.types.Operator):
         context.view_layer.objects.active = gizmo
         return {'FINISHED'}
 
+# Remove blocks from selected grid elements
 class ClearMap(bpy.types.Operator):
     """Removes blocks in selection"""
     bl_idname = "object.clear_map"
@@ -261,6 +270,7 @@ class ClearMap(bpy.types.Operator):
         context.view_layer.objects.active = gizmo
         return {'FINISHED'}
 
+# Activate selected map element as current brush
 class SelectBlock(bpy.types.Operator):
     """Select building block"""
     bl_idname = "object.select_block"
@@ -276,6 +286,7 @@ class SelectBlock(bpy.types.Operator):
         D.collections['Brush'].objects.link(context.object)
         return {'FINISHED'}
 
+# Calls the map_analysis() function
 class AnalyzeMap(bpy.types.Operator):
     """Analyzes map and generates seed file"""
     bl_idname = "object.analyze_map"
@@ -368,9 +379,10 @@ def generate_grid():
                     gizmo.lock_rotation[i] = True
                     gizmo.lock_scale[i] = True
 
-
+# Generator that loops over entire grid, yielding one element at at time
 def all_blocks():
-   for blk in D.collections['Grid'].objects:
+    """Yields position and name of all building blocks in grid"""
+    for blk in D.collections['Grid'].objects:
         name, pos = blk.name.split('_')
         if name == 'block':
             x, y, z = pos.split('-')
@@ -383,7 +395,9 @@ def all_blocks():
                 name = "Empty"
             yield (x, y, z), name
 
+# Get block info at position (x, y, z)
 def get_block(x, y, z):
+    """Returns block info at position (x, y, z)"""
     if x < 0 or y < 0 or z < 0:
         return "Edge"
     max_x = D.objects['grid'].location.x
@@ -470,7 +484,7 @@ def map_analysis():
 #                MAIN
 #######################################################
 
-
+# Things to do at startup
 if __name__ == "__main__":
     if not D.collections.get('Map'):
         map = D.collections.new("Map")
@@ -494,7 +508,6 @@ if __name__ == "__main__":
         settings.scale = (2, 2, 2)
         settings.hide_viewport = True
 
-
     if not D.collections.get('Trash'):
         trash = D.collections.new("Trash")
         C.scene.collection.children.link(trash)
@@ -505,5 +518,6 @@ if __name__ == "__main__":
     
     if not D.objects.get('block_0-0-0'):
         generate_grid()
+
     register()
 
