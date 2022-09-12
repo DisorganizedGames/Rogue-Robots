@@ -195,7 +195,7 @@ namespace DOG
 			const aiMaterial* material = scene->mMaterials[mat_id];
 
 			// Save material
-			m_loadedModel->materials.push_back(ExtractMaterial(material, directory));
+			m_loadedModel->materials.push_back(ExtractMaterial(material, directory + "/"));
 		}
 	}
 }

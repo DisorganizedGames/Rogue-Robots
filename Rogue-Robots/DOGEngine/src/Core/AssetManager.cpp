@@ -1,5 +1,10 @@
 #include "AssetManager.h"
 
+#pragma warning(push, 0)
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#pragma warning(pop)
+
 namespace DOG
 {
 	AssetManager::AssetManager()
@@ -32,9 +37,30 @@ namespace DOG
 		return id;
 	}
 
-	u64 AssetManager::LoadTexture(const std::string&, AssetLoadFlag)
+	u64 AssetManager::LoadTexture(const std::string& path, AssetLoadFlag)
 	{
-		return 0;
+		assert(std::filesystem::exists(path));
+		int width;
+		int height;
+		int numChannels; // Number of channels the image contained, we will force it to load with rgba
+		u8* imageData = stbi_load(path.c_str(), &width, &height, &numChannels, STBI_rgb_alpha);
+		numChannels = STBI_rgb_alpha; // we will have rgba
+		assert(imageData);
+
+		TextureAsset newTexture;
+		newTexture.filePath = path;
+		newTexture.mipLevels = 1; // Mip maps will be handled later on when the assetTool is implemented.
+		newTexture.width = width;
+		newTexture.height = height;
+		newTexture.textureData.resize(width * height * numChannels);
+
+		memcpy(newTexture.textureData.data(), imageData, newTexture.textureData.size());
+		STBI_FREE(imageData);
+		
+		newTexture.stateFlag = AssetStateFlag::ExistOnCPU;
+		u64 id = GenerateRandomID();
+		m_assets[id] = std::make_unique<TextureAsset>(std::move(newTexture));
+		return id;
 	}
 
 	u64 AssetManager::LoadAudio(const std::string&, AssetLoadFlag)
