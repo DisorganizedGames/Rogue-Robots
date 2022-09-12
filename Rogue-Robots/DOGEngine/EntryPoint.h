@@ -33,7 +33,12 @@ int main(int, char**)
 				
 			}
 			testOutput = clientTest.SendandReciveTcp(testInput);
-			std::cout << testOutput[0].w << std::endl;
+			for (int i = 0; i < 4; i++)
+			{
+				std::cout << testOutput[i].w;
+			}
+			
+			std::cout<< " Sleep 1 sekond" << std::endl;
 			testInput.w = false;
 
 			continue;

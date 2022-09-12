@@ -19,9 +19,10 @@ namespace DOG
 		~Client();
 		int ConnectTcpServer(std::string ipAdress);
 		ClientsData* SendandReciveTcp(ClientsData input);
+		//std::vector<ClientsData>  SendandReciveTcp(ClientsData input);
 		ClientsData* GetClientsData();
 	private:
-		ClientsData m_playersClient[m_nrOfPlayers];
+		ClientsData m_playersClient[m_maxNrOfPlayers];
 		SOCKET m_connectSocket;
 		
 	};

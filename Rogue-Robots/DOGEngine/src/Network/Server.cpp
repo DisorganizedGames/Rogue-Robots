@@ -4,8 +4,9 @@ namespace DOG
 {
 	Server::Server()
 	{
-		m_playerIds.resize(m_nrOfPlayers);
-		for (int i = 0; i < m_nrOfPlayers; i++)
+		m_playerIds.resize(m_maxNrOfPlayers);
+		
+		for (int i = 0; i < m_maxNrOfPlayers; i++)
 		{
 			m_playersServer[i].player_nr = i + 1;
 			m_playerIds.at(i) = i;
@@ -86,9 +87,10 @@ namespace DOG
 					WSAPOLLFD m_clientPoll;
 					std::cout << "\nServer: Accept a connection from clientSocket: " << clientSocket << ", From player: " << m_playerIds.front() + 1 << std::endl;
 					int playerId = m_playerIds.front();
+					ClientsData input;
+					input.player_nr = playerId + 1;
 					sprintf(inputSend, "%d", playerId);
 					send(clientSocket, inputSend, sizeof(int), 0);
-					
 					m_clientPoll.fd = clientSocket;
 					m_clientPoll.events = POLLRDNORM;
 					m_clientPoll.revents = 0;
@@ -126,8 +128,8 @@ namespace DOG
 		const UINT sleepGranularityMs = 1;
 		ClientsData holdClientsData;
 		char* clientData = new char[sizeof(ClientsData)];
-		char* inputSend = new char[sizeof(m_playersServer)];
-
+		char* inputSend = new char[2048];
+		char* inputSendVector = new char[sizeof(ClientsData)*10];
 		int status = 0;
 
 
@@ -139,7 +141,7 @@ namespace DOG
 			QueryPerformanceCounter(&tickStartTime);
 
 			m_holdSockets = m_clientsSockets;
-			if (WSAPoll(m_holdSockets.data(), m_holdSockets.size(), 1) > 0)
+			if (WSAPoll(m_holdSockets.data(), m_holdSockets.size(), 10) > 0)
 			{
 				for (int i = 0; i < m_holdSockets.size(); i++)
 				{
@@ -148,16 +150,16 @@ namespace DOG
 
 					else if (m_holdSockets[i].revents & POLLRDNORM)
 					{
-						status = recv(m_holdSockets[i].fd, clientData, sizeof(m_playersServer), 0);
+						status = recv(m_holdSockets[i].fd, clientData, sizeof(ClientsData), 0);
 						memcpy(&holdClientsData, (void*)clientData, sizeof(ClientsData));
 						memcpy(&m_playersServer[holdClientsData.player_nr-1], (void*)clientData, sizeof(ClientsData));
 					}
 				}
 			}
-			memcpy(inputSend, m_playersServer, sizeof(m_playersServer));
 
 			for (int i = 0; i < m_holdSockets.size(); i++)
 			{
+				memcpy(inputSend, m_playersServer, sizeof(m_playersServer));
 				status = send(m_holdSockets[i].fd, inputSend, sizeof(m_playersServer), 0);
 			}
 			//wait untill tick is done 

@@ -3,12 +3,13 @@ namespace DOG
 {
 	Client::Client()
 	{
+		ClientsData test;
 		m_connectSocket = INVALID_SOCKET;
 	}
 
 	Client::~Client()
 	{
-
+	
 	}
 
 	int Client::ConnectTcpServer(std::string ipAdress)
@@ -85,16 +86,16 @@ namespace DOG
 		}
 	}
 
+
 	struct Client::ClientsData* Client::SendandReciveTcp(ClientsData input) {
 		char* inputSend = new char[sizeof(ClientsData)];
-		char recvbuf[1024];
+		char recvbuf[2048];
 		memcpy(inputSend, &input, sizeof(ClientsData));
 		send(m_connectSocket, inputSend, sizeof(ClientsData), 0);
 		recv(m_connectSocket, recvbuf, sizeof(recvbuf), 0);
 		memcpy(m_playersClient, recvbuf, sizeof(m_playersClient));
 		return m_playersClient;
 	}
-
 
 
 	struct Client::ClientsData* Client::GetClientsData()

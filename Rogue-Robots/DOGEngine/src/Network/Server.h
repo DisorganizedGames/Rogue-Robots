@@ -1,7 +1,7 @@
 #pragma once
 namespace DOG
 {
-	constexpr int m_nrOfPlayers = 2;
+	constexpr int m_maxNrOfPlayers = 4;
 	class Server
 	{
 	public:
@@ -27,9 +27,9 @@ namespace DOG
 
 		float m_tickrate;
 
-		ClientsData m_playersServer[m_nrOfPlayers];
-		std::vector<int>	m_playerIds;
-		std::vector<WSAPOLLFD> m_clientsSockets;
-		std::vector<WSAPOLLFD> m_holdSockets;
+		ClientsData m_playersServer[m_maxNrOfPlayers];
+		std::vector<int>		m_playerIds;
+		std::vector<WSAPOLLFD>	m_clientsSockets;
+		std::vector<WSAPOLLFD>	m_holdSockets;
 	};
 }
