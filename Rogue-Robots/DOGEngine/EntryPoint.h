@@ -1,5 +1,8 @@
 #pragma once
 #include "src/Core/Application.h"
+
+
+
 int main(int, char**)
 {
 	HR hr = CoInitialize(nullptr);
