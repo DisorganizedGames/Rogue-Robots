@@ -1,7 +1,9 @@
 #pragma once
 #include "Window.h"
+#include "../EventSystem/LayerStack.h"
 namespace DOG
 {
+	class Layer;
 	struct ApplicationSpecification
 	{
 		std::string name;
@@ -24,12 +26,17 @@ namespace DOG
 		explicit Application(const ApplicationSpecification& spec) noexcept;
 		virtual ~Application() noexcept;
 		void Run() noexcept;
-		void OnRestart() noexcept;
-	private:
-		void OnStartUp() noexcept;
-		void OnShutDown() noexcept;
+		virtual void OnRestart() noexcept;
+	protected:
+		virtual void OnStartUp() noexcept;
+		virtual void OnShutDown() noexcept;
+		void PushLayer(Layer* layer) noexcept;
+		void PushOverlay(Layer* layer) noexcept;
+		void PopLayer(Layer* layer) noexcept;
+		void PopOverlay(Layer* layer) noexcept;
 	private:
 		ApplicationSpecification m_specification;
+		LayerStack m_layerStack;
 		bool m_isRunning;
 	};
 }

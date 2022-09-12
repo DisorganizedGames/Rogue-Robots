@@ -31,6 +31,12 @@ namespace DOG
 			if (!Window::OnUpdate())
 				m_isRunning = false;
 
+			for (auto const layer : m_layerStack)
+			{
+				layer->OnUpdate();
+				layer->OnRender();
+			}
+
 			Mouse::Reset();
 		}
 	}
@@ -48,5 +54,25 @@ namespace DOG
 	void Application::OnShutDown() noexcept
 	{
 		//...
+	}
+
+	void Application::PushLayer(Layer* layer) noexcept
+	{
+		m_layerStack.PushLayer(layer);
+	}
+
+	void Application::PushOverlay(Layer* layer) noexcept
+	{
+		m_layerStack.PushOverlay(layer);
+	}
+
+	void Application::PopLayer(Layer* layer) noexcept
+	{
+		m_layerStack.PopLayer(layer);
+	}
+
+	void Application::PopOverlay(Layer* layer) noexcept
+	{
+		m_layerStack.PopOverlay(layer);
 	}
 }
