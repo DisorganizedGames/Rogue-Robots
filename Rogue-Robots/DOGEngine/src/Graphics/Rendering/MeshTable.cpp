@@ -60,6 +60,7 @@ namespace DOG::gfx
 			const auto& attrData = loadAttrData(spec, VertexAttributeTemp::Position);
 			u32 numElements = (u32)attrData.size_bytes() / POS_STRIDE;
 			storage.pos = m_positionTable->Allocate(numElements, attrData.data());
+			m_positionTable->SendCopyRequests(ctx);
 		}
 
 		// Load UV
@@ -67,6 +68,7 @@ namespace DOG::gfx
 			const auto& attrData = loadAttrData(spec, VertexAttributeTemp::UV);
 			u32 numElements = (u32)attrData.size_bytes() / UV_STRIDE;
 			storage.uv = m_uvTable->Allocate(numElements, attrData.data());
+			m_uvTable->SendCopyRequests(ctx);
 		}
 
 		// Load nor
@@ -74,6 +76,7 @@ namespace DOG::gfx
 			const auto& attrData = loadAttrData(spec, VertexAttributeTemp::Normal);
 			u32 numElements = (u32)attrData.size_bytes() / NOR_STRIDE;
 			storage.nor = m_normalTable->Allocate(numElements, attrData.data());
+			m_normalTable->SendCopyRequests(ctx);
 		}
 
 		// Load tangent
@@ -81,16 +84,23 @@ namespace DOG::gfx
 			const auto& attrData = loadAttrData(spec, VertexAttributeTemp::Tangent);
 			u32 numElements = (u32)attrData.size_bytes() / TAN_STRIDE;
 			storage.tan = m_tangentTable->Allocate(numElements, attrData.data());
+			m_tangentTable->SendCopyRequests(ctx);
 		}
 
-		auto handle = m_handleAtor.Allocate<Mesh>();
 
-		return MeshContainerTemp();
+		auto handle = m_handleAtor.Allocate<Mesh>();
+		HandleAllocator::TryInsert(m_resources, storage, HandleAllocator::GetSlot(handle.handle));
+
+		MeshContainerTemp container{};
+		container.mesh = handle;
+		container.numSubmeshes = spec.submeshData.size();
+
+		return container;
 	}
 
 	void MeshTable::FreeMesh(Mesh handle)
 	{
-		const auto& res = HandleAllocator::TryGet(m_resources, HandleAllocator::GetSlot(handle.handle));
+		auto& res = HandleAllocator::TryGet(m_resources, HandleAllocator::GetSlot(handle.handle));
 
 		// Push safe deletion
 		auto delFunc = [this,
