@@ -11,8 +11,8 @@ SourceVoice::SourceVoice(IXAudio2SourceVoice* sourceVoice, const WAVProperties& 
 }
 
 SourceVoice::SourceVoice(SourceVoice&& other) noexcept
-	: sourceVoice(other.sourceVoice), audioProperties(other.audioProperties),
-	voiceSettings(other.voiceSettings), callback(std::move(other.callback))
+	: m_sourceVoice(other.m_sourceVoice), m_audioProperties(other.m_audioProperties),
+	m_voiceSettings(other.m_voiceSettings), m_callback(std::move(other.m_callback))
 {
 	other.m_sourceVoice = nullptr;
 }
@@ -25,13 +25,13 @@ SourceVoice::~SourceVoice()
 
 SourceVoice& SourceVoice::operator=(SourceVoice&& other) noexcept
 {
-	sourceVoice = other.sourceVoice;
-	audioProperties = other.audioProperties;
-	voiceSettings = other.voiceSettings;
+	m_sourceVoice = other.m_sourceVoice;
+	m_audioProperties = other.m_audioProperties;
+	m_voiceSettings = other.m_voiceSettings;
 
-	callback = std::move(other.callback);
+	m_callback = std::move(other.m_callback);
 
-	other.sourceVoice = nullptr;
+	other.m_sourceVoice = nullptr;
 	return *this;
 }
 
@@ -56,15 +56,15 @@ void SourceVoice::Play(std::vector<u8>&& buffer)
 	hr.try_fail("Failed to start playing queued XAudio Buffer");
 
 	// TODO: How the fuck do we store this buffer
-	buffers.push_back(std::move(buffer));
+	m_buffers.push_back(std::move(buffer));
 }
 
 void SourceVoice::Stop()
 {
-	HR hr = sourceVoice->Stop();
+	HR hr = m_sourceVoice->Stop();
 	hr.try_fail("Failed to stop Source Voice");
 
-	hr = sourceVoice->FlushSourceBuffers();
+	hr = m_sourceVoice->FlushSourceBuffers();
 	hr.try_fail("Failed to flush source voice queued buffers");
 }
 
@@ -76,7 +76,7 @@ void SourceVoice::WaitForEnd()
 	{
 		m_callback->WaitForStreamEnd();
 	}
-	buffers.clear();
+	m_buffers.clear();
 	return;
 }
 
@@ -90,12 +90,12 @@ bool SourceVoice::HasFinished()
 
 void SourceVoice::SetSettings(const SourceVoiceSettings& settings)
 {
-	this->voiceSettings = settings;
-	sourceVoice->SetVolume(settings.volume);
+	this->m_voiceSettings = settings;
+	m_sourceVoice->SetVolume(settings.volume);
 }
 
 const WAVProperties& SourceVoice::GetWAVProperties() const
 {
-	return audioProperties;
+	return m_audioProperties;
 }
 

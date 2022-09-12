@@ -2,7 +2,7 @@
 
 namespace DOG
 {
-	class FileNotFoundError : std::exception
+	class FileNotFoundError : public std::exception
 	{
 	public:
 		explicit FileNotFoundError(const std::string& filePath) : filePath(filePath) {}
@@ -18,7 +18,7 @@ namespace DOG
 		std::string outString;
 	};
 	
-	class NoVoiceAvailableError : std::exception
+	class NoVoiceAvailableError : public std::exception
 	{
 	public:
 		explicit NoVoiceAvailableError() = default;
