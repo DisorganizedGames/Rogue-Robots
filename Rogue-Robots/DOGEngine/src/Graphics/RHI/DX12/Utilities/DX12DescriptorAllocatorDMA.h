@@ -1,5 +1,8 @@
 #pragma once
+#pragma warning (push, 0)
 #include "D3D12MemAlloc.h"
+#pragma warning (pop)
+
 #include <unordered_map>
 #include "DX12DescriptorChunk.h"
 

@@ -149,7 +149,7 @@ namespace DOG::gfx
 
 		GraphicsPipelineBuilder& SetTopology(PrimitiveTopology topology) { m_desc.topology = topology; return *this; }
 		GraphicsPipelineBuilder& SetSampleMask(u32 mask) { m_desc.sampleMask = mask; return *this; }
-		GraphicsPipelineBuilder& SetMultisample(u32 count, u32 quality) { m_desc.sampleCount = count; m_desc.sampleQuality = quality; return *this; };
+		GraphicsPipelineBuilder& SetMultisample(u8 count, u8 quality) { m_desc.sampleCount = count; m_desc.sampleQuality = quality; return *this; };
 		GraphicsPipelineBuilder& SetDepthFormat(DepthFormat format);
 
 		GraphicsPipelineBuilder& SetShader(const CompiledShader* shader);

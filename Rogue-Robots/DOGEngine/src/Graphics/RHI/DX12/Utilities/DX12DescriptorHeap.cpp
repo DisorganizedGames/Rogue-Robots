@@ -3,7 +3,7 @@
 DX12DescriptorHeap::DX12DescriptorHeap(ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE heap_type, uint32_t max_descriptors, bool is_shader_visible) :
 	m_heap_type(heap_type),
 	m_max_descriptors(max_descriptors),
-	m_descriptor_size(device->GetDescriptorHandleIncrementSize(heap_type)),
+	m_descriptor_size((u8)device->GetDescriptorHandleIncrementSize(heap_type)),
 	m_is_shader_visible(is_shader_visible)
 {
 	HRESULT hr{ S_OK };

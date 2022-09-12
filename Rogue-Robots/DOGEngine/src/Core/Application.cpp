@@ -49,7 +49,7 @@ namespace DOG
 		std::array<Texture, NUM_BUFFERS> scTextures;
 		std::array<TextureView, NUM_BUFFERS> scViews;
 		std::array<RenderPass, NUM_BUFFERS> scPasses;
-		for (u32 i = 0; i < NUM_BUFFERS; ++i)
+		for (u8 i = 0; i < NUM_BUFFERS; ++i)
 		{
 			// Grab textures
 			scTextures[i] = sc->GetBuffer(i);

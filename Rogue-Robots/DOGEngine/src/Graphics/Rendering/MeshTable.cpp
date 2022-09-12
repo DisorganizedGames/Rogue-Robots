@@ -43,7 +43,6 @@ namespace DOG::gfx
 	{
 		Mesh_Storage storage{};
 
-
 		// Load submeshes ==> Use a single handle for submeshes and use submesh as a local offset
 		for (const auto& md : spec.submeshData)
 		{
