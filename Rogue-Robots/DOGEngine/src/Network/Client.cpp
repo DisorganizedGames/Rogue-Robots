@@ -81,7 +81,7 @@ namespace DOG
 			//std::cout << "CLient: All players connected, Starting " << std::endl;
 
 
-			return atoi(inputSend);
+			return atoi(inputSend)+1;
 		}
 	}
 

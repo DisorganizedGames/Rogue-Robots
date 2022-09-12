@@ -12,7 +12,7 @@ namespace DOG
 		}
 
 		//Change denominator to set tick rate
-		m_tickrate = 1.0f / 1.0f;
+		m_tickrate = 1.0f / 2.0f;
 
 
 		m_clientsSockets.clear();
@@ -124,6 +124,7 @@ namespace DOG
 		LARGE_INTEGER timeNow;
 		SOCKET clientSocket;
 		const UINT sleepGranularityMs = 1;
+		ClientsData holdClientsData;
 		char* clientData = new char[sizeof(ClientsData)];
 		char* inputSend = new char[sizeof(m_playersServer)];
 
@@ -148,7 +149,8 @@ namespace DOG
 					else if (m_holdSockets[i].revents & POLLRDNORM)
 					{
 						status = recv(m_holdSockets[i].fd, clientData, sizeof(m_playersServer), 0);
-						memcpy(&m_playersServer[playerIndex], (void*)clientData, sizeof(ClientsData));
+						memcpy(&holdClientsData, (void*)clientData, sizeof(ClientsData));
+						memcpy(&m_playersServer[holdClientsData.player_nr-1], (void*)clientData, sizeof(ClientsData));
 					}
 				}
 			}

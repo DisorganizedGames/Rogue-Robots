@@ -26,7 +26,7 @@ int main(int, char**)
 
 		//CoUninitialize();
 		while (true) {
-			
+			Sleep(1000);
 			if (GetAsyncKeyState(87))
 			{
 				testInput.w = true;
