@@ -2,6 +2,7 @@
 #include "Application.h"
 #include "../Input/Keyboard.h"
 #include "../Input/Mouse.h"
+#include "../EventSystem/WindowEvents.h"
 namespace DOG
 {
 	struct WindowData
@@ -13,19 +14,20 @@ namespace DOG
 	};
 	static WindowData s_windowData = {};
 
-	LRESULT WindowProcedure(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
+	LRESULT Window::WindowProcedure(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		switch (message)
 		{
 		case WM_CLOSE:
 		{
-			::PostQuitMessage(0);
+			PublishEvent<WindowClosedEvent>();
 			break;
 		}
 		case WM_SIZE:
 		{
 			s_windowData.dimensions.x = LOWORD(lParam);
 			s_windowData.dimensions.y = HIWORD(lParam);
+			PublishEvent<WindowResizedEvent>(LOWORD(lParam), HIWORD(lParam));
 			break;
 		}
 		case WM_KEYDOWN:
@@ -126,7 +128,7 @@ namespace DOG
 		ASSERT_FUNC(::RegisterClassExA(&windowClass), "Failed to register Window class.");
 
 		RECT windowRectangle = {0u, 0u, static_cast<LONG>(spec.windowDimensions.x), static_cast<LONG>(spec.windowDimensions.y)};
-		ASSERT_FUNC(::AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW, FALSE), "Failed to adjust window rectangle.");
+		ASSERT_FUNC(::AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME, FALSE), "Failed to adjust window rectangle.");
 	
 		DEVMODEA devMode = {};
 		devMode.dmSize = sizeof(DEVMODE);
@@ -139,7 +141,7 @@ namespace DOG
 			0u,												//DwExStyle
 			className.c_str(),								//Class name
 			spec.name.c_str(),								//Window name
-			WS_OVERLAPPEDWINDOW,							//Window styles
+			WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME,			//Window styles
 			windowCenterPosX,								//Window center X
 			windowCenterPosY,								//Window center Y
 			windowRectangle.right - windowRectangle.left,	//Width
@@ -163,18 +165,14 @@ namespace DOG
 		::ShowWindow(s_windowData.windowHandle, SW_SHOW);
 	}
 
-	bool Window::OnUpdate() noexcept
+	void Window::OnUpdate() noexcept
 	{
 		MSG message = {};
 		while (::PeekMessageA(&message, nullptr, 0u, 0u, PM_REMOVE))
 		{
 			::TranslateMessage(&message);
 			::DispatchMessageA(&message);
-
-			if (message.message == WM_QUIT)
-				return false;
 		}
-		return true;
 	}
 
 	const u32 Window::GetWidth() noexcept

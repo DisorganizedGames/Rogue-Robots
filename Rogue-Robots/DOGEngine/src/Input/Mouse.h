@@ -1,9 +1,10 @@
 #pragma once
+#include "../EventSystem/EventPublisher.h"
 namespace DOG
 {
 	enum class Button : u8 {Left = 0u, Right, Wheel};
 	constexpr const u16 BUTTON_COUNT{ 3 };
-	class Mouse
+	class Mouse : public EventPublisher
 	{
 	public:
 		static void OnButtonPressed(const Button button) noexcept;

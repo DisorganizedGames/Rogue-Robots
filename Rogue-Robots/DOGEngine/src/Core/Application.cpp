@@ -1,4 +1,5 @@
 #include "Application.h"
+#include "Window.h"
 #include "../Input/Mouse.h"
 #include "../Input/Keyboard.h"
 
@@ -13,6 +14,8 @@
 #include "../Graphics/Rendering/GPUTable.h"
 #include "../Graphics/Rendering/GPUDynamicConstants.h"
 
+#include "../EventSystem/EventBus.h"
+#include "../EventSystem/LayerStack.h"
 namespace DOG
 {
 	bool ApplicationManager::s_shouldRestart{ false };
@@ -26,7 +29,7 @@ namespace DOG
 	}
 
 	Application::Application(const ApplicationSpecification& spec) noexcept
-		: m_specification{spec}, m_isRunning{true}
+		: m_specification{ spec }, m_isRunning{ true }, m_layerStack{ LayerStack::Get() }
 	{
 		OnStartUp();
 	}
@@ -104,8 +107,7 @@ namespace DOG
 
 		while (m_isRunning)
 		{
-			if (!Window::OnUpdate())
-				m_isRunning = false;
+			Window::OnUpdate();
 
 			for (auto const layer : m_layerStack)
 			{
@@ -199,8 +201,22 @@ namespace DOG
 		//...
 	}
 
+	void Application::OnEvent(IEvent& event) noexcept
+	{
+		if (!(event.GetEventCategory() == EventCategory::WindowEventCategory))
+			return;
+
+		switch (event.GetEventType())
+		{
+		case EventType::WindowClosedEvent:
+			m_isRunning = false;
+			break;
+		}
+	}
+
 	void Application::OnStartUp() noexcept
 	{
+		EventBus::Get().SetMainApplication(this);
 		Window::Initialize(m_specification);
 	}
 

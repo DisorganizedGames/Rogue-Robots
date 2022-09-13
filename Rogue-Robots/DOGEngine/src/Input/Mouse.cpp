@@ -1,4 +1,5 @@
 #include "Mouse.h"
+#include "../EventSystem/MouseEvents.h"
 namespace DOG
 {
 	std::bitset<BUTTON_COUNT> Mouse::s_buttons;
@@ -8,16 +9,29 @@ namespace DOG
 	void Mouse::OnButtonPressed(const Button button) noexcept
 	{
 		s_buttons[(u8)button] = true;
+		switch (button)
+		{
+		case Button::Left: PublishEvent<LeftMouseButtonPressedEvent>(s_currentMouseCoords); break;
+		case Button::Right: PublishEvent<RightMouseButtonPressedEvent>(s_currentMouseCoords); break;
+		case Button::Wheel: PublishEvent<MiddleMouseButtonPressedEvent>(s_currentMouseCoords); break;
+		}
 	}
 
 	void Mouse::OnButtonReleased(const Button button) noexcept
 	{
 		s_buttons[(u8)button] = false;
+		switch (button)
+		{
+		case Button::Left: PublishEvent<LeftMouseButtonReleasedEvent>(s_currentMouseCoords); break;
+		case Button::Right: PublishEvent<RightMouseButtonReleasedEvent>(s_currentMouseCoords); break;
+		case Button::Wheel: PublishEvent<MiddleMouseButtonReleasedEvent>(s_currentMouseCoords); break;
+		}
 	}
 
 	void Mouse::OnMove(Vector2u newCoords) noexcept
 	{
 		s_currentMouseCoords = newCoords;
+		PublishEvent<MouseMovedEvent>(s_currentMouseCoords);
 	}
 
 	void Mouse::OnRawDelta(Vector2i deltaCoords) noexcept
@@ -38,11 +52,11 @@ namespace DOG
 
 	const std::pair<u32, u32> Mouse::GetCoordinates() noexcept
 	{
-		return std::make_pair(s_currentMouseCoords.x, s_currentMouseCoords.y);
-	}
+		return { s_currentMouseCoords.x, s_currentMouseCoords.y };
+	};
 
 	const std::pair<i32, i32> Mouse::GetDeltaCoordinates() noexcept
 	{
-		return std::make_pair(s_deltaMouseCoords.x, s_deltaMouseCoords.y);
+		return { s_deltaMouseCoords.x, s_deltaMouseCoords.y };
 	}
 }

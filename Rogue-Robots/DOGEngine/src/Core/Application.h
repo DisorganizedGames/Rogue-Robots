@@ -1,16 +1,8 @@
 #pragma once
-#include "Window.h"
 #include "../EventSystem/LayerStack.h"
+#include "CoreUtils.h"
 namespace DOG
 {
-	class Layer;
-	struct ApplicationSpecification
-	{
-		std::string name;
-		Vector2u windowDimensions;
-		WindowMode initialWindowMode;
-	};
-
 	class ApplicationManager
 	{
 	public:
@@ -27,6 +19,7 @@ namespace DOG
 		virtual ~Application() noexcept;
 		void Run() noexcept;
 		virtual void OnRestart() noexcept;
+		virtual void OnEvent(IEvent& event) noexcept;
 	protected:
 		virtual void OnStartUp() noexcept;
 		virtual void OnShutDown() noexcept;
@@ -35,8 +28,9 @@ namespace DOG
 		void PopLayer(Layer* layer) noexcept;
 		void PopOverlay(Layer* layer) noexcept;
 	private:
+		DELETE_COPY_MOVE_CONSTRUCTOR(Application);
 		ApplicationSpecification m_specification;
-		LayerStack m_layerStack;
+		LayerStack& m_layerStack;
 		bool m_isRunning;
 	};
 }
