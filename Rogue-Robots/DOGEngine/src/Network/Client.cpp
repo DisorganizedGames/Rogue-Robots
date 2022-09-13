@@ -15,7 +15,6 @@ namespace DOG
 	int Client::ConnectTcpServer(std::string ipAdress)
 	{
 		WSADATA socketStart;
-		SOCKET connectSocket = INVALID_SOCKET;
 		addrinfo client, * addrOutput = NULL, * ptr = NULL;
 		BOOL turn = TRUE;
 		char* ipAdressInput = new char[sizeof(ipAdress) + 1];
@@ -55,10 +54,7 @@ namespace DOG
 		freeaddrinfo(addrOutput);
 		assert(m_connectSocket != INVALID_SOCKET);
 
-		char optval[1];
-		socklen_t optlen = sizeof(optval);
-
-		//setsockopt(m_connectSocket, SOL_SOCKET, SO_KEEPALIVE, (char*)&turn, sizeof(bool));
+		//set socket to tcp_nodelay
 		setsockopt(m_connectSocket, SOL_SOCKET, TCP_NODELAY, (char*)&turn, sizeof(bool));
 
 		//get player number
@@ -88,11 +84,6 @@ namespace DOG
 		return m_playersClient;
 	}
 
-
-	struct Client::ClientsData* Client::GetClientsData()
-	{
-		return m_playersClient;
-	}
 
 	struct Client::ClientsData Client::AddString(ClientsData player, std::string inputs)
 	{

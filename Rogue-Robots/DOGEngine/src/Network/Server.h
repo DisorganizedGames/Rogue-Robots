@@ -1,4 +1,5 @@
 #pragma once
+
 namespace DOG
 {
 	constexpr int m_maxNrOfPlayers = 4;
@@ -22,7 +23,7 @@ namespace DOG
 	private:
 		void ServerReciveConnections(SOCKET listenSocket);
 		void ServerPoll();
-		void CloseSocket(int socketIndex);
+		void CloseSocket(int socketIndex, int playerIndex);
 		float TickTimeLeft(LARGE_INTEGER t, LARGE_INTEGER frequency);
 
 		float m_tickrate;

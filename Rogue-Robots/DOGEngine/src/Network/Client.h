@@ -2,6 +2,8 @@
 #include "Server.h"
 namespace DOG
 {
+	constexpr int m_maxNrOfPlayer = 4;
+
 	class Client
 	{
 	public:
@@ -19,11 +21,10 @@ namespace DOG
 		~Client();
 		int ConnectTcpServer(std::string ipAdress);
 		ClientsData* SendandReciveTcp(ClientsData input);
-		ClientsData* GetClientsData();
 		ClientsData AddString(ClientsData player, std::string inputs);
 		ClientsData CleanClientsData(ClientsData player);
 	private:
-		ClientsData m_playersClient[m_maxNrOfPlayers];
+		ClientsData m_playersClient[m_maxNrOfPlayer];
 		SOCKET m_connectSocket;
 		
 	};

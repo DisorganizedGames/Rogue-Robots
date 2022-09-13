@@ -61,6 +61,7 @@
 #include <DirectXMath.h>
 #include <bitset>
 #include <barrier>
+#include <timeapi.h>
 
 #include "common/Utils.h"
 

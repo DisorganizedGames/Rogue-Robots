@@ -113,52 +113,48 @@ namespace DOG
 		return float(now.QuadPart - t.QuadPart) / float(frequency.QuadPart);
 	}
 
-	void Server::ServerPoll()
+	void Server::ServerPoll() 
 	{
-		std::cout << "Server: connected to ServerSend" << std::endl;
-		BOOL turn = true;
-
-
+		std::cout << "Server: Started to tick" << std::endl;
 
 		LARGE_INTEGER tickStartTime;
-		LARGE_INTEGER timeNow;
 		SOCKET clientSocket;
-		const UINT sleepGranularityMs = 1;
 		ClientsData holdClientsData;
 		char* clientData = new char[sizeof(ClientsData)];
 		char* inputSend = new char[2048];
-		char* inputSendVector = new char[sizeof(ClientsData)*10];
-		int status = 0;
-
-
 		LARGE_INTEGER clockFrequency;
 		QueryPerformanceFrequency(&clockFrequency);
-
+		
+		//sets the minium resolution for ticks
+		UINT sleepGranularityMs = 1;
+		bool sleepGranularityWasSet = timeBeginPeriod(sleepGranularityMs) == TIMERR_NOERROR;
 
 		do {
 			QueryPerformanceCounter(&tickStartTime);
 
 			m_holdSockets = m_clientsSockets;
+			//read in from clients that have send data
 			if (WSAPoll(m_holdSockets.data(), m_holdSockets.size(), 10) > 0)
 			{
 				for (int i = 0; i < m_holdSockets.size(); i++)
 				{
 					if (m_holdSockets[i].revents & POLLERR || m_holdSockets[i].revents & POLLHUP || m_holdSockets[i].revents & POLLNVAL) 
-						CloseSocket(i);
+						CloseSocket(i, m_playersServer[i].player_nr);
 
 					else if (m_holdSockets[i].revents & POLLRDNORM)
 					{
-						status = recv(m_holdSockets[i].fd, clientData, sizeof(ClientsData), 0);
+						recv(m_holdSockets[i].fd, clientData, sizeof(ClientsData), 0);
 						memcpy(&holdClientsData, (void*)clientData, sizeof(ClientsData));
 						memcpy(&m_playersServer[holdClientsData.player_nr-1], (void*)clientData, sizeof(ClientsData));
 					}
 				}
 			}
 
+			//Send to all connected clients
 			for (int i = 0; i < m_holdSockets.size(); i++)
 			{
 				memcpy(inputSend, m_playersServer, sizeof(m_playersServer));
-				status = send(m_holdSockets[i].fd, inputSend, sizeof(m_playersServer), 0);
+				send(m_holdSockets[i].fd, inputSend, sizeof(m_playersServer), 0);
 			}
 			//wait untill tick is done 
 			float timeTakenS = TickTimeLeft(tickStartTime, clockFrequency);
@@ -181,10 +177,10 @@ namespace DOG
 			std::cout << "Server: AAaAAA Nåt är jävligt fel" << WSAGetLastError() << std::endl;
 	}
 
-	void Server::CloseSocket(int socketIndex)
+	void Server::CloseSocket(int socketIndex, int playerNr) 
 	{
 		std::cout << "Server: Closes socket" << std::endl;
-		//m_playerIds.push_back(playerIndex);
+		m_playerIds.push_back(playerNr);
 		m_clientsSockets.erase(m_clientsSockets.begin() + socketIndex);
 	}
 }
