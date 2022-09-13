@@ -51,6 +51,23 @@ namespace DOG
 		return out;
 	}
 
+	static WAVProperties ReadWAVProperties(const std::string& path)
+	{
+		std::ifstream file(path, std::ios::binary);
+		if (!file)
+		{
+			assert(false);
+		}
+
+		const u64 fileSize = std::filesystem::file_size(path);
+		assert(fileSize >= WAV_RIFF_HEADER_SIZE + WAV_FORMAT_CHUNK_SIZE);
+
+		std::vector<u8> header_data(WAV_RIFF_HEADER_SIZE + WAV_FORMAT_CHUNK_SIZE);
+		file.read((char*)header_data.data(), header_data.size());
+
+		return ReadWAVProperties(header_data);
+	}
+
 	static std::vector<u8> ReadLISTChunk(const u8* data)
 	{
 		data += 4; // Skip "LIST"
@@ -118,15 +135,12 @@ namespace DOG
 		return outData;
 	}
 
-	// Reads the provided WAV file and returns a tuple of it's properties, a pointer to the sound data, and
-	// the size of said data.
+	// Reads the provided WAV file and returns a pair of it's properties and a vector with the sound data	
 	static std::pair<WAVProperties, std::vector<u8>> ReadWAV(const std::string& filePath)
 	{
 		std::ifstream file(filePath, std::ios::binary);
 		if (!file)
-		{
-			throw FileNotFoundError(filePath);
-		}
+			assert(false);
 
 		const u64 fileSize = std::filesystem::file_size(filePath);
 
@@ -140,5 +154,77 @@ namespace DOG
 
 		return {properties, ReadWAVData(wavData)};
 	}
+
+	class WAVFileReader
+	{
+	private:
+		std::ifstream file;
+		u32 remaining_bytes = 0;
+
+	private:
+		void SeekNextDataChunk()
+		{
+			char chunk_type[5];
+			char chunk_size[4];
+			chunk_type[4] = 0;
+			while (true)
+			{
+				file.read(chunk_type, 4);
+				if (strcmp(&chunk_type[0], "LIST") == 0)
+				{
+					file.seekg(4, std::ios::cur); // Skip chunk size
+				}
+				else if (strcmp(&chunk_type[0], "INFO") == 0)
+				{
+					file.seekg(4, std::ios::cur);
+					file.read(chunk_size, sizeof(u32));
+					u32 skip = *(u32*)chunk_size;
+					file.seekg(skip, std::ios::cur);
+				}
+				else if (strcmp(&chunk_type[0], "data") == 0)
+				{
+					file.read((char*)&remaining_bytes, sizeof(u32));
+					break;
+				}
+			}
+		}
+	public:
+		WAVFileReader(const std::string& path)
+		{
+			file.open(path, std::ios::binary);
+			if (!file)
+				assert(file);
+		}
+
+		WAVProperties ReadProperties()
+		{
+			std::vector<u8> header(WAV_RIFF_HEADER_SIZE + WAV_FORMAT_CHUNK_SIZE);
+			file.read((char*)header.data(), header.size());
+			return ReadWAVProperties(header);
+		}
+
+		[[nodiscard]]
+		std::vector<u8> ReadNextChunk(u32 size)
+		{
+			if (file.eof())
+				return std::vector<u8>();
+
+			if (!remaining_bytes)
+				SeekNextDataChunk();
+
+			u32 to_read = size < remaining_bytes ? size : remaining_bytes;
+
+			std::vector<u8> out(to_read);
+			if (!file.read((char*)&out[0], to_read))
+			{
+				assert(false);
+			}
+
+			remaining_bytes -= to_read;
+
+			return out;
+		}
+	};
+
 }
 
