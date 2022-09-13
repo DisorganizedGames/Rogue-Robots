@@ -23,7 +23,7 @@ namespace DOG
 	private:
 		void ServerReciveConnections(SOCKET listenSocket);
 		void ServerPoll();
-		void CloseSocket(int socketIndex, int playerIndex);
+		void CloseSocket(int socketIndex);
 		float TickTimeLeft(LARGE_INTEGER t, LARGE_INTEGER frequency);
 
 		float m_tickrate;

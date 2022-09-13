@@ -139,7 +139,7 @@ namespace DOG
 				for (int i = 0; i < m_holdSockets.size(); i++)
 				{
 					if (m_holdSockets[i].revents & POLLERR || m_holdSockets[i].revents & POLLHUP || m_holdSockets[i].revents & POLLNVAL) 
-						CloseSocket(i, m_playersServer[i].player_nr);
+						CloseSocket(i);
 
 					else if (m_holdSockets[i].revents & POLLRDNORM)
 					{
@@ -171,16 +171,14 @@ namespace DOG
 				timeTakenS = TickTimeLeft(tickStartTime, clockFrequency);
 			}
 		} while (true);
-		std::cout << "Server: server thread closes..." << std::endl;
+		std::cout << "Server: server loop closed" << std::endl;
 		
-		if (closesocket(clientSocket) == SOCKET_ERROR)
-			std::cout << "Server: AAaAAA Nåt är jävligt fel" << WSAGetLastError() << std::endl;
 	}
 
-	void Server::CloseSocket(int socketIndex, int playerNr) 
+	void Server::CloseSocket(int socketIndex) 
 	{
 		std::cout << "Server: Closes socket" << std::endl;
-		m_playerIds.push_back(playerNr);
+		//m_playerIds.push_back(playerNr);
 		m_clientsSockets.erase(m_clientsSockets.begin() + socketIndex);
 	}
 }
