@@ -6,6 +6,7 @@ extern "C"
 #include "Lua/lauxlib.h"
 #include "Lua/lualib.h"
 }
+
 class LuaContext;
 
 struct ClassFunctionInfo
@@ -31,14 +32,21 @@ struct Table
 typedef Table Function;
 typedef Table UserData;
 
+struct Reference
+{
+	uint32_t nr_of_references;
+};
+
 class LuaW
 {
 	friend RegisterClassFunctions;
+	friend LuaContext;
 
 private:
 	lua_State* m_luaState;
+	std::unordered_map<int, Reference> m_reference_list;
 
-public:
+private:
 	LuaW(lua_State* l);
 	template<void (*func)(LuaContext*)>
 	static inline int FunctionsHook(lua_State* luaState);
@@ -46,19 +54,27 @@ public:
 	template <typename T, void (T::* func)(LuaContext*)>
 	static inline int ClassFunctionsHook(lua_State* luaState);
 
-	bool IsUserData(int index) const;
 	void Error(const std::string& errorMessage);
 
 	void LoadChunk(const std::string& luaScriptName);
+	bool TryLoadChunk(const std::string& luaScriptName);
 
-	int GetIntegerFromStack(int index = 1);
-	float GetFloatFromStack(int index = 1);
-	double GetDoubleFromStack(int index = 1);
-	std::string GetStringFromStack(int index = 1);
-	bool GetBoolFromStack(int index = 1);
-	Function GetFunctionFromStack(int index = 1);
-	Table GetTableFromStack(int index = 1);
-	UserData GetUserDataFromStack(int index = 1);
+	bool IsInteger(int index = 1) const;
+	bool IsNumber(int index = 1) const;
+	bool IsString(int index = 1) const;
+	bool IsBool(int index = 1) const;
+	bool IsFunction(int index = 1) const;
+	bool IsTable(int index = 1) const;
+	bool IsUserData(int index = 1) const;
+
+	int GetIntegerFromStack(int index = 1, bool noError = false);
+	float GetFloatFromStack(int index = 1, bool noError = false);
+	double GetDoubleFromStack(int index = 1, bool noError = false);
+	std::string GetStringFromStack(int index = 1, bool noError = false);
+	bool GetBoolFromStack(int index = 1, bool noError = false);
+	Function GetFunctionFromStack(int index = 1, bool noError = false);
+	Table GetTableFromStack(int index = 1, bool noError = false);
+	UserData GetUserDataFromStack(int index = 1, bool noError = false);
 	template<typename T>
 	T* GetUserDataPointerFromStack(int index = 1);
 
@@ -79,6 +95,14 @@ public:
 	void SetTableAndPop();
 	void GetTableAndRemove();
 
+	void AddReference(Table& ref);
+	void RemoveReference(Table& ref);
+
+	int AddEnvironmentToTable(Table& table, const std::string& luaFileName);
+
+	int GetNumberOfStackItems() const;
+
+	void ClearStack();
 
 public:
 	void PushGlobalNumber(const std::string& luaGlobalName, int number);
@@ -135,12 +159,19 @@ public:
 	Table GetTableFromTable(Table& table, const std::string& tableTableName);
 	UserData GetUserDataFromTable(Table& table, const std::string& tableUserDataName);
 
+	Function TryGetFunctionFromTable(Table& table, const std::string& tableFunctionName);
+	bool CheckIfFunctionExist(Function& function);
+
 	void RunScript(const std::string& luaFileName);
 	void CreateEnvironment(Table& table, const std::string& luaFileName);
+	int TryCreateEnvironment(Table& table, const std::string& luaFileName);
 
 	template<typename T>
 	T* GetUserDataPointer(UserData& userData);
 
+	void AddReferenceToTable(Table& table);
+	void AddReferenceToFunction(Function& function);
+	void AddReferenceToUserData(UserData& userData);
 	void RemoveReferenceToTable(Table& table);
 	void RemoveReferenceToFunction(Function& function);
 	void RemoveReferenceToUserData(UserData& userData);
@@ -190,10 +221,11 @@ template<void (*func)(LuaContext*)>
 static inline int LuaW::FunctionsHook(lua_State* luaState)
 {
 	LuaW luaW(luaState);
-	LuaContext state(luaW);
+	LuaContext state(&luaW);
 
 	func(&state);
-	return 0;//state.returns;
+
+	return state.GetNumberOfReturns();
 }
 
 //Hooks a member function from c++ to an static int function(lua_State* luaState) 
@@ -201,9 +233,9 @@ template <typename T, void (T::* func)(LuaContext*)>
 static inline int LuaW::ClassFunctionsHook(lua_State* luaState)
 {
 	LuaW luaW(luaState);
-	LuaContext state(luaW);
+	LuaContext state(&luaW);
 
-	if (!luaW.IsUserData(1))
+	if (!luaW.IsUserData())
 	{
 		luaW.Error("Tried to access userdata and no userdata was found! Call object function with either object:function() or object.function(object)!");
 		return 0;
@@ -211,7 +243,7 @@ static inline int LuaW::ClassFunctionsHook(lua_State* luaState)
 	T* object = luaW.GetUserDataPointerFromStack<T>();
 	(object->*func)(&state);
 
-	return 0;//state.returns;
+	return state.GetNumberOfReturns();
 }
 
 //Adds a member function to the interface
