@@ -14,7 +14,6 @@ namespace DOG
 
 	int Client::ConnectTcpServer(std::string ipAdress)
 	{
-
 		WSADATA socketStart;
 		SOCKET connectSocket = INVALID_SOCKET;
 		addrinfo client, * addrOutput = NULL, * ptr = NULL;
@@ -74,14 +73,6 @@ namespace DOG
 		{
 			std::cout << "\nCLient: Player nr: " << atoi(inputSend) +1 << std::endl;
 			assert(m_connectSocket != INVALID_SOCKET);
-
-			//std::cout << "CLient: Waiting for more players to connect..." << std::endl;
-			check = recv(m_connectSocket, inputSend, sizeof(int), 0);
-
-
-			//std::cout << "CLient: All players connected, Starting " << std::endl;
-
-
 			return atoi(inputSend)+1;
 		}
 	}
@@ -103,4 +94,23 @@ namespace DOG
 		return m_playersClient;
 	}
 
+	struct Client::ClientsData Client::AddString(ClientsData player, std::string inputs)
+	{
+		for (int i = 0; i < inputs.length(); i++)
+		{
+			if (i > 63)
+				break;
+			player.inputs[player.inputLength] = inputs.at(i);
+			player.inputLength++;
+		}
+		
+		return player;
+	}
+
+	struct Client::ClientsData Client::CleanClientsData(ClientsData player)
+	{
+		memset(player.inputs, 0, sizeof(player.inputs));
+		player.inputLength = 0;
+		return player;
+	}
 }

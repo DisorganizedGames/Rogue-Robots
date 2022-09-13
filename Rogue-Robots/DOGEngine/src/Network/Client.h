@@ -12,15 +12,16 @@ namespace DOG
 			bool a = false;
 			bool s = false;
 			bool d = false;
-			char inputs[32];
-			int input_lentgh;
+			char inputs[64] = {0};
+			int inputLength = 0;
 		};
 		Client();
 		~Client();
 		int ConnectTcpServer(std::string ipAdress);
 		ClientsData* SendandReciveTcp(ClientsData input);
-		//std::vector<ClientsData>  SendandReciveTcp(ClientsData input);
 		ClientsData* GetClientsData();
+		ClientsData AddString(ClientsData player, std::string inputs);
+		ClientsData CleanClientsData(ClientsData player);
 	private:
 		ClientsData m_playersClient[m_maxNrOfPlayers];
 		SOCKET m_connectSocket;

@@ -27,20 +27,23 @@ int main(int, char**)
 		//CoUninitialize();
 		while (true) {
 			Sleep(1000);
+			std::string inputs = "";
 			if (GetAsyncKeyState(87))
 			{
 				testInput.w = true;
+				inputs.push_back('w');
 				
 			}
+			testInput = clientTest.AddString(testInput, inputs);
 			testOutput = clientTest.SendandReciveTcp(testInput);
 			for (int i = 0; i < 4; i++)
 			{
-				std::cout << testOutput[i].w;
+				std::cout << testOutput[i].w << testOutput[i].inputs[0] << testOutput[i].inputs[1] << "  ";
 			}
 			
 			std::cout<< " Sleep 1 sekond" << std::endl;
 			testInput.w = false;
-
+			testInput = clientTest.CleanClientsData(testInput);
 			continue;
 		}
 		return 0;

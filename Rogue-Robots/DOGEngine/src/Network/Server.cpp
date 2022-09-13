@@ -65,8 +65,6 @@ namespace DOG
 
 	void Server::ServerReciveConnections(SOCKET listenSocket)
 	{
-
-
 		char* inputSend = new char[sizeof(int)];
 		while (true)
 		{
@@ -187,6 +185,6 @@ namespace DOG
 	{
 		std::cout << "Server: Closes socket" << std::endl;
 		//m_playerIds.push_back(playerIndex);
-		m_clientsSockets.erase(m_clientsSockets.begin() +socketIndex);
+		m_clientsSockets.erase(m_clientsSockets.begin() + socketIndex);
 	}
 }
