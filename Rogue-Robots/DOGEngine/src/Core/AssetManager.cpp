@@ -7,6 +7,27 @@
 
 namespace DOG
 {
+	std::unique_ptr<AssetManager> AssetManager::s_instance = nullptr;
+
+	void AssetManager::Initialize()
+	{
+		assert(!s_instance);
+		s_instance = std::unique_ptr<AssetManager>(new AssetManager());
+	}
+
+	void AssetManager::Destroy()
+	{
+		assert(s_instance);
+		s_instance.reset();
+		s_instance = nullptr;
+	}
+
+	AssetManager& AssetManager::Get()
+	{
+		assert(s_instance);
+		return *s_instance;
+	}
+
 	AssetManager::AssetManager()
 	{
 

@@ -65,7 +65,10 @@ namespace DOG
 	class AssetManager
 	{
 	public:
-		AssetManager();
+		static void Initialize();
+		static void Destroy();
+		static AssetManager& Get();
+
 		~AssetManager();
 
 		[[nodiscard]] u64 LoadModelAsset(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::None);
@@ -77,9 +80,13 @@ namespace DOG
 		Asset* GetAsset(u64 id) const;
 
 	private:
+		AssetManager();
+
 		[[nodiscard]] std::vector<u64> LoadMaterials(const std::vector<ImportedMaterial>& importedMats);
 
 	private:
+		static std::unique_ptr<AssetManager> s_instance;
+
 		std::unordered_map<uint64_t, std::unique_ptr<Asset>> m_assets;
 
 		MaterialManager m_materialManager;
