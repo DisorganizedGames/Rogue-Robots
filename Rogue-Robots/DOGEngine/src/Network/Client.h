@@ -2,7 +2,7 @@
 #include "Server.h"
 namespace DOG
 {
-	constexpr int m_maxNrOfPlayer = 4;
+	constexpr int MAX_PLAYER_COUNT = 4;
 
 	class Client
 	{

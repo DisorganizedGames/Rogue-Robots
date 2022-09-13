@@ -19,7 +19,7 @@ namespace DOG
 		BOOL turn = TRUE;
 		char* ipAdressInput = new char[sizeof(ipAdress) + 1];
 		char* inputSend = new char[sizeof(int)];
-		int check;
+		int check, returnValue;
 
 		strcpy(ipAdressInput, ipAdress.c_str());
 
@@ -59,17 +59,20 @@ namespace DOG
 
 		//get player number
 		check = recv(m_connectSocket, inputSend, sizeof(int), 0);
+		returnValue = atoi(inputSend);
+		delete[] ipAdressInput;
+		delete[] inputSend;
 
-		if (atoi(inputSend) == -1)
+		if (returnValue == -1)
 		{
-			std::cout << "\nCLient: Server Full: " << atoi(inputSend) << std::endl;
+			std::cout << "\nCLient: Server Full: " << returnValue << std::endl;
 			return -1;
 		}
 		else
 		{
-			std::cout << "\nCLient: Player nr: " << atoi(inputSend) +1 << std::endl;
+			std::cout << "\nCLient: Player nr: " << returnValue +1 << std::endl;
 			assert(m_connectSocket != INVALID_SOCKET);
-			return atoi(inputSend)+1;
+			return returnValue +1;
 		}
 	}
 
@@ -81,6 +84,7 @@ namespace DOG
 		send(m_connectSocket, inputSend, sizeof(ClientsData), 0);
 		recv(m_connectSocket, recvbuf, sizeof(recvbuf), 0);
 		memcpy(m_playersClient, recvbuf, sizeof(m_playersClient));
+		delete[] inputSend;
 		return m_playersClient;
 	}
 

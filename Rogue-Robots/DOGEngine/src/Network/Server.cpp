@@ -101,7 +101,7 @@ namespace DOG
 				}
 			}
 		}
-
+		delete[] inputSend;
 		closesocket(listenSocket);
 	}
 
@@ -173,7 +173,8 @@ namespace DOG
 			}
 		} while (true);
 		std::cout << "Server: server loop closed" << std::endl;
-		
+		delete[] clientData;
+		delete[] inputSend;
 	}
 
 	void Server::CloseSocket(int socketIndex) 
