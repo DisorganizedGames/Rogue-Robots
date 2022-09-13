@@ -6,7 +6,7 @@
 #include "Utilities/DX12DescriptorChunk.h"
 #include "Utilities/DX12Fence.h"
 
-
+#define USE_REVERSE_Z
 
 namespace D3D12MA { class Allocator; class Allocation; }
 class DX12DescriptorManager;
@@ -61,6 +61,9 @@ namespace DOG::gfx
 			Sensitive commands start
 			==================================
 		*/
+		void Cmd_SetIndexBuffer(CommandList list,
+			Buffer ib);
+
 		void Cmd_Draw(CommandList list,
 			u32 vertsPerInstance,
 			u32 instanceCount,

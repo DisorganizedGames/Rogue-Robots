@@ -1,6 +1,6 @@
 #pragma once
 #include "../Handles/HandleAllocator.h"
-#include "Types/MeshTypes.h"
+#include "../../Core/Types/MeshTypes.h"
 #include "GPUTable.h"
 
 namespace DOG::gfx
@@ -15,13 +15,15 @@ namespace DOG::gfx
 		struct MemorySpecification
 		{
 			u32 maxTotalSubmeshes{ 0 };
-			std::unordered_map<VertexAttributeTemp, u32> maxSizePerAttribute;
+			u32 maxNumIndices{ 0 };
+			std::unordered_map<VertexAttribute, u32> maxSizePerAttribute;
 		};
 
 		struct MeshSpecification
 		{
-			std::unordered_map<VertexAttributeTemp, std::span<u8>> vertexDataPerAttribute;
-			std::vector<SubmeshMetadataTemp> submeshData;
+			std::unordered_map<VertexAttribute, std::span<u8>> vertexDataPerAttribute;
+			std::span<u32> indices;
+			std::vector<SubmeshMetadata> submeshData;
 		};
 
 	public:
@@ -29,21 +31,23 @@ namespace DOG::gfx
 		MeshTable(RenderDevice* rd, GPUGarbageBin* bin, const MemorySpecification& spec, bool async = false);
 
 		// Mesh loaded to staging --> Will be uploaded to GPU by upload context! :)
-		MeshContainerTemp LoadMesh(const MeshSpecification& spec, UploadContext& ctx);
+		MeshContainer LoadMesh(const MeshSpecification& spec, UploadContext& ctx);
 
 		void FreeMesh(Mesh handle);
 
 		// Get descriptor to attribute table
-		u32 GetAttributeDescriptor(VertexAttributeTemp attr) const;
+		u32 GetAttributeDescriptor(VertexAttribute attr) const;
 
 		// Get descriptor to submesh metadata table
 		u32 GetSubmeshDescriptor() const;
 
 		// Grab metadata for specific submesh on CPU
-		const SubmeshMetadataTemp& GetSubmeshMD_CPU(Mesh mesh, u32 submesh);
+		const SubmeshMetadata& GetSubmeshMD_CPU(Mesh mesh, u32 submesh);
 
 		// Grab local offset for the submesh in the submesh table
 		u32 GetSubmeshMD_GPU(Mesh mesh, u32 submesh);
+
+		Buffer GetIndexBuffer();
 
 	private:
 		/*
@@ -60,6 +64,7 @@ namespace DOG::gfx
 
 		struct SubmeshHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
 
+		struct IndexHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
 		struct PositionHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
 		struct UVHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
 		struct NormalHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
@@ -71,12 +76,11 @@ namespace DOG::gfx
 			UVHandle uv;
 			NormalHandle nor;
 			TangentHandle tan;
+			IndexHandle idx;
 
-			std::vector<SubmeshMetadataTemp> mdsCpu;
+			std::vector<SubmeshMetadata> mdsCpu;
 
-			// Maybe only use one Handle here?
-			// It is a base to the Mesh --> We can offset with the Submesh index passed!kl;
-			std::vector<SubmeshHandle> mdsGpu;
+			SubmeshHandle mdsGpu;
 		};
 
 	private:
@@ -90,6 +94,7 @@ namespace DOG::gfx
 		std::unique_ptr<GPUTableDeviceLocal<SubmeshHandle>> m_submeshTable;
 
 		// Vertex attributes
+		std::unique_ptr<GPUTableDeviceLocal<IndexHandle>> m_indexTable;
 		std::unique_ptr<GPUTableDeviceLocal<PositionHandle>> m_positionTable;
 		std::unique_ptr<GPUTableDeviceLocal<UVHandle>> m_uvTable;
 		std::unique_ptr<GPUTableDeviceLocal<NormalHandle>> m_normalTable;

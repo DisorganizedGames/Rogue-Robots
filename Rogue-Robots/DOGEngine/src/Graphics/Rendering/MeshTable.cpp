@@ -11,35 +11,39 @@ namespace DOG::gfx
 	{
 		m_resources.resize(1);
 
-		m_submeshTable = std::make_unique<GPUTableDeviceLocal<SubmeshHandle>>(rd, bin, (u32)sizeof(SubmeshMetadataTemp), spec.maxTotalSubmeshes, async);
+		assert(spec.maxTotalSubmeshes != 0);
+		m_submeshTable = std::make_unique<GPUTableDeviceLocal<SubmeshHandle>>(rd, bin, (u32)sizeof(SubmeshMetadata), spec.maxTotalSubmeshes, async);
+
+		// Assumes indices always exist
+		m_indexTable = std::make_unique<GPUTableDeviceLocal<IndexHandle>>(rd, bin, sizeof(u32), spec.maxNumIndices, async);
 
 		// Assumes position always exist
 		{
-			u32 maxElements = spec.maxSizePerAttribute.find(VertexAttributeTemp::Position)->second / POS_STRIDE;
+			u32 maxElements = spec.maxSizePerAttribute.find(VertexAttribute::Position)->second / POS_STRIDE;
 			m_positionTable = std::make_unique<GPUTableDeviceLocal<PositionHandle>>(rd, bin, POS_STRIDE, maxElements, async);
 		}
 
 		// Assumes UV always exist
 		{
-			u32 maxElements = spec.maxSizePerAttribute.find(VertexAttributeTemp::UV)->second / UV_STRIDE;
+			u32 maxElements = spec.maxSizePerAttribute.find(VertexAttribute::UV)->second / UV_STRIDE;
 			m_uvTable = std::make_unique<GPUTableDeviceLocal<UVHandle>>(rd, bin, UV_STRIDE, maxElements, async);
 		}
 
 		// Assumes Normal always exist
 		{
-			u32 maxElements = spec.maxSizePerAttribute.find(VertexAttributeTemp::Normal)->second / NOR_STRIDE;
+			u32 maxElements = spec.maxSizePerAttribute.find(VertexAttribute::Normal)->second / NOR_STRIDE;
 			m_normalTable = std::make_unique<GPUTableDeviceLocal<NormalHandle>>(rd, bin, NOR_STRIDE, maxElements, async);
 		}
 
 		// Assumes tangents always exist
 		{
-			u32 maxElements = spec.maxSizePerAttribute.find(VertexAttributeTemp::Tangent)->second / TAN_STRIDE;
+			u32 maxElements = spec.maxSizePerAttribute.find(VertexAttribute::Tangent)->second / TAN_STRIDE;
 			m_tangentTable = std::make_unique<GPUTableDeviceLocal<TangentHandle>>(rd, bin, TAN_STRIDE, maxElements, async);
 		}
 
 	}
 
-	MeshContainerTemp MeshTable::LoadMesh(const MeshSpecification& spec, UploadContext& ctx)
+	MeshContainer MeshTable::LoadMesh(const MeshSpecification& spec, UploadContext& ctx)
 	{
 		Mesh_Storage storage{};
 
@@ -48,16 +52,23 @@ namespace DOG::gfx
 		{
 			storage.mdsCpu.push_back(md);
 		}
-		m_submeshTable->Allocate((u32)spec.submeshData.size(), (void*)spec.submeshData.data());
+		storage.mdsGpu = m_submeshTable->Allocate((u32)spec.submeshData.size(), (void*)spec.submeshData.data());
+		m_submeshTable->SendCopyRequests(ctx);
 
-		auto loadAttrData = [this](const MeshSpecification& spec, VertexAttributeTemp attr) -> std::span<u8>
+		auto loadAttrData = [this](const MeshSpecification& spec, VertexAttribute attr) -> std::span<u8>
 		{
 			return spec.vertexDataPerAttribute.find(attr)->second;
 		};
 
+		// Load indices
+		{
+			storage.idx = m_indexTable->Allocate(spec.indices.size(), spec.indices.data());
+			m_indexTable->SendCopyRequests(ctx);
+		}
+
 		// Load position
 		{
-			const auto& attrData = loadAttrData(spec, VertexAttributeTemp::Position);
+			const auto& attrData = loadAttrData(spec, VertexAttribute::Position);
 			u32 numElements = (u32)attrData.size_bytes() / POS_STRIDE;
 			storage.pos = m_positionTable->Allocate(numElements, attrData.data());
 			m_positionTable->SendCopyRequests(ctx);
@@ -65,7 +76,7 @@ namespace DOG::gfx
 
 		// Load UV
 		{
-			const auto& attrData = loadAttrData(spec, VertexAttributeTemp::UV);
+			const auto& attrData = loadAttrData(spec, VertexAttribute::UV);
 			u32 numElements = (u32)attrData.size_bytes() / UV_STRIDE;
 			storage.uv = m_uvTable->Allocate(numElements, attrData.data());
 			m_uvTable->SendCopyRequests(ctx);
@@ -73,7 +84,7 @@ namespace DOG::gfx
 
 		// Load nor
 		{
-			const auto& attrData = loadAttrData(spec, VertexAttributeTemp::Normal);
+			const auto& attrData = loadAttrData(spec, VertexAttribute::Normal);
 			u32 numElements = (u32)attrData.size_bytes() / NOR_STRIDE;
 			storage.nor = m_normalTable->Allocate(numElements, attrData.data());
 			m_normalTable->SendCopyRequests(ctx);
@@ -81,17 +92,16 @@ namespace DOG::gfx
 
 		// Load tangent
 		{
-			const auto& attrData = loadAttrData(spec, VertexAttributeTemp::Tangent);
+			const auto& attrData = loadAttrData(spec, VertexAttribute::Tangent);
 			u32 numElements = (u32)attrData.size_bytes() / TAN_STRIDE;
 			storage.tan = m_tangentTable->Allocate(numElements, attrData.data());
 			m_tangentTable->SendCopyRequests(ctx);
 		}
 
-
 		auto handle = m_handleAtor.Allocate<Mesh>();
 		HandleAllocator::TryInsert(m_resources, storage, HandleAllocator::GetSlot(handle.handle));
 
-		MeshContainerTemp container{};
+		MeshContainer container{};
 		container.mesh = handle;
 		container.numSubmeshes = (u32)spec.submeshData.size();
 
@@ -115,8 +125,7 @@ namespace DOG::gfx
 			m_uvTable->Free(uv);
 			m_normalTable->Free(nor);
 			m_tangentTable->Free(tan);
-			for (const auto& md : mds)
-				m_submeshTable->Free(md);
+			m_submeshTable->Free(mds);
 		};
 		m_bin->PushDeferredDeletion(delFunc);
 
@@ -124,21 +133,21 @@ namespace DOG::gfx
 		HandleAllocator::FreeStorage(m_handleAtor, m_resources, handle);
 	}
 
-	u32 MeshTable::GetAttributeDescriptor(VertexAttributeTemp attr) const
+	u32 MeshTable::GetAttributeDescriptor(VertexAttribute attr) const
 	{
 		switch (attr)
 		{
-		case VertexAttributeTemp::Position:
-			m_positionTable->GetGlobalDescriptor();
+		case VertexAttribute::Position:
+			return m_positionTable->GetGlobalDescriptor();
 			break;
-		case VertexAttributeTemp::UV:
-			m_uvTable->GetGlobalDescriptor();
+		case VertexAttribute::UV:
+			return m_uvTable->GetGlobalDescriptor();
 			break;
-		case VertexAttributeTemp::Normal:
-			m_normalTable->GetGlobalDescriptor();
+		case VertexAttribute::Normal:
+			return m_normalTable->GetGlobalDescriptor();
 			break;
-		case VertexAttributeTemp::Tangent:
-			m_tangentTable->GetGlobalDescriptor();
+		case VertexAttribute::Tangent:
+			return m_tangentTable->GetGlobalDescriptor();
 			break;
 
 		default:
@@ -152,7 +161,7 @@ namespace DOG::gfx
 		return m_submeshTable->GetGlobalDescriptor();
 	}
 
-	const SubmeshMetadataTemp& MeshTable::GetSubmeshMD_CPU(Mesh mesh, u32 submesh)
+	const SubmeshMetadata& MeshTable::GetSubmeshMD_CPU(Mesh mesh, u32 submesh)
 	{
 		const auto& res = HandleAllocator::TryGet(m_resources, HandleAllocator::GetSlot(mesh.handle));
 		assert(submesh < res.mdsCpu.size());
@@ -163,9 +172,14 @@ namespace DOG::gfx
 	u32 MeshTable::GetSubmeshMD_GPU(Mesh mesh, u32 submesh)
 	{
 		const auto& res = HandleAllocator::TryGet(m_resources, HandleAllocator::GetSlot(mesh.handle));
-		assert(submesh < res.mdsGpu.size());
 
 		u32 localOffset = submesh;
-		return m_submeshTable->GetLocalOffset(res.mdsGpu[submesh]) + localOffset;
+		// Get to mesh, then use mesh-local offset to find submesh
+		return m_submeshTable->GetLocalOffset(res.mdsGpu) + localOffset;
+	}
+
+	Buffer MeshTable::GetIndexBuffer()
+	{
+		return m_indexTable->GetBuffer();
 	}
 }

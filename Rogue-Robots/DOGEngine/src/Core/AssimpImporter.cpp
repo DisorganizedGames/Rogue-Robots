@@ -14,7 +14,7 @@ namespace DOG
 		if (!aiMat->Get(AI_MATKEY_NAME, materialName))
 		{
 			importedMat.materialName = materialName.C_Str();
-			std::cout << materialName.C_Str() << std::endl;
+			//std::cout << materialName.C_Str() << std::endl;
 		}
 
 		float metallicFactor;

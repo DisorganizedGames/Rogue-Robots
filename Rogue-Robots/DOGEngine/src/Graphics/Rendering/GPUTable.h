@@ -160,6 +160,9 @@ namespace DOG::gfx
 			}
 		}
 
+		// For LIMITED use!!
+		Buffer GetBuffer() const { return m_buffer; }
+
 	private:
 		RenderDevice* m_rd{ nullptr };
 		GPUGarbageBin* m_bin{ nullptr };

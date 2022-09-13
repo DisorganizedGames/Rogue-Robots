@@ -30,8 +30,7 @@ namespace DOG::gfx
 		if (version.copyDoneReceipt)
 		{
 			m_rd->WaitForGPU(*version.copyDoneReceipt);
-		}
-		{
+		
 			version.copyDoneReceipt = std::nullopt;
 			version.vator.Clear();
 
@@ -59,7 +58,8 @@ namespace DOG::gfx
 		// Assert that PushUpload has been called before SubmitCopies and waited for the receipt
 		assert(!version.copyDoneReceipt);
 
-		const bool generateSync = m_targetQueue == QueueType::Copy ? true : false;
+		//const bool generateSync = m_targetQueue == QueueType::Copy ? true : false;
+		const bool generateSync = true;
 
 		// Used to internally sync with next time m_currVersion occurs
 		version.copyDoneReceipt = m_rd->SubmitCommandList(version.copyCmdl, m_targetQueue, {}, generateSync);

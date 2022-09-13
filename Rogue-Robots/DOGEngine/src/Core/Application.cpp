@@ -20,6 +20,12 @@
 
 #include "../EventSystem/EventBus.h"
 #include "../EventSystem/LayerStack.h"
+#include "../Graphics/Rendering/MaterialTable.h"
+#include "../Graphics/Rendering/MeshTable.h"
+
+#include "../Core/AssimpImporter.h"
+
+
 namespace DOG
 {
 	bool ApplicationManager::s_shouldRestart{ false };
@@ -53,6 +59,16 @@ namespace DOG
 		auto rd = backend->CreateDevice();
 		auto sc = rd->CreateSwapchain(hwnd, NUM_BUFFERS);
 
+		// Create depth
+		Texture depth;
+		TextureView depthTarget;
+		{
+			TextureDesc d(MemoryType::Default, DXGI_FORMAT_D32_FLOAT, Window::GetWidth(), Window::GetHeight(), 1, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+			TextureViewDesc tvd(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT);
+			depth = rd->CreateTexture(d);
+			depthTarget = rd->CreateView(depth, tvd);
+		}
+
 		std::array<Texture, NUM_BUFFERS> scTextures;
 		std::array<TextureView, NUM_BUFFERS> scViews;
 		std::array<RenderPass, NUM_BUFFERS> scPasses;
@@ -67,44 +83,61 @@ namespace DOG
 
 			scPasses[i] = rd->CreateRenderPass(RenderPassBuilder()
 				.AppendRT(scViews[i], RenderPassBeginAccessType::Clear, RenderPassEndingAccessType::Preserve)
+				.AddDepth(depthTarget, RenderPassBeginAccessType::Clear, RenderPassEndingAccessType::Discard)
 				.Build());
 		}
 
 		auto sclr = std::make_unique<ShaderCompilerDXC>();
 		auto fullscreenTriVS = sclr->CompileFromFile("FullscreenTriVS.hlsl", ShaderType::Vertex);
 		auto blitPS = sclr->CompileFromFile("BlitPS.hlsl", ShaderType::Pixel);
-
 		Pipeline pipe = rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
 			.SetShader(fullscreenTriVS.get())
 			.SetShader(blitPS.get())
 			.AppendRTFormat(sc->GetBufferFormat())
+			.SetDepthFormat(DepthFormat::D32)
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.Build());
+
+		auto meshVS = sclr->CompileFromFile("MainVS.hlsl", ShaderType::Vertex);
+		auto meshPS = sclr->CompileFromFile("MainPS.hlsl", ShaderType::Pixel);
+		Pipeline meshPipe = rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
+			.SetShader(meshVS.get())
+			.SetShader(meshPS.get())
+			.AppendRTFormat(sc->GetBufferFormat())
+			.SetDepthFormat(DepthFormat::D32)
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
 
 		GPUGarbageBin bin(1);
-		UploadContext upCtx(rd, 16'000, 1);
+		UploadContext upCtx(rd, 40'000'000, 1);
 
-		struct TestData
+		// Test mesh manager		
+		MeshTable::MemorySpecification spec{};
+		spec.maxSizePerAttribute[VertexAttribute::Position] = 4'000'000;
+		spec.maxSizePerAttribute[VertexAttribute::UV] = 4'000'000;
+		spec.maxSizePerAttribute[VertexAttribute::Normal] = 4'000'000;
+		spec.maxSizePerAttribute[VertexAttribute::Tangent] = 4'000'000;
+		spec.maxTotalSubmeshes = 500;
+		spec.maxNumIndices = 1'000'000;
+		MeshTable meshTab(rd, &bin, spec);
+		auto res = AssimpImporter("Assets/Sponza_gltf/glTF/Sponza.gltf").get_result();
+
+		MeshContainer sponza;
 		{
-			float a, b, c, d;
-		};
+			MeshTable::MeshSpecification loadSpec{};
+			loadSpec.indices = res->mesh.indices;
+			for (const auto& attr : res->mesh.vertexData)
+				loadSpec.vertexDataPerAttribute[attr.first] = res->mesh.vertexData[attr.first];
+			loadSpec.submeshData = res->submeshes;
 
-		struct SomeHandle { u64 handle; friend class TypedHandlePool; };
-		GPUTableDeviceLocal<SomeHandle> table(rd, &bin, sizeof(TestData), 100);
-
-		TestData initData{};
-		initData.a = 0.2f;
-		initData.b = 0.4f;
-		initData.c = 0.6f;
-		initData.d = 1.0f;
-		auto dataHandle = table.Allocate(1, &initData);
-		table.SendCopyRequests(upCtx);
-		upCtx.SubmitCopies();
+			sponza = meshTab.LoadMesh(loadSpec, upCtx);
 
 
-		GPUDynamicConstants constantsMan(rd, &bin, 100);
-
-		GPUTableHostVisible<SomeHandle> hvTable(rd, &bin, sizeof(TestData), 100);
-		auto hvHandle = hvTable.Allocate(1);
+			// Upload
+			upCtx.SubmitCopies();
+		}
+		
+		GPUDynamicConstants cMan(rd, &bin, 500);
 
 		CommandList cmdl = rd->AllocateCommandList();
 		u32 count = 0;
@@ -126,7 +159,6 @@ namespace DOG
 
 			// ====== GPU
 			auto& scTex = scTextures[sc->GetNextDrawSurfaceIdx()];
-			auto& scView = scViews[sc->GetNextDrawSurfaceIdx()];
 			auto& scPass = scPasses[sc->GetNextDrawSurfaceIdx()];
 
 			rd->Flush();
@@ -135,47 +167,76 @@ namespace DOG
 			rd->RecycleCommandList(cmdl);
 			cmdl = rd->AllocateCommandList();
 
-			TestData initData{};
-			initData.a = count == 0 ? 1.f : 0.f;
-			initData.b = count == 1 ? 1.f : 0.f;
-			initData.c = count == 2 ? 1.f : 0.f;
-			initData.d = 1.f;
-
-			hvTable.UpdateDirect(hvHandle, &initData, sizeof(initData));
-
-			//table.RequestUpdate(dataHandle, &initData, sizeof(initData));
-			//table.SendCopyRequests(upCtx);
-			//upCtx.SubmitCopies();
-
-			auto dynConst = constantsMan.Allocate();
-			std::memcpy(dynConst.memory, &initData, sizeof(initData));
 
 			// Write
 			{
 				GPUBarrier barrs[]
 				{
-					GPUBarrier::Transition(scTex, 0, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET)
+					GPUBarrier::Transition(scTex, 0, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET),
+					GPUBarrier::Transition(depth, 0, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE)
 				};
 				rd->Cmd_Barrier(cmdl, barrs);
 			}
 
 			rd->Cmd_BeginRenderPass(cmdl, scPass);
 
-			rd->Cmd_SetPipeline(cmdl, pipe);
 			rd->Cmd_SetViewports(cmdl, Viewports()
 				.Append(0.f, 0.f, (f32)Window::GetWidth(), (f32)Window::GetHeight()));
 			rd->Cmd_SetScissorRects(cmdl, ScissorRects()
 				.Append(0, 0, Window::GetWidth(), Window::GetHeight()));
 
-			auto directHandle = table.GetLocalOffset(dataHandle);
-			rd->Cmd_UpdateShaderArgs(cmdl, ShaderArgs()
-				.AppendConstant(table.GetGlobalDescriptor())
-				.AppendConstant(directHandle)
-				.AppendConstant(dynConst.globalDescriptor)
-				.AppendConstant(hvTable.GetGlobalDescriptor())
-				.AppendConstant(hvTable.GetLocalOffset(hvHandle)));
+			// Update and set constant
+			//rd->Cmd_SetPipeline(cmdl, pipe);
+			//{
+			//	auto constant = cMan.Allocate();
+			//	struct SomeData
+			//	{
+			//		f32 a, b, c, d;
+			//	};
+			//	SomeData dat{};
+			//	dat.a = count == 0 ? 1.f : 0.f;
+			//	dat.b = count == 1 ? 1.f : 0.f;
+			//	dat.c = count == 2 ? 1.f : 0.f;
+			//	dat.d = 1.f;
+			//	std::memcpy(constant.memory, &dat, sizeof(SomeData));
+			//	rd->Cmd_UpdateShaderArgs(cmdl, ShaderArgs()
+			//		.AppendConstant(constant.globalDescriptor));
+			//}
+			//rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
 
-			rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
+			
+			rd->Cmd_SetPipeline(cmdl, meshPipe);
+			rd->Cmd_SetIndexBuffer(cmdl, meshTab.GetIndexBuffer());
+			for (u32 i = 0; i < sponza.numSubmeshes; ++i)
+			{
+				auto pfConstant = cMan.Allocate();
+				struct PerFrameData
+				{
+					DirectX::XMMATRIX world, view, proj;
+				} pfData{};
+				pfData.world = DirectX::XMMatrixTranslation(0.f, 0.f, 0.f);
+				pfData.view = DirectX::XMMatrixLookAtLH({ 0.f, 0.f, 0.f }, { 0.f, 0.f, 1.f }, { 0.f, 1.f, 0.f });
+				pfData.proj = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)Window::GetWidth() / Window::GetHeight(), 800.f, 0.1f);
+				std::memcpy(pfConstant.memory, &pfData, sizeof(pfData));
+
+				auto args = ShaderArgs()
+					.AppendConstant(pfConstant.globalDescriptor)
+					.AppendConstant(meshTab.GetSubmeshMD_GPU(sponza.mesh, i))
+					.AppendConstant(meshTab.GetSubmeshDescriptor())
+					.AppendConstant(meshTab.GetAttributeDescriptor(VertexAttribute::Position))
+					.AppendConstant(meshTab.GetAttributeDescriptor(VertexAttribute::UV))
+					.AppendConstant(meshTab.GetAttributeDescriptor(VertexAttribute::Normal))
+					.AppendConstant(meshTab.GetAttributeDescriptor(VertexAttribute::Tangent));
+
+				rd->Cmd_UpdateShaderArgs(cmdl, args);
+
+				auto sm = meshTab.GetSubmeshMD_CPU(sponza.mesh, i);
+				rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
+
+			}
+		
+
+
 
 			rd->Cmd_EndRenderPass(cmdl);
 
@@ -183,7 +244,9 @@ namespace DOG
 			{
 				GPUBarrier barrs[]
 				{
-					GPUBarrier::Transition(scTex, 0, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT)
+					GPUBarrier::Transition(scTex, 0, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT),
+					GPUBarrier::Transition(depth, 0, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_COMMON)
+
 				};
 				rd->Cmd_Barrier(cmdl, barrs);
 			}

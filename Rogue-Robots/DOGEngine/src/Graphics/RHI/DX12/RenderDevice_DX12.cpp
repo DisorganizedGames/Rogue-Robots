@@ -601,6 +601,19 @@ namespace DOG::gfx
 
 
 
+	void RenderDevice_DX12::Cmd_SetIndexBuffer(CommandList list, Buffer ib)
+	{
+		auto& cmdlRes = HandleAllocator::TryGet(m_cmdls, HandleAllocator::GetSlot(list.handle));
+		auto& bufRes = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(ib.handle));
+
+		D3D12_INDEX_BUFFER_VIEW ibv{};
+		ibv.BufferLocation = bufRes.resource->GetGPUVirtualAddress();
+		ibv.Format = DXGI_FORMAT_R32_UINT;
+		ibv.SizeInBytes = bufRes.desc.size;
+
+		cmdlRes.pair.list->IASetIndexBuffer(&ibv);
+	}
+
 	void RenderDevice_DX12::Cmd_Draw(CommandList list, u32 vertsPerInstance, u32 instanceCount, u32 vertStart, u32 instanceStart)
 	{
 		auto& res = HandleAllocator::TryGet(m_cmdls, HandleAllocator::GetSlot(list.handle));
