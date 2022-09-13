@@ -1,5 +1,5 @@
 #include "ShaderCompilerDXC.h"
-#include <dxcapi.h>
+#include "DirectXShaderCompiler/dxcapi.h"
 
 namespace DOG::gfx
 {

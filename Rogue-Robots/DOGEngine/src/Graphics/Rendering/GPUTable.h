@@ -230,7 +230,9 @@ namespace DOG::gfx
 			auto hdl = m_handleAtor.Allocate<Handle>();
 			HandleAllocator::TryInsert(m_resources, res, HandleAllocator::GetSlot(hdl.handle));
 
-			// Send memory TODO
+			// Direct copy
+			if (initData)
+				std::memcpy(res.alloc.memory, initData, m_elementSize * numElements);
 
 			return hdl;
 		}

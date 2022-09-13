@@ -19,7 +19,7 @@ namespace DOG::gfx
 
 	private:
 		friend class GPVirtualAllocator;
-		D3D12MA::VirtualAllocation alloc;
+		D3D12MA::VirtualAllocation alloc{};
 	};
 
 	class GPVirtualAllocator
