@@ -15,21 +15,22 @@ DebugCamera::DebugCamera(f32 x, f32 y, f32 z)
 void DebugCamera::OnUpdate()
 {
 	auto [mouseX, mouseY] = DOG::Mouse::GetDeltaCoordinates();
-	m_polar += mouseX * 1.f/2000 * 2 * XM_PI;
-	m_azim -= mouseY * 1.f/2000 * 2 * XM_PI;
 	
 	if (mouseX || mouseY)
 	{
-		Vector originalForward = XMVectorSet(0, 0, 1, 0);
+		m_polar += mouseX * 1.f/2000 * 2 * XM_PI;
+		m_azim -= mouseY * 1.f/2000 * 2 * XM_PI;
+		
+		m_forward = XMVectorSet(
+			std::sin(m_azim) * std::cos(m_polar),
+			std::sin(m_azim) * std::sin(m_polar),
+			std::cos(m_azim), 
+			0
+		);
 
-		Vector quat = XMQuaternionRotationAxis(-m_right, m_azim);
-		m_forward = XMVector3Rotate(originalForward, quat);
-
-		quat = XMQuaternionRotationAxis(s_globalUp, m_polar);
-		m_forward = XMVector3Rotate(m_forward, quat);
+		m_right = XMVector3Cross(s_globalUp, m_forward);
 	}
 
-	m_right = XMVector3Cross(s_globalUp, m_forward);
 	Vector moveTowards = XMVectorSet(0, 0, 0, 0);
 
 	if (DOG::Keyboard::IsKeyPressed(DOG::Key::W))
