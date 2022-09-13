@@ -42,7 +42,7 @@ namespace DOG
 		const u32 NUM_BUFFERS = 2;
 
 		auto hwnd = Window::GetHandle();
-		auto backend = std::make_unique<gfx::RenderBackend_DX12>();
+		auto backend = std::make_unique<gfx::RenderBackend_DX12>(true);
 		auto rd = backend->CreateDevice();
 		auto sc = rd->CreateSwapchain(hwnd, NUM_BUFFERS);
 
