@@ -24,3 +24,18 @@ void GameLayer::OnRender()
 {
 	//...
 }
+
+//Place-holder example on how to use event system:
+void GameLayer::OnEvent(DOG::IEvent& event)
+{
+	using namespace DOG;
+	switch (event.GetEventType())
+	{
+	case EventType::LeftMouseButtonPressedEvent:
+	{
+		auto [x, y] = EVENT(LeftMouseButtonPressedEvent).coordinates;
+		std::cout << GetName() << " received event: Left MB clicked [x,y] = [" << x << "," << y << "]\n";
+		break;
+	}
+	}
+}

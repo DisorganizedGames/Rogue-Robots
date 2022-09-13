@@ -1,6 +1,8 @@
 #include "LayerStack.h"
 namespace DOG
 {
+	LayerStack LayerStack::s_instance;
+
 	LayerStack::LayerStack() noexcept
 		:m_layers{}, 
 		 m_layerIt{ m_layers.begin() }, 

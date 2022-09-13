@@ -9,6 +9,7 @@ public:
 	virtual void OnDetach() override final;
 	virtual void OnUpdate() override final;
 	virtual void OnRender() override final;
+	virtual void OnEvent(DOG::IEvent& event) override final;
 private:
 
 };

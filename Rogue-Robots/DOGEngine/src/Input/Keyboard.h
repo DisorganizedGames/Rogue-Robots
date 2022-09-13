@@ -1,4 +1,5 @@
 #pragma once
+#include "../EventSystem/EventPublisher.h"
 namespace DOG
 {
 	enum class Key : u8 
@@ -11,7 +12,7 @@ namespace DOG
 	};
 
 	constexpr const u16 KEY_COUNT{ 256 };
-	class Keyboard
+	class Keyboard : public EventPublisher
 	{
 	public:
 		static void OnKeyDown(const Key key) noexcept;

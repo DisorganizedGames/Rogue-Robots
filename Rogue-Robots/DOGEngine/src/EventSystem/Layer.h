@@ -1,6 +1,7 @@
 #pragma once
 namespace DOG
 {
+	class IEvent;
 	class Layer
 	{
 	public:
@@ -10,6 +11,7 @@ namespace DOG
 		virtual void OnDetach() {}
 		virtual void OnUpdate() {}
 		virtual void OnRender() {}
+		virtual void OnEvent(IEvent&) {}
 		[[nodiscard]] constexpr const std::string& GetName() const noexcept { return m_name; }
 	private:
 		std::string m_name;
