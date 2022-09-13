@@ -26,6 +26,9 @@ namespace DOG
 	public:
 		// Plays a single buffer to the end. Does not support additional buffers
 		void Play(std::vector<u8>&& buffer);
+
+
+		void PlayAsync(WAVFileReader&& fileReader);
 		
 		void Stop();
 
@@ -48,6 +51,13 @@ namespace DOG
 		std::vector<std::vector<u8>> m_buffers;
 
 		std::unique_ptr<SourceVoiceCallback> m_callback;
+		
+		bool m_playingAsync = false;
+		WAVFileReader m_fileReader;
+		std::thread m_audioThread;
+
+	private:
+		void Queue(const std::vector<u8>& buffer, u32 bufferFlag);
 	};	
 }
 

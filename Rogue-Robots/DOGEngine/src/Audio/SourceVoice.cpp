@@ -59,17 +59,64 @@ void SourceVoice::Play(std::vector<u8>&& buffer)
 	m_buffers.push_back(std::move(buffer));
 }
 
+void SourceVoice::PlayAsync(WAVFileReader&& fileReader)
+{
+	constexpr const u32 chunkSize = 4096;
+	m_fileReader = std::move(fileReader);
+
+	m_buffers.clear();
+	m_buffers.resize(2);
+
+	m_playingAsync = true;
+	m_audioThread = std::thread([&] ()
+		{
+			u32 index = 1;
+			bool endOfStream = false;
+
+			m_buffers[0] = m_fileReader.ReadNextChunk(chunkSize);
+			endOfStream = (m_buffers[0].size() < chunkSize);
+			Queue(m_buffers[0], endOfStream * XAUDIO2_END_OF_STREAM);
+			
+			m_sourceVoice->Start();
+
+			while (!endOfStream && m_playingAsync)
+			{
+				m_buffers[index] = m_fileReader.ReadNextChunk(chunkSize);
+				endOfStream = (m_buffers[index].size() < chunkSize);
+				Queue(m_buffers[index], endOfStream * XAUDIO2_END_OF_STREAM);
+
+				m_callback->WaitForEnd();
+				index = (index+1) % 2;
+			}
+			m_playingAsync = false;
+			m_buffers.clear();
+		});
+}
+
 void SourceVoice::Stop()
 {
+	if (m_playingAsync)
+	{
+		m_playingAsync = false;
+		m_audioThread.join();
+	}
+
 	HR hr = m_sourceVoice->Stop();
 	hr.try_fail("Failed to stop Source Voice");
 
 	hr = m_sourceVoice->FlushSourceBuffers();
 	hr.try_fail("Failed to flush source voice queued buffers");
+
+	m_buffers.clear();
 }
 
 void SourceVoice::WaitForEnd()
 {
+	if (m_playingAsync)
+	{
+		m_audioThread.join();
+		return;
+	}
 	XAUDIO2_VOICE_STATE state;
 	m_sourceVoice->GetState(&state);
 	if (state.BuffersQueued > 0)
@@ -99,3 +146,20 @@ const WAVProperties& SourceVoice::GetWAVProperties() const
 	return m_audioProperties;
 }
 
+void SourceVoice::Queue(const std::vector<u8>& buffer, u32 bufferFlag)
+{
+	XAUDIO2_BUFFER xAudioBuffer = {
+		.Flags = bufferFlag,
+		.AudioBytes = static_cast<u32>(buffer.size()),
+		.pAudioData = buffer.data(),
+		.PlayBegin = 0,
+		.PlayLength = 0,
+		.LoopBegin = 0,
+		.LoopLength = 0,
+		.LoopCount = 0,
+		.pContext = nullptr,
+	};
+
+	HR hr = m_sourceVoice->SubmitSourceBuffer(&xAudioBuffer);
+	hr.try_fail("Failed to queue XAudio Buffer");
+}

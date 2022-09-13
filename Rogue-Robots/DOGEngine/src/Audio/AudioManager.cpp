@@ -1,4 +1,7 @@
 #include "AudioManager.h"
+#include <filesystem>
+#include <vector>
+#include "AudioFileReader.h"
 
 using namespace DOG;
 
@@ -11,8 +14,20 @@ void AudioManager::Play(AudioPlayerComponent& audioPlayerComponent)
 {
 	auto& [audioID, volume, _] = audioPlayerComponent;
 	
+	auto fileSize = std::filesystem::file_size("chilling.wav");
+
 	// TODO: HIGHLY TEMPORARY
-	auto [wavProp, data] = ReadWAV("chilling.wav");
+	WAVProperties wavProp;
+	std::vector<u8> data;
+	
+	WAVFileReader wfr("chilling.wav");
+	wavProp = wfr.ReadProperties();
+	
+	if (fileSize <= 4096)
+	{
+		auto [p, d] = ReadWAV("chilling.wav");
+		data = std::move(d);
+	}
 
 	u64 freeVoiceIndex = GetFreeVoice(wavProp);
 
@@ -22,9 +37,16 @@ void AudioManager::Play(AudioPlayerComponent& audioPlayerComponent)
 	auto& source = m_sources[freeVoiceIndex];
 
 	source->SetSettings(settings);
-	
 	audioPlayerComponent.voiceID = freeVoiceIndex;
-	source->Play(std::move(data));
+	
+	if (fileSize > ((u64)18<<1))
+	{
+		source->PlayAsync(std::move(wfr));
+	}
+	else
+	{
+		source->Play(std::move(data));
+	}
 }
 
 void AudioManager::Stop(AudioPlayerComponent& audioPlayerComponent)

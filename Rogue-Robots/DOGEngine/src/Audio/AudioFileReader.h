@@ -158,8 +158,8 @@ namespace DOG
 	class WAVFileReader
 	{
 	private:
-		std::ifstream file;
-		u32 remaining_bytes = 0;
+		std::ifstream m_file;
+		u32 m_remainingBytes = 0;
 
 	private:
 		void SeekNextDataChunk()
@@ -169,58 +169,72 @@ namespace DOG
 			chunk_type[4] = 0;
 			while (true)
 			{
-				file.read(chunk_type, 4);
+				m_file.read(chunk_type, 4);
 				if (strcmp(&chunk_type[0], "LIST") == 0)
 				{
-					file.seekg(4, std::ios::cur); // Skip chunk size
+					m_file.seekg(4, std::ios::cur); // Skip chunk size
 				}
 				else if (strcmp(&chunk_type[0], "INFO") == 0)
 				{
-					file.seekg(4, std::ios::cur);
-					file.read(chunk_size, sizeof(u32));
+					m_file.seekg(4, std::ios::cur);
+					m_file.read(chunk_size, sizeof(u32));
 					u32 skip = *(u32*)chunk_size;
-					file.seekg(skip, std::ios::cur);
+					m_file.seekg(skip, std::ios::cur);
 				}
 				else if (strcmp(&chunk_type[0], "data") == 0)
 				{
-					file.read((char*)&remaining_bytes, sizeof(u32));
+					m_file.read((char*)&m_remainingBytes, sizeof(u32));
 					break;
 				}
 			}
 		}
 	public:
+		WAVFileReader() {}
 		WAVFileReader(const std::string& path)
 		{
-			file.open(path, std::ios::binary);
-			if (!file)
-				assert(file);
+			m_file.open(path, std::ios::binary);
+			if (!m_file)
+				assert(m_file);
+		}
+		WAVFileReader(WAVFileReader&& other) noexcept
+		{
+			m_file = std::move(other.m_file);
+			m_remainingBytes = other.m_remainingBytes;
+		}
+
+		WAVFileReader& operator =(WAVFileReader&& other) noexcept
+		{
+			m_file = std::move(other.m_file);
+			m_remainingBytes = other.m_remainingBytes;
+			return *this;
 		}
 
 		WAVProperties ReadProperties()
 		{
 			std::vector<u8> header(WAV_RIFF_HEADER_SIZE + WAV_FORMAT_CHUNK_SIZE);
-			file.read((char*)header.data(), header.size());
+			m_file.read((char*)header.data(), header.size());
 			return ReadWAVProperties(header);
 		}
 
 		[[nodiscard]]
 		std::vector<u8> ReadNextChunk(u32 size)
 		{
-			if (file.eof())
+			assert(m_file.is_open());
+			if (m_file.eof())
 				return std::vector<u8>();
 
-			if (!remaining_bytes)
+			if (!m_remainingBytes)
 				SeekNextDataChunk();
 
-			u32 to_read = size < remaining_bytes ? size : remaining_bytes;
+			u32 toRead = size < m_remainingBytes ? size : m_remainingBytes;
 
-			std::vector<u8> out(to_read);
-			if (!file.read((char*)&out[0], to_read))
+			std::vector<u8> out(toRead);
+			if (!m_file.read((char*)&out[0], toRead))
 			{
 				assert(false);
 			}
 
-			remaining_bytes -= to_read;
+			m_remainingBytes -= toRead;
 
 			return out;
 		}
