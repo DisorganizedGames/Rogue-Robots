@@ -110,7 +110,7 @@ namespace DOG
 
 		s_windowData.dimensions.x = spec.windowDimensions.x;
 		s_windowData.dimensions.y = spec.windowDimensions.y;
-		s_windowData.mode = (WindowMode)spec.initialWindowMode;
+		s_windowData.mode = spec.initialWindowMode;
 		
 		std::string className = spec.name + "Class";
 		WNDCLASSEXA windowClass = {};

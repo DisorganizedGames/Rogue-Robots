@@ -1,5 +1,5 @@
 #pragma once
-#include "EventBuss.h"
+#include "EventBus.h"
 #include "IEvent.h"
 namespace DOG
 {
@@ -17,12 +17,12 @@ namespace DOG
 	template<typename EventType, typename ...Args>
 	void EventPublisher::PublishEvent(Args&& ... args) noexcept
 	{
-		EventBuss::Get().Dispatch(EventType({ std::forward<Args>(args)... }));
+		EventBus::Get().Dispatch(EventType({ std::forward<Args>(args)... }));
 	}
 
 	template<typename EventType>
 	void EventPublisher::PublishEvent() noexcept
 	{
-		EventBuss::Get().Dispatch(EventType());
+		EventBus::Get().Dispatch(EventType());
 	}
 }

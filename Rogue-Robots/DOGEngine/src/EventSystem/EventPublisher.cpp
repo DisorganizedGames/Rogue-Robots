@@ -3,6 +3,6 @@ namespace DOG
 {
 	void EventPublisher::PublishEvent(IEvent&& event) noexcept
 	{
-		EventBuss::Get().Dispatch(std::move(event));
+		EventBus::Get().Dispatch(std::move(event));
 	}
 }

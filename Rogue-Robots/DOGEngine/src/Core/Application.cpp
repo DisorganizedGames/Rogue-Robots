@@ -14,7 +14,7 @@
 #include "../Graphics/Rendering/GPUTable.h"
 #include "../Graphics/Rendering/GPUDynamicConstants.h"
 
-#include "../EventSystem/EventBuss.h"
+#include "../EventSystem/EventBus.h"
 #include "../EventSystem/LayerStack.h"
 namespace DOG
 {
@@ -216,7 +216,7 @@ namespace DOG
 
 	void Application::OnStartUp() noexcept
 	{
-		EventBuss::Get().SetMainApplication(this);
+		EventBus::Get().SetMainApplication(this);
 		Window::Initialize(m_specification);
 	}
 

@@ -1,11 +1,11 @@
-#include "EventBuss.h"
+#include "EventBus.h"
 #include "IEvent.h"
 #include "LayerStack.h"
 namespace DOG
 {
-	EventBuss EventBuss::s_instance;
+	EventBus EventBus::s_instance;
 	
-	void EventBuss::Dispatch(IEvent&& event) const noexcept
+	void EventBus::Dispatch(IEvent&& event) const noexcept
 	{
 		for (auto layer = LayerStack::Get().end(); layer != LayerStack::Get().begin();)
 		{
@@ -19,7 +19,7 @@ namespace DOG
 		m_mainApplication->OnEvent(event);
 	}
 
-	void EventBuss::SetMainApplication(Application* application) noexcept
+	void EventBus::SetMainApplication(Application* application) noexcept
 	{
 		ASSERT(application, "Application pointer is invalid.");
 		m_mainApplication = application;
