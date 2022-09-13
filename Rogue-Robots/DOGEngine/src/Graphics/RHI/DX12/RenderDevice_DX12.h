@@ -6,8 +6,6 @@
 #include "Utilities/DX12DescriptorChunk.h"
 #include "Utilities/DX12Fence.h"
 
-#define USE_REVERSE_Z
-
 namespace D3D12MA { class Allocator; class Allocation; }
 class DX12DescriptorManager;
 class DX12Queue;

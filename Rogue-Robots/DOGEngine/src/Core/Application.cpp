@@ -60,13 +60,13 @@ namespace DOG
 		auto sc = rd->CreateSwapchain(hwnd, NUM_BUFFERS);
 
 		// Create depth
-		Texture depth;
+		Texture depthTex;
 		TextureView depthTarget;
 		{
 			TextureDesc d(MemoryType::Default, DXGI_FORMAT_D32_FLOAT, Window::GetWidth(), Window::GetHeight(), 1, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 			TextureViewDesc tvd(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT);
-			depth = rd->CreateTexture(d);
-			depthTarget = rd->CreateView(depth, tvd);
+			depthTex = rd->CreateTexture(d);
+			depthTarget = rd->CreateView(depthTex, tvd);
 		}
 
 		std::array<Texture, NUM_BUFFERS> scTextures;
@@ -132,8 +132,7 @@ namespace DOG
 
 			sponza = meshTab.LoadMesh(loadSpec, upCtx);
 
-
-			// Upload
+			// Upload! :)
 			upCtx.SubmitCopies();
 		}
 		
@@ -173,7 +172,7 @@ namespace DOG
 				GPUBarrier barrs[]
 				{
 					GPUBarrier::Transition(scTex, 0, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET),
-					GPUBarrier::Transition(depth, 0, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE)
+					GPUBarrier::Transition(depthTex, 0, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE)
 				};
 				rd->Cmd_Barrier(cmdl, barrs);
 			}
@@ -185,6 +184,7 @@ namespace DOG
 			rd->Cmd_SetScissorRects(cmdl, ScissorRects()
 				.Append(0, 0, Window::GetWidth(), Window::GetHeight()));
 
+			// Fullscreen
 			// Update and set constant
 			//rd->Cmd_SetPipeline(cmdl, pipe);
 			//{
@@ -216,6 +216,7 @@ namespace DOG
 				} pfData{};
 				pfData.world = DirectX::XMMatrixTranslation(0.f, 0.f, 0.f);
 				pfData.view = DirectX::XMMatrixLookAtLH({ 0.f, 0.f, 0.f }, { 0.f, 0.f, 1.f }, { 0.f, 1.f, 0.f });
+				// We are using REVERSE DEPTH!!!
 				pfData.proj = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)Window::GetWidth() / Window::GetHeight(), 800.f, 0.1f);
 				std::memcpy(pfConstant.memory, &pfData, sizeof(pfData));
 
@@ -235,9 +236,6 @@ namespace DOG
 
 			}
 		
-
-
-
 			rd->Cmd_EndRenderPass(cmdl);
 
 			// Present
@@ -245,7 +243,7 @@ namespace DOG
 				GPUBarrier barrs[]
 				{
 					GPUBarrier::Transition(scTex, 0, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT),
-					GPUBarrier::Transition(depth, 0, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_COMMON)
+					GPUBarrier::Transition(depthTex, 0, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_COMMON)
 
 				};
 				rd->Cmd_Barrier(cmdl, barrs);

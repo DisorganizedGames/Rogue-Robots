@@ -82,11 +82,8 @@ namespace DOG::gfx
 		std::array<float, 4> clearColor{ 0.f, 0.f, 0.f, 1.f };
 		u8 stencilClear{ 0 };
 
-#ifdef USE_REVERSE_Z
+		// Reverse Z by default
 		float depthClear{ 0.f };
-#else
-		float depthClear{ 1.f };
-#endif
 
 		TextureDesc() = default;
 		TextureDesc(MemoryType memType, DXGI_FORMAT format, u32 width, u32 height, u32 depth, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATES initState = D3D12_RESOURCE_STATE_COMMON) :
@@ -156,11 +153,8 @@ namespace DOG::gfx
 		std::array<D3D12_VIEWPORT, 8> vps;
 		u8 numVps{ 0 };
 
-#ifdef USE_REVERSE_Z
+		// Using Reverse-Z by default (Reverse Z)
 		Viewports& Append(f32 topLeftX, f32 topLeftY, f32 width, f32 height, f32 minDepth = 0.f, f32 maxDepth = D3D12_MAX_DEPTH)
-#else
-		Viewports& Append(f32 topLeftX, f32 topLeftY, f32 width, f32 height, f32 minDepth = D3D12_MAX_DEPTH, f32 maxDepth = 0.f)
-#endif
 		{
 			assert(numVps < 8);
 			D3D12_VIEWPORT vp{};
