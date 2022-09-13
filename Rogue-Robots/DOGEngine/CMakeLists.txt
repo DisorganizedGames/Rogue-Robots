@@ -58,6 +58,15 @@ add_custom_command(
     "${CMAKE_BINARY_DIR}/Runtime/D3D12/"
 )
 
+add_custom_command(
+    TARGET ${LibraryName} POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy 
+    "${CMAKE_BINARY_DIR}/Runtime/d3d12SDKLayers.dll"
+    "${CMAKE_BINARY_DIR}/Runtime/D3D12/"
+)
+
+
+
 
 set_property(
     DIRECTORY 
