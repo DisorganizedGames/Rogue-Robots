@@ -2,6 +2,7 @@
 
 void LuaContext::IncreaseReturnArgument()
 {
+	//Clears the stack if it's not empty
 	++m_return_argument_size;
 	if (m_return_argument_size == 0)
 	{
@@ -15,6 +16,7 @@ LuaContext::LuaContext(LuaW* luaW)
 	m_return_argument_size = 0;
 }
 
+//if there exist no double/float then we return a empty string
 int LuaContext::GetInteger() const
 {
 	int max = m_luaW->GetNumberOfStackItems();
@@ -28,6 +30,7 @@ int LuaContext::GetInteger() const
 	return 0;
 }
 
+//if there exist no double/float then we return a empty string
 double LuaContext::GetDouble() const
 {
 	int max = m_luaW->GetNumberOfStackItems();
@@ -41,6 +44,7 @@ double LuaContext::GetDouble() const
 	return 0.0;
 }
 
+//if there exist no bool then we return false
 bool LuaContext::GetBoolean() const
 {
 	int max = m_luaW->GetNumberOfStackItems();
@@ -54,6 +58,7 @@ bool LuaContext::GetBoolean() const
 	return false;
 }
 
+//if there exist no string then we return a empty string
 std::string LuaContext::GetString() const
 {
 	int max = m_luaW->GetNumberOfStackItems();
@@ -67,6 +72,7 @@ std::string LuaContext::GetString() const
 	return std::string();
 }
 
+//if there exist no table it returns a empty table
 LuaTable LuaContext::GetTable() const
 {
 	int max = m_luaW->GetNumberOfStackItems();
@@ -81,7 +87,6 @@ LuaTable LuaContext::GetTable() const
 
 	std::cout << "Error: Couldn't Find Table In Arguments\n";
 
-	//m_luaW->GetTableFromStack();
 	return LuaTable(m_luaW);
 }
 

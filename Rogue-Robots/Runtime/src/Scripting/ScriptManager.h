@@ -7,7 +7,6 @@ struct TempScript
 {
 	std::string scriptName;
 	Table luaScript;
-	//LuaTable luaScript;
 	Function onStart;
 	Function onUpdate;
 };
@@ -29,10 +28,12 @@ private:
 
 private:
 	static void ScriptFileWatcher(const std::filesystem::path& path, const filewatch::Event changeType);
+	//Temp before component system
 	void TempReloadFile(const std::string& fileName, TempScript* script);
 
 public:
 	ScriptManager(LuaW* luaW);
+	//Temp before component system
 	TempScript* AddScript(const std::string& luaFileName);
 	void ReloadScripts();
 };

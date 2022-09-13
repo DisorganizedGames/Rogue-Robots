@@ -14,13 +14,16 @@ void LuaW::Error(const std::string& errorMessage)
 
 void LuaW::RunScript(const std::string& luaFileName)
 {
+	const int getErrorMessage = -1;
+	const int popAmount = 1;
+
 	//Load lua file and run it
 	int error = luaL_loadfile(m_luaState, luaFileName.c_str()) || lua_pcall(m_luaState, 0, LUA_MULTRET, 0);
 	if (error)
 	{
-		std::cout << lua_tostring(m_luaState, -1) << std::endl;
+		std::cout << lua_tostring(m_luaState, getErrorMessage) << std::endl;
 		assert(false);
-		lua_pop(m_luaState, 1);
+		lua_pop(m_luaState, popAmount);
 	}
 }
 
@@ -77,6 +80,8 @@ RegisterClassFunctions LuaW::CreateLuaInterface(const std::string& interfaceName
 //Pushes the interface to lua
 void LuaW::PushLuaInterface(RegisterClassFunctions& registerInterface)
 {
+	const int topStackItemIndex = -1;
+
 	std::vector<luaL_Reg> lua_regs;
 
 	for (int i = 0; i < registerInterface.classFunctions.size(); ++i)
@@ -91,9 +96,9 @@ void LuaW::PushLuaInterface(RegisterClassFunctions& registerInterface)
 	//Sets the functions to the metatable
 	luaL_setfuncs(m_luaState, lua_regs.data(), 0);
 	//Copies the metatable on the stack
-	lua_pushvalue(m_luaState, -1);
+	lua_pushvalue(m_luaState, topStackItemIndex);
 	//Sets the __index to the metatable (to it self)
-	lua_setfield(m_luaState, -1, "__index");
+	lua_setfield(m_luaState, topStackItemIndex, "__index");
 	//Create the interface for lua
 	SetGlobal(registerInterface.className);
 }
@@ -281,7 +286,7 @@ Function LuaW::GetFunctionFromStack(int index, bool noError)
 		Error("The value on the stack is not an function");
 		lua_remove(m_luaState, index);
 	}
-	return Function(-1);
+	return Function(c_unValid);
 }
 
 //Checks if the current index on the stack is an table and return it
@@ -300,7 +305,7 @@ Table LuaW::GetTableFromStack(int index, bool noError)
 		Error("The value on the stack is not an table");
 	}
 	lua_remove(m_luaState, index);
-	return Table(-1);
+	return Table(c_unValid);
 }
 
 //Checks if the current index on the stack is an UserData and return it
@@ -317,7 +322,7 @@ UserData LuaW::GetUserDataFromStack(int index, bool noError)
 		Error("The value on the stack is not an userdata");
 		lua_remove(m_luaState, index);
 	}
-	return UserData(-1);
+	return UserData(c_unValid);
 }
 
 //Push an integer to the stack
@@ -389,24 +394,32 @@ void LuaW::GetGlobal(const std::string& luaGlobalName)
 //Pushes two items on the stack into the table and then we pop the table from the stack
 void LuaW::SetTableAndPop()
 {
-	lua_settable(m_luaState, -3);
+	const int tableStackIndex = -3;
+	const int popAmount = 1;
 
-	lua_pop(m_luaState, 1);
+	lua_settable(m_luaState, tableStackIndex);
+
+	lua_pop(m_luaState, popAmount);
 }
 
 //Gets item from the table and then we remove it from the stack
 void LuaW::GetTableAndRemove()
 {
-	lua_gettable(m_luaState, -2);
+	const int tableStackIndex = -2;
+	const int popAmount = 1;
 
-	lua_remove(m_luaState, 1);
+	lua_gettable(m_luaState, tableStackIndex);
+
+	lua_remove(m_luaState, popAmount);
 }
 
 void LuaW::AddReference(Table& ref)
 {
+	const int oneReference = 1;
+
 	auto it = m_reference_list.find(ref.ref);
 	if (it == m_reference_list.end())
-		m_reference_list.insert({ ref.ref, {1} });
+		m_reference_list.insert({ ref.ref, {oneReference} });
 	else
 		++it->second.nr_of_references;
 }
@@ -414,18 +427,24 @@ void LuaW::AddReference(Table& ref)
 //If there are no more reference to that table then we will remove the reference on the c++ side
 void LuaW::RemoveReference(Table& ref)
 {
+	const int minAllowedReferencesForRemoval = 0;
+
 	auto it = m_reference_list.find(ref.ref);
 	if (it != m_reference_list.end())
 	{
 		--it->second.nr_of_references;
-		if (it->second.nr_of_references == 0)
+		if (it->second.nr_of_references == minAllowedReferencesForRemoval)
 			luaL_unref(m_luaState, LUA_REGISTRYINDEX, ref.ref);
-		ref.ref = -1;
+		ref.ref = c_unValid;
 	}
 }
 
 int LuaW::AddEnvironmentToTable(Table& table, const std::string& luaFileName)
 {
+	const int environmentTable = 1;
+	const int globalTableStackIndex = 3;
+	const int chunkStackIndex = -2;
+
 	//Pushes the table to the stack
 	PushTableToStack(table);
 
@@ -439,16 +458,16 @@ int LuaW::AddEnvironmentToTable(Table& table, const std::string& luaFileName)
 	GetGlobal("_G");
 
 	//Sets the global table to the __index of the metatable
-	lua_setfield(m_luaState, 3, "__index");
+	lua_setfield(m_luaState, globalTableStackIndex, "__index");
 
 	//Sets the metatable to the table
-	lua_setmetatable(m_luaState, 1);
+	lua_setmetatable(m_luaState, environmentTable);
 
 	//Copies the table to the stack on the top
-	lua_pushvalue(m_luaState, 1);
+	lua_pushvalue(m_luaState, environmentTable);
 
 	//Pushes the table to the chunk
-	lua_setupvalue(m_luaState, -2, 1);
+	lua_setupvalue(m_luaState, chunkStackIndex, environmentTable);
 
 	//Run the chunk (run the lua file)
 	return lua_pcall(m_luaState, 0, LUA_MULTRET, 0);
@@ -461,12 +480,18 @@ int LuaW::GetNumberOfStackItems() const
 
 void LuaW::ClearStack()
 {
-	lua_pop(m_luaState, -1);
+	const int popAmount = -1;
+	//When popAmount is -1 then it will clear the entire stack
+	lua_pop(m_luaState, popAmount);
 }
 
 void LuaW::CallLuaFunction(Function& function, int arguments)
 {
-	if (function.ref == -1)
+	const int popAmount = 1;
+	const int getErrorMessage = -1;
+	const int bottomOfStackIndex = 1;
+
+	if (function.ref == c_unValid)
 	{
 		Error("Function references nothing");
 		return;
@@ -475,20 +500,25 @@ void LuaW::CallLuaFunction(Function& function, int arguments)
 	PushFunctionToStack(function);
 	//Insert the function to the bottom of the stack
 	//The arguments need to be at the top and the function call needs to be last
-	lua_insert(m_luaState, 1);
+	lua_insert(m_luaState, bottomOfStackIndex);
 	//Call the function with the amount of arguments
 	int error = lua_pcall(m_luaState, arguments, LUA_MULTRET, 0);
 	if (error)
 	{
-		Error(lua_tostring(m_luaState, -1));
+		Error(lua_tostring(m_luaState, getErrorMessage));
 		assert(false);
-		lua_pop(m_luaState, 1);
+		lua_pop(m_luaState, popAmount);
 	}
 }
 
 void LuaW::CallTableLuaFunction(Table& table, Function& function, int arguments)
 {
-	if (function.ref == -1 || table.ref == -1)
+	const int popAmount = 1;
+	const int getErrorMessage = -1;
+	const int bottomOfStackIndex = 1;
+	const int secondIndexOfStack = 2;
+
+	if (function.ref == c_unValid || table.ref == c_unValid)
 	{
 		Error("Table or Function references nothing");
 		return;
@@ -498,30 +528,35 @@ void LuaW::CallTableLuaFunction(Table& table, Function& function, int arguments)
 	PushFunctionToStack(function);
 	//Insert the function to the bottom of the stack
 	//The arguments need to be at the top and the function call needs to be last
-	lua_insert(m_luaState, 1);
+	lua_insert(m_luaState, bottomOfStackIndex);
 	//Pushes the table to the stack
 	PushTableToStack(table);
 	//Insert the table above the function on the stack
 	//If you want to be able to access private table variables in the function then this is needed
 	//This is equivalent to writing table.function(table) or table:function()
-	lua_insert(m_luaState, 2);
+	lua_insert(m_luaState, secondIndexOfStack);
 
-	int error = lua_pcall(m_luaState, 1 + arguments, LUA_MULTRET, 0);
+	//+1 because we need to return the table aswell
+	int argumentSize = 1 + arguments;
+
+	int error = lua_pcall(m_luaState, argumentSize, LUA_MULTRET, 0);
 	if (error)
 	{
-		Error(lua_tostring(m_luaState, -1));
+		Error(lua_tostring(m_luaState, getErrorMessage));
 		assert(false);
-		lua_pop(m_luaState, 1);
+		lua_pop(m_luaState, popAmount);
 	}
 }
 
 Table LuaW::CreateGlobalTable(const std::string& globalTableName)
 {
+	const int tableStackIndex = -1;
+
 	//Creates a table on the stack
 	lua_newtable(m_luaState);
 
 	//Copies the table on the stack
-	lua_pushvalue(m_luaState, -1);
+	lua_pushvalue(m_luaState, tableStackIndex);
 
 	//Take the copied table and pushes it as a global
 	SetGlobal(globalTableName);
@@ -743,6 +778,8 @@ UserData LuaW::GetUserDataFromTable(Table& table, const std::string& tableUserDa
 
 Function LuaW::TryGetFunctionFromTable(Table& table, const std::string& tableFunctionName)
 {
+	const int popAmount = 1;
+
 	PushTableToStack(table);
 	PushStringToStack(tableFunctionName);
 
@@ -755,68 +792,82 @@ Function LuaW::TryGetFunctionFromTable(Table& table, const std::string& tableFun
 	Function function = GetFunctionFromStack(index, true);
 
 	if (!CheckIfFunctionExist(function))
-		lua_pop(m_luaState, 1);
+		lua_pop(m_luaState, popAmount);
 
 	return function;
 }
 
+//Checks if the function differs from unValid
 bool LuaW::CheckIfFunctionExist(Function& function)
 {
-	return function.ref != -1;
+	return function.ref != c_unValid;
 }
 
 //Load the lua file and pushes it to the stack
 void LuaW::LoadChunk(const std::string& luaScriptName)
 {
+	const int popAmount = 1;
+	const int getErrorMessage = -1;
+
 	int error = luaL_loadfile(m_luaState, luaScriptName.c_str());
 	if (error)
 	{
-		Error(lua_tostring(m_luaState, -1));//"Couldn't find file " + luaScriptName + "!");
-		lua_pop(m_luaState, 1);
+		Error(lua_tostring(m_luaState, getErrorMessage));//"Couldn't find file " + luaScriptName + "!");
+		lua_pop(m_luaState, popAmount);
 	}
 }
 
 //Try and get the lua file
 bool LuaW::TryLoadChunk(const std::string& luaScriptName)
 {
+	const int popAmount = 1;
+	const int getErrorMessage = -1;
+
 	int error = luaL_loadfile(m_luaState, luaScriptName.c_str());
 	if (error)
-		std::cout << "ERROR: " << lua_tostring(m_luaState, -1) << "\n";
+		std::cout << "ERROR: " << lua_tostring(m_luaState, getErrorMessage) << "\n";
 
-	lua_pop(m_luaState, 1);
+	lua_pop(m_luaState, popAmount);
 	return error;
 }
 
+//Checks if the index on the stack is a integer
 bool LuaW::IsInteger(int index) const
 {
 	return lua_isinteger(m_luaState, index);
 }
 
+//Checks if the index on the stack is a number
 bool LuaW::IsNumber(int index) const
 {
 	return lua_isnumber(m_luaState, index);
 }
 
+//Checks if the index on the stack is a string
 bool LuaW::IsString(int index) const
 {
 	return lua_isstring(m_luaState, index);
 }
 
+//Checks if the index on the stack is a bool
 bool LuaW::IsBool(int index) const
 {
 	return lua_isboolean(m_luaState, index);
 }
 
+//Checks if the index on the stack is a function
 bool LuaW::IsFunction(int index) const
 {
 	return lua_isfunction(m_luaState, index);
 }
 
+//Checks if the index on the stack is a table
 bool LuaW::IsTable(int index) const
 {
 	return lua_istable(m_luaState, index);
 }
 
+//Checks if the index on the stack is a userData
 bool LuaW::IsUserData(int index) const
 {
 	return lua_isuserdata(m_luaState, index);
@@ -824,46 +875,56 @@ bool LuaW::IsUserData(int index) const
 
 void LuaW::CreateEnvironment(Table& table, const std::string& luaFileName)
 {
+	const int popAmount = 1;
+	const int getErrorMessage = -1;
+
 	int error = AddEnvironmentToTable(table, luaFileName);
 
 	if (error)
 	{
-		auto errorText = lua_tostring(m_luaState, -1);
+		auto errorText = lua_tostring(m_luaState, getErrorMessage);
 		Error(errorText);
 	}
 
 	//Pop the table
-	lua_pop(m_luaState, 1);
+	lua_pop(m_luaState, popAmount);
 }
 
 int LuaW::TryCreateEnvironment(Table& table, const std::string& luaFileName)
 {
+	const int popAmount = 1;
+	const int getErrorMessage = -1;
+
 	int error = AddEnvironmentToTable(table, luaFileName);
 
 	if (error)
 	{
-		auto errorText = lua_tostring(m_luaState, -1);
+		auto errorText = lua_tostring(m_luaState, getErrorMessage);
 		std::cout << "Error: " << errorText << "\n";
+
 		//Pop string
-		lua_pop(m_luaState, 1);
+		lua_pop(m_luaState, popAmount);
 	}
 
 	//Pop the table
-	lua_pop(m_luaState, 1);
+	lua_pop(m_luaState, popAmount);
 
 	return error;
 }
 
+//Adds reference to the table
 void LuaW::AddReferenceToTable(Table& table)
 {
 	AddReference(table);
 }
 
+//Adds reference to the function
 void LuaW::AddReferenceToFunction(Function& function)
 {
 	AddReference(function);
 }
 
+//Adds reference to the userData
 void LuaW::AddReferenceToUserData(UserData& userData)
 {
 	AddReference(userData);

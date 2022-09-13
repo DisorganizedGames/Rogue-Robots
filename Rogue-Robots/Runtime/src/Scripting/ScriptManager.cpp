@@ -4,6 +4,7 @@ std::vector<std::string> ScriptManager::s_filesToBeReloaded = {};
 std::mutex ScriptManager::s_reloadMutex;
 
 
+//Check the file that have been modified and make sure it is a lua file and pushes it to be reloaded at a later stage
 void ScriptManager::ScriptFileWatcher(const std::filesystem::path& path, const filewatch::Event changeType)
 {
 	if (filewatch::Event::modified == changeType && path.extension() == std::filesystem::path(".lua"))
@@ -15,6 +16,7 @@ void ScriptManager::ScriptFileWatcher(const std::filesystem::path& path, const f
 	}
 }
 
+//Reloades the script
 void ScriptManager::TempReloadFile(const std::string& fileName, TempScript* script)
 {
 	//Will test lua syntax
@@ -32,6 +34,7 @@ void ScriptManager::TempReloadFile(const std::string& fileName, TempScript* scri
 	if (failedCreatingEnvironment)
 		return;
 
+	//Removes the old environment and creates a new one
 	m_luaW->RemoveReferenceToTable(script->luaScript);
 	script->luaScript = m_luaW->CreateTable();
 	m_luaW->CreateEnvironment(script->luaScript, c_pathToScripts + fileName);
@@ -50,6 +53,7 @@ ScriptManager::ScriptManager(LuaW* luaW) : m_luaW(luaW)
 #endif // _DEBUG
 }
 
+//Creates a script and runs it
 TempScript* ScriptManager::AddScript(const std::string& luaFileName)
 {
 	TempScript newScript = {luaFileName, -1, 0, 0};
@@ -77,6 +81,7 @@ TempScript* ScriptManager::AddScript(const std::string& luaFileName)
 	return returnScript;
 }
 
+//Reloades the script caught by the file watcher
 void ScriptManager::ReloadScripts()
 {
 	#ifndef _DEBUG
@@ -88,7 +93,9 @@ void ScriptManager::ReloadScripts()
 	{
 		std::lock_guard<std::mutex> lock(s_reloadMutex);
 
+		//Removes any duplicates if there should be any
 		s_filesToBeReloaded.erase(std::unique(s_filesToBeReloaded.begin(), s_filesToBeReloaded.end()), s_filesToBeReloaded.end());
+
 		for (int i = 0; i < s_filesToBeReloaded.size(); ++i)
 		{
 			auto it = m_scriptsMap.find(s_filesToBeReloaded[i].c_str());

@@ -45,6 +45,7 @@ class LuaW
 private:
 	lua_State* m_luaState;
 	std::unordered_map<int, Reference> m_reference_list;
+	static constexpr int c_unValid = -1;
 
 private:
 	LuaW(lua_State* l);
@@ -204,8 +205,11 @@ inline void LuaW::PushUserDataPointerToStack(T* object, const std::string& inter
 	T** newUserData = (T**)lua_newuserdata(m_luaState, sizeof(T*));
 	*newUserData = object;
 
+	//Gets the metatable of the interface
 	luaL_getmetatable(m_luaState, interfaceName.c_str());
-	lua_setmetatable(m_luaState, -2);
+	const int userDataPosition = -2;
+	//Sets the metatable of the interface to the userData
+	lua_setmetatable(m_luaState, userDataPosition);
 }
 
 //Sets the UserData to an global variable in lua
