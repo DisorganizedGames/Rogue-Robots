@@ -21,6 +21,8 @@
 //	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //	SOFTWARE.
 
+//https://github.com/ThomasMonkman/filewatch
+
 #ifndef FILEWATCHER_H
 #define FILEWATCHER_H
 

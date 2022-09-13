@@ -1,4 +1,6 @@
 
 print("Hello World I am in LUA")
 
-print(ReturnText(20))
+print("hej")
+
+print("g")

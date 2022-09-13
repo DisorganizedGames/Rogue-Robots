@@ -57,7 +57,6 @@ private:
 	void Error(const std::string& errorMessage);
 
 	void LoadChunk(const std::string& luaScriptName);
-	bool TryLoadChunk(const std::string& luaScriptName);
 
 	bool IsInteger(int index = 1) const;
 	bool IsNumber(int index = 1) const;
@@ -165,6 +164,8 @@ public:
 	void RunScript(const std::string& luaFileName);
 	void CreateEnvironment(Table& table, const std::string& luaFileName);
 	int TryCreateEnvironment(Table& table, const std::string& luaFileName);
+
+	bool TryLoadChunk(const std::string& luaScriptName);
 
 	template<typename T>
 	T* GetUserDataPointer(UserData& userData);
