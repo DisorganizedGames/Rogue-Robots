@@ -87,6 +87,7 @@ namespace DOG
 					int playerId = m_playerIds.front();
 					ClientsData input;
 					input.player_nr = playerId + 1;
+					m_holdPlayerIds.push_back(playerId);
 					sprintf(inputSend, "%d", playerId);
 					send(clientSocket, inputSend, sizeof(int), 0);
 					m_clientPoll.fd = clientSocket;
@@ -178,7 +179,8 @@ namespace DOG
 	void Server::CloseSocket(int socketIndex) 
 	{
 		std::cout << "Server: Closes socket" << std::endl;
-		//m_playerIds.push_back(playerNr);
+		m_playerIds.push_back(m_holdPlayerIds.at(socketIndex));
+		m_holdPlayerIds.erase(m_holdPlayerIds.begin() + socketIndex);
 		m_clientsSockets.erase(m_clientsSockets.begin() + socketIndex);
 	}
 }

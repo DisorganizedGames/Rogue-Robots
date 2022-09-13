@@ -30,6 +30,7 @@ namespace DOG
 
 		ClientsData m_playersServer[m_maxNrOfPlayers];
 		std::vector<int>		m_playerIds;
+		std::vector<int>		m_holdPlayerIds;
 		std::vector<WSAPOLLFD>	m_clientsSockets;
 		std::vector<WSAPOLLFD>	m_holdSockets;
 	};
