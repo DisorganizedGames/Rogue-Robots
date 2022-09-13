@@ -4,9 +4,9 @@ namespace DOG
 {
 	Server::Server()
 	{
-		m_playerIds.resize(m_maxNrOfPlayers);
+		m_playerIds.resize(MAX_PLAYER_COUNT);
 		
-		for (int i = 0; i < m_maxNrOfPlayers; i++)
+		for (int i = 0; i < MAX_PLAYER_COUNT; i++)
 		{
 			m_playersServer[i].player_nr = i + 1;
 			m_playerIds.at(i) = i;

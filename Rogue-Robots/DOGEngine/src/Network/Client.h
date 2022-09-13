@@ -1,5 +1,5 @@
 #pragma once
-#include "Server.h"
+
 namespace DOG
 {
 	constexpr int MAX_PLAYER_COUNT = 4;
@@ -24,7 +24,7 @@ namespace DOG
 		ClientsData AddString(ClientsData player, std::string inputs);
 		ClientsData CleanClientsData(ClientsData player);
 	private:
-		ClientsData m_playersClient[m_maxNrOfPlayer];
+		ClientsData m_playersClient[MAX_PLAYER_COUNT];
 		SOCKET m_connectSocket;
 		
 	};

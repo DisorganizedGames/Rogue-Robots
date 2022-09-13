@@ -1,8 +1,7 @@
 #pragma once
-
+#include "Client.h"
 namespace DOG
 {
-	constexpr int m_maxNrOfPlayers = 4;
 	class Server
 	{
 	public:
@@ -28,7 +27,7 @@ namespace DOG
 
 		float m_tickrate;
 
-		ClientsData m_playersServer[m_maxNrOfPlayers];
+		ClientsData m_playersServer[MAX_PLAYER_COUNT];
 		std::vector<int>		m_playerIds;
 		std::vector<int>		m_holdPlayerIds;
 		std::vector<WSAPOLLFD>	m_clientsSockets;
