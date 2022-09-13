@@ -13,7 +13,7 @@ set(LibraryName "DOGEngine")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/DOGEngine/vendor/includes/")
 set (ExternalLibPath "${CMAKE_SOURCE_DIR}/DOGEngine/vendor/libs")
 
-add_library("${LibraryName}" STATIC "${SourceFiles}" "${TempGraphics}")
+add_library("${LibraryName}" STATIC "${SourceFiles}" "${TempGraphics}" "src/Graphics/Rendering/MaterialTable.h" "src/Graphics/Rendering/MaterialTable.cpp")
 target_include_directories("${LibraryName}" PRIVATE "${CMAKE_SOURCE_DIR}/Core/src/" "${ExternalIncludePath}")
 target_compile_options("${LibraryName}" PRIVATE "/W4")
 set_target_properties("${LibraryName}" PROPERTIES LINKER_LANGUAGE "CXX")

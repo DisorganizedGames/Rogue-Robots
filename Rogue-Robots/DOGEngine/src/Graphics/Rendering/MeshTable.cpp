@@ -93,7 +93,7 @@ namespace DOG::gfx
 
 		MeshContainerTemp container{};
 		container.mesh = handle;
-		container.numSubmeshes = spec.submeshData.size();
+		container.numSubmeshes = (u32)spec.submeshData.size();
 
 		return container;
 	}
