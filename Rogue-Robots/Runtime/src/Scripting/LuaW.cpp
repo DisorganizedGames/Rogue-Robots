@@ -1,5 +1,7 @@
 #include "LuaW.h"
 
+LuaW LuaW::s_luaW; 
+
 LuaW::LuaW(lua_State* l)
 {
 	m_luaState = l;

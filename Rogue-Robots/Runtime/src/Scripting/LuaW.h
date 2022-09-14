@@ -48,6 +48,10 @@ private:
 	static constexpr int c_unValid = -1;
 
 private:
+	//Might be changed later depending on if we have threaded scripting
+	static LuaW s_luaW;
+
+private:
 	LuaW(lua_State* l);
 	template<void (*func)(LuaContext*)>
 	static inline int FunctionsHook(lua_State* luaState);
@@ -225,8 +229,8 @@ void LuaW::PushGlobalUserData(T* object, const std::string& interfaceName, const
 template<void (*func)(LuaContext*)>
 static inline int LuaW::FunctionsHook(lua_State* luaState)
 {
-	LuaW luaW(luaState);
-	LuaContext state(&luaW);
+	//LuaW luaW(luaState);
+	LuaContext state(&s_luaW);
 
 	func(&state);
 
@@ -237,15 +241,15 @@ static inline int LuaW::FunctionsHook(lua_State* luaState)
 template <typename T, void (T::* func)(LuaContext*)>
 static inline int LuaW::ClassFunctionsHook(lua_State* luaState)
 {
-	LuaW luaW(luaState);
-	LuaContext state(&luaW);
+	//LuaW luaW(luaState);
+	LuaContext state(&s_luaW);
 
-	if (!luaW.IsUserData())
+	if (!s_luaW.IsUserData())
 	{
-		luaW.Error("Tried to access userdata and no userdata was found! Call object function with either object:function() or object.function(object)!");
+		s_luaW.Error("Tried to access userdata and no userdata was found! Call object function with either object:function() or object.function(object)!");
 		return 0;
 	}
-	T* object = luaW.GetUserDataPointerFromStack<T>();
+	T* object = s_luaW.GetUserDataPointerFromStack<T>();
 	(object->*func)(&state);
 
 	return state.GetNumberOfReturns();
