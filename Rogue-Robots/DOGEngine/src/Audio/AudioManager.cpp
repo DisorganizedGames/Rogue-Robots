@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <vector>
 #include "AudioFileReader.h"
+#include "../Core/AssetManager.h"
 
 using namespace DOG;
 
@@ -14,22 +15,9 @@ void AudioManager::Play(AudioPlayerComponent& audioPlayerComponent)
 {
 	auto& [audioID, volume, _] = audioPlayerComponent;
 	
-	auto fileSize = std::filesystem::file_size("chilling.wav");
+	AudioAsset* asset = (AudioAsset*)AssetManager::Get().GetAsset(audioPlayerComponent.audioID);
 
-	// TODO: HIGHLY TEMPORARY
-	WAVProperties wavProp;
-	std::vector<u8> data;
-	
-	WAVFileReader wfr("chilling.wav");
-	wavProp = wfr.ReadProperties();
-	
-	if (fileSize <= 4096)
-	{
-		auto [p, d] = ReadWAV("chilling.wav");
-		data = std::move(d);
-	}
-
-	u64 freeVoiceIndex = GetFreeVoice(wavProp);
+	u64 freeVoiceIndex = GetFreeVoice(asset->properties);
 
 	SourceVoiceSettings settings = {
 		.volume = volume,
@@ -39,13 +27,14 @@ void AudioManager::Play(AudioPlayerComponent& audioPlayerComponent)
 	source->SetSettings(settings);
 	audioPlayerComponent.voiceID = freeVoiceIndex;
 	
-	if (fileSize > ((u64)18<<1))
+	if (asset->async)
 	{
+		WAVFileReader wfr(asset->filePath);
 		source->PlayAsync(std::move(wfr));
 	}
 	else
 	{
-		source->Play(std::move(data));
+		source->Play(asset->audioData);
 	}
 }
 

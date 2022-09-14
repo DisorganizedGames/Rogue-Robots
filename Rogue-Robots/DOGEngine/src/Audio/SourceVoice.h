@@ -24,8 +24,9 @@ namespace DOG
 		
 		SourceVoice& operator =(SourceVoice&& other) noexcept;
 	public:
-		// Plays a single buffer to the end. Does not support additional buffers
-		void Play(std::vector<u8>&& buffer);
+		// Plays a single buffer to the end. Does not support additional buffers.
+		// KEEP THIS BUFFER AROUND!!!! Preferably in an AudioAsset
+		void Play(const std::vector<u8>& buffer);
 
 
 		void PlayAsync(WAVFileReader&& fileReader);

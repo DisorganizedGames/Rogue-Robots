@@ -20,7 +20,10 @@ SourceVoice::SourceVoice(SourceVoice&& other) noexcept
 SourceVoice::~SourceVoice()
 {
 	if (m_sourceVoice)
+	{
+		Stop();
 		m_sourceVoice->DestroyVoice();
+	}
 }
 
 SourceVoice& SourceVoice::operator=(SourceVoice&& other) noexcept
@@ -35,7 +38,7 @@ SourceVoice& SourceVoice::operator=(SourceVoice&& other) noexcept
 	return *this;
 }
 
-void SourceVoice::Play(std::vector<u8>&& buffer)
+void SourceVoice::Play(const std::vector<u8>& buffer)
 {
 	XAUDIO2_BUFFER xAudioBuffer = {
 		.Flags = XAUDIO2_END_OF_STREAM,
@@ -54,9 +57,6 @@ void SourceVoice::Play(std::vector<u8>&& buffer)
 
 	hr = m_sourceVoice->Start();
 	hr.try_fail("Failed to start playing queued XAudio Buffer");
-
-	// TODO: How the fuck do we store this buffer
-	m_buffers.push_back(std::move(buffer));
 }
 
 void SourceVoice::PlayAsync(WAVFileReader&& fileReader)

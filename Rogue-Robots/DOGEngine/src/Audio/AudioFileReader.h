@@ -160,6 +160,7 @@ namespace DOG
 	private:
 		std::ifstream m_file;
 		u32 m_remainingBytes = 0;
+		bool m_propertiesRead = false;
 
 	private:
 		void SeekNextDataChunk()
@@ -213,6 +214,7 @@ namespace DOG
 		{
 			std::vector<u8> header(WAV_RIFF_HEADER_SIZE + WAV_FORMAT_CHUNK_SIZE);
 			m_file.read((char*)header.data(), header.size());
+			m_propertiesRead = true;
 			return ReadWAVProperties(header);
 		}
 
@@ -222,6 +224,9 @@ namespace DOG
 			assert(m_file.is_open());
 			if (m_file.eof())
 				return std::vector<u8>();
+
+			if (!m_propertiesRead)
+				ReadProperties();
 
 			if (!m_remainingBytes)
 				SeekNextDataChunk();

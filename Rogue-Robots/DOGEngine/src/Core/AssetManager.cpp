@@ -108,6 +108,7 @@ namespace DOG
 		if (fileSize > 16'384)
 		{
 			newAudio->async = true;
+			newAudio->properties = ReadWAVProperties(path);
 		}
 		else
 		{
