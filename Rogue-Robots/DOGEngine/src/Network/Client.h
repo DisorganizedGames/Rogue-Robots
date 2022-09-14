@@ -10,10 +10,6 @@ namespace DOG
 		struct ClientsData
 		{
 			int player_nr = 0;
-			bool w = false;
-			bool a = false;
-			bool s = false;
-			bool d = false;
 			char inputs[64] = {0};
 			int inputLength = 0;
 		};
