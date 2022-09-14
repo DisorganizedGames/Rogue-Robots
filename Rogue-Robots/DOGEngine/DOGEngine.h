@@ -2,6 +2,7 @@
 #include "src/Core/Application.h"
 #include "src/Core/Window.h"
 #include "src/Core/Time.h"
+#include "src/Core/AssetManager.h"
 
 #include "src/Input/Keyboard.h"
 #include "src/Input/Mouse.h"
