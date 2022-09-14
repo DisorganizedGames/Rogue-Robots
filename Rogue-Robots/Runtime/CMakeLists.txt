@@ -6,7 +6,8 @@ set(SourceFiles  "src/Core/RuntimeApplication.cpp" "src/Core/RuntimeApplication.
 		"src/Scripting/LuaGlobal.h" "src/Scripting/LuaGlobal.cpp"
 		"src/Game/EmilDebugLayer.h" "src/Game/EmilDebugLayer.cpp"
 		"src/Scripting/LuaEvent.h" "src/Scripting/LuaEvent.cpp" 
-		"src/Game/MainPlayer.h" "src/Game/MainPlayer.cpp")
+		"src/Game/MainPlayer.h" "src/Game/MainPlayer.cpp" 
+		"src/Game/NetCode.h" "src/Game/NetCode.cpp")
 		
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")

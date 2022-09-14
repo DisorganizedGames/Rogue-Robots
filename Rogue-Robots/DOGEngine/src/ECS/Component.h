@@ -55,6 +55,11 @@ namespace DOG
 				DirectX::XMMatrixTranslationFromVector(translation);
 			return *this;
 		}
+
+		DirectX::SimpleMath::Vector3 GetPosition()
+		{
+			return { worldMatrix(3, 0) , worldMatrix(3, 1), worldMatrix(3, 2) };
+		}
 		operator const DirectX::SimpleMath::Matrix& () const { return worldMatrix; }
 		operator DirectX::SimpleMath::Matrix& () { return worldMatrix; }
 		DirectX::SimpleMath::Matrix worldMatrix = DirectX::SimpleMath::Matrix::Identity;
@@ -76,4 +81,10 @@ namespace DOG
 
 		inline static CameraComponent* s_mainCamera = nullptr;
 	};
+
+	struct NetworkComponent : public Component<NetworkComponent>
+	{
+		int playerId;
+	};
+
 }

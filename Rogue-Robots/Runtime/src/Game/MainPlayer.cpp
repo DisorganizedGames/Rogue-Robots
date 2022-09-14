@@ -31,6 +31,22 @@ void MainPlayer::OnUpdate()
 	UpdateCamera(cameraComp);
 }
 
+void MainPlayer::SetPosition(SimpleMath::Vector3 position)
+{
+	m_position = position;
+}
+
+SimpleMath::Vector3 MainPlayer::GetPosition()
+{
+	return m_position;
+}
+
+SimpleMath::Vector3 MainPlayer::GetRotation()
+{
+	SimpleMath::Vector3 rotation = {m_polar, m_azim, 0 };
+	return rotation;
+}
+
 void MainPlayer::UpdateCamera(CameraComponent& camera)
 {
 	// Not using a structured binding to avoid getting screwed over by the layout of the CameraComponent changing
