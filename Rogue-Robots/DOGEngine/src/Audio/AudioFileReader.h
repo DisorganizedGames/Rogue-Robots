@@ -140,7 +140,7 @@ namespace DOG
 	{
 		std::ifstream file(filePath, std::ios::binary);
 		if (!file)
-			assert(false);
+			throw FileNotFoundError(filePath);
 
 		const u64 fileSize = std::filesystem::file_size(filePath);
 
@@ -194,7 +194,7 @@ namespace DOG
 		{
 			m_file.open(path, std::ios::binary);
 			if (!m_file)
-				assert(m_file);
+				throw FileNotFoundError(path);
 		}
 		WAVFileReader(WAVFileReader&& other) noexcept
 		{
