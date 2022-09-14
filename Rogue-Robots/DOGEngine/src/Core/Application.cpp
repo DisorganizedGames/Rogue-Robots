@@ -1,8 +1,9 @@
 #include "Application.h"
 #include "Window.h"
+#include "Time.h"
+
 #include "../Input/Mouse.h"
 #include "../Input/Keyboard.h"
-
 
 #include "../Graphics/RHI/DX12/RenderBackend_DX12.h"
 #include "../Graphics/RHI/DX12/RenderDevice_DX12.h"
@@ -107,6 +108,7 @@ namespace DOG
 
 		while (m_isRunning)
 		{
+			Time::Start();
 			Window::OnUpdate();
 
 			for (auto const layer : m_layerStack)
@@ -190,6 +192,7 @@ namespace DOG
 			count = (count + 1) % 3;
 
 			bin.EndFrame();
+			Time::End();
 		}
 
 		rd->Flush();
