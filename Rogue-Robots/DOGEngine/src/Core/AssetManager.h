@@ -1,6 +1,7 @@
 #pragma once
 #include "AssimpImporter.h"
 #include "MaterialManager.h"
+#include "../Audio/AudioFileReader.h"
 
 namespace DOG
 {
@@ -177,6 +178,9 @@ namespace DOG
 
 	struct AudioAsset : public Asset
 	{
+		bool async = false;
+		std::string filePath;
+		WAVProperties properties;
 		std::vector<u8> audioData;
 	};
 
