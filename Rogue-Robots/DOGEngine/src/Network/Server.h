@@ -5,16 +5,6 @@ namespace DOG
 	class Server
 	{
 	public:
-		struct ClientsData
-		{
-			int player_nr = 0;
-			bool w = false;
-			bool a = false;
-			bool s = false;
-			bool d = false;
-			char inputs[64] = { 0 };
-			int inputLength = 0;
-		};
 		Server();
 		~Server();
 
@@ -27,7 +17,7 @@ namespace DOG
 
 		float m_tickrate;
 
-		ClientsData m_playersServer[MAX_PLAYER_COUNT];
+		Client::ClientsData m_playersServer[MAX_PLAYER_COUNT];
 		std::vector<int>		m_playerIds;
 		std::vector<int>		m_holdPlayerIds;
 		std::vector<WSAPOLLFD>	m_clientsSockets;

@@ -9,11 +9,7 @@ namespace DOG
 	public:
 		struct ClientsData
 		{
-			int player_nr = 0;
-			bool w = false;
-			bool a = false;
-			bool s = false;
-			bool d = false;
+			int playerNr = 0;
 			char inputs[64] = {0};
 			int inputLength = 0;
 		};
