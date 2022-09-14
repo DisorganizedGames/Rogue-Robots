@@ -24,6 +24,8 @@
 #include "../Graphics/Rendering/MeshTable.h"
 
 #include "../Core/AssimpImporter.h"
+#include "../Core/TextureFileImporter.h"
+#include "../Graphics/Rendering/TextureManager.h"
 
 
 namespace DOG
@@ -51,7 +53,7 @@ namespace DOG
 
 	using namespace DOG::gfx;
 	void Application::Run() noexcept
-	{	
+	{
 		const u32 NUM_BUFFERS = 2;
 
 		auto hwnd = Window::GetHandle();
@@ -110,8 +112,11 @@ namespace DOG
 
 		GPUGarbageBin bin(1);
 		UploadContext upCtx(rd, 40'000'000, 1);
+		UploadContext texUpCtx(rd, 400'000'000, 1);
 
 		// Test mesh manager		
+
+		// Startup
 		MeshTable::MemorySpecification spec{};
 		spec.maxSizePerAttribute[VertexAttribute::Position] = 4'000'000;
 		spec.maxSizePerAttribute[VertexAttribute::UV] = 4'000'000;
@@ -120,21 +125,167 @@ namespace DOG
 		spec.maxTotalSubmeshes = 500;
 		spec.maxNumIndices = 1'000'000;
 		MeshTable meshTab(rd, &bin, spec);
-		auto res = AssimpImporter("Assets/Sponza_gltf/glTF/Sponza.gltf").get_result();
 
+		MaterialTable::MemorySpecification memSpec{};
+		memSpec.maxElements = 500;	// 500 distinct materials
+		MaterialTable matTab(rd, &bin, memSpec);
+
+		TextureManager texMan(rd, &bin);
+
+		// Load ONE model
 		MeshContainer sponza;
+		std::vector<MaterialHandle> mats;
 		{
+			// Load mesh
+			auto res = AssimpImporter("Assets/Sponza_gltf/glTF/Sponza.gltf").GetResult();
 			MeshTable::MeshSpecification loadSpec{};
 			loadSpec.indices = res->mesh.indices;
 			for (const auto& attr : res->mesh.vertexData)
 				loadSpec.vertexDataPerAttribute[attr.first] = res->mesh.vertexData[attr.first];
 			loadSpec.submeshData = res->submeshes;
-
 			sponza = meshTab.LoadMesh(loadSpec, upCtx);
 
-			// Upload! :)
 			upCtx.SubmitCopies();
+
+
+			// Load materials
+			auto loadTexture = [](
+				TextureManager& texMan, UploadContext& ctx, 
+				const std::string& name, ImportedTextureFile& textureData, bool srgb) -> Texture
+			{
+				TextureManager::MippedTexture2DSpecification spec{};
+				for (auto& mip : textureData.dataPerMip)
+				{
+					TextureManager::TextureSubresource subr{};
+					subr.data = mip.data;
+					subr.width = mip.width;
+					subr.height = mip.height;
+					spec.dataPerMip.push_back(subr);
+				}
+				spec.srgb = srgb;
+				return texMan.LoadTexture(name, spec, ctx);
+			};
+
+			auto loadToMat = [&](const std::string& path, bool srgb, bool genMips) -> std::optional<TextureView>
+			{
+				std::optional<Texture> tex;
+				if (!texMan.Exists(path))
+				{
+					const bool srgb = true;
+
+					auto importedTex = TextureFileImporter(path, genMips).GetResult();
+					if (importedTex)
+						tex = loadTexture(texMan, texUpCtx, path, *importedTex, srgb);
+				}
+				else
+					tex = texMan.GetTexture(path);
+
+				if (tex)
+				{
+					return rd->CreateView(*tex, TextureViewDesc(
+						ViewType::ShaderResource,
+						TextureViewDimension::Texture2D,
+						srgb ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM));
+				}
+				else
+					return {};
+
+			};
+
+			for (const auto& mat : res->materials)
+			{
+				std::optional<Texture> albedoTex, metallicRoughnessTex, normalTex, emissiveTex;
+				MaterialTable::MaterialSpecification matSpec{};
+
+				matSpec.albedo = loadToMat(mat.albedoPath, true, false);
+				matSpec.metallicRoughness = loadToMat(mat.metallicRoughnessPath, false, false);
+				matSpec.normal = loadToMat(mat.normalMapPath, false, false);
+				matSpec.emissive = loadToMat(mat.emissivePath, true, false);
+
+				//if (!texMan.Exists(mat.albedoPath))
+				//{
+				//	const bool srgb = true;
+
+				//	auto albedo = TextureFileImporter(mat.albedoPath, false).GetResult();
+				//	if (albedo)
+				//		albedoTex = loadTexture(texMan, texUpCtx, mat.albedoPath, *albedo, srgb);
+				//}
+				//else
+				//	albedoTex = texMan.GetTexture(mat.albedoPath);
+
+				//if (albedoTex)
+				//{
+				//	matSpec.albedo = rd->CreateView(*albedoTex, TextureViewDesc(
+				//		ViewType::ShaderResource,
+				//		TextureViewDimension::Texture2D,
+				//		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB));
+				//}
+
+	
+
+
+
+
+
+
+
+				//if (!texMan.Exists(mat.metallicRoughnessPath))
+				//{
+				//	const bool srgb = false;
+
+				//	auto metallicRoughness = TextureFileImporter(mat.metallicRoughnessPath, false).GetResult();
+				//	if (metallicRoughness)
+				//	{
+				//		metallicRoughnessTex = loadTexture(texMan, texUpCtx, mat.metallicRoughnessPath, *metallicRoughness, srgb);
+				//		matSpec.metallicRoughness = rd->CreateView(*metallicRoughnessTex, TextureViewDesc(
+				//			ViewType::ShaderResource,
+				//			TextureViewDimension::Texture2D,
+				//			DXGI_FORMAT_R8G8B8A8_UNORM));
+				//	}
+				//}
+				//if (!texMan.Exists(mat.normalMapPath))
+				//{
+				//	const bool srgb = false;
+
+				//	auto normal = TextureFileImporter(mat.normalMapPath, false).GetResult();
+				//	if (normal)
+				//	{
+				//		normalTex = loadTexture(texMan, texUpCtx, mat.normalMapPath, *normal, srgb);
+				//		matSpec.normal = rd->CreateView(*normalTex, TextureViewDesc(
+				//			ViewType::ShaderResource,
+				//			TextureViewDimension::Texture2D,
+				//			DXGI_FORMAT_R8G8B8A8_UNORM));
+				//	}
+				//}
+				//if (!texMan.Exists(mat.emissivePath))
+				//{ 
+				//	const bool srgb = true;
+
+				//	auto emissive = TextureFileImporter(mat.emissivePath, false).GetResult();
+				//	if (emissive)
+				//	{
+				//		emissiveTex = loadTexture(texMan, texUpCtx, mat.emissivePath, *emissive, srgb);
+				//		matSpec.emissive = rd->CreateView(*emissiveTex, TextureViewDesc(
+				//			ViewType::ShaderResource,
+				//			TextureViewDimension::Texture2D,
+				//			DXGI_FORMAT_R8G8B8A8_UNORM_SRGB));
+				//	}
+				//}
+
+				mats.push_back(matTab.LoadMaterial(matSpec, upCtx));
+			}
+
+
+			upCtx.SubmitCopies();
+
+			texUpCtx.SubmitCopies();
 		}
+
+
+
+
+
+
 		
 		GPUDynamicConstants cMan(rd, &bin, 500);
 
@@ -227,7 +378,10 @@ namespace DOG
 					.AppendConstant(meshTab.GetAttributeDescriptor(VertexAttribute::Position))
 					.AppendConstant(meshTab.GetAttributeDescriptor(VertexAttribute::UV))
 					.AppendConstant(meshTab.GetAttributeDescriptor(VertexAttribute::Normal))
-					.AppendConstant(meshTab.GetAttributeDescriptor(VertexAttribute::Tangent));
+					.AppendConstant(meshTab.GetAttributeDescriptor(VertexAttribute::Tangent))
+					.AppendConstant(matTab.GetDescriptor())
+					.AppendConstant(matTab.GetMaterialIndex(mats[i])
+					);
 
 				rd->Cmd_UpdateShaderArgs(cmdl, args);
 

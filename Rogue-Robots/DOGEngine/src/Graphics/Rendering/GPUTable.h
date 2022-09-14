@@ -66,8 +66,6 @@ namespace DOG::gfx
 
 			auto size = numElements * m_elementSize;
 
-
-
 			// Allocate from virtual pool allocator
 			res.alloc = m_vator.Allocate(size);
 			res.elementOffset = res.alloc.offset / m_elementSize;

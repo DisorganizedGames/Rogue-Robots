@@ -53,7 +53,7 @@ namespace DOG
 		}
 
 		DOG::AssimpImporter assimpImporter = DOG::AssimpImporter(path);
-		auto asset = assimpImporter.get_result();
+		auto asset = assimpImporter.GetResult();
 
 		ModelAsset* newModel = new ModelAsset;
 		newModel->meshID = AddMesh(asset->mesh);

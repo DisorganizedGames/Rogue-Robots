@@ -9,14 +9,6 @@ struct VS_OUT
     float3 wsPos : WS_POSITION;
 };
 
-cbuffer PerFrame : register(b0)
-{
-    matrix g_view;
-    matrix g_proj;
-    matrix g_world;
-    float4 g_f4;
-};
-
 struct PerFrameData
 {
     matrix world;

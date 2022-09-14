@@ -30,12 +30,15 @@ namespace DOG::gfx
 	public:
 		MaterialTable(RenderDevice* rd, GPUGarbageBin* bin, const MemorySpecification& spec, bool async = false);
 
-		MaterialHandle LoadMaterial(const MaterialSpecification& spec);
+		MaterialHandle LoadMaterial(const MaterialSpecification& spec, UploadContext& ctx);
 		void FreeMaterial(MaterialHandle handle);
 
 		void UpdateMaterial(MaterialHandle handle, const MaterialSpecification& spec);
 		
-		void SendCopyRequests(UploadContext& ctx);
+		//void SendCopyRequests(UploadContext& ctx);
+
+		u32 GetDescriptor() const { return m_matTable->GetGlobalDescriptor(); }
+		u32 GetMaterialIndex(MaterialHandle handle) const;
 
 	private:
 		struct GPUMatHandle { u64 handle{ 0 }; friend class TypedHandlePool; };

@@ -39,7 +39,6 @@ namespace DOG::gfx
 			version.copyCmdl = m_rd->AllocateCommandList(m_targetQueue);
 		}
 
-
 		// Allocate staging memory
 		auto [memory, offsetFromBase] = version.vator.AllocateWithOffset(dataSize);
 
@@ -49,6 +48,52 @@ namespace DOG::gfx
 		// Record GPU-GPU copy
 		m_rd->Cmd_CopyBuffer(version.copyCmdl,
 			dst, dstOffset, version.staging, (u32)offsetFromBase, dataSize);
+	}
+
+	void UploadContext::PushUploadToTexture(
+		Texture dst, 
+		u32 dstSubresource, 
+		std::tuple<u32, u32, u32> dstTopLeft,
+		void* srcData, 
+		DXGI_FORMAT srcFormat, 
+		u32 srcWidth,
+		u32 srcHeight, 
+		u32 srcDepth, 
+		u32 srcRowPitch)
+	{
+		auto& version = m_storage[m_currVersion];
+
+		// Reset version.. safely..
+		if (version.copyDoneReceipt)
+		{
+			m_rd->WaitForGPU(*version.copyDoneReceipt);
+
+			version.copyDoneReceipt = std::nullopt;
+			version.vator.Clear();
+
+			// Recycle command list
+			m_rd->RecycleCommandList(version.copyCmdl);
+			version.copyCmdl = m_rd->AllocateCommandList(m_targetQueue);
+		}
+
+		const u32 totalSize = srcRowPitch * srcHeight;
+
+		static constexpr u32 TEXALIGNMENT = 512;
+
+		// Allocate staging memory
+		auto [memory, offsetFromBase] = version.vator.AllocateWithOffset(totalSize, TEXALIGNMENT);
+
+		// Copy to staging
+		std::memcpy(memory, srcData, totalSize);
+
+		// Record GPU-GPU copy
+		m_rd->Cmd_CopyBufferToImage(version.copyCmdl,
+			dst, 
+			dstSubresource, 
+			dstTopLeft, 
+			version.staging, 
+			(u32)offsetFromBase, 
+			srcFormat, srcWidth, srcHeight, srcDepth, srcRowPitch);
 	}
 
 	std::optional<SyncReceipt> UploadContext::SubmitCopies()

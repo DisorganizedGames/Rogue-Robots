@@ -1,4 +1,5 @@
 #pragma once
+#include "MeshTypes.h"
 
 namespace DOG
 {
@@ -14,6 +15,19 @@ namespace DOG
 		float roughnessFactor = 1;
 		float emissiveFactor[3] = { 0, 0, 0 };
 	};
+
+	struct ImportedTextureFileMip
+	{
+		std::vector<u8> data;
+		u32 width{ 0 };
+		u32 height{ 0 };
+	};
+
+	struct ImportedTextureFile
+	{
+		std::vector<ImportedTextureFileMip> dataPerMip;
+	};
+
 
 	struct ImportedMesh
 	{
