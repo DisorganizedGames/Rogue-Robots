@@ -16,7 +16,6 @@ struct MaterialElement
     uint emissive;
 };
 
-
 struct PushConstantElement
 {
     uint perFrameCB;

@@ -197,80 +197,12 @@ namespace DOG
 				std::optional<Texture> albedoTex, metallicRoughnessTex, normalTex, emissiveTex;
 				MaterialTable::MaterialSpecification matSpec{};
 
-				matSpec.albedo = loadToMat(mat.albedoPath, true, false);
-				matSpec.metallicRoughness = loadToMat(mat.metallicRoughnessPath, false, false);
-				matSpec.normal = loadToMat(mat.normalMapPath, false, false);
-				matSpec.emissive = loadToMat(mat.emissivePath, true, false);
+				const bool genMips = true;
 
-				//if (!texMan.Exists(mat.albedoPath))
-				//{
-				//	const bool srgb = true;
-
-				//	auto albedo = TextureFileImporter(mat.albedoPath, false).GetResult();
-				//	if (albedo)
-				//		albedoTex = loadTexture(texMan, texUpCtx, mat.albedoPath, *albedo, srgb);
-				//}
-				//else
-				//	albedoTex = texMan.GetTexture(mat.albedoPath);
-
-				//if (albedoTex)
-				//{
-				//	matSpec.albedo = rd->CreateView(*albedoTex, TextureViewDesc(
-				//		ViewType::ShaderResource,
-				//		TextureViewDimension::Texture2D,
-				//		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB));
-				//}
-
-	
-
-
-
-
-
-
-
-				//if (!texMan.Exists(mat.metallicRoughnessPath))
-				//{
-				//	const bool srgb = false;
-
-				//	auto metallicRoughness = TextureFileImporter(mat.metallicRoughnessPath, false).GetResult();
-				//	if (metallicRoughness)
-				//	{
-				//		metallicRoughnessTex = loadTexture(texMan, texUpCtx, mat.metallicRoughnessPath, *metallicRoughness, srgb);
-				//		matSpec.metallicRoughness = rd->CreateView(*metallicRoughnessTex, TextureViewDesc(
-				//			ViewType::ShaderResource,
-				//			TextureViewDimension::Texture2D,
-				//			DXGI_FORMAT_R8G8B8A8_UNORM));
-				//	}
-				//}
-				//if (!texMan.Exists(mat.normalMapPath))
-				//{
-				//	const bool srgb = false;
-
-				//	auto normal = TextureFileImporter(mat.normalMapPath, false).GetResult();
-				//	if (normal)
-				//	{
-				//		normalTex = loadTexture(texMan, texUpCtx, mat.normalMapPath, *normal, srgb);
-				//		matSpec.normal = rd->CreateView(*normalTex, TextureViewDesc(
-				//			ViewType::ShaderResource,
-				//			TextureViewDimension::Texture2D,
-				//			DXGI_FORMAT_R8G8B8A8_UNORM));
-				//	}
-				//}
-				//if (!texMan.Exists(mat.emissivePath))
-				//{ 
-				//	const bool srgb = true;
-
-				//	auto emissive = TextureFileImporter(mat.emissivePath, false).GetResult();
-				//	if (emissive)
-				//	{
-				//		emissiveTex = loadTexture(texMan, texUpCtx, mat.emissivePath, *emissive, srgb);
-				//		matSpec.emissive = rd->CreateView(*emissiveTex, TextureViewDesc(
-				//			ViewType::ShaderResource,
-				//			TextureViewDimension::Texture2D,
-				//			DXGI_FORMAT_R8G8B8A8_UNORM_SRGB));
-				//	}
-				//}
+				matSpec.albedo = loadToMat(mat.albedoPath, true, genMips);
+				matSpec.metallicRoughness = loadToMat(mat.metallicRoughnessPath, false, genMips);
+				matSpec.normal = loadToMat(mat.normalMapPath, false, genMips);
+				matSpec.emissive = loadToMat(mat.emissivePath, true, genMips);
 
 				mats.push_back(matTab.LoadMaterial(matSpec, upCtx));
 			}
@@ -365,8 +297,8 @@ namespace DOG
 				{
 					DirectX::XMMATRIX world, view, proj;
 				} pfData{};
-				pfData.world = DirectX::XMMatrixTranslation(0.f, 0.f, 0.f);
-				pfData.view = DirectX::XMMatrixLookAtLH({ 0.f, 0.f, 0.f }, { 0.f, 0.f, 1.f }, { 0.f, 1.f, 0.f });
+				pfData.world = DirectX::XMMatrixScaling(0.07f, 0.07f, 0.07f);
+				pfData.view = DirectX::XMMatrixLookAtLH({ 5.f, 2.f, 0.f }, { -1.f, 1.f, 1.f }, { 0.f, 1.f, 0.f });
 				// We are using REVERSE DEPTH!!!
 				pfData.proj = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)Window::GetWidth() / Window::GetHeight(), 800.f, 0.1f);
 				std::memcpy(pfConstant.memory, &pfData, sizeof(pfData));

@@ -46,8 +46,8 @@ namespace DOG::gfx
 		struct Material_GPUElement
 		{
 			u32 albedo{ 0 };
-			u32 normal{ 0 };
 			u32 metallicRoughness{ 0 };
+			u32 normal{ 0 };
 			u32 emissive{ 0 };
 
 			// other types to shader..
