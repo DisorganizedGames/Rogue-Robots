@@ -43,7 +43,14 @@ float4 main(VS_OUT input) : SV_TARGET
     //return float4(mat.albedo.x, mat.emissive.x, mat.metallicRoughness.x, mat.normal.x);
     
     Texture2D albedo = ResourceDescriptorHeap[mat.albedo];
-    return float4(albedo.Sample(g_aniso_samp, input.uv));
+    
+    float3 col = albedo.Sample(g_aniso_samp, input.uv);
+    
+    col = pow(col, (1.f / 2.22f).rrr);
+    
+    return float4(col, 1.f);
+    
+    
 
     
     return float4(normalize(input.nor), 1.f);
