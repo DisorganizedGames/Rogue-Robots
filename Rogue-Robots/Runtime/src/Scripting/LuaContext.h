@@ -15,13 +15,13 @@ private:
 public:
 	LuaContext(LuaW* luaW);
 
-	const int GetInteger() const;
-	const double GetDouble() const;
-	const bool GetBoolean() const;
-	const std::string GetString() const;
-	const LuaTable GetTable() const;
+	int GetInteger() const;
+	double GetDouble() const;
+	bool GetBoolean() const;
+	std::string GetString() const;
+	LuaTable GetTable() const;
 	template <typename T>
-	const T* GetUserData() const;
+	T* GetUserData() const;
 
 	void ReturnInteger(int integer);
 	void ReturnDouble(double number);
@@ -35,7 +35,7 @@ public:
 };
 
 template<typename T>
-inline const T* LuaContext::GetUserData() const
+inline T* LuaContext::GetUserData() const
 {
 	int max = m_luaW->GetNumberOfStackItems();
 

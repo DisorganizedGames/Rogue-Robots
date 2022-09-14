@@ -17,9 +17,9 @@ LuaContext::LuaContext(LuaW* luaW)
 }
 
 //if there exist no integer then we return zero
-const int LuaContext::GetInteger() const
+int LuaContext::GetInteger() const
 {
-	int max = m_luaW->GetNumberOfStackItems();
+	const int max = m_luaW->GetNumberOfStackItems();
 
 	for (int index = 1; index <= max; ++index)
 		if (m_luaW->IsInteger(index))
@@ -31,9 +31,9 @@ const int LuaContext::GetInteger() const
 }
 
 //if there exist no double/float then we return zero
-const double LuaContext::GetDouble() const
+double LuaContext::GetDouble() const
 {
-	int max = m_luaW->GetNumberOfStackItems();
+	const int max = m_luaW->GetNumberOfStackItems();
 
 	for (int index = 1; index <= max; ++index)
 		if (m_luaW->IsNumber(index))
@@ -45,9 +45,9 @@ const double LuaContext::GetDouble() const
 }
 
 //if there exist no bool then we return false
-const bool LuaContext::GetBoolean() const
+bool LuaContext::GetBoolean() const
 {
-	int max = m_luaW->GetNumberOfStackItems();
+	const int max = m_luaW->GetNumberOfStackItems();
 
 	for (int index = 1; index <= max; ++index)
 		if (m_luaW->IsBool(index))
@@ -59,9 +59,9 @@ const bool LuaContext::GetBoolean() const
 }
 
 //if there exist no string then we return a empty string
-const std::string LuaContext::GetString() const
+std::string LuaContext::GetString() const
 {
-	int max = m_luaW->GetNumberOfStackItems();
+	const int max = m_luaW->GetNumberOfStackItems();
 
 	for (int index = 1; index <= max; ++index)
 		if (!m_luaW->IsNumber(index) && m_luaW->IsString(index))
@@ -73,9 +73,9 @@ const std::string LuaContext::GetString() const
 }
 
 //if there exist no table it returns a empty table
-const LuaTable LuaContext::GetTable() const
+LuaTable LuaContext::GetTable() const
 {
-	int max = m_luaW->GetNumberOfStackItems();
+	const int max = m_luaW->GetNumberOfStackItems();
 
 	for (int index = 1; index <= max; ++index)
 		if (m_luaW->IsTable(index))
