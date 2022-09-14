@@ -4,6 +4,8 @@ namespace DOG
 {
 	constexpr const u32 WAV_RIFF_HEADER_SIZE = 12;
 	constexpr const u32 WAV_FORMAT_CHUNK_SIZE = 24;
+	constexpr const u32 CHUNK_TYPE_SIZE = 4;
+	constexpr const u32 SIZE_FIELD_SIZE = 4;
 	constexpr const u32 LIST_CHUNK_SIZE = 4;
 	constexpr const u32 INFO_CHUNK_SIZE = 8;
 	constexpr const u32 DATA_CHUNK_SIZE = 4;
@@ -62,21 +64,21 @@ namespace DOG
 		const u64 fileSize = std::filesystem::file_size(path);
 		assert(fileSize >= WAV_RIFF_HEADER_SIZE + WAV_FORMAT_CHUNK_SIZE);
 
-		std::vector<u8> header_data(WAV_RIFF_HEADER_SIZE + WAV_FORMAT_CHUNK_SIZE);
-		file.read((char*)header_data.data(), header_data.size());
+		std::vector<u8> headerData(WAV_RIFF_HEADER_SIZE + WAV_FORMAT_CHUNK_SIZE);
+		file.read((char*)headerData.data(), headerData.size());
 
-		return ReadWAVProperties(header_data);
+		return ReadWAVProperties(headerData);
 	}
 
 	static std::vector<u8> ReadLISTChunk(const u8* data)
 	{
-		data += 4; // Skip "LIST"
+		data += CHUNK_TYPE_SIZE; // Skip "LIST"
 		u32 bytesLeft = *(u32*)data;
-		data += 4; // Move past chunk size
+		data += SIZE_FIELD_SIZE; // Move past chunk size
 
 		while (bytesLeft)
 		{
-			if (memcmp(data, "INFO", 4) == 0)
+			if (memcmp(data, "INFO", CHUNK_TYPE_SIZE) == 0)
 			{
 				u32 chunkSize = *(u32*)&data[INFO_CHUNK_SIZE] + INFO_CHUNK_SIZE + sizeof(u32);
 
@@ -95,20 +97,20 @@ namespace DOG
 	static std::pair<std::vector<u8>, u64> ReadWAVChunk(const u8* data)
 	{
 		std::vector<u8> soundData;
-		u64 chunkSize = 0;
+		u32 chunkSize = 0;
 
 		// Handle the current chunk type (LIST or data)
-		if (memcmp(data, "LIST", 4) == 0)
+		if (memcmp(data, "LIST", CHUNK_TYPE_SIZE) == 0)
 		{
-			chunkSize = (u64)8 + *(u32*)&data[LIST_CHUNK_SIZE];
+			chunkSize = CHUNK_TYPE_SIZE + SIZE_FIELD_SIZE + *(u32*)&data[LIST_CHUNK_SIZE];
 
 			soundData = ReadLISTChunk(data);
 		}
-		else if (memcmp(data, "data", 4) == 0)
+		else if (memcmp(data, "data", CHUNK_TYPE_SIZE) == 0)
 		{
-			chunkSize = (u64)8 + *(u32*)&data[DATA_CHUNK_SIZE];
+			chunkSize = CHUNK_TYPE_SIZE + SIZE_FIELD_SIZE + *(u32*)&data[DATA_CHUNK_SIZE];
 
-			soundData.resize(chunkSize - 8);
+			soundData.resize(chunkSize - (CHUNK_TYPE_SIZE + SIZE_FIELD_SIZE));
 
 			memcpy(soundData.data(), &data[DATA_CHUNK_DATA], soundData.size());
 		}
