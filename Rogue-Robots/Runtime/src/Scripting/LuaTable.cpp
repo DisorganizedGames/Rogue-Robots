@@ -80,6 +80,14 @@ void LuaTable::AddBoolToTable(const std::string& name, bool boolean)
 	m_luaW->AddBoolToTable(m_table, name, boolean);
 }
 
+LuaTable LuaTable::AddTableToTable(const std::string& name)
+{
+	Table table = m_luaW->CreateTable();
+	LuaTable luaTable(m_luaW, table);
+	m_luaW->AddTableToTable(m_table, name, table);
+	return luaTable;
+}
+
 int LuaTable::GetIntFromTable(const std::string& name)
 {
 	return m_luaW->GetIntegerFromTable(m_table, name);
@@ -103,6 +111,12 @@ std::string LuaTable::GetStringFromTable(const std::string& name)
 bool LuaTable::GetBoolFromTable(const std::string& name)
 {
 	return m_luaW->GetBoolFromTable(m_table, name);
+}
+
+LuaTable LuaTable::GetTableFromTable(const std::string& name)
+{
+	Table table = m_luaW->GetTableFromTable(m_table, name);
+	return LuaTable(m_luaW, table);
 }
 
 //Will assert in debug and in release will return an invalid function if the function does not exist

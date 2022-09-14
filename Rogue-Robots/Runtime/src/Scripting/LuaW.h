@@ -8,6 +8,7 @@ extern "C"
 }
 
 class LuaContext;
+class LuaGlobal;
 
 struct ClassFunctionInfo
 {
@@ -22,6 +23,8 @@ struct RegisterClassFunctions
 
 	template <typename T, void (T::* func)(LuaContext*)>
 	RegisterClassFunctions AddFunction(const std::string& functionName);
+	template <void (*func)(LuaContext*)>
+	RegisterClassFunctions AddStaticFunction(const std::string& functionName);
 };
 
 struct Table
@@ -41,6 +44,7 @@ class LuaW
 {
 	friend RegisterClassFunctions;
 	friend LuaContext;
+	friend LuaGlobal;
 
 private:
 	lua_State* m_luaState;
@@ -262,6 +266,18 @@ RegisterClassFunctions RegisterClassFunctions::AddFunction(const std::string& fu
 	ClassFunctionInfo info;
 	info.functionName = functionName;
 	info.classFunction = LuaW::ClassFunctionsHook<T, func>;
+
+	classFunctions.push_back(info);
+
+	return *this;
+}
+
+template<void(*func)(LuaContext*)>
+inline RegisterClassFunctions RegisterClassFunctions::AddStaticFunction(const std::string& functionName)
+{
+	ClassFunctionInfo info;
+	info.functionName = functionName;
+	info.classFunction = LuaW::FunctionsHook<func>;
 
 	classFunctions.push_back(info);
 

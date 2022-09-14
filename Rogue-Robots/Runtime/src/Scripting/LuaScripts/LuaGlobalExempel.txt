@@ -1,0 +1,42 @@
+void GlobalFunction(LuaContext* context)
+{
+	context->ReturnString("Return");
+}
+
+class CoolClass
+{
+public:
+	std::string otherText = "";
+	static void PrintCoolText(LuaContext* context)
+	{
+		std::cout << "Cool Text\n";
+	};
+	void PrintOtherText(LuaContext* context)
+	{
+		std::cout << otherText << "\n";
+	};
+};
+	
+	luaGlobal.SetNumber("globalNumber", 23.0f);
+	luaGlobal.SetBoolean("globalBool", true);
+	luaGlobal.SetString("globalString", "I am a global string");
+	luaGlobal.SetFunction<GlobalFunction>("GlobalFunction");
+	LuaTable globalTable = luaGlobal.CreateLuaTable("globalTable");
+	globalTable.AddIntToTable("tableNumber", 12);
+
+	auto registerInterface = luaGlobal.CreateLuaInterface("LuaInterface");
+	registerInterface.AddStaticFunction<&CoolClass::PrintCoolText>("PrintCoolText");
+	registerInterface.AddFunction<CoolClass, &CoolClass::PrintOtherText>("PrintOtherText");
+	luaGlobal.SetLuaInterface(registerInterface);
+
+	CoolClass coolClass;
+	coolClass.otherText = "TJENA TJENA";
+	luaGlobal.SetUserData<CoolClass>(&coolClass, "coolClass", "LuaInterface");
+
+	int tableNumber = luaGlobal.GetTable("globalTable").GetIntFromTable("tableNumber");
+	double globalNumber = luaGlobal.GetDouble("globalNumber");
+	std::string globalString = luaGlobal.GetString("globalString");
+	bool globalBoolean = luaGlobal.GetBoolean("globalBool");
+	CoolClass* coolClass2 = luaGlobal.GetUserData<CoolClass>("coolClass");
+
+	scriptManager->AddScript("LuaTest.lua");
