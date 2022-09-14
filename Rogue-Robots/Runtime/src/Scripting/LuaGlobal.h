@@ -33,18 +33,21 @@ public:
 	T* GetUserData(const std::string& luaGlobalName);
 };
 
+//Sets the given name to a global function
 template<void(*func)(LuaContext*)>
 inline void LuaGlobal::SetFunction(const std::string& luaGlobalName)
 {
 	m_luaW->PushGlobalFunction<func>(luaGlobalName);
 }
 
+//Sets the given name to a global userData
 template<typename T>
 inline void LuaGlobal::SetUserData(T* object, const std::string& objectName, const std::string& interfaceName)
 {
 	m_luaW->PushGlobalUserData<T>(object, interfaceName, objectName);
 }
 
+//Get the global userData
 template<typename T>
 inline T* LuaGlobal::GetUserData(const std::string& luaGlobalName)
 {
