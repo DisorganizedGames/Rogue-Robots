@@ -35,32 +35,45 @@ namespace DOG
 
 	AssetManager::~AssetManager()
 	{
-
+		for (auto& [id, asset] : m_assets)
+		{
+			assert(asset);
+			delete asset;
+			asset = nullptr;
+		}
 	}
 
 	u64 AssetManager::LoadModelAsset(const std::string& path, AssetLoadFlag)
 	{
-		assert(std::filesystem::exists(path));
+		if (!std::filesystem::exists(path))
+		{
+			// assert wont catch if we have wrong path only in release mode
+			std::cout << "AssetManager::LoadModelAsset throw. " + path + " does not exist" << std::endl;
+			throw std::runtime_error(path + " does not exist");
+		}
+
 		DOG::AssimpImporter assimpImporter = DOG::AssimpImporter(path);
 		auto asset = assimpImporter.get_result();
 
-		ModelAsset newModel;
-		newModel.filePath = path;
-		newModel.meshID = AddMesh(asset->mesh, path);
-		newModel.submeshes = std::move(asset->submeshes);
-		newModel.materialIDs = LoadMaterials(asset->materials);
-
-		GetAsset(newModel.meshID)->stateFlag = AssetStateFlag::ExistOnCPU;
-		newModel.stateFlag = AssetStateFlag::ExistOnCPU;
+		ModelAsset* newModel = new ModelAsset;
+		newModel->meshID = AddMesh(asset->mesh);
+		newModel->submeshes = std::move(asset->submeshes);
+		newModel->materialIDs = LoadMaterials(asset->materials);
 
 		u64 id = GenerateRandomID();
-		m_assets[id] = std::make_unique<ModelAsset>(std::move(newModel));
+		m_assets.insert({ id, new ManagedAsset(AssetStateFlag::ExistOnCPU, newModel) });
 		return id;
 	}
 
 	u64 AssetManager::LoadTexture(const std::string& path, AssetLoadFlag)
 	{
-		assert(std::filesystem::exists(path));
+		if (!std::filesystem::exists(path))
+		{
+			// assert wont catch if we have wrong path only in release mode
+			std::cout << "AssetManager::LoadTexture throw. " + path + " does not exist" << std::endl;
+			throw std::runtime_error(path + " does not exist");
+		}
+
 		int width;
 		int height;
 		int numChannels; // Number of channels the image contained, we will force it to load with rgba
@@ -68,19 +81,17 @@ namespace DOG
 		numChannels = STBI_rgb_alpha; // we will have rgba
 		assert(imageData);
 
-		TextureAsset newTexture;
-		newTexture.filePath = path;
-		newTexture.mipLevels = 1; // Mip maps will be handled later on when the assetTool is implemented.
-		newTexture.width = width;
-		newTexture.height = height;
-		newTexture.textureData.resize(width * height * numChannels);
+		TextureAsset* newTexture = new TextureAsset;
+		newTexture->mipLevels = 1; // Mip maps will be handled later on when the assetTool is implemented.
+		newTexture->width = width;
+		newTexture->height = height;
+		newTexture->textureData.resize(static_cast<size_t>(width) * height * numChannels);
 
-		memcpy(newTexture.textureData.data(), imageData, newTexture.textureData.size());
+		memcpy(newTexture->textureData.data(), imageData, newTexture->textureData.size());
 		STBI_FREE(imageData);
 		
-		newTexture.stateFlag = AssetStateFlag::ExistOnCPU;
 		u64 id = GenerateRandomID();
-		m_assets[id] = std::make_unique<TextureAsset>(std::move(newTexture));
+		m_assets.insert({ id, new ManagedAsset(AssetStateFlag::ExistOnCPU, newTexture) });
 		return id;
 	}
 
@@ -93,35 +104,43 @@ namespace DOG
 	{
 		if (m_assets.contains(id))
 		{
-			return m_assets.at(id).get();
+			return m_assets.at(id)->Get();
 		}
 		else
 		{
+			std::cout << "Warning AssetManager::GetAsset called with invalid id as argument." << std::endl;
 			return nullptr;
 		}
 	}
 
-	u64 AssetManager::AddMesh(const MeshAsset& mesh)
+	u64 AssetManager::AddMesh(const ImportedMesh& mesh)
 	{
+		MeshAsset* newMesh = new MeshAsset;
+		newMesh->indices = mesh.indices;
+		newMesh->vertexData = mesh.vertexData;
+
 		u64 id = GenerateRandomID();
-		m_assets[id] = std::make_unique<MeshAsset>(mesh);
+		m_assets.insert({ id, new ManagedAsset(AssetStateFlag::ExistOnCPU, newMesh) });
 		return id;
 	}
 
-	u64 AssetManager::AddMesh(MeshAsset&& mesh)
+	void AssetManager::UnLoadAsset(u64 id, AssetUnLoadFlag flag)
 	{
-		u64 id = GenerateRandomID();
-		m_assets[id] = std::make_unique<MeshAsset>(std::move(mesh));
-		return id;
-	}
+		if (m_assets.contains(id) && !m_assets[id]->CheckIfLoadingAsync())
+		{
+			assert(m_assets[id]->stateFlag != AssetStateFlag::Unknown);
 
-	u64 AssetManager::AddMesh(const ImportedMesh& mesh, const std::string& pathImportedFrom)
-	{
-		MeshAsset newMesh;
-		newMesh.filePath = pathImportedFrom;
-		newMesh.indices = mesh.indices;
-		newMesh.vertexData = mesh.vertexData;
-		return AddMesh(std::move(newMesh));
+			if (m_assets[id]->stateFlag & AssetStateFlag::ExistOnGPU && flag & AssetUnLoadFlag::RemoveFromVram)
+			{
+				// TODO
+				// This can't be handled internaly in the ManagedAsset, it does not know about gpu land.
+			}
+			
+			if (m_assets[id]->stateFlag & AssetStateFlag::ExistOnCPU && flag & AssetUnLoadFlag::RemoveFromRam)
+			{
+				m_assets[id]->ReleaseAsset();
+			}
+		}
 	}
 
 	std::vector<u64> AssetManager::LoadMaterials(const std::vector<ImportedMaterial>& importedMats)
@@ -146,5 +165,51 @@ namespace DOG
 		}
 
 		return newMats;
+	}
+
+	ManagedAsset::ManagedAsset(AssetStateFlag flag, Asset* asset) : m_asset(asset), stateFlag(flag)
+	{
+		if (stateFlag & AssetStateFlag::LoadingAsync)
+			m_isLoadingConcurrent = 1;
+	}
+
+	ManagedAsset::~ManagedAsset()
+	{
+		if (m_asset)
+		{
+			if (CheckIfLoadingAsync())
+			{
+				assert(false); // Does this ever happen, if so create a task to fix this.
+			}
+
+			delete m_asset;
+			m_asset = nullptr;
+		}
+	}
+
+	Asset* ManagedAsset::Get() const
+	{
+		if (CheckIfLoadingAsync())
+			return nullptr;
+		else
+			return m_asset;
+	}
+	bool ManagedAsset::CheckIfLoadingAsync() const
+	{
+		if (stateFlag & AssetStateFlag::LoadingAsync)
+		{
+			if (m_isLoadingConcurrent == 1)
+				return true;
+			else
+				stateFlag &= ~AssetStateFlag::LoadingAsync;
+		}
+		return false;
+	}
+	void ManagedAsset::ReleaseAsset()
+	{
+		assert(m_asset && !CheckIfLoadingAsync());
+		delete m_asset;
+		m_asset = nullptr;
+		stateFlag &= ~AssetStateFlag::ExistOnCPU;
 	}
 }
