@@ -401,6 +401,7 @@ class AnalyzeMap(bpy.types.Operator):
 #######################################################
 
 def generate_grid():
+    save_selection()
     settings = D.objects['grid']
     size_x = int(settings.location.x)
     settings.location.x = size_x
@@ -445,6 +446,8 @@ def generate_grid():
                 obj.hide_viewport = True
 
     # Create grid
+    viewport_state = D.collections['Grid'].hide_viewport
+    D.collections['Grid'].hide_viewport = False
     C.view_layer.active_layer_collection = \
     C.view_layer.layer_collection.children['Grid']
     for z in range(size_z):
@@ -473,6 +476,8 @@ def generate_grid():
                     gizmo.lock_location[i] = True
                     gizmo.lock_rotation[i] = True
                     gizmo.lock_scale[i] = True
+    D.collections['Grid'].hide_viewport = viewport_state
+    restore_selection()
 
 # Generator that loops over entire grid, yielding one element at at time
 def all_blocks():
@@ -509,6 +514,8 @@ def get_block(x, y, z):
 
 def empty_collection(coll, ex=[]):
     O.object.select_all(action='DESELECT')
+    coll_state = coll.hide_viewport
+    coll.hide_viewport = False
     for obj in coll.objects:
         obj.hide_viewport = False
         obj.hide_select = False
@@ -516,8 +523,9 @@ def empty_collection(coll, ex=[]):
     for obj in ex:
         obj.hide_viewport = True
     O.object.delete()
+    coll.hide_viewport = coll_state
 
-def save_selection(context):
+def save_selection(context=C):
     # First empty selection
     for obj in D.collections['Object_Selection'].objects:
         D.collections['Object_Selection'].objects.unlink(obj)
@@ -531,7 +539,7 @@ def save_selection(context):
         D.collections['Active_Object'].objects.link(obj)
     
 
-def restore_selection(context):
+def restore_selection(context=C):
     O.object.select_all(action='DESELECT')
     O.object.select_same_collection(collection='Object_Selection')
     for obj in D.collections['Object_Selection'].objects:
