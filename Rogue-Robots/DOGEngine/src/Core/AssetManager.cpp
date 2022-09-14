@@ -1,8 +1,11 @@
 #include "AssetManager.h"
 
 #pragma warning(push, 0)
-#define STB_IMAGE_IMPLEMENTATION
+
+// Nad: Compressonator library already defines this 
+//#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+
 #pragma warning(pop)
 
 namespace DOG
@@ -88,8 +91,9 @@ namespace DOG
 		newTexture->textureData.resize(static_cast<size_t>(width) * height * numChannels);
 
 		memcpy(newTexture->textureData.data(), imageData, newTexture->textureData.size());
-		STBI_FREE(imageData);
-
+		stbi_image_free(imageData);
+		//STBI_FREE(imageData);
+		
 		u64 id = GenerateRandomID();
 		m_assets.insert({ id, new ManagedAsset(AssetStateFlag::ExistOnCPU, newTexture) });
 		return id;
