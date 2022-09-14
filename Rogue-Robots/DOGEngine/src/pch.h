@@ -18,6 +18,8 @@
 
 #include <xaudio2.h>
 #include <x3daudio.h>
+#include <WinSock2.h>
+#include <ws2tcpip.h>
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -58,6 +60,8 @@
 #include <optional>
 #include <DirectXMath.h>
 #include <bitset>
+#include <barrier>
+#include <timeapi.h>
 
 #include "common/Utils.h"
 
