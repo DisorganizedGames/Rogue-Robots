@@ -11,6 +11,13 @@ namespace DOG
 		Async = 1 << 2,
 	};
 
+	enum class AssetUnLoadFlag
+	{
+		RemoveFromVram = 1 << 1,
+		RemoveFromRam = 1 << 2,
+		RemoveFromAllMemoryTypes = RemoveFromVram | RemoveFromRam,
+	};
+
 	enum class AssetStateFlag
 	{
 		Unknown = 0,
@@ -20,27 +27,138 @@ namespace DOG
 		Evicted = 1 << 4,
 	};
 
-	inline AssetLoadFlag operator &(AssetLoadFlag l, AssetLoadFlag r)
+	inline int operator &(AssetLoadFlag l, AssetLoadFlag r)
 	{
-		return (AssetLoadFlag)((int)l & (int)r);
+		return (int)l & (int)r;
 	}
-	inline AssetLoadFlag operator |(AssetLoadFlag l, AssetLoadFlag r)
+	inline int operator |(AssetLoadFlag l, AssetLoadFlag r)
 	{
-		return (AssetLoadFlag)((int)l | (int)r);
+		return (int)l | (int)r;
+	}
+
+	inline void operator |= (AssetLoadFlag& l, AssetLoadFlag r)
+	{
+		l = (AssetLoadFlag)(l | r);
+	}
+
+	inline void operator |= (AssetLoadFlag& l, int r)
+	{
+		l = (AssetLoadFlag)((int)l | r);
+	}
+
+	inline void operator &= (AssetLoadFlag& l, AssetLoadFlag r)
+	{
+		l = (AssetLoadFlag)(l & r);
+	}
+
+	inline void operator &= (AssetLoadFlag& l, int r)
+	{
+		l = (AssetLoadFlag)((int)l & r);
+	}
+
+	inline int operator~ (AssetLoadFlag e)
+	{
+		return ~(int)e;
+	}
+
+	inline int operator &(AssetUnLoadFlag l, AssetUnLoadFlag r)
+	{
+		return (int)l & (int)r;
+	}
+	inline int operator |(AssetUnLoadFlag l, AssetUnLoadFlag r)
+	{
+		return (int)l | (int)r;
+	}
+
+	inline void operator |= (AssetUnLoadFlag& l, AssetUnLoadFlag r)
+	{
+		l = (AssetUnLoadFlag)(l | r);
+	}
+
+	inline void operator |= (AssetUnLoadFlag& l, int r)
+	{
+		l = (AssetUnLoadFlag)((int)l | r);
+	}
+
+	inline void operator &= (AssetUnLoadFlag& l, AssetUnLoadFlag r)
+	{
+		l = (AssetUnLoadFlag)(l & r);
+	}
+
+	inline void operator &= (AssetUnLoadFlag& l, int r)
+	{
+		l = (AssetUnLoadFlag)((int)l & r);
+	}
+
+	inline int operator~ (AssetUnLoadFlag e)
+	{
+		return ~(int)e;
+	}
+
+	inline int operator &(AssetStateFlag l, AssetStateFlag r)
+	{
+		return (int)l & (int)r;
+	}
+
+	inline int operator |(AssetStateFlag l, AssetStateFlag r)
+	{
+		return (int)l | (int)r;
+	}
+
+	inline void operator |= (AssetStateFlag& l, AssetStateFlag r)
+	{
+		l = (AssetStateFlag)(l | r);
+	}
+
+	inline void operator |= (AssetStateFlag& l, int r)
+	{
+		l = (AssetStateFlag)((int)l | r);
+	}
+
+	inline void operator &= (AssetStateFlag& l, AssetStateFlag r)
+	{
+		l = (AssetStateFlag)(l & r);
+	}
+
+	inline void operator &= (AssetStateFlag& l, int r)
+	{
+		l = (AssetStateFlag)((int)l & r);
+	}
+
+	inline int operator~ (AssetStateFlag e)
+	{
+		return ~(int)e;
 	}
 
 	struct Asset
 	{
 		virtual ~Asset() = default;
-		std::string filePath;
-		AssetStateFlag stateFlag = AssetStateFlag::Unknown;
 	};
+
+	class ManagedAsset
+	{
+	public:
+		ManagedAsset() = default;
+		ManagedAsset(AssetStateFlag flag, Asset* asset);
+		~ManagedAsset();
+		Asset* Get() const;
+		bool CheckIfLoadingAsync() const;
+		void ReleaseAsset();
+
+		mutable AssetStateFlag stateFlag = AssetStateFlag::Unknown;
+
+	private:
+		Asset* m_asset = nullptr;
+		std::atomic_signed_lock_free m_isLoadingConcurrent = 0;
+	};
+
+	
 
 	struct TextureAsset : public Asset
 	{
-		uint32_t width;
-		uint32_t height;
-		uint32_t mipLevels;
+		uint32_t width{ 0 };
+		uint32_t height{ 0 };
+		uint32_t mipLevels{ 0 };
 		std::vector<u8> textureData;
 	};
 
@@ -65,22 +183,30 @@ namespace DOG
 	class AssetManager
 	{
 	public:
-		AssetManager();
+		static void Initialize();
+		static void Destroy();
+		static AssetManager& Get();
+
 		~AssetManager();
 
 		[[nodiscard]] u64 LoadModelAsset(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::None);
 		[[nodiscard]] u64 LoadTexture(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::None);
 		[[nodiscard]] u64 LoadAudio(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::None);
-		[[nodiscard]] u64 AddMesh(const MeshAsset& mesh);
-		[[nodiscard]] u64 AddMesh(MeshAsset&& mesh);
-		[[nodiscard]] u64 AddMesh(const ImportedMesh& mesh, const std::string& pathImportedFrom);
+
+		void UnLoadAsset(u64 id, AssetUnLoadFlag flag = AssetUnLoadFlag::RemoveFromAllMemoryTypes);
+
 		Asset* GetAsset(u64 id) const;
 
 	private:
+		AssetManager();
+
+		[[nodiscard]] u64 AddMesh(const ImportedMesh& mesh);
 		[[nodiscard]] std::vector<u64> LoadMaterials(const std::vector<ImportedMaterial>& importedMats);
 
 	private:
-		std::unordered_map<uint64_t, std::unique_ptr<Asset>> m_assets;
+		static std::unique_ptr<AssetManager> s_instance;
+
+		std::unordered_map<u64, ManagedAsset*> m_assets;
 
 		MaterialManager m_materialManager;
 	};

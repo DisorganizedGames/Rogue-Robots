@@ -1,9 +1,12 @@
 #include "Application.h"
 #include "Window.h"
 #include "Time.h"
+#include "AssetManager.h"
 
 #include "../Input/Mouse.h"
 #include "../Input/Keyboard.h"
+
+
 
 #include "../Graphics/RHI/DX12/RenderBackend_DX12.h"
 #include "../Graphics/RHI/DX12/RenderDevice_DX12.h"
@@ -221,10 +224,12 @@ namespace DOG
 	{
 		EventBus::Get().SetMainApplication(this);
 		Window::Initialize(m_specification);
+		AssetManager::Initialize();
 	}
 
 	void Application::OnShutDown() noexcept
 	{
+		AssetManager::Destroy();
 		//...
 	}
 
