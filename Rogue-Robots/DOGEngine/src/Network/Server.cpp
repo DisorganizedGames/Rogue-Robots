@@ -8,7 +8,7 @@ namespace DOG
 		
 		for (int i = 0; i < MAX_PLAYER_COUNT; i++)
 		{
-			m_playersServer[i].player_nr = i + 1;
+			m_playersServer[i].playerNr = i + 1;
 			m_playerIds.at(i) = i;
 		}
 
@@ -90,7 +90,7 @@ namespace DOG
 					std::cout << "\nServer: Accept a connection from clientSocket: " << clientSocket << ", From player: " << m_playerIds.front() + 1 << std::endl;
 					//give connections a player id
 					int playerId = m_playerIds.front();
-					input.player_nr = playerId + 1;
+					input.playerNr = playerId + 1;
 					m_holdPlayerIds.push_back(playerId);
 					sprintf(inputSend, "%d", playerId);
 					send(clientSocket, inputSend, sizeof(int), 0);
@@ -131,7 +131,7 @@ namespace DOG
 		
 		//sets the minium resolution for ticks
 		UINT sleepGranularityMs = 1;
-		timeBeginPeriod(sleepGranularityMs) == TIMERR_NOERROR;
+		timeBeginPeriod(sleepGranularityMs);
 
 		do {
 			QueryPerformanceCounter(&tickStartTime);
@@ -150,7 +150,7 @@ namespace DOG
 					{
 						recv(m_holdSockets[i].fd, clientData, sizeof(Client::ClientsData), 0);
 						memcpy(&holdClientsData, (void*)clientData, sizeof(Client::ClientsData));
-						memcpy(&m_playersServer[holdClientsData.player_nr-1], (void*)clientData, sizeof(Client::ClientsData));
+						memcpy(&m_playersServer[holdClientsData.playerNr-1], (void*)clientData, sizeof(Client::ClientsData));
 					}
 				}
 			}
