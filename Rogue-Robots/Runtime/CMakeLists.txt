@@ -1,6 +1,6 @@
 #Root/Runtime
 set(SourceFiles  "src/Core/RuntimeApplication.cpp" "src/Core/RuntimeApplication.h" "src/Scripting/LuaContext.cpp" "src/Scripting/LuaContext.h" "src/Scripting/LuaW.cpp"
-    "src/Scripting/LuaW.h" "src/Game/GameLayer.h" "src/Game/GameLayer.cpp"    )
+    "src/Scripting/LuaW.h" "src/Game/GameLayer.h" "src/Game/GameLayer.cpp" "src/Scripting/LuaTable.h" "src/Scripting/LuaTable.cpp" "src/Scripting/ScriptManager.cpp" "src/Scripting/ScriptManager.h")
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")
 set (ExternalLibPath "${CMAKE_SOURCE_DIR}/Runtime/vendor/libs")
@@ -32,6 +32,28 @@ foreach(var ${dlls})
     COMMAND ${CMAKE_COMMAND} -E copy 
     "${var}"
     ${CMAKE_BINARY_DIR}/Runtime/
+
+    )
+endforeach()
+
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/Runtime/LuaScripts")
+
+file(GLOB_RECURSE LuaScripts
+      "${CMAKE_SOURCE_DIR}/Runtime/src/Scripting/LuaScripts/*.lua")
+
+set_property(
+    DIRECTORY 
+    APPEND 
+    PROPERTY CMAKE_CONFIGURE_DEPENDS 
+    ${LuaScripts}
+)
+
+foreach(var ${LuaScripts})
+    add_custom_command(
+    TARGET "${ExecutableName}" POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy 
+    "${var}"
+    "${CMAKE_BINARY_DIR}/Runtime/LuaScripts"
 
     )
 endforeach()

@@ -6,6 +6,7 @@ extern "C"
 #include "Lua/lauxlib.h"
 #include "Lua/lualib.h"
 }
+
 class LuaContext;
 
 struct ClassFunctionInfo
@@ -31,14 +32,26 @@ struct Table
 typedef Table Function;
 typedef Table UserData;
 
+struct Reference
+{
+	uint32_t nrOfReferences;
+};
+
 class LuaW
 {
 	friend RegisterClassFunctions;
+	friend LuaContext;
 
 private:
 	lua_State* m_luaState;
+	std::unordered_map<int, Reference> m_referenceList;
+	static constexpr int c_unValid = -1;
 
 public:
+	//Might be changed later depending on if we have threaded scripting
+	static LuaW s_luaW;
+
+private:
 	LuaW(lua_State* l);
 	template<void (*func)(LuaContext*)>
 	static inline int FunctionsHook(lua_State* luaState);
@@ -46,19 +59,26 @@ public:
 	template <typename T, void (T::* func)(LuaContext*)>
 	static inline int ClassFunctionsHook(lua_State* luaState);
 
-	bool IsUserData(int index) const;
 	void Error(const std::string& errorMessage);
 
 	void LoadChunk(const std::string& luaScriptName);
 
-	int GetIntegerFromStack(int index = 1);
-	float GetFloatFromStack(int index = 1);
-	double GetDoubleFromStack(int index = 1);
-	std::string GetStringFromStack(int index = 1);
-	bool GetBoolFromStack(int index = 1);
-	Function GetFunctionFromStack(int index = 1);
-	Table GetTableFromStack(int index = 1);
-	UserData GetUserDataFromStack(int index = 1);
+	bool IsInteger(int index = 1) const;
+	bool IsNumber(int index = 1) const;
+	bool IsString(int index = 1) const;
+	bool IsBool(int index = 1) const;
+	bool IsFunction(int index = 1) const;
+	bool IsTable(int index = 1) const;
+	bool IsUserData(int index = 1) const;
+
+	int GetIntegerFromStack(int index = 1, bool noError = false);
+	float GetFloatFromStack(int index = 1, bool noError = false);
+	double GetDoubleFromStack(int index = 1, bool noError = false);
+	std::string GetStringFromStack(int index = 1, bool noError = false);
+	bool GetBoolFromStack(int index = 1, bool noError = false);
+	Function GetFunctionFromStack(int index = 1, bool noError = false);
+	Table GetTableFromStack(int index = 1, bool noError = false);
+	UserData GetUserDataFromStack(int index = 1, bool noError = false);
 	template<typename T>
 	T* GetUserDataPointerFromStack(int index = 1);
 
@@ -79,6 +99,14 @@ public:
 	void SetTableAndPop();
 	void GetTableAndRemove();
 
+	void AddReference(Table& ref);
+	void RemoveReference(Table& ref);
+
+	int AddEnvironmentToTable(Table& table, const std::string& luaFileName);
+
+	int GetNumberOfStackItems() const;
+
+	void ClearStack();
 
 public:
 	void PushGlobalNumber(const std::string& luaGlobalName, int number);
@@ -135,12 +163,21 @@ public:
 	Table GetTableFromTable(Table& table, const std::string& tableTableName);
 	UserData GetUserDataFromTable(Table& table, const std::string& tableUserDataName);
 
+	Function TryGetFunctionFromTable(Table& table, const std::string& tableFunctionName);
+	bool CheckIfFunctionExist(Function& function);
+
 	void RunScript(const std::string& luaFileName);
 	void CreateEnvironment(Table& table, const std::string& luaFileName);
+	int TryCreateEnvironment(Table& table, const std::string& luaFileName);
+
+	bool TryLoadChunk(const std::string& luaScriptName);
 
 	template<typename T>
 	T* GetUserDataPointer(UserData& userData);
 
+	void AddReferenceToTable(Table& table);
+	void AddReferenceToFunction(Function& function);
+	void AddReferenceToUserData(UserData& userData);
 	void RemoveReferenceToTable(Table& table);
 	void RemoveReferenceToFunction(Function& function);
 	void RemoveReferenceToUserData(UserData& userData);
@@ -172,8 +209,11 @@ inline void LuaW::PushUserDataPointerToStack(T* object, const std::string& inter
 	T** newUserData = (T**)lua_newuserdata(m_luaState, sizeof(T*));
 	*newUserData = object;
 
+	//Gets the metatable of the interface
 	luaL_getmetatable(m_luaState, interfaceName.c_str());
-	lua_setmetatable(m_luaState, -2);
+	const int userDataPosition = -2;
+	//Sets the metatable of the interface to the userData
+	lua_setmetatable(m_luaState, userDataPosition);
 }
 
 //Sets the UserData to an global variable in lua
@@ -189,29 +229,30 @@ void LuaW::PushGlobalUserData(T* object, const std::string& interfaceName, const
 template<void (*func)(LuaContext*)>
 static inline int LuaW::FunctionsHook(lua_State* luaState)
 {
-	LuaW luaW(luaState);
-	LuaContext state(luaW);
+	//LuaW luaW(luaState);
+	LuaContext state(&s_luaW);
 
 	func(&state);
-	return 0;//state.returns;
+
+	return state.GetNumberOfReturns();
 }
 
 //Hooks a member function from c++ to an static int function(lua_State* luaState) 
 template <typename T, void (T::* func)(LuaContext*)>
 static inline int LuaW::ClassFunctionsHook(lua_State* luaState)
 {
-	LuaW luaW(luaState);
-	LuaContext state(luaW);
+	//LuaW luaW(luaState);
+	LuaContext state(&s_luaW);
 
-	if (!luaW.IsUserData(1))
+	if (!s_luaW.IsUserData())
 	{
-		luaW.Error("Tried to access userdata and no userdata was found! Call object function with either object:function() or object.function(object)!");
+		s_luaW.Error("Tried to access userdata and no userdata was found! Call object function with either object:function() or object.function(object)!");
 		return 0;
 	}
-	T* object = luaW.GetUserDataPointerFromStack<T>();
+	T* object = s_luaW.GetUserDataPointerFromStack<T>();
 	(object->*func)(&state);
 
-	return 0;//state.returns;
+	return state.GetNumberOfReturns();
 }
 
 //Adds a member function to the interface
