@@ -419,11 +419,11 @@ void LuaW::AddReference(Table& ref)
 {
 	const int oneReference = 1;
 
-	auto it = m_reference_list.find(ref.ref);
-	if (it == m_reference_list.end())
-		m_reference_list.insert({ ref.ref, {oneReference} });
+	auto it = m_referenceList.find(ref.ref);
+	if (it == m_referenceList.end())
+		m_referenceList.insert({ ref.ref, {oneReference} });
 	else
-		++it->second.nr_of_references;
+		++it->second.nrOfReferences;
 }
 
 //If there are no more reference to that table then we will remove the reference on the c++ side
@@ -431,11 +431,11 @@ void LuaW::RemoveReference(Table& ref)
 {
 	const int minAllowedReferencesForRemoval = 0;
 
-	auto it = m_reference_list.find(ref.ref);
-	if (it != m_reference_list.end())
+	auto it = m_referenceList.find(ref.ref);
+	if (it != m_referenceList.end())
 	{
-		--it->second.nr_of_references;
-		if (it->second.nr_of_references == minAllowedReferencesForRemoval)
+		--it->second.nrOfReferences;
+		if (it->second.nrOfReferences == minAllowedReferencesForRemoval)
 			luaL_unref(m_luaState, LUA_REGISTRYINDEX, ref.ref);
 		ref.ref = c_unValid;
 	}

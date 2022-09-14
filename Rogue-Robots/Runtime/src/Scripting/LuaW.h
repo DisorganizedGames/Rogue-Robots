@@ -34,7 +34,7 @@ typedef Table UserData;
 
 struct Reference
 {
-	uint32_t nr_of_references;
+	uint32_t nrOfReferences;
 };
 
 class LuaW
@@ -44,10 +44,10 @@ class LuaW
 
 private:
 	lua_State* m_luaState;
-	std::unordered_map<int, Reference> m_reference_list;
+	std::unordered_map<int, Reference> m_referenceList;
 	static constexpr int c_unValid = -1;
 
-private:
+public:
 	//Might be changed later depending on if we have threaded scripting
 	static LuaW s_luaW;
 

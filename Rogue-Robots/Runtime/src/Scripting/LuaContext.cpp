@@ -3,21 +3,21 @@
 void LuaContext::IncreaseReturnArgument()
 {
 	//Clears the stack if it's not empty
-	++m_return_argument_size;
-	if (m_return_argument_size == 0)
+	if (m_returnArgumentSize == 0)
 	{
 		m_luaW->ClearStack();
 	}
+	++m_returnArgumentSize;
 }
 
 LuaContext::LuaContext(LuaW* luaW)
 {
 	m_luaW = luaW;
-	m_return_argument_size = 0;
+	m_returnArgumentSize = 0;
 }
 
-//if there exist no double/float then we return a empty string
-int LuaContext::GetInteger() const
+//if there exist no integer then we return zero
+const int LuaContext::GetInteger() const
 {
 	int max = m_luaW->GetNumberOfStackItems();
 
@@ -30,8 +30,8 @@ int LuaContext::GetInteger() const
 	return 0;
 }
 
-//if there exist no double/float then we return a empty string
-double LuaContext::GetDouble() const
+//if there exist no double/float then we return zero
+const double LuaContext::GetDouble() const
 {
 	int max = m_luaW->GetNumberOfStackItems();
 
@@ -45,7 +45,7 @@ double LuaContext::GetDouble() const
 }
 
 //if there exist no bool then we return false
-bool LuaContext::GetBoolean() const
+const bool LuaContext::GetBoolean() const
 {
 	int max = m_luaW->GetNumberOfStackItems();
 
@@ -59,13 +59,13 @@ bool LuaContext::GetBoolean() const
 }
 
 //if there exist no string then we return a empty string
-std::string LuaContext::GetString() const
+const std::string LuaContext::GetString() const
 {
 	int max = m_luaW->GetNumberOfStackItems();
 
 	for (int index = 1; index <= max; ++index)
 		if (!m_luaW->IsNumber(index) && m_luaW->IsString(index))
-			return std::move(m_luaW->GetStringFromStack(index));
+			return m_luaW->GetStringFromStack(index);
 
 	std::cout << "Error: Couldn't Find String In Arguments\n";
 
@@ -73,7 +73,7 @@ std::string LuaContext::GetString() const
 }
 
 //if there exist no table it returns a empty table
-LuaTable LuaContext::GetTable() const
+const LuaTable LuaContext::GetTable() const
 {
 	int max = m_luaW->GetNumberOfStackItems();
 
@@ -122,5 +122,5 @@ void LuaContext::ReturnTable(LuaTable& luaTable)
 
 uint32_t LuaContext::GetNumberOfReturns() const
 {
-	return m_return_argument_size;
+	return m_returnArgumentSize;
 }

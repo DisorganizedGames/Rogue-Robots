@@ -7,7 +7,7 @@ class LuaContext
 {
 private:
 	LuaW* m_luaW;
-	uint32_t m_return_argument_size;
+	uint32_t m_returnArgumentSize;
 
 private:
 	void IncreaseReturnArgument();
@@ -15,13 +15,13 @@ private:
 public:
 	LuaContext(LuaW* luaW);
 
-	int GetInteger() const;
-	double GetDouble() const;
-	bool GetBoolean() const;
-	std::string GetString() const;
-	LuaTable GetTable() const;
+	const int GetInteger() const;
+	const double GetDouble() const;
+	const bool GetBoolean() const;
+	const std::string GetString() const;
+	const LuaTable GetTable() const;
 	template <typename T>
-	T* GetUserData() const;
+	const T* GetUserData() const;
 
 	void ReturnInteger(int integer);
 	void ReturnDouble(double number);
@@ -35,7 +35,7 @@ public:
 };
 
 template<typename T>
-inline T* LuaContext::GetUserData() const
+inline const T* LuaContext::GetUserData() const
 {
 	int max = m_luaW->GetNumberOfStackItems();
 

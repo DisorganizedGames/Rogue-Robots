@@ -9,7 +9,7 @@ void ScriptManager::ScriptFileWatcher(const std::filesystem::path& path, const f
 {
 	if (filewatch::Event::modified == changeType && path.extension() == std::filesystem::path(".lua"))
 	{
-		std::string fileName = path.string().c_str();
+		std::string fileName = path.string();
 
 		std::lock_guard<std::mutex> guard(s_reloadMutex);
 		s_filesToBeReloaded.push_back(fileName);
