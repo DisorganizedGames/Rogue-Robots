@@ -21,7 +21,7 @@ void GameLayer::OnDetach()
 void GameLayer::OnUpdate()
 {
 	m_debugCam.OnUpdate();
-	//m_debugCam.PrintPosition();
+	m_pipedData.viewMat = m_debugCam.GetViewMatrix();
 }
 
 void GameLayer::OnRender()

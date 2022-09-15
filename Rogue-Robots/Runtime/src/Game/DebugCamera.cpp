@@ -18,13 +18,16 @@ void DebugCamera::OnUpdate()
 	
 	if (mouseX || mouseY)
 	{
-		m_polar += mouseX * 1.f/2000 * 2 * XM_PI;
-		m_azim -= mouseY * 1.f/2000 * 2 * XM_PI;
+		m_azim -= mouseX * 1.f/2000 * 2 * XM_PI;
+		m_polar += mouseY * 1.f/2000 * 2 * XM_PI;
 		
+		m_polar = std::min((double)m_polar, XM_PI - 0.001);
+		m_polar = std::max((double)m_polar, 0.001);
+
 		m_forward = XMVectorSet(
-			std::sin(m_azim) * std::cos(m_polar),
+			std::cos(m_azim) * std::sin(m_polar),
+			std::cos(m_polar), 
 			std::sin(m_azim) * std::sin(m_polar),
-			std::cos(m_azim), 
 			0
 		);
 
@@ -97,9 +100,10 @@ inline void DebugCamera::InitCamera(f32 x, f32 y, f32 z, f32 forwardX, f32 forwa
 	m_position = XMVectorSet(x, y, z, 0);
 	m_forward = XMVectorSet(forwardX, forwardY, forwardZ, 0);
 	m_right = XMVector3Cross(s_globalUp, m_forward);
-	m_speed = 0.001;
+	m_speed = 0.1;
 
-	m_polar = m_azim = 0;
+	m_polar = XM_PI / 2;
+	m_azim = XM_PI / 2;
 }
 
 inline void DebugCamera::GenerateViewMatrix()
