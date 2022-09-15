@@ -11,7 +11,5 @@ public:
 	virtual void OnRestart() noexcept override final;
 
 private:
-	void SetWorkingDirectory();
-private:
 	GameLayer m_gameLayer;
 };
