@@ -59,7 +59,7 @@ TempScript* ScriptManager::AddScript(const std::string& luaFileName)
 	TempScript newScript = {luaFileName, -1, 0, 0};
 	newScript.luaScript = m_luaW->CreateTable();
 	
-	LuaTable table(m_luaW, newScript.luaScript);
+	LuaTable table(m_luaW, newScript.luaScript, true);
 	table.CreateEnvironment(c_pathToScripts + luaFileName);
 	newScript.onStart = table.TryGetFunctionFromTable("OnStart");
 	newScript.onUpdate = table.TryGetFunctionFromTable("OnUpdate");
