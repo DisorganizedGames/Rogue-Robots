@@ -29,12 +29,14 @@ public:
 	void AddDoubleToTable(const std::string& name, double value);
 	void AddStringToTable(const std::string& name, const std::string& string);
 	void AddBoolToTable(const std::string& name, bool boolean);
+	LuaTable AddTableToTable(const std::string& name);
 
 	int GetIntFromTable(const std::string& name);
 	float GetFloatFromTable(const std::string& name);
 	double GetDoubleFromTable(const std::string& name);
 	std::string GetStringFromTable(const std::string& name);
 	bool GetBoolFromTable(const std::string& name);
+	LuaTable GetTableFromTable(const std::string& name);
 
 	Function GetFunctionFromTable(const std::string& name);
 	Function TryGetFunctionFromTable(const std::string& name);

@@ -53,12 +53,7 @@ endforeach()
 
 
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/Runtime/D3D12")
-file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/Runtime/Shaders")
 
-
-
-file(GLOB_RECURSE shaders
-      "${CMAKE_SOURCE_DIR}/DOGEngine/src/Graphics/Shaders/*.hlsl")
 
 add_custom_command(
     TARGET ${LibraryName} POST_BUILD 
@@ -73,23 +68,3 @@ add_custom_command(
     "${CMAKE_BINARY_DIR}/Runtime/d3d12SDKLayers.dll"
     "${CMAKE_BINARY_DIR}/Runtime/D3D12/"
 )
-
-
-
-
-set_property(
-    DIRECTORY 
-    APPEND 
-    PROPERTY CMAKE_CONFIGURE_DEPENDS 
-    ${shaders}
-)
-
-foreach(var ${shaders})
-    add_custom_command(
-    TARGET "${LibraryName}" POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy 
-    "${var}"
-    "${CMAKE_BINARY_DIR}/Runtime/Shaders"
-
-    )
-endforeach()
