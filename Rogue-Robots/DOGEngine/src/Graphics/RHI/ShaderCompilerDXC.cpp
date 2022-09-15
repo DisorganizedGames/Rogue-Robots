@@ -38,11 +38,11 @@ namespace DOG::gfx
 		std::wstring entry_wstr = std::filesystem::path(entryPoint).wstring();
 
 #ifdef _DEBUG
-		std::string dir = "..\\..\\..\\..\\DogEngine\\src\\Graphics\\Shaders\\";
+		std::string dir = "Assets/Shaders/";
 #else
 		// Waiting for Release with Debug!
 		// Currently, release looks for shaders inside DOGEngine
-		std::string dir = "..\\..\\..\\..\\DogEngine\\src\\Graphics\\Shaders\\";
+		std::string dir = "Assets/Shaders/";
 		//std::string dir = "Shaders\\";
 #endif
 

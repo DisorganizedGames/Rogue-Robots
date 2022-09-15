@@ -16,6 +16,7 @@ RuntimeApplication::~RuntimeApplication()
 
 void RuntimeApplication::OnStartUp() noexcept
 {
+	SetWorkingDirectory();
 	PushLayer(&m_gameLayer);
 }
 
@@ -27,6 +28,27 @@ void RuntimeApplication::OnShutDown() noexcept
 void RuntimeApplication::OnRestart() noexcept
 {
 	//...
+}
+
+void RuntimeApplication::SetWorkingDirectory()
+{
+	std::string currentWorkSpace = std::filesystem::current_path().string();
+	std::string workSpaceInBuildTime = PROJECT_WORKSPACE;
+	std::string binBuildTime = PROJECT_BIN;
+
+	std::filesystem::path binRelativeToWorkSpace = binBuildTime.substr(workSpaceInBuildTime.length());
+	binRelativeToWorkSpace = binRelativeToWorkSpace.make_preferred(); // On Windows, Converts a/b -> a\\b
+
+	if (currentWorkSpace.find(binRelativeToWorkSpace.string()) != std::string::npos)
+	{
+		// Remove binRelativeToWorkSpace from currentWorkSpace
+		std::string newWorkSpace = currentWorkSpace.substr(0, currentWorkSpace.length() - binRelativeToWorkSpace.string().length());
+		std::filesystem::current_path(newWorkSpace);
+	}
+	else
+	{
+		std::cout << binRelativeToWorkSpace.string() << " is not part of the path to the exe";
+	}
 }
 
 void SaveRuntimeSettings() noexcept
