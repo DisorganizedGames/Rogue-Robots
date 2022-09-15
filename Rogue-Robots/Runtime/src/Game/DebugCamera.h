@@ -5,6 +5,7 @@
 class DebugCamera
 {
 	using Vector = DirectX::XMVECTOR;
+	using Matrix = DirectX::XMMATRIX;
 private:
 	Vector m_position;
 	Vector m_forward;
@@ -14,6 +15,9 @@ private:
 
 	f32 m_speed;
 
+	Matrix m_viewMatrix;
+	bool m_viewDirty = true;
+
 public:
 	DebugCamera();
 	DebugCamera(f32 x, f32 y, f32 z);
@@ -22,6 +26,7 @@ public:
 public:
 	void OnUpdate();
 
+	Matrix GetViewMatrix();
 	// TODO: TEMPORARY
 	void PrintPosition();
 
@@ -30,5 +35,6 @@ private:
 
 private:
 	inline void InitCamera(f32 x, f32 y, f32 z, f32 forwardX=0, f32 forwardY=0, f32 forwardZ=1);
+	inline void GenerateViewMatrix();
 
 };

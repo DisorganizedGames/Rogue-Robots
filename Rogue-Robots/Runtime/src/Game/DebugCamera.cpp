@@ -29,6 +29,7 @@ void DebugCamera::OnUpdate()
 		);
 
 		m_right = XMVector3Cross(s_globalUp, m_forward);
+		m_viewDirty = true;
 	}
 
 	Vector moveTowards = XMVectorSet(0, 0, 0, 0);
@@ -55,17 +56,30 @@ void DebugCamera::OnUpdate()
 	{
 		moveTowards = XMVector3Normalize(moveTowards);
 		m_position += moveTowards * m_speed /* Time::DeltaTime */;
+		m_viewDirty = true;
 	}
 
 	if (DOG::Keyboard::IsKeyPressed(DOG::Key::Spacebar))
 	{
 		m_position += s_globalUp * m_speed;
+		m_viewDirty = true;
 	}
 	if (DOG::Keyboard::IsKeyPressed(DOG::Key::Shift))
 	{
 		m_position -= s_globalUp * m_speed;
+		m_viewDirty = true;
 	}
 
+}
+
+DebugCamera::Matrix DebugCamera::GetViewMatrix()
+{
+	if (m_viewDirty)
+	{
+		GenerateViewMatrix();
+		m_viewDirty = false;
+	}
+	return m_viewMatrix;
 }
 
 void DebugCamera::PrintPosition()
@@ -86,4 +100,10 @@ inline void DebugCamera::InitCamera(f32 x, f32 y, f32 z, f32 forwardX, f32 forwa
 	m_speed = 0.001;
 
 	m_polar = m_azim = 0;
+}
+
+inline void DebugCamera::GenerateViewMatrix()
+{
+	Vector up = XMVector3Cross(m_forward, m_right);
+	m_viewMatrix = XMMatrixLookToLH(m_position, m_forward, up);
 }
