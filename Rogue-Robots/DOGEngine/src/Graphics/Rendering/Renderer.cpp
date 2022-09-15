@@ -246,7 +246,17 @@ namespace DOG::gfx
 			struct PerFrameData
 			{
 				DirectX::XMMATRIX world, view, proj;
+				DirectX::XMFLOAT3 camPos;
 			} pfData{};
+
+			DirectX::XMVECTOR tmp;
+			auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
+
+			auto pos = invVm.r[3];
+			DirectX::XMFLOAT3 posFloat3;
+			DirectX::XMStoreFloat3(&posFloat3, pos);
+			pfData.camPos = posFloat3;
+
 			pfData.world = DirectX::XMMatrixScaling(0.07f, 0.07f, 0.07f);
 			//pfData.view = DirectX::XMMatrixLookAtLH({ 5.f, 2.f, 0.f }, { -1.f, 1.f, 1.f }, { 0.f, 1.f, 0.f });
 			pfData.view = m_viewMat;
