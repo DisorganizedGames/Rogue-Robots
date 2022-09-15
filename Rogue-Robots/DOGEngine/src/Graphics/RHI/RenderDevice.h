@@ -47,6 +47,9 @@ namespace DOG::gfx
 			Sensitive commands start
 			==================================
 		*/
+		virtual void Cmd_SetIndexBuffer(CommandList list,
+			Buffer ib) = 0;
+
 		virtual void Cmd_Draw(CommandList list,
 			u32 vertsPerInstance,
 			u32 instanceCount,

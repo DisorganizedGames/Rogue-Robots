@@ -7,6 +7,9 @@ namespace DOG::gfx
 {
 	class RenderDevice;
 
+	/*
+		Responsible for CPU -> staging -> device-local data transfer
+	*/
 	class UploadContext
 	{
 	public:
@@ -16,10 +19,24 @@ namespace DOG::gfx
 		*/
 		UploadContext(RenderDevice* rd, u32 stagingSizePerVersion, u8 maxVersions, QueueType targetQueue = QueueType::Graphics);
 
-		/*
-			Copies data to local staging and enqueues GPU-GPU copy for later exeuction.
-		*/
+		// Copies data to local staging and enqueues GPU-GPU (buffer-to-buffer) copy for later execution
 		void PushUpload(Buffer dst, u32 dstOffset, void* data, u32 dataSize);
+
+		/*
+			Copies data to local staging and enqueues GPU-GPU (buffer-to-texture) copy for later execution
+		*/
+		void PushUploadToTexture(
+			Texture dst,
+			u32 dstSubresource,
+			std::tuple<u32, u32, u32> dstTopLeft,
+
+			void* srcData,
+			// Describe the data in 'src':
+			DXGI_FORMAT srcFormat,
+			u32 srcWidth,
+			u32 srcHeight,
+			u32 srcDepth,
+			u32 srcRowPitch);
 
 		/*
 			If target queue is Graphics, no sync receipt is generated.

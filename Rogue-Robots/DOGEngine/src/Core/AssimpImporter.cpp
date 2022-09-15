@@ -14,7 +14,7 @@ namespace DOG
 		if (!aiMat->Get(AI_MATKEY_NAME, materialName))
 		{
 			importedMat.materialName = materialName.C_Str();
-			std::cout << materialName.C_Str() << std::endl;
+			//std::cout << materialName.C_Str() << std::endl;
 		}
 
 		float metallicFactor;
@@ -189,7 +189,7 @@ namespace DOG
 		assert(submeshes.size() == submesh_to_material_idx.size());
 
 		// Extract material load data
-		const auto directory = path.parent_path().string();
+		const auto directory = path.parent_path().string() + "/";
 		for (auto mat_id : submesh_to_material_idx)
 		{
 			const aiMaterial* material = scene->mMaterials[mat_id];

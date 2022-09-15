@@ -66,8 +66,6 @@ namespace DOG::gfx
 
 			auto size = numElements * m_elementSize;
 
-
-
 			// Allocate from virtual pool allocator
 			res.alloc = m_vator.Allocate(size);
 			res.elementOffset = res.alloc.offset / m_elementSize;
@@ -159,6 +157,9 @@ namespace DOG::gfx
 				m_updateRequests.pop();
 			}
 		}
+
+		// For LIMITED use!!
+		Buffer GetBuffer() const { return m_buffer; }
 
 	private:
 		RenderDevice* m_rd{ nullptr };

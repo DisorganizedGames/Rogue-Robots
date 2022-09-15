@@ -8,7 +8,7 @@ namespace DOG
 	public:
 		AssimpImporter(const std::filesystem::path& path);
 
-		std::shared_ptr<ImportedModel> get_result() const { return m_loadedModel; }
+		std::shared_ptr<ImportedModel> GetResult() const { return m_loadedModel; }
 
 	private:
 		std::shared_ptr<ImportedModel> m_loadedModel;

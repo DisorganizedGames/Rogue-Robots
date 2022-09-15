@@ -104,11 +104,8 @@ namespace DOG::gfx
 			// Set defaults
 			m_desc.DepthEnable = false;		// ---- Depth disabled by default!
 			m_desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-#ifdef USE_REVERSE_Z
+			// Reverse Z by default!
 			m_desc.DepthFunc = D3D12_COMPARISON_FUNC_GREATER;
-#else
-			m_desc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-#endif
 			m_desc.StencilEnable = false;
 			m_desc.StencilReadMask = 0xFF;
 			m_desc.StencilWriteMask = 0xFF;
