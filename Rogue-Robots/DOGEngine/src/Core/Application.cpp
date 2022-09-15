@@ -11,6 +11,8 @@
 
 #include "../Graphics/Rendering/Renderer.h"
 
+#include "../Core/DataPiper.h"
+
 
 namespace DOG
 {
@@ -38,6 +40,9 @@ namespace DOG
 	using namespace DOG::gfx;
 	void Application::Run() noexcept
 	{
+		// Temporary read only data from runtime
+		const piper::PipedData* runtimeData = piper::GetPipe();
+
 		while (m_isRunning)
 		{
 			Time::Start();
@@ -51,11 +56,10 @@ namespace DOG
 
 			Mouse::Reset();
 
-
-
 			//// ====== GPU
-			// 
 			m_renderer->BeginFrame_GPU();
+
+			m_renderer->SetMainRenderCamera(runtimeData->viewMat);
 
 			m_renderer->Update(0.0f);
 			m_renderer->Render(0.0f);

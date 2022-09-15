@@ -3,6 +3,9 @@
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer")
 {
+	m_pipedData.viewMat = DirectX::XMMatrixLookAtLH({ 0.f, 5.f, 0.f }, { 0.f, 5.f, 1.f }, { 0.f, 1.f, 0.f });
+
+	DOG::piper::SetPipe(&m_pipedData);
 }
 
 void GameLayer::OnAttach()
