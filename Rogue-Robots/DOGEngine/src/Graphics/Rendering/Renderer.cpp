@@ -201,8 +201,10 @@ namespace DOG::gfx
 	{
 	}
 
-	void Renderer::SetMainRenderCamera(const DirectX::XMMATRIX& view, const DirectX::XMMATRIX proj)
+	void Renderer::SetMainRenderCamera(const DirectX::XMMATRIX& view, std::optional<DirectX::XMMATRIX> proj)
 	{
+		m_viewMat = view;
+		m_projMat = proj ? *proj : DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_clientWidth / m_clientHeight, 800.f, 0.1f);
 	}
 
 	void Renderer::SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material)
@@ -246,9 +248,11 @@ namespace DOG::gfx
 				DirectX::XMMATRIX world, view, proj;
 			} pfData{};
 			pfData.world = DirectX::XMMatrixScaling(0.07f, 0.07f, 0.07f);
-			pfData.view = DirectX::XMMatrixLookAtLH({ 5.f, 2.f, 0.f }, { -1.f, 1.f, 1.f }, { 0.f, 1.f, 0.f });
+			//pfData.view = DirectX::XMMatrixLookAtLH({ 5.f, 2.f, 0.f }, { -1.f, 1.f, 1.f }, { 0.f, 1.f, 0.f });
+			pfData.view = m_viewMat;
 			// We are using REVERSE DEPTH!!!
-			pfData.proj = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_clientWidth/m_clientHeight, 800.f, 0.1f);
+			//pfData.proj = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_clientWidth/m_clientHeight, 800.f, 0.1f);
+			pfData.proj = m_projMat;
 			std::memcpy(pfConstant.memory, &pfData, sizeof(pfData));
 
 			auto args = ShaderArgs()

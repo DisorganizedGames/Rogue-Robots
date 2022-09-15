@@ -32,7 +32,7 @@ namespace DOG::gfx
 		// Must be called at the start of any frame to pick up CPU side ImGUI code
 		void BeginGUI();
 
-		void SetMainRenderCamera(const DirectX::XMMATRIX& view, const DirectX::XMMATRIX proj);
+		void SetMainRenderCamera(const DirectX::XMMATRIX& view, std::optional<DirectX::XMMATRIX> proj = {});
 
 		void SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material);
 
@@ -57,6 +57,8 @@ namespace DOG::gfx
 		std::unique_ptr<RenderBackend> m_backend;
 		RenderDevice* m_rd{ nullptr };
 		Swapchain* m_sc{ nullptr };
+
+		DirectX::XMMATRIX m_viewMat, m_projMat;
 
 		u32 m_clientWidth{ 0 };
 		u32 m_clientHeight{ 0 };
