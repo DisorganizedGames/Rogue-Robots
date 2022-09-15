@@ -14,6 +14,7 @@ struct PerFrameData
     matrix world;
     matrix view;
     matrix proj;
+    float3 camPos;
 };
 
 struct SubmeshMetadata
