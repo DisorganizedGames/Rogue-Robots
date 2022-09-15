@@ -1,5 +1,7 @@
 #pragma once
+#pragma warning(push, 0)
 #include "FileWatch/FileWatch.hpp"
+#pragma warning(pop)
 #include "LuaTable.h"
 
 

@@ -62,7 +62,7 @@ namespace DOG::gfx
 
 		// Load indices
 		{
-			storage.idx = m_indexTable->Allocate(spec.indices.size(), spec.indices.data());
+			storage.idx = m_indexTable->Allocate((u32)spec.indices.size(), spec.indices.data());
 			m_indexTable->SendCopyRequests(ctx);
 		}
 

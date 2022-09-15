@@ -33,7 +33,7 @@ namespace DOG::gfx
         auto d = TextureDesc(
             MemoryType::Default, texFormat,
             baseWidth, baseHeight, 1)
-            .SetMipLevels(spec.dataPerMip.size());
+            .SetMipLevels((u32)spec.dataPerMip.size());
         Texture tex = m_rd->CreateTexture(d);
 
         // Load each mip to texture

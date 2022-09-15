@@ -21,7 +21,7 @@ namespace DOG
 		char* inputSend = new char[sizeof(int)];
 		int check, returnValue;
 
-		strcpy(ipAdressInput, ipAdress.c_str());
+		std::ranges::copy(ipAdress, ipAdressInput);
 
 		ZeroMemory(&client, sizeof(client));
 		client.ai_family = AF_INET;
@@ -30,10 +30,16 @@ namespace DOG
 
 
 		check = WSAStartup(0x202, &socketStart);
-		assert(check == 0);
+		if (check != 0)
+		{
+			throw std::runtime_error("Failed to start WSA on client");
+		}
 
 		check = getaddrinfo(ipAdressInput, "50005", &client, &addrOutput);
-		assert(check == 0);
+		if (check != 0)
+		{
+			throw std::runtime_error("Failed to get address info on client");
+		}
 
 		//connect to server
 		for (ptr = addrOutput; ptr != NULL; ptr = ptr->ai_next)

@@ -65,6 +65,7 @@
 #include <bitset>
 #include <barrier>
 #include <timeapi.h>
+#include <cstdio>
 
 #include "common/Utils.h"
 

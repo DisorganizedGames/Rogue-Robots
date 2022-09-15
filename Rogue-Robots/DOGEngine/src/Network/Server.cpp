@@ -39,10 +39,16 @@ namespace DOG
 		addrInput.ai_flags = AI_PASSIVE;
 
 		check = WSAStartup(0x202, &socketStart);
-		assert(check == 0);
+		if (check != 0)
+		{
+			throw std::runtime_error("Failed to start WSA on server");
+		}
 
 		check = getaddrinfo(NULL, "50005", &addrInput, &addrOutput);
-		assert(check == 0);
+		if (check != 0)
+		{
+			throw std::runtime_error("Failed to get address info on server");
+		}
 
 		//Create socket that listens for new connections
 		listenSocket = socket(addrOutput->ai_family, addrOutput->ai_socktype, addrOutput->ai_protocol);
@@ -76,7 +82,7 @@ namespace DOG
 			//Check if server full
 			if (m_playerIds.empty())
 			{
-				sprintf(inputSend, "%d", -1);
+				sprintf_s(inputSend, sizeof(int), "%d", -1);
 				send(clientSocket, inputSend, sizeof(int), 0);
 			}
 			else
@@ -92,7 +98,7 @@ namespace DOG
 					int playerId = m_playerIds.front();
 					input.playerNr = playerId + 1;
 					m_holdPlayerIds.push_back(playerId);
-					sprintf(inputSend, "%d", playerId);
+					sprintf_s(inputSend, sizeof(int), "%d", playerId);
 					send(clientSocket, inputSend, sizeof(int), 0);
 					m_playerIds.erase(m_playerIds.begin());
 
@@ -122,7 +128,6 @@ namespace DOG
 		std::cout << "Server: Started to tick" << std::endl;
 
 		LARGE_INTEGER tickStartTime;
-		SOCKET clientSocket;
 		Client::ClientsData holdClientsData;
 		char* clientData = new char[sizeof(Client::ClientsData)];
 		char* inputSend = new char[2048];
@@ -138,7 +143,7 @@ namespace DOG
 
 			m_holdSockets = m_clientsSockets;
 			
-			if (WSAPoll(m_holdSockets.data(), m_holdSockets.size(), 10) > 0)
+			if (WSAPoll(m_holdSockets.data(), (u32)m_holdSockets.size(), 10) > 0)
 			{
 				for (int i = 0; i < m_holdSockets.size(); i++)
 				{
@@ -170,7 +175,7 @@ namespace DOG
 
 				if (timeToWaitMs > 0)
 				{
-					Sleep(timeToWaitMs);
+					Sleep((u32)timeToWaitMs);
 				}
 				timeTakenS = TickTimeLeft(tickStartTime, clockFrequency);
 			}

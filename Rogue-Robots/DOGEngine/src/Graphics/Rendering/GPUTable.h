@@ -38,7 +38,7 @@ namespace DOG::gfx
 
 			auto flag = async ? D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS : D3D12_RESOURCE_FLAG_NONE;
 			m_buffer = rd->CreateBuffer(BufferDesc(MemoryType::Default, maxElements * m_elementSize, flag));
-			m_vator = GPVirtualAllocator(maxElements * m_elementSize, false);
+			m_vator = GPVirtualAllocator(maxElements * (u64)m_elementSize, false);
 
 			m_fullView = rd->CreateView(m_buffer, BufferViewDesc(ViewType::ShaderResource, 0, elementSize, maxElements));
 			m_fullViewDDA = rd->GetGlobalDescriptor(m_fullView);
@@ -232,6 +232,10 @@ namespace DOG::gfx
 			HandleAllocator::TryInsert(m_resources, res, HandleAllocator::GetSlot(hdl.handle));
 
 			// Direct copy
+			if (!res.alloc.memory)
+			{
+				throw std::runtime_error("No res.alloc.memory");
+			}
 			if (initData)
 				std::memcpy(res.alloc.memory, initData, m_elementSize * numElements);
 
