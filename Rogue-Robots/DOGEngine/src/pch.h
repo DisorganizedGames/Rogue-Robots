@@ -22,6 +22,9 @@
 #include <ws2tcpip.h>
 
 #include <d3d12.h>
+#pragma warning(push, 0)
+#include <DirectXTK/SimpleMath.h>
+#pragma warning(pop)
 #include <dxgi1_6.h>
 #include <d3dcompiler.h>
 #include <wrl.h>
