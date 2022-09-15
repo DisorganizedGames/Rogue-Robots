@@ -28,22 +28,29 @@ namespace DOG::gfx
 		m_sc = m_rd->CreateSwapchain(hwnd, S_NUM_BACKBUFFERS);
 		m_sclr = std::make_unique<ShaderCompilerDXC>();
 
+		const u32 maxUploadSizeDefault = 40'000'000;
+		const u32 maxUploadSizeTextures = 400'000'000;
+
 		m_bin = std::make_unique<GPUGarbageBin>(1);
-		m_uploadCtx = std::make_unique<UploadContext>(m_rd, 40'000'000, 1);
-		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, 400'000'000, 1);
+		m_uploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, 1);
+		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeTextures, 1);
 
-
-		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 500);
+		const u32 maxConstantsPerFrame = 500;
+		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), maxConstantsPerFrame);
 		m_cmdl = m_rd->AllocateCommandList();
 
 		// Startup
 		MeshTable::MemorySpecification spec{};
-		spec.maxSizePerAttribute[VertexAttribute::Position] = 4'000'000;
-		spec.maxSizePerAttribute[VertexAttribute::UV] = 4'000'000;
-		spec.maxSizePerAttribute[VertexAttribute::Normal] = 4'000'000;
-		spec.maxSizePerAttribute[VertexAttribute::Tangent] = 4'000'000;
-		spec.maxTotalSubmeshes = 500;
-		spec.maxNumIndices = 1'000'000;
+		const u32 maxBytesPerAttribute = 4'000'000;
+		const u32 maxNumberOfIndices = 1'000'000;
+		const u32 maxTotalSubmeshes = 500;
+
+		spec.maxSizePerAttribute[VertexAttribute::Position] = maxBytesPerAttribute;
+		spec.maxSizePerAttribute[VertexAttribute::UV] = maxBytesPerAttribute;
+		spec.maxSizePerAttribute[VertexAttribute::Normal] = maxBytesPerAttribute;
+		spec.maxSizePerAttribute[VertexAttribute::Tangent] = maxBytesPerAttribute;
+		spec.maxTotalSubmeshes = maxTotalSubmeshes;
+		spec.maxNumIndices = maxNumberOfIndices;
 		m_globalMeshTable = std::make_unique<MeshTable>(m_rd, m_bin.get(), spec);
 
 		MaterialTable::MemorySpecification memSpec{};
