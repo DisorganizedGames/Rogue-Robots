@@ -1,5 +1,8 @@
 #pragma once
 #include <DOGEngine.h>
+
+#include "../DOGEngine/src/Core/DataPiper.h"
+
 class GameLayer : public DOG::Layer
 {
 public:
@@ -11,5 +14,6 @@ public:
 	virtual void OnRender() override final;
 	virtual void OnEvent(DOG::IEvent& event) override final;
 private:
+	DOG::piper::PipedData m_pipedData{};
 
 };
