@@ -3,6 +3,8 @@
 #include "CoreUtils.h"
 namespace DOG
 {
+	namespace gfx { class Renderer; }
+
 	class ApplicationManager
 	{
 	public:
@@ -32,6 +34,7 @@ namespace DOG
 		ApplicationSpecification m_specification;
 		LayerStack& m_layerStack;
 		bool m_isRunning;
+		std::unique_ptr<gfx::Renderer> m_renderer;
 	};
 }
 

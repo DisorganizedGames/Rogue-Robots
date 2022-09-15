@@ -8,5 +8,6 @@ namespace DOG
 		std::string name;
 		Vector2u windowDimensions;
 		WindowMode initialWindowMode;
+		std::string workingDir;
 	};
 }
