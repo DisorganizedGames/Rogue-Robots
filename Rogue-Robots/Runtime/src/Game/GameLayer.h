@@ -2,6 +2,7 @@
 #include <DOGEngine.h>
 
 #include "../DOGEngine/src/Core/DataPiper.h"
+#include "DebugCamera.h"
 
 class GameLayer : public DOG::Layer
 {
@@ -16,4 +17,7 @@ public:
 private:
 	DOG::piper::PipedData m_pipedData{};
 
+private:
+	DebugCamera m_debugCam;
+	
 };

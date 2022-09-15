@@ -10,17 +10,18 @@ GameLayer::GameLayer() noexcept
 
 void GameLayer::OnAttach()
 {
-	//...
+	m_debugCam = DebugCamera(0, 1, 0);
 }
 
 void GameLayer::OnDetach()
 {
-	//...
+	
 }
 
 void GameLayer::OnUpdate()
 {
-	//...
+	m_debugCam.OnUpdate();
+	m_pipedData.viewMat = m_debugCam.GetViewMatrix();
 }
 
 void GameLayer::OnRender()
