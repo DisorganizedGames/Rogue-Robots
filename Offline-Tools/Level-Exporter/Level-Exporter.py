@@ -473,6 +473,12 @@ def unregister():
 
 
 def map_analysis():
+    blockDict = {}
+    for (x, y, z), block_id in all_blocks():
+        
+        if !blockDict[block_id]:
+            
+
         print("="*5, " Analysis ", "="*5)
         for (x, y, z), block_id in all_blocks():
 #        for pos, block_id in all_blocks():
