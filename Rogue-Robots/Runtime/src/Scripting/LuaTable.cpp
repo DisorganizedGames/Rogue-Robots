@@ -84,8 +84,8 @@ void LuaTable::AddBoolToTable(const std::string& name, bool boolean)
 
 void LuaTable::AddTableToTable(const std::string& name, LuaTable table)
 {
-	Table table_ref = table.GetTable();
-	m_luaW->AddTableToTable(m_table, name, table_ref);
+	Table tableRef = table.GetTable();
+	m_luaW->AddTableToTable(m_table, name, tableRef);
 }
 
 LuaTable LuaTable::CreateTableInTable(const std::string& name)
