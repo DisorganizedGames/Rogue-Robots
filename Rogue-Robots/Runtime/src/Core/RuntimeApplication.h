@@ -9,6 +9,9 @@ public:
 	virtual void OnStartUp() noexcept override final;
 	virtual void OnShutDown() noexcept override final;
 	virtual void OnRestart() noexcept override final;
+
+private:
+	void SetWorkingDirectory();
 private:
 	GameLayer m_gameLayer;
 };

@@ -14,6 +14,8 @@ target_link_libraries("${ExecutableName}" PRIVATE "DOGEngine")
 target_compile_options("${ExecutableName}" PRIVATE "/W4")
 
 target_compile_definitions("${ExecutableName}" PRIVATE RUNTIME_DIR="${CMAKE_CURRENT_SOURCE_DIR}/")
+target_compile_definitions("${ExecutableName}" PRIVATE PROJECT_WORKSPACE="${CMAKE_SOURCE_DIR}/")
+target_compile_definitions("${ExecutableName}" PRIVATE PROJECT_BIN="${CMAKE_BINARY_DIR}/${ExecutableName}")
 
 ##### Section for linking external libraries #####
 file(GLOB_RECURSE libFiles
