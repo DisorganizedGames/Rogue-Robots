@@ -38,7 +38,7 @@ namespace DOG::gfx
 
 			auto flag = async ? D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS : D3D12_RESOURCE_FLAG_NONE;
 			m_buffer = rd->CreateBuffer(BufferDesc(MemoryType::Default, maxElements * m_elementSize, flag));
-			m_vator = GPVirtualAllocator(maxElements * m_elementSize, false);
+			m_vator = GPVirtualAllocator(maxElements * (u64)m_elementSize, false);
 
 			m_fullView = rd->CreateView(m_buffer, BufferViewDesc(ViewType::ShaderResource, 0, elementSize, maxElements));
 			m_fullViewDDA = rd->GetGlobalDescriptor(m_fullView);
