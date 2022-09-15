@@ -16,7 +16,7 @@ private:
 
 public:
 	LuaTable(LuaW* luaW);
-	LuaTable(LuaW* luaW, Table& table);
+	LuaTable(LuaW* luaW, Table& table, bool addReference = false);
 	~LuaTable();
 	LuaTable(const LuaTable& table);
 	LuaTable& operator=(const LuaTable& table);
@@ -29,7 +29,9 @@ public:
 	void AddDoubleToTable(const std::string& name, double value);
 	void AddStringToTable(const std::string& name, const std::string& string);
 	void AddBoolToTable(const std::string& name, bool boolean);
-	LuaTable AddTableToTable(const std::string& name);
+	void AddTableToTable(const std::string& name, LuaTable table);
+
+	LuaTable CreateTableInTable(const std::string& name);
 
 	int GetIntFromTable(const std::string& name);
 	float GetFloatFromTable(const std::string& name);

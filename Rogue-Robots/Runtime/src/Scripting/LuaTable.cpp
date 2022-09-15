@@ -10,8 +10,10 @@ LuaTable::LuaTable(LuaW* luaW) : m_luaW(luaW)
 	m_table = luaW->CreateTable();
 }
 
-LuaTable::LuaTable(LuaW* luaW, Table& table) : m_luaW(luaW), m_table(table)
+LuaTable::LuaTable(LuaW* luaW, Table& table, bool addReference) : m_luaW(luaW), m_table(table)
 {
+	if (addReference)
+		m_luaW->AddReferenceToTable(table);
 }
 
 LuaTable::~LuaTable()
@@ -80,7 +82,13 @@ void LuaTable::AddBoolToTable(const std::string& name, bool boolean)
 	m_luaW->AddBoolToTable(m_table, name, boolean);
 }
 
-LuaTable LuaTable::AddTableToTable(const std::string& name)
+void LuaTable::AddTableToTable(const std::string& name, LuaTable table)
+{
+	Table table_ref = table.GetTable();
+	m_luaW->AddTableToTable(m_table, name, table_ref);
+}
+
+LuaTable LuaTable::CreateTableInTable(const std::string& name)
 {
 	Table table = m_luaW->CreateTable();
 	LuaTable luaTable(m_luaW, table);
