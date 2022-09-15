@@ -68,3 +68,4 @@
 
 #include "common/Utils.h"
 
+#include "common/ErrorTypes.h"

@@ -89,15 +89,37 @@ namespace DOG
 
 		memcpy(newTexture->textureData.data(), imageData, newTexture->textureData.size());
 		STBI_FREE(imageData);
-		
+
 		u64 id = GenerateRandomID();
 		m_assets.insert({ id, new ManagedAsset(AssetStateFlag::ExistOnCPU, newTexture) });
 		return id;
 	}
 
-	u64 AssetManager::LoadAudio(const std::string&, AssetLoadFlag)
+	u64 AssetManager::LoadAudio(const std::string& path, AssetLoadFlag)
 	{
-		return 0;
+		if (!std::filesystem::exists(path))
+		{
+			throw FileNotFoundError(path);
+		}
+		u64 fileSize = std::filesystem::file_size(path);
+		AudioAsset* newAudio = new AudioAsset;
+		newAudio->filePath = path;
+
+		if (fileSize > 16'384)
+		{
+			newAudio->async = true;
+			newAudio->properties = ReadWAVProperties(path);
+		}
+		else
+		{
+			auto [properties, data] = ReadWAV(path);
+			newAudio->properties = properties;
+			newAudio->audioData = data;
+		}
+
+		u64 id = GenerateRandomID();
+		m_assets.insert({ id, new ManagedAsset(AssetStateFlag::ExistOnCPU, newAudio) });
+		return id;
 	}
 
 	Asset* AssetManager::GetAsset(u64 id) const
@@ -135,7 +157,7 @@ namespace DOG
 				// TODO
 				// This can't be handled internaly in the ManagedAsset, it does not know about gpu land.
 			}
-			
+
 			if (m_assets[id]->stateFlag & AssetStateFlag::ExistOnCPU && flag & AssetUnLoadFlag::RemoveFromRam)
 			{
 				m_assets[id]->ReleaseAsset();
