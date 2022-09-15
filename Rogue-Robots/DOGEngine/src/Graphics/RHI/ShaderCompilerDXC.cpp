@@ -37,6 +37,8 @@ namespace DOG::gfx
 	{
 		std::wstring entry_wstr = std::filesystem::path(entryPoint).wstring();
 
+		std::cout << std::filesystem::current_path().string()  << "\n";
+
 #ifdef _DEBUG
 		std::string dir = "Assets/Shaders/";
 #else

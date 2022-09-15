@@ -2,6 +2,8 @@
 #include <EntryPoint.h>
 
 void SaveRuntimeSettings() noexcept;
+std::string GetWorkingDirectory();
+
 
 RuntimeApplication::RuntimeApplication(const DOG::ApplicationSpecification& spec) noexcept
 	: DOG::Application{ spec }
@@ -16,7 +18,7 @@ RuntimeApplication::~RuntimeApplication()
 
 void RuntimeApplication::OnStartUp() noexcept
 {
-	SetWorkingDirectory();
+	//SetWorkingDirectory();
 	PushLayer(&m_gameLayer);
 }
 
@@ -30,7 +32,7 @@ void RuntimeApplication::OnRestart() noexcept
 	//...
 }
 
-void RuntimeApplication::SetWorkingDirectory()
+std::string GetWorkingDirectory()
 {
 	std::string currentWorkSpace = std::filesystem::current_path().string();
 	std::string workSpaceInBuildTime = PROJECT_WORKSPACE;
@@ -42,12 +44,12 @@ void RuntimeApplication::SetWorkingDirectory()
 	if (currentWorkSpace.find(binRelativeToWorkSpace.string()) != std::string::npos)
 	{
 		// Remove binRelativeToWorkSpace from currentWorkSpace
-		std::string newWorkSpace = currentWorkSpace.substr(0, currentWorkSpace.length() - binRelativeToWorkSpace.string().length());
-		std::filesystem::current_path(newWorkSpace);
+		return currentWorkSpace.substr(0, currentWorkSpace.length() - binRelativeToWorkSpace.string().length());
 	}
 	else
 	{
 		std::cout << binRelativeToWorkSpace.string() << " is not part of the path to the exe";
+		return currentWorkSpace;
 	}
 }
 
@@ -89,6 +91,8 @@ void SaveRuntimeSettings() noexcept
 
 	DOG::ApplicationSpecification spec;
 	spec.name = "Rogue Robots";
+	spec.workingDir = GetWorkingDirectory();
+
 	if (inFile.is_open())
 	{
 		std::string readData;
@@ -110,6 +114,7 @@ void SaveRuntimeSettings() noexcept
 		return spec;
 	}
 
+	// This is potentially never run @fix
 	spec.windowDimensions.x = 1280u;
 	spec.windowDimensions.y = 720u;
 	spec.initialWindowMode = DOG::WindowMode::Windowed;
