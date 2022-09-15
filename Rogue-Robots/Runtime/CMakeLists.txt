@@ -37,25 +37,3 @@ foreach(var ${dlls})
 
     )
 endforeach()
-
-file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/Runtime/LuaScripts")
-
-file(GLOB_RECURSE LuaScripts
-      "${CMAKE_SOURCE_DIR}/Runtime/src/Scripting/LuaScripts/*.lua")
-
-set_property(
-    DIRECTORY 
-    APPEND 
-    PROPERTY CMAKE_CONFIGURE_DEPENDS 
-    ${LuaScripts}
-)
-
-foreach(var ${LuaScripts})
-    add_custom_command(
-    TARGET "${ExecutableName}" POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy 
-    "${var}"
-    "${CMAKE_BINARY_DIR}/Runtime/LuaScripts"
-
-    )
-endforeach()
