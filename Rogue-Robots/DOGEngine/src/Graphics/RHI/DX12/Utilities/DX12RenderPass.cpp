@@ -1,7 +1,7 @@
 #include "DX12RenderPass.h"
 
 DX12RenderPass::DX12RenderPass(std::span<DX12RenderPass::RenderTarget> render_targets,
-	std::optional<DX12RenderPass::DepthStencilTarget> ds_target, D3D12_RENDER_PASS_FLAGS flags)
+	std::optional<DX12RenderPass::DepthStencilTarget> ds_target, D3D12_RENDER_PASS_FLAGS)
 {
 	// Verifies any assumptions we have and assembles to API submittable form
 

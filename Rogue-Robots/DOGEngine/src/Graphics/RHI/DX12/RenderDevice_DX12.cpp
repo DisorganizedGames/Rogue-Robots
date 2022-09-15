@@ -580,8 +580,8 @@ namespace DOG::gfx
 		D3D12_RANGE range{};
 		range.Begin = read_range.first;
 		range.End = read_range.second;
-		HRESULT hr = res.resource->Map(subresource, &range, (void**)&mapped);
-		assert(SUCCEEDED(hr));
+		HR hr = res.resource->Map(subresource, &range, (void**)&mapped);
+		hr.try_fail("Failed to map subresource");
 
 		return mapped;
 	}

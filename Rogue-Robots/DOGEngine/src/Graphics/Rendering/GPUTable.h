@@ -232,6 +232,10 @@ namespace DOG::gfx
 			HandleAllocator::TryInsert(m_resources, res, HandleAllocator::GetSlot(hdl.handle));
 
 			// Direct copy
+			if (!res.alloc.memory)
+			{
+				throw std::runtime_error("No res.alloc.memory");
+			}
 			if (initData)
 				std::memcpy(res.alloc.memory, initData, m_elementSize * numElements);
 
