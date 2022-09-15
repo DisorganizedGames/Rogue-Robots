@@ -8,8 +8,8 @@ namespace DOG::gfx
 		blockDesc.Size = maxSize;
 		blockDesc.Flags = usesLinearAlgorithm ? D3D12MA::VIRTUAL_BLOCK_FLAG_ALGORITHM_LINEAR : D3D12MA::VIRTUAL_BLOCK_FLAG_NONE;
 
-		HRESULT hr = CreateVirtualBlock(&blockDesc, m_dmaBlock.GetAddressOf());
-		assert(SUCCEEDED(hr));
+		HR hr = CreateVirtualBlock(&blockDesc, m_dmaBlock.GetAddressOf());
+		hr.try_fail("Failed to create virtual block");
 	}
 
 	GPVirtualAllocation GPVirtualAllocator::Allocate(u64 size)

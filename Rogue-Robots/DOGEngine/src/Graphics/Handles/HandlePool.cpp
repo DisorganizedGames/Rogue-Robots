@@ -35,7 +35,7 @@ namespace DOG::gfx
 
 		return handle;
 	}
-
+#pragma warning(push, 0)
 	void HandlePool::free_handle(uint64_t handle)
 	{
 		const uint32_t key = (uint32_t)(handle & SLOT_MASK);
@@ -56,4 +56,5 @@ namespace DOG::gfx
 
 		m_reusable_keys.push(key);
 	}
+#pragma warning(pop)
 }

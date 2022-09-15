@@ -24,7 +24,10 @@ namespace DOG::gfx
 
 			m_heapEnd = m_heapStart + size;
 
-			assert(m_heapStart != nullptr);
+			if (m_heapStart == nullptr)
+			{
+				throw std::runtime_error("Bump allocators heap start was nullptr");
+			}
 			std::memset(m_heapStart, 0, size);
 		}
 
