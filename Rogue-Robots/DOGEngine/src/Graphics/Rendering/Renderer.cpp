@@ -249,7 +249,10 @@ namespace DOG::gfx
 				DirectX::XMFLOAT3 camPos;
 			} pfData{};
 
-			auto pos = m_viewMat.r[3];
+			DirectX::XMVECTOR tmp;
+			auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
+
+			auto pos = invVm.r[3];
 			DirectX::XMFLOAT3 posFloat3;
 			DirectX::XMStoreFloat3(&posFloat3, pos);
 			pfData.camPos = posFloat3;

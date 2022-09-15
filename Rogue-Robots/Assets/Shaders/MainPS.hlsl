@@ -98,29 +98,31 @@ float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(float3 N, float3 V, float3 L, float roughness);
 float3 FresnelSchlick(float cosTheta, float3 F0);
 
+float3 GetFinalNormal(uint normalId, float3 tangent, float3 bitangent, float3 inputNormal, float2 uv);
+
 static const float PI = 3.1415f;
 
 float4 main(VS_OUT input) : SV_TARGET
 {
+    
     StructuredBuffer<MaterialElement> mats = ResourceDescriptorHeap[constants.matTable];
     MaterialElement mat = mats[constants.matID];
     
-    //return float4(mat.albedo.x, mat.emissive.x, mat.metallicRoughness.x, mat.normal.x);
-    
     Texture2D albedo = ResourceDescriptorHeap[mat.albedo];
     Texture2D metallicRoughness = ResourceDescriptorHeap[mat.metallicRoughness];
-    
-    
+    Texture2D normalMap = ResourceDescriptorHeap[mat.normal];
+        
     float3 albedoInput = albedo.Sample(g_aniso_samp, input.uv);
-    
     float metallicInput = metallicRoughness.Sample(g_aniso_samp, input.uv).b;
     float roughnessInput = metallicRoughness.Sample(g_aniso_samp, input.uv).g;
     
-        
     ConstantBuffer<PerFrameData> pfData = ResourceDescriptorHeap[constants.perFrameCB];
     float3 camPos = pfData.camPos;
     
-    float3 N = normalize(input.nor);
+    float3 amb = 0.03f * albedoInput;
+    
+    
+    float3 N = normalize(GetFinalNormal(mat.normal, normalize(input.tan), normalize(input.bitan), normalize(input.nor), input.uv));    
     float3 V = normalize(camPos - input.wsPos);
     
     float3 F0 = float3(0.04f, 0.04f, 0.04f);
@@ -138,7 +140,7 @@ float4 main(VS_OUT input) : SV_TARGET
     float3 Lo = float3(0.f, 0.f, 0.f);
     {
         // calculate per-light radiance
-        float3 L = -float3(-1.f, -0.5f, 1.f);
+        float3 L = normalize(-float3(-1.f, -1.f, 1.f));
         float3 H = normalize(V + L);
         float3 radiance = float3(1.f, 1.f, 1.f); // no attenuation
         
@@ -154,17 +156,43 @@ float4 main(VS_OUT input) : SV_TARGET
         float3 numerator = NDF * G * F;
         float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
         float3 specular = numerator / max(denominator, 0.001);
+        
             
         // add to outgoing radiance Lo
         float NdotL = max(dot(N, L), 0.0);
         Lo += (kD * albedoInput / PI + specular) * radiance * NdotL;
     }
     
-    float3 ldr = aces_fitted(Lo);
+    float3 ldr = aces_fitted(amb + Lo);
     ldr = pow(ldr, (1.f / 2.22f).rrr);
     
     return float4(ldr, 1.f);
     
+}
+
+
+float3 GetFinalNormal(uint normalId, float3 tangent, float3 bitangent, float3 inputNormal, float2 uv)
+{
+    Texture2D normalTex = ResourceDescriptorHeap[normalId];
+    
+    float3 tanSpaceNor = normalTex.Sample(g_aniso_samp, uv).xyz;
+    
+    // If no normal map --> Use default input normal
+    if (length(tanSpaceNor) <= 0.005f)  // epsilon: 0.005f
+        return inputNormal;
+    
+    float3x3 tbn = float3x3(tangent, bitangent, inputNormal); // matrix to orient our tangent space normal with
+    tbn = transpose(tbn);
+    
+    // Normal map is in [0, 1] space so we need to transform it to [-1, 1] space
+    float3 mappedSpaceNor = normalize(tanSpaceNor * 2.f - 1.f);
+    
+    // Orient the tangent space correctly in world space
+    float3 mapNorWorld = normalize(mul(tbn, mappedSpaceNor));
+       
+    // Assuming always on
+    return mapNorWorld;
+
 }
 
 float DistributionGGX(float3 N, float3 H, float roughness)
