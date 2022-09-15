@@ -2,16 +2,18 @@
 set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h" "src/Core/Application.cpp" "src/Core/Window.h" "src/Core/Window.cpp" 
 	"src/common/Utils.h" "src/Audio/AudioDevice.h" "src/Audio/AudioDevice.cpp" 
 	"src/Audio/SourceVoice.h" "src/Audio/SourceVoice.cpp" "src/Audio/AudioFileReader.h"  "src/Audio/SourceVoiceCallback.h" "src/Input/Mouse.h" "src/Input/Mouse.cpp" "src/Input/Keyboard.h" "src/Input/Keyboard.cpp"
-<<<<<<< HEAD
-  "src/Core/AssetManager.h" "src/Core/AssetManager.cpp" "src/Core/AssimpImporter.h" "src/Core/AssimpImporter.cpp" "src/Core/DOGEngineTypes.h" "src/Core/DOGEngineTypes.cpp" "src/Core/MaterialManager.h" "src/Core/MaterialManager.cpp" 
+    "src/Core/AssetManager.h" "src/Core/AssetManager.cpp" "src/Core/AssimpImporter.h" "src/Core/AssimpImporter.cpp" "src/Core/DOGEngineTypes.h" "src/Core/DOGEngineTypes.cpp" "src/Core/MaterialManager.h" "src/Core/MaterialManager.cpp" 
 	"src/EventSystem/Layer.h" "src/EventSystem/LayerStack.h" "src/EventSystem/LayerStack.cpp" "src/EventSystem/IEvent.h" "src/EventSystem/WindowEvents.h" 
 	"src/EventSystem/EventPublisher.h"  "src/EventSystem/EventBus.h" "src/EventSystem/EventBus.cpp" "src/Core/CoreUtils.h" "src/EventSystem/MouseEvents.h" 
-	"src/EventSystem/KeyboardEvents.h" "src/EventSystem/EventPublisher.cpp" "src/Network/Server.h" "src/Network/Server.cpp" "src/Network/Client.h" "src/Network/Client.cpp" "src/Core/Time.h"
+	"src/EventSystem/KeyboardEvents.h" "src/EventSystem/EventPublisher.cpp" "src/Network/Server.h" "src/Network/Server.cpp" "src/Network/Client.h" "src/Network/Client.cpp" 
+    "src/Core/Time.h"
 	"src/Audio/AudioManager.h" "src/Audio/AudioManager.cpp" "src/Audio/AudioPlayerComponent.h" "src/common/ErrorTypes.h"
-    "src/Core/Types/MeshTypes.h" "src/Core/Types/MaterialTypes.h" "src/Core/Types/AssetTypes.h" "src/Graphics/Rendering/MaterialTable.h" "src/Graphics/Rendering/MaterialTable.cpp")
-=======
-    "src/Core/AssetManager.h" "src/Core/AssetManager.cpp" "src/Core/AssimpImporter.h" "src/Core/AssimpImporter.cpp" "src/Core/DOGEngineTypes.h" "src/Core/DOGEngineTypes.cpp" "src/Core/MaterialManager.h" "src/Core/MaterialManager.cpp" "src/EventSystem/Layer.h" "src/EventSystem/LayerStack.h" "src/EventSystem/LayerStack.cpp" "src/EventSystem/IEvent.h" "src/EventSystem/WindowEvents.h" "src/EventSystem/EventPublisher.h"  "src/EventSystem/EventBus.h" "src/EventSystem/EventBus.cpp" "src/Core/CoreUtils.h" "src/EventSystem/MouseEvents.h" "src/EventSystem/KeyboardEvents.h" "src/EventSystem/EventPublisher.cpp" "src/Network/Server.h" "src/Network/Server.cpp" "src/Network/Client.h" "src/Network/Client.cpp" "src/Core/Time.h" "src/Core/Types/MeshTypes.h" "src/Core/Types/MaterialTypes.h" "src/Core/Types/AssetTypes.h" "src/Graphics/Rendering/MaterialTable.h" "src/Graphics/Rendering/MaterialTable.cpp" "src/Core/Types/MeshTypes.h" "src/Core/Types/MaterialTypes.h" "src/Core/Types/AssetTypes.h" "src/Graphics/Rendering/MaterialTable.h" "src/Graphics/Rendering/MaterialTable.cpp"   "src/Core/TextureFileImporter.h" "src/Core/TextureFileImporter.cpp"   "src/Graphics/Rendering/TextureManager.h" "src/Graphics/Rendering/TextureManager.cpp")
->>>>>>> f5d6187 (impl texture importer, gen mips, add compressonator)
+    "src/Core/Types/MeshTypes.h" "src/Core/Types/MaterialTypes.h" "src/Core/Types/AssetTypes.h" "src/Graphics/Rendering/MaterialTable.h" "src/Graphics/Rendering/MaterialTable.cpp"
+    "src/Core/AssetManager.h" "src/Core/AssetManager.cpp" "src/Core/AssimpImporter.h" "src/Core/AssimpImporter.cpp" "src/Core/DOGEngineTypes.h" "src/Core/DOGEngineTypes.cpp"
+    "src/Core/MaterialManager.h" "src/Core/MaterialManager.cpp"
+    "src/Graphics/Rendering/MaterialTable.h"  "src/Core/TextureFileImporter.h" "src/Core/TextureFileImporter.cpp" 
+    "src/Graphics/Rendering/MaterialTable.cpp" "src/Graphics/Rendering/MaterialTable.h" "src/Graphics/Rendering/MaterialTable.cpp"   
+    "src/Graphics/Rendering/TextureManager.h" "src/Graphics/Rendering/TextureManager.cpp")
 
 	file(GLOB_RECURSE TempGraphics
     "src/Graphics/*.cpp")
