@@ -1,4 +1,5 @@
 #pragma once
+#include "../common/ErrorTypes.h"
 
 namespace DOG
 {
@@ -61,8 +62,7 @@ namespace DOG
 			assert(false);
 		}
 
-		const u64 fileSize = std::filesystem::file_size(path);
-		assert(fileSize >= WAV_RIFF_HEADER_SIZE + WAV_FORMAT_CHUNK_SIZE);
+		assert(std::filesystem::file_size(path) >= WAV_RIFF_HEADER_SIZE + WAV_FORMAT_CHUNK_SIZE);
 
 		std::vector<u8> headerData(WAV_RIFF_HEADER_SIZE + WAV_FORMAT_CHUNK_SIZE);
 		file.read((char*)headerData.data(), headerData.size());
