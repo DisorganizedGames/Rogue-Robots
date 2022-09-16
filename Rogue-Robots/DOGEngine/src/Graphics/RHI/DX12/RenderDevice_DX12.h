@@ -147,7 +147,7 @@ namespace DOG::gfx
 		ID3D12CommandQueue* GetQueue(D3D12_COMMAND_LIST_TYPE type);
 
 		Texture RegisterSwapchainTexture(ComPtr<ID3D12Resource> texture);
-		void SetClearColor(Texture tex, const std::array<float, 4>& clear_color);
+		void SetClearColor(Texture tex, const std::array<float, 4>& clearColor);
 
 		// For ImGUI
 		std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> GetReservedResourceHandle() const;
