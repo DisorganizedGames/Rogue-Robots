@@ -1,3 +1,4 @@
+#pragma once
 
 namespace DOG::gfx
 {
@@ -8,6 +9,6 @@ namespace DOG::gfx
 	public:
 		virtual RenderDevice* CreateDevice() = 0;
 
-		virtual ~RenderBackend() {}
+		virtual ~RenderBackend() = default;
 	};
 }

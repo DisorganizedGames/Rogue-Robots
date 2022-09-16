@@ -1,5 +1,8 @@
 #include "RenderBackend_DX12.h"
+
 #include "RenderDevice_DX12.h"
+#include "ImGUIBackend_DX12.h"
+#include "Swapchain_DX12.h"
 
 // AgilitySDK
 extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 606; }

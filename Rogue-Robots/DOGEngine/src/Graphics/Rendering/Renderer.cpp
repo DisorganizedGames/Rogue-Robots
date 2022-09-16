@@ -1,6 +1,7 @@
 #include "Renderer.h"
 
 #include "../RHI/DX12/RenderBackend_DX12.h"
+#include "../RHI/DX12/ImGUIBackend_DX12.h"
 #include "../RHI/DX12/RenderDevice_DX12.h"
 #include "../RHI/ShaderCompilerDXC.h"
 #include "../RHI/PipelineBuilder.h"
@@ -25,15 +26,21 @@ namespace DOG::gfx
 	{
 		m_backend = std::make_unique<gfx::RenderBackend_DX12>(debug);
 		m_rd = m_backend->CreateDevice();
-		m_sc = m_rd->CreateSwapchain(hwnd, S_NUM_BACKBUFFERS);
+		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
+		m_imgui = std::make_unique<gfx::ImGUIBackend_DX12>(m_rd, m_sc, S_MAX_FIF);
 		m_sclr = std::make_unique<ShaderCompilerDXC>();
+
+		m_wmCallback = [this](HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+		{
+			return WinProc(hwnd, uMsg, wParam, lParam);
+		};
 
 		const u32 maxUploadSizeDefault = 40'000'000;
 		const u32 maxUploadSizeTextures = 400'000'000;
 
-		m_bin = std::make_unique<GPUGarbageBin>(1);
-		m_uploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, 1);
-		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeTextures, 1);
+		m_bin = std::make_unique<GPUGarbageBin>(S_MAX_FIF);
+		m_uploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, S_MAX_FIF);
+		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeTextures, S_MAX_FIF);
 
 		const u32 maxConstantsPerFrame = 500;
 		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), maxConstantsPerFrame);
@@ -149,8 +156,6 @@ namespace DOG::gfx
 				std::optional<Texture> tex;
 				if (!m_texMan->Exists(path))
 				{
-					const bool srgb = true;
-
 					auto importedTex = TextureFileImporter(path, genMips).GetResult();
 					if (importedTex)
 						tex = loadTexture(*m_texMan, *m_texUploadCtx, path, *importedTex, srgb);
@@ -197,25 +202,26 @@ namespace DOG::gfx
 	{
 	}
 
-	void Renderer::BeginGUI()
-	{
-	}
-
-	void Renderer::SetMainRenderCamera(const DirectX::XMMATRIX& view, std::optional<DirectX::XMMATRIX> proj)
+	void Renderer::SetMainRenderCamera(const DirectX::XMMATRIX& view, DirectX::XMMATRIX* proj)
 	{
 		m_viewMat = view;
 		m_projMat = proj ? *proj : DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_clientWidth / m_clientHeight, 800.f, 0.1f);
 	}
+	
+	void Renderer::BeginGUI()
+	{
+		m_imgui->BeginFrame();
+	}
 
-	void Renderer::SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material)
+	void Renderer::SubmitMesh(Mesh , u32 , MaterialHandle )
 	{
 	}
 
-	void Renderer::Update(f32 dt)
+	void Renderer::Update(f32 )
 	{
 	}
 
-	void Renderer::Render(f32 dt)
+	void Renderer::Render(f32 )
 	{
 		// ====== GPU
 		auto& scTex = m_scTextures[m_sc->GetNextDrawSurfaceIdx()];
@@ -324,7 +330,7 @@ namespace DOG::gfx
 
 	void Renderer::EndFrame_GPU(bool vsync)
 	{
-
+		EndGUI();
 		m_bin->EndFrame();
 
 		m_sc->Present(vsync);
@@ -338,6 +344,12 @@ namespace DOG::gfx
 
 	void Renderer::EndGUI()
 	{
+		m_imgui->EndFrame();
+	}
+
+	bool Renderer::WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	{
+		return m_imgui->WinProc(hwnd, uMsg, wParam, lParam);
 	}
 
 }

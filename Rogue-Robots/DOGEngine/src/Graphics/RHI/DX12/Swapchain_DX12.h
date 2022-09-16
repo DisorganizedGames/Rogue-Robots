@@ -24,11 +24,17 @@ namespace DOG::gfx
 
 		void Present(bool vsync);
 
+		// Implementation interface
+	public:
+		HWND GetHWND() const { return m_hwnd; }
+
+
 	private:
 		bool IsTearingSupported();
 
 	private:
 		RenderDevice_DX12* m_device{ nullptr };
+		HWND m_hwnd;
 		ComPtr<IDXGISwapChain3> m_sc;
 		DXGI_FORMAT m_scFormat;
 
