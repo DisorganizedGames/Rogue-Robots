@@ -581,7 +581,7 @@ if __name__ == "__main__":
         settings = C.object
         settings.name = "grid"
         settings.location = (5, 5, 3)
-        settings.scale = (2, 2, 2)
+        settings.scale = (5, 5, 5)
         settings.hide_viewport = True
 
     if not D.collections.get('Trash'):
