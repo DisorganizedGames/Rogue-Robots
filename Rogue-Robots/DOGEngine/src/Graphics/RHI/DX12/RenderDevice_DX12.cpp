@@ -813,12 +813,18 @@ namespace DOG::gfx
 
 	std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> RenderDevice_DX12::GetReservedResourceHandle() const
 	{
-		return std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE>();
+		return { m_reservedDescriptor->cpu_handle(0), m_reservedDescriptor->gpu_handle(0) };
 	}
 
 	ID3D12DescriptorHeap* RenderDevice_DX12::GetMainResourceDH() const
 	{
 		return m_descriptorMgr->get_gpu_dh_resource();
+	}
+
+	ID3D12GraphicsCommandList4* RenderDevice_DX12::GetListForExternal(CommandList cmdl)
+	{
+		const auto& res = HandleAllocator::TryGet(m_cmdls, HandleAllocator::GetSlot(cmdl.handle));
+		return res.pair.list.Get();
 	}
 
 	void RenderDevice_DX12::CreateQueues()

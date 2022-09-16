@@ -290,6 +290,8 @@ namespace DOG::gfx
 
 		}
 
+		m_imgui->Render(m_rd, m_cmdl);
+
 		m_rd->Cmd_EndRenderPass(m_cmdl);
 
 		// Present
