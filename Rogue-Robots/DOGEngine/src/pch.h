@@ -67,6 +67,7 @@
 #include <timeapi.h>
 #include <cstdio>
 #include <stdarg.h>
+#include <queue>
 
 #include "common/Utils.h"
 
