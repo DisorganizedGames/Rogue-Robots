@@ -548,9 +548,12 @@ def map_analysis():
     for uniqueBlockId in blockDict:
         f.write(uniqueBlockId + '\n')
         for i in range(0, 6):
+            s = ""
             for listItem in blockDict[uniqueBlockId][i]:
-                f.write(listItem + ',')
+                s += listItem + ','
+            f.write(s)
             f.write('\n')
+        f.write('\n')
 
         
 
