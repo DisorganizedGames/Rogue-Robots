@@ -74,7 +74,9 @@ class PANEL_PT_builder_paint(PANEL_PT_builder, Panel):
             row = layout.row()
             row.operator("object.rotate_block")
             row = layout.row()
-            row.operator("object.flip_block")
+            row.operator("object.flip_block_x")
+            row = layout.row()
+            row.operator("object.flip_block_y")
         else:
             row = layout.row()
             row.label(text="Select cubes in grid to draw map")
@@ -159,7 +161,7 @@ class AddBlock(bpy.types.Operator):
             block.location = (0,0,0)
             block.parent = giz
             block.hide_select = True
-            block.name = block.name.split('.')[0] + "_r0_." + giz.name.split('_')[1]
+            block.name = block.name.split('.')[0] + "_r0_f." + giz.name.split('_')[1]
         empty_collection(D.collections['Trash'])
         O.object.select_all(action='DESELECT')
         for obj in slots:
@@ -186,16 +188,16 @@ class RotateBlock(bpy.types.Operator):
             if len(giz.children) == 1:
                 obj = giz.children[0]
                 name, rot, flip = obj.name.split('.')[0].split('_')
-                if flip == "":
-                    obj.hide_select = False
-                    context.view_layer.objects.active = obj
-                    obj.select_set(True)
-                    obj.rotation_euler.rotate_axis('Z', PI/2)
-                    O.object.transform_apply(properties=False)
-                    obj.hide_select = True
-                    rot = (int(rot.split('r')[1]) + 1) % 4
-                    obj.name = f"{name}_r{rot}_{flip}.{giz.name.split('_')[1]}"
-                    obj.hide_select = True
+                # if flip == "":
+                obj.hide_select = False
+                context.view_layer.objects.active = obj
+                obj.select_set(True)
+                obj.rotation_euler.rotate_axis('Z', PI/2)
+                # O.object.transform_apply(properties=False)
+                obj.hide_select = True
+                rot = (int(rot.split('r')[1]) + 1) % 4
+                obj.name = f"{name}_r{rot}_{flip}.{giz.name.split('_')[1]}"
+                obj.hide_select = True
         O.object.select_all(action='DESELECT')
         for obj in slots:
             obj.select_set(True)
@@ -204,17 +206,17 @@ class RotateBlock(bpy.types.Operator):
         return {'FINISHED'}
 
 # Flip blocks over x-axis
-class FlipBlock(bpy.types.Operator):
+class FlipBlockX(bpy.types.Operator):
     """Flip selected blocks over x-axix"""
-    bl_idname = "object.flip_block"
-    bl_label = "Flip Block"
+    bl_idname = "object.flip_block_x"
+    bl_label = "Flip Block X"
 
     @classmethod
     def poll(cls, context):
         return context.active_object is not None
 
     def execute(self, context):
-        invert = {'f': '', '': 'f'}
+        invert = {'f': 'fx', 'fx': 'f', 'fy': 'fxy', 'fxy': 'fy'}
         slots = context.selected_objects
         gizmo = context.object
         O.object.select_all(action='DESELECT')
@@ -224,10 +226,43 @@ class FlipBlock(bpy.types.Operator):
                 obj.hide_select = False
                 context.view_layer.objects.active = obj
                 obj.select_set(True)
-                s = obj.scale.x
-                n = obj.name
                 obj.scale.x = obj.scale.x * (-1)
-                O.object.transform_apply(properties=False)
+                # O.object.transform_apply(properties=False)
+                obj.hide_select = True
+                name, rot, flip = obj.name.split('.')[0].split('_')
+                flip = invert[flip]
+                obj.name = f"{name}_{rot}_{flip}.{giz.name.split('_')[1]}"
+                obj.hide_select = True
+        O.object.select_all(action='DESELECT')
+        for obj in slots:
+            obj.select_set(True)
+        gizmo.select_set(True)
+        context.view_layer.objects.active = gizmo
+        return {'FINISHED'}
+
+# Flip blocks over x-axis
+class FlipBlockY(bpy.types.Operator):
+    """Flip selected blocks over y-axix"""
+    bl_idname = "object.flip_block_y"
+    bl_label = "Flip Block Y"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None
+
+    def execute(self, context):
+        invert = {'f': 'fy', 'fy': 'f', 'fx': 'fxy', 'fxy': 'fx'}
+        slots = context.selected_objects
+        gizmo = context.object
+        O.object.select_all(action='DESELECT')
+        for giz in slots:
+            if len(giz.children) == 1:
+                obj = giz.children[0]
+                obj.hide_select = False
+                context.view_layer.objects.active = obj
+                obj.select_set(True)
+                obj.scale.y = obj.scale.y * (-1)
+                # O.object.transform_apply(properties=False)
                 obj.hide_select = True
                 name, rot, flip = obj.name.split('.')[0].split('_')
                 flip = invert[flip]
@@ -400,10 +435,10 @@ def get_block(x, y, z):
     """Returns block info at position (x, y, z)"""
     if x < 0 or y < 0 or z < 0:
         return "Edge"
-    max_x = D.objects['grid'].location.x
-    max_y = D.objects['grid'].location.y
-    max_z = D.objects['grid'].location.z
-    if x > max_x or y > max_y or z > max_z:
+    max_x = int(D.objects['grid'].location.x)
+    max_y = int(D.objects['grid'].location.y)
+    max_z = int(D.objects['grid'].location.z)
+    if x >= max_x or y >= max_y or z >= max_z:
         return "Edge"
     blk_name = f"block_{x}-{y}-{z}"
     blk = D.objects[blk_name]
@@ -427,7 +462,8 @@ def menu_func(self, context):
     self.layout.operator(T.bl_idname, text=CreateGrid.bl_label)
     self.layout.operator(AddBlock.bl_idname, text=AddBlock.bl_label)
     self.layout.operator(RotateBlock.bl_idname, text=RotateBlock.bl_label)
-    self.layout.operator(FlipBlock.bl_idname, text=FlipBlock.bl_label)
+    self.layout.operator(FlipBlockX.bl_idname, text=FlipBlockX.bl_label)
+    self.layout.operator(FlipBlockY.bl_idname, text=FlipBlockY.bl_label)
     self.layout.operator(ClearMap.bl_idname, text=ClearMap.bl_label)
     self.layout.operator(SelectBlock.bl_idname, text=SelectBlock.bl_label)
     self.layout.operator(AnalyzeMap.bl_idname, text=AnalyzeMap.bl_label)
@@ -439,7 +475,8 @@ def register():
     bpy.utils.register_class(GridToggleXray)
     bpy.utils.register_class(AddBlock)
     bpy.utils.register_class(RotateBlock)
-    bpy.utils.register_class(FlipBlock)
+    bpy.utils.register_class(FlipBlockX)
+    bpy.utils.register_class(FlipBlockY)
     bpy.utils.register_class(ClearMap)
     bpy.utils.register_class(SelectBlock)
     bpy.utils.register_class(AnalyzeMap)
@@ -455,7 +492,8 @@ def unregister():
     bpy.utils.unregister_class(GridToggleXray)
     bpy.utils.unregister_class(AddBlock)
     bpy.utils.unregister_class(RotateBlock)
-    bpy.utils.unregister_class(FlipBlock)
+    bpy.utils.unregister_class(FlipBlockX)
+    bpy.utils.unregister_class(FlipBlockY)
     bpy.utils.unregister_class(ClearMap)
     bpy.utils.unregister_class(SelectBlock)
     bpy.utils.unregister_class(AnalyzeMap)
@@ -475,7 +513,7 @@ def unregister():
 def map_analysis():
     blockDict = {}
     for (x, y, z), block_id in all_blocks(): #Go through all blocks in the input level.
-        if !blockDict[block_id]: #If the current block is not in the dictionary yet we create an entry for it.
+        if block_id not in blockDict: #If the current block is not in the dictionary yet we create an entry for it.
         #order: +x  -x  +y  -y  +z  -z
         #IN ENGINE WE USE LEFT HAND! Y AND Z CHANGES PLACE!
             blockDict[block_id] = [[get_block(x + 1, y, z)], [get_block(x - 1, y, z)], [get_block(x, y + 1, z)], [get_block(x, y - 1, z)], [get_block(x, y, z + 1)], [get_block(x, y, z - 1)]]
