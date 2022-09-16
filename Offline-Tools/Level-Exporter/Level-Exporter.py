@@ -474,15 +474,47 @@ def unregister():
 
 def map_analysis():
     blockDict = {}
-    for (x, y, z), block_id in all_blocks():
-        
-        if !blockDict[block_id]:
-            
+    for (x, y, z), block_id in all_blocks(): #Go through all blocks in the input level.
+        if !blockDict[block_id]: #If the current block is not in the dictionary yet we create an entry for it.
+        #order: +x  -x  +y  -y  +z  -z
+        #IN ENGINE WE USE LEFT HAND! Y AND Z CHANGES PLACE!
+            blockDict[block_id] = [[get_block(x + 1, y, z)], [get_block(x - 1, y, z)], [get_block(x, y + 1, z)], [get_block(x, y - 1, z)], [get_block(x, y, z + 1)], [get_block(x, y, z - 1)]]
 
-        print("="*5, " Analysis ", "="*5)
-        for (x, y, z), block_id in all_blocks():
-#        for pos, block_id in all_blocks():
-            print(f"{str((x, y, z)):15} {block_id}, {get_block(x-1, y-1, z-1)}")
+        else: #If the entry already exist we have to check if the neighboring blocks already exists in the id's lists.
+            r = get_block(x + 1, y, z) #Get the block next to the current one.
+            if blockDict[block_id][0].count(r) == 0: #Check if that block's id already exists in this block's list in that direction.
+                blockDict[block_id][0].append(r)
+
+            l = get_block(x - 1, y, z)
+            if blockDict[block_id][1].count(l) == 0:
+                blockDict[block_id][1].append(l)
+
+            f = get_block(x, y + 1, z)
+            if blockDict[block_id][2].count(f) == 0:
+                blockDict[block_id][2].append(f)
+
+            b = get_block(x, y - 1, z)
+            if blockDict[block_id][3].count(b) == 0:
+                blockDict[block_id][3].append(b)
+
+            u = get_block(x, y, z + 1)
+            if blockDict[block_id][4].count(u) == 0:
+                blockDict[block_id][4].append(u)
+
+            d = get_block(x, y, z - 1)
+            if blockDict[block_id][5].count(d) == 0:
+                blockDict[block_id][5].append(d)
+    
+    blendFileName = D.filepath.split('\\')[-1].split('.')[0] #Get the name of the blendfile.
+    f = open(blendFileName + 'Output.txt', 'w')
+    for uniqueBlockId in blockDict:
+        f.write(uniqueBlockId + '\n')
+        for i in range(0, 6):
+            for listItem in blockDict[uniqueBlockId][i]:
+                f.write(listItem + ',')
+            f.write('\n')
+
+        
 
 
 
