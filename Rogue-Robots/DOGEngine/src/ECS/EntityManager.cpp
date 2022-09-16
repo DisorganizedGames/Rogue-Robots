@@ -4,7 +4,7 @@ namespace DOG
 
 	static u32 componentID{ 0u };
 
-	u32 ComponentBase::GetID() noexcept
+	const u32 ComponentBase::GetID() noexcept
 	{
 		return componentID++;
 	}

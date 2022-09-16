@@ -11,7 +11,7 @@ namespace DOG
 	{
 		ComponentBase() noexcept = default;
 		virtual ~ComponentBase() noexcept = default;
-		[[nodiscard]] static u32 GetID() noexcept;
+		[[nodiscard]] static const u32 GetID() noexcept;
 	};
 
 	template<typename T>
@@ -67,7 +67,10 @@ namespace DOG
 		ComponentType& AddComponent(entity entityID, Args&& ...args) noexcept;
 
 		template<typename ComponentType>
-		[[nodiscard]] bool HasComponent(entity entityID) noexcept;
+		[[nodiscard]] bool HasComponent(entity entityID) const noexcept;
+	private:
+		template<typename ComponentType>
+		void AddSparseSet() noexcept;
 	private:
 		std::vector<entity> m_entities;
 		std::queue<entity> m_freeList;
@@ -84,17 +87,7 @@ namespace DOG
 
 		if (!(m_components.size() > ComponentType::ID))
 		{
-			auto sparseSet = std::make_unique<SparseSet<ComponentType>>(); //PoolAllocator?
-			m_components.push_back(std::move(sparseSet));
-
-			set->sparseArray.reserve(MAX_ENTITIES);
-			for (u32 i{ 0u }; i < MAX_ENTITIES; i++)
-			{
-				set->sparseArray.push_back(NULL_ENTITY);
-			}
-
-			set->denseArray.reserve(MAX_ENTITIES);
-			set->components.reserve(MAX_ENTITIES);
+			AddSparseSet<ComponentType>();
 		}
 
 		const auto pos = set->denseArray.size();
@@ -106,7 +99,7 @@ namespace DOG
 	}
 
 	template<typename ComponentType>
-	bool EntityManager::HasComponent(entity entityID) noexcept
+	bool EntityManager::HasComponent(entity entityID) const noexcept
 	{
 		static_assert(std::is_base_of<ComponentBase, ComponentType>::value);
 
@@ -117,5 +110,23 @@ namespace DOG
 			&& (set->sparseArray[entityID] < set->denseArray.size()) 
 			&& (set->sparseArray[entityID] != NULL_ENTITY
 				);
+	}
+
+	template<typename ComponentType>
+	void EntityManager::AddSparseSet() noexcept
+	{
+		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get()))
+
+		auto sparseSet = std::make_unique<SparseSet<ComponentType>>(); //PoolAllocator?
+		m_components.push_back(std::move(sparseSet));
+
+		set->sparseArray.reserve(MAX_ENTITIES);
+		for (u32 i{ 0u }; i < MAX_ENTITIES; i++)
+		{
+			set->sparseArray.push_back(NULL_ENTITY);
+		}
+
+		set->denseArray.reserve(MAX_ENTITIES);
+		set->components.reserve(MAX_ENTITIES);
 	}
 }
