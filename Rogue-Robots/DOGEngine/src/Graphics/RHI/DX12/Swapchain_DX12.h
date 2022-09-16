@@ -21,6 +21,8 @@ namespace DOG::gfx
 
 		Texture GetBuffer(u8 idx);
 		DXGI_FORMAT GetBufferFormat() const;
+		std::vector<DXGI_MODE_DESC> GetModeDescs(DXGI_FORMAT format) const;
+		DXGI_OUTPUT_DESC1 GetOutputDesc() const;
 
 		void Present(bool vsync);
 

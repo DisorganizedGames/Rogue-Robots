@@ -24,7 +24,7 @@ namespace DOG::gfx
 		~RenderDevice_DX12();
 
 		Swapchain* CreateSwapchain(void* hwnd, u8 numBuffers);
-
+		Monitor GetMonitor() override;
 		Buffer CreateBuffer(const BufferDesc& desc);
 		Texture CreateTexture(const TextureDesc& desc);
 		Pipeline CreateGraphicsPipeline(const GraphicsPipelineDesc& desc);

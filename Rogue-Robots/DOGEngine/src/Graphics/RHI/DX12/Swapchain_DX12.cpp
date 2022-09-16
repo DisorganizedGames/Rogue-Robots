@@ -25,7 +25,8 @@ namespace DOG::gfx
 		scd.SampleDesc.Count = 1;
 		scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		scd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-		scd.Flags = m_tearingIsSupported ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+		scd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+		scd.Flags |= m_tearingIsSupported ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 		// Grab IDXGIFactory4 for CreateSwapChainForHwnd
 		ComPtr<IDXGIFactory2> fac;
@@ -93,6 +94,44 @@ namespace DOG::gfx
 	DXGI_FORMAT Swapchain_DX12::GetBufferFormat() const
 	{
 		return m_scFormat;
+	}
+
+	std::vector<DXGI_MODE_DESC> Swapchain_DX12::GetModeDescs(DXGI_FORMAT format) const
+	{
+		IDXGIOutput* output;
+		HRESULT hr = m_sc->GetContainingOutput(&output);
+		HR_VFY(hr);
+
+		UINT numModes = 0;
+		hr = output->GetDisplayModeList(format, 0, &numModes, nullptr);
+		HR_VFY(hr);
+
+		std::vector<DXGI_MODE_DESC> modes;
+		modes.resize(numModes);
+
+		hr = output->GetDisplayModeList(format, 0, &numModes, modes.data());
+		HR_VFY(hr);
+		output->Release();
+		return modes;
+	}
+
+	DXGI_OUTPUT_DESC1 Swapchain_DX12::GetOutputDesc() const
+	{
+		IDXGIOutput* output;
+		HRESULT hr = m_sc->GetContainingOutput(&output);
+		HR_VFY(hr);
+
+		IDXGIOutput6* output6;
+		hr = output->QueryInterface(__uuidof(IDXGIOutput6), reinterpret_cast<void**>(&output6));
+		HR_VFY(hr);
+
+		DXGI_OUTPUT_DESC1 desc{};
+		hr = output6->GetDesc1(&desc);
+		HR_VFY(hr);
+
+		output->Release();
+		output6->Release();
+		return desc;
 	}
 
 	void Swapchain_DX12::Present(bool vsync)
