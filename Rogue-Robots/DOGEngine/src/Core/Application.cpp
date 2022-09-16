@@ -51,6 +51,10 @@ namespace DOG
 			Time::Start();
 			Window::OnUpdate();
 
+			// Early break if WM tells us to
+			if (!m_isRunning)
+				break;
+
 			// All ImGUI calls must happen after this call
 			m_renderer->BeginGUI();
 		
