@@ -5,7 +5,7 @@ namespace DOG::piper
 	struct PipedData
 	{
 		DirectX::XMMATRIX viewMat;
-		std::optional<DirectX::XMMATRIX> projMat;
+		DirectX::XMMATRIX* projMat;
 	};
 
 	void SetPipe(PipedData* data);

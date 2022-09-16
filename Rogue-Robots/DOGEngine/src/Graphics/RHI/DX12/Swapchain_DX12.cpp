@@ -5,6 +5,7 @@
 namespace DOG::gfx
 {
 	Swapchain_DX12::Swapchain_DX12(RenderDevice_DX12* device, HWND hwnd, u8 num_buffers, bool debug_on) :
+		m_hwnd(hwnd),
 		m_device(device),
 		m_scFormat(DXGI_FORMAT_R8G8B8A8_UNORM)
 	{
