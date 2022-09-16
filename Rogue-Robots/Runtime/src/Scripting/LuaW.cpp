@@ -84,19 +84,19 @@ void LuaW::PushLuaInterface(RegisterClassFunctions& registerInterface)
 {
 	const int topStackItemIndex = -1;
 
-	std::vector<luaL_Reg> lua_regs;
+	std::vector<luaL_Reg> luaRegs;
 
 	for (int i = 0; i < registerInterface.classFunctions.size(); ++i)
 	{
-		lua_regs.push_back({ registerInterface.classFunctions[i].functionName.c_str(), registerInterface.classFunctions[i].classFunction });
+		luaRegs.push_back({ registerInterface.classFunctions[i].functionName.c_str(), registerInterface.classFunctions[i].classFunction });
 	}
 	//Have to have null, null at the end!
-	lua_regs.push_back({ NULL, NULL });
+	luaRegs.push_back({ NULL, NULL });
 
 	//Create a metatable on the stack (an table)
 	luaL_newmetatable(m_luaState, registerInterface.className.c_str());
 	//Sets the functions to the metatable
-	luaL_setfuncs(m_luaState, lua_regs.data(), 0);
+	luaL_setfuncs(m_luaState, luaRegs.data(), 0);
 	//Copies the metatable on the stack
 	lua_pushvalue(m_luaState, topStackItemIndex);
 	//Sets the __index to the metatable (to it self)

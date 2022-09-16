@@ -36,7 +36,7 @@ double LuaContext::GetDouble() const
 	const int max = m_luaW->GetNumberOfStackItems();
 
 	for (int index = 1; index <= max; ++index)
-		if (m_luaW->IsNumber(index))
+		if (m_luaW->IsNumber(index) && !m_luaW->IsInteger(index))
 			return m_luaW->GetDoubleFromStack(index);
 
 	std::cout << "Error: Couldn't Find Float/Double In Arguments\n";

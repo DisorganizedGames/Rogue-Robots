@@ -19,11 +19,20 @@ void ScriptManager::ScriptFileWatcher(const std::filesystem::path& path, const f
 //Reloades the script
 void ScriptManager::TempReloadFile(const std::string& fileName, TempScript* script)
 {
+	//Removes the old environment and creates a new one
+	m_luaW->RemoveReferenceToTable(script->luaScript);
+	script->luaScript = m_luaW->CreateTable();
+	m_luaW->CreateEnvironment(script->luaScript, c_pathToScripts + fileName);
+}
+
+//Test if we can reload the file and return true/false
+bool ScriptManager::TestReloadFile(const std::string& fileName, TempScript* script)
+{
 	//Will test lua syntax
 	bool failedLoadingFile = m_luaW->TryLoadChunk(c_pathToScripts + fileName);
 
 	if (failedLoadingFile)
-		return;
+		return false;
 
 	//Will only test code outside of functions
 	//Maybe add more
@@ -32,12 +41,9 @@ void ScriptManager::TempReloadFile(const std::string& fileName, TempScript* scri
 	bool failedCreatingEnvironment = testTable.TryCreateEnvironment(c_pathToScripts + fileName);
 
 	if (failedCreatingEnvironment)
-		return;
+		return false;
 
-	//Removes the old environment and creates a new one
-	m_luaW->RemoveReferenceToTable(script->luaScript);
-	script->luaScript = m_luaW->CreateTable();
-	m_luaW->CreateEnvironment(script->luaScript, c_pathToScripts + fileName);
+	return true;
 }
 
 ScriptManager::ScriptManager(LuaW* luaW) : m_luaW(luaW)
@@ -107,9 +113,14 @@ void ScriptManager::ReloadScripts()
 				return;
 			}
 
-			for (int scriptIndex = 0; scriptIndex < it->second.size(); ++scriptIndex)
+			bool fileIsReloadedable = TestReloadFile(s_filesToBeReloaded[i], &it->second[0]);
+
+			if (fileIsReloadedable)
 			{
-				TempReloadFile(s_filesToBeReloaded[i], &it->second[scriptIndex]);
+				for (int scriptIndex = 0; scriptIndex < it->second.size(); ++scriptIndex)
+				{
+					TempReloadFile(s_filesToBeReloaded[i], &it->second[scriptIndex]);
+				}
 			}
 			std::cout << s_filesToBeReloaded[i] << "\n";
 		}

@@ -27,6 +27,7 @@ private:
 	static void ScriptFileWatcher(const std::filesystem::path& path, const filewatch::Event changeType);
 	//Temp before component system
 	void TempReloadFile(const std::string& fileName, TempScript* script);
+	bool TestReloadFile(const std::string& fileName, TempScript* script);
 
 public:
 	ScriptManager(LuaW* luaW);
