@@ -153,6 +153,7 @@ namespace DOG::gfx
 		std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> GetReservedResourceHandle() const;
 		ID3D12Device5* GetDevice() const { return m_device.Get(); }
 		ID3D12DescriptorHeap* GetMainResourceDH() const;
+		ID3D12GraphicsCommandList4* GetListForExternal(CommandList cmdl);
 
 
 

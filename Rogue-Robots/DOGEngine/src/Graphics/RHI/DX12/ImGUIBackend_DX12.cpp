@@ -37,7 +37,7 @@ DOG::gfx::ImGUIBackend_DX12::ImGUIBackend_DX12(RenderDevice* rd, Swapchain* sc, 
 	ImGui_ImplWin32_Init(sc12->GetHWND());
 	ImGui_ImplDX12_Init(
 		rd12->GetDevice(),
-		maxFramesInFlight, sc12->GetBufferFormat(),
+		maxFramesInFlight + 1, sc12->GetBufferFormat(),	// ImGUI requires 2 frames in flight at least for some reason.
 		rd12->GetMainResourceDH(),
 		rd12->GetReservedResourceHandle().first,
 		rd12->GetReservedResourceHandle().second);
@@ -81,6 +81,13 @@ void DOG::gfx::ImGUIBackend_DX12::EndFrame()
 		ImGui::UpdatePlatformWindows();
 		ImGui::RenderPlatformWindowsDefault();
 	}
+}
+
+void DOG::gfx::ImGUIBackend_DX12::Render(RenderDevice* rd, CommandList cmdl)
+{
+	auto rd12 = (RenderDevice_DX12*)rd;
+	ImGui::Render();
+	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), rd12->GetListForExternal(cmdl));
 }
 
 // Forward declare message handler from imgui_impl_win32.cpp
