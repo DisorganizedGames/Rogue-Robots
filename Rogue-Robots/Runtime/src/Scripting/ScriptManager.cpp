@@ -26,7 +26,7 @@ void ScriptManager::TempReloadFile(const std::string& fileName, TempScript* scri
 }
 
 //Test if we can reload the file and return true/false
-bool ScriptManager::TestReloadFile(const std::string& fileName, TempScript* script)
+bool ScriptManager::TestReloadFile(const std::string& fileName)
 {
 	//Will test lua syntax
 	bool failedLoadingFile = m_luaW->TryLoadChunk(c_pathToScripts + fileName);
@@ -118,7 +118,7 @@ void ScriptManager::ReloadScripts()
 				return;
 			}
 
-			bool fileIsReloadedable = TestReloadFile(s_filesToBeReloaded[i], &it->second[0]);
+			bool fileIsReloadedable = TestReloadFile(s_filesToBeReloaded[i]);
 
 			if (fileIsReloadedable)
 			{
