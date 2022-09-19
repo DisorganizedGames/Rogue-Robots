@@ -112,6 +112,7 @@ namespace DOG
 		std::vector<entity> m_entities;
 		std::queue<entity> m_freeList;
 		std::vector<ComponentPool> m_components;
+		std::unordered_map<u32, u32> idToId;
 	};
 
 	class Collection
@@ -143,7 +144,7 @@ namespace DOG
 		ASSERT(!HasComponent<ComponentType>(entityID), "Entity already has component!");
 		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get())) 
 
-		if (!(m_components.size() > ComponentType::ID))
+		if (m_components[ComponentType::ID] == nullptr)
 		{
 			AddSparseSet<ComponentType>();
 		}
@@ -240,14 +241,20 @@ namespace DOG
 	template<typename ComponentType> 
 	bool EntityManager::HasComponent(const entity entityID) const noexcept
 	{
+		//std::string_view pretty_function{ __FUNCSIG__ };
+		//auto first = pretty_function.find_first_not_of(' ', pretty_function.find_first_of('<') + 1);
+		//auto value = pretty_function.substr(first, pretty_function.find_last_of('>') - first);
+		//auto res = std::hash<std::string_view>{}(pretty_function);
+
+
 		static_assert(std::is_base_of<ComponentBase, ComponentType>::value);
 		ASSERT(Exists(entityID), "Entity is invalid");
 		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get())) 
-		
 
 		return 
 			(
 			m_components.size() > ComponentType::ID
+			&& m_components[ComponentType::ID] != nullptr
 			&& entityID < set->sparseArray.size()) 
 			&& (set->sparseArray[entityID] < set->denseArray.size()) 
 			&& (set->sparseArray[entityID] != NULL_ENTITY
@@ -257,9 +264,9 @@ namespace DOG
 	template<typename ComponentType>
 	void EntityManager::AddSparseSet() noexcept
 	{
-		std::cout << ComponentType::ID;
 		static_assert(std::is_base_of<ComponentBase, ComponentType>::value);
-		m_components.emplace_back(std::move(std::make_unique<SparseSet<ComponentType>>())); //PoolAllocator?
+		m_components.insert(m_components.begin() + ComponentType::ID, std::move(std::make_unique<SparseSet<ComponentType>>()));
+		//m_components.emplace_back(std::move(std::make_unique<SparseSet<ComponentType>>())); //PoolAllocator?
 		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get()))
 
 		std::cout << ComponentType::ID;

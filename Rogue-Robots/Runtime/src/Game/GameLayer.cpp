@@ -40,28 +40,12 @@ void GameLayer::OnAttach()
 {
 	m_debugCam = DebugCamera(0, 1, 0);
 	auto e = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<DOG::SoundComponent>(e);
+	if (m_entityManager.HasComponent<DOG::SoundComponent>(e))
+	{
+
+	}
 	m_entityManager.AddComponent<DOG::TransformComponent>(e);
-
-	auto entity2 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<DOG::MeshComponent>(entity2, 0);
-	m_entityManager.AddComponent<DOG::SoundComponent>(entity2, 0);
-
-	auto eee = m_entityManager.CreateEntity();
-
-	auto C = m_entityManager.GetByCollection<DOG::TransformComponent, DOG::MeshComponent>();
-	for (auto entity : C)
-	{
-		auto [transform, mesh] = C.Get<DOG::TransformComponent, DOG::MeshComponent>(entity);
-		std::cout << transform.position.x << "," << transform.position.y << "," << transform.position.z << "\n";
-		std::cout << mesh.id << "\n";
-	}
-
-	auto C2 = m_entityManager.GetByCollection<DOG::SoundComponent, DOG::TransformComponent>();
-	for (auto entity : C2)
-	{
-		auto [sound, transform] = C2.Get<DOG::SoundComponent, DOG::TransformComponent>(entity);
-
-	}
 
 }
 

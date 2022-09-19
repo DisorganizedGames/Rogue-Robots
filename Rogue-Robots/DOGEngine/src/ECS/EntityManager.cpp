@@ -20,8 +20,12 @@ namespace DOG
 		for (u32 entityId{ 0u }; entityId < MAX_ENTITIES; entityId++)
 			m_freeList.push(entityId);
 
-		//m_components.resize(150);
-		m_components.reserve(150);
+		m_components.resize(150);
+		//m_components.reserve(150);
+		for (u32 i{ 0u }; i < 150; i++)
+		{
+			m_components.push_back(nullptr);
+		}
 	}
 
 	entity EntityManager::CreateEntity() noexcept
