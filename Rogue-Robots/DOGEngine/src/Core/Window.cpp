@@ -13,9 +13,13 @@ namespace DOG
 		WindowMode mode;
 	};
 	static WindowData s_windowData = {};
+	static std::optional<std::function<void(HWND, UINT, WPARAM, LPARAM)>> s_wmHook;
 
 	LRESULT Window::WindowProcedure(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
 	{
+		if (s_wmHook)
+			(*s_wmHook)(windowHandle, message, wParam, lParam);
+
 		switch (message)
 		{
 		case WM_CLOSE:
@@ -198,5 +202,10 @@ namespace DOG
 	const HWND Window::GetHandle() noexcept
 	{
 		return s_windowData.windowHandle;
+	}
+
+	void Window::SetWMHook(const std::function<void(HWND, UINT, WPARAM, LPARAM)> func)
+	{
+		s_wmHook = func;
 	}
 }

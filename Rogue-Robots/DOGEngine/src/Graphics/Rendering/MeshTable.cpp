@@ -15,7 +15,7 @@ namespace DOG::gfx
 		m_submeshTable = std::make_unique<GPUTableDeviceLocal<SubmeshHandle>>(rd, bin, (u32)sizeof(SubmeshMetadata), spec.maxTotalSubmeshes, async);
 
 		// Assumes indices always exist
-		m_indexTable = std::make_unique<GPUTableDeviceLocal<IndexHandle>>(rd, bin, sizeof(u32), spec.maxNumIndices, async);
+		m_indexTable = std::make_unique<GPUTableDeviceLocal<IndexHandle>>(rd, bin, (u32)sizeof(u32), spec.maxNumIndices, async);
 
 		// Assumes position always exist
 		{

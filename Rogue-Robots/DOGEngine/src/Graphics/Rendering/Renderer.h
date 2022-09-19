@@ -5,8 +5,9 @@
 
 namespace DOG::gfx
 {
-	class RenderDevice;
 	class RenderBackend;
+	class ImGUIBackend;
+	class RenderDevice;
 	class Swapchain;
 	class ShaderCompilerDXC;
 
@@ -20,9 +21,10 @@ namespace DOG::gfx
 	class Renderer
 	{
 	private:
-		static constexpr u32 S_NUM_BACKBUFFERS = 2;
-		static constexpr u32 S_MAX_FIF = S_NUM_BACKBUFFERS;
+		static constexpr u8 S_NUM_BACKBUFFERS = 2;
+		static constexpr u8 S_MAX_FIF = 1;
 
+		static_assert(S_MAX_FIF <= S_NUM_BACKBUFFERS);
 	public:
 		Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug);
 		~Renderer();
@@ -32,7 +34,7 @@ namespace DOG::gfx
 		// Must be called at the start of any frame to pick up CPU side ImGUI code
 		void BeginGUI();
 
-		void SetMainRenderCamera(const DirectX::XMMATRIX& view, std::optional<DirectX::XMMATRIX> proj = {});
+		void SetMainRenderCamera(const DirectX::XMMATRIX& view, DirectX::XMMATRIX* proj = nullptr);
 
 		void SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material);
 
@@ -50,13 +52,19 @@ namespace DOG::gfx
 
 		void Flush();
 
+		const std::function<void(HWND, UINT, WPARAM, LPARAM)>& GetWMCallback() { return m_wmCallback; }
+
 	private:
 		void EndGUI();	// Called at EndFrame_GPU
 
+		bool WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
 	private:
 		std::unique_ptr<RenderBackend> m_backend;
+		std::unique_ptr<ImGUIBackend> m_imgui;
 		RenderDevice* m_rd{ nullptr };
 		Swapchain* m_sc{ nullptr };
+
 
 		DirectX::XMMATRIX m_viewMat, m_projMat;
 
@@ -79,7 +87,7 @@ namespace DOG::gfx
 		// Caches textures (for now, temp?)
 		std::unique_ptr<TextureManager> m_texMan;		
 
-	
+		std::function<void(HWND, UINT, WPARAM, LPARAM)> m_wmCallback;
 
 		// ================= RENDERING RESOURCES
 		Texture m_depthTex;

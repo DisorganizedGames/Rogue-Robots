@@ -17,7 +17,6 @@ namespace DOG::gfx
 		virtual Texture GetBuffer(u8 idx) = 0;
 		virtual DXGI_FORMAT GetBufferFormat() const = 0;
 
-
 		virtual ~Swapchain() {}
 	};
 }

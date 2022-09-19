@@ -17,7 +17,7 @@ namespace DOG::gfx
 		Impl will depend on the header too. Essentially pImpl.
 	*/
 	class Swapchain_DX12;
-	class RenderDevice_DX12 : public RenderDevice
+	class RenderDevice_DX12 final : public RenderDevice
 	{
 	public:
 		RenderDevice_DX12(ComPtr<ID3D12Device5> device, IDXGIAdapter* adapter, bool debug);
@@ -147,7 +147,15 @@ namespace DOG::gfx
 		ID3D12CommandQueue* GetQueue(D3D12_COMMAND_LIST_TYPE type);
 
 		Texture RegisterSwapchainTexture(ComPtr<ID3D12Resource> texture);
-		void SetClearColor(Texture tex, const std::array<float, 4>& clear_color);
+		void SetClearColor(Texture tex, const std::array<float, 4>& clearColor);
+
+		// For ImGUI
+		std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> GetReservedResourceHandle() const;
+		ID3D12Device5* GetDevice() const { return m_device.Get(); }
+		ID3D12DescriptorHeap* GetMainResourceDH() const;
+		ID3D12GraphicsCommandList4* GetListForExternal(CommandList cmdl);
+
+
 
 		// Helpers
 	private:
@@ -275,6 +283,9 @@ namespace DOG::gfx
 
 		// Important that this is destructed before resources and descriptor managers (need to free underlying texture)
 		std::unique_ptr<Swapchain_DX12> m_swapchain;
+
+		// ImGUI
+		std::optional<DX12DescriptorChunk> m_reservedDescriptor;
 	};
 }
 

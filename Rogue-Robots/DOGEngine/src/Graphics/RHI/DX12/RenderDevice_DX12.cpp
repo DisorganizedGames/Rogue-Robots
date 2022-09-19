@@ -31,6 +31,8 @@ namespace DOG::gfx
 
 		m_descriptorMgr = std::make_unique<DX12DescriptorManager>(m_device.Get());
 
+		m_reservedDescriptor = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
 		InitRootsig();
 
 	}
@@ -54,6 +56,8 @@ namespace DOG::gfx
 			}
 		}
 
+		if (m_reservedDescriptor)
+			m_descriptorMgr->free(&(*m_reservedDescriptor));
 	}
 
 	Swapchain* RenderDevice_DX12::CreateSwapchain(void* hwnd, u8 numBuffers)
@@ -805,6 +809,22 @@ namespace DOG::gfx
 	{
 		auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(tex.handle));
 		res.desc.clearColor = clear_color;
+	}
+
+	std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> RenderDevice_DX12::GetReservedResourceHandle() const
+	{
+		return { m_reservedDescriptor->cpu_handle(0), m_reservedDescriptor->gpu_handle(0) };
+	}
+
+	ID3D12DescriptorHeap* RenderDevice_DX12::GetMainResourceDH() const
+	{
+		return m_descriptorMgr->get_gpu_dh_resource();
+	}
+
+	ID3D12GraphicsCommandList4* RenderDevice_DX12::GetListForExternal(CommandList cmdl)
+	{
+		const auto& res = HandleAllocator::TryGet(m_cmdls, HandleAllocator::GetSlot(cmdl.handle));
+		return res.pair.list.Get();
 	}
 
 	void RenderDevice_DX12::CreateQueues()

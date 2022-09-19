@@ -13,6 +13,7 @@
 
 #include "../Core/DataPiper.h"
 
+#include "ImGUI/imgui.h"
 
 namespace DOG
 {
@@ -43,10 +44,22 @@ namespace DOG
 		// Temporary read only data from runtime
 		const piper::PipedData* runtimeData = piper::GetPipe();
 
+		bool showDemoWindow = true;
+
 		while (m_isRunning)
 		{
 			Time::Start();
 			Window::OnUpdate();
+
+			// Early break if WM tells us to
+			if (!m_isRunning)
+				break;
+
+			// All ImGUI calls must happen after this call
+			m_renderer->BeginGUI();
+		
+			// Example ImGUI call
+			ImGui::ShowDemoWindow(&showDemoWindow);
 
 			for (auto const layer : m_layerStack)
 			{
@@ -104,6 +117,8 @@ namespace DOG
 #else
 		m_renderer = std::make_unique<gfx::Renderer>(Window::GetHandle(), Window::GetWidth(), Window::GetHeight(), false);
 #endif
+		Window::SetWMHook(m_renderer->GetWMCallback());
+
 		AssetManager::Initialize();
 	}
 

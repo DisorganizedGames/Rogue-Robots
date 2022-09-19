@@ -12,7 +12,7 @@ namespace DOG::gfx
 		m_resources.resize(1);
 
 		assert(spec.maxElements != 0);
-		m_matTable = std::make_unique<GPUTableDeviceLocal<GPUMatHandle>>(rd, bin, sizeof(Material_GPUElement), spec.maxElements, async);
+		m_matTable = std::make_unique<GPUTableDeviceLocal<GPUMatHandle>>(rd, bin, (u32)sizeof(Material_GPUElement), spec.maxElements, async);
 	}
 
 	MaterialHandle MaterialTable::LoadMaterial(const MaterialSpecification& spec, UploadContext& ctx)
