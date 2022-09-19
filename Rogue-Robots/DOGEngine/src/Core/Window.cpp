@@ -35,85 +35,85 @@ namespace DOG
 		case WM_CLOSE:
 		{
 			PublishEvent<WindowClosedEvent>();
-			break;
+			return 0;
 		}
 		case WM_SIZE:
 		{
 			s_windowData.dimensions.x = LOWORD(lParam);
 			s_windowData.dimensions.y = HIWORD(lParam);
 			PublishEvent<WindowResizedEvent>(LOWORD(lParam), HIWORD(lParam));
-			break;
+			return 0;
 		}
 		case WM_KEYDOWN:
 		{
-			if (ignoreKeyboardInput) break;
+			if (ignoreKeyboardInput) return 0;
 			bool keyIsRepeated = (lParam >> 30) & 1;
 			if (!keyIsRepeated)
 			{
 				Keyboard::OnKeyDown((Key)(u8)(wParam));
 			}
-			break;
+			return 0;
 		}
 		case WM_KEYUP:
 		{
-			if (ignoreKeyboardInput) break;
+			if (ignoreKeyboardInput) return 0;
 			Keyboard::OnKeyUp((Key)(u8)(wParam));
-			break;
+			return 0;
 		}
 		case WM_LBUTTONDOWN:
 		{
-			if (ignoreMouseInput) break;
+			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonPressed(Button::Left);
-			break;
+			return 0;
 		}
 		case WM_LBUTTONUP:
 		{
-			if (ignoreMouseInput) break;
+			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonReleased(Button::Left);
-			break;
+			return 0;
 		}
 		case WM_RBUTTONDOWN:
 		{
-			if (ignoreMouseInput) break;
+			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonPressed(Button::Right);
-			break;
+			return 0;
 		}
 		case WM_RBUTTONUP:
 		{
-			if (ignoreMouseInput) break;
+			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonReleased(Button::Right);
-			break;
+			return 0;
 		}
 		case WM_MBUTTONDOWN:
 		{
-			if (ignoreMouseInput) break;
+			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonPressed(Button::Wheel);
-			break;
+			return 0;
 		}
 		case WM_MBUTTONUP:
 		{
-			if (ignoreMouseInput) break;
+			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonReleased(Button::Wheel);
-			break;
+			return 0;
 		}
 		case WM_MOUSEMOVE:
 		{
-			if (ignoreMouseInput) break;
+			if (ignoreMouseInput) return 0;
 			Mouse::OnMove({ LOWORD(lParam), HIWORD(lParam) });
-			break;
+			return 0;
 		}
 		case WM_INPUT:
 		{
-			if (ignoreMouseInput) break;
+			if (ignoreMouseInput) return 0;
 			UINT size = 0u;
 			if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, nullptr, &size, sizeof(RAWINPUTHEADER)) == -1)
-				break;
+				return 0;
 
 			std::vector<char> rawBuffer;
 			rawBuffer.resize(size);
 
 			if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, rawBuffer.data(), &size, sizeof(RAWINPUTHEADER)) != size)
-				break;
+				return 0;
 
 			auto& ri = reinterpret_cast<const RAWINPUT&>(*rawBuffer.data());
 			if (ri.header.dwType == RIM_TYPEMOUSE && (ri.data.mouse.lLastX != 0 || ri.data.mouse.lLastY != 0))
@@ -121,7 +121,7 @@ namespace DOG
 				Mouse::OnRawDelta({ ri.data.mouse.lLastX, ri.data.mouse.lLastY });
 			}
 
-			break;
+			return 0;
 		}
 		}
 		return DefWindowProcA(windowHandle, message, wParam, lParam);
