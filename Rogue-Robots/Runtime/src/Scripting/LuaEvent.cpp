@@ -1,6 +1,5 @@
 #include "LuaEvent.h"
 #include "ScriptManager.h"
-#include "LuaTable.h"
 
 LuaEvent LuaEvent::s_luaEvent;
 
@@ -14,6 +13,9 @@ void LuaEvent::Initialize(LuaW* luaW, ScriptManager* scriptManager)
 
 	Table table = m_luaW->GetGlobalTable(luaEventSystemTableName);
 	m_eventSystemTable = std::make_unique<LuaTable>(m_luaW, table);
+
+	m_eventSystemTableRegisterFunction = m_eventSystemTable->GetFunctionFromTable("Register");
+	m_eventSystemTableInvokeFunction = m_eventSystemTable->GetFunctionFromTable("InvokeEvent");
 }
 
 LuaEvent& LuaEvent::GetLuaEvent()

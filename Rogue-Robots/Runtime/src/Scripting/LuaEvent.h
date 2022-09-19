@@ -1,9 +1,8 @@
 #pragma once
-#include "LuaW.h"
+#include "LuaTable.h"
 
 class LuaContext;
 class ScriptManager;
-class LuaTable;
 
 class LuaEvent
 {
@@ -12,6 +11,8 @@ private:
 	static LuaEvent s_luaEvent;
 	//std::unordered_map<std::string, std::vector<std::function<void (void*)>>> eventCallBacks;
 	std::unique_ptr<LuaTable> m_eventSystemTable;
+	Function m_eventSystemTableRegisterFunction;
+	Function m_eventSystemTableInvokeFunction;
 
 private:
 	LuaEvent() = default;
@@ -35,6 +36,7 @@ public:
 template<void (*func)(LuaContext*)>
 inline void LuaEvent::AddListener(const std::string& eventName)
 {
+	//m_eventSystemTable->CallFunctionOnTable();
 	//m_eventSystemTable->Add
 	//m_luaW.Push
 }
