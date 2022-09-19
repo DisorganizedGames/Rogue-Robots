@@ -18,6 +18,8 @@ namespace DOG::gfx
 	class MeshTable;
 	class TextureManager;
 
+	class GraphicsBuilder;
+
 	class Renderer
 	{
 	private:
@@ -29,7 +31,8 @@ namespace DOG::gfx
 		Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug);
 		~Renderer();
 
-		// GraphicsBuilders* GetBuilders();
+		GraphicsBuilder* GetBuilder() const { return m_builder.get(); }
+
 
 		// Must be called at the start of any frame to pick up CPU side ImGUI code
 		void BeginGUI();
@@ -37,6 +40,8 @@ namespace DOG::gfx
 		void SetMainRenderCamera(const DirectX::XMMATRIX& view, DirectX::XMMATRIX* proj = nullptr);
 
 		void SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material);
+
+
 
 		// Internal state updates
 		void Update(f32 dt);
@@ -60,10 +65,21 @@ namespace DOG::gfx
 		bool WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	private:
+		struct RenderSubmission
+		{
+			Mesh mesh;
+			u32 submesh;
+			MaterialHandle mat;
+		};
+
+	private:
 		std::unique_ptr<RenderBackend> m_backend;
 		std::unique_ptr<ImGUIBackend> m_imgui;
 		RenderDevice* m_rd{ nullptr };
 		Swapchain* m_sc{ nullptr };
+		
+		std::unique_ptr<GraphicsBuilder> m_builder;
+		std::vector<RenderSubmission> m_submissions;		// temporary
 
 
 		DirectX::XMMATRIX m_viewMat, m_projMat;
@@ -101,12 +117,6 @@ namespace DOG::gfx
 
 		// Reusing a single command list for now
 		CommandList m_cmdl;
-
-
-
-		// TEMP
-		MeshContainer m_sponza;
-		std::vector<MaterialHandle> m_mats;
 
 
 
