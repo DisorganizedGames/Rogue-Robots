@@ -13,9 +13,11 @@
 #include "MaterialTable.h"
 #include "MeshTable.h"
 #include "TextureManager.h"
+#include "GraphicsBuilder.h"
 
 #include "../../Core/AssimpImporter.h"
 #include "../../Core/TextureFileImporter.h"
+
 
 
 namespace DOG::gfx
@@ -42,6 +44,7 @@ namespace DOG::gfx
 		m_uploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, S_MAX_FIF);
 		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeTextures, S_MAX_FIF);
 
+
 		const u32 maxConstantsPerFrame = 500;
 		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), maxConstantsPerFrame);
 		m_cmdl = m_rd->AllocateCommandList();
@@ -63,6 +66,16 @@ namespace DOG::gfx
 		MaterialTable::MemorySpecification memSpec{};
 		memSpec.maxElements = 500;	// 500 distinct materials
 		m_globalMaterialTable = std::make_unique<MaterialTable>(m_rd, m_bin.get(), memSpec);
+
+		// Create builder for users to create graphical objects supported by the renderer
+		m_builder = std::make_unique<GraphicsBuilder>(
+			m_rd,
+			m_uploadCtx.get(), 
+			m_texUploadCtx.get(), 
+			m_globalMeshTable.get(), 
+			m_globalMaterialTable.get());
+
+
 
 		m_texMan = std::make_unique<TextureManager>(m_rd, m_bin.get());
 
@@ -114,88 +127,6 @@ namespace DOG::gfx
 			.SetDepthFormat(DepthFormat::D32)
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
-
-		// Test mesh manager		
-
-
-
-		// Load ONE model
-		{
-			// Load mesh
-			auto res = AssimpImporter("Assets/Sponza_gltf/glTF/Sponza.gltf").GetResult();
-			MeshTable::MeshSpecification loadSpec{};
-			loadSpec.indices = res->mesh.indices;
-			for (const auto& attr : res->mesh.vertexData)
-				loadSpec.vertexDataPerAttribute[attr.first] = res->mesh.vertexData[attr.first];
-			loadSpec.submeshData = res->submeshes;
-			m_sponza = m_globalMeshTable->LoadMesh(loadSpec, *m_uploadCtx);
-
-			m_uploadCtx->SubmitCopies();
-
-
-			// Load materials
-			auto loadTexture = [](
-				TextureManager& texMan, UploadContext& ctx,
-				const std::string& name, ImportedTextureFile& textureData, bool srgb) -> Texture
-			{
-				TextureManager::MippedTexture2DSpecification spec{};
-				for (auto& mip : textureData.dataPerMip)
-				{
-					TextureManager::TextureSubresource subr{};
-					subr.data = mip.data;
-					subr.width = mip.width;
-					subr.height = mip.height;
-					spec.dataPerMip.push_back(subr);
-				}
-				spec.srgb = srgb;
-				return texMan.LoadTexture(name, spec, ctx);
-			};
-
-			auto loadToMat = [&](const std::string& path, bool srgb, bool genMips) -> std::optional<TextureView>
-			{
-				std::optional<Texture> tex;
-				if (!m_texMan->Exists(path))
-				{
-					auto importedTex = TextureFileImporter(path, genMips).GetResult();
-					if (importedTex)
-						tex = loadTexture(*m_texMan, *m_texUploadCtx, path, *importedTex, srgb);
-				}
-				else
-					tex = m_texMan->GetTexture(path);
-
-				if (tex)
-				{
-					return m_rd->CreateView(*tex, TextureViewDesc(
-						ViewType::ShaderResource,
-						TextureViewDimension::Texture2D,
-						srgb ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM));
-				}
-				else
-					return {};
-
-			};
-
-			for (const auto& mat : res->materials)
-			{
-				std::optional<Texture> albedoTex, metallicRoughnessTex, normalTex, emissiveTex;
-				MaterialTable::MaterialSpecification matSpec{};
-
-				const bool genMips = true;
-
-				matSpec.albedo = loadToMat(mat.albedoPath, true, genMips);
-				matSpec.metallicRoughness = loadToMat(mat.metallicRoughnessPath, false, genMips);
-				matSpec.normal = loadToMat(mat.normalMapPath, false, genMips);
-				matSpec.emissive = loadToMat(mat.emissivePath, true, genMips);
-
-				m_mats.push_back(m_globalMaterialTable->LoadMaterial(matSpec, *m_uploadCtx));
-			}
-
-
-			m_uploadCtx->SubmitCopies();
-
-			m_texUploadCtx->SubmitCopies();
-		}
-
 	}
 
 	Renderer::~Renderer()
@@ -213,8 +144,13 @@ namespace DOG::gfx
 		m_imgui->BeginFrame();
 	}
 
-	void Renderer::SubmitMesh(Mesh , u32 , MaterialHandle )
+	void Renderer::SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle mat)
 	{
+		RenderSubmission sub{};
+		sub.mesh = mesh;
+		sub.submesh = submesh;
+		sub.mat = mat;
+		m_submissions.push_back(sub);
 	}
 
 	void Renderer::Update(f32 )
@@ -246,7 +182,7 @@ namespace DOG::gfx
 
 		m_rd->Cmd_SetPipeline(m_cmdl, m_meshPipe);
 		m_rd->Cmd_SetIndexBuffer(m_cmdl, m_globalMeshTable->GetIndexBuffer());
-		for (u32 i = 0; i < m_sponza.numSubmeshes; ++i)
+		for (const auto& sub : m_submissions)
 		{
 			auto pfConstant = m_dynConstants->Allocate();
 			struct PerFrameData
@@ -273,19 +209,19 @@ namespace DOG::gfx
 
 			auto args = ShaderArgs()
 				.AppendConstant(pfConstant.globalDescriptor)
-				.AppendConstant(m_globalMeshTable->GetSubmeshMD_GPU(m_sponza.mesh, i))
+				.AppendConstant(m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh))
 				.AppendConstant(m_globalMeshTable->GetSubmeshDescriptor())
 				.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Position))
 				.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::UV))
 				.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Normal))
 				.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Tangent))
 				.AppendConstant(m_globalMaterialTable->GetDescriptor())
-				.AppendConstant(m_globalMaterialTable->GetMaterialIndex(m_mats[i])
+				.AppendConstant(m_globalMaterialTable->GetMaterialIndex(sub.mat)
 				);
 
 			m_rd->Cmd_UpdateShaderArgs(m_cmdl, args);
 
-			auto sm = m_globalMeshTable->GetSubmeshMD_CPU(m_sponza.mesh, i);
+			auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
 			m_rd->Cmd_DrawIndexed(m_cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
 
 		}
@@ -334,6 +270,7 @@ namespace DOG::gfx
 	{
 		EndGUI();
 		m_bin->EndFrame();
+		m_submissions.clear();
 
 		m_sc->Present(vsync);
 	}
