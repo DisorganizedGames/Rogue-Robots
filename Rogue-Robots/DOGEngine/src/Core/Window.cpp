@@ -99,7 +99,13 @@ namespace DOG
 		case WM_MOUSEMOVE:
 		{
 			if (ignoreMouseInput) return 0;
-			Mouse::OnMove({ LOWORD(lParam), HIWORD(lParam) });
+			// LOWORD and HIWORD can't be used because x and y can be negative
+			POINTS point = MAKEPOINTS(lParam);
+			if (point.x < 0 || point.y < 0 || point.x >= static_cast<int>(GetWidth()) || point.y >= static_cast<int>(GetHeight()))
+			{
+				std::cout << "Warning WM_MOUSEMOVE returned point outside the windows dimensions! x: " << point.x << " y: " << point.y << std::endl;
+			}
+			Mouse::OnMove({ static_cast<u32>(point.x), static_cast<u32>(point.y) });
 			return 0;
 		}
 		case WM_INPUT:
