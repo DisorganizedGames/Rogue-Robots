@@ -7,6 +7,7 @@ namespace DOG
 	private:
 		HANDLE m_streamEndEvent;
 		HANDLE m_bufferEndEvent;
+		bool m_hardEnd = false;
 	public:
 		SourceVoiceCallback()
 		{
@@ -18,7 +19,15 @@ namespace DOG
 			if (m_streamEndEvent)
 				CloseHandle(m_streamEndEvent);
 		};
+
 	public:
+
+		void TriggerEnd()
+		{
+			SetEvent(m_streamEndEvent);
+			m_hardEnd = true;
+		}
+
 		void OnStreamEnd() override
 		{
 			SetEvent(m_streamEndEvent);
@@ -31,13 +40,19 @@ namespace DOG
 
 		void WaitForStreamEnd()
 		{
-			WaitForSingleObjectEx(m_streamEndEvent, INFINITE, true);
+			if (!m_hardEnd)
+			{
+				WaitForSingleObjectEx(m_streamEndEvent, INFINITE, true);
+			}
 		}
 
 		void WaitForEnd()
 		{
-			std::vector<HANDLE> events = {m_streamEndEvent, m_bufferEndEvent};
-			WaitForMultipleObjectsEx(2, &events[0], false, INFINITE, true);
+			if (!m_hardEnd)
+			{
+				std::vector<HANDLE> events = { m_streamEndEvent, m_bufferEndEvent };
+				WaitForMultipleObjectsEx(2, &events[0], false, INFINITE, true);
+			}
 		}
 
 		// Unimplemented callbacks

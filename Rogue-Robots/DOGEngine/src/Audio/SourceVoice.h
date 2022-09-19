@@ -33,9 +33,6 @@ namespace DOG
 		
 		void Stop();
 
-		// Waits for all currently queued buffers to finish playing
-		void WaitForEnd();
-
 		// Returns true if all queued buffers have finished playing, false otherwise
 		bool HasFinished();
 		
@@ -49,14 +46,13 @@ namespace DOG
 		IXAudio2SourceVoice* m_sourceVoice = nullptr;
 		WAVProperties m_audioProperties = {};
 		SourceVoiceSettings m_voiceSettings;
-		std::vector<std::vector<u8>> m_buffers;
 
 		std::unique_ptr<SourceVoiceCallback> m_callback;
-		
-		bool m_playingAsync = false;
-		WAVFileReader m_fileReader;
-		std::thread m_audioThread;
 
+		std::jthread m_audioThread;
+		std::atomic<bool> m_playingAsync = false;
+		std::atomic<bool> m_shouldStop = false;
+		
 	private:
 		void Queue(const std::vector<u8>& buffer, u32 bufferFlag);
 	};	
