@@ -209,6 +209,7 @@ namespace DOG
 
 	private:
 		static std::unique_ptr<AssetManager> s_instance;
+		static constexpr u64 MAX_AUDIO_SIZE_ASYNC = 65536;
 
 		std::unordered_map<u64, ManagedAsset*> m_assets;
 
