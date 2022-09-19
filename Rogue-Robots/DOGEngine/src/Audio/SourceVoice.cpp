@@ -21,7 +21,9 @@ SourceVoice::~SourceVoice()
 {
 	if (m_sourceVoice)
 	{
+		m_playingAsync = false;
 		Stop();
+		m_callback->TriggerEnd();
 		m_sourceVoice->DestroyVoice();
 	}
 }
@@ -61,76 +63,78 @@ void SourceVoice::Play(const std::vector<u8>& buffer)
 
 void SourceVoice::PlayAsync(WAVFileReader&& fileReader)
 {
-	constexpr const u32 chunkSize = 4096;
-	m_fileReader = std::move(fileReader);
+	if (m_playingAsync)
+		assert(false);
 
-	m_buffers.clear();
-	m_buffers.resize(2);
-
+	constexpr u64 chunkSize = 16384;
 	m_playingAsync = true;
-	m_audioThread = std::thread([&] ()
-		{
-			u32 index = 1;
-			bool endOfStream = false;
+	m_shouldStop = false;
 
-			m_buffers[0] = m_fileReader.ReadNextChunk(chunkSize);
-			endOfStream = (m_buffers[0].size() < chunkSize);
-			Queue(m_buffers[0], endOfStream * XAUDIO2_END_OF_STREAM);
-			
+	m_audioThread = std::jthread([&](WAVFileReader&& wfr)
+		{
+			u8 index = 0;
+			std::array<std::vector<u8>, 2> buffers;
+
+			buffers[index] = wfr.ReadNextChunk(chunkSize);
+			bool finalBuffer = (buffers[index].size() < chunkSize);
+			Queue(buffers[index], XAUDIO2_END_OF_STREAM * finalBuffer);
 			m_sourceVoice->Start();
 
-			while (!endOfStream && m_playingAsync)
+			index++;
+			while (!m_shouldStop && !finalBuffer)
 			{
-				m_buffers[index] = m_fileReader.ReadNextChunk(chunkSize);
-				endOfStream = (m_buffers[index].size() < chunkSize);
-				Queue(m_buffers[index], endOfStream * XAUDIO2_END_OF_STREAM);
+				buffers[index] = wfr.ReadNextChunk(chunkSize);
+				finalBuffer = (buffers[index].size() < chunkSize);
+				
+				if (m_shouldStop) break;
+				Queue(buffers[index], XAUDIO2_END_OF_STREAM * finalBuffer);
+				if (m_shouldStop || finalBuffer) break;
 
 				m_callback->WaitForEnd();
 				index = (index+1) % 2;
 			}
-			m_playingAsync = false;
-			m_buffers.clear();
-		});
+			if (m_playingAsync)
+			{
+				HR hr = m_sourceVoice->Stop();
+				hr.try_fail("Failed to stop Source Voice async");
+
+				hr = m_sourceVoice->FlushSourceBuffers();
+				hr.try_fail("Failed to flush source voice buffers");
+
+				m_playingAsync = false;
+			}
+		}, std::move(fileReader));
 }
 
 void SourceVoice::Stop()
 {
-	if (m_playingAsync)
+	m_shouldStop = true;
+
+	if (!m_playingAsync)
 	{
-		m_playingAsync = false;
-		m_audioThread.join();
+		HR hr = m_sourceVoice->Stop();
+		hr.try_fail("Failed to stop Source Voice");
+
+		hr = m_sourceVoice->FlushSourceBuffers();
+		hr.try_fail("Failed to flush source voice queued buffers");
 	}
-
-	HR hr = m_sourceVoice->Stop();
-	hr.try_fail("Failed to stop Source Voice");
-
-	hr = m_sourceVoice->FlushSourceBuffers();
-	hr.try_fail("Failed to flush source voice queued buffers");
-
-	m_buffers.clear();
-}
-
-void SourceVoice::WaitForEnd()
-{
-	if (m_playingAsync)
-	{
-		m_audioThread.join();
-		return;
-	}
-	XAUDIO2_VOICE_STATE state;
-	m_sourceVoice->GetState(&state);
-	if (state.BuffersQueued > 0)
-	{
-		m_callback->WaitForStreamEnd();
-	}
-	m_buffers.clear();
-	return;
 }
 
 bool SourceVoice::HasFinished()
 {
+	if (m_playingAsync)
+	{
+		return false;
+	}
+
 	XAUDIO2_VOICE_STATE state;
-	m_sourceVoice->GetState(&state);
+	m_sourceVoice->GetState(&state, XAUDIO2_VOICE_NOSAMPLESPLAYED);
+
+	if (state.BuffersQueued == 0)
+	{
+		HR hr = m_sourceVoice->Stop();
+		hr.try_fail("Failed to stop source voice with no buffers queued");
+	}
 
 	return state.BuffersQueued == 0;
 }

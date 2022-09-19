@@ -109,7 +109,7 @@ namespace DOG
 		AudioAsset* newAudio = new AudioAsset;
 		newAudio->filePath = path;
 
-		if (fileSize > 16'384)
+		if (fileSize > 65536)
 		{
 			newAudio->async = true;
 			newAudio->properties = ReadWAVProperties(path);

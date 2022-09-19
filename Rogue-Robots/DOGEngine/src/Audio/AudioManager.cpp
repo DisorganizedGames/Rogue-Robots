@@ -13,9 +13,25 @@ AudioManager::AudioManager()
 
 void AudioManager::Play(AudioPlayerComponent& audioPlayerComponent)
 {
-	auto& [audioID, volume, _] = audioPlayerComponent;
+	u64 audioID = audioPlayerComponent.audioID;
+	f32 volume = audioPlayerComponent.volume;
+
+	i64 currentVoice = audioPlayerComponent.voiceID;
+
+	if (currentVoice != -1)
+	{
+		if (m_sources[currentVoice]->HasFinished())
+		{
+			m_sources[currentVoice].reset();
+			audioPlayerComponent.voiceID = -1;
+		}
+		else
+		{
+			return;
+		}
+	}
 	
-	AudioAsset* asset = (AudioAsset*)AssetManager::Get().GetAsset(audioPlayerComponent.audioID);
+	AudioAsset* asset = (AudioAsset*)AssetManager::Get().GetAsset(audioID);
 
 	u64 freeVoiceIndex = GetFreeVoice(asset->properties);
 
@@ -41,6 +57,11 @@ void AudioManager::Play(AudioPlayerComponent& audioPlayerComponent)
 void AudioManager::Stop(AudioPlayerComponent& audioPlayerComponent)
 {
 	u64 voiceID = audioPlayerComponent.voiceID;
+	if (voiceID < 0 || voiceID > MAX_SOURCES-1)
+	{
+		throw std::runtime_error("Tried to call stop, but no voice was specified");
+	}
+
 	auto& voice = m_sources[voiceID];
 	if (!voice->HasFinished())
 	{
@@ -49,15 +70,14 @@ void AudioManager::Stop(AudioPlayerComponent& audioPlayerComponent)
 	audioPlayerComponent.voiceID = -1;
 }
 
-void AudioManager::WaitForEnd(AudioPlayerComponent& audioPlayerComponent)
+bool AudioManager::HasFinished(const AudioPlayerComponent& audioPlayerComponent) const
 {
-	i64 voiceID = audioPlayerComponent.voiceID;
-	if (audioPlayerComponent.voiceID < 0 || audioPlayerComponent.voiceID > MAX_SOURCES-1)
+	u64 voiceID = audioPlayerComponent.voiceID;
+	if (voiceID >= 0 && voiceID < MAX_SOURCES)
 	{
-		return;
+		return m_sources[voiceID]->HasFinished();
 	}
-
-	m_sources[voiceID]->WaitForEnd();
+	return true;
 }
 
 u64 AudioManager::GetFreeVoice(const WAVProperties& wavProperties)

@@ -17,7 +17,7 @@ namespace DOG
 
 		void Stop(AudioPlayerComponent& audioPlayerComponent);
 
-		void WaitForEnd(AudioPlayerComponent& audioPlayerComponent);
+		bool HasFinished(const AudioPlayerComponent& audioPlayerComponent) const;
 
 	private:
 		static inline constexpr const u32 MAX_SOURCES = 8;
