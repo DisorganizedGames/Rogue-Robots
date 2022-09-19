@@ -287,7 +287,7 @@ namespace DOG::gfx
 		m_imgui->EndFrame();
 	}
 
-	bool Renderer::WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	LRESULT Renderer::WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		return m_imgui->WinProc(hwnd, uMsg, wParam, lParam);
 	}

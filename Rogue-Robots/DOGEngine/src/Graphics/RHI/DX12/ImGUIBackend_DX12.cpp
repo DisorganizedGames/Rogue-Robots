@@ -93,9 +93,7 @@ void DOG::gfx::ImGUIBackend_DX12::Render(RenderDevice* rd, CommandList cmdl)
 // Forward declare message handler from imgui_impl_win32.cpp
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-bool DOG::gfx::ImGUIBackend_DX12::WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT DOG::gfx::ImGUIBackend_DX12::WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam))
-		return true;
-	return false;
+	return ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam);
 }

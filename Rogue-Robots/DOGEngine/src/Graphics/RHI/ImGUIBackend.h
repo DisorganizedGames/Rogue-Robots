@@ -12,7 +12,7 @@ namespace DOG::gfx
 		virtual void BeginFrame() = 0;
 		virtual void EndFrame() = 0;
 		virtual void Render(RenderDevice* rd, CommandList cmdl) = 0;
-		virtual bool WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) = 0;
+		virtual LRESULT WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) = 0;
 
 		virtual ~ImGUIBackend() {};
 	};
