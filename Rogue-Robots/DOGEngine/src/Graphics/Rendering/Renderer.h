@@ -1,6 +1,5 @@
 #pragma once
-#include "../../Core/Types/MeshTypes.h"
-#include "../../Core/Types/MaterialTypes.h"
+#include "../../Core/Types/GraphicsTypes.h"
 #include "../RHI/RenderResourceHandles.h"
 
 namespace DOG::gfx

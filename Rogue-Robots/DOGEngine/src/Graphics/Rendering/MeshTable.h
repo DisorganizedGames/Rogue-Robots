@@ -1,6 +1,6 @@
 #pragma once
 #include "../Handles/HandleAllocator.h"
-#include "../../Core/Types/MeshTypes.h"
+#include "../../Core/Types/GraphicsTypes.h"
 #include "GPUTable.h"
 
 namespace DOG::gfx

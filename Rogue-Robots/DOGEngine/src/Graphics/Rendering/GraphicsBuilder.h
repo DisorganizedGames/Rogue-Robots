@@ -2,8 +2,6 @@
 #include "MeshTable.h"
 #include "MaterialTable.h"
 
-#include "Types/RenderableTypes.h"
-
 namespace DOG::gfx
 {
 	class RenderDevice;
