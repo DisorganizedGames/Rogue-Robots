@@ -30,6 +30,9 @@ public:
 	void AddStringToTable(const std::string& name, const std::string& string);
 	void AddBoolToTable(const std::string& name, bool boolean);
 	void AddTableToTable(const std::string& name, LuaTable table);
+	void AddFunctionToTable(const std::string& name, Function& function);
+	template <void (*func)(LuaContext*)>
+	void AddFunctionToTable(const std::string& name);
 
 	LuaTable CreateTableInTable(const std::string& name);
 
@@ -48,3 +51,8 @@ public:
 	void RemoveReferenceToTable();
 };
 
+template<void(*func)(LuaContext*)>
+inline void LuaTable::AddFunctionToTable(const std::string& name)
+{
+	m_luaW->AddFunctionToTable<func>(m_table, name); 
+}

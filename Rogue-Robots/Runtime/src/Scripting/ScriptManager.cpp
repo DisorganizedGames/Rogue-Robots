@@ -59,6 +59,11 @@ ScriptManager::ScriptManager(LuaW* luaW) : m_luaW(luaW)
 #endif // _DEBUG
 }
 
+void ScriptManager::RunLuaFile(const std::string& luaFileName)
+{
+	m_luaW->RunScript(c_pathToScripts + luaFileName);
+}
+
 //Creates a script and runs it
 TempScript* ScriptManager::AddScript(const std::string& luaFileName)
 {

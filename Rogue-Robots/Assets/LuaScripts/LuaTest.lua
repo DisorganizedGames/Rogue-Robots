@@ -11,6 +11,16 @@ function SetNumber(number)
 	print("Changed Number", m_number)
 end
 
+function EventFunc(number, string, table)
+	print(number)
+	print(string)
+	print(table.text)
+	print("Hello")
+end
+
+EventSystem:Register("Event", EventFunc)
+
+EventSystem:InvokeEvent("Event", 20, "Hello Friend", {text = "table text"})
 
 --print(globalNumber)
 --print(globalString)

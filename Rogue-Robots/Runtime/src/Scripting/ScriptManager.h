@@ -31,6 +31,8 @@ private:
 
 public:
 	ScriptManager(LuaW* luaW);
+	//For lua files which do not require to be scripts
+	void RunLuaFile(const std::string& luaFileName);
 	//Temp before component system
 	TempScript* AddScript(const std::string& luaFileName);
 	void ReloadScripts();

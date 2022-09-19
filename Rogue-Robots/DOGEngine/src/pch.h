@@ -66,6 +66,7 @@
 #include <barrier>
 #include <timeapi.h>
 #include <cstdio>
+#include <stdarg.h>
 
 #include "common/Utils.h"
 
