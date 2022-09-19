@@ -55,15 +55,25 @@ namespace DOG
 		u32 id;
 	};
 
+	struct SoundComponent : public Component<SoundComponent>
+	{
+		SoundComponent(u32 id = 0) noexcept : id{ id } {}
+		virtual ~SoundComponent() noexcept override final = default;
+		u32 id;
+	};
+
+	class Collection;
 	class EntityManager
 	{
 	public:
 		EntityManager() noexcept;
 		~EntityManager() noexcept = default;
 
+		void Initialize() noexcept;
 		entity CreateEntity() noexcept;
 		[[nodiscard]] std::vector<entity>& GetAllEntities() noexcept;
 		void Reset() noexcept;
+		[[nodiscard]] bool Exists(const entity entityID) const noexcept;
 
 		template<typename ComponentType, typename ...Args>
 		ComponentType& AddComponent(const entity entityID, Args&& ...args) noexcept;
@@ -78,26 +88,50 @@ namespace DOG
 		[[nodiscard]] std::vector<ComponentType>& GetComponentsOfType() noexcept;
 
 		template<typename... ComponentType>
-		void GetByCollection() noexcept;
+		Collection GetByCollection() noexcept;
 
 		template<typename ComponentType>
-		void bar() noexcept;
+		std::vector<entity>* bar() noexcept;
 
 		template<typename ComponentType>
 		[[nodiscard]] bool HasComponent(const entity entityID) const noexcept;
+
 	private:
 		template<typename ComponentType>
 		void AddSparseSet() noexcept;
 	private:
+		friend class Collection;
 		std::vector<entity> m_entities;
 		std::queue<entity> m_freeList;
 		std::vector<ComponentPool> m_components;
 	};
 
+	class Collection
+	{
+	public:
+		explicit Collection(EntityManager* mgr) noexcept : mgr{ mgr } {}
+		template<typename... ComponentType>
+		std::tuple<ComponentType...> Get(const entity entityID) noexcept;
+
+		std::vector<entity> entities;
+		[[nodiscard]] std::vector<entity>::reverse_iterator begin() { return entities.rbegin(); }
+		[[nodiscard]] std::vector<entity>::reverse_iterator end() { return entities.rend(); }
+
+	private:
+		EntityManager* mgr;
+	};
+
+	template<typename... ComponentType>
+	std::tuple<ComponentType...> Collection::Get(const entity entityID) noexcept
+	{
+		return { mgr->GetComponent<ComponentType>(entityID)... };
+	}
+
 	template<typename ComponentType, typename ...Args>
 	ComponentType& EntityManager::AddComponent(const entity entityID, Args&& ...args) noexcept
 	{
 		static_assert(std::is_base_of<ComponentBase, ComponentType>::value);
+		ASSERT(Exists(entityID), "Entity is invalid");
 		ASSERT(!HasComponent<ComponentType>(entityID), "Entity already has component!");
 		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get())) 
 
@@ -118,7 +152,9 @@ namespace DOG
 	void EntityManager::RemoveComponent(const entity entityID) noexcept
 	{
 		static_assert(std::is_base_of<ComponentBase, ComponentType>::value);
+		ASSERT(Exists(entityID), "Entity is invalid");
 		ASSERT(HasComponent<ComponentType>(entityID), "Entity does not have that component.");
+
 		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get())) 
 
 		const auto last = set->denseArray.back();
@@ -134,6 +170,7 @@ namespace DOG
 	ComponentType& EntityManager::GetComponent(const entity entityID) const noexcept
 	{
 		static_assert(std::is_base_of<ComponentBase, ComponentType>::value);
+		ASSERT(Exists(entityID), "Entity is invalid");
 		ASSERT(HasComponent<ComponentType>(entityID), "Entity does not have that component.");
 		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get())) 
 
@@ -150,29 +187,60 @@ namespace DOG
 	}
 
 	template<typename... ComponentType>
-	void EntityManager::GetByCollection() noexcept
+	Collection EntityManager::GetByCollection() noexcept
 	{
-		constexpr auto num_types = sizeof... (ComponentType);
-		std::array<uint32_t, num_types> test;
-		(bar<ComponentType>(), ...);
+		std::vector<std::vector<entity>*> test = { bar<ComponentType>()... };
+		std::vector<entity>* vectorWithLeastComponents = test[0];
+
+		for (u32 i {0u}; i < test.size(); i++)
+		{
+			if (test[i]->size() < vectorWithLeastComponents->size())
+			{
+				vectorWithLeastComponents = test[i];
+			}
+		}
+		
+		std::vector<entity> finalVector;
+
+		std::vector<entity>::iterator it = vectorWithLeastComponents->end();
+		for (u32 j{ 0u }; j < vectorWithLeastComponents->size(); j++)
+		{
+			bool existInAll = true;
+			for (u32 k{ 0u }; k < test.size() && existInAll; k++)
+			{
+					if (std::find(test[k]->begin(), test[k]->end(), (*vectorWithLeastComponents)[j]) == test[k]->end())
+					{
+						existInAll = false;
+						it--;
+					}
+			}
+			if (existInAll)
+				finalVector.push_back((*vectorWithLeastComponents)[j]);
+		}
+		Collection c(this);
+		c.entities = finalVector;
+		return c;
 	}
 
 	template<typename ComponentType>
-	void EntityManager::bar() noexcept
+	std::vector<entity>* EntityManager::bar() noexcept
 	{
-		std::cout << "Component ID: " << ComponentType::ID;
+		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get()))
+		return &set->denseArray;
 	}
 
-	template<typename ComponentType>
+	template<typename ComponentType> 
 	bool EntityManager::HasComponent(const entity entityID) const noexcept
 	{
 		static_assert(std::is_base_of<ComponentBase, ComponentType>::value);
+		ASSERT(Exists(entityID), "Entity is invalid");
 		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get())) 
 		
+
 		return 
 			(
-			m_components.size() > ComponentType::ID
-			&& entityID < set->sparseArray.size()) 
+			/*m_components.size() > ComponentType::ID
+			&&*/ entityID < set->sparseArray.size()) 
 			&& (set->sparseArray[entityID] < set->denseArray.size()) 
 			&& (set->sparseArray[entityID] != NULL_ENTITY
 			);
@@ -181,10 +249,12 @@ namespace DOG
 	template<typename ComponentType>
 	void EntityManager::AddSparseSet() noexcept
 	{
+		std::cout << ComponentType::ID;
 		static_assert(std::is_base_of<ComponentBase, ComponentType>::value);
+		m_components[ComponentType::ID] = std::move(std::make_unique<SparseSet<ComponentType>>()); //PoolAllocator?
 		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get()))
 
-		m_components.emplace_back(std::make_unique<SparseSet<ComponentType>>()); //PoolAllocator?
+		std::cout << ComponentType::ID;
 
 		set->sparseArray.reserve(MAX_ENTITIES);
 		for (u32 i{ 0u }; i < MAX_ENTITIES; i++)

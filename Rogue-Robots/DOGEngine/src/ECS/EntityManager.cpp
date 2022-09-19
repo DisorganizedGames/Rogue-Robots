@@ -11,11 +11,17 @@ namespace DOG
 
 	EntityManager::EntityManager() noexcept
 	{
+		Initialize();
+	}
+
+	void EntityManager::Initialize() noexcept
+	{
 		m_entities.reserve(MAX_ENTITIES);
 		for (u32 entityId{ 0u }; entityId < MAX_ENTITIES; entityId++)
 			m_freeList.push(entityId);
 
-		m_components.reserve(150);
+		m_components.resize(150);
+		//m_components.reserve(150);
 	}
 
 	entity EntityManager::CreateEntity() noexcept
@@ -33,10 +39,16 @@ namespace DOG
 
 	void EntityManager::Reset() noexcept
 	{
-		for (auto entity : m_entities)
-			m_freeList.push(entity);
+		std::queue<entity> temp;
+		std::swap(m_freeList, temp);
 
 		m_entities.clear();
 		m_components.clear();
+		Initialize();
+	}
+
+	bool EntityManager::Exists(const entity entityID) const noexcept
+	{
+		return ((entityID < m_entities.size()) && (m_entities[entityID] == entityID));
 	}
 }

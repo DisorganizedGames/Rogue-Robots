@@ -39,29 +39,29 @@ GameLayer::GameLayer() noexcept
 void GameLayer::OnAttach()
 {
 	m_debugCam = DebugCamera(0, 1, 0);
-	auto entity = m_entityManager.CreateEntity();
-	DOG::TransformComponent& transform = m_entityManager.AddComponent<DOG::TransformComponent>(entity, Vector3f(10.0f, 1.0f, 5.0f));
-	transform.position = { 3.0f, 3.0f, 3.0f };
-	
-	auto& t = m_entityManager.GetComponent<DOG::TransformComponent>(entity);
-	std::cout << t.position.x;
-
-	m_entityManager.Reset();
-
 	auto entity2 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<DOG::TransformComponent>(entity2, Vector3f{2.0f, 2.0f, 2.0f});
+	m_entityManager.AddComponent<DOG::SoundComponent>(entity2, 0);
 	m_entityManager.AddComponent<DOG::MeshComponent>(entity2, 0);
+	auto e = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<DOG::TransformComponent>(e);
 
-	auto& allTransforms = m_entityManager.GetComponentsOfType<DOG::TransformComponent>();
+	auto eee = m_entityManager.CreateEntity();
 
-	auto& allEntities = m_entityManager.GetAllEntities();
-	for (auto entity : allEntities)
+	auto C = m_entityManager.GetByCollection<DOG::TransformComponent, DOG::MeshComponent>();
+	for (auto entity : C)
 	{
-		if (m_entityManager.HasComponent<DOG::TransformComponent>(entity))
-			std::cout << "HURRAY";
+		auto [transform, mesh] = C.Get<DOG::TransformComponent, DOG::MeshComponent>(entity);
+		std::cout << transform.position.x << "," << transform.position.y << "," << transform.position.z << "\n";
+		std::cout << mesh.id << "\n";
 	}
 
-	m_entityManager.GetByCollection<DOG::TransformComponent, DOG::MeshComponent>();
+	auto C2 = m_entityManager.GetByCollection<DOG::SoundComponent, DOG::TransformComponent>();
+	for (auto entity : C2)
+	{
+		auto [sound, transform] = C2.Get<DOG::SoundComponent, DOG::TransformComponent>(entity);
+
+	}
+
 }
 
 void GameLayer::OnDetach()
