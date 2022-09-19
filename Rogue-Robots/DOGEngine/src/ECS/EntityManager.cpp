@@ -25,4 +25,18 @@ namespace DOG
 		m_freeList.pop();
 		return m_entities.back();
 	}
+
+	std::vector<entity>& EntityManager::GetAllEntities() noexcept
+	{
+		return m_entities;
+	}
+
+	void EntityManager::Reset() noexcept
+	{
+		for (auto entity : m_entities)
+			m_freeList.push(entity);
+
+		m_entities.clear();
+		m_components.clear();
+	}
 }

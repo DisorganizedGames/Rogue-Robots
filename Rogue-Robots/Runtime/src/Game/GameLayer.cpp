@@ -42,9 +42,26 @@ void GameLayer::OnAttach()
 	auto entity = m_entityManager.CreateEntity();
 	DOG::TransformComponent& transform = m_entityManager.AddComponent<DOG::TransformComponent>(entity, Vector3f(10.0f, 1.0f, 5.0f));
 	transform.position = { 3.0f, 3.0f, 3.0f };
+	
+	auto& t = m_entityManager.GetComponent<DOG::TransformComponent>(entity);
+	std::cout << t.position.x;
 
-	bool hasComponent = m_entityManager.HasComponent<DOG::TransformComponent>(entity);
-	hasComponent = m_entityManager.HasComponent<DOG::MeshComponent>(entity);
+	m_entityManager.Reset();
+
+	auto entity2 = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<DOG::TransformComponent>(entity2, Vector3f{2.0f, 2.0f, 2.0f});
+	m_entityManager.AddComponent<DOG::MeshComponent>(entity2, 0);
+
+	auto& allTransforms = m_entityManager.GetComponentsOfType<DOG::TransformComponent>();
+
+	auto& allEntities = m_entityManager.GetAllEntities();
+	for (auto entity : allEntities)
+	{
+		if (m_entityManager.HasComponent<DOG::TransformComponent>(entity))
+			std::cout << "HURRAY";
+	}
+
+	m_entityManager.GetByCollection<DOG::TransformComponent, DOG::MeshComponent>();
 }
 
 void GameLayer::OnDetach()
@@ -63,108 +80,6 @@ void GameLayer::OnRender()
 	//...
 }
 
-//void GameLayer::AddComponent(entity entityID, const PositionComponent& component) noexcept
-//{
-//	auto positionComponentSet = static_cast<SparseSet<PositionComponent>*>(mgr.components[0].get());
-//	const auto pos = positionComponentSet->denseArray.size();
-//	positionComponentSet->denseArray.emplace_back(entityID);
-//	positionComponentSet->components.emplace_back(component);
-//	positionComponentSet->sparseArray[entityID] = (entity)pos;
-//}
-
-//void GameLayer::RemoveComponent(entity entityID)
-//{
-//	auto positionComponentSet = static_cast<SparseSet<PositionComponent>*>(mgr.components[0].get());
-//	const auto last = positionComponentSet->denseArray.back();
-//	std::swap(positionComponentSet->denseArray.back(), positionComponentSet->denseArray[positionComponentSet->sparseArray[entityID]]);
-//	std::swap(positionComponentSet->sparseArray[last], positionComponentSet->sparseArray[entityID]);
-//	positionComponentSet->denseArray.pop_back();
-//	positionComponentSet->sparseArray[entityID] = NULL_ENTITY;
-//}
-
-//bool GameLayer::HasComponent(entity entityID)
-//{
-//	auto positionComponentSet = static_cast<SparseSet<PositionComponent>*>(mgr.components[0].get());
-//	return (entityID < positionComponentSet->sparseArray.size()) && (positionComponentSet->sparseArray[entityID]< positionComponentSet->denseArray.size()) && (positionComponentSet->sparseArray[entityID] != NULL_ENTITY);
-//}
-
-//void GameLayer::AddEntity()
-//{
-//	std::cout << "Added entity with ID " << nextEntity << "\n";
-//	entities.push_back(nextEntity++);
-//}
-
-//void GameLayer::PrintSparseSet()
-//{
-//	auto positionComponentSet = static_cast<SparseSet<PositionComponent>*>(mgr.components[0].get());
-//	u32 highestEntityNr = 0u;
-//	for (u32 i = 0u; i < positionComponentSet->denseArray.size(); i++)
-//	{
-//		if (positionComponentSet->denseArray[i] > highestEntityNr)
-//			highestEntityNr = positionComponentSet->denseArray[i];
-//	}
-//
-//	std::cout << "Sparse array: ";
-//	for (u32 j = 0u; j <= highestEntityNr; j++)
-//	{
-//		std::cout << "[";
-//		positionComponentSet->sparseArray[j] == NULL_ENTITY ? std::cout << "X" : std::cout << positionComponentSet->sparseArray[j];
-//		std::cout << "]";
-//	}
-//	std::cout << "\nDense array: ";
-//	for (u32 k = 0u; k < positionComponentSet->denseArray.size(); k++)
-//	{
-//		std::cout << "[" << positionComponentSet->denseArray[k] << "]";
-//	}
-//	std::cout << "\n\n\n";
-//}
-
-//void GameLayer::AddC()
-//{
-//	std::cout << "Existing entities:\n";
-//	for (u32 i = 0u; i < entities.size(); i++)
-//	{
-//		std::cout << entities[i] << "\n";
-//	}
-//	std::cout << "Entity to add component to: ";
-//	u32 chosenEntity;
-//	std::cin >> chosenEntity;
-//	std::cin.get();
-//	
-//	if (std::find(entities.begin(), entities.end(), chosenEntity) != entities.end())
-//	{
-//		AddComponent(chosenEntity, { 10.0f, 10.0f, 10.0f });
-//	}
-//}
-
-//void GameLayer::RemoveC()
-//{
-//	std::cout << "Existing entities:\n";
-//	for (u32 i = 0u; i < entities.size(); i++)
-//	{
-//		std::cout << entities[i] << "\n";
-//	}
-//	std::cout << "Entity to remove component for: ";
-//	u32 chosenEntity;
-//	std::cin >> chosenEntity;
-//	std::cin.get();
-//	RemoveComponent(chosenEntity);
-//}
-
-//void GameLayer::HasC()
-//{
-//	std::cout << "Existing entities:\n";
-//	for (u32 i = 0u; i < entities.size(); i++)
-//	{
-//		std::cout << entities[i] << "\n";
-//	}
-//	std::cout << "Entity to check for component-owning : ";
-//	u32 chosenEntity;
-//	std::cin >> chosenEntity;
-//	std::cin.get();
-//	std::cout << HasComponent(chosenEntity) << "\n";
-//}
-
 //Place-holder example on how to use event system:
 void GameLayer::OnEvent(DOG::IEvent& event)
 {
@@ -176,21 +91,6 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 		//auto [x, y] = EVENT(LeftMouseButtonPressedEvent).coordinates;
 		//std::cout << GetName() << " received event: Left MB clicked [x,y] = [" << x << "," << y << "]\n";
 		break;
-	}
-	case EventType::KeyPressedEvent:
-	{
-		//Key k = EVENT(KeyPressedEvent).key;
-		//if (k == Key::A)
-		//	AddEntity();
-		//else if (k == Key::C)
-		//	AddC();
-		//else if (k == Key::P)
-		//	PrintSparseSet();
-		//else if (k == Key::R)
-		//	RemoveC();
-		//else if (k == Key::H)
-		//	HasC();
-		//break;
 	}
 	}
 }
