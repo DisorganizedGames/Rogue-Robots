@@ -15,7 +15,7 @@ void GameLayer::OnAttach()
 
 void GameLayer::OnDetach()
 {
-	
+
 }
 
 void GameLayer::OnUpdate()

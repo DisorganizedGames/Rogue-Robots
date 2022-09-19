@@ -27,10 +27,12 @@ private:
 	static void ScriptFileWatcher(const std::filesystem::path& path, const filewatch::Event changeType);
 	//Temp before component system
 	void TempReloadFile(const std::string& fileName, TempScript* script);
-	bool TestReloadFile(const std::string& fileName, TempScript* script);
+	bool TestReloadFile(const std::string& fileName);
 
 public:
 	ScriptManager(LuaW* luaW);
+	//For lua files which do not require to be scripts
+	void RunLuaFile(const std::string& luaFileName);
 	//Temp before component system
 	TempScript* AddScript(const std::string& luaFileName);
 	void ReloadScripts();

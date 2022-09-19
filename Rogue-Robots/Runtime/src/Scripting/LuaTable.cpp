@@ -88,6 +88,11 @@ void LuaTable::AddTableToTable(const std::string& name, LuaTable table)
 	m_luaW->AddTableToTable(m_table, name, tableRef);
 }
 
+void LuaTable::AddFunctionToTable(const std::string& name, Function& function)
+{
+	m_luaW->AddFunctionToTable(m_table, name, function);
+}
+
 LuaTable LuaTable::CreateTableInTable(const std::string& name)
 {
 	Table table = m_luaW->CreateTable();
