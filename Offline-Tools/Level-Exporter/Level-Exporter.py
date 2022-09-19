@@ -6,6 +6,7 @@ D = bpy.data
 O = bpy.ops
 PI = 3.141592653589793
 
+
 #######################################################
 #                LEVEL BUILDER UI PANELS
 #######################################################
@@ -54,9 +55,12 @@ class PANEL_PT_builder_brush(PANEL_PT_builder, Panel):
         else:
             b = D.collections['Brush'].objects[0]
             row.label(text="Brush: " + b.name)
-        if context.object.name in D.collections['Collection'].objects.keys():
+        if D.collections['Brushes'].hide_viewport:
             row = layout.row()
-            row.operator("object.select_block")
+            row.operator("object.select_brush")
+        else:
+            row = layout.row()
+            row.operator("object.set_brush")
 
 # Panel with actions to edit the map
 class PANEL_PT_builder_paint(PANEL_PT_builder, Panel):
@@ -92,6 +96,22 @@ class PANEL_PT_builder_analyze(PANEL_PT_builder, Panel):
         layout = self.layout
         row = layout.row()
         row.operator("object.analyze_map")
+
+# Selected blocks
+class PANEL_PT_builder_analyze(PANEL_PT_builder, Panel):
+    bl_idname = "PANEL_PT_builder_analyze"
+    bl_label = "Map Selection"
+
+    def draw(self, context):
+        layout = self.layout
+        if not D.collections['Grid'].hide_viewport:
+            if len(context.active_object.children) > 0:
+                row = layout.row()
+                row.label(text=f"{context.active_object.children[0].name}")
+            for gizmo in context.selected_objects:
+                if len(gizmo.children) > 0 and not gizmo == context.active_object:
+                    row = layout.row()
+                    row.label(text=f"     {gizmo.children[0].name}")
 
 
 #######################################################
@@ -145,6 +165,7 @@ class AddBlock(bpy.types.Operator):
         map = D.collections['Map']
         trash = D.collections['Trash']
         brush = D.collections['Brush'].objects[0]
+        brush.hide_select = False
         for giz in slots:
             for obj in giz.children:
                 for coll in obj.users_collection:
@@ -153,15 +174,18 @@ class AddBlock(bpy.types.Operator):
                 obj.parent = None
             context.view_layer.objects.active = brush
             brush.select_set(True)
-            O.object.duplicate()
-            block = context.object
-            for col in block.users_collection:
-                col.objects.unlink(block)
-            map.objects.link(block)
-            block.location = (0,0,0)
-            block.parent = giz
-            block.hide_select = True
-            block.name = block.name.split('.')[0] + "_r0_f." + giz.name.split('_')[1]
+            if O.object.duplicate() == {'FINISHED'}:
+                block = context.object
+                for col in block.users_collection:
+                    col.objects.unlink(block)
+                map.objects.link(block)
+                block.location = (0,0,0)
+                block.parent = giz
+                block.hide_select = True
+                block.name = block.name.split('.')[0] + "_r0_f." + giz.name.split('_')[1]
+            else:
+                print(f"Couldn't duplicate {brush.name}")
+        brush.hide_select = True
         empty_collection(D.collections['Trash'])
         O.object.select_all(action='DESELECT')
         for obj in slots:
@@ -231,6 +255,9 @@ class FlipBlockX(bpy.types.Operator):
                 obj.hide_select = True
                 name, rot, flip = obj.name.split('.')[0].split('_')
                 flip = invert[flip]
+                if flip == 'fxy':
+                    rot = f"r{(int(rot.split('r')[1]) + 2) % 4}"
+                    flip = 'f'
                 obj.name = f"{name}_{rot}_{flip}.{giz.name.split('_')[1]}"
                 obj.hide_select = True
         O.object.select_all(action='DESELECT')
@@ -266,6 +293,9 @@ class FlipBlockY(bpy.types.Operator):
                 obj.hide_select = True
                 name, rot, flip = obj.name.split('.')[0].split('_')
                 flip = invert[flip]
+                if flip == 'fxy':
+                    rot = f"r{(int(rot.split('r')[1]) + 2) % 4}"
+                    flip = 'f'
                 obj.name = f"{name}_{rot}_{flip}.{giz.name.split('_')[1]}"
                 obj.hide_select = True
         O.object.select_all(action='DESELECT')
@@ -305,11 +335,33 @@ class ClearMap(bpy.types.Operator):
         context.view_layer.objects.active = gizmo
         return {'FINISHED'}
 
+# Open the select brush dialog
+class SelectBrush(bpy.types.Operator):
+    """Display all brushes"""
+    bl_idname = "object.select_brush"
+    bl_label = "Display Brushes"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None
+
+    def execute(self, context):
+        save_selection(context)
+        O.object.select_all(action='DESELECT')
+        D.collections['Brushes'].hide_viewport = False
+        D.collections['Map'].hide_viewport = True
+        D.collections['Grid'].hide_viewport = True
+        for obj in D.collections['Brushes'].objects:
+            obj.hide_select = False
+        context.view_layer.objects.active = D.collections['Brush'].objects[0]
+        D.collections['Brush'].objects[0].select_set(True)
+        return {'FINISHED'}
+
 # Activate selected map element as current brush
-class SelectBlock(bpy.types.Operator):
+class SetBrush(bpy.types.Operator):
     """Select building block"""
-    bl_idname = "object.select_block"
-    bl_label = "Select Block"
+    bl_idname = "object.set_brush"
+    bl_label = "Set Brush"
 
     @classmethod
     def poll(cls, context):
@@ -319,6 +371,14 @@ class SelectBlock(bpy.types.Operator):
         for brush in D.collections['Brush'].objects:
             D.collections['Brush'].objects.unlink(brush)
         D.collections['Brush'].objects.link(context.object)
+        O.object.select_all(action='DESELECT')
+        for obj in D.collections['Brushes'].objects:
+            obj.hide_select = True
+        context.view_layer.objects.active = None
+        D.collections['Brushes'].hide_viewport = True
+        D.collections['Map'].hide_viewport = False
+        D.collections['Grid'].hide_viewport = False
+        restore_selection(context)
         return {'FINISHED'}
 
 # Calls the map_analysis() function
@@ -457,15 +517,38 @@ def empty_collection(coll, ex=[]):
         obj.hide_viewport = True
     O.object.delete()
 
+def save_selection(context):
+    # First empty selection
+    for obj in D.collections['Object_Selection'].objects:
+        D.collections['Object_Selection'].objects.unlink(obj)
+    # ... and active object
+    for obj in D.collections['Active_Object'].objects:
+        D.collections['Active_Object'].objects.unlink(obj)
+    # then save selection and active object
+    for obj in context.selected_objects:
+        D.collections['Object_Selection'].objects.link(obj)
+    D.collections['Active_Object'].objects.link(obj)
+
+def restore_selection(context):
+    O.object.select_all(action='DESELECT')
+    O.object.select_same_collection(collection='Object_Selection')
+    for obj in D.collections['Object_Selection'].objects:
+        D.collections['Object_Selection'].objects.unlink(obj)
+    for i, obj in enumerate(D.collections['Active_Object'].objects):
+        context.view_layer.objects.active = obj             # last object in collection will become active
+        D.collections['Active_Object'].objects.unlink(obj)
+
+
 def menu_func(self, context):
     self.layout.operator(GridToggleXray.bl_idname, text=GridToggleXray.bl_label)
-    self.layout.operator(T.bl_idname, text=CreateGrid.bl_label)
+    self.layout.operator(CreateGrid.bl_idname, text=CreateGrid.bl_label)
     self.layout.operator(AddBlock.bl_idname, text=AddBlock.bl_label)
     self.layout.operator(RotateBlock.bl_idname, text=RotateBlock.bl_label)
     self.layout.operator(FlipBlockX.bl_idname, text=FlipBlockX.bl_label)
     self.layout.operator(FlipBlockY.bl_idname, text=FlipBlockY.bl_label)
     self.layout.operator(ClearMap.bl_idname, text=ClearMap.bl_label)
-    self.layout.operator(SelectBlock.bl_idname, text=SelectBlock.bl_label)
+    self.layout.operator(SelectBrush.bl_idname, text=SelectBrush.bl_label)
+    self.layout.operator(SetBrush.bl_idname, text=SetBrush.bl_label)
     self.layout.operator(AnalyzeMap.bl_idname, text=AnalyzeMap.bl_label)
 
 
@@ -478,7 +561,8 @@ def register():
     bpy.utils.register_class(FlipBlockX)
     bpy.utils.register_class(FlipBlockY)
     bpy.utils.register_class(ClearMap)
-    bpy.utils.register_class(SelectBlock)
+    bpy.utils.register_class(SelectBrush)
+    bpy.utils.register_class(SetBrush)
     bpy.utils.register_class(AnalyzeMap)
     bpy.types.VIEW3D_MT_object.append(menu_func)
 
@@ -495,7 +579,8 @@ def unregister():
     bpy.utils.unregister_class(FlipBlockX)
     bpy.utils.unregister_class(FlipBlockY)
     bpy.utils.unregister_class(ClearMap)
-    bpy.utils.unregister_class(SelectBlock)
+    bpy.utils.unregister_class(SelectBrush)
+    bpy.utils.unregister_class(SetBrush)
     bpy.utils.unregister_class(AnalyzeMap)
     bpy.types.VIEW3D_MT_object.remove(menu_func)
 
@@ -565,6 +650,14 @@ def map_analysis():
 
 # Things to do at startup
 if __name__ == "__main__":
+    if not D.collections.get('Brush'):
+        grid = D.collections.new("Brush")
+        C.scene.collection.children.link(grid)
+    
+    if not D.collections.get('Brushes'):
+        brushes = D.collections.new("Brushes")
+        C.scene.collection.children.link(brushes)
+
     if not D.collections.get('Map'):
         map = D.collections.new("Map")
         C.scene.collection.children.link(map)
@@ -574,8 +667,8 @@ if __name__ == "__main__":
         C.scene.collection.children.link(grid)
 
     if not D.collections.get('Settings'):
-        grid = D.collections.new("Settings")
-        C.scene.collection.children.link(grid)
+        settings = D.collections.new("Settings")
+        C.scene.collection.children.link(settings)
 
     if not D.objects.get('grid'):
         C.view_layer.active_layer_collection = \
@@ -589,14 +682,33 @@ if __name__ == "__main__":
 
     if not D.collections.get('Trash'):
         trash = D.collections.new("Trash")
-        C.scene.collection.children.link(trash)
+        # C.scene.collection.children.link(trash)
 
-    if not D.collections.get('Brush'):
-        grid = D.collections.new("Brush")
-        C.scene.collection.children.link(grid)
-    
+    if not D.collections.get('Object_Selection'):
+        obj_select = D.collections.new("Object_Selection")
+        # C.scene.collection.children.link(obj_select)
+
+    if not D.collections.get('Active_Object'):
+        active_obj = D.collections.new("Active_Object")
+        # C.scene.collection.children.link(active_obj)
+
+    if D.collections.get('Collection'):
+        for obj in D.collections['Collection'].objects:
+            if obj.name.split('.')[0] not in ['Camera', 'Cube', 'Light']:
+                D.collections['Brushes'].objects.link(obj)
+                D.collections['Collection'].objects.unlink(obj)
+
     if not D.objects.get('block_0-0-0'):
         generate_grid()
+        D.collections['Object_Selection'].objects.link(D.objects['block_0-0-0'])
+        D.collections['Active_Object'].objects.link(D.objects['block_0-0-0'])
+
+    D.collections['Brushes'].hide_viewport = False
+    D.collections['Grid'].hide_viewport = True
+
+    if len(D.collections['Brushes'].objects) > 0:
+        C.view_layer.objects.active = D.collections['Brushes'].objects[0]
+        D.collections['Brushes'].objects[0].select_set(True)
 
     register()
 
