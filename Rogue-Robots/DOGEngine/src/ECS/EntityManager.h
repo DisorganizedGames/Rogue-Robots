@@ -7,6 +7,14 @@ namespace DOG
 	struct SparseSetBase;
 	typedef std::unique_ptr<SparseSetBase> ComponentPool;
 
+	class generator {
+		inline static std::size_t counter{};
+
+	public:
+		template<typename Type>
+		inline static const std::size_t type = counter++;
+	};
+
 	struct ComponentBase
 	{
 		ComponentBase() noexcept = default;
@@ -239,8 +247,8 @@ namespace DOG
 
 		return 
 			(
-			/*m_components.size() > ComponentType::ID
-			&&*/ entityID < set->sparseArray.size()) 
+			m_components.size() > ComponentType::ID
+			&& entityID < set->sparseArray.size()) 
 			&& (set->sparseArray[entityID] < set->denseArray.size()) 
 			&& (set->sparseArray[entityID] != NULL_ENTITY
 			);
@@ -251,7 +259,7 @@ namespace DOG
 	{
 		std::cout << ComponentType::ID;
 		static_assert(std::is_base_of<ComponentBase, ComponentType>::value);
-		m_components[ComponentType::ID] = std::move(std::make_unique<SparseSet<ComponentType>>()); //PoolAllocator?
+		m_components.emplace_back(std::move(std::make_unique<SparseSet<ComponentType>>())); //PoolAllocator?
 		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get()))
 
 		std::cout << ComponentType::ID;

@@ -39,11 +39,12 @@ GameLayer::GameLayer() noexcept
 void GameLayer::OnAttach()
 {
 	m_debugCam = DebugCamera(0, 1, 0);
-	auto entity2 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<DOG::SoundComponent>(entity2, 0);
-	m_entityManager.AddComponent<DOG::MeshComponent>(entity2, 0);
 	auto e = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<DOG::TransformComponent>(e);
+
+	auto entity2 = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<DOG::MeshComponent>(entity2, 0);
+	m_entityManager.AddComponent<DOG::SoundComponent>(entity2, 0);
 
 	auto eee = m_entityManager.CreateEntity();
 
