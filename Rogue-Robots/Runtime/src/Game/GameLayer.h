@@ -23,5 +23,5 @@ private:
 	u64 m_magentaCube{ 0 };
 	u32 nextEntity = 0u;
 	std::vector<entity> entities;
-	DOG::EntityManager m_entityManager;
+	DOG::EntityManager& m_entityManager;
 };

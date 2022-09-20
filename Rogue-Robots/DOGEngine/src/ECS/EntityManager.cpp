@@ -1,28 +1,13 @@
 #include "EntityManager.h"
 namespace DOG
 {
-	constexpr const u32 MAX_COMPONENT_TYPES{ 250u };
+	constexpr const u32 MAX_COMPONENT_TYPES{ 8u };
+
+	EntityManager EntityManager::s_instance;
 	
 	EntityManager::EntityManager() noexcept
 	{
 		Initialize();
-	}
-
-	void EntityManager::Initialize() noexcept
-	{
-		m_entities.reserve(MAX_ENTITIES);
-		for (u32 i{ 0u }; i < MAX_ENTITIES; i++)
-		{
-			m_entities.push_back(MAX_ENTITIES);
-		}
-		for (u32 entityId{ 0u }; entityId < MAX_ENTITIES; entityId++)
-			m_freeList.push(entityId);
-
-		m_components.resize(MAX_COMPONENT_TYPES);
-		for (u32 i{ 0u }; i < MAX_COMPONENT_TYPES; i++)
-		{
-			m_components.push_back(nullptr);
-		}
 	}
 
 	entity EntityManager::CreateEntity() noexcept
@@ -39,21 +24,14 @@ namespace DOG
 		ASSERT(Exists(entityID), "Entity is invalid.");
 
 		m_entities[entityID] = MAX_ENTITIES;
-		for (u32 i{ 0u }; i < m_components.size(); i++)
+		for (u32 componentPoolIndex{ 0u }; componentPoolIndex < m_components.size(); componentPoolIndex++)
 		{
-			if (m_components[i] != nullptr && entityID < m_components[i]->sparseArray.size()
-				&& (m_components[i]->sparseArray[entityID] < m_components[i]->denseArray.size())
-				&& (m_components[i]->sparseArray[entityID] != NULL_ENTITY))
+			if (HasComponentInternal(componentPoolIndex, entityID))
 			{
-				const auto last = m_components[i]->denseArray.back();
-				std::swap(m_components[i]->denseArray.back(), m_components[i]->denseArray[m_components[i]->sparseArray[entityID]]);
-				//std::swap(m_components[i]->components.back(), m_components[i]->components[m_components[i]->sparseArray[entityID]]);
-				std::swap(m_components[i]->sparseArray[last], m_components[i]->sparseArray[entityID]);
-				m_components[i]->denseArray.pop_back();
-				m_components[i]->sparseArray[entityID] = NULL_ENTITY;
+				DestroyComponentInternal(componentPoolIndex, entityID);
 			}
 		}
-
+		m_freeList.push(entityID);
 	}
 
 	std::vector<entity>& EntityManager::GetAllEntities() noexcept
@@ -74,6 +52,41 @@ namespace DOG
 	bool EntityManager::Exists(const entity entityID) const noexcept
 	{
 		return ((entityID < m_entities.size()) && (m_entities[entityID] == entityID));
+	}
+
+	void EntityManager::Initialize() noexcept
+	{
+		m_entities.reserve(MAX_ENTITIES);
+		for (u32 i{ 0u }; i < MAX_ENTITIES; i++)
+		{
+			m_entities.emplace_back(MAX_ENTITIES);
+		}
+
+		for (u32 entityId{ 0u }; entityId < MAX_ENTITIES; entityId++)
+			m_freeList.push(entityId);
+
+		m_components.reserve(MAX_COMPONENT_TYPES);
+		for (u32 i{ 0u }; i < MAX_COMPONENT_TYPES; i++)
+		{
+			m_components.emplace_back(nullptr);
+		}
+	}
+
+	[[nodiscard]] bool EntityManager::HasComponentInternal(const u32 componentPoolIndex, const entity entityID) const noexcept
+	{
+		return m_components[componentPoolIndex] != nullptr && entityID < m_components[componentPoolIndex]->sparseArray.size()
+			&& (m_components[componentPoolIndex]->sparseArray[entityID] < m_components[componentPoolIndex]->denseArray.size())
+			&& (m_components[componentPoolIndex]->sparseArray[entityID] != NULL_ENTITY);
+	}
+
+	void EntityManager::DestroyComponentInternal(const u32 componentPoolIndex, const entity entityID) noexcept
+	{
+		const auto last = m_components[componentPoolIndex]->denseArray.back();
+		std::swap(m_components[componentPoolIndex]->denseArray.back(), m_components[componentPoolIndex]->denseArray[m_components[componentPoolIndex]->sparseArray[entityID]]);
+		m_components[componentPoolIndex]->DestroyInternal(entityID);
+		std::swap(m_components[componentPoolIndex]->sparseArray[last], m_components[componentPoolIndex]->sparseArray[entityID]);
+		m_components[componentPoolIndex]->denseArray.pop_back();
+		m_components[componentPoolIndex]->sparseArray[entityID] = NULL_ENTITY;
 	}
 
 	void Collection::Add(entity entityID) noexcept

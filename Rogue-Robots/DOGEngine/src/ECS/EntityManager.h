@@ -17,8 +17,7 @@ namespace DOG
 		std::vector<entity> sparseArray;
 		std::vector<entity> denseArray;
 
-		virtual void DestroyInternal(entity entityID) = 0;
-
+		virtual void DestroyInternal(const entity entityID) = 0;
 	};
 
 	template<typename ComponentType>
@@ -28,14 +27,18 @@ namespace DOG
 		virtual ~SparseSet() noexcept override final = default;
 		std::vector<ComponentType> components;
 		
-		virtual void DestroyInternal(entity entityID) {}
+	private:
+		virtual void DestroyInternal(const entity entityID) override final 
+		{
+			std::swap(components.back(), components[sparseArray[entityID]]);
+			components.pop_back();
+		}
 	};
 
 	class EntityManager
 	{
 	public:
-		EntityManager() noexcept;
-		~EntityManager() noexcept = default;
+		[[nodiscard]] static constexpr EntityManager& Get() noexcept { return s_instance; }
 
 		entity CreateEntity() noexcept;
 		void DestroyEntity(const entity entityID) noexcept;
@@ -68,23 +71,34 @@ namespace DOG
 		[[nodiscard]] bool HasComponent(const entity entityID) const noexcept;
 
 	private:
+		EntityManager() noexcept;
+		~EntityManager() noexcept = default;
+		DELETE_COPY_MOVE_CONSTRUCTOR(EntityManager);
+
 		void Initialize() noexcept;
+
+		[[nodiscard]] bool HasComponentInternal(const u32 componentPoolIndex, const entity entityID) const noexcept;
+		void DestroyComponentInternal(const u32 componentPoolIndex, const entity entityID) noexcept;
+
+		template<typename ComponentType>
+		requires std::is_base_of_v<ComponentBase, ComponentType>
+		void ValidateComponentPool() noexcept;
 
 		template<typename ComponentType> 
 		requires std::is_base_of_v<ComponentBase, ComponentType>
 		void AddSparseSet() noexcept;
 	private:
 		friend class Collection;
+		static EntityManager s_instance;
 		std::vector<entity> m_entities;
 		std::queue<entity> m_freeList;
 		std::vector<ComponentPool> m_components;
-		std::unordered_map<u32, u32> idToId;
 	};
 
 	class Collection
 	{
 	public:
-		explicit Collection(EntityManager* mgr, const size_t size) noexcept : m_mgr{ mgr } { m_entities.resize(size); }
+		explicit Collection(EntityManager* mgr, const size_t size) noexcept : m_mgr{ mgr } { m_entities.reserve(size); }
 
 		template<typename... ComponentType>
 		requires std::is_base_of_v<ComponentBase, ComponentType...>
@@ -115,10 +129,7 @@ namespace DOG
 		ASSERT(Exists(entityID), "Entity is invalid");
 		ASSERT(!HasComponent<ComponentType>(entityID), "Entity already has component!");
 
-		if (m_components[ComponentType::ID] == nullptr)
-		{
-			AddSparseSet<ComponentType>();
-		}
+		ValidateComponentPool<ComponentType>();
 
 		const size_t position = set->denseArray.size();
 		set->denseArray.emplace_back(entityID);
@@ -203,11 +214,29 @@ namespace DOG
 
 		return 
 			(
-			m_components[ComponentType::ID] != nullptr
+			m_components.capacity() > ComponentType::ID
+			&& m_components[ComponentType::ID] != nullptr
 			&& entityID < set->sparseArray.size()) 
 			&& (set->sparseArray[entityID] < set->denseArray.size()) 
 			&& (set->sparseArray[entityID] != NULL_ENTITY
 			);
+	}
+
+	template<typename ComponentType>
+	requires std::is_base_of_v<ComponentBase, ComponentType>
+	void EntityManager::ValidateComponentPool() noexcept
+	{
+		if (ComponentType::ID >= m_components.capacity())
+		{
+			for (size_t i{ m_components.size() }; i < ComponentType::ID * 2; i++)
+			{
+				m_components.emplace_back(nullptr);
+			}
+		}
+		if (m_components[ComponentType::ID] == nullptr)
+		{
+			AddSparseSet<ComponentType>();
+		}
 	}
 
 	template<typename ComponentType> 
@@ -215,7 +244,7 @@ namespace DOG
 	void EntityManager::AddSparseSet() noexcept
 	{
 		ASSERT((m_components.begin() + ComponentType::ID) < m_components.end(), "All available component pools are in use.");
-		m_components.insert(m_components.begin() + ComponentType::ID, std::move(std::make_unique<SparseSet<ComponentType>>()));
+		m_components[ComponentType::ID] = std::move(std::make_unique<SparseSet<ComponentType>>());
 
 		set->sparseArray.reserve(MAX_ENTITIES);
 		for (u32 i{ 0u }; i < MAX_ENTITIES; i++)

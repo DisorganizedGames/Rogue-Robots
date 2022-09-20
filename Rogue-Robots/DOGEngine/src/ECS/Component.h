@@ -21,22 +21,15 @@ namespace DOG
 
 	struct TransformComponent : public Component<TransformComponent>
 	{
-		TransformComponent(Vector3f position = { 0.0f, 0.0f, 0.0f }) noexcept : position{ position } {}
+		TransformComponent(Vector3f position = { 0.0f, 0.0f, 0.0f }) noexcept : m_position{ position } {}
 		virtual ~TransformComponent() noexcept override final = default;
-		Vector3f position;
+		Vector3f m_position;
 	};
 
-	struct MeshComponent : public Component<MeshComponent>
+	struct ModelComponent : public Component<ModelComponent>
 	{
-		MeshComponent(u32 id = 0) noexcept : id{ id } {}
-		virtual ~MeshComponent() noexcept override final = default;
-		u32 id;
-	};
-
-	struct SoundComponent : public Component<SoundComponent>
-	{
-		SoundComponent(u32 id = 0) noexcept : id{ id } {}
-		virtual ~SoundComponent() noexcept override final = default;
-		u32 id;
+		ModelComponent(u64 id = 0) noexcept : id{ id } {}
+		virtual ~ModelComponent() noexcept override final = default;
+		u64 id;
 	};
 }

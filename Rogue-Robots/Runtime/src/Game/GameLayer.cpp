@@ -1,7 +1,7 @@
 #include "GameLayer.h"
 
 GameLayer::GameLayer() noexcept
-	: Layer("Game layer")
+	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
 {
 	m_pipedData.viewMat = DirectX::XMMatrixLookAtLH({ 0.f, 5.f, 0.f }, { 0.f, 5.f, 1.f }, { 0.f, 1.f, 0.f });
 
@@ -39,25 +39,6 @@ GameLayer::GameLayer() noexcept
 void GameLayer::OnAttach()
 {
 	m_debugCam = DebugCamera(0, 1, 0);
-	auto e = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<DOG::SoundComponent>(e);
-	if (m_entityManager.HasComponent<DOG::SoundComponent>(e))
-	{
-
-	}
-	m_entityManager.AddComponent<DOG::TransformComponent>(e);
-	auto e2 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<DOG::TransformComponent>(e2);
-
-	auto C = m_entityManager.GetCollection<DOG::TransformComponent>();
-	for (auto entity : C)
-	{
-		auto[transform] = C.Get<DOG::TransformComponent>(entity);
-		transform.position.x = 30.0f;
-		transform.position.y = 30.0f;
-		transform.position.z = 30.0f;
-	}
-
 }
 
 void GameLayer::OnDetach()
