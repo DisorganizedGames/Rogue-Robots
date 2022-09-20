@@ -15,7 +15,7 @@ private:
 	Function m_eventSystemTableInvokeFunction;
 
 private:
-	LuaEvent() = default;
+	LuaEvent();
 
 public:
 	void Initialize(LuaW* luaW, ScriptManager* scriptManager);
