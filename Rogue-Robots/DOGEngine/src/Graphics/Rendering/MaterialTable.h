@@ -21,10 +21,12 @@ namespace DOG::gfx
 		{
 			std::optional<TextureView> albedo, normal, metallicRoughness, emissive;
 
-			/*
-				other data to shader..
-				other data to shader..
-			*/
+			// Change yourself if you want to support more data
+			// Also change GPU Element struct and ConvertSpecToElement function to supply it
+			DirectX::SimpleMath::Vector4 albedoFactor{ 1.f, 1.f, 1.f, 1.f };
+			DirectX::SimpleMath::Vector4 emissiveFactor{ 0.f, 0.f, 0.f, 1.f };
+			f32 metallicFactor{ 0.f };
+			f32 roughnessFactor{ 1.f };
 		};
 
 	public:
@@ -50,7 +52,10 @@ namespace DOG::gfx
 			u32 normal{ 0 };
 			u32 emissive{ 0 };
 
-			// other types to shader..
+			DirectX::SimpleMath::Vector4 albedoFactor{ 1.f, 1.f, 1.f, 1.f };
+			DirectX::SimpleMath::Vector4 emissiveFactor{ 0.f, 0.f, 0.f, 1.f };
+			f32 metallicFactor{ 0.f };
+			f32 roughnessFactor{ 1.f };
 		};
 
 		struct Material_Storage

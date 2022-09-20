@@ -254,6 +254,11 @@ namespace DOG
 			matSpec.metallicRoughness = TextureAssetToGfxTexture(mat.metallicRoughness, *builder, *this);
 			matSpec.emissive = TextureAssetToGfxTexture(mat.emissive, *builder, *this);
 			matSpec.normal = TextureAssetToGfxTexture(mat.normalMap, *builder, *this);
+
+			matSpec.albedoFactor = mat.albedoFactor;
+			matSpec.emissiveFactor = DirectX::SimpleMath::Vector4(mat.emissiveFactor.x, mat.emissiveFactor.y, mat.emissiveFactor.z, 1.f);
+			matSpec.roughnessFactor = mat.roughnessFactor;
+			matSpec.metallicFactor = mat.metallicFactor;
 		}
 
 		modelAsset->gfxModel = builder->LoadCustomModel(loadSpec, matSpecs);
