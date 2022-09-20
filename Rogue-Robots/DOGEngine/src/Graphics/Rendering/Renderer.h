@@ -38,7 +38,7 @@ namespace DOG::gfx
 
 		void SetMainRenderCamera(const DirectX::XMMATRIX& view, DirectX::XMMATRIX* proj = nullptr);
 
-		void SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material);
+		void SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 
 
 
@@ -69,6 +69,7 @@ namespace DOG::gfx
 			Mesh mesh;
 			u32 submesh;
 			MaterialHandle mat;
+			DirectX::SimpleMath::Matrix world;
 		};
 
 	private:

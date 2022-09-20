@@ -75,8 +75,10 @@ namespace DOG
 			m_renderer->BeginFrame_GPU();
 
 			ModelAsset* sponza = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(sponzaID));
+			DirectX::SimpleMath::Matrix worldMatrix;
+			worldMatrix = DirectX::SimpleMath::Matrix::Identity;
 			for (u32 i = 0; i < sponza->gfxModel.mesh.numSubmeshes; ++i)
-				m_renderer->SubmitMesh(sponza->gfxModel.mesh.mesh, i, sponza->gfxModel.mats[i]);
+				m_renderer->SubmitMesh(sponza->gfxModel.mesh.mesh, i, sponza->gfxModel.mats[i], worldMatrix);
 
 			m_renderer->SetMainRenderCamera(runtimeData->viewMat);
 
