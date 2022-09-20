@@ -19,5 +19,8 @@ private:
 
 private:
 	DebugCamera m_debugCam;
-	
+	u64 m_redCube{ 0 };
+	u64 m_greenCube{ 0 };
+	u64 m_blueCube{ 0 };
+	u64 m_magentaCube{ 0 };
 };

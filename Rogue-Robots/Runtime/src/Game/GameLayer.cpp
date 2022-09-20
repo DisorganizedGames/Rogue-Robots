@@ -5,6 +5,34 @@ GameLayer::GameLayer() noexcept
 {
 	m_pipedData.viewMat = DirectX::XMMatrixLookAtLH({ 0.f, 5.f, 0.f }, { 0.f, 5.f, 1.f }, { 0.f, 1.f, 0.f });
 
+
+	auto& am = DOG::AssetManager::Get();
+	m_redCube = am.LoadModelAsset("Assets/red_cube.glb");
+	m_greenCube = am.LoadModelAsset("Assets/green_cube.glb");
+	m_blueCube = am.LoadModelAsset("Assets/blue_cube.glb");
+	m_magentaCube = am.LoadModelAsset("Assets/magenta_cube.glb");
+
+	DOG::piper::TempEntity e1;
+	e1.modelID = m_redCube;
+	e1.worldMatrix.Translation({ 4, -2, 5 });
+
+	DOG::piper::TempEntity e2;
+	e2.modelID = m_greenCube;
+	e2.worldMatrix.Translation({ -4, -2, 5 });
+
+	DOG::piper::TempEntity e3;
+	e3.modelID = m_blueCube;
+	e3.worldMatrix.Translation({ 4, 2, 5 });
+
+	DOG::piper::TempEntity e4;
+	e4.modelID = m_magentaCube;
+	e4.worldMatrix.Translation({ -4, 2, 5 });
+
+	m_pipedData.entitiesToRender.push_back(e1);
+	m_pipedData.entitiesToRender.push_back(e2);
+	m_pipedData.entitiesToRender.push_back(e3);
+	m_pipedData.entitiesToRender.push_back(e4);
+
 	DOG::piper::SetPipe(&m_pipedData);
 }
 

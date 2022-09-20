@@ -46,7 +46,6 @@ namespace DOG
 		const piper::PipedData* runtimeData = piper::GetPipe();
 		bool showDemoWindow = true;
 
-		u64 sponzaID = AssetManager::Get().LoadModelAsset("Assets/Sponza_gltf/glTF/Sponza.gltf");
 
 		while (m_isRunning)
 		{
@@ -74,11 +73,12 @@ namespace DOG
 			//// ====== GPU
 			m_renderer->BeginFrame_GPU();
 
-			ModelAsset* sponza = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(sponzaID));
-			DirectX::SimpleMath::Matrix worldMatrix;
-			worldMatrix = DirectX::SimpleMath::Matrix::Identity;
-			for (u32 i = 0; i < sponza->gfxModel.mesh.numSubmeshes; ++i)
-				m_renderer->SubmitMesh(sponza->gfxModel.mesh.mesh, i, sponza->gfxModel.mats[i], worldMatrix);
+			for (auto& e : runtimeData->entitiesToRender)
+			{
+				ModelAsset* model = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(e.modelID));
+				for (u32 i = 0; i < model->gfxModel.mesh.numSubmeshes; ++i)
+					m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], e.worldMatrix);
+			}
 
 			m_renderer->SetMainRenderCamera(runtimeData->viewMat);
 
