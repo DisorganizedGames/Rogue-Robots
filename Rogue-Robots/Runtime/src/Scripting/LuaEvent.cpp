@@ -3,6 +3,13 @@
 
 LuaEvent LuaEvent::s_luaEvent;
 
+LuaEvent::LuaEvent()
+{
+	m_luaW = nullptr;
+	m_eventSystemTableInvokeFunction = {};
+	m_eventSystemTableRegisterFunction = {};
+}
+
 void LuaEvent::Initialize(LuaW* luaW, ScriptManager* scriptManager)
 {
 	const std::string& luaFileEventSystemName = "EventSystem.lua";

@@ -9,6 +9,7 @@ extern "C"
 
 class LuaContext;
 class LuaGlobal;
+class LuaTable;
 
 struct ClassFunctionInfo
 {
@@ -45,6 +46,7 @@ class LuaW
 	friend RegisterClassFunctions;
 	friend LuaContext;
 	friend LuaGlobal;
+	friend LuaTable;
 
 private:
 	lua_State* m_luaState;
@@ -65,7 +67,7 @@ private:
 
 	void Error(const std::string& errorMessage);
 
-	void LoadChunk(const std::string& luaScriptName);
+	bool LoadChunk(const std::string& luaScriptName);
 
 	bool IsInteger(int index = 1) const;
 	bool IsNumber(int index = 1) const;
