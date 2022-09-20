@@ -14,7 +14,8 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Graphics/Rendering/MaterialTable.h"  "src/Core/TextureFileImporter.h" "src/Core/TextureFileImporter.cpp" 
     "src/Graphics/Rendering/MaterialTable.cpp" "src/Graphics/Rendering/MaterialTable.h" "src/Graphics/Rendering/MaterialTable.cpp"   
     "src/Graphics/Rendering/TextureManager.h" "src/Graphics/Rendering/TextureManager.cpp" "src/Graphics/Rendering/Renderer.h" "src/Graphics/Rendering/Renderer.cpp" 
-    "src/Core/DataPiper.h" "src/Core/DataPiper.cpp" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.h" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.cpp" "src/Graphics/RHI/ImGUIBackend.h" "src/Graphics/Rendering/GraphicsBuilder.h" "src/Graphics/Rendering/GraphicsBuilder.cpp" "src/Graphics/Rendering/Types/RenderableTypes.h")
+    "src/Core/DataPiper.h" "src/Core/DataPiper.cpp" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.h" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.cpp" "src/Graphics/RHI/ImGUIBackend.h" 
+    "src/Graphics/Rendering/GraphicsBuilder.h" "src/Graphics/Rendering/GraphicsBuilder.cpp" "src/Graphics/Rendering/Types/RenderableTypes.h" "src/Graphics/Rendering/RenderGraph/RenderGraph.h" "src/Graphics/Rendering/RenderGraph/RenderGraph.cpp" "src/Graphics/Rendering/RenderGraph/RGResourceRepo.h" "src/Graphics/Rendering/RenderGraph/RGResourceRepo.cpp" "src/Graphics/Rendering/RenderGraph/RGTypes.h")
 
 	file(GLOB_RECURSE TempGraphics
     "src/Graphics/*.cpp")
@@ -23,7 +24,7 @@ set(LibraryName "DOGEngine")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/DOGEngine/vendor/includes/")
 set (ExternalLibPath "${CMAKE_SOURCE_DIR}/DOGEngine/vendor/libs")
 
-add_library("${LibraryName}" STATIC "${SourceFiles}" "${TempGraphics}"   )
+add_library("${LibraryName}" STATIC "${SourceFiles}" "${TempGraphics}"    )
 target_include_directories("${LibraryName}" PRIVATE "${CMAKE_SOURCE_DIR}/Core/src/" "${ExternalIncludePath}")
 target_compile_options("${LibraryName}" PRIVATE "/W4")
 set_target_properties("${LibraryName}" PROPERTIES LINKER_LANGUAGE "CXX")
