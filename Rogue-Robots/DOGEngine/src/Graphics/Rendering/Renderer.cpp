@@ -57,7 +57,9 @@ namespace DOG::gfx
 
 			RGResource outputPass1;
 			{
-				auto tex1 = rgRepo.DeclareResource(RGTextureDesc());
+				RGTextureDesc d{};
+				d.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				auto tex1 = rgRepo.DeclareResource(d);
 				struct PassData
 				{
 					RGResourceView out1;
@@ -66,7 +68,8 @@ namespace DOG::gfx
 				rg.AddPass<PassData>("Some Pass",
 					[&](RenderGraph::PassBuilder& builder, PassData& passData)
 					{
-						passData.out1 = builder.WriteTexture(tex1);
+						passData.out1 = builder.WriteTexture(tex1, TextureViewDesc(
+							ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 					},
 					[](RenderDevice* rd, RenderGraph::PassResources& resources, const PassData& passData)
 					{
@@ -75,9 +78,11 @@ namespace DOG::gfx
 
 				outputPass1 = tex1;
 			}
-
+		
 			{
-				auto out = rgRepo.DeclareResource(RGTextureDesc());
+				RGTextureDesc d{};
+				d.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				auto out = rgRepo.DeclareResource(d);
 				struct PassData
 				{
 					RGResourceView in1;
@@ -87,11 +92,15 @@ namespace DOG::gfx
 				rg.AddPass<PassData>("Pass 2",
 					[&](RenderGraph::PassBuilder& builder, PassData& passData)
 					{
-						passData.in1 = builder.ReadTexture(outputPass1);
-						passData.out1 = builder.WriteTexture(out);
+						passData.in1 = builder.ReadTexture(outputPass1, TextureViewDesc(
+							ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+						passData.out1 = builder.WriteTexture(out, TextureViewDesc(
+							ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 					},
 					[](RenderDevice* rd, RenderGraph::PassResources& resources, const PassData& passData)
 					{
+						auto view = resources.RealizeTexture(passData.in1);
+					
 						std::cout << "Doing Pass 2\n";
 					});
 			}

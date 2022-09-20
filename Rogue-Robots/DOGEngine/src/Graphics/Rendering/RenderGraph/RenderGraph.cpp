@@ -120,14 +120,14 @@ namespace DOG::gfx
 	{
 	}
 
-	RGResourceView RenderGraph::PassBuilder::ReadTexture(RGResource res, std::optional<TextureViewDesc> desc)
+	RGResourceView RenderGraph::PassBuilder::ReadTexture(RGResource res, const TextureViewDesc& desc)
 	{
 		m_reads.push_back(res);
 
 		View_Storage storage{};
 		storage.createFunc = [res, desc](RenderDevice* rd, RGResourceRepo* repo) -> u64
 		{
-			return rd->CreateView(repo->GetTexture(res), *desc).handle;
+			return rd->CreateView(repo->GetTexture(res), desc).handle;
 		};
 		auto ret = m_repo->handleAtor.Allocate<RGResourceView>();
 		HandleAllocator::TryInsert(m_repo->views, storage, HandleAllocator::GetSlot(ret.handle));
@@ -135,14 +135,14 @@ namespace DOG::gfx
 		return ret;
 	}
 
-	RGResourceView RenderGraph::PassBuilder::WriteTexture(RGResource res, std::optional<TextureViewDesc> desc)
+	RGResourceView RenderGraph::PassBuilder::WriteTexture(RGResource res, const TextureViewDesc& desc)
 	{
 		m_writes.push_back(res);
 
 		View_Storage storage{};
 		storage.createFunc = [res, desc](RenderDevice* rd, RGResourceRepo* repo) -> u64
 		{
-			return rd->CreateView(repo->GetTexture(res), *desc).handle;
+			return rd->CreateView(repo->GetTexture(res), desc).handle;
 		};
 		auto ret = m_repo->handleAtor.Allocate<RGResourceView>();
 		HandleAllocator::TryInsert(m_repo->views, storage, HandleAllocator::GetSlot(ret.handle));

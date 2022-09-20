@@ -22,6 +22,10 @@ namespace DOG::gfx
 
 		RGResource DeclareResource(const RGTextureDesc& desc);
 
+		/*
+			Texture realization should use the information for resource lifetimes
+			;lkasdhfjklsf
+		*/
 		Texture GetTexture(RGResource tex);
 
 	private:

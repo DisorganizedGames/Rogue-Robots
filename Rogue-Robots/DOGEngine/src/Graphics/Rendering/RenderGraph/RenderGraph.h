@@ -57,8 +57,8 @@ namespace DOG::gfx
 			PassBuilder(ViewRepo* repo);
 
 			// No texture desc assumes default D3D12 view settings
-			RGResourceView ReadTexture(RGResource res, std::optional<TextureViewDesc> desc = {});
-			RGResourceView WriteTexture(RGResource res, std::optional<TextureViewDesc> desc = {});
+			RGResourceView ReadTexture(RGResource res, const TextureViewDesc& desc);
+			RGResourceView WriteTexture(RGResource res, const TextureViewDesc& desc);
 
 			friend class RenderGraph;
 		private:
