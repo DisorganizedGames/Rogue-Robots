@@ -19,14 +19,14 @@ miscDropTable = {
 	radar = {1, "Radar"}
 }
 
-drops = {
+worldDrops = {
 	barrelDrop = {2, barrelDropTable},
 	magazineDrop = {1, magazineDropTable},
 	miscDrop = {1, miscDropTable}
 }
 
 enemyDrops = {
-	drop = {9, drops},
+	drop = {9, worldDrops},
 	nothing = {1, "Nothing"}
 }
 
@@ -61,24 +61,14 @@ function DropGuaranteed(table)
 	return "Error" -- Should never occur
 end
 
-function Drop()
-	sampleCount = 100000
-	samples = {}
-	for i=0, sampleCount do 
-		drop = DropGuaranteed(enemyDrops)
-		if samples[drop] then
-			samples[drop] = samples[drop] + 1
-		else
-			samples[drop] = 0
-		end
-	end
+function WorldDrop()
 
-	print("-------------------------------------------------")
-	for k, v in pairs(samples) do
-		print(k .. ": " .. v/sampleCount * 100 .. "%")
-	end
 end
 
--- function OnEvent(enemyDeathEvent) 
---	SpawnItemAtPosition(DropGuaranteed(enemy_drops), enemyDeathEvent.position)
--- end
+function DropFromEnemy(position)
+	drop = DropGuaranteed(enemyDrops)
+	print(drop .. " at position: (" .. position[1] .. ", " .. position[2] .. ", " .. position[3] .. ")")	
+	-- Instantiate(drop) Somehow
+end
+
+EventSystem:Register("EnemyDrop", DropFromEnemy)
