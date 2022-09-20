@@ -16,7 +16,7 @@
 namespace DOG
 {
 	// Helpers
-	std::optional<gfx::TextureView> TexturAssetToGfxTexture(u64 assetID, gfx::GraphicsBuilder& builder, const AssetManager& am);
+	std::optional<gfx::TextureView> TextureAssetToGfxTexture(u64 assetID, gfx::GraphicsBuilder& builder, const AssetManager& am);
 
 	std::unique_ptr<AssetManager> AssetManager::s_instance = nullptr;
 
@@ -250,10 +250,10 @@ namespace DOG
 			const Material& mat = m_materialManager.GetMaterial(matIndex);
 			auto& matSpec = matSpecs.emplace_back();
 
-			matSpec.albedo = TexturAssetToGfxTexture(mat.albedo, *builder, *this);
-			matSpec.metallicRoughness = TexturAssetToGfxTexture(mat.metallicRoughness, *builder, *this);
-			matSpec.emissive = TexturAssetToGfxTexture(mat.emissive, *builder, *this);
-			matSpec.normal = TexturAssetToGfxTexture(mat.normalMap, *builder, *this);
+			matSpec.albedo = TextureAssetToGfxTexture(mat.albedo, *builder, *this);
+			matSpec.metallicRoughness = TextureAssetToGfxTexture(mat.metallicRoughness, *builder, *this);
+			matSpec.emissive = TextureAssetToGfxTexture(mat.emissive, *builder, *this);
+			matSpec.normal = TextureAssetToGfxTexture(mat.normalMap, *builder, *this);
 		}
 
 		modelAsset->gfxModel = builder->LoadCustomModel(loadSpec, matSpecs);
@@ -305,7 +305,7 @@ namespace DOG
 		stateFlag &= ~AssetStateFlag::ExistOnCPU;
 	}
 
-	std::optional<gfx::TextureView> TexturAssetToGfxTexture(u64 assetID, gfx::GraphicsBuilder& builder, const AssetManager& am)
+	std::optional<gfx::TextureView> TextureAssetToGfxTexture(u64 assetID, gfx::GraphicsBuilder& builder, const AssetManager& am)
 	{
 		if (!assetID) return std::nullopt;
 		TextureAsset* asset = static_cast<TextureAsset*>(am.GetAsset(assetID));
