@@ -17,7 +17,7 @@ namespace DOG::gfx
 		void BeginFrame();
 		void EndFrame();
 		void Render(RenderDevice* rd, CommandList cmdl);
-		bool WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		LRESULT WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 		// Implementation interface
 	public:

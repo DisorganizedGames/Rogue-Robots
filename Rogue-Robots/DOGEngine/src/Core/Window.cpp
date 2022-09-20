@@ -3,6 +3,7 @@
 #include "../Input/Keyboard.h"
 #include "../Input/Mouse.h"
 #include "../EventSystem/WindowEvents.h"
+#include <ImGUI/imgui.h>
 namespace DOG
 {
 	struct WindowData
@@ -11,89 +12,114 @@ namespace DOG
 		RECT windowRectangle;
 		Vector2u dimensions;
 		WindowMode mode;
+		bool isStarting = true;
 	};
 	static WindowData s_windowData = {};
-	static std::optional<std::function<void(HWND, UINT, WPARAM, LPARAM)>> s_wmHook;
+	static std::optional<std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)>> s_wmHook;
 
 	LRESULT Window::WindowProcedure(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		if (s_wmHook)
-			(*s_wmHook)(windowHandle, message, wParam, lParam);
+		{
+			if ((*s_wmHook)(windowHandle, message, wParam, lParam))
+			{
+				return true;
+			}
+		}
+
+		bool ignoreMouseInput = !s_windowData.isStarting && ImGui::GetIO().WantCaptureMouse;
+		bool ignoreKeyboardInput = !s_windowData.isStarting && ImGui::GetIO().WantCaptureKeyboard;
 
 		switch (message)
 		{
 		case WM_CLOSE:
 		{
 			PublishEvent<WindowClosedEvent>();
-			break;
+			return 0;
 		}
 		case WM_SIZE:
 		{
 			s_windowData.dimensions.x = LOWORD(lParam);
 			s_windowData.dimensions.y = HIWORD(lParam);
 			PublishEvent<WindowResizedEvent>(LOWORD(lParam), HIWORD(lParam));
-			break;
+			return 0;
 		}
 		case WM_KEYDOWN:
 		{
+			if (ignoreKeyboardInput) return 0;
 			bool keyIsRepeated = (lParam >> 30) & 1;
 			if (!keyIsRepeated)
 			{
 				Keyboard::OnKeyDown((Key)(u8)(wParam));
 			}
-			break;
+			return 0;
 		}
 		case WM_KEYUP:
 		{
+			if (ignoreKeyboardInput) return 0;
 			Keyboard::OnKeyUp((Key)(u8)(wParam));
-			break;
+			return 0;
 		}
 		case WM_LBUTTONDOWN:
 		{
+			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonPressed(Button::Left);
-			break;
+			return 0;
 		}
 		case WM_LBUTTONUP:
 		{
+			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonReleased(Button::Left);
-			break;
+			return 0;
 		}
 		case WM_RBUTTONDOWN:
 		{
+			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonPressed(Button::Right);
-			break;
+			return 0;
 		}
 		case WM_RBUTTONUP:
 		{
+			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonReleased(Button::Right);
-			break;
+			return 0;
 		}
 		case WM_MBUTTONDOWN:
 		{
+			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonPressed(Button::Wheel);
-			break;
+			return 0;
 		}
 		case WM_MBUTTONUP:
 		{
+			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonReleased(Button::Wheel);
-			break;
+			return 0;
 		}
 		case WM_MOUSEMOVE:
 		{
-			Mouse::OnMove({ LOWORD(lParam), HIWORD(lParam) });
-			break;
+			if (ignoreMouseInput) return 0;
+			// LOWORD and HIWORD can't be used because x and y can be negative
+			POINTS point = MAKEPOINTS(lParam);
+			if (point.x < 0 || point.y < 0 || point.x >= static_cast<int>(GetWidth()) || point.y >= static_cast<int>(GetHeight()))
+			{
+				std::cout << "Warning WM_MOUSEMOVE returned point outside the windows dimensions! x: " << point.x << " y: " << point.y << std::endl;
+			}
+			Mouse::OnMove({ static_cast<u32>(point.x), static_cast<u32>(point.y) });
+			return 0;
 		}
 		case WM_INPUT:
 		{
+			if (ignoreMouseInput) return 0;
 			UINT size = 0u;
 			if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, nullptr, &size, sizeof(RAWINPUTHEADER)) == -1)
-				break;
+				return 0;
 
 			std::vector<char> rawBuffer;
 			rawBuffer.resize(size);
 
 			if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, rawBuffer.data(), &size, sizeof(RAWINPUTHEADER)) != size)
-				break;
+				return 0;
 
 			auto& ri = reinterpret_cast<const RAWINPUT&>(*rawBuffer.data());
 			if (ri.header.dwType == RIM_TYPEMOUSE && (ri.data.mouse.lLastX != 0 || ri.data.mouse.lLastY != 0))
@@ -101,7 +127,7 @@ namespace DOG
 				Mouse::OnRawDelta({ ri.data.mouse.lLastX, ri.data.mouse.lLastY });
 			}
 
-			break;
+			return 0;
 		}
 		}
 		return DefWindowProcA(windowHandle, message, wParam, lParam);
@@ -167,6 +193,8 @@ namespace DOG
 			,"Failed to register raw mouse movement delta.");
 
 		::ShowWindow(s_windowData.windowHandle, SW_SHOW);
+
+		s_windowData.isStarting = false;
 	}
 
 	void Window::OnUpdate() noexcept
@@ -204,7 +232,7 @@ namespace DOG
 		return s_windowData.windowHandle;
 	}
 
-	void Window::SetWMHook(const std::function<void(HWND, UINT, WPARAM, LPARAM)> func)
+	void Window::SetWMHook(const std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> func)
 	{
 		s_wmHook = func;
 	}

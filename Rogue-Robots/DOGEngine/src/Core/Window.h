@@ -16,7 +16,7 @@ namespace DOG
 		static const HWND GetHandle() noexcept;
 
 		// Reserved for renderer until further notice (no functionality for WM callbacks is implemented for Window otherwise)
-		static void SetWMHook(const std::function<void(HWND, UINT, WPARAM, LPARAM)> func);
+		static void SetWMHook(const std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> func);
 
 	private:
 		static LRESULT WindowProcedure(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);

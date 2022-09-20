@@ -56,12 +56,12 @@ namespace DOG::gfx
 
 		void Flush();
 
-		const std::function<void(HWND, UINT, WPARAM, LPARAM)>& GetWMCallback() { return m_wmCallback; }
+		const std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)>& GetWMCallback() { return m_wmCallback; }
 
 	private:
 		void EndGUI();	// Called at EndFrame_GPU
 
-		bool WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		LRESULT WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	private:
 		struct RenderSubmission
@@ -103,7 +103,7 @@ namespace DOG::gfx
 		// Caches textures (for now, temp?)
 		std::unique_ptr<TextureManager> m_texMan;		
 
-		std::function<void(HWND, UINT, WPARAM, LPARAM)> m_wmCallback;
+		std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> m_wmCallback;
 
 		// ================= RENDERING RESOURCES
 		Texture m_depthTex;
