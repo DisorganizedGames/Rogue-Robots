@@ -4,7 +4,6 @@ namespace DOG
 	struct ComponentBase
 	{
 		ComponentBase() noexcept = default;
-	private:
 		[[nodiscard]] static const u32 GetID() noexcept;
 	};
 
