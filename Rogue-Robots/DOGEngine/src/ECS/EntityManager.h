@@ -1,37 +1,14 @@
 #pragma once
+#include "Component.h"
 namespace DOG
 {
 	constexpr const u32 MAX_ENTITIES = 64'000u;
 	constexpr const u32 NULL_ENTITY = MAX_ENTITIES;
 	typedef u32 entity;
 	struct SparseSetBase;
+	class Collection;
 	typedef std::unique_ptr<SparseSetBase> ComponentPool;
-
-	class generator {
-		inline static std::size_t counter{};
-
-	public:
-		template<typename Type>
-		inline static const std::size_t type = counter++;
-	};
-
-	struct ComponentBase
-	{
-		ComponentBase() noexcept = default;
-		virtual ~ComponentBase() noexcept = default;
-		[[nodiscard]] static const u32 GetID() noexcept;
-	};
-
-	template<typename T>
-	struct Component : public ComponentBase
-	{
-		Component() noexcept = default;
-		virtual ~Component() noexcept override = default;
-		static u32 ID;
-	};
-
-	template<typename T>
-	u32 Component<T>::ID{ ComponentBase::GetID() };
+	#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get())) 
 
 	struct SparseSetBase
 	{
@@ -49,63 +26,46 @@ namespace DOG
 		std::vector<ComponentType> components;
 	};
 
-	struct TransformComponent : public Component<TransformComponent>
-	{
-		TransformComponent(Vector3f position = {0.0f, 0.0f, 0.0f}) noexcept : position{position} {}
-		virtual ~TransformComponent() noexcept override final = default;
-		Vector3f position;
-	};
-
-	struct MeshComponent : public Component<MeshComponent>
-	{
-		MeshComponent(u32 id = 0) noexcept : id{ id } {}
-		virtual ~MeshComponent() noexcept override final = default;
-		u32 id;
-	};
-
-	struct SoundComponent : public Component<SoundComponent>
-	{
-		SoundComponent(u32 id = 0) noexcept : id{ id } {}
-		virtual ~SoundComponent() noexcept override final = default;
-		u32 id;
-	};
-
-	class Collection;
 	class EntityManager
 	{
 	public:
 		EntityManager() noexcept;
 		~EntityManager() noexcept = default;
 
-		void Initialize() noexcept;
 		entity CreateEntity() noexcept;
 		[[nodiscard]] std::vector<entity>& GetAllEntities() noexcept;
 		void Reset() noexcept;
 		[[nodiscard]] bool Exists(const entity entityID) const noexcept;
 
 		template<typename ComponentType, typename ...Args>
+		requires std::is_base_of_v<ComponentBase, ComponentType>
 		ComponentType& AddComponent(const entity entityID, Args&& ...args) noexcept;
 
 		template<typename ComponentType>
+		requires std::is_base_of_v<ComponentBase, ComponentType>
 		void RemoveComponent(const entity entityID) noexcept;
 
 		template<typename ComponentType>
+		requires std::is_base_of_v<ComponentBase, ComponentType>
 		[[nodiscard]] ComponentType& GetComponent(const entity entityID) const noexcept;
 
-		template<typename ComponentType>
-		[[nodiscard]] std::vector<ComponentType>& GetComponentsOfType() noexcept;
-
 		template<typename... ComponentType>
-		Collection GetByCollection() noexcept;
+		requires std::is_base_of_v<ComponentBase, ComponentType...>
+		[[nodiscard]] Collection GetCollection() noexcept;
 
 		template<typename ComponentType>
-		std::vector<entity>* bar() noexcept;
+		requires std::is_base_of_v<ComponentBase, ComponentType>
+		[[nodiscard]] std::vector<entity>* GetEntitiesForComponentType() const noexcept;
 
 		template<typename ComponentType>
+		requires std::is_base_of_v<ComponentBase, ComponentType>
 		[[nodiscard]] bool HasComponent(const entity entityID) const noexcept;
 
 	private:
-		template<typename ComponentType>
+		void Initialize() noexcept;
+
+		template<typename ComponentType> 
+		requires std::is_base_of_v<ComponentBase, ComponentType>
 		void AddSparseSet() noexcept;
 	private:
 		friend class Collection;
@@ -118,31 +78,36 @@ namespace DOG
 	class Collection
 	{
 	public:
-		explicit Collection(EntityManager* mgr) noexcept : mgr{ mgr } {}
-		template<typename... ComponentType>
-		std::tuple<ComponentType...> Get(const entity entityID) noexcept;
+		explicit Collection(EntityManager* mgr, const size_t size) noexcept : m_mgr{ mgr } { m_entities.resize(size); }
 
-		std::vector<entity> entities;
-		[[nodiscard]] std::vector<entity>::reverse_iterator begin() { return entities.rbegin(); }
-		[[nodiscard]] std::vector<entity>::reverse_iterator end() { return entities.rend(); }
+		template<typename... ComponentType>
+		requires std::is_base_of_v<ComponentBase, ComponentType...>
+		[[nodiscard]] std::tuple<ComponentType&...> Get(const entity entityID) const noexcept;
+
+		[[nodiscard]] std::vector<entity>::reverse_iterator begin() { return m_entities.rbegin(); }
+		[[nodiscard]] std::vector<entity>::reverse_iterator end() { return m_entities.rend(); }
 
 	private:
-		EntityManager* mgr;
+		friend class EntityManager;
+		void Add(entity entityID) noexcept;
+	private:
+		std::vector<entity> m_entities;
+		EntityManager* m_mgr;
 	};
 
 	template<typename... ComponentType>
-	std::tuple<ComponentType...> Collection::Get(const entity entityID) noexcept
+	requires std::is_base_of_v<ComponentBase, ComponentType...>
+	std::tuple<ComponentType&...> Collection::Get(const entity entityID) const noexcept
 	{
-		return { mgr->GetComponent<ComponentType>(entityID)... };
+		return { m_mgr->GetComponent<ComponentType>(entityID)... };
 	}
 
 	template<typename ComponentType, typename ...Args>
+	requires std::is_base_of_v<ComponentBase, ComponentType>
 	ComponentType& EntityManager::AddComponent(const entity entityID, Args&& ...args) noexcept
 	{
-		static_assert(std::is_base_of<ComponentBase, ComponentType>::value);
 		ASSERT(Exists(entityID), "Entity is invalid");
 		ASSERT(!HasComponent<ComponentType>(entityID), "Entity already has component!");
-		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get())) 
 
 		if (m_components[ComponentType::ID] == nullptr)
 		{
@@ -158,13 +123,11 @@ namespace DOG
 	}
 
 	template<typename ComponentType>
+	requires std::is_base_of_v<ComponentBase, ComponentType>
 	void EntityManager::RemoveComponent(const entity entityID) noexcept
 	{
-		static_assert(std::is_base_of<ComponentBase, ComponentType>::value);
 		ASSERT(Exists(entityID), "Entity is invalid");
 		ASSERT(HasComponent<ComponentType>(entityID), "Entity does not have that component.");
-
-		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get())) 
 
 		const auto last = set->denseArray.back();
 		std::swap(set->denseArray.back(), set->denseArray[set->sparseArray[entityID]]);
@@ -176,100 +139,77 @@ namespace DOG
 	}
 
 	template<typename ComponentType>
+	requires std::is_base_of_v<ComponentBase, ComponentType>
 	ComponentType& EntityManager::GetComponent(const entity entityID) const noexcept
 	{
-		static_assert(std::is_base_of<ComponentBase, ComponentType>::value);
 		ASSERT(Exists(entityID), "Entity is invalid");
 		ASSERT(HasComponent<ComponentType>(entityID), "Entity does not have that component.");
-		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get())) 
 
 		return set->components[set->sparseArray[entityID]];
 	}
 
-	template<typename ComponentType>
-	std::vector<ComponentType>& EntityManager::GetComponentsOfType() noexcept
-	{
-		static_assert(std::is_base_of<ComponentBase, ComponentType>::value);
-		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get())) 
-
-		return set->components;
-	}
-
 	template<typename... ComponentType>
-	Collection EntityManager::GetByCollection() noexcept
+	requires std::is_base_of_v<ComponentBase, ComponentType...>
+	Collection EntityManager::GetCollection() noexcept
 	{
-		std::vector<std::vector<entity>*> test = { bar<ComponentType>()... };
-		std::vector<entity>* vectorWithLeastComponents = test[0];
+		/*Create a better solution...*/
+		std::vector<std::vector<entity>*> entityVectors = { GetEntitiesForComponentType<ComponentType>()... };
+		std::vector<entity>* vectorWithLeastEntities = entityVectors[0];
 
-		for (u32 i {0u}; i < test.size(); i++)
+		for (u32 i {0u}; i < entityVectors.size(); i++)
 		{
-			if (test[i]->size() < vectorWithLeastComponents->size())
+			if (entityVectors[i]->size() < vectorWithLeastEntities->size())
 			{
-				vectorWithLeastComponents = test[i];
+				vectorWithLeastEntities = entityVectors[i];
 			}
 		}
 		
-		std::vector<entity> finalVector;
-
-		std::vector<entity>::iterator it = vectorWithLeastComponents->end();
-		for (u32 j{ 0u }; j < vectorWithLeastComponents->size(); j++)
+		Collection collection(this, vectorWithLeastEntities->size());
+		for (u32 j{ 0u }; j < vectorWithLeastEntities->size(); j++)
 		{
 			bool existInAll = true;
-			for (u32 k{ 0u }; k < test.size() && existInAll; k++)
+			for (u32 k{ 0u }; k < entityVectors.size() && existInAll; k++)
 			{
-					if (std::find(test[k]->begin(), test[k]->end(), (*vectorWithLeastComponents)[j]) == test[k]->end())
+					if (std::find(entityVectors[k]->begin(), entityVectors[k]->end(), (*vectorWithLeastEntities)[j]) == entityVectors[k]->end())
 					{
 						existInAll = false;
-						it--;
 					}
 			}
 			if (existInAll)
-				finalVector.push_back((*vectorWithLeastComponents)[j]);
+				collection.Add((*vectorWithLeastEntities)[j]);
 		}
-		Collection c(this);
-		c.entities = finalVector;
-		return c;
+		return collection;
 	}
 
 	template<typename ComponentType>
-	std::vector<entity>* EntityManager::bar() noexcept
+	requires std::is_base_of_v<ComponentBase, ComponentType>
+	std::vector<entity>* EntityManager::GetEntitiesForComponentType() const noexcept
 	{
-		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get()))
+		ASSERT(m_components[ComponentType::ID] != nullptr, "Component type does not exist.");
 		return &set->denseArray;
 	}
 
 	template<typename ComponentType> 
+	requires std::is_base_of_v<ComponentBase, ComponentType>
 	bool EntityManager::HasComponent(const entity entityID) const noexcept
 	{
-		//std::string_view pretty_function{ __FUNCSIG__ };
-		//auto first = pretty_function.find_first_not_of(' ', pretty_function.find_first_of('<') + 1);
-		//auto value = pretty_function.substr(first, pretty_function.find_last_of('>') - first);
-		//auto res = std::hash<std::string_view>{}(pretty_function);
-
-
-		static_assert(std::is_base_of<ComponentBase, ComponentType>::value);
 		ASSERT(Exists(entityID), "Entity is invalid");
-		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get())) 
 
 		return 
 			(
-			m_components.size() > ComponentType::ID
-			&& m_components[ComponentType::ID] != nullptr
+			m_components[ComponentType::ID] != nullptr
 			&& entityID < set->sparseArray.size()) 
 			&& (set->sparseArray[entityID] < set->denseArray.size()) 
 			&& (set->sparseArray[entityID] != NULL_ENTITY
 			);
 	}
 
-	template<typename ComponentType>
+	template<typename ComponentType> 
+	requires std::is_base_of_v<ComponentBase, ComponentType>
 	void EntityManager::AddSparseSet() noexcept
 	{
-		static_assert(std::is_base_of<ComponentBase, ComponentType>::value);
+		ASSERT((m_components.begin() + ComponentType::ID) < m_components.end(), "All available component pools are in use.");
 		m_components.insert(m_components.begin() + ComponentType::ID, std::move(std::make_unique<SparseSet<ComponentType>>()));
-		//m_components.emplace_back(std::move(std::make_unique<SparseSet<ComponentType>>())); //PoolAllocator?
-		#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get()))
-
-		std::cout << ComponentType::ID;
 
 		set->sparseArray.reserve(MAX_ENTITIES);
 		for (u32 i{ 0u }; i < MAX_ENTITIES; i++)

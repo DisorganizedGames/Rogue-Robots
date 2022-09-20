@@ -46,6 +46,17 @@ void GameLayer::OnAttach()
 
 	}
 	m_entityManager.AddComponent<DOG::TransformComponent>(e);
+	auto e2 = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<DOG::TransformComponent>(e2);
+
+	auto C = m_entityManager.GetCollection<DOG::TransformComponent>();
+	for (auto entity : C)
+	{
+		auto[transform] = C.Get<DOG::TransformComponent>(entity);
+		transform.position.x = 30.0f;
+		transform.position.y = 30.0f;
+		transform.position.z = 30.0f;
+	}
 
 }
 

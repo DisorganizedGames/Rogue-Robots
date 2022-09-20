@@ -1,14 +1,8 @@
 #include "EntityManager.h"
 namespace DOG
 {
-
-	static u32 componentID{ 0u };
-
-	const u32 ComponentBase::GetID() noexcept
-	{
-		return componentID++;
-	}
-
+	constexpr const u32 MAX_COMPONENT_TYPES{ 250u };
+	
 	EntityManager::EntityManager() noexcept
 	{
 		Initialize();
@@ -20,9 +14,8 @@ namespace DOG
 		for (u32 entityId{ 0u }; entityId < MAX_ENTITIES; entityId++)
 			m_freeList.push(entityId);
 
-		m_components.resize(150);
-		//m_components.reserve(150);
-		for (u32 i{ 0u }; i < 150; i++)
+		m_components.resize(MAX_COMPONENT_TYPES);
+		for (u32 i{ 0u }; i < MAX_COMPONENT_TYPES; i++)
 		{
 			m_components.push_back(nullptr);
 		}
@@ -54,5 +47,10 @@ namespace DOG
 	bool EntityManager::Exists(const entity entityID) const noexcept
 	{
 		return ((entityID < m_entities.size()) && (m_entities[entityID] == entityID));
+	}
+
+	void Collection::Add(entity entityID) noexcept
+	{
+		m_entities.emplace_back(entityID);
 	}
 }
