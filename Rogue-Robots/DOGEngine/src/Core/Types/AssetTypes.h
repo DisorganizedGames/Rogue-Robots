@@ -1,5 +1,5 @@
 #pragma once
-#include "MeshTypes.h"
+#include "GraphicsTypes.h"
 
 namespace DOG
 {

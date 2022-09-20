@@ -1,7 +1,7 @@
 #pragma once
 #include "GPUTable.h"
 #include "../Handles/HandleAllocator.h"
-#include "../../Core/Types/MaterialTypes.h"
+#include "../../Core/Types/GraphicsTypes.h"
 
 namespace DOG::gfx
 {

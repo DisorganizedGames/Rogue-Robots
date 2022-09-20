@@ -15,12 +15,6 @@
 
 #include "ImGUI/imgui.h"
 
-#include "../Graphics/Rendering/TextureManager.h"
-#include "../Graphics/Rendering/GraphicsBuilder.h"
-#include "../Core/TextureFileImporter.h"
-
-#include <set>
-
 
 namespace DOG
 {
@@ -52,72 +46,6 @@ namespace DOG
 		const piper::PipedData* runtimeData = piper::GetPipe();
 		bool showDemoWindow = true;
 
-		// Example of manual model loading
-		// Arbitrary mesh works too, such replace MeshSpec and materials will custom solution.
-		//auto builder = m_renderer->GetBuilder();
-		//StaticModel model{};
-		//{
-		//	// Setup mesh spec
-		//	auto res = AssimpImporter("Assets/Sponza_gltf/glTF/Sponza.gltf").GetResult();
-		//	MeshTable::MeshSpecification loadSpec{};
-		//	loadSpec.indices = res->mesh.indices;
-		//	for (const auto& attr : res->mesh.vertexData)
-		//		loadSpec.vertexDataPerAttribute[attr.first] = res->mesh.vertexData[attr.first];
-		//	loadSpec.submeshData = res->submeshes;
-
-		//	// Load materials
-		//	auto loadTexture = [&](
-		//		ImportedTextureFile& textureData,
-		//		bool srgb) -> Texture
-		//	{
-		//		GraphicsBuilder::MippedTexture2DSpecification spec{};
-		//		for (auto& mip : textureData.dataPerMip)
-		//		{
-		//			GraphicsBuilder::TextureSubresource subr{};
-		//			subr.data = mip.data;
-		//			subr.width = mip.width;
-		//			subr.height = mip.height;
-		//			spec.dataPerMip.push_back(subr);
-		//		}
-		//		spec.srgb = srgb;
-		//		return builder->LoadTexture(spec);
-		//	};
-
-		//	auto loadToMat = [&](const std::string& path, bool srgb, bool genMips) -> std::optional<TextureView>
-		//	{
-		//		std::optional<Texture> tex;
-
-		//		auto importedTex = TextureFileImporter(path, genMips).GetResult();
-		//		if (importedTex)
-		//			tex = loadTexture(*importedTex, srgb);
-		//		else
-		//			return {};
-
-		//		return builder->CreateTextureView(*tex, TextureViewDesc(
-		//			ViewType::ShaderResource,
-		//			TextureViewDimension::Texture2D,
-		//			srgb ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM));
-		//	};
-
-		//	std::vector<MaterialTable::MaterialSpecification> matSpecs;
-		//	matSpecs.reserve(res->materials.size());
-		//	for (const auto& mat : res->materials)
-		//	{
-		//		std::optional<Texture> albedoTex, metallicRoughnessTex, normalTex, emissiveTex;
-		//		MaterialTable::MaterialSpecification matSpec{};
-
-		//		const bool genMips = true;
-
-		//		matSpec.albedo = loadToMat(mat.albedoPath, true, genMips);
-		//		matSpec.metallicRoughness = loadToMat(mat.metallicRoughnessPath, false, genMips);
-		//		matSpec.normal = loadToMat(mat.normalMapPath, false, genMips);
-		//		matSpec.emissive = loadToMat(mat.emissivePath, true, genMips);
-		//		matSpecs.push_back(matSpec);
-		//	}
-
-		//	model = builder->LoadCustomModel(loadSpec, matSpecs);
-		//}
-
 
 		while (m_isRunning)
 		{
@@ -145,9 +73,12 @@ namespace DOG
 			//// ====== GPU
 			m_renderer->BeginFrame_GPU();
 
-			// Example submission
-			//for (u32 i = 0; i < model.mesh.numSubmeshes; ++i)
-			//	m_renderer->SubmitMesh(model.mesh.mesh, i, model.mats[i]);
+			for (auto& e : runtimeData->entitiesToRender)
+			{
+				ModelAsset* model = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(e.modelID));
+				for (u32 i = 0; i < model->gfxModel.mesh.numSubmeshes; ++i)
+					m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], e.worldMatrix);
+			}
 
 			m_renderer->SetMainRenderCamera(runtimeData->viewMat);
 
@@ -196,7 +127,7 @@ namespace DOG
 #endif
 		Window::SetWMHook(m_renderer->GetWMCallback());
 
-		AssetManager::Initialize();
+		AssetManager::Initialize(m_renderer.get());
 	}
 
 	void Application::OnShutDown() noexcept

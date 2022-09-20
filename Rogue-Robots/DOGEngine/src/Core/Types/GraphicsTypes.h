@@ -4,6 +4,17 @@ namespace DOG
 {
 	namespace gfx
 	{
+		struct MaterialHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
+
+		enum class MaterialTextureType
+		{
+			Albedo = 0,
+			NormalMap,
+			MetallicRoughness,
+			Emissive,
+			COUNT
+		};
+
 		struct Mesh { u64 handle{ 0 }; friend class TypedHandlePool; };
 
 		struct MeshContainer
@@ -12,6 +23,12 @@ namespace DOG
 			u32 numSubmeshes{ 0 };
 
 			u32 managerID{ UINT_MAX };
+		};
+
+		struct StaticModel
+		{
+			MeshContainer mesh;
+			std::vector<MaterialHandle> mats;
 		};
 	}
 
@@ -30,7 +47,4 @@ namespace DOG
 		u32 indexStart{ 0 };
 		u32 indexCount{ 0 };
 	};
-
-
-
 }

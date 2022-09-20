@@ -8,13 +8,13 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
 	"src/EventSystem/KeyboardEvents.h" "src/EventSystem/EventPublisher.cpp" "src/Network/Server.h" "src/Network/Server.cpp" "src/Network/Client.h" "src/Network/Client.cpp" 
     "src/Core/Time.h"
 	"src/Audio/AudioManager.h" "src/Audio/AudioManager.cpp" "src/Audio/AudioPlayerComponent.h" "src/common/ErrorTypes.h"
-    "src/Core/Types/MeshTypes.h" "src/Core/Types/MaterialTypes.h" "src/Core/Types/AssetTypes.h" "src/Graphics/Rendering/MaterialTable.h" "src/Graphics/Rendering/MaterialTable.cpp"
+    "src/Core/Types/GraphicsTypes.h"  "src/Core/Types/AssetTypes.h" "src/Graphics/Rendering/MaterialTable.h" "src/Graphics/Rendering/MaterialTable.cpp"
     "src/Core/AssetManager.h" "src/Core/AssetManager.cpp" "src/Core/AssimpImporter.h" "src/Core/AssimpImporter.cpp" "src/Core/DOGEngineTypes.h" "src/Core/DOGEngineTypes.cpp"
     "src/Core/MaterialManager.h" "src/Core/MaterialManager.cpp"
     "src/Graphics/Rendering/MaterialTable.h"  "src/Core/TextureFileImporter.h" "src/Core/TextureFileImporter.cpp" 
     "src/Graphics/Rendering/MaterialTable.cpp" "src/Graphics/Rendering/MaterialTable.h" "src/Graphics/Rendering/MaterialTable.cpp"   
     "src/Graphics/Rendering/TextureManager.h" "src/Graphics/Rendering/TextureManager.cpp" "src/Graphics/Rendering/Renderer.h" "src/Graphics/Rendering/Renderer.cpp" 
-    "src/Core/DataPiper.h" "src/Core/DataPiper.cpp" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.h" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.cpp" "src/Graphics/RHI/ImGUIBackend.h" "src/Graphics/Rendering/GraphicsBuilder.h" "src/Graphics/Rendering/GraphicsBuilder.cpp" "src/Graphics/Rendering/Types/RenderableTypes.h")
+    "src/Core/DataPiper.h" "src/Core/DataPiper.cpp" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.h" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.cpp" "src/Graphics/RHI/ImGUIBackend.h" "src/Graphics/Rendering/GraphicsBuilder.h" "src/Graphics/Rendering/GraphicsBuilder.cpp" )
 
 	file(GLOB_RECURSE TempGraphics
     "src/Graphics/*.cpp")

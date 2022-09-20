@@ -2,6 +2,7 @@
 #include "AssimpImporter.h"
 #include "MaterialManager.h"
 #include "../Audio/AudioFileReader.h"
+#include "Types/GraphicsTypes.h"
 
 namespace DOG
 {
@@ -10,6 +11,8 @@ namespace DOG
 		None = 0,
 		VramOnly = 1 << 1,
 		Async = 1 << 2,
+		GenMips = 1 << 3,
+		Srgb = 1 << 4,
 	};
 
 	enum class AssetUnLoadFlag
@@ -161,6 +164,7 @@ namespace DOG
 		uint32_t height{ 0 };
 		uint32_t mipLevels{ 0 };
 		std::vector<u8> textureData;
+		bool srgb = true;
 	};
 
 	struct MeshAsset : public Asset
@@ -171,9 +175,12 @@ namespace DOG
 
 	struct ModelAsset : public Asset
 	{
-		std::vector<u64> materialIDs;
+		// Note that a materialIndex is not a key to an asset
+		std::vector<u64> materialIndices;
 		std::vector<SubmeshMetadata> submeshes;
 		u64 meshID{0};
+		gfx::StaticModel gfxModel;
+
 	};
 
 	struct AudioAsset : public Asset
@@ -184,10 +191,14 @@ namespace DOG
 		std::vector<u8> audioData;
 	};
 
+	namespace gfx
+	{
+		class Renderer;
+	}
 	class AssetManager
 	{
 	public:
-		static void Initialize();
+		static void Initialize(gfx::Renderer* renderer);
 		static void Destroy();
 		static AssetManager& Get();
 
@@ -206,6 +217,10 @@ namespace DOG
 
 		[[nodiscard]] u64 AddMesh(const ImportedMesh& mesh);
 		[[nodiscard]] std::vector<u64> LoadMaterials(const std::vector<ImportedMaterial>& importedMats);
+		[[nodiscard]] u64 LoadTextureSTBI(const std::string& path, AssetLoadFlag flag);
+		[[nodiscard]] u64 LoadTextureCommpresonator(const std::string& path, AssetLoadFlag flag);
+		void MoveModelToGPU(u64 modelID);
+
 
 	private:
 		static std::unique_ptr<AssetManager> s_instance;
@@ -214,5 +229,7 @@ namespace DOG
 		std::unordered_map<u64, ManagedAsset*> m_assets;
 
 		MaterialManager m_materialManager;
+
+		gfx::Renderer* m_renderer = nullptr;
 	};
 }

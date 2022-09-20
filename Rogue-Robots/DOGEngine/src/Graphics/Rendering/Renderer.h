@@ -1,6 +1,5 @@
 #pragma once
-#include "../../Core/Types/MeshTypes.h"
-#include "../../Core/Types/MaterialTypes.h"
+#include "../../Core/Types/GraphicsTypes.h"
 #include "../RHI/RenderResourceHandles.h"
 
 namespace DOG::gfx
@@ -39,7 +38,7 @@ namespace DOG::gfx
 
 		void SetMainRenderCamera(const DirectX::XMMATRIX& view, DirectX::XMMATRIX* proj = nullptr);
 
-		void SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material);
+		void SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 
 
 
@@ -70,6 +69,7 @@ namespace DOG::gfx
 			Mesh mesh;
 			u32 submesh;
 			MaterialHandle mat;
+			DirectX::SimpleMath::Matrix world;
 		};
 
 	private:

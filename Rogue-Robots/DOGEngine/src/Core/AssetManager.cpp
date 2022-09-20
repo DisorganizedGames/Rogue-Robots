@@ -1,4 +1,8 @@
 #include "AssetManager.h"
+#include "../Graphics/Rendering/Renderer.h"
+#include "../Graphics/Rendering/TextureManager.h"
+#include "../Graphics/Rendering/GraphicsBuilder.h"
+#include "../Core/TextureFileImporter.h"
 
 #pragma warning(push, 0)
 
@@ -8,14 +12,19 @@
 
 #pragma warning(pop)
 
+
 namespace DOG
 {
+	// Helpers
+	std::optional<gfx::TextureView> TextureAssetToGfxTexture(u64 assetID, gfx::GraphicsBuilder& builder, const AssetManager& am);
+
 	std::unique_ptr<AssetManager> AssetManager::s_instance = nullptr;
 
-	void AssetManager::Initialize()
+	void AssetManager::Initialize(gfx::Renderer* renderer)
 	{
 		assert(!s_instance);
 		s_instance = std::unique_ptr<AssetManager>(new AssetManager());
+		s_instance->m_renderer = renderer;
 	}
 
 	void AssetManager::Destroy()
@@ -61,14 +70,17 @@ namespace DOG
 		ModelAsset* newModel = new ModelAsset;
 		newModel->meshID = AddMesh(asset->mesh);
 		newModel->submeshes = std::move(asset->submeshes);
-		newModel->materialIDs = LoadMaterials(asset->materials);
+		newModel->materialIndices = LoadMaterials(asset->materials);
 
 		u64 id = GenerateRandomID();
 		m_assets.insert({ id, new ManagedAsset(AssetStateFlag::ExistOnCPU, newModel) });
+
+		MoveModelToGPU(id);
+
 		return id;
 	}
 
-	u64 AssetManager::LoadTexture(const std::string& path, AssetLoadFlag)
+	u64 AssetManager::LoadTexture(const std::string& path, AssetLoadFlag flag)
 	{
 		if (!std::filesystem::exists(path))
 		{
@@ -76,26 +88,8 @@ namespace DOG
 			std::cout << "AssetManager::LoadTexture throw. " + path + " does not exist" << std::endl;
 			throw std::runtime_error(path + " does not exist");
 		}
-
-		int width;
-		int height;
-		int numChannels; // Number of channels the image contained, we will force it to load with rgba
-		u8* imageData = stbi_load(path.c_str(), &width, &height, &numChannels, STBI_rgb_alpha);
-		numChannels = STBI_rgb_alpha; // we will have rgba
-		assert(imageData);
-
-		TextureAsset* newTexture = new TextureAsset;
-		newTexture->mipLevels = 1; // Mip maps will be handled later on when the assetTool is implemented.
-		newTexture->width = width;
-		newTexture->height = height;
-		newTexture->textureData.resize(static_cast<size_t>(width) * height * numChannels);
-
-		memcpy(newTexture->textureData.data(), imageData, newTexture->textureData.size());
-		stbi_image_free(imageData);
-		//STBI_FREE(imageData);
-		
-		u64 id = GenerateRandomID();
-		m_assets.insert({ id, new ManagedAsset(AssetStateFlag::ExistOnCPU, newTexture) });
+		//u64 id = LoadTextureSTBI(path, flag);
+		u64 id = LoadTextureCommpresonator(path, flag);
 		return id;
 	}
 
@@ -177,10 +171,10 @@ namespace DOG
 		{
 			Material material;
 
-			material.albedo = m.albedoPath.empty() ? 0 : LoadTexture(m.albedoPath);
-			material.metallicRoughness = m.metallicRoughnessPath.empty() ? 0 : LoadTexture(m.metallicRoughnessPath);
+			material.albedo = m.albedoPath.empty() ? 0 : LoadTexture(m.albedoPath, AssetLoadFlag::Srgb);
+			material.metallicRoughness = m.metallicRoughnessPath.empty() ? 0 : LoadTexture(m.metallicRoughnessPath, AssetLoadFlag::Srgb);
 			material.normalMap = m.normalMapPath.empty() ? 0 : LoadTexture(m.normalMapPath);
-			material.emissive = m.emissivePath.empty() ? 0 : LoadTexture(m.emissivePath);
+			material.emissive = m.emissivePath.empty() ? 0 : LoadTexture(m.emissivePath, AssetLoadFlag::Srgb);
 
 			material.albedoFactor = DirectX::XMFLOAT4(m.albedoFactor);
 			material.emissiveFactor = DirectX::XMFLOAT3(m.emissiveFactor);
@@ -191,6 +185,78 @@ namespace DOG
 		}
 
 		return newMats;
+	}
+
+	u64 AssetManager::LoadTextureSTBI(const std::string& path, AssetLoadFlag flag)
+	{
+		int width;
+		int height;
+		int numChannels; // Number of channels the image contained, we will force it to load with rgba
+		u8* imageData = stbi_load(path.c_str(), &width, &height, &numChannels, STBI_rgb_alpha);
+		numChannels = STBI_rgb_alpha; // we will have rgba
+		assert(imageData);
+
+		TextureAsset* newTexture = new TextureAsset;
+		newTexture->mipLevels = 1; // Mip maps will be handled later on when the assetTool is implemented.
+		newTexture->width = width;
+		newTexture->height = height;
+		newTexture->textureData.resize(static_cast<size_t>(width) * height * numChannels);
+
+		memcpy(newTexture->textureData.data(), imageData, newTexture->textureData.size());
+		stbi_image_free(imageData);
+		//STBI_FREE(imageData);
+		newTexture->srgb = flag & AssetLoadFlag::Srgb;
+		u64 id = GenerateRandomID();
+		m_assets.insert({ id, new ManagedAsset(AssetStateFlag::ExistOnCPU, newTexture) });
+		return id;
+	}
+
+	u64 AssetManager::LoadTextureCommpresonator(const std::string& path, AssetLoadFlag flag)
+	{
+		auto importedTex = TextureFileImporter(path, false).GetResult();
+		TextureAsset* newTexture = new TextureAsset;
+		newTexture->mipLevels = 1; // Mip maps will be handled later on when the assetTool is implemented.
+		newTexture->width = importedTex->dataPerMip.front().width;
+		newTexture->height = importedTex->dataPerMip.front().height;
+		assert(static_cast<size_t>(newTexture->width) * newTexture->height * 4 == importedTex->dataPerMip.front().data.size());
+		newTexture->textureData.resize(importedTex->dataPerMip.front().data.size());
+		memcpy(newTexture->textureData.data(), importedTex->dataPerMip.front().data.data(), importedTex->dataPerMip.front().data.size());
+		newTexture->srgb = flag & AssetLoadFlag::Srgb;
+		u64 id = GenerateRandomID();
+		m_assets.insert({ id, new ManagedAsset(AssetStateFlag::ExistOnCPU, newTexture) });
+		return id;
+	}
+
+	void AssetManager::MoveModelToGPU(u64 modelID)
+	{
+		gfx::GraphicsBuilder* builder = m_renderer->GetBuilder();
+
+		// Convert ModelAsset and its MeshAsset to MeshSpecification
+		ModelAsset* modelAsset = static_cast<ModelAsset*>(GetAsset(modelID));
+		MeshAsset* meshAsset = static_cast<MeshAsset*>(GetAsset(modelAsset->meshID));
+		gfx::MeshTable::MeshSpecification loadSpec{};
+
+		loadSpec.submeshData = modelAsset->submeshes;
+		loadSpec.indices = meshAsset->indices;
+		for (auto& [attr, data] : meshAsset->vertexData)
+			loadSpec.vertexDataPerAttribute[attr] = data;
+
+
+		// Convert Materials and its TextureAssets to MaterialSpecification
+		std::vector<gfx::MaterialTable::MaterialSpecification> matSpecs;
+		matSpecs.reserve(modelAsset->materialIndices.size());
+		for (auto& matIndex : modelAsset->materialIndices)
+		{
+			const Material& mat = m_materialManager.GetMaterial(matIndex);
+			auto& matSpec = matSpecs.emplace_back();
+
+			matSpec.albedo = TextureAssetToGfxTexture(mat.albedo, *builder, *this);
+			matSpec.metallicRoughness = TextureAssetToGfxTexture(mat.metallicRoughness, *builder, *this);
+			matSpec.emissive = TextureAssetToGfxTexture(mat.emissive, *builder, *this);
+			matSpec.normal = TextureAssetToGfxTexture(mat.normalMap, *builder, *this);
+		}
+
+		modelAsset->gfxModel = builder->LoadCustomModel(loadSpec, matSpecs);
 	}
 
 	ManagedAsset::ManagedAsset(AssetStateFlag flag, Asset* asset) : m_asset(asset), stateFlag(flag)
@@ -237,5 +303,28 @@ namespace DOG
 		delete m_asset;
 		m_asset = nullptr;
 		stateFlag &= ~AssetStateFlag::ExistOnCPU;
+	}
+
+	std::optional<gfx::TextureView> TextureAssetToGfxTexture(u64 assetID, gfx::GraphicsBuilder& builder, const AssetManager& am)
+	{
+		if (!assetID) return std::nullopt;
+		TextureAsset* asset = static_cast<TextureAsset*>(am.GetAsset(assetID));
+		if (!asset) return std::nullopt;
+
+		gfx::GraphicsBuilder::TextureSubresource subres{};
+		subres.width = asset->width;
+		subres.height = asset->height;
+		subres.data = asset->textureData;
+
+		// Only one mip level for now
+		gfx::GraphicsBuilder::MippedTexture2DSpecification textureSpec{};
+		textureSpec.srgb = asset->srgb;
+		textureSpec.dataPerMip.push_back(subres);
+		gfx::Texture texture = builder.LoadTexture(textureSpec);
+
+		gfx::TextureViewDesc desc = gfx::TextureViewDesc(gfx::ViewType::ShaderResource, gfx::TextureViewDimension::Texture2D,
+			textureSpec.srgb ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM);
+
+		return builder.CreateTextureView(texture, desc);
 	}
 }

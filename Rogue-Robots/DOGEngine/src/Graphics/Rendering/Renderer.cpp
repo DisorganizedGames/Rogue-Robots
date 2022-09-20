@@ -144,12 +144,13 @@ namespace DOG::gfx
 		m_imgui->BeginFrame();
 	}
 
-	void Renderer::SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle mat)
+	void Renderer::SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle mat, const DirectX::SimpleMath::Matrix& world)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
 		sub.submesh = submesh;
 		sub.mat = mat;
+		sub.world = world;
 		m_submissions.push_back(sub);
 	}
 
@@ -199,7 +200,7 @@ namespace DOG::gfx
 			DirectX::XMStoreFloat3(&posFloat3, pos);
 			pfData.camPos = posFloat3;
 
-			pfData.world = DirectX::XMMatrixScaling(0.07f, 0.07f, 0.07f);
+			pfData.world = sub.world;
 			//pfData.view = DirectX::XMMatrixLookAtLH({ 5.f, 2.f, 0.f }, { -1.f, 1.f, 1.f }, { 0.f, 1.f, 0.f });
 			pfData.view = m_viewMat;
 			// We are using REVERSE DEPTH!!!
