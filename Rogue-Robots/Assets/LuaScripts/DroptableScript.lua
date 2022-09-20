@@ -1,17 +1,17 @@
 
-barrel_drop_table = {
+barrelDropTable = {
 	grenade = {1, "Grenade Barrel"},
 	laser = {1, "Laser Barrel"},
 	liquid = {1, "Liquid Barrel"}
 }
 
-magazine_drop_table = {
+magazineDropTable = {
 	fire = {1, "Fire Magazine"},
 	frost = {1, "Frost Magazine"},
 	elec = {1, "Electricity Magazine"}
 }
 
-misc_drop_table = {
+miscDropTable = {
 	full_auto = {1, "Full Auto Switch"},
 	burst = {1, "Burst Switch"},
 	scatter = {1, "Scatter Shot"},
@@ -20,12 +20,12 @@ misc_drop_table = {
 }
 
 drops = {
-	barrel_drop = {2, barrel_drop_table},
-	magazine_drop = {1, magazine_drop_table},
-	misc_drop = {1, misc_drop_table}
+	barrelDrop = {2, barrelDropTable},
+	magazineDrop = {1, magazineDropTable},
+	miscDrop = {1, miscDropTable}
 }
 
-enemy_drops = {
+enemyDrops = {
 	drop = {9, drops},
 	nothing = {1, "Nothing"}
 }
@@ -58,14 +58,14 @@ function DropGuaranteed(table)
 		acc = acc + ((1/value[1])/tot)
 	end
 
-	return "Nothing" -- Should never occur
+	return "Error" -- Should never occur
 end
 
 function Drop()
-	sample_count = 100000
+	sampleCount = 100000
 	samples = {}
-	for i=0, sample_count do 
-		drop = DropGuaranteed(enemy_drops)
+	for i=0, sampleCount do 
+		drop = DropGuaranteed(enemyDrops)
 		if samples[drop] then
 			samples[drop] = samples[drop] + 1
 		else
@@ -75,6 +75,10 @@ function Drop()
 
 	print("-------------------------------------------------")
 	for k, v in pairs(samples) do
-		print(k .. ": " .. v/sample_count * 100 .. "%")
+		print(k .. ": " .. v/sampleCount * 100 .. "%")
 	end
 end
+
+-- function OnEvent(enemyDeathEvent) 
+--	SpawnItemAtPosition(DropGuaranteed(enemy_drops), enemyDeathEvent.position)
+-- end
