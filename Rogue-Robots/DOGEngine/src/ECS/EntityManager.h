@@ -14,6 +14,11 @@ namespace DOG
 	{
 		SparseSetBase() noexcept = default;
 		virtual ~SparseSetBase() noexcept = default;
+		std::vector<entity> sparseArray;
+		std::vector<entity> denseArray;
+
+		virtual void DestroyInternal(entity entityID) = 0;
+
 	};
 
 	template<typename ComponentType>
@@ -21,9 +26,9 @@ namespace DOG
 	{
 		SparseSet() noexcept = default;
 		virtual ~SparseSet() noexcept override final = default;
-		std::vector<entity> sparseArray;
-		std::vector<entity> denseArray;
 		std::vector<ComponentType> components;
+		
+		virtual void DestroyInternal(entity entityID) {}
 	};
 
 	class EntityManager
@@ -33,6 +38,7 @@ namespace DOG
 		~EntityManager() noexcept = default;
 
 		entity CreateEntity() noexcept;
+		void DestroyEntity(const entity entityID) noexcept;
 		[[nodiscard]] std::vector<entity>& GetAllEntities() noexcept;
 		void Reset() noexcept;
 		[[nodiscard]] bool Exists(const entity entityID) const noexcept;

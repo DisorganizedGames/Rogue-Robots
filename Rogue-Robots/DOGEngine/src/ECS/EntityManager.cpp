@@ -11,6 +11,10 @@ namespace DOG
 	void EntityManager::Initialize() noexcept
 	{
 		m_entities.reserve(MAX_ENTITIES);
+		for (u32 i{ 0u }; i < MAX_ENTITIES; i++)
+		{
+			m_entities.push_back(MAX_ENTITIES);
+		}
 		for (u32 entityId{ 0u }; entityId < MAX_ENTITIES; entityId++)
 			m_freeList.push(entityId);
 
@@ -24,9 +28,32 @@ namespace DOG
 	entity EntityManager::CreateEntity() noexcept
 	{
 		ASSERT(!m_freeList.empty(), "Entity capacity reached!");
-		m_entities.emplace_back(m_freeList.front());
+		u32 indexToInsert = m_freeList.front();
+		m_entities[indexToInsert] = indexToInsert;
 		m_freeList.pop();
-		return m_entities.back();
+		return m_entities[indexToInsert];
+	}
+
+	void EntityManager::DestroyEntity(const entity entityID) noexcept
+	{
+		ASSERT(Exists(entityID), "Entity is invalid.");
+
+		m_entities[entityID] = MAX_ENTITIES;
+		for (u32 i{ 0u }; i < m_components.size(); i++)
+		{
+			if (m_components[i] != nullptr && entityID < m_components[i]->sparseArray.size()
+				&& (m_components[i]->sparseArray[entityID] < m_components[i]->denseArray.size())
+				&& (m_components[i]->sparseArray[entityID] != NULL_ENTITY))
+			{
+				const auto last = m_components[i]->denseArray.back();
+				std::swap(m_components[i]->denseArray.back(), m_components[i]->denseArray[m_components[i]->sparseArray[entityID]]);
+				//std::swap(m_components[i]->components.back(), m_components[i]->components[m_components[i]->sparseArray[entityID]]);
+				std::swap(m_components[i]->sparseArray[last], m_components[i]->sparseArray[entityID]);
+				m_components[i]->denseArray.pop_back();
+				m_components[i]->sparseArray[entityID] = NULL_ENTITY;
+			}
+		}
+
 	}
 
 	std::vector<entity>& EntityManager::GetAllEntities() noexcept
