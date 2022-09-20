@@ -11,12 +11,19 @@ function SetNumber(number)
 	print("Changed Number", m_number)
 end
 
+function OnUpdate()
+	--print("Hello")
+	--return 20
+end
+
 function EventFunc(number, string, table)
 	print(number)
 	print(string)
 	print(table.text)
 	print("Hello")
 end
+
+--t = !
 
 EventSystem:Register("Event", EventFunc)
 

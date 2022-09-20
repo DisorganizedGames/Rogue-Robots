@@ -25,7 +25,7 @@ int LuaContext::GetInteger() const
 		if (m_luaW->IsInteger(index))
 			return m_luaW->GetIntegerFromStack(index);
 
-	std::cout << "Error: Couldn't Find Integer In Arguments\n";
+	m_luaW->Error("Error: Couldn't Find Integer In Arguments\n");
 
 	return 0;
 }
@@ -39,7 +39,7 @@ double LuaContext::GetDouble() const
 		if (m_luaW->IsNumber(index) && !m_luaW->IsInteger(index))
 			return m_luaW->GetDoubleFromStack(index);
 
-	std::cout << "Error: Couldn't Find Float/Double In Arguments\n";
+	m_luaW->Error("Error: Couldn't Find Float/Double In Arguments\n");
 
 	return 0.0;
 }
@@ -53,7 +53,7 @@ bool LuaContext::GetBoolean() const
 		if (m_luaW->IsBool(index))
 			return m_luaW->GetBoolFromStack(index);
 
-	std::cout << "Error: Couldn't Find Boolean In Arguments\n";
+	m_luaW->Error("Error: Couldn't Find Boolean In Arguments\n");
 
 	return false;
 }
@@ -67,7 +67,7 @@ std::string LuaContext::GetString() const
 		if (!m_luaW->IsNumber(index) && m_luaW->IsString(index))
 			return m_luaW->GetStringFromStack(index);
 
-	std::cout << "Error: Couldn't Find String In Arguments\n";
+	m_luaW->Error("Error: Couldn't Find String In Arguments\n");
 
 	return std::string();
 }
@@ -85,7 +85,7 @@ LuaTable LuaContext::GetTable() const
 			return table;
 		}
 
-	std::cout << "Error: Couldn't Find Table In Arguments\n";
+	m_luaW->Error("Error: Couldn't Find Table In Arguments\n");
 
 	return LuaTable(m_luaW);
 }

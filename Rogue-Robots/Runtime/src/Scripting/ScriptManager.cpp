@@ -23,6 +23,14 @@ void ScriptManager::TempReloadFile(const std::string& fileName, TempScript* scri
 	m_luaW->RemoveReferenceToTable(script->luaScript);
 	script->luaScript = m_luaW->CreateTable();
 	m_luaW->CreateEnvironment(script->luaScript, c_pathToScripts + fileName);
+
+	//Remove the old function references
+	m_luaW->RemoveReferenceToFunction(script->onUpdate);
+	m_luaW->RemoveReferenceToFunction(script->onStart);
+	//Get the new functions from the table
+	LuaTable table(m_luaW, script->luaScript, true);
+	script->onStart = table.TryGetFunctionFromTable("OnStart");
+	script->onUpdate = table.TryGetFunctionFromTable("OnUpdate");
 }
 
 //Test if we can reload the file and return true/false
