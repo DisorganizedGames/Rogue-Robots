@@ -109,6 +109,14 @@ struct Vector2i
 	i32 x;
 	i32 y;
 };
+
+struct Vector3f
+{
+	f32 x;
+	f32 y;
+	f32 z;
+};
+
 inline uint64_t GenerateRandomID()
 {
 	static std::random_device rdev;

@@ -14,7 +14,8 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Graphics/Rendering/MaterialTable.h"  "src/Core/TextureFileImporter.h" "src/Core/TextureFileImporter.cpp" 
     "src/Graphics/Rendering/MaterialTable.cpp" "src/Graphics/Rendering/MaterialTable.h" "src/Graphics/Rendering/MaterialTable.cpp"   
     "src/Graphics/Rendering/TextureManager.h" "src/Graphics/Rendering/TextureManager.cpp" "src/Graphics/Rendering/Renderer.h" "src/Graphics/Rendering/Renderer.cpp" 
-    "src/Core/DataPiper.h" "src/Core/DataPiper.cpp" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.h" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.cpp" "src/Graphics/RHI/ImGUIBackend.h" "src/Graphics/Rendering/GraphicsBuilder.h" "src/Graphics/Rendering/GraphicsBuilder.cpp" )
+    "src/Core/DataPiper.h" "src/Core/DataPiper.cpp" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.h" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.cpp" "src/Graphics/RHI/ImGUIBackend.h" "src/Graphics/Rendering/GraphicsBuilder.h" "src/Graphics/Rendering/GraphicsBuilder.cpp"
+    "src/ECS/EntityManager.h" "src/ECS/EntityManager.cpp" "src/ECS/Component.h" "src/ECS/Component.cpp")
 
 	file(GLOB_RECURSE TempGraphics
     "src/Graphics/*.cpp")

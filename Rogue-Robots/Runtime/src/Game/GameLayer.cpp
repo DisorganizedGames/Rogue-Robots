@@ -1,7 +1,7 @@
 #include "GameLayer.h"
 
 GameLayer::GameLayer() noexcept
-	: Layer("Game layer")
+	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
 {
 	m_pipedData.viewMat = DirectX::XMMatrixLookAtLH({ 0.f, 5.f, 0.f }, { 0.f, 5.f, 1.f }, { 0.f, 1.f, 0.f });
 
@@ -65,8 +65,8 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	{
 	case EventType::LeftMouseButtonPressedEvent:
 	{
-		auto [x, y] = EVENT(LeftMouseButtonPressedEvent).coordinates;
-		std::cout << GetName() << " received event: Left MB clicked [x,y] = [" << x << "," << y << "]\n";
+		//auto [x, y] = EVENT(LeftMouseButtonPressedEvent).coordinates;
+		//std::cout << GetName() << " received event: Left MB clicked [x,y] = [" << x << "," << y << "]\n";
 		break;
 	}
 	}

@@ -1,9 +1,7 @@
 #pragma once
 #include <DOGEngine.h>
-
 #include "../DOGEngine/src/Core/DataPiper.h"
 #include "DebugCamera.h"
-
 class GameLayer : public DOG::Layer
 {
 public:
@@ -23,4 +21,5 @@ private:
 	u64 m_greenCube{ 0 };
 	u64 m_blueCube{ 0 };
 	u64 m_magentaCube{ 0 };
+	DOG::EntityManager& m_entityManager;
 };
