@@ -18,6 +18,8 @@
 #include "../../Core/AssimpImporter.h"
 #include "../../Core/TextureFileImporter.h"
 
+#include "RenderGraph/RGResourceRepo.h"
+#include "RenderGraph/RenderGraph.h"
 
 
 namespace DOG::gfx
@@ -43,6 +45,77 @@ namespace DOG::gfx
 		m_bin = std::make_unique<GPUGarbageBin>(S_MAX_FIF);
 		m_uploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, S_MAX_FIF);
 		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeTextures, S_MAX_FIF);
+
+		/*
+			
+			Render Graph testing
+		
+		*/
+		{
+			RGResourceRepo rgRepo(m_rd, m_bin.get());
+			RenderGraph rg(m_rd, &rgRepo);
+
+			RGResource outputPass1;
+			{
+				auto tex1 = rgRepo.DeclareResource(RGTextureDesc());
+				struct PassData
+				{
+					RGResourceView out1;
+				};
+
+				rg.AddPass<PassData>("Some Pass",
+					[&](RenderGraph::PassBuilder& builder, PassData& passData)
+					{
+						passData.out1 = builder.WriteTexture(tex1);
+					},
+					[](RenderDevice* rd, RenderGraph::PassResources& resources, const PassData& passData)
+					{
+						std::cout << "Doing Some Pass\n";
+					});
+
+				outputPass1 = tex1;
+			}
+
+			{
+				auto out = rgRepo.DeclareResource(RGTextureDesc());
+				struct PassData
+				{
+					RGResourceView in1;
+					RGResourceView out1;
+				};
+
+				rg.AddPass<PassData>("Pass 2",
+					[&](RenderGraph::PassBuilder& builder, PassData& passData)
+					{
+						passData.in1 = builder.ReadTexture(outputPass1);
+						passData.out1 = builder.WriteTexture(out);
+					},
+					[](RenderDevice* rd, RenderGraph::PassResources& resources, const PassData& passData)
+					{
+						std::cout << "Doing Pass 2\n";
+					});
+			}
+
+			rg.Build();
+			rg.Run();
+
+
+
+
+
+
+
+
+
+
+		}
+		assert(false);
+
+
+
+
+
+
 
 
 		const u32 maxConstantsPerFrame = 500;
