@@ -81,6 +81,11 @@ namespace DOG::gfx
 		load(gpuElement.normal, spec.normal);
 		load(gpuElement.metallicRoughness, spec.metallicRoughness);
 		load(gpuElement.emissive, spec.emissive);
+
+		gpuElement.albedoFactor = spec.albedoFactor;
+		gpuElement.emissiveFactor = spec.emissiveFactor;
+		gpuElement.metallicFactor = spec.metallicFactor;
+		gpuElement.roughnessFactor = spec.roughnessFactor;
 	}
 
 

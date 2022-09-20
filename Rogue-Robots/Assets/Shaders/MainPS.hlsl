@@ -22,6 +22,11 @@ struct MaterialElement
     uint metallicRoughness;
     uint normal;
     uint emissive;
+    
+    float4 albedoFactor;
+    float4 emissiveFactor;
+    float metallicFactor;
+    float roughnessFactor;
 };
 
 struct PushConstantElement
@@ -104,9 +109,12 @@ static const float PI = 3.1415f;
 
 float4 main(VS_OUT input) : SV_TARGET
 {
-    
     StructuredBuffer<MaterialElement> mats = ResourceDescriptorHeap[constants.matTable];
     MaterialElement mat = mats[constants.matID];
+    
+    
+    // Using albedo factor
+    return mat.albedoFactor;
     
     Texture2D albedo = ResourceDescriptorHeap[mat.albedo];
     Texture2D metallicRoughness = ResourceDescriptorHeap[mat.metallicRoughness];
