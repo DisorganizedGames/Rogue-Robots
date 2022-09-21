@@ -804,7 +804,15 @@ namespace DOG::gfx
 
 
 
+	ID3D12CommandQueue* RenderDevice_DX12::_GetQueue()
+	{
+		return *m_directQueue;
+	}
 
+	D3D12_CPU_DESCRIPTOR_HANDLE RenderDevice_DX12::GetReservedRTV()
+	{
+		return m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV).cpu_handle(0);
+	}
 
 
 

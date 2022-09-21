@@ -1,11 +1,13 @@
 #pragma once
 #include "../../Core/Types/GraphicsTypes.h"
 #include "../RHI/RenderResourceHandles.h"
+#include "../RHI/d2dBackend.h"
 #include "../../Core/AnimationManager.h"
 namespace DOG::gfx
 {
 	class RenderBackend;
 	class ImGUIBackend;
+	class d2dBackend;
 	class RenderDevice;
 	class Swapchain;
 	class ShaderCompilerDXC;
@@ -80,6 +82,7 @@ namespace DOG::gfx
 	private:
 		std::unique_ptr<RenderBackend> m_backend;
 		std::unique_ptr<ImGUIBackend> m_imgui;
+		std::unique_ptr<d2dBackend> m_d2d;
 		RenderDevice* m_rd{ nullptr };
 		Swapchain* m_sc{ nullptr };
 		

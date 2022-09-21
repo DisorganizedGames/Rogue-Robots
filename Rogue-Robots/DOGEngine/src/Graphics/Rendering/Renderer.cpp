@@ -3,6 +3,7 @@
 #include "../RHI/DX12/RenderBackend_DX12.h"
 #include "../RHI/DX12/ImGUIBackend_DX12.h"
 #include "../RHI/DX12/RenderDevice_DX12.h"
+#include "../RHI/DX12/d2dBackend_DX12.h"
 #include "../RHI/ShaderCompilerDXC.h"
 #include "../RHI/PipelineBuilder.h"
 
@@ -32,6 +33,7 @@ namespace DOG::gfx
 		m_rd = m_backend->CreateDevice();
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
 		m_imgui = std::make_unique<gfx::ImGUIBackend_DX12>(m_rd, m_sc, S_MAX_FIF);
+		m_d2d = std::make_unique<gfx::d2dBackend_DX12>(m_rd, m_sc, S_NUM_BACKBUFFERS, hwnd);
 		m_sclr = std::make_unique<ShaderCompilerDXC>();
 
 		m_wmCallback = [this](HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -123,7 +125,7 @@ namespace DOG::gfx
 		m_imgui->BeginFrame();
 	}
 
-	void Renderer::SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle mat, const DirectX::SimpleMath::Matrix& world)
+	void Renderer::SubmitMesh(Meshmesh, u32submesh, MaterialHandlemat, const DirectX::SimpleMath::Matrix& world)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
