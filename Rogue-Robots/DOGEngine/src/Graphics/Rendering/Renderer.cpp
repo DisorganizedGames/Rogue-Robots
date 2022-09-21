@@ -3,6 +3,7 @@
 #include "../RHI/DX12/RenderBackend_DX12.h"
 #include "../RHI/DX12/ImGUIBackend_DX12.h"
 #include "../RHI/DX12/RenderDevice_DX12.h"
+#include "../RHI/DX12/d2dBackend_DX12.h"
 #include "../RHI/ShaderCompilerDXC.h"
 #include "../RHI/PipelineBuilder.h"
 
@@ -28,6 +29,7 @@ namespace DOG::gfx
 		m_rd = m_backend->CreateDevice();
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
 		m_imgui = std::make_unique<gfx::ImGUIBackend_DX12>(m_rd, m_sc, S_MAX_FIF);
+		m_d2d = std::make_unique<gfx::d2dBackend_DX12>(m_rd, m_sc, S_NUM_BACKBUFFERS, hwnd);
 		m_sclr = std::make_unique<ShaderCompilerDXC>();
 
 		m_wmCallback = [this](HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -207,21 +209,21 @@ namespace DOG::gfx
 		m_viewMat = view;
 		m_projMat = proj ? *proj : DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_clientWidth / m_clientHeight, 800.f, 0.1f);
 	}
-	
+
 	void Renderer::BeginGUI()
 	{
 		m_imgui->BeginFrame();
 	}
 
-	void Renderer::SubmitMesh(Mesh , u32 , MaterialHandle )
+	void Renderer::SubmitMesh(Mesh, u32, MaterialHandle)
 	{
 	}
 
-	void Renderer::Update(f32 )
+	void Renderer::Update(f32)
 	{
 	}
 
-	void Renderer::Render(f32 )
+	void Renderer::Render(f32)
 	{
 		// ====== GPU
 		auto& scTex = m_scTextures[m_sc->GetNextDrawSurfaceIdx()];
@@ -291,6 +293,7 @@ namespace DOG::gfx
 		}
 
 		m_imgui->Render(m_rd, m_cmdl);
+		
 
 		m_rd->Cmd_EndRenderPass(m_cmdl);
 
@@ -306,7 +309,10 @@ namespace DOG::gfx
 		}
 
 		m_rd->SubmitCommandList(m_cmdl);
-	
+
+		m_d2d->Render(m_rd, m_sc, m_cmdl);
+		
+
 	}
 
 	void Renderer::OnResize(u32 clientWidth, u32 clientHeight)

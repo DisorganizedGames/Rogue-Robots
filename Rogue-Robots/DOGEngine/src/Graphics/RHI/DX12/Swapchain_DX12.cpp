@@ -120,4 +120,12 @@ namespace DOG::gfx
 		}
 		return allowed;
 	}
+	ID3D12Resource* Swapchain_DX12::_GetBuffer(u8 idx)
+	{
+		assert(idx < m_buffers.size());
+		ID3D12Resource* backBuff = nullptr;
+		HRESULT hr = m_sc->GetBuffer(idx, __uuidof(ID3D12Resource), (void**)&backBuff);
+		HR_VFY(hr);
+		return backBuff;
+	}
 }

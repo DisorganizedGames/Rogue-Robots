@@ -14,7 +14,8 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Graphics/Rendering/MaterialTable.h"  "src/Core/TextureFileImporter.h" "src/Core/TextureFileImporter.cpp" 
     "src/Graphics/Rendering/MaterialTable.cpp" "src/Graphics/Rendering/MaterialTable.h" "src/Graphics/Rendering/MaterialTable.cpp"   
     "src/Graphics/Rendering/TextureManager.h" "src/Graphics/Rendering/TextureManager.cpp" "src/Graphics/Rendering/Renderer.h" "src/Graphics/Rendering/Renderer.cpp" 
-    "src/Core/DataPiper.h" "src/Core/DataPiper.cpp" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.h" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.cpp" "src/Graphics/RHI/ImGUIBackend.h")
+    "src/Core/DataPiper.h" "src/Core/DataPiper.cpp" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.h" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.cpp" "src/Graphics/RHI/ImGUIBackend.h" "src/Graphics/RHI/d2dBackend.h" "src/Graphics/RHI/DX12/d2dBackend_DX12.h"
+    "src/Graphics/RHI/DX12/d2dBackend_DX12.cpp")
 
 	file(GLOB_RECURSE TempGraphics
     "src/Graphics/*.cpp")
@@ -27,7 +28,7 @@ add_library("${LibraryName}" STATIC "${SourceFiles}" "${TempGraphics}"   )
 target_include_directories("${LibraryName}" PRIVATE "${CMAKE_SOURCE_DIR}/Core/src/" "${ExternalIncludePath}")
 target_compile_options("${LibraryName}" PRIVATE "/W4")
 set_target_properties("${LibraryName}" PROPERTIES LINKER_LANGUAGE "CXX")
-target_link_libraries("${LibraryName}" PRIVATE "xaudio2" "ole32" "d3d12" "dxgi" "dxguid" "dxcompiler" "Ws2_32" "winmm.lib")
+target_link_libraries("${LibraryName}" PRIVATE "xaudio2" "ole32" "d3d12" "d3d11" "D2d1" "Dwrite" "dxgi" "dxguid" "dxcompiler" "Ws2_32" "winmm.lib")
 
 target_precompile_headers("${LibraryName}" PUBLIC "src/pch.h")
 
