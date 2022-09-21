@@ -98,8 +98,8 @@ class PANEL_PT_builder_analyze(PANEL_PT_builder, Panel):
         row.operator("object.analyze_map")
 
 # Selected blocks
-class PANEL_PT_builder_analyze(PANEL_PT_builder, Panel):
-    bl_idname = "PANEL_PT_builder_analyze"
+class PANEL_PT_builder_selected(PANEL_PT_builder, Panel):
+    bl_idname = "PANEL_PT_builder_selected"
     bl_label = "Map Selection"
 
     def draw(self, context):
@@ -527,7 +527,9 @@ def save_selection(context):
     # then save selection and active object
     for obj in context.selected_objects:
         D.collections['Object_Selection'].objects.link(obj)
-    D.collections['Active_Object'].objects.link(obj)
+    for obj in D.collections['Active_Object'].objects:
+        D.collections['Active_Object'].objects.link(obj)
+    
 
 def restore_selection(context):
     O.object.select_all(action='DESELECT')
@@ -570,6 +572,7 @@ def register():
     bpy.utils.register_class(PANEL_PT_builder_paint)
     bpy.utils.register_class(PANEL_PT_builder_grid)
     bpy.utils.register_class(PANEL_PT_builder_analyze)
+    bpy.utils.register_class(PANEL_PT_builder_selected)
 
 def unregister():
     bpy.utils.unregister_class(CreateGrid)
@@ -588,6 +591,7 @@ def unregister():
     bpy.utils.unregister_class(PANEL_PT_builder_paint)
     bpy.utils.unregister_class(PANEL_PT_builder_grid)
     bpy.utils.unregister_class(PANEL_PT_builder_analyze)
+    bpy.utils.unregister_class(PANEL_PT_builder_selected)
 
 
 #######################################################
@@ -601,38 +605,40 @@ def map_analysis():
         if block_id not in blockDict: #If the current block is not in the dictionary yet we create an entry for it.
         #order: +x  -x  +y  -y  +z  -z
         #IN ENGINE WE USE LEFT HAND! Y AND Z CHANGES PLACE!
-            blockDict[block_id] = [[get_block(x + 1, y, z)], [get_block(x - 1, y, z)], [get_block(x, y + 1, z)], [get_block(x, y - 1, z)], [get_block(x, y, z + 1)], [get_block(x, y, z - 1)]]
+            blockDict[block_id] = [1, [get_block(x + 1, y, z)], [get_block(x - 1, y, z)], [get_block(x, y + 1, z)], [get_block(x, y - 1, z)], [get_block(x, y, z + 1)], [get_block(x, y, z - 1)]]
 
         else: #If the entry already exist we have to check if the neighboring blocks already exists in the id's lists.
+            blockDict[block_id][0] += 1
+            
             r = get_block(x + 1, y, z) #Get the block next to the current one.
-            if blockDict[block_id][0].count(r) == 0: #Check if that block's id already exists in this block's list in that direction.
-                blockDict[block_id][0].append(r)
+            if blockDict[block_id][1].count(r) == 0: #Check if that block's id already exists in this block's list in that direction.
+                blockDict[block_id][1].append(r)
 
             l = get_block(x - 1, y, z)
-            if blockDict[block_id][1].count(l) == 0:
-                blockDict[block_id][1].append(l)
+            if blockDict[block_id][2].count(l) == 0:
+                blockDict[block_id][2].append(l)
 
             f = get_block(x, y + 1, z)
-            if blockDict[block_id][2].count(f) == 0:
-                blockDict[block_id][2].append(f)
+            if blockDict[block_id][3].count(f) == 0:
+                blockDict[block_id][3].append(f)
 
             b = get_block(x, y - 1, z)
-            if blockDict[block_id][3].count(b) == 0:
-                blockDict[block_id][3].append(b)
+            if blockDict[block_id][4].count(b) == 0:
+                blockDict[block_id][4].append(b)
 
             u = get_block(x, y, z + 1)
-            if blockDict[block_id][4].count(u) == 0:
-                blockDict[block_id][4].append(u)
+            if blockDict[block_id][5].count(u) == 0:
+                blockDict[block_id][5].append(u)
 
             d = get_block(x, y, z - 1)
-            if blockDict[block_id][5].count(d) == 0:
-                blockDict[block_id][5].append(d)
-    
+            if blockDict[block_id][6].count(d) == 0:
+                blockDict[block_id][6].append(d)
+        
     blendFileName = D.filepath.split('\\')[-1].split('.')[0] #Get the name of the blendfile.
     f = open(blendFileName + 'Output.txt', 'w')
     for uniqueBlockId in blockDict:
-        f.write(uniqueBlockId + '\n')
-        for i in range(0, 6):
+        f.write(uniqueBlockId + ' ' + str(blockDict[uniqueBlockId][0]) + '\n')
+        for i in range(1, 7):
             s = ""
             for listItem in blockDict[uniqueBlockId][i]:
                 s += listItem + ','
