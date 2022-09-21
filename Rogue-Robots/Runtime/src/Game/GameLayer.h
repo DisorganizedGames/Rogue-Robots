@@ -13,6 +13,8 @@ public:
 	virtual void OnRender() override final;
 	virtual void OnImGuiRender() override final;
 	virtual void OnEvent(DOG::IEvent& event) override final;
+private:
+	void RegisterLuaInterfaces();
 
 private:
 	u64 m_redCube{ 0 };

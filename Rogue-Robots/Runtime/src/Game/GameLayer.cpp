@@ -1,4 +1,7 @@
 #include "GameLayer.h"
+#include "Scripting/LuaGlobal.h"
+#include "Scripting/ScriptManager.h"
+#include "LuaInterfaces.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -39,6 +42,8 @@ GameLayer::GameLayer() noexcept
 
 void GameLayer::OnAttach()
 {
+	//Register Lua interfaces
+	RegisterLuaInterfaces();
 	//...
 }
 
@@ -75,4 +80,19 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 		break;
 	}
 	}
+}
+
+void GameLayer::RegisterLuaInterfaces()
+{
+	LuaGlobal global(&LuaW::s_luaW);
+
+	//Input
+	auto inputLua = global.CreateLuaInterface("Input");
+	inputLua.AddStaticFunction<InputInterface::IsLeftPressed>("IsLeftPressed");
+	inputLua.AddStaticFunction<InputInterface::IsRightPressed>("IsRightPressed");
+	inputLua.AddStaticFunction<InputInterface::IsKeyPressed>("IsKeyPressed");
+	//inputLua.AddFunction<InputInterface, &InputInterface::LeftClick>("LeftClick");
+	global.SetLuaInterface(inputLua);
+
+	//Audio
 }
