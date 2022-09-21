@@ -48,6 +48,8 @@ namespace DOG::gfx
 		u32 GetGlobalDescriptor(BufferView view) const;
 		u32 GetGlobalDescriptor(TextureView view) const;
 
+		
+
 		void Flush();
 
 		// Consumes the receipt (automatic recycling)
@@ -175,6 +177,9 @@ namespace DOG::gfx
 		ID3D12Device5* GetDevice() const { return m_device.Get(); }
 		ID3D12DescriptorHeap* GetMainResourceDH() const;
 		ID3D12GraphicsCommandList4* GetListForExternal(CommandList cmdl);
+
+		ID3D12CommandQueue* _GetQueue();
+		D3D12_CPU_DESCRIPTOR_HANDLE GetReservedRTV();
 
 		// Helpers
 	private:
