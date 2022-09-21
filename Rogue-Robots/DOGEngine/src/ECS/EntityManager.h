@@ -107,7 +107,7 @@ namespace DOG
 		#endif
 		}
 
-		void Do(void (*func)(ComponentType& ...))
+		void Do(std::invocable<ComponentType&...> auto&& func)
 		{
 			std::vector<entity>* ePointer = &(get<0>(m_pools)->denseArray);
 			std::apply([&ePointer](const auto... pool) 
@@ -124,7 +124,7 @@ namespace DOG
 			}
 		}
 
-		void Do(void (*func)(entity entityID, ComponentType& ...))
+		void Do(std::invocable<entity, ComponentType&...> auto&& func)
 		{
 			std::vector<entity>* ePointer = &(get<0>(m_pools)->denseArray);
 			std::apply([&ePointer](const auto... pool)
