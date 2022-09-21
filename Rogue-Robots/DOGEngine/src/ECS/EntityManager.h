@@ -59,7 +59,7 @@ namespace DOG
 		[[nodiscard]] ComponentType& GetComponent(const entity entityID) const noexcept;
 
 		template<typename... ComponentType>
-		requires std::is_base_of_v<ComponentBase, ComponentType...>
+		requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
 		[[nodiscard]] Collection GetCollection() noexcept;
 
 		template<typename ComponentType>
@@ -101,7 +101,7 @@ namespace DOG
 		explicit Collection(EntityManager* mgr, const size_t size) noexcept : m_mgr{ mgr } { m_entities.reserve(size); }
 
 		template<typename... ComponentType>
-		requires std::is_base_of_v<ComponentBase, ComponentType...>
+		requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
 		[[nodiscard]] std::tuple<ComponentType&...> Get(const entity entityID) const noexcept;
 
 		[[nodiscard]] std::vector<entity>::reverse_iterator begin() { return m_entities.rbegin(); }
@@ -116,7 +116,7 @@ namespace DOG
 	};
 
 	template<typename... ComponentType>
-	requires std::is_base_of_v<ComponentBase, ComponentType...>
+	requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
 	std::tuple<ComponentType&...> Collection::Get(const entity entityID) const noexcept
 	{
 		return { m_mgr->GetComponent<ComponentType>(entityID)... };
@@ -166,7 +166,7 @@ namespace DOG
 	}
 
 	template<typename... ComponentType>
-	requires std::is_base_of_v<ComponentBase, ComponentType...>
+	requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
 	Collection EntityManager::GetCollection() noexcept
 	{
 		/*Create a better solution...*/
