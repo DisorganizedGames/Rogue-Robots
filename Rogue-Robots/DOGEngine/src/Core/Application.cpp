@@ -67,7 +67,12 @@ namespace DOG
 				layer->OnUpdate();
 				layer->OnRender();
 			}
-
+#if defined _DEBUG
+			for (auto const layer : m_layerStack)
+			{
+				layer->OnImGuiRender();
+			}
+#endif
 			Mouse::Reset();
 
 			//// ====== GPU

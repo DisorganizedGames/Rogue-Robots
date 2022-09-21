@@ -6,7 +6,10 @@ namespace DOG
 	constexpr const u32 NULL_ENTITY = MAX_ENTITIES;
 	typedef u32 entity;
 	struct SparseSetBase;
+
+	template<typename... ComponentType>
 	class Collection;
+	
 	typedef std::unique_ptr<SparseSetBase> ComponentPool;
 	#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get())) 
 
@@ -60,11 +63,7 @@ namespace DOG
 
 		template<typename... ComponentType>
 		requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
-		[[nodiscard]] Collection GetCollection() noexcept;
-
-		template<typename ComponentType>
-		requires std::is_base_of_v<ComponentBase, ComponentType>
-		[[nodiscard]] std::vector<entity>* GetEntitiesForComponentType() const noexcept;
+		[[nodiscard]] Collection<ComponentType...> Collect() noexcept;
 
 		template<typename ComponentType>
 		requires std::is_base_of_v<ComponentBase, ComponentType>
@@ -88,6 +87,7 @@ namespace DOG
 		requires std::is_base_of_v<ComponentBase, ComponentType>
 		void AddSparseSet() noexcept;
 	private:
+		template<typename... ComponentType>
 		friend class Collection;
 		static EntityManager s_instance;
 		std::vector<entity> m_entities;
@@ -95,32 +95,58 @@ namespace DOG
 		std::vector<ComponentPool> m_components;
 	};
 
+	template<typename... ComponentType>
 	class Collection
 	{
 	public:
-		explicit Collection(EntityManager* mgr, const size_t size) noexcept : m_mgr{ mgr } { m_entities.reserve(size); }
+		explicit Collection(EntityManager* mgr, std::tuple<SparseSet<ComponentType>*...> pools) noexcept
+			: m_mgr{ mgr }, m_pools( std::move(pools) ) 
+		{
+		#if defined _DEBUG
+			std::apply([](const auto... pool) {(ASSERT(pool, "Component type does not exist."), ...); }, m_pools);
+		#endif
+		}
 
-		template<typename... ComponentType>
-		requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
-		[[nodiscard]] std::tuple<ComponentType&...> Get(const entity entityID) const noexcept;
+		void Do(void (*func)(ComponentType& ...))
+		{
+			std::vector<entity>* ePointer = &(get<0>(m_pools)->denseArray);
+			std::apply([&ePointer](const auto... pool) 
+			{
+				((ePointer = (pool->denseArray.size() < ePointer->size()) ? &pool->denseArray : ePointer), ...);
+			}, m_pools);
+		
+			for (int i{ (int)ePointer->size() - 1}; i >= 0; --i)
+			{
+				if ((m_mgr->HasComponent<ComponentType>((*ePointer)[i]) && ...))
+				{
+					func(m_mgr->GetComponent<ComponentType>((*ePointer)[i])...);
+				}
+			}
+		}
 
-		[[nodiscard]] std::vector<entity>::reverse_iterator begin() { return m_entities.rbegin(); }
-		[[nodiscard]] std::vector<entity>::reverse_iterator end() { return m_entities.rend(); }
+		void Do(void (*func)(entity entityID, ComponentType& ...))
+		{
+			std::vector<entity>* ePointer = &(get<0>(m_pools)->denseArray);
+			std::apply([&ePointer](const auto... pool)
+				{
+					((ePointer = (pool->denseArray.size() < ePointer->size()) ? &pool->denseArray : ePointer), ...);
+				}, m_pools);
+
+			for (int i{ (int)ePointer->size() - 1 }; i >= 0; --i)
+			{
+				if ((m_mgr->HasComponent<ComponentType>((*ePointer)[i]) && ...))
+				{
+					func((*ePointer)[i], m_mgr->GetComponent<ComponentType>((*ePointer)[i])...);
+				}
+			}
+		}
 
 	private:
+		DELETE_COPY_MOVE_CONSTRUCTOR(Collection);
 		friend class EntityManager;
-		void Add(entity entityID) noexcept;
-	private:
-		std::vector<entity> m_entities;
+		std::tuple<SparseSet<ComponentType>*...> m_pools;
 		EntityManager* m_mgr;
 	};
-
-	template<typename... ComponentType>
-	requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
-	std::tuple<ComponentType&...> Collection::Get(const entity entityID) const noexcept
-	{
-		return { m_mgr->GetComponent<ComponentType>(entityID)... };
-	}
 
 	template<typename ComponentType, typename ...Args>
 	requires std::is_base_of_v<ComponentBase, ComponentType>
@@ -167,43 +193,9 @@ namespace DOG
 
 	template<typename... ComponentType>
 	requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
-	Collection EntityManager::GetCollection() noexcept
+	Collection<ComponentType...> EntityManager::Collect() noexcept
 	{
-		/*Create a better solution...*/
-		std::vector<std::vector<entity>*> entityVectors = { GetEntitiesForComponentType<ComponentType>()... };
-		std::vector<entity>* vectorWithLeastEntities = entityVectors[0];
-
-		for (u32 i {0u}; i < entityVectors.size(); i++)
-		{
-			if (entityVectors[i]->size() < vectorWithLeastEntities->size())
-			{
-				vectorWithLeastEntities = entityVectors[i];
-			}
-		}
-		
-		Collection collection(this, vectorWithLeastEntities->size());
-		for (u32 j{ 0u }; j < vectorWithLeastEntities->size(); j++)
-		{
-			bool existInAll = true;
-			for (u32 k{ 0u }; k < entityVectors.size() && existInAll; k++)
-			{
-					if (std::find(entityVectors[k]->begin(), entityVectors[k]->end(), (*vectorWithLeastEntities)[j]) == entityVectors[k]->end())
-					{
-						existInAll = false;
-					}
-			}
-			if (existInAll)
-				collection.Add((*vectorWithLeastEntities)[j]);
-		}
-		return collection;
-	}
-
-	template<typename ComponentType>
-	requires std::is_base_of_v<ComponentBase, ComponentType>
-	std::vector<entity>* EntityManager::GetEntitiesForComponentType() const noexcept
-	{
-		ASSERT(m_components[ComponentType::ID] != nullptr, "Component type does not exist.");
-		return &set->denseArray;
+		return Collection<ComponentType...>( this, {set... });
 	}
 
 	template<typename ComponentType> 

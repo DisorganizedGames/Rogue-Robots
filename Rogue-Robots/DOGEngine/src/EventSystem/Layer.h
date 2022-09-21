@@ -11,6 +11,7 @@ namespace DOG
 		virtual void OnDetach() {}
 		virtual void OnUpdate() {}
 		virtual void OnRender() {}
+		virtual void OnImGuiRender() {}
 		virtual void OnEvent(IEvent&) {}
 		[[nodiscard]] constexpr const std::string& GetName() const noexcept { return m_name; }
 	private:

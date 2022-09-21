@@ -1,7 +1,7 @@
 #include "EntityManager.h"
 namespace DOG
 {
-	constexpr const u32 MAX_COMPONENT_TYPES{ 8u };
+	constexpr const u32 INITIAL_COMPONENT_CAPACITY{ 8u };
 
 	EntityManager EntityManager::s_instance;
 	
@@ -65,8 +65,8 @@ namespace DOG
 		for (u32 entityId{ 0u }; entityId < MAX_ENTITIES; entityId++)
 			m_freeList.push(entityId);
 
-		m_components.reserve(MAX_COMPONENT_TYPES);
-		for (u32 i{ 0u }; i < MAX_COMPONENT_TYPES; i++)
+		m_components.reserve(INITIAL_COMPONENT_CAPACITY);
+		for (u32 i{ 0u }; i < INITIAL_COMPONENT_CAPACITY; i++)
 		{
 			m_components.emplace_back(nullptr);
 		}
@@ -87,10 +87,5 @@ namespace DOG
 		std::swap(m_components[componentPoolIndex]->sparseArray[last], m_components[componentPoolIndex]->sparseArray[entityID]);
 		m_components[componentPoolIndex]->denseArray.pop_back();
 		m_components[componentPoolIndex]->sparseArray[entityID] = NULL_ENTITY;
-	}
-
-	void Collection::Add(entity entityID) noexcept
-	{
-		m_entities.emplace_back(entityID);
 	}
 }
