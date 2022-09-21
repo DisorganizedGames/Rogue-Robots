@@ -1,11 +1,12 @@
 #Root/Runtime
 set(SourceFiles  "src/Core/RuntimeApplication.cpp" "src/Core/RuntimeApplication.h" "src/Scripting/LuaContext.cpp" "src/Scripting/LuaContext.h" "src/Scripting/LuaW.cpp"
     "src/Scripting/LuaW.h" "src/Game/GameLayer.h" "src/Game/GameLayer.cpp" 
-	"src/Scripting/LuaTable.h" "src/Scripting/LuaTable.cpp" 
-	"src/Scripting/ScriptManager.cpp" "src/Scripting/ScriptManager.h" 
-	"src/Scripting/LuaGlobal.h" "src/Scripting/LuaGlobal.cpp"
-    "src/Game/DebugCamera.h" "src/Game/DebugCamera.cpp"
-     "src/Scripting/LuaEvent.h" "src/Scripting/LuaEvent.cpp" "src/Game/EmilDebugLayer.h" "src/Game/EmilDebugLayer.cpp")
+		"src/Scripting/LuaTable.h" "src/Scripting/LuaTable.cpp" 
+		"src/Scripting/ScriptManager.cpp" "src/Scripting/ScriptManager.h" 
+		"src/Scripting/LuaGlobal.h" "src/Scripting/LuaGlobal.cpp"
+    "src/Game/EmilDebugLayer.h" "src/Game/EmilDebugLayer.cpp")
+    "src/Scripting/LuaEvent.h" "src/Scripting/LuaEvent.cpp" 
+		"src/Game/MainPlayer.h" "src/Game/MainPlayer.cpp")
 		
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")

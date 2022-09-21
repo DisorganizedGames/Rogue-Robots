@@ -69,9 +69,11 @@ namespace DOG
 
 	struct CameraComponent : public Component<CameraComponent>
 	{
-		DirectX::SimpleMath::Matrix viewMatrix = DirectX::XMMatrixIdentity();
-		DirectX::SimpleMath::Matrix projMatrix = DirectX::XMMatrixIdentity();
-	
+		using Matrix = DirectX::SimpleMath::Matrix;	
+
+		Matrix viewMatrix = DirectX::XMMatrixIdentity();
+		Matrix projMatrix = DirectX::XMMatrixIdentity();
+
 		inline static CameraComponent* s_mainCamera = nullptr;
 	};
 }

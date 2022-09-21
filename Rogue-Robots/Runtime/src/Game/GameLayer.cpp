@@ -39,12 +39,7 @@ GameLayer::GameLayer() noexcept
 
 void GameLayer::OnAttach()
 {
-	m_debugCam = DebugCamera(0, 1, 0);
-	m_camera = m_entityManager.CreateEntity();
-	auto& cc = m_entityManager.AddComponent<CameraComponent>(m_camera);
-
-	cc.viewMatrix = m_debugCam.GetViewMatrix();
-	CameraComponent::s_mainCamera = &cc;
+	//...
 }
 
 void GameLayer::OnDetach()
@@ -54,9 +49,7 @@ void GameLayer::OnDetach()
 
 void GameLayer::OnUpdate()
 {
-	m_debugCam.OnUpdate();
-	auto& cc = m_entityManager.GetComponent<CameraComponent>(m_camera);
-	cc.viewMatrix = m_debugCam.GetViewMatrix();
+	m_player.OnUpdate();
 }
 
 void GameLayer::OnRender()

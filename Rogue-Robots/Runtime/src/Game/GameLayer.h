@@ -1,6 +1,6 @@
 #pragma once
 #include <DOGEngine.h>
-#include "DebugCamera.h"
+#include "MainPlayer.h"
 
 class GameLayer : public DOG::Layer
 {
@@ -15,11 +15,10 @@ public:
 	virtual void OnEvent(DOG::IEvent& event) override final;
 
 private:
-	DebugCamera m_debugCam;
-	DOG::entity m_camera{ 0 };
 	u64 m_redCube{ 0 };
 	u64 m_greenCube{ 0 };
 	u64 m_blueCube{ 0 };
 	u64 m_magentaCube{ 0 };
 	DOG::EntityManager& m_entityManager;
+	MainPlayer m_player;
 };
