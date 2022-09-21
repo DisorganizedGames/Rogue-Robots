@@ -23,13 +23,47 @@ namespace DOG
 
 	struct TransformComponent : public Component<TransformComponent>
 	{
-		TransformComponent(Vector3f position = { 0.0f, 0.0f, 0.0f }) noexcept : m_position{ position } {}
-		Vector3f m_position;
+		TransformComponent(DirectX::SimpleMath::Vector3 position = { 0.0f, 0.0f, 0.0f },
+			DirectX::SimpleMath::Vector3 rotation = { 0.0f, 0.0f, 0.0f },
+			DirectX::SimpleMath::Vector3 scale = { 1.0f, 1.0f, 1.0f }) noexcept
+		{
+			auto t = DirectX::SimpleMath::Matrix::CreateTranslation(position);
+			auto r = DirectX::SimpleMath::Matrix::CreateFromYawPitchRoll(rotation);
+			auto s = DirectX::SimpleMath::Matrix::CreateScale(scale);
+			worldMatrix = s * r * t;
+		}
+		TransformComponent& SetPosition(DirectX::SimpleMath::Vector3 position)
+		{
+			worldMatrix.Translation(position);
+			return *this;
+		}
+		TransformComponent& SetRotation(DirectX::SimpleMath::Vector3 rotation)
+		{
+			DirectX::XMVECTOR scale, rotationQuat, translation;
+			DirectX::XMMatrixDecompose(&scale, &rotationQuat, &translation, worldMatrix);
+			worldMatrix = DirectX::XMMatrixScalingFromVector(scale) *
+				DirectX::XMMatrixRotationRollPitchYawFromVector(rotation) *
+				DirectX::XMMatrixTranslationFromVector(translation);
+			return *this;
+		}
+		TransformComponent& SetScale(DirectX::SimpleMath::Vector3 scale)
+		{
+			DirectX::XMVECTOR xmScale, rotationQuat, translation;
+			DirectX::XMMatrixDecompose(&xmScale, &rotationQuat, &translation, worldMatrix);
+			worldMatrix = DirectX::XMMatrixScalingFromVector(scale) *
+				DirectX::XMMatrixRotationQuaternion(rotationQuat) *
+				DirectX::XMMatrixTranslationFromVector(translation);
+			return *this;
+		}
+		operator const DirectX::SimpleMath::Matrix& () const { return worldMatrix; }
+		operator DirectX::SimpleMath::Matrix& () { return worldMatrix; }
+		DirectX::SimpleMath::Matrix worldMatrix = DirectX::SimpleMath::Matrix::Identity;
 	};
 
 	struct ModelComponent : public Component<ModelComponent>
 	{
 		ModelComponent(u64 id = 0) noexcept : id{ id } {}
+		operator const u64 () const { return id; }
 		u64 id;
 	};
 }

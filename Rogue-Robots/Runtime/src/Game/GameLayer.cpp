@@ -1,5 +1,8 @@
 #include "GameLayer.h"
 
+using namespace DOG;
+using namespace DirectX;
+using namespace DirectX::SimpleMath;
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
 {
@@ -12,26 +15,29 @@ GameLayer::GameLayer() noexcept
 	m_blueCube = am.LoadModelAsset("Assets/blue_cube.glb");
 	m_magentaCube = am.LoadModelAsset("Assets/magenta_cube.glb");
 
-	DOG::piper::TempEntity e1;
-	e1.modelID = m_redCube;
-	e1.worldMatrix.Translation({ 4, -2, 5 });
+	entity entity1 = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<ModelComponent>(entity1, m_redCube);
+	m_entityManager.AddComponent<TransformComponent>(entity1)
+		.SetPosition({ 4, -2, 5 })
+		.SetRotation({ 3.14f / 4.0f, 0, 0 })
+		.SetScale({0.5, 0.5, 0.5});
 
-	DOG::piper::TempEntity e2;
-	e2.modelID = m_greenCube;
-	e2.worldMatrix.Translation({ -4, -2, 5 });
+	entity entity2 = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<ModelComponent>(entity2, m_greenCube);
+	m_entityManager.AddComponent<TransformComponent>(entity2, Vector3(-4, -2, 5), Vector3(0.1f, 0, 0));
 
-	DOG::piper::TempEntity e3;
-	e3.modelID = m_blueCube;
-	e3.worldMatrix.Translation({ 4, 2, 5 });
+	entity entity3 = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<ModelComponent>(entity3, m_blueCube);
+	auto& t3 = m_entityManager.AddComponent<TransformComponent>(entity3);
+	t3.SetPosition({ 4, 2, 5 });
+	t3.SetScale({ 0.5f, 0.5f, 0.5f });
 
-	DOG::piper::TempEntity e4;
-	e4.modelID = m_magentaCube;
-	e4.worldMatrix.Translation({ -4, 2, 5 });
-
-	m_pipedData.entitiesToRender.push_back(e1);
-	m_pipedData.entitiesToRender.push_back(e2);
-	m_pipedData.entitiesToRender.push_back(e3);
-	m_pipedData.entitiesToRender.push_back(e4);
+	entity entity4 = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<ModelComponent>(entity4, m_magentaCube);
+	auto& t4 = m_entityManager.AddComponent<TransformComponent>(entity4);
+	t4.worldMatrix(3, 0) = -4;
+	t4.worldMatrix(3, 1) = 2;
+	t4.worldMatrix(3, 2) = 5;
 
 	DOG::piper::SetPipe(&m_pipedData);
 }

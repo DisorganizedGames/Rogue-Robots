@@ -2,7 +2,7 @@
 #include "Window.h"
 #include "Time.h"
 #include "AssetManager.h"
-
+#include "../ECS/EntityManager.h"
 #include "../Input/Mouse.h"
 #include "../Input/Keyboard.h"
 
@@ -72,12 +72,14 @@ namespace DOG
 
 			//// ====== GPU
 			m_renderer->BeginFrame_GPU();
+			Collection collectionToRender = EntityManager::Get().GetCollection<TransformComponent, ModelComponent>();
 
-			for (auto& e : runtimeData->entitiesToRender)
+			for (auto& e : collectionToRender)
 			{
-				ModelAsset* model = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(e.modelID));
+				auto [transformC, modelC] = collectionToRender.Get<TransformComponent, ModelComponent>(e);
+				ModelAsset* model = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(modelC));
 				for (u32 i = 0; i < model->gfxModel.mesh.numSubmeshes; ++i)
-					m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], e.worldMatrix);
+					m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], transformC);
 			}
 
 			m_renderer->SetMainRenderCamera(runtimeData->viewMat);
