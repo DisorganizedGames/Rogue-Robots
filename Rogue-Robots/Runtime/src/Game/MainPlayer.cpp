@@ -22,7 +22,7 @@ MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 	UpdateCamera(camera);
 
 	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
-	camera.projMatrix = XMMatrixPerspectiveFovLH(120.f * (XM_PI/180.f), aspectRatio, 0.1f, 1000.f);
+	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
 }
 
 void MainPlayer::OnUpdate()

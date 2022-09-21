@@ -79,9 +79,11 @@ namespace DOG
 					ModelAsset* model = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(modelC));
 					for (u32 i = 0; i < model->gfxModel.mesh.numSubmeshes; ++i)
 					m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], transformC);
-				});
-
-			m_renderer->SetMainRenderCamera(CameraComponent::s_mainCamera->viewMatrix);
+			}
+			
+			auto mainCam = CameraComponent::s_mainCamera;
+			auto& proj = (DirectX::XMMATRIX&)mainCam->projMatrix;
+			m_renderer->SetMainRenderCamera(mainCam->viewMatrix, &proj);
 			
 
 			m_renderer->Update(0.0f);
