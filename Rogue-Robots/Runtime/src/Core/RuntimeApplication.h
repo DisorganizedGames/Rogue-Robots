@@ -1,6 +1,7 @@
 #pragma once
 #include <DOGEngine.h>
 #include "../Game/GameLayer.h"
+//#include "../Game/EmilDebugLayer.h"
 class RuntimeApplication : public DOG::Application
 {
 public:
@@ -12,4 +13,5 @@ public:
 
 private:
 	GameLayer m_gameLayer;
+	//EmilDebugLayer m_EmilDebugLayer;
 };

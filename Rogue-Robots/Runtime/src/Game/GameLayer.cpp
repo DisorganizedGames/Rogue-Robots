@@ -63,6 +63,11 @@ void GameLayer::OnRender()
 	//...
 }
 
+void GameLayer::OnImGuiRender()
+{
+	//...
+}
+
 //Place-holder example on how to use event system:
 void GameLayer::OnEvent(DOG::IEvent& event)
 {

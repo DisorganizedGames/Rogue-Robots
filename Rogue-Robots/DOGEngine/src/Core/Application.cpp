@@ -67,20 +67,22 @@ namespace DOG
 				layer->OnUpdate();
 				layer->OnRender();
 			}
-
+#if defined _DEBUG
+			for (auto const layer : m_layerStack)
+			{
+				layer->OnImGuiRender();
+			}
+#endif
 			Mouse::Reset();
 
 			//// ====== GPU
 			m_renderer->BeginFrame_GPU();
-			Collection collectionToRender = EntityManager::Get().GetCollection<TransformComponent, ModelComponent>();
-
-			for (auto& e : collectionToRender)
-			{
-				auto [transformC, modelC] = collectionToRender.Get<TransformComponent, ModelComponent>(e);
-				ModelAsset* model = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(modelC));
-				for (u32 i = 0; i < model->gfxModel.mesh.numSubmeshes; ++i)
+			EntityManager::Get().Collect<TransformComponent, ModelComponent>().Do([&](TransformComponent& transformC, ModelComponent& modelC)
+				{
+					ModelAsset* model = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(modelC));
+					for (u32 i = 0; i < model->gfxModel.mesh.numSubmeshes; ++i)
 					m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], transformC);
-			}
+				});
 
 			m_renderer->SetMainRenderCamera(runtimeData->viewMat);
 

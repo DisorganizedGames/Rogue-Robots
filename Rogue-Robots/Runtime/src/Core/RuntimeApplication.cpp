@@ -18,8 +18,8 @@ RuntimeApplication::~RuntimeApplication()
 
 void RuntimeApplication::OnStartUp() noexcept
 {
-	//SetWorkingDirectory();
 	PushLayer(&m_gameLayer);
+	//PushLayer(&m_EmilDebugLayer);
 }
 
 void RuntimeApplication::OnShutDown() noexcept
