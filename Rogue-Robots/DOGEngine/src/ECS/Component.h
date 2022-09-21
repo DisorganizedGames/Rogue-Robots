@@ -8,10 +8,13 @@ namespace DOG
 		[[nodiscard]] static const u32 GetID() noexcept;
 	};
 
+	class EntityManager;
 	template<typename T>
 	struct Component : public ComponentBase
 	{
+		friend EntityManager;
 		Component() noexcept = default;
+	private:
 		static const u32 ID;
 	};
 
