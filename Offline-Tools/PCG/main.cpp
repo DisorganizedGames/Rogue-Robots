@@ -26,11 +26,11 @@ int main()
         std::ofstream output;
         output.open(input + "_generatedLevel.txt");
 
-        for (uint32_t i{ 0u }; i < d; i++)
+        for (uint32_t i{ 0u }; i < d; ++i)
         {
-            for (uint32_t j{ 0u }; j < h; j++)
+            for (uint32_t j{ 0u }; j < h; ++j)
             {
-                for (uint32_t k{ 0u }; k < w; k++)
+                for (uint32_t k{ 0u }; k < w; ++k)
                 {
                     output << generatedLevel[i * h * w + j * w + k] << " ";
                 }

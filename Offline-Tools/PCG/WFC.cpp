@@ -12,7 +12,7 @@ bool WFC::GenerateLevel()
 
 	//Create an entropy block for each cell.
 	//Set the id to be the index, and the possibilities as all blocks for now.
-	for (uint32_t i{ 0u }; i < m_width * m_height * m_depth; i++)
+	for (uint32_t i{ 0u }; i < m_width * m_height * m_depth; ++i)
 	{
 		EntropyBlock temp;
 		temp.id = i;
@@ -23,11 +23,11 @@ bool WFC::GenerateLevel()
 	//ADD A NICE WAY TO INTRODUCE MULTIPLE CONSTRAINTS HERE!
 	{
 		//We now go through the entropy and introduce the boundary constraint.
-		for (uint32_t i{ 0u }; i < m_width * m_height * m_depth; i++)
+		for (uint32_t i{ 0u }; i < m_width * m_height * m_depth; ++i)
 		{
 			if (i % m_width == 0) //If the index is on y = 0
 			{
-				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); j++) //Go through all the current possibilities
+				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities
 				{
 					std::string c = m_entropy[i].possibilities[j];
 					//Check if the possibility cannot have a boundary in the negative y direction.
@@ -48,7 +48,7 @@ bool WFC::GenerateLevel()
 			}
 			if (i % m_width == m_width - 1) //If the index is on y = width
 			{
-				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); j++) //Go through all the current possibilities
+				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities
 				{
 					std::string c = m_entropy[i].possibilities[j];
 					//Check if the possibility cannot have a boundary in the positive y direction.
@@ -70,7 +70,7 @@ bool WFC::GenerateLevel()
 			uint32_t remainder = i % (m_width * m_height);
 			if (remainder < m_width) //If the index is on z = 0
 			{
-				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); j++) //Go through all the current possibilities
+				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities
 				{
 					std::string c = m_entropy[i].possibilities[j];
 					//Check if the possibility cannot have a boundary in the negative z direction.
@@ -91,7 +91,7 @@ bool WFC::GenerateLevel()
 			}
 			if (remainder < m_width * m_height && remainder >= m_width * (m_height - 1)) //If the index is on z = height
 			{
-				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); j++) //Go through all the current possibilities
+				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities
 				{
 					std::string c = m_entropy[i].possibilities[j];
 					//Check if the possibility cannot have a boundary in the positive z direction.
@@ -113,7 +113,7 @@ bool WFC::GenerateLevel()
 			if (i < m_width * m_height) //If the index is on x = 0.
 			{
 				//Go through all the current possibilities in the cell.
-				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); j++)
+				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j)
 				{
 					std::string c = m_entropy[i].possibilities[j];
 					//Check if the possibility cannot have a boundary in the negative x direction.
@@ -134,7 +134,7 @@ bool WFC::GenerateLevel()
 			}
 			if (i >= m_width * m_height * (m_depth - 1)) //If the index is on x = depth
 			{
-				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); j++) //Go through all the current possibilities
+				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities
 				{
 					std::string c = m_entropy[i].possibilities[j];
 					//Check if the possibility cannot have a boundary in the positive x direction.
@@ -233,7 +233,7 @@ bool WFC::GenerateLevel()
 
 		//Now that a single possibility is chosen the rest of the possibilities have to be removed.
 		//The information that each one have been removed is then propogated out to the neighboring cells.
-		for (uint32_t i{ 0u }; i < m_entropy[index].possibilities.size(); i++)
+		for (uint32_t i{ 0u }; i < m_entropy[index].possibilities.size(); ++i)
 		{
 			std::string current = m_entropy[index].possibilities[i];
 			if (current != c)
@@ -305,7 +305,7 @@ void WFC::ReadInput(std::string input)
 			m_totalCount += static_cast<uint32_t>(m_blockPossibilities[id].frequency);
 
 			//For each direction.
-			for (uint32_t i{ 0u }; i < 6; i++)
+			for (uint32_t i{ 0u }; i < 6; ++i)
 			{
 				//Go through each possibility in that direction.
 				std::getline(inputFile, line);
@@ -402,7 +402,7 @@ bool WFC::Propogate(std::string& removed, uint32_t index)
 //Dir is the direction from the neighborIndex TO the currentIndex.
 void WFC::CheckForPropogation(uint32_t currentIndex, uint32_t neighborIndex, unsigned dir, std::string& removed)
 {
-	for (uint32_t i{ 0u }; i < m_entropy[neighborIndex].possibilities.size(); i++) //For every possibility in the neighbor cell
+	for (uint32_t i{ 0u }; i < m_entropy[neighborIndex].possibilities.size(); ++i) //For every possibility in the neighbor cell
 	{
 		std::string& r = m_entropy[neighborIndex].possibilities[i];
 		bool matched = false;

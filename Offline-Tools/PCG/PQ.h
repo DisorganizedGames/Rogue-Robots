@@ -8,15 +8,16 @@ public:
 
 	PriorityQueue(std::vector<EntropyBlock>& blockList, std::unordered_map<std::string, Block>& blockPossibilities, uint32_t width, uint32_t height, uint32_t depth) noexcept
 	{
-		m_first = new QueueBlock();
+		m_first = std::make_shared<QueueBlock>();
+		//m_first = new QueueBlock();
 		m_first->m_block = &blockList[0];
 		m_first->m_entropy = CalculateEntropy(m_first->m_block->possibilities, blockPossibilities);
 		m_first->m_next = nullptr;
 
 		//For all entropyblocks except first calculate the entropy and place it in the correct location in the PQ.
-		for (uint32_t i{ 1u }; i < width * height * depth; i++)
+		for (uint32_t i{ 1u }; i < width * height * depth; ++i)
 		{
-			QueueBlock* newBlock = new QueueBlock();
+			std::shared_ptr<QueueBlock> newBlock = std::make_shared<QueueBlock>();
 			newBlock->m_block = &blockList[i];
 			newBlock->m_entropy = CalculateEntropy(newBlock->m_block->possibilities, blockPossibilities);
 			newBlock->m_next = nullptr;
@@ -29,8 +30,8 @@ public:
 			}
 			else
 			{
-				QueueBlock* prevBlock = m_first;
-				QueueBlock* nextBlock = m_first->m_next;
+				std::shared_ptr<QueueBlock> prevBlock = m_first;
+				std::shared_ptr<QueueBlock> nextBlock = m_first->m_next;
 				bool placed = false;
 				//Find the spot where the new block is supposed to go.
 				while (nextBlock && !placed)
@@ -69,5 +70,5 @@ private:
 	//Calculates the Shannon entropy of the block. Used as prio.
 	float CalculateEntropy(std::vector<std::string>& currentPossibilities, std::unordered_map<std::string, Block>& blockPossibilities);
 
-	QueueBlock* m_first = nullptr;
+	std::shared_ptr<QueueBlock> m_first = nullptr;
 };

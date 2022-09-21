@@ -11,10 +11,10 @@ int PriorityQueue::Pop()
 		//Go through the first few elements and see how many there are that share lowest entropy.
 		uint32_t count = 1;
 		float lowestVal = m_first->m_entropy;
-		QueueBlock* current = m_first->m_next;
+		std::shared_ptr<QueueBlock> current = m_first->m_next;
 		while (current && current->m_entropy == lowestVal)
 		{
-			count++;
+			++count;
 			current = current->m_next;
 		}
 
@@ -28,7 +28,6 @@ int PriorityQueue::Pop()
 			uint32_t returnIndex = current->m_block->id;
 			current->m_block = nullptr;
 			current->m_next = nullptr;
-			delete current;
 
 			return returnIndex;
 		}
@@ -43,12 +42,12 @@ int PriorityQueue::Pop()
 			//Go to the randomized element.
 			count = 1;
 			current = m_first;
-			QueueBlock* prev = nullptr;
+			std::shared_ptr<QueueBlock> prev = nullptr;
 			while (count != val)
 			{
 				prev = current;
 				current = current->m_next;
-				count++;
+				++count;
 			}
 			if (current)
 			{
@@ -72,7 +71,6 @@ int PriorityQueue::Pop()
 				uint32_t returnIndex = current->m_block->id;
 				current->m_block = nullptr;
 				current->m_next = nullptr;
-				delete current;
 
 				return returnIndex;
 			}
@@ -86,8 +84,8 @@ int PriorityQueue::Pop()
 
 bool PriorityQueue::Rearrange(uint32_t index, std::unordered_map<std::string, Block>& blockPossibilities)
 {
-	QueueBlock* current = m_first;
-	QueueBlock* prev = nullptr;
+	std::shared_ptr<QueueBlock> current = m_first;
+	std::shared_ptr<QueueBlock> prev = nullptr;
 	//Go to the element in question.
 	while (current && current->m_block->id != index)
 	{
@@ -101,7 +99,6 @@ bool PriorityQueue::Rearrange(uint32_t index, std::unordered_map<std::string, Bl
 	}
 	else
 	{
-
 		if (current->m_block->possibilities.size() == 0)
 		{
 			return false; //This means the generation failed, because a block ended up not having any valid block.
@@ -118,7 +115,7 @@ bool PriorityQueue::Rearrange(uint32_t index, std::unordered_map<std::string, Bl
 			current->m_next = nullptr;
 
 			//Find the spot where it is supposed to go.
-			QueueBlock* stepper = m_first;
+			std::shared_ptr<QueueBlock> stepper = m_first;
 			prev = nullptr;
 			while (stepper && stepper->m_entropy < current->m_entropy)
 			{
