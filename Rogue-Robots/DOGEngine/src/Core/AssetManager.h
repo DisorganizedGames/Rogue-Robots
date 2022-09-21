@@ -211,7 +211,21 @@ namespace DOG
 		void UnLoadAsset(u64 id, AssetUnLoadFlag flag = AssetUnLoadFlag::RemoveFromAllMemoryTypes);
 
 		Asset* GetAsset(u64 id) const;
+		void Update();
 
+		template<typename T, typename ...Args>
+		static void AddCommand(T&& command, Args&&... args)
+		{
+			s_commandQueueMutex.lock();
+			s_commandQueue.emplace(
+				[command = std::forward<T>(command), args = std::make_tuple(std::forward<Args>(args)...)]() mutable
+				{
+					std::apply(command, std::move(args));
+				});
+			s_commandQueueMutex.unlock();
+		}
+
+		void ExecuteCommands();
 	private:
 		AssetManager();
 
@@ -225,10 +239,12 @@ namespace DOG
 	private:
 		static std::unique_ptr<AssetManager> s_instance;
 		static constexpr u64 MAX_AUDIO_SIZE_ASYNC = 65536;
-
+		static std::mutex s_commandQueueMutex;
+		static std::queue<std::function<void()>> s_commandQueue;
 		std::unordered_map<u64, ManagedAsset*> m_assets;
 
 		MaterialManager m_materialManager;
+
 
 		gfx::Renderer* m_renderer = nullptr;
 	};

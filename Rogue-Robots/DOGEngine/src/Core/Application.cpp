@@ -59,6 +59,8 @@ namespace DOG
 			// Example ImGUI call
 			ImGui::ShowDemoWindow(&showDemoWindow);
 
+			AssetManager::Get().Update();
+
 			for (auto const layer : m_layerStack)
 			{
 				layer->OnUpdate();

@@ -19,6 +19,8 @@ namespace DOG
 	std::optional<gfx::TextureView> TextureAssetToGfxTexture(u64 assetID, gfx::GraphicsBuilder& builder, const AssetManager& am);
 
 	std::unique_ptr<AssetManager> AssetManager::s_instance = nullptr;
+	std::mutex AssetManager::s_commandQueueMutex;
+	std::queue<std::function<void()>> AssetManager::s_commandQueue;
 
 	void AssetManager::Initialize(gfx::Renderer* renderer)
 	{
@@ -75,8 +77,8 @@ namespace DOG
 		u64 id = GenerateRandomID();
 		m_assets.insert({ id, new ManagedAsset(AssetStateFlag::ExistOnCPU, newModel) });
 
-		MoveModelToGPU(id);
 
+		AssetManager::AddCommand([](u64 idToMove) { AssetManager::Get().MoveModelToGPU(idToMove); }, id);
 		return id;
 	}
 
@@ -130,6 +132,23 @@ namespace DOG
 		{
 			std::cout << "Warning AssetManager::GetAsset called with invalid id as argument." << std::endl;
 			return nullptr;
+		}
+	}
+
+	void AssetManager::Update()
+	{
+		ExecuteCommands();
+	}
+
+	void AssetManager::ExecuteCommands()
+	{
+		while (!s_commandQueue.empty())
+		{
+			s_commandQueueMutex.lock();
+			auto command = std::move(s_commandQueue.front());
+			s_commandQueue.pop();
+			s_commandQueueMutex.unlock();
+			command();
 		}
 	}
 
