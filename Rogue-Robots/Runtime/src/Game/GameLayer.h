@@ -1,7 +1,7 @@
 #pragma once
 #include <DOGEngine.h>
-#include "../DOGEngine/src/Core/DataPiper.h"
 #include "DebugCamera.h"
+
 class GameLayer : public DOG::Layer
 {
 public:
@@ -13,11 +13,10 @@ public:
 	virtual void OnRender() override final;
 	virtual void OnImGuiRender() override final;
 	virtual void OnEvent(DOG::IEvent& event) override final;
-private:
-	DOG::piper::PipedData m_pipedData{};
 
 private:
 	DebugCamera m_debugCam;
+	DOG::entity m_camera{ 0 };
 	u64 m_redCube{ 0 };
 	u64 m_greenCube{ 0 };
 	u64 m_blueCube{ 0 };

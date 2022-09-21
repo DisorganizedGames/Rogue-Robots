@@ -11,8 +11,6 @@
 
 #include "../Graphics/Rendering/Renderer.h"
 
-#include "../Core/DataPiper.h"
-
 #include "ImGUI/imgui.h"
 
 
@@ -43,7 +41,6 @@ namespace DOG
 	void Application::Run() noexcept
 	{
 		// Temporary read only data from runtime
-		const piper::PipedData* runtimeData = piper::GetPipe();
 		bool showDemoWindow = true;
 
 
@@ -84,7 +81,8 @@ namespace DOG
 					m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], transformC);
 				});
 
-			m_renderer->SetMainRenderCamera(runtimeData->viewMat);
+			m_renderer->SetMainRenderCamera(CameraComponent::s_mainCamera->viewMatrix);
+			
 
 			m_renderer->Update(0.0f);
 			m_renderer->Render(0.0f);
