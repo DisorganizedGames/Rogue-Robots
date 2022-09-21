@@ -5,6 +5,20 @@ Table& LuaTable::GetTable()
 	return m_table;
 }
 
+//Calls a function on the table
+void LuaTable::CallFunctionOnTableNoReturn(Function function)
+{
+	m_luaW->CallTableLuaFunction(m_table, function);
+}
+
+//Calls a function on the table with the name of the function being required
+void LuaTable::CallFunctionOnTableNoReturn(const std::string& name)
+{
+	Function function = m_luaW->GetFunctionFromTable(m_table, name);
+	m_luaW->CallTableLuaFunction(m_table, function);
+	m_luaW->RemoveReferenceToFunction(function);
+}
+
 LuaTable::LuaTable(LuaW* luaW) : m_luaW(luaW)
 {
 	m_table = luaW->CreateTable();
@@ -93,6 +107,11 @@ void LuaTable::AddFunctionToTable(const std::string& name, Function& function)
 	m_luaW->AddFunctionToTable(m_table, name, function);
 }
 
+void LuaTable::AddUserDataToTable(const std::string& name, UserData& userData)
+{
+	m_luaW->AddUserDataToTable(m_table, name, userData);
+}
+
 LuaTable LuaTable::CreateTableInTable(const std::string& name)
 {
 	Table table = m_luaW->CreateTable();
@@ -132,9 +151,16 @@ LuaTable LuaTable::GetTableFromTable(const std::string& name)
 	return LuaTable(m_luaW, table);
 }
 
+UserData LuaTable::GetUserDataFromTable(const std::string& name)
+{
+	return m_luaW->GetUserDataFromTable(m_table, name);
+}
+
 //Will assert in debug and in release will return an invalid function if the function does not exist
 Function LuaTable::GetFunctionFromTable(const std::string& name)
 {
+	if (m_table.ref == -1)
+		return {-1};
 	return m_luaW->GetFunctionFromTable(m_table, name);
 }
 
@@ -144,18 +170,18 @@ Function LuaTable::TryGetFunctionFromTable(const std::string& name)
 	return m_luaW->TryGetFunctionFromTable(m_table, name);
 }
 
-//Calls a function on the table
-void LuaTable::CallFunctionOnTable(Function function)
+LuaFunctionReturn LuaTable::CallFunctionOnTable(Function function)
 {
-	m_luaW->CallTableLuaFunction(m_table, function);
+	return m_luaW->CallTableLuaFunctionReturn(m_table, function);
 }
 
-//Calls a function on the table with the name of the function being required
-void LuaTable::CallFunctionOnTable(const std::string& name)
+LuaFunctionReturn LuaTable::CallFunctionOnTable(const std::string& name)
 {
+	//Get function
 	Function function = m_luaW->GetFunctionFromTable(m_table, name);
-	m_luaW->CallTableLuaFunction(m_table, function);
+	auto luaReturns = m_luaW->CallTableLuaFunctionReturn(m_table, function);
 	m_luaW->RemoveReferenceToFunction(function);
+	return luaReturns;
 }
 
 //Will remove the reference to the table on the c++ side which means the lua garbage collection will remove it if there is no reference on the lua side to the table

@@ -30,7 +30,15 @@ public:
 	bool GetBoolean(const std::string& luaGlobalName);
 	LuaTable GetTable(const std::string& luaGlobalName);
 	template <typename T>
-	T* GetUserData(const std::string& luaGlobalName);
+	T* GetUserDataPointer(const std::string& luaGlobalName);
+	UserData GetUserData(const std::string& luaGlobalName);
+
+	template <class... Args>
+	LuaFunctionReturn CallGlobalFunction(Function& function, Args... args);
+	template <class... Args>
+	LuaFunctionReturn CallGlobalFunction(const std::string& name, Args... args);
+	LuaFunctionReturn CallGlobalFunction(Function& function);
+	LuaFunctionReturn CallGlobalFunction(const std::string& name);
 };
 
 //Sets the given name to a global function
@@ -49,10 +57,36 @@ inline void LuaGlobal::SetUserData(T* object, const std::string& objectName, con
 
 //Get the global userData
 template<typename T>
-inline T* LuaGlobal::GetUserData(const std::string& luaGlobalName)
+inline T* LuaGlobal::GetUserDataPointer(const std::string& luaGlobalName)
 {
 	UserData userData = m_luaW->GetGlobalUserData(luaGlobalName);
 	T* object = m_luaW->GetUserDataPointer<T>(userData);
 	m_luaW->RemoveReferenceToUserData(userData);
 	return object;
+}
+
+template<class ...Args>
+inline LuaFunctionReturn LuaGlobal::CallGlobalFunction(Function& function, Args ...args)
+{
+	//Get the amount of arguments
+	int argumentSize = sizeof...(Args);
+	//Push the arguments to the stack
+	m_luaW->PushStack(args...);
+
+	return m_luaW->CallLuaFunctionReturn(function, argumentSize);
+}
+
+template<class ...Args>
+inline LuaFunctionReturn LuaGlobal::CallGlobalFunction(const std::string& name, Args ...args)
+{
+	//Get function
+	Function function = m_luaW->GetGlobalFunction(name);
+	//Get the amount of arguments
+	int argumentSize = sizeof...(Args);
+	//Push the arguments to the stack
+	m_luaW->PushStack(args...);
+
+	auto luaReturns = m_luaW->CallLuaFunctionReturn(function, argumentSize);
+	m_luaW->RemoveReferenceToFunction(function);
+	return luaReturns;
 }

@@ -89,3 +89,24 @@ LuaTable LuaGlobal::GetTable(const std::string& luaGlobalName)
 	Table table = m_luaW->GetGlobalTable(luaGlobalName);
 	return LuaTable(m_luaW, table);
 }
+
+//Get the global UserData
+UserData LuaGlobal::GetUserData(const std::string& luaGlobalName)
+{
+	return m_luaW->GetGlobalUserData(luaGlobalName);
+}
+
+LuaFunctionReturn LuaGlobal::CallGlobalFunction(Function& function)
+{
+	return m_luaW->CallLuaFunctionReturn(function);
+}
+
+LuaFunctionReturn LuaGlobal::CallGlobalFunction(const std::string& name)
+{
+	//Get function
+	Function function = m_luaW->GetGlobalFunction(name);
+
+	auto luaReturns = m_luaW->CallLuaFunctionReturn(function);
+	m_luaW->RemoveReferenceToFunction(function);
+	return luaReturns;
+}
