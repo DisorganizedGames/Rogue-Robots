@@ -4,6 +4,7 @@ namespace DOG
 	struct ComponentBase
 	{
 		ComponentBase() noexcept = default;
+	protected:
 		[[nodiscard]] static const u32 GetID() noexcept;
 	};
 
@@ -11,11 +12,11 @@ namespace DOG
 	struct Component : public ComponentBase
 	{
 		Component() noexcept = default;
-		static u32 ID;
+		static const u32 ID;
 	};
 
 	template<typename T>
-	u32 Component<T>::ID{ ComponentBase::GetID() };
+	const u32 Component<T>::ID{ ComponentBase::GetID() };
 
 	struct TransformComponent : public Component<TransformComponent>
 	{
