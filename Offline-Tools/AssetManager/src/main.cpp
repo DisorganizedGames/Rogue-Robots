@@ -1,23 +1,10 @@
+#include "AssetManager.h"
 
-
-int main()
+int main(int argc, char** argv)
 {
 	CMP_InitFramework();
 
-	CMP_MipSet mipSet{};
-	auto error = CMP_LoadTexture("../../assets/planet.png", &mipSet);
-
-	if (error == CMP_OK)
-	{
-		std::cout << "Texture loaded!\n" << "Size: " << mipSet.m_nWidth << "x" << mipSet.m_nHeight << std::endl;
-	}
-	else
-	{
-		std::cerr << "Failed to load texture" << std::endl;
-		return -1;
-	}
-
-	CMP_FreeMipSet(&mipSet);
+	WriteAssetFiles("../../assets", "../../asset_output");
 
 	return 0;
 }

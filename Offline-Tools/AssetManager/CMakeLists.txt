@@ -8,7 +8,7 @@ set(CMAKE_STANDARD_REQUIRED ON)
 set(INC "${CMAKE_SOURCE_DIR}/include")
 set(LIB "${CMAKE_SOURCE_DIR}/lib/${CMAKE_BUILD_TYPE}")
 set(BIN "${CMAKE_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}")
-set(SRC "src/main.cpp")
+set(SRC "src/main.cpp" "src/AssetManager.h")
 
 add_executable(AssetManager ${SRC})
 target_link_directories(AssetManager PRIVATE ${LIB})
