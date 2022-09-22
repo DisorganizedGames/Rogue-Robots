@@ -13,7 +13,7 @@ end
 
 function OnUpdate()
 	--print("Hello")
-	--return 20
+	return 20, 5.3, "Hello", {}, SetNumber, true
 end
 
 function EventFunc(number, string, table)
@@ -23,11 +23,26 @@ function EventFunc(number, string, table)
 	print("Hello")
 end
 
+Table = {}
+Table.fn = function (me, integer, float, double, bool, string, constchar, table, func, userData)
+	print(integer)
+	print(float)
+	print(double)
+	print(bool)
+	print(string)
+	print(constchar)
+	print(table)
+	print(func)
+	print(userData)
+	print(Table.Object)
+	return integer, double, bool, string, table, func, userData
+end
+
 --t = !
 
-EventSystem:Register("Event", EventFunc)
+--EventSystem:Register("Event", EventFunc)
 
-EventSystem:InvokeEvent("Event", 20, "Hello Friend", {text = "table text"})
+--EventSystem:InvokeEvent("Event", 20, "Hello Friend", {text = "table text"})
 
 --print(globalNumber)
 --print(globalString)

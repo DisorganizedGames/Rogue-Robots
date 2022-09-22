@@ -36,6 +36,17 @@ struct Table
 typedef Table Function;
 typedef Table UserData;
 
+struct LuaFunctionReturn
+{
+	int integer = 0;
+	double number = 0.0;
+	bool boolean = false;
+	std::string string = "";
+	Table table = {-1};
+	Function function = {-1};
+	UserData userData = {-1};
+};
+
 struct Reference
 {
 	uint32_t nrOfReferences;
@@ -69,6 +80,27 @@ private:
 
 	bool LoadChunk(const std::string& luaScriptName);
 
+	//Push arguments to stack
+	template<typename T, class... Args>
+	void PushStack(T type, Args... args);
+
+	//Push integer
+	void PushStack(int integer);
+	//Push float
+	void PushStack(float number);
+	//Push double
+	void PushStack(double number);
+	//Push bool
+	void PushStack(bool boolean);
+	//Push string
+	void PushStack(const std::string& string);
+	//Push string
+	void PushStack(const char* string);
+	//Push table, Used for UserData and functions aswell
+	void PushStack(Table& table);
+	//Does nothing (Exist because it is needed for Args... to push an empty argument)
+	void PushStack();
+
 	bool IsInteger(int index = 1) const;
 	bool IsNumber(int index = 1) const;
 	bool IsString(int index = 1) const;
@@ -87,6 +119,8 @@ private:
 	UserData GetUserDataFromStack(int index = 1, bool noError = false);
 	template<typename T>
 	T* GetUserDataPointerFromStack(int index = 1);
+
+	void GetReturnsFromFunction(LuaFunctionReturn& luaFunctionReturn);
 
 	void PushIntegerToStack(int integer);
 	void PushFloatToStack(float number);
@@ -142,7 +176,9 @@ public:
 	UserData GetGlobalUserData(const std::string& luaGlobalName);
 
 	void CallLuaFunction(Function& function, int arguments = 0);
+	LuaFunctionReturn CallLuaFunctionReturn(Function& function, int arguments = 0);
 	void CallTableLuaFunction(Table& table, Function& function, int arguments = 0);
+	LuaFunctionReturn CallTableLuaFunctionReturn(Table& table, Function& function, int arguments = 0);
 
 	Table CreateTable();
 
@@ -259,6 +295,18 @@ static inline int LuaW::ClassFunctionsHook(lua_State* luaState)
 	(object->*func)(&state);
 
 	return state.GetNumberOfReturns();
+}
+
+template<typename T, class ...Args>
+inline void LuaW::PushStack(T type, Args ...args)
+{
+	//Push type to the stack
+	//The other push stack functions are called here!
+	PushStack(type);
+
+	//Continues the recursive function by taking out one more argument from the arg list
+	//Calls the empty push stack when it is done
+	PushStack(args...);
 }
 
 //Adds a member function to the interface

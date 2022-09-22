@@ -272,8 +272,10 @@ Function LuaW::GetFunctionFromStack(int index, bool noError)
 {
 	if (IsFunction(index))
 	{
+		lua_pushvalue(m_luaState, index);
 		Function function = { luaL_ref(m_luaState, LUA_REGISTRYINDEX) };
 		AddReference(function);
+		lua_remove(m_luaState, index);
 		return function;
 	}
 	else if (!noError)
@@ -307,8 +309,10 @@ UserData LuaW::GetUserDataFromStack(int index, bool noError)
 {
 	if (IsUserData(index))
 	{
+		lua_pushvalue(m_luaState, index);
 		UserData userData = { luaL_ref(m_luaState, LUA_REGISTRYINDEX) };
 		AddReference(userData);
+		lua_remove(m_luaState, index);
 		return userData;
 	}
 	else if (!noError)
@@ -316,6 +320,29 @@ UserData LuaW::GetUserDataFromStack(int index, bool noError)
 		Error("The value on the stack is not an userdata");
 	}
 	return UserData(c_unValid);
+}
+
+void LuaW::GetReturnsFromFunction(LuaFunctionReturn& luaFunctionReturn)
+{
+	while (GetNumberOfStackItems() > 0)
+	{
+		if (IsInteger())
+			luaFunctionReturn.integer = GetIntegerFromStack();
+		else if (IsNumber())
+			luaFunctionReturn.number = GetDoubleFromStack();
+		else if (IsBool())
+			luaFunctionReturn.boolean = GetBoolFromStack();
+		else if (IsString())
+			luaFunctionReturn.string = GetStringFromStack();
+		else if (IsTable())
+			luaFunctionReturn.table = GetTableFromStack();
+		else if (IsFunction())
+			luaFunctionReturn.function = GetFunctionFromStack();
+		else if (IsUserData())
+			luaFunctionReturn.userData = GetUserDataFromStack();
+		else
+			Error("Return is not an acceptable type");
+	}
 }
 
 //Push an integer to the stack
@@ -517,11 +544,21 @@ void LuaW::CallLuaFunction(Function& function, int arguments)
 	}
 }
 
+LuaFunctionReturn LuaW::CallLuaFunctionReturn(Function& function, int arguments)
+{
+	CallLuaFunction(function, arguments);
+
+	LuaFunctionReturn returns;
+	
+	GetReturnsFromFunction(returns);
+
+	return returns;
+}
+
 void LuaW::CallTableLuaFunction(Table& table, Function& function, int arguments)
 {
 	const int getErrorMessage = -1;
 	const int bottomOfStackIndex = 1;
-	const int secondIndexOfStack = 2;
 
 	if (function.ref == c_unValid || table.ref == c_unValid)
 	{
@@ -537,13 +574,14 @@ void LuaW::CallTableLuaFunction(Table& table, Function& function, int arguments)
 	//Only move the function and table on the stack if there are actually arguments 
 	if (arguments > 0)
 	{
-		//Insert the function to the bottom of the stack
-		//The arguments need to be at the top and the function call needs to be last
-		lua_insert(m_luaState, bottomOfStackIndex);
-		//Insert the table above the function on the stack
+		//Insert the table
 		//If you want to be able to access private table variables in the function then this is needed
 		//This is equivalent to writing table.function(table) or table:function()
-		lua_insert(m_luaState, secondIndexOfStack);
+		lua_insert(m_luaState, bottomOfStackIndex);
+		//Insert the function to the bottom of the stack under the table
+		//The arguments need to be at the top and the function call needs to be last
+		lua_insert(m_luaState, bottomOfStackIndex);
+
 	}
 
 	//+1 because we need to return the table aswell
@@ -554,6 +592,17 @@ void LuaW::CallTableLuaFunction(Table& table, Function& function, int arguments)
 	{
 		Error(lua_tostring(m_luaState, getErrorMessage));
 	}
+}
+
+LuaFunctionReturn LuaW::CallTableLuaFunctionReturn(Table& table, Function& function, int arguments)
+{
+	CallTableLuaFunction(table, function, arguments);
+
+	LuaFunctionReturn returns;
+
+	GetReturnsFromFunction(returns);
+
+	return returns;
 }
 
 Table LuaW::CreateGlobalTable(const std::string& globalTableName)
@@ -838,6 +887,46 @@ bool LuaW::TryLoadChunk(const std::string& luaScriptName)
 	else
 		lua_pop(m_luaState, popAmount);
 	return error;
+}
+
+void LuaW::PushStack(int integer)
+{
+	PushIntegerToStack(integer);
+}
+
+void LuaW::PushStack(float number)
+{
+	PushFloatToStack(number);
+}
+
+void LuaW::PushStack(double number)
+{
+	PushDoubleToStack(number);
+}
+
+void LuaW::PushStack(bool boolean)
+{
+	PushBoolToStack(boolean);
+}
+
+void LuaW::PushStack(const std::string& string)
+{
+	PushStringToStack(string);
+}
+
+void LuaW::PushStack(const char* string)
+{
+	PushStringToStack(string);
+}
+
+void LuaW::PushStack(Table& table)
+{
+	PushTableToStack(table);
+}
+
+void LuaW::PushStack()
+{
+	//Do nothing
 }
 
 //Checks if the index on the stack is a integer

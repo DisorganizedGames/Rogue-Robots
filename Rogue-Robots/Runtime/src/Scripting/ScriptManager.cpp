@@ -45,11 +45,11 @@ bool ScriptManager::TestReloadFile(const std::string& fileName)
 	//Will only test code outside of functions
 	//Maybe add more
 	//Maybe should skip this entirely
-	LuaTable testTable(m_luaW);
-	bool failedCreatingEnvironment = testTable.TryCreateEnvironment(c_pathToScripts + fileName);
+	//LuaTable testTable(m_luaW);
+	//bool failedCreatingEnvironment = testTable.TryCreateEnvironment(c_pathToScripts + fileName);
 
-	if (failedCreatingEnvironment)
-		return false;
+	//if (failedCreatingEnvironment)
+	//	return false;
 
 	return true;
 }
