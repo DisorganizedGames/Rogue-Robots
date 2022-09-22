@@ -31,7 +31,7 @@ void AudioManager::Play(AudioPlayerComponent& audioPlayerComponent)
 		}
 	}
 	
-	AudioAsset* asset = (AudioAsset*)AssetManager::Get().GetAsset(audioID);
+	AudioAsset* asset = (AudioAsset*)AssetManager::Get().GetAsset<AudioAsset>(audioID);
 
 	u64 freeVoiceIndex = GetFreeVoice(asset->properties);
 

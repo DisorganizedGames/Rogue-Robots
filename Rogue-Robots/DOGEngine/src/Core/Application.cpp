@@ -79,7 +79,7 @@ namespace DOG
 
 			EntityManager::Get().Bundle<TransformComponent, ModelComponent>().Do([&](TransformComponent& transformC, ModelComponent& modelC)
 				{
-					ModelAsset* model = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(modelC));
+					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 					for (u32 i = 0; i < model->gfxModel.mesh.numSubmeshes; ++i)
 						m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], transformC);
 				});
