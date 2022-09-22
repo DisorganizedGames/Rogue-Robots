@@ -328,11 +328,11 @@ void LuaW::GetReturnsFromFunction(LuaFunctionReturn& luaFunctionReturn)
 	{
 		if (IsInteger())
 			luaFunctionReturn.integer = GetIntegerFromStack();
-		else if (IsNumber() && !IsInteger())
+		else if (IsNumber())
 			luaFunctionReturn.number = GetDoubleFromStack();
 		else if (IsBool())
 			luaFunctionReturn.boolean = GetBoolFromStack();
-		else if (IsString() && !IsNumber())
+		else if (IsString())
 			luaFunctionReturn.string = GetStringFromStack();
 		else if (IsTable())
 			luaFunctionReturn.table = GetTableFromStack();
