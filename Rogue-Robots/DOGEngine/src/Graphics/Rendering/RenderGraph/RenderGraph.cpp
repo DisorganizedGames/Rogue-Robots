@@ -23,14 +23,14 @@ namespace DOG::gfx
 		m_resources->RealizeResources();
 		RealizeViews();
 
-		InsertTransitions();
+		InsertTransitionsAndCalculateEffectiveLifetimes();
 	}
 
 	void RenderGraph::Run()
 	{
 		m_cmdl = m_rd->AllocateCommandList();
 		for (auto& dependencyLevel : m_dependencyLevels)
-			dependencyLevel.ExecutePasses(m_rd, m_passResources, m_resources, m_cmdl);
+			dependencyLevel.ExecutePasses(m_rd, m_passResources, m_cmdl);
 
 		m_rd->SubmitCommandList(m_cmdl);
 		m_rd->Flush();
@@ -101,14 +101,9 @@ namespace DOG::gfx
 
 	void RenderGraph::RealizeViews()
 	{
-		// { RG, states }
-		std::unordered_map<u64, D3D12_RESOURCE_STATES> readStatesAccum;
-
 		// Realize views in backwards order to accumulate read-states
-		for (auto it = m_sortedPasses.rbegin(); it < m_sortedPasses.rend(); ++it)
+		for (const auto& pass : m_sortedPasses)
 		{
-			const auto& pass = *it;
-
 			// Realize write views (and construct render passes)
 			RenderPassBuilder rpBuilder;
 			// @todo Expose UAV flags in rp builder later
@@ -119,14 +114,10 @@ namespace DOG::gfx
 				const auto& write = pass->builder.m_writes[i];
 
 				auto& viewRes = HandleAllocator::TryGet(m_views.views, HandleAllocator::GetSlot(writeView.handle));
-				auto& states = readStatesAccum[write.handle];
 
 				// Get view and desired state
 				viewRes.view = viewRes.createFunc(m_rd, m_resources, &rpBuilder, viewRes.desiredState);
-				
-				// Reset accum
-				states = D3D12_RESOURCE_STATE_COMMON;					
-
+			
 			}
 			pass->rp = m_rd->CreateRenderPass(rpBuilder.Build());
 
@@ -137,69 +128,92 @@ namespace DOG::gfx
 				const auto& read = pass->builder.m_reads[i];
 
 				auto& viewRes = HandleAllocator::TryGet(m_views.views, HandleAllocator::GetSlot(readView.handle));
-				auto& states = readStatesAccum[read.handle];
 
 				// Get view and desired state
 				viewRes.view = viewRes.createFunc(m_rd, m_resources, nullptr, viewRes.desiredState);
-
-				// Accumulate combined-read states
-				states |= viewRes.desiredState;
-				viewRes.desiredState = states;	
 			}
 		}
 	}
 
-	void RenderGraph::InsertTransitions()
+	void RenderGraph::InsertTransitionsAndCalculateEffectiveLifetimes()
 	{
 		for (const auto& [pass, adjPasses] : m_adjacencyMap)
 		{
 			const auto dependencyLevel = pass->passDepth;
+			auto& depLevel = m_dependencyLevels[dependencyLevel];
 
 			for (u32 writeIdx = 0; writeIdx < pass->builder.m_writes.size(); ++writeIdx)
 			{
 				// Write properties
 				const auto& write = pass->builder.m_writes[writeIdx];
-				const auto& writeRes = m_resources->GetTexture(write);					// Will break if we do buffers
-				const auto& writeView = pass->builder.m_writeViews[writeIdx];
-				D3D12_RESOURCE_STATES prevWriteState{ pass->builder.m_writeStates[writeIdx] };
+				const auto& writeRes = m_resources->GetTexture(write);								// Will break if we do buffers
+				D3D12_RESOURCE_STATES writeState{ pass->builder.m_writeStates[writeIdx] };
 
-				
-				auto& effectiveLifetime = m_resources->GetMutEffectiveLifetime(write);	// Will break if we do buffers
-				effectiveLifetime.first = dependencyLevel;
+				auto& effectiveLifetime = m_resources->GetMutEffectiveLifetime(write);				// Will break if we do buffers
+				// A single write resource can be encountered multiple times only when handle aliasing is used
+				// In such case, we always want to track the earliest occurence of this, hence holding the minimum.
+				effectiveLifetime.first = (std::min)(dependencyLevel, effectiveLifetime.first);
 				effectiveLifetime.second = dependencyLevel;
-				// We should have some bool that unsubscribes external resources from effective liftime calcs and misc.
 
 				// Read properties
 				D3D12_RESOURCE_STATES combinedReadState{ D3D12_RESOURCE_STATE_COMMON };
-				bool intersects{ false };
+				bool readIntersects{ false };
+
+				//bool writeIntersects{ false };
+				//u32 writeIntersectDepth{ 0 };
+				//D3D12_RESOURCE_STATES writeIntersectState{ D3D12_RESOURCE_STATE_COMMON };
+
 				for (const auto& adjPass : adjPasses)
 				{
 					const auto adjPassDepth = adjPass->passDepth;
 
+					// Find if write is a part of a read in the adjacent pass
+					auto findFunc = [&](RGResource res) { return write.handle == res.handle; };
 					const auto& reads = adjPass->builder.m_reads;
-					const auto it = std::find_if(reads.cbegin(), reads.cend(), [&](RGResource res)
-						{
-							return write.handle == res.handle;
-						});
-					intersects = it != reads.cend();
-					if (intersects)
+					const auto readIt = std::find_if(reads.cbegin(), reads.cend(), findFunc);
+					readIntersects = readIt != reads.cend();
+
+					// Combine read states from all valid resource intersections
+					if (readIntersects)
 					{
-						const auto idx = it - reads.cbegin();
 						// Grab view to get desired state
+						const auto idx = readIt - reads.cbegin();
 						const auto& readViews = adjPass->builder.m_readViews;
 						const auto readView = readViews[idx];
 						const auto& viewRes = HandleAllocator::TryGet(m_views.views, HandleAllocator::GetSlot(readView.handle));
 						combinedReadState |= viewRes.desiredState;
+			
+						assert(IsReadState(viewRes.desiredState));
 
 						effectiveLifetime.second = (std::max)(adjPassDepth, effectiveLifetime.second);
 					}
+
+					//// Find if theres a write to the same resource in adjacent pass
+					//const auto& adjWrites = adjPass->builder.m_writes;
+					//const auto adjWriteIt = std::find_if(adjWrites.cbegin(), adjWrites.cend(), findFunc);
+					//writeIntersects = writeIntersects || (adjWriteIt != adjWrites.cend());
+					//writeIntersectDepth = adjPassDepth;
+					//writeIntersectState = adjPass->builder.m_writeStates[adjWriteIt - adjWrites.cbegin()];
 				}
 
-				auto& depLevel = m_dependencyLevels[dependencyLevel];
+				//// Adjacent has used aliasing if write intersects!
+				//if (writeIntersects)
+				//{
+				//	// Insert preBarrier at depLevel[adjPass->passDepth]
+				//	// combinedRead --> adjWriteView
+				//	// Above inserts the barrier as late as possible
+				//	m_dependencyLevels[writeIntersectDepth].AddPreStateTransition(writeRes, combinedReadState, writeIntersectState);
+				//}
+
+				// If texture init state does not match declared write state, we transition it first
+				// User declaring should ensure that this happens minimally
+				const auto writeResInitState = m_resources->GetInitState(write);
+				if (writeState != writeResInitState)
+					depLevel.AddPreStateTransition(writeRes, writeResInitState, writeState);
 
 				// If combined desired state is common, we skip.
-				if (intersects)
-					depLevel.AddStateTransition(writeRes, prevWriteState, combinedReadState);
+				if (readIntersects)
+					depLevel.AddStateTransition(writeRes, writeState, combinedReadState);
 			}
 		}
 	}
@@ -318,9 +332,10 @@ namespace DOG::gfx
 		m_passes.push_back(pass);
 	}
 
-	void RenderGraph::DependencyLevel::ExecutePasses(RenderDevice* rd, PassResources& resources, RGResourceRepo* repo, CommandList cmdl)
+	void RenderGraph::DependencyLevel::ExecutePasses(RenderDevice* rd, PassResources& resources, CommandList cmdl)
 	{
-		ExecuteBarriers(rd, cmdl);
+		if (!m_preBarriers.empty())
+			rd->Cmd_Barrier(cmdl, m_preBarriers);
 
 		for (auto& pass : m_passes)
 		{	
@@ -328,6 +343,15 @@ namespace DOG::gfx
 			pass->execFunc(rd, cmdl, resources);
 			rd->Cmd_EndRenderPass(cmdl);
 		}
+
+		if (!m_barriers.empty())
+			rd->Cmd_Barrier(cmdl, m_barriers);
+	}
+
+	void RenderGraph::DependencyLevel::AddPreStateTransition(Texture tex, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after)
+	{
+		m_preBarriers.push_back(GPUBarrier::Transition(tex, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, prev, after));
+
 	}
 
 	void RenderGraph::DependencyLevel::AddStateTransition(Buffer buffer, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after)
@@ -340,10 +364,6 @@ namespace DOG::gfx
 		m_barriers.push_back(GPUBarrier::Transition(tex, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, prev, after));
 	}
 
-	void RenderGraph::DependencyLevel::ExecuteBarriers(RenderDevice* rd, CommandList cmdl)
-	{
-		rd->Cmd_Barrier(cmdl, m_barriers);
-	}	
 
 	
 

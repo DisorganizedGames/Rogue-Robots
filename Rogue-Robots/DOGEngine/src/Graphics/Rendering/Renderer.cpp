@@ -48,144 +48,7 @@ namespace DOG::gfx
 		m_uploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, S_MAX_FIF);
 		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeTextures, S_MAX_FIF);
 
-		/*
-			
-			Render Graph testing
-		
-		*/
-		{
-			RGResourceRepo rgRepo(m_rd, m_bin.get());
-			RenderGraph rg(m_rd, &rgRepo);
-			RGBlackboard blackboard;
 
-
-			struct SomePassOutput
-			{
-				RGResource out1;
-			} output{};
-
-			RGResource outputPass1;
-			{
-				RGTextureDesc d{};
-				d.format = DXGI_FORMAT_R8G8B8A8_UNORM;
-				d.flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-				auto tex1 = rgRepo.DeclareResource(d);
-
-
-				struct PassData
-				{
-					// GPU resources used in pass
-					RGResourceView out1;
-
-					// Allocated resources (e.g constant buffers allocation or updates)
-
-				};
-
-				rg.AddPass<PassData>("Some Pass",
-					[&](RenderGraph::PassBuilder& builder, PassData& passData)
-					{
-						passData.out1 = builder.WriteTexture(tex1, D3D12_RESOURCE_STATE_RENDER_TARGET,
-							TextureViewDesc(
-							ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-					},
-					[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
-					{
-							
-						std::cout << "Doing Some Pass\n";
-					});
-
-
-
-
-
-				output.out1 = tex1;
-				blackboard.Add<SomePassOutput>(output);
-
-				outputPass1 = tex1;
-			}
-		
-			{
-
-
-				RGTextureDesc d{};
-				d.format = DXGI_FORMAT_R8G8B8A8_UNORM;
-				d.flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-				auto out = rgRepo.DeclareResource(d);
-				struct PassData
-				{
-					RGResourceView in1;
-					RGResourceView out1;
-				};
-
-				rg.AddPass<PassData>("Pass 2",
-					[&](RenderGraph::PassBuilder& builder, PassData& passData)
-					{
-						// Read texture should take a State
-						passData.in1 = builder.ReadTexture(outputPass1, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-							TextureViewDesc(
-							ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-
-						passData.out1 = builder.WriteTexture(out, D3D12_RESOURCE_STATE_RENDER_TARGET,
-							TextureViewDesc(
-							ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-					},
-					[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
-					{
-						auto in = resources.GetTexture(passData.out1);
-						auto view = resources.GetTexture(passData.in1);
-					
-						std::cout << "Doing Pass 2\n";
-					});
-			}
-
-			{
-
-
-				RGTextureDesc d{};
-				d.format = DXGI_FORMAT_R8G8B8A8_UNORM;
-				d.flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-				auto out = rgRepo.DeclareResource(d);
-				struct PassData
-				{
-					RGResourceView in1;
-					RGResourceView out1;
-				};
-
-				rg.AddPass<PassData>("Pass 3",
-					[&](RenderGraph::PassBuilder& builder, PassData& passData)
-					{
-						// Read texture should take a State
-						passData.in1 = builder.ReadTexture(outputPass1, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-							TextureViewDesc(
-								ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-
-						passData.out1 = builder.WriteTexture(out, D3D12_RESOURCE_STATE_RENDER_TARGET,
-							TextureViewDesc(
-								ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-					},
-					[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
-					{
-						auto in = resources.GetTexture(passData.out1);
-						auto view = resources.GetTexture(passData.in1);
-
-						std::cout << "Doing Pass 3\n";
-					});
-			}
-
-			rg.Build();
-			rg.Run();
-
-
-
-
-
-
-
-
-
-
-		}
-		//assert(false);
 
 
 
@@ -276,6 +139,97 @@ namespace DOG::gfx
 			.SetDepthFormat(DepthFormat::D32)
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
+
+
+
+
+
+
+		/*
+
+	Render Graph testing
+
+*/
+		{
+			RGResourceRepo rgRepo(m_rd, m_bin.get());
+			RenderGraph rg(m_rd, &rgRepo);
+			RGBlackboard blackboard;
+
+			struct ForwardOutput
+			{
+				RGResource out;
+			};
+
+			// Forward pass to offline buffer
+			{
+				auto output = rgRepo.DeclareResource(RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R8G8B8A8_UNORM, m_clientWidth, m_clientHeight));
+
+				struct PassData
+				{
+					RGResourceView out1;
+				};
+
+				rg.AddPass<PassData>("Forward Pass",
+					[&](RenderGraph::PassBuilder& builder, PassData& passData)
+					{
+						passData.out1 = builder.WriteTexture(output, D3D12_RESOURCE_STATE_RENDER_TARGET,
+							TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+					},
+					[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
+					{
+						std::cout << "Forward Pass\n";
+					});
+
+				ForwardOutput passOut{};
+				passOut.out = output;
+				blackboard.Add<ForwardOutput>(passOut);
+			}
+
+			// Fullscreen pass to postproc and blit to backbuffer
+			{
+				const auto& passIn = blackboard.Get<ForwardOutput>();
+
+				auto bb = rgRepo.ImportResource(m_scTextures[0], D3D12_RESOURCE_STATE_PRESENT);
+
+				struct PassData
+				{
+					RGResourceView input1;
+					RGResourceView output1;
+				};
+
+				rg.AddPass<PassData>("Postproc Pass",
+					[&](RenderGraph::PassBuilder& builder, PassData& passData)
+					{
+						passData.input1 = builder.ReadTexture(passIn.out, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+							TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+
+						passData.output1 = builder.WriteTexture(bb, D3D12_RESOURCE_STATE_RENDER_TARGET,
+							TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+					},
+					[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
+					{
+						std::cout << "Postproc Pass\n";
+					});
+			}
+
+
+			rg.Build();
+			rg.Run();
+
+
+
+
+
+
+
+
+
+
+		}
+		//assert(false);
+
+
+
 	}
 
 	Renderer::~Renderer()

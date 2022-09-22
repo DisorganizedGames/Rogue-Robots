@@ -106,18 +106,20 @@ namespace DOG::gfx
 		{
 		public:
 			void AddPass(Pass* pass);
-			void ExecutePasses(RenderDevice* rd, PassResources& resources, RGResourceRepo* repo, CommandList cmdl);
+			void ExecutePasses(RenderDevice* rd, PassResources& resources, CommandList cmdl);
+
+			void AddPreStateTransition(Texture tex, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after);
 
 			void AddStateTransition(Buffer buffer, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after);
 			void AddStateTransition(Texture tex, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after);
 			// AddAliasingBarrier
 			// AddUAVBarrier
 			
-		private:
-			void ExecuteBarriers(RenderDevice* rd, CommandList cmdl);
 
 		private:
 			std::vector<Pass*> m_passes;
+
+			std::vector<GPUBarrier> m_preBarriers;
 			std::vector<GPUBarrier> m_barriers;
 		};
 
@@ -156,7 +158,7 @@ namespace DOG::gfx
 		void BuildDependencyLevels();
 
 		void RealizeViews();
-		void InsertTransitions();
+		void InsertTransitionsAndCalculateEffectiveLifetimes();
 
 	private:
 		RenderDevice* m_rd{ nullptr };

@@ -21,15 +21,19 @@ namespace DOG::gfx
 		void Tick();
 
 		RGResource DeclareResource(const RGTextureDesc& desc);
+		RGResource AliasResource(RGResource tex);
 
-		// Import external (state must resource initial state)
 		RGResource ImportResource(Texture tex, D3D12_RESOURCE_STATES initState);
 
 
 	private:
 		friend class RenderGraph;
+
 		Texture GetTexture(RGResource tex);
+		D3D12_RESOURCE_STATES GetInitState(RGResource tex);
+		bool IsImported(RGResource tex);
 		std::pair<u32, u32>& GetMutEffectiveLifetime(RGResource tex);
+
 		void RealizeResources();
 
 	private:
@@ -38,6 +42,11 @@ namespace DOG::gfx
 			RGTextureDesc desc;
 			std::optional<Texture> realized;
 			std::pair<u32, u32> effectiveLifetime{ 0, 0 };
+			bool imported{ false };
+
+			// Points to the original resource
+			bool isAnAlias{ false };
+			std::optional<RGResource> aliasOf;
 		};
 
 	private:

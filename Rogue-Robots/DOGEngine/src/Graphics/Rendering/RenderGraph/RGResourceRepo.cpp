@@ -33,10 +33,24 @@ namespace DOG::gfx
 		return hdl;
 	}
 
+	RGResource RGResourceRepo::AliasResource(RGResource tex)
+	{
+		Texture_Storage storage{};
+		storage.isAnAlias = true;
+		storage.aliasOf = tex;
+
+		auto hdl = m_handleAtor.Allocate<RGResource>();
+		HandleAllocator::TryInsert(m_textures, storage, HandleAllocator::GetSlot(hdl.handle));
+
+		return hdl;
+	}
+
 	RGResource RGResourceRepo::ImportResource(Texture tex, D3D12_RESOURCE_STATES initState)
 	{
 		Texture_Storage storage{};
 		storage.realized = tex;
+		storage.imported = true;
+		storage.desc.initState = initState;
 
 		auto hdl = m_handleAtor.Allocate<RGResource>();
 		HandleAllocator::TryInsert(m_textures, storage, HandleAllocator::GetSlot(hdl.handle));
@@ -51,6 +65,19 @@ namespace DOG::gfx
 		return *res.realized;
 	}
 
+	D3D12_RESOURCE_STATES RGResourceRepo::GetInitState(RGResource tex)
+	{
+		const auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(tex.handle));
+		return res.desc.initState;
+	}
+
+	bool RGResourceRepo::IsImported(RGResource tex)
+	{
+		const auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(tex.handle));
+		assert(res.realized);
+		return res.imported;
+	}
+
 	std::pair<u32, u32>& RGResourceRepo::GetMutEffectiveLifetime(RGResource tex)
 	{
 		auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(tex.handle));
@@ -61,13 +88,26 @@ namespace DOG::gfx
 	{
 		for (auto& res : m_textures)
 		{
-			if (res && !res->realized)
+			if (res && !res->realized && !res->isAnAlias)
 			{
 				TextureDesc desc(MemoryType::Default, res->desc.format,
 					res->desc.width, res->desc.height, res->desc.depth,
 					res->desc.flags, res->desc.initState);
 
 				res->realized = m_rd->CreateTexture(desc);
+			}
+		}
+
+		// Second pass to assign aliases the original resources
+		for (auto& res : m_textures)
+		{
+			if (res && !res->realized && res->isAnAlias)
+			{
+				const auto original = (*res->aliasOf).handle;
+				const auto& originalRes = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(original));
+
+				// Assign the RGResource with the same underlying resource
+				res->realized = originalRes.realized;
 			}
 		}
 	}

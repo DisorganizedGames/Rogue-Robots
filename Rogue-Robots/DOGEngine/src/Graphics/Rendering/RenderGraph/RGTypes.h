@@ -27,6 +27,19 @@ namespace DOG::gfx
 
 	struct RGTextureDesc
 	{
+
+		static RGTextureDesc RenderTarget2D(DXGI_FORMAT format, u32 width, u32 height, u32 mipLevels = 1)
+		{
+			RGTextureDesc d{};
+			d.format = format;
+			d.width = width;
+			d.height = height;
+			d.mipLevels = mipLevels;
+			d.initState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+			d.flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+			return d;
+		}
+
 		u32 width{ 1 };
 		u32 height{ 1 };
 		u32 depth{ 1 };
