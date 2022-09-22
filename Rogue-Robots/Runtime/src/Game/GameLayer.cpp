@@ -52,6 +52,8 @@ void GameLayer::OnAttach()
 	//Register Lua interfaces
 	RegisterLuaInterfaces();
 	//...
+
+	m_player = std::make_shared<MainPlayer>();
 }
 
 void GameLayer::OnDetach()
@@ -61,7 +63,7 @@ void GameLayer::OnDetach()
 
 void GameLayer::OnUpdate()
 {
-	m_player.OnUpdate();
+	m_player->OnUpdate();
 }
 
 void GameLayer::OnRender()
@@ -119,5 +121,30 @@ void GameLayer::RegisterLuaInterfaces()
 
 	global.SetUserData<LuaInterface>(luaInterfaceObject.get(), "Audio", "AudioInterface");
 
+	//-----------------------------------------------------------------------------------------------
+	//Entities
+	luaInterfaceObject = std::make_shared<EntityInterface>();
+	m_luaInterfaces.push_back(luaInterfaceObject);
+
+	luaInterface = global.CreateLuaInterface("EntityInterface");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::CreateEntity>("CreateEntity");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::DestroyEntity>("DestroyEntity");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::AddComponent>("AddComponent");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::ModifyComponent>("ModifyComponent");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetTransformPosData>("GetTransformPosData");
+	global.SetLuaInterface(luaInterface);
+
+	global.SetUserData<LuaInterface>(luaInterfaceObject.get(), "Entity", "EntityInterface");
+
+	//-----------------------------------------------------------------------------------------------
+	//Assets
+	luaInterfaceObject = std::make_shared<AssetInterface>();
+	m_luaInterfaces.push_back(luaInterfaceObject);
+
+	luaInterface = global.CreateLuaInterface("AssetInterface");
+	luaInterface.AddFunction<AssetInterface, &AssetInterface::LoadModel>("LoadModel");
+	global.SetLuaInterface(luaInterface);
+
+	global.SetUserData<LuaInterface>(luaInterfaceObject.get(), "Asset", "AssetInterface");
 
 }

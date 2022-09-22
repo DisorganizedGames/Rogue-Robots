@@ -1,6 +1,6 @@
 #pragma once
-
 #include <DOGEngine.h>
+#include "GameComponent.h"
 
 class MainPlayer
 {
@@ -25,4 +25,6 @@ private:
 	f32 m_moveSpeed;
 
 	inline const static Vector3 s_globalUp = Vector3(0, 1, 0);
+
+	std::unique_ptr<ScriptManager> m_tempSM;
 };

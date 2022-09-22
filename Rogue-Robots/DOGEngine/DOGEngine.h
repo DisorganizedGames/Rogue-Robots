@@ -14,5 +14,6 @@
 #include "src/EventSystem/KeyboardEvents.h"
 
 #include "src/ECS/EntityManager.h"
+#include "src/ECS/Component.h"
 
 #include "src/Audio/AudioManager.h"

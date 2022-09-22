@@ -5,6 +5,7 @@ using namespace DirectX;
 
 MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 {
+	//Camera
 	m_playerEntity = m_entityManager.CreateEntity();
 	CameraComponent& camera = m_entityManager.AddComponent<CameraComponent>(m_playerEntity);
 	CameraComponent::s_mainCamera = &camera;
@@ -23,12 +24,27 @@ MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 
 	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
 	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
+
+	//Temporary ScriptManager until we have a global one.
+	m_tempSM = std::make_unique<ScriptManager>(ScriptManager(&LuaW::s_luaW));
+	//Gun
+	GunComponent& gun = m_entityManager.AddComponent<GunComponent>(m_playerEntity);
+	gun.gunScript = m_tempSM->AddScript("Gun.lua");
+
+	//Temporary until we can call functions easily.
+	LuaTable table(&LuaW::s_luaW, gun.gunScript->luaScript, true);
+	table.CallFunctionOnTable(gun.gunScript->onStart);
 }
 
 void MainPlayer::OnUpdate()
 {
 	auto& cameraComp = m_entityManager.GetComponent<CameraComponent>(m_playerEntity);
 	UpdateCamera(cameraComp);
+
+	auto& gunComp = m_entityManager.GetComponent<GunComponent>(m_playerEntity);
+	//Temporary until we can call functions easily.
+	LuaTable table(&LuaW::s_luaW, gunComp.gunScript->luaScript, true);
+	table.CallFunctionOnTable(gunComp.gunScript->onUpdate);
 }
 
 void MainPlayer::UpdateCamera(CameraComponent& camera)
