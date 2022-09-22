@@ -1,5 +1,6 @@
 #include "LuaEvent.h"
 #include "ScriptManager.h"
+#include "LuaGlobal.h"
 
 LuaEvent LuaEvent::s_luaEvent;
 
@@ -30,7 +31,8 @@ LuaEvent& LuaEvent::GetLuaEvent()
 	return s_luaEvent;
 }
 
-//void LuaEvent::FireEvent(const std::string& eventName, ...)
-//{
-//	
-//}
+void LuaEvent::InvokeEvent(const std::string& eventName)
+{
+	//Calls the EventSystem on Lua
+	m_eventSystemTable->CallFunctionOnTable(m_eventSystemTableInvokeFunction, eventName);
+}
