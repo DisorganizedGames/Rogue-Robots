@@ -1,7 +1,6 @@
 #include "GameLayer.h"
 #include "Scripting/LuaGlobal.h"
 #include "Scripting/ScriptManager.h"
-#include "LuaInterfaces.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -86,13 +85,31 @@ void GameLayer::RegisterLuaInterfaces()
 {
 	LuaGlobal global(&LuaW::s_luaW);
 
+	//-----------------------------------------------------------------------------------------------
 	//Input
-	auto inputLua = global.CreateLuaInterface("Input");
-	inputLua.AddStaticFunction<InputInterface::IsLeftPressed>("IsLeftPressed");
-	inputLua.AddStaticFunction<InputInterface::IsRightPressed>("IsRightPressed");
-	inputLua.AddStaticFunction<InputInterface::IsKeyPressed>("IsKeyPressed");
-	//inputLua.AddFunction<InputInterface, &InputInterface::LeftClick>("LeftClick");
-	global.SetLuaInterface(inputLua);
+	//Create a luaInterface variable that holds the interface object (is reused for all interfaces)
+	std::shared_ptr<LuaInterface> luaInterfaceObject = std::make_shared<InputInterface>();
+	m_luaInterfaces.push_back(luaInterfaceObject); //Add it to the gamelayer's interfaces.
+	
+	auto luaInterface = global.CreateLuaInterface("InputInterface"); //Register a new interface in lua.
+	//Add all functions that are needed from the interface class.
+	luaInterface.AddFunction<InputInterface, &InputInterface::IsLeftPressed>("IsLeftPressed");
+	luaInterface.AddFunction<InputInterface, &InputInterface::IsRightPressed>("IsRightPressed");
+	luaInterface.AddFunction<InputInterface, &InputInterface::IsKeyPressed>("IsKeyPressed");
+	global.SetLuaInterface(luaInterface);
+	//Make the object accessible from lua. Is used by: Input.FunctionName()
+	global.SetUserData<LuaInterface>(luaInterfaceObject.get(), "Input", "InputInterface");
 
+	//-----------------------------------------------------------------------------------------------
 	//Audio
+	luaInterfaceObject = std::make_shared<AudioInterface>();
+	m_luaInterfaces.push_back(luaInterfaceObject);
+
+	luaInterface = global.CreateLuaInterface("AudioInterface");
+	//luaInterface.AddFunction<AudioInterface, &InputInterface::PlaySound>("PlaySound");
+	global.SetLuaInterface(luaInterface);
+
+	global.SetUserData<LuaInterface>(luaInterfaceObject.get(), "Audio", "AudioInterface");
+
+
 }

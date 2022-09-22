@@ -2,28 +2,59 @@
 #include "Scripting/LuaContext.h"
 
 using namespace DOG;
-static class InputInterface
+
+class LuaInterface
 {
 public:
-	InputInterface() noexcept = default;
-	~InputInterface() noexcept = default;
+	LuaInterface() noexcept = default;
+	virtual ~LuaInterface() noexcept = default;
+};
 
-	static void IsLeftPressed(LuaContext* context)
+class InputInterface : public LuaInterface
+{
+public:
+	InputInterface() noexcept
+	{
+
+	}
+	~InputInterface() noexcept
+	{
+	
+	}
+
+	void IsLeftPressed(LuaContext* context)
 	{
 		context->ReturnBoolean(DOG::Mouse::IsButtonPressed(DOG::Button::Left));
 	}
 
-	static void IsRightPressed(LuaContext* context)
+	void IsRightPressed(LuaContext* context)
 	{
 		context->ReturnBoolean(DOG::Mouse::IsButtonPressed(DOG::Button::Right));
 	}
 
 	//Takes a string as argument.
-	static void IsKeyPressed(LuaContext* context)
+	void IsKeyPressed(LuaContext* context)
 	{
 		std::string input = context->GetString();
 		context->ReturnBoolean(DOG::Keyboard::IsKeyPressed((DOG::Key)input[0])); //Usch
 	}
+};
 
-private:
+class AudioInterface : public LuaInterface
+{
+public:
+	AudioInterface() noexcept
+	{
+
+	}
+	~AudioInterface() noexcept
+	{
+
+	}
+
+	//Takes a string as argument
+	void PlaySound(LuaContext* context)
+	{
+		//TODO
+	}
 };
