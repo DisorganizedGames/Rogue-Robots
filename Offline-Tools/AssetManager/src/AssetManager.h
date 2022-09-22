@@ -4,6 +4,8 @@ using u8 = unsigned char;
 using u16 = unsigned short;
 using u32 = unsigned int;
 
+using i32 = int;
+
 void FatalError(const std::string& msg)
 {
 	std::cerr << "\x1b[4;31m" << "Error: " << msg << "\x1b[0m" << std::endl;
@@ -108,21 +110,37 @@ void WriteAssetFiles(const std::filesystem::path& assetPath, const std::filesyst
 void WriteTexture(const std::filesystem::path& in, std::ofstream* out)
 {
 	TextureHeader header = {};
-	CMP_MipSet mipset = {};
+	CMP_MipSet inMipset = {};
 
-	auto error = CMP_LoadTexture(in.string().c_str(), &mipset);
+	auto error = CMP_LoadTexture(in.string().c_str(), &inMipset);
 
 	if (error != CMP_OK)
 	{
 		FatalError(std::string("Failed to read texture: ") + in.string());
 	}
 
-	header.width = mipset.m_nWidth;
-	header.height = mipset.m_nHeight;
-	header.bytesPerPixel = mipset.m_nChannels;
+	KernelOptions opts = {
+		.fquality = 0.f,
+		.format = CMP_FORMAT_BC7,
+		.threads = 8,
+	};
+
+	CMP_MipSet outMipset = {};
+
+	error = CMP_ProcessTexture(&inMipset, &outMipset, opts, nullptr);
+
+	if (error != CMP_OK)
+	{
+		FatalError(std::string("Failed to compress texture: ") + in.string());
+	}
+
+	header.width = outMipset.m_nWidth;
+	header.height = outMipset.m_nHeight;
 
 	out->write((char*)&header, sizeof(TextureHeader));
+	out->write((char*)outMipset.pData, outMipset.dwDataSize);
 
-	out->write((char*)mipset.pData, mipset.dwDataSize);
+	CMP_FreeMipSet(&inMipset);
+	CMP_FreeMipSet(&outMipset);
 }
 
