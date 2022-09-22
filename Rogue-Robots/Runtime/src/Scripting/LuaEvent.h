@@ -9,7 +9,7 @@ class LuaEvent
 private:
 	LuaW* m_luaW;
 	static LuaEvent s_luaEvent;
-	//std::unordered_map<std::string, std::vector<std::function<void (void*)>>> eventCallBacks;
+
 	std::unique_ptr<LuaTable> m_eventSystemTable;
 	Function m_eventSystemTableRegisterFunction;
 	Function m_eventSystemTableInvokeFunction;
@@ -21,22 +21,24 @@ public:
 	void Initialize(LuaW* luaW, ScriptManager* scriptManager);
 	static LuaEvent& GetLuaEvent();
 
-	template<void (*func)(LuaContext*)>
-	void AddListener(const std::string& eventName);
-
-	//template <typename Func, class... Args>
-	//void AddListener(const std::string& eventName, Func callBack, Args&& ...args);
-	//template <typename Func>
-	//void AddListener(const std::string& eventName, Func callBack);
-	//template <void (*func)()>
-	//void AddListenerT(const std::string& eventName);
-	/*void FireEvent(const std::string& eventName, ...);*/
+	template <void(*func)(LuaContext*)>
+	void Register(const std::string& eventName);
+	void InvokeEvent(const std::string& eventName);
+	template<class ...Args>
+	void InvokeEvent(const std::string& eventName, Args... args);
 };
 
-template<void (*func)(LuaContext*)>
-inline void LuaEvent::AddListener(const std::string& eventName)
+template<void(*func)(LuaContext*)>
+inline void LuaEvent::Register(const std::string& eventName)
 {
-	//m_eventSystemTable->CallFunctionOnTable();
-	//m_eventSystemTable->Add
-	//m_luaW.Push
+	Function callBack = m_luaW->HookFunctionAndGetFunction<func>();
+	//Pushes the callBack function to the EventSystem
+	m_eventSystemTable->CallFunctionOnTable(m_eventSystemTableRegisterFunction, eventName, callBack);
+}
+
+template<class ...Args>
+inline void LuaEvent::InvokeEvent(const std::string& eventName, Args ...args)
+{
+	//Calls the EventSystem on Lua
+	m_eventSystemTable->CallFunctionOnTable(m_eventSystemTableInvokeFunction, eventName, args...);
 }

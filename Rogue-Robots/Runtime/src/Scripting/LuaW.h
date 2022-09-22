@@ -10,6 +10,7 @@ extern "C"
 class LuaContext;
 class LuaGlobal;
 class LuaTable;
+class LuaEvent;
 
 struct ClassFunctionInfo
 {
@@ -58,6 +59,7 @@ class LuaW
 	friend LuaContext;
 	friend LuaGlobal;
 	friend LuaTable;
+	friend LuaEvent;
 
 private:
 	lua_State* m_luaState;
@@ -75,6 +77,9 @@ private:
 
 	template <typename T, void (T::* func)(LuaContext*)>
 	static inline int ClassFunctionsHook(lua_State* luaState);
+
+	template<void (*func)(LuaContext*)>
+	Function HookFunctionAndGetFunction();
 
 	void Error(const std::string& errorMessage);
 
@@ -295,6 +300,13 @@ static inline int LuaW::ClassFunctionsHook(lua_State* luaState)
 	(object->*func)(&state);
 
 	return state.GetNumberOfReturns();
+}
+
+template<void(*func)(LuaContext*)>
+inline Function LuaW::HookFunctionAndGetFunction()
+{
+	lua_pushcfunction(m_luaState, FunctionsHook<func>);
+	return GetFunctionFromStack();
 }
 
 template<typename T, class ...Args>

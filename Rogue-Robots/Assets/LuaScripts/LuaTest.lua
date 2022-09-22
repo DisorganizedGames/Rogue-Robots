@@ -25,33 +25,6 @@ function EventFunc(number, string, table)
 	print("Hello")
 end
 
-Table = {}
-Table.fn = function (me, integer, float, double, bool, string, constchar, table, func, userData)
-	print(integer)
-	print(float)
-	print(double)
-	print(bool)
-	print(string)
-	print(constchar)
-	print(table)
-	print(func)
-	print(userData)
-	print(Table.Object)
-	return integer, double, bool, string, table, func, userData
-end
+EventSystem:Register("Event", EventFunc)
 
---t = !
-
---EventSystem:Register("Event", EventFunc)
-
---EventSystem:InvokeEvent("Event", 20, "Hello Friend", {text = "table text"})
-
---print(globalNumber)
---print(globalString)
---print(globalBool)
---print(GlobalFunction())
---print(globalTable)
---print(globalTable.tableNumber)
---LuaInterface:PrintCoolText()
---coolClass:PrintOtherText()
---print(globalTable.table.tableText)
+EventSystem:InvokeEvent("Event", 20, "Hello Friend", {text = "table text"})

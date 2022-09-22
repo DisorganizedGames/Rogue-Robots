@@ -9,6 +9,7 @@ function EventSystem:Register(eventName, callBack)
 end
 
 function EventSystem:InvokeEvent(eventName, ...)
+	--Check if there are any listeners registered to that event
 	if self.events[eventName] == nil then
 		return
 	end
