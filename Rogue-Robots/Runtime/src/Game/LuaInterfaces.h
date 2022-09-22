@@ -1,5 +1,4 @@
 #include <DOGEngine.h>
-#include "Scripting/LuaContext.h"
 
 using namespace DOG;
 

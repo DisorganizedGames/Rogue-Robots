@@ -1,6 +1,4 @@
 #include "GameLayer.h"
-#include "Scripting/LuaGlobal.h"
-#include "Scripting/ScriptManager.h"
 
 using namespace DOG;
 using namespace DirectX;
