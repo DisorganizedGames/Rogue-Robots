@@ -5,6 +5,8 @@ print("hej")
 
 m_number = 0
 
+print(Input.LeftClick())
+
 function SetNumber(number)
 	print("Current Number", m_number)
 	m_number = number
