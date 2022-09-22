@@ -11,8 +11,6 @@
 
 #include "../Graphics/Rendering/Renderer.h"
 
-#include "../Core/DataPiper.h"
-
 #include "ImGUI/imgui.h"
 
 
@@ -43,7 +41,6 @@ namespace DOG
 	void Application::Run() noexcept
 	{
 		// Temporary read only data from runtime
-		const piper::PipedData* runtimeData = piper::GetPipe();
 		bool showDemoWindow = true;
 
 
@@ -81,10 +78,13 @@ namespace DOG
 				{
 					ModelAsset* model = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(modelC));
 					for (u32 i = 0; i < model->gfxModel.mesh.numSubmeshes; ++i)
-					m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], transformC);
+						m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], transformC);
 				});
-
-			m_renderer->SetMainRenderCamera(runtimeData->viewMat);
+			
+			auto mainCam = CameraComponent::s_mainCamera;
+			auto& proj = (DirectX::XMMATRIX&)mainCam->projMatrix;
+			m_renderer->SetMainRenderCamera(mainCam->viewMatrix, &proj);
+			
 
 			m_renderer->Update(0.0f);
 			m_renderer->Render(0.0f);

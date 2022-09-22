@@ -6,9 +6,6 @@ using namespace DirectX::SimpleMath;
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
 {
-	m_pipedData.viewMat = DirectX::XMMatrixLookAtLH({ 0.f, 5.f, 0.f }, { 0.f, 5.f, 1.f }, { 0.f, 1.f, 0.f });
-
-
 	auto& am = DOG::AssetManager::Get();
 	m_redCube = am.LoadModelAsset("Assets/red_cube.glb");
 	m_greenCube = am.LoadModelAsset("Assets/green_cube.glb");
@@ -38,13 +35,11 @@ GameLayer::GameLayer() noexcept
 	t4.worldMatrix(3, 0) = -4;
 	t4.worldMatrix(3, 1) = 2;
 	t4.worldMatrix(3, 2) = 5;
-
-	DOG::piper::SetPipe(&m_pipedData);
 }
 
 void GameLayer::OnAttach()
 {
-	m_debugCam = DebugCamera(0, 1, 0);
+	//...
 }
 
 void GameLayer::OnDetach()
@@ -54,8 +49,7 @@ void GameLayer::OnDetach()
 
 void GameLayer::OnUpdate()
 {
-	m_debugCam.OnUpdate();
-	m_pipedData.viewMat = m_debugCam.GetViewMatrix();
+	m_player.OnUpdate();
 }
 
 void GameLayer::OnRender()

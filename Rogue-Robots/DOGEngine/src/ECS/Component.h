@@ -66,4 +66,14 @@ namespace DOG
 		operator const u64 () const { return id; }
 		u64 id;
 	};
+
+	struct CameraComponent : public Component<CameraComponent>
+	{
+		using Matrix = DirectX::SimpleMath::Matrix;	
+
+		Matrix viewMatrix = DirectX::XMMatrixIdentity();
+		Matrix projMatrix = DirectX::XMMatrixIdentity();
+
+		inline static CameraComponent* s_mainCamera = nullptr;
+	};
 }
