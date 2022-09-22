@@ -4,6 +4,8 @@
 
 namespace DOG::gfx
 {
+	bool IsReadState(D3D12_RESOURCE_STATES states);
+
 	RenderGraph::RenderGraph(RenderDevice* rd, RGResourceRepo* repo) :
 		m_rd(rd),
 		m_resources(repo),
@@ -16,12 +18,27 @@ namespace DOG::gfx
 		BuildAdjacencyList();
 		SortPassesTopologically();
 		BuildDependencyLevels();
+
+		
+		//m_resources->FinalizeResourceLifetimes();
+		m_resources->RealizeResources();
+		RealizeViews();
+
+		InsertTransitions();
+
+		std::cout << "RG Building done\n";
+
 	}
 
 	void RenderGraph::Run()
 	{
+		m_cmdl = m_rd->AllocateCommandList();
 		for (auto& dependencyLevel : m_dependencyLevels)
-			dependencyLevel.ExecutePasses(m_rd, m_passResources);
+			dependencyLevel.ExecutePasses(m_rd, m_passResources, m_resources, m_cmdl);
+
+		m_rd->SubmitCommandList(m_cmdl);
+		m_rd->Flush();
+
 	}
 
 	void RenderGraph::BuildAdjacencyList()
@@ -59,11 +76,11 @@ namespace DOG::gfx
 	void RenderGraph::SortPassesTopologically()
 	{
 		// Helper for DFS
-		std::unordered_map<RenderPass*, bool> visited;
+		std::unordered_map<Pass*, bool> visited;
 
 		// DFS lambda (requires fully specified to call lambda recursively, and need to pass itself to the lambda
-		std::function<void(RenderPass*, const std::vector<RenderPass*>&)> dfs =
-			[this, &visited, &dfs](RenderPass* vertex, const std::vector<RenderPass*>& edges)
+		std::function<void(Pass*, const std::vector<Pass*>&)> dfs =
+			[this, &visited, &dfs](Pass* vertex, const std::vector<Pass*>& edges)
 		{
 			if (visited[vertex])
 				return;
@@ -84,6 +101,102 @@ namespace DOG::gfx
 			dfs(pass, edges);
 		}
 		std::reverse(m_sortedPasses.begin(), m_sortedPasses.end());
+	}
+
+	void RenderGraph::RealizeViews()
+	{
+		// { RG, states }
+		std::unordered_map<u64, D3D12_RESOURCE_STATES> readStatesAccum;
+
+		// Realize views in backwards order to accumulate read-states
+		for (auto it = m_sortedPasses.rbegin(); it < m_sortedPasses.rend(); ++it)
+		{
+			const auto& pass = *it;
+
+			// Realize write views (and construct render passes)
+			RenderPassBuilder rpBuilder;
+			// @todo Expose UAV flags in rp builder later
+			
+			for (u32 i = 0; i < pass->builder.m_writes.size(); ++i)
+			{
+				const auto& writeView = pass->builder.m_writeViews[i];
+				const auto& write = pass->builder.m_writes[i];
+
+				auto& viewRes = HandleAllocator::TryGet(m_views.views, HandleAllocator::GetSlot(writeView.handle));
+				auto& states = readStatesAccum[write.handle];
+
+				// Get view and desired state
+				viewRes.view = viewRes.createFunc(m_rd, m_resources, &rpBuilder, viewRes.desiredState);
+				
+				// Reset accum
+				states = D3D12_RESOURCE_STATE_COMMON;					
+
+			}
+			pass->rp = m_rd->CreateRenderPass(rpBuilder.Build());
+
+			// Realize read views
+			for (u32 i = 0; i < pass->builder.m_reads.size(); ++i)
+			{
+				const auto& readView = pass->builder.m_readViews[i];
+				const auto& read = pass->builder.m_reads[i];
+
+				auto& viewRes = HandleAllocator::TryGet(m_views.views, HandleAllocator::GetSlot(readView.handle));
+				auto& states = readStatesAccum[read.handle];
+
+				// Get view and desired state
+				viewRes.view = viewRes.createFunc(m_rd, m_resources, nullptr, viewRes.desiredState);
+
+				// Accumulate combined-read states
+				states |= viewRes.desiredState;
+				viewRes.desiredState = states;	
+			}
+		}
+	}
+
+	void RenderGraph::InsertTransitions()
+	{
+		for (const auto& [pass, adjPasses] : m_adjacencyMap)
+		{
+			const auto dependencyLevel = pass->passDepth;
+
+			for (u32 writeIdx = 0; writeIdx < pass->builder.m_writes.size(); ++writeIdx)
+			{
+				// Write properties
+				const auto& write = pass->builder.m_writes[writeIdx];
+				const auto& writeRes = m_resources->GetTexture(write);					// Will break if we do buffers
+				const auto& writeView = pass->builder.m_writeViews[writeIdx];
+				D3D12_RESOURCE_STATES prevWriteState{ pass->builder.m_writeStates[writeIdx] };
+
+				// Read properties
+				D3D12_RESOURCE_STATES combinedReadState{ D3D12_RESOURCE_STATE_COMMON };
+				bool intersects{ false };
+				for (const auto& adjPass : adjPasses)
+				{
+					const auto& reads = adjPass->builder.m_reads;
+					const auto it = std::find_if(reads.cbegin(), reads.cend(), [&](RGResource res)
+						{
+							return write.handle == res.handle;
+						});
+					intersects = it != reads.cend();
+					if (intersects)
+					{
+						const auto idx = it - reads.cbegin();
+						// Grab view to get desired state
+						const auto& readViews = adjPass->builder.m_readViews;
+						const auto readView = readViews[idx];
+						const auto& viewRes = HandleAllocator::TryGet(m_views.views, HandleAllocator::GetSlot(readView.handle));
+						combinedReadState |= viewRes.desiredState;
+					}
+				}
+
+				auto& depLevel = m_dependencyLevels[dependencyLevel];
+
+				// If combined desired state is common, we skip.
+				if (intersects)
+					depLevel.AddStateTransition(writeRes, prevWriteState, combinedReadState);
+			
+			}
+		}
 	}
 
 	void RenderGraph::BuildDependencyLevels()
@@ -120,32 +233,60 @@ namespace DOG::gfx
 	{
 	}
 
-	RGResourceView RenderGraph::PassBuilder::ReadTexture(RGResource res, const TextureViewDesc& desc)
+	RGResourceView RenderGraph::PassBuilder::ReadTexture(RGResource res, D3D12_RESOURCE_STATES state, const TextureViewDesc& desc)
 	{
 		m_reads.push_back(res);
 
 		View_Storage storage{};
-		storage.createFunc = [res, desc](RenderDevice* rd, RGResourceRepo* repo) -> u64
+		storage.createFunc = [res, desc, state](RenderDevice* rd, RGResourceRepo* repo, RenderPassBuilder*, D3D12_RESOURCE_STATES& outStates) -> u64
 		{
+			outStates = state;
 			return rd->CreateView(repo->GetTexture(res), desc).handle;
 		};
 		auto ret = m_repo->handleAtor.Allocate<RGResourceView>();
 		HandleAllocator::TryInsert(m_repo->views, storage, HandleAllocator::GetSlot(ret.handle));
+
+		m_readViews.push_back(ret);
+		m_readStates.push_back(state);
 
 		return ret;
 	}
 
-	RGResourceView RenderGraph::PassBuilder::WriteTexture(RGResource res, const TextureViewDesc& desc)
+	RGResourceView RenderGraph::PassBuilder::WriteTexture(RGResource res, D3D12_RESOURCE_STATES state, const TextureViewDesc& desc)
 	{
 		m_writes.push_back(res);
 
 		View_Storage storage{};
-		storage.createFunc = [res, desc](RenderDevice* rd, RGResourceRepo* repo) -> u64
+		storage.createFunc = [res, desc, state](RenderDevice* rd, RGResourceRepo* repo, RenderPassBuilder* builder, D3D12_RESOURCE_STATES& outStates) -> u64
 		{
-			return rd->CreateView(repo->GetTexture(res), desc).handle;
+			assert(builder != nullptr);
+
+			auto view = rd->CreateView(repo->GetTexture(res), desc);
+			
+			if (desc.format == DXGI_FORMAT_D16_UNORM || desc.format == DXGI_FORMAT_D32_FLOAT)
+			{
+				builder->AddDepth(view, RenderPassBeginAccessType::Clear, RenderPassEndingAccessType::Discard);
+			}
+			else if (desc.format == DXGI_FORMAT_D24_UNORM_S8_UINT || desc.format == DXGI_FORMAT_D32_FLOAT_S8X24_UINT)
+			{
+				builder->AddDepthStencil(view, 
+					RenderPassBeginAccessType::Clear, RenderPassEndingAccessType::Discard,	// depth
+					RenderPassBeginAccessType::Clear, RenderPassEndingAccessType::Discard);	// stencil
+			}
+			else
+			{
+				builder->AppendRT(view, RenderPassBeginAccessType::Clear, RenderPassEndingAccessType::Preserve);
+			}
+
+			outStates = state;
+
+			return view.handle;
 		};
 		auto ret = m_repo->handleAtor.Allocate<RGResourceView>();
 		HandleAllocator::TryInsert(m_repo->views, storage, HandleAllocator::GetSlot(ret.handle));
+		
+		m_writeViews.push_back(ret);
+		m_writeStates.push_back(state);
 
 		return ret;
 	}
@@ -157,22 +298,64 @@ namespace DOG::gfx
 	{
 	}
 
-	TextureView RenderGraph::PassResources::RealizeTexture(RGResourceView view)
+	TextureView RenderGraph::PassResources::GetTexture(RGResourceView view)
 	{
 		auto& viewResource = HandleAllocator::TryGet(m_views->views, HandleAllocator::GetSlot(view.handle));
-
-		// Realize view
-		viewResource.view = viewResource.createFunc(m_rd, m_repo);
-
 		return viewResource.GetTextureView();
 	}
-	void RenderGraph::DependencyLevel::AddPass(RenderPass* pass)
+
+
+
+
+
+	void RenderGraph::DependencyLevel::AddPass(Pass* pass)
 	{
 		m_passes.push_back(pass);
 	}
-	void RenderGraph::DependencyLevel::ExecutePasses(RenderDevice* rd, PassResources& resources)
+
+	void RenderGraph::DependencyLevel::ExecutePasses(RenderDevice* rd, PassResources& resources, RGResourceRepo* repo, CommandList cmdl)
 	{
-		for (const auto& pass : m_passes)
-			pass->execFunc(rd, resources);
+		ExecuteBarriers(rd, cmdl);
+
+		for (auto& pass : m_passes)
+		{	
+			rd->Cmd_BeginRenderPass(cmdl, pass->rp);
+			pass->execFunc(rd, cmdl, resources);
+			rd->Cmd_EndRenderPass(cmdl);
+		}
+	}
+
+	void RenderGraph::DependencyLevel::AddStateTransition(Buffer buffer, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after)
+	{
+		m_barriers.push_back(GPUBarrier::Transition(buffer, 0, prev, after));
+	}
+
+	void RenderGraph::DependencyLevel::AddStateTransition(Texture tex, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after)
+	{
+		m_barriers.push_back(GPUBarrier::Transition(tex, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, prev, after));
+	}
+
+	void RenderGraph::DependencyLevel::ExecuteBarriers(RenderDevice* rd, CommandList cmdl)
+	{
+		rd->Cmd_Barrier(cmdl, m_barriers);
+	}	
+
+	
+
+
+
+	bool IsReadState(D3D12_RESOURCE_STATES states)
+	{
+		if ((states & D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER) == D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER ||
+			(states & D3D12_RESOURCE_STATE_INDEX_BUFFER) == D3D12_RESOURCE_STATE_INDEX_BUFFER ||
+			(states & D3D12_RESOURCE_STATE_DEPTH_READ) == D3D12_RESOURCE_STATE_DEPTH_READ ||
+			(states & D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE) == D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE ||
+			(states & D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE) == D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE ||
+			(states & D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT) == D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT ||
+			(states & D3D12_RESOURCE_STATE_COPY_SOURCE) == D3D12_RESOURCE_STATE_COPY_SOURCE)
+		{
+			return true;
+		}
+		return false;
 	}
 }

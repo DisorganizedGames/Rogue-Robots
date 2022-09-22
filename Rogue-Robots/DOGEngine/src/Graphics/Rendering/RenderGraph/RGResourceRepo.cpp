@@ -19,7 +19,6 @@ namespace DOG::gfx
 			return m_currFrame > (lastFrameAccess + MAX_UNUSED_RESOURCE_LIFETIME);
 		};
 
-
 		++m_currFrame;
 	}
 
@@ -27,6 +26,7 @@ namespace DOG::gfx
 	{
 		Texture_Storage storage{};
 		storage.desc = desc;
+		storage.currState = desc.initState;
 			
 		auto hdl = m_handleAtor.Allocate<RGResource>();
 		HandleAllocator::TryInsert(m_textures, storage, HandleAllocator::GetSlot(hdl.handle));
@@ -34,18 +34,50 @@ namespace DOG::gfx
 		return hdl;
 	}
 
+	RGResource RGResourceRepo::ImportResource(Texture tex, D3D12_RESOURCE_STATES initState)
+	{
+		Texture_Storage storage{};
+		storage.realized = tex;
+		storage.currState = initState;
+
+		auto hdl = m_handleAtor.Allocate<RGResource>();
+		HandleAllocator::TryInsert(m_textures, storage, HandleAllocator::GetSlot(hdl.handle));
+
+		return hdl;
+	}
+
 	Texture RGResourceRepo::GetTexture(RGResource tex)
 	{
 		auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(tex.handle));
-		if (!res.realized)
-		{
-			TextureDesc desc(MemoryType::Default, res.desc.format,
-				res.desc.width, res.desc.height, res.desc.depth,
-				res.desc.flags, res.desc.initState);
-
-			res.realized = m_rd->CreateTexture(desc);
-		}
+		assert(res.realized);
 		return *res.realized;
+	}
+
+	void RGResourceRepo::RealizeResources()
+	{
+		for (auto& res : m_textures)
+		{
+			if (res && !res->realized)
+			{
+				TextureDesc desc(MemoryType::Default, res->desc.format,
+					res->desc.width, res->desc.height, res->desc.depth,
+					res->desc.flags, res->desc.initState);
+
+				res->realized = m_rd->CreateTexture(desc);
+			}
+		}
+	}
+
+	void RGResourceRepo::SetState(RGResource resource, D3D12_RESOURCE_STATES states)
+	{
+		auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(resource.handle));
+		res.currState = states;
+	}
+
+	D3D12_RESOURCE_STATES RGResourceRepo::GetState(RGResource resource)
+	{
+		const auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(resource.handle));
+		return res.currState;
 	}
 
 }

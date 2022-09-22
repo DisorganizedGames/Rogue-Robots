@@ -22,17 +22,23 @@ namespace DOG::gfx
 
 		RGResource DeclareResource(const RGTextureDesc& desc);
 
-		/*
-			Texture realization should use the information for resource lifetimes
-			;lkasdhfjklsf
-		*/
+		// Import external (state must resource initial state)
+		RGResource ImportResource(Texture tex, D3D12_RESOURCE_STATES initState);
+
 		Texture GetTexture(RGResource tex);
+
+	private:
+		friend class RenderGraph;
+		void RealizeResources();
+		void SetState(RGResource resource, D3D12_RESOURCE_STATES states);
+		D3D12_RESOURCE_STATES GetState(RGResource resource);
 
 	private:
 		struct Texture_Storage
 		{
 			RGTextureDesc desc;
 			std::optional<Texture> realized;
+			D3D12_RESOURCE_STATES currState{ D3D12_RESOURCE_STATE_COMMON };
 		};
 
 	private:

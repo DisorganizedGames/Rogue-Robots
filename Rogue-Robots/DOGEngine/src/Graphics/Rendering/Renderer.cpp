@@ -20,6 +20,8 @@
 
 #include "RenderGraph/RGResourceRepo.h"
 #include "RenderGraph/RenderGraph.h"
+#include "RenderGraph/RGBlackboard.h"
+
 
 
 namespace DOG::gfx
@@ -54,34 +56,60 @@ namespace DOG::gfx
 		{
 			RGResourceRepo rgRepo(m_rd, m_bin.get());
 			RenderGraph rg(m_rd, &rgRepo);
+			RGBlackboard blackboard;
+
+
+			struct SomePassOutput
+			{
+				RGResource out1;
+			} output{};
 
 			RGResource outputPass1;
 			{
 				RGTextureDesc d{};
 				d.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				d.flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 				auto tex1 = rgRepo.DeclareResource(d);
+
+
 				struct PassData
 				{
+					// GPU resources used in pass
 					RGResourceView out1;
+
+					// Allocated resources (e.g constant buffers allocation or updates)
+
 				};
 
 				rg.AddPass<PassData>("Some Pass",
 					[&](RenderGraph::PassBuilder& builder, PassData& passData)
 					{
-						passData.out1 = builder.WriteTexture(tex1, TextureViewDesc(
-							ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+						passData.out1 = builder.WriteTexture(tex1, D3D12_RESOURCE_STATE_RENDER_TARGET,
+							TextureViewDesc(
+							ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 					},
-					[](RenderDevice* rd, RenderGraph::PassResources& resources, const PassData& passData)
+					[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
 					{
+							
 						std::cout << "Doing Some Pass\n";
 					});
+
+
+
+
+
+				output.out1 = tex1;
+				blackboard.Add<SomePassOutput>(output);
 
 				outputPass1 = tex1;
 			}
 		
 			{
+
+
 				RGTextureDesc d{};
 				d.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				d.flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 				auto out = rgRepo.DeclareResource(d);
 				struct PassData
 				{
@@ -92,16 +120,55 @@ namespace DOG::gfx
 				rg.AddPass<PassData>("Pass 2",
 					[&](RenderGraph::PassBuilder& builder, PassData& passData)
 					{
-						passData.in1 = builder.ReadTexture(outputPass1, TextureViewDesc(
+						// Read texture should take a State
+						passData.in1 = builder.ReadTexture(outputPass1, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+							TextureViewDesc(
 							ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-						passData.out1 = builder.WriteTexture(out, TextureViewDesc(
-							ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+
+						passData.out1 = builder.WriteTexture(out, D3D12_RESOURCE_STATE_RENDER_TARGET,
+							TextureViewDesc(
+							ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 					},
-					[](RenderDevice* rd, RenderGraph::PassResources& resources, const PassData& passData)
+					[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
 					{
-						auto view = resources.RealizeTexture(passData.in1);
+						auto in = resources.GetTexture(passData.out1);
+						auto view = resources.GetTexture(passData.in1);
 					
 						std::cout << "Doing Pass 2\n";
+					});
+			}
+
+			{
+
+
+				RGTextureDesc d{};
+				d.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				d.flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+				auto out = rgRepo.DeclareResource(d);
+				struct PassData
+				{
+					RGResourceView in1;
+					RGResourceView out1;
+				};
+
+				rg.AddPass<PassData>("Pass 3",
+					[&](RenderGraph::PassBuilder& builder, PassData& passData)
+					{
+						// Read texture should take a State
+						passData.in1 = builder.ReadTexture(outputPass1, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+							TextureViewDesc(
+								ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+
+						passData.out1 = builder.WriteTexture(out, D3D12_RESOURCE_STATE_RENDER_TARGET,
+							TextureViewDesc(
+								ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+					},
+					[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
+					{
+						auto in = resources.GetTexture(passData.out1);
+						auto view = resources.GetTexture(passData.in1);
+
+						std::cout << "Doing Pass 3\n";
 					});
 			}
 
@@ -118,7 +185,7 @@ namespace DOG::gfx
 
 
 		}
-		assert(false);
+		//assert(false);
 
 
 
