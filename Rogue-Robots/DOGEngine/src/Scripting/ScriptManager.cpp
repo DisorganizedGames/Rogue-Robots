@@ -56,7 +56,7 @@ namespace DOG
 		return true;
 	}
 
-	ScriptManager::ScriptManager(LuaW* luaW) : m_luaW(luaW)
+	ScriptManager::ScriptManager(LuaW* luaW) : m_luaW(luaW), m_entityManager(DOG::EntityManager::Get())
 	{
 #ifdef _DEBUG
 		//Hook up the script watcher
@@ -67,6 +67,8 @@ namespace DOG
 			}
 		);
 #endif // _DEBUG
+
+		m_idCounter = 0;
 	}
 
 	void ScriptManager::RunLuaFile(const std::string& luaFileName)
@@ -74,32 +76,69 @@ namespace DOG
 		m_luaW->RunScript(c_pathToScripts + luaFileName);
 	}
 
+	////Creates a script and runs it
+	//TempScript* ScriptManager::AddScriptT(const std::string& luaFileName)
+	//{
+	//	TempScript newScript = { luaFileName, -1, 0, 0 };
+	//	newScript.luaScript = m_luaW->CreateTable();
+
+	//	LuaTable table(m_luaW, newScript.luaScript, true);
+	//	table.CreateEnvironment(c_pathToScripts + luaFileName);
+	//	newScript.onStart = table.TryGetFunctionFromTable("OnStart");
+	//	newScript.onUpdate = table.TryGetFunctionFromTable("OnUpdate");
+
+	//	TempScript* returnScript;
+	//	auto it = m_scriptsMap.find(luaFileName.c_str());
+	//	if (it != m_scriptsMap.end())
+	//	{
+	//		it->second.push_back(newScript);
+	//		returnScript = &it->second.back();
+	//	}
+	//	else
+	//	{
+	//		m_scriptsMap.insert({ luaFileName.c_str(), {newScript} });
+	//		it = m_scriptsMap.find(luaFileName.c_str());
+	//		returnScript = &it->second.back();
+	//	}
+
+	//	return returnScript;
+	//}
+
 	//Creates a script and runs it
-	TempScript* ScriptManager::AddScript(const std::string& luaFileName)
+	ScriptData ScriptManager::AddScript(const std::string& luaFileName)
 	{
-		TempScript newScript = { luaFileName, -1, 0, 0 };
-		newScript.luaScript = m_luaW->CreateTable();
+		ScriptData scriptData = {0, -1, -1, -1};
+		scriptData.scriptTable = m_luaW->CreateTable();
 
-		LuaTable table(m_luaW, newScript.luaScript, true);
+		LuaTable table(m_luaW, scriptData.scriptTable, true);
 		table.CreateEnvironment(c_pathToScripts + luaFileName);
-		newScript.onStart = table.TryGetFunctionFromTable("OnStart");
-		newScript.onUpdate = table.TryGetFunctionFromTable("OnUpdate");
+		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
+		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
 
-		TempScript* returnScript;
-		auto it = m_scriptsMap.find(luaFileName.c_str());
-		if (it != m_scriptsMap.end())
+		u32 oldIDCounter = m_idCounter;
+		auto it = m_scriptsIDMap.find(luaFileName.c_str());
+		if (it == m_scriptsIDMap.end())
 		{
-			it->second.push_back(newScript);
-			returnScript = &it->second.back();
+			m_scriptsIDMap.insert({ luaFileName.c_str(), {m_idCounter} });
+			++m_idCounter;
 		}
-		else
-		{
-			m_scriptsMap.insert({ luaFileName.c_str(), {newScript} });
-			it = m_scriptsMap.find(luaFileName.c_str());
-			returnScript = &it->second.back();
-		}
+		scriptData.scriptFileID = oldIDCounter;
 
-		return returnScript;
+		return scriptData;
+
+		//TempScript* returnScript;
+		//auto it = m_scriptsMap.find(luaFileName.c_str());
+		//if (it != m_scriptsMap.end())
+		//{
+		//	it->second.push_back(newScript);
+		//	returnScript = &it->second.back();
+		//}
+		//else
+		//{
+		//	m_scriptsMap.insert({ luaFileName.c_str(), {newScript} });
+		//	it = m_scriptsMap.find(luaFileName.c_str());
+		//	returnScript = &it->second.back();
+		//}
 	}
 
 	//Reloades the script caught by the file watcher

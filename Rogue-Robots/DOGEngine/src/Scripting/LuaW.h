@@ -17,7 +17,7 @@ namespace DOG
 	struct ClassFunctionInfo
 	{
 		std::string functionName;
-		lua_CFunction classFunction;
+		lua_CFunction classFunction = {0};
 	};
 
 	struct RegisterClassFunctions
@@ -248,7 +248,9 @@ namespace DOG
 	template<typename T>
 	T* LuaW::GetUserDataPointerFromStack(int index)
 	{
-		return *(T**)lua_touserdata(m_luaState, index);
+		T* userDataPointer = *(T**)lua_touserdata(m_luaState, index);
+		lua_remove(m_luaState, index);
+		return userDataPointer;
 	}
 
 	//Pushes a new UserData to the stack

@@ -3,6 +3,8 @@
 #include "FileWatch/FileWatch.hpp"
 #pragma warning(pop)
 #include "LuaTable.h"
+#include "../ECS/Component.h"
+#include "../ECS/EntityManager.h"
 
 namespace DOG
 {
@@ -14,15 +16,32 @@ namespace DOG
 		Function onUpdate;
 	};
 
+	struct ScriptData
+	{
+		u32 scriptFileID;
+		Table scriptTable;
+		Function onStartFunction;
+		Function onUpdateFunction;
+	};
+
+	struct ScriptComponent : public Component<ScriptComponent>
+	{
+		ScriptComponent(const ScriptData& scriptData) noexcept : scriptData(scriptData) {}
+		ScriptData scriptData;
+	};
+
 	class ScriptManager
 	{
 	private:
 		std::unordered_map<std::string, std::vector<TempScript>> m_scriptsMap;
+		u32 m_idCounter;
+		std::unordered_map<std::string, u32> m_scriptsIDMap;
 		LuaW* m_luaW;
 		std::unique_ptr<filewatch::FileWatch<std::filesystem::path>> m_fileWatcher;
 		static std::vector<std::string> s_filesToBeReloaded;
 		static std::mutex s_reloadMutex;
 		const std::string c_pathToScripts = "Assets/LuaScripts/";
+		DOG::EntityManager& m_entityManager;
 
 	private:
 		static void ScriptFileWatcher(const std::filesystem::path& path, const filewatch::Event changeType);
@@ -35,7 +54,8 @@ namespace DOG
 		//For lua files which do not require to be scripts
 		void RunLuaFile(const std::string& luaFileName);
 		//Temp before component system
-		TempScript* AddScript(const std::string& luaFileName);
+		//TempScript* AddScriptT(const std::string& luaFileName);
+		ScriptData AddScript(const std::string& luaFileName);
 		void ReloadScripts();
 	};
 }
