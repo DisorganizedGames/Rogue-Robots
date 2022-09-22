@@ -26,7 +26,6 @@ namespace DOG::gfx
 	{
 		Texture_Storage storage{};
 		storage.desc = desc;
-		storage.currState = desc.initState;
 			
 		auto hdl = m_handleAtor.Allocate<RGResource>();
 		HandleAllocator::TryInsert(m_textures, storage, HandleAllocator::GetSlot(hdl.handle));
@@ -38,7 +37,6 @@ namespace DOG::gfx
 	{
 		Texture_Storage storage{};
 		storage.realized = tex;
-		storage.currState = initState;
 
 		auto hdl = m_handleAtor.Allocate<RGResource>();
 		HandleAllocator::TryInsert(m_textures, storage, HandleAllocator::GetSlot(hdl.handle));
@@ -48,9 +46,15 @@ namespace DOG::gfx
 
 	Texture RGResourceRepo::GetTexture(RGResource tex)
 	{
-		auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(tex.handle));
+		const auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(tex.handle));
 		assert(res.realized);
 		return *res.realized;
+	}
+
+	std::pair<u32, u32>& RGResourceRepo::GetMutEffectiveLifetime(RGResource tex)
+	{
+		auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(tex.handle));
+		return res.effectiveLifetime;
 	}
 
 	void RGResourceRepo::RealizeResources()
@@ -66,18 +70,6 @@ namespace DOG::gfx
 				res->realized = m_rd->CreateTexture(desc);
 			}
 		}
-	}
-
-	void RGResourceRepo::SetState(RGResource resource, D3D12_RESOURCE_STATES states)
-	{
-		auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(resource.handle));
-		res.currState = states;
-	}
-
-	D3D12_RESOURCE_STATES RGResourceRepo::GetState(RGResource resource)
-	{
-		const auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(resource.handle));
-		return res.currState;
 	}
 
 }

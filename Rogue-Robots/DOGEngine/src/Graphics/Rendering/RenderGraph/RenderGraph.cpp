@@ -19,15 +19,11 @@ namespace DOG::gfx
 		SortPassesTopologically();
 		BuildDependencyLevels();
 
-		
 		//m_resources->FinalizeResourceLifetimes();
 		m_resources->RealizeResources();
 		RealizeViews();
 
 		InsertTransitions();
-
-		std::cout << "RG Building done\n";
-
 	}
 
 	void RenderGraph::Run()
@@ -167,11 +163,19 @@ namespace DOG::gfx
 				const auto& writeView = pass->builder.m_writeViews[writeIdx];
 				D3D12_RESOURCE_STATES prevWriteState{ pass->builder.m_writeStates[writeIdx] };
 
+				
+				auto& effectiveLifetime = m_resources->GetMutEffectiveLifetime(write);	// Will break if we do buffers
+				effectiveLifetime.first = dependencyLevel;
+				effectiveLifetime.second = dependencyLevel;
+				// We should have some bool that unsubscribes external resources from effective liftime calcs and misc.
+
 				// Read properties
 				D3D12_RESOURCE_STATES combinedReadState{ D3D12_RESOURCE_STATE_COMMON };
 				bool intersects{ false };
 				for (const auto& adjPass : adjPasses)
 				{
+					const auto adjPassDepth = adjPass->passDepth;
+
 					const auto& reads = adjPass->builder.m_reads;
 					const auto it = std::find_if(reads.cbegin(), reads.cend(), [&](RGResource res)
 						{
@@ -186,6 +190,8 @@ namespace DOG::gfx
 						const auto readView = readViews[idx];
 						const auto& viewRes = HandleAllocator::TryGet(m_views.views, HandleAllocator::GetSlot(readView.handle));
 						combinedReadState |= viewRes.desiredState;
+
+						effectiveLifetime.second = (std::max)(adjPassDepth, effectiveLifetime.second);
 					}
 				}
 
@@ -194,7 +200,6 @@ namespace DOG::gfx
 				// If combined desired state is common, we skip.
 				if (intersects)
 					depLevel.AddStateTransition(writeRes, prevWriteState, combinedReadState);
-			
 			}
 		}
 	}
