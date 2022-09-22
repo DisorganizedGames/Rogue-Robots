@@ -46,6 +46,7 @@ namespace DOG
 
 		m_entities.clear();
 		m_components.clear();
+		m_bundles.clear();
 		Initialize();
 	}
 
@@ -66,9 +67,11 @@ namespace DOG
 			m_freeList.push(entityId);
 
 		m_components.reserve(INITIAL_COMPONENT_CAPACITY);
+		m_bundles.reserve(INITIAL_COMPONENT_CAPACITY);
 		for (u32 i{ 0u }; i < INITIAL_COMPONENT_CAPACITY; i++)
 		{
 			m_components.emplace_back(nullptr);
+			m_bundles.emplace_back(nullptr);
 		}
 	}
 
