@@ -246,7 +246,9 @@ void LuaW::PushGlobalFunction(const std::string& functionName)
 template<typename T>
 T* LuaW::GetUserDataPointerFromStack(int index)
 {
-	return *(T**)lua_touserdata(m_luaState, index);
+	T* userDataPointer = *(T**)lua_touserdata(m_luaState, index);
+	lua_remove(m_luaState, index);
+	return userDataPointer;
 }
 
 //Pushes a new UserData to the stack
@@ -286,11 +288,10 @@ static inline int LuaW::FunctionsHook(lua_State* luaState)
 
 //Hooks a member function from c++ to an static int function(lua_State* luaState) 
 template <typename T, void (T::* func)(LuaContext*)>
-static inline int LuaW::ClassFunctionsHook(lua_State* luaState)
+static inline int LuaW::ClassFunctionsHook(lua_State*)
 {
 	//LuaW luaW(luaState);
 	LuaContext state(&s_luaW);
-
 	if (!s_luaW.IsUserData())
 	{
 		s_luaW.Error("Tried to access userdata and no userdata was found! Call object function with either object:function() or object.function(object)!");
@@ -298,7 +299,6 @@ static inline int LuaW::ClassFunctionsHook(lua_State* luaState)
 	}
 	T* object = s_luaW.GetUserDataPointerFromStack<T>();
 	(object->*func)(&state);
-
 	return state.GetNumberOfReturns();
 }
 

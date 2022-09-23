@@ -24,5 +24,5 @@ private:
 	u64 m_magentaCube{ 0 };
 	DOG::EntityManager& m_entityManager;
 	std::vector<std::shared_ptr<LuaInterface>> m_luaInterfaces;
-	MainPlayer m_player;
+	std::shared_ptr<MainPlayer> m_player;
 };

@@ -511,8 +511,6 @@ void LuaW::ClearStack()
 	//const int popAmount = -1;
 	//When popAmount is -1 then it will clear the entire stack
 	lua_pop(m_luaState, popAmount);
-
-	PrintStack();
 }
 
 void LuaW::CallLuaFunction(Function& function, int arguments)
@@ -760,10 +758,8 @@ float LuaW::GetFloatFromTable(Table& table, const std::string& tableFloatName)
 {
 	PushTableToStack(table);
 	PushStringToStack(tableFloatName);
-
 	//Get the float from the table and remove the table from the stack
 	GetTableAndRemove();
-
 	return GetFloatFromStack();
 }
 
