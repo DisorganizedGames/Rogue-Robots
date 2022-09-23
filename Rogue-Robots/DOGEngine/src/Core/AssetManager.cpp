@@ -16,7 +16,7 @@
 namespace DOG
 {
 	// Helpers
-	std::optional<gfx::TextureView> TextureAssetToGfxTexture(u64 assetID, gfx::GraphicsBuilder& builder, const AssetManager& am);
+	std::optional<gfx::TextureView> TextureAssetToGfxTexture(u32 assetID, gfx::GraphicsBuilder& builder, const AssetManager& am);
 
 	std::unique_ptr<AssetManager> AssetManager::s_instance = nullptr;
 	std::mutex AssetManager::s_commandQueueMutex;
@@ -62,7 +62,7 @@ namespace DOG
 		return m_materialManager;
 	}
 
-	u64 AssetManager::LoadModelAsset(const std::string& path, AssetLoadFlag flag)
+	u32 AssetManager::LoadModelAsset(const std::string& path, AssetLoadFlag flag)
 	{
 		if (!std::filesystem::exists(path))
 		{
@@ -79,15 +79,15 @@ namespace DOG
 		newModel->submeshes = std::move(asset->submeshes);
 		newModel->materialIndices = LoadMaterials(asset->materials);
 
-		u64 id = GenerateRandomID();
+		u32 id = NextKey();
 		m_assets.insert({ id, new ManagedAsset<ModelAsset>(AssetStateFlag::ExistOnCPU, newModel) });
 
 
-		AssetManager::AddCommand([](u64 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveModelToGPU(idToMove, f); }, id, flag);
+		AssetManager::AddCommand([](u32 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveModelToGPU(idToMove, f); }, id, flag);
 		return id;
 	}
 
-	u64 AssetManager::LoadTexture(const std::string& path, AssetLoadFlag flag)
+	u32 AssetManager::LoadTexture(const std::string& path, AssetLoadFlag flag)
 	{
 		if (!std::filesystem::exists(path))
 		{
@@ -95,12 +95,12 @@ namespace DOG
 			std::cout << "AssetManager::LoadTexture throw. " + path + " does not exist" << std::endl;
 			throw std::runtime_error(path + " does not exist");
 		}
-		//u64 id = LoadTextureSTBI(path, flag);
-		u64 id = LoadTextureCommpresonator(path, flag);
+		//u32 id = LoadTextureSTBI(path, flag);
+		u32 id = LoadTextureCommpresonator(path, flag);
 		return id;
 	}
 
-	u64 AssetManager::LoadAudio(const std::string& path, AssetLoadFlag)
+	u32 AssetManager::LoadAudio(const std::string& path, AssetLoadFlag)
 	{
 		if (!std::filesystem::exists(path))
 		{
@@ -122,12 +122,12 @@ namespace DOG
 			newAudio->audioData = data;
 		}
 
-		u64 id = GenerateRandomID();
+		u32 id = NextKey();
 		m_assets.insert({ id, new ManagedAsset<AudioAsset>(AssetStateFlag::ExistOnCPU, newAudio) });
 		return id;
 	}
 
-	Asset* AssetManager::GetBaseAsset(u64 id) const
+	Asset* AssetManager::GetBaseAsset(u32 id) const
 	{
 		if (m_assets.contains(id))
 		{
@@ -157,18 +157,18 @@ namespace DOG
 		}
 	}
 
-	u64 AssetManager::AddMesh(const ImportedMesh& mesh)
+	u32 AssetManager::AddMesh(const ImportedMesh& mesh)
 	{
 		MeshAsset* newMesh = new MeshAsset;
 		newMesh->indices = mesh.indices;
 		newMesh->vertexData = mesh.vertexData;
 
-		u64 id = GenerateRandomID();
+		u32 id = NextKey();
 		m_assets.insert({ id, new ManagedAsset<MeshAsset>(AssetStateFlag::ExistOnCPU, newMesh) });
 		return id;
 	}
 
-	void AssetManager::UnLoadAsset(u64 id, AssetUnLoadFlag flag)
+	void AssetManager::UnLoadAsset(u32 id, AssetUnLoadFlag flag)
 	{
 		if (m_assets.contains(id) && !m_assets[id]->CheckIfLoadingAsync())
 		{
@@ -178,9 +178,9 @@ namespace DOG
 		}
 	}
 
-	std::vector<u64> AssetManager::LoadMaterials(const std::vector<ImportedMaterial>& importedMats)
+	std::vector<u32> AssetManager::LoadMaterials(const std::vector<ImportedMaterial>& importedMats)
 	{
-		std::vector<u64> newMats;
+		std::vector<u32> newMats;
 		newMats.reserve(importedMats.size());
 		for (auto& m : importedMats)
 		{
@@ -202,7 +202,7 @@ namespace DOG
 		return newMats;
 	}
 
-	u64 AssetManager::LoadTextureSTBI(const std::string& path, AssetLoadFlag flag)
+	u32 AssetManager::LoadTextureSTBI(const std::string& path, AssetLoadFlag flag)
 	{
 		int width;
 		int height;
@@ -221,12 +221,12 @@ namespace DOG
 		stbi_image_free(imageData);
 		//STBI_FREE(imageData);
 		newTexture->srgb = flag & AssetLoadFlag::Srgb;
-		u64 id = GenerateRandomID();
+		u32 id = NextKey();
 		m_assets.insert({ id, new ManagedAsset<TextureAsset>(AssetStateFlag::ExistOnCPU, newTexture) });
 		return id;
 	}
 
-	u64 AssetManager::LoadTextureCommpresonator(const std::string& path, AssetLoadFlag flag)
+	u32 AssetManager::LoadTextureCommpresonator(const std::string& path, AssetLoadFlag flag)
 	{
 		auto importedTex = TextureFileImporter(path, false).GetResult();
 		TextureAsset* newTexture = new TextureAsset;
@@ -237,12 +237,12 @@ namespace DOG
 		newTexture->textureData.resize(importedTex->dataPerMip.front().data.size());
 		memcpy(newTexture->textureData.data(), importedTex->dataPerMip.front().data.data(), importedTex->dataPerMip.front().data.size());
 		newTexture->srgb = flag & AssetLoadFlag::Srgb;
-		u64 id = GenerateRandomID();
+		u32 id = NextKey();
 		m_assets.insert({ id, new ManagedAsset<TextureAsset>(AssetStateFlag::ExistOnCPU, newTexture) });
 		return id;
 	}
 
-	void AssetManager::MoveModelToGPU(u64 modelID, AssetLoadFlag flag)
+	void AssetManager::MoveModelToGPU(u32 modelID, AssetLoadFlag flag)
 	{
 		gfx::GraphicsBuilder* builder = m_renderer->GetBuilder();
 
@@ -286,7 +286,12 @@ namespace DOG
 		}
 	}
 
-	std::optional<gfx::TextureView> TextureAssetToGfxTexture(u64 assetID, gfx::GraphicsBuilder& builder, const AssetManager& am)
+	u32 AssetManager::NextKey()
+	{
+		return ++m_lastKey;
+	}
+
+	std::optional<gfx::TextureView> TextureAssetToGfxTexture(u32 assetID, gfx::GraphicsBuilder& builder, const AssetManager& am)
 	{
 		if (!assetID) return std::nullopt;
 		TextureAsset* asset = am.GetAsset<TextureAsset>(assetID);

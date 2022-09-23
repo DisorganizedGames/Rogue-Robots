@@ -23,18 +23,18 @@ namespace DOG
 
 		~AssetManager();
 
-		[[nodiscard]] u64 LoadModelAsset(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::VramOnly);
-		[[nodiscard]] u64 LoadTexture(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::None);
-		[[nodiscard]] u64 LoadAudio(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::None);
+		[[nodiscard]] u32 LoadModelAsset(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::VramOnly);
+		[[nodiscard]] u32 LoadTexture(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::None);
+		[[nodiscard]] u32 LoadAudio(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::None);
 
 		MaterialManager& GetMaterialManager();
 
-		void UnLoadAsset(u64 id, AssetUnLoadFlag flag);
+		void UnLoadAsset(u32 id, AssetUnLoadFlag flag);
 
-		Asset* GetBaseAsset(u64 id) const;
+		Asset* GetBaseAsset(u32 id) const;
 		template<typename T>
 		requires std::is_base_of_v<Asset, T>
-		T* GetAsset(u64 id) const
+		T* GetAsset(u32 id) const
 		{
 			if (m_assets.contains(id))
 			{
@@ -64,11 +64,13 @@ namespace DOG
 	private:
 		AssetManager();
 
-		[[nodiscard]] u64 AddMesh(const ImportedMesh& mesh);
-		[[nodiscard]] std::vector<u64> LoadMaterials(const std::vector<ImportedMaterial>& importedMats);
-		[[nodiscard]] u64 LoadTextureSTBI(const std::string& path, AssetLoadFlag flag);
-		[[nodiscard]] u64 LoadTextureCommpresonator(const std::string& path, AssetLoadFlag flag);
-		void MoveModelToGPU(u64 modelID, AssetLoadFlag flag);
+		[[nodiscard]] u32 AddMesh(const ImportedMesh& mesh);
+		[[nodiscard]] std::vector<u32> LoadMaterials(const std::vector<ImportedMaterial>& importedMats);
+		[[nodiscard]] u32 LoadTextureSTBI(const std::string& path, AssetLoadFlag flag);
+		[[nodiscard]] u32 LoadTextureCommpresonator(const std::string& path, AssetLoadFlag flag);
+		void MoveModelToGPU(u32 modelID, AssetLoadFlag flag);
+
+		u32 NextKey();
 
 
 	private:
@@ -76,7 +78,9 @@ namespace DOG
 		static constexpr u64 MAX_AUDIO_SIZE_ASYNC = 65536;
 		static std::mutex s_commandQueueMutex;
 		static std::queue<std::function<void()>> s_commandQueue;
-		std::unordered_map<u64, ManagedAssetBase*> m_assets;
+		std::unordered_map<u32, ManagedAssetBase*> m_assets;
+		u32 m_lastKey = 0;
+
 
 		MaterialManager m_materialManager;
 

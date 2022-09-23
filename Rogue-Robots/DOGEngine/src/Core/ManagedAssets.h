@@ -157,9 +157,9 @@ namespace DOG
 	struct ModelAsset : public Asset
 	{
 		// Note that a materialIndex is not a key to an asset
-		std::vector<u64> materialIndices;
+		std::vector<u32> materialIndices;
 		std::vector<SubmeshMetadata> submeshes;
-		u64 meshID{ 0 };
+		u32 meshID{ 0 };
 		gfx::StaticModel gfxModel;
 
 	};
@@ -222,7 +222,7 @@ namespace DOG
 			else
 				return static_cast<Asset*>(m_asset);
 		}
-		void UnloadAsset(AssetUnLoadFlag flag) override
+		void UnloadAsset(AssetUnLoadFlag) override
 		{
 			assert(m_asset && !CheckIfLoadingAsync());
 			delete m_asset;

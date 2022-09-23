@@ -13,7 +13,7 @@ AudioManager::AudioManager()
 
 void AudioManager::Play(AudioPlayerComponent& audioPlayerComponent)
 {
-	u64 audioID = audioPlayerComponent.audioID;
+	u32 audioID = audioPlayerComponent.audioID;
 	f32 volume = audioPlayerComponent.volume;
 
 	i64 currentVoice = audioPlayerComponent.voiceID;
