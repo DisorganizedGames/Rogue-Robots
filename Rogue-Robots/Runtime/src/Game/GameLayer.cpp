@@ -63,6 +63,9 @@ void GameLayer::OnDetach()
 
 void GameLayer::OnUpdate()
 {
+	LuaGlobal global(&LuaW::s_luaW);
+	global.SetNumber("DeltaTime", Time::DeltaTime());
+
 	m_player->OnUpdate();
 }
 
@@ -94,6 +97,8 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 void GameLayer::RegisterLuaInterfaces()
 {
 	LuaGlobal global(&LuaW::s_luaW);
+
+	global.SetNumber("DeltaTime", Time::DeltaTime());
 
 	//-----------------------------------------------------------------------------------------------
 	//Input

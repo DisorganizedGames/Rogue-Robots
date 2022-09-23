@@ -278,7 +278,6 @@ void LuaW::PushGlobalUserData(T* object, const std::string& interfaceName, const
 template<void (*func)(LuaContext*)>
 static inline int LuaW::FunctionsHook(lua_State* luaState)
 {
-	std::cout << "Hello THERE\n";
 	//LuaW luaW(luaState);
 	LuaContext state(&s_luaW);
 
@@ -291,7 +290,6 @@ static inline int LuaW::FunctionsHook(lua_State* luaState)
 template <typename T, void (T::* func)(LuaContext*)>
 static inline int LuaW::ClassFunctionsHook(lua_State* luaState)
 {
-	std::cout << "Hello\n";
 	//LuaW luaW(luaState);
 	LuaContext state(&s_luaW);
 	if (!s_luaW.IsUserData())

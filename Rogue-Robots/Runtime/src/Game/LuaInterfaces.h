@@ -86,7 +86,6 @@ public:
 	//The user also has to send the appropriate input for that component.
 	void AddComponent(LuaContext* context)
 	{
-		LuaW::s_luaW.PrintStack();
 		entity e = context->GetInteger();
 		std::string compType = context->GetString();
 
@@ -139,11 +138,9 @@ private:
 
 	void AddTransform(LuaContext* context, entity e)
 	{
-		LuaW::s_luaW.PrintStack();
 		LuaTable pos = context->GetTable();
 		LuaTable rot = context->GetTable();
 		LuaTable scale = context->GetTable();
-		LuaW::s_luaW.PrintStack();
 
 		EntityManager::Get().AddComponent<TransformComponent>(e)
 			.SetPosition({ pos.GetFloatFromTable("x"), pos.GetFloatFromTable("y") , pos.GetFloatFromTable("z") })
@@ -159,10 +156,15 @@ private:
 		{
 		case 1:
 			transform.SetPosition({ t.GetFloatFromTable("x"), t.GetFloatFromTable("y"), t.GetFloatFromTable("z") });
+			break;
 		case 2:
 			transform.SetRotation({ t.GetFloatFromTable("x"), t.GetFloatFromTable("y") , t.GetFloatFromTable("z") });
+			break;
 		case 3:
 			transform.SetScale({ t.GetFloatFromTable("x"), t.GetFloatFromTable("y") , t.GetFloatFromTable("z") });
+			break;
+		default:
+			break;
 		}
 	}
 };
