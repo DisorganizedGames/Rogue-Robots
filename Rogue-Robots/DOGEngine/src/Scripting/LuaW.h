@@ -279,9 +279,8 @@ namespace DOG
 
 	//Hooks the function from c++ to an static int function(lua_State* luaState) 
 	template<void (*func)(LuaContext*)>
-	static inline int LuaW::FunctionsHook(lua_State* luaState)
+	static inline int LuaW::FunctionsHook(lua_State*)
 	{
-		//LuaW luaW(luaState);
 		LuaContext state(&s_luaW);
 
 		func(&state);
@@ -291,9 +290,8 @@ namespace DOG
 
 	//Hooks a member function from c++ to an static int function(lua_State* luaState) 
 	template <typename T, void (T::* func)(LuaContext*)>
-	static inline int LuaW::ClassFunctionsHook(lua_State* luaState)
+	static inline int LuaW::ClassFunctionsHook(lua_State*)
 	{
-		//LuaW luaW(luaState);
 		LuaContext state(&s_luaW);
 
 		if (!s_luaW.IsUserData())
