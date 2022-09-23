@@ -23,7 +23,7 @@ namespace DOG
 
 		~AssetManager();
 
-		[[nodiscard]] u32 LoadModelAsset(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::VramOnly);
+		[[nodiscard]] u32 LoadModelAsset(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::GPUMemoryOnly);
 		[[nodiscard]] u32 LoadTexture(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::None);
 		[[nodiscard]] u32 LoadAudio(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::None);
 
@@ -64,6 +64,8 @@ namespace DOG
 	private:
 		AssetManager();
 
+		void LoadModelAssetInternal(const std::string& path, u32 id, AssetLoadFlag flag, ModelAsset* assetOut);
+
 		[[nodiscard]] u32 AddMesh(const ImportedMesh& mesh);
 		[[nodiscard]] std::vector<u32> LoadMaterials(const std::vector<ImportedMaterial>& importedMats);
 		[[nodiscard]] u32 LoadTextureSTBI(const std::string& path, AssetLoadFlag flag);
@@ -72,6 +74,8 @@ namespace DOG
 
 		u32 NextKey();
 
+		// if assetIDOut == 0 then the component needs needs to be added to m_assets
+		bool AssetNeedsToBeLoaded(const std::string& path, u32& assetIDOut); 
 
 	private:
 		static std::unique_ptr<AssetManager> s_instance;
@@ -81,6 +85,7 @@ namespace DOG
 		std::unordered_map<u32, ManagedAssetBase*> m_assets;
 		u32 m_lastKey = 0;
 
+		std::unordered_map<std::string, u32> m_pathTOAssetID;
 
 		MaterialManager m_materialManager;
 

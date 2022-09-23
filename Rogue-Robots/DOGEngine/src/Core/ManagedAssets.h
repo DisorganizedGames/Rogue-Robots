@@ -6,10 +6,11 @@ namespace DOG
 	enum class AssetLoadFlag
 	{
 		None = 0,
-		VramOnly = 1 << 1,
-		Async = 1 << 2,
-		GenMips = 1 << 3,
-		Srgb = 1 << 4,
+		GPUMemory = 1 << 1,
+		GPUMemoryOnly = 1 << 2,
+		Async = 1 << 3,
+		GenMips = 1 << 4,
+		Srgb = 1 << 5,
 	};
 
 	inline int operator &(AssetLoadFlag l, AssetLoadFlag r)
@@ -227,7 +228,7 @@ namespace DOG
 			assert(m_asset && !CheckIfLoadingAsync());
 			delete m_asset;
 			m_asset = nullptr;
-			stateFlag &= ~AssetStateFlag::ExistOnCPU;
+			stateFlag = AssetStateFlag::Evicted;
 		}
 
 	private:

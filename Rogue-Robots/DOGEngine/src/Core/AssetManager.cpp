@@ -47,6 +47,20 @@ namespace DOG
 
 	}
 
+	void AssetManager::LoadModelAssetInternal(const std::string& path, u32 id, AssetLoadFlag flag, ModelAsset* assetOut)
+	{
+		DOG::AssimpImporter assimpImporter = DOG::AssimpImporter(path);
+		auto asset = assimpImporter.GetResult();
+
+		assetOut->meshID = AddMesh(asset->mesh);
+		assetOut->submeshes = std::move(asset->submeshes);
+		assetOut->materialIndices = LoadMaterials(asset->materials);
+
+		m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
+
+		AssetManager::AddCommand([](u32 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveModelToGPU(idToMove, f); }, id, flag);
+	}
+
 	AssetManager::~AssetManager()
 	{
 		for (auto& [id, asset] : m_assets)
@@ -64,26 +78,19 @@ namespace DOG
 
 	u32 AssetManager::LoadModelAsset(const std::string& path, AssetLoadFlag flag)
 	{
-		if (!std::filesystem::exists(path))
+		u32 id = 0;
+		if (AssetNeedsToBeLoaded(path, id))
 		{
-			// assert wont catch if we have wrong path only in release mode
-			std::cout << "AssetManager::LoadModelAsset throw. " + path + " does not exist" << std::endl;
-			throw std::runtime_error(path + " does not exist");
+			if (id == 0)
+			{
+				id = NextKey();
+				m_assets.insert({ id, new ManagedAsset<ModelAsset>(AssetStateFlag::Unknown, new ModelAsset) });
+				m_pathTOAssetID[path] = id;
+			}
+			ModelAsset* p = GetAsset<ModelAsset>(id);
+			LoadModelAssetInternal(path, id, flag, p);
 		}
-
-		DOG::AssimpImporter assimpImporter = DOG::AssimpImporter(path);
-		auto asset = assimpImporter.GetResult();
-
-		ModelAsset* newModel = new ModelAsset;
-		newModel->meshID = AddMesh(asset->mesh);
-		newModel->submeshes = std::move(asset->submeshes);
-		newModel->materialIndices = LoadMaterials(asset->materials);
-
-		u32 id = NextKey();
-		m_assets.insert({ id, new ManagedAsset<ModelAsset>(AssetStateFlag::ExistOnCPU, newModel) });
-
-
-		AssetManager::AddCommand([](u32 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveModelToGPU(idToMove, f); }, id, flag);
+		assert(id != 0);
 		return id;
 	}
 
@@ -278,7 +285,7 @@ namespace DOG
 
 		modelAsset->gfxModel = builder->LoadCustomModel(loadSpec, matSpecs);
 
-		if (flag & AssetLoadFlag::VramOnly)
+		if (flag & AssetLoadFlag::GPUMemoryOnly)
 		{
 			AssetUnLoadFlag unloadFlag = AssetUnLoadFlag::MeshCPU;
 			unloadFlag |= AssetUnLoadFlag::TextureCPU;
@@ -289,6 +296,37 @@ namespace DOG
 	u32 AssetManager::NextKey()
 	{
 		return ++m_lastKey;
+	}
+
+	bool AssetManager::AssetNeedsToBeLoaded(const std::string& path, u32& assetIDOut)
+	{
+		if (!std::filesystem::exists(path))
+		{
+			// assert wont catch if we have wrong path only in release mode
+			std::cout << "AssetManager::AssetShouldBeLoaded throw. " + path + " does not exist" << std::endl;
+			throw std::runtime_error(path + " does not exist");
+		}
+
+		u32 id = 0;
+		bool assetNeedsToBeLoaded = false;
+		if (m_pathTOAssetID.contains(path))
+		{
+			id = m_pathTOAssetID.at(path);
+			assert(m_assets.contains(id));
+			auto& managedAsset = m_assets[id];
+
+			if (!managedAsset->CheckIfLoadingAsync() && managedAsset->stateFlag & AssetStateFlag::Evicted)
+			{
+				assetNeedsToBeLoaded = true;
+			}
+		}
+		else
+		{
+			assetNeedsToBeLoaded = true;
+		}
+
+		assetIDOut = id;
+		return assetNeedsToBeLoaded;
 	}
 
 	std::optional<gfx::TextureView> TextureAssetToGfxTexture(u32 assetID, gfx::GraphicsBuilder& builder, const AssetManager& am)
