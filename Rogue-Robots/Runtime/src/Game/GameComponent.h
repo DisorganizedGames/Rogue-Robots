@@ -2,9 +2,7 @@
 #include <DOGEngine.h>
 #include "Scripting/ScriptManager.h"
 
-using namespace DOG;
-
-struct GunComponent : public Component<GunComponent>
+struct GunComponent : public DOG::Component<GunComponent>
 {
 	TempScript* gunScript;
 };
