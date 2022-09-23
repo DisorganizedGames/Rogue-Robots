@@ -64,6 +64,9 @@ namespace DOG::gfx
 
 		bool WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+
+		void TestRenderGraph();
+
 	private:
 		struct RenderSubmission
 		{

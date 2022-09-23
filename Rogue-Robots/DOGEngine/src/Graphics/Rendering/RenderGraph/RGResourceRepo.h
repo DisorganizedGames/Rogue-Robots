@@ -30,6 +30,10 @@ namespace DOG::gfx
 		friend class RenderGraph;
 		Texture GetTexture(RGResource tex);
 		std::pair<u32, u32>& GetMutEffectiveLifetime(RGResource tex);
+		D3D12_RESOURCE_STATES GetState(RGResource tex);
+		void SetState(RGResource tex, D3D12_RESOURCE_STATES state);
+
+
 		void RealizeResources();
 
 	private:
@@ -38,6 +42,8 @@ namespace DOG::gfx
 			RGTextureDesc desc;
 			std::optional<Texture> realized;
 			std::pair<u32, u32> effectiveLifetime{ 0, 0 };
+
+			D3D12_RESOURCE_STATES currState{ D3D12_RESOURCE_STATE_COMMON };
 		};
 
 	private:

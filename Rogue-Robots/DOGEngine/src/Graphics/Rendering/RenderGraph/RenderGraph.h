@@ -102,25 +102,6 @@ namespace DOG::gfx
 			RenderPass rp;
 		};
 
-		class DependencyLevel
-		{
-		public:
-			void AddPass(Pass* pass);
-			void ExecutePasses(RenderDevice* rd, PassResources& resources, RGResourceRepo* repo, CommandList cmdl);
-
-			void AddStateTransition(Buffer buffer, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after);
-			void AddStateTransition(Texture tex, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after);
-			// AddAliasingBarrier
-			// AddUAVBarrier
-			
-		private:
-			void ExecuteBarriers(RenderDevice* rd, CommandList cmdl);
-
-		private:
-			std::vector<Pass*> m_passes;
-			std::vector<GPUBarrier> m_barriers;
-		};
-
 	public:
 		RenderGraph(RenderDevice* rd, RGResourceRepo* repo);
 		
@@ -153,10 +134,9 @@ namespace DOG::gfx
 	private:
 		void BuildAdjacencyList();
 		void SortPassesTopologically();
-		void BuildDependencyLevels();
+		void AssignDepthLevels();
 
 		void RealizeViews();
-		void InsertTransitions();
 
 	private:
 		RenderDevice* m_rd{ nullptr };
@@ -167,20 +147,8 @@ namespace DOG::gfx
 		std::vector<std::unique_ptr<Pass>> m_passes;
 		std::unordered_map<Pass*, std::vector<Pass*>> m_adjacencyMap;
 		std::vector<Pass*> m_sortedPasses;
-		std::vector<DependencyLevel> m_dependencyLevels;
 
-		// { RG, before, after }
-		//std::vector<std::vector<std::tuple<RGResource, D3D12_RESOURCE_STATES, D3D12_RESOURCE_STATES>>> m_resourceStateTransitionAtDependencyLevel;
-		
-
-
-
-
-		// temp
 		CommandList m_cmdl;
-
-
-
 	};
 
 

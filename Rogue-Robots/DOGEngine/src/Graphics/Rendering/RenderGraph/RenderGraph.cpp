@@ -17,24 +17,55 @@ namespace DOG::gfx
 	{
 		BuildAdjacencyList();
 		SortPassesTopologically();
-		BuildDependencyLevels();
-
+		AssignDepthLevels();
+		
 		//m_resources->FinalizeResourceLifetimes();
 		m_resources->RealizeResources();
 		RealizeViews();
-
-		InsertTransitions();
 	}
 
 	void RenderGraph::Run()
 	{
 		m_cmdl = m_rd->AllocateCommandList();
-		for (auto& dependencyLevel : m_dependencyLevels)
-			dependencyLevel.ExecutePasses(m_rd, m_passResources, m_resources, m_cmdl);
+		
+		std::vector<GPUBarrier> barriers;
+		for (const auto& pass : m_sortedPasses)
+		{
+			// JIT barriers
+			for (u32 readIdx = 0; readIdx < pass->builder.m_reads.size(); ++readIdx)
+			{
+				const auto& read = pass->builder.m_reads[readIdx];
+				auto prevState = m_resources->GetState(read);
+				auto afterState = pass->builder.m_readStates[readIdx];
+				auto tex = m_resources->GetTexture(read);
+				m_resources->SetState(read, afterState);
+	
+				if (prevState != afterState)
+					barriers.push_back(GPUBarrier::Transition(tex, 0, prevState, afterState));
+			}
+			for (u32 writeIdx = 0; writeIdx < pass->builder.m_writes.size(); ++writeIdx)
+			{
+				const auto& write = pass->builder.m_writes[writeIdx];
+				auto prevState = m_resources->GetState(write);
+				auto afterState = pass->builder.m_writeStates[writeIdx];
+				auto tex = m_resources->GetTexture(write);
+				m_resources->SetState(write, afterState);
+
+				if (prevState != afterState)
+					barriers.push_back(GPUBarrier::Transition(tex, 0, prevState, afterState));
+			}
+			if (!barriers.empty())
+				m_rd->Cmd_Barrier(m_cmdl, barriers);
+			barriers.clear();
+
+			// Exec pass
+			m_rd->Cmd_BeginRenderPass(m_cmdl, pass->rp);
+			pass->execFunc(m_rd, m_cmdl, m_passResources);
+			m_rd->Cmd_EndRenderPass(m_cmdl);
+		}
 
 		m_rd->SubmitCommandList(m_cmdl);
 		m_rd->Flush();
-
 	}
 
 	void RenderGraph::BuildAdjacencyList()
@@ -57,6 +88,20 @@ namespace DOG::gfx
 				{
 					if (std::find_if(reads.begin(), reads.end(), 
 						[write](RGResource lh) { return lh.handle == write.handle; }) != reads.cend())
+					{
+						// Found at least one dependency -> Passes dependent
+						auto& adjacents = m_adjacencyMap[pass.get()];
+						adjacents.push_back(pdp.get());
+						break;
+					}
+				}
+
+				const auto& writes = pdp->builder.m_writes;
+				// Check write/write intersection
+				for (const auto& write : pass->builder.m_writes)
+				{
+					if (std::find_if(writes.begin(), writes.end(),
+						[write](RGResource lh) { return lh.handle == write.handle; }) != writes.cend())
 					{
 						// Found at least one dependency -> Passes dependent
 						auto& adjacents = m_adjacencyMap[pass.get()];
@@ -97,6 +142,21 @@ namespace DOG::gfx
 			dfs(pass, edges);
 		}
 		std::reverse(m_sortedPasses.begin(), m_sortedPasses.end());
+	}
+
+	void RenderGraph::AssignDepthLevels()
+	{
+		// It is important to observe that traversing in topological order means that
+		// parent nodes always have resolved depth levels!
+		u32 maxDepth{ 0 };
+		for (const auto& pass : m_sortedPasses)
+		{
+			for (auto& adjacentPass : m_adjacencyMap[pass])
+			{
+				adjacentPass->passDepth = (std::max)(pass->passDepth + 1, adjacentPass->passDepth);
+				maxDepth = (std::max)(adjacentPass->passDepth, maxDepth);
+			}
+		}
 	}
 
 	void RenderGraph::RealizeViews()
@@ -146,85 +206,6 @@ namespace DOG::gfx
 				states |= viewRes.desiredState;
 				viewRes.desiredState = states;	
 			}
-		}
-	}
-
-	void RenderGraph::InsertTransitions()
-	{
-		for (const auto& [pass, adjPasses] : m_adjacencyMap)
-		{
-			const auto dependencyLevel = pass->passDepth;
-
-			for (u32 writeIdx = 0; writeIdx < pass->builder.m_writes.size(); ++writeIdx)
-			{
-				// Write properties
-				const auto& write = pass->builder.m_writes[writeIdx];
-				const auto& writeRes = m_resources->GetTexture(write);					// Will break if we do buffers
-				const auto& writeView = pass->builder.m_writeViews[writeIdx];
-				D3D12_RESOURCE_STATES prevWriteState{ pass->builder.m_writeStates[writeIdx] };
-
-				
-				auto& effectiveLifetime = m_resources->GetMutEffectiveLifetime(write);	// Will break if we do buffers
-				effectiveLifetime.first = dependencyLevel;
-				effectiveLifetime.second = dependencyLevel;
-				// We should have some bool that unsubscribes external resources from effective liftime calcs and misc.
-
-				// Read properties
-				D3D12_RESOURCE_STATES combinedReadState{ D3D12_RESOURCE_STATE_COMMON };
-				bool intersects{ false };
-				for (const auto& adjPass : adjPasses)
-				{
-					const auto adjPassDepth = adjPass->passDepth;
-
-					const auto& reads = adjPass->builder.m_reads;
-					const auto it = std::find_if(reads.cbegin(), reads.cend(), [&](RGResource res)
-						{
-							return write.handle == res.handle;
-						});
-					intersects = it != reads.cend();
-					if (intersects)
-					{
-						const auto idx = it - reads.cbegin();
-						// Grab view to get desired state
-						const auto& readViews = adjPass->builder.m_readViews;
-						const auto readView = readViews[idx];
-						const auto& viewRes = HandleAllocator::TryGet(m_views.views, HandleAllocator::GetSlot(readView.handle));
-						combinedReadState |= viewRes.desiredState;
-
-						effectiveLifetime.second = (std::max)(adjPassDepth, effectiveLifetime.second);
-					}
-				}
-
-				auto& depLevel = m_dependencyLevels[dependencyLevel];
-
-				// If combined desired state is common, we skip.
-				if (intersects)
-					depLevel.AddStateTransition(writeRes, prevWriteState, combinedReadState);
-			}
-		}
-	}
-
-	void RenderGraph::BuildDependencyLevels()
-	{
-		// Assign dependency levels by traversing in topological order
-		// It is important to observe that traversing in topological order means that
-		// parent nodes always have resolved depth levels!
-		u32 maxDepth{ 0 };
-		for (const auto& pass : m_sortedPasses)
-		{
-			for (auto& adjacentPass : m_adjacencyMap[pass])
-			{
-				adjacentPass->passDepth = (std::max)(pass->passDepth + 1, adjacentPass->passDepth);
-				maxDepth = (std::max)(adjacentPass->passDepth, maxDepth);
-			}
-		}
-
-		// Add passes to dependency level
-		m_dependencyLevels.resize(maxDepth + 1);
-		for (u32 i = 0; i < m_sortedPasses.size(); ++i)
-		{
-			const auto& pass = m_sortedPasses[i];
-			m_dependencyLevels[pass->passDepth].AddPass(pass);
 		}
 	}
 
@@ -312,40 +293,6 @@ namespace DOG::gfx
 
 
 
-
-	void RenderGraph::DependencyLevel::AddPass(Pass* pass)
-	{
-		m_passes.push_back(pass);
-	}
-
-	void RenderGraph::DependencyLevel::ExecutePasses(RenderDevice* rd, PassResources& resources, RGResourceRepo* repo, CommandList cmdl)
-	{
-		ExecuteBarriers(rd, cmdl);
-
-		for (auto& pass : m_passes)
-		{	
-			rd->Cmd_BeginRenderPass(cmdl, pass->rp);
-			pass->execFunc(rd, cmdl, resources);
-			rd->Cmd_EndRenderPass(cmdl);
-		}
-	}
-
-	void RenderGraph::DependencyLevel::AddStateTransition(Buffer buffer, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after)
-	{
-		m_barriers.push_back(GPUBarrier::Transition(buffer, 0, prev, after));
-	}
-
-	void RenderGraph::DependencyLevel::AddStateTransition(Texture tex, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after)
-	{
-		m_barriers.push_back(GPUBarrier::Transition(tex, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, prev, after));
-	}
-
-	void RenderGraph::DependencyLevel::ExecuteBarriers(RenderDevice* rd, CommandList cmdl)
-	{
-		rd->Cmd_Barrier(cmdl, m_barriers);
-	}	
-
-	
 
 
 
