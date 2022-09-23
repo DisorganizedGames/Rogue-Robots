@@ -1,6 +1,5 @@
+#pragma once
 #include <DOGEngine.h>
-
-using namespace DOG;
 
 class LuaInterface
 {
@@ -21,22 +20,12 @@ public:
 	
 	}
 
-	void IsLeftPressed(LuaContext* context)
-	{
-		context->ReturnBoolean(DOG::Mouse::IsButtonPressed(DOG::Button::Left));
-	}
+	void IsLeftPressed(DOG::LuaContext* context);
 
-	void IsRightPressed(LuaContext* context)
-	{
-		context->ReturnBoolean(DOG::Mouse::IsButtonPressed(DOG::Button::Right));
-	}
+	void IsRightPressed(DOG::LuaContext* context);
 
 	//Takes a string as argument.
-	void IsKeyPressed(LuaContext* context)
-	{
-		std::string input = context->GetString();
-		context->ReturnBoolean(DOG::Keyboard::IsKeyPressed((DOG::Key)input[0])); //Usch
-	}
+	void IsKeyPressed(DOG::LuaContext* context);
 };
 
 class AudioInterface : public LuaInterface
@@ -52,10 +41,7 @@ public:
 	}
 
 	//Takes a string as argument
-	void PlaySound(LuaContext*)
-	{
-		//TODO
-	}
+	void PlaySound(DOG::LuaContext*);
 };
 
 class EntityInterface : public LuaInterface
@@ -70,102 +56,32 @@ public:
 
 	}
 
-	void CreateEntity(LuaContext* context)
-	{
-		context->ReturnInteger(EntityManager::Get().CreateEntity());
-	}
+	void CreateEntity(DOG::LuaContext* context);
 
-	void DestroyEntity(LuaContext* context)
-	{
-		EntityManager::Get().DestroyEntity(context->GetInteger());
-	}
+	void DestroyEntity(DOG::LuaContext* context);
 
 	//Takes an entity-ID as input.
 	//Also takes a string that tells what component to add.
 	//The user also has to send the appropriate input for that component.
-	void AddComponent(LuaContext* context)
-	{
-		entity e = context->GetInteger();
-		std::string compType = context->GetString();
-
-		if (compType == "Model")
-		{
-			AddModel(context, e);
-		}
-		else if (compType == "Transform")
-		{
-			AddTransform(context, e);
-		}
-		//Add more component types here.
-	}
+	void AddComponent(DOG::LuaContext* context);
 
 	//Takes an entity-ID as input.
 	//Also takes a string that tells what component to change.
 	//The user also has to send the appropriate input for that component.
-	void ModifyComponent(LuaContext* context)
-	{
-		entity e = context->GetInteger();
-		std::string compType = context->GetString();
-
-		if (compType == "Transform")
-		{
-			ModifyTransform(context, e);
-		}
-		//Add more component types here.
-	}
+	void ModifyComponent(DOG::LuaContext* context);
 
 	//Takes an entity-ID as input.
-	void GetTransformPosData(LuaContext* context)
-	{
-		entity e = context->GetInteger();
-		TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
-
-		DirectX::SimpleMath::Vector3 pos = transform.worldMatrix.Translation();
-
-		LuaTable t;
-		t.AddFloatToTable("x", pos.x);
-		t.AddFloatToTable("y", pos.y);
-		t.AddFloatToTable("z", pos.z);
-		context->ReturnTable(t);
-	}
+	void GetTransformPosData(DOG::LuaContext* context);
+	void GetTransformScaleData(DOG::LuaContext* context);
 
 private:
-	void AddModel(LuaContext* context, entity e)
-	{
-		EntityManager::Get().AddComponent<ModelComponent>(e, std::stoull(context->GetString()));
-	}
+	void AddModel(DOG::LuaContext* context, DOG::entity e);
 
-	void AddTransform(LuaContext* context, entity e)
-	{
-		LuaTable pos = context->GetTable();
-		LuaTable rot = context->GetTable();
-		LuaTable scale = context->GetTable();
+	void AddTransform(DOG::LuaContext* context, DOG::entity e);
 
-		EntityManager::Get().AddComponent<TransformComponent>(e)
-			.SetPosition({ pos.GetFloatFromTable("x"), pos.GetFloatFromTable("y") , pos.GetFloatFromTable("z") })
-			.SetRotation({ rot.GetFloatFromTable("x"), rot.GetFloatFromTable("y") , rot.GetFloatFromTable("z") })
-			.SetScale({ scale.GetFloatFromTable("x"), scale.GetFloatFromTable("y"), scale.GetFloatFromTable("z") });
-	}
+	void AddNetwork(DOG::LuaContext* context, DOG::entity e);
 
-	void ModifyTransform(LuaContext* context, entity e)
-	{
-		TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
-		LuaTable t = context->GetTable();
-		switch (context->GetInteger())
-		{
-		case 1:
-			transform.SetPosition({ t.GetFloatFromTable("x"), t.GetFloatFromTable("y"), t.GetFloatFromTable("z") });
-			break;
-		case 2:
-			transform.SetRotation({ t.GetFloatFromTable("x"), t.GetFloatFromTable("y") , t.GetFloatFromTable("z") });
-			break;
-		case 3:
-			transform.SetScale({ t.GetFloatFromTable("x"), t.GetFloatFromTable("y") , t.GetFloatFromTable("z") });
-			break;
-		default:
-			break;
-		}
-	}
+	void ModifyTransform(DOG::LuaContext* context, DOG::entity e);
 };
 
 class AssetInterface : public LuaInterface
@@ -181,12 +97,27 @@ public:
 	}
 
 	//Takes a string, path to the model.
-	void LoadModel(LuaContext* context)
-	{
-		//Send string? Cast to double? Change asset manager to use 32bit?
-		context->ReturnString(std::to_string(AssetManager::Get().LoadModelAsset(context->GetString())));
-	}
+	void LoadModel(DOG::LuaContext* context);
 
 private:
 
+};
+
+class PlayerInterface : public LuaInterface
+{
+public:
+	PlayerInterface() noexcept = delete;
+	PlayerInterface(DOG::entity player) : m_player{ player }
+	{
+
+	}
+	~PlayerInterface() noexcept
+	{
+
+	}
+
+	void GetForward(DOG::LuaContext* context);
+	void GetPosition(DOG::LuaContext* context);
+private:
+	DOG::entity m_player;
 };
