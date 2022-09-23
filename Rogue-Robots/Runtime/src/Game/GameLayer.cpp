@@ -45,6 +45,7 @@ GameLayer::GameLayer() noexcept
 	t4.worldMatrix(3, 2) = 5;
 }
 
+ScriptManager* scriptManager;
 void GameLayer::OnAttach()
 {
 	//Register Lua interfaces

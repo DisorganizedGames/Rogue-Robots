@@ -33,7 +33,6 @@ namespace DOG
 	class ScriptManager
 	{
 	private:
-		std::unordered_map<std::string, std::vector<TempScript>> m_scriptsMap;
 		u32 m_idCounter;
 		std::unordered_map<std::string, u32> m_scriptsIDMap;
 		LuaW* m_luaW;
@@ -45,17 +44,20 @@ namespace DOG
 
 	private:
 		static void ScriptFileWatcher(const std::filesystem::path& path, const filewatch::Event changeType);
-		//Temp before component system
-		void TempReloadFile(const std::string& fileName, TempScript* script);
+		void ReloadFile(const std::string& fileName, ScriptData& scriptData);
 		bool TestReloadFile(const std::string& fileName);
 
 	public:
 		ScriptManager(LuaW* luaW);
 		//For lua files which do not require to be scripts
 		void RunLuaFile(const std::string& luaFileName);
-		//Temp before component system
-		//TempScript* AddScriptT(const std::string& luaFileName);
+		//Adds a script and runs it
 		ScriptData AddScript(const std::string& luaFileName);
+		//Reloads script which have changed
 		void ReloadScripts();
+		//Call start on the scripts which has one
+		void StartScripts();
+		//Call update on the scripts which has one
+		void UpdateScripts();
 	};
 }

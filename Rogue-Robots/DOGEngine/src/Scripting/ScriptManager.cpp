@@ -19,20 +19,21 @@ namespace DOG
 	}
 
 	//Reloades the script
-	void ScriptManager::TempReloadFile(const std::string& fileName, TempScript* script)
+	void ScriptManager::ReloadFile(const std::string& fileName, ScriptData& scriptData)
 	{
 		//Removes the old environment and creates a new one
-		m_luaW->RemoveReferenceToTable(script->luaScript);
-		script->luaScript = m_luaW->CreateTable();
-		m_luaW->CreateEnvironment(script->luaScript, c_pathToScripts + fileName);
+		m_luaW->RemoveReferenceToTable(scriptData.scriptTable);
+		scriptData.scriptTable = m_luaW->CreateTable();
+		m_luaW->CreateEnvironment(scriptData.scriptTable, c_pathToScripts + fileName);
 
 		//Remove the old function references
-		m_luaW->RemoveReferenceToFunction(script->onUpdate);
-		m_luaW->RemoveReferenceToFunction(script->onStart);
+		m_luaW->RemoveReferenceToFunction(scriptData.onStartFunction);
+		m_luaW->RemoveReferenceToFunction(scriptData.onUpdateFunction);
+
 		//Get the new functions from the table
-		LuaTable table(m_luaW, script->luaScript, true);
-		script->onStart = table.TryGetFunctionFromTable("OnStart");
-		script->onUpdate = table.TryGetFunctionFromTable("OnUpdate");
+		LuaTable table(m_luaW, scriptData.scriptTable, true);
+		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
+		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
 	}
 
 	//Test if we can reload the file and return true/false
@@ -76,34 +77,6 @@ namespace DOG
 		m_luaW->RunScript(c_pathToScripts + luaFileName);
 	}
 
-	////Creates a script and runs it
-	//TempScript* ScriptManager::AddScriptT(const std::string& luaFileName)
-	//{
-	//	TempScript newScript = { luaFileName, -1, 0, 0 };
-	//	newScript.luaScript = m_luaW->CreateTable();
-
-	//	LuaTable table(m_luaW, newScript.luaScript, true);
-	//	table.CreateEnvironment(c_pathToScripts + luaFileName);
-	//	newScript.onStart = table.TryGetFunctionFromTable("OnStart");
-	//	newScript.onUpdate = table.TryGetFunctionFromTable("OnUpdate");
-
-	//	TempScript* returnScript;
-	//	auto it = m_scriptsMap.find(luaFileName.c_str());
-	//	if (it != m_scriptsMap.end())
-	//	{
-	//		it->second.push_back(newScript);
-	//		returnScript = &it->second.back();
-	//	}
-	//	else
-	//	{
-	//		m_scriptsMap.insert({ luaFileName.c_str(), {newScript} });
-	//		it = m_scriptsMap.find(luaFileName.c_str());
-	//		returnScript = &it->second.back();
-	//	}
-
-	//	return returnScript;
-	//}
-
 	//Creates a script and runs it
 	ScriptData ScriptManager::AddScript(const std::string& luaFileName)
 	{
@@ -125,20 +98,6 @@ namespace DOG
 		scriptData.scriptFileID = oldIDCounter;
 
 		return scriptData;
-
-		//TempScript* returnScript;
-		//auto it = m_scriptsMap.find(luaFileName.c_str());
-		//if (it != m_scriptsMap.end())
-		//{
-		//	it->second.push_back(newScript);
-		//	returnScript = &it->second.back();
-		//}
-		//else
-		//{
-		//	m_scriptsMap.insert({ luaFileName.c_str(), {newScript} });
-		//	it = m_scriptsMap.find(luaFileName.c_str());
-		//	returnScript = &it->second.back();
-		//}
 	}
 
 	//Reloades the script caught by the file watcher
@@ -158,10 +117,10 @@ namespace DOG
 
 			for (int i = 0; i < s_filesToBeReloaded.size(); ++i)
 			{
-				auto it = m_scriptsMap.find(s_filesToBeReloaded[i].c_str());
+				auto it = m_scriptsIDMap.find(s_filesToBeReloaded[i].c_str());
 
 				//Should never happen
-				if (it == m_scriptsMap.end())
+				if (it == m_scriptsIDMap.end())
 				{
 					assert(false);
 					return;
@@ -171,14 +130,39 @@ namespace DOG
 
 				if (fileIsReloadedable)
 				{
-					for (int scriptIndex = 0; scriptIndex < it->second.size(); ++scriptIndex)
-					{
-						TempReloadFile(s_filesToBeReloaded[i], &it->second[scriptIndex]);
-					}
+					u32 scriptID = it->second;
+					m_entityManager.Collect<ScriptComponent>().Do([&](ScriptComponent scriptComponent)
+						{
+							if (scriptComponent.scriptData.scriptFileID == scriptID)
+							{
+								ReloadFile(s_filesToBeReloaded[i], scriptComponent.scriptData);
+							}
+						}
+					);
 				}
 				std::cout << s_filesToBeReloaded[i] << "\n";
 			}
 			s_filesToBeReloaded.clear();
 		}
+	}
+
+	void ScriptManager::StartScripts()
+	{
+		m_entityManager.Collect<ScriptComponent>().Do([&](ScriptComponent scriptComponent)
+			{
+				if (scriptComponent.scriptData.onStartFunction.ref != -1)
+					m_luaW->CallTableLuaFunction(scriptComponent.scriptData.scriptTable, scriptComponent.scriptData.onStartFunction);
+			}
+		);
+	}
+
+	void ScriptManager::UpdateScripts()
+	{
+		m_entityManager.Collect<ScriptComponent>().Do([&](ScriptComponent scriptComponent)
+			{
+				if (scriptComponent.scriptData.onUpdateFunction.ref != -1)
+					m_luaW->CallTableLuaFunction(scriptComponent.scriptData.scriptTable, scriptComponent.scriptData.onUpdateFunction);
+			}
+		);
 	}
 }
