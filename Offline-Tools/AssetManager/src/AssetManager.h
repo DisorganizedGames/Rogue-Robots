@@ -1,4 +1,7 @@
 #pragma once
+#include <Assets.h>
+
+using namespace DOG; // I know it would leak, but this isn't getting included in the actual project
 
 using u8 = unsigned char;
 using u16 = unsigned short;
@@ -16,8 +19,8 @@ struct AssetMetaData
 {
 	struct TrivialData
 	{
-		u16 countTextures;
-		u16 countMeshes;
+		u32 countTextures;
+		u32 countMeshes;
 	} trivial;
 
 	std::map<std::string, u16> textureMap;
@@ -28,15 +31,6 @@ enum class AssetType
 	Texture,
 	Mesh,
 	Audio
-};
-
-struct TextureHeader
-{
-	char id[3] = {'T', 'E', 'X'};
-	u8 mips;
-	u16 width;
-	u16 height;
-	// mip0, mip1, mip2, ... offsets u32
 };
 
 std::map<std::string, AssetType> extensionMap = {
