@@ -33,9 +33,10 @@ enum class AssetType
 struct TextureHeader
 {
 	char id[3] = {'T', 'E', 'X'};
-	u8 bytesPerPixel;
+	u8 mips;
 	u16 width;
 	u16 height;
+	// mip0, mip1, mip2, ... offsets u32
 };
 
 std::map<std::string, AssetType> extensionMap = {
@@ -119,7 +120,10 @@ void WriteTexture(const std::filesystem::path& in, std::ofstream* out)
 	{
 		FatalError(std::string("Failed to read texture: ") + in.string());
 	}
+	
+	CMP_GenerateMIPLevels(&inMipset, 1);
 
+	// Perform texture compression on the mip-ified texture
 	KernelOptions opts = {
 		.fquality = 0.f,
 		.format = CMP_FORMAT_BC7,
@@ -134,12 +138,28 @@ void WriteTexture(const std::filesystem::path& in, std::ofstream* out)
 	{
 		FatalError(std::string("Failed to compress texture: ") + in.string());
 	}
-
+	
+	// Write texture header to file
 	header.width = outMipset.m_nWidth;
 	header.height = outMipset.m_nHeight;
-
+	header.mips = outMipset.m_nMipLevels;
 	out->write((char*)&header, sizeof(TextureHeader));
-	out->write((char*)outMipset.pData, outMipset.dwDataSize);
+
+	// Write mip level offsets to file
+	for (int i = 0; i < header.mips; ++i)
+	{
+		CMP_MipLevel* mipLevel = nullptr;
+		CMP_GetMipLevel(&mipLevel, &outMipset, i, 0);
+		out->write((char*)&mipLevel->m_dwLinearSize, sizeof(u32));
+	}
+
+	// Write data for each mip level to file
+	for (int i = 0; i < header.mips; ++i)
+	{
+		CMP_MipLevel* mipLevel = nullptr;
+		CMP_GetMipLevel(&mipLevel, &outMipset, i, 0);
+		out->write((char*)mipLevel->m_pbData, mipLevel->m_dwLinearSize);
+	}
 
 	CMP_FreeMipSet(&inMipset);
 	CMP_FreeMipSet(&outMipset);
