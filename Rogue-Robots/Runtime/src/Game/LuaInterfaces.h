@@ -53,7 +53,7 @@ public:
 	}
 
 	//Takes a string as argument
-	void PlaySound(LuaContext* context)
+	void PlaySound(LuaContext*)
 	{
 		//TODO
 	}
