@@ -43,7 +43,7 @@ std::map<std::string, AssetType> extensionMap = {
 	{".png", AssetType::Texture},
 };
 
-AssetMetaData GenerateMetaData(const std::filesystem::path& path)
+AssetMetaData GenerateMetaData(const std::filesystem::path& path, const std::string& outExt)
 {
 	if (!std::filesystem::is_directory(path))
 	{
@@ -52,6 +52,7 @@ AssetMetaData GenerateMetaData(const std::filesystem::path& path)
 
 	AssetMetaData out = {};
 
+	// Map each texture to its unique id
 	for (auto& filePath : std::filesystem::directory_iterator(path))
 	{
 		auto ext = filePath.path().extension();
@@ -59,7 +60,7 @@ AssetMetaData GenerateMetaData(const std::filesystem::path& path)
 		switch (extensionMap[ext.string()])
 		{
 		case AssetType::Texture:
-			out.textureMap[filePath.path().filename().string()] = out.trivial.countTextures++;
+			out.textureMap[filePath.path().filename().replace_extension().string() + outExt] = out.trivial.countTextures++;
 			break;
 		default:
 			break;
@@ -73,7 +74,7 @@ void WriteTexture(const std::filesystem::path& in, std::ofstream* out);
 
 void WriteAssetFiles(const std::filesystem::path& assetPath, const std::filesystem::path& outPath, const std::string& ext = ".dog")
 {
-	AssetMetaData metaData = GenerateMetaData(assetPath);
+	AssetMetaData metaData = GenerateMetaData(assetPath, ext);
 
 	if (!std::filesystem::is_directory(outPath))
 	{
