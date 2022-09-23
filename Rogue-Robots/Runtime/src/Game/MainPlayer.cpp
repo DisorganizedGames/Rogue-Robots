@@ -18,7 +18,7 @@ MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 
 	m_azim = XM_PI / 2;
 	m_polar = XM_PI / 2;
-	m_moveSpeed = 0.01f;
+	m_moveSpeed = 10.0f;
 
 	UpdateCamera(camera);
 
