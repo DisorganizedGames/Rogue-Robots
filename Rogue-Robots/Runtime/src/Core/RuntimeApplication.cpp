@@ -19,7 +19,7 @@ RuntimeApplication::~RuntimeApplication()
 void RuntimeApplication::OnStartUp() noexcept
 {
 	PushLayer(&m_gameLayer);
-	PushLayer(&m_EmilDebugLayer);
+	//PushLayer(&m_EmilDebugLayer);
 }
 
 void RuntimeApplication::OnShutDown() noexcept

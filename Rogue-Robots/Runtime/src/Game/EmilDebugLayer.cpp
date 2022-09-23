@@ -15,22 +15,27 @@ void EmilDebugLayer::OnAttach()
 {
 	using namespace DOG;
 
-	//auto e = m_entityManager.CreateEntity();
-	//auto e2 = m_entityManager.CreateEntity();
-	//m_entityManager.AddComponent<DOG::TransformComponent>(e);
-	//m_entityManager.AddComponent<DOG::TransformComponent>(e2);
+	auto& am = DOG::AssetManager::Get();
+	m_redCube = am.LoadModelAsset("Assets/red_cube.glb");
+	m_greenCube = am.LoadModelAsset("Assets/green_cube.glb");
+	m_blueCube = am.LoadModelAsset("Assets/blue_cube.glb");
+	m_magentaCube = am.LoadModelAsset("Assets/magenta_cube.glb");
 
 
-	//m_entityManager.AddComponent<DOG::ModelComponent>(e);
-	//m_entityManager.AddComponent<DOG::ModelComponent>(e2);
 
 	for (int i = 0; i < 10; i++)
 	{
 		entity id = m_entityManager.CreateEntity();
-		m_entityManager.AddComponent<TransformComponent>(id);
+		if (i != 8)
+		{
+			m_entityManager.AddComponent<TransformComponent>(id)
+				.SetPosition({ 4, -2, 5 })
+				.SetRotation({ 3.14f / 4.0f, 0, 0 })
+				.SetScale({0.5, 0.5, 0.5});
+		}
 		if (id % 2 == 0)
 		{
-			m_entityManager.AddComponent<SpriteComponent>(id);
+			m_entityManager.AddComponent<ModelComponent>(id, m_redCube);
 		}
 	}
 	for (int i = 0; i < 3; i++)
@@ -38,7 +43,14 @@ void EmilDebugLayer::OnAttach()
 		m_entityManager.RemoveComponent<TransformComponent>(i);
 	}
 
-	m_entityManager.Bundlee<TransformComponent, SpriteComponent>();
+	m_entityManager.AddComponent<TransformComponent>(8, DirectX::SimpleMath::Vector3{ 50.0f, 50.0f, 50.0f });
+
+	//
+	//auto newE = m_entityManager.CreateEntity();
+	//auto& w2 = m_entityManager.AddComponent<TransformComponent>(newE, DirectX::SimpleMath::Vector3{ 50.0f, 50.0f, 500.0f });
+	//std::cout << "HEHE";
+
+
 }
 
 void EmilDebugLayer::OnDetach()
