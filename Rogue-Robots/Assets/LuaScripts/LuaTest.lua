@@ -3,9 +3,11 @@ print("Hello World I am in LUA")
 
 print("hej")
 
+print("g")
+
 m_number = 0
 
-print(Input.LeftClick())
+--print(Input.LeftClick())
 
 function SetNumber(number)
 	print("Current Number", m_number)
@@ -15,7 +17,7 @@ end
 
 function OnUpdate()
 	--print("Hello")
-	return 20, 5.3, "Hello", {}, SetNumber, true
+	--return 20, 5.3, "Hello", {}, SetNumber, true
 end
 
 function EventFunc(number, string, table)
@@ -25,6 +27,6 @@ function EventFunc(number, string, table)
 	print("Hello")
 end
 
-EventSystem:Register("Event", EventFunc)
+--EventSystem:Register("Event", EventFunc)
 
-EventSystem:InvokeEvent("Event", 20, "Hello Friend", {text = "table text"})
+--EventSystem:InvokeEvent("Event", 20, "Hello Friend", {text = "table text"})

@@ -17,3 +17,5 @@
 #include "src/ECS/Component.h"
 
 #include "src/Audio/AudioManager.h"
+
+#include "src/Scripting/LuaMain.h"

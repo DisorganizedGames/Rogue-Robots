@@ -1,6 +1,4 @@
 #include "GameLayer.h"
-#include "Scripting/LuaGlobal.h"
-#include "Scripting/ScriptManager.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -45,6 +43,8 @@ GameLayer::GameLayer() noexcept
 	t4.worldMatrix(3, 0) = -4;
 	t4.worldMatrix(3, 1) = 2;
 	t4.worldMatrix(3, 2) = 5;
+
+	LuaMain::Initialize();
 }
 
 void GameLayer::OnAttach()
@@ -63,8 +63,8 @@ void GameLayer::OnDetach()
 
 void GameLayer::OnUpdate()
 {
-	LuaGlobal global(&LuaW::s_luaW);
-	global.SetNumber("DeltaTime", Time::DeltaTime());
+	LuaGlobal* global = LuaMain::GetGlobal();
+	global->SetNumber("DeltaTime", Time::DeltaTime());
 
 	m_player->OnUpdate();
 }
@@ -96,9 +96,9 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 
 void GameLayer::RegisterLuaInterfaces()
 {
-	LuaGlobal global(&LuaW::s_luaW);
+	LuaGlobal* global = LuaMain::GetGlobal();
 
-	global.SetNumber("DeltaTime", Time::DeltaTime());
+	global->SetNumber("DeltaTime", Time::DeltaTime());
 
 	//-----------------------------------------------------------------------------------------------
 	//Input
@@ -106,50 +106,50 @@ void GameLayer::RegisterLuaInterfaces()
 	std::shared_ptr<LuaInterface> luaInterfaceObject = std::make_shared<InputInterface>();
 	m_luaInterfaces.push_back(luaInterfaceObject); //Add it to the gamelayer's interfaces.
 	
-	auto luaInterface = global.CreateLuaInterface("InputInterface"); //Register a new interface in lua.
+	auto luaInterface = global->CreateLuaInterface("InputInterface"); //Register a new interface in lua.
 	//Add all functions that are needed from the interface class.
 	luaInterface.AddFunction<InputInterface, &InputInterface::IsLeftPressed>("IsLeftPressed");
 	luaInterface.AddFunction<InputInterface, &InputInterface::IsRightPressed>("IsRightPressed");
 	luaInterface.AddFunction<InputInterface, &InputInterface::IsKeyPressed>("IsKeyPressed");
-	global.SetLuaInterface(luaInterface);
+	global->SetLuaInterface(luaInterface);
 	//Make the object accessible from lua. Is used by: Input.FunctionName()
-	global.SetUserData<LuaInterface>(luaInterfaceObject.get(), "Input", "InputInterface");
+	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Input", "InputInterface");
 
 	//-----------------------------------------------------------------------------------------------
 	//Audio
 	luaInterfaceObject = std::make_shared<AudioInterface>();
 	m_luaInterfaces.push_back(luaInterfaceObject);
 
-	luaInterface = global.CreateLuaInterface("AudioInterface");
+	luaInterface = global->CreateLuaInterface("AudioInterface");
 	//luaInterface.AddFunction<AudioInterface, &InputInterface::PlaySound>("PlaySound");
-	global.SetLuaInterface(luaInterface);
+	global->SetLuaInterface(luaInterface);
 
-	global.SetUserData<LuaInterface>(luaInterfaceObject.get(), "Audio", "AudioInterface");
+	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Audio", "AudioInterface");
 
 	//-----------------------------------------------------------------------------------------------
 	//Entities
 	luaInterfaceObject = std::make_shared<EntityInterface>();
 	m_luaInterfaces.push_back(luaInterfaceObject);
 
-	luaInterface = global.CreateLuaInterface("EntityInterface");
+	luaInterface = global->CreateLuaInterface("EntityInterface");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::CreateEntity>("CreateEntity");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::DestroyEntity>("DestroyEntity");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::AddComponent>("AddComponent");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::ModifyComponent>("ModifyComponent");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetTransformPosData>("GetTransformPosData");
-	global.SetLuaInterface(luaInterface);
+	global->SetLuaInterface(luaInterface);
 
-	global.SetUserData<LuaInterface>(luaInterfaceObject.get(), "Entity", "EntityInterface");
+	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Entity", "EntityInterface");
 
 	//-----------------------------------------------------------------------------------------------
 	//Assets
 	luaInterfaceObject = std::make_shared<AssetInterface>();
 	m_luaInterfaces.push_back(luaInterfaceObject);
 
-	luaInterface = global.CreateLuaInterface("AssetInterface");
+	luaInterface = global->CreateLuaInterface("AssetInterface");
 	luaInterface.AddFunction<AssetInterface, &AssetInterface::LoadModel>("LoadModel");
-	global.SetLuaInterface(luaInterface);
+	global->SetLuaInterface(luaInterface);
 
-	global.SetUserData<LuaInterface>(luaInterfaceObject.get(), "Asset", "AssetInterface");
+	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Asset", "AssetInterface");
 
 }
