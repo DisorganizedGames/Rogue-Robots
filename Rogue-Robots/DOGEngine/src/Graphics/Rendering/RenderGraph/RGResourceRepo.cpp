@@ -34,12 +34,14 @@ namespace DOG::gfx
 		return hdl;
 	}
 
-	RGResource RGResourceRepo::ImportResource(Texture tex, D3D12_RESOURCE_STATES initState)
+	RGResource RGResourceRepo::ImportResource(Texture tex, D3D12_RESOURCE_STATES initState, D3D12_RESOURCE_STATES outState)
 	{
 		Texture_Storage storage{};
 		storage.realized = tex;
 		storage.currState = initState;
+		storage.outState = outState;
 		storage.desc.initState = initState;
+		storage.imported = true;
 
 		auto hdl = m_handleAtor.Allocate<RGResource>();
 		HandleAllocator::TryInsert(m_textures, storage, HandleAllocator::GetSlot(hdl.handle));
@@ -70,6 +72,20 @@ namespace DOG::gfx
 	{
 		auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(tex.handle));
 		res.currState = state;
+	}
+
+	void RGResourceRepo::TransitionImportedState(CommandList cmdl)
+	{
+		std::vector<GPUBarrier> barriers;
+		for (auto& res : m_textures)
+		{
+			if (res && res->realized && res->imported && res->enabled)
+			{
+				barriers.push_back(GPUBarrier::Transition(*res->realized, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, res->currState, res->outState));
+				res->enabled = false;
+			}
+		}
+		m_rd->Cmd_Barrier(cmdl, barriers);
 	}
 
 	void RGResourceRepo::RealizeResources()

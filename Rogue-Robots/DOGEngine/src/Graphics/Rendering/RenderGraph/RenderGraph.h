@@ -47,6 +47,7 @@ namespace DOG::gfx
 			{
 				views.resize(1);
 			}
+
 		};
 
 

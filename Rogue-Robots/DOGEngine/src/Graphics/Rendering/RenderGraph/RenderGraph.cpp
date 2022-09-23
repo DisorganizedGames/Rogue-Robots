@@ -41,7 +41,7 @@ namespace DOG::gfx
 				m_resources->SetState(read, afterState);
 	
 				if (prevState != afterState)
-					barriers.push_back(GPUBarrier::Transition(tex, 0, prevState, afterState));
+					barriers.push_back(GPUBarrier::Transition(tex, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, prevState, afterState));
 			}
 			for (u32 writeIdx = 0; writeIdx < pass->builder.m_writes.size(); ++writeIdx)
 			{
@@ -52,20 +52,34 @@ namespace DOG::gfx
 				m_resources->SetState(write, afterState);
 
 				if (prevState != afterState)
-					barriers.push_back(GPUBarrier::Transition(tex, 0, prevState, afterState));
+					barriers.push_back(GPUBarrier::Transition(tex, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, prevState, afterState));
 			}
 			if (!barriers.empty())
 				m_rd->Cmd_Barrier(m_cmdl, barriers);
-			barriers.clear();
 
 			// Exec pass
 			m_rd->Cmd_BeginRenderPass(m_cmdl, pass->rp);
 			pass->execFunc(m_rd, m_cmdl, m_passResources);
 			m_rd->Cmd_EndRenderPass(m_cmdl);
+
+			barriers.clear();
 		}
+
+		m_resources->TransitionImportedState(m_cmdl);
 
 		m_rd->SubmitCommandList(m_cmdl);
 		m_rd->Flush();
+
+
+		for (const auto& storage : m_views.views)
+		{
+			if (storage)
+			{
+				m_rd->FreeView(TextureView(*storage->view));
+			}
+		}
+
+		m_rd->RecycleCommandList(m_cmdl);
 	}
 
 	void RenderGraph::BuildAdjacencyList()

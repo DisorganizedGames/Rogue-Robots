@@ -23,7 +23,8 @@ namespace DOG::gfx
 		RGResource DeclareResource(const RGTextureDesc& desc);
 
 		// Import external (state must resource initial state)
-		RGResource ImportResource(Texture tex, D3D12_RESOURCE_STATES initState);
+		RGResource ImportResource(Texture tex, D3D12_RESOURCE_STATES initState, D3D12_RESOURCE_STATES outState);
+
 
 
 	private:
@@ -33,6 +34,7 @@ namespace DOG::gfx
 		D3D12_RESOURCE_STATES GetState(RGResource tex);
 		void SetState(RGResource tex, D3D12_RESOURCE_STATES state);
 
+		void TransitionImportedState(CommandList cmdl);
 
 		void RealizeResources();
 
@@ -42,8 +44,12 @@ namespace DOG::gfx
 			RGTextureDesc desc;
 			std::optional<Texture> realized;
 			std::pair<u32, u32> effectiveLifetime{ 0, 0 };
+			bool imported{ false };
 
 			D3D12_RESOURCE_STATES currState{ D3D12_RESOURCE_STATE_COMMON };
+			D3D12_RESOURCE_STATES outState{ D3D12_RESOURCE_STATE_COMMON };
+
+			bool enabled{ true };
 		};
 
 	private:

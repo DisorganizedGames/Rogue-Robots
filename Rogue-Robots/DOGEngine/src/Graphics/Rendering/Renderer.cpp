@@ -48,12 +48,11 @@ namespace DOG::gfx
 		m_uploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, S_MAX_FIF);
 		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeTextures, S_MAX_FIF);
 
+		m_rgResourceRepo = std::make_unique<RGResourceRepo>(m_rd, m_bin.get());
+		m_rg = std::make_unique<RenderGraph>(m_rd, m_rgResourceRepo.get());
+		m_rgBlackboard = std::make_unique<RGBlackboard>();
 
-
-
-
-
-
+		
 
 
 
@@ -180,85 +179,110 @@ namespace DOG::gfx
 		auto& scTex = m_scTextures[m_sc->GetNextDrawSurfaceIdx()];
 		auto& scPass = m_scPasses[m_sc->GetNextDrawSurfaceIdx()];
 
-		// Write
+		// Replace original render graph and make a new one
+		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResourceRepo.get()));
+
+		auto bb = m_rgResourceRepo->ImportResource(scTex, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
+		auto depth = m_rgResourceRepo->ImportResource(m_depthTex, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COMMON);
+		// Forward pass
 		{
-			GPUBarrier barrs[]
+			struct PassData
 			{
-				GPUBarrier::Transition(scTex, 0, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET),
-				GPUBarrier::Transition(m_depthTex, 0, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE)
+				RGResourceView bbOut;
+				RGResourceView depthOut;
 			};
-			m_rd->Cmd_Barrier(m_cmdl, barrs);
+			m_rg->AddPass<PassData>("Forward",
+				[&](RenderGraph::PassBuilder& builder, PassData& passData)
+				{
+					passData.bbOut = builder.WriteTexture(bb, D3D12_RESOURCE_STATE_RENDER_TARGET,
+						TextureViewDesc(
+							ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+
+					passData.depthOut = builder.WriteTexture(depth, D3D12_RESOURCE_STATE_DEPTH_WRITE,
+						TextureViewDesc(
+							ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
+				},
+				[this](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
+				{
+					std::cout << "Doing pass forward\n";
+
+					m_rd->Cmd_SetViewports(m_cmdl, Viewports()
+						.Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight));
+					m_rd->Cmd_SetScissorRects(m_cmdl, ScissorRects()
+						.Append(0, 0, m_clientWidth, m_clientHeight));
+
+					m_rd->Cmd_SetPipeline(m_cmdl, m_meshPipe);
+					m_rd->Cmd_SetIndexBuffer(m_cmdl, m_globalMeshTable->GetIndexBuffer());
+					for (const auto& sub : m_submissions)
+					{
+						auto pfConstant = m_dynConstants->Allocate();
+						struct PerFrameData
+						{
+							DirectX::XMMATRIX world, view, proj;
+							DirectX::XMFLOAT3 camPos;
+						} pfData{};
+
+						DirectX::XMVECTOR tmp;
+						auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
+
+						auto pos = invVm.r[3];
+						DirectX::XMFLOAT3 posFloat3;
+						DirectX::XMStoreFloat3(&posFloat3, pos);
+						pfData.camPos = posFloat3;
+
+						pfData.world = DirectX::XMMatrixScaling(0.07f, 0.07f, 0.07f);
+						//pfData.view = DirectX::XMMatrixLookAtLH({ 5.f, 2.f, 0.f }, { -1.f, 1.f, 1.f }, { 0.f, 1.f, 0.f });
+						pfData.view = m_viewMat;
+						// We are using REVERSE DEPTH!!!
+						//pfData.proj = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_clientWidth/m_clientHeight, 800.f, 0.1f);
+						pfData.proj = m_projMat;
+						std::memcpy(pfConstant.memory, &pfData, sizeof(pfData));
+
+						auto args = ShaderArgs()
+							.AppendConstant(pfConstant.globalDescriptor)
+							.AppendConstant(m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh))
+							.AppendConstant(m_globalMeshTable->GetSubmeshDescriptor())
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Position))
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::UV))
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Normal))
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Tangent))
+							.AppendConstant(m_globalMaterialTable->GetDescriptor())
+							.AppendConstant(m_globalMaterialTable->GetMaterialIndex(sub.mat)
+							);
+
+						m_rd->Cmd_UpdateShaderArgs(m_cmdl, args);
+
+						auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+						m_rd->Cmd_DrawIndexed(m_cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
+
+					}
+				});
 		}
-
-		m_rd->Cmd_BeginRenderPass(m_cmdl, scPass);
-
-		m_rd->Cmd_SetViewports(m_cmdl, Viewports()
-			.Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight));
-		m_rd->Cmd_SetScissorRects(m_cmdl, ScissorRects()
-			.Append(0, 0, m_clientWidth, m_clientHeight));
-
-		m_rd->Cmd_SetPipeline(m_cmdl, m_meshPipe);
-		m_rd->Cmd_SetIndexBuffer(m_cmdl, m_globalMeshTable->GetIndexBuffer());
-		for (const auto& sub : m_submissions)
+		// GUI pass
 		{
-			auto pfConstant = m_dynConstants->Allocate();
-			struct PerFrameData
+			struct PassData
 			{
-				DirectX::XMMATRIX world, view, proj;
-				DirectX::XMFLOAT3 camPos;
-			} pfData{};
-
-			DirectX::XMVECTOR tmp;
-			auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
-
-			auto pos = invVm.r[3];
-			DirectX::XMFLOAT3 posFloat3;
-			DirectX::XMStoreFloat3(&posFloat3, pos);
-			pfData.camPos = posFloat3;
-
-			pfData.world = DirectX::XMMatrixScaling(0.07f, 0.07f, 0.07f);
-			//pfData.view = DirectX::XMMatrixLookAtLH({ 5.f, 2.f, 0.f }, { -1.f, 1.f, 1.f }, { 0.f, 1.f, 0.f });
-			pfData.view = m_viewMat;
-			// We are using REVERSE DEPTH!!!
-			//pfData.proj = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_clientWidth/m_clientHeight, 800.f, 0.1f);
-			pfData.proj = m_projMat;
-			std::memcpy(pfConstant.memory, &pfData, sizeof(pfData));
-
-			auto args = ShaderArgs()
-				.AppendConstant(pfConstant.globalDescriptor)
-				.AppendConstant(m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh))
-				.AppendConstant(m_globalMeshTable->GetSubmeshDescriptor())
-				.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Position))
-				.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::UV))
-				.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Normal))
-				.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Tangent))
-				.AppendConstant(m_globalMaterialTable->GetDescriptor())
-				.AppendConstant(m_globalMaterialTable->GetMaterialIndex(sub.mat)
-				);
-
-			m_rd->Cmd_UpdateShaderArgs(m_cmdl, args);
-
-			auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
-			m_rd->Cmd_DrawIndexed(m_cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
-
-		}
-
-		m_imgui->Render(m_rd, m_cmdl);
-
-		m_rd->Cmd_EndRenderPass(m_cmdl);
-
-		// Present
-		{
-			GPUBarrier barrs[]
-			{
-				GPUBarrier::Transition(scTex, 0, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT),
-				GPUBarrier::Transition(m_depthTex, 0, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_COMMON)
-
+				RGResourceView bbIn;
+				RGResourceView depthIn;
 			};
-			m_rd->Cmd_Barrier(m_cmdl, barrs);
+			m_rg->AddPass<PassData>("GUI",
+				[&](RenderGraph::PassBuilder& builder, PassData& passData)
+				{
+					passData.bbIn = builder.WriteTexture(bb, D3D12_RESOURCE_STATE_RENDER_TARGET,
+						TextureViewDesc(
+							ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+				},
+				[this](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
+				{
+					std::cout << "Doing GUI pass\n";
+					m_imgui->Render(m_rd, m_cmdl);
+				});
+
 		}
 
-		m_rd->SubmitCommandList(m_cmdl);
+		m_rg->Build();
+		m_rg->Run();
+
 	
 	}
 
@@ -278,6 +302,7 @@ namespace DOG::gfx
 	{
 		m_rd->Flush();
 
+		m_rgResourceRepo->Tick();
 		m_bin->BeginFrame();
 		m_rd->RecycleCommandList(m_cmdl);
 		m_cmdl = m_rd->AllocateCommandList();
@@ -310,96 +335,96 @@ namespace DOG::gfx
 
 	void DOG::gfx::Renderer::TestRenderGraph()
 	{
-		RGResourceRepo rgRepo(m_rd, m_bin.get());
-		RenderGraph rg(m_rd, &rgRepo);
-		RGBlackboard blackboard;
+		//RGResourceRepo rgRepo(m_rd, m_bin.get());
+		//RenderGraph rg(m_rd, &rgRepo);
+		//RGBlackboard blackboard;
 
-		RGTextureDesc desc{};
-		desc.format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		desc.flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-		desc.initState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		auto outputPass1 = rgRepo.DeclareResource(desc);
-		{	
-			struct PassData
-			{
-				RGResourceView output;
-			};
-			rg.AddPass<PassData>("Forward",
-				[&](RenderGraph::PassBuilder& builder, PassData& passData)
-				{
-					passData.output = builder.WriteTexture(outputPass1, D3D12_RESOURCE_STATE_RENDER_TARGET,
-						TextureViewDesc(
-							ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-				},
-				[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
-				{
-					
-					std::cout << "Doing pass forward\n";
-				});
-		}
+		//RGTextureDesc desc{};
+		//desc.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		//desc.flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+		//desc.initState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		//auto outputPass1 = rgRepo.DeclareResource(desc);
+		//{	
+		//	struct PassData
+		//	{
+		//		RGResourceView output;
+		//	};
+		//	rg.AddPass<PassData>("Forward",
+		//		[&](RenderGraph::PassBuilder& builder, PassData& passData)
+		//		{
+		//			passData.output = builder.WriteTexture(outputPass1, D3D12_RESOURCE_STATE_RENDER_TARGET,
+		//				TextureViewDesc(
+		//					ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+		//		},
+		//		[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
+		//		{
+		//			
+		//			std::cout << "Doing pass forward\n";
+		//		});
+		//}
 
-		auto bb = rgRepo.ImportResource(m_scTextures[0], D3D12_RESOURCE_STATE_PRESENT);
-		{
+		//auto bb = rgRepo.ImportResource(m_scTextures[0], D3D12_RESOURCE_STATE_PRESENT);
+		//{
 
-			struct PassData
-			{
-				RGResourceView input;
-				RGResourceView output;
-			};
-			rg.AddPass<PassData>("Post-proc blit",
-				[&](RenderGraph::PassBuilder& builder, PassData& passData)
-				{
-					passData.input = builder.ReadTexture(outputPass1, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-						TextureViewDesc(
-							ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+		//	struct PassData
+		//	{
+		//		RGResourceView input;
+		//		RGResourceView output;
+		//	};
+		//	rg.AddPass<PassData>("Post-proc blit",
+		//		[&](RenderGraph::PassBuilder& builder, PassData& passData)
+		//		{
+		//			passData.input = builder.ReadTexture(outputPass1, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		//				TextureViewDesc(
+		//					ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 
-					passData.output = builder.WriteTexture(bb, D3D12_RESOURCE_STATE_RENDER_TARGET,
-						TextureViewDesc(
-							ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-				},
-				[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
-				{
-					std::cout << "Doing pass Post-proc blit\n";
-				});
-		}
-		{
-			struct PassData
-			{
-				RGResourceView output;
-			};
-			rg.AddPass<PassData>("ImGUI pass",
-				[&](RenderGraph::PassBuilder& builder, PassData& passData)
-				{
-					passData.output = builder.WriteTexture(bb, D3D12_RESOURCE_STATE_RENDER_TARGET,
-						TextureViewDesc(
-							ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-				},
-				[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
-				{
-					std::cout << "Doing pass ImGUI\n";
-				});
-		}
-		{
-			struct PassData
-			{
-				RGResourceView output;
-			};
-			rg.AddPass<PassData>("2D GUI pass",
-				[&](RenderGraph::PassBuilder& builder, PassData& passData)
-				{
-					passData.output = builder.WriteTexture(bb, D3D12_RESOURCE_STATE_RENDER_TARGET,
-						TextureViewDesc(
-							ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-				},
-				[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
-				{
-					std::cout << "Doing pass 2D GUI\n";
-				});
-		}
+		//			passData.output = builder.WriteTexture(bb, D3D12_RESOURCE_STATE_RENDER_TARGET,
+		//				TextureViewDesc(
+		//					ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+		//		},
+		//		[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
+		//		{
+		//			std::cout << "Doing pass Post-proc blit\n";
+		//		});
+		//}
+		//{
+		//	struct PassData
+		//	{
+		//		RGResourceView output;
+		//	};
+		//	rg.AddPass<PassData>("ImGUI pass",
+		//		[&](RenderGraph::PassBuilder& builder, PassData& passData)
+		//		{
+		//			passData.output = builder.WriteTexture(bb, D3D12_RESOURCE_STATE_RENDER_TARGET,
+		//				TextureViewDesc(
+		//					ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+		//		},
+		//		[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
+		//		{
+		//			std::cout << "Doing pass ImGUI\n";
+		//		});
+		//}
+		//{
+		//	struct PassData
+		//	{
+		//		RGResourceView output;
+		//	};
+		//	rg.AddPass<PassData>("2D GUI pass",
+		//		[&](RenderGraph::PassBuilder& builder, PassData& passData)
+		//		{
+		//			passData.output = builder.WriteTexture(bb, D3D12_RESOURCE_STATE_RENDER_TARGET,
+		//				TextureViewDesc(
+		//					ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+		//		},
+		//		[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
+		//		{
+		//			std::cout << "Doing pass 2D GUI\n";
+		//		});
+		//}
 
 
-		rg.Build();
-		rg.Run();
+		//rg.Build();
+		//rg.Run();
 
 	}
 

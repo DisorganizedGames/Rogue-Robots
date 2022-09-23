@@ -20,6 +20,10 @@ namespace DOG::gfx
 
 	class GraphicsBuilder;
 
+	class RenderGraph;
+	class RGResourceRepo;
+	class RGBlackboard;
+
 	class Renderer
 	{
 	private:
@@ -123,6 +127,9 @@ namespace DOG::gfx
 
 
 
+		std::unique_ptr<RenderGraph> m_rg;
+		std::unique_ptr<RGResourceRepo> m_rgResourceRepo;
+		std::unique_ptr<RGBlackboard> m_rgBlackboard;
 
 	};
 }
