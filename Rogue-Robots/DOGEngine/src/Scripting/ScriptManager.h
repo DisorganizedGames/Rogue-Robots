@@ -52,7 +52,7 @@ namespace DOG
 		//For lua files which do not require to be scripts
 		void RunLuaFile(const std::string& luaFileName);
 		//Adds a script and runs it
-		ScriptData AddScript(entity entity, const std::string& luaFileName);
+		ScriptComponent& AddScript(entity entity, const std::string& luaFileName);
 		//Reloads script which have changed
 		void ReloadScripts();
 		//Call start on the scripts which has one

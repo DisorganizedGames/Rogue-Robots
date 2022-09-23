@@ -66,7 +66,7 @@ namespace DOG
 		const int max = m_luaW->GetNumberOfStackItems();
 
 		for (int index = 1; index <= max; ++index)
-			if (!m_luaW->IsNumber(index) && m_luaW->IsString(index))
+			if (/*!m_luaW->IsNumber(index) &&*/ m_luaW->IsString(index))
 				return m_luaW->GetStringFromStack(index);
 
 		m_luaW->Error("Error: Couldn't Find String In Arguments\n");

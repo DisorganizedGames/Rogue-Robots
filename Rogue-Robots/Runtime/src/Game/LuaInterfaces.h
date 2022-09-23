@@ -122,7 +122,7 @@ public:
 
 		DirectX::SimpleMath::Vector3 pos = transform.worldMatrix.Translation();
 
-		LuaTable t(&LuaW::s_luaW);
+		LuaTable t;
 		t.AddFloatToTable("x", pos.x);
 		t.AddFloatToTable("y", pos.y);
 		t.AddFloatToTable("z", pos.z);

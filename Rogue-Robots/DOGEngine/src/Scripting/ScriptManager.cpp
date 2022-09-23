@@ -78,7 +78,7 @@ namespace DOG
 	}
 
 	//Creates a script and runs it
-	ScriptData ScriptManager::AddScript(entity entity, const std::string& luaFileName)
+	ScriptComponent& ScriptManager::AddScript(entity entity, const std::string& luaFileName)
 	{
 		ScriptData scriptData = {0, -1, -1, -1};
 		scriptData.scriptTable = m_luaW->CreateTable();
@@ -97,9 +97,7 @@ namespace DOG
 		}
 		scriptData.scriptFileID = oldIDCounter;
 
-		m_entityManager.AddComponent<ScriptComponent>(entity, scriptData);
-
-		return scriptData;
+		return m_entityManager.AddComponent<ScriptComponent>(entity, scriptData);
 	}
 
 	//Reloades the script caught by the file watcher
