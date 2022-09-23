@@ -10,19 +10,13 @@ namespace DOG
 	{
 	private:
 		LuaW* m_luaW;
-		static LuaEvent s_luaEvent;
 
 		std::unique_ptr<LuaTable> m_eventSystemTable;
 		Function m_eventSystemTableRegisterFunction;
 		Function m_eventSystemTableInvokeFunction;
 
-	private:
-		LuaEvent();
-
 	public:
-		void Initialize(LuaW* luaW, ScriptManager* scriptManager);
-		static LuaEvent& GetLuaEvent();
-
+		LuaEvent(LuaW* luaW, ScriptManager* scriptManager);
 		template <void(*func)(LuaContext*)>
 		void Register(const std::string& eventName);
 		void InvokeEvent(const std::string& eventName);

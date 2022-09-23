@@ -513,8 +513,11 @@ namespace DOG
 		//const int popAmount = -1;
 		//When popAmount is -1 then it will clear the entire stack
 		lua_pop(m_luaState, popAmount);
+	}
 
-		PrintStack();
+	LuaW& LuaW::GetLuaW()
+	{
+		return s_luaW;
 	}
 
 	void LuaW::CallLuaFunction(Function& function, int arguments)

@@ -31,7 +31,7 @@ namespace DOG
 		m_luaW->RemoveReferenceToFunction(scriptData.onUpdateFunction);
 
 		//Get the new functions from the table
-		LuaTable table(m_luaW, scriptData.scriptTable, true);
+		LuaTable table(scriptData.scriptTable, true);
 		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
 		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
 	}
@@ -78,12 +78,12 @@ namespace DOG
 	}
 
 	//Creates a script and runs it
-	ScriptData ScriptManager::AddScript(const std::string& luaFileName)
+	ScriptData ScriptManager::AddScript(entity entity, const std::string& luaFileName)
 	{
 		ScriptData scriptData = {0, -1, -1, -1};
 		scriptData.scriptTable = m_luaW->CreateTable();
 
-		LuaTable table(m_luaW, scriptData.scriptTable, true);
+		LuaTable table(scriptData.scriptTable, true);
 		table.CreateEnvironment(c_pathToScripts + luaFileName);
 		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
 		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
@@ -96,6 +96,8 @@ namespace DOG
 			++m_idCounter;
 		}
 		scriptData.scriptFileID = oldIDCounter;
+
+		m_entityManager.AddComponent<ScriptComponent>(entity, scriptData);
 
 		return scriptData;
 	}

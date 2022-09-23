@@ -21,13 +21,15 @@ namespace DOG
 		m_luaW->RemoveReferenceToFunction(function);
 	}
 
-	LuaTable::LuaTable(LuaW* luaW) : m_luaW(luaW)
+	LuaTable::LuaTable()
 	{
-		m_table = luaW->CreateTable();
+		m_luaW = &LuaW::GetLuaW();
+		m_table = m_luaW->CreateTable();
 	}
 
-	LuaTable::LuaTable(LuaW* luaW, Table& table, bool addReference) : m_luaW(luaW), m_table(table)
+	LuaTable::LuaTable(Table& table, bool addReference) : m_table(table)
 	{
+		m_luaW = &LuaW::GetLuaW();
 		if (addReference)
 			m_luaW->AddReferenceToTable(table);
 	}
@@ -117,7 +119,7 @@ namespace DOG
 	LuaTable LuaTable::CreateTableInTable(const std::string& name)
 	{
 		Table table = m_luaW->CreateTable();
-		LuaTable luaTable(m_luaW, table);
+		LuaTable luaTable(table);
 		m_luaW->AddTableToTable(m_table, name, table);
 		return luaTable;
 	}
@@ -150,7 +152,7 @@ namespace DOG
 	LuaTable LuaTable::GetTableFromTable(const std::string& name)
 	{
 		Table table = m_luaW->GetTableFromTable(m_table, name);
-		return LuaTable(m_luaW, table);
+		return LuaTable(table);
 	}
 
 	UserData LuaTable::GetUserDataFromTable(const std::string& name)

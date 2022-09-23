@@ -46,7 +46,7 @@ namespace DOG
 	LuaTable LuaGlobal::CreateLuaTable(const std::string& luaGlobalName)
 	{
 		Table table = m_luaW->CreateGlobalTable(luaGlobalName);
-		return LuaTable(m_luaW, table);
+		return LuaTable(table);
 	}
 
 	//Returns a object which the user uses to create the interface
@@ -89,7 +89,7 @@ namespace DOG
 	LuaTable LuaGlobal::GetTable(const std::string& luaGlobalName)
 	{
 		Table table = m_luaW->GetGlobalTable(luaGlobalName);
-		return LuaTable(m_luaW, table);
+		return LuaTable(table);
 	}
 
 	//Get the global UserData

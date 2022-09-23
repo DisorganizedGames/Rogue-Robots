@@ -13,6 +13,7 @@ namespace DOG
 	class LuaGlobal;
 	class LuaTable;
 	class LuaEvent;
+	class LuaMain;
 
 	struct ClassFunctionInfo
 	{
@@ -62,14 +63,12 @@ namespace DOG
 		friend LuaGlobal;
 		friend LuaTable;
 		friend LuaEvent;
+		friend LuaMain;
 
 	private:
 		lua_State* m_luaState;
 		std::unordered_map<int, Reference> m_referenceList;
 		static constexpr int c_unValid = -1;
-
-	public:
-		//Might be changed later depending on if we have threaded scripting
 		static LuaW s_luaW;
 
 	private:
@@ -154,6 +153,8 @@ namespace DOG
 		int GetNumberOfStackItems() const;
 
 		void ClearStack();
+
+		static LuaW& GetLuaW();
 
 	public:
 		void PushGlobalNumber(const std::string& luaGlobalName, int number);

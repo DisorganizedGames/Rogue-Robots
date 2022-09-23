@@ -83,13 +83,13 @@ namespace DOG
 			if (m_luaW->IsTable(index))
 			{
 				Table getTable = m_luaW->GetTableFromStack(index);
-				LuaTable table(m_luaW, getTable);
+				LuaTable table(getTable);
 				return table;
 			}
 
 		m_luaW->Error("Error: Couldn't Find Table In Arguments\n");
 
-		return LuaTable(m_luaW);
+		return LuaTable();
 	}
 
 	void LuaContext::ReturnInteger(int integer)

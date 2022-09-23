@@ -18,6 +18,4 @@
 
 #include "src/Audio/AudioManager.h"
 
-#include "src/Scripting/LuaContext.h"
-#include "src/Scripting/LuaGlobal.h"
-#include "src/Scripting/ScriptManager.h"
+#include "src/Scripting/LuaMain.h"

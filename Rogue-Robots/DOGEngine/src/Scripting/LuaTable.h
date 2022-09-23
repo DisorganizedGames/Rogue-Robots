@@ -19,8 +19,8 @@ namespace DOG
 		void CallFunctionOnTableNoReturn(const std::string& name);
 
 	public:
-		LuaTable(LuaW* luaW);
-		LuaTable(LuaW* luaW, Table& table, bool addReference = false);
+		LuaTable();
+		LuaTable(Table& table, bool addReference = false);
 		~LuaTable();
 		LuaTable(const LuaTable& table);
 		LuaTable& operator=(const LuaTable& table);
