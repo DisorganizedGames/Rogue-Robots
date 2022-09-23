@@ -14,6 +14,14 @@ GameLayer::GameLayer() noexcept
 	m_blueCube = am.LoadModelAsset("Assets/blue_cube.glb");
 	m_magentaCube = am.LoadModelAsset("Assets/magenta_cube.glb");
 
+	//u64 sponza = am.LoadModelAsset("Assets/Sponza_gltf/glTF/Sponza.gltf");
+	//entity entity0 = m_entityManager.CreateEntity();
+	//m_entityManager.AddComponent<ModelComponent>(entity0, sponza);
+	//m_entityManager.AddComponent<TransformComponent>(entity0)
+	//	.SetPosition({ 0, 0, 0 })
+	//	.SetRotation({ 0, 0, 0 })
+	//	.SetScale({ 0.05f, 0.05f, 0.05f });
+
 	entity entity1 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity1, m_redCube);
 	m_entityManager.AddComponent<TransformComponent>(entity1)

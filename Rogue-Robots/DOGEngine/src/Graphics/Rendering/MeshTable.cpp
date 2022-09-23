@@ -47,13 +47,6 @@ namespace DOG::gfx
 	{
 		Mesh_Storage storage{};
 
-		// Load submeshes ==> Use a single handle for submeshes and use submesh as a local offset
-		for (const auto& md : spec.submeshData)
-		{
-			storage.mdsCpu.push_back(md);
-		}
-		storage.mdsGpu = m_submeshTable->Allocate((u32)spec.submeshData.size(), (void*)spec.submeshData.data());
-		m_submeshTable->SendCopyRequests(ctx);
 
 		auto loadAttrData = [this](const MeshSpecification& spec, VertexAttribute attr) -> std::span<u8>
 		{
@@ -97,6 +90,18 @@ namespace DOG::gfx
 			storage.tan = m_tangentTable->Allocate(numElements, attrData.data());
 			m_tangentTable->SendCopyRequests(ctx);
 		}
+
+		// Load submeshes ==> Use a single handle for submeshes and use submesh as a local offset
+		auto globalVertexOffset = m_positionTable->GetLocalOffset(storage.pos);
+		auto globalIndexOffset = m_indexTable->GetLocalOffset(storage.idx);
+		for (auto md : spec.submeshData)
+		{
+			md.vertexStart += globalVertexOffset;
+			md.indexStart += globalIndexOffset;
+			storage.mdsCpu.push_back(md);
+		}
+		storage.mdsGpu = m_submeshTable->Allocate((u32)storage.mdsCpu.size(), (void*)storage.mdsCpu.data());
+		m_submeshTable->SendCopyRequests(ctx);
 
 		auto handle = m_handleAtor.Allocate<Mesh>();
 		HandleAllocator::TryInsert(m_resources, storage, HandleAllocator::GetSlot(handle.handle));
