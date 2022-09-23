@@ -185,6 +185,11 @@ namespace DOG::gfx
 				blackboard.Add<ForwardOutput>(passOut);
 			}
 
+			struct BlitOutput
+			{
+				RGResource bbOut;
+			};
+
 			// Fullscreen pass to postproc and blit to backbuffer
 			{
 				const auto& passIn = blackboard.Get<ForwardOutput>();
@@ -210,6 +215,76 @@ namespace DOG::gfx
 					{
 						std::cout << "Postproc Pass\n";
 					});
+
+				BlitOutput output{};
+				output.bbOut = bb;
+				blackboard.Add<BlitOutput>(output);
+			}
+
+			struct GUIOutput
+			{
+				RGResource bbOut;
+			};
+
+			// Write to backbuffer
+			{
+				const auto& passIn = blackboard.Get<BlitOutput>();
+
+				auto bbOut = rgRepo.AliasResource(passIn.bbOut);
+
+				struct PassData
+				{
+					RGResourceView bbIn;
+					RGResourceView bbOut;
+				};
+
+				rg.AddPass<PassData>("GUI Pass",
+					[&](RenderGraph::PassBuilder& builder, PassData& passData)
+					{
+						// This will not be used (we could read from it)
+						passData.bbIn = builder.ReadTexture(passIn.bbOut, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+							TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+
+						passData.bbOut = builder.WriteTexture(bbOut, D3D12_RESOURCE_STATE_RENDER_TARGET,
+							TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+					},
+					[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
+					{
+						std::cout << "GUI Pass\n";
+					});
+
+				GUIOutput output{};
+				output.bbOut = bbOut;
+				blackboard.Add<GUIOutput>(output);
+			}
+
+			// Write to backbuffer 2
+			{
+				const auto& passIn = blackboard.Get<GUIOutput>();
+
+				auto bbOut = rgRepo.AliasResource(passIn.bbOut);
+
+				struct PassData
+				{
+					RGResourceView bbIn;
+					RGResourceView bbOut;
+				};
+
+				rg.AddPass<PassData>("GUI Pass 2",
+					[&](RenderGraph::PassBuilder& builder, PassData& passData)
+					{
+						// This will not be used (we could read from it)
+						passData.bbIn = builder.ReadTexture(passIn.bbOut, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+							TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+
+						passData.bbOut = builder.WriteTexture(bbOut, D3D12_RESOURCE_STATE_RENDER_TARGET,
+							TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+					},
+					[](RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources, const PassData& passData)
+					{
+						std::cout << "GUI Pass 2\n";
+					});
+
 			}
 
 

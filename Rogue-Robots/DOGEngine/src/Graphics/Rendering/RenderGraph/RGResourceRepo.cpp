@@ -35,6 +35,10 @@ namespace DOG::gfx
 
 	RGResource RGResourceRepo::AliasResource(RGResource tex)
 	{
+		auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(tex.handle));
+		assert(!res.hasBeenAliased);		// enforce that a RGResource can only be aliased once!
+		res.hasBeenAliased = true;
+
 		Texture_Storage storage{};
 		storage.isAnAlias = true;
 		storage.aliasOf = tex;
@@ -71,6 +75,14 @@ namespace DOG::gfx
 		return res.desc.initState;
 	}
 
+	D3D12_RESOURCE_STATES RGResourceRepo::GetAliasInitState(RGResource tex)
+	{
+		const auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(tex.handle));
+		const auto& originalRes = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot((res.aliasOf)->handle));
+		return originalRes.aliasInitState;
+	}
+
+
 	bool RGResourceRepo::IsImported(RGResource tex)
 	{
 		const auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(tex.handle));
@@ -78,10 +90,23 @@ namespace DOG::gfx
 		return res.imported;
 	}
 
+	bool RGResourceRepo::IsAnAlias(RGResource tex)
+	{
+		const auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(tex.handle));
+		return res.isAnAlias;
+	}
+
+
 	std::pair<u32, u32>& RGResourceRepo::GetMutEffectiveLifetime(RGResource tex)
 	{
 		auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(tex.handle));
 		return res.effectiveLifetime;
+	}
+
+	void RGResourceRepo::SetAliasInitState(RGResource tex, D3D12_RESOURCE_STATES nextState)
+	{
+		auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(tex.handle));
+		res.aliasInitState = nextState;
 	}
 
 	void RGResourceRepo::RealizeResources()

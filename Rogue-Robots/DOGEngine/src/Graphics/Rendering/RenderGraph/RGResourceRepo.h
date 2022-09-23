@@ -31,8 +31,11 @@ namespace DOG::gfx
 
 		Texture GetTexture(RGResource tex);
 		D3D12_RESOURCE_STATES GetInitState(RGResource tex);
+		D3D12_RESOURCE_STATES GetAliasInitState(RGResource tex);
 		bool IsImported(RGResource tex);
+		bool IsAnAlias(RGResource tex);
 		std::pair<u32, u32>& GetMutEffectiveLifetime(RGResource tex);
+		void SetAliasInitState(RGResource tex, D3D12_RESOURCE_STATES nextState);
 
 		void RealizeResources();
 
@@ -42,11 +45,15 @@ namespace DOG::gfx
 			RGTextureDesc desc;
 			std::optional<Texture> realized;
 			std::pair<u32, u32> effectiveLifetime{ 0, 0 };
+
 			bool imported{ false };
 
+			bool hasBeenAliased{ false };
+
 			// Points to the original resource
-			bool isAnAlias{ false };
 			std::optional<RGResource> aliasOf;
+			bool isAnAlias{ false };
+			D3D12_RESOURCE_STATES aliasInitState{ D3D12_RESOURCE_STATE_COMMON };	// If an alias inherits this resource --> It will have new init state
 		};
 
 	private:

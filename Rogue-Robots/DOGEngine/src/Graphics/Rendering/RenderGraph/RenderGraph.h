@@ -110,8 +110,8 @@ namespace DOG::gfx
 
 			void AddPreStateTransition(Texture tex, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after);
 
-			void AddStateTransition(Buffer buffer, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after);
-			void AddStateTransition(Texture tex, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after);
+			void AddPostStateTransition(Buffer buffer, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after);
+			void AddPostStateTransition(Texture tex, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after);
 			// AddAliasingBarrier
 			// AddUAVBarrier
 			
@@ -170,11 +170,6 @@ namespace DOG::gfx
 		std::unordered_map<Pass*, std::vector<Pass*>> m_adjacencyMap;
 		std::vector<Pass*> m_sortedPasses;
 		std::vector<DependencyLevel> m_dependencyLevels;
-
-		// { RG, before, after }
-		//std::vector<std::vector<std::tuple<RGResource, D3D12_RESOURCE_STATES, D3D12_RESOURCE_STATES>>> m_resourceStateTransitionAtDependencyLevel;
-		
-
 
 
 

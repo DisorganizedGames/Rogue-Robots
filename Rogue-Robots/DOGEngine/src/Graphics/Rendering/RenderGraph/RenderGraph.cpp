@@ -101,7 +101,6 @@ namespace DOG::gfx
 
 	void RenderGraph::RealizeViews()
 	{
-		// Realize views in backwards order to accumulate read-states
 		for (const auto& pass : m_sortedPasses)
 		{
 			// Realize write views (and construct render passes)
@@ -137,6 +136,8 @@ namespace DOG::gfx
 
 	void RenderGraph::InsertTransitionsAndCalculateEffectiveLifetimes()
 	{
+		std::vector<std::function<void()>> deferredAliasTransitions;
+
 		for (const auto& [pass, adjPasses] : m_adjacencyMap)
 		{
 			const auto dependencyLevel = pass->passDepth;
@@ -147,6 +148,7 @@ namespace DOG::gfx
 				// Write properties
 				const auto& write = pass->builder.m_writes[writeIdx];
 				const auto& writeRes = m_resources->GetTexture(write);								// Will break if we do buffers
+				const auto& writeIsAlias = m_resources->IsAnAlias(write);
 				D3D12_RESOURCE_STATES writeState{ pass->builder.m_writeStates[writeIdx] };
 
 				auto& effectiveLifetime = m_resources->GetMutEffectiveLifetime(write);				// Will break if we do buffers
@@ -158,10 +160,6 @@ namespace DOG::gfx
 				// Read properties
 				D3D12_RESOURCE_STATES combinedReadState{ D3D12_RESOURCE_STATE_COMMON };
 				bool readIntersects{ false };
-
-				//bool writeIntersects{ false };
-				//u32 writeIntersectDepth{ 0 };
-				//D3D12_RESOURCE_STATES writeIntersectState{ D3D12_RESOURCE_STATE_COMMON };
 
 				for (const auto& adjPass : adjPasses)
 				{
@@ -187,35 +185,43 @@ namespace DOG::gfx
 
 						effectiveLifetime.second = (std::max)(adjPassDepth, effectiveLifetime.second);
 					}
-
-					//// Find if theres a write to the same resource in adjacent pass
-					//const auto& adjWrites = adjPass->builder.m_writes;
-					//const auto adjWriteIt = std::find_if(adjWrites.cbegin(), adjWrites.cend(), findFunc);
-					//writeIntersects = writeIntersects || (adjWriteIt != adjWrites.cend());
-					//writeIntersectDepth = adjPassDepth;
-					//writeIntersectState = adjPass->builder.m_writeStates[adjWriteIt - adjWrites.cbegin()];
 				}
 
-				//// Adjacent has used aliasing if write intersects!
-				//if (writeIntersects)
-				//{
-				//	// Insert preBarrier at depLevel[adjPass->passDepth]
-				//	// combinedRead --> adjWriteView
-				//	// Above inserts the barrier as late as possible
-				//	m_dependencyLevels[writeIntersectDepth].AddPreStateTransition(writeRes, combinedReadState, writeIntersectState);
-				//}
+				// Should this write resource be aliased, we set the initial state it should have next time it needs to be written to
+				m_resources->SetAliasInitState(write, combinedReadState);
 
 				// If texture init state does not match declared write state, we transition it first
 				// User declaring should ensure that this happens minimally
 				const auto writeResInitState = m_resources->GetInitState(write);
-				if (writeState != writeResInitState)
+				bool inCorrectState = writeState != writeResInitState;
+				if (!writeIsAlias && inCorrectState)
 					depLevel.AddPreStateTransition(writeRes, writeResInitState, writeState);
 
-				// If combined desired state is common, we skip.
+				/*
+					Make it so that we cannot make a view on a resource that has been aliased!
+					--> No guarantee that it is the final write.
+				*/
+
+
+				// For aliased resources --> We check the end read state of the original resource
+				if (writeIsAlias)
+				{
+					// Resolves them at end when all nextInitState have been initialized
+					deferredAliasTransitions.push_back([this, &depLevel, write, writeState]()
+						{
+							const auto& writeRes = m_resources->GetTexture(write);									// Will break if we do buffers
+							const auto& writeResInitState = m_resources->GetAliasInitState(write);					// Will break if we do buffers
+							depLevel.AddPreStateTransition(writeRes, writeResInitState, writeState);
+						});
+				}
+
 				if (readIntersects)
-					depLevel.AddStateTransition(writeRes, writeState, combinedReadState);
+					depLevel.AddPostStateTransition(writeRes, writeState, combinedReadState);
 			}
 		}
+		
+		for (auto func : deferredAliasTransitions)
+			func();
 	}
 
 	void RenderGraph::BuildDependencyLevels()
@@ -354,12 +360,12 @@ namespace DOG::gfx
 
 	}
 
-	void RenderGraph::DependencyLevel::AddStateTransition(Buffer buffer, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after)
+	void RenderGraph::DependencyLevel::AddPostStateTransition(Buffer buffer, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after)
 	{
 		m_barriers.push_back(GPUBarrier::Transition(buffer, 0, prev, after));
 	}
 
-	void RenderGraph::DependencyLevel::AddStateTransition(Texture tex, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after)
+	void RenderGraph::DependencyLevel::AddPostStateTransition(Texture tex, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES after)
 	{
 		m_barriers.push_back(GPUBarrier::Transition(tex, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, prev, after));
 	}
