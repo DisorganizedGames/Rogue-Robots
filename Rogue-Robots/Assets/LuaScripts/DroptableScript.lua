@@ -1,34 +1,11 @@
 
-barrelDropTable = {
-	grenade = {1, "Grenade Barrel"},
-	laser = {1, "Laser Barrel"},
-	liquid = {1, "Liquid Barrel"}
-}
+local cubeDropTable = {}
 
-magazineDropTable = {
-	fire = {1, "Fire Magazine"},
-	frost = {1, "Frost Magazine"},
-	elec = {1, "Electricity Magazine"}
-}
-
-miscDropTable = {
-	full_auto = {1, "Full Auto Switch"},
-	burst = {1, "Burst Switch"},
-	scatter = {1, "Scatter Shot"},
-	charge_shot = {1, "Charge Shot"},
-	radar = {1, "Radar"}
-}
-
-worldDrops = {
-	barrelDrop = {2, barrelDropTable},
-	magazineDrop = {1, magazineDropTable},
-	miscDrop = {1, miscDropTable}
-}
-
-enemyDrops = {
-	drop = {9, worldDrops},
-	nothing = {1, "Nothing"}
-}
+function OnStart()
+	cubeDropTable.red 	= {1, Asset:LoadModel("Assets/red_cube.glb")}
+	cubeDropTable.green = {1, Asset:LoadModel("Assets/green_cube.glb")}
+	cubeDropTable.blue 	= {1, Asset:LoadModel("Assets/blue_cube.glb")}
+end
 
 function GetDrop(dropItem)
 	if type(dropItem) == "table" then
@@ -61,14 +38,12 @@ function DropGuaranteed(table)
 	return "Error" -- Should never occur
 end
 
-function WorldDrop()
-
-end
-
 function DropFromEnemy(position)
-	drop = DropGuaranteed(enemyDrops)
-	print(drop .. " at position: (" .. position[1] .. ", " .. position[2] .. ", " .. position[3] .. ")")	
-	-- Instantiate(drop) Somehow
+	local drop = DropGuaranteed(cubeDropTable)
+	local dropEntity = Entity:CreateEntity()
+	Entity:AddComponent(dropEntity, "Model", drop)
+	Entity:AddComponent(dropEntity, "Transform", position, {x=0,y=0,z=0}, {x=1,y=1,z=1})
 end
 
 EventSystem:Register("EnemyDrop", DropFromEnemy)
+
