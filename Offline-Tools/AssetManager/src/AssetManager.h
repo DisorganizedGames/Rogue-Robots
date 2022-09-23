@@ -15,6 +15,16 @@ void FatalError(const std::string& msg)
 	exit(-1);
 }
 
+void StartSequence(const std::string& msg, const std::filesystem::path& filePath = "")
+{
+	std::cout << "\x1b[33m" << msg << ": " << filePath << "\x1b[0m";
+}
+
+void EndSequence(const std::string& msg, const std::filesystem::path& filePath = "")
+{
+	std::cout << "\x1b[100D" << "\x1b[32m" << msg << ": " << filePath << "\x1b[0m\n";
+}
+
 struct AssetMetaData
 {
 	struct TrivialData
@@ -105,6 +115,8 @@ void WriteAssetFiles(const std::filesystem::path& assetPath, const std::filesyst
 
 void WriteTexture(const std::filesystem::path& in, std::ofstream* out)
 {
+	StartSequence("Loading", in);
+
 	TextureHeader header = {};
 	CMP_MipSet inMipset = {};
 
@@ -114,10 +126,13 @@ void WriteTexture(const std::filesystem::path& in, std::ofstream* out)
 	{
 		FatalError(std::string("Failed to read texture: ") + in.string());
 	}
+
+	EndSequence("Successfully loaded", in);
 	
 	CMP_GenerateMIPLevels(&inMipset, 1);
 
 	// Perform texture compression on the mip-ified texture
+	StartSequence("Compressing", in);
 	KernelOptions opts = {
 		.fquality = 0.f,
 		.format = CMP_FORMAT_BC7,
@@ -133,7 +148,10 @@ void WriteTexture(const std::filesystem::path& in, std::ofstream* out)
 		FatalError(std::string("Failed to compress texture: ") + in.string());
 	}
 	
+	EndSequence("Successfully compressed", in);
+	
 	// Write texture header to file
+	StartSequence("Writing", in);
 	header.width = outMipset.m_nWidth;
 	header.height = outMipset.m_nHeight;
 	header.mips = outMipset.m_nMipLevels;
@@ -154,6 +172,8 @@ void WriteTexture(const std::filesystem::path& in, std::ofstream* out)
 		CMP_GetMipLevel(&mipLevel, &outMipset, i, 0);
 		out->write((char*)mipLevel->m_pbData, mipLevel->m_dwLinearSize);
 	}
+	
+	EndSequence("Successfully wrote", in);
 
 	CMP_FreeMipSet(&inMipset);
 	CMP_FreeMipSet(&outMipset);
