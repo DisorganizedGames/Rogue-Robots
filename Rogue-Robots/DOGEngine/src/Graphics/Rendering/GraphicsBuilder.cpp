@@ -4,12 +4,13 @@
 
 namespace DOG::gfx
 {
-	GraphicsBuilder::GraphicsBuilder(RenderDevice* rd, UploadContext* dataUpCtx, UploadContext* texUpCtx, MeshTable* meshes, MaterialTable* mats) :
+	GraphicsBuilder::GraphicsBuilder(RenderDevice* rd, UploadContext* dataUpCtx, UploadContext* texUpCtx, MeshTable* meshes, MaterialTable* mats, GPUGarbageBin* garbageBin) :
 		m_rd(rd),
 		m_meshTable(meshes),
 		m_matTable(mats),
 		m_uploadCtx(dataUpCtx),
-		m_texUploadCtx(texUpCtx)
+		m_texUploadCtx(texUpCtx),
+		m_garbageBin(garbageBin)
 	{
 	}
 
@@ -95,5 +96,14 @@ namespace DOG::gfx
 
 		assert(false);
 		return TextureView();
+	}
+
+	void GraphicsBuilder::FreeResource(Texture handle)
+	{
+		m_garbageBin->PushDeferredDeletion([=, rd = m_rd, h = handle]() {rd->FreeTexture(h); });
+	}
+	void GraphicsBuilder::FreeResource(TextureView handle)
+	{
+		m_garbageBin->PushDeferredDeletion([=, rd = m_rd, h = handle]() {rd->FreeView(h); });
 	}
 }

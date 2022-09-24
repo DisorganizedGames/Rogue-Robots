@@ -1,7 +1,5 @@
 #include "AssetManager.h"
 #include "../Graphics/Rendering/Renderer.h"
-#include "../Graphics/Rendering/TextureManager.h"
-#include "../Graphics/Rendering/GraphicsBuilder.h"
 #include "../Core/TextureFileImporter.h"
 
 #pragma warning(push, 0)
@@ -12,12 +10,10 @@
 
 #pragma warning(pop)
 
+using namespace DOG::gfx;
 
 namespace DOG
 {
-	// Helpers
-	std::optional<gfx::TextureView> TextureAssetToGfxTexture(u32 assetID, gfx::GraphicsBuilder& builder, const AssetManager& am);
-
 	std::unique_ptr<AssetManager> AssetManager::s_instance = nullptr;
 	std::mutex AssetManager::s_commandQueueMutex;
 	std::queue<std::function<void()>> AssetManager::s_commandQueue;
@@ -54,7 +50,10 @@ namespace DOG
 
 		assetOut->meshID = AddMesh(asset->mesh);
 		assetOut->submeshes = std::move(asset->submeshes);
-		assetOut->materialIndices = LoadMaterials(asset->materials);
+		assetOut->materialIndices = LoadMaterials(asset->materials, flag);
+
+
+
 
 		m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
 
@@ -104,6 +103,12 @@ namespace DOG
 		}
 		//u32 id = LoadTextureSTBI(path, flag);
 		u32 id = LoadTextureCommpresonator(path, flag);
+
+
+		if (flag & AssetLoadFlag::GPUMemory || flag & AssetLoadFlag::GPUMemoryOnly)
+		{
+			AssetManager::AddCommand([](u32 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveTextureToGPU(idToMove, f); }, id, flag);
+		}
 		return id;
 	}
 
@@ -185,18 +190,20 @@ namespace DOG
 		}
 	}
 
-	std::vector<u32> AssetManager::LoadMaterials(const std::vector<ImportedMaterial>& importedMats)
+	std::vector<u32> AssetManager::LoadMaterials(const std::vector<ImportedMaterial>& importedMats, AssetLoadFlag flag)
 	{
 		std::vector<u32> newMats;
 		newMats.reserve(importedMats.size());
+		AssetLoadFlag flagWithSrgb = AssetLoadFlag::Srgb;
+		flagWithSrgb |= flag;
 		for (auto& m : importedMats)
 		{
 			Material material;
 
-			material.albedo = m.albedoPath.empty() ? 0 : LoadTexture(m.albedoPath, AssetLoadFlag::Srgb);
-			material.metallicRoughness = m.metallicRoughnessPath.empty() ? 0 : LoadTexture(m.metallicRoughnessPath, AssetLoadFlag::Srgb);
-			material.normalMap = m.normalMapPath.empty() ? 0 : LoadTexture(m.normalMapPath);
-			material.emissive = m.emissivePath.empty() ? 0 : LoadTexture(m.emissivePath, AssetLoadFlag::Srgb);
+			material.albedo = m.albedoPath.empty() ? 0 : LoadTexture(m.albedoPath, flagWithSrgb);
+			material.metallicRoughness = m.metallicRoughnessPath.empty() ? 0 : LoadTexture(m.metallicRoughnessPath, flagWithSrgb);
+			material.normalMap = m.normalMapPath.empty() ? 0 : LoadTexture(m.normalMapPath, flag);
+			material.emissive = m.emissivePath.empty() ? 0 : LoadTexture(m.emissivePath, flagWithSrgb);
 
 			material.albedoFactor = DirectX::XMFLOAT4(m.albedoFactor);
 			material.emissiveFactor = DirectX::XMFLOAT3(m.emissiveFactor);
@@ -272,10 +279,15 @@ namespace DOG
 			const Material& mat = m_materialManager.GetMaterial(matIndex);
 			auto& matSpec = matSpecs.emplace_back();
 
-			matSpec.albedo = TextureAssetToGfxTexture(mat.albedo, *builder, *this);
-			matSpec.metallicRoughness = TextureAssetToGfxTexture(mat.metallicRoughness, *builder, *this);
-			matSpec.emissive = TextureAssetToGfxTexture(mat.emissive, *builder, *this);
-			matSpec.normal = TextureAssetToGfxTexture(mat.normalMap, *builder, *this);
+			assert(!mat.albedo || GetAsset<TextureAsset>(mat.albedo));
+			assert(!mat.metallicRoughness || GetAsset<TextureAsset>(mat.metallicRoughness));
+			assert(!mat.emissive || GetAsset<TextureAsset>(mat.emissive));
+			assert(!mat.normalMap|| GetAsset<TextureAsset>(mat.normalMap));
+
+			if (mat.albedo && m_assets[mat.albedo]->stateFlag & AssetStateFlag::ExistOnGPU) matSpec.albedo = GetAsset<TextureAsset>(mat.albedo)->textureViewGPU;
+			if (mat.metallicRoughness && m_assets[mat.metallicRoughness]->stateFlag & AssetStateFlag::ExistOnGPU) matSpec.metallicRoughness = GetAsset<TextureAsset>(mat.metallicRoughness)->textureViewGPU;
+			if (mat.emissive && m_assets[mat.emissive]->stateFlag & AssetStateFlag::ExistOnGPU) matSpec.emissive = GetAsset<TextureAsset>(mat.emissive)->textureViewGPU;
+			if (mat.normalMap && m_assets[mat.normalMap]->stateFlag & AssetStateFlag::ExistOnGPU) matSpec.normal = GetAsset<TextureAsset>(mat.normalMap)->textureViewGPU;
 
 			matSpec.albedoFactor = mat.albedoFactor;
 			matSpec.emissiveFactor = DirectX::SimpleMath::Vector4(mat.emissiveFactor.x, mat.emissiveFactor.y, mat.emissiveFactor.z, 1.f);
@@ -290,6 +302,40 @@ namespace DOG
 			AssetUnLoadFlag unloadFlag = AssetUnLoadFlag::MeshCPU;
 			unloadFlag |= AssetUnLoadFlag::TextureCPU;
 			AssetManager::Get().UnLoadAsset(modelID, unloadFlag);
+		}
+	}
+
+	void AssetManager::MoveTextureToGPU(u32 textureID, AssetLoadFlag flag)
+	{
+		assert(m_renderer);
+		gfx::GraphicsBuilder* builder = m_renderer->GetBuilder();
+
+		gfx::GraphicsBuilder::MippedTexture2DSpecification textureSpec{};
+
+		TextureAsset* asset = GetAsset<TextureAsset>(textureID);
+		assert(asset); // This could happen and if it does i want to know about it.
+
+		gfx::GraphicsBuilder::TextureSubresource subres{};
+		subres.width = asset->width;
+		subres.height = asset->height;
+		subres.data = asset->textureData;
+
+		textureSpec.srgb = asset->srgb;
+		textureSpec.dataPerMip.push_back(subres);
+
+		asset->textureGPU = builder->LoadTexture(textureSpec);
+
+		TextureViewDesc desc = TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D,
+			textureSpec.srgb ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM);
+		
+
+		asset->textureViewGPU = builder->CreateTextureView(asset->textureGPU, desc);
+
+		m_assets[textureID]->stateFlag |= AssetStateFlag::ExistOnGPU;
+
+		if (flag & AssetLoadFlag::GPUMemoryOnly)
+		{
+			AssetManager::Get().UnLoadAsset(textureID, AssetUnLoadFlag::TextureCPU);
 		}
 	}
 
@@ -329,26 +375,10 @@ namespace DOG
 		return assetNeedsToBeLoaded;
 	}
 
-	std::optional<gfx::TextureView> TextureAssetToGfxTexture(u32 assetID, gfx::GraphicsBuilder& builder, const AssetManager& am)
+	gfx::GraphicsBuilder& AssetManager::GetGraphicsBuilder()
 	{
-		if (!assetID) return std::nullopt;
-		TextureAsset* asset = am.GetAsset<TextureAsset>(assetID);
-		if (!asset) return std::nullopt;
-
-		gfx::GraphicsBuilder::TextureSubresource subres{};
-		subres.width = asset->width;
-		subres.height = asset->height;
-		subres.data = asset->textureData;
-
-		// Only one mip level for now
-		gfx::GraphicsBuilder::MippedTexture2DSpecification textureSpec{};
-		textureSpec.srgb = asset->srgb;
-		textureSpec.dataPerMip.push_back(subres);
-		gfx::Texture texture = builder.LoadTexture(textureSpec);
-
-		gfx::TextureViewDesc desc = gfx::TextureViewDesc(gfx::ViewType::ShaderResource, gfx::TextureViewDimension::Texture2D,
-			textureSpec.srgb ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM);
-
-		return builder.CreateTextureView(texture, desc);
+		assert(m_renderer);
+		assert(m_renderer->GetBuilder());
+		return *m_renderer->GetBuilder();
 	}
 }

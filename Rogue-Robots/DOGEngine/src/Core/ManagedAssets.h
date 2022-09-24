@@ -1,6 +1,7 @@
 #pragma once
 #include "../Audio/AudioFileReader.h"
 #include "Types/GraphicsTypes.h"
+#include "../Graphics/Rendering/GraphicsBuilder.h"
 namespace DOG
 {
 	enum class AssetLoadFlag
@@ -147,6 +148,8 @@ namespace DOG
 		uint32_t mipLevels{ 0 };
 		std::vector<u8> textureData;
 		bool srgb = true;
+		gfx::Texture textureGPU;
+		gfx::TextureView textureViewGPU;
 	};
 
 	struct MeshAsset : public Asset
@@ -241,42 +244,35 @@ namespace DOG
 	template<>
 	class ManagedAsset<ModelAsset> : public ManagedAssetBase
 	{
-	private:
-		ModelAsset* m_asset = nullptr;
 	public:
 		ManagedAsset() = default;
-		ManagedAsset(AssetStateFlag flag, ModelAsset* asset) : ManagedAssetBase(flag), m_asset(asset)
-		{
-		}
-		~ManagedAsset()
-		{
-			if (m_asset)
-			{
-				if (CheckIfLoadingAsync())
-				{
-					assert(false); // Does this ever happen, if so create a task to fix this.
-				}
+		ManagedAsset(AssetStateFlag flag, ModelAsset* asset);
+		~ManagedAsset();
+		ModelAsset* Get();
 
-				delete m_asset;
-				m_asset = nullptr;
-			}
-		}
-
-		ModelAsset* Get()
-		{
-			if (CheckIfLoadingAsync())
-				return nullptr;
-			else
-				return m_asset;
-		}
-
-		Asset* GetBase() override
-		{
-			if (CheckIfLoadingAsync())
-				return nullptr;
-			else
-				return static_cast<Asset*>(m_asset);
-		}
+		Asset* GetBase() override;
 		void UnloadAsset(AssetUnLoadFlag flag) override;
+
+	private:
+		ModelAsset* m_asset = nullptr;
+	};
+
+
+
+	//TextureAsset
+	template<>
+	class ManagedAsset<TextureAsset> : public ManagedAssetBase
+	{
+	public:
+		ManagedAsset() = default;
+		ManagedAsset(AssetStateFlag flag, TextureAsset* asset);
+		~ManagedAsset();
+
+		TextureAsset* Get();
+		Asset* GetBase() override;
+		void UnloadAsset(AssetUnLoadFlag flag) override;
+
+	private:
+		TextureAsset* m_asset = nullptr;
 	};
 }

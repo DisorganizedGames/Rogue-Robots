@@ -16,6 +16,7 @@ namespace DOG
 	}
 	class AssetManager
 	{
+		friend ManagedAsset<TextureAsset>;
 	public:
 		static void Initialize(gfx::Renderer* renderer);
 		static void Destroy();
@@ -67,15 +68,19 @@ namespace DOG
 		void LoadModelAssetInternal(const std::string& path, u32 id, AssetLoadFlag flag, ModelAsset* assetOut);
 
 		[[nodiscard]] u32 AddMesh(const ImportedMesh& mesh);
-		[[nodiscard]] std::vector<u32> LoadMaterials(const std::vector<ImportedMaterial>& importedMats);
+		[[nodiscard]] std::vector<u32> LoadMaterials(const std::vector<ImportedMaterial>& importedMats, AssetLoadFlag flag);
 		[[nodiscard]] u32 LoadTextureSTBI(const std::string& path, AssetLoadFlag flag);
 		[[nodiscard]] u32 LoadTextureCommpresonator(const std::string& path, AssetLoadFlag flag);
 		void MoveModelToGPU(u32 modelID, AssetLoadFlag flag);
+
+		void MoveTextureToGPU(u32 textureID, AssetLoadFlag flag);
 
 		u32 NextKey();
 
 		// if assetIDOut == 0 then the component needs needs to be added to m_assets
 		bool AssetNeedsToBeLoaded(const std::string& path, u32& assetIDOut); 
+
+		gfx::GraphicsBuilder& GetGraphicsBuilder();
 
 	private:
 		static std::unique_ptr<AssetManager> s_instance;
