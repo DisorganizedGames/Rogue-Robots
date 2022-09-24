@@ -70,8 +70,8 @@ namespace DOG
 
 		[[nodiscard]] u32 AddMesh(const ImportedMesh& mesh);
 		[[nodiscard]] std::vector<u32> LoadMaterials(const std::vector<ImportedMaterial>& importedMats, AssetLoadFlag flag);
-		void LoadTextureSTBI(const std::string& path, AssetLoadFlag flag, TextureAsset* assetOut);
-		void LoadTextureCommpresonator(const std::string& path, AssetLoadFlag flag, TextureAsset* assetOut);
+		static void LoadTextureSTBI(const std::string& path, AssetLoadFlag flag, TextureAsset* assetOut);
+		static void LoadTextureCommpresonator(const std::string& path, AssetLoadFlag flag, TextureAsset* assetOut);
 		void MoveModelToGPU(u32 modelID, AssetLoadFlag flag);
 
 		void MoveTextureToGPU(u32 textureID, AssetLoadFlag flag);

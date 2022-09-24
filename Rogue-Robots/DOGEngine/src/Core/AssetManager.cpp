@@ -57,18 +57,38 @@ namespace DOG
 
 		m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
 
+		//std::this_thread::sleep_for(std::chrono::seconds(4));
 		AssetManager::AddCommand([](u32 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveModelToGPU(idToMove, f); }, id, flag);
 	}
 
 	void AssetManager::LoadTextureAssetInternal(const std::string& path, u32 id, AssetLoadFlag flag, TextureAsset* assetOut)
 	{
 		//LoadTextureSTBI(path, flag, assetOut);
-		LoadTextureCommpresonator(path, flag, assetOut);
-		m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
 
-		if (flag & AssetLoadFlag::GPUMemory || flag & AssetLoadFlag::GPUMemoryOnly)
+		if (flag & AssetLoadFlag::Async)
 		{
-			AssetManager::AddCommand([](u32 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveTextureToGPU(idToMove, f); }, id, flag);
+			m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
+			m_assets[id]->stateFlag |= AssetStateFlag::LoadingAsync;
+			m_assets[id]->m_isLoadingConcurrent = 1;
+			CallAsync([=, lock = &m_assets[id]->m_isLoadingConcurrent]()
+				{
+					AssetManager::LoadTextureCommpresonator(path, flag, assetOut);
+					*lock = 0;
+					if (flag & AssetLoadFlag::GPUMemory || flag & AssetLoadFlag::GPUMemoryOnly)
+					{
+						AssetManager::AddCommand([](u32 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveTextureToGPU(idToMove, f); }, id, flag);
+					}
+				});
+		}
+		else
+		{
+			LoadTextureCommpresonator(path, flag, assetOut);
+			m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
+
+			if (flag & AssetLoadFlag::GPUMemory || flag & AssetLoadFlag::GPUMemoryOnly)
+			{
+				AssetManager::AddCommand([](u32 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveTextureToGPU(idToMove, f); }, id, flag);
+			}
 		}
 	}
 
@@ -108,6 +128,8 @@ namespace DOG
 
 	u32 AssetManager::LoadTexture(const std::string& path, AssetLoadFlag flag)
 	{
+		flag |= AssetLoadFlag::Async;
+
 		u32 id = 0;
 		if (AssetNeedsToBeLoaded(path, id))
 		{
@@ -267,6 +289,34 @@ namespace DOG
 		// Convert ModelAsset and its MeshAsset to MeshSpecification
 		ModelAsset* modelAsset = GetAsset<ModelAsset>(modelID);
 		MeshAsset* meshAsset = GetAsset<MeshAsset>(modelAsset->meshID);
+
+
+		auto&& needToWait = [&](u32 texID) {
+			if (texID == 0) return false;
+			if (m_assets[texID]->CheckIfLoadingAsync()) return true;
+			if (!(m_assets[texID]->stateFlag & AssetStateFlag::ExistOnGPU)) return true;
+			
+			return false;
+		};
+		for (auto& matIndex : modelAsset->materialIndices)
+		{
+			bool yield = false;
+			const Material& mat = m_materialManager.GetMaterial(matIndex);
+
+			yield = yield || needToWait(mat.albedo);
+			yield = yield || needToWait(mat.emissive);
+			yield = yield || needToWait(mat.metallicRoughness);
+			yield = yield || needToWait(mat.normalMap);
+			if (yield)
+			{
+				// FIX!!! return lamda function and have the system add it after it back
+				CallAsync([=]() {
+					std::this_thread::sleep_for(std::chrono::milliseconds(200)); // If frametime is higher then 200ms this might lock the main thread
+					AssetManager::AddCommand([](u32 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveModelToGPU(idToMove, f); }, modelID, flag);
+					});
+				return;
+			}
+		}
 		gfx::MeshTable::MeshSpecification loadSpec{};
 
 		loadSpec.submeshData = modelAsset->submeshes;
@@ -286,7 +336,7 @@ namespace DOG
 			assert(!mat.albedo || GetAsset<TextureAsset>(mat.albedo));
 			assert(!mat.metallicRoughness || GetAsset<TextureAsset>(mat.metallicRoughness));
 			assert(!mat.emissive || GetAsset<TextureAsset>(mat.emissive));
-			assert(!mat.normalMap|| GetAsset<TextureAsset>(mat.normalMap));
+			assert(!mat.normalMap || GetAsset<TextureAsset>(mat.normalMap));
 
 			if (mat.albedo && m_assets[mat.albedo]->stateFlag & AssetStateFlag::ExistOnGPU) matSpec.albedo = GetAsset<TextureAsset>(mat.albedo)->textureViewGPU;
 			if (mat.metallicRoughness && m_assets[mat.metallicRoughness]->stateFlag & AssetStateFlag::ExistOnGPU) matSpec.metallicRoughness = GetAsset<TextureAsset>(mat.metallicRoughness)->textureViewGPU;

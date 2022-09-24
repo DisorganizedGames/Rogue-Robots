@@ -176,8 +176,10 @@ namespace DOG
 		std::vector<u8> audioData;
 	};
 
+	class AssetManager;
 	class ManagedAssetBase
 	{
+		friend AssetManager;
 	public:
 		ManagedAssetBase(AssetStateFlag flag);
 		virtual ~ManagedAssetBase() = default;
