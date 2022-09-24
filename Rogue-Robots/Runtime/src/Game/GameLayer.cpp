@@ -40,6 +40,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<NetworkPlayerComponent>(entity3).playerId = 2;
 	t3.SetPosition({ 4, 2, 5 });
 	t3.SetScale({ 0.5f, 0.5f, 0.5f });
+	players.push_back(entity3);
 
 	entity entity4 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity4, m_magentaCube);

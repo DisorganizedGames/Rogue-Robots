@@ -22,7 +22,6 @@ public:
 	bool m_startUp;
 private:
 	void Recive();
-
 	std::atomic_bool m_netCodeAlive;
 	std::thread m_thread;
 	std::vector<entity> m_playersId;

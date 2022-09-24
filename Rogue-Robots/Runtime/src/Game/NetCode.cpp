@@ -144,7 +144,6 @@ void NetCode::Recive()
 	}
 }
 
-
 void NetCode::AddPlayersId(std::vector<DOG::entity> playersId)
 {
 	m_playersId = playersId;
