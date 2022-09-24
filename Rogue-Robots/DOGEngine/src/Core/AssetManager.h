@@ -66,11 +66,12 @@ namespace DOG
 		AssetManager();
 
 		void LoadModelAssetInternal(const std::string& path, u32 id, AssetLoadFlag flag, ModelAsset* assetOut);
+		void LoadTextureAssetInternal(const std::string& path, u32 id, AssetLoadFlag flag, TextureAsset* assetOut);
 
 		[[nodiscard]] u32 AddMesh(const ImportedMesh& mesh);
 		[[nodiscard]] std::vector<u32> LoadMaterials(const std::vector<ImportedMaterial>& importedMats, AssetLoadFlag flag);
-		[[nodiscard]] u32 LoadTextureSTBI(const std::string& path, AssetLoadFlag flag);
-		[[nodiscard]] u32 LoadTextureCommpresonator(const std::string& path, AssetLoadFlag flag);
+		void LoadTextureSTBI(const std::string& path, AssetLoadFlag flag, TextureAsset* assetOut);
+		void LoadTextureCommpresonator(const std::string& path, AssetLoadFlag flag, TextureAsset* assetOut);
 		void MoveModelToGPU(u32 modelID, AssetLoadFlag flag);
 
 		void MoveTextureToGPU(u32 textureID, AssetLoadFlag flag);

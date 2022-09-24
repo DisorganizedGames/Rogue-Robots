@@ -60,6 +60,19 @@ namespace DOG
 		AssetManager::AddCommand([](u32 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveModelToGPU(idToMove, f); }, id, flag);
 	}
 
+	void AssetManager::LoadTextureAssetInternal(const std::string& path, u32 id, AssetLoadFlag flag, TextureAsset* assetOut)
+	{
+		//LoadTextureSTBI(path, flag, assetOut);
+		LoadTextureCommpresonator(path, flag, assetOut);
+		m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
+
+		if (flag & AssetLoadFlag::GPUMemory || flag & AssetLoadFlag::GPUMemoryOnly)
+		{
+			AssetManager::AddCommand([](u32 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveTextureToGPU(idToMove, f); }, id, flag);
+		}
+	}
+
+
 	AssetManager::~AssetManager()
 	{
 		for (auto& [id, asset] : m_assets)
@@ -95,20 +108,19 @@ namespace DOG
 
 	u32 AssetManager::LoadTexture(const std::string& path, AssetLoadFlag flag)
 	{
-		if (!std::filesystem::exists(path))
+		u32 id = 0;
+		if (AssetNeedsToBeLoaded(path, id))
 		{
-			// assert wont catch if we have wrong path only in release mode
-			std::cout << "AssetManager::LoadTexture throw. " + path + " does not exist" << std::endl;
-			throw std::runtime_error(path + " does not exist");
+			if (id == 0)
+			{
+				id = NextKey();
+				m_assets.insert({ id, new ManagedAsset<TextureAsset>(AssetStateFlag::Unknown, new TextureAsset) });
+				m_pathTOAssetID[path] = id;
+			}
+			TextureAsset* p = GetAsset<TextureAsset>(id);
+			LoadTextureAssetInternal(path, id, flag, p);
 		}
-		//u32 id = LoadTextureSTBI(path, flag);
-		u32 id = LoadTextureCommpresonator(path, flag);
-
-
-		if (flag & AssetLoadFlag::GPUMemory || flag & AssetLoadFlag::GPUMemoryOnly)
-		{
-			AssetManager::AddCommand([](u32 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveTextureToGPU(idToMove, f); }, id, flag);
-		}
+		assert(id != 0);
 		return id;
 	}
 
@@ -216,7 +228,7 @@ namespace DOG
 		return newMats;
 	}
 
-	u32 AssetManager::LoadTextureSTBI(const std::string& path, AssetLoadFlag flag)
+	void AssetManager::LoadTextureSTBI(const std::string& path, AssetLoadFlag flag, TextureAsset* assetOut)
 	{
 		int width;
 		int height;
@@ -225,35 +237,27 @@ namespace DOG
 		numChannels = STBI_rgb_alpha; // we will have rgba
 		assert(imageData);
 
-		TextureAsset* newTexture = new TextureAsset;
-		newTexture->mipLevels = 1; // Mip maps will be handled later on when the assetTool is implemented.
-		newTexture->width = width;
-		newTexture->height = height;
-		newTexture->textureData.resize(static_cast<size_t>(width) * height * numChannels);
+		assetOut->mipLevels = 1; // Mip maps will be handled later on when the assetTool is implemented.
+		assetOut->width = width;
+		assetOut->height = height;
+		assetOut->textureData.resize(static_cast<size_t>(width) * height * numChannels);
 
-		memcpy(newTexture->textureData.data(), imageData, newTexture->textureData.size());
+		memcpy(assetOut->textureData.data(), imageData, assetOut->textureData.size());
 		stbi_image_free(imageData);
 		//STBI_FREE(imageData);
-		newTexture->srgb = flag & AssetLoadFlag::Srgb;
-		u32 id = NextKey();
-		m_assets.insert({ id, new ManagedAsset<TextureAsset>(AssetStateFlag::ExistOnCPU, newTexture) });
-		return id;
+		assetOut->srgb = flag & AssetLoadFlag::Srgb;
 	}
 
-	u32 AssetManager::LoadTextureCommpresonator(const std::string& path, AssetLoadFlag flag)
+	void AssetManager::LoadTextureCommpresonator(const std::string& path, AssetLoadFlag flag, TextureAsset* assetOut)
 	{
 		auto importedTex = TextureFileImporter(path, false).GetResult();
-		TextureAsset* newTexture = new TextureAsset;
-		newTexture->mipLevels = 1; // Mip maps will be handled later on when the assetTool is implemented.
-		newTexture->width = importedTex->dataPerMip.front().width;
-		newTexture->height = importedTex->dataPerMip.front().height;
-		assert(static_cast<size_t>(newTexture->width) * newTexture->height * 4 == importedTex->dataPerMip.front().data.size());
-		newTexture->textureData.resize(importedTex->dataPerMip.front().data.size());
-		memcpy(newTexture->textureData.data(), importedTex->dataPerMip.front().data.data(), importedTex->dataPerMip.front().data.size());
-		newTexture->srgb = flag & AssetLoadFlag::Srgb;
-		u32 id = NextKey();
-		m_assets.insert({ id, new ManagedAsset<TextureAsset>(AssetStateFlag::ExistOnCPU, newTexture) });
-		return id;
+		assetOut->mipLevels = 1; // Mip maps will be handled later on when the assetTool is implemented.
+		assetOut->width = importedTex->dataPerMip.front().width;
+		assetOut->height = importedTex->dataPerMip.front().height;
+		assert(static_cast<size_t>(assetOut->width) * assetOut->height * 4 == importedTex->dataPerMip.front().data.size());
+		assetOut->textureData.resize(importedTex->dataPerMip.front().data.size());
+		memcpy(assetOut->textureData.data(), importedTex->dataPerMip.front().data.data(), importedTex->dataPerMip.front().data.size());
+		assetOut->srgb = flag & AssetLoadFlag::Srgb;
 	}
 
 	void AssetManager::MoveModelToGPU(u32 modelID, AssetLoadFlag flag)
