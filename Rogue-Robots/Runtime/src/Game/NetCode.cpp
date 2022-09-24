@@ -28,7 +28,7 @@ void NetCode::OnUpdate(std::shared_ptr<MainPlayer> player)
 		if (m_startUp == TRUE)
 		{
 
-			EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC)
+			EntityManager::Get().Collect<NetworkPlayerComponent>().Do([&]( NetworkPlayerComponent& networkC)
 				{
 					//Give player correct model
 					if (networkC.playerId == m_input.playerId)
@@ -82,7 +82,7 @@ void NetCode::Recive()
 					m_input.playerId = m_client.ConnectTcpServer(ip);
 					if (m_input.playerId > -1)
 					{
-						m_input.position = DirectX::XMVectorSet(0, m_input.playerId * 2 + 1, 0, 0);
+						m_input.position = DirectX::XMVectorSet(0, (float)(m_input.playerId * 2 + 1), 0, 0);
 						m_Output = m_client.ReciveTcp();
 						start = TRUE;
 					}
@@ -106,7 +106,7 @@ void NetCode::Recive()
 			}
 			if (m_input.playerId > -1)
 			{
-				m_input.position = DirectX::XMVectorSet(0, m_input.playerId * 2 + 1, 0, 0);
+				m_input.position = DirectX::XMVectorSet(0, (float)(m_input.playerId * 2 + 1), 0, 0);
 				m_Output = m_client.ReciveTcp();
 				start = TRUE;
 			}
