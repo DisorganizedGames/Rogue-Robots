@@ -123,31 +123,11 @@ namespace DOG
 		return m_playersClient;
 	}
 
-
-	struct Client::ClientsData Client::AddString(ClientsData player, std::string inputs)
-	{
-		for (int i = 0; i < inputs.length(); i++)
-		{
-			if (i > 255)
-				break;
-			player.inputs[player.inputLength] = inputs.at(i);
-			player.inputLength++;
-		}
-		
-		return player;
-	}
-
-
 	struct Client::ClientsData Client::CleanClientsData(ClientsData player)
 	{
 		memset(player.inputs, 0, sizeof(player.inputs));
 		player.inputLength = 0;
 		//player.rotation = DirectX::XMVectorSet(0, 0, 0, 0);
 		return player;
-	}
-
-	void Client::ICMPConnect()
-	{
-		
 	}
 }

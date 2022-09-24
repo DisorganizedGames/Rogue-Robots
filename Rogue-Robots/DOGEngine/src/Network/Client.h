@@ -23,14 +23,10 @@ namespace DOG
 		void SendTcp(ClientsData input);
 		ClientsData* ReciveTcp();
 		ClientsData* SendandReciveTcp(ClientsData input);
-		ClientsData AddString(ClientsData player, std::string inputs);
 		ClientsData CleanClientsData(ClientsData player);
 	private:
 		ClientsData m_playersClient[MAX_PLAYER_COUNT];
 		SOCKET m_connectSocket;
 		char* m_inputSend;
-	private:
-		void ICMPConnect();
-
 	};
 }
