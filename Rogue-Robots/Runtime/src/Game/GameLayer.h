@@ -28,4 +28,5 @@ private:
 	DOG::EntityManager& m_entityManager;
 	std::vector<std::shared_ptr<LuaInterface>> m_luaInterfaces;
 	std::shared_ptr<MainPlayer> m_player;
+	NetCode m_netCode;
 };

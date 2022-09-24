@@ -1,8 +1,7 @@
 #Root/Runtime
-set(SourceFiles  "src/Core/RuntimeApplication.cpp" "src/Core/RuntimeApplication.h"
+set(SourceFiles "src/Core/RuntimeApplication.cpp" "src/Core/RuntimeApplication.h"
 		"src/Game/GameLayer.h" "src/Game/GameLayer.cpp" 
 		"src/Game/EmilDebugLayer.h" "src/Game/EmilDebugLayer.cpp"
-		"src/Scripting/LuaEvent.h" "src/Scripting/LuaEvent.cpp" 
 		"src/Game/MainPlayer.h" "src/Game/MainPlayer.cpp" 
 		"src/Game/NetCode.h" "src/Game/NetCode.cpp")
 		

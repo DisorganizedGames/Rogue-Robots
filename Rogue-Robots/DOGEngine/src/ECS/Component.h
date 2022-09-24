@@ -82,9 +82,12 @@ namespace DOG
 		inline static CameraComponent* s_mainCamera = nullptr;
 	};
 
-	struct NetworkComponent : public Component<NetworkComponent>
+	struct NetworkPlayerComponent : public Component<NetworkPlayerComponent>
 	{
 		int playerId;
 	};
 
+	struct NetworkComponent : public Component<NetworkComponent>
+	{
+	};
 }

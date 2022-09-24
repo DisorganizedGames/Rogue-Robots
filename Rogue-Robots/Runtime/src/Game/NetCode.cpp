@@ -8,38 +8,40 @@ NetCode::NetCode()
 	m_input.position = DirectX::XMVectorSet(0, 0, 0, 0);
 	m_active = FALSE;
 	m_startUp = FALSE;
+	m_thread = std::thread(&NetCode::Recive, this);
 
 }
 
 NetCode::~NetCode()
 {
 	m_netCodeAlive = FALSE;
-	if(m_active)
-		m_thread.join();
+	m_thread.join();
 }
 
 
-void NetCode::OnUpdate(MainPlayer* player)
+void NetCode::OnUpdate(std::shared_ptr<MainPlayer> player)
 {
+
 	if (m_active)
 	{
-	//if connects first time 
-	if (m_startUp == true)
-	{
-		m_thread = std::thread(&NetCode::Recive, this);
-		EntityManager::Get().Collect<TransformComponent, NetworkComponent>().Do([&](TransformComponent& transformC, NetworkComponent& networkC)
-			{
-				//Give player correct model
-				if (networkC.playerId == m_input.playerId)
-					player->SetPosition(m_Output[networkC.playerId].position);
-			});
-		
-		m_startUp = false;
-	}
+		//if connects first time 
+		if (m_startUp == TRUE)
+		{
+
+			EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC)
+				{
+					//Give player correct model
+					if (networkC.playerId == m_input.playerId)
+						player->SetPosition(m_Output[networkC.playerId].position);
+				});
+
+			m_startUp = false;
+		}
+
 	//if connected to server
 		AddPosition(player->GetPosition());
 		AddRotation(player->GetRotation());
-		EntityManager::Get().Collect<TransformComponent, NetworkComponent>().Do([&](TransformComponent& transformC, NetworkComponent& networkC)
+		EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC)
 			{
 				if (networkC.playerId == m_input.playerId)
 				{
@@ -59,10 +61,12 @@ void NetCode::Recive()
 {
 	DOG::Server serverTest;
 	bool start = FALSE;
+	char input = 'o';
 	while (start == FALSE)
 	{
+		
 		std::cout << "\nInput 'h' to host, 'j' to join, 'o' to play offline: ";
-		char input = getchar();
+		//input = getchar(); // uncomment to startup online
 		switch (input)
 		{
 		case 'h':
@@ -110,7 +114,7 @@ void NetCode::Recive()
 		}
 		case 'o':
 		{
-			std::cout << "Offline mode" << std::endl;
+			std::cout << " Offline mode Selected" << std::endl;
 			start = TRUE;
 			while (m_netCodeAlive)
 				continue;
@@ -120,7 +124,7 @@ void NetCode::Recive()
 			break;
 		}
 		if(start == FALSE)
-			std::cout << "Failed, try agiain" << std::endl;
+			std::cout << "Failed input, try agiain" << std::endl;
 		fseek(stdin, 0, SEEK_END);
 	}
 	while (m_netCodeAlive)
@@ -139,6 +143,7 @@ void NetCode::Recive()
 
 	}
 }
+
 
 void NetCode::AddPlayersId(std::vector<DOG::entity> playersId)
 {

@@ -4,7 +4,7 @@ namespace DOG
 {
 	Server::Server()
 	{
-		m_serverAlive = TRUE;
+		m_serverAlive = FALSE;
 		m_playerIds.resize(MAX_PLAYER_COUNT);
 		
 		for (int i = 0; i < MAX_PLAYER_COUNT; i++)
@@ -25,9 +25,12 @@ namespace DOG
 
 	Server::~Server()
 	{
-		m_serverAlive = FALSE;
-		m_serverLoop.join();
-		m_reciveConnections.join();
+		if (m_serverAlive)
+		{
+			m_serverAlive = FALSE;
+			m_serverLoop.join();
+			m_reciveConnections.join();
+		}
 		for (int socketIndex = 0; socketIndex < m_holdPlayerIds.size(); socketIndex++)
 		{
 			std::cout << "Server: Closes socket for player" << m_holdPlayerIds.at(socketIndex) + 1 << std::endl;
@@ -40,6 +43,7 @@ namespace DOG
 	bool Server::StartTcpServer()
 	{
 		std::cout << "Server: Starting server..." << std::endl;
+		
 		int check;
 		unsigned long setUnblocking = 1;
 		WSADATA socketStart;
@@ -96,6 +100,7 @@ namespace DOG
 			return FALSE;
 		}
 
+		m_serverAlive = TRUE;
 		//Thread to handle new connections
 		m_reciveConnections = std::thread(&Server::ServerReciveConnectionsTCP, this, listenSocket);
 
