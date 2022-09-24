@@ -1,8 +1,9 @@
 #Root/Runtime
-set(SourceFiles  "src/Core/RuntimeApplication.cpp" "src/Core/RuntimeApplication.h"
+set(SourceFiles "src/Core/RuntimeApplication.cpp" "src/Core/RuntimeApplication.h"
 		"src/Game/GameLayer.h" "src/Game/GameLayer.cpp" 
 		"src/Game/EmilDebugLayer.h" "src/Game/EmilDebugLayer.cpp"
-		"src/Game/MainPlayer.h" "src/Game/MainPlayer.cpp")
+		"src/Game/MainPlayer.h" "src/Game/MainPlayer.cpp" 
+		"src/Game/NetCode.h" "src/Game/NetCode.cpp")
 		
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")

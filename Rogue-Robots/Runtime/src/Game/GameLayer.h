@@ -2,6 +2,7 @@
 #include <DOGEngine.h>
 #include "MainPlayer.h"
 #include "LuaInterfaces.h"
+#include "NetCode.h"
 
 class GameLayer : public DOG::Layer
 {
@@ -14,10 +15,12 @@ public:
 	virtual void OnRender() override final;
 	virtual void OnImGuiRender() override final;
 	virtual void OnEvent(DOG::IEvent& event) override final;
+
 private:
 	void RegisterLuaInterfaces();
 
 private:
+
 	u64 m_redCube{ 0 };
 	u64 m_greenCube{ 0 };
 	u64 m_blueCube{ 0 };
@@ -25,4 +28,5 @@ private:
 	DOG::EntityManager& m_entityManager;
 	std::vector<std::shared_ptr<LuaInterface>> m_luaInterfaces;
 	std::shared_ptr<MainPlayer> m_player;
+	NetCode m_netCode;
 };

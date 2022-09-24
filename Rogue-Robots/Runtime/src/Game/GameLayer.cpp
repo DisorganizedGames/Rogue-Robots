@@ -6,6 +6,7 @@ using namespace DirectX::SimpleMath;
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
 {
+
 	auto& am = DOG::AssetManager::Get();
 	m_redCube = am.LoadModelAsset("Assets/red_cube.glb");
 	m_greenCube = am.LoadModelAsset("Assets/green_cube.glb");
@@ -26,20 +27,24 @@ GameLayer::GameLayer() noexcept
 		.SetPosition({ 4, -2, 5 })
 		.SetRotation({ 3.14f / 4.0f, 0, 0 })
 		.SetScale({0.5, 0.5, 0.5});
-
+	m_entityManager.AddComponent<NetworkPlayerComponent>(entity1).playerId = 0;
+	
 	entity entity2 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity2, m_greenCube);
 	m_entityManager.AddComponent<TransformComponent>(entity2, Vector3(-4, -2, 5), Vector3(0.1f, 0, 0));
+	m_entityManager.AddComponent<NetworkPlayerComponent>(entity2).playerId = 1;
 
 	entity entity3 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity3, m_blueCube);
 	auto& t3 = m_entityManager.AddComponent<TransformComponent>(entity3);
+	m_entityManager.AddComponent<NetworkPlayerComponent>(entity3).playerId = 2;
 	t3.SetPosition({ 4, 2, 5 });
 	t3.SetScale({ 0.5f, 0.5f, 0.5f });
 
 	entity entity4 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity4, m_magentaCube);
 	auto& t4 = m_entityManager.AddComponent<TransformComponent>(entity4);
+	m_entityManager.AddComponent<NetworkPlayerComponent>(entity4).playerId = 3;
 	t4.worldMatrix(3, 0) = -4;
 	t4.worldMatrix(3, 1) = 2;
 	t4.worldMatrix(3, 2) = 5;
@@ -67,7 +72,10 @@ void GameLayer::OnUpdate()
 	global->SetNumber("DeltaTime", Time::DeltaTime());
 
 	m_player->OnUpdate();
+	m_netCode.OnUpdate(m_player);
 }
+
+
 
 void GameLayer::OnRender()
 {
