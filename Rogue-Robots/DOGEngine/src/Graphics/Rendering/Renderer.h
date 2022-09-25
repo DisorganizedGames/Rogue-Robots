@@ -65,6 +65,7 @@ namespace DOG::gfx
 		void TestRG_1();
 		void TestRG_2();
 		void TestRG_3();
+		void TestRG_4();
 
 		LRESULT WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

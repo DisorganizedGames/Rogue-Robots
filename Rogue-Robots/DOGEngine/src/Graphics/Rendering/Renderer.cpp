@@ -266,6 +266,7 @@ namespace DOG::gfx
 	{
 		m_rd->Flush();
 
+		// m_rgResMan->Tick();
 		m_bin->BeginFrame();
 		m_rd->RecycleCommandList(m_cmdl);
 		m_cmdl = m_rd->AllocateCommandList();
@@ -569,6 +570,11 @@ namespace DOG::gfx
 		rg.Execute();
 
 		assert(false);
+	}
+
+	void DOG::gfx::Renderer::TestRG_4()
+	{
+		// Test illegal cases with Aliasing (written in document)
 	}
 
 	LRESULT Renderer::WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
