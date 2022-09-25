@@ -521,6 +521,8 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("Alias ArbiOutput",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
+					builder.ProxyRead(RG_RESOURCE(ArbiReadDone));
+
 					builder.WriteAliasedRenderTarget(RG_RESOURCE(ArbiOutput2), RG_RESOURCE(ArbiOutput), RenderPassAccessType::Clear_Preserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 				},
@@ -538,6 +540,7 @@ namespace DOG::gfx
 				{
 					builder.ImportTexture(RG_RESOURCE(Backbuffer1), m_scTextures[0], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
 
+					builder.ProxyWrite(RG_RESOURCE(ArbiReadDone));
 					builder.ReadResource(RG_RESOURCE(ArbiOutput), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 					builder.ReadResource(RG_RESOURCE(LitHDR), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,

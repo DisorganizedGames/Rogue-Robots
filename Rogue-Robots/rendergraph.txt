@@ -4,6 +4,7 @@ digraph G {
 "Light Pass to HDR" -> "Blit HDR to LDR Backbuffer"
 "Read GBufferPosition" -> "Alias ArbiOutput"
 "Read GBufferPosition" -> "Blit HDR to LDR Backbuffer"
+"Blit HDR to LDR Backbuffer" -> "Alias ArbiOutput"
 "Blit HDR to LDR Backbuffer" -> "ImGUI Pass"
 "ImGUI Pass" -> "2D Renderer Pass"
 }

@@ -75,11 +75,11 @@ namespace DOG::gfx
 					continue;
 
 				// Check input/output intersection
-				const auto& reads = pdp->inputs;
+				const auto& inputs = pdp->inputs;
 				for (const auto& output : pass->outputs)
 				{
-					auto it = std::find_if(reads.begin(), reads.end(), [output](PassIO input) { return input.id == output.id; });
-					bool ioIntersects = it != reads.cend();
+					auto it = std::find_if(inputs.begin(), inputs.end(), [output](PassIO input) { return input.id == output.id; });
+					bool ioIntersects = it != inputs.cend();
 
 					if (ioIntersects)
 					{
@@ -88,6 +88,22 @@ namespace DOG::gfx
 						break;
 					}
 				}
+
+				// Check input/output proxy intersection
+				const auto& proxyInput = pdp->proxyInput;
+				for (const auto& output : pass->proxyOutput)
+				{
+					auto it = std::find_if(proxyInput.begin(), proxyInput.end(), [output](RGResourceID input) { return input == output; });
+					bool ioIntersects = it != proxyInput.cend();
+
+					if (ioIntersects)
+					{
+						auto& adjacents = m_adjacencyMap[pass.get()];
+						adjacents.push_back(pdp.get());
+						break;
+					}
+				}
+
 			}
 		}
 	}
@@ -401,6 +417,20 @@ namespace DOG::gfx
 		output.aliasWrite = true;
 		output.rpAccessType = access;
 		m_pass.outputs.push_back(output);
+	}
+
+	void RenderGraph::PassBuilder::ProxyWrite(RGResourceID id)
+	{
+		// Explicitly forbids outputting the same proxy more than once
+		assert(!m_globalData.writes.contains(id));
+		m_globalData.writes.insert(id);
+		
+		m_pass.proxyOutput.push_back(id);
+	}
+
+	void RenderGraph::PassBuilder::ProxyRead(RGResourceID id)
+	{
+		m_pass.proxyInput.push_back(id);
 	}
 
 

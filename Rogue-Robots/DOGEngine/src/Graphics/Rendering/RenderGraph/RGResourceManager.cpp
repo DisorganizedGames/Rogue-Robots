@@ -67,6 +67,7 @@ namespace DOG::gfx
 		newRes.variants = alias;
 	}
 
+
 	void RGResourceManager::RealizeResources()
 	{
 		// https://github.com/DisorganizedGames/Rogue-Robots/blob/RenderGraph/Rogue-Robots/DOGEngine/src/Graphics/Rendering/RenderGraph/RGResourceRepo.cpp

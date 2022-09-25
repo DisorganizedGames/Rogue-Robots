@@ -57,6 +57,9 @@ namespace DOG::gfx
 			// Declared by user
 			std::vector<PassIO> inputs;
 			std::vector<PassIO> outputs;
+
+			std::vector<RGResourceID> proxyInput;
+			std::vector<RGResourceID> proxyOutput;
 			
 			// Filled by implementation
 			std::string name;
@@ -111,6 +114,9 @@ namespace DOG::gfx
 			void ReadOrWriteDepth(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
 			void WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
 			void WriteAliasedRenderTarget(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc);
+
+			void ProxyWrite(RGResourceID id);
+			void ProxyRead(RGResourceID id);
 
 		private:
 			friend class RenderGraph;
