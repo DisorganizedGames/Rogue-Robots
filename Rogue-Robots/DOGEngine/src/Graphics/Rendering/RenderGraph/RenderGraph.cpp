@@ -1,6 +1,8 @@
 #include "RenderGraph.h"
 #include "RGResourceManager.h"
+#include "../../RHI/RenderDevice.h"
 #include <set>
+#include <fstream>
 
 namespace DOG::gfx
 {
@@ -24,13 +26,19 @@ namespace DOG::gfx
 		TrackLifetimes();
 		m_resMan->SanitizeAliasingLifetimes();
 
-		// Resources NEED to be realized from this point forward!
 		m_resMan->RealizeResources();
 
+		// Resources NEED to be realized from this point forward!
+
+		RealizeViews();
 		TrackTransitions();
 
 		for (auto& depLevel : m_dependencyLevels)
 			depLevel.Finalize();
+
+		// To help the graph author see what's going on.
+		// @TODO: Expand with input/output labels on each pass
+		GenerateGraphviz();
 	}
 
 	void RenderGraph::Execute()
@@ -143,6 +151,7 @@ namespace DOG::gfx
 				auto& usageLifetime = m_resMan->GetMutableUsageLifetime(input.id);
 				usageLifetime.first = (std::min)(pass->depth, usageLifetime.first);
 				usageLifetime.second = (std::max)(pass->depth, usageLifetime.second);
+
 			}
 
 			for (const auto& output : pass->outputs)
@@ -198,8 +207,6 @@ namespace DOG::gfx
 			auto& depLevel = m_dependencyLevels[pass->depth];
 			for (const auto& input : pass->inputs)
 			{
-				const auto variant = m_resMan->GetResourceVariant(input.id);
-
 				// Track resource state transitions
 				const auto resource = m_resMan->GetResource(input.id);
 				const auto currState = m_resMan->GetCurrentState(input.id);
@@ -208,7 +215,11 @@ namespace DOG::gfx
 				// If aliased, output takes care of picking up state transition
 				if (!input.aliasWrite &&
 					trackStateTransition(resource, input.type, depLevel, currState, desiredState))
+				{
 					m_resMan->SetCurrentState(input.id, desiredState);
+				}
+					
+
 			}
 
 			for (const auto& output : pass->outputs)
@@ -225,19 +236,126 @@ namespace DOG::gfx
 		}
 	}
 
-
-	void RenderGraph::PassBuilder::WriteRenderTarget(RGResourceID id, TextureViewDesc desc)
+	void RenderGraph::RealizeViews()
 	{
+		for (const auto& pass : m_sortedPasses)
+		{
+			auto& passResources = pass->passResources;
+			passResources.m_resMan = m_resMan;
+
+			// Realize output views
+			RenderPassBuilder builder;
+			for (const auto& output : pass->outputs)
+			{
+				if (output.type == RGResourceType::Texture)
+				{
+					const auto& viewDesc = std::get<TextureViewDesc>(*output.viewDesc);
+
+					// Create view and immediately convert to global descriptor index
+					auto view = m_rd->CreateView(Texture(m_resMan->GetResource(output.id)), viewDesc);
+
+					if (viewDesc.viewType == ViewType::RenderTarget)
+					{
+						auto accesses = GetAccessTypes(*output.rpAccessType);
+						builder.AppendRT(view, accesses.first, accesses.second);
+					}
+					else if (viewDesc.viewType == ViewType::DepthStencil)
+					{
+						auto depthAccesses = GetAccessTypes(*output.rpAccessType);
+						auto stencilAccesses = GetAccessTypes(*output.rpStencilAccessType);
+						builder.AddDepthStencil(view,
+							depthAccesses.first, depthAccesses.second,
+							stencilAccesses.first, stencilAccesses.second);
+					}
+					else
+					{
+						// We do not expose RTV and DSV to user (these are baked into the render pass)
+						passResources.m_views[output.id] = m_rd->GetGlobalDescriptor(view);
+					}
+				}
+				else
+				{
+					const auto& viewDesc = std::get<BufferViewDesc>(*output.viewDesc);
+
+					// Create view and immediately convert to global descriptor index
+					passResources.m_views[output.id] = m_rd->GetGlobalDescriptor(m_rd->CreateView(Buffer(m_resMan->GetResource(output.id)), viewDesc));
+				}
+			}
+		}
+	}
+
+	void RenderGraph::GenerateGraphviz()
+	{
+		/*
+			Open .txt
+			Use adjacency map to grab
+		*/
+			
+		std::ofstream file;
+		file.open("rendergraph.txt");
+		file << "digraph G {" << std::endl;
+
+		for (const auto& [pass, adjacents] : m_adjacencyMap)
+		{
+			for (const auto& adj : adjacents)
+			{
+				file << "\"" << pass->name << "\" -> \"" << adj->name << "\"" << std::endl;
+			}
+		}
+
+		file << "}" << std::endl;
+
+		file.close();
+	}
+
+
+
+
+
+	RenderGraph::PassBuilder::PassBuilder(PassBuilderGlobalData& globalData, RGResourceManager* resMan) :
+		m_globalData(globalData),
+		m_resMan(resMan)
+	{
+	}
+
+	void RenderGraph::PassBuilder::DeclareTexture(RGResourceID name, RGTextureDesc desc)
+	{
+		m_resMan->DeclareTexture(name, desc);
+	}
+
+	void RenderGraph::PassBuilder::ImportTexture(RGResourceID name, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState)
+	{
+		m_resMan->ImportTexture(name, texture, entryState, exitState);
+	}
+
+	void RenderGraph::PassBuilder::WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc)
+	{
+		// Explicitly forbids writing to the same graph resource more than once
+		assert(!m_globalData.writes.contains(id));
+		m_globalData.writes.insert(id);
+		
+		assert(desc.viewType == ViewType::RenderTarget);
+		
 		PassIO output;
 		output.id = id;
 		output.type = RGResourceType::Texture;
 		output.viewDesc = desc;
 		output.desiredState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		output.rpAccessType = access;
 		m_pass.outputs.push_back(output);
 	}
 
-	void RenderGraph::PassBuilder::WriteAliasedRenderTarget(RGResourceID newID, RGResourceID oldID, TextureViewDesc desc)
+	void RenderGraph::PassBuilder::WriteAliasedRenderTarget(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc)
 	{
+		assert(desc.viewType == ViewType::RenderTarget);
+
+		assert(!m_globalData.writes.contains(newID));
+		m_globalData.writes.insert(newID);
+
+		m_resMan->AliasTexture(newID, oldID);
+
+
+
 		PassIO input;
 		input.id = oldID;
 		input.type = RGResourceType::Texture;
@@ -250,8 +368,13 @@ namespace DOG::gfx
 		output.desiredState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		output.viewDesc = desc;
 		output.aliasWrite = true;
+		output.rpAccessType = access;
 		m_pass.outputs.push_back(output);
 	}
+
+
+
+
 
 	RenderGraph::DependencyLevel::DependencyLevel(RGResourceManager* resMan) :
 		m_resMan(resMan)
@@ -339,5 +462,6 @@ namespace DOG::gfx
 		}
 		return false;
 	}
+
 
 }

@@ -12,9 +12,14 @@ namespace DOG::gfx
 	public:
 		RGResourceManager(RenderDevice* rd, GPUGarbageBin* bin);
 
-		void DeclareTexture(const std::string& name, RGTextureDesc desc);
-		void ImportTexture(const std::string& name, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
-		void AliasTexture(const std::string& newName, const std::string& oldName);
+
+	private:
+		friend class RenderGraph;
+		
+		// These interfaces are exposed through PassBuilder
+		void DeclareTexture(RGResourceID id, RGTextureDesc desc);
+		void ImportTexture(RGResourceID id, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
+		void AliasTexture(RGResourceID newID, RGResourceID oldID);
 
 		/*
 			Discards the resources stored safely and clears map for re-use.
@@ -27,7 +32,7 @@ namespace DOG::gfx
 		struct RGResourceDeclared
 		{
 			RGTextureDesc desc;
-			std::pair<u32, u32> resourceLifetime{ 0, 0 };		// Lifetime of the underlying resource
+			std::pair<u32, u32> resourceLifetime{ std::numeric_limits<u32>::max(), std::numeric_limits<u32>::min() };		// Lifetime of the underlying resource
 			D3D12_RESOURCE_STATES currState{ D3D12_RESOURCE_STATE_COMMON };
 		};
 
@@ -56,6 +61,7 @@ namespace DOG::gfx
 
 			u64 resource{ 0 };	// texture/buffer
 			bool hasBeenAliased{ false };
+			bool hasBeenWrittenDuringUsage{ false };
 		};
 
 		// ======================

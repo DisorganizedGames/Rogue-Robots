@@ -2,7 +2,10 @@
 #include "../../RHI/RenderResourceHandles.h"
 #include "../../RHI/Types/ResourceDescs.h"
 #include "../../RHI/Types/BarrierDesc.h"
+#include "../../RHI/Types/RenderPassDesc.h"
 #include "RGTypes.h"
+
+#include <unordered_set>
 
 namespace DOG::gfx
 {
@@ -30,6 +33,7 @@ namespace DOG::gfx
 			Texture GetBuffer(RGResourceID id);
 
 		private:
+			friend class RenderGraph;
 			std::unordered_map<RGResourceID, u64> m_views;		// Views already converted to global indices
 
 			// Used to retrieve underlying resources if needed by the user (e.g resource copies)
@@ -43,7 +47,8 @@ namespace DOG::gfx
 			RGResourceType type{ RGResourceType::Texture };
 			std::optional<std::variant<TextureViewDesc, BufferViewDesc>> viewDesc;
 			D3D12_RESOURCE_STATES desiredState{ D3D12_RESOURCE_STATE_COMMON };
-
+			std::optional<RenderPassAccessType> rpAccessType;			// Render Target & Depth
+			std::optional<RenderPassAccessType> rpStencilAccessType;	// Stencil
 			bool aliasWrite{ false };
 		};
 
@@ -58,6 +63,7 @@ namespace DOG::gfx
 			std::function<void(RenderDevice*, CommandList, PassResources&)> execFunc;
 			u32 depth{ 0 };
 			PassResources passResources;
+			RenderPass rp;
 		};
 
 		class DependencyLevel
@@ -86,20 +92,30 @@ namespace DOG::gfx
 			std::vector<GPUBarrier> m_refinedBatchedEntryBarriers;
 		};
 
+		struct PassBuilderGlobalData
+		{
+			std::unordered_set<RGResourceID> writes;
+		};
+
 	public:
 		struct PassBuilder
 		{
 		public:
+			PassBuilder(PassBuilderGlobalData& globalData, RGResourceManager* resMan);
+
+			// ResourceManager interface
+			void DeclareTexture(RGResourceID id, RGTextureDesc desc);
+			void ImportTexture(RGResourceID id, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
+
 			void ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc);
-
-			void ReadOrWriteDepth(RGResourceID id, TextureViewDesc desc);
-
-			void WriteRenderTarget(RGResourceID id, TextureViewDesc desc);
-
-			void WriteAliasedRenderTarget(RGResourceID newID, RGResourceID oldID, TextureViewDesc desc);
+			void ReadOrWriteDepth(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
+			void WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
+			void WriteAliasedRenderTarget(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc);
 
 		private:
 			friend class RenderGraph;
+			PassBuilderGlobalData& m_globalData;
+			RGResourceManager* m_resMan{ nullptr };
 			Pass m_pass;
 		};
 
@@ -111,7 +127,7 @@ namespace DOG::gfx
 			const std::function<void(PassData&, PassBuilder&)>& buildFunc,
 			const std::function<void(const PassData&, RenderDevice*, CommandList, PassResources&)>& execFunc)
 		{
-			PassBuilder builder{};
+			PassBuilder builder(m_passBuilderGlobalData, m_resMan);
 			PassData passData{};
 			buildFunc(passData, builder);
 
@@ -138,9 +154,14 @@ namespace DOG::gfx
 		void TrackLifetimes();
 		void TrackTransitions();
 
+		void RealizeViews();
+
+		void GenerateGraphviz();
+
 	private:
 		RenderDevice* m_rd{ nullptr };
 		RGResourceManager* m_resMan{ nullptr };
+		PassBuilderGlobalData m_passBuilderGlobalData;
 
 		std::vector<std::unique_ptr<Pass>> m_passes;
 		std::unordered_map<Pass*, std::vector<Pass*>> m_adjacencyMap;

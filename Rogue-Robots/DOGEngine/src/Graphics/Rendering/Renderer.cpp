@@ -301,8 +301,9 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("Pass 1",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
-					resMan.DeclareTexture(RG_RESOURCE(out1), RGTextureDesc());
-					builder.WriteRenderTarget(RG_RESOURCE(out1), TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+					builder.DeclareTexture(RG_RESOURCE(out1), RGTextureDesc());
+					builder.WriteRenderTarget(RG_RESOURCE(out1), RenderPassAccessType::Clear_Preserve,
+						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 				},
 				[](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
 				{
@@ -315,8 +316,7 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("Pass 2",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
-					resMan.AliasTexture(RG_RESOURCE(out2), RG_RESOURCE(out1));
-					builder.WriteAliasedRenderTarget(RG_RESOURCE(out2), RG_RESOURCE(out1), 
+					builder.WriteAliasedRenderTarget(RG_RESOURCE(out2), RG_RESOURCE(out1), RenderPassAccessType::Preserve_Preserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 				},
 				[](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
@@ -329,8 +329,7 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("Pass 3",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
-					resMan.AliasTexture(RG_RESOURCE(out3), RG_RESOURCE(out2));
-					builder.WriteAliasedRenderTarget(RG_RESOURCE(out3), RG_RESOURCE(out2),
+					builder.WriteAliasedRenderTarget(RG_RESOURCE(out3), RG_RESOURCE(out2), RenderPassAccessType::Preserve_Preserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 				},
 				[](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
