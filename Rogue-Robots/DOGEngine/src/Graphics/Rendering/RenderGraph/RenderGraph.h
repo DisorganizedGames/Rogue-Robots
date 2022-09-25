@@ -75,6 +75,7 @@ namespace DOG::gfx
 	
 			void AddPass(Pass* pass);
 			void AddEntryBarrier(GPUBarrier barrier);
+			bool BarrierExists(u64 resource);
 			/*
 				Called after all barriers have been inserted.
 				This checks for any simultaneous read/write on the same resource (forbidden)

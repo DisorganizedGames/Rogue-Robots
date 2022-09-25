@@ -218,9 +218,27 @@ namespace DOG::gfx
 		while (resource->variantType == RGResourceVariant::Aliased)
 			resource = &m_resources.find(std::get<RGResourceAliased>(resource->variants).prevID)->second;
 
+		//if (resource->variantType == RGResourceVariant::Declared)
+		//	std::get<RGResourceDeclared>(resource->variants).currState = state;
+		//else
+		//	std::get<RGResourceImported>(resource->variants).currState = state;
+
+		// This relies on Dependency Level doing read-combines
 		if (resource->variantType == RGResourceVariant::Declared)
-			std::get<RGResourceDeclared>(resource->variants).currState = state;
+		{
+			auto& currState = std::get<RGResourceDeclared>(resource->variants).currState;
+			if (IsReadState(currState))
+				currState |= state;
+			else
+				currState = state;
+		}
 		else
-			std::get<RGResourceImported>(resource->variants).currState = state;
+		{
+			auto& currState = std::get<RGResourceImported>(resource->variants).currState;
+			if (IsReadState(currState))
+				currState |= state;
+			else
+				currState = state;
+		}
 	}
 }

@@ -7,8 +7,6 @@
 
 namespace DOG::gfx
 {
-	bool IsReadState(D3D12_RESOURCE_STATES states);
-
 	RenderGraph::RenderGraph(RenderDevice* rd, RGResourceManager* resMan, GPUGarbageBin* bin) :
 		m_rd(rd),
 		m_resMan(resMan),
@@ -209,6 +207,9 @@ namespace DOG::gfx
 			}
 			if (currState != desiredState)
 			{
+				if (depLevel.BarrierExists(resource))
+					return false;
+
 				depLevel.AddEntryBarrier(barr);
 				return true;
 			}
@@ -443,6 +444,14 @@ namespace DOG::gfx
 		m_batchedEntryBarriers.push_back(barrier);
 	}
 
+	bool RenderGraph::DependencyLevel::BarrierExists(u64 resource)
+	{
+		for (const auto& barrier : m_batchedEntryBarriers)
+			if (barrier.resource == resource)
+				return true;
+		return false;
+	}
+
 	void RenderGraph::DependencyLevel::Finalize()
 	{
 		// Assuming initial state upon element initialization in the hash map is D3D12_RESOURCE_STATE_COMMON (since value is 0)
@@ -524,18 +533,4 @@ namespace DOG::gfx
 
 
 
-	bool IsReadState(D3D12_RESOURCE_STATES states)
-	{
-		if ((states & D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER) == D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER ||
-			(states & D3D12_RESOURCE_STATE_INDEX_BUFFER) == D3D12_RESOURCE_STATE_INDEX_BUFFER ||
-			(states & D3D12_RESOURCE_STATE_DEPTH_READ) == D3D12_RESOURCE_STATE_DEPTH_READ ||
-			(states & D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE) == D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE ||
-			(states & D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE) == D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE ||
-			(states & D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT) == D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT ||
-			(states & D3D12_RESOURCE_STATE_COPY_SOURCE) == D3D12_RESOURCE_STATE_COPY_SOURCE)
-		{
-			return true;
-		}
-		return false;
-	}
 }

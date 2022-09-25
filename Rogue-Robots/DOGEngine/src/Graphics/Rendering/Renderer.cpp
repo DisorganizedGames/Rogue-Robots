@@ -505,13 +505,28 @@ namespace DOG::gfx
 				{
 					builder.DeclareTexture(RG_RESOURCE(ArbiOutput), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R8G8B8A8_UNORM, m_clientWidth, m_clientHeight));
 
-					builder.ReadResource(RG_RESOURCE(GBufferPosition), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+					builder.ReadResource(RG_RESOURCE(GBufferPosition), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 					builder.WriteRenderTarget(RG_RESOURCE(ArbiOutput), RenderPassAccessType::Clear_Preserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 				},
 				[](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
 				{
+				});
+		}
+
+		// Alias ArbiOutput
+		{
+			struct PassData {};
+			rg.AddPass<PassData>("Alias ArbiOutput",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					builder.WriteAliasedRenderTarget(RG_RESOURCE(ArbiOutput2), RG_RESOURCE(ArbiOutput), RenderPassAccessType::Clear_Preserve,
+						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+				},
+				[](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				{
+					
 				});
 		}
 
