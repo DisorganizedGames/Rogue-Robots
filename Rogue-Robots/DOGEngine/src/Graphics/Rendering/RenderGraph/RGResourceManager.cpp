@@ -51,6 +51,15 @@ namespace DOG::gfx
 
 		RGResourceAliased alias;
 		alias.prevID = oldID;
+		if (oldRes.variantType == RGResourceVariant::Declared || oldRes.variantType == RGResourceVariant::Imported)
+		{
+			alias.originalID = oldID;
+		}
+		else
+		{
+			const auto& variant = std::get<RGResourceAliased>(oldRes.variants);
+			alias.originalID = variant.originalID;
+		}
 
 		auto& newRes = m_resources[newID];
 		newRes.variantType = RGResourceVariant::Aliased;
@@ -65,26 +74,42 @@ namespace DOG::gfx
 
 		for (auto& [_, resource] : m_resources)
 		{
-			// If not a Declared resource, we are not interested in creating a resource for it
+			// We are only interested in creating resources for Declared resources
 			if (resource.variantType != RGResourceVariant::Declared)
 				continue;
 
+			/*
+				We eventually want to replace this with Memory Aliased resources..
+			*/
 			const RGResourceDeclared& decl = std::get<RGResourceDeclared>(resource.variants);
-
-
 			if (resource.resourceType == RGResourceType::Texture)
 			{
-				//resource.resource = m_rd->CreateTexture(decl.desc).handle
+				const auto& rgDesc = std::get<RGTextureDesc>(decl.desc);
+
+				TextureDesc desc(MemoryType::Default, rgDesc.format,
+					rgDesc.width, rgDesc.height, rgDesc.depth,
+					rgDesc.flags, rgDesc.initState);
+				resource.resource = m_rd->CreateTexture(desc).handle;
 			}
 			else
 			{
+				const auto& rgDesc = std::get<RGBufferDesc>(decl.desc);
 
+				BufferDesc desc(MemoryType::Default, rgDesc.size, rgDesc.flags, rgDesc.initState);
+				resource.resource = m_rd->CreateBuffer(desc).handle;
 			}
 		}
 
-		// initialize aliasing resource too?
-		// we need to give the RGResource 'resource' a value for aliased things...
-		// @TODO
+		// Assign underlying resource to aliased resources
+		for (auto& [_, resource] : m_resources)
+		{
+			if (resource.variantType != RGResourceVariant::Aliased)
+				continue;
+
+			RGResourceAliased& alias = std::get<RGResourceAliased>(resource.variants);
+			const auto& original = m_resources.find(alias.originalID)->second;
+			resource.resource = original.resource;
+		}
 	}
 
 	void RGResourceManager::SanitizeAliasingLifetimes()
@@ -113,9 +138,33 @@ namespace DOG::gfx
 		}
 	}
 
+	void RGResourceManager::ImportedResourceExitTransition(CommandList cmdl)
+	{
+		std::vector<GPUBarrier> barriers;
+		// Assign underlying resource to aliased resources
+		for (auto& [_, resource] : m_resources)
+		{
+			if (resource.variantType != RGResourceVariant::Imported)
+				continue;
+
+			RGResourceImported& imported = std::get<RGResourceImported>(resource.variants);
+			if (resource.resourceType == RGResourceType::Texture)
+				barriers.push_back(GPUBarrier::Transition(Texture(resource.resource), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, imported.currState, imported.importExitState));
+			else
+				barriers.push_back(GPUBarrier::Transition(Buffer(resource.resource), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, imported.currState, imported.importExitState));
+		}
+
+		m_rd->Cmd_Barrier(cmdl, barriers);
+	}
+
 	u64 RGResourceManager::GetResource(RGResourceID id) const
 	{
 		return m_resources.find(id)->second.resource;
+	}
+
+	RGResourceType RGResourceManager::GetResourceType(RGResourceID id) const
+	{
+		return m_resources.find(id)->second.resourceType;
 	}
 
 	RGResourceVariant RGResourceManager::GetResourceVariant(RGResourceID id) const
@@ -145,6 +194,7 @@ namespace DOG::gfx
 
 	std::pair<u32, u32>& RGResourceManager::GetMutableResourceLifetime(RGResourceID id)
 	{
+		assert(m_resources.contains(id));
 		auto& res = m_resources.find(id)->second;
 
 		// Get all the way back to the Declared/Imported resource

@@ -62,6 +62,8 @@ namespace DOG::gfx
 		void EndGUI();	// Called at EndFrame_GPU
 
 		void TestRG();
+		void TestRG_1();
+		void TestRG_2();
 
 		LRESULT WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

@@ -31,7 +31,7 @@ namespace DOG::gfx
 
 		struct RGResourceDeclared
 		{
-			RGTextureDesc desc;
+			std::variant<RGTextureDesc, RGBufferDesc> desc;
 			std::pair<u32, u32> resourceLifetime{ std::numeric_limits<u32>::max(), std::numeric_limits<u32>::min() };		// Lifetime of the underlying resource
 			D3D12_RESOURCE_STATES currState{ D3D12_RESOURCE_STATE_COMMON };
 		};
@@ -49,6 +49,7 @@ namespace DOG::gfx
 		struct RGResourceAliased
 		{
 			RGResourceID prevID;
+			RGResourceID originalID;		// Original Declared/Imported resource
 		};
 
 		struct RGResource
@@ -67,9 +68,10 @@ namespace DOG::gfx
 		// ======================
 
 	private:
-		// Must be called after resource lifetimes have been resolved
+		// RealizeResources be called after resource lifetimes have been resolved
 		void RealizeResources();
 		void SanitizeAliasingLifetimes();
+		void ImportedResourceExitTransition(CommandList cmdl);
 
 		u64 GetResource(RGResourceID id) const;
 		RGResourceType GetResourceType(RGResourceID id) const;
@@ -81,14 +83,6 @@ namespace DOG::gfx
 		// Lifetime of underlying resource
 		std::pair<u32, u32>& GetMutableResourceLifetime(RGResourceID id);
 		const std::pair<u32, u32>& GetResourceLifetime(RGResourceID id);
-
-		// ========= Alias specific
-		// For an aliased resource: Grab the usage lifetime of the parent resource for this aliased resource
-		const std::pair<u32, u32>& GetParentUsageLifetime(RGResourceID id);
-
-		// ========= Import specific
-		D3D12_RESOURCE_STATES GetImportEntryState(RGResourceID id) const;
-		D3D12_RESOURCE_STATES GetImportExitState(RGResourceID id) const;
 
 		// Helper for JIT state transitions
 		void SetCurrentState(RGResourceID id, D3D12_RESOURCE_STATES state);

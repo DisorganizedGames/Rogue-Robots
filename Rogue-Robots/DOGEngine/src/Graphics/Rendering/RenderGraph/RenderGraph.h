@@ -11,6 +11,7 @@ namespace DOG::gfx
 {
 	class RenderDevice;
 	class RGResourceManager;
+	class GPUGarbageBin;
 
 	class RenderGraph
 	{
@@ -23,14 +24,13 @@ namespace DOG::gfx
 		{
 		public:
 			PassResources() = default;
-			PassResources(RGResourceManager* resMan, std::unordered_map<RGResourceID, u64> views);
 
 			// Pass local
-			u64 GetView(RGResourceID id);			// SRV/UAVs
+			u64 GetView(RGResourceID id) const;			// SRV/UAVs
 
 			// Graph global
 			Texture GetTexture(RGResourceID id);
-			Texture GetBuffer(RGResourceID id);
+			Buffer GetBuffer(RGResourceID id);
 
 		private:
 			friend class RenderGraph;
@@ -63,7 +63,7 @@ namespace DOG::gfx
 			std::function<void(RenderDevice*, CommandList, PassResources&)> execFunc;
 			u32 depth{ 0 };
 			PassResources passResources;
-			RenderPass rp;
+			std::optional<RenderPass> rp;
 		};
 
 		class DependencyLevel
@@ -89,7 +89,6 @@ namespace DOG::gfx
 
 			// Barriers for all resources upon entry into this dependency level
 			std::vector<GPUBarrier> m_batchedEntryBarriers;
-			std::vector<GPUBarrier> m_refinedBatchedEntryBarriers;
 		};
 
 		struct PassBuilderGlobalData
@@ -120,7 +119,7 @@ namespace DOG::gfx
 		};
 
 	public:
-		RenderGraph(RenderDevice* rd, RGResourceManager* resMan);
+		RenderGraph(RenderDevice* rd, RGResourceManager* resMan, GPUGarbageBin* bin);
 
 		template <typename PassData>
 		void AddPass(const std::string& name,
@@ -161,6 +160,7 @@ namespace DOG::gfx
 	private:
 		RenderDevice* m_rd{ nullptr };
 		RGResourceManager* m_resMan{ nullptr };
+		GPUGarbageBin* m_bin{ nullptr };
 		PassBuilderGlobalData m_passBuilderGlobalData;
 
 		std::vector<std::unique_ptr<Pass>> m_passes;
@@ -169,6 +169,8 @@ namespace DOG::gfx
 
 		u32 m_maxDepth{ 0 };
 		std::vector<DependencyLevel> m_dependencyLevels;
+
+		CommandList m_cmdl;
 		
 
 

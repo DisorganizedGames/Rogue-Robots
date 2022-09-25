@@ -1,4 +1,5 @@
 digraph G {
-"Pass 1" -> "Pass 2"
-"Pass 2" -> "Pass 3"
+"Light Pass to HDR" -> "Blit HDR to LDR Backbuffer"
+"GBuffer Pass" -> "Light Pass to HDR"
+"Blit HDR to LDR Backbuffer" -> "ImGUI Pass"
 }

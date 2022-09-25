@@ -1,6 +1,7 @@
 #include "RenderGraph.h"
 #include "RGResourceManager.h"
 #include "../../RHI/RenderDevice.h"
+#include "../GPUGarbageBin.h"
 #include <set>
 #include <fstream>
 
@@ -8,15 +9,21 @@ namespace DOG::gfx
 {
 	bool IsReadState(D3D12_RESOURCE_STATES states);
 
-	RenderGraph::RenderGraph(RenderDevice* rd, RGResourceManager* resMan) :
+	RenderGraph::RenderGraph(RenderDevice* rd, RGResourceManager* resMan, GPUGarbageBin* bin) :
 		m_rd(rd),
-		m_resMan(resMan)
+		m_resMan(resMan),
+		m_bin(bin)
 	{
 	}
 
 	void RenderGraph::Build()
 	{
 		BuildAdjacencyMap();
+
+		// To help the graph author see what's going on.
+		// @TODO: Expand with input/output labels on each pass
+		GenerateGraphviz();
+
 		SortPassesTopologically();
 
 		AssignDependencyLevels();
@@ -36,13 +43,23 @@ namespace DOG::gfx
 		for (auto& depLevel : m_dependencyLevels)
 			depLevel.Finalize();
 
-		// To help the graph author see what's going on.
-		// @TODO: Expand with input/output labels on each pass
-		GenerateGraphviz();
+
 	}
 
 	void RenderGraph::Execute()
 	{
+		m_cmdl = m_rd->AllocateCommandList();
+
+		for (auto& depLevel : m_dependencyLevels)
+		{
+			depLevel.Execute(m_rd, m_cmdl);
+		}
+
+		m_resMan->ImportedResourceExitTransition(m_cmdl);
+		
+		// clean up cmdl by pushing to bin
+		m_rd->Flush();
+		m_rd->RecycleCommandList(m_cmdl);
 	}
 
 	void RenderGraph::BuildAdjacencyMap()
@@ -139,7 +156,6 @@ namespace DOG::gfx
 	{
 		for (const auto& pass : m_sortedPasses)
 		{
-			auto& depLevel = m_dependencyLevels[pass->depth];
 			for (const auto& input : pass->inputs)
 			{
 				// Track start lifetime
@@ -238,13 +254,14 @@ namespace DOG::gfx
 
 	void RenderGraph::RealizeViews()
 	{
-		for (const auto& pass : m_sortedPasses)
+		for (auto& pass : m_sortedPasses)
 		{
 			auto& passResources = pass->passResources;
 			passResources.m_resMan = m_resMan;
 
 			// Realize output views
 			RenderPassBuilder builder;
+			bool rpActive{ false };
 			for (const auto& output : pass->outputs)
 			{
 				if (output.type == RGResourceType::Texture)
@@ -256,11 +273,13 @@ namespace DOG::gfx
 
 					if (viewDesc.viewType == ViewType::RenderTarget)
 					{
+						rpActive = true;
 						auto accesses = GetAccessTypes(*output.rpAccessType);
 						builder.AppendRT(view, accesses.first, accesses.second);
 					}
 					else if (viewDesc.viewType == ViewType::DepthStencil)
 					{
+						rpActive = true;
 						auto depthAccesses = GetAccessTypes(*output.rpAccessType);
 						auto stencilAccesses = GetAccessTypes(*output.rpStencilAccessType);
 						builder.AddDepthStencil(view,
@@ -281,6 +300,9 @@ namespace DOG::gfx
 					passResources.m_views[output.id] = m_rd->GetGlobalDescriptor(m_rd->CreateView(Buffer(m_resMan->GetResource(output.id)), viewDesc));
 				}
 			}
+
+			if (rpActive)
+				pass->rp = m_rd->CreateRenderPass(builder.Build());
 		}
 	}
 
@@ -328,6 +350,16 @@ namespace DOG::gfx
 		m_resMan->ImportTexture(name, texture, entryState, exitState);
 	}
 
+	void RenderGraph::PassBuilder::ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc)
+	{
+		PassIO input;
+		input.id = id;
+		input.desiredState = state;
+		input.viewDesc = desc;
+		input.type = RGResourceType::Texture;
+		m_pass.inputs.push_back(input);
+	}
+
 	void RenderGraph::PassBuilder::WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc)
 	{
 		// Explicitly forbids writing to the same graph resource more than once
@@ -354,8 +386,6 @@ namespace DOG::gfx
 
 		m_resMan->AliasTexture(newID, oldID);
 
-
-
 		PassIO input;
 		input.id = oldID;
 		input.type = RGResourceType::Texture;
@@ -379,6 +409,28 @@ namespace DOG::gfx
 	RenderGraph::DependencyLevel::DependencyLevel(RGResourceManager* resMan) :
 		m_resMan(resMan)
 	{
+	}
+
+	void RenderGraph::DependencyLevel::Execute(RenderDevice* rd, CommandList cmdl)
+	{
+		if (!m_batchedEntryBarriers.empty())
+			rd->Cmd_Barrier(cmdl, m_batchedEntryBarriers);
+
+		for (const auto& pass : m_passes)
+		{
+			std::cout << "Doing: " << pass->name << "\n";
+
+			if (pass->rp)
+			{
+				rd->Cmd_BeginRenderPass(cmdl, *pass->rp);
+				pass->execFunc(rd, cmdl, pass->passResources);
+				rd->Cmd_EndRenderPass(cmdl);
+			}
+			else
+			{
+				pass->execFunc(rd, cmdl, pass->passResources);
+			}
+		}
 	}
 
 	void RenderGraph::DependencyLevel::AddPass(Pass* pass)
@@ -412,7 +464,10 @@ namespace DOG::gfx
 					assert(IsReadState(input.desiredState));
 				// If write state --> Exclusive writer pass already exists and all other accesses are forbidden
 				else
-					assert(false);
+				{
+					if (states != D3D12_RESOURCE_STATE_COMMON)	// Common is currently is synonymous with uninitialized (for the resourceDesiredStates)
+						assert(false);
+				}
 
 				// Read-combine if all is well
 				resourceDesiredStates[resource] |= input.desiredState;
@@ -448,6 +503,27 @@ namespace DOG::gfx
 
 
 
+
+	u64 RenderGraph::PassResources::GetView(RGResourceID id) const
+	{
+		assert(m_views.contains(id));
+		return m_views.find(id)->second;
+	}
+
+	Texture RenderGraph::PassResources::GetTexture(RGResourceID id)
+	{
+		assert(m_resMan->GetResourceType(id) == RGResourceType::Texture);
+		return Texture(m_resMan->GetResource(id));
+	}
+
+	Buffer RenderGraph::PassResources::GetBuffer(RGResourceID id)
+	{
+		assert(m_resMan->GetResourceType(id) == RGResourceType::Buffer);
+		return Buffer(m_resMan->GetResource(id));
+	}
+
+
+
 	bool IsReadState(D3D12_RESOURCE_STATES states)
 	{
 		if ((states & D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER) == D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER ||
@@ -462,6 +538,4 @@ namespace DOG::gfx
 		}
 		return false;
 	}
-
-
 }
