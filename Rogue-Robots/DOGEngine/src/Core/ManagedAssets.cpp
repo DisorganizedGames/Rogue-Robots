@@ -68,7 +68,7 @@ namespace DOG
 			m_asset->submeshes.clear();
 			std::vector<SubmeshMetadata>().swap(m_asset->submeshes); // This will release the memory
 
-			AssetManager::Get().UnLoadAsset(m_asset->meshID, flag);
+			m_asset->meshAsset = MeshAsset();
 		}
 		if (flag & AssetUnLoadFlag::TextureCPU)
 		{

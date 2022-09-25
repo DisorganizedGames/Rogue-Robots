@@ -80,8 +80,11 @@ namespace DOG
 			EntityManager::Get().Bundle<TransformComponent, ModelComponent>().Do([&](TransformComponent& transformC, ModelComponent& modelC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-					for (u32 i = 0; i < model->gfxModel.mesh.numSubmeshes; ++i)
-						m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], transformC);
+					if (model)
+					{
+						for (u32 i = 0; i < model->gfxModel.mesh.numSubmeshes; ++i)
+							m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], transformC);
+					}
 				});
 			
 			auto mainCam = CameraComponent::s_mainCamera;

@@ -163,9 +163,8 @@ namespace DOG
 		// Note that a materialIndex is not a key to an asset
 		std::vector<u32> materialIndices;
 		std::vector<SubmeshMetadata> submeshes;
-		u32 meshID{ 0 };
+		MeshAsset meshAsset;
 		gfx::StaticModel gfxModel;
-
 	};
 
 	struct AudioAsset : public Asset

@@ -45,20 +45,47 @@ namespace DOG
 
 	void AssetManager::LoadModelAssetInternal(const std::string& path, u32 id, AssetLoadFlag flag, ModelAsset* assetOut)
 	{
-		DOG::AssimpImporter assimpImporter = DOG::AssimpImporter(path);
-		auto asset = assimpImporter.GetResult();
+		if (flag & AssetLoadFlag::Async)
+		{
+			m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
+			m_assets[id]->stateFlag |= AssetStateFlag::LoadingAsync;
+			m_assets[id]->m_isLoadingConcurrent = 1;
 
-		assetOut->meshID = AddMesh(asset->mesh);
-		assetOut->submeshes = std::move(asset->submeshes);
-		assetOut->materialIndices = LoadMaterials(asset->materials, flag);
+			CallAsync([=, lock = &m_assets[id]->m_isLoadingConcurrent]()
+				{
+					DOG::AssimpImporter assimpImporter = DOG::AssimpImporter(path);
+					std::shared_ptr<ImportedModel> asset = assimpImporter.GetResult();
 
+					assetOut->meshAsset.indices = std::move(asset->mesh.indices);
+					assetOut->meshAsset.vertexData = std::move(asset->mesh.vertexData);
+					assetOut->submeshes = std::move(asset->submeshes);
 
+					*lock = 0;
+					AssetManager::AddCommand([model = assetOut, importedModel = asset, f = flag]()
+						{
+							model->materialIndices = AssetManager::Get().LoadMaterials(importedModel->materials, f);
+						});
 
+					if (flag & AssetLoadFlag::GPUMemory || flag & AssetLoadFlag::GPUMemoryOnly)
+					{
+						AssetManager::AddCommand([idToMove = id, f = flag]() { AssetManager::Get().MoveModelToGPU(idToMove, f); });
+					}
+				});
+		}
+		else
+		{
+			DOG::AssimpImporter assimpImporter = DOG::AssimpImporter(path);
+			auto asset = assimpImporter.GetResult();
 
-		m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
+			assetOut->meshAsset.indices = std::move(asset->mesh.indices);
+			assetOut->meshAsset.vertexData = std::move(asset->mesh.vertexData);
+			assetOut->submeshes = std::move(asset->submeshes);
+			assetOut->materialIndices = LoadMaterials(asset->materials, flag);
 
-		//std::this_thread::sleep_for(std::chrono::seconds(4));
-		AssetManager::AddCommand([](u32 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveModelToGPU(idToMove, f); }, id, flag);
+			m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
+
+			AssetManager::AddCommand([idToMove = id, f = flag]() { AssetManager::Get().MoveModelToGPU(idToMove, f); });
+		}
 	}
 
 	void AssetManager::LoadTextureAssetInternal(const std::string& path, u32 id, AssetLoadFlag flag, TextureAsset* assetOut)
@@ -76,7 +103,7 @@ namespace DOG
 					*lock = 0;
 					if (flag & AssetLoadFlag::GPUMemory || flag & AssetLoadFlag::GPUMemoryOnly)
 					{
-						AssetManager::AddCommand([](u32 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveTextureToGPU(idToMove, f); }, id, flag);
+						AssetManager::AddCommand([idToMove = id, f = flag]() { AssetManager::Get().MoveTextureToGPU(idToMove, f); });
 					}
 				});
 		}
@@ -87,7 +114,7 @@ namespace DOG
 
 			if (flag & AssetLoadFlag::GPUMemory || flag & AssetLoadFlag::GPUMemoryOnly)
 			{
-				AssetManager::AddCommand([](u32 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveTextureToGPU(idToMove, f); }, id, flag);
+				AssetManager::AddCommand([idToMove = id, f = flag]() { AssetManager::Get().MoveTextureToGPU(idToMove, f); });
 			}
 		}
 	}
@@ -128,8 +155,6 @@ namespace DOG
 
 	u32 AssetManager::LoadTexture(const std::string& path, AssetLoadFlag flag)
 	{
-		flag |= AssetLoadFlag::Async;
-
 		u32 id = 0;
 		if (AssetNeedsToBeLoaded(path, id))
 		{
@@ -193,13 +218,17 @@ namespace DOG
 
 	void AssetManager::ExecuteCommands()
 	{
-		while (!s_commandQueue.empty())
+		s_commandQueueMutex.lock();
+		int n = s_commandQueue.size();
+		s_commandQueueMutex.unlock();
+		while (n > 0)
 		{
 			s_commandQueueMutex.lock();
 			auto command = std::move(s_commandQueue.front());
 			s_commandQueue.pop();
 			s_commandQueueMutex.unlock();
 			command();
+			n--;
 		}
 	}
 
@@ -288,8 +317,7 @@ namespace DOG
 
 		// Convert ModelAsset and its MeshAsset to MeshSpecification
 		ModelAsset* modelAsset = GetAsset<ModelAsset>(modelID);
-		MeshAsset* meshAsset = GetAsset<MeshAsset>(modelAsset->meshID);
-
+		assert(modelAsset);
 
 		auto&& needToWait = [&](u32 texID) {
 			if (texID == 0) return false;
@@ -309,9 +337,8 @@ namespace DOG
 			yield = yield || needToWait(mat.normalMap);
 			if (yield)
 			{
-				// FIX!!! return lamda function and have the system add it after it back
 				CallAsync([=]() {
-					std::this_thread::sleep_for(std::chrono::milliseconds(200)); // If frametime is higher then 200ms this might lock the main thread
+					std::this_thread::sleep_for(std::chrono::milliseconds(20));
 					AssetManager::AddCommand([](u32 idToMove, AssetLoadFlag f) { AssetManager::Get().MoveModelToGPU(idToMove, f); }, modelID, flag);
 					});
 				return;
@@ -320,8 +347,8 @@ namespace DOG
 		gfx::MeshTable::MeshSpecification loadSpec{};
 
 		loadSpec.submeshData = modelAsset->submeshes;
-		loadSpec.indices = meshAsset->indices;
-		for (auto& [attr, data] : meshAsset->vertexData)
+		loadSpec.indices = modelAsset->meshAsset.indices;
+		for (auto& [attr, data] : modelAsset->meshAsset.vertexData)
 			loadSpec.vertexDataPerAttribute[attr] = data;
 
 
