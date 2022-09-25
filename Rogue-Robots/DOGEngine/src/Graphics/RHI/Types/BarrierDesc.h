@@ -74,7 +74,6 @@ namespace DOG::gfx
 			return barrier;
 		}
 
-	private:
 		GPUBarrier() = default;
 
 	};

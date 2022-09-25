@@ -1,0 +1,95 @@
+#pragma once
+#include "RGTypes.h"
+
+namespace DOG::gfx
+{
+	class RenderDevice;
+	class GPUGarbageBin;
+
+	class RGResourceManager
+	{
+		friend class RenderGraph;
+	public:
+		RGResourceManager(RenderDevice* rd, GPUGarbageBin* bin);
+
+		void DeclareTexture(const std::string& name, RGTextureDesc desc);
+		void ImportTexture(const std::string& name, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
+		void AliasTexture(const std::string& newName, const std::string& oldName);
+
+		/*
+			Discards the resources stored safely and clears map for re-use.
+			Assuming that the render graph is rebuilt every frame
+		*/
+		void Tick();
+	
+	private:
+
+		struct RGResourceDeclared
+		{
+			RGTextureDesc desc;
+			std::pair<u32, u32> resourceLifetime{ 0, 0 };		// Lifetime of the underlying resource
+			D3D12_RESOURCE_STATES currState{ D3D12_RESOURCE_STATE_COMMON };
+		};
+
+		struct RGResourceImported
+		{
+			D3D12_RESOURCE_STATES importEntryState{ D3D12_RESOURCE_STATE_COMMON };
+			D3D12_RESOURCE_STATES importExitState{ D3D12_RESOURCE_STATE_COMMON };
+			D3D12_RESOURCE_STATES currState{ D3D12_RESOURCE_STATE_COMMON };
+			
+			// Infinite lifetime from graphs perspective
+			std::pair<u32, u32> resourceLifetime{ std::numeric_limits<u32>::max(), std::numeric_limits<u32>::min() };
+		};
+
+		struct RGResourceAliased
+		{
+			RGResourceID prevID;
+		};
+
+		struct RGResource
+		{
+			RGResourceType resourceType{ RGResourceType::Texture };
+			RGResourceVariant variantType{ RGResourceVariant::Declared };
+			std::variant<RGResourceDeclared, RGResourceImported, RGResourceAliased> variants;
+
+			std::pair<u32, u32> usageLifetime{ std::numeric_limits<u32>::max(), std::numeric_limits<u32>::min() };		// Lifetime of this specific RGResource
+
+			u64 resource{ 0 };	// texture/buffer
+			bool hasBeenAliased{ false };
+		};
+
+		// ======================
+
+	private:
+		// Must be called after resource lifetimes have been resolved
+		void RealizeResources();
+		void SanitizeAliasingLifetimes();
+
+		u64 GetResource(RGResourceID id) const;
+		RGResourceType GetResourceType(RGResourceID id) const;
+		RGResourceVariant GetResourceVariant(RGResourceID id) const;
+		D3D12_RESOURCE_STATES GetCurrentState(RGResourceID id) const;
+		std::pair<u32, u32>& GetMutableUsageLifetime(RGResourceID id);		// Lifetime of specific graph resource
+
+		// ========= Declared & Alias specific
+		// Lifetime of underlying resource
+		std::pair<u32, u32>& GetMutableResourceLifetime(RGResourceID id);
+		const std::pair<u32, u32>& GetResourceLifetime(RGResourceID id);
+
+		// ========= Alias specific
+		// For an aliased resource: Grab the usage lifetime of the parent resource for this aliased resource
+		const std::pair<u32, u32>& GetParentUsageLifetime(RGResourceID id);
+
+		// ========= Import specific
+		D3D12_RESOURCE_STATES GetImportEntryState(RGResourceID id) const;
+		D3D12_RESOURCE_STATES GetImportExitState(RGResourceID id) const;
+
+		// Helper for JIT state transitions
+		void SetCurrentState(RGResourceID id, D3D12_RESOURCE_STATES state);
+
+	private:
+		RenderDevice* m_rd{ nullptr };
+		GPUGarbageBin* m_bin{ nullptr };
+		std::unordered_map<RGResourceID, RGResource> m_resources;
+	};
+}

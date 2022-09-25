@@ -18,7 +18,8 @@
 #include "../../Core/AssimpImporter.h"
 #include "../../Core/TextureFileImporter.h"
 
-
+#include "RenderGraph/RenderGraph.h"
+#include "RenderGraph/RGResourceManager.h"
 
 namespace DOG::gfx
 {
@@ -128,6 +129,8 @@ namespace DOG::gfx
 			.SetDepthFormat(DepthFormat::D32)
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
+
+		TestRG();
 	}
 
 	Renderer::~Renderer()
@@ -286,6 +289,62 @@ namespace DOG::gfx
 	void Renderer::EndGUI()
 	{
 		m_imgui->EndFrame();
+	}
+
+	void DOG::gfx::Renderer::TestRG()
+	{
+		RGResourceManager resMan(m_rd, m_bin.get());
+		RenderGraph rg(m_rd, &resMan);
+		
+		{
+			struct PassData {};
+			rg.AddPass<PassData>("Pass 1",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					resMan.DeclareTexture(RG_RESOURCE(out1), RGTextureDesc());
+					builder.WriteRenderTarget(RG_RESOURCE(out1), TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+				},
+				[](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				{
+
+				});
+		}
+
+		{
+			struct PassData {};
+			rg.AddPass<PassData>("Pass 2",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					resMan.AliasTexture(RG_RESOURCE(out2), RG_RESOURCE(out1));
+					builder.WriteAliasedRenderTarget(RG_RESOURCE(out2), RG_RESOURCE(out1), 
+						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+				},
+				[](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				{
+				});
+		}
+
+		{
+			struct PassData {};
+			rg.AddPass<PassData>("Pass 3",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					resMan.AliasTexture(RG_RESOURCE(out3), RG_RESOURCE(out2));
+					builder.WriteAliasedRenderTarget(RG_RESOURCE(out3), RG_RESOURCE(out2),
+						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+				},
+				[](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				{
+
+				});
+		}
+
+		rg.Build();
+		rg.Execute();
+
+		assert(false);
+
+
 	}
 
 	LRESULT Renderer::WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
