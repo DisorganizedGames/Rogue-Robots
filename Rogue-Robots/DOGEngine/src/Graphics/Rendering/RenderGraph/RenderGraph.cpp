@@ -425,6 +425,7 @@ namespace DOG::gfx
 		assert(!m_globalData.writes.contains(id));
 		m_globalData.writes.insert(id);
 		
+		m_resMan->DeclareProxy(id);
 		m_pass.proxyOutput.push_back(id);
 	}
 

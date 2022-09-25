@@ -67,6 +67,12 @@ namespace DOG::gfx
 		newRes.variants = alias;
 	}
 
+	void RGResourceManager::DeclareProxy(RGResourceID id)
+	{
+		// Marks ID as unavailable
+		m_resources[id] = {};
+	}
+
 
 	void RGResourceManager::RealizeResources()
 	{

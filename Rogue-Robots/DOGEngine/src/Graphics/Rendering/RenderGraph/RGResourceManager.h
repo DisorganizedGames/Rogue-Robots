@@ -20,6 +20,7 @@ namespace DOG::gfx
 		void DeclareTexture(RGResourceID id, RGTextureDesc desc);
 		void ImportTexture(RGResourceID id, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
 		void AliasTexture(RGResourceID newID, RGResourceID oldID);
+		void DeclareProxy(RGResourceID id);
 
 		/*
 			Discards the resources stored safely and clears map for re-use.
