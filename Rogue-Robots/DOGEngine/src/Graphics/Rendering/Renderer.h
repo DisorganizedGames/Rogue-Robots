@@ -2,6 +2,7 @@
 #include "../../Core/Types/GraphicsTypes.h"
 #include "../RHI/RenderResourceHandles.h"
 #include "../RHI/d2dBackend.h"
+#include "../UI.h"
 #include "../../Core/AnimationManager.h"
 namespace DOG::gfx
 {
@@ -83,6 +84,7 @@ namespace DOG::gfx
 		std::unique_ptr<RenderBackend> m_backend;
 		std::unique_ptr<ImGUIBackend> m_imgui;
 		std::unique_ptr<d2dBackend> m_d2d;
+		std::unique_ptr<UI> m_ui;
 		RenderDevice* m_rd{ nullptr };
 		Swapchain* m_sc{ nullptr };
 		
