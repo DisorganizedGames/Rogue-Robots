@@ -14,33 +14,15 @@ namespace DOG::gfx
 	class d2dBackend_DX12 final : public d2dBackend
 	{
 	public:
-		d2dBackend_DX12(RenderDevice* rd, Swapchain* sc, u32 maxFramesInFlight, HWND hwnd);
+		d2dBackend_DX12(RenderDevice* rd, Swapchain* sc, u_int numBuffers, HWND hwnd);
 		~d2dBackend_DX12();
 
 		// Public interface
-		void BeginFrame();
-		void EndFrame();
-		void Render(RenderDevice* rd,Swapchain* sc, CommandList cmdl);
-		bool WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		void BeginFrame(RenderDevice* rd, Swapchain* sc) override;
+		void EndFrame(RenderDevice* rd, Swapchain* sc) override;
+		void Render(RenderDevice* rd,Swapchain* sc) override;
 
-		// Implementation interface
-	public:
-		//void Render(ID3D12GraphicsCommandList4* cmdl);
-
-		/*
-		
-			// At m_rd->BeginFrame();
-			ImGUI->BeginFrame();
-
-			m_rd->Cmd_RenderImGUI(ImGUI)
-
-			// At Renderer->EndFrame();
-			ImGUI->EndFrame();
-		
-		*/
-
-	private:
-      ComPtr<ID3D11Device> m_d;
+		ComPtr<ID3D11Device> m_d;
 		ComPtr<ID3D11DeviceContext> m_dc;
 		ComPtr<IDXGIDevice> m_dxd;
 		ComPtr<ID3D11On12Device> m_11on12d;
@@ -55,6 +37,9 @@ namespace DOG::gfx
 		ComPtr<ID2D1SolidColorBrush> brush;
       ComPtr<IDWriteTextFormat> format;
 		ComPtr<ID3D12CommandAllocator> m_commandAllocators[2];
+
+	private:
+      
 
 	};
 }
