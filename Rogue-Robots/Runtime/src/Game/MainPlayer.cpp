@@ -30,11 +30,11 @@ MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 	//Gun
 	ScriptManager* scriptManager = LuaMain::GetScriptManager();
 	/*GunComponent& gun = m_entityManager.AddComponent<GunComponent>(m_playerEntity);*/
-	ScriptComponent gun = scriptManager->AddScript(m_playerEntity, "Gun.lua");
+	//ScriptComponent gun = scriptManager->AddScript(m_playerEntity, "Gun.lua");
 
 	//Temporary until we can call functions easily.
-	LuaTable table(gun.scriptData.scriptTable, true);
-	table.CallFunctionOnTable(gun.scriptData.onStartFunction);
+	//LuaTable table(gun.scriptData.scriptTable, true);
+	//table.CallFunctionOnTable(gun.scriptData.onStartFunction);
 }
 
 void MainPlayer::OnUpdate()
@@ -42,10 +42,10 @@ void MainPlayer::OnUpdate()
 	auto& cameraComp = m_entityManager.GetComponent<CameraComponent>(m_playerEntity);
 	UpdateCamera(cameraComp);
 
-	auto& gunComp = m_entityManager.GetComponent<ScriptComponent>(m_playerEntity);
-	//Temporary until we can call functions easily.
-	LuaTable table(gunComp.scriptData.scriptTable, true);
-	table.CallFunctionOnTable(gunComp.scriptData.onUpdateFunction);
+	//auto& gunComp = m_entityManager.GetComponent<ScriptComponent>(m_playerEntity);
+	////Temporary until we can call functions easily.
+	//LuaTable table(gunComp.scriptData.scriptTable, true);
+	//table.CallFunctionOnTable(gunComp.scriptData.onUpdateFunction);
 }
 
 void MainPlayer::SetPosition(SimpleMath::Vector3 position)

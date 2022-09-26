@@ -50,6 +50,9 @@ GameLayer::GameLayer() noexcept
 	t4.worldMatrix(3, 2) = 5;
 
 	LuaMain::Initialize();
+	//LuaMain::GetScriptManager()->OrderScript("LuaTest.lua", 1);
+	//LuaMain::GetScriptManager()->OrderScript("ScriptTest.lua", -1);
+	LuaMain::GetScriptManager()->SortOrderScripts();
 }
 
 void GameLayer::OnAttach()
@@ -59,6 +62,8 @@ void GameLayer::OnAttach()
 	//...
 
 	m_player = std::make_shared<MainPlayer>();
+
+	LuaMain::GetScriptManager()->StartScripts();
 }
 
 void GameLayer::OnDetach()
@@ -73,6 +78,9 @@ void GameLayer::OnUpdate()
 
 	m_player->OnUpdate();
 	m_netCode.OnUpdate(m_player);
+
+	LuaMain::GetScriptManager()->UpdateScripts();
+	LuaMain::GetScriptManager()->ReloadScripts();
 }
 
 

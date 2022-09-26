@@ -8,26 +8,30 @@
 
 namespace DOG
 {
-	struct TempScript
-	{
-		std::string scriptName;
-		Table luaScript;
-		Function onStart;
-		Function onUpdate;
-	};
-
 	struct ScriptData
 	{
-		u32 scriptFileID;
+		entity entity;
 		Table scriptTable;
 		Function onStartFunction;
 		Function onUpdateFunction;
 	};
 
+	struct GetScriptData
+	{
+		bool sorted;
+		u32 vectorIndex;
+	};
+
+	struct SortData
+	{
+		std::string luaFileName;
+		int sortOrder;
+	};
+
 	struct ScriptComponent : public Component<ScriptComponent>
 	{
-		ScriptComponent(const ScriptData& scriptData) noexcept : scriptData(scriptData) {}
-		ScriptData scriptData;
+		ScriptComponent(entity entity) noexcept : scriptEntity(entity) {}
+		entity scriptEntity;
 	};
 
 	class ScriptManager
@@ -35,6 +39,14 @@ namespace DOG
 	private:
 		u32 m_idCounter;
 		std::unordered_map<std::string, u32> m_scriptsIDMap;
+		std::unordered_map<u32, GetScriptData> m_scriptToVector;
+		std::vector<std::vector<ScriptData>> m_unsortedScripts;
+		std::vector<std::vector<ScriptData>> m_sortedScripts;
+
+		//Only for sorting
+		std::vector<SortData> m_scriptsBeforeSorted;
+
+		u32 m_sortedScriptsHalfwayIndex;
 		LuaW* m_luaW;
 		std::unique_ptr<filewatch::FileWatch<std::filesystem::path>> m_fileWatcher;
 		static std::vector<std::string> s_filesToBeReloaded;
@@ -46,6 +58,8 @@ namespace DOG
 		static void ScriptFileWatcher(const std::filesystem::path& path, const filewatch::Event changeType);
 		void ReloadFile(const std::string& fileName, ScriptData& scriptData);
 		bool TestReloadFile(const std::string& fileName);
+		void RemoveReferences(ScriptData& scriptData);
+		void RemoveScriptData(std::vector<ScriptData>& scriptVector, entity entity);
 
 	public:
 		ScriptManager(LuaW* luaW);
@@ -53,11 +67,19 @@ namespace DOG
 		void RunLuaFile(const std::string& luaFileName);
 		//Adds a script and runs it
 		ScriptComponent& AddScript(entity entity, const std::string& luaFileName);
+		//Removes a script from entity
+		void RemoveScript(entity entity, const std::string& luaFileName);
+		//Removes all scripts from an entity
+		void RemoveAllEntityScripts(entity);
 		//Reloads script which have changed
 		void ReloadScripts();
 		//Call start on the scripts which has one
 		void StartScripts();
 		//Call update on the scripts which has one
 		void UpdateScripts();
+		//Order Script
+		void OrderScript(const std::string& luaFileName, int sortOrder);
+		//Sort the ordered scripts
+		void SortOrderScripts();
 	};
 }
