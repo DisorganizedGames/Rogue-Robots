@@ -23,6 +23,7 @@ private:
 private:
 	DOG::EntityManager& m_entityManager;
 	DOG::entity m_playerEntity;
+	DOG::entity m_playerStatsEntity;
 	
 	f32 m_azim, m_polar;
 	Vector3 m_forward, m_right, m_up, m_position;

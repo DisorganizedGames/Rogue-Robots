@@ -7,6 +7,7 @@ MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 {
 	//Camera
 	m_playerEntity = m_entityManager.CreateEntity();
+	m_playerStatsEntity = m_entityManager.CreateEntity();
 	CameraComponent& camera = m_entityManager.AddComponent<CameraComponent>(m_playerEntity);
 	CameraComponent::s_mainCamera = &camera;
 
@@ -32,6 +33,7 @@ MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 	scriptManager->AddScript(m_playerEntity, "Gun.lua");
 	/*GunComponent& gun = m_entityManager.AddComponent<GunComponent>(m_playerEntity);*/
 	//ScriptComponent gun = scriptManager->AddScript(m_playerEntity, "Gun.lua");
+	scriptManager->AddScript(m_playerStatsEntity, "PlayerStats.lua");
 
 	//Temporary until we can call functions easily.
 	//LuaTable table(gun.scriptData.scriptTable, true);
@@ -47,6 +49,13 @@ void MainPlayer::OnUpdate()
 	////Temporary until we can call functions easily.
 	//LuaTable table(gunComp.scriptData.scriptTable, true);
 	//table.CallFunctionOnTable(gunComp.scriptData.onUpdateFunction);
+
+	auto& itemComp = m_entityManager.GetComponent<ScriptComponent>(m_playerStatsEntity);
+	table = LuaTable(itemComp.scriptData.scriptTable, true);
+	table.CallFunctionOnTable(itemComp.scriptData.onUpdateFunction);
+
+	// Use the stats produced?
+	// auto stats = table.GetTableFromTable("playerStats");
 }
 
 void MainPlayer::SetPosition(SimpleMath::Vector3 position)
