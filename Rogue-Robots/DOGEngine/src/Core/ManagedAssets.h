@@ -7,8 +7,8 @@ namespace DOG
 	enum class AssetLoadFlag
 	{
 		None = 0,
-		GPUMemory = 1 << 1,
-		GPUMemoryOnly = 1 << 2,
+		CPUMemory = 1 << 1,
+		GPUMemory = 1 << 2,
 		Async = 1 << 3,
 		GenMips = 1 << 4,
 		Srgb = 1 << 5,
@@ -50,6 +50,7 @@ namespace DOG
 
 	enum class AssetUnLoadFlag
 	{
+		None = 0,
 		TextureGPU = 1 << 1,
 		TextureCPU = 1 << 2,
 		MeshGPU = 1 << 3,
@@ -94,11 +95,9 @@ namespace DOG
 
 	enum class AssetStateFlag
 	{
-		Unknown = 0,
-		LoadingAsync = 1 << 1,
+		None = 0,
 		ExistOnCPU = 1 << 2,
 		ExistOnGPU = 1 << 3,
-		Evicted = 1 << 4,
 	};
 
 	inline int operator &(AssetStateFlag l, AssetStateFlag r)
@@ -180,13 +179,13 @@ namespace DOG
 	{
 		friend AssetManager;
 	public:
-		ManagedAssetBase(AssetStateFlag flag);
 		virtual ~ManagedAssetBase() = default;
 		virtual Asset* GetBase() = 0;
 		bool CheckIfLoadingAsync();
 		virtual void UnloadAsset(AssetUnLoadFlag flag) = 0;
-
-		mutable AssetStateFlag stateFlag = AssetStateFlag::Unknown;
+		mutable AssetStateFlag stateFlag = AssetStateFlag::None;
+		mutable AssetLoadFlag loadFlag = AssetLoadFlag::None;
+		//mutable AssetUnLoadFlag unLoadFlag = AssetUnLoadFlag::None;
 	private:
 		std::atomic_signed_lock_free m_isLoadingConcurrent = 0;
 	};
@@ -197,7 +196,7 @@ namespace DOG
 	{
 	public:
 		ManagedAsset() = default;
-		ManagedAsset(AssetStateFlag flag, T* asset) : ManagedAssetBase(flag), m_asset(asset)
+		ManagedAsset(T* asset) : m_asset(asset)
 		{
 		}
 		~ManagedAsset()
@@ -232,7 +231,7 @@ namespace DOG
 			assert(m_asset && !CheckIfLoadingAsync());
 			delete m_asset;
 			m_asset = nullptr;
-			stateFlag = AssetStateFlag::Evicted;
+			stateFlag = AssetStateFlag::None;
 		}
 
 	private:
@@ -247,7 +246,7 @@ namespace DOG
 	{
 	public:
 		ManagedAsset() = default;
-		ManagedAsset(AssetStateFlag flag, ModelAsset* asset);
+		ManagedAsset(ModelAsset* asset);
 		~ManagedAsset();
 		ModelAsset* Get();
 
@@ -266,7 +265,7 @@ namespace DOG
 	{
 	public:
 		ManagedAsset() = default;
-		ManagedAsset(AssetStateFlag flag, TextureAsset* asset);
+		ManagedAsset(TextureAsset* asset);
 		~ManagedAsset();
 
 		TextureAsset* Get();

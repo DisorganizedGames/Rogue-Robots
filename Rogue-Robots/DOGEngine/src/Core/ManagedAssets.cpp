@@ -3,20 +3,14 @@
 
 namespace DOG
 {
-	ManagedAssetBase::ManagedAssetBase(AssetStateFlag flag) : stateFlag(flag)
-	{
-		if (stateFlag & AssetStateFlag::LoadingAsync)
-			m_isLoadingConcurrent = 1;
-	}
-
 	bool ManagedAssetBase::CheckIfLoadingAsync()
 	{
-		if (stateFlag & AssetStateFlag::LoadingAsync)
+		if (loadFlag & AssetLoadFlag::Async)
 		{
 			if (m_isLoadingConcurrent == 1)
 				return true;
 			else
-				stateFlag &= ~AssetStateFlag::LoadingAsync;
+				loadFlag &= ~AssetLoadFlag::Async;
 		}
 		return false;
 	}
@@ -25,7 +19,7 @@ namespace DOG
 
 	// ManagedAsset<ModelAsset>----------------------
 
-	ManagedAsset<ModelAsset>::ManagedAsset(AssetStateFlag flag, ModelAsset* asset) : ManagedAssetBase(flag), m_asset(asset)
+	ManagedAsset<ModelAsset>::ManagedAsset(ModelAsset* asset) : m_asset(asset)
 	{
 	}
 
@@ -89,7 +83,7 @@ namespace DOG
 
 	//TextureAsset--------------------------
 
-	ManagedAsset<TextureAsset>::ManagedAsset(AssetStateFlag flag, TextureAsset* asset) : ManagedAssetBase(flag), m_asset(asset)
+	ManagedAsset<TextureAsset>::ManagedAsset(TextureAsset* asset) : m_asset(asset)
 	{
 	}
 

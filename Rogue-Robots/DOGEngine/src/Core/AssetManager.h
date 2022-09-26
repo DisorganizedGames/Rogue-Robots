@@ -24,7 +24,8 @@ namespace DOG
 
 		~AssetManager();
 
-		[[nodiscard]] u32 LoadModelAsset(const std::string& path, AssetLoadFlag flag = (AssetLoadFlag)(AssetLoadFlag::GPUMemoryOnly | AssetLoadFlag::Async));
+		//[[nodiscard]] u32 LoadModelAsset(const std::string& path, AssetLoadFlag flag = (AssetLoadFlag)(AssetLoadFlag::GPUMemory));
+		[[nodiscard]] u32 LoadModelAsset(const std::string& path, AssetLoadFlag flag = (AssetLoadFlag)(AssetLoadFlag::GPUMemory | AssetLoadFlag::Async));
 		[[nodiscard]] u32 LoadTexture(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::None);
 		[[nodiscard]] u32 LoadAudio(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::None);
 
@@ -65,21 +66,21 @@ namespace DOG
 	private:
 		AssetManager();
 
-		void LoadModelAssetInternal(const std::string& path, u32 id, AssetLoadFlag flag, ModelAsset* assetOut);
-		void LoadTextureAssetInternal(const std::string& path, u32 id, AssetLoadFlag flag, TextureAsset* assetOut);
+		void LoadModelAssetInternal(const std::string& path, u32 id, ModelAsset* assetOut);
+		void LoadTextureAssetInternal(const std::string& path, u32 id, TextureAsset* assetOut);
 
 		[[nodiscard]] u32 AddMesh(const ImportedMesh& mesh);
 		[[nodiscard]] std::vector<u32> LoadMaterials(const std::vector<ImportedMaterial>& importedMats, AssetLoadFlag flag);
-		static void LoadTextureSTBI(const std::string& path, AssetLoadFlag flag, TextureAsset* assetOut);
-		static void LoadTextureCommpresonator(const std::string& path, AssetLoadFlag flag, TextureAsset* assetOut);
-		void MoveModelToGPU(u32 modelID, AssetLoadFlag flag);
+		static void LoadTextureSTBI(const std::string& path, TextureAsset* assetOut);
+		static void LoadTextureCommpresonator(const std::string& path, TextureAsset* assetOut);
+		void MoveModelToGPU(u32 modelID);
 
-		void MoveTextureToGPU(u32 textureID, AssetLoadFlag flag);
+		void MoveTextureToGPU(u32 textureID);
 
 		u32 NextKey();
 
 		// if assetIDOut == 0 then the component needs needs to be added to m_assets
-		bool AssetNeedsToBeLoaded(const std::string& path, u32& assetIDOut); 
+		bool AssetNeedsToBeLoaded(const std::string& path, AssetLoadFlag flag, u32& assetIDOut);
 
 		gfx::GraphicsBuilder& GetGraphicsBuilder();
 
