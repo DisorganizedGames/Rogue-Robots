@@ -66,7 +66,11 @@ namespace DOG
 					AssetManager::AddCommand([id = id, managedModel = managedModel, model = model, importedModel = asset](AssetLoadFlag textureLoadFlag)
 						{
 							managedModel->stateFlag |= AssetStateFlag::ExistOnCPU;
-							managedModel->loadFlag &= ~AssetLoadFlag::CPUMemory;
+
+							if (managedModel->loadFlag & AssetLoadFlag::CPUMemory)
+								managedModel->loadFlag &= ~AssetLoadFlag::CPUMemory;
+							else
+								managedModel->unLoadFlag |= AssetUnLoadFlag::AllCPU;
 
 							model->materialIndices = AssetManager::Get().LoadMaterials(importedModel->materials, textureLoadFlag);
 							if (managedModel->loadFlag & AssetLoadFlag::GPUMemory)
@@ -89,14 +93,11 @@ namespace DOG
 			assetOut->materialIndices = LoadMaterials(asset->materials, m_assets[id]->loadFlag);
 
 			m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
+
 			if (m_assets[id]->loadFlag & AssetLoadFlag::CPUMemory)
-			{
 				m_assets[id]->loadFlag &= ~AssetLoadFlag::CPUMemory;
-			}
 			else
-			{
-				// TODO delete from ram
-			}
+				m_assets[id]->unLoadFlag |= AssetUnLoadFlag::AllCPU;
 
 			AssetManager::AddCommand([idToMove = id]() { AssetManager::Get().MoveModelToGPU(idToMove); });
 		}
@@ -112,9 +113,15 @@ namespace DOG
 			CallAsync([=, lock = &m_assets[id]->m_isLoadingConcurrent]()
 				{
 					AssetManager::LoadTextureCommpresonator(path, assetOut);
-					AssetManager::AddCommand([idToMove = id]() {
-						AssetManager::Get().m_assets[idToMove]->stateFlag |= AssetStateFlag::ExistOnCPU;
-						AssetManager::Get().MoveTextureToGPU(idToMove);
+					AssetManager::AddCommand([idToMove = id]()
+						{
+							AssetManager::Get().m_assets[idToMove]->stateFlag |= AssetStateFlag::ExistOnCPU;
+							if (AssetManager::Get().m_assets[idToMove]->loadFlag & AssetLoadFlag::CPUMemory)
+								AssetManager::Get().m_assets[idToMove]->loadFlag &= ~AssetLoadFlag::CPUMemory;
+							else
+								AssetManager::Get().m_assets[idToMove]->unLoadFlag |= AssetUnLoadFlag::TextureCPU;
+
+							AssetManager::Get().MoveTextureToGPU(idToMove);
 						});
 					*lock = 0;
 				});
@@ -123,6 +130,11 @@ namespace DOG
 		{
 			LoadTextureCommpresonator(path, assetOut);
 			m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
+
+			if (m_assets[id]->loadFlag & AssetLoadFlag::CPUMemory)
+				m_assets[id]->loadFlag &= ~AssetLoadFlag::CPUMemory;
+			else
+				m_assets[id]->unLoadFlag |= AssetUnLoadFlag::TextureCPU;
 
 			if (m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory)
 			{
@@ -160,6 +172,13 @@ namespace DOG
 			}
 			ModelAsset* p = GetAsset<ModelAsset>(id); // GetAsset will clear the async bit of loadFlag
 			m_assets[id]->loadFlag |= flag; // importand that we add the flag after call to GetAsset
+			
+			// Stop a potential unload;
+			if (flag & AssetLoadFlag::CPUMemory)
+				m_assets[id]->unLoadFlag &= ~AssetUnLoadFlag::AllCPU;
+			if (flag & AssetLoadFlag::GPUMemory)
+				m_assets[id]->unLoadFlag &= ~AssetUnLoadFlag::AllGPU;
+
 			LoadModelAssetInternal(path, id, p);
 		}
 		assert(id != 0);
@@ -179,6 +198,11 @@ namespace DOG
 			}
 			TextureAsset* p = GetAsset<TextureAsset>(id);
 			m_assets[id]->loadFlag |= flag;
+			if (flag & AssetLoadFlag::CPUMemory)
+				m_assets[id]->unLoadFlag &= ~AssetUnLoadFlag::AllCPU;
+			if (flag & AssetLoadFlag::GPUMemory)
+				m_assets[id]->unLoadFlag &= ~AssetUnLoadFlag::AllGPU;
+
 			LoadTextureAssetInternal(path, id, p);
 		}
 		assert(id != 0);
@@ -390,12 +414,7 @@ namespace DOG
 
 		modelAsset->gfxModel = builder->LoadCustomModel(loadSpec, matSpecs);
 
-		if (!(m_assets[modelID]->loadFlag & AssetLoadFlag::CPUMemory))
-		{
-			AssetUnLoadFlag unloadFlag = AssetUnLoadFlag::MeshCPU;
-			unloadFlag |= AssetUnLoadFlag::TextureCPU;
-			AssetManager::Get().UnLoadAsset(modelID, unloadFlag);
-		}
+		AssetManager::Get().UnLoadAsset(modelID, m_assets[modelID]->unLoadFlag);
 	}
 
 	void AssetManager::MoveTextureToGPU(u32 textureID)
@@ -414,7 +433,7 @@ namespace DOG
 		gfx::GraphicsBuilder::MippedTexture2DSpecification textureSpec{};
 
 		TextureAsset* asset = GetAsset<TextureAsset>(textureID);
-		assert(asset); // Could this happen? And if it does i want to know about it.
+		assert(asset); // Could this happen? And if it does i want to know about it. //nr of times it has happend: 1
 
 		gfx::GraphicsBuilder::TextureSubresource subres{};
 		subres.width = asset->width;
@@ -434,10 +453,7 @@ namespace DOG
 
 		m_assets[textureID]->stateFlag |= AssetStateFlag::ExistOnGPU;
 
-		if (!(m_assets[textureID]->loadFlag & AssetLoadFlag::CPUMemory))
-		{
-			AssetManager::Get().UnLoadAsset(textureID, AssetUnLoadFlag::TextureCPU);
-		}
+		AssetManager::Get().UnLoadAsset(textureID, m_assets[textureID]->unLoadFlag);
 	}
 
 	u32 AssetManager::NextKey()

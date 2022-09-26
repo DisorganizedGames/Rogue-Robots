@@ -10,8 +10,7 @@ namespace DOG
 		CPUMemory = 1 << 1,
 		GPUMemory = 1 << 2,
 		Async = 1 << 3,
-		GenMips = 1 << 4,
-		Srgb = 1 << 5,
+		Srgb = 1 << 4,
 	};
 
 	inline int operator &(AssetLoadFlag l, AssetLoadFlag r)
@@ -54,9 +53,9 @@ namespace DOG
 		TextureGPU = 1 << 1,
 		TextureCPU = 1 << 2,
 		MeshGPU = 1 << 3,
-		MeshCPU = 1 << 3,
-		AllGPU = TextureGPU << MeshGPU,
-		//AllCPU = TextureCPU << MeshCPU,
+		MeshCPU = 1 << 4,
+		AllGPU = TextureGPU | MeshGPU,
+		AllCPU = TextureCPU | MeshCPU,
 	};
 
 	inline int operator &(AssetUnLoadFlag l, AssetUnLoadFlag r)
@@ -96,8 +95,8 @@ namespace DOG
 	enum class AssetStateFlag
 	{
 		None = 0,
-		ExistOnCPU = 1 << 2,
-		ExistOnGPU = 1 << 3,
+		ExistOnCPU = 1 << 1,
+		ExistOnGPU = 1 << 2,
 	};
 
 	inline int operator &(AssetStateFlag l, AssetStateFlag r)
@@ -183,9 +182,9 @@ namespace DOG
 		virtual Asset* GetBase() = 0;
 		bool CheckIfLoadingAsync();
 		virtual void UnloadAsset(AssetUnLoadFlag flag) = 0;
-		mutable AssetStateFlag stateFlag = AssetStateFlag::None;
-		mutable AssetLoadFlag loadFlag = AssetLoadFlag::None;
-		//mutable AssetUnLoadFlag unLoadFlag = AssetUnLoadFlag::None;
+		AssetStateFlag stateFlag = AssetStateFlag::None;
+		AssetLoadFlag loadFlag = AssetLoadFlag::None;
+		AssetUnLoadFlag unLoadFlag = AssetUnLoadFlag::None;
 	private:
 		std::atomic_signed_lock_free m_isLoadingConcurrent = 0;
 	};
