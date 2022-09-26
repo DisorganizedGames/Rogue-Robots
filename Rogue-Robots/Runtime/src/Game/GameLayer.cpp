@@ -44,6 +44,10 @@ GameLayer::GameLayer() noexcept
 		m_entityManager.AddComponent<ModelComponent>(zAxis, m_shapes[11]);
 		m_entityManager.AddComponent<TransformComponent>(zAxis, Vector3(0, 0, 0), Vector3(DirectX::XM_PIDIV2, 0, 0), Vector3(0.02f, 100, 0.02f));
 	}
+	entity entity1 = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<ModelComponent>(entity1, m_redCube);
+	m_entityManager.AddComponent<TransformComponent>(entity1, Vector3(4, 2, -5), Vector3(0.1f, 0, 0));
+	m_entityManager.AddComponent<NetworkPlayerComponent>(entity1).playerId = 0;
 
 	entity entity2 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity2, m_greenCube);

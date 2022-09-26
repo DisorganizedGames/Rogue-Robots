@@ -47,7 +47,8 @@ namespace DOG
 
 	struct NetworkComponent
 	{
-
+		int playerId;
+		int objectId;
 	};
 
 	struct AnimationComponent

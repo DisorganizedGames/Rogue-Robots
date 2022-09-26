@@ -1,43 +1,51 @@
 #include "Server.h"
 
-namespace DOG
-{
+using namespace DOG;
+
 	Server::Server()
 	{
-		m_serverAlive = FALSE;
+		m_gameAlive = FALSE;
 		m_playerIds.resize(MAX_PLAYER_COUNT);
-		
-		for (int i = 0; i < MAX_PLAYER_COUNT; i++)
+		m_outputUdp.nrOfEntites = 0;
+		m_outputUdp.udpId = 0;
+		for (UINT8 i = 0; i < MAX_PLAYER_COUNT; i++)
 		{
 			m_playersServer[i].playerId = i;
 			m_playersServer[i].position = DirectX::XMVectorSet(0, (float)i*2.0f+1.0f, 0, 0);
 			m_playersServer[i].rotation = DirectX::XMVectorSet(0, 0, 0, 0);
+			m_holdPlayersUdp[i].playerId = i;
+			m_holdPlayersUdp[i].position = DirectX::XMVectorSet(0, (float)i*2.0f+1.0f, 0, 0);
+			m_holdPlayersUdp[i].rotation = DirectX::XMVectorSet(0, 0, 0, 0);
 			m_playerIds.at(i) = i;
 			
 		}
 
 		//Change denominator to set tick rate
-		m_tickrate = 1.0f / 120.0f;
-
-
-		m_clientsSockets.clear();
+		m_tickrateTcp = 1.0f / 60.0f;
+		m_tickrateUdp = 1.0f /60.0f;
+		m_upid = 0;
+		m_reciveupid = 0;
+		m_clientsSocketsTcp.clear();
 	}
 
 	Server::~Server()
 	{
-		if (m_serverAlive)
+		if (m_gameAlive)
 		{
-			m_serverAlive = FALSE;
-			m_serverLoop.join();
-			m_reciveConnections.join();
+			m_gameAlive = FALSE;
+			m_loopTcp.join();
+			m_reciveConnectionsTcp.join();
+			m_loopUdp.join();
+			m_reciveLoopUdp.join();
 		}
-		for (int socketIndex = 0; socketIndex < m_holdPlayerIds.size(); socketIndex++)
+		for (UINT8 socketIndex = 0; socketIndex < m_holdPlayerIds.size(); socketIndex++)
 		{
 			std::cout << "Server: Closes socket for player" << m_holdPlayerIds.at(socketIndex) + 1 << std::endl;
 			m_playerIds.push_back(m_holdPlayerIds.at(socketIndex));
 			m_holdPlayerIds.erase(m_holdPlayerIds.begin() + socketIndex);
-			m_clientsSockets.erase(m_clientsSockets.begin() + socketIndex);
+			m_clientsSocketsTcp.erase(m_clientsSocketsTcp.begin() + socketIndex);
 		}
+		WSACleanup();
 	}
 
 	bool Server::StartTcpServer()
@@ -100,21 +108,28 @@ namespace DOG
 			return FALSE;
 		}
 
-		m_serverAlive = TRUE;
+		m_gameAlive = TRUE;
 		//Thread to handle new connections
-		m_reciveConnections = std::thread(&Server::ServerReciveConnectionsTCP, this, listenSocket);
+		m_reciveConnectionsTcp = std::thread(&Server::ServerReciveConnectionsTCP, this, listenSocket);
 
-		//Thread that runs server
-		m_serverLoop = std::thread(&Server::ServerPollTCP, this);
+		//Thread that runs Game Tcp
+		m_loopTcp = std::thread(&Server::ServerPollTCP, this);
+
+		//Thread that runs Game Udp
+		m_loopUdp = std::thread(&Server::GameLoopUdp, this);
+		
+		//Tread that parses udp packets
+		m_reciveLoopUdp = std::thread(&Server::ReciveLoopUdp, this);
 
 		std::cout << "Server: Server started" << std::endl;
+		
 		return TRUE;
 	}
 
 	void Server::ServerReciveConnectionsTCP(SOCKET listenSocket)
 	{
 		char* inputSend = new char[sizeof(int)];
-		while (m_serverAlive)
+		while (m_gameAlive)
 		{
 			SOCKET clientSocket = accept(listenSocket, NULL, NULL);
 			//Check if server full
@@ -135,7 +150,7 @@ namespace DOG
 						Client::ClientsData input;
 						std::cout << "\nServer: Accept a connection from clientSocket: " << clientSocket << ", From player: " << m_playerIds.front() + 1 << std::endl;
 						//give connections a player id
-						int playerId = m_playerIds.front();
+						UINT8 playerId = m_playerIds.front();
 						input.playerId = playerId;
 						m_holdPlayerIds.push_back(playerId);
 						sprintf_s(inputSend, sizeof(int), "%d", playerId);
@@ -146,7 +161,7 @@ namespace DOG
 						m_clientPoll.fd = clientSocket;
 						m_clientPoll.events = POLLRDNORM;
 						m_clientPoll.revents = 0;
-						m_clientsSockets.push_back(m_clientPoll);
+						m_clientsSocketsTcp.push_back(m_clientPoll);
 					}
 				}
 			}
@@ -182,37 +197,37 @@ namespace DOG
 		do {
 			QueryPerformanceCounter(&tickStartTime);
 
-			m_holdSockets = m_clientsSockets;
+			m_holdSocketsTcp = m_clientsSocketsTcp;
 			
-			if (WSAPoll(m_holdSockets.data(), (u32)m_holdSockets.size(), 1) > 0)
+			if (WSAPoll(m_holdSocketsTcp.data(), (u32)m_holdSocketsTcp.size(), 1) > 0)
 			{
-				for (int i = 0; i < m_holdSockets.size(); i++)
+				for (int i = 0; i < m_holdSocketsTcp.size(); i++)
 				{
-					if (m_holdSockets[i].revents & POLLERR || m_holdSockets[i].revents & POLLHUP || m_holdSockets[i].revents & POLLNVAL) 
+					if (m_holdSocketsTcp[i].revents & POLLERR || m_holdSocketsTcp[i].revents & POLLHUP || m_holdSocketsTcp[i].revents & POLLNVAL) 
 						CloseSocketTCP(i);
-
+					//TODO TRY HERE
 					//read in from clients that have send data
-					else if (m_holdSockets[i].revents & POLLRDNORM)
+					else if (m_holdSocketsTcp[i].revents & POLLRDNORM)
 					{
-						recv(m_holdSockets[i].fd, clientData, sizeof(Client::ClientsData), 0);
+						recv(m_holdSocketsTcp[i].fd, clientData, sizeof(Client::ClientsData), 0);
 						memcpy(&holdClientsData, (void*)clientData, sizeof(Client::ClientsData));
 						memcpy(&m_playersServer[holdClientsData.playerId], (void*)clientData, sizeof(Client::ClientsData));
 					}
 				}
+			
 			}
-
-			//Send to all connected clients
-			for (int i = 0; i < m_holdSockets.size(); i++)
+			for (int i = 0; i < m_holdSocketsTcp.size(); i++)
 			{
+
 				memcpy(inputSend, m_playersServer, sizeof(m_playersServer));
-				send(m_holdSockets[i].fd, inputSend, sizeof(m_playersServer), 0);
+				send(m_holdSocketsTcp[i].fd, inputSend, sizeof(m_playersServer), 0);
 			}
 			//wait untill tick is done 
 			float timeTakenS = TickTimeLeftTCP(tickStartTime, clockFrequency);
 
-			while (timeTakenS < m_tickrate)
+			while (timeTakenS < m_tickrateTcp)
 			{
-				float timeToWaitMs = (m_tickrate - timeTakenS) * 1000;
+				float timeToWaitMs = (m_tickrateTcp - timeTakenS) * 1000;
 
 				if (timeToWaitMs > 0)
 				{
@@ -220,7 +235,7 @@ namespace DOG
 				}
 				timeTakenS = TickTimeLeftTCP(tickStartTime, clockFrequency);
 			}
-		} while (m_serverAlive);
+		} while (m_gameAlive);
 		std::cout << "Server: server loop closed" << std::endl;
 		delete[] clientData;
 		delete[] inputSend;
@@ -231,15 +246,15 @@ namespace DOG
 		std::cout << "Server: Closes socket for player" << m_holdPlayerIds.at(socketIndex) + 1 << std::endl;
 		m_playerIds.push_back(m_holdPlayerIds.at(socketIndex));
 		m_holdPlayerIds.erase(m_holdPlayerIds.begin() + socketIndex);
-		m_clientsSockets.erase(m_clientsSockets.begin() + socketIndex);
+		m_clientsSocketsTcp.erase(m_clientsSocketsTcp.begin() + socketIndex);
 	}
 
 	std::string Server::GetIpAddress()
 	{
 		int check;
-		char hold[128];
+		char hold[32];
 		std::string ip = "";
-		struct addrinfo* result , *linked;
+		struct addrinfo* result , *nextResult;
 	
 		check = gethostname(hold, sizeof(hold));
 		if (check == SOCKET_ERROR)
@@ -253,12 +268,12 @@ namespace DOG
 			std::cout << "GetIpAddress: getaddrinfo failed, error code: " << WSAGetLastError() << std::endl;
 			return ip;
 		}
-		linked = result;
-		while (linked)
+		nextResult = result;
+		while (nextResult)
 		{
-			if (linked->ai_family == AF_INET)
-				inet_ntop(linked->ai_family, &((struct sockaddr_in*)linked->ai_addr)->sin_addr, hold, 100);
-			linked = linked->ai_next;
+			if (nextResult->ai_family == AF_INET)
+				inet_ntop(nextResult->ai_family, &((struct sockaddr_in*)nextResult->ai_addr)->sin_addr, hold, 31);
+			nextResult = nextResult->ai_next;
 		}
 		for (int i = 0; i < sizeof(hold); i++)
 		{
@@ -270,5 +285,132 @@ namespace DOG
 		freeaddrinfo(result);
 		return ip;
 	}
-}
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	void Server::GameLoopUdp()
+	{
+		// Send udp socket
+		SOCKET udpSendSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		if (udpSendSocket == INVALID_SOCKET)
+		{
+			std::cout << "Server: Failed to create udpSocket on client, ErrorCode: " << WSAGetLastError() << std::endl;
+		}
+		struct sockaddr_in clientAddressUdp;
+		ZeroMemory(&clientAddressUdp, sizeof(clientAddressUdp));
+		clientAddressUdp.sin_family = AF_INET;
+
+		inet_pton(AF_INET, "239.255.255.0", &clientAddressUdp.sin_addr.s_addr);
+		clientAddressUdp.sin_port = htons(50006);
+
+		LARGE_INTEGER tickStartTime;
+		LARGE_INTEGER clockFrequency;
+		QueryPerformanceFrequency(&clockFrequency);
+
+		//sets the minium resolution for ticks
+		UINT sleepGranularityMs = 1;
+		timeBeginPeriod(sleepGranularityMs);
+		Client::UdpData holdHeaderUdp;
+		
+		while (m_gameAlive)
+		{
+			QueryPerformanceCounter(&tickStartTime);
+
+			m_mut.lock();
+			m_outputUdp.udpId++;
+			holdHeaderUdp = m_outputUdp;
+			
+
+			char sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
+			memcpy(sendBuffer, &holdHeaderUdp, sizeof(Client::UdpData));
+			m_outputUdp.nrOfEntites = 0;
+			memcpy(sendBuffer + sizeof(holdHeaderUdp), m_holdPlayersUdp, sizeof(m_holdPlayersUdp));
+			m_mut.unlock();
+			
+		
+			holdHeaderUdp.udpId = m_upid++;
+			sendto(udpSendSocket, sendBuffer, sizeof(holdHeaderUdp) + sizeof(m_holdPlayersUdp), 0, (struct sockaddr*)&clientAddressUdp, sizeof(clientAddressUdp));
+
+			//wait untill tick is done 
+			float timeTakenS = TickTimeLeftTCP(tickStartTime, clockFrequency);
+
+			while (timeTakenS < m_tickrateUdp)
+			{
+				float timeToWaitMs = (m_tickrateUdp - timeTakenS) * 1000;
+				if (timeToWaitMs > 0)
+				{
+					Sleep((u32)timeToWaitMs);
+				}
+				timeTakenS = TickTimeLeftTCP(tickStartTime, clockFrequency);
+			}
+		}
+		
+		std::cout << "Server: udp loop closed" << std::endl;
+	}
+
+	void Server::ReciveLoopUdp()
+	{
+		SOCKET udpSocket;
+		int check;
+		struct ip_mreq setMulticast;
+		struct sockaddr_in hostAddress;
+		bool turn = true;
+		DWORD ttl = 1000;
+		int hostAddressLength = sizeof(hostAddress);
+		char reciveBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
+		Client::PlayerNetworkComponent holderPlayer;
+
+		udpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		if (udpSocket == INVALID_SOCKET)
+		{
+			std::cout << "Server: Failed to create udpSocket on server, ErrorCode: " << WSAGetLastError() << std::endl;
+		}
+
+		check = setsockopt(udpSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&turn, sizeof(bool));
+		if (check == SOCKET_ERROR)
+		{
+			std::cout << "Server: Failed to set udpsocket to reusabale adress to unblocking on server, ErrorCode: " << WSAGetLastError() << std::endl;
+		}
+
+		ZeroMemory(&hostAddress, sizeof(hostAddress));
+		hostAddress.sin_family = AF_INET;
+		hostAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+		hostAddress.sin_port = htons(50004);
+
+		check = bind(udpSocket, (struct sockaddr*)&hostAddress, sizeof(hostAddress));
+		if (check == SOCKET_ERROR)
+		{
+			std::cout << "Server: Failed to bind udpsocket on server, ErrorCode: " << WSAGetLastError() << std::endl;
+		}
+
+		inet_pton(AF_INET, "239.255.255.0", &setMulticast.imr_multiaddr.S_un.S_addr);
+		setMulticast.imr_interface.S_un.S_addr = htonl(INADDR_ANY);
+		check = setsockopt(udpSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&setMulticast, sizeof(setMulticast));
+		if (check == SOCKET_ERROR)
+		{
+			std::cout << "Server: Failed to set assign multicast on udp on server, ErrorCode: " << WSAGetLastError() << std::endl;
+		}
+		
+		check = setsockopt(udpSocket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&ttl, sizeof(ttl));
+		if (check == SOCKET_ERROR)
+		{
+			std::cout << "Server: Failed to set socket to ttl on server, ErrorCode: " << WSAGetLastError() << std::endl;
+		}
+
+		int bytesRecived = 0;
+		
+		//Gameloop
+		while (m_gameAlive)
+		{
+			bytesRecived = recvfrom(udpSocket, reciveBuffer, SEND_AND_RECIVE_BUFFER_SIZE, 0, (struct sockaddr*)&hostAddress, &hostAddressLength);
+			if (bytesRecived > -1)
+			{
+				memcpy(&holderPlayer, (void*)reciveBuffer, sizeof(Client::PlayerNetworkComponent));
+				if (holderPlayer.udpId > m_holdPlayersUdp[holderPlayer.playerId].udpId)
+				{
+					m_mut.lock();
+					memcpy(&m_holdPlayersUdp[holderPlayer.playerId], &holderPlayer, sizeof(holderPlayer));
+					m_mut.unlock();
+				}
+			}
+		}
+	}
