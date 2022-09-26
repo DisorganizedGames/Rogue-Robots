@@ -400,43 +400,99 @@ class AnalyzeMap(bpy.types.Operator):
 #                HELPER FUNCTIONS
 #######################################################
 
-def generate_grid():
-    save_selection()
-    settings = D.objects['grid']
-    size_x = int(settings.location.x)
-    settings.location.x = size_x
-    size_y = int(settings.location.y)
-    settings.location.y = size_y
-    size_z = int(settings.location.z)
-    settings.location.z = size_z
-    fx = settings.scale.x
-    fy = settings.scale.y
-    fz = settings.scale.z
-    empty_collection(D.collections['Map'])
-    empty_collection(D.collections['Grid'])
-    empty_collection(D.collections['Settings'], [settings])
-    empty_collection(D.collections['Trash'])
+def remove_block(x, y, z):
+    name = f"block_{x}-{y}-{z}"
+    obj = D.objects[name]
+    for child in obj.children:
+        child.hide_select = False
+        for coll in child.users_collection:
+            coll.objects.unlink(child)
+        D.collections['Trash'].objects.link(child)
+    obj.hide_select = False
+    for coll in obj.users_collection:
+        coll.objects.unlink(obj)
+    D.collections['Trash'].objects.link(obj)
 
-    # Create selectors
-    C.view_layer.active_layer_collection = \
-    C.view_layer.layer_collection.children['Settings']
-    for i, axis in enumerate(['x', 'y', 'z']):
-        for k, end in enumerate(['l', 'h']):
-            sel = 'selector_' + end + '-' + axis
-            if not D.objects.get(sel):
+def generate_grid():
+    # save_selection()
+    new_settings = D.objects['grid']
+    current = D.objects['current_grid_settings']
+
+    new_x = int(new_settings.location.x)
+    new_settings.location.x = new_x
+    new_y = int(new_settings.location.y)
+    new_settings.location.y = new_y
+    new_z = int(new_settings.location.z)
+    new_settings.location.z = new_z
+    old_x = int(current.location.x)
+    old_y = int(current.location.y)
+    old_z = int(current.location.z)
+    current.location = new_settings.location
+    current.scale = new_settings.scale
+
+    viewport_state = D.collections['Grid'].hide_viewport
+    D.collections['Grid'].hide_viewport = False
+
+    if new_x < old_x or new_y < old_y or new_z < old_z:
+        # remove superflous blocks
+        x_rng = range(new_x, old_x)
+        y_rng = range(new_y, old_y)
+        z_rng = range(new_z, old_z)
+        if len(x_rng) == 0:
+            x_rng = [old_x - 1]
+        else:
+            for z in range(old_z):
+                for x in x_rng:
+                    for y in range(old_y):
+                        remove_block(x, y, z)
+        if len(y_rng) == 0:
+            y_rng = [old_y - 1]
+        else:
+            for z in range(old_z):
+                for x in range(old_x):
+                    for y in y_rng:
+                        remove_block(x, y, z)
+        if len(z_rng) == 0:
+            z_rng = [old_z - 1]
+        else:
+            for z in z_rng:
+                for x in range(old_x):
+                    for y in range(old_y):
+                        remove_block(x, y, z)
+        for z in z_rng:
+            for x in x_rng:
+                for y in y_rng:
+                    remove_block(x, y, z)
+
+    if new_x != old_x or new_y != old_y or new_z != old_z:
+        empty_collection(D.collections['Trash'])
+        # Create selectors
+        C.view_layer.active_layer_collection = \
+        C.view_layer.layer_collection.children['Settings']
+        for i, axis in enumerate(['x', 'y', 'z']):
+            for k, end in enumerate(['l', 'h']):
+                sel = 'selector_' + end + '-' + axis
                 s = D.objects['grid']
                 loc = s.location
                 scl = s.scale
-                O.object.empty_add(type="CIRCLE", radius=max(loc) * max(scl))
-                obj = C.object
-                obj.name = sel
+                obj = D.objects.get(sel)
+                if not obj:
+                    O.object.empty_add(type="CIRCLE", radius=max(loc) * max(scl))
+                    obj = C.object
+                    obj.name = sel
+                    if i != 1:
+                        ax = ['Z', 'Z', 'X']
+                        obj.lock_rotation 
+                        obj.rotation_euler.rotate_axis(ax[i], PI/2)
+                else:
+                    obj.hide_viewport = False
+                    obj.empty_display_size = max(loc) * max(scl)
+                for j in range(3):
+                    obj.lock_location[j] = False
                 adj = [0.5, 0.5, 0.5]
                 fac = [-0.3, 1.3]
                 adj[i] = fac[k]
                 obj.location = (adj[0] * loc.x * scl.x, adj[1] * loc.y * scl.y, adj[2] * loc.z * scl.z)
-                if i != 1:
-                    ax = ['Z', 'Z', 'X']
-                    obj.rotation_euler.rotate_axis(ax[i], PI/2)
                 lock = [True, True, True]
                 lock[i] = False
                 for j in range(3):
@@ -445,39 +501,73 @@ def generate_grid():
                     obj.lock_scale[j] = True
                 obj.hide_viewport = True
 
-    # Create grid
-    viewport_state = D.collections['Grid'].hide_viewport
-    D.collections['Grid'].hide_viewport = False
-    C.view_layer.active_layer_collection = \
-    C.view_layer.layer_collection.children['Grid']
-    for z in range(size_z):
-        for x in range(size_x):
-            for y in range(size_y):
-                O.object.empty_add(location=((x+0.5)*fx, (y+0.5)*fy, z*fz), radius=0.1)
-                gizmo = C.object
-                gizmo.name = f"block_{x}-{y}-{z}"
-                gizmo.show_in_front = True
-                # Create drivers
-                drv = gizmo.driver_add("hide_viewport").driver
-                expr = []
-                for ax in ['x', 'y', 'z']:
-                    var = drv.variables.new()
-                    var.name = ax
-                    var.targets[0].id = gizmo
-                    var.targets[0].data_path = f"location.{ax}"
-                    for lh in ['l', 'h']:
-                        var = drv.variables.new()
-                        var.name = f"{lh}{ax}"
-                        var.targets[0].id = D.objects[f"selector_{lh}-{ax}"]
-                        var.targets[0].data_path = f"location.{ax}"
-                    expr.append(f"({ax} < l{ax} or h{ax} < {ax})")
-                drv.expression = " or ".join(expr)
-                for i in range(3):
-                    gizmo.lock_location[i] = True
-                    gizmo.lock_rotation[i] = True
-                    gizmo.lock_scale[i] = True
+    if old_x < new_x or old_y < new_y or old_z < new_z:
+        # Add blocks to grid
+        C.view_layer.active_layer_collection = \
+        C.view_layer.layer_collection.children['Grid']
+        x_rng = range(old_x, new_x)
+        y_rng = range(old_y, new_y)
+        z_rng = range(old_z, new_z)
+        if len(x_rng) == 0:
+            x_rng = [new_x - 1]
+        else:
+            for z in range(old_z):
+                for x in x_rng:
+                    for y in range(old_y):
+                        add_block(x, y, z)
+        if len(y_rng) == 0:
+            y_rng = [new_y - 1]
+        else:
+            for z in range(old_z):
+                for x in range(old_x):
+                    for y in y_rng:
+                        add_block(x, y, z)
+        for z in range(old_z):
+            for x in x_rng:
+                for y in y_rng:
+                    add_block(x, y, z)
+        if len(z_rng) > 0:
+            for z in z_rng:
+                for x in range(new_x):
+                    for y in range(new_y):
+                        add_block(x, y, z)
+    
     D.collections['Grid'].hide_viewport = viewport_state
-    restore_selection()
+    # restore_selection()
+
+def add_block(x, y, z):
+    name = f"block_{x}-{y}-{z}"
+    # if not D.objects.get(name):
+    if D.objects.get(name):
+        print(f"Warning: {(x, y, x)} exists")
+    else:
+        fx = D.objects['grid'].scale.x
+        fy = D.objects['grid'].scale.y
+        fz = D.objects['grid'].scale.z
+        O.object.empty_add(location=((x+0.5)*fx, (y+0.5)*fy, z*fz), radius=0.1)
+        gizmo = C.object
+        gizmo.name = name
+        gizmo.show_in_front = True
+        # Create drivers
+        drv = gizmo.driver_add("hide_viewport").driver
+        expr = []
+        for ax in ['x', 'y', 'z']:
+            var = drv.variables.new()
+            var.name = ax
+            var.targets[0].id = gizmo
+            var.targets[0].data_path = f"location.{ax}"
+            for lh in ['l', 'h']:
+                var = drv.variables.new()
+                var.name = f"{lh}{ax}"
+                var.targets[0].id = D.objects[f"selector_{lh}-{ax}"]
+                var.targets[0].data_path = f"location.{ax}"
+            expr.append(f"({ax} < l{ax} or h{ax} < {ax})")
+        drv.expression = " or ".join(expr)
+        for i in range(3):
+            gizmo.lock_location[i] = True
+            gizmo.lock_rotation[i] = True
+            gizmo.lock_scale[i] = True
+
 
 # Generator that loops over entire grid, yielding one element at at time
 def all_blocks():
@@ -512,7 +602,8 @@ def get_block(x, y, z):
     else:
         return blk.children[0].name.split('.')[0]
 
-def empty_collection(coll, ex=[]):
+def empty_collection(coll, exclude=[]):
+    # save_selection()
     O.object.select_all(action='DESELECT')
     coll_state = coll.hide_viewport
     coll.hide_viewport = False
@@ -520,10 +611,11 @@ def empty_collection(coll, ex=[]):
         obj.hide_viewport = False
         obj.hide_select = False
     O.object.select_same_collection(collection=coll.name)
-    for obj in ex:
+    for obj in exclude:
         obj.hide_viewport = True
     O.object.delete()
     coll.hide_viewport = coll_state
+    # restore_selection()
 
 def save_selection(context=C):
     # First empty selection
@@ -693,10 +785,20 @@ if __name__ == "__main__":
         settings.location = (5, 5, 3)
         settings.scale = (5, 5, 5)
         settings.hide_viewport = True
+    
+    if not D.objects.get('current_grid_settings'):
+        C.view_layer.active_layer_collection = \
+        C.view_layer.layer_collection.children['Settings']
+        O.object.empty_add()
+        settings = C.object
+        settings.name = "current_grid_settings"
+        settings.location = (0, 0, 0)
+        settings.scale = D.objects['grid'].scale
+        settings.hide_viewport = True
 
     if not D.collections.get('Trash'):
         trash = D.collections.new("Trash")
-        # C.scene.collection.children.link(trash)
+        C.scene.collection.children.link(trash)
 
     if not D.collections.get('Object_Selection'):
         obj_select = D.collections.new("Object_Selection")
