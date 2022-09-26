@@ -54,10 +54,33 @@ namespace DOG::gfx
 		}
 
 		m_resMan->ImportedResourceExitTransition(m_cmdl);
-		
+
+		// Clean up command list
+		auto delFunc = [rd = m_rd, cmdl = m_cmdl]()
+		{
+			rd->RecycleCommandList(cmdl);
+		};
+		m_bin->PushDeferredDeletion(delFunc);
+
+		// Clean up views
+		for (const auto& pass : m_sortedPasses)
+		{
+			auto df = [rd = m_rd, resMan = m_resMan, views = std::move(pass->passResources.m_views)]() mutable
+			{
+				for (const auto& [id, view] : views)
+				{
+					if (resMan->GetResourceType(id) == RGResourceType::Texture)
+						rd->FreeView(TextureView(view));
+					else
+						rd->FreeView(BufferView(view));
+				}
+			};
+			m_bin->PushDeferredDeletion(df);
+		}
+
 		// clean up cmdl by pushing to bin
-		m_rd->Flush();
-		m_rd->RecycleCommandList(m_cmdl);
+		//m_rd->Flush();
+		//m_rd->RecycleCommandList(m_cmdl);
 	}
 
 	void RenderGraph::BuildAdjacencyMap()

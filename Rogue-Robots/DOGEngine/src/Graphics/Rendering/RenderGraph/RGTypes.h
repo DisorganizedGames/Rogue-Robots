@@ -27,7 +27,7 @@ namespace DOG::gfx
 	
 	enum class RGTextureType { Texture1D, Texture2D, Texture3D };
 	enum class RGResourceType { Buffer, Texture };
-	enum class RGResourceVariant { Declared, Imported, Aliased };
+	enum class RGResourceVariant { Declared, Imported, Aliased, Proxy };
 
 	struct RGTextureDesc
 	{

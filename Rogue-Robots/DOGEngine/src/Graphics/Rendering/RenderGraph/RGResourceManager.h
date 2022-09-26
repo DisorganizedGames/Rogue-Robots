@@ -63,6 +63,7 @@ namespace DOG::gfx
 
 			u64 resource{ 0 };	// texture/buffer
 			bool hasBeenAliased{ false };
+
 		};
 
 		// ======================

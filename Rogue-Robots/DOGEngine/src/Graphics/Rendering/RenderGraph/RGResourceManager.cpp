@@ -9,6 +9,7 @@ namespace DOG::gfx
 		m_bin(bin)
 	{
 	}
+
 	void RGResourceManager::DeclareTexture(RGResourceID id, RGTextureDesc desc)
 	{
 		assert(!m_resources.contains(id));
@@ -70,9 +71,42 @@ namespace DOG::gfx
 	void RGResourceManager::DeclareProxy(RGResourceID id)
 	{
 		// Marks ID as unavailable
-		m_resources[id] = {};
+		auto& res = m_resources[id];
+		res.variantType = RGResourceVariant::Proxy;
 	}
 
+
+
+
+	void RGResourceManager::Tick()
+	{
+		for (const auto& [_, resource] : m_resources)
+		{
+			// We only release graph created resources (declared)
+			if (resource.variantType != RGResourceVariant::Declared)
+				continue;
+
+			// Safely free resources later
+			if (resource.resourceType == RGResourceType::Texture)
+			{
+				auto delFunc = [rd = m_rd, gpuResource = resource.resource]()
+				{
+					rd->FreeTexture(Texture(gpuResource));
+				};
+				m_bin->PushDeferredDeletion(delFunc);
+			}
+			else
+			{
+				auto delFunc = [rd = m_rd, gpuResource = resource.resource]()
+				{
+					rd->FreeBuffer(Buffer(gpuResource));
+				};
+				m_bin->PushDeferredDeletion(delFunc);
+			}
+		}
+
+		m_resources.clear();
+	}
 
 	void RGResourceManager::RealizeResources()
 	{
@@ -163,6 +197,9 @@ namespace DOG::gfx
 
 		m_rd->Cmd_Barrier(cmdl, barriers);
 	}
+
+
+
 
 	u64 RGResourceManager::GetResource(RGResourceID id) const
 	{
