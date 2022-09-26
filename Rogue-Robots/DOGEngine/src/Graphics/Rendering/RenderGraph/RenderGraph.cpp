@@ -65,17 +65,51 @@ namespace DOG::gfx
 		// Clean up views
 		for (const auto& pass : m_sortedPasses)
 		{
-			auto df = [rd = m_rd, resMan = m_resMan, views = std::move(pass->passResources.m_views)]() mutable
+			for (const auto& [id, view] : pass->passResources.m_views)
 			{
-				for (const auto& [id, view] : views)
+				auto df = [rd = m_rd, resMan = m_resMan, id, view]()
 				{
 					if (resMan->GetResourceType(id) == RGResourceType::Texture)
 						rd->FreeView(TextureView(view));
 					else
 						rd->FreeView(BufferView(view));
-				}
-			};
-			m_bin->PushDeferredDeletion(df);
+				};
+				m_bin->PushDeferredDeletion(df);
+			}
+
+			for (const auto& view : pass->rpTextureViews)
+			{
+				auto df = [rd = m_rd, resMan = m_resMan, view]()
+				{
+					rd->FreeView(view);
+				};
+				m_bin->PushDeferredDeletion(df);
+			}
+
+			if (pass->rp)
+			{
+				auto df = [rd = m_rd, rp = pass->rp]()
+				{
+					rd->FreeRenderPass(*rp);
+				};
+				m_bin->PushDeferredDeletion(df);
+			}
+
+
+
+
+			//auto df = [rd = m_rd, resMan = m_resMan, views = std::move(pass->passResources.m_views)]() mutable
+			//{
+			//	for (const auto& [id, view] : views)
+			//	{
+			//		if (resMan->GetResourceType(id) == RGResourceType::Texture)
+			//			rd->FreeView(TextureView(view));
+			//		else
+			//			rd->FreeView(BufferView(view));
+			//	}
+			//};
+			//m_bin->PushDeferredDeletion(df);
+
 		}
 
 		// clean up cmdl by pushing to bin
@@ -314,12 +348,16 @@ namespace DOG::gfx
 					if (viewDesc.viewType == ViewType::RenderTarget)
 					{
 						rpActive = true;
+						pass->rpTextureViews.push_back(view);
+
 						auto accesses = GetAccessTypes(*output.rpAccessType);
 						builder.AppendRT(view, accesses.first, accesses.second);
 					}
 					else if (viewDesc.viewType == ViewType::DepthStencil)
 					{
 						rpActive = true;
+						pass->rpTextureViews.push_back(view);
+
 						auto depthAccesses = GetAccessTypes(*output.rpAccessType);
 						auto stencilAccesses = GetAccessTypes(*output.rpStencilAccessType);
 						builder.AddDepthStencil(view,

@@ -12,6 +12,11 @@ namespace DOG::gfx
 	public:
 		RGResourceManager(RenderDevice* rd, GPUGarbageBin* bin);
 
+		/*
+			Discards the resources stored safely and clears map for re-use.
+			Assuming that the render graph is rebuilt every frame
+		*/
+		void Tick();
 
 	private:
 		friend class RenderGraph;
@@ -22,11 +27,6 @@ namespace DOG::gfx
 		void AliasTexture(RGResourceID newID, RGResourceID oldID);
 		void DeclareProxy(RGResourceID id);
 
-		/*
-			Discards the resources stored safely and clears map for re-use.
-			Assuming that the render graph is rebuilt every frame
-		*/
-		void Tick();
 	
 	private:
 

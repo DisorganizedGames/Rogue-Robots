@@ -191,6 +191,7 @@ namespace DOG::gfx
 			ComPtr<D3D12MA::Allocation> alloc;
 			ComPtr<ID3D12Resource> resource;
 
+			~GPUResource_Storage();
 		};
 
 		struct Buffer_Storage : public GPUResource_Storage
@@ -202,7 +203,9 @@ namespace DOG::gfx
 		struct Texture_Storage : public GPUResource_Storage
 		{
 			TextureDesc desc;
-			ComPtr<ID3D12Resource> resource;
+
+			// this shouldn't be here
+			//ComPtr<ID3D12Resource> resource;
 		};
 
 		struct BufferView_Storage

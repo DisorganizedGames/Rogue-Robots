@@ -66,7 +66,9 @@ namespace DOG::gfx
 			std::function<void(RenderDevice*, CommandList, PassResources&)> execFunc;
 			u32 depth{ 0 };
 			PassResources passResources;
+
 			std::optional<RenderPass> rp;
+			std::vector<TextureView> rpTextureViews;	// Held for deallocation
 		};
 
 		class DependencyLevel

@@ -14,7 +14,6 @@ namespace DOG::gfx
 	RenderBackend_DX12::RenderBackend_DX12(bool debug) :
 		m_debug_on(debug)
 	{
-		// 29 Mb footprint for Device!!
 		CreateAdapterFac();
 		SelectAdapter();
 		CheckFeatureSupport();
@@ -30,8 +29,10 @@ namespace DOG::gfx
 			hr = D3D12GetDebugInterface(IID_PPV_ARGS(debug1.GetAddressOf()));
 			HR_VFY(hr);
 
-			debug1->SetEnableGPUBasedValidation(true);
+			// CreatePlacedResource fails after some time with GBV on. Refer to DirectX12 discord for discussions
+			debug1->SetEnableGPUBasedValidation(false);
 			debug1->EnableDebugLayer();
+			debug1->SetEnableSynchronizedCommandQueueValidation(true);
 		}
 
 		hr = D3D12CreateDevice(m_adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(dev.GetAddressOf()));

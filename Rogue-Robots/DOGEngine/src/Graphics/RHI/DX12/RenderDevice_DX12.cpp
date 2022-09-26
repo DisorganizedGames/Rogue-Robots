@@ -60,6 +60,11 @@ namespace DOG::gfx
 			m_descriptorMgr->free(&(*m_reservedDescriptor));
 	}
 
+	RenderDevice_DX12::GPUResource_Storage::~GPUResource_Storage()
+	{
+		//printf("deleted\n");
+	}
+
 	Swapchain* RenderDevice_DX12::CreateSwapchain(void* hwnd, u8 numBuffers)
 	{
 		m_swapchain = std::make_unique<Swapchain_DX12>(this, (HWND)hwnd, numBuffers, m_debugOn);
@@ -121,6 +126,22 @@ namespace DOG::gfx
 		rd.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 		rd.Flags = desc.flags;
 
+		D3D12_CLEAR_VALUE clearVal{};
+		clearVal.Format = desc.format;
+		if ((rd.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
+		{
+			clearVal.DepthStencil.Depth = desc.depthClear;
+			clearVal.DepthStencil.Stencil = desc.stencilClear;
+		}
+		else
+		{
+			clearVal.Color[0] = desc.clearColor[0];
+			clearVal.Color[1] = desc.clearColor[1];
+			clearVal.Color[2] = desc.clearColor[2];
+			clearVal.Color[3] = desc.clearColor[3];
+		}
+
+
 		D3D12_RESOURCE_STATES initState{ desc.initState };
 		if (ad.HeapType == D3D12_HEAP_TYPE_UPLOAD)
 			initState = D3D12_RESOURCE_STATE_GENERIC_READ;
@@ -130,7 +151,7 @@ namespace DOG::gfx
 		Texture_Storage storage{};
 		storage.desc = desc;
 
-		hr = m_dma->CreateResource(&ad, &rd, initState, nullptr, storage.alloc.GetAddressOf(), IID_PPV_ARGS(storage.resource.GetAddressOf()));
+		hr = m_dma->CreateResource(&ad, &rd, initState, &clearVal, storage.alloc.GetAddressOf(), IID_PPV_ARGS(storage.resource.GetAddressOf()));
 		HR_VFY(hr);
 
 		auto handle = m_rhp.Allocate<Texture>();

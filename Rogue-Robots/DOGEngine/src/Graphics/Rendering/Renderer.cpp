@@ -130,7 +130,9 @@ namespace DOG::gfx
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
 
-		TestRG();
+		m_rgResMan = std::make_unique<RGResourceManager>(m_rd, m_bin.get());
+
+		//TestRG();
 	}
 
 	Renderer::~Renderer()
@@ -247,6 +249,146 @@ namespace DOG::gfx
 		}
 
 		m_rd->SubmitCommandList(m_cmdl);
+
+
+	
+		{
+			m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
+			auto& rg = *m_rg;
+		
+			// GBuffer
+			{
+				struct PassData {};
+				rg.AddPass<PassData>("GBuffer Pass",
+					[&](PassData&, RenderGraph::PassBuilder& builder)
+					{
+						builder.DeclareTexture(RG_RESOURCE(GBufferPosition), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R8G8B8A8_UNORM, m_clientWidth, m_clientHeight));
+						builder.DeclareTexture(RG_RESOURCE(GBufferNormal), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R8G8B8A8_UNORM, m_clientWidth, m_clientHeight));
+
+						builder.WriteRenderTarget(RG_RESOURCE(GBufferPosition), RenderPassAccessType::Clear_Preserve,
+							TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+						builder.WriteRenderTarget(RG_RESOURCE(GBufferNormal), RenderPassAccessType::Clear_Preserve,
+							TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+					},
+					[](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+					{
+
+					});
+			}
+
+			// Light pass to HDR
+			{
+				struct PassData {};
+				rg.AddPass<PassData>("Light Pass to HDR",
+					[&](PassData&, RenderGraph::PassBuilder& builder)
+					{
+						builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_clientWidth, m_clientHeight));
+
+						builder.ReadResource(RG_RESOURCE(GBufferPosition), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+							TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+						builder.ReadResource(RG_RESOURCE(GBufferNormal), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+							TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+						builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::Clear_Preserve,
+							TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+					},
+					[](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+					{
+					});
+			}
+
+			// Do something arbitrary with GBuffer Positions
+			{
+				struct PassData {};
+				rg.AddPass<PassData>("Read GBufferPosition",
+					[&](PassData&, RenderGraph::PassBuilder& builder)
+					{
+						builder.DeclareTexture(RG_RESOURCE(ArbiOutput), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R8G8B8A8_UNORM, m_clientWidth, m_clientHeight));
+
+						builder.ReadResource(RG_RESOURCE(GBufferPosition), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+							TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+						builder.WriteRenderTarget(RG_RESOURCE(ArbiOutput), RenderPassAccessType::Clear_Preserve,
+							TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+					},
+					[](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+					{
+					});
+			}
+
+			// Alias ArbiOutput
+			{
+				struct PassData {};
+				rg.AddPass<PassData>("Alias ArbiOutput",
+					[&](PassData&, RenderGraph::PassBuilder& builder)
+					{
+						builder.ProxyRead(RG_RESOURCE(ArbiReadDone));
+
+						builder.WriteAliasedRenderTarget(RG_RESOURCE(ArbiOutput2), RG_RESOURCE(ArbiOutput), RenderPassAccessType::Clear_Preserve,
+							TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+					},
+					[](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+					{
+
+					});
+			}
+
+			// Blit to LDR directly to backbuffer
+			{
+				struct PassData {};
+				rg.AddPass<PassData>("Blit HDR to LDR Backbuffer",
+					[&](PassData&, RenderGraph::PassBuilder& builder)
+					{
+						builder.ImportTexture(RG_RESOURCE(Backbuffer1), m_scTextures[0], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
+
+						builder.ProxyWrite(RG_RESOURCE(ArbiReadDone));
+						builder.ReadResource(RG_RESOURCE(ArbiOutput), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+							TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+						builder.ReadResource(RG_RESOURCE(LitHDR), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+							TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+						builder.WriteRenderTarget(RG_RESOURCE(Backbuffer1), RenderPassAccessType::Clear_Preserve,
+							TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+					},
+					[](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+					{
+
+					});
+			}
+
+			// Draw ImGUI on backbuffer
+			{
+				struct PassData {};
+				rg.AddPass<PassData>("ImGUI Pass",
+					[&](PassData&, RenderGraph::PassBuilder& builder)
+					{
+						builder.WriteAliasedRenderTarget(RG_RESOURCE(Backbuffer2), RG_RESOURCE(Backbuffer1), RenderPassAccessType::Preserve_Preserve,
+							TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+					},
+					[](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+					{
+
+					});
+			}
+
+			// Draw 2D Renderer on backbuffer
+			{
+				struct PassData {};
+				rg.AddPass<PassData>("2D Renderer Pass",
+					[&](PassData&, RenderGraph::PassBuilder& builder)
+					{
+						builder.WriteAliasedRenderTarget(RG_RESOURCE(Backbuffer3), RG_RESOURCE(Backbuffer2), RenderPassAccessType::Preserve_Preserve,
+							TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+					},
+					[](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+					{
+
+					});
+			}
+
+			rg.Build();
+			rg.Execute();
+
+		}
+
+
 	
 	}
 
@@ -266,7 +408,7 @@ namespace DOG::gfx
 	{
 		m_rd->Flush();
 
-		// m_rgResMan->Tick();
+		m_rgResMan->Tick();
 		m_bin->BeginFrame();
 		m_rd->RecycleCommandList(m_cmdl);
 		m_cmdl = m_rd->AllocateCommandList();
