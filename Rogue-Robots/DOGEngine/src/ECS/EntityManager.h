@@ -17,6 +17,8 @@ namespace DOG
 	typedef std::unique_ptr<SparseSetBase> ComponentPool;
 	#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get())) 
 
+	//##################### SPARSE SET #####################
+
 	struct SparseSetBase
 	{
 		SparseSetBase() noexcept = default;
@@ -42,6 +44,8 @@ namespace DOG
 			components.pop_back();
 		}
 	};
+
+	//##################### ENTITY MANAGER #####################
 
 	class EntityManager
 	{
@@ -76,6 +80,14 @@ namespace DOG
 
 		template<typename... ComponentType>
 		requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
+		[[nodiscard]] bool HasAllOf(const entity entityID) const noexcept;
+
+		template<typename... ComponentType>
+		requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
+		[[nodiscard]] bool HasAnyOf(const entity entityID) const noexcept;
+
+		template<typename... ComponentType>
+		requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
 		[[nodiscard]] BundleImpl<ComponentType...>& Bundle() noexcept;
 
 	private:
@@ -107,121 +119,6 @@ namespace DOG
 		std::vector<std::unique_ptr<BundleBase>> m_bundles;
 	};
 
-	class BundleBase
-	{
-	public:
-		BundleBase() noexcept = default;
-		virtual ~BundleBase() noexcept = default;
-
-		virtual [[nodiscard]] std::optional<u32> AddUpdate(const entity entityID) noexcept = 0;
-		virtual void RemoveUpdate(const entity entityID) noexcept = 0;
-	};
-
-	template<typename... ComponentType>
-	class BundleImpl : public BundleBase
-	{
-	public:
-		explicit BundleImpl(EntityManager* mgr, const std::tuple<SparseSet<ComponentType>*...>& pools) noexcept
-			: m_mgr{ mgr }, m_pools{ std::move(pools) }, m_bundleStart{ -1 }, ePointer{nullptr}
-		{
-#if defined _DEBUG
-			std::apply([](const auto... pool) {(ASSERT(pool, "Component type does not exist."), ...); }, m_pools);
-#endif
-			ePointer = &(get<0>(m_pools)->denseArray);
-			std::apply([&](const auto... pool)
-				{
-					((ePointer = (pool->denseArray.size() < ePointer->size()) ? &pool->denseArray : ePointer), ...);
-				}, m_pools);
-
-			auto myLambda = [&]<typename ComponentType>(SparseSet<ComponentType>* pool, u32 index, int bundleStart) 
-			{ 
-				std::swap(pool->denseArray[index], pool->denseArray[bundleStart + 1]);
-				std::swap(pool->components[index], pool->components[bundleStart + 1]);
-				std::swap(pool->sparseArray[pool->denseArray[index]], pool->sparseArray[pool->denseArray[bundleStart + 1]]);
-			};
-
-			for (u32 i{ 0u }; i < ePointer->size(); ++i)
-			{
-				if ((m_mgr->HasComponent<ComponentType>((*ePointer)[i]) && ...))
-				{
-					std::apply([&](const auto... pool)
-						{
-							(myLambda(pool, pool->sparseArray[(*ePointer)[i]], m_bundleStart), ...);
-						}, m_pools);
-
-							m_bundleStart++;
-				}
-			}
-		}
-
-		void Do(std::invocable<ComponentType&...> auto&& func) const noexcept
-		{
-			for (int i{ m_bundleStart }; i >= 0; --i)
-			{
-				func(m_mgr->GetComponent<ComponentType>((*ePointer)[i])...);
-			}
-		}
-		void Do(std::invocable<entity, ComponentType&...> auto&& func) const noexcept
-		{
-			for (int i{ m_bundleStart }; i >= 0; --i)
-			{
-				func(i, m_mgr->GetComponent<ComponentType>((*ePointer)[i])...);
-			}
-		}
-
-		virtual ~BundleImpl() noexcept override final = default;
-	private:
-		DELETE_COPY_MOVE_CONSTRUCTOR(BundleImpl);
-		[[nodiscard]] std::optional<u32> AddUpdate(const entity entityID) noexcept override final
-		{
-			auto myLambda = [&]<typename ComponentType>(SparseSet<ComponentType>*pool, u32 index, int bundleStart)
-			{
-				std::swap(pool->denseArray[index], pool->denseArray[bundleStart + 1]);
-				std::swap(pool->components[index], pool->components[bundleStart + 1]);
-				std::swap(pool->sparseArray[pool->denseArray[index]], pool->sparseArray[pool->denseArray[bundleStart + 1]]);
-			};
-
-			if ((m_mgr->HasComponent<ComponentType>(entityID) && ...))
-			{
-				std::apply([&](const auto... pool)
-					{
-						(myLambda(pool, pool->sparseArray[entityID], m_bundleStart), ...);
-					}, m_pools);
-
-				m_bundleStart++;
-				return m_bundleStart;
-			}
-			return std::nullopt;
-		}
-
-		virtual void RemoveUpdate(const entity entityID) noexcept override final
-		{
-			auto myLambda = [&]<typename ComponentType>(SparseSet<ComponentType>*pool, u32 index, int bundleStart)
-			{
-				std::swap(pool->denseArray[index], pool->denseArray[bundleStart]);
-				std::swap(pool->components[index], pool->components[bundleStart]);
-				std::swap(pool->sparseArray[pool->denseArray[index]], pool->sparseArray[pool->denseArray[bundleStart]]);
-			};
-
-			if ((m_mgr->HasComponent<ComponentType>(entityID) && ...))
-			{
-				std::apply([&](const auto... pool)
-					{
-						(myLambda(pool, pool->sparseArray[entityID], m_bundleStart), ...);
-					}, m_pools);
-
-				m_bundleStart--;
-			}
-		}
-
-	private:
-		friend EntityManager;
-		EntityManager* m_mgr;
-		std::tuple<SparseSet<ComponentType>*...> m_pools;
-		std::vector<entity>* ePointer;
-		int m_bundleStart;
-	};
-
 	template<typename... ComponentType>
 	requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
 	BundleImpl<ComponentType...>& EntityManager::Bundle() noexcept
@@ -233,66 +130,13 @@ namespace DOG
 		if (m_bundles[minComponentID] == nullptr)
 		{
 #if defined _DEBUG
-			std::apply([](const auto... pool) {(ASSERT((pool != nullptr) && pool->bundle == -1, "Bundle creation failed."), ...); }, pools);
+			std::apply([](const auto&... pool) {(ASSERT((pool != nullptr) && pool->bundle == -1, "Bundle creation failed."), ...); }, pools);
 #endif
-			std::apply([&](auto&... pool) {((pool->bundle = minComponentID), ...); }, pools);
+			std::apply([&](const auto&... pool) {((pool->bundle = minComponentID), ...); }, pools);
 			m_bundles[minComponentID] = (std::unique_ptr<BundleImpl<ComponentType...>>(new BundleImpl<ComponentType...>(this, { set... })));
 		}
 		return *(static_cast<BundleImpl<ComponentType...>*>(m_bundles[minComponentID].get()));
 	}
-
-	template<typename... ComponentType>
-	class Collection
-	{
-	public:
-		explicit Collection(EntityManager* mgr, const std::tuple<SparseSet<ComponentType>*...>& pools) noexcept
-			: m_mgr{ mgr }, m_pools( std::move(pools) ) 
-		{
-		#if defined _DEBUG
-			std::apply([](const auto... pool) {(ASSERT(pool, "Component type does not exist."), ...); }, m_pools);
-		#endif
-		}
-
-		void Do(std::invocable<ComponentType&...> auto&& func) const noexcept
-		{
-			std::vector<entity>* ePointer = &(get<0>(m_pools)->denseArray);
-			std::apply([&ePointer](const auto... pool) 
-			{
-				((ePointer = (pool->denseArray.size() < ePointer->size()) ? &pool->denseArray : ePointer), ...);
-			}, m_pools);
-		
-			for (int i{ (int)ePointer->size() - 1}; i >= 0; --i)
-			{
-				if ((m_mgr->HasComponent<ComponentType>((*ePointer)[i]) && ...))
-				{
-					func(m_mgr->GetComponent<ComponentType>((*ePointer)[i])...);
-				}
-			}
-		}
-
-		void Do(std::invocable<entity, ComponentType&...> auto&& func) const noexcept
-		{
-			std::vector<entity>* ePointer = &(get<0>(m_pools)->denseArray);
-			std::apply([&ePointer](const auto... pool)
-				{
-					((ePointer = (pool->denseArray.size() < ePointer->size()) ? &pool->denseArray : ePointer), ...);
-				}, m_pools);
-
-			for (int i{ (int)ePointer->size() - 1 }; i >= 0; --i)
-			{
-				if ((m_mgr->HasComponent<ComponentType>((*ePointer)[i]) && ...))
-				{
-					func((*ePointer)[i], m_mgr->GetComponent<ComponentType>((*ePointer)[i])...);
-				}
-			}
-		}
-
-	private:
-		DELETE_COPY_MOVE_CONSTRUCTOR(Collection);
-		friend class EntityManager;
-		std::tuple<SparseSet<ComponentType>*...> m_pools;
-		EntityManager* m_mgr;
-	};
 
 	template<typename ComponentType, typename ...Args>
 	requires std::is_base_of_v<ComponentBase, ComponentType>
@@ -310,7 +154,7 @@ namespace DOG
 
 		if (set->bundle != -1)
 		{
-			auto componentIdx = m_bundles[set->bundle]->AddUpdate(entityID);
+			auto componentIdx = m_bundles[set->bundle]->UpdateOnAdd(entityID);
 			if (componentIdx)
 			{
 				return set->components[*componentIdx];
@@ -328,7 +172,7 @@ namespace DOG
 
 		if (set->bundle != -1)
 		{
-			m_bundles[set->bundle]->RemoveUpdate(entityID);
+			m_bundles[set->bundle]->UpdateOnRemove(entityID);
 		}
 
 		const auto last = set->denseArray.back();
@@ -352,7 +196,7 @@ namespace DOG
 
 	template<typename... ComponentType>
 	requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
- Collection<ComponentType...> EntityManager::Collect() noexcept
+	Collection<ComponentType...> EntityManager::Collect() noexcept
 	{
 		return Collection<ComponentType...>( this, {set... });
 	}
@@ -371,6 +215,24 @@ namespace DOG
 			&& (set->sparseArray[entityID] < set->denseArray.size()) 
 			&& (set->sparseArray[entityID] != NULL_ENTITY
 			);
+	}
+
+	template<typename... ComponentType>
+	requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
+	bool EntityManager::HasAllOf(const entity entityID) const noexcept
+	{
+		ASSERT(Exists(entityID), "Entity is invalid");
+
+		return (EntityManager::HasComponent<ComponentType>(entityID) && ...);
+	}
+
+	template<typename... ComponentType>
+	requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
+	bool EntityManager::HasAnyOf(const entity entityID) const noexcept
+	{
+		ASSERT(Exists(entityID), "Entity is invalid");
+
+		return (EntityManager::HasComponent<ComponentType>(entityID) || ...);
 	}
 
 	template<typename ComponentType>
@@ -405,5 +267,198 @@ namespace DOG
 
 		set->denseArray.reserve(MAX_ENTITIES);
 		set->components.reserve(MAX_ENTITIES);
+	}
+
+	//##################### COLLECTIONS #####################
+
+	template<typename... ComponentType>
+	class Collection
+	{
+	public:
+		explicit Collection(EntityManager* mgr, const std::tuple<SparseSet<ComponentType>*...>& pools) noexcept;
+		~Collection() noexcept = default;
+
+		void Do(std::invocable<ComponentType&...> auto&& func) const noexcept;
+		void Do(std::invocable<entity, ComponentType&...> auto&& func) const noexcept;
+
+	private:
+		DELETE_COPY_MOVE_CONSTRUCTOR(Collection);
+		friend class EntityManager;
+		std::tuple<SparseSet<ComponentType>*...> m_pools;
+		EntityManager* m_mgr;
+	};
+
+	template<typename... ComponentType>
+	Collection<ComponentType...>::Collection(EntityManager* mgr, const std::tuple<SparseSet<ComponentType>*...>& pools) noexcept
+		: m_mgr{ mgr }, m_pools(std::move(pools))
+	{
+#if defined _DEBUG
+		std::apply([](const auto... pool) {(ASSERT(pool, "Component type does not exist."), ...); }, m_pools);
+#endif
+	}
+
+	template<typename... ComponentType>
+	void Collection<ComponentType...>::Do(std::invocable<ComponentType&...> auto&& func) const noexcept
+	{
+		std::vector<entity>* ePointer = &(get<0>(m_pools)->denseArray);
+		std::apply([&ePointer](const auto&... pool)
+			{
+				((ePointer = (pool->denseArray.size() < ePointer->size()) ? &pool->denseArray : ePointer), ...);
+			}, m_pools);
+
+		for (int i{ (int)ePointer->size() - 1 }; i >= 0; --i)
+		{
+			if (m_mgr->HasAllOf<ComponentType...>((*ePointer)[i]))
+			{
+				func(m_mgr->GetComponent<ComponentType>((*ePointer)[i])...);
+			}
+		}
+	}
+
+	template<typename... ComponentType>
+	void Collection<ComponentType...>::Do(std::invocable<entity, ComponentType&...> auto&& func) const noexcept
+	{
+		std::vector<entity>* ePointer = &(get<0>(m_pools)->denseArray);
+		std::apply([&ePointer](const auto&... pool)
+			{
+				((ePointer = (pool->denseArray.size() < ePointer->size()) ? &pool->denseArray : ePointer), ...);
+			}, m_pools);
+
+		for (int i{ (int)ePointer->size() - 1 }; i >= 0; --i)
+		{
+			if (m_mgr->HasAllOf<ComponentType...>((*ePointer)[i]))
+			{
+				func((*ePointer)[i], m_mgr->GetComponent<ComponentType>((*ePointer)[i])...);
+			}
+		}
+	}
+
+	//##################### BUNDLES #####################
+
+	class BundleBase
+	{
+	public:
+		BundleBase() noexcept = default;
+		virtual ~BundleBase() noexcept = default;
+
+		virtual [[nodiscard]] std::optional<u32> UpdateOnAdd(const entity entityID) noexcept = 0;
+		virtual void UpdateOnRemove(const entity entityID) noexcept = 0;
+	};
+
+	template<typename... ComponentType>
+	class BundleImpl : public BundleBase
+	{
+	public:
+		explicit BundleImpl(EntityManager* mgr, const std::tuple<SparseSet<ComponentType>*...>& pools) noexcept;
+		virtual ~BundleImpl() noexcept override final = default;
+
+		void Do(std::invocable<ComponentType&...> auto&& func) const noexcept;
+		void Do(std::invocable<entity, ComponentType&...> auto&& func) const noexcept;
+	private:
+		DELETE_COPY_MOVE_CONSTRUCTOR(BundleImpl);
+		[[nodiscard]] std::optional<u32> UpdateOnAdd(const entity entityID) noexcept override final;
+		virtual void UpdateOnRemove(const entity entityID) noexcept override final;
+	private:
+		friend EntityManager;
+		EntityManager* m_mgr;
+		std::tuple<SparseSet<ComponentType>*...> m_pools;
+		std::vector<entity>* ePointer;
+		int m_bundleStart;
+	};
+
+	template<typename... ComponentType>
+	BundleImpl<ComponentType...>::BundleImpl(EntityManager* mgr, const std::tuple<SparseSet<ComponentType>*...>& pools) noexcept
+		: m_mgr{ mgr }, m_pools{ std::move(pools) }, m_bundleStart{ -1 }, ePointer{ nullptr }
+	{
+#if defined _DEBUG
+		std::apply([](const auto... pool) {(ASSERT(pool, "Component type does not exist."), ...); }, m_pools);
+#endif
+		ePointer = &(get<0>(m_pools)->denseArray);
+		std::apply([&](const auto... pool)
+			{
+				((ePointer = (pool->denseArray.size() < ePointer->size()) ? &pool->denseArray : ePointer), ...);
+			}, m_pools);
+
+		const auto&& myLambda = []<typename ComponentType>(SparseSet<ComponentType>*pool, u32 index, int bundleStart)
+		{
+			std::swap(pool->denseArray[index], pool->denseArray[bundleStart + 1]);
+			std::swap(pool->components[index], pool->components[bundleStart + 1]);
+			std::swap(pool->sparseArray[pool->denseArray[index]], pool->sparseArray[pool->denseArray[bundleStart + 1]]);
+		};
+
+		for (u32 i{ 0u }; i < ePointer->size(); ++i)
+		{
+			if ((m_mgr->HasComponent<ComponentType>((*ePointer)[i]) && ...))
+			{
+				std::apply([&](const auto... pool)
+					{
+						(myLambda(pool, pool->sparseArray[(*ePointer)[i]], m_bundleStart), ...);
+					}, m_pools);
+
+				m_bundleStart++;
+			}
+		}
+	}
+
+	template<typename... ComponentType>
+	void BundleImpl<ComponentType...>::Do(std::invocable<ComponentType&...> auto&& func) const noexcept
+	{
+		for (int i{ m_bundleStart }; i >= 0; --i)
+		{
+			func(m_mgr->GetComponent<ComponentType>((*ePointer)[i])...);
+		}
+	}
+
+	template<typename... ComponentType>
+	void BundleImpl<ComponentType...>::Do(std::invocable<entity, ComponentType&...> auto&& func) const noexcept
+	{
+		for (int i{ m_bundleStart }; i >= 0; --i)
+		{
+			func(i, m_mgr->GetComponent<ComponentType>((*ePointer)[i])...);
+		}
+	}
+
+	template<typename... ComponentType>
+	std::optional<u32> BundleImpl<ComponentType...>::UpdateOnAdd(const entity entityID) noexcept
+	{
+		const auto&& SwapLambda = []<typename ComponentType>(SparseSet<ComponentType>* pool, u32 index, int bundleStart)
+		{
+			std::swap(pool->denseArray[index], pool->denseArray[bundleStart + 1]);
+			std::swap(pool->components[index], pool->components[bundleStart + 1]);
+			std::swap(pool->sparseArray[pool->denseArray[index]], pool->sparseArray[pool->denseArray[bundleStart + 1]]);
+		};
+
+		if (m_mgr->HasAllOf<ComponentType...>(entityID))
+		{
+			std::apply([&](const auto... pool)
+				{
+					(SwapLambda(pool, pool->sparseArray[entityID], m_bundleStart), ...);
+				}, m_pools);
+
+			m_bundleStart++;
+			return m_bundleStart;
+		}
+		return std::nullopt;
+	}
+
+	template<typename... ComponentType>
+	void BundleImpl<ComponentType...>::UpdateOnRemove(const entity entityID) noexcept
+	{
+		const auto&& SwapLambda = []<typename ComponentType>(SparseSet<ComponentType>* pool, u32 index, int bundleStart)
+		{
+			std::swap(pool->denseArray[index], pool->denseArray[bundleStart]);
+			std::swap(pool->components[index], pool->components[bundleStart]);
+			std::swap(pool->sparseArray[pool->denseArray[index]], pool->sparseArray[pool->denseArray[bundleStart]]);
+		};
+
+		if (m_mgr->HasAllOf<ComponentType...>(entityID))
+		{
+			std::apply([&](const auto... pool)
+				{
+					(SwapLambda(pool, pool->sparseArray[entityID], m_bundleStart), ...);
+				}, m_pools);
+
+			m_bundleStart--;
+		}
 	}
 }

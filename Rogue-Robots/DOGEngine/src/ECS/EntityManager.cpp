@@ -86,7 +86,7 @@ namespace DOG
 	{
 		if (m_components[componentPoolIndex]->bundle != -1)
 		{
-			m_bundles[m_components[componentPoolIndex]->bundle]->RemoveUpdate(entityID);
+			m_bundles[m_components[componentPoolIndex]->bundle]->UpdateOnRemove(entityID);
 		}
 
 		const auto last = m_components[componentPoolIndex]->denseArray.back();
