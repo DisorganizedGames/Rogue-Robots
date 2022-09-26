@@ -58,7 +58,16 @@ void SaveRuntimeSettings() noexcept
 	std::string fullFilePath = RUNTIME_DIR + std::string("Runtime.ini");
 	std::vector<std::string> lines;
 	std::ifstream inFile(fullFilePath);
-	assert(inFile.is_open() && "File does not exist.");
+	if (!inFile)
+	{
+		// Temporary solution until this works as intended
+		constexpr const char def[] = "[WINDOW][DIMENSIONS]\n1280\n720\n\n[WINDOW][MODE]\n0";
+		std::ofstream initFile(fullFilePath);
+		assert(initFile && "Couldn't initialize Runtime.ini");
+		initFile.write(def, sizeof(def));
+		inFile.open(fullFilePath);
+		assert(inFile && "Couldn't open Runtime.ini for saving");
+	}
 	std::string aLine;
 	while (std::getline(inFile, aLine))
 	{
