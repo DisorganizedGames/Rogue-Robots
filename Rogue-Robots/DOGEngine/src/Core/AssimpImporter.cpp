@@ -14,7 +14,6 @@ namespace DOG
 		if (!aiMat->Get(AI_MATKEY_NAME, materialName))
 		{
 			importedMat.materialName = materialName.C_Str();
-			//std::cout << materialName.C_Str() << std::endl;
 		}
 
 		float metallicFactor;
@@ -49,25 +48,21 @@ namespace DOG
 		if (!aiMat->GetTexture(AI_MATKEY_BASE_COLOR_TEXTURE, &textureFileName))
 		{
 			importedMat.albedoPath = directory + textureFileName.C_Str();
-			std::cout << directory + textureFileName.C_Str() << std::endl;
 		}
 
 		if (!aiMat->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &textureFileName))
 		{
 			importedMat.metallicRoughnessPath = directory + textureFileName.C_Str();
-			std::cout << directory + textureFileName.C_Str() << std::endl;
 		}
 
 		if (!aiMat->GetTexture(aiTextureType::aiTextureType_EMISSIVE, 0, &textureFileName))
 		{
 			importedMat.emissivePath = directory + textureFileName.C_Str();
-			std::cout << directory + textureFileName.C_Str() << std::endl;
 		}
 
 		if (!aiMat->GetTexture(aiTextureType::aiTextureType_NORMALS, 0, &textureFileName))
 		{
 			importedMat.normalMapPath = directory + textureFileName.C_Str();
-			std::cout << directory + textureFileName.C_Str() << std::endl;
 		}
 		return importedMat;
 	}
