@@ -6,13 +6,13 @@ using namespace DirectX::SimpleMath;
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
 {
-
+	m_boneDaddy = std::make_unique<BoneJovi>();
 	auto& am = DOG::AssetManager::Get();
 	m_redCube = am.LoadModelAsset("Assets/red_cube.glb");
 	m_greenCube = am.LoadModelAsset("Assets/green_cube.glb");
 	m_blueCube = am.LoadModelAsset("Assets/blue_cube.glb");
 	m_magentaCube = am.LoadModelAsset("Assets/magenta_cube.glb");
-
+	m_mixamo = am.LoadModelAsset("Assets/mixamo/walkmix.fbx");
 	//u64 sponza = am.LoadModelAsset("Assets/Sponza_gltf/glTF/Sponza.gltf");
 	//entity entity0 = m_entityManager.CreateEntity();
 	//m_entityManager.AddComponent<ModelComponent>(entity0, sponza);
@@ -22,14 +22,21 @@ GameLayer::GameLayer() noexcept
 	//	.SetScale({ 0.05f, 0.05f, 0.05f });
 
 	entity entity1 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelComponent>(entity1, m_redCube);
+	m_entityManager.AddComponent<ModelAnimationComponent>(entity1).animationId = -1;
+	m_entityManager.AddComponent<ModelComponent>(entity1, m_mixamo);
 	m_entityManager.AddComponent<TransformComponent>(entity1)
 		.SetPosition({ 4, -2, 5 })
 		.SetRotation({ 3.14f / 4.0f, 0, 0 })
 		.SetScale({0.5, 0.5, 0.5});
 	m_entityManager.AddComponent<NetworkPlayerComponent>(entity1).playerId = 0;
-	
-	entity entity2 = m_entityManager.CreateEntity();
+	EntityManager::Get().Collect<TransformComponent, ModelComponent, ModelAnimationComponent>().Do([&](TransformComponent& transformC, ModelComponent& modelC, ModelAnimationComponent& amnimationC)
+		{
+			ModelAsset* model = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(modelC));
+			m_boneDaddy->GetBoned(model->animation);
+		});
+
+
+	/*entity entity2 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity2, m_greenCube);
 	m_entityManager.AddComponent<TransformComponent>(entity2, Vector3(-4, -2, 5), Vector3(0.1f, 0, 0));
 	m_entityManager.AddComponent<NetworkPlayerComponent>(entity2).playerId = 1;
@@ -47,7 +54,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<NetworkPlayerComponent>(entity4).playerId = 3;
 	t4.worldMatrix(3, 0) = -4;
 	t4.worldMatrix(3, 1) = 2;
-	t4.worldMatrix(3, 2) = 5;
+	t4.worldMatrix(3, 2) = 5;*/
 
 	LuaMain::Initialize();
 	//LuaMain::GetScriptManager()->OrderScript("LuaTest.lua", 1);
@@ -76,7 +83,14 @@ void GameLayer::OnUpdate()
 {
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
-
+	EntityManager::Get().Collect<TransformComponent, ModelComponent, ModelAnimationComponent>().Do([&](TransformComponent& transformC, ModelComponent& modelC, ModelAnimationComponent& amnimationC)
+		{
+			ModelAsset* model = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(modelC));
+			for (u32 i = 0; i < model->gfxModel.mesh.numSubmeshes; ++i)
+				auto u = 0; // getAnimationTime etc
+		});
+	
+	m_boneDaddy->UpdateSkeleton(0, 1, 0.1f);
 	m_player->OnUpdate();
 	m_netCode.OnUpdate(m_player);
 

@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "Window.h"
 #include "Time.h"
+#include "BoneJovi.h"
 #include "AssetManager.h"
 #include "../ECS/EntityManager.h"
 #include "../Input/Mouse.h"
@@ -81,7 +82,6 @@ namespace DOG
 							m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], transformC);
 					}
 				});
-			
 			auto mainCam = CameraComponent::s_mainCamera;
 			auto& proj = (DirectX::XMMATRIX&)mainCam->projMatrix;
 			m_renderer->SetMainRenderCamera(mainCam->viewMatrix, &proj);

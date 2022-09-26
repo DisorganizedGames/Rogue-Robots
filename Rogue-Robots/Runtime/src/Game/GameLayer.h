@@ -4,6 +4,7 @@
 #include "LuaInterfaces.h"
 #include "NetCode.h"
 
+
 class GameLayer : public DOG::Layer
 {
 public:
@@ -20,7 +21,8 @@ private:
 	void RegisterLuaInterfaces();
 
 private:
-
+	std::unique_ptr<BoneJovi> m_boneDaddy;
+	u64 m_mixamo{ 0 };
 	u64 m_redCube{ 0 };
 	u64 m_greenCube{ 0 };
 	u64 m_blueCube{ 0 };

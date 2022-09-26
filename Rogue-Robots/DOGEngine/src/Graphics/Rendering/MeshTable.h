@@ -61,6 +61,7 @@ namespace DOG::gfx
 		static constexpr u32 UV_STRIDE = sizeof(f32) * 2;
 		static constexpr u32 NOR_STRIDE = sizeof(f32) * 3;
 		static constexpr u32 TAN_STRIDE = sizeof(f32) * 3;
+		static constexpr u32 BLEND_STRIDE = (sizeof(i32)+sizeof(f32))*4;
 
 		struct SubmeshHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
 
@@ -69,6 +70,7 @@ namespace DOG::gfx
 		struct UVHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
 		struct NormalHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
 		struct TangentHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
+		struct BlendHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
 
 		struct Mesh_Storage
 		{
@@ -76,7 +78,9 @@ namespace DOG::gfx
 			UVHandle uv;
 			NormalHandle nor;
 			TangentHandle tan;
+			BlendHandle blend;
 			IndexHandle idx;
+
 
 			std::vector<SubmeshMetadata> mdsCpu;
 
@@ -99,6 +103,7 @@ namespace DOG::gfx
 		std::unique_ptr<GPUTableDeviceLocal<UVHandle>> m_uvTable;
 		std::unique_ptr<GPUTableDeviceLocal<NormalHandle>> m_normalTable;
 		std::unique_ptr<GPUTableDeviceLocal<TangentHandle>> m_tangentTable;
+		std::unique_ptr<GPUTableDeviceLocal<BlendHandle>> m_blendTable;
 
 
 

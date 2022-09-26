@@ -24,6 +24,17 @@ struct SubmeshMetadata
     uint indexCount;
 };
 
+struct BlendWeight
+{
+    int blendIdx;
+    float weight;
+};
+
+struct Blend
+{
+    BlendWeight bw[4];
+};
+
 struct PushConstantElement
 {
     uint perFrameCB;
@@ -35,6 +46,7 @@ struct PushConstantElement
     uint uvTable;
     uint norTable;
     uint tanTable;
+    uint blendTable;
 };
 ConstantBuffer<PushConstantElement> constants : register(b0, space0);
 
@@ -48,6 +60,7 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     StructuredBuffer<float2> uvs = ResourceDescriptorHeap[constants.uvTable];
     StructuredBuffer<float3> normals = ResourceDescriptorHeap[constants.norTable];
     StructuredBuffer<float3> tangents = ResourceDescriptorHeap[constants.tanTable];
+    StructuredBuffer<Blend> blendData = ResourceDescriptorHeap[constants.blendTable];
     
     SubmeshMetadata md = mds[constants.submeshID];
     vertexID += md.vertStart;
@@ -58,7 +71,11 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     float3 tan = tangents[vertexID];
     //float3 bitan = normalize(cross(nor, tan));  // not sure if this is correct-handed
     float3 bitan = normalize(cross(tan, nor));  // not sure if this is correct-handed
-    
+    Blend bw = blendData[vertexID];
+
+    if(bw.bw[0].weight > 0.0f)
+        pos.x += 1000.0f;
+
     ConstantBuffer<PerFrameData> pfData = ResourceDescriptorHeap[constants.perFrameCB];
     
     output.wsPos = mul(pfData.world, float4(pos, 1.f)).xyz;

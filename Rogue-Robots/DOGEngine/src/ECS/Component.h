@@ -47,4 +47,9 @@ namespace DOG
 	struct NetworkComponent
 	{
 	};
+
+	struct ModelAnimationComponent : public Component<ModelAnimationComponent>
+	{
+		int animationId;
+	};
 }
