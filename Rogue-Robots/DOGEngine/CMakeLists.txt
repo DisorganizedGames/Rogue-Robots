@@ -17,7 +17,8 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
       "src/Graphics/RHI/DX12/ImGUIBackend_DX12.h" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.cpp" "src/Graphics/RHI/ImGUIBackend.h" "src/Graphics/Rendering/GraphicsBuilder.h" "src/Graphics/Rendering/GraphicsBuilder.cpp"
     "src/ECS/EntityManager.h" "src/ECS/EntityManager.cpp" "src/ECS/Component.h" "src/ECS/Component.cpp" 
     "src/Scripting/LuaW.h" "src/Scripting/LuaW.cpp" "src/Scripting/LuaTable.h" "src/Scripting/LuaTable.cpp" "src/Scripting/LuaGlobal.h" "src/Scripting/LuaGlobal.cpp" "src/Scripting/LuaEvent.h" "src/Scripting/LuaEvent.cpp" "src/Scripting/ScriptManager.h" "src/Scripting/ScriptManager.cpp" "src/Scripting/LuaContext.h" "src/Scripting/LuaContext.cpp" "src/Scripting/LuaMain.h" "src/Scripting/LuaMain.cpp"
-    "src/Core/ManagedAssets.h" "src/Core/ManagedAssets.cpp")
+    "src/Core/ManagedAssets.h" "src/Core/ManagedAssets.cpp"
+    "src/Core/BoneJovi.h" "src/Core/BoneJovi.cpp")
 
 	file(GLOB_RECURSE TempGraphics
     "src/Graphics/*.cpp")

@@ -19,7 +19,6 @@
 #include "../../Core/TextureFileImporter.h"
 
 
-
 namespace DOG::gfx
 {
 	Renderer::Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug) :
@@ -59,6 +58,7 @@ namespace DOG::gfx
 		spec.maxSizePerAttribute[VertexAttribute::UV] = maxBytesPerAttribute;
 		spec.maxSizePerAttribute[VertexAttribute::Normal] = maxBytesPerAttribute;
 		spec.maxSizePerAttribute[VertexAttribute::Tangent] = maxBytesPerAttribute;
+		spec.maxSizePerAttribute[VertexAttribute::BlendData] = maxBytesPerAttribute;
 		spec.maxTotalSubmeshes = maxTotalSubmeshes;
 		spec.maxNumIndices = maxNumberOfIndices;
 		m_globalMeshTable = std::make_unique<MeshTable>(m_rd, m_bin.get(), spec);
@@ -83,7 +83,6 @@ namespace DOG::gfx
 
 
 		// INITIALIZE RESOURCES =================
-
 
 
 		// Create depth
@@ -217,6 +216,7 @@ namespace DOG::gfx
 				.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::UV))
 				.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Normal))
 				.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Tangent))
+				.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::BlendData))
 				.AppendConstant(m_globalMaterialTable->GetDescriptor())
 				.AppendConstant(m_globalMaterialTable->GetMaterialIndex(sub.mat)
 				);

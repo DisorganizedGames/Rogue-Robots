@@ -13,6 +13,8 @@ using u64 = uint64_t;
 using f32 = float;
 using f64 = double;
 
+using dxf4x4 = DirectX::XMFLOAT4X4;
+
 class HR
 {
 	HRESULT hr;

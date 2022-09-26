@@ -37,7 +37,8 @@ namespace DOG
 		Position,
 		Normal,
 		UV,
-		Tangent
+		Tangent,
+		BlendData
 	};
 
 	struct SubmeshMetadata
