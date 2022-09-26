@@ -29,6 +29,7 @@ MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 	//m_tempSM = std::make_unique<ScriptManager>(ScriptManager(&LuaW::s_luaW));
 	//Gun
 	ScriptManager* scriptManager = LuaMain::GetScriptManager();
+	scriptManager->AddScript(m_playerEntity, "Gun.lua");
 	/*GunComponent& gun = m_entityManager.AddComponent<GunComponent>(m_playerEntity);*/
 	//ScriptComponent gun = scriptManager->AddScript(m_playerEntity, "Gun.lua");
 

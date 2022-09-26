@@ -38,8 +38,7 @@ namespace DOG
 	{
 	private:
 		u32 m_idCounter;
-		std::unordered_map<std::string, u32> m_scriptsIDMap;
-		std::unordered_map<u32, GetScriptData> m_scriptToVector;
+		std::unordered_map<std::string, GetScriptData> m_scriptToVector;
 		std::vector<std::vector<ScriptData>> m_unsortedScripts;
 		std::vector<std::vector<ScriptData>> m_sortedScripts;
 

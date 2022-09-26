@@ -108,24 +108,13 @@ namespace DOG
 		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
 		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
 
-		u32 oldIDCounter = m_idCounter;
-		auto it = m_scriptsIDMap.find(luaFileName.c_str());
-		if (it == m_scriptsIDMap.end())
-		{
-			m_scriptsIDMap.insert({ luaFileName.c_str(), {m_idCounter} });
-			++m_idCounter;
-		}
-		else
-		{
-			oldIDCounter = it->second;
-		}
-
-		auto itScriptToVector = m_scriptToVector.find(oldIDCounter);
+		//Find if there already exist a vector for that script type
+		auto itScriptToVector = m_scriptToVector.find(luaFileName.c_str());
 		if (itScriptToVector == m_scriptToVector.end())
 		{
 			m_unsortedScripts.push_back({scriptData});
 			u32 vectorIndex = (u32)(m_unsortedScripts.size() - 1);
-			m_scriptToVector.insert({ oldIDCounter, {false, vectorIndex}});
+			m_scriptToVector.insert({ luaFileName, {false, vectorIndex}});
 		}
 		else
 		{
@@ -139,6 +128,8 @@ namespace DOG
 			}
 		}
 
+		//Return script component
+		//Return the entity component if it already exists
 		bool hasScriptComponent = m_entityManager.HasComponent<ScriptComponent>(entity);
 		ScriptComponent scriptComponent(0);
 		if (hasScriptComponent)
@@ -152,13 +143,7 @@ namespace DOG
 
 	void ScriptManager::RemoveScript(entity entity, const std::string& luaFileName)
 	{
-		auto it = m_scriptsIDMap.find(luaFileName.c_str());
-		if (it == m_scriptsIDMap.end())
-		{
-			return;
-		}
-
-		auto itScriptToVector = m_scriptToVector.find(it->second);
+		auto itScriptToVector = m_scriptToVector.find(luaFileName.c_str());
 		if (itScriptToVector == m_scriptToVector.end())
 		{
 			return;
@@ -210,10 +195,10 @@ namespace DOG
 
 			for (int i = 0; i < s_filesToBeReloaded.size(); ++i)
 			{
-				auto it = m_scriptsIDMap.find(s_filesToBeReloaded[i].c_str());
+				auto it = m_scriptToVector.find(s_filesToBeReloaded[i].c_str());
 
 				//Should never happen
-				if (it == m_scriptsIDMap.end())
+				if (it == m_scriptToVector.end())
 				{
 					assert(false);
 					return;
@@ -223,9 +208,7 @@ namespace DOG
 
 				if (fileIsReloadedable)
 				{
-					u32 scriptID = it->second;
-
-					GetScriptData getScriptData = m_scriptToVector[scriptID];
+					GetScriptData getScriptData = it->second;
 
 					if (getScriptData.sorted)
 					{
@@ -325,6 +308,7 @@ namespace DOG
 			});
 
 		bool setHalwayIndex = true;
+		m_sortedScriptsHalfwayIndex = 0;
 		for (auto& sortData : m_scriptsBeforeSorted)
 		{
 			if (sortData.sortOrder > 0 && setHalwayIndex)
@@ -333,20 +317,12 @@ namespace DOG
 				setHalwayIndex = false;
 			}
 
-			u32 oldIDCounter = m_idCounter;
-			auto it = m_scriptsIDMap.find(sortData.luaFileName.c_str());
-			if (it == m_scriptsIDMap.end())
-			{
-				m_scriptsIDMap.insert({ sortData.luaFileName.c_str(), {m_idCounter} });
-				++m_idCounter;
-			}
-
-			auto itScriptToVector = m_scriptToVector.find(oldIDCounter);
+			auto itScriptToVector = m_scriptToVector.find(sortData.luaFileName.c_str());
 			if (itScriptToVector == m_scriptToVector.end())
 			{
 				m_sortedScripts.push_back({});
 				u32 vectorIndex = (u32)(m_sortedScripts.size() - 1);
-				m_scriptToVector.insert({ oldIDCounter, {true, vectorIndex} });
+				m_scriptToVector.insert({ sortData.luaFileName.c_str(), {true, vectorIndex} });
 			}
 		}
 
