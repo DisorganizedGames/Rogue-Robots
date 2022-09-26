@@ -24,7 +24,6 @@ namespace DOG
 
 		~AssetManager();
 
-		//[[nodiscard]] u32 LoadModelAsset(const std::string& path, AssetLoadFlag flag = (AssetLoadFlag)(AssetLoadFlag::GPUMemory));
 		[[nodiscard]] u32 LoadModelAsset(const std::string& path, AssetLoadFlag flag = (AssetLoadFlag)(AssetLoadFlag::GPUMemory | AssetLoadFlag::Async));
 		[[nodiscard]] u32 LoadTexture(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::None);
 		[[nodiscard]] u32 LoadAudio(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::None);
