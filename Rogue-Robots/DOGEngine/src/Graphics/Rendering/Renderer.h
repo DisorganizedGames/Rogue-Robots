@@ -121,9 +121,15 @@ namespace DOG::gfx
 		//TMP
 		std::unique_ptr<BoneJovi> m_boneJourno;
 	public:
+		bool firstTime = true;
 		void SetBones(DOG::ImportedAnimation& ia)
 		{
-			m_boneJourno->SetJoints(ia);
+			if (firstTime)
+			{
+				m_boneJourno->SetJoints(ia);
+				firstTime = false;
+			}
+			auto c = ia;
 		}
 	};
 }
