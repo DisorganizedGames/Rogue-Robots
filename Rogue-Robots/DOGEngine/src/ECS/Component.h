@@ -23,43 +23,20 @@ namespace DOG
 
 	struct TransformComponent : public Component<TransformComponent>
 	{
-		TransformComponent(DirectX::SimpleMath::Vector3 position = { 0.0f, 0.0f, 0.0f },
-			DirectX::SimpleMath::Vector3 rotation = { 0.0f, 0.0f, 0.0f },
-			DirectX::SimpleMath::Vector3 scale = { 1.0f, 1.0f, 1.0f }) noexcept
-		{
-			auto t = DirectX::SimpleMath::Matrix::CreateTranslation(position);
-			auto r = DirectX::SimpleMath::Matrix::CreateFromYawPitchRoll(rotation);
-			auto s = DirectX::SimpleMath::Matrix::CreateScale(scale);
-			worldMatrix = s * r * t;
-		}
-		TransformComponent& SetPosition(DirectX::SimpleMath::Vector3 position)
-		{
-			worldMatrix.Translation(position);
-			return *this;
-		}
-		TransformComponent& SetRotation(DirectX::SimpleMath::Vector3 rotation)
-		{
-			DirectX::XMVECTOR scale, rotationQuat, translation;
-			DirectX::XMMatrixDecompose(&scale, &rotationQuat, &translation, worldMatrix);
-			worldMatrix = DirectX::XMMatrixScalingFromVector(scale) *
-				DirectX::XMMatrixRotationRollPitchYawFromVector(rotation) *
-				DirectX::XMMatrixTranslationFromVector(translation);
-			return *this;
-		}
-		TransformComponent& SetScale(DirectX::SimpleMath::Vector3 scale)
-		{
-			DirectX::XMVECTOR xmScale, rotationQuat, translation;
-			DirectX::XMMatrixDecompose(&xmScale, &rotationQuat, &translation, worldMatrix);
-			worldMatrix = DirectX::XMMatrixScalingFromVector(scale) *
-				DirectX::XMMatrixRotationQuaternion(rotationQuat) *
-				DirectX::XMMatrixTranslationFromVector(translation);
-			return *this;
-		}
+		TransformComponent(const DirectX::SimpleMath::Vector3& position = { 0.0f, 0.0f, 0.0f },
+			const DirectX::SimpleMath::Vector3& rotation = { 0.0f, 0.0f, 0.0f },
+			const DirectX::SimpleMath::Vector3& scale = { 1.0f, 1.0f, 1.0f }) noexcept;
+		TransformComponent& SetPosition(const DirectX::SimpleMath::Vector3& position) noexcept;
+		TransformComponent& SetRotation(const DirectX::SimpleMath::Vector3& rotation) noexcept;
+		TransformComponent& SetScale(const DirectX::SimpleMath::Vector3& scale) noexcept;
+		DirectX::SimpleMath::Vector3 GetPosition() const noexcept;
+		DirectX::SimpleMath::Matrix GetRotation() const noexcept;
 
-		DirectX::SimpleMath::Vector3 GetPosition()
-		{
-			return { worldMatrix(3, 0) , worldMatrix(3, 1), worldMatrix(3, 2) };
-		}
+		TransformComponent& RotateW(const DirectX::SimpleMath::Vector3& rotation) noexcept;
+		TransformComponent& RotateW(const DirectX::SimpleMath::Matrix& rotation) noexcept;
+		TransformComponent& RotateL(const DirectX::SimpleMath::Vector3& rotation) noexcept;
+		TransformComponent& RotateL(const DirectX::SimpleMath::Matrix& rotation) noexcept;
+
 		operator const DirectX::SimpleMath::Matrix& () const { return worldMatrix; }
 		operator DirectX::SimpleMath::Matrix& () { return worldMatrix; }
 		DirectX::SimpleMath::Matrix worldMatrix = DirectX::SimpleMath::Matrix::Identity;
