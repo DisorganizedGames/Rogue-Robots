@@ -8,7 +8,7 @@ namespace DOG
 		LeftArrow = 37, UpArrow, RightArrow, DownArrow,
 		Zero = 48, One, Two, Three, Four, Five, Six, Seven, Eight, Nine,
 		A = 65, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
-		Ö = 192, Å = 221, Ä
+		F1 = 112, F2, F3, Ö = 192, Å = 221, Ä
 	};
 
 	constexpr const u16 KEY_COUNT{ 256 };
