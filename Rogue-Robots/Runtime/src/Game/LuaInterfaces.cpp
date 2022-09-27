@@ -17,12 +17,12 @@ void InputInterface::IsRightPressed(LuaContext* context)
 void InputInterface::IsKeyPressed(LuaContext* context)
 {
 	std::string input = context->GetString();
-	context->ReturnBoolean(Keyboard::IsKeyPressed((Key)input[0])); //Usch
+	context->ReturnBoolean(Keyboard::IsKeyPressed((Key)std::toupper(input[0]))); //Usch
 }
 
 //---------------------------------------------------------------------------------------------------------
 //Audio
-void AudioInterface::PlaySound(LuaContext*)
+void AudioInterface::PlaySound(LuaContext* context)
 {
 	//TODO
 }
