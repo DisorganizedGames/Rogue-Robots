@@ -23,7 +23,6 @@ namespace DOG
 	{
 		ASSERT(Exists(entityID), "Entity is invalid.");
 
-		m_entities[entityID] = MAX_ENTITIES;
 		for (u32 componentPoolIndex{ 0u }; componentPoolIndex < m_components.size(); componentPoolIndex++)
 		{
 			if (HasComponentInternal(componentPoolIndex, entityID))
@@ -31,10 +30,11 @@ namespace DOG
 				DestroyComponentInternal(componentPoolIndex, entityID);
 			}
 		}
+		m_entities[entityID] = MAX_ENTITIES;
 		m_freeList.push(entityID);
 	}
 
-	std::vector<entity>& EntityManager::GetAllEntities() noexcept
+	const std::vector<entity>& EntityManager::GetAllEntities() const noexcept
 	{
 		return m_entities;
 	}
@@ -46,6 +46,7 @@ namespace DOG
 
 		m_entities.clear();
 		m_components.clear();
+		m_bundles.clear();
 		Initialize();
 	}
 
@@ -66,9 +67,11 @@ namespace DOG
 			m_freeList.push(entityId);
 
 		m_components.reserve(INITIAL_COMPONENT_CAPACITY);
+		m_bundles.reserve(INITIAL_COMPONENT_CAPACITY);
 		for (u32 i{ 0u }; i < INITIAL_COMPONENT_CAPACITY; i++)
 		{
 			m_components.emplace_back(nullptr);
+			m_bundles.emplace_back(nullptr);
 		}
 	}
 
@@ -81,6 +84,11 @@ namespace DOG
 
 	void EntityManager::DestroyComponentInternal(const u32 componentPoolIndex, const entity entityID) noexcept
 	{
+		if (m_components[componentPoolIndex]->bundle != -1)
+		{
+			m_bundles[m_components[componentPoolIndex]->bundle]->UpdateOnRemove(entityID);
+		}
+
 		const auto last = m_components[componentPoolIndex]->denseArray.back();
 		std::swap(m_components[componentPoolIndex]->denseArray.back(), m_components[componentPoolIndex]->denseArray[m_components[componentPoolIndex]->sparseArray[entityID]]);
 		m_components[componentPoolIndex]->DestroyInternal(entityID);

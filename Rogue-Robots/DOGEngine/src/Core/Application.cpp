@@ -74,7 +74,8 @@ namespace DOG
 
 			//// ====== GPU
 			m_renderer->BeginFrame_GPU();
-			EntityManager::Get().Collect<TransformComponent, ModelComponent>().Do([&](TransformComponent& transformC, ModelComponent& modelC)
+
+			EntityManager::Get().Bundle<TransformComponent, ModelComponent>().Do([&](TransformComponent& transformC, ModelComponent& modelC)
 				{
 					ModelAsset* model = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(modelC));
 					for (u32 i = 0; i < model->gfxModel.mesh.numSubmeshes; ++i)
