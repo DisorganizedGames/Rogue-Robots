@@ -197,6 +197,7 @@ namespace DOG
 				m_pathTOAssetID[path] = id;
 			}
 			TextureAsset* p = GetAsset<TextureAsset>(id);
+			p->srgb = flag & AssetLoadFlag::Srgb;
 			m_assets[id]->loadFlag |= flag;
 			if (flag & AssetLoadFlag::CPUMemory)
 				m_assets[id]->unLoadFlag &= ~AssetUnLoadFlag::AllCPU;
