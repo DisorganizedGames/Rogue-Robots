@@ -17,6 +17,8 @@ void BoneJovi::SpawnControlWindow()
 {
 	if (ImGui::Begin("BonneJoints (ppp;)"))
 	{
+		ImGui::Text("Perform update this many times (for profiling)");
+		ImGui::SliderInt(" ", &m_imgui_profilePerformUpdate, 0, 100);
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::Columns(2, nullptr, true);
@@ -152,61 +154,64 @@ DirectX::FXMMATRIX BoneJovi::CalculateNodeTransformation(const DOG::AnimationDat
 
 void BoneJovi::UpdateSkeleton(u32 skeletonId, f32 dt)
 {
-	// For (job : jobs) get this data
-	const auto& rig = m_rigs[skeletonId];
-	const auto& anim = rig.animations[m_imgui_animation];
-	if (m_imgui_playAnimation)
+	for (size_t i = 0; i < m_imgui_profilePerformUpdate; i++)
 	{
-		m_imgui_animTime += m_imgui_timeScale * dt / anim.duration;
-		if (m_imgui_animTime > 1.0f)
+		// For (job : jobs) get this data
+		const auto& rig = m_rigs[skeletonId];
+		const auto& anim = rig.animations[m_imgui_animation];
+		if (m_imgui_playAnimation)
 		{
-			m_lastSRTkeys.assign(rig.nodes.size(), { 1,1,1 });
-			while (m_imgui_animTime > 1.0f)
-				m_imgui_animTime -= 1.0f;
+			m_imgui_animTime += m_imgui_timeScale * dt / anim.duration;
+			if (m_imgui_animTime > 1.0f)
+			{
+				m_lastSRTkeys.assign(rig.nodes.size(), { 1,1,1 });
+				while (m_imgui_animTime > 1.0f)
+					m_imgui_animTime -= 1.0f;
+			}
+			else if (m_imgui_animTime < 0.0f)
+				m_imgui_animTime = 1.0f + m_imgui_animTime;
+
+			m_currentTick = m_imgui_animTime * anim.ticks;
 		}
-		else if (m_imgui_animTime < 0.0f)
-			m_imgui_animTime = 1.0f + m_imgui_animTime;
+		else
+			m_currentTick = m_imgui_animTime * anim.ticks;
 
-		m_currentTick = m_imgui_animTime * anim.ticks;
-	}
-	else
-		m_currentTick = m_imgui_animTime * anim.ticks;
+		std::vector<DirectX::XMMATRIX> hereditaryTFs;
+		hereditaryTFs.reserve(rig.nodes.size());
 
-	std::vector<DirectX::XMMATRIX> hereditaryTFs;
-	hereditaryTFs.reserve(rig.nodes.size());
+		// Set node animation transformations
+		hereditaryTFs.push_back(DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation));
+		for (i32 i = 1; i < rig.nodes.size(); i++)
+		{
+			auto ntf = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
 
-	// Set node animation transformations
-	hereditaryTFs.push_back(DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation));
-	for (i32 i = 1; i < rig.nodes.size(); i++)
-	{
-		auto ntf = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
+			if (!m_imgui_bindPose && i > 1)
+				if (m_imgui_testAnimationBlend)
+					ntf = CalculateBlendTransformation(i);
+				else
+					ntf = CalculateNodeTransformation(anim, i, m_currentTick);
 
-		if (!m_imgui_bindPose && i > 1)
-			if (m_imgui_testAnimationBlend)
-				ntf = CalculateBlendTransformation(i);
-			else
-				ntf = CalculateNodeTransformation(anim, i, m_currentTick);
-
-		hereditaryTFs.push_back(ntf);
+			hereditaryTFs.push_back(ntf);
 #if defined _DEBUG
-		DirectX::XMMATRIX imguiMatrix = DirectX::XMMatrixScaling(m_imgui_scale[i].x, m_imgui_scale[i].y, m_imgui_scale[i].z) *
-										DirectX::XMMatrixRotationRollPitchYaw(m_imgui_rot[i].x, m_imgui_rot[i].y, m_imgui_rot[i].z) *
-										DirectX::XMMatrixTranslation(m_imgui_pos[i].x, m_imgui_pos[i].y, m_imgui_pos[i].z);
+			DirectX::XMMATRIX imguiMatrix = DirectX::XMMatrixScaling(m_imgui_scale[i].x, m_imgui_scale[i].y, m_imgui_scale[i].z) *
+				DirectX::XMMatrixRotationRollPitchYaw(m_imgui_rot[i].x, m_imgui_rot[i].y, m_imgui_rot[i].z) *
+				DirectX::XMMatrixTranslation(m_imgui_pos[i].x, m_imgui_pos[i].y, m_imgui_pos[i].z);
 
-		hereditaryTFs.back() *= imguiMatrix;
+			hereditaryTFs.back() *= imguiMatrix;
 #endif
-	}
+		}
 
-	// Apply parent Transformation
-	for (size_t i = 1; i < hereditaryTFs.size(); i++)
-		hereditaryTFs[i] = hereditaryTFs[rig.nodes[i].parentIdx] * hereditaryTFs[i];
+		// Apply parent Transformation
+		for (size_t i = 1; i < hereditaryTFs.size(); i++)
+			hereditaryTFs[i] = hereditaryTFs[rig.nodes[i].parentIdx] * hereditaryTFs[i];
 
-	auto rootTF = DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation);
-	for (size_t n = 0; n < rig.nodes.size(); n++)
-	{
-		auto joint = rig.nodes[n].jointIdx;
-		if (joint != -1)
-			DirectX::XMStoreFloat4x4(&m_vsJoints[joint], rootTF * hereditaryTFs[n] * DirectX::XMLoadFloat4x4(&rig.jointOffsets[joint]));
+		auto rootTF = DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation);
+		for (size_t n = 0; n < rig.nodes.size(); n++)
+		{
+			auto joint = rig.nodes[n].jointIdx;
+			if (joint != -1)
+				DirectX::XMStoreFloat4x4(&m_vsJoints[joint], rootTF * hereditaryTFs[n] * DirectX::XMLoadFloat4x4(&rig.jointOffsets[joint]));
+		}
 	}
 };
 void BoneJovi::SetJoints(DOG::ImportedAnimation& ia)

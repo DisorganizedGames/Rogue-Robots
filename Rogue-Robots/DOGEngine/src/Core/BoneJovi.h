@@ -61,6 +61,7 @@ private:
 	std::vector<DirectX::XMFLOAT4X4> m_vsJoints;
 private:
 	// IMGUI RELATED
+	int m_imgui_profilePerformUpdate = 1;
 	bool m_imgui_testAnimationBlend = false;
 	f32 m_imgui_blend = 0.0f;
 	i32 m_imgui_animation2 = 0;
