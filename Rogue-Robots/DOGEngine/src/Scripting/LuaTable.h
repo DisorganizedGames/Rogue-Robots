@@ -110,6 +110,7 @@ namespace DOG
 	inline Function LuaTable::AddFunctionToTable(int index)
 	{
 		m_luaW->AddFunctionToTable<func>(m_table, ++index);
+		//The get function handles the index inside so we do not need to increase it here
 		return GetFunctionFromTable(index);
 	}
 
@@ -117,6 +118,7 @@ namespace DOG
 	inline UserData LuaTable::AddUserDataToTable(int index, T* object, const std::string& interfaceName)
 	{
 		m_luaW->AddUserDataToTable(m_table, object, interfaceName, ++index);
+		//The get function handles the index inside so we do not need to increase it here
 		return GetUserDataFromTable(index);
 	}
 
