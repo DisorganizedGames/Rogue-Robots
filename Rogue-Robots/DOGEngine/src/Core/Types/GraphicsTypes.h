@@ -47,5 +47,7 @@ namespace DOG
 		u32 vertexCount{ 0 };
 		u32 indexStart{ 0 };
 		u32 indexCount{ 0 };
+		u32 blendStart{ 0 };
+		u32 blendCount{ 0 };
 	};
 }

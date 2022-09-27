@@ -187,7 +187,6 @@ namespace DOG
 			}
 			submesh_start += mesh->mNumVertices;
 		}
-		auto x = boneIndices[1756];
 		// normalize weights
 		for (auto& w : boneWeights)
 		{
@@ -205,13 +204,7 @@ namespace DOG
 			blendData.push_back({ boneIndices[i].indices[2], boneWeights[i].weights[2] });
 			blendData.push_back({ boneIndices[i].indices[3], boneWeights[i].weights[3] });
 		}
-		for (auto& bd : blendData)
-		{
-			bd.index = 69;
-			bd.weight = 69.0f;
-		}
-		auto c1r = blendData[1756 * 4];
-		auto c2r = blendData[1756 * 4 + 1];
+		
 		// resize buffer
 		m_model->mesh.vertexData[VertexAttribute::BlendData].resize(blendData.size() * sizeof(blendData[0]));
 		std::memcpy(m_model->mesh.vertexData[VertexAttribute::BlendData].data(), blendData.data(), blendData.size() * sizeof(blendData[0]));
@@ -336,7 +329,11 @@ namespace DOG
 				submesh_md.vertexCount = mesh->mNumVertices;
 				submesh_md.indexStart = (u32)indices.size();
 				submesh_md.indexCount = 0;
-
+				if(scene->HasAnimations())
+				{
+					submesh_md.blendStart = (u32)positions.size();
+					submesh_md.blendCount = mesh->mNumVertices;
+				}
 				// Count indices
 				for (u32 face_idx = 0; face_idx < mesh->mNumFaces; ++face_idx)
 				{

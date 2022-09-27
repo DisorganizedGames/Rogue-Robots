@@ -105,7 +105,7 @@ namespace DOG::gfx
 
 		std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> m_wmCallback;
 
-		// ================= RENDERING RESOURCES
+		// ================= RENDERING RESOURCES =================
 		Texture m_depthTex;
 		TextureView m_depthTarget;
 
@@ -118,8 +118,12 @@ namespace DOG::gfx
 		// Reusing a single command list for now
 		CommandList m_cmdl;
 
-
-
-
+		//TMP
+		std::unique_ptr<BoneJovi> m_boneJourno;
+	public:
+		void SetBones(DOG::ImportedAnimation& ia)
+		{
+			m_boneJourno->SetJoints(ia);
+		}
 	};
 }

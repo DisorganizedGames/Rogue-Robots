@@ -25,6 +25,7 @@ namespace DOG::gfx
 		m_clientWidth(clientWidth),
 		m_clientHeight(clientHeight)
 	{
+		m_boneJourno = std::make_unique<BoneJovi>();
 		m_backend = std::make_unique<gfx::RenderBackend_DX12>(debug);
 		m_rd = m_backend->CreateDevice();
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
@@ -156,11 +157,13 @@ namespace DOG::gfx
 
 	void Renderer::Update(f32 )
 	{
+		m_boneJourno->SpawnControlWindow();
+		m_boneJourno->UpdateSkeleton(0, 0.01f);
 	}
 
 	void Renderer::Render(f32 )
 	{
-		// ====== GPU
+		// ====== GPU ======
 		auto& scTex = m_scTextures[m_sc->GetNextDrawSurfaceIdx()];
 		auto& scPass = m_scPasses[m_sc->GetNextDrawSurfaceIdx()];
 
@@ -189,8 +192,15 @@ namespace DOG::gfx
 			struct PerFrameData
 			{
 				DirectX::XMMATRIX world, view, proj;
-				DirectX::XMFLOAT3 camPos;
+				DirectX::XMFLOAT4 camPos;
+				//tmp 
+				DirectX::XMFLOAT4X4 bones[110];
 			} pfData{};
+
+			//tmp
+			auto& joints = m_boneJourno->GetBones();
+			for (size_t i = 0; i < joints.size(); i++)
+				pfData.bones[i] = joints[i];
 
 			DirectX::XMVECTOR tmp;
 			auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
@@ -198,7 +208,7 @@ namespace DOG::gfx
 			auto pos = invVm.r[3];
 			DirectX::XMFLOAT3 posFloat3;
 			DirectX::XMStoreFloat3(&posFloat3, pos);
-			pfData.camPos = posFloat3;
+			pfData.camPos = { posFloat3.x, posFloat3.y, posFloat3.z, 5.5f };
 
 			pfData.world = sub.world;
 			//pfData.view = DirectX::XMMatrixLookAtLH({ 5.f, 2.f, 0.f }, { -1.f, 1.f, 1.f }, { 0.f, 1.f, 0.f });

@@ -16,7 +16,7 @@ namespace DOG::gfx
 	class GPUDynamicConstants
 	{
 	private:
-		static constexpr u16 ELEMENTSIZE = 256;
+		static constexpr u16 ELEMENTSIZE = 4096*2;
 	public:
 		GPUDynamicConstants(RenderDevice* rd, GPUGarbageBin* bin, u32 maxElementsPerVersion);
 
