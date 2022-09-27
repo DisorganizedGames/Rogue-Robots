@@ -155,10 +155,10 @@ namespace DOG::gfx
 		m_submissions.push_back(sub);
 	}
 
-	void Renderer::Update(f32 )
+	void Renderer::Update(f32 dt)
 	{
 		m_boneJourno->SpawnControlWindow();
-		m_boneJourno->UpdateSkeleton(0, 0.01f);
+		m_boneJourno->UpdateSkeleton(0, dt);
 	}
 
 	void Renderer::Render(f32 )

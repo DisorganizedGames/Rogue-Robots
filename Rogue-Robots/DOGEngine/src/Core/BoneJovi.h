@@ -38,7 +38,7 @@ private:
 		//f32 timeScale;
 		//f32 CurrentTick;
 		
-		// delay/loop/interupt/append etc. ?
+		// delay/loop/interupt/append/culled etc. ?
 	};
 private:
 	
