@@ -13,9 +13,5 @@ public:
 	virtual void OnEvent(DOG::IEvent& event) override final;
 
 private:
-	u64 m_redCube{ 0 };
-	u64 m_greenCube{ 0 };
-	u64 m_blueCube{ 0 };
-	u64 m_magentaCube{ 0 };
 	DOG::EntityManager& m_entityManager;
 };
