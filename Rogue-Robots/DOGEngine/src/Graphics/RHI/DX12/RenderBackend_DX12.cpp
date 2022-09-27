@@ -30,7 +30,7 @@ namespace DOG::gfx
 			HR_VFY(hr);
 
 			// CreatePlacedResource fails after some time with GBV on. Refer to DirectX12 discord for discussions
-			debug1->SetEnableGPUBasedValidation(false);
+			debug1->SetEnableGPUBasedValidation(true);
 			debug1->EnableDebugLayer();
 			debug1->SetEnableSynchronizedCommandQueueValidation(true);
 		}

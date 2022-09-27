@@ -127,9 +127,10 @@ namespace DOG::gfx
 			{
 				const auto& rgDesc = std::get<RGTextureDesc>(decl.desc);
 
-				TextureDesc desc(MemoryType::Default, rgDesc.format,
+				auto desc = TextureDesc(MemoryType::Default, rgDesc.format,
 					rgDesc.width, rgDesc.height, rgDesc.depth,
-					rgDesc.flags, rgDesc.initState);
+					rgDesc.flags, rgDesc.initState)
+					.SetMipLevels(rgDesc.mipLevels);
 				resource.resource = m_rd->CreateTexture(desc).handle;
 			}
 			else

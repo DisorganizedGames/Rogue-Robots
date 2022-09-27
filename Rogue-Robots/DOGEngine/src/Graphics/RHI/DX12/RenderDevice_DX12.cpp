@@ -35,6 +35,12 @@ namespace DOG::gfx
 
 		InitRootsig();
 
+		// Create texture pool
+		D3D12MA::POOL_DESC poolDesc = {};
+		poolDesc.HeapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
+		poolDesc.BlockSize = 700'000'000;
+		HRESULT hr = m_dma->CreatePool(&poolDesc, m_textureMemPool.GetAddressOf());
+		HR_VFY(hr);
 	}
 
 	RenderDevice_DX12::~RenderDevice_DX12()
@@ -112,6 +118,9 @@ namespace DOG::gfx
 
 		D3D12MA::ALLOCATION_DESC ad{};
 		ad.HeapType = to_internal(desc.memType);
+		//ad.CustomPool = m_textureMemPool.Get();
+		ad.Flags = D3D12MA::ALLOCATION_FLAG_COMMITTED;
+		//ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT;
 
 		D3D12_RESOURCE_DESC rd{};
 		rd.Dimension = to_internal(desc.type);

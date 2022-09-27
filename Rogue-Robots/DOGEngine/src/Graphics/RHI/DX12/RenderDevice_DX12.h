@@ -6,7 +6,7 @@
 #include "Utilities/DX12DescriptorChunk.h"
 #include "Utilities/DX12Fence.h"
 
-namespace D3D12MA { class Allocator; class Allocation; }
+namespace D3D12MA { class Allocator; class Allocation; class Pool; }
 class DX12DescriptorManager;
 class DX12Queue;
 
@@ -264,6 +264,7 @@ namespace DOG::gfx
 
 		std::unique_ptr<DX12Queue> m_directQueue, m_copyQueue, m_computeQueue;
 		ComPtr<D3D12MA::Allocator> m_dma;
+		ComPtr<D3D12MA::Pool> m_textureMemPool;
 
 		ComPtr<ID3D12RootSignature> m_gfxRsig;
 		std::unique_ptr<DX12DescriptorManager> m_descriptorMgr;

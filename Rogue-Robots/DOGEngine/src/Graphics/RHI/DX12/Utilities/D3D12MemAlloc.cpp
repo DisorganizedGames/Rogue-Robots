@@ -8396,8 +8396,8 @@ void BlockVector::Free(Allocation* hAllocation)
     }
 }
 
-//static bool yeah = false;
-//static int thing = 0;
+static bool yeah = false;
+static int thing = 0;
 
 HRESULT BlockVector::CreateResource(
     UINT64 size,
@@ -8413,19 +8413,19 @@ HRESULT BlockVector::CreateResource(
     HRESULT hr = Allocate(size, alignment, allocDesc, 1, ppAllocation);
     if (SUCCEEDED(hr))
     {
-        //if (!yeah)
-        //{
-        //    thing = 0;
-        //    yeah = true;
-        //}
-        //++thing;
-        //printf(std::to_string(thing).c_str());
-        //printf("\n");
+        if (!yeah)
+        {
+            thing = 0;
+            yeah = true;
+        }
+        ++thing;
+        printf(std::to_string(thing).c_str());
+        printf("\n");
 
-        //if (thing == 1034)
-        //{
-        //    printf("dothing");
-        //}
+        if (thing == 1034)
+        {
+            printf("dothing");
+        }
 
         ID3D12Resource* res = NULL;
         hr = m_hAllocator->GetDevice()->CreatePlacedResource(
