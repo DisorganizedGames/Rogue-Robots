@@ -27,9 +27,9 @@ namespace DOG
 	{
 		if (m_asset)
 		{
-			if (CheckIfLoadingAsync())
+			while (CheckIfLoadingAsync())
 			{
-				assert(false); // Does this ever happen, if so create a task to fix this.
+				std::cout << "blocking in wait of async function to complete" << std::endl;
 			}
 
 			delete m_asset;
@@ -91,9 +91,9 @@ namespace DOG
 	{
 		if (m_asset)
 		{
-			if (CheckIfLoadingAsync())
+			while (CheckIfLoadingAsync())
 			{
-				assert(false); // Does this ever happen, if so create a task to fix this.
+				std::cout << "blocking in wait of async function to complete" << std::endl;
 			}
 
 			delete m_asset;
