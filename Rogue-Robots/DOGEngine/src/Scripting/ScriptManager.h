@@ -66,6 +66,8 @@ namespace DOG
 		void RunLuaFile(const std::string& luaFileName);
 		//Adds a script and runs it
 		ScriptComponent& AddScript(entity entity, const std::string& luaFileName);
+		//Get ScriptData
+		ScriptData GetScript(entity entity, const std::string& luaFileName);
 		//Removes a script from entity
 		void RemoveScript(entity entity, const std::string& luaFileName);
 		//Removes all scripts from an entity

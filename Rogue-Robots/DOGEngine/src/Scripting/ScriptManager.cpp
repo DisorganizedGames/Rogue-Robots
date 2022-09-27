@@ -90,6 +90,7 @@ namespace DOG
 #endif // _DEBUG
 
 		m_idCounter = 0;
+		m_sortedScriptsHalfwayIndex = 0;
 	}
 
 	void ScriptManager::RunLuaFile(const std::string& luaFileName)
@@ -131,14 +132,42 @@ namespace DOG
 		//Return script component
 		//Return the entity component if it already exists
 		bool hasScriptComponent = m_entityManager.HasComponent<ScriptComponent>(entity);
-		ScriptComponent scriptComponent(0);
 		if (hasScriptComponent)
 		{
-			scriptComponent = m_entityManager.GetComponent<ScriptComponent>(entity);
+			return m_entityManager.GetComponent<ScriptComponent>(entity);
 		}
 		else
-			scriptComponent = m_entityManager.AddComponent<ScriptComponent>(entity, entity);
-		return scriptComponent;
+			return m_entityManager.AddComponent<ScriptComponent>(entity, entity);
+	}
+
+	ScriptData ScriptManager::GetScript(entity entity, const std::string& luaFileName)
+	{
+		auto itScriptToVector = m_scriptToVector.find(luaFileName.c_str());
+		if (itScriptToVector == m_scriptToVector.end())
+		{
+			assert(false);
+			return ScriptData();
+		}
+
+		std::vector<ScriptData>* scriptDataVector = nullptr;
+		if (itScriptToVector->second.sorted)
+		{
+			scriptDataVector = &m_sortedScripts[itScriptToVector->second.vectorIndex];
+		}
+		else
+		{
+			scriptDataVector = &m_unsortedScripts[itScriptToVector->second.vectorIndex];
+		}
+
+		//Find the scriptdata and returns it
+		for (u32 index = 0; index < scriptDataVector->size(); ++index)
+		{
+			if (entity == (*scriptDataVector)[index].entity)
+				return (*scriptDataVector)[index];
+		}
+
+		assert(false);
+		return ScriptData();
 	}
 
 	void ScriptManager::RemoveScript(entity entity, const std::string& luaFileName)
@@ -151,12 +180,12 @@ namespace DOG
 
 		if (itScriptToVector->second.sorted)
 		{
-			auto vector = m_sortedScripts[itScriptToVector->second.vectorIndex];
+			auto& vector = m_sortedScripts[itScriptToVector->second.vectorIndex];
 			RemoveScriptData(vector, entity);
 		}
 		else
 		{
-			auto vector = m_unsortedScripts[itScriptToVector->second.vectorIndex];
+			auto& vector = m_unsortedScripts[itScriptToVector->second.vectorIndex];
 			RemoveScriptData(vector, entity);
 		}
 	}
