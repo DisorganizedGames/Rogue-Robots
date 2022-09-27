@@ -8,6 +8,7 @@ namespace DOG
 	class LuaTable
 	{
 		friend LuaContext;
+		friend LuaW;
 
 	private:
 		LuaW* m_luaW;

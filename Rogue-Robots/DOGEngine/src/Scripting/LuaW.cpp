@@ -1,4 +1,5 @@
 #include "LuaW.h"
+#include "LuaTable.h"
 
 namespace DOG
 {
@@ -744,6 +745,11 @@ namespace DOG
 	void LuaW::PushStack(Table& table)
 	{
 		PushTableToStack(table);
+	}
+
+	void LuaW::PushStack(LuaTable& table)
+	{
+		PushTableToStack(table.GetTable());
 	}
 
 	void LuaW::PushStack()

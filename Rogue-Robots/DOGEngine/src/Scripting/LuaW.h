@@ -104,6 +104,8 @@ namespace DOG
 		void PushStack(const char* string);
 		//Push table, Used for UserData and functions aswell
 		void PushStack(Table& table);
+		//Push LuaTable
+		void PushStack(LuaTable& table);
 		//Does nothing (Exist because it is needed for Args... to push an empty argument)
 		void PushStack();
 
