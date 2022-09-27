@@ -188,12 +188,13 @@ void BoneJovi::UpdateSkeleton(u32 skeletonId, f32 dt)
 				ntf = CalculateNodeTransformation(anim, i, m_currentTick);
 
 		hereditaryTFs.push_back(ntf);
-
+#if defined _DEBUG
 		DirectX::XMMATRIX imguiMatrix = DirectX::XMMatrixScaling(m_imgui_scale[i].x, m_imgui_scale[i].y, m_imgui_scale[i].z) *
 										DirectX::XMMatrixRotationRollPitchYaw(m_imgui_rot[i].x, m_imgui_rot[i].y, m_imgui_rot[i].z) *
 										DirectX::XMMatrixTranslation(m_imgui_pos[i].x, m_imgui_pos[i].y, m_imgui_pos[i].z);
 
 		hereditaryTFs.back() *= imguiMatrix;
+#endif
 	}
 
 	// Apply parent Transformation
