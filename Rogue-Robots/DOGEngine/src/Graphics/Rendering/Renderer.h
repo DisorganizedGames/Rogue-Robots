@@ -121,5 +121,12 @@ namespace DOG::gfx
 		std::unique_ptr<RGResourceManager> m_rgResMan;
 
 
+		//TMP
+		std::unique_ptr<BoneJovi> m_boneJourno;
+	public:
+		void SetBones(DOG::ImportedAnimation& ia)
+		{
+			m_boneJourno->SetJoints(ia);
+		}
 	};
 }

@@ -30,7 +30,7 @@ namespace DOG
 	}
 
 	Application::Application(const ApplicationSpecification& spec) noexcept
-		: m_specification{ spec }, m_isRunning{ true }, m_layerStack{ LayerStack::Get() }
+		: m_specification{ spec }, m_isRunning{ true }, m_layerStack{ LayerStack::Get()}
 	{
 		OnStartUp();
 	}
@@ -43,6 +43,15 @@ namespace DOG
 	using namespace DOG::gfx;
 	void Application::Run() noexcept
 	{
+		// Temporary read only data from runtime
+		bool showDemoWindow = true;
+		EntityManager::Get().Collect<ModelComponent, ModelAnimationComponent>().Do([&](ModelComponent& modelC, ModelAnimationComponent& animationC)
+			{
+				ModelAsset* model = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(modelC));
+				if(animationC.skeletonId == 0) // avoid unref. warning
+					m_renderer->SetBones(model->animation);
+			});
+
 		while (m_isRunning)
 		{
 			Time::Start();

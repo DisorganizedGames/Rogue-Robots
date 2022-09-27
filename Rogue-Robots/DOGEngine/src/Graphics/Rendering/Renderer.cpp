@@ -27,6 +27,7 @@ namespace DOG::gfx
 		m_clientWidth(clientWidth),
 		m_clientHeight(clientHeight)
 	{
+		m_boneJourno = std::make_unique<BoneJovi>();
 		m_backend = std::make_unique<gfx::RenderBackend_DX12>(debug);
 		m_rd = m_backend->CreateDevice();
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
@@ -134,6 +135,8 @@ namespace DOG::gfx
 
 	void Renderer::Update(f32)
 	{
+		m_boneJourno->SpawnControlWindow();
+		m_boneJourno->UpdateSkeleton(0, 0.01f);
 	}
 
 	void Renderer::Render(f32)

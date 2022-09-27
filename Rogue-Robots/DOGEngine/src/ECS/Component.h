@@ -50,6 +50,6 @@ namespace DOG
 
 	struct ModelAnimationComponent : public Component<ModelAnimationComponent>
 	{
-		int animationId;
+		int skeletonId;
 	};
 }
