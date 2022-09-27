@@ -6,6 +6,8 @@
 #include "Utilities/DX12DescriptorChunk.h"
 #include "Utilities/DX12Fence.h"
 
+#include "../../Memory/GPVirtualAllocator.h"
+
 namespace D3D12MA { class Allocator; class Allocation; class Pool; }
 class DX12DescriptorManager;
 class DX12Queue;
@@ -155,6 +157,8 @@ namespace DOG::gfx
 		ID3D12DescriptorHeap* GetMainResourceDH() const;
 		ID3D12GraphicsCommandList4* GetListForExternal(CommandList cmdl);
 
+		void CreateBogusHeap();
+		void CreateBogusResource(TextureDesc desc);
 
 
 		// Helpers
@@ -191,7 +195,7 @@ namespace DOG::gfx
 			ComPtr<D3D12MA::Allocation> alloc;
 			ComPtr<ID3D12Resource> resource;
 
-			~GPUResource_Storage();
+			virtual ~GPUResource_Storage();
 		};
 
 		struct Buffer_Storage : public GPUResource_Storage
@@ -202,6 +206,7 @@ namespace DOG::gfx
 
 		struct Texture_Storage : public GPUResource_Storage
 		{
+			std::optional<GPVirtualAllocation> valloc;
 			TextureDesc desc;
 
 			// this shouldn't be here
@@ -264,14 +269,20 @@ namespace DOG::gfx
 
 		std::unique_ptr<DX12Queue> m_directQueue, m_copyQueue, m_computeQueue;
 		ComPtr<D3D12MA::Allocator> m_dma;
-		ComPtr<D3D12MA::Pool> m_textureMemPool;
+		ComPtr<D3D12MA::Pool> m_pool;
+
+#ifdef _DEBUG
+		std::unordered_map<u64, std::unordered_map<u32, std::vector<ComPtr<ID3D12Resource>>>> m_mapping;
+
+#endif
+
+		GPVirtualAllocator m_textureHeapAtor;
+		ComPtr<ID3D12Heap> m_textureHeap;
 
 		ComPtr<ID3D12RootSignature> m_gfxRsig;
 		std::unique_ptr<DX12DescriptorManager> m_descriptorMgr;
 
 		HandleAllocator m_rhp;
-
-		std::vector<D3D12_RENDER_PASS_RENDER_TARGET_DESC> tmp;
 
 		std::vector<std::optional<Buffer_Storage>> m_buffers;
 		std::vector<std::optional<Texture_Storage>> m_textures;

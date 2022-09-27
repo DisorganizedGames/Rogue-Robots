@@ -190,6 +190,9 @@ namespace DOG::gfx
 				continue;
 
 			RGResourceImported& imported = std::get<RGResourceImported>(resource.variants);
+			if (imported.currState == imported.importExitState)
+				continue;
+
 			if (resource.resourceType == RGResourceType::Texture)
 				barriers.push_back(GPUBarrier::Transition(Texture(resource.resource), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, imported.currState, imported.importExitState));
 			else

@@ -35,11 +35,13 @@ namespace DOG::gfx
 
 		InitRootsig();
 
-		// Create texture pool
-		D3D12MA::POOL_DESC poolDesc = {};
+		CreateBogusHeap();
+
+		// Create pool for textures
+		D3D12MA::POOL_DESC poolDesc{};
 		poolDesc.HeapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
-		poolDesc.BlockSize = 700'000'000;
-		HRESULT hr = m_dma->CreatePool(&poolDesc, m_textureMemPool.GetAddressOf());
+		poolDesc.BlockSize = 400'000'000;
+		HRESULT hr = m_dma->CreatePool(&poolDesc, m_pool.GetAddressOf());
 		HR_VFY(hr);
 	}
 
@@ -68,7 +70,7 @@ namespace DOG::gfx
 
 	RenderDevice_DX12::GPUResource_Storage::~GPUResource_Storage()
 	{
-		//printf("deleted\n");
+		printf("deleted\n");
 	}
 
 	Swapchain* RenderDevice_DX12::CreateSwapchain(void* hwnd, u8 numBuffers)
@@ -108,7 +110,7 @@ namespace DOG::gfx
 		HR_VFY(hr);
 
 		auto handle = m_rhp.Allocate<Buffer>();
-		HandleAllocator::TryInsert(m_buffers, storage, HandleAllocator::GetSlot(handle.handle));
+		HandleAllocator::TryInsertMove(m_buffers, std::move(storage), HandleAllocator::GetSlot(handle.handle));
 		return handle;
 	}
 
@@ -118,9 +120,8 @@ namespace DOG::gfx
 
 		D3D12MA::ALLOCATION_DESC ad{};
 		ad.HeapType = to_internal(desc.memType);
-		//ad.CustomPool = m_textureMemPool.Get();
-		ad.Flags = D3D12MA::ALLOCATION_FLAG_COMMITTED;
-		//ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT;
+		ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT | D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET;
+		ad.CustomPool = m_pool.Get();
 
 		D3D12_RESOURCE_DESC rd{};
 		rd.Dimension = to_internal(desc.type);
@@ -150,7 +151,6 @@ namespace DOG::gfx
 			clearVal.Color[3] = desc.clearColor[3];
 		}
 
-
 		D3D12_RESOURCE_STATES initState{ desc.initState };
 		if (ad.HeapType == D3D12_HEAP_TYPE_UPLOAD)
 			initState = D3D12_RESOURCE_STATE_GENERIC_READ;
@@ -163,8 +163,39 @@ namespace DOG::gfx
 		hr = m_dma->CreateResource(&ad, &rd, initState, &clearVal, storage.alloc.GetAddressOf(), IID_PPV_ARGS(storage.resource.GetAddressOf()));
 		HR_VFY(hr);
 
+		// Hold the original resource place on a certain heap on a certain offset
+#ifdef _DEBUG
+		//auto& heapMap = m_mapping[(u64)storage.alloc->GetHeap()];
+		//heapMap[storage.alloc->GetOffset()].push_back(storage.resource);
+
+		// intentionally leak to avoid crashing CreatePlacedResource
+		//storage.resource->AddRef();	
+#endif
+
+		//u32 numSubresources{ 0 };
+		//if (desc.mipLevels == 0)
+		//{
+		//	u32 smallest = desc.width > desc.height ? desc.height : desc.width;
+		//	u32 maxMips = std::log2(smallest);
+		//	numSubresources = maxMips * desc.depth;
+		//}
+		//else
+		//	numSubresources = desc.mipLevels * desc.depth;
+
+		//u64 totalSize{ 0 };
+		//m_device->GetCopyableFootprints(&rd, 0, numSubresources, 0, nullptr, nullptr, nullptr, &totalSize);
+		////storage.valloc = m_textureHeapAtor.Allocate(totalSize, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
+		////ID3D12Resource* res;
+		////hr = m_device->CreatePlacedResource(m_textureHeap.Get(), 0, &rd, desc.initState, nullptr, IID_PPV_ARGS(&res));
+		//hr = m_device->CreatePlacedResource(m_textureHeap.Get(), 0, &rd, desc.initState, nullptr, IID_PPV_ARGS(storage.resource.GetAddressOf()));
+		////storage.resource = res;
+		//HR_VFY(hr);
+
+		//storage.resource->AddRef();
+
 		auto handle = m_rhp.Allocate<Texture>();
-		HandleAllocator::TryInsert(m_textures, storage, HandleAllocator::GetSlot(handle.handle));
+		HandleAllocator::TryInsertMove(m_textures, std::move(storage), HandleAllocator::GetSlot(handle.handle));
+
 		return handle;
 	}
 
@@ -185,7 +216,7 @@ namespace DOG::gfx
 		storage.pipeline = pso;
 
 		auto handle = m_rhp.Allocate<Pipeline>();
-		HandleAllocator::TryInsert(m_pipelines, storage, HandleAllocator::GetSlot(handle.handle));
+		HandleAllocator::TryInsertMove(m_pipelines, std::move(storage), HandleAllocator::GetSlot(handle.handle));
 		return handle;
 	}
 
@@ -234,7 +265,7 @@ namespace DOG::gfx
 		}
 
 		auto handle = m_rhp.Allocate<RenderPass>();
-		HandleAllocator::TryInsert(m_renderPasses, storage, HandleAllocator::GetSlot(handle.handle));
+		HandleAllocator::TryInsertMove(m_renderPasses, std::move(storage), HandleAllocator::GetSlot(handle.handle));
 		return handle;
 
 
@@ -309,7 +340,7 @@ namespace DOG::gfx
 		}
 
 		auto handle = m_rhp.Allocate<BufferView>();
-		HandleAllocator::TryInsert(m_bufferViews, BufferView_Storage(buffer, desc.viewType, view_desc), HandleAllocator::GetSlot(handle.handle));
+		HandleAllocator::TryInsertMove(m_bufferViews, std::move(BufferView_Storage(buffer, desc.viewType, view_desc)), HandleAllocator::GetSlot(handle.handle));
 		return handle;
 
 	}
@@ -356,7 +387,7 @@ namespace DOG::gfx
 		}
 
 		auto handle = m_rhp.Allocate<TextureView>();
-		HandleAllocator::TryInsert(m_textureViews, TextureView_Storage(texture, desc.viewType, view_desc), HandleAllocator::GetSlot(handle.handle));
+		HandleAllocator::TryInsertMove(m_textureViews, std::move(TextureView_Storage(texture, desc.viewType, view_desc)), HandleAllocator::GetSlot(handle.handle));
 		return handle;
 	}
 
@@ -367,6 +398,10 @@ namespace DOG::gfx
 
 	void RenderDevice_DX12::FreeTexture(Texture handle)
 	{
+		auto& tex_storage = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(handle.handle));
+		if (tex_storage.valloc)
+			m_textureHeapAtor.Free(std::move(*tex_storage.valloc));
+
 		HandleAllocator::FreeStorage(m_rhp, m_textures, handle);
 	}
 
@@ -522,7 +557,7 @@ namespace DOG::gfx
 			curr_queue->insert_signal(sync.fence);
 
 			syncReceipt = m_rhp.Allocate<SyncReceipt>();
-			HandleAllocator::TryInsert(m_syncs, std::move(sync), HandleAllocator::GetSlot(syncReceipt->handle));
+			HandleAllocator::TryInsertMove(m_syncs, std::move(sync), HandleAllocator::GetSlot(syncReceipt->handle));
 		}
 		return syncReceipt;
 
@@ -574,7 +609,7 @@ namespace DOG::gfx
 			curr_queue->insert_signal(sync.fence);
 
 			syncReceipt = m_rhp.Allocate<SyncReceipt>();
-			HandleAllocator::TryInsert(m_syncs, std::move(sync), HandleAllocator::GetSlot(syncReceipt->handle));
+			HandleAllocator::TryInsertMove(m_syncs, std::move(sync), HandleAllocator::GetSlot(syncReceipt->handle));
 		}
 		return syncReceipt;
 	}
@@ -831,7 +866,7 @@ namespace DOG::gfx
 		auto desc = texture->GetDesc();
 
 		auto handle = m_rhp.Allocate<Texture>();
-		HandleAllocator::TryInsert(m_textures, storage, HandleAllocator::GetSlot(handle.handle));
+		HandleAllocator::TryInsertMove(m_textures, std::move(storage), HandleAllocator::GetSlot(handle.handle));
 		return handle;
 	}
 
@@ -989,6 +1024,40 @@ namespace DOG::gfx
 			return D3D12_COMMAND_LIST_TYPE_DIRECT;
 		}
 	}
+
+	void RenderDevice_DX12::CreateBogusHeap()
+	{
+		D3D12_HEAP_DESC desc{};
+		desc.SizeInBytes = 100'000'000;
+		desc.Flags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
+		desc.Properties.Type = D3D12_HEAP_TYPE_DEFAULT;
+
+		m_textureHeapAtor = GPVirtualAllocator(desc.SizeInBytes, true);
+
+		HRESULT hr = m_device->CreateHeap(&desc, IID_PPV_ARGS(m_textureHeap.GetAddressOf()));
+		HR_VFY(hr);
+	}
+
+	void RenderDevice_DX12::CreateBogusResource(TextureDesc desc)
+	{
+		D3D12_RESOURCE_DESC rd{};
+		rd.Dimension = to_internal(desc.type);
+		rd.Alignment = desc.alignment;
+		rd.Width = desc.width;
+		rd.Height = desc.height;
+		rd.DepthOrArraySize = (u16)desc.depth;
+		rd.MipLevels = (u16)desc.mipLevels;
+		rd.Format = desc.format;
+		rd.SampleDesc.Count = desc.sampleCount;
+		rd.SampleDesc.Quality = desc.sampleQuality;
+		rd.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+		rd.Flags = desc.flags;
+		ID3D12Resource* res;
+
+		HRESULT hr = m_device->CreatePlacedResource(m_textureHeap.Get(), 0, &rd, desc.initState, nullptr, IID_PPV_ARGS(&res));
+		HR_VFY(hr);
+	}
+
 }
 
 

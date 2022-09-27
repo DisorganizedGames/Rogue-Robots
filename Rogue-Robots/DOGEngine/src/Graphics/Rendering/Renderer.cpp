@@ -250,6 +250,29 @@ namespace DOG::gfx
 
 		m_rd->SubmitCommandList(m_cmdl);
 
+		
+
+
+		//TextureDesc desc{};
+		//desc.width = 1920;
+		//desc.height = 1080;
+		//desc.depth = 1;
+		//desc.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		//desc.flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+		//desc.mipLevels = 1;
+
+
+		//for (u32 i = 0; i < 10; ++i)
+		//{
+		//	//((RenderDevice_DX12*)m_rd)->CreateBogusResource(desc);
+
+		//	auto t = m_rd->CreateTexture(desc);
+		//	auto delFunc = [rd = m_rd, t]()
+		//	{
+		//		rd->FreeTexture(t);
+		//	};
+		//	m_bin->PushDeferredDeletion(delFunc);
+		//}
 
 	
 		{
@@ -388,6 +411,112 @@ namespace DOG::gfx
 
 		}
 
+		/*
+		
+			// ====== GPU
+		auto& scTex = m_scTextures[m_sc->GetNextDrawSurfaceIdx()];
+
+		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
+		auto& rg = *m_rg;
+	
+		// Forward pass to HDR
+		{
+			struct PassData {};
+			rg.AddPass<PassData>("Forward Pass",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					builder.ImportTexture(RG_RESOURCE(Backbuffer1), scTex, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
+
+					RGTextureDesc desc{};
+					desc.width = m_clientWidth;
+					desc.height = m_clientHeight;
+					desc.initState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+					desc.format = DXGI_FORMAT_D32_FLOAT;
+					desc.flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+					builder.DeclareTexture(RG_RESOURCE(MainDepth), desc);
+					//builder.ImportTexture(RG_RESOURCE(MainDepth), m_depthTex, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COMMON);
+
+					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer1), RenderPassAccessType::Clear_Preserve,
+						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+					builder.ReadOrWriteDepth(RG_RESOURCE(MainDepth), RenderPassAccessType::Clear_Discard,
+						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
+				},
+				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				{
+					rd->Cmd_SetViewports(cmdl, Viewports()
+						.Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight));
+					rd->Cmd_SetScissorRects(cmdl, ScissorRects()
+						.Append(0, 0, m_clientWidth, m_clientHeight));
+
+					rd->Cmd_SetPipeline(cmdl, m_meshPipe);
+					rd->Cmd_SetIndexBuffer(cmdl, m_globalMeshTable->GetIndexBuffer());
+					for (const auto& sub : m_submissions)
+					{
+						auto pfConstant = m_dynConstants->Allocate();
+						struct PerFrameData
+						{
+							DirectX::XMMATRIX world, view, proj;
+							DirectX::XMFLOAT3 camPos;
+						} pfData{};
+
+						DirectX::XMVECTOR tmp;
+						auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
+
+						auto pos = invVm.r[3];
+						DirectX::XMFLOAT3 posFloat3;
+						DirectX::XMStoreFloat3(&posFloat3, pos);
+						pfData.camPos = posFloat3;
+
+						pfData.world = sub.world;
+						//pfData.view = DirectX::XMMatrixLookAtLH({ 5.f, 2.f, 0.f }, { -1.f, 1.f, 1.f }, { 0.f, 1.f, 0.f });
+						pfData.view = m_viewMat;
+						// We are using REVERSE DEPTH!!!
+						//pfData.proj = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_clientWidth/m_clientHeight, 800.f, 0.1f);
+						pfData.proj = m_projMat;
+						std::memcpy(pfConstant.memory, &pfData, sizeof(pfData));
+
+						auto args = ShaderArgs()
+							.AppendConstant(pfConstant.globalDescriptor)
+							.AppendConstant(m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh))
+							.AppendConstant(m_globalMeshTable->GetSubmeshDescriptor())
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Position))
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::UV))
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Normal))
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Tangent))
+							.AppendConstant(m_globalMaterialTable->GetDescriptor())
+							.AppendConstant(m_globalMaterialTable->GetMaterialIndex(sub.mat)
+							);
+
+						rd->Cmd_UpdateShaderArgs(cmdl, args);
+
+						auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+						rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
+
+					}
+				});
+		}
+
+		// Draw ImGUI on backbuffer
+		{
+			struct PassData {};
+			rg.AddPass<PassData>("ImGUI Pass",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					builder.WriteAliasedRenderTarget(RG_RESOURCE(Backbuffer2), RG_RESOURCE(Backbuffer1), RenderPassAccessType::Preserve_Preserve,
+						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+				},
+				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				{
+					m_imgui->Render(rd, cmdl);
+
+				});
+		}
+
+		rg.Build();
+		rg.Execute();
+		
+		*/
 
 	
 	}
@@ -739,7 +868,10 @@ namespace DOG::gfx
 
 	LRESULT Renderer::WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
-		return m_imgui->WinProc(hwnd, uMsg, wParam, lParam);
+		if (m_imgui)
+			return m_imgui->WinProc(hwnd, uMsg, wParam, lParam);
+		else
+			return false;
 	}
 
 }

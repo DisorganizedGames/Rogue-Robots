@@ -54,6 +54,7 @@ namespace DOG::gfx
 		}
 
 		m_resMan->ImportedResourceExitTransition(m_cmdl);
+		//m_rd->SubmitCommandList(m_cmdl);
 
 		// Clean up command list
 		auto delFunc = [rd = m_rd, cmdl = m_cmdl]()
@@ -96,25 +97,7 @@ namespace DOG::gfx
 			}
 
 
-
-
-			//auto df = [rd = m_rd, resMan = m_resMan, views = std::move(pass->passResources.m_views)]() mutable
-			//{
-			//	for (const auto& [id, view] : views)
-			//	{
-			//		if (resMan->GetResourceType(id) == RGResourceType::Texture)
-			//			rd->FreeView(TextureView(view));
-			//		else
-			//			rd->FreeView(BufferView(view));
-			//	}
-			//};
-			//m_bin->PushDeferredDeletion(df);
-
 		}
-
-		// clean up cmdl by pushing to bin
-		//m_rd->Flush();
-		//m_rd->RecycleCommandList(m_cmdl);
 	}
 
 	void RenderGraph::BuildAdjacencyMap()
@@ -268,14 +251,14 @@ namespace DOG::gfx
 			{
 				barr = GPUBarrier::Transition(
 					Texture(resource),
-					0,
+					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 					currState, desiredState);
 			}
 			else
 			{
 				barr = GPUBarrier::Transition(
 					Texture(resource),
-					0,
+					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 					currState, desiredState);
 			}
 			if (currState != desiredState)
@@ -436,6 +419,27 @@ namespace DOG::gfx
 		input.viewDesc = desc;
 		input.type = RGResourceType::Texture;
 		m_pass.inputs.push_back(input);
+	}
+
+	void RenderGraph::PassBuilder::ReadOrWriteDepth(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc)
+	{
+		// DSV read
+		if (desc.depthReadOnly)
+		{
+			assert(false);		// @TODO
+		}
+		// DSV write
+		else
+		{
+			PassIO output{};
+			output.id = id;
+			output.type = RGResourceType::Texture;
+			output.viewDesc = desc;
+			output.desiredState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+			output.rpAccessType = access;
+			output.rpStencilAccessType = RenderPassAccessType::Discard_Discard;
+			m_pass.outputs.push_back(output);
+		}
 	}
 
 	void RenderGraph::PassBuilder::WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc)
