@@ -45,12 +45,6 @@ namespace DOG
 	{
 		// Temporary read only data from runtime
 		bool showDemoWindow = true;
-		EntityManager::Get().Collect<ModelComponent, ModelAnimationComponent>().Do([&](ModelComponent& modelC, ModelAnimationComponent& animationC)
-			{
-				ModelAsset* model = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(modelC));
-				if(animationC.skeletonId == 0) // avoid unref. warning
-					m_renderer->SetBones(model->animation);
-			});
 
 		while (m_isRunning)
 		{
@@ -91,12 +85,18 @@ namespace DOG
 							m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], transformC);
 					}
 				});
+			EntityManager::Get().Collect<ModelComponent, ModelAnimationComponent>().Do([&](ModelComponent& modelC, ModelAnimationComponent& modelaC)
+				{
+					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
+					if (model)
+						m_renderer->SetBones(model->animation);
+				});
 			auto mainCam = CameraComponent::s_mainCamera;
 			auto& proj = (DirectX::XMMATRIX&)mainCam->projMatrix;
 			m_renderer->SetMainRenderCamera(mainCam->viewMatrix, &proj);
 			
-
-			m_renderer->Update((f32)Time::DeltaTime());
+			if(!m_renderer->firstTime)
+				m_renderer->Update((f32)Time::DeltaTime());
 			m_renderer->Render(0.0f);
 
 			m_renderer->EndFrame_GPU(true);

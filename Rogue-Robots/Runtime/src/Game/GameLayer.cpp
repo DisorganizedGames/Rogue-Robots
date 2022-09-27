@@ -15,13 +15,10 @@ GameLayer::GameLayer() noexcept
 	m_mixamo = am.LoadModelAsset("Assets/mixamo/walkmix.fbx");
 
 	entity entity1 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelAnimationComponent>(entity1).skeletonId = 0;
 	m_entityManager.AddComponent<ModelComponent>(entity1, m_mixamo);
-	m_entityManager.AddComponent<TransformComponent>(entity1)
-		.SetPosition({ 4, -2, 5 })
-		.SetRotation({ 0, 0, 0 })
-		.SetScale({0.008f, 0.008f, 0.008f});
+	m_entityManager.AddComponent<TransformComponent>(entity1, Vector3(-4, -2, 5), Vector3(0.1f, 0, 0));
 	m_entityManager.AddComponent<NetworkPlayerComponent>(entity1).playerId = 0;
+	m_entityManager.AddComponent<ModelAnimationComponent>(entity1).skeletonId = 0;
 
 	entity entity2 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity2, m_greenCube);

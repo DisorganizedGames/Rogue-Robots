@@ -60,6 +60,7 @@ namespace DOG
 
 					model->meshAsset.indices = std::move(asset->mesh.indices);
 					model->meshAsset.vertexData = std::move(asset->mesh.vertexData);
+					model->animation = std::move(asset->animation);
 					model->submeshes = std::move(asset->submeshes);
 
 					// Add command that runs on the main thread
@@ -90,6 +91,8 @@ namespace DOG
 			assetOut->meshAsset.indices = std::move(asset->mesh.indices);
 			assetOut->meshAsset.vertexData = std::move(asset->mesh.vertexData);
 			assetOut->submeshes = std::move(asset->submeshes);
+			assetOut->animation = std::move(asset->animation);
+
 			assetOut->materialIndices = LoadMaterials(asset->materials, m_assets[id]->loadFlag);
 
 			m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;

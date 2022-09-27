@@ -154,7 +154,7 @@ DirectX::FXMMATRIX BoneJovi::CalculateNodeTransformation(const DOG::AnimationDat
 
 void BoneJovi::UpdateSkeleton(u32 skeletonId, f32 dt)
 {
-	for (size_t i = 0; i < m_imgui_profilePerformUpdate; i++)
+	for (size_t m = 0; m < m_imgui_profilePerformUpdate; m++)
 	{
 		// For (job : jobs) get this data
 		const auto& rig = m_rigs[skeletonId];
@@ -180,7 +180,7 @@ void BoneJovi::UpdateSkeleton(u32 skeletonId, f32 dt)
 		hereditaryTFs.reserve(rig.nodes.size());
 
 		// Set node animation transformations
-		hereditaryTFs.push_back(DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation));
+		hereditaryTFs.push_back(DirectX::XMMatrixScaling(0.02f, 0.02f, 0.02f) * DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation));
 		for (i32 i = 1; i < rig.nodes.size(); i++)
 		{
 			auto ntf = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
