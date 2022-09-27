@@ -1,10 +1,10 @@
 #pragma once
 #include <DOGEngine.h>
-class EmilDebugLayer : public DOG::Layer
+class EmilFDebugLayer : public DOG::Layer
 {
 public:
-	EmilDebugLayer() noexcept;
-	virtual ~EmilDebugLayer() override final = default;
+	EmilFDebugLayer() noexcept;
+	virtual ~EmilFDebugLayer() override final = default;
 	virtual void OnAttach() override final;
 	virtual void OnDetach() override final;
 	virtual void OnUpdate() override final;

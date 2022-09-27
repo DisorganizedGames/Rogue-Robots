@@ -38,12 +38,15 @@ namespace DOG
 		std::vector<ComponentType> components;
 		
 	private:
-		virtual void DestroyInternal(const entity entityID) noexcept override final 
-		{
-			std::swap(components.back(), components[sparseArray[entityID]]);
-			components.pop_back();
-		}
+		virtual void DestroyInternal(const entity entityID) noexcept override final;
 	};
+
+	template<typename ComponentType>
+	void SparseSet<ComponentType>::DestroyInternal(const entity entityID) noexcept
+	{
+		std::swap(components.back(), components[sparseArray[entityID]]);
+		components.pop_back();
+	}
 
 	//##################### ENTITY MANAGER #####################
 
@@ -160,7 +163,7 @@ namespace DOG
 				return set->components[*componentIdx];
 			}
 		}
-			return set->components.back();
+		return set->components.back();
 	}
 
 	template<typename ComponentType>

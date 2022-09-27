@@ -1,6 +1,6 @@
-#include "EmilDebugLayer.h"
+#include "EmilFDebugLayer.h"
 
-EmilDebugLayer::EmilDebugLayer() noexcept
+EmilFDebugLayer::EmilFDebugLayer() noexcept
 	: Layer("Emil debug layer"), m_entityManager{ DOG::EntityManager::Get() }
 {
 	
@@ -11,7 +11,7 @@ struct SpriteComponent : public DOG::Component<SpriteComponent>
 
 };
 
-void EmilDebugLayer::OnAttach()
+void EmilFDebugLayer::OnAttach()
 {
 	using namespace DOG;
 
@@ -53,27 +53,27 @@ void EmilDebugLayer::OnAttach()
 
 }
 
-void EmilDebugLayer::OnDetach()
+void EmilFDebugLayer::OnDetach()
 {
 
 }
 
-void EmilDebugLayer::OnUpdate()
+void EmilFDebugLayer::OnUpdate()
 {
 	
 }
 
-void EmilDebugLayer::OnRender()
+void EmilFDebugLayer::OnRender()
 {
 	//...
 }
 
-void EmilDebugLayer::OnImGuiRender()
+void EmilFDebugLayer::OnImGuiRender()
 {
 	//...
 }
 
-void EmilDebugLayer::OnEvent(DOG::IEvent&)
+void EmilFDebugLayer::OnEvent(DOG::IEvent&)
 {
 	
 }
