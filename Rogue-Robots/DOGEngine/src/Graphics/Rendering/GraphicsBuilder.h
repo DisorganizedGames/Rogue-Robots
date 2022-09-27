@@ -6,6 +6,7 @@ namespace DOG::gfx
 {
 	class RenderDevice;
 	class UploadContext;
+	class GPUGarbageBin;
 
 	class GraphicsBuilder
 	{
@@ -31,7 +32,8 @@ namespace DOG::gfx
 			UploadContext* dataUpCtx,
 			UploadContext* texUpCtx,
 			MeshTable* meshes,
-			MaterialTable* mats);
+			MaterialTable* mats,
+			GPUGarbageBin* garbageBin);
 
 		// Mesh + Materials per submesh
 		StaticModel LoadCustomModel(
@@ -42,12 +44,15 @@ namespace DOG::gfx
 		Texture LoadTexture(const MippedTexture2DSpecification& spec);
 		TextureView CreateTextureView(Texture tex, std::optional<TextureViewDesc> desc);
 
+		void FreeResource(Texture handle);
+		void FreeResource(TextureView handle);
 
 	private:
 		RenderDevice* m_rd{ nullptr };
 
 		MeshTable* m_meshTable{ nullptr };
 		MaterialTable* m_matTable{ nullptr };
+		GPUGarbageBin* m_garbageBin{ nullptr };
 
 		UploadContext* m_uploadCtx{ nullptr };		// For general data 
 		UploadContext* m_texUploadCtx{ nullptr };	// For textures (larger footprint)

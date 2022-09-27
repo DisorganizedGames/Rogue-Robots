@@ -124,3 +124,14 @@ inline uint64_t GenerateRandomID()
 	static std::uniform_int_distribution<uint64_t> udis(1, std::numeric_limits<uint64_t>::max());
 	return udis(gen);
 }
+
+// Is this a memory leak???
+template <typename T, typename ...Args>
+void CallAsync(T&& function, Args&& ...args)
+{
+	std::shared_ptr<std::future<void>> sharedFuture = std::make_shared<std::future<void>>();
+	*sharedFuture = std::async(
+		std::launch::async,
+		[sharedFuture, function]<typename ...Args>(Args&& ...args) mutable { function(std::forward<Args>(args)...); sharedFuture.reset(); },
+		std::forward<Args>(args)...);
+}

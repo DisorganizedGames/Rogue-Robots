@@ -67,9 +67,9 @@ namespace DOG
 
 	struct ModelComponent : public Component<ModelComponent>
 	{
-		ModelComponent(u64 id = 0) noexcept : id{ id } {}
-		operator const u64 () const { return id; }
-		u64 id;
+		ModelComponent(u32 id = 0) noexcept : id{ id } {}
+		operator const u32 () const { return id; }
+		u32 id;
 	};
 
 	struct CameraComponent : public Component<CameraComponent>

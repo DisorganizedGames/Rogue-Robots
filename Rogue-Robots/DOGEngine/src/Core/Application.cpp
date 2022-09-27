@@ -59,6 +59,8 @@ namespace DOG
 			// Example ImGUI call
 			ImGui::ShowDemoWindow(&showDemoWindow);
 
+			AssetManager::Get().Update();
+
 			for (auto const layer : m_layerStack)
 			{
 				layer->OnUpdate();
@@ -77,9 +79,12 @@ namespace DOG
 
 			EntityManager::Get().Bundle<TransformComponent, ModelComponent>().Do([&](TransformComponent& transformC, ModelComponent& modelC)
 				{
-					ModelAsset* model = static_cast<ModelAsset*>(AssetManager::Get().GetAsset(modelC));
-					for (u32 i = 0; i < model->gfxModel.mesh.numSubmeshes; ++i)
-						m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], transformC);
+					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
+					if (model)
+					{
+						for (u32 i = 0; i < model->gfxModel.mesh.numSubmeshes; ++i)
+							m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], transformC);
+					}
 				});
 			
 			auto mainCam = CameraComponent::s_mainCamera;
