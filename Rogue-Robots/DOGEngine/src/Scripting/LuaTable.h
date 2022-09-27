@@ -41,6 +41,19 @@ namespace DOG
 		UserData AddUserDataToTable(const std::string& name, T* object, const std::string& interfaceName);
 		void AddUserDataToTable(const std::string& name, UserData& userData);
 
+		void AddIntToTable(int index, int value);
+		void AddFloatToTable(int index, float value);
+		void AddDoubleToTable(int index, double value);
+		void AddStringToTable(int index, const std::string& string);
+		void AddBoolToTable(int index, bool boolean);
+		void AddTableToTable(int index, LuaTable table);
+		void AddFunctionToTable(int index, Function& function);
+		template <void (*func)(LuaContext*)>
+		Function AddFunctionToTable(int index);
+		template <typename T>
+		UserData AddUserDataToTable(int index, T* object, const std::string& interfaceName);
+		void AddUserDataToTable(int index, UserData& userData);
+
 		LuaTable CreateTableInTable(const std::string& name);
 
 		int GetIntFromTable(const std::string& name);
@@ -54,6 +67,18 @@ namespace DOG
 		T* GetUserDataPointerFromTable(const std::string& name);
 		//Get UserData from Lua table
 		UserData GetUserDataFromTable(const std::string& name);
+
+		int GetIntFromTable(int index);
+		float GetFloatFromTable(int index);
+		double GetDoubleFromTable(int index);
+		std::string GetStringFromTable(int index);
+		bool GetBoolFromTable(int index);
+		LuaTable GetTableFromTable(int index);
+		//Get Pointer from the UserData from Lua table
+		template <typename T>
+		T* GetUserDataPointerFromTable(int index);
+		//Get UserData from Lua table
+		UserData GetUserDataFromTable(int index);
 
 		Function GetFunctionFromTable(const std::string& name);
 		Function TryGetFunctionFromTable(const std::string& name);
@@ -81,10 +106,30 @@ namespace DOG
 		return GetUserDataFromTable(name);
 	}
 
+	template<void(*func)(LuaContext*)>
+	inline Function LuaTable::AddFunctionToTable(int index)
+	{
+		m_luaW->AddFunctionToTable<func>(m_table, ++index);
+		return GetFunctionFromTable(index);
+	}
+
+	template<typename T>
+	inline UserData LuaTable::AddUserDataToTable(int index, T* object, const std::string& interfaceName)
+	{
+		m_luaW->AddUserDataToTable(m_table, object, interfaceName, ++index);
+		return GetUserDataFromTable(index);
+	}
+
 	template<typename T>
 	inline T* LuaTable::GetUserDataPointerFromTable(const std::string& name)
 	{
-		return m_luaW->GetUserDataPointer<T>(m_luaW->GetUserDataFromTable());
+		return m_luaW->GetUserDataPointer<T>(m_luaW->GetUserDataFromTable(m_table, name));
+	}
+
+	template<typename T>
+	inline T* LuaTable::GetUserDataPointerFromTable(int index)
+	{
+		return m_luaW->GetUserDataPointer<T>(m_luaW->GetUserDataFromTable(m_table, ++index));
 	}
 
 	template<class ...Args>
