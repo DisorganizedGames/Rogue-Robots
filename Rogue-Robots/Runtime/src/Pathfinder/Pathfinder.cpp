@@ -53,6 +53,7 @@ size_t Pathfinder::FindNavMeshContaining(const Vector3 pos)
 			return i;
 	// pos not found should be impossible!
 	ASSERT(false, "Pathfinder: pos does not exist in map");
+	return size_t(-1);
 }
 
 float Pathfinder::heuristicStraightLine(Vector3 start, Vector3 goal)
@@ -171,11 +172,11 @@ std::vector<Pathfinder::TransitPlane*> Pathfinder::Astar(const Vector3 start, co
 		if (neighbor == startPoint)
 			if (iNavMesh != entry.iMesh1)
 				// only one can have a single connection thus current has two
-				iNavMesh == m_transits[current].iMesh2;
+				iNavMesh = m_transits[current].iMesh2;
 		else
 			if (iNavMesh != m_transits[neighbor].iMesh1)
 				// only one can have a single connection thus neighbor has two
-				iNavMesh == m_transits[neighbor].iMesh2;
+				iNavMesh = m_transits[neighbor].iMesh2;
 		// since the first two NavMeshes are different iNavMesh must now contain the righ reference
 		return m_navMeshes[iNavMesh].CostWalk(m_transits[current].Midpoint(), m_transits[neighbor].Midpoint());
 	};
@@ -190,14 +191,7 @@ std::vector<Pathfinder::TransitPlane*> Pathfinder::Astar(const Vector3 start, co
 			iNode = cameFrom[iNode];
 		}
 		// reverse path
-		size_t fwd = 0;
-		size_t bkw = path.size() - 1;
-		while (fwd < bkw)
-		{
-			TransitPlane* swap = path[fwd];
-			path[fwd++] = path[bkw];
-			path[bkw--] = swap;
-		}
+		std::reverse(path.begin(), path.end());
 		return path;
 	};
 
