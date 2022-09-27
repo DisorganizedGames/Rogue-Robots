@@ -88,7 +88,7 @@ namespace DOG
 
 		//Push arguments to stack
 		template<typename T, class... Args>
-		void PushStack(T type, Args... args);
+		void PushStack(T type, Args&&... args);
 
 		//Push integer
 		void PushStack(int integer);
@@ -330,7 +330,7 @@ namespace DOG
 	}
 
 	template<typename T, class ...Args>
-	inline void LuaW::PushStack(T type, Args ...args)
+	inline void LuaW::PushStack(T type, Args&& ...args)
 	{
 		//Push type to the stack
 		//The other push stack functions are called here!
@@ -338,7 +338,7 @@ namespace DOG
 
 		//Continues the recursive function by taking out one more argument from the arg list
 		//Calls the empty push stack when it is done
-		PushStack(args...);
+		PushStack(std::forward<Args>(args)...);
 	}
 
 	//Adds a member function to the interface

@@ -83,9 +83,9 @@ namespace DOG
 		Function GetFunctionFromTable(const std::string& name);
 		Function TryGetFunctionFromTable(const std::string& name);
 		template <class... Args>
-		LuaFunctionReturn CallFunctionOnTable(Function function, Args... args);
+		LuaFunctionReturn CallFunctionOnTable(Function function, Args&&... args);
 		template <class... Args>
-		LuaFunctionReturn CallFunctionOnTable(const std::string& name, Args... args);
+		LuaFunctionReturn CallFunctionOnTable(const std::string& name, Args&&... args);
 		LuaFunctionReturn CallFunctionOnTable(Function function);
 		LuaFunctionReturn CallFunctionOnTable(const std::string& name);
 
@@ -135,25 +135,25 @@ namespace DOG
 	}
 
 	template<class ...Args>
-	inline LuaFunctionReturn LuaTable::CallFunctionOnTable(Function function, Args ...args)
+	inline LuaFunctionReturn LuaTable::CallFunctionOnTable(Function function, Args&& ...args)
 	{
 		//Get the amount of arguments
 		int argumentSize = sizeof...(Args);
 		//Push the arguments to the stack
-		m_luaW->PushStack(args...);
+		m_luaW->PushStack(std::forward<Args>(args)...);
 
 		return m_luaW->CallTableLuaFunctionReturn(m_table, function, argumentSize);
 	}
 
 	template<class ...Args>
-	inline LuaFunctionReturn LuaTable::CallFunctionOnTable(const std::string& name, Args ...args)
+	inline LuaFunctionReturn LuaTable::CallFunctionOnTable(const std::string& name, Args&& ...args)
 	{
 		//Get function
 		Function function = m_luaW->GetFunctionFromTable(m_table, name);
 		//Get the amount of arguments
 		int argumentSize = sizeof...(Args);
 		//Push the arguments to the stack
-		m_luaW->PushStack(args...);
+		m_luaW->PushStack(std::forward<Args>(args)...);
 
 		auto luaReturns = m_luaW->CallTableLuaFunctionReturn(m_table, function, argumentSize);
 		m_luaW->RemoveReferenceToFunction(function);
