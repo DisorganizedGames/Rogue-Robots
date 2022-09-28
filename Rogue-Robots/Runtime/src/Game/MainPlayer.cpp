@@ -10,6 +10,13 @@ MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 	CameraComponent& camera = m_entityManager.AddComponent<CameraComponent>(m_playerEntity);
 	CameraComponent::s_mainCamera = &camera;
 
+	auto& psComp = m_entityManager.AddComponent<PlayerStatsComponent>(m_playerEntity);
+	psComp = {
+		.health = 100.f,
+		.maxHealth = 100.f,
+		.speed = 10.f
+	};
+
 	m_right		= Vector3(1, 0, 0);
 	m_up		= Vector3(0, 1, 0);
 	m_forward	= Vector3(0, 0, 1);
@@ -32,6 +39,7 @@ MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 	scriptManager->AddScript(m_playerEntity, "Gun.lua");
 	/*GunComponent& gun = m_entityManager.AddComponent<GunComponent>(m_playerEntity);*/
 	//ScriptComponent gun = scriptManager->AddScript(m_playerEntity, "Gun.lua");
+	scriptManager->AddScript(m_playerEntity, "PlayerStats.lua");
 
 	//Temporary until we can call functions easily.
 	//LuaTable table(gun.scriptData.scriptTable, true);
@@ -47,6 +55,13 @@ void MainPlayer::OnUpdate()
 	////Temporary until we can call functions easily.
 	//LuaTable table(gunComp.scriptData.scriptTable, true);
 	//table.CallFunctionOnTable(gunComp.scriptData.onUpdateFunction);
+
+	//auto& itemComp = m_entityManager.GetComponent<ScriptComponent>(m_playerStatsEntity);
+	//table = LuaTable(itemComp.scriptData.scriptTable, true);
+	//table.CallFunctionOnTable(itemComp.scriptData.onUpdateFunction);
+
+	// Use the stats produced?
+	// auto stats = table.GetTableFromTable("playerStats");
 }
 
 void MainPlayer::SetPosition(SimpleMath::Vector3 position)
@@ -75,6 +90,8 @@ void MainPlayer::UpdateCamera(CameraComponent& camera)
 {
 	// Not using a structured binding to avoid getting screwed over by the layout of the CameraComponent changing
 	auto& view = camera.viewMatrix;
+
+	auto speed = m_entityManager.GetComponent<PlayerStatsComponent>(m_playerEntity).speed;
 
 	auto [mouseX, mouseY] = DOG::Mouse::GetDeltaCoordinates();
 
@@ -119,16 +136,16 @@ void MainPlayer::UpdateCamera(CameraComponent& camera)
 	if (lengthVec > 0.0001)
 	{
 		moveTowards = XMVector3Normalize(moveTowards);
-		m_position += moveTowards * m_moveSpeed * (f32)Time::DeltaTime();
+		m_position += moveTowards * speed * (f32)Time::DeltaTime();
 	}
 
 	if (DOG::Keyboard::IsKeyPressed(DOG::Key::Spacebar))
 	{
-		m_position += s_globalUp * m_moveSpeed * (f32)Time::DeltaTime();
+		m_position += s_globalUp * speed * (f32)Time::DeltaTime();
 	}
 	if (DOG::Keyboard::IsKeyPressed(DOG::Key::Shift))
 	{
-		m_position -= s_globalUp * m_moveSpeed * (f32)Time::DeltaTime();
+		m_position -= s_globalUp * speed * (f32)Time::DeltaTime();
 	}
 	
 	m_up = m_forward.Cross(m_right);

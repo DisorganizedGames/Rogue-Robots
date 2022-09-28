@@ -154,6 +154,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::AddComponent>("AddComponent");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::ModifyComponent>("ModifyComponent");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetTransformPosData>("GetTransformPosData");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPlayerStats>("GetPlayerStats");
 	global->SetLuaInterface(luaInterface);
 
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Entity", "EntityInterface");
@@ -176,6 +177,7 @@ void GameLayer::RegisterLuaInterfaces()
 	m_luaInterfaces.push_back(luaInterfaceObject);
 
 	luaInterface = global->CreateLuaInterface("PlayerInterface");
+	luaInterface.AddFunction<PlayerInterface, &PlayerInterface::GetID>("GetID");
 	luaInterface.AddFunction<PlayerInterface, &PlayerInterface::GetForward>("GetForward");
 	luaInterface.AddFunction<PlayerInterface, &PlayerInterface::GetPosition>("GetPosition");
 	global->SetLuaInterface(luaInterface);
