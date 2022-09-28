@@ -12,6 +12,11 @@ namespace DOG::gfx
 		m_resMan(resMan),
 		m_bin(bin)
 	{
+		constexpr u32 PASS_RESERVED{ 50 };
+		constexpr u32 DEP_LEVELS_RESERVED{ 50 };
+		m_passes.reserve(PASS_RESERVED);
+		m_sortedPasses.reserve(PASS_RESERVED);
+		m_dependencyLevels.reserve(DEP_LEVELS_RESERVED);
 	}
 
 	void RenderGraph::Build()
@@ -20,7 +25,9 @@ namespace DOG::gfx
 
 		// To help the graph author see what's going on.
 		// @TODO: Expand with input/output labels on each pass
+#ifdef GENERATE_GRAPHVIZ
 		GenerateGraphviz();
+#endif
 
 		SortPassesTopologically();
 
@@ -49,12 +56,10 @@ namespace DOG::gfx
 		m_cmdl = m_rd->AllocateCommandList();
 
 		for (auto& depLevel : m_dependencyLevels)
-		{
 			depLevel.Execute(m_rd, m_cmdl);
-		}
 
 		m_resMan->ImportedResourceExitTransition(m_cmdl);
-		//m_rd->SubmitCommandList(m_cmdl);
+		m_rd->SubmitCommandList(m_cmdl);
 
 		// Clean up command list
 		auto delFunc = [rd = m_rd, cmdl = m_cmdl]()
@@ -95,13 +100,15 @@ namespace DOG::gfx
 				};
 				m_bin->PushDeferredDeletion(df);
 			}
-
-
 		}
+
+
 	}
 
 	void RenderGraph::BuildAdjacencyMap()
 	{
+		static constexpr u32 ADJACENTS_RESERVED{ 10 };
+
 		if (m_passes.size() == 1)
 			m_sortedPasses.push_back(m_passes[0].get());
 
@@ -124,6 +131,8 @@ namespace DOG::gfx
 					if (ioIntersects)
 					{
 						auto& adjacents = m_adjacencyMap[pass.get()];
+						if (adjacents.empty())
+							adjacents.reserve(ADJACENTS_RESERVED);
 						adjacents.push_back(pdp.get());
 						break;
 					}
@@ -139,6 +148,8 @@ namespace DOG::gfx
 					if (ioIntersects)
 					{
 						auto& adjacents = m_adjacencyMap[pass.get()];
+						if (adjacents.empty())
+							adjacents.reserve(ADJACENTS_RESERVED);
 						adjacents.push_back(pdp.get());
 						break;
 					}
@@ -413,6 +424,8 @@ namespace DOG::gfx
 
 	void RenderGraph::PassBuilder::ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc)
 	{
+		assert(IsReadState(state));
+
 		PassIO input;
 		input.id = id;
 		input.desiredState = state;
@@ -515,7 +528,7 @@ namespace DOG::gfx
 
 		for (const auto& pass : m_passes)
 		{
-			std::cout << "Doing: " << pass->name << "\n";
+			//std::cout << "Doing: " << pass->name << "\n";
 
 			if (pass->rp)
 			{

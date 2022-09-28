@@ -171,7 +171,10 @@ namespace DOG::gfx
 
 			const auto parentEnd = parentLifetime.second;
 			const auto aliasBegin = thisLifetime.first;
-			assert(parentEnd <= aliasBegin);
+			if (parentEnd > aliasBegin)
+				assert(false);
+
+			//assert(parentEnd <= aliasBegin);
 
 			// Additionally, only read accesses should be allowed in the range (parentBegin, aliasBegin) (exclusive)
 			/*

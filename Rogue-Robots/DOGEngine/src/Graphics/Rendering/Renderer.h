@@ -64,11 +64,7 @@ namespace DOG::gfx
 	private:
 		void EndGUI();	// Called at EndFrame_GPU
 
-		void TestRG();
-		void TestRG_1();
-		void TestRG_2();
-		void TestRG_3();
-		void TestRG_4();
+
 
 		LRESULT WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -115,12 +111,7 @@ namespace DOG::gfx
 		std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> m_wmCallback;
 
 		// ================= RENDERING RESOURCES
-		Texture m_depthTex;
-		TextureView m_depthTarget;
-
 		std::array<Texture, S_NUM_BACKBUFFERS> m_scTextures;
-		std::array<TextureView, S_NUM_BACKBUFFERS> m_scViews;
-		std::array<RenderPass, S_NUM_BACKBUFFERS> m_scPasses;
 
 		Pipeline m_pipe, m_meshPipe;
 

@@ -4,8 +4,9 @@
 #include "../../RHI/Types/BarrierDesc.h"
 #include "../../RHI/Types/RenderPassDesc.h"
 #include "RGTypes.h"
-
 #include <unordered_set>
+
+//#define GENERATE_GRAPHVIZ
 
 namespace DOG::gfx
 {

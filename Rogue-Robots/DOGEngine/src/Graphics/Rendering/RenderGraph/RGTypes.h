@@ -1,5 +1,6 @@
 #pragma once
 #include "../../RHI/RenderResourceHandles.h"
+#include "../../RHI/Types/DepthTypes.h"
 
 
 namespace DOG::gfx
@@ -31,16 +32,64 @@ namespace DOG::gfx
 
 	struct RGTextureDesc
 	{
-		static RGTextureDesc RenderTarget2D(DXGI_FORMAT format, u32 width, u32 height, u32 mipLevels = 0)
+		static RGTextureDesc RenderTarget2D(DXGI_FORMAT format, u32 width, u32 height, u32 depth = 1, u32 mipLevels = 1)
 		{
 			RGTextureDesc d{};
 			d.format = format;
 			d.width = width;
 			d.height = height;
+			d.depth = depth;
 			d.mipLevels = mipLevels;
 			d.initState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 			d.flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 			return d;
+		}
+
+		static RGTextureDesc DepthWrite2D(DepthFormat format, u32 width, u32 height, u32 depth = 1, u32 mipLevels = 1)
+		{
+			RGTextureDesc d{};
+			switch (format)
+			{
+			case DepthFormat::D32:
+				d.format = DXGI_FORMAT_D32_FLOAT;               // Fully qualififies the format: DXGI_FORMAT_R32_TYPELESS
+				break;
+			case DepthFormat::D32_S8:
+				d.format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;    // Fully qualififies the format: DXGI_FORMAT_R32G8X24_TYPELESS
+				break;
+			case DepthFormat::D24_S8:
+				d.format = DXGI_FORMAT_D24_UNORM_S8_UINT;       // Fully qualififies the format: DXGI_FORMAT_R24G8_TYPELESS
+				break;
+			case DepthFormat::D16:
+				d.format = DXGI_FORMAT_D16_UNORM;               // Fully qualififies the format: DXGI_FORMAT_R16_TYPELESS
+				break;
+			default:
+				assert(false);
+			}
+			d.width = width;
+			d.height = height;
+			d.depth = depth;
+			d.mipLevels = mipLevels;
+			d.initState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+			d.flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+		}
+
+		static RGTextureDesc ReadWrite2D(DXGI_FORMAT format, u32 width, u32 height, u32 depth = 1, u32 mipLevels = 1)
+		{
+			RGTextureDesc d{};
+			d.format = format;
+			d.width = width;
+			d.height = height;
+			d.depth = depth;
+			d.mipLevels = mipLevels;
+			d.initState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+			d.flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+			return d;
+		}
+
+		RGTextureDesc& AppendExtraFlag(D3D12_RESOURCE_FLAGS flag)
+		{
+			flags |= flag;
+			return *this;
 		}
 
 		u32 width{ 1 };

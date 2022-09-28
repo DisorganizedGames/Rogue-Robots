@@ -34,13 +34,6 @@ namespace DOG::gfx
 		m_reservedDescriptor = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		InitRootsig();
-
-		// Create pool for textures
-		D3D12MA::POOL_DESC poolDesc{};
-		poolDesc.HeapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
-		poolDesc.BlockSize = 400'000'000;
-		HRESULT hr = m_dma->CreatePool(&poolDesc, m_pool.GetAddressOf());
-		HR_VFY(hr);
 	}
 
 	RenderDevice_DX12::~RenderDevice_DX12()
@@ -64,11 +57,6 @@ namespace DOG::gfx
 
 		if (m_reservedDescriptor)
 			m_descriptorMgr->free(&(*m_reservedDescriptor));
-	}
-
-	RenderDevice_DX12::GPUResource_Storage::~GPUResource_Storage()
-	{
-		printf("deleted\n");
 	}
 
 	Swapchain* RenderDevice_DX12::CreateSwapchain(void* hwnd, u8 numBuffers)
@@ -376,10 +364,6 @@ namespace DOG::gfx
 
 	void RenderDevice_DX12::FreeTexture(Texture handle)
 	{
-		auto& tex_storage = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(handle.handle));
-		if (tex_storage.valloc)
-			m_textureHeapAtor.Free(std::move(*tex_storage.valloc));
-
 		HandleAllocator::FreeStorage(m_rhp, m_textures, handle);
 	}
 
