@@ -133,13 +133,13 @@ namespace DOG
 		Window::SetWMHook(m_renderer->GetWMCallback());
 
 		AssetManager::Initialize(m_renderer.get());
-		AudioManager::Initialize();
+		//AudioManager::Initialize();
 	}
 
 	void Application::OnShutDown() noexcept
 	{
 		AssetManager::Destroy();
-		AudioManager::Destroy();
+		//AudioManager::Destroy();
 		//...
 	}
 
