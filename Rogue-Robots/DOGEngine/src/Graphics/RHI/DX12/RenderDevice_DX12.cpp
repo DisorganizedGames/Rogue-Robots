@@ -34,7 +34,6 @@ namespace DOG::gfx
 		m_reservedDescriptor = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		InitRootsig();
-
 	}
 
 	RenderDevice_DX12::~RenderDevice_DX12()
@@ -97,7 +96,7 @@ namespace DOG::gfx
 		HR_VFY(hr);
 
 		auto handle = m_rhp.Allocate<Buffer>();
-		HandleAllocator::TryInsert(m_buffers, storage, HandleAllocator::GetSlot(handle.handle));
+		HandleAllocator::TryInsertMove(m_buffers, std::move(storage), HandleAllocator::GetSlot(handle.handle));
 		return handle;
 	}
 
@@ -107,6 +106,9 @@ namespace DOG::gfx
 
 		D3D12MA::ALLOCATION_DESC ad{};
 		ad.HeapType = to_internal(desc.memType);
+		//ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT | D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET;
+		//ad.CustomPool = m_pool.Get();
+		ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT;
 
 		D3D12_RESOURCE_DESC rd{};
 		rd.Dimension = to_internal(desc.type);
@@ -121,6 +123,21 @@ namespace DOG::gfx
 		rd.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 		rd.Flags = desc.flags;
 
+		D3D12_CLEAR_VALUE clearVal{};
+		clearVal.Format = desc.format;
+		if ((rd.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
+		{
+			clearVal.DepthStencil.Depth = desc.depthClear;
+			clearVal.DepthStencil.Stencil = desc.stencilClear;
+		}
+		else
+		{
+			clearVal.Color[0] = desc.clearColor[0];
+			clearVal.Color[1] = desc.clearColor[1];
+			clearVal.Color[2] = desc.clearColor[2];
+			clearVal.Color[3] = desc.clearColor[3];
+		}
+
 		D3D12_RESOURCE_STATES initState{ desc.initState };
 		if (ad.HeapType == D3D12_HEAP_TYPE_UPLOAD)
 			initState = D3D12_RESOURCE_STATE_GENERIC_READ;
@@ -130,11 +147,21 @@ namespace DOG::gfx
 		Texture_Storage storage{};
 		storage.desc = desc;
 
-		hr = m_dma->CreateResource(&ad, &rd, initState, nullptr, storage.alloc.GetAddressOf(), IID_PPV_ARGS(storage.resource.GetAddressOf()));
+		hr = m_dma->CreateResource(&ad, &rd, initState, &clearVal, storage.alloc.GetAddressOf(), IID_PPV_ARGS(storage.resource.GetAddressOf()));
 		HR_VFY(hr);
 
+		// Hold the original resource place on a certain heap on a certain offset
+#ifdef GPU_VALIDATION_ON
+		//auto& heapMap = m_mapping[(u64)storage.alloc->GetHeap()];
+		//heapMap[storage.alloc->GetOffset()].push_back(storage.resource);
+		// intentionally leak to avoid crashing CreatePlacedResource
+		storage.resource->AddRef();	
+#endif
+
+
 		auto handle = m_rhp.Allocate<Texture>();
-		HandleAllocator::TryInsert(m_textures, storage, HandleAllocator::GetSlot(handle.handle));
+		HandleAllocator::TryInsertMove(m_textures, std::move(storage), HandleAllocator::GetSlot(handle.handle));
+
 		return handle;
 	}
 
@@ -155,7 +182,7 @@ namespace DOG::gfx
 		storage.pipeline = pso;
 
 		auto handle = m_rhp.Allocate<Pipeline>();
-		HandleAllocator::TryInsert(m_pipelines, storage, HandleAllocator::GetSlot(handle.handle));
+		HandleAllocator::TryInsertMove(m_pipelines, std::move(storage), HandleAllocator::GetSlot(handle.handle));
 		return handle;
 	}
 
@@ -204,7 +231,7 @@ namespace DOG::gfx
 		}
 
 		auto handle = m_rhp.Allocate<RenderPass>();
-		HandleAllocator::TryInsert(m_renderPasses, storage, HandleAllocator::GetSlot(handle.handle));
+		HandleAllocator::TryInsertMove(m_renderPasses, std::move(storage), HandleAllocator::GetSlot(handle.handle));
 		return handle;
 
 
@@ -279,7 +306,7 @@ namespace DOG::gfx
 		}
 
 		auto handle = m_rhp.Allocate<BufferView>();
-		HandleAllocator::TryInsert(m_bufferViews, BufferView_Storage(buffer, desc.viewType, view_desc), HandleAllocator::GetSlot(handle.handle));
+		HandleAllocator::TryInsertMove(m_bufferViews, std::move(BufferView_Storage(buffer, desc.viewType, view_desc)), HandleAllocator::GetSlot(handle.handle));
 		return handle;
 
 	}
@@ -326,7 +353,7 @@ namespace DOG::gfx
 		}
 
 		auto handle = m_rhp.Allocate<TextureView>();
-		HandleAllocator::TryInsert(m_textureViews, TextureView_Storage(texture, desc.viewType, view_desc), HandleAllocator::GetSlot(handle.handle));
+		HandleAllocator::TryInsertMove(m_textureViews, std::move(TextureView_Storage(texture, desc.viewType, view_desc)), HandleAllocator::GetSlot(handle.handle));
 		return handle;
 	}
 
@@ -492,7 +519,7 @@ namespace DOG::gfx
 			curr_queue->insert_signal(sync.fence);
 
 			syncReceipt = m_rhp.Allocate<SyncReceipt>();
-			HandleAllocator::TryInsert(m_syncs, std::move(sync), HandleAllocator::GetSlot(syncReceipt->handle));
+			HandleAllocator::TryInsertMove(m_syncs, std::move(sync), HandleAllocator::GetSlot(syncReceipt->handle));
 		}
 		return syncReceipt;
 
@@ -544,7 +571,7 @@ namespace DOG::gfx
 			curr_queue->insert_signal(sync.fence);
 
 			syncReceipt = m_rhp.Allocate<SyncReceipt>();
-			HandleAllocator::TryInsert(m_syncs, std::move(sync), HandleAllocator::GetSlot(syncReceipt->handle));
+			HandleAllocator::TryInsertMove(m_syncs, std::move(sync), HandleAllocator::GetSlot(syncReceipt->handle));
 		}
 		return syncReceipt;
 	}
@@ -801,7 +828,7 @@ namespace DOG::gfx
 		auto desc = texture->GetDesc();
 
 		auto handle = m_rhp.Allocate<Texture>();
-		HandleAllocator::TryInsert(m_textures, storage, HandleAllocator::GetSlot(handle.handle));
+		HandleAllocator::TryInsertMove(m_textures, std::move(storage), HandleAllocator::GetSlot(handle.handle));
 		return handle;
 	}
 
@@ -959,6 +986,7 @@ namespace DOG::gfx
 			return D3D12_COMMAND_LIST_TYPE_DIRECT;
 		}
 	}
+
 }
 
 

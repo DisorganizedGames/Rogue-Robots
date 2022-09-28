@@ -9,4 +9,7 @@ using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 #define HR_VFY(hr) assert(SUCCEEDED(hr))
 
+// Will leak if GPU Validation On
+//#define GPU_VALIDATION_ON
+
 

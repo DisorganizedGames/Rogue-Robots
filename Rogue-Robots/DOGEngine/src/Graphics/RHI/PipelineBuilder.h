@@ -1,16 +1,9 @@
 #pragma once
 #include "Types/PipelineTypes.h"
+#include "Types/DepthTypes.h"
 
 namespace DOG::gfx
 {
-	enum class DepthFormat
-	{
-		D32,
-		D32_S8,
-		D24_S8,
-		D16
-	};
-
 	class RasterizerBuilder
 	{
 	public:

@@ -12,12 +12,13 @@ namespace DOG::gfx
 		hr.try_fail("Failed to create virtual block");
 	}
 
-	GPVirtualAllocation GPVirtualAllocator::Allocate(u64 size)
+	GPVirtualAllocation GPVirtualAllocator::Allocate(u64 size, u32 alignment)
 	{
 		HRESULT hr = S_OK;
 
 		D3D12MA::VIRTUAL_ALLOCATION_DESC allocDesc{};
 		allocDesc.Size = size;
+		allocDesc.Alignment = alignment;
 
 		D3D12MA::VirtualAllocation dmaAlloc;
 		UINT64 allocOffset;

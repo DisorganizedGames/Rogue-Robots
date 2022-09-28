@@ -18,7 +18,8 @@
 #include "../../Core/AssimpImporter.h"
 #include "../../Core/TextureFileImporter.h"
 
-
+#include "RenderGraph/RenderGraph.h"
+#include "RenderGraph/RGResourceManager.h"
 
 namespace DOG::gfx
 {
@@ -70,9 +71,9 @@ namespace DOG::gfx
 		// Create builder for users to create graphical objects supported by the renderer
 		m_builder = std::make_unique<GraphicsBuilder>(
 			m_rd,
-			m_uploadCtx.get(), 
-			m_texUploadCtx.get(), 
-			m_globalMeshTable.get(), 
+			m_uploadCtx.get(),
+			m_texUploadCtx.get(),
+			m_globalMeshTable.get(),
 			m_globalMaterialTable.get(),
 			m_bin.get());
 
@@ -80,34 +81,11 @@ namespace DOG::gfx
 
 		m_texMan = std::make_unique<TextureManager>(m_rd, m_bin.get());
 
-
-
 		// INITIALIZE RESOURCES =================
 
-
-
-		// Create depth
-		{
-			TextureDesc d(MemoryType::Default, DXGI_FORMAT_D32_FLOAT, clientWidth, clientHeight, 1, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-			TextureViewDesc tvd(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT);
-			m_depthTex = m_rd->CreateTexture(d);
-			m_depthTarget = m_rd->CreateView(m_depthTex, tvd);
-		}
-
+		// Grab textures
 		for (u8 i = 0; i < S_NUM_BACKBUFFERS; ++i)
-		{
-			// Grab textures
 			m_scTextures[i] = m_sc->GetBuffer(i);
-
-			// Create texture as target
-			auto td = TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, m_sc->GetBufferFormat());
-			m_scViews[i] = m_rd->CreateView(m_scTextures[i], td);
-
-			m_scPasses[i] = m_rd->CreateRenderPass(RenderPassBuilder()
-				.AppendRT(m_scViews[i], RenderPassBeginAccessType::Clear, RenderPassEndingAccessType::Preserve)
-				.AddDepth(m_depthTarget, RenderPassBeginAccessType::Clear, RenderPassEndingAccessType::Discard)
-				.Build());
-		}
 
 		auto fullscreenTriVS = m_sclr->CompileFromFile("FullscreenTriVS.hlsl", ShaderType::Vertex);
 		auto blitPS = m_sclr->CompileFromFile("BlitPS.hlsl", ShaderType::Pixel);
@@ -128,6 +106,8 @@ namespace DOG::gfx
 			.SetDepthFormat(DepthFormat::D32)
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
+
+		m_rgResMan = std::make_unique<RGResourceManager>(m_rd, m_bin.get());
 	}
 
 	Renderer::~Renderer()
@@ -139,7 +119,7 @@ namespace DOG::gfx
 		m_viewMat = view;
 		m_projMat = proj ? *proj : DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_clientWidth / m_clientHeight, 800.f, 0.1f);
 	}
-	
+
 	void Renderer::BeginGUI()
 	{
 		m_imgui->BeginFrame();
@@ -155,96 +135,132 @@ namespace DOG::gfx
 		m_submissions.push_back(sub);
 	}
 
-	void Renderer::Update(f32 )
+	void Renderer::Update(f32)
 	{
 	}
 
-	void Renderer::Render(f32 )
+	void Renderer::Render(f32)
 	{
+		std::chrono::steady_clock::time_point m_start, m_end;
+		std::chrono::duration<double> diff;
+
 		// ====== GPU
 		auto& scTex = m_scTextures[m_sc->GetNextDrawSurfaceIdx()];
-		auto& scPass = m_scPasses[m_sc->GetNextDrawSurfaceIdx()];
 
-		// Write
+		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
+		auto& rg = *m_rg;
+
+
+		m_start = m_end = std::chrono::high_resolution_clock::now();
+		// Forward pass to HDR
 		{
-			GPUBarrier barrs[]
-			{
-				GPUBarrier::Transition(scTex, 0, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET),
-				GPUBarrier::Transition(m_depthTex, 0, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE)
-			};
-			m_rd->Cmd_Barrier(m_cmdl, barrs);
+			struct PassData {};
+			rg.AddPass<PassData>("Forward Pass",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					builder.ImportTexture(RG_RESOURCE(Backbuffer1), scTex, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
+
+					RGTextureDesc desc{};
+					desc.width = m_clientWidth;
+					desc.height = m_clientHeight;
+					desc.initState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+					desc.format = DXGI_FORMAT_D32_FLOAT;
+					desc.flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+					builder.DeclareTexture(RG_RESOURCE(MainDepth), desc);
+
+					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer1), RenderPassAccessType::Clear_Preserve,
+						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+					builder.ReadOrWriteDepth(RG_RESOURCE(MainDepth), RenderPassAccessType::Clear_Discard,
+						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
+				},
+				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
+				{
+					rd->Cmd_SetViewports(cmdl, Viewports()
+						.Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight));
+					rd->Cmd_SetScissorRects(cmdl, ScissorRects()
+						.Append(0, 0, m_clientWidth, m_clientHeight));
+
+					rd->Cmd_SetPipeline(cmdl, m_meshPipe);
+					rd->Cmd_SetIndexBuffer(cmdl, m_globalMeshTable->GetIndexBuffer());
+					for (const auto& sub : m_submissions)
+					{
+						auto pfConstant = m_dynConstants->Allocate();
+						struct PerFrameData
+						{
+							DirectX::XMMATRIX world, view, proj;
+							DirectX::XMFLOAT3 camPos;
+						} pfData{};
+
+						DirectX::XMVECTOR tmp;
+						auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
+
+						auto pos = invVm.r[3];
+						DirectX::XMFLOAT3 posFloat3;
+						DirectX::XMStoreFloat3(&posFloat3, pos);
+						pfData.camPos = posFloat3;
+
+						pfData.world = sub.world;
+						//pfData.view = DirectX::XMMatrixLookAtLH({ 5.f, 2.f, 0.f }, { -1.f, 1.f, 1.f }, { 0.f, 1.f, 0.f });
+						pfData.view = m_viewMat;
+						// We are using REVERSE DEPTH!!!
+						//pfData.proj = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_clientWidth/m_clientHeight, 800.f, 0.1f);
+						pfData.proj = m_projMat;
+						std::memcpy(pfConstant.memory, &pfData, sizeof(pfData));
+
+						auto args = ShaderArgs()
+							.AppendConstant(pfConstant.globalDescriptor)
+							.AppendConstant(m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh))
+							.AppendConstant(m_globalMeshTable->GetSubmeshDescriptor())
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Position))
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::UV))
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Normal))
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Tangent))
+							.AppendConstant(m_globalMaterialTable->GetDescriptor())
+							.AppendConstant(m_globalMaterialTable->GetMaterialIndex(sub.mat)
+							);
+
+						rd->Cmd_UpdateShaderArgs(cmdl, args);
+
+						auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+						rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
+
+					}
+				});
 		}
 
-		m_rd->Cmd_BeginRenderPass(m_cmdl, scPass);
-
-		m_rd->Cmd_SetViewports(m_cmdl, Viewports()
-			.Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight));
-		m_rd->Cmd_SetScissorRects(m_cmdl, ScissorRects()
-			.Append(0, 0, m_clientWidth, m_clientHeight));
-
-		m_rd->Cmd_SetPipeline(m_cmdl, m_meshPipe);
-		m_rd->Cmd_SetIndexBuffer(m_cmdl, m_globalMeshTable->GetIndexBuffer());
-		for (const auto& sub : m_submissions)
+		// Draw ImGUI on backbuffer
 		{
-			auto pfConstant = m_dynConstants->Allocate();
-			struct PerFrameData
-			{
-				DirectX::XMMATRIX world, view, proj;
-				DirectX::XMFLOAT3 camPos;
-			} pfData{};
+			struct PassData {};
+			rg.AddPass<PassData>("ImGUI Pass",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					builder.WriteAliasedRenderTarget(RG_RESOURCE(Backbuffer2), RG_RESOURCE(Backbuffer1), RenderPassAccessType::Preserve_Preserve,
+						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+				},
+				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
+				{
+					m_imgui->Render(rd, cmdl);
 
-			DirectX::XMVECTOR tmp;
-			auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
-
-			auto pos = invVm.r[3];
-			DirectX::XMFLOAT3 posFloat3;
-			DirectX::XMStoreFloat3(&posFloat3, pos);
-			pfData.camPos = posFloat3;
-
-			pfData.world = sub.world;
-			//pfData.view = DirectX::XMMatrixLookAtLH({ 5.f, 2.f, 0.f }, { -1.f, 1.f, 1.f }, { 0.f, 1.f, 0.f });
-			pfData.view = m_viewMat;
-			// We are using REVERSE DEPTH!!!
-			//pfData.proj = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_clientWidth/m_clientHeight, 800.f, 0.1f);
-			pfData.proj = m_projMat;
-			std::memcpy(pfConstant.memory, &pfData, sizeof(pfData));
-
-			auto args = ShaderArgs()
-				.AppendConstant(pfConstant.globalDescriptor)
-				.AppendConstant(m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh))
-				.AppendConstant(m_globalMeshTable->GetSubmeshDescriptor())
-				.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Position))
-				.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::UV))
-				.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Normal))
-				.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Tangent))
-				.AppendConstant(m_globalMaterialTable->GetDescriptor())
-				.AppendConstant(m_globalMaterialTable->GetMaterialIndex(sub.mat)
-				);
-
-			m_rd->Cmd_UpdateShaderArgs(m_cmdl, args);
-
-			auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
-			m_rd->Cmd_DrawIndexed(m_cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
-
+				});
 		}
+		
+		m_end = std::chrono::high_resolution_clock::now();
+		diff = m_end - m_start;
+		//std::cout << "Graph declaration time elapsed (ms): " << diff.count() * 1000.0 << "\n";
 
-		m_imgui->Render(m_rd, m_cmdl);
+		m_start = m_end = std::chrono::high_resolution_clock::now();
+		rg.Build();
+		m_end = std::chrono::high_resolution_clock::now();
+		diff = m_end - m_start;
+		//std::cout << "Build time elapsed (ms): " << diff.count() * 1000.0 << "\n";
 
-		m_rd->Cmd_EndRenderPass(m_cmdl);
+		m_start = m_end = std::chrono::high_resolution_clock::now();
+		rg.Execute();
+		m_end = std::chrono::high_resolution_clock::now();
+		diff = m_end - m_start;
+		//std::cout << "Exec time elapsed (ms): " << diff.count() * 1000.0 << "\n\n";
 
-		// Present
-		{
-			GPUBarrier barrs[]
-			{
-				GPUBarrier::Transition(scTex, 0, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT),
-				GPUBarrier::Transition(m_depthTex, 0, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_COMMON)
-
-			};
-			m_rd->Cmd_Barrier(m_cmdl, barrs);
-		}
-
-		m_rd->SubmitCommandList(m_cmdl);
-	
 	}
 
 	void Renderer::OnResize(u32 clientWidth, u32 clientHeight)
@@ -263,6 +279,7 @@ namespace DOG::gfx
 	{
 		m_rd->Flush();
 
+		m_rgResMan->Tick();
 		m_bin->BeginFrame();
 		m_rd->RecycleCommandList(m_cmdl);
 		m_cmdl = m_rd->AllocateCommandList();
@@ -290,7 +307,10 @@ namespace DOG::gfx
 
 	LRESULT Renderer::WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
-		return m_imgui->WinProc(hwnd, uMsg, wParam, lParam);
+		if (m_imgui)
+			return m_imgui->WinProc(hwnd, uMsg, wParam, lParam);
+		else
+			return false;
 	}
 
 }

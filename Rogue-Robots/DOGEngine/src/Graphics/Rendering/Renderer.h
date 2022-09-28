@@ -19,6 +19,9 @@ namespace DOG::gfx
 
 	class GraphicsBuilder;
 
+	class RenderGraph;
+	class RGResourceManager;
+
 	class Renderer
 	{
 	private:
@@ -60,6 +63,8 @@ namespace DOG::gfx
 
 	private:
 		void EndGUI();	// Called at EndFrame_GPU
+
+
 
 		LRESULT WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -106,19 +111,15 @@ namespace DOG::gfx
 		std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> m_wmCallback;
 
 		// ================= RENDERING RESOURCES
-		Texture m_depthTex;
-		TextureView m_depthTarget;
-
 		std::array<Texture, S_NUM_BACKBUFFERS> m_scTextures;
-		std::array<TextureView, S_NUM_BACKBUFFERS> m_scViews;
-		std::array<RenderPass, S_NUM_BACKBUFFERS> m_scPasses;
 
 		Pipeline m_pipe, m_meshPipe;
 
 		// Reusing a single command list for now
 		CommandList m_cmdl;
 
-
+		std::unique_ptr<RenderGraph> m_rg;
+		std::unique_ptr<RGResourceManager> m_rgResMan;
 
 
 	};

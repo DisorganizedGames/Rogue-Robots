@@ -27,8 +27,8 @@ namespace DOG
 			}
 		}
 
-		bool ignoreMouseInput = !s_windowData.isStarting && ImGui::GetIO().WantCaptureMouse;
-		bool ignoreKeyboardInput = !s_windowData.isStarting && ImGui::GetIO().WantCaptureKeyboard;
+		bool ignoreMouseInput = !s_windowData.isStarting && ImGui::GetCurrentContext() && ImGui::GetIO().WantCaptureMouse;
+		bool ignoreKeyboardInput = !s_windowData.isStarting && ImGui::GetCurrentContext() && ImGui::GetIO().WantCaptureKeyboard;
 
 		switch (message)
 		{

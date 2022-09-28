@@ -14,8 +14,44 @@ namespace DOG::gfx
 	{
 		Discard,
 		Preserve,
-		Resolve
+		Resolve			// Not supported for now
 	};
+
+	// Combined Begin/End
+	enum class RenderPassAccessType
+	{
+		Discard_Discard,
+		Discard_Preserve,
+
+		Preserve_Discard,
+		Preserve_Preserve,
+
+		Clear_Discard,
+		Clear_Preserve
+	};
+
+	static std::pair<RenderPassBeginAccessType, RenderPassEndingAccessType> GetAccessTypes(RenderPassAccessType access)
+	{
+		switch (access)
+		{
+		case RenderPassAccessType::Discard_Discard:
+			return { RenderPassBeginAccessType::Discard, RenderPassEndingAccessType::Discard };
+		case RenderPassAccessType::Discard_Preserve:
+			return { RenderPassBeginAccessType::Discard, RenderPassEndingAccessType::Preserve };
+		case RenderPassAccessType::Preserve_Discard:
+			return { RenderPassBeginAccessType::Preserve, RenderPassEndingAccessType::Discard };
+		case RenderPassAccessType::Preserve_Preserve:
+			return { RenderPassBeginAccessType::Preserve, RenderPassEndingAccessType::Preserve };
+		case RenderPassAccessType::Clear_Discard:
+			return { RenderPassBeginAccessType::Clear, RenderPassEndingAccessType::Discard };
+		case RenderPassAccessType::Clear_Preserve:
+			return { RenderPassBeginAccessType::Clear, RenderPassEndingAccessType::Preserve };
+
+		default:
+			assert(false);
+			return {};
+		}
+	}
 
 	struct RenderPassTargetDesc
 	{
