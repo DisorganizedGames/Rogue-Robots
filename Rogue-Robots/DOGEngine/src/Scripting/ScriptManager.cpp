@@ -34,6 +34,9 @@ namespace DOG
 		LuaTable table(scriptData.scriptTable, true);
 		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
 		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
+
+		//Call start on the reloaded script!
+		table.CallFunctionOnTable(scriptData.onStartFunction);
 	}
 
 	//Test if we can reload the file and return true/false
@@ -77,6 +80,37 @@ namespace DOG
 		}
 	}
 
+	void ScriptManager::CreateScript(entity entity, const std::string& luaFileName)
+	{
+		ScriptData scriptData = { entity, -1, -1, -1 };
+		scriptData.scriptTable = m_luaW->CreateTable();
+
+		LuaTable table(scriptData.scriptTable, true);
+		table.CreateEnvironment(c_pathToScripts + luaFileName);
+		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
+		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
+
+		//Find if there already exist a vector for that script type
+		auto itScriptToVector = m_scriptToVector.find(luaFileName);
+		if (itScriptToVector == m_scriptToVector.end())
+		{
+			m_unsortedScripts.push_back({ scriptData });
+			u32 vectorIndex = (u32)(m_unsortedScripts.size() - 1);
+			m_scriptToVector.insert({ luaFileName, {false, vectorIndex} });
+	}
+		else
+		{
+			if (itScriptToVector->second.sorted)
+			{
+				m_sortedScripts[itScriptToVector->second.vectorIndex].push_back(scriptData);
+			}
+			else
+			{
+				m_unsortedScripts[itScriptToVector->second.vectorIndex].push_back(scriptData);
+			}
+		}
+	}
+
 	ScriptManager::ScriptManager(LuaW* luaW) : m_luaW(luaW), m_entityManager(DOG::EntityManager::Get())
 	{
 #ifdef _DEBUG
@@ -101,33 +135,7 @@ namespace DOG
 	//Creates a script and runs it
 	ScriptComponent& ScriptManager::AddScript(entity entity, const std::string& luaFileName)
 	{
-		ScriptData scriptData = { entity, -1, -1, -1};
-		scriptData.scriptTable = m_luaW->CreateTable();
-
-		LuaTable table(scriptData.scriptTable, true);
-		table.CreateEnvironment(c_pathToScripts + luaFileName);
-		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
-		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
-
-		//Find if there already exist a vector for that script type
-		auto itScriptToVector = m_scriptToVector.find(luaFileName.c_str());
-		if (itScriptToVector == m_scriptToVector.end())
-		{
-			m_unsortedScripts.push_back({scriptData});
-			u32 vectorIndex = (u32)(m_unsortedScripts.size() - 1);
-			m_scriptToVector.insert({ luaFileName, {false, vectorIndex}});
-		}
-		else
-		{
-			if (itScriptToVector->second.sorted)
-			{
-				m_sortedScripts[itScriptToVector->second.vectorIndex].push_back(scriptData);
-			}
-			else
-			{
-				m_unsortedScripts[itScriptToVector->second.vectorIndex].push_back(scriptData);
-			}
-		}
+		CreateScript(entity, luaFileName);
 
 		//Return script component
 		//Return the entity component if it already exists
@@ -142,7 +150,7 @@ namespace DOG
 
 	ScriptData ScriptManager::GetScript(entity entity, const std::string& luaFileName)
 	{
-		auto itScriptToVector = m_scriptToVector.find(luaFileName.c_str());
+		auto itScriptToVector = m_scriptToVector.find(luaFileName);
 		if (itScriptToVector == m_scriptToVector.end())
 		{
 			assert(false);
@@ -172,7 +180,7 @@ namespace DOG
 
 	void ScriptManager::RemoveScript(entity entity, const std::string& luaFileName)
 	{
-		auto itScriptToVector = m_scriptToVector.find(luaFileName.c_str());
+		auto itScriptToVector = m_scriptToVector.find(luaFileName);
 		if (itScriptToVector == m_scriptToVector.end())
 		{
 			return;
@@ -224,7 +232,7 @@ namespace DOG
 
 			for (int i = 0; i < s_filesToBeReloaded.size(); ++i)
 			{
-				auto it = m_scriptToVector.find(s_filesToBeReloaded[i].c_str());
+				auto it = m_scriptToVector.find(s_filesToBeReloaded[i]);
 
 				//Sometimes files are reloaded before they even exist as scripts 
 				//Return early and clear filesToBeReloaded, should work
@@ -348,12 +356,12 @@ namespace DOG
 				setHalwayIndex = false;
 			}
 
-			auto itScriptToVector = m_scriptToVector.find(sortData.luaFileName.c_str());
+			auto itScriptToVector = m_scriptToVector.find(sortData.luaFileName);
 			if (itScriptToVector == m_scriptToVector.end())
 			{
 				m_sortedScripts.push_back({});
 				u32 vectorIndex = (u32)(m_sortedScripts.size() - 1);
-				m_scriptToVector.insert({ sortData.luaFileName.c_str(), {true, vectorIndex} });
+				m_scriptToVector.insert({ sortData.luaFileName, {true, vectorIndex} });
 			}
 		}
 
