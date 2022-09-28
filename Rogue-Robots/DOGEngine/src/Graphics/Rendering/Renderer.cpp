@@ -126,7 +126,7 @@ namespace DOG::gfx
 		m_imgui->BeginFrame();
 	}
 
-	void Renderer::SubmitMesh(Meshmesh, u32submesh, MaterialHandlemat, const DirectX::SimpleMath::Matrix& world)
+	void Renderer::SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle mat, const DirectX::SimpleMath::Matrix& world)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
@@ -276,13 +276,15 @@ namespace DOG::gfx
 		m_end = std::chrono::high_resolution_clock::now();
 		diff = m_end - m_start;
 		//std::cout << "Build time elapsed (ms): " << diff.count() * 1000.0 << "\n";
-m_ui->m_d2d.BeginFrame(m_rd, m_sc);
-		m_ui->drawUI();
-		m_ui->m_d2d.EndFrame(m_rd, m_sc);
+		
 		m_start = m_end = std::chrono::high_resolution_clock::now();
 		rg.Execute();
+		
 		m_end = std::chrono::high_resolution_clock::now();
 		diff = m_end - m_start;
+		m_ui->m_d2d.BeginFrame(m_rd, m_sc);
+		m_ui->drawUI();
+		m_ui->m_d2d.EndFrame(m_rd, m_sc);
 		//std::cout << "Exec time elapsed (ms): " << diff.count() * 1000.0 << "\n\n";
 
 	}
