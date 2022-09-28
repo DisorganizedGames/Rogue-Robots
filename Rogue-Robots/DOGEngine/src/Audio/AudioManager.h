@@ -23,7 +23,7 @@ namespace DOG
 		static bool HasFinished(const AudioPlayerComponent& audioPlayerComponent);
 
 	private:
-		static inline constexpr const u32 MAX_SOURCES = 8;
+		static inline constexpr const u32 MAX_SOURCES = 128;
 
 		static inline AudioDevice* s_device = nullptr;
 		static inline auto s_sources = std::vector<std::unique_ptr<SourceVoice>>(MAX_SOURCES);
