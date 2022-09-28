@@ -6,7 +6,7 @@ using namespace DirectX::SimpleMath;
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
 {
-	m_boneJourno = std::make_unique<BoneJovi>();
+	m_boneJourno = std::make_unique<AnimationManager>();
 	auto& am = DOG::AssetManager::Get();
 	m_redCube = am.LoadModelAsset("Assets/red_cube.glb");
 	m_greenCube = am.LoadModelAsset("Assets/green_cube.glb");
@@ -16,9 +16,9 @@ GameLayer::GameLayer() noexcept
 
 	entity entity1 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity1, m_mixamo);
-	m_entityManager.AddComponent<TransformComponent>(entity1, Vector3(-4, -2, 5), Vector3(0.1f, 0, 0));
+	m_entityManager.AddComponent<TransformComponent>(entity1, Vector3(0, -2, 5), Vector3(0, 0, 0), Vector3(0.02f, 0.02f, 0.02f));
 	m_entityManager.AddComponent<NetworkPlayerComponent>(entity1).playerId = 0;
-	m_entityManager.AddComponent<ModelAnimationComponent>(entity1).skeletonId = 0;
+	m_entityManager.AddComponent<AnimationComponent>(entity1).rigID = 0;
 
 	entity entity2 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity2, m_greenCube);

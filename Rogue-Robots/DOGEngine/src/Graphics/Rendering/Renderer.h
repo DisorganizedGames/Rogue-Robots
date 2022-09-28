@@ -1,7 +1,7 @@
 #pragma once
 #include "../../Core/Types/GraphicsTypes.h"
 #include "../RHI/RenderResourceHandles.h"
-#include "../../Core/BoneJovi.h"
+#include "../../Core/AnimationManager.h"
 namespace DOG::gfx
 {
 	class RenderBackend;
@@ -122,14 +122,14 @@ namespace DOG::gfx
 
 
 		//TMP
-		std::unique_ptr<BoneJovi> m_boneJourno;
+		std::unique_ptr<AnimationManager> m_boneJourno;
 	public:
 		bool firstTime = true;
 		void SetBones(DOG::ImportedAnimation& ia)
 		{
 			if (firstTime)
 			{
-				m_boneJourno->SetJoints(ia);
+				m_boneJourno->SetImportedAnimations(ia);
 				firstTime = false;
 			}
 			auto c = ia;

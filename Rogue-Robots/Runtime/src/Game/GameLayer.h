@@ -1,5 +1,4 @@
 #pragma once
-#include <DOGEngine.h>
 #include "MainPlayer.h"
 #include "LuaInterfaces.h"
 #include "NetCode.h"
@@ -21,7 +20,7 @@ private:
 	void RegisterLuaInterfaces();
 
 private:
-	std::unique_ptr<BoneJovi> m_boneJourno;
+	std::unique_ptr<AnimationManager> m_boneJourno;
 	u64 m_mixamo{ 0 };
 	u64 m_redCube{ 0 };
 	u64 m_greenCube{ 0 };

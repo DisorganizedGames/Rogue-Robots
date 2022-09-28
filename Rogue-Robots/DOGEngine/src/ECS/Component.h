@@ -48,8 +48,18 @@ namespace DOG
 	{
 	};
 
-	struct ModelAnimationComponent : public Component<ModelAnimationComponent>
+	struct RigComponent : public Component<RigComponent>
 	{
-		int skeletonId;
+		u32 rigID;
+	};
+
+	struct AnimationComponent : public Component<AnimationComponent>
+	{
+		i32 offset;
+		i32 rigID;
+		i32 animationID;
+		f32 time;
+		f32 timeScale;
+		f32 transition;
 	};
 }
