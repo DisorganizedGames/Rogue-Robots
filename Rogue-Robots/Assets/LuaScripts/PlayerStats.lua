@@ -1,23 +1,20 @@
-playerStats = {
-	maxHealth = 100.0,
-	health = 100.0,
-	speed = 10.0,
-	-- ...
-}
 
+-- List of currently active temporary pickups
 tempPickups = {}
 
 -- Template to use when implementing a permanent effect pickup item.
 templatePickup = {
-	affect = function(self, stats) 
+	affect = function(self, stats)
 		-- Do something to the player stats, like increasing health
+		-- Entity:ModifyComponent(Player:GetID(), "PlayerStats", stats)
 	end
 }
 
 -- Template to use when implementing a temporary effect pickup item.
-templatePickup = {
-	affect = function(self, stats) 
+templateTempPickup = {
+	affect = function(self, stats)
 		-- Do something to the player stats, like increasing health
+		-- Entity:ModifyComponent(Player:GetID(), "PlayerStats", stats)
 		
 		table.insert(tempPickups, {
 			co = couroutine.create(function(params)

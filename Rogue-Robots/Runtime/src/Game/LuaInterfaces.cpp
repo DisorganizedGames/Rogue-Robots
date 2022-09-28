@@ -1,4 +1,5 @@
 #include "LuaInterfaces.h"
+#include "GameComponent.h"
 
 using namespace DOG;
 using namespace DirectX::SimpleMath;
@@ -68,6 +69,10 @@ void EntityInterface::ModifyComponent(LuaContext* context)
 	{
 		ModifyTransform(context, e);
 	}
+	if (compType == "PlayerStats")
+	{
+		ModifyPlayerStats(context, e);
+	}
 	//Add more component types here.
 }
 
@@ -98,6 +103,19 @@ void EntityInterface::GetTransformScaleData(LuaContext* context)
 	t.AddFloatToTable("x", scale.x);
 	t.AddFloatToTable("y", scale.y);
 	t.AddFloatToTable("z", scale.z);
+	context->ReturnTable(t);
+}
+
+void EntityInterface::GetPlayerStats(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	PlayerStatsComponent& psComp = EntityManager::Get().GetComponent<PlayerStatsComponent>(e);
+
+	LuaTable t;
+	t.AddDoubleToTable("health", psComp.health);
+	t.AddDoubleToTable("maxHealth", psComp.maxHealth);
+	t.AddDoubleToTable("speed", psComp.speed);
+
 	context->ReturnTable(t);
 }
 
@@ -143,6 +161,16 @@ void EntityInterface::ModifyTransform(LuaContext* context, entity e)
 	}
 }
 
+void EntityInterface::ModifyPlayerStats(DOG::LuaContext* context, DOG::entity e)
+{
+	auto t = context->GetTable();
+	auto& psComp = EntityManager::Get().GetComponent<PlayerStatsComponent>(e);
+	
+	psComp.health = t.GetFloatFromTable("health");
+	psComp.maxHealth = t.GetFloatFromTable("maxHealth");
+	psComp.speed = t.GetFloatFromTable("speed");
+}
+
 //---------------------------------------------------------------------------------------------------------
 //Asset
 
@@ -154,6 +182,10 @@ void AssetInterface::LoadModel(LuaContext* context)
 
 //---------------------------------------------------------------------------------------------------------
 //Player
+void PlayerInterface::GetID(LuaContext* context)
+{
+	context->ReturnInteger(m_player);
+}
 
 void PlayerInterface::GetForward(LuaContext* context)
 {

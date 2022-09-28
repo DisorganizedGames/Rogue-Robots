@@ -74,6 +74,8 @@ public:
 	void GetTransformPosData(DOG::LuaContext* context);
 	void GetTransformScaleData(DOG::LuaContext* context);
 
+	void GetPlayerStats(DOG::LuaContext* context);
+
 private:
 	void AddModel(DOG::LuaContext* context, DOG::entity e);
 
@@ -82,6 +84,8 @@ private:
 	void AddNetwork(DOG::entity e);
 
 	void ModifyTransform(DOG::LuaContext* context, DOG::entity e);
+	
+	void ModifyPlayerStats(DOG::LuaContext* context, DOG::entity e);
 };
 
 class AssetInterface : public LuaInterface
@@ -115,7 +119,8 @@ public:
 	{
 
 	}
-
+	
+	void GetID(DOG::LuaContext* context);
 	void GetForward(DOG::LuaContext* context);
 	void GetPosition(DOG::LuaContext* context);
 private:
