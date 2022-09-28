@@ -230,7 +230,7 @@ namespace DOG::gfx
 				{
 					rd->Cmd_SetPipeline(cmdl, m_pipe);
 					rd->Cmd_UpdateShaderArgs(cmdl, ShaderArgs()
-						.AppendConstant(resources.GetView(RG_RESOURCE(LitHDR))));
+						.AppendConstant((u32)resources.GetView(RG_RESOURCE(LitHDR))));
 					rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
 				});
 
