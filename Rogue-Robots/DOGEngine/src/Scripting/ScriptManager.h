@@ -59,6 +59,7 @@ namespace DOG
 		bool TestReloadFile(const std::string& fileName);
 		void RemoveReferences(ScriptData& scriptData);
 		void RemoveScriptData(std::vector<ScriptData>& scriptVector, entity entity);
+		void CreateScript(entity entity, const std::string& luaFileName);
 
 	public:
 		ScriptManager(LuaW* luaW);
@@ -66,6 +67,9 @@ namespace DOG
 		void RunLuaFile(const std::string& luaFileName);
 		//Adds a script and runs it
 		ScriptComponent& AddScript(entity entity, const std::string& luaFileName);
+		//Adds a script and runs it, also creates the specified component
+		template<typename T, class ...Args>
+		T& AddScript(entity entity, const std::string& luaFileName, Args&&... args);
 		//Get ScriptData
 		ScriptData GetScript(entity entity, const std::string& luaFileName);
 		//Removes a script from entity
@@ -83,4 +87,13 @@ namespace DOG
 		//Sort the ordered scripts
 		void SortOrderScripts();
 	};
+
+	template<typename T, class ...Args>
+	inline T& ScriptManager::AddScript(entity entity, const std::string& luaFileName, Args&&... args)
+	{
+		CreateScript(entity, luaFileName);
+
+		//Return the created component
+		return m_entityManager.AddComponent<T>(entity, std::forward<Args>(args)...);
+	}
 }
