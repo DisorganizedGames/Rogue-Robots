@@ -169,7 +169,7 @@ namespace DOG
 	{
 		bool async = false;
 		std::string filePath;
-		WAVProperties properties;
+		WAVProperties properties = {};
 		std::vector<u8> audioData;
 	};
 

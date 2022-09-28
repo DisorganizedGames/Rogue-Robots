@@ -41,7 +41,7 @@ public:
 	}
 
 	//Takes a string as argument
-	void PlaySound(/*DOG::LuaContext**/);
+	void Play(DOG::LuaContext* context);
 };
 
 class EntityInterface : public LuaInterface

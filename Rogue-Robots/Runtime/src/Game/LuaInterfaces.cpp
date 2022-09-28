@@ -23,9 +23,11 @@ void InputInterface::IsKeyPressed(LuaContext* context)
 
 //---------------------------------------------------------------------------------------------------------
 //Audio
-void AudioInterface::PlaySound(/*LuaContext* context*/)
+void AudioInterface::Play(LuaContext* context)
 {
-	//TODO
+	auto path = context->GetString();
+	AudioPlayerComponent apc = { AssetManager::Get().LoadAudio(path, AssetLoadFlag::CPUMemory) };
+	AudioManager::Play(apc);
 }
 
 //---------------------------------------------------------------------------------------------------------

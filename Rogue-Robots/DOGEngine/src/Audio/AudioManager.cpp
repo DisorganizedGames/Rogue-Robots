@@ -6,9 +6,19 @@
 
 using namespace DOG;
 
-AudioManager::AudioManager()
+void AudioManager::Initialize()
 {
-	m_sources.resize(MAX_SOURCES);
+	s_device = std::make_unique<AudioDevice>();
+}
+
+void AudioManager::Destroy()
+{
+	for (auto& source: s_sources)
+	{
+		source.reset();
+	}
+	
+	s_device.reset();
 }
 
 void AudioManager::Play(AudioPlayerComponent& audioPlayerComponent)
@@ -20,9 +30,9 @@ void AudioManager::Play(AudioPlayerComponent& audioPlayerComponent)
 
 	if (currentVoice != -1)
 	{
-		if (m_sources[currentVoice]->HasFinished())
+		if (s_sources[currentVoice]->HasFinished())
 		{
-			m_sources[currentVoice].reset();
+			s_sources[currentVoice].reset();
 			audioPlayerComponent.voiceID = -1;
 		}
 		else
@@ -38,7 +48,7 @@ void AudioManager::Play(AudioPlayerComponent& audioPlayerComponent)
 	SourceVoiceSettings settings = {
 		.volume = volume,
 	};
-	auto& source = m_sources[freeVoiceIndex];
+	auto& source = s_sources[freeVoiceIndex];
 
 	source->SetSettings(settings);
 	audioPlayerComponent.voiceID = freeVoiceIndex;
@@ -62,7 +72,7 @@ void AudioManager::Stop(AudioPlayerComponent& audioPlayerComponent)
 		throw std::runtime_error("Tried to call stop, but no voice was specified");
 	}
 
-	auto& voice = m_sources[voiceID];
+	auto& voice = s_sources[voiceID];
 	if (!voice->HasFinished())
 	{
 		voice->Stop();
@@ -70,12 +80,12 @@ void AudioManager::Stop(AudioPlayerComponent& audioPlayerComponent)
 	audioPlayerComponent.voiceID = -1;
 }
 
-bool AudioManager::HasFinished(const AudioPlayerComponent& audioPlayerComponent) const
+bool AudioManager::HasFinished(const AudioPlayerComponent& audioPlayerComponent)
 {
 	u64 voiceID = audioPlayerComponent.voiceID;
 	if (voiceID >= 0 && voiceID < MAX_SOURCES)
 	{
-		return m_sources[voiceID]->HasFinished();
+		return s_sources[voiceID]->HasFinished();
 	}
 	return true;
 }
@@ -83,15 +93,15 @@ bool AudioManager::HasFinished(const AudioPlayerComponent& audioPlayerComponent)
 u64 AudioManager::GetFreeVoice(const WAVProperties& wavProperties)
 {
 	// Find compatible voice
-	for (int i = 0; i < m_sources.size(); ++i)
+	for (int i = 0; i < s_sources.size(); ++i)
 	{
-		auto& source = m_sources[i];
+		auto& source = s_sources[i];
 		if (!source)
 			continue;
 		if (!source->HasFinished())
 			continue;
 		
-		auto sourceWAVProperties = source->GetWAVProperties();
+		auto& sourceWAVProperties = source->GetWAVProperties();
 		if (memcmp(&wavProperties, &sourceWAVProperties, sizeof(WAVProperties)) == 0)
 		{
 			return i;
@@ -99,21 +109,21 @@ u64 AudioManager::GetFreeVoice(const WAVProperties& wavProperties)
 	}
 
 	// Find empty voice and create a new one with the provided properties
-	for (int i = 0; i < m_sources.size(); ++i)
+	for (int i = 0; i < s_sources.size(); ++i)
 	{
-		auto& source = m_sources[i];
+		auto& source = s_sources[i];
 		if (!source)
 		{
 			source = std::make_unique<SourceVoice>();
-			*source = m_device.CreateSourceVoice(wavProperties);
+			*source = s_device->CreateSourceVoice(wavProperties);
 			return i;
 		}
 	}
 
 	// Free unused voice(s?) and use the freed voice's place
-	for (int i = 0; i < m_sources.size(); ++i)
+	for (int i = 0; i < s_sources.size(); ++i)
 	{
-		auto& source = m_sources[i];
+		auto& source = s_sources[i];
 		if (!source)
 			continue;
 		

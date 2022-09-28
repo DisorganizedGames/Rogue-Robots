@@ -138,7 +138,7 @@ void GameLayer::RegisterLuaInterfaces()
 	m_luaInterfaces.push_back(luaInterfaceObject);
 
 	luaInterface = global->CreateLuaInterface("AudioInterface");
-	//luaInterface.AddFunction<AudioInterface, &InputInterface::PlaySound>("PlaySound");
+	luaInterface.AddFunction<AudioInterface, &AudioInterface::Play>("Play");
 	global->SetLuaInterface(luaInterface);
 
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Audio", "AudioInterface");

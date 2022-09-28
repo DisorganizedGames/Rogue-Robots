@@ -25,7 +25,9 @@ AudioDevice::AudioDevice()
 
 DOG::AudioDevice::~AudioDevice()
 {
-	m_masteringVoice->DestroyVoice();
+	if (m_masteringVoice)
+		m_masteringVoice->DestroyVoice();
+
 	if (m_xAudio)
 	{
 		m_xAudio->Release();

@@ -210,12 +210,17 @@ namespace DOG
 		return id;
 	}
 
-	u32 AssetManager::LoadAudio(const std::string& path, AssetLoadFlag)
+	u32 AssetManager::LoadAudio(const std::string& path, AssetLoadFlag flag)
 	{
 		if (!std::filesystem::exists(path))
 		{
 			throw FileNotFoundError(path);
 		}
+
+		u32 id = 0;
+		if (!AssetNeedsToBeLoaded(path, flag, id))
+			return id;
+		
 		u64 fileSize = std::filesystem::file_size(path);
 		AudioAsset* newAudio = new AudioAsset;
 		newAudio->filePath = path;
@@ -231,9 +236,12 @@ namespace DOG
 			newAudio->properties = properties;
 			newAudio->audioData = data;
 		}
-
-		u32 id = NextKey();
-		m_assets.insert({ id, new ManagedAsset<AudioAsset>(newAudio) });
+		
+		if(id == 0)
+		{
+			id = NextKey();
+			m_assets.insert({ id, new ManagedAsset<AudioAsset>(newAudio) });
+		}
 		m_assets[id]->stateFlag = AssetStateFlag::ExistOnCPU;
 		return id;
 	}
