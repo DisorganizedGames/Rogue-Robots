@@ -12,7 +12,6 @@ namespace DOG
 		RECT windowRectangle;
 		Vector2u dimensions;
 		WindowMode mode;
-		bool isStarting = true;
 	};
 	static WindowData s_windowData = {};
 	static std::optional<std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)>> s_wmHook;
@@ -26,9 +25,6 @@ namespace DOG
 				return true;
 			}
 		}
-
-		bool ignoreMouseInput = !s_windowData.isStarting && ImGui::GetCurrentContext() && ImGui::GetIO().WantCaptureMouse;
-		bool ignoreKeyboardInput = !s_windowData.isStarting && ImGui::GetCurrentContext() && ImGui::GetIO().WantCaptureKeyboard;
 
 		switch (message)
 		{
@@ -46,7 +42,6 @@ namespace DOG
 		}
 		case WM_KEYDOWN:
 		{
-			if (ignoreKeyboardInput) return 0;
 			bool keyIsRepeated = (lParam >> 30) & 1;
 			if (!keyIsRepeated)
 			{
@@ -56,49 +51,41 @@ namespace DOG
 		}
 		case WM_KEYUP:
 		{
-			if (ignoreKeyboardInput) return 0;
 			Keyboard::OnKeyUp((Key)(u8)(wParam));
 			return 0;
 		}
 		case WM_LBUTTONDOWN:
 		{
-			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonPressed(Button::Left);
 			return 0;
 		}
 		case WM_LBUTTONUP:
 		{
-			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonReleased(Button::Left);
 			return 0;
 		}
 		case WM_RBUTTONDOWN:
 		{
-			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonPressed(Button::Right);
 			return 0;
 		}
 		case WM_RBUTTONUP:
 		{
-			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonReleased(Button::Right);
 			return 0;
 		}
 		case WM_MBUTTONDOWN:
 		{
-			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonPressed(Button::Wheel);
 			return 0;
 		}
 		case WM_MBUTTONUP:
 		{
-			if (ignoreMouseInput) return 0;
 			Mouse::OnButtonReleased(Button::Wheel);
 			return 0;
 		}
 		case WM_MOUSEMOVE:
 		{
-			if (ignoreMouseInput) return 0;
 			// LOWORD and HIWORD can't be used because x and y can be negative
 			POINTS point = MAKEPOINTS(lParam);
 			if (point.x < 0 || point.y < 0 || point.x >= static_cast<int>(GetWidth()) || point.y >= static_cast<int>(GetHeight()))
@@ -110,7 +97,6 @@ namespace DOG
 		}
 		case WM_INPUT:
 		{
-			if (ignoreMouseInput) return 0;
 			UINT size = 0u;
 			if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, nullptr, &size, sizeof(RAWINPUTHEADER)) == -1)
 				return 0;
@@ -193,8 +179,6 @@ namespace DOG
 			,"Failed to register raw mouse movement delta.");
 
 		::ShowWindow(s_windowData.windowHandle, SW_SHOW);
-
-		s_windowData.isStarting = false;
 	}
 
 	void Window::OnUpdate() noexcept

@@ -32,6 +32,35 @@ void RuntimeApplication::OnRestart() noexcept
 	//...
 }
 
+void RuntimeApplication::OnEvent(IEvent& event) noexcept
+{
+	if (event.GetEventCategory() == EventCategory::KeyboardEventCategory)
+	{
+		switch (event.GetEventType())
+		{
+		case EventType::KeyPressedEvent:
+		{
+			if (EVENT(KeyPressedEvent).key == Key::F1)
+			{
+				m_showImGuiMenu = !m_showImGuiMenu;
+				if (m_showImGuiMenu)
+				{
+					PushOverlay(&m_imGuiMenuLayer);
+					
+				}
+				else
+				{
+					PopOverlay(&m_imGuiMenuLayer);
+				}
+			}
+			break;
+		}
+		}
+
+	}
+	Application::OnEvent(event);
+}
+
 std::string GetWorkingDirectory()
 {
 	std::string currentWorkSpace = std::filesystem::current_path().string();

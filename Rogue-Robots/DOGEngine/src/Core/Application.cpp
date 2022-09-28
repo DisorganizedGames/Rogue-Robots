@@ -40,10 +40,6 @@ namespace DOG
 	using namespace DOG::gfx;
 	void Application::Run() noexcept
 	{
-		// Temporary read only data from runtime
-		bool showDemoWindow = true;
-
-
 		while (m_isRunning)
 		{
 			Time::Start();
@@ -55,9 +51,6 @@ namespace DOG
 
 			// All ImGUI calls must happen after this call
 			m_renderer->BeginGUI();
-		
-			// Example ImGUI call
-			ImGui::ShowDemoWindow(&showDemoWindow);
 
 			AssetManager::Get().Update();
 
