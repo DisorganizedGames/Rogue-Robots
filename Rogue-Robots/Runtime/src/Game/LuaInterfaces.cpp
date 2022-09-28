@@ -22,7 +22,7 @@ void InputInterface::IsKeyPressed(LuaContext* context)
 
 //---------------------------------------------------------------------------------------------------------
 //Audio
-void AudioInterface::PlaySound(LuaContext* context)
+void AudioInterface::PlaySound(/*LuaContext* context*/)
 {
 	//TODO
 }
@@ -54,7 +54,7 @@ void EntityInterface::AddComponent(LuaContext* context)
 	}
 	else if (compType == "Network")
 	{
-		AddNetwork(context, e);
+		AddNetwork(e);
 	}
 	//Add more component types here.
 }
@@ -118,7 +118,7 @@ void EntityInterface::AddTransform(LuaContext* context, entity e)
 		.SetScale({ scale.GetFloatFromTable("x"), scale.GetFloatFromTable("y"), scale.GetFloatFromTable("z") });
 }
 
-void EntityInterface::AddNetwork(DOG::LuaContext* context, DOG::entity e)
+void EntityInterface::AddNetwork(DOG::entity e)
 {
 	EntityManager::Get().AddComponent<NetworkComponent>(e);
 }

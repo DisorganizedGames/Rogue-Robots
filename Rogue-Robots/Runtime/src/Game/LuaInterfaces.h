@@ -41,7 +41,7 @@ public:
 	}
 
 	//Takes a string as argument
-	void PlaySound(DOG::LuaContext*);
+	void PlaySound(/*DOG::LuaContext**/);
 };
 
 class EntityInterface : public LuaInterface
@@ -79,7 +79,7 @@ private:
 
 	void AddTransform(DOG::LuaContext* context, DOG::entity e);
 
-	void AddNetwork(DOG::LuaContext* context, DOG::entity e);
+	void AddNetwork(DOG::entity e);
 
 	void ModifyTransform(DOG::LuaContext* context, DOG::entity e);
 };
