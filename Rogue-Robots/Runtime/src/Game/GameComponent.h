@@ -1,13 +1,13 @@
 #pragma once
 #include <DOGEngine.h>
 
-struct GunComponent : public DOG::Component<GunComponent>
+struct GunComponent
 {
 	//ScriptData gunScript;
 	//TempScript* gunScript;
 };
 
-struct PlayerStatsComponent : public DOG::Component<PlayerStatsComponent>
+struct PlayerStatsComponent
 {
 	float health;
 	float maxHealth;

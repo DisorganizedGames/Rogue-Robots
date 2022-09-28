@@ -1,7 +1,14 @@
 #pragma once
 #include "Component.h"
+#include <StaticTypeInfo/type_id.h>
+#include <StaticTypeInfo/type_index.h>
+#include <StaticTypeInfo/type_name.h>
+#define set(ID) (static_cast<SparseSet<ComponentType>*>(m_components.at(ID).get()))
+
 namespace DOG
 {
+	#define sti static_type_info
+	
 	constexpr const u32 MAX_ENTITIES = 64'000u;
 	constexpr const u32 NULL_ENTITY = MAX_ENTITIES;
 	typedef u32 entity;
@@ -13,9 +20,8 @@ namespace DOG
 	class BundleBase;
 	template<typename... ComponentType>
 	class BundleImpl;
-	
+
 	typedef std::unique_ptr<SparseSetBase> ComponentPool;
-	#define set (static_cast<SparseSet<ComponentType>*>(m_components[ComponentType::ID].get())) 
 
 	//##################### SPARSE SET #####################
 
@@ -25,7 +31,7 @@ namespace DOG
 		virtual ~SparseSetBase() noexcept = default;
 		std::vector<entity> sparseArray;
 		std::vector<entity> denseArray;
-		int bundle = -1;
+		sti::TypeIndex bundle = nullptr;
 
 		virtual void DestroyInternal(const entity entityID) noexcept = 0;
 	};
@@ -62,35 +68,27 @@ namespace DOG
 		[[nodiscard]] bool Exists(const entity entityID) const noexcept;
 
 		template<typename ComponentType, typename ...Args>
-		requires std::is_base_of_v<ComponentBase, ComponentType>
 		ComponentType& AddComponent(const entity entityID, Args&& ...args) noexcept;
 
 		template<typename ComponentType>
-		requires std::is_base_of_v<ComponentBase, ComponentType>
 		void RemoveComponent(const entity entityID) noexcept;
 
 		template<typename ComponentType>
-		requires std::is_base_of_v<ComponentBase, ComponentType>
 		[[nodiscard]] ComponentType& GetComponent(const entity entityID) const noexcept;
 
 		template<typename... ComponentType>
-		requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
 		[[nodiscard]] Collection<ComponentType...> Collect() noexcept;
 
 		template<typename ComponentType>
-		requires std::is_base_of_v<ComponentBase, ComponentType>
 		[[nodiscard]] bool HasComponent(const entity entityID) const noexcept;
 
 		template<typename... ComponentType>
-		requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
 		[[nodiscard]] bool HasAllOf(const entity entityID) const noexcept;
 
 		template<typename... ComponentType>
-		requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
 		[[nodiscard]] bool HasAnyOf(const entity entityID) const noexcept;
 
 		template<typename... ComponentType>
-		requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
 		[[nodiscard]] BundleImpl<ComponentType...>& Bundle() noexcept;
 
 	private:
@@ -100,16 +98,17 @@ namespace DOG
 
 		void Initialize() noexcept;
 
-		[[nodiscard]] bool HasComponentInternal(const u32 componentPoolIndex, const entity entityID) const noexcept;
-		void DestroyComponentInternal(const u32 componentPoolIndex, const entity entityID) noexcept;
+		[[nodiscard]] bool HasComponentInternal(const sti::TypeIndex componentPoolIndex, const entity entityID) const noexcept;
+		void DestroyComponentInternal(const sti::TypeIndex componentPoolIndex, const entity entityID) noexcept;
 
 		template<typename ComponentType>
-		requires std::is_base_of_v<ComponentBase, ComponentType>
 		void ValidateComponentPool() noexcept;
 
 		template<typename ComponentType> 
-		requires std::is_base_of_v<ComponentBase, ComponentType>
 		void AddSparseSet() noexcept;
+
+		template<typename ComponentType>
+		SparseSet<ComponentType>* ExpandAsTupleArguments() const noexcept;
 	private:
 		template<typename... ComponentType>
 		friend class Collection;
@@ -118,110 +117,116 @@ namespace DOG
 		static EntityManager s_instance;
 		std::vector<entity> m_entities;
 		std::queue<entity> m_freeList;
-		std::vector<ComponentPool> m_components;
-		std::vector<std::unique_ptr<BundleBase>> m_bundles;
+		std::unordered_map<sti::TypeIndex ,ComponentPool> m_components;
+		std::unordered_map<sti::TypeIndex, std::unique_ptr<BundleBase>> m_bundles;
 	};
 
+	template<typename ComponentType>
+	SparseSet<ComponentType>* EntityManager::ExpandAsTupleArguments() const noexcept
+	{
+		constexpr auto componentID = sti::getTypeIndex<ComponentType>();
+
+		return static_cast<SparseSet<ComponentType>*>(m_components.at(componentID).get());
+	}
+
 	template<typename... ComponentType>
-	requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
 	BundleImpl<ComponentType...>& EntityManager::Bundle() noexcept
 	{
-		std::tuple<SparseSet<ComponentType>*...> pools = { set... };
-		const std::array<u32, sizeof... (ComponentType)> componentIDs{ ComponentType::ID... };
-		auto minComponentID = *std::min_element(componentIDs.begin(), componentIDs.end());
+		constexpr std::array<sti::TypeIndex, sizeof... (ComponentType)> componentIDs{ sti::getTypeIndex<ComponentType>()... };
+		constexpr sti::TypeIndex minComponentID = *std::min_element(std::begin(componentIDs), std::end(componentIDs));
 
 		if (m_bundles[minComponentID] == nullptr)
 		{
+			std::tuple<SparseSet<ComponentType>*...> pools = { (ExpandAsTupleArguments<ComponentType>()) ...};
 #if defined _DEBUG
-			std::apply([](const auto&... pool) {(ASSERT((pool != nullptr) && pool->bundle == -1, "Bundle creation failed."), ...); }, pools);
+			std::apply([](const auto&... pool) {(ASSERT((pool != nullptr) && pool->bundle == nullptr, "Bundle creation failed."), ...); }, pools);
 #endif
-			std::apply([&](const auto&... pool) {((pool->bundle = minComponentID), ...); }, pools);
-			m_bundles[minComponentID] = (std::unique_ptr<BundleImpl<ComponentType...>>(new BundleImpl<ComponentType...>(this, { set... })));
+			std::apply([&minComponentID](const auto... pool) {((pool->bundle = minComponentID), ...); }, pools);
+			m_bundles[minComponentID] = (std::unique_ptr<BundleImpl<ComponentType...>>(new BundleImpl<ComponentType...>(this, std::move(pools))));
 		}
 		return *(static_cast<BundleImpl<ComponentType...>*>(m_bundles[minComponentID].get()));
 	}
 
 	template<typename ComponentType, typename ...Args>
-	requires std::is_base_of_v<ComponentBase, ComponentType>
 	ComponentType& EntityManager::AddComponent(const entity entityID, Args&& ...args) noexcept
 	{
+		constexpr auto ComponentID = sti::getTypeIndex<ComponentType>();
+
 		ASSERT(Exists(entityID), "Entity is invalid");
 		ASSERT(!HasComponent<ComponentType>(entityID), "Entity already has component!");
 
 		ValidateComponentPool<ComponentType>();
 
-		const size_t position = set->denseArray.size();
-		set->denseArray.emplace_back(entityID);
-		set->components.emplace_back(ComponentType(std::forward<Args>(args)...));
-		set->sparseArray[entityID] = static_cast<entity>(position);
+		const size_t position = set(ComponentID)->denseArray.size();
+		set(ComponentID)->denseArray.emplace_back(entityID);
+		set(ComponentID)->components.emplace_back(ComponentType(std::forward<Args>(args)...));
+		set(ComponentID)->sparseArray[entityID] = static_cast<entity>(position);
 
-		if (set->bundle != -1)
+		if (set(ComponentID)->bundle != nullptr)
 		{
-			auto componentIdx = m_bundles[set->bundle]->UpdateOnAdd(entityID);
+			auto componentIdx = m_bundles[set(ComponentID)->bundle]->UpdateOnAdd(entityID);
 			if (componentIdx)
 			{
-				return set->components[*componentIdx];
+				return set(ComponentID)->components[*componentIdx];
 			}
 		}
-		return set->components.back();
+		return set(ComponentID)->components.back();
 	}
 
 	template<typename ComponentType>
-	requires std::is_base_of_v<ComponentBase, ComponentType>
 	void EntityManager::RemoveComponent(const entity entityID) noexcept
 	{
+		auto constexpr componentID = sti::getTypeIndex<ComponentType>();
+
 		ASSERT(Exists(entityID), "Entity is invalid");
 		ASSERT(HasComponent<ComponentType>(entityID), "Entity does not have that component.");
 
-		if (set->bundle != -1)
+		if (set(componentID)->bundle != nullptr)
 		{
-			m_bundles[set->bundle]->UpdateOnRemove(entityID);
+			m_bundles[set(componentID)->bundle]->UpdateOnRemove(entityID);
 		}
 
-		const auto last = set->denseArray.back();
-		std::swap(set->denseArray.back(), set->denseArray[set->sparseArray[entityID]]);
-		std::swap(set->components.back(), set->components[set->sparseArray[entityID]]);
-		std::swap(set->sparseArray[last], set->sparseArray[entityID]);
-		set->denseArray.pop_back();
-		set->components.pop_back();
-		set->sparseArray[entityID] = NULL_ENTITY;
+		const auto last = set(componentID)->denseArray.back();
+		std::swap(set(componentID)->denseArray.back(), set(componentID)->denseArray[set(componentID)->sparseArray[entityID]]);
+		std::swap(set(componentID)->components.back(), set(componentID)->components[set(componentID)->sparseArray[entityID]]);
+		std::swap(set(componentID)->sparseArray[last], set(componentID)->sparseArray[entityID]);
+		set(componentID)->denseArray.pop_back();
+		set(componentID)->components.pop_back();
+		set(componentID)->sparseArray[entityID] = NULL_ENTITY;
 	}
 
 	template<typename ComponentType>
-	requires std::is_base_of_v<ComponentBase, ComponentType>
 	ComponentType& EntityManager::GetComponent(const entity entityID) const noexcept
 	{
+		auto constexpr componentID = sti::getTypeIndex<ComponentType>();
 		ASSERT(Exists(entityID), "Entity is invalid");
 		ASSERT(HasComponent<ComponentType>(entityID), "Entity does not have that component.");
 
-		return set->components[set->sparseArray[entityID]];
+		return set(componentID)->components[set(componentID)->sparseArray[entityID]];
 	}
 
 	template<typename... ComponentType>
-	requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
 	Collection<ComponentType...> EntityManager::Collect() noexcept
 	{
-		return Collection<ComponentType...>( this, {set... });
+		return Collection<ComponentType...>( this, { ExpandAsTupleArguments<ComponentType>() ...});
 	}
 
 	template<typename ComponentType> 
-	requires std::is_base_of_v<ComponentBase, ComponentType>
 	bool EntityManager::HasComponent(const entity entityID) const noexcept
 	{
+		auto constexpr componentID = sti::getTypeIndex<ComponentType>();
 		ASSERT(Exists(entityID), "Entity is invalid");
 
 		return 
 			(
-			m_components.capacity() > ComponentType::ID
-			&& m_components[ComponentType::ID] != nullptr
-			&& entityID < set->sparseArray.size()) 
-			&& (set->sparseArray[entityID] < set->denseArray.size()) 
-			&& (set->sparseArray[entityID] != NULL_ENTITY
+			m_components.contains(componentID)
+			&& entityID < set(componentID)->sparseArray.size())
+			&& (set(componentID)->sparseArray[entityID] < set(componentID)->denseArray.size())
+			&& (set(componentID)->sparseArray[entityID] != NULL_ENTITY
 			);
 	}
 
 	template<typename... ComponentType>
-	requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
 	bool EntityManager::HasAllOf(const entity entityID) const noexcept
 	{
 		ASSERT(Exists(entityID), "Entity is invalid");
@@ -230,7 +235,6 @@ namespace DOG
 	}
 
 	template<typename... ComponentType>
-	requires (std::is_base_of_v<ComponentBase, ComponentType> && ...)
 	bool EntityManager::HasAnyOf(const entity entityID) const noexcept
 	{
 		ASSERT(Exists(entityID), "Entity is invalid");
@@ -239,37 +243,29 @@ namespace DOG
 	}
 
 	template<typename ComponentType>
-	requires std::is_base_of_v<ComponentBase, ComponentType>
 	void EntityManager::ValidateComponentPool() noexcept
 	{
-		if (ComponentType::ID >= m_components.capacity())
-		{
-			for (size_t i{ m_components.size() }; i < ComponentType::ID * 2; i++)
-			{
-				m_components.emplace_back(nullptr);
-			}
-		}
-		if (m_components[ComponentType::ID] == nullptr)
+		constexpr auto ComponentID = sti::getTypeIndex<ComponentType>();
+		if (!m_components.contains(ComponentID))
 		{
 			AddSparseSet<ComponentType>();
 		}
 	}
 
 	template<typename ComponentType> 
-	requires std::is_base_of_v<ComponentBase, ComponentType>
 	void EntityManager::AddSparseSet() noexcept
 	{
-		ASSERT((m_components.begin() + ComponentType::ID) < m_components.end(), "All available component pools are in use.");
-		m_components[ComponentType::ID] = std::move(std::make_unique<SparseSet<ComponentType>>());
+		constexpr auto ComponentID = sti::getTypeIndex<ComponentType>();
+		m_components[ComponentID] = std::move(std::make_unique<SparseSet<ComponentType>>());
 
-		set->sparseArray.reserve(MAX_ENTITIES);
+		set(ComponentID)->sparseArray.reserve(MAX_ENTITIES);
 		for (u32 i{ 0u }; i < MAX_ENTITIES; i++)
 		{
-			set->sparseArray.push_back(NULL_ENTITY);
+			set(ComponentID)->sparseArray.push_back(NULL_ENTITY);
 		}
 
-		set->denseArray.reserve(MAX_ENTITIES);
-		set->components.reserve(MAX_ENTITIES);
+		set(ComponentID)->denseArray.reserve(MAX_ENTITIES);
+		set(ComponentID)->components.reserve(MAX_ENTITIES);
 	}
 
 	//##################### COLLECTIONS #####################

@@ -8,7 +8,7 @@ using namespace DOG;
 
 void AudioManager::Initialize()
 {
-	s_device = std::make_unique<AudioDevice>();
+	//s_device = std::make_unique<AudioDevice>();
 }
 
 void AudioManager::Destroy()

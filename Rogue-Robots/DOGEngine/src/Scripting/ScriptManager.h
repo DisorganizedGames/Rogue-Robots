@@ -28,7 +28,7 @@ namespace DOG
 		int sortOrder;
 	};
 
-	struct ScriptComponent : public Component<ScriptComponent>
+	struct ScriptComponent
 	{
 		ScriptComponent(entity entity) noexcept : scriptEntity(entity) {}
 		entity scriptEntity;
