@@ -74,7 +74,8 @@ namespace DOG::gfx
 			m_uploadCtx.get(),
 			m_texUploadCtx.get(),
 			m_globalMeshTable.get(),
-			m_globalMaterialTable.get());
+			m_globalMaterialTable.get(),
+			m_bin.get());
 
 
 
