@@ -66,6 +66,11 @@ SimpleMath::Vector3 MainPlayer::GetRotation()
 }
 
 
+const DOG::entity MainPlayer::GetEntity() const noexcept
+{
+	return m_playerEntity;
+}
+
 void MainPlayer::UpdateCamera(CameraComponent& camera)
 {
 	// Not using a structured binding to avoid getting screwed over by the layout of the CameraComponent changing

@@ -13,6 +13,8 @@ public:
 	void SetPosition(DirectX::SimpleMath::Vector3 position);
 	Vector3 GetPosition();
 	Vector3 GetRotation();
+
+	const DOG::entity GetEntity() const noexcept;
 private:
 	void UpdateCamera(DOG::CameraComponent& component);
 	void UpdateCameraRotation(DOG::CameraComponent& component);

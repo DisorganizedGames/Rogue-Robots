@@ -57,11 +57,12 @@ GameLayer::GameLayer() noexcept
 
 void GameLayer::OnAttach()
 {
+	//Do startup of lua
+	LuaMain::GetScriptManager()->RunLuaFile("LuaStartUp.lua");
+
 	//Register Lua interfaces
 	RegisterLuaInterfaces();
 	//...
-
-	m_player = std::make_shared<MainPlayer>();
 
 	LuaMain::GetScriptManager()->StartScripts();
 }
@@ -168,4 +169,16 @@ void GameLayer::RegisterLuaInterfaces()
 
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Asset", "AssetInterface");
 
+	//-----------------------------------------------------------------------------------------------
+	//Player
+	m_player = std::make_shared<MainPlayer>();
+	luaInterfaceObject = std::make_shared<PlayerInterface>(m_player->GetEntity());
+	m_luaInterfaces.push_back(luaInterfaceObject);
+
+	luaInterface = global->CreateLuaInterface("PlayerInterface");
+	luaInterface.AddFunction<PlayerInterface, &PlayerInterface::GetForward>("GetForward");
+	luaInterface.AddFunction<PlayerInterface, &PlayerInterface::GetPosition>("GetPosition");
+	global->SetLuaInterface(luaInterface);
+
+	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Player", "PlayerInterface");
 }
