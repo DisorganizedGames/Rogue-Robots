@@ -37,6 +37,10 @@ namespace DOG::gfx
 			friend class RenderGraph;
 			std::unordered_map<RGResourceID, u64> m_views;		// Views already converted to global indices
 
+			// Held for cleanup
+			std::vector<TextureView> m_textureViews;
+			std::vector<BufferView> m_bufferViews;
+
 			// Used to retrieve underlying resources if needed by the user (e.g resource copies)
 			RGResourceManager* m_resMan{ nullptr };
 		};
@@ -69,7 +73,6 @@ namespace DOG::gfx
 			PassResources passResources;
 
 			std::optional<RenderPass> rp;
-			std::vector<TextureView> rpTextureViews;	// Held for deallocation
 		};
 
 		class DependencyLevel

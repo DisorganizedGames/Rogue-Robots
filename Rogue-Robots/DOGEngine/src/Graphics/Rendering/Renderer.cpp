@@ -83,18 +83,14 @@ namespace DOG::gfx
 
 		// INITIALIZE RESOURCES =================
 
-		// Grab textures
-		for (u8 i = 0; i < S_NUM_BACKBUFFERS; ++i)
-			m_scTextures[i] = m_sc->GetBuffer(i);
-
 		auto fullscreenTriVS = m_sclr->CompileFromFile("FullscreenTriVS.hlsl", ShaderType::Vertex);
 		auto blitPS = m_sclr->CompileFromFile("BlitPS.hlsl", ShaderType::Pixel);
 		m_pipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
 			.SetShader(fullscreenTriVS.get())
 			.SetShader(blitPS.get())
 			.AppendRTFormat(m_sc->GetBufferFormat())
-			.SetDepthFormat(DepthFormat::D32)
-			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			//.SetDepthFormat(DepthFormat::D32)
+			//.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
 
 		auto meshVS = m_sclr->CompileFromFile("MainVS.hlsl", ShaderType::Vertex);
@@ -102,7 +98,7 @@ namespace DOG::gfx
 		m_meshPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
 			.SetShader(meshVS.get())
 			.SetShader(meshPS.get())
-			.AppendRTFormat(m_sc->GetBufferFormat())
+			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
 			.SetDepthFormat(DepthFormat::D32)
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
@@ -144,12 +140,8 @@ namespace DOG::gfx
 		std::chrono::steady_clock::time_point m_start, m_end;
 		std::chrono::duration<double> diff;
 
-		// ====== GPU
-		auto& scTex = m_scTextures[m_sc->GetNextDrawSurfaceIdx()];
-
 		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
 		auto& rg = *m_rg;
-
 
 		m_start = m_end = std::chrono::high_resolution_clock::now();
 		// Forward pass to HDR
@@ -158,19 +150,11 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("Forward Pass",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
-					builder.ImportTexture(RG_RESOURCE(Backbuffer1), scTex, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
+					builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_clientWidth, m_clientHeight));
+					builder.DeclareTexture(RG_RESOURCE(MainDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_clientWidth, m_clientHeight));
 
-					RGTextureDesc desc{};
-					desc.width = m_clientWidth;
-					desc.height = m_clientHeight;
-					desc.initState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-					desc.format = DXGI_FORMAT_D32_FLOAT;
-					desc.flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-					builder.DeclareTexture(RG_RESOURCE(MainDepth), desc);
-
-					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer1), RenderPassAccessType::Clear_Preserve,
-						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::Clear_Preserve,
+						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 					builder.ReadOrWriteDepth(RG_RESOURCE(MainDepth), RenderPassAccessType::Clear_Discard,
 						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
 				},
@@ -229,6 +213,29 @@ namespace DOG::gfx
 				});
 		}
 
+		// Blit HDR to LDR
+		{
+			struct PassData {};
+			rg.AddPass<PassData>("Blit to HDR Pass",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					builder.ImportTexture(RG_RESOURCE(Backbuffer1), m_sc->GetNextDrawSurface(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
+
+					builder.ReadResource(RG_RESOURCE(LitHDR), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer1), RenderPassAccessType::Clear_Preserve,
+						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+				},
+				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				{
+					rd->Cmd_SetPipeline(cmdl, m_pipe);
+					rd->Cmd_UpdateShaderArgs(cmdl, ShaderArgs()
+						.AppendConstant((u32)resources.GetView(RG_RESOURCE(LitHDR))));
+					rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
+				});
+
+		}
+
 		// Draw ImGUI on backbuffer
 		{
 			struct PassData {};
@@ -241,7 +248,6 @@ namespace DOG::gfx
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
 				{
 					m_imgui->Render(rd, cmdl);
-
 				});
 		}
 		

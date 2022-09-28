@@ -150,7 +150,7 @@ namespace DOG::gfx
 
 	struct Viewports
 	{
-		std::array<D3D12_VIEWPORT, 8> vps;
+		std::array<D3D12_VIEWPORT, 8> vps{};
 		u8 numVps{ 0 };
 
 		// Using Reverse-Z by default (Reverse Z)
@@ -172,7 +172,7 @@ namespace DOG::gfx
 
 	struct ScissorRects
 	{
-		std::array<D3D12_RECT, 8> scissors;
+		std::array<D3D12_RECT, 8> scissors{};
 		u8 numScissors{ 0 };
 
 		ScissorRects& Append(u32 left, u32 top, u32 right, u32 bottom)

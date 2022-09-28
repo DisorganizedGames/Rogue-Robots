@@ -71,21 +71,18 @@ namespace DOG::gfx
 		// Clean up views
 		for (const auto& pass : m_sortedPasses)
 		{
-			for (const auto& [id, view] : pass->passResources.m_views)
+			for (const auto& view : pass->passResources.m_bufferViews)
 			{
-				auto df = [rd = m_rd, resMan = m_resMan, id, view]()
+				auto df = [rd = m_rd, view = view]()
 				{
-					if (resMan->GetResourceType(id) == RGResourceType::Texture)
-						rd->FreeView(TextureView(view));
-					else
-						rd->FreeView(BufferView(view));
+					rd->FreeView(view);
 				};
 				m_bin->PushDeferredDeletion(df);
 			}
 
-			for (const auto& view : pass->rpTextureViews)
+			for (const auto& view : pass->passResources.m_textureViews)
 			{
-				auto df = [rd = m_rd, resMan = m_resMan, view]()
+				auto df = [rd = m_rd, view = view]()
 				{
 					rd->FreeView(view);
 				};
@@ -327,6 +324,8 @@ namespace DOG::gfx
 			auto& passResources = pass->passResources;
 			passResources.m_resMan = m_resMan;
 
+
+
 			// Realize output views
 			RenderPassBuilder builder;
 			bool rpActive{ false };
@@ -339,10 +338,12 @@ namespace DOG::gfx
 					// Create view and immediately convert to global descriptor index
 					auto view = m_rd->CreateView(Texture(m_resMan->GetResource(output.id)), viewDesc);
 
+					// Hold views for deallocation
+					passResources.m_textureViews.push_back(view);
+
 					if (viewDesc.viewType == ViewType::RenderTarget)
 					{
 						rpActive = true;
-						pass->rpTextureViews.push_back(view);
 
 						auto accesses = GetAccessTypes(*output.rpAccessType);
 						builder.AppendRT(view, accesses.first, accesses.second);
@@ -350,7 +351,6 @@ namespace DOG::gfx
 					else if (viewDesc.viewType == ViewType::DepthStencil)
 					{
 						rpActive = true;
-						pass->rpTextureViews.push_back(view);
 
 						auto depthAccesses = GetAccessTypes(*output.rpAccessType);
 						auto stencilAccesses = GetAccessTypes(*output.rpStencilAccessType);
@@ -358,9 +358,8 @@ namespace DOG::gfx
 							depthAccesses.first, depthAccesses.second,
 							stencilAccesses.first, stencilAccesses.second);
 					}
-					else
+					else if (viewDesc.viewType == ViewType::UnorderedAccess)
 					{
-						// We do not expose RTV and DSV to user (these are baked into the render pass)
 						passResources.m_views[output.id] = m_rd->GetGlobalDescriptor(view);
 					}
 				}
@@ -369,7 +368,48 @@ namespace DOG::gfx
 					const auto& viewDesc = std::get<BufferViewDesc>(*output.viewDesc);
 
 					// Create view and immediately convert to global descriptor index
-					passResources.m_views[output.id] = m_rd->GetGlobalDescriptor(m_rd->CreateView(Buffer(m_resMan->GetResource(output.id)), viewDesc));
+					auto view = m_rd->CreateView(Buffer(m_resMan->GetResource(output.id)), viewDesc);
+					passResources.m_views[output.id] = m_rd->GetGlobalDescriptor(view);
+					passResources.m_bufferViews.push_back(view);
+				}
+			}
+
+			// Realize input  views
+			for (const auto& input : pass->inputs)
+			{
+				// No view desc supplied --> No view (e.g Imported doesnt have view desc)
+				if (!input.viewDesc)
+					continue;
+
+				if (input.type == RGResourceType::Texture)
+				{
+					const auto& viewDesc = std::get<TextureViewDesc>(*input.viewDesc);
+
+					// Create view and immediately convert to global descriptor index
+					auto view = m_rd->CreateView(Texture(m_resMan->GetResource(input.id)), viewDesc);
+					passResources.m_textureViews.push_back(view);
+
+					// @todo to support later (read only DSV --> baked into Render Pass
+					if (viewDesc.viewType == ViewType::DepthStencil)
+						assert(false);
+					// RTV as input not allowed!
+					else if (viewDesc.viewType == ViewType::RenderTarget)
+						assert(false);
+					else 
+					{
+						passResources.m_views[input.id] = m_rd->GetGlobalDescriptor(view);
+					}
+				}
+				else
+				{
+					const auto& viewDesc = std::get<BufferViewDesc>(*input.viewDesc);
+
+					// Create view and immediately convert to global descriptor index
+					auto view = m_rd->CreateView(Buffer(m_resMan->GetResource(input.id)), viewDesc);
+					passResources.m_bufferViews.push_back(view);
+
+					// @todo: support buffer
+					assert(false);
 				}
 			}
 
@@ -425,6 +465,7 @@ namespace DOG::gfx
 	void RenderGraph::PassBuilder::ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc)
 	{
 		assert(IsReadState(state));
+		assert(desc.viewType != ViewType::RenderTarget || desc.viewType != ViewType::UnorderedAccess);
 
 		PassIO input;
 		input.id = id;
