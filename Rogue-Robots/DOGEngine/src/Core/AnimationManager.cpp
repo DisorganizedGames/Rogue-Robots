@@ -176,7 +176,6 @@ void AnimationManager::UpdateSkeleton(u32 skeletonId, f32 dt)
 		else
 			m_currentTick = m_imgui_animTime * anim.ticks;
 
-
 		std::vector<DirectX::XMMATRIX> hereditaryTFs;
 		hereditaryTFs.reserve(rig.nodes.size());
 		// Set node animation transformations

@@ -1,6 +1,4 @@
 #pragma once
-#include <vector>
-#include <unordered_map>
 
 #include "DOGEngineTypes.h"
 #include "../Graphics/RHI/ImGUIBackend.h"
@@ -24,52 +22,38 @@ private:
 	};
 	std::vector<LastSRT> m_lastSRTkeys;
 	f32 m_currentTick = 0.0f;
-	struct AnimationJob
-	{
-		u32 rigID;
-		u32 animationID;
-		//f32 timeScale;
-		//f32 CurrentTick;
-		
-		// delay/loop/interupt/append/culled etc. ?
-	};
-private:
-	
 public:
 	AnimationManager();
 	~AnimationManager();
 	void UpdateSkeleton(u32 skeletonId, f32 dt);
 	void SetImportedAnimations(DOG::ImportedAnimation& ia);
-	//i32 AddJob(i32 skeletonID, i32 animationID, f32 animationTime = 0.0f);
 	std::vector<DirectX::XMFLOAT4X4>& GetBones() { return m_vsJoints; };
-
 private:
 	DirectX::FXMMATRIX CalculateBlendTransformation(i32 nodeID);
 	DirectX::FXMMATRIX CalculateNodeTransformation(const DOG::AnimationData&, i32 nodeID, f32 animTick);
 	DirectX::XMVECTOR GetAnimationComponent(const std::vector<DOG::AnimationKey>& keys, KeyType component, f32 tick);
 	
 	// Collection of the rigs and corresponding animations used in game
-	std::vector<DOG::ImportedAnimation> m_rigs; 
+	std::vector<DOG::ImportedAnimation> m_rigs;
 	// Matrices to upload to Vertex Shader
 	std::vector<DirectX::XMFLOAT4X4> m_vsJoints;
 private:
 	// IMGUI RELATED
-	int m_imgui_profilePerformUpdate = 1;
-	bool m_imgui_testAnimationBlend = false;
-	f32 m_imgui_blend = 0.0f;
-	i32 m_imgui_animation2 = 0;
-	f32 m_imgui_animTime2 = 0.0f;
-
-	bool m_imgui_rootTranslation = true; // apply root animation translation or not
-	bool m_imgui_playAnimation = true;
-	bool m_imgui_bindPose = false;
-	i32 m_imgui_selectedBone = 1;
-	i32 m_imgui_animation = 0;
-	f32 m_imgui_timeScale = 1.0f;
-	f32 m_imgui_animTime = 0.0f;
-	std::vector<DirectX::XMFLOAT3> m_imgui_scale;
-	std::vector<DirectX::XMFLOAT3> m_imgui_rot;
-	std::vector<DirectX::XMFLOAT3> m_imgui_pos;
+	int m_imguiprofilePerformUpdate = 1;
+	bool m_imguitestAnimationBlend = false;
+	f32 m_imguiblend = 0.0f;
+	i32 m_imguianimation2 = 0;
+	f32 m_imguianimTime2 = 0.0f;
+	bool m_imguirootTranslation = true; // apply root animation translation or not
+	bool m_imguiplayAnimation = true;
+	bool m_imguibindPose = false;
+	i32 m_imguiselectedBone = 1;
+	i32 m_imguianimation = 0;
+	f32 m_imguitimeScale = 1.0f;
+	f32 m_imguianimTime = 0.0f;
+	std::vector<DirectX::XMFLOAT3> m_imguiscale;
+	std::vector<DirectX::XMFLOAT3> m_imguirot;
+	std::vector<DirectX::XMFLOAT3> m_imguipos;
 public:
 	void SpawnControlWindow();
 };

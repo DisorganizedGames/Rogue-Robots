@@ -30,7 +30,7 @@ namespace DOG
 	}
 
 	Application::Application(const ApplicationSpecification& spec) noexcept
-		: m_specification{ spec }, m_isRunning{ true }, m_layerStack{ LayerStack::Get()}
+		: m_specification{ spec }, m_isRunning{ true }, m_layerStack{ LayerStack::Get() }
 	{
 		OnStartUp();
 	}
@@ -90,7 +90,8 @@ namespace DOG
 					{
 						ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 						if (model)
-							m_renderer->SetBones(model->animation);
+							if(modelaC.animationID == 0)
+								m_renderer->SetBones(model->animation);
 					});
 			}
 			
