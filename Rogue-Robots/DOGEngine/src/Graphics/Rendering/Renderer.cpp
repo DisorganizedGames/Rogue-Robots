@@ -135,7 +135,7 @@ namespace DOG::gfx
 
 	void Renderer::Update(f32 dt)
 	{
-		if (!firstTime)
+		if (m_bonesLoaded)
 		{
 			m_boneJourno->SpawnControlWindow();
 			m_boneJourno->UpdateSkeleton(0, dt);
@@ -180,8 +180,13 @@ namespace DOG::gfx
 						struct PerFrameData
 						{
 							DirectX::XMMATRIX world, view, proj;
-							DirectX::XMFLOAT3 camPos;
+							DirectX::XMFLOAT4 camPos;
+							DirectX::XMFLOAT4X4 joints[110];
 						} pfData{};
+
+						auto& updatedJoints = m_boneJourno->GetBones();
+						for (size_t i = 0; i < updatedJoints.size(); i++)
+							pfData.joints[i] = updatedJoints[i];
 
 						DirectX::XMVECTOR tmp;
 						auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
@@ -189,7 +194,7 @@ namespace DOG::gfx
 						auto pos = invVm.r[3];
 						DirectX::XMFLOAT3 posFloat3;
 						DirectX::XMStoreFloat3(&posFloat3, pos);
-						pfData.camPos = posFloat3;
+						pfData.camPos = { posFloat3.x, posFloat3.y, posFloat3.z, 0.0f };
 
 						pfData.world = sub.world;
 						//pfData.view = DirectX::XMMatrixLookAtLH({ 5.f, 2.f, 0.f }, { -1.f, 1.f, 1.f }, { 0.f, 1.f, 0.f });
@@ -207,6 +212,7 @@ namespace DOG::gfx
 							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::UV))
 							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Normal))
 							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Tangent))
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::BlendData))
 							.AppendConstant(m_globalMaterialTable->GetDescriptor())
 							.AppendConstant(m_globalMaterialTable->GetMaterialIndex(sub.mat)
 							);

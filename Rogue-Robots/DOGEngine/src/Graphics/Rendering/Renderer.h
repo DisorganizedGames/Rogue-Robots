@@ -120,18 +120,15 @@ namespace DOG::gfx
 		std::unique_ptr<RenderGraph> m_rg;
 		std::unique_ptr<RGResourceManager> m_rgResMan;
 
-
 		//TMP
 		std::unique_ptr<AnimationManager> m_boneJourno;
 	public:
-		bool firstTime = true;
+		//TMP
+		bool m_bonesLoaded = false;
 		void SetBones(DOG::ImportedAnimation& ia)
 		{
-			if (firstTime)
-			{
-				m_boneJourno->SetImportedAnimations(ia);
-				firstTime = false;
-			}
+			m_boneJourno->SetImportedAnimations(ia);
+			m_bonesLoaded = true;
 		}
 	};
 }

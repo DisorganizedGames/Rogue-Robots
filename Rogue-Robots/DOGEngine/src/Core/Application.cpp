@@ -85,7 +85,7 @@ namespace DOG
 							m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], transformC);
 					}
 				});
-			if (m_renderer->firstTime) {
+			if (!m_renderer->m_bonesLoaded) {
 				EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
 					{
 						ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
