@@ -131,13 +131,13 @@ void ImGuiMenuLayer::OnRender()
 
                 if (ImGui::Button("Spawn model"))
                 {
-                    Asset* asset = DOG::AssetManager::Get().GetBaseAsset(id);
+                    Asset* asset = AssetManager::Get().GetBaseAsset(id);
                     if (asset)
                     {
                         constexpr float toRad = DirectX::XM_PI / 180.0f;
-                        entity e = DOG::EntityManager::Get().CreateEntity();
-                        DOG::EntityManager::Get().AddComponent<ModelComponent>(e, id);
-                        auto& t = DOG::EntityManager::Get().AddComponent<TransformComponent>(e,
+                        entity e = EntityManager::Get().CreateEntity();
+                        EntityManager::Get().AddComponent<ModelComponent>(e, id);
+                        EntityManager::Get().AddComponent<TransformComponent>(e,
                             DirectX::SimpleMath::Vector3(pos),
                             toRad * DirectX::SimpleMath::Vector3(rot),
                             DirectX::SimpleMath::Vector3(scale));
@@ -153,7 +153,7 @@ void ImGuiMenuLayer::OnImGuiRender()
 {
 }
 
-void ImGuiMenuLayer::OnEvent(DOG::IEvent& event)
+void ImGuiMenuLayer::OnEvent(IEvent& event)
 {
     if (event.GetEventCategory() == EventCategory::KeyboardEventCategory)
     {
