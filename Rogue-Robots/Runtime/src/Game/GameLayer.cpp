@@ -17,8 +17,7 @@ GameLayer::GameLayer() noexcept
 	entity entity1 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity1, m_mixamo);
 	m_entityManager.AddComponent<TransformComponent>(entity1, Vector3(0, -2, 5), Vector3(0, 0, 0), Vector3(0.02f, 0.02f, 0.02f));
-	m_entityManager.AddComponent<NetworkPlayerComponent>(entity1).playerId = 0;
-	m_entityManager.AddComponent<AnimationComponent>(entity1).rigID = 0;
+	m_entityManager.AddComponent<AnimationComponent>(entity1).animationID = 0;
 
 	entity entity2 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity2, m_greenCube);
