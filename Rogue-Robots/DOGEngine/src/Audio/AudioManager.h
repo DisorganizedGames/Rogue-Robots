@@ -7,25 +7,28 @@ namespace DOG
 	class AudioManager
 	{
 	public:
-		AudioManager();
-		~AudioManager() = default;
+		AudioManager() = delete;
+		//~AudioManager() = default;
 		
-		AudioManager(AudioManager&& other) = delete;
-		AudioManager(const AudioManager& other) = delete;
+		//AudioManager(AudioManager&& other) = delete;
+		//AudioManager(const AudioManager& other) = delete;
 	public:
-		void Play(AudioPlayerComponent& audioPlayerComponent);
+		static void Initialize();
+		static void Destroy();
 
-		void Stop(AudioPlayerComponent& audioPlayerComponent);
+		static void Play(AudioPlayerComponent& audioPlayerComponent);
 
-		bool HasFinished(const AudioPlayerComponent& audioPlayerComponent) const;
+		static void Stop(AudioPlayerComponent& audioPlayerComponent);
+
+		static bool HasFinished(const AudioPlayerComponent& audioPlayerComponent);
 
 	private:
 		static inline constexpr const u32 MAX_SOURCES = 8;
 
-		AudioDevice m_device;
-		std::vector<std::unique_ptr<SourceVoice>> m_sources;
+		static inline AudioDevice* s_device = nullptr;
+		static inline auto s_sources = std::vector<std::unique_ptr<SourceVoice>>(MAX_SOURCES);
 	
 	private:
-		u64 GetFreeVoice(const WAVProperties& wavProperties);
+		static u64 GetFreeVoice(const WAVProperties& wavProperties);
 	};
 }

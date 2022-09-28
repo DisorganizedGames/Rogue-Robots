@@ -13,6 +13,8 @@
 
 #include "ImGUI/imgui.h"
 
+#include "../Audio/AudioManager.h"
+
 
 namespace DOG
 {
@@ -131,11 +133,13 @@ namespace DOG
 		Window::SetWMHook(m_renderer->GetWMCallback());
 
 		AssetManager::Initialize(m_renderer.get());
+		AudioManager::Initialize();
 	}
 
 	void Application::OnShutDown() noexcept
 	{
 		AssetManager::Destroy();
+		AudioManager::Destroy();
 		//...
 	}
 
