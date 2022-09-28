@@ -35,8 +35,6 @@ namespace DOG::gfx
 
 		InitRootsig();
 
-		CreateBogusHeap();
-
 		// Create pool for textures
 		D3D12MA::POOL_DESC poolDesc{};
 		poolDesc.HeapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
@@ -120,8 +118,9 @@ namespace DOG::gfx
 
 		D3D12MA::ALLOCATION_DESC ad{};
 		ad.HeapType = to_internal(desc.memType);
-		ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT | D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET;
-		ad.CustomPool = m_pool.Get();
+		//ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT | D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET;
+		//ad.CustomPool = m_pool.Get();
+		ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT;
 
 		D3D12_RESOURCE_DESC rd{};
 		rd.Dimension = to_internal(desc.type);
@@ -164,34 +163,13 @@ namespace DOG::gfx
 		HR_VFY(hr);
 
 		// Hold the original resource place on a certain heap on a certain offset
-#ifdef _DEBUG
+#ifdef GPU_VALIDATION_ON
 		//auto& heapMap = m_mapping[(u64)storage.alloc->GetHeap()];
 		//heapMap[storage.alloc->GetOffset()].push_back(storage.resource);
-
 		// intentionally leak to avoid crashing CreatePlacedResource
-		//storage.resource->AddRef();	
+		storage.resource->AddRef();	
 #endif
 
-		//u32 numSubresources{ 0 };
-		//if (desc.mipLevels == 0)
-		//{
-		//	u32 smallest = desc.width > desc.height ? desc.height : desc.width;
-		//	u32 maxMips = std::log2(smallest);
-		//	numSubresources = maxMips * desc.depth;
-		//}
-		//else
-		//	numSubresources = desc.mipLevels * desc.depth;
-
-		//u64 totalSize{ 0 };
-		//m_device->GetCopyableFootprints(&rd, 0, numSubresources, 0, nullptr, nullptr, nullptr, &totalSize);
-		////storage.valloc = m_textureHeapAtor.Allocate(totalSize, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
-		////ID3D12Resource* res;
-		////hr = m_device->CreatePlacedResource(m_textureHeap.Get(), 0, &rd, desc.initState, nullptr, IID_PPV_ARGS(&res));
-		//hr = m_device->CreatePlacedResource(m_textureHeap.Get(), 0, &rd, desc.initState, nullptr, IID_PPV_ARGS(storage.resource.GetAddressOf()));
-		////storage.resource = res;
-		//HR_VFY(hr);
-
-		//storage.resource->AddRef();
 
 		auto handle = m_rhp.Allocate<Texture>();
 		HandleAllocator::TryInsertMove(m_textures, std::move(storage), HandleAllocator::GetSlot(handle.handle));
@@ -1023,39 +1001,6 @@ namespace DOG::gfx
 		default:
 			return D3D12_COMMAND_LIST_TYPE_DIRECT;
 		}
-	}
-
-	void RenderDevice_DX12::CreateBogusHeap()
-	{
-		D3D12_HEAP_DESC desc{};
-		desc.SizeInBytes = 100'000'000;
-		desc.Flags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
-		desc.Properties.Type = D3D12_HEAP_TYPE_DEFAULT;
-
-		m_textureHeapAtor = GPVirtualAllocator(desc.SizeInBytes, true);
-
-		HRESULT hr = m_device->CreateHeap(&desc, IID_PPV_ARGS(m_textureHeap.GetAddressOf()));
-		HR_VFY(hr);
-	}
-
-	void RenderDevice_DX12::CreateBogusResource(TextureDesc desc)
-	{
-		D3D12_RESOURCE_DESC rd{};
-		rd.Dimension = to_internal(desc.type);
-		rd.Alignment = desc.alignment;
-		rd.Width = desc.width;
-		rd.Height = desc.height;
-		rd.DepthOrArraySize = (u16)desc.depth;
-		rd.MipLevels = (u16)desc.mipLevels;
-		rd.Format = desc.format;
-		rd.SampleDesc.Count = desc.sampleCount;
-		rd.SampleDesc.Quality = desc.sampleQuality;
-		rd.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-		rd.Flags = desc.flags;
-		ID3D12Resource* res;
-
-		HRESULT hr = m_device->CreatePlacedResource(m_textureHeap.Get(), 0, &rd, desc.initState, nullptr, IID_PPV_ARGS(&res));
-		HR_VFY(hr);
 	}
 
 }

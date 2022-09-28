@@ -157,10 +157,6 @@ namespace DOG::gfx
 		ID3D12DescriptorHeap* GetMainResourceDH() const;
 		ID3D12GraphicsCommandList4* GetListForExternal(CommandList cmdl);
 
-		void CreateBogusHeap();
-		void CreateBogusResource(TextureDesc desc);
-
-
 		// Helpers
 	private:
 		struct CommandAtorAndList
@@ -271,7 +267,7 @@ namespace DOG::gfx
 		ComPtr<D3D12MA::Allocator> m_dma;
 		ComPtr<D3D12MA::Pool> m_pool;
 
-#ifdef _DEBUG
+#ifdef GPU_VALIDATION_ON
 		std::unordered_map<u64, std::unordered_map<u32, std::vector<ComPtr<ID3D12Resource>>>> m_mapping;
 
 #endif
