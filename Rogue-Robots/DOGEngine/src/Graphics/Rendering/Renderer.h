@@ -111,7 +111,6 @@ namespace DOG::gfx
 		std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> m_wmCallback;
 
 		// ================= RENDERING RESOURCES
-		std::array<Texture, S_NUM_BACKBUFFERS> m_scTextures;
 
 		Pipeline m_pipe, m_meshPipe;
 

@@ -71,6 +71,7 @@ namespace DOG::gfx
 			d.mipLevels = mipLevels;
 			d.initState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 			d.flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+			return d;
 		}
 
 		static RGTextureDesc ReadWrite2D(DXGI_FORMAT format, u32 width, u32 height, u32 depth = 1, u32 mipLevels = 1)
