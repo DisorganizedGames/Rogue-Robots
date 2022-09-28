@@ -139,13 +139,6 @@ void DOG::gfx::d2dBackend_DX12::BeginFrame(RenderDevice* rd, Swapchain* sc)
 void DOG::gfx::d2dBackend_DX12::Render(RenderDevice* rd, Swapchain* sc)
 {
     
-
-
-    
-    
-
-
-    
 }
 
 void DOG::gfx::d2dBackend_DX12::EndFrame(RenderDevice* rd, Swapchain* sc)
