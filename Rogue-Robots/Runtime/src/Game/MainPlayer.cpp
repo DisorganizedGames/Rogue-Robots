@@ -7,7 +7,6 @@ MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 {
 	//Camera
 	m_playerEntity = m_entityManager.CreateEntity();
-	m_playerStatsEntity = m_entityManager.CreateEntity();
 	CameraComponent& camera = m_entityManager.AddComponent<CameraComponent>(m_playerEntity);
 	CameraComponent::s_mainCamera = &camera;
 

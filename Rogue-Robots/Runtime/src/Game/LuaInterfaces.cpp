@@ -69,7 +69,7 @@ void EntityInterface::ModifyComponent(LuaContext* context)
 	{
 		ModifyTransform(context, e);
 	}
-	if (compType == "PlayerStats")
+	else if (compType == "PlayerStats")
 	{
 		ModifyPlayerStats(context, e);
 	}
