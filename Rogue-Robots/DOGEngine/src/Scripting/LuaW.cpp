@@ -1,4 +1,5 @@
 #include "LuaW.h"
+#include "LuaTable.h"
 
 namespace DOG
 {
@@ -7,6 +8,13 @@ namespace DOG
 	LuaW::LuaW(lua_State* l)
 	{
 		m_luaState = l;
+	}
+
+	LuaW::LuaW()
+	{
+		//Create the luaState and add the libs
+		m_luaState = luaL_newstate();
+		luaL_openlibs(m_luaState);
 	}
 
 	void LuaW::Error(const std::string& errorMessage)
@@ -648,196 +656,6 @@ namespace DOG
 		return table;
 	}
 
-	void LuaW::AddNumberToTable(Table& table, const std::string& numberName, int number)
-	{
-		//Pushes the table on the stack
-		PushTableToStack(table);
-		//Pushes the name of the table on the stack
-		PushStringToStack(numberName);
-		//Pushes the number to the stack
-		PushIntegerToStack(number);
-
-		//Sets the number to the numberName in the table
-		SetTableAndPop();
-	}
-
-	void LuaW::AddNumberToTable(Table& table, const std::string& numberName, float number)
-	{
-		PushTableToStack(table);
-		PushStringToStack(numberName);
-		PushFloatToStack(number);
-
-		//Sets the number to the numberName in the table
-		SetTableAndPop();
-	}
-
-	void LuaW::AddNumberToTable(Table& table, const std::string& numberName, double number)
-	{
-		PushTableToStack(table);
-		PushStringToStack(numberName);
-		PushDoubleToStack(number);
-
-		//Sets the number to the numberName in the table
-		SetTableAndPop();
-	}
-
-	void LuaW::AddStringToTable(Table& table, const std::string& stringName, const std::string& string)
-	{
-		PushTableToStack(table);
-		PushStringToStack(stringName);
-		PushStringToStack(string);
-
-		//Sets the string to the stringName in the table
-		SetTableAndPop();
-	}
-
-	void LuaW::AddStringToTable(Table& table, const std::string& stringName, const char* string)
-	{
-		PushTableToStack(table);
-		PushStringToStack(stringName);
-		PushStringToStack(string);
-
-		//Sets the string to the stringName in the table
-		SetTableAndPop();
-	}
-
-	void LuaW::AddBoolToTable(Table& table, const std::string& boolName, bool boolean)
-	{
-		PushTableToStack(table);
-		PushStringToStack(boolName);
-		PushBoolToStack(boolean);
-
-		//Sets the bool to the boolName in the table
-		SetTableAndPop();
-	}
-
-	void LuaW::AddTableToTable(Table& table, const std::string& tableName, Table& addTable)
-	{
-		PushTableToStack(table);
-		PushStringToStack(tableName);
-		PushTableToStack(addTable);
-
-		//Sets the table to the tableName in the table
-		SetTableAndPop();
-	}
-
-	void LuaW::AddFunctionToTable(Table& table, const std::string& functionName, Function& function)
-	{
-		PushTableToStack(table);
-		PushStringToStack(functionName);
-		PushTableToStack(function);
-
-		//Sets the function to the functionName in the table
-		SetTableAndPop();
-	}
-
-	LuaW::LuaW()
-	{
-		//Create the luaState and add the libs
-		m_luaState = luaL_newstate();
-		luaL_openlibs(m_luaState);
-	}
-
-	void LuaW::AddUserDataToTable(Table& table, const std::string& userDataName, UserData& userData)
-	{
-		PushTableToStack(table);
-		PushStringToStack(userDataName);
-		PushTableToStack(userData);
-
-		//Sets the userData to the userDataName in the table
-		SetTableAndPop();
-	}
-
-	int LuaW::GetIntegerFromTable(Table& table, const std::string& tableIntegerName)
-	{
-		//Pushes the table to the stack
-		PushTableToStack(table);
-		//Pushes the integerName to the stack
-		PushStringToStack(tableIntegerName);
-
-		//Get the integer from the table and remove the table from the stack
-		GetTableAndRemove();
-
-		return GetIntegerFromStack();
-	}
-
-	float LuaW::GetFloatFromTable(Table& table, const std::string& tableFloatName)
-	{
-		PushTableToStack(table);
-		PushStringToStack(tableFloatName);
-
-		//Get the float from the table and remove the table from the stack
-		GetTableAndRemove();
-
-		return GetFloatFromStack();
-	}
-
-	double LuaW::GetDoubleFromTable(Table& table, const std::string& tableDoubleName)
-	{
-		PushTableToStack(table);
-		PushStringToStack(tableDoubleName);
-
-		//Get the double from the table and remove the table from the stack
-		GetTableAndRemove();
-
-		return GetDoubleFromStack();
-	}
-
-	std::string LuaW::GetStringFromTable(Table& table, const std::string& tableStringName)
-	{
-		PushTableToStack(table);
-		PushStringToStack(tableStringName);
-
-		//Get the string from the table and remove the table from the stack
-		GetTableAndRemove();
-
-		return std::move(GetStringFromStack());
-	}
-
-	bool LuaW::GetBoolFromTable(Table& table, const std::string& tableBoolName)
-	{
-		PushTableToStack(table);
-		PushStringToStack(tableBoolName);
-
-		//Get the bool from the table and remove the table from the stack
-		GetTableAndRemove();
-
-		return GetBoolFromStack();
-	}
-
-	Function LuaW::GetFunctionFromTable(Table& table, const std::string& tableFunctionName)
-	{
-		PushTableToStack(table);
-		PushStringToStack(tableFunctionName);
-
-		//Get the function from the table and remove the table from the stack
-		GetTableAndRemove();
-
-		return GetFunctionFromStack(1, false);
-	}
-
-	Table LuaW::GetTableFromTable(Table& table, const std::string& tableTableName)
-	{
-		PushTableToStack(table);
-		PushStringToStack(tableTableName);
-
-		//Get the table from the table and remove the table from the stack
-		GetTableAndRemove();
-
-		return GetTableFromStack();
-	}
-
-	UserData LuaW::GetUserDataFromTable(Table& table, const std::string& tableUserDataName)
-	{
-		PushTableToStack(table);
-		PushStringToStack(tableUserDataName);
-
-		//Get the UserData from the table and remove the table from the stack
-		GetTableAndRemove();
-
-		return GetUserDataFromStack();
-	}
-
 	Function LuaW::TryGetFunctionFromTable(Table& table, const std::string& tableFunctionName)
 	{
 		const int popAmount = 1;
@@ -927,6 +745,11 @@ namespace DOG
 	void LuaW::PushStack(Table& table)
 	{
 		PushTableToStack(table);
+	}
+
+	void LuaW::PushStack(LuaTable& table)
+	{
+		PushTableToStack(table.GetTable());
 	}
 
 	void LuaW::PushStack()

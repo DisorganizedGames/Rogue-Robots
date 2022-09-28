@@ -21,7 +21,7 @@ namespace DOG
 		void Register(const std::string& eventName);
 		void InvokeEvent(const std::string& eventName);
 		template<class ...Args>
-		void InvokeEvent(const std::string& eventName, Args... args);
+		void InvokeEvent(const std::string& eventName, Args&&... args);
 	};
 
 	template<void(*func)(LuaContext*)>
@@ -33,9 +33,9 @@ namespace DOG
 	}
 
 	template<class ...Args>
-	inline void LuaEvent::InvokeEvent(const std::string& eventName, Args ...args)
+	inline void LuaEvent::InvokeEvent(const std::string& eventName, Args&& ...args)
 	{
 		//Calls the EventSystem on Lua
-		m_eventSystemTable->CallFunctionOnTable(m_eventSystemTableInvokeFunction, eventName, args...);
+		m_eventSystemTable->CallFunctionOnTable(m_eventSystemTableInvokeFunction, eventName, std::forward<Args>(args)...);
 	}
 }

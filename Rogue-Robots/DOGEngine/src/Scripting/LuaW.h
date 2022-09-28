@@ -88,7 +88,7 @@ namespace DOG
 
 		//Push arguments to stack
 		template<typename T, class... Args>
-		void PushStack(T type, Args... args);
+		void PushStack(T type, Args&&... args);
 
 		//Push integer
 		void PushStack(int integer);
@@ -104,6 +104,8 @@ namespace DOG
 		void PushStack(const char* string);
 		//Push table, Used for UserData and functions aswell
 		void PushStack(Table& table);
+		//Push LuaTable
+		void PushStack(LuaTable& table);
 		//Does nothing (Exist because it is needed for Args... to push an empty argument)
 		void PushStack();
 
@@ -190,28 +192,45 @@ namespace DOG
 
 		Table CreateTable();
 
-		void AddNumberToTable(Table& table, const std::string& numberName, int number);
-		void AddNumberToTable(Table& table, const std::string& numberName, float number);
-		void AddNumberToTable(Table& table, const std::string& numberName, double number);
-		void AddStringToTable(Table& table, const std::string& stringName, const std::string& string);
-		void AddStringToTable(Table& table, const std::string& stringName, const char* string);
-		void AddBoolToTable(Table& table, const std::string& boolName, bool boolean);
-		void AddTableToTable(Table& table, const std::string& tableName, Table& addTable);
-		template<void (*func)(LuaContext*)>
-		void AddFunctionToTable(Table& table, const std::string& functionName);
-		void AddFunctionToTable(Table& table, const std::string& functionName, Function& function);
 		template<typename T>
-		void AddUserDataToTable(Table& table, T* object, const std::string& interfaceName, const std::string& objectName);
-		void AddUserDataToTable(Table& table, const std::string& userDataName, UserData& userData);
+		void AddNumberToTable(Table& table, const T& tableKey, int number);
+		template<typename T>
+		void AddNumberToTable(Table& table, const T& tableKey, float number);
+		template<typename T>
+		void AddNumberToTable(Table& table, const T& tableKey, double number);
+		template<typename T>
+		void AddStringToTable(Table& table, const T& tableKey, const std::string& string);
+		template<typename T>
+		void AddStringToTable(Table& table, const T& tableKey, const char* string);
+		template<typename T>
+		void AddBoolToTable(Table& table, const T& tableKey, bool boolean);
+		template<typename T>
+		void AddTableToTable(Table& table, const T& tableKey, Table& addTable);
+		template<void (*func)(LuaContext*), typename T>
+		void AddFunctionToTable(Table& table, const T& tableKey);
+		template<typename T>
+		void AddFunctionToTable(Table& table, const T& tableKey, Function& function);
+		template<typename UserDataType, typename T>
+		void AddUserDataToTable(Table& table, UserDataType* object, const std::string& interfaceName, const T& tableKey);
+		template<typename T>
+		void AddUserDataToTable(Table& table, const T& tableKey, UserData& userData);
 
-		int GetIntegerFromTable(Table& table, const std::string& tableIntegerName);
-		float GetFloatFromTable(Table& table, const std::string& tableFloatName);
-		double GetDoubleFromTable(Table& table, const std::string& tableDoubleName);
-		std::string GetStringFromTable(Table& table, const std::string& tableStringName);
-		bool GetBoolFromTable(Table& table, const std::string& tableBoolName);
-		Function GetFunctionFromTable(Table& table, const std::string& tableFunctionName);
-		Table GetTableFromTable(Table& table, const std::string& tableTableName);
-		UserData GetUserDataFromTable(Table& table, const std::string& tableUserDataName);
+		template<typename T>
+		int GetIntegerFromTable(Table& table, const T& tableGet);
+		template<typename T>
+		float GetFloatFromTable(Table& table, const T& tableGet);
+		template<typename T>
+		double GetDoubleFromTable(Table& table, const T& tableGet);
+		template<typename T>
+		std::string GetStringFromTable(Table& table, const T& tableGet);
+		template<typename T>
+		bool GetBoolFromTable(Table& table, const T& tableGet);
+		template<typename T>
+		Function GetFunctionFromTable(Table& table, const T& tableGet);
+		template<typename T>
+		Table GetTableFromTable(Table& table, const T& tableGet);
+		template<typename T>
+		UserData GetUserDataFromTable(Table& table, const T& tableGet);
 
 		Function TryGetFunctionFromTable(Table& table, const std::string& tableFunctionName);
 		bool CheckIfFunctionExist(Function& function);
@@ -313,7 +332,7 @@ namespace DOG
 	}
 
 	template<typename T, class ...Args>
-	inline void LuaW::PushStack(T type, Args ...args)
+	inline void LuaW::PushStack(T type, Args&& ...args)
 	{
 		//Push type to the stack
 		//The other push stack functions are called here!
@@ -321,7 +340,7 @@ namespace DOG
 
 		//Continues the recursive function by taking out one more argument from the arg list
 		//Calls the empty push stack when it is done
-		PushStack(args...);
+		PushStack(std::forward<Args>(args)...);
 	}
 
 	//Adds a member function to the interface
@@ -349,26 +368,116 @@ namespace DOG
 		return *this;
 	}
 
-	//Adds function from c++ to a table
-	template<void (*func)(LuaContext*)>
-	void LuaW::AddFunctionToTable(Table& table, const std::string& functionName)
+	template<typename T>
+	inline int LuaW::GetIntegerFromTable(Table& table, const T& tableGet)
 	{
+		//Pushes the table to the stack
 		PushTableToStack(table);
-		PushStringToStack(functionName);
-		lua_pushcfunction(m_luaState, FunctionsHook<func>);
+		//Pushes int/string to get integer
+		PushStack(tableGet);
 
-		SetTableAndPop();
+		//Get the integer from the table and remove the table from the stack
+		GetTableAndRemove();
+
+		return GetIntegerFromStack();
 	}
 
-	//Adds UserData to a table 
 	template<typename T>
-	inline void LuaW::AddUserDataToTable(Table& table, T* object, const std::string& interfaceName, const std::string& objectName)
+	inline float LuaW::GetFloatFromTable(Table& table, const T& tableGet)
 	{
+		//Pushes the table to the stack
 		PushTableToStack(table);
-		PushStringToStack(objectName);
-		PushUserDataPointerToStack<T>(object, interfaceName);
+		//Pushes int/string to get float
+		PushStack(tableGet);
 
-		SetTableAndPop();
+		//Get the float from the table and remove the table from the stack
+		GetTableAndRemove();
+
+		return GetFloatFromStack();
+	}
+
+	template<typename T>
+	inline double LuaW::GetDoubleFromTable(Table& table, const T& tableGet)
+	{
+		//Pushes the table to the stack
+		PushTableToStack(table);
+		//Pushes int/string to get double
+		PushStack(tableGet);
+
+		//Get the double from the table and remove the table from the stack
+		GetTableAndRemove();
+
+		return GetDoubleFromStack();
+	}
+
+	template<typename T>
+	inline std::string LuaW::GetStringFromTable(Table& table, const T& tableGet)
+	{
+		//Pushes the table to the stack
+		PushTableToStack(table);
+		//Pushes int/string to get string
+		PushStack(tableGet);
+
+		//Get the string from the table and remove the table from the stack
+		GetTableAndRemove();
+
+		return GetStringFromStack();
+	}
+
+	template<typename T>
+	inline bool LuaW::GetBoolFromTable(Table& table, const T& tableGet)
+	{
+		//Pushes the table to the stack
+		PushTableToStack(table);
+		//Pushes int/string to get bool
+		PushStack(tableGet);
+
+		//Get the bool from the table and remove the table from the stack
+		GetTableAndRemove();
+
+		return GetBoolFromStack();
+	}
+
+	template<typename T>
+	inline Function LuaW::GetFunctionFromTable(Table& table, const T& tableGet)
+	{
+		//Pushes the table to the stack
+		PushTableToStack(table);
+		//Pushes int/string to get function
+		PushStack(tableGet);
+
+		//Get the function from the table and remove the table from the stack
+		GetTableAndRemove();
+
+		return GetFunctionFromStack();
+	}
+
+	template<typename T>
+	inline Table LuaW::GetTableFromTable(Table& table, const T& tableGet)
+	{
+		//Pushes the table to the stack
+		PushTableToStack(table);
+		//Pushes int/string to get table
+		PushStack(tableGet);
+
+		//Get the table from the table and remove the table from the stack
+		GetTableAndRemove();
+
+		return GetTableFromStack();
+	}
+
+	template<typename T>
+	inline UserData LuaW::GetUserDataFromTable(Table& table, const T& tableGet)
+	{
+		//Pushes the table to the stack
+		PushTableToStack(table);
+		//Pushes int/string to get UserData
+		PushStack(tableGet);
+
+		//Get the UserData from the table and remove the table from the stack
+		GetTableAndRemove();
+
+		return GetUserDataFromStack();
 	}
 
 	//Gets the UserData from the stack
@@ -377,5 +486,159 @@ namespace DOG
 	{
 		PushUserDataToStack(userData);
 		return GetUserDataPointerFromStack<T>();
+	}
+
+	template<typename T>
+	inline void LuaW::AddNumberToTable(Table& table, const T& tableKey, int number)
+	{
+		//Pushes the table on the stack
+		PushTableToStack(table);
+		//Pushes int/string on the stack
+		PushStack(tableKey);
+		//Pushes the number to the stack
+		PushIntegerToStack(number);
+
+		//Sets the number to the tableKey in the table
+		SetTableAndPop();
+	}
+
+	template<typename T>
+	inline void LuaW::AddNumberToTable(Table& table, const T& tableKey, float number)
+	{
+		//Pushes the table on the stack
+		PushTableToStack(table);
+		//Pushes int/string on the stack
+		PushStack(tableKey);
+		//Pushes the number to the stack
+		PushFloatToStack(number);
+
+		//Sets the number to the tableKey in the table
+		SetTableAndPop();
+	}
+
+	template<typename T>
+	inline void LuaW::AddNumberToTable(Table& table, const T& tableKey, double number)
+	{
+		//Pushes the table on the stack
+		PushTableToStack(table);
+		//Pushes int/string on the stack
+		PushStack(tableKey);
+		//Pushes the number to the stack
+		PushDoubleToStack(number);
+
+		//Sets the number to the tableKey in the table
+		SetTableAndPop();
+	}
+
+	template<typename T>
+	inline void LuaW::AddStringToTable(Table& table, const T& tableKey, const std::string& string)
+	{
+		//Pushes the table on the stack
+		PushTableToStack(table);
+		//Pushes int/string on the stack
+		PushStack(tableKey);
+		//Pushes the string to the stack
+		PushStringToStack(string);
+
+		//Sets the string to the tableKey in the table
+		SetTableAndPop();
+	}
+
+	template<typename T>
+	inline void LuaW::AddStringToTable(Table& table, const T& tableKey, const char* string)
+	{
+		//Pushes the table on the stack
+		PushTableToStack(table);
+		//Pushes int/string on the stack
+		PushStack(tableKey);
+		//Pushes the string to the stack
+		PushStringToStack(string);
+
+		//Sets the string to the tableKey in the table
+		SetTableAndPop();
+	}
+
+	template<typename T>
+	inline void LuaW::AddBoolToTable(Table& table, const T& tableKey, bool boolean)
+	{
+		//Pushes the table on the stack
+		PushTableToStack(table);
+		//Pushes int/string on the stack
+		PushStack(tableKey);
+		//Pushes the bool to the stack
+		PushBoolToStack(boolean);
+
+		//Sets the bool to the tableKey in the table
+		SetTableAndPop();
+	}
+
+	template<typename T>
+	inline void LuaW::AddTableToTable(Table& table, const T& tableKey, Table& addTable)
+	{
+		//Pushes the table on the stack
+		PushTableToStack(table);
+		//Pushes int/string on the stack
+		PushStack(tableKey);
+		//Pushes the table to the stack
+		PushTableToStack(addTable);
+
+		//Sets the table to the tableKey in the table
+		SetTableAndPop();
+	}
+
+	template<void(*func)(LuaContext*), typename T>
+	inline void LuaW::AddFunctionToTable(Table& table, const T& tableKey)
+	{
+		//Pushes the table on the stack
+		PushTableToStack(table);
+		//Pushes int/string on the stack
+		PushStack(tableKey);
+		//Pushes the function to the stack
+		lua_pushcfunction(m_luaState, FunctionsHook<func>);
+
+		//Sets the function to the tableKey in the table
+		SetTableAndPop();
+	}
+
+	template<typename T>
+	inline void LuaW::AddFunctionToTable(Table& table, const T& tableKey, Function& function)
+	{
+		//Pushes the table on the stack
+		PushTableToStack(table);
+		//Pushes int/string on the stack
+		PushStack(tableKey);
+		//Pushes the function to the stack
+		PushFunctionToStack(function);
+
+		//Sets the function to the tableKey in the table
+		SetTableAndPop();
+	}
+
+	template<typename UserDataType, typename T>
+	inline void LuaW::AddUserDataToTable(Table& table, UserDataType* object, const std::string& interfaceName, const T& tableKey)
+	{
+		//Pushes the table on the stack
+		PushTableToStack(table);
+		//Pushes int/string on the stack
+		PushStack(tableKey);
+		//Pushes the UserData to the stack
+		PushUserDataPointerToStack<UserDataType>(object, interfaceName);
+
+		//Sets the UserData to the tableKey in the table
+		SetTableAndPop();
+	}
+
+	template<typename T>
+	inline void LuaW::AddUserDataToTable(Table& table, const T& tableKey, UserData& userData)
+	{
+		//Pushes the table on the stack
+		PushTableToStack(table);
+		//Pushes int/string on the stack
+		PushStack(tableKey);
+		//Pushes the UserData to the stack
+		PushUserDataToStack(userData);
+
+		//Sets the UserData to the tableKey in the table
+		SetTableAndPop();
 	}
 }

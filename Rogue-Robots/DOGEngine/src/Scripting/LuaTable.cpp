@@ -116,6 +116,46 @@ namespace DOG
 		m_luaW->AddUserDataToTable(m_table, name, userData);
 	}
 
+	void LuaTable::AddIntToTable(int index, int value)
+	{
+		m_luaW->AddNumberToTable(m_table, ++index, value);
+	}
+
+	void LuaTable::AddFloatToTable(int index, float value)
+	{
+		m_luaW->AddNumberToTable(m_table, ++index, value);
+	}
+
+	void LuaTable::AddDoubleToTable(int index, double value)
+	{
+		m_luaW->AddNumberToTable(m_table, ++index, value);
+	}
+
+	void LuaTable::AddStringToTable(int index, const std::string& string)
+	{
+		m_luaW->AddStringToTable(m_table, ++index, string);
+	}
+
+	void LuaTable::AddBoolToTable(int index, bool boolean)
+	{
+		m_luaW->AddBoolToTable(m_table, ++index, boolean);
+	}
+
+	void LuaTable::AddTableToTable(int index, LuaTable table)
+	{
+		m_luaW->AddTableToTable(m_table, ++index, table.GetTable());
+	}
+
+	void LuaTable::AddFunctionToTable(int index, Function& function)
+	{
+		m_luaW->AddTableToTable(m_table, ++index, function);
+	}
+
+	void LuaTable::AddUserDataToTable(int index, UserData& userData)
+	{
+		m_luaW->AddUserDataToTable(m_table, ++index, userData);
+	}
+
 	LuaTable LuaTable::CreateTableInTable(const std::string& name)
 	{
 		Table table = m_luaW->CreateTable();
@@ -158,6 +198,42 @@ namespace DOG
 	UserData LuaTable::GetUserDataFromTable(const std::string& name)
 	{
 		return m_luaW->GetUserDataFromTable(m_table, name);
+	}
+
+	int LuaTable::GetIntFromTable(int index)
+	{
+		return m_luaW->GetIntegerFromTable(m_table, ++index);
+	}
+
+	float LuaTable::GetFloatFromTable(int index)
+	{
+		return m_luaW->GetFloatFromTable(m_table, ++index);
+	}
+
+	double LuaTable::GetDoubleFromTable(int index)
+	{
+		return m_luaW->GetDoubleFromTable(m_table, ++index);
+	}
+
+	std::string LuaTable::GetStringFromTable(int index)
+	{
+		return std::move(m_luaW->GetStringFromTable(m_table, ++index));
+	}
+
+	bool LuaTable::GetBoolFromTable(int index)
+	{
+		return m_luaW->GetBoolFromTable(m_table, ++index);
+	}
+
+	LuaTable LuaTable::GetTableFromTable(int index)
+	{
+		Table table = m_luaW->GetTableFromTable(m_table, ++index);
+		return LuaTable(table);
+	}
+
+	UserData LuaTable::GetUserDataFromTable(int index)
+	{
+		return m_luaW->GetUserDataFromTable(m_table, ++index);
 	}
 
 	//Will assert in debug and in release will return an invalid function if the function does not exist

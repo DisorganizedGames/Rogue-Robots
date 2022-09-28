@@ -226,10 +226,12 @@ namespace DOG
 			{
 				auto it = m_scriptToVector.find(s_filesToBeReloaded[i].c_str());
 
-				//Should never happen
+				//Sometimes files are reloaded before they even exist as scripts 
+				//Return early and clear filesToBeReloaded, should work
 				if (it == m_scriptToVector.end())
 				{
-					assert(false);
+					std::cout << "File being reloaded but there exist no script of that file\n";
+					s_filesToBeReloaded.clear();
 					return;
 				}
 
