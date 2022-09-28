@@ -98,7 +98,7 @@ DOG::gfx::d2dBackend_DX12::d2dBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
             hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)dwritef.GetAddressOf());
             HR_VFY(hr);
 
-            HRESULT hr = m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black, 1.0f), &brush);
+            HRESULT hr = m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &brush);
             HR_VFY(hr);
             hr = dwritef->CreateTextFormat(
                 L"Robot Radicals",

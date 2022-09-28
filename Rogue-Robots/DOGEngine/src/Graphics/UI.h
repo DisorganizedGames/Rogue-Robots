@@ -10,7 +10,17 @@ class UIelement;
 class RenderDevice;
 class Swapchain;
 
+enum menuUI
+{
+   bplay = 1,
+   bexit
+};
 
+enum Uiscene
+{
+   menu,
+   game
+};
 
 class UI
 {
@@ -21,6 +31,7 @@ public:
    UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int maxFramesInFlight, HWND hwnd);
    ~UI();
    void drawUI();
+   void changeUIscene(Uiscene scene);
 };
 
 class UIelement
@@ -44,6 +55,7 @@ private:
    D2D_VECTOR_2F size;
    std::wstring text;
 public:
+   bool pressed;
    UIButton(D2D_POINT_2F pos,D2D_VECTOR_2F size, std::wstring text);
    void draw(DOG::gfx::d2dBackend_DX12 &m_d2d) override;
    void update(DOG::gfx::d2dBackend_DX12& m_d2d) override;
