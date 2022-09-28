@@ -8,10 +8,7 @@ namespace DOG
 	{
 	public:
 		AudioManager() = delete;
-		//~AudioManager() = default;
-		
-		//AudioManager(AudioManager&& other) = delete;
-		//AudioManager(const AudioManager& other) = delete;
+
 	public:
 		static void Initialize();
 		static void Destroy();
@@ -25,7 +22,7 @@ namespace DOG
 	private:
 		static inline constexpr const u32 MAX_SOURCES = 128;
 
-		static inline AudioDevice* s_device = nullptr;
+		static inline std::unique_ptr<AudioDevice> s_device;
 		static inline auto s_sources = std::vector<std::unique_ptr<SourceVoice>>(MAX_SOURCES);
 	
 	private:

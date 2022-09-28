@@ -8,7 +8,7 @@ using namespace DOG;
 
 void AudioManager::Initialize()
 {
-	s_device = new AudioDevice();
+	s_device = std::make_unique<AudioDevice>();
 }
 
 void AudioManager::Destroy()
@@ -18,7 +18,7 @@ void AudioManager::Destroy()
 		source.reset();
 	}
 	
-	delete s_device;
+	s_device.reset();
 }
 
 void AudioManager::Play(AudioPlayerComponent& audioPlayerComponent)
