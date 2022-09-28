@@ -17,4 +17,5 @@ public:
 private:
 	bool m_showEmptyWindow = false;
 	bool m_showDemoWindow = false;
+	bool m_showModelSpawnerWindow = false;
 };
