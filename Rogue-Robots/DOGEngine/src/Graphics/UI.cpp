@@ -148,7 +148,7 @@ void UISplashScreen::draw(DOG::gfx::d2dBackend_DX12& m_d2d)
 void UISplashScreen::update(DOG::gfx::d2dBackend_DX12& m_d2d)
 {
    float time = clock() / CLOCKS_PER_SEC;
-   if (time <= 13 && time >= 3)
+   if (time <= 4 && time >= 0)
    {
       if (textOp <= 1.0f)
          textBrush->SetOpacity(textOp += 0.01f);
@@ -156,7 +156,7 @@ void UISplashScreen::update(DOG::gfx::d2dBackend_DX12& m_d2d)
    else
       textBrush->SetOpacity(textOp -= 0.01f);
 
-   if (time >= 14.8f)
+   if (time >= 6.f)
       splashBrush->SetOpacity(backOp -= 0.01f);
 
 }
