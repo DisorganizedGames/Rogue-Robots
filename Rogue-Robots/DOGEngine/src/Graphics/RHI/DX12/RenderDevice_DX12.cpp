@@ -123,19 +123,23 @@ namespace DOG::gfx
 		rd.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 		rd.Flags = desc.flags;
 
-		D3D12_CLEAR_VALUE clearVal{};
-		clearVal.Format = desc.format;
+		// Nad bug fix
+		std::optional<D3D12_CLEAR_VALUE> clearVal;
 		if ((rd.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
 		{
-			clearVal.DepthStencil.Depth = desc.depthClear;
-			clearVal.DepthStencil.Stencil = desc.stencilClear;
+			clearVal = D3D12_CLEAR_VALUE();
+			clearVal->Format = desc.format;
+			clearVal->DepthStencil.Depth = desc.depthClear;
+			clearVal->DepthStencil.Stencil = desc.stencilClear;
 		}
-		else
+		else if ((rd.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) == D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET)
 		{
-			clearVal.Color[0] = desc.clearColor[0];
-			clearVal.Color[1] = desc.clearColor[1];
-			clearVal.Color[2] = desc.clearColor[2];
-			clearVal.Color[3] = desc.clearColor[3];
+			clearVal = D3D12_CLEAR_VALUE();
+			clearVal->Format = desc.format;
+			clearVal->Color[0] = desc.clearColor[0];
+			clearVal->Color[1] = desc.clearColor[1];
+			clearVal->Color[2] = desc.clearColor[2];
+			clearVal->Color[3] = desc.clearColor[3];
 		}
 
 		D3D12_RESOURCE_STATES initState{ desc.initState };
@@ -147,7 +151,7 @@ namespace DOG::gfx
 		Texture_Storage storage{};
 		storage.desc = desc;
 
-		hr = m_dma->CreateResource(&ad, &rd, initState, &clearVal, storage.alloc.GetAddressOf(), IID_PPV_ARGS(storage.resource.GetAddressOf()));
+		hr = m_dma->CreateResource(&ad, &rd, initState, clearVal ? &clearVal.value() : nullptr, storage.alloc.GetAddressOf(), IID_PPV_ARGS(storage.resource.GetAddressOf()));
 		HR_VFY(hr);
 
 		// Hold the original resource place on a certain heap on a certain offset
