@@ -10,13 +10,6 @@ UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HW
    D2D_VECTOR_2F s = { 200.f, 80.f };
    elements.push_back(std::move(std::make_unique<UIButton>(p, s, L"Play")));
    elements.push_back(std::move(std::make_unique<UISplashScreen>(m_d2d)));
-
-
-
-
-   //p.x = 500;
-   //p.y = 500;
-   //elements.push_back(std::move(std::make_unique<UIButton>(p,s, L"Button2")));
 }
 
 UI::~UI()
@@ -26,8 +19,11 @@ UI::~UI()
 
 void UI::drawUI()
 {
-   if (DOG::Keyboard::IsKeyPressed(DOG::Key::Tab))
+   //auto b = dynamic_cast<std::unique_ptr<UIButton>>(elements[bplay]);
+   if (DOG::Keyboard::IsKeyPressed(DOG::Key::G))
       changeUIscene(game);
+   if(DOG::Keyboard::IsKeyPressed(DOG::Key::M))
+      changeUIscene(menu);
    for (auto&& e : elements)
    {
       e->update(m_d2d);
@@ -43,6 +39,9 @@ void UI::changeUIscene(Uiscene scene)
    case menu:
       {
          elements.clear();
+         D2D_POINT_2F p = { 600.f, 350.f };
+         D2D_VECTOR_2F s = { 200.f, 80.f };
+         elements.push_back(std::move(std::make_unique<UIButton>(p, s, L"Play")));
       }
       break;
    case game:
