@@ -91,7 +91,7 @@ namespace DOG
 		// Store Node if it is associated with bone or is root of bone hierarchy
 		if (hasJoint || parentIdx == 0)
 		{
-			DirectX::XMStoreFloat4x4(&n.transformation, DirectX::XMMATRIX(&node->mTransformation.a1));
+			n.transformation = DirectX::XMFLOAT4X4(&node->mTransformation.a1);
 			n.parentIdx = parentIdx;
 			n.name = node->mName.C_Str();
 			parentIdx = (i32)nodeArray.size();
@@ -138,8 +138,12 @@ namespace DOG
 		boneArray.assign(nameToJoint.size(), dxf4x4{});
 		for (auto& n : allNodes)
 			if (nameToJoint.find(n->mName.C_Str()) != nameToJoint.end())
+			{
 				DirectX::XMStoreFloat4x4(&boneArray[nameToJointIdx.at(n->mName.C_Str())],
 					DirectX::XMMATRIX(&nameToJoint.at(n->mName.C_Str())->mOffsetMatrix.a1));
+
+			}
+
 
 		// Store vertices BoneWeight and Indices
 		m_model->mesh.vertexData[VertexAttribute::BlendData] = {};

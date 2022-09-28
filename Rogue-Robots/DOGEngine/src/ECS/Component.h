@@ -66,6 +66,7 @@ namespace DOG
 
 	struct NetworkComponent : public Component<NetworkComponent>
 	{
+
 	};
 
 	struct AnimationComponent : public Component<AnimationComponent>

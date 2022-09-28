@@ -129,7 +129,6 @@ namespace DOG::gfx
 				m_boneJourno->SetImportedAnimations(ia);
 				firstTime = false;
 			}
-			auto c = ia;
 		}
 	};
 }

@@ -14,11 +14,6 @@ GameLayer::GameLayer() noexcept
 	m_magentaCube = am.LoadModelAsset("Assets/magenta_cube.glb");
 	m_mixamo = am.LoadModelAsset("Assets/mixamo/walkmix.fbx");
 
-	entity entity1 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelComponent>(entity1, m_mixamo);
-	m_entityManager.AddComponent<TransformComponent>(entity1, Vector3(0, -2, 5), Vector3(0, 0, 0), Vector3(0.02f, 0.02f, 0.02f));
-	m_entityManager.AddComponent<AnimationComponent>(entity1).animationID = 0;
-
 	entity entity2 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity2, m_greenCube);
 	m_entityManager.AddComponent<TransformComponent>(entity2, Vector3(-4, -2, 5), Vector3(0.1f, 0, 0));
@@ -38,6 +33,11 @@ GameLayer::GameLayer() noexcept
 	t4.worldMatrix(3, 0) = -4;
 	t4.worldMatrix(3, 1) = 2;
 	t4.worldMatrix(3, 2) = 5;
+
+	entity entity5 = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<ModelComponent>(entity5, m_mixamo);
+	m_entityManager.AddComponent<TransformComponent>(entity5, Vector3(0, -2, 5), Vector3(0, 0, 0), Vector3(0.02f, 0.02f, 0.02f));
+	m_entityManager.AddComponent<AnimationComponent>(entity5).animationID = 0;
 
 	LuaMain::Initialize();
 	//LuaMain::GetScriptManager()->OrderScript("LuaTest.lua", 1);
