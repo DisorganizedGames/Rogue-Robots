@@ -594,10 +594,11 @@ namespace DOG::gfx
 			for (const auto& output : pass->outputs)
 			{
 				auto resource = m_resMan->GetResource(output.id);
-				auto& states = resourceDesiredStates[resource];
+				//auto& states = resourceDesiredStates[resource];
 
 				// We assert that state has to be COMMON, meaning it is uninitialized (no writers and no readers yet)
-				assert(states == D3D12_RESOURCE_STATE_COMMON);
+				assert(resourceDesiredStates[resource] == D3D12_RESOURCE_STATE_COMMON);
+				//assert(states == D3D12_RESOURCE_STATE_COMMON);
 
 				// Sanity check that the graph author always puts a write state for outputs
 				assert(!IsReadState(output.desiredState));
