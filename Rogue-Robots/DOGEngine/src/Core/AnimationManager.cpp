@@ -1,19 +1,19 @@
-#include "BoneJovi.h"
+#include "AnimationManager.h"
 #include "ImGUI/imgui.h"
 
-BoneJovi::BoneJovi()
+AnimationManager::AnimationManager()
 {
 	m_imgui_scale.assign(150, { 1.0f, 1.0f, 1.0f });
 	m_imgui_pos.assign(150, { 0.0f, 0.0f, 0.0f });
 	m_imgui_rot.assign(150, { 0.0f, 0.0f, 0.0f });
 };
 
-BoneJovi::~BoneJovi()
+AnimationManager::~AnimationManager()
 {
 
 };
 
-void BoneJovi::SpawnControlWindow()
+void AnimationManager::SpawnControlWindow()
 {
 	if (ImGui::Begin("BonneJoints (ppp;)"))
 	{
@@ -74,7 +74,7 @@ void BoneJovi::SpawnControlWindow()
 	ImGui::End();
 }
 
-DirectX::FXMMATRIX BoneJovi::CalculateBlendTransformation(i32 nodeID)
+DirectX::FXMMATRIX AnimationManager::CalculateBlendTransformation(i32 nodeID)
 {
 	using namespace DirectX;
 	// Scaling
@@ -110,7 +110,7 @@ DirectX::FXMMATRIX BoneJovi::CalculateBlendTransformation(i32 nodeID)
 		XMMatrixTranslation(translation.x, translation.y, translation.z));
 }
 
-DirectX::FXMMATRIX BoneJovi::CalculateNodeTransformation(const DOG::AnimationData& animation, i32 nodeID, f32 tick)
+DirectX::FXMMATRIX AnimationManager::CalculateNodeTransformation(const DOG::AnimationData& animation, i32 nodeID, f32 tick)
 {
 	using namespace DirectX;
 	XMFLOAT3 scaling = { 1.f, 1.f, 1.f };
@@ -152,11 +152,11 @@ DirectX::FXMMATRIX BoneJovi::CalculateNodeTransformation(const DOG::AnimationDat
 	return XMMatrixTranspose(nodeTransform);
 }
 
-void BoneJovi::UpdateSkeleton(u32 skeletonId, f32 dt)
+void AnimationManager::UpdateSkeleton(u32 skeletonId, f32 dt)
 {
 	for (size_t m = 0; m < m_imgui_profilePerformUpdate; m++)
 	{
-		// For (job : jobs) get this data
+		// For (job : jobs) get this data (imgui for now)
 		const auto& rig = m_rigs[skeletonId];
 		const auto& anim = rig.animations[m_imgui_animation];
 		if (m_imgui_playAnimation)
@@ -176,11 +176,11 @@ void BoneJovi::UpdateSkeleton(u32 skeletonId, f32 dt)
 		else
 			m_currentTick = m_imgui_animTime * anim.ticks;
 
+
 		std::vector<DirectX::XMMATRIX> hereditaryTFs;
 		hereditaryTFs.reserve(rig.nodes.size());
-
 		// Set node animation transformations
-		hereditaryTFs.push_back(DirectX::XMMatrixScaling(0.02f, 0.02f, 0.02f) * DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation));
+		hereditaryTFs.push_back(DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation));
 		for (i32 i = 1; i < rig.nodes.size(); i++)
 		{
 			auto ntf = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
@@ -214,14 +214,14 @@ void BoneJovi::UpdateSkeleton(u32 skeletonId, f32 dt)
 		}
 	}
 };
-void BoneJovi::SetJoints(DOG::ImportedAnimation& ia)
+void AnimationManager::SetImportedAnimations(DOG::ImportedAnimation& ia)
 {
 	m_rigs.push_back(ia);
 	for (auto& om : ia.jointOffsets)
 		m_vsJoints.push_back(om);
 };
 
-DirectX::XMVECTOR BoneJovi::GetAnimationComponent(const std::vector<DOG::AnimationKey>& keys, KeyType component, f32 tick)
+DirectX::XMVECTOR AnimationManager::GetAnimationComponent(const std::vector<DOG::AnimationKey>& keys, KeyType component, f32 tick)
 {
 	using namespace DirectX;
 

@@ -3,7 +3,7 @@
 #include "src/Core/Window.h"
 #include "src/Core/Time.h"
 #include "src/Core/AssetManager.h"
-#include "src/Core/BoneJovi.h"
+#include "src/Core/AnimationManager.h"
 
 #include "src/Input/Keyboard.h"
 #include "src/Input/Mouse.h"

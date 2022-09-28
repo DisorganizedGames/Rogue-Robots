@@ -1,17 +1,9 @@
 #pragma once
 #include <vector>
-//#include <Assimp/scene.h>           // Output data structure
 #include <unordered_map>
 
 #include "DOGEngineTypes.h"
-//#include "Types/AssetTypes.h"
-//#include "AssimpImporter.h"
 #include "../Graphics/RHI/ImGUIBackend.h"
-//#include "../Graphics/RenderBackend_DX12.h"
-//#include "../Graphics/ImGUIBackend_DX12.h"
-//#include "../Graphics/RenderDevice_DX12.h"
-//#include "Types/GraphicsTypes.h"
-//#include "AssetManager.h"
 
 
 enum class KeyType
@@ -21,7 +13,8 @@ enum class KeyType
 	Translation,
 };
 
-class BoneJovi
+// rip BoneJovi
+class AnimationManager 
 {
 private:
 	// tmp, unused for now
@@ -43,10 +36,10 @@ private:
 private:
 	
 public:
-	BoneJovi();
-	~BoneJovi();
+	AnimationManager();
+	~AnimationManager();
 	void UpdateSkeleton(u32 skeletonId, f32 dt);
-	void SetJoints(DOG::ImportedAnimation& ia);
+	void SetImportedAnimations(DOG::ImportedAnimation& ia);
 	//i32 AddJob(i32 skeletonID, i32 animationID, f32 animationTime = 0.0f);
 	std::vector<DirectX::XMFLOAT4X4>& GetBones() { return m_vsJoints; };
 
