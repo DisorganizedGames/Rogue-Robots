@@ -1,19 +1,18 @@
 #include "UI.h"
 #include "../Input/Mouse.h"
+#include "../Input/Keyboard.h"
 #include <assert.h>
 
 UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HWND hwnd) : m_d2d(rd, sc, numBuffers, hwnd)
 {
-   
-   D2D_POINT_2F p = { 100.f, 100.f };
-   D2D_VECTOR_2F s = {400.f, 100.f};
-   //std::unique_ptr<UIelement> b = std::make_unique<UIButton>(p, "play");
-   //elements.push_back(std::move(std::make_unique<UIButton>(p,s, L"ROGUE ROBOTS")));
-   elements.push_back(std::move(std::make_unique<UISplashScreen>( m_d2d)));
+
+   D2D_POINT_2F p = { 600.f, 350.f };
+   D2D_VECTOR_2F s = { 200.f, 80.f };
+   elements.push_back(std::move(std::make_unique<UIButton>(p, s, L"Play")));
+   elements.push_back(std::move(std::make_unique<UISplashScreen>(m_d2d)));
 
 
-   
-   
+
 
    //p.x = 500;
    //p.y = 500;
@@ -27,6 +26,8 @@ UI::~UI()
 
 void UI::drawUI()
 {
+   if (DOG::Keyboard::IsKeyPressed(DOG::Key::Tab))
+      changeUIscene(game);
    for (auto&& e : elements)
    {
       e->update(m_d2d);
@@ -35,9 +36,31 @@ void UI::drawUI()
 
 }
 
+void UI::changeUIscene(Uiscene scene)
+{
+   switch (scene)
+   {
+   case menu:
+      {
+         elements.clear();
+      }
+      break;
+   case game:
+      elements.clear();
+      {
+         D2D_POINT_2F p = { 100.f, 100.f };
+         D2D_VECTOR_2F s = { 250.f, 100.f };
+         elements.push_back(std::move(std::make_unique<UIButton>(p, s, L"Inventory")));
+      }
+      break;
+   default:
+      break;
+   }
+}
+
 UIelement::UIelement()
 {
-   
+
 }
 
 UIelement::UIelement(D2D_POINT_2F pos)
@@ -57,7 +80,7 @@ void UIelement::update(DOG::gfx::d2dBackend_DX12& m_d2d)
 UIButton::UIButton(D2D_POINT_2F pos, D2D_VECTOR_2F size, std::wstring text) : pos(pos)
 {
    this->size = size;
-   
+
    textRect = D2D1::RectF(pos.x, pos.y, pos.x + size.x, pos.y + size.y);
    this->text = text;
 }
@@ -68,6 +91,7 @@ UIButton::~UIButton()
 
 void UIButton::draw(DOG::gfx::d2dBackend_DX12& m_d2d)
 {
+   pressed = false;
    m_d2d.m_2ddc->DrawRectangle(textRect, m_d2d.brush.Get());
    m_d2d.m_2ddc->DrawTextW(
       text.c_str(),
@@ -84,10 +108,17 @@ void UIButton::update(DOG::gfx::d2dBackend_DX12& m_d2d)
    // auto t = D2D1::Matrix3x2F::Rotation( angle += 0.1f, D2D1::Point2F(468.0f, 331.5f));
    // m_d2d.m_2ddc->SetTransform(t);
    auto m = DOG::Mouse::GetCoordinates();
-   // if(m.first >= textRect.left && m.first <= textRect.right && m.second >= textRect.top && m.second <= textRect.bottom)
-   //    m_d2d.brush.Get()->SetOpacity(1.0f);
-   // else
-   //    m_d2d.brush.Get()->SetOpacity(0.5f);
+   if (m.first >= textRect.left && m.first <= textRect.right && m.second >= textRect.top && m.second <= textRect.bottom)
+   {
+      m_d2d.brush.Get()->SetOpacity(1.0f);
+      if (DOG::Mouse::IsButtonPressed(DOG::Button::Left))
+         pressed = true;
+      else
+         pressed = false;
+
+   }
+   else
+      m_d2d.brush.Get()->SetOpacity(0.5f);
 
 }
 
@@ -105,7 +136,7 @@ UISplashScreen::UISplashScreen(DOG::gfx::d2dBackend_DX12& m_d2d)
    textOp = 0.0f;
 }
 
-void UISplashScreen::draw(DOG::gfx::d2dBackend_DX12 &m_d2d)
+void UISplashScreen::draw(DOG::gfx::d2dBackend_DX12& m_d2d)
 {
    m_d2d.m_2ddc->FillRectangle(background, splashBrush);
    m_d2d.m_2ddc->DrawTextW(
@@ -120,7 +151,7 @@ void UISplashScreen::update(DOG::gfx::d2dBackend_DX12& m_d2d)
    float time = clock() / CLOCKS_PER_SEC;
    if (time <= 13 && time >= 3)
    {
-      if(textOp <= 1.0f)
+      if (textOp <= 1.0f)
          textBrush->SetOpacity(textOp += 0.01f);
    }
    else
@@ -128,14 +159,16 @@ void UISplashScreen::update(DOG::gfx::d2dBackend_DX12& m_d2d)
 
    if (time >= 14.8f)
       splashBrush->SetOpacity(backOp -= 0.01f);
-   
+
 }
 
 UISplashScreen::~UISplashScreen()
 {
-
+   textBrush->Release();
+   splashBrush->Release();
 }
 
-float easeOutCubic(float x) {
+float easeOutCubic(float x)
+{
    return 1 - powf(1 - x, 3);
 }
