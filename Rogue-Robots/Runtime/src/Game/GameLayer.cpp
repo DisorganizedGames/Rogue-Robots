@@ -92,6 +92,8 @@ void GameLayer::OnAttach()
 	RegisterLuaInterfaces();
 	//...
 
+	LoadLevel();
+
 	LuaMain::GetScriptManager()->StartScripts();
 }
 
@@ -217,4 +219,71 @@ void GameLayer::RegisterLuaInterfaces()
 	global->SetLuaInterface(luaInterface);
 
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Player", "PlayerInterface");
+}
+
+void GameLayer::LoadLevel()
+{
+	float blockDim = 5.0f;
+
+	std::string line;
+	std::ifstream inputFile("..\\Offline-Tools\\PCG\\testLevelOutput_generatedLevel.txt");
+
+	AssetManager& aManager = AssetManager::Get();
+	EntityManager& eManager = EntityManager::Get();
+
+	unsigned x = 0;
+	unsigned y = 0;
+	unsigned z = 0;
+	if (inputFile.is_open())
+	{
+		while (std::getline(inputFile, line))
+		{
+			if (line[0] != '-')
+			{
+				while (line.find(' ') != std::string::npos)
+				{
+					unsigned delimPos = line.find(' ');
+					std::string block = line.substr(0, delimPos);
+					line.erase(0, delimPos + 1);
+					if (block != "Empty")
+					{
+						unsigned firstUnderscore = block.find('_');
+						unsigned secondUnderscore = block.find('_', firstUnderscore + 1);
+						std::string blockName = block.substr(0, firstUnderscore);
+						int blockRot = std::stoi(block.substr(firstUnderscore + 2, secondUnderscore - firstUnderscore - 2));
+						std::string blockFlip = block.substr(secondUnderscore + 1, block.size() - secondUnderscore - 1);
+
+						float xFlip = 1.0f;
+						float yFlip = 1.0f;
+						if (blockFlip.find('x'))
+						{
+							xFlip = -1.0f;
+						}
+						if (blockFlip.find('y'))
+						{
+							yFlip = -1.0f;
+						}
+
+						entity blockEntity = eManager.CreateEntity();
+						eManager.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".fbx"));
+						eManager.AddComponent<TransformComponent>(blockEntity)
+							.SetPosition({ x * blockDim, y * blockDim, z * blockDim })
+							.SetRotation({ 0.0f, 3.14f * blockRot, 0.0f})
+							.SetScale({ 1.0f, 1.0f, 1.0f }); //yFlip is on Z because of left-hand/right-hand.
+						eManager.AddComponent<ModularBlockComponent>(blockEntity);
+					}
+
+					++x;
+				}
+				x = 0;
+				++y;
+			}
+			else
+			{
+				x = 0;
+				y = 0;
+				++z;
+			}
+		}
+	}
 }

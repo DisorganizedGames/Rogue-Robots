@@ -19,7 +19,7 @@ public:
 
 private:
 	void RegisterLuaInterfaces();
-
+	void LoadLevel();
 private:
 	u32 m_mixamo{ 0 };
 	u32 m_redCube{ 0 };
