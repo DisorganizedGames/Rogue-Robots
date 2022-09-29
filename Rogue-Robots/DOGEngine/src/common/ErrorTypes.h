@@ -28,4 +28,17 @@ namespace DOG
 			return "No voice available to play audio on";
 		}
 	};
+
+	class HRError : public std::exception
+	{
+	public:
+		explicit HRError(HRESULT hr) : m_hr(hr) {}
+
+		const char* what() const noexcept
+		{
+			return "";
+		}
+	private:
+		HRESULT m_hr;
+	};
 }

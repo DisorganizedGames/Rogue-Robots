@@ -20,7 +20,7 @@ AudioDevice::AudioDevice()
 #endif
 
 	hr = m_xAudio->CreateMasteringVoice(&m_masteringVoice);
-	hr.try_fail("Failed to create XAudio2 Mastering Voice");
+	hr.try_throw("Failed to create XAudio2 Mastering Voice");
 }
 
 DOG::AudioDevice::~AudioDevice()

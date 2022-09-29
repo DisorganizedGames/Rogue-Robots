@@ -1,4 +1,5 @@
 #pragma once
+#include "ErrorTypes.h"
 
 using i8 = int8_t;
 using i16 = int16_t;
@@ -32,6 +33,15 @@ public:
 		}
 	};
 
+	void try_throw(const std::string_view message)
+	{
+		if (this->failed())
+		{
+			std::cerr << message << "\n" << "HRESULT " << std::hex << hr << ": ";
+			throw DOG::HRError(hr);
+		}
+	};
+
 	constexpr bool succeeded()
 	{
 		return SUCCEEDED(hr);
@@ -42,7 +52,7 @@ public:
 		return FAILED(hr);
 	}
 
-	void print()
+	void print() const
 	{
 		char out[64];
 		FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, nullptr, hr,
