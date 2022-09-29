@@ -1,5 +1,7 @@
 #pragma once
 #include "IEvent.h"
+#include "../Input/Keyboard.h"
+
 namespace DOG
 {
 	class KeyPressedEvent : public IEvent
