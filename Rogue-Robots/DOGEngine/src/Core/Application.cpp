@@ -43,9 +43,6 @@ namespace DOG
 	using namespace DOG::gfx;
 	void Application::Run() noexcept
 	{
-		// Temporary read only data from runtime
-		bool showDemoWindow = true;
-
 		while (m_isRunning)
 		{
 			Time::Start();
