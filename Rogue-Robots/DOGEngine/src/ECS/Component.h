@@ -49,7 +49,7 @@ namespace DOG
 
 	};
 
-	struct AnimationComponent : public Component<AnimationComponent>
+	struct AnimationComponent
 	{
 		i32 offset;
 		i32 animationID;
