@@ -465,7 +465,19 @@ namespace DOG::gfx
 	void RenderGraph::PassBuilder::ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc)
 	{
 		assert(IsReadState(state));
-		assert(desc.viewType != ViewType::RenderTarget || desc.viewType != ViewType::UnorderedAccess);
+		assert(desc.viewType != ViewType::RenderTarget && desc.viewType != ViewType::UnorderedAccess);
+
+		// Automatically deduces the correct read if ID is an aliased resource
+		if (m_globalData.writes.contains(id))
+		{
+			const auto& writeCount = m_globalData.writeCount[id];
+
+			// Get latest write name
+			auto prevName = id.name + "(" + std::to_string(writeCount) + ")";
+			prevName = writeCount == 1 ? id.name : prevName;
+
+			id = RGResourceID(prevName);
+		}
 
 		PassIO input;
 		input.id = id;
@@ -493,26 +505,59 @@ namespace DOG::gfx
 			output.rpAccessType = access;
 			output.rpStencilAccessType = RenderPassAccessType::Discard_Discard;
 			m_pass.outputs.push_back(output);
+
+			m_globalData.writeCount[id] = 1;
 		}
 	}
 
 	void RenderGraph::PassBuilder::WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc)
 	{
-		// Explicitly forbids writing to the same graph resource more than once
-		assert(!m_globalData.writes.contains(id));
-		m_globalData.writes.insert(id);
-		
-		assert(desc.viewType == ViewType::RenderTarget);
-		
-		PassIO output;
-		output.id = id;
-		output.type = RGResourceType::Texture;
-		output.viewDesc = desc;
-		output.desiredState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		output.rpAccessType = access;
-		m_pass.outputs.push_back(output);
-	}
+		// Automatically aliases if same resource already exists
+		if (m_globalData.writes.contains(id))
+		{
+			auto& writeCount = m_globalData.writeCount[id];
 
+			// If single write --> Use original name --> without (n) 
+			auto prevName = id.name + "(" + std::to_string(writeCount) + ")";
+			prevName = writeCount == 1 ? id.name : prevName;
+			RGResourceID prevID(prevName);
+
+			writeCount += 1;
+			auto nextName = id.name + "(" + std::to_string(writeCount) + ")";
+			RGResourceID newID(nextName);
+
+			WriteAliasedRenderTarget(newID, prevID, access, desc);
+		}
+		else
+		{
+			assert(desc.viewType == ViewType::RenderTarget);
+			m_globalData.writeCount[id] = 1;
+
+			PassIO output;
+			output.id = id;
+			output.type = RGResourceType::Texture;
+			output.viewDesc = desc;
+			output.desiredState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+			output.rpAccessType = access;
+			m_pass.outputs.push_back(output);
+		}
+		m_globalData.writes.insert(id);
+
+		//// Explicitly forbids writing to the same graph resource more than once
+		//assert(!m_globalData.writes.contains(id));
+		//m_globalData.writes.insert(id);
+		//
+		//assert(desc.viewType == ViewType::RenderTarget);
+		//
+		//PassIO output;
+		//output.id = id;
+		//output.type = RGResourceType::Texture;
+		//output.viewDesc = desc;
+		//output.desiredState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		//output.rpAccessType = access;
+		//m_pass.outputs.push_back(output);
+	}
+	
 	void RenderGraph::PassBuilder::WriteAliasedRenderTarget(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc)
 	{
 		assert(desc.viewType == ViewType::RenderTarget);
@@ -537,6 +582,8 @@ namespace DOG::gfx
 		output.rpAccessType = access;
 		m_pass.outputs.push_back(output);
 	}
+
+
 
 	void RenderGraph::PassBuilder::ProxyWrite(RGResourceID id)
 	{

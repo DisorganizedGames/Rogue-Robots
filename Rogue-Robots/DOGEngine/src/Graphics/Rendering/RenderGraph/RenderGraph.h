@@ -6,7 +6,7 @@
 #include "RGTypes.h"
 #include <unordered_set>
 
-//#define GENERATE_GRAPHVIZ
+#define GENERATE_GRAPHVIZ
 
 namespace DOG::gfx
 {
@@ -104,6 +104,9 @@ namespace DOG::gfx
 		struct PassBuilderGlobalData
 		{
 			std::unordered_set<RGResourceID> writes;
+
+			// ID holder for auto-aliasing (Backbuffer --> Backbuffer(0) --> Backbuffer(1), etc.)
+			std::unordered_map<RGResourceID, u32> writeCount;	
 		};
 
 	public:
@@ -119,12 +122,14 @@ namespace DOG::gfx
 			void ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc);
 			void ReadOrWriteDepth(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
 			void WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
-			void WriteAliasedRenderTarget(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc);
 
 			void ProxyWrite(RGResourceID id);
 			void ProxyRead(RGResourceID id);
 
 		private:
+			// Aliasing now handled internally
+			void WriteAliasedRenderTarget(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc);
+
 			friend class RenderGraph;
 			PassBuilderGlobalData& m_globalData;
 			RGResourceManager* m_resMan{ nullptr };

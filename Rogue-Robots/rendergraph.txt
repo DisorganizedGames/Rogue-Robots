@@ -1,3 +1,5 @@
 digraph G {
-"Forward Pass" -> "ImGUI Pass"
+"Forward Pass" -> "Blit to HDR Pass"
+"Blit to HDR Pass" -> "After Pass"
+"Blit to HDR Pass" -> "ImGUI Pass"
 }
