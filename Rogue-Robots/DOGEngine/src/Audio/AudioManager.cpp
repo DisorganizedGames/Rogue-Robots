@@ -8,7 +8,16 @@ using namespace DOG;
 
 void AudioManager::Initialize()
 {
-	//s_device = std::make_unique<AudioDevice>();
+	try
+	{
+		s_device = std::make_unique<AudioDevice>();
+		s_audio_device_instantiated = true;
+	}
+	catch (HRError& e)
+	{
+		std::cerr << e.what();
+		s_device.reset();
+	}
 }
 
 void AudioManager::Destroy()
@@ -23,6 +32,9 @@ void AudioManager::Destroy()
 
 void AudioManager::Play(AudioPlayerComponent& audioPlayerComponent)
 {
+	if (!s_audio_device_instantiated) 
+		return;
+
 	u32 audioID = audioPlayerComponent.audioID;
 	f32 volume = audioPlayerComponent.volume;
 
@@ -66,6 +78,9 @@ void AudioManager::Play(AudioPlayerComponent& audioPlayerComponent)
 
 void AudioManager::Stop(AudioPlayerComponent& audioPlayerComponent)
 {
+	if (!s_audio_device_instantiated)
+		return;
+
 	u64 voiceID = audioPlayerComponent.voiceID;
 	if (voiceID < 0 || voiceID > MAX_SOURCES-1)
 	{
@@ -82,6 +97,9 @@ void AudioManager::Stop(AudioPlayerComponent& audioPlayerComponent)
 
 bool AudioManager::HasFinished(const AudioPlayerComponent& audioPlayerComponent)
 {
+	if (!s_audio_device_instantiated)
+		return true;
+
 	u64 voiceID = audioPlayerComponent.voiceID;
 	if (voiceID >= 0 && voiceID < MAX_SOURCES)
 	{
