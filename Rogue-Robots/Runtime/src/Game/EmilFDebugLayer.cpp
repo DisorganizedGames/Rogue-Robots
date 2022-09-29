@@ -1,5 +1,6 @@
 #include "EmilFDebugLayer.h"
 
+
 EmilFDebugLayer::EmilFDebugLayer() noexcept
 	: Layer("Emil debug layer"), m_entityManager{ DOG::EntityManager::Get() }
 {
@@ -8,7 +9,9 @@ EmilFDebugLayer::EmilFDebugLayer() noexcept
 
 void EmilFDebugLayer::OnAttach()
 {
-	
+	DOG::TestSystem system;
+
+
 }
 
 void EmilFDebugLayer::OnDetach()
