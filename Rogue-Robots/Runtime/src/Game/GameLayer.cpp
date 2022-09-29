@@ -6,29 +6,13 @@ using namespace DirectX::SimpleMath;
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
 {
-
 	auto& am = DOG::AssetManager::Get();
 	m_redCube = am.LoadModelAsset("Assets/red_cube.glb");
 	m_greenCube = am.LoadModelAsset("Assets/green_cube.glb");
 	m_blueCube = am.LoadModelAsset("Assets/blue_cube.glb");
 	m_magentaCube = am.LoadModelAsset("Assets/magenta_cube.glb");
+	m_mixamo = am.LoadModelAsset("Assets/mixamo/walkmix.fbx");
 
-	//u64 sponza = am.LoadModelAsset("Assets/Sponza_gltf/glTF/Sponza.gltf");
-	//entity entity0 = m_entityManager.CreateEntity();
-	//m_entityManager.AddComponent<ModelComponent>(entity0, sponza);
-	//m_entityManager.AddComponent<TransformComponent>(entity0)
-	//	.SetPosition({ 0, 0, 0 })
-	//	.SetRotation({ 0, 0, 0 })
-	//	.SetScale({ 0.05f, 0.05f, 0.05f });
-
-	entity entity1 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelComponent>(entity1, m_redCube);
-	m_entityManager.AddComponent<TransformComponent>(entity1)
-		.SetPosition({ 4, -2, 5 })
-		.SetRotation({ 3.14f / 4.0f, 0, 0 })
-		.SetScale({0.5, 0.5, 0.5});
-	m_entityManager.AddComponent<NetworkPlayerComponent>(entity1).playerId = 0;
-	
 	entity entity2 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity2, m_greenCube);
 	m_entityManager.AddComponent<TransformComponent>(entity2, Vector3(-4, -2, 5), Vector3(0.1f, 0, 0));
@@ -48,6 +32,11 @@ GameLayer::GameLayer() noexcept
 	t4.worldMatrix(3, 0) = -4;
 	t4.worldMatrix(3, 1) = 2;
 	t4.worldMatrix(3, 2) = 5;
+
+	entity entity5 = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<ModelComponent>(entity5, m_mixamo);
+	m_entityManager.AddComponent<TransformComponent>(entity5, Vector3(0, -2, 5), Vector3(0, 0, 0), Vector3(0.02f, 0.02f, 0.02f));
+	m_entityManager.AddComponent<AnimationComponent>(entity5).animationID = 0;
 
 	LuaMain::Initialize();
 	//LuaMain::GetScriptManager()->OrderScript("LuaTest.lua", 1);
@@ -76,7 +65,8 @@ void GameLayer::OnUpdate()
 {
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
-
+	
+	//m_boneJourno->UpdateSkeleton(0, 1, 0.1f);
 	m_player->OnUpdate();
 	m_netCode.OnUpdate(m_player);
 
@@ -106,6 +96,12 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	{
 		//auto [x, y] = EVENT(LeftMouseButtonPressedEvent).coordinates;
 		//std::cout << GetName() << " received event: Left MB clicked [x,y] = [" << x << "," << y << "]\n";
+		break;
+	}
+	case EventType::KeyPressedEvent:
+	{
+		if (EVENT(KeyReleasedEvent).key == DOG::Key::C)
+			m_player->m_moveView = !m_player->m_moveView;
 		break;
 	}
 	}

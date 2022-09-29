@@ -16,6 +16,27 @@ namespace DOG
 		float emissiveFactor[3] = { 0, 0, 0 };
 	};
 
+	struct BlendData
+	{
+		i32 index = -1;
+		f32 weight = 0.0f;
+	};
+
+	struct JointNode
+	{
+		std::string name; // tmp for debug
+		DirectX::XMFLOAT4X4 transformation;
+		i32 parentIdx = -1;
+		i32 jointIdx = -1; // will not be needed
+	};
+
+	struct AnimationKey
+	{
+		std::string name; // tmp for debugging
+		f32 time;
+		DirectX::XMFLOAT4 value;
+	};
+
 	struct ImportedTextureFileMip
 	{
 		std::vector<u8> data;
@@ -28,6 +49,24 @@ namespace DOG
 		std::vector<ImportedTextureFileMip> dataPerMip;
 	};
 
+	struct AnimationData
+	{
+		std::string name;
+		f32 duration;
+		f32 ticks;
+		f32 ticksPerSec;
+		// following can and should be concatenated once we have final model
+		std::unordered_map<i32, std::vector<AnimationKey>> scaKeys;
+		std::unordered_map<i32, std::vector<AnimationKey>> rotKeys;
+		std::unordered_map<i32, std::vector<AnimationKey>> posKeys;
+	};
+
+	struct ImportedAnimation
+	{
+		std::vector<JointNode> nodes;
+		std::vector<DirectX::XMFLOAT4X4> jointOffsets;
+		std::vector<AnimationData> animations;
+	};
 
 	struct ImportedMesh
 	{
@@ -39,6 +78,7 @@ namespace DOG
 	{
 		std::vector<ImportedMaterial> materials;
 		std::vector<SubmeshMetadata> submeshes;
+		ImportedAnimation animation;
 		ImportedMesh mesh;
 	};
 }

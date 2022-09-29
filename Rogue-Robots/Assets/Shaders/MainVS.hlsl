@@ -13,7 +13,8 @@ struct PerFrameData
     matrix world;
     matrix view;
     matrix proj;
-    float3 camPos;
+    float4 camPos;
+    matrix joints[130];
 };
 
 struct SubmeshMetadata
@@ -22,6 +23,19 @@ struct SubmeshMetadata
     uint vertCount;
     uint indexStart;
     uint indexCount;
+    uint blendStart;
+    uint blendCount;
+};
+
+struct BlendWeight
+{
+    int idx;
+    float weight;
+};
+
+struct Blend
+{
+    BlendWeight iw[4];
 };
 
 struct PushConstantElement
@@ -35,6 +49,7 @@ struct PushConstantElement
     uint uvTable;
     uint norTable;
     uint tanTable;
+    uint blendTable;
 };
 ConstantBuffer<PushConstantElement> constants : register(b0, space0);
 
@@ -48,18 +63,29 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     StructuredBuffer<float2> uvs = ResourceDescriptorHeap[constants.uvTable];
     StructuredBuffer<float3> normals = ResourceDescriptorHeap[constants.norTable];
     StructuredBuffer<float3> tangents = ResourceDescriptorHeap[constants.tanTable];
+    StructuredBuffer<Blend> blendData = ResourceDescriptorHeap[constants.blendTable];
     
     SubmeshMetadata md = mds[constants.submeshID];
+    Blend bw = blendData[vertexID + md.blendStart];
     vertexID += md.vertStart;
-    
+
     float3 pos = positions[vertexID];
     float2 uv = uvs[vertexID];
     float3 nor = normals[vertexID];
     float3 tan = tangents[vertexID];
     //float3 bitan = normalize(cross(nor, tan));  // not sure if this is correct-handed
     float3 bitan = normalize(cross(tan, nor));  // not sure if this is correct-handed
-    
+   
     ConstantBuffer<PerFrameData> pfData = ResourceDescriptorHeap[constants.perFrameCB];
+
+    if (md.blendCount > 0)
+    {
+        matrix mat = pfData.joints[bw.iw[0].idx] * bw.iw[0].weight;
+        mat += pfData.joints[bw.iw[1].idx] * bw.iw[1].weight;
+        mat += pfData.joints[bw.iw[2].idx] * bw.iw[2].weight;
+        mat += pfData.joints[bw.iw[3].idx] * bw.iw[3].weight;
+        pos = (float3) mul(float4(pos, 1.0f), mat);
+    }
     
     output.wsPos = mul(pfData.world, float4(pos, 1.f)).xyz;
     output.pos = mul(pfData.proj, mul(pfData.view, float4(output.wsPos, 1.f)));

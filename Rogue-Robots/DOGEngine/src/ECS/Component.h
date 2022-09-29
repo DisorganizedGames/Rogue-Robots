@@ -46,5 +46,15 @@ namespace DOG
 
 	struct NetworkComponent
 	{
+
+	};
+
+	struct AnimationComponent
+	{
+		i32 offset;
+		i32 animationID;
+		f32 time;
+		f32 timeScale;
+		f32 transition;
 	};
 }

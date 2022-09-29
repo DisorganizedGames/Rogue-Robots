@@ -1,7 +1,7 @@
 #pragma once
 #include "../../Core/Types/GraphicsTypes.h"
 #include "../RHI/RenderResourceHandles.h"
-
+#include "../../Core/AnimationManager.h"
 namespace DOG::gfx
 {
 	class RenderBackend;
@@ -120,6 +120,15 @@ namespace DOG::gfx
 		std::unique_ptr<RenderGraph> m_rg;
 		std::unique_ptr<RGResourceManager> m_rgResMan;
 
-
+		//TMP
+		std::unique_ptr<AnimationManager> m_boneJourno;
+	public:
+		//TMP
+		bool m_bonesLoaded = false;
+		void SetBones(DOG::ImportedAnimation& ia)
+		{
+			m_boneJourno->SetImportedAnimations(ia);
+			m_bonesLoaded = true;
+		}
 	};
 }

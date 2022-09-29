@@ -1,8 +1,8 @@
 #pragma once
-#include <DOGEngine.h>
 #include "MainPlayer.h"
 #include "LuaInterfaces.h"
 #include "NetCode.h"
+
 
 class GameLayer : public DOG::Layer
 {
@@ -20,7 +20,7 @@ private:
 	void RegisterLuaInterfaces();
 
 private:
-
+	u64 m_mixamo{ 0 };
 	u64 m_redCube{ 0 };
 	u64 m_greenCube{ 0 };
 	u64 m_blueCube{ 0 };

@@ -40,7 +40,8 @@ struct PushConstantElement
     uint uvTable;
     uint norTable;
     uint tanTable;
-    
+    uint blendTable;
+
     uint matTable;
     uint matID;
 };

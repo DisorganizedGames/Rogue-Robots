@@ -41,6 +41,12 @@ namespace DOG::gfx
 			m_tangentTable = std::make_unique<GPUTableDeviceLocal<TangentHandle>>(rd, bin, TAN_STRIDE, maxElements, async);
 		}
 
+		// Assumes BlendData always exist
+		{
+			u32 maxElements = spec.maxSizePerAttribute.find(VertexAttribute::BlendData)->second / BLEND_STRIDE;
+			m_blendTable = std::make_unique<GPUTableDeviceLocal<BlendHandle>>(rd, bin, BLEND_STRIDE, maxElements, async);
+		}
+
 	}
 
 	MeshContainer MeshTable::LoadMesh(const MeshSpecification& spec, UploadContext& ctx)
@@ -91,6 +97,16 @@ namespace DOG::gfx
 			m_tangentTable->SendCopyRequests(ctx);
 		}
 
+		if (spec.vertexDataPerAttribute.find(VertexAttribute::BlendData) != spec.vertexDataPerAttribute.end())
+		{
+			// Load blend data
+			{
+				const auto& attrData = loadAttrData(spec, VertexAttribute::BlendData);
+				u32 numElements = (u32)attrData.size_bytes() / BLEND_STRIDE;
+				storage.blend = m_blendTable->Allocate(numElements, attrData.data());
+				m_blendTable->SendCopyRequests(ctx);
+			}
+		}
 		// Load submeshes ==> Use a single handle for submeshes and use submesh as a local offset
 		auto globalVertexOffset = m_positionTable->GetLocalOffset(storage.pos);
 		auto globalIndexOffset = m_indexTable->GetLocalOffset(storage.idx);
@@ -123,6 +139,7 @@ namespace DOG::gfx
 			uv = res.uv,
 			nor = res.nor,
 			tan = res.tan,
+			blend = res.blend,
 			mds = std::move(res.mdsGpu)		// We are moving the vector! No deep copies
 		]() mutable
 		{
@@ -130,6 +147,7 @@ namespace DOG::gfx
 			m_uvTable->Free(uv);
 			m_normalTable->Free(nor);
 			m_tangentTable->Free(tan);
+			m_blendTable->Free(blend);
 			m_submeshTable->Free(mds);
 		};
 		m_bin->PushDeferredDeletion(delFunc);
@@ -153,6 +171,9 @@ namespace DOG::gfx
 			break;
 		case VertexAttribute::Tangent:
 			return m_tangentTable->GetGlobalDescriptor();
+			break;
+		case VertexAttribute::BlendData:
+			return m_blendTable->GetGlobalDescriptor();
 			break;
 
 		default:

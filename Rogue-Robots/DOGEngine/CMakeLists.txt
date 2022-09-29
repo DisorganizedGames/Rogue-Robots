@@ -21,6 +21,7 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Core/ManagedAssets.h" "src/Core/ManagedAssets.cpp"
     "src/Graphics/Rendering/RenderGraph/RenderGraph.h" "src/Graphics/Rendering/RenderGraph/RenderGraph.cpp" "src/Graphics/Rendering/RenderGraph/RGTypes.h" 
     "src/Graphics/Rendering/RenderGraph/RGResourceManager.h" "src/Graphics/Rendering/RenderGraph/RGResourceManager.cpp"
+    "src/Core/AnimationManager.h" "src/Core/AnimationManager.cpp"
     )
 
 	file(GLOB_RECURSE TempGraphics
