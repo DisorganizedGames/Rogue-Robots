@@ -5,7 +5,6 @@ struct VS_OUT
     float3 nor : NORMAL;
     float3 tan : TANGENT;
     float3 bitan : BITANGENT;
-    
     float3 wsPos : WS_POSITION;
 };
 
@@ -64,8 +63,9 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     
     output.wsPos = mul(pfData.world, float4(pos, 1.f)).xyz;
     output.pos = mul(pfData.proj, mul(pfData.view, float4(output.wsPos, 1.f)));
-    output.nor = mul(pfData.world, float4(nor, 1.f)).xyz;
-    output.tan = mul(pfData.world, float4(tan, 1.f)).xyz;
+
+    output.nor = mul(pfData.world, float4(nor, 0.f)).xyz;
+    output.tan = mul(pfData.world, float4(tan, 0.f)).xyz;
     output.bitan = bitan;
     output.uv = uv;
  

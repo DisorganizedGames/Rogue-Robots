@@ -73,6 +73,7 @@ namespace DOG::gfx
 				dest = m_rd->GetGlobalDescriptor(*view);
 			else
 			{
+				dest = UINT32_MAX;
 				// dest m_rd->GetGlobalDescriptor(m_defaultTextures->GetDefaultAlbedo());
 			}
 		};

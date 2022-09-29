@@ -59,30 +59,47 @@ float3 GetFinalNormal(uint normalId, float3 tangent, float3 bitangent, float3 in
 
 static const float PI = 3.1415f;
 
+static const float NO_TEXTURE = 0xffffffff;
+
 float4 main(VS_OUT input) : SV_TARGET
 {
     StructuredBuffer<MaterialElement> mats = ResourceDescriptorHeap[constants.matTable];
     MaterialElement mat = mats[constants.matID];
-    
-    
-    // Using albedo factor
-    return mat.albedoFactor;
-    
-    Texture2D albedo = ResourceDescriptorHeap[mat.albedo];
-    Texture2D metallicRoughness = ResourceDescriptorHeap[mat.metallicRoughness];
-    Texture2D normalMap = ResourceDescriptorHeap[mat.normal];
-        
-    float3 albedoInput = albedo.Sample(g_aniso_samp, input.uv);
-    float metallicInput = metallicRoughness.Sample(g_aniso_samp, input.uv).b;
-    float roughnessInput = metallicRoughness.Sample(g_aniso_samp, input.uv).g;
+
+    float4 albedoInput4 = mat.albedoFactor;
+    float albedoAlpha = albedoInput4.w;
+    float3 albedoInput = albedoInput4.xyz;
+    if (mat.albedo != NO_TEXTURE)
+    {
+        Texture2D albedo = ResourceDescriptorHeap[mat.albedo];
+
+        albedoInput4 = albedo.Sample(g_aniso_samp, input.uv) * mat.albedoFactor;
+        albedoInput = albedoInput4.xyz;
+        albedoAlpha = albedoInput4.w;
+    }
+
+    float metallicInput = mat.metallicFactor;
+    float roughnessInput = mat.roughnessFactor;
+    if (mat.metallicRoughness != NO_TEXTURE)
+    {
+        Texture2D metallicRoughness = ResourceDescriptorHeap[mat.metallicRoughness];
+
+        metallicInput = metallicRoughness.Sample(g_aniso_samp, input.uv).b * mat.metallicFactor;
+        roughnessInput = metallicRoughness.Sample(g_aniso_samp, input.uv).g * mat.roughnessFactor;
+    }
+
+    float3 N = normalize(input.nor);
+    if (mat.normal != NO_TEXTURE)
+    {
+        N = normalize(GetFinalNormal(mat.normal, normalize(input.tan), normalize(input.bitan), normalize(input.nor), input.uv));
+    }
     
     ConstantBuffer<PerFrameData> pfData = ResourceDescriptorHeap[constants.perFrameCB];
     float3 camPos = pfData.camPos;
     
     float3 amb = 0.03f * albedoInput;
     
-    
-    float3 N = normalize(GetFinalNormal(mat.normal, normalize(input.tan), normalize(input.bitan), normalize(input.nor), input.uv));    
+      
     float3 V = normalize(camPos - input.wsPos);
     
     float3 F0 = float3(0.04f, 0.04f, 0.04f);
