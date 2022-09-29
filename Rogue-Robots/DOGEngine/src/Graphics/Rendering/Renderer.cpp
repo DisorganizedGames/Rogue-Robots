@@ -181,7 +181,7 @@ namespace DOG::gfx
 						{
 							DirectX::XMMATRIX world, view, proj;
 							DirectX::XMFLOAT4 camPos;
-							DirectX::XMFLOAT4X4 joints[110];
+							DirectX::XMFLOAT4X4 joints[130];
 						} pfData{};
 
 						auto& updatedJoints = m_boneJourno->GetBones();

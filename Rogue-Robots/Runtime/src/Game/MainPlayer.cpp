@@ -93,20 +93,23 @@ void MainPlayer::UpdateCamera(CameraComponent& camera)
 
 	auto speed = m_entityManager.GetComponent<PlayerStatsComponent>(m_playerEntity).speed;
 
-	auto [mouseX, mouseY] = DOG::Mouse::GetDeltaCoordinates();
+	if (m_moveView)
+	{
+		auto [mouseX, mouseY] = DOG::Mouse::GetDeltaCoordinates();
 
-	m_azim -= mouseX * 1.f/2000 * 2 * XM_PI;
-	m_polar += mouseY * 1.f/2000 * 2 * XM_PI;
+		m_azim -= mouseX * 1.f / 2000 * 2 * XM_PI;
+		m_polar += mouseY * 1.f / 2000 * 2 * XM_PI;
 
-	m_polar = (f32)std::min((double)m_polar, XM_PI - 0.001);
-	m_polar = (f32)std::max((double)m_polar, 0.001);
+		m_polar = (f32)std::min((double)m_polar, XM_PI - 0.001);
+		m_polar = (f32)std::max((double)m_polar, 0.001);
 
-	m_forward = XMVectorSet(
-		std::cos(m_azim) * std::sin(m_polar),
-		std::cos(m_polar),
-		std::sin(m_azim) * std::sin(m_polar),
-		0
-	);
+		m_forward = XMVectorSet(
+			std::cos(m_azim) * std::sin(m_polar),
+			std::cos(m_polar),
+			std::sin(m_azim) * std::sin(m_polar),
+			0
+		);
+	}
 
 	m_right = s_globalUp.Cross(m_forward);
 	Vector3 xzForward = m_forward;

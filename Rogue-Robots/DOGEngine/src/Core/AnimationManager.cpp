@@ -3,9 +3,9 @@
 
 AnimationManager::AnimationManager()
 {
-	m_imguiscale.assign(150, { 1.0f, 1.0f, 1.0f });
-	m_imguipos.assign(150, { 0.0f, 0.0f, 0.0f });
-	m_imguirot.assign(150, { 0.0f, 0.0f, 0.0f });
+	m_imguiScale.assign(150, { 1.0f, 1.0f, 1.0f });
+	m_imguiPos.assign(150, { 0.0f, 0.0f, 0.0f });
+	m_imguiRot.assign(150, { 0.0f, 0.0f, 0.0f });
 };
 
 AnimationManager::~AnimationManager()
@@ -18,58 +18,58 @@ void AnimationManager::SpawnControlWindow()
 	if (ImGui::Begin("BonneJoints (ppp;)"))
 	{
 		ImGui::Text("Perform update this many times (for profiling)");
-		ImGui::SliderInt(" ", &m_imguiprofilePerformUpdate, 0, 100);
+		ImGui::SliderInt(" ", &m_imguiProfilePerformUpdate, 0, 100);
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::Columns(2, nullptr, true);
-		if (ImGui::BeginCombo("animation1", m_rigs[0].animations[m_imguianimation].name.c_str()))
+		if (ImGui::BeginCombo("animation1", m_rigs[0].animations[m_imguiAnimation].name.c_str()))
 		{
 			for (i32 i = 0; i < std::size(m_rigs[0].animations); i++)
-				if (ImGui::Selectable((m_rigs[0].animations[i].name + "  " + std::to_string(i)).c_str(), (i == m_imguianimation)))
-					m_imguianimation = i;
+				if (ImGui::Selectable((m_rigs[0].animations[i].name + "  " + std::to_string(i)).c_str(), (i == m_imguiAnimation)))
+					m_imguiAnimation = i;
 			ImGui::EndCombo();
 		}
-		ImGui::SliderFloat("Animation Time", &m_imguianimTime, 0.0f, 1.0f, "%.5f");
-		ImGui::SliderFloat("Time Scale", &m_imguitimeScale, -2.0f, 2.0f, "%.3f");
-		ImGui::Checkbox("Play Animation", &m_imguiplayAnimation);
-		ImGui::Checkbox("Bindpose", &m_imguibindPose);
-		ImGui::Checkbox("RootTranslation", &m_imguirootTranslation);
-		m_imguiplayAnimation = m_imguibindPose ? false : m_imguiplayAnimation;
+		ImGui::SliderFloat("Animation Time", &m_imguiAnimTime, 0.0f, 1.0f, "%.5f");
+		ImGui::SliderFloat("Time Scale", &m_imguiTimeScale, -2.0f, 2.0f, "%.3f");
+		ImGui::Checkbox("Play Animation", &m_imguiPlayAnimation);
+		ImGui::Checkbox("Bindpose", &m_imguiBindPose);
+		ImGui::Checkbox("RootTranslation", &m_imguiRootTranslation);
+		m_imguiPlayAnimation = m_imguiBindPose ? false : m_imguiPlayAnimation;
 
-		if (m_imguiplayAnimation)
-			m_imguianimTime2 = m_imguianimTime;
-		if (ImGui::BeginCombo("tfs", m_rigs[0].nodes[m_imguiselectedBone].name.c_str()))
+		if (m_imguiPlayAnimation)
+			m_imguiAnimTime2 = m_imguiAnimTime;
+		if (ImGui::BeginCombo("tfs", m_rigs[0].nodes[m_imguiSelectedBone].name.c_str()))
 		{
 			for (i32 i = 1; i < std::size(m_rigs[0].nodes); i++)
-				if (ImGui::Selectable((m_rigs[0].nodes[i].name + "  " + std::to_string(i)).c_str(), (i == m_imguiselectedBone)))
-					m_imguiselectedBone = i;
+				if (ImGui::Selectable((m_rigs[0].nodes[i].name + "  " + std::to_string(i)).c_str(), (i == m_imguiSelectedBone)))
+					m_imguiSelectedBone = i;
 			ImGui::EndCombo();
 		}
 		ImGui::Text("Orientation");
-		ImGui::SliderAngle("Roll", &m_imguirot[m_imguiselectedBone].z, -180.0f, 180.0f);
-		ImGui::SliderAngle("Pitch", &m_imguirot[m_imguiselectedBone].x, -180.0f, 180.0f);
-		ImGui::SliderAngle("Yaw", &m_imguirot[m_imguiselectedBone].y, -180.0f, 180.0f);
+		ImGui::SliderAngle("Roll", &m_imguiRot[m_imguiSelectedBone].z, -180.0f, 180.0f);
+		ImGui::SliderAngle("Pitch", &m_imguiRot[m_imguiSelectedBone].x, -180.0f, 180.0f);
+		ImGui::SliderAngle("Yaw", &m_imguiRot[m_imguiSelectedBone].y, -180.0f, 180.0f);
 
 		ImGui::Text("Translation");
-		ImGui::SliderFloat("pos X", &m_imguipos[m_imguiselectedBone].x, -1.0f, 1.0f, "%.3f");
-		ImGui::SliderFloat("pos Y", &m_imguipos[m_imguiselectedBone].y, -1.0f, 1.0f, "%.3f");
-		ImGui::SliderFloat("pos Z", &m_imguipos[m_imguiselectedBone].z, -1.0f, 1.0f, "%.3f");
+		ImGui::SliderFloat("pos X", &m_imguiPos[m_imguiSelectedBone].x, -1.0f, 1.0f, "%.3f");
+		ImGui::SliderFloat("pos Y", &m_imguiPos[m_imguiSelectedBone].y, -1.0f, 1.0f, "%.3f");
+		ImGui::SliderFloat("pos Z", &m_imguiPos[m_imguiSelectedBone].z, -1.0f, 1.0f, "%.3f");
 
 		ImGui::Text("Scale");
-		ImGui::SliderFloat("X", &m_imguiscale[m_imguiselectedBone].x, -10.0f, 10.0f, "%.1f");
-		ImGui::SliderFloat("Y", &m_imguiscale[m_imguiselectedBone].y, -10.0f, 10.0f, "%.1f");
-		ImGui::SliderFloat("Z", &m_imguiscale[m_imguiselectedBone].z, -10.0f, 10.0f, "%.1f");
+		ImGui::SliderFloat("X", &m_imguiScale[m_imguiSelectedBone].x, -10.0f, 10.0f, "%.1f");
+		ImGui::SliderFloat("Y", &m_imguiScale[m_imguiSelectedBone].y, -10.0f, 10.0f, "%.1f");
+		ImGui::SliderFloat("Z", &m_imguiScale[m_imguiSelectedBone].z, -10.0f, 10.0f, "%.1f");
 		ImGui::NextColumn();
-		if (ImGui::BeginCombo("animation2", m_rigs[0].animations[m_imguianimation2].name.c_str()))
+		if (ImGui::BeginCombo("animation2", m_rigs[0].animations[m_imguiAnimation2].name.c_str()))
 		{
 			for (i32 j = 0; j < std::size(m_rigs[0].animations); j++)
-				if (ImGui::Selectable((m_rigs[0].animations[j].name + " " + std::to_string(j)).c_str(), (j == m_imguianimation2)))
-					m_imguianimation2 = j;
+				if (ImGui::Selectable((m_rigs[0].animations[j].name + " " + std::to_string(j)).c_str(), (j == m_imguiAnimation2)))
+					m_imguiAnimation2 = j;
 			ImGui::EndCombo();
 		}
-		ImGui::SliderFloat("Animation Time2", &m_imguianimTime2, 0.0f, 1.0f, "%.5f");
-		ImGui::SliderFloat("blendFactor", &m_imguiblend, 0.0f, 1.0f, "%.5f");
-		ImGui::Checkbox("Blend", &m_imguitestAnimationBlend);
+		ImGui::SliderFloat("Animation Time2", &m_imguiAnimTime2, 0.0f, 1.0f, "%.5f");
+		ImGui::SliderFloat("blendFactor", &m_imguiBlend, 0.0f, 1.0f, "%.5f");
+		ImGui::Checkbox("Blend", &m_imguiTestAnimationBlend);
 	}
 	ImGui::End();
 }
@@ -82,28 +82,28 @@ DirectX::FXMMATRIX AnimationManager::CalculateBlendTransformation(i32 nodeID)
 	XMFLOAT3 translation = { 0.f, 0.f, 0.f };
 	XMFLOAT4 rotation = { 0.f, 0.f, 0.f, 0.f };
 
-	f32 t1 = m_imguianimTime * m_rigs[0].animations[m_imguianimation].ticks;
-	f32 t2 = m_imguianimTime2 * m_rigs[0].animations[m_imguianimation2].ticks;
-	auto& animation1 = m_rigs[0].animations[m_imguianimation];
-	auto& animation2 = m_rigs[0].animations[m_imguianimation2];
+	f32 t1 = m_imguiAnimTime * m_rigs[0].animations[m_imguiAnimation].ticks;
+	f32 t2 = m_imguiAnimTime2 * m_rigs[0].animations[m_imguiAnimation2].ticks;
+	auto& animation1 = m_rigs[0].animations[m_imguiAnimation];
+	auto& animation2 = m_rigs[0].animations[m_imguiAnimation2];
 
 	if (animation1.scaKeys.find(nodeID) != animation1.scaKeys.end())
 	{
 		auto anim1 = GetAnimationComponent(animation1.scaKeys.at(nodeID), KeyType::Scale, t1);
 		auto anim2 = GetAnimationComponent(animation2.scaKeys.at(nodeID), KeyType::Scale, t2);
-		DirectX::XMStoreFloat3(&scaling, XMVectorLerp(anim1, anim2, m_imguiblend));
+		DirectX::XMStoreFloat3(&scaling, XMVectorLerp(anim1, anim2, m_imguiBlend));
 	}
 	if (animation1.rotKeys.find(nodeID) != animation1.rotKeys.end())
 	{
 		auto anim1 = GetAnimationComponent(animation1.rotKeys.at(nodeID), KeyType::Rotation, t1);
 		auto anim2 = GetAnimationComponent(animation2.rotKeys.at(nodeID), KeyType::Rotation, t2);
-		DirectX::XMStoreFloat4(&rotation, XMQuaternionSlerp(anim1, anim2, m_imguiblend));
+		DirectX::XMStoreFloat4(&rotation, XMQuaternionSlerp(anim1, anim2, m_imguiBlend));
 	}
-	if (animation1.posKeys.find(nodeID) != animation1.posKeys.end() && (m_imguirootTranslation || nodeID > 2))
+	if (animation1.posKeys.find(nodeID) != animation1.posKeys.end() && (m_imguiRootTranslation || nodeID > 2))
 	{
 		auto anim1 = GetAnimationComponent(animation1.posKeys.at(nodeID), KeyType::Translation, t1);
 		auto anim2 = GetAnimationComponent(animation2.posKeys.at(nodeID), KeyType::Translation, t2);
-		DirectX::XMStoreFloat3(&translation, XMVectorLerp(anim1, anim2, m_imguiblend));
+		DirectX::XMStoreFloat3(&translation, XMVectorLerp(anim1, anim2, m_imguiBlend));
 	}
 	return XMMatrixTranspose(XMMatrixScaling(scaling.x, scaling.y, scaling.z) *
 		XMMatrixRotationQuaternion(XMQuaternionNormalize(DirectX::XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w))) *
@@ -136,7 +136,7 @@ DirectX::FXMMATRIX AnimationManager::CalculateNodeTransformation(const DOG::Anim
 			DirectX::XMStoreFloat4(&rotation, GetAnimationComponent(animation.rotKeys.at(nodeID), KeyType::Rotation, tick));
 	}
 	// Translation
-	if (animation.posKeys.find(nodeID) != animation.posKeys.end() && (m_imguirootTranslation || nodeID > 2))
+	if (animation.posKeys.find(nodeID) != animation.posKeys.end() && (m_imguiRootTranslation || nodeID > 2))
 	{
 		const auto& keys = animation.posKeys.at(nodeID);
 		if (keys.size() == 1)
@@ -154,27 +154,27 @@ DirectX::FXMMATRIX AnimationManager::CalculateNodeTransformation(const DOG::Anim
 
 void AnimationManager::UpdateSkeleton(u32 skeletonId, f32 dt)
 {
-	for (size_t m = 0; m < m_imguiprofilePerformUpdate; m++)
+	for (size_t m = 0; m < m_imguiProfilePerformUpdate; m++)
 	{
 		// For (job : jobs) get this data (imgui for now)
 		const auto& rig = m_rigs[skeletonId];
-		const auto& anim = rig.animations[m_imguianimation];
-		if (m_imguiplayAnimation)
+		const auto& anim = rig.animations[m_imguiAnimation];
+		if (m_imguiPlayAnimation)
 		{
-			m_imguianimTime += m_imguitimeScale * dt / anim.duration;
-			if (m_imguianimTime > 1.0f)
+			m_imguiAnimTime += m_imguiTimeScale * dt / anim.duration;
+			if (m_imguiAnimTime > 1.0f)
 			{
 				m_lastSRTkeys.assign(rig.nodes.size(), { 1,1,1 });
-				while (m_imguianimTime > 1.0f)
-					m_imguianimTime -= 1.0f;
+				while (m_imguiAnimTime > 1.0f)
+					m_imguiAnimTime -= 1.0f;
 			}
-			else if (m_imguianimTime < 0.0f)
-				m_imguianimTime = 1.0f + m_imguianimTime;
+			else if (m_imguiAnimTime < 0.0f)
+				m_imguiAnimTime = 1.0f + m_imguiAnimTime;
 
-			m_currentTick = m_imguianimTime * anim.ticks;
+			m_currentTick = m_imguiAnimTime * anim.ticks;
 		}
 		else
-			m_currentTick = m_imguianimTime * anim.ticks;
+			m_currentTick = m_imguiAnimTime * anim.ticks;
 
 		std::vector<DirectX::XMMATRIX> hereditaryTFs;
 		hereditaryTFs.reserve(rig.nodes.size());
@@ -184,17 +184,17 @@ void AnimationManager::UpdateSkeleton(u32 skeletonId, f32 dt)
 		{
 			auto ntf = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
 
-			if (!m_imguibindPose && i > 1)
-				if (m_imguitestAnimationBlend)
+			if (!m_imguiBindPose && i > 1)
+				if (m_imguiTestAnimationBlend)
 					ntf = CalculateBlendTransformation(i);
 				else
 					ntf = CalculateNodeTransformation(anim, i, m_currentTick);
 
 			hereditaryTFs.push_back(ntf);
 #if defined _DEBUG
-			DirectX::XMMATRIX imguiMatrix = DirectX::XMMatrixScaling(m_imguiscale[i].x, m_imguiscale[i].y, m_imguiscale[i].z) *
-				DirectX::XMMatrixRotationRollPitchYaw(m_imguirot[i].x, m_imguirot[i].y, m_imguirot[i].z) *
-				DirectX::XMMatrixTranslation(m_imguipos[i].x, m_imguipos[i].y, m_imguipos[i].z);
+			DirectX::XMMATRIX imguiMatrix = DirectX::XMMatrixScaling(m_imguiScale[i].x, m_imguiScale[i].y, m_imguiScale[i].z) *
+				DirectX::XMMatrixRotationRollPitchYaw(m_imguiRot[i].x, m_imguiRot[i].y, m_imguiRot[i].z) *
+				DirectX::XMMatrixTranslation(m_imguiPos[i].x, m_imguiPos[i].y, m_imguiPos[i].z);
 
 			hereditaryTFs.back() *= imguiMatrix;
 #endif

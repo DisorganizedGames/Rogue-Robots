@@ -14,7 +14,7 @@ struct PerFrameData
     matrix view;
     matrix proj;
     float4 camPos;
-    matrix joints[110];
+    matrix joints[130];
 };
 
 struct SubmeshMetadata

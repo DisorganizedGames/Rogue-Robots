@@ -6,7 +6,6 @@ using namespace DirectX::SimpleMath;
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
 {
-	m_boneJourno = std::make_unique<AnimationManager>();
 	auto& am = DOG::AssetManager::Get();
 	m_redCube = am.LoadModelAsset("Assets/red_cube.glb");
 	m_greenCube = am.LoadModelAsset("Assets/green_cube.glb");
@@ -97,6 +96,12 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	{
 		//auto [x, y] = EVENT(LeftMouseButtonPressedEvent).coordinates;
 		//std::cout << GetName() << " received event: Left MB clicked [x,y] = [" << x << "," << y << "]\n";
+		break;
+	}
+	case EventType::KeyPressedEvent:
+	{
+		if (EVENT(KeyReleasedEvent).key == DOG::Key::C)
+			m_player->m_moveView = !m_player->m_moveView;
 		break;
 	}
 	}
