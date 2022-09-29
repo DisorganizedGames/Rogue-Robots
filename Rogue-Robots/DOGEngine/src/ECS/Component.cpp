@@ -5,15 +5,6 @@ using namespace DirectX::SimpleMath;
 
 namespace DOG
 {
-	static u32 componentID{ 0u };
-
-	const u32 ComponentBase::GetID() noexcept
-	{
-		return componentID++;
-	}
-
-
-
 	// Math functions for the TransformComponent
 
 	TransformComponent::TransformComponent(const Vector3& position, const Vector3& rotation, const Vector3& scale) noexcept

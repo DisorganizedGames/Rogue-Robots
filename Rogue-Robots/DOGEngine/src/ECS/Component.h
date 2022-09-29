@@ -1,27 +1,7 @@
 #pragma once
 namespace DOG
 {
-	struct ComponentBase
-	{
-		ComponentBase() noexcept = default;
-	protected:
-		[[nodiscard]] static const u32 GetID() noexcept;
-	};
-
-	class EntityManager;
-	template<typename T>
-	struct Component : public ComponentBase
-	{
-		friend EntityManager;
-		Component() noexcept = default;
-	private:
-		static const u32 ID;
-	};
-
-	template<typename T>
-	const u32 Component<T>::ID{ ComponentBase::GetID() };
-
-	struct TransformComponent : public Component<TransformComponent>
+	struct TransformComponent
 	{
 		TransformComponent(const DirectX::SimpleMath::Vector3& position = { 0.0f, 0.0f, 0.0f },
 			const DirectX::SimpleMath::Vector3& rotation = { 0.0f, 0.0f, 0.0f },
@@ -42,14 +22,14 @@ namespace DOG
 		DirectX::SimpleMath::Matrix worldMatrix = DirectX::SimpleMath::Matrix::Identity;
 	};
 
-	struct ModelComponent : public Component<ModelComponent>
+	struct ModelComponent
 	{
 		ModelComponent(u32 id = 0) noexcept : id{ id } {}
 		operator const u32 () const { return id; }
 		u32 id;
 	};
 
-	struct CameraComponent : public Component<CameraComponent>
+	struct CameraComponent
 	{
 		using Matrix = DirectX::SimpleMath::Matrix;	
 
@@ -59,12 +39,12 @@ namespace DOG
 		inline static CameraComponent* s_mainCamera = nullptr;
 	};
 
-	struct NetworkPlayerComponent : public Component<NetworkPlayerComponent>
+	struct NetworkPlayerComponent
 	{
 		int playerId;
 	};
 
-	struct NetworkComponent : public Component<NetworkComponent>
+	struct NetworkComponent
 	{
 	};
 }

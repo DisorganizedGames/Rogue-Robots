@@ -1,8 +1,6 @@
 #include "EntityManager.h"
 namespace DOG
 {
-	constexpr const u32 INITIAL_COMPONENT_CAPACITY{ 8u };
-
 	EntityManager EntityManager::s_instance;
 	
 	EntityManager::EntityManager() noexcept
@@ -23,7 +21,7 @@ namespace DOG
 	{
 		ASSERT(Exists(entityID), "Entity is invalid.");
 
-		for (u32 componentPoolIndex{ 0u }; componentPoolIndex < m_components.size(); componentPoolIndex++)
+		for (auto& [componentPoolIndex, componentPool] : m_components)
 		{
 			if (HasComponentInternal(componentPoolIndex, entityID))
 			{
@@ -65,35 +63,27 @@ namespace DOG
 
 		for (u32 entityId{ 0u }; entityId < MAX_ENTITIES; entityId++)
 			m_freeList.push(entityId);
-
-		m_components.reserve(INITIAL_COMPONENT_CAPACITY);
-		m_bundles.reserve(INITIAL_COMPONENT_CAPACITY);
-		for (u32 i{ 0u }; i < INITIAL_COMPONENT_CAPACITY; i++)
-		{
-			m_components.emplace_back(nullptr);
-			m_bundles.emplace_back(nullptr);
-		}
 	}
 
-	[[nodiscard]] bool EntityManager::HasComponentInternal(const u32 componentPoolIndex, const entity entityID) const noexcept
+	[[nodiscard]] bool EntityManager::HasComponentInternal(const static_type_info::TypeIndex componentPoolIndex, const entity entityID) const noexcept
 	{
-		return m_components[componentPoolIndex] != nullptr && entityID < m_components[componentPoolIndex]->sparseArray.size()
-			&& (m_components[componentPoolIndex]->sparseArray[entityID] < m_components[componentPoolIndex]->denseArray.size())
-			&& (m_components[componentPoolIndex]->sparseArray[entityID] != NULL_ENTITY);
+		return m_components.contains(componentPoolIndex) && entityID < m_components.at(componentPoolIndex)->sparseArray.size()
+			&& (m_components.at(componentPoolIndex)->sparseArray[entityID] < m_components.at(componentPoolIndex)->denseArray.size())
+			&& (m_components.at(componentPoolIndex)->sparseArray[entityID] != NULL_ENTITY);
 	}
 
-	void EntityManager::DestroyComponentInternal(const u32 componentPoolIndex, const entity entityID) noexcept
+	void EntityManager::DestroyComponentInternal(const static_type_info::TypeIndex componentPoolIndex, const entity entityID) noexcept
 	{
-		if (m_components[componentPoolIndex]->bundle != -1)
+		if (m_components.at(componentPoolIndex)->bundle != nullptr)
 		{
-			m_bundles[m_components[componentPoolIndex]->bundle]->UpdateOnRemove(entityID);
+			m_bundles[m_components.at(componentPoolIndex)->bundle]->UpdateOnRemove(entityID);
 		}
 
-		const auto last = m_components[componentPoolIndex]->denseArray.back();
-		std::swap(m_components[componentPoolIndex]->denseArray.back(), m_components[componentPoolIndex]->denseArray[m_components[componentPoolIndex]->sparseArray[entityID]]);
-		m_components[componentPoolIndex]->DestroyInternal(entityID);
-		std::swap(m_components[componentPoolIndex]->sparseArray[last], m_components[componentPoolIndex]->sparseArray[entityID]);
-		m_components[componentPoolIndex]->denseArray.pop_back();
-		m_components[componentPoolIndex]->sparseArray[entityID] = NULL_ENTITY;
+		const auto last = m_components.at(componentPoolIndex)->denseArray.back();
+		std::swap(m_components.at(componentPoolIndex)->denseArray.back(), m_components.at(componentPoolIndex)->denseArray[m_components.at(componentPoolIndex)->sparseArray[entityID]]);
+		m_components.at(componentPoolIndex)->DestroyInternal(entityID);
+		std::swap(m_components.at(componentPoolIndex)->sparseArray[last], m_components.at(componentPoolIndex)->sparseArray[entityID]);
+		m_components.at(componentPoolIndex)->denseArray.pop_back();
+		m_components.at(componentPoolIndex)->sparseArray[entityID] = NULL_ENTITY;
 	}
 }
