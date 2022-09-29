@@ -249,22 +249,6 @@ namespace DOG::gfx
 
 		}
 
-		{
-			struct PassData {};
-			rg.AddPass<PassData>("After Pass",
-				[&](PassData&, RenderGraph::PassBuilder& builder)
-				{
-					builder.ReadResource(RG_RESOURCE(Backbuffer1), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-
-					//builder.WriteAliasedRenderTarget(RG_RESOURCE(Backbuffer2), RG_RESOURCE(Backbuffer1), RenderPassAccessType::Preserve_Preserve,
-					//	TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-				},
-				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
-				{
-					//m_imgui->Render(rd, cmdl);
-				});
-		}
 
 		// Draw ImGUI on backbuffer
 		{
@@ -283,6 +267,45 @@ namespace DOG::gfx
 					m_imgui->Render(rd, cmdl);
 				});
 		}
+
+		{
+			struct PassData {};
+			rg.AddPass<PassData>("After Pass",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer1), RenderPassAccessType::Preserve_Preserve,
+						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+
+					//builder.WriteAliasedRenderTarget(RG_RESOURCE(Backbuffer2), RG_RESOURCE(Backbuffer1), RenderPassAccessType::Preserve_Preserve,
+					//	TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+				},
+				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
+				{
+					//m_imgui->Render(rd, cmdl);
+				});
+		}
+
+
+		{
+			struct PassData {};
+			rg.AddPass<PassData>("Read Pass",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					builder.ReadResource(RG_RESOURCE(Backbuffer1), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+
+					//builder.WriteAliasedRenderTarget(RG_RESOURCE(Backbuffer2), RG_RESOURCE(Backbuffer1), RenderPassAccessType::Preserve_Preserve,
+					//	TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+				},
+				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
+				{
+					//m_imgui->Render(rd, cmdl);
+				});
+		}
+
+
+
+
 
 		
 		m_end = std::chrono::high_resolution_clock::now();

@@ -21,6 +21,7 @@ namespace DOG::gfx
 
 	void RenderGraph::Build()
 	{
+		AddProxies();
 		BuildAdjacencyMap();
 
 		// To help the graph author see what's going on.
@@ -100,6 +101,23 @@ namespace DOG::gfx
 		}
 
 
+	}
+
+	void RenderGraph::AddProxies()
+	{
+		u32 proxyID{ 0 };
+		for (const auto& trackedProxies : m_passBuilderGlobalData.proxies)
+		{
+			auto id = RGResourceID("Proxy" + std::to_string(proxyID));
+			for (auto& pass : m_passes)
+			{
+				if (pass->id == trackedProxies.first)
+					pass->proxyOutput.push_back(id);
+				else if (pass->id == trackedProxies.second)
+					pass->proxyInput.push_back(id);
+			}
+			++proxyID;
+		}
 	}
 
 	void RenderGraph::BuildAdjacencyMap()
@@ -426,7 +444,7 @@ namespace DOG::gfx
 		*/
 			
 		std::ofstream file;
-		file.open("rendergraph.txt");
+		file.open("Assets\\rendergraph.txt");
 		file << "digraph G {" << std::endl;
 
 		for (const auto& [pass, adjacents] : m_adjacencyMap)
@@ -471,11 +489,12 @@ namespace DOG::gfx
 		if (m_globalData.writes.contains(id))
 		{
 			const auto& writeCount = m_globalData.writeCount[id];
+			auto& readsUntilWrite = m_globalData.latestRead[id];
+			readsUntilWrite.push_back(m_pass.id);
 
-			// Get latest write name
+			// Get latest write name (connect properly to latest alias)
 			auto prevName = id.name + "(" + std::to_string(writeCount) + ")";
 			prevName = writeCount == 1 ? id.name : prevName;
-
 			id = RGResourceID(prevName);
 		}
 
@@ -516,6 +535,15 @@ namespace DOG::gfx
 		if (m_globalData.writes.contains(id))
 		{
 			auto& writeCount = m_globalData.writeCount[id];
+			auto& prevReads = m_globalData.latestRead[id];
+			if (!prevReads.empty())
+			{
+				auto latestRead = prevReads.back();
+				
+				// Latest write now connected to latest read
+				m_globalData.proxies.push_back({ prevReads.back(), m_pass.id });
+				prevReads.clear();
+			}
 
 			// If single write --> Use original name --> without (n) 
 			auto prevName = id.name + "(" + std::to_string(writeCount) + ")";

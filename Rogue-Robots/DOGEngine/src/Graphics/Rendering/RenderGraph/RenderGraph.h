@@ -68,6 +68,7 @@ namespace DOG::gfx
 			
 			// Filled by implementation
 			std::string name;
+			u32 id{ 0 };
 			std::function<void(RenderDevice*, CommandList, PassResources&)> execFunc;
 			u32 depth{ 0 };
 			PassResources passResources;
@@ -107,6 +108,15 @@ namespace DOG::gfx
 
 			// ID holder for auto-aliasing (Backbuffer --> Backbuffer(0) --> Backbuffer(1), etc.)
 			std::unordered_map<RGResourceID, u32> writeCount;	
+
+			// Keeps track of the pass IDs which read from this resource up until another read-write
+			// E.g --> [Read, Read, Alias, Read, Read, Read, Alias]
+			// Vector sized 2 until first Alias where it gets reset to 0
+			// Vector sized 3 until second Alias where it gets reset to 0
+			std::unordered_map<RGResourceID, std::vector<u32>> latestRead;
+
+			// When alias is reset, a proxy is created as it marks the last read-to-write
+			std::vector<std::pair<u32, u32>> proxies;
 		};
 
 	public:
@@ -145,12 +155,14 @@ namespace DOG::gfx
 			const std::function<void(const PassData&, RenderDevice*, CommandList, PassResources&)>& execFunc)
 		{
 			PassBuilder builder(m_passBuilderGlobalData, m_resMan);
+			builder.m_pass.id = m_nextPassID++;
+			builder.m_pass.name = name;
+
 			PassData passData{};
 			buildFunc(passData, builder);
 
 			// Construct pass data
 			auto pass = std::make_unique<Pass>(std::move(builder.m_pass));
-			pass->name = name;
 			pass->execFunc = [execFunc, passData](RenderDevice* rd, CommandList cmdl, PassResources& resources)
 			{
 				execFunc(passData, rd, cmdl, resources);
@@ -163,6 +175,7 @@ namespace DOG::gfx
 		void Execute();
 
 	private:
+		void AddProxies();
 		void BuildAdjacencyMap();
 		void SortPassesTopologically();
 		void AssignDependencyLevels();
@@ -181,6 +194,7 @@ namespace DOG::gfx
 		GPUGarbageBin* m_bin{ nullptr };
 		PassBuilderGlobalData m_passBuilderGlobalData;
 
+		u32 m_nextPassID{ 0 };
 		std::vector<std::unique_ptr<Pass>> m_passes;
 		std::unordered_map<Pass*, std::vector<Pass*>> m_adjacencyMap;
 		std::vector<Pass*> m_sortedPasses;
