@@ -258,13 +258,56 @@ namespace DOG::gfx
 				{
 					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer1), RenderPassAccessType::Preserve_Preserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-
-					//builder.WriteAliasedRenderTarget(RG_RESOURCE(Backbuffer2), RG_RESOURCE(Backbuffer1), RenderPassAccessType::Preserve_Preserve,
-					//	TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 				},
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
 				{
 					m_imgui->Render(rd, cmdl);
+				});
+		}
+
+
+		{
+			struct PassData {};
+			rg.AddPass<PassData>("Awiie Pass",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					builder.ReadResource(RG_RESOURCE(Backbuffer1), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+				},
+				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
+				{
+
+				});
+		}
+
+
+
+		{
+			struct PassData {};
+			rg.AddPass<PassData>("Awiie Pass 2",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					builder.ReadResource(RG_RESOURCE(Backbuffer1), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+				},
+				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
+				{
+
+				});
+		}
+
+
+		{
+			struct PassData {};
+			rg.AddPass<PassData>("Awiie Pass 3",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					builder.ReadResource(RG_RESOURCE(Backbuffer1), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+				},
+				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
+				{
+
 				});
 		}
 
@@ -275,15 +318,14 @@ namespace DOG::gfx
 				{
 					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer1), RenderPassAccessType::Preserve_Preserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-
-					//builder.WriteAliasedRenderTarget(RG_RESOURCE(Backbuffer2), RG_RESOURCE(Backbuffer1), RenderPassAccessType::Preserve_Preserve,
-					//	TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 				},
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
 				{
-					//m_imgui->Render(rd, cmdl);
+
 				});
 		}
+
+
 
 
 		{
@@ -293,13 +335,9 @@ namespace DOG::gfx
 				{
 					builder.ReadResource(RG_RESOURCE(Backbuffer1), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-
-					//builder.WriteAliasedRenderTarget(RG_RESOURCE(Backbuffer2), RG_RESOURCE(Backbuffer1), RenderPassAccessType::Preserve_Preserve,
-					//	TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 				},
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
 				{
-					//m_imgui->Render(rd, cmdl);
 				});
 		}
 

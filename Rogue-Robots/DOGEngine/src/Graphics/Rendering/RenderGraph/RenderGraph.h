@@ -133,12 +133,21 @@ namespace DOG::gfx
 			void ReadOrWriteDepth(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
 			void WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
 
-			void ProxyWrite(RGResourceID id);
-			void ProxyRead(RGResourceID id);
-
 		private:
+			// Auto-proxy and auto-alias helpers
+			std::pair<RGResourceID, RGResourceID> ResolveAliasingIDs(RGResourceID input);
+			void PushPassReader(RGResourceID id);
+			RGResourceID GetPrevious(RGResourceID id);
+			RGResourceID GetNextID(RGResourceID id);
+			void FlushReadsAndConnectProxy(RGResourceID id);
+
 			// Aliasing now handled internally
 			void WriteAliasedRenderTarget(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc);
+			void WriteAliasedDepth(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc);
+
+			// Proxy now handled internally
+			void ProxyWrite(RGResourceID id);
+			void ProxyRead(RGResourceID id);
 
 			friend class RenderGraph;
 			PassBuilderGlobalData& m_globalData;

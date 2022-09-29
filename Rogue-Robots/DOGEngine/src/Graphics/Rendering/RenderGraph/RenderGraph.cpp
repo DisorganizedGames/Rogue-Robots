@@ -488,14 +488,8 @@ namespace DOG::gfx
 		// Automatically deduces the correct read if ID is an aliased resource
 		if (m_globalData.writes.contains(id))
 		{
-			const auto& writeCount = m_globalData.writeCount[id];
-			auto& readsUntilWrite = m_globalData.latestRead[id];
-			readsUntilWrite.push_back(m_pass.id);
-
-			// Get latest write name (connect properly to latest alias)
-			auto prevName = id.name + "(" + std::to_string(writeCount) + ")";
-			prevName = writeCount == 1 ? id.name : prevName;
-			id = RGResourceID(prevName);
+			PushPassReader(id);
+			id = GetPrevious(id);
 		}
 
 		PassIO input;
@@ -516,16 +510,25 @@ namespace DOG::gfx
 		// DSV write
 		else
 		{
-			PassIO output{};
-			output.id = id;
-			output.type = RGResourceType::Texture;
-			output.viewDesc = desc;
-			output.desiredState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-			output.rpAccessType = access;
-			output.rpStencilAccessType = RenderPassAccessType::Discard_Discard;
-			m_pass.outputs.push_back(output);
+			// No aliasing support for depth for now!
+			if (m_globalData.writes.contains(id))
+			{
+				assert(false);
+			}
+			else
+			{
+				PassIO output{};
+				output.id = id;
+				output.type = RGResourceType::Texture;
+				output.viewDesc = desc;
+				output.desiredState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+				output.rpAccessType = access;
+				output.rpStencilAccessType = RenderPassAccessType::Discard_Discard;
+				m_pass.outputs.push_back(output);
 
-			m_globalData.writeCount[id] = 1;
+				m_globalData.writeCount[id] = 1;
+				m_globalData.writes.insert(id);
+			}
 		}
 	}
 
@@ -534,26 +537,13 @@ namespace DOG::gfx
 		// Automatically aliases if same resource already exists
 		if (m_globalData.writes.contains(id))
 		{
-			auto& writeCount = m_globalData.writeCount[id];
-			auto& prevReads = m_globalData.latestRead[id];
-			if (!prevReads.empty())
-			{
-				auto latestRead = prevReads.back();
-				
-				// Latest write now connected to latest read
-				m_globalData.proxies.push_back({ prevReads.back(), m_pass.id });
-				prevReads.clear();
-			}
+			// Explicitly connects previous reads on ID to newID
+			// The previous reads that are connect are the previous reads SINCE a write.
+			const auto ids = ResolveAliasingIDs(id);
 
-			// If single write --> Use original name --> without (n) 
-			auto prevName = id.name + "(" + std::to_string(writeCount) + ")";
-			prevName = writeCount == 1 ? id.name : prevName;
-			RGResourceID prevID(prevName);
-
-			writeCount += 1;
-			auto nextName = id.name + "(" + std::to_string(writeCount) + ")";
-			RGResourceID newID(nextName);
-
+			// Explicitly connects prevID to newID
+			const auto& prevID = ids.first;
+			const auto& newID = ids.second;
 			WriteAliasedRenderTarget(newID, prevID, access, desc);
 		}
 		else
@@ -570,22 +560,69 @@ namespace DOG::gfx
 			m_pass.outputs.push_back(output);
 		}
 		m_globalData.writes.insert(id);
-
-		//// Explicitly forbids writing to the same graph resource more than once
-		//assert(!m_globalData.writes.contains(id));
-		//m_globalData.writes.insert(id);
-		//
-		//assert(desc.viewType == ViewType::RenderTarget);
-		//
-		//PassIO output;
-		//output.id = id;
-		//output.type = RGResourceType::Texture;
-		//output.viewDesc = desc;
-		//output.desiredState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		//output.rpAccessType = access;
-		//m_pass.outputs.push_back(output);
 	}
-	
+
+
+	std::pair<RGResourceID, RGResourceID> RenderGraph::PassBuilder::ResolveAliasingIDs(RGResourceID input)
+	{
+		/*
+			Resolves previous and after aliasing IDs
+			and adds appropriate proxies
+		*/
+
+		FlushReadsAndConnectProxy(input);
+
+		const auto prevID = GetPrevious(input);
+		const auto newID = GetNextID(input);
+
+		return { prevID, newID };
+	}
+
+	void RenderGraph::PassBuilder::PushPassReader(RGResourceID id)
+	{
+		// Push reads
+		auto& readsUntilWrite = m_globalData.latestRead[id];
+		readsUntilWrite.push_back(m_pass.id);
+	}
+
+	RGResourceID RenderGraph::PassBuilder::GetPrevious(RGResourceID id)
+	{
+		auto& writeCount = m_globalData.writeCount[id];
+
+		// If single write --> Use original name --> without (n) 
+		auto prevName = id.name + "(" + std::to_string(writeCount) + ")";
+		prevName = writeCount == 1 ? id.name : prevName;
+		return RGResourceID(prevName);
+	}
+
+	RGResourceID RenderGraph::PassBuilder::GetNextID(RGResourceID id)
+	{
+		// Get next ID
+		auto& writeCount = m_globalData.writeCount[id];
+		writeCount += 1;
+		auto nextName = id.name + "(" + std::to_string(writeCount) + ")";
+		return RGResourceID(nextName);
+	}
+
+
+	void RenderGraph::PassBuilder::FlushReadsAndConnectProxy(RGResourceID id)
+	{
+		auto& prevReads = m_globalData.latestRead[id];
+		if (!prevReads.empty())
+		{
+			auto latestRead = prevReads.back();
+
+			// Latest write now connected to latest reads
+			for (const auto& read : prevReads)
+				m_globalData.proxies.push_back({ read, m_pass.id });
+			prevReads.clear();
+		}
+	}
+
+
+
+
+
 	void RenderGraph::PassBuilder::WriteAliasedRenderTarget(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc)
 	{
 		assert(desc.viewType == ViewType::RenderTarget);
@@ -610,8 +647,6 @@ namespace DOG::gfx
 		output.rpAccessType = access;
 		m_pass.outputs.push_back(output);
 	}
-
-
 
 	void RenderGraph::PassBuilder::ProxyWrite(RGResourceID id)
 	{
