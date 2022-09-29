@@ -83,6 +83,8 @@ namespace DOG
 
 		gfx::GraphicsBuilder& GetGraphicsBuilder();
 
+		void ImguiLoadModel(bool& open);
+
 	private:
 		static std::unique_ptr<AssetManager> s_instance;
 		static constexpr u64 MAX_AUDIO_SIZE_ASYNC = 65536;

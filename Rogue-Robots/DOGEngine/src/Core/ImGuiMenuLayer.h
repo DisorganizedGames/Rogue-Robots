@@ -18,7 +18,16 @@ namespace DOG
 		virtual void OnImGuiRender() override final;
 		virtual void OnEvent(IEvent& event) override final;
 
+		static void RegisterDebugWindow(const std::string& name, std::function<void(bool&)> func);
+		static void UnRegisterDebugWindow(const std::string& name);
+
 	private:
+		static void ModelSpawner(bool& open);
+		static void DemoWindow(bool& open);
+
+	private:
+		static std::map<std::string, std::pair<std::function<void(bool&)>, bool>> s_debugWindows;
+
 		bool m_showEmptyWindow = false;
 		bool m_showDemoWindow = false;
 		bool m_showModelSpawnerWindow = false;

@@ -1,6 +1,8 @@
 #include "AssetManager.h"
 #include "../Graphics/Rendering/Renderer.h"
 #include "../Core/TextureFileImporter.h"
+#include "ImGuiMenuLayer.h"
+#include "ImGUI/imgui.h"
 
 #pragma warning(push, 0)
 
@@ -40,7 +42,7 @@ namespace DOG
 
 	AssetManager::AssetManager()
 	{
-
+		ImGuiMenuLayer::RegisterDebugWindow("LoadModel", [](bool& open) {AssetManager::Get().ImguiLoadModel(open); });
 	}
 
 	void AssetManager::LoadModelAssetInternal(const std::string& path, u32 id, ModelAsset* assetOut)
@@ -149,6 +151,7 @@ namespace DOG
 
 	AssetManager::~AssetManager()
 	{
+		ImGuiMenuLayer::UnRegisterDebugWindow("LoadModel");
 		for (auto& [id, asset] : m_assets)
 		{
 			assert(asset);
@@ -530,5 +533,48 @@ namespace DOG
 		assert(m_renderer);
 		assert(m_renderer->GetBuilder());
 		return *m_renderer->GetBuilder();
+	}
+
+	void AssetManager::ImguiLoadModel(bool& open)
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::BeginMenu("Import"))
+			{
+				if (ImGui::BeginMenu("Model"))
+				{
+					if (ImGui::MenuItem("Sponza"))
+					{
+						constexpr std::string_view path = "Assets/Sponza_gltf/glTF/Sponza.gltf";
+						if (std::filesystem::exists(path))
+						{
+							u32 id = DOG::AssetManager::Get().LoadModelAsset(path.data());
+							std::cout << "model ID: " << id << ", path: " << path << std::endl;
+						}
+					}
+					if (ImGui::MenuItem("Suzanne"))
+					{
+						constexpr std::string_view path = "Assets/suzanne.glb";
+						if (std::filesystem::exists(path))
+						{
+							u32 id = DOG::AssetManager::Get().LoadModelAsset(path.data());
+							std::cout << "model ID: " << id << ", path: " << path << std::endl;
+						}
+					}
+					ImGui::EndMenu(); // "Model"
+				}
+
+				if (ImGui::BeginMenu("Texture"))
+				{
+					if (ImGui::MenuItem("Default"))
+					{
+
+					}
+					ImGui::EndMenu(); // "Texture"
+				}
+				ImGui::EndMenu(); // "Import"
+			}
+			ImGui::EndMenu(); // "File"
+		}
 	}
 }
