@@ -20,31 +20,31 @@ namespace DOG::gfx
 	// Combined Begin/End
 	enum class RenderPassAccessType
 	{
-		Discard_Discard,
-		Discard_Preserve,
+		DiscardDiscard,
+		DiscardPreserve,
 
-		Preserve_Discard,
-		Preserve_Preserve,
+		PreserveDiscard,
+		PreservePreserve,
 
-		Clear_Discard,
-		Clear_Preserve
+		ClearDiscard,
+		ClearPreserve
 	};
 
 	static std::pair<RenderPassBeginAccessType, RenderPassEndingAccessType> GetAccessTypes(RenderPassAccessType access)
 	{
 		switch (access)
 		{
-		case RenderPassAccessType::Discard_Discard:
+		case RenderPassAccessType::DiscardDiscard:
 			return { RenderPassBeginAccessType::Discard, RenderPassEndingAccessType::Discard };
-		case RenderPassAccessType::Discard_Preserve:
+		case RenderPassAccessType::DiscardPreserve:
 			return { RenderPassBeginAccessType::Discard, RenderPassEndingAccessType::Preserve };
-		case RenderPassAccessType::Preserve_Discard:
+		case RenderPassAccessType::PreserveDiscard:
 			return { RenderPassBeginAccessType::Preserve, RenderPassEndingAccessType::Discard };
-		case RenderPassAccessType::Preserve_Preserve:
+		case RenderPassAccessType::PreservePreserve:
 			return { RenderPassBeginAccessType::Preserve, RenderPassEndingAccessType::Preserve };
-		case RenderPassAccessType::Clear_Discard:
+		case RenderPassAccessType::ClearDiscard:
 			return { RenderPassBeginAccessType::Clear, RenderPassEndingAccessType::Discard };
-		case RenderPassAccessType::Clear_Preserve:
+		case RenderPassAccessType::ClearPreserve:
 			return { RenderPassBeginAccessType::Clear, RenderPassEndingAccessType::Preserve };
 
 		default:

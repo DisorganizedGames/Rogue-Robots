@@ -1,3 +1,0 @@
-digraph G {
-"Forward Pass" -> "ImGUI Pass"
-}

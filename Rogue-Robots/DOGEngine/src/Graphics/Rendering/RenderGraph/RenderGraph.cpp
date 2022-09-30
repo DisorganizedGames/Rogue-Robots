@@ -21,6 +21,7 @@ namespace DOG::gfx
 
 	void RenderGraph::Build()
 	{
+		AddProxies();
 		BuildAdjacencyMap();
 
 		// To help the graph author see what's going on.
@@ -100,6 +101,23 @@ namespace DOG::gfx
 		}
 
 
+	}
+
+	void RenderGraph::AddProxies()
+	{
+		u32 proxyID{ 0 };
+		for (const auto& trackedProxies : m_passBuilderGlobalData.proxies)
+		{
+			auto id = RGResourceID("Proxy" + std::to_string(proxyID));
+			for (auto& pass : m_passes)
+			{
+				if (pass->id == trackedProxies.first)
+					pass->proxyOutput.push_back(id);
+				else if (pass->id == trackedProxies.second)
+					pass->proxyInput.push_back(id);
+			}
+			++proxyID;
+		}
 	}
 
 	void RenderGraph::BuildAdjacencyMap()
@@ -426,7 +444,7 @@ namespace DOG::gfx
 		*/
 			
 		std::ofstream file;
-		file.open("rendergraph.txt");
+		file.open("Assets\\rendergraph.txt");
 		file << "digraph G {" << std::endl;
 
 		for (const auto& [pass, adjacents] : m_adjacencyMap)
@@ -465,7 +483,14 @@ namespace DOG::gfx
 	void RenderGraph::PassBuilder::ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc)
 	{
 		assert(IsReadState(state));
-		assert(desc.viewType != ViewType::RenderTarget || desc.viewType != ViewType::UnorderedAccess);
+		assert(desc.viewType != ViewType::RenderTarget && desc.viewType != ViewType::UnorderedAccess);
+
+		// Automatically deduces the correct read if ID is an aliased resource
+		if (m_globalData.writes.contains(id))
+		{
+			PushPassReader(id);
+			id = GetPrevious(id);
+		}
 
 		PassIO input;
 		input.id = id;
@@ -485,33 +510,116 @@ namespace DOG::gfx
 		// DSV write
 		else
 		{
-			PassIO output{};
-			output.id = id;
-			output.type = RGResourceType::Texture;
-			output.viewDesc = desc;
-			output.desiredState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-			output.rpAccessType = access;
-			output.rpStencilAccessType = RenderPassAccessType::Discard_Discard;
-			m_pass.outputs.push_back(output);
+			// No aliasing support for depth for now!
+			if (m_globalData.writes.contains(id))
+			{
+				assert(false);
+			}
+			else
+			{
+				PassIO output{};
+				output.id = id;
+				output.type = RGResourceType::Texture;
+				output.viewDesc = desc;
+				output.desiredState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+				output.rpAccessType = access;
+				output.rpStencilAccessType = RenderPassAccessType::DiscardDiscard;
+				m_pass.outputs.push_back(output);
+
+				m_globalData.writeCount[id] = 1;
+				m_globalData.writes.insert(id);
+			}
 		}
 	}
 
 	void RenderGraph::PassBuilder::WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc)
 	{
-		// Explicitly forbids writing to the same graph resource more than once
-		assert(!m_globalData.writes.contains(id));
+		// Automatically aliases if same resource already exists
+		if (m_globalData.writes.contains(id))
+		{
+			// Explicitly connects previous reads on ID to newID
+			// The previous reads that are connect are the previous reads SINCE a write.
+			const auto ids = ResolveAliasingIDs(id);
+
+			// Explicitly connects prevID to newID
+			const auto& prevID = ids.first;
+			const auto& newID = ids.second;
+			WriteAliasedRenderTarget(newID, prevID, access, desc);
+		}
+		else
+		{
+			assert(desc.viewType == ViewType::RenderTarget);
+			m_globalData.writeCount[id] = 1;
+
+			PassIO output;
+			output.id = id;
+			output.type = RGResourceType::Texture;
+			output.viewDesc = desc;
+			output.desiredState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+			output.rpAccessType = access;
+			m_pass.outputs.push_back(output);
+		}
 		m_globalData.writes.insert(id);
-		
-		assert(desc.viewType == ViewType::RenderTarget);
-		
-		PassIO output;
-		output.id = id;
-		output.type = RGResourceType::Texture;
-		output.viewDesc = desc;
-		output.desiredState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		output.rpAccessType = access;
-		m_pass.outputs.push_back(output);
 	}
+
+
+	std::pair<RGResourceID, RGResourceID> RenderGraph::PassBuilder::ResolveAliasingIDs(RGResourceID input)
+	{
+		/*
+			Resolves previous and after aliasing IDs
+			and adds appropriate proxies
+		*/
+
+		FlushReadsAndConnectProxy(input);
+
+		const auto prevID = GetPrevious(input);
+		const auto newID = GetNextID(input);
+
+		return { prevID, newID };
+	}
+
+	void RenderGraph::PassBuilder::PushPassReader(RGResourceID id)
+	{
+		// Push reads
+		auto& readsUntilWrite = m_globalData.latestRead[id];
+		readsUntilWrite.push_back(m_pass.id);
+	}
+
+	RGResourceID RenderGraph::PassBuilder::GetPrevious(RGResourceID id)
+	{
+		auto& writeCount = m_globalData.writeCount[id];
+
+		// If single write --> Use original name --> without (n) 
+		auto prevName = id.name + "(" + std::to_string(writeCount) + ")";
+		prevName = writeCount == 1 ? id.name : prevName;
+		return RGResourceID(prevName);
+	}
+
+	RGResourceID RenderGraph::PassBuilder::GetNextID(RGResourceID id)
+	{
+		// Get next ID
+		auto& writeCount = m_globalData.writeCount[id];
+		writeCount += 1;
+		auto nextName = id.name + "(" + std::to_string(writeCount) + ")";
+		return RGResourceID(nextName);
+	}
+
+
+	void RenderGraph::PassBuilder::FlushReadsAndConnectProxy(RGResourceID id)
+	{
+		auto& prevReads = m_globalData.latestRead[id];
+		if (!prevReads.empty())
+		{
+			// Latest write now connected to latest reads
+			for (const auto& read : prevReads)
+				m_globalData.proxies.push_back({ read, m_pass.id });
+			prevReads.clear();
+		}
+	}
+
+
+
+
 
 	void RenderGraph::PassBuilder::WriteAliasedRenderTarget(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc)
 	{
