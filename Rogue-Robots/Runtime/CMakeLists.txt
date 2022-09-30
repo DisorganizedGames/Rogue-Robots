@@ -8,7 +8,6 @@ set(SourceFiles
 		"src/Game/MainPlayer.h" "src/Game/MainPlayer.cpp"
 		"src/Pathfinder/Pathfinder.h" "src/Pathfinder/Pathfinder.cpp"
 		"src/Game/LuaInterfaces.h" "src/Game/LuaInterfaces.cpp"
-		"src/Core/ImGuiMenuLayer.h" "src/Core/ImGuiMenuLayer.cpp"
 		)
 		
 set(ExecutableName "Runtime")

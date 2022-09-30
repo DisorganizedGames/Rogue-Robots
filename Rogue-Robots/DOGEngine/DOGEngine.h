@@ -4,6 +4,7 @@
 #include "src/Core/Time.h"
 #include "src/Core/AssetManager.h"
 #include "src/Core/AnimationManager.h"
+#include "src/Core/ImGuiMenuLayer.h"
 
 #include "src/Input/Keyboard.h"
 #include "src/Input/Mouse.h"

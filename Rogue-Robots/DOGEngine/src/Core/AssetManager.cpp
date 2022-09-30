@@ -1,6 +1,8 @@
 #include "AssetManager.h"
 #include "../Graphics/Rendering/Renderer.h"
 #include "../Core/TextureFileImporter.h"
+#include "ImGuiMenuLayer.h"
+#include "ImGUI/imgui.h"
 
 #pragma warning(push, 0)
 
@@ -40,7 +42,8 @@ namespace DOG
 
 	AssetManager::AssetManager()
 	{
-
+		ImGuiMenuLayer::RegisterDebugWindow("LoadModel", [](bool& open) { AssetManager::Get().ImguiLoadModel(open); });
+		ImGuiMenuLayer::RegisterDebugWindow("AssetManager", [](bool& open) { AssetManager::Get().AssetManagerGUI(open); });
 	}
 
 	void AssetManager::LoadModelAssetInternal(const std::string& path, u32 id, ModelAsset* assetOut)
@@ -149,6 +152,8 @@ namespace DOG
 
 	AssetManager::~AssetManager()
 	{
+		ImGuiMenuLayer::UnRegisterDebugWindow("LoadModel");
+		ImGuiMenuLayer::UnRegisterDebugWindow("AssetManager");
 		for (auto& [id, asset] : m_assets)
 		{
 			assert(asset);
@@ -530,5 +535,113 @@ namespace DOG
 		assert(m_renderer);
 		assert(m_renderer->GetBuilder());
 		return *m_renderer->GetBuilder();
+	}
+
+	void AssetManager::ImguiLoadModel(bool&)
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::BeginMenu("Import"))
+			{
+				if (ImGui::BeginMenu("Model"))
+				{
+					if (ImGui::MenuItem("Sponza"))
+					{
+						constexpr std::string_view path = "Assets/Sponza_gltf/glTF/Sponza.gltf";
+						if (std::filesystem::exists(path))
+						{
+							u32 id = DOG::AssetManager::Get().LoadModelAsset(path.data());
+							std::cout << "model ID: " << id << ", path: " << path << std::endl;
+						}
+					}
+					if (ImGui::MenuItem("Suzanne"))
+					{
+						constexpr std::string_view path = "Assets/suzanne.glb";
+						if (std::filesystem::exists(path))
+						{
+							u32 id = DOG::AssetManager::Get().LoadModelAsset(path.data());
+							std::cout << "model ID: " << id << ", path: " << path << std::endl;
+						}
+					}
+					ImGui::EndMenu(); // "Model"
+				}
+
+				if (ImGui::BeginMenu("Texture"))
+				{
+					if (ImGui::MenuItem("Default"))
+					{
+
+					}
+					ImGui::EndMenu(); // "Texture"
+				}
+				ImGui::EndMenu(); // "Import"
+			}
+			ImGui::EndMenu(); // "File"
+		}
+	}
+
+	void AssetManager::AssetManagerGUI(bool& open)
+	{
+		if (ImGui::BeginMenu("View"))
+		{
+			if (ImGui::MenuItem("AssetManager"))
+			{
+				open = true;
+			}
+			ImGui::EndMenu(); // "View"
+		}
+
+		if (open)
+		{
+			if (ImGui::Begin("Asset manager", &open))
+			{
+				static int selectedModelPath = 0;
+				std::array<const char*, 2> modelPaths = { "Assets/Sponza_gltf/glTF/Sponza.gltf", "Assets/suzanne.glb" };
+				ImGui::Combo("Model path", &selectedModelPath, modelPaths.data(), static_cast<int>(modelPaths.size()));
+
+
+				static int id = 0;
+				if (ImGui::InputInt("Model ID", &id))
+				{
+					std::cout << id << std::endl;
+				}
+				ImGui::Separator();
+
+				ImGui::Text("LoadFlag");
+				static bool loadAsync = false;
+				static bool loadCPU = false;
+				static bool loadGPU = false;
+				ImGui::Checkbox("load async", &loadAsync); ImGui::SameLine();
+				ImGui::Checkbox("load RAM", &loadCPU); ImGui::SameLine();
+				ImGui::Checkbox("load VRAM", &loadGPU); ImGui::Separator();
+				AssetLoadFlag loadFlag = AssetLoadFlag::None;
+				if (loadAsync) loadFlag |= AssetLoadFlag::Async;
+				if (loadCPU) loadFlag |= AssetLoadFlag::CPUMemory;
+				if (loadGPU) loadFlag |= AssetLoadFlag::GPUMemory;
+
+
+				ImGui::Text("UnLoadFlag");
+				static bool unloadCPU = false;
+				static bool unloadGPU = false;
+				ImGui::Checkbox("unload RAM", &unloadCPU); ImGui::SameLine();
+				ImGui::Checkbox("unload VRAM", &unloadGPU); ImGui::Separator();
+				AssetUnLoadFlag unloadFlag = AssetUnLoadFlag::None;
+				if (unloadCPU) unloadFlag |= AssetUnLoadFlag::AllCPU;
+				if (unloadGPU) unloadFlag |= AssetUnLoadFlag::AllGPU;
+
+
+				if (ImGui::Button("LoadModel"))
+				{
+					if(loadFlag & AssetLoadFlag::GPUMemory || loadFlag & AssetLoadFlag::CPUMemory)
+						id = AssetManager::Get().LoadModelAsset(modelPaths[selectedModelPath], loadFlag);
+				}
+
+				if (ImGui::Button("Unload"))
+				{
+					AssetManager::Get().UnLoadAsset(id, unloadFlag);
+				}
+			}
+			ImGui::End(); // "Asset manager"
+		}
 	}
 }
