@@ -23,8 +23,7 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Graphics/Rendering/RenderGraph/RGResourceManager.h" "src/Graphics/Rendering/RenderGraph/RGResourceManager.cpp"
     "src/Core/AnimationManager.h" "src/Core/AnimationManager.cpp" "src/Core/ImGuiMenuLayer.h" "src/Core/ImGuiMenuLayer.cpp"
     "src/Core/AnimationManager.h" "src/Core/AnimationManager.cpp"
-    "src/Physics/BulletPhysics.h" "src/Physics/BulletPhysics.cpp"
-    )
+    "src/Physics/BulletPhysics.h" "src/Physics/BulletPhysics.cpp"  )
 
 	file(GLOB_RECURSE TempGraphics
     "src/Graphics/*.cpp")

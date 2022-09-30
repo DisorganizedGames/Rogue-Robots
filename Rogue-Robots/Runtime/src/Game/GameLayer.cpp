@@ -38,6 +38,9 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<TransformComponent>(entity5, Vector3(0, -2, 5), Vector3(0, 0, 0), Vector3(0.02f, 0.02f, 0.02f));
 	m_entityManager.AddComponent<AnimationComponent>(entity5).animationID = 0;
 
+	m_entityManager.AddComponent<BoxColliderComponent>(entity4, entity4, Vector3(1, 1, 1), true);
+	m_entityManager.AddComponent<BoxColliderComponent>(entity2, entity2, Vector3(1, 1, 1), false);
+
 	LuaMain::Initialize();
 	//LuaMain::GetScriptManager()->OrderScript("LuaTest.lua", 1);
 	//LuaMain::GetScriptManager()->OrderScript("ScriptTest.lua", -1);

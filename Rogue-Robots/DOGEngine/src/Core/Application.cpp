@@ -44,8 +44,8 @@ namespace DOG
 	using namespace DOG::gfx;
 	void Application::Run() noexcept
 	{
-		BulletPhysics g;
-		g.BulletTest();
+		//BulletPhysics::Initialize();
+		//BulletPhysics::BulletTest();
 
 		while (m_isRunning)
 		{
@@ -56,7 +56,7 @@ namespace DOG
 			if (!m_isRunning)
 				break;
 
-
+			BulletPhysics::UpdatePhysics((f32)Time::DeltaTime());
 
 			// All ImGUI calls must happen after this call
 			m_renderer->BeginGUI();
@@ -150,6 +150,7 @@ namespace DOG
 
 		AssetManager::Initialize(m_renderer.get());
 		AudioManager::Initialize();
+		BulletPhysics::Initialize();
 	}
 
 	void Application::OnShutDown() noexcept
