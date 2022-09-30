@@ -610,8 +610,6 @@ namespace DOG::gfx
 		auto& prevReads = m_globalData.latestRead[id];
 		if (!prevReads.empty())
 		{
-			auto latestRead = prevReads.back();
-
 			// Latest write now connected to latest reads
 			for (const auto& read : prevReads)
 				m_globalData.proxies.push_back({ read, m_pass.id });
