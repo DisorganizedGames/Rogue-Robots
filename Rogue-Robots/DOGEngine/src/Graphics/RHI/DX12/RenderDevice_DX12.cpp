@@ -190,6 +190,25 @@ namespace DOG::gfx
 		return handle;
 	}
 
+	Pipeline RenderDevice_DX12::CreateComputePipeline(const ComputePipelineDesc& desc)
+	{
+		D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = to_internal_compute(desc, m_gfxRsig.Get());
+		HRESULT hr{ S_OK };
+		
+		ComPtr<ID3D12PipelineState> pso;
+		hr = m_device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(pso.GetAddressOf()));
+		HR_VFY(hr);
+		
+		Pipeline_Storage storage{};
+		storage.computeDesc = desc;
+		storage.pipeline = pso;
+		storage.isCompute = true;
+
+		auto handle = m_rhp.Allocate<Pipeline>();
+		HandleAllocator::TryInsertMove(m_pipelines, std::move(storage), HandleAllocator::GetSlot(handle.handle));
+		return handle;
+	}
+
 	RenderPass RenderDevice_DX12::CreateRenderPass(const RenderPassDesc& desc)
 	{
 		RenderPass_Storage storage{};
@@ -428,10 +447,14 @@ namespace DOG::gfx
 			}
 
 			// Set globals
-			if (queueType == QueueType::Graphics)
-				list->SetGraphicsRootSignature(m_gfxRsig.Get());
-			else if (queueType == QueueType::Compute)
-				list->SetComputeRootSignature(m_gfxRsig.Get());
+			//if (queueType == QueueType::Graphics)
+			//	list->SetGraphicsRootSignature(m_gfxRsig.Get());
+			//else if (queueType == QueueType::Compute)
+			//	list->SetComputeRootSignature(m_gfxRsig.Get());
+
+			// Set both..
+			list->SetGraphicsRootSignature(m_gfxRsig.Get());
+			list->SetComputeRootSignature(m_gfxRsig.Get());
 		};
 
 		// Re-use if any
@@ -663,12 +686,23 @@ namespace DOG::gfx
 		res.pair.list->DrawIndexedInstanced(indicesPerInstance, instanceCount, indexStart, vertStart, instanceStart);
 	}
 
+	void RenderDevice_DX12::Cmd_Dispatch(CommandList list,
+		u32 threadGroupCountX,
+		u32 threadGroupCountY,
+		u32 threadGroupCountZ)
+	{
+		auto& res = HandleAllocator::TryGet(m_cmdls, HandleAllocator::GetSlot(list.handle));
+		res.pair.list->Dispatch(threadGroupCountX, threadGroupCountY, threadGroupCountZ);
+	}
+
 	void RenderDevice_DX12::Cmd_SetPipeline(CommandList list, Pipeline pipeline)
 	{
 		auto& cmdlRes = HandleAllocator::TryGet(m_cmdls, HandleAllocator::GetSlot(list.handle));
 		const auto& pipeRes = HandleAllocator::TryGet(m_pipelines, HandleAllocator::GetSlot(pipeline.handle));
 
-		cmdlRes.pair.list->IASetPrimitiveTopology(pipeRes.topology);
+		if (!pipeRes.isCompute)
+			cmdlRes.pair.list->IASetPrimitiveTopology(pipeRes.topology);
+
 		cmdlRes.pair.list->SetPipelineState(pipeRes.pipeline.Get());
 	}
 
@@ -710,7 +744,16 @@ namespace DOG::gfx
 			}
 			case D3D12_RESOURCE_BARRIER_TYPE_UAV:
 			{
-				assert(false);		// @todo
+				if (barr.isBuffer)
+				{
+					const auto& res = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(barr.resource));
+					barrs[i].UAV.pResource = res.resource.Get();
+				}
+				else
+				{
+					const auto& res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(barr.resource));
+					barrs[i].UAV.pResource = res.resource.Get();
+				}
 				break;
 			}
 			default:
@@ -738,14 +781,13 @@ namespace DOG::gfx
 		cmdl.pair.list->EndRenderPass();
 	}
 
-	void RenderDevice_DX12::Cmd_UpdateShaderArgs(CommandList list, const ShaderArgs& args)
+	void RenderDevice_DX12::Cmd_UpdateShaderArgs(CommandList list, QueueType targetQueue, const ShaderArgs& args)
 	{
 		auto& cmdlRes = HandleAllocator::TryGet(m_cmdls, HandleAllocator::GetSlot(list.handle));
 
-		// Resolves target queue automatically
-		if (cmdlRes.pair.queueType == QueueType::Graphics)
+		if (targetQueue == QueueType::Graphics)
 			cmdlRes.pair.list->SetGraphicsRoot32BitConstants(0, args.numConstants, args.constants.data(), 0);
-		else if (cmdlRes.pair.queueType == QueueType::Compute)
+		else if (targetQueue == QueueType::Compute)
 			cmdlRes.pair.list->SetComputeRoot32BitConstants(0, args.numConstants, args.constants.data(), 0);
 	}
 

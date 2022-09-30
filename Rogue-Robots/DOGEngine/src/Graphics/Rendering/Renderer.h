@@ -113,6 +113,7 @@ namespace DOG::gfx
 		// ================= RENDERING RESOURCES
 
 		Pipeline m_pipe, m_meshPipe;
+		Pipeline m_testCompPipe;
 
 		// Reusing a single command list for now
 		CommandList m_cmdl;

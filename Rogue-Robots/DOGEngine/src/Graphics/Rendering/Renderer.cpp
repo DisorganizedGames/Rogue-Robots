@@ -106,6 +106,12 @@ namespace DOG::gfx
 			.Build());
 
 		m_rgResMan = std::make_unique<RGResourceManager>(m_rd, m_bin.get());
+
+		auto testCS = m_sclr->CompileFromFile("TestComputeCS.hlsl", ShaderType::Compute);
+		m_testCompPipe = m_rd->CreateComputePipeline(ComputePipelineDesc(testCS.get()));
+
+		
+
 	}
 
 	Renderer::~Renderer()
@@ -157,8 +163,9 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("Forward Pass",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
-					builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_clientWidth, m_clientHeight));
 					builder.DeclareTexture(RG_RESOURCE(MainDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_clientWidth, m_clientHeight));
+					builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_clientWidth, m_clientHeight)
+						.AddFlag(D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
 
 					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
@@ -217,12 +224,31 @@ namespace DOG::gfx
 							.AppendConstant(m_globalMaterialTable->GetMaterialIndex(sub.mat)
 							);
 
-						rd->Cmd_UpdateShaderArgs(cmdl, args);
+						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
 						auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
 						rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
 
 					}
+				});
+		}
+
+		// Compute modify
+		{
+			struct PassData {};
+			rg.AddPass<PassData>("Compute",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					builder.ReadWriteTarget(RG_RESOURCE(LitHDR),
+						TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+				},
+				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				{
+					rd->Cmd_SetPipeline(cmdl, m_testCompPipe);
+					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, ShaderArgs()
+						.AppendConstant((u32)resources.GetView(RG_RESOURCE(LitHDR))));
+					rd->Cmd_Dispatch(cmdl, 25, 14, 1);
 				});
 		}
 
@@ -242,7 +268,7 @@ namespace DOG::gfx
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
 				{
 					rd->Cmd_SetPipeline(cmdl, m_pipe);
-					rd->Cmd_UpdateShaderArgs(cmdl, ShaderArgs()
+					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, ShaderArgs()
 						.AppendConstant((u32)resources.GetView(RG_RESOURCE(LitHDR))));
 					rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
 				});

@@ -48,6 +48,7 @@ namespace DOG::gfx
 	private:
 		struct PassIO
 		{
+			std::optional<RGResourceID> originalID;			// if aliased --> holds original resource name
 			RGResourceID id;
 			RGResourceType type{ RGResourceType::Texture };
 			std::optional<std::variant<TextureViewDesc, BufferViewDesc>> viewDesc;
@@ -85,7 +86,7 @@ namespace DOG::gfx
 	
 			void AddPass(Pass* pass);
 			void AddEntryBarrier(GPUBarrier barrier);
-			bool BarrierExists(u64 resource);
+			bool BarrierExists(u64 resource, D3D12_RESOURCE_BARRIER_TYPE type);
 			/*
 				Called after all barriers have been inserted.
 				This checks for any simultaneous read/write on the same resource (forbidden)
@@ -132,6 +133,8 @@ namespace DOG::gfx
 			void ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc);
 			void ReadOrWriteDepth(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
 			void WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
+			void ReadWriteTarget(RGResourceID id, TextureViewDesc desc);
+
 
 		private:
 			// Auto-proxy and auto-alias helpers
@@ -143,7 +146,7 @@ namespace DOG::gfx
 
 			// Aliasing now handled internally
 			void WriteAliasedRenderTarget(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc);
-			void WriteAliasedDepth(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc);
+
 
 			// Proxy now handled internally
 			void ProxyWrite(RGResourceID id);

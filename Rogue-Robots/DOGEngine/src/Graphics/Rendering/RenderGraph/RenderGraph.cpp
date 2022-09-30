@@ -268,37 +268,49 @@ namespace DOG::gfx
 
 	void RenderGraph::TrackTransitions()
 	{
-		const auto trackStateTransition = [this](
+		const auto recordBarrier = [this](
 			u64 resource, RGResourceType type, DependencyLevel& depLevel,
 			D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES desiredState)
 		{
-			GPUBarrier barr{};
+			GPUBarrier transitionBarrier{};
+
+			// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_uav_barrier
+			// UAV Barrier not required if user only does read on the resource.
+			// But we will always assume a write and insert a UAV barrier to avoid potential user bugs (e.g specifying read only but actually writing to it)
+			// We cannot detect if a user writes to a resource or not (since it's on the shader side)
+			std::optional<GPUBarrier> uavBarrier;
+
 			if (type == RGResourceType::Texture)
 			{
-				barr = GPUBarrier::Transition(
+				transitionBarrier = GPUBarrier::Transition(
 					Texture(resource),
 					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 					currState, desiredState);
-			}
-			else
-			{
-				barr = GPUBarrier::Transition(
-					Texture(resource),
-					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-					currState, desiredState);
-			}
-			if (currState != desiredState)
-			{
-				if (depLevel.BarrierExists(resource))
-					return false;
 
-				depLevel.AddEntryBarrier(barr);
-				return true;
+				uavBarrier = GPUBarrier::UAV(Texture(resource));
 			}
 			else
 			{
-				return false;
+				transitionBarrier = GPUBarrier::Transition(
+					Texture(resource),
+					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+					currState, desiredState);
+
+				uavBarrier = GPUBarrier::UAV(Texture(resource));
 			}
+
+			// Assure that an unordered access always gets write results (read text further up)
+			if (uavBarrier && currState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS &&
+				desiredState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+				depLevel.AddEntryBarrier(*uavBarrier);
+	
+			// No need for state transition, return early.
+			if (currState == desiredState || depLevel.BarrierExists(resource, D3D12_RESOURCE_BARRIER_TYPE_TRANSITION))
+				return false;
+
+			depLevel.AddEntryBarrier(transitionBarrier);
+
+			return true;
 		};
 
 		for (const auto& pass : m_sortedPasses)
@@ -313,12 +325,10 @@ namespace DOG::gfx
 
 				// If aliased, output takes care of picking up state transition
 				if (!input.aliasWrite &&
-					trackStateTransition(resource, input.type, depLevel, currState, desiredState))
+					recordBarrier(resource, input.type, depLevel, currState, desiredState))
 				{
 					m_resMan->SetCurrentState(input.id, desiredState);
 				}
-					
-
 			}
 
 			for (const auto& output : pass->outputs)
@@ -328,7 +338,7 @@ namespace DOG::gfx
 				const auto currState = m_resMan->GetCurrentState(output.id);
 				const auto desiredState = output.desiredState;
 
-				if (trackStateTransition(resource, output.type, depLevel, currState, desiredState))
+				if (recordBarrier(resource, output.type, depLevel, currState, desiredState))
 					m_resMan->SetCurrentState(output.id, desiredState);
 			}
 
@@ -349,12 +359,12 @@ namespace DOG::gfx
 			bool rpActive{ false };
 			for (const auto& output : pass->outputs)
 			{
+				const auto lookupID = output.originalID ? *output.originalID : output.id;
+
 				if (output.type == RGResourceType::Texture)
 				{
 					const auto& viewDesc = std::get<TextureViewDesc>(*output.viewDesc);
-
-					// Create view and immediately convert to global descriptor index
-					auto view = m_rd->CreateView(Texture(m_resMan->GetResource(output.id)), viewDesc);
+					const auto view = m_rd->CreateView(Texture(m_resMan->GetResource(output.id)), viewDesc);
 
 					// Hold views for deallocation
 					passResources.m_textureViews.push_back(view);
@@ -378,7 +388,7 @@ namespace DOG::gfx
 					}
 					else if (viewDesc.viewType == ViewType::UnorderedAccess)
 					{
-						passResources.m_views[output.id] = m_rd->GetGlobalDescriptor(view);
+						passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
 					}
 				}
 				else
@@ -387,7 +397,7 @@ namespace DOG::gfx
 
 					// Create view and immediately convert to global descriptor index
 					auto view = m_rd->CreateView(Buffer(m_resMan->GetResource(output.id)), viewDesc);
-					passResources.m_views[output.id] = m_rd->GetGlobalDescriptor(view);
+					passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
 					passResources.m_bufferViews.push_back(view);
 				}
 			}
@@ -399,23 +409,27 @@ namespace DOG::gfx
 				if (!input.viewDesc)
 					continue;
 
+				const auto lookupID = input.originalID ? *input.originalID : input.id;
+
 				if (input.type == RGResourceType::Texture)
 				{
 					const auto& viewDesc = std::get<TextureViewDesc>(*input.viewDesc);
-
-					// Create view and immediately convert to global descriptor index
-					auto view = m_rd->CreateView(Texture(m_resMan->GetResource(input.id)), viewDesc);
+					const auto view = m_rd->CreateView(Texture(m_resMan->GetResource(input.id)), viewDesc);
 					passResources.m_textureViews.push_back(view);
 
 					// @todo to support later (read only DSV --> baked into Render Pass
 					if (viewDesc.viewType == ViewType::DepthStencil)
+					{
 						assert(false);
-					// RTV as input not allowed!
+					}
+					// RTV as input not allowed! (This should be caught earlier)
 					else if (viewDesc.viewType == ViewType::RenderTarget)
+					{
 						assert(false);
+					}
 					else 
 					{
-						passResources.m_views[input.id] = m_rd->GetGlobalDescriptor(view);
+						passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
 					}
 				}
 				else
@@ -485,6 +499,9 @@ namespace DOG::gfx
 		assert(IsReadState(state));
 		assert(desc.viewType != ViewType::RenderTarget && desc.viewType != ViewType::UnorderedAccess);
 
+		PassIO input;
+		input.originalID = id;
+
 		// Automatically deduces the correct read if ID is an aliased resource
 		if (m_globalData.writes.contains(id))
 		{
@@ -492,7 +509,6 @@ namespace DOG::gfx
 			id = GetPrevious(id);
 		}
 
-		PassIO input;
 		input.id = id;
 		input.desiredState = state;
 		input.viewDesc = desc;
@@ -500,6 +516,9 @@ namespace DOG::gfx
 		m_pass.inputs.push_back(input);
 	}
 
+	/*
+		No aliasing support
+	*/
 	void RenderGraph::PassBuilder::ReadOrWriteDepth(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc)
 	{
 		// DSV read
@@ -544,7 +563,31 @@ namespace DOG::gfx
 			// Explicitly connects prevID to newID
 			const auto& prevID = ids.first;
 			const auto& newID = ids.second;
-			WriteAliasedRenderTarget(newID, prevID, access, desc);
+
+			// Write aliased render target
+			assert(desc.viewType == ViewType::RenderTarget);
+
+			assert(!m_globalData.writes.contains(newID));
+			m_globalData.writes.insert(newID);
+
+			m_resMan->AliasTexture(newID, prevID);
+
+			PassIO input;
+			input.originalID = id;
+			input.id = prevID;
+			input.type = RGResourceType::Texture;
+			input.aliasWrite = true;
+			m_pass.inputs.push_back(input);
+
+			PassIO output;
+			output.originalID = id;
+			output.id = prevID;
+			output.type = RGResourceType::Texture;
+			output.desiredState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+			output.viewDesc = desc;
+			output.aliasWrite = true;
+			output.rpAccessType = access;
+			m_pass.outputs.push_back(output);
 		}
 		else
 		{
@@ -558,9 +601,63 @@ namespace DOG::gfx
 			output.desiredState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 			output.rpAccessType = access;
 			m_pass.outputs.push_back(output);
+
+			m_globalData.writes.insert(id);
 		}
-		m_globalData.writes.insert(id);
 	}
+
+	void RenderGraph::PassBuilder::ReadWriteTarget(RGResourceID id, TextureViewDesc desc)
+	{
+		assert(desc.viewType == ViewType::UnorderedAccess);
+
+		// Automatically aliases if same resource already exists
+		if (m_globalData.writes.contains(id))
+		{
+			// Explicitly connects previous reads on ID to newID
+			// The previous reads that are connect are the previous reads SINCE a write.
+			const auto ids = ResolveAliasingIDs(id);
+
+			// Explicitly connects prevID to newID
+			const auto& prevID = ids.first;
+			const auto& newID = ids.second;
+		
+			// Add aliased unordered access
+			assert(!m_globalData.writes.contains(newID));
+			m_globalData.writes.insert(newID);
+
+			m_resMan->AliasTexture(newID, prevID);
+
+			PassIO input;
+			input.originalID = id;
+			input.id = prevID;
+			input.type = RGResourceType::Texture;
+			input.aliasWrite = true;
+			m_pass.inputs.push_back(input);
+
+			PassIO output;
+			output.originalID = id;
+			output.id = newID;
+			output.type = RGResourceType::Texture;
+			output.desiredState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+			output.viewDesc = desc;
+			output.aliasWrite = true;
+			m_pass.outputs.push_back(output);
+		}
+		else
+		{
+			m_globalData.writeCount[id] = 1;
+
+			PassIO output;
+			output.id = id;
+			output.type = RGResourceType::Texture;
+			output.viewDesc = desc;
+			output.desiredState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+			m_pass.outputs.push_back(output);
+		
+			m_globalData.writes.insert(id);
+		}
+	}
+
 
 
 	std::pair<RGResourceID, RGResourceID> RenderGraph::PassBuilder::ResolveAliasingIDs(RGResourceID input)
@@ -604,7 +701,6 @@ namespace DOG::gfx
 		return RGResourceID(nextName);
 	}
 
-
 	void RenderGraph::PassBuilder::FlushReadsAndConnectProxy(RGResourceID id)
 	{
 		auto& prevReads = m_globalData.latestRead[id];
@@ -623,28 +719,30 @@ namespace DOG::gfx
 
 	void RenderGraph::PassBuilder::WriteAliasedRenderTarget(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc)
 	{
-		assert(desc.viewType == ViewType::RenderTarget);
+		//assert(desc.viewType == ViewType::RenderTarget);
 
-		assert(!m_globalData.writes.contains(newID));
-		m_globalData.writes.insert(newID);
+		//assert(!m_globalData.writes.contains(newID));
+		//m_globalData.writes.insert(newID);
 
-		m_resMan->AliasTexture(newID, oldID);
+		//m_resMan->AliasTexture(newID, oldID);
 
-		PassIO input;
-		input.id = oldID;
-		input.type = RGResourceType::Texture;
-		input.aliasWrite = true;
-		m_pass.inputs.push_back(input);
+		//PassIO input;
+		//input.id = oldID;
+		//input.type = RGResourceType::Texture;
+		//input.aliasWrite = true;
+		//m_pass.inputs.push_back(input);
 
-		PassIO output;
-		output.id = newID;
-		output.type = RGResourceType::Texture;
-		output.desiredState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		output.viewDesc = desc;
-		output.aliasWrite = true;
-		output.rpAccessType = access;
-		m_pass.outputs.push_back(output);
+		//PassIO output;
+		//output.id = newID;
+		//output.type = RGResourceType::Texture;
+		//output.desiredState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		//output.viewDesc = desc;
+		//output.aliasWrite = true;
+		//output.rpAccessType = access;
+		//m_pass.outputs.push_back(output);
 	}
+
+
 
 	void RenderGraph::PassBuilder::ProxyWrite(RGResourceID id)
 	{
@@ -702,10 +800,10 @@ namespace DOG::gfx
 		m_batchedEntryBarriers.push_back(barrier);
 	}
 
-	bool RenderGraph::DependencyLevel::BarrierExists(u64 resource)
+	bool RenderGraph::DependencyLevel::BarrierExists(u64 resource, D3D12_RESOURCE_BARRIER_TYPE type)
 	{
 		for (const auto& barrier : m_batchedEntryBarriers)
-			if (barrier.resource == resource)
+			if (barrier.resource == resource && barrier.type == type)
 				return true;
 		return false;
 	}

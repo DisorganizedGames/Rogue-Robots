@@ -87,7 +87,7 @@ namespace DOG::gfx
 			return d;
 		}
 
-		RGTextureDesc& AppendExtraFlag(D3D12_RESOURCE_FLAGS flag)
+		RGTextureDesc& AddFlag(D3D12_RESOURCE_FLAGS flag)
 		{
 			flags |= flag;
 			return *this;
