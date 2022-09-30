@@ -1,20 +1,21 @@
 #pragma once
 
+#include "../ECS/Component.h"
 #include "DOGEngineTypes.h"
 #include "../Graphics/RHI/ImGUIBackend.h"
 
-
-enum class KeyType
-{
-	Scale,
-	Rotation,
-	Translation,
-};
 
 // rip BoneJovi
 class AnimationManager 
 {
 private:
+	static constexpr u8 MAX_ANIMATIONS = 2;
+	enum class KeyType
+	{
+		Scale,
+		Rotation,
+		Translation,
+	};
 	// tmp, unused for now
 	struct LastSRT
 	{
@@ -24,11 +25,14 @@ private:
 public:
 	AnimationManager();
 	~AnimationManager();
+	void UpdateSkeleton(const DOG::AnimationComponent& animator, const DOG::ImportedAnimation& rig);
 	void UpdateSkeleton(u32 skeletonId, f32 dt);
 	void SetImportedAnimations(DOG::ImportedAnimation& ia);
+	void UpdateAnimationComponent(DOG::AnimationComponent& ac, const std::vector<DOG::AnimationData>& animations, const f32 dt) const;
 	std::vector<DirectX::XMFLOAT4X4>& GetBones() { return m_vsJoints; };
 private:
 	DirectX::FXMMATRIX CalculateBlendTransformation(i32 nodeID);
+	DirectX::FXMMATRIX CalculateBlendTransformation(i32 nodeID, const DOG::ImportedAnimation& rig, const DOG::AnimationComponent& ac);
 	DirectX::FXMMATRIX CalculateNodeTransformation(const DOG::AnimationData&, i32 nodeID, f32 animTick);
 	DirectX::XMVECTOR GetAnimationComponent(const std::vector<DOG::AnimationKey>& keys, KeyType component, f32 tick);
 	
@@ -44,7 +48,7 @@ private:
 	f32 m_imguiBlend = 0.0f;
 	i32 m_imguiAnimation2 = 0;
 	f32 m_imguiAnimTime2 = 0.0f;
-	bool m_imguiRootTranslation = true; // apply root animation translation or not
+	bool m_imguiRootTranslation = false; // apply root animation translation or not
 	bool m_imguiPlayAnimation = true;
 	bool m_imguiBindPose = false;
 	i32 m_imguiSelectedBone = 1;

@@ -36,7 +36,7 @@ GameLayer::GameLayer() noexcept
 	entity entity5 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity5, m_mixamo);
 	m_entityManager.AddComponent<TransformComponent>(entity5, Vector3(0, -2, 5), Vector3(0, 0, 0), Vector3(0.02f, 0.02f, 0.02f));
-	m_entityManager.AddComponent<AnimationComponent>(entity5).animationID = 0;
+	m_entityManager.AddComponent<AnimationComponent>(entity5).offset = 0;
 
 	LuaMain::Initialize();
 	//LuaMain::GetScriptManager()->OrderScript("LuaTest.lua", 1);
@@ -66,7 +66,6 @@ void GameLayer::OnUpdate()
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
 	
-	//m_boneJourno->UpdateSkeleton(0, 1, 0.1f);
 	m_player->OnUpdate();
 	m_netCode.OnUpdate(m_player);
 

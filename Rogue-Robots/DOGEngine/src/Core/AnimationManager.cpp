@@ -74,6 +74,41 @@ void AnimationManager::SpawnControlWindow()
 	ImGui::End();
 }
 
+DirectX::FXMMATRIX AnimationManager::CalculateBlendTransformation(i32 nodeID, const DOG::ImportedAnimation& rig, const DOG::AnimationComponent& ac)
+{
+	using namespace DirectX;
+	XMFLOAT3 scaling = { 1.f, 1.f, 1.f };
+	XMFLOAT3 translation = { 0.f, 0.f, 0.f };
+	XMFLOAT4 rotation = { 0.f, 0.f, 0.f, 0.f };
+
+	f32 t1 = ac.tick[0];
+	f32 t2 = ac.tick[1];
+	const auto& animation1 = rig.animations[ac.animationID[0]];
+	const auto& animation2 = rig.animations[ac.animationID[1]];
+
+	if (animation1.scaKeys.find(nodeID) != animation1.scaKeys.end())
+	{
+		auto scale1 = GetAnimationComponent(animation1.scaKeys.at(nodeID), KeyType::Scale, t1);
+		auto scale2 = GetAnimationComponent(animation2.scaKeys.at(nodeID), KeyType::Scale, t2);
+		DirectX::XMStoreFloat3(&scaling, XMVectorLerp(scale1, scale2, /*tmp*/ac.bf));
+	}
+	if (animation1.rotKeys.find(nodeID) != animation1.rotKeys.end())
+	{
+		auto rot1 = GetAnimationComponent(animation1.rotKeys.at(nodeID), KeyType::Rotation, t1);
+		auto rot2 = GetAnimationComponent(animation2.rotKeys.at(nodeID), KeyType::Rotation, t2);
+		DirectX::XMStoreFloat4(&rotation, XMQuaternionSlerp(rot1, rot2, ac.bf));
+	}
+	if (animation1.posKeys.find(nodeID) != animation1.posKeys.end() && (m_imguiRootTranslation || nodeID > 2))
+	{
+		auto translation1 = GetAnimationComponent(animation1.posKeys.at(nodeID), KeyType::Translation, t1);
+		auto translation2 = GetAnimationComponent(animation2.posKeys.at(nodeID), KeyType::Translation, t2);
+		DirectX::XMStoreFloat3(&translation, XMVectorLerp(translation1, translation2, ac.bf));
+	}
+	return XMMatrixTranspose(XMMatrixScaling(scaling.x, scaling.y, scaling.z) *
+		XMMatrixRotationQuaternion(XMQuaternionNormalize(DirectX::XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w))) *
+		XMMatrixTranslation(translation.x, translation.y, translation.z));
+}
+
 DirectX::FXMMATRIX AnimationManager::CalculateBlendTransformation(i32 nodeID)
 {
 	using namespace DirectX;
@@ -152,6 +187,46 @@ DirectX::FXMMATRIX AnimationManager::CalculateNodeTransformation(const DOG::Anim
 	return XMMatrixTranspose(nodeTransform);
 }
 
+void AnimationManager::UpdateSkeleton(const DOG::AnimationComponent& animator, const DOG::ImportedAnimation& rig)
+{
+	// Set node animation transformations
+	std::vector<DirectX::XMMATRIX> hereditaryTFs;
+	hereditaryTFs.reserve(rig.nodes.size());
+	hereditaryTFs.push_back(DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation));
+	for (i32 i = 1; i < rig.nodes.size(); i++)
+	{
+		auto ntf = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
+
+		if (!m_imguiBindPose && i > 1)
+		{
+			if (animator.animationID[0] != -1 && animator.animationID[1] != -1)
+				ntf = CalculateBlendTransformation(i, rig, animator);
+			else if(animator.animationID[0] != -1)
+				ntf = CalculateNodeTransformation(rig.animations[animator.animationID[0]], i, animator.tick[0]);
+			else if (animator.animationID[1] != -1)
+				ntf = CalculateNodeTransformation(rig.animations[animator.animationID[1]], i, animator.tick[1]);
+			else
+				CalculateNodeTransformation(rig.animations[0], i, animator.tick[0]);
+		}
+
+		//imgui tf here
+		hereditaryTFs.push_back(ntf);
+	}
+	// Apply parent Transformation
+	for (size_t i = 1; i < hereditaryTFs.size(); i++)
+		hereditaryTFs[i] = hereditaryTFs[rig.nodes[i].parentIdx] * hereditaryTFs[i];
+
+	auto rootTF = DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation);
+	for (size_t n = 0; n < rig.nodes.size(); n++)
+	{
+		auto joint = rig.nodes[n].jointIdx;
+		if (joint != -1)
+			DirectX::XMStoreFloat4x4(&m_vsJoints[animator.offset + joint],
+				rootTF * hereditaryTFs[n] * DirectX::XMLoadFloat4x4(&rig.jointOffsets[joint]));
+	}
+}
+
+
 void AnimationManager::UpdateSkeleton(u32 skeletonId, f32 dt)
 {
 	for (size_t m = 0; m < m_imguiProfilePerformUpdate; m++)
@@ -170,11 +245,9 @@ void AnimationManager::UpdateSkeleton(u32 skeletonId, f32 dt)
 			}
 			else if (m_imguiAnimTime < 0.0f)
 				m_imguiAnimTime = 1.0f + m_imguiAnimTime;
-
-			m_currentTick = m_imguiAnimTime * anim.ticks;
 		}
-		else
-			m_currentTick = m_imguiAnimTime * anim.ticks;
+		
+		m_currentTick = m_imguiAnimTime * anim.ticks;
 
 		std::vector<DirectX::XMMATRIX> hereditaryTFs;
 		hereditaryTFs.reserve(rig.nodes.size());
@@ -240,4 +313,48 @@ DirectX::XMVECTOR AnimationManager::GetAnimationComponent(const std::vector<DOG:
 	else
 		return XMVectorLerp(XMLoadFloat4(&keys[key1Idx].value), XMLoadFloat4(&keys[key2Idx].value),
 			(tick - keys[key1Idx].time) / (keys[key2Idx].time - keys[key1Idx].time));
+}
+
+void AnimationManager::UpdateAnimationComponent(DOG::AnimationComponent& ac, const std::vector<DOG::AnimationData>& animations, const f32 dt) const
+{
+	if (ac.mode == 0) // loop and blend with ImGui
+	{
+		for (u8 i = 0; i < MAX_ANIMATIONS; i++)
+		{
+			if (ac.animationID[i] == -1) // no Animation
+				continue;
+			const auto& animation = animations[ac.animationID[i]];
+			ac.normalizedTime[i] += ac.timeScale[i] * dt / animation.duration;
+			while (ac.normalizedTime[i] > 1.0f)
+				ac.normalizedTime[i] -= 1.0f;
+			if (ac.normalizedTime[i] < 0.0f)
+				ac.normalizedTime[i] = 1.0f + ac.normalizedTime[i];
+
+			ac.tick[i] = ac.normalizedTime[i] * animation.ticks;
+		}
+	}
+	else if (ac.mode == 1) // something else
+	{
+		if (ac.animationID[0] == -1 || ac.animationID[1] == -1)
+			return;
+		const auto& anim1 = animations[ac.animationID[0]];
+		const auto& anim2 = animations[ac.animationID[1]];
+
+		ac.normalizedTime[0] += ac.timeScale[0] * dt / anim1.duration;
+		if (ac.normalizedTime[0] > ac.transition)
+			ac.normalizedTime[1] += ac.timeScale[1] * dt / anim2.duration;
+
+		if (ac.normalizedTime[1] > 1.0f)
+		{
+			ac.normalizedTime[0] = 0.0f;
+			ac.animationID[0] = -1;
+			ac.mode = 0;
+			return;
+		}
+
+		ac.bf = ac.normalizedTime[1]/(1.0f - ac.transition);
+		ac.bf = std::clamp(ac.bf, 0.0f, 1.0f);
+		ac.tick[0] = ac.normalizedTime[0] * anim1.ticks;
+		ac.tick[1] = ac.normalizedTime[1] * anim2.ticks;
+	}
 }

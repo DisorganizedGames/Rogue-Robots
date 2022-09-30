@@ -3,6 +3,7 @@
 
 namespace DOG
 {
+
 	struct ImportedMaterial
 	{
 		std::string materialName;

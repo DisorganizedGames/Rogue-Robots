@@ -82,20 +82,36 @@ namespace DOG
 							m_renderer->SubmitMesh(model->gfxModel.mesh.mesh, i, model->gfxModel.mats[i], transformC);
 					}
 				});
+
+
 			if (!m_renderer->m_bonesLoaded) {
 				EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
+				{
+					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
+					if (model && modelaC.animationID[0] == 0)
 					{
-						ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-						if (model)
-							if(modelaC.animationID == 0)
-								m_renderer->SetBones(model->animation);
-					});
+						m_renderer->m_boneJourno->SetImportedAnimations(model->animation);
+						m_renderer->m_bonesLoaded = true;
+					}
+				});
 			}
-			
+			else if (m_renderer->m_bonesLoaded)
+			{
+				//m_renderer->m_boneJourno->SpawnControlWindow();
+				EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC)
+				{
+					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
+					if (model)
+					{
+						m_renderer->m_boneJourno->UpdateAnimationComponent(animatorC, model->animation.animations, (f32)Time::DeltaTime());
+						m_renderer->m_boneJourno->UpdateSkeleton(animatorC, model->animation);
+					}
+				});
+			}
+
 			auto mainCam = CameraComponent::s_mainCamera;
 			auto& proj = (DirectX::XMMATRIX&)mainCam->projMatrix;
 			m_renderer->SetMainRenderCamera(mainCam->viewMatrix, &proj);
-			
 			
 			m_renderer->Update((f32)Time::DeltaTime());
 			m_renderer->Render(0.0f);
