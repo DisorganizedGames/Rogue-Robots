@@ -84,6 +84,7 @@ namespace DOG
 		gfx::GraphicsBuilder& GetGraphicsBuilder();
 
 		void ImguiLoadModel(bool& open);
+		static void AssetManagerGUI(bool& open);
 
 	private:
 		static std::unique_ptr<AssetManager> s_instance;

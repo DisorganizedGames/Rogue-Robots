@@ -32,6 +32,9 @@ namespace DOG
         // The menu bar at the top
         if (ImGui::BeginMainMenuBar())
         {
+            if (ImGui::BeginMenu("File")) ImGui::EndMenu();
+            if (ImGui::BeginMenu("View")) ImGui::EndMenu();
+
             for (auto& [n, w] : s_debugWindows)
             {
                 w.first(w.second);
