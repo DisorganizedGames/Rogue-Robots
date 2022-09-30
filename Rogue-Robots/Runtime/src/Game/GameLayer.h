@@ -30,5 +30,5 @@ private:
 	std::vector<std::shared_ptr<LuaInterface>> m_luaInterfaces;
 	std::shared_ptr<MainPlayer> m_player;
 	NetCode m_netCode;
-	Pathfinder m_pathfinder;
+	//Pathfinder m_pathfinder;		// uncomment to activate pathfinder
 };
