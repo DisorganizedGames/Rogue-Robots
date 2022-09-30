@@ -523,7 +523,7 @@ namespace DOG::gfx
 				output.viewDesc = desc;
 				output.desiredState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 				output.rpAccessType = access;
-				output.rpStencilAccessType = RenderPassAccessType::Discard_Discard;
+				output.rpStencilAccessType = RenderPassAccessType::DiscardDiscard;
 				m_pass.outputs.push_back(output);
 
 				m_globalData.writeCount[id] = 1;

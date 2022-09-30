@@ -160,9 +160,9 @@ namespace DOG::gfx
 					builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_clientWidth, m_clientHeight));
 					builder.DeclareTexture(RG_RESOURCE(MainDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_clientWidth, m_clientHeight));
 
-					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::Clear_Preserve,
+					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
-					builder.ReadOrWriteDepth(RG_RESOURCE(MainDepth), RenderPassAccessType::Clear_Discard,
+					builder.ReadOrWriteDepth(RG_RESOURCE(MainDepth), RenderPassAccessType::ClearDiscard,
 						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
 				},
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
@@ -236,7 +236,7 @@ namespace DOG::gfx
 
 					builder.ReadResource(RG_RESOURCE(LitHDR), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
-					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer1), RenderPassAccessType::Clear_Preserve,
+					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer1), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 				},
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
@@ -256,7 +256,7 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("ImGUI Pass",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
-					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer1), RenderPassAccessType::Preserve_Preserve,
+					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer1), RenderPassAccessType::PreservePreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 				},
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
