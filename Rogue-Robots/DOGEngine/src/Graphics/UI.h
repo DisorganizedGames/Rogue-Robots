@@ -26,9 +26,9 @@ class UI
 {
 private:
 public:
-   std::vector<std::unique_ptr<UIelement>> elements;
+   std::vector<std::unique_ptr<UIelement>> m_elements;
    DOG::gfx::d2dBackend_DX12 m_d2d; //The thing that renders everything
-   UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int maxFramesInFlight, HWND hwnd);
+   UI(DOG::gfx::RenderDevice* m_rd, DOG::gfx::Swapchain* sc, u_int maxFramesInFlight, HWND hwnd);
    ~UI();
    void drawUI();
    void changeUIscene(Uiscene scene);
