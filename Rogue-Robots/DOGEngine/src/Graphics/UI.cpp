@@ -8,8 +8,8 @@ UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HW
 
    D2D_POINT_2F p = { 600.f, 350.f };
    D2D_VECTOR_2F s = { 200.f, 80.f };
-   elements.push_back(std::move(std::make_unique<UIButton>(p, s, L"Play")));
-   elements.push_back(std::move(std::make_unique<UISplashScreen>(m_d2d)));
+   m_elements.push_back(std::move(std::make_unique<UIButton>(p, s, L"Play")));
+   m_elements.push_back(std::move(std::make_unique<UISplashScreen>(m_d2d)));
 }
 
 UI::~UI()
@@ -24,7 +24,7 @@ void UI::drawUI()
       changeUIscene(game);
    if(DOG::Keyboard::IsKeyPressed(DOG::Key::M))
       changeUIscene(menu);
-   for (auto&& e : elements)
+   for (auto&& e : m_elements)
    {
       e->update(m_d2d);
       e->draw(m_d2d);
@@ -38,18 +38,18 @@ void UI::changeUIscene(Uiscene scene)
    {
    case menu:
       {
-         elements.clear();
+         m_elements.clear();
          D2D_POINT_2F p = { 600.f, 350.f };
          D2D_VECTOR_2F s = { 200.f, 80.f };
-         elements.push_back(std::move(std::make_unique<UIButton>(p, s, L"Play")));
+         m_elements.push_back(std::move(std::make_unique<UIButton>(p, s, L"Play")));
       }
       break;
    case game:
-      elements.clear();
+      m_elements.clear();
       {
          D2D_POINT_2F p = { 100.f, 100.f };
          D2D_VECTOR_2F s = { 250.f, 100.f };
-         elements.push_back(std::move(std::make_unique<UIButton>(p, s, L"Inventory")));
+         m_elements.push_back(std::move(std::make_unique<UIButton>(p, s, L"Inventory")));
       }
       break;
    default:
