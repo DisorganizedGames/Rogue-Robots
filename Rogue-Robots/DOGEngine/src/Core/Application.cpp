@@ -94,7 +94,6 @@ namespace DOG
 			else if (m_renderer->m_boneJourno->m_bonesLoaded)
 			{
 				m_renderer->m_boneJourno->UpdateJoints();
-				m_renderer->m_boneJourno->SpawnControlWindow();
 			}
 
 			auto mainCam = CameraComponent::s_mainCamera;

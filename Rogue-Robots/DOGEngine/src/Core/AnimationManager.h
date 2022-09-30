@@ -43,7 +43,7 @@ namespace DOG
 		std::vector<DirectX::XMFLOAT3> m_imguiRot;
 		std::vector<DirectX::XMFLOAT3> m_imguiPos;
 	public:
-		void SpawnControlWindow();
+		void SpawnControlWindow(bool& open);
 	};
 }
 

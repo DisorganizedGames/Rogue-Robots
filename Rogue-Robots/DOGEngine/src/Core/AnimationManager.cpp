@@ -3,6 +3,7 @@
 #include "AssetManager.h"
 #include "ImGUI/imgui.h"
 #include "Time.h"
+#include "ImGuiMenuLayer.h"
 
 
 namespace DOG
@@ -13,11 +14,12 @@ namespace DOG
 		m_imguiPos.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_imguiRot.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_vsJoints.assign(130, {});
+		ImGuiMenuLayer::RegisterDebugWindow("Animation", [this](bool& open) {SpawnControlWindow(open); });
 	};
 
 	AnimationManager::~AnimationManager()
 	{
-
+		ImGuiMenuLayer::UnRegisterDebugWindow("Animation");
 	};
 
 	void AnimationManager::UpdateJoints()
@@ -34,103 +36,114 @@ namespace DOG
 		});
 	}
 
-	void AnimationManager::SpawnControlWindow()
+	void AnimationManager::SpawnControlWindow(bool& open)
 	{
 		using namespace DOG;
-
-		ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
-		if (ImGui::Begin("Animation"))
+		if (ImGui::BeginMenu("View"))
 		{
-			ImGui::Text("Perform update X times");
-			ImGui::SliderInt(" X", &m_imguiProfilePerformUpdate, 1, 100);
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-			ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-			static AnimationComponent* ac1;
-			static i32 rig;
-			static i32 animation[2] = { 0, 0 };
-			static std::vector<ImportedRig> rigs;
-			if (rigs.size() == 0)
+			if (ImGui::MenuItem("Animation"))
 			{
-				EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC)
-					{
-						ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-						if (model)
-						{
-							rigs.push_back(model->animation);
-							ac1 = &animatorC;
-						}
-						else
-							return ImGui::End(); // "Animator";
-					});
+				open = true;
 			}
-			if (ImGui::BeginCombo("rig", std::to_string(rig).c_str()))
-			{
-				for (i32 i = 0; i < std::size(rigs); i++)
-					if (ImGui::Selectable(std::to_string(i).c_str(), (i == rig)))
-						rig = i;
-				ImGui::EndCombo();
-			}
-			ImGui::Checkbox("RootTranslation", &m_imguiRootTranslation);
-			auto imguiAnim = [rigs = rigs, ac = ac1, animation = animation](i32 aIdx)
-			{
-				auto& a = animation[aIdx];
-				if (ImGui::BeginCombo(("animation " + std::to_string(aIdx)).c_str(), rigs[rig].animations[a].name.c_str()))
-				{
-					for (i32 i = 0; i < std::size(rigs[rig].animations); i++)
-						if (ImGui::Selectable(rigs[rig].animations[i].name.c_str(), (i == a)))
-							ac1->animationID[aIdx] = a = i;
-					ImGui::EndCombo();
-				}
-				ImGui::SliderFloat("time", &ac1->normalizedTime[aIdx], 0.0f, 1.0f, "%.5f");
-				ImGui::SliderFloat("timeScale", &ac1->timeScale[aIdx], -2.0f, 2.0f, "%.5f");
-			};
-
-			ImGui::Columns(2, nullptr, true);
-			imguiAnim(0);
-			ImGui::NextColumn();
-			imguiAnim(1);
-			ImGui::Columns();
-			ImGui::SliderFloat("blendFactor", &ac1->bf, 0.0f, 1.0f, "%.5f");
-
-			ImGui::SliderFloat("transition", &ac1->transition, 0.0f, 1.0f, "%.5f");
-			if (ImGui::Button("append"))
-			{
-				ac1->mode = 1;
-				ac1->normalizedTime[0] = 0.0f;
-				ac1->normalizedTime[1] = 0.0f;
-				ac1->animationID[0] = animation[0];
-				ac1->animationID[1] = animation[1];
-			}
-			if (ac1->mode != 1)
-			{
-				ac1->animationID[0] = ac1->bf < 1.0f ? animation[0] : -1;
-				ac1->animationID[1] = ac1->bf > 0.0f ? animation[1] : -1;
-			}
-			// ImGui individual joint sliders
-			{
-				if (ImGui::BeginCombo("tfs", rigs[0].nodes[m_imguiSelectedBone].name.c_str()))
-				{
-					for (i32 i = 1; i < std::size(rigs[0].nodes); i++)
-						if (ImGui::Selectable((rigs[0].nodes[i].name + "  " + std::to_string(i)).c_str(), (i == m_imguiSelectedBone)))
-							m_imguiSelectedBone = i;
-					ImGui::EndCombo();
-				}
-			
-				ImGui::Text("Orientation");
-				ImGui::SliderAngle("Roll", &m_imguiRot[m_imguiSelectedBone].z, -180.0f, 180.0f);
-				ImGui::SliderAngle("Pitch", &m_imguiRot[m_imguiSelectedBone].x, -180.0f, 180.0f);
-				ImGui::SliderAngle("Yaw", &m_imguiRot[m_imguiSelectedBone].y, -180.0f, 180.0f);
-				ImGui::Text("Translation");
-				ImGui::SliderFloat("pos X", &m_imguiPos[m_imguiSelectedBone].x, -1.0f, 1.0f, "%.3f");
-				ImGui::SliderFloat("pos Y", &m_imguiPos[m_imguiSelectedBone].y, -1.0f, 1.0f, "%.3f");
-				ImGui::SliderFloat("pos Z", &m_imguiPos[m_imguiSelectedBone].z, -1.0f, 1.0f, "%.3f");
-				ImGui::Text("Scale");
-				ImGui::SliderFloat("X", &m_imguiSca[m_imguiSelectedBone].x, -10.0f, 10.0f, "%.1f");
-				ImGui::SliderFloat("Y", &m_imguiSca[m_imguiSelectedBone].y, -10.0f, 10.0f, "%.1f");
-				ImGui::SliderFloat("Z", &m_imguiSca[m_imguiSelectedBone].z, -10.0f, 10.0f, "%.1f");
-			}
+			ImGui::EndMenu(); // "View"
 		}
-		ImGui::End(); // "Animator"
+
+		if (open)
+		{
+			ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
+			if (ImGui::Begin("Animation", &open))
+			{
+				ImGui::Text("Perform update X times");
+				ImGui::SliderInt(" X", &m_imguiProfilePerformUpdate, 1, 100);
+				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+				ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+				static AnimationComponent* ac1;
+				static i32 rig;
+				static i32 animation[2] = { 0, 0 };
+				static std::vector<ImportedRig> rigs;
+				if (rigs.size() == 0)
+				{
+					EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC)
+						{
+							ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
+							if (model)
+							{
+								rigs.push_back(model->animation);
+								ac1 = &animatorC;
+							}
+							else
+								return ImGui::End(); // "Animator";
+						});
+				}
+				if (ImGui::BeginCombo("rig", std::to_string(rig).c_str()))
+				{
+					for (i32 i = 0; i < std::size(rigs); i++)
+						if (ImGui::Selectable(std::to_string(i).c_str(), (i == rig)))
+							rig = i;
+					ImGui::EndCombo();
+				}
+				ImGui::Checkbox("RootTranslation", &m_imguiRootTranslation);
+				auto imguiAnim = [rigs = rigs, ac = ac1, animation = animation](i32 aIdx)
+				{
+					auto& a = animation[aIdx];
+					if (ImGui::BeginCombo(("animation " + std::to_string(aIdx)).c_str(), rigs[rig].animations[a].name.c_str()))
+					{
+						for (i32 i = 0; i < std::size(rigs[rig].animations); i++)
+							if (ImGui::Selectable(rigs[rig].animations[i].name.c_str(), (i == a)))
+								ac1->animationID[aIdx] = a = i;
+						ImGui::EndCombo();
+					}
+					ImGui::SliderFloat("time", &ac1->normalizedTime[aIdx], 0.0f, 1.0f, "%.5f");
+					ImGui::SliderFloat("timeScale", &ac1->timeScale[aIdx], -2.0f, 2.0f, "%.5f");
+				};
+
+				ImGui::Columns(2, nullptr, true);
+				imguiAnim(0);
+				ImGui::NextColumn();
+				imguiAnim(1);
+				ImGui::Columns();
+				ImGui::SliderFloat("blendFactor", &ac1->bf, 0.0f, 1.0f, "%.5f");
+
+				ImGui::SliderFloat("transition", &ac1->transition, 0.0f, 1.0f, "%.5f");
+				if (ImGui::Button("append"))
+				{
+					ac1->mode = 1;
+					ac1->normalizedTime[0] = 0.0f;
+					ac1->normalizedTime[1] = 0.0f;
+					ac1->animationID[0] = animation[0];
+					ac1->animationID[1] = animation[1];
+				}
+				if (ac1->mode != 1)
+				{
+					ac1->animationID[0] = ac1->bf < 1.0f ? animation[0] : -1;
+					ac1->animationID[1] = ac1->bf > 0.0f ? animation[1] : -1;
+				}
+				// ImGui individual joint sliders
+				{
+					if (ImGui::BeginCombo("tfs", rigs[0].nodes[m_imguiSelectedBone].name.c_str()))
+					{
+						for (i32 i = 1; i < std::size(rigs[0].nodes); i++)
+							if (ImGui::Selectable((rigs[0].nodes[i].name + "  " + std::to_string(i)).c_str(), (i == m_imguiSelectedBone)))
+								m_imguiSelectedBone = i;
+						ImGui::EndCombo();
+					}
+
+					ImGui::Text("Orientation");
+					ImGui::SliderAngle("Roll", &m_imguiRot[m_imguiSelectedBone].z, -180.0f, 180.0f);
+					ImGui::SliderAngle("Pitch", &m_imguiRot[m_imguiSelectedBone].x, -180.0f, 180.0f);
+					ImGui::SliderAngle("Yaw", &m_imguiRot[m_imguiSelectedBone].y, -180.0f, 180.0f);
+					ImGui::Text("Translation");
+					ImGui::SliderFloat("pos X", &m_imguiPos[m_imguiSelectedBone].x, -1.0f, 1.0f, "%.3f");
+					ImGui::SliderFloat("pos Y", &m_imguiPos[m_imguiSelectedBone].y, -1.0f, 1.0f, "%.3f");
+					ImGui::SliderFloat("pos Z", &m_imguiPos[m_imguiSelectedBone].z, -1.0f, 1.0f, "%.3f");
+					ImGui::Text("Scale");
+					ImGui::SliderFloat("X", &m_imguiSca[m_imguiSelectedBone].x, -10.0f, 10.0f, "%.1f");
+					ImGui::SliderFloat("Y", &m_imguiSca[m_imguiSelectedBone].y, -10.0f, 10.0f, "%.1f");
+					ImGui::SliderFloat("Z", &m_imguiSca[m_imguiSelectedBone].z, -10.0f, 10.0f, "%.1f");
+				}
+			}
+			ImGui::End(); // "Animator"
+		}
 	}
 
 	DirectX::FXMMATRIX AnimationManager::CalculateBlendTransformation(i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac)
