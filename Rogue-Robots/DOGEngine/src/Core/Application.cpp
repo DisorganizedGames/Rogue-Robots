@@ -1,7 +1,6 @@
 #include "Application.h"
 #include "Window.h"
 #include "Time.h"
-#include "AnimationManager.h"
 #include "AssetManager.h"
 #include "../ECS/EntityManager.h"
 #include "../Input/Mouse.h"
@@ -84,29 +83,18 @@ namespace DOG
 				});
 
 
-			if (!m_renderer->m_bonesLoaded) {
+			if (!m_renderer->m_boneJourno->m_bonesLoaded) {
 				EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 					if (model && modelaC.animationID[0] == 0)
-					{
-						m_renderer->m_boneJourno->SetImportedAnimations(model->animation);
-						m_renderer->m_bonesLoaded = true;
-					}
+						m_renderer->m_boneJourno->m_bonesLoaded = true;
 				});
 			}
-			else if (m_renderer->m_bonesLoaded)
+			else if (m_renderer->m_boneJourno->m_bonesLoaded)
 			{
-				//m_renderer->m_boneJourno->SpawnControlWindow();
-				EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC)
-				{
-					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-					if (model)
-					{
-						m_renderer->m_boneJourno->UpdateAnimationComponent(animatorC, model->animation.animations, (f32)Time::DeltaTime());
-						m_renderer->m_boneJourno->UpdateSkeleton(animatorC, model->animation);
-					}
-				});
+				m_renderer->m_boneJourno->UpdateJoints();
+				m_renderer->m_boneJourno->SpawnControlWindow();
 			}
 
 			auto mainCam = CameraComponent::s_mainCamera;

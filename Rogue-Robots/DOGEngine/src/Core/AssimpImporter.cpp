@@ -102,13 +102,13 @@ namespace DOG
 			AddNode(nameToJointIdx, nameToJoint, nodeArray, node->mChildren[i], parentIdx);
 	}
 
-	ImportedAnimation ImportAnimation(const aiScene* scene, std::shared_ptr<ImportedModel>& m_model)
+	ImportedRig ImportAnimation(const aiScene* scene, std::shared_ptr<ImportedModel>& m_model)
 	{
 		std::unordered_map<std::string, aiBone*> nameToJoint;
 		std::unordered_map<std::string, i32> nameToJointIdx;
 		std::vector<aiNode*> allNodes;
 
-		ImportedAnimation importedAnim = {};
+		ImportedRig importedAnim = {};
 		std::vector<JointNode>& nodeArray = importedAnim.nodes;
 		std::vector<dxf4x4>& boneArray = importedAnim.jointOffsets;
 

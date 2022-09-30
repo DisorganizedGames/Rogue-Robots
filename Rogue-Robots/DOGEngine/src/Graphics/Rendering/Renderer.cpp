@@ -180,9 +180,8 @@ namespace DOG::gfx
 							DirectX::XMFLOAT4X4 joints[130];
 						} pfData{};
 
-						m_joints = m_boneJourno->GetBones();
-						for (size_t i = 0; i < m_joints.size(); i++)
-							pfData.joints[i] = m_joints[i];
+						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); i++)
+							pfData.joints[i] = m_boneJourno->m_vsJoints[i];
 
 						DirectX::XMVECTOR tmp;
 						auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);

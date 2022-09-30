@@ -62,7 +62,7 @@ namespace DOG
 		std::unordered_map<i32, std::vector<AnimationKey>> posKeys;
 	};
 
-	struct ImportedAnimation
+	struct ImportedRig
 	{
 		std::vector<JointNode> nodes;
 		std::vector<DirectX::XMFLOAT4X4> jointOffsets;
@@ -79,7 +79,7 @@ namespace DOG
 	{
 		std::vector<ImportedMaterial> materials;
 		std::vector<SubmeshMetadata> submeshes;
-		ImportedAnimation animation;
+		ImportedRig animation;
 		ImportedMesh mesh;
 	};
 }

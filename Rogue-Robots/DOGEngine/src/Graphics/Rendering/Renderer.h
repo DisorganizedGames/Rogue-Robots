@@ -124,7 +124,5 @@ namespace DOG::gfx
 	public:
 		//TMP
 		std::unique_ptr<AnimationManager> m_boneJourno;
-		std::vector<DirectX::XMFLOAT4X4> m_joints;
-		bool m_bonesLoaded = false;
 	};
 }

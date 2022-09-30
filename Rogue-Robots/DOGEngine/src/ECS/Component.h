@@ -51,13 +51,13 @@ namespace DOG
 
 	struct AnimationComponent
 	{
+		// initial animation component, liable to changge
 		i32 offset;
 		i32 animationID[2] = { 0, -1 };
 		f32 tick[2] = { 0.f, 0.f };
 		f32 normalizedTime[2] = { 0.f, 0.f };
 		f32 timeScale[2] = { 1.0f, 1.0f };
 		f32 transition = 0.0f;
-		//tmp for testing different blending
 		i32 mode = 0;
 		f32 bf = 0.0f;
 	};
