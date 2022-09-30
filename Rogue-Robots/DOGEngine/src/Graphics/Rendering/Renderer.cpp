@@ -142,13 +142,9 @@ namespace DOG::gfx
 		m_submissions.push_back(sub);
 	}
 
-	void Renderer::Update(f32 dt)
+	void Renderer::Update(f32)
 	{
-		if (m_bonesLoaded)
-		{
-			m_boneJourno->SpawnControlWindow();
-			m_boneJourno->UpdateSkeleton(0, dt);
-		}
+		m_boneJourno->UpdateJoints();
 	}
 
 	void Renderer::Render(f32)
@@ -196,9 +192,8 @@ namespace DOG::gfx
 							DirectX::XMFLOAT4X4 joints[130];
 						} pfData{};
 
-						auto& updatedJoints = m_boneJourno->GetBones();
-						for (size_t i = 0; i < updatedJoints.size(); i++)
-							pfData.joints[i] = updatedJoints[i];
+						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); i++)
+							pfData.joints[i] = m_boneJourno->m_vsJoints[i];
 
 						DirectX::XMVECTOR tmp;
 						auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);

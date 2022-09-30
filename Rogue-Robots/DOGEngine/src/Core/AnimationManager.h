@@ -1,60 +1,79 @@
 #pragma once
 
-#include "DOGEngineTypes.h"
 #include "../Graphics/RHI/ImGUIBackend.h"
+#include "../ECS/EntityManager.h"
+#include "../ECS/Component.h"
 
+#include "Types/AssetTypes.h"
+#include "DOGEngineTypes.h"
 
-enum class KeyType
+namespace DOG
 {
-	Scale,
-	Rotation,
-	Translation,
-};
-
-// rip BoneJovi
-class AnimationManager 
-{
-private:
-	// tmp, unused for now
-	struct LastSRT
+	// rip BoneJovi
+	class AnimationManager
 	{
-		u8 srt[3] = { 0, 0, 0 };
+	private:
+		// tmp
+		static constexpr u8 MAX_ANIMATIONS = 2;
+		static constexpr u8 m_animationNumeroUno = 0;
+		static constexpr u8 m_animationNumeroDos = 1;
+		enum class KeyType
+		{
+			Scale,
+			Rotation,
+			Translation,
+		};
+	public:
+		AnimationManager();
+		~AnimationManager();
+		void UpdateJoints();
+		// Matrices to upload to Vertex Shader
+		std::vector<DirectX::XMFLOAT4X4> m_vsJoints;
+	private:
+		void UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
+		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator);
+
+		DirectX::FXMVECTOR GetAnimationComponent(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick);
+		DirectX::FXMMATRIX CalculateNodeTransformation(const DOG::AnimationData&, i32 nodeID, f32 animTick);
+		DirectX::FXMMATRIX CalculateBlendTransformation(i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
+	private:
+		bool m_bonesLoaded = false;
+		static constexpr i32 m_rootNodeIdx = 0;
+		static constexpr i32 m_rootBoneIdx = 2;
+		static constexpr DirectX::XMFLOAT3 m_baseScale = { 1.f, 1.f, 1.f };
+		static constexpr DirectX::XMFLOAT4 m_baseRotation = { 0.f, 0.f, 0.f, 0.f };
+		static constexpr DirectX::XMFLOAT3 m_baseTranslation = { 0.f, 0.f, 0.f };
+		// tmp for testing different blend types.
+		static constexpr i32 m_modeImguiBlend = 0;
+		static constexpr i32 m_modeTransitionLinearBlend = 1;
+		static constexpr i32 m_modeTransitionBezierBlend = 2;
+		static constexpr i32 m_noAnimation = -1;
+		// IMGUI RELATED
+		i32 m_imguiProfilePerformUpdate = 1;
+		bool m_imguiRootTranslation = false;
+		i32 m_imguiSelectedBone = 1;
+		std::vector<DirectX::XMFLOAT3> m_imguiSca;
+		std::vector<DirectX::XMFLOAT3> m_imguiRot;
+		std::vector<DirectX::XMFLOAT3> m_imguiPos;
+
+		static constexpr f32 m_imguiBlendMin = 0.0f;
+		static constexpr f32 m_imguiBlendMax = 1.0f;
+		static constexpr f32 m_imguiTransitionMin = 0.0f;
+		static constexpr f32 m_imguiTransitionMax = 1.0f;
+		static constexpr f32 m_imguiTimeScaleMin = -2.0f;
+		static constexpr f32 m_imguiTimeScaleMax = 2.0f;
+		static constexpr i32 m_imguiNumUpdatesMin = 0;
+		static constexpr i32 m_imguiNumUpdatesMax = 100;
+		static constexpr f32 m_imguiJointRotMin = -180.0f;
+		static constexpr f32 m_imguiJointRotMax = 180.0f;
+		static constexpr f32 m_imguiJointScaMin = -10.0f;
+		static constexpr f32 m_imguiJointScaMax = 10.0f;
+		static constexpr f32 m_imguiJointPosMin = -1.0f;
+		static constexpr f32 m_imguiJointPosMax = 1.0f;
+		static constexpr f32 m_imguiNormalizedTimeMin = 0.0f;
+		static constexpr f32 m_imguiNormalizedTimeMax = 1.0f;
+	public:
+		void SpawnControlWindow(bool& open);
 	};
-	std::vector<LastSRT> m_lastSRTkeys;
-public:
-	AnimationManager();
-	~AnimationManager();
-	void UpdateSkeleton(u32 skeletonId, f32 dt);
-	void SetImportedAnimations(DOG::ImportedAnimation& ia);
-	std::vector<DirectX::XMFLOAT4X4>& GetBones() { return m_vsJoints; };
-private:
-	DirectX::FXMMATRIX CalculateBlendTransformation(i32 nodeID);
-	DirectX::FXMMATRIX CalculateNodeTransformation(const DOG::AnimationData&, i32 nodeID, f32 animTick);
-	DirectX::XMVECTOR GetAnimationComponent(const std::vector<DOG::AnimationKey>& keys, KeyType component, f32 tick);
-	
-	// Collection of the rigs and corresponding animations used in game (tmp)
-	std::vector<DOG::ImportedAnimation> m_rigs;
-	// Matrices to upload to Vertex Shader
-	std::vector<DirectX::XMFLOAT4X4> m_vsJoints;
-private:
-	f32 m_currentTick = 0.0f;
-	// IMGUI RELATED
-	int m_imguiProfilePerformUpdate = 1;
-	bool m_imguiTestAnimationBlend = false;
-	f32 m_imguiBlend = 0.0f;
-	i32 m_imguiAnimation2 = 0;
-	f32 m_imguiAnimTime2 = 0.0f;
-	bool m_imguiRootTranslation = true; // apply root animation translation or not
-	bool m_imguiPlayAnimation = true;
-	bool m_imguiBindPose = false;
-	i32 m_imguiSelectedBone = 1;
-	i32 m_imguiAnimation = 0;
-	f32 m_imguiTimeScale = 1.0f;
-	f32 m_imguiAnimTime = 0.0f;
-	std::vector<DirectX::XMFLOAT3> m_imguiScale;
-	std::vector<DirectX::XMFLOAT3> m_imguiRot;
-	std::vector<DirectX::XMFLOAT3> m_imguiPos;
-public:
-	void SpawnControlWindow();
-};
+}
 

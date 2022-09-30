@@ -88,22 +88,12 @@ namespace DOG
 							m_renderer->SubmitMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
 					}
 				});
-			if (!m_renderer->m_bonesLoaded) {
-				EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
-					{
-						ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-						if (model)
-							if(modelaC.animationID == 0)
-								m_renderer->SetBones(model->animation);
-					});
-			}
-			
+
 			auto mainCam = CameraComponent::s_mainCamera;
 			auto& proj = (DirectX::XMMATRIX&)mainCam->projMatrix;
 			m_renderer->SetMainRenderCamera(mainCam->viewMatrix, &proj);
 			
-			
-			m_renderer->Update((f32)Time::DeltaTime());
+			m_renderer->Update(0.0f);
 			m_renderer->Render(0.0f);
 
 			m_renderer->EndFrame_GPU(true);

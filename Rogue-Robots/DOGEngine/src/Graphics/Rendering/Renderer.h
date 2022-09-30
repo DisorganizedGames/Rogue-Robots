@@ -123,13 +123,5 @@ namespace DOG::gfx
 
 		//TMP
 		std::unique_ptr<AnimationManager> m_boneJourno;
-	public:
-		//TMP
-		bool m_bonesLoaded = false;
-		void SetBones(DOG::ImportedAnimation& ia)
-		{
-			m_boneJourno->SetImportedAnimations(ia);
-			m_bonesLoaded = true;
-		}
 	};
 }

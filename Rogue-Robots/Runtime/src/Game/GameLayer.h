@@ -26,6 +26,7 @@ private:
 	u32 m_greenCube{ 0 };
 	u32 m_blueCube{ 0 };
 	u32 m_magentaCube{ 0 };
+	std::vector<u32> m_shapes;
 	DOG::EntityManager& m_entityManager;
 	std::vector<std::shared_ptr<LuaInterface>> m_luaInterfaces;
 	std::shared_ptr<MainPlayer> m_player;
