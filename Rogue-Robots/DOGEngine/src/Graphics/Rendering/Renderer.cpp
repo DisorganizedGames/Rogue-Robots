@@ -247,7 +247,33 @@ namespace DOG::gfx
 				{
 					rd->Cmd_SetPipeline(cmdl, m_testCompPipe);
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, ShaderArgs()
-						.AppendConstant((u32)resources.GetView(RG_RESOURCE(LitHDR))));
+						.AppendConstant((u32)resources.GetView(RG_RESOURCE(LitHDR)))
+						.AppendConstant(1)		// Red contrib
+						.AppendConstant(0)
+						.AppendConstant(0)
+						.AppendConstant(10));	// Delta
+					rd->Cmd_Dispatch(cmdl, 25, 14, 1);
+				});
+		}
+
+		// Compute modify
+		{
+			struct PassData {};
+			rg.AddPass<PassData>("Compute2",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					builder.ReadWriteTarget(RG_RESOURCE(LitHDR),
+						TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+				},
+				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				{
+					rd->Cmd_SetPipeline(cmdl, m_testCompPipe);
+					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, ShaderArgs()
+						.AppendConstant((u32)resources.GetView(RG_RESOURCE(LitHDR)))
+						.AppendConstant(0)
+						.AppendConstant(1)		// Green contrib
+						.AppendConstant(0)
+						.AppendConstant(7));	// Delta
 					rd->Cmd_Dispatch(cmdl, 25, 14, 1);
 				});
 		}
@@ -258,11 +284,11 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("Blit to HDR Pass",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
-					builder.ImportTexture(RG_RESOURCE(Backbuffer1), m_sc->GetNextDrawSurface(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
+					builder.ImportTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
 
 					builder.ReadResource(RG_RESOURCE(LitHDR), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
-					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer1), RenderPassAccessType::ClearPreserve,
+					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 				},
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
@@ -282,7 +308,7 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("ImGUI Pass",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
-					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer1), RenderPassAccessType::PreservePreserve,
+					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer), RenderPassAccessType::PreservePreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 				},
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)

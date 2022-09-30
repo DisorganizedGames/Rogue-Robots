@@ -1,7 +1,11 @@
 
 struct PushConstantElement
 {
-    uint test;
+    uint tex;
+    uint rContrib;
+    uint gContrib;
+    uint bContrib;
+    uint step;
 };
 
 ConstantBuffer<PushConstantElement> g_constants : register(b0, space0);
@@ -9,7 +13,7 @@ ConstantBuffer<PushConstantElement> g_constants : register(b0, space0);
 [numthreads(8, 8, 1)]
 void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadID)
 {
-    RWTexture2D<float4> tex = ResourceDescriptorHeap[g_constants.test];
+    RWTexture2D<float4> tex = ResourceDescriptorHeap[g_constants.tex];
         
-    tex[globalId.xy * float2(10, 10)] = float4(0.f, 1.f, 0.f, 1.f);
+    tex[globalId.xy * g_constants.step.rr] = float4(g_constants.rContrib, g_constants.gContrib, g_constants.bContrib, 1.f);
 }
