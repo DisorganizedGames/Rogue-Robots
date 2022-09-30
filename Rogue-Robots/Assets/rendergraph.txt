@@ -1,12 +1,4 @@
 digraph G {
-"ImGUI Pass" -> "Awiie Pass"
-"ImGUI Pass" -> "Awiie Pass 2"
-"ImGUI Pass" -> "Awiie Pass 3"
-"ImGUI Pass" -> "After Pass"
 "Forward Pass" -> "Blit to HDR Pass"
 "Blit to HDR Pass" -> "ImGUI Pass"
-"Awiie Pass" -> "After Pass"
-"Awiie Pass 2" -> "After Pass"
-"After Pass" -> "Read Pass"
-"Awiie Pass 3" -> "After Pass"
 }
