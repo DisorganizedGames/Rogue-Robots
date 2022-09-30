@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "Window.h"
 #include "Time.h"
+#include "../Physics/BulletPhysics.h"
 #include "AnimationManager.h"
 #include "AssetManager.h"
 #include "../ECS/EntityManager.h"
@@ -43,6 +44,9 @@ namespace DOG
 	using namespace DOG::gfx;
 	void Application::Run() noexcept
 	{
+		BulletPhysics g;
+		g.BulletTest();
+
 		while (m_isRunning)
 		{
 			Time::Start();
@@ -51,6 +55,8 @@ namespace DOG
 			// Early break if WM tells us to
 			if (!m_isRunning)
 				break;
+
+
 
 			// All ImGUI calls must happen after this call
 			m_renderer->BeginGUI();
