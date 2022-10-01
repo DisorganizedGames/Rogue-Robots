@@ -299,9 +299,8 @@ namespace DOG::gfx
 				uavBarrier = GPUBarrier::UAV(Texture(resource));
 			}
 
-			// Assure that an unordered access always gets write results (read text further up)
-			if (uavBarrier && currState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS &&
-				desiredState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+			// Assure that any acceses AFTER an unordered access always gets write results
+			if (uavBarrier && currState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
 				depLevel.AddEntryBarrier(*uavBarrier);
 	
 			// No need for state transition, return early.
