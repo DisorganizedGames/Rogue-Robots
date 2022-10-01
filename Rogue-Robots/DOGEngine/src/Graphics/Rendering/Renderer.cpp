@@ -47,7 +47,7 @@ namespace DOG::gfx
 		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeTextures, S_MAX_FIF);
 
 
-		const u32 maxConstantsPerFrame = 500;
+		const u32 maxConstantsPerFrame = 500 * 32;
 		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), maxConstantsPerFrame);
 		m_cmdl = m_rd->AllocateCommandList();
 
@@ -183,7 +183,7 @@ namespace DOG::gfx
 					rd->Cmd_SetIndexBuffer(cmdl, m_globalMeshTable->GetIndexBuffer());
 					for (const auto& sub : m_submissions)
 					{
-						auto pfConstant = m_dynConstants->Allocate();
+						auto pfConstant = m_dynConstants->Allocate(32);
 						struct PerFrameData
 						{
 							DirectX::XMMATRIX world, view, proj;
