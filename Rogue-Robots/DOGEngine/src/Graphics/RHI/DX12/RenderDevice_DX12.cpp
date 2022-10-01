@@ -154,12 +154,12 @@ namespace DOG::gfx
 		hr = m_dma->CreateResource(&ad, &rd, initState, clearVal ? &clearVal.value() : nullptr, storage.alloc.GetAddressOf(), IID_PPV_ARGS(storage.resource.GetAddressOf()));
 		HR_VFY(hr);
 
-		// Hold the original resource place on a certain heap on a certain offset
 #ifdef GPU_VALIDATION_ON
+		// Hold the original resource place on a certain heap on a certain offset
+		// intentionally leak to avoid crashing CreatePlacedResource
 		//auto& heapMap = m_mapping[(u64)storage.alloc->GetHeap()];
 		//heapMap[storage.alloc->GetOffset()].push_back(storage.resource);
-		// intentionally leak to avoid crashing CreatePlacedResource
-		storage.resource->AddRef();	
+		//storage.resource->AddRef();	
 #endif
 
 
@@ -444,17 +444,11 @@ namespace DOG::gfx
 			{
 				ID3D12DescriptorHeap* dheaps[] = { m_descriptorMgr->get_gpu_dh_resource() };
 				list->SetDescriptorHeaps(_countof(dheaps), dheaps);
+
+				// Set both..
+				list->SetGraphicsRootSignature(m_gfxRsig.Get());
+				list->SetComputeRootSignature(m_gfxRsig.Get());
 			}
-
-			// Set globals
-			//if (queueType == QueueType::Graphics)
-			//	list->SetGraphicsRootSignature(m_gfxRsig.Get());
-			//else if (queueType == QueueType::Compute)
-			//	list->SetComputeRootSignature(m_gfxRsig.Get());
-
-			// Set both..
-			list->SetGraphicsRootSignature(m_gfxRsig.Get());
-			list->SetComputeRootSignature(m_gfxRsig.Get());
 		};
 
 		// Re-use if any
