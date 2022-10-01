@@ -141,9 +141,6 @@ namespace DOG::gfx
 
 	void RGResourceManager::RealizeResources()
 	{
-		// https://github.com/DisorganizedGames/Rogue-Robots/blob/RenderGraph/Rogue-Robots/DOGEngine/src/Graphics/Rendering/RenderGraph/RGResourceRepo.cpp
-		// Create textures
-
 		for (auto& [_, resource] : m_resources)
 		{
 			// We are only interested in creating resources for Declared resources
@@ -151,7 +148,7 @@ namespace DOG::gfx
 				continue;
 
 			/*
-				We eventually want to replace this with Memory Aliased resources..
+				@todo: We eventually want add memory aliasing to Textures
 			*/
 			const RGResourceDeclared& decl = std::get<RGResourceDeclared>(resource.variants);
 			if (resource.resourceType == RGResourceType::Texture)
