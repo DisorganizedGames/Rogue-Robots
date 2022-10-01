@@ -26,7 +26,6 @@ namespace DOG
 		void UpdateJoints();
 		// Matrices to upload to Vertex Shader
 		std::vector<DirectX::XMFLOAT4X4> m_vsJoints;
-		bool m_bonesLoaded = false;
 	private:
 		void UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
 		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator);
@@ -35,6 +34,7 @@ namespace DOG
 		DirectX::FXMMATRIX CalculateNodeTransformation(const DOG::AnimationData&, i32 nodeID, f32 animTick);
 		DirectX::FXMMATRIX CalculateBlendTransformation(i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 	private:
+		bool m_bonesLoaded = false;
 		// IMGUI RELATED
 		i32 m_imguiProfilePerformUpdate = 1;
 		bool m_imguiRootTranslation = false;

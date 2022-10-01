@@ -82,20 +82,6 @@ namespace DOG
 					}
 				});
 
-
-			if (!m_renderer->m_boneJourno->m_bonesLoaded) {
-				EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
-				{
-					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-					if (model && modelaC.animationID[0] == 0)
-						m_renderer->m_boneJourno->m_bonesLoaded = true;
-				});
-			}
-			else if (m_renderer->m_boneJourno->m_bonesLoaded)
-			{
-				m_renderer->m_boneJourno->UpdateJoints();
-			}
-
 			auto mainCam = CameraComponent::s_mainCamera;
 			auto& proj = (DirectX::XMMATRIX&)mainCam->projMatrix;
 			m_renderer->SetMainRenderCamera(mainCam->viewMatrix, &proj);

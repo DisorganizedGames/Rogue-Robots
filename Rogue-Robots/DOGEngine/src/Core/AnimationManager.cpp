@@ -24,6 +24,18 @@ namespace DOG
 
 	void AnimationManager::UpdateJoints()
 	{
+		if (!m_bonesLoaded) {
+			EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
+				{
+					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
+					if (model && modelaC.offset == 0)
+						m_bonesLoaded = true;
+				});
+		}
+		if (!m_bonesLoaded)
+		{
+			return;
+		}
 		EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC)
 		{
 			ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);

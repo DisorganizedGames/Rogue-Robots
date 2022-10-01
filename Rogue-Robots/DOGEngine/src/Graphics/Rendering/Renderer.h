@@ -120,8 +120,6 @@ namespace DOG::gfx
 		std::unique_ptr<RenderGraph> m_rg;
 		std::unique_ptr<RGResourceManager> m_rgResMan;
 
-		
-	public:
 		//TMP
 		std::unique_ptr<AnimationManager> m_boneJourno;
 	};

@@ -135,7 +135,7 @@ namespace DOG::gfx
 
 	void Renderer::Update(f32)
 	{
-		
+		m_boneJourno->UpdateJoints();
 	}
 
 	void Renderer::Render(f32)
