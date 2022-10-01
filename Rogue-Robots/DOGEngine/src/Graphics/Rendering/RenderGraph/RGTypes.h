@@ -112,6 +112,23 @@ namespace DOG::gfx
 
 	struct RGBufferDesc
 	{
+		static RGBufferDesc ReadWrite(u32 size, 
+			D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, 
+			D3D12_RESOURCE_STATES initState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+		{
+			RGBufferDesc d{};
+			d.size = size;
+			d.flags = flags;
+			d.initState = initState;
+			return d;
+		}
+
+		RGBufferDesc& AddFlag(D3D12_RESOURCE_FLAGS flag)
+		{
+			flags |= flag;
+			return *this;
+		}
+
 		u32 size{ 0 };
 		D3D12_RESOURCE_FLAGS flags{ D3D12_RESOURCE_FLAG_NONE };
 		D3D12_RESOURCE_STATES initState{ D3D12_RESOURCE_STATE_COMMON };

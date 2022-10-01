@@ -311,7 +311,7 @@ namespace DOG::gfx
 
 			// We never use counter buffers, user has to create their own RW buffer with counters and do InterlockedAdd
 			// This makes counting explicit on the user side and simplifies API (always no counter)
-			m_device->CreateUnorderedAccessView(buffer_storage.resource.Get(), nullptr, &uavd, view_desc.cpu_handle(2));
+			m_device->CreateUnorderedAccessView(buffer_storage.resource.Get(), nullptr, &uavd, view_desc.cpu_handle(0));
 		}
 		else if (desc.viewType == ViewType::RaytracingAS)
 		{

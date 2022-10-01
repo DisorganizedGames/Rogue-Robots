@@ -24,10 +24,12 @@ namespace DOG::gfx
 		// These interfaces are exposed through PassBuilder
 		void DeclareTexture(RGResourceID id, RGTextureDesc desc);
 		void ImportTexture(RGResourceID id, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
-		void AliasTexture(RGResourceID newID, RGResourceID oldID);
-		void DeclareProxy(RGResourceID id);
 
-	
+		void DeclareBuffer(RGResourceID id, RGBufferDesc desc);
+		void ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
+
+		void AliasResource(RGResourceID newID, RGResourceID oldID, RGResourceType type);
+		void DeclareProxy(RGResourceID id);
 	private:
 
 		struct RGResourceDeclared

@@ -296,7 +296,7 @@ namespace DOG::gfx
 					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 					currState, desiredState);
 
-				uavBarrier = GPUBarrier::UAV(Texture(resource));
+				uavBarrier = GPUBarrier::UAV(Buffer(resource));
 			}
 
 			// Assure that any acceses AFTER an unordered access always gets write results
@@ -493,6 +493,16 @@ namespace DOG::gfx
 		m_resMan->ImportTexture(name, texture, entryState, exitState);
 	}
 
+	void RenderGraph::PassBuilder::DeclareBuffer(RGResourceID id, RGBufferDesc desc)
+	{
+		m_resMan->DeclareBuffer(id, desc);
+	}
+
+	void RenderGraph::PassBuilder::ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState)
+	{
+		m_resMan->ImportBuffer(id, buffer, entryState, exitState);
+	}
+
 	void RenderGraph::PassBuilder::ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc)
 	{
 		assert(IsReadState(state));
@@ -515,9 +525,6 @@ namespace DOG::gfx
 		m_pass.inputs.push_back(input);
 	}
 
-	/*
-		No aliasing support
-	*/
 	void RenderGraph::PassBuilder::ReadOrWriteDepth(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc)
 	{
 		// DSV read
@@ -569,7 +576,7 @@ namespace DOG::gfx
 			assert(!m_globalData.writes.contains(newID));
 			m_globalData.writes.insert(newID);
 
-			m_resMan->AliasTexture(newID, prevID);
+			m_resMan->AliasResource(newID, prevID, RGResourceType::Texture);
 
 			PassIO input;
 			input.originalID = id;
@@ -624,7 +631,7 @@ namespace DOG::gfx
 			assert(!m_globalData.writes.contains(newID));
 			m_globalData.writes.insert(newID);
 
-			m_resMan->AliasTexture(newID, prevID);
+			m_resMan->AliasResource(newID, prevID, RGResourceType::Texture);
 
 			PassIO input;
 			input.originalID = id;
@@ -653,6 +660,62 @@ namespace DOG::gfx
 			output.desiredState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 			m_pass.outputs.push_back(output);
 		
+			m_globalData.writes.insert(id);
+		}
+	}
+
+	void RenderGraph::PassBuilder::ReadWriteTarget(RGResourceID id, BufferViewDesc desc)
+	{
+		/*
+			Code is literal copy of ReadWriteTarget for texture. @todo: Refactor
+		*/
+
+		assert(desc.viewType == ViewType::UnorderedAccess);
+
+		// Automatically aliases if same resource already exists
+		if (m_globalData.writes.contains(id))
+		{
+			// Explicitly connects previous reads on ID to newID
+			// The previous reads that are connect are the previous reads SINCE a write.
+			const auto ids = ResolveAliasingIDs(id);
+
+			// Explicitly connects prevID to newID
+			const auto& prevID = ids.first;
+			const auto& newID = ids.second;
+
+			// Add aliased unordered access
+			assert(!m_globalData.writes.contains(newID));
+			m_globalData.writes.insert(newID);
+
+			m_resMan->AliasResource(newID, prevID, RGResourceType::Buffer);
+
+			PassIO input;
+			input.originalID = id;
+			input.id = prevID;
+			input.type = RGResourceType::Buffer;
+			input.aliasWrite = true;
+			m_pass.inputs.push_back(input);
+
+			PassIO output;
+			output.originalID = id;
+			output.id = newID;
+			output.type = RGResourceType::Buffer;
+			output.desiredState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+			output.viewDesc = desc;
+			output.aliasWrite = true;
+			m_pass.outputs.push_back(output);
+		}
+		else
+		{
+			m_globalData.writeCount[id] = 1;
+
+			PassIO output;
+			output.id = id;
+			output.type = RGResourceType::Buffer;
+			output.viewDesc = desc;
+			output.desiredState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+			m_pass.outputs.push_back(output);
+
 			m_globalData.writes.insert(id);
 		}
 	}
@@ -713,33 +776,6 @@ namespace DOG::gfx
 	}
 
 
-
-
-
-	void RenderGraph::PassBuilder::WriteAliasedRenderTarget(RGResourceID , RGResourceID , RenderPassAccessType , TextureViewDesc )
-	{
-		//assert(desc.viewType == ViewType::RenderTarget);
-
-		//assert(!m_globalData.writes.contains(newID));
-		//m_globalData.writes.insert(newID);
-
-		//m_resMan->AliasTexture(newID, oldID);
-
-		//PassIO input;
-		//input.id = oldID;
-		//input.type = RGResourceType::Texture;
-		//input.aliasWrite = true;
-		//m_pass.inputs.push_back(input);
-
-		//PassIO output;
-		//output.id = newID;
-		//output.type = RGResourceType::Texture;
-		//output.desiredState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		//output.viewDesc = desc;
-		//output.aliasWrite = true;
-		//output.rpAccessType = access;
-		//m_pass.outputs.push_back(output);
-	}
 
 
 

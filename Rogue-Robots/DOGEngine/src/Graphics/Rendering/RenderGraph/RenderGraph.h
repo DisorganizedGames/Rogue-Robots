@@ -129,11 +129,15 @@ namespace DOG::gfx
 			// ResourceManager interface
 			void DeclareTexture(RGResourceID id, RGTextureDesc desc);
 			void ImportTexture(RGResourceID id, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
+			void DeclareBuffer(RGResourceID id, RGBufferDesc desc);
+			void ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
 
 			void ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc);
-			void ReadOrWriteDepth(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
+			void ReadOrWriteDepth(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);		// No aliasing support
 			void WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
 			void ReadWriteTarget(RGResourceID id, TextureViewDesc desc);
+
+			void ReadWriteTarget(RGResourceID id, BufferViewDesc desc);
 
 
 		private:
@@ -144,9 +148,7 @@ namespace DOG::gfx
 			RGResourceID GetNextID(RGResourceID id);
 			void FlushReadsAndConnectProxy(RGResourceID id);
 
-			// Aliasing now handled internally
-			void WriteAliasedRenderTarget(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc);
-
+		
 
 			// Proxy now handled internally
 			void ProxyWrite(RGResourceID id);
