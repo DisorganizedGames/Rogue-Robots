@@ -435,12 +435,12 @@ namespace DOG::gfx
 				{
 					const auto& viewDesc = std::get<BufferViewDesc>(*input.viewDesc);
 
+					// @todo: do we need view checks?
+
 					// Create view and immediately convert to global descriptor index
 					auto view = m_rd->CreateView(Buffer(m_resMan->GetResource(input.id)), viewDesc);
 					passResources.m_bufferViews.push_back(view);
 
-					// @todo: support buffer
-					assert(false);
 				}
 			}
 
