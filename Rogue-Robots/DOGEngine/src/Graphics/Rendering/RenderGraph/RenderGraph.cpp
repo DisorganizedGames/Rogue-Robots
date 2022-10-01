@@ -716,7 +716,7 @@ namespace DOG::gfx
 
 
 
-	void RenderGraph::PassBuilder::WriteAliasedRenderTarget(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc)
+	void RenderGraph::PassBuilder::WriteAliasedRenderTarget(RGResourceID , RGResourceID , RenderPassAccessType , TextureViewDesc )
 	{
 		//assert(desc.viewType == ViewType::RenderTarget);
 
@@ -869,7 +869,7 @@ namespace DOG::gfx
 
 
 
-	u64 RenderGraph::PassResources::GetView(RGResourceID id) const
+	u32 RenderGraph::PassResources::GetView(RGResourceID id) const
 	{
 		assert(m_views.contains(id));
 		return m_views.find(id)->second;

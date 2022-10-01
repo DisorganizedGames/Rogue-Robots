@@ -247,7 +247,7 @@ namespace DOG::gfx
 				{
 					rd->Cmd_SetPipeline(cmdl, m_testCompPipe);
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, ShaderArgs()
-						.AppendConstant((u32)resources.GetView(RG_RESOURCE(LitHDR)))
+						.AppendConstant(resources.GetView(RG_RESOURCE(LitHDR)))
 						.AppendConstant(1)		// Red contrib
 						.AppendConstant(0)
 						.AppendConstant(0)
@@ -269,7 +269,7 @@ namespace DOG::gfx
 				{
 					rd->Cmd_SetPipeline(cmdl, m_testCompPipe);
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, ShaderArgs()
-						.AppendConstant((u32)resources.GetView(RG_RESOURCE(LitHDR)))
+						.AppendConstant(resources.GetView(RG_RESOURCE(LitHDR)))
 						.AppendConstant(0)
 						.AppendConstant(1)		// Green contrib
 						.AppendConstant(0)
@@ -295,7 +295,7 @@ namespace DOG::gfx
 				{
 					rd->Cmd_SetPipeline(cmdl, m_pipe);
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, ShaderArgs()
-						.AppendConstant((u32)resources.GetView(RG_RESOURCE(LitHDR))));
+						.AppendConstant(resources.GetView(RG_RESOURCE(LitHDR))));
 					rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
 				});
 

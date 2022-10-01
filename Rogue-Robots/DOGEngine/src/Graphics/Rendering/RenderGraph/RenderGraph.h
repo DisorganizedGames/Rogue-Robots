@@ -27,7 +27,7 @@ namespace DOG::gfx
 			PassResources() = default;
 
 			// Pass local
-			u64 GetView(RGResourceID id) const;			// SRV/UAVs
+			u32 GetView(RGResourceID id) const;			// SRV/UAVs
 
 			// Graph global
 			Texture GetTexture(RGResourceID id);
@@ -35,7 +35,7 @@ namespace DOG::gfx
 
 		private:
 			friend class RenderGraph;
-			std::unordered_map<RGResourceID, u64> m_views;		// Views already converted to global indices
+			std::unordered_map<RGResourceID, u32> m_views;		// Views already converted to global indices
 
 			// Held for cleanup
 			std::vector<TextureView> m_textureViews;
