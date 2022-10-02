@@ -109,6 +109,69 @@ namespace DOG
 		}
 	}
 
+	void AssetManager::LoadShapeAssetInternal(const std::string& path, const Shape shape, const u32 tessFactor1, const u32 tessFactor2, u32 id, ModelAsset* assetOut)
+	{
+		assert(m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory);
+		assert(!(m_assets[id]->loadFlag & AssetLoadFlag::CPUMemory));
+
+		if (m_assets[id]->loadFlag & AssetLoadFlag::Async)
+		{
+			ManagedAsset<ModelAsset>* managedModel = static_cast<ManagedAsset<ModelAsset>*>(m_assets[id]);
+			m_assets[id]->m_isLoadingConcurrent = 1;
+
+			CallAsync([managedModel = managedModel, id = id, model = assetOut, path = path, shape = shape, tessFactor1 = tessFactor1, tessFactor2 = tessFactor2, lock = &m_assets[id]->m_isLoadingConcurrent]()
+				{
+					DOG::ShapeCreator shapeCreator = DOG::ShapeCreator(shape, tessFactor1, tessFactor2);
+					std::shared_ptr<ImportedModel> asset = shapeCreator.GetResult();
+
+					model->meshAsset.indices = std::move(asset->mesh.indices);
+					model->meshAsset.vertexData = std::move(asset->mesh.vertexData);
+					model->animation = std::move(asset->animation);
+					model->submeshes = std::move(asset->submeshes);
+
+					// Add command that runs on the main thread
+					AssetManager::AddCommand([id = id, managedModel = managedModel, model = model, importedModel = asset](AssetLoadFlag textureLoadFlag)
+						{
+							managedModel->stateFlag |= AssetStateFlag::ExistOnCPU;
+
+							if (managedModel->loadFlag & AssetLoadFlag::CPUMemory)
+								managedModel->loadFlag &= ~AssetLoadFlag::CPUMemory;
+							else
+								managedModel->unLoadFlag |= AssetUnLoadFlag::AllCPU;
+
+							model->materialIndices = AssetManager::Get().LoadMaterials(importedModel->materials, textureLoadFlag);
+							if (managedModel->loadFlag & AssetLoadFlag::GPUMemory)
+							{
+								AssetManager::AddCommand([id = id]() { AssetManager::Get().MoveModelToGPU(id); });
+							}
+						}, managedModel->loadFlag); // send a copy of the flag, as it is not safe to assume it will not change.
+
+					*lock = 0;
+				});
+		}
+		else
+		{
+			DOG::AssimpImporter assimpImporter = DOG::AssimpImporter(path);
+			auto asset = assimpImporter.GetResult();
+
+			assetOut->meshAsset.indices = std::move(asset->mesh.indices);
+			assetOut->meshAsset.vertexData = std::move(asset->mesh.vertexData);
+			assetOut->submeshes = std::move(asset->submeshes);
+			assetOut->animation = std::move(asset->animation);
+
+			assetOut->materialIndices = LoadMaterials(asset->materials, m_assets[id]->loadFlag);
+
+			m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
+
+			if (m_assets[id]->loadFlag & AssetLoadFlag::CPUMemory)
+				m_assets[id]->loadFlag &= ~AssetLoadFlag::CPUMemory;
+			else
+				m_assets[id]->unLoadFlag |= AssetUnLoadFlag::AllCPU;
+
+			AssetManager::AddCommand([idToMove = id]() { AssetManager::Get().MoveModelToGPU(idToMove); });
+		}
+	}
+
 	void AssetManager::LoadTextureAssetInternal(const std::string& path, u32 id, TextureAsset* assetOut)
 	{
 		//LoadTextureSTBI(path, flag, assetOut);
@@ -188,6 +251,33 @@ namespace DOG
 				m_assets[id]->unLoadFlag &= ~AssetUnLoadFlag::AllGPU;
 
 			LoadModelAssetInternal(path, id, p);
+		}
+		assert(id != 0);
+		return id;
+	}
+
+	u32 AssetManager::LoadShapeAsset(const Shape shape, const u32 tessFactor1, const u32 tessFactor2, AssetLoadFlag flag)
+	{
+		u32 id = 0;
+		const std::string path = std::to_string(static_cast<std::underlying_type<Shape>::type>(shape)) +" "+ std::to_string(tessFactor1) + " " + std::to_string(tessFactor2);
+		if (ShapeAssetNeedsToBeLoaded(path, flag, id))
+		{
+			if (id == 0)
+			{
+				id = NextKey();
+				m_assets.insert({ id, new ManagedAsset<ModelAsset>(new ModelAsset) });
+				m_pathTOAssetID[path] = id;
+			}
+			ModelAsset* p = GetAsset<ModelAsset>(id); // GetAsset will clear the async bit of loadFlag
+			m_assets[id]->loadFlag |= flag; // importand that we add the flag after call to GetAsset
+
+			// Stop a potential unload;
+			if (flag & AssetLoadFlag::CPUMemory)
+				m_assets[id]->unLoadFlag &= ~AssetUnLoadFlag::AllCPU;
+			if (flag & AssetLoadFlag::GPUMemory)
+				m_assets[id]->unLoadFlag &= ~AssetUnLoadFlag::AllGPU;
+
+			LoadShapeAssetInternal(path, shape, tessFactor1, tessFactor2, id, p);
 		}
 		assert(id != 0);
 		return id;
@@ -487,6 +577,52 @@ namespace DOG
 			std::cout << "AssetManager::AssetShouldBeLoaded throw. " + path + " does not exist" << std::endl;
 			throw std::runtime_error(path + " does not exist");
 		}
+
+		u32 id = 0;
+		bool assetNeedsToBeLoaded = true;
+		if (m_pathTOAssetID.contains(path))
+		{
+			id = m_pathTOAssetID.at(path);
+			assert(m_assets.contains(id));
+			auto& managedAsset = m_assets[id];
+
+			if (managedAsset->CheckIfLoadingAsync())
+			{
+				// We lack information on where it will be loaded, (need access to the load flag that the async function uses)
+				// This can be problematic if a previus async later want to evict the resource from the memory type a later request wants it to
+				// Assume that it will have the same load flag for now
+				assetNeedsToBeLoaded = false;
+			}
+			else
+			{
+				bool existOnCpuMemory = managedAsset->stateFlag & AssetStateFlag::ExistOnCPU;
+				bool requestedOnCpuMemory = managedAsset->loadFlag & AssetLoadFlag::CPUMemory;
+				bool existOnGpuMemory = managedAsset->stateFlag & AssetStateFlag::ExistOnGPU;
+				bool requestedOnGpuMemory = managedAsset->loadFlag & AssetLoadFlag::GPUMemory;
+
+				bool needToLoadToCpu = false;
+				bool needToLoadToGpu = false;
+
+				if (loadFlag & AssetLoadFlag::CPUMemory)
+				{
+					needToLoadToCpu = !(existOnCpuMemory || requestedOnCpuMemory);
+				}
+
+				if (loadFlag & AssetLoadFlag::GPUMemory)
+				{
+					needToLoadToGpu = !(existOnGpuMemory || requestedOnGpuMemory);
+				}
+				assetNeedsToBeLoaded = needToLoadToCpu || needToLoadToGpu;
+			}
+		}
+
+		assetIDOut = id;
+		return assetNeedsToBeLoaded;
+	}
+
+	bool AssetManager::ShapeAssetNeedsToBeLoaded(const std::string& path, AssetLoadFlag loadFlag, u32& assetIDOut)
+	{
+		assert(loadFlag & AssetLoadFlag::GPUMemory || loadFlag & AssetLoadFlag::CPUMemory);
 
 		u32 id = 0;
 		bool assetNeedsToBeLoaded = true;

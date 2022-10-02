@@ -3,6 +3,7 @@
 #include <Assimp/Importer.hpp>      // C++ importer interface
 #include <Assimp/postprocess.h>     // Post processing flags
 #include <Assimp/pbrmaterial.h>
+#include <DirectXMath.h>
 
 namespace DOG
 {
@@ -143,7 +144,6 @@ namespace DOG
 					DirectX::XMMATRIX(&nameToJoint.at(n->mName.C_Str())->mOffsetMatrix.a1));
 
 			}
-
 
 		// Store vertices BoneWeight and Indices
 		m_model->mesh.vertexData[VertexAttribute::BlendData] = {};

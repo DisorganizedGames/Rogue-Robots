@@ -86,7 +86,7 @@ namespace DOG
 			auto& proj = (DirectX::XMMATRIX&)mainCam->projMatrix;
 			m_renderer->SetMainRenderCamera(mainCam->viewMatrix, &proj);
 			
-			m_renderer->Update((f32)Time::DeltaTime());
+			m_renderer->Update(0.0f);
 			m_renderer->Render(0.0f);
 
 			m_renderer->EndFrame_GPU(true);

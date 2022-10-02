@@ -3,6 +3,13 @@
 
 namespace DOG
 {
+	enum class Shape
+	{
+		cone,
+		prism,
+		sphere,
+		sheet
+	};
 
 	struct ImportedMaterial
 	{
@@ -56,7 +63,7 @@ namespace DOG
 		f32 duration;
 		f32 ticks;
 		f32 ticksPerSec;
-		// following can and should be concatenated once we have final model
+		// following can and should be concatenated once we have final model(s)
 		std::unordered_map<i32, std::vector<AnimationKey>> scaKeys;
 		std::unordered_map<i32, std::vector<AnimationKey>> rotKeys;
 		std::unordered_map<i32, std::vector<AnimationKey>> posKeys;

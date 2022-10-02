@@ -279,7 +279,7 @@ namespace DOG
 		return XMMatrixTranspose(nodeTransform);
 	}
 
-	DirectX::FXMVECTOR AnimationManager::GetAnimationComponent(const std::vector<DOG::AnimationKey>& keys, KeyType component, f32 tick)
+	DirectX::FXMVECTOR AnimationManager::GetAnimationComponent(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick)
 	{
 		using namespace DirectX;
 

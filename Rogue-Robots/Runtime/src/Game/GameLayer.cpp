@@ -13,6 +13,38 @@ GameLayer::GameLayer() noexcept
 	m_magentaCube = am.LoadModelAsset("Assets/magenta_cube.glb");
 	m_mixamo = am.LoadModelAsset("Assets/mixamo/walkmix.fbx");
 
+	// Create some shapes
+	{
+		u32 tessFactor[3] = { 1, 10, 100 };
+		for (u32 i = 0; i < 3; i++) // 3 sheets
+			m_shapes.push_back(am.LoadShapeAsset(Shape::sheet, tessFactor[i]));
+		for (u32 i = 0; i < 3; i++) // 3 spheres
+			m_shapes.push_back(am.LoadShapeAsset(Shape::sphere, 2 + tessFactor[i], 2 + tessFactor[i]));
+		for (u32 i = 0; i < 3; i++) // 3 cones
+			m_shapes.push_back(am.LoadShapeAsset(Shape::cone, 2 + tessFactor[i], 2 + tessFactor[i]));
+		for (u32 i = 0; i < 3; i++) // 3 prisms
+			m_shapes.push_back(am.LoadShapeAsset(Shape::prism, 2 + tessFactor[i], 2 + tessFactor[i]));
+		
+		for (i32 i = 0; i < 4; i++)
+		{
+			for (i32 j = 0; j < 3; j++)
+			{
+				entity e = m_entityManager.CreateEntity();
+				m_entityManager.AddComponent<ModelComponent>(e, m_shapes[i*3+j]);
+				m_entityManager.AddComponent<TransformComponent>(e, Vector3(f32(-3 + j * 3), (f32)(-4.5f + i * 3), 10), Vector3(0, 0, 0));
+			}
+		}
+		entity xAxis = m_entityManager.CreateEntity();
+		m_entityManager.AddComponent<ModelComponent>(xAxis, m_shapes[9]);
+		m_entityManager.AddComponent<TransformComponent>(xAxis, Vector3(0, 0, 0), Vector3(0, 0, DirectX::XM_PIDIV2), Vector3(0.02f, 100, 0.02f));
+		entity yAxis = m_entityManager.CreateEntity();
+		m_entityManager.AddComponent<ModelComponent>(yAxis, m_shapes[10]);
+		m_entityManager.AddComponent<TransformComponent>(yAxis, Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(0.02f, 100, 0.02f));
+		entity zAxis = m_entityManager.CreateEntity();
+		m_entityManager.AddComponent<ModelComponent>(zAxis, m_shapes[11]);
+		m_entityManager.AddComponent<TransformComponent>(zAxis, Vector3(0, 0, 0), Vector3(DirectX::XM_PIDIV2, 0, 0), Vector3(0.02f, 100, 0.02f));
+	}
+
 	entity entity2 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity2, m_greenCube);
 	m_entityManager.AddComponent<TransformComponent>(entity2, Vector3(-4, -2, 5), Vector3(0.1f, 0, 0));

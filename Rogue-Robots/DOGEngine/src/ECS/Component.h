@@ -52,7 +52,7 @@ namespace DOG
 	struct AnimationComponent
 	{
 		// initial animation component, liable to changge
-		i32 offset;
+		i32 offset = 0;
 		i32 animationID[2] = { 0, -1 };
 		f32 tick[2] = { 0.f, 0.f };
 		f32 normalizedTime[2] = { 0.f, 0.f };
