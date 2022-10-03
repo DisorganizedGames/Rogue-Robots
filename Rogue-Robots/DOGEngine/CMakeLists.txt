@@ -29,6 +29,8 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
 	file(GLOB_RECURSE TempGraphics
     "src/Graphics/*.cpp")
 
+add_compile_definitions(TRACY_ENABLE=1)
+
 set(LibraryName "DOGEngine")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/DOGEngine/vendor/includes/")
 set (ExternalLibPath "${CMAKE_SOURCE_DIR}/DOGEngine/vendor/libs")
