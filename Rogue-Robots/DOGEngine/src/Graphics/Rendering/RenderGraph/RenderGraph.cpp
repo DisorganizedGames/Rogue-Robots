@@ -247,7 +247,6 @@ namespace DOG::gfx
 				auto& usageLifetime = m_resMan->GetMutableUsageLifetime(input.id);
 				usageLifetime.first = (std::min)(pass->depth, usageLifetime.first);
 				usageLifetime.second = (std::max)(pass->depth, usageLifetime.second);
-
 			}
 
 			for (const auto& output : pass->outputs)
@@ -262,7 +261,6 @@ namespace DOG::gfx
 				usageLifetime.first = (std::min)(pass->depth, usageLifetime.first);
 				usageLifetime.second = (std::max)(pass->depth, usageLifetime.second);
 			}
-
 		}
 	}
 
@@ -668,6 +666,8 @@ namespace DOG::gfx
 	{
 		/*
 			Code is literal copy of ReadWriteTarget for texture. @todo: Refactor
+			the only difference is the Texture/Buffer enums
+			@todo: refactor this
 		*/
 
 		assert(desc.viewType == ViewType::UnorderedAccess);
