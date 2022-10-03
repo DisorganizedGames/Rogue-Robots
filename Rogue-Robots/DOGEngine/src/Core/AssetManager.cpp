@@ -48,8 +48,7 @@ namespace DOG
 
 	void AssetManager::LoadModelAssetInternal(const std::string& path, u32 id, ModelAsset* assetOut)
 	{
-		assert(m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory);
-		assert(!(m_assets[id]->loadFlag & AssetLoadFlag::CPUMemory));
+		assert(m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory || m_assets[id]->loadFlag & AssetLoadFlag::CPUMemory);
 
 		if (m_assets[id]->loadFlag & AssetLoadFlag::Async)
 		{
@@ -127,7 +126,10 @@ namespace DOG
 							else
 								AssetManager::Get().m_assets[idToMove]->unLoadFlag |= AssetUnLoadFlag::TextureCPU;
 
-							AssetManager::Get().MoveTextureToGPU(idToMove);
+							if (AssetManager::Get().m_assets[idToMove]->loadFlag & AssetLoadFlag::GPUMemory)
+							{
+								AssetManager::Get().MoveTextureToGPU(idToMove);
+							}
 						});
 					*lock = 0;
 				});
@@ -178,8 +180,8 @@ namespace DOG
 				m_assets.insert({ id, new ManagedAsset<ModelAsset>(new ModelAsset) });
 				m_pathTOAssetID[path] = id;
 			}
-			ModelAsset* p = GetAsset<ModelAsset>(id); // GetAsset will clear the async bit of loadFlag
-			m_assets[id]->loadFlag |= flag; // importand that we add the flag after call to GetAsset
+			ModelAsset* p = GetAssetUnsafe<ModelAsset>(id);
+			m_assets[id]->loadFlag |= flag;
 			
 			// Stop a potential unload;
 			if (flag & AssetLoadFlag::CPUMemory)
@@ -204,7 +206,7 @@ namespace DOG
 				m_assets.insert({ id, new ManagedAsset<TextureAsset>(new TextureAsset) });
 				m_pathTOAssetID[path] = id;
 			}
-			TextureAsset* p = GetAsset<TextureAsset>(id);
+			TextureAsset* p = GetAssetUnsafe<TextureAsset>(id);
 			p->srgb = flag & AssetLoadFlag::Srgb;
 			m_assets[id]->loadFlag |= flag;
 			if (flag & AssetLoadFlag::CPUMemory)
@@ -256,14 +258,22 @@ namespace DOG
 
 	Asset* AssetManager::GetBaseAsset(u32 id) const
 	{
-		if (m_assets.contains(id))
-		{
-			return m_assets.at(id)->GetBase();
-		}
-		else
+		if (!m_assets.contains(id))
 		{
 			std::cout << "Warning AssetManager::GetAsset called with invalid id as argument." << std::endl;
 			return nullptr;
+		}
+		else if (m_assets.at(id)->CheckIfLoadingAsync())
+		{
+			return nullptr;
+		}
+		else if(m_assets.at(id)->stateFlag == AssetStateFlag::None)
+		{
+			return nullptr;
+		}
+		else
+		{
+			return m_assets.at(id)->GetBase();
 		}
 	}
 
@@ -304,8 +314,6 @@ namespace DOG
 	{
 		if (m_assets.contains(id) && !m_assets[id]->CheckIfLoadingAsync())
 		{
-			assert(m_assets[id]->stateFlag != AssetStateFlag::None);
-
 			m_assets[id]->UnloadAsset(flag);
 		}
 	}
@@ -369,8 +377,6 @@ namespace DOG
 		gfx::GraphicsBuilder* builder = m_renderer->GetBuilder();
 
 		// Convert ModelAsset and its MeshAsset to MeshSpecification
-		ModelAsset* modelAsset = GetAsset<ModelAsset>(modelID);
-		assert(modelAsset);
 
 		auto&& needToWait = [&](u32 texID) {
 			if (texID == 0) return false;
@@ -379,6 +385,10 @@ namespace DOG
 			
 			return false;
 		};
+
+		ModelAsset* modelAsset = GetAsset<ModelAsset>(modelID);
+		assert(modelAsset);
+
 		for (auto& matIndex : modelAsset->materialIndices)
 		{
 			bool yield = false;
@@ -430,6 +440,9 @@ namespace DOG
 		}
 
 		modelAsset->gfxModel = builder->LoadCustomModel(loadSpec, matSpecs);
+		m_assets[modelID]->stateFlag |= AssetStateFlag::ExistOnGPU;
+		m_assets[modelID]->loadFlag &= ~AssetLoadFlag::GPUMemory;
+
 
 		AssetManager::Get().UnLoadAsset(modelID, m_assets[modelID]->unLoadFlag);
 	}
@@ -447,10 +460,19 @@ namespace DOG
 		assert(m_renderer);
 		gfx::GraphicsBuilder* builder = m_renderer->GetBuilder();
 
+		if (m_assets[textureID]->CheckIfLoadingAsync())
+		{
+			AssetManager::AddCommand([idToMove = textureID]() { AssetManager::Get().MoveTextureToGPU(idToMove); });
+			return;
+		}
+
+
 		gfx::GraphicsBuilder::MippedTexture2DSpecification textureSpec{};
 
 		TextureAsset* asset = GetAsset<TextureAsset>(textureID);
-		assert(asset); // Could this happen? And if it does i want to know about it. //nr of times it has happend: 1
+		assert(asset); // Could this happen? And if it does i want to know about it. //nr of times it has happend: 3; This should be fixed, if it happens again tell me.
+
+
 
 		gfx::GraphicsBuilder::TextureSubresource subres{};
 		subres.width = asset->width;
@@ -469,6 +491,8 @@ namespace DOG
 		asset->textureViewGPU = builder->CreateTextureView(asset->textureGPU, desc);
 
 		m_assets[textureID]->stateFlag |= AssetStateFlag::ExistOnGPU;
+		m_assets[textureID]->loadFlag &= ~AssetLoadFlag::GPUMemory;
+
 
 		AssetManager::Get().UnLoadAsset(textureID, m_assets[textureID]->unLoadFlag);
 	}
@@ -498,9 +522,7 @@ namespace DOG
 
 			if (managedAsset->CheckIfLoadingAsync())
 			{
-				// We lack information on where it will be loaded, (need access to the load flag that the async function uses)
-				// This can be problematic if a previus async later want to evict the resource from the memory type a later request wants it to
-				// Assume that it will have the same load flag for now
+				managedAsset->loadFlag |= loadFlag;
 				assetNeedsToBeLoaded = false;
 			}
 			else

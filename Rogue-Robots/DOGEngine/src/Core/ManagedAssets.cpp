@@ -39,18 +39,12 @@ namespace DOG
 
 	ModelAsset* ManagedAsset<ModelAsset>::Get()
 	{
-		if (CheckIfLoadingAsync())
-			return nullptr;
-		else
-			return m_asset;
+		return m_asset;
 	}
 
 	Asset* ManagedAsset<ModelAsset>::GetBase()
 	{
-		if (CheckIfLoadingAsync())
-			return nullptr;
-		else
-			return static_cast<Asset*>(m_asset);
+		return static_cast<Asset*>(m_asset);
 	}
 
 	void ManagedAsset<ModelAsset>::UnloadAsset(AssetUnLoadFlag flag)
@@ -63,19 +57,35 @@ namespace DOG
 			std::vector<SubmeshMetadata>().swap(m_asset->submeshes); // This will release the memory
 
 			m_asset->meshAsset = MeshAsset();
+
+			stateFlag &= ~AssetStateFlag::ExistOnCPU;
 		}
-		if (flag & AssetUnLoadFlag::TextureCPU)
+
+		if (flag & AssetUnLoadFlag::MeshGPU)
 		{
-			auto& matMan = AssetManager::Get().GetMaterialManager();
-			for (auto& matIndex : m_asset->materialIndices)
-			{
-				const Material& mat = matMan.GetMaterial(matIndex);
-				AssetManager::Get().UnLoadAsset(mat.albedo, flag);
-				AssetManager::Get().UnLoadAsset(mat.emissive, flag);
-				AssetManager::Get().UnLoadAsset(mat.normalMap, flag);
-				AssetManager::Get().UnLoadAsset(mat.metallicRoughness, flag);
-			}
+			// TODO
+
+			stateFlag &= ~AssetStateFlag::ExistOnGPU;
+			m_asset->gfxModel = std::nullopt;
 		}
+
+		if (flag & AssetUnLoadFlag::TextureGPU)
+		{
+			stateFlag &= ~AssetStateFlag::ExistOnGPU;
+			m_asset->gfxModel = std::nullopt;
+		}
+
+		auto& matMan = AssetManager::Get().GetMaterialManager();
+		for (auto& matIndex : m_asset->materialIndices)
+		{
+			const Material& mat = matMan.GetMaterial(matIndex);
+			AssetManager::Get().UnLoadAsset(mat.albedo, flag);
+			AssetManager::Get().UnLoadAsset(mat.emissive, flag);
+			AssetManager::Get().UnLoadAsset(mat.normalMap, flag);
+			AssetManager::Get().UnLoadAsset(mat.metallicRoughness, flag);
+		}
+
+		unLoadFlag &= ~flag;
 	}
 
 
@@ -103,18 +113,12 @@ namespace DOG
 
 	TextureAsset* ManagedAsset<TextureAsset>::Get()
 	{
-		if (CheckIfLoadingAsync())
-			return nullptr;
-		else
-			return m_asset;
+		return m_asset;
 	}
 
 	Asset* ManagedAsset<TextureAsset>::GetBase()
 	{
-		if (CheckIfLoadingAsync())
-			return nullptr;
-		else
-			return static_cast<Asset*>(m_asset);
+		return static_cast<Asset*>(m_asset);
 	}
 
 	void ManagedAsset<TextureAsset>::UnloadAsset(AssetUnLoadFlag flag)
@@ -131,8 +135,11 @@ namespace DOG
 		if (flag & AssetUnLoadFlag::TextureGPU && stateFlag & AssetStateFlag::ExistOnGPU)
 		{
 			AssetManager::Get().GetGraphicsBuilder().FreeResource(m_asset->textureViewGPU);
+			m_asset->textureViewGPU.handle = 0;
 			AssetManager::Get().GetGraphicsBuilder().FreeResource(m_asset->textureGPU);
+			m_asset->textureGPU.handle = 0;
 			stateFlag &= ~AssetStateFlag::ExistOnGPU;
 		}
+		unLoadFlag &= ~flag;
 	}
 }
