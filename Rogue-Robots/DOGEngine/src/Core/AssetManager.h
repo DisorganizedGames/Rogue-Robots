@@ -76,6 +76,7 @@ namespace DOG
 
 		void LoadModelAssetInternal(const std::string& path, u32 id, ModelAsset* assetOut);
 		void LoadTextureAssetInternal(const std::string& path, u32 id, TextureAsset* assetOut);
+		void TextureMoveToGpuCallHelper(u32 id);
 
 		[[nodiscard]] u32 AddMesh(const ImportedMesh& mesh);
 		[[nodiscard]] std::vector<u32> LoadMaterials(const std::vector<ImportedMaterial>& importedMats, AssetLoadFlag flag);
