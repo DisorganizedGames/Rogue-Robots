@@ -30,12 +30,26 @@ local bulletTemplate = {
 }
 
 --Non-tweakable
-local bulletModel = 0
+local gunModel = 0
+local bulletModel = nil
 local bullets = {}
 local shootTimer = 0.0
 
+local gunEntity = {
+	entityID = nil,
+	position = {x=0,y=0,z=0},
+	rotation = {x=3.14/2,y=0,z=0}
+}
+
 function OnStart()
-	bulletModel = Asset:LoadModel("Assets/556x45_bullet.fbx") --Load the bullet's model
+	gunModel = Asset:LoadModel("Assets/Rifle/scene.gltf")
+	bulletModel = Asset:LoadModel("Assets/556x45_bullet.fbx")
+
+	-- Initialize the gun view model entity
+	gunID = Entity:CreateEntity()
+	gunEntity.entityID = gunID
+	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.15,y=.15,z=.15})
+	Entity:AddComponent(gunID, "Model", gunModel)
 
 	barrelComponent = ObjectManager:CreateObject()
 	magazineComponent = ObjectManager:CreateObject()
@@ -50,6 +64,26 @@ end
 local tempMode = 0
 local tempTimer = 0.0
 function OnUpdate()
+	-- Update gun model position
+	gunEntity.position = Player:GetPosition()
+	up = Player:GetUp()
+	pf = Player:GetForward()
+	pr = Player:GetRight()
+	
+	gf = {x=-pf.x, y=-pf.y, z=-pf.z}
+	gup = {x=up.x, y=up.y, z=up.z}
+
+	pos = gunEntity.position
+	gunEntity.position = {
+		x = pos.x + 0.2 * pr.x - 0.2 * gup.x,
+		y = pos.y - 0.2 * pr.y - 0.2 * gup.y, 
+		z = pos.z + 0.2 * pr.z - 0.2 * gup.z
+	}
+
+	Entity:SetRotationForwardUp(gunEntity.entityID, gf, gup)
+
+	Entity:ModifyComponent(gunEntity.entityID, "Transform", gunEntity.position, 1)
+
 --Temporary code to allow for switching mode.
 	tempTimer = tempTimer - DeltaTime
 	if Input:IsKeyPressed("Q") and tempTimer <= 0.0 then
@@ -65,7 +99,7 @@ function OnUpdate()
 ----------------------------------------------------
 
 	shootTimer = shootTimer - DeltaTime
-
+	
 	if miscComponent.OnUpdate then
 		miscComponent:OnUpdate(barrelComponent, magazineComponent, bullets, InitialBulletSpeed, BulletSize)
 	else

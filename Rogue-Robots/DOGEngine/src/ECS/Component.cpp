@@ -31,6 +31,16 @@ namespace DOG
 		return *this;
 	}
 
+	TransformComponent& TransformComponent::SetRotation(const Matrix& rotationMatrix) noexcept
+	{
+		XMVECTOR scale, rotationQuat, translation;
+		XMMatrixDecompose(&scale, &rotationQuat, &translation, worldMatrix);
+		worldMatrix = XMMatrixScalingFromVector(scale) *
+			(XMMATRIX) rotationMatrix *
+			XMMatrixTranslationFromVector(translation);
+		return *this;
+	}
+
 	TransformComponent& TransformComponent::SetScale(const Vector3& scale) noexcept
 	{
 		XMVECTOR xmScale, rotationQuat, translation;

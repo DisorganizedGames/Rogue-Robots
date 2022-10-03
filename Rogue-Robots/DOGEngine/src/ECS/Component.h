@@ -8,6 +8,7 @@ namespace DOG
 			const DirectX::SimpleMath::Vector3& scale = { 1.0f, 1.0f, 1.0f }) noexcept;
 		TransformComponent& SetPosition(const DirectX::SimpleMath::Vector3& position) noexcept;
 		TransformComponent& SetRotation(const DirectX::SimpleMath::Vector3& rotation) noexcept;
+		TransformComponent& SetRotation(const DirectX::SimpleMath::Matrix& rotationMatrix) noexcept;
 		TransformComponent& SetScale(const DirectX::SimpleMath::Vector3& scale) noexcept;
 		DirectX::SimpleMath::Vector3 GetPosition() const noexcept;
 		DirectX::SimpleMath::Matrix GetRotation() const noexcept;
