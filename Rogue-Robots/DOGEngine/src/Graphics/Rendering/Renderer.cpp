@@ -233,64 +233,6 @@ namespace DOG::gfx
 				});
 		}
 
-		struct Bogus
-		{
-			DirectX::SimpleMath::Vector4 color;
-		};
-
-		// Compute modify
-		{
-			struct PassData {};
-			rg.AddPass<PassData>("Compute",
-				[&](PassData&, RenderGraph::PassBuilder& builder)
-				{
-					builder.DeclareBuffer(RG_RESOURCE(TestBuffer), RGBufferDesc::ReadWrite(sizeof(Bogus)));
-
-					builder.ReadWriteTarget(RG_RESOURCE(LitHDR),
-						TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
-					builder.ReadWriteTarget(RG_RESOURCE(TestBuffer),
-						BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Bogus), 1));
-				},
-				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
-				{
-					rd->Cmd_SetPipeline(cmdl, m_testCompPipe);
-					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, ShaderArgs()
-						.AppendConstant(resources.GetView(RG_RESOURCE(LitHDR)))
-						.AppendConstant(resources.GetView(RG_RESOURCE(TestBuffer)))
-						.AppendConstant(1)		// Red contrib
-						.AppendConstant(0)
-						.AppendConstant(0)
-						.AppendConstant(10));	// Delta
-					rd->Cmd_Dispatch(cmdl, 25, 14, 1);
-				});
-		}
-
-		// Compute modify
-		{
-			struct PassData {};
-			rg.AddPass<PassData>("Compute2",
-				[&](PassData&, RenderGraph::PassBuilder& builder)
-				{
-					builder.ReadWriteTarget(RG_RESOURCE(LitHDR),
-						TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
-
-					builder.ReadWriteTarget(RG_RESOURCE(TestBuffer),
-						BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Bogus), 1));
-				},
-				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
-				{
-					rd->Cmd_SetPipeline(cmdl, m_testCompPipe);
-					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, ShaderArgs()
-						.AppendConstant(resources.GetView(RG_RESOURCE(LitHDR)))
-						.AppendConstant(resources.GetView(RG_RESOURCE(TestBuffer)))
-						.AppendConstant(0)
-						.AppendConstant(1)		// Green contrib
-						.AppendConstant(0)
-						.AppendConstant(7));	// Delta
-					rd->Cmd_Dispatch(cmdl, 25, 14, 1);
-				});
-		}
-
 		// Blit HDR to LDR
 		{
 			struct PassData {};
