@@ -21,6 +21,8 @@ namespace DOG
 	//Reloades the script
 	void ScriptManager::ReloadFile(const std::string& fileName, ScriptData& scriptData)
 	{
+		/*RemoveScript(scriptData.entity, fileName);*/
+
 		//Removes the old environment and creates a new one
 		m_luaW->RemoveReferenceToTable(scriptData.scriptTable);
 		scriptData.scriptTable = m_luaW->CreateTable();

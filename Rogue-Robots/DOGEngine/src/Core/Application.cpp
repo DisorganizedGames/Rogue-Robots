@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "Window.h"
 #include "Time.h"
+#include "../Physics/PhysicsEngine.h"
 #include "AnimationManager.h"
 #include "AssetManager.h"
 #include "../ECS/EntityManager.h"
@@ -43,6 +44,9 @@ namespace DOG
 	using namespace DOG::gfx;
 	void Application::Run() noexcept
 	{
+		//BulletPhysics::Initialize();
+		//BulletPhysics::BulletTest();
+
 		while (m_isRunning)
 		{
 			Time::Start();
@@ -51,6 +55,8 @@ namespace DOG
 			// Early break if WM tells us to
 			if (!m_isRunning)
 				break;
+
+			PhysicsEngine::UpdatePhysics((f32)Time::DeltaTime());
 
 			// All ImGUI calls must happen after this call
 			m_renderer->BeginGUI();
@@ -144,6 +150,7 @@ namespace DOG
 
 		AssetManager::Initialize(m_renderer.get());
 		AudioManager::Initialize();
+		PhysicsEngine::Initialize();
 	}
 
 	void Application::OnShutDown() noexcept
