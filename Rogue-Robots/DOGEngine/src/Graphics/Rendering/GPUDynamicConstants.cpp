@@ -12,21 +12,29 @@ namespace DOG::gfx
 		m_ator = RingBuffer(ELEMENTSIZE, maxElementsPerVersion, m_rd->Map(m_buffer));
 	}
 
-	GPUDynamicConstant GPUDynamicConstants::Allocate()
+	GPUDynamicConstant GPUDynamicConstants::Allocate(u32 count)
 	{
-		// Grab memory
+		if (count == 0)
+			return {};
+
+		// Grab memory (base)
 		auto [mem, offset] = m_ator.AllocateWithOffset();
 		GPUDynamicConstant ret{};
 		ret.memory = mem;
 
+		// Allocate rest
+		for (u32 i = 0; i < count - 1; ++i)
+			m_ator.Allocate();
+
 		// Create temporary view (potential performance hazard?)
-		auto view = m_rd->CreateView(m_buffer, BufferViewDesc(ViewType::Constant, (u32)offset, ELEMENTSIZE, 1));
+		auto view = m_rd->CreateView(m_buffer, BufferViewDesc(ViewType::Constant, (u32)offset, ELEMENTSIZE * count, 1));
 		ret.globalDescriptor = m_rd->GetGlobalDescriptor(view);
 
 		// Safely delete later
-		auto delFunc = [this, view]()
+		auto delFunc = [this, view, toPop = count]()
 		{
-			m_ator.Pop();
+			for (u32 i = 0; i < toPop; ++i)
+				m_ator.Pop();
 			m_rd->FreeView(view);
 		};
 		m_bin->PushDeferredDeletion(delFunc);

@@ -53,4 +53,12 @@ namespace DOG::gfx
 		u32 numControlPatches{ 3 };
 
 	};
+
+	struct ComputePipelineDesc
+	{
+		const CompiledShader* cs{ nullptr };
+
+		ComputePipelineDesc() = default;
+		ComputePipelineDesc(const CompiledShader* cs) : cs(cs) {}
+	};
 }

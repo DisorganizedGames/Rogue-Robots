@@ -583,4 +583,15 @@ namespace DOG::gfx
 		apiDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
 		return apiDesc;
 	}
+
+	inline D3D12_COMPUTE_PIPELINE_STATE_DESC to_internal_compute(const ComputePipelineDesc& desc, ID3D12RootSignature* rsig)
+	{
+		D3D12_COMPUTE_PIPELINE_STATE_DESC apiDesc{};
+
+		assert(desc.cs->shaderType == ShaderType::Compute);
+		apiDesc.CS = to_internal(desc.cs);
+		apiDesc.pRootSignature = rsig;
+
+		return apiDesc;
+	}
 }

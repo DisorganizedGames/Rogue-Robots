@@ -47,7 +47,7 @@ namespace DOG::gfx
 		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeTextures, S_MAX_FIF);
 
 
-		const u32 maxConstantsPerFrame = 500;
+		const u32 maxConstantsPerFrame = 500 * 32;
 		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), maxConstantsPerFrame);
 		m_cmdl = m_rd->AllocateCommandList();
 
@@ -106,6 +106,12 @@ namespace DOG::gfx
 			.Build());
 
 		m_rgResMan = std::make_unique<RGResourceManager>(m_rd, m_bin.get());
+
+		auto testCS = m_sclr->CompileFromFile("TestComputeCS.hlsl", ShaderType::Compute);
+		m_testCompPipe = m_rd->CreateComputePipeline(ComputePipelineDesc(testCS.get()));
+
+		
+
 	}
 
 	Renderer::~Renderer()
@@ -157,8 +163,9 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("Forward Pass",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
-					builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_clientWidth, m_clientHeight));
 					builder.DeclareTexture(RG_RESOURCE(MainDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_clientWidth, m_clientHeight));
+					builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_clientWidth, m_clientHeight)
+						.AddFlag(D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
 
 					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
@@ -176,7 +183,7 @@ namespace DOG::gfx
 					rd->Cmd_SetIndexBuffer(cmdl, m_globalMeshTable->GetIndexBuffer());
 					for (const auto& sub : m_submissions)
 					{
-						auto pfConstant = m_dynConstants->Allocate();
+						auto pfConstant = m_dynConstants->Allocate(32);
 						struct PerFrameData
 						{
 							DirectX::XMMATRIX world, view, proj;
@@ -217,7 +224,7 @@ namespace DOG::gfx
 							.AppendConstant(m_globalMaterialTable->GetMaterialIndex(sub.mat)
 							);
 
-						rd->Cmd_UpdateShaderArgs(cmdl, args);
+						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
 						auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
 						rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
@@ -232,18 +239,18 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("Blit to HDR Pass",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
-					builder.ImportTexture(RG_RESOURCE(Backbuffer1), m_sc->GetNextDrawSurface(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
+					builder.ImportTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
 
 					builder.ReadResource(RG_RESOURCE(LitHDR), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
-					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer1), RenderPassAccessType::ClearPreserve,
+					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 				},
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
 				{
 					rd->Cmd_SetPipeline(cmdl, m_pipe);
-					rd->Cmd_UpdateShaderArgs(cmdl, ShaderArgs()
-						.AppendConstant((u32)resources.GetView(RG_RESOURCE(LitHDR))));
+					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, ShaderArgs()
+						.AppendConstant(resources.GetView(RG_RESOURCE(LitHDR))));
 					rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
 				});
 
@@ -256,7 +263,7 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("ImGUI Pass",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
-					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer1), RenderPassAccessType::PreservePreserve,
+					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer), RenderPassAccessType::PreservePreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 				},
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)

@@ -19,8 +19,8 @@ namespace DOG::gfx
 		decl.currState = desc.initState;
 
 		auto& res = m_resources[id];
-		res.variantType = RGResourceVariant::Declared;
 		res.resourceType = RGResourceType::Texture;
+		res.variantType = RGResourceVariant::Declared;
 		res.variants = decl;
 	}
 
@@ -41,7 +41,38 @@ namespace DOG::gfx
 		res.variants = imported;
 	}
 
-	void RGResourceManager::AliasTexture(RGResourceID newID, RGResourceID oldID)
+	void RGResourceManager::DeclareBuffer(RGResourceID id, RGBufferDesc desc)
+	{
+		assert(!m_resources.contains(id));
+
+		RGResourceDeclared decl;
+		decl.desc = desc;
+		decl.currState = desc.initState;
+
+		auto& res = m_resources[id];
+		res.variantType = RGResourceVariant::Declared;
+		res.resourceType = RGResourceType::Buffer;
+		res.variants = decl;
+	}
+
+	void RGResourceManager::ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState)
+	{
+		assert(!m_resources.contains(id));
+
+		auto& res = m_resources[id];
+
+		RGResourceImported imported;
+		imported.importEntryState = entryState;
+		imported.currState = entryState;
+		imported.importExitState = exitState;
+
+		res.resource = buffer.handle;
+		res.variantType = RGResourceVariant::Imported;
+		res.resourceType = RGResourceType::Buffer;
+		res.variants = imported;
+	}
+
+	void RGResourceManager::AliasResource(RGResourceID newID, RGResourceID oldID, RGResourceType type)
 	{
 		assert(!m_resources.contains(newID));
 		assert(m_resources.contains(oldID));
@@ -64,7 +95,7 @@ namespace DOG::gfx
 
 		auto& newRes = m_resources[newID];
 		newRes.variantType = RGResourceVariant::Aliased;
-		newRes.resourceType = RGResourceType::Texture;
+		newRes.resourceType = type;
 		newRes.variants = alias;
 	}
 
@@ -110,9 +141,6 @@ namespace DOG::gfx
 
 	void RGResourceManager::RealizeResources()
 	{
-		// https://github.com/DisorganizedGames/Rogue-Robots/blob/RenderGraph/Rogue-Robots/DOGEngine/src/Graphics/Rendering/RenderGraph/RGResourceRepo.cpp
-		// Create textures
-
 		for (auto& [_, resource] : m_resources)
 		{
 			// We are only interested in creating resources for Declared resources
@@ -120,7 +148,7 @@ namespace DOG::gfx
 				continue;
 
 			/*
-				We eventually want to replace this with Memory Aliased resources..
+				@todo: We eventually want add memory aliasing to Textures
 			*/
 			const RGResourceDeclared& decl = std::get<RGResourceDeclared>(resource.variants);
 			if (resource.resourceType == RGResourceType::Texture)

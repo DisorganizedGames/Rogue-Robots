@@ -28,6 +28,7 @@ namespace DOG::gfx
 		Buffer CreateBuffer(const BufferDesc& desc);
 		Texture CreateTexture(const TextureDesc& desc);
 		Pipeline CreateGraphicsPipeline(const GraphicsPipelineDesc& desc);
+		Pipeline CreateComputePipeline(const ComputePipelineDesc& desc);
 		RenderPass CreateRenderPass(const RenderPassDesc& desc);
 		BufferView CreateView(Buffer buffer, const BufferViewDesc& desc);
 		TextureView CreateView(Texture texture, const TextureViewDesc& desc);
@@ -75,6 +76,11 @@ namespace DOG::gfx
 			u32 vertStart,
 			u32 instanceStart);
 
+		void Cmd_Dispatch(CommandList list,
+			u32 threadGroupCountX,
+			u32 threadGroupCountY,
+			u32 threadGroupCountZ);
+
 		void Cmd_SetPipeline(CommandList list,
 			Pipeline pipeline);
 
@@ -87,6 +93,7 @@ namespace DOG::gfx
 		void Cmd_EndRenderPass(CommandList list);
 
 		void Cmd_UpdateShaderArgs(CommandList list,
+			QueueType targetQueue,
 			const ShaderArgs& args);
 
 		void Cmd_CopyBuffer(CommandList list,
@@ -226,7 +233,10 @@ namespace DOG::gfx
 			GraphicsPipelineDesc desc;
 			D3D_PRIMITIVE_TOPOLOGY topology{};
 			ComPtr<ID3D12PipelineState> pipeline;
-			bool is_compute{ false };
+
+			// We could use variant here for pipelines but since compute storage is small we'll just keep it this way
+			bool isCompute{ false };
+			ComputePipelineDesc computeDesc;
 		};
 
 		struct RenderPass_Storage

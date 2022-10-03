@@ -16,6 +16,7 @@ namespace DOG::gfx
 		virtual Buffer CreateBuffer(const BufferDesc& desc) = 0;
 		virtual Texture CreateTexture(const TextureDesc& desc) = 0;
 		virtual Pipeline CreateGraphicsPipeline(const GraphicsPipelineDesc& desc) = 0;
+		virtual Pipeline CreateComputePipeline(const ComputePipelineDesc& desc) = 0;
 		virtual RenderPass CreateRenderPass(const RenderPassDesc& desc) = 0;
 		virtual BufferView CreateView(Buffer buffer, const BufferViewDesc& desc) = 0;
 		virtual TextureView CreateView(Texture texture, const TextureViewDesc& desc) = 0;
@@ -56,6 +57,11 @@ namespace DOG::gfx
 			u32 vertStart,
 			u32 instanceStart) = 0;
 
+		virtual void Cmd_Dispatch(CommandList list,
+			u32 threadGroupCountX,
+			u32 threadGroupCountY,
+			u32 threadGroupCountZ) = 0;
+
 		virtual void Cmd_DrawIndexed(CommandList list,
 			u32 indicesPerInstance,
 			u32 instanceCount,
@@ -75,6 +81,7 @@ namespace DOG::gfx
 		virtual void Cmd_EndRenderPass(CommandList list) = 0;
 
 		virtual void Cmd_UpdateShaderArgs(CommandList list,
+			QueueType targetQueue,
 			const ShaderArgs& args) = 0;
 
 		virtual void Cmd_CopyBuffer(CommandList list,

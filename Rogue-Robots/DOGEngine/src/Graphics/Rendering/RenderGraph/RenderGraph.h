@@ -6,7 +6,7 @@
 #include "RGTypes.h"
 #include <unordered_set>
 
-#define GENERATE_GRAPHVIZ
+//#define GENERATE_GRAPHVIZ
 
 namespace DOG::gfx
 {
@@ -27,7 +27,7 @@ namespace DOG::gfx
 			PassResources() = default;
 
 			// Pass local
-			u64 GetView(RGResourceID id) const;			// SRV/UAVs
+			u32 GetView(RGResourceID id) const;			// SRV/UAVs
 
 			// Graph global
 			Texture GetTexture(RGResourceID id);
@@ -35,7 +35,7 @@ namespace DOG::gfx
 
 		private:
 			friend class RenderGraph;
-			std::unordered_map<RGResourceID, u64> m_views;		// Views already converted to global indices
+			std::unordered_map<RGResourceID, u32> m_views;		// Views already converted to global indices
 
 			// Held for cleanup
 			std::vector<TextureView> m_textureViews;
@@ -48,6 +48,7 @@ namespace DOG::gfx
 	private:
 		struct PassIO
 		{
+			std::optional<RGResourceID> originalID;			// if aliased --> holds original resource name
 			RGResourceID id;
 			RGResourceType type{ RGResourceType::Texture };
 			std::optional<std::variant<TextureViewDesc, BufferViewDesc>> viewDesc;
@@ -85,7 +86,7 @@ namespace DOG::gfx
 	
 			void AddPass(Pass* pass);
 			void AddEntryBarrier(GPUBarrier barrier);
-			bool BarrierExists(u64 resource);
+			bool BarrierExists(u64 resource, D3D12_RESOURCE_BARRIER_TYPE type);
 			/*
 				Called after all barriers have been inserted.
 				This checks for any simultaneous read/write on the same resource (forbidden)
@@ -128,10 +129,16 @@ namespace DOG::gfx
 			// ResourceManager interface
 			void DeclareTexture(RGResourceID id, RGTextureDesc desc);
 			void ImportTexture(RGResourceID id, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
+			void DeclareBuffer(RGResourceID id, RGBufferDesc desc);
+			void ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
 
 			void ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc);
-			void ReadOrWriteDepth(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
+			void ReadOrWriteDepth(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);		// No aliasing support
 			void WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
+			void ReadWriteTarget(RGResourceID id, TextureViewDesc desc);
+
+			void ReadWriteTarget(RGResourceID id, BufferViewDesc desc);
+
 
 		private:
 			// Auto-proxy and auto-alias helpers
@@ -141,9 +148,7 @@ namespace DOG::gfx
 			RGResourceID GetNextID(RGResourceID id);
 			void FlushReadsAndConnectProxy(RGResourceID id);
 
-			// Aliasing now handled internally
-			void WriteAliasedRenderTarget(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc);
-			void WriteAliasedDepth(RGResourceID newID, RGResourceID oldID, RenderPassAccessType access, TextureViewDesc desc);
+		
 
 			// Proxy now handled internally
 			void ProxyWrite(RGResourceID id);
