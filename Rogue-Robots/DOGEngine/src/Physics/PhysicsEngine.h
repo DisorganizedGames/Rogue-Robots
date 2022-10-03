@@ -1,4 +1,5 @@
 #pragma once
+#include "../Graphics/Handles/HandleAllocator.h"
 
 class btDefaultCollisionConfiguration;
 class btCollisionDispatcher;
@@ -13,11 +14,17 @@ namespace DOG
 {
 	typedef u32 entity;
 
+	struct RigidbodyHandle
+	{
+		u64 handle = 0;
+		friend class TypedHandlePool;
+	};
+
 	struct RigidbodyColliderData
 	{
-		std::unique_ptr<btRigidBody> rigidBody;
-		std::unique_ptr<btDefaultMotionState> motionState;
-		std::unique_ptr<btCollisionShape> collisionShape;
+		btRigidBody* rigidBody = nullptr;
+		btDefaultMotionState* motionState = nullptr;
+		btCollisionShape* collisionShape = nullptr;
 	};
 
 	struct RigidbodyComponent
@@ -27,29 +34,29 @@ namespace DOG
 		void ConstrainRotation(bool constrainXRotation, bool constrainYRotation, bool constrainZRotation);
 		void ConstrainPosition(bool constrainXPosition, bool constrainYPosition, bool constrainZPosition);
 
-		u32 handle;
+		RigidbodyHandle handle;
 	};
 
 	struct BoxColliderComponent
 	{
 		BoxColliderComponent(entity entity, const DirectX::SimpleMath::Vector3& boxColliderSize, bool dynamic, float mass = 1.0f) noexcept;
 
-		u32 handle;
+		RigidbodyHandle handle;
 	};
 	struct SphereColliderComponent
 	{
 		SphereColliderComponent(entity entity, float radius, bool dynamic, float mass = 1.0f) noexcept;
 
-		u32 handle;
+		RigidbodyHandle handle;
 	};
 	struct CapsuleColliderComponent
 	{
 		CapsuleColliderComponent(entity entity, float radius, float height, bool dynamic, float mass = 1.0f) noexcept;
 
-		u32 handle;
+		RigidbodyHandle handle;
 	};
 
-	class BulletPhysics
+	class PhysicsEngine
 	{
 		friend BoxColliderComponent;
 		friend SphereColliderComponent;
@@ -57,28 +64,32 @@ namespace DOG
 		friend RigidbodyComponent;
 
 	private:
+		//Order of unique ptrs matter for the destruction of the unique ptrs
 		std::unique_ptr<btDefaultCollisionConfiguration> m_collisionConfiguration;
 		std::unique_ptr<btCollisionDispatcher> m_collisionDispatcher;
 		std::unique_ptr<btBroadphaseInterface> m_broadphaseInterface;
 		std::unique_ptr<btSequentialImpulseConstraintSolver> m_sequentialImpulseContraintSolver;
 		std::unique_ptr<btDiscreteDynamicsWorld> m_dynamicsWorld;
-		static BulletPhysics s_bulletPhysics;
+		static PhysicsEngine s_physicsEngine;
 
 		std::vector<RigidbodyColliderData> m_rigidBodyColliderDatas;
+		gfx::HandleAllocator m_handleAllocator;
+
 
 	private:
-		BulletPhysics();
+		PhysicsEngine();
 		static btDiscreteDynamicsWorld* GetDynamicsWorld();
-		static u32 AddRigidbodyColliderData(RigidbodyColliderData rigidbodyColliderData);
-		static u32 AddRigidbody(entity entity, RigidbodyColliderData& rigidbodyColliderData, bool dynamic, float mass);
+		static RigidbodyHandle AddRigidbodyColliderData(RigidbodyColliderData rigidbodyColliderData);
+		static RigidbodyHandle AddRigidbody(entity entity, RigidbodyColliderData& rigidbodyColliderData, bool dynamic, float mass);
 		static RigidbodyColliderData* GetRigidbodyColliderData(u32 handle);
 
+		static constexpr u64 RESIZE_RIGIDBODY_SIZE = 1000;
+
 	public:
-		~BulletPhysics();
-		BulletPhysics(const BulletPhysics& other) = delete;
-		BulletPhysics& operator=(const BulletPhysics& other) = delete;
+		~PhysicsEngine();
+		PhysicsEngine(const PhysicsEngine& other) = delete;
+		PhysicsEngine& operator=(const PhysicsEngine& other) = delete;
 		static void Initialize();
-		static void BulletTest();
 		static void UpdatePhysics(float deltaTime);
 	};
 }

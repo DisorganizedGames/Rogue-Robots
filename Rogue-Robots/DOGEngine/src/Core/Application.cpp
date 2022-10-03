@@ -1,7 +1,7 @@
 #include "Application.h"
 #include "Window.h"
 #include "Time.h"
-#include "../Physics/BulletPhysics.h"
+#include "../Physics/PhysicsEngine.h"
 #include "AnimationManager.h"
 #include "AssetManager.h"
 #include "../ECS/EntityManager.h"
@@ -56,7 +56,7 @@ namespace DOG
 			if (!m_isRunning)
 				break;
 
-			BulletPhysics::UpdatePhysics((f32)Time::DeltaTime());
+			PhysicsEngine::UpdatePhysics((f32)Time::DeltaTime());
 
 			// All ImGUI calls must happen after this call
 			m_renderer->BeginGUI();
@@ -150,7 +150,7 @@ namespace DOG
 
 		AssetManager::Initialize(m_renderer.get());
 		AudioManager::Initialize();
-		BulletPhysics::Initialize();
+		PhysicsEngine::Initialize();
 	}
 
 	void Application::OnShutDown() noexcept

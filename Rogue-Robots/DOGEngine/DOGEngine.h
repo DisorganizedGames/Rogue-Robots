@@ -15,7 +15,7 @@
 #include "src/EventSystem/MouseEvents.h"
 #include "src/EventSystem/KeyboardEvents.h"
 
-#include "src/Physics/BulletPhysics.h"
+#include "src/Physics/PhysicsEngine.h"
 
 #include "src/ECS/EntityManager.h"
 #include "src/ECS/Component.h"
