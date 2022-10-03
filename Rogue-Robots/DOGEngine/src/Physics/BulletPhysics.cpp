@@ -1,5 +1,7 @@
 #include "BulletPhysics.h"
+#pragma warning(push, 0)
 #include "BulletPhysics/btBulletDynamicsCommon.h"
+#pragma warning(pop)
 #include "../ECS/EntityManager.h"
 
 namespace DOG
@@ -18,7 +20,24 @@ namespace DOG
 
 	BulletPhysics::~BulletPhysics()
 	{
+		for (u32 i = 0; i < m_rigidBodyColliderDatas.size(); ++i)
+		{
+			btRigidBody* body = m_rigidBodyColliderDatas[i].rigidBody.get();
+			if (body && body->getMotionState())
+			{
+				m_rigidBodyColliderDatas[i].motionState.release();
+			}
+			m_dynamicsWorld->removeRigidBody(body);
+			m_rigidBodyColliderDatas[i].rigidBody.release();
+			m_rigidBodyColliderDatas[i].collisionShape.release();
+		}
 		m_rigidBodyColliderDatas.clear();
+
+		m_dynamicsWorld.release();
+		m_sequentialImpulseContraintSolver.release();
+		m_broadphaseInterface.release();
+		m_collisionDispatcher.release();
+		m_collisionConfiguration.release();
 	}
 
 	void BulletPhysics::Initialize()
@@ -212,21 +231,38 @@ namespace DOG
 					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
 				}
 			});
+
+		EntityManager::Get().Collect<TransformComponent, SphereColliderComponent>().Do([&](TransformComponent& transform, SphereColliderComponent& collider)
+			{
+				auto& rigidBody = s_bulletPhysics.m_rigidBodyColliderDatas[collider.handle];
+				if (rigidBody.rigidBody.get() && rigidBody.rigidBody->getMotionState())
+				{
+					btTransform trans;
+					rigidBody.rigidBody->getMotionState()->getWorldTransform(trans);
+					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
+				}
+			});
+
+		EntityManager::Get().Collect<TransformComponent, CapsuleColliderComponent>().Do([&](TransformComponent& transform, CapsuleColliderComponent& collider)
+			{
+				auto& rigidBody = s_bulletPhysics.m_rigidBodyColliderDatas[collider.handle];
+				if (rigidBody.rigidBody.get() && rigidBody.rigidBody->getMotionState())
+				{
+					btTransform trans;
+					rigidBody.rigidBody->getMotionState()->getWorldTransform(trans);
+					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
+				}
+			});
 	}
 
 	u32 BulletPhysics::AddRigidbodyColliderData(RigidbodyColliderData rigidbodyColliderData)
 	{
 		s_bulletPhysics.m_rigidBodyColliderDatas.push_back(std::move(rigidbodyColliderData));
-		return s_bulletPhysics.m_rigidBodyColliderDatas.size() - 1;
+		return (u32)(s_bulletPhysics.m_rigidBodyColliderDatas.size() - 1);
 	}
 
-	BoxColliderComponent::BoxColliderComponent(entity entity, const DirectX::SimpleMath::Vector3& boxColliderSize, bool dynamic, float mass) noexcept
+	u32 BulletPhysics::AddRigidbody(entity entity, RigidbodyColliderData& rigidbodyColliderData, bool dynamic, float mass)
 	{
-		RigidbodyColliderData rCD; 
-		rCD.collisionShape = std::make_unique<btBoxShape>(btVector3(boxColliderSize.x, boxColliderSize.y, boxColliderSize.z));
-
-		//btCollisionShape* groundShape = new btBoxShape(btVector3(boxColliderSize.x, boxColliderSize.y, boxColliderSize.z));
-
 		TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(entity);
 
 		//Copy entity transform
@@ -234,26 +270,99 @@ namespace DOG
 		groundTransform.setFromOpenGLMatrix((float*)(&transform.worldMatrix));
 
 		//rigidbody is dynamic if and only if mass is non zero, otherwise static
-		bool isDynamic = dynamic;//(mass != 0.f);
+		bool isDynamic = dynamic;
 		float bodyMass = 0.0f;
 
 		btVector3 localInertia(0, 0, 0);
 		if (isDynamic)
 		{
-			rCD.collisionShape->calculateLocalInertia(mass, localInertia);
+			rigidbodyColliderData.collisionShape->calculateLocalInertia(mass, localInertia);
 			bodyMass = mass;
 		}
 
 		//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
-		rCD.motionState = std::make_unique<btDefaultMotionState>(groundTransform);
-		//btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
-		btRigidBody::btRigidBodyConstructionInfo rbInfo(bodyMass, rCD.motionState.get(), rCD.collisionShape.get(), localInertia);
-		rCD.rigidBody = std::make_unique<btRigidBody>(rbInfo);
-		/*rigidBody = new btRigidBody(rbInfo);*/ //std::make_unique<btRigidBody>(rbInfo);
-		//btRigidBody* body = new btRigidBody(rbInfo);
+		rigidbodyColliderData.motionState = std::make_unique<btDefaultMotionState>(groundTransform);
+		btRigidBody::btRigidBodyConstructionInfo rbInfo(bodyMass, rigidbodyColliderData.motionState.get(), rigidbodyColliderData.collisionShape.get(), localInertia);
+		rigidbodyColliderData.rigidBody = std::make_unique<btRigidBody>(rbInfo);
 
 		//add the body to the dynamics world
-		BulletPhysics::GetDynamicsWorld()->addRigidBody(rCD.rigidBody.get());
-		handle = BulletPhysics::AddRigidbodyColliderData(std::move(rCD));
+		BulletPhysics::GetDynamicsWorld()->addRigidBody(rigidbodyColliderData.rigidBody.get());
+
+		return BulletPhysics::AddRigidbodyColliderData(std::move(rigidbodyColliderData));
+	}
+
+	RigidbodyColliderData* BulletPhysics::GetRigidbodyColliderData(u32 handle)
+	{
+		return &s_bulletPhysics.m_rigidBodyColliderDatas[handle];
+	}
+
+	BoxColliderComponent::BoxColliderComponent(entity entity, const DirectX::SimpleMath::Vector3& boxColliderSize, bool dynamic, float mass) noexcept
+	{
+		RigidbodyColliderData rCD; 
+		rCD.collisionShape = std::make_unique<btBoxShape>(btVector3(boxColliderSize.x, boxColliderSize.y, boxColliderSize.z));
+
+		handle = BulletPhysics::AddRigidbody(entity, rCD, dynamic, mass);
+	}
+
+	SphereColliderComponent::SphereColliderComponent(entity entity, float radius, bool dynamic, float mass) noexcept
+	{
+		RigidbodyColliderData rCD;
+		rCD.collisionShape = std::make_unique<btSphereShape>(radius);
+
+		handle = BulletPhysics::AddRigidbody(entity, rCD, dynamic, mass);
+	}
+
+	CapsuleColliderComponent::CapsuleColliderComponent(entity entity, float radius, float height, bool dynamic, float mass) noexcept
+	{
+		RigidbodyColliderData rCD;
+		rCD.collisionShape = std::make_unique<btCapsuleShape>(radius, height);
+
+		handle = BulletPhysics::AddRigidbody(entity, rCD, dynamic, mass);
+	}
+
+	RigidbodyComponent::RigidbodyComponent(entity enitity)
+	{
+		handle = 0;
+
+		if (EntityManager::Get().HasComponent<BoxColliderComponent>(enitity))
+		{
+			handle = EntityManager::Get().GetComponent<BoxColliderComponent>(enitity).handle;
+		}
+		else if (EntityManager::Get().HasComponent<SphereColliderComponent>(enitity))
+		{
+			handle = EntityManager::Get().GetComponent<SphereColliderComponent>(enitity).handle;
+		}
+		else if (EntityManager::Get().HasComponent<CapsuleColliderComponent>(enitity))
+		{
+			handle = EntityManager::Get().GetComponent<CapsuleColliderComponent>(enitity).handle;
+		}
+		else
+		{
+			assert(false, "No Collider on entity");
+		}
+	}
+
+	void RigidbodyComponent::ConstrainRotation(bool constrainXRotation, bool constrainYRotation, bool constrainZRotation)
+	{
+		RigidbodyColliderData* rigidbodyColliderData = BulletPhysics::GetRigidbodyColliderData(handle);
+
+		//Set no rotations in x,y,z
+		float x = constrainXRotation ? 0.0f : 1.0f;
+		float y = constrainYRotation ? 0.0f : 1.0f;
+		float z = constrainZRotation ? 0.0f : 1.0f;
+
+		rigidbodyColliderData->rigidBody->setAngularFactor(btVector3(x, y, z));
+	}
+
+	void RigidbodyComponent::ConstrainPosition(bool constrainXPosition, bool constrainYPosition, bool constrainZPosition)
+	{
+		RigidbodyColliderData* rigidbodyColliderData = BulletPhysics::GetRigidbodyColliderData(handle);
+
+		////Set freeze position in x,y,z
+		float x = constrainXPosition ? 0.0f : 1.0f;
+		float y = constrainYPosition ? 0.0f : 1.0f;
+		float z = constrainZPosition ? 0.0f : 1.0f;
+
+		rigidbodyColliderData->rigidBody->setLinearFactor(btVector3(x, y, z));
 	}
 }
