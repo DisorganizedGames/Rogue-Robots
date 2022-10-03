@@ -6,45 +6,254 @@ using namespace DirectX::SimpleMath;
 
 
 Pathfinder::Pathfinder() noexcept
-	: Layer("Pathfinder")
 {
+	// For testing purposes
+	std::vector<std::string> map1 = {
+		"***********************************************",
+		"*                                             *",
+		"*               ***********                   *",
+		"*      *        *                *****        *",
+		"*      *        *                *****        *",
+		"*      *                 *****      **        *",
+		"*      ******               **       *        *",
+		"*           *               **                *",
+		"*           *                                 *",
+		"*           ********            *****         *",
+		"*               *               *             *",
+		"*               *               *             *",
+		"*                                             *",
+		"***********************************************",
+	};
+	size_t gridSizeX = map1[0].size();
+	size_t gridSizeY = map1.size();
+	size_t startX = gridSizeX / 2;
+	size_t startY = gridSizeY / 2;
+	while (map1[startY][startX] != ' ')
+		++startY; ++startX;
+	char symbol = 'a';
+	GenerateNavMeshes(map1, GridCoord(startX, startY), symbol);
 }
 
-void Pathfinder::OnAttach()
+void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord origin, char& symbol)
 {
-	//...
-}
+	constexpr char printif = 'e';
+	size_t gridSizeX = map[0].size();
+	size_t gridSizeY = map.size();
+	std::cout << "***********************************************************" << std::endl;
+	std::cout << "origin: " << origin.str() << std::endl;
+	std::vector<GridCoord> left;
+	std::vector<GridCoord> top;
+	std::vector<GridCoord> right;
+	std::vector<GridCoord> bottom;
 
-void Pathfinder::OnDetach()
-{
-	//...
-}
+	// map blocking 
+	GridCoord low = { -1, -1, -1 };
+	GridCoord high = { static_cast<int>(gridSizeX), static_cast<int>(gridSizeY), 1 };
+	
+	// find the maximum possible lower x bound
+	GridCoord pt = origin;
+	while (low.x <= --pt.x && map[pt.y][pt.x] == ' ');
+	low.x = pt.x;
+	left.push_back(pt);
 
-void Pathfinder::OnUpdate()
-{
-	//...
-}
+	// find the maximum possible lower y bound
+	pt = origin;
+	while (low.y <= --pt.y && map[pt.y][pt.x] == ' ');
+	low.y = pt.y;
+	top.push_back(pt);
 
-void Pathfinder::OnRender()
-{
-	//...
-}
+	// find the minimum possible higher x bound
+	pt = origin;
+	while (++pt.x <= high.x && map[pt.y][pt.x] == ' ');
+	high.x = pt.x;
+	right.push_back(pt);
 
-//Place-holder example on how to use event system:
-void Pathfinder::OnEvent(DOG::IEvent& event)
-{
-	using namespace DOG;
-	switch (event.GetEventType())
+	// find the minimum possible higher y bound
+	pt = origin;
+	while (++pt.y <= high.y && map[pt.y][pt.x] == ' ');
+	high.y = pt.y;
+	bottom.push_back(pt);
+
+	// check each quadrant for blocking squares (later: cubes)
+	// upper left quadrant
+	pt = origin;
+	GridCoord qlim = low;
+	while (low.y < --pt.y)
 	{
-	case EventType::LeftMouseButtonPressedEvent:
+		pt.x = origin.x;
+		while (qlim.x < --pt.x)
+			if (map[pt.y][pt.x] != ' ')
+			{
+				qlim.x = pt.x;
+				left.push_back(pt);
+				top.push_back(pt);
+				break;
+			}
+	}
+	// upper right quadrant
+	pt = origin;
+	qlim = GridCoord(high.x, low.y, low.z);
+	while (low.y < --pt.y)
 	{
-		auto [x, y] = EVENT(LeftMouseButtonPressedEvent).coordinates;
-		std::cout << GetName() << " received event: Left MB clicked [x,y] = [" << x << "," << y << "]\n";
-		break;
+		pt.x = origin.x;
+		while (++pt.x < qlim.x)
+			if (map[pt.y][pt.x] != ' ')
+			{
+				qlim.x = pt.x;
+				top.push_back(pt);
+				right.push_back(pt);
+				break;
+			}
 	}
+	// lower right quadrant
+	pt = origin;
+	qlim = high;
+	while (++pt.y < high.y)
+	{
+		pt.x = origin.x;
+		while (++pt.x < qlim.x)
+			if (map[pt.y][pt.x] != ' ')
+			{
+				qlim.x = pt.x;
+				right.push_back(pt);
+				bottom.push_back(pt);
+				break;
+			}
 	}
-}
+	// lower left quadrant
+	pt = origin;
+	qlim = GridCoord(low.x, high.y, high.z);
+	while (++pt.y < high.y)
+	{
+		pt.x = origin.x;
+		while (qlim.x < --pt.x)
+			if (map[pt.y][pt.x] != ' ')
+			{ 
+				qlim.x = pt.x;
+				bottom.push_back(pt);
+				left.push_back(pt);
+				break;
+			}
+	}
+	if (symbol == printif)
+	{
+		std::cout << "left:   " << std::endl;
+		for (GridCoord& point : left)
+			std::cout << "       " << point.str() << std::endl;
+		std::cout << "top:    " << std::endl;
+		for (GridCoord& point : top)
+			std::cout << "       " << point.str() << std::endl;
+		std::cout << "right:  " << std::endl;
+		for (GridCoord& point : right)
+			std::cout << "       " << point.str() << std::endl;
+		std::cout << "bottom: " << std::endl;
+		for (GridCoord& point : bottom)
+			std::cout << "       " << point.str() << std::endl;
+	}
 
+	// Check all boxes defined by left, top, right and bottom,
+	// discard any box that contains one of the other points
+	// and keep the largest of them
+	Box largest;	// default initialized to 0
+	for (size_t il = 0; il < left.size(); ++il)
+		for (size_t it = 0; it < top.size(); ++it)
+			for (size_t ir = 0; ir < right.size(); ++ir)
+				for (size_t ib = 0; ib < bottom.size(); ++ib)
+				{
+					Box b = Box(left[il], top[it], right[ir], bottom[ib]);
+					if (!(b.ContainsAny(left) || b.ContainsAny(top) || b.ContainsAny(right) || b.ContainsAny(bottom)))
+						if (largest < b)
+							largest = b;
+						else if (symbol == printif)
+							std::cout << b.str() << " " << b.Area() << " < " << largest.str() << " " << largest.Area() << std::endl;
+				}
+	auto print = [&](Box bx)
+	{
+		std::cout << "====================================================" << std::endl;
+		constexpr size_t interval = 2;
+		std::cout << " ";
+		for (size_t x = 0; x < gridSizeX; ++x)
+			if (x % interval == 0)
+				std::cout << x % 10;
+			else
+				std::cout << " ";
+		std::cout << std::endl;
+		for (size_t y = 0; y < gridSizeY; ++y)
+		{
+			if (y % interval == 0)
+				std::cout << y % 10;
+			else
+				std::cout << " ";
+			for (size_t x = 0; x < gridSizeX; ++x)
+			{
+				if (x == origin.x && y == origin.y)
+					map[y][x] = '@';
+				else if (bx.Contains(GridCoord(x, y)))
+					map[y][x] = symbol;
+				std::cout << map[y][x];
+			}
+			if (y % interval == 0)
+				std::cout << y % 10;
+			else
+				std::cout << " ";
+			std::cout << std::endl;
+		}
+		std::cout << " ";
+		for (size_t x = 0; x < gridSizeX; ++x)
+			if (x % interval == 0)
+				std::cout << x % 10;
+			else
+				std::cout << " ";
+		std::cout << std::endl;
+		std::cout << "====================================================" << std::endl;
+	};
+	print(largest);
+	Box border = largest + 1;
+	if (largest.Area() > 0)
+	{
+		std::cout << "border: " << border.str() << std::endl;
+		GridCoord nxt1 = border.low;
+		GridCoord nxt2 = nxt1;
+		// expand left
+		while (nxt1.y < border.high.y && nxt2.y < border.high.y)
+		{
+			while (++nxt1.y < border.high.y && map[nxt1.y][nxt1.x] != ' ');
+			nxt2 = nxt1;
+			while (++nxt2.y < border.high.y && map[nxt2.y][nxt2.x] == ' ');
+			if (nxt1.y < border.high.y)
+				GenerateNavMeshes(map, GridCoord(nxt2.x, nxt1.y + (nxt2.y - nxt1.y) / 2, 0), ++symbol);
+		}
+		// expand down
+		while (nxt1.x < border.high.x && nxt2.x < border.high.x)
+		{
+			while (++nxt1.x < border.high.x && map[nxt1.y][nxt1.x] != ' ');
+			nxt2 = nxt1;
+			while (++nxt2.x < border.high.x && map[nxt2.y][nxt2.x] == ' ');
+			if (nxt1.x < border.high.x)
+				GenerateNavMeshes(map, GridCoord(nxt1.x + (nxt2.x - nxt1.x) / 2, nxt2.y, 0), ++symbol);
+		}
+		// expand right
+		while (border.low.y < nxt1.y && border.low.y < nxt2.y)
+		{
+			while (border.low.y < --nxt1.y && map[nxt1.y][nxt1.x] != ' ');
+			nxt2 = nxt1;
+			while (border.low.y < --nxt2.y && map[nxt2.y][nxt2.x] == ' ');
+			if (border.low.y < nxt1.y)
+				GenerateNavMeshes(map, GridCoord(nxt2.x, nxt1.y - (nxt1.y - nxt2.y) / 2, 0), ++symbol);
+		}
+		// expand up
+		while (border.low.x < nxt1.x && border.low.x < nxt2.x)
+		{
+			while (border.low.x < --nxt1.x && map[nxt1.y][nxt1.x] != ' ');
+			nxt2 = nxt1;
+			while (border.low.x < --nxt2.x && map[nxt2.y][nxt2.x] == ' ');
+			if (border.low.x < nxt1.x)
+				GenerateNavMeshes(map, GridCoord(nxt1.x - (nxt1.x - nxt2.x) / 2, nxt2.y, 0), ++symbol);
+		}
+	}
+	else
+		std::cout << "finished generating NavMeshes" << std::endl;
+}
 
 size_t Pathfinder::FindNavMeshContaining(const Vector3 pos)
 {

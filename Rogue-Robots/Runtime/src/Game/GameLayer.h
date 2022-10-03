@@ -2,6 +2,7 @@
 #include "MainPlayer.h"
 #include "LuaInterfaces.h"
 #include "NetCode.h"
+#include "Pathfinder/Pathfinder.h"
 
 
 class GameLayer : public DOG::Layer
@@ -29,4 +30,5 @@ private:
 	std::vector<std::shared_ptr<LuaInterface>> m_luaInterfaces;
 	std::shared_ptr<MainPlayer> m_player;
 	NetCode m_netCode;
+	//Pathfinder m_pathfinder;		// uncomment to activate pathfinder
 };
