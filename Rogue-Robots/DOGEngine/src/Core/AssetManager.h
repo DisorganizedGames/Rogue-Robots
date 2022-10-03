@@ -37,16 +37,25 @@ namespace DOG
 		requires std::is_base_of_v<Asset, T>
 		T* GetAsset(u32 id) const
 		{
-			if (m_assets.contains(id))
-			{
-				return static_cast<ManagedAsset<T>*>(m_assets.at(id))->Get();
-			}
-			else
+			if (!m_assets.contains(id))
 			{
 				std::cout << "Warning AssetManager::GetAsset called with invalid id as argument." << std::endl;
 				return nullptr;
 			}
+			else if (m_assets.at(id)->CheckIfLoadingAsync())
+			{
+				return nullptr;
+			}
+			else if (m_assets.at(id)->stateFlag == AssetStateFlag::None)
+			{
+				return nullptr;
+			}
+			else
+			{
+				return static_cast<ManagedAsset<T>*>(m_assets.at(id))->Get();
+			}
 		}
+
 		void Update();
 
 		template<typename T, typename ...Args>
@@ -67,6 +76,7 @@ namespace DOG
 
 		void LoadModelAssetInternal(const std::string& path, u32 id, ModelAsset* assetOut);
 		void LoadTextureAssetInternal(const std::string& path, u32 id, TextureAsset* assetOut);
+		void TextureMoveToGpuCallHelper(u32 id);
 
 		[[nodiscard]] u32 AddMesh(const ImportedMesh& mesh);
 		[[nodiscard]] std::vector<u32> LoadMaterials(const std::vector<ImportedMaterial>& importedMats, AssetLoadFlag flag);
@@ -85,6 +95,21 @@ namespace DOG
 
 		void ImguiLoadModel(bool& open);
 		static void AssetManagerGUI(bool& open);
+
+		template<typename T>
+		requires std::is_base_of_v<Asset, T>
+		T* GetAssetUnsafe(u32 id) const
+		{
+			if (!m_assets.contains(id))
+			{
+				std::cout << "Warning AssetManager::GetAsset called with invalid id as argument." << std::endl;
+				return nullptr;
+			}
+			else
+			{
+				return static_cast<ManagedAsset<T>*>(m_assets.at(id))->Get();
+			}
+		}
 
 	private:
 		static std::unique_ptr<AssetManager> s_instance;

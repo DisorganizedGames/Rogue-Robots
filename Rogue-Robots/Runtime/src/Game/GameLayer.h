@@ -21,11 +21,11 @@ private:
 	void RegisterLuaInterfaces();
 
 private:
-	u64 m_mixamo{ 0 };
-	u64 m_redCube{ 0 };
-	u64 m_greenCube{ 0 };
-	u64 m_blueCube{ 0 };
-	u64 m_magentaCube{ 0 };
+	u32 m_mixamo{ 0 };
+	u32 m_redCube{ 0 };
+	u32 m_greenCube{ 0 };
+	u32 m_blueCube{ 0 };
+	u32 m_magentaCube{ 0 };
 	DOG::EntityManager& m_entityManager;
 	std::vector<std::shared_ptr<LuaInterface>> m_luaInterfaces;
 	std::shared_ptr<MainPlayer> m_player;

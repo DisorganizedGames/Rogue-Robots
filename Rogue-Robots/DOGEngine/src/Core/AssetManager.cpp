@@ -48,8 +48,12 @@ namespace DOG
 
 	void AssetManager::LoadModelAssetInternal(const std::string& path, u32 id, ModelAsset* assetOut)
 	{
-		assert(m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory);
-		assert(!(m_assets[id]->loadFlag & AssetLoadFlag::CPUMemory));
+		assert(m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory || m_assets[id]->loadFlag & AssetLoadFlag::CPUMemory);
+
+		if (m_assets[id]->stateFlag & AssetStateFlag::ExistOnCPU)
+		{
+			m_assets[id]->loadFlag &= ~AssetLoadFlag::Async;
+		}
 
 		if (m_assets[id]->loadFlag & AssetLoadFlag::Async)
 		{
@@ -77,7 +81,7 @@ namespace DOG
 								managedModel->unLoadFlag |= AssetUnLoadFlag::AllCPU;
 
 							model->materialIndices = AssetManager::Get().LoadMaterials(importedModel->materials, textureLoadFlag);
-							if (managedModel->loadFlag & AssetLoadFlag::GPUMemory)
+							if (managedModel->loadFlag & AssetLoadFlag::GPUMemory && !(managedModel->stateFlag & AssetStateFlag::ExistOnGPU))
 							{
 								AssetManager::AddCommand([id = id]() { AssetManager::Get().MoveModelToGPU(id); });
 							}
@@ -88,30 +92,69 @@ namespace DOG
 		}
 		else
 		{
-			DOG::AssimpImporter assimpImporter = DOG::AssimpImporter(path);
-			auto asset = assimpImporter.GetResult();
+			if (!(m_assets[id]->stateFlag & AssetStateFlag::ExistOnCPU))
+			{
+				DOG::AssimpImporter assimpImporter = DOG::AssimpImporter(path);
+				auto asset = assimpImporter.GetResult();
 
-			assetOut->meshAsset.indices = std::move(asset->mesh.indices);
-			assetOut->meshAsset.vertexData = std::move(asset->mesh.vertexData);
-			assetOut->submeshes = std::move(asset->submeshes);
-			assetOut->animation = std::move(asset->animation);
+				assetOut->meshAsset.indices = std::move(asset->mesh.indices);
+				assetOut->meshAsset.vertexData = std::move(asset->mesh.vertexData);
+				assetOut->submeshes = std::move(asset->submeshes);
+				assetOut->animation = std::move(asset->animation);
+				assetOut->materialIndices = LoadMaterials(asset->materials, m_assets[id]->loadFlag);
+				m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
 
-			assetOut->materialIndices = LoadMaterials(asset->materials, m_assets[id]->loadFlag);
+				if (!(m_assets[id]->loadFlag & AssetLoadFlag::CPUMemory))
+				{
+					assert(m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory);
+					m_assets[id]->unLoadFlag |= AssetUnLoadFlag::AllCPU;
+				}
+			}
+			else if (m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory && !(m_assets[id]->stateFlag & AssetStateFlag::ExistOnGPU))
+			{
+				// The textures need to be moved to vram
+				ModelAsset* model = GetAsset<ModelAsset>(id);
 
-			m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
 
-			if (m_assets[id]->loadFlag & AssetLoadFlag::CPUMemory)
-				m_assets[id]->loadFlag &= ~AssetLoadFlag::CPUMemory;
-			else
-				m_assets[id]->unLoadFlag |= AssetUnLoadFlag::AllCPU;
+				auto&& moveToGPU = [&, flag = m_assets[id]->loadFlag](u32 texID) {
+					if (texID != 0 && !(m_assets[texID]->stateFlag & AssetStateFlag::ExistOnGPU))
+					{
+						m_assets[texID]->loadFlag |= flag;
+						TextureMoveToGpuCallHelper(texID);
+					}
+				};
 
-			AssetManager::AddCommand([idToMove = id]() { AssetManager::Get().MoveModelToGPU(idToMove); });
+				for (auto& matIndex : model->materialIndices)
+				{
+					const Material& mat = m_materialManager.GetMaterial(matIndex);
+					moveToGPU(mat.albedo);
+					moveToGPU(mat.emissive);
+					moveToGPU(mat.normalMap);
+					moveToGPU(mat.metallicRoughness);
+				}
+			}
+
+			m_assets[id]->loadFlag &= ~AssetLoadFlag::CPUMemory;
+
+			if (m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory && !(m_assets[id]->stateFlag & AssetStateFlag::ExistOnGPU))
+			{
+				AssetManager::AddCommand([idToMove = id]() { AssetManager::Get().MoveModelToGPU(idToMove); });
+			}
+			else if (m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory)
+			{
+				m_assets[id]->loadFlag &= ~AssetLoadFlag::GPUMemory;
+			}
 		}
 	}
 
 	void AssetManager::LoadTextureAssetInternal(const std::string& path, u32 id, TextureAsset* assetOut)
 	{
 		//LoadTextureSTBI(path, flag, assetOut);
+
+		if (m_assets[id]->stateFlag & AssetStateFlag::ExistOnCPU)
+		{
+			m_assets[id]->loadFlag &= ~AssetLoadFlag::Async;
+		}
 
 		if (m_assets[id]->loadFlag & AssetLoadFlag::Async)
 		{
@@ -127,25 +170,44 @@ namespace DOG
 							else
 								AssetManager::Get().m_assets[idToMove]->unLoadFlag |= AssetUnLoadFlag::TextureCPU;
 
-							AssetManager::Get().MoveTextureToGPU(idToMove);
+							if (AssetManager::Get().m_assets[idToMove]->loadFlag & AssetLoadFlag::GPUMemory && !(AssetManager::Get().m_assets[idToMove]->stateFlag & AssetStateFlag::ExistOnGPU))
+							{
+								AssetManager::Get().MoveTextureToGPU(idToMove);
+							}
 						});
 					*lock = 0;
 				});
 		}
 		else
 		{
-			LoadTextureCommpresonator(path, assetOut);
-			m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
-
-			if (m_assets[id]->loadFlag & AssetLoadFlag::CPUMemory)
-				m_assets[id]->loadFlag &= ~AssetLoadFlag::CPUMemory;
-			else
-				m_assets[id]->unLoadFlag |= AssetUnLoadFlag::TextureCPU;
-
-			if (m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory)
+			if (!(m_assets[id]->stateFlag & AssetStateFlag::ExistOnCPU))
 			{
-				AssetManager::AddCommand([idToMove = id]() { AssetManager::Get().MoveTextureToGPU(idToMove); });
+				LoadTextureCommpresonator(path, assetOut);
+				m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
 			}
+
+			if (!(m_assets[id]->loadFlag & AssetLoadFlag::CPUMemory))
+			{
+				assert(m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory);
+				m_assets[id]->unLoadFlag |= AssetUnLoadFlag::TextureCPU;
+			}
+			m_assets[id]->loadFlag &= ~AssetLoadFlag::CPUMemory;
+
+			TextureMoveToGpuCallHelper(id);
+		}
+	}
+
+	void AssetManager::TextureMoveToGpuCallHelper(u32 id)
+	{
+		assert(m_assets.contains(id));
+
+		if (m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory && !(m_assets[id]->stateFlag & AssetStateFlag::ExistOnGPU))
+		{
+			AssetManager::AddCommand([idToMove = id]() { AssetManager::Get().MoveTextureToGPU(idToMove); });
+		}
+		else if (m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory)
+		{
+			m_assets[id]->loadFlag &= ~AssetLoadFlag::GPUMemory;
 		}
 	}
 
@@ -178,14 +240,19 @@ namespace DOG
 				m_assets.insert({ id, new ManagedAsset<ModelAsset>(new ModelAsset) });
 				m_pathTOAssetID[path] = id;
 			}
-			ModelAsset* p = GetAsset<ModelAsset>(id); // GetAsset will clear the async bit of loadFlag
-			m_assets[id]->loadFlag |= flag; // importand that we add the flag after call to GetAsset
+			m_assets[id]->loadFlag |= flag;
+			ModelAsset* p = GetAssetUnsafe<ModelAsset>(id);
 			
 			// Stop a potential unload;
 			if (flag & AssetLoadFlag::CPUMemory)
 				m_assets[id]->unLoadFlag &= ~AssetUnLoadFlag::AllCPU;
 			if (flag & AssetLoadFlag::GPUMemory)
 				m_assets[id]->unLoadFlag &= ~AssetUnLoadFlag::AllGPU;
+
+			if (m_assets[id]->stateFlag & AssetStateFlag::ExistOnCPU)
+				m_assets[id]->loadFlag &= ~AssetLoadFlag::CPUMemory;
+			if (m_assets[id]->stateFlag & AssetStateFlag::ExistOnGPU)
+				m_assets[id]->loadFlag &= ~AssetLoadFlag::GPUMemory;
 
 			LoadModelAssetInternal(path, id, p);
 		}
@@ -204,14 +271,21 @@ namespace DOG
 				m_assets.insert({ id, new ManagedAsset<TextureAsset>(new TextureAsset) });
 				m_pathTOAssetID[path] = id;
 			}
-			TextureAsset* p = GetAsset<TextureAsset>(id);
-			p->srgb = flag & AssetLoadFlag::Srgb;
 			m_assets[id]->loadFlag |= flag;
+			TextureAsset* p = GetAssetUnsafe<TextureAsset>(id);
+			p->srgb = flag & AssetLoadFlag::Srgb;
+
 			if (flag & AssetLoadFlag::CPUMemory)
 				m_assets[id]->unLoadFlag &= ~AssetUnLoadFlag::AllCPU;
 			if (flag & AssetLoadFlag::GPUMemory)
 				m_assets[id]->unLoadFlag &= ~AssetUnLoadFlag::AllGPU;
 
+			if (m_assets[id]->stateFlag & AssetStateFlag::ExistOnCPU)
+				m_assets[id]->loadFlag &= ~AssetLoadFlag::CPUMemory;
+			if (m_assets[id]->stateFlag & AssetStateFlag::ExistOnGPU)
+				m_assets[id]->loadFlag &= ~AssetLoadFlag::GPUMemory;
+
+			
 			LoadTextureAssetInternal(path, id, p);
 		}
 		assert(id != 0);
@@ -256,14 +330,22 @@ namespace DOG
 
 	Asset* AssetManager::GetBaseAsset(u32 id) const
 	{
-		if (m_assets.contains(id))
-		{
-			return m_assets.at(id)->GetBase();
-		}
-		else
+		if (!m_assets.contains(id))
 		{
 			std::cout << "Warning AssetManager::GetAsset called with invalid id as argument." << std::endl;
 			return nullptr;
+		}
+		else if (m_assets.at(id)->CheckIfLoadingAsync())
+		{
+			return nullptr;
+		}
+		else if(m_assets.at(id)->stateFlag == AssetStateFlag::None)
+		{
+			return nullptr;
+		}
+		else
+		{
+			return m_assets.at(id)->GetBase();
 		}
 	}
 
@@ -304,8 +386,6 @@ namespace DOG
 	{
 		if (m_assets.contains(id) && !m_assets[id]->CheckIfLoadingAsync())
 		{
-			assert(m_assets[id]->stateFlag != AssetStateFlag::None);
-
 			m_assets[id]->UnloadAsset(flag);
 		}
 	}
@@ -369,8 +449,6 @@ namespace DOG
 		gfx::GraphicsBuilder* builder = m_renderer->GetBuilder();
 
 		// Convert ModelAsset and its MeshAsset to MeshSpecification
-		ModelAsset* modelAsset = GetAsset<ModelAsset>(modelID);
-		assert(modelAsset);
 
 		auto&& needToWait = [&](u32 texID) {
 			if (texID == 0) return false;
@@ -379,6 +457,10 @@ namespace DOG
 			
 			return false;
 		};
+
+		ModelAsset* modelAsset = GetAsset<ModelAsset>(modelID);
+		assert(modelAsset);
+
 		for (auto& matIndex : modelAsset->materialIndices)
 		{
 			bool yield = false;
@@ -430,27 +512,37 @@ namespace DOG
 		}
 
 		modelAsset->gfxModel = builder->LoadCustomModel(loadSpec, matSpecs);
+		m_assets[modelID]->stateFlag |= AssetStateFlag::ExistOnGPU;
+		m_assets[modelID]->loadFlag &= ~AssetLoadFlag::GPUMemory;
+
 
 		AssetManager::Get().UnLoadAsset(modelID, m_assets[modelID]->unLoadFlag);
 	}
 
 	void AssetManager::MoveTextureToGPU(u32 textureID)
 	{
-		if (!(m_assets[textureID]->loadFlag & AssetLoadFlag::GPUMemory))
+		if (m_assets[textureID]->stateFlag & AssetStateFlag::ExistOnGPU)
 		{
-			assert(false);
+			m_assets[textureID]->loadFlag &= ~AssetLoadFlag::GPUMemory;
 			return;
 		}
-
-		assert(!(m_assets[textureID]->stateFlag & AssetStateFlag::ExistOnGPU));
 
 		assert(m_renderer);
 		gfx::GraphicsBuilder* builder = m_renderer->GetBuilder();
 
+		if (m_assets[textureID]->CheckIfLoadingAsync())
+		{
+			AssetManager::AddCommand([idToMove = textureID]() { AssetManager::Get().MoveTextureToGPU(idToMove); });
+			return;
+		}
+
+
 		gfx::GraphicsBuilder::MippedTexture2DSpecification textureSpec{};
 
 		TextureAsset* asset = GetAsset<TextureAsset>(textureID);
-		assert(asset); // Could this happen? And if it does i want to know about it. //nr of times it has happend: 1
+		assert(asset); // Could this happen? And if it does i want to know about it. //nr of times it has happend: 3; This should be fixed, if it happens again tell me.
+
+
 
 		gfx::GraphicsBuilder::TextureSubresource subres{};
 		subres.width = asset->width;
@@ -469,6 +561,8 @@ namespace DOG
 		asset->textureViewGPU = builder->CreateTextureView(asset->textureGPU, desc);
 
 		m_assets[textureID]->stateFlag |= AssetStateFlag::ExistOnGPU;
+		m_assets[textureID]->loadFlag &= ~AssetLoadFlag::GPUMemory;
+
 
 		AssetManager::Get().UnLoadAsset(textureID, m_assets[textureID]->unLoadFlag);
 	}
@@ -498,9 +592,7 @@ namespace DOG
 
 			if (managedAsset->CheckIfLoadingAsync())
 			{
-				// We lack information on where it will be loaded, (need access to the load flag that the async function uses)
-				// This can be problematic if a previus async later want to evict the resource from the memory type a later request wants it to
-				// Assume that it will have the same load flag for now
+				managedAsset->loadFlag |= loadFlag;
 				assetNeedsToBeLoaded = false;
 			}
 			else

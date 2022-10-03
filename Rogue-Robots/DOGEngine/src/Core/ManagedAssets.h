@@ -162,7 +162,7 @@ namespace DOG
 		std::vector<u32> materialIndices;
 		std::vector<SubmeshMetadata> submeshes;
 		MeshAsset meshAsset;
-		gfx::StaticModel gfxModel;
+		std::optional<gfx::StaticModel> gfxModel = std::nullopt;
 		ImportedAnimation animation;
 	};
 
@@ -214,17 +214,11 @@ namespace DOG
 		}
 		T* Get()
 		{
-			if (CheckIfLoadingAsync())
-				return nullptr;
-			else
-				return m_asset;
+			return m_asset;
 		}
 		Asset* GetBase() override
 		{
-			if (CheckIfLoadingAsync())
-				return nullptr;
-			else
-				return static_cast<Asset*>(m_asset);
+			return static_cast<Asset*>(m_asset);
 		}
 		void UnloadAsset(AssetUnLoadFlag) override
 		{
