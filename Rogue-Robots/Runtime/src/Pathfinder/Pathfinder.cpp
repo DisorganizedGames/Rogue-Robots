@@ -31,7 +31,7 @@ Pathfinder::Pathfinder() noexcept
 	while (map1[startY][startX] != ' ')
 		++startY; ++startX;
 	char symbol = 'a';
-	GenerateNavMeshes(map1, GridCoord(startX, startY, 0), symbol);
+	GenerateNavMeshes(map1, GridCoord(startX, startY), symbol);
 }
 
 void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord origin, char& symbol)
@@ -188,7 +188,7 @@ void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord orig
 			{
 				if (x == origin.x && y == origin.y)
 					map[y][x] = '@';
-				else if (bx.Contains(GridCoord(x, y, 0)))
+				else if (bx.Contains(GridCoord(x, y)))
 					map[y][x] = symbol;
 				std::cout << map[y][x];
 			}
