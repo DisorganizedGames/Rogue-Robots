@@ -92,6 +92,8 @@ private:
 
 	void AddNetwork(DOG::entity e);
 
+	void AddAgentStats(DOG::LuaContext* context, DOG::entity e);
+
 	void ModifyTransform(DOG::LuaContext* context, DOG::entity e);
 	
 	void ModifyPlayerStats(DOG::LuaContext* context, DOG::entity e);

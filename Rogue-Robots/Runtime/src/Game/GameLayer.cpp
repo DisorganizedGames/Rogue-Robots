@@ -82,19 +82,21 @@ GameLayer::GameLayer() noexcept
 	//LuaMain::GetScriptManager()->OrderScript("LuaTest.lua", 1);
 	//LuaMain::GetScriptManager()->OrderScript("ScriptTest.lua", -1);
 	LuaMain::GetScriptManager()->SortOrderScripts();
-}
 
-void GameLayer::OnAttach()
-{
 	//Do startup of lua
 	LuaMain::GetScriptManager()->RunLuaFile("LuaStartUp.lua");
+
 
 	//Register Lua interfaces
 	RegisterLuaInterfaces();
 	//...
+}
 
+
+void GameLayer::OnAttach()
+{
 	LoadLevel();
-
+	m_Agent = std::make_shared<Agent>();
 	LuaMain::GetScriptManager()->StartScripts();
 }
 

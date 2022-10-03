@@ -88,6 +88,7 @@ namespace DOG
 		scriptData.scriptTable = m_luaW->CreateTable();
 
 		LuaTable table(scriptData.scriptTable, true);
+		table.AddIntToTable("EntityID", entity);
 		table.CreateEnvironment(c_pathToScripts + luaFileName);
 		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
 		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
@@ -99,7 +100,7 @@ namespace DOG
 			m_unsortedScripts.push_back({ scriptData });
 			u32 vectorIndex = (u32)(m_unsortedScripts.size() - 1);
 			m_scriptToVector.insert({ luaFileName, {false, vectorIndex} });
-	}
+		}
 		else
 		{
 			if (itScriptToVector->second.sorted)
