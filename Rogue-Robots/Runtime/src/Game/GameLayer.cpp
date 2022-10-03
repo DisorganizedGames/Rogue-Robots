@@ -234,6 +234,7 @@ void GameLayer::LoadLevel()
 	unsigned x = 0;
 	unsigned y = 0;
 	unsigned z = 0;
+	float piDiv2 = DirectX::XM_PIDIV2;
 	if (inputFile.is_open())
 	{
 		while (std::getline(inputFile, line))
@@ -255,11 +256,11 @@ void GameLayer::LoadLevel()
 
 						float xFlip = 1.0f;
 						float yFlip = 1.0f;
-						if (blockFlip.find('x'))
+						if (blockFlip.find('x') != std::string::npos)
 						{
 							xFlip = -1.0f;
 						}
-						if (blockFlip.find('y'))
+						if (blockFlip.find('y') != std::string::npos)
 						{
 							yFlip = -1.0f;
 						}
@@ -268,8 +269,8 @@ void GameLayer::LoadLevel()
 						eManager.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".fbx"));
 						eManager.AddComponent<TransformComponent>(blockEntity)
 							.SetPosition({ x * blockDim, y * blockDim, z * blockDim })
-							.SetRotation({ 0.0f, 3.14f * blockRot, 0.0f})
-							.SetScale({ 1.0f, 1.0f, 1.0f }); //yFlip is on Z because of left-hand/right-hand.
+							.SetRotation({ piDiv2, piDiv2 * blockRot - piDiv2, 0.0f })
+							.SetScale({ xFlip, -1.0f, yFlip }); //yFlip is on Z because of left-hand/right-hand.
 						eManager.AddComponent<ModularBlockComponent>(blockEntity);
 					}
 

@@ -19,18 +19,18 @@ bool WFC::GenerateLevel()
 		temp.possibilities = allBlocks;
 		m_entropy.push_back(temp);
 	}
-	
+	/*
 	//ADD A NICE WAY TO INTRODUCE MULTIPLE CONSTRAINTS HERE!
 	{
 		//We now go through the entropy and introduce the boundary constraint.
 		for (uint32_t i{ 0u }; i < m_width * m_height * m_depth; ++i)
 		{
-			if (i % m_width == 0) //If the index is on y = 0
+			if (i % m_depth == 0) //If the index is on z = 0
 			{
 				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities
 				{
 					std::string c = m_entropy[i].possibilities[j];
-					//Check if the possibility cannot have a boundary in the negative y direction.
+					//Check if the possibility cannot have a boundary in the negative z direction.
 					if (!std::count(m_blockPossibilities[c].dirPossibilities[3].begin(), m_blockPossibilities[c].dirPossibilities[3].end(), "Edge"))
 					{
 						if (Propogate(c, i))
@@ -46,12 +46,12 @@ bool WFC::GenerateLevel()
 					}
 				}
 			}
-			if (i % m_width == m_width - 1) //If the index is on y = width
+			if (i % m_depth == m_depth - 1) //If the index is on z = depth
 			{
 				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities
 				{
 					std::string c = m_entropy[i].possibilities[j];
-					//Check if the possibility cannot have a boundary in the positive y direction.
+					//Check if the possibility cannot have a boundary in the positive z direction.
 					if (!std::count(m_blockPossibilities[c].dirPossibilities[2].begin(), m_blockPossibilities[c].dirPossibilities[2].end(), "Edge"))
 					{
 						if (Propogate(c, i))
@@ -67,13 +67,13 @@ bool WFC::GenerateLevel()
 					}
 				}
 			}
-			uint32_t remainder = i % (m_width * m_height);
-			if (remainder < m_width) //If the index is on z = 0
+			uint32_t remainder = i % (m_depth * m_height);
+			if (remainder < m_depth) //If the index is on y = 0
 			{
 				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities
 				{
 					std::string c = m_entropy[i].possibilities[j];
-					//Check if the possibility cannot have a boundary in the negative z direction.
+					//Check if the possibility cannot have a boundary in the negative y direction.
 					if (!std::count(m_blockPossibilities[c].dirPossibilities[5].begin(), m_blockPossibilities[c].dirPossibilities[5].end(), "Edge"))
 					{
 						if (Propogate(c, i))
@@ -89,12 +89,12 @@ bool WFC::GenerateLevel()
 					}
 				}
 			}
-			if (remainder < m_width * m_height && remainder >= m_width * (m_height - 1)) //If the index is on z = height
+			if (remainder < m_depth * m_height && remainder >= m_depth * (m_height - 1)) //If the index is on y = height
 			{
 				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities
 				{
 					std::string c = m_entropy[i].possibilities[j];
-					//Check if the possibility cannot have a boundary in the positive z direction.
+					//Check if the possibility cannot have a boundary in the positive y direction.
 					if (!std::count(m_blockPossibilities[c].dirPossibilities[4].begin(), m_blockPossibilities[c].dirPossibilities[4].end(), "Edge"))
 					{
 						if (Propogate(c, i))
@@ -110,7 +110,7 @@ bool WFC::GenerateLevel()
 					}
 				}
 			}
-			if (i < m_width * m_height) //If the index is on x = 0.
+			if (i < m_depth * m_height) //If the index is on x = 0.
 			{
 				//Go through all the current possibilities in the cell.
 				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j)
@@ -132,7 +132,7 @@ bool WFC::GenerateLevel()
 					}
 				}
 			}
-			if (i >= m_width * m_height * (m_depth - 1)) //If the index is on x = depth
+			if (i >= m_depth * m_height * (m_width - 1)) //If the index is on x = width
 			{
 				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities
 				{
@@ -155,7 +155,7 @@ bool WFC::GenerateLevel()
 			}
 		}
 	}
-	
+	*/
 	//The priority queue is not needed for the constraints. As they do not use a priority.
 	//All the entropy blocks should now be placed in a priority queue based on their Shannon entropy.
 	m_priorityQueue = new PriorityQueue(m_entropy, m_blockPossibilities, m_width, m_height, m_depth);
@@ -328,6 +328,10 @@ void WFC::ReadInput(std::string input)
 	{
 		block.second.frequency /= m_totalCount;
 
+		if (block.first == "Cube_r0_f")
+		{
+			block.second.frequency *= 1.0f;
+		}
 		//Here we can tweak the frequencies.
 	}
 
@@ -350,7 +354,7 @@ bool WFC::Propogate(std::string& removed, uint32_t index)
 		m_failed = true;
 	}
 
-	//We now have to rearrange the PQ since a possibility was removed.
+	//We now have to rearrange the PQ since a possibility was removed. (Is not done during contraints.)
 	if (m_priorityQueue)
 	{
 		if (!m_priorityQueue->Rearrange(index, m_blockPossibilities))
@@ -359,41 +363,41 @@ bool WFC::Propogate(std::string& removed, uint32_t index)
 		}
 	}
 	
-	//If the index is not y = 0 we can propogate in the negative y direction.
-	if (index % m_width != 0)
+	//If the index is not z = 0 we can propogate in the negative z direction.
+	if (index % m_depth != 0)
 	{
 		CheckForPropogation(index, index - 1, 2, removed);
 	}
 
-	//If the index is not y = width we can propogate in the positive y direction.
-	if (index % m_width != m_width - 1)
+	//If the index is not z = width we can propogate in the positive z direction.
+	if (index % m_depth != m_depth - 1)
 	{
 		CheckForPropogation(index, index + 1, 3, removed);
 	}
 
-	//If the index is not z = 0 we can propogate in the negative z direction.
-	uint32_t remainder = index % (m_width * m_height);
-	if (remainder >= m_width)
+	//If the index is not y = 0 we can propogate in the negative y direction.
+	uint32_t remainder = index % (m_depth * m_height);
+	if (remainder >= m_depth)
 	{
-		CheckForPropogation(index, index - m_width, 4, removed);
+		CheckForPropogation(index, index - m_depth, 4, removed);
 	}
 
-	//If the index is not z = height we can propogate in the positive z direction.
-	if (remainder >= m_width * m_height || remainder < m_width * (m_height - 1))
+	//If the index is not y = height we can propogate in the positive y direction.
+	if (remainder >= m_depth * m_height || remainder < m_depth * (m_height - 1))
 	{
-		CheckForPropogation(index, index + m_width, 5, removed);
+		CheckForPropogation(index, index + m_depth, 5, removed);
 	}
 
 	//If the index is not x = 0 we can propogate in the negative x direction.
-	if (index >= m_width * m_height)
+	if (index >= m_depth * m_height)
 	{
-		CheckForPropogation(index, index - (m_width * m_height), 0, removed);
+		CheckForPropogation(index, index - (m_depth * m_height), 0, removed);
 	}
 
 	//If the index is not x = depth we can propogate in the positive x direction.
-	if (index < m_width * m_height * (m_depth - 1))
+	if (index < m_depth * m_height * (m_width - 1))
 	{
-		CheckForPropogation(index, index + (m_width * m_height), 1, removed);
+		CheckForPropogation(index, index + (m_depth * m_height), 1, removed);
 	}
 
 	return true;
@@ -406,6 +410,7 @@ void WFC::CheckForPropogation(uint32_t currentIndex, uint32_t neighborIndex, uns
 	{
 		std::string& r = m_entropy[neighborIndex].possibilities[i];
 		bool matched = false;
+		
 		for (auto& t : m_entropy[currentIndex].possibilities) //Check every possibility still left in the current cell and make sure "r" matches with atleast one of them.
 		{
 			if (std::count(m_blockPossibilities[r].dirPossibilities[dir].begin(), m_blockPossibilities[r].dirPossibilities[dir].end(), t))

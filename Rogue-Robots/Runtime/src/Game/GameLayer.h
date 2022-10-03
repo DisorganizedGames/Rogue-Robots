@@ -19,7 +19,7 @@ public:
 
 private:
 	void RegisterLuaInterfaces();
-	void LoadLevel();
+	void LoadLevel(); //Loads a PCG generated level.
 private:
 	u32 m_mixamo{ 0 };
 	u32 m_redCube{ 0 };
