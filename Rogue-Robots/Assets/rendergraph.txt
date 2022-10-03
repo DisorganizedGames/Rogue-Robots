@@ -1,6 +1,0 @@
-digraph G {
-"Forward Pass" -> "Compute"
-"Compute" -> "Compute2"
-"Compute2" -> "Blit to HDR Pass"
-"Blit to HDR Pass" -> "ImGUI Pass"
-}

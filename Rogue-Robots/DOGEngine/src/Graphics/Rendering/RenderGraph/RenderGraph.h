@@ -6,7 +6,7 @@
 #include "RGTypes.h"
 #include <unordered_set>
 
-#define GENERATE_GRAPHVIZ
+//#define GENERATE_GRAPHVIZ
 
 namespace DOG::gfx
 {
