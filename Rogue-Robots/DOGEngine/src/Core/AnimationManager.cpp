@@ -215,7 +215,7 @@ namespace DOG
 
 	void AnimationManager::UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator)
 	{
-		ZoneScopedN("skeleton");
+		ZoneScopedN("skeletonUpdate");
 
 		// Set node animation transformations
 		std::vector<DirectX::XMMATRIX> hereditaryTFs;
