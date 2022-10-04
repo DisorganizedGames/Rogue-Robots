@@ -32,6 +32,7 @@ namespace DOG
 		std::vector<DirectX::XMFLOAT4X4> m_vsJoints;
 	private:
 		void UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
+		void ImguiBlendUpdate(const std::vector<DOG::AnimationData>& animations, const AnimationComponent& ac, const f32 dt);
 		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator);
 		void UpdateMovementAnimation(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt);
 
