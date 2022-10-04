@@ -12,9 +12,11 @@ namespace DOG
 	PhysicsEngine::PhysicsEngine()
 	{
 		m_rigidBodyColliderDatas.resize(PhysicsEngine::RESIZE_RIGIDBODY_SIZE);
+
+		m_collisionShapes.resize(PhysicsEngine::RESIZE_COLLISIONSHAPE_SIZE);
 	}
 
-	void PhysicsEngine::AddMeshColliderWaitForModel(MeshWaitData meshColliderData)
+	void PhysicsEngine::AddMeshColliderWaitForModel(const MeshWaitData& meshColliderData)
 	{
 		s_physicsEngine.m_meshCollidersWaitingForModels.push_back(meshColliderData);
 	}
@@ -26,6 +28,7 @@ namespace DOG
 
 	PhysicsEngine::~PhysicsEngine()
 	{
+		//Delete rigidbodys
 		for (u32 i = 0; i < m_rigidBodyColliderDatas.size(); ++i)
 		{
 			btRigidBody* body = m_rigidBodyColliderDatas[i].rigidBody;
@@ -35,11 +38,23 @@ namespace DOG
 			if (body->getMotionState())
 			{
 				delete m_rigidBodyColliderDatas[i].motionState;
+				m_rigidBodyColliderDatas[i].motionState = nullptr;
 			}
 			m_dynamicsWorld->removeRigidBody(body);
 			delete m_rigidBodyColliderDatas[i].rigidBody;
-			delete m_rigidBodyColliderDatas[i].collisionShape;
+			m_rigidBodyColliderDatas[i].rigidBody = nullptr;
 		}
+
+		//Delete collisionShapes
+		for (u32 i = 0; i < m_collisionShapes.size(); ++i)
+		{
+			if (m_collisionShapes[i])
+			{
+				delete m_collisionShapes[i];
+				m_collisionShapes[i] = nullptr;
+			}
+		}
+
 		m_rigidBodyColliderDatas.clear();
 
 		//m_dynamicsWorld.release();
@@ -67,48 +82,13 @@ namespace DOG
 
 		s_physicsEngine.GetDynamicsWorld()->stepSimulation(deltaTime, 10);
 
-		EntityManager::Get().Collect<TransformComponent, BoxColliderComponent>().Do([&](TransformComponent& transform, BoxColliderComponent& collider)
+		EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([&](TransformComponent& transform, RigidbodyComponent& rigidbody)
 			{
 				//Get handle for vector
-				u32 handle = s_physicsEngine.m_handleAllocator.GetSlot(collider.handle.handle);
+				u32 handle = s_physicsEngine.m_handleAllocator.GetSlot(rigidbody.rigidbodyHandle.handle);
 
 				//Get rigidbody
 				auto& rigidBody = s_physicsEngine.m_rigidBodyColliderDatas[handle];
-
-
-				if (rigidBody.rigidBody && rigidBody.rigidBody->getMotionState())
-				{
-					btTransform trans;
-					rigidBody.rigidBody->getMotionState()->getWorldTransform(trans);
-					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
-				}
-			});
-
-		EntityManager::Get().Collect<TransformComponent, SphereColliderComponent>().Do([&](TransformComponent& transform, SphereColliderComponent& collider)
-			{
-				//Get handle for vector
-				u32 handle = s_physicsEngine.m_handleAllocator.GetSlot(collider.handle.handle);
-
-				//Get rigidbody
-				auto& rigidBody = s_physicsEngine.m_rigidBodyColliderDatas[handle];
-
-
-				if (rigidBody.rigidBody && rigidBody.rigidBody->getMotionState())
-				{
-					btTransform trans;
-					rigidBody.rigidBody->getMotionState()->getWorldTransform(trans);
-					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
-				}
-			});
-
-		EntityManager::Get().Collect<TransformComponent, CapsuleColliderComponent>().Do([&](TransformComponent& transform, CapsuleColliderComponent& collider)
-			{
-				//Get handle for vector
-				u32 handle = s_physicsEngine.m_handleAllocator.GetSlot(collider.handle.handle);
-
-				//Get rigidbody
-				auto& rigidBody = s_physicsEngine.m_rigidBodyColliderDatas[handle];
-
 
 				if (rigidBody.rigidBody && rigidBody.rigidBody->getMotionState())
 				{
@@ -145,16 +125,17 @@ namespace DOG
 		bool isDynamic = dynamic;
 		float bodyMass = 0.0f;
 
+		btCollisionShape* collisionShape = s_physicsEngine.GetCollisionShape(rigidbodyColliderData.collisionShapeHandle);
 		btVector3 localInertia(0, 0, 0);
 		if (isDynamic)
 		{
-			rigidbodyColliderData.collisionShape->calculateLocalInertia(mass, localInertia);
+			collisionShape->calculateLocalInertia(mass, localInertia);
 			bodyMass = mass;
 		}
 
 		//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
 		rigidbodyColliderData.motionState = new btDefaultMotionState(groundTransform);
-		btRigidBody::btRigidBodyConstructionInfo rbInfo(bodyMass, rigidbodyColliderData.motionState, rigidbodyColliderData.collisionShape, localInertia);
+		btRigidBody::btRigidBodyConstructionInfo rbInfo(bodyMass, rigidbodyColliderData.motionState, collisionShape, localInertia);
 		rigidbodyColliderData.rigidBody = new btRigidBody(rbInfo);
 
 		//add the body to the dynamics world
@@ -170,6 +151,7 @@ namespace DOG
 
 	void PhysicsEngine::CheckMeshColliders()
 	{
+		//Check mesh colliders until the model is loaded into memory
 		for (u32 index = 0; index < m_meshCollidersWaitingForModels.size(); ++index)
 		{
 			ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(m_meshCollidersWaitingForModels[index].meshModelID);
@@ -183,43 +165,94 @@ namespace DOG
 		}
 	}
 
+	void PhysicsEngine::AddMeshColliderData(const MeshColliderData& meshColliderData)
+	{
+		s_physicsEngine.m_meshCollidersLoadedInMemory.push_back(meshColliderData);
+	}
+
+	MeshColliderData PhysicsEngine::GetMeshColliderData(u32 modelID)
+	{
+		//Get mesh collider data if it exists
+		for (auto& data : s_physicsEngine.m_meshCollidersLoadedInMemory)
+		{
+			if (data.meshModelID == modelID)
+			{
+				return data;
+			}
+		}
+
+		MeshColliderData meshColliderData;
+		meshColliderData.collisionShapeHandle.handle = 0;
+		meshColliderData.meshModelID = 0;
+		return meshColliderData;
+	}
+
+	CollisionShapeHandle PhysicsEngine::AddCollisionShape(btCollisionShape* addCollisionShape)
+	{
+		CollisionShapeHandle collisionShapeHandle = s_physicsEngine.m_handleAllocator.Allocate<CollisionShapeHandle>();
+		u32 handle = gfx::HandleAllocator::GetSlot(collisionShapeHandle.handle);
+
+		//Resize if needed
+		if (handle >= s_physicsEngine.m_collisionShapes.size())
+			s_physicsEngine.m_collisionShapes.resize(s_physicsEngine.m_collisionShapes.size() + PhysicsEngine::RESIZE_COLLISIONSHAPE_SIZE);
+
+		s_physicsEngine.m_collisionShapes[handle] = addCollisionShape;
+
+		return collisionShapeHandle;
+	}
+
+	btCollisionShape* PhysicsEngine::GetCollisionShape(const CollisionShapeHandle& collisionShapeHandle)
+	{
+		u32 handle = gfx::HandleAllocator::GetSlot(collisionShapeHandle.handle);
+
+		//0 is default for HandleAllocator
+		if (handle == 0)
+		{
+			std::cout << "Handle does not exist!\n";
+			assert(false);
+		}
+
+		return m_collisionShapes[handle];
+	}
+
 	BoxColliderComponent::BoxColliderComponent(entity entity, const DirectX::SimpleMath::Vector3& boxColliderSize, bool dynamic, float mass) noexcept
 	{
 		RigidbodyColliderData rCD; 
-		rCD.collisionShape = new btBoxShape(btVector3(boxColliderSize.x, boxColliderSize.y, boxColliderSize.z));
+		rCD.collisionShapeHandle = PhysicsEngine::AddCollisionShape(new btBoxShape(btVector3(boxColliderSize.x, boxColliderSize.y, boxColliderSize.z)));
 
-		handle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
+		rigidbodyHandle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
 	}
 
 	SphereColliderComponent::SphereColliderComponent(entity entity, float radius, bool dynamic, float mass) noexcept
 	{
 		RigidbodyColliderData rCD;
-		rCD.collisionShape = new btSphereShape(radius);
+		rCD.collisionShapeHandle = PhysicsEngine::AddCollisionShape(new btSphereShape(radius));
 
-		handle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
+		rigidbodyHandle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
 	}
 
 	CapsuleColliderComponent::CapsuleColliderComponent(entity entity, float radius, float height, bool dynamic, float mass) noexcept
 	{
 		RigidbodyColliderData rCD;
-		rCD.collisionShape = new btCapsuleShape(radius, height);
+		rCD.collisionShapeHandle = PhysicsEngine::AddCollisionShape(new btCapsuleShape(radius, height));
 
-		handle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
+		rigidbodyHandle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
 	}
 
 	RigidbodyComponent::RigidbodyComponent(entity enitity)
 	{
+		//Can only create a rigidbody component for box, sphere, capsule
 		if (EntityManager::Get().HasComponent<BoxColliderComponent>(enitity))
 		{
-			handle = EntityManager::Get().GetComponent<BoxColliderComponent>(enitity).handle;
+			rigidbodyHandle = EntityManager::Get().GetComponent<BoxColliderComponent>(enitity).rigidbodyHandle;
 		}
 		else if (EntityManager::Get().HasComponent<SphereColliderComponent>(enitity))
 		{
-			handle = EntityManager::Get().GetComponent<SphereColliderComponent>(enitity).handle;
+			rigidbodyHandle = EntityManager::Get().GetComponent<SphereColliderComponent>(enitity).rigidbodyHandle;
 		}
 		else if (EntityManager::Get().HasComponent<CapsuleColliderComponent>(enitity))
 		{
-			handle = EntityManager::Get().GetComponent<CapsuleColliderComponent>(enitity).handle;
+			rigidbodyHandle = EntityManager::Get().GetComponent<CapsuleColliderComponent>(enitity).rigidbodyHandle;
 		}
 		else
 		{
@@ -231,9 +264,9 @@ namespace DOG
 	void RigidbodyComponent::ConstrainRotation(bool constrainXRotation, bool constrainYRotation, bool constrainZRotation)
 	{
 		//Get handle for vector
-		u32 rigidbodyHandle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(handle.handle);
+		u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(rigidbodyHandle.handle);
 
-		RigidbodyColliderData* rigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(rigidbodyHandle);
+		RigidbodyColliderData* rigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(handle);
 
 		//Set no rotations in x,y,z
 		float x = constrainXRotation ? 0.0f : 1.0f;
@@ -246,9 +279,9 @@ namespace DOG
 	void RigidbodyComponent::ConstrainPosition(bool constrainXPosition, bool constrainYPosition, bool constrainZPosition)
 	{
 		//Get handle for vector
-		u32 rigidbodyHandle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(handle.handle);
+		u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(rigidbodyHandle.handle);
 
-		RigidbodyColliderData* rigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(rigidbodyHandle);
+		RigidbodyColliderData* rigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(handle);
 
 		////Set freeze position in x,y,z
 		float x = constrainXPosition ? 0.0f : 1.0f;
@@ -270,6 +303,7 @@ namespace DOG
 
 		ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelID);
 
+		//Check if the model is loaded into memory
 		if (!model)
 		{
 			MeshWaitData meshWaitData;
@@ -287,60 +321,65 @@ namespace DOG
 	{
 		RigidbodyColliderData rCD;
 
-		btTriangleMesh* mesh = new btTriangleMesh();
-		ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelID);
+		//Get mesh collider for an already existing mesh collider if it exists
+		MeshColliderData meshColliderData = PhysicsEngine::GetMeshColliderData(modelID);
 
-		struct Vertex
+		//Set the handle, if it is zero we create a new collisionShape
+		rCD.collisionShapeHandle = meshColliderData.collisionShapeHandle;
+
+		//For the handle 0 is default value
+		if (meshColliderData.collisionShapeHandle.handle == 0)
 		{
-			float x;
-			float y;
-			float z;
-		};
-		std::vector<u8>* vertexData = &(model->meshAsset.vertexData[VertexAttribute::Position]);
-		Vertex* vertexVertices = (Vertex*)vertexData->data();
-		u32 trianglesAmount = model->meshAsset.indices.size() / 3;
-		u32 verticesAmount = vertexData->size() / (sizeof(Vertex));
-		//for (u32 i = 0; i < model->meshAsset.indices.size(); i += 3)
-		//{
-		//	u32 index1 = model->meshAsset.indices[i];
-		//	u32 index2 = model->meshAsset.indices[i+1];
-		//	u32 index3 = model->meshAsset.indices[i+2];
-		//	//Vertex vertex = ;
-		//	Vertex vertex1 = vertexVertices[index1];
-		//	Vertex vertex2 = vertexVertices[index2];
-		//	Vertex vertex3 = vertexVertices[index3];
+			btTriangleMesh* mesh = new btTriangleMesh();
+			ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelID);
 
-		//	mesh->addTriangle(btVector3(vertex1.x,vertex1.y,vertex1.z), btVector3(vertex2.x, vertex2.y, vertex2.z), btVector3(vertex3.x, vertex3.y, vertex3.z));
-		//}
+			if (!model)
+			{
+				//Should never happen!!!
+				assert(false);
+			}
 
-		btIndexedMesh indexedMesh;
-		indexedMesh.m_numTriangles = trianglesAmount;
-		indexedMesh.m_triangleIndexBase = (const unsigned char*)model->meshAsset.indices.data();
-		indexedMesh.m_triangleIndexStride = 3 * sizeof(u32);// 3 * sizeof(float) * 3;
-		indexedMesh.m_numVertices = verticesAmount;
-		indexedMesh.m_vertexBase = (const unsigned char*)vertexVertices;
-		indexedMesh.m_vertexStride = sizeof(Vertex);
-		mesh->addIndexedMesh(indexedMesh);
+			struct Vertex
+			{
+				float x;
+				float y;
+				float z;
+			};
+			const u32 verticePerTriangle = 3;
 
-		rCD.collisionShape = new btBvhTriangleMeshShape(mesh, true);
+			std::vector<u8>* vertexData = &(model->meshAsset.vertexData[VertexAttribute::Position]);
+			Vertex* vertexVertices = (Vertex*)vertexData->data();
 
-		//auto numberOfTriangles = model->meshAsset.indices.size() / 3;
-		//btIndexedMesh indexedMesh;
-		//btTriangleIndexVertexArray* g = new btTriangleIndexVertexArray();
-		//indexedMesh.m_numTriangles = numberOfTriangles;
-		//indexedMesh.m_triangleIndexBase = (const unsigned char*)model->meshAsset.indices.data();
-		//indexedMesh.m_triangleIndexStride = 0;
-		//indexedMesh.m_numVertices = model->meshAsset.indices.size();
-		//indexedMesh.m_vertexBase = (const unsigned char*)vertices;
-		//indexedMesh.m_vertexStride = 3 * sizeof(float);
+			u32 trianglesAmount = model->meshAsset.indices.size() / verticePerTriangle;
+			u32 verticesAmount = vertexData->size() / (sizeof(Vertex));
 
-		//g->addIndexedMesh(indexedMesh);
-		//rCD.collisionShape = new btBvhTriangleMeshShape(g, true);
+			//Set the mesh for the collider
+			btIndexedMesh indexedMesh;
+			indexedMesh.m_numTriangles = trianglesAmount;
+			indexedMesh.m_triangleIndexBase = (const unsigned char*)model->meshAsset.indices.data();
+			indexedMesh.m_triangleIndexStride = verticePerTriangle * sizeof(u32);
+			indexedMesh.m_numVertices = verticesAmount;
+			indexedMesh.m_vertexBase = (const unsigned char*)vertexVertices;
+			indexedMesh.m_vertexStride = sizeof(Vertex);
 
+			mesh->addIndexedMesh(indexedMesh);
 
+			btCollisionShape* meshCollider = new btBvhTriangleMeshShape(mesh, true);
+
+			//Add the mesh to the existing mesh vector
+			MeshColliderData newMeshColliderData;
+			newMeshColliderData.meshModelID = modelID;
+			newMeshColliderData.collisionShapeHandle = PhysicsEngine::AddCollisionShape(meshCollider);
+			PhysicsEngine::AddMeshColliderData(newMeshColliderData);
+
+			rCD.collisionShapeHandle = newMeshColliderData.collisionShapeHandle;
+		}
+
+		//Meshes can not be dynamic
+		//Convex meshes can be
 		float mass = 0.0f;
 		bool dynamic = false;
-		handle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
+		rigidbodyHandle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
 		meshNotLoaded = false;
 	}
 }

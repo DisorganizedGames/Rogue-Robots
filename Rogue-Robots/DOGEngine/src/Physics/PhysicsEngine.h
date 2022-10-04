@@ -20,11 +20,17 @@ namespace DOG
 		friend class TypedHandlePool;
 	};
 
+	struct CollisionShapeHandle
+	{
+		u64 handle = 0;
+		friend class TypedHandlePool;
+	};
+
 	struct RigidbodyColliderData
 	{
 		btRigidBody* rigidBody = nullptr;
 		btDefaultMotionState* motionState = nullptr;
-		btCollisionShape* collisionShape = nullptr;
+		CollisionShapeHandle collisionShapeHandle;
 	};
 
 	struct RigidbodyComponent
@@ -34,26 +40,26 @@ namespace DOG
 		void ConstrainRotation(bool constrainXRotation, bool constrainYRotation, bool constrainZRotation);
 		void ConstrainPosition(bool constrainXPosition, bool constrainYPosition, bool constrainZPosition);
 
-		RigidbodyHandle handle;
+		RigidbodyHandle rigidbodyHandle;
 	};
 
 	struct BoxColliderComponent
 	{
 		BoxColliderComponent(entity entity, const DirectX::SimpleMath::Vector3& boxColliderSize, bool dynamic, float mass = 1.0f) noexcept;
 
-		RigidbodyHandle handle;
+		RigidbodyHandle rigidbodyHandle;
 	};
 	struct SphereColliderComponent
 	{
 		SphereColliderComponent(entity entity, float radius, bool dynamic, float mass = 1.0f) noexcept;
 
-		RigidbodyHandle handle;
+		RigidbodyHandle rigidbodyHandle;
 	};
 	struct CapsuleColliderComponent
 	{
 		CapsuleColliderComponent(entity entity, float radius, float height, bool dynamic, float mass = 1.0f) noexcept;
 
-		RigidbodyHandle handle;
+		RigidbodyHandle rigidbodyHandle;
 	};
 	struct MeshColliderComponent
 	{
@@ -62,13 +68,20 @@ namespace DOG
 		void LoadMesh(entity entity, u32 modelID);
 
 		bool meshNotLoaded = true;
-		RigidbodyHandle handle;
+		RigidbodyHandle rigidbodyHandle;
 	};
 
 	struct MeshWaitData
 	{
 		entity meshEntity;
 		u32 meshModelID;
+	};
+
+	struct MeshColliderData
+	{
+		u32 meshModelID;
+		CollisionShapeHandle collisionShapeHandle;
+		//btCollisionShape* collisionShape = nullptr;
 	};
 
 	class PhysicsEngine
@@ -94,16 +107,27 @@ namespace DOG
 		//Mesh colliders which are waiting for the models to be loaded in
 		std::vector<MeshWaitData> m_meshCollidersWaitingForModels;
 
+		//If the mesh already is an collider
+		std::vector<MeshColliderData> m_meshCollidersLoadedInMemory;
+
+		//To be able to reuse collision shapes (mostly for mesh colliders)
+		std::vector<btCollisionShape*> m_collisionShapes;
+
 	private:
 		PhysicsEngine();
-		static void AddMeshColliderWaitForModel(MeshWaitData meshColliderData);
+		static void AddMeshColliderWaitForModel(const MeshWaitData& meshColliderData);
 		static btDiscreteDynamicsWorld* GetDynamicsWorld();
 		static RigidbodyHandle AddRigidbodyColliderData(RigidbodyColliderData rigidbodyColliderData);
 		static RigidbodyHandle AddRigidbody(entity entity, RigidbodyColliderData& rigidbodyColliderData, bool dynamic, float mass);
 		static RigidbodyColliderData* GetRigidbodyColliderData(u32 handle);
 		void CheckMeshColliders();
+		static void AddMeshColliderData(const MeshColliderData& meshColliderData);
+		static MeshColliderData GetMeshColliderData(u32 modelID);
+		static CollisionShapeHandle AddCollisionShape(btCollisionShape* addCollisionShape);
+		btCollisionShape* GetCollisionShape(const CollisionShapeHandle& collisionShapeHandle);
 
 		static constexpr u64 RESIZE_RIGIDBODY_SIZE = 1000;
+		static constexpr u64 RESIZE_COLLISIONSHAPE_SIZE = 1000;
 
 	public:
 		~PhysicsEngine();
