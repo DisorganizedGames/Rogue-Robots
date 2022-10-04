@@ -230,7 +230,8 @@ namespace DOG::gfx
 				barriers.push_back(GPUBarrier::Transition(Buffer(resource.resource), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, imported.currState, imported.importExitState));
 		}
 
-		m_rd->Cmd_Barrier(cmdl, barriers);
+		if (!barriers.empty())
+			m_rd->Cmd_Barrier(cmdl, barriers);
 	}
 
 
