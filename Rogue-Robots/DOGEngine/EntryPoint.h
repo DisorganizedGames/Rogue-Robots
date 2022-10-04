@@ -17,7 +17,10 @@ int main(int, char**)
 			app->OnRestart();
 
 		app->Run();
+		app.reset();
 	}
+
+	return 0;
 }
 
 

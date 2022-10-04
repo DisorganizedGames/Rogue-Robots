@@ -30,7 +30,14 @@ namespace DOG
 		{
 		case WM_CLOSE:
 		{
+			// DOG::Application listens for WindowClosedEvent, it will call DestroyWindow if WindowClosedEvent is not stopped by another listener.
 			PublishEvent<WindowClosedEvent>();
+			return 0;
+		}
+		case WM_DESTROY:
+		{
+			// At this point the window will be killed, no going back.
+			PostQuitMessage(0);
 			return 0;
 		}
 		case WM_SIZE:
@@ -181,14 +188,19 @@ namespace DOG
 		::ShowWindow(s_windowData.windowHandle, SW_SHOW);
 	}
 
-	void Window::OnUpdate() noexcept
+	bool Window::OnUpdate() noexcept
 	{
 		MSG message = {};
 		while (::PeekMessageA(&message, nullptr, 0u, 0u, PM_REMOVE))
 		{
+			if (message.message == WM_QUIT)
+			{
+				return false;
+			}
 			::TranslateMessage(&message);
 			::DispatchMessageA(&message);
 		}
+		return true;
 	}
 
 	const u32 Window::GetWidth() noexcept
