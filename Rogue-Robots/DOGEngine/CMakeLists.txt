@@ -23,7 +23,8 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Graphics/Rendering/RenderGraph/RGResourceManager.h" "src/Graphics/Rendering/RenderGraph/RGResourceManager.cpp"
     "src/Core/AnimationManager.h" "src/Core/AnimationManager.cpp" "src/Core/ImGuiMenuLayer.h" "src/Core/ImGuiMenuLayer.cpp"
     "src/Physics/PhysicsEngine.h" "src/Physics/PhysicsEngine.cpp"
-     "src/Core/ShapeCreator.h" "src/Core/ShapeCreator.cpp")
+    "src/Core/ShapeCreator.h" "src/Core/ShapeCreator.cpp")
+    "src/Graphics/Rendering/RenderGraph/RGBlackboard.h")
 
 	file(GLOB_RECURSE TempGraphics
     "src/Graphics/*.cpp")
