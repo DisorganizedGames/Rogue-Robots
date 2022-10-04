@@ -33,7 +33,7 @@ void UI::DrawUI()
    else if (m_scene == game && dynamic_cast<UIButton*>(m_elements[GameUI::inventory])->pressed )
       ChangeUIscene(menu);
    else if(m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bexit])->pressed)
-      ;
+      OutputDebugString(L"Exit");
 }
 
 void UI::BuildMenuUI()
@@ -89,6 +89,7 @@ UIelement::~UIelement()
 
 void UIelement::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
 {
+   UNREFERENCED_PARAMETER(m_d2d);
    return;
 }
 
@@ -135,6 +136,7 @@ void UIButton::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
 
 UISplashScreen::UISplashScreen(DOG::gfx::D2DBackend_DX12& m_d2d, float width, float height)
 {
+   UNREFERENCED_PARAMETER(m_d2d);
    m_timer = clock();
    m_background = D2D1::RectF(0.0f, 0.0f, width, height);
    m_text = L"Disorganized Games";
@@ -159,6 +161,7 @@ void UISplashScreen::Draw(DOG::gfx::D2DBackend_DX12& m_d2d)
 }
 void UISplashScreen::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
 {
+   UNREFERENCED_PARAMETER(m_d2d);
    float time = (float)(clock() / CLOCKS_PER_SEC);
    if (time <= 4 && time >= 0)
    {

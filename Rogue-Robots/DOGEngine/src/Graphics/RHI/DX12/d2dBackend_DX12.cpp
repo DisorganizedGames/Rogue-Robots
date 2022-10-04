@@ -54,7 +54,7 @@ DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
     }
 
 
-    float dpi = GetDpiForWindow(hwnd);
+    float dpi = (float)GetDpiForWindow(hwnd);
     D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1(
         D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
         D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED),
@@ -67,7 +67,7 @@ DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
         // Create a RTV, D2D render target, and a command allocator for each frame.
         for (UINT n = 0; n < numBuffers; n++)
         {
-            m_renderTargets[n] = sc12->GetD12Buffer(n);
+            m_renderTargets[n] = sc12->GetD12Buffer((u8)n);
             rd12->GetDevice()->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtvHandle);
 
             // Create a wrapped 11On12 resource of this back buffer. Since we are 
@@ -102,7 +102,7 @@ DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
             hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)dwritef.GetAddressOf());
             HR_VFY(hr);
 
-            HRESULT hr = m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &brush);
+            hr = m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &brush);
             HR_VFY(hr);
             hr = dwritef->CreateTextFormat(
                 L"Robot Radicals",
