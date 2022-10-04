@@ -255,10 +255,7 @@ namespace DOG
 
 	void AnimationManager::UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator)
 	{
-		ZoneScopedN("skeleton");
-
-		const auto& clip0 = animator.clips[0];
-		const auto& clip1 = animator.clips[1];
+		ZoneScopedN("skeletonUpdate");
 
 		// Set node animation transformations
 		std::vector<DirectX::XMMATRIX> hereditaryTFs;
@@ -383,7 +380,7 @@ namespace DOG
 		{
 			for (u8 i = 0; i < MAX_ANIMATIONS; i++)
 			{
-				if (ac.animationID[i] != m_noAnimation)
+				if (ac.HasActiveAnimation(i))
 				{
 					const auto& animation = animations[ac.animationID[i]];
 					ac.normalizedTime[i] += ac.timeScale[i] * dt / animation.duration;
