@@ -7,13 +7,13 @@ namespace DOG::gfx
 	class RenderDevice;
 	class Swapchain;
 
-	class d2dBackend
+	class D2DBackend
 	{
 		public:
-		virtual void BeginFrame(RenderDevice* rd, Swapchain* sc) = 0;
-		virtual void EndFrame(RenderDevice* rd, Swapchain* sc) = 0;
-		virtual void Render(RenderDevice* rd, Swapchain* sc) = 0;
+		virtual void BeginFrame() = 0;
+		virtual void EndFrame() = 0;
+		virtual void Render() = 0;
 
-		virtual ~d2dBackend() {};
+		virtual ~D2DBackend() {};
 	};
 }

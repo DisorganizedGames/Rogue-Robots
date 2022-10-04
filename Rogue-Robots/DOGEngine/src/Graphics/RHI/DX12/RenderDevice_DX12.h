@@ -178,7 +178,7 @@ namespace DOG::gfx
 		ID3D12DescriptorHeap* GetMainResourceDH() const;
 		ID3D12GraphicsCommandList4* GetListForExternal(CommandList cmdl);
 
-		ID3D12CommandQueue* _GetQueue();
+		ID3D12CommandQueue* GetQueue();
 		D3D12_CPU_DESCRIPTOR_HANDLE GetReservedRTV();
 
 		// Helpers

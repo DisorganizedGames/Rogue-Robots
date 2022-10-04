@@ -3,6 +3,7 @@
 #include <d3d11on12.h>
 #include <d2d1_3.h>
 #include <dwrite.h>
+#include <vector>
 #include "CommonIncludes_DX12.h"
 #include "../d2dBackend.h"
 
@@ -11,16 +12,18 @@ namespace DOG::gfx
 	class RenderDevice;
 	class Swapchain;
 
-	class d2dBackend_DX12 final : public d2dBackend
+	class D2DBackend_DX12 final : public D2DBackend
 	{
 	public:
-		d2dBackend_DX12(RenderDevice* rd, Swapchain* sc, u_int numBuffers, HWND hwnd);
-		~d2dBackend_DX12();
+		D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_int numBuffers, HWND hwnd);
+		~D2DBackend_DX12();
+		RenderDevice* rd;
+		Swapchain* sc;
 
 		// Public interface
-		void BeginFrame(RenderDevice* rd, Swapchain* sc) override;
-		void EndFrame(RenderDevice* rd, Swapchain* sc) override;
-		void Render(RenderDevice* rd,Swapchain* sc) override;
+		void BeginFrame() override;
+		void EndFrame() override;
+		void Render() override;
 
 		ComPtr<ID3D11Device> m_d;
 		ComPtr<ID3D11DeviceContext> m_dc;
@@ -30,10 +33,10 @@ namespace DOG::gfx
 		ComPtr<ID2D1Device> m_2dd;
 		ComPtr<ID2D1DeviceContext> m_2ddc;
 		ComPtr<IDWriteFactory> m_dwritwf;
-		ComPtr<ID3D12Resource> m_renderTargets[2];
-		ComPtr<ID3D11Resource> m_wrappedBackBuffers[2];
+		std::vector<ComPtr<ID3D12Resource>> m_renderTargets;
+		std::vector<ComPtr<ID3D11Resource>> m_wrappedBackBuffers;
 		ComPtr<IDXGISurface> surface;
-		ComPtr<ID2D1Bitmap1> m_d2dRenderTargets[2];
+		std::vector<ComPtr<ID2D1Bitmap1>> m_d2dRenderTargets;
 		ComPtr<ID2D1SolidColorBrush> brush;
       ComPtr<IDWriteTextFormat> format, bformat;
 		ComPtr<ID3D12CommandAllocator> m_commandAllocators[2];

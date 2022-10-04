@@ -13,7 +13,7 @@ namespace DOG::gfx
 {
 	class RenderBackend;
 	class ImGUIBackend;
-	class d2dBackend;
+	class D2DBackend;
 	class RenderDevice;
 	class Swapchain;
 	class ShaderCompilerDXC;
