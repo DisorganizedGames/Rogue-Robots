@@ -79,7 +79,7 @@ function OnUpdate()
 	local gunForward = -playerForward
 	local gunUp = playerUp
 
-	local angle = -3.141592 / 2 -- 90 degrees
+	local angle = -math.pi / 2 -- 90 degrees
 	local gunForward = RotateAroundAxis(gunForward, playerRight, angle)
 	local gunUp = RotateAroundAxis(gunUp, playerRight, angle)
 

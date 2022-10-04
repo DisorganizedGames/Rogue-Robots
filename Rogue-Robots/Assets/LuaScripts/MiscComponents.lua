@@ -32,7 +32,7 @@ function MiscComponents:NormalGun(pos, ...)
 		bullet.size = Vector3.new(2.0, 2.0, 2.0)
 		table.insert(args[3], bullet)
 
-		local angle = 3.141592 / 2
+		local angle = math.pi / 2
 		local actualForward = RotateAroundAxis(forward, up, angle)
 
 		Entity:AddComponent(bullet.entity, "Transform",{x = bullet.startPos.x, y = bullet.startPos.y, z = bullet.startPos.z}, {x = 0.0, y = 0.0, z = 0.0}, bullet.size)
@@ -80,7 +80,7 @@ function MiscComponents:ChargeShot(pos, ...)
 		bullet.speed = args[4]
 		table.insert(args[3], bullet)
 
-		local angle = 3.141592 / 2
+		local angle = math.pi / 2
 		local actualForward = RotateAroundAxis(forward, up, angle)
 
 		Entity:AddComponent(bullet.entity, "Transform", {x = bullet.startPos.x, y = bullet.startPos.y, z = bullet.startPos.z}, {x = 0.0, y = 0.0, z = 0.0}, {x = args[5].x + shotPower, y = args[5].y + shotPower, z = args[5].z + shotPower})
