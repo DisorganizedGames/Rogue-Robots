@@ -53,7 +53,7 @@ namespace DOG
 
 	void AnimationManager::SpawnControlWindow(bool& open)
 	{
-		ZoneScopedN("animImgui3");
+		ZoneScopedN("animImgui");
 
 		if (ImGui::BeginMenu("View"))
 		{
@@ -372,45 +372,31 @@ namespace DOG
 
 	void AnimationManager::UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const
 	{
-		auto& clip0 = ac.clips[0];
-		auto& clip1 = ac.clips[1];
-
-		ZoneScopedN("updateAnimComponent");
 		// tmp code for testing different blending updates
-		
-		auto& blendSpec = ac.blendSpec;
-		if (blendSpec.mode == m_modeImguiBlend) // tmp loop and blend with ImGui
+		/*switch (ac.mode)
 		{
-			// Update Clips
-			clip0.UpdateClip(dt);
-			clip1.UpdateClip(dt);
-			      
-			// Ensure matching animation times, this is wack, need to mark animations how they should be transitioned to.
-			// this is correct for -matching- run/walk anims but not walk->dying etc.
-			clip1.normalizedTime = clip0.normalizedTime;
-		}
-		else if (blendSpec.mode == m_modeTransitionLinearBlend) // tmp Transititon test
+		case m_modeImguiBlend:
+
+			break;
+		default:
+			break;
+		}*/
+		ZoneScopedN("updateAnimComponent");
+		if (ac.mode == m_modeImguiBlend) // tmp loop and blend with ImGui
 		{
-			if (clip0.HasActiveAnimation() && clip1.HasActiveAnimation())
+			for (u8 i = 0; i < MAX_ANIMATIONS; i++)
 			{
-				if (clip0.normalizedTime >= m_imguiBlendMax)
+				if (ac.HasActiveAnimation(i))
 				{
-					blendSpec.mode = m_modeImguiBlend;
-					blendSpec.blendFactor = m_imguiBlendMax;
-					clip1.loop = true;
-					return;
+					const auto& animation = animations[ac.animationID[i]];
+					ac.normalizedTime[i] += ac.timeScale[i] * dt / animation.duration;
+					while (ac.normalizedTime[i] > 1.0f)
+						ac.normalizedTime[i] -= 1.0f;
+					if (ac.normalizedTime[i] < 0.0f)
+						ac.normalizedTime[i] = 1.0f + ac.normalizedTime[i];
+
+					ac.tick[i] = ac.normalizedTime[i] * animation.ticks;
 				}
-
-				// Ensure matching animation times, this is wack, need to mark animations how they should be transitioned to.
-				// this is correct for -matching- run/walk anims but not walk->dying etc.
-				clip1.normalizedTime = clip0.normalizedTime;
-
-				if (clip1.normalizedTime > blendSpec.transition)
-					blendSpec.blendFactor = (clip1.normalizedTime - blendSpec.transition) / (1.0f - blendSpec.transition);
-				
-				// Update Clips
-				clip0.UpdateClip(dt);
-				clip1.UpdateClip(dt);
 			}
 		}
 		else if (ac.blendSpec.mode == m_modeTransitionBezierBlend) // tmp Transititon test
