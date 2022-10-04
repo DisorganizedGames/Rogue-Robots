@@ -16,6 +16,7 @@
 #include "ImGUI/imgui.h"
 
 #include "../Audio/AudioManager.h"
+#include "ImGuiMenuLayer.h"
 
 
 namespace DOG
@@ -155,10 +156,13 @@ namespace DOG
 		AssetManager::Initialize(m_renderer.get());
 		AudioManager::Initialize();
 		PhysicsEngine::Initialize();
+
+		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); });
 	}
 
 	void Application::OnShutDown() noexcept
 	{
+		ImGuiMenuLayer::UnRegisterDebugWindow("ApplicationSetting");
 		AssetManager::Destroy();
 		AudioManager::Destroy();
 
@@ -184,5 +188,65 @@ namespace DOG
 	void Application::PopOverlay(Layer* layer) noexcept
 	{
 		m_layerStack.PopOverlay(layer);
+	}
+
+	void Application::ApplicationSettingDebugMenu(bool& open)
+	{
+		if (ImGui::BeginMenu("View"))
+		{
+			if (ImGui::MenuItem("Application settings"))
+			{
+				open = true;
+			}
+			ImGui::EndMenu(); // "View"
+		}
+
+		if (open)
+		{
+			if (ImGui::Begin("Application settings", &open))
+			{
+				gfx::Monitor monitor = m_renderer->GetMonitor();
+
+				ImGui::Text("Monitor Specs");
+				ImGui::Text(std::filesystem::path(monitor.output.DeviceName).string().c_str());
+
+				int left = monitor.output.DesktopCoordinates.left;
+				int right = monitor.output.DesktopCoordinates.right;
+				int top = monitor.output.DesktopCoordinates.top;
+				int bottom = monitor.output.DesktopCoordinates.bottom;
+
+				std::string rectX = "left: " + std::to_string(left) + ", right: " + std::to_string(right);
+				std::string rectY = "top: " + std::to_string(top) + ", bottom : " + std::to_string(bottom);
+				ImGui::Text("Rect");
+				ImGui::Text(rectX.c_str());
+				ImGui::Text(rectY.c_str());
+				ImGui::Separator();
+
+
+				auto&& modeElementToString = [&monitor](i64 index) -> std::string
+				{
+					std::string str = "resolution: " + std::to_string(monitor.modes[index].Width) + "x" + std::to_string(monitor.modes[index].Height);
+					str += ", hz: " + std::to_string(static_cast<float>(monitor.modes[index].RefreshRate.Numerator) / monitor.modes[index].RefreshRate.Denominator);
+					str += ", Format: " + std::to_string(monitor.modes[index].Format);
+					str += ", scanline: " + std::to_string(monitor.modes[index].ScanlineOrdering);
+					str += ", scaling: " + std::to_string(monitor.modes[index].Scaling);
+					return str;
+				};
+				static i64 selectedModeIndex = std::ssize(monitor.modes) - 1;
+				selectedModeIndex = std::min(selectedModeIndex, static_cast<i64>(std::ssize(monitor.modes) - 1));
+				if (ImGui::BeginCombo("modes", modeElementToString(selectedModeIndex).c_str()))
+				{
+					for (i64 i = std::ssize(monitor.modes) - 1; i >= 0; i--)
+					{
+						if (ImGui::Selectable(modeElementToString(i).c_str(), selectedModeIndex == i))
+						{
+							selectedModeIndex = i;
+						}
+					}
+					ImGui::EndCombo();
+				}
+			}
+			ImGui::End(); // "Application settings"
+		}
 	}
 }

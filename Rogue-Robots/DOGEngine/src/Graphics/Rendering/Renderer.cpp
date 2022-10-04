@@ -188,6 +188,11 @@ namespace DOG::gfx
 		Flush();
 	}
 
+	Monitor Renderer::GetMonitor() const
+	{
+		return m_rd->GetMonitor();
+	}
+
 	void Renderer::SetMainRenderCamera(const DirectX::XMMATRIX& view, DirectX::XMMATRIX* proj)
 	{
 		m_viewMat = view;

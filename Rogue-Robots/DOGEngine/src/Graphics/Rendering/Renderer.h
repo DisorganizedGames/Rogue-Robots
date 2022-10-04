@@ -1,6 +1,7 @@
 #pragma once
 #include "../../Core/Types/GraphicsTypes.h"
 #include "../RHI/RenderResourceHandles.h"
+#include "../RHI/Types/HardwereTypes.h"
 #include "../../Core/AnimationManager.h"
 #include "GPUTable.h"
 
@@ -40,6 +41,7 @@ namespace DOG::gfx
 		~Renderer();
 
 		GraphicsBuilder* GetBuilder() const { return m_builder.get(); }
+		Monitor GetMonitor() const;
 
 		// Must be called at the start of any frame to pick up CPU side ImGUI code
 		void BeginGUI();

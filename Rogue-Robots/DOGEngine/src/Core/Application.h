@@ -30,6 +30,8 @@ namespace DOG
 		void PopLayer(Layer* layer) noexcept;
 		void PopOverlay(Layer* layer) noexcept;
 	private:
+		void ApplicationSettingDebugMenu(bool& open);
+	private:
 		DELETE_COPY_MOVE_CONSTRUCTOR(Application);
 		ApplicationSpecification m_specification;
 		LayerStack& m_layerStack;
