@@ -928,7 +928,7 @@ namespace DOG::gfx
 
 
 
-	ID3D12CommandQueue* RenderDevice_DX12::_GetQueue()
+	ID3D12CommandQueue* RenderDevice_DX12::GetQueue()
 	{
 		return *m_directQueue;
 	}

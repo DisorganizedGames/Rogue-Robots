@@ -10,19 +10,19 @@ class UIelement;
 class RenderDevice;
 class Swapchain;
 
-enum menuUI
+enum MenuUI
 {
    bplay,
    boptions,
    bexit
 };
 
-enum gameUI
+enum GameUI
 {
    inventory
 };
 
-enum pauseUI
+enum PauseUI
 {
 
 };
@@ -36,14 +36,14 @@ enum Uiscene
 class UI
 {
 private:
-   Uiscene scene;
+   Uiscene m_scene;
    void BuildMenuUI();
    void BuildGameUI();
    ComPtr<IDWriteTextFormat> m_btextformat;
 public:
    std::vector<UIelement*> m_elements;
    UINT m_width, m_height;
-   DOG::gfx::d2dBackend_DX12 m_d2d; //The thing that renders everything
+   DOG::gfx::D2DBackend_DX12 m_d2d; //The thing that renders everything
    UI(DOG::gfx::RenderDevice* m_rd, DOG::gfx::Swapchain* sc, u_int maxFramesInFlight, HWND hwnd);
    ~UI();
    void DrawUI();
@@ -57,8 +57,8 @@ private:
 public:
    UIelement();
    UIelement(D2D_POINT_2F pos);
-   virtual void Draw(DOG::gfx::d2dBackend_DX12 &m_d2d) = 0;
-   virtual void Update(DOG::gfx::d2dBackend_DX12& m_d2d);
+   virtual void Draw(DOG::gfx::D2DBackend_DX12 &m_d2d) = 0;
+   virtual void Update(DOG::gfx::D2DBackend_DX12& m_d2d);
    
    virtual ~UIelement();
 };
@@ -73,8 +73,8 @@ private:
 public:
    bool pressed;
    UIButton(D2D_POINT_2F pos,D2D_VECTOR_2F size, std::wstring text);
-   void Draw(DOG::gfx::d2dBackend_DX12 &m_d2d) override;
-   void Update(DOG::gfx::d2dBackend_DX12& m_d2d) override;
+   void Draw(DOG::gfx::D2DBackend_DX12 &m_d2d) override;
+   void Update(DOG::gfx::D2DBackend_DX12& m_d2d) override;
    ~UIButton();
 };
 
@@ -88,8 +88,8 @@ private:
    std::wstring m_text;
    float m_textOp, m_backOp;
 public:
-   UISplashScreen(DOG::gfx::d2dBackend_DX12& m_d2d, float width, float height);
-   void Draw(DOG::gfx::d2dBackend_DX12 &m_d2d) override;
-   void Update(DOG::gfx::d2dBackend_DX12& m_d2d) override;
+   UISplashScreen(DOG::gfx::D2DBackend_DX12& m_d2d, float width, float height);
+   void Draw(DOG::gfx::D2DBackend_DX12 &m_d2d) override;
+   void Update(DOG::gfx::D2DBackend_DX12& m_d2d) override;
    ~UISplashScreen();
 };

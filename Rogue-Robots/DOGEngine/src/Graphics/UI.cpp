@@ -10,9 +10,9 @@ UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HW
       OutputDebugString(L"Error retreiving client rect in UI creation\n");
    m_width = wrect.right;
    m_height = wrect.bottom;
-   this->scene = menu;
+   this->m_scene = menu;
    BuildMenuUI();
-   m_elements.push_back(new UISplashScreen(m_d2d, m_width, m_height));
+   m_elements.push_back(new UISplashScreen(m_d2d, (float)m_width, (float)m_height));
 }
 
 UI::~UI()
@@ -28,11 +28,11 @@ void UI::DrawUI()
       e->Update(m_d2d);
       e->Draw(m_d2d);
    }
-   if (scene == menu && dynamic_cast<UIButton*>(m_elements[menuUI::bplay])->pressed )
+   if (m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bplay])->pressed )
       ChangeUIscene(game);
-   else if (scene == game && dynamic_cast<UIButton*>(m_elements[gameUI::inventory])->pressed )
+   else if (m_scene == game && dynamic_cast<UIButton*>(m_elements[GameUI::inventory])->pressed )
       ChangeUIscene(menu);
-   else if(scene == menu && dynamic_cast<UIButton*>(m_elements[menuUI::bexit])->pressed)
+   else if(m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bexit])->pressed)
       ;
 }
 
@@ -61,12 +61,12 @@ void UI::ChangeUIscene(Uiscene scene)
    case menu:
       m_elements.clear();
       BuildMenuUI();
-      this->scene = menu;
+      this->m_scene = menu;
       break;
    case game:
       m_elements.clear();
       BuildGameUI();
-      this->scene = game;
+      this->m_scene = game;
       break;
    default:
       break;
@@ -87,7 +87,7 @@ UIelement::~UIelement()
 {
 }
 
-void UIelement::Update(DOG::gfx::d2dBackend_DX12& m_d2d)
+void UIelement::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
 {
    return;
 }
@@ -104,19 +104,19 @@ UIButton::~UIButton()
 
 }
 
-void UIButton::Draw(DOG::gfx::d2dBackend_DX12& m_d2d)
+void UIButton::Draw(DOG::gfx::D2DBackend_DX12& m_d2d)
 {
    m_d2d.m_2ddc->DrawRectangle(m_textRect, m_d2d.brush.Get());
    m_d2d.m_2ddc->DrawTextW(
       m_text.c_str(),
-      m_text.length(),
+      (UINT32)m_text.length(),
       m_d2d.bformat.Get(),
       &m_textRect,
       m_d2d.brush.Get()
    );
 }
 
-void UIButton::Update(DOG::gfx::d2dBackend_DX12& m_d2d)
+void UIButton::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
 {
 
    auto m = DOG::Mouse::GetCoordinates();
@@ -133,7 +133,7 @@ void UIButton::Update(DOG::gfx::d2dBackend_DX12& m_d2d)
 
 }
 
-UISplashScreen::UISplashScreen(DOG::gfx::d2dBackend_DX12& m_d2d, float width, float height)
+UISplashScreen::UISplashScreen(DOG::gfx::D2DBackend_DX12& m_d2d, float width, float height)
 {
    m_timer = clock();
    m_background = D2D1::RectF(0.0f, 0.0f, width, height);
@@ -147,19 +147,19 @@ UISplashScreen::UISplashScreen(DOG::gfx::d2dBackend_DX12& m_d2d, float width, fl
    m_textOp = 0.0f;
 }
 
-void UISplashScreen::Draw(DOG::gfx::d2dBackend_DX12& m_d2d)
+void UISplashScreen::Draw(DOG::gfx::D2DBackend_DX12& m_d2d)
 {
    m_d2d.m_2ddc->FillRectangle(m_background, m_splashBrush);
    m_d2d.m_2ddc->DrawTextW(
       m_text.c_str(),
-      m_text.length(),
+      (UINT32)m_text.length(),
       m_d2d.format.Get(),
       &m_background,
       m_textBrush);
 }
-void UISplashScreen::Update(DOG::gfx::d2dBackend_DX12& m_d2d)
+void UISplashScreen::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
 {
-   float time = clock() / CLOCKS_PER_SEC;
+   float time = (float)(clock() / CLOCKS_PER_SEC);
    if (time <= 4 && time >= 0)
    {
       if (m_textOp <= 1.0f)

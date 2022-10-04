@@ -5,21 +5,25 @@
 #include "Swapchain_DX12.h"
 
 
-DOG::gfx::d2dBackend_DX12::d2dBackend_DX12(RenderDevice* rd, Swapchain* sc, u_int numBuffers, HWND hwnd)
+DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_int numBuffers, HWND hwnd) : rd(rd), sc(sc)
 {
     // This is guaranteed since we have no other backends than DX12
     auto rd12 = (RenderDevice_DX12*)rd;
     auto sc12 = (Swapchain_DX12*)sc;
 
+    m_renderTargets.resize(numBuffers);
+    m_wrappedBackBuffers.resize(numBuffers);
+    m_d2dRenderTargets.resize(numBuffers);
+
     // Create an 11 device wrapped around the 12 device and share
     // 12's command queue.
-    auto test = rd12->_GetQueue();
+    auto queue = rd12->GetQueue();
     HRESULT hr = D3D11On12CreateDevice(
         rd12->GetDevice(),
         D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT,
         NULL,
         1u,
-        reinterpret_cast<IUnknown**>(&test),
+        reinterpret_cast<IUnknown**>(&queue),
         1,
         0,
         &m_d,
@@ -34,10 +38,10 @@ DOG::gfx::d2dBackend_DX12::d2dBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
 
     {
         D2D1_DEVICE_CONTEXT_OPTIONS deviceOptions = D2D1_DEVICE_CONTEXT_OPTIONS_NONE;
-        D2D1_FACTORY_OPTIONS f_opt = {
+        D2D1_FACTORY_OPTIONS fOpt = {
             .debugLevel = D2D1_DEBUG_LEVEL_INFORMATION
         };
-        hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory3), &f_opt, (void**)&m_factory);
+        hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory3), &fOpt, (void**)&m_factory);
         HR_VFY(hr);
         hr = m_11on12d.As(&m_dxd);
         HR_VFY(hr);
@@ -63,7 +67,7 @@ DOG::gfx::d2dBackend_DX12::d2dBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
         // Create a RTV, D2D render target, and a command allocator for each frame.
         for (UINT n = 0; n < numBuffers; n++)
         {
-            m_renderTargets[n] = sc12->_GetBuffer(n);
+            m_renderTargets[n] = sc12->GetD12Buffer(n);
             rd12->GetDevice()->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtvHandle);
 
             // Create a wrapped 11On12 resource of this back buffer. Since we are 
@@ -134,12 +138,12 @@ DOG::gfx::d2dBackend_DX12::d2dBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
     }
 }
 
-DOG::gfx::d2dBackend_DX12::~d2dBackend_DX12()
+DOG::gfx::D2DBackend_DX12::~D2DBackend_DX12()
 {
 
 }
 
-void DOG::gfx::d2dBackend_DX12::BeginFrame(RenderDevice* rd, Swapchain* sc)
+void DOG::gfx::D2DBackend_DX12::BeginFrame()
 {
     u_char idx = sc->GetNextDrawSurfaceIdx();
     D2D1_SIZE_F rtSize = m_d2dRenderTargets[idx]->GetSize();
@@ -151,12 +155,12 @@ void DOG::gfx::d2dBackend_DX12::BeginFrame(RenderDevice* rd, Swapchain* sc)
     m_2ddc->BeginDraw();
 }
 
-void DOG::gfx::d2dBackend_DX12::Render(RenderDevice* rd, Swapchain* sc)
+void DOG::gfx::D2DBackend_DX12::Render()
 {
     
 }
 
-void DOG::gfx::d2dBackend_DX12::EndFrame(RenderDevice* rd, Swapchain* sc)
+void DOG::gfx::D2DBackend_DX12::EndFrame()
 {
     u_char idx = sc->GetNextDrawSurfaceIdx();
     HRESULT hr = m_2ddc->EndDraw();
