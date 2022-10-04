@@ -115,6 +115,21 @@ DOG::gfx::d2dBackend_DX12::d2dBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
             HR_VFY(hr);
             hr = format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
             HR_VFY(hr);
+            hr = dwritef->CreateTextFormat(
+                L"Robot Radicals",
+                NULL,
+                DWRITE_FONT_WEIGHT_NORMAL,
+                DWRITE_FONT_STYLE_NORMAL,
+                DWRITE_FONT_STRETCH_NORMAL,
+                20,
+                L"en-us",
+                &bformat
+            );
+            HR_VFY(hr);
+            hr = bformat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+            HR_VFY(hr);
+            hr = bformat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+            
         }
     }
 }
