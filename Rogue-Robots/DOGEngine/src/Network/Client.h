@@ -5,6 +5,11 @@ namespace DOG
 {
 	constexpr int MAX_PLAYER_COUNT = 4;
 	constexpr int SEND_AND_RECIVE_BUFFER_SIZE = 2048;
+	constexpr const char* PORTNUMBER_OUT = "50005";
+	constexpr const char* PORTNUMBER_IN = "50004";
+	constexpr int PORTNUMBER_OUT_INT = 50006;
+	constexpr int PORTNUMBER_IN_INT = 50004;
+	constexpr const char* MULTICAST_ADRESS = "239.255.255.0";
 	class Client
 	{
 	public:
@@ -27,7 +32,7 @@ namespace DOG
 		{
 			int nrOfEntites;
 			int udpId;
-			
+
 		};
 		struct UdpReturnData
 		{

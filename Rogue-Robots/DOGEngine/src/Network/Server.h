@@ -3,7 +3,7 @@
 
 namespace DOG
 {
-	
+
 	class Server
 	{
 	public:
@@ -24,7 +24,7 @@ namespace DOG
 		int m_upid;
 		int m_reciveupid;
 		std::atomic_bool m_gameAlive;
-		
+
 		std::thread m_reciveConnectionsTcp;
 		std::thread m_loopTcp;
 		std::thread m_loopUdp;
@@ -39,7 +39,7 @@ namespace DOG
 		float m_tickrateUdp;
 		std::mutex m_mut;
 		Client::PlayerNetworkComponent m_holdPlayersUdp[MAX_PLAYER_COUNT];
-		
+
 
 	};
 }
