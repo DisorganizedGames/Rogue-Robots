@@ -163,7 +163,7 @@ namespace DOG
 		std::vector<SubmeshMetadata> submeshes;
 		MeshAsset meshAsset;
 		std::optional<gfx::StaticModel> gfxModel = std::nullopt;
-		ImportedAnimation animation;
+		ImportedRig animation;
 	};
 
 	struct AudioAsset : public Asset

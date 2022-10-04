@@ -1,4 +1,5 @@
 #pragma once
+#include "ShapeCreator.h"
 #include "AssimpImporter.h"
 #include "MaterialManager.h"
 #include "ManagedAssets.h"
@@ -25,6 +26,7 @@ namespace DOG
 		~AssetManager();
 
 		[[nodiscard]] u32 LoadModelAsset(const std::string& path, AssetLoadFlag flag = (AssetLoadFlag)(AssetLoadFlag::GPUMemory | AssetLoadFlag::Async));
+		[[nodiscard]] u32 LoadShapeAsset(const Shape shape, const u32 tessFactor1, const u32 tessFactor2 = 3, AssetLoadFlag flag = (AssetLoadFlag)(AssetLoadFlag::GPUMemory | AssetLoadFlag::Async));
 		[[nodiscard]] u32 LoadTexture(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::None);
 		[[nodiscard]] u32 LoadAudio(const std::string& path, AssetLoadFlag flag = AssetLoadFlag::None);
 
@@ -77,6 +79,7 @@ namespace DOG
 		void LoadModelAssetInternal(const std::string& path, u32 id, ModelAsset* assetOut);
 		void LoadTextureAssetInternal(const std::string& path, u32 id, TextureAsset* assetOut);
 		void TextureMoveToGpuCallHelper(u32 id);
+		void LoadShapeAssetInternal(const std::string& path, const Shape shape, const u32 tessFactor1, const u32 tessFactor2, u32 id, ModelAsset* assetOut);
 
 		[[nodiscard]] u32 AddMesh(const ImportedMesh& mesh);
 		[[nodiscard]] std::vector<u32> LoadMaterials(const std::vector<ImportedMaterial>& importedMats, AssetLoadFlag flag);
@@ -89,6 +92,7 @@ namespace DOG
 		u32 NextKey();
 
 		// if assetIDOut == 0 then the component needs needs to be added to m_assets
+		bool ShapeAssetNeedsToBeLoaded(const std::string& path, AssetLoadFlag loadFlag, u32& assetIDOut);
 		bool AssetNeedsToBeLoaded(const std::string& path, AssetLoadFlag flag, u32& assetIDOut);
 
 		gfx::GraphicsBuilder& GetGraphicsBuilder();

@@ -7,7 +7,9 @@ namespace DOG
 	{
 	public:
 		AssimpImporter(const std::filesystem::path& path);
+		AssimpImporter(const u32 shape);
 
+		std::shared_ptr<ImportedModel> GetShape() const { return m_loadedModel; }
 		std::shared_ptr<ImportedModel> GetResult() const { return m_loadedModel; }
 
 	private:

@@ -3,6 +3,7 @@
 #include <Assimp/Importer.hpp>      // C++ importer interface
 #include <Assimp/postprocess.h>     // Post processing flags
 #include <Assimp/pbrmaterial.h>
+#include <DirectXMath.h>
 
 namespace DOG
 {
@@ -102,13 +103,13 @@ namespace DOG
 			AddNode(nameToJointIdx, nameToJoint, nodeArray, node->mChildren[i], parentIdx);
 	}
 
-	ImportedAnimation ImportAnimation(const aiScene* scene, std::shared_ptr<ImportedModel>& m_model)
+	ImportedRig ImportAnimation(const aiScene* scene, std::shared_ptr<ImportedModel>& m_model)
 	{
 		std::unordered_map<std::string, aiBone*> nameToJoint;
 		std::unordered_map<std::string, i32> nameToJointIdx;
 		std::vector<aiNode*> allNodes;
 
-		ImportedAnimation importedAnim = {};
+		ImportedRig importedAnim = {};
 		std::vector<JointNode>& nodeArray = importedAnim.nodes;
 		std::vector<dxf4x4>& boneArray = importedAnim.jointOffsets;
 
@@ -143,7 +144,6 @@ namespace DOG
 					DirectX::XMMATRIX(&nameToJoint.at(n->mName.C_Str())->mOffsetMatrix.a1));
 
 			}
-
 
 		// Store vertices BoneWeight and Indices
 		m_model->mesh.vertexData[VertexAttribute::BlendData] = {};
