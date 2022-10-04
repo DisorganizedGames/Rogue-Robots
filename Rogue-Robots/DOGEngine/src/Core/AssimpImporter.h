@@ -5,10 +5,6 @@ namespace DOG
 {
 	class AssimpImporter
 	{
-		enum class Shape
-		{
-			Prism,
-		};
 	public:
 		AssimpImporter(const std::filesystem::path& path);
 		AssimpImporter(const u32 shape);
