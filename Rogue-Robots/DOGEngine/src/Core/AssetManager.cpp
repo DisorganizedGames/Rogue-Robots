@@ -482,6 +482,16 @@ namespace DOG
 		}
 	}
 
+	AssetLoadFlag AssetManager::GetAssetFlags(u32 id) const
+	{
+		if (m_assets.contains(id))
+		{
+			return m_assets.at(id)->loadFlag;
+		}
+
+		return AssetLoadFlag::None;
+	}
+
 	void AssetManager::Update()
 	{
 		ExecuteCommands();
