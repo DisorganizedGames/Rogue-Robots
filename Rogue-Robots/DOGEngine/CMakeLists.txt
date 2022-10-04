@@ -23,10 +23,12 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Graphics/Rendering/RenderGraph/RGResourceManager.h" "src/Graphics/Rendering/RenderGraph/RGResourceManager.cpp"
     "src/Core/AnimationManager.h" "src/Core/AnimationManager.cpp" "src/Core/ImGuiMenuLayer.h" "src/Core/ImGuiMenuLayer.cpp"
     "src/Physics/PhysicsEngine.h" "src/Physics/PhysicsEngine.cpp"
-    )
+)   
 
 	file(GLOB_RECURSE TempGraphics
     "src/Graphics/*.cpp")
+
+add_compile_definitions(TRACY_ENABLE=1)
 
 set(LibraryName "DOGEngine")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/DOGEngine/vendor/includes/")

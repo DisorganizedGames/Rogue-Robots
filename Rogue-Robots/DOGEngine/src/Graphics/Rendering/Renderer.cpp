@@ -21,6 +21,8 @@
 #include "RenderGraph/RenderGraph.h"
 #include "RenderGraph/RGResourceManager.h"
 
+#include "Tracy/Tracy.hpp"
+
 namespace DOG::gfx
 {
 	Renderer::Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug) :
@@ -151,6 +153,8 @@ namespace DOG::gfx
 
 	void Renderer::Render(f32)
 	{
+		ZoneScopedN("Render");
+
 		std::chrono::steady_clock::time_point m_start, m_end;
 		std::chrono::duration<double> diff;
 
