@@ -15,3 +15,7 @@ struct PlayerStatsComponent
 	//...
 };
 
+struct ModularBlockComponent
+{
+	//
+};
