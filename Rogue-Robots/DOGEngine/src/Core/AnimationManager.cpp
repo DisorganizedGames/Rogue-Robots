@@ -215,7 +215,7 @@ namespace DOG
 
 	void AnimationManager::UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator)
 	{
-		ZoneScopedN("skeletonUpdate");
+		ZoneScopedN("skeleton");
 
 		// Set node animation transformations
 		std::vector<DirectX::XMMATRIX> hereditaryTFs;
@@ -329,23 +329,20 @@ namespace DOG
 				(tick - keys[key1Idx].time) / (keys[key2Idx].time - keys[key1Idx].time));
 	}
 
+	/*void ImguiBlendUpdate(const )
+	{
+
+	}*/
+
 	void AnimationManager::UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const
 	{
 		// tmp code for testing different blending updates
-		/*switch (ac.mode)
-		{
-		case m_modeImguiBlend:
-
-			break;
-		default:
-			break;
-		}*/
 		ZoneScopedN("updateAnimComponent");
 		if (ac.mode == m_modeImguiBlend) // tmp loop and blend with ImGui
 		{
 			for (u8 i = 0; i < MAX_ANIMATIONS; i++)
 			{
-				if (ac.HasActiveAnimation(i))
+				if (ac.animationID[i] != m_noAnimation)
 				{
 					const auto& animation = animations[ac.animationID[i]];
 					ac.normalizedTime[i] += ac.timeScale[i] * dt / animation.duration;
