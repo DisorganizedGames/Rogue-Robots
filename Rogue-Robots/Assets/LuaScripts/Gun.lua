@@ -91,7 +91,7 @@ function OnUpdate()
 	tempTimer = tempTimer - DeltaTime
 	if Input:IsKeyPressed("Q") and tempTimer <= 0.0 then
 		if tempMode == 0 then
-			miscComponent.OnUpdate = nil
+			miscComponent.OnUpdate = MiscManager.NormalGun
 			tempMode = 1
 		else
 			miscComponent.OnUpdate = MiscManager.ChargeShot
@@ -101,44 +101,7 @@ function OnUpdate()
 	end
 ----------------------------------------------------
 
-	shootTimer = shootTimer - DeltaTime
-	
-	if miscComponent.OnUpdate then
-		miscComponent:OnUpdate(barrelComponent, magazineComponent, bullets, InitialBulletSpeed, BulletSize)
-	else
-		NormalGunUpdate()
-	end
-end
-
---If there is no misc component.
-function NormalGunUpdate()
-	--If the shoot cooldown is up and we are clicking.
-	if shootTimer < 0.0 and Input:IsLeftPressed() then
-		shootTimer = ShootCooldown
-
-		local bullet = {}
-		bullet.entity = Entity:CreateEntity()
-		bullet.forward = Player:GetForward()
-		bullet.startPos = Player:GetPosition()
-		bullet.speed = InitialBulletSpeed
-		table.insert(bullets, bullet)
-
-		Entity:AddComponent(bullet.entity, "Transform",{x = bullet.startPos.x, y = bullet.startPos.y, z = bullet.startPos.z}, {x = 0.0, y = 0.0, z = 0.0}, BulletSize)
-		if barrelComponent.OnStart then
-			barrelComponent:OnStart()
-		else
-			NormalBulletSpawn(bullet)
-		end
-	end
-	
-	if barrelComponent.OnUpdate then
-		barrelComponent:OnUpdate()
-	else
-		NormalBulletUpdate()
-	end
-	if magazineComponent.OnUpdate then
-		magazineComponent:OnUpdate()
-	end
+	miscComponent:OnUpdate(gunEntity.position + playerForward * -0.45 + playerUp * 0.06, barrelComponent, magazineComponent, bullets, InitialBulletSpeed, BulletSize)
 end
 
 --If there is not barrel component start.
