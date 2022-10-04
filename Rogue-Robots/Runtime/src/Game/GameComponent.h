@@ -15,7 +15,7 @@ struct PlayerStatsComponent
 	//...
 };
 
-struct ModularBlockComponent : public DOG::Component<ModularBlockComponent>
+struct ModularBlockComponent
 {
 	//
 };

@@ -243,13 +243,13 @@ void GameLayer::LoadLevel()
 			{
 				while (line.find(' ') != std::string::npos)
 				{
-					unsigned delimPos = line.find(' ');
+					size_t delimPos = line.find(' ');
 					std::string block = line.substr(0, delimPos);
 					line.erase(0, delimPos + 1);
 					if (block != "Empty")
 					{
-						unsigned firstUnderscore = block.find('_');
-						unsigned secondUnderscore = block.find('_', firstUnderscore + 1);
+						size_t firstUnderscore = block.find('_');
+						size_t secondUnderscore = block.find('_', firstUnderscore + 1);
 						std::string blockName = block.substr(0, firstUnderscore);
 						int blockRot = std::stoi(block.substr(firstUnderscore + 2, secondUnderscore - firstUnderscore - 2));
 						std::string blockFlip = block.substr(secondUnderscore + 1, block.size() - secondUnderscore - 1);
