@@ -12,8 +12,19 @@ class Swapchain;
 
 enum menuUI
 {
-   bplay = 1,
+   bplay,
+   boptions,
    bexit
+};
+
+enum gameUI
+{
+   inventory
+};
+
+enum pauseUI
+{
+
 };
 
 enum Uiscene
@@ -25,13 +36,18 @@ enum Uiscene
 class UI
 {
 private:
+   Uiscene scene;
+   void BuildMenuUI();
+   void BuildGameUI();
+   ComPtr<IDWriteTextFormat> m_btextformat;
 public:
-   std::vector<std::unique_ptr<UIelement>> m_elements;
+   std::vector<UIelement*> m_elements;
+   UINT m_width, m_height;
    DOG::gfx::d2dBackend_DX12 m_d2d; //The thing that renders everything
    UI(DOG::gfx::RenderDevice* m_rd, DOG::gfx::Swapchain* sc, u_int maxFramesInFlight, HWND hwnd);
    ~UI();
-   void drawUI();
-   void changeUIscene(Uiscene scene);
+   void DrawUI();
+   void ChangeUIscene(Uiscene scene);
 };
 
 class UIelement
@@ -41,8 +57,8 @@ private:
 public:
    UIelement();
    UIelement(D2D_POINT_2F pos);
-   virtual void draw(DOG::gfx::d2dBackend_DX12 &m_d2d) = 0;
-   virtual void update(DOG::gfx::d2dBackend_DX12& m_d2d);
+   virtual void Draw(DOG::gfx::d2dBackend_DX12 &m_d2d) = 0;
+   virtual void Update(DOG::gfx::d2dBackend_DX12& m_d2d);
    
    virtual ~UIelement();
 };
@@ -50,15 +66,15 @@ public:
 class UIButton : public UIelement
 {
 private:
-   D2D_POINT_2F pos;
-   D2D1_RECT_F textRect;
-   D2D_VECTOR_2F size;
-   std::wstring text;
+   D2D_POINT_2F m_pos;
+   D2D1_RECT_F m_textRect;
+   D2D_VECTOR_2F m_size;
+   std::wstring m_text;
 public:
    bool pressed;
    UIButton(D2D_POINT_2F pos,D2D_VECTOR_2F size, std::wstring text);
-   void draw(DOG::gfx::d2dBackend_DX12 &m_d2d) override;
-   void update(DOG::gfx::d2dBackend_DX12& m_d2d) override;
+   void Draw(DOG::gfx::d2dBackend_DX12 &m_d2d) override;
+   void Update(DOG::gfx::d2dBackend_DX12& m_d2d) override;
    ~UIButton();
 };
 
@@ -66,14 +82,14 @@ public:
 class UISplashScreen : public UIelement
 {
 private:
-   D2D1_RECT_F background;
-   clock_t timer;
-   ID2D1SolidColorBrush* splashBrush, *textBrush;
-   std::wstring text;
-   float textOp, backOp;
+   D2D1_RECT_F m_background;
+   clock_t m_timer;
+   ID2D1SolidColorBrush* m_splashBrush, *m_textBrush;
+   std::wstring m_text;
+   float m_textOp, m_backOp;
 public:
-   UISplashScreen(DOG::gfx::d2dBackend_DX12& m_d2d);
-   void draw(DOG::gfx::d2dBackend_DX12 &m_d2d) override;
-   void update(DOG::gfx::d2dBackend_DX12& m_d2d) override;
+   UISplashScreen(DOG::gfx::d2dBackend_DX12& m_d2d, float width, float height);
+   void Draw(DOG::gfx::d2dBackend_DX12 &m_d2d) override;
+   void Update(DOG::gfx::d2dBackend_DX12& m_d2d) override;
    ~UISplashScreen();
 };
