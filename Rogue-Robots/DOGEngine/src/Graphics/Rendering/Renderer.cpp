@@ -263,10 +263,6 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("ImGUI Pass",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
-					builder.ReadDepthStencil(RG_RESOURCE(MainDepth),
-						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT)
-							.SetDepthReadOnly());
-
 					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer), RenderPassAccessType::PreservePreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 				},
