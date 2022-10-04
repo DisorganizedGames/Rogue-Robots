@@ -1,3 +1,5 @@
+require("VectorMath")
+
 --Tweakable values.
 local MaxAmmo = 10
 local InitialBulletSpeed = 10.0
@@ -30,12 +32,26 @@ local bulletTemplate = {
 }
 
 --Non-tweakable
-local bulletModel = 0
+local gunModel = 0
+local bulletModel = nil
 local bullets = {}
 local shootTimer = 0.0
 
+local gunEntity = {
+	entityID = nil,
+	position = {x=0,y=0,z=0},
+	rotation = {x=3.14/2,y=0,z=0}
+}
+
 function OnStart()
-	bulletModel = Asset:LoadModel("Assets/556x45_bullet.fbx") --Load the bullet's model
+	gunModel = Asset:LoadModel("Assets/Rifle/scene.gltf")
+	bulletModel = Asset:LoadModel("Assets/556x45_bullet.fbx")
+
+	-- Initialize the gun view model entity
+	gunID = Entity:CreateEntity()
+	gunEntity.entityID = gunID
+	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.15,y=.15,z=.15})
+	Entity:AddComponent(gunID, "Model", gunModel)
 
 	barrelComponent = ObjectManager:CreateObject()
 	magazineComponent = ObjectManager:CreateObject()
@@ -50,11 +66,32 @@ end
 local tempMode = 0
 local tempTimer = 0.0
 function OnUpdate()
+	-- Update gun model position
+	gunEntity.position = Vector3.fromTable(Player:GetPosition())
+	local playerUp = Vector3.fromTable(Player:GetUp())
+	local playerForward = Vector3.fromTable(Player:GetForward())
+	local playerRight = Vector3.fromTable(Player:GetRight())
+
+	-- Move gun down and to the right 
+	gunEntity.position = gunEntity.position + playerRight * 0.2 - playerUp * 0.2
+
+	-- Rotate the weapon by 90 degrees pitch
+	local gunForward = -playerForward
+	local gunUp = playerUp
+
+	local angle = -math.pi / 2 -- 90 degrees
+	local gunForward = RotateAroundAxis(gunForward, playerRight, angle)
+	local gunUp = RotateAroundAxis(gunUp, playerRight, angle)
+
+	Entity:SetRotationForwardUp(gunEntity.entityID, gunForward, gunUp)
+	
+	Entity:ModifyComponent(gunEntity.entityID, "Transform", gunEntity.position, 1)
+
 --Temporary code to allow for switching mode.
 	tempTimer = tempTimer - DeltaTime
 	if Input:IsKeyPressed("Q") and tempTimer <= 0.0 then
 		if tempMode == 0 then
-			miscComponent.OnUpdate = nil
+			miscComponent.OnUpdate = MiscManager.NormalGun
 			tempMode = 1
 		else
 			miscComponent.OnUpdate = MiscManager.ChargeShot
@@ -64,44 +101,7 @@ function OnUpdate()
 	end
 ----------------------------------------------------
 
-	shootTimer = shootTimer - DeltaTime
-
-	if miscComponent.OnUpdate then
-		miscComponent:OnUpdate(barrelComponent, magazineComponent, bullets, InitialBulletSpeed, BulletSize)
-	else
-		NormalGunUpdate()
-	end
-end
-
---If there is no misc component.
-function NormalGunUpdate()
-	--If the shoot cooldown is up and we are clicking.
-	if shootTimer < 0.0 and Input:IsLeftPressed() then
-		shootTimer = ShootCooldown
-
-		local bullet = {}
-		bullet.entity = Entity:CreateEntity()
-		bullet.forward = Player:GetForward()
-		bullet.startPos = Player:GetPosition()
-		bullet.speed = InitialBulletSpeed
-		table.insert(bullets, bullet)
-
-		Entity:AddComponent(bullet.entity, "Transform",{x = bullet.startPos.x, y = bullet.startPos.y, z = bullet.startPos.z}, {x = 0.0, y = 0.0, z = 0.0}, BulletSize)
-		if barrelComponent.OnStart then
-			barrelComponent:OnStart()
-		else
-			NormalBulletSpawn(bullet)
-		end
-	end
-	
-	if barrelComponent.OnUpdate then
-		barrelComponent:OnUpdate()
-	else
-		NormalBulletUpdate()
-	end
-	if magazineComponent.OnUpdate then
-		magazineComponent:OnUpdate()
-	end
+	miscComponent:OnUpdate(gunEntity.position + playerForward * -0.45 + playerUp * 0.06, barrelComponent, magazineComponent, bullets, InitialBulletSpeed, BulletSize)
 end
 
 --If there is not barrel component start.

@@ -2,7 +2,8 @@
 #include "GameComponent.h"
 
 using namespace DOG;
-using namespace DirectX::SimpleMath;
+using namespace DirectX;
+using namespace SimpleMath;
 //---------------------------------------------------------------------------------------------------------
 //Input
 void InputInterface::IsLeftPressed(LuaContext* context)
@@ -108,6 +109,25 @@ void EntityInterface::GetTransformScaleData(LuaContext* context)
 	context->ReturnTable(t);
 }
 
+void EntityInterface::SetRotationForwardUp(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
+	LuaTable forwardTable = context->GetTable();
+	LuaTable upTable = context->GetTable();
+	LuaVector3 forwardLua(forwardTable);
+	LuaVector3 upLua(upTable);
+
+	Vector3 forward = ::XMVectorSet(forwardLua.x, forwardLua.y, forwardLua.z, 0);
+	Vector3 up = ::XMVectorSet(upLua.x, upLua.y, upLua.z, 0);
+	Vector3 right = ::XMVector3Cross(up, forward);
+
+	Matrix rotMat = DirectX::XMMatrixLookToLH((DirectX::XMVECTOR)transform.GetPosition(), forward, up);
+	rotMat = rotMat.Invert();
+
+	transform.SetRotation(rotMat);
+}
+
 void EntityInterface::GetPlayerStats(DOG::LuaContext* context)
 {
 	entity e = context->GetInteger();
@@ -208,3 +228,47 @@ void PlayerInterface::GetPosition(LuaContext* context)
 	t.AddFloatToTable("z", position.z);
 	context->ReturnTable(t);
 }
+
+void PlayerInterface::GetUp(LuaContext* context)
+{
+	Matrix viewMat = EntityManager::Get().GetComponent<CameraComponent>(m_player).viewMatrix.Invert();
+	Vector3 scale;
+	Quaternion rotation;
+	Vector3 translation;
+	viewMat.Decompose(scale, rotation, translation);
+
+	Vector3 up(0, 1, 0);
+	up = XMVector3Rotate(up, rotation);
+
+	LuaTable t;
+	t.AddFloatToTable("x", up.x);
+	t.AddFloatToTable("y", up.y);
+	t.AddFloatToTable("z", up.z);
+	context->ReturnTable(t);
+}
+
+void PlayerInterface::GetRight(DOG::LuaContext* context)
+{
+	Matrix viewMat = EntityManager::Get().GetComponent<CameraComponent>(m_player).viewMatrix.Invert();
+	Vector3 scale;
+	Quaternion rotation;
+	Vector3 translation;
+	viewMat.Decompose(scale, rotation, translation);
+
+	Vector3 right(1, 0, 0);
+	right = XMVector3Rotate(right, rotation);
+
+	LuaTable t;
+	t.AddFloatToTable("x", right.x);
+	t.AddFloatToTable("y", right.y);
+	t.AddFloatToTable("z", right.z);
+	context->ReturnTable(t);
+}
+
+LuaVector3::LuaVector3(LuaTable& table)
+{
+	x = table.GetFloatFromTable("x");
+	y = table.GetFloatFromTable("y");
+	z = table.GetFloatFromTable("z");
+}
+

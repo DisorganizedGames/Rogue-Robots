@@ -1,6 +1,13 @@
 #pragma once
 #include <DOGEngine.h>
 
+struct LuaVector3
+{
+	f32 x, y, z;
+
+	explicit LuaVector3(DOG::LuaTable& table);
+};
+
 class LuaInterface
 {
 public:
@@ -74,6 +81,8 @@ public:
 	void GetTransformPosData(DOG::LuaContext* context);
 	void GetTransformScaleData(DOG::LuaContext* context);
 
+	void SetRotationForwardUp(DOG::LuaContext* context);
+
 	void GetPlayerStats(DOG::LuaContext* context);
 
 private:
@@ -123,6 +132,9 @@ public:
 	void GetID(DOG::LuaContext* context);
 	void GetForward(DOG::LuaContext* context);
 	void GetPosition(DOG::LuaContext* context);
+	void GetUp(DOG::LuaContext* context);
+	void GetRight(DOG::LuaContext* context);
+
 private:
 	DOG::entity m_player;
 };

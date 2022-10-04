@@ -1,0 +1,11 @@
+Model Information:
+* title:	Assault Rifle PBR
+* source:	https://sketchfab.com/3d-models/assault-rifle-pbr-8c6ed34adaf740318f6ab1b08ac4e7d4
+* author:	Mamba_Negra (https://sketchfab.com/Mamba_Negra)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Assault Rifle PBR" (https://sketchfab.com/3d-models/assault-rifle-pbr-8c6ed34adaf740318f6ab1b08ac4e7d4) by Mamba_Negra (https://sketchfab.com/Mamba_Negra) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
