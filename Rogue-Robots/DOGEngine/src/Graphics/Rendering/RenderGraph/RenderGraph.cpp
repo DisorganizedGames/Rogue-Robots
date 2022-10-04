@@ -414,10 +414,16 @@ namespace DOG::gfx
 					const auto view = m_rd->CreateView(Texture(m_resMan->GetResource(input.id)), viewDesc);
 					passResources.m_textureViews.push_back(view);
 
-					// @todo to support later (read only DSV --> baked into Render Pass
+					// Read only DSV
 					if (viewDesc.viewType == ViewType::DepthStencil)
 					{
-						assert(false);
+						rpActive = true;
+
+						auto depthAccesses = GetAccessTypes(*input.rpAccessType);
+						auto stencilAccesses = GetAccessTypes(*input.rpStencilAccessType);
+						builder.AddDepthStencil(view,
+							depthAccesses.first, depthAccesses.second,
+							stencilAccesses.first, stencilAccesses.second);
 					}
 					// RTV as input not allowed! (This should be caught earlier)
 					else if (viewDesc.viewType == ViewType::RenderTarget)
@@ -504,7 +510,9 @@ namespace DOG::gfx
 	void RenderGraph::PassBuilder::ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc)
 	{
 		assert(IsReadState(state));
-		assert(desc.viewType != ViewType::RenderTarget && desc.viewType != ViewType::UnorderedAccess);
+		assert(desc.viewType != ViewType::RenderTarget);
+		assert(desc.viewType != ViewType::UnorderedAccess);
+		assert(desc.viewType != ViewType::DepthStencil);
 
 		PassIO input;
 		input.originalID = id;
@@ -515,6 +523,8 @@ namespace DOG::gfx
 			PushPassReader(id);
 			id = GetPrevious(id);
 		}
+		else
+			assert(false);		// RG has never written to this resource, and is therefore an invalid read.
 
 		input.id = id;
 		input.desiredState = state;
@@ -523,36 +533,40 @@ namespace DOG::gfx
 		m_pass.inputs.push_back(input);
 	}
 
-	void RenderGraph::PassBuilder::ReadOrWriteDepth(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc)
+	void RenderGraph::PassBuilder::ReadDepthStencil(RGResourceID id, TextureViewDesc desc)
 	{
-		// DSV read
-		if (desc.depthReadOnly)
-		{
-			assert(false);		// @TODO
-		}
-		// DSV write
-		else
-		{
-			// No aliasing support for depth for now!
-			if (m_globalData.writes.contains(id))
-			{
-				assert(false);
-			}
-			else
-			{
-				PassIO output{};
-				output.id = id;
-				output.type = RGResourceType::Texture;
-				output.viewDesc = desc;
-				output.desiredState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-				output.rpAccessType = access;
-				output.rpStencilAccessType = RenderPassAccessType::DiscardDiscard;
-				m_pass.outputs.push_back(output);
+		assert(desc.viewType == ViewType::DepthStencil);
 
-				m_globalData.writeCount[id] = 1;
-				m_globalData.writes.insert(id);
-			}
-		}
+		// Verify that the user hasn't forgotten the read only flags on views
+		assert(desc.depthReadOnly || desc.stencilReadOnly);
+		
+		PassIO input{};
+		input.id = id;
+		input.type = RGResourceType::Texture;
+		input.viewDesc = desc;
+		input.desiredState = D3D12_RESOURCE_STATE_DEPTH_READ;
+		input.rpAccessType = RenderPassAccessType::PreservePreserve;
+		input.rpStencilAccessType = RenderPassAccessType::PreservePreserve;
+		m_pass.inputs.push_back(input);
+	}
+
+	void RenderGraph::PassBuilder::WriteDepthStencil(RGResourceID id, RenderPassAccessType depthAccess, TextureViewDesc desc, RenderPassAccessType stencilAccess)
+	{
+		assert(!desc.depthReadOnly);
+		assert(!desc.stencilReadOnly);
+		assert(!m_globalData.writes.contains(id));		// No aliasing support for depth stencil
+
+		PassIO output{};
+		output.id = id;
+		output.type = RGResourceType::Texture;
+		output.viewDesc = desc;
+		output.desiredState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+		output.rpAccessType = depthAccess;
+		output.rpStencilAccessType = stencilAccess;
+		m_pass.outputs.push_back(output);
+
+		m_globalData.writeCount[id] = 1;
+		m_globalData.writes.insert(id);
 	}
 
 	void RenderGraph::PassBuilder::WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc)
@@ -660,6 +674,28 @@ namespace DOG::gfx
 		
 			m_globalData.writes.insert(id);
 		}
+	}
+
+	void RenderGraph::PassBuilder::ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, BufferViewDesc desc)
+	{
+		assert(IsReadState(state));
+		assert(desc.viewType != ViewType::RenderTarget && desc.viewType != ViewType::UnorderedAccess);
+
+		PassIO input;
+		input.originalID = id;
+
+		// Automatically deduces the correct read if ID is an aliased resource
+		if (m_globalData.writes.contains(id))
+		{
+			PushPassReader(id);
+			id = GetPrevious(id);
+		}
+
+		input.id = id;
+		input.desiredState = state;
+		input.viewDesc = desc;
+		input.type = RGResourceType::Buffer;
+		m_pass.inputs.push_back(input);
 	}
 
 	void RenderGraph::PassBuilder::ReadWriteTarget(RGResourceID id, BufferViewDesc desc)

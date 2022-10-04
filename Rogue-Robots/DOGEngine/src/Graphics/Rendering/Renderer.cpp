@@ -170,7 +170,7 @@ namespace DOG::gfx
 
 					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
-					builder.ReadOrWriteDepth(RG_RESOURCE(MainDepth), RenderPassAccessType::ClearDiscard,
+					builder.WriteDepthStencil(RG_RESOURCE(MainDepth), RenderPassAccessType::ClearDiscard,
 						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
 				},
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
@@ -263,6 +263,10 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("ImGUI Pass",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
+					builder.ReadDepthStencil(RG_RESOURCE(MainDepth),
+						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT)
+							.SetDepthReadOnly());
+
 					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer), RenderPassAccessType::PreservePreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 				},

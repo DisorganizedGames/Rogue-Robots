@@ -133,12 +133,14 @@ namespace DOG::gfx
 			void ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
 
 			void ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc);
-			void ReadOrWriteDepth(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);		// No aliasing support
+			void ReadDepthStencil(RGResourceID id, TextureViewDesc desc);
+			void ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, BufferViewDesc desc);
+
+			void WriteDepthStencil(RGResourceID id, RenderPassAccessType depthAccess, TextureViewDesc desc, RenderPassAccessType stencilAccess = RenderPassAccessType::DiscardDiscard);
 			void WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
 			void ReadWriteTarget(RGResourceID id, TextureViewDesc desc);
-
+			
 			void ReadWriteTarget(RGResourceID id, BufferViewDesc desc);
-
 
 		private:
 			// Auto-proxy and auto-alias helpers
