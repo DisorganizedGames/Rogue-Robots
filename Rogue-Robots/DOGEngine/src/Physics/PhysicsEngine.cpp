@@ -350,8 +350,8 @@ namespace DOG
 			std::vector<u8>* vertexData = &(model->meshAsset.vertexData[VertexAttribute::Position]);
 			Vertex* vertexVertices = (Vertex*)vertexData->data();
 
-			u32 trianglesAmount = model->meshAsset.indices.size() / verticePerTriangle;
-			u32 verticesAmount = vertexData->size() / (sizeof(Vertex));
+			u32 trianglesAmount = (u32)(model->meshAsset.indices.size() / verticePerTriangle);
+			u32 verticesAmount = (u32)(vertexData->size() / (sizeof(Vertex)));
 
 			//Set the mesh for the collider
 			btIndexedMesh indexedMesh;
