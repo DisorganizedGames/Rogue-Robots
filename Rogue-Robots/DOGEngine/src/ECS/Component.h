@@ -62,20 +62,26 @@ namespace DOG
 	struct AnimationComponent
 	{
 		// initial animation component, liable to changge
+		i32 mode = 0;
+		f32 bf = 0.0f;
 		i32 offset = 0;
+		f32 transition = 0.0f;
+		
 		i32 animationID[2] = { 0, -1 };
 		f32 tick[2] = { 0.f, 0.f };
 		f32 normalizedTime[2] = { 0.f, 0.f };
 		f32 timeScale[2] = { 1.0f, 1.0f };
-		f32 transition = 0.0f;
-		i32 mode = 0;
-		f32 bf = 0.0f;
-		/*bool HasActiveAnimation(const u8 animation) const noexcept{
-			return animationID[animation] != -1; };
-		void UpdateBlend(const f32 dt, const f32 animDuration, const f32 animTicks)
-		{
 
-		}*/
+		struct animationClip
+		{
+			i32 animationID = 0;
+			f32 tick = 0.f;
+			f32 normalizedTime = 0.f;
+			f32 timeScale = 1.0f;
+			void Update(const f32 animDuration, const f32 dt, const f32 animTicks)
+			{}
+		};
+		std::array<animationClip, 2> clips;
 	};
 
 	struct AudioComponent

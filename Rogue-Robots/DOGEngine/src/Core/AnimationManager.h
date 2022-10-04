@@ -15,6 +15,7 @@ namespace DOG
 	private:
 		// tmp
 		static constexpr u8 MAX_ANIMATIONS = 2;
+		static constexpr i32 m_noAnimation = -1;
 		static constexpr u8 m_animationNumeroUno = 0;
 		static constexpr u8 m_animationNumeroDos = 1;
 		enum class KeyType
@@ -48,7 +49,6 @@ namespace DOG
 		static constexpr i32 m_modeImguiBlend = 0;
 		static constexpr i32 m_modeTransitionLinearBlend = 1;
 		static constexpr i32 m_modeTransitionBezierBlend = 2;
-		static constexpr i32 m_noAnimation = -1;
 		// IMGUI RELATED
 		i32 m_imguiProfilePerformUpdate = 1;
 		bool m_imguiRootTranslation = false;
