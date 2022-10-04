@@ -21,7 +21,7 @@
 #include "RenderGraph/RenderGraph.h"
 #include "RenderGraph/RGResourceManager.h"
 
-#include "../../Profiler/tracy-0.8.2/Tracy.hpp"
+#include "Tracy/Tracy.hpp"
 
 namespace DOG::gfx
 {
