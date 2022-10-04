@@ -71,7 +71,7 @@ namespace DOG
 				static AnimationComponent* animComponent;
 				static i32 rig;
 				static i32 animation[MAX_ANIMATIONS] = { 0, 0 };
-				static std::vector<ImportedRig> rigs;
+				static std::vector<ImportedRig*> rigs;
 				
 				const bool rigLoaded = rigs.size();
 				if (!rigLoaded)
@@ -81,7 +81,7 @@ namespace DOG
 							ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 							if (model)
 							{
-								rigs.push_back(model->animation);
+								rigs.push_back(&model->animation);
 								animComponent = &animatorC;
 							}
 							else
@@ -99,10 +99,10 @@ namespace DOG
 				auto imguiAnim = [rigs = rigs, ac = animComponent, animation = animation](u8 aIdx)
 				{
 					auto& a = animation[aIdx];
-					if (ImGui::BeginCombo(("animation " + std::to_string(aIdx)).c_str(), rigs[rig].animations[a].name.c_str()))
+					if (ImGui::BeginCombo(("animation " + std::to_string(aIdx)).c_str(), rigs[rig]->animations[a].name.c_str()))
 					{
-						for (i32 i = 0; i < std::size(rigs[rig].animations); i++)
-							if (ImGui::Selectable(rigs[rig].animations[i].name.c_str(), (i == a)))
+						for (i32 i = 0; i < std::size(rigs[rig]->animations); i++)
+							if (ImGui::Selectable(rigs[rig]->animations[i].name.c_str(), (i == a)))
 								animComponent->animationID[aIdx] = a = i;
 						ImGui::EndCombo();
 					}
@@ -141,10 +141,10 @@ namespace DOG
 				}
 				// ImGui individual joint sliders
 				{
-					if (ImGui::BeginCombo("tfs", rigs[0].nodes[m_imguiSelectedBone].name.c_str()))
+					if (ImGui::BeginCombo("tfs", rigs[0]->nodes[m_imguiSelectedBone].name.c_str()))
 					{
-						for (i32 i = 1; i < std::size(rigs[0].nodes); i++)
-							if (ImGui::Selectable((rigs[0].nodes[i].name + "  " + std::to_string(i)).c_str(), (i == m_imguiSelectedBone)))
+						for (i32 i = 1; i < std::size(rigs[0]->nodes); i++)
+							if (ImGui::Selectable((rigs[0]->nodes[i].name + "  " + std::to_string(i)).c_str(), (i == m_imguiSelectedBone)))
 								m_imguiSelectedBone = i;
 						ImGui::EndCombo();
 					}
