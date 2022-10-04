@@ -35,7 +35,7 @@ namespace DOG::gfx
 		ComPtr<IDXGISurface> surface;
 		ComPtr<ID2D1Bitmap1> m_d2dRenderTargets[2];
 		ComPtr<ID2D1SolidColorBrush> brush;
-      ComPtr<IDWriteTextFormat> format;
+      ComPtr<IDWriteTextFormat> format, bformat;
 		ComPtr<ID3D12CommandAllocator> m_commandAllocators[2];
 
 	private:
