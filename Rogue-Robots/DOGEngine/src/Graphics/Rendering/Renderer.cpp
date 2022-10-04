@@ -116,6 +116,7 @@ namespace DOG::gfx
 
 	Renderer::~Renderer()
 	{
+		Flush();
 	}
 
 	void Renderer::SetMainRenderCamera(const DirectX::XMMATRIX& view, DirectX::XMMATRIX* proj)
