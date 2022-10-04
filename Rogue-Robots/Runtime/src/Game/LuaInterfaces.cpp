@@ -125,9 +125,6 @@ void EntityInterface::SetRotationForwardUp(DOG::LuaContext* context)
 	Matrix rotMat = DirectX::XMMatrixLookToLH((DirectX::XMVECTOR)transform.GetPosition(), forward, up);
 	rotMat = rotMat.Invert();
 
-	// Super temporary rotation because the gun needs an extra rotation (And screw rotating vectors in lua)
-	rotMat = Matrix::CreateFromYawPitchRoll(0, 3.1415/2, 0) * rotMat;
-
 	transform.SetRotation(rotMat);
 }
 

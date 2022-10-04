@@ -1,3 +1,5 @@
+require("VectorMath")
+
 --Tweakable values.
 local MaxAmmo = 10
 local InitialBulletSpeed = 10.0
@@ -65,23 +67,24 @@ local tempMode = 0
 local tempTimer = 0.0
 function OnUpdate()
 	-- Update gun model position
-	gunEntity.position = Player:GetPosition()
-	up = Player:GetUp()
-	pf = Player:GetForward()
-	pr = Player:GetRight()
+	gunEntity.position = Vector3.fromTable(Player:GetPosition())
+	local playerUp = Vector3.fromTable(Player:GetUp())
+	local playerForward = Vector3.fromTable(Player:GetForward())
+	local playerRight = Vector3.fromTable(Player:GetRight())
+
+	-- Move gun down and to the right 
+	gunEntity.position = gunEntity.position + playerRight * 0.2 - playerUp * 0.2
+
+	-- Rotate the weapon by 90 degrees pitch
+	local gunForward = -playerForward
+	local gunUp = playerUp
+
+	local angle = -3.141592 / 2 -- 90 degrees
+	local gunForward = RotateAroundAxis(gunForward, playerRight, angle)
+	local gunUp = RotateAroundAxis(gunUp, playerRight, angle)
+
+	Entity:SetRotationForwardUp(gunEntity.entityID, gunForward, gunUp)
 	
-	gf = {x=-pf.x, y=-pf.y, z=-pf.z}
-	gup = {x=up.x, y=up.y, z=up.z}
-
-	pos = gunEntity.position
-	gunEntity.position = {
-		x = pos.x + 0.2 * pr.x - 0.2 * gup.x,
-		y = pos.y - 0.2 * pr.y - 0.2 * gup.y, 
-		z = pos.z + 0.2 * pr.z - 0.2 * gup.z
-	}
-
-	Entity:SetRotationForwardUp(gunEntity.entityID, gf, gup)
-
 	Entity:ModifyComponent(gunEntity.entityID, "Transform", gunEntity.position, 1)
 
 --Temporary code to allow for switching mode.
