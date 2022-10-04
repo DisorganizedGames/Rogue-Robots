@@ -4,6 +4,7 @@
 #include "ImGUI/imgui.h"
 #include "Time.h"
 #include "ImGuiMenuLayer.h"
+#include "Tracy/Tracy.hpp"
 
 
 namespace DOG
@@ -50,6 +51,8 @@ namespace DOG
 
 	void AnimationManager::SpawnControlWindow(bool& open)
 	{
+		ZoneScopedN("animImgui");
+
 		if (ImGui::BeginMenu("View"))
 		{
 			if (ImGui::MenuItem("Animation"))
@@ -212,6 +215,8 @@ namespace DOG
 
 	void AnimationManager::UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator)
 	{
+		ZoneScopedN("skeletonUpdate");
+
 		// Set node animation transformations
 		std::vector<DirectX::XMMATRIX> hereditaryTFs;
 		hereditaryTFs.reserve(rig.nodes.size());
@@ -326,21 +331,31 @@ namespace DOG
 
 	void AnimationManager::UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const
 	{
-		// tmp code for testing different blending updates 
+		// tmp code for testing different blending updates
+		/*switch (ac.mode)
+		{
+		case m_modeImguiBlend:
+
+			break;
+		default:
+			break;
+		}*/
+		ZoneScopedN("updateAnimComponent");
 		if (ac.mode == m_modeImguiBlend) // tmp loop and blend with ImGui
 		{
 			for (u8 i = 0; i < MAX_ANIMATIONS; i++)
 			{
-				if (ac.animationID[i] == m_noAnimation)
-					continue;
-				const auto& animation = animations[ac.animationID[i]];
-				ac.normalizedTime[i] += ac.timeScale[i] * dt / animation.duration;
-				while (ac.normalizedTime[i] > 1.0f)
-					ac.normalizedTime[i] -= 1.0f;
-				if (ac.normalizedTime[i] < 0.0f)
-					ac.normalizedTime[i] = 1.0f + ac.normalizedTime[i];
+				if (ac.HasActiveAnimation(i))
+				{
+					const auto& animation = animations[ac.animationID[i]];
+					ac.normalizedTime[i] += ac.timeScale[i] * dt / animation.duration;
+					while (ac.normalizedTime[i] > 1.0f)
+						ac.normalizedTime[i] -= 1.0f;
+					if (ac.normalizedTime[i] < 0.0f)
+						ac.normalizedTime[i] = 1.0f + ac.normalizedTime[i];
 
-				ac.tick[i] = ac.normalizedTime[i] * animation.ticks;
+					ac.tick[i] = ac.normalizedTime[i] * animation.ticks;
+				}
 			}
 		}
 		else if (ac.mode == m_modeTransitionLinearBlend) // tmp Transititon test
