@@ -58,6 +58,8 @@ namespace DOG
 			}
 		}
 
+		AssetLoadFlag GetAssetFlags(u32 id) const;
+
 		void Update();
 
 		template<typename T, typename ...Args>

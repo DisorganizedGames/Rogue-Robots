@@ -3,6 +3,7 @@
 #include "BulletPhysics/btBulletDynamicsCommon.h"
 #pragma warning(pop)
 #include "../ECS/EntityManager.h"
+#include "../Core/AssetManager.h"
 
 namespace DOG
 {
@@ -11,6 +12,11 @@ namespace DOG
 	PhysicsEngine::PhysicsEngine()
 	{
 		m_rigidBodyColliderDatas.resize(PhysicsEngine::RESIZE_RIGIDBODY_SIZE);
+	}
+
+	void PhysicsEngine::AddMeshColliderWaitForModel(MeshWaitData meshColliderData)
+	{
+		s_physicsEngine.m_meshCollidersWaitingForModels.push_back(meshColliderData);
 	}
 
 	btDiscreteDynamicsWorld* PhysicsEngine::GetDynamicsWorld()
@@ -57,6 +63,8 @@ namespace DOG
 
 	void PhysicsEngine::UpdatePhysics(float deltaTime)
 	{
+		s_physicsEngine.CheckMeshColliders();
+
 		s_physicsEngine.GetDynamicsWorld()->stepSimulation(deltaTime, 10);
 
 		EntityManager::Get().Collect<TransformComponent, BoxColliderComponent>().Do([&](TransformComponent& transform, BoxColliderComponent& collider)
@@ -160,6 +168,21 @@ namespace DOG
 		return &s_physicsEngine.m_rigidBodyColliderDatas[handle];
 	}
 
+	void PhysicsEngine::CheckMeshColliders()
+	{
+		for (u32 index = 0; index < m_meshCollidersWaitingForModels.size(); ++index)
+		{
+			ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(m_meshCollidersWaitingForModels[index].meshModelID);
+			if (model)
+			{
+				MeshColliderComponent component = EntityManager::Get().GetComponent<MeshColliderComponent>(m_meshCollidersWaitingForModels[index].meshEntity);
+				component.LoadMesh(m_meshCollidersWaitingForModels[index].meshEntity, m_meshCollidersWaitingForModels[index].meshModelID);
+				m_meshCollidersWaitingForModels.erase(m_meshCollidersWaitingForModels.begin() + index);
+				--index;
+			}
+		}
+	}
+
 	BoxColliderComponent::BoxColliderComponent(entity entity, const DirectX::SimpleMath::Vector3& boxColliderSize, bool dynamic, float mass) noexcept
 	{
 		RigidbodyColliderData rCD; 
@@ -233,5 +256,91 @@ namespace DOG
 		float z = constrainZPosition ? 0.0f : 1.0f;
 
 		rigidbodyColliderData->rigidBody->setLinearFactor(btVector3(x, y, z));
+	}
+
+	MeshColliderComponent::MeshColliderComponent(entity entity, u32 modelID) noexcept
+	{	
+		AssetLoadFlag modelLoadFlag = AssetManager::Get().GetAssetFlags(modelID);
+		if (!(modelLoadFlag & AssetLoadFlag::CPUMemory))
+		{
+			std::cout << "Asset does not have CPUMemory flag set!\nMeshColliderComponent require the mesh to be on the cpu!\n";
+			assert(false);
+			return;
+		}
+
+		ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelID);
+
+		if (!model)
+		{
+			MeshWaitData meshWaitData;
+			meshWaitData.meshEntity = entity;
+			meshWaitData.meshModelID = modelID;
+			PhysicsEngine::AddMeshColliderWaitForModel(meshWaitData);
+			return;
+		}
+
+		//The model is loaded in
+		LoadMesh(entity, modelID);
+	}
+
+	void MeshColliderComponent::LoadMesh(entity entity, u32 modelID)
+	{
+		RigidbodyColliderData rCD;
+
+		btTriangleMesh* mesh = new btTriangleMesh();
+		ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelID);
+
+		struct Vertex
+		{
+			float x;
+			float y;
+			float z;
+		};
+		std::vector<u8>* vertexData = &(model->meshAsset.vertexData[VertexAttribute::Position]);
+		Vertex* vertexVertices = (Vertex*)vertexData->data();
+		u32 trianglesAmount = model->meshAsset.indices.size() / 3;
+		u32 verticesAmount = vertexData->size() / (sizeof(Vertex));
+		//for (u32 i = 0; i < model->meshAsset.indices.size(); i += 3)
+		//{
+		//	u32 index1 = model->meshAsset.indices[i];
+		//	u32 index2 = model->meshAsset.indices[i+1];
+		//	u32 index3 = model->meshAsset.indices[i+2];
+		//	//Vertex vertex = ;
+		//	Vertex vertex1 = vertexVertices[index1];
+		//	Vertex vertex2 = vertexVertices[index2];
+		//	Vertex vertex3 = vertexVertices[index3];
+
+		//	mesh->addTriangle(btVector3(vertex1.x,vertex1.y,vertex1.z), btVector3(vertex2.x, vertex2.y, vertex2.z), btVector3(vertex3.x, vertex3.y, vertex3.z));
+		//}
+
+		btIndexedMesh indexedMesh;
+		indexedMesh.m_numTriangles = trianglesAmount;
+		indexedMesh.m_triangleIndexBase = (const unsigned char*)model->meshAsset.indices.data();
+		indexedMesh.m_triangleIndexStride = 3 * sizeof(u32);// 3 * sizeof(float) * 3;
+		indexedMesh.m_numVertices = verticesAmount;
+		indexedMesh.m_vertexBase = (const unsigned char*)vertexVertices;
+		indexedMesh.m_vertexStride = sizeof(Vertex);
+		mesh->addIndexedMesh(indexedMesh);
+
+		rCD.collisionShape = new btBvhTriangleMeshShape(mesh, true);
+
+		//auto numberOfTriangles = model->meshAsset.indices.size() / 3;
+		//btIndexedMesh indexedMesh;
+		//btTriangleIndexVertexArray* g = new btTriangleIndexVertexArray();
+		//indexedMesh.m_numTriangles = numberOfTriangles;
+		//indexedMesh.m_triangleIndexBase = (const unsigned char*)model->meshAsset.indices.data();
+		//indexedMesh.m_triangleIndexStride = 0;
+		//indexedMesh.m_numVertices = model->meshAsset.indices.size();
+		//indexedMesh.m_vertexBase = (const unsigned char*)vertices;
+		//indexedMesh.m_vertexStride = 3 * sizeof(float);
+
+		//g->addIndexedMesh(indexedMesh);
+		//rCD.collisionShape = new btBvhTriangleMeshShape(g, true);
+
+
+		float mass = 0.0f;
+		bool dynamic = false;
+		handle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
+		meshNotLoaded = false;
 	}
 }

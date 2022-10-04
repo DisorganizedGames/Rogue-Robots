@@ -8,7 +8,7 @@ GameLayer::GameLayer() noexcept
 {
 	auto& am = DOG::AssetManager::Get();
 	m_redCube = am.LoadModelAsset("Assets/red_cube.glb");
-	m_greenCube = am.LoadModelAsset("Assets/green_cube.glb");
+	m_greenCube = am.LoadModelAsset("Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
 	m_blueCube = am.LoadModelAsset("Assets/blue_cube.glb");
 	m_magentaCube = am.LoadModelAsset("Assets/magenta_cube.glb");
 	m_mixamo = am.LoadModelAsset("Assets/mixamo/walkmix.fbx");
@@ -72,7 +72,8 @@ GameLayer::GameLayer() noexcept
 
 	m_entityManager.AddComponent<SphereColliderComponent>(entity3, entity3, 1.0f, true);
 	m_entityManager.AddComponent<CapsuleColliderComponent>(entity4, entity4, 1.0f, 1.0f, true);
-	m_entityManager.AddComponent<BoxColliderComponent>(entity2, entity2, Vector3(1, 1, 1), false);
+	m_entityManager.AddComponent<BoxColliderComponent>(entity5, entity5, Vector3(1, 1, 1), false);
+	m_entityManager.AddComponent<MeshColliderComponent>(entity2, entity2, m_greenCube);
 	m_entityManager.AddComponent<RigidbodyComponent>(entity4, entity4);
 	/*m_entityManager.GetComponent<RigidbodyComponent>(entity4).ConstrainPosition(true, false, true);*/
 	//m_entityManager.GetComponent<RigidbodyComponent>(entity4).ConstrainRotation(false, true, true);

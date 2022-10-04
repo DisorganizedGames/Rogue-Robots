@@ -55,6 +55,21 @@ namespace DOG
 
 		RigidbodyHandle handle;
 	};
+	struct MeshColliderComponent
+	{
+		MeshColliderComponent(entity entity, u32 modelID) noexcept;
+		
+		void LoadMesh(entity entity, u32 modelID);
+
+		bool meshNotLoaded = true;
+		RigidbodyHandle handle;
+	};
+
+	struct MeshWaitData
+	{
+		entity meshEntity;
+		u32 meshModelID;
+	};
 
 	class PhysicsEngine
 	{
@@ -62,6 +77,7 @@ namespace DOG
 		friend SphereColliderComponent;
 		friend CapsuleColliderComponent;
 		friend RigidbodyComponent;
+		friend MeshColliderComponent;
 
 	private:
 		//Order of unique ptrs matter for the destruction of the unique ptrs
@@ -75,13 +91,17 @@ namespace DOG
 		std::vector<RigidbodyColliderData> m_rigidBodyColliderDatas;
 		gfx::HandleAllocator m_handleAllocator;
 
+		//Mesh colliders which are waiting for the models to be loaded in
+		std::vector<MeshWaitData> m_meshCollidersWaitingForModels;
 
 	private:
 		PhysicsEngine();
+		static void AddMeshColliderWaitForModel(MeshWaitData meshColliderData);
 		static btDiscreteDynamicsWorld* GetDynamicsWorld();
 		static RigidbodyHandle AddRigidbodyColliderData(RigidbodyColliderData rigidbodyColliderData);
 		static RigidbodyHandle AddRigidbody(entity entity, RigidbodyColliderData& rigidbodyColliderData, bool dynamic, float mass);
 		static RigidbodyColliderData* GetRigidbodyColliderData(u32 handle);
+		void CheckMeshColliders();
 
 		static constexpr u64 RESIZE_RIGIDBODY_SIZE = 1000;
 
