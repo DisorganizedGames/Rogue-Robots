@@ -70,6 +70,12 @@ namespace DOG
 		f32 transition = 0.0f;
 		i32 mode = 0;
 		f32 bf = 0.0f;
+		/*bool HasActiveAnimation(const u8 animation) const noexcept{
+			return animationID[animation] != -1; };
+		void UpdateBlend(const f32 dt, const f32 animDuration, const f32 animTicks)
+		{
+
+		}*/
 	};
 
 	struct AudioComponent
