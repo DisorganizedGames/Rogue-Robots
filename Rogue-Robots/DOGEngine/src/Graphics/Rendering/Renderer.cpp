@@ -245,6 +245,7 @@ namespace DOG::gfx
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+
 				},
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
 				{
@@ -253,7 +254,6 @@ namespace DOG::gfx
 						.AppendConstant(resources.GetView(RG_RESOURCE(LitHDR))));
 					rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
 				});
-
 		}
 
 
@@ -271,6 +271,7 @@ namespace DOG::gfx
 					m_imgui->Render(rd, cmdl);
 				});
 		}
+
 
 
 

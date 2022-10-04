@@ -131,21 +131,18 @@ namespace DOG::gfx
 			void DeclareBuffer(RGResourceID id, RGBufferDesc desc);
 			void ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
 
-			// Texture reads
+			// Texture read views
 			void ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc);
+			void ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, BufferViewDesc desc);
 			void ReadDepthStencil(RGResourceID id, TextureViewDesc desc);
 
-			// Buffer reads
-			void ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, BufferViewDesc desc);
-
-			// Texture writes
 			void WriteDepthStencil(RGResourceID id, RenderPassAccessType depthAccess, TextureViewDesc desc, RenderPassAccessType stencilAccess = RenderPassAccessType::DiscardDiscard);
 			void WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
 			void ReadWriteTarget(RGResourceID id, TextureViewDesc desc);
-			
-			// Buffer writes
 			void ReadWriteTarget(RGResourceID id, BufferViewDesc desc);
-			void CopyToBuffer(RGResourceID id);
+
+			void CopyToResource(RGResourceID id, RGResourceType type);
+			void CopyFromResource(RGResourceID id, RGResourceType type);
 
 
 
