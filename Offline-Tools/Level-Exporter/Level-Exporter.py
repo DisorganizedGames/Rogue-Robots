@@ -74,6 +74,8 @@ class PANEL_PT_builder_paint(PANEL_PT_builder, Panel):
             row = layout.row()
             row.label(text="Place at " + obj.name)
             row = layout.row()
+            row.operator("object.add_void")
+            row = layout.row()
             row.operator("object.add_block")
             row = layout.row()
             row.operator("object.rotate_block")
@@ -159,39 +161,21 @@ class AddBlock(bpy.types.Operator):
         return context.active_object is not None
 
     def execute(self, context):
-        slots = context.selected_objects
-        gizmo = context.object
-        O.object.select_all(action='DESELECT')
-        map = D.collections['Map']
-        trash = D.collections['Trash']
-        brush = D.collections['Brush'].objects[0]
-        brush.hide_select = False
-        for giz in slots:
-            for obj in giz.children:
-                for coll in obj.users_collection:
-                    coll.objects.unlink(obj)
-                trash.objects.link(obj)
-                obj.parent = None
-            context.view_layer.objects.active = brush
-            brush.select_set(True)
-            if O.object.duplicate() == {'FINISHED'}:
-                block = context.object
-                for col in block.users_collection:
-                    col.objects.unlink(block)
-                map.objects.link(block)
-                block.location = (0,0,0)
-                block.parent = giz
-                block.hide_select = True
-                block.name = block.name.split('.')[0] + "_r0_f." + giz.name.split('_')[1]
-            else:
-                print(f"Couldn't duplicate {brush.name}")
-        brush.hide_select = True
-        empty_collection(D.collections['Trash'])
-        O.object.select_all(action='DESELECT')
-        for obj in slots:
-            obj.select_set(True)
-        gizmo.select_set(True)
-        context.view_layer.objects.active = gizmo
+        paint(context, D.collections['Brush'].objects[0])
+        return {'FINISHED'}
+
+# Adding Void-objects to the map
+class AddVoid(bpy.types.Operator):
+    """Add a Void marker at selected position"""
+    bl_idname = "object.add_void"
+    bl_label = "Add Void Marker"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None
+
+    def execute(self, context):
+        paint(context, D.objects['Void'])
         return {'FINISHED'}
 
 # Rotating blocks
@@ -211,17 +195,18 @@ class RotateBlock(bpy.types.Operator):
         for giz in slots:
             if len(giz.children) == 1:
                 obj = giz.children[0]
-                name, rot, flip = obj.name.split('.')[0].split('_')
-                # if flip == "":
-                obj.hide_select = False
-                context.view_layer.objects.active = obj
-                obj.select_set(True)
-                obj.rotation_euler.rotate_axis('Z', PI/2)
-                # O.object.transform_apply(properties=False)
-                obj.hide_select = True
-                rot = (int(rot.split('r')[1]) + 1) % 4
-                obj.name = f"{name}_r{rot}_{flip}.{giz.name.split('_')[1]}"
-                obj.hide_select = True
+                name = obj.name.split('.')[0]
+                if not name == "Void":
+                    name, rot, flip = name.split('_')
+                    obj.hide_select = False
+                    context.view_layer.objects.active = obj
+                    obj.select_set(True)
+                    obj.rotation_euler.rotate_axis('Z', PI/2)
+                    # O.object.transform_apply(properties=False)
+                    obj.hide_select = True
+                    rot = (int(rot.split('r')[1]) + 1) % 4
+                    obj.name = f"{name}_r{rot}_{flip}.{giz.name.split('_')[1]}"
+                    obj.hide_select = True
         O.object.select_all(action='DESELECT')
         for obj in slots:
             obj.select_set(True)
@@ -251,15 +236,16 @@ class FlipBlockX(bpy.types.Operator):
                 context.view_layer.objects.active = obj
                 obj.select_set(True)
                 obj.scale.x = obj.scale.x * (-1)
-                # O.object.transform_apply(properties=False)
                 obj.hide_select = True
-                name, rot, flip = obj.name.split('.')[0].split('_')
-                flip = invert[flip]
-                if flip == 'fxy':
-                    rot = f"r{(int(rot.split('r')[1]) + 2) % 4}"
-                    flip = 'f'
-                obj.name = f"{name}_{rot}_{flip}.{giz.name.split('_')[1]}"
-                obj.hide_select = True
+                name = obj.name.split('.')[0]
+                if not name == 'Void':
+                    name, rot, flip = name.split('_')
+                    flip = invert[flip]
+                    if flip == 'fxy':
+                        rot = f"r{(int(rot.split('r')[1]) + 2) % 4}"
+                        flip = 'f'
+                    obj.name = f"{name}_{rot}_{flip}.{giz.name.split('_')[1]}"
+                    obj.hide_select = True
         O.object.select_all(action='DESELECT')
         for obj in slots:
             obj.select_set(True)
@@ -289,15 +275,16 @@ class FlipBlockY(bpy.types.Operator):
                 context.view_layer.objects.active = obj
                 obj.select_set(True)
                 obj.scale.y = obj.scale.y * (-1)
-                # O.object.transform_apply(properties=False)
                 obj.hide_select = True
-                name, rot, flip = obj.name.split('.')[0].split('_')
-                flip = invert[flip]
-                if flip == 'fxy':
-                    rot = f"r{(int(rot.split('r')[1]) + 2) % 4}"
-                    flip = 'f'
-                obj.name = f"{name}_{rot}_{flip}.{giz.name.split('_')[1]}"
-                obj.hide_select = True
+                name = obj.name.split('.')
+                if name != 'Void':
+                    name, rot, flip = name.split('_')
+                    flip = invert[flip]
+                    if flip == 'fxy':
+                        rot = f"r{(int(rot.split('r')[1]) + 2) % 4}"
+                        flip = 'f'
+                    obj.name = f"{name}_{rot}_{flip}.{giz.name.split('_')[1]}"
+                    obj.hide_select = True
         O.object.select_all(action='DESELECT')
         for obj in slots:
             obj.select_set(True)
@@ -319,7 +306,6 @@ class ClearMap(bpy.types.Operator):
         slots = context.selected_objects
         gizmo = context.object
         O.object.select_all(action='DESELECT')
-        map = D.collections['Map']
         trash = D.collections['Trash']
         for giz in slots:
             for obj in giz.children:
@@ -393,12 +379,54 @@ class AnalyzeMap(bpy.types.Operator):
     
     def execute(self, context):
         map_analysis()
+        # map_print()
         return {'FINISHED'}
 
 
 #######################################################
 #                HELPER FUNCTIONS
 #######################################################
+
+def paint(context, brush):
+    state = "_r0_f." if brush.name != 'Void' else '.'
+    slots = context.selected_objects
+    gizmo = context.object
+    O.object.select_all(action='DESELECT')
+    map = D.collections['Map']
+    trash = D.collections['Trash']
+    view = brush.hide_viewport
+    brush.hide_viewport = False
+    brush.hide_select = False
+    for giz in slots:
+        position = giz.name.split('_')[1]
+        for obj in giz.children:
+            for coll in obj.users_collection:
+                coll.objects.unlink(obj)
+            trash.objects.link(obj)
+            obj.parent = None
+            obj.name = 'Trashed_' + position
+        context.view_layer.objects.active = brush
+        brush.select_set(True)
+        if O.object.duplicate(linked=True) == {'FINISHED'}:
+            block = context.object
+            for col in block.users_collection:
+                col.objects.unlink(block)
+            map.objects.link(block)
+            block.location = (0,0,0)
+            block.parent = giz
+            block.hide_select = True
+            block.name = brush.name + state + position
+        else:
+            print(f"Couldn't duplicate {brush.name}")
+    brush.hide_select = True
+    brush.hide_viewport = view
+    empty_collection(D.collections['Trash'])
+    O.object.select_all(action='DESELECT')
+    for obj in slots:
+        obj.select_set(True)
+    gizmo.select_set(True)
+    context.view_layer.objects.active = gizmo
+
 
 def remove_block(x, y, z):
     name = f"block_{x}-{y}-{z}"
@@ -659,6 +687,7 @@ def register():
     bpy.utils.register_class(CreateGrid)
     bpy.utils.register_class(GridToggleXray)
     bpy.utils.register_class(AddBlock)
+    bpy.utils.register_class(AddVoid)
     bpy.utils.register_class(RotateBlock)
     bpy.utils.register_class(FlipBlockX)
     bpy.utils.register_class(FlipBlockY)
@@ -678,6 +707,7 @@ def unregister():
     bpy.utils.unregister_class(CreateGrid)
     bpy.utils.unregister_class(GridToggleXray)
     bpy.utils.unregister_class(AddBlock)
+    bpy.utils.unregister_class(AddVoid)
     bpy.utils.unregister_class(RotateBlock)
     bpy.utils.unregister_class(FlipBlockX)
     bpy.utils.unregister_class(FlipBlockY)
@@ -698,6 +728,10 @@ def unregister():
 #                MAP ANALYSIS ALGORITHM
 #######################################################
 
+
+def map_print():
+    for pos, name in all_blocks():
+        print(pos, name)
 
 def map_analysis():
     blockDict = {}
@@ -802,11 +836,11 @@ if __name__ == "__main__":
 
     if not D.collections.get('Object_Selection'):
         obj_select = D.collections.new("Object_Selection")
-        # C.scene.collection.children.link(obj_select)
+        C.scene.collection.children.link(obj_select)
 
     if not D.collections.get('Active_Object'):
         active_obj = D.collections.new("Active_Object")
-        # C.scene.collection.children.link(active_obj)
+        C.scene.collection.children.link(active_obj)
 
     if D.collections.get('Collection'):
         for obj in D.collections['Collection'].objects:
@@ -818,6 +852,7 @@ if __name__ == "__main__":
         generate_grid()
         D.collections['Object_Selection'].objects.link(D.objects['block_0-0-0'])
         D.collections['Active_Object'].objects.link(D.objects['block_0-0-0'])
+    
 
     D.collections['Brushes'].hide_viewport = False
     D.collections['Grid'].hide_viewport = True
@@ -826,5 +861,15 @@ if __name__ == "__main__":
         C.view_layer.objects.active = D.collections['Brushes'].objects[0]
         D.collections['Brushes'].objects[0].select_set(True)
 
+    if not D.objects.get('Void'):
+        O.mesh.primitive_uv_sphere_add(segments=16, ring_count=8, radius=0.4)
+        obj = C.object
+        obj.name = 'Void'
+        if not D.materials.get('Void'):
+            D.materials.new('Void')
+            D.materials['Void'].diffuse_color = (1, 0, 0, 1)
+        obj.active_material = D.materials['Void']
+        obj.hide_viewport = True
+    
     register()
 
