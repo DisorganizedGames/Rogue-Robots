@@ -7,11 +7,12 @@ EmilFDebugLayer::EmilFDebugLayer() noexcept
 	
 }
 
+
 void EmilFDebugLayer::OnAttach()
 {
-	DOG::TestSystem system;
-
-
+	m_systems.emplace_back(std::make_unique<DOG::TestSystem>());
+	m_systems[0]->Create();
+	m_systems[0]->Update();
 }
 
 void EmilFDebugLayer::OnDetach()

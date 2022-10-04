@@ -14,4 +14,5 @@ public:
 
 private:
 	DOG::EntityManager& m_entityManager;
+	std::vector<std::unique_ptr<DOG::ISystem>> m_systems;
 };

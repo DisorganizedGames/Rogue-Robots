@@ -106,7 +106,7 @@ namespace DOG
 
 		template<typename ComponentType> 
 		void AddSparseSet() noexcept;
-
+	public:
 		template<typename ComponentType>
 		SparseSet<ComponentType>* ExpandAsTupleArguments() const noexcept;
 	private:
@@ -114,6 +114,9 @@ namespace DOG
 		friend class Collection;
 		template<typename... ComponentType>
 		friend class BundleImpl;
+		
+		friend class ISystem;
+
 		static EntityManager s_instance;
 		std::vector<entity> m_entities;
 		std::queue<entity> m_freeList;
@@ -460,4 +463,99 @@ namespace DOG
 			m_bundleStart--;
 		}
 	}
+
+	class ISystem
+	{
+	public:
+		ISystem() noexcept = default;
+		virtual ~ISystem() noexcept = default;
+		virtual void Create() noexcept {}
+		virtual void Update() noexcept {}
+	};
+	
+	template<typename... ComponentType>
+	class SystemHelper
+	{
+	public:
+		SystemHelper() noexcept
+			: m_pools{ EntityManager::Get().ExpandAsTupleArguments<ComponentType>() ...} {}
+	
+	std::tuple<SparseSet<ComponentType>* ...> m_pools;
+	};
+#ifndef SYSTEM_CLASS
+	#define SYSTEM_CLASS(...)	\
+	SystemHelper<__VA_ARGS__> systemHelper;	
+#endif
+
+#ifndef ON_UPDATE
+	#define ON_UPDATE(...)	\
+	void Update() noexcept override final	\
+	{	\
+		UpdateImpl<__VA_ARGS__>();	\
+	}	\
+	\
+	template<typename... ComponentType>	\
+	void UpdateImpl()	\
+	{	\
+		std::vector<entity>* ePointer = &(get<0>(systemHelper.m_pools)->denseArray);	\
+		std::apply([&ePointer](const auto&... pool)	\
+		{	\
+			((ePointer = (pool->denseArray.size() < ePointer->size()) ? &pool->denseArray : ePointer), ...);	\
+		}, systemHelper.m_pools);	\
+	\
+	for (int i{ (int)ePointer->size() - 1 }; i >= 0; --i)	\
+	{	\
+		if (EntityManager::Get().HasAllOf<ComponentType...>((*ePointer)[i]))	\
+		{	\
+			OnUpdate((*ePointer)[i], EntityManager::Get().GetComponent<ComponentType>((*ePointer)[i]) ...);	\
+		}	\
+	}	\
+	}
+#endif
+
+	//################## ON CREATE ####################
+
+#ifndef ON_CREATE
+#define ON_CREATE(...)	\
+	void Create() noexcept override final	\
+	{	\
+		CreateImpl<__VA_ARGS__>();	\
+	}	\
+	\
+	template<typename... ComponentType>	\
+	void CreateImpl()	\
+	{	\
+		std::vector<entity>* ePointer = &(get<0>(systemHelper.m_pools)->denseArray);	\
+		std::apply([&ePointer](const auto&... pool)	\
+		{	\
+			((ePointer = (pool->denseArray.size() < ePointer->size()) ? &pool->denseArray : ePointer), ...);	\
+		}, systemHelper.m_pools);	\
+	\
+	for (int i{ (int)ePointer->size() - 1 }; i >= 0; --i)	\
+	{	\
+		if (EntityManager::Get().HasAllOf<ComponentType...>((*ePointer)[i]))	\
+		{	\
+			OnCreate((*ePointer)[i], EntityManager::Get().GetComponent<ComponentType>((*ePointer)[i]) ...);	\
+		}	\
+	}	\
+	}
+#endif
+
+	class TestSystem : public ISystem
+	{
+	public:
+		SYSTEM_CLASS(TransformComponent, ModelComponent);
+		ON_UPDATE(TransformComponent);
+		ON_CREATE();
+		
+		void OnUpdate(entity entityID, TransformComponent& tc)
+		{
+			std::cout << tc.GetPosition().x << "\n";
+		}
+
+		void OnCreate(entity entityID)
+		{
+			std::cout << entityID << "\n";
+		}
+	};
 }
