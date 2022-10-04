@@ -147,6 +147,8 @@ namespace DOG
 	{
 		AssetManager::Destroy();
 		AudioManager::Destroy();
+
+		::DestroyWindow(Window::GetHandle());
 		//...
 	}
 

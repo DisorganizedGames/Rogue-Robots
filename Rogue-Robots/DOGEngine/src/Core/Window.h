@@ -8,7 +8,7 @@ namespace DOG
 	{
 	public:
 		static void Initialize(const ApplicationSpecification& spec) noexcept;
-		static void OnUpdate() noexcept;
+		static bool OnUpdate() noexcept;
 		static const u32 GetWidth() noexcept;
 		static const u32 GetHeight() noexcept;
 		static const std::pair<u32, u32> GetDimensions() noexcept;
