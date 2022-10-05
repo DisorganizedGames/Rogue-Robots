@@ -18,17 +18,14 @@ class NetCode
 public:
 	NetCode();
 	~NetCode();
-
-	void OnUpdate(std::shared_ptr<MainPlayer> player);
+	
+	void OnUpdate();
 	void AddPlayersId(std::vector<entity> playersId);
 
 	void AddMatrixTcp(DirectX::XMMATRIX input);
-	void AddPositionTcp(DirectX::SimpleMath::Vector3 input);
-	void AddRotationTcp(DirectX::SimpleMath::Vector3 input);
 
-	//void AddMatrixUdp(DirectX::XMMATRIX input); blocked for now need another task first
-	void AddPositionUdp(DirectX::SimpleMath::Vector3 input);
-	void AddRotationUdp(DirectX::SimpleMath::Vector3 input);
+	void AddMatrixUdp(DirectX::XMMATRIX input);
+
 
 private:
 	void Recive();

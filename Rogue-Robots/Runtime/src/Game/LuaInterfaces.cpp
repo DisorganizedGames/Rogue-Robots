@@ -106,6 +106,77 @@ void EntityInterface::GetTransformPosData(LuaContext* context)
 	context->ReturnTable(t);
 }
 
+void EntityInterface::GetForward(LuaContext* context)
+{
+	entity e = context->GetInteger();
+	TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
+	Vector3 forward = Vector3::Transform({ 0, 0, 1 }, transform.GetRotation());
+	
+	LuaTable t;
+	t.AddFloatToTable("x", forward.x);
+	t.AddFloatToTable("y", forward.y);
+	t.AddFloatToTable("z", forward.z);
+	context->ReturnTable(t);
+}
+
+void EntityInterface::GetUp(LuaContext* context)
+{
+	entity e = context->GetInteger();
+	TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
+	Vector3 up = Vector3::Transform({ 0, 1, 0 }, transform.GetRotation());
+
+	LuaTable t;
+	t.AddFloatToTable("x", up.x);
+	t.AddFloatToTable("y", up.y);
+	t.AddFloatToTable("z", up.z);
+	context->ReturnTable(t);
+}
+
+void EntityInterface::GetRight(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
+	Vector3 right;
+	right = Vector3::Transform({ 1, 0, 0 }, transform.GetRotation());
+
+	LuaTable t;
+	t.AddFloatToTable("x", right.x);
+	t.AddFloatToTable("y", right.y);
+	t.AddFloatToTable("z", right.z);
+	context->ReturnTable(t);
+}
+//1. Shoot, 2. Jump, 3.activateActiveItem 
+void EntityInterface::GetAction(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	int action = context->GetInteger();
+	InputController& input = EntityManager::Get().GetComponent<InputController>(e);
+	switch (action)
+	{
+	case 1:
+		if (input.shoot)
+			context->ReturnBoolean(true);
+		else
+			context->ReturnBoolean(false);
+		break;
+	case 2:
+		if (input.jump)
+			context->ReturnBoolean(true);
+		else
+			context->ReturnBoolean(false);
+		break;
+	case 3:
+		if (input.activateActiveItem)
+			context->ReturnBoolean(true);
+		else
+			context->ReturnBoolean(false);
+		break;
+	default:
+		break;
+	}
+	
+}
+
 void EntityInterface::GetTransformScaleData(LuaContext* context)
 {
 	entity e = context->GetInteger();
@@ -250,62 +321,6 @@ void AssetInterface::LoadAudio(LuaContext* context)
 void PlayerInterface::GetID(LuaContext* context)
 {
 	context->ReturnInteger(m_player);
-}
-
-void PlayerInterface::GetForward(LuaContext* context)
-{
-	Vector3 forward = EntityManager::Get().GetComponent<CameraComponent>(m_player).viewMatrix.Invert().Forward();
-	LuaTable t;
-	t.AddFloatToTable("x", forward.x);
-	t.AddFloatToTable("y", forward.y);
-	t.AddFloatToTable("z", forward.z);
-	context->ReturnTable(t);
-}
-
-void PlayerInterface::GetPosition(LuaContext* context)
-{
-	Vector3 position = EntityManager::Get().GetComponent<CameraComponent>(m_player).viewMatrix.Invert().Translation();
-	LuaTable t;
-	t.AddFloatToTable("x", position.x);
-	t.AddFloatToTable("y", position.y);
-	t.AddFloatToTable("z", position.z);
-	context->ReturnTable(t);
-}
-
-void PlayerInterface::GetUp(LuaContext* context)
-{
-	Matrix viewMat = EntityManager::Get().GetComponent<CameraComponent>(m_player).viewMatrix.Invert();
-	Vector3 scale;
-	Quaternion rotation;
-	Vector3 translation;
-	viewMat.Decompose(scale, rotation, translation);
-
-	Vector3 up(0, 1, 0);
-	up = XMVector3Rotate(up, rotation);
-
-	LuaTable t;
-	t.AddFloatToTable("x", up.x);
-	t.AddFloatToTable("y", up.y);
-	t.AddFloatToTable("z", up.z);
-	context->ReturnTable(t);
-}
-
-void PlayerInterface::GetRight(DOG::LuaContext* context)
-{
-	Matrix viewMat = EntityManager::Get().GetComponent<CameraComponent>(m_player).viewMatrix.Invert();
-	Vector3 scale;
-	Quaternion rotation;
-	Vector3 translation;
-	viewMat.Decompose(scale, rotation, translation);
-
-	Vector3 right(1, 0, 0);
-	right = XMVector3Rotate(right, rotation);
-
-	LuaTable t;
-	t.AddFloatToTable("x", right.x);
-	t.AddFloatToTable("y", right.y);
-	t.AddFloatToTable("z", right.z);
-	context->ReturnTable(t);
 }
 
 LuaVector3::LuaVector3(LuaTable& table)

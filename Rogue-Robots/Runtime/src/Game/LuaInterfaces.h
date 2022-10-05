@@ -84,6 +84,14 @@ public:
 	void SetRotationForwardUp(DOG::LuaContext* context);
 
 	void GetPlayerStats(DOG::LuaContext* context);
+	
+	void GetForward(DOG::LuaContext* context);
+
+	void GetUp(DOG::LuaContext* context);
+	
+	void GetRight(DOG::LuaContext* context);
+
+	void GetAction(DOG::LuaContext* context);
 
 private:
 	void AddModel(DOG::LuaContext* context, DOG::entity e);

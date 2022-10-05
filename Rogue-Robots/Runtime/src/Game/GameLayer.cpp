@@ -56,19 +56,19 @@ GameLayer::GameLayer() noexcept
 	entity entity2 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity2, m_greenCube);
 	m_entityManager.AddComponent<TransformComponent>(entity2, Vector3(-4, -2, 5), Vector3(0.1f, 0, 0));
-	m_entityManager.AddComponent<NetworkPlayerComponent>(entity2).playerId = 1;
+	
 
 	entity entity3 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity3, m_blueCube);
 	auto& t3 = m_entityManager.AddComponent<TransformComponent>(entity3);
-	m_entityManager.AddComponent<NetworkPlayerComponent>(entity3).playerId = 2;
+	
 	t3.SetPosition({ 4, 2, 5 });
 	t3.SetScale({ 0.5f, 0.5f, 0.5f });
 
 	entity entity4 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity4, m_magentaCube);
 	auto& t4 = m_entityManager.AddComponent<TransformComponent>(entity4);
-	m_entityManager.AddComponent<NetworkPlayerComponent>(entity4).playerId = 3;
+
 	t4.worldMatrix(3, 0) = 10;
 	t4.worldMatrix(3, 1) = 12;
 	t4.worldMatrix(3, 2) = 10;
@@ -86,6 +86,10 @@ GameLayer::GameLayer() noexcept
 	/*m_entityManager.GetComponent<RigidbodyComponent>(entity4).ConstrainPosition(true, false, true);*/
 	//m_entityManager.GetComponent<RigidbodyComponent>(entity4).ConstrainRotation(false, true, true);
 
+	
+	
+
+
 	LuaMain::Initialize();
 	//LuaMain::GetScriptManager()->OrderScript("LuaTest.lua", 1);
 	//LuaMain::GetScriptManager()->OrderScript("ScriptTest.lua", -1);
@@ -98,6 +102,40 @@ GameLayer::GameLayer() noexcept
 	//Register Lua interfaces
 	RegisterLuaInterfaces();
 	//...
+
+	entity Player1 = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<ModelComponent>(Player1, m_greenCube);
+	m_entityManager.AddComponent<TransformComponent>(Player1, Vector3(0, 0, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
+	m_entityManager.AddComponent<NetworkPlayerComponent>(Player1).playerId = 0;
+	m_entityManager.AddComponent<InputController>(Player1);
+	m_entityManager.AddComponent<CameraComponent>(Player1);
+	m_entityManager.AddComponent<ThisPlayer>(Player1);
+	ScriptManager* scriptManager = LuaMain::GetScriptManager();
+	scriptManager->AddScript(Player1, "Gun.lua");
+
+	entity Player2 = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<ModelComponent>(Player2, m_redCube);
+	m_entityManager.AddComponent<TransformComponent>(Player2, Vector3(0, 10, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
+	m_entityManager.AddComponent<NetworkPlayerComponent>(Player2).playerId = 1;
+	m_entityManager.AddComponent<InputController>(Player2);
+	m_entityManager.AddComponent<OnlinePlayer>(Player2);
+	scriptManager->AddScript(Player2, "Gun.lua");
+
+	entity Player3 = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<ModelComponent>(Player3, m_blueCube);
+	m_entityManager.AddComponent<TransformComponent>(Player3, Vector3(0, 20, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
+	m_entityManager.AddComponent<NetworkPlayerComponent>(Player3).playerId = 2;
+	m_entityManager.AddComponent<InputController>(Player3);
+	m_entityManager.AddComponent<OnlinePlayer>(Player3);
+	scriptManager->AddScript(Player3, "Gun.lua");
+
+	entity Player4 = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<ModelComponent>(Player4, m_magentaCube);
+	m_entityManager.AddComponent<TransformComponent>(Player4, Vector3(0, 30, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
+	m_entityManager.AddComponent<NetworkPlayerComponent>(Player4).playerId = 3;
+	m_entityManager.AddComponent<InputController>(Player4);
+	m_entityManager.AddComponent<OnlinePlayer>(Player4);
+	scriptManager->AddScript(Player4, "Gun.lua");
 }
 
 
@@ -117,16 +155,12 @@ void GameLayer::OnUpdate()
 {
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
-	
-	m_player->OnUpdate();
-	m_netCode.OnUpdate(m_player);
 
+	m_player->OnUpdate();
+	m_netCode.OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
-}
-
-
-
+} 
 void GameLayer::OnRender()
 {
 	//...
@@ -145,15 +179,31 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	{
 	case EventType::LeftMouseButtonPressedEvent:
 	{
-		//auto [x, y] = EVENT(LeftMouseButtonPressedEvent).coordinates;
-		//std::cout << GetName() << " received event: Left MB clicked [x,y] = [" << x << "," << y << "]\n";
+		EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer& )
+			{
+				inputC.shoot = true;
+			});
+		break;
+	}
+	case EventType::LeftMouseButtonReleasedEvent:
+	{
+		EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
+			{
+				inputC.shoot = false;
+			});
 		break;
 	}
 	case EventType::KeyPressedEvent:
 	{
-		if (EVENT(KeyReleasedEvent).key == DOG::Key::C)
+		if (EVENT(KeyPressedEvent).key == DOG::Key::C)
 			m_player->m_moveView = !m_player->m_moveView;
+		else
+			Input(EVENT(KeyPressedEvent).key);
 		break;
+	}
+	case EventType::KeyReleasedEvent:
+	{
+		Release(EVENT(KeyReleasedEvent).key);
 	}
 	}
 }
@@ -203,6 +253,11 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetTransformPosData>("GetTransformPosData");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetRotationForwardUp>("SetRotationForwardUp");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPlayerStats>("GetPlayerStats");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetUp>("GetUp");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetForward>("GetForward");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetRight>("GetRight");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAction>("GetAction");
+
 	global->SetLuaInterface(luaInterface);
 
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Entity", "EntityInterface");
@@ -227,10 +282,6 @@ void GameLayer::RegisterLuaInterfaces()
 
 	luaInterface = global->CreateLuaInterface("PlayerInterface");
 	luaInterface.AddFunction<PlayerInterface, &PlayerInterface::GetID>("GetID");
-	luaInterface.AddFunction<PlayerInterface, &PlayerInterface::GetForward>("GetForward");
-	luaInterface.AddFunction<PlayerInterface, &PlayerInterface::GetUp>("GetUp");
-	luaInterface.AddFunction<PlayerInterface, &PlayerInterface::GetRight>("GetRight");
-	luaInterface.AddFunction<PlayerInterface, &PlayerInterface::GetPosition>("GetPosition");
 	global->SetLuaInterface(luaInterface);
 
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Player", "PlayerInterface");
@@ -303,3 +354,51 @@ void GameLayer::LoadLevel()
 		}
 	}
 }
+
+void GameLayer::Input(DOG::Key key)
+{
+	EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
+	{
+			if (key == DOG::Key::W)
+				inputC.forward = true;
+			if (key == DOG::Key::A)
+				inputC.left = true;
+			if (key == DOG::Key::S)
+				inputC.backwards = true;
+			if (key == DOG::Key::D)
+				inputC.right = true;
+			if (key == DOG::Key::Shift)
+				inputC.down = true;
+			if (key == DOG::Key::Spacebar)
+				inputC.up = true;
+			if (key == DOG::Key::Spacebar)
+				inputC.jump = true;
+			if (key == DOG::Key::F)
+				inputC.activateActiveItem = true;
+	});
+}
+
+void GameLayer::Release(DOG::Key key)
+{
+	EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
+		{
+			if (key == DOG::Key::W)
+				inputC.forward = false;
+			if (key == DOG::Key::A)
+				inputC.left = false;
+			if (key == DOG::Key::S)
+				inputC.backwards = false;
+			if (key == DOG::Key::D)
+				inputC.right = false;
+			if (key == DOG::Key::Shift)
+				inputC.down = false;
+			if (key == DOG::Key::Spacebar)
+				inputC.up = false;
+			if (key == DOG::Key::Spacebar)
+				inputC.jump = false;
+			if (key == DOG::Key::F)
+				inputC.activateActiveItem = false;
+		});
+}
+
+

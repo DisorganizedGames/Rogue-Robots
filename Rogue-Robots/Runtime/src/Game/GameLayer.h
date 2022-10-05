@@ -4,8 +4,7 @@
 #include "NetCode.h"
 #include "Pathfinder/Pathfinder.h"
 #include "Agent.h"
-
-
+#include "GameComponent.h"
 class GameLayer : public DOG::Layer
 {
 public:
@@ -21,6 +20,9 @@ public:
 private:
 	void RegisterLuaInterfaces();
 	void LoadLevel(); //Loads a PCG generated level.
+	void Input(DOG::Key key);
+	void Release(DOG::Key key);
+	void CameraUpdate();
 private:
 	u32 m_mixamo{ 0 };
 	u32 m_redCube{ 0 };

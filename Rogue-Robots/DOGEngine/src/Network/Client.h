@@ -23,10 +23,10 @@ namespace DOG
 		{
 			int playerId = 0;
 			int udpId = 0;
-			//DirectX::XMMATRIX componentMatrix;
-			DirectX::SimpleMath::Vector3 position;
-			DirectX::SimpleMath::Vector3 rotation;
-			unsigned char playerOptions = 0;
+			DirectX::XMMATRIX matrix = {};
+			bool shoot = FALSE;
+			bool jump = FALSE;
+			bool activateActiveItem = FALSE;
 		};
 		struct UdpData
 		{
@@ -41,9 +41,7 @@ namespace DOG
 		struct ClientsData
 		{
 			int playerId = 0;
-			//DirectX::XMMATRIX matrix;
-			DirectX::SimpleMath::Vector3 position;
-			DirectX::SimpleMath::Vector3 rotation;
+			DirectX::XMMATRIX matrix = {};
 		};
 		Client();
 		~Client();

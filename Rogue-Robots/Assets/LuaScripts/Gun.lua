@@ -14,6 +14,7 @@ local BulletSize = {
 --Managers for objects & component functions.
 local ObjectManager = require("Object")
 local MiscManager = require("MiscComponents")
+local MyMiscComponents = MiscManager:CreateComponent()
 local BarrelManager = require("BarrelComponents")
 local MagazineManager = require("MagazineComponents")
 
@@ -57,33 +58,31 @@ function OnStart()
 
 	barrelComponent = ObjectManager:CreateObject()
 	magazineComponent = ObjectManager:CreateObject()
-	miscComponent = ObjectManager:CreateObject()
-	miscComponent.OnUpdate = MiscManager.ChargeShot
+	miscComponent = MyMiscComponents
+	miscComponent.OnUpdate = MyMiscComponents.ChargeShot
 
 	--Events
-	EventSystem:Register("NormalBulletUpdate", NormalBulletUpdate) --Is called if there is no barrelcomponent.
-	EventSystem:Register("NormalBulletSpawn", NormalBulletSpawn) --Is called if there is no barrelcomponent.
+	EventSystem:Register("NormalBulletUpdate" .. tostring(EntityID), NormalBulletUpdate) --Is called if there is no barrelcomponent.
+	EventSystem:Register("NormalBulletSpawn" .. tostring(EntityID), NormalBulletSpawn) --Is called if there is no barrelcomponent.
 end
 
 local tempMode = 0
 local tempTimer = 0.0
 function OnUpdate()
 	-- Update gun model position
-	gunEntity.position = Vector3.fromTable(Player:GetPosition())
-	local playerUp = Vector3.fromTable(Player:GetUp())
-	local playerForward = Vector3.fromTable(Player:GetForward())
-	local playerRight = Vector3.fromTable(Player:GetRight())
+	gunEntity.position = Vector3.fromTable(Entity:GetTransformPosData(EntityID))
+	local playerUp = Vector3.fromTable(Entity:GetUp(EntityID))
+	local playerForward = Vector3.fromTable(Entity:GetForward(EntityID))
+	local playerRight = Vector3.fromTable(Entity:GetRight(EntityID))
 
 	-- Move gun down and to the right 
 	gunEntity.position = gunEntity.position + playerRight * 0.2 - playerUp * 0.2
 
 	-- Rotate the weapon by 90 degrees pitch
-	local gunForward = -playerForward
-	local gunUp = playerUp
 
 	local angle = -math.pi / 2 -- 90 degrees
-	local gunForward = RotateAroundAxis(gunForward, playerRight, angle)
-	local gunUp = RotateAroundAxis(gunUp, playerRight, angle)
+	local gunForward = RotateAroundAxis(playerForward, playerRight, angle)
+	local gunUp = RotateAroundAxis(playerUp, playerRight, angle)
 
 	Entity:SetRotationForwardUp(gunEntity.entityID, gunForward, gunUp)
 	
@@ -93,17 +92,17 @@ function OnUpdate()
 	tempTimer = tempTimer - DeltaTime
 	if Input:IsKeyPressed("Q") and tempTimer <= 0.0 then
 		if tempMode == 0 then
-			miscComponent.OnUpdate = MiscManager.NormalGun
+			miscComponent.OnUpdate = MyMiscComponents.NormalGun
 			tempMode = 1
 		else
-			miscComponent.OnUpdate = MiscManager.ChargeShot
+			miscComponent.OnUpdate = MyMiscComponents.ChargeShot
 			tempMode = 0
 		end
 		tempTimer = 1.0
 	end
 ----------------------------------------------------
 
-	miscComponent:OnUpdate(gunEntity.position + playerForward * -0.45 + playerUp * 0.06, barrelComponent, magazineComponent, bullets, InitialBulletSpeed, BulletSize)
+	miscComponent:OnUpdate(gunEntity.position + playerForward * 0.45 + playerUp * 0.06, barrelComponent, magazineComponent, bullets, InitialBulletSpeed, BulletSize, EntityID)
 end
 
 --If there is not barrel component start.
@@ -117,14 +116,16 @@ end
 function NormalBulletUpdate()
 	local i = 1
 	while i ~= #bullets + 1 do
-		local t = Entity:GetTransformPosData(bullets[i].entity)
+		local t = Vector3.fromTable(Entity:GetTransformPosData(bullets[i].entity))
+		local forward = Vector3.fromTable(bullets[i].forward)
 		local dist = math.sqrt((t.x - bullets[i].startPos.x)^2 + (t.y - bullets[i].startPos.y)^2 + (t.z - bullets[i].startPos.z)^2)
 		if dist > BulletDespawnDist then
 			Entity:DestroyEntity(bullets[i].entity)
 			table.remove(bullets, i)
 			i = i - 1
 		else
-			Entity:ModifyComponent(bullets[i].entity, "Transform", {x = t.x + bullets[i].speed * DeltaTime * -bullets[i].forward.x, y = t.y + bullets[i].speed * DeltaTime * -bullets[i].forward.y, z = t.z + bullets[i].speed * DeltaTime * -bullets[i].forward.z}, 1)
+			newPos = t + (forward * bullets[i].speed) * DeltaTime; 
+			Entity:ModifyComponent(bullets[i].entity, "Transform", newPos, 1)
 			bullets[i].speed = bullets[i].speed - 0.9 * DeltaTime --temp
 		end
 

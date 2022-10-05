@@ -10,15 +10,10 @@ public:
 
 public:
 	void OnUpdate();
-	void SetPosition(DirectX::SimpleMath::Vector3 position);
-	Vector3 GetPosition();
-	Vector3 GetRotation();
 
 	const DOG::entity GetEntity() const noexcept;
 private:
 	void UpdateCamera(DOG::CameraComponent& component);
-	void UpdateCameraRotation(DOG::CameraComponent& component);
-	void UpdateCameraPosition(DOG::CameraComponent& component);
 
 private:
 	DOG::EntityManager& m_entityManager;
@@ -30,4 +25,5 @@ private:
 	inline const static Vector3 s_globalUp = Vector3(0, 1, 0);
 public:
 	bool m_moveView = true;
+	bool m_firstTime = true;
 };
