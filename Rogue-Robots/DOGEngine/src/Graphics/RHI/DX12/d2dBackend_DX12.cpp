@@ -140,7 +140,8 @@ DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
 
 DOG::gfx::D2DBackend_DX12::~D2DBackend_DX12()
 {
-
+    
+    
 }
 
 void DOG::gfx::D2DBackend_DX12::BeginFrame()
