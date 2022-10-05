@@ -56,7 +56,6 @@ namespace DOG
 
 		std::array<std::unique_ptr<SourceVoice>, 64> m_sources = { nullptr };
 
-		std::mutex m_sourceMutex;
 		std::atomic_bool m_threadShouldDie = false;
 		std::thread m_audioThread;
 
