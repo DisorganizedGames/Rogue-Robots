@@ -276,7 +276,7 @@ class FlipBlockY(bpy.types.Operator):
                 obj.select_set(True)
                 obj.scale.y = obj.scale.y * (-1)
                 obj.hide_select = True
-                name = obj.name.split('.')
+                name = obj.name.split('.')[0]
                 if name != 'Void':
                     name, rot, flip = name.split('_')
                     flip = invert[flip]
