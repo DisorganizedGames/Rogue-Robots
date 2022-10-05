@@ -1,8 +1,5 @@
 #include "AudioManager.h"
-#include <filesystem>
-#include <vector>
-#include "AudioFileReader.h"
-#include "../Core/AssetManager.h"
+#include "../ECS/EntityManager.h"
 
 using namespace DOG;
 
@@ -11,147 +8,28 @@ void AudioManager::Initialize()
 	try
 	{
 		s_device = std::make_unique<AudioDevice>();
-		s_audio_device_instantiated = true;
+		s_deviceInitialized = true;
 	}
-	catch (HRError& e)
+	catch (DOG::HRError& e)
 	{
-		std::cerr << e.what();
-		s_device.reset();
+		std::cerr << e.what() << std::endl;
 	}
 }
 
 void AudioManager::Destroy()
 {
-	for (auto& source: s_sources)
-	{
-		source.reset();
-	}
-	
 	s_device.reset();
 }
 
-void AudioManager::Play(AudioPlayerComponent& audioPlayerComponent)
+void AudioManager::AudioSystem()
 {
-	if (!s_audio_device_instantiated) 
+	if (!s_deviceInitialized)
 		return;
 
-	u32 audioID = audioPlayerComponent.audioID;
-	f32 volume = audioPlayerComponent.volume;
-
-	i64 currentVoice = audioPlayerComponent.voiceID;
-
-	if (currentVoice != -1)
-	{
-		if (s_sources[currentVoice]->HasFinished())
+	EntityManager::Get().Collect<AudioComponent>().Do([](AudioComponent& ac)
 		{
-			s_sources[currentVoice].reset();
-			audioPlayerComponent.voiceID = -1;
-		}
-		else
-		{
-			return;
-		}
-	}
+			s_device->HandleComponent(ac);
+		});
 	
-	AudioAsset* asset = (AudioAsset*)AssetManager::Get().GetAsset<AudioAsset>(audioID);
-
-	u64 freeVoiceIndex = GetFreeVoice(asset->properties);
-
-	SourceVoiceSettings settings = {
-		.volume = volume,
-	};
-	auto& source = s_sources[freeVoiceIndex];
-
-	source->SetSettings(settings);
-	audioPlayerComponent.voiceID = freeVoiceIndex;
-	
-	if (asset->async)
-	{
-		WAVFileReader wfr(asset->filePath);
-		source->PlayAsync(std::move(wfr));
-	}
-	else
-	{
-		source->Play(asset->audioData);
-	}
+	s_device->Commit();
 }
-
-void AudioManager::Stop(AudioPlayerComponent& audioPlayerComponent)
-{
-	if (!s_audio_device_instantiated)
-		return;
-
-	u64 voiceID = audioPlayerComponent.voiceID;
-	if (voiceID < 0 || voiceID > MAX_SOURCES-1)
-	{
-		throw std::runtime_error("Tried to call stop, but no voice was specified");
-	}
-
-	auto& voice = s_sources[voiceID];
-	if (!voice->HasFinished())
-	{
-		voice->Stop();
-	}
-	audioPlayerComponent.voiceID = -1;
-}
-
-bool AudioManager::HasFinished(const AudioPlayerComponent& audioPlayerComponent)
-{
-	if (!s_audio_device_instantiated)
-		return true;
-
-	u64 voiceID = audioPlayerComponent.voiceID;
-	if (voiceID >= 0 && voiceID < MAX_SOURCES)
-	{
-		return s_sources[voiceID]->HasFinished();
-	}
-	return true;
-}
-
-u64 AudioManager::GetFreeVoice(const WAVProperties& wavProperties)
-{
-	// Find compatible voice
-	for (int i = 0; i < s_sources.size(); ++i)
-	{
-		auto& source = s_sources[i];
-		if (!source)
-			continue;
-		if (!source->HasFinished())
-			continue;
-		
-		auto& sourceWAVProperties = source->GetWAVProperties();
-		if (memcmp(&wavProperties, &sourceWAVProperties, sizeof(WAVProperties)) == 0)
-		{
-			return i;
-		}
-	}
-
-	// Find empty voice and create a new one with the provided properties
-	for (int i = 0; i < s_sources.size(); ++i)
-	{
-		auto& source = s_sources[i];
-		if (!source)
-		{
-			source = std::make_unique<SourceVoice>();
-			*source = s_device->CreateSourceVoice(wavProperties);
-			return i;
-		}
-	}
-
-	// Free unused voice(s?) and use the freed voice's place
-	for (int i = 0; i < s_sources.size(); ++i)
-	{
-		auto& source = s_sources[i];
-		if (!source)
-			continue;
-		
-		if (source->HasFinished())
-		{
-			source.reset();
-			return i;
-		}
-	}
-
-	throw NoVoiceAvailableError(); // TODO: Figure out a way to solve this... Software Mixing? More voices?
-}
-

@@ -49,6 +49,10 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<TransformComponent>(entity1, Vector3(4, 2, -5), Vector3(0.1f, 0, 0));
 	m_entityManager.AddComponent<NetworkPlayerComponent>(entity1).playerId = 0;
 
+	// Temporary solution to not have the entity manager crash on audio system
+	entity testAudio = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<AudioComponent>(testAudio);
+
 	entity entity2 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity2, m_greenCube);
 	m_entityManager.AddComponent<TransformComponent>(entity2, Vector3(-4, -2, 5), Vector3(0.1f, 0, 0));

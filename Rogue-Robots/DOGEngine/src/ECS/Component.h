@@ -63,4 +63,20 @@ namespace DOG
 		i32 mode = 0;
 		f32 bf = 0.0f;
 	};
+
+	struct AudioComponent
+	{
+		u32 assetID = u32(-1);
+		//f32 beginLoop = 0.f; These are not yet implemented
+		//f32 endLoop = 0.f;
+		f32 volume = 2.0f;
+
+		u32 source = u32(-1);
+
+		bool shouldPlay = false;
+		bool playing = false;
+		bool shouldStop = false;
+	};
+
 }
+

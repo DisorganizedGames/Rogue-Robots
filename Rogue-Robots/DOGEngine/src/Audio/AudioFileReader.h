@@ -193,11 +193,11 @@ namespace DOG
 		}
 	public:
 		WAVFileReader() {}
-		WAVFileReader(const std::string& path)
+		WAVFileReader(const std::filesystem::path& path)
 		{
 			m_file.open(path, std::ios::binary);
 			if (!m_file)
-				throw FileNotFoundError(path);
+				assert(false);
 		}
 		WAVFileReader(WAVFileReader&& other) noexcept
 		{
