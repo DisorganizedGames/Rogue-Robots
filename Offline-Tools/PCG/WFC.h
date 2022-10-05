@@ -29,13 +29,17 @@ public:
 	void SetDimensions(uint32_t width, uint32_t height, uint32_t depth);
 
 private:
+	//CONSTRAINS
+	bool EdgeConstrain(uint32_t i, uint32_t dir);
+
+
 	//Reads input from a file and adds it to the block possibilities.
 	void ReadInput(std::string input);
 
 	//Propogates information to neighboring cells after a possibility is removed.
-	bool Propogate(std::string& removedId, uint32_t index);
+	bool Propogate(uint32_t index);
 	//Helper function
-	void CheckForPropogation(uint32_t currentIndex, uint32_t neighborIndex, unsigned dir, std::string& removed);
+	void CheckForPropogation(uint32_t currentIndex, uint32_t neighborIndex, unsigned dir);
 
 private:
 	uint32_t m_totalCount = 0u; //Total number of blocks read during input.

@@ -34,6 +34,5 @@ struct QueueBlock
 //Data that gets pushed onto the recursive stack. Information is used to call WFC::Propogate.
 struct StackData
 {
-	std::string removed;
 	uint32_t index = -1;
 };

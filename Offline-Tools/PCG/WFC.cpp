@@ -1,5 +1,46 @@
 #include "WFC.h"
 
+bool WFC::EdgeConstrain(uint32_t i, uint32_t dir)
+{
+	bool removed = false;
+	for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities
+	{
+		std::string c = m_entropy[i].possibilities[j];
+		//Check if the possibility cannot have a boundary in the negative z direction.
+		if (!std::count(m_blockPossibilities[c].dirPossibilities[dir].begin(), m_blockPossibilities[c].dirPossibilities[dir].end(), "Edge"))
+		{
+			m_entropy[i].possibilities.erase(m_entropy[i].possibilities.begin() + j);
+			j--;
+			removed = true;
+			
+			if (m_entropy[i].possibilities.size() == 0)
+			{
+				m_failed = true;
+				break;
+			}
+		}
+	}
+	if (m_failed)
+	{
+		return false;
+	}
+
+	if (removed)
+	{
+		StackData d;
+		d.index = i;
+		m_recursiveStack.push(d);
+		while (!m_recursiveStack.empty())
+		{
+			StackData d = m_recursiveStack.top();
+			Propogate(d.index);
+			m_recursiveStack.pop();
+		}
+	}
+
+	return true;
+}
+
 bool WFC::GenerateLevel()
 {
 	//First we set up the entropy.
@@ -19,143 +60,67 @@ bool WFC::GenerateLevel()
 		temp.possibilities = allBlocks;
 		m_entropy.push_back(temp);
 	}
-	/*
+	
 	//ADD A NICE WAY TO INTRODUCE MULTIPLE CONSTRAINTS HERE!
 	{
 		//We now go through the entropy and introduce the boundary constraint.
 		for (uint32_t i{ 0u }; i < m_width * m_height * m_depth; ++i)
 		{
-			if (i % m_depth == 0) //If the index is on z = 0
+			if (i >= m_depth * m_height * (m_width - 1)) //If the index is on x = width
 			{
-				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities
+				if (!EdgeConstrain(i, 0))
 				{
-					std::string c = m_entropy[i].possibilities[j];
-					//Check if the possibility cannot have a boundary in the negative z direction.
-					if (!std::count(m_blockPossibilities[c].dirPossibilities[3].begin(), m_blockPossibilities[c].dirPossibilities[3].end(), "Edge"))
-					{
-						if (Propogate(c, i))
-						{
-							j--;
-						}
-						while (!m_recursiveStack.empty())
-						{
-							StackData d = m_recursiveStack.top();
-							Propogate(d.removed, d.index);
-							m_recursiveStack.pop();
-						}
-					}
-				}
-			}
-			if (i % m_depth == m_depth - 1) //If the index is on z = depth
-			{
-				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities
-				{
-					std::string c = m_entropy[i].possibilities[j];
-					//Check if the possibility cannot have a boundary in the positive z direction.
-					if (!std::count(m_blockPossibilities[c].dirPossibilities[2].begin(), m_blockPossibilities[c].dirPossibilities[2].end(), "Edge"))
-					{
-						if (Propogate(c, i))
-						{
-							j--;
-						}
-						while (!m_recursiveStack.empty())
-						{
-							StackData d = m_recursiveStack.top();
-							Propogate(d.removed, d.index);
-							m_recursiveStack.pop();
-						}
-					}
-				}
-			}
-			uint32_t remainder = i % (m_depth * m_height);
-			if (remainder < m_depth) //If the index is on y = 0
-			{
-				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities
-				{
-					std::string c = m_entropy[i].possibilities[j];
-					//Check if the possibility cannot have a boundary in the negative y direction.
-					if (!std::count(m_blockPossibilities[c].dirPossibilities[5].begin(), m_blockPossibilities[c].dirPossibilities[5].end(), "Edge"))
-					{
-						if (Propogate(c, i))
-						{
-							j--;
-						}
-						while (!m_recursiveStack.empty())
-						{
-							StackData d = m_recursiveStack.top();
-							Propogate(d.removed, d.index);
-							m_recursiveStack.pop();
-						}
-					}
-				}
-			}
-			if (remainder < m_depth * m_height && remainder >= m_depth * (m_height - 1)) //If the index is on y = height
-			{
-				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities
-				{
-					std::string c = m_entropy[i].possibilities[j];
-					//Check if the possibility cannot have a boundary in the positive y direction.
-					if (!std::count(m_blockPossibilities[c].dirPossibilities[4].begin(), m_blockPossibilities[c].dirPossibilities[4].end(), "Edge"))
-					{
-						if (Propogate(c, i))
-						{
-							j--;
-						}
-						while (!m_recursiveStack.empty())
-						{
-							StackData d = m_recursiveStack.top();
-							Propogate(d.removed, d.index);
-							m_recursiveStack.pop();
-						}
-					}
+					break;
 				}
 			}
 			if (i < m_depth * m_height) //If the index is on x = 0.
 			{
-				//Go through all the current possibilities in the cell.
-				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j)
+				if (!EdgeConstrain(i, 1))
 				{
-					std::string c = m_entropy[i].possibilities[j];
-					//Check if the possibility cannot have a boundary in the negative x direction.
-					if (!std::count(m_blockPossibilities[c].dirPossibilities[1].begin(), m_blockPossibilities[c].dirPossibilities[1].end(), "Edge"))
-					{
-						if (Propogate(c, i))
-						{
-							j--;
-						}
-						while (!m_recursiveStack.empty())
-						{
-							StackData d = m_recursiveStack.top();
-							Propogate(d.removed, d.index);
-							m_recursiveStack.pop();
-						}
-					}
+					break;
 				}
 			}
-			if (i >= m_depth * m_height * (m_width - 1)) //If the index is on x = width
+
+			if (i % m_depth == m_depth - 1) //If the index is on z = depth
 			{
-				for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities
+				if (!EdgeConstrain(i, 2))
 				{
-					std::string c = m_entropy[i].possibilities[j];
-					//Check if the possibility cannot have a boundary in the positive x direction.
-					if (!std::count(m_blockPossibilities[c].dirPossibilities[0].begin(), m_blockPossibilities[c].dirPossibilities[0].end(), "Edge"))
-					{
-						if (Propogate(c, i))
-						{
-							j--;
-						}
-						while (!m_recursiveStack.empty())
-						{
-							StackData d = m_recursiveStack.top();
-							Propogate(d.removed, d.index);
-							m_recursiveStack.pop();
-						}
-					}
+					break;
+				}
+			}
+			if (i % m_depth == 0) //If the index is on z = 0
+			{
+				if (!EdgeConstrain(i, 3))
+				{
+					break;
+				}
+			}
+			
+			uint32_t remainder = i % (m_depth * m_height);
+			if (remainder < m_depth) //If the index is on y = 0
+			{
+				if (!EdgeConstrain(i, 5))
+				{
+					break;
+				}
+			}
+			if (remainder < m_depth * m_height && remainder >= m_depth * (m_height - 1)) //If the index is on y = height
+			{
+				if (!EdgeConstrain(i, 4))
+				{
+					break;
 				}
 			}
 		}
 	}
-	*/
+	if (m_failed)
+	{
+		std::cout << "FAILED!" << std::endl;
+		m_failed = false;
+		m_entropy.clear();
+		return false;
+	}
+
 	//The priority queue is not needed for the constraints. As they do not use a priority.
 	//All the entropy blocks should now be placed in a priority queue based on their Shannon entropy.
 	m_priorityQueue = new PriorityQueue(m_entropy, m_blockPossibilities, m_width, m_height, m_depth);
@@ -188,7 +153,7 @@ bool WFC::GenerateLevel()
 			delete m_priorityQueue;
 			m_priorityQueue = nullptr;
 
-			//If the generation failed we try again.
+			//If the generation failed.
 			if (m_failed)
 			{
 				std::cout << "FAILED!" << std::endl;
@@ -233,21 +198,39 @@ bool WFC::GenerateLevel()
 
 		//Now that a single possibility is chosen the rest of the possibilities have to be removed.
 		//The information that each one have been removed is then propogated out to the neighboring cells.
+		bool removed = false;
 		for (uint32_t i{ 0u }; i < m_entropy[index].possibilities.size(); ++i)
 		{
 			std::string current = m_entropy[index].possibilities[i];
 			if (current != c)
 			{
-				if (Propogate(current, index))
+				m_entropy[index].possibilities.erase(m_entropy[index].possibilities.begin() + i);
+				i--;
+				removed = true;
+
+				if (m_entropy[index].possibilities.size() == 0)
 				{
-					i--;
+					m_failed = true;
+					break;
 				}
-				while (!m_recursiveStack.empty())
-				{
-					StackData d = m_recursiveStack.top();
-					Propogate(d.removed, d.index);
-					m_recursiveStack.pop();
-				}
+
+			}
+		}
+		if (m_failed)
+		{
+			break;
+		}
+
+		if (removed)
+		{
+			StackData d;
+			d.index = index;
+			m_recursiveStack.push(d);
+			while (!m_recursiveStack.empty())
+			{
+				StackData d = m_recursiveStack.top();
+				Propogate(d.index);
+				m_recursiveStack.pop();
 			}
 		}
 		//We then set the chosen value in the generated level.
@@ -328,9 +311,9 @@ void WFC::ReadInput(std::string input)
 	{
 		block.second.frequency /= m_totalCount;
 
-		if (block.first == "Cube_r0_f")
+		if (block.first == "Void")
 		{
-			block.second.frequency *= 1.0f;
+			block.second.frequency *= 0.01f;
 		}
 		//Here we can tweak the frequencies.
 	}
@@ -338,23 +321,13 @@ void WFC::ReadInput(std::string input)
 	//Or here
 }
 
-bool WFC::Propogate(std::string& removed, uint32_t index)
+bool WFC::Propogate(uint32_t index)
 {
-	//std::cout << removed << " - " << index << std::endl;
-	//If the string did not exist as a possibility of this cell, we simply return false and do not propogate further.
-	if (std::find(m_entropy[index].possibilities.begin(), m_entropy[index].possibilities.end(), removed) == m_entropy[index].possibilities.end())
+	if (index == 67)
 	{
-		return false;
+		std::cout << "t";
 	}
-
-	//Remove the possibility within this cell.
-	m_entropy[index].possibilities.erase(std::find(m_entropy[index].possibilities.begin(), m_entropy[index].possibilities.end(), removed));
-	if (m_entropy[index].possibilities.size() == 0)
-	{
-		m_failed = true;
-	}
-
-	//We now have to rearrange the PQ since a possibility was removed. (Is not done during contraints.)
+	//We now have to rearrange the PQ since possibilities were removed. (Is not done during contraints.)
 	if (m_priorityQueue)
 	{
 		if (!m_priorityQueue->Rearrange(index, m_blockPossibilities))
@@ -366,46 +339,51 @@ bool WFC::Propogate(std::string& removed, uint32_t index)
 	//If the index is not z = 0 we can propogate in the negative z direction.
 	if (index % m_depth != 0)
 	{
-		CheckForPropogation(index, index - 1, 2, removed);
+		CheckForPropogation(index, index - 1, 2);
 	}
 
 	//If the index is not z = width we can propogate in the positive z direction.
 	if (index % m_depth != m_depth - 1)
 	{
-		CheckForPropogation(index, index + 1, 3, removed);
+		CheckForPropogation(index, index + 1, 3);
 	}
 
 	//If the index is not y = 0 we can propogate in the negative y direction.
 	uint32_t remainder = index % (m_depth * m_height);
 	if (remainder >= m_depth)
 	{
-		CheckForPropogation(index, index - m_depth, 4, removed);
+		CheckForPropogation(index, index - m_depth, 4);
 	}
 
 	//If the index is not y = height we can propogate in the positive y direction.
 	if (remainder >= m_depth * m_height || remainder < m_depth * (m_height - 1))
 	{
-		CheckForPropogation(index, index + m_depth, 5, removed);
+		CheckForPropogation(index, index + m_depth, 5);
 	}
 
 	//If the index is not x = 0 we can propogate in the negative x direction.
 	if (index >= m_depth * m_height)
 	{
-		CheckForPropogation(index, index - (m_depth * m_height), 0, removed);
+		CheckForPropogation(index, index - (m_depth * m_height), 0);
 	}
 
 	//If the index is not x = depth we can propogate in the positive x direction.
 	if (index < m_depth * m_height * (m_width - 1))
 	{
-		CheckForPropogation(index, index + (m_depth * m_height), 1, removed);
+		CheckForPropogation(index, index + (m_depth * m_height), 1);
 	}
 
 	return true;
 }
 
 //Dir is the direction from the neighborIndex TO the currentIndex.
-void WFC::CheckForPropogation(uint32_t currentIndex, uint32_t neighborIndex, unsigned dir, std::string& removed)
+void WFC::CheckForPropogation(uint32_t currentIndex, uint32_t neighborIndex, unsigned dir)
 {
+	if (neighborIndex == 67)
+	{
+		std::cout << "t";
+	}
+	bool removed = false;
 	for (uint32_t i{ 0u }; i < m_entropy[neighborIndex].possibilities.size(); ++i) //For every possibility in the neighbor cell
 	{
 		std::string& r = m_entropy[neighborIndex].possibilities[i];
@@ -421,10 +399,21 @@ void WFC::CheckForPropogation(uint32_t currentIndex, uint32_t neighborIndex, uns
 		}
 		if (!matched)
 		{
-			StackData d;
-			d.removed = r;
-			d.index = neighborIndex;
-			m_recursiveStack.push(d);
+			m_entropy[neighborIndex].possibilities.erase(m_entropy[neighborIndex].possibilities.begin() + i);
+			i--;
+			removed = true;
+
+			if (m_entropy[neighborIndex].possibilities.size() == 0)
+			{
+				m_failed = true;
+				break;
+			}
 		}
+	}
+	if (removed)
+	{
+		StackData d;
+		d.index = neighborIndex;
+		m_recursiveStack.push(d);
 	}
 }

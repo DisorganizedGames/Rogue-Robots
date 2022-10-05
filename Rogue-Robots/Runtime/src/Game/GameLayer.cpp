@@ -294,7 +294,7 @@ void GameLayer::LoadLevel()
 	float blockDim = 5.0f;
 
 	std::string line;
-	std::ifstream inputFile("..\\Offline-Tools\\PCG\\testLevelOutput_generatedLevel.txt");
+	std::ifstream inputFile("..\\Offline-Tools\\PCG\\largerTestOutput_generatedLevel.txt");
 
 	AssetManager& aManager = AssetManager::Get();
 
@@ -313,7 +313,7 @@ void GameLayer::LoadLevel()
 					size_t delimPos = line.find(' ');
 					std::string block = line.substr(0, delimPos);
 					line.erase(0, delimPos + 1);
-					if (block != "Empty")
+					if (block != "Empty" && block != "Void")
 					{
 						size_t firstUnderscore = block.find('_');
 						size_t secondUnderscore = block.find('_', firstUnderscore + 1);

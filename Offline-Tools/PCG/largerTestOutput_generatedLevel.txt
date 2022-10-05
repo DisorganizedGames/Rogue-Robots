@@ -1,36 +1,25 @@
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
+Void Void Void Void Void Void 
+Void Void Void Void Void Void 
+Void Void Void Void Void Void 
+Void Void Void Void Void Void 
 -
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
+Void Void CornerFloor1_r1_f WallFloor1_r1_fx CornerFloor1_r0_f Void 
+Void CornerWall1_r1_f Wall1_r1_fx CornerWall1_r0_f Void Void 
+CornerRoof1_r1_f WallRoof1_r1_fx CornerRoof1_r0_f Void Void Void 
+Void Void Void Void WallFloor1_r2_fx Floor1_r0_fx 
 -
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
+WallFloor1_r0_fx Void Void Wall1_r2_fx Empty Wall1_r0_fx 
+Void Void WallRoof1_r2_fx Roof1_r0_fx WallRoof1_r0_fx Void 
+Void Void Void Void Void Void 
+WallFloor1_r2_f Floor1_r0_f WallFloor1_r0_f Void Void Wall1_r2_f 
 -
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
+Empty Wall1_r0_f Void Void WallRoof1_r2_f Roof1_r0_f 
+WallRoof1_r0_f Void Void Void Void Void 
+Void Void CornerFloor1_r2_f WallFloor1_r3_f CornerFloor1_r3_f Void 
+Void CornerWall1_r2_f Wall1_r3_f CornerWall1_r3_f Void Void 
 -
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
--
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
--
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
--
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
--
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
-Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f Cube_r0_f 
+CornerRoof1_r2_f WallRoof1_r3_f CornerRoof1_r3_f Void Void Void 
+Void Void Void Void Void Void 
+Void Void Void Void Void Void 
+Void Void Void Void Void Void 
 -

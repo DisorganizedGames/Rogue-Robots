@@ -2,11 +2,11 @@
 
 int main()
 {
-    uint32_t w = 9;
-    uint32_t h = 3;
-    uint32_t d = 9;
+    uint32_t w = 6;
+    uint32_t h = 4;
+    uint32_t d = 5;
 
-    std::string input = "testLevelOutput";
+    std::string input = "largerTestOutput";
 
     //Create a WFC interface and send the input.
     WFC* wfc = new WFC(input + ".txt", w, h, d);
@@ -39,6 +39,10 @@ int main()
             output << "-\n";
         }
         output.close();
+    }
+    else
+    {
+        std::cout << "OUT OF TRIES!" << std::endl;
     }
     
     delete wfc;
