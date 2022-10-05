@@ -61,9 +61,9 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<ModelComponent>(entity4, m_magentaCube);
 	auto& t4 = m_entityManager.AddComponent<TransformComponent>(entity4);
 	m_entityManager.AddComponent<NetworkPlayerComponent>(entity4).playerId = 3;
-	t4.worldMatrix(3, 0) = -4;
-	t4.worldMatrix(3, 1) = 2;
-	t4.worldMatrix(3, 2) = 5;
+	t4.worldMatrix(3, 0) = 10;
+	t4.worldMatrix(3, 1) = 12;
+	t4.worldMatrix(3, 2) = 10;
 
 	entity entity5 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity5, m_mixamo);
@@ -71,8 +71,8 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<AnimationComponent>(entity5).offset = 0;
 
 	m_entityManager.AddComponent<SphereColliderComponent>(entity3, entity3, 1.0f, true);
-	m_entityManager.AddComponent<CapsuleColliderComponent>(entity4, entity4, 1.0f, 1.0f, true);
-	m_entityManager.AddComponent<BoxColliderComponent>(entity5, entity5, Vector3(1, 1, 1), false);
+	m_entityManager.AddComponent<CapsuleColliderComponent>(entity5, entity5, 1.0f, 1.0f, true);
+	m_entityManager.AddComponent<BoxColliderComponent>(entity4, entity4, Vector3(1, 1, 1), true);
 	m_entityManager.AddComponent<MeshColliderComponent>(entity2, entity2, m_greenCube);
 	m_entityManager.AddComponent<RigidbodyComponent>(entity4, entity4);
 	/*m_entityManager.GetComponent<RigidbodyComponent>(entity4).ConstrainPosition(true, false, true);*/
@@ -235,7 +235,6 @@ void GameLayer::LoadLevel()
 	std::ifstream inputFile("..\\Offline-Tools\\PCG\\testLevelOutput_generatedLevel.txt");
 
 	AssetManager& aManager = AssetManager::Get();
-	EntityManager& eManager = EntityManager::Get();
 
 	unsigned x = 0;
 	unsigned y = 0;
@@ -271,13 +270,14 @@ void GameLayer::LoadLevel()
 							yFlip = -1.0f;
 						}
 
-						entity blockEntity = eManager.CreateEntity();
-						eManager.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".fbx"));
-						eManager.AddComponent<TransformComponent>(blockEntity)
+						entity blockEntity = m_entityManager.CreateEntity();
+						m_entityManager.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".fbx"));
+						m_entityManager.AddComponent<TransformComponent>(blockEntity)
 							.SetPosition({ x * blockDim, y * blockDim, z * blockDim })
 							.SetRotation({ piDiv2, piDiv2 * blockRot - piDiv2, 0.0f })
 							.SetScale({ xFlip, -1.0f, yFlip }); //yFlip is on Z because of left-hand/right-hand.
-						eManager.AddComponent<ModularBlockComponent>(blockEntity);
+						m_entityManager.AddComponent<ModularBlockComponent>(blockEntity);
+						m_entityManager.AddComponent<MeshColliderComponent>(blockEntity, blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + "_Col.fbx", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory))));
 					}
 
 					++x;
