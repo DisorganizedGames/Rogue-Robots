@@ -3,6 +3,7 @@
 
 namespace DOG
 {
+
 	class Server
 	{
 	public:
@@ -16,15 +17,29 @@ namespace DOG
 		void ServerPollTCP();
 		void CloseSocketTCP(int socketIndex);
 		float TickTimeLeftTCP(LARGE_INTEGER t, LARGE_INTEGER frequency);
-		std::atomic_bool m_serverAlive;
-		float m_tickrate;
-		std::thread m_reciveConnections;
-		std::thread m_serverLoop;
+
+	private:
+		void GameLoopUdp();
+		void ReciveLoopUdp();
+		int m_upid;
+		int m_reciveupid;
+		std::atomic_bool m_gameAlive;
+
+		std::thread m_reciveConnectionsTcp;
+		std::thread m_loopTcp;
+		std::thread m_loopUdp;
+		std::thread m_reciveLoopUdp;
 		Client::ClientsData m_playersServer[MAX_PLAYER_COUNT];
-		std::vector<int>		m_playerIds;
-		std::vector<int>		m_holdPlayerIds;
-		std::vector<WSAPOLLFD>	m_clientsSockets;
-		std::vector<WSAPOLLFD>	m_holdSockets;
+		Client::UdpData m_outputUdp;
+		std::vector<UINT8>		m_playerIds;
+		std::vector<UINT8>		m_holdPlayerIds;
+		std::vector<WSAPOLLFD>	m_clientsSocketsTcp;
+		std::vector<WSAPOLLFD>	m_holdSocketsTcp;
+		float m_tickrateTcp;
+		float m_tickrateUdp;
+		std::mutex m_mut;
+		Client::PlayerNetworkComponent m_holdPlayersUdp[MAX_PLAYER_COUNT];
+
 
 	};
 }

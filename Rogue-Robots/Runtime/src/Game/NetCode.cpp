@@ -2,13 +2,23 @@
 using namespace DOG;
 NetCode::NetCode()
 {
+
+
 	m_netCodeAlive = TRUE;
-	m_Output = nullptr;
-	m_input.rotation = DirectX::XMVectorSet(0, 0, 0, 0);
-	m_input.position = DirectX::XMVectorSet(0, 0, 0, 0);
+	m_outputTcp = nullptr;
+	m_inputTcp.rotation = DirectX::XMVectorSet(0, 0, 0, 0);
+	m_inputTcp.position = DirectX::XMVectorSet(0, 0, 0, 0);
+
+
+	m_playerInputUdp.playerId = 0;
+	m_playerInputUdp.playerOptions = 0;
+	m_playerInputUdp.rotation = DirectX::XMVectorSet(0, 0, 0, 0);
+	m_playerInputUdp.position = DirectX::XMVectorSet(0, 0, 0, 0);
+	m_hardSyncTcp = FALSE;
 	m_active = FALSE;
 	m_startUp = FALSE;
 	m_thread = std::thread(&NetCode::Recive, this);
+
 
 }
 
@@ -16,6 +26,7 @@ NetCode::~NetCode()
 {
 	m_netCodeAlive = FALSE;
 	m_thread.join();
+	m_threadUdp.join();
 }
 
 
@@ -24,36 +35,61 @@ void NetCode::OnUpdate(std::shared_ptr<MainPlayer> player)
 
 	if (m_active)
 	{
-		//if connects first time 
+
 		if (m_startUp == TRUE)
 		{
-
-			EntityManager::Get().Collect<NetworkPlayerComponent>().Do([&]( NetworkPlayerComponent& networkC)
+			m_playerInputUdp.playerId = m_inputTcp.playerId;
+			EntityManager::Get().Collect<NetworkPlayerComponent>().Do([&](NetworkPlayerComponent& networkC)
 				{
 					//Give player correct model
-					if (networkC.playerId == m_input.playerId)
-						player->SetPosition(m_Output[networkC.playerId].position);
+					if (networkC.playerId == m_inputTcp.playerId)
+						player->SetPosition(m_outputTcp[networkC.playerId].position);
+				});
+			EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC)
+				{
+					if (networkC.playerId != m_inputTcp.playerId)
+					{
+						transformC.SetPosition(m_outputTcp[networkC.playerId].position);
+						transformC.SetRotation(m_outputTcp[networkC.playerId].rotation);
+					}
 				});
 
 			m_startUp = false;
 		}
 
-	//if connected to server
-		AddPosition(player->GetPosition());
-		AddRotation(player->GetRotation());
+		AddPositionTcp(player->GetPosition());
+		AddRotationTcp(player->GetRotation());
+
+		AddPositionUdp(player->GetPosition());
+		AddRotationUdp(player->GetRotation());
+		//TODO: when player entity exist
+		//EntityManager::Get().Collect<mainPlayer>().Do([&](mainPlayer& playerC)
+		//{
+		//	AddMatrixUdp(playerC.worldMatrix);
+		//};
+
 		EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC)
 			{
-				if (networkC.playerId == m_input.playerId)
+				//Udp
+				if (networkC.playerId == m_inputTcp.playerId)
 				{
 					transformC.SetPosition(player->GetPosition());
 					transformC.SetRotation(player->GetRotation());
 				}
 				else
 				{
-					transformC.SetPosition(m_Output[networkC.playerId].position);
-					transformC.SetRotation(m_Output[networkC.playerId].rotation);
+					for (int i = 0; i < MAX_PLAYER_COUNT; i++)
+					{
+						if (networkC.playerId == m_outputUdp.m_holdplayersUdp[i].playerId)
+						{
+							transformC.SetPosition(m_outputUdp.m_holdplayersUdp[i].position);
+							transformC.SetRotation(m_outputTcp[networkC.playerId].rotation);
+						}
+					}
 				}
 			});
+
+
 	}
 }
 
@@ -64,14 +100,14 @@ void NetCode::Recive()
 	char input = 'o';
 	while (start == FALSE)
 	{
-		
+
 		std::cout << "\nInput 'h' to host, 'j' to join, 'o' to play offline: ";
 		//input = getchar(); // uncomment to startup online
 		switch (input)
 		{
 		case 'h':
 		{
-			bool server	= serverTest.StartTcpServer();
+			bool server = serverTest.StartTcpServer();
 			if (server)
 			{
 				// join server
@@ -79,11 +115,11 @@ void NetCode::Recive()
 				if (ip != "")
 				{
 					std::cout << "Hosting at: " << ip << std::endl;
-					m_input.playerId = m_client.ConnectTcpServer(ip);
-					if (m_input.playerId > -1)
+					m_inputTcp.playerId = m_client.ConnectTcpServer(ip);
+					if (m_inputTcp.playerId > -1)
 					{
-						m_input.position = DirectX::XMVectorSet(0, (float)(m_input.playerId * 2 + 1), 0, 0);
-						m_Output = m_client.ReciveTcp();
+						m_inputTcp.position = DirectX::XMVectorSet(0, (float)(m_inputTcp.playerId * 2 + 1), 0, 0);
+						m_outputTcp = m_client.ReciveTcp();
 						start = TRUE;
 					}
 				}
@@ -98,16 +134,16 @@ void NetCode::Recive()
 			std::cin >> inputString;
 			if (inputString[0] == 'd')
 			{
-				m_input.playerId = m_client.ConnectTcpServer("192.168.50.214"); //192.168.1.55 || 192.168.50.214
+				m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.55"); //192.168.1.55 || 192.168.50.214
 			}
 			else
 			{
-				m_input.playerId = m_client.ConnectTcpServer(inputString);
+				m_inputTcp.playerId = m_client.ConnectTcpServer(inputString);
 			}
-			if (m_input.playerId > -1)
+			if (m_inputTcp.playerId > -1)
 			{
-				m_input.position = DirectX::XMVectorSet(0, (float)(m_input.playerId * 2 + 1), 0, 0);
-				m_Output = m_client.ReciveTcp();
+				m_inputTcp.position = DirectX::XMVectorSet(0, (float)(m_inputTcp.playerId * 2 + 1), 0, 0);
+				m_outputTcp = m_client.ReciveTcp();
 				start = TRUE;
 			}
 			break;
@@ -123,25 +159,39 @@ void NetCode::Recive()
 		default:
 			break;
 		}
-		if(start == FALSE)
+		if (start == FALSE)
 			std::cout << "Failed input, try agiain" << std::endl;
 		fseek(stdin, 0, SEEK_END);
 	}
-	while (m_netCodeAlive)
+	m_threadUdp = std::thread(&NetCode::ReciveUdp, this);
+	if (m_netCodeAlive)
 	{
-		m_mut.lock();
-		DOG::Client::ClientsData testInput = m_input;
-		m_input = m_client.CleanClientsData(m_input);
-		m_mut.unlock();
-		m_client.SendTcp(testInput);
-		m_Output = m_client.ReciveTcp();
 		if (m_active == FALSE)
 		{
 			m_startUp = TRUE;
 			m_active = TRUE;
 		}
-
+		//tcp
+		while (m_netCodeAlive)
+		{
+			m_mut.lock();
+			m_client.SendTcp(m_inputTcp);
+			m_mut.unlock();
+			m_outputTcp = m_client.ReciveTcp();
+		}
 	}
+}
+
+void NetCode::ReciveUdp()
+{
+	while (m_netCodeAlive)
+	{
+		m_mut.lock();
+		m_client.SendUdp(m_playerInputUdp);
+		m_mut.unlock();
+		m_outputUdp = m_client.ReciveUdp();
+	}
+
 }
 
 void NetCode::AddPlayersId(std::vector<DOG::entity> playersId)
@@ -149,25 +199,48 @@ void NetCode::AddPlayersId(std::vector<DOG::entity> playersId)
 	m_playersId = playersId;
 }
 
-void NetCode::AddMatrix(DirectX::XMMATRIX input)
+//void NetCode::AddMatrixTcp(DirectX::XMMATRIX input)
+//{
+//	m_mut.lock();
+//	m_inputTcp.matrix = input;
+//	m_mut.unlock();
+//}
+
+
+
+void NetCode::AddRotationTcp(DirectX::SimpleMath::Vector3 input)
 {
 	m_mut.lock();
-	m_input.matrix = input;
+	m_inputTcp.rotation = input;
+	m_mut.unlock();
+
+}
+
+void NetCode::AddPositionTcp(DirectX::SimpleMath::Vector3 input)
+{
+	m_mut.lock();
+	m_inputTcp.position = input;
 	m_mut.unlock();
 }
 
-void NetCode::AddRotation(DirectX::SimpleMath::Vector3 input)
+void NetCode::AddRotationUdp(DirectX::SimpleMath::Vector3 input)
 {
 	m_mut.lock();
-	m_input.rotation = input;
+	m_playerInputUdp.rotation = input;
 	m_mut.unlock();
 
 }
 
-void NetCode::AddPosition(DirectX::SimpleMath::Vector3 input)
+void NetCode::AddPositionUdp(DirectX::SimpleMath::Vector3 input)
 {
 	m_mut.lock();
-	input = DirectX::XMVectorSubtract(input, m_input.position);
-	m_input.position = DirectX::XMVectorAdd(m_input.position, input);
+	m_playerInputUdp.position = input;
 	m_mut.unlock();
 }
+
+//void NetCode::AddMatrixUdp(DirectX::XMMATRIX input) change back later when main player has transform
+//{
+//	m_mut.lock();
+//	m_inputUdp.playerMatrix.push_back(input); 
+//	m_mut.unlock();
+//}
