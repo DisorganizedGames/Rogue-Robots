@@ -62,6 +62,7 @@ namespace DOG
 			m_renderer->BeginGUI();
 
 			AssetManager::Get().Update();
+			AudioManager::AudioSystem();
 
 			for (auto const layer : m_layerStack)
 			{
