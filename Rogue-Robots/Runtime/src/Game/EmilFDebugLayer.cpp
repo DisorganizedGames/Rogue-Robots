@@ -1,18 +1,14 @@
 #include "EmilFDebugLayer.h"
 
-
 EmilFDebugLayer::EmilFDebugLayer() noexcept
 	: Layer("Emil debug layer"), m_entityManager{ DOG::EntityManager::Get() }
 {
 	
 }
 
-
 void EmilFDebugLayer::OnAttach()
 {
-	m_systems.emplace_back(std::make_unique<DOG::TestSystem>());
-	m_systems[0]->Create();
-	m_systems[0]->Update();
+
 }
 
 void EmilFDebugLayer::OnDetach()
@@ -22,7 +18,18 @@ void EmilFDebugLayer::OnDetach()
 
 void EmilFDebugLayer::OnUpdate()
 {
-
+	for (auto& system : m_entityManager)
+	{
+		system->EarlyUpdate();
+	}
+	for (auto& system : m_entityManager)
+	{
+		system->Update();
+	}
+	for (auto& system : m_entityManager)
+	{
+		system->LateUpdate();
+	}
 }
 
 void EmilFDebugLayer::OnRender()

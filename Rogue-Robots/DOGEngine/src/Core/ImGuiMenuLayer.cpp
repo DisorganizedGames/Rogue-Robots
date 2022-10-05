@@ -13,6 +13,9 @@ namespace DOG
     {
         RegisterDebugWindow("Demo window", DemoWindow);
         RegisterDebugWindow("Model spawner", ModelSpawner);
+#if defined _DEBUG
+        RegisterDebugWindow("ECS Debug Panel", ECSPanel);
+#endif
     }
 
     void ImGuiMenuLayer::OnAttach()
@@ -149,4 +152,248 @@ namespace DOG
             ImGui::ShowDemoWindow(&open);
         }
     }
+
+#if defined _DEBUG
+    void ImGuiMenuLayer::ECSPanel(bool& open)
+    {
+		if (ImGui::BeginMenu("View"))
+		{
+			if (ImGui::MenuItem("ECS"))
+			{
+				open = true;
+			}
+			ImGui::EndMenu(); // "View"
+		}
+
+        if (open)
+        {
+            auto& mgr = EntityManager::Get();
+            auto& pools = mgr.GetAllComponentPools();
+            u32 maxEntitiesInAPool = 0u;
+            u32 nrOfValidPools = 0u;
+            for (auto& [componentID, componentPool] : pools)
+            {
+                if (componentPool != nullptr)
+                {
+                    nrOfValidPools++;
+                    if (componentPool->denseArray.size() > maxEntitiesInAPool)
+                        maxEntitiesInAPool = (u32)componentPool->denseArray.size();
+                }
+            }
+
+			ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
+			if (ImGui::Begin("ECS Debug Panel", &open))
+			{
+                static bool clickedOnEntities = false;
+                static const ComponentPool* selectedPool = nullptr;
+                static entity selectedEntity = NULL_ENTITY;
+                if (selectedEntity != NULL_ENTITY && !mgr.Exists(selectedEntity))
+                {
+                    selectedEntity = NULL_ENTITY;
+                }
+
+                ImGui::Text("Entities alive: %d", mgr.GetNrOfEntities());
+                if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+                    clickedOnEntities = true;
+
+                ImGui::Separator();
+                ImVec2 actualCursorPosition = ImGui::GetCursorPos();
+                ImVec2 savedCursorPosition = ImGui::GetCursorPos();
+                ImGui::Text("Unique component types: %d", nrOfValidPools);
+				ImVec2 outer_size = ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 12);
+				static ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable;
+                ImGui::SetNextItemWidth(ImGui::GetFrameHeight());
+
+                if (!selectedPool && !clickedOnEntities && selectedEntity == NULL_ENTITY)
+                {
+					if (ImGui::BeginTable("table_allComponents", 2, flags, outer_size))
+					{
+						ImGui::TableSetupScrollFreeze(0, 1);
+						ImGui::TableSetupColumn("Component Type", ImGuiTableColumnFlags_NoHide);
+                        ImGui::TableSetupColumn("Entities", ImGuiTableColumnFlags_NoHide);
+						ImGui::TableHeadersRow();
+
+						for (auto& [componentID, componentPool] : pools)
+						{
+							if (componentPool != nullptr)
+							{
+								ImGui::TableNextRow();
+								for (int column = 0; column < 2; column++)
+								{
+									if (!ImGui::TableSetColumnIndex(column) && column > 0)
+										continue;
+
+									auto [entities, poolName] = componentPool->ReportUsage();
+									if (column == 0)
+									{
+										ImGui::Text("%s", std::string(poolName).c_str());
+								
+										if (ImGui::IsItemClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
+										{
+											selectedPool = &componentPool;
+										}
+									}
+									else
+										ImGui::Text("%d", entities.size());
+								}
+							}
+						}
+						ImGui::EndTable();
+                        actualCursorPosition = ImGui::GetCursorPos();
+					}
+                }
+                else if (selectedPool && !clickedOnEntities && selectedEntity == NULL_ENTITY)
+                {
+                    if (ImGui::BeginTable("table_specificComponent", 1, flags, outer_size))
+                    {
+                        ImGui::TableSetupScrollFreeze(0, 1);
+                        auto [entities, poolName] = (*selectedPool)->ReportUsage();
+                        ImGui::TableSetupColumn(std::string(poolName).c_str(), ImGuiTableColumnFlags_NoHide);
+                        ImGui::TableHeadersRow();
+                    
+                        for (size_t i{ 0u }; i < entities.size(); i++)
+                        {
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::Text("%d", entities[i]);
+                            if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+                            {
+                                selectedEntity = entities[i];
+                            }
+                        }
+
+                        ImGui::EndTable();
+                        float widthOfPanel = ImGui::GetWindowContentRegionMax().x;
+                        actualCursorPosition = ImGui::GetCursorPos();
+                        ImGui::SetCursorPos(ImVec2(savedCursorPosition.x + widthOfPanel - 24, savedCursorPosition.y - 3));
+                        ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+                        if (ImGui::Button("<"))
+                            selectedPool = nullptr;
+                        ImGui::PopStyleColor();
+                    }
+                }
+                else if (!selectedPool && clickedOnEntities && selectedEntity == NULL_ENTITY)
+                {
+                    if (ImGui::BeginTable("table_entities", 1, flags, outer_size))
+                    {
+                        ImGui::TableSetupScrollFreeze(0, 1);
+                        ImGui::TableSetupColumn("Entities", ImGuiTableColumnFlags_NoHide);
+                        ImGui::TableHeadersRow();
+
+                        auto& entities = mgr.GetAllEntitiesAlive();
+                        for (size_t i{ 0u }; i < entities.size(); i++)
+                        {
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::Text("%d", entities[i]);
+                            if (ImGui::IsItemClicked())
+                                selectedEntity = entities[i];
+                        }
+
+                        ImGui::EndTable();
+                        float widthOfPanel = ImGui::GetWindowContentRegionMax().x;
+                        actualCursorPosition = ImGui::GetCursorPos();
+                        ImGui::SetCursorPos(ImVec2(savedCursorPosition.x + widthOfPanel - 24, savedCursorPosition.y - 3));
+                        ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+                        if (ImGui::Button("<"))
+                            clickedOnEntities = false;
+                        ImGui::PopStyleColor();
+                    }
+                }
+                else
+                {
+					if (ImGui::BeginTable("table_entity", 1, flags, outer_size))
+					{
+						ImGui::TableSetupScrollFreeze(0, 1);
+                        std::string columnName = std::string("Entity #") + std::to_string(selectedEntity);
+						ImGui::TableSetupColumn(columnName.c_str(), ImGuiTableColumnFlags_NoHide);
+						ImGui::TableHeadersRow();
+
+                        for (auto& [componentID, componentPool] : pools)
+                        {
+                            if (componentPool != nullptr)
+                            {
+                                auto [entities, poolName] = componentPool->ReportUsage();
+                                if (std::find(entities.begin(), entities.end(), selectedEntity) != entities.end())
+                                {
+									ImGui::TableNextRow();
+									ImGui::TableSetColumnIndex(0);
+									ImGui::Text("%s", std::string(poolName).c_str());
+                                }
+                            }
+                        }
+						ImGui::EndTable();
+						float widthOfPanel = ImGui::GetWindowContentRegionMax().x;
+                        actualCursorPosition = ImGui::GetCursorPos();
+						ImGui::SetCursorPos(ImVec2(savedCursorPosition.x + widthOfPanel - 24, savedCursorPosition.y - 3));
+						ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+						if (ImGui::Button("<"))
+							selectedEntity = NULL_ENTITY;
+						ImGui::PopStyleColor();
+					}
+                }
+                ImGui::SetCursorPos(actualCursorPosition);
+				ImGui::Separator();
+
+				//Systems:
+                static int selectedSystemIndex = -1;
+				auto& systems = mgr.GetAllSystems();
+                savedCursorPosition = ImGui::GetCursorPos();
+				ImGui::Text("Unique systems: %d", systems.size());
+                if (ImGui::BeginTable("table_systems", 1, flags, outer_size))
+                {
+                    ImGui::TableSetupScrollFreeze(0, 1);
+                    ImGui::TableSetupColumn("System execution order", ImGuiTableColumnFlags_NoHide);
+                    ImGui::TableHeadersRow();
+
+                    for (size_t i{0u}; i < systems.size(); ++i)
+					{
+						ImGui::TableNextRow();
+						ImGui::TableSetColumnIndex(0);
+
+                        std::string_view name = systems[i]->GetName();
+                        SystemType systemType = systems[i]->GetSystemType();
+                        std::string finalName = std::string(name);
+                        if (systemType == SystemType::Standard)
+                        {
+                            finalName += " (Standard)";
+                        }
+                        else
+                        {
+                            finalName += " (Critical)";
+                        }
+
+						ImGui::Text("%s", finalName.c_str());
+                        if (ImGui::IsItemClicked())
+                            selectedSystemIndex = (int)i;
+					}
+					ImGui::EndTable();
+					float widthOfPanel = ImGui::GetWindowContentRegionMax().x;
+					actualCursorPosition = ImGui::GetCursorPos();
+					ImGui::SetCursorPos(ImVec2(savedCursorPosition.x + widthOfPanel - 46, savedCursorPosition.y - 3));
+					ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+                    if (ImGui::Button("^"))
+                    {
+                        if (selectedSystemIndex > 0)
+                        {
+                            std::swap(systems[selectedSystemIndex], systems[selectedSystemIndex - 1]);
+                            selectedSystemIndex--;
+                        }
+                    }
+                    ImGui::SameLine();
+                    if (ImGui::Button("v"))
+                    {
+						if (selectedSystemIndex < systems.size() - 1)
+						{
+							std::swap(systems[selectedSystemIndex], systems[selectedSystemIndex + 1]);
+							selectedSystemIndex++;
+						}
+                    }
+					ImGui::PopStyleColor();
+				}
+			}
+			ImGui::End(); // "ECS Debug Panel"
+        }
+    }
+#endif
 }
