@@ -60,6 +60,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddNetwork(e);
 	}
+	else if (compType == "AgentStats")
+	{
+		AddAgentStats(context, e);
+	}
 	//Add more component types here.
 }
 
@@ -161,6 +165,18 @@ void EntityInterface::AddTransform(LuaContext* context, entity e)
 void EntityInterface::AddNetwork(DOG::entity e)
 {
 	EntityManager::Get().AddComponent<NetworkComponent>(e);
+}
+
+void EntityInterface::AddAgentStats(LuaContext* context, entity e)
+{
+	LuaTable stats = context->GetTable();
+
+	auto& agentStats = EntityManager::Get().AddComponent<AgentStatsComponent>(e);
+	agentStats = {
+		.hp = stats.GetFloatFromTable("hp"),
+		.maxHP = stats.GetFloatFromTable("maxHP"),
+		.speed = stats.GetFloatFromTable("speed")
+	};
 }
 
 void EntityInterface::ModifyTransform(LuaContext* context, entity e)

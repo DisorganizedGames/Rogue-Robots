@@ -15,6 +15,14 @@ struct PlayerStatsComponent
 	//...
 };
 
+struct AgentStatsComponent
+{
+	float hp;
+	float maxHP;
+	float speed;
+	//...
+};
+
 struct ModularBlockComponent
 {
 	//
