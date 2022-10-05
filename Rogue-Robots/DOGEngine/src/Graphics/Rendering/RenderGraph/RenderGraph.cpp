@@ -290,7 +290,7 @@ namespace DOG::gfx
 			else
 			{
 				transitionBarrier = GPUBarrier::Transition(
-					Texture(resource),
+					Buffer(resource),
 					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 					currState, desiredState);
 
@@ -347,9 +347,6 @@ namespace DOG::gfx
 		for (auto& pass : m_sortedPasses)
 		{
 			auto& passResources = pass->passResources;
-			passResources.m_resMan = m_resMan;
-
-
 
 			// Realize output views
 			RenderPassBuilder builder;
@@ -361,10 +358,12 @@ namespace DOG::gfx
 				if (output.type == RGResourceType::Texture)
 				{
 					const auto& viewDesc = std::get<TextureViewDesc>(*output.viewDesc);
-					const auto view = m_rd->CreateView(Texture(m_resMan->GetResource(output.id)), viewDesc);
+					const auto resource = Texture(m_resMan->GetResource(output.id));
+					const auto view = m_rd->CreateView(resource, viewDesc);
 
 					// Hold views for deallocation
 					passResources.m_textureViews.push_back(view);
+					passResources.m_textures[lookupID] = resource;
 
 					if (viewDesc.viewType == ViewType::RenderTarget)
 					{
@@ -390,16 +389,21 @@ namespace DOG::gfx
 				}
 				else
 				{
-					const auto& viewDesc = std::get<BufferViewDesc>(*output.viewDesc);
+					const auto resource = Buffer(m_resMan->GetResource(output.id));
+					passResources.m_buffers[lookupID] = resource;
 
-					// Create view and immediately convert to global descriptor index
-					auto view = m_rd->CreateView(Buffer(m_resMan->GetResource(output.id)), viewDesc);
-					passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
-					passResources.m_bufferViews.push_back(view);
+					if (output.viewDesc)
+					{
+						const auto& viewDesc = std::get<BufferViewDesc>(*output.viewDesc);
+						// Create view and immediately convert to global descriptor index
+						auto view = m_rd->CreateView(resource, viewDesc);
+						passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
+						passResources.m_bufferViews.push_back(view);
+					}
 				}
 			}
 
-			// Realize input  views
+			// Realize input views
 			for (const auto& input : pass->inputs)
 			{
 				// No view desc supplied --> No view (e.g Imported doesnt have view desc)
@@ -411,8 +415,11 @@ namespace DOG::gfx
 				if (input.type == RGResourceType::Texture)
 				{
 					const auto& viewDesc = std::get<TextureViewDesc>(*input.viewDesc);
-					const auto view = m_rd->CreateView(Texture(m_resMan->GetResource(input.id)), viewDesc);
+					const auto resource = Texture(m_resMan->GetResource(input.id));
+					const auto view = m_rd->CreateView(resource, viewDesc);
 					passResources.m_textureViews.push_back(view);
+					passResources.m_textures[lookupID] = resource;
+
 
 					// Read only DSV
 					if (viewDesc.viewType == ViewType::DepthStencil)
@@ -442,9 +449,10 @@ namespace DOG::gfx
 					// @todo: do we need view checks?
 
 					// Create view and immediately convert to global descriptor index
-					auto view = m_rd->CreateView(Buffer(m_resMan->GetResource(input.id)), viewDesc);
+					const auto resource = Buffer(m_resMan->GetResource(input.id));
+					auto view = m_rd->CreateView(resource, viewDesc);
 					passResources.m_bufferViews.push_back(view);
-
+					passResources.m_buffers[lookupID] = resource;
 				}
 			}
 
@@ -538,7 +546,7 @@ namespace DOG::gfx
 		assert(desc.viewType == ViewType::DepthStencil);
 
 		// Verify that the user hasn't forgotten the read only flags on views
-		assert(desc.depthReadOnly || desc.stencilReadOnly);
+		assert(desc.depthReadOnly && (desc.depthReadOnly || desc.stencilReadOnly));
 		
 		PassIO input{};
 		input.id = id;
@@ -552,6 +560,7 @@ namespace DOG::gfx
 
 	void RenderGraph::PassBuilder::WriteDepthStencil(RGResourceID id, RenderPassAccessType depthAccess, TextureViewDesc desc, RenderPassAccessType stencilAccess)
 	{
+		assert(desc.viewType == ViewType::DepthStencil);
 		assert(!desc.depthReadOnly);
 		assert(!desc.stencilReadOnly);
 		assert(!m_globalData.writes.contains(id));		// No aliasing support for depth stencil
@@ -599,7 +608,7 @@ namespace DOG::gfx
 
 			PassIO output;
 			output.originalID = id;
-			output.id = prevID;
+			output.id = newID;
 			output.type = RGResourceType::Texture;
 			output.desiredState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 			output.viewDesc = desc;
@@ -756,6 +765,71 @@ namespace DOG::gfx
 		}
 	}
 
+	void RenderGraph::PassBuilder::CopyToResource(RGResourceID id, RGResourceType type)
+	{
+		// Automatically aliases if same resource already exists
+		if (m_globalData.writes.contains(id))
+		{
+			// Explicitly connects previous reads on ID to newID
+			// The previous reads that are connect are the previous reads SINCE a write.
+			const auto ids = ResolveAliasingIDs(id);
+
+			// Explicitly connects prevID to newID
+			const auto& prevID = ids.first;
+			const auto& newID = ids.second;
+
+			// Setup new ID
+			assert(!m_globalData.writes.contains(newID));
+			m_globalData.writes.insert(newID);
+
+			m_resMan->AliasResource(newID, prevID, type);
+
+			PassIO input;
+			input.originalID = id;
+			input.id = prevID;
+			input.type = type;
+			input.aliasWrite = true;
+			m_pass.inputs.push_back(input);
+
+			PassIO output;
+			output.originalID = id;
+			output.id = newID;
+			output.type = type;
+			output.desiredState = D3D12_RESOURCE_STATE_COPY_DEST;
+			output.aliasWrite = true;
+			m_pass.outputs.push_back(output);
+		}
+		else
+		{
+			m_globalData.writes.insert(id);
+			m_globalData.writeCount[id] = 1;
+
+			PassIO output;
+			output.id = id;
+			output.type = type;
+			output.desiredState = D3D12_RESOURCE_STATE_COPY_DEST;
+			m_pass.outputs.push_back(output);
+		}
+	}
+
+	void RenderGraph::PassBuilder::CopyFromResource(RGResourceID id, RGResourceType type)
+	{
+		PassIO input;
+		input.originalID = id;
+
+		// Automatically deduces the correct read if ID is an aliased resource
+		if (m_globalData.writes.contains(id))
+		{
+			PushPassReader(id);
+			id = GetPrevious(id);
+		}
+
+		input.id = id;
+		input.desiredState = D3D12_RESOURCE_STATE_COPY_SOURCE;
+		input.type = type;
+		m_pass.inputs.push_back(input);
+	}
+
 
 
 	std::pair<RGResourceID, RGResourceID> RenderGraph::PassBuilder::ResolveAliasingIDs(RGResourceID input)
@@ -906,15 +980,16 @@ namespace DOG::gfx
 				}
 
 				// Read-combine if all is well
-				resourceDesiredStates[resource] |= input.desiredState;
+				states |= input.desiredState;
 			}
 
 			for (const auto& output : pass->outputs)
 			{
 				auto resource = m_resMan->GetResource(output.id);
-				//auto& states = resourceDesiredStates[resource];
+				auto& states = resourceDesiredStates[resource];
 
 				// We assert that state has to be COMMON, meaning it is uninitialized (no writers and no readers yet)
+				// If this asserts false --> A read or write has already been applied --> Illegal simultaneous read/write detected
 				assert(resourceDesiredStates[resource] == D3D12_RESOURCE_STATE_COMMON);
 				//assert(states == D3D12_RESOURCE_STATE_COMMON);
 
@@ -922,7 +997,7 @@ namespace DOG::gfx
 				assert(!IsReadState(output.desiredState));
 
 				// Set exclusive write state
-				resourceDesiredStates[resource] = output.desiredState;
+				states = output.desiredState;
 			}
 		}
 
@@ -949,14 +1024,14 @@ namespace DOG::gfx
 
 	Texture RenderGraph::PassResources::GetTexture(RGResourceID id)
 	{
-		assert(m_resMan->GetResourceType(id) == RGResourceType::Texture);
-		return Texture(m_resMan->GetResource(id));
+		assert(m_textures.contains(id));
+		return m_textures.find(id)->second;
 	}
 
 	Buffer RenderGraph::PassResources::GetBuffer(RGResourceID id)
 	{
-		assert(m_resMan->GetResourceType(id) == RGResourceType::Buffer);
-		return Buffer(m_resMan->GetResource(id));
+		assert(m_buffers.contains(id));
+		return m_buffers.find(id)->second;
 	}
 
 

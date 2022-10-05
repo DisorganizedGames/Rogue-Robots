@@ -35,14 +35,13 @@ namespace DOG::gfx
 
 		private:
 			friend class RenderGraph;
-			std::unordered_map<RGResourceID, u32> m_views;		// Views already converted to global indices
+			std::unordered_map<RGResourceID, u32> m_views;			// Views already converted to global indices for immediate use
+			std::unordered_map<RGResourceID, Buffer> m_buffers;		// Underlying buffer resources
+			std::unordered_map<RGResourceID, Texture> m_textures;	// Underlying texture resources
 
 			// Held for cleanup
 			std::vector<TextureView> m_textureViews;
 			std::vector<BufferView> m_bufferViews;
-
-			// Used to retrieve underlying resources if needed by the user (e.g resource copies)
-			RGResourceManager* m_resMan{ nullptr };
 		};
 
 	private:
@@ -132,15 +131,20 @@ namespace DOG::gfx
 			void DeclareBuffer(RGResourceID id, RGBufferDesc desc);
 			void ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
 
+			// Texture read views
 			void ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc);
-			void ReadDepthStencil(RGResourceID id, TextureViewDesc desc);
 			void ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, BufferViewDesc desc);
+			void ReadDepthStencil(RGResourceID id, TextureViewDesc desc);
 
 			void WriteDepthStencil(RGResourceID id, RenderPassAccessType depthAccess, TextureViewDesc desc, RenderPassAccessType stencilAccess = RenderPassAccessType::DiscardDiscard);
 			void WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
 			void ReadWriteTarget(RGResourceID id, TextureViewDesc desc);
-			
 			void ReadWriteTarget(RGResourceID id, BufferViewDesc desc);
+
+			void CopyToResource(RGResourceID id, RGResourceType type);
+			void CopyFromResource(RGResourceID id, RGResourceType type);
+
+
 
 		private:
 			// Auto-proxy and auto-alias helpers
