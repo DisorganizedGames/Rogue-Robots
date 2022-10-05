@@ -37,6 +37,7 @@ class UI
 {
 private:
    Uiscene m_scene;
+   bool m_visible;
    void BuildMenuUI();
    void BuildGameUI();
    ComPtr<IDWriteTextFormat> m_btextformat;
