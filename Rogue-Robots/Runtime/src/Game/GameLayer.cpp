@@ -214,6 +214,7 @@ void GameLayer::RegisterLuaInterfaces()
 
 	luaInterface = global->CreateLuaInterface("AssetInterface");
 	luaInterface.AddFunction<AssetInterface, &AssetInterface::LoadModel>("LoadModel");
+	luaInterface.AddFunction<AssetInterface, &AssetInterface::LoadAudio>("LoadAudio");
 	global->SetLuaInterface(luaInterface);
 
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Asset", "AssetInterface");

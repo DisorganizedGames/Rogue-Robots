@@ -51,7 +51,7 @@ void AudioDevice::HandleComponent(AudioComponent& comp)
 			comp.playing = false;
 		}
 
-		std::scoped_lock<std::mutex> lock(m_sourceMutex);
+		//std::scoped_lock<std::mutex> lock(m_sourceMutex);
 		AudioAsset* asset = AssetManager::Get().GetAsset<AudioAsset>(comp.assetID);
 		auto prop = asset->properties;
 
@@ -104,7 +104,7 @@ void AudioDevice::AudioThreadRoutine()
 	while (!m_threadShouldDie)
 	{
 
-		std::scoped_lock<std::mutex> lock(m_sourceMutex);
+		//std::scoped_lock<std::mutex> lock(m_sourceMutex);
 		for (auto& source: m_sources)
 		{
 			if (!source || source->Stopped())
@@ -197,6 +197,7 @@ void SourceVoice::Stop()
 {
 	m_stopped = true;
 	m_source->SetVolume(0.0);
+	m_source->FlushSourceBuffers();
 	m_source->Discontinuity();
 	m_externalBuffer.resize(0);
 }
@@ -252,10 +253,10 @@ void SourceVoice::QueueNext()
 
 		m_idx += CHUNK_SIZE;
 
-		if (m_idx > m_externalBuffer.size())
+		if (m_idx >= m_externalBuffer.size())
 		{
 			m_idx = m_externalBuffer.size();
-			m_source->Discontinuity();
+			Stop();
 			break;
 		}
 

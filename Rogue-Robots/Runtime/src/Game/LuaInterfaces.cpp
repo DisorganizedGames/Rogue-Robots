@@ -69,6 +69,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddAgentStats(context, e);
 	}
+	else if (compType == "Audio")
+	{
+		AddAudio(context, e);
+	}
 	//Add more component types here.
 }
 
@@ -184,6 +188,17 @@ void EntityInterface::AddAgentStats(LuaContext* context, entity e)
 	};
 }
 
+void EntityInterface::AddAudio(LuaContext* context, entity e)
+{
+	auto assetID = context->GetInteger();
+	auto shouldPlay = context->GetBoolean();
+
+	auto& comp = EntityManager::Get().AddComponent<AudioComponent>(e);
+
+	comp.assetID = assetID;
+	comp.shouldPlay = shouldPlay;
+}
+
 void EntityInterface::ModifyTransform(LuaContext* context, entity e)
 {
 	TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
@@ -221,6 +236,13 @@ void AssetInterface::LoadModel(LuaContext* context)
 {
 	//Send string? Cast to double? Change asset manager to use 32bit?
 	context->ReturnString(std::to_string(AssetManager::Get().LoadModelAsset(context->GetString())));
+}
+
+void AssetInterface::LoadAudio(LuaContext* context)
+{
+	auto filePath = context->GetString();
+	auto audioAssetID = AssetManager::Get().LoadAudio(filePath, DOG::AssetLoadFlag::CPUMemory);
+	context->ReturnInteger((i32)audioAssetID); // Pray we don't have over 2 billion assets
 }
 
 //---------------------------------------------------------------------------------------------------------

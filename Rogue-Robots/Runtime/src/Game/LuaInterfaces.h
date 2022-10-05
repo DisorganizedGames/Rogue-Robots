@@ -94,6 +94,8 @@ private:
 
 	void AddAgentStats(DOG::LuaContext* context, DOG::entity e);
 
+	void AddAudio(DOG::LuaContext* context, DOG::entity e);
+
 	void ModifyTransform(DOG::LuaContext* context, DOG::entity e);
 	
 	void ModifyPlayerStats(DOG::LuaContext* context, DOG::entity e);
@@ -113,6 +115,7 @@ public:
 
 	//Takes a string, path to the model.
 	void LoadModel(DOG::LuaContext* context);
+	void LoadAudio(DOG::LuaContext* context);
 
 private:
 
