@@ -169,15 +169,11 @@ namespace DOG::gfx
 
 	void Renderer::Render(f32)
 	{
-		ZoneScopedN("Render");
+		ZoneNamedN(RenderScope, "Render", true);
 
-		std::chrono::steady_clock::time_point m_start, m_end;
-		std::chrono::duration<double> diff;
 
 		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
 		auto& rg = *m_rg;
-
-		m_start = m_end = std::chrono::high_resolution_clock::now();
 		// Forward pass to HDR
 		{
 			struct PassData {};
@@ -338,28 +334,15 @@ namespace DOG::gfx
 		}
 
 
+		{
+			ZoneNamedN(RGBuildScope, "RG Building", true);
+			rg.Build();
+		}
 
-
-
-
-
-
-		
-		m_end = std::chrono::high_resolution_clock::now();
-		diff = m_end - m_start;
-		//std::cout << "Graph declaration time elapsed (ms): " << diff.count() * 1000.0 << "\n";
-
-		m_start = m_end = std::chrono::high_resolution_clock::now();
-		rg.Build();
-		m_end = std::chrono::high_resolution_clock::now();
-		diff = m_end - m_start;
-		//std::cout << "Build time elapsed (ms): " << diff.count() * 1000.0 << "\n";
-
-		m_start = m_end = std::chrono::high_resolution_clock::now();
-		rg.Execute();
-		m_end = std::chrono::high_resolution_clock::now();
-		diff = m_end - m_start;
-		//std::cout << "Exec time elapsed (ms): " << diff.count() * 1000.0 << "\n\n";
+		{
+			ZoneNamedN(RGExecuteScope, "RG Execution", true);
+			rg.Execute();
+		}
 
 	}
 

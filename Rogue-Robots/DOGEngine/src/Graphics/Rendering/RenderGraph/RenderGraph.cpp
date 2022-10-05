@@ -5,6 +5,8 @@
 #include <set>
 #include <fstream>
 
+#include "Tracy/Tracy.hpp"
+
 namespace DOG::gfx
 {
 	RenderGraph::RenderGraph(RenderDevice* rd, RGResourceManager* resMan, GPUGarbageBin* bin) :
@@ -920,7 +922,7 @@ namespace DOG::gfx
 
 		for (const auto& pass : m_passes)
 		{
-			//std::cout << "Doing: " << pass->name << "\n";
+			ZoneTransientN(Zone1, pass->name.c_str(), true);
 
 			if (pass->rp)
 			{
