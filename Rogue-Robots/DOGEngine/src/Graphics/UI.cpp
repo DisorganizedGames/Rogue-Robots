@@ -17,7 +17,9 @@ UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HW
 
 UI::~UI()
 {
-
+   for (auto &&e : m_elements)
+      delete e;
+   
 }
 
 void UI::DrawUI()
