@@ -80,13 +80,21 @@ namespace DOG
 			//// ====== GPU
 			m_renderer->BeginFrame_GPU();
 
-			EntityManager::Get().Bundle<TransformComponent, ModelComponent>().Do([&](TransformComponent& transformC, ModelComponent& modelC)
+			EntityManager::Get().Collect<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 					if (model && model->gfxModel)
 					{
-						for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
-							m_renderer->SubmitMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+						if (EntityManager::Get().HasComponent<ModularBlockComponent>(e))
+						{
+							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
+								m_renderer->SubmitMeshNoFaceCulling(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+						}
+						else
+						{
+							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
+								m_renderer->SubmitMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+						}
 					}
 				});
 

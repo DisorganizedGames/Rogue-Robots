@@ -107,6 +107,15 @@ namespace DOG::gfx
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
 
+		m_meshPipeNoCull = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
+			.SetShader(meshVS.get())
+			.SetShader(meshPS.get())
+			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+			.SetDepthFormat(DepthFormat::D32)
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.SetRasterizer(RasterizerBuilder().SetCullMode(D3D12_CULL_MODE_NONE))
+			.Build());
+
 		m_rgResMan = std::make_unique<RGResourceManager>(m_rd, m_bin.get());
 
 		auto testCS = m_sclr->CompileFromFile("TestComputeCS.hlsl", ShaderType::Compute);
@@ -132,15 +141,26 @@ namespace DOG::gfx
 		m_imgui->BeginFrame();
 	}
 
-	void Renderer::SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle mat, const DirectX::SimpleMath::Matrix& world)
+	void Renderer::SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
 		sub.submesh = submesh;
-		sub.mat = mat;
+		sub.mat = material;
 		sub.world = world;
 		m_submissions.push_back(sub);
 	}
+
+	void Renderer::SubmitMeshNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
+	{
+		RenderSubmission sub{};
+		sub.mesh = mesh;
+		sub.submesh = submesh;
+		sub.mat = material;
+		sub.world = world;
+		m_noCullSubmissions.push_back(sub);
+	}
+
 
 	void Renderer::Update(f32)
 	{
@@ -204,10 +224,7 @@ namespace DOG::gfx
 						pfData.camPos = { posFloat3.x, posFloat3.y, posFloat3.z, 0.0f };
 
 						pfData.world = sub.world;
-						//pfData.view = DirectX::XMMatrixLookAtLH({ 5.f, 2.f, 0.f }, { -1.f, 1.f, 1.f }, { 0.f, 1.f, 0.f });
 						pfData.view = m_viewMat;
-						// We are using REVERSE DEPTH!!!
-						//pfData.proj = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_clientWidth/m_clientHeight, 800.f, 0.1f);
 						pfData.proj = m_projMat;
 						std::memcpy(pfConstant.memory, &pfData, sizeof(pfData));
 
@@ -230,6 +247,54 @@ namespace DOG::gfx
 						rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
 
 					}
+
+					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
+					for (const auto& sub : m_noCullSubmissions)
+					{
+						auto pfConstant = m_dynConstants->Allocate(32);
+						struct PerFrameData
+						{
+							DirectX::XMMATRIX world, view, proj;
+							DirectX::XMFLOAT4 camPos;
+							DirectX::XMFLOAT4X4 joints[130];
+						} pfData{};
+
+						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); i++)
+							pfData.joints[i] = m_boneJourno->m_vsJoints[i];
+
+						DirectX::XMVECTOR tmp;
+						auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
+
+						auto pos = invVm.r[3];
+						DirectX::XMFLOAT3 posFloat3;
+						DirectX::XMStoreFloat3(&posFloat3, pos);
+						pfData.camPos = { posFloat3.x, posFloat3.y, posFloat3.z, 0.0f };
+
+						pfData.world = sub.world;
+						pfData.view = m_viewMat;
+						pfData.proj = m_projMat;
+						std::memcpy(pfConstant.memory, &pfData, sizeof(pfData));
+
+						auto args = ShaderArgs()
+							.AppendConstant(pfConstant.globalDescriptor)
+							.AppendConstant(m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh))
+							.AppendConstant(m_globalMeshTable->GetSubmeshDescriptor())
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Position))
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::UV))
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Normal))
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Tangent))
+							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::BlendData))
+							.AppendConstant(m_globalMaterialTable->GetDescriptor())
+							.AppendConstant(m_globalMaterialTable->GetMaterialIndex(sub.mat)
+							);
+
+						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
+
+						auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+						rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
+
+					}
+
 				});
 		}
 
@@ -325,6 +390,7 @@ namespace DOG::gfx
 		EndGUI();
 		m_bin->EndFrame();
 		m_submissions.clear();
+		m_noCullSubmissions.clear();
 
 		m_sc->Present(vsync);
 	}

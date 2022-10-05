@@ -22,8 +22,3 @@ struct AgentStatsComponent
 	float speed;
 	//...
 };
-
-struct ModularBlockComponent
-{
-	//
-};

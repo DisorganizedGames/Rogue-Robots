@@ -42,6 +42,7 @@ namespace DOG::gfx
 		void SetMainRenderCamera(const DirectX::XMMATRIX& view, DirectX::XMMATRIX* proj = nullptr);
 
 		void SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
+		void SubmitMeshNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 
 
 
@@ -85,6 +86,7 @@ namespace DOG::gfx
 		
 		std::unique_ptr<GraphicsBuilder> m_builder;
 		std::vector<RenderSubmission> m_submissions;		// temporary
+		std::vector<RenderSubmission> m_noCullSubmissions;	// temporary
 
 
 		DirectX::XMMATRIX m_viewMat, m_projMat;
@@ -112,7 +114,7 @@ namespace DOG::gfx
 
 		// ================= RENDERING RESOURCES
 
-		Pipeline m_pipe, m_meshPipe;
+		Pipeline m_pipe, m_meshPipe, m_meshPipeNoCull;
 		Pipeline m_testCompPipe;
 
 		// Reusing a single command list for now

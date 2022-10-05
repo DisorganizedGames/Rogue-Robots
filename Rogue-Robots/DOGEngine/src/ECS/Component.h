@@ -78,5 +78,9 @@ namespace DOG
 		bool shouldStop = false;
 	};
 
+	struct ModularBlockComponent
+	{
+		//
+	};
 }
 
