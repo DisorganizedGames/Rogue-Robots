@@ -3,7 +3,7 @@
 #include "../Input/Keyboard.h"
 #include <assert.h>
 
-UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HWND hwnd) : m_d2d(rd, sc, numBuffers, hwnd)
+UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HWND hwnd) : m_d2d(rd, sc, numBuffers, hwnd), m_visible(true)
 {
    RECT wrect;
    if (!GetClientRect(hwnd, &wrect))
@@ -22,18 +22,25 @@ UI::~UI()
 
 void UI::DrawUI()
 {
-
-   for (auto&& e : m_elements)
+   if(DOG::Keyboard::IsKeyPressed(DOG::Key::G) && !m_visible)
    {
-      e->Update(m_d2d);
-      e->Draw(m_d2d);
-   }
-   if (m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bplay])->pressed )
-      ChangeUIscene(game);
-   else if (m_scene == game && dynamic_cast<UIButton*>(m_elements[GameUI::inventory])->pressed )
+      m_visible = true;
       ChangeUIscene(menu);
-   else if(m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bexit])->pressed)
-      OutputDebugString(L"Exit");
+   }
+   if (m_visible)
+   {
+      for (auto&& e : m_elements)
+      {
+         e->Update(m_d2d);
+         e->Draw(m_d2d);
+      }
+      if (m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bplay])->pressed)
+         ChangeUIscene(game);
+      else if (m_scene == game && dynamic_cast<UIButton*>(m_elements[GameUI::inventory])->pressed)
+         ChangeUIscene(menu);
+      else if (m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bexit])->pressed)
+         m_visible = false;
+   }
 }
 
 void UI::BuildMenuUI()
