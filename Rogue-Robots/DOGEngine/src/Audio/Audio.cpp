@@ -164,9 +164,9 @@ u64 AudioDevice::GetFreeVoice(const WAVEFORMATEX& m_wfx)
 
 // ------- SOURCE VOICE ----------
 
-SourceVoice::SourceVoice(IXAudio2* xaudio, WAVEFORMATEX m_wfx) : m_wfx(std::move(m_wfx))
+SourceVoice::SourceVoice(IXAudio2* audioDevice, WAVEFORMATEX wfx) : m_wfx(std::move(wfx))
 {
-	HRESULT hr = xaudio->CreateSourceVoice(&m_source, &m_wfx);
+	HRESULT hr = audioDevice->CreateSourceVoice(&m_source, &m_wfx);
 	if (FAILED(hr)) { throw false; }
 }
 
@@ -229,20 +229,20 @@ void SourceVoice::QueueNext()
 	{
 		auto it = m_externalBuffer.begin() + m_idx;
 
-		auto& cur_buffer = m_bufferRing[m_ringIdx++];
+		auto& curBuffer = m_bufferRing[m_ringIdx++];
 
-		u64 new_size = std::min(CHUNK_SIZE, m_externalBuffer.size()-m_idx);
+		u64 newSize = std::min(CHUNK_SIZE, m_externalBuffer.size()-m_idx);
 
-		if (cur_buffer.size() == 0)
+		if (curBuffer.size() == 0)
 		{
-			cur_buffer.resize(new_size);
+			curBuffer.resize(newSize);
 		}
 
-		std::copy(it, it + new_size, cur_buffer.begin());
+		std::copy(it, it + newSize, curBuffer.begin());
 
 		XAUDIO2_BUFFER buf = {
-			.AudioBytes = (u32)cur_buffer.size(),
-			.pAudioData = cur_buffer.data(),
+			.AudioBytes = (u32)curBuffer.size(),
+			.pAudioData = curBuffer.data(),
 		};
 
 		HR hr = m_source->SubmitSourceBuffer(&buf);
@@ -270,13 +270,13 @@ void SourceVoice::QueueNextAsync()
 
 	while (state.BuffersQueued < m_bufferRing.size())
 	{
-		auto& cur_buffer = m_bufferRing[m_ringIdx++];
+		auto& curBuffer = m_bufferRing[m_ringIdx++];
 
-		cur_buffer = m_asyncWFR.ReadNextChunk(CHUNK_SIZE);
+		curBuffer = m_asyncWFR.ReadNextChunk(CHUNK_SIZE);
 
 		XAUDIO2_BUFFER buf = {
-			.AudioBytes = (u32)cur_buffer.size(),
-			.pAudioData = cur_buffer.data(),
+			.AudioBytes = (u32)curBuffer.size(),
+			.pAudioData = curBuffer.data(),
 		};
 
 		HR hr = m_source->SubmitSourceBuffer(&buf);

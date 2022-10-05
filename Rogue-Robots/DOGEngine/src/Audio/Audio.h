@@ -30,7 +30,7 @@ namespace DOG
 
 	public:
 		SourceVoice() = delete;
-		SourceVoice(IXAudio2* audio_device, WAVEFORMATEX m_wfx);
+		SourceVoice(IXAudio2* audioDevice, WAVEFORMATEX wfx);
 		~SourceVoice() { if (m_source) m_source->DestroyVoice(); }
 
 	public:
