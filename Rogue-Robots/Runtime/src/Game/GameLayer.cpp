@@ -374,7 +374,7 @@ void GameLayer::Input(DOG::Key key)
 			if (key == DOG::Key::Spacebar)
 				inputC.up = true;
 			if (key == DOG::Key::Q)
-				inputC.jump = !inputC.jump;
+				inputC.normalFireMode = !inputC.normalFireMode;
 
 	});
 }

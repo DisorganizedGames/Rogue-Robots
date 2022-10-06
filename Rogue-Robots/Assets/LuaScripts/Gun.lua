@@ -88,9 +88,8 @@ function OnUpdate()
 	
 	Entity:ModifyComponent(gunEntity.entityID, "Transform", gunEntity.position, 1)
 
---Temporary code to allow for switching mode.
+
 	miscComponent.OnUpdate = MyMiscComponents.NormalGun
-----------------------------------------------------
 
 	miscComponent:OnUpdate(gunEntity.position + playerForward * 0.45 + playerUp * 0.06, barrelComponent, magazineComponent, bullets, InitialBulletSpeed, BulletSize, EntityID)
 end

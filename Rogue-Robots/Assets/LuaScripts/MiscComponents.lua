@@ -51,7 +51,7 @@ function MiscComponent:NormalGun(pos, ...)
 	local args = {...}
 
 	self.shootTimer = self.shootTimer - DeltaTime
-	if  Entity:GetAction(args[6], 2) then
+	if  Entity:GetAction(args[6], 4) then
 		--If the shoot cooldown is up and we are clicking.
 		if self.shootTimer <= 0.0 and Entity:GetAction(args[6], 1) then
 			self.shootTimer = self.shootCooldown

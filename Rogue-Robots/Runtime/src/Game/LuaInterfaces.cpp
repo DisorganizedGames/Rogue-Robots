@@ -171,6 +171,12 @@ void EntityInterface::GetAction(DOG::LuaContext* context)
 		else
 			context->ReturnBoolean(false);
 		break;
+	case 4:
+		if (input.normalFireMode)
+			context->ReturnBoolean(true);
+		else
+			context->ReturnBoolean(false);
+		break;
 	default:
 		break;
 	}
@@ -191,6 +197,9 @@ void EntityInterface::GetAction(DOG::LuaContext* context)
 		break;
 	case 3:
 		input.activateActiveItem = active;
+		break;
+	case 4:
+		input.normalFireMode = active;
 		break;
 	default:
 		break;

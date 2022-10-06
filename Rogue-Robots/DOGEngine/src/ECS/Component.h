@@ -99,6 +99,7 @@ namespace DOG
 		bool shoot = false;
 		bool jump = false;
 		bool activateActiveItem = false;
+		bool normalFireMode = false;
 	};
 }
 

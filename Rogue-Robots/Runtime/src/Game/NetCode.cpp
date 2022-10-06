@@ -71,8 +71,7 @@ void NetCode::OnUpdate()
 				m_playerInputUdp.shoot = inputC.shoot;
 				m_playerInputUdp.jump = inputC.jump;
 				m_playerInputUdp.activateActiveItem = inputC.activateActiveItem;
-
-				//modelC.id = ;
+				m_playerInputUdp.normalFireMode = inputC.normalFireMode;
 
 			});
 
@@ -83,6 +82,9 @@ void NetCode::OnUpdate()
 				inputC.shoot = m_outputUdp.m_holdplayersUdp[networkC.playerId].shoot;
 				inputC.jump = m_outputUdp.m_holdplayersUdp[networkC.playerId].jump;
 				inputC.activateActiveItem = m_outputUdp.m_holdplayersUdp[networkC.playerId].activateActiveItem;
+				inputC.normalFireMode = m_outputUdp.m_holdplayersUdp[networkC.playerId].normalFireMode;
+				
+
 			});
 
 
@@ -98,7 +100,7 @@ void NetCode::Recive()
 	{
 
 		std::cout << "\nInput 'h' to host, 'j' to join, 'o' to play offline: ";
-		//input = getchar(); // uncomment to startup online
+		input = getchar(); // uncomment to startup online
 		switch (input)
 		{
 		case 'h':
