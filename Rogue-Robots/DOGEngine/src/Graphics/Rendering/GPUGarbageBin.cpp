@@ -33,7 +33,8 @@ namespace DOG::gfx
 		*/
 		while (!m_deletes.empty())
 		{
-			auto& storage = m_deletes.front();
+			ZoneNamedN(BinPerDelete, "GPU Garbage Bin: Per Deferred Deletion", true);
+			auto storage = std::move(m_deletes.front());
 			if (storage.frameIdxOnRequest != m_currFrameIdx)
 				break;
 

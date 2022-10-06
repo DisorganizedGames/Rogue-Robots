@@ -23,8 +23,15 @@ namespace DOG::gfx
 
 	void RenderGraph::Build()
 	{
-		AddProxies();
-		BuildAdjacencyMap();
+		{
+			ZoneNamedN(RGAddProxies, "RG Building: Add Proxies", true);
+			AddProxies();
+		}
+
+		{
+			ZoneNamedN(RGBuildAdjacencyMap, "RG Building: Build AdjacencyMap", true);
+			BuildAdjacencyMap();
+		}
 
 		// To help the graph author see what's going on.
 		// @TODO: Expand with input/output labels on each pass
@@ -32,24 +39,55 @@ namespace DOG::gfx
 		GenerateGraphviz();
 #endif
 
-		SortPassesTopologically();
+		{
+			ZoneNamedN(RGSortTopological, "RG Building: Topological Sort", true);
+			SortPassesTopologically();
+		}
 
-		AssignDependencyLevels();
-		BuildDependencyLevels();
+		{
+			ZoneNamedN(RGAssignDepLevels, "RG Building: Assign Dependency Levels", true);
+			AssignDependencyLevels();
+		}
+
+		{
+			ZoneNamedN(RGBuildDepLevels, "RG Building: Build Dependency Levels", true);
+			BuildDependencyLevels();
+		}
 
 		// Walk graph topologically to obtain all data necessary for sanitizing
-		TrackLifetimes();
-		m_resMan->SanitizeAliasingLifetimes();
+		{
+			ZoneNamedN(RGTrackLifetimes, "RG Building: Track Lifetimes", true);
+			TrackLifetimes();
+		}
 
-		m_resMan->RealizeResources();
+		{
+			ZoneNamedN(RGSanitizeAliasingLifetimes, "RG Building: Sanitize Aliasing Lifetimes", true);
+			m_resMan->SanitizeAliasingLifetimes();
+		}
+
+		{
+			ZoneNamedN(RGRealizeResources, "RG Building: Realize Resources", true);
+			m_resMan->RealizeResources();
+		}
 
 		// Resources NEED to be realized from this point forward!
 
-		RealizeViews();
-		TrackTransitions();
+		{
+			ZoneNamedN(RGRealizeViews, "RG Building: Realize Views", true);
+			RealizeViews();
+		}
 
-		for (auto& depLevel : m_dependencyLevels)
-			depLevel.Finalize();
+		{
+			ZoneNamedN(RGTrackTransitions, "RG Building: Track Transitions", true);
+			TrackTransitions();
+		}
+
+		{
+			ZoneNamedN(RGFinalizeDependencyLevels, "RG Building: Finalize Dependency Levels", true);
+			for (auto& depLevel : m_dependencyLevels)
+				depLevel.Finalize();
+		}
+
 
 
 	}
