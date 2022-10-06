@@ -23,6 +23,9 @@ namespace DOG::gfx
 
 	void GPUGarbageBin::BeginFrame()
 	{
+		/*
+			This is REALLY SLOW!
+		*/
 		ZoneScopedN("GPU Garbage Bin: Clear");
 		/*
 			Assuming deletes are always grouped contiguously:
@@ -31,15 +34,11 @@ namespace DOG::gfx
 		while (!m_deletes.empty())
 		{
 			auto& storage = m_deletes.front();
-			if (storage.frameIdxOnRequest == m_currFrameIdx)
-			{
-				storage.func();	// delete
-				m_deletes.pop();
-			}
-			else
-			{
+			if (storage.frameIdxOnRequest != m_currFrameIdx)
 				break;
-			}
+
+			storage.func();	// delete
+			m_deletes.pop();
 		}
 	}
 
