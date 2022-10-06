@@ -300,7 +300,29 @@ namespace DOG::gfx
 
 						auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
 						rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
+					}
 
+					// Draw no backface cull
+					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
+					for (const auto& sub : m_noCullSubmissions)
+					{
+						auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
+						PerDrawData perDrawData{};
+
+						perDrawData.world = sub.world;
+						perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
+						perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
+						std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
+
+						auto args = ShaderArgs()
+							.AppendConstant(m_gdDescriptor)
+							.AppendConstant(m_currPfDescriptor)
+							.AppendConstant(perDrawHandle.globalDescriptor);
+
+						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
+
+						auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+						rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
 					}
 
 					// Draw animated
@@ -333,30 +355,6 @@ namespace DOG::gfx
 						rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
 
 					}
-
-					// Draw no backface cull
-					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
-					for (const auto& sub : m_noCullSubmissions)
-					{
-						auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
-						PerDrawData perDrawData{};
-
-						perDrawData.world = sub.world;
-						perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
-						perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
-						std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
-
-						auto args = ShaderArgs()
-							.AppendConstant(m_gdDescriptor)
-							.AppendConstant(m_currPfDescriptor)
-							.AppendConstant(perDrawHandle.globalDescriptor);
-
-						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
-
-						auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
-						rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
-					}
-
 				});
 		}
 

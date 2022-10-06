@@ -15,11 +15,9 @@ struct GlobalData
     uint meshTableUV;
     uint meshTableNor;
     uint meshTableTan;
-
     uint meshTableBlend;
     
     uint perFrameTable;
-
     uint materialTable;
 };
 
@@ -82,8 +80,6 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
 {
     VS_OUT output = (VS_OUT) 0;
     
-
-  
     ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[constants.perDrawCB];
     
     StructuredBuffer<GlobalData> gds = ResourceDescriptorHeap[constants.gdDescriptor];
