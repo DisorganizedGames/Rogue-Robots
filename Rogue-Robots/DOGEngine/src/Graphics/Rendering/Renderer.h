@@ -148,7 +148,7 @@ namespace DOG::gfx
 		struct PfDataHandle { friend class TypedHandlePool; u64 handle{ 0 }; };
 		std::unique_ptr<GPUTableDeviceLocal<PfDataHandle>> m_pfDataTable;
 		PfDataHandle m_pfHandle;
-		u32 m_currPfOffset{ 0 };
+		u32 m_currPfDescriptor{ 0 };
 
 		// Global data
 		struct GlobalData

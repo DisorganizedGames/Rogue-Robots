@@ -208,7 +208,7 @@ namespace DOG::gfx
 			m_pfDataTable->SendCopyRequests(*m_perFrameUploadCtx);
 
 			// Get offset after update
-			m_currPfOffset = m_pfDataTable->GetLocalOffset(m_pfHandle);
+			m_currPfDescriptor = m_pfDataTable->GetLocalOffset(m_pfHandle);
 		}
 	}
 
@@ -223,8 +223,17 @@ namespace DOG::gfx
 		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
 		auto& rg = *m_rg;
 
+
 		// Forward pass to HDR
 		{
+			struct PerDrawData
+			{
+				DirectX::XMMATRIX world;
+				DirectX::XMFLOAT4X4 joints[130];
+				u32 globalSubmeshID;
+				u32 globalMaterialID;
+			};
+
 			struct PassData {};
 			rg.AddPass<PassData>("Forward Pass",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
@@ -249,14 +258,8 @@ namespace DOG::gfx
 					rd->Cmd_SetIndexBuffer(cmdl, m_globalMeshTable->GetIndexBuffer());
 					for (const auto& sub : m_submissions)
 					{
-						struct PfData
-						{
-							DirectX::XMMATRIX world;
-							DirectX::XMFLOAT4X4 joints[130];
-							u32 globalSubmeshID;
-							u32 globalMaterialID;
-						} perDrawData{};
-						auto perDrawHandle = m_dynConstants->Allocate(std::ceilf(sizeof(PfData) / (float)256));
+						auto perDrawHandle = m_dynConstants->Allocate(std::ceilf(sizeof(PerDrawData) / (float)256));
+						PerDrawData perDrawData{};
 
 						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); i++)
 							perDrawData.joints[i] = m_boneJourno->m_vsJoints[i];
@@ -269,7 +272,7 @@ namespace DOG::gfx
 
 						auto args = ShaderArgs()
 							.AppendConstant(m_gdDescriptor)
-							.AppendConstant(m_currPfOffset)
+							.AppendConstant(m_currPfDescriptor)
 							.AppendConstant(perDrawHandle.globalDescriptor);
 
 						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
@@ -282,15 +285,8 @@ namespace DOG::gfx
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
 					for (const auto& sub : m_noCullSubmissions)
 					{
-						struct PfData
-						{
-							DirectX::XMMATRIX world;
-							DirectX::XMFLOAT4X4 joints[130];
-							u32 globalSubmeshID;
-							u32 globalMaterialID;
-						} perDrawData{};
-						auto perDrawHandle = m_dynConstants->Allocate(std::ceilf(sizeof(PfData) / (float)256));
-
+						auto perDrawHandle = m_dynConstants->Allocate(std::ceilf(sizeof(PerDrawData) / (float)256));
+						PerDrawData perDrawData{};
 
 						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); i++)
 							perDrawData.joints[i] = m_boneJourno->m_vsJoints[i];
@@ -305,7 +301,7 @@ namespace DOG::gfx
 
 						auto args = ShaderArgs()
 							.AppendConstant(m_gdDescriptor)
-							.AppendConstant(m_currPfOffset)
+							.AppendConstant(m_currPfDescriptor)
 							.AppendConstant(perDrawHandle.globalDescriptor);
 
 						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
