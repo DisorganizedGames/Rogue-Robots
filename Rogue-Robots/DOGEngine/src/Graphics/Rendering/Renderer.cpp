@@ -187,6 +187,7 @@ namespace DOG::gfx
 	Renderer::~Renderer()
 	{
 		Flush();
+		m_sc->SetFullscreenState(false, {}); // safeguard to prevent crash if game has not exited fullscreen before exit
 	}
 
 	Monitor Renderer::GetMonitor() const
@@ -414,11 +415,6 @@ namespace DOG::gfx
 
 	void Renderer::OnResize(u32 clientWidth, u32 clientHeight)
 	{
-		std::cout << "Renderer::OnResize: " << clientWidth << ", " << clientHeight << std::endl;
-		// If same client width/height --> Ignore
-		//if (clientWidth == m_clientWidth && m_clientHeight == clientHeight)
-		//	return;
-
 		m_clientWidth = clientWidth;
 		m_clientHeight = clientHeight;
 

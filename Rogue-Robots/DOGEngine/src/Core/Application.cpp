@@ -136,18 +136,54 @@ namespace DOG
 		switch (event.GetEventType())
 		{
 		case EventType::WindowClosedEvent:
+		{
 			m_isRunning = false;
 			break;
+		}
 		case EventType::WindowResizedEvent:
+		{
 			auto& e = EVENT(WindowResizedEvent);
 			if (m_renderer)
 			{
-				std::cout << "Application::OnEvent OnResize: " << e.dimensions.x << ", " << e.dimensions.y << std::endl;
 				m_renderer->OnResize(e.dimensions.x, e.dimensions.y);
-
 			}
 			break;
 		}
+		case EventType::WindowActiveEvent:
+		{
+			if (m_renderer)
+			{
+				auto& e = EVENT(WindowActiveEvent);
+				if (!e.active)
+				{
+					m_fullscreenStateOnFocusLoss = m_renderer->GetFullscreenState();
+					m_renderer->SetFullscreenState(WindowMode::Windowed, *m_specification.displayMode);
+				}
+				else
+				{
+					m_renderer->SetFullscreenState(m_fullscreenStateOnFocusLoss, *m_specification.displayMode);
+				}
+			}
+			break;
+		}
+		case EventType::WindowAltEnterEvent:
+		{
+			if (m_renderer)
+			{
+				if (m_renderer->GetFullscreenState() != WindowMode::FullScreen)
+					m_renderer->SetFullscreenState(WindowMode::FullScreen, *m_specification.displayMode);
+				else
+					m_renderer->SetFullscreenState(WindowMode::Windowed, *m_specification.displayMode);
+			}
+			break;
+		}
+		case EventType::WindowHitBorderEvent:
+		{
+			std::cout << "WindowHitBorderEvent" << std::endl;
+			m_fullscreenStateOnFocusLoss = WindowMode::Windowed;
+			break;
+		}
+	}
 	}
 
 	void Application::OnStartUp() noexcept
@@ -167,14 +203,17 @@ namespace DOG
 		AudioManager::Initialize();
 		PhysicsEngine::Initialize();
 
-		Window::s_altEnterCallback = std::bind(&Application::HandleAltEnter, this);
 		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); });
+
+		if (!m_specification.displayMode)
+		{
+			m_specification.displayMode = m_renderer->GetDefaultDisplayMode();
+		}
 	}
 
 	void Application::OnShutDown() noexcept
 	{
 		ImGuiMenuLayer::UnRegisterDebugWindow("ApplicationSetting");
-		Window::s_altEnterCallback = std::nullopt;
 		AssetManager::Destroy();
 		AudioManager::Destroy();
 
@@ -274,17 +313,5 @@ namespace DOG
 			}
 			ImGui::End(); // "Application settings"
 		}
-	}
-
-	void Application::HandleAltEnter()
-	{
-		if (!m_specification.displayMode)
-		{
-			m_specification.displayMode = m_renderer->GetDefaultDisplayMode();
-		}
-		if (m_renderer->GetFullscreenState() != WindowMode::FullScreen)
-			m_renderer->SetFullscreenState(WindowMode::FullScreen, *m_specification.displayMode);
-		else
-			m_renderer->SetFullscreenState(WindowMode::Windowed, *m_specification.displayMode);
 	}
 }

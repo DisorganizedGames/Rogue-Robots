@@ -15,7 +15,6 @@ namespace DOG
 	};
 	static WindowData s_windowData = {};
 	static std::optional<std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)>> s_wmHook;
-	std::optional<std::function<void()>> Window::s_altEnterCallback = std::nullopt;
 
 	LRESULT Window::WindowProcedure(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
 	{
@@ -43,9 +42,27 @@ namespace DOG
 		}
 		case WM_SIZE:
 		{
+			if(IsMinimized(Window::GetHandle())) return 0;
+
 			s_windowData.dimensions.x = LOWORD(lParam);
 			s_windowData.dimensions.y = HIWORD(lParam);
+
 			PublishEvent<WindowResizedEvent>(LOWORD(lParam), HIWORD(lParam));
+			return 0;
+		}
+		case WM_MOUSEACTIVATE:
+		{
+			if (LOWORD(lParam) == HTTOP || LOWORD(lParam) == HTBOTTOM || LOWORD(lParam) == HTLEFT || LOWORD(lParam) == HTRIGHT ||
+				LOWORD(lParam) == HTCLOSE || LOWORD(lParam) == HTMAXBUTTON || LOWORD(lParam) == HTMINBUTTON)
+			{
+				PublishEvent<WindowHitBorderEvent>();
+				return MA_NOACTIVATE;
+			}
+			return MA_ACTIVATEANDEAT;
+		}
+		case WM_ACTIVATEAPP:
+		{
+			PublishEvent<WindowActiveEvent>(static_cast<bool>(wParam));
 			return 0;
 		}
 		case WM_SYSKEYDOWN:
@@ -53,7 +70,7 @@ namespace DOG
 			// Handle ALT+ENTER:
 			if (wParam == VK_RETURN && (lParam & (1 << 29) && !(lParam & (1 << 30))))
 			{
-				if (s_altEnterCallback) (*s_altEnterCallback)();
+				PublishEvent<WindowAltEnterEvent>();
 				return 0;
 			}
 			break;

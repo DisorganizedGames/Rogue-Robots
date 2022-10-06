@@ -23,8 +23,6 @@ namespace DOG
 	private:
 		static LRESULT WindowProcedure(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
 		STATIC_CLASS(Window);
-
-		static std::optional<std::function<void()>> s_altEnterCallback;
 	};
 
 

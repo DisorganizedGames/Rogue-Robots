@@ -4,7 +4,7 @@ namespace DOG
 	enum class EventCategory : u8 { WindowEventCategory = 0u, MouseEventCategory, KeyboardEventCategory };
 	enum class EventType : u8 
 	{ 
-		WindowResizedEvent = 0u, WindowClosedEvent,
+		WindowResizedEvent = 0u, WindowClosedEvent, WindowActiveEvent, WindowHitBorderEvent, WindowAltEnterEvent,
 		LeftMouseButtonPressedEvent, LeftMouseButtonReleasedEvent, RightMouseButtonPressedEvent, RightMouseButtonReleasedEvent, MiddleMouseButtonPressedEvent, MiddleMouseButtonReleasedEvent,
 		MouseMovedEvent,
 		KeyPressedEvent, KeyReleasedEvent
