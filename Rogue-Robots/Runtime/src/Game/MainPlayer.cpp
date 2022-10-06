@@ -14,7 +14,6 @@ MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 		.maxHealth = 100.f,
 		.speed = 10.f
 	};
-
 	m_right		= Vector3(1, 0, 0);
 	m_up		= Vector3(0, 1, 0);
 	m_forward	= Vector3(0, 0, 1);

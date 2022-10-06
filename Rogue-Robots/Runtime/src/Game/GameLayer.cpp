@@ -301,16 +301,16 @@ void GameLayer::RegisterLuaInterfaces()
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Asset", "AssetInterface");
 
 	//-----------------------------------------------------------------------------------------------
-	//Player
+	//Host
 	m_player = std::make_shared<MainPlayer>();
-	luaInterfaceObject = std::make_shared<PlayerInterface>(m_player->GetEntity());
+	luaInterfaceObject = std::make_shared<HostInterface>();
 	m_luaInterfaces.push_back(luaInterfaceObject);
 
-	luaInterface = global->CreateLuaInterface("PlayerInterface");
-	luaInterface.AddFunction<PlayerInterface, &PlayerInterface::GetID>("GetID");
+	luaInterface = global->CreateLuaInterface("HostInterface");
+	luaInterface.AddFunction<HostInterface, &HostInterface::DistanceToPlayers>("DistanceToPlayers");
 	global->SetLuaInterface(luaInterface);
 
-	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Player", "PlayerInterface");
+	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Host", "HostInterface");
 }
 
 void GameLayer::LoadLevel()

@@ -360,10 +360,47 @@ void AssetInterface::LoadAudio(LuaContext* context)
 }
 
 //---------------------------------------------------------------------------------------------------------
-//Player
-void PlayerInterface::GetID(LuaContext* context)
+//Host
+void HostInterface::DistanceToPlayers(DOG::LuaContext* context)
 {
-	context->ReturnInteger(m_player);
+	struct PlayerDist
+	{
+		entity id;
+		Vector3 pos;
+		float dist;
+		PlayerDist(entity pID, Vector3 p, float d) : id(pID), pos(p), dist(d) {}
+		bool operator<(PlayerDist& o) { return dist < o.dist; }
+	};
+	LuaTable t = context->GetTable();
+	Vector3 agentPos = Vector3(
+		t.GetFloatFromTable("x"),
+		t.GetFloatFromTable("y"),
+		t.GetFloatFromTable("z")
+	);
+	std::vector<PlayerDist> distances;
+
+	EntityManager::Get().Collect<ThisPlayer, TransformComponent>().Do(
+		[&](entity id, ThisPlayer&, TransformComponent& transC) {
+			distances.push_back(PlayerDist(id, transC.GetPosition(), (agentPos - transC.GetPosition()).Length()));
+		});
+
+	//EntityManager::Get().Collect<OnlinePlayer, TransformComponent>().Do(
+	//	[&](entity id, OnlinePlayer&, TransformComponent& transC) {
+	//		distances.push_back(PlayerDist(id, transC.GetPosition(), (agentPos - transC.GetPosition()).Length()));
+	//	});
+
+	//std:sort(distances.begin(), distances.end());
+
+	LuaTable tbl;
+	for (size_t i = 0; i < distances.size(); ++i)
+	{
+		LuaTable d;
+		d.AddIntToTable("id", static_cast<int>(distances[i].id));
+		d.AddTableToTable("pos", CreateLuaVector3(distances[i].pos));
+		d.AddFloatToTable("dist", distances[i].dist);
+		tbl.AddTableToTable(static_cast<int>(i), d);
+	}
+	context->ReturnTable(tbl);
 }
 
 LuaVector3::LuaVector3(LuaTable& table)
@@ -373,3 +410,11 @@ LuaVector3::LuaVector3(LuaTable& table)
 	z = table.GetFloatFromTable("z");
 }
 
+LuaTable CreateLuaVector3(Vector3 vec)
+{
+	LuaTable tbl;
+	tbl.AddFloatToTable("x", vec.x);
+	tbl.AddFloatToTable("y", vec.y);
+	tbl.AddFloatToTable("z", vec.z);
+	return tbl;
+}

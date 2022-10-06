@@ -6,7 +6,7 @@ tempPickups = {}
 templatePickup = {
 	affect = function(self, stats)
 		-- Do something to the player stats, like increasing health
-		-- Entity:ModifyComponent(Player:GetID(), "PlayerStats", stats)
+		-- Entity:ModifyComponent(Player:GetID(), "PlayerStats", stats) -- Player deprecated, use EntityID instead of Player:GetID()
 	end
 }
 
@@ -14,7 +14,7 @@ templatePickup = {
 templateTempPickup = {
 	affect = function(self, stats)
 		-- Do something to the player stats, like increasing health
-		-- Entity:ModifyComponent(Player:GetID(), "PlayerStats", stats)
+		-- Entity:ModifyComponent(Player:GetID(), "PlayerStats", stats) -- Player deprecated, use EntityID instead of Player:GetID()
 		
 		table.insert(tempPickups, {
 			co = couroutine.create(function(params)

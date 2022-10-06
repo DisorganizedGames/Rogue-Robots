@@ -8,6 +8,8 @@ struct LuaVector3
 	explicit LuaVector3(DOG::LuaTable& table);
 };
 
+DOG::LuaTable CreateLuaVector3(DirectX::SimpleMath::Vector3 vec);
+
 class LuaInterface
 {
 public:
@@ -133,25 +135,17 @@ private:
 
 };
 
-class PlayerInterface : public LuaInterface
+class HostInterface : public LuaInterface
 {
 public:
-	PlayerInterface() noexcept = delete;
-	PlayerInterface(DOG::entity player) : m_player{ player }
+	HostInterface() noexcept
 	{
 
 	}
-	~PlayerInterface() noexcept
+	~HostInterface() noexcept
 	{
 
 	}
 	
-	void GetID(DOG::LuaContext* context);
-	void GetForward(DOG::LuaContext* context);
-	void GetPosition(DOG::LuaContext* context);
-	void GetUp(DOG::LuaContext* context);
-	void GetRight(DOG::LuaContext* context);
-
-private:
-	DOG::entity m_player;
+	void DistanceToPlayers(DOG::LuaContext* context);
 };
