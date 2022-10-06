@@ -22,8 +22,8 @@ namespace DOG
 		//	return PhysicsEngine::GetRigidbodyColliderData(rigidbodyHandle)->rigidBody->checkCollideWithOverride(static_cast<btCollisionObject*>(proxy->m_clientObject));
 		//}
 
-		virtual btScalar addSingleResult(btManifoldPoint& cp, const btCollisionObjectWrapper* colObj0Wrap, int partId0, int index0,
-			const btCollisionObjectWrapper* colObj1Wrap, int partId1, int index1)
+		virtual btScalar addSingleResult(btManifoldPoint&, const btCollisionObjectWrapper* colObj0Wrap, int, int,
+			const btCollisionObjectWrapper* colObj1Wrap, int, int)
 		{
 			//Get handle for obj0
 			u32 obj0handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot((u64)colObj0Wrap->getCollisionObject()->getUserIndex());
@@ -164,7 +164,7 @@ namespace DOG
 				}
 			});
 
-		EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([&](TransformComponent& transform, RigidbodyComponent& rigidbody)
+		EntityManager::Get().Collect<RigidbodyComponent>().Do([&](RigidbodyComponent& rigidbody)
 			{
 				//Get rigidbody
 				auto& rigidBody = s_physicsEngine.m_rigidBodyColliderDatas[rigidbody.rigidbodyHandle.handle];
@@ -187,6 +187,8 @@ namespace DOG
 						it.second.activeCollision = it.second.collisionCheck;
 						if (it.second.activeCollision != beforeCollision)
 						{
+							it.second.collisionCheck = false;
+
 							if (it.second.activeCollision && rigidbody.onCollisionEnter != nullptr)
 								rigidbody.onCollisionEnter();
 
@@ -199,7 +201,6 @@ namespace DOG
 								collisions->second.erase(it.first);
 							}
 						}
-						it.second.collisionCheck = false;
 					}
 				}
 			});
@@ -388,14 +389,14 @@ namespace DOG
 		PhysicsEngine::s_physicsEngine.m_rigidbodyCollision.insert({ handle, {} });
 	}
 
-	void RigidbodyComponent::SetOnCollisionEnter(std::function<void()> onCollisionEnter)
+	void RigidbodyComponent::SetOnCollisionEnter(std::function<void()> inOnCollisionEnter)
 	{
-		this->onCollisionEnter = onCollisionEnter;
+		onCollisionEnter = inOnCollisionEnter;
 	}
 
-	void RigidbodyComponent::SetOnCollisionExit(std::function<void()> onCollisionExit)
+	void RigidbodyComponent::SetOnCollisionExit(std::function<void()> inOnCollisionExit)
 	{
-		this->onCollisionExit = onCollisionExit;
+		onCollisionExit = inOnCollisionExit;
 	}
 
 	void RigidbodyComponent::ConstrainRotation(bool constrainXRotation, bool constrainYRotation, bool constrainZRotation)
