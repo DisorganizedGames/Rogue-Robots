@@ -68,11 +68,15 @@ void UI::ChangeUIscene(Uiscene scene)
    switch (scene)
    {
    case menu:
+      for (auto &&e : m_elements)
+         e->~UIelement();
       m_elements.clear();
       BuildMenuUI();
       this->m_scene = menu;
       break;
    case game:
+      for (auto &&e : m_elements)
+         e->~UIelement();
       m_elements.clear();
       BuildGameUI();
       this->m_scene = game;
