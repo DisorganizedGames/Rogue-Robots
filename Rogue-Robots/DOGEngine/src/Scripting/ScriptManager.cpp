@@ -87,7 +87,8 @@ namespace DOG
 					{
 						if (index == storedScriptDataVector[entityScriptIndex].scriptIndex)
 						{
-							storedScriptDataVector.erase(entityToScripts->second.begin() + entityScriptIndex);
+							m_freeScriptPositions.push_back(storedScriptDataVector[entityScriptIndex]);
+							storedScriptDataVector.erase(storedScriptDataVector.begin() + entityScriptIndex);
 							--entityScriptIndex;
 						}
 					}
@@ -134,18 +135,37 @@ namespace DOG
 		}
 		else
 		{
-			if (itScriptToVector->second.sorted)
+			bool pushNewData = true;
+			//Get already created position in the vector
+			if (m_freeScriptPositions.size())
 			{
-				m_sortedScripts[itScriptToVector->second.vectorIndex].push_back(scriptData);
-				storedScriptData.scriptIndex = (u32)(m_sortedScripts[itScriptToVector->second.vectorIndex].size() - 1);
-			}
-			else
-			{
-				m_unsortedScripts[itScriptToVector->second.vectorIndex].push_back(scriptData);
-				storedScriptData.scriptIndex = (u32)(m_unsortedScripts[itScriptToVector->second.vectorIndex].size() - 1);
+				for (auto& freeStoredScriptData : m_freeScriptPositions)
+				{
+					if (itScriptToVector->second.sorted == freeStoredScriptData.getScriptData.sorted
+						&& itScriptToVector->second.vectorIndex == freeStoredScriptData.getScriptData.vectorIndex)
+					{
+						storedScriptData = m_freeScriptPositions.back();
+						m_freeScriptPositions.pop_back();
+						pushNewData = false;
+						break;
+					}
+				}
 			}
 
-			storedScriptData.getScriptData = itScriptToVector->second;
+			if (pushNewData)
+			{
+				if (itScriptToVector->second.sorted)
+				{
+					m_sortedScripts[itScriptToVector->second.vectorIndex].push_back(scriptData);
+					storedScriptData.scriptIndex = (u32)(m_sortedScripts[itScriptToVector->second.vectorIndex].size() - 1);
+				}
+				else
+				{
+					m_unsortedScripts[itScriptToVector->second.vectorIndex].push_back(scriptData);
+					storedScriptData.scriptIndex = (u32)(m_unsortedScripts[itScriptToVector->second.vectorIndex].size() - 1);
+				}
+				storedScriptData.getScriptData = itScriptToVector->second;
+			}
 		}
 
 		auto entityToScripts = m_entityScripts.find(entity);

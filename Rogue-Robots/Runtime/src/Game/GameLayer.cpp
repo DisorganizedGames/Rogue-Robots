@@ -104,6 +104,9 @@ GameLayer::GameLayer() noexcept
 	//...
 
 	LuaMain::GetScriptManager()->AddScript(entity4, "ScriptTest.lua");
+	//LuaMain::GetScriptManager()->RemoveScript(entity4, "ScriptTest.lua");
+	//LuaMain::GetScriptManager()->AddScript(entity4, "Gun.lua");
+	//LuaMain::GetScriptManager()->AddScript(entity4, "ScriptTest.lua");
 
 	entity Player1 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(Player1, m_greenCube);

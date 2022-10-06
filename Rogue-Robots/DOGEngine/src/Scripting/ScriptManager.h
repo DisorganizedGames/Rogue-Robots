@@ -47,6 +47,10 @@ namespace DOG
 		std::unordered_map<std::string, GetScriptData> m_scriptToVector;
 		std::vector<std::vector<ScriptData>> m_unsortedScripts;
 		std::vector<std::vector<ScriptData>> m_sortedScripts;
+
+		//When removing script, resue the old position for a new script later
+		std::vector<StoredScriptData> m_freeScriptPositions;
+
 		//Map from entity to it's scripts
 		std::unordered_map<entity, std::vector<StoredScriptData>> m_entityScripts;
 
