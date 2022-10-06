@@ -126,8 +126,11 @@ namespace DOG::gfx
 		m_testCompPipe = m_rd->CreateComputePipeline(ComputePipelineDesc(testCS.get()));
 
 
+
+
+
 		// Setup per frame
-		m_pfDataTable = std::make_unique<GPUTableDeviceLocal<PfDataHandle>>(m_rd, m_bin.get(), sizeof(PerFrameData), S_MAX_FIF + 1, false);
+		m_pfDataTable = std::make_unique<GPUTableDeviceLocal<PfDataHandle>>(m_rd, m_bin.get(), (u32)sizeof(PerFrameData), S_MAX_FIF + 1, false);
 		m_pfHandle = m_pfDataTable->Allocate(1, &m_pfData);
 
 
@@ -258,7 +261,7 @@ namespace DOG::gfx
 					rd->Cmd_SetIndexBuffer(cmdl, m_globalMeshTable->GetIndexBuffer());
 					for (const auto& sub : m_submissions)
 					{
-						auto perDrawHandle = m_dynConstants->Allocate(std::ceilf(sizeof(PerDrawData) / (float)256));
+						auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
 						PerDrawData perDrawData{};
 
 						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); i++)
@@ -285,7 +288,7 @@ namespace DOG::gfx
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
 					for (const auto& sub : m_noCullSubmissions)
 					{
-						auto perDrawHandle = m_dynConstants->Allocate(std::ceilf(sizeof(PerDrawData) / (float)256));
+						auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
 						PerDrawData perDrawData{};
 
 						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); i++)

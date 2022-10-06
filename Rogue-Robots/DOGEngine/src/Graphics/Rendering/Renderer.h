@@ -37,7 +37,6 @@ namespace DOG::gfx
 
 		GraphicsBuilder* GetBuilder() const { return m_builder.get(); }
 
-
 		// Must be called at the start of any frame to pick up CPU side ImGUI code
 		void BeginGUI();
 
@@ -144,7 +143,7 @@ namespace DOG::gfx
 			DirectX::SimpleMath::Vector4 camPos;
 			
 			f32 time{ 0.f };
-		} m_pfData;
+		} m_pfData{};
 		struct PfDataHandle { friend class TypedHandlePool; u64 handle{ 0 }; };
 		std::unique_ptr<GPUTableDeviceLocal<PfDataHandle>> m_pfDataTable;
 		PfDataHandle m_pfHandle;
@@ -168,7 +167,7 @@ namespace DOG::gfx
 
 			// Material
 			u32 materialTable{ 0 };
-		} m_globalData;
+		} m_globalData{};
 		struct GlobalDataHandle{
 			friend class TypedHandlePool; 
 			u64 handle{ 0 };
