@@ -9,5 +9,6 @@ namespace DOG
 		Vector2u windowDimensions;
 		WindowMode initialWindowMode;
 		std::string workingDir;
+		std::optional<DXGI_MODE_DESC> displayMode = std::nullopt;
 	};
 }

@@ -15,6 +15,7 @@ namespace DOG
 	};
 	static WindowData s_windowData = {};
 	static std::optional<std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)>> s_wmHook;
+	std::optional<std::function<void()>> Window::s_altEnterCallback = std::nullopt;
 
 	LRESULT Window::WindowProcedure(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
 	{
@@ -46,6 +47,16 @@ namespace DOG
 			s_windowData.dimensions.y = HIWORD(lParam);
 			PublishEvent<WindowResizedEvent>(LOWORD(lParam), HIWORD(lParam));
 			return 0;
+		}
+		case WM_SYSKEYDOWN:
+		{
+			// Handle ALT+ENTER:
+			if (wParam == VK_RETURN && (lParam & (1 << 29) && !(lParam & (1 << 30))))
+			{
+				if (s_altEnterCallback) (*s_altEnterCallback)();
+				return 0;
+			}
+			break;
 		}
 		case WM_KEYDOWN:
 		{

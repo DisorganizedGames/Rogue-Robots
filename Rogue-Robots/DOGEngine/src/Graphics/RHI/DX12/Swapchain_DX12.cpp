@@ -178,6 +178,27 @@ namespace DOG::gfx
 		return modes;
 	}
 
+	DXGI_MODE_DESC Swapchain_DX12::GetDefaultDisplayModeDesc() const
+	{
+		auto rect = GetOutputDesc().DesktopCoordinates;
+		DXGI_MODE_DESC modeDesc{};
+
+		DXGI_MODE_DESC prefModeDesc{};
+		prefModeDesc.Width = abs(rect.left - rect.right);
+		prefModeDesc.Height = abs(rect.bottom - rect.top);
+		prefModeDesc.Format = GetBufferFormat();
+
+		IDXGIOutput* output = nullptr;
+		HRESULT hr = m_sc->GetContainingOutput(&output);
+		HR_VFY(hr);
+
+		hr = output->FindClosestMatchingMode(&prefModeDesc, &modeDesc, nullptr);
+		HR_VFY(hr);
+		output->Release();
+
+		return modeDesc;
+	}
+
 	DXGI_OUTPUT_DESC1 Swapchain_DX12::GetOutputDesc() const
 	{
 		IDXGIOutput* output;

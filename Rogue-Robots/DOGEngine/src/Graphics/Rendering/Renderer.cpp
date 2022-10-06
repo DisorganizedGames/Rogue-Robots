@@ -3,6 +3,7 @@
 #include "../RHI/DX12/RenderBackend_DX12.h"
 #include "../RHI/DX12/ImGUIBackend_DX12.h"
 #include "../RHI/DX12/RenderDevice_DX12.h"
+#include "../RHI/DX12/Swapchain_DX12.h"
 #include "../RHI/ShaderCompilerDXC.h"
 #include "../RHI/PipelineBuilder.h"
 
@@ -191,6 +192,12 @@ namespace DOG::gfx
 	Monitor Renderer::GetMonitor() const
 	{
 		return m_rd->GetMonitor();
+	}
+
+	DXGI_MODE_DESC Renderer::GetDefaultDisplayMode() const
+	{
+		// Abstract DXGI_MODE_DESC should be created later, for now use dxgi
+		return static_cast<Swapchain_DX12*>(m_sc)->GetDefaultDisplayModeDesc();
 	}
 
 	void Renderer::SetMainRenderCamera(const DirectX::XMMATRIX& view, DirectX::XMMATRIX* proj)

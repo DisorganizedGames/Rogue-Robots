@@ -3,9 +3,11 @@
 #include "CoreUtils.h"
 namespace DOG
 {
+	class Application;
 	struct ApplicationSpecification;
 	class Window : public EventPublisher
 	{
+		friend Application;
 	public:
 		static void Initialize(const ApplicationSpecification& spec) noexcept;
 		static bool OnUpdate() noexcept;
@@ -21,6 +23,8 @@ namespace DOG
 	private:
 		static LRESULT WindowProcedure(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
 		STATIC_CLASS(Window);
+
+		static std::optional<std::function<void()>> s_altEnterCallback;
 	};
 
 

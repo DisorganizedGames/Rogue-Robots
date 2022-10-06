@@ -31,6 +31,7 @@ namespace DOG
 		void PopOverlay(Layer* layer) noexcept;
 	private:
 		void ApplicationSettingDebugMenu(bool& open);
+		void HandleAltEnter();
 	private:
 		DELETE_COPY_MOVE_CONSTRUCTOR(Application);
 		ApplicationSpecification m_specification;

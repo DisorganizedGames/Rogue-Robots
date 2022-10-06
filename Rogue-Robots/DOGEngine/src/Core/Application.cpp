@@ -167,12 +167,14 @@ namespace DOG
 		AudioManager::Initialize();
 		PhysicsEngine::Initialize();
 
+		Window::s_altEnterCallback = std::bind(&Application::HandleAltEnter, this);
 		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); });
 	}
 
 	void Application::OnShutDown() noexcept
 	{
 		ImGuiMenuLayer::UnRegisterDebugWindow("ApplicationSetting");
+		Window::s_altEnterCallback = std::nullopt;
 		AssetManager::Destroy();
 		AudioManager::Destroy();
 
@@ -251,6 +253,7 @@ namespace DOG
 						if (ImGui::Selectable(modeElementToString(i).c_str(), selectedModeIndex == i))
 						{
 							selectedModeIndex = i;
+							m_specification.displayMode = monitor.modes[selectedModeIndex];
 							if (m_renderer->GetFullscreenState() == WindowMode::FullScreen)
 							{
 								m_renderer->SetFullscreenState(WindowMode::FullScreen, monitor.modes[selectedModeIndex]);
@@ -261,6 +264,7 @@ namespace DOG
 				}
 
 				static int selectedFullscreenStateIndex = 0;
+				selectedFullscreenStateIndex = static_cast<int>(m_renderer->GetFullscreenState());
 				std::array<const char*, 2> fullscreenCombo = { "Windowed", "Fullscreen" };
 				if (ImGui::Combo("Fullscreen mode", &selectedFullscreenStateIndex, fullscreenCombo.data(), static_cast<int>(fullscreenCombo.size())))
 				{
@@ -270,5 +274,17 @@ namespace DOG
 			}
 			ImGui::End(); // "Application settings"
 		}
+	}
+
+	void Application::HandleAltEnter()
+	{
+		if (!m_specification.displayMode)
+		{
+			m_specification.displayMode = m_renderer->GetDefaultDisplayMode();
+		}
+		if (m_renderer->GetFullscreenState() != WindowMode::FullScreen)
+			m_renderer->SetFullscreenState(WindowMode::FullScreen, *m_specification.displayMode);
+		else
+			m_renderer->SetFullscreenState(WindowMode::Windowed, *m_specification.displayMode);
 	}
 }

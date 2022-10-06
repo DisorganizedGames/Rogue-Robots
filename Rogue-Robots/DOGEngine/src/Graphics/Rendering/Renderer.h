@@ -43,6 +43,7 @@ namespace DOG::gfx
 
 		GraphicsBuilder* GetBuilder() const { return m_builder.get(); }
 		Monitor GetMonitor() const;
+		DXGI_MODE_DESC GetDefaultDisplayMode() const;
 
 		// Must be called at the start of any frame to pick up CPU side ImGUI code
 		void BeginGUI();
