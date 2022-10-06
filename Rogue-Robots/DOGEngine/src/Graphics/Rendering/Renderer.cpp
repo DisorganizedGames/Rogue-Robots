@@ -57,8 +57,11 @@ namespace DOG::gfx
 
 
 
-		const u32 maxConstantsPerFrame = 33 * 5000 * S_MAX_FIF;
+		const u32 maxConstantsPerFrame = 1000;
 		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), maxConstantsPerFrame);
+
+		// multiple of curr loaded mixamo skeleton
+		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 33 * 5);		
 		m_cmdl = m_rd->AllocateCommandList();
 
 		// Startup
@@ -233,7 +236,8 @@ namespace DOG::gfx
 
 	void Renderer::Render(f32)
 	{
-		ZoneNamedN(RenderScope, "Render", true);
+		//ZoneNamedN(RenderScope, "Render", true);
+		ZoneScopedN("Render");
 
 		// Resolve any per frame copies from CPU
 		m_perFrameUploadCtx->SubmitCopies();
@@ -330,8 +334,8 @@ namespace DOG::gfx
 					{
 						// Resolve joints
 						JointData jointsData{};
-						auto jointsHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
-						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); i++)
+						auto jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); ++i)
 							jointsData.joints[i] = m_boneJourno->m_vsJoints[i];
 						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
 

@@ -110,6 +110,7 @@ namespace DOG::gfx
 
 		// Ring-buffered dynamic constant allocator (allocate, use, and forget)
 		std::unique_ptr<GPUDynamicConstants> m_dynConstants;
+		std::unique_ptr<GPUDynamicConstants> m_dynConstantsAnimated;		// temp storage for per draw joints
 
 		// Big buffers store meshes and materials
 		std::unique_ptr<MaterialTable> m_globalMaterialTable;
