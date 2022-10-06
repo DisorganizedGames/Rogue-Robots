@@ -160,6 +160,7 @@ namespace DOG::gfx
 		m_globalPassData.defRenderScissors = ScissorRects().Append(0, 0, m_clientWidth, m_clientHeight);
 		m_globalPassData.defRenderVPs= Viewports().Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight);
 		m_globalPassData.globalDataDescriptor = m_globalDataTable->GetGlobalDescriptor();
+		m_globalPassData.meshTable = m_globalMeshTable.get();
 
 		// Passes
 		m_rgBlackboard = std::make_unique<RGBlackboard>();
@@ -324,12 +325,10 @@ namespace DOG::gfx
 				},
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
 				{
-					rd->Cmd_SetViewports(cmdl, Viewports()
-						.Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight));
-					rd->Cmd_SetScissorRects(cmdl, ScissorRects()
-						.Append(0, 0, m_clientWidth, m_clientHeight));
-
-					rd->Cmd_SetIndexBuffer(cmdl, m_globalMeshTable->GetIndexBuffer());
+					rd->Cmd_SetViewports(cmdl, m_globalPassData.defRenderVPs);
+					rd->Cmd_SetScissorRects(cmdl, m_globalPassData.defRenderScissors);
+						
+					rd->Cmd_SetIndexBuffer(cmdl, m_globalPassData.meshTable->GetIndexBuffer());
 
 					// Draw statics
 					rd->Cmd_SetPipeline(cmdl, m_meshPipe);

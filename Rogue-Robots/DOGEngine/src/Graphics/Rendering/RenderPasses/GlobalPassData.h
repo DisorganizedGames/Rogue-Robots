@@ -4,6 +4,13 @@
 
 namespace DOG::gfx
 {
+	class MeshTable;
+	class MaterialTable;
+
+	/*
+		Don't bloat this structure unless you are sure that it is something that belongs in global scope.
+		Use the RGBlackboard for specific interpass communication.
+	*/
 	struct GlobalPassData
 	{
 		// VP/Scissor which follows render resolution
@@ -15,7 +22,9 @@ namespace DOG::gfx
 		ScissorRects bbScissor;
 
 		u32 globalDataDescriptor{ UINT_MAX };
-		u32* perFrameTableOffset{ nullptr };
+		const u32* perFrameTableOffset{ nullptr };
+
+		const MeshTable* meshTable{ nullptr };
 
 	};
 }

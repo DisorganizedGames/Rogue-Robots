@@ -187,7 +187,7 @@ namespace DOG::gfx
 		return m_submeshTable->GetGlobalDescriptor();
 	}
 
-	const SubmeshMetadata& MeshTable::GetSubmeshMD_CPU(Mesh mesh, u32 submesh)
+	const SubmeshMetadata& MeshTable::GetSubmeshMD_CPU(Mesh mesh, u32 submesh) const
 	{
 		const auto& res = HandleAllocator::TryGet(m_resources, HandleAllocator::GetSlot(mesh.handle));
 		assert(submesh < res.mdsCpu.size());
@@ -195,7 +195,7 @@ namespace DOG::gfx
 		return res.mdsCpu[submesh];
 	}
 
-	u32 MeshTable::GetSubmeshMD_GPU(Mesh mesh, u32 submesh)
+	u32 MeshTable::GetSubmeshMD_GPU(Mesh mesh, u32 submesh) const
 	{
 		const auto& res = HandleAllocator::TryGet(m_resources, HandleAllocator::GetSlot(mesh.handle));
 
@@ -204,7 +204,7 @@ namespace DOG::gfx
 		return m_submeshTable->GetLocalOffset(res.mdsGpu) + localOffset;
 	}
 
-	Buffer MeshTable::GetIndexBuffer()
+	Buffer MeshTable::GetIndexBuffer() const
 	{
 		return m_indexTable->GetBuffer();
 	}
