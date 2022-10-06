@@ -65,10 +65,10 @@ GameLayer::GameLayer() noexcept
 	entity entity4 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity4, m_magentaCube);
 	auto& t4 = m_entityManager.AddComponent<TransformComponent>(entity4);
-
-	t4.worldMatrix(3, 0) = 10;
-	t4.worldMatrix(3, 1) = 12;
-	t4.worldMatrix(3, 2) = 10;
+	m_entityManager.AddComponent<NetworkPlayerComponent>(entity4).playerId = 3;
+	t4.worldMatrix(3, 0) = 39;
+	t4.worldMatrix(3, 1) = 30;
+	t4.worldMatrix(3, 2) = 40;
 
 	entity entity5 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity5, m_mixamo);
@@ -294,7 +294,7 @@ void GameLayer::LoadLevel()
 	float blockDim = 5.0f;
 
 	std::string line;
-	std::ifstream inputFile("..\\Offline-Tools\\PCG\\largerTestOutput_generatedLevel.txt");
+	std::ifstream inputFile("..\\Offline-Tools\\PCG\\showOff_generatedLevel.txt");
 
 	AssetManager& aManager = AssetManager::Get();
 
@@ -310,10 +310,10 @@ void GameLayer::LoadLevel()
 			{
 				while (line.find(' ') != std::string::npos)
 				{
-					size_t delimPos = line.find(' ');
+					size_t delimPos = line.find(' ');	
 					std::string block = line.substr(0, delimPos);
 					line.erase(0, delimPos + 1);
-					if (block != "Empty" && block != "Void")
+					if (block != "Empty" && block != "Void" && block != "q")
 					{
 						size_t firstUnderscore = block.find('_');
 						size_t secondUnderscore = block.find('_', firstUnderscore + 1);
@@ -337,9 +337,9 @@ void GameLayer::LoadLevel()
 						m_entityManager.AddComponent<TransformComponent>(blockEntity)
 							.SetPosition({ x * blockDim, y * blockDim, z * blockDim })
 							.SetRotation({ piDiv2, piDiv2 * blockRot - piDiv2, 0.0f })
-							.SetScale({ xFlip, -1.0f, yFlip }); //yFlip is on Z because of left-hand/right-hand.
+							.SetScale({ xFlip, -1.0f * yFlip, 1.0f }); //yFlip is on Z because of left-hand/right-hand.
 						m_entityManager.AddComponent<ModularBlockComponent>(blockEntity);
-						m_entityManager.AddComponent<MeshColliderComponent>(blockEntity, blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + "_Col.fbx", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory))));
+						m_entityManager.AddComponent<MeshColliderComponent>(blockEntity, blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + "_Col.fbx", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | DOG::AssetLoadFlag::CPUMemory)));
 					}
 
 					++x;

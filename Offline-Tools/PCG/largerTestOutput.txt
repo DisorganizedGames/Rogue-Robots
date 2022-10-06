@@ -1,5 +1,5 @@
 Void 878
-Void,CornerFloor1_r1_f,WallFloor1_r1_fx,WallFloor1_r1_f,CornerWall1_r1_f,Wall1_r1_fx,Wall1_r1_f,CliffCorner1_r3_fx,Cliff1_r2_fx,Cliff1_r0_f,CliffCorner1_r3_f,CliffCorner1_r0_f,Edge,CornerFloor1_r0_f,WallShelfEnd1_r1_fx,WallShelf1_r1_f,WallShelf1_r1_fx,WallShelfEnd2_r1_fx,CornerWall1_r0_f,WallShelfEnd2_r1_f,CornerRoof1_r1_f,WallRoof1_r1_fx,WallRoof1_r1_f,CornerRoof1_r0_f,
+Void,CornerFloor1_r1_f,WallFloor1_r1_fx,WallFloor1_r1_f,CornerWall1_r1_f,Wall1_r1_fx,Wall1_r1_f,CliffCorner1_r3_fx,Cliff1_r2_fx,Cliff1_r0_f,CliffCorner1_r3_f,CliffCorner1_r0_f,Edge,CornerFloor1_r0_f,WallShelfEnd1_r1_fx,WallShelf1_r1_f,WallShelf1_r1_fx,WallShelfEnd2_r1_fx,CornerWall1_r0_f,WallShelfEnd2_r1_f,WallShelfEnd1_r1_f,CornerRoof1_r1_f,WallRoof1_r1_fx,WallRoof1_r1_f,CornerRoof1_r0_f,
 Edge,Void,CliffCorner1_r1_f,Cliff1_r2_f,Cliff1_r0_fx,CliffCorner1_r1_fx,CliffCorner1_r0_fx,CornerFloor1_r2_f,WallFloor1_r3_f,WallFloor1_r3_fx,CornerFloor1_r3_f,CornerWall1_r2_f,Wall1_r3_f,Wall1_r3_fx,WallShelfEnd2_r3_fx,WallShelf1_r3_f,WallShelfEnd1_r3_fx,CornerWall1_r3_f,WallShelf1_r3_fx,CornerRoof1_r2_f,WallRoof1_r3_f,WallRoof1_r3_fx,CornerRoof1_r3_f,
 Void,CornerFloor1_r1_f,WallFloor1_r2_fx,WallFloor1_r2_f,CornerWall1_r1_f,Wall1_r2_fx,Wall1_r2_f,Edge,CliffCorner1_r3_fx,Cliff1_r3_fx,Cliff1_r1_f,CliffCorner1_r1_f,CliffCorner1_r0_f,CliffCorner1_r0_fx,CornerFloor1_r2_f,WallShelfEnd2_r2_fx,WallShelf1_r2_f,WallShelf1_r2_fx,WallShelfEnd2_r2_f,CornerWall1_r2_f,WallShelfEnd1_r2_f,WallShelfEnd1_r2_fx,CornerRoof1_r1_f,WallRoof1_r2_fx,WallRoof1_r2_f,CornerRoof1_r2_f,
 Edge,Void,CliffCorner1_r3_f,Cliff1_r3_f,Cliff1_r1_fx,CliffCorner1_r1_fx,CornerFloor1_r0_f,WallFloor1_r0_fx,WallFloor1_r0_f,CornerFloor1_r3_f,CornerWall1_r0_f,Wall1_r0_fx,Wall1_r0_f,WallShelfEnd1_r0_fx,WallShelf1_r0_f,WallShelf1_r0_fx,WallShelfEnd1_r0_f,CornerWall1_r3_f,WallShelfEnd2_r0_f,CornerRoof1_r0_f,WallRoof1_r0_fx,WallRoof1_r0_f,CornerRoof1_r3_f,
@@ -74,8 +74,8 @@ Wall1_r1_fx 7
 Empty,
 Void,
 Wall1_r1_f,CornerWall1_r0_f,WallShelfEnd2_r1_f,
-CornerWall1_r1_f,Wall1_r1_f,WallShelfEnd2_r1_fx,
-Wall1_r1_fx,WallShelf1_r1_f,WallRoof1_r1_fx,
+CornerWall1_r1_f,Wall1_r1_f,WallShelfEnd1_r1_f,
+Wall1_r1_fx,WallShelf1_r1_fx,WallRoof1_r1_fx,
 WallFloor1_r1_fx,Wall1_r1_fx,WallShelfEnd1_r1_fx,WallShelf1_r1_fx,
 
 Wall1_r1_f 7
@@ -83,7 +83,7 @@ Empty,
 Void,
 Wall1_r1_fx,WallShelfEnd1_r1_fx,
 Wall1_r1_fx,WallShelfEnd2_r1_fx,
-WallShelfEnd2_r1_f,WallShelfEnd2_r1_fx,WallShelf1_r1_f,Wall1_r1_f,WallRoof1_r1_f,
+WallShelfEnd2_r1_f,WallShelfEnd1_r1_f,WallShelf1_r1_f,Wall1_r1_f,WallRoof1_r1_f,
 WallFloor1_r1_f,WallShelf1_r1_f,Wall1_r1_f,
 
 Wall1_r2_fx 9
@@ -96,10 +96,10 @@ WallFloor1_r2_fx,Wall1_r2_fx,
 
 Empty 401
 Empty,Bridge1_r1_f,FloorCliff1_r0_fx,ShelfEnd1_r0_f,ShelfEnd1_r2_f,ShelfEnd1_r3_f,Wall1_r3_f,Wall1_r3_fx,WallShelfEnd2_r3_fx,WallShelfEnd1_r3_fx,ShelfEnd1_r2_fx,ShelfEnd1_r0_fx,ShelfEnd1_r3_fx,
-Wall1_r1_fx,Wall1_r1_f,Empty,FloorCliff1_r0_f,Bridge1_r1_f,WallShelfEnd1_r1_fx,WallShelfEnd2_r1_fx,ShelfEnd1_r1_f,ShelfEnd1_r1_fx,ShelfEnd1_r0_fx,ShelfEnd1_r2_fx,WallShelfEnd2_r1_f,ShelfEnd1_r2_f,
-Empty,FloorCliff1_r3_f,FloorCliff1_r1_fx,ShelfEnd1_r1_f,Wall1_r0_fx,Wall1_r0_f,WallShelfEnd1_r0_fx,ShelfEnd1_r0_f,ShelfEnd1_r0_fx,WallShelfEnd1_r0_f,ShelfEnd1_r3_f,ShelfEnd1_r2_f,WallShelfEnd2_r0_f,
+Wall1_r1_fx,Wall1_r1_f,Empty,FloorCliff1_r0_f,Bridge1_r1_f,WallShelfEnd1_r1_fx,WallShelfEnd2_r1_fx,ShelfEnd1_r1_f,ShelfEnd1_r1_fx,ShelfEnd1_r0_fx,ShelfEnd1_r2_fx,WallShelfEnd2_r1_f,WallShelfEnd1_r1_f,ShelfEnd1_r2_f,
+Empty,FloorCliff1_r3_f,FloorCliff1_r1_fx,ShelfEnd1_r1_f,Wall1_r0_fx,Wall1_r0_f,WallShelfEnd1_r0_fx,ShelfEnd1_r0_f,ShelfEnd1_r0_fx,WallShelfEnd1_r0_f,ShelfEnd1_r3_f,WallShelfEnd2_r0_f,
 Wall1_r2_fx,Empty,Wall1_r2_f,Bridge1_r2_f,FloorCliff1_r1_f,FloorCliff1_r3_fx,ShelfEnd1_r1_f,WallShelfEnd2_r2_fx,ShelfEnd1_r2_f,ShelfEnd1_r2_fx,WallShelfEnd2_r2_f,ShelfEnd1_r3_f,WallShelfEnd1_r2_f,WallShelfEnd1_r2_fx,
-Empty,ShelfEnd1_r2_f,ShelfEnd1_r1_f,ShelfEnd1_r1_fx,ShelfEnd1_r2_fx,ShelfEnd1_r0_fx,ShelfEnd1_r0_f,ShelfEnd1_r3_f,ShelfEnd1_r3_fx,Roof1_r0_fx,Roof1_r0_f,
+Empty,ShelfEnd1_r1_f,ShelfEnd1_r1_fx,ShelfEnd1_r2_fx,ShelfEnd1_r0_fx,ShelfEnd1_r2_f,ShelfEnd1_r0_f,ShelfEnd1_r3_f,ShelfEnd1_r3_fx,Roof1_r0_fx,Roof1_r0_f,
 Floor1_r0_fx,Floor1_r0_f,Riverbed1_r0_fx,Riverbed1_r0_f,FloorBridge1_r0_fx,FloorBridge1_r0_f,FloorBridge1_r2_f,FloorCornerCliff1_r3_fx,FloorBridge2_r2_fx,FloorCliff1_r0_f,FloorCornerCliff1_r3_f,FloorCliff1_r3_fx,Bridge1_r2_f,Empty,FloorCliff1_r3_f,FloorBridge1_r1_fx,FloorBridge2_r1_f,Bridge2_r1_f,Bridge1_r1_f,FloorBridge2_r1_fx,FloorBridge1_r1_f,Floor1_r2_f,FloorCornerCliff1_r1_f,FloorBridge2_r2_f,FloorCliff1_r0_fx,FloorCornerCliff1_r1_fx,Floor1_r0_fy,FloorBridge1_r2_fx,FloorCornerCliff1_r0_f,FloorCliff1_r1_f,FloorBridge1_r3_f,FloorBridge2_r3_fx,FloorBridge1_r3_fx,FloorCliff1_r1_fx,ShelfEnd1_r1_f,ShelfEnd1_r1_fx,ShelfEnd1_r0_f,ShelfEnd1_r0_fx,ShelfEnd1_r3_f,
 
 Wall1_r2_f 9
@@ -558,29 +558,29 @@ Wall1_r1_f,
 Wall1_r1_fx,WallShelf1_r1_fx,WallRoof1_r1_fx,
 WallFloor1_r1_fx,WallShelfEnd2_r1_fx,
 
-WallShelf1_r1_f 6
-ShelfEnd1_r1_f,ShelfEnd1_r2_f,
+WallShelf1_r1_f 5
+ShelfEnd1_r1_f,
 Void,
 WallShelf1_r1_fx,WallShelfEnd2_r1_fx,
-WallShelfEnd1_r1_fx,WallShelf1_r1_fx,WallShelfEnd2_r1_f,
-Wall1_r1_f,WallShelf1_r1_f,WallRoof1_r1_fx,WallRoof1_r1_f,
-WallFloor1_r1_f,Wall1_r1_fx,Wall1_r1_f,WallShelf1_r1_f,
+WallShelfEnd1_r1_fx,WallShelf1_r1_fx,
+Wall1_r1_f,WallShelf1_r1_f,WallRoof1_r1_f,
+WallFloor1_r1_f,Wall1_r1_f,WallShelf1_r1_f,
 
-WallShelf1_r1_fx 2
-ShelfEnd1_r1_fx,
+WallShelf1_r1_fx 3
+ShelfEnd1_r1_fx,ShelfEnd1_r1_f,
 Void,
-WallShelf1_r1_f,
-WallShelf1_r1_f,
+WallShelf1_r1_f,WallShelfEnd1_r1_f,
+WallShelf1_r1_f,WallShelfEnd2_r1_f,
 Wall1_r1_fx,WallRoof1_r1_fx,
-WallFloor1_r1_fx,WallShelfEnd1_r1_fx,
+WallFloor1_r1_fx,Wall1_r1_fx,WallShelfEnd1_r1_fx,
 
-WallShelfEnd2_r1_fx 4
+WallShelfEnd2_r1_fx 3
 Empty,
 Void,
-Wall1_r1_f,Wall1_r1_fx,
+Wall1_r1_f,
 WallShelf1_r1_f,
-WallShelfEnd1_r1_fx,WallShelfEnd2_r1_fx,WallRoof1_r1_f,WallRoof1_r1_fx,
-WallFloor1_r1_fx,Wall1_r1_f,WallShelfEnd2_r1_fx,
+WallShelfEnd1_r1_fx,WallShelfEnd2_r1_fx,WallRoof1_r1_fx,
+WallFloor1_r1_fx,WallShelfEnd2_r1_fx,
 
 CornerWall1_r0_f 2
 Wall1_r0_fx,
@@ -590,12 +590,12 @@ Wall1_r1_fx,
 CornerWall1_r0_f,CornerRoof1_r0_f,
 CornerFloor1_r0_f,CornerWall1_r0_f,
 
-ShelfEnd1_r1_f 5
+ShelfEnd1_r1_f 6
 Empty,
-WallShelf1_r1_f,
+WallShelf1_r1_f,WallShelf1_r1_fx,
 ShelfEnd1_r1_fx,Empty,
 Empty,ShelfEnd1_r1_fx,
-Empty,ShelfEnd1_r1_f,Roof1_r0_f,
+Empty,ShelfEnd1_r1_f,Roof1_r0_fx,Roof1_r0_f,
 Floor1_r0_f,Empty,ShelfEnd1_r1_f,
 
 ShelfEnd1_r1_fx 2
@@ -686,13 +686,13 @@ Void,
 WallShelf1_r2_f,WallRoof1_r2_f,
 WallFloor1_r2_f,WallShelf1_r2_f,WallShelfEnd2_r2_f,
 
-ShelfEnd1_r2_f 4
+ShelfEnd1_r2_f 3
 ShelfEnd1_r2_fx,Empty,
-Empty,WallShelf1_r1_f,ShelfEnd1_r2_fx,
+Empty,ShelfEnd1_r2_fx,
 Empty,
-WallShelf1_r2_f,Empty,
-ShelfEnd1_r2_f,Roof1_r0_fx,Roof1_r0_f,
-Floor1_r0_f,Empty,ShelfEnd1_r2_f,
+WallShelf1_r2_f,
+ShelfEnd1_r2_f,Roof1_r0_f,
+Floor1_r0_f,ShelfEnd1_r2_f,Empty,
 
 WallShelf1_r2_fx 3
 WallShelfEnd2_r2_f,WallShelf1_r2_f,
@@ -785,8 +785,16 @@ CornerFloor1_r3_f,CornerWall1_r3_f,
 WallShelfEnd2_r1_f 1
 Empty,
 Void,
-WallShelf1_r1_f,
+WallShelf1_r1_fx,
 Wall1_r1_fx,
+WallRoof1_r1_f,
+Wall1_r1_f,
+
+WallShelfEnd1_r1_f 1
+Empty,
+Void,
+Wall1_r1_fx,
+WallShelf1_r1_fx,
 WallRoof1_r1_f,
 Wall1_r1_f,
 
@@ -844,7 +852,7 @@ Void,
 WallRoof1_r1_f,CornerRoof1_r0_f,
 CornerRoof1_r1_f,WallRoof1_r1_f,
 Edge,
-Wall1_r1_fx,WallShelf1_r1_f,WallShelfEnd1_r1_fx,WallShelf1_r1_fx,WallShelfEnd2_r1_fx,
+Wall1_r1_fx,WallShelf1_r1_fx,WallShelfEnd1_r1_fx,WallShelfEnd2_r1_fx,
 
 WallRoof1_r1_f 7
 Roof1_r0_f,
@@ -852,7 +860,7 @@ Void,
 WallRoof1_r1_fx,
 WallRoof1_r1_fx,
 Edge,
-WallShelfEnd2_r1_f,WallShelfEnd2_r1_fx,Wall1_r1_f,WallShelf1_r1_f,
+WallShelfEnd2_r1_f,WallShelfEnd1_r1_f,Wall1_r1_f,WallShelf1_r1_f,
 
 CornerRoof1_r0_f 1
 WallRoof1_r0_fx,
@@ -876,7 +884,7 @@ WallRoof1_r1_fx,Roof1_r0_f,
 Roof1_r0_f,WallRoof1_r0_fx,
 WallRoof1_r2_fx,Roof1_r0_f,
 Edge,
-Empty,ShelfEnd1_r2_f,ShelfEnd1_r1_fx,ShelfEnd1_r2_fx,ShelfEnd1_r0_fx,ShelfEnd1_r3_fx,
+Empty,ShelfEnd1_r1_f,ShelfEnd1_r1_fx,ShelfEnd1_r2_fx,ShelfEnd1_r0_fx,ShelfEnd1_r3_fx,
 
 Roof1_r0_f 105
 Roof1_r0_fx,WallRoof1_r3_f,
