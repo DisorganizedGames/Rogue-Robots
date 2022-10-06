@@ -63,16 +63,14 @@ DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
         dpi,
         dpi);
 
-
-
     {
-        rtvHandle = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        rtvHandle = m_descriptorMgr->allocate(m_numBuffers, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
         // Create a RTV, D2D render target, and a command allocator for each frame.
         for (UINT n = 0; n < m_numBuffers; n++)
         {
             m_renderTargets[n] = sc12->GetD12Buffer((u8)n);
-            rd12->GetDevice()->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtvHandle.cpu_handle(0));
+            rd12->GetDevice()->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtvHandle.cpu_handle(n));
 
             // Create a wrapped 11On12 resource of this back buffer. Since we are 
             // rendering all D3D12 content first and then all D2D content, we specify 
