@@ -213,8 +213,6 @@ namespace DOG::gfx
 		m_animatedDraws.push_back(sub);
 	}
 
-
-
 	void Renderer::Update(f32 dt)
 	{
 		m_boneJourno->UpdateJoints();
@@ -275,6 +273,12 @@ namespace DOG::gfx
 				u32 jointsDescriptor{ UINT_MAX };
 			};
 
+			/*
+				@todo:
+					Still need some way to pre-allocate per draw data prior to render pass.
+					Perhaps go through the submissions and collect data --> Upload to GPU (maybe instance it as well?)
+					and during forward pass we simply read from it 
+			*/
 			auto drawSubmissions = [this](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission> submissions, bool animated = false)
 			{
 				for (const auto& sub : submissions)
@@ -330,7 +334,6 @@ namespace DOG::gfx
 						
 					rd->Cmd_SetIndexBuffer(cmdl, m_globalPassData.meshTable->GetIndexBuffer());
 
-					// Draw statics
 					rd->Cmd_SetPipeline(cmdl, m_meshPipe);
 					drawSubmissions(rd, cmdl, m_submissions);
 					drawSubmissions(rd, cmdl, m_animatedDraws, true);
