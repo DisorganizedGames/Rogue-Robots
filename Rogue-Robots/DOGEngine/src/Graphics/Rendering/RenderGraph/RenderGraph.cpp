@@ -132,9 +132,9 @@ namespace DOG::gfx
 
 			if (pass->rp)
 			{
-				auto df = [rd = m_rd, rp = pass->rp]()
+				auto df = [rd = m_rd, rp = *pass->rp]()
 				{
-					rd->FreeRenderPass(*rp);
+					rd->FreeRenderPass(rp);
 				};
 				m_bin->PushDeferredDeletion(df);
 			}

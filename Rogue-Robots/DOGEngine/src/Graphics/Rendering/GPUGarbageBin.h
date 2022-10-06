@@ -1,5 +1,6 @@
 #pragma once
 #include <functional>
+#include <deque>
 
 namespace DOG::gfx
 {
@@ -71,7 +72,8 @@ namespace DOG::gfx
 		u8 m_maxFramesInFlight{ 0 };
 		u8 m_currFrameIdx{ 0 };
 		//std::queue<Deletion_Storage> m_deletes;
-		PrivateQueue<Deletion_Storage> m_deletes;
+		//PrivateQueue<Deletion_Storage> m_deletes;
+		std::deque<Deletion_Storage> m_deletes;
 
 	};
 }
