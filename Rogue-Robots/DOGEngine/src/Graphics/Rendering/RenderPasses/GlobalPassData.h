@@ -13,5 +13,9 @@ namespace DOG::gfx
 		// VP/Scissor which follows backbuffer resolution
 		Viewports bbVP;
 		ScissorRects bbScissor;
+
+		u32 globalDataDescriptor{ UINT_MAX };
+		u32* perFrameTableOffset{ nullptr };
+
 	};
 }

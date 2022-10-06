@@ -151,7 +151,6 @@ namespace DOG::gfx
 		m_globalDataTable = std::make_unique<GPUTableDeviceLocal<GlobalDataHandle>>(m_rd, m_bin.get(), (u32)sizeof(GlobalData), 1, false);
 		m_gdHandle = m_globalDataTable->Allocate(1, &m_globalData);
 		m_globalDataTable->SendCopyRequests(*m_uploadCtx);
-		m_gdDescriptor = m_globalDataTable->GetGlobalDescriptor();
 
 
 		// Set default pass data
@@ -160,6 +159,7 @@ namespace DOG::gfx
 		// render vps/scissors subject to change
 		m_globalPassData.defRenderScissors = ScissorRects().Append(0, 0, m_clientWidth, m_clientHeight);
 		m_globalPassData.defRenderVPs= Viewports().Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight);
+		m_globalPassData.globalDataDescriptor = m_globalDataTable->GetGlobalDescriptor();
 
 		// Passes
 		m_rgBlackboard = std::make_unique<RGBlackboard>();
@@ -239,16 +239,20 @@ namespace DOG::gfx
 
 			// Get offset after update
 			m_currPfDescriptor = m_pfDataTable->GetLocalOffset(m_pfHandle);
+			m_globalPassData.perFrameTableOffset = &m_currPfDescriptor;
+
 		}
 	}
 
 	void Renderer::Render(f32)
 	{
-		//ZoneNamedN(RenderScope, "Render", true);
-		ZoneScopedN("Render");
+		ZoneNamedN(RenderScope, "Render", true);
 
 		// Resolve any per frame copies from CPU
-		m_perFrameUploadCtx->SubmitCopies();
+		{
+			ZoneNamedN(FrameCopyResolve, "Frame Copies", true);
+			m_perFrameUploadCtx->SubmitCopies();
+		}
 
 
 		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
@@ -304,7 +308,7 @@ namespace DOG::gfx
 						std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
 
 						auto args = ShaderArgs()
-							.AppendConstant(m_gdDescriptor)
+							.AppendConstant(m_globalPassData.globalDataDescriptor)
 							.AppendConstant(m_currPfDescriptor)
 							.AppendConstant(perDrawHandle.globalDescriptor);
 
@@ -327,7 +331,7 @@ namespace DOG::gfx
 						std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
 
 						auto args = ShaderArgs()
-							.AppendConstant(m_gdDescriptor)
+							.AppendConstant(m_globalPassData.globalDataDescriptor)
 							.AppendConstant(m_currPfDescriptor)
 							.AppendConstant(perDrawHandle.globalDescriptor);
 
@@ -357,7 +361,7 @@ namespace DOG::gfx
 
 
 						auto args = ShaderArgs()
-							.AppendConstant(m_gdDescriptor)
+							.AppendConstant(m_globalPassData.globalDataDescriptor)
 							.AppendConstant(m_currPfDescriptor)
 							.AppendConstant(perDrawHandle.globalDescriptor);
 
