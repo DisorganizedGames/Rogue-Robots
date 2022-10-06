@@ -85,7 +85,7 @@ class UISplashScreen : public UIelement
 private:
    D2D1_RECT_F m_background;
    clock_t m_timer;
-   ID2D1SolidColorBrush* m_splashBrush, *m_textBrush;
+   ComPtr<ID2D1SolidColorBrush> m_splashBrush, m_textBrush;
    std::wstring m_text;
    float m_textOp, m_backOp;
 public:
