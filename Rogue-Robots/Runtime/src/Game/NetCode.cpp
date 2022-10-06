@@ -1,4 +1,7 @@
 #include "NetCode.h"
+//todo
+// exclude entities with thisplayerComponent
+// Swap models
 using namespace DOG;
 NetCode::NetCode()
 {
@@ -6,14 +9,14 @@ NetCode::NetCode()
 
 	m_netCodeAlive = TRUE;
 	m_outputTcp = nullptr;
-	m_inputTcp.rotation = DirectX::XMVectorSet(0, 0, 0, 0);
-	m_inputTcp.position = DirectX::XMVectorSet(0, 0, 0, 0);
-
+	m_inputTcp.matrix = {};
 
 	m_playerInputUdp.playerId = 0;
-	m_playerInputUdp.playerOptions = 0;
-	m_playerInputUdp.rotation = DirectX::XMVectorSet(0, 0, 0, 0);
-	m_playerInputUdp.position = DirectX::XMVectorSet(0, 0, 0, 0);
+	m_playerInputUdp.matrix = {};
+	m_playerInputUdp.shoot = FALSE;
+	m_playerInputUdp.jump = FALSE;
+	m_playerInputUdp.activateActiveItem = FALSE;
+
 	m_hardSyncTcp = FALSE;
 	m_active = FALSE;
 	m_startUp = FALSE;
@@ -30,7 +33,7 @@ NetCode::~NetCode()
 }
 
 
-void NetCode::OnUpdate(std::shared_ptr<MainPlayer> player)
+void NetCode::OnUpdate()
 {
 
 	if (m_active)
@@ -38,55 +41,39 @@ void NetCode::OnUpdate(std::shared_ptr<MainPlayer> player)
 
 		if (m_startUp == TRUE)
 		{
-			m_playerInputUdp.playerId = m_inputTcp.playerId;
-			EntityManager::Get().Collect<NetworkPlayerComponent>().Do([&](NetworkPlayerComponent& networkC)
+
+			EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, TransformComponent, ModelComponent>().Do([&](NetworkPlayerComponent& networkC, ThisPlayer&, TransformComponent& transC, ModelComponent&)
 				{
-					//Give player correct model
-					if (networkC.playerId == m_inputTcp.playerId)
-						player->SetPosition(m_outputTcp[networkC.playerId].position);
+					transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
+					networkC.playerId = m_inputTcp.playerId;
+					//modelC.id = ;
+
 				});
-			EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC)
+			EntityManager::Get().Collect<NetworkPlayerComponent, TransformComponent, ModelComponent>().Do([&](NetworkPlayerComponent& networkC, TransformComponent& transC, ModelComponent&)
 				{
-					if (networkC.playerId != m_inputTcp.playerId)
+					if (networkC.playerId == m_inputTcp.playerId) // todo
 					{
-						transformC.SetPosition(m_outputTcp[networkC.playerId].position);
-						transformC.SetRotation(m_outputTcp[networkC.playerId].rotation);
+						networkC.playerId = 0;
+						//modelC.id = ;
 					}
+					transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
 				});
 
 			m_startUp = false;
 		}
 
-		AddPositionTcp(player->GetPosition());
-		AddRotationTcp(player->GetRotation());
-
-		AddPositionUdp(player->GetPosition());
-		AddRotationUdp(player->GetRotation());
-		//TODO: when player entity exist
-		//EntityManager::Get().Collect<mainPlayer>().Do([&](mainPlayer& playerC)
-		//{
-		//	AddMatrixUdp(playerC.worldMatrix);
-		//};
-
-		EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC)
+		EntityManager::Get().Collect<ThisPlayer, TransformComponent>().Do([&](ThisPlayer&, TransformComponent& transC)
 			{
-				//Udp
-				if (networkC.playerId == m_inputTcp.playerId)
-				{
-					transformC.SetPosition(player->GetPosition());
-					transformC.SetRotation(player->GetRotation());
-				}
-				else
-				{
-					for (int i = 0; i < MAX_PLAYER_COUNT; i++)
-					{
-						if (networkC.playerId == m_outputUdp.m_holdplayersUdp[i].playerId)
-						{
-							transformC.SetPosition(m_outputUdp.m_holdplayersUdp[i].position);
-							transformC.SetRotation(m_outputTcp[networkC.playerId].rotation);
-						}
-					}
-				}
+				AddMatrixTcp(transC.worldMatrix);
+				AddMatrixUdp(transC.worldMatrix);
+			});
+
+		EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent, InputController, OnlinePlayer>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&)
+			{
+				transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].matrix;
+				inputC.shoot = m_outputUdp.m_holdplayersUdp[networkC.playerId].shoot;
+				inputC.jump = m_outputUdp.m_holdplayersUdp[networkC.playerId].jump;
+				inputC.activateActiveItem = m_outputUdp.m_holdplayersUdp[networkC.playerId].activateActiveItem;
 			});
 
 
@@ -118,7 +105,7 @@ void NetCode::Recive()
 					m_inputTcp.playerId = m_client.ConnectTcpServer(ip);
 					if (m_inputTcp.playerId > -1)
 					{
-						m_inputTcp.position = DirectX::XMVectorSet(0, (float)(m_inputTcp.playerId * 2 + 1), 0, 0);
+						
 						m_outputTcp = m_client.ReciveTcp();
 						start = TRUE;
 					}
@@ -142,7 +129,7 @@ void NetCode::Recive()
 			}
 			if (m_inputTcp.playerId > -1)
 			{
-				m_inputTcp.position = DirectX::XMVectorSet(0, (float)(m_inputTcp.playerId * 2 + 1), 0, 0);
+				
 				m_outputTcp = m_client.ReciveTcp();
 				start = TRUE;
 			}
@@ -199,48 +186,17 @@ void NetCode::AddPlayersId(std::vector<DOG::entity> playersId)
 	m_playersId = playersId;
 }
 
-//void NetCode::AddMatrixTcp(DirectX::XMMATRIX input)
-//{
-//	m_mut.lock();
-//	m_inputTcp.matrix = input;
-//	m_mut.unlock();
-//}
-
-
-
-void NetCode::AddRotationTcp(DirectX::SimpleMath::Vector3 input)
+void NetCode::AddMatrixTcp(DirectX::XMMATRIX input)
 {
 	m_mut.lock();
-	m_inputTcp.rotation = input;
-	m_mut.unlock();
-
-}
-
-void NetCode::AddPositionTcp(DirectX::SimpleMath::Vector3 input)
-{
-	m_mut.lock();
-	m_inputTcp.position = input;
+	m_inputTcp.matrix = input;
 	m_mut.unlock();
 }
 
-void NetCode::AddRotationUdp(DirectX::SimpleMath::Vector3 input)
+
+void NetCode::AddMatrixUdp(DirectX::XMMATRIX input) 
 {
 	m_mut.lock();
-	m_playerInputUdp.rotation = input;
-	m_mut.unlock();
-
-}
-
-void NetCode::AddPositionUdp(DirectX::SimpleMath::Vector3 input)
-{
-	m_mut.lock();
-	m_playerInputUdp.position = input;
+	m_playerInputUdp.matrix = input; 
 	m_mut.unlock();
 }
-
-//void NetCode::AddMatrixUdp(DirectX::XMMATRIX input) change back later when main player has transform
-//{
-//	m_mut.lock();
-//	m_inputUdp.playerMatrix.push_back(input); 
-//	m_mut.unlock();
-//}

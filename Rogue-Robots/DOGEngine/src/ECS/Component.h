@@ -80,7 +80,25 @@ namespace DOG
 
 	struct ModularBlockComponent
 	{
-		//
+	};	//
+	struct ThisPlayer
+	{
+	};
+	struct OnlinePlayer
+	{
+	};
+
+	struct InputController
+	{
+		bool forward = false;
+		bool left = false;
+		bool right = false;
+		bool backwards = false;
+		bool up = false;
+		bool down = false;
+		bool shoot = false;
+		bool jump = false;
+		bool activateActiveItem = false;
 	};
 }
 

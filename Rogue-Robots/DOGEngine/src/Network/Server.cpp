@@ -11,11 +11,15 @@ Server::Server()
 	for (UINT8 i = 0; i < MAX_PLAYER_COUNT; i++)
 	{
 		m_playersServer[i].playerId = i;
-		m_playersServer[i].position = DirectX::XMVectorSet(0, (float)i * 2.0f + 1.0f, 0, 0);
-		m_playersServer[i].rotation = DirectX::XMVectorSet(0, 0, 0, 0);
+		m_playersServer[i].matrix = {};
+	
 		m_holdPlayersUdp[i].playerId = i;
-		m_holdPlayersUdp[i].position = DirectX::XMVectorSet(0, (float)i * 2.0f + 1.0f, 0, 0);
-		m_holdPlayersUdp[i].rotation = DirectX::XMVectorSet(0, 0, 0, 0);
+		m_holdPlayersUdp[i].matrix = {};
+		m_holdPlayersUdp[i].jump  = FALSE;
+		m_holdPlayersUdp[i].shoot  = FALSE;
+		m_holdPlayersUdp[i].activateActiveItem  = FALSE;
+
+		
 		m_playerIds.at(i) = i;
 
 	}
