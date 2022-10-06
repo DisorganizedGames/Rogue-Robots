@@ -76,7 +76,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<AnimationComponent>(entity5).offset = 0;
 
 	m_entityManager.AddComponent<SphereColliderComponent>(entity3, entity3, 1.0f, true);
-	m_entityManager.AddComponent<CapsuleColliderComponent>(entity5, entity5, 1.0f, 1.0f, true);
+	m_entityManager.AddComponent<CapsuleColliderComponent>(entity5, entity5, 1.0f, 1.0f, false);
 	m_entityManager.AddComponent<BoxColliderComponent>(entity4, entity4, Vector3(1, 1, 1), true);
 	m_entityManager.AddComponent<MeshColliderComponent>(entity2, entity2, m_greenCube);
 	m_entityManager.AddComponent<RigidbodyComponent>(entity4, entity4);
