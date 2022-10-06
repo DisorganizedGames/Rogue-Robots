@@ -4,7 +4,9 @@
 #include <d2d1_3.h>
 #include <dwrite.h>
 #include <vector>
+#include <memory>
 #include "CommonIncludes_DX12.h"
+#include "Utilities/DX12DescriptorManager.h"
 #include "../d2dBackend.h"
 
 namespace DOG::gfx
@@ -40,9 +42,11 @@ namespace DOG::gfx
 		ComPtr<ID2D1SolidColorBrush> brush;
       ComPtr<IDWriteTextFormat> format, bformat;
 		ComPtr<ID3D12CommandAllocator> m_commandAllocators[2];
+		std::unique_ptr<DX12DescriptorManager> m_descriptorMgr;
 
 	private:
-      
+      u_int m_numBuffers;
+		DX12DescriptorChunk rtvHandle;
 
 	};
 }

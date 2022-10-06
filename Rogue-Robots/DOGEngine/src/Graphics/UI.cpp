@@ -17,7 +17,7 @@ UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HW
 
 UI::~UI()
 {
-   for (auto &&e : m_elements)
+   for (auto e : m_elements)
       delete e;
    
 }
@@ -160,13 +160,13 @@ UISplashScreen::UISplashScreen(DOG::gfx::D2DBackend_DX12& m_d2d, float width, fl
 
 void UISplashScreen::Draw(DOG::gfx::D2DBackend_DX12& m_d2d)
 {
-   m_d2d.m_2ddc->FillRectangle(m_background, m_splashBrush);
+   m_d2d.m_2ddc->FillRectangle(m_background, m_splashBrush.Get());
    m_d2d.m_2ddc->DrawTextW(
       m_text.c_str(),
       (UINT32)m_text.length(),
       m_d2d.format.Get(),
       &m_background,
-      m_textBrush);
+      m_textBrush.Get());
 }
 void UISplashScreen::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
 {
@@ -187,8 +187,7 @@ void UISplashScreen::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
 
 UISplashScreen::~UISplashScreen()
 {
-   m_textBrush->Release();
-   m_splashBrush->Release();
+
 }
 
 float easeOutCubic(float x)

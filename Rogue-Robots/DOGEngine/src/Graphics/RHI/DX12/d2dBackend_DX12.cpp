@@ -3,13 +3,15 @@
 
 #include "RenderDevice_DX12.h"
 #include "Swapchain_DX12.h"
+#include <memory>
 
 
-DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_int numBuffers, HWND hwnd) : rd(rd), sc(sc)
+DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_int numBuffers, HWND hwnd) : rd(rd), sc(sc), m_numBuffers(numBuffers)
 {
     // This is guaranteed since we have no other backends than DX12
     auto rd12 = (RenderDevice_DX12*)rd;
     auto sc12 = (Swapchain_DX12*)sc;
+    m_descriptorMgr = std::make_unique<DX12DescriptorManager>(rd12->GetDevice());
 
     m_renderTargets.resize(numBuffers);
     m_wrappedBackBuffers.resize(numBuffers);
@@ -61,14 +63,16 @@ DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
         dpi,
         dpi);
 
+
+
     {
-        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rd12->GetReservedRTV();
+        rtvHandle = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
         // Create a RTV, D2D render target, and a command allocator for each frame.
-        for (UINT n = 0; n < numBuffers; n++)
+        for (UINT n = 0; n < m_numBuffers; n++)
         {
             m_renderTargets[n] = sc12->GetD12Buffer((u8)n);
-            rd12->GetDevice()->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtvHandle);
+            rd12->GetDevice()->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtvHandle.cpu_handle(0));
 
             // Create a wrapped 11On12 resource of this back buffer. Since we are 
             // rendering all D3D12 content first and then all D2D content, we specify 
@@ -140,8 +144,8 @@ DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
 
 DOG::gfx::D2DBackend_DX12::~D2DBackend_DX12()
 {
-    
-    
+    m_descriptorMgr->free(&rtvHandle);
+
 }
 
 void DOG::gfx::D2DBackend_DX12::BeginFrame()

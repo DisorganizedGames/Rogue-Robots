@@ -45,7 +45,7 @@ namespace DOG::gfx
 		m_rd = m_backend->CreateDevice();
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
 		m_imgui = std::make_unique<gfx::ImGUIBackend_DX12>(m_rd, m_sc, S_MAX_FIF);
-		//m_ui = std::make_unique<UI>(m_rd, m_sc, S_NUM_BACKBUFFERS, hwnd);
+		m_ui = std::make_unique<UI>(m_rd, m_sc, S_NUM_BACKBUFFERS, hwnd);
 		
 		m_sclr = std::make_unique<ShaderCompilerDXC>();
 
