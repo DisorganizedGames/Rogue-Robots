@@ -175,6 +175,27 @@ void EntityInterface::GetAction(DOG::LuaContext* context)
 		break;
 	}
 	
+}void EntityInterface::SetAction(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	int action = context->GetInteger();
+	bool active = context->GetBoolean();
+	InputController& input = EntityManager::Get().GetComponent<InputController>(e);
+	switch (action)
+	{
+	case 1:
+		input.shoot = active;
+		break;
+	case 2:
+		input.jump = active;
+		break;
+	case 3:
+		input.activateActiveItem = active;
+		break;
+	default:
+		break;
+	}
+	
 }
 
 void EntityInterface::GetTransformScaleData(LuaContext* context)

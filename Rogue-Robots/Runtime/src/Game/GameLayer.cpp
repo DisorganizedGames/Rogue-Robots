@@ -45,10 +45,6 @@ GameLayer::GameLayer() noexcept
 		m_entityManager.AddComponent<ModelComponent>(zAxis, m_shapes[11]);
 		m_entityManager.AddComponent<TransformComponent>(zAxis, Vector3(0, 0, 0), Vector3(DirectX::XM_PIDIV2, 0, 0), Vector3(0.02f, 100, 0.02f));
 	}
-	entity entity1 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelComponent>(entity1, m_redCube);
-	m_entityManager.AddComponent<TransformComponent>(entity1, Vector3(4, 2, -5), Vector3(0.1f, 0, 0));
-	m_entityManager.AddComponent<NetworkPlayerComponent>(entity1).playerId = 0;
 
 	// Temporary solution to not have the entity manager crash on audio system
 	entity testAudio = m_entityManager.CreateEntity();
@@ -119,7 +115,7 @@ GameLayer::GameLayer() noexcept
 
 	entity Player2 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(Player2, m_redCube);
-	m_entityManager.AddComponent<TransformComponent>(Player2, Vector3(0, 10, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
+	m_entityManager.AddComponent<TransformComponent>(Player2, Vector3(0, 0, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
 	m_entityManager.AddComponent<NetworkPlayerComponent>(Player2).playerId = 1;
 	m_entityManager.AddComponent<InputController>(Player2);
 	m_entityManager.AddComponent<OnlinePlayer>(Player2);
@@ -127,19 +123,20 @@ GameLayer::GameLayer() noexcept
 
 	entity Player3 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(Player3, m_blueCube);
-	m_entityManager.AddComponent<TransformComponent>(Player3, Vector3(0, 20, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
+	m_entityManager.AddComponent<TransformComponent>(Player3, Vector3(0, 0, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
 	m_entityManager.AddComponent<NetworkPlayerComponent>(Player3).playerId = 2;
 	m_entityManager.AddComponent<InputController>(Player3);
 	m_entityManager.AddComponent<OnlinePlayer>(Player3);
 	scriptManager->AddScript(Player3, "Gun.lua");
-
+	
 	entity Player4 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(Player4, m_magentaCube);
-	m_entityManager.AddComponent<TransformComponent>(Player4, Vector3(0, 30, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
+	m_entityManager.AddComponent<TransformComponent>(Player4, Vector3(0, 0, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
 	m_entityManager.AddComponent<NetworkPlayerComponent>(Player4).playerId = 3;
 	m_entityManager.AddComponent<InputController>(Player4);
 	m_entityManager.AddComponent<OnlinePlayer>(Player4);
 	scriptManager->AddScript(Player4, "Gun.lua");
+
 }
 
 
@@ -261,6 +258,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetForward>("GetForward");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetRight>("GetRight");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAction>("GetAction");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetAction>("SetAction");
 
 	global->SetLuaInterface(luaInterface);
 
@@ -375,10 +373,9 @@ void GameLayer::Input(DOG::Key key)
 				inputC.down = true;
 			if (key == DOG::Key::Spacebar)
 				inputC.up = true;
-			if (key == DOG::Key::Spacebar)
-				inputC.jump = true;
-			if (key == DOG::Key::F)
-				inputC.activateActiveItem = true;
+			if (key == DOG::Key::Q)
+				inputC.jump = !inputC.jump;
+
 	});
 }
 
@@ -398,10 +395,6 @@ void GameLayer::Release(DOG::Key key)
 				inputC.down = false;
 			if (key == DOG::Key::Spacebar)
 				inputC.up = false;
-			if (key == DOG::Key::Spacebar)
-				inputC.jump = false;
-			if (key == DOG::Key::F)
-				inputC.activateActiveItem = false;
 		});
 }
 

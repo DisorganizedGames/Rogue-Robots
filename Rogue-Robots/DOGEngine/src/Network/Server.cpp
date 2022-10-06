@@ -4,7 +4,7 @@ using namespace DOG;
 
 Server::Server()
 {
-	m_gameAlive = FALSE;
+	m_gameAlive = false;
 	m_playerIds.resize(MAX_PLAYER_COUNT);
 	m_outputUdp.nrOfEntites = 0;
 	m_outputUdp.udpId = 0;
@@ -15,9 +15,9 @@ Server::Server()
 	
 		m_holdPlayersUdp[i].playerId = i;
 		m_holdPlayersUdp[i].matrix = {};
-		m_holdPlayersUdp[i].jump  = FALSE;
-		m_holdPlayersUdp[i].shoot  = FALSE;
-		m_holdPlayersUdp[i].activateActiveItem  = FALSE;
+		m_holdPlayersUdp[i].jump  = false;
+		m_holdPlayersUdp[i].shoot  = false;
+		m_holdPlayersUdp[i].activateActiveItem  = false;
 
 		
 		m_playerIds.at(i) = i;

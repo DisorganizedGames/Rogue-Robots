@@ -92,6 +92,8 @@ public:
 	void GetRight(DOG::LuaContext* context);
 
 	void GetAction(DOG::LuaContext* context);
+	
+	void SetAction(DOG::LuaContext* context);
 
 private:
 	void AddModel(DOG::LuaContext* context, DOG::entity e);

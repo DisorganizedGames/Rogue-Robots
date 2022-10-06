@@ -35,21 +35,25 @@ NetCode::~NetCode()
 
 void NetCode::OnUpdate()
 {
-
+	EntityManager::Get().Collect<ThisPlayer, TransformComponent>().Do([&](ThisPlayer&, TransformComponent& transC)
+	{
+				AddMatrixTcp(transC.worldMatrix);
+				AddMatrixUdp(transC.worldMatrix);
+	});
 	if (m_active)
 	{
 
 		if (m_startUp == TRUE)
 		{
 
-			EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, TransformComponent, ModelComponent>().Do([&](NetworkPlayerComponent& networkC, ThisPlayer&, TransformComponent& transC, ModelComponent&)
+			EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, TransformComponent>().Do([&](NetworkPlayerComponent& networkC, ThisPlayer&, TransformComponent& transC)
 				{
 					transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
 					networkC.playerId = m_inputTcp.playerId;
 					//modelC.id = ;
 
 				});
-			EntityManager::Get().Collect<NetworkPlayerComponent, TransformComponent, ModelComponent>().Do([&](NetworkPlayerComponent& networkC, TransformComponent& transC, ModelComponent&)
+			EntityManager::Get().Collect<NetworkPlayerComponent, TransformComponent>().Do([&](NetworkPlayerComponent& networkC, TransformComponent& transC)
 				{
 					if (networkC.playerId == m_inputTcp.playerId) // todo
 					{
@@ -62,15 +66,20 @@ void NetCode::OnUpdate()
 			m_startUp = false;
 		}
 
-		EntityManager::Get().Collect<ThisPlayer, TransformComponent>().Do([&](ThisPlayer&, TransformComponent& transC)
+		EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, InputController>().Do([&](NetworkPlayerComponent& networkC, ThisPlayer&, InputController& inputC)
 			{
-				AddMatrixTcp(transC.worldMatrix);
-				AddMatrixUdp(transC.worldMatrix);
+				m_playerInputUdp.shoot = inputC.shoot;
+				m_playerInputUdp.jump = inputC.jump;
+				m_playerInputUdp.activateActiveItem = inputC.activateActiveItem;
+
+				//modelC.id = ;
+
 			});
 
 		EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent, InputController, OnlinePlayer>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&)
 			{
 				transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].matrix;
+				transformC.SetScale(DirectX::SimpleMath::Vector3(0.5f, 0.5f, 0.5f));
 				inputC.shoot = m_outputUdp.m_holdplayersUdp[networkC.playerId].shoot;
 				inputC.jump = m_outputUdp.m_holdplayersUdp[networkC.playerId].jump;
 				inputC.activateActiveItem = m_outputUdp.m_holdplayersUdp[networkC.playerId].activateActiveItem;
@@ -105,7 +114,7 @@ void NetCode::Recive()
 					m_inputTcp.playerId = m_client.ConnectTcpServer(ip);
 					if (m_inputTcp.playerId > -1)
 					{
-						
+						m_client.SendTcp(m_inputTcp);
 						m_outputTcp = m_client.ReciveTcp();
 						start = TRUE;
 					}
@@ -147,8 +156,10 @@ void NetCode::Recive()
 			break;
 		}
 		if (start == FALSE)
+		{
 			std::cout << "Failed input, try agiain" << std::endl;
-		fseek(stdin, 0, SEEK_END);
+			fseek(stdin, 0, SEEK_END);
+		}
 	}
 	m_threadUdp = std::thread(&NetCode::ReciveUdp, this);
 	if (m_netCodeAlive)
@@ -165,12 +176,14 @@ void NetCode::Recive()
 			m_client.SendTcp(m_inputTcp);
 			m_mut.unlock();
 			m_outputTcp = m_client.ReciveTcp();
+
 		}
 	}
 }
 
 void NetCode::ReciveUdp()
 {
+	m_playerInputUdp.playerId = m_inputTcp.playerId;
 	while (m_netCodeAlive)
 	{
 		m_mut.lock();
