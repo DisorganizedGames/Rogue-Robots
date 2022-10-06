@@ -34,26 +34,28 @@ namespace DOG
 		btDefaultMotionState* motionState = nullptr;
 		CollisionShapeHandle collisionShapeHandle;
 		bool dynamic = false;
+		entity rigidbodyEntity;
 	};
 
 	struct RigidbodyCollisionData
 	{
 		bool collisionCheck = false;
 		bool activeCollision = false;
+		RigidbodyHandle rigidbodyHandle;
 	};
 
 	struct RigidbodyComponent
 	{
 		RigidbodyComponent(entity entity);
 
-		void SetOnCollisionEnter(std::function<void()> onCollisionEnter);
-		void SetOnCollisionExit(std::function<void()> onCollisionExit);
+		void SetOnCollisionEnter(std::function<void(entity, entity)> onCollisionEnter);
+		void SetOnCollisionExit(std::function<void(entity, entity)> onCollisionExit);
 		void ConstrainRotation(bool constrainXRotation, bool constrainYRotation, bool constrainZRotation);
 		void ConstrainPosition(bool constrainXPosition, bool constrainYPosition, bool constrainZPosition);
 
 		RigidbodyHandle rigidbodyHandle;
-		std::function<void()> onCollisionEnter = nullptr;
-		std::function<void()> onCollisionExit = nullptr;
+		std::function<void(entity, entity)> onCollisionEnter = nullptr;
+		std::function<void(entity, entity)> onCollisionExit = nullptr;
 	};
 
 	struct BoxColliderComponent

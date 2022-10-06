@@ -25,14 +25,19 @@ namespace DOG
 		virtual btScalar addSingleResult(btManifoldPoint&, const btCollisionObjectWrapper* colObj0Wrap, int, int,
 			const btCollisionObjectWrapper* colObj1Wrap, int, int)
 		{
+			//Get rigidobdy handles
+			const u32 byteShift = 4;
+			u64 obj0RigidbodyHandle = (colObj0Wrap->getCollisionObject()->getUserIndex2() << byteShift) | colObj0Wrap->getCollisionObject()->getUserIndex();
+			u64 obj1RigidbodyHandle = (colObj1Wrap->getCollisionObject()->getUserIndex2() << byteShift) | colObj1Wrap->getCollisionObject()->getUserIndex();
+
 			//Get handle for obj0
-			u32 obj0handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot((u64)colObj0Wrap->getCollisionObject()->getUserIndex());
+			u32 obj0handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(obj0RigidbodyHandle);
 
 			//Get the collisionKeeper for obj0
 			auto collisions = PhysicsEngine::s_physicsEngine.m_rigidbodyCollision.find(obj0handle);
 
 			//Get handle for obj1
-			u32 obj1Handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot((u64)colObj1Wrap->getCollisionObject()->getUserIndex());
+			u32 obj1Handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(obj1RigidbodyHandle);
 
 			//Check if obj1 exist in the collisionKeeper if it does then we set the collisionCheck true
 			auto obj1Collision = collisions->second.find(obj1Handle);
@@ -46,6 +51,9 @@ namespace DOG
 				RigidbodyCollisionData collisionData;
 				collisionData.activeCollision = false;
 				collisionData.collisionCheck = true;
+				RigidbodyHandle handle;
+				handle.handle = obj1RigidbodyHandle;
+				collisionData.rigidbodyHandle = handle;
 				collisions->second.insert({obj1Handle, collisionData});
 			}
 
@@ -189,13 +197,17 @@ namespace DOG
 						{
 							it.second.collisionCheck = false;
 
+							//Get RigidbodyColliderData to get the corresponding entities
+							RigidbodyColliderData* obj0RigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(rigidbody.rigidbodyHandle);
+							RigidbodyColliderData* obj1RigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(it.second.rigidbodyHandle);
+
 							if (it.second.activeCollision && rigidbody.onCollisionEnter != nullptr)
-								rigidbody.onCollisionEnter();
+								rigidbody.onCollisionEnter(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
 
 							if (!it.second.activeCollision)
 							{
 								if (rigidbody.onCollisionExit != nullptr)
-									rigidbody.onCollisionExit();
+									rigidbody.onCollisionExit(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
 
 								//Remove the collision because we do not need to keep track of it anymore
 								collisions->second.erase(it.first);
@@ -222,6 +234,9 @@ namespace DOG
 
 	RigidbodyHandle PhysicsEngine::AddRigidbody(entity entity, RigidbodyColliderData& rigidbodyColliderData, bool dynamic, float mass)
 	{
+		//Set rigidody entity
+		rigidbodyColliderData.rigidbodyEntity = entity;
+
 		TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(entity);
 
 		//Copy entity transform
@@ -255,10 +270,14 @@ namespace DOG
 		RigidbodyHandle rigidbodyHandle = PhysicsEngine::AddRigidbodyColliderData(std::move(rigidbodyColliderData));
 
 		RigidbodyColliderData* pointerToRCD= PhysicsEngine::GetRigidbodyColliderData(rigidbodyHandle);
-		//Asserts when we have more rigidbodies then UINT32_MAX, can fix this later if needed
-		assert(rigidbodyHandle.handle < UINT32_MAX);
+
 		//Sets the handle for collision detection later
-		pointerToRCD->rigidBody->setUserIndex((u32)rigidbodyHandle.handle);
+		const u64 bitMask = 0x0000FFFF;
+		const u32 byteShift = 4;
+		u32 userIndex1 = (u32)(rigidbodyHandle.handle & bitMask);
+		u32 userIndex2 = (u32)((rigidbodyHandle.handle >> byteShift) & bitMask);
+		pointerToRCD->rigidBody->setUserIndex(userIndex1);
+		pointerToRCD->rigidBody->setUserIndex2(userIndex2);
 
 		return rigidbodyHandle;
 	}
@@ -389,12 +408,12 @@ namespace DOG
 		PhysicsEngine::s_physicsEngine.m_rigidbodyCollision.insert({ handle, {} });
 	}
 
-	void RigidbodyComponent::SetOnCollisionEnter(std::function<void()> inOnCollisionEnter)
+	void RigidbodyComponent::SetOnCollisionEnter(std::function<void(entity, entity)> inOnCollisionEnter)
 	{
 		onCollisionEnter = inOnCollisionEnter;
 	}
 
-	void RigidbodyComponent::SetOnCollisionExit(std::function<void()> inOnCollisionExit)
+	void RigidbodyComponent::SetOnCollisionExit(std::function<void(entity, entity)> inOnCollisionExit)
 	{
 		onCollisionExit = inOnCollisionExit;
 	}

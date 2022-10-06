@@ -84,8 +84,8 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<BoxColliderComponent>(entity4, entity4, Vector3(1, 1, 1), true);
 	m_entityManager.AddComponent<MeshColliderComponent>(entity2, entity2, m_greenCube);
 	RigidbodyComponent& rigidbodyComponent = m_entityManager.AddComponent<RigidbodyComponent>(entity4, entity4);
-	rigidbodyComponent.SetOnCollisionEnter([&]() {std::cout << "Enter Hello\n"; });
-	rigidbodyComponent.SetOnCollisionExit([&]() {std::cout << "Exit Hello\n"; });
+	//rigidbodyComponent.SetOnCollisionEnter([&](entity ent1, entity ent2) {std::cout << ent1 << " " << ent2 << " Enter Hello\n"; });
+	//rigidbodyComponent.SetOnCollisionExit([&](entity ent1, entity ent2) {std::cout << ent1 << " " << ent2 << " Exit Hello\n"; });
 
 	/*m_entityManager.GetComponent<RigidbodyComponent>(entity4).ConstrainPosition(true, false, true);*/
 	//m_entityManager.GetComponent<RigidbodyComponent>(entity4).ConstrainRotation(false, true, true);
