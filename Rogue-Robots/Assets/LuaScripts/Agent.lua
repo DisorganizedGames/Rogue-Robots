@@ -33,6 +33,25 @@ function Agent:doBehavior()
 	end
 end
 
+
+local idle = ObjectManager:CreateObject()
+function idle:OnUpdate()
+	return true
+end
+
+local death = ObjectManager:CreateObject()
+function death:OnUpdate()
+	if rot.x < 3.1415 then
+		rot.x = rot.x + 3.1415 * DeltaTime
+		Entity:ModifyComponent(EntityID, "Transform", rot, 2)
+	else
+		pos.y = pos.y - 1.0 * DeltaTime
+		Entity:ModifyComponent(EntityID, "Transform", pos, 1)
+	end
+	return pos.y > 0.0
+end
+
+
 local default = ObjectManager:CreateObject()
 default.target = 1
 default.checkpoints = {
@@ -43,7 +62,6 @@ default.checkpoints = {
 	Vector3.new(23.0, 2.3, 11.2),
 	Vector3.new(18.0, 2.3, 9.2),
 }
-
 function default:OnUpdate()
 	local dir = self.checkpoints[self.target] - pos;
 	local len = Length(dir)
@@ -55,8 +73,9 @@ function default:OnUpdate()
 		self.target = self.target % #self.checkpoints + 1
 		--print("Switching target: " .. prev .. " --> " .. self.target .. ": ", self.checkpoints[prev], self.checkpoints[self.target])
 	end
+	--agentStats.hp = agentStats.hp - 15.0 * DeltaTime  --death timer...
 	Entity:ModifyComponent(EntityID, "Transform", pos, 1)
-	return true
+	return agentStats.hp > 0.0
 end
 
 --In future move to more specific Agent script
@@ -67,7 +86,7 @@ function OnStart()
 	Agent.transform = Entity:AddComponent(EntityID, "Transform", pos, rot, scale)	--Probably move this to C++ Agent()
 	Agent.transform = Entity:AddComponent(EntityID, "Model", Agent.model)
 	
-	Agent.behaviorStack = {default}
+	Agent.behaviorStack = {idle, death, default}
 end
 
 function OnUpdate()
