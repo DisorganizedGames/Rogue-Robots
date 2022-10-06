@@ -35,6 +35,11 @@ Vector3 = {
 	-- Vector-scalar multiplication
 	__mul = function(vec, scalar)
 		return Vector3.new(scalar * vec.x, scalar * vec.y, scalar * vec.z)
+	end,
+
+	-- Stringify
+	__tostring = function(vec)
+		return "(" .. vec.x .. ", " .. vec.y .. ", " .. vec.z .. ")"
 	end
 }
 
@@ -51,6 +56,16 @@ end
 -- Scale vector v by scalar s
 function Scale(v, s)
 	return v * s
+end
+
+-- Length of vector v
+function Length(v)
+	return math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z)
+end
+
+-- Normalize vector v
+function Norm(v)
+	return Vector3.new(v.x, v.y, v.z) * (1/Length(v))
 end
 
 function QuatMul(q, p)
