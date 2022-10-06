@@ -10,10 +10,11 @@ struct VS_OUT
 
 struct PerFrameData
 {
-    matrix world;
-    matrix view;
-    matrix proj;
-    float3 camPos;
+    matrix viewMatrix;
+    matrix projMatrix;
+    matrix invProjMatrix;
+    float4 camPos;
+    float time;
 };
 
 struct MaterialElement
@@ -29,21 +30,37 @@ struct MaterialElement
     float roughnessFactor;
 };
 
-struct PushConstantElement
+struct GlobalData
 {
-    uint perFrameCB;
+    uint meshTableSubmeshMD;
+    uint meshTablePos;
+    uint meshTableUV;
+    uint meshTableNor;
+    uint meshTableTan;
+
+    uint meshTableBlend;
+    
+    uint perFrameTable;
+
+    uint materialTable;
+};
+
+
+struct PerDrawData
+{
+    matrix world;
+    matrix joints[130];
     
     uint submeshID;
-    
-    uint submeshTable;
-    uint posTable;
-    uint uvTable;
-    uint norTable;
-    uint tanTable;
-    uint blendTable;
+    uint materialID;
+};
 
-    uint matTable;
-    uint matID;
+struct PushConstantElement
+{
+    uint gdDescriptor;
+    uint perFrameOffset;
+    
+    uint perDrawCB;
 };
 
 ConstantBuffer<PushConstantElement> constants : register(b0, space0);
@@ -55,17 +72,23 @@ float DistributionGGX(float3 N, float3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(float3 N, float3 V, float3 L, float roughness);
 float3 FresnelSchlick(float cosTheta, float3 F0);
-
 float3 GetFinalNormal(uint normalId, float3 tangent, float3 bitangent, float3 inputNormal, float2 uv);
 
 static const float PI = 3.1415f;
-
 static const float NO_TEXTURE = 0xffffffff;
 
 float4 main(VS_OUT input) : SV_TARGET
-{
-    StructuredBuffer<MaterialElement> mats = ResourceDescriptorHeap[constants.matTable];
-    MaterialElement mat = mats[constants.matID];
+{    
+    ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[constants.perDrawCB];
+    
+    StructuredBuffer<GlobalData> gds = ResourceDescriptorHeap[constants.gdDescriptor];
+    GlobalData gd = gds[0];
+    
+    StructuredBuffer<PerFrameData> pfDatas = ResourceDescriptorHeap[gd.perFrameTable];
+    PerFrameData pfData = pfDatas[constants.perFrameOffset];
+    
+    StructuredBuffer<MaterialElement> mats = ResourceDescriptorHeap[gd.materialTable];
+    MaterialElement mat = mats[perDrawData.materialID];
 
     float4 albedoInput4 = mat.albedoFactor;
     float albedoAlpha = albedoInput4.w;
@@ -95,7 +118,6 @@ float4 main(VS_OUT input) : SV_TARGET
         N = normalize(GetFinalNormal(mat.normal, normalize(input.tan), normalize(input.bitan), normalize(input.nor), input.uv));
     }
     
-    ConstantBuffer<PerFrameData> pfData = ResourceDescriptorHeap[constants.perFrameCB];
     float3 camPos = pfData.camPos;
     
     float3 amb = 0.03f * albedoInput;

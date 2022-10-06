@@ -916,7 +916,7 @@ namespace DOG::gfx
 	{
 		HRESULT hr{ S_OK };
 
-		const u8 num_constants = 9;
+		const u8 num_constants = 14;
 
 		std::vector<D3D12_ROOT_PARAMETER> params;
 		D3D12_ROOT_PARAMETER param{};

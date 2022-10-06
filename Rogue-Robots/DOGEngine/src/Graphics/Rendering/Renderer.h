@@ -2,6 +2,8 @@
 #include "../../Core/Types/GraphicsTypes.h"
 #include "../RHI/RenderResourceHandles.h"
 #include "../../Core/AnimationManager.h"
+#include "GPUTable.h"
+
 namespace DOG::gfx
 {
 	class RenderBackend;
@@ -98,6 +100,7 @@ namespace DOG::gfx
 
 		std::unique_ptr<GPUGarbageBin> m_bin;
 		std::unique_ptr<UploadContext> m_uploadCtx;
+		std::unique_ptr<UploadContext> m_perFrameUploadCtx;
 		std::unique_ptr<UploadContext> m_texUploadCtx;
 
 		// Ring-buffered dynamic constant allocator (allocate, use, and forget)
@@ -125,5 +128,54 @@ namespace DOG::gfx
 
 		//TMP
 		std::unique_ptr<AnimationManager> m_boneJourno;
+
+
+
+
+
+
+
+		// Per Frame data
+		struct PerFrameData
+		{
+			DirectX::SimpleMath::Matrix viewMatrix;
+			DirectX::SimpleMath::Matrix projMatrix;
+			DirectX::SimpleMath::Matrix invProjMatrix;
+			DirectX::SimpleMath::Vector4 camPos;
+			
+			f32 time{ 0.f };
+		} m_pfData;
+		struct PfDataHandle { friend class TypedHandlePool; u64 handle{ 0 }; };
+		std::unique_ptr<GPUTableDeviceLocal<PfDataHandle>> m_pfDataTable;
+		PfDataHandle m_pfHandle;
+		u32 m_currPfOffset{ 0 };
+
+		// Global data
+		struct GlobalData
+		{
+			// Mesh
+			u32 meshTableSubmeshMD{ 0 };
+			u32 meshTablePos{ 0 };
+			u32 meshTableUV{ 0 };
+			u32 meshTableNor{ 0 };
+			u32 meshTableTan{ 0 };
+
+			// ..
+			u32 meshTableBlend{ 0 };
+
+			// Per Frame table
+			u32 perFrameTable;
+
+			// Material
+			u32 materialTable{ 0 };
+		} m_globalData;
+		struct GlobalDataHandle{
+			friend class TypedHandlePool; 
+			u64 handle{ 0 };
+		};
+		std::unique_ptr<GPUTableDeviceLocal<GlobalDataHandle>> m_globalDataTable;
+		GlobalDataHandle m_gdHandle;
+		u32 m_gdDescriptor{ 0 };
+
 	};
 }

@@ -48,8 +48,13 @@ namespace DOG::gfx
 		m_uploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, S_MAX_FIF);
 		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeTextures, S_MAX_FIF);
 
+		// For internal per frame management
+		const u32 maxUploadPerFrame = 512'000;
+		m_perFrameUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadPerFrame, S_MAX_FIF);
 
-		const u32 maxConstantsPerFrame = 500 * 32;
+
+
+		const u32 maxConstantsPerFrame = 33 * 5000 * S_MAX_FIF;
 		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), maxConstantsPerFrame);
 		m_cmdl = m_rd->AllocateCommandList();
 
@@ -58,6 +63,7 @@ namespace DOG::gfx
 		const u32 maxBytesPerAttribute = 4'000'000;
 		const u32 maxNumberOfIndices = 1'000'000;
 		const u32 maxTotalSubmeshes = 500;
+		const u32 maxMaterialArgs = 1000;
 
 		spec.maxSizePerAttribute[VertexAttribute::Position] = maxBytesPerAttribute;
 		spec.maxSizePerAttribute[VertexAttribute::UV] = maxBytesPerAttribute;
@@ -69,7 +75,7 @@ namespace DOG::gfx
 		m_globalMeshTable = std::make_unique<MeshTable>(m_rd, m_bin.get(), spec);
 
 		MaterialTable::MemorySpecification memSpec{};
-		memSpec.maxElements = 500;	// 500 distinct materials
+		memSpec.maxElements = maxMaterialArgs;
 		m_globalMaterialTable = std::make_unique<MaterialTable>(m_rd, m_bin.get(), memSpec);
 
 		// Create builder for users to create graphical objects supported by the renderer
@@ -93,8 +99,6 @@ namespace DOG::gfx
 			.SetShader(fullscreenTriVS.get())
 			.SetShader(blitPS.get())
 			.AppendRTFormat(m_sc->GetBufferFormat())
-			//.SetDepthFormat(DepthFormat::D32)
-			//.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
 
 		auto meshVS = m_sclr->CompileFromFile("MainVS.hlsl", ShaderType::Vertex);
@@ -121,8 +125,26 @@ namespace DOG::gfx
 		auto testCS = m_sclr->CompileFromFile("TestComputeCS.hlsl", ShaderType::Compute);
 		m_testCompPipe = m_rd->CreateComputePipeline(ComputePipelineDesc(testCS.get()));
 
-		
 
+		// Setup per frame
+		m_pfDataTable = std::make_unique<GPUTableDeviceLocal<PfDataHandle>>(m_rd, m_bin.get(), sizeof(PerFrameData), S_MAX_FIF + 1, false);
+		m_pfHandle = m_pfDataTable->Allocate(1, &m_pfData);
+
+
+		// Setup persistent renderer data
+		m_globalData.meshTableSubmeshMD = m_globalMeshTable->GetSubmeshDescriptor();
+		m_globalData.meshTablePos = m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Position);
+		m_globalData.meshTableUV = m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::UV);
+		m_globalData.meshTableNor = m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Normal);
+		m_globalData.meshTableTan = m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Tangent);
+		m_globalData.meshTableBlend = m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::BlendData);
+		m_globalData.perFrameTable = m_pfDataTable->GetGlobalDescriptor();
+		m_globalData.materialTable = m_globalMaterialTable->GetDescriptor();
+
+		m_globalDataTable = std::make_unique<GPUTableDeviceLocal<GlobalDataHandle>>(m_rd, m_bin.get(), sizeof(GlobalData), 1, false);
+		m_gdHandle = m_globalDataTable->Allocate(1, &m_globalData);
+		m_globalDataTable->SendCopyRequests(*m_uploadCtx);
+		m_gdDescriptor = m_globalDataTable->GetGlobalDescriptor();
 	}
 
 	Renderer::~Renderer()
@@ -162,18 +184,45 @@ namespace DOG::gfx
 	}
 
 
-	void Renderer::Update(f32)
+	void Renderer::Update(f32 dt)
 	{
 		m_boneJourno->UpdateJoints();
+
+
+		// Update per frame data
+		{
+			m_pfData.viewMatrix = m_viewMat;
+			m_pfData.projMatrix = m_projMat;
+			m_pfData.projMatrix.Invert(m_pfData.invProjMatrix);
+			m_pfData.time += dt;
+
+			// Get camera position
+			DirectX::XMVECTOR tmp;
+			auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
+			auto pos = invVm.r[3];
+			DirectX::XMFLOAT3 posFloat3;
+			DirectX::XMStoreFloat3(&posFloat3, pos);
+			m_pfData.camPos = { posFloat3.x, posFloat3.y, posFloat3.z, 0.0f };
+
+			m_pfDataTable->RequestUpdate(m_pfHandle, &m_pfData, sizeof(m_pfData));
+			m_pfDataTable->SendCopyRequests(*m_perFrameUploadCtx);
+
+			// Get offset after update
+			m_currPfOffset = m_pfDataTable->GetLocalOffset(m_pfHandle);
+		}
 	}
 
 	void Renderer::Render(f32)
 	{
 		ZoneNamedN(RenderScope, "Render", true);
 
+		// Resolve any per frame copies from CPU
+		m_perFrameUploadCtx->SubmitCopies();
+
 
 		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
 		auto& rg = *m_rg;
+
 		// Forward pass to HDR
 		{
 			struct PassData {};
@@ -200,42 +249,28 @@ namespace DOG::gfx
 					rd->Cmd_SetIndexBuffer(cmdl, m_globalMeshTable->GetIndexBuffer());
 					for (const auto& sub : m_submissions)
 					{
-						auto pfConstant = m_dynConstants->Allocate(32);
-						struct PerFrameData
+						struct PfData
 						{
-							DirectX::XMMATRIX world, view, proj;
-							DirectX::XMFLOAT4 camPos;
+							DirectX::XMMATRIX world;
 							DirectX::XMFLOAT4X4 joints[130];
-						} pfData{};
+							u32 globalSubmeshID;
+							u32 globalMaterialID;
+						} perDrawData{};
+						auto perDrawHandle = m_dynConstants->Allocate(std::ceilf(sizeof(PfData) / (float)256));
 
 						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); i++)
-							pfData.joints[i] = m_boneJourno->m_vsJoints[i];
+							perDrawData.joints[i] = m_boneJourno->m_vsJoints[i];
 
-						DirectX::XMVECTOR tmp;
-						auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
+						perDrawData.world = sub.world;
+						perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
+						perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
+						std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
 
-						auto pos = invVm.r[3];
-						DirectX::XMFLOAT3 posFloat3;
-						DirectX::XMStoreFloat3(&posFloat3, pos);
-						pfData.camPos = { posFloat3.x, posFloat3.y, posFloat3.z, 0.0f };
-
-						pfData.world = sub.world;
-						pfData.view = m_viewMat;
-						pfData.proj = m_projMat;
-						std::memcpy(pfConstant.memory, &pfData, sizeof(pfData));
 
 						auto args = ShaderArgs()
-							.AppendConstant(pfConstant.globalDescriptor)
-							.AppendConstant(m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh))
-							.AppendConstant(m_globalMeshTable->GetSubmeshDescriptor())
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Position))
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::UV))
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Normal))
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Tangent))
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::BlendData))
-							.AppendConstant(m_globalMaterialTable->GetDescriptor())
-							.AppendConstant(m_globalMaterialTable->GetMaterialIndex(sub.mat)
-							);
+							.AppendConstant(m_gdDescriptor)
+							.AppendConstant(m_currPfOffset)
+							.AppendConstant(perDrawHandle.globalDescriptor);
 
 						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
@@ -247,42 +282,31 @@ namespace DOG::gfx
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
 					for (const auto& sub : m_noCullSubmissions)
 					{
-						auto pfConstant = m_dynConstants->Allocate(32);
-						struct PerFrameData
+						struct PfData
 						{
-							DirectX::XMMATRIX world, view, proj;
-							DirectX::XMFLOAT4 camPos;
+							DirectX::XMMATRIX world;
 							DirectX::XMFLOAT4X4 joints[130];
-						} pfData{};
+							u32 globalSubmeshID;
+							u32 globalMaterialID;
+						} perDrawData{};
+						auto perDrawHandle = m_dynConstants->Allocate(std::ceilf(sizeof(PfData) / (float)256));
+
 
 						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); i++)
-							pfData.joints[i] = m_boneJourno->m_vsJoints[i];
+							perDrawData.joints[i] = m_boneJourno->m_vsJoints[i];
 
-						DirectX::XMVECTOR tmp;
-						auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
+						perDrawData.world = sub.world;
+						perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
+						perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
+						std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
 
-						auto pos = invVm.r[3];
-						DirectX::XMFLOAT3 posFloat3;
-						DirectX::XMStoreFloat3(&posFloat3, pos);
-						pfData.camPos = { posFloat3.x, posFloat3.y, posFloat3.z, 0.0f };
 
-						pfData.world = sub.world;
-						pfData.view = m_viewMat;
-						pfData.proj = m_projMat;
-						std::memcpy(pfConstant.memory, &pfData, sizeof(pfData));
+
 
 						auto args = ShaderArgs()
-							.AppendConstant(pfConstant.globalDescriptor)
-							.AppendConstant(m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh))
-							.AppendConstant(m_globalMeshTable->GetSubmeshDescriptor())
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Position))
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::UV))
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Normal))
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Tangent))
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::BlendData))
-							.AppendConstant(m_globalMaterialTable->GetDescriptor())
-							.AppendConstant(m_globalMaterialTable->GetMaterialIndex(sub.mat)
-							);
+							.AppendConstant(m_gdDescriptor)
+							.AppendConstant(m_currPfOffset)
+							.AppendConstant(perDrawHandle.globalDescriptor);
 
 						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 

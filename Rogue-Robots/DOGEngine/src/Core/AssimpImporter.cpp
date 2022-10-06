@@ -383,6 +383,10 @@ namespace DOG
 			std::memcpy(m_loadedModel->mesh.vertexData[VertexAttribute::UV].data(), uvs.data(), uvs.size() * sizeof(uvs[0]));
 			std::memcpy(m_loadedModel->mesh.vertexData[VertexAttribute::Normal].data(), normals.data(), normals.size() * sizeof(normals[0]));
 			std::memcpy(m_loadedModel->mesh.vertexData[VertexAttribute::Tangent].data(), tangents.data(), tangents.size() * sizeof(tangents[0]));
+
+			assert(positions.size() == uvs.size());
+			assert(uvs.size() == normals.size());
+			assert(normals.size() == tangents.size());
 		}
 
 		// Sanity check

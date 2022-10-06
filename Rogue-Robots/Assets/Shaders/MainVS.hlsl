@@ -8,13 +8,38 @@ struct VS_OUT
     float3 wsPos : WS_POSITION;
 };
 
+struct GlobalData
+{
+    uint meshTableSubmeshMD;
+    uint meshTablePos;
+    uint meshTableUV;
+    uint meshTableNor;
+    uint meshTableTan;
+
+    uint meshTableBlend;
+    
+    uint perFrameTable;
+
+    uint materialTable;
+};
+
 struct PerFrameData
 {
-    matrix world;
-    matrix view;
-    matrix proj;
+    matrix viewMatrix;
+    matrix projMatrix;
+    matrix invProjMatrix;
     float4 camPos;
+    float time;
+};
+
+
+struct PerDrawData
+{
+    matrix world;
     matrix joints[130];
+    
+    uint submeshID;
+    uint materialID;
 };
 
 struct SubmeshMetadata
@@ -40,16 +65,11 @@ struct Blend
 
 struct PushConstantElement
 {
-    uint perFrameCB;
+    uint gdDescriptor;
+    uint perFrameOffset;
     
-    uint submeshID;
+    uint perDrawCB;
     
-    uint submeshTable;
-    uint posTable;
-    uint uvTable;
-    uint norTable;
-    uint tanTable;
-    uint blendTable;
 };
 ConstantBuffer<PushConstantElement> constants : register(b0, space0);
 
@@ -58,14 +78,25 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
 {
     VS_OUT output = (VS_OUT) 0;
     
-    StructuredBuffer<SubmeshMetadata> mds = ResourceDescriptorHeap[constants.submeshTable];
-    StructuredBuffer<float3> positions = ResourceDescriptorHeap[constants.posTable];
-    StructuredBuffer<float2> uvs = ResourceDescriptorHeap[constants.uvTable];
-    StructuredBuffer<float3> normals = ResourceDescriptorHeap[constants.norTable];
-    StructuredBuffer<float3> tangents = ResourceDescriptorHeap[constants.tanTable];
-    StructuredBuffer<Blend> blendData = ResourceDescriptorHeap[constants.blendTable];
+
     
-    SubmeshMetadata md = mds[constants.submeshID];
+    ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[constants.perDrawCB];
+    
+    StructuredBuffer<GlobalData> gds = ResourceDescriptorHeap[constants.gdDescriptor];
+    GlobalData gd = gds[0];
+    
+    StructuredBuffer<PerFrameData> pfDatas = ResourceDescriptorHeap[gd.perFrameTable];
+    PerFrameData pfData = pfDatas[constants.perFrameOffset];
+    
+    StructuredBuffer<SubmeshMetadata> mds = ResourceDescriptorHeap[gd.meshTableSubmeshMD];
+    StructuredBuffer<float3> positions = ResourceDescriptorHeap[gd.meshTablePos];
+    StructuredBuffer<float2> uvs = ResourceDescriptorHeap[gd.meshTableUV];
+    StructuredBuffer<float3> normals = ResourceDescriptorHeap[gd.meshTableNor];
+    StructuredBuffer<float3> tangents = ResourceDescriptorHeap[gd.meshTableNor];
+    StructuredBuffer<Blend> blendData = ResourceDescriptorHeap[gd.meshTableBlend];
+
+    
+    SubmeshMetadata md = mds[perDrawData.submeshID];
     Blend bw = blendData[vertexID + md.blendStart];
     vertexID += md.vertStart;
 
@@ -73,25 +104,22 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     float2 uv = uvs[vertexID];
     float3 nor = normals[vertexID];
     float3 tan = tangents[vertexID];
-    //float3 bitan = normalize(cross(nor, tan));  // not sure if this is correct-handed
-    float3 bitan = normalize(cross(tan, nor));  // not sure if this is correct-handed
-   
-    ConstantBuffer<PerFrameData> pfData = ResourceDescriptorHeap[constants.perFrameCB];
-
+    float3 bitan = normalize(cross(tan, nor));
+    
     if (md.blendCount > 0)
     {
-        matrix mat = pfData.joints[bw.iw[0].idx] * bw.iw[0].weight;
-        mat += pfData.joints[bw.iw[1].idx] * bw.iw[1].weight;
-        mat += pfData.joints[bw.iw[2].idx] * bw.iw[2].weight;
-        mat += pfData.joints[bw.iw[3].idx] * bw.iw[3].weight;
+        matrix mat = perDrawData.joints[bw.iw[0].idx] * bw.iw[0].weight;
+        mat += perDrawData.joints[bw.iw[1].idx] * bw.iw[1].weight;
+        mat += perDrawData.joints[bw.iw[2].idx] * bw.iw[2].weight;
+        mat += perDrawData.joints[bw.iw[3].idx] * bw.iw[3].weight;
         pos = (float3) mul(float4(pos, 1.0f), mat);
     }
     
-    output.wsPos = mul(pfData.world, float4(pos, 1.f)).xyz;
-    output.pos = mul(pfData.proj, mul(pfData.view, float4(output.wsPos, 1.f)));
+    output.wsPos = mul(perDrawData.world, float4(pos, 1.f)).xyz;
+    output.pos = mul(pfData.projMatrix, mul(pfData.viewMatrix, float4(output.wsPos, 1.f)));
 
-    output.nor = mul(pfData.world, float4(nor, 0.f)).xyz;
-    output.tan = mul(pfData.world, float4(tan, 0.f)).xyz;
+    output.nor = mul(perDrawData.world, float4(nor, 0.f)).xyz;
+    output.tan = mul(perDrawData.world, float4(tan, 0.f)).xyz;
     output.bitan = bitan;
     output.uv = uv;
  

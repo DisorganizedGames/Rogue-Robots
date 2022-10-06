@@ -20,7 +20,7 @@ namespace DOG::gfx
 	private:
 		struct Storage
 		{
-			GPVirtualAllocation alloc;					// Virtual allocation to element
+			GPVirtualAllocation alloc;			// Virtual allocation to element
 			u64 elementOffset{ 0 };				// Offset in DataType strides
 		};
 
