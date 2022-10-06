@@ -32,8 +32,9 @@ local bulletTemplate = {
 }
 
 --Non-tweakable
-local gunModel = 0
+local gunModel = nil
 local bulletModel = nil
+local gunShotSound = nil
 local bullets = {}
 local shootTimer = 0.0
 
@@ -46,6 +47,7 @@ local gunEntity = {
 function OnStart()
 	gunModel = Asset:LoadModel("Assets/Rifle/scene.gltf")
 	bulletModel = Asset:LoadModel("Assets/556x45_bullet.fbx")
+	gunShotSound = Asset:LoadAudio("Assets/Audio/TestShoot.wav")
 
 	-- Initialize the gun view model entity
 	gunID = Entity:CreateEntity()
@@ -108,6 +110,7 @@ end
 function NormalBulletSpawn(bullet)
 	Entity:AddComponent(bullet.entity, "Model", bulletModel)
 	Entity:AddComponent(bullet.entity, "Network")
+	Entity:AddComponent(bullet.entity, "Audio", gunShotSound, true)
 end
 
 --If there is no barrel component update.
