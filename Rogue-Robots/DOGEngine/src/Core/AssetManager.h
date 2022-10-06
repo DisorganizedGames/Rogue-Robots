@@ -10,6 +10,12 @@
 namespace DOG
 {
 	
+	struct AssetFlags
+	{
+		AssetLoadFlag loadFlag;
+		AssetUnLoadFlag unloadFlag;
+		AssetStateFlag stateFlag;
+	};
 
 	namespace gfx
 	{
@@ -58,7 +64,7 @@ namespace DOG
 			}
 		}
 
-		AssetLoadFlag GetAssetFlags(u32 id) const;
+		AssetFlags GetAssetFlags(u32 id) const;
 
 		void Update();
 

@@ -9,11 +9,65 @@ namespace DOG
 {
 	PhysicsEngine PhysicsEngine::s_physicsEngine;
 
+	struct BulletCollisionCallback : public btCollisionWorld::ContactResultCallback {
+
+		BulletCollisionCallback() : btCollisionWorld::ContactResultCallback() {}
+
+		//Keep this code here in case we need it for later
+		//virtual bool needsCollision(btBroadphaseProxy* proxy) const {
+		//	// superclass will check m_collisionFilterGroup and m_collisionFilterMask
+		//	if (!btCollisionWorld::ContactResultCallback::needsCollision(proxy))
+		//		return false;
+		//	// if passed filters, may also want to avoid contacts between constraints
+		//	return PhysicsEngine::GetRigidbodyColliderData(rigidbodyHandle)->rigidBody->checkCollideWithOverride(static_cast<btCollisionObject*>(proxy->m_clientObject));
+		//}
+
+		virtual btScalar addSingleResult(btManifoldPoint&, const btCollisionObjectWrapper* colObj0Wrap, int, int,
+			const btCollisionObjectWrapper* colObj1Wrap, int, int)
+		{
+			//Get rigidobdy handles
+			const u32 byteShift = 4;
+			u64 obj0RigidbodyHandle = (colObj0Wrap->getCollisionObject()->getUserIndex2() << byteShift) | colObj0Wrap->getCollisionObject()->getUserIndex();
+			u64 obj1RigidbodyHandle = (colObj1Wrap->getCollisionObject()->getUserIndex2() << byteShift) | colObj1Wrap->getCollisionObject()->getUserIndex();
+
+			//Get handle for obj0
+			u32 obj0handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(obj0RigidbodyHandle);
+
+			//Get the collisionKeeper for obj0
+			auto collisions = PhysicsEngine::s_physicsEngine.m_rigidbodyCollision.find(obj0handle);
+
+			//Get handle for obj1
+			u32 obj1Handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(obj1RigidbodyHandle);
+
+			//Check if obj1 exist in the collisionKeeper if it does then we set the collisionCheck true
+			auto obj1Collision = collisions->second.find(obj1Handle);
+			if (obj1Collision != collisions->second.end())
+			{
+				obj1Collision->second.collisionCheck = true;
+			}
+			else
+			{
+				//Add new collision to the collisionKeeper
+				RigidbodyCollisionData collisionData;
+				collisionData.activeCollision = false;
+				collisionData.collisionCheck = true;
+				RigidbodyHandle handle;
+				handle.handle = obj1RigidbodyHandle;
+				collisionData.rigidbodyHandle = handle;
+				collisions->second.insert({obj1Handle, collisionData});
+			}
+
+			return 0;
+		}
+	};
+
 	PhysicsEngine::PhysicsEngine()
 	{
 		m_rigidBodyColliderDatas.resize(PhysicsEngine::RESIZE_RIGIDBODY_SIZE);
 
 		m_collisionShapes.resize(PhysicsEngine::RESIZE_COLLISIONSHAPE_SIZE);
+
+		m_collisionCallback = std::make_unique<BulletCollisionCallback>();
 	}
 
 	void PhysicsEngine::AddMeshColliderWaitForModel(const MeshWaitData& meshColliderData)
@@ -82,19 +136,84 @@ namespace DOG
 
 		s_physicsEngine.GetDynamicsWorld()->stepSimulation(deltaTime, 10);
 
-		EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([&](TransformComponent& transform, RigidbodyComponent& rigidbody)
+		EntityManager::Get().Collect<TransformComponent, BoxColliderComponent>().Do([&](TransformComponent& transform, BoxColliderComponent& collider)
 			{
-				//Get handle for vector
-				u32 handle = s_physicsEngine.m_handleAllocator.GetSlot(rigidbody.rigidbodyHandle.handle);
-
 				//Get rigidbody
-				auto& rigidBody = s_physicsEngine.m_rigidBodyColliderDatas[handle];
-
-				if (rigidBody.rigidBody && rigidBody.rigidBody->getMotionState())
+				auto& rigidBody = s_physicsEngine.m_rigidBodyColliderDatas[collider.rigidbodyHandle.handle];
+				if (rigidBody.dynamic && rigidBody.rigidBody->getMotionState())
 				{
 					btTransform trans;
 					rigidBody.rigidBody->getMotionState()->getWorldTransform(trans);
 					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
+				}
+			});
+		
+		EntityManager::Get().Collect<TransformComponent, SphereColliderComponent>().Do([&](TransformComponent& transform, SphereColliderComponent& collider)
+			{
+				//Get rigidbody
+				auto& rigidBody = s_physicsEngine.m_rigidBodyColliderDatas[collider.rigidbodyHandle.handle];
+				if (rigidBody.dynamic && rigidBody.rigidBody->getMotionState())
+				{
+					btTransform trans;
+					rigidBody.rigidBody->getMotionState()->getWorldTransform(trans);
+					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
+				}
+			});
+
+		EntityManager::Get().Collect<TransformComponent, CapsuleColliderComponent>().Do([&](TransformComponent& transform, CapsuleColliderComponent& collider)
+			{
+				//Get rigidbody
+				auto& rigidBody = s_physicsEngine.m_rigidBodyColliderDatas[collider.rigidbodyHandle.handle];
+				if (rigidBody.dynamic && rigidBody.rigidBody->getMotionState())
+				{
+					btTransform trans;
+					rigidBody.rigidBody->getMotionState()->getWorldTransform(trans);
+					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
+				}
+			});
+
+		EntityManager::Get().Collect<RigidbodyComponent>().Do([&](RigidbodyComponent& rigidbody)
+			{
+				//Get rigidbody
+				auto& rigidBody = s_physicsEngine.m_rigidBodyColliderDatas[rigidbody.rigidbodyHandle.handle];
+				if (rigidBody.rigidBody && rigidBody.rigidBody->getMotionState())
+				{
+					//Check collisions
+					PhysicsEngine::s_physicsEngine.GetDynamicsWorld()->contactTest(rigidBody.rigidBody, *(PhysicsEngine::s_physicsEngine.m_collisionCallback.get()));
+
+					//Get handle for vector
+					u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(rigidbody.rigidbodyHandle.handle);
+					auto collisions = s_physicsEngine.m_rigidbodyCollision.find(handle);
+					//Check if the existing collisions are exiting or have just entered the collision
+					for (auto& it : collisions->second)
+					{
+						if (collisions->second.size() == 0)
+							break;
+
+						//Check if the activeCollision has changed, if it has then we either call onCollisionEnter or onCollisionExit
+						bool beforeCollision = it.second.activeCollision;
+						it.second.activeCollision = it.second.collisionCheck;
+						if (it.second.activeCollision != beforeCollision)
+						{
+							it.second.collisionCheck = false;
+
+							//Get RigidbodyColliderData to get the corresponding entities
+							RigidbodyColliderData* obj0RigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(rigidbody.rigidbodyHandle);
+							RigidbodyColliderData* obj1RigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(it.second.rigidbodyHandle);
+
+							if (it.second.activeCollision && rigidbody.onCollisionEnter != nullptr)
+								rigidbody.onCollisionEnter(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
+
+							if (!it.second.activeCollision)
+							{
+								if (rigidbody.onCollisionExit != nullptr)
+									rigidbody.onCollisionExit(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
+
+								//Remove the collision because we do not need to keep track of it anymore
+								collisions->second.erase(it.first);
+							}
+						}
+					}
 				}
 			});
 	}
@@ -115,6 +234,9 @@ namespace DOG
 
 	RigidbodyHandle PhysicsEngine::AddRigidbody(entity entity, RigidbodyColliderData& rigidbodyColliderData, bool dynamic, float mass)
 	{
+		//Set rigidody entity
+		rigidbodyColliderData.rigidbodyEntity = entity;
+
 		TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(entity);
 
 		//Copy entity transform
@@ -138,14 +260,33 @@ namespace DOG
 		btRigidBody::btRigidBodyConstructionInfo rbInfo(bodyMass, rigidbodyColliderData.motionState, collisionShape, localInertia);
 		rigidbodyColliderData.rigidBody = new btRigidBody(rbInfo);
 
+		//Keep track if the rigidbody is dynamic or not
+		rigidbodyColliderData.dynamic = dynamic;
+
 		//add the body to the dynamics world
 		PhysicsEngine::GetDynamicsWorld()->addRigidBody(rigidbodyColliderData.rigidBody);
 
-		return PhysicsEngine::AddRigidbodyColliderData(std::move(rigidbodyColliderData));
+		//Get the handle
+		RigidbodyHandle rigidbodyHandle = PhysicsEngine::AddRigidbodyColliderData(std::move(rigidbodyColliderData));
+
+		RigidbodyColliderData* pointerToRCD= PhysicsEngine::GetRigidbodyColliderData(rigidbodyHandle);
+
+		//Sets the handle for collision detection later
+		const u64 bitMask = 0x0000FFFF;
+		const u32 byteShift = 4;
+		u32 userIndex1 = (u32)(rigidbodyHandle.handle & bitMask);
+		u32 userIndex2 = (u32)((rigidbodyHandle.handle >> byteShift) & bitMask);
+		pointerToRCD->rigidBody->setUserIndex(userIndex1);
+		pointerToRCD->rigidBody->setUserIndex2(userIndex2);
+
+		return rigidbodyHandle;
 	}
 
-	RigidbodyColliderData* PhysicsEngine::GetRigidbodyColliderData(u32 handle)
+	RigidbodyColliderData* PhysicsEngine::GetRigidbodyColliderData(const RigidbodyHandle& rigidbodyHandle)
 	{
+		//Get handle for vector
+		u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(rigidbodyHandle.handle);
+
 		return &s_physicsEngine.m_rigidBodyColliderDatas[handle];
 	}
 
@@ -239,34 +380,47 @@ namespace DOG
 		rigidbodyHandle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
 	}
 
-	RigidbodyComponent::RigidbodyComponent(entity enitity)
+	RigidbodyComponent::RigidbodyComponent(entity entity)
 	{
 		//Can only create a rigidbody component for box, sphere, capsule
-		if (EntityManager::Get().HasComponent<BoxColliderComponent>(enitity))
+		if (EntityManager::Get().HasComponent<BoxColliderComponent>(entity))
 		{
-			rigidbodyHandle = EntityManager::Get().GetComponent<BoxColliderComponent>(enitity).rigidbodyHandle;
+			rigidbodyHandle = EntityManager::Get().GetComponent<BoxColliderComponent>(entity).rigidbodyHandle;
 		}
-		else if (EntityManager::Get().HasComponent<SphereColliderComponent>(enitity))
+		else if (EntityManager::Get().HasComponent<SphereColliderComponent>(entity))
 		{
-			rigidbodyHandle = EntityManager::Get().GetComponent<SphereColliderComponent>(enitity).rigidbodyHandle;
+			rigidbodyHandle = EntityManager::Get().GetComponent<SphereColliderComponent>(entity).rigidbodyHandle;
 		}
-		else if (EntityManager::Get().HasComponent<CapsuleColliderComponent>(enitity))
+		else if (EntityManager::Get().HasComponent<CapsuleColliderComponent>(entity))
 		{
-			rigidbodyHandle = EntityManager::Get().GetComponent<CapsuleColliderComponent>(enitity).rigidbodyHandle;
+			rigidbodyHandle = EntityManager::Get().GetComponent<CapsuleColliderComponent>(entity).rigidbodyHandle;
 		}
 		else
 		{
 			std::cout << "Entity has no collider component for rigidbody\n";
 			assert(false);
 		}
+
+		//Get handle for vector
+		u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(rigidbodyHandle.handle);
+
+		//Set up rigidbody for collision
+		PhysicsEngine::s_physicsEngine.m_rigidbodyCollision.insert({ handle, {} });
+	}
+
+	void RigidbodyComponent::SetOnCollisionEnter(std::function<void(entity, entity)> inOnCollisionEnter)
+	{
+		onCollisionEnter = inOnCollisionEnter;
+	}
+
+	void RigidbodyComponent::SetOnCollisionExit(std::function<void(entity, entity)> inOnCollisionExit)
+	{
+		onCollisionExit = inOnCollisionExit;
 	}
 
 	void RigidbodyComponent::ConstrainRotation(bool constrainXRotation, bool constrainYRotation, bool constrainZRotation)
 	{
-		//Get handle for vector
-		u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(rigidbodyHandle.handle);
-
-		RigidbodyColliderData* rigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(handle);
+		RigidbodyColliderData* rigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(rigidbodyHandle);
 
 		//Set no rotations in x,y,z
 		float x = constrainXRotation ? 0.0f : 1.0f;
@@ -278,10 +432,7 @@ namespace DOG
 
 	void RigidbodyComponent::ConstrainPosition(bool constrainXPosition, bool constrainYPosition, bool constrainZPosition)
 	{
-		//Get handle for vector
-		u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(rigidbodyHandle.handle);
-
-		RigidbodyColliderData* rigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(handle);
+		RigidbodyColliderData* rigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(rigidbodyHandle);
 
 		////Set freeze position in x,y,z
 		float x = constrainXPosition ? 0.0f : 1.0f;
@@ -293,8 +444,13 @@ namespace DOG
 
 	MeshColliderComponent::MeshColliderComponent(entity entity, u32 modelID) noexcept
 	{	
-		AssetLoadFlag modelLoadFlag = AssetManager::Get().GetAssetFlags(modelID);
-		if (!(modelLoadFlag & AssetLoadFlag::CPUMemory))
+		AssetFlags modelFlags = AssetManager::Get().GetAssetFlags(modelID);
+
+		bool modelLoadingToCPU = modelFlags.loadFlag & AssetLoadFlag::CPUMemory;
+		bool modelOnCPU = modelFlags.stateFlag & AssetStateFlag::ExistOnCPU;
+
+		//If the model is neither being loaded to the cpu memory or does not exist in cpu memory, we assert!
+		if (!(modelLoadingToCPU || modelOnCPU))
 		{
 			std::cout << "Asset does not have CPUMemory flag set!\nMeshColliderComponent require the mesh to be on the cpu!\n";
 			assert(false);

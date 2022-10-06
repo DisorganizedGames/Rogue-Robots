@@ -12,6 +12,8 @@ class btCollisionShape;
 
 namespace DOG
 {
+	struct BulletCollisionCallback;
+
 	typedef u32 entity;
 
 	struct RigidbodyHandle
@@ -31,33 +33,46 @@ namespace DOG
 		btRigidBody* rigidBody = nullptr;
 		btDefaultMotionState* motionState = nullptr;
 		CollisionShapeHandle collisionShapeHandle;
+		bool dynamic = false;
+		entity rigidbodyEntity;
+	};
+
+	struct RigidbodyCollisionData
+	{
+		bool collisionCheck = false;
+		bool activeCollision = false;
+		RigidbodyHandle rigidbodyHandle;
 	};
 
 	struct RigidbodyComponent
 	{
-		RigidbodyComponent(entity enitity);
+		RigidbodyComponent(entity entity);
 
+		void SetOnCollisionEnter(std::function<void(entity, entity)> onCollisionEnter);
+		void SetOnCollisionExit(std::function<void(entity, entity)> onCollisionExit);
 		void ConstrainRotation(bool constrainXRotation, bool constrainYRotation, bool constrainZRotation);
 		void ConstrainPosition(bool constrainXPosition, bool constrainYPosition, bool constrainZPosition);
 
 		RigidbodyHandle rigidbodyHandle;
+		std::function<void(entity, entity)> onCollisionEnter = nullptr;
+		std::function<void(entity, entity)> onCollisionExit = nullptr;
 	};
 
 	struct BoxColliderComponent
 	{
-		BoxColliderComponent(entity entity, const DirectX::SimpleMath::Vector3& boxColliderSize, bool dynamic, float mass = 1.0f) noexcept;
+		BoxColliderComponent(entity entity, const DirectX::SimpleMath::Vector3& boxColliderSize, bool dynamic = false, float mass = 1.0f) noexcept;
 
 		RigidbodyHandle rigidbodyHandle;
 	};
 	struct SphereColliderComponent
 	{
-		SphereColliderComponent(entity entity, float radius, bool dynamic, float mass = 1.0f) noexcept;
+		SphereColliderComponent(entity entity, float radius, bool dynamic = false, float mass = 1.0f) noexcept;
 
 		RigidbodyHandle rigidbodyHandle;
 	};
 	struct CapsuleColliderComponent
 	{
-		CapsuleColliderComponent(entity entity, float radius, float height, bool dynamic, float mass = 1.0f) noexcept;
+		CapsuleColliderComponent(entity entity, float radius, float height, bool dynamic = false, float mass = 1.0f) noexcept;
 
 		RigidbodyHandle rigidbodyHandle;
 	};
@@ -79,9 +94,8 @@ namespace DOG
 
 	struct MeshColliderData
 	{
-		u32 meshModelID;
+		u32 meshModelID = 0;
 		CollisionShapeHandle collisionShapeHandle;
-		//btCollisionShape* collisionShape = nullptr;
 	};
 
 	class PhysicsEngine
@@ -91,6 +105,7 @@ namespace DOG
 		friend CapsuleColliderComponent;
 		friend RigidbodyComponent;
 		friend MeshColliderComponent;
+		friend BulletCollisionCallback;
 
 	private:
 		//Order of unique ptrs matter for the destruction of the unique ptrs
@@ -113,13 +128,19 @@ namespace DOG
 		//To be able to reuse collision shapes (mostly for mesh colliders)
 		std::vector<btCollisionShape*> m_collisionShapes;
 
+		//Collision keeper for different rigidbodies
+		std::unordered_map<u32, std::unordered_map<u32, RigidbodyCollisionData>> m_rigidbodyCollision;
+
+		//Callback function for collision detection
+		std::unique_ptr<BulletCollisionCallback> m_collisionCallback;
+
 	private:
 		PhysicsEngine();
 		static void AddMeshColliderWaitForModel(const MeshWaitData& meshColliderData);
 		static btDiscreteDynamicsWorld* GetDynamicsWorld();
 		static RigidbodyHandle AddRigidbodyColliderData(RigidbodyColliderData rigidbodyColliderData);
 		static RigidbodyHandle AddRigidbody(entity entity, RigidbodyColliderData& rigidbodyColliderData, bool dynamic, float mass);
-		static RigidbodyColliderData* GetRigidbodyColliderData(u32 handle);
+		static RigidbodyColliderData* GetRigidbodyColliderData(const RigidbodyHandle& rigidbodyHandle);
 		void CheckMeshColliders();
 		static void AddMeshColliderData(const MeshColliderData& meshColliderData);
 		static MeshColliderData GetMeshColliderData(u32 modelID);
