@@ -73,6 +73,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddAudio(context, e);
 	}
+	else if (compType == "BoxCollider")
+	{
+		AddBoxCollider(context, e);
+	}
 	//Add more component types here.
 }
 
@@ -328,6 +332,15 @@ void EntityInterface::ModifyPlayerStats(DOG::LuaContext* context, DOG::entity e)
 	psComp.health = t.GetFloatFromTable("health");
 	psComp.maxHealth = t.GetFloatFromTable("maxHealth");
 	psComp.speed = t.GetFloatFromTable("speed");
+}
+
+void EntityInterface::AddBoxCollider(DOG::LuaContext* context, DOG::entity e)
+{
+	LuaTable t = context->GetTable();
+	bool constrain = context->GetBoolean();
+
+	EntityManager::Get().AddComponent<BoxColliderComponent>(e, e, 
+		Vector3(t.GetFloatFromTable("x"), t.GetFloatFromTable("y"), t.GetFloatFromTable("z")), constrain);
 }
 
 //---------------------------------------------------------------------------------------------------------

@@ -83,10 +83,10 @@ function OnStart()
 	--Agent.model = Asset:LoadModel("Assets/temp_Robot.fbx")
 	Agent.model = Asset:LoadModel("Assets/red_cube.glb")
 	
-	Agent.transform = Entity:AddComponent(EntityID, "AgentStats", agentStats)
-	Agent.transform = Entity:AddComponent(EntityID, "Transform", pos, rot, scale)	--Probably move this to C++ Agent()
-	Agent.transform = Entity:AddComponent(EntityID, "Model", Agent.model)
-	
+	Entity:AddComponent(EntityID, "Model", Agent.model)
+	Entity:AddComponent(EntityID, "AgentStats", agentStats)
+	Entity:AddComponent(EntityID, "Transform", pos, rot, scale)	--Probably move this to C++ Agent() since all agents will have it...
+	Entity:AddComponent(EntityID, "BoxCollider", {x = 1, y = 1, z = 1}, true) --...and this as well
 	Agent.behaviorStack = {idle, death, default}
 end
 
