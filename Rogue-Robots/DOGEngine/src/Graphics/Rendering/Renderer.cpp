@@ -20,6 +20,7 @@
 
 #include "RenderGraph/RenderGraph.h"
 #include "RenderGraph/RGResourceManager.h"
+#include "RenderGraph/RGBlackboard.h"
 
 #include "Tracy/Tracy.hpp"
 
@@ -94,9 +95,6 @@ namespace DOG::gfx
 			m_bin.get());
 
 
-
-		m_texMan = std::make_unique<TextureManager>(m_rd, m_bin.get());
-
 		// INITIALIZE RESOURCES =================
 
 		auto fullscreenTriVS = m_sclr->CompileFromFile("FullscreenTriVS.hlsl", ShaderType::Vertex);
@@ -155,7 +153,17 @@ namespace DOG::gfx
 		m_globalDataTable->SendCopyRequests(*m_uploadCtx);
 		m_gdDescriptor = m_globalDataTable->GetGlobalDescriptor();
 
-		m_igPass = std::make_unique<ImGUIPass>(m_imgui.get());
+
+		// Set default pass data
+		m_globalPassData.bbScissor = ScissorRects().Append(0, 0, m_clientWidth, m_clientHeight);
+		m_globalPassData.bbVP = Viewports().Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight);
+		// render vps/scissors subject to change
+		m_globalPassData.defRenderScissors = ScissorRects().Append(0, 0, m_clientWidth, m_clientHeight);
+		m_globalPassData.defRenderVPs= Viewports().Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight);
+
+		// Passes
+		m_rgBlackboard = std::make_unique<RGBlackboard>();
+		m_igPass = std::make_unique<ImGUIPass>(m_globalPassData, *m_rgBlackboard, m_imgui.get());
 	}
 
 	Renderer::~Renderer()

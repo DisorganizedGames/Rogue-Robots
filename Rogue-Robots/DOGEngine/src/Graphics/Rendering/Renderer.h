@@ -4,6 +4,8 @@
 #include "../../Core/AnimationManager.h"
 #include "GPUTable.h"
 
+#include "RenderPasses/GlobalPassData.h"
+
 namespace DOG::gfx
 {
 	class RenderBackend;
@@ -23,6 +25,7 @@ namespace DOG::gfx
 
 	class RenderGraph;
 	class RGResourceManager;
+	class RGBlackboard;
 
 	// Passes
 	class ImGUIPass;
@@ -85,11 +88,22 @@ namespace DOG::gfx
 		};
 
 	private:
+		std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> m_wmCallback;
 		std::unique_ptr<RenderBackend> m_backend;
 		std::unique_ptr<ImGUIBackend> m_imgui;
+		std::unique_ptr<ShaderCompilerDXC> m_sclr;
+		std::unique_ptr<GPUGarbageBin> m_bin;
 		RenderDevice* m_rd{ nullptr };
 		Swapchain* m_sc{ nullptr };
-		
+
+		u32 m_clientWidth{ 0 };
+		u32 m_clientHeight{ 0 };
+
+		// Big buffers store meshes and materials
+		std::unique_ptr<MaterialTable> m_globalMaterialTable;
+		std::unique_ptr<MeshTable> m_globalMeshTable;
+
+
 		std::unique_ptr<GraphicsBuilder> m_builder;
 		std::vector<RenderSubmission> m_submissions;		// temporary
 		std::vector<RenderSubmission> m_noCullSubmissions;	// temporary
@@ -98,12 +112,9 @@ namespace DOG::gfx
 
 		DirectX::XMMATRIX m_viewMat, m_projMat;
 
-		u32 m_clientWidth{ 0 };
-		u32 m_clientHeight{ 0 };
-		
-		std::unique_ptr<ShaderCompilerDXC> m_sclr;
 
-		std::unique_ptr<GPUGarbageBin> m_bin;
+		
+
 		std::unique_ptr<UploadContext> m_uploadCtx;
 		std::unique_ptr<UploadContext> m_perFrameUploadCtx;
 		std::unique_ptr<UploadContext> m_texUploadCtx;
@@ -112,14 +123,9 @@ namespace DOG::gfx
 		std::unique_ptr<GPUDynamicConstants> m_dynConstants;
 		std::unique_ptr<GPUDynamicConstants> m_dynConstantsAnimated;		// temp storage for per draw joints
 
-		// Big buffers store meshes and materials
-		std::unique_ptr<MaterialTable> m_globalMaterialTable;
-		std::unique_ptr<MeshTable> m_globalMeshTable;
 
-		// Caches textures (for now, temp?)
-		std::unique_ptr<TextureManager> m_texMan;		
+	
 
-		std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> m_wmCallback;
 
 		// ================= RENDERING RESOURCES
 
@@ -131,6 +137,11 @@ namespace DOG::gfx
 
 		std::unique_ptr<RenderGraph> m_rg;
 		std::unique_ptr<RGResourceManager> m_rgResMan;
+		std::unique_ptr<RGBlackboard> m_rgBlackboard;
+
+
+
+
 
 		//TMP
 		std::unique_ptr<AnimationManager> m_boneJourno;
@@ -139,9 +150,9 @@ namespace DOG::gfx
 
 
 
+		GlobalPassData m_globalPassData{};
 
-
-		// Per Frame data
+		// Per frame shader data
 		struct PerFrameData
 		{
 			DirectX::SimpleMath::Matrix viewMatrix;
@@ -156,7 +167,7 @@ namespace DOG::gfx
 		PfDataHandle m_pfHandle;
 		u32 m_currPfDescriptor{ 0 };
 
-		// Global data
+		// Per frame global data
 		struct GlobalData
 		{
 			// Mesh
@@ -175,14 +186,10 @@ namespace DOG::gfx
 			// Material
 			u32 materialTable{ 0 };
 		} m_globalData{};
-		struct GlobalDataHandle{
-			friend class TypedHandlePool; 
-			u64 handle{ 0 };
-		};
+		struct GlobalDataHandle{ friend class TypedHandlePool; u64 handle{ 0 }; };
 		std::unique_ptr<GPUTableDeviceLocal<GlobalDataHandle>> m_globalDataTable;
 		GlobalDataHandle m_gdHandle;
 		u32 m_gdDescriptor{ 0 };
-
 
 		// Passes
 		std::unique_ptr<ImGUIPass> m_igPass;
