@@ -151,7 +151,8 @@ namespace DOG
 		ASSERT_FUNC(::RegisterClassExA(&windowClass), "Failed to register Window class.");
 
 		RECT windowRectangle = {0u, 0u, static_cast<LONG>(spec.windowDimensions.x), static_cast<LONG>(spec.windowDimensions.y)};
-		ASSERT_FUNC(::AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME, FALSE), "Failed to adjust window rectangle.");
+		//ASSERT_FUNC(::AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME, FALSE), "Failed to adjust window rectangle.");
+		ASSERT_FUNC(::AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW, FALSE), "Failed to adjust window rectangle.");
 	
 		DEVMODEA devMode = {};
 		devMode.dmSize = sizeof(DEVMODE);
@@ -164,7 +165,8 @@ namespace DOG
 			0u,												//DwExStyle
 			className.c_str(),								//Class name
 			spec.name.c_str(),								//Window name
-			WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME,			//Window styles
+			//WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME,			//Window styles
+			WS_OVERLAPPEDWINDOW,			//Window styles
 			windowCenterPosX,								//Window center X
 			windowCenterPosY,								//Window center Y
 			windowRectangle.right - windowRectangle.left,	//Width

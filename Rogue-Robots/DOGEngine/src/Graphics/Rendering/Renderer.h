@@ -3,6 +3,7 @@
 #include "../RHI/RenderResourceHandles.h"
 #include "../RHI/Types/HardwereTypes.h"
 #include "../../Core/AnimationManager.h"
+#include "../../Core/CoreUtils.h"
 #include "GPUTable.h"
 
 #include "RenderEffects/RenderEffect.h"
@@ -63,6 +64,8 @@ namespace DOG::gfx
 
 
 		void OnResize(u32 clientWidth, u32 clientHeight);
+		void SetFullscreenState(WindowMode windowMode, DXGI_MODE_DESC mode);
+		WindowMode GetFullscreenState() const;
 
 		void BeginFrame_GPU();
 		void EndFrame_GPU(bool vsync);

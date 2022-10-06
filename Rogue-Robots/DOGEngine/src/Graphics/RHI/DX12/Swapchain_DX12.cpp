@@ -63,6 +63,8 @@ namespace DOG::gfx
 
 			m_buffers.push_back(m_device->RegisterSwapchainTexture(buffer));
 		}
+
+		std::tie(m_windowedClientWidth, m_windowedClientHeight) = GetSwapchainWidthAndHeight();
 	}
 
 	Swapchain_DX12::~Swapchain_DX12()
@@ -83,6 +85,67 @@ namespace DOG::gfx
 	{
 		for (const auto& bb : m_buffers)
 			m_device->SetClearColor(bb, clear_color);
+	}
+
+	void Swapchain_DX12::OnResize(u32 clientWidth, u32 clientHeight)
+	{
+		std::cout << "Swapchain_DX12::OnResize: " << clientWidth << ", " << clientHeight << std::endl;
+		m_device->Flush();
+
+		HRESULT hr{ S_OK };
+		DXGI_SWAP_CHAIN_DESC1 swapDesc;
+		hr = m_sc->GetDesc1(&swapDesc);
+		HR_VFY(hr);
+
+		for (const auto& tex : m_buffers)
+			m_device->FreeTexture(tex);
+
+
+
+
+		hr = m_sc->ResizeBuffers(0, clientWidth, clientHeight, swapDesc.Format, swapDesc.Flags);
+
+
+
+
+		for (u32 i = 0; i < m_buffers.size(); ++i)
+		{
+			ComPtr<ID3D12Resource> buffer;
+			hr = m_sc->GetBuffer(i, IID_PPV_ARGS(buffer.GetAddressOf()));
+			HR_VFY(hr);
+
+			m_buffers[i] = (m_device->RegisterSwapchainTexture(buffer));
+		}
+
+		HR_VFY(hr);
+	}
+
+	bool Swapchain_DX12::GetFullscreenState() const
+	{
+		BOOL state;
+		HRESULT hr = m_sc->GetFullscreenState(&state, nullptr);
+		HR_VFY(hr);
+		return static_cast<bool>(state);
+	}
+
+	bool Swapchain_DX12::SetFullscreenState(bool fullscreen, DXGI_MODE_DESC mode)
+	{
+		std::cout << "Start Swapchain_DX12::SetFullscreenState: " << std::to_string(fullscreen) << ", " << mode.Width << ", " << mode.Height << std::endl;
+		
+
+		if (fullscreen)
+		{
+			EnterFullscreen(mode);
+		}
+		else
+		{
+			ExitFullscreen();
+		}
+
+		auto [w, h] = GetSwapchainWidthAndHeight();
+		std::cout << "End Swapchain_DX12::SetFullscreenState: " << std::to_string(GetFullscreenState()) << ", " << w << ", " << h << std::endl;
+		std::cout << std::endl;
+		return true;
 	}
 
 	Texture Swapchain_DX12::GetBuffer(u8 idx)
@@ -134,6 +197,14 @@ namespace DOG::gfx
 		return desc;
 	}
 
+	std::pair<u32, u32> Swapchain_DX12::GetSwapchainWidthAndHeight() const
+	{
+		DXGI_SWAP_CHAIN_DESC1 swapDesc;
+		HRESULT hr = m_sc->GetDesc1(&swapDesc);
+		HR_VFY(hr);
+		return std::make_pair<u32, u32>(static_cast<u32>(swapDesc.Width), static_cast<u32>(swapDesc.Height));
+	}
+
 	void Swapchain_DX12::Present(bool vsync)
 	{
 		u32 flags{ 0 };
@@ -158,5 +229,105 @@ namespace DOG::gfx
 			}
 		}
 		return allowed;
+	}
+
+	bool Swapchain_DX12::EnterFullscreen(DXGI_MODE_DESC mode)
+	{
+		if (GetFullscreenState())
+		{
+			// We are already in fullscreen, set the new mode and return
+
+			HRESULT hr{ S_OK };
+			hr = m_sc->ResizeTarget(&mode);
+			if (hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE)
+			{
+				std::cout << "Pre EnterFullscreen ResizeTarget: DXGI_ERROR_NOT_CURRENTLY_AVAILABLE" << std::endl;
+				return false;
+			}
+			HR_VFY(hr);
+			return true;
+		}
+		// Save width and height so that we might reset the window to them later on
+		std::tie(m_windowedClientWidth, m_windowedClientHeight) = GetSwapchainWidthAndHeight();
+
+		std::cout << "EnterFullscreen" << std::endl;
+		HRESULT hr{ S_OK };
+		hr = m_sc->ResizeTarget(&mode);
+		if (hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE)
+		{
+			std::cout << "Pre EnterFullscreen ResizeTarget: DXGI_ERROR_NOT_CURRENTLY_AVAILABLE" << std::endl;
+			return false;
+		}
+		HR_VFY(hr);
+
+		hr = m_sc->SetFullscreenState(TRUE, nullptr);
+		if (hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE)
+		{
+			std::cout << "EnterFullscreen: DXGI_ERROR_NOT_CURRENTLY_AVAILABLE" << std::endl;
+			return false;
+		}
+		else if (hr == DXGI_STATUS_MODE_CHANGE_IN_PROGRESS)
+		{
+			std::cout << "EnterFullscreen: DXGI_STATUS_MODE_CHANGE_IN_PROGRESS" << std::endl;
+			return false;
+		}
+		HR_VFY(hr);
+
+		hr = m_sc->ResizeTarget(&mode);
+		if (hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE)
+		{
+			std::cout << "Post EnterFullscreen ResizeTarget: DXGI_ERROR_NOT_CURRENTLY_AVAILABLE" << std::endl;
+			return false;
+		}
+		HR_VFY(hr);
+
+		auto [w, h] = GetSwapchainWidthAndHeight();
+		assert(w == mode.Width && h == mode.Height);
+
+		std::cout << "EnterFullscreen calls OnResize" << std::endl;
+		OnResize(mode.Width, mode.Height);
+
+
+		std::cout << "End Swapchain_DX12::EnterFullscreen: " << std::to_string(GetFullscreenState()) << ", " << w << ", " << h << std::endl;
+		std::cout << std::endl;
+		return true;
+	}
+	bool Swapchain_DX12::ExitFullscreen()
+	{
+		if (!GetFullscreenState()) return true;
+
+		std::cout << "ExitFullscreen" << std::endl;
+		HRESULT hr{ S_OK };
+		hr = m_sc->SetFullscreenState(FALSE, nullptr);
+		if (hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE)
+		{
+			std::cout << "ExitFullscreen: DXGI_ERROR_NOT_CURRENTLY_AVAILABLE" << std::endl;
+			return false;
+		}
+		else if (hr == DXGI_STATUS_MODE_CHANGE_IN_PROGRESS)
+		{
+			std::cout << "ExitFullscreen: DXGI_STATUS_MODE_CHANGE_IN_PROGRESS" << std::endl;
+			return false;
+		}
+		HR_VFY(hr);
+
+		if (m_windowedClientWidth != 0 && m_windowedClientHeight != 0)
+		{
+			DXGI_MODE_DESC mode{};
+			mode.Width = m_windowedClientWidth;
+			mode.Height = m_windowedClientHeight;
+			hr = m_sc->ResizeTarget(&mode);
+			if (hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE)
+			{
+				std::cout << "ExitFullscreen ResizeTarget: DXGI_ERROR_NOT_CURRENTLY_AVAILABLE" << std::endl;
+				return false;
+			}
+			HR_VFY(hr);
+		}
+
+		auto [w, h] = GetSwapchainWidthAndHeight();
+		std::cout << "End Swapchain_DX12::ExitFullscreen: " << std::to_string(GetFullscreenState()) << ", " << w << ", " <<h << std::endl;
+		std::cout << std::endl;
+		return true;
 	}
 }

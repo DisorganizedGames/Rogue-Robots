@@ -407,14 +407,41 @@ namespace DOG::gfx
 
 	void Renderer::OnResize(u32 clientWidth, u32 clientHeight)
 	{
+		std::cout << "Renderer::OnResize: " << clientWidth << ", " << clientHeight << std::endl;
 		// If same client width/height --> Ignore
-		if (clientWidth == m_clientWidth && m_clientHeight == clientHeight)
-			return;
+		//if (clientWidth == m_clientWidth && m_clientHeight == clientHeight)
+		//	return;
 
 		m_clientWidth = clientWidth;
 		m_clientHeight = clientHeight;
 
-		// Recreate resources if needed..
+		m_sc->OnResize(clientWidth, clientHeight);
+	}
+
+	void DOG::gfx::Renderer::SetFullscreenState(WindowMode windowMode, DXGI_MODE_DESC mode)
+	{
+		bool succeeded;
+		if (windowMode == WindowMode::Windowed)
+		{
+			succeeded = m_sc->SetFullscreenState(false, mode);
+			if (!succeeded)
+			{
+				std::cout << "SetFullscreenState Windowed failed" << std::endl;
+			}
+		}
+		else if (windowMode == WindowMode::FullScreen)
+		{
+			succeeded = m_sc->SetFullscreenState(true, mode);
+			if (!succeeded)
+			{
+				std::cout << "SetFullscreenState Fullscreen failed" << std::endl;
+			}
+		}
+	}
+
+	WindowMode DOG::gfx::Renderer::GetFullscreenState() const
+	{
+		return m_sc->GetFullscreenState() ? WindowMode::FullScreen : WindowMode::Windowed;
 	}
 
 	void Renderer::BeginFrame_GPU()

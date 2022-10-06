@@ -10,6 +10,7 @@
 
 #include "../EventSystem/EventBus.h"
 #include "../EventSystem/LayerStack.h"
+#include "../EventSystem/WindowEvents.h"
 
 #include "../Graphics/Rendering/Renderer.h"
 
@@ -137,6 +138,15 @@ namespace DOG
 		case EventType::WindowClosedEvent:
 			m_isRunning = false;
 			break;
+		case EventType::WindowResizedEvent:
+			auto& e = EVENT(WindowResizedEvent);
+			if (m_renderer)
+			{
+				std::cout << "Application::OnEvent OnResize: " << e.dimensions.x << ", " << e.dimensions.y << std::endl;
+				m_renderer->OnResize(e.dimensions.x, e.dimensions.y);
+
+			}
+			break;
 		}
 	}
 
@@ -207,7 +217,7 @@ namespace DOG
 			{
 				gfx::Monitor monitor = m_renderer->GetMonitor();
 
-				ImGui::Text("Monitor Specs");
+				ImGui::Text("Display settings");
 				ImGui::Text(std::filesystem::path(monitor.output.DeviceName).string().c_str());
 
 				int left = monitor.output.DesktopCoordinates.left;
@@ -220,7 +230,6 @@ namespace DOG
 				ImGui::Text("Rect");
 				ImGui::Text(rectX.c_str());
 				ImGui::Text(rectY.c_str());
-				ImGui::Separator();
 
 
 				auto&& modeElementToString = [&monitor](i64 index) -> std::string
@@ -232,6 +241,7 @@ namespace DOG
 					str += ", scaling: " + std::to_string(monitor.modes[index].Scaling);
 					return str;
 				};
+
 				static i64 selectedModeIndex = std::ssize(monitor.modes) - 1;
 				selectedModeIndex = std::min(selectedModeIndex, static_cast<i64>(std::ssize(monitor.modes) - 1));
 				if (ImGui::BeginCombo("modes", modeElementToString(selectedModeIndex).c_str()))
@@ -241,10 +251,22 @@ namespace DOG
 						if (ImGui::Selectable(modeElementToString(i).c_str(), selectedModeIndex == i))
 						{
 							selectedModeIndex = i;
+							if (m_renderer->GetFullscreenState() == WindowMode::FullScreen)
+							{
+								m_renderer->SetFullscreenState(WindowMode::FullScreen, monitor.modes[selectedModeIndex]);
+							}
 						}
 					}
 					ImGui::EndCombo();
 				}
+
+				static int selectedFullscreenStateIndex = 0;
+				std::array<const char*, 2> fullscreenCombo = { "Windowed", "Fullscreen" };
+				if (ImGui::Combo("Fullscreen mode", &selectedFullscreenStateIndex, fullscreenCombo.data(), static_cast<int>(fullscreenCombo.size())))
+				{
+					m_renderer->SetFullscreenState(static_cast<WindowMode>(selectedFullscreenStateIndex), monitor.modes[selectedModeIndex]);
+				}
+				ImGui::Separator();
 			}
 			ImGui::End(); // "Application settings"
 		}
