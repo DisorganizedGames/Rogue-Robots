@@ -1,5 +1,7 @@
 #include "GPUGarbageBin.h"
 
+#include "Tracy/Tracy.hpp"
+
 namespace DOG::gfx
 {
 	GPUGarbageBin::GPUGarbageBin(u8 maxFramesInFlight) :
@@ -9,6 +11,9 @@ namespace DOG::gfx
 
 	void GPUGarbageBin::PushDeferredDeletion(const std::function<void()>& deletionFunc)
 	{
+		ZoneScopedN("GPU Garbage Bin: Add Deferred Deletion");
+
+
 		Deletion_Storage storage{};
 		storage.frameIdxOnRequest = m_currFrameIdx;
 		storage.func = deletionFunc;
@@ -18,6 +23,7 @@ namespace DOG::gfx
 
 	void GPUGarbageBin::BeginFrame()
 	{
+		ZoneScopedN("GPU Garbage Bin: Clear");
 		/*
 			Assuming deletes are always grouped contiguously:
 			[ 0, 0, 0, 1, 1, 1, 2, 2, 2, 0, 0, 0, ...]
