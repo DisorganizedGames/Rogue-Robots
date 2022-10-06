@@ -103,6 +103,8 @@ GameLayer::GameLayer() noexcept
 	RegisterLuaInterfaces();
 	//...
 
+	LuaMain::GetScriptManager()->AddScript(entity4, "ScriptTest.lua");
+
 	entity Player1 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(Player1, m_greenCube);
 	m_entityManager.AddComponent<TransformComponent>(Player1, Vector3(0, 0, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));

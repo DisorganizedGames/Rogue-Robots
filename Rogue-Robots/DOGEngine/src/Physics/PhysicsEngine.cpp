@@ -4,6 +4,7 @@
 #pragma warning(pop)
 #include "../ECS/EntityManager.h"
 #include "../Core/AssetManager.h"
+#include "../Scripting/LuaMain.h"
 
 namespace DOG
 {
@@ -203,6 +204,8 @@ namespace DOG
 
 							if (it.second.activeCollision && rigidbody.onCollisionEnter != nullptr)
 								rigidbody.onCollisionEnter(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
+							else
+								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0RigidbodyColliderData->rigidbodyEntity, "OnCollisionEnter", (i32)obj1RigidbodyColliderData->rigidbodyEntity);
 
 							if (!it.second.activeCollision)
 							{

@@ -71,13 +71,34 @@ namespace DOG
 
 	void ScriptManager::RemoveScriptData(std::vector<ScriptData>& scriptVector, entity entity)
 	{
+		//Does not have to be like this anymore!!!
+		//FIX LATER
 		for (u32 index = 0; index < scriptVector.size(); ++index)
 		{
 			if (scriptVector[index].entity == entity)
 			{
 				RemoveReferences(scriptVector[index]);
-				scriptVector.erase(scriptVector.begin() + index);
-				--index;
+
+				auto entityToScripts = m_entityScripts.find(entity);
+				if (entityToScripts != m_entityScripts.end())
+				{
+					std::vector<StoredScriptData>& storedScriptDataVector = entityToScripts->second;
+					for (u32 entityScriptIndex = 0; entityScriptIndex < storedScriptDataVector.size(); ++entityToScripts)
+					{
+						if (index == storedScriptDataVector[entityScriptIndex].scriptIndex)
+						{
+							storedScriptDataVector.erase(entityToScripts->second.begin() + entityScriptIndex);
+							--entityScriptIndex;
+						}
+					}
+				}
+				else
+				{
+					std::cout << "Entity does not have any scripts!\n";
+					assert(false);
+				}
+				//scriptVector.erase(scriptVector.begin() + index);
+				//--index;
 			}
 		}
 	}
@@ -93,24 +114,48 @@ namespace DOG
 		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
 		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
 
+		StoredScriptData storedScriptData = {};
+
 		//Find if there already exist a vector for that script type
 		auto itScriptToVector = m_scriptToVector.find(luaFileName);
 		if (itScriptToVector == m_scriptToVector.end())
 		{
 			m_unsortedScripts.push_back({ scriptData });
 			u32 vectorIndex = (u32)(m_unsortedScripts.size() - 1);
-			m_scriptToVector.insert({ luaFileName, {false, vectorIndex} });
+
+			GetScriptData getScriptData;
+			getScriptData.vectorIndex = vectorIndex;
+			getScriptData.sorted = false;
+
+			m_scriptToVector.insert({ luaFileName, getScriptData });
+
+			storedScriptData.getScriptData = getScriptData;
+			storedScriptData.scriptIndex = 0;
 		}
 		else
 		{
 			if (itScriptToVector->second.sorted)
 			{
 				m_sortedScripts[itScriptToVector->second.vectorIndex].push_back(scriptData);
+				storedScriptData.scriptIndex = (u32)(m_sortedScripts[itScriptToVector->second.vectorIndex].size() - 1);
 			}
 			else
 			{
 				m_unsortedScripts[itScriptToVector->second.vectorIndex].push_back(scriptData);
+				storedScriptData.scriptIndex = (u32)(m_unsortedScripts[itScriptToVector->second.vectorIndex].size() - 1);
 			}
+
+			storedScriptData.getScriptData = itScriptToVector->second;
+		}
+
+		auto entityToScripts = m_entityScripts.find(entity);
+		if (entityToScripts == m_entityScripts.end())
+		{
+			m_entityScripts.insert({ entity, { storedScriptData } });
+		}
+		else
+		{
+			entityToScripts->second.push_back(storedScriptData);
 		}
 	}
 

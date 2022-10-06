@@ -22,6 +22,12 @@ namespace DOG
 		u32 vectorIndex;
 	};
 
+	struct StoredScriptData
+	{
+		GetScriptData getScriptData;
+		u32 scriptIndex;
+	};
+
 	struct SortData
 	{
 		std::string luaFileName;
@@ -41,6 +47,8 @@ namespace DOG
 		std::unordered_map<std::string, GetScriptData> m_scriptToVector;
 		std::vector<std::vector<ScriptData>> m_unsortedScripts;
 		std::vector<std::vector<ScriptData>> m_sortedScripts;
+		//Map from entity to it's scripts
+		std::unordered_map<entity, std::vector<StoredScriptData>> m_entityScripts;
 
 		//Only for sorting
 		std::vector<SortData> m_scriptsBeforeSorted;
@@ -86,6 +94,9 @@ namespace DOG
 		void OrderScript(const std::string& luaFileName, int sortOrder);
 		//Sort the ordered scripts
 		void SortOrderScripts();
+		//
+		template<class ...Args>
+		void CallFunctionOnAllEntityScripts(entity entity, const std::string& functionName, Args&&... args);
 	};
 
 	template<typename T, class ...Args>
@@ -95,5 +106,70 @@ namespace DOG
 
 		//Return the created component
 		return m_entityManager.AddComponent<T>(entity, std::forward<Args>(args)...);
+	}
+
+	template<class ...Args>
+	inline void ScriptManager::CallFunctionOnAllEntityScripts(entity entity, const std::string& functionName, Args&&... args)
+	{
+		if (!m_entityManager.HasComponent<ScriptComponent>(entity))
+			return;
+
+		auto entityToScripts = m_entityScripts.find(entity);
+		if (entityToScripts != m_entityScripts.end())
+		{
+			for (u32 index = 0; index < entityToScripts->second.size(); ++index)
+			{
+				StoredScriptData storedScriptData = entityToScripts->second[index];
+				ScriptData scriptData = {};
+				if (storedScriptData.getScriptData.sorted)
+					scriptData = m_sortedScripts[storedScriptData.getScriptData.vectorIndex][storedScriptData.scriptIndex];
+				else
+					scriptData = m_unsortedScripts[storedScriptData.getScriptData.vectorIndex][storedScriptData.scriptIndex];
+
+				Function function = m_luaW->TryGetFunctionFromTable(scriptData.scriptTable, functionName);
+				if (function.ref != -1)
+				{
+					LuaTable table(scriptData.scriptTable);
+					table.CallFunctionOnTable(function, (i32)entity, std::forward<Args>(args)...);
+				}
+			}
+		}
+		else
+		{
+			std::cout << "Entity does not exist\n";
+			assert(false);
+		}
+
+		////Run the scripts which should happen first!
+		//for (u32 index = 0; index < m_sortedScriptsHalfwayIndex; ++index)
+		//{
+		//	for (auto& scriptData : m_sortedScripts[index])
+		//	{
+		//		//scriptData.
+		//		Function function = m_luaW->TryGetFunctionFromTable(scriptData.scriptTable, functionName);
+		//		if (function.ref != -1)
+		//			m_luaW->CallTableLuaFunction(scriptData.scriptTable, function);
+		//	}
+		//}
+		////Run the scripts which does not have an order!
+		//for (u32 index = 0; index < m_unsortedScripts.size(); ++index)
+		//{
+		//	for (auto& scriptData : m_unsortedScripts[index])
+		//	{
+		//		Function function = m_luaW->TryGetFunctionFromTable(scriptData.scriptTable, functionName);
+		//		if (function.ref != -1)
+		//			m_luaW->CallTableLuaFunction(scriptData.scriptTable, function);
+		//	}
+		//}
+		////Run the scripts which should happen last!
+		//for (u32 index = m_sortedScriptsHalfwayIndex; index < m_sortedScripts.size(); ++index)
+		//{
+		//	for (auto& scriptData : m_sortedScripts[index])
+		//	{
+		//		Function function = m_luaW->TryGetFunctionFromTable(scriptData.scriptTable, functionName);
+		//		if (function.ref != -1)
+		//			m_luaW->CallTableLuaFunction(scriptData.scriptTable, function);
+		//	}
+		//}
 	}
 }
