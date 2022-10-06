@@ -1,7 +1,7 @@
 #pragma once
-#include "ShaderInterop_Common.h"
+#include "ShaderInterop_Base.h"
 
-struct MaterialElement
+struct ShaderInterop_MaterialElement
 {
     uint albedo;
     uint metallicRoughness;

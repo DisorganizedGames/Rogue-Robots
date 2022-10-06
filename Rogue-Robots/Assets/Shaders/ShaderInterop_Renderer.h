@@ -1,5 +1,5 @@
 #pragma once
-#include "ShaderInterop_Common.h"
+#include "ShaderInterop_Base.h"
 
 /*
     For non-changing structures derived on renderer startup
@@ -17,7 +17,7 @@ struct ShaderInterop_GlobalData
     uint materialTable;
 };
 
-struct ShaderInterop_PerFrame
+struct ShaderInterop_PerFrameData
 {
     matrix viewMatrix;
     matrix projMatrix;
@@ -25,3 +25,6 @@ struct ShaderInterop_PerFrame
     float4 camPos;
     float time;
 };
+
+
+

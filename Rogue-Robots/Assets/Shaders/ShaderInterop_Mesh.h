@@ -1,7 +1,7 @@
 #pragma once
-#include "ShaderInterop_Common.h"
+#include "ShaderInterop_Base.h"
 
-struct SubmeshMetadata
+struct ShaderInterop_SubmeshMetadata
 {
     uint vertStart;
     uint vertCount;

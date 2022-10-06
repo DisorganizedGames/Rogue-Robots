@@ -8,7 +8,10 @@
 
 /*
 	Ensure that when we include any other ShaderInterop which have defined structs in terms of HLSL,
-	we get a corresponding version on the CPP side
+	we get a corresponding version on the CPP side.
+
+	This time around, we wont be using the Interop structures on the CPU side.
+	Instead we'll map the shader interop structures 1-1.
 */
 
 using matrix = DirectX::XMMATRIX;
@@ -29,6 +32,11 @@ using uint = uint32_t;
 // If HLSL
 #define CONSTANT_ALIGN		// empty
 #define STRUCTURED_ALIGN	// empty
+
+#define CONSTANTS(varName, structName) ConstantBuffer<structName> varName : register(b0, space0);
+
+
+
 
 #endif
 

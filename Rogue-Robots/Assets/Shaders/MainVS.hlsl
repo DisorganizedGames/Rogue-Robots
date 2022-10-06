@@ -1,3 +1,6 @@
+#include "ShaderInterop_Renderer.h"
+#include "ShaderInterop_Mesh.h"
+
 struct VS_OUT
 {
     float4 pos : SV_POSITION;
@@ -6,28 +9,6 @@ struct VS_OUT
     float3 tan : TANGENT;
     float3 bitan : BITANGENT;
     float3 wsPos : WS_POSITION;
-};
-
-struct GlobalData
-{
-    uint meshTableSubmeshMD;
-    uint meshTablePos;
-    uint meshTableUV;
-    uint meshTableNor;
-    uint meshTableTan;
-    uint meshTableBlend;
-    
-    uint perFrameTable;
-    uint materialTable;
-};
-
-struct PerFrameData
-{
-    matrix viewMatrix;
-    matrix projMatrix;
-    matrix invProjMatrix;
-    float4 camPos;
-    float time;
 };
 
 
@@ -39,19 +20,12 @@ struct PerDrawData
     uint jointsDescriptor;
 };
 
+
+
+
 struct JointsData
 {
     matrix joints[130];
-};
-
-struct SubmeshMetadata
-{
-    uint vertStart;
-    uint vertCount;
-    uint indexStart;
-    uint indexCount;
-    uint blendStart;
-    uint blendCount;
 };
 
 struct BlendWeight
@@ -64,6 +38,9 @@ struct Blend
 {
     BlendWeight iw[4];
 };
+
+
+
 
 struct PushConstantElement
 {
@@ -82,13 +59,13 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     
     ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[constants.perDrawCB];
     
-    StructuredBuffer<GlobalData> gds = ResourceDescriptorHeap[constants.gdDescriptor];
-    GlobalData gd = gds[0];
+    StructuredBuffer<ShaderInterop_GlobalData> gds = ResourceDescriptorHeap[constants.gdDescriptor];
+    ShaderInterop_GlobalData gd = gds[0];
     
-    StructuredBuffer<PerFrameData> pfDatas = ResourceDescriptorHeap[gd.perFrameTable];
-    PerFrameData pfData = pfDatas[constants.perFrameOffset];
+    StructuredBuffer<ShaderInterop_PerFrameData> pfDatas = ResourceDescriptorHeap[gd.perFrameTable];
+    ShaderInterop_PerFrameData pfData = pfDatas[constants.perFrameOffset];
     
-    StructuredBuffer<SubmeshMetadata> mds = ResourceDescriptorHeap[gd.meshTableSubmeshMD];
+    StructuredBuffer<ShaderInterop_SubmeshMetadata> mds = ResourceDescriptorHeap[gd.meshTableSubmeshMD];
     StructuredBuffer<float3> positions = ResourceDescriptorHeap[gd.meshTablePos];
     StructuredBuffer<float2> uvs = ResourceDescriptorHeap[gd.meshTableUV];
     StructuredBuffer<float3> normals = ResourceDescriptorHeap[gd.meshTableNor];
@@ -96,7 +73,7 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     StructuredBuffer<Blend> blendData = ResourceDescriptorHeap[gd.meshTableBlend];
 
     
-    SubmeshMetadata md = mds[perDrawData.submeshID];
+    ShaderInterop_SubmeshMetadata md = mds[perDrawData.submeshID];
     Blend bw = blendData[vertexID + md.blendStart];
     vertexID += md.vertStart;
 
