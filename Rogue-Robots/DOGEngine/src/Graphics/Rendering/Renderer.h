@@ -24,6 +24,9 @@ namespace DOG::gfx
 	class RenderGraph;
 	class RGResourceManager;
 
+	// Passes
+	class ImGUIPass;
+
 	class Renderer
 	{
 	private:
@@ -44,6 +47,8 @@ namespace DOG::gfx
 
 		void SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 		void SubmitMeshNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
+
+		void SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 
 
 
@@ -88,6 +93,7 @@ namespace DOG::gfx
 		std::unique_ptr<GraphicsBuilder> m_builder;
 		std::vector<RenderSubmission> m_submissions;		// temporary
 		std::vector<RenderSubmission> m_noCullSubmissions;	// temporary
+		std::vector<RenderSubmission> m_animatedDraws;		// temp
 
 
 		DirectX::XMMATRIX m_viewMat, m_projMat;
@@ -175,6 +181,10 @@ namespace DOG::gfx
 		std::unique_ptr<GPUTableDeviceLocal<GlobalDataHandle>> m_globalDataTable;
 		GlobalDataHandle m_gdHandle;
 		u32 m_gdDescriptor{ 0 };
+
+
+		// Passes
+		std::unique_ptr<ImGUIPass> m_igPass;
 
 	};
 }

@@ -23,6 +23,9 @@
 
 #include "Tracy/Tracy.hpp"
 
+// Passes
+#include "RenderPasses/ImGUIPass.h"
+
 namespace DOG::gfx
 {
 	Renderer::Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug) :
@@ -144,10 +147,12 @@ namespace DOG::gfx
 		m_globalData.perFrameTable = m_pfDataTable->GetGlobalDescriptor();
 		m_globalData.materialTable = m_globalMaterialTable->GetDescriptor();
 
-		m_globalDataTable = std::make_unique<GPUTableDeviceLocal<GlobalDataHandle>>(m_rd, m_bin.get(), sizeof(GlobalData), 1, false);
+		m_globalDataTable = std::make_unique<GPUTableDeviceLocal<GlobalDataHandle>>(m_rd, m_bin.get(), (u32)sizeof(GlobalData), 1, false);
 		m_gdHandle = m_globalDataTable->Allocate(1, &m_globalData);
 		m_globalDataTable->SendCopyRequests(*m_uploadCtx);
 		m_gdDescriptor = m_globalDataTable->GetGlobalDescriptor();
+
+		m_igPass = std::make_unique<ImGUIPass>(m_imgui.get());
 	}
 
 	Renderer::~Renderer()
@@ -185,6 +190,17 @@ namespace DOG::gfx
 		sub.world = world;
 		m_noCullSubmissions.push_back(sub);
 	}
+
+	void Renderer::SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
+	{
+		RenderSubmission sub{};
+		sub.mesh = mesh;
+		sub.submesh = submesh;
+		sub.mat = material;
+		sub.world = world;
+		m_animatedDraws.push_back(sub);
+	}
+
 
 
 	void Renderer::Update(f32 dt)
@@ -229,12 +245,17 @@ namespace DOG::gfx
 
 		// Forward pass to HDR
 		{
+			struct JointData
+			{
+				DirectX::XMFLOAT4X4 joints[130];
+			};
+
 			struct PerDrawData
 			{
 				DirectX::XMMATRIX world;
-				DirectX::XMFLOAT4X4 joints[130];
-				u32 globalSubmeshID;
-				u32 globalMaterialID;
+				u32 globalSubmeshID{ UINT_MAX };
+				u32 globalMaterialID{ UINT_MAX };
+				u32 jointsDescriptor{ UINT_MAX };
 			};
 
 			struct PassData {};
@@ -257,6 +278,7 @@ namespace DOG::gfx
 					rd->Cmd_SetScissorRects(cmdl, ScissorRects()
 						.Append(0, 0, m_clientWidth, m_clientHeight));
 
+					// Draw statics
 					rd->Cmd_SetPipeline(cmdl, m_meshPipe);
 					rd->Cmd_SetIndexBuffer(cmdl, m_globalMeshTable->GetIndexBuffer());
 					for (const auto& sub : m_submissions)
@@ -264,12 +286,39 @@ namespace DOG::gfx
 						auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
 						PerDrawData perDrawData{};
 
-						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); i++)
-							perDrawData.joints[i] = m_boneJourno->m_vsJoints[i];
-
 						perDrawData.world = sub.world;
 						perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
 						perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
+						std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
+
+						auto args = ShaderArgs()
+							.AppendConstant(m_gdDescriptor)
+							.AppendConstant(m_currPfDescriptor)
+							.AppendConstant(perDrawHandle.globalDescriptor);
+
+						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
+
+						auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+						rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
+
+					}
+
+					// Draw animated
+					for (const auto& sub : m_animatedDraws)
+					{
+						// Resolve joints
+						JointData jointsData{};
+						auto jointsHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); i++)
+							jointsData.joints[i] = m_boneJourno->m_vsJoints[i];
+						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
+
+						auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
+						PerDrawData perDrawData{};
+						perDrawData.world = sub.world;
+						perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
+						perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
+						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
 						std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
 
 
@@ -285,22 +334,17 @@ namespace DOG::gfx
 
 					}
 
+					// Draw no backface cull
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
 					for (const auto& sub : m_noCullSubmissions)
 					{
 						auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
 						PerDrawData perDrawData{};
 
-						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); i++)
-							perDrawData.joints[i] = m_boneJourno->m_vsJoints[i];
-
 						perDrawData.world = sub.world;
 						perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
 						perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
 						std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
-
-
-
 
 						auto args = ShaderArgs()
 							.AppendConstant(m_gdDescriptor)
@@ -311,7 +355,6 @@ namespace DOG::gfx
 
 						auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
 						rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
-
 					}
 
 				});
@@ -341,20 +384,7 @@ namespace DOG::gfx
 		}
 
 
-		// Draw ImGUI on backbuffer
-		{
-			struct PassData {};
-			rg.AddPass<PassData>("ImGUI Pass",
-				[&](PassData&, RenderGraph::PassBuilder& builder)
-				{
-					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer), RenderPassAccessType::PreservePreserve,
-						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-				},
-				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
-				{
-					m_imgui->Render(rd, cmdl);
-				});
-		}
+		m_igPass->AddPass(rg);
 
 
 		{
@@ -397,6 +427,7 @@ namespace DOG::gfx
 		m_bin->EndFrame();
 		m_submissions.clear();
 		m_noCullSubmissions.clear();
+		m_animatedDraws.clear();
 
 		m_sc->Present(vsync);
 	}

@@ -49,10 +49,9 @@ struct GlobalData
 struct PerDrawData
 {
     matrix world;
-    matrix joints[130];
-    
     uint submeshID;
     uint materialID;
+    uint jointsDescriptor;
 };
 
 struct PushConstantElement

@@ -36,10 +36,14 @@ struct PerFrameData
 struct PerDrawData
 {
     matrix world;
-    matrix joints[130];
-    
     uint submeshID;
     uint materialID;
+    uint jointsDescriptor;
+};
+
+struct JointsData
+{
+    matrix joints[130];
 };
 
 struct SubmeshMetadata
@@ -79,7 +83,7 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     VS_OUT output = (VS_OUT) 0;
     
 
-    
+  
     ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[constants.perDrawCB];
     
     StructuredBuffer<GlobalData> gds = ResourceDescriptorHeap[constants.gdDescriptor];
@@ -108,10 +112,12 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     
     if (md.blendCount > 0)
     {
-        matrix mat = perDrawData.joints[bw.iw[0].idx] * bw.iw[0].weight;
-        mat += perDrawData.joints[bw.iw[1].idx] * bw.iw[1].weight;
-        mat += perDrawData.joints[bw.iw[2].idx] * bw.iw[2].weight;
-        mat += perDrawData.joints[bw.iw[3].idx] * bw.iw[3].weight;
+        ConstantBuffer<JointsData> jointsData = ResourceDescriptorHeap[perDrawData.jointsDescriptor];
+        
+        matrix mat = jointsData.joints[bw.iw[0].idx] * bw.iw[0].weight;
+        mat += jointsData.joints[bw.iw[1].idx] * bw.iw[1].weight;
+        mat += jointsData.joints[bw.iw[2].idx] * bw.iw[2].weight;
+        mat += jointsData.joints[bw.iw[3].idx] * bw.iw[3].weight;
         pos = (float3) mul(float4(pos, 1.0f), mat);
     }
     
