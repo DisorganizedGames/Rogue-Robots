@@ -3,23 +3,23 @@
 #include "../Input/Keyboard.h"
 #include <assert.h>
 
-UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HWND hwnd) : m_d2d(rd, sc, numBuffers, hwnd), m_visible(true)
+UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HWND hwnd) : m_visible(true)
 {
    RECT wrect;
    if (!GetClientRect(hwnd, &wrect))
       OutputDebugString(L"Error retreiving client rect in UI creation\n");
    m_width = wrect.right;
    m_height = wrect.bottom;
+   m_d2d = std::make_unique<DOG::gfx::D2DBackend_DX12>(rd, sc, numBuffers, hwnd);
    this->m_scene = menu;
    BuildMenuUI();
-   m_elements.push_back(new UISplashScreen(m_d2d, (float)m_width, (float)m_height));
+   m_elements.push_back(new UISplashScreen(*m_d2d, (float)m_width, (float)m_height));
 }
 
 UI::~UI()
 {
    for (auto e : m_elements)
       delete e;
-   
 }
 
 void UI::DrawUI()
@@ -33,8 +33,8 @@ void UI::DrawUI()
    {
       for (auto&& e : m_elements)
       {
-         e->Update(m_d2d);
-         e->Draw(m_d2d);
+         e->Update(*m_d2d);
+         e->Draw(*m_d2d);
       }
       if (m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bplay])->pressed)
          ChangeUIscene(game);

@@ -88,7 +88,7 @@ DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
             );
             HR_VFY(hr);
 
-            // Create a render target for D2D to draw directly to this back buffer.
+            //Create a render target for D2D to draw directly to this back buffer.
 
             hr = m_wrappedBackBuffers[n].As(&surface);
             HR_VFY(hr);
@@ -143,7 +143,12 @@ DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
 DOG::gfx::D2DBackend_DX12::~D2DBackend_DX12()
 {
     m_descriptorMgr->free(&rtvHandle);
-
+    for (auto &&i : m_renderTargets)
+    {
+        i.Get()->Release();
+    }
+    
+    
 }
 
 void DOG::gfx::D2DBackend_DX12::BeginFrame()
