@@ -149,7 +149,6 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<InputController>(Player4);
 	m_entityManager.AddComponent<OnlinePlayer>(Player4);
 	scriptManager->AddScript(Player4, "Gun.lua");
-
 }
 
 
