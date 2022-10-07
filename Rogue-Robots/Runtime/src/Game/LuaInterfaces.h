@@ -97,6 +97,8 @@ public:
 	
 	void SetAction(DOG::LuaContext* context);
 
+	void HasComponent(DOG::LuaContext* context);
+
 private:
 	void AddModel(DOG::LuaContext* context, DOG::entity e);
 

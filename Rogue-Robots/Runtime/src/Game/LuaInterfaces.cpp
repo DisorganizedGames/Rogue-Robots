@@ -210,6 +210,32 @@ void EntityInterface::GetAction(DOG::LuaContext* context)
 	
 }
 
+#pragma region HasComponent
+
+template<typename ComponentType>
+bool HasComp(entity e)
+{
+	return EntityManager::Get().HasComponent<ComponentType>(e);
+}
+
+const std::unordered_map<std::string, bool (*) (entity)> componentMap = {
+	{ "Transform", HasComp<TransformComponent> },
+	{ "Model", HasComp<ModelComponent> },
+	{ "Audio", HasComp<AudioComponent>},
+	{ "Network", HasComp<NetworkComponent>},
+	{ "Rigidbody", HasComp<RigidbodyComponent>},
+	{ "BoxCollider", HasComp<BoxColliderComponent>},
+};
+
+void EntityInterface::HasComponent(LuaContext* context)
+{
+	entity e = context->GetInteger();
+	bool hasComp = componentMap.at(context->GetString())(e);
+	context->ReturnBoolean(hasComp);
+}
+
+#pragma endregion
+
 void EntityInterface::GetTransformScaleData(LuaContext* context)
 {
 	entity e = context->GetInteger();
