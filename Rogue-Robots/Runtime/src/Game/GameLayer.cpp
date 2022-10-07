@@ -768,6 +768,7 @@ void GameLayer::RegisterLuaInterfaces()
 
 std::vector<entity> GameLayer::LoadLevel()
 {
+	return;
 	float blockDim = 5.0f;
 
 	std::string line;
