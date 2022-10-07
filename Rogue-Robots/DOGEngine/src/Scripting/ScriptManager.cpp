@@ -69,38 +69,36 @@ namespace DOG
 		m_luaW->RemoveReferenceToFunction(scriptData.onUpdateFunction);
 	}
 
-	void ScriptManager::RemoveScriptData(std::vector<ScriptData>& scriptVector, entity entity)
+	void ScriptManager::RemoveScriptData(entity entity, bool removeAllEntityScripts, u32 vectorIndex)
 	{
-		//Does not have to be like this anymore!!!
-		//FIX LATER
-		for (u32 index = 0; index < scriptVector.size(); ++index)
+		auto entityToScripts = m_entityScripts.find(entity);
+		if (entityToScripts != m_entityScripts.end())
 		{
-			if (scriptVector[index].entity == entity)
+			std::vector<StoredScriptData>& storedScriptDataVector = entityToScripts->second;
+			for (u32 entityScriptIndex = 0; entityScriptIndex < storedScriptDataVector.size(); ++entityScriptIndex)
 			{
-				RemoveReferences(scriptVector[index]);
+				StoredScriptData& storedScriptData = storedScriptDataVector[entityScriptIndex];
+				//Remove all scripts if requested otherwise just removes the script type selected
+				if (removeAllEntityScripts || vectorIndex == storedScriptData.getScriptData.vectorIndex)
+				{
+					if (storedScriptData.getScriptData.sorted)
+						RemoveReferences(m_sortedScripts[storedScriptData.getScriptData.vectorIndex][storedScriptData.scriptIndex]);
+					else
+						RemoveReferences(m_unsortedScripts[storedScriptData.getScriptData.vectorIndex][storedScriptData.scriptIndex]);
 
-				auto entityToScripts = m_entityScripts.find(entity);
-				if (entityToScripts != m_entityScripts.end())
-				{
-					std::vector<StoredScriptData>& storedScriptDataVector = entityToScripts->second;
-					for (u32 entityScriptIndex = 0; entityScriptIndex < storedScriptDataVector.size(); ++entityToScripts)
-					{
-						if (index == storedScriptDataVector[entityScriptIndex].scriptIndex)
-						{
-							m_freeScriptPositions.push_back(storedScriptDataVector[entityScriptIndex]);
-							storedScriptDataVector.erase(storedScriptDataVector.begin() + entityScriptIndex);
-							--entityScriptIndex;
-						}
-					}
+					//Could be changed for performance if needed
+					m_freeScriptPositions.push_back(storedScriptData);
+					//Could be changed for performance if needed
+					storedScriptDataVector.erase(storedScriptDataVector.begin() + entityScriptIndex);
+
+					--entityScriptIndex;
 				}
-				else
-				{
-					std::cout << "Entity does not have any scripts!\n";
-					assert(false);
-				}
-				//scriptVector.erase(scriptVector.begin() + index);
-				//--index;
 			}
+		}
+		else
+		{
+			std::cout << "Entity does not have any scripts!\n";
+			assert(false);
 		}
 	}
 
@@ -135,24 +133,36 @@ namespace DOG
 		}
 		else
 		{
-			bool pushNewData = true;
 			//Get already created position in the vector
 			if (m_freeScriptPositions.size())
 			{
-				for (auto& freeStoredScriptData : m_freeScriptPositions)
+				for (u32 freeScriptIndex = 0; freeScriptIndex < m_freeScriptPositions.size(); ++freeScriptIndex)
 				{
+					StoredScriptData& freeStoredScriptData = m_freeScriptPositions[freeScriptIndex];
+
+					//Check if there exist an requested free place for the script type
 					if (itScriptToVector->second.sorted == freeStoredScriptData.getScriptData.sorted
 						&& itScriptToVector->second.vectorIndex == freeStoredScriptData.getScriptData.vectorIndex)
 					{
-						storedScriptData = m_freeScriptPositions.back();
-						m_freeScriptPositions.pop_back();
-						pushNewData = false;
+						storedScriptData = freeStoredScriptData;
+						//Could be changed for performance if needed
+						m_freeScriptPositions.erase(m_freeScriptPositions.begin() + freeScriptIndex);
+
+						//Put the scriptData it in the correct vector
+						if (storedScriptData.getScriptData.sorted)
+						{
+							m_sortedScripts[itScriptToVector->second.vectorIndex][storedScriptData.scriptIndex] = scriptData;
+						}
+						else
+						{
+							m_unsortedScripts[itScriptToVector->second.vectorIndex][storedScriptData.scriptIndex] = scriptData;
+						}
 						break;
 					}
 				}
 			}
-
-			if (pushNewData)
+			//If there are no free positions we push it back in the vector
+			else
 			{
 				if (itScriptToVector->second.sorted)
 				{
@@ -167,7 +177,8 @@ namespace DOG
 				storedScriptData.getScriptData = itScriptToVector->second;
 			}
 		}
-
+		
+		//Add the script connection to the entity
 		auto entityToScripts = m_entityScripts.find(entity);
 		if (entityToScripts == m_entityScripts.end())
 		{
@@ -175,6 +186,7 @@ namespace DOG
 		}
 		else
 		{
+			//Could be changed for performance if needed
 			entityToScripts->second.push_back(storedScriptData);
 		}
 	}
@@ -254,30 +266,14 @@ namespace DOG
 			return;
 		}
 
-		if (itScriptToVector->second.sorted)
-		{
-			auto& vector = m_sortedScripts[itScriptToVector->second.vectorIndex];
-			RemoveScriptData(vector, entity);
-		}
-		else
-		{
-			auto& vector = m_unsortedScripts[itScriptToVector->second.vectorIndex];
-			RemoveScriptData(vector, entity);
-		}
+		RemoveScriptData(entity, false, itScriptToVector->second.vectorIndex);
 	}
 
 	void ScriptManager::RemoveAllEntityScripts(entity entity)
 	{
 		if (m_entityManager.HasComponent<ScriptComponent>(entity))
 		{
-			for (auto& vector : m_sortedScripts)
-			{
-				RemoveScriptData(vector, entity);
-			}
-			for (auto& vector : m_unsortedScripts)
-			{
-				RemoveScriptData(vector, entity);
-			}
+			RemoveScriptData(entity, true);
 
 			m_entityManager.RemoveComponent<ScriptComponent>(entity);
 		}

@@ -70,7 +70,7 @@ namespace DOG
 		void ReloadFile(const std::string& fileName, ScriptData& scriptData);
 		bool TestReloadFile(const std::string& fileName);
 		void RemoveReferences(ScriptData& scriptData);
-		void RemoveScriptData(std::vector<ScriptData>& scriptVector, entity entity);
+		void RemoveScriptData(entity entity, bool removeAllEntityScripts, u32 vectorIndex = 0);
 		void CreateScript(entity entity, const std::string& luaFileName);
 
 	public:
