@@ -146,6 +146,8 @@ namespace DOG
 		static MeshColliderData GetMeshColliderData(u32 modelID);
 		static CollisionShapeHandle AddCollisionShape(btCollisionShape* addCollisionShape);
 		btCollisionShape* GetCollisionShape(const CollisionShapeHandle& collisionShapeHandle);
+		void FreeRigidbodyData(const RigidbodyHandle& rigidbodyHandle, bool freeCollisionShape);
+		void FreeCollisionShape(const CollisionShapeHandle& collisionShapeHandle);
 
 		static constexpr u64 RESIZE_RIGIDBODY_SIZE = 1000;
 		static constexpr u64 RESIZE_COLLISIONSHAPE_SIZE = 1000;
@@ -156,5 +158,6 @@ namespace DOG
 		PhysicsEngine& operator=(const PhysicsEngine& other) = delete;
 		static void Initialize();
 		static void UpdatePhysics(float deltaTime);
+		static void FreePhysicsFromEntity(entity entity);
 	};
 }
