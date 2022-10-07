@@ -107,6 +107,7 @@ namespace DOG::gfx
 		std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> m_wmCallback;
 		std::unique_ptr<RenderBackend> m_backend;
 		std::unique_ptr<ImGUIBackend> m_imgui;
+		std::unique_ptr<UI> m_ui; 
 		std::unique_ptr<ShaderCompilerDXC> m_sclr;
 		std::unique_ptr<GPUGarbageBin> m_bin;
 		RenderDevice* m_rd{ nullptr };
