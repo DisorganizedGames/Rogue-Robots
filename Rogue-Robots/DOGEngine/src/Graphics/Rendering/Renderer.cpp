@@ -520,6 +520,9 @@ namespace DOG::gfx
 			ZoneNamedN(RGExecuteScope, "RG Execution", true);
 			rg.Execute();
 		}
+		m_ui->m_d2d->BeginFrame();
+		m_ui->DrawUI();
+		m_ui->m_d2d->EndFrame();
 
 	}
 
