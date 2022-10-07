@@ -418,6 +418,9 @@ namespace DOG::gfx
 		m_clientWidth = clientWidth;
 		m_clientHeight = clientHeight;
 
+		m_globalPassData.defRenderScissors = ScissorRects().Append(0, 0, m_clientWidth, m_clientHeight);
+		m_globalPassData.defRenderVPs = Viewports().Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight);
+
 		m_sc->OnResize(clientWidth, clientHeight);
 	}
 
