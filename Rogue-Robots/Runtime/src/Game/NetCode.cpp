@@ -111,7 +111,7 @@ void NetCode::Recive()
 	{
 
 		std::cout << "\nInput 'h' to host, 'j' to join, 'o' to play offline: ";
-		//input = getchar(); // uncomment to startup online
+		input = getchar(); // uncomment to startup online
 		switch (input)
 		{
 		case 'h':
@@ -210,6 +210,17 @@ void NetCode::Recive()
 
 						});
 				}
+				//Sync all stats component that this player has hit
+				EntityManager::Get().Collect<NetworkAgentStats, AgentStatsComponent>().Do([&](NetworkAgentStats& netC, AgentStatsComponent& aStats)
+					{
+						if (netC.playerId = netC.playerId)
+						{
+							netC.stats = aStats;
+							memcpy(sendBuffer + bufferSize, &netC, sizeof(NetworkTransform));
+							m_inputTcp.nrOfNetStats++;
+							bufferSize += sizeof(NetworkTransform);
+						}
+					});
 				//put in the client data
 				memcpy(sendBuffer, (char*)&m_inputTcp, sizeof(m_inputTcp));
 				
@@ -222,7 +233,7 @@ void NetCode::Recive()
 				else
 				{
 					int bufferReciveSize = 0;
-					//Úpdate the players entites stats
+					//ï¿½pdate the players entites stats
 					memcpy(m_outputTcp, reciveBuffer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
 					bufferReciveSize += sizeof(Client::ClientsData) * MAX_PLAYER_COUNT;
 					if (m_outputTcp->nrOfNetTransform > 0 && m_outputTcp->playerId < 10)

@@ -217,7 +217,7 @@ function OnStart()
 end
 
 function OnUpdate()
-	Agent.pos = Vector3.FromTable(Entity:GetTransformPosData(EntityID))
+	--Agent.pos = Vector3.fromTable(Entity:GetTransformPosData(EntityID))
 	Agent:doBehavior()
 end
 
