@@ -13,6 +13,7 @@ class btCollisionShape;
 namespace DOG
 {
 	struct BulletCollisionCallback;
+	struct RigidbodyComponent;
 
 	typedef u32 entity;
 
@@ -42,20 +43,6 @@ namespace DOG
 		bool collisionCheck = false;
 		bool activeCollision = false;
 		RigidbodyHandle rigidbodyHandle;
-	};
-
-	struct RigidbodyComponent
-	{
-		RigidbodyComponent(entity entity);
-
-		void SetOnCollisionEnter(std::function<void(entity, entity)> onCollisionEnter);
-		void SetOnCollisionExit(std::function<void(entity, entity)> onCollisionExit);
-		void ConstrainRotation(bool constrainXRotation, bool constrainYRotation, bool constrainZRotation);
-		void ConstrainPosition(bool constrainXPosition, bool constrainYPosition, bool constrainZPosition);
-
-		RigidbodyHandle rigidbodyHandle;
-		std::function<void(entity, entity)> onCollisionEnter = nullptr;
-		std::function<void(entity, entity)> onCollisionExit = nullptr;
 	};
 
 	struct BoxColliderComponent

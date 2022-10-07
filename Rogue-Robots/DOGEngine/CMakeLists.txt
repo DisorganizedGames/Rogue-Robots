@@ -29,6 +29,7 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Graphics/Rendering/RenderEffects/TestComputeEffect.h" "src/Graphics/Rendering/RenderEffects/TestComputeEffect.cpp"    
     "src/Graphics/Rendering/RenderEffects/RenderEffect.h" "src/Graphics/Rendering/RenderEffects/RECommonIncludes.h"
     "src/ECS/System.h" "src/Graphics/RHI/Types/HardwareTypes.h"
+    "src/Physics/PhysicsRigidbody.h" "src/Physics/PhysicsRigidbody.cpp"
     )
 
 	file(GLOB_RECURSE TempGraphics
