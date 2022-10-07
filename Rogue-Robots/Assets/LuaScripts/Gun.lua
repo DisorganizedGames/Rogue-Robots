@@ -6,9 +6,9 @@ local InitialBulletSpeed = 10.0
 local ShootCooldown = 0.1
 local BulletDespawnDist = 50
 local BulletSize = {
-	x = 1.0,
-	y = 1.0,
-	z = 1.0
+	x = 10.0,
+	y = 10.0,
+	z = 10.0
 }
 
 --Managers for objects & component functions.
@@ -88,19 +88,8 @@ function OnUpdate()
 	
 	Entity:ModifyComponent(gunEntity.entityID, "Transform", gunEntity.position, 1)
 
---Temporary code to allow for switching mode.
-	tempTimer = tempTimer - DeltaTime
-	if Input:IsKeyPressed("Q") and tempTimer <= 0.0 then
-		if tempMode == 0 then
-			miscComponent.OnUpdate = MyMiscComponents.NormalGun
-			tempMode = 1
-		else
-			miscComponent.OnUpdate = MyMiscComponents.ChargeShot
-			tempMode = 0
-		end
-		tempTimer = 1.0
-	end
-----------------------------------------------------
+
+	miscComponent.OnUpdate = MyMiscComponents.NormalGun
 
 	miscComponent:OnUpdate(gunEntity.position + playerForward * 0.45 + playerUp * 0.06, barrelComponent, magazineComponent, bullets, InitialBulletSpeed, BulletSize, EntityID)
 end

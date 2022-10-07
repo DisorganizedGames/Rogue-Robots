@@ -24,9 +24,12 @@ namespace DOG
 			int playerId = 0;
 			int udpId = 0;
 			DirectX::XMMATRIX matrix = {};
-			bool shoot = FALSE;
-			bool jump = FALSE;
-			bool activateActiveItem = FALSE;
+			bool shoot = false;
+			bool jump = false;
+			bool activateActiveItem = false;
+			bool normalFireMode = false;
+
+
 		};
 		struct UdpData
 		{
