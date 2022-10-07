@@ -100,7 +100,7 @@ void NetCode::Recive()
 	{
 
 		std::cout << "\nInput 'h' to host, 'j' to join, 'o' to play offline: ";
-		input = getchar(); // uncomment to startup online
+		//input = getchar(); // uncomment to startup online
 		switch (input)
 		{
 		case 'h':
