@@ -118,7 +118,8 @@ namespace DOG::gfx
 	bool Swapchain_DX12::GetFullscreenState() const
 	{
 		BOOL state;
-		HRESULT hr = m_sc->GetFullscreenState(&state, nullptr);
+		HRESULT hr{ S_OK };
+		hr = m_sc->GetFullscreenState(&state, nullptr);
 		HR_VFY(hr);
 		return static_cast<bool>(state);
 	}
@@ -211,8 +212,9 @@ namespace DOG::gfx
 
 	std::pair<u32, u32> Swapchain_DX12::GetSwapchainWidthAndHeight() const
 	{
+		HRESULT hr{ S_OK };
 		DXGI_SWAP_CHAIN_DESC1 swapDesc;
-		HRESULT hr = m_sc->GetDesc1(&swapDesc);
+		hr = m_sc->GetDesc1(&swapDesc);
 		HR_VFY(hr);
 		return std::make_pair<u32, u32>(static_cast<u32>(swapDesc.Width), static_cast<u32>(swapDesc.Height));
 	}
