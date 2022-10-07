@@ -143,37 +143,5 @@ namespace DOG
 			std::cout << "Entity does not exist\n";
 			assert(false);
 		}
-
-		////Run the scripts which should happen first!
-		//for (u32 index = 0; index < m_sortedScriptsHalfwayIndex; ++index)
-		//{
-		//	for (auto& scriptData : m_sortedScripts[index])
-		//	{
-		//		//scriptData.
-		//		Function function = m_luaW->TryGetFunctionFromTable(scriptData.scriptTable, functionName);
-		//		if (function.ref != -1)
-		//			m_luaW->CallTableLuaFunction(scriptData.scriptTable, function);
-		//	}
-		//}
-		////Run the scripts which does not have an order!
-		//for (u32 index = 0; index < m_unsortedScripts.size(); ++index)
-		//{
-		//	for (auto& scriptData : m_unsortedScripts[index])
-		//	{
-		//		Function function = m_luaW->TryGetFunctionFromTable(scriptData.scriptTable, functionName);
-		//		if (function.ref != -1)
-		//			m_luaW->CallTableLuaFunction(scriptData.scriptTable, function);
-		//	}
-		//}
-		////Run the scripts which should happen last!
-		//for (u32 index = m_sortedScriptsHalfwayIndex; index < m_sortedScripts.size(); ++index)
-		//{
-		//	for (auto& scriptData : m_sortedScripts[index])
-		//	{
-		//		Function function = m_luaW->TryGetFunctionFromTable(scriptData.scriptTable, functionName);
-		//		if (function.ref != -1)
-		//			m_luaW->CallTableLuaFunction(scriptData.scriptTable, function);
-		//	}
-		//}
 	}
 }
