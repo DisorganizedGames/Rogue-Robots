@@ -1,5 +1,3 @@
-#include <memory>
-#include <vector>
 #include <string>
 #include <time.h>
 #include "RHI/DX12/d2dBackend_DX12.h"
