@@ -7,6 +7,13 @@ function OnStart()
 end
 
 function OnCollisionEnter(self, entity1, entity2)
+	print("OnCollisionEnter POGGERS")
+	print("OnEntity1", entity1)
+	print("OnEntity2", entity2)
+end
+
+function OnCollisionExit(self, entity1, entity2)
+	print("OnCollisionExit ALSO POGGERS")
 	print("OnEntity1", entity1)
 	print("OnEntity2", entity2)
 end

@@ -133,8 +133,8 @@ namespace DOG
 				Function function = m_luaW->TryGetFunctionFromTable(scriptData.scriptTable, functionName);
 				if (function.ref != -1)
 				{
-					LuaTable table(scriptData.scriptTable);
-					table.CallFunctionOnTable(function, (i32)entity, std::forward<Args>(args)...);
+					LuaTable table(scriptData.scriptTable, true);
+					table.CallFunctionOnTable(function, entity, std::forward<Args>(args)...);
 				}
 			}
 		}

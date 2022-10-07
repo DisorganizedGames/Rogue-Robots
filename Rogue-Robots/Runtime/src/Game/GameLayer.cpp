@@ -80,13 +80,26 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<BoxColliderComponent>(entity4, entity4, Vector3(1, 1, 1), true);
 	m_entityManager.AddComponent<MeshColliderComponent>(entity2, entity2, m_greenCube);
 	m_entityManager.AddComponent<RigidbodyComponent>(entity4, entity4);
+	m_entityManager.AddComponent<RigidbodyComponent>(entity3, entity3);
 	//rigidbodyComponent.SetOnCollisionEnter([&](entity ent1, entity ent2) {std::cout << ent1 << " " << ent2 << " Enter Hello\n"; });
 	//rigidbodyComponent.SetOnCollisionExit([&](entity ent1, entity ent2) {std::cout << ent1 << " " << ent2 << " Exit Hello\n"; });
 
 	/*m_entityManager.GetComponent<RigidbodyComponent>(entity4).ConstrainPosition(true, false, true);*/
 	//m_entityManager.GetComponent<RigidbodyComponent>(entity4).ConstrainRotation(false, true, true);
 
-	
+	entity entity80 = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<ModelComponent>(entity80, m_blueCube);
+	auto& t80 = m_entityManager.AddComponent<TransformComponent>(entity80);
+	t80.worldMatrix = t3.worldMatrix;
+	m_entityManager.AddComponent<SphereColliderComponent>(entity80, entity80, 1.0f, true);
+	m_entityManager.AddComponent<RigidbodyComponent>(entity80, entity80);
+
+	entity entity81 = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<ModelComponent>(entity81, m_magentaCube);
+	auto& t81 = m_entityManager.AddComponent<TransformComponent>(entity81);
+	t81.worldMatrix = t4.worldMatrix;
+	m_entityManager.AddComponent<BoxColliderComponent>(entity81, entity81, Vector3(1, 1, 1), true);
+	m_entityManager.AddComponent<RigidbodyComponent>(entity81, entity81);
 	
 
 
@@ -102,11 +115,6 @@ GameLayer::GameLayer() noexcept
 	//Register Lua interfaces
 	RegisterLuaInterfaces();
 	//...
-
-	LuaMain::GetScriptManager()->AddScript(entity4, "ScriptTest.lua");
-	//LuaMain::GetScriptManager()->RemoveScript(entity4, "ScriptTest.lua");
-	//LuaMain::GetScriptManager()->AddScript(entity4, "Gun.lua");
-	//LuaMain::GetScriptManager()->AddScript(entity4, "ScriptTest.lua");
 
 	entity Player1 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(Player1, m_greenCube);

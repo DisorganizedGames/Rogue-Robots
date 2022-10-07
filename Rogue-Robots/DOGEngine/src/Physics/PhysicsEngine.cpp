@@ -185,37 +185,53 @@ namespace DOG
 					//Get handle for vector
 					u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(rigidbody.rigidbodyHandle.handle);
 					auto collisions = s_physicsEngine.m_rigidbodyCollision.find(handle);
+
 					//Check if the existing collisions are exiting or have just entered the collision
-					for (auto& it : collisions->second)
+					for (auto it = collisions->second.begin(); it != collisions->second.end();)
 					{
 						if (collisions->second.size() == 0)
 							break;
 
-						//Check if the activeCollision has changed, if it has then we either call onCollisionEnter or onCollisionExit
-						bool beforeCollision = it.second.activeCollision;
-						it.second.activeCollision = it.second.collisionCheck;
-						if (it.second.activeCollision != beforeCollision)
-						{
-							it.second.collisionCheck = false;
 
+						bool incrementIterator = true;
+
+						//Check if the activeCollision has changed, if it has then we either call onCollisionEnter or onCollisionExit
+						bool beforeCollision = it->second.activeCollision;
+						it->second.activeCollision = it->second.collisionCheck;
+						if (it->second.activeCollision != beforeCollision)
+						{
 							//Get RigidbodyColliderData to get the corresponding entities
 							RigidbodyColliderData* obj0RigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(rigidbody.rigidbodyHandle);
-							RigidbodyColliderData* obj1RigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(it.second.rigidbodyHandle);
+							RigidbodyColliderData* obj1RigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(it->second.rigidbodyHandle);
 
-							if (it.second.activeCollision && rigidbody.onCollisionEnter != nullptr)
+							if (it->second.activeCollision && rigidbody.onCollisionEnter != nullptr)
 								rigidbody.onCollisionEnter(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
-							else
-								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0RigidbodyColliderData->rigidbodyEntity, "OnCollisionEnter", (i32)obj1RigidbodyColliderData->rigidbodyEntity);
+							else if (it->second.activeCollision)
+								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0RigidbodyColliderData->rigidbodyEntity, "OnCollisionEnter", obj1RigidbodyColliderData->rigidbodyEntity);
 
-							if (!it.second.activeCollision)
+							//Set collisionCheck false for next collision check
+							it->second.collisionCheck = false;
+
+							if (!it->second.activeCollision)
 							{
 								if (rigidbody.onCollisionExit != nullptr)
 									rigidbody.onCollisionExit(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
+								else
+									LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0RigidbodyColliderData->rigidbodyEntity, "OnCollisionExit", obj1RigidbodyColliderData->rigidbodyEntity);
 
 								//Remove the collision because we do not need to keep track of it anymore
-								collisions->second.erase(it.first);
+ 								collisions->second.erase(it++);
+								incrementIterator = false;
 							}
 						}
+						else
+						{
+							//Set collisionCheck false for next collision check
+							it->second.collisionCheck = false;
+						}
+
+						if (incrementIterator)
+							++it;
 					}
 				}
 			});
