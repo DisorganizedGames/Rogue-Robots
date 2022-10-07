@@ -32,8 +32,8 @@
 namespace DOG::gfx
 {
 	Renderer::Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug) :
-		m_clientWidth(clientWidth),
-		m_clientHeight(clientHeight)
+		m_renderWidth(1920),
+		m_renderHeight(1080)
 	{
 		m_boneJourno = std::make_unique<AnimationManager>();
 		m_backend = std::make_unique<gfx::RenderBackend_DX12>(debug);
@@ -153,12 +153,12 @@ namespace DOG::gfx
 		m_globalDataTable->SendCopyRequests(*m_uploadCtx);
 
 
-		// Set default global pass data
-		m_globalEffectData.bbScissor = ScissorRects().Append(0, 0, m_clientWidth, m_clientHeight);
-		m_globalEffectData.bbVP = Viewports().Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight);
+		// Set default pass data
+		m_globalEffectData.bbScissor = ScissorRects().Append(0, 0, clientWidth, clientHeight);
+		m_globalEffectData.bbVP = Viewports().Append(0.f, 0.f, (f32)clientWidth, (f32)clientHeight);
 		// render vps/scissors subject to change
-		m_globalEffectData.defRenderScissors = ScissorRects().Append(0, 0, m_clientWidth, m_clientHeight);
-		m_globalEffectData.defRenderVPs= Viewports().Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight);
+		m_globalEffectData.defRenderScissors = ScissorRects().Append(0, 0, m_renderWidth, m_renderHeight);
+		m_globalEffectData.defRenderVPs= Viewports().Append(0.f, 0.f, (f32)m_renderWidth, (f32)m_renderHeight);
 		m_globalEffectData.globalDataDescriptor = m_globalDataTable->GetGlobalDescriptor();
 		m_globalEffectData.meshTable = m_globalMeshTable.get();
 
@@ -204,7 +204,7 @@ namespace DOG::gfx
 	void Renderer::SetMainRenderCamera(const DirectX::XMMATRIX& view, DirectX::XMMATRIX* proj)
 	{
 		m_viewMat = view;
-		m_projMat = proj ? *proj : DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_clientWidth / m_clientHeight, 800.f, 0.1f);
+		m_projMat = proj ? *proj : DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_renderWidth / m_renderHeight, 800.f, 0.1f);
 	}
 
 	void Renderer::BeginGUI()
@@ -346,8 +346,8 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("Forward Pass",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
-					builder.DeclareTexture(RG_RESOURCE(MainDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_clientWidth, m_clientHeight));
-					builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_clientWidth, m_clientHeight)
+					builder.DeclareTexture(RG_RESOURCE(MainDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_renderWidth, m_renderHeight));
+					builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight)
 						.AddFlag(D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
 
 					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::ClearPreserve,
@@ -391,6 +391,9 @@ namespace DOG::gfx
 				},
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
 				{
+					rd->Cmd_SetViewports(cmdl, m_globalEffectData.bbVP);
+					rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.bbScissor);
+
 					rd->Cmd_SetPipeline(cmdl, m_pipe);
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, ShaderArgs()
 						.AppendConstant(resources.GetView(RG_RESOURCE(LitHDR))));
@@ -415,39 +418,25 @@ namespace DOG::gfx
 
 	void Renderer::OnResize(u32 clientWidth, u32 clientHeight)
 	{
-		m_clientWidth = clientWidth;
-		m_clientHeight = clientHeight;
-
-		m_globalPassData.defRenderScissors = ScissorRects().Append(0, 0, m_clientWidth, m_clientHeight);
-		m_globalPassData.defRenderVPs = Viewports().Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight);
+		m_globalEffectData.bbScissor = ScissorRects().Append(0, 0, clientWidth, clientHeight);
+		m_globalEffectData.bbVP = Viewports().Append(0.f, 0.f, (f32)clientWidth, (f32)clientHeight);
 
 		m_sc->OnResize(clientWidth, clientHeight);
-	}
-
-	void DOG::gfx::Renderer::SetFullscreenState(WindowMode windowMode, DXGI_MODE_DESC mode)
-	{
-		bool succeeded;
-		if (windowMode == WindowMode::Windowed)
-		{
-			succeeded = m_sc->SetFullscreenState(false, mode);
-			if (!succeeded)
-			{
-				std::cout << "SetFullscreenState Windowed failed" << std::endl;
-			}
-		}
-		else if (windowMode == WindowMode::FullScreen)
-		{
-			succeeded = m_sc->SetFullscreenState(true, mode);
-			if (!succeeded)
-			{
-				std::cout << "SetFullscreenState Fullscreen failed" << std::endl;
-			}
-		}
 	}
 
 	WindowMode DOG::gfx::Renderer::GetFullscreenState() const
 	{
 		return m_sc->GetFullscreenState() ? WindowMode::FullScreen : WindowMode::Windowed;
+	}
+
+	bool Renderer::SetGraphicsSettings(GraphicsSettings requestedSettings)
+	{
+		assert(requestedSettings.displayMode);
+		m_renderWidth = requestedSettings.renderResolution.x;
+		m_renderHeight = requestedSettings.renderResolution.y;
+		m_sc->SetFullscreenState(requestedSettings.windowMode == WindowMode::FullScreen, *requestedSettings.displayMode);
+
+		return true;
 	}
 
 	void Renderer::BeginFrame_GPU()

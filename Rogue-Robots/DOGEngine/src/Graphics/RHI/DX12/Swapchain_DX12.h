@@ -50,7 +50,8 @@ namespace DOG::gfx
 
 		std::vector<Texture> m_buffers;
 
-		bool m_tearingIsSupported{ false };
+		bool m_tearingIsSupported{ true };
+		bool m_isFullscreen{ false };
 		u32 m_windowedClientWidth{ 0 };
 		u32 m_windowedClientHeight{ 0 };
 	};

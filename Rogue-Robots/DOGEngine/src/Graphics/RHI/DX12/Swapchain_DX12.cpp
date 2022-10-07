@@ -133,6 +133,9 @@ namespace DOG::gfx
 		{
 			ExitFullscreen();
 		}
+
+		m_isFullscreen = GetFullscreenState();
+		assert(m_isFullscreen == fullscreen);
 		return true;
 	}
 
@@ -217,7 +220,7 @@ namespace DOG::gfx
 	void Swapchain_DX12::Present(bool vsync)
 	{
 		u32 flags{ 0 };
-		if (!vsync && m_tearingIsSupported)
+		if (!vsync && m_tearingIsSupported && !m_isFullscreen)
 			flags |= DXGI_PRESENT_ALLOW_TEARING;
 
 		HRESULT hr{ S_OK };

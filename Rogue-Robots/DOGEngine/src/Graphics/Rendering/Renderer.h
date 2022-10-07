@@ -65,8 +65,9 @@ namespace DOG::gfx
 
 
 		void OnResize(u32 clientWidth, u32 clientHeight);
-		void SetFullscreenState(WindowMode windowMode, DXGI_MODE_DESC mode);
+		bool SetGraphicsSettings(GraphicsSettings requestedSettings);
 		WindowMode GetFullscreenState() const;
+
 
 		void BeginFrame_GPU();
 		void EndFrame_GPU(bool vsync);
@@ -102,8 +103,8 @@ namespace DOG::gfx
 		RenderDevice* m_rd{ nullptr };
 		Swapchain* m_sc{ nullptr };
 
-		u32 m_clientWidth{ 0 };
-		u32 m_clientHeight{ 0 };
+		u32 m_renderWidth{ 0 };
+		u32 m_renderHeight{ 0 };
 
 		// Big buffers store meshes and materials
 		std::unique_ptr<MaterialTable> m_globalMaterialTable;

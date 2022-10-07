@@ -112,7 +112,7 @@ namespace DOG
 			m_renderer->Update(0.0f);
 			m_renderer->Render(0.0f);
 
-			m_renderer->EndFrame_GPU(true);
+			m_renderer->EndFrame_GPU(m_specification.graphicsSettings.vSync);
 
 			Time::End();
 		}
@@ -157,12 +157,14 @@ namespace DOG
 				if (!e.active)
 				{
 					m_fullscreenStateOnFocusLoss = m_renderer->GetFullscreenState();
-					m_renderer->SetFullscreenState(WindowMode::Windowed, *m_specification.displayMode);
+					m_specification.graphicsSettings.windowMode = WindowMode::Windowed;
 				}
 				else
 				{
-					m_renderer->SetFullscreenState(m_fullscreenStateOnFocusLoss, *m_specification.displayMode);
+					m_specification.graphicsSettings.windowMode = m_fullscreenStateOnFocusLoss;
 				}
+
+				m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
 			}
 			break;
 		}
@@ -171,15 +173,16 @@ namespace DOG
 			if (m_renderer)
 			{
 				if (m_renderer->GetFullscreenState() != WindowMode::FullScreen)
-					m_renderer->SetFullscreenState(WindowMode::FullScreen, *m_specification.displayMode);
+					m_specification.graphicsSettings.windowMode = WindowMode::FullScreen;
 				else
-					m_renderer->SetFullscreenState(WindowMode::Windowed, *m_specification.displayMode);
+					m_specification.graphicsSettings.windowMode = WindowMode::Windowed;
+
+				m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
 			}
 			break;
 		}
 		case EventType::WindowHitBorderEvent:
 		{
-			std::cout << "WindowHitBorderEvent" << std::endl;
 			m_fullscreenStateOnFocusLoss = WindowMode::Windowed;
 			break;
 		}
@@ -205,9 +208,9 @@ namespace DOG
 
 		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); });
 
-		if (!m_specification.displayMode)
+		if (!m_specification.graphicsSettings.displayMode)
 		{
-			m_specification.displayMode = m_renderer->GetDefaultDisplayMode();
+			m_specification.graphicsSettings.displayMode = m_renderer->GetDefaultDisplayMode();
 		}
 	}
 
@@ -292,11 +295,8 @@ namespace DOG
 						if (ImGui::Selectable(modeElementToString(i).c_str(), selectedModeIndex == i))
 						{
 							selectedModeIndex = i;
-							m_specification.displayMode = monitor.modes[selectedModeIndex];
-							if (m_renderer->GetFullscreenState() == WindowMode::FullScreen)
-							{
-								m_renderer->SetFullscreenState(WindowMode::FullScreen, monitor.modes[selectedModeIndex]);
-							}
+							m_specification.graphicsSettings.displayMode = monitor.modes[selectedModeIndex];
+							m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
 						}
 					}
 					ImGui::EndCombo();
@@ -307,8 +307,10 @@ namespace DOG
 				std::array<const char*, 2> fullscreenCombo = { "Windowed", "Fullscreen" };
 				if (ImGui::Combo("Fullscreen mode", &selectedFullscreenStateIndex, fullscreenCombo.data(), static_cast<int>(fullscreenCombo.size())))
 				{
-					m_renderer->SetFullscreenState(static_cast<WindowMode>(selectedFullscreenStateIndex), monitor.modes[selectedModeIndex]);
+					m_specification.graphicsSettings.windowMode = static_cast<WindowMode>(selectedFullscreenStateIndex);
+					m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
 				}
+				ImGui::Checkbox("Vsync", &m_specification.graphicsSettings.vSync);
 				ImGui::Separator();
 			}
 			ImGui::End(); // "Application settings"
