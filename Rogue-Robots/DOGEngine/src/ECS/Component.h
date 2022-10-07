@@ -61,27 +61,46 @@ namespace DOG
 
 	struct AnimationComponent
 	{
+		i32 offset = 0;
+		struct BlendSpecification
+		{
+			i32 mode = 0;
+			f32 transition = 0.0f;
+			f32 blendFactor = 0.0f;
+		};
+		struct AnimationClip
+		{
+			static constexpr i32 movement = 0;
+			static constexpr i32 action = 1;
+			static constexpr i32 misc = 2;
+			i32 group = 0;
+			i32 animationID = 0;
+			f32 currentTick = 0.f;
+			f32 normalizedTime = 0.f;
+			f32 timeScale = 1.0f;
+			// testing some stuff
+			f32 animTotalTicks = 1.0f;
+			f32 animDuration = 1.0f;
+			bool loop = false;
+			void UpdateClip(const f32 dt);
+			bool HasActiveAnimation() const { return animationID != -1; };
+			bool operator < ( AnimationClip const& rhs) const{
+				return this->group < rhs.group || this->group == rhs.group && this->animationID < rhs.animationID; };
+			void SetAnimation(const i32 id, const f32 nTicks, const f32 duration, const f32 startTime = 0.0f);
+		};
+		BlendSpecification blendSpec;
+		std::array<AnimationClip, 2> clips;
+		// Update 
+		void Update(const f32 dt);
 		// initial animation component, liable to changge
 		i32 mode = 0;
 		f32 bf = 0.0f;
-		i32 offset = 0;
 		f32 transition = 0.0f;
-		
+
 		i32 animationID[2] = { 0, -1 };
 		f32 tick[2] = { 0.f, 0.f };
 		f32 normalizedTime[2] = { 0.f, 0.f };
 		f32 timeScale[2] = { 1.0f, 1.0f };
-
-		struct animationClip
-		{
-			i32 animationID = 0;
-			f32 tick = 0.f;
-			f32 normalizedTime = 0.f;
-			f32 timeScale = 1.0f;
-			void Update(const f32 animDuration, const f32 dt, const f32 animTicks)
-			{}
-		};
-		std::array<animationClip, 2> clips;
 	};
 
 	struct AudioComponent

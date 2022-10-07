@@ -117,4 +117,40 @@ namespace DOG
 		worldMatrix = s * deltaR * r * t;
 		return *this;
 	}
+
+	// Animation update
+	void AnimationComponent::AnimationClip::UpdateClip(const f32 dt) 
+	{
+		if (HasActiveAnimation())
+		{
+			normalizedTime += timeScale * dt / animDuration;
+			if(loop)
+			{
+				while (normalizedTime > 1.0f)
+					normalizedTime -= 1.0f;
+			}
+
+			normalizedTime = std::clamp(normalizedTime, 0.0f, 1.0f);
+			currentTick = normalizedTime * animTotalTicks;
+		}
+	};
+
+	void AnimationComponent::AnimationClip::SetAnimation(const i32 id, const f32 nTicks, const f32 duration, const f32 startTime)
+	{
+		animationID = id;
+		animTotalTicks = nTicks;
+		animDuration = duration;
+		normalizedTime = startTime;
+	}
+
+
+	void AnimationComponent::Update(const f32 dt)
+	{
+		// Sort clips by group
+		std::sort(clips.rbegin(), clips.rend());
+
+		for (auto& c : clips)
+			if (c.HasActiveAnimation())
+				c.UpdateClip(dt);
+	}
 }
