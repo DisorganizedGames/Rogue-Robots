@@ -79,10 +79,6 @@ void GameLayer::OnUpdate()
 	m_netCode.OnUpdate();
 }
 
-void GameLayer::UpdateLobby()
-{
-	m_gameState = GameState::StartPlaying;
-}
 
 void GameLayer::StartMainScene()
 {
@@ -142,6 +138,21 @@ void GameLayer::OnImGuiRender()
 
 }
 
+void GameLayer::StartMainScene()
+{
+	assert(m_mainScene == nullptr);
+
+	m_mainScene = std::make_unique<MainScene>();
+	m_mainScene->SetUpScene({
+		[this]() { return SpawnPlayers(Vector3(25, 25, 15), 4, 10.f); },
+		[this]() { return LoadLevel(); },
+		[this]() { return std::vector<entity>(1, m_Agent->MakeAgent(m_entityManager.CreateEntity())); }
+		});
+
+	m_gameState = GameState::Playing;
+}
+
+
 //Place-holder example on how to use event system:
 void GameLayer::OnEvent(DOG::IEvent& event)
 {
@@ -178,6 +189,31 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	}
 	}
 }
+
+void GameLayer::UpdateLobby()
+{
+	static bool inLobby = true;
+	static char input[64]{};
+	ImGui::InputText("input", input, 64);
+
+	if (ImGui::Button("Host"))
+	{
+		m_netCode.Host();
+		inLobby = false;
+	}
+	if (ImGui::Button("Join"))
+	{
+		if( m_netCode.Join(input))
+			inLobby = false;
+	}
+	if (ImGui::Button("Offline"))
+	{
+		inLobby = false;
+	}
+	if(!inLobby)
+		m_gameState = GameState::StartPlaying;
+}
+
 
 
 void GameLayer::RegisterLuaInterfaces()
@@ -223,6 +259,8 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::HasComponent>("HasComponent");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::PlayAudio>("PlayAudio");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPassiveType>("GetPassiveType");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::IsBulletLocal>("IsBulletLocal");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::IsPlayerHost>("IsPlayerHost");
 
 	global->SetLuaInterface(luaInterface);
 

@@ -20,25 +20,24 @@ public:
 	~NetCode();
 	
 	void OnUpdate();
-
+	void Host();
+	bool Join(char* input);
 
 
 private:
 	void Recive();
 	void ReciveUdp();
 
-	void AddMatrixTcp(DirectX::XMMATRIX input);
 
 	void AddMatrixUdp(DirectX::XMMATRIX input);
 
-	void AddNetworkEntity(int id);
 	
 	Client::ClientsData m_inputTcp;
 	Client::PlayerNetworkComponent m_playerInputUdp;
 
 	Client::ClientsData* m_outputTcp;
 	Client::UdpReturnData m_outputUdp;
-
+	
 	std::atomic_bool m_active;
 	std::atomic_bool m_startUp;
 	std::atomic_bool m_hardSyncTcp;
@@ -50,4 +49,11 @@ private:
 	std::string m_inputString;
 	Client m_client;
 	std::mutex m_mut;
+	int m_bufferSize;
+	int m_bufferReciveSize;
+	char m_sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
+	char* m_reciveBuffer;
+	bool m_dataIsReadyToBeSentTcp;
+	bool m_dataIsReadyToBeRecivedTcp;
+	bool m_start;
 };

@@ -53,7 +53,6 @@ namespace DOG
 		u32 objectId;
 		DirectX::SimpleMath::Matrix transform;
 	};
-
 	struct AnimationComponent
 	{
 		// initial animation component, liable to changge
@@ -178,5 +177,9 @@ namespace DOG
 		bool dirty{ false };
 	};
 
+	struct HostOrClient
+	{
+		bool host = true;
+	};
 }
 

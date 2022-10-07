@@ -3,7 +3,7 @@
 
 
 	constexpr int MAX_PLAYER_COUNT = 4;
-	constexpr int SEND_AND_RECIVE_BUFFER_SIZE = 2048;
+	constexpr int SEND_AND_RECIVE_BUFFER_SIZE = 32768;
 	constexpr const char* PORTNUMBER_OUT = "50005";
 	constexpr const char* PORTNUMBER_IN  = "50004";
 	constexpr int PORTNUMBER_OUT_INT = 50006;
@@ -45,7 +45,7 @@
 			int playerId = 0;
 			int nrOfNetTransform = 0;
 			int nrOfNetStats = 0;
-			DirectX::XMMATRIX matrix = {};
+			int nrOfCreateAndDestroy = 0;
 		};
 		struct HostData
 		{
