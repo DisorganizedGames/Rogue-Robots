@@ -100,10 +100,10 @@ namespace DOG::gfx
 
 	void GraphicsBuilder::FreeResource(Texture handle)
 	{
-		m_garbageBin->PushDeferredDeletion([=, rd = m_rd, h = handle]() {rd->FreeTexture(h); });
+		m_garbageBin->PushDeferredDeletion([rd = m_rd, h = handle]() {rd->FreeTexture(h); });
 	}
 	void GraphicsBuilder::FreeResource(TextureView handle)
 	{
-		m_garbageBin->PushDeferredDeletion([=, rd = m_rd, h = handle]() {rd->FreeView(h); });
+		m_garbageBin->PushDeferredDeletion([rd = m_rd, h = handle]() {rd->FreeView(h); });
 	}
 }

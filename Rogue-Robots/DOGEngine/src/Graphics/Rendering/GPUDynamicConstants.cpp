@@ -4,12 +4,12 @@
 
 namespace DOG::gfx
 {
-	GPUDynamicConstants::GPUDynamicConstants(RenderDevice* rd, GPUGarbageBin* bin, u32 maxElementsPerVersion) :
+	GPUDynamicConstants::GPUDynamicConstants(RenderDevice* rd, GPUGarbageBin* bin, u32 maxTotalElements) :
 		m_rd(rd),
 		m_bin(bin)
 	{
-		m_buffer = m_rd->CreateBuffer(BufferDesc(MemoryType::Upload, ELEMENTSIZE * maxElementsPerVersion * bin->GetMaxVersions()));
-		m_ator = RingBuffer(ELEMENTSIZE, maxElementsPerVersion, m_rd->Map(m_buffer));
+		m_buffer = m_rd->CreateBuffer(BufferDesc(MemoryType::Upload, ELEMENTSIZE * maxTotalElements * bin->GetMaxVersions()));
+		m_ator = RingBuffer(ELEMENTSIZE, maxTotalElements, m_rd->Map(m_buffer));
 	}
 
 	GPUDynamicConstant GPUDynamicConstants::Allocate(u32 count)

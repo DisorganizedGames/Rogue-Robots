@@ -1,3 +1,9 @@
+#include "ShaderInterop_Renderer.h"
+#include "ShaderInterop_Material.h"
+#include "ShaderInterop_Samplers.hlsli"
+#include "ShaderInterop_Math.hlsli"
+#include "PBRHelpers.hlsli"
+
 struct VS_OUT
 {
     float4 pos : SV_POSITION;
@@ -8,64 +14,38 @@ struct VS_OUT
     float3 wsPos : WS_POSITION;
 };
 
-struct PerFrameData
+struct PerDrawData
 {
     matrix world;
-    matrix view;
-    matrix proj;
-    float3 camPos;
-};
-
-struct MaterialElement
-{
-    uint albedo;
-    uint metallicRoughness;
-    uint normal;
-    uint emissive;
-    
-    float4 albedoFactor;
-    float4 emissiveFactor;
-    float metallicFactor;
-    float roughnessFactor;
+    uint submeshID;
+    uint materialID;
+    uint jointsDescriptor;
 };
 
 struct PushConstantElement
 {
-    uint perFrameCB;
+    uint gdDescriptor;
+    uint perFrameOffset;
     
-    uint submeshID;
-    
-    uint submeshTable;
-    uint posTable;
-    uint uvTable;
-    uint norTable;
-    uint tanTable;
-    uint blendTable;
-
-    uint matTable;
-    uint matID;
+    uint perDrawCB;
 };
+CONSTANTS(g_constants, PushConstantElement)
 
-ConstantBuffer<PushConstantElement> constants : register(b0, space0);
 
-SamplerState g_aniso_samp : register(s0, space1);
-
-// PBR Functions
-float DistributionGGX(float3 N, float3 H, float roughness);
-float GeometrySchlickGGX(float NdotV, float roughness);
-float GeometrySmith(float3 N, float3 V, float3 L, float roughness);
-float3 FresnelSchlick(float cosTheta, float3 F0);
-
-float3 GetFinalNormal(uint normalId, float3 tangent, float3 bitangent, float3 inputNormal, float2 uv);
-
-static const float PI = 3.1415f;
-
-static const float NO_TEXTURE = 0xffffffff;
+static const uint NO_TEXTURE = 0xffffffff;
 
 float4 main(VS_OUT input) : SV_TARGET
-{
-    StructuredBuffer<MaterialElement> mats = ResourceDescriptorHeap[constants.matTable];
-    MaterialElement mat = mats[constants.matID];
+{    
+    ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[g_constants.perDrawCB];
+    
+    StructuredBuffer<ShaderInterop_GlobalData> gds = ResourceDescriptorHeap[g_constants.gdDescriptor];
+    ShaderInterop_GlobalData gd = gds[0];
+    
+    StructuredBuffer<ShaderInterop_PerFrameData> pfDatas = ResourceDescriptorHeap[gd.perFrameTable];
+    ShaderInterop_PerFrameData pfData = pfDatas[g_constants.perFrameOffset];
+    
+    StructuredBuffer<ShaderInterop_MaterialElement> mats = ResourceDescriptorHeap[gd.materialTable];
+    ShaderInterop_MaterialElement mat = mats[perDrawData.materialID];
 
     float4 albedoInput4 = mat.albedoFactor;
     float albedoAlpha = albedoInput4.w;
@@ -95,7 +75,6 @@ float4 main(VS_OUT input) : SV_TARGET
         N = normalize(GetFinalNormal(mat.normal, normalize(input.tan), normalize(input.bitan), normalize(input.nor), input.uv));
     }
     
-    ConstantBuffer<PerFrameData> pfData = ResourceDescriptorHeap[constants.perFrameCB];
     float3 camPos = pfData.camPos;
     
     float3 amb = 0.03f * albedoInput;
@@ -147,66 +126,3 @@ float4 main(VS_OUT input) : SV_TARGET
 }
 
 
-float3 GetFinalNormal(uint normalId, float3 tangent, float3 bitangent, float3 inputNormal, float2 uv)
-{
-    Texture2D normalTex = ResourceDescriptorHeap[normalId];
-    
-    float3 tanSpaceNor = normalTex.Sample(g_aniso_samp, uv).xyz;
-    
-    // If no normal map --> Use default input normal
-    if (length(tanSpaceNor) <= 0.005f)  // epsilon: 0.005f
-        return inputNormal;
-    
-    float3x3 tbn = float3x3(tangent, bitangent, inputNormal); // matrix to orient our tangent space normal with
-    tbn = transpose(tbn);
-    
-    // Normal map is in [0, 1] space so we need to transform it to [-1, 1] space
-    float3 mappedSpaceNor = normalize(tanSpaceNor * 2.f - 1.f);
-    
-    // Orient the tangent space correctly in world space
-    float3 mapNorWorld = normalize(mul(tbn, mappedSpaceNor));
-       
-    // Assuming always on
-    return mapNorWorld;
-
-}
-
-float DistributionGGX(float3 N, float3 H, float roughness)
-{
-    float a = roughness * roughness;
-    float a2 = a * a;
-    float NdotH = max(dot(N, H), 0.0);
-    float NdotH2 = NdotH * NdotH;
-	
-    float num = a2;
-    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
-    denom = PI * denom * denom;
-	
-    return num / denom;
-}
-
-float GeometrySchlickGGX(float NdotV, float roughness)
-{
-    float r = (roughness + 1.0);
-    float k = (r * r) / 8.0;
-
-    float num = NdotV;
-    float denom = NdotV * (1.0 - k) + k;
-	
-    return num / denom;
-}
-
-float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
-{
-    float NdotV = max(dot(N, V), 0.0);
-    float NdotL = max(dot(N, L), 0.0);
-    float ggx2 = GeometrySchlickGGX(NdotV, roughness);
-    float ggx1 = GeometrySchlickGGX(NdotL, roughness);
-	
-    return ggx1 * ggx2;
-}
-
-float3 FresnelSchlick(float cosTheta, float3 F0)
-{
-    return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
-}

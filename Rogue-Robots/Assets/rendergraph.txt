@@ -1,0 +1,5 @@
+digraph G {
+"Update Per Frame" -> "Forward Pass"
+"Forward Pass" -> "Blit to HDR Pass"
+"Blit to HDR Pass" -> "ImGUI Pass"
+}

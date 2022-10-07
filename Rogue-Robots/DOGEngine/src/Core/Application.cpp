@@ -90,6 +90,11 @@ namespace DOG
 							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
 								m_renderer->SubmitMeshNoFaceCulling(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
 						}
+						else if (EntityManager::Get().HasComponent<AnimationComponent>(e))
+						{
+							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
+								m_renderer->SubmitAnimatedMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+						}	
 						else
 						{
 							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)

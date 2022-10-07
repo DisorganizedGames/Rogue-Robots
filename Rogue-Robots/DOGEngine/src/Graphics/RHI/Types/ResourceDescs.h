@@ -142,10 +142,10 @@ namespace DOG::gfx
 
 	struct ShaderArgs
 	{
-		std::array<u32, 10> constants{};
+		std::array<u32, 15> constants{};
 		u8 numConstants{ 0 };
 
-		ShaderArgs& AppendConstant(u32 constant) { assert(numConstants < 10); constants[numConstants++] = constant; return *this; }
+		ShaderArgs& AppendConstant(u32 constant) { assert(numConstants < 15); constants[numConstants++] = constant; return *this; }
 	};
 
 	struct Viewports

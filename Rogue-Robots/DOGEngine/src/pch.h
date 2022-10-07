@@ -68,6 +68,7 @@
 #include <cstdio>
 #include <cstdarg>
 #include <queue>
+#include <deque>
 
 #include "common/Utils.h"
 

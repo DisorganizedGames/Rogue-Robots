@@ -2,6 +2,10 @@
 #include "../../Core/Types/GraphicsTypes.h"
 #include "../RHI/RenderResourceHandles.h"
 #include "../../Core/AnimationManager.h"
+#include "GPUTable.h"
+
+#include "RenderPasses/GlobalPassData.h"
+
 namespace DOG::gfx
 {
 	class RenderBackend;
@@ -21,6 +25,10 @@ namespace DOG::gfx
 
 	class RenderGraph;
 	class RGResourceManager;
+	class RGBlackboard;
+
+	// Passes
+	class ImGUIPass;
 
 	class Renderer
 	{
@@ -35,7 +43,6 @@ namespace DOG::gfx
 
 		GraphicsBuilder* GetBuilder() const { return m_builder.get(); }
 
-
 		// Must be called at the start of any frame to pick up CPU side ImGUI code
 		void BeginGUI();
 
@@ -43,6 +50,8 @@ namespace DOG::gfx
 
 		void SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 		void SubmitMeshNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
+
+		void SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 
 
 
@@ -74,43 +83,52 @@ namespace DOG::gfx
 		{
 			Mesh mesh;
 			u32 submesh;
-			MaterialHandle mat;
+			MaterialHandle mat;			// mat args 
 			DirectX::SimpleMath::Matrix world;
+
+			// bitflags for target passes? (i.e multipass)
 		};
 
 	private:
+		std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> m_wmCallback;
 		std::unique_ptr<RenderBackend> m_backend;
 		std::unique_ptr<ImGUIBackend> m_imgui;
+		std::unique_ptr<ShaderCompilerDXC> m_sclr;
+		std::unique_ptr<GPUGarbageBin> m_bin;
 		RenderDevice* m_rd{ nullptr };
 		Swapchain* m_sc{ nullptr };
-		
-		std::unique_ptr<GraphicsBuilder> m_builder;
-		std::vector<RenderSubmission> m_submissions;		// temporary
-		std::vector<RenderSubmission> m_noCullSubmissions;	// temporary
-
-
-		DirectX::XMMATRIX m_viewMat, m_projMat;
 
 		u32 m_clientWidth{ 0 };
 		u32 m_clientHeight{ 0 };
-		
-		std::unique_ptr<ShaderCompilerDXC> m_sclr;
-
-		std::unique_ptr<GPUGarbageBin> m_bin;
-		std::unique_ptr<UploadContext> m_uploadCtx;
-		std::unique_ptr<UploadContext> m_texUploadCtx;
-
-		// Ring-buffered dynamic constant allocator (allocate, use, and forget)
-		std::unique_ptr<GPUDynamicConstants> m_dynConstants;
 
 		// Big buffers store meshes and materials
 		std::unique_ptr<MaterialTable> m_globalMaterialTable;
 		std::unique_ptr<MeshTable> m_globalMeshTable;
 
-		// Caches textures (for now, temp?)
-		std::unique_ptr<TextureManager> m_texMan;		
 
-		std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> m_wmCallback;
+		std::vector<RenderSubmission> m_submissions;		// temporary
+		std::vector<RenderSubmission> m_noCullSubmissions;	// temporary
+		std::vector<RenderSubmission> m_animatedDraws;		// temp
+
+
+		DirectX::XMMATRIX m_viewMat, m_projMat;
+
+
+		
+
+		std::unique_ptr<UploadContext> m_uploadCtx;
+		std::unique_ptr<UploadContext> m_perFrameUploadCtx;
+		std::unique_ptr<UploadContext> m_texUploadCtx;
+
+		// Ring-buffered dynamic constant allocator (allocate, use, and forget)
+		std::unique_ptr<GPUDynamicConstants> m_dynConstants;
+		std::unique_ptr<GPUDynamicConstants> m_dynConstantsAnimated;		// temp storage for per draw joints
+
+
+	
+		// ================= External interfaces
+		std::unique_ptr<GraphicsBuilder> m_builder;
+
 
 		// ================= RENDERING RESOURCES
 
@@ -122,8 +140,57 @@ namespace DOG::gfx
 
 		std::unique_ptr<RenderGraph> m_rg;
 		std::unique_ptr<RGResourceManager> m_rgResMan;
+		std::unique_ptr<RGBlackboard> m_rgBlackboard;
+
+
+
+
 
 		//TMP
 		std::unique_ptr<AnimationManager> m_boneJourno;
+
+
+
+
+
+		GlobalPassData m_globalPassData{};
+
+		// Per frame shader data
+		struct PerFrameData
+		{
+			DirectX::SimpleMath::Matrix viewMatrix;
+			DirectX::SimpleMath::Matrix projMatrix;
+			DirectX::SimpleMath::Matrix invProjMatrix;
+			DirectX::SimpleMath::Vector4 camPos;
+			f32 time{ 0.f };
+
+		} m_pfData{};
+		struct PfDataHandle { friend class TypedHandlePool; u64 handle{ 0 }; };
+		std::unique_ptr<GPUTableDeviceLocal<PfDataHandle>> m_pfDataTable;
+		PfDataHandle m_pfHandle;
+		u32 m_currPfDescriptor{ 0 };
+
+		// Per frame global data
+		struct GlobalData
+		{
+			// Mesh
+			u32 meshTableSubmeshMD{ 0 };
+			u32 meshTablePos{ 0 };
+			u32 meshTableUV{ 0 };
+			u32 meshTableNor{ 0 };
+			u32 meshTableTan{ 0 };
+			u32 meshTableBlend{ 0 };
+
+			u32 perFrameTable;
+			u32 materialTable{ 0 };
+
+		} m_globalData{};
+		struct GlobalDataHandle{ friend class TypedHandlePool; u64 handle{ 0 }; };
+		std::unique_ptr<GPUTableDeviceLocal<GlobalDataHandle>> m_globalDataTable;
+		GlobalDataHandle m_gdHandle;
+
+		// Passes
+		std::unique_ptr<ImGUIPass> m_igPass;
+
 	};
 }

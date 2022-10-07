@@ -20,8 +20,12 @@
 
 #include "RenderGraph/RenderGraph.h"
 #include "RenderGraph/RGResourceManager.h"
+#include "RenderGraph/RGBlackboard.h"
 
 #include "Tracy/Tracy.hpp"
+
+// Passes
+#include "RenderPasses/ImGUIPass.h"
 
 namespace DOG::gfx
 {
@@ -48,9 +52,17 @@ namespace DOG::gfx
 		m_uploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, S_MAX_FIF);
 		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeTextures, S_MAX_FIF);
 
+		// For internal per frame management
+		const u32 maxUploadPerFrame = 512'000;
+		m_perFrameUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadPerFrame, S_MAX_FIF);
 
-		const u32 maxConstantsPerFrame = 500 * 32;
+
+
+		const u32 maxConstantsPerFrame = 1000;
 		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), maxConstantsPerFrame);
+
+		// multiple of curr loaded mixamo skeleton
+		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 33 * 5);		
 		m_cmdl = m_rd->AllocateCommandList();
 
 		// Startup
@@ -58,6 +70,7 @@ namespace DOG::gfx
 		const u32 maxBytesPerAttribute = 4'000'000;
 		const u32 maxNumberOfIndices = 1'000'000;
 		const u32 maxTotalSubmeshes = 500;
+		const u32 maxMaterialArgs = 1000;
 
 		spec.maxSizePerAttribute[VertexAttribute::Position] = maxBytesPerAttribute;
 		spec.maxSizePerAttribute[VertexAttribute::UV] = maxBytesPerAttribute;
@@ -69,7 +82,7 @@ namespace DOG::gfx
 		m_globalMeshTable = std::make_unique<MeshTable>(m_rd, m_bin.get(), spec);
 
 		MaterialTable::MemorySpecification memSpec{};
-		memSpec.maxElements = 500;	// 500 distinct materials
+		memSpec.maxElements = maxMaterialArgs;
 		m_globalMaterialTable = std::make_unique<MaterialTable>(m_rd, m_bin.get(), memSpec);
 
 		// Create builder for users to create graphical objects supported by the renderer
@@ -82,9 +95,6 @@ namespace DOG::gfx
 			m_bin.get());
 
 
-
-		m_texMan = std::make_unique<TextureManager>(m_rd, m_bin.get());
-
 		// INITIALIZE RESOURCES =================
 
 		auto fullscreenTriVS = m_sclr->CompileFromFile("FullscreenTriVS.hlsl", ShaderType::Vertex);
@@ -93,8 +103,6 @@ namespace DOG::gfx
 			.SetShader(fullscreenTriVS.get())
 			.SetShader(blitPS.get())
 			.AppendRTFormat(m_sc->GetBufferFormat())
-			//.SetDepthFormat(DepthFormat::D32)
-			//.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
 
 		auto meshVS = m_sclr->CompileFromFile("MainVS.hlsl", ShaderType::Vertex);
@@ -121,8 +129,42 @@ namespace DOG::gfx
 		auto testCS = m_sclr->CompileFromFile("TestComputeCS.hlsl", ShaderType::Compute);
 		m_testCompPipe = m_rd->CreateComputePipeline(ComputePipelineDesc(testCS.get()));
 
-		
 
+
+
+
+		// Setup per frame
+		m_pfDataTable = std::make_unique<GPUTableDeviceLocal<PfDataHandle>>(m_rd, m_bin.get(), (u32)sizeof(PerFrameData), S_MAX_FIF + 1, false);
+		m_pfHandle = m_pfDataTable->Allocate(1, &m_pfData);
+
+
+		// Setup persistent renderer data
+		m_globalData.meshTableSubmeshMD = m_globalMeshTable->GetSubmeshDescriptor();
+		m_globalData.meshTablePos = m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Position);
+		m_globalData.meshTableUV = m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::UV);
+		m_globalData.meshTableNor = m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Normal);
+		m_globalData.meshTableTan = m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Tangent);
+		m_globalData.meshTableBlend = m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::BlendData);
+		m_globalData.perFrameTable = m_pfDataTable->GetGlobalDescriptor();
+		m_globalData.materialTable = m_globalMaterialTable->GetDescriptor();
+
+		m_globalDataTable = std::make_unique<GPUTableDeviceLocal<GlobalDataHandle>>(m_rd, m_bin.get(), (u32)sizeof(GlobalData), 1, false);
+		m_gdHandle = m_globalDataTable->Allocate(1, &m_globalData);
+		m_globalDataTable->SendCopyRequests(*m_uploadCtx);
+
+
+		// Set default pass data
+		m_globalPassData.bbScissor = ScissorRects().Append(0, 0, m_clientWidth, m_clientHeight);
+		m_globalPassData.bbVP = Viewports().Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight);
+		// render vps/scissors subject to change
+		m_globalPassData.defRenderScissors = ScissorRects().Append(0, 0, m_clientWidth, m_clientHeight);
+		m_globalPassData.defRenderVPs= Viewports().Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight);
+		m_globalPassData.globalDataDescriptor = m_globalDataTable->GetGlobalDescriptor();
+		m_globalPassData.meshTable = m_globalMeshTable.get();
+
+		// Passes
+		m_rgBlackboard = std::make_unique<RGBlackboard>();
+		m_igPass = std::make_unique<ImGUIPass>(m_globalPassData, *m_rgBlackboard, m_imgui.get());
 	}
 
 	Renderer::~Renderer()
@@ -161,25 +203,117 @@ namespace DOG::gfx
 		m_noCullSubmissions.push_back(sub);
 	}
 
+	void Renderer::SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
+	{
+		RenderSubmission sub{};
+		sub.mesh = mesh;
+		sub.submesh = submesh;
+		sub.mat = material;
+		sub.world = world;
+		m_animatedDraws.push_back(sub);
+	}
 
-	void Renderer::Update(f32)
+	void Renderer::Update(f32 dt)
 	{
 		m_boneJourno->UpdateJoints();
+
+
+		// Update per frame data
+		{
+			m_pfData.viewMatrix = m_viewMat;
+			m_pfData.projMatrix = m_projMat;
+			m_pfData.projMatrix.Invert(m_pfData.invProjMatrix);
+			m_pfData.time += dt;
+
+			// Get camera position
+			DirectX::XMVECTOR tmp;
+			auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
+			auto pos = invVm.r[3];
+			DirectX::XMFLOAT3 posFloat3;
+			DirectX::XMStoreFloat3(&posFloat3, pos);
+			m_pfData.camPos = { posFloat3.x, posFloat3.y, posFloat3.z, 0.0f };
+
+			m_pfDataTable->RequestUpdate(m_pfHandle, &m_pfData, sizeof(m_pfData));
+			m_pfDataTable->SendCopyRequests(*m_perFrameUploadCtx);
+
+			// Get offset after update
+			m_currPfDescriptor = m_pfDataTable->GetLocalOffset(m_pfHandle);
+			m_globalPassData.perFrameTableOffset = &m_currPfDescriptor;
+
+		}
 	}
 
 	void Renderer::Render(f32)
 	{
-		ZoneScopedN("Render");
+		ZoneNamedN(RenderScope, "Render", true);
 
-		std::chrono::steady_clock::time_point m_start, m_end;
-		std::chrono::duration<double> diff;
+		// Resolve any per frame copies from CPU
+		{
+			ZoneNamedN(FrameCopyResolve, "Frame Copies", true);
+			m_perFrameUploadCtx->SubmitCopies();
+		}
+
 
 		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
 		auto& rg = *m_rg;
 
-		m_start = m_end = std::chrono::high_resolution_clock::now();
+
 		// Forward pass to HDR
 		{
+			struct JointData
+			{
+				DirectX::XMFLOAT4X4 joints[130];
+			};
+
+			struct PerDrawData
+			{
+				DirectX::XMMATRIX world;
+				u32 globalSubmeshID{ UINT_MAX };
+				u32 globalMaterialID{ UINT_MAX };
+				u32 jointsDescriptor{ UINT_MAX };
+			};
+
+			/*
+				@todo:
+					Still need some way to pre-allocate per draw data prior to render pass.
+					Perhaps go through the submissions and collect data --> Upload to GPU (maybe instance it as well?)
+					and during forward pass we simply read from it 
+			*/
+			auto drawSubmissions = [this](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission> submissions, bool animated = false)
+			{
+				for (const auto& sub : submissions)
+				{
+					auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
+					PerDrawData perDrawData{};
+					perDrawData.world = sub.world;
+					perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
+					perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
+
+					if (animated)
+					{
+						// Resolve joints
+						JointData jointsData{};
+						auto jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); ++i)
+							jointsData.joints[i] = m_boneJourno->m_vsJoints[i];
+						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
+						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
+					}
+
+					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
+
+					auto args = ShaderArgs()
+						.AppendConstant(m_globalPassData.globalDataDescriptor)
+						.AppendConstant(m_currPfDescriptor)
+						.AppendConstant(perDrawHandle.globalDescriptor);
+
+					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
+
+					auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+					rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
+				}
+			};
+
 			struct PassData {};
 			rg.AddPass<PassData>("Forward Pass",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
@@ -195,106 +329,17 @@ namespace DOG::gfx
 				},
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
 				{
-					rd->Cmd_SetViewports(cmdl, Viewports()
-						.Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight));
-					rd->Cmd_SetScissorRects(cmdl, ScissorRects()
-						.Append(0, 0, m_clientWidth, m_clientHeight));
+					rd->Cmd_SetViewports(cmdl, m_globalPassData.defRenderVPs);
+					rd->Cmd_SetScissorRects(cmdl, m_globalPassData.defRenderScissors);
+						
+					rd->Cmd_SetIndexBuffer(cmdl, m_globalPassData.meshTable->GetIndexBuffer());
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipe);
-					rd->Cmd_SetIndexBuffer(cmdl, m_globalMeshTable->GetIndexBuffer());
-					for (const auto& sub : m_submissions)
-					{
-						auto pfConstant = m_dynConstants->Allocate(32);
-						struct PerFrameData
-						{
-							DirectX::XMMATRIX world, view, proj;
-							DirectX::XMFLOAT4 camPos;
-							DirectX::XMFLOAT4X4 joints[130];
-						} pfData{};
-
-						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); i++)
-							pfData.joints[i] = m_boneJourno->m_vsJoints[i];
-
-						DirectX::XMVECTOR tmp;
-						auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
-
-						auto pos = invVm.r[3];
-						DirectX::XMFLOAT3 posFloat3;
-						DirectX::XMStoreFloat3(&posFloat3, pos);
-						pfData.camPos = { posFloat3.x, posFloat3.y, posFloat3.z, 0.0f };
-
-						pfData.world = sub.world;
-						pfData.view = m_viewMat;
-						pfData.proj = m_projMat;
-						std::memcpy(pfConstant.memory, &pfData, sizeof(pfData));
-
-						auto args = ShaderArgs()
-							.AppendConstant(pfConstant.globalDescriptor)
-							.AppendConstant(m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh))
-							.AppendConstant(m_globalMeshTable->GetSubmeshDescriptor())
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Position))
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::UV))
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Normal))
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Tangent))
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::BlendData))
-							.AppendConstant(m_globalMaterialTable->GetDescriptor())
-							.AppendConstant(m_globalMaterialTable->GetMaterialIndex(sub.mat)
-							);
-
-						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
-
-						auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
-						rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
-
-					}
+					drawSubmissions(rd, cmdl, m_submissions);
+					drawSubmissions(rd, cmdl, m_animatedDraws, true);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
-					for (const auto& sub : m_noCullSubmissions)
-					{
-						auto pfConstant = m_dynConstants->Allocate(32);
-						struct PerFrameData
-						{
-							DirectX::XMMATRIX world, view, proj;
-							DirectX::XMFLOAT4 camPos;
-							DirectX::XMFLOAT4X4 joints[130];
-						} pfData{};
-
-						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); i++)
-							pfData.joints[i] = m_boneJourno->m_vsJoints[i];
-
-						DirectX::XMVECTOR tmp;
-						auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
-
-						auto pos = invVm.r[3];
-						DirectX::XMFLOAT3 posFloat3;
-						DirectX::XMStoreFloat3(&posFloat3, pos);
-						pfData.camPos = { posFloat3.x, posFloat3.y, posFloat3.z, 0.0f };
-
-						pfData.world = sub.world;
-						pfData.view = m_viewMat;
-						pfData.proj = m_projMat;
-						std::memcpy(pfConstant.memory, &pfData, sizeof(pfData));
-
-						auto args = ShaderArgs()
-							.AppendConstant(pfConstant.globalDescriptor)
-							.AppendConstant(m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh))
-							.AppendConstant(m_globalMeshTable->GetSubmeshDescriptor())
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Position))
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::UV))
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Normal))
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::Tangent))
-							.AppendConstant(m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::BlendData))
-							.AppendConstant(m_globalMaterialTable->GetDescriptor())
-							.AppendConstant(m_globalMaterialTable->GetMaterialIndex(sub.mat)
-							);
-
-						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
-
-						auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
-						rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
-
-					}
-
+					drawSubmissions(rd, cmdl, m_noCullSubmissions);
 				});
 		}
 
@@ -321,45 +366,17 @@ namespace DOG::gfx
 				});
 		}
 
+		m_igPass->AddPass(rg);
 
-		// Draw ImGUI on backbuffer
 		{
-			struct PassData {};
-			rg.AddPass<PassData>("ImGUI Pass",
-				[&](PassData&, RenderGraph::PassBuilder& builder)
-				{
-					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer), RenderPassAccessType::PreservePreserve,
-						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-				},
-				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
-				{
-					m_imgui->Render(rd, cmdl);
-				});
+			ZoneNamedN(RGBuildScope, "RG Building", true);
+			rg.Build();
 		}
 
-
-
-
-
-
-
-
-		
-		m_end = std::chrono::high_resolution_clock::now();
-		diff = m_end - m_start;
-		//std::cout << "Graph declaration time elapsed (ms): " << diff.count() * 1000.0 << "\n";
-
-		m_start = m_end = std::chrono::high_resolution_clock::now();
-		rg.Build();
-		m_end = std::chrono::high_resolution_clock::now();
-		diff = m_end - m_start;
-		//std::cout << "Build time elapsed (ms): " << diff.count() * 1000.0 << "\n";
-
-		m_start = m_end = std::chrono::high_resolution_clock::now();
-		rg.Execute();
-		m_end = std::chrono::high_resolution_clock::now();
-		diff = m_end - m_start;
-		//std::cout << "Exec time elapsed (ms): " << diff.count() * 1000.0 << "\n\n";
+		{
+			ZoneNamedN(RGExecuteScope, "RG Execution", true);
+			rg.Execute();
+		}
 
 	}
 
@@ -391,6 +408,7 @@ namespace DOG::gfx
 		m_bin->EndFrame();
 		m_submissions.clear();
 		m_noCullSubmissions.clear();
+		m_animatedDraws.clear();
 
 		m_sc->Present(vsync);
 	}

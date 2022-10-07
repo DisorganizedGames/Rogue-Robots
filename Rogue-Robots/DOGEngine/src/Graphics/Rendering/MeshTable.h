@@ -42,12 +42,12 @@ namespace DOG::gfx
 		u32 GetSubmeshDescriptor() const;
 
 		// Grab metadata for specific submesh on CPU
-		const SubmeshMetadata& GetSubmeshMD_CPU(Mesh mesh, u32 submesh);
+		const SubmeshMetadata& GetSubmeshMD_CPU(Mesh mesh, u32 submesh) const;
 
 		// Grab local offset for the submesh in the submesh table
-		u32 GetSubmeshMD_GPU(Mesh mesh, u32 submesh);
+		u32 GetSubmeshMD_GPU(Mesh mesh, u32 submesh) const;
 
-		Buffer GetIndexBuffer();
+		Buffer GetIndexBuffer() const;
 
 	private:
 		/*

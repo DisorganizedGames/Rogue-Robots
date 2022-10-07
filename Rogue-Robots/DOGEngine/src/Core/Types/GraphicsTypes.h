@@ -21,8 +21,6 @@ namespace DOG
 		{
 			Mesh mesh;
 			u32 numSubmeshes{ 0 };
-
-			u32 managerID{ UINT_MAX };
 		};
 
 		struct StaticModel

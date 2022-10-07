@@ -80,7 +80,8 @@ end
 
 --In future move to more specific Agent script
 function OnStart()
-	Agent.model = Asset:LoadModel("Assets/temp_Robot.fbx")
+	--Agent.model = Asset:LoadModel("Assets/temp_Robot.fbx")
+	Agent.model = Asset:LoadModel("Assets/red_cube.glb")
 	
 	Agent.transform = Entity:AddComponent(EntityID, "AgentStats", agentStats)
 	Agent.transform = Entity:AddComponent(EntityID, "Transform", pos, rot, scale)	--Probably move this to C++ Agent()
