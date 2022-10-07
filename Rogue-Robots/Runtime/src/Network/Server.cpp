@@ -1,6 +1,5 @@
 #include "Server.h"
 
-using namespace DOG;
 
 Server::Server()
 {
@@ -190,34 +189,59 @@ void Server::ServerPollTCP()
 	Client::ClientsData holdClientsData;
 	LARGE_INTEGER clockFrequency;
 	QueryPerformanceFrequency(&clockFrequency);
-
+	
 	//sets the minium resolution for ticks
 	UINT sleepGranularityMs = 1;
 	timeBeginPeriod(sleepGranularityMs);
+	
 
 	do {
 		QueryPerformanceCounter(&tickStartTime);
-
+		char sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
+		char reciveBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
+		int bufferSendSize = 0;
+		int bufferReciveSize = 0;
 		m_holdSocketsTcp = m_clientsSocketsTcp;
-
+		bufferSendSize += sizeof(m_playersServer);
 		if (WSAPoll(m_holdSocketsTcp.data(), (u32)m_holdSocketsTcp.size(), 1) > 0)
 		{
 			for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
 			{
+
 				if (m_holdSocketsTcp[i].revents & POLLERR || m_holdSocketsTcp[i].revents & POLLHUP || m_holdSocketsTcp[i].revents & POLLNVAL)
 					CloseSocketTCP(i);
 				//TODO TRY HERE
 				//read in from clients that have send data
 				else if (m_holdSocketsTcp[i].revents & POLLRDNORM)
 				{
-					recv(m_holdSocketsTcp[i].fd, (char*)&holdClientsData, sizeof(Client::ClientsData), 0);
+					bufferReciveSize = 0;
+					recv(m_holdSocketsTcp[i].fd, reciveBuffer, SEND_AND_RECIVE_BUFFER_SIZE, 0);
+					memcpy(&holdClientsData, &reciveBuffer, sizeof(Client::ClientsData));
 					memcpy(&m_playersServer[holdClientsData.playerId], &holdClientsData, sizeof(Client::ClientsData));
+					bufferReciveSize += sizeof(Client::ClientsData);
+
+					//check if host and then add transforms
+					if (holdClientsData.playerId == 0)
+					{
+						for (int j = 0; j < holdClientsData.nrOfNetTransform; j++)
+						{
+							DOG::NetworkTransform test;
+							memcpy(sendBuffer + bufferSendSize, reciveBuffer + bufferReciveSize, sizeof(DOG::NetworkTransform));
+							bufferReciveSize += sizeof(DOG::NetworkTransform);
+							bufferSendSize += sizeof(DOG::NetworkTransform);
+						}
+					}
+
 				}
 			}
 
 		}
+
+		
+		memcpy(sendBuffer, (char*)m_playersServer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
+		//memcpy(reciveBuffer, (char*)&m_playersServer, sizeof(Client::ClientsData) *4);
 		for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
-			send(m_holdSocketsTcp[i].fd, (char*)m_playersServer, sizeof(m_playersServer), 0);
+			send(m_holdSocketsTcp[i].fd, sendBuffer, bufferSendSize, 0);
 
 		//wait untill tick is done 
 		float timeTakenS = TickTimeLeftTCP(tickStartTime, clockFrequency);

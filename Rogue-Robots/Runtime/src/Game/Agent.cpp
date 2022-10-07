@@ -9,6 +9,7 @@ Agent::Agent() : m_entityManager(EntityManager::Get()), m_agentEntity(m_entityMa
 	m_entityManager.AddComponent<TransformComponent>(m_agentEntity, Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(1, 1, 1));
 	// Attach correct script
 	LuaMain::GetScriptManager()->AddScript(m_agentEntity, "Agent.lua");
+	m_entityManager.AddComponent<NetworkTransform>(m_agentEntity).objectId  = m_agentEntity;
 }
 
 Agent::~Agent()

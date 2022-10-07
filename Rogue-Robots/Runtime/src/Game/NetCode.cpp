@@ -7,7 +7,8 @@ NetCode::NetCode()
 	m_netCodeAlive = TRUE;
 	m_outputTcp = nullptr;
 	m_inputTcp.matrix = {};
-
+	m_inputTcp.nrOfNetTransform = 0;
+	m_inputTcp.nrOfNetStats = 0;
 	m_playerInputUdp.playerId = 0;
 	m_playerInputUdp.matrix = {};
 	m_playerInputUdp.shoot = FALSE;
@@ -37,11 +38,13 @@ void NetCode::OnUpdate()
 				AddMatrixTcp(transC.worldMatrix);
 				AddMatrixUdp(transC.worldMatrix);
 	});
+
 	if (m_active)
 	{
-
 		if (m_startUp == TRUE)
 		{
+
+			
 			DOG::EntityManager& m_entityManager = DOG::EntityManager::Get();
 			EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, TransformComponent>().Do([&](entity id, NetworkPlayerComponent& networkC, ThisPlayer&, TransformComponent& transC)
 				{
@@ -64,9 +67,11 @@ void NetCode::OnUpdate()
 					}
 					transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
 				});
-
+			
 			m_startUp = false;
 		}
+
+
 
 		EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, InputController>().Do([&](NetworkPlayerComponent&, ThisPlayer&, InputController& inputC)
 			{
@@ -96,7 +101,8 @@ void NetCode::OnUpdate()
 
 void NetCode::Recive()
 {
-	DOG::Server serverTest;
+	Server serverHost;
+	
 	bool start = FALSE;
 	char input = 'o';
 	while (start == FALSE)
@@ -108,11 +114,11 @@ void NetCode::Recive()
 		{
 		case 'h':
 		{
-			bool server = serverTest.StartTcpServer();
+			bool server = serverHost.StartTcpServer();
 			if (server)
 			{
 				// join server
-				std::string ip = serverTest.GetIpAddress();
+				std::string ip = serverHost.GetIpAddress();
 				if (ip != "")
 				{
 					std::cout << "Hosting at: " << ip << std::endl;
@@ -135,7 +141,7 @@ void NetCode::Recive()
 			std::cin >> inputString;
 			if (inputString[0] == 'd')
 			{
-				m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.55"); //192.168.1.55 || 192.168.50.214
+				m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.74"); //192.168.1.55 || 192.168.50.214
 			}
 			else
 			{
@@ -167,23 +173,83 @@ void NetCode::Recive()
 		}
 	}
 	m_threadUdp = std::thread(&NetCode::ReciveUdp, this);
+
 	if (m_netCodeAlive)
 	{
-		if (m_active == FALSE)
+		if (m_active == false)
 		{
-			m_startUp = TRUE;
-			m_active = TRUE;
+			m_startUp = true;
+			m_active = true;
+			
 		}
 		//tcp
+		
 		while (m_netCodeAlive)
 		{
-			m_mut.lock();
-			m_client.SendTcp(m_inputTcp);
-			m_mut.unlock();
-			m_outputTcp = m_client.ReciveTcp();
+			char sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
+			char* reciveBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
+			m_inputTcp.nrOfNetTransform = 0;
+			m_inputTcp.nrOfNetStats = 0;
+			int bufferSize = 0;
+			//If player got valid id from server else idle
+			if (m_inputTcp.playerId > -1)
+			{
+				bufferSize += sizeof(Client::ClientsData);
+				//sync all transforms Host only
+				if (m_inputTcp.playerId == 0)
+				{
+					EntityManager::Get().Collect<NetworkTransform, TransformComponent>().Do([&](entity id, NetworkTransform& netC, TransformComponent& transC)
+						{
+							netC.objectId = id;
+							netC.transform = transC.worldMatrix;
+							memcpy(sendBuffer + bufferSize, &netC, sizeof(NetworkTransform));
+							m_inputTcp.nrOfNetTransform++;
+							bufferSize += sizeof(NetworkTransform);
 
+						});
+				}
+				//put in the client data
+				memcpy(sendBuffer, (char*)&m_inputTcp, sizeof(m_inputTcp));
+				
+				m_client.SendChararrayTcp(sendBuffer, bufferSize);
+				reciveBuffer = m_client.ReciveCharArrayTcp(reciveBuffer);
+				if (reciveBuffer == nullptr)
+				{
+					std::cout << "bad tcp packet \n"; 
+				}
+				else
+				{
+					int bufferReciveSize = 0;
+					//Úpdate the players entites stats
+					memcpy(m_outputTcp, reciveBuffer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
+					bufferReciveSize += sizeof(Client::ClientsData) * MAX_PLAYER_COUNT;
+					if (m_outputTcp->nrOfNetTransform > 0 && m_outputTcp->playerId < 10)
+					{
+						//Update the transfroms, Only none hosts
+						NetworkTransform* temp = new NetworkTransform;
+						memcpy(temp, reciveBuffer + sizeof(Client::ClientsData) * MAX_PLAYER_COUNT, sizeof(NetworkTransform));
+						if (m_inputTcp.playerId > 0)
+						{
+							EntityManager::Get().Collect<NetworkTransform, TransformComponent>().Do([&](entity id, NetworkTransform&, TransformComponent& transC)
+								{
+									for (int i = 0; i < m_outputTcp[0].nrOfNetTransform; ++i)
+									{
+										memcpy(temp, reciveBuffer + bufferReciveSize + sizeof(NetworkTransform) * i, sizeof(NetworkTransform));
+										if (id == temp->objectId)
+										{
+											transC.worldMatrix = temp->transform;
+										}
+
+									}
+								});
+						}
+					}
+				}
+			}
+			delete[] reciveBuffer;
 		}
 	}
+	
 }
 
 void NetCode::ReciveUdp()
@@ -197,11 +263,6 @@ void NetCode::ReciveUdp()
 		m_outputUdp = m_client.ReciveUdp();
 	}
 
-}
-
-void NetCode::AddPlayersId(std::vector<DOG::entity> playersId)
-{
-	m_playersId = playersId;
 }
 
 void NetCode::AddMatrixTcp(DirectX::XMMATRIX input)
@@ -218,3 +279,5 @@ void NetCode::AddMatrixUdp(DirectX::XMMATRIX input)
 	m_playerInputUdp.matrix = input; 
 	m_mut.unlock();
 }
+
+

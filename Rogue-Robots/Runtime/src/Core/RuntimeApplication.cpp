@@ -1,6 +1,6 @@
 #include "RuntimeApplication.h"
 #include <EntryPoint.h>
-
+using namespace DOG;
 void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string& path) noexcept;
 std::string GetWorkingDirectory();
 

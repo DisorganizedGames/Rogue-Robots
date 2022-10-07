@@ -87,7 +87,7 @@ function OnStart()
 	local default = ObjectManager:CreateObject()
 	default.target = 1
 	default.checkpoints = {
-		Vector3.New(1.0, 1.3, 1.2),
+		Vector3.New(10.0, 10.3, 1.2),
 		Vector3.New(33.0, 8.3, 38.2),
 		Vector3.New(26.0, 2.3, 2.2),
 		Vector3.New(12.0, 3.3, 27.2),
@@ -130,6 +130,7 @@ function OnStart()
 end
 
 function OnUpdate()
+	Agent.pos = Vector3.FromTable(Entity:GetTransformPosData(EntityID))
 	Agent:doBehavior()
 end
 

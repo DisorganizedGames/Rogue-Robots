@@ -1,5 +1,5 @@
 #include "Client.h"
-using namespace DOG;
+
 Client::Client()
 {
 	ClientsData test;
@@ -110,10 +110,24 @@ void Client::SendTcp(ClientsData input)
 	return;
 }
 
+void Client::SendChararrayTcp(char* input, int size)
+{
+	send(m_connectSocket, input, size, 0);
+	return;
+}
+
 struct Client::ClientsData* Client::ReciveTcp()
 {
 	recv(m_connectSocket, (char*)&m_playersClient, sizeof(m_playersClient), 0);
 	return m_playersClient;
+}
+
+char* Client::ReciveCharArrayTcp(char* reciveBuffer)
+{
+	int j = recv(m_connectSocket, reciveBuffer, SEND_AND_RECIVE_BUFFER_SIZE, 0);
+	if (j < (sizeof(Client::ClientsData) * MAX_PLAYER_COUNT))
+		return nullptr;
+	return reciveBuffer;
 }
 
 struct Client::ClientsData* Client::SendandReciveTcp(ClientsData input)

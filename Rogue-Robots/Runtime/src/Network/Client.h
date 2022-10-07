@@ -1,22 +1,21 @@
 #pragma once
-#include "../Core/Application.h"
+#include <DOGEngine.h>
 
-namespace DOG
-{
+
 	constexpr int MAX_PLAYER_COUNT = 4;
 	constexpr int SEND_AND_RECIVE_BUFFER_SIZE = 2048;
 	constexpr const char* PORTNUMBER_OUT = "50005";
-	constexpr const char* PORTNUMBER_IN = "50004";
+	constexpr const char* PORTNUMBER_IN  = "50004";
 	constexpr int PORTNUMBER_OUT_INT = 50006;
 	constexpr int PORTNUMBER_IN_INT = 50004;
 	constexpr const char* MULTICAST_ADRESS = "239.255.255.0";
 	class Client
 	{
 	public:
-		struct NetworkComponent
+		struct NetworkEntity
 		{
-			UINT8 playerId;
-			unsigned short componentId;
+			int playerId;
+			int componentId;
 			DirectX::XMMATRIX componentMatrix;
 		};
 		struct PlayerNetworkComponent
@@ -44,12 +43,23 @@ namespace DOG
 		struct ClientsData
 		{
 			int playerId = 0;
+			int nrOfNetTransform = 0;
+			int nrOfNetStats = 0;
 			DirectX::XMMATRIX matrix = {};
 		};
+		struct HostData
+		{
+			int playerId = 0;
+			int nrOfNetworkEntites = 0;
+			DirectX::XMMATRIX matrix = {};
+		};
+
 		Client();
 		~Client();
 		int ConnectTcpServer(std::string ipAdress);
-		void SendTcp(ClientsData input);
+		void SendTcp(ClientsData input); 
+		void SendChararrayTcp(char* input, int size);
+		char* ReciveCharArrayTcp(char* recivebuffer);
 		ClientsData* ReciveTcp();
 		ClientsData* SendandReciveTcp(ClientsData input);
 		void SetUpUdp();
@@ -72,4 +82,3 @@ namespace DOG
 		char* m_reciveUdpBuffer;
 		PlayerNetworkComponent m_holdplayersUdp[MAX_PLAYER_COUNT];
 	};
-}
