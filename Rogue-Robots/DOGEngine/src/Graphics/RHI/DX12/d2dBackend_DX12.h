@@ -41,11 +41,7 @@ namespace DOG::gfx
 		std::vector<ComPtr<ID2D1Bitmap1>> m_d2dRenderTargets;
 		ComPtr<ID2D1SolidColorBrush> brush;
       ComPtr<IDWriteTextFormat> format, bformat;
-		std::unique_ptr<DX12DescriptorManager> m_descriptorMgr;
-
 	private:
       u_int m_numBuffers;
-		DX12DescriptorChunk rtvHandle;
-
 	};
 }

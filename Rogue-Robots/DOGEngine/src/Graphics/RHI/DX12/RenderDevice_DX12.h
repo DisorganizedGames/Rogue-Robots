@@ -179,7 +179,7 @@ namespace DOG::gfx
 		ID3D12GraphicsCommandList4* GetListForExternal(CommandList cmdl);
 
 		ID3D12CommandQueue* GetQueue();
-		D3D12_CPU_DESCRIPTOR_HANDLE GetReservedRTV();
+		D3D12_CPU_DESCRIPTOR_HANDLE GetReservedRTV(u8 offset);
 
 		// Helpers
 	private:
@@ -298,6 +298,7 @@ namespace DOG::gfx
 #endif
 		ComPtr<ID3D12RootSignature> m_gfxRsig;
 		std::unique_ptr<DX12DescriptorManager> m_descriptorMgr;
+		
 
 		HandleAllocator m_rhp;
 
@@ -318,6 +319,9 @@ namespace DOG::gfx
 
 		// ImGUI
 		std::optional<DX12DescriptorChunk> m_reservedDescriptor;
+
+		//Ui
+		std::optional<DX12DescriptorChunk> m_d2dReservedDescriptor;
 	};
 }
 
