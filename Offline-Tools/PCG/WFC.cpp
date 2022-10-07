@@ -1,21 +1,21 @@
 #include "WFC.h"
 
-bool WFC::EdgeConstrain(uint32_t i, uint32_t dir)
+bool WFC::EdgeConstrain(uint32_t cellIndex, uint32_t dir)
 {
 	bool removed = false;
-	for (uint32_t j{ 0u }; j < m_entropy[i].possibilities.size(); ++j) //Go through all the current possibilities in the cell
+	for (uint32_t j{ 0u }; j < m_entropy[cellIndex].possibilities.size(); ++j) //Go through all the current possibilities in the cell
 	{
-		std::string c = m_entropy[i].possibilities[j];
+		std::string possibility = m_entropy[cellIndex].possibilities[j];
 
 		//Check if the possibility cannot have a boundary in the direction.
-		if (!std::count(m_blockPossibilities[c].dirPossibilities[dir].begin(), m_blockPossibilities[c].dirPossibilities[dir].end(), "Edge"))
+		if (!std::count(m_blockPossibilities[possibility].dirPossibilities[dir].begin(), m_blockPossibilities[possibility].dirPossibilities[dir].end(), "Edge"))
 		{
 			//If it can not we remove the possibility.
-			m_entropy[i].possibilities.erase(m_entropy[i].possibilities.begin() + j);
+			m_entropy[cellIndex].possibilities.erase(m_entropy[cellIndex].possibilities.begin() + j);
 			j--;
 			removed = true;
 			
-			if (m_entropy[i].possibilities.size() == 0)
+			if (m_entropy[cellIndex].possibilities.size() == 0)
 			{
 				m_failed = true;
 				break;
@@ -32,7 +32,7 @@ bool WFC::EdgeConstrain(uint32_t i, uint32_t dir)
 	{
 		//Push the index onto the stack and then loop through the stack until it is empty.
 		//(A call to Propogate can put more information on the stack.)
-		m_recursiveStack.push(i);
+		m_recursiveStack.push(cellIndex);
 		while (!m_recursiveStack.empty())
 		{
 			uint32_t data = m_recursiveStack.front();
@@ -69,8 +69,8 @@ bool WFC::GenerateLevel()
 	//Firstly we go through all the blocks with just 1 possibility.
 	while (m_currentEntropy[index].possibilities.size() == 1)
 	{
-		std::string c = m_currentEntropy[index].possibilities[0]; //It only has 1 possibility.
-		m_generatedLevel[index] = c; //Put the block in the generated level.
+		std::string possibility = m_currentEntropy[index].possibilities[0]; //It only has 1 possibility.
+		m_generatedLevel[index] = possibility; //Put the block in the generated level.
 
 		index = m_priorityQueue->Pop();
 
@@ -251,8 +251,8 @@ bool WFC::ReadInput(std::string input)
 		block.second.frequency /= m_totalCount;
 
 		//Here we can tweak the frequencies.
-
-		block.second.frequency += 0.5f * (1.0f - block.second.frequency);
+		float squishValue = 0.5f;
+		block.second.frequency += squishValue * (1.0f - block.second.frequency);
 
 		if (block.first == "Void")
 		{
@@ -394,12 +394,12 @@ void WFC::CheckForPropogation(uint32_t currentIndex, uint32_t neighborIndex, uns
 	bool removed = false;
 	for (uint32_t i{ 0u }; i < m_currentEntropy[neighborIndex].possibilities.size(); ++i) //For every possibility in the neighbor cell
 	{
-		std::string& r = m_currentEntropy[neighborIndex].possibilities[i];
+		std::string& neighborPossibility = m_currentEntropy[neighborIndex].possibilities[i];
 		bool matched = false;
 		
-		for (auto& t : m_currentEntropy[currentIndex].possibilities) //Check every possibility still left in the current cell and make sure "r" matches with atleast one of them.
+		for (auto& possibility : m_currentEntropy[currentIndex].possibilities) //Check every possibility still left in the current cell and make sure "r" matches with atleast one of them.
 		{
-			if (std::count(m_blockPossibilities[r].dirPossibilities[dir].begin(), m_blockPossibilities[r].dirPossibilities[dir].end(), t))
+			if (std::count(m_blockPossibilities[neighborPossibility].dirPossibilities[dir].begin(), m_blockPossibilities[neighborPossibility].dirPossibilities[dir].end(), possibility))
 			{
 				matched = true;
 				break;
@@ -482,12 +482,12 @@ void WFC::CheckForPropogationConstrain(uint32_t currentIndex, uint32_t neighborI
 	bool removed = false;
 	for (uint32_t i{ 0u }; i < m_entropy[neighborIndex].possibilities.size(); ++i) //For every possibility in the neighbor cell
 	{
-		std::string& r = m_entropy[neighborIndex].possibilities[i];
+		std::string& neighborPossibility = m_entropy[neighborIndex].possibilities[i];
 		bool matched = false;
 
-		for (auto& t : m_entropy[currentIndex].possibilities) //Check every possibility still left in the current cell and make sure "r" matches with atleast one of them.
+		for (auto& possibility : m_entropy[currentIndex].possibilities) //Check every possibility still left in the current cell and make sure "r" matches with atleast one of them.
 		{
-			if (std::count(m_blockPossibilities[r].dirPossibilities[dir].begin(), m_blockPossibilities[r].dirPossibilities[dir].end(), t))
+			if (std::count(m_blockPossibilities[neighborPossibility].dirPossibilities[dir].begin(), m_blockPossibilities[neighborPossibility].dirPossibilities[dir].end(), possibility))
 			{
 				matched = true;
 				break;
