@@ -41,8 +41,8 @@ private:
    ComPtr<IDWriteTextFormat> m_btextformat;
 public:
    std::vector<UIelement*> m_elements;
+   std::unique_ptr<DOG::gfx::D2DBackend_DX12> m_d2d; //The thing that renders everything
    UINT m_width, m_height;
-   DOG::gfx::D2DBackend_DX12 m_d2d; //The thing that renders everything
    UI(DOG::gfx::RenderDevice* m_rd, DOG::gfx::Swapchain* sc, u_int maxFramesInFlight, HWND hwnd);
    ~UI();
    void DrawUI();
@@ -91,4 +91,11 @@ public:
    void Draw(DOG::gfx::D2DBackend_DX12 &m_d2d) override;
    void Update(DOG::gfx::D2DBackend_DX12& m_d2d) override;
    ~UISplashScreen();
+};
+
+class UIHealthBar : public UIelement
+{
+   private:
+   D2D1_RECT_F m_background;
+
 };
