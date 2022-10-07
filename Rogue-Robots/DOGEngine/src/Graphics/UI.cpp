@@ -13,13 +13,12 @@ UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HW
    m_d2d = std::make_unique<DOG::gfx::D2DBackend_DX12>(rd, sc, numBuffers, hwnd);
    this->m_scene = menu;
    BuildMenuUI();
-   m_elements.push_back(new UISplashScreen(*m_d2d, (float)m_width, (float)m_height));
+   m_elements.push_back(std::make_unique<UISplashScreen>(*m_d2d, (float)m_width, (float)m_height));
 }
 
 UI::~UI()
 {
-   for (auto e : m_elements)
-      delete e;
+   
 }
 
 void UI::DrawUI()
@@ -36,11 +35,11 @@ void UI::DrawUI()
          e->Update(*m_d2d);
          e->Draw(*m_d2d);
       }
-      if (m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bplay])->pressed)
+      if (m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bplay].get())->pressed)
          ChangeUIscene(game);
-      else if (m_scene == game && dynamic_cast<UIButton*>(m_elements[GameUI::inventory])->pressed)
+      else if (m_scene == game && dynamic_cast<UIButton*>(m_elements[GameUI::inventory].get())->pressed)
          ChangeUIscene(menu);
-      else if (m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bexit])->pressed)
+      else if (m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bexit].get())->pressed)
          m_visible = false;
    }
 }
@@ -49,18 +48,18 @@ void UI::BuildMenuUI()
 {
    D2D_VECTOR_2F s = { 150.f, 60.f };
    D2D_POINT_2F p = { m_width / 2.f - s.x / 2, m_height / 2 - s.y / 2 };
-   m_elements.push_back(new UIButton(p, s, L"Play"));
+   m_elements.push_back(std::make_unique<UIButton>(p, s, L"Play"));
    p.y += s.y + 50;
-   m_elements.push_back(new UIButton(p, s, L"Options"));
+   m_elements.push_back(std::make_unique<UIButton>(p, s, L"Options"));
    p.y += s.y + 50;
-   m_elements.push_back(new UIButton(p, s, L"Exit"));
+   m_elements.push_back(std::make_unique<UIButton>(p, s, L"Exit"));
 }
 
 void UI::BuildGameUI()
 {
    D2D_POINT_2F p = { 50.f, 50.f };
    D2D_VECTOR_2F s = { 250.f, 100.f };
-   m_elements.push_back(new UIButton(p, s, L"Menu"));
+   m_elements.push_back(std::make_unique<UIButton>(p, s, L"Menu"));
 }
 
 void UI::ChangeUIscene(Uiscene scene)
@@ -68,15 +67,11 @@ void UI::ChangeUIscene(Uiscene scene)
    switch (scene)
    {
    case menu:
-      for (auto &&e : m_elements)
-         e->~UIelement();
       m_elements.clear();
       BuildMenuUI();
       this->m_scene = menu;
       break;
    case game:
-      for (auto &&e : m_elements)
-         e->~UIelement();
       m_elements.clear();
       BuildGameUI();
       this->m_scene = game;
