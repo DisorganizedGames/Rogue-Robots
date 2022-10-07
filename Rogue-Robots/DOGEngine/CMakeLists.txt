@@ -31,6 +31,11 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
 
 add_compile_definitions(TRACY_ENABLE=1)
 
+# Keep this commented this to fix memory leak
+# Profiler leaks memory if to be used properly
+# If you want to use tracy, uncomment this
+#add_compile_definitions(PROFILER_ON)
+
 set(LibraryName "DOGEngine")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/DOGEngine/vendor/includes/")
 set (ExternalLibPath "${CMAKE_SOURCE_DIR}/DOGEngine/vendor/libs")
