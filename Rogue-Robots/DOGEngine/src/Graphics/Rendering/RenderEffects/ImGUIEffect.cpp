@@ -1,21 +1,18 @@
-#include "ImGUIPass.h"
+#include "ImGUIEffect.h"
+#include "RECommonIncludes.h"
 
 #include "../../RHI/RenderDevice.h"
 #include "../../RHI/ImGUIBackend.h"
 
-#include "../RenderGraph/RenderGraph.h"
-#include "../RenderGraph/RGBlackboard.h"
-
 namespace DOG::gfx
 {
-	ImGUIPass::ImGUIPass(GlobalPassData& globalPassData, RGBlackboard& blackboard, ImGUIBackend* backend) :
-		m_globalPassData(globalPassData),
-		m_blackboard(blackboard),
+	ImGUIEffect::ImGUIEffect(GlobalEffectData& globalEffectData, RGBlackboard& blackboard, ImGUIBackend* backend) :
+		RenderEffect(globalEffectData, blackboard),
 		m_imgui(backend)
 	{
 	}
 
-	void ImGUIPass::AddPass(RenderGraph& rg)
+	void ImGUIEffect::Add(RenderGraph& rg)
 	{
 		struct PassData {};
 		rg.AddPass<PassData>("ImGUI Pass",
@@ -26,8 +23,8 @@ namespace DOG::gfx
 			},
 			[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
 			{
-				rd->Cmd_SetViewports(cmdl, m_globalPassData.bbVP);
-				rd->Cmd_SetScissorRects(cmdl, m_globalPassData.bbScissor);
+				rd->Cmd_SetViewports(cmdl, m_globalEffectData.bbVP);
+				rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.bbScissor);
 				m_imgui->Render(rd, cmdl);
 			});
 	}

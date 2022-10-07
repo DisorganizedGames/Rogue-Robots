@@ -4,7 +4,8 @@
 #include "../../Core/AnimationManager.h"
 #include "GPUTable.h"
 
-#include "RenderPasses/GlobalPassData.h"
+#include "RenderEffects/RenderEffect.h"
+#include "RenderEffects/EffectData/GlobalEffectData.h"
 
 namespace DOG::gfx
 {
@@ -26,9 +27,6 @@ namespace DOG::gfx
 	class RenderGraph;
 	class RGResourceManager;
 	class RGBlackboard;
-
-	// Passes
-	class ImGUIPass;
 
 	class Renderer
 	{
@@ -133,7 +131,7 @@ namespace DOG::gfx
 		// ================= RENDERING RESOURCES
 
 		Pipeline m_pipe, m_meshPipe, m_meshPipeNoCull;
-		Pipeline m_testCompPipe;
+		//Pipeline m_testCompPipe;
 
 		// Reusing a single command list for now
 		CommandList m_cmdl;
@@ -153,7 +151,7 @@ namespace DOG::gfx
 
 
 
-		GlobalPassData m_globalPassData{};
+		GlobalEffectData m_globalEffectData{};
 
 		// Per frame shader data
 		struct PerFrameData
@@ -190,7 +188,8 @@ namespace DOG::gfx
 		GlobalDataHandle m_gdHandle;
 
 		// Passes
-		std::unique_ptr<ImGUIPass> m_igPass;
+		std::unique_ptr<RenderEffect> m_imGUIEffect;
+		std::unique_ptr<RenderEffect> m_testComputeEffect;
 
 	};
 }

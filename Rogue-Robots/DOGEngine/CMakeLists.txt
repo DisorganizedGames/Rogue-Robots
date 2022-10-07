@@ -24,7 +24,12 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Core/AnimationManager.h" "src/Core/AnimationManager.cpp" "src/Core/ImGuiMenuLayer.h" "src/Core/ImGuiMenuLayer.cpp"
     "src/Physics/PhysicsEngine.h" "src/Physics/PhysicsEngine.cpp"
     "src/Core/ShapeCreator.h" "src/Core/ShapeCreator.cpp"
-    "src/Graphics/Rendering/RenderGraph/RGBlackboard.h" "src/Graphics/Rendering/RenderPasses/ImGUIPass.h" "src/Graphics/Rendering/RenderPasses/ImGUIPass.cpp" "src/Graphics/Rendering/RenderPasses/GlobalPassData.h" "src/ECS/System.h")
+    "src/Graphics/Rendering/RenderGraph/RGBlackboard.h" "src/Graphics/Rendering/RenderEffects/ImGUIEffect.h" 
+    "src/Graphics/Rendering/RenderEffects/ImGUIEffect.cpp" "src/Graphics/Rendering/RenderEffects/EffectData/GlobalEffectData.h"  
+    "src/Graphics/Rendering/RenderEffects/TestComputeEffect.h" "src/Graphics/Rendering/RenderEffects/TestComputeEffect.cpp"    
+    "src/Graphics/Rendering/RenderEffects/RenderEffect.h" "src/Graphics/Rendering/RenderEffects/RECommonIncludes.h"
+    "src/ECS/System.h"
+    )
 
 	file(GLOB_RECURSE TempGraphics
     "src/Graphics/*.cpp")
