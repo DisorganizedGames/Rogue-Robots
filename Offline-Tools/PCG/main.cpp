@@ -2,22 +2,22 @@
 
 int main()
 {
-    uint32_t w = 9;
-    uint32_t h = 3;
-    uint32_t d = 9;
+    uint32_t w = 13;
+    uint32_t h = 7;
+    uint32_t d = 12;
 
-    std::string input = "testLevelOutput";
+    std::string input = "largerTestOutput";
 
     //Create a WFC interface and send the input.
-    WFC* wfc = new WFC(input + ".txt", w, h, d);
+    WFC* wfc = new WFC(w, h, d);
+    wfc->SetInput(input + ".txt");
 
-    //The generation has 20 chances to succeed.
-    unsigned chances = 20;
+    //The generation has a certain amount of chances to succeed.
+    unsigned chances = 100;
     while (!wfc->GenerateLevel() && chances > 0)
     {
         chances--;
     }
-
     if (chances != 0)
     {
         //Output the generated level to a textfile.
@@ -39,6 +39,10 @@ int main()
             output << "-\n";
         }
         output.close();
+    }
+    else
+    {
+        std::cout << "OUT OF TRIES!" << std::endl;
     }
     
     delete wfc;

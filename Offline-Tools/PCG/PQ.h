@@ -58,7 +58,17 @@ public:
 		}
 	}
 
-	~PriorityQueue() noexcept = default;
+	~PriorityQueue() noexcept
+	{
+		//This prevents a stack overflow when the generation is done.
+		QueueBlock* temp = m_first.get();
+		while(temp)
+		{
+			m_first = temp->m_next;
+			temp->m_next = nullptr;
+			temp = m_first.get();
+		}
+	};
 
 	//Returns the index of one of the first blocks in the PQ (decided randomly)
 	int Pop();
