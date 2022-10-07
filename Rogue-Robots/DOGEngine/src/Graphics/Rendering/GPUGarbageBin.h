@@ -1,6 +1,4 @@
 #pragma once
-#include <functional>
-#include <deque>
 
 namespace DOG::gfx
 {

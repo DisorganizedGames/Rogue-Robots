@@ -1,3 +1,5 @@
+// https://64.github.io/tonemapping/
+
 static const float3 aces_input_matrix[] =
 {
     float3(0.59719f, 0.35458f, 0.04823f),
