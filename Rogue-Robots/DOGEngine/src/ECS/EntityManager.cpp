@@ -17,9 +17,7 @@ namespace DOG
 		m_entities[indexToInsert] = indexToInsert;
 		m_freeList.pop();
 
-#if defined _DEBUG
-		m_aliveEntities.push_back(indexToInsert);
-#endif
+		ECS_DEBUG_OP([&](){m_aliveEntities.push_back(indexToInsert); });
 
 		return m_entities[indexToInsert];
 	}
@@ -38,17 +36,16 @@ namespace DOG
 		m_entities[entityID] = MAX_ENTITIES;
 		m_freeList.push(entityID);
 		
-#if defined _DEBUG
-		for (u32 i{ 0u }; i < m_aliveEntities.size(); ++i)
-		{
-			if (m_aliveEntities[i] == entityID)
+		ECS_DEBUG_OP([&](){
+			for (u32 i{ 0u }; i < m_aliveEntities.size(); ++i)
 			{
-				std::swap(m_aliveEntities[i], m_aliveEntities[m_aliveEntities.size() - 1]);
-				m_aliveEntities.pop_back();
-				break;
-			}
-		}
-#endif
+				if (m_aliveEntities[i] == entityID)
+				{
+					std::swap(m_aliveEntities[i], m_aliveEntities[m_aliveEntities.size() - 1]);
+					m_aliveEntities.pop_back();
+					break;
+				}
+			}});
 	}
 
 	const std::vector<entity>& EntityManager::GetAllEntities() const noexcept
@@ -65,10 +62,7 @@ namespace DOG
 		m_components.clear();
 		m_bundles.clear();
 		m_systems.clear();
-
-#if defined _DEBUG
-		m_aliveEntities.clear();
-#endif
+		ECS_DEBUG_OP([&](){ m_aliveEntities.clear(); });
 
 		Initialize();
 	}
@@ -90,10 +84,7 @@ namespace DOG
 			m_freeList.push(entityId);
 
 		m_systems.reserve(INITIAL_SYSTEM_CAPACITY);
-
-#if defined(_DEBUG)
-		m_aliveEntities.reserve(MAX_ENTITIES);
-#endif
+		ECS_DEBUG_OP([&]() { m_aliveEntities.reserve(MAX_ENTITIES); });
 	}
 
 	[[nodiscard]] bool EntityManager::HasComponentInternal(const sti::TypeIndex componentPoolIndex, const entity entityID) const noexcept
@@ -120,6 +111,7 @@ namespace DOG
 
 	void EntityManager::RegisterSystem(std::unique_ptr<ISystem>&& pSystem) noexcept
 	{
+		ECS_DEBUG_OP([&]() { for (auto& system : m_systems) ASSERT(typeid(*system) != typeid(*pSystem), "System already exists."); })
 		pSystem->Create();
 		m_systems.emplace_back(std::move(pSystem));
 	}

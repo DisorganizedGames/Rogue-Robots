@@ -8,6 +8,22 @@
 
 namespace DOG
 {
+#if defined _DEBUG
+	#ifndef ECS_DEBUG_OP
+		#define ECS_DEBUG_OP(lambda) lambda();
+	#endif
+	#ifndef ECS_DEBUG_EXPR
+		#define ECS_DEBUG_EXPR(expr) expr
+	#endif
+#else
+	#ifndef ECS_DEBUG_OP
+		#define ECS_DEBUG_OP(lambda) 
+	#endif
+	#ifndef ECS_DEBUG_EXPR
+		#define ECS_DEBUG_EXPR(expr)
+	#endif
+#endif
+
 	#define sti static_type_info
 	
 	constexpr const u32 MAX_ENTITIES = 64'000u;
@@ -30,15 +46,14 @@ namespace DOG
 	{
 		SparseSetBase() noexcept = default;
 		virtual ~SparseSetBase() noexcept = default;
-		std::vector<entity> sparseArray;
-		std::vector<entity> denseArray;
-		sti::TypeIndex bundle = nullptr;
-
 		virtual void DestroyInternal(const entity entityID) noexcept = 0;
 
 #if defined _DEBUG
 		virtual std::pair<std::vector<entity>&, std::string_view> ReportUsage() noexcept = 0;
 #endif
+		std::vector<entity> sparseArray;
+		std::vector<entity> denseArray;
+		sti::TypeIndex bundle = nullptr;
 	};
 
 	template<typename ComponentType>
@@ -46,7 +61,6 @@ namespace DOG
 	{
 		SparseSet() noexcept = default;
 		virtual ~SparseSet() noexcept override final = default;
-		std::vector<ComponentType> components;
 
 #if defined _DEBUG
 		virtual std::pair<std::vector<entity>&, std::string_view> ReportUsage() noexcept override final
@@ -56,6 +70,7 @@ namespace DOG
 			return { denseArray, finalString };
 		}
 #endif
+		std::vector<ComponentType> components;
 	private:
 		virtual void DestroyInternal(const entity entityID) noexcept override final;
 	};
@@ -111,10 +126,9 @@ namespace DOG
 		[[nodiscard]] constexpr const std::vector<std::unique_ptr<ISystem>>::const_iterator begin() const { return m_systems.begin(); }
 		[[nodiscard]] constexpr const std::vector<std::unique_ptr<ISystem>>::const_iterator end() const { return m_systems.end(); }
 	
-#if defined _DEBUG
-		[[nodiscard]] std::vector<std::unique_ptr<ISystem>>& GetAllSystems() noexcept { return m_systems; }
-		[[nodiscard]] constexpr const std::vector<entity>& GetAllEntitiesAlive() const noexcept { return m_aliveEntities; }
-#endif
+		ECS_DEBUG_EXPR([[nodiscard]] std::vector<std::unique_ptr<ISystem>>& GetAllSystems() noexcept { return m_systems; });
+		ECS_DEBUG_EXPR([[nodiscard]] constexpr const std::vector<entity>& GetAllEntitiesAlive() const noexcept { return m_aliveEntities; });
+
 	private:
 		EntityManager() noexcept;
 		~EntityManager() noexcept = default;
@@ -138,18 +152,16 @@ namespace DOG
 		friend class Collection;
 		template<typename... ComponentType>
 		friend class BundleImpl;
-		
 		friend class ISystem;
 
 		static EntityManager s_instance;
 		std::vector<entity> m_entities;
-#if defined _DEBUG
-		std::vector<entity> m_aliveEntities;
-#endif
 		std::queue<entity> m_freeList;
 		std::unordered_map<sti::TypeIndex ,ComponentPool> m_components;
 		std::unordered_map<sti::TypeIndex, std::unique_ptr<BundleBase>> m_bundles;
 		std::vector<std::unique_ptr<ISystem>> m_systems;
+	
+		ECS_DEBUG_EXPR(std::vector<entity> m_aliveEntities;);
 	};
 
 	template<typename ComponentType>
@@ -170,10 +182,10 @@ namespace DOG
 		if (m_bundles[minComponentID] == nullptr)
 		{
 			std::tuple<SparseSet<ComponentType>*...> pools = { (ExpandAsTupleArguments<ComponentType>()) ...};
-#if defined _DEBUG
-			std::apply([](const auto&... pool) {(ASSERT((pool != nullptr) && pool->bundle == nullptr, "Bundle creation failed."), ...); }, pools);
-#endif
+
+			ECS_DEBUG_EXPR(std::apply([](const auto&... pool) {(ASSERT((pool != nullptr) && pool->bundle == nullptr, "Bundle creation failed."), ...); }, pools););
 			std::apply([&minComponentID](const auto... pool) {((pool->bundle = minComponentID), ...); }, pools);
+			
 			m_bundles[minComponentID] = (std::unique_ptr<BundleImpl<ComponentType...>>(new BundleImpl<ComponentType...>(this, std::move(pools))));
 		}
 		return *(static_cast<BundleImpl<ComponentType...>*>(m_bundles[minComponentID].get()));
@@ -323,9 +335,7 @@ namespace DOG
 	Collection<ComponentType...>::Collection(EntityManager* mgr, const std::tuple<SparseSet<ComponentType>*...>& pools) noexcept
 		: m_mgr{ mgr }, m_pools(std::move(pools))
 	{
-#if defined _DEBUG
-		std::apply([](const auto... pool) {(ASSERT(pool, "Component type does not exist."), ...); }, m_pools);
-#endif
+		ECS_DEBUG_EXPR(std::apply([](const auto... pool) {(ASSERT(pool, "Component type does not exist."), ...); }, m_pools););
 	}
 
 	template<typename... ComponentType>
@@ -406,9 +416,8 @@ namespace DOG
 	BundleImpl<ComponentType...>::BundleImpl(EntityManager* mgr, const std::tuple<SparseSet<ComponentType>*...>& pools) noexcept
 		: m_mgr{ mgr }, m_pools{ std::move(pools) }, m_bundleStart{ -1 }, ePointer{ nullptr }
 	{
-#if defined _DEBUG
-		std::apply([](const auto... pool) {(ASSERT(pool, "Component type does not exist."), ...); }, m_pools);
-#endif
+		ECS_DEBUG_EXPR(std::apply([](const auto... pool) {(ASSERT(pool, "Component type does not exist."), ...); }, m_pools);)
+		
 		ePointer = &(get<0>(m_pools)->denseArray);
 		std::apply([&](const auto... pool)
 			{
@@ -497,10 +506,11 @@ namespace DOG
 			m_bundleStart--;
 		}
 	}
+
 	
 }
-//##################### SYSTEMS #####################
 
+//##################### SYSTEMS #####################
 
 	template<typename... ComponentType>
 	struct SystemHelper
@@ -518,7 +528,7 @@ namespace DOG
 
 			return ePointer;
 		}
-
+		DELETE_COPY_MOVE_CONSTRUCTOR(SystemHelper);
 		DOG::EntityManager& m_mgr;
 		std::tuple<DOG::SparseSet<ComponentType>* ...> m_pools;
 	};
@@ -527,13 +537,15 @@ namespace DOG
 	struct CriticalSystemHelper
 	{
 		CriticalSystemHelper() noexcept
-			: m_mgr{ DOG::EntityManager::Get() }, m_bundle{ DOG::EntityManager::Get().Bundle<ComponentType...>() }
+			: m_mgr{ DOG::EntityManager::Get() } 
 		{
-			m_ePointer = m_bundle.GetEntityVectorPointer();
-			m_bundleStart = m_bundle.GetBundleStartPointer();
+			static_assert(sizeof...(ComponentType) > 1);
+			auto& bundle = DOG::EntityManager::Get().Bundle<ComponentType...>();
+			m_ePointer = bundle.GetEntityVectorPointer();
+			m_bundleStart = bundle.GetBundleStartPointer();
 		}
+		DELETE_COPY_MOVE_CONSTRUCTOR(CriticalSystemHelper);
 		DOG::EntityManager& m_mgr;
-		DOG::BundleImpl<ComponentType...>& m_bundle;
 		const std::vector<DOG::entity>* m_ePointer;
 		const int* m_bundleStart;
 	};
@@ -550,7 +562,7 @@ public:																															\
 			constexpr std::string_view finalName = s2.substr(0, lastIndex);														\
 			return finalName;																									\
 		}																														\
-		[[nodiscard]] virtual DOG::SystemType GetSystemType() const noexcept															\
+		[[nodiscard]] virtual DOG::SystemType GetType() const noexcept															\
 		{																														\
 			return DOG::SystemType::Standard;																						\
 		}																														
@@ -571,7 +583,7 @@ public:																															\
 			constexpr std::string_view finalName = s2.substr(0, lastIndex);														\
 			return finalName;																									\
 		}																														\
-		[[nodiscard]] virtual DOG::SystemType GetSystemType() const noexcept															\
+		[[nodiscard]] virtual DOG::SystemType GetType() const noexcept															\
 		{																														\
 			return DOG::SystemType::Critical;																						\
 		}

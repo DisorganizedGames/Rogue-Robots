@@ -14,7 +14,7 @@ namespace DOG
 		virtual void LateUpdate() noexcept {}
 #if defined _DEBUG
 		[[nodiscard]] virtual std::string_view GetName() const = 0;
-		[[nodiscard]] virtual SystemType GetSystemType() const noexcept = 0;
+		[[nodiscard]] virtual SystemType GetType() const noexcept = 0;
 #endif
 	};
 }

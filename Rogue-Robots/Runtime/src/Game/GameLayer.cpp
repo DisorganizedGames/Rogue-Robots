@@ -151,7 +151,6 @@ GameLayer::GameLayer() noexcept
 	scriptManager->AddScript(Player4, "Gun.lua");
 }
 
-
 void GameLayer::OnAttach()
 {
 	LoadLevel();
@@ -166,6 +165,19 @@ void GameLayer::OnDetach()
 
 void GameLayer::OnUpdate()
 {
+	for (auto& system : m_entityManager)
+	{
+		system->EarlyUpdate();
+	}
+	for (auto& system : m_entityManager)
+	{
+		system->Update();
+	}
+	for (auto& system : m_entityManager)
+	{
+		system->LateUpdate();
+	}
+
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
 

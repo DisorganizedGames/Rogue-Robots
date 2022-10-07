@@ -18,18 +18,7 @@ void EmilFDebugLayer::OnDetach()
 
 void EmilFDebugLayer::OnUpdate()
 {
-	for (auto& system : m_entityManager)
-	{
-		system->EarlyUpdate();
-	}
-	for (auto& system : m_entityManager)
-	{
-		system->Update();
-	}
-	for (auto& system : m_entityManager)
-	{
-		system->LateUpdate();
-	}
+	//...
 }
 
 void EmilFDebugLayer::OnRender()

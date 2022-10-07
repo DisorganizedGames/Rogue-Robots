@@ -173,11 +173,13 @@ namespace DOG
             u32 nrOfValidPools = 0u;
             for (auto& [componentID, componentPool] : pools)
             {
-                if (componentPool != nullptr)
+                if (componentPool)
                 {
                     nrOfValidPools++;
                     if (componentPool->denseArray.size() > maxEntitiesInAPool)
+                    {
                         maxEntitiesInAPool = (u32)componentPool->denseArray.size();
+                    }
                 }
             }
 
@@ -187,6 +189,8 @@ namespace DOG
                 static bool clickedOnEntities = false;
                 static const ComponentPool* selectedPool = nullptr;
                 static entity selectedEntity = NULL_ENTITY;
+                float widthOfPanel = ImGui::GetWindowContentRegionMax().x;
+
                 if (selectedEntity != NULL_ENTITY && !mgr.Exists(selectedEntity))
                 {
                     selectedEntity = NULL_ENTITY;
@@ -195,15 +199,14 @@ namespace DOG
                 ImGui::Text("Entities alive: %d", mgr.GetNrOfEntities());
                 if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
                     clickedOnEntities = true;
-
                 ImGui::Separator();
+                
                 ImVec2 actualCursorPosition = ImGui::GetCursorPos();
                 ImVec2 savedCursorPosition = ImGui::GetCursorPos();
                 ImGui::Text("Unique component types: %d", nrOfValidPools);
-				ImVec2 outer_size = ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 12);
-				static ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable;
-                ImGui::SetNextItemWidth(ImGui::GetFrameHeight());
-
+				
+                ImVec2 outer_size = ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 12);
+                static ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_::ImGuiTableFlags_PadOuterX;
                 if (!selectedPool && !clickedOnEntities && selectedEntity == NULL_ENTITY)
                 {
 					if (ImGui::BeginTable("table_allComponents", 2, flags, outer_size))
@@ -215,13 +218,15 @@ namespace DOG
 
 						for (auto& [componentID, componentPool] : pools)
 						{
-							if (componentPool != nullptr)
+							if (componentPool)
 							{
 								ImGui::TableNextRow();
 								for (int column = 0; column < 2; column++)
 								{
-									if (!ImGui::TableSetColumnIndex(column) && column > 0)
+                                    if (!ImGui::TableSetColumnIndex(column) && column > 0)
+                                    {
 										continue;
+                                    }
 
 									auto [entities, poolName] = componentPool->ReportUsage();
 									if (column == 0)
@@ -233,8 +238,10 @@ namespace DOG
 											selectedPool = &componentPool;
 										}
 									}
-									else
+                                    else
+                                    {
 										ImGui::Text("%d", entities.size());
+                                    }
 								}
 							}
 						}
@@ -263,12 +270,13 @@ namespace DOG
                         }
 
                         ImGui::EndTable();
-                        float widthOfPanel = ImGui::GetWindowContentRegionMax().x;
                         actualCursorPosition = ImGui::GetCursorPos();
                         ImGui::SetCursorPos(ImVec2(savedCursorPosition.x + widthOfPanel - 24, savedCursorPosition.y - 3));
                         ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
                         if (ImGui::Button("<"))
+                        {
                             selectedPool = nullptr;
+                        }
                         ImGui::PopStyleColor();
                     }
                 }
@@ -287,16 +295,18 @@ namespace DOG
                             ImGui::TableSetColumnIndex(0);
                             ImGui::Text("%d", entities[i]);
                             if (ImGui::IsItemClicked())
+                            {
                                 selectedEntity = entities[i];
+                            }
                         }
-
                         ImGui::EndTable();
-                        float widthOfPanel = ImGui::GetWindowContentRegionMax().x;
                         actualCursorPosition = ImGui::GetCursorPos();
                         ImGui::SetCursorPos(ImVec2(savedCursorPosition.x + widthOfPanel - 24, savedCursorPosition.y - 3));
                         ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
                         if (ImGui::Button("<"))
+                        {
                             clickedOnEntities = false;
+                        }
                         ImGui::PopStyleColor();
                     }
                 }
@@ -311,7 +321,7 @@ namespace DOG
 
                         for (auto& [componentID, componentPool] : pools)
                         {
-                            if (componentPool != nullptr)
+                            if (componentPool)
                             {
                                 auto [entities, poolName] = componentPool->ReportUsage();
                                 if (std::find(entities.begin(), entities.end(), selectedEntity) != entities.end())
@@ -323,12 +333,13 @@ namespace DOG
                             }
                         }
 						ImGui::EndTable();
-						float widthOfPanel = ImGui::GetWindowContentRegionMax().x;
                         actualCursorPosition = ImGui::GetCursorPos();
 						ImGui::SetCursorPos(ImVec2(savedCursorPosition.x + widthOfPanel - 24, savedCursorPosition.y - 3));
 						ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
-						if (ImGui::Button("<"))
+                        if (ImGui::Button("<"))
+                        {
 							selectedEntity = NULL_ENTITY;
+                        }
 						ImGui::PopStyleColor();
 					}
                 }
@@ -340,10 +351,11 @@ namespace DOG
 				auto& systems = mgr.GetAllSystems();
                 savedCursorPosition = ImGui::GetCursorPos();
 				ImGui::Text("Unique systems: %d", systems.size());
-                if (ImGui::BeginTable("table_systems", 1, flags, outer_size))
+                if (ImGui::BeginTable("table_systems", 2, flags, outer_size))
                 {
                     ImGui::TableSetupScrollFreeze(0, 1);
                     ImGui::TableSetupColumn("System execution order", ImGuiTableColumnFlags_NoHide);
+                    ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_NoHide);
                     ImGui::TableHeadersRow();
 
                     for (size_t i{0u}; i < systems.size(); ++i)
@@ -351,24 +363,35 @@ namespace DOG
 						ImGui::TableNextRow();
 						ImGui::TableSetColumnIndex(0);
 
-                        std::string_view name = systems[i]->GetName();
-                        SystemType systemType = systems[i]->GetSystemType();
-                        std::string finalName = std::string(name);
-                        if (systemType == SystemType::Standard)
+                        if (selectedSystemIndex == i)
                         {
-                            finalName += " (Standard)";
-                        }
-                        else
-                        {
-                            finalName += " (Critical)";
+                            ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
                         }
 
-						ImGui::Text("%s", finalName.c_str());
-                        if (ImGui::IsItemClicked())
+                        std::string_view name = systems[i]->GetName();
+						ImGui::Text("%s", std::string(name).c_str());
+                        if (ImGui::IsItemClicked() && selectedSystemIndex != (int)i)
+                        {
                             selectedSystemIndex = (int)i;
+                            ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+                        }
+
+                        ImGui::TableSetColumnIndex(1);
+						SystemType systemType = systems[i]->GetType();
+						if (systemType == SystemType::Standard)
+						{
+                            ImGui::Text("Standard");
+						}
+						else
+						{
+                            ImGui::Text("Critical");
+						}
+						if (selectedSystemIndex == i)
+						{
+							ImGui::PopStyleColor(1);
+						}
 					}
 					ImGui::EndTable();
-					float widthOfPanel = ImGui::GetWindowContentRegionMax().x;
 					actualCursorPosition = ImGui::GetCursorPos();
 					ImGui::SetCursorPos(ImVec2(savedCursorPosition.x + widthOfPanel - 46, savedCursorPosition.y - 3));
 					ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
