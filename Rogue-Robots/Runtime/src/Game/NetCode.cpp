@@ -163,7 +163,8 @@ void NetCode::Recive()
 		if (start == FALSE)
 		{
 			std::cout << "Failed input, try agiain" << std::endl;
-		//fseek(stdin, 0, SEEK_END);
+			//fseek(stdin, 0, SEEK_END);
+		}
 	}
 	m_threadUdp = std::thread(&NetCode::ReciveUdp, this);
 	if (m_netCodeAlive)
