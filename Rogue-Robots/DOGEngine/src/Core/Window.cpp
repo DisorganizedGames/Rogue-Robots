@@ -247,7 +247,7 @@ namespace DOG
 		return s_windowData.dimensions.y;
 	}
 
-	const std::pair<u32, u32> GetDimensions() noexcept
+	const std::pair<u32, u32> Window::GetDimensions() noexcept
 	{
 		return std::make_pair(s_windowData.dimensions.x, s_windowData.dimensions.y);
 	}
