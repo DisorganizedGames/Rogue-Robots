@@ -14,6 +14,7 @@ namespace DOG
 		RECT windowRectangle;
 		Vector2u dimensions;
 		WindowMode mode;
+		CursorMode cursorMode = CursorMode::Visible;
 	};
 	static WindowData s_windowData = {};
 	static std::optional<std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)>> s_wmHook;
@@ -266,6 +267,36 @@ namespace DOG
 		s_wmHook = func;
 	}
 
+	void Window::SetCursorMode(CursorMode mode) noexcept
+	{
+		if ((s_windowData.cursorMode & CursorMode::Visible) != (mode & CursorMode::Visible))
+		{
+			if ((mode & CursorMode::Visible) == CursorMode::Visible)
+				ShowCursor(true);
+			else
+				ShowCursor(false);
+		}
+		if ((s_windowData.cursorMode & CursorMode::Confined) != (mode & CursorMode::Confined))
+		{
+			if ((mode & CursorMode::Confined) == CursorMode::Confined)
+			{
+				RECT r;
+				GetClientRect(s_windowData.windowHandle, &r);
+				MapWindowPoints(s_windowData.windowHandle, nullptr, (POINT*)&r, 2);
+				ClipCursor(&r);
+			}
+			else
+			{
+				ClipCursor(nullptr);
+			}
+		}
+		s_windowData.cursorMode = mode;
+	}
+
+	CursorMode Window::GetCursorMode() noexcept
+	{
+		return s_windowData.cursorMode;
+	}
 
 
 	void MapLeftRightShiftAndControl(WPARAM& wParam, LPARAM lParam)

@@ -20,4 +20,24 @@ namespace DOG
 		std::string workingDir;
 		GraphicsSettings graphicsSettings;
 	};
+
+	enum class CursorMode
+	{
+		Visible = 1,
+		Confined = 2
+	};
+
+
+	inline CursorMode operator ~(CursorMode m)
+	{
+		return (CursorMode)~(int)m;
+	}
+	inline CursorMode operator &(CursorMode l, CursorMode r)
+	{
+		return (CursorMode)((int)l & (int)r);
+	}
+	inline CursorMode operator |(CursorMode l, CursorMode r)
+	{
+		return (CursorMode)((int)l | (int)r);
+	}
 }

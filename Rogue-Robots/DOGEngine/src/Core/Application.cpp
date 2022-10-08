@@ -156,11 +156,15 @@ namespace DOG
 				auto& e = EVENT(WindowActiveEvent);
 				if (!e.active)
 				{
+					m_cursorModeOnFocusLoss = Window::GetCursorMode();
+					Window::SetCursorMode(CursorMode::Visible);
+
 					m_fullscreenStateOnFocusLoss = m_renderer->GetFullscreenState();
 					m_specification.graphicsSettings.windowMode = WindowMode::Windowed;
 				}
 				else
 				{
+					Window::SetCursorMode(m_cursorModeOnFocusLoss);
 					m_specification.graphicsSettings.windowMode = m_fullscreenStateOnFocusLoss;
 				}
 

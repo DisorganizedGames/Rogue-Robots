@@ -16,6 +16,8 @@ namespace DOG
 		static const std::pair<u32, u32> GetDimensions() noexcept;
 		static const WindowMode GetMode() noexcept;
 		static const HWND GetHandle() noexcept;
+		static void SetCursorMode(CursorMode mode) noexcept;
+		static CursorMode GetCursorMode() noexcept;
 
 		// Reserved for renderer until further notice (no functionality for WM callbacks is implemented for Window otherwise)
 		static void SetWMHook(const std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> func);

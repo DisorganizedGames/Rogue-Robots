@@ -34,7 +34,8 @@ void RuntimeApplication::OnRestart() noexcept
 
 void RuntimeApplication::OnEvent(IEvent& event) noexcept
 {
-	if (event.GetEventCategory() == EventCategory::KeyboardEventCategory)
+	if (event.GetEventCategory() == EventCategory::KeyboardEventCategory
+		|| event.GetEventCategory() == EventCategory::MouseEventCategory)
 	{
 		switch (event.GetEventType())
 		{
@@ -46,13 +47,26 @@ void RuntimeApplication::OnEvent(IEvent& event) noexcept
 				if (m_showImGuiMenu)
 				{
 					PushOverlay(&m_imGuiMenuLayer);
-					
+
 				}
 				else
 				{
 					PopOverlay(&m_imGuiMenuLayer);
 				}
 			}
+			break;
+
+		}
+		case EventType::RightMouseButtonPressedEvent:
+		{
+			static bool lockMouse = false;
+			if (lockMouse)
+				Window::SetCursorMode(CursorMode::Confined);
+			else
+				Window::SetCursorMode(CursorMode::Visible);
+
+			lockMouse = !lockMouse;
+			event.StopPropagation();
 			break;
 		}
 		}

@@ -35,6 +35,7 @@ namespace DOG
 		DELETE_COPY_MOVE_CONSTRUCTOR(Application);
 		ApplicationSpecification m_specification;
 		WindowMode m_fullscreenStateOnFocusLoss;
+		CursorMode m_cursorModeOnFocusLoss;
 		LayerStack& m_layerStack;
 		bool m_isRunning;
 		std::unique_ptr<gfx::Renderer> m_renderer;
