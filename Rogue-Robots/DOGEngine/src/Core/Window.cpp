@@ -70,10 +70,14 @@ namespace DOG
 		}
 		case WM_SYSKEYDOWN:
 		{
-			// Handle ALT+ENTER:
-			if (wParam == VK_RETURN && (lParam & (1 << 29) && !(lParam & (1 << 30))))
+			bool keyIsRepeated = (lParam >> 30) & 1;
+			if (wParam == VK_RETURN && (lParam & (1 << 29) && !keyIsRepeated))
 			{
-				PublishEvent<WindowAltEnterEvent>();
+				PublishEvent<WindowAltEnterEvent>(); // Handle ALT+ENTER:
+			}
+			if (wParam == VK_F4 && (lParam & (1 << 29) && !keyIsRepeated))
+			{
+				break; // We don't want to disable alt + f4.
 			}
 		}
 		case WM_KEYDOWN:

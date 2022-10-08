@@ -6,7 +6,7 @@ namespace DOG
 	{
 		BackSpace = 8, Tab,
 		Enter = 13,
-		AltGr = 18,
+		Alt = 18,
 		Capslock = 20,
 		Esc = 27,
 		Spacebar = 32,
