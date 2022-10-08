@@ -434,6 +434,8 @@ namespace DOG::gfx
 		assert(requestedSettings.displayMode);
 		m_renderWidth = requestedSettings.renderResolution.x;
 		m_renderHeight = requestedSettings.renderResolution.y;
+		m_globalPassData.defRenderScissors = ScissorRects().Append(0, 0, m_renderWidth, m_renderHeight);
+		m_globalPassData.defRenderVPs = Viewports().Append(0.f, 0.f, (f32)m_renderWidth, (f32)m_renderHeight);
 		m_sc->SetFullscreenState(requestedSettings.windowMode == WindowMode::FullScreen, *requestedSettings.displayMode);
 
 		return true;

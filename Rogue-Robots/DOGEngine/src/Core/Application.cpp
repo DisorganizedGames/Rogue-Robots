@@ -215,6 +215,8 @@ namespace DOG
 		if (!m_specification.graphicsSettings.displayMode)
 		{
 			m_specification.graphicsSettings.displayMode = m_renderer->GetDefaultDisplayMode();
+			m_specification.graphicsSettings.renderResolution.x = m_specification.graphicsSettings.displayMode->Width;
+			m_specification.graphicsSettings.renderResolution.y = m_specification.graphicsSettings.displayMode->Height;
 		}
 	}
 
@@ -316,6 +318,47 @@ namespace DOG
 				}
 				ImGui::Checkbox("Vsync", &m_specification.graphicsSettings.vSync);
 				ImGui::Separator();
+
+				ImGui::Text("Graphics settings");
+
+				Vector2u resolutionRatio;
+				if (m_renderer->GetFullscreenState() == WindowMode::Windowed)
+				{
+					std::tie(resolutionRatio.x, resolutionRatio.y) = Window::GetDimensions();
+				}
+				else
+				{
+					assert(m_specification.graphicsSettings.displayMode);
+					resolutionRatio.x = m_specification.graphicsSettings.displayMode->Width;
+					resolutionRatio.y = m_specification.graphicsSettings.displayMode->Height;
+				}
+
+				std::vector<const char*> res =
+				{
+					"144",
+					"360",
+					"720",
+					"1080",
+					"1440",
+					"2160",
+				};
+
+				static int resIndex = 3;
+
+				ImGui::Text("resolution");
+				ImGui::SameLine();
+				if (ImGui::Combo("##2", &resIndex, res.data(), static_cast<int>(res.size())))
+				{
+					m_specification.graphicsSettings.renderResolution.y = std::stoi(res[resIndex]);
+					m_specification.graphicsSettings.renderResolution.x = m_specification.graphicsSettings.renderResolution.y * resolutionRatio.x / resolutionRatio.y;
+					assert(m_specification.graphicsSettings.renderResolution.x % 2 == 0);
+
+					m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
+				}
+
+
+
+				//--------------
 			}
 			ImGui::End(); // "Application settings"
 		}
