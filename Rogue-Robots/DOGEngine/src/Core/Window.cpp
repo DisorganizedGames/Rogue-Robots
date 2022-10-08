@@ -71,9 +71,7 @@ namespace DOG
 			if (wParam == VK_RETURN && (lParam & (1 << 29) && !(lParam & (1 << 30))))
 			{
 				PublishEvent<WindowAltEnterEvent>();
-				return 0;
 			}
-			break;
 		}
 		case WM_KEYDOWN:
 		{
@@ -84,6 +82,7 @@ namespace DOG
 			}
 			return 0;
 		}
+		case WM_SYSKEYUP:
 		case WM_KEYUP:
 		{
 			Keyboard::OnKeyUp((Key)(u8)(wParam));
