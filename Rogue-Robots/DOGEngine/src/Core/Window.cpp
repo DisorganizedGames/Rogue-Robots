@@ -6,6 +6,8 @@
 #include <ImGUI/imgui.h>
 namespace DOG
 {
+	void MapLeftRightShiftAndControl(WPARAM& wParam, LPARAM lParam);
+
 	struct WindowData
 	{
 		HWND windowHandle;
@@ -78,6 +80,7 @@ namespace DOG
 			bool keyIsRepeated = (lParam >> 30) & 1;
 			if (!keyIsRepeated)
 			{
+				MapLeftRightShiftAndControl(wParam, lParam);
 				Keyboard::OnKeyDown((Key)(u8)(wParam));
 			}
 			return 0;
@@ -85,6 +88,7 @@ namespace DOG
 		case WM_SYSKEYUP:
 		case WM_KEYUP:
 		{
+			MapLeftRightShiftAndControl(wParam, lParam);
 			Keyboard::OnKeyUp((Key)(u8)(wParam));
 			return 0;
 		}
@@ -260,5 +264,15 @@ namespace DOG
 	void Window::SetWMHook(const std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> func)
 	{
 		s_wmHook = func;
+	}
+
+
+
+	void MapLeftRightShiftAndControl(WPARAM& wParam, LPARAM lParam)
+	{
+		if (wParam == VK_SHIFT)
+			wParam = MapVirtualKey((lParam & 0xff0000) >> 16, MAPVK_VSC_TO_VK_EX);
+		else if (wParam == VK_CONTROL)
+			wParam = lParam & 0x01000000 ? VK_RCONTROL : VK_LCONTROL;
 	}
 }
