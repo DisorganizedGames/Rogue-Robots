@@ -119,6 +119,12 @@ namespace DOG
 		bool IsTable(int index = 1) const;
 		bool IsUserData(int index = 1) const;
 
+		template<typename T>
+		bool TryGetValueFromStack(T& valueOut)
+		{
+			return false;
+		}
+
 		int GetIntegerFromStack(int index = 1, bool noError = false);
 		float GetFloatFromStack(int index = 1, bool noError = false);
 		double GetDoubleFromStack(int index = 1, bool noError = false);
@@ -220,13 +226,23 @@ namespace DOG
 		template<typename T>
 		int GetIntegerFromTable(Table& table, const T& tableGet);
 		template<typename T>
+		bool TryGetIntegerFromTable(Table& table, const T& tableGet, int& out);
+		template<typename T>
 		float GetFloatFromTable(Table& table, const T& tableGet);
+		template<typename T>
+		bool TryGetFloatFromTable(Table& table, const T& tableGet, float& out);
 		template<typename T>
 		double GetDoubleFromTable(Table& table, const T& tableGet);
 		template<typename T>
+		bool TryGetDoubleFromTable(Table& table, const T& tableGet, double& out);
+		template<typename T>
 		std::string GetStringFromTable(Table& table, const T& tableGet);
 		template<typename T>
+		bool TryGetStringFromTable(Table& table, const T& tableGet, std::string& out);
+		template<typename T>
 		bool GetBoolFromTable(Table& table, const T& tableGet);
+		template<typename T>
+		bool TryGetBoolFromTable(Table& table, const T& tableGet, bool& out);
 		template<typename T>
 		Function GetFunctionFromTable(Table& table, const T& tableGet);
 		template<typename T>
@@ -385,6 +401,29 @@ namespace DOG
 	}
 
 	template<typename T>
+	inline bool LuaW::TryGetIntegerFromTable(Table& table, const T& tableGet, int& out)
+	{
+		//Pushes the table to the stack
+		PushTableToStack(table);
+		//Pushes int/string to get integer
+		PushStack(tableGet);
+
+		//Get the integer from the table and remove the table from the stack
+		GetTableAndRemove();
+
+		if (IsInteger())
+		{
+			out = GetIntegerFromStack(1, true);
+			return true;
+		}
+		else
+		{
+			ClearStack();
+			return false;
+		}
+	}
+
+	template<typename T>
 	inline float LuaW::GetFloatFromTable(Table& table, const T& tableGet)
 	{
 		//Pushes the table to the stack
@@ -396,6 +435,29 @@ namespace DOG
 		GetTableAndRemove();
 
 		return GetFloatFromStack();
+	}
+
+	template<typename T>
+	inline bool LuaW::TryGetFloatFromTable(Table& table, const T& tableGet, float& out)
+	{
+		//Pushes the table to the stack
+		PushTableToStack(table);
+		//Pushes int/string to get float
+		PushStack(tableGet);
+
+		//Get the float from the table and remove the table from the stack
+		GetTableAndRemove();
+
+		if (IsNumber())
+		{
+			out = GetFloatFromStack(1, true);
+			return true;
+		}
+		else
+		{
+			ClearStack();
+			return false;
+		}
 	}
 
 	template<typename T>
@@ -413,6 +475,29 @@ namespace DOG
 	}
 
 	template<typename T>
+	inline bool LuaW::TryGetDoubleFromTable(Table& table, const T& tableGet, double& out)
+	{
+		//Pushes the table to the stack
+		PushTableToStack(table);
+		//Pushes int/string to get double
+		PushStack(tableGet);
+
+		//Get the double from the table and remove the table from the stack
+		GetTableAndRemove();
+
+		if (IsNumber())
+		{
+			out = GetDoubleFromStack(1, true);
+			return true;
+		}
+		else
+		{
+			ClearStack();
+			return false;
+		}
+	}
+
+	template<typename T>
 	inline std::string LuaW::GetStringFromTable(Table& table, const T& tableGet)
 	{
 		//Pushes the table to the stack
@@ -427,6 +512,29 @@ namespace DOG
 	}
 
 	template<typename T>
+	inline bool LuaW::TryGetStringFromTable(Table& table, const T& tableGet, std::string& out)
+	{
+		//Pushes the table to the stack
+		PushTableToStack(table);
+		//Pushes int/string to get string
+		PushStack(tableGet);
+
+		//Get the string from the table and remove the table from the stack
+		GetTableAndRemove();
+
+		if (IsString())
+		{
+			out = std::move(GetStringFromStack(1, true));
+			return true;
+		}
+		else
+		{
+			ClearStack();
+			return false;
+		}
+	}
+
+	template<typename T>
 	inline bool LuaW::GetBoolFromTable(Table& table, const T& tableGet)
 	{
 		//Pushes the table to the stack
@@ -438,6 +546,29 @@ namespace DOG
 		GetTableAndRemove();
 
 		return GetBoolFromStack();
+	}
+
+	template<typename T>
+	inline bool LuaW::TryGetBoolFromTable(Table& table, const T& tableGet, bool& out)
+	{
+		//Pushes the table to the stack
+		PushTableToStack(table);
+		//Pushes int/string to get bool
+		PushStack(tableGet);
+
+		//Get the bool from the table and remove the table from the stack
+		GetTableAndRemove();
+
+		if (IsBool())
+		{
+			out = GetBoolFromStack(1, true);
+			return true;
+		}
+		else
+		{
+			ClearStack();
+			return false;
+		}
 	}
 
 	template<typename T>
