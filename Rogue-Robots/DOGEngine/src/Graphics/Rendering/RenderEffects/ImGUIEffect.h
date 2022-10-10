@@ -8,7 +8,7 @@ namespace DOG::gfx
 	class ImGUIEffect : public RenderEffect
 	{
 	public:
-		ImGUIEffect(GlobalEffectData& globalEffectData, RGBlackboard& blackboard, ImGUIBackend* backend);
+		ImGUIEffect(GlobalEffectData& globalEffectData, ImGUIBackend* backend);
 		
 		void Add(RenderGraph& rg);
 

@@ -6,6 +6,9 @@ namespace DOG::gfx
 {
 	class MeshTable;
 	class MaterialTable;
+	class RenderDevice;
+	class RGBlackboard;
+	class ShaderCompilerDXC;
 
 	/*
 		Don't bloat this structure unless you are sure that it is something that belongs in global scope.
@@ -13,6 +16,10 @@ namespace DOG::gfx
 	*/
 	struct GlobalEffectData
 	{
+		RenderDevice* rd{ nullptr };
+		RGBlackboard* blackboard{ nullptr };
+		ShaderCompilerDXC* sclr{ nullptr };
+
 		// VP/Scissor which follows render resolution
 		Viewports defRenderVPs;
 		ScissorRects defRenderScissors;

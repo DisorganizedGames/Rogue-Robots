@@ -6,13 +6,14 @@
 
 namespace DOG::gfx
 {
-	TestComputeEffect::TestComputeEffect(GlobalEffectData& globalEffectData, RGBlackboard& blackboard, RenderDevice* rd, ShaderCompilerDXC* sclr) :
-		RenderEffect(globalEffectData, blackboard),
-		m_rd(rd),
-		m_sclr(sclr)
+	TestComputeEffect::TestComputeEffect(GlobalEffectData& globalEffectData) :
+		RenderEffect(globalEffectData)
 	{
-		auto testCS = m_sclr->CompileFromFile("TestComputeCS.hlsl", ShaderType::Compute);
-		m_computePipe = m_rd->CreateComputePipeline(ComputePipelineDesc(testCS.get()));
+		auto& sclr = m_globalEffectData.sclr;
+		auto& rd = m_globalEffectData.rd;
+
+		auto testCS = sclr->CompileFromFile("TestComputeCS.hlsl", ShaderType::Compute);
+		m_computePipe = rd->CreateComputePipeline(ComputePipelineDesc(testCS.get()));
 	}
 
 	void TestComputeEffect::Add(RenderGraph& rg)
