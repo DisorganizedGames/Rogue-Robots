@@ -11,65 +11,11 @@ namespace DOG
 {
 	PhysicsEngine PhysicsEngine::s_physicsEngine;
 
-	struct BulletCollisionCallback : public btCollisionWorld::ContactResultCallback {
-
-		BulletCollisionCallback() : btCollisionWorld::ContactResultCallback() {}
-
-		//Keep this code here in case we need it for later
-		//virtual bool needsCollision(btBroadphaseProxy* proxy) const {
-		//	// superclass will check m_collisionFilterGroup and m_collisionFilterMask
-		//	if (!btCollisionWorld::ContactResultCallback::needsCollision(proxy))
-		//		return false;
-		//	// if passed filters, may also want to avoid contacts between constraints
-		//	return PhysicsEngine::GetRigidbodyColliderData(rigidbodyHandle)->rigidBody->checkCollideWithOverride(static_cast<btCollisionObject*>(proxy->m_clientObject));
-		//}
-
-		virtual btScalar addSingleResult(btManifoldPoint&, const btCollisionObjectWrapper* colObj0Wrap, int, int,
-			const btCollisionObjectWrapper* colObj1Wrap, int, int)
-		{
-			//Get rigidobdy handles
-			const u32 byteShift = 4;
-			u64 obj0RigidbodyHandle = (colObj0Wrap->getCollisionObject()->getUserIndex2() << byteShift) | colObj0Wrap->getCollisionObject()->getUserIndex();
-			u64 obj1RigidbodyHandle = (colObj1Wrap->getCollisionObject()->getUserIndex2() << byteShift) | colObj1Wrap->getCollisionObject()->getUserIndex();
-
-			//Get handle for obj0
-			u32 obj0handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(obj0RigidbodyHandle);
-
-			//Get the collisionKeeper for obj0
-			auto collisions = PhysicsEngine::s_physicsEngine.m_rigidbodyCollision.find(obj0handle);
-
-			//Get handle for obj1
-			u32 obj1Handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(obj1RigidbodyHandle);
-
-			//Check if obj1 exist in the collisionKeeper if it does then we set the collisionCheck true
-			auto obj1Collision = collisions->second.find(obj1Handle);
-			if (obj1Collision != collisions->second.end())
-			{
-				obj1Collision->second.collisionCheck = true;
-			}
-			else
-			{
-				//Add new collision to the collisionKeeper
-				RigidbodyCollisionData collisionData;
-				collisionData.activeCollision = false;
-				collisionData.collisionCheck = true;
-				RigidbodyHandle handle;
-				handle.handle = obj1RigidbodyHandle;
-				collisionData.rigidbodyHandle = handle;
-				collisions->second.insert({obj1Handle, collisionData});
-			}
-
-			return 0;
-		}
-	};
-
 	PhysicsEngine::PhysicsEngine()
 	{
 		m_rigidBodyColliderDatas.resize(PhysicsEngine::RESIZE_RIGIDBODY_SIZE);
 
 		m_collisionShapes.resize(PhysicsEngine::RESIZE_COLLISIONSHAPE_SIZE);
-
-		m_collisionCallback = std::make_unique<BulletCollisionCallback>();
 	}
 
 	void PhysicsEngine::AddMeshColliderWaitForModel(const MeshWaitData& meshColliderData)
@@ -176,6 +122,8 @@ namespace DOG
 				}
 			});
 
+		s_physicsEngine.CheckRigidbodyCollisions();
+
 		EntityManager::Get().Collect<RigidbodyComponent>().Do([&](RigidbodyComponent& rigidbody)
 			{
 				//Get rigidbody
@@ -183,7 +131,7 @@ namespace DOG
 				if (rigidBody->rigidBody && rigidBody->rigidBody->getMotionState())
 				{
 					//Check collisions
-					PhysicsEngine::s_physicsEngine.GetDynamicsWorld()->contactTest(rigidBody->rigidBody, *(PhysicsEngine::s_physicsEngine.m_collisionCallback.get()));
+					//PhysicsEngine::s_physicsEngine.GetDynamicsWorld()->contactTest(rigidBody->rigidBody, *(PhysicsEngine::s_physicsEngine.m_collisionCallback.get()));
 
 					//Get handle for vector
 					u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(rigidbody.rigidbodyHandle.handle);
@@ -441,6 +389,62 @@ namespace DOG
 		m_collisionShapes[handle] = nullptr;
 
 		m_handleAllocator.Free(collisionShapeHandle);
+	}
+
+	void PhysicsEngine::CheckRigidbodyCollisions()
+	{
+		int num_manifolds = s_physicsEngine.m_dynamicsWorld->getDispatcher()->getNumManifolds();
+		for (int i = 0; i < num_manifolds; i++)
+		{
+			btPersistentManifold* contact_manifold = s_physicsEngine.m_dynamicsWorld->getDispatcher()->getManifoldByIndexInternal(i);
+			btCollisionObject* obj_a = (btCollisionObject*)(contact_manifold->getBody0());
+			btCollisionObject* obj_b = (btCollisionObject*)(contact_manifold->getBody1());
+
+			int num_contacts = contact_manifold->getNumContacts() > 1 ? 1 : contact_manifold->getNumContacts();
+
+			for (int j = 0; j < num_contacts; j++)
+			{
+				btManifoldPoint& pt = contact_manifold->getContactPoint(j);
+				if (pt.getDistance() < 0.0f)
+				{
+					//Get obj0 rigidbody handle
+					const u32 byteShift = 4;
+					u64 obj0RigidbodyHandle = (obj_a->getUserIndex2() << byteShift) | obj_a->getUserIndex();
+
+					//Get handle for obj0
+					u32 obj0handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(obj0RigidbodyHandle);
+
+					//Get the collisionKeeper for obj0
+					auto collisions = PhysicsEngine::s_physicsEngine.m_rigidbodyCollision.find(obj0handle);
+
+					if (collisions == PhysicsEngine::s_physicsEngine.m_rigidbodyCollision.end())
+						continue;
+
+					//Get ob1 rigidbody handle
+					u64 obj1RigidbodyHandle = (obj_b->getUserIndex2() << byteShift) | obj_b->getUserIndex();
+					//Get handle for obj1
+					u32 obj1Handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(obj1RigidbodyHandle);
+
+					//Check if obj1 exist in the collisionKeeper if it does then we set the collisionCheck true
+					auto obj1Collision = collisions->second.find(obj1Handle);
+					if (obj1Collision != collisions->second.end())
+					{
+						obj1Collision->second.collisionCheck = true;
+					}
+					else
+					{
+						//Add new collision to the collisionKeeper
+						RigidbodyCollisionData collisionData;
+						collisionData.activeCollision = false;
+						collisionData.collisionCheck = true;
+						RigidbodyHandle handle;
+						handle.handle = obj1RigidbodyHandle;
+						collisionData.rigidbodyHandle = handle;
+						collisions->second.insert({ obj1Handle, collisionData });
+					}
+				}
+			}
+		}
 	}
 
 	BoxColliderComponent::BoxColliderComponent(entity entity, const DirectX::SimpleMath::Vector3& boxColliderSize, bool dynamic, float mass) noexcept
