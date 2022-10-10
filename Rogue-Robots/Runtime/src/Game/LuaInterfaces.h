@@ -6,7 +6,9 @@ struct LuaVector3
 	f32 x, y, z;
 
 	explicit LuaVector3(DOG::LuaTable& table);
+	static DOG::LuaTable Create(DirectX::SimpleMath::Vector3 vec);
 };
+
 
 class LuaInterface
 {
@@ -109,6 +111,8 @@ private:
 	void ModifyTransform(DOG::LuaContext* context, DOG::entity e);
 	
 	void ModifyPlayerStats(DOG::LuaContext* context, DOG::entity e);
+
+	void AddBoxCollider(DOG::LuaContext* context, DOG::entity e);
 };
 
 class AssetInterface : public LuaInterface
@@ -131,25 +135,17 @@ private:
 
 };
 
-class PlayerInterface : public LuaInterface
+class HostInterface : public LuaInterface
 {
 public:
-	PlayerInterface() noexcept = delete;
-	PlayerInterface(DOG::entity player) : m_player{ player }
+	HostInterface() noexcept
 	{
 
 	}
-	~PlayerInterface() noexcept
+	~HostInterface() noexcept
 	{
 
 	}
 	
-	void GetID(DOG::LuaContext* context);
-	void GetForward(DOG::LuaContext* context);
-	void GetPosition(DOG::LuaContext* context);
-	void GetUp(DOG::LuaContext* context);
-	void GetRight(DOG::LuaContext* context);
-
-private:
-	DOG::entity m_player;
+	void DistanceToPlayers(DOG::LuaContext* context);
 };

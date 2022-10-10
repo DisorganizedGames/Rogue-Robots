@@ -73,6 +73,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddAudio(context, e);
 	}
+	else if (compType == "BoxCollider")
+	{
+		AddBoxCollider(context, e);
+	}
 	//Add more component types here.
 }
 
@@ -330,6 +334,15 @@ void EntityInterface::ModifyPlayerStats(DOG::LuaContext* context, DOG::entity e)
 	psComp.speed = t.GetFloatFromTable("speed");
 }
 
+void EntityInterface::AddBoxCollider(DOG::LuaContext* context, DOG::entity e)
+{
+	LuaTable t = context->GetTable();
+	bool dynamic = context->GetBoolean();
+
+	EntityManager::Get().AddComponent<BoxColliderComponent>(e, e, 
+		Vector3(t.GetFloatFromTable("x"), t.GetFloatFromTable("y"), t.GetFloatFromTable("z")), dynamic);
+}
+
 //---------------------------------------------------------------------------------------------------------
 //Asset
 
@@ -347,10 +360,50 @@ void AssetInterface::LoadAudio(LuaContext* context)
 }
 
 //---------------------------------------------------------------------------------------------------------
-//Player
-void PlayerInterface::GetID(LuaContext* context)
+//Host
+void HostInterface::DistanceToPlayers(DOG::LuaContext* context)
 {
-	context->ReturnInteger(m_player);
+	struct PlayerDist
+	{
+		entity entityID;
+		int playerID;
+		Vector3 pos;
+		float dist;
+		PlayerDist(entity eID, int pID, Vector3 p, float d) : entityID(eID), playerID(pID), pos(p), dist(d) {}
+		bool operator<(PlayerDist& o) { return dist < o.dist; }
+	};
+	LuaTable t = context->GetTable();
+	Vector3 agentPos = Vector3(
+		t.GetFloatFromTable("x"),
+		t.GetFloatFromTable("y"),
+		t.GetFloatFromTable("z")
+	);
+	std::vector<PlayerDist> distances;
+	distances.reserve(4);
+
+	EntityManager::Get().Collect<ThisPlayer, TransformComponent, NetworkPlayerComponent>().Do(
+		[&](entity id, ThisPlayer&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) {
+			distances.push_back(PlayerDist(id, netPlayer.playerId, transC.GetPosition(), (agentPos - transC.GetPosition()).Length()));
+		});
+
+	EntityManager::Get().Collect<OnlinePlayer, TransformComponent, NetworkPlayerComponent>().Do(
+		[&](entity id, OnlinePlayer&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) {
+			distances.push_back(PlayerDist(id, netPlayer.playerId, transC.GetPosition(), (agentPos - transC.GetPosition()).Length()));
+		});
+
+	std::sort(distances.begin(), distances.end());
+
+	LuaTable tbl;
+	for (size_t i = 0; i < distances.size(); ++i)
+	{
+		LuaTable d;
+		d.AddIntToTable("entityID", static_cast<int>(distances[i].entityID));
+		d.AddIntToTable("playerID", static_cast<int>(distances[i].playerID));
+		d.AddTableToTable("pos", LuaVector3::Create(distances[i].pos));
+		d.AddFloatToTable("dist", distances[i].dist);
+		tbl.AddTableToTable(static_cast<int>(i), d);
+	}
+	context->ReturnTable(tbl);
 }
 
 LuaVector3::LuaVector3(LuaTable& table)
@@ -360,3 +413,11 @@ LuaVector3::LuaVector3(LuaTable& table)
 	z = table.GetFloatFromTable("z");
 }
 
+LuaTable LuaVector3::Create(Vector3 vec)
+{
+	LuaTable tbl;
+	tbl.AddFloatToTable("x", vec.x);
+	tbl.AddFloatToTable("y", vec.y);
+	tbl.AddFloatToTable("z", vec.z);
+	return tbl;
+}

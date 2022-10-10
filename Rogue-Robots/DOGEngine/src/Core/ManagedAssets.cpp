@@ -29,7 +29,7 @@ namespace DOG
 		{
 			while (CheckIfLoadingAsync())
 			{
-				std::cout << "blocking in wait of async function to complete" << std::endl;
+			//	std::cout << "blocking in wait of async function to complete" << std::endl;
 			}
 
 			delete m_asset;
@@ -103,7 +103,7 @@ namespace DOG
 		{
 			while (CheckIfLoadingAsync())
 			{
-				std::cout << "blocking in wait of async function to complete" << std::endl;
+			//	std::cout << "blocking in wait of async function to complete" << std::endl;
 			}
 
 			delete m_asset;

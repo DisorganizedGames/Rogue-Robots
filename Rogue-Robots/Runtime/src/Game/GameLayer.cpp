@@ -118,7 +118,7 @@ GameLayer::GameLayer() noexcept
 
 	entity Player1 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(Player1, m_greenCube);
-	m_entityManager.AddComponent<TransformComponent>(Player1, Vector3(0, 0, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
+	m_entityManager.AddComponent<TransformComponent>(Player1, Vector3(-10, 0, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
 	m_entityManager.AddComponent<NetworkPlayerComponent>(Player1).playerId = 0;
 	m_entityManager.AddComponent<InputController>(Player1);
 	m_entityManager.AddComponent<CameraComponent>(Player1);
@@ -128,7 +128,7 @@ GameLayer::GameLayer() noexcept
 
 	entity Player2 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(Player2, m_redCube);
-	m_entityManager.AddComponent<TransformComponent>(Player2, Vector3(0, 0, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
+	m_entityManager.AddComponent<TransformComponent>(Player2, Vector3(-10, 10, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
 	m_entityManager.AddComponent<NetworkPlayerComponent>(Player2).playerId = 1;
 	m_entityManager.AddComponent<InputController>(Player2);
 	m_entityManager.AddComponent<OnlinePlayer>(Player2);
@@ -136,7 +136,7 @@ GameLayer::GameLayer() noexcept
 
 	entity Player3 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(Player3, m_blueCube);
-	m_entityManager.AddComponent<TransformComponent>(Player3, Vector3(0, 0, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
+	m_entityManager.AddComponent<TransformComponent>(Player3, Vector3(-10, 20, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
 	m_entityManager.AddComponent<NetworkPlayerComponent>(Player3).playerId = 2;
 	m_entityManager.AddComponent<InputController>(Player3);
 	m_entityManager.AddComponent<OnlinePlayer>(Player3);
@@ -144,7 +144,7 @@ GameLayer::GameLayer() noexcept
 	
 	entity Player4 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(Player4, m_magentaCube);
-	m_entityManager.AddComponent<TransformComponent>(Player4, Vector3(0, 0, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
+	m_entityManager.AddComponent<TransformComponent>(Player4, Vector3(-10, 30, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
 	m_entityManager.AddComponent<NetworkPlayerComponent>(Player4).playerId = 3;
 	m_entityManager.AddComponent<InputController>(Player4);
 	m_entityManager.AddComponent<OnlinePlayer>(Player4);
@@ -301,16 +301,16 @@ void GameLayer::RegisterLuaInterfaces()
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Asset", "AssetInterface");
 
 	//-----------------------------------------------------------------------------------------------
-	//Player
+	//Host
 	m_player = std::make_shared<MainPlayer>();
-	luaInterfaceObject = std::make_shared<PlayerInterface>(m_player->GetEntity());
+	luaInterfaceObject = std::make_shared<HostInterface>();
 	m_luaInterfaces.push_back(luaInterfaceObject);
 
-	luaInterface = global->CreateLuaInterface("PlayerInterface");
-	luaInterface.AddFunction<PlayerInterface, &PlayerInterface::GetID>("GetID");
+	luaInterface = global->CreateLuaInterface("HostInterface");
+	luaInterface.AddFunction<HostInterface, &HostInterface::DistanceToPlayers>("DistanceToPlayers");
 	global->SetLuaInterface(luaInterface);
 
-	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Player", "PlayerInterface");
+	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Host", "HostInterface");
 }
 
 void GameLayer::LoadLevel()
