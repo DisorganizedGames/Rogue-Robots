@@ -270,9 +270,12 @@ namespace DOG
 	{
 		m_specification.graphicsSettings.displayMode = m_renderer->GetMatchingDisplayMode(m_specification.graphicsSettings.displayMode);
 
-		// Guard agains bad values
-		if (m_specification.graphicsSettings.renderResolution.x > 16384 || m_specification.graphicsSettings.renderResolution.y > 16384
-			|| m_specification.graphicsSettings.renderResolution.x < 8 || m_specification.graphicsSettings.renderResolution.y < 8)
+		// Guard against bad values
+		constexpr u32 maxTextureSize = 16384;
+		constexpr u32 minTextureSize = 8; // 1 would be allowed but use 8 as a min value for.
+
+		if (m_specification.graphicsSettings.renderResolution.x > maxTextureSize || m_specification.graphicsSettings.renderResolution.y > maxTextureSize
+			|| m_specification.graphicsSettings.renderResolution.x < minTextureSize || m_specification.graphicsSettings.renderResolution.y < minTextureSize)
 		{
 			m_specification.graphicsSettings.renderResolution.x = m_specification.graphicsSettings.displayMode->Width;
 			m_specification.graphicsSettings.renderResolution.y = m_specification.graphicsSettings.displayMode->Height;
