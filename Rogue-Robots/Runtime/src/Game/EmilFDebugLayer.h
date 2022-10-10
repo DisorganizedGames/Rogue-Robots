@@ -14,4 +14,5 @@ public:
 
 private:
 	DOG::EntityManager& m_entityManager;
+	DOG::entity cubeEntity;
 };
