@@ -154,6 +154,8 @@ namespace DOG::gfx
 
 
 		// Set default pass data
+		m_globalEffectData.rd = m_rd;
+		m_globalEffectData.sclr = m_sclr.get();
 		m_globalEffectData.bbScissor = ScissorRects().Append(0, 0, clientWidth, clientHeight);
 		m_globalEffectData.bbVP = Viewports().Append(0.f, 0.f, (f32)clientWidth, (f32)clientHeight);
 		// render vps/scissors subject to change
@@ -180,8 +182,8 @@ namespace DOG::gfx
 			(i.e try defining a few passes with only read/write declarations to see if the generated graph is as expected!)
 			
 		*/
-		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, *m_rgBlackboard, m_imgui.get());
-		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData, *m_rgBlackboard, m_rd, m_sclr.get());
+		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
+		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
 	}
 
 	Renderer::~Renderer()

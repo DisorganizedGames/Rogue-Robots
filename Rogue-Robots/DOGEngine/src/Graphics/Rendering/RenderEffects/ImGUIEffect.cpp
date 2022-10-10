@@ -6,8 +6,8 @@
 
 namespace DOG::gfx
 {
-	ImGUIEffect::ImGUIEffect(GlobalEffectData& globalEffectData, RGBlackboard& blackboard, ImGUIBackend* backend) :
-		RenderEffect(globalEffectData, blackboard),
+	ImGUIEffect::ImGUIEffect(GlobalEffectData& globalEffectData, ImGUIBackend* backend) :
+		RenderEffect(globalEffectData),
 		m_imgui(backend)
 	{
 	}

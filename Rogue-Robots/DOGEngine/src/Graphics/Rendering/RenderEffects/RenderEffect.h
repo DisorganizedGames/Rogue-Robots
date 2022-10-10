@@ -23,11 +23,9 @@ namespace DOG::gfx
 		virtual void Add(RenderGraph& rg) = 0;
 
 	protected:
-		RenderEffect(GlobalEffectData& globalEffectData, RGBlackboard& blackboard) :
-			m_globalEffectData(globalEffectData),
-			m_blackboard(blackboard) {}
+		RenderEffect(GlobalEffectData& globalEffectData) :
+			m_globalEffectData(globalEffectData) {}
 
 		GlobalEffectData& m_globalEffectData;
-		RGBlackboard& m_blackboard;
 	};
 }

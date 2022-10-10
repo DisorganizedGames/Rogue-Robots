@@ -13,14 +13,11 @@ namespace DOG::gfx
 	class TestComputeEffect : public RenderEffect
 	{
 	public:
-		TestComputeEffect(GlobalEffectData& globalEffectData, RGBlackboard& blackboard, RenderDevice* rd, ShaderCompilerDXC* sclr);
+		TestComputeEffect(GlobalEffectData& globalEffectData);
 
 		void Add(RenderGraph& rg);
 
 	private:
-		RenderDevice* m_rd{ nullptr };
-		ShaderCompilerDXC* m_sclr{ nullptr };
-
 		Pipeline m_computePipe;
 	};
 
