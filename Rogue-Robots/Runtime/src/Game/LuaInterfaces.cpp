@@ -398,7 +398,7 @@ void HostInterface::DistanceToPlayers(DOG::LuaContext* context)
 		LuaTable d;
 		d.AddIntToTable("entityID", static_cast<int>(distances[i].entityID));
 		d.AddIntToTable("playerID", static_cast<int>(distances[i].playerID));
-		d.AddTableToTable("pos", CreateLuaVector3(distances[i].pos));
+		d.AddTableToTable("pos", LuaVector3::Create(distances[i].pos));
 		d.AddFloatToTable("dist", distances[i].dist);
 		tbl.AddTableToTable(static_cast<int>(i), d);
 	}
@@ -412,7 +412,7 @@ LuaVector3::LuaVector3(LuaTable& table)
 	z = table.GetFloatFromTable("z");
 }
 
-LuaTable CreateLuaVector3(Vector3 vec)
+LuaTable LuaVector3::Create(Vector3 vec)
 {
 	LuaTable tbl;
 	tbl.AddFloatToTable("x", vec.x);

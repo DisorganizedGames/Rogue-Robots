@@ -6,9 +6,9 @@ struct LuaVector3
 	f32 x, y, z;
 
 	explicit LuaVector3(DOG::LuaTable& table);
+	static DOG::LuaTable Create(DirectX::SimpleMath::Vector3 vec);
 };
 
-DOG::LuaTable CreateLuaVector3(DirectX::SimpleMath::Vector3 vec);
 
 class LuaInterface
 {
