@@ -136,6 +136,8 @@ namespace DOG
 	{
 		s_physicsEngine.CheckMeshColliders();
 
+		PhysicsRigidbody::UpdateRigidbodies();
+
 		s_physicsEngine.GetDynamicsWorld()->stepSimulation(deltaTime, 10);
 
 		EntityManager::Get().Collect<TransformComponent, BoxColliderComponent>().Do([&](TransformComponent& transform, BoxColliderComponent& collider)
@@ -178,7 +180,7 @@ namespace DOG
 			{
 				//Get rigidbody
 				auto* rigidBody = s_physicsEngine.GetRigidbodyColliderData(rigidbody.rigidbodyHandle);
-				if (rigidBody->rigidBody && rigidBody->rigidBody && rigidBody->rigidBody->getMotionState())
+				if (rigidBody->rigidBody && rigidBody->rigidBody->getMotionState())
 				{
 					//Check collisions
 					PhysicsEngine::s_physicsEngine.GetDynamicsWorld()->contactTest(rigidBody->rigidBody, *(PhysicsEngine::s_physicsEngine.m_collisionCallback.get()));
@@ -232,6 +234,8 @@ namespace DOG
 					}
 				}
 			});
+
+		PhysicsRigidbody::UpdateValuesForRigidbodies();
 	}
 
 	void PhysicsEngine::FreePhysicsFromEntity(entity entity)

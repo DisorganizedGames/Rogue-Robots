@@ -16,8 +16,8 @@ namespace DOG
 		std::function<void(entity, entity)> onCollisionEnter = nullptr;
 		std::function<void(entity, entity)> onCollisionExit = nullptr;
 
-		bool constrainRotation[3];
-		bool constrainPosition[3];
+		bool constrainRotationX, constrainRotationY, constrainRotationZ;
+		bool constrainPositionX, constrainPositionY, constrainPositionZ;
 		DirectX::SimpleMath::Vector3 linearVelocity;
 		DirectX::SimpleMath::Vector3 centralForce;
 		float mass = 1.0f;
@@ -27,5 +27,6 @@ namespace DOG
 	{
 	public:
 		static void UpdateRigidbodies();
+		static void UpdateValuesForRigidbodies();
 	};
 }

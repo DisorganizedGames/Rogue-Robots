@@ -14,6 +14,7 @@ namespace DOG
 {
 	struct BulletCollisionCallback;
 	struct RigidbodyComponent;
+	class PhysicsRigidbody;
 
 	typedef u32 entity;
 
@@ -93,6 +94,7 @@ namespace DOG
 		friend RigidbodyComponent;
 		friend MeshColliderComponent;
 		friend BulletCollisionCallback;
+		friend PhysicsRigidbody;
 
 	private:
 		//Order of unique ptrs matter for the destruction of the unique ptrs

@@ -32,6 +32,8 @@ namespace DOG
 
 		//Set up rigidbody for collision
 		PhysicsEngine::s_physicsEngine.m_rigidbodyCollision.insert({ handle, {} });
+
+		constrainPositionX = constrainPositionY = constrainPositionZ = constrainRotationX = constrainRotationY = constrainRotationZ = false;
 	}
 
 	void RigidbodyComponent::SetOnCollisionEnter(std::function<void(entity, entity)> inOnCollisionEnter)
@@ -46,33 +48,56 @@ namespace DOG
 
 	void RigidbodyComponent::ConstrainRotation(bool constrainXRotation, bool constrainYRotation, bool constrainZRotation)
 	{
-		RigidbodyColliderData* rigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(rigidbodyHandle);
-
-		//Set no rotations in x,y,z
-		float x = constrainXRotation ? 0.0f : 1.0f;
-		float y = constrainYRotation ? 0.0f : 1.0f;
-		float z = constrainZRotation ? 0.0f : 1.0f;
-
-		rigidbodyColliderData->rigidBody->setAngularFactor(btVector3(x, y, z));
+		constrainRotationX = constrainXRotation;
+		constrainRotationY = constrainYRotation;
+		constrainRotationZ = constrainZRotation;
 	}
 
 	void RigidbodyComponent::ConstrainPosition(bool constrainXPosition, bool constrainYPosition, bool constrainZPosition)
 	{
-		RigidbodyColliderData* rigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(rigidbodyHandle);
-
-		////Set freeze position in x,y,z
-		float x = constrainXPosition ? 0.0f : 1.0f;
-		float y = constrainYPosition ? 0.0f : 1.0f;
-		float z = constrainZPosition ? 0.0f : 1.0f;
-
-		rigidbodyColliderData->rigidBody->setLinearFactor(btVector3(x, y, z));
+		constrainPositionX = constrainXPosition;
+		constrainPositionY = constrainYPosition;
+		constrainPositionZ = constrainZPosition;
 	}
 
 	void PhysicsRigidbody::UpdateRigidbodies()
 	{
 		EntityManager::Get().Collect<RigidbodyComponent>().Do([&](RigidbodyComponent& rigidbody)
 			{
+				btRigidBody* bulletRigidbody = PhysicsEngine::GetRigidbodyColliderData(rigidbody.rigidbodyHandle)->rigidBody;
 
+				bulletRigidbody->setLinearVelocity(btVector3(rigidbody.linearVelocity.x, rigidbody.linearVelocity.y, rigidbody.linearVelocity.z));
+				bulletRigidbody->applyCentralForce(btVector3(rigidbody.centralForce.x, rigidbody.centralForce.y, rigidbody.centralForce.z));
+
+				////Set freeze position in x,y,z
+				float x = rigidbody.constrainPositionX ? 0.0f : 1.0f;
+				float y = rigidbody.constrainPositionY ? 0.0f : 1.0f;
+				float z = rigidbody.constrainPositionZ ? 0.0f : 1.0f;
+
+				bulletRigidbody->setLinearFactor(btVector3(x, y, z));
+
+				//Set no rotations in x,y,z
+				x = rigidbody.constrainRotationX ? 0.0f : 1.0f;
+				y = rigidbody.constrainRotationY ? 0.0f : 1.0f;
+				z = rigidbody.constrainRotationZ ? 0.0f : 1.0f;
+
+				bulletRigidbody->setAngularFactor(btVector3(x, y, z));
+			});
+	}
+
+	void PhysicsRigidbody::UpdateValuesForRigidbodies()
+	{
+		EntityManager::Get().Collect<RigidbodyComponent>().Do([&](RigidbodyComponent& rigidbody)
+			{
+				btRigidBody* bulletRigidbody = PhysicsEngine::GetRigidbodyColliderData(rigidbody.rigidbodyHandle)->rigidBody;
+
+				//Get the new velocity
+				btVector3 linearVelocity = bulletRigidbody->getLinearVelocity();
+				rigidbody.linearVelocity.x = linearVelocity.getX();
+				rigidbody.linearVelocity.y = linearVelocity.getY();
+				rigidbody.linearVelocity.z = linearVelocity.getZ();
+
+				rigidbody.centralForce = DirectX::SimpleMath::Vector3::Zero;
 			});
 	}
 }
