@@ -146,9 +146,15 @@ namespace DOG
 
 	void AnimationComponent::Update(const f32 dt)
 	{
-		// Sort clips by group
-		std::sort(clips.rbegin(), clips.rend());
+		switch (blendSpec.mode)
+		{
+		case 0: // frozen transition
+			clips[0].timeScale = 0.0f;
 
+			break;
+		default:
+			break;
+		}
 		for (auto& c : clips)
 			if (c.HasActiveAnimation())
 				c.UpdateClip(dt);
