@@ -24,7 +24,9 @@ namespace DOG
 	private:
 		static void ModelSpawner(bool& open);
 		static void DemoWindow(bool& open);
-
+#if defined _DEBUG
+		static void ECSPanel(bool& open);
+#endif
 	private:
 		static std::map<std::string, std::pair<std::function<void(bool&)>, bool>> s_debugWindows;
 

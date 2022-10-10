@@ -8,7 +8,7 @@ EmilFDebugLayer::EmilFDebugLayer() noexcept
 
 void EmilFDebugLayer::OnAttach()
 {
-	
+
 }
 
 void EmilFDebugLayer::OnDetach()
@@ -18,7 +18,7 @@ void EmilFDebugLayer::OnDetach()
 
 void EmilFDebugLayer::OnUpdate()
 {
-
+	//...
 }
 
 void EmilFDebugLayer::OnRender()
