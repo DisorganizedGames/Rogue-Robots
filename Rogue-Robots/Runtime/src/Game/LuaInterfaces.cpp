@@ -337,10 +337,10 @@ void EntityInterface::ModifyPlayerStats(DOG::LuaContext* context, DOG::entity e)
 void EntityInterface::AddBoxCollider(DOG::LuaContext* context, DOG::entity e)
 {
 	LuaTable t = context->GetTable();
-	bool constrain = context->GetBoolean();
+	bool dynamic = context->GetBoolean();
 
 	EntityManager::Get().AddComponent<BoxColliderComponent>(e, e, 
-		Vector3(t.GetFloatFromTable("x"), t.GetFloatFromTable("y"), t.GetFloatFromTable("z")), constrain);
+		Vector3(t.GetFloatFromTable("x"), t.GetFloatFromTable("y"), t.GetFloatFromTable("z")), dynamic);
 }
 
 //---------------------------------------------------------------------------------------------------------
@@ -379,6 +379,7 @@ void HostInterface::DistanceToPlayers(DOG::LuaContext* context)
 		t.GetFloatFromTable("z")
 	);
 	std::vector<PlayerDist> distances;
+	distances.reserve(4);
 
 	EntityManager::Get().Collect<ThisPlayer, TransformComponent, NetworkPlayerComponent>().Do(
 		[&](entity id, ThisPlayer&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) {
@@ -390,7 +391,7 @@ void HostInterface::DistanceToPlayers(DOG::LuaContext* context)
 			distances.push_back(PlayerDist(id, netPlayer.playerId, transC.GetPosition(), (agentPos - transC.GetPosition()).Length()));
 		});
 
-	std:sort(distances.begin(), distances.end());
+	std::sort(distances.begin(), distances.end());
 
 	LuaTable tbl;
 	for (size_t i = 0; i < distances.size(); ++i)

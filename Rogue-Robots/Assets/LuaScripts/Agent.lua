@@ -50,7 +50,7 @@ function OnStart()
 	local death = ObjectManager:CreateObject()
 	function death:OnUpdate()
 		if Agent.rot.x < 3.1415 then
-			Agent.rot.x = Agent.rot.x + 3.1415 * DeltaTime
+			Agent.rot.x = Agent.rot.x + math.pi * DeltaTime
 			Entity:ModifyComponent(EntityID, "Transform", Agent.rot, 2)
 		else
 			Agent.pos.y = Agent.pos.y - 1.0 * DeltaTime
@@ -118,7 +118,7 @@ function OnStart()
 	
 	Entity:AddComponent(EntityID, "Model", Agent.model)
 	Entity:AddComponent(EntityID, "AgentStats", Agent.stats)
-	Entity:AddComponent(EntityID, "BoxCollider", {x = 1, y = 1, z = 1}, true) --reconfigure size to match model
+	--Entity:AddComponent(EntityID, "BoxCollider", {x = 1, y = 1, z = 1}, false) --reconfigure size to match model
 end
 
 function OnUpdate()
