@@ -31,13 +31,11 @@ void MainPlayer::OnUpdate()
 {
 	EntityManager::Get().Collect<InputController, CameraComponent, TransformComponent>().Do([&](InputController& inputC, CameraComponent& cameraC, TransformComponent& transformC)
 		{
-			if (m_firstTime)
-			{
-				f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
-				CameraComponent::s_mainCamera = &cameraC;
-				cameraC.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
-				m_firstTime = FALSE;
-			}
+	
+			f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
+			CameraComponent::s_mainCamera = &cameraC;
+			cameraC.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
+			
 			auto& view = cameraC.viewMatrix;
 			auto speed = m_entityManager.GetComponent<PlayerStatsComponent>(m_playerEntity).speed;
 			if (m_moveView)

@@ -1,7 +1,4 @@
 #include "NetCode.h"
-//todo
-// exclude entities with thisplayerComponent
-// Swap models
 using namespace DOG;
 NetCode::NetCode()
 {
@@ -45,20 +42,25 @@ void NetCode::OnUpdate()
 
 		if (m_startUp == TRUE)
 		{
-
-			EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, TransformComponent>().Do([&](NetworkPlayerComponent& networkC, ThisPlayer&, TransformComponent& transC)
+			DOG::EntityManager& m_entityManager = DOG::EntityManager::Get();
+			EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, TransformComponent>().Do([&](entity id, NetworkPlayerComponent& networkC, ThisPlayer&, TransformComponent& transC)
 				{
-					transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
-					networkC.playerId = m_inputTcp.playerId;
-					//modelC.id = ;
+					if (networkC.playerId != m_inputTcp.playerId)
+					{
+						m_entityManager.AddComponent<OnlinePlayer>(id);
+						m_entityManager.RemoveComponent<ThisPlayer>(id);
+						m_entityManager.RemoveComponent<CameraComponent>(id);
+						transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
+					}
 
 				});
-			EntityManager::Get().Collect<NetworkPlayerComponent, TransformComponent>().Do([&](NetworkPlayerComponent& networkC, TransformComponent& transC)
+			EntityManager::Get().Collect<NetworkPlayerComponent, TransformComponent, OnlinePlayer>().Do([&](entity id, NetworkPlayerComponent& networkC, TransformComponent& transC, OnlinePlayer&)
 				{
-					if (networkC.playerId == m_inputTcp.playerId) // todo
+					if (networkC.playerId == m_inputTcp.playerId)
 					{
-						networkC.playerId = 0;
-						//modelC.id = ;
+						m_entityManager.AddComponent<ThisPlayer>(id);
+						m_entityManager.AddComponent<CameraComponent>(id);
+						m_entityManager.RemoveComponent<OnlinePlayer>(id);
 					}
 					transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
 				});
@@ -66,8 +68,9 @@ void NetCode::OnUpdate()
 			m_startUp = false;
 		}
 
-		EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, InputController>().Do([&](NetworkPlayerComponent& networkC, ThisPlayer&, InputController& inputC)
+		EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, InputController>().Do([&](NetworkPlayerComponent&, ThisPlayer&, InputController& inputC)
 			{
+
 				m_playerInputUdp.shoot = inputC.shoot;
 				m_playerInputUdp.jump = inputC.jump;
 				m_playerInputUdp.activateActiveItem = inputC.activateActiveItem;

@@ -13,9 +13,6 @@ public:
 
 	const DOG::entity GetEntity() const noexcept;
 private:
-	void UpdateCamera(DOG::CameraComponent& component);
-
-private:
 	DOG::EntityManager& m_entityManager;
 	DOG::entity m_playerEntity;
 	
@@ -25,5 +22,4 @@ private:
 	inline const static Vector3 s_globalUp = Vector3(0, 1, 0);
 public:
 	bool m_moveView = true;
-	bool m_firstTime = true;
 };
