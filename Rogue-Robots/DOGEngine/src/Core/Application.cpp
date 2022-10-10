@@ -176,6 +176,8 @@ namespace DOG
 
 					m_fullscreenStateOnFocusLoss = m_renderer->GetFullscreenState();
 					m_specification.graphicsSettings.windowMode = WindowMode::Windowed;
+
+					Keyboard::Reset();
 				}
 				else
 				{

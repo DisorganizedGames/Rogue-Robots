@@ -25,6 +25,7 @@ namespace DOG
 	public:
 		static void OnKeyDown(const Key key) noexcept;
 		static void OnKeyUp(const Key key) noexcept;
+		static void Reset() noexcept;
 		static [[nodiscard]] const bool IsKeyPressed(const Key key) noexcept;
 	private:
 		STATIC_CLASS(Keyboard);
