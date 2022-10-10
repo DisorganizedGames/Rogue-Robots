@@ -205,23 +205,25 @@ namespace DOG
                 ImVec2 savedCursorPosition = ImGui::GetCursorPos();
                 ImGui::Text("Unique component types: %d", nrOfValidPools);
 				
-                ImVec2 outer_size = ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 12);
+                const auto tableYSize = ImGui::GetTextLineHeightWithSpacing() * 12;
+                ImVec2 outer_size = ImVec2(0.0f, tableYSize);
                 static ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_::ImGuiTableFlags_PadOuterX;
                 if (!selectedPool && !clickedOnEntities && selectedEntity == NULL_ENTITY)
                 {
-					if (ImGui::BeginTable("table_allComponents", 2, flags, outer_size))
+                    constexpr auto nrOfColumns = 2;
+					if (ImGui::BeginTable("table_allComponents", nrOfColumns, flags, outer_size))
 					{
-						ImGui::TableSetupScrollFreeze(0, 1);
-						ImGui::TableSetupColumn("Component Type", ImGuiTableColumnFlags_NoHide);
+					    ImGui::TableSetupScrollFreeze(0, 1);
+					    ImGui::TableSetupColumn("Component Type", ImGuiTableColumnFlags_NoHide);
                         ImGui::TableSetupColumn("Entities", ImGuiTableColumnFlags_NoHide);
-						ImGui::TableHeadersRow();
+					    ImGui::TableHeadersRow();
 
-						for (auto& [componentID, componentPool] : pools)
+					    for (auto& [componentID, componentPool] : pools)
 						{
 							if (componentPool)
 							{
 								ImGui::TableNextRow();
-								for (int column = 0; column < 2; column++)
+								for (int column = 0; column < nrOfColumns; column++)
 								{
                                     if (!ImGui::TableSetColumnIndex(column) && column > 0)
                                     {
@@ -251,7 +253,8 @@ namespace DOG
                 }
                 else if (selectedPool && !clickedOnEntities && selectedEntity == NULL_ENTITY)
                 {
-                    if (ImGui::BeginTable("table_specificComponent", 1, flags, outer_size))
+                    constexpr auto nrOfColumns = 1;
+                    if (ImGui::BeginTable("table_specificComponent", nrOfColumns, flags, outer_size))
                     {
                         ImGui::TableSetupScrollFreeze(0, 1);
                         auto [entities, poolName] = (*selectedPool)->ReportUsage();
@@ -271,7 +274,9 @@ namespace DOG
 
                         ImGui::EndTable();
                         actualCursorPosition = ImGui::GetCursorPos();
-                        ImGui::SetCursorPos(ImVec2(savedCursorPosition.x + widthOfPanel - 24, savedCursorPosition.y - 3));
+						const auto buttonXOffset = widthOfPanel - 24;
+						constexpr auto buttonYOffset = -3;
+                        ImGui::SetCursorPos(ImVec2(savedCursorPosition.x + buttonXOffset, savedCursorPosition.y + buttonYOffset));
                         ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
                         if (ImGui::Button("<"))
                         {
@@ -282,7 +287,8 @@ namespace DOG
                 }
                 else if (!selectedPool && clickedOnEntities && selectedEntity == NULL_ENTITY)
                 {
-                    if (ImGui::BeginTable("table_entities", 1, flags, outer_size))
+                    constexpr auto nrOfColumns = 1;
+                    if (ImGui::BeginTable("table_entities", nrOfColumns, flags, outer_size))
                     {
                         ImGui::TableSetupScrollFreeze(0, 1);
                         ImGui::TableSetupColumn("Entities", ImGuiTableColumnFlags_NoHide);
@@ -301,7 +307,9 @@ namespace DOG
                         }
                         ImGui::EndTable();
                         actualCursorPosition = ImGui::GetCursorPos();
-                        ImGui::SetCursorPos(ImVec2(savedCursorPosition.x + widthOfPanel - 24, savedCursorPosition.y - 3));
+                        const auto buttonXOffset = widthOfPanel - 24;
+                        constexpr auto buttonYOffset = -3;
+                        ImGui::SetCursorPos(ImVec2(savedCursorPosition.x + buttonXOffset, savedCursorPosition.y + buttonYOffset));
                         ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
                         if (ImGui::Button("<"))
                         {
@@ -312,10 +320,11 @@ namespace DOG
                 }
                 else
                 {
-					if (ImGui::BeginTable("table_entity", 1, flags, outer_size))
+                    constexpr auto nrOfColumns = 1;
+					if (ImGui::BeginTable("table_entity", nrOfColumns, flags, outer_size))
 					{
 						ImGui::TableSetupScrollFreeze(0, 1);
-                        std::string columnName = std::string("Entity #") + std::to_string(selectedEntity);
+                        const std::string columnName = std::string("Entity #") + std::to_string(selectedEntity);
 						ImGui::TableSetupColumn(columnName.c_str(), ImGuiTableColumnFlags_NoHide);
 						ImGui::TableHeadersRow();
 
@@ -334,7 +343,9 @@ namespace DOG
                         }
 						ImGui::EndTable();
                         actualCursorPosition = ImGui::GetCursorPos();
-						ImGui::SetCursorPos(ImVec2(savedCursorPosition.x + widthOfPanel - 24, savedCursorPosition.y - 3));
+						const auto buttonXOffset = widthOfPanel - 24;
+						constexpr auto buttonYOffset = -3;
+						ImGui::SetCursorPos(ImVec2(savedCursorPosition.x + buttonXOffset, savedCursorPosition.y + buttonYOffset));
 						ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
                         if (ImGui::Button("<"))
                         {
@@ -351,7 +362,8 @@ namespace DOG
 				auto& systems = mgr.GetAllSystems();
                 savedCursorPosition = ImGui::GetCursorPos();
 				ImGui::Text("Unique systems: %d", systems.size());
-                if (ImGui::BeginTable("table_systems", 2, flags, outer_size))
+                constexpr auto nrOfColumns = 2;
+                if (ImGui::BeginTable("table_systems", nrOfColumns, flags, outer_size))
                 {
                     ImGui::TableSetupScrollFreeze(0, 1);
                     ImGui::TableSetupColumn("System execution order", ImGuiTableColumnFlags_NoHide);
@@ -393,7 +405,9 @@ namespace DOG
 					}
 					ImGui::EndTable();
 					actualCursorPosition = ImGui::GetCursorPos();
-					ImGui::SetCursorPos(ImVec2(savedCursorPosition.x + widthOfPanel - 46, savedCursorPosition.y - 3));
+					const auto buttonXOffset = widthOfPanel - 46;
+					constexpr auto buttonYOffset = -3;
+					ImGui::SetCursorPos(ImVec2(savedCursorPosition.x + buttonXOffset, savedCursorPosition.y + buttonYOffset));
 					ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
                     if (ImGui::Button("^"))
                     {
