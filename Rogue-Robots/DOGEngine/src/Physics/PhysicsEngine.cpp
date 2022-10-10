@@ -4,6 +4,7 @@
 #pragma warning(pop)
 #include "../ECS/EntityManager.h"
 #include "../Core/AssetManager.h"
+#include "../Scripting/LuaMain.h"
 
 namespace DOG
 {
@@ -139,11 +140,11 @@ namespace DOG
 		EntityManager::Get().Collect<TransformComponent, BoxColliderComponent>().Do([&](TransformComponent& transform, BoxColliderComponent& collider)
 			{
 				//Get rigidbody
-				auto& rigidBody = s_physicsEngine.m_rigidBodyColliderDatas[collider.rigidbodyHandle.handle];
-				if (rigidBody.dynamic && rigidBody.rigidBody->getMotionState())
+				auto* rigidBody = s_physicsEngine.GetRigidbodyColliderData(collider.rigidbodyHandle);
+				if (rigidBody->dynamic && rigidBody->rigidBody && rigidBody->rigidBody->getMotionState())
 				{
 					btTransform trans;
-					rigidBody.rigidBody->getMotionState()->getWorldTransform(trans);
+					rigidBody->rigidBody->getMotionState()->getWorldTransform(trans);
 					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
 				}
 			});
@@ -151,11 +152,11 @@ namespace DOG
 		EntityManager::Get().Collect<TransformComponent, SphereColliderComponent>().Do([&](TransformComponent& transform, SphereColliderComponent& collider)
 			{
 				//Get rigidbody
-				auto& rigidBody = s_physicsEngine.m_rigidBodyColliderDatas[collider.rigidbodyHandle.handle];
-				if (rigidBody.dynamic && rigidBody.rigidBody->getMotionState())
+				auto* rigidBody = s_physicsEngine.GetRigidbodyColliderData(collider.rigidbodyHandle);
+				if (rigidBody->dynamic && rigidBody->rigidBody && rigidBody->rigidBody->getMotionState())
 				{
 					btTransform trans;
-					rigidBody.rigidBody->getMotionState()->getWorldTransform(trans);
+					rigidBody->rigidBody->getMotionState()->getWorldTransform(trans);
 					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
 				}
 			});
@@ -163,11 +164,11 @@ namespace DOG
 		EntityManager::Get().Collect<TransformComponent, CapsuleColliderComponent>().Do([&](TransformComponent& transform, CapsuleColliderComponent& collider)
 			{
 				//Get rigidbody
-				auto& rigidBody = s_physicsEngine.m_rigidBodyColliderDatas[collider.rigidbodyHandle.handle];
-				if (rigidBody.dynamic && rigidBody.rigidBody->getMotionState())
+				auto* rigidBody = s_physicsEngine.GetRigidbodyColliderData(collider.rigidbodyHandle);
+				if (rigidBody->dynamic && rigidBody->rigidBody && rigidBody->rigidBody->getMotionState())
 				{
 					btTransform trans;
-					rigidBody.rigidBody->getMotionState()->getWorldTransform(trans);
+					rigidBody->rigidBody->getMotionState()->getWorldTransform(trans);
 					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
 				}
 			});
@@ -175,47 +176,93 @@ namespace DOG
 		EntityManager::Get().Collect<RigidbodyComponent>().Do([&](RigidbodyComponent& rigidbody)
 			{
 				//Get rigidbody
-				auto& rigidBody = s_physicsEngine.m_rigidBodyColliderDatas[rigidbody.rigidbodyHandle.handle];
-				if (rigidBody.rigidBody && rigidBody.rigidBody->getMotionState())
+				auto* rigidBody = s_physicsEngine.GetRigidbodyColliderData(rigidbody.rigidbodyHandle);
+				if (rigidBody->rigidBody && rigidBody->rigidBody && rigidBody->rigidBody->getMotionState())
 				{
 					//Check collisions
-					PhysicsEngine::s_physicsEngine.GetDynamicsWorld()->contactTest(rigidBody.rigidBody, *(PhysicsEngine::s_physicsEngine.m_collisionCallback.get()));
+					PhysicsEngine::s_physicsEngine.GetDynamicsWorld()->contactTest(rigidBody->rigidBody, *(PhysicsEngine::s_physicsEngine.m_collisionCallback.get()));
 
 					//Get handle for vector
 					u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(rigidbody.rigidbodyHandle.handle);
 					auto collisions = s_physicsEngine.m_rigidbodyCollision.find(handle);
+
 					//Check if the existing collisions are exiting or have just entered the collision
-					for (auto& it : collisions->second)
+					for (auto it = collisions->second.begin(); it != collisions->second.end();)
 					{
-						if (collisions->second.size() == 0)
-							break;
+						bool incrementIterator = true;
 
 						//Check if the activeCollision has changed, if it has then we either call onCollisionEnter or onCollisionExit
-						bool beforeCollision = it.second.activeCollision;
-						it.second.activeCollision = it.second.collisionCheck;
-						if (it.second.activeCollision != beforeCollision)
+						bool beforeCollision = it->second.activeCollision;
+						it->second.activeCollision = it->second.collisionCheck;
+						if (it->second.activeCollision != beforeCollision)
 						{
-							it.second.collisionCheck = false;
-
 							//Get RigidbodyColliderData to get the corresponding entities
 							RigidbodyColliderData* obj0RigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(rigidbody.rigidbodyHandle);
-							RigidbodyColliderData* obj1RigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(it.second.rigidbodyHandle);
+							RigidbodyColliderData* obj1RigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(it->second.rigidbodyHandle);
 
-							if (it.second.activeCollision && rigidbody.onCollisionEnter != nullptr)
+							if (it->second.activeCollision && rigidbody.onCollisionEnter != nullptr)
 								rigidbody.onCollisionEnter(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
+							else if (it->second.activeCollision)
+								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0RigidbodyColliderData->rigidbodyEntity, "OnCollisionEnter", obj1RigidbodyColliderData->rigidbodyEntity);
 
-							if (!it.second.activeCollision)
+							//Set collisionCheck false for next collision check
+							it->second.collisionCheck = false;
+
+							if (!it->second.activeCollision)
 							{
 								if (rigidbody.onCollisionExit != nullptr)
 									rigidbody.onCollisionExit(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
+								else
+									LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0RigidbodyColliderData->rigidbodyEntity, "OnCollisionExit", obj1RigidbodyColliderData->rigidbodyEntity);
 
 								//Remove the collision because we do not need to keep track of it anymore
-								collisions->second.erase(it.first);
+ 								collisions->second.erase(it++);
+								incrementIterator = false;
 							}
 						}
+						else
+						{
+							//Set collisionCheck false for next collision check
+							it->second.collisionCheck = false;
+						}
+
+						if (incrementIterator)
+							++it;
 					}
 				}
 			});
+	}
+
+	void PhysicsEngine::FreePhysicsFromEntity(entity entity)
+	{
+		if (EntityManager::Get().HasComponent<BoxColliderComponent>(entity))
+		{
+			BoxColliderComponent& colliderComponent = EntityManager::Get().GetComponent<BoxColliderComponent>(entity);
+			s_physicsEngine.FreeRigidbodyData(colliderComponent.rigidbodyHandle, true);
+		}
+		if (EntityManager::Get().HasComponent<SphereColliderComponent>(entity))
+		{
+			SphereColliderComponent& colliderComponent = EntityManager::Get().GetComponent<SphereColliderComponent>(entity);
+			s_physicsEngine.FreeRigidbodyData(colliderComponent.rigidbodyHandle, true);
+		}
+		if (EntityManager::Get().HasComponent<CapsuleColliderComponent>(entity))
+		{
+			CapsuleColliderComponent& colliderComponent = EntityManager::Get().GetComponent<CapsuleColliderComponent>(entity);
+			s_physicsEngine.FreeRigidbodyData(colliderComponent.rigidbodyHandle, true);
+		}
+		if (EntityManager::Get().HasComponent<MeshColliderComponent>(entity))
+		{
+			MeshColliderComponent& colliderComponent = EntityManager::Get().GetComponent<MeshColliderComponent>(entity);
+			s_physicsEngine.FreeRigidbodyData(colliderComponent.rigidbodyHandle, false);
+		}
+		if (EntityManager::Get().HasComponent<RigidbodyComponent>(entity))
+		{
+			RigidbodyComponent& rigidbodyComponent = EntityManager::Get().GetComponent<RigidbodyComponent>(entity);
+			//Get handle for vector
+			u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(rigidbodyComponent.rigidbodyHandle.handle);
+			//Clear collision checks if there should be any!
+			s_physicsEngine.m_rigidbodyCollision.find(handle)->second.clear();
+		}
 	}
 
 	RigidbodyHandle PhysicsEngine::AddRigidbodyColliderData(RigidbodyColliderData rigidbodyColliderData)
@@ -331,7 +378,7 @@ namespace DOG
 	CollisionShapeHandle PhysicsEngine::AddCollisionShape(btCollisionShape* addCollisionShape)
 	{
 		CollisionShapeHandle collisionShapeHandle = s_physicsEngine.m_handleAllocator.Allocate<CollisionShapeHandle>();
-		u32 handle = gfx::HandleAllocator::GetSlot(collisionShapeHandle.handle);
+		u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(collisionShapeHandle.handle);
 
 		//Resize if needed
 		if (handle >= s_physicsEngine.m_collisionShapes.size())
@@ -344,7 +391,7 @@ namespace DOG
 
 	btCollisionShape* PhysicsEngine::GetCollisionShape(const CollisionShapeHandle& collisionShapeHandle)
 	{
-		u32 handle = gfx::HandleAllocator::GetSlot(collisionShapeHandle.handle);
+		u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(collisionShapeHandle.handle);
 
 		//0 is default for HandleAllocator
 		if (handle == 0)
@@ -354,6 +401,41 @@ namespace DOG
 		}
 
 		return m_collisionShapes[handle];
+	}
+
+	void PhysicsEngine::FreeRigidbodyData(const RigidbodyHandle& rigidbodyHandle, bool freeCollisionShape)
+	{
+		RigidbodyColliderData* rigidbodyColliderData = GetRigidbodyColliderData(rigidbodyHandle);
+		if (rigidbodyColliderData->motionState)
+		{
+			delete rigidbodyColliderData->motionState;
+			rigidbodyColliderData->motionState = nullptr;
+		}
+		m_dynamicsWorld->removeRigidBody(rigidbodyColliderData->rigidBody);
+		delete rigidbodyColliderData->rigidBody;
+		rigidbodyColliderData->rigidBody = nullptr;
+
+		if (freeCollisionShape)
+			FreeCollisionShape(rigidbodyColliderData->collisionShapeHandle);
+
+		m_handleAllocator.Free(rigidbodyHandle);
+	}
+
+	void PhysicsEngine::FreeCollisionShape(const CollisionShapeHandle& collisionShapeHandle)
+	{
+		u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(collisionShapeHandle.handle);
+
+		//0 is default for HandleAllocator
+		if (handle == 0)
+		{
+			std::cout << "Handle does not exist!\n";
+			assert(false);
+		}
+
+		delete (m_collisionShapes[handle]);
+		m_collisionShapes[handle] = nullptr;
+
+		m_handleAllocator.Free(collisionShapeHandle);
 	}
 
 	BoxColliderComponent::BoxColliderComponent(entity entity, const DirectX::SimpleMath::Vector3& boxColliderSize, bool dynamic, float mass) noexcept

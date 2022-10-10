@@ -69,16 +69,36 @@ namespace DOG
 		m_luaW->RemoveReferenceToFunction(scriptData.onUpdateFunction);
 	}
 
-	void ScriptManager::RemoveScriptData(std::vector<ScriptData>& scriptVector, entity entity)
+	void ScriptManager::RemoveScriptData(entity entity, bool removeAllEntityScripts, u32 vectorIndex)
 	{
-		for (u32 index = 0; index < scriptVector.size(); ++index)
+		auto entityToScripts = m_entityScripts.find(entity);
+		if (entityToScripts != m_entityScripts.end())
 		{
-			if (scriptVector[index].entity == entity)
+			std::vector<StoredScriptData>& storedScriptDataVector = entityToScripts->second;
+			for (u32 entityScriptIndex = 0; entityScriptIndex < storedScriptDataVector.size(); ++entityScriptIndex)
 			{
-				RemoveReferences(scriptVector[index]);
-				scriptVector.erase(scriptVector.begin() + index);
-				--index;
+				StoredScriptData& storedScriptData = storedScriptDataVector[entityScriptIndex];
+				//Remove all scripts if requested otherwise just removes the script type selected
+				if (removeAllEntityScripts || vectorIndex == storedScriptData.getScriptData.vectorIndex)
+				{
+					if (storedScriptData.getScriptData.sorted)
+						RemoveReferences(m_sortedScripts[storedScriptData.getScriptData.vectorIndex][storedScriptData.scriptIndex]);
+					else
+						RemoveReferences(m_unsortedScripts[storedScriptData.getScriptData.vectorIndex][storedScriptData.scriptIndex]);
+
+					//Could be changed for performance if needed
+					m_freeScriptPositions.push_back(storedScriptData);
+					//Could be changed for performance if needed
+					storedScriptDataVector.erase(storedScriptDataVector.begin() + entityScriptIndex);
+
+					--entityScriptIndex;
+				}
 			}
+		}
+		else
+		{
+			std::cout << "Entity does not have any scripts!\n";
+			assert(false);
 		}
 	}
 
@@ -93,24 +113,81 @@ namespace DOG
 		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
 		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
 
+		StoredScriptData storedScriptData = {};
+
 		//Find if there already exist a vector for that script type
 		auto itScriptToVector = m_scriptToVector.find(luaFileName);
 		if (itScriptToVector == m_scriptToVector.end())
 		{
 			m_unsortedScripts.push_back({ scriptData });
 			u32 vectorIndex = (u32)(m_unsortedScripts.size() - 1);
-			m_scriptToVector.insert({ luaFileName, {false, vectorIndex} });
+
+			GetScriptData getScriptData;
+			getScriptData.vectorIndex = vectorIndex;
+			getScriptData.sorted = false;
+
+			m_scriptToVector.insert({ luaFileName, getScriptData });
+
+			storedScriptData.getScriptData = getScriptData;
+			storedScriptData.scriptIndex = 0;
 		}
 		else
 		{
-			if (itScriptToVector->second.sorted)
+			//Get already created position in the vector
+			if (m_freeScriptPositions.size())
 			{
-				m_sortedScripts[itScriptToVector->second.vectorIndex].push_back(scriptData);
+				for (u32 freeScriptIndex = 0; freeScriptIndex < m_freeScriptPositions.size(); ++freeScriptIndex)
+				{
+					StoredScriptData& freeStoredScriptData = m_freeScriptPositions[freeScriptIndex];
+
+					//Check if there exist an requested free place for the script type
+					if (itScriptToVector->second.sorted == freeStoredScriptData.getScriptData.sorted
+						&& itScriptToVector->second.vectorIndex == freeStoredScriptData.getScriptData.vectorIndex)
+					{
+						storedScriptData = freeStoredScriptData;
+						//Could be changed for performance if needed
+						m_freeScriptPositions.erase(m_freeScriptPositions.begin() + freeScriptIndex);
+
+						//Put the scriptData it in the correct vector
+						if (storedScriptData.getScriptData.sorted)
+						{
+							m_sortedScripts[itScriptToVector->second.vectorIndex][storedScriptData.scriptIndex] = scriptData;
+						}
+						else
+						{
+							m_unsortedScripts[itScriptToVector->second.vectorIndex][storedScriptData.scriptIndex] = scriptData;
+						}
+						break;
+					}
+				}
 			}
+			//If there are no free positions we push it back in the vector
 			else
 			{
-				m_unsortedScripts[itScriptToVector->second.vectorIndex].push_back(scriptData);
+				if (itScriptToVector->second.sorted)
+				{
+					m_sortedScripts[itScriptToVector->second.vectorIndex].push_back(scriptData);
+					storedScriptData.scriptIndex = (u32)(m_sortedScripts[itScriptToVector->second.vectorIndex].size() - 1);
+				}
+				else
+				{
+					m_unsortedScripts[itScriptToVector->second.vectorIndex].push_back(scriptData);
+					storedScriptData.scriptIndex = (u32)(m_unsortedScripts[itScriptToVector->second.vectorIndex].size() - 1);
+				}
+				storedScriptData.getScriptData = itScriptToVector->second;
 			}
+		}
+		
+		//Add the script connection to the entity
+		auto entityToScripts = m_entityScripts.find(entity);
+		if (entityToScripts == m_entityScripts.end())
+		{
+			m_entityScripts.insert({ entity, { storedScriptData } });
+		}
+		else
+		{
+			//Could be changed for performance if needed
+			entityToScripts->second.push_back(storedScriptData);
 		}
 	}
 
@@ -189,30 +266,14 @@ namespace DOG
 			return;
 		}
 
-		if (itScriptToVector->second.sorted)
-		{
-			auto& vector = m_sortedScripts[itScriptToVector->second.vectorIndex];
-			RemoveScriptData(vector, entity);
-		}
-		else
-		{
-			auto& vector = m_unsortedScripts[itScriptToVector->second.vectorIndex];
-			RemoveScriptData(vector, entity);
-		}
+		RemoveScriptData(entity, false, itScriptToVector->second.vectorIndex);
 	}
 
 	void ScriptManager::RemoveAllEntityScripts(entity entity)
 	{
 		if (m_entityManager.HasComponent<ScriptComponent>(entity))
 		{
-			for (auto& vector : m_sortedScripts)
-			{
-				RemoveScriptData(vector, entity);
-			}
-			for (auto& vector : m_unsortedScripts)
-			{
-				RemoveScriptData(vector, entity);
-			}
+			RemoveScriptData(entity, true);
 
 			m_entityManager.RemoveComponent<ScriptComponent>(entity);
 		}

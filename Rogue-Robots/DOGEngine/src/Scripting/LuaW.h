@@ -92,6 +92,8 @@ namespace DOG
 
 		//Push integer
 		void PushStack(int integer);
+		//Push unsigned integer
+		void PushStack(unsigned int integer);
 		//Push float
 		void PushStack(float number);
 		//Push double

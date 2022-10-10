@@ -717,6 +717,11 @@ namespace DOG
 		PushIntegerToStack(integer);
 	}
 
+	void LuaW::PushStack(unsigned int integer)
+	{
+		PushIntegerToStack(integer);
+	}
+
 	void LuaW::PushStack(float number)
 	{
 		PushFloatToStack(number);
