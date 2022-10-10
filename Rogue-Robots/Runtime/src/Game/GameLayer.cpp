@@ -393,7 +393,7 @@ void GameLayer::Input(DOG::Key key)
 				inputC.backwards = true;
 			if (key == DOG::Key::D)
 				inputC.right = true;
-			if (key == DOG::Key::Shift)
+			if (key == DOG::Key::LShift)
 				inputC.down = true;
 			if (key == DOG::Key::Spacebar)
 				inputC.up = true;
@@ -415,7 +415,7 @@ void GameLayer::Release(DOG::Key key)
 				inputC.backwards = false;
 			if (key == DOG::Key::D)
 				inputC.right = false;
-			if (key == DOG::Key::Shift)
+			if (key == DOG::Key::LShift)
 				inputC.down = false;
 			if (key == DOG::Key::Spacebar)
 				inputC.up = false;

@@ -1,7 +1,9 @@
 #pragma once
 #include "../../Core/Types/GraphicsTypes.h"
 #include "../RHI/RenderResourceHandles.h"
+#include "../RHI/Types/HardwareTypes.h"
 #include "../../Core/AnimationManager.h"
+#include "../../Core/CoreUtils.h"
 #include "GPUTable.h"
 
 #include "RenderEffects/RenderEffect.h"
@@ -40,6 +42,8 @@ namespace DOG::gfx
 		~Renderer();
 
 		GraphicsBuilder* GetBuilder() const { return m_builder.get(); }
+		Monitor GetMonitor() const;
+		DXGI_MODE_DESC GetMatchingDisplayMode(std::optional<DXGI_MODE_DESC> mode = std::nullopt) const;
 
 		// Must be called at the start of any frame to pick up CPU side ImGUI code
 		void BeginGUI();
@@ -61,6 +65,9 @@ namespace DOG::gfx
 
 
 		void OnResize(u32 clientWidth, u32 clientHeight);
+		void SetGraphicsSettings(GraphicsSettings requestedSettings);
+		WindowMode GetFullscreenState() const;
+
 
 		void BeginFrame_GPU();
 		void EndFrame_GPU(bool vsync);
@@ -96,8 +103,8 @@ namespace DOG::gfx
 		RenderDevice* m_rd{ nullptr };
 		Swapchain* m_sc{ nullptr };
 
-		u32 m_clientWidth{ 0 };
-		u32 m_clientHeight{ 0 };
+		u32 m_renderWidth{ 0 };
+		u32 m_renderHeight{ 0 };
 
 		// Big buffers store meshes and materials
 		std::unique_ptr<MaterialTable> m_globalMaterialTable;

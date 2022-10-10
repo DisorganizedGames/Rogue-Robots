@@ -6,12 +6,15 @@
 #include <ImGUI/imgui.h>
 namespace DOG
 {
+	void MapLeftRightShiftAndControl(WPARAM& wParam, LPARAM lParam);
+
 	struct WindowData
 	{
 		HWND windowHandle;
 		RECT windowRectangle;
 		Vector2u dimensions;
 		WindowMode mode;
+		CursorMode cursorMode = CursorMode::Visible;
 	};
 	static WindowData s_windowData = {};
 	static std::optional<std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)>> s_wmHook;
@@ -40,24 +43,63 @@ namespace DOG
 			PostQuitMessage(0);
 			return 0;
 		}
+		case WM_WINDOWPOSCHANGING:
+		{
+			if (IsMinimized(Window::GetHandle())) return 0;
+			PublishEvent<WindowPosChangingEvent>();
+			break;
+		}
 		case WM_SIZE:
 		{
+			if(IsMinimized(Window::GetHandle())) return 0;
+
 			s_windowData.dimensions.x = LOWORD(lParam);
 			s_windowData.dimensions.y = HIWORD(lParam);
+
 			PublishEvent<WindowResizedEvent>(LOWORD(lParam), HIWORD(lParam));
 			return 0;
+		}
+		case WM_MOUSEACTIVATE:
+		{
+			if (LOWORD(lParam) == HTTOP || LOWORD(lParam) == HTBOTTOM || LOWORD(lParam) == HTLEFT || LOWORD(lParam) == HTRIGHT ||
+				LOWORD(lParam) == HTCLOSE || LOWORD(lParam) == HTMAXBUTTON || LOWORD(lParam) == HTMINBUTTON)
+			{
+				PublishEvent<WindowHitBorderEvent>();
+				return MA_NOACTIVATE;
+			}
+			return MA_ACTIVATEANDEAT;
+		}
+		case WM_ACTIVATEAPP:
+		{
+			PublishEvent<WindowActiveEvent>(static_cast<bool>(wParam));
+			return 0;
+		}
+		case WM_SYSKEYDOWN:
+		{
+			bool keyIsRepeated = (lParam >> 30) & 1;
+			if (wParam == VK_RETURN && (lParam & (1 << 29) && !keyIsRepeated))
+			{
+				PublishEvent<WindowAltEnterEvent>(); // Handle ALT+ENTER:
+			}
+			if (wParam == VK_F4 && (lParam & (1 << 29) && !keyIsRepeated))
+			{
+				break; // We don't want to disable alt + f4.
+			}
 		}
 		case WM_KEYDOWN:
 		{
 			bool keyIsRepeated = (lParam >> 30) & 1;
 			if (!keyIsRepeated)
 			{
+				MapLeftRightShiftAndControl(wParam, lParam);
 				Keyboard::OnKeyDown((Key)(u8)(wParam));
 			}
 			return 0;
 		}
+		case WM_SYSKEYUP:
 		case WM_KEYUP:
 		{
+			MapLeftRightShiftAndControl(wParam, lParam);
 			Keyboard::OnKeyUp((Key)(u8)(wParam));
 			return 0;
 		}
@@ -151,7 +193,8 @@ namespace DOG
 		ASSERT_FUNC(::RegisterClassExA(&windowClass), "Failed to register Window class.");
 
 		RECT windowRectangle = {0u, 0u, static_cast<LONG>(spec.windowDimensions.x), static_cast<LONG>(spec.windowDimensions.y)};
-		ASSERT_FUNC(::AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME, FALSE), "Failed to adjust window rectangle.");
+		//ASSERT_FUNC(::AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME, FALSE), "Failed to adjust window rectangle.");
+		ASSERT_FUNC(::AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW, FALSE), "Failed to adjust window rectangle.");
 	
 		DEVMODEA devMode = {};
 		devMode.dmSize = sizeof(DEVMODE);
@@ -164,7 +207,8 @@ namespace DOG
 			0u,												//DwExStyle
 			className.c_str(),								//Class name
 			spec.name.c_str(),								//Window name
-			WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME,			//Window styles
+			//WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME,			//Window styles
+			WS_OVERLAPPEDWINDOW,			//Window styles
 			windowCenterPosX,								//Window center X
 			windowCenterPosY,								//Window center Y
 			windowRectangle.right - windowRectangle.left,	//Width
@@ -213,7 +257,7 @@ namespace DOG
 		return s_windowData.dimensions.y;
 	}
 
-	const std::pair<u32, u32> GetDimensions() noexcept
+	const std::pair<u32, u32> Window::GetDimensions() noexcept
 	{
 		return std::make_pair(s_windowData.dimensions.x, s_windowData.dimensions.y);
 	}
@@ -231,5 +275,45 @@ namespace DOG
 	void Window::SetWMHook(const std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> func)
 	{
 		s_wmHook = func;
+	}
+
+	void Window::SetCursorMode(CursorMode mode) noexcept
+	{
+		if ((s_windowData.cursorMode & CursorMode::Visible) != (mode & CursorMode::Visible))
+		{
+			if ((mode & CursorMode::Visible) == CursorMode::Visible)
+				ShowCursor(true);
+			else
+				ShowCursor(false);
+		}
+		if ((s_windowData.cursorMode & CursorMode::Confined) != (mode & CursorMode::Confined))
+		{
+			if ((mode & CursorMode::Confined) == CursorMode::Confined)
+			{
+				RECT r;
+				GetClientRect(s_windowData.windowHandle, &r);
+				MapWindowPoints(s_windowData.windowHandle, nullptr, (POINT*)&r, 2);
+				ClipCursor(&r);
+			}
+			else
+			{
+				ClipCursor(nullptr);
+			}
+		}
+		s_windowData.cursorMode = mode;
+	}
+
+	CursorMode Window::GetCursorMode() noexcept
+	{
+		return s_windowData.cursorMode;
+	}
+
+
+	void MapLeftRightShiftAndControl(WPARAM& wParam, LPARAM lParam)
+	{
+		if (wParam == VK_SHIFT)
+			wParam = MapVirtualKey((lParam & 0xff0000) >> 16, MAPVK_VSC_TO_VK_EX);
+		else if (wParam == VK_CONTROL)
+			wParam = lParam & 0x01000000 ? VK_RCONTROL : VK_LCONTROL;
 	}
 }

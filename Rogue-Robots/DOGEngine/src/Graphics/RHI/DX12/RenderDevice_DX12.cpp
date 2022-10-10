@@ -65,6 +65,14 @@ namespace DOG::gfx
 		return m_swapchain.get();
 	}
 
+	Monitor RenderDevice_DX12::GetMonitor()
+	{
+		Monitor monitor;
+		monitor.modes = m_swapchain->GetModeDescs(m_swapchain->GetBufferFormat());
+		monitor.output = m_swapchain->GetOutputDesc();
+		return monitor;
+	}
+
 	Buffer RenderDevice_DX12::CreateBuffer(const BufferDesc& desc)
 	{
 		HRESULT hr{ S_OK };

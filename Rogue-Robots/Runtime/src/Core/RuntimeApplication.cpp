@@ -1,7 +1,7 @@
 #include "RuntimeApplication.h"
 #include <EntryPoint.h>
 
-void SaveRuntimeSettings() noexcept;
+void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string& path) noexcept;
 std::string GetWorkingDirectory();
 
 
@@ -24,7 +24,8 @@ void RuntimeApplication::OnStartUp() noexcept
 
 void RuntimeApplication::OnShutDown() noexcept
 {
-	SaveRuntimeSettings();
+	//SaveRuntimeSettings();
+	SaveRuntimeSettings(GetApplicationSpecification(), "Runtime/Settings.lua");
 }
 
 void RuntimeApplication::OnRestart() noexcept
@@ -34,7 +35,8 @@ void RuntimeApplication::OnRestart() noexcept
 
 void RuntimeApplication::OnEvent(IEvent& event) noexcept
 {
-	if (event.GetEventCategory() == EventCategory::KeyboardEventCategory)
+	if (event.GetEventCategory() == EventCategory::KeyboardEventCategory
+		|| event.GetEventCategory() == EventCategory::MouseEventCategory)
 	{
 		switch (event.GetEventType())
 		{
@@ -46,13 +48,26 @@ void RuntimeApplication::OnEvent(IEvent& event) noexcept
 				if (m_showImGuiMenu)
 				{
 					PushOverlay(&m_imGuiMenuLayer);
-					
+
 				}
 				else
 				{
 					PopOverlay(&m_imGuiMenuLayer);
 				}
 			}
+			break;
+
+		}
+		case EventType::RightMouseButtonPressedEvent:
+		{
+			static bool lockMouse = false;
+			if (lockMouse)
+				Window::SetCursorMode(CursorMode::Confined);
+			else
+				Window::SetCursorMode(CursorMode::Visible);
+
+			lockMouse = !lockMouse;
+			event.StopPropagation();
 			break;
 		}
 		}
@@ -82,84 +97,94 @@ std::string GetWorkingDirectory()
 	}
 }
 
-void SaveRuntimeSettings() noexcept
+void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string& path) noexcept
 {
-	std::string fullFilePath = RUNTIME_DIR + std::string("Runtime.ini");
-	std::vector<std::string> lines;
-	std::ifstream inFile(fullFilePath);
-	if (!inFile)
-	{
-		// Temporary solution until this works as intended
-		constexpr const char def[] = "[WINDOW][DIMENSIONS]\n1280\n720\n\n[WINDOW][MODE]\n0";
-		std::ofstream initFile(fullFilePath);
-		assert(initFile && "Couldn't initialize Runtime.ini");
-		initFile.write(def, sizeof(def));
-		inFile.open(fullFilePath);
-		assert(inFile && "Couldn't open Runtime.ini for saving");
-	}
-	std::string aLine;
-	while (std::getline(inFile, aLine))
-	{
-		lines.push_back(aLine);
-	}
-	inFile.close();
+	std::ofstream outFile(path);
+	outFile << "Settings =\n{";
 
-	std::ofstream outFile(fullFilePath);
-	assert(outFile.is_open() && "File does not exist.");
-	for (u32 i = 0u; i < lines.size(); i++)
+	outFile << "\n\t" << "fullscreen = " << static_cast<int>(spec.graphicsSettings.windowMode);
+	outFile << ",\n\t" << "clientWidth = " << spec.windowDimensions.x;
+	outFile << ",\n\t" << "clientHeight = " << spec.windowDimensions.y;
+	outFile << ",\n\t" << "renderResolutionWidth = " << spec.graphicsSettings.renderResolution.x;
+	outFile << ",\n\t" << "renderResolutionHeight = " << spec.graphicsSettings.renderResolution.y;
+	outFile << ",\n\t" << "vsync = " << (spec.graphicsSettings.vSync ? "true" : "false");
+
+	if (spec.graphicsSettings.displayMode)
 	{
-		if (lines[i] == "[WINDOW][DIMENSIONS]")
-		{
-			lines[i + 1] = std::to_string(DOG::Window::GetWidth());
-			lines[i + 2] = std::to_string(DOG::Window::GetHeight());
-		}
-		else if (lines[i] == "[WINDOW][MODE]")
-		{
-			lines[i + 1] = std::to_string((int)DOG::Window::GetMode());
-		}
-		outFile << lines[i] << std::endl;
+		const auto& mode = *spec.graphicsSettings.displayMode;
+		outFile  << ",\n\n\t--DXGI_MODE_DESC";
+		outFile  << ",\n\t" << "displayWidth = " << mode.Width;
+		outFile  << ",\n\t" << "displayHeight = " << mode.Height;
+		outFile  << ",\n\t" << "refreshRateNumerator = " << mode.RefreshRate.Numerator;
+		outFile  << ",\n\t" << "refreshRateDenominator = " << mode.RefreshRate.Denominator;
+		outFile  << ",\n\t" << "format = " << mode.Format;
+		outFile  << ",\n\t" << "scanLine = " << mode.ScanlineOrdering;
+		outFile  << ",\n\t" << "scaling = " << mode.Scaling;
 	}
-	outFile.close();
+
+	outFile << "\n}\n";
 }
 
-[[nodiscard]] DOG::ApplicationSpecification LoadRuntimeSettings() noexcept
+[[nodiscard]] ApplicationSpecification LoadRuntimeSettings(const std::string& path) noexcept
 {
-	std::string fullFilePath = RUNTIME_DIR + std::string("Runtime.ini");
-	std::ifstream inFile(fullFilePath);
-
-	DOG::ApplicationSpecification spec;
-	spec.name = "Rogue Robots";
-	spec.workingDir = GetWorkingDirectory();
-
-	if (inFile.is_open())
+	ApplicationSpecification appSpec;
+	if (!std::filesystem::exists(path))
 	{
-		std::string readData;
-		while (inFile >> readData)
-		{
-			if (readData == "[WINDOW][DIMENSIONS]")
-			{
-				inFile >> spec.windowDimensions.x;
-				inFile >> spec.windowDimensions.y;
-			}
-			else if (readData == "[WINDOW][MODE]")
-			{
-				int mode = -1;
-				inFile >> mode;
-				spec.initialWindowMode = static_cast<DOG::WindowMode>(mode);
-			}
-		}
-		inFile.close();
-		return spec;
+		SaveRuntimeSettings(appSpec, path);
 	}
 
-	// This is potentially never run @fix
-	spec.windowDimensions.x = 1280u;
-	spec.windowDimensions.y = 720u;
-	spec.initialWindowMode = DOG::WindowMode::Windowed;
-	return spec;
+	LuaTable table;
+	if (!table.TryCreateEnvironment(path))
+	{
+		LuaTable spec = table.GetTableFromTable("Settings");
+
+		auto&& tryGetSpec = [&](const auto& key, auto& value) {
+			bool succeeded = spec.TryGetValueFromTable(key, value);
+			if(!succeeded) std::cout << key << " is missing value" << std::endl;
+			return succeeded;
+		};
+
+		bool err = false;
+		err |= !tryGetSpec("clientWidth", appSpec.windowDimensions.x);
+		err |= !tryGetSpec("clientHeight", appSpec.windowDimensions.y);
+		err |= !tryGetSpec("renderResolutionWidth", appSpec.graphicsSettings.renderResolution.x);
+		err |= !tryGetSpec("renderResolutionHeight", appSpec.graphicsSettings.renderResolution.y);
+		err |= !tryGetSpec("vsync", appSpec.graphicsSettings.vSync);
+		err |= !tryGetSpec("fullscreen", (int&)appSpec.graphicsSettings.windowMode);
+
+		bool modeErr = false;
+		appSpec.graphicsSettings.displayMode = DXGI_MODE_DESC{};
+		modeErr |= !tryGetSpec("scanLine", (int&)appSpec.graphicsSettings.displayMode->ScanlineOrdering);
+		modeErr |= !tryGetSpec("format", (int&)appSpec.graphicsSettings.displayMode->Format);
+		modeErr |= !tryGetSpec("scaling", (int&)appSpec.graphicsSettings.displayMode->Scaling);
+		modeErr |= !tryGetSpec("refreshRateNumerator", appSpec.graphicsSettings.displayMode->RefreshRate.Numerator);
+		modeErr |= !tryGetSpec("refreshRateDenominator", appSpec.graphicsSettings.displayMode->RefreshRate.Denominator);
+		modeErr |= !tryGetSpec("displayWidth", appSpec.graphicsSettings.displayMode->Width);
+		modeErr |= !tryGetSpec("displayHeight", appSpec.graphicsSettings.displayMode->Height);
+
+		if (modeErr)
+		{
+			// If the saved mode is broken, set null and let the app query a new one from the renderer later on
+			appSpec.graphicsSettings.displayMode = std::nullopt;
+		}
+
+		if (err || modeErr)
+		{
+			std::cout << path << " is missing some values, they will be replaced with defaults" << std::endl;
+			SaveRuntimeSettings(appSpec, path);
+		}
+	}
+	else
+	{
+		SaveRuntimeSettings(appSpec, path);
+	}
+	return appSpec;
 }
 
 std::unique_ptr<DOG::Application> CreateApplication() noexcept
 {
-	return std::make_unique<RuntimeApplication>(LoadRuntimeSettings());
+	ApplicationSpecification spec = LoadRuntimeSettings(RUNTIME_DIR + std::string("Settings.lua"));
+	spec.name = "Rogue Robots";
+	spec.workingDir = GetWorkingDirectory();
+	return std::make_unique<RuntimeApplication>(spec);
 }

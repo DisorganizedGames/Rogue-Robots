@@ -29,9 +29,16 @@ namespace DOG
 		void PushOverlay(Layer* layer) noexcept;
 		void PopLayer(Layer* layer) noexcept;
 		void PopOverlay(Layer* layer) noexcept;
+		const ApplicationSpecification& GetApplicationSpecification() const noexcept;
+		Vector2u GetAspectRatio() const noexcept;
+		void ApplyGraphicsSettings() noexcept;
+	private:
+		void ApplicationSettingDebugMenu(bool& open);
 	private:
 		DELETE_COPY_MOVE_CONSTRUCTOR(Application);
 		ApplicationSpecification m_specification;
+		WindowMode m_fullscreenStateOnFocusLoss;
+		CursorMode m_cursorModeOnFocusLoss;
 		LayerStack& m_layerStack;
 		bool m_isRunning;
 		std::unique_ptr<gfx::Renderer> m_renderer;

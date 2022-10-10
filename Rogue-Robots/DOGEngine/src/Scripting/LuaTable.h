@@ -57,6 +57,21 @@ namespace DOG
 
 		LuaTable CreateTableInTable(const std::string& name);
 
+		template<typename T>
+		bool TryGetValueFromTable(const std::string& name, T& valueOut);
+		template<>
+		bool TryGetValueFromTable<int>(const std::string& name, int& valueOut);
+		template<>
+		bool TryGetValueFromTable<unsigned int>(const std::string& name, unsigned int& valueOut);
+		template<>
+		bool TryGetValueFromTable<bool>(const std::string& name, bool& valueOut);
+		template<>
+		bool TryGetValueFromTable<float>(const std::string& name, float& valueOut);
+		template<>
+		bool TryGetValueFromTable<double>(const std::string& name, double& valueOut);
+		template<>
+		bool TryGetValueFromTable<std::string>(const std::string& name, std::string& valueOut);
+
 		int GetIntFromTable(const std::string& name);
 		float GetFloatFromTable(const std::string& name);
 		double GetDoubleFromTable(const std::string& name);
@@ -121,6 +136,50 @@ namespace DOG
 		m_luaW->AddUserDataToTable(m_table, object, interfaceName, ++index);
 		//The get function handles the index inside so we do not need to increase it here
 		return GetUserDataFromTable(index);
+	}
+
+	template<typename T>
+	inline bool LuaTable::TryGetValueFromTable(const std::string& name, T& valueOut)
+	{
+		//This function should not be called, all values should have template specialization
+		assert(false);
+		return false;
+	}
+
+	template<>
+	inline bool LuaTable::TryGetValueFromTable(const std::string& name, int& valueOut)
+	{
+		return m_luaW->TryGetIntegerFromTable(m_table, name, valueOut);
+	}
+
+	template<>
+	inline bool LuaTable::TryGetValueFromTable(const std::string& name, unsigned int& valueOut)
+	{
+		return m_luaW->TryGetIntegerFromTable(m_table, name, (int&)valueOut);
+	}
+
+	template<>
+	inline bool LuaTable::TryGetValueFromTable(const std::string& name, bool& valueOut)
+	{
+		return m_luaW->TryGetBoolFromTable(m_table, name, valueOut);
+	}
+
+	template<>
+	inline bool LuaTable::TryGetValueFromTable(const std::string& name, float& valueOut)
+	{
+		return m_luaW->TryGetFloatFromTable(m_table, name, valueOut);
+	}
+
+	template<>
+	inline bool LuaTable::TryGetValueFromTable(const std::string& name, double& valueOut)
+	{
+		return m_luaW->TryGetDoubleFromTable(m_table, name, valueOut);
+	}
+
+	template<>
+	inline bool LuaTable::TryGetValueFromTable(const std::string& name, std::string& valueOut)
+	{
+		return m_luaW->TryGetStringFromTable(m_table, name, valueOut);
 	}
 
 	template<typename T>

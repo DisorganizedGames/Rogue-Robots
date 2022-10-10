@@ -21,6 +21,8 @@ namespace DOG::gfx
 		virtual BufferView CreateView(Buffer buffer, const BufferViewDesc& desc) = 0;
 		virtual TextureView CreateView(Texture texture, const TextureViewDesc& desc) = 0;
 
+		virtual Monitor GetMonitor() = 0;
+
 		// Free/recycle when appropriate! Sensitive resources that may be in-flight
 		virtual void FreeBuffer(Buffer handle) = 0;
 		virtual void FreeTexture(Texture handle) = 0;

@@ -2,4 +2,4 @@ imgui.ini
 /out
 /.vs
 .vscode
-/Runtime/Runtime.ini
+/Runtime/Settings.lua
