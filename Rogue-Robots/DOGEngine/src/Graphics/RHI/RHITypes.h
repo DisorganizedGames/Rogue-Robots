@@ -7,4 +7,4 @@
 #include "Types/ShaderTypes.h"
 #include "Types/RenderPassDesc.h"
 #include "Types/QueueTypes.h"
-#include "Types/HardwereTypes.h"
+#include "Types/HardwareTypes.h"

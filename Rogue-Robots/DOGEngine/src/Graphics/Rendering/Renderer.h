@@ -1,7 +1,7 @@
 #pragma once
 #include "../../Core/Types/GraphicsTypes.h"
 #include "../RHI/RenderResourceHandles.h"
-#include "../RHI/Types/HardwereTypes.h"
+#include "../RHI/Types/HardwareTypes.h"
 #include "../../Core/AnimationManager.h"
 #include "../../Core/CoreUtils.h"
 #include "GPUTable.h"
