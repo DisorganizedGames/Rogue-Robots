@@ -1,8 +1,8 @@
 #include <string>
 #include <time.h>
-#include "RHI/DX12/d2dBackend_DX12.h"
-#include "RHI/RenderDevice.h"
-#include "../Core/Time.h"
+#include <functional>
+#include "../RHI/DX12/D2DBackend_DX12.h"
+#include "../RHI/RenderDevice.h"
 
 class UIelement;
 class RenderDevice;
@@ -59,6 +59,7 @@ public:
    
    virtual ~UIelement();
 private:
+   u32 id;
    D2D_POINT_2F pos;
 };
 
@@ -66,7 +67,7 @@ class UIButton : public UIelement
 {
 public:
    bool pressed;
-   UIButton(D2D_POINT_2F pos,D2D_VECTOR_2F size, std::wstring text);
+   UIButton(D2D_POINT_2F pos,D2D_VECTOR_2F size, std::wstring text, std::function<void(void)> callback);
    void Draw(DOG::gfx::D2DBackend_DX12 &m_d2d) override;
    void Update(DOG::gfx::D2DBackend_DX12& m_d2d) override;
    ~UIButton();
@@ -75,6 +76,7 @@ private:
    D2D1_RECT_F m_textRect;
    D2D_VECTOR_2F m_size;
    std::wstring m_text;
+   std::function<void(void)> m_callback;
 };
 
 
