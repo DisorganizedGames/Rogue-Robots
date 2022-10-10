@@ -358,7 +358,7 @@ namespace DOG
 				static bool firstTime = true;
 				if (firstTime)
 				{
-					selectedModeIndex = [&]()->int {
+					selectedModeIndex = [&]()->i64 {
 						for (int i = 1; i < monitor.modes.size() - 1; i++)
 						{
 							auto& other = monitor.modes[i];
@@ -420,10 +420,10 @@ namespace DOG
 				{
 					resIndex = [&]()->int {
 						for (int i = 1; i < res.size() - 1; i++)
-							if (m_specification.graphicsSettings.renderResolution.y == std::stoi(res[i])) return i;
+							if (m_specification.graphicsSettings.renderResolution.y == static_cast<u32>(std::stoi(res[i]))) return i;
 
 						res.push_back(std::to_string(m_specification.graphicsSettings.renderResolution.y));
-						return res.size() - 1;
+						return static_cast<int>(res.size() - 1);
 					}();
 					
 				}
