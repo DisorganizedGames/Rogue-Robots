@@ -31,7 +31,7 @@ void AudioInterface::Play(LuaContext* context)
 
 	static auto tempEntityForLuaAudio = EntityManager::Get().CreateEntity();
 	auto& audioComponent = EntityManager::Get().AddComponent<AudioComponent>(tempEntityForLuaAudio);
-	
+
 	audioComponent.assetID = audioAsset;
 	audioComponent.shouldPlay = true;
 }
@@ -77,7 +77,15 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddBoxCollider(context, e);
 	}
+	else if (compType == "Rigidbody")
+	{
+		AddRigidbody(context, e);
+	}
 	//Add more component types here.
+	else
+	{
+		assert(false && "Lua can't create component");
+	}
 }
 
 void EntityInterface::ModifyComponent(LuaContext* context)
@@ -207,7 +215,7 @@ void EntityInterface::GetAction(DOG::LuaContext* context)
 	default:
 		break;
 	}
-	
+
 }
 
 #pragma region HasComponent
@@ -329,6 +337,21 @@ void EntityInterface::AddAudio(LuaContext* context, entity e)
 	comp.shouldPlay = shouldPlay;
 }
 
+void EntityInterface::AddBoxCollider(LuaContext* context, entity e)
+{
+	LuaTable boxDimTable = context->GetTable();
+	bool dynamic = context->GetBoolean();
+
+	LuaVector3 boxDim = LuaVector3(boxDimTable);
+
+	EntityManager::Get().AddComponent<BoxColliderComponent>(e, e, Vector3{ boxDim.x, boxDim.y, boxDim.z }, dynamic);
+}
+
+void EntityInterface::AddRigidbody(LuaContext*, entity e)
+{
+	auto& rigid = EntityManager::Get().AddComponent<RigidbodyComponent>(e, e);
+}
+
 void EntityInterface::ModifyTransform(LuaContext* context, entity e)
 {
 	TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
@@ -353,7 +376,7 @@ void EntityInterface::ModifyPlayerStats(DOG::LuaContext* context, DOG::entity e)
 {
 	auto t = context->GetTable();
 	auto& psComp = EntityManager::Get().GetComponent<PlayerStatsComponent>(e);
-	
+
 	psComp.health = t.GetFloatFromTable("health");
 	psComp.maxHealth = t.GetFloatFromTable("maxHealth");
 	psComp.speed = t.GetFloatFromTable("speed");

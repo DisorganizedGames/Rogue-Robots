@@ -110,6 +110,10 @@ private:
 
 	void AddAudio(DOG::LuaContext* context, DOG::entity e);
 
+	void AddBoxCollider(DOG::LuaContext* context, DOG::entity e);
+
+	void AddRigidbody(DOG::LuaContext* context, DOG::entity e);
+
 	void ModifyTransform(DOG::LuaContext* context, DOG::entity e);
 	
 	void ModifyPlayerStats(DOG::LuaContext* context, DOG::entity e);
