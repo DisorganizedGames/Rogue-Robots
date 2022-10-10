@@ -46,14 +46,13 @@ namespace DOG
 				UpdateAnimationComponent(model->animation.animations, animatorC, (f32)Time::DeltaTime());
 				for (i32 i = 0; i < m_imguiProfilePerformUpdate; i++)
 					UpdateSkeleton(model->animation, animatorC);
-
 			}
 		});
 	}
 
 	void AnimationManager::SpawnControlWindow(bool& open)
 	{
-		ZoneScopedN("animImgui");
+		ZoneScopedN("animImgui3");
 
 		if (ImGui::BeginMenu("View"))
 		{
@@ -366,11 +365,6 @@ namespace DOG
 			return XMVectorLerp(XMLoadFloat4(&keys[key1Idx].value), XMLoadFloat4(&keys[key2Idx].value),
 				(tick - keys[key1Idx].time) / (keys[key2Idx].time - keys[key1Idx].time));
 	}
-
-	/*void ImguiBlendUpdate(const )
-	{
-
-	}*/
 
 	void AnimationManager::UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const
 	{
