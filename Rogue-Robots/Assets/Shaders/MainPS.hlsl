@@ -36,6 +36,7 @@ static const uint NO_TEXTURE = 0xffffffff;
 
 float4 main(VS_OUT input) : SV_TARGET
 {    
+    //return float4(input.nor, 1.f);
     ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[g_constants.perDrawCB];
     
     StructuredBuffer<ShaderInterop_GlobalData> gds = ResourceDescriptorHeap[g_constants.gdDescriptor];
@@ -64,15 +65,16 @@ float4 main(VS_OUT input) : SV_TARGET
     if (mat.metallicRoughness != NO_TEXTURE)
     {
         Texture2D metallicRoughness = ResourceDescriptorHeap[mat.metallicRoughness];
-
+        
         metallicInput = metallicRoughness.Sample(g_aniso_samp, input.uv).b * mat.metallicFactor;
         roughnessInput = metallicRoughness.Sample(g_aniso_samp, input.uv).g * mat.roughnessFactor;
+        
     }
-
+            
     float3 N = normalize(input.nor);
     if (mat.normal != NO_TEXTURE)
     {
-        N = normalize(GetFinalNormal(mat.normal, normalize(input.tan), normalize(input.bitan), normalize(input.nor), input.uv));
+        N = normalize(GetFinalNormal(g_aniso_samp, ResourceDescriptorHeap[mat.normal], normalize(input.tan), normalize(input.bitan), normalize(input.nor), input.uv));
     }
     
     float3 camPos = pfData.camPos;
@@ -117,7 +119,7 @@ float4 main(VS_OUT input) : SV_TARGET
             
         // add to outgoing radiance Lo
         float NdotL = max(dot(N, L), 0.0);
-        Lo += (kD * albedoInput / PI + specular) * radiance * NdotL;
+        Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL;
     }
     
     float3 hdr = amb + Lo;

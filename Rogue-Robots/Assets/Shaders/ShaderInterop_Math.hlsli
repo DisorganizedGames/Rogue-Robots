@@ -2,11 +2,11 @@
 
 static const float PI = 3.1415f;
 
-float3 GetFinalNormal(uint normalId, float3 tangent, float3 bitangent, float3 inputNormal, float2 uv)
+float3 GetFinalNormal(SamplerState samp, Texture2D norTex, float3 tangent, float3 bitangent, float3 inputNormal, float2 uv)
 {
-    Texture2D normalTex = ResourceDescriptorHeap[normalId];
+    Texture2D normalTex = norTex;
     
-    float3 tanSpaceNor = normalTex.Sample(g_aniso_samp, uv).xyz;
+    float3 tanSpaceNor = normalTex.Sample(samp, uv).xyz;
     
     // If no normal map --> Use default input normal
     if (length(tanSpaceNor) <= 0.005f)  // epsilon: 0.005f
