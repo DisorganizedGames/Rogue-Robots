@@ -459,7 +459,7 @@ namespace DOG
 	{
 		for (int i{ m_bundleStart }; i >= 0; --i)
 		{
-			func(i, m_mgr->GetComponent<ComponentType>((*ePointer)[i])...);
+			func((*ePointer)[i], m_mgr->GetComponent<ComponentType>((*ePointer)[i])...);
 		}
 	}
 
@@ -665,7 +665,7 @@ public:																															\
 	{																														\
 		for (int i{*m_systemHelper.m_bundleStart }; i >= 0; --i)															\
 		{																													\
-			OnCreate(i, m_systemHelper.m_mgr.GetComponent<ComponentType>((*m_systemHelper.m_ePointer)[i])...);					\
+			OnCreate((*m_systemHelper.m_ePointer)[i], m_systemHelper.m_mgr.GetComponent<ComponentType>((*m_systemHelper.m_ePointer)[i])...);					\
 		}																													\
 	}
 #endif
@@ -743,7 +743,7 @@ public:																															\
 	{																														\
 		for (int i{*m_systemHelper.m_bundleStart }; i >= 0; --i)															\
 		{																													\
-			OnEarlyUpdate(i, m_systemHelper.m_mgr.GetComponent<ComponentType>((*m_systemHelper.m_ePointer)[i])...);			\
+			OnEarlyUpdate((*m_systemHelper.m_ePointer)[i], m_systemHelper.m_mgr.GetComponent<ComponentType>((*m_systemHelper.m_ePointer)[i])...);			\
 		}																													\
 	}
 #endif
@@ -821,7 +821,7 @@ public:																															\
 	{																														\
 		for (int i{*m_systemHelper.m_bundleStart }; i >= 0; --i)															\
 		{																													\
-			OnUpdate(i, m_systemHelper.m_mgr.GetComponent<ComponentType>((*m_systemHelper.m_ePointer)[i])...);				\
+			OnUpdate((*m_systemHelper.m_ePointer)[i], m_systemHelper.m_mgr.GetComponent<ComponentType>((*m_systemHelper.m_ePointer)[i])...);				\
 		}																													\
 	}
 #endif
@@ -899,7 +899,7 @@ public:																															\
 	{																														\
 		for (int i{*m_systemHelper.m_bundleStart }; i >= 0; --i)															\
 		{																													\
-			OnLateUpdate(i, m_systemHelper.m_mgr.GetComponent<ComponentType>((*m_systemHelper.m_ePointer)[i])...);			\
+			OnLateUpdate((*m_systemHelper.m_ePointer)[i], m_systemHelper.m_mgr.GetComponent<ComponentType>((*m_systemHelper.m_ePointer)[i])...);			\
 		}																													\
 	}
 #endif
