@@ -64,7 +64,7 @@ function OnStart()
 	function chasePlayer:OnUpdate()
 		distances = Host:DistanceToPlayers(Agent.pos)
 		if distances[1].dist > 10.0 then
-			--print("Lost sight of player " .. distances[1].id)
+			print("Lost sight of player " .. chasePlayer.target)
 			chasePlayer.target = nil
 		elseif distances[1].dist < 0.05 then
 			--print("Attacking player " .. distances[1].id)
@@ -101,8 +101,8 @@ function OnStart()
 		end
 		distances = Host:DistanceToPlayers(Agent.pos)
 		if distances[1].dist < 8.0 then
-			print("Chasing player " .. distances[1].id)
-			chasePlayer.target = distances[1].id
+			chasePlayer.target = distances[1].playerID
+			print("Chasing player " .. chasePlayer.target)
 			Agent:pushBehavior(chasePlayer)
 		end
 		--Agent.stats.hp = Agent.stats.hp - 15.0 * DeltaTime  --death timer...

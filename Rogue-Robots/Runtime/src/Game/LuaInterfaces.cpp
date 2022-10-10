@@ -365,10 +365,11 @@ void HostInterface::DistanceToPlayers(DOG::LuaContext* context)
 {
 	struct PlayerDist
 	{
-		entity id;
+		entity entityID;
+		int playerID;
 		Vector3 pos;
 		float dist;
-		PlayerDist(entity pID, Vector3 p, float d) : id(pID), pos(p), dist(d) {}
+		PlayerDist(entity eID, int pID, Vector3 p, float d) : entityID(eID), playerID(pID), pos(p), dist(d) {}
 		bool operator<(PlayerDist& o) { return dist < o.dist; }
 	};
 	LuaTable t = context->GetTable();
@@ -379,23 +380,24 @@ void HostInterface::DistanceToPlayers(DOG::LuaContext* context)
 	);
 	std::vector<PlayerDist> distances;
 
-	EntityManager::Get().Collect<ThisPlayer, TransformComponent>().Do(
-		[&](entity id, ThisPlayer&, TransformComponent& transC) {
-			distances.push_back(PlayerDist(id, transC.GetPosition(), (agentPos - transC.GetPosition()).Length()));
+	EntityManager::Get().Collect<ThisPlayer, TransformComponent, NetworkPlayerComponent>().Do(
+		[&](entity id, ThisPlayer&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) {
+			distances.push_back(PlayerDist(id, netPlayer.playerId, transC.GetPosition(), (agentPos - transC.GetPosition()).Length()));
 		});
 
-	//EntityManager::Get().Collect<OnlinePlayer, TransformComponent>().Do(
-	//	[&](entity id, OnlinePlayer&, TransformComponent& transC) {
-	//		distances.push_back(PlayerDist(id, transC.GetPosition(), (agentPos - transC.GetPosition()).Length()));
-	//	});
+	EntityManager::Get().Collect<OnlinePlayer, TransformComponent, NetworkPlayerComponent>().Do(
+		[&](entity id, OnlinePlayer&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) {
+			distances.push_back(PlayerDist(id, netPlayer.playerId, transC.GetPosition(), (agentPos - transC.GetPosition()).Length()));
+		});
 
-	//std:sort(distances.begin(), distances.end());
+	std:sort(distances.begin(), distances.end());
 
 	LuaTable tbl;
 	for (size_t i = 0; i < distances.size(); ++i)
 	{
 		LuaTable d;
-		d.AddIntToTable("id", static_cast<int>(distances[i].id));
+		d.AddIntToTable("entityID", static_cast<int>(distances[i].entityID));
+		d.AddIntToTable("playerID", static_cast<int>(distances[i].playerID));
 		d.AddTableToTable("pos", CreateLuaVector3(distances[i].pos));
 		d.AddFloatToTable("dist", distances[i].dist);
 		tbl.AddTableToTable(static_cast<int>(i), d);
