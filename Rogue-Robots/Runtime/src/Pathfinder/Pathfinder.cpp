@@ -270,7 +270,7 @@ float Pathfinder::heuristicStraightLine(Vector3 start, Vector3 goal)
 	return (goal - start).Length();
 }
 
-std::vector<Pathfinder::TransitPlane*> Pathfinder::Astar(const Vector3 start, const Vector3 goal, float(*h)(Vector3, Vector3))
+std::vector<Pathfinder::NavNode*> Pathfinder::Astar(const Vector3 start, const Vector3 goal, float(*h)(Vector3, Vector3))
 {
 	struct MaxFloat
 	{	// float wrapper that has default value infinity
@@ -287,21 +287,21 @@ std::vector<Pathfinder::TransitPlane*> Pathfinder::Astar(const Vector3 start, co
 	// Define the entry and terminal nodes
 	// Opportunity to optimize:
 	// if FindNavMeshContaining(start) == FindNavMeshContaining(goal) return empty path
-	TransitPlane entry = TransitPlane(start, FindNavMeshContaining(start));
-	constexpr size_t startPoint = size_t(-1);
-	size_t terminalNavMesh = FindNavMeshContaining(goal);
+	NavNode entry = NavNode(start, FindNavMeshContaining(start));
+	constexpr NavNodeID startPoint = NavNodeID(-1);
+	NavMeshID terminalNavMesh = FindNavMeshContaining(goal);
 
-	std::vector<size_t> openSet = { startPoint };
-	std::unordered_map<size_t, size_t> cameFrom;
-	std::unordered_map<size_t, MaxFloat> fScore;
+	std::vector<NavNodeID> openSet = { startPoint };
+	std::unordered_map<NavNodeID, NavNodeID> cameFrom;
+	std::unordered_map<NavNodeID, MaxFloat> fScore;
 	fScore[startPoint] = h(start, goal);
-	std::unordered_map<size_t, MaxFloat> gScore;
+	std::unordered_map<NavNodeID, MaxFloat> gScore;
 	gScore[startPoint] = 0;
 
 	// lambda: pop element with lowest fScore from minheap
 	auto popOpenSet = [&]()
 	{
-		size_t get = openSet[0];
+		NavNodeID get = openSet[0];
 		openSet[0] = openSet.back();
 		openSet.pop_back();
 		// percolate down
@@ -315,9 +315,10 @@ std::vector<Pathfinder::TransitPlane*> Pathfinder::Astar(const Vector3 start, co
 					comp = right;
 			if (fScore[comp] < fScore[i])
 			{
-				size_t toSwap = openSet[i];
-				openSet[i] = openSet[comp];
-				openSet[comp] = toSwap;
+				//NavNodeID toSwap = openSet[i];
+				//openSet[i] = openSet[comp];
+				//openSet[comp] = toSwap;
+				std::swap(openSet[i], openSet[comp]);
 				i = comp;
 				comp = i * 2 + 1;
 			}
@@ -327,7 +328,7 @@ std::vector<Pathfinder::TransitPlane*> Pathfinder::Astar(const Vector3 start, co
 		return get;
 	};
 	// lambda: push new element onto minheap
-	auto pushOpenSet = [&](size_t iNode)
+	auto pushOpenSet = [&](NavNodeID iNode)
 	{
 		openSet.push_back(iNode);
 		// percolate up
@@ -335,68 +336,69 @@ std::vector<Pathfinder::TransitPlane*> Pathfinder::Astar(const Vector3 start, co
 		size_t p = (i + (i % 2)) / 2 - 1;
 		while (p >= 0 && fScore[p] > fScore[i])
 		{
-			size_t toSwap = openSet[p];
-			openSet[p] = openSet[i];
-			openSet[i] = toSwap;
+			//NavNodeID toSwap = openSet[p];
+			//openSet[p] = openSet[i];
+			//openSet[i] = toSwap;
+			std::swap(openSet[p], openSet[i]);
 			i = p;
 			p = (i + (i % 2)) / 2 - 1;
 		}
 	};
 	// returns true if current node is connected to the NavMesh containing the goal
-	auto leadsToGoal = [&](size_t current)
+	auto leadsToGoal = [&](NavNodeID current)
 	{
 		if (current == startPoint)
 			return entry.iMesh1 == terminalNavMesh;
-		return m_transits[current].iMesh1 == terminalNavMesh || m_transits[current].iMesh2 == terminalNavMesh;
+		return m_navNodes[current].iMesh1 == terminalNavMesh || m_navNodes[current].iMesh2 == terminalNavMesh;
 	};
 	// returns true if openSet does not contain neighbor
-	auto notInOpenSet = [&](size_t neighbor)
+	auto notInOpenSet = [&](NavNodeID neighbor)
 	{
-		for (size_t node : openSet)
+		for (NavNodeID node : openSet)
 			if (node == neighbor)
 				return false;
 		return true;
 	};
-	auto getNeighbors = [&](size_t current)
+	auto getNeighbors = [&](NavNodeID current)
 	{
 		if (current == startPoint)
-			return m_navMeshes[entry.iMesh1].iTransits;
-		std::vector<size_t> neighbors;
-		for (size_t i : { m_transits[current].iMesh1, m_transits[current].iMesh2 })
-			for (size_t iNode : m_navMeshes[i].iTransits)
+			return m_navMeshes[entry.iMesh1].navNodes;
+		std::vector<NavNodeID> neighbors;
+		for (NavMeshID i : { m_navNodes[current].iMesh1, m_navNodes[current].iMesh2 })
+			for (NavNodeID iNode : m_navMeshes[i].navNodes)
 				if (iNode != current)
 					neighbors.push_back(iNode);
 		return neighbors;
 	};
 	// lambda: d - distance between nodes
-	auto d = [&](size_t current, size_t neighbor)
+	auto d = [&](NavNodeID current, NavNodeID neighbor)
 	{
-		size_t iNavMesh;
+		NavMeshID iNavMesh;
 		// get the first NavMesh of current
 		if (current == startPoint)
 			iNavMesh = entry.iMesh1;
 		else
-			iNavMesh = m_transits[current].iMesh1;
+			iNavMesh = m_navNodes[current].iMesh1;
 		// compare with first NavMesh of neigbor
 		if (neighbor == startPoint)
 			if (iNavMesh != entry.iMesh1)
 				// only one can have a single connection thus current has two
-				iNavMesh = m_transits[current].iMesh2;
+				iNavMesh = m_navNodes[current].iMesh2;
 		else
-			if (iNavMesh != m_transits[neighbor].iMesh1)
+			if (iNavMesh != m_navNodes[neighbor].iMesh1)
 				// only one can have a single connection thus neighbor has two
-				iNavMesh = m_transits[neighbor].iMesh2;
+				iNavMesh = m_navNodes[neighbor].iMesh2;
 		// since the first two NavMeshes are different iNavMesh must now contain the righ reference
-		return m_navMeshes[iNavMesh].CostWalk(m_transits[current].Midpoint(), m_transits[neighbor].Midpoint());
+		return m_navMeshes[iNavMesh].CostWalk(m_navNodes[current].Midpoint(), m_navNodes[neighbor].Midpoint());
 	};
-	auto reconstructPath = [&](size_t iNode)
+	auto reconstructPath = [&](NavNodeID iNode)
 	{
-		std::vector<TransitPlane*> path;
+		std::vector<NavNode*> path;
 		while (cameFrom.contains(iNode))
 		{
 			if (iNode != startPoint)
 				// exclude starting point from path
-				path.push_back(&m_transits[iNode]);
+				path.push_back(&m_navNodes[iNode]);
 			iNode = cameFrom[iNode];
 		}
 		// reverse path
@@ -407,34 +409,34 @@ std::vector<Pathfinder::TransitPlane*> Pathfinder::Astar(const Vector3 start, co
 	// A* implementation
 	while (!openSet.empty())
 	{
-		size_t current = popOpenSet();
+		NavNodeID current = popOpenSet();
 		if (leadsToGoal(current))
 			return reconstructPath(current);
 
-		for (size_t neighbor : getNeighbors(current))
+		for (NavNodeID neighbor : getNeighbors(current))
 		{
 			float tentativeGScore = gScore[current] + d(current, neighbor);
 			if (gScore[neighbor] > tentativeGScore)
 			{
 				cameFrom[neighbor] = current;
 				gScore[neighbor] = tentativeGScore;
-				fScore[neighbor] = tentativeGScore + h(m_transits[neighbor].Midpoint(), goal);
+				fScore[neighbor] = tentativeGScore + h(m_navNodes[neighbor].Midpoint(), goal);
 				if (notInOpenSet(neighbor))
 					pushOpenSet(neighbor);
 			}
 		}
 	}
 	// no path found, returning empty vector
-	return std::vector<TransitPlane*>();
+	return std::vector<NavNode*>();
 }
 
 Pathfinder::NavMesh::NavMesh(Vector3 low, Vector3 hi) : lowCorner(low), hiCorner(hi)
 {
 }
 
-void Pathfinder::NavMesh::AddTransitPlane(size_t iTransit)
+void Pathfinder::NavMesh::AddNavNode(NavNodeID nodeID)
 {
-	iTransits.push_back(iTransit);
+	navNodes.push_back(nodeID);
 }
 
 bool Pathfinder::NavMesh::Contains(const Vector3 pos)
@@ -456,7 +458,7 @@ float Pathfinder::NavMesh::CostFly(const Vector3 enter, const Vector3 exit)
 	return (exit - enter).Length();
 }
 
-Vector3 Pathfinder::TransitPlane::Midpoint()
+Vector3 Pathfinder::NavNode::Midpoint()
 {
 	return (hiCorner - lowCorner) / 2;
 }

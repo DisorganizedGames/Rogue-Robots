@@ -10,6 +10,8 @@ public:
 
 
 private:
+	using NavNodeID = size_t;
+	using NavMeshID = size_t;
 	struct GridCoord
 	{
 		int x, y, z;
@@ -59,15 +61,15 @@ private:
 		}
 		std::string str() { return low.str() + " " + high.str(); }
 	};
-	struct TransitPlane
+	struct NavNode
 	{
 		Vector3	lowCorner;
 		Vector3	hiCorner;
-		size_t  iMesh1;
-		size_t  iMesh2;
-		TransitPlane(Vector3 low, Vector3 hi, size_t one, size_t two) : 
+		NavMeshID  iMesh1;
+		NavMeshID  iMesh2;
+		NavNode(Vector3 low, Vector3 hi, NavMeshID one, NavMeshID two) :
 			lowCorner(low), hiCorner(hi), iMesh1(one), iMesh2(two) {}
-		TransitPlane(Vector3 pos, size_t meshIdx) : lowCorner(pos), hiCorner(pos), iMesh1(meshIdx), iMesh2(meshIdx) {}
+		NavNode(Vector3 pos, NavMeshID meshIdx) : lowCorner(pos), hiCorner(pos), iMesh1(meshIdx), iMesh2(meshIdx) {}
 
 		// Methods
 		Vector3 Midpoint();
@@ -78,11 +80,11 @@ private:
 		Vector3 lowCorner;
 		Vector3 hiCorner;
 		// Exit zones
-		std::vector<size_t> iTransits;
+		std::vector<NavNodeID> navNodes;
 
 		// Methods
 		NavMesh(Vector3 low, Vector3 hi);
-		void AddTransitPlane(size_t iTransit);
+		void AddNavNode(NavNodeID nodeID);
 		bool Contains(const Vector3 pos);
 		float CostWalk(const Vector3 enter, const Vector3 exit);
 		float CostFly(const Vector3 enter, const Vector3 exit);
@@ -90,13 +92,13 @@ private:
 
 	// The graph representation of the map
 	std::vector<NavMesh> m_navMeshes;
-	std::vector<TransitPlane> m_transits;
+	std::vector<NavNode> m_navNodes;
 
 	// Methods
 	void GenerateNavMeshes(std::vector<std::string>& map, GridCoord origin, char& symbol);
 	// newPos Walk(currentPos, goal, speed)
 	// newPos Fly(currentPos, goal, speed)
 	size_t FindNavMeshContaining(const Vector3 pos);
-	std::vector<TransitPlane*> Astar(const Vector3 start, const Vector3 goal, float (*h)(Vector3, Vector3));
+	std::vector<NavNode*> Astar(const Vector3 start, const Vector3 goal, float (*h)(Vector3, Vector3));
 	float heuristicStraightLine(Vector3 start, Vector3 goal);
 };
