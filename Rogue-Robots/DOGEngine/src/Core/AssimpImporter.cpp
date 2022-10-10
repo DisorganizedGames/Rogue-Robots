@@ -50,6 +50,11 @@ namespace DOG
 		{
 			importedMat.albedoPath = directory + textureFileName.C_Str();
 		}
+		else if (!aiMat->GetTexture(aiTextureType_DIFFUSE, 0, &textureFileName))
+		{
+			// If no pbr texture exists, use diffuse
+			importedMat.albedoPath = directory + textureFileName.C_Str();
+		}
 
 		if (!aiMat->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &textureFileName))
 		{
