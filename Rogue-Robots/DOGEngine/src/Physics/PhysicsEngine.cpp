@@ -84,6 +84,45 @@ namespace DOG
 
 		PhysicsRigidbody::UpdateRigidbodies();
 
+		//Is possible that this is removed later 
+		{
+			EntityManager::Get().Collect<TransformComponent, BoxColliderComponent>().Do([&](TransformComponent& transform, BoxColliderComponent& collider)
+				{
+					//Get rigidbody
+					auto* rigidBody = s_physicsEngine.GetRigidbodyColliderData(collider.rigidbodyHandle);
+					if (rigidBody->dynamic && rigidBody->rigidBody && rigidBody->rigidBody->getMotionState())
+					{
+						btTransform trans;
+						trans.setFromOpenGLMatrix((float*)(&transform.worldMatrix));
+						rigidBody->rigidBody->getMotionState()->setWorldTransform(trans);
+					}
+				});
+
+			EntityManager::Get().Collect<TransformComponent, SphereColliderComponent>().Do([&](TransformComponent& transform, SphereColliderComponent& collider)
+				{
+					//Get rigidbody
+					auto* rigidBody = s_physicsEngine.GetRigidbodyColliderData(collider.rigidbodyHandle);
+					if (rigidBody->dynamic && rigidBody->rigidBody && rigidBody->rigidBody->getMotionState())
+					{
+						btTransform trans;
+						trans.setFromOpenGLMatrix((float*)(&transform.worldMatrix));
+						rigidBody->rigidBody->getMotionState()->setWorldTransform(trans);
+					}
+				});
+
+			EntityManager::Get().Collect<TransformComponent, CapsuleColliderComponent>().Do([&](TransformComponent& transform, CapsuleColliderComponent& collider)
+				{
+					//Get rigidbody
+					auto* rigidBody = s_physicsEngine.GetRigidbodyColliderData(collider.rigidbodyHandle);
+					if (rigidBody->dynamic && rigidBody->rigidBody && rigidBody->rigidBody->getMotionState())
+					{
+						btTransform trans;
+						trans.setFromOpenGLMatrix((float*)(&transform.worldMatrix));
+						rigidBody->rigidBody->getMotionState()->setWorldTransform(trans);
+					}
+				});
+		}
+
 		s_physicsEngine.GetDynamicsWorld()->stepSimulation(deltaTime, 10);
 
 		EntityManager::Get().Collect<TransformComponent, BoxColliderComponent>().Do([&](TransformComponent& transform, BoxColliderComponent& collider)
@@ -95,6 +134,8 @@ namespace DOG
 					btTransform trans;
 					rigidBody->rigidBody->getMotionState()->getWorldTransform(trans);
 					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
+					//The scale is set to 1 by bullet physics, so we set it back to the original scale
+					transform.SetScale(rigidBody->rigidbodyScale);
 				}
 			});
 		
@@ -107,6 +148,8 @@ namespace DOG
 					btTransform trans;
 					rigidBody->rigidBody->getMotionState()->getWorldTransform(trans);
 					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
+					//The scale is set to 1 by bullet physics, so we set it back to the original scale
+					transform.SetScale(rigidBody->rigidbodyScale);
 				}
 			});
 
@@ -119,6 +162,8 @@ namespace DOG
 					btTransform trans;
 					rigidBody->rigidBody->getMotionState()->getWorldTransform(trans);
 					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
+					//The scale is set to 1 by bullet physics, so we set it back to the original scale
+					transform.SetScale(rigidBody->rigidbodyScale);
 				}
 			});
 
@@ -130,9 +175,6 @@ namespace DOG
 				auto* rigidBody = s_physicsEngine.GetRigidbodyColliderData(rigidbody.rigidbodyHandle);
 				if (rigidBody->rigidBody && rigidBody->rigidBody->getMotionState())
 				{
-					//Check collisions
-					//PhysicsEngine::s_physicsEngine.GetDynamicsWorld()->contactTest(rigidBody->rigidBody, *(PhysicsEngine::s_physicsEngine.m_collisionCallback.get()));
-
 					//Get handle for vector
 					u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(rigidbody.rigidbodyHandle.handle);
 					auto collisions = s_physicsEngine.m_rigidbodyCollision.find(handle);
@@ -242,6 +284,8 @@ namespace DOG
 		//Copy entity transform
 		btTransform groundTransform;
 		groundTransform.setFromOpenGLMatrix((float*)(&transform.worldMatrix));
+
+		rigidbodyColliderData.rigidbodyScale = transform.GetScale();
 
 		//rigidbody is dynamic if and only if mass is non zero, otherwise static
 		bool isDynamic = dynamic;
@@ -400,6 +444,7 @@ namespace DOG
 			btCollisionObject* obj_a = (btCollisionObject*)(contact_manifold->getBody0());
 			btCollisionObject* obj_b = (btCollisionObject*)(contact_manifold->getBody1());
 
+			//We can ignore to check the different contact points and only check one! If there exist one 
 			int num_contacts = contact_manifold->getNumContacts() > 1 ? 1 : contact_manifold->getNumContacts();
 
 			for (int j = 0; j < num_contacts; j++)

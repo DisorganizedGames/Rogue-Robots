@@ -12,6 +12,7 @@ namespace DOG
 		TransformComponent& SetScale(const DirectX::SimpleMath::Vector3& scale) noexcept;
 		DirectX::SimpleMath::Vector3 GetPosition() const noexcept;
 		DirectX::SimpleMath::Matrix GetRotation() const noexcept;
+		DirectX::SimpleMath::Vector3 GetScale() const noexcept;
 
 		TransformComponent& RotateW(const DirectX::SimpleMath::Vector3& rotation) noexcept;
 		TransformComponent& RotateW(const DirectX::SimpleMath::Matrix& rotation) noexcept;

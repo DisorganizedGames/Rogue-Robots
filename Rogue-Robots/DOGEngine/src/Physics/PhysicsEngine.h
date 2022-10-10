@@ -36,6 +36,7 @@ namespace DOG
 		CollisionShapeHandle collisionShapeHandle;
 		bool dynamic = false;
 		entity rigidbodyEntity;
+		DirectX::SimpleMath::Vector3 rigidbodyScale;
 	};
 
 	struct RigidbodyCollisionData
