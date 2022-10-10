@@ -191,6 +191,22 @@ namespace DOG::gfx
 		return modeDesc;
 	}
 
+	DXGI_MODE_DESC Swapchain_DX12::GetClosestMatchingDisplayModeDesc(DXGI_MODE_DESC preferredMode) const
+	{
+		DXGI_MODE_DESC modeDesc{};
+
+		IDXGIOutput* output = nullptr;
+		HRESULT hr = m_sc->GetContainingOutput(&output);
+		HR_VFY(hr);
+
+		hr = output->FindClosestMatchingMode(&preferredMode, &modeDesc, nullptr);
+		HR_VFY(hr);
+		output->Release();
+
+		assert(modeDesc.Format == GetBufferFormat()); // Do we support different types of formats?;
+		return modeDesc;
+	}
+
 	DXGI_OUTPUT_DESC1 Swapchain_DX12::GetOutputDesc() const
 	{
 		IDXGIOutput* output;

@@ -140,11 +140,26 @@ namespace DOG
 			m_isRunning = false;
 			break;
 		}
+		case EventType::WindowPosChangingEvent:
+		{
+			if (!m_renderer) break;
+			static WindowMode prevFullScreenState = WindowMode::Windowed;
+			WindowMode currentFullscreenState = m_renderer->GetFullscreenState();
+			if (currentFullscreenState != prevFullScreenState)
+			{
+				prevFullScreenState = currentFullscreenState;
+				m_renderer->OnResize(0, 0); // forece the backbuffers to resize
+			}
+			break;
+		}
 		case EventType::WindowResizedEvent:
 		{
 			auto& e = EVENT(WindowResizedEvent);
 			if (m_renderer)
 			{
+				if (m_specification.graphicsSettings.windowMode == WindowMode::Windowed)
+					m_specification.windowDimensions = e.dimensions;
+
 				m_renderer->OnResize(e.dimensions.x, e.dimensions.y);
 			}
 			break;
@@ -204,6 +219,7 @@ namespace DOG
 #else
 		m_renderer = std::make_unique<gfx::Renderer>(Window::GetHandle(), Window::GetWidth(), Window::GetHeight(), false);
 #endif
+		ApplyGraphicsSettings();
 		Window::SetWMHook(m_renderer->GetWMCallback());
 
 		AssetManager::Initialize(m_renderer.get());
@@ -211,13 +227,6 @@ namespace DOG
 		PhysicsEngine::Initialize();
 
 		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); });
-
-		if (!m_specification.graphicsSettings.displayMode)
-		{
-			m_specification.graphicsSettings.displayMode = m_renderer->GetDefaultDisplayMode();
-			m_specification.graphicsSettings.renderResolution.x = m_specification.graphicsSettings.displayMode->Width;
-			m_specification.graphicsSettings.renderResolution.y = m_specification.graphicsSettings.displayMode->Height;
-		}
 	}
 
 	void Application::OnShutDown() noexcept
@@ -248,6 +257,45 @@ namespace DOG
 	void Application::PopOverlay(Layer* layer) noexcept
 	{
 		m_layerStack.PopOverlay(layer);
+	}
+
+	const ApplicationSpecification& Application::GetApplicationSpecification() const noexcept
+	{
+		return m_specification;
+	}
+
+	void Application::ApplyGraphicsSettings() noexcept
+	{
+		m_specification.graphicsSettings.displayMode = m_renderer->GetMatchingDisplayMode(m_specification.graphicsSettings.displayMode);
+
+		// Guard agains bad values
+		if (m_specification.graphicsSettings.renderResolution.x > 16384 || m_specification.graphicsSettings.renderResolution.y > 16384
+			|| m_specification.graphicsSettings.renderResolution.x < 8 || m_specification.graphicsSettings.renderResolution.y < 8)
+		{
+			m_specification.graphicsSettings.renderResolution.x = m_specification.graphicsSettings.displayMode->Width;
+			m_specification.graphicsSettings.renderResolution.y = m_specification.graphicsSettings.displayMode->Height;
+		}
+
+		Vector2u aspectRatio;
+		if (m_specification.graphicsSettings.windowMode == WindowMode::Windowed)
+		{
+			std::tie(aspectRatio.x, aspectRatio.y) = Window::GetDimensions();
+		}
+		else
+		{
+			aspectRatio.x = m_specification.graphicsSettings.displayMode->Width;
+			aspectRatio.y = m_specification.graphicsSettings.displayMode->Height;
+		}
+
+		u32 d = std::gcd(aspectRatio.x, aspectRatio.y);
+		aspectRatio.x /= d;
+		aspectRatio.y /= d;
+
+		m_specification.graphicsSettings.renderResolution.x = m_specification.graphicsSettings.renderResolution.y * aspectRatio.x / aspectRatio.y;
+
+		m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
+
+		m_specification.graphicsSettings.windowMode = m_renderer->GetFullscreenState();
 	}
 
 	void Application::ApplicationSettingDebugMenu(bool& open)
@@ -289,11 +337,39 @@ namespace DOG
 					str += ", Format: " + std::to_string(monitor.modes[index].Format);
 					str += ", scanline: " + std::to_string(monitor.modes[index].ScanlineOrdering);
 					str += ", scaling: " + std::to_string(monitor.modes[index].Scaling);
+
+					UINT c = std::gcd(monitor.modes[index].Width, monitor.modes[index].Height);
+					UINT w = monitor.modes[index].Width / c;
+					UINT h = monitor.modes[index].Height / c;
+					str += ", aspect ratio: " + std::to_string(w) + "/" + std::to_string(h);
+					
 					return str;
 				};
 
 				static i64 selectedModeIndex = std::ssize(monitor.modes) - 1;
 				selectedModeIndex = std::min(selectedModeIndex, static_cast<i64>(std::ssize(monitor.modes) - 1));
+
+
+				static bool firstTime = true;
+				if (firstTime)
+				{
+					selectedModeIndex = [&]()->int {
+						for (int i = 1; i < monitor.modes.size() - 1; i++)
+						{
+							auto& other = monitor.modes[i];
+							auto& current = *m_specification.graphicsSettings.displayMode;
+
+							if (current.Format == other.Format && current.RefreshRate.Denominator == other.RefreshRate.Denominator
+								&& current.RefreshRate.Numerator == other.RefreshRate.Numerator && current.Height == other.Height
+								&& current.Width == other.Width && current.Scaling == other.Scaling && current.ScanlineOrdering == other.ScanlineOrdering)
+							{
+								return i;
+							}
+						}
+						return selectedModeIndex;
+					}();
+				}
+
 				if (ImGui::BeginCombo("modes", modeElementToString(selectedModeIndex).c_str()))
 				{
 					for (i64 i = std::ssize(monitor.modes) - 1; i >= 0; i--)
@@ -321,19 +397,10 @@ namespace DOG
 
 				ImGui::Text("Graphics settings");
 
-				Vector2u resolutionRatio;
-				if (m_renderer->GetFullscreenState() == WindowMode::Windowed)
-				{
-					std::tie(resolutionRatio.x, resolutionRatio.y) = Window::GetDimensions();
-				}
-				else
-				{
-					assert(m_specification.graphicsSettings.displayMode);
-					resolutionRatio.x = m_specification.graphicsSettings.displayMode->Width;
-					resolutionRatio.y = m_specification.graphicsSettings.displayMode->Height;
-				}
 
-				std::vector<const char*> res =
+
+				
+				static std::vector<std::string> res =
 				{
 					"144",
 					"360",
@@ -342,25 +409,71 @@ namespace DOG
 					"1440",
 					"2160",
 				};
-
 				static int resIndex = 3;
 
-				ImGui::Text("resolution");
-				ImGui::SameLine();
-				if (ImGui::Combo("##2", &resIndex, res.data(), static_cast<int>(res.size())))
+				if (firstTime)
 				{
-					m_specification.graphicsSettings.renderResolution.y = std::stoi(res[resIndex]);
-					m_specification.graphicsSettings.renderResolution.x = m_specification.graphicsSettings.renderResolution.y * resolutionRatio.x / resolutionRatio.y;
-					assert(m_specification.graphicsSettings.renderResolution.x % 2 == 0);
+					resIndex = [&]()->int {
+						for (int i = 1; i < res.size() - 1; i++)
+							if (m_specification.graphicsSettings.renderResolution.y == std::stoi(res[i])) return i;
 
-					m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
+						res.push_back(std::to_string(m_specification.graphicsSettings.renderResolution.y));
+						return res.size() - 1;
+					}();
+					
 				}
 
 
+				ImGui::Text("resolution");
+				ImGui::SameLine();
+
+				Vector2u resolutionRatio = GetAspectRatio();
+				auto&& resToString = [&](int index) -> std::string
+				{
+					std::string resX = std::to_string(std::stoi(res[index]) * resolutionRatio.x / resolutionRatio.y);
+					return resX + "x" + res[index];
+				};
+
+				if (ImGui::BeginCombo("res", resToString(resIndex).c_str()))
+				{
+					for (int i = 0; i < std::size(res); i++)
+					{
+						if (ImGui::Selectable(resToString(i).c_str(), resIndex == i))
+						{
+							resIndex = i;
+							m_specification.graphicsSettings.renderResolution.y = std::stoi(res[resIndex]);
+							m_specification.graphicsSettings.renderResolution.x = m_specification.graphicsSettings.renderResolution.y * resolutionRatio.x / resolutionRatio.y;
+							m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
+						}
+					}
+					ImGui::EndCombo();
+				}
+
+				firstTime = false;
 
 				//--------------
 			}
 			ImGui::End(); // "Application settings"
 		}
 	}
+	Vector2u Application::GetAspectRatio()  const noexcept
+	{
+		Vector2u aspectRatio;
+		if (m_renderer->GetFullscreenState() == WindowMode::Windowed)
+		{
+			std::tie(aspectRatio.x, aspectRatio.y) = Window::GetDimensions();
+		}
+		else
+		{
+			assert(m_specification.graphicsSettings.displayMode);
+			aspectRatio.x = m_specification.graphicsSettings.displayMode->Width;
+			aspectRatio.y = m_specification.graphicsSettings.displayMode->Height;
+		}
+
+		u32 d = std::gcd(aspectRatio.x, aspectRatio.y);
+		aspectRatio.x /= d;
+		aspectRatio.y /= d;
+		return aspectRatio;
+	}
+	
 }

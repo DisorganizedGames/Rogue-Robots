@@ -43,6 +43,12 @@ namespace DOG
 			PostQuitMessage(0);
 			return 0;
 		}
+		case WM_WINDOWPOSCHANGING:
+		{
+			if (IsMinimized(Window::GetHandle())) return 0;
+			PublishEvent<WindowPosChangingEvent>();
+			break;
+		}
 		case WM_SIZE:
 		{
 			if(IsMinimized(Window::GetHandle())) return 0;

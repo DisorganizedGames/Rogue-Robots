@@ -29,6 +29,9 @@ namespace DOG
 		void PushOverlay(Layer* layer) noexcept;
 		void PopLayer(Layer* layer) noexcept;
 		void PopOverlay(Layer* layer) noexcept;
+		const ApplicationSpecification& GetApplicationSpecification() const noexcept;
+		Vector2u GetAspectRatio() const noexcept;
+		void ApplyGraphicsSettings() noexcept;
 	private:
 		void ApplicationSettingDebugMenu(bool& open);
 	private:

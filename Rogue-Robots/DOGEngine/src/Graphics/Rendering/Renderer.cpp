@@ -195,10 +195,12 @@ namespace DOG::gfx
 		return m_rd->GetMonitor();
 	}
 
-	DXGI_MODE_DESC Renderer::GetDefaultDisplayMode() const
+	DXGI_MODE_DESC Renderer::GetMatchingDisplayMode(std::optional<DXGI_MODE_DESC> mode) const
 	{
-		// Abstract DXGI_MODE_DESC should be created later, for now use dxgi
-		return static_cast<Swapchain_DX12*>(m_sc)->GetDefaultDisplayModeDesc();
+		if (mode)
+			return static_cast<Swapchain_DX12*>(m_sc)->GetClosestMatchingDisplayModeDesc(*mode);
+		else
+			return static_cast<Swapchain_DX12*>(m_sc)->GetDefaultDisplayModeDesc();
 	}
 
 	void Renderer::SetMainRenderCamera(const DirectX::XMMATRIX& view, DirectX::XMMATRIX* proj)
@@ -418,8 +420,11 @@ namespace DOG::gfx
 
 	void Renderer::OnResize(u32 clientWidth, u32 clientHeight)
 	{
-		m_globalEffectData.bbScissor = ScissorRects().Append(0, 0, clientWidth, clientHeight);
-		m_globalEffectData.bbVP = Viewports().Append(0.f, 0.f, (f32)clientWidth, (f32)clientHeight);
+		if (clientWidth != 0 && clientHeight != 0)
+		{
+			m_globalEffectData.bbScissor = ScissorRects().Append(0, 0, clientWidth, clientHeight);
+			m_globalEffectData.bbVP = Viewports().Append(0.f, 0.f, (f32)clientWidth, (f32)clientHeight);
+		}
 
 		m_sc->OnResize(clientWidth, clientHeight);
 	}
@@ -429,16 +434,14 @@ namespace DOG::gfx
 		return m_sc->GetFullscreenState() ? WindowMode::FullScreen : WindowMode::Windowed;
 	}
 
-	bool Renderer::SetGraphicsSettings(GraphicsSettings requestedSettings)
+	void Renderer::SetGraphicsSettings(GraphicsSettings requestedSettings)
 	{
 		assert(requestedSettings.displayMode);
 		m_renderWidth = requestedSettings.renderResolution.x;
 		m_renderHeight = requestedSettings.renderResolution.y;
-		m_globalPassData.defRenderScissors = ScissorRects().Append(0, 0, m_renderWidth, m_renderHeight);
-		m_globalPassData.defRenderVPs = Viewports().Append(0.f, 0.f, (f32)m_renderWidth, (f32)m_renderHeight);
+		m_globalEffectData.defRenderScissors = ScissorRects().Append(0, 0, m_renderWidth, m_renderHeight);
+		m_globalEffectData.defRenderVPs = Viewports().Append(0.f, 0.f, (f32)m_renderWidth, (f32)m_renderHeight);
 		m_sc->SetFullscreenState(requestedSettings.windowMode == WindowMode::FullScreen, *requestedSettings.displayMode);
-
-		return true;
 	}
 
 	void Renderer::BeginFrame_GPU()

@@ -27,6 +27,7 @@ namespace DOG::gfx
 		DXGI_FORMAT GetBufferFormat() const;
 		std::vector<DXGI_MODE_DESC> GetModeDescs(DXGI_FORMAT format) const;
 		DXGI_MODE_DESC GetDefaultDisplayModeDesc() const;
+		DXGI_MODE_DESC GetClosestMatchingDisplayModeDesc(DXGI_MODE_DESC preferredMode) const;
 		DXGI_OUTPUT_DESC1 GetOutputDesc() const;
 		std::pair<u32, u32> GetSwapchainWidthAndHeight() const;
 		void Present(bool vsync);

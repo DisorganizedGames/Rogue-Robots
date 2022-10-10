@@ -43,7 +43,7 @@ namespace DOG::gfx
 
 		GraphicsBuilder* GetBuilder() const { return m_builder.get(); }
 		Monitor GetMonitor() const;
-		DXGI_MODE_DESC GetDefaultDisplayMode() const;
+		DXGI_MODE_DESC GetMatchingDisplayMode(std::optional<DXGI_MODE_DESC> mode = std::nullopt) const;
 
 		// Must be called at the start of any frame to pick up CPU side ImGUI code
 		void BeginGUI();
@@ -65,7 +65,7 @@ namespace DOG::gfx
 
 
 		void OnResize(u32 clientWidth, u32 clientHeight);
-		bool SetGraphicsSettings(GraphicsSettings requestedSettings);
+		void SetGraphicsSettings(GraphicsSettings requestedSettings);
 		WindowMode GetFullscreenState() const;
 
 

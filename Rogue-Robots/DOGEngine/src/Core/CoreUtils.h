@@ -15,7 +15,7 @@ namespace DOG
 	struct ApplicationSpecification
 	{
 		std::string name;
-		Vector2u windowDimensions;
+		Vector2u windowDimensions{ 1280, 720 };
 		WindowMode initialWindowMode;
 		std::string workingDir;
 		GraphicsSettings graphicsSettings;

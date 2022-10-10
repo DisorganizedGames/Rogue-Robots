@@ -13,6 +13,15 @@ namespace DOG
 		Vector2u dimensions;
 	};
 
+	class WindowPosChangingEvent : public IEvent
+	{
+	public:
+		explicit WindowPosChangingEvent() noexcept = default;
+		virtual ~WindowPosChangingEvent() noexcept override final = default;
+		[[nodiscard]] virtual constexpr const EventType GetEventType() const noexcept override final { return EventType::WindowPosChangingEvent; }
+		[[nodiscard]] virtual constexpr const EventCategory GetEventCategory() const { return EventCategory::WindowEventCategory; }
+	};
+
 	class WindowClosedEvent : public IEvent
 	{
 	public:
