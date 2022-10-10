@@ -69,10 +69,9 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     StructuredBuffer<float3> positions = ResourceDescriptorHeap[gd.meshTablePos];
     StructuredBuffer<float2> uvs = ResourceDescriptorHeap[gd.meshTableUV];
     StructuredBuffer<float3> normals = ResourceDescriptorHeap[gd.meshTableNor];
-    StructuredBuffer<float3> tangents = ResourceDescriptorHeap[gd.meshTableNor];
+    StructuredBuffer<float3> tangents = ResourceDescriptorHeap[gd.meshTableTan];
     StructuredBuffer<Blend> blendData = ResourceDescriptorHeap[gd.meshTableBlend];
 
-    
     ShaderInterop_SubmeshMetadata md = mds[perDrawData.submeshID];
     Blend bw = blendData[vertexID + md.blendStart];
     vertexID += md.vertStart;
@@ -81,7 +80,6 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     float2 uv = uvs[vertexID];
     float3 nor = normals[vertexID];
     float3 tan = tangents[vertexID];
-    float3 bitan = normalize(cross(tan, nor));
     
     if (md.blendCount > 0)
     {
@@ -96,10 +94,9 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     
     output.wsPos = mul(perDrawData.world, float4(pos, 1.f)).xyz;
     output.pos = mul(pfData.projMatrix, mul(pfData.viewMatrix, float4(output.wsPos, 1.f)));
-
     output.nor = mul(perDrawData.world, float4(nor, 0.f)).xyz;
     output.tan = mul(perDrawData.world, float4(tan, 0.f)).xyz;
-    output.bitan = bitan;
+    output.bitan = normalize(cross(output.tan, output.nor));
     output.uv = uv;
  
     return output;

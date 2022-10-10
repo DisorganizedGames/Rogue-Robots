@@ -25,7 +25,8 @@
 #include "Tracy/Tracy.hpp"
 
 // Passes
-#include "RenderPasses/ImGUIPass.h"
+#include "RenderEffects/ImGUIEffect.h"
+#include "RenderEffects/TestComputeEffect.h"
 
 namespace DOG::gfx
 {
@@ -95,8 +96,8 @@ namespace DOG::gfx
 			m_bin.get());
 
 
-		// INITIALIZE RESOURCES =================
-
+		// INITIALIZE RESOURCES ================= Globals for now..
+		// Refer to TestComputeEffect for Effect local resource building
 		auto fullscreenTriVS = m_sclr->CompileFromFile("FullscreenTriVS.hlsl", ShaderType::Vertex);
 		auto blitPS = m_sclr->CompileFromFile("BlitPS.hlsl", ShaderType::Pixel);
 		m_pipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
@@ -126,8 +127,6 @@ namespace DOG::gfx
 
 		m_rgResMan = std::make_unique<RGResourceManager>(m_rd, m_bin.get());
 
-		auto testCS = m_sclr->CompileFromFile("TestComputeCS.hlsl", ShaderType::Compute);
-		m_testCompPipe = m_rd->CreateComputePipeline(ComputePipelineDesc(testCS.get()));
 
 
 
@@ -153,18 +152,35 @@ namespace DOG::gfx
 		m_globalDataTable->SendCopyRequests(*m_uploadCtx);
 
 
-		// Set default pass data
-		m_globalPassData.bbScissor = ScissorRects().Append(0, 0, m_clientWidth, m_clientHeight);
-		m_globalPassData.bbVP = Viewports().Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight);
+		// Set default global pass data
+		m_globalEffectData.bbScissor = ScissorRects().Append(0, 0, m_clientWidth, m_clientHeight);
+		m_globalEffectData.bbVP = Viewports().Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight);
 		// render vps/scissors subject to change
-		m_globalPassData.defRenderScissors = ScissorRects().Append(0, 0, m_clientWidth, m_clientHeight);
-		m_globalPassData.defRenderVPs= Viewports().Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight);
-		m_globalPassData.globalDataDescriptor = m_globalDataTable->GetGlobalDescriptor();
-		m_globalPassData.meshTable = m_globalMeshTable.get();
+		m_globalEffectData.defRenderScissors = ScissorRects().Append(0, 0, m_clientWidth, m_clientHeight);
+		m_globalEffectData.defRenderVPs= Viewports().Append(0.f, 0.f, (f32)m_clientWidth, (f32)m_clientHeight);
+		m_globalEffectData.globalDataDescriptor = m_globalDataTable->GetGlobalDescriptor();
+		m_globalEffectData.meshTable = m_globalMeshTable.get();
 
-		// Passes
+		// Setup blackboard for potential Effect-intercom
 		m_rgBlackboard = std::make_unique<RGBlackboard>();
-		m_igPass = std::make_unique<ImGUIPass>(m_globalPassData, *m_rgBlackboard, m_imgui.get());
+
+
+		// Define Passes
+		/*
+			Remember that the connections between passes are simply resource names.
+
+			You can see how the graph looks like by uncommenting the GENERATE_GRAPHVIZ define in RenderGraph.h.
+			you can then find rendergraph.txt in the Assets folder and simply copy paste it to Graphviz Online.
+			The graph is to be traversed in topological order, so you can then verify that everything is executed
+			in the order you expect them to.
+			
+			Remember that you do not have to immediately create an Effect class to play around.
+			You can simply define passes as lambdas just like Forward Pass in the Render function to get acquainted
+			(i.e try defining a few passes with only read/write declarations to see if the generated graph is as expected!)
+			
+		*/
+		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, *m_rgBlackboard, m_imgui.get());
+		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData, *m_rgBlackboard, m_rd, m_sclr.get());
 	}
 
 	Renderer::~Renderer()
@@ -238,7 +254,7 @@ namespace DOG::gfx
 
 			// Get offset after update
 			m_currPfDescriptor = m_pfDataTable->GetLocalOffset(m_pfHandle);
-			m_globalPassData.perFrameTableOffset = &m_currPfDescriptor;
+			m_globalEffectData.perFrameTableOffset = &m_currPfDescriptor;
 
 		}
 	}
@@ -253,10 +269,9 @@ namespace DOG::gfx
 			m_perFrameUploadCtx->SubmitCopies();
 		}
 
-
+		
 		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
 		auto& rg = *m_rg;
-
 
 		// Forward pass to HDR
 		{
@@ -303,7 +318,7 @@ namespace DOG::gfx
 					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
 
 					auto args = ShaderArgs()
-						.AppendConstant(m_globalPassData.globalDataDescriptor)
+						.AppendConstant(m_globalEffectData.globalDataDescriptor)
 						.AppendConstant(m_currPfDescriptor)
 						.AppendConstant(perDrawHandle.globalDescriptor);
 
@@ -329,10 +344,10 @@ namespace DOG::gfx
 				},
 				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
 				{
-					rd->Cmd_SetViewports(cmdl, m_globalPassData.defRenderVPs);
-					rd->Cmd_SetScissorRects(cmdl, m_globalPassData.defRenderScissors);
+					rd->Cmd_SetViewports(cmdl, m_globalEffectData.defRenderVPs);
+					rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.defRenderScissors);
 						
-					rd->Cmd_SetIndexBuffer(cmdl, m_globalPassData.meshTable->GetIndexBuffer());
+					rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipe);
 					drawSubmissions(rd, cmdl, m_submissions);
@@ -342,6 +357,10 @@ namespace DOG::gfx
 					drawSubmissions(rd, cmdl, m_noCullSubmissions);
 				});
 		}
+
+		// Test compute on Lit HDR
+		// Uncomment to enable the test compute effect!
+		//m_testComputeEffect->Add(rg);
 
 		// Blit HDR to LDR
 		{
@@ -366,7 +385,8 @@ namespace DOG::gfx
 				});
 		}
 
-		m_igPass->AddPass(rg);
+		// Final ImGUI pass
+		m_imGUIEffect->Add(rg);
 
 		{
 			ZoneNamedN(RGBuildScope, "RG Building", true);
