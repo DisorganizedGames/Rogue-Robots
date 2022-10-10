@@ -11,6 +11,11 @@ AudioDevice::AudioDevice() : m_audioThread([](AudioDevice* self) { self->AudioTh
 
 		hr = m_xaudio->CreateMasteringVoice(&m_master);
 		hr.try_throw("Failed to create xaudio2 mastering voice");
+
+		m_master->GetVoiceDetails(&m_masterDetails);
+
+		hr = X3DAudioInitialize(SPEAKER_STEREO, 300.f, m_x3daudio);
+		hr.try_fail("Failed to initialize x3daudio");
 	}
 	catch (HRError& e)
 	{
@@ -38,9 +43,6 @@ AudioDevice::~AudioDevice()
 
 void AudioDevice::HandleComponent(AudioComponent& comp)
 {
-	if (!comp.playing && !comp.shouldPlay && !comp.shouldStop)
-		return;
-
 	if (comp.shouldPlay)
 	{
 		if (comp.playing)
@@ -82,12 +84,24 @@ void AudioDevice::HandleComponent(AudioComponent& comp)
 		comp.playing = true;
 	}
 
+	// Return early if the component has no voice assigned
+	if (comp.source == u32(-1))
+	{
+		return;
+	}
+
 	if (comp.shouldStop)
 	{
 		m_sources[comp.source]->Stop();
 
 		comp.playing = false;
 		comp.shouldStop = false;
+	}
+
+	if (comp.is3D)
+	{
+		auto& source = m_sources[comp.source];
+		Handle3DComponent(source.get());
 	}
 }
 
@@ -140,7 +154,7 @@ u64 AudioDevice::GetFreeVoice(const WAVEFORMATEX& m_wfx)
 		if (!src)
 			return i;
 	}
-	
+
 	// Find unused voice
 	for (int i = 0; i < m_sources.size(); ++i)
 	{
@@ -150,11 +164,48 @@ u64 AudioDevice::GetFreeVoice(const WAVEFORMATEX& m_wfx)
 			return i;
 		}
 	}
-	
+
 	// Audio just couldn't be played, no matter how hard we tried
 	// Solve this somehow? Or maybe just crash and we'll have to increase maximum voice-count
 	assert(false && "failed to find empty voice");
 	return u64(-1);
+}
+
+void AudioDevice::Handle3DComponent(SourceVoice* source)
+{
+	std::vector<f32> azimuths(source->m_wfx.nChannels);
+	std::iota(azimuths.begin(), azimuths.end(), 0.f);
+	std::transform(azimuths.begin(), azimuths.end(), azimuths.begin(), [](auto angle) { return (angle + 0.5f) * X3DAUDIO_PI; });
+
+	X3DAUDIO_EMITTER es = {
+		.OrientFront = {0, 0, 1},
+		.OrientTop = {0, 1, 0},
+		.ChannelCount = source->m_wfx.nChannels,
+		.ChannelRadius = 1.0f,
+		.pChannelAzimuths = azimuths.data(),
+		.CurveDistanceScaler = 1.0f,
+	};
+
+	X3DAUDIO_DSP_SETTINGS dspSettings = {
+		.SrcChannelCount = es.ChannelCount,
+		.DstChannelCount = m_masterDetails.InputChannels,
+	};
+	EntityManager::Get().Collect<AudioListenerComponent, TransformComponent>()
+		.Do([&](AudioListenerComponent& /*listener*/, TransformComponent& transform)
+			{
+				std::vector<f32> matrix(dspSettings.DstChannelCount * dspSettings.SrcChannelCount);
+				X3DAUDIO_LISTENER ls = {
+					.OrientFront = transform.worldMatrix.Forward(),
+					.OrientTop = transform.worldMatrix.Up(),
+					.Position = transform.GetPosition(),
+					.Velocity = {}, // For doppler effect
+					.pCone = nullptr, // Cones not supported yet
+				};
+
+				dspSettings.pMatrixCoefficients = matrix.data();
+				X3DAudioCalculate(m_x3daudio, &ls, &es, X3DAUDIO_CALCULATE_MATRIX, &dspSettings);
+				source->SetOutputMatrix(matrix, m_master);
+			});
 }
 
 // ------- SOURCE VOICE ----------
@@ -196,6 +247,13 @@ void SourceVoice::Stop()
 	m_source->FlushSourceBuffers();
 	m_source->Discontinuity();
 	m_externalBuffer.resize(0);
+}
+
+void SourceVoice::SetOutputMatrix(const std::vector<f32>& matrix, IXAudio2Voice* dest)
+{
+	auto destChannels = matrix.size()/m_wfx.nChannels;
+	HR hr = m_source->SetOutputMatrix(dest, m_wfx.nChannels, (u32)destChannels, matrix.data());
+	hr.try_fail("Failed to set output matrix for source voice");
 }
 
 bool SourceVoice::HasFinished()
