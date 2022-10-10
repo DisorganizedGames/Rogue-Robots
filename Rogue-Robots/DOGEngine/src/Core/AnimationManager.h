@@ -32,9 +32,8 @@ namespace DOG
 		std::vector<DirectX::XMFLOAT4X4> m_vsJoints;
 	private:
 		void UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
-		void UpdateAnimationComponent2(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
 		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator);
-		void UpdateSkeleton2(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator);
+		void UpdateMovementAnimation(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt);
 
 		DirectX::FXMVECTOR GetAnimationComponent(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick);
 		DirectX::FXMMATRIX CalculateNodeTransformation(const DOG::AnimationData&, i32 nodeID, f32 animTick);
@@ -53,7 +52,6 @@ namespace DOG
 		static constexpr i32 m_modeTransitionLinearBlend = 1;
 		static constexpr i32 m_modeTransitionBezierBlend = 2;
 		// IMGUI RELATED
-		AnimationComponent* m_imguiAnimC;
 		i32 m_imguiProfilePerformUpdate = 1;
 		bool m_imguiRootTranslation = false;
 		i32 m_imguiSelectedBone = 1;
@@ -77,10 +75,9 @@ namespace DOG
 		static constexpr f32 m_imguiJointPosMax = 1.0f;
 		static constexpr f32 m_imguiNormalizedTimeMin = 0.0f;
 		static constexpr f32 m_imguiNormalizedTimeMax = 1.0f;
+		static constexpr f32 m_imguiVelocity = 0.0f;
 	public:
 		void SpawnControlWindow(bool& open);
-		void SpawnControlWindow2(bool& open);
-		void SpawnControlWindow3(bool& open);
 
 	};
 }
