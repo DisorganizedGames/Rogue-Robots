@@ -1,6 +1,6 @@
 #include "UI.h"
-#include "../Input/Mouse.h"
-#include "../Input/Keyboard.h"
+#include "../../Input/Mouse.h"
+#include "../../Input/Keyboard.h"
 #include <assert.h>
 
 UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HWND hwnd) : m_visible(true)
@@ -21,11 +21,16 @@ UI::~UI()
    
 }
 
+void buttonfunc()
+{
+   OutputDebugString(L"Button pressed");
+}
+
 void UI::DrawUI()
 {
-   if(DOG::Keyboard::IsKeyPressed(DOG::Key::G) && !m_visible)
+   if(DOG::Keyboard::IsKeyPressed(DOG::Key::G))
    {
-      m_visible = true;
+      m_visible = false;
       ChangeUIscene(menu);
    }
    if (m_visible)
@@ -35,12 +40,12 @@ void UI::DrawUI()
          e->Update(*m_d2d);
          e->Draw(*m_d2d);
       }
-      if (m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bplay].get())->pressed)
-         ChangeUIscene(game);
-      else if (m_scene == game && dynamic_cast<UIButton*>(m_elements[GameUI::inventory].get())->pressed)
-         ChangeUIscene(menu);
-      else if (m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bexit].get())->pressed)
-         m_visible = false;
+      // if (m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bplay].get())->pressed)
+      //    ChangeUIscene(game);
+      // else if (m_scene == game && dynamic_cast<UIButton*>(m_elements[GameUI::inventory].get())->pressed)
+      //    ChangeUIscene(menu);
+      // else if (m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bexit].get())->pressed)
+      //    m_visible = false;
    }
 }
 
@@ -48,18 +53,18 @@ void UI::BuildMenuUI()
 {
    D2D_VECTOR_2F s = { 150.f, 60.f };
    D2D_POINT_2F p = { m_width / 2.f - s.x / 2, m_height / 2 - s.y / 2 };
-   m_elements.push_back(std::make_unique<UIButton>(p, s, L"Play"));
+   m_elements.push_back(std::make_unique<UIButton>(p, s, L"Play", buttonfunc));
    p.y += s.y + 50;
-   m_elements.push_back(std::make_unique<UIButton>(p, s, L"Options"));
+   m_elements.push_back(std::make_unique<UIButton>(p, s, L"Options", buttonfunc));
    p.y += s.y + 50;
-   m_elements.push_back(std::make_unique<UIButton>(p, s, L"Exit"));
+   m_elements.push_back(std::make_unique<UIButton>(p, s, L"Exit", buttonfunc));
 }
 
 void UI::BuildGameUI()
 {
    D2D_POINT_2F p = { 50.f, 50.f };
    D2D_VECTOR_2F s = { 250.f, 100.f };
-   m_elements.push_back(std::make_unique<UIButton>(p, s, L"Menu"));
+   m_elements.push_back(std::make_unique<UIButton>(p, s, L"Menu", buttonfunc));
 }
 
 void UI::ChangeUIscene(Uiscene scene)
@@ -101,7 +106,7 @@ void UIelement::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
    return;
 }
 
-UIButton::UIButton(D2D_POINT_2F pos, D2D_VECTOR_2F size, std::wstring text) : m_pos(pos), pressed(false)
+UIButton::UIButton(D2D_POINT_2F pos, D2D_VECTOR_2F size, std::wstring text, std::function<void(void)> callback) : m_pos(pos), pressed(false), m_callback(callback)
 {
    this->m_size = size;
    m_textRect = D2D1::RectF(pos.x, pos.y, pos.x + size.x, pos.y + size.y);
@@ -133,9 +138,7 @@ void UIButton::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
    {
       m_d2d.brush.Get()->SetOpacity(1.0f);
       if (DOG::Mouse::IsButtonPressed(DOG::Button::Left))
-         pressed = true;
-      else
-         pressed = false;
+         m_callback();
    }
    else
       m_d2d.brush.Get()->SetOpacity(0.5f);
