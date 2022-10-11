@@ -276,6 +276,7 @@ namespace DOG::gfx
 	{
 		m_boneJourno->UpdateJoints();
 
+		m_globalLightTable->SendCopyRequests(*m_uploadCtx);
 
 		// Update spotlight
 

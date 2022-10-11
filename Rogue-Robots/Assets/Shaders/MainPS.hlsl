@@ -43,6 +43,13 @@ float4 main(VS_OUT input) : SV_TARGET
     StructuredBuffer<ShaderInterop_GlobalData> gds = ResourceDescriptorHeap[g_constants.gdDescriptor];
     ShaderInterop_GlobalData gd = gds[0];
     
+    // Get light
+    StructuredBuffer<ShaderInterop_SpotLight> spotlights = ResourceDescriptorHeap[gd.spotLightTable];
+    return spotlights[0].color;
+
+    
+    
+    
     StructuredBuffer<ShaderInterop_PerFrameData> pfDatas = ResourceDescriptorHeap[gd.perFrameTable];
     ShaderInterop_PerFrameData pfData = pfDatas[g_constants.perFrameOffset];
     
