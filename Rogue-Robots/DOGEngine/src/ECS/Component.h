@@ -70,18 +70,29 @@ namespace DOG
 		};
 		struct AnimationClip
 		{
+			// Animation Specifics
 			i32 animationID = 0;
+			f32 totalTicks = 1.0f;
+			f32 duration = 1.0f;
+			// Clip Specifics
 			f32 currentTick = 0.f;
 			f32 normalizedTime = 0.f;
 			f32 timeScale = 1.0f;
+			f32 currentWeight = 1.0f;
+			f32 targetWeight = 1.0f;
+			bool loop = false;
+			// Blend Specifics
+			i32 blendMode = 0;
+			f32 transitionStart = 0.0f;
+			f32 transitionTime = 0.0f;
+			bool matchingTime = false;
+
 			// testing some stuff
 			f32 animTotalTicks = 1.0f;
 			f32 animDuration = 1.0f;
-			bool loop = false;
 			void UpdateClip(const f32 dt);
 			bool HasActiveAnimation() const { return animationID != -1; };
-			bool operator < ( AnimationClip const& rhs) const{
-				return this->animationID < rhs.animationID; };
+			bool operator < ( AnimationClip const& rhs) const{ return this->animationID < rhs.animationID; };
 			void SetAnimation(const i32 id, const f32 nTicks, const f32 duration, const f32 startTime = 0.0f);
 		};
 		BlendSpecification blendSpec;
