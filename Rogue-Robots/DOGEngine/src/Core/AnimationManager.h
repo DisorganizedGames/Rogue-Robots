@@ -32,13 +32,19 @@ namespace DOG
 		std::vector<DirectX::XMFLOAT4X4> m_vsJoints;
 	private:
 		void UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
-		void ImguiBlendUpdate(const std::vector<DOG::AnimationData>& animations, const AnimationComponent& ac, const f32 dt);
 		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator);
 		void UpdateMovementAnimation(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt);
 
 		DirectX::FXMVECTOR GetAnimationComponent(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick);
 		DirectX::FXMMATRIX CalculateNodeTransformation(const DOG::AnimationData&, i32 nodeID, f32 animTick);
 		DirectX::FXMMATRIX CalculateBlendTransformation(i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
+		DirectX::FXMMATRIX CalculateBlendTransformation2(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
+
+		void UpdateClips(DOG::AnimationComponent& ac, const f32 dt);
+		void UpdateBelzier(AnimationComponent::AnimationClip& clip, const f32 dt);
+		void UpdateLinear(AnimationComponent::AnimationClip& clip, const f32 dt);
+
+		void UpdateComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt);
 
 		std::vector<ImportedRig*> m_rigs;
 	private:
@@ -53,6 +59,8 @@ namespace DOG
 		static constexpr i32 m_modeTransitionLinearBlend = 1;
 		static constexpr i32 m_modeTransitionBezierBlend = 2;
 		// IMGUI RELATED
+		bool m_imguiPause = false;
+		bool m_imguiMatching = false;
 		i32 m_imguiProfilePerformUpdate = 1;
 		bool m_imguiRootTranslation = false;
 		i32 m_imguiSelectedBone = 1;
