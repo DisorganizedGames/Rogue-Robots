@@ -312,6 +312,17 @@ void GameLayer::RegisterLuaInterfaces()
 	global->SetLuaInterface(luaInterface);
 
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Host", "HostInterface");
+
+	//-----------------------------------------------------------------------------------------------
+	//Physics
+	luaInterfaceObject = std::make_shared<PhysicsInterface>();
+	m_luaInterfaces.push_back(luaInterfaceObject);
+
+	luaInterface = global->CreateLuaInterface("PhysicsInterface");
+	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBSetVelocity>("RBSetVelocity");
+	
+	global->SetLuaInterface(luaInterface);
+	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Physics", "PhysicsInterface");
 }
 
 void GameLayer::LoadLevel()

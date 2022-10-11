@@ -153,3 +153,12 @@ public:
 	
 	void DistanceToPlayers(DOG::LuaContext* context);
 };
+
+class PhysicsInterface : public LuaInterface
+{
+public:
+	PhysicsInterface() noexcept {};
+	~PhysicsInterface() noexcept {};
+
+	void RBSetVelocity(DOG::LuaContext* context);
+};

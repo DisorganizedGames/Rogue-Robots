@@ -2,7 +2,7 @@ require("VectorMath")
 
 --Tweakable values.
 local MaxAmmo = 10
-local InitialBulletSpeed = 10.0
+local InitialBulletSpeed = 75.0
 local ShootCooldown = 0.1
 local BulletDespawnDist = 50
 local BulletSize = {
@@ -101,6 +101,8 @@ function NormalBulletSpawn(bullet)
 	Entity:AddComponent(bullet.entity, "Audio", gunShotSound, true)
 	Entity:AddComponent(bullet.entity, "BoxCollider", Vector3.new(.1, .1, .1), true)
 	Entity:AddComponent(bullet.entity, "Rigidbody", false)
+
+	Physics:RBSetVelocity(bullet.entity, bullet.forward * bullet.speed)
 end
 
 --If there is no barrel component update.
@@ -114,10 +116,6 @@ function NormalBulletUpdate()
 			Entity:DestroyEntity(bullets[i].entity)
 			table.remove(bullets, i)
 			i = i - 1
-		else
-			newPos = t + (forward * bullets[i].speed) * DeltaTime; 
-			Entity:ModifyComponent(bullets[i].entity, "Transform", newPos, 1)
-			bullets[i].speed = bullets[i].speed - 0.9 * DeltaTime --temp
 		end
 
 		i = i + 1

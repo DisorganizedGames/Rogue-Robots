@@ -446,6 +446,15 @@ void HostInterface::DistanceToPlayers(DOG::LuaContext* context)
 	context->ReturnTable(tbl);
 }
 
+void PhysicsInterface::RBSetVelocity(LuaContext* context)
+{
+	entity e = static_cast<u64>(context->GetInteger());
+	LuaTable t = context->GetTable();
+	LuaVector3 vel(t);
+	auto& rigid = EntityManager::Get().GetComponent<RigidbodyComponent>(e);
+	rigid.linearVelocity = { vel.x, vel.y, vel.z };
+}
+
 LuaVector3::LuaVector3(LuaTable& table)
 {
 	x = table.GetFloatFromTable("x");
