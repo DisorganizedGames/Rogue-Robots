@@ -43,7 +43,8 @@ namespace DOG
 			ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 			if (model)
 			{
-				UpdateAnimationComponent(model->animation.animations, animatorC, (f32)Time::DeltaTime());
+				UpdateClips(animatorC, (f32)Time::DeltaTime());
+				//UpdateAnimationComponent(model->animation.animations, animatorC, (f32)Time::DeltaTime());
 				for (i32 i = 0; i < m_imguiProfilePerformUpdate; i++)
 					UpdateSkeleton(model->animation, animatorC);
 			}
@@ -138,46 +139,47 @@ namespace DOG
 							ImGui::EndCombo();
 						}
 					};
+					auto setClip = [&setName, &setClipAnim](u8 aIdx, AnimationComponent::AnimationClip& clip)
+					{
+						ImGui::Text(("Animation Clip" + std::to_string(aIdx) + " Struct\n{").c_str());
+						setClipAnim(aIdx, clip);
+						ImGui::SliderFloat(setName("	timeScale       ").c_str(), &clip.timeScale, m_imguiTimeScaleMin, m_imguiTimeScaleMax, "%.5f");
+						ImGui::SliderFloat(setName("	currentWeight   ").c_str(), &clip.currentWeight, 0.0f, 1.0f, "%.5f");
+						ImGui::SliderFloat(setName("	targetWeight    ").c_str(), &clip.targetWeight, 0.0f, 1.0f, "%.5f");
+						ImGui::SliderFloat(setName("	transitionStart ").c_str(), &clip.transitionStart, 0.0f, 1.0f, "%.5f");
+						ImGui::SliderFloat(setName("	transitionLength").c_str(), &clip.transitionTime, 0.0f, 1.0f, "%.5f");
+						ImGui::SliderInt(setName("    blendMode    ").c_str(), &clip.blendMode, 0, 4);
+						ImGui::Checkbox(setName("    loop         ").c_str(), &clip.loop);
+						if (ImGui::Button(("Apply Animation Clip"+std::to_string(aIdx)).c_str()))
+							imguiAnimC->clips[aIdx] = clip0;
+						ImGui::Text("}\n");
+					};
 					ImGui::Columns(MAX_ANIMATIONS, nullptr, true);
 					// First Clip
-					{
-						ImGui::Text("Animation Clip0 Struct\n{");
-						setClipAnim(m_animationNumeroUno, clip0);
-						ImGui::SliderFloat(setName("	currentTime").c_str(), &clip0.normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
-						ImGui::SliderFloat(setName("	timeScale  ").c_str(), &clip0.timeScale, m_imguiTimeScaleMin, m_imguiTimeScaleMax, "%.5f");
-						ImGui::Checkbox(setName("    loop").c_str(), &clip0.loop);
+					setClip(0, clip0);
+					ImGui::SliderFloat(setName("n Time").c_str(), &imguiAnimC->clips[0].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
+					ImGui::SliderFloat(setName("weight").c_str(), &imguiAnimC->clips[0].currentWeight, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
 
-						if (ImGui::Button("Apply Animation Clip0"))
-							imguiAnimC->clips[0] = clip0;
-						ImGui::Text("}\n");
-					}
 					ImGui::NextColumn();
 					// Second Clip
-					{
-						ImGui::Text("Animation Clip1 Struct\n{");
-						setClipAnim(m_animationNumeroDos, clip1);
-						ImGui::SliderFloat(setName("	currentTime").c_str(), &clip1.normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
-						ImGui::SliderFloat(setName("	timeScale  ").c_str(), &clip1.timeScale, m_imguiTimeScaleMin, m_imguiTimeScaleMax, "%.5f");
-						ImGui::Checkbox(setName("    loop").c_str(), &clip1.loop);
-						if (ImGui::Button("Apply Animation Clip1"))
-							imguiAnimC->clips[1] = clip1;
-						ImGui::Text("}\n");
-					}
+					setClip(1, clip1);
+					ImGui::SliderFloat(setName("n Time").c_str(), &imguiAnimC->clips[1].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
+					ImGui::SliderFloat(setName("weight").c_str(), &imguiAnimC->clips[1].currentWeight, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
 				}
 				ImGui::Columns();
-				if (ImGui::Button("Apply Clips & BlendSpecification"))
+				if (ImGui::Button("Apply Clips & BlendSpecification")) // tmp
 				{
+					clip0.currentWeight = 1.0f - blendSpec.blendFactor;
+					clip1.currentWeight = blendSpec.blendFactor;
+
 					imguiAnimC->clips[0] = clip0;
 					imguiAnimC->clips[1] = clip1;
 					imguiAnimC->blendSpec = blendSpec;
+					m_imguiPause = !m_imguiPause;
 				}
+				ImGui::SameLine(); ImGui::Checkbox("matchNormTime", &m_imguiMatching);
 				ImGui::Text("				\nCurrent blendfactor\n");
 				ImGui::SliderFloat(" ", &imguiAnimC->blendSpec.blendFactor, m_imguiBlendMin, m_imguiBlendMax, "%.5f");
-				ImGui::Text("				\nCurrent normTime\n");
-				ImGui::Columns(MAX_ANIMATIONS, nullptr, true);
-				ImGui::SliderFloat(setName("	currentTime").c_str(), &imguiAnimC->clips[0].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
-				ImGui::NextColumn();
-				ImGui::SliderFloat(setName("	currentTime").c_str(), &imguiAnimC->clips[1].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
 
 				// ImGui individual joint sliders
 				{
@@ -218,33 +220,81 @@ namespace DOG
 		const auto& clip1 = ac.clips[1];
 		const f32 t0 = clip0.currentTick;
 		const f32 t1 = clip1.currentTick;
-		const auto& animation1 = rig.animations[clip0.animationID];
-		const auto& animation2 = rig.animations[clip1.animationID];
+		const auto& animation0 = rig.animations[clip0.animationID];
+		const auto& animation1 = rig.animations[clip1.animationID];
 
 		const auto keyExists = [&nodeID](const std::unordered_map<i32, std::vector<AnimationKey>>& keys)
 		{ return keys.find(nodeID) != keys.end(); };
 
 		// Scale
-		if (keyExists(animation1.scaKeys))
+		if (keyExists(animation0.scaKeys))
 		{
-			auto scale1 = GetAnimationComponent(animation1.scaKeys.at(nodeID), KeyType::Scale, t0);
-			auto scale2 = GetAnimationComponent(animation2.scaKeys.at(nodeID), KeyType::Scale, t1);
-			DirectX::XMStoreFloat3(&scaling, XMVectorLerp(scale1, scale2, ac.blendSpec.blendFactor));
+			auto scale0 = GetAnimationComponent(animation0.scaKeys.at(nodeID), KeyType::Scale, t0);
+			auto scale1 = GetAnimationComponent(animation1.scaKeys.at(nodeID), KeyType::Scale, t1);
+			DirectX::XMStoreFloat3(&scaling, XMVectorLerp(scale0, scale1, ac.blendSpec.blendFactor));
 		}
 		// Rotation
-		if (keyExists(animation1.rotKeys))
+		if (keyExists(animation0.rotKeys))
 		{
-			auto rot1 = GetAnimationComponent(animation1.rotKeys.at(nodeID), KeyType::Rotation, t0);
-			auto rot2 = GetAnimationComponent(animation2.rotKeys.at(nodeID), KeyType::Rotation, t1);
+			auto rot1 = GetAnimationComponent(animation0.rotKeys.at(nodeID), KeyType::Rotation, t0);
+			auto rot2 = GetAnimationComponent(animation1.rotKeys.at(nodeID), KeyType::Rotation, t1);
 			DirectX::XMStoreFloat4(&rotation, XMQuaternionSlerp(rot1, rot2, ac.blendSpec.blendFactor));
 		}
 		// Translation
 		const bool applyTranslation = (m_imguiRootTranslation || nodeID > m_rootBoneIdx);
-		if (keyExists(animation1.posKeys) && applyTranslation)
+		if (keyExists(animation0.posKeys) && applyTranslation)
 		{
-			auto translation1 = GetAnimationComponent(animation1.posKeys.at(nodeID), KeyType::Translation, t0);
-			auto translation2 = GetAnimationComponent(animation2.posKeys.at(nodeID), KeyType::Translation, t1);
+			auto translation1 = GetAnimationComponent(animation0.posKeys.at(nodeID), KeyType::Translation, t0);
+			auto translation2 = GetAnimationComponent(animation1.posKeys.at(nodeID), KeyType::Translation, t1);
 			DirectX::XMStoreFloat3(&translation, XMVectorLerp(translation1, translation2, ac.blendSpec.blendFactor));
+		}
+
+		return XMMatrixTranspose(XMMatrixScaling(scaling.x, scaling.y, scaling.z) *
+			XMMatrixRotationQuaternion(XMQuaternionNormalize(DirectX::XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w))) *
+			XMMatrixTranslation(translation.x, translation.y, translation.z));
+	}
+
+	DirectX::FXMMATRIX AnimationManager::CalculateBlendTransformation2(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac)
+	{
+		using namespace DirectX;
+		XMFLOAT3 scaling = m_baseScale;
+		XMFLOAT4 rotation = m_baseRotation;
+		XMFLOAT3 translation = m_baseTranslation;
+
+		const auto& clip0 = ac.clips[0];
+		const auto& clip1 = ac.clips[1];
+		//const auto& clip2 = ac.clips[2];
+		const f32 t0 = clip0.currentTick;
+		const f32 t1 = clip1.currentTick;
+		const auto& animation0 = rig.animations[clip0.animationID];
+		const auto& animation1 = rig.animations[clip1.animationID];
+
+		const auto keyExists = [&nodeID](const std::unordered_map<i32, std::vector<AnimationKey>>& keys)
+		{ return keys.find(nodeID) != keys.end(); };
+
+		// Scale
+		if (keyExists(animation0.scaKeys))
+		{
+			auto scale0 = GetAnimationComponent(animation0.scaKeys.at(nodeID), KeyType::Scale, t0);
+			auto scale1 = GetAnimationComponent(animation1.scaKeys.at(nodeID), KeyType::Scale, t1);
+
+			DirectX::XMStoreFloat3(&scaling, clip0.currentWeight * scale0 + clip1.currentWeight * scale1);
+		}
+		// Rotation
+		if (keyExists(animation0.rotKeys))
+		{
+			auto rot0 = GetAnimationComponent(animation0.rotKeys.at(nodeID), KeyType::Rotation, t0);
+			auto rot1 = GetAnimationComponent(animation1.rotKeys.at(nodeID), KeyType::Rotation, t1);
+			DirectX::XMStoreFloat4(&rotation, XMQuaternionSlerp(rot0, rot1, 1.0f - clip0.currentWeight));
+		}
+		// Translation
+		const bool applyTranslation = (m_imguiRootTranslation || nodeID > m_rootBoneIdx);
+		if (keyExists(animation0.posKeys) && applyTranslation)
+		{
+			auto translation0 = GetAnimationComponent(animation0.posKeys.at(nodeID), KeyType::Translation, t0);
+			auto translation1 = GetAnimationComponent(animation1.posKeys.at(nodeID), KeyType::Translation, t1);
+
+			DirectX::XMStoreFloat3(&translation, clip0.currentWeight * translation0 + clip1.currentWeight * translation1);
 		}
 
 		return XMMatrixTranspose(XMMatrixScaling(scaling.x, scaling.y, scaling.z) *
@@ -265,7 +315,7 @@ namespace DOG
 			auto ntf = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
 
 			if (clip0.HasActiveAnimation() && clip1.HasActiveAnimation())
-				ntf = CalculateBlendTransformation(i, rig, animator);
+				ntf = CalculateBlendTransformation2(i, rig, animator);
 			else if (clip0.HasActiveAnimation())
 				ntf = CalculateNodeTransformation(rig.animations[clip0.animationID], i, clip0.currentTick);
 			else if (clip1.HasActiveAnimation())
@@ -277,7 +327,6 @@ namespace DOG
 			DirectX::XMMATRIX imguiMatrix = DirectX::XMMatrixScaling(m_imguiSca[i].x, m_imguiSca[i].y, m_imguiSca[i].z) *
 				DirectX::XMMatrixRotationRollPitchYaw(m_imguiRot[i].x, m_imguiRot[i].y, m_imguiRot[i].z) *
 				DirectX::XMMatrixTranslation(m_imguiPos[i].x, m_imguiPos[i].y, m_imguiPos[i].z);
-
 			hereditaryTFs.back() *= imguiMatrix;
 #endif
 			hereditaryTFs.push_back(ntf);
@@ -351,19 +400,19 @@ namespace DOG
 		if (keys.size() == 1)
 			return XMLoadFloat4(&keys[0].value);
 
-		// tmp, animations will supply last key used in the future, for now this will have to do
+		// tmp, will supply last key used in the future, for now this will have to do
 		i32 key2Idx = 1;
 		while (key2Idx < keys.size() - 1 && keys[key2Idx].time <= tick)
 			key2Idx++;
 		key2Idx = std::clamp(key2Idx, 1, i32(keys.size() - 1));
 		i32 key1Idx = key2Idx - 1;
 
+		const auto blendFactor = (tick - keys[key1Idx].time) / (keys[key2Idx].time - keys[key1Idx].time);
+
 		if (component == KeyType::Rotation)
-			return XMQuaternionSlerp(XMLoadFloat4(&keys[key1Idx].value), XMLoadFloat4(&keys[key2Idx].value),
-				(tick - keys[key1Idx].time) / (keys[key2Idx].time - keys[key1Idx].time));
+			return XMQuaternionSlerp(XMLoadFloat4(&keys[key1Idx].value), XMLoadFloat4(&keys[key2Idx].value), blendFactor);
 		else
-			return XMVectorLerp(XMLoadFloat4(&keys[key1Idx].value), XMLoadFloat4(&keys[key2Idx].value),
-				(tick - keys[key1Idx].time) / (keys[key2Idx].time - keys[key1Idx].time));
+			return XMVectorLerp(XMLoadFloat4(&keys[key1Idx].value), XMLoadFloat4(&keys[key2Idx].value), blendFactor);
 	}
 
 	void AnimationManager::UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const
@@ -411,6 +460,60 @@ namespace DOG
 				return;
 			}
 		}
+	}
+
+	void AnimationManager::UpdateClips(DOG::AnimationComponent& ac, const f32 dt)
+	{
+		static constexpr i32 linear = 1;
+		static constexpr i32 belzier = 2;
+
+		f32 weightSum = 0.0f;
+		for (auto& c : ac.clips)
+		{
+			c.UpdateClip(dt);
+			if (c.blendMode == linear)
+				UpdateLinear(c, dt);
+			else if (c.blendMode == belzier)
+				UpdateBelzier(c, dt);
+			weightSum += c.currentWeight;
+		}
+
+		// Normalize weights
+		for (auto& c : ac.clips)
+			c.currentWeight /= weightSum;
+
+		if (m_imguiMatching)
+			ac.clips[1].normalizedTime = ac.clips[0].normalizedTime;
+	}
+	void AnimationManager::UpdateBelzier(AnimationComponent::AnimationClip& clip, const f32 dt)
+	{
+		if (clip.normalizedTime > clip.transitionStart)
+		{
+			const f32 diff = clip.targetWeight - clip.currentWeight;
+			const f32 tstart = clip.transitionStart;
+			const f32 t = clip.normalizedTime - tstart;
+			const f32 u = t / (clip.transitionTime);
+			const f32 v = (1.0f - u);
+			clip.currentWeight += diff * (3.f * v * u * u + std::powf(u, 3.f));
+			clip.currentWeight = std::clamp(clip.currentWeight, 0.0f, 1.0f);
+		}
+	}
+	void AnimationManager::UpdateLinear(AnimationComponent::AnimationClip& clip, const f32 dt)
+	{
+		if (clip.normalizedTime > clip.transitionStart && clip.currentWeight != clip.targetWeight)
+		{
+			if (m_imguiPause)
+				auto x = 0;
+			const f32 diff = clip.targetWeight - clip.currentWeight;
+			const f32 tStart = clip.transitionStart;
+			const f32 tCurrent = clip.normalizedTime - tStart;
+			clip.currentWeight += diff * tCurrent / clip.transitionTime;
+			clip.currentWeight = std::clamp(clip.currentWeight, 0.0f, 1.0f);
+		}
+	}
+	
+	void AnimationManager::UpdateComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt)
+	{
 	}
 
 	void AnimationManager::UpdateMovementAnimation(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt)

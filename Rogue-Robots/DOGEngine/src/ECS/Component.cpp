@@ -124,11 +124,10 @@ namespace DOG
 		if (HasActiveAnimation())
 		{
 			normalizedTime += timeScale * dt / animDuration;
+			
 			if(loop)
-			{
 				while (normalizedTime > 1.0f)
 					normalizedTime -= 1.0f;
-			}
 
 			normalizedTime = std::clamp(normalizedTime, 0.0f, 1.0f);
 			currentTick = normalizedTime * animTotalTicks;
@@ -146,15 +145,6 @@ namespace DOG
 
 	void AnimationComponent::Update(const f32 dt)
 	{
-		switch (blendSpec.mode)
-		{
-		case 0: // frozen transition
-			clips[0].timeScale = 0.0f;
-
-			break;
-		default:
-			break;
-		}
 		for (auto& c : clips)
 			if (c.HasActiveAnimation())
 				c.UpdateClip(dt);
