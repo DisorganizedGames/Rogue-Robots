@@ -71,11 +71,14 @@ namespace DOG::gfx
 			res.elementOffset = res.alloc.offset / m_elementSize;
 
 			// Enqueue data update
-			auto updateFunc = [this, initData, size, offset = res.alloc.offset](UploadContext& ctx)
+			if (initData)
 			{
-				ctx.PushUpload(m_buffer, (u32)offset, initData, size);
-			};
-			m_updateRequests.push(updateFunc);
+				auto updateFunc = [this, initData, size, offset = res.alloc.offset](UploadContext& ctx)
+				{
+					ctx.PushUpload(m_buffer, (u32)offset, initData, size);
+				};
+				m_updateRequests.push(updateFunc);
+			}
 
 			// Reserve storage
 			auto hdl = m_handleAtor.Allocate<Handle>();
@@ -108,27 +111,32 @@ namespace DOG::gfx
 			Assumes CPU data is stored elsewhere.
 			The CPU data MUST be valid all the way until SendCopyRequests!
 			This table does NOT take ownership of the data!
+
+			Unsafe direct upload --> Uploads unsafely directly to the already allocated memory
 		*/
-		void RequestUpdate(Handle handle, void* data, u32 dataSize)
+		void RequestUpdate(Handle handle, void* data, u32 dataSize, bool unsafeDirectUpload = false)
 		{
 			auto& res = HandleAllocator::TryGet(m_resources, HandleAllocator::GetSlot(handle.handle));
 			assert(dataSize <= res.alloc.size);
 
-			// Invalidate internal GPU data
-			auto delFunc = [this, alloc = std::move(res.alloc)]() mutable
+			// If safe --> Allocate new
+			if (!unsafeDirectUpload)
 			{
-				m_vator.Free(std::move(alloc));
-			};
-			m_bin->PushDeferredDeletion(delFunc);
+				auto delFunc = [this, alloc = std::move(res.alloc)]() mutable
+				{
+					m_vator.Free(std::move(alloc));
+				};
+				m_bin->PushDeferredDeletion(delFunc);
 
-			// Allocate new one
-			res.alloc = m_vator.Allocate(m_elementSize);
-			res.elementOffset = res.alloc.offset / m_elementSize;
-
+				// Allocate new one
+				res.alloc = m_vator.Allocate(m_elementSize);
+				res.elementOffset = res.alloc.offset / m_elementSize;
+			}
+		
 			// Enqueue data update
-			auto updateFunc = [this, data, dataSize, offset = res.alloc.offset](UploadContext& ctx)
+			auto updateFunc = [this, savedData = data, dataSize, offset = res.alloc.offset](UploadContext& ctx)
 			{
-				ctx.PushUpload(m_buffer, (u32)offset, data, dataSize);
+				ctx.PushUpload(m_buffer, (u32)offset, savedData, dataSize);
 			};
 			m_updateRequests.push(updateFunc);
 		}

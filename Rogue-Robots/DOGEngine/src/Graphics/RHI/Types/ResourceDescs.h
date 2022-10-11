@@ -104,11 +104,21 @@ namespace DOG::gfx
 		u32 offset{ 0 };
 		u32 stride{ 0 };
 		u32 count{ 1 };
+	
+		Buffer uavCounterResource;
+		u32 uavCounterOffset{ 0 };
 
 		bool raw{ false };
 
 		BufferViewDesc() = delete;
 		BufferViewDesc(ViewType viewType, u32 offset, u32 stride, u32 count = 1) : viewType(viewType), offset(offset), stride(stride), count(count) {};
+
+		BufferViewDesc& AddCounterResource(Buffer resource, u32 counterOffset)
+		{
+			uavCounterResource = resource;
+			uavCounterOffset = counterOffset;
+			return *this;
+		}
 	};
 
 	struct TextureViewDesc

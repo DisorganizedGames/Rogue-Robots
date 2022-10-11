@@ -9,6 +9,7 @@
 #include "RenderEffects/RenderEffect.h"
 #include "RenderEffects/EffectData/GlobalEffectData.h"
 
+
 namespace DOG::gfx
 {
 	class RenderBackend;
@@ -22,6 +23,7 @@ namespace DOG::gfx
 	class GPUDynamicConstants;
 	class MaterialTable;
 	class MeshTable;
+	class LightTable;
 	class TextureManager;
 
 	class GraphicsBuilder;
@@ -109,6 +111,7 @@ namespace DOG::gfx
 		// Big buffers store meshes and materials
 		std::unique_ptr<MaterialTable> m_globalMaterialTable;
 		std::unique_ptr<MeshTable> m_globalMeshTable;
+		std::unique_ptr<LightTable> m_globalLightTable;
 
 
 		std::vector<RenderSubmission> m_submissions;		// temporary
@@ -169,6 +172,24 @@ namespace DOG::gfx
 			DirectX::SimpleMath::Vector4 camPos;
 			f32 time{ 0.f };
 
+			u32 dynPointLightOffset;
+			u32 dynPointLightCount;
+
+			u32 infreqPointLightOffset;
+			u32 infreqPointLightCount;
+
+			u32 dynSpotLightOffset;
+			u32 dynSpotLightCount;
+
+			u32 infreqSpotLightOffset;
+			u32 infreqSpotLightCount;
+
+			u32 dynAreaLightOffset;
+			u32 dynAreaLightCount;
+
+			u32 infreqAreaLightOffset;
+			u32 infreqAreaLightCount;
+
 		} m_pfData{};
 		struct PfDataHandle { friend class TypedHandlePool; u64 handle{ 0 }; };
 		std::unique_ptr<GPUTableDeviceLocal<PfDataHandle>> m_pfDataTable;
@@ -188,6 +209,18 @@ namespace DOG::gfx
 
 			u32 perFrameTable;
 			u32 materialTable{ 0 };
+
+			u32 pointLightTable{ 0 };
+			u32 spotLightTable{ 0 };
+			u32 areaLightTable{ 0 };
+
+			u32 staticPointLightOffset{ 0 };
+			u32 staticSpotLightOffset{ 0 };
+			u32 staticAreaLightOffset{ 0 };
+
+			u32 staticPointLightCount{ 0 };
+			u32 staticSpotLightCount{ 0 };
+			u32 staticAreaLightCount{ 0 };
 
 		} m_globalData{};
 		struct GlobalDataHandle{ friend class TypedHandlePool; u64 handle{ 0 }; };

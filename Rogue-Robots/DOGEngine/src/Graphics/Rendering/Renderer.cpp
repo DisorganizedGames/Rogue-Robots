@@ -13,7 +13,7 @@
 #include "GPUDynamicConstants.h"
 #include "MaterialTable.h"
 #include "MeshTable.h"
-#include "TextureManager.h"
+#include "LightTable.h"
 #include "GraphicsBuilder.h"
 
 #include "../../Core/AssimpImporter.h"
@@ -87,6 +87,26 @@ namespace DOG::gfx
 		memSpec.maxElements = maxMaterialArgs;
 		m_globalMaterialTable = std::make_unique<MaterialTable>(m_rd, m_bin.get(), memSpec);
 
+		// Default storage
+		auto lightStorageSpec = LightTable::StorageSpecification();
+		m_globalLightTable = std::make_unique<LightTable>(m_rd, m_bin.get(), lightStorageSpec, false);
+		// Tests
+		auto sdesc = SpotLightDesc();
+		sdesc.position = { 0.f, 1.f, 0.f };
+		sdesc.color = { 1.f, 0.f, 0.f };
+		auto h1 = m_globalLightTable->AddSpotLight(sdesc, LightUpdateFrequency::Never);
+		sdesc.color = { 0.f, 0.f, 1.f };
+		auto h10 = m_globalLightTable->AddSpotLight(sdesc, LightUpdateFrequency::Never);
+		sdesc.position = { 0.f, 2.f, 0.f };
+		auto h2 = m_globalLightTable->AddSpotLight(sdesc, LightUpdateFrequency::Sometimes);
+		sdesc.position = { 0.f, 3.f, 0.f };
+		auto h3 = m_globalLightTable->AddSpotLight(sdesc, LightUpdateFrequency::PerFrame);
+
+
+
+
+
+
 		// Create builder for users to create graphical objects supported by the renderer
 		m_builder = std::make_unique<GraphicsBuilder>(
 			m_rd,
@@ -147,6 +167,15 @@ namespace DOG::gfx
 		m_globalData.meshTableBlend = m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::BlendData);
 		m_globalData.perFrameTable = m_pfDataTable->GetGlobalDescriptor();
 		m_globalData.materialTable = m_globalMaterialTable->GetDescriptor();
+		m_globalData.pointLightTable = m_globalLightTable->GetDescriptor(LightType::Point);
+		m_globalData.spotLightTable = m_globalLightTable->GetDescriptor(LightType::Spot);
+		m_globalData.areaLightTable = m_globalLightTable->GetDescriptor(LightType::Area);
+		m_globalData.staticPointLightOffset = m_globalLightTable->GetChunkOffset(LightType::Point, LightUpdateFrequency::Never);
+		m_globalData.staticSpotLightOffset = m_globalLightTable->GetChunkOffset(LightType::Spot, LightUpdateFrequency::Never);
+		m_globalData.staticAreaLightOffset = m_globalLightTable->GetChunkOffset(LightType::Area, LightUpdateFrequency::Never);
+		m_globalData.staticPointLightCount = lightStorageSpec.pointLightSpec.maxStatics;
+		m_globalData.staticSpotLightCount = lightStorageSpec.spotLightSpec.maxStatics;
+		m_globalData.staticAreaLightCount = lightStorageSpec.areaLightSpec.maxStatics;
 
 		m_globalDataTable = std::make_unique<GPUTableDeviceLocal<GlobalDataHandle>>(m_rd, m_bin.get(), (u32)sizeof(GlobalData), 1, false);
 		m_gdHandle = m_globalDataTable->Allocate(1, &m_globalData);
@@ -250,6 +279,7 @@ namespace DOG::gfx
 	{
 		m_boneJourno->UpdateJoints();
 
+		m_globalLightTable->SendCopyRequests(*m_uploadCtx);
 
 		// Update per frame data
 		{
