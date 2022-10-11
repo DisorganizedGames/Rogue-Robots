@@ -12,7 +12,8 @@ class btCollisionShape;
 
 namespace DOG
 {
-	struct BulletCollisionCallback;
+	struct RigidbodyComponent;
+	class PhysicsRigidbody;
 
 	typedef u32 entity;
 
@@ -35,6 +36,7 @@ namespace DOG
 		CollisionShapeHandle collisionShapeHandle;
 		bool dynamic = false;
 		entity rigidbodyEntity;
+		DirectX::SimpleMath::Vector3 rigidbodyScale;
 	};
 
 	struct RigidbodyCollisionData
@@ -42,20 +44,6 @@ namespace DOG
 		bool collisionCheck = false;
 		bool activeCollision = false;
 		RigidbodyHandle rigidbodyHandle;
-	};
-
-	struct RigidbodyComponent
-	{
-		RigidbodyComponent(entity entity);
-
-		void SetOnCollisionEnter(std::function<void(entity, entity)> onCollisionEnter);
-		void SetOnCollisionExit(std::function<void(entity, entity)> onCollisionExit);
-		void ConstrainRotation(bool constrainXRotation, bool constrainYRotation, bool constrainZRotation);
-		void ConstrainPosition(bool constrainXPosition, bool constrainYPosition, bool constrainZPosition);
-
-		RigidbodyHandle rigidbodyHandle;
-		std::function<void(entity, entity)> onCollisionEnter = nullptr;
-		std::function<void(entity, entity)> onCollisionExit = nullptr;
 	};
 
 	struct BoxColliderComponent
@@ -105,7 +93,7 @@ namespace DOG
 		friend CapsuleColliderComponent;
 		friend RigidbodyComponent;
 		friend MeshColliderComponent;
-		friend BulletCollisionCallback;
+		friend PhysicsRigidbody;
 
 	private:
 		//Order of unique ptrs matter for the destruction of the unique ptrs
@@ -131,8 +119,8 @@ namespace DOG
 		//Collision keeper for different rigidbodies
 		std::unordered_map<u32, std::unordered_map<u32, RigidbodyCollisionData>> m_rigidbodyCollision;
 
-		//Callback function for collision detection
-		std::unique_ptr<BulletCollisionCallback> m_collisionCallback;
+		static constexpr u64 RESIZE_RIGIDBODY_SIZE = 1000;
+		static constexpr u64 RESIZE_COLLISIONSHAPE_SIZE = 1000;
 
 	private:
 		PhysicsEngine();
@@ -148,9 +136,7 @@ namespace DOG
 		btCollisionShape* GetCollisionShape(const CollisionShapeHandle& collisionShapeHandle);
 		void FreeRigidbodyData(const RigidbodyHandle& rigidbodyHandle, bool freeCollisionShape);
 		void FreeCollisionShape(const CollisionShapeHandle& collisionShapeHandle);
-
-		static constexpr u64 RESIZE_RIGIDBODY_SIZE = 1000;
-		static constexpr u64 RESIZE_COLLISIONSHAPE_SIZE = 1000;
+		void CheckRigidbodyCollisions();
 
 	public:
 		~PhysicsEngine();

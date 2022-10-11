@@ -63,6 +63,13 @@ namespace DOG
 		return XMMatrixRotationQuaternion(rotationQuat);
 	}
 
+	DirectX::SimpleMath::Vector3 TransformComponent::GetScale() const noexcept
+	{
+		XMVECTOR xmScale, rotationQuat, translation;
+		XMMatrixDecompose(&xmScale, &rotationQuat, &translation, worldMatrix);
+		return xmScale;
+	}
+
 	TransformComponent& TransformComponent::RotateW(const Vector3& rotation) noexcept
 	{
 		XMVECTOR scaleVec, rotationQuat, translationVec;

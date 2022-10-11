@@ -16,6 +16,7 @@
 #include "src/EventSystem/KeyboardEvents.h"
 
 #include "src/Physics/PhysicsEngine.h"
+#include "src/Physics/PhysicsRigidbody.h"
 
 #include "src/ECS/EntityManager.h"
 #include "src/ECS/Component.h"
