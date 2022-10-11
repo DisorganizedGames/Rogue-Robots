@@ -35,7 +35,7 @@ namespace DOG
 		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator);
 		void UpdateMovementAnimation(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt);
 
-		DirectX::FXMVECTOR GetAnimationComponent(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick);
+		DirectX::FXMVECTOR GetKeyValue(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick);
 		DirectX::FXMMATRIX CalculateNodeTransformation(const DOG::AnimationData&, i32 nodeID, f32 animTick);
 		DirectX::FXMMATRIX CalculateBlendTransformation(i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 		DirectX::FXMMATRIX CalculateBlendTransformation2(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
