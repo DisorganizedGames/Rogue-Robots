@@ -1055,7 +1055,7 @@ namespace DOG::gfx
 			sd1.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
 			sd1.MinLOD = 0.f;
 			sd1.MaxLOD = D3D12_FLOAT32_MAX;
-			sd1.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+			sd1.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 			sd1.ShaderRegister = next_register++;
 			sd1.RegisterSpace = space;
 			samplers.push_back(sd1);
@@ -1071,7 +1071,23 @@ namespace DOG::gfx
 			sd1.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
 			sd1.MinLOD = 0.f;
 			sd1.MaxLOD = D3D12_FLOAT32_MAX;
-			sd1.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+			sd1.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+			sd1.ShaderRegister = next_register++;
+			sd1.RegisterSpace = space;
+			samplers.push_back(sd1);
+		}
+
+		{
+			D3D12_STATIC_SAMPLER_DESC sd1{};
+			sd1.Filter = D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+			sd1.AddressU = sd1.AddressV = sd1.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+			sd1.MipLODBias = 0.f;
+			sd1.MaxAnisotropy = 0;
+			sd1.ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+			sd1.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+			sd1.MinLOD = 0.f;
+			sd1.MaxLOD = D3D12_FLOAT32_MAX;
+			sd1.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 			sd1.ShaderRegister = next_register++;
 			sd1.RegisterSpace = space;
 			samplers.push_back(sd1);

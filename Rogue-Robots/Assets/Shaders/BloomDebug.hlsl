@@ -25,28 +25,39 @@ float3 random(float seed, float3 seedVec)
 
 ConstantBuffer<PushConstantElement> g_constants : register(b0, space0);
 
+
 [numthreads(32, 32, 1)]
-void main(uint3 globalId : SV_DispatchThreadID)
+void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 {
     if (globalId.x < g_constants.width && globalId.y < g_constants.height)
     {
-        ConstantBuffer<PerDrawData> cb = ResourceDescriptorHeap[g_constants.contantBufferHandle];
-        //RWTexture2D<float4> tex = ResourceDescriptorHeap[g_constants.srcTexture];
         Texture2D tex = ResourceDescriptorHeap[g_constants.srcTexture];
-        RWTexture2D<float4> bloomTexture = ResourceDescriptorHeap[g_constants.dstTexture];
+        RWTexture2D<float4> target = ResourceDescriptorHeap[g_constants.dstTexture];
         
-        //if (length(tex[globalId.xy].rgb) > cb.threshold)
         float u = (float) globalId.x / g_constants.width;
         float v = (float) globalId.y / g_constants.height;
-        float3 color = tex.Sample(g_bilinear_clamp_samp, float2(u, v)).rgb;
-
-        //if (tex[globalId.xy].g > cb.threshold)
-        if (length(color.rgb) > length(cb.threshold * float3(1, 1, 1)))
-        {
-            bloomTexture[globalId.xy].rgb = color;
-        }
+        float3 color = tex.Sample(g_point_samp, float2(u, v)).rgb;
+        target[globalId.xy].xyz = color;
     }
 }
+
+
+//[numthreads(32, 32, 1)]
+//void main(uint3 globalId : SV_DispatchThreadID)
+//{
+//    if (globalId.x < g_constants.width && globalId.y < g_constants.height)
+//    {
+//        ConstantBuffer<PerDrawData> cb = ResourceDescriptorHeap[g_constants.contantBufferHandle];
+//        RWTexture2D<float4> tex = ResourceDescriptorHeap[g_constants.srcTexture];
+//        RWTexture2D<float4> bloomTexture = ResourceDescriptorHeap[g_constants.dstTexture];
+        
+//        //if (length(tex[globalId.xy].rgb) > cb.threshold)
+//        if (tex[globalId.xy].g > cb.threshold)
+//        {
+//            bloomTexture[globalId.xy].rgb = tex[globalId.xy].rgb;
+//        }
+//    }
+//}
 
 
 

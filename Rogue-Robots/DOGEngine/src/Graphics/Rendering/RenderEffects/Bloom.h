@@ -20,14 +20,12 @@ namespace DOG::gfx
 		{
 			DirectX::SimpleMath::Vector3 color;
 			f32 threshold;
-			Vector2u res;
 		};
 
 		TextureDesc m_bloomTexDesc;
-		//Texture m_bloomTexture;
 
 		// Untill the rendergraph can handle subresources we will use fake mip levels by using more textures
-		std::vector<Texture> m_bloomTexture;
+		std::vector<std::pair<Texture, TextureDesc>> m_bloomTexture;
 
 
 		u32 m_width;
@@ -36,5 +34,6 @@ namespace DOG::gfx
 		GPUDynamicConstants* m_dynamicConstants{ nullptr };
 		Pipeline m_computePipe;
 		Pipeline m_compPipDownSample;
+		Pipeline m_compPipDebug;
 	};
 }
