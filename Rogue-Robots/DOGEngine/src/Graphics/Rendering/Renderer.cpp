@@ -28,6 +28,7 @@
 // Passes
 #include "RenderEffects/ImGUIEffect.h"
 #include "RenderEffects/TestComputeEffect.h"
+#include "RenderEffects/Bloom.h"
 
 #include "ImGUI/imgui.h"
 #include "../../Core/ImGuiMenuLayer.h"
@@ -224,6 +225,7 @@ namespace DOG::gfx
 		*/
 		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
 		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
+		m_bloomEffect = std::make_unique<Bloom>(m_globalEffectData, m_dynConstants.get());
 
 		ImGuiMenuLayer::RegisterDebugWindow("Renderer Debug", [this](bool& open) { SpawnRenderDebugWindow(open); });
 	}
@@ -472,6 +474,8 @@ namespace DOG::gfx
 		// Test compute on Lit HDR
 		// Uncomment to enable the test compute effect!
 		//m_testComputeEffect->Add(rg);
+
+		m_bloomEffect->Add(rg);
 
 		// Blit HDR to LDR
 		{

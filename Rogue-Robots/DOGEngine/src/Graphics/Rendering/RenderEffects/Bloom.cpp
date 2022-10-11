@@ -1,0 +1,140 @@
+#include "Bloom.h"
+
+#include "RECommonIncludes.h"
+
+#include "../../RHI/RenderDevice.h"
+#include "../../RHI/ShaderCompilerDXC.h"
+#include "../GPUDynamicConstants.h"
+
+
+namespace DOG::gfx
+{
+	Bloom::Bloom(GlobalEffectData& globalEffectData, GPUDynamicConstants* dynConsts)
+		: RenderEffect(globalEffectData), m_dynamicConstants(dynConsts)
+	{
+		/*m_width = 1280;
+		m_height = 720;*/
+
+		m_width = 1280;
+		m_height = 720;
+
+		auto& device = globalEffectData.rd;
+
+		auto bloomShader = globalEffectData.sclr->CompileFromFile("BloomCS.hlsl", ShaderType::Compute);
+		m_computePipe = device->CreateComputePipeline(ComputePipelineDesc(bloomShader.get()));
+		auto downSampleShader = globalEffectData.sclr->CompileFromFile("BloomDownSample.hlsl", ShaderType::Compute);
+		m_compPipDownSample = device->CreateComputePipeline(ComputePipelineDesc(downSampleShader.get()));
+
+
+		m_bloomTexDesc.width = m_width;
+		m_bloomTexDesc.height = m_height;
+		m_bloomTexDesc.mipLevels = 1;
+		m_bloomTexDesc.flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+		m_bloomTexDesc.format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+
+		m_bloomTexture.push_back(device->CreateTexture(m_bloomTexDesc));
+
+		TextureDesc desc1 = m_bloomTexDesc;
+		desc1.width /= 2;
+		desc1.height /= 2;
+		m_bloomTexture.push_back(device->CreateTexture(desc1));
+
+
+	}
+	void Bloom::Add(RenderGraph& rg)
+	{
+		struct PassData
+		{
+			GPUDynamicConstant constantBufferHandle;
+			RGResourceView srcTextureHandle;
+			RGResourceView dstTextureHandle;
+		};
+		rg.AddPass<PassData>("Bloom Pass0",
+			[&](PassData& passData, RenderGraph::PassBuilder& builder)		// Build
+			{
+
+				passData.srcTextureHandle = builder.ReadWriteTarget(RG_RESOURCE(LitHDR),
+					TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+				builder.ImportTexture(RG_RESOURCE(BloomTexture0), m_bloomTexture[0], D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COMMON);
+
+				//passData.dstTextureHandle = builder.ReadWriteTarget(RG_RESOURCE(BloomTexture), TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+				passData.dstTextureHandle = builder.ReadWriteTarget(RG_RESOURCE(BloomTexture0), TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+				passData.constantBufferHandle = m_dynamicConstants->Allocate(1);
+				BloomConstantBuffer perDrawData{};
+				perDrawData.threshold = 0.1f;
+				perDrawData.color = { 1, 1, 1 };
+				perDrawData.res.x = m_width;
+				perDrawData.res.y = m_height;
+
+				*reinterpret_cast<BloomConstantBuffer*>(passData.constantBufferHandle.memory) = perDrawData;
+			},
+			[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)		// Execute
+			{
+				u32 view = resources.GetView(passData.srcTextureHandle);
+				u32 bloomTextureHandle = resources.GetView(passData.dstTextureHandle);
+
+				rd->Cmd_SetPipeline(cmdl, m_computePipe);
+				auto args = ShaderArgs()
+					.AppendConstant(view)
+					.AppendConstant(bloomTextureHandle)
+					.AppendConstant(passData.constantBufferHandle.globalDescriptor)
+					.AppendConstant(m_width)
+					.AppendConstant(m_height);
+				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
+
+				constexpr u32 groupSize = 32;
+
+				u32 tgx = m_width / groupSize + 1 * static_cast<bool>(m_width % groupSize);
+				u32 tgy = m_height / groupSize + 1 * static_cast<bool>(m_height % groupSize);
+				rd->Cmd_ClearUnorderedAccessFLOAT(cmdl,
+					resources.GetTextureView(passData.dstTextureHandle), { 0.f, 0.f, 0.f, 0.f }, ScissorRects().Append(0, 0, m_width, m_height));
+				rd->Cmd_Dispatch(cmdl, tgx, tgy, 1);
+			});
+
+		rg.AddPass<PassData>("Bloom Pass1",
+			[&](PassData& passData, RenderGraph::PassBuilder& builder)		// Build
+			{
+				builder.ImportTexture(RG_RESOURCE(BloomTexture1), m_bloomTexture[1], D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COMMON);
+
+				//passData.srcTextureHandle = builder.ReadResource(RG_RESOURCE(BloomTexture0), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+				passData.srcTextureHandle = builder.ReadWriteTarget(RG_RESOURCE(BloomTexture0), TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+				passData.dstTextureHandle = builder.ReadWriteTarget(RG_RESOURCE(BloomTexture1), TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+				passData.constantBufferHandle = m_dynamicConstants->Allocate(1);
+				BloomConstantBuffer perDrawData{};
+				perDrawData.threshold = 0.1f;
+				perDrawData.color = { 1, 1, 1 };
+				perDrawData.res.x = m_width;
+				perDrawData.res.y = m_height;
+
+				*reinterpret_cast<BloomConstantBuffer*>(passData.constantBufferHandle.memory) = perDrawData;
+			},
+			[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)		// Execute
+			{
+				u32 bloomReadHandle = resources.GetView(passData.srcTextureHandle);
+				u32 bloomWriteHandle = resources.GetView(passData.dstTextureHandle);
+
+				rd->Cmd_SetPipeline(cmdl, m_compPipDownSample);
+				auto args = ShaderArgs()
+					.AppendConstant(bloomReadHandle)
+					.AppendConstant(bloomWriteHandle)
+					.AppendConstant(passData.constantBufferHandle.globalDescriptor)
+					.AppendConstant(m_width/2)
+					.AppendConstant(m_height/2);
+				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
+
+				constexpr u32 groupSize = 32;
+
+				u32 tgx = (m_width/2)  / groupSize + 1 * static_cast<bool>((m_width / 2) % groupSize);
+				u32 tgy = (m_height/2) / groupSize + 1 * static_cast<bool>((m_height / 2) % groupSize);
+
+				rd->Cmd_Dispatch(cmdl, tgx, tgy, 1);
+
+				/*rd->Cmd_ClearUnorderedAccessFLOAT(cmdl,
+					resources.GetTextureView(passData.srcTextureHandle), { 0.f, 0.f, 0.f, 0.f }, ScissorRects().Append(0, 0, m_width, m_height));*/
+			});
+	}
+}
