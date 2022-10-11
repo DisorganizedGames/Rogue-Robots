@@ -114,12 +114,12 @@ void EntityInterface::GetForward(LuaContext* context)
 {
 	entity e = context->GetInteger();
 	TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
-	Vector3 forward = Vector3::Transform({ 0, 0, 1 }, transform.GetRotation());
+	Matrix world = transform.worldMatrix;
 	
 	LuaTable t;
-	t.AddFloatToTable("x", forward.x);
-	t.AddFloatToTable("y", forward.y);
-	t.AddFloatToTable("z", forward.z);
+	t.AddFloatToTable("x", world._31);
+	t.AddFloatToTable("y", world._32);
+	t.AddFloatToTable("z", world._33);
 	context->ReturnTable(t);
 }
 
@@ -127,12 +127,12 @@ void EntityInterface::GetUp(LuaContext* context)
 {
 	entity e = context->GetInteger();
 	TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
-	Vector3 up = Vector3::Transform({ 0, 1, 0 }, transform.GetRotation());
+	Matrix world = transform.worldMatrix;
 
 	LuaTable t;
-	t.AddFloatToTable("x", up.x);
-	t.AddFloatToTable("y", up.y);
-	t.AddFloatToTable("z", up.z);
+	t.AddFloatToTable("x", world._21);
+	t.AddFloatToTable("y", world._22);
+	t.AddFloatToTable("z", world._23);
 	context->ReturnTable(t);
 }
 
@@ -140,13 +140,12 @@ void EntityInterface::GetRight(DOG::LuaContext* context)
 {
 	entity e = context->GetInteger();
 	TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
-	Vector3 right;
-	right = Vector3::Transform({ 1, 0, 0 }, transform.GetRotation());
+	Matrix world = transform.worldMatrix;
 
 	LuaTable t;
-	t.AddFloatToTable("x", right.x);
-	t.AddFloatToTable("y", right.y);
-	t.AddFloatToTable("z", right.z);
+	t.AddFloatToTable("x", world._11);
+	t.AddFloatToTable("y", world._12);
+	t.AddFloatToTable("z", world._13);
 	context->ReturnTable(t);
 }
 //1. Shoot, 2. Jump, 3.activateActiveItem 
