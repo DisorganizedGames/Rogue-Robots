@@ -46,17 +46,6 @@ float4 main(VS_OUT input) : SV_TARGET
     StructuredBuffer<ShaderInterop_PerFrameData> pfDatas = ResourceDescriptorHeap[gd.perFrameTable];
     ShaderInterop_PerFrameData pfData = pfDatas[g_constants.perFrameOffset];
     
-    
-    
-    // Get lights metadata
-    StructuredBuffer<ShaderInterop_LightsMetadata> lightsMDs = ResourceDescriptorHeap[gd.lightTableMD];
-    ShaderInterop_LightsMetadata lightsMD = lightsMDs[0];
-    
-    // Get spotlights
-    StructuredBuffer<ShaderInterop_SpotLight> spotlights = ResourceDescriptorHeap[gd.spotLightTable];
-    uint lightID = 0;
-    ShaderInterop_SpotLight spotlight = spotlights[pfData.spotLightOffsets.dynOffset + lightID];
-    //return spotlight.color;
 
     
     
@@ -127,15 +116,47 @@ float4 main(VS_OUT input) : SV_TARGET
     
     
     
-
     
-        
+    
+    // Get lights metadata
+    StructuredBuffer<ShaderInterop_LightsMetadata> lightsMDs = ResourceDescriptorHeap[gd.lightTableMD];
+    ShaderInterop_LightsMetadata lightsMD = lightsMDs[0];
+    
+    // Get spotlights
+    StructuredBuffer<ShaderInterop_SpotLight> spotlights = ResourceDescriptorHeap[gd.spotLightTable];
+    uint lightID = 0;
+    ShaderInterop_SpotLight spotlight = spotlights[pfData.spotLightOffsets.dynOffset + lightID];
+    
+    float3 lightToPosDir = normalize(input.wsPos - spotlight.position.xyz);
+    float3 lightToPosDist = length(input.wsPos - spotlight.position.xyz);
+    float theta = dot(normalize(spotlight.direction), lightToPosDir);
+    
+    float SPOTLIGHT_DISTANCE = 30.f;
+    float distanceFallOffFactor = (1.f - clamp(lightToPosDist, 0.f, SPOTLIGHT_DISTANCE) / SPOTLIGHT_DISTANCE);
+    distanceFallOffFactor *= distanceFallOffFactor;     // quadratic falloff
+    
+    float contrib = 0.f;    
+    contrib = distanceFallOffFactor;
+    //if (acos(theta) > spotlight.cutoffAngle * 3.1415f / 180.f)
+    //{
+    //    contrib = 0.0f;
+    //}
+    //else
+    //    contrib = 1.f * distanceFallOffFactor;
+    
+    
+    
+    
+    
+    
+    
+    
     // Add directional Light
     float3 Lo = float3(0.f, 0.f, 0.f);
     {
         // calculate per-light radiance
         //float3 L = normalize(-float3(-1.f, -1.f, 1.f));
-        float3 L = normalize(spotlight.position.xyz - input.wsPos);        // temp
+        float3 L = normalize(spotlight.position.xyz - input.wsPos); // temp
         float3 H = normalize(V + L);
         float3 radiance = float3(1.f, 1.f, 1.f); // no attenuation
         
@@ -163,7 +184,7 @@ float4 main(VS_OUT input) : SV_TARGET
     
     
     float3 hdr = amb + Lo;
-    return float4(hdr, 1.f);
+    return float4(hdr * contrib, 1.f);
     
 }
 

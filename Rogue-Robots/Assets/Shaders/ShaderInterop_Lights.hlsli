@@ -33,7 +33,8 @@ struct ShaderInterop_PointLight
 struct ShaderInterop_SpotLight
 {
     float4 position;
-    float4 color;
+    float3 color;
+    float cutoffAngle;
     float3 direction;
     float strength;
 };

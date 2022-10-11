@@ -277,30 +277,29 @@ namespace DOG::gfx
 		m_boneJourno->UpdateJoints();
 
 
-		// Update spotlight
-
-		ImGui::SliderFloat3("Position", thingy, -30.f, 30.f);
-		ImGui::SliderFloat3("Color", thingy2, 0.f, 1.f);
-		auto sdesc = SpotLightDesc();
-		sdesc.position = { thingy[0], thingy[1], thingy[2] };
-		sdesc.color = { thingy2[0], thingy2[1], thingy2[2] };
-		m_globalLightTable->UpdateSpotLight(m_light, sdesc);
-
-		m_globalLightTable->FinalizeUpdates();
-
-
 
 		// Update spotlight
+		{
+			// Get camera position
+			DirectX::XMVECTOR tmp;
+			auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
+			auto pos = invVm.r[3];
+			DirectX::XMFLOAT3 posFloat3;
+			DirectX::XMStoreFloat3(&posFloat3, pos);
 
-		ImGui::SliderFloat3("Position", thingy, -30.f, 30.f);
-		ImGui::SliderFloat3("Color", thingy2, 0.f, 1.f);
-		auto sdesc = SpotLightDesc();
-		sdesc.position = { thingy[0], thingy[1], thingy[2] };
-		sdesc.color = { thingy2[0], thingy2[1], thingy2[2] };
-		m_globalLightTable->UpdateSpotLight(m_light, sdesc);
+			// Get camera lookat
+			auto lookat = invVm.r[2];
+			DirectX::XMFLOAT3 lookAtF3;
+			DirectX::XMStoreFloat3(&lookAtF3, lookat);
 
+			auto sdesc = SpotLightDesc();
+			sdesc.position = { pos };
+			sdesc.direction = { lookAtF3 };
+			sdesc.color = { thingy2[0], thingy2[1], thingy2[2] };
+			m_globalLightTable->UpdateSpotLight(m_light, sdesc);
+
+		}
 		m_globalLightTable->FinalizeUpdates();
-
 
 
 		// Update per frame data
@@ -338,6 +337,10 @@ namespace DOG::gfx
 			m_currPfDescriptor = m_pfDataTable->GetLocalOffset(m_pfHandle);
 			m_globalEffectData.perFrameTableOffset = &m_currPfDescriptor;
 		}
+
+
+
+
 
 		m_globalLightTable->SendCopyRequests(*m_perFrameUploadCtx);
 		m_pfDataTable->SendCopyRequests(*m_perFrameUploadCtx);

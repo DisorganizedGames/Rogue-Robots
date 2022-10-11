@@ -47,15 +47,15 @@ namespace DOG::gfx
 			m_lightMD.infreqPointLightRange = m_pointLightsMD.infreqs.range;
 			m_lightMD.dynPointLightRange = m_pointLightsMD.dynamics.range;
 
-m_lightMD.staticSpotLightRange = m_spotLightsMD.statics.range;
-m_lightMD.infreqSpotLightRange = m_spotLightsMD.infreqs.range;
-m_lightMD.dynSpotLightRange = m_spotLightsMD.dynamics.range;
+			m_lightMD.staticSpotLightRange = m_spotLightsMD.statics.range;
+			m_lightMD.infreqSpotLightRange = m_spotLightsMD.infreqs.range;
+			m_lightMD.dynSpotLightRange = m_spotLightsMD.dynamics.range;
 
-m_lightMD.staticAreaLightRange = m_areaLightsMD.statics.range;
-m_lightMD.infreqAreaLightRange = m_areaLightsMD.infreqs.range;
-m_lightMD.dynAreaLightRange = m_areaLightsMD.dynamics.range;
+			m_lightMD.staticAreaLightRange = m_areaLightsMD.statics.range;
+			m_lightMD.infreqAreaLightRange = m_areaLightsMD.infreqs.range;
+			m_lightMD.dynAreaLightRange = m_areaLightsMD.dynamics.range;
 
-m_mdHandle = m_lightsMD->Allocate(1, &m_lightMD);
+			m_mdHandle = m_lightsMD->Allocate(1, &m_lightMD);
 		}
 
 		// Allocate chunks
@@ -107,7 +107,8 @@ m_mdHandle = m_lightsMD->Allocate(1, &m_lightMD);
 
 		auto& gpu = m_spotLights[storage.localLightID];
 		gpu.position = DirectX::SimpleMath::Vector4(desc.position.x, desc.position.y, desc.position.z, 1.f);
-		gpu.color = DirectX::SimpleMath::Vector4(desc.color.x, desc.color.y, desc.color.z, 1.f);
+		gpu.cutoffAngle = desc.cutoffAngle;
+		gpu.color = desc.color;
 		gpu.direction = desc.direction;
 		gpu.strength = desc.strength;
 
@@ -131,7 +132,7 @@ m_mdHandle = m_lightsMD->Allocate(1, &m_lightMD);
 		// Copy data
 		auto& gpu = m_spotLights[nextIdx];
 		gpu.position = DirectX::SimpleMath::Vector4(desc.position.x, desc.position.y, desc.position.z, 1.f);
-		gpu.color = DirectX::SimpleMath::Vector4(desc.color.x, desc.color.y, desc.color.z, 1.f);
+		gpu.color = desc.color;
 		gpu.direction = desc.direction;
 		gpu.strength = desc.strength;
 
