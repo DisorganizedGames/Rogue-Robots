@@ -101,6 +101,7 @@ function NormalBulletSpawn(bullet)
 	Entity:AddComponent(bullet.entity, "Audio", gunShotSound, true)
 	Entity:AddComponent(bullet.entity, "BoxCollider", Vector3.new(.1, .1, .1), true)
 	Entity:AddComponent(bullet.entity, "Rigidbody", false)
+	Entity:AddComponent(bullet.entity, "Bullet")
 
 	Physics:RBSetVelocity(bullet.entity, bullet.forward * bullet.speed)
 end

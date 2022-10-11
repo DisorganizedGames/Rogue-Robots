@@ -81,6 +81,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddRigidbody(context, e);
 	}
+	else if (compType == "Bullet")
+	{
+		EntityManager::Get().AddComponent<BulletComponent>(e);
+	}
 	//Add more component types here.
 	else
 	{
@@ -227,12 +231,16 @@ bool HasComp(entity e)
 }
 
 const std::unordered_map<std::string, bool (*) (entity)> componentMap = {
+	// Engine Types
 	{ "Transform", HasComp<TransformComponent> },
 	{ "Model", HasComp<ModelComponent> },
 	{ "Audio", HasComp<AudioComponent>},
 	{ "Network", HasComp<NetworkComponent>},
 	{ "Rigidbody", HasComp<RigidbodyComponent>},
 	{ "BoxCollider", HasComp<BoxColliderComponent>},
+	
+	// Game Types
+	{ "Bullet", HasComp<BulletComponent>},
 };
 
 void EntityInterface::HasComponent(LuaContext* context)

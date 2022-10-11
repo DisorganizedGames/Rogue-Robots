@@ -22,3 +22,8 @@ struct AgentStatsComponent
 	float speed;
 	//...
 };
+
+struct BulletComponent
+{
+
+};
