@@ -10,8 +10,6 @@ MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 	m_up		= Vector3(0, 1, 0);
 	m_forward	= Vector3(0, 0, 1);
 
-	m_position	= Vector3(0, 0, 0);
-
 	m_azim = XM_PI / 2;
 	m_polar = XM_PI / 2;
 	m_moveSpeed = 10.0f;
@@ -42,7 +40,6 @@ void MainPlayer::OnUpdate()
 		.Do([&](InputController& inputC, CameraComponent& cameraC, TransformComponent& transformC, RigidbodyComponent& rb)
 		{
 			f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
-			CameraComponent::s_mainCamera = &cameraC;
 			cameraC.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
 			
 			float speed = 10;
