@@ -122,6 +122,20 @@ namespace DOG::gfx
 
 		void Cmd_SetScissorRects(CommandList list,
 			ScissorRects rects);
+
+		void Cmd_ClearUnorderedAccessFLOAT(CommandList list,
+			BufferView view, std::array<f32, 4> clear, const ScissorRects& rects);
+
+		void Cmd_ClearUnorderedAccessFLOAT(CommandList list,
+			TextureView view, std::array<f32, 4> clear, const ScissorRects& rects);
+
+		void Cmd_ClearUnorderedAccessUINT(CommandList list,
+			BufferView view, std::array<u32, 4> clear, const ScissorRects& rects);
+
+		void Cmd_ClearUnorderedAccessUINT(CommandList list,
+			TextureView view, std::array<u32, 4> clear, const ScissorRects& rects);
+
+
 		/*
 			Sensitive commands end
 			===================================================
@@ -215,6 +229,7 @@ namespace DOG::gfx
 			Buffer buf;
 			ViewType type{ ViewType::None };
 			DX12DescriptorChunk view;
+			std::optional<DX12DescriptorChunk> uavClear;
 
 			BufferView_Storage(Buffer buf_in, ViewType type_in, const DX12DescriptorChunk& descriptor) : buf(buf_in), type(type_in), view(descriptor) {}
 		};
@@ -224,6 +239,8 @@ namespace DOG::gfx
 			Texture tex;
 			ViewType type{ ViewType::None };
 			DX12DescriptorChunk view;
+			std::optional<DX12DescriptorChunk> uavClear;
+
 
 			TextureView_Storage(Texture tex_in, ViewType type_in, const DX12DescriptorChunk& descriptor) : tex(tex_in), type(type_in), view(descriptor) {}
 		};

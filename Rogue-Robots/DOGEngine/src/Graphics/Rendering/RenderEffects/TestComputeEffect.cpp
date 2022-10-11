@@ -42,6 +42,8 @@ namespace DOG::gfx
 				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
 				rd->Cmd_Dispatch(cmdl, 25, 14, 1);
 
+				rd->Cmd_ClearUnorderedAccessFLOAT(cmdl,
+					resources.GetTextureView(passData.litHDRView), { 0.5f, 0.f, 0.f, 1.f }, ScissorRects().Append(0, 0, 600, 600));
 			});
 	}
 }

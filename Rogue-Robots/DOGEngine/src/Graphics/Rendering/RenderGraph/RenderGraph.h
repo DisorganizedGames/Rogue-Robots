@@ -29,6 +29,10 @@ namespace DOG::gfx
 			// Pass local
 			u32 GetView(RGResourceView id) const;			// SRV/UAVs
 
+			// Unsafe
+			TextureView GetTextureView(RGResourceView id) const;
+			BufferView GetBufferView(RGResourceView id) const;
+
 			// Graph global
 			Texture GetTexture(RGResourceID id);
 			Buffer GetBuffer(RGResourceID id);
@@ -39,6 +43,10 @@ namespace DOG::gfx
 			std::unordered_map<RGResourceView, u32> m_views;			// Views already converted to global indices for immediate use
 			std::unordered_map<RGResourceID, Buffer> m_buffers;		// Underlying buffer resources
 			std::unordered_map<RGResourceID, Texture> m_textures;	// Underlying texture resources
+
+			// @todo should replace vectors below
+			std::unordered_map<RGResourceView, TextureView> m_textureViewsLookup;
+			std::unordered_map<RGResourceView, BufferView> m_bufferViewsLookup;
 
 			// Held for cleanup
 			std::vector<TextureView> m_textureViews;
