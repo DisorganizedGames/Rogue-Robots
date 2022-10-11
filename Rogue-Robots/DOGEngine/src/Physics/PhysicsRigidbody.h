@@ -5,7 +5,7 @@ namespace DOG
 {
 	struct RigidbodyComponent
 	{
-		RigidbodyComponent(entity entity);
+		RigidbodyComponent(entity entity, bool kinematicBody = false);
 
 		//Fix later
 		//void SetOnCollisionEnter(std::function<void(entity, entity)> onCollisionEnter);

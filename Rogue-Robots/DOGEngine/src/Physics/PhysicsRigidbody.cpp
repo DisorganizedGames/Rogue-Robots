@@ -6,7 +6,7 @@
 
 namespace DOG
 {
-	RigidbodyComponent::RigidbodyComponent(entity entity)
+	RigidbodyComponent::RigidbodyComponent(entity entity, bool kinematicBody)
 	{
 		//Can only create a rigidbody component for box, sphere, capsule
 		if (EntityManager::Get().HasComponent<BoxColliderComponent>(entity))
@@ -34,6 +34,18 @@ namespace DOG
 		PhysicsEngine::s_physicsEngine.m_rigidbodyCollision.insert({ handle, {} });
 
 		constrainPositionX = constrainPositionY = constrainPositionZ = constrainRotationX = constrainRotationY = constrainRotationZ = false;
+
+		RigidbodyColliderData* rigidbodyColliderData = PhysicsEngine::s_physicsEngine.GetRigidbodyColliderData(rigidbodyHandle);
+		if (kinematicBody)
+		{
+			assert(rigidbodyColliderData->dynamic && "Must be dynamic and kinematic");
+			rigidbodyColliderData->rigidBody->setCollisionFlags(rigidbodyColliderData->rigidBody->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
+			rigidbodyColliderData->rigidBody->setActivationState(DISABLE_DEACTIVATION);
+		}
+		else if (!rigidbodyColliderData->dynamic)
+		{
+			rigidbodyColliderData->rigidBody->setCollisionFlags(rigidbodyColliderData->rigidBody->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
+		}
 	}
 
 	//Fix later
