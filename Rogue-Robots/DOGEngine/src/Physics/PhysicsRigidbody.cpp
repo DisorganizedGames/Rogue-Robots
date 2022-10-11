@@ -36,15 +36,16 @@ namespace DOG
 		constrainPositionX = constrainPositionY = constrainPositionZ = constrainRotationX = constrainRotationY = constrainRotationZ = false;
 	}
 
-	void RigidbodyComponent::SetOnCollisionEnter(std::function<void(entity, entity)> inOnCollisionEnter)
-	{
-		onCollisionEnter = inOnCollisionEnter;
-	}
+	//Fix later
+	//void RigidbodyComponent::SetOnCollisionEnter(std::function<void(entity, entity)> inOnCollisionEnter)
+	//{
+	//	onCollisionEnter = inOnCollisionEnter;
+	//}
 
-	void RigidbodyComponent::SetOnCollisionExit(std::function<void(entity, entity)> inOnCollisionExit)
-	{
-		onCollisionExit = inOnCollisionExit;
-	}
+	//void RigidbodyComponent::SetOnCollisionExit(std::function<void(entity, entity)> inOnCollisionExit)
+	//{
+	//	onCollisionExit = inOnCollisionExit;
+	//}
 
 	void RigidbodyComponent::ConstrainRotation(bool constrainXRotation, bool constrainYRotation, bool constrainZRotation)
 	{
