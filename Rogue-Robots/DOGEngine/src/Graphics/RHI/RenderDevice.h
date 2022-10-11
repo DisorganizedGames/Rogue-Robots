@@ -112,6 +112,21 @@ namespace DOG::gfx
 
 		virtual void Cmd_SetScissorRects(CommandList list,
 			ScissorRects rects) = 0;
+
+		virtual void Cmd_ClearUnorderedAccessFLOAT(CommandList list,
+			BufferView view, std::array<f32, 4> clear, const ScissorRects& rects) = 0;
+
+		virtual void Cmd_ClearUnorderedAccessFLOAT(CommandList list,
+			TextureView view, std::array<f32, 4> clear, const ScissorRects& rects) = 0;
+
+		virtual void Cmd_ClearUnorderedAccessUINT(CommandList list,
+			BufferView view, std::array<u32, 4> clear, const ScissorRects& rects) = 0;
+
+		virtual void Cmd_ClearUnorderedAccessUINT(CommandList list,
+			TextureView view, std::array<u32, 4> clear, const ScissorRects& rects) = 0;
+
+
+
 		/*
 			Sensitive commands end
 			===================================================

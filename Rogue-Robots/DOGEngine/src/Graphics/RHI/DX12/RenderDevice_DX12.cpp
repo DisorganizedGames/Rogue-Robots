@@ -846,6 +846,50 @@ namespace DOG::gfx
 		cmdlRes.pair.list->RSSetScissorRects(rects.numScissors, rects.scissors.data());
 	}
 
+	void RenderDevice_DX12::Cmd_ClearUnorderedAccessFLOAT(CommandList list,
+		BufferView view, std::array<f32, 4> clear, const ScissorRects& rects)
+	{
+		auto& cmdlRes = HandleAllocator::TryGet(m_cmdls, HandleAllocator::GetSlot(list.handle));
+		auto& viewRes = HandleAllocator::TryGet(m_bufferViews, HandleAllocator::GetSlot(view.handle));
+		auto& d12Res = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(viewRes.buf.handle));
+		
+		cmdlRes.pair.list->ClearUnorderedAccessViewFloat(viewRes.view.gpu_handle(0), viewRes.view.cpu_handle(0),
+			d12Res.resource.Get(), clear.data(), rects.numScissors, rects.scissors.data());
+	}
+
+	void RenderDevice_DX12::Cmd_ClearUnorderedAccessFLOAT(CommandList list,
+		TextureView view, std::array<f32, 4> clear, const ScissorRects& rects)
+	{
+		auto& cmdlRes = HandleAllocator::TryGet(m_cmdls, HandleAllocator::GetSlot(list.handle));
+		auto& viewRes = HandleAllocator::TryGet(m_textureViews, HandleAllocator::GetSlot(view.handle));
+		auto& d12Res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(viewRes.tex.handle));
+
+		cmdlRes.pair.list->ClearUnorderedAccessViewFloat(viewRes.view.gpu_handle(0), viewRes.view.cpu_handle(0),
+			d12Res.resource.Get(), clear.data(), rects.numScissors, rects.scissors.data());
+	}
+
+	void RenderDevice_DX12::Cmd_ClearUnorderedAccessUINT(CommandList list, 
+		BufferView view, std::array<u32, 4> clear, const ScissorRects& rects)
+	{
+		auto& cmdlRes = HandleAllocator::TryGet(m_cmdls, HandleAllocator::GetSlot(list.handle));
+		auto& viewRes = HandleAllocator::TryGet(m_bufferViews, HandleAllocator::GetSlot(view.handle));
+		auto& d12Res = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(viewRes.buf.handle));
+
+		cmdlRes.pair.list->ClearUnorderedAccessViewUint(viewRes.view.gpu_handle(0), viewRes.view.cpu_handle(0),
+			d12Res.resource.Get(), clear.data(), rects.numScissors, rects.scissors.data());
+	}
+
+	void RenderDevice_DX12::Cmd_ClearUnorderedAccessUINT(CommandList list, 
+		TextureView view, std::array<u32, 4> clear, const ScissorRects& rects)
+	{
+		auto& cmdlRes = HandleAllocator::TryGet(m_cmdls, HandleAllocator::GetSlot(list.handle));
+		auto& viewRes = HandleAllocator::TryGet(m_textureViews, HandleAllocator::GetSlot(view.handle));
+		auto& d12Res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(viewRes.tex.handle));
+
+		cmdlRes.pair.list->ClearUnorderedAccessViewUint(viewRes.view.gpu_handle(0), viewRes.view.cpu_handle(0),
+			d12Res.resource.Get(), clear.data(), rects.numScissors, rects.scissors.data());
+	}
+
 
 
 
