@@ -23,7 +23,16 @@ namespace DOG::gfx
 		{
 			return name == other.name;
 		}
+	};
 
+	struct RGResourceView
+	{
+		u32 id{ 0 };
+
+		bool operator==(const RGResourceView& other) const
+		{
+			return id == other.id;
+		}
 	};
 	
 	enum class RGTextureType { Texture1D, Texture2D, Texture3D };
@@ -168,6 +177,16 @@ namespace std
 		std::size_t operator()(const DOG::gfx::RGResourceID& k) const
 		{
 			return hash<string>()(k.name);
+			// return k.hashedString
+		}
+	};
+
+	template <>
+	struct hash<DOG::gfx::RGResourceView>
+	{
+		std::size_t operator()(const DOG::gfx::RGResourceView& k) const
+		{
+			return hash<u32>()(k.id);
 			// return k.hashedString
 		}
 	};

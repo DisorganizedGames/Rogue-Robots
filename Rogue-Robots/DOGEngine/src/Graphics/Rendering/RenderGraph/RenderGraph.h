@@ -27,7 +27,7 @@ namespace DOG::gfx
 			PassResources() = default;
 
 			// Pass local
-			u32 GetView(RGResourceID id) const;			// SRV/UAVs
+			u32 GetView(RGResourceView id) const;			// SRV/UAVs
 
 			// Graph global
 			Texture GetTexture(RGResourceID id);
@@ -35,7 +35,8 @@ namespace DOG::gfx
 
 		private:
 			friend class RenderGraph;
-			std::unordered_map<RGResourceID, u32> m_views;			// Views already converted to global indices for immediate use
+			//std::unordered_map<RGResourceID, u32> m_views;			// Views already converted to global indices for immediate use
+			std::unordered_map<RGResourceView, u32> m_views;			// Views already converted to global indices for immediate use
 			std::unordered_map<RGResourceID, Buffer> m_buffers;		// Underlying buffer resources
 			std::unordered_map<RGResourceID, Texture> m_textures;	// Underlying texture resources
 
@@ -50,6 +51,7 @@ namespace DOG::gfx
 			std::optional<RGResourceID> originalID;			// if aliased --> holds original resource name
 			RGResourceID id;
 			RGResourceType type{ RGResourceType::Texture };
+			RGResourceView viewID;
 			std::optional<std::variant<TextureViewDesc, BufferViewDesc>> viewDesc;
 			D3D12_RESOURCE_STATES desiredState{ D3D12_RESOURCE_STATE_COMMON };
 			std::optional<RenderPassAccessType> rpAccessType;			// Render Target & Depth
@@ -104,6 +106,8 @@ namespace DOG::gfx
 
 		struct PassBuilderGlobalData
 		{
+			u32 viewCount{ 0 };
+
 			std::unordered_set<RGResourceID> writes;
 
 			// ID holder for auto-aliasing (Backbuffer --> Backbuffer(0) --> Backbuffer(1), etc.)
@@ -132,14 +136,14 @@ namespace DOG::gfx
 			void ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
 
 			// Texture read views
-			void ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc);
-			void ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, BufferViewDesc desc);
+			[[nodiscard]] RGResourceView ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc);
+			[[nodiscard]] RGResourceView ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, BufferViewDesc desc);
 			void ReadDepthStencil(RGResourceID id, TextureViewDesc desc);
 
 			void WriteDepthStencil(RGResourceID id, RenderPassAccessType depthAccess, TextureViewDesc desc, RenderPassAccessType stencilAccess = RenderPassAccessType::DiscardDiscard);
 			void WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc);
-			void ReadWriteTarget(RGResourceID id, TextureViewDesc desc);
-			void ReadWriteTarget(RGResourceID id, BufferViewDesc desc);
+			[[nodiscard]] RGResourceView ReadWriteTarget(RGResourceID id, TextureViewDesc desc);
+			[[nodiscard]] RGResourceView ReadWriteTarget(RGResourceID id, BufferViewDesc desc);
 
 			void CopyToResource(RGResourceID id, RGResourceType type);
 			void CopyFromResource(RGResourceID id, RGResourceType type);
