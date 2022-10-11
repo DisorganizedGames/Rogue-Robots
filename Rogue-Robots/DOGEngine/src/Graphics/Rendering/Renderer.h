@@ -81,6 +81,9 @@ namespace DOG::gfx
 	private:
 		void EndGUI();	// Called at EndFrame_GPU
 
+		void SpawnRenderDebugWindow(bool& open);
+
+
 
 
 		LRESULT WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -215,6 +218,7 @@ namespace DOG::gfx
 
 		// Lights test
 		LightHandle m_light;
+		std::vector<LightHandle> m_spots;
 
 		// Passes
 		std::unique_ptr<RenderEffect> m_imGUIEffect;

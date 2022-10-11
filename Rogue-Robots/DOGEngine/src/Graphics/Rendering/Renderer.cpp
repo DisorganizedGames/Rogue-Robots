@@ -30,6 +30,7 @@
 #include "RenderEffects/TestComputeEffect.h"
 
 #include "ImGUI/imgui.h"
+#include "../../Core/ImGuiMenuLayer.h"
 
 namespace DOG::gfx
 {
@@ -115,7 +116,7 @@ namespace DOG::gfx
 				dd.color = { 0.f, 0.f, 1.f };
 				dd.direction = { 0.f, 1.f, 0.f };
 				dd.strength = 1.f;
-				m_globalLightTable->AddSpotLight(dd, LightUpdateFrequency::Never);
+				m_spots.push_back(m_globalLightTable->AddSpotLight(dd, LightUpdateFrequency::Never));
 			}
 		}
 
@@ -228,6 +229,8 @@ namespace DOG::gfx
 		*/
 		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
 		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
+
+		ImGuiMenuLayer::RegisterDebugWindow("Renderer Debug", [this](bool& open) { SpawnRenderDebugWindow(open); });
 	}
 
 	Renderer::~Renderer()
@@ -294,7 +297,6 @@ namespace DOG::gfx
 	{
 		m_boneJourno->UpdateJoints();
 
-
 		// Update spotlight
 		{
 			// Get camera position
@@ -353,6 +355,7 @@ namespace DOG::gfx
 			m_currPfDescriptor = m_pfDataTable->GetLocalOffset(m_pfHandle);
 			m_globalEffectData.perFrameTableOffset = &m_currPfDescriptor;
 		}
+
 
 
 
@@ -569,6 +572,33 @@ namespace DOG::gfx
 	{
 		m_imgui->EndFrame();
 	}
+
+	void Renderer::SpawnRenderDebugWindow(bool& open)
+	{
+		if (ImGui::BeginMenu("View"))
+		{
+			if (ImGui::MenuItem("Renderer"))
+			{
+				open = true;
+			}
+			ImGui::EndMenu(); // "View"
+		}
+
+		if (open)
+		{
+			if (ImGui::Begin("Light Manager", &open))
+			{
+				static int id = 0;
+				if (ImGui::InputInt("Light ID", &id))
+					std::cout << id << std::endl;
+
+				if (ImGui::Button("Remove Light"))
+					m_globalLightTable->RemoveLight(m_spots[id]);
+			}
+			ImGui::End();
+		}
+	}
+	
 
 	LRESULT Renderer::WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{

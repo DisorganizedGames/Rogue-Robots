@@ -232,6 +232,7 @@ namespace DOG::gfx
 				switch (freq)
 				{
 				case LightUpdateFrequency::Never:
+					SetStaticsChunkDirty(true);
 					statics.freeSlots.push(slot);
 					break;
 				case LightUpdateFrequency::Sometimes:
@@ -247,10 +248,14 @@ namespace DOG::gfx
 				}
 			}
 
+
 			bool DynamicsChunkDirty() const { return dynamics.handle.second; }
 			bool InfreqsChunkDirty() const { return infreqs.handle.second; }
+			bool StaticsChunkDirty() const { return statics.handle.second; }
+
 			void SetDynamicsChunkDirty(bool dirty) { dynamics.handle.second = dirty; }
 			void SetInfreqsChunkDirty(bool dirty) { infreqs.handle.second = dirty; }
+			void SetStaticsChunkDirty(bool dirty) { statics.handle.second = dirty; }
 			
 			void TryUpdateDynamics(void* chunkStart, u32 elementSize)
 			{

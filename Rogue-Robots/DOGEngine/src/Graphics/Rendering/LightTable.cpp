@@ -191,23 +191,26 @@ namespace DOG::gfx
 		// MD sent onces
 		m_lightsMD->SendCopyRequests(ctx);
 
-		if (m_pointLightsMD.DynamicsChunkDirty() || m_pointLightsMD.InfreqsChunkDirty())
+		if (m_pointLightsMD.DynamicsChunkDirty() || m_pointLightsMD.InfreqsChunkDirty() || m_pointLightsMD.StaticsChunkDirty())
 			m_pointLightsMD.bufferGPU->SendCopyRequests(ctx);
 
-		if (m_spotLightsMD.DynamicsChunkDirty() || m_spotLightsMD.InfreqsChunkDirty())
+		if (m_spotLightsMD.DynamicsChunkDirty() || m_spotLightsMD.InfreqsChunkDirty() || m_spotLightsMD.StaticsChunkDirty())
 			m_spotLightsMD.bufferGPU->SendCopyRequests(ctx);
 
-		if (m_areaLightsMD.DynamicsChunkDirty() || m_areaLightsMD.InfreqsChunkDirty())
+		if (m_areaLightsMD.DynamicsChunkDirty() || m_areaLightsMD.InfreqsChunkDirty() || m_areaLightsMD.StaticsChunkDirty())
 			m_areaLightsMD.bufferGPU->SendCopyRequests(ctx);
 
 		// Reset
 		m_pointLightsMD.SetDynamicsChunkDirty(false);
+		m_pointLightsMD.SetStaticsChunkDirty(false);
 		m_pointLightsMD.SetInfreqsChunkDirty(false);
 
 		m_spotLightsMD.SetDynamicsChunkDirty(false);
+		m_spotLightsMD.SetStaticsChunkDirty(false);
 		m_spotLightsMD.SetInfreqsChunkDirty(false);
 
 		m_areaLightsMD.SetDynamicsChunkDirty(false);
+		m_areaLightsMD.SetStaticsChunkDirty(false);
 		m_areaLightsMD.SetInfreqsChunkDirty(false);
 	}
 
