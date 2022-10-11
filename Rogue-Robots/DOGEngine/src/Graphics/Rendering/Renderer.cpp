@@ -276,7 +276,19 @@ namespace DOG::gfx
 	{
 		m_boneJourno->UpdateJoints();
 
-		m_globalLightTable->SendCopyRequests(*m_uploadCtx);
+
+		// Update spotlight
+
+		ImGui::SliderFloat3("Position", thingy, -30.f, 30.f);
+		ImGui::SliderFloat3("Color", thingy2, 0.f, 1.f);
+		auto sdesc = SpotLightDesc();
+		sdesc.position = { thingy[0], thingy[1], thingy[2] };
+		sdesc.color = { thingy2[0], thingy2[1], thingy2[2] };
+		m_globalLightTable->UpdateSpotLight(m_light, sdesc);
+
+		m_globalLightTable->FinalizeUpdates();
+
+
 
 		// Update spotlight
 
