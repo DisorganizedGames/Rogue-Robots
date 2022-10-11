@@ -229,23 +229,23 @@ namespace DOG
 		// Scale
 		if (keyExists(animation0.scaKeys))
 		{
-			auto scale0 = GetAnimationComponent(animation0.scaKeys.at(nodeID), KeyType::Scale, t0);
-			auto scale1 = GetAnimationComponent(animation1.scaKeys.at(nodeID), KeyType::Scale, t1);
+			auto scale0 = GetKeyValue(animation0.scaKeys.at(nodeID), KeyType::Scale, t0);
+			auto scale1 = GetKeyValue(animation1.scaKeys.at(nodeID), KeyType::Scale, t1);
 			DirectX::XMStoreFloat3(&scaling, XMVectorLerp(scale0, scale1, ac.blendSpec.blendFactor));
 		}
 		// Rotation
 		if (keyExists(animation0.rotKeys))
 		{
-			auto rot1 = GetAnimationComponent(animation0.rotKeys.at(nodeID), KeyType::Rotation, t0);
-			auto rot2 = GetAnimationComponent(animation1.rotKeys.at(nodeID), KeyType::Rotation, t1);
+			auto rot1 = GetKeyValue(animation0.rotKeys.at(nodeID), KeyType::Rotation, t0);
+			auto rot2 = GetKeyValue(animation1.rotKeys.at(nodeID), KeyType::Rotation, t1);
 			DirectX::XMStoreFloat4(&rotation, XMQuaternionSlerp(rot1, rot2, ac.blendSpec.blendFactor));
 		}
 		// Translation
 		const bool applyTranslation = (m_imguiRootTranslation || nodeID > m_rootBoneIdx);
 		if (keyExists(animation0.posKeys) && applyTranslation)
 		{
-			auto translation1 = GetAnimationComponent(animation0.posKeys.at(nodeID), KeyType::Translation, t0);
-			auto translation2 = GetAnimationComponent(animation1.posKeys.at(nodeID), KeyType::Translation, t1);
+			auto translation1 = GetKeyValue(animation0.posKeys.at(nodeID), KeyType::Translation, t0);
+			auto translation2 = GetKeyValue(animation1.posKeys.at(nodeID), KeyType::Translation, t1);
 			DirectX::XMStoreFloat3(&translation, XMVectorLerp(translation1, translation2, ac.blendSpec.blendFactor));
 		}
 
@@ -261,41 +261,36 @@ namespace DOG
 		XMFLOAT4 rotation = m_baseRotation;
 		XMFLOAT3 translation = m_baseTranslation;
 
-		const auto& clip0 = ac.clips[0];
-		const auto& clip1 = ac.clips[1];
-		//const auto& clip2 = ac.clips[2];
-		const f32 t0 = clip0.currentTick;
-		const f32 t1 = clip1.currentTick;
-		const auto& animation0 = rig.animations[clip0.animationID];
-		const auto& animation1 = rig.animations[clip1.animationID];
-
 		const auto keyExists = [&nodeID](const std::unordered_map<i32, std::vector<AnimationKey>>& keys)
 		{ return keys.find(nodeID) != keys.end(); };
 
-		// Scale
-		if (keyExists(animation0.scaKeys))
-		{
-			auto scale0 = GetAnimationComponent(animation0.scaKeys.at(nodeID), KeyType::Scale, t0);
-			auto scale1 = GetAnimationComponent(animation1.scaKeys.at(nodeID), KeyType::Scale, t1);
+		XMVECTOR scaleVec = XMVECTOR{};
+		XMVECTOR transVec = XMVECTOR{};
 
-			DirectX::XMStoreFloat3(&scaling, clip0.currentWeight * scale0 + clip1.currentWeight * scale1);
+		for (auto& c : ac.clips)
+		{
+			const auto& anim = rig.animations[c.animationID];
+			// Weighted average for scaling/translation
+			scaleVec += c.currentWeight * GetKeyValue(anim.scaKeys.at(nodeID), KeyType::Scale, c.currentTick);
+			transVec += c.currentWeight * GetKeyValue(anim.posKeys.at(nodeID), KeyType::Translation, c.currentTick);
 		}
+
+		const auto& clip0 = ac.clips[0];
+		const auto& clip1 = ac.clips[1];
+		const auto& animation0 = rig.animations[clip0.animationID];
+		const auto& animation1 = rig.animations[clip1.animationID];
+
 		// Rotation
 		if (keyExists(animation0.rotKeys))
 		{
-			auto rot0 = GetAnimationComponent(animation0.rotKeys.at(nodeID), KeyType::Rotation, t0);
-			auto rot1 = GetAnimationComponent(animation1.rotKeys.at(nodeID), KeyType::Rotation, t1);
+			auto rot0 = GetKeyValue(animation0.rotKeys.at(nodeID), KeyType::Rotation, clip0.currentTick);
+			auto rot1 = GetKeyValue(animation1.rotKeys.at(nodeID), KeyType::Rotation, clip1.currentTick);
 			DirectX::XMStoreFloat4(&rotation, XMQuaternionSlerp(rot0, rot1, 1.0f - clip0.currentWeight));
 		}
-		// Translation
-		const bool applyTranslation = (m_imguiRootTranslation || nodeID > m_rootBoneIdx);
-		if (keyExists(animation0.posKeys) && applyTranslation)
-		{
-			auto translation0 = GetAnimationComponent(animation0.posKeys.at(nodeID), KeyType::Translation, t0);
-			auto translation1 = GetAnimationComponent(animation1.posKeys.at(nodeID), KeyType::Translation, t1);
 
-			DirectX::XMStoreFloat3(&translation, clip0.currentWeight * translation0 + clip1.currentWeight * translation1);
-		}
+		DirectX::XMStoreFloat3(&scaling, scaleVec);
+		const bool applyTranslation = (m_imguiRootTranslation || nodeID > m_rootBoneIdx);
+		if(applyTranslation) DirectX::XMStoreFloat3(&translation, transVec);
 
 		return XMMatrixTranspose(XMMatrixScaling(scaling.x, scaling.y, scaling.z) *
 			XMMatrixRotationQuaternion(XMQuaternionNormalize(DirectX::XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w))) *
@@ -364,7 +359,7 @@ namespace DOG
 			if (thereIsOnlyOneKeyIn(scalingKeys))
 				scaling = { scalingKeys[0].value.x, scalingKeys[0].value.y, scalingKeys[0].value.z };
 			else
-				DirectX::XMStoreFloat3(&scaling, GetAnimationComponent(animation.scaKeys.at(nodeID), KeyType::Scale, tick));
+				DirectX::XMStoreFloat3(&scaling, GetKeyValue(animation.scaKeys.at(nodeID), KeyType::Scale, tick));
 		}
 		// Rotation
 		if (keyExists(animation.rotKeys))
@@ -373,7 +368,7 @@ namespace DOG
 			if (thereIsOnlyOneKeyIn(rotKeys))
 				rotation = { rotKeys[0].value.x, rotKeys[0].value.y, rotKeys[0].value.z, rotKeys[0].value.w };
 			else
-				DirectX::XMStoreFloat4(&rotation, GetAnimationComponent(animation.rotKeys.at(nodeID), KeyType::Rotation, tick));
+				DirectX::XMStoreFloat4(&rotation, GetKeyValue(animation.rotKeys.at(nodeID), KeyType::Rotation, tick));
 		}
 		// Translation
 		const bool applyTranslation = (m_imguiRootTranslation || nodeID > m_rootBoneIdx);
@@ -383,7 +378,7 @@ namespace DOG
 			if (thereIsOnlyOneKeyIn(posKeys))
 				translation = { posKeys[0].value.x, posKeys[0].value.y, posKeys[0].value.z };
 			else
-				DirectX::XMStoreFloat3(&translation, GetAnimationComponent(animation.posKeys.at(nodeID), KeyType::Translation, tick));
+				DirectX::XMStoreFloat3(&translation, GetKeyValue(animation.posKeys.at(nodeID), KeyType::Translation, tick));
 		}
 
 		auto nodeTransform = XMMatrixScaling(scaling.x, scaling.y, scaling.z) *
@@ -393,7 +388,7 @@ namespace DOG
 		return XMMatrixTranspose(nodeTransform);
 	}
 
-	DirectX::FXMVECTOR AnimationManager::GetAnimationComponent(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick)
+	DirectX::FXMVECTOR AnimationManager::GetKeyValue(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick)
 	{
 		using namespace DirectX;
 
@@ -482,6 +477,7 @@ namespace DOG
 		for (auto& c : ac.clips)
 			c.currentWeight /= weightSum;
 
+		// Tmp set matching norm time, required for run/walk etc.
 		if (m_imguiMatching)
 			ac.clips[1].normalizedTime = ac.clips[0].normalizedTime;
 	}
@@ -502,8 +498,6 @@ namespace DOG
 	{
 		if (clip.normalizedTime > clip.transitionStart && clip.currentWeight != clip.targetWeight)
 		{
-			if (m_imguiPause)
-				auto x = 0;
 			const f32 diff = clip.targetWeight - clip.currentWeight;
 			const f32 tStart = clip.transitionStart;
 			const f32 tCurrent = clip.normalizedTime - tStart;
