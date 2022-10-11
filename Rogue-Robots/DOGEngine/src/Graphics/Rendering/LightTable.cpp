@@ -12,10 +12,6 @@ namespace DOG::gfx
 		const u32 maxSpotLights = spec.spotLightSpec.GetTotal();
 		const u32 maxAreaLights = spec.areaLightSpec.GetTotal();
 
-
-
-
-
 		m_pointLights.resize(maxPointLights);
 		m_spotLights.resize(maxSpotLights);
 		m_areaLights.resize(maxAreaLights);
@@ -25,108 +21,62 @@ namespace DOG::gfx
 		m_areaLightsMD.bufferGPU = std::make_unique<GPUTableDeviceLocal<AreaLightHandle>>(rd, bin, (u32)sizeof(AreaLight_GPUElement), maxAreaLights * (bin->GetMaxVersions() + 1), async);
 		m_lightsMD = std::make_unique<GPUTableDeviceLocal<LightMDHandle>>(rd, bin, (u32)sizeof(LightMetadata_GPU), bin->GetMaxVersions() + 1, async);
 
+		// Define light chunks
+		// [ Statics, Infreqs, Dynamics ]
 		{
-			// cpu-side chunks are stored as such:
-			// [ statics, infreqs, dynamics ] 
-			// Offsets
-			m_pointLightsMD.staticsCpuOffset = 0;
-			m_pointLightsMD.infreqsCpuOffset = spec.pointLightSpec.maxStatics;
-			m_pointLightsMD.dynamicsCpuOffset = spec.pointLightSpec.maxStatics + spec.pointLightSpec.maxSometimes;
+			m_pointLightsMD.statics.range = { 0, spec.pointLightSpec.maxStatics };
+			m_pointLightsMD.infreqs.range = { spec.pointLightSpec.maxStatics, spec.pointLightSpec.maxSometimes };
+			m_pointLightsMD.dynamics.range = { spec.pointLightSpec.maxStatics + spec.pointLightSpec.maxSometimes, spec.pointLightSpec.maxDynamic };
 
-			m_pointLightsMD.numMaxStatics = spec.pointLightSpec.maxStatics;
-			m_pointLightsMD.numMaxInfreqs = spec.pointLightSpec.maxSometimes;
-			m_pointLightsMD.numMaxDynamics = spec.pointLightSpec.maxDynamic;
+			m_spotLightsMD.statics.range = { 0, spec.spotLightSpec.maxStatics };
+			m_spotLightsMD.infreqs.range = { spec.spotLightSpec.maxStatics, spec.spotLightSpec.maxSometimes };
+			m_spotLightsMD.dynamics.range = { spec.spotLightSpec.maxStatics + spec.spotLightSpec.maxSometimes, spec.spotLightSpec.maxDynamic };
 
-			m_spotLightsMD.staticsCpuOffset = 0;
-			m_spotLightsMD.infreqsCpuOffset = spec.spotLightSpec.maxStatics;
-			m_spotLightsMD.dynamicsCpuOffset = spec.spotLightSpec.maxStatics + spec.spotLightSpec.maxSometimes;
+			m_areaLightsMD.statics.range = { 0, spec.areaLightSpec.maxStatics };
+			m_areaLightsMD.infreqs.range = { spec.areaLightSpec.maxStatics, spec.areaLightSpec.maxSometimes };
+			m_areaLightsMD.dynamics.range = { spec.areaLightSpec.maxStatics + spec.areaLightSpec.maxSometimes, spec.areaLightSpec.maxDynamic };
 
-			// Counts
-			m_spotLightsMD.numMaxStatics = spec.spotLightSpec.maxStatics;
-			m_spotLightsMD.numMaxInfreqs = spec.spotLightSpec.maxSometimes;
-			m_spotLightsMD.numMaxDynamics = spec.spotLightSpec.maxDynamic;
-
-			m_areaLightsMD.staticsCpuOffset = 0;
-			m_areaLightsMD.infreqsCpuOffset = spec.areaLightSpec.maxStatics;
-			m_areaLightsMD.dynamicsCpuOffset = spec.areaLightSpec.maxStatics + spec.areaLightSpec.maxSometimes;
-
-			m_areaLightsMD.numMaxStatics = spec.areaLightSpec.maxStatics;
-			m_areaLightsMD.numMaxInfreqs = spec.areaLightSpec.maxSometimes;
-			m_areaLightsMD.numMaxDynamics = spec.areaLightSpec.maxDynamic;
+			m_pointLightsMD.FillSlots();
+			m_spotLightsMD.FillSlots();
+			m_areaLightsMD.FillSlots();
 		}
-
 
 		// Setup MD Buffer
 		{
-			m_lightMD.staticPointLightOffset = m_pointLightsMD.staticsCpuOffset;
-			m_lightMD.infreqPointLightOffset = m_pointLightsMD.infreqsCpuOffset;
-			m_lightMD.dynPointLightOffset = m_pointLightsMD.dynamicsCpuOffset;
+			m_lightMD.staticPointLightRange = m_pointLightsMD.statics.range;
+			m_lightMD.infreqPointLightRange = m_pointLightsMD.infreqs.range;
+			m_lightMD.dynPointLightRange = m_pointLightsMD.dynamics.range;
 
-			m_lightMD.staticSpotLightOffset = m_spotLightsMD.staticsCpuOffset;
-			m_lightMD.infreqSpotLightOffset = m_spotLightsMD.infreqsCpuOffset;
-			m_lightMD.dynSpotLightOffset = m_spotLightsMD.dynamicsCpuOffset;
+m_lightMD.staticSpotLightRange = m_spotLightsMD.statics.range;
+m_lightMD.infreqSpotLightRange = m_spotLightsMD.infreqs.range;
+m_lightMD.dynSpotLightRange = m_spotLightsMD.dynamics.range;
 
-			m_lightMD.staticAreaLightOffset = m_areaLightsMD.staticsCpuOffset;
-			m_lightMD.infreqAreaLightOffset = m_areaLightsMD.infreqsCpuOffset;
-			m_lightMD.dynAreaLightOffset = m_areaLightsMD.dynamicsCpuOffset;
+m_lightMD.staticAreaLightRange = m_areaLightsMD.statics.range;
+m_lightMD.infreqAreaLightRange = m_areaLightsMD.infreqs.range;
+m_lightMD.dynAreaLightRange = m_areaLightsMD.dynamics.range;
 
-			// Counts
-			m_lightMD.staticPointLightCount = m_pointLightsMD.numMaxStatics;
-			m_lightMD.infreqPointLightCount = m_pointLightsMD.numMaxInfreqs;
-			m_lightMD.dynPointLightCount = m_pointLightsMD.numMaxDynamics;
-
-			m_lightMD.staticSpotLightCount = m_spotLightsMD.numMaxStatics;
-			m_lightMD.infreqSpotLightCount = m_spotLightsMD.numMaxInfreqs;
-			m_lightMD.dynSpotLightCount = m_spotLightsMD.numMaxDynamics;
-
-			m_lightMD.staticAreaLightCount = m_spotLightsMD.numMaxStatics;
-			m_lightMD.infreqAreaLightCount = m_spotLightsMD.numMaxInfreqs;
-			m_lightMD.dynAreaLightCount = m_spotLightsMD.numMaxDynamics;
+m_mdHandle = m_lightsMD->Allocate(1, &m_lightMD);
 		}
 
-
-
-
-
-		// =======
-
+		// Allocate chunks
+		{
 		// Point lights
-		m_pointLightsMD.staticsHandle = m_pointLightsMD.bufferGPU->Allocate(spec.pointLightSpec.maxStatics);
-		m_pointLightsMD.dynamicsHandle = { m_pointLightsMD.bufferGPU->Allocate(spec.pointLightSpec.maxDynamic), true };
-		m_pointLightsMD.infreqsHandle = { m_pointLightsMD.bufferGPU->Allocate(spec.pointLightSpec.maxSometimes), true };
+		m_pointLightsMD.statics.handle = { m_pointLightsMD.bufferGPU->Allocate(spec.pointLightSpec.maxStatics), true };
+		m_pointLightsMD.dynamics.handle = { m_pointLightsMD.bufferGPU->Allocate(spec.pointLightSpec.maxDynamic), true };
+		m_pointLightsMD.infreqs.handle = { m_pointLightsMD.bufferGPU->Allocate(spec.pointLightSpec.maxSometimes), true };
 
 		// Spot lights
-		m_spotLightsMD.staticsHandle = m_spotLightsMD.bufferGPU->Allocate(spec.spotLightSpec.maxStatics);
-		m_spotLightsMD.dynamicsHandle = { m_spotLightsMD.bufferGPU->Allocate(spec.spotLightSpec.maxDynamic), true };
-		m_spotLightsMD.infreqsHandle = { m_spotLightsMD.bufferGPU->Allocate(spec.spotLightSpec.maxSometimes), true };
+		m_spotLightsMD.statics.handle = { m_spotLightsMD.bufferGPU->Allocate(spec.spotLightSpec.maxStatics), true };
+		m_spotLightsMD.dynamics.handle = { m_spotLightsMD.bufferGPU->Allocate(spec.spotLightSpec.maxDynamic), true };
+		m_spotLightsMD.infreqs.handle = { m_spotLightsMD.bufferGPU->Allocate(spec.spotLightSpec.maxSometimes), true };
 
 		// Area lights
-		m_areaLightsMD.staticsHandle = m_areaLightsMD.bufferGPU->Allocate(spec.areaLightSpec.maxStatics);
-		m_areaLightsMD.dynamicsHandle = { m_areaLightsMD.bufferGPU->Allocate(spec.areaLightSpec.maxDynamic), true };
-		m_areaLightsMD.infreqsHandle = { m_areaLightsMD.bufferGPU->Allocate(spec.areaLightSpec.maxSometimes), true };
-
-		// Reserve slots
-		const auto fillQueue = [](PrivateStack<u32>& stack, u32 numSlots, u32 offset)
-		{
-			for (i32 i = numSlots - 1; i >= 0; --i)
-				stack.push(offset + (u32)i);
-		};
-
-		fillQueue(m_pointLightsMD.freeStatics, spec.pointLightSpec.maxStatics, m_pointLightsMD.staticsCpuOffset);
-		fillQueue(m_pointLightsMD.freeInfreqs, spec.pointLightSpec.maxSometimes, m_pointLightsMD.infreqsCpuOffset);
-		fillQueue(m_pointLightsMD.freeDynamics, spec.pointLightSpec.maxDynamic, m_pointLightsMD.dynamicsCpuOffset);
-
-		fillQueue(m_spotLightsMD.freeStatics, spec.spotLightSpec.maxStatics, m_spotLightsMD.staticsCpuOffset);
-		fillQueue(m_spotLightsMD.freeInfreqs, spec.spotLightSpec.maxSometimes, m_spotLightsMD.infreqsCpuOffset);
-		fillQueue(m_spotLightsMD.freeDynamics, spec.spotLightSpec.maxDynamic, m_spotLightsMD.dynamicsCpuOffset);
-	
-
-		fillQueue(m_areaLightsMD.freeStatics, spec.areaLightSpec.maxStatics, m_areaLightsMD.staticsCpuOffset);
-		fillQueue(m_areaLightsMD.freeInfreqs, spec.areaLightSpec.maxSometimes, m_areaLightsMD.infreqsCpuOffset);
-		fillQueue(m_areaLightsMD.freeDynamics, spec.areaLightSpec.maxDynamic, m_areaLightsMD.dynamicsCpuOffset);
-	
+		m_areaLightsMD.statics.handle = { m_areaLightsMD.bufferGPU->Allocate(spec.areaLightSpec.maxStatics), true };
+		m_areaLightsMD.dynamics.handle = { m_areaLightsMD.bufferGPU->Allocate(spec.areaLightSpec.maxDynamic), true };
+		m_areaLightsMD.infreqs.handle = { m_areaLightsMD.bufferGPU->Allocate(spec.areaLightSpec.maxSometimes), true };
+		}
 	}
-	
+
 	void LightTable::RemoveLight(LightHandle handle)
 	{
 		auto& storage = HandleAllocator::TryGet(m_lights, HandleAllocator::GetSlot(handle.handle));
@@ -149,16 +99,12 @@ namespace DOG::gfx
 		HandleAllocator::FreeStorage(m_handleAtor, m_lights, handle);
 	}
 
-	void LightTable::UpdatePointLight(LightHandle handle, const PointLightDesc& desc)
-	{
-		assert(false);
-	}
-
 	void LightTable::UpdateSpotLight(LightHandle handle, const SpotLightDesc& desc)
 	{
 		const auto& storage = HandleAllocator::TryGet(m_lights, HandleAllocator::GetSlot(handle.handle));
 		assert(storage.freq != LightUpdateFrequency::Never);
-		
+		assert(storage.type == LightType::Spot);
+
 		auto& gpu = m_spotLights[storage.localLightID];
 		gpu.position = DirectX::SimpleMath::Vector4(desc.position.x, desc.position.y, desc.position.z, 1.f);
 		gpu.color = DirectX::SimpleMath::Vector4(desc.color.x, desc.color.y, desc.color.z, 1.f);
@@ -176,36 +122,6 @@ namespace DOG::gfx
 		}
 	}
 
-	void LightTable::UpdateAreaLight(LightHandle handle, const AreaLightDesc& desc)
-	{
-		assert(false);
-	}
-
-	LightHandle LightTable::AddPointLight(const PointLightDesc&, LightUpdateFrequency frequency)
-	{
-		assert(false);
-
-		// Grab slot
-		u32 nextIdx = m_pointLightsMD.GetNextSlot(frequency);
-		
-		// Copy data
-		//auto& gpu = m_pointLights[nextIdx];
-
-
-		// @todo fill data
-
-
-
-		// Store
-		const auto lightHandle = m_handleAtor.Allocate<LightHandle>();
-		Light_Storage storage{};
-		storage.localLightID = nextIdx;
-		storage.type = LightType::Point;
-		storage.freq = frequency;
-
-		HandleAllocator::TryInsertMove(m_lights, std::move(storage), HandleAllocator::GetSlot(lightHandle.handle));
-		return lightHandle;
-	}
 
 	LightHandle LightTable::AddSpotLight(const SpotLightDesc& desc, LightUpdateFrequency frequency)
 	{
@@ -230,30 +146,26 @@ namespace DOG::gfx
 		return lightHandle;
 	}
 
-	LightHandle LightTable::AddAreaLight(const AreaLightDesc& desc, LightUpdateFrequency frequency)
+	void LightTable::FinalizeUpdates()
 	{
-		assert(false);
-		return LightHandle();
+		// If dirty --> Update GPU structures
+		m_pointLightsMD.TryUpdateStatics(&m_pointLights[m_pointLightsMD.statics.range.first], sizeof(PointLight_GPUElement));
+		m_pointLightsMD.TryUpdateInfreqs(&m_pointLights[m_pointLightsMD.infreqs.range.first], sizeof(PointLight_GPUElement));
+		m_pointLightsMD.TryUpdateDynamics(&m_pointLights[m_pointLightsMD.dynamics.range.first], sizeof(PointLight_GPUElement));
 
+		m_spotLightsMD.TryUpdateStatics(&m_spotLights[m_spotLightsMD.statics.range.first], sizeof(SpotLight_GPUElement));
+		m_spotLightsMD.TryUpdateInfreqs(&m_spotLights[m_spotLightsMD.infreqs.range.first], sizeof(SpotLight_GPUElement));
+		m_spotLightsMD.TryUpdateDynamics(&m_spotLights[m_spotLightsMD.dynamics.range.first], sizeof(SpotLight_GPUElement));
+
+		m_areaLightsMD.TryUpdateStatics(&m_areaLights[m_areaLightsMD.statics.range.first], sizeof(AreaLight_GPUElement));
+		m_areaLightsMD.TryUpdateInfreqs(&m_areaLights[m_areaLightsMD.infreqs.range.first], sizeof(AreaLight_GPUElement));
+		m_areaLightsMD.TryUpdateDynamics(&m_areaLights[m_areaLightsMD.dynamics.range.first], sizeof(AreaLight_GPUElement));
 	}
 
 	void LightTable::SendCopyRequests(UploadContext& ctx)
 	{
-		m_lightsMD->RequestUpdate(m_mdHandle, &m_lightMD, sizeof(m_lightMD));
+		// MD sent onces
 		m_lightsMD->SendCopyRequests(ctx);
-
-		// If dirty --> Update GPU structures
-		m_pointLightsMD.UpdateStatics(&m_pointLights[m_pointLightsMD.staticsCpuOffset], sizeof(PointLight_GPUElement));
-		m_pointLightsMD.TryUpdateInfreqs(&m_pointLights[m_pointLightsMD.infreqsCpuOffset], sizeof(PointLight_GPUElement));
-		m_pointLightsMD.TryUpdateDynamics(&m_pointLights[m_pointLightsMD.dynamicsCpuOffset], sizeof(PointLight_GPUElement));
-
-		m_spotLightsMD.UpdateStatics(&m_spotLights[m_spotLightsMD.staticsCpuOffset], sizeof(SpotLight_GPUElement));
-		m_spotLightsMD.TryUpdateInfreqs(&m_spotLights[m_spotLightsMD.infreqsCpuOffset], sizeof(SpotLight_GPUElement));
-		m_spotLightsMD.TryUpdateDynamics(&m_spotLights[m_spotLightsMD.dynamicsCpuOffset], sizeof(SpotLight_GPUElement));
-
-		m_areaLightsMD.UpdateStatics(&m_areaLights[m_areaLightsMD.staticsCpuOffset], sizeof(AreaLight_GPUElement));
-		m_areaLightsMD.TryUpdateInfreqs(&m_areaLights[m_areaLightsMD.infreqsCpuOffset], sizeof(AreaLight_GPUElement));
-		m_areaLightsMD.TryUpdateDynamics(&m_areaLights[m_areaLightsMD.dynamicsCpuOffset], sizeof(AreaLight_GPUElement));
 
 		if (m_pointLightsMD.DynamicsChunkDirty() || m_pointLightsMD.InfreqsChunkDirty())
 			m_pointLightsMD.bufferGPU->SendCopyRequests(ctx);
@@ -307,6 +219,11 @@ namespace DOG::gfx
 	
 		assert(false);
 		return 0;
-	}	
+	}
+	u32 LightTable::GetMetadataDescriptor()
+	{
+		return m_lightsMD->GetGlobalDescriptor();
+	}
+
 
 }

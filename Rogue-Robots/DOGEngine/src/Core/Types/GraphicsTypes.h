@@ -28,6 +28,8 @@ namespace DOG
 			MeshContainer mesh;
 			std::vector<MaterialHandle> mats;
 		};
+
+		struct LightHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
 	}
 
 	enum class VertexAttribute

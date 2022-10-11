@@ -17,19 +17,17 @@ struct ShaderInterop_GlobalData
     uint materialTable;
 
     // Lights
-    // uint lightTableMD
+    uint lightTableMD;
     uint pointLightTable;
     uint spotLightTable;
     uint areaLightTable;
-    // Static light chunks
-    uint staticPointLightOffset;
-    uint staticSpotLightOffset;
-    uint staticAreaLightOffset;
-    // Static light count
-    uint staticPointLightCount;
-    uint staticSpotLightCount;
-    uint staticAreaLightCount;
+};
 
+struct ShaderInterop_LightOffsets
+{
+    uint staticOffset;
+    uint infreqOffset;
+    uint dynOffset;
 };
 
 struct ShaderInterop_PerFrameData
@@ -40,23 +38,10 @@ struct ShaderInterop_PerFrameData
     float4 camPos;
     float time;
 
-    uint dynPointLightOffset;
-    uint dynPointLightCount;
-
-    uint infreqPointLightOffset;
-    uint infreqPointLightCount;
-
-    uint dynSpotLightOffset;
-    uint dynSpotLightCount;
-
-    uint infreqSpotLightOffset;
-    uint infreqSpotLightCount;
-
-    uint dynAreaLightOffset;
-    uint dynAreaLightCount;
-
-    uint infreqAreaLightOffset;
-    uint infreqAreaLightCount;
+    // Offset into light tables to chunk start
+    ShaderInterop_LightOffsets pointLightOffsets;
+    ShaderInterop_LightOffsets spotLightOffsets;
+    ShaderInterop_LightOffsets areaLightOffsets;
 };
 
 

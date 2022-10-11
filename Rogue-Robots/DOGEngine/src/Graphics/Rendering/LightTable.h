@@ -1,9 +1,9 @@
 #pragma once
 #include "GPUTable.h"
+#include "../../Core/Types/GraphicsTypes.h"
 
 namespace DOG::gfx
 {
-	struct LightHandle { friend TypedHandlePool; u64 handle{ 0 }; };
 	enum class LightType
 	{
 		Point, Spot, Area
@@ -20,16 +20,6 @@ namespace DOG::gfx
 	{
 		
 	};
-
-	/*
-		SpotlightComponent
-		{
-			SpotlightDesc desc;
-			LightHandle handle;
-		
-		}
-	
-	*/
 
 	struct SpotLightDesc
 	{
@@ -76,6 +66,8 @@ namespace DOG::gfx
 		LightHandle AddAreaLight(const AreaLightDesc& desc, LightUpdateFrequency frequency);
 
 		void RemoveLight(LightHandle handle);
+		void EnableLight(LightHandle handle);
+		void DisableLight(LightHandle handle);
 
 		// Update dynamic lights
 		void UpdatePointLight(LightHandle handle, const PointLightDesc& desc);
@@ -83,19 +75,14 @@ namespace DOG::gfx
 		void UpdateAreaLight(LightHandle handle, const AreaLightDesc& desc);
 
 		
-
-
-
-
-
-
-
 		// ======== Implementation interface
+		void FinalizeUpdates();
 		void SendCopyRequests(UploadContext& ctx);
 		
 		// Get array start per light type
 		u32 GetDescriptor(LightType type);
 		u32 GetChunkOffset(LightType type, LightUpdateFrequency freq);
+		u32 GetMetadataDescriptor();
 
 
 	private:
@@ -128,35 +115,20 @@ namespace DOG::gfx
 
 		struct LightMetadata_GPU
 		{
-			// Static light chunks
-			u32 staticPointLightOffset;
-			u32 staticSpotLightOffset;
-			u32 staticAreaLightOffset;
+			// Point lights (statics, infreqs, dynamics)
+			std::pair<u32, u32> staticPointLightRange;
+			std::pair<u32, u32> infreqPointLightRange;
+			std::pair<u32, u32> dynPointLightRange;
 
-			// Static light count
-			u32 staticPointLightCount;
-			u32 staticSpotLightCount;
-			u32 staticAreaLightCount;
+			// Spot lights
+			std::pair<u32, u32> staticSpotLightRange;
+			std::pair<u32, u32> infreqSpotLightRange;
+			std::pair<u32, u32> dynSpotLightRange;
 
-			// Dynamics
-			u32 dynPointLightOffset;
-			u32 dynPointLightCount;
-
-			u32 dynSpotLightOffset;
-			u32 dynSpotLightCount;
-
-			u32 dynAreaLightOffset;
-			u32 dynAreaLightCount;
-
-			// Infreqs
-			u32 infreqPointLightOffset;
-			u32 infreqPointLightCount;
-
-			u32 infreqSpotLightOffset;
-			u32 infreqSpotLightCount;
-
-			u32 infreqAreaLightOffset;
-			u32 infreqAreaLightCount;
+			// Area lights
+			std::pair<u32, u32> staticAreaLightRange;
+			std::pair<u32, u32> infreqAreaLightRange;
+			std::pair<u32, u32> dynAreaLightRange;
 		};
 
 
@@ -198,28 +170,34 @@ namespace DOG::gfx
 		};
 
 		template <typename Handle>
+		struct PerFreqMetadata
+		{
+			PrivateStack<u32> freeSlots;
+			std::pair<u32, u32> range{ 0, 0 };			// { offset, count }
+			std::pair<Handle, bool> handle;				// { handle, dirty }
+
+			void FillSlots()
+			{
+				assert(range.second != 0);
+				for (i32 i = range.second - 1; i >= 0; --i)
+					freeSlots.push(range.first + i);
+			}
+		};
+
+		template <typename Handle>
 		struct LightMetadata
 		{
 			std::unique_ptr<GPUTableDeviceLocal<Handle>> bufferGPU;
+			PerFreqMetadata<Handle> statics, infreqs, dynamics;
 
-			PrivateStack<u32> freeStatics, freeDynamics, freeInfreqs;
-
-			u32 staticsCpuOffset{ 0 };
-			u32 infreqsCpuOffset{ 0 };
-			u32 dynamicsCpuOffset{ 0 };
-
-			u32 numMaxStatics{ 0 };
-			u32 numMaxInfreqs{ 0 };
-			u32 numMaxDynamics{ 0 };
-
-			bool staticsUploaded{ false };
-
-			// Chunks per frequency : { handle, dirty } 
-			Handle staticsHandle;
-			std::pair<Handle, bool> dynamicsHandle;
-			std::pair<Handle, bool> infreqsHandle;
 
 		// === Helpers
+			void FillSlots()
+			{
+				statics.FillSlots();
+				infreqs.FillSlots();
+				dynamics.FillSlots();
+			}
 
 			u32 GetNextSlot(LightUpdateFrequency freq)
 			{
@@ -227,17 +205,17 @@ namespace DOG::gfx
 				switch (freq)
 				{
 				case LightUpdateFrequency::Never:
-					ret = freeStatics.top();
-					freeStatics.pop();
+					ret = statics.freeSlots.top();
+					statics.freeSlots.pop();
 					break;
 				case LightUpdateFrequency::Sometimes:
-					ret = freeInfreqs.top();
-					freeInfreqs.pop();
+					ret = infreqs.freeSlots.top();
+					infreqs.freeSlots.pop();
 					SetInfreqsChunkDirty(true);			// Assuming that retrieving a new slot means that new data is to be copied in
 					break;
 				case LightUpdateFrequency::PerFrame:
-					ret = freeDynamics.top();
-					freeDynamics.pop();
+					ret = dynamics.freeSlots.top();
+					dynamics.freeSlots.pop();
 					SetDynamicsChunkDirty(true);		// See above
 					break;
 				}
@@ -250,32 +228,34 @@ namespace DOG::gfx
 				switch (freq)
 				{
 				case LightUpdateFrequency::Never:
-					freeStatics.push(slot);
+					statics.freeSlots.push(slot);
 					break;
 				case LightUpdateFrequency::Sometimes:
-					freeInfreqs.push(slot);
+					infreqs.freeSlots.push(slot);
+					SetInfreqsChunkDirty(true);	
 					break;
 				case LightUpdateFrequency::PerFrame:
-					freeDynamics.push(slot);
+					dynamics.freeSlots.push(slot);
+					SetDynamicsChunkDirty(true);
 					break;
 				default:
 					assert(false);
 				}
 			}
 
-			bool DynamicsChunkDirty() const { return dynamicsHandle.second; }
-			bool InfreqsChunkDirty() const { return infreqsHandle.second; }
-			void SetDynamicsChunkDirty(bool dirty) { dynamicsHandle.second = dirty; }
-			void SetInfreqsChunkDirty(bool dirty) { infreqsHandle.second = dirty; }
+			bool DynamicsChunkDirty() const { return dynamics.handle.second; }
+			bool InfreqsChunkDirty() const { return infreqs.handle.second; }
+			void SetDynamicsChunkDirty(bool dirty) { dynamics.handle.second = dirty; }
+			void SetInfreqsChunkDirty(bool dirty) { infreqs.handle.second = dirty; }
 			
 			void TryUpdateDynamics(void* chunkStart, u32 elementSize)
 			{
 				if (DynamicsChunkDirty())
 				{
 					bufferGPU->RequestUpdate(
-						dynamicsHandle.first,
+						dynamics.handle.first,
 						chunkStart,
-						numMaxDynamics * elementSize);
+						dynamics.range.second * elementSize);
 				}
 			}
 			void TryUpdateInfreqs(void* chunkStart, u32 elementSize)
@@ -283,21 +263,20 @@ namespace DOG::gfx
 				if (InfreqsChunkDirty())
 				{
 					bufferGPU->RequestUpdate(
-						infreqsHandle.first,
+						infreqs.handle.first,
 						chunkStart,
-						numMaxInfreqs * elementSize);
+						infreqs.range.second * elementSize);
 				}
 			}
-
-			void UpdateStatics(void* chunkStart, u32 elementSize)
+			void TryUpdateStatics(void* chunkStart, u32 elementSize)
 			{
-				if (!staticsUploaded)
+				if (statics.handle.second)
 				{
-					staticsUploaded = true;
+					statics.handle.second = false;
 					bufferGPU->RequestUpdate(
-						staticsHandle,
+						statics.handle.first,
 						chunkStart,
-						numMaxInfreqs * elementSize, 
+						statics.range.second * elementSize, 
 						true);
 				}
 			}
@@ -308,11 +287,11 @@ namespace DOG::gfx
 				switch (freq)
 				{
 				case LightUpdateFrequency::Never:
-					return bufferGPU->GetLocalOffset(staticsHandle);
+					return bufferGPU->GetLocalOffset(statics.handle.first);
 				case LightUpdateFrequency::Sometimes:
-					return bufferGPU->GetLocalOffset(infreqsHandle.first);
+					return bufferGPU->GetLocalOffset(infreqs.handle.first);
 				case LightUpdateFrequency::PerFrame:
-					return bufferGPU->GetLocalOffset(dynamicsHandle.first);
+					return bufferGPU->GetLocalOffset(dynamics.handle.first);
 				default:
 					assert(false);
 				}
@@ -341,9 +320,10 @@ namespace DOG::gfx
 		LightMetadata<SpotLightHandle> m_spotLightsMD;
 		LightMetadata<AreaLightHandle> m_areaLightsMD;
 
-		LightMetadata_GPU m_lightMD;
+		// Metadata
 		struct LightMDHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
 		std::unique_ptr<GPUTableDeviceLocal<LightMDHandle>> m_lightsMD;
+		LightMetadata_GPU m_lightMD;
 		LightMDHandle m_mdHandle;
 	};
 

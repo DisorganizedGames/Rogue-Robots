@@ -122,6 +122,7 @@ namespace DOG::gfx
 			// If safe --> Allocate new
 			if (!unsafeDirectUpload)
 			{
+				u64 oldSize = res.alloc.size;
 				auto delFunc = [this, alloc = std::move(res.alloc)]() mutable
 				{
 					m_vator.Free(std::move(alloc));
@@ -129,7 +130,7 @@ namespace DOG::gfx
 				m_bin->PushDeferredDeletion(delFunc);
 
 				// Allocate new one
-				res.alloc = m_vator.Allocate(m_elementSize);
+				res.alloc = m_vator.Allocate(oldSize);
 				res.elementOffset = res.alloc.offset / m_elementSize;
 			}
 		

@@ -43,15 +43,24 @@ float4 main(VS_OUT input) : SV_TARGET
     StructuredBuffer<ShaderInterop_GlobalData> gds = ResourceDescriptorHeap[g_constants.gdDescriptor];
     ShaderInterop_GlobalData gd = gds[0];
     
-    // Get light
+    StructuredBuffer<ShaderInterop_PerFrameData> pfDatas = ResourceDescriptorHeap[gd.perFrameTable];
+    ShaderInterop_PerFrameData pfData = pfDatas[g_constants.perFrameOffset];
+    
+    
+    
+    // Get lights metadata
+    StructuredBuffer<ShaderInterop_LightsMetadata> lightsMDs = ResourceDescriptorHeap[gd.lightTableMD];
+    ShaderInterop_LightsMetadata lightsMD = lightsMDs[0];
+    
+    // Get spotlights
     StructuredBuffer<ShaderInterop_SpotLight> spotlights = ResourceDescriptorHeap[gd.spotLightTable];
-    return spotlights[0].color;
+    uint lightID = 0;
+    ShaderInterop_SpotLight spotlight = spotlights[pfData.spotLightOffsets.dynOffset + lightID];
+    //return spotlight.color;
 
     
     
     
-    StructuredBuffer<ShaderInterop_PerFrameData> pfDatas = ResourceDescriptorHeap[gd.perFrameTable];
-    ShaderInterop_PerFrameData pfData = pfDatas[g_constants.perFrameOffset];
     
     StructuredBuffer<ShaderInterop_MaterialElement> mats = ResourceDescriptorHeap[gd.materialTable];
     ShaderInterop_MaterialElement mat = mats[perDrawData.materialID];
@@ -101,13 +110,16 @@ float4 main(VS_OUT input) : SV_TARGET
     
     
     
+    
 
+    
         
     // Add directional Light
     float3 Lo = float3(0.f, 0.f, 0.f);
     {
         // calculate per-light radiance
-        float3 L = normalize(-float3(-1.f, -1.f, 1.f));
+        //float3 L = normalize(-float3(-1.f, -1.f, 1.f));
+        float3 L = -normalize(spotlight.position.xyz - input.wsPos);        // temp
         float3 H = normalize(V + L);
         float3 radiance = float3(1.f, 1.f, 1.f); // no attenuation
         
@@ -129,6 +141,10 @@ float4 main(VS_OUT input) : SV_TARGET
         float NdotL = max(dot(N, L), 0.0);
         Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL;
     }
+    
+
+
+    
     
     float3 hdr = amb + Lo;
     return float4(hdr, 1.f);

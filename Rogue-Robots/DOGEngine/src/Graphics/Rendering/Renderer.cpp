@@ -29,6 +29,8 @@
 #include "RenderEffects/ImGUIEffect.h"
 #include "RenderEffects/TestComputeEffect.h"
 
+#include "ImGUI/imgui.h"
+
 namespace DOG::gfx
 {
 	Renderer::Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug) :
@@ -92,15 +94,12 @@ namespace DOG::gfx
 		m_globalLightTable = std::make_unique<LightTable>(m_rd, m_bin.get(), lightStorageSpec, false);
 		// Tests
 		auto sdesc = SpotLightDesc();
-		sdesc.position = { 0.f, 1.f, 0.f };
-		sdesc.color = { 1.f, 0.f, 0.f };
-		auto h1 = m_globalLightTable->AddSpotLight(sdesc, LightUpdateFrequency::Never);
-		sdesc.color = { 0.f, 0.f, 1.f };
-		auto h10 = m_globalLightTable->AddSpotLight(sdesc, LightUpdateFrequency::Never);
-		sdesc.position = { 0.f, 2.f, 0.f };
-		auto h2 = m_globalLightTable->AddSpotLight(sdesc, LightUpdateFrequency::Sometimes);
-		sdesc.position = { 0.f, 3.f, 0.f };
-		auto h3 = m_globalLightTable->AddSpotLight(sdesc, LightUpdateFrequency::PerFrame);
+		sdesc.position = { 0.f, 15.f, 0.f };
+		sdesc.color = { 0.f, 1.f, 0.f };
+		m_light = m_globalLightTable->AddSpotLight(sdesc, LightUpdateFrequency::PerFrame);
+
+
+
 
 
 
@@ -170,12 +169,7 @@ namespace DOG::gfx
 		m_globalData.pointLightTable = m_globalLightTable->GetDescriptor(LightType::Point);
 		m_globalData.spotLightTable = m_globalLightTable->GetDescriptor(LightType::Spot);
 		m_globalData.areaLightTable = m_globalLightTable->GetDescriptor(LightType::Area);
-		m_globalData.staticPointLightOffset = m_globalLightTable->GetChunkOffset(LightType::Point, LightUpdateFrequency::Never);
-		m_globalData.staticSpotLightOffset = m_globalLightTable->GetChunkOffset(LightType::Spot, LightUpdateFrequency::Never);
-		m_globalData.staticAreaLightOffset = m_globalLightTable->GetChunkOffset(LightType::Area, LightUpdateFrequency::Never);
-		m_globalData.staticPointLightCount = lightStorageSpec.pointLightSpec.maxStatics;
-		m_globalData.staticSpotLightCount = lightStorageSpec.spotLightSpec.maxStatics;
-		m_globalData.staticAreaLightCount = lightStorageSpec.areaLightSpec.maxStatics;
+		m_globalData.lightTableMD = m_globalLightTable->GetMetadataDescriptor();
 
 		m_globalDataTable = std::make_unique<GPUTableDeviceLocal<GlobalDataHandle>>(m_rd, m_bin.get(), (u32)sizeof(GlobalData), 1, false);
 		m_gdHandle = m_globalDataTable->Allocate(1, &m_globalData);
@@ -275,11 +269,26 @@ namespace DOG::gfx
 		m_animatedDraws.push_back(sub);
 	}
 
+	static float thingy[3] = { 0.f, 0.f, 0.f };
+	static float thingy2[3] = { 0.f, 1.f, 0.f };
+
 	void Renderer::Update(f32 dt)
 	{
 		m_boneJourno->UpdateJoints();
 
-		m_globalLightTable->SendCopyRequests(*m_uploadCtx);
+
+		// Update spotlight
+
+		ImGui::SliderFloat3("Position", thingy, -30.f, 30.f);
+		ImGui::SliderFloat3("Color", thingy2, 0.f, 1.f);
+		auto sdesc = SpotLightDesc();
+		sdesc.position = { thingy[0], thingy[1], thingy[2] };
+		sdesc.color = { thingy2[0], thingy2[1], thingy2[2] };
+		m_globalLightTable->UpdateSpotLight(m_light, sdesc);
+
+		m_globalLightTable->FinalizeUpdates();
+
+
 
 		// Update per frame data
 		{
@@ -287,6 +296,20 @@ namespace DOG::gfx
 			m_pfData.projMatrix = m_projMat;
 			m_pfData.projMatrix.Invert(m_pfData.invProjMatrix);
 			m_pfData.time += dt;
+
+			// Set light data
+			m_pfData.pointLightOffsets.staticOffset = m_globalLightTable->GetChunkOffset(LightType::Point, LightUpdateFrequency::Never);
+			m_pfData.pointLightOffsets.infreqOffset = m_globalLightTable->GetChunkOffset(LightType::Point, LightUpdateFrequency::Sometimes);
+			m_pfData.pointLightOffsets.dynOffset = m_globalLightTable->GetChunkOffset(LightType::Point, LightUpdateFrequency::PerFrame);
+
+			m_pfData.spotLightOffsets.staticOffset = m_globalLightTable->GetChunkOffset(LightType::Spot, LightUpdateFrequency::Never);
+			m_pfData.spotLightOffsets.infreqOffset = m_globalLightTable->GetChunkOffset(LightType::Spot, LightUpdateFrequency::Sometimes);
+			m_pfData.spotLightOffsets.dynOffset = m_globalLightTable->GetChunkOffset(LightType::Spot, LightUpdateFrequency::PerFrame);
+
+			m_pfData.areaLightOffsets.staticOffset = m_globalLightTable->GetChunkOffset(LightType::Area, LightUpdateFrequency::Never);
+			m_pfData.areaLightOffsets.infreqOffset = m_globalLightTable->GetChunkOffset(LightType::Area, LightUpdateFrequency::Sometimes);
+			m_pfData.areaLightOffsets.dynOffset = m_globalLightTable->GetChunkOffset(LightType::Area, LightUpdateFrequency::PerFrame);
+
 
 			// Get camera position
 			DirectX::XMVECTOR tmp;
@@ -297,18 +320,22 @@ namespace DOG::gfx
 			m_pfData.camPos = { posFloat3.x, posFloat3.y, posFloat3.z, 0.0f };
 
 			m_pfDataTable->RequestUpdate(m_pfHandle, &m_pfData, sizeof(m_pfData));
-			m_pfDataTable->SendCopyRequests(*m_perFrameUploadCtx);
 
 			// Get offset after update
 			m_currPfDescriptor = m_pfDataTable->GetLocalOffset(m_pfHandle);
 			m_globalEffectData.perFrameTableOffset = &m_currPfDescriptor;
-
 		}
+
+		m_globalLightTable->SendCopyRequests(*m_perFrameUploadCtx);
+		m_pfDataTable->SendCopyRequests(*m_perFrameUploadCtx);
+
+
 	}
 
 	void Renderer::Render(f32)
 	{
 		ZoneNamedN(RenderScope, "Render", true);
+
 
 		// Resolve any per frame copies from CPU
 		{
