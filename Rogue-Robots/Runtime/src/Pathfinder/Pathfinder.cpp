@@ -10,18 +10,18 @@ Pathfinder::Pathfinder() noexcept
 	// For testing purposes
 	std::vector<std::string> map1 = {
 		"***********************************************",
-		"*                                             *",
+		"*                         *                   *",
 		"*               ***********                   *",
 		"*      *        *                *****        *",
 		"*      *        *                *****        *",
 		"*      *                 *****      **        *",
-		"*      ******               **       *        *",
-		"*           *               **                *",
+		"*      ******               **       **********",
+		"*           *               **********        *",
 		"*           *                                 *",
-		"*           ********            *****         *",
-		"*               *               *             *",
-		"*               *               *             *",
-		"*                                             *",
+		"*           ********            ******        *",
+		"*               *               *    *        *",
+		"*               *               *    *        *",
+		"*               *                    *        *",
 		"***********************************************",
 	};
 	size_t gridSizeX = map1[0].size();
@@ -223,6 +223,8 @@ void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord orig
 			if (nxt1.y < border.high.y)
 				GenerateNavMeshes(map, GridCoord(nxt2.x, nxt1.y + (nxt2.y - nxt1.y) / 2, 0), ++symbol);
 		}
+		nxt1.x = border.low.x; nxt1.y = border.high.y;
+		nxt2 = nxt1;
 		// expand down
 		while (nxt1.x < border.high.x && nxt2.x < border.high.x)
 		{
@@ -232,6 +234,8 @@ void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord orig
 			if (nxt1.x < border.high.x)
 				GenerateNavMeshes(map, GridCoord(nxt1.x + (nxt2.x - nxt1.x) / 2, nxt2.y, 0), ++symbol);
 		}
+		nxt1 = border.high;
+		nxt2 = nxt1;
 		// expand right
 		while (border.low.y < nxt1.y && border.low.y < nxt2.y)
 		{
@@ -241,6 +245,8 @@ void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord orig
 			if (border.low.y < nxt1.y)
 				GenerateNavMeshes(map, GridCoord(nxt2.x, nxt1.y - (nxt1.y - nxt2.y) / 2, 0), ++symbol);
 		}
+		nxt1.x = border.high.x; nxt1.y = border.low.y;
+		nxt2 = nxt1;
 		// expand up
 		while (border.low.x < nxt1.x && border.low.x < nxt2.x)
 		{
