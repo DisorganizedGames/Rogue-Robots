@@ -279,6 +279,7 @@ namespace DOG::gfx
 
 		assert((desc.offset + desc.stride * desc.count - 1) < buffer_storage.desc.size);
 
+		std::optional<DX12DescriptorChunk> uavClear;
 		if (desc.viewType == ViewType::Constant)
 		{
 			assert(desc.stride % 256 == 0);
@@ -317,9 +318,12 @@ namespace DOG::gfx
 			uavd.Buffer.CounterOffsetInBytes = 0;
 			uavd.Buffer.Flags = desc.raw ? D3D12_BUFFER_UAV_FLAG_RAW : D3D12_BUFFER_UAV_FLAG_NONE;
 
+			uavClear = m_descriptorMgr->allocate_cbv_srv_uav_cpu(1);
+
 			// We never use counter buffers, user has to create their own RW buffer with counters and do InterlockedAdd
 			// This makes counting explicit on the user side and simplifies API (always no counter)
 			m_device->CreateUnorderedAccessView(buffer_storage.resource.Get(), nullptr, &uavd, view_desc.cpu_handle(0));
+			m_device->CreateUnorderedAccessView(buffer_storage.resource.Get(), nullptr, &uavd, uavClear->cpu_handle(0));
 		}
 		else if (desc.viewType == ViewType::RaytracingAS)
 		{
@@ -337,7 +341,9 @@ namespace DOG::gfx
 		}
 
 		auto handle = m_rhp.Allocate<BufferView>();
-		HandleAllocator::TryInsertMove(m_bufferViews, std::move(BufferView_Storage(buffer, desc.viewType, view_desc)), HandleAllocator::GetSlot(handle.handle));
+		auto viewStorage = BufferView_Storage(buffer, desc.viewType, view_desc);
+		viewStorage.uavClear = uavClear;
+		HandleAllocator::TryInsertMove(m_bufferViews, std::move(viewStorage), HandleAllocator::GetSlot(handle.handle));
 		return handle;
 
 	}
@@ -358,6 +364,7 @@ namespace DOG::gfx
 		else
 			view_desc = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+		std::optional<DX12DescriptorChunk> uavClear;
 		if (desc.viewType == ViewType::DepthStencil)
 		{
 			auto dsv = to_dsv(desc);
@@ -376,7 +383,10 @@ namespace DOG::gfx
 		else if (desc.viewType == ViewType::UnorderedAccess)
 		{
 			auto uav = to_uav(desc);
+
+			uavClear = m_descriptorMgr->allocate_cbv_srv_uav_cpu(1);
 			m_device->CreateUnorderedAccessView(tex_storage.resource.Get(), nullptr, &uav, view_desc.cpu_handle(0));
+			m_device->CreateUnorderedAccessView(tex_storage.resource.Get(), nullptr, &uav, uavClear->cpu_handle(0));
 		}
 		else
 		{
@@ -384,7 +394,9 @@ namespace DOG::gfx
 		}
 
 		auto handle = m_rhp.Allocate<TextureView>();
-		HandleAllocator::TryInsertMove(m_textureViews, std::move(TextureView_Storage(texture, desc.viewType, view_desc)), HandleAllocator::GetSlot(handle.handle));
+		auto viewStorage = TextureView_Storage(texture, desc.viewType, view_desc);
+		viewStorage.uavClear = uavClear;
+		HandleAllocator::TryInsertMove(m_textureViews, std::move(viewStorage), HandleAllocator::GetSlot(handle.handle));
 		return handle;
 	}
 
@@ -412,6 +424,8 @@ namespace DOG::gfx
 	{
 		auto& res = HandleAllocator::TryGet(m_bufferViews, HandleAllocator::GetSlot(handle.handle));
 		m_descriptorMgr->free(&res.view);
+		if (res.uavClear)
+			m_descriptorMgr->free_cbv_srv_uav_cpu(&*res.uavClear);
 		HandleAllocator::FreeStorage(m_rhp, m_bufferViews, handle);
 	}
 
@@ -419,6 +433,8 @@ namespace DOG::gfx
 	{
 		auto& res = HandleAllocator::TryGet(m_textureViews, HandleAllocator::GetSlot(handle.handle));
 		m_descriptorMgr->free(&res.view);
+		if (res.uavClear)
+			m_descriptorMgr->free_cbv_srv_uav_cpu(&*res.uavClear);
 		HandleAllocator::FreeStorage(m_rhp, m_textureViews, handle);
 	}
 
@@ -853,7 +869,7 @@ namespace DOG::gfx
 		auto& viewRes = HandleAllocator::TryGet(m_bufferViews, HandleAllocator::GetSlot(view.handle));
 		auto& d12Res = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(viewRes.buf.handle));
 		
-		cmdlRes.pair.list->ClearUnorderedAccessViewFloat(viewRes.view.gpu_handle(0), viewRes.view.cpu_handle(0),
+		cmdlRes.pair.list->ClearUnorderedAccessViewFloat(viewRes.view.gpu_handle(0), viewRes.uavClear->cpu_handle(0),
 			d12Res.resource.Get(), clear.data(), rects.numScissors, rects.scissors.data());
 	}
 
@@ -864,7 +880,7 @@ namespace DOG::gfx
 		auto& viewRes = HandleAllocator::TryGet(m_textureViews, HandleAllocator::GetSlot(view.handle));
 		auto& d12Res = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(viewRes.tex.handle));
 
-		cmdlRes.pair.list->ClearUnorderedAccessViewFloat(viewRes.view.gpu_handle(0), viewRes.view.cpu_handle(0),
+		cmdlRes.pair.list->ClearUnorderedAccessViewFloat(viewRes.view.gpu_handle(0), viewRes.uavClear->cpu_handle(0),
 			d12Res.resource.Get(), clear.data(), rects.numScissors, rects.scissors.data());
 	}
 

@@ -426,6 +426,8 @@ namespace DOG::gfx
 					{
 						//passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
 						passResources.m_views[output.viewID] = m_rd->GetGlobalDescriptor(view);
+						passResources.m_textureViewsLookup[output.viewID] = view;
+
 					}
 				}
 				else
@@ -440,6 +442,7 @@ namespace DOG::gfx
 						auto view = m_rd->CreateView(resource, viewDesc);
 						//passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
 						passResources.m_views[output.viewID] = m_rd->GetGlobalDescriptor(view);
+						passResources.m_bufferViewsLookup[output.viewID] = view;
 						passResources.m_bufferViews.push_back(view);
 					}
 				}
@@ -483,6 +486,8 @@ namespace DOG::gfx
 					{
 						//passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
 						passResources.m_views[input.viewID] = m_rd->GetGlobalDescriptor(view);
+						passResources.m_textureViewsLookup[input.viewID] = view;
+
 					}
 				}
 				else
@@ -496,6 +501,9 @@ namespace DOG::gfx
 					auto view = m_rd->CreateView(resource, viewDesc);
 					passResources.m_bufferViews.push_back(view);
 					passResources.m_buffers[lookupID] = resource;
+
+					passResources.m_views[input.viewID] = m_rd->GetGlobalDescriptor(view);
+					passResources.m_bufferViewsLookup[input.viewID] = view;
 				}
 			}
 
@@ -1082,6 +1090,18 @@ namespace DOG::gfx
 	{
 		assert(m_views.contains(id));
 		return m_views.find(id)->second;
+	}
+
+	TextureView RenderGraph::PassResources::GetTextureView(RGResourceView id) const
+	{
+		assert(m_textureViewsLookup.contains(id));
+		return m_textureViewsLookup.find(id)->second;
+	}
+
+	BufferView RenderGraph::PassResources::GetBufferView(RGResourceView id) const
+	{
+		assert(m_bufferViewsLookup.contains(id));
+		return m_bufferViewsLookup.find(id)->second;
 	}
 
 	Texture RenderGraph::PassResources::GetTexture(RGResourceID id)

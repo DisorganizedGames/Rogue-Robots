@@ -229,6 +229,7 @@ namespace DOG::gfx
 			Buffer buf;
 			ViewType type{ ViewType::None };
 			DX12DescriptorChunk view;
+			std::optional<DX12DescriptorChunk> uavClear;
 
 			BufferView_Storage(Buffer buf_in, ViewType type_in, const DX12DescriptorChunk& descriptor) : buf(buf_in), type(type_in), view(descriptor) {}
 		};
@@ -238,6 +239,8 @@ namespace DOG::gfx
 			Texture tex;
 			ViewType type{ ViewType::None };
 			DX12DescriptorChunk view;
+			std::optional<DX12DescriptorChunk> uavClear;
+
 
 			TextureView_Storage(Texture tex_in, ViewType type_in, const DX12DescriptorChunk& descriptor) : tex(tex_in), type(type_in), view(descriptor) {}
 		};
