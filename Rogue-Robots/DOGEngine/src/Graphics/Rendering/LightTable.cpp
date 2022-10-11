@@ -77,6 +77,7 @@ namespace DOG::gfx
 		}
 	}
 
+
 	void LightTable::RemoveLight(LightHandle handle)
 	{
 		auto& storage = HandleAllocator::TryGet(m_lights, HandleAllocator::GetSlot(handle.handle));
@@ -123,6 +124,28 @@ namespace DOG::gfx
 		}
 	}
 
+
+	LightHandle LightTable::AddPointLight(const PointLightDesc& desc, LightUpdateFrequency frequency)
+	{
+		// Grab slot
+		u32 nextIdx = m_pointLightsMD.GetNextSlot(frequency);
+
+		// Copy data
+		auto& gpu = m_pointLights[nextIdx];
+		gpu.position = DirectX::SimpleMath::Vector4(desc.position);
+		gpu.color = DirectX::SimpleMath::Vector4(desc.color);
+		gpu.strength = desc.strength;
+
+		// Store
+		const auto lightHandle = m_handleAtor.Allocate<LightHandle>();
+		Light_Storage storage{};
+		storage.localLightID = nextIdx;
+		storage.type = LightType::Spot;
+		storage.freq = frequency;
+
+		HandleAllocator::TryInsertMove(m_lights, std::move(storage), HandleAllocator::GetSlot(lightHandle.handle));
+		return lightHandle;
+	}
 
 	LightHandle LightTable::AddSpotLight(const SpotLightDesc& desc, LightUpdateFrequency frequency)
 	{

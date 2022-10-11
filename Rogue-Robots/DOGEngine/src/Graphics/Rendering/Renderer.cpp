@@ -98,6 +98,27 @@ namespace DOG::gfx
 		sdesc.color = { 0.f, 1.f, 0.f };
 		m_light = m_globalLightTable->AddSpotLight(sdesc, LightUpdateFrequency::PerFrame);
 
+		u32 xOffset = 18.f;
+		u32 zOffset = 18.f;
+		for (u32 i = 0; i < 5; ++i)
+		{
+			for (u32 x = 0; x < 5; ++x)
+			{
+				auto pdesc = PointLightDesc();
+				pdesc.position = { xOffset + (f32)i * 7.f, 8.f, zOffset + (f32)x * 7.f };
+				pdesc.color = { 1.f, 0.f, 0.f };
+				pdesc.strength = 10.f;
+				m_globalLightTable->AddPointLight(pdesc, LightUpdateFrequency::Never);
+
+				auto dd = SpotLightDesc();
+				dd.position = { xOffset + (f32)i * 7.f, 16.f, zOffset + (f32)x * 7.f };
+				dd.color = { 0.f, 0.f, 1.f };
+				dd.direction = { 0.f, 1.f, 0.f };
+				dd.strength = 1.f;
+				m_globalLightTable->AddSpotLight(dd, LightUpdateFrequency::Never);
+			}
+		}
+
 
 
 
@@ -272,7 +293,6 @@ namespace DOG::gfx
 	void Renderer::Update(f32 dt)
 	{
 		m_boneJourno->UpdateJoints();
-
 
 
 		// Update spotlight

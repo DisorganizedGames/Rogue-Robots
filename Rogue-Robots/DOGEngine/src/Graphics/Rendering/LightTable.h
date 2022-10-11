@@ -18,16 +18,18 @@ namespace DOG::gfx
 
 	struct PointLightDesc
 	{
-		
+		DirectX::SimpleMath::Vector3 position{ 0.f, 0.f, 0.f };
+		DirectX::SimpleMath::Vector3 color{ 1.f, 1.f, 1.f };
+		float strength{ 1.f };
 	};
 
 	struct SpotLightDesc
 	{
 		DirectX::SimpleMath::Vector3 position{ 0.f, 0.f, 0.f };
-		DirectX::SimpleMath::Vector3 direction{ 0.f, 0.f, 1.f };
 		DirectX::SimpleMath::Vector3 color{ 1.f, 1.f, 1.f };
+		DirectX::SimpleMath::Vector3 direction{ 0.f, 0.f, 1.f };
 		float strength{ 1.f };
-		float cutoffAngle{ 35.f };
+		float cutoffAngle{ 15.f };
 	};
 
 	struct AreaLightDesc
@@ -98,14 +100,14 @@ namespace DOG::gfx
 		{
 			DirectX::SimpleMath::Vector4 position{ 0.f, 0.f, 0.f, 1.f };
 			DirectX::SimpleMath::Vector4 color{ 0.f, 0.f, 0.f, 1.f };
-			DirectX::SimpleMath::Vector4 attenuation{ 0.f, 0.f, 0.f, 1.f };
+			float strength{ 1.f };
 		};
 
 		struct SpotLight_GPUElement
 		{
 			DirectX::SimpleMath::Vector4 position{ 0.f, 0.f, 0.f, 1.f };
 			DirectX::SimpleMath::Vector3 color{ 0.f, 0.f, 0.f };
-			float cutoffAngle{ 35.f };
+			float cutoffAngle{ 15.f };
 			DirectX::SimpleMath::Vector3 direction{ 0.f, 0.f, 1.f };
 			float strength{ 1.f };
 		};
