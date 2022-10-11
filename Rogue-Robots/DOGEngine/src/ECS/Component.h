@@ -62,12 +62,6 @@ namespace DOG
 	struct AnimationComponent
 	{
 		i32 offset = 0;
-		struct BlendSpecification
-		{
-			i32 mode = 0;
-			f32 transition = 0.0f;
-			f32 blendFactor = 0.0f;
-		};
 		struct AnimationClip
 		{
 			// Animation Specifics
@@ -85,17 +79,12 @@ namespace DOG
 			i32 blendMode = 0;
 			f32 transitionStart = 0.0f;
 			f32 transitionTime = 0.0f;
-			bool matchingTime = false;
+			bool matchingTime = false; //bs
 
-			// testing some stuff
-			f32 animTotalTicks = 1.0f;
-			f32 animDuration = 1.0f;
 			void UpdateClip(const f32 dt);
 			bool HasActiveAnimation() const { return animationID != -1; };
-			bool operator < ( AnimationClip const& rhs) const{ return this->animationID < rhs.animationID; };
 			void SetAnimation(const i32 id, const f32 nTicks, const f32 duration, const f32 startTime = 0.0f);
 		};
-		BlendSpecification blendSpec;
 		std::array<AnimationClip, 2> clips;
 		// Update 
 		void Update(const f32 dt);
