@@ -269,9 +269,6 @@ namespace DOG::gfx
 		m_animatedDraws.push_back(sub);
 	}
 
-	static float thingy[3] = { 0.f, 0.f, 0.f };
-	static float thingy2[3] = { 0.f, 1.f, 0.f };
-
 	void Renderer::Update(f32 dt)
 	{
 		m_boneJourno->UpdateJoints();
@@ -295,7 +292,6 @@ namespace DOG::gfx
 			auto sdesc = SpotLightDesc();
 			sdesc.position = { pos };
 			sdesc.direction = { lookAtF3 };
-			sdesc.color = { thingy2[0], thingy2[1], thingy2[2] };
 			m_globalLightTable->UpdateSpotLight(m_light, sdesc);
 
 		}
