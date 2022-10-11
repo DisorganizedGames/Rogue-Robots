@@ -347,9 +347,10 @@ void EntityInterface::AddBoxCollider(LuaContext* context, entity e)
 	EntityManager::Get().AddComponent<BoxColliderComponent>(e, e, Vector3{ boxDim.x, boxDim.y, boxDim.z }, dynamic);
 }
 
-void EntityInterface::AddRigidbody(LuaContext*, entity e)
+void EntityInterface::AddRigidbody(LuaContext* context, entity e)
 {
-	auto& rigid = EntityManager::Get().AddComponent<RigidbodyComponent>(e, e);
+	bool kinematic = context->GetBoolean();
+	EntityManager::Get().AddComponent<RigidbodyComponent>(e, e, kinematic);
 }
 
 void EntityInterface::ModifyTransform(LuaContext* context, entity e)
@@ -380,15 +381,6 @@ void EntityInterface::ModifyPlayerStats(DOG::LuaContext* context, DOG::entity e)
 	psComp.health = t.GetFloatFromTable("health");
 	psComp.maxHealth = t.GetFloatFromTable("maxHealth");
 	psComp.speed = t.GetFloatFromTable("speed");
-}
-
-void EntityInterface::AddBoxCollider(DOG::LuaContext* context, DOG::entity e)
-{
-	LuaTable t = context->GetTable();
-	bool dynamic = context->GetBoolean();
-
-	EntityManager::Get().AddComponent<BoxColliderComponent>(e, e, 
-		Vector3(t.GetFloatFromTable("x"), t.GetFloatFromTable("y"), t.GetFloatFromTable("z")), dynamic);
 }
 
 //---------------------------------------------------------------------------------------------------------

@@ -12,7 +12,7 @@ local ObjectManager = require("Object")
 --  Agent script   --
 ---------------------
 local Agent = ObjectManager:CreateObject()
-Agent.pos = Vector3.new(15.0, 15.0, 5.0)
+Agent.pos = Vector3.new(25.0, 12.0, 25.0)
 Agent.rot = Vector3.new(0.0, 0.0, 0.0)
 Agent.stats = {
 	hp = 100.0,
@@ -37,6 +37,8 @@ end
 
 -- In future move to more specific Agent script --
 function OnStart()
+
+	Entity:ModifyComponent(EntityID, "Transform", Agent.pos, 1)
 
 	-----------------------------
 	--  Define some behaviors  --
@@ -72,7 +74,7 @@ function OnStart()
 			local dir = distances[1].pos - Agent.pos;
 			dir = dir * (1 / distances[1].dist)
 			Agent.pos = Agent.pos + dir * Agent.stats.speed * DeltaTime
-			Entity:ModifyComponent(EntityID, "Transform", Agent.pos, 1)
+			--Entity:ModifyComponent(EntityID, "Transform", Agent.pos, 1)
 			--print("Distance to player " .. distances[1].id .. " is " .. distances[1].dist)
 		end
 		return self.target ~= nil
@@ -93,7 +95,7 @@ function OnStart()
 		local len = Length(dir)
 		dir = dir * (1 / len)
 		local move = Agent.stats.speed * DeltaTime
-		Agent.pos = Agent.pos + dir * move
+		-- Agent.pos = Agent.pos + dir * move
 		if (len - move) < 0.05 then
 			local prev = self.target
 			self.target = self.target % #self.checkpoints + 1
@@ -102,11 +104,11 @@ function OnStart()
 		distances = Host:DistanceToPlayers(Agent.pos)
 		if distances[1].dist < 8.0 then
 			chasePlayer.target = distances[1].playerID
-			print("Chasing player " .. chasePlayer.target)
-			Agent:pushBehavior(chasePlayer)
+			-- print("Chasing player " .. chasePlayer.target)
+			--Agent:pushBehavior(chasePlayer)
 		end
 		--Agent.stats.hp = Agent.stats.hp - 15.0 * DeltaTime  --death timer...
-		Entity:ModifyComponent(EntityID, "Transform", Agent.pos, 1)
+		-- Entity:ModifyComponent(EntityID, "Transform", Agent.pos, 1)
 		return Agent.stats.hp > 0.0
 	end
 
@@ -115,13 +117,24 @@ function OnStart()
 
 	Agent.model = Asset:LoadModel("Assets/suzanne.glb")
 	--Agent.model = Asset:LoadModel("Assets/temp_Robot.fbx")
-	
 	Entity:AddComponent(EntityID, "Model", Agent.model)
 	Entity:AddComponent(EntityID, "AgentStats", Agent.stats)
-	--Entity:AddComponent(EntityID, "BoxCollider", {x = 1, y = 1, z = 1}, false) --reconfigure size to match model
+	Entity:AddComponent(EntityID, "BoxCollider", Vector3.new(1, 1, 1), true)
+	Entity:AddComponent(EntityID, "Rigidbody", true)
+
+	Agent.behaviorStack = {idle, death, default}
 end
 
 function OnUpdate()
 	Agent:doBehavior()
+	Entity:ModifyComponent(EntityID, "Transform", Agent.pos, 1)
+end
+
+function OnCollisionEnter()
+	print("Agent collided with something!")
+end
+
+function OnCollisionExit()
+	print("Agent stopped colliding with that something!")
 end
 
