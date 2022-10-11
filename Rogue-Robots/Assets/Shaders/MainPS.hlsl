@@ -119,7 +119,7 @@ float4 main(VS_OUT input) : SV_TARGET
     {
         // calculate per-light radiance
         //float3 L = normalize(-float3(-1.f, -1.f, 1.f));
-        float3 L = -normalize(spotlight.position.xyz - input.wsPos);        // temp
+        float3 L = normalize(spotlight.position.xyz - input.wsPos);        // temp
         float3 H = normalize(V + L);
         float3 radiance = float3(1.f, 1.f, 1.f); // no attenuation
         
