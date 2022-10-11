@@ -9,6 +9,8 @@ class btDiscreteDynamicsWorld;
 class btRigidBody;
 class btDefaultMotionState;
 class btCollisionShape;
+class btGhostObject;
+class btPairCachingGhostObject;
 
 namespace DOG
 {
@@ -29,13 +31,19 @@ namespace DOG
 		friend class TypedHandlePool;
 	};
 
+	struct GhostObjectHandle
+	{
+		u64 handle = 0;
+		friend class TypedHandlePool;
+	};
+
 	struct RigidbodyColliderData
 	{
 		btRigidBody* rigidBody = nullptr;
 		btDefaultMotionState* motionState = nullptr;
 		CollisionShapeHandle collisionShapeHandle;
 		bool dynamic = false;
-		entity rigidbodyEntity;
+		entity rigidbodyEntity = 0;
 		DirectX::SimpleMath::Vector3 rigidbodyScale;
 	};
 
@@ -44,6 +52,13 @@ namespace DOG
 		bool collisionCheck = false;
 		bool activeCollision = false;
 		RigidbodyHandle rigidbodyHandle;
+	};
+
+	struct GhostObjectData
+	{
+		btPairCachingGhostObject* ghostObject = nullptr;
+		CollisionShapeHandle collisionShapeHandle;
+		entity ghostObjectEntity = 0;
 	};
 
 	struct BoxColliderComponent
@@ -76,6 +91,13 @@ namespace DOG
 		RigidbodyHandle rigidbodyHandle;
 	};
 
+	struct BoxTriggerComponent
+	{
+		BoxTriggerComponent(entity entity, const DirectX::SimpleMath::Vector3& boxColliderSize) noexcept;
+
+		GhostObjectHandle ghostObjectHandle;
+	};
+
 	struct MeshWaitData
 	{
 		entity meshEntity;
@@ -95,6 +117,7 @@ namespace DOG
 		friend CapsuleColliderComponent;
 		friend RigidbodyComponent;
 		friend MeshColliderComponent;
+		friend BoxTriggerComponent;
 		friend PhysicsRigidbody;
 
 	private:
@@ -121,8 +144,13 @@ namespace DOG
 		//Collision keeper for different rigidbodies
 		std::unordered_map<u32, std::unordered_map<u32, RigidbodyCollisionData>> m_rigidbodyCollision;
 
+		//Ghost objects (ghost objects are triggers)
+		std::vector<GhostObjectData> m_ghostObjectDatas;
+		u64 m_nrGhostObjects = 0;
+
 		static constexpr u64 RESIZE_RIGIDBODY_SIZE = 1000;
 		static constexpr u64 RESIZE_COLLISIONSHAPE_SIZE = 1000;
+		static constexpr u64 RESIZE_GHOST_OBJECT_SIZE = 1000;
 
 	private:
 		PhysicsEngine();
@@ -130,7 +158,10 @@ namespace DOG
 		static btDiscreteDynamicsWorld* GetDynamicsWorld();
 		static RigidbodyHandle AddRigidbodyColliderData(RigidbodyColliderData rigidbodyColliderData);
 		static RigidbodyHandle AddRigidbody(entity entity, RigidbodyColliderData& rigidbodyColliderData, bool dynamic, float mass);
+		static GhostObjectHandle AddGhostObjectData(GhostObjectData& ghostObjectData);
+		static GhostObjectHandle AddGhostObject(entity entity, GhostObjectData& ghostObjectData);
 		static RigidbodyColliderData* GetRigidbodyColliderData(const RigidbodyHandle& rigidbodyHandle);
+		static GhostObjectData* GetGhostObjectData(const GhostObjectHandle& ghostObjectHandle);
 		void CheckMeshColliders();
 		static void AddMeshColliderData(const MeshColliderData& meshColliderData);
 		static MeshColliderData GetMeshColliderData(u32 modelID);
@@ -139,6 +170,7 @@ namespace DOG
 		void FreeRigidbodyData(const RigidbodyHandle& rigidbodyHandle, bool freeCollisionShape);
 		void FreeCollisionShape(const CollisionShapeHandle& collisionShapeHandle);
 		void CheckRigidbodyCollisions();
+		void CheckGhostObjectCollisions();
 
 	public:
 		~PhysicsEngine();

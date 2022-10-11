@@ -16,6 +16,8 @@ namespace DOG
 		m_rigidBodyColliderDatas.resize(PhysicsEngine::RESIZE_RIGIDBODY_SIZE);
 
 		m_collisionShapes.resize(PhysicsEngine::RESIZE_COLLISIONSHAPE_SIZE);
+
+		m_ghostObjectDatas.resize(PhysicsEngine::RESIZE_GHOST_OBJECT_SIZE);
 	}
 
 	void PhysicsEngine::AddMeshColliderWaitForModel(const MeshWaitData& meshColliderData)
@@ -76,6 +78,9 @@ namespace DOG
 			s_physicsEngine.m_broadphaseInterface.get(), s_physicsEngine.m_sequentialImpulseContraintSolver.get(), s_physicsEngine.m_collisionConfiguration.get());
 
 		s_physicsEngine.m_dynamicsWorld->setGravity({0.0f, -9.82f, 0.0f});
+
+		//For checking trigger collisions (i'm pretty sure)
+		s_physicsEngine.m_dynamicsWorld->getBroadphase()->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
 	}
 
 	void PhysicsEngine::UpdatePhysics(float deltaTime)
@@ -168,6 +173,7 @@ namespace DOG
 			});
 
 		s_physicsEngine.CheckRigidbodyCollisions();
+		s_physicsEngine.CheckGhostObjectCollisions();
 
 		//Because for now we do not have any callbacks to c++ we only have to check if entity have a ScriptComponent
 		EntityManager::Get().Collect<RigidbodyComponent, ScriptComponent>().Do([&](RigidbodyComponent& rigidbody, ScriptComponent&)
@@ -330,8 +336,62 @@ namespace DOG
 		u32 userIndex2 = (u32)((rigidbodyHandle.handle >> byteShift) & bitMask);
 		pointerToRCD->rigidBody->setUserIndex(userIndex1);
 		pointerToRCD->rigidBody->setUserIndex2(userIndex2);
+		pointerToRCD->rigidBody->setUserIndex3(true);
 
 		return rigidbodyHandle;
+	}
+
+	GhostObjectHandle PhysicsEngine::AddGhostObjectData(GhostObjectData& ghostObjectData)
+	{
+		GhostObjectHandle ghostObjectHandle = s_physicsEngine.m_handleAllocator.Allocate<GhostObjectHandle>();
+		u32 handle = gfx::HandleAllocator::GetSlot(ghostObjectHandle.handle);
+
+		//Resize if needed
+		if (handle >= s_physicsEngine.m_ghostObjectDatas.size())
+			s_physicsEngine.m_ghostObjectDatas.resize(s_physicsEngine.m_ghostObjectDatas.size() + PhysicsEngine::RESIZE_GHOST_OBJECT_SIZE);
+
+		s_physicsEngine.m_ghostObjectDatas[handle] = std::move(ghostObjectData);
+
+		//Increase the counter for ghost objects
+		++s_physicsEngine.m_nrGhostObjects;
+
+		return ghostObjectHandle;
+	}
+
+	GhostObjectHandle PhysicsEngine::AddGhostObject(entity entity, GhostObjectData& ghostObjectData)
+	{
+		//Set rigidody entity
+		ghostObjectData.ghostObjectEntity = entity;
+
+		ghostObjectData.ghostObject = new btPairCachingGhostObject();
+
+		//Set collision shape
+		btCollisionShape* collider = s_physicsEngine.GetCollisionShape(ghostObjectData.collisionShapeHandle);
+		ghostObjectData.ghostObject->setCollisionShape(collider);
+
+		TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(entity);
+
+		//Copy entity transform
+		btTransform groundTransform;
+		groundTransform.setFromOpenGLMatrix((float*)(&transform.worldMatrix));
+		ghostObjectData.ghostObject->setWorldTransform(groundTransform);
+
+		//Add it to the world
+		s_physicsEngine.m_dynamicsWorld->addCollisionObject(ghostObjectData.ghostObject);
+		ghostObjectData.ghostObject->setCollisionFlags(ghostObjectData.ghostObject->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
+
+		GhostObjectHandle ghostObjectHandle = PhysicsEngine::AddGhostObjectData(ghostObjectData);
+
+		//Sets the handle for collision detection later
+		const u64 bitMask = 0x0000FFFF;
+		const u32 byteShift = 4;
+		u32 userIndex1 = (u32)(ghostObjectHandle.handle & bitMask);
+		u32 userIndex2 = (u32)((ghostObjectHandle.handle >> byteShift) & bitMask);
+		ghostObjectData.ghostObject->setUserIndex(userIndex1);
+		ghostObjectData.ghostObject->setUserIndex2(userIndex2);
+		ghostObjectData.ghostObject->setUserIndex3(false);
+
+		return ghostObjectHandle;
 	}
 
 	RigidbodyColliderData* PhysicsEngine::GetRigidbodyColliderData(const RigidbodyHandle& rigidbodyHandle)
@@ -340,6 +400,14 @@ namespace DOG
 		u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(rigidbodyHandle.handle);
 
 		return &s_physicsEngine.m_rigidBodyColliderDatas[handle];
+	}
+
+	GhostObjectData* PhysicsEngine::GetGhostObjectData(const GhostObjectHandle& ghostObjectHandle)
+	{
+		//Get handle for vector
+		u32 handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(ghostObjectHandle.handle);
+
+		return &s_physicsEngine.m_ghostObjectDatas[handle];
 	}
 
 	void PhysicsEngine::CheckMeshColliders()
@@ -449,20 +517,17 @@ namespace DOG
 		for (int i = 0; i < num_manifolds; i++)
 		{
 			btPersistentManifold* contact_manifold = s_physicsEngine.m_dynamicsWorld->getDispatcher()->getManifoldByIndexInternal(i);
-			btCollisionObject* obj_a = (btCollisionObject*)(contact_manifold->getBody0());
-			btCollisionObject* obj_b = (btCollisionObject*)(contact_manifold->getBody1());
+			btCollisionObject* obj0 = (btCollisionObject*)(contact_manifold->getBody0());
+			btCollisionObject* obj1 = (btCollisionObject*)(contact_manifold->getBody1());
 
-			//We can ignore to check the different contact points and only check one! If there exist one 
-			int num_contacts = contact_manifold->getNumContacts() > 1 ? 1 : contact_manifold->getNumContacts();
-
-			for (int j = 0; j < num_contacts; j++)
+			for (int j = 0; j < contact_manifold->getNumContacts(); j++)
 			{
 				btManifoldPoint& pt = contact_manifold->getContactPoint(j);
 				if (pt.getDistance() < 0.0f)
 				{
 					//Get obj0 rigidbody handle
 					const u32 byteShift = 4;
-					u64 obj0RigidbodyHandle = (obj_a->getUserIndex2() << byteShift) | obj_a->getUserIndex();
+					u64 obj0RigidbodyHandle = (obj0->getUserIndex2() << byteShift) | obj0->getUserIndex();
 
 					//Get handle for obj0
 					u32 obj0handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(obj0RigidbodyHandle);
@@ -473,8 +538,8 @@ namespace DOG
 					if (collisions == PhysicsEngine::s_physicsEngine.m_rigidbodyCollision.end())
 						continue;
 
-					//Get ob1 rigidbody handle
-					u64 obj1RigidbodyHandle = (obj_b->getUserIndex2() << byteShift) | obj_b->getUserIndex();
+					//Get obj1 rigidbody handle
+					u64 obj1RigidbodyHandle = (obj1->getUserIndex2() << byteShift) | obj1->getUserIndex();
 					//Get handle for obj1
 					u32 obj1Handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(obj1RigidbodyHandle);
 
@@ -495,9 +560,137 @@ namespace DOG
 						collisionData.rigidbodyHandle = handle;
 						collisions->second.insert({ obj1Handle, collisionData });
 					}
+
+					//If the two objects did collide then we do not need to check the other collision points
+					break;
 				}
 			}
 		}
+	}
+
+	void PhysicsEngine::CheckGhostObjectCollisions()
+	{
+		static btManifoldArray manifoldsArray;
+		u64 checkedGhostObjects = 0;
+		//Handles start at one
+		u64 ghostObjectIndex = 1;
+		while (checkedGhostObjects < m_nrGhostObjects)
+		{
+			if (m_ghostObjectDatas[ghostObjectIndex].ghostObject != nullptr)
+			{
+				GhostObjectData* ghostObjectData = &m_ghostObjectDatas[ghostObjectIndex];
+				m_dynamicsWorld->getDispatcher()->dispatchAllCollisionPairs(ghostObjectData->ghostObject->getOverlappingPairCache(), m_dynamicsWorld->getDispatchInfo(), m_dynamicsWorld->getDispatcher());
+
+				for (int i = 0; i < ghostObjectData->ghostObject->getOverlappingPairCache()->getNumOverlappingPairs(); ++i)
+				{
+					btBroadphasePair* collisionPair = &ghostObjectData->ghostObject->getOverlappingPairCache()->getOverlappingPairArray()[i];
+					
+					btCollisionObject* obj0 = static_cast<btCollisionObject*>(collisionPair->m_pProxy0->m_clientObject);
+					btCollisionObject* obj1 = static_cast<btCollisionObject*>(collisionPair->m_pProxy1->m_clientObject);
+
+					if (!obj0->getUserIndex3() && !obj1->getUserIndex3())
+					{
+						std::cout << "Two ghosts\n";
+						continue;
+					}
+
+					const u32 byteShift = 4;
+					//Get obj1 rigidbody handle
+					u64 obj0CollisionObjectHandle = (obj0->getUserIndex2() << byteShift) | obj0->getUserIndex();
+					//Get handle for obj1
+					u32 obj0Handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(obj0CollisionObjectHandle);
+
+					if (obj0->getUserIndex3())
+					{
+						RigidbodyColliderData* obj = PhysicsEngine::s_physicsEngine.GetRigidbodyColliderData((RigidbodyHandle)obj0CollisionObjectHandle);
+						if (EntityManager::Get().HasComponent<RigidbodyComponent>(obj->rigidbodyEntity))
+						{
+							std::cout << "obj0 has an rigidbody\n";
+						}
+					}
+
+					//Get obj1 rigidbody handle
+					u64 obj1CollisionObjectHandle = (obj1->getUserIndex2() << byteShift) | obj1->getUserIndex();
+					//Get handle for obj1
+					u32 obj1Handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(obj1CollisionObjectHandle);
+
+					if (obj1->getUserIndex3())
+					{
+						RigidbodyColliderData* obj = PhysicsEngine::s_physicsEngine.GetRigidbodyColliderData((RigidbodyHandle)obj1CollisionObjectHandle);
+						if (EntityManager::Get().HasComponent<RigidbodyComponent>(obj->rigidbodyEntity))
+						{
+							std::cout << "obj1 has an rigidbody\n";
+						}
+					}
+
+					//Check for flags here???
+
+					if (collisionPair->m_algorithm)
+					{
+						collisionPair->m_algorithm->getAllContactManifolds(manifoldsArray);
+					}
+					else
+					{
+						continue;
+					}
+
+					for (int j = 0; j < manifoldsArray.size(); ++j)
+					{
+						btPersistentManifold* manifold = manifoldsArray[j];
+						for (int k = 0; k < manifold->getNumContacts(); ++k)
+						{
+							const btManifoldPoint& pt = manifold->getContactPoint(k);
+
+							if (pt.getDistance() < 0.0f)
+							{
+								std::cout << "Collisions Check\n";
+								//If the two objects did collide then we do not need to check the other collision points
+								j = manifoldsArray.size();
+								break;
+							}
+						}
+					}
+				}
+
+				++checkedGhostObjects;
+			}
+
+			++ghostObjectIndex;
+		}
+
+		//m_dynamicsWorld->setInternalTickCallback
+
+		//btBroadphasePairArray& collisionPairs = m_ghostObject->getOverlappingPairCache()->getOverlappingPairArray();	//New
+		//const int	numObjects = collisionPairs.size();
+		//static btManifoldArray	m_manifoldArray;
+		//bool added;
+		//for (int i = 0; i < numObjects; i++) {
+		//	const btBroadphasePair& collisionPair = collisionPairs[i];
+		//	m_manifoldArray.resize(0);
+		//	if (collisionPair.m_algorithm) collisionPair.m_algorithm->getAllContactManifolds(m_manifoldArray);
+		//	else printf("No collisionPair.m_algorithm - probably m_dynamicsWorld->getDispatcher()->dispatchAllCollisionPairs(...) must be missing.\n");
+		//	added = false;
+		//	for (int j = 0; j < m_manifoldArray.size(); j++) {
+		//		btPersistentManifold* manifold = m_manifoldArray[j];
+		//		// Here we are in the narrowphase, but can happen that manifold->getNumContacts()==0:
+		//		if (m_processOnlyObjectsWithNegativePenetrationDistance) {
+		//			for (int p = 0; p < manifold->getNumContacts(); p++) {
+		//				const btManifoldPoint& pt = manifold->getContactPoint(p);
+		//				if (pt.getDistance() < 0.0) {
+		//					// How can I be sure that the colObjs are all distinct ? I use the "added" flag.
+		//					m_objectsInFrustum.push_back((btCollisionObject*)(manifold->getBody0() == m_ghostObject ? manifold->getBody1() : manifold->getBody0()));
+		//					added = true;
+		//					break;
+		//				}
+		//			}
+		//			if (added) break;
+		//		}
+		//		else if (manifold->getNumContacts() > 0) {
+		//			m_objectsInFrustum.push_back((btCollisionObject*)(manifold->getBody0() == m_ghostObject ? manifold->getBody1() : manifold->getBody0()));
+		//			break;
+		//		}
+		//	}
+		//}
 	}
 
 	BoxColliderComponent::BoxColliderComponent(entity entity, const DirectX::SimpleMath::Vector3& boxColliderSize, bool dynamic, float mass) noexcept
@@ -633,5 +826,13 @@ namespace DOG
 		bool dynamic = false;
 		rigidbodyHandle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
 		meshNotLoaded = false;
+	}
+
+	BoxTriggerComponent::BoxTriggerComponent(entity entity, const DirectX::SimpleMath::Vector3& boxColliderSize) noexcept
+	{
+		GhostObjectData ghostObjectData;
+		ghostObjectData.collisionShapeHandle = PhysicsEngine::AddCollisionShape(new btBoxShape(btVector3(boxColliderSize.x, boxColliderSize.y, boxColliderSize.z)));
+
+		ghostObjectHandle = PhysicsEngine::AddGhostObject(entity, ghostObjectData);
 	}
 }
