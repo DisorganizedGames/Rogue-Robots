@@ -28,7 +28,8 @@ MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 
 void MainPlayer::OnUpdate()
 {
-	EntityManager::Get().Collect<InputController, CameraComponent, TransformComponent>().Do([&](InputController& inputC, CameraComponent& cameraC, TransformComponent& transformC)
+	EntityManager::Get().Collect<InputController, CameraComponent, TransformComponent, RigidbodyComponent>()
+		.Do([&](InputController& inputC, CameraComponent& cameraC, TransformComponent& transformC, RigidbodyComponent& rb)
 		{
 	
 			f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
@@ -80,19 +81,18 @@ void MainPlayer::OnUpdate()
 			}
 
 			f32 lengthVec = moveTowards.Length();
-			if (lengthVec > 0.0001)
-			{
-				moveTowards = XMVector3Normalize(moveTowards);
-				transformC.SetPosition((transformC.GetPosition() += moveTowards * speed * (f32)Time::DeltaTime()));
-			}
-
+			moveTowards = XMVector3Normalize(moveTowards);
+			rb.linearVelocity.x = moveTowards.x * speed;
+			rb.linearVelocity.z = moveTowards.z * speed;
+			//transformC.SetPosition((transformC.GetPosition() += moveTowards * speed * (f32)Time::DeltaTime()));
+			
 			if (inputC.up)
 			{
-				transformC.SetPosition(transformC.GetPosition() += s_globalUp * speed * (f32)Time::DeltaTime());
+				rb.linearVelocity.y = speed;
 			}
 			if (inputC.down)
 			{
-				transformC.SetPosition(transformC.GetPosition() -= s_globalUp * speed * (f32)Time::DeltaTime());
+				//transformC.SetPosition(transformC.GetPosition() -= s_globalUp * speed * (f32)Time::DeltaTime());
 			}
 
 			m_up = m_forward.Cross(m_right);
