@@ -18,16 +18,19 @@ namespace DOG::gfx
 
 	void TestComputeEffect::Add(RenderGraph& rg)
 	{
-		struct PassData {};
+		struct PassData 
+		{
+			RGResourceView litHDRView;
+		};
 		rg.AddPass<PassData>("Compute Pass",
-			[&](PassData&, RenderGraph::PassBuilder& builder)		// Build
+			[&](PassData& passData, RenderGraph::PassBuilder& builder)		// Build
 			{
-				builder.ReadWriteTarget(RG_RESOURCE(LitHDR),
+				passData.litHDRView = builder.ReadWriteTarget(RG_RESOURCE(LitHDR),
 					TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 			},
-			[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)		// Execute
+			[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)		// Execute
 			{
-				u32 view = resources.GetView(RG_RESOURCE(LitHDR));
+				u32 view = resources.GetView(passData.litHDRView);
 
 				rd->Cmd_SetPipeline(cmdl, m_computePipe);
 				auto args = ShaderArgs()

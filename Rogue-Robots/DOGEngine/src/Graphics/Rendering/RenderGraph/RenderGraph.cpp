@@ -424,7 +424,8 @@ namespace DOG::gfx
 					}
 					else if (viewDesc.viewType == ViewType::UnorderedAccess)
 					{
-						passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
+						//passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
+						passResources.m_views[output.viewID] = m_rd->GetGlobalDescriptor(view);
 					}
 				}
 				else
@@ -437,7 +438,8 @@ namespace DOG::gfx
 						const auto& viewDesc = std::get<BufferViewDesc>(*output.viewDesc);
 						// Create view and immediately convert to global descriptor index
 						auto view = m_rd->CreateView(resource, viewDesc);
-						passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
+						//passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
+						passResources.m_views[output.viewID] = m_rd->GetGlobalDescriptor(view);
 						passResources.m_bufferViews.push_back(view);
 					}
 				}
@@ -479,7 +481,8 @@ namespace DOG::gfx
 					}
 					else 
 					{
-						passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
+						//passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
+						passResources.m_views[input.viewID] = m_rd->GetGlobalDescriptor(view);
 					}
 				}
 				else
@@ -555,12 +558,13 @@ namespace DOG::gfx
 		m_resMan->ImportBuffer(id, buffer, entryState, exitState);
 	}
 
-	void RenderGraph::PassBuilder::ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc)
+	RGResourceView RenderGraph::PassBuilder::ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc)
 	{
 		assert(IsReadState(state));
 		assert(desc.viewType != ViewType::RenderTarget);
 		assert(desc.viewType != ViewType::UnorderedAccess);
 		assert(desc.viewType != ViewType::DepthStencil);
+
 
 		PassIO input;
 		input.originalID = id;
@@ -578,7 +582,10 @@ namespace DOG::gfx
 		input.desiredState = state;
 		input.viewDesc = desc;
 		input.type = RGResourceType::Texture;
+		input.viewID.id = m_globalData.viewCount++;
 		m_pass.inputs.push_back(input);
+
+		return input.viewID;
 	}
 
 	void RenderGraph::PassBuilder::ReadDepthStencil(RGResourceID id, TextureViewDesc desc)
@@ -673,7 +680,7 @@ namespace DOG::gfx
 		}
 	}
 
-	void RenderGraph::PassBuilder::ReadWriteTarget(RGResourceID id, TextureViewDesc desc)
+	RGResourceView RenderGraph::PassBuilder::ReadWriteTarget(RGResourceID id, TextureViewDesc desc)
 	{
 		assert(desc.viewType == ViewType::UnorderedAccess);
 
@@ -708,7 +715,10 @@ namespace DOG::gfx
 			output.desiredState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 			output.viewDesc = desc;
 			output.aliasWrite = true;
+			output.viewID.id = m_globalData.viewCount++;
 			m_pass.outputs.push_back(output);
+
+			return output.viewID;
 		}
 		else
 		{
@@ -719,13 +729,16 @@ namespace DOG::gfx
 			output.type = RGResourceType::Texture;
 			output.viewDesc = desc;
 			output.desiredState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+			output.viewID.id = m_globalData.viewCount++;
 			m_pass.outputs.push_back(output);
 		
 			m_globalData.writes.insert(id);
+
+			return output.viewID;
 		}
 	}
 
-	void RenderGraph::PassBuilder::ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, BufferViewDesc desc)
+	RGResourceView RenderGraph::PassBuilder::ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, BufferViewDesc desc)
 	{
 		assert(IsReadState(state));
 		assert(desc.viewType != ViewType::RenderTarget && desc.viewType != ViewType::UnorderedAccess);
@@ -744,10 +757,13 @@ namespace DOG::gfx
 		input.desiredState = state;
 		input.viewDesc = desc;
 		input.type = RGResourceType::Buffer;
+		input.viewID.id = m_globalData.viewCount++;
 		m_pass.inputs.push_back(input);
+
+		return input.viewID;
 	}
 
-	void RenderGraph::PassBuilder::ReadWriteTarget(RGResourceID id, BufferViewDesc desc)
+	RGResourceView RenderGraph::PassBuilder::ReadWriteTarget(RGResourceID id, BufferViewDesc desc)
 	{
 		/*
 			Code is literal copy of ReadWriteTarget for texture. @todo: Refactor
@@ -788,7 +804,10 @@ namespace DOG::gfx
 			output.desiredState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 			output.viewDesc = desc;
 			output.aliasWrite = true;
+			output.viewID.id = m_globalData.viewCount++;
 			m_pass.outputs.push_back(output);
+
+			return output.viewID;
 		}
 		else
 		{
@@ -799,9 +818,12 @@ namespace DOG::gfx
 			output.type = RGResourceType::Buffer;
 			output.viewDesc = desc;
 			output.desiredState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+			output.viewID.id = m_globalData.viewCount++;
 			m_pass.outputs.push_back(output);
 
 			m_globalData.writes.insert(id);
+
+			return output.viewID;
 		}
 	}
 
@@ -1056,7 +1078,7 @@ namespace DOG::gfx
 
 
 
-	u32 RenderGraph::PassResources::GetView(RGResourceID id) const
+	u32 RenderGraph::PassResources::GetView(RGResourceView id) const
 	{
 		assert(m_views.contains(id));
 		return m_views.find(id)->second;

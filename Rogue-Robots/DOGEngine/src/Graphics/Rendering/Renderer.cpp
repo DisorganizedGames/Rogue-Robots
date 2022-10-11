@@ -381,26 +381,29 @@ namespace DOG::gfx
 
 		// Blit HDR to LDR
 		{
-			struct PassData {};
+			struct PassData 
+			{
+				RGResourceView litHDRView;
+			};
 			rg.AddPass<PassData>("Blit to HDR Pass",
-				[&](PassData&, RenderGraph::PassBuilder& builder)
+				[&](PassData& passData, RenderGraph::PassBuilder& builder)
 				{
 					builder.ImportTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
 
-					builder.ReadResource(RG_RESOURCE(LitHDR), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+					passData.litHDRView = builder.ReadResource(RG_RESOURCE(LitHDR), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 
 				},
-				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
 				{
 					rd->Cmd_SetViewports(cmdl, m_globalEffectData.bbVP);
 					rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.bbScissor);
 
 					rd->Cmd_SetPipeline(cmdl, m_pipe);
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, ShaderArgs()
-						.AppendConstant(resources.GetView(RG_RESOURCE(LitHDR))));
+						.AppendConstant(resources.GetView(passData.litHDRView)));
 					rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
 				});
 		}
