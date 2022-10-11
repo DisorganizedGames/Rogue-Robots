@@ -123,22 +123,22 @@ namespace DOG
 	{
 		if (HasActiveAnimation())
 		{
-			normalizedTime += timeScale * dt / animDuration;
-			
+			normalizedTime += timeScale * dt / duration;
 			if(loop)
+			{
 				while (normalizedTime > 1.0f)
 					normalizedTime -= 1.0f;
-
+			}
 			normalizedTime = std::clamp(normalizedTime, 0.0f, 1.0f);
-			currentTick = normalizedTime * animTotalTicks;
+			currentTick = normalizedTime * totalTicks;
 		}
 	};
 
-	void AnimationComponent::AnimationClip::SetAnimation(const i32 id, const f32 nTicks, const f32 duration, const f32 startTime)
+	void AnimationComponent::AnimationClip::SetAnimation(const i32 id, const f32 nTicks, const f32 animDuration, const f32 startTime)
 	{
 		animationID = id;
-		animTotalTicks = nTicks;
-		animDuration = duration;
+		totalTicks = nTicks;
+		duration = animDuration;
 		normalizedTime = startTime;
 	}
 
@@ -146,7 +146,6 @@ namespace DOG
 	void AnimationComponent::Update(const f32 dt)
 	{
 		for (auto& c : clips)
-			if (c.HasActiveAnimation())
-				c.UpdateClip(dt);
+			c.UpdateClip(dt);
 	}
 }

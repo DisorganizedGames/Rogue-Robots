@@ -49,6 +49,8 @@ namespace DOG
 		std::vector<ImportedRig*> m_rigs;
 	private:
 		bool m_bonesLoaded = false;
+		i32 m_imguiMinMaskIdx = 4;
+		i32 m_imguiMaxMaskIdx = 78;
 		static constexpr i32 m_rootNodeIdx = 0;
 		static constexpr i32 m_rootBoneIdx = 2;
 		static constexpr DirectX::XMFLOAT3 m_baseScale = { 1.f, 1.f, 1.f };
