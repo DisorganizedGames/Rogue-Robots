@@ -33,24 +33,26 @@ namespace DOG
 	private:
 		void UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
 		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator);
-		void UpdateMovementAnimation(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt);
+		void UpdateMovementAnimation(DOG::AnimationComponent& ac, const f32 dt);
 
 		DirectX::FXMVECTOR GetKeyValue(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick);
 		DirectX::FXMMATRIX CalculateNodeTransformation(const DOG::AnimationData&, i32 nodeID, f32 animTick);
-		DirectX::FXMMATRIX CalculateBlendTransformation(i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
-		DirectX::FXMMATRIX CalculateBlendTransformation2(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
+		DirectX::FXMMATRIX CalculateBlendTransformation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
+
+		DirectX::FXMVECTOR CalculateScaling(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
+		DirectX::FXMVECTOR CalculateRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
+		DirectX::FXMVECTOR CalculateTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 
 		void UpdateClips(DOG::AnimationComponent& ac, const f32 dt);
-		void UpdateBelzier(AnimationComponent::AnimationClip& clip, const f32 dt);
+		void UpdateBezier(AnimationComponent::AnimationClip& clip, const f32 dt);
 		void UpdateLinear(AnimationComponent::AnimationClip& clip, const f32 dt);
-
-		void UpdateComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt);
-
+		void UpdateLinearGT(AnimationComponent::AnimationClip& clip, const f32 globalTime, const f32 dt);
 		std::vector<ImportedRig*> m_rigs;
 	private:
+		DirectX::XMVECTOR m_previousTrans = {};
 		bool m_bonesLoaded = false;
-		i32 m_imguiMinMaskIdx = 4;
-		i32 m_imguiMaxMaskIdx = 78;
+		i32 m_imguiMinMaskIdx = 100;
+		i32 m_imguiMaxMaskIdx = 0;
 		static constexpr i32 m_rootNodeIdx = 0;
 		static constexpr i32 m_rootBoneIdx = 2;
 		static constexpr DirectX::XMFLOAT3 m_baseScale = { 1.f, 1.f, 1.f };
@@ -61,6 +63,8 @@ namespace DOG
 		static constexpr i32 m_modeTransitionLinearBlend = 1;
 		static constexpr i32 m_modeTransitionBezierBlend = 2;
 		// IMGUI RELATED
+		bool m_imguiTestMovement = false;
+		f32 m_imguiMovementSpeed = 0.0f;
 		bool m_imguiPause = false;
 		bool m_imguiMatching = false;
 		i32 m_imguiProfilePerformUpdate = 1;
@@ -86,7 +90,6 @@ namespace DOG
 		static constexpr f32 m_imguiJointPosMax = 1.0f;
 		static constexpr f32 m_imguiNormalizedTimeMin = 0.0f;
 		static constexpr f32 m_imguiNormalizedTimeMax = 1.0f;
-		static constexpr f32 m_imguiVelocity = 0.0f;
 	public:
 		void SpawnControlWindow(bool& open);
 
