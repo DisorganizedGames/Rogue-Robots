@@ -286,7 +286,12 @@ namespace DOG
 
 		//Copy entity transform
 		btTransform groundTransform;
-		groundTransform.setFromOpenGLMatrix((float*)(&transform.worldMatrix));
+		
+		// This is a hack until it's properly fixed
+		TransformComponent test = transform;
+		test.SetScale({ 1, 1, 1 });
+
+		groundTransform.setFromOpenGLMatrix((float*)(&test.worldMatrix));
 
 		rigidbodyColliderData.rigidbodyScale = transform.GetScale();
 

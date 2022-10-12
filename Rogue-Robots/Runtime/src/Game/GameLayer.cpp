@@ -321,6 +321,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetRight>("GetRight");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAction>("GetAction");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetAction>("SetAction");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::HasComponent>("HasComponent");
 
 	global->SetLuaInterface(luaInterface);
 
@@ -349,6 +350,17 @@ void GameLayer::RegisterLuaInterfaces()
 	global->SetLuaInterface(luaInterface);
 
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Host", "HostInterface");
+
+	//-----------------------------------------------------------------------------------------------
+	//Physics
+	luaInterfaceObject = std::make_shared<PhysicsInterface>();
+	m_luaInterfaces.push_back(luaInterfaceObject);
+
+	luaInterface = global->CreateLuaInterface("PhysicsInterface");
+	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBSetVelocity>("RBSetVelocity");
+	
+	global->SetLuaInterface(luaInterface);
+	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Physics", "PhysicsInterface");
 }
 
 void GameLayer::LoadLevel()
@@ -436,7 +448,7 @@ void GameLayer::Input(DOG::Key key)
 			if (key == DOG::Key::Spacebar)
 				inputC.up = true;
 			if (key == DOG::Key::Q)
-				inputC.normalFireMode = !inputC.normalFireMode;
+				inputC.switchComp = true;
 
 	});
 }
@@ -457,6 +469,8 @@ void GameLayer::Release(DOG::Key key)
 				inputC.down = false;
 			if (key == DOG::Key::Spacebar)
 				inputC.up = false;
+			if (key == DOG::Key::Q)
+				inputC.switchComp = false;
 		});
 }
 

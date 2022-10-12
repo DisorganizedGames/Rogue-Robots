@@ -1,136 +1,79 @@
-local MiscManager = {}
+require("VectorMath")
 
-local MiscComponent = {
-	--Tweakable--
-	--Normal Gun
-	shootCooldown = 0.1,
-	--Charge Shot
-	chargeSpeed = 5.0,
-	--Non-tweakable--
-	--Normal Gun
-	shootTimer = 0.0,
-	--Charge Shot
-	shotPower = 0.0,
-	pressing = false
-}
+MiscComponent = {}
 
-function MiscManager:CreateComponent(o)
-	return MiscComponent:New(o)
-end
+function MiscComponent.NormalGun()
+	return {
+		cooldown = 0,
 
-function MiscComponent:New(o)
-	o = o or {}
-	setmetatable(o, self)
-	self.__index = self
+		Update = function(self, parentEntity) 
+			self.cooldown = self.cooldown - DeltaTime
+			if self.cooldown <= 0.0 and Entity:GetAction(parentEntity, 1) then
+				self.cooldown = 0.1
+				
+				local pos = Vector3.FromTable(Entity:GetTransformPosData(parentEntity))
+				local forward = Vector3.FromTable(Entity:GetForward(parentEntity))
+				local up = Vector3.FromTable(Entity:GetUp(parentEntity))
+				local right = Vector3.FromTable(Entity:GetRight(parentEntity))
 
---Tweakable--
-	--Normal Gun
-	self.shootCooldown = 0.1
-	--Charge Shot
-	self.chargeSpeed = 5.0
-	--Non-tweakable--
-	--Normal Gun
-	self.shootTimer = 0.0
-	--Charge Shot
-	self.shotPower = 0.0
-	self.pressing = false
-	return o
-end
+				pos = pos + up * -0.14 + right * 0.2 + forward * 0.6
 
---[[
-ARGUMENTS
-1: barrel component
-2: magazine component
-3: bullets table
-4: initial bullet speed
-5: base size vector3
-6: entity ID
-]]
+				local bullet = {
+					entity = 0,
+					forward = forward,
+					startPos = pos,
+					speed = 75.0,
+					size = Vector3.New(3, 3, 3),
+					lifetime = 0
+				}
 
-function MiscComponent:NormalGun(pos, ...)
-	local args = {...}
-
-	self.shootTimer = self.shootTimer - DeltaTime
-	if  Entity:GetAction(args[6], 4) then
-		--If the shoot cooldown is up and we are clicking.
-		if self.shootTimer <= 0.0 and Entity:GetAction(args[6], 1) then
-			self.shootTimer = self.shootCooldown
-
-			local forward = Vector3.fromTable(Entity:GetForward(args[6]))
-			local up = Vector3.fromTable(Entity:GetUp(args[6])) 
-
-			local bullet = {}
-			bullet.entity = Entity:CreateEntity()
-			bullet.forward = forward
-			bullet.startPos = pos
-			bullet.speed = args[4]
-			bullet.size = Vector3.new(2.0, 2.0, 2.0)
-			table.insert(args[3], bullet)
-
-			local angle = -math.pi / 2
-			local actualForward = RotateAroundAxis(forward, up, angle)
-
-			Entity:AddComponent(bullet.entity, "Transform",{x = bullet.startPos.x, y = bullet.startPos.y, z = bullet.startPos.z}, {x = 0.0, y = 0.0, z = 0.0}, bullet.size)
-			Entity:SetRotationForwardUp(bullet.entity, actualForward, up)
-			Entity:ModifyComponent(bullet.entity, "Transform", {x = bullet.startPos.x, y = bullet.startPos.y, z = bullet.startPos.z}, 1)
-			if args[1].OnStart then
-				args[1]:OnStart()
-			else
-				EventSystem:InvokeEvent("NormalBulletSpawn" .. tostring(args[6]), bullet)
+				return bullet 
 			end
+			return nil
 		end
-	
-		if args[1].OnUpdate then
-			args[1]:OnUpdate()
-		else
-			EventSystem:InvokeEvent("NormalBulletUpdate" .. tostring(args[6]))
-		end
-		if args[2].OnUpdate then
-			args[2]:OnUpdate()
-		end
-	else
-		if Entity:GetAction(args[6], 1) then
-			self.pressing = true
-			self.shotPower = self.shotPower + DeltaTime * self.chargeSpeed
-		elseif self.pressing then --If we released the button.
-			self.pressing = false
-			local forward = Vector3.fromTable(Entity:GetForward(args[6]))
-			local up = Vector3.fromTable(Entity:GetUp(args[6]))
-		
-			local bullet = {}
-			bullet.entity = Entity:CreateEntity()
-			bullet.forward = forward
-			bullet.startPos = pos
-			bullet.speed = args[4]
-			table.insert(args[3], bullet)
-
-			local angle = -math.pi / 2
-			local actualForward = RotateAroundAxis(forward, up, angle)
-
-			Entity:AddComponent(bullet.entity, "Transform", {x = bullet.startPos.x, y = bullet.startPos.y, z = bullet.startPos.z}, {x = 0.0, y = 0.0, z = 0.0}, {x = args[5].x + self.shotPower, y = args[5].y + self.shotPower, z = args[5].z + self.shotPower})
-			Entity:SetRotationForwardUp(bullet.entity, actualForward, up)
-			Entity:ModifyComponent(bullet.entity, "Transform", {x = bullet.startPos.x, y = bullet.startPos.y, z = bullet.startPos.z}, 1)
-
-			if args[1].OnStart then
-				args[1]:OnStart()
-			else
-				EventSystem:InvokeEvent("NormalBulletSpawn" .. tostring(args[6]), bullet)
-			end
-
-			self.shotPower = 0.0
-		end
-	
-		if args[1].OnUpdate then
-			args[1]:OnUpdate()
-		else
-			EventSystem:InvokeEvent("NormalBulletUpdate" .. tostring(args[6]))
-		end
-		if args[2].OnUpdate then
-			args[2]:OnUpdate()
-		end
-	end
+	}
 end
 
---Add more components here.
+function MiscComponent.ChargeShot()
+	return {
+		shotPower = 0.0,
+		chargeSpeed = 10.0,
+		pressing = false,
 
-return MiscManager
+		Update = function(self, parentEntity)
+			
+			if Entity:GetAction(parentEntity, 1) then
+				self.pressing = true
+				self.shotPower = self.shotPower + self.chargeSpeed * DeltaTime
+
+			elseif self.pressing then
+				self.pressing = false
+				
+				local pos = Vector3.FromTable(Entity:GetTransformPosData(parentEntity))
+				local forward = Vector3.FromTable(Entity:GetForward(parentEntity))
+				local up = Vector3.FromTable(Entity:GetUp(parentEntity))
+				local right = Vector3.FromTable(Entity:GetRight(parentEntity))
+
+				pos = pos + up * -0.14 + right * 0.2 + forward * 0.6
+
+				local bullet = {
+					entity = 0,
+					forward = forward,
+					startPos = pos,
+					speed = 75.0,
+					size = Vector3.New(2, 2, 2) + Vector3.New(self.shotPower, self.shotPower, self.shotPower),
+					lifetime = 0
+				}
+
+				self.shotPower = 0.0
+
+				return bullet
+
+			end
+			return nil
+		end
+	}
+end
+
+return MiscComponent
+

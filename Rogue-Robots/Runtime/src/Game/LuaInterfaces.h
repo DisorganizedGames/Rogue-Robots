@@ -97,6 +97,8 @@ public:
 	
 	void SetAction(DOG::LuaContext* context);
 
+	void HasComponent(DOG::LuaContext* context);
+
 private:
 	void AddModel(DOG::LuaContext* context, DOG::entity e);
 
@@ -108,11 +110,13 @@ private:
 
 	void AddAudio(DOG::LuaContext* context, DOG::entity e);
 
+	void AddBoxCollider(DOG::LuaContext* context, DOG::entity e);
+
+	void AddRigidbody(DOG::LuaContext* context, DOG::entity e);
+
 	void ModifyTransform(DOG::LuaContext* context, DOG::entity e);
 	
 	void ModifyPlayerStats(DOG::LuaContext* context, DOG::entity e);
-
-	void AddBoxCollider(DOG::LuaContext* context, DOG::entity e);
 };
 
 class AssetInterface : public LuaInterface
@@ -148,4 +152,13 @@ public:
 	}
 	
 	void DistanceToPlayers(DOG::LuaContext* context);
+};
+
+class PhysicsInterface : public LuaInterface
+{
+public:
+	PhysicsInterface() noexcept {};
+	~PhysicsInterface() noexcept {};
+
+	void RBSetVelocity(DOG::LuaContext* context);
 };

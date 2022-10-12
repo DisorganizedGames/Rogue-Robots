@@ -31,7 +31,7 @@ void AudioInterface::Play(LuaContext* context)
 
 	static auto tempEntityForLuaAudio = EntityManager::Get().CreateEntity();
 	auto& audioComponent = EntityManager::Get().AddComponent<AudioComponent>(tempEntityForLuaAudio);
-	
+
 	audioComponent.assetID = audioAsset;
 	audioComponent.shouldPlay = true;
 }
@@ -77,7 +77,19 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddBoxCollider(context, e);
 	}
+	else if (compType == "Rigidbody")
+	{
+		AddRigidbody(context, e);
+	}
+	else if (compType == "Bullet")
+	{
+		EntityManager::Get().AddComponent<BulletComponent>(e);
+	}
 	//Add more component types here.
+	else
+	{
+		assert(false && "Lua can't create component");
+	}
 }
 
 void EntityInterface::ModifyComponent(LuaContext* context)
@@ -175,7 +187,7 @@ void EntityInterface::GetAction(DOG::LuaContext* context)
 			context->ReturnBoolean(false);
 		break;
 	case 4:
-		if (input.normalFireMode)
+		if (input.switchComp)
 			context->ReturnBoolean(true);
 		else
 			context->ReturnBoolean(false);
@@ -202,13 +214,43 @@ void EntityInterface::GetAction(DOG::LuaContext* context)
 		input.activateActiveItem = active;
 		break;
 	case 4:
-		input.normalFireMode = active;
+		input.switchComp = active;
 		break;
 	default:
 		break;
 	}
-	
+
 }
+
+#pragma region HasComponent
+
+template<typename ComponentType>
+bool HasComp(entity e)
+{
+	return EntityManager::Get().HasComponent<ComponentType>(e);
+}
+
+const std::unordered_map<std::string, bool (*) (entity)> componentMap = {
+	// Engine Types
+	{ "Transform", HasComp<TransformComponent> },
+	{ "Model", HasComp<ModelComponent> },
+	{ "Audio", HasComp<AudioComponent>},
+	{ "Network", HasComp<NetworkComponent>},
+	{ "Rigidbody", HasComp<RigidbodyComponent>},
+	{ "BoxCollider", HasComp<BoxColliderComponent>},
+	
+	// Game Types
+	{ "Bullet", HasComp<BulletComponent>},
+};
+
+void EntityInterface::HasComponent(LuaContext* context)
+{
+	entity e = context->GetInteger();
+	bool hasComp = componentMap.at(context->GetString())(e);
+	context->ReturnBoolean(hasComp);
+}
+
+#pragma endregion
 
 void EntityInterface::GetTransformScaleData(LuaContext* context)
 {
@@ -303,6 +345,22 @@ void EntityInterface::AddAudio(LuaContext* context, entity e)
 	comp.shouldPlay = shouldPlay;
 }
 
+void EntityInterface::AddBoxCollider(LuaContext* context, entity e)
+{
+	LuaTable boxDimTable = context->GetTable();
+	bool dynamic = context->GetBoolean();
+
+	LuaVector3 boxDim = LuaVector3(boxDimTable);
+
+	EntityManager::Get().AddComponent<BoxColliderComponent>(e, e, Vector3{ boxDim.x, boxDim.y, boxDim.z }, dynamic);
+}
+
+void EntityInterface::AddRigidbody(LuaContext* context, entity e)
+{
+	bool kinematic = context->GetBoolean();
+	EntityManager::Get().AddComponent<RigidbodyComponent>(e, e, kinematic);
+}
+
 void EntityInterface::ModifyTransform(LuaContext* context, entity e)
 {
 	TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
@@ -327,19 +385,10 @@ void EntityInterface::ModifyPlayerStats(DOG::LuaContext* context, DOG::entity e)
 {
 	auto t = context->GetTable();
 	auto& psComp = EntityManager::Get().GetComponent<PlayerStatsComponent>(e);
-	
+
 	psComp.health = t.GetFloatFromTable("health");
 	psComp.maxHealth = t.GetFloatFromTable("maxHealth");
 	psComp.speed = t.GetFloatFromTable("speed");
-}
-
-void EntityInterface::AddBoxCollider(DOG::LuaContext* context, DOG::entity e)
-{
-	LuaTable t = context->GetTable();
-	bool dynamic = context->GetBoolean();
-
-	EntityManager::Get().AddComponent<BoxColliderComponent>(e, e, 
-		Vector3(t.GetFloatFromTable("x"), t.GetFloatFromTable("y"), t.GetFloatFromTable("z")), dynamic);
 }
 
 //---------------------------------------------------------------------------------------------------------
@@ -403,6 +452,15 @@ void HostInterface::DistanceToPlayers(DOG::LuaContext* context)
 		tbl.AddTableToTable(static_cast<int>(i), d);
 	}
 	context->ReturnTable(tbl);
+}
+
+void PhysicsInterface::RBSetVelocity(LuaContext* context)
+{
+	entity e = static_cast<u64>(context->GetInteger());
+	LuaTable t = context->GetTable();
+	LuaVector3 vel(t);
+	auto& rigid = EntityManager::Get().GetComponent<RigidbodyComponent>(e);
+	rigid.linearVelocity = { vel.x, vel.y, vel.z };
 }
 
 LuaVector3::LuaVector3(LuaTable& table)

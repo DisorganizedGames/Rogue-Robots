@@ -74,7 +74,7 @@ void NetCode::OnUpdate()
 				m_playerInputUdp.shoot = inputC.shoot;
 				m_playerInputUdp.jump = inputC.jump;
 				m_playerInputUdp.activateActiveItem = inputC.activateActiveItem;
-				m_playerInputUdp.normalFireMode = inputC.normalFireMode;
+				m_playerInputUdp.switchComp = inputC.switchComp;
 
 			});
 
@@ -85,7 +85,7 @@ void NetCode::OnUpdate()
 				inputC.shoot = m_outputUdp.m_holdplayersUdp[networkC.playerId].shoot;
 				inputC.jump = m_outputUdp.m_holdplayersUdp[networkC.playerId].jump;
 				inputC.activateActiveItem = m_outputUdp.m_holdplayersUdp[networkC.playerId].activateActiveItem;
-				inputC.normalFireMode = m_outputUdp.m_holdplayersUdp[networkC.playerId].normalFireMode;
+				inputC.switchComp = m_outputUdp.m_holdplayersUdp[networkC.playerId].switchComp;
 				
 
 			});
