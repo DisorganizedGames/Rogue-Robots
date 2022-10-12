@@ -191,6 +191,7 @@ void SourceVoice::PlayAsync()
 void SourceVoice::Stop()
 {
 	m_stopped = true;
+	m_async = false;
 	m_source->SetVolume(0.0);
 	m_source->FlushSourceBuffers();
 	m_source->Discontinuity();
@@ -209,7 +210,7 @@ bool SourceVoice::HasFinished()
 
 	if (m_stopped)
 	{
-		m_source->Stop();
+		Stop();
 		for (auto& buf: m_bufferRing) buf.resize(0);
 	}
 
