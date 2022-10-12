@@ -374,6 +374,13 @@ namespace DOG::gfx
 
 		auto& tex_storage = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(texture.handle));
 
+		// calc resource mips
+		u32 mipLevels{ 0 };
+		if (tex_storage.desc.mipLevels == 0)	// num mips internally generated --> we have to calculate ourselves here
+			mipLevels = (std::min)(log2(tex_storage.desc.width) + 1, log2(tex_storage.desc.height) + 1);
+		else
+			mipLevels = tex_storage.desc.mipLevels;
+
 
 		DX12DescriptorChunk view_desc;
 		if (desc.viewType == ViewType::RenderTarget)
@@ -387,17 +394,17 @@ namespace DOG::gfx
 		std::set<u32> subresources;
 		if (desc.viewType == ViewType::DepthStencil)
 		{
-			auto dsv = to_dsv(desc, tex_storage.desc.mipLevels, tex_storage.desc.depth, &subresources);
+			auto dsv = to_dsv(desc, mipLevels, tex_storage.desc.depth, &subresources);
 			m_device->CreateDepthStencilView(tex_storage.resource.Get(), &dsv, view_desc.cpu_handle(0));
 		}
 		else if (desc.viewType == ViewType::RenderTarget)
 		{
-			auto rtv = to_rtv(desc, tex_storage.desc.mipLevels, tex_storage.desc.depth, &subresources);
+			auto rtv = to_rtv(desc, mipLevels, tex_storage.desc.depth, &subresources);
 			m_device->CreateRenderTargetView(tex_storage.resource.Get(), &rtv, view_desc.cpu_handle(0));
 		}
 		else if (desc.viewType == ViewType::ShaderResource)
 		{
-			auto srv = to_srv(desc, tex_storage.desc.mipLevels, tex_storage.desc.depth, &subresources);
+			auto srv = to_srv(desc, mipLevels, tex_storage.desc.depth, &subresources);
 			m_device->CreateShaderResourceView(tex_storage.resource.Get(), &srv, view_desc.cpu_handle(0));
 		}
 		else if (desc.viewType == ViewType::UnorderedAccess)
