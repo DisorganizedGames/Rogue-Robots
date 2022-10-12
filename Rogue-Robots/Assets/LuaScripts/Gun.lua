@@ -1,20 +1,15 @@
 require("VectorMath")
+require("MiscComponents")
 
 --Tweakable values.
 local MaxAmmo = 10
 local InitialBulletSpeed = 75.0
 local ShootCooldown = 0.1
 local BulletDespawnDist = 50
-local BulletSize = {
-	x = 10.0,
-	y = 10.0,
-	z = 10.0
-}
+local BulletSize = Vector3.New(3, 3, 3)
 
 --Managers for objects & component functions.
 local ObjectManager = require("Object")
-local MiscManager = require("MiscComponents")
-local MyMiscComponents = MiscManager:CreateComponent()
 local BarrelManager = require("BarrelComponents")
 local MagazineManager = require("MagazineComponents")
 
@@ -24,13 +19,17 @@ local barrelComponent = nil
 local magazineComponent = nil
 local miscComponent = nil
 
+-- TEMPORARY to make sure we don't over-switch components
+local switched = false
+local componentIdx = 0
+
 --A template. Not supposed to be used, simply here to show what variables exist to be used.
 local bulletTemplate = {
-	entity = 0, --ID used by the ECS.
-	forward = {}, --Vector3 that describes the direction of the bullet.
-	startPos = {}, --Vector3 that describes the initial spawn position of the bullet.
-	speed = InitialBulletSpeed, --Float that describes the current speed of the bullet. 
-	lifetime = 0 -- counter to know when to kill the bullet entity
+	entity = 0,					-- ID used by the ECS.
+	forward = {},				-- Vector3 that describes the direction of the bullet.
+	startPos = {},				-- Vector3 that describes the initial spawn position of the bullet.
+	speed = InitialBulletSpeed, -- Float that describes the current speed of the bullet. 
+	lifetime = 0				-- Counter to know when to kill the bullet entity
 }
 
 --Non-tweakable
@@ -42,8 +41,8 @@ local shootTimer = 0.0
 
 local gunEntity = {
 	entityID = nil,
-	position = {x=0,y=0,z=0},
-	rotation = {x=3.14/2,y=0,z=0}
+	position = Vector3.Zero(),
+	rotation = Vector3.Zero(),
 }
 
 function OnStart()
@@ -57,14 +56,14 @@ function OnStart()
 	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.15,y=.15,z=.15})
 	Entity:AddComponent(gunID, "Model", gunModel)
 
+	-- Initialize base components
+	miscComponent = MiscComponent.ChargeShot()
 	barrelComponent = ObjectManager:CreateObject()
 	magazineComponent = ObjectManager:CreateObject()
-	miscComponent = MyMiscComponents
-	miscComponent.OnUpdate = MyMiscComponents.ChargeShot
 
 	--Events
-	EventSystem:Register("NormalBulletUpdate" .. tostring(EntityID), NormalBulletUpdate) --Is called if there is no barrelcomponent.
-	EventSystem:Register("NormalBulletSpawn" .. tostring(EntityID), NormalBulletSpawn) --Is called if there is no barrelcomponent.
+	EventSystem:Register("NormalBulletUpdate" .. EntityID, NormalBulletUpdate) --Is called if there is no barrelcomponent.
+	EventSystem:Register("NormalBulletSpawn" .. EntityID, NormalBulletSpawn) --Is called if there is no barrelcomponent.
 end
 
 local tempMode = 0
@@ -80,23 +79,61 @@ function OnUpdate()
 	gunEntity.position = gunEntity.position + playerRight * 0.2 - playerUp * 0.2
 
 	-- Rotate the weapon by 90 degrees pitch
-
-	local angle = -math.pi / 2 -- 90 degrees
+	local angle = -math.pi / 2 
 	local gunForward = RotateAroundAxis(playerForward, playerRight, angle)
 	local gunUp = RotateAroundAxis(playerUp, playerRight, angle)
 
 	Entity:SetRotationForwardUp(gunEntity.entityID, gunForward, gunUp)
-	
 	Entity:ModifyComponent(gunEntity.entityID, "Transform", gunEntity.position, 1)
 
+	-- Switch misc component if we should 
+	-- THIS IS TEMPORARY
+	if Entity:GetAction(EntityID, 4) and not switched then
+		switched = true
+		if componentIdx == 0 then
+			miscComponent = MiscComponent.NormalGun()
+			componentIdx = 1
+		else
+			miscComponent = MiscComponent.ChargeShot()
+			componentIdx = 0
+		end
+	elseif not Entity:GetAction(EntityID, 4) then
+		switched = false
+	end
 
-	miscComponent.OnUpdate = MyMiscComponents.NormalGun
 
-	miscComponent:OnUpdate(gunEntity.position + playerForward * 0.45 + playerUp * 0.06, barrelComponent, magazineComponent, bullets, InitialBulletSpeed, BulletSize, EntityID)
+	-- Gun firing logic
+	local bullet = miscComponent:Update(EntityID)
+	EventSystem:InvokeEvent("NormalBulletUpdate" .. tostring(EntityID))
+
+	if not bullet then
+		return
+	end
+
+	EventSystem:InvokeEvent("NormalBulletSpawn" .. tostring(EntityID), bullet)
+
+	--BarrelComponent:Update(barrelComponent)
+	--MagazineComponent:Update(magazineComponent)
 end
 
 --If there is not barrel component start.
 function NormalBulletSpawn(bullet)
+	bullet.entity = Entity:CreateEntity()
+	table.insert(bullets, bullet)
+
+	Entity:AddComponent(bullet.entity, "Transform",
+		Vector3.Zero(),
+		Vector3.Zero(),
+		bullet.size
+	)
+	
+	local up = Vector3.FromTable(Entity:GetUp(EntityID))
+	local angle = -math.pi / 2
+
+	local newForward = RotateAroundAxis(Entity:GetForward(EntityID), up, angle)
+	Entity:SetRotationForwardUp(bullet.entity, newForward, up)
+	Entity:ModifyComponent(bullet.entity, "Transform", bullet.startPos, 1)
+
 	Entity:AddComponent(bullet.entity, "Model", bulletModel)
 	Entity:AddComponent(bullet.entity, "Network")
 	Entity:AddComponent(bullet.entity, "Audio", gunShotSound, true)

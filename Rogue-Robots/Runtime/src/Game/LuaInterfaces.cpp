@@ -187,7 +187,7 @@ void EntityInterface::GetAction(DOG::LuaContext* context)
 			context->ReturnBoolean(false);
 		break;
 	case 4:
-		if (input.normalFireMode)
+		if (input.switchComp)
 			context->ReturnBoolean(true);
 		else
 			context->ReturnBoolean(false);
@@ -214,7 +214,7 @@ void EntityInterface::GetAction(DOG::LuaContext* context)
 		input.activateActiveItem = active;
 		break;
 	case 4:
-		input.normalFireMode = active;
+		input.switchComp = active;
 		break;
 	default:
 		break;

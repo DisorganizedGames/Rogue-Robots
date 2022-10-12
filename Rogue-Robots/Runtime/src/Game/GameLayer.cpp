@@ -410,7 +410,7 @@ void GameLayer::Input(DOG::Key key)
 			if (key == DOG::Key::Spacebar)
 				inputC.up = true;
 			if (key == DOG::Key::Q)
-				inputC.normalFireMode = !inputC.normalFireMode;
+				inputC.switchComp = true;
 
 	});
 }
@@ -431,6 +431,8 @@ void GameLayer::Release(DOG::Key key)
 				inputC.down = false;
 			if (key == DOG::Key::Spacebar)
 				inputC.up = false;
+			if (key == DOG::Key::Q)
+				inputC.switchComp = false;
 		});
 }
 
