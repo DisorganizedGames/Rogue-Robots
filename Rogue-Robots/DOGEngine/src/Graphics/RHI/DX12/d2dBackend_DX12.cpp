@@ -1,4 +1,4 @@
-#include "d2dBackend_DX12.h"
+#include "D2DBackend_DX12.h"
 
 
 #include "RenderDevice_DX12.h"
@@ -42,11 +42,11 @@ DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
         D2D1_FACTORY_OPTIONS fOpt = {
             .debugLevel = D2D1_DEBUG_LEVEL_INFORMATION
         };
-        hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory3), &fOpt, (void**)&m_factory);
+        hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory5), &fOpt, (void**)&m_factory);
         HR_VFY(hr);
         hr = m_11on12d.As(&m_dxd);
         HR_VFY(hr);
-        hr = m_factory->CreateDevice(m_dxd.Get(), m_2dd.GetAddressOf());
+        hr = m_factory->CreateDevice(m_dxd.Get(), m_2dd.GetAddressOf()); //warning
         HR_VFY(hr);
         hr = m_2dd->CreateDeviceContext(deviceOptions, &m_2ddc);
         HR_VFY(hr);
@@ -141,10 +141,7 @@ DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
 
 DOG::gfx::D2DBackend_DX12::~D2DBackend_DX12()
 {
-    for (auto &&i : m_renderTargets)
-    {
-        i.Get()->Release();
-    }
+    
 }
 
 void DOG::gfx::D2DBackend_DX12::BeginFrame()
@@ -167,7 +164,7 @@ void DOG::gfx::D2DBackend_DX12::Render()
 void DOG::gfx::D2DBackend_DX12::EndFrame()
 {
     u_char idx = sc->GetNextDrawSurfaceIdx();
-    HRESULT hr = m_2ddc->EndDraw();
+    HRESULT hr = m_2ddc->EndDraw(); //warning
     HR_VFY(hr);
 
     m_11on12d->ReleaseWrappedResources(m_wrappedBackBuffers[idx].GetAddressOf(), 1);

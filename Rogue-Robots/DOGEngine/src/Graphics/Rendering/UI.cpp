@@ -2,114 +2,174 @@
 #include "../../Input/Mouse.h"
 #include "../../Input/Keyboard.h"
 #include <assert.h>
-
-UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HWND hwnd) : m_visible(true)
-{
-   RECT wrect;
-   if (!GetClientRect(hwnd, &wrect))
-      OutputDebugString(L"Error retreiving client rect in UI creation\n");
-   m_width = wrect.right;
-   m_height = wrect.bottom;
-   m_d2d = std::make_unique<DOG::gfx::D2DBackend_DX12>(rd, sc, numBuffers, hwnd);
-   this->m_scene = menu;
-   BuildMenuUI();
-   m_elements.push_back(std::make_unique<UISplashScreen>(*m_d2d, (float)m_width, (float)m_height));
-}
-
-UI::~UI()
-{
-   
-}
+#include <Intsafe.h>
 
 void buttonfunc()
 {
    OutputDebugString(L"Button pressed");
 }
 
+UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HWND hwnd) : m_visible(true)
+{
+   srand((UINT)time(NULL));
+   RECT wrect;
+   if (!GetClientRect(hwnd, &wrect))
+      OutputDebugString(L"Error retreiving client rect in UI creation\n");
+   m_width = wrect.right;
+   m_height = wrect.bottom;
+   m_d2d = std::make_unique<DOG::gfx::D2DBackend_DX12>(rd, sc, numBuffers, hwnd);
+   UINT id = AddScene();
+   ChangeUIscene(id);
+   auto bID = GenerateUID();
+   auto b = std::make_unique<UIButton>(m_width / 2.f - 150.f / 2, m_height / 2 - 60.f / 2, 150.f, 60.f, std::wstring(L"Play"), buttonfunc, bID);
+   AddUIlEmentToScene(id, std::move(b));
+   auto sID = GenerateUID();
+   auto s = std::make_unique<UISplashScreen>(*m_d2d, (float)m_width, (float)m_height, sID);
+   AddUIlEmentToScene(id, std::move(s));
+
+   // BuildMenuUI();
+}
+
+UI::~UI()
+{
+
+}
+
+
 void UI::DrawUI()
 {
-   if(DOG::Keyboard::IsKeyPressed(DOG::Key::G))
+   if (DOG::Keyboard::IsKeyPressed(DOG::Key::G))aaaaaa
    {
       m_visible = false;
-      ChangeUIscene(menu);
+      //ChangeUIscene(menu);
    }
    if (m_visible)
    {
-      for (auto&& e : m_elements)
+      for (auto&& e : m_scenes[m_currsceneIndex]->m_scene)
       {
          e->Update(*m_d2d);
          e->Draw(*m_d2d);
       }
-      // if (m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bplay].get())->pressed)
-      //    ChangeUIscene(game);
-      // else if (m_scene == game && dynamic_cast<UIButton*>(m_elements[GameUI::inventory].get())->pressed)
-      //    ChangeUIscene(menu);
-      // else if (m_scene == menu && dynamic_cast<UIButton*>(m_elements[MenuUI::bexit].get())->pressed)
-      //    m_visible = false;
    }
 }
 
-void UI::BuildMenuUI()
+/// @brief Generates a unique ID
+/// @return Unique ID
+UINT UI::GenerateUID()
 {
-   D2D_VECTOR_2F s = { 150.f, 60.f };
-   D2D_POINT_2F p = { m_width / 2.f - s.x / 2, m_height / 2 - s.y / 2 };
-   m_elements.push_back(std::make_unique<UIButton>(p, s, L"Play", buttonfunc));
-   p.y += s.y + 50;
-   m_elements.push_back(std::make_unique<UIButton>(p, s, L"Options", buttonfunc));
-   p.y += s.y + 50;
-   m_elements.push_back(std::make_unique<UIButton>(p, s, L"Exit", buttonfunc));
+   UINT uid;
+   do
+      uid = rand();
+   while (std::find(m_generatedIDs.begin(), m_generatedIDs.end(), uid) != m_generatedIDs.end());
+   m_generatedIDs.push_back(uid);
+   return uid;
 }
 
-void UI::BuildGameUI()
+/// @brief Querrys a scene from a specific sceneID
+/// @param sceneID The ID of the scene
+/// @return Returns the index of the scene witrh the specific sceneID. If scene is not found UINT_MAX is returned;
+UINT UI::QuerryScene(UINT sceneID)
 {
-   D2D_POINT_2F p = { 50.f, 50.f };
-   D2D_VECTOR_2F s = { 250.f, 100.f };
-   m_elements.push_back(std::make_unique<UIButton>(p, s, L"Menu", buttonfunc));
-}
-
-void UI::ChangeUIscene(Uiscene scene)
-{
-   switch (scene)
+   UINT index;
+   auto res = std::find_if(m_scenes.begin(), m_scenes.end(), [&](std::unique_ptr<UIScene> const& s) { return s->m_ID == sceneID; });
+   if (res == m_scenes.end())
+      return UINT_MAX;
+   else
    {
-   case menu:
-      m_elements.clear();
-      BuildMenuUI();
-      this->m_scene = menu;
-      break;
-   case game:
-      m_elements.clear();
-      BuildGameUI();
-      this->m_scene = game;
-      break;
-   default:
-      break;
+      ptrdiff_t ptrdiff = std::distance(m_scenes.begin(), res);
+      HR_VFY(PtrdiffTToUInt(ptrdiff, &index));
+      return index;
    }
 }
 
-UIelement::UIelement()
+/// @brief Adds a ui element to a specific UIscene
+/// @param sceneID The ID of the scene
+/// @param element The element to be added
+/// @return The unique ID of the element. If the scene does not exist UINT_MAX is returned
+UINT UI::AddUIlEmentToScene(UINT sceneID, std::unique_ptr<UIElement> element)
+{
+   UINT index = QuerryScene(sceneID);
+   UINT id;
+   if(index == UINT_MAX)
+      return UINT_MAX;
+   else
+   {
+      id = element->m_ID;
+      m_scenes[index]->m_scene.push_back(std::move(element));
+   }
+   return id;
+}
+
+/// @brief Adds a scene to the UI manager
+/// @return A unique ID for the newly created scene
+UINT UI::AddScene()
+{
+   auto scene = std::make_unique<UIScene>(GenerateUID());
+   UINT id = scene->m_ID;
+   m_scenes.push_back(std::move(scene));
+   return id;
+}
+
+/// @brief Removes a scene with a specific ID
+/// @param sceneID The ID of the scene to be removed
+void UI::RemoveScene(UINT sceneID)
+{
+   UINT index = QuerryScene(sceneID);
+   if(index == UINT_MAX)
+      return;
+   else
+      m_scenes.erase(m_scenes.begin() + index);
+}
+
+// void UI::BuildMenuUI()
+// {
+//    D2D_VECTOR_2F s = { 150.f, 60.f };
+//    D2D_POINT_2F p = { m_width / 2.f - s.x / 2, m_height / 2 - s.y / 2 };
+//    m_scenes.push_back(std::make_unique<UIButton>(p, s, L"Play", buttonfunc));
+//    p.y += s.y + 50;
+//    m_scenes.push_back(std::make_unique<UIButton>(p, s, L"Options", buttonfunc));
+//    p.y += s.y + 50;
+//    m_scenes.push_back(std::make_unique<UIButton>(p, s, L"Exit", buttonfunc));
+// }
+
+// void UI::BuildGameUI()
+// {
+//    D2D_POINT_2F p = { 50.f, 50.f };
+//    D2D_VECTOR_2F s = { 250.f, 100.f };
+//    m_scenes.push_back(std::make_unique<UIButton>(p, s, L"Menu", buttonfunc));
+// }
+
+void UI::ChangeUIscene(UINT sceneID)
+{
+   UINT index = QuerryScene(sceneID);
+   if(index == UINT_MAX)
+      return;
+   else
+   {
+      m_currsceneIndex = index;
+      m_currsceneID = sceneID;
+   }
+}
+
+UIElement::UIElement(UINT id) : m_ID(id)
 {
 
 }
 
-UIelement::UIelement(D2D_POINT_2F pos)
-{
-   this->pos = pos;
-}
-
-UIelement::~UIelement()
+UIElement::~UIElement()
 {
 }
 
-void UIelement::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
+void UIElement::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
 {
    UNREFERENCED_PARAMETER(m_d2d);
    return;
 }
 
-UIButton::UIButton(D2D_POINT_2F pos, D2D_VECTOR_2F size, std::wstring text, std::function<void(void)> callback) : m_pos(pos), pressed(false), m_callback(callback)
+UIButton::UIButton(float x, float y, float width, float height, std::wstring text, std::function<void(void)> callback, UINT id) : pressed(false), m_callback(callback), UIElement(id)
 {
-   this->m_size = size;
-   m_textRect = D2D1::RectF(pos.x, pos.y, pos.x + size.x, pos.y + size.y);
+   this->m_size = D2D1::Vector2F(width, height);
+   m_textRect = D2D1::RectF(x, y, x + width, y + height);
    this->m_text = text;
 }
 
@@ -145,7 +205,7 @@ void UIButton::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
 
 }
 
-UISplashScreen::UISplashScreen(DOG::gfx::D2DBackend_DX12& m_d2d, float width, float height)
+UISplashScreen::UISplashScreen(DOG::gfx::D2DBackend_DX12& m_d2d, float width, float height, UINT id) : UIElement(id)
 {
    UNREFERENCED_PARAMETER(m_d2d);
    m_timer = clock();
@@ -195,4 +255,9 @@ UISplashScreen::~UISplashScreen()
 float easeOutCubic(float x)
 {
    return 1 - powf(1 - x, 3);
+}
+
+UIScene::UIScene(UINT id) : m_ID(id)
+{
+   
 }
