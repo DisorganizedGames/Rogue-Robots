@@ -6,6 +6,12 @@ namespace DOG
 	constexpr const u32 MAX_ENTITIES = 64'000u;
 	constexpr const u32 NULL_ENTITY = MAX_ENTITIES;
 	typedef u32 entity;
+	enum class AnimationBlendMode
+	{
+		normal,
+		linear,
+		bezier,
+	};
 
 	struct TransformComponent
 	{
@@ -62,6 +68,7 @@ namespace DOG
 	struct AnimationComponent
 	{
 		i32 offset = 0;
+		f32 globalTime = 0.0f;
 		struct AnimationClip
 		{
 			// Animation Specifics
@@ -73,15 +80,17 @@ namespace DOG
 			f32 normalizedTime = 0.f;
 			f32 timeScale = 1.0f;
 			f32 currentWeight = 1.0f;
-			f32 targetWeight = 1.0f;
+			f32 targetWeight = 0.0f;
 			bool loop = false;
 			// Blend Specifics
-			i32 blendMode = 0;
+			AnimationBlendMode blendMode = AnimationBlendMode::normal;
 			f32 transitionStart = 0.0f;
 			f32 transitionTime = 0.0f;
 			bool matchingTime = false; //bs
 
 			void UpdateClip(const f32 dt);
+			void UpdateLinear(const f32 dt);
+			void UpdateBezier(const f32 dt);
 			bool HasActiveAnimation() const { return animationID != -1; };
 			void SetAnimation(const i32 id, const f32 nTicks, const f32 duration, const f32 startTime = 0.0f);
 		};
