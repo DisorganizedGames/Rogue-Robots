@@ -3,6 +3,7 @@
 #include "../../Input/Keyboard.h"
 #include <assert.h>
 #include <Intsafe.h>
+#include <algorithm>
 
 void buttonfunc()
 {
@@ -18,16 +19,19 @@ UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HW
    m_width = wrect.right;
    m_height = wrect.bottom;
    m_d2d = std::make_unique<DOG::gfx::D2DBackend_DX12>(rd, sc, numBuffers, hwnd);
-   UINT id = AddScene();
-   ChangeUIscene(id);
+   UINT menuID = AddScene();
+   UINT gameID = AddScene();
+   ChangeUIscene(menuID);
+   auto hID = GenerateUID();
+   auto h = std::make_unique<UIHealthBar>(40.f, m_height - 60.f, 250.f, 30.f, *m_d2d, hID);
+   AddUIlEmentToScene(gameID, std::move(h));
    auto bID = GenerateUID();
    auto b = std::make_unique<UIButton>(m_width / 2.f - 150.f / 2, m_height / 2 - 60.f / 2, 150.f, 60.f, std::wstring(L"Play"), buttonfunc, bID);
-   AddUIlEmentToScene(id, std::move(b));
+   AddUIlEmentToScene(menuID, std::move(b));
    auto sID = GenerateUID();
    auto s = std::make_unique<UISplashScreen>(*m_d2d, (float)m_width, (float)m_height, sID);
-   AddUIlEmentToScene(id, std::move(s));
+   AddUIlEmentToScene(menuID, std::move(s));
 
-   // BuildMenuUI();
 }
 
 UI::~UI()
@@ -38,10 +42,9 @@ UI::~UI()
 
 void UI::DrawUI()
 {
-   if (DOG::Keyboard::IsKeyPressed(DOG::Key::G))aaaaaa
+   if (DOG::Keyboard::IsKeyPressed(DOG::Key::G))
    {
       m_visible = false;
-      //ChangeUIscene(menu);
    }
    if (m_visible)
    {
@@ -90,7 +93,7 @@ UINT UI::AddUIlEmentToScene(UINT sceneID, std::unique_ptr<UIElement> element)
 {
    UINT index = QuerryScene(sceneID);
    UINT id;
-   if(index == UINT_MAX)
+   if (index == UINT_MAX)
       return UINT_MAX;
    else
    {
@@ -115,34 +118,19 @@ UINT UI::AddScene()
 void UI::RemoveScene(UINT sceneID)
 {
    UINT index = QuerryScene(sceneID);
-   if(index == UINT_MAX)
+   if (index == UINT_MAX)
       return;
    else
       m_scenes.erase(m_scenes.begin() + index);
 }
 
-// void UI::BuildMenuUI()
-// {
-//    D2D_VECTOR_2F s = { 150.f, 60.f };
-//    D2D_POINT_2F p = { m_width / 2.f - s.x / 2, m_height / 2 - s.y / 2 };
-//    m_scenes.push_back(std::make_unique<UIButton>(p, s, L"Play", buttonfunc));
-//    p.y += s.y + 50;
-//    m_scenes.push_back(std::make_unique<UIButton>(p, s, L"Options", buttonfunc));
-//    p.y += s.y + 50;
-//    m_scenes.push_back(std::make_unique<UIButton>(p, s, L"Exit", buttonfunc));
-// }
 
-// void UI::BuildGameUI()
-// {
-//    D2D_POINT_2F p = { 50.f, 50.f };
-//    D2D_VECTOR_2F s = { 250.f, 100.f };
-//    m_scenes.push_back(std::make_unique<UIButton>(p, s, L"Menu", buttonfunc));
-// }
-
+/// @brief Changes the current scene to a scene with a specific ID
+/// @param sceneID The ID of the scene to switch to
 void UI::ChangeUIscene(UINT sceneID)
 {
    UINT index = QuerryScene(sceneID);
-   if(index == UINT_MAX)
+   if (index == UINT_MAX)
       return;
    else
    {
@@ -259,5 +247,62 @@ float easeOutCubic(float x)
 
 UIScene::UIScene(UINT id) : m_ID(id)
 {
-   
+
+}
+
+UIHealthBar::UIHealthBar(float x, float y, float width, float height, DOG::gfx::D2DBackend_DX12& m_d2d, UINT id) : UIElement(id)
+{
+   m_text = L"100%";
+   m_value = m_test = 1.0f;
+   m_barWidth = width - 2.f;
+   m_border = D2D1::RectF(x, y, x + width, y + height);
+   m_bar = D2D1::RectF(x + 2.0f, y + 2.0f, x + width - 2.f, y + height - 2.f);
+   HRESULT hr = m_d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &m_borderBrush);
+   HR_VFY(hr);
+   hr = m_d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::GreenYellow, 0.5f), &m_barBrush);
+   HR_VFY(hr);
+   hr = m_d2d.m_dwritwf->CreateTextFormat(
+      L"Robot Radicals",
+      NULL,
+      DWRITE_FONT_WEIGHT_NORMAL,
+      DWRITE_FONT_STYLE_NORMAL,
+      DWRITE_FONT_STRETCH_NORMAL,
+      12,
+      L"en-us",
+      &m_textFormat
+   );
+   HR_VFY(hr);
+   hr = m_textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+   HR_VFY(hr);
+   hr = m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+   HR_VFY(hr);
+}
+
+UIHealthBar::~UIHealthBar()
+{
+
+}
+
+void UIHealthBar::Draw(DOG::gfx::D2DBackend_DX12& m_d2d)
+{
+   m_d2d.m_2ddc->FillRectangle(m_bar, m_barBrush.Get());
+   m_d2d.m_2ddc->DrawRectangle(m_border, m_barBrush.Get());
+   m_d2d.m_2ddc->DrawTextW(
+      m_text.c_str(),
+      (UINT32)m_text.length(),
+      m_textFormat.Get(),
+      &m_border,
+      m_borderBrush.Get());
+
+}
+void UIHealthBar::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
+{
+   auto val = abs(sinf(m_value += 0.01f));
+   m_bar.right = val * (m_barWidth)+m_bar.left - 1.0f;
+   m_text = std::to_wstring((UINT)(val * 100.f + 1.f)) + L'%';
+}
+void UIHealthBar::SetBarValue(float value)
+{
+   m_value = value;
+   m_text = std::to_wstring(value) + L'%';
 }
