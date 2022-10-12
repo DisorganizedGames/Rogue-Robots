@@ -38,7 +38,8 @@ namespace DOG::gfx
 		TextureDesc desc = m_bloomTexDesc;
 		desc.width = m_bloomTexDesc.width / 2;
 		desc.height = m_bloomTexDesc.height / 2;
-		while (desc.width > 32 && desc.height > 32)
+		constexpr u32 minMipSize = 8;
+		while (desc.width > minMipSize && desc.height > minMipSize)
 		{
 			m_bloomTexture.emplace_back(device->CreateTexture(desc), desc);
 			desc.width /= 2;
@@ -73,7 +74,7 @@ namespace DOG::gfx
 				passData.dstTextureHandle = builder.ReadWriteTarget(RG_RESOURCE(BloomTexture0), TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 
 				BloomConstantBuffer perDrawData{};
-				perDrawData.threshold = 0.1f;
+				perDrawData.threshold = 0.12f;
 				perDrawData.color = { 1, 1, 1 };
 
 				*reinterpret_cast<BloomConstantBuffer*>(passData.constantBufferHandle.memory) = perDrawData;
@@ -146,7 +147,8 @@ namespace DOG::gfx
 		rg.AddPass<PassData>("Bloom Debug",
 			[&](PassData& passData, RenderGraph::PassBuilder& builder)		// Build
 			{
-				passData.level = m_bloomTexture.size() - 1;
+				//passData.level = m_bloomTexture.size() - 1;
+				passData.level = 5;
 				//passData.width =m_bloomTexture[passData.level].second.width;
 				//passData.height = m_bloomTexture[passData.level].second.height;
 				passData.width = m_width / 2;

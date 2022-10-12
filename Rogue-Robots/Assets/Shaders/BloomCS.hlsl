@@ -38,7 +38,8 @@ void main(uint3 globalId : SV_DispatchThreadID)
         //if (length(tex[globalId.xy].rgb) > cb.threshold)
         float u = (float) globalId.x / g_constants.width;
         float v = (float) globalId.y / g_constants.height;
-        float3 color = tex.Sample(g_bilinear_clamp_samp, float2(u, v)).rgb;
+        float3 color = tex.Sample(g_point_clamp_samp, float2(u, v)).rgb;
+        //float3 color = tex.Sample(g_bilinear_clamp_samp, float2(u, v)).rgb;
 
         //if (tex[globalId.xy].g > cb.threshold)
         if (length(color.rgb) > length(cb.threshold * float3(1, 1, 1)))

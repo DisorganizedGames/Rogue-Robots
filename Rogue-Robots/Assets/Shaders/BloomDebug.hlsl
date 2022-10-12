@@ -36,7 +36,9 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
         
         float u = (float) globalId.x / g_constants.width;
         float v = (float) globalId.y / g_constants.height;
-        float3 color = tex.Sample(g_point_samp, float2(u, v)).rgb;
+        float3 color = tex.Sample(g_point_clamp_samp, float2(u, v)).rgb;
+        //float3 color = tex.Sample(g_point_samp, float2(u, v)).rgb;
+        //float3 color = tex.Sample(g_bilinear_clamp_samp, float2(u, v)).rgb;
         target[globalId.xy].xyz = color;
     }
 }
