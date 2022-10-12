@@ -49,6 +49,18 @@ namespace DOG
 			m_rigidBodyColliderDatas[i].rigidBody = nullptr;
 		}
 
+		//Delete ghostObjects
+		for (u32 i = 0; i < m_ghostObjectDatas.size(); ++i)
+		{
+			btGhostObject* ghostObject = m_ghostObjectDatas[i].ghostObject;
+			if (ghostObject == nullptr)
+				continue;
+
+			m_dynamicsWorld->removeCollisionObject(ghostObject);
+			delete m_ghostObjectDatas[i].ghostObject;
+			m_ghostObjectDatas[i].ghostObject = nullptr;
+		}
+
 		//Delete collisionShapes
 		for (u32 i = 0; i < m_collisionShapes.size(); ++i)
 		{
@@ -100,8 +112,8 @@ namespace DOG
 						btTransform trans;
 						trans.setFromOpenGLMatrix((float*)(&transform.worldMatrix));
 						rigidBody->rigidBody->getMotionState()->setWorldTransform(trans);
-
-						//s_physicsEngine.m_dynamicsWorld->updateSingleAabb(rigidBody->rigidBody);
+						//If the user updates the scale after creation
+						rigidBody->rigidbodyScale = transform.GetScale();
 					}
 				});
 
@@ -114,8 +126,8 @@ namespace DOG
 						btTransform trans;
 						trans.setFromOpenGLMatrix((float*)(&transform.worldMatrix));
 						rigidBody->rigidBody->getMotionState()->setWorldTransform(trans);
-
-						//s_physicsEngine.m_dynamicsWorld->updateSingleAabb(rigidBody->rigidBody);
+						//If the user updates the scale after creation
+						rigidBody->rigidbodyScale = transform.GetScale();
 					}
 				});
 
@@ -128,22 +140,34 @@ namespace DOG
 						btTransform trans;
 						trans.setFromOpenGLMatrix((float*)(&transform.worldMatrix));
 						rigidBody->rigidBody->getMotionState()->setWorldTransform(trans);
-
-						//s_physicsEngine.m_dynamicsWorld->updateSingleAabb(rigidBody->rigidBody);
+						//If the user updates the scale after creation
+						rigidBody->rigidbodyScale = transform.GetScale();
 					}
 				});
 
+			//Ghost objects have no physics done to them but we want to update the boxtriggers position in the physics world
 			EntityManager::Get().Collect<TransformComponent, BoxTriggerComponent>().Do([&](TransformComponent& transform, BoxTriggerComponent& trigger)
 				{
 					//Get ghostObject
 					auto* ghostObjectData = s_physicsEngine.GetGhostObjectData(trigger.ghostObjectHandle);
-					if (ghostObjectData->ghostObject) //&& rigidBody->rigidBody && rigidBody->rigidBody->getMotionState())
+					if (ghostObjectData->ghostObject)
 					{
 						btTransform trans;
 						trans.setFromOpenGLMatrix((float*)(&transform.worldMatrix));
 						ghostObjectData->ghostObject->setWorldTransform(trans);
+					}
+				});
 
-						//s_physicsEngine.m_dynamicsWorld->updateSingleAabb(ghostObjectData->ghostObject);
+			//Ghost objects have no physics done to them but we want to update the spheretriggers position in the physics world
+			EntityManager::Get().Collect<TransformComponent, SphereTriggerComponent>().Do([&](TransformComponent& transform, SphereTriggerComponent& trigger)
+				{
+					//Get ghostObject
+					auto* ghostObjectData = s_physicsEngine.GetGhostObjectData(trigger.ghostObjectHandle);
+					if (ghostObjectData->ghostObject)
+					{
+						btTransform trans;
+						trans.setFromOpenGLMatrix((float*)(&transform.worldMatrix));
+						ghostObjectData->ghostObject->setWorldTransform(trans);
 					}
 				});
 		}
@@ -188,18 +212,6 @@ namespace DOG
 					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
 					//The scale is set to 1 by bullet physics, so we set it back to the original scale
 					transform.SetScale(rigidBody->rigidbodyScale);
-				}
-			});
-
-		EntityManager::Get().Collect<TransformComponent, BoxTriggerComponent>().Do([&](TransformComponent& transform, BoxTriggerComponent& trigger)
-			{
-				//Get ghostObject
-				auto* ghostObjectData = s_physicsEngine.GetGhostObjectData(trigger.ghostObjectHandle);
-				if (ghostObjectData->ghostObject) //&& rigidBody->rigidBody && rigidBody->rigidBody->getMotionState())
-				{
-					btTransform trans;
-					trans = ghostObjectData->ghostObject->getWorldTransform();
-					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
 				}
 			});
 
@@ -292,6 +304,16 @@ namespace DOG
 			MeshColliderComponent& colliderComponent = EntityManager::Get().GetComponent<MeshColliderComponent>(entity);
 			s_physicsEngine.FreeRigidbodyData(colliderComponent.rigidbodyHandle, false);
 		}
+		if (EntityManager::Get().HasComponent<BoxTriggerComponent>(entity))
+		{
+			BoxTriggerComponent& colliderComponent = EntityManager::Get().GetComponent<BoxTriggerComponent>(entity);
+			s_physicsEngine.FreeGhostObjectData(colliderComponent.ghostObjectHandle);
+		}
+		if (EntityManager::Get().HasComponent<SphereTriggerComponent>(entity))
+		{
+			SphereTriggerComponent& colliderComponent = EntityManager::Get().GetComponent<SphereTriggerComponent>(entity);
+			s_physicsEngine.FreeGhostObjectData(colliderComponent.ghostObjectHandle);
+		}
 		if (EntityManager::Get().HasComponent<RigidbodyComponent>(entity))
 		{
 			RigidbodyComponent& rigidbodyComponent = EntityManager::Get().GetComponent<RigidbodyComponent>(entity);
@@ -365,11 +387,14 @@ namespace DOG
 		//Sets the handle for collision detection later
 		const u64 bitMask = 0x0000FFFF;
 		const u32 byteShift = 4;
+		const bool isRigidbody = true;
 		u32 userIndex1 = (u32)(rigidbodyHandle.handle & bitMask);
 		u32 userIndex2 = (u32)((rigidbodyHandle.handle >> byteShift) & bitMask);
 		pointerToRCD->rigidBody->setUserIndex(userIndex1);
 		pointerToRCD->rigidBody->setUserIndex2(userIndex2);
-		pointerToRCD->rigidBody->setUserIndex3(true);
+		//Set if the collision object is a rigidbody or a ghost
+		//In this case it is a rigidbody
+		pointerToRCD->rigidBody->setUserIndex3(isRigidbody);
 
 		return rigidbodyHandle;
 	}
@@ -385,15 +410,12 @@ namespace DOG
 
 		s_physicsEngine.m_ghostObjectDatas[handle] = std::move(ghostObjectData);
 
-		//Increase the counter for ghost objects
-		++s_physicsEngine.m_nrGhostObjects;
-
 		return ghostObjectHandle;
 	}
 
 	GhostObjectHandle PhysicsEngine::AddGhostObject(entity entity, GhostObjectData& ghostObjectData)
 	{
-		//Set rigidody entity
+		//Set ghost object entity
 		ghostObjectData.ghostObjectEntity = entity;
 
 		ghostObjectData.ghostObject = new btPairCachingGhostObject();
@@ -418,11 +440,14 @@ namespace DOG
 		//Sets the handle for collision detection later
 		const u64 bitMask = 0x0000FFFF;
 		const u32 byteShift = 4;
+		const bool isRigidbody = false;
 		u32 userIndex1 = (u32)(ghostObjectHandle.handle & bitMask);
 		u32 userIndex2 = (u32)((ghostObjectHandle.handle >> byteShift) & bitMask);
 		ghostObjectData.ghostObject->setUserIndex(userIndex1);
 		ghostObjectData.ghostObject->setUserIndex2(userIndex2);
-		ghostObjectData.ghostObject->setUserIndex3(false);
+		//Set if the collision object is a rigidbody or a ghost
+		//In this case it is a ghost
+		ghostObjectData.ghostObject->setUserIndex3(isRigidbody);
 
 		return ghostObjectHandle;
 	}
@@ -542,6 +567,19 @@ namespace DOG
 		m_collisionShapes[handle] = nullptr;
 
 		m_handleAllocator.Free(collisionShapeHandle);
+	}
+
+	void PhysicsEngine::FreeGhostObjectData(const GhostObjectHandle& ghostObjectHandle)
+	{
+		GhostObjectData* ghostObjectData = GetGhostObjectData(ghostObjectHandle);
+
+		m_dynamicsWorld->removeCollisionObject(ghostObjectData->ghostObject);
+		delete ghostObjectData->ghostObject;
+		ghostObjectData->ghostObject = nullptr;
+
+		FreeCollisionShape(ghostObjectData->collisionShapeHandle);
+
+		m_handleAllocator.Free(ghostObjectHandle);
 	}
 
 	void PhysicsEngine::CheckRigidbodyCollisions()
@@ -744,6 +782,14 @@ namespace DOG
 	{
 		GhostObjectData ghostObjectData;
 		ghostObjectData.collisionShapeHandle = PhysicsEngine::AddCollisionShape(new btBoxShape(btVector3(boxColliderSize.x, boxColliderSize.y, boxColliderSize.z)));
+
+		ghostObjectHandle = PhysicsEngine::AddGhostObject(entity, ghostObjectData);
+	}
+
+	SphereTriggerComponent::SphereTriggerComponent(entity entity, float radius) noexcept
+	{
+		GhostObjectData ghostObjectData;
+		ghostObjectData.collisionShapeHandle = PhysicsEngine::AddCollisionShape(new btSphereShape(radius));
 
 		ghostObjectHandle = PhysicsEngine::AddGhostObject(entity, ghostObjectData);
 	}

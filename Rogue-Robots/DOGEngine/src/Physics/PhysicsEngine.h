@@ -99,6 +99,12 @@ namespace DOG
 
 		GhostObjectHandle ghostObjectHandle;
 	};
+	struct SphereTriggerComponent
+	{
+		SphereTriggerComponent(entity entity, float radius) noexcept;
+
+		GhostObjectHandle ghostObjectHandle;
+	};
 
 	struct MeshWaitData
 	{
@@ -120,6 +126,7 @@ namespace DOG
 		friend RigidbodyComponent;
 		friend MeshColliderComponent;
 		friend BoxTriggerComponent;
+		friend SphereTriggerComponent;
 		friend PhysicsRigidbody;
 
 	private:
@@ -148,7 +155,6 @@ namespace DOG
 
 		//Ghost objects (ghost objects are triggers)
 		std::vector<GhostObjectData> m_ghostObjectDatas;
-		u64 m_nrGhostObjects = 0;
 
 		static constexpr u64 RESIZE_RIGIDBODY_SIZE = 1000;
 		static constexpr u64 RESIZE_COLLISIONSHAPE_SIZE = 1000;
@@ -171,6 +177,7 @@ namespace DOG
 		btCollisionShape* GetCollisionShape(const CollisionShapeHandle& collisionShapeHandle);
 		void FreeRigidbodyData(const RigidbodyHandle& rigidbodyHandle, bool freeCollisionShape);
 		void FreeCollisionShape(const CollisionShapeHandle& collisionShapeHandle);
+		void FreeGhostObjectData(const GhostObjectHandle& ghostObjectHandle);
 		void CheckRigidbodyCollisions();
 
 	public:
