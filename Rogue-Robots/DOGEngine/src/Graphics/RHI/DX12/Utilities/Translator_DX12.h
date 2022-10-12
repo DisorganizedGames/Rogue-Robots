@@ -1,6 +1,8 @@
 #pragma once
 #include "../../RHITypes.h"
 
+// https://stackoverflow.com/questions/59097257/does-the-multisample-texture-need-to-be-mipmapped-if-the-main-texture-is-mipmapp
+
 namespace DOG::gfx
 {
 	inline UINT D3D12CalcSubresource(UINT mipSlice, UINT arraySlice, UINT planeSlice, UINT mipLevels, UINT arraySize)
