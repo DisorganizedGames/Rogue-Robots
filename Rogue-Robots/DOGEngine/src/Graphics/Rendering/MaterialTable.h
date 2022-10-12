@@ -37,7 +37,7 @@ namespace DOG::gfx
 
 		void UpdateMaterial(MaterialHandle handle, const MaterialSpecification& spec);
 		
-		//void SendCopyRequests(UploadContext& ctx);
+		void SendCopyRequests(UploadContext& ctx);
 
 		u32 GetDescriptor() const { return m_matTable->GetGlobalDescriptor(); }
 		u32 GetMaterialIndex(MaterialHandle handle) const;

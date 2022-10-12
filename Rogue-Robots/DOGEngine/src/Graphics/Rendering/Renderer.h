@@ -22,6 +22,7 @@ namespace DOG::gfx
 	class GPUDynamicConstants;
 	class MaterialTable;
 	class MeshTable;
+	class LightTable;
 	class TextureManager;
 
 	class GraphicsBuilder;
@@ -41,6 +42,7 @@ namespace DOG::gfx
 		Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug);
 		~Renderer();
 
+		LightTable* GetLightTable() const { return m_globalLightTable.get(); }
 		GraphicsBuilder* GetBuilder() const { return m_builder.get(); }
 		Monitor GetMonitor() const;
 		DXGI_MODE_DESC GetMatchingDisplayMode(std::optional<DXGI_MODE_DESC> mode = std::nullopt) const;
@@ -79,6 +81,9 @@ namespace DOG::gfx
 	private:
 		void EndGUI();	// Called at EndFrame_GPU
 
+		void SpawnRenderDebugWindow(bool& open);
+
+
 
 
 		LRESULT WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -109,6 +114,7 @@ namespace DOG::gfx
 		// Big buffers store meshes and materials
 		std::unique_ptr<MaterialTable> m_globalMaterialTable;
 		std::unique_ptr<MeshTable> m_globalMeshTable;
+		std::unique_ptr<LightTable> m_globalLightTable;
 
 
 		std::vector<RenderSubmission> m_submissions;		// temporary
@@ -160,6 +166,13 @@ namespace DOG::gfx
 
 		GlobalEffectData m_globalEffectData{};
 
+		struct LightOffsets
+		{
+			u32 staticOffset;
+			u32 infreqOffset;
+			u32 dynOffset;
+		};
+
 		// Per frame shader data
 		struct PerFrameData
 		{
@@ -168,6 +181,10 @@ namespace DOG::gfx
 			DirectX::SimpleMath::Matrix invProjMatrix;
 			DirectX::SimpleMath::Vector4 camPos;
 			f32 time{ 0.f };
+
+			LightOffsets pointLightOffsets;
+			LightOffsets spotLightOffsets;
+			LightOffsets areaLightOffsets;
 
 		} m_pfData{};
 		struct PfDataHandle { friend class TypedHandlePool; u64 handle{ 0 }; };
@@ -188,6 +205,11 @@ namespace DOG::gfx
 
 			u32 perFrameTable;
 			u32 materialTable{ 0 };
+
+			u32 lightTableMD{ 0 };
+			u32 pointLightTable{ 0 };
+			u32 spotLightTable{ 0 };
+			u32 areaLightTable{ 0 };
 
 		} m_globalData{};
 		struct GlobalDataHandle{ friend class TypedHandlePool; u64 handle{ 0 }; };

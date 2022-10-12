@@ -36,4 +36,7 @@ private:
 	NetCode m_netCode;
 	//Pathfinder m_pathfinder;		// uncomment to activate pathfinder
 	std::shared_ptr <Agent> m_Agent;
+
+	entity m_movingPointLight;
+	f64 m_elapsedTime{ 0.f };
 };

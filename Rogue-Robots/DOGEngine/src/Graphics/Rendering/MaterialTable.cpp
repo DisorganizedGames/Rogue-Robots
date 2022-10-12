@@ -53,10 +53,10 @@ namespace DOG::gfx
 		res.gpuHandle = m_matTable->Allocate(1, &res.gpu);
 	}
 
-	//void MaterialTable::SendCopyRequests(UploadContext& ctx)
-	//{
-	//	m_matTable->SendCopyRequests(ctx);
-	//}
+	void MaterialTable::SendCopyRequests(UploadContext& ctx)
+	{
+		m_matTable->SendCopyRequests(ctx);
+	}
 
 	u32 MaterialTable::GetMaterialIndex(MaterialHandle handle) const
 	{

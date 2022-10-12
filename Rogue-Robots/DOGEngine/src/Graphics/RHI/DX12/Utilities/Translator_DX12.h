@@ -3,6 +3,11 @@
 
 namespace DOG::gfx
 {
+	inline UINT D3D12CalcSubresource(UINT mipSlice, UINT arraySlice, UINT planeSlice, UINT mipLevels, UINT arraySize)
+	{
+		return mipSlice + (arraySlice * mipLevels) + (planeSlice * mipLevels * arraySize);
+	}
+
 	inline D3D12_HEAP_TYPE to_internal(MemoryType memType)
 	{
 		switch (memType)
@@ -258,7 +263,7 @@ namespace DOG::gfx
 
 
 
-	D3D12_SHADER_RESOURCE_VIEW_DESC to_srv(const TextureViewDesc& range)
+	D3D12_SHADER_RESOURCE_VIEW_DESC to_srv(const TextureViewDesc& range, u32 mipLevels, u32 arraySize, std::set<u32>* subresources)
 	{
 		D3D12_SHADER_RESOURCE_VIEW_DESC desc{};
 		desc.Format = range.format;
@@ -271,6 +276,10 @@ namespace DOG::gfx
 			desc.Texture1D.MostDetailedMip = range.mipLevelBase;
 			desc.Texture1D.MipLevels = range.mipLevels;
 			desc.Texture1D.ResourceMinLODClamp = range.minLodClamp;
+
+			for (u32 i = 0; i < range.mipLevels; ++i)
+				subresources->insert(D3D12CalcSubresource(range.mipLevelBase + i, 0, 0, mipLevels, arraySize));
+
 			break;
 		}
 		case TextureViewDimension::Texture1D_Array:
@@ -281,6 +290,18 @@ namespace DOG::gfx
 
 			desc.Texture1DArray.ArraySize = range.arrayCount;
 			desc.Texture1DArray.FirstArraySlice = range.arrayBase;
+
+			for (u32 i = 0; i < range.mipLevels; ++i)
+			{
+				for (u32 u = 0; u < range.arrayCount; ++u)
+				{
+					subresources->insert(D3D12CalcSubresource(
+						range.mipLevelBase + i,
+						range.arrayBase + u,
+						0, mipLevels, arraySize));
+				}
+			}
+
 			break;
 		}
 		case TextureViewDimension::Texture2D:
@@ -291,6 +312,16 @@ namespace DOG::gfx
 
 			desc.Texture2D.PlaneSlice = range.arrayBase;
 			assert(range.arrayCount == 1);
+
+
+			for (u32 i = 0; i < range.mipLevels; ++i)
+			{
+				subresources->insert(D3D12CalcSubresource(
+					range.mipLevelBase + i,
+					0,							// arraySlice = 0? @todo
+					range.arrayBase, 
+					mipLevels, arraySize));
+			}
 
 			break;
 		}
@@ -303,6 +334,8 @@ namespace DOG::gfx
 			desc.Texture2DArray.ArraySize = range.arrayCount;
 			desc.Texture2DArray.FirstArraySlice = range.arrayBase;
 			desc.Texture2DArray.PlaneSlice = 0;
+
+			// continue calculating subresources..
 
 			break;
 		}
@@ -353,8 +386,12 @@ namespace DOG::gfx
 		return desc;
 	}
 
-	D3D12_RENDER_TARGET_VIEW_DESC to_rtv(const TextureViewDesc& range)
+	D3D12_RENDER_TARGET_VIEW_DESC to_rtv(const TextureViewDesc& range, u32 mipLevels, u32 arraySize, std::set<u32>* subresources = nullptr)
 	{
+		UNREFERENCED_PARAMETER(mipLevels);
+		UNREFERENCED_PARAMETER(arraySize);
+		UNREFERENCED_PARAMETER(subresources);
+
 		D3D12_RENDER_TARGET_VIEW_DESC desc{};
 		desc.Format = range.format;
 		desc.ViewDimension = to_internal_rtv(range.viewDimension);
@@ -362,7 +399,7 @@ namespace DOG::gfx
 		{
 		case TextureViewDimension::Texture1D:
 		{
-			desc.Texture1D.MipSlice = range.arrayBase;
+			desc.Texture1D.MipSlice = range.mipLevelBase;
 
 			assert(range.arrayCount == 1);
 			break;
@@ -378,7 +415,7 @@ namespace DOG::gfx
 		}
 		case TextureViewDimension::Texture2D:
 		{
-			desc.Texture2D.MipSlice = range.arrayBase;
+			desc.Texture2D.MipSlice = range.mipLevelBase;
 			desc.Texture2D.PlaneSlice = 0;
 
 			assert(range.arrayCount == 1);
@@ -425,8 +462,12 @@ namespace DOG::gfx
 		return desc;
 	}
 
-	D3D12_DEPTH_STENCIL_VIEW_DESC to_dsv(const TextureViewDesc& range)
+	D3D12_DEPTH_STENCIL_VIEW_DESC to_dsv(const TextureViewDesc& range, u32 mipLevels, u32 arraySize, std::set<u32>* subresources = nullptr)
 	{
+		UNREFERENCED_PARAMETER(mipLevels);
+		UNREFERENCED_PARAMETER(arraySize);
+		UNREFERENCED_PARAMETER(subresources);
+
 		D3D12_DEPTH_STENCIL_VIEW_DESC desc{};
 		desc.Format = range.format;
 		desc.ViewDimension = to_internal_dsv(range.viewDimension);
@@ -494,8 +535,12 @@ namespace DOG::gfx
 		return desc;
 	}
 
-	D3D12_UNORDERED_ACCESS_VIEW_DESC to_uav(const TextureViewDesc& range)
+	D3D12_UNORDERED_ACCESS_VIEW_DESC to_uav(const TextureViewDesc& range, u32 mipLevels, u32 arraySize, std::set<u32>* subresources = nullptr)
 	{
+		UNREFERENCED_PARAMETER(mipLevels);
+		UNREFERENCED_PARAMETER(arraySize);
+		UNREFERENCED_PARAMETER(subresources);
+
 		D3D12_UNORDERED_ACCESS_VIEW_DESC desc{};
 		desc.Format = range.format;
 		desc.ViewDimension = to_internal_uav(range.viewDimension);

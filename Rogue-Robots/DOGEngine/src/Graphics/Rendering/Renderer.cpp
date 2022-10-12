@@ -13,7 +13,7 @@
 #include "GPUDynamicConstants.h"
 #include "MaterialTable.h"
 #include "MeshTable.h"
-#include "TextureManager.h"
+#include "LightTable.h"
 #include "GraphicsBuilder.h"
 
 #include "../../Core/AssimpImporter.h"
@@ -28,6 +28,9 @@
 // Passes
 #include "RenderEffects/ImGUIEffect.h"
 #include "RenderEffects/TestComputeEffect.h"
+
+#include "ImGUI/imgui.h"
+#include "../../Core/ImGuiMenuLayer.h"
 
 namespace DOG::gfx
 {
@@ -86,6 +89,18 @@ namespace DOG::gfx
 		MaterialTable::MemorySpecification memSpec{};
 		memSpec.maxElements = maxMaterialArgs;
 		m_globalMaterialTable = std::make_unique<MaterialTable>(m_rd, m_bin.get(), memSpec);
+
+		// Default storage
+		auto lightStorageSpec = LightTable::StorageSpecification();
+		m_globalLightTable = std::make_unique<LightTable>(m_rd, m_bin.get(), lightStorageSpec, false);
+
+
+
+
+
+
+
+
 
 		// Create builder for users to create graphical objects supported by the renderer
 		m_builder = std::make_unique<GraphicsBuilder>(
@@ -147,6 +162,10 @@ namespace DOG::gfx
 		m_globalData.meshTableBlend = m_globalMeshTable->GetAttributeDescriptor(VertexAttribute::BlendData);
 		m_globalData.perFrameTable = m_pfDataTable->GetGlobalDescriptor();
 		m_globalData.materialTable = m_globalMaterialTable->GetDescriptor();
+		m_globalData.pointLightTable = m_globalLightTable->GetDescriptor(LightType::Point);
+		m_globalData.spotLightTable = m_globalLightTable->GetDescriptor(LightType::Spot);
+		m_globalData.areaLightTable = m_globalLightTable->GetDescriptor(LightType::Area);
+		m_globalData.lightTableMD = m_globalLightTable->GetMetadataDescriptor();
 
 		m_globalDataTable = std::make_unique<GPUTableDeviceLocal<GlobalDataHandle>>(m_rd, m_bin.get(), (u32)sizeof(GlobalData), 1, false);
 		m_gdHandle = m_globalDataTable->Allocate(1, &m_globalData);
@@ -184,6 +203,8 @@ namespace DOG::gfx
 		*/
 		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
 		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
+
+		ImGuiMenuLayer::RegisterDebugWindow("Renderer Debug", [this](bool& open) { SpawnRenderDebugWindow(open); });
 	}
 
 	Renderer::~Renderer()
@@ -249,6 +270,7 @@ namespace DOG::gfx
 	void Renderer::Update(f32 dt)
 	{
 		m_boneJourno->UpdateJoints();
+		m_globalLightTable->FinalizeUpdates();
 
 
 		// Update per frame data
@@ -257,6 +279,20 @@ namespace DOG::gfx
 			m_pfData.projMatrix = m_projMat;
 			m_pfData.projMatrix.Invert(m_pfData.invProjMatrix);
 			m_pfData.time += dt;
+
+			// Set light data
+			m_pfData.pointLightOffsets.staticOffset = m_globalLightTable->GetChunkOffset(LightType::Point, LightUpdateFrequency::Never);
+			m_pfData.pointLightOffsets.infreqOffset = m_globalLightTable->GetChunkOffset(LightType::Point, LightUpdateFrequency::Sometimes);
+			m_pfData.pointLightOffsets.dynOffset = m_globalLightTable->GetChunkOffset(LightType::Point, LightUpdateFrequency::PerFrame);
+
+			m_pfData.spotLightOffsets.staticOffset = m_globalLightTable->GetChunkOffset(LightType::Spot, LightUpdateFrequency::Never);
+			m_pfData.spotLightOffsets.infreqOffset = m_globalLightTable->GetChunkOffset(LightType::Spot, LightUpdateFrequency::Sometimes);
+			m_pfData.spotLightOffsets.dynOffset = m_globalLightTable->GetChunkOffset(LightType::Spot, LightUpdateFrequency::PerFrame);
+
+			m_pfData.areaLightOffsets.staticOffset = m_globalLightTable->GetChunkOffset(LightType::Area, LightUpdateFrequency::Never);
+			m_pfData.areaLightOffsets.infreqOffset = m_globalLightTable->GetChunkOffset(LightType::Area, LightUpdateFrequency::Sometimes);
+			m_pfData.areaLightOffsets.dynOffset = m_globalLightTable->GetChunkOffset(LightType::Area, LightUpdateFrequency::PerFrame);
+
 
 			// Get camera position
 			DirectX::XMVECTOR tmp;
@@ -267,18 +303,27 @@ namespace DOG::gfx
 			m_pfData.camPos = { posFloat3.x, posFloat3.y, posFloat3.z, 0.0f };
 
 			m_pfDataTable->RequestUpdate(m_pfHandle, &m_pfData, sizeof(m_pfData));
-			m_pfDataTable->SendCopyRequests(*m_perFrameUploadCtx);
 
 			// Get offset after update
 			m_currPfDescriptor = m_pfDataTable->GetLocalOffset(m_pfHandle);
 			m_globalEffectData.perFrameTableOffset = &m_currPfDescriptor;
-
 		}
+
+
+
+
+
+
+		m_globalLightTable->SendCopyRequests(*m_perFrameUploadCtx);
+		m_pfDataTable->SendCopyRequests(*m_perFrameUploadCtx);
+
+
 	}
 
 	void Renderer::Render(f32)
 	{
 		ZoneNamedN(RenderScope, "Render", true);
+
 
 		// Resolve any per frame copies from CPU
 		{
@@ -480,6 +525,27 @@ namespace DOG::gfx
 	{
 		m_imgui->EndFrame();
 	}
+
+	void Renderer::SpawnRenderDebugWindow(bool& open)
+	{
+		if (ImGui::BeginMenu("View"))
+		{
+			if (ImGui::MenuItem("Renderer"))
+			{
+				open = true;
+			}
+			ImGui::EndMenu(); // "View"
+		}
+
+		if (open)
+		{
+			if (ImGui::Begin("Light Manager", &open))
+			{
+			}
+			ImGui::End();
+		}
+	}
+	
 
 	LRESULT Renderer::WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{

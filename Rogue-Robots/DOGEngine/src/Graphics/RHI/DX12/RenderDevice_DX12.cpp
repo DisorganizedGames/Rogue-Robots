@@ -12,6 +12,7 @@
 
 namespace DOG::gfx
 {
+
 	RenderDevice_DX12::RenderDevice_DX12(ComPtr<ID3D12Device5> device, IDXGIAdapter* adapter, bool debug) :
 		m_device(device),
 		m_debugOn(debug)
@@ -318,12 +319,29 @@ namespace DOG::gfx
 			uavd.Buffer.CounterOffsetInBytes = 0;
 			uavd.Buffer.Flags = desc.raw ? D3D12_BUFFER_UAV_FLAG_RAW : D3D12_BUFFER_UAV_FLAG_NONE;
 
+			// User can choose to either manually use InterlockedAdd with separate buffer or actually pass in a Counter Buffer
 			uavClear = m_descriptorMgr->allocate_cbv_srv_uav_cpu(1);
+			if (desc.uavCounterResource.handle != 0)
+			{
+				const auto& counterStorage = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(desc.uavCounterResource.handle));
+				const auto& counterResource = counterStorage.resource;
 
-			// We never use counter buffers, user has to create their own RW buffer with counters and do InterlockedAdd
-			// This makes counting explicit on the user side and simplifies API (always no counter)
-			m_device->CreateUnorderedAccessView(buffer_storage.resource.Get(), nullptr, &uavd, view_desc.cpu_handle(0));
-			m_device->CreateUnorderedAccessView(buffer_storage.resource.Get(), nullptr, &uavd, uavClear->cpu_handle(0));
+				uavd.Buffer.CounterOffsetInBytes = desc.uavCounterOffset;
+				assert(uavd.Buffer.CounterOffsetInBytes % 4 == 0);
+				assert(uavd.Buffer.CounterOffsetInBytes < counterStorage.desc.size);
+				assert(uavd.Buffer.Flags != D3D12_BUFFER_UAV_FLAG_RAW);
+
+				m_device->CreateUnorderedAccessView(buffer_storage.resource.Get(), counterResource.Get(), &uavd, view_desc.cpu_handle(0));
+				m_device->CreateUnorderedAccessView(buffer_storage.resource.Get(), counterResource.Get(), &uavd, uavClear->cpu_handle(0));
+
+			}
+			// PREFERRABLY: User should manually use InterlockedAdd --> Most flexibility
+			else
+			{
+				m_device->CreateUnorderedAccessView(buffer_storage.resource.Get(), nullptr, &uavd, view_desc.cpu_handle(0));
+				m_device->CreateUnorderedAccessView(buffer_storage.resource.Get(), nullptr, &uavd, uavClear->cpu_handle(0));
+			}
+
 		}
 		else if (desc.viewType == ViewType::RaytracingAS)
 		{
@@ -356,6 +374,7 @@ namespace DOG::gfx
 
 		auto& tex_storage = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(texture.handle));
 
+
 		DX12DescriptorChunk view_desc;
 		if (desc.viewType == ViewType::RenderTarget)
 			view_desc = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -365,24 +384,25 @@ namespace DOG::gfx
 			view_desc = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		std::optional<DX12DescriptorChunk> uavClear;
+		std::set<u32> subresources;
 		if (desc.viewType == ViewType::DepthStencil)
 		{
-			auto dsv = to_dsv(desc);
+			auto dsv = to_dsv(desc, tex_storage.desc.mipLevels, tex_storage.desc.depth, &subresources);
 			m_device->CreateDepthStencilView(tex_storage.resource.Get(), &dsv, view_desc.cpu_handle(0));
 		}
 		else if (desc.viewType == ViewType::RenderTarget)
 		{
-			auto rtv = to_rtv(desc);
+			auto rtv = to_rtv(desc, tex_storage.desc.mipLevels, tex_storage.desc.depth, &subresources);
 			m_device->CreateRenderTargetView(tex_storage.resource.Get(), &rtv, view_desc.cpu_handle(0));
 		}
 		else if (desc.viewType == ViewType::ShaderResource)
 		{
-			auto srv = to_srv(desc);
+			auto srv = to_srv(desc, tex_storage.desc.mipLevels, tex_storage.desc.depth, &subresources);
 			m_device->CreateShaderResourceView(tex_storage.resource.Get(), &srv, view_desc.cpu_handle(0));
 		}
 		else if (desc.viewType == ViewType::UnorderedAccess)
 		{
-			auto uav = to_uav(desc);
+			auto uav = to_uav(desc, tex_storage.desc.mipLevels, tex_storage.desc.depth, &subresources);
 
 			uavClear = m_descriptorMgr->allocate_cbv_srv_uav_cpu(1);
 			m_device->CreateUnorderedAccessView(tex_storage.resource.Get(), nullptr, &uav, view_desc.cpu_handle(0));

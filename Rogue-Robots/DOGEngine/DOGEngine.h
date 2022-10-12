@@ -3,6 +3,8 @@
 #include "src/Core/Window.h"
 #include "src/Core/Time.h"
 #include "src/Core/AssetManager.h"
+#include "src/Core/LightManager.h"
+#include "src/Core/Types/GraphicsTypes.h"
 #include "src/Core/AnimationManager.h"
 #include "src/Core/ImGuiMenuLayer.h"
 

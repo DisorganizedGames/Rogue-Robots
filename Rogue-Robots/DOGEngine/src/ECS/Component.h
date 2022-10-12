@@ -1,4 +1,6 @@
 #pragma once
+#include "../Core/Types/GraphicsTypes.h"
+
 namespace DOG
 {
 	struct TransformComponent
@@ -101,6 +103,30 @@ namespace DOG
 		bool jump = false;
 		bool activateActiveItem = false;
 		bool normalFireMode = false;
+	};
+
+	struct SpotLightComponent
+	{
+		LightHandle handle;
+
+		// Light properties
+		DirectX::SimpleMath::Vector3 color{ 1.f, 1.f, 1.f };
+		float strength{ 1.f };
+		DirectX::SimpleMath::Vector3 direction{ 0.f, 0.f, 1.f };
+		float cutoffAngle{ 15.f };
+
+		bool dirty{ true };		// If static handle, dirty bool is ignored
+	};
+
+	struct PointLightComponent
+	{
+		LightHandle handle;
+
+		// Light properties
+		DirectX::SimpleMath::Vector3 color{ 1.f, 1.f, 1.f };
+		float strength{ 1.f };
+
+		bool dirty{ true };		// If static handle, dirty bool is ignored
 	};
 }
 
