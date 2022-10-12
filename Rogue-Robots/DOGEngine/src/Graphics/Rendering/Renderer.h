@@ -219,6 +219,7 @@ namespace DOG::gfx
 		// Lights test
 		LightHandle m_light;
 		std::vector<LightHandle> m_spots;
+		//std::vector<SpotLightDesc> m_spotDescs;
 
 		// Passes
 		std::unique_ptr<RenderEffect> m_imGUIEffect;

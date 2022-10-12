@@ -116,7 +116,8 @@ namespace DOG::gfx
 				dd.color = { 0.f, 0.f, 1.f };
 				dd.direction = { 0.f, 1.f, 0.f };
 				dd.strength = 1.f;
-				m_spots.push_back(m_globalLightTable->AddSpotLight(dd, LightUpdateFrequency::Never));
+				m_spots.push_back(m_globalLightTable->AddSpotLight(dd, LightUpdateFrequency::PerFrame));
+				//m_spotDescs.push_back(dd);
 			}
 		}
 
@@ -315,6 +316,10 @@ namespace DOG::gfx
 			sdesc.position = { pos };
 			sdesc.direction = { lookAtF3 };
 			m_globalLightTable->UpdateSpotLight(m_light, sdesc);
+
+
+			// Update spotlights test
+			//for (u32 i = 0; i < m_spots.size(); )
 
 		}
 		m_globalLightTable->FinalizeUpdates();
