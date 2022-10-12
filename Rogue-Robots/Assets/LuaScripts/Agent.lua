@@ -12,8 +12,8 @@ local ObjectManager = require("Object")
 --  Agent script   --
 ---------------------
 local Agent = ObjectManager:CreateObject()
-Agent.pos = Vector3.new(25.0, 12.0, 25.0)
-Agent.rot = Vector3.new(0.0, 0.0, 0.0)
+Agent.pos = Vector3.New(25.0, 12.0, 25.0)
+Agent.rot = Vector3.New(0.0, 0.0, 0.0)
 Agent.stats = {
 	hp = 100.0,
 	maxHP = 100.0,
@@ -87,12 +87,12 @@ function OnStart()
 	local default = ObjectManager:CreateObject()
 	default.target = 1
 	default.checkpoints = {
-		Vector3.new(1.0, 1.3, 1.2),
-		Vector3.new(33.0, 8.3, 38.2),
-		Vector3.new(26.0, 2.3, 2.2),
-		Vector3.new(12.0, 3.3, 27.2),
-		Vector3.new(23.0, 2.3, 11.2),
-		Vector3.new(18.0, 2.3, 9.2),
+		Vector3.New(1.0, 1.3, 1.2),
+		Vector3.New(33.0, 8.3, 38.2),
+		Vector3.New(26.0, 2.3, 2.2),
+		Vector3.New(12.0, 3.3, 27.2),
+		Vector3.New(23.0, 2.3, 11.2),
+		Vector3.New(18.0, 2.3, 9.2),
 	}
 	function default:OnUpdate()
 		local dir = self.checkpoints[self.target] - Agent.pos;
@@ -123,7 +123,7 @@ function OnStart()
 	--Agent.model = Asset:LoadModel("Assets/temp_Robot.fbx")
 	Entity:AddComponent(EntityID, "Model", Agent.model)
 	Entity:AddComponent(EntityID, "AgentStats", Agent.stats)
-	Entity:AddComponent(EntityID, "BoxCollider", Vector3.new(1, 1, 1), true)
+	Entity:AddComponent(EntityID, "BoxCollider", Vector3.New(1, 1, 1), true)
 	Entity:AddComponent(EntityID, "Rigidbody", true)
 
 	Agent.behaviorStack = {idle, death, default}

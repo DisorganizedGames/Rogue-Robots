@@ -5,36 +5,42 @@
 -- Basic vector structure to use in this libraries functions
 
 Vector3 = {
-	new = function(x, y, z)
+	New = function(x, y, z)
 		local vec = { x=x, y=y, z=z }
 		setmetatable(vec, Vector3)
 		return vec
 	end,
 
-	fromTable = function(vecTable)
+	FromTable = function(vecTable)
 		local vec = vecTable
+		setmetatable(vec, Vector3)
+		return vec
+	end,
+
+	Zero = function() 
+		local vec = { x = 0, y = 0, z = 0 }
 		setmetatable(vec, Vector3)
 		return vec
 	end,
 
 	-- Vector addition
 	__add = function(first, second)
-		return Vector3.new(first.x + second.x, first.y + second.y, first.z + second.z)
+		return Vector3.New(first.x + second.x, first.y + second.y, first.z + second.z)
 	end,
 	
 	-- Vector subtraction
 	__sub = function(first, second)
-		return Vector3.new(first.x - second.x, first.y - second.y, first.z - second.z)
+		return Vector3.New(first.x - second.x, first.y - second.y, first.z - second.z)
 	end,
 	
 	-- Vector inversion
 	__unm = function(vec)
-		return Vector3.new(-vec.x, -vec.y, -vec.z)
+		return Vector3.New(-vec.x, -vec.y, -vec.z)
 	end,
 
 	-- Vector-scalar multiplication
 	__mul = function(vec, scalar)
-		return Vector3.new(scalar * vec.x, scalar * vec.y, scalar * vec.z)
+		return Vector3.New(scalar * vec.x, scalar * vec.y, scalar * vec.z)
 	end,
 
 	-- Stringify
@@ -65,7 +71,7 @@ end
 
 -- Normalize vector v
 function Norm(v)
-	return Vector3.new(v.x, v.y, v.z) * (1/Length(v))
+	return Vector3.New(v.x, v.y, v.z) * (1/Length(v))
 end
 
 function QuatMul(q, p)
@@ -104,6 +110,6 @@ function RotateAroundAxis(v, axis, angle)
 
 	local outV = QuatMul(rotQuatInv, QuatMul(quatV, rotQuat))
 
-	return Vector3.new(outV.y, outV.z, outV.w)
+	return Vector3.New(outV.y, outV.z, outV.w)
 end
 

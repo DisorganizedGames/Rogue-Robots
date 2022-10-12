@@ -71,10 +71,10 @@ local tempMode = 0
 local tempTimer = 0.0
 function OnUpdate()
 	-- Update gun model position
-	gunEntity.position = Vector3.fromTable(Entity:GetTransformPosData(EntityID))
-	local playerUp = Vector3.fromTable(Entity:GetUp(EntityID))
-	local playerForward = Vector3.fromTable(Entity:GetForward(EntityID))
-	local playerRight = Vector3.fromTable(Entity:GetRight(EntityID))
+	gunEntity.position = Vector3.FromTable(Entity:GetTransformPosData(EntityID))
+	local playerUp = Vector3.FromTable(Entity:GetUp(EntityID))
+	local playerForward = Vector3.FromTable(Entity:GetForward(EntityID))
+	local playerRight = Vector3.FromTable(Entity:GetRight(EntityID))
 
 	-- Move gun down and to the right 
 	gunEntity.position = gunEntity.position + playerRight * 0.2 - playerUp * 0.2
@@ -100,7 +100,7 @@ function NormalBulletSpawn(bullet)
 	Entity:AddComponent(bullet.entity, "Model", bulletModel)
 	Entity:AddComponent(bullet.entity, "Network")
 	Entity:AddComponent(bullet.entity, "Audio", gunShotSound, true)
-	Entity:AddComponent(bullet.entity, "BoxCollider", Vector3.new(.1, .1, .1), true)
+	Entity:AddComponent(bullet.entity, "BoxCollider", Vector3.New(.1, .1, .1), true)
 	Entity:AddComponent(bullet.entity, "Rigidbody", false)
 	Entity:AddComponent(bullet.entity, "Bullet")
 
