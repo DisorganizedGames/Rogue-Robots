@@ -1,7 +1,5 @@
 #pragma once
 #include "../ECS/Component.h"
-#include <unordered_map>
-#include <functional>
 
 namespace DOG
 {

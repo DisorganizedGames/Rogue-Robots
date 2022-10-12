@@ -1,12 +1,11 @@
 #pragma once
 #include "../../RHITypes.h"
-#include <set>
 
 namespace DOG::gfx
 {
-	inline UINT D3D12CalcSubresource(UINT MipSlice, UINT ArraySlice, UINT PlaneSlice, UINT MipLevels, UINT ArraySize)
+	inline UINT D3D12CalcSubresource(UINT mipSlice, UINT arraySlice, UINT planeSlice, UINT mipLevels, UINT arraySize)
 	{
-		return MipSlice + (ArraySlice * MipLevels) + (PlaneSlice * MipLevels * ArraySize);
+		return mipSlice + (arraySlice * mipLevels) + (planeSlice * mipLevels * arraySize);
 	}
 
 	inline D3D12_HEAP_TYPE to_internal(MemoryType memType)
