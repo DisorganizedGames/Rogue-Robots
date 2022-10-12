@@ -57,17 +57,6 @@ float4 main(VS_OUT input) : SV_TARGET
     
     
     
-    
-    
-    // Get lights metadata
-    StructuredBuffer<ShaderInterop_LightsMetadata> lightsMDs = ResourceDescriptorHeap[gd.lightTableMD];
-    ShaderInterop_LightsMetadata lightsMD = lightsMDs[0];
-    
-    // Get spotlights
-    StructuredBuffer<ShaderInterop_SpotLight> spotlights = ResourceDescriptorHeap[gd.spotLightTable];
-    uint lightID = 0;
-    ShaderInterop_SpotLight spotlight = spotlights[pfData.spotLightOffsets.dynOffset + lightID];
-    //return spotlight.color;
 
     
     
