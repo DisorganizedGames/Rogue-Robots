@@ -1,3 +1,4 @@
+require("VectorMath")
 local MiscManager = {}
 
 local MiscComponent = {
@@ -65,6 +66,7 @@ function MiscComponent:NormalGun(pos, ...)
 			bullet.startPos = pos
 			bullet.speed = args[4]
 			bullet.size = Vector3.new(2.0, 2.0, 2.0)
+			bullet.lifetime = 0.0
 			table.insert(args[3], bullet)
 
 			local angle = -math.pi / 2
@@ -102,6 +104,7 @@ function MiscComponent:NormalGun(pos, ...)
 			bullet.forward = forward
 			bullet.startPos = pos
 			bullet.speed = args[4]
+			bullet.lifetime = 0.0
 			table.insert(args[3], bullet)
 
 			local angle = -math.pi / 2

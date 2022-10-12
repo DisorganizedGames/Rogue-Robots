@@ -62,6 +62,11 @@ function OnStart()
 	local chasePlayer = ObjectManager:CreateObject()
 	chasePlayer.target = nil
 	function chasePlayer:OnUpdate()
+		if Agent.stats.hp <= 0.0 then -- Temporary hack
+			Agent:pushBehavior(idle)
+			Agent:pushBehavior(death)
+		end
+
 		distances = Host:DistanceToPlayers(Agent.pos)
 		if distances[1].dist > 10.0 then
 			print("Lost sight of player " .. chasePlayer.target)
@@ -75,6 +80,7 @@ function OnStart()
 			Entity:ModifyComponent(EntityID, "Transform", Agent.pos, 1)
 			--print("Distance to player " .. distances[1].id .. " is " .. distances[1].dist)
 		end
+		
 		return self.target ~= nil
 	end
 	--	default  --
@@ -105,7 +111,7 @@ function OnStart()
 			-- print("Chasing player " .. chasePlayer.target)
 			Agent:pushBehavior(chasePlayer)
 		end
-		--Agent.stats.hp = Agent.stats.hp - 15.0 * DeltaTime  --death timer...
+
 		Entity:ModifyComponent(EntityID, "Transform", Agent.pos, 1)
 		return Agent.stats.hp > 0.0
 	end

@@ -29,7 +29,8 @@ local bulletTemplate = {
 	entity = 0, --ID used by the ECS.
 	forward = {}, --Vector3 that describes the direction of the bullet.
 	startPos = {}, --Vector3 that describes the initial spawn position of the bullet.
-	speed = InitialBulletSpeed --Float that describes the current speed of the bullet. 
+	speed = InitialBulletSpeed, --Float that describes the current speed of the bullet. 
+	lifetime = 0 -- counter to know when to kill the bullet entity
 }
 
 --Non-tweakable
@@ -108,17 +109,11 @@ end
 
 --If there is no barrel component update.
 function NormalBulletUpdate()
-	local i = 1
-	while i ~= #bullets + 1 do
-		local t = Vector3.fromTable(Entity:GetTransformPosData(bullets[i].entity))
-		local forward = Vector3.fromTable(bullets[i].forward)
-		local dist = math.sqrt((t.x - bullets[i].startPos.x)^2 + (t.y - bullets[i].startPos.y)^2 + (t.z - bullets[i].startPos.z)^2)
-		if dist > BulletDespawnDist then
+	for i = #bullets, 1, -1 do -- Iterate through bullets backwards to make removal of elements safe
+		bullets[i].lifetime = bullets[i].lifetime + DeltaTime
+		if bullets[i].lifetime > 5.0 then
 			Entity:DestroyEntity(bullets[i].entity)
 			table.remove(bullets, i)
-			i = i - 1
 		end
-
-		i = i + 1
 	end
 end
