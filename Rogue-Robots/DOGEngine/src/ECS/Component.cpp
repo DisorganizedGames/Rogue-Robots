@@ -128,6 +128,8 @@ namespace DOG
 			{
 				while (normalizedTime > 1.0f)
 					normalizedTime -= 1.0f;
+				while (normalizedTime < 0.0f)
+					normalizedTime += 1.0f;
 			}
 			normalizedTime = std::clamp(normalizedTime, 0.0f, 1.0f);
 			currentTick = normalizedTime * totalTicks;
@@ -145,7 +147,52 @@ namespace DOG
 
 	void AnimationComponent::Update(const f32 dt)
 	{
+		globalTime += dt;
 		for (auto& c : clips)
-			c.UpdateClip(dt);
+		{
+			switch (c.blendMode)
+			{
+			case DOG::AnimationBlendMode::normal:
+				c.UpdateClip(dt);
+				break;
+			case DOG::AnimationBlendMode::linear:
+				c.UpdateLinear(dt);
+				break;
+			case DOG::AnimationBlendMode::bezier:
+				c.UpdateBezier(dt);
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
+	void AnimationComponent::AnimationClip::UpdateLinear(const f32 dt)
+	{
+		UpdateClip(dt);
+		// Linear transition between current weight to target weight of clip
+		if (normalizedTime > transitionStart && targetWeight != 0.0f)
+		{
+			const f32 wDiff = targetWeight - currentWeight;
+			const f32 tCurrent = normalizedTime - transitionStart;
+			currentWeight += wDiff * tCurrent / transitionTime;
+			currentWeight = std::clamp(currentWeight, 0.0f, 1.0f);
+			transitionTime -= tCurrent;
+			transitionStart += tCurrent;
+		}
+	}
+
+	void AnimationComponent::AnimationClip::UpdateBezier(const f32 dt)
+	{
+		UpdateClip(dt);
+		// Bezier curve transition between current weight to target weight of clip
+		if (normalizedTime > transitionStart)
+		{
+			const f32 t = normalizedTime - transitionStart;
+			const f32 u = t / (transitionTime);
+			const f32 v = (1.0f - u);
+			currentWeight += targetWeight * (3.f * v * u * u + std::powf(u, 3.f));
+			currentWeight = std::clamp(currentWeight, 0.0f, 1.0f);
+		}
 	}
 }
