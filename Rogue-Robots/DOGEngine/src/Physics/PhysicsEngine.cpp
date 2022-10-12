@@ -535,8 +535,9 @@ namespace DOG
 		rigidbodyHandle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
 	}
 
-	MeshColliderComponent::MeshColliderComponent(entity entity, u32 modelID) noexcept
+	MeshColliderComponent::MeshColliderComponent(entity entity, u32 modelID, bool drawOverride) noexcept
 	{	
+		drawMeshColliderOverride = drawOverride;
 		AssetFlags modelFlags = AssetManager::Get().GetAssetFlags(modelID);
 
 		bool modelLoadingToCPU = modelFlags.loadFlag & AssetLoadFlag::CPUMemory;

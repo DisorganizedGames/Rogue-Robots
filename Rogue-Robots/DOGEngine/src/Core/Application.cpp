@@ -114,14 +114,27 @@ namespace DOG
 				});
 
 			EntityManager::Get().Bundle<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
+
+
+			// We need to bucket in a better way..
+			EntityManager::Get().Collect<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 					if (model && model->gfxModel)
 					{
 						if (EntityManager::Get().HasComponent<ModularBlockComponent>(e))
 						{
-							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
-								m_renderer->SubmitMeshNoFaceCulling(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+							if (EntityManager::Get().HasComponent<MeshColliderComponent>(e) &&
+								EntityManager::Get().GetComponent<MeshColliderComponent>(e).drawMeshColliderOverride)
+							{
+								for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
+									m_renderer->SubmitMeshWireframeNoFaceCulling(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+							}
+							else
+							{
+								for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
+									m_renderer->SubmitMeshNoFaceCulling(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+							}
 						}
 						else if (EntityManager::Get().HasComponent<AnimationComponent>(e))
 						{
@@ -130,8 +143,17 @@ namespace DOG
 						}	
 						else
 						{
-							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
-								m_renderer->SubmitMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+							if (EntityManager::Get().HasComponent<MeshColliderComponent>(e) &&
+								EntityManager::Get().GetComponent<MeshColliderComponent>(e).drawMeshColliderOverride)
+							{
+								for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
+									m_renderer->SubmitMeshWireframe(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+							}
+							else
+							{
+								for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
+									m_renderer->SubmitMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+							}
 						}
 					}
 				});

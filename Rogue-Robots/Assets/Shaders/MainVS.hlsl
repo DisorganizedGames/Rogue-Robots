@@ -18,8 +18,8 @@ struct PerDrawData
     uint submeshID;
     uint materialID;
     uint jointsDescriptor;
-};
 
+};
 
 
 
@@ -48,6 +48,7 @@ struct PushConstantElement
     uint perFrameOffset;
     
     uint perDrawCB;
+    uint wireframe;
     
 };
 ConstantBuffer<PushConstantElement> constants : register(b0, space0);
