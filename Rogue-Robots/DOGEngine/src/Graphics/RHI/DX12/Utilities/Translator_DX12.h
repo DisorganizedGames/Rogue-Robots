@@ -360,6 +360,13 @@ namespace DOG::gfx
 		case TextureViewDimension::Texture2D_MS:
 		{
 			desc.Texture2DMS.UnusedField_NothingToDefine = 0;
+			// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tex2dms_srv
+			// Since a multi sampled 2D texture contains a single subresource..
+			if (!subresources)
+				break;
+
+			subresources->insert(0);
+
 			break;
 		}
 		case TextureViewDimension::Texture2D_MS_Array:
@@ -372,16 +379,16 @@ namespace DOG::gfx
 
 			// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tex2dms_array_srv
 			// https://learn.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-subresources
-			// Array Slice --> Texture and its mips
+			// Array Slice --> Texture and its mips, but multisampled textures have one subresource (no mips)
 			for (u32 u = 0; u < range.arrayCount; ++u)
 			{
 				subresources->insert(D3D12CalcSubresource(
-					u,
-					range.arrayBase,
+					0,
+					range.arrayBase + u,
 					0,
 					mipLevels, arraySize));
 			}
-
+	
 			break;
 		}
 		case TextureViewDimension::Texture3D:
@@ -476,6 +483,7 @@ namespace DOG::gfx
 		case TextureViewDimension::Texture1D:
 		{
 			desc.Texture1D.MipSlice = range.mipLevelBase;
+			assert(range.arrayCount == 1);
 
 			if (!subresources)
 				break;
@@ -486,7 +494,6 @@ namespace DOG::gfx
 				0,						
 				mipLevels, arraySize));
 
-			assert(range.arrayCount == 1);
 			break;
 		}
 		case TextureViewDimension::Texture1D_Array:
@@ -513,20 +520,17 @@ namespace DOG::gfx
 		{
 			desc.Texture2D.MipSlice = range.mipLevelBase;
 			desc.Texture2D.PlaneSlice = 0;
+			assert(range.arrayCount == 1);
 
 			if (!subresources)
 				break;
 
-			for (u32 i = 0; i < range.mipLevels; ++i)
-			{
-				subresources->insert(D3D12CalcSubresource(
-					range.mipLevelBase + i,
-					0,							// arraySlice = 0? @todo
-					0,
-					mipLevels, arraySize));
-			}
+			subresources->insert(D3D12CalcSubresource(
+				range.mipLevelBase,
+				0,							// arraySlice = 0? @todo
+				0,
+				mipLevels, arraySize));
 
-			assert(range.arrayCount == 1);
 			break;
 		}
 		case TextureViewDimension::Texture2D_Array:
@@ -542,23 +546,26 @@ namespace DOG::gfx
 			if (!subresources)
 				break;
 
-			for (u32 i = 0; i < range.mipLevels; ++i)
+			for (u32 u = 0; u < range.arrayCount; ++u)
 			{
-				for (u32 u = 0; u < range.arrayCount; ++u)
-				{
-					subresources->insert(D3D12CalcSubresource(
-						range.mipLevelBase + i,
-						range.arrayBase + u,
-						0,
-						mipLevels, arraySize));
-				}
+				subresources->insert(D3D12CalcSubresource(
+					range.mipLevelBase,
+					range.arrayBase + u,
+					0,
+					mipLevels, arraySize));
 			}
-
+	
 			break;
 		}
 		case TextureViewDimension::Texture2D_MS:
 		{
 			desc.Texture2DMS.UnusedField_NothingToDefine = 0;
+
+			if (!subresources)
+				break;
+
+			subresources->insert(0);
+
 			break;
 		}
 		case TextureViewDimension::Texture2D_MS_Array:
@@ -572,8 +579,8 @@ namespace DOG::gfx
 			for (u32 u = 0; u < range.arrayCount; ++u)
 			{
 				subresources->insert(D3D12CalcSubresource(
-					u,
-					range.arrayBase,
+					0,
+					range.arrayBase + u,
 					0,
 					mipLevels, arraySize));
 			}
@@ -614,10 +621,6 @@ namespace DOG::gfx
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC to_dsv(const TextureViewDesc& range, u32 mipLevels, u32 arraySize, std::set<u32>* subresources = nullptr)
 	{
-		UNREFERENCED_PARAMETER(mipLevels);
-		UNREFERENCED_PARAMETER(arraySize);
-		UNREFERENCED_PARAMETER(subresources);
-
 		D3D12_DEPTH_STENCIL_VIEW_DESC desc{};
 		desc.Format = range.format;
 		desc.ViewDimension = to_internal_dsv(range.viewDimension);
@@ -635,6 +638,15 @@ namespace DOG::gfx
 
 			assert(range.mipLevels == 1);
 
+			if (!subresources)
+				break;
+
+			subresources->insert(D3D12CalcSubresource(
+				range.mipLevelBase,
+				0,
+				0,
+				mipLevels, arraySize));
+
 			break;
 		}
 		case TextureViewDimension::Texture1D_Array:
@@ -642,6 +654,17 @@ namespace DOG::gfx
 			desc.Texture1DArray.MipSlice = range.mipLevelBase;
 			desc.Texture1DArray.FirstArraySlice = range.arrayBase;
 			desc.Texture1DArray.ArraySize = range.arrayCount;
+
+			if (!subresources)
+				break;
+
+			for (u32 u = 0; u < range.arrayCount; ++u)
+			{
+				subresources->insert(D3D12CalcSubresource(
+					range.mipLevelBase,						// possibly wrong? @todo: it seems like we can only select Array Slice offset and count, but only Mip offset
+					range.arrayBase + u,
+					0, mipLevels, arraySize));
+			}
 
 			assert(range.mipLevels == 1);
 
@@ -653,6 +676,15 @@ namespace DOG::gfx
 
 			assert(range.mipLevels == 1);
 
+			if (!subresources)
+				break;
+
+			subresources->insert(D3D12CalcSubresource(
+				range.mipLevelBase,
+				0,						
+				0,
+				mipLevels, arraySize));
+			
 			break;
 		}
 		case TextureViewDimension::Texture2D_Array:
@@ -663,11 +695,27 @@ namespace DOG::gfx
 
 			assert(range.mipLevels == 1);
 
+			if (!subresources)
+				break;
+
+			for (u32 u = 0; u < range.arrayCount; ++u)
+			{
+				subresources->insert(D3D12CalcSubresource(
+					range.mipLevelBase,
+					range.arrayBase + u,
+					0, mipLevels, arraySize));
+			}
+
 			break;
 		}
 		case TextureViewDimension::Texture2D_MS:
 		{
 			desc.Texture2DMS.UnusedField_NothingToDefine = 0;
+
+			if (!subresources)
+				break;
+
+			subresources->insert(0);
 
 			break;
 		}
@@ -675,6 +723,19 @@ namespace DOG::gfx
 		{
 			desc.Texture2DMSArray.FirstArraySlice = range.arrayBase;
 			desc.Texture2DMSArray.ArraySize = range.arrayCount;
+
+			if (!subresources)
+				break;
+
+			for (u32 u = 0; u < range.arrayCount; ++u)
+			{
+				subresources->insert(D3D12CalcSubresource(
+					0,
+					range.arrayBase + u,
+					0,
+					mipLevels, arraySize));
+			}
+
 			break;
 		}
 
@@ -687,10 +748,6 @@ namespace DOG::gfx
 
 	D3D12_UNORDERED_ACCESS_VIEW_DESC to_uav(const TextureViewDesc& range, u32 mipLevels, u32 arraySize, std::set<u32>* subresources = nullptr)
 	{
-		UNREFERENCED_PARAMETER(mipLevels);
-		UNREFERENCED_PARAMETER(arraySize);
-		UNREFERENCED_PARAMETER(subresources);
-
 		D3D12_UNORDERED_ACCESS_VIEW_DESC desc{};
 		desc.Format = range.format;
 		desc.ViewDimension = to_internal_uav(range.viewDimension);
@@ -703,6 +760,15 @@ namespace DOG::gfx
 		{
 			desc.Texture1D.MipSlice = range.mipLevelBase;
 
+			if (!subresources)
+				break;
+
+			subresources->insert(D3D12CalcSubresource(
+				range.mipLevelBase,
+				0,
+				0,
+				mipLevels, arraySize));
+
 			break;
 		}
 		case TextureViewDimension::Texture1D_Array:
@@ -711,6 +777,16 @@ namespace DOG::gfx
 			desc.Texture1DArray.FirstArraySlice = range.arrayBase;
 			desc.Texture1DArray.ArraySize = range.arrayCount;
 
+			if (!subresources)
+				break;
+
+			for (u32 u = 0; u < range.arrayCount; ++u)
+			{
+				subresources->insert(D3D12CalcSubresource(
+					range.mipLevelBase,
+					range.arrayBase + u,
+					0, mipLevels, arraySize));
+			}
 
 			break;
 		}
@@ -718,6 +794,15 @@ namespace DOG::gfx
 		{
 			desc.Texture2D.MipSlice = range.mipLevelBase;
 			desc.Texture2D.PlaneSlice = 0;
+
+			if (!subresources)
+				break;
+
+			subresources->insert(D3D12CalcSubresource(
+				range.mipLevelBase,
+				0,							
+				0,
+				mipLevels, arraySize));
 
 			break;
 		}
@@ -729,6 +814,17 @@ namespace DOG::gfx
 			desc.Texture2DArray.MipSlice = range.mipLevelBase;
 			desc.Texture2DArray.PlaneSlice = 0;
 
+			if (!subresources)
+				break;
+
+			for (u32 u = 0; u < range.arrayCount; ++u)
+			{
+				subresources->insert(D3D12CalcSubresource(
+					range.mipLevelBase,
+					range.arrayBase + u,
+					0,
+					mipLevels, arraySize));
+			}
 
 			break;
 		}
@@ -737,6 +833,20 @@ namespace DOG::gfx
 			desc.Texture3D.MipSlice = range.mipLevelBase;
 			desc.Texture3D.FirstWSlice = range.arrayBase;
 			desc.Texture3D.WSize = range.arrayCount;
+
+			if (!subresources)
+				break;
+
+			// https://learn.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-textures-intro#3d-textures
+			// There is no concept of a 3D texture array; therefore a 3D texture subresource is a single mipmap level.
+			for (u32 u = 0; u < range.arrayCount; ++u)
+			{
+				subresources->insert(D3D12CalcSubresource(
+					range.mipLevelBase,
+					range.arrayBase + u,		// "3D texture behaves identically to a 2D texture array with n slices"
+					0,
+					mipLevels, arraySize));
+			}
 
 			break;
 		}

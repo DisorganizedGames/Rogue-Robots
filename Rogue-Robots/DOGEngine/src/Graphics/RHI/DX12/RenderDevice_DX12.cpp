@@ -377,7 +377,7 @@ namespace DOG::gfx
 		// calc resource mips
 		u32 mipLevels{ 0 };
 		if (tex_storage.desc.mipLevels == 0)	// num mips internally generated --> we have to calculate ourselves here
-			mipLevels = (std::min)(log2(tex_storage.desc.width) + 1, log2(tex_storage.desc.height) + 1);
+			mipLevels = (u32)(std::min)(log2(tex_storage.desc.width) + 1, log2(tex_storage.desc.height) + 1);
 		else
 			mipLevels = tex_storage.desc.mipLevels;
 
