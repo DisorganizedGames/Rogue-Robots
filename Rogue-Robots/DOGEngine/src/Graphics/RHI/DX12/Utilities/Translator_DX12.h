@@ -389,6 +389,10 @@ namespace DOG::gfx
 
 	D3D12_RENDER_TARGET_VIEW_DESC to_rtv(const TextureViewDesc& range, u32 mipLevels, u32 arraySize, std::set<u32>* subresources = nullptr)
 	{
+		UNREFERENCED_PARAMETER(mipLevels);
+		UNREFERENCED_PARAMETER(arraySize);
+		UNREFERENCED_PARAMETER(subresources);
+
 		D3D12_RENDER_TARGET_VIEW_DESC desc{};
 		desc.Format = range.format;
 		desc.ViewDimension = to_internal_rtv(range.viewDimension);
@@ -461,6 +465,10 @@ namespace DOG::gfx
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC to_dsv(const TextureViewDesc& range, u32 mipLevels, u32 arraySize, std::set<u32>* subresources = nullptr)
 	{
+		UNREFERENCED_PARAMETER(mipLevels);
+		UNREFERENCED_PARAMETER(arraySize);
+		UNREFERENCED_PARAMETER(subresources);
+
 		D3D12_DEPTH_STENCIL_VIEW_DESC desc{};
 		desc.Format = range.format;
 		desc.ViewDimension = to_internal_dsv(range.viewDimension);
@@ -530,6 +538,10 @@ namespace DOG::gfx
 
 	D3D12_UNORDERED_ACCESS_VIEW_DESC to_uav(const TextureViewDesc& range, u32 mipLevels, u32 arraySize, std::set<u32>* subresources = nullptr)
 	{
+		UNREFERENCED_PARAMETER(mipLevels);
+		UNREFERENCED_PARAMETER(arraySize);
+		UNREFERENCED_PARAMETER(subresources);
+
 		D3D12_UNORDERED_ACCESS_VIEW_DESC desc{};
 		desc.Format = range.format;
 		desc.ViewDimension = to_internal_uav(range.viewDimension);

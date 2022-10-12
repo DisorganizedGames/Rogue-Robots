@@ -149,6 +149,36 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<InputController>(Player4);
 	m_entityManager.AddComponent<OnlinePlayer>(Player4);
 	scriptManager->AddScript(Player4, "Gun.lua");
+
+	// Setup lights
+
+	// Default lights
+	u32 xOffset = 18;
+	u32 zOffset = 18;
+	for (u32 i = 0; i < 3; ++i)
+	{
+		for (u32 x = 0; x < 3; ++x)
+		{
+			auto pdesc = PointLightDesc();
+			pdesc.position = { xOffset + (f32)i * 7.f, 8.f, zOffset + (f32)x * 7.f };
+			pdesc.color = { 1.f, 0.f, 0.f };
+			pdesc.strength = 10.f;
+			LightManager::Get().AddPointLight(pdesc, LightUpdateFrequency::Never);
+
+			auto dd = SpotLightDesc();
+			dd.position = { xOffset + (f32)i * 7.f, 16.f, zOffset + (f32)x * 7.f };
+			dd.color = { 0.f, 0.f, 1.f };
+			dd.direction = { 0.f, 1.f, 0.f };
+			dd.strength = 1.f;
+			LightManager::Get().AddSpotLight(dd, LightUpdateFrequency::Never);
+		}
+	}
+
+	// Moving light
+	LightHandle pointLight = LightManager::Get().AddPointLight(PointLightDesc(), LightUpdateFrequency::PerFrame);
+	m_movingPointLight = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<TransformComponent>(m_movingPointLight, Vector3(10, 10, 10), Vector3(0, 0, 0), Vector3(1.f));
+	m_entityManager.AddComponent<PointLightComponent>(m_movingPointLight, pointLight, Vector3(1.f, 1.f, 0.f), 5.f);
 }
 
 void GameLayer::OnAttach()
@@ -177,6 +207,14 @@ void GameLayer::OnUpdate()
 	{
 		system->LateUpdate();
 	}
+	
+	m_elapsedTime += Time::DeltaTime();
+	m_entityManager.Get().GetComponent<PointLightComponent>(m_movingPointLight).dirty = true;
+	m_entityManager.Get().GetComponent<TransformComponent>(m_movingPointLight).SetPosition(Vector3(
+		15.f, 
+		8.f, 
+		10.f + 30.f * (cosf((f32)m_elapsedTime) * 0.5f + 0.5f)));
+
 
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());

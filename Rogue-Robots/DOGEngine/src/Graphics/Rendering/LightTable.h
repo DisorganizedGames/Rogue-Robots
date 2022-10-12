@@ -4,39 +4,6 @@
 
 namespace DOG::gfx
 {
-	enum class LightType
-	{
-		Point, Spot, Area
-	};
-
-	enum class LightUpdateFrequency
-	{
-		Never,		// Static light
-		Sometimes,	// Dynamic (assumed less than once per frame on average)
-		PerFrame	// Dynamic (once per frame)
-	};
-
-	struct PointLightDesc
-	{
-		DirectX::SimpleMath::Vector3 position{ 0.f, 0.f, 0.f };
-		DirectX::SimpleMath::Vector3 color{ 1.f, 1.f, 1.f };
-		float strength{ 1.f };
-	};
-
-	struct SpotLightDesc
-	{
-		DirectX::SimpleMath::Vector3 position{ 0.f, 0.f, 0.f };
-		DirectX::SimpleMath::Vector3 color{ 1.f, 1.f, 1.f };
-		DirectX::SimpleMath::Vector3 direction{ 0.f, 0.f, 1.f };
-		float strength{ 1.f };
-		float cutoffAngle{ 15.f };
-	};
-
-	struct AreaLightDesc
-	{
-		
-	};
-
 	class RenderDevice;
 	class GPUGarbageBin;
 	class UploadContext;
@@ -46,9 +13,9 @@ namespace DOG::gfx
 	public:
 		struct PerTypeSpecification
 		{
-			u32 maxStatics{ 50 };
-			u32 maxDynamic{ 30 };
-			u32 maxSometimes{ 30 };
+			u32 maxStatics{ 30 };
+			u32 maxDynamic{ 15 };
+			u32 maxSometimes{ 15 };
 
 			u32 GetTotal() const { return maxStatics + maxDynamic + maxSometimes; }
 		};
@@ -248,6 +215,24 @@ namespace DOG::gfx
 				}
 			}
 
+			void SetDirty(LightUpdateFrequency freq)
+			{
+				switch (freq)
+				{
+				case LightUpdateFrequency::Never:
+					SetStaticsChunkDirty(true);
+					break;
+				case LightUpdateFrequency::Sometimes:
+					SetInfreqsChunkDirty(true);
+					break;
+				case LightUpdateFrequency::PerFrame:
+					SetDynamicsChunkDirty(true);
+					break;
+				default:
+					assert(false);
+				}
+			}
+
 
 			bool DynamicsChunkDirty() const { return dynamics.handle.second; }
 			bool InfreqsChunkDirty() const { return infreqs.handle.second; }
@@ -334,6 +319,9 @@ namespace DOG::gfx
 		std::unique_ptr<GPUTableDeviceLocal<LightMDHandle>> m_lightsMD;
 		LightMetadata_GPU m_lightMD;
 		LightMDHandle m_mdHandle;
+
+		// Enable/disabling lights
+		std::unordered_map<u64, std::function<void()>> m_returnUpdateState;
 	};
 
 

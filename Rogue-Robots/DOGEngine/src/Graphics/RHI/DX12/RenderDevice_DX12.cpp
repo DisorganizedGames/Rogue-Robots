@@ -325,11 +325,10 @@ namespace DOG::gfx
 			{
 				const auto& counterStorage = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(desc.uavCounterResource.handle));
 				const auto& counterResource = counterStorage.resource;
-				const auto counterResourceSize = counterStorage.desc.size;
 
 				uavd.Buffer.CounterOffsetInBytes = desc.uavCounterOffset;
 				assert(uavd.Buffer.CounterOffsetInBytes % 4 == 0);
-				assert(uavd.Buffer.CounterOffsetInBytes < counterResourceSize);
+				assert(uavd.Buffer.CounterOffsetInBytes < counterStorage.desc.size);
 				assert(uavd.Buffer.Flags != D3D12_BUFFER_UAV_FLAG_RAW);
 
 				m_device->CreateUnorderedAccessView(buffer_storage.resource.Get(), counterResource.Get(), &uavd, view_desc.cpu_handle(0));

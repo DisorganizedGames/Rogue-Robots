@@ -4,6 +4,7 @@
 #include "../Physics/PhysicsEngine.h"
 #include "AnimationManager.h"
 #include "AssetManager.h"
+#include "LightManager.h"
 #include "../ECS/EntityManager.h"
 #include "../Input/Mouse.h"
 #include "../Input/Keyboard.h"
@@ -49,6 +50,7 @@ namespace DOG
 		//BulletPhysics::Initialize();
 		//BulletPhysics::BulletTest();
 
+
 		while (m_isRunning)
 		{
 			Time::Start();
@@ -81,6 +83,35 @@ namespace DOG
 
 			//// ====== GPU
 			m_renderer->BeginFrame_GPU();
+
+			// Update lights
+			EntityManager::Get().Collect<TransformComponent, SpotLightComponent>().Do([&](entity, TransformComponent tr, SpotLightComponent& light)
+				{
+					if (light.dirty)
+					{
+						SpotLightDesc d{};
+						d.position = tr.GetPosition();
+						d.color = light.color;
+						d.cutoffAngle = light.cutoffAngle;
+						d.direction = light.direction;
+						d.strength = light.strength;
+						LightManager::Get().UpdateSpotLight(light.handle, d);
+						light.dirty = false;
+					}
+				});
+
+			EntityManager::Get().Collect<TransformComponent, PointLightComponent>().Do([&](entity, TransformComponent tr, PointLightComponent& light)
+				{
+					if (light.dirty)
+					{
+						PointLightDesc d{};
+						d.position = tr.GetPosition();
+						d.color = light.color;
+						d.strength = light.strength;
+						LightManager::Get().UpdatePointLight(light.handle, d);
+						light.dirty = false;
+					}
+				});
 
 			EntityManager::Get().Bundle<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
 				{
@@ -223,6 +254,8 @@ namespace DOG
 #endif
 		ApplyGraphicsSettings();
 		Window::SetWMHook(m_renderer->GetWMCallback());
+		LightManager::Initialize(m_renderer.get());
+
 
 		AssetManager::Initialize(m_renderer.get());
 		AudioManager::Initialize();
@@ -236,7 +269,8 @@ namespace DOG
 		ImGuiMenuLayer::UnRegisterDebugWindow("ApplicationSetting");
 		AssetManager::Destroy();
 		AudioManager::Destroy();
-
+		
+		LightManager::Destroy();
 		::DestroyWindow(Window::GetHandle());
 		//...
 	}

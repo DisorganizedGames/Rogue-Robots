@@ -9,7 +9,6 @@
 #include "RenderEffects/RenderEffect.h"
 #include "RenderEffects/EffectData/GlobalEffectData.h"
 
-
 namespace DOG::gfx
 {
 	class RenderBackend;
@@ -43,6 +42,7 @@ namespace DOG::gfx
 		Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug);
 		~Renderer();
 
+		LightTable* GetLightTable() const { return m_globalLightTable.get(); }
 		GraphicsBuilder* GetBuilder() const { return m_builder.get(); }
 		Monitor GetMonitor() const;
 		DXGI_MODE_DESC GetMatchingDisplayMode(std::optional<DXGI_MODE_DESC> mode = std::nullopt) const;
@@ -215,11 +215,6 @@ namespace DOG::gfx
 		struct GlobalDataHandle{ friend class TypedHandlePool; u64 handle{ 0 }; };
 		std::unique_ptr<GPUTableDeviceLocal<GlobalDataHandle>> m_globalDataTable;
 		GlobalDataHandle m_gdHandle;
-
-		// Lights test
-		LightHandle m_light;
-		std::vector<LightHandle> m_spots;
-		//std::vector<SpotLightDesc> m_spotDescs;
 
 		// Passes
 		std::unique_ptr<RenderEffect> m_imGUIEffect;

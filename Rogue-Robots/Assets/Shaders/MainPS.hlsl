@@ -174,6 +174,42 @@ float4 main(VS_OUT input) : SV_TARGET
         Lo += (kD * albedoInput / 3.1415f + specular) * radiance * NdotL;
         
     }
+
+    // calculate dyn point lights
+    for (int i = 0; i < lightsMD.dynPointLightRange.count; ++i)
+    {
+        ShaderInterop_PointLight pointLight = pointLights[pfData.pointLightOffsets.dynOffset + i];
+        
+        // calculate per-light radiance
+        float3 L = normalize(pointLight.position.xyz - input.wsPos);
+        float3 H = normalize(V + L);
+        float distance = length(pointLight.position.xyz - input.wsPos);
+        float attenuation = 1.0 / (distance * distance);
+        float3 radiance = pointLight.color.xyz * attenuation * pointLight.strength;
+        
+        // cook-torrance brdf
+        float NDF = DistributionGGX(N, H, roughnessInput);
+        float G = GeometrySmith(N, V, L, roughnessInput);
+        float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
+        
+        // energy conservation (diff/spec)
+        float3 kS = F;
+        float3 kD = float3(1.f, 1.f, 1.f) - kS;
+        kD *= 1.0 - metallicInput;
+        
+        float3 numerator = NDF * G * F;
+        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+        float3 specular = numerator / max(denominator, 0.001);
+            
+        // add to outgoing radiance Lo
+        float NdotL = max(dot(N, L), 0.0);
+        Lo += (kD * albedoInput / 3.1415f + specular) * radiance * NdotL;
+        
+    }
+    
+    
+    
+    
     
     // calculate static spot lights
     StructuredBuffer<ShaderInterop_SpotLight> spotLights = ResourceDescriptorHeap[gd.spotLightTable];

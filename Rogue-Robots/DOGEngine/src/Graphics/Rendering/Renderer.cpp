@@ -93,33 +93,6 @@ namespace DOG::gfx
 		// Default storage
 		auto lightStorageSpec = LightTable::StorageSpecification();
 		m_globalLightTable = std::make_unique<LightTable>(m_rd, m_bin.get(), lightStorageSpec, false);
-		// Tests
-		auto sdesc = SpotLightDesc();
-		sdesc.position = { 0.f, 15.f, 0.f };
-		sdesc.color = { 0.f, 1.f, 0.f };
-		m_light = m_globalLightTable->AddSpotLight(sdesc, LightUpdateFrequency::PerFrame);
-
-		u32 xOffset = 18.f;
-		u32 zOffset = 18.f;
-		for (u32 i = 0; i < 5; ++i)
-		{
-			for (u32 x = 0; x < 5; ++x)
-			{
-				auto pdesc = PointLightDesc();
-				pdesc.position = { xOffset + (f32)i * 7.f, 8.f, zOffset + (f32)x * 7.f };
-				pdesc.color = { 1.f, 0.f, 0.f };
-				pdesc.strength = 10.f;
-				m_globalLightTable->AddPointLight(pdesc, LightUpdateFrequency::Never);
-
-				auto dd = SpotLightDesc();
-				dd.position = { xOffset + (f32)i * 7.f, 16.f, zOffset + (f32)x * 7.f };
-				dd.color = { 0.f, 0.f, 1.f };
-				dd.direction = { 0.f, 1.f, 0.f };
-				dd.strength = 1.f;
-				m_spots.push_back(m_globalLightTable->AddSpotLight(dd, LightUpdateFrequency::PerFrame));
-				//m_spotDescs.push_back(dd);
-			}
-		}
 
 
 
@@ -297,31 +270,6 @@ namespace DOG::gfx
 	void Renderer::Update(f32 dt)
 	{
 		m_boneJourno->UpdateJoints();
-
-		// Update spotlight
-		{
-			// Get camera position
-			DirectX::XMVECTOR tmp;
-			auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
-			auto pos = invVm.r[3];
-			DirectX::XMFLOAT3 posFloat3;
-			DirectX::XMStoreFloat3(&posFloat3, pos);
-
-			// Get camera lookat
-			auto lookat = invVm.r[2];
-			DirectX::XMFLOAT3 lookAtF3;
-			DirectX::XMStoreFloat3(&lookAtF3, lookat);
-
-			auto sdesc = SpotLightDesc();
-			sdesc.position = { pos };
-			sdesc.direction = { lookAtF3 };
-			m_globalLightTable->UpdateSpotLight(m_light, sdesc);
-
-
-			// Update spotlights test
-			//for (u32 i = 0; i < m_spots.size(); )
-
-		}
 		m_globalLightTable->FinalizeUpdates();
 
 
@@ -593,12 +541,6 @@ namespace DOG::gfx
 		{
 			if (ImGui::Begin("Light Manager", &open))
 			{
-				static int id = 0;
-				if (ImGui::InputInt("Light ID", &id))
-					std::cout << id << std::endl;
-
-				if (ImGui::Button("Remove Light"))
-					m_globalLightTable->RemoveLight(m_spots[id]);
 			}
 			ImGui::End();
 		}

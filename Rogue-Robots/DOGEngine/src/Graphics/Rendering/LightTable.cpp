@@ -100,6 +100,92 @@ namespace DOG::gfx
 		HandleAllocator::FreeStorage(m_handleAtor, m_lights, handle);
 	}
 
+	void LightTable::EnableLight(LightHandle handle)
+	{
+		auto returnFunc = m_returnUpdateState[handle.handle];
+		returnFunc();
+		m_returnUpdateState.erase(handle.handle);
+	}
+
+	void LightTable::DisableLight(LightHandle handle)
+	{
+		const auto& storage = HandleAllocator::TryGet(m_lights, HandleAllocator::GetSlot(handle.handle));
+		switch (storage.type)
+		{
+		case LightType::Point:
+		{
+			// Set return update
+			auto retFunc = [this, freq = storage.freq, localLightID = storage.localLightID, gpuElement = m_pointLights[storage.localLightID]]()
+			{
+				std::memcpy(&m_pointLights[localLightID], &gpuElement, sizeof(gpuElement));
+				m_pointLightsMD.SetDirty(freq);
+			};
+			m_returnUpdateState[handle.handle] = retFunc;
+
+			// Empty current data
+			std::memset(&m_pointLights[storage.localLightID], 0, sizeof(PointLight_GPUElement));
+			m_pointLightsMD.SetDirty(storage.freq);
+
+			break;
+		}
+		case LightType::Spot:
+		{
+			auto retFunc = [this, freq = storage.freq, localLightID = storage.localLightID, gpuElement = m_spotLights[storage.localLightID]]()
+			{
+				std::memcpy(&m_spotLights[localLightID], &gpuElement, sizeof(gpuElement));
+				m_spotLightsMD.SetDirty(freq);
+
+			};
+			m_returnUpdateState[handle.handle] = retFunc;
+
+			std::memset(&m_spotLights[storage.localLightID], 0, sizeof(SpotLight_GPUElement));
+			m_spotLightsMD.SetDirty(storage.freq);
+
+			break;
+		}
+		case LightType::Area:
+		{
+			auto retFunc = [this, freq = storage.freq, localLightID = storage.localLightID, gpuElement = m_areaLights[storage.localLightID]]()
+			{
+				std::memcpy(&m_areaLights[localLightID], &gpuElement, sizeof(gpuElement));
+				m_areaLightsMD.SetDirty(freq);
+			};
+			m_returnUpdateState[handle.handle] = retFunc;
+
+
+			std::memset(&m_areaLights[storage.localLightID], 0, sizeof(AreaLight_GPUElement));
+			m_areaLightsMD.SetDirty(storage.freq);
+			break;
+		}
+		default:
+			assert(false);
+		}
+
+
+	}
+
+	void LightTable::UpdatePointLight(LightHandle handle, const PointLightDesc& desc)
+	{
+		const auto& storage = HandleAllocator::TryGet(m_lights, HandleAllocator::GetSlot(handle.handle));
+		assert(storage.freq != LightUpdateFrequency::Never);
+		assert(storage.type == LightType::Spot);
+
+		auto& gpu = m_pointLights[storage.localLightID];
+		gpu.position = DirectX::SimpleMath::Vector4(desc.position.x, desc.position.y, desc.position.z, 1.f);
+		gpu.color = DirectX::SimpleMath::Vector4(desc.color);
+		gpu.strength = desc.strength;
+
+		switch (storage.freq)
+		{
+		case LightUpdateFrequency::Sometimes:
+			m_pointLightsMD.SetInfreqsChunkDirty(true);
+			break;
+		case LightUpdateFrequency::PerFrame:
+			m_pointLightsMD.SetDynamicsChunkDirty(true);
+			break;
+		}
+	}
+
 	void LightTable::UpdateSpotLight(LightHandle handle, const SpotLightDesc& desc)
 	{
 		const auto& storage = HandleAllocator::TryGet(m_lights, HandleAllocator::GetSlot(handle.handle));
@@ -122,6 +208,12 @@ namespace DOG::gfx
 			m_spotLightsMD.SetDynamicsChunkDirty(true);
 			break;
 		}
+	}
+
+	void LightTable::UpdateAreaLight(LightHandle handle, const AreaLightDesc& desc)
+	{
+		UNREFERENCED_PARAMETER(handle);
+		UNREFERENCED_PARAMETER(desc);
 	}
 
 
@@ -168,6 +260,13 @@ namespace DOG::gfx
 
 		HandleAllocator::TryInsertMove(m_lights, std::move(storage), HandleAllocator::GetSlot(lightHandle.handle));
 		return lightHandle;
+	}
+
+	LightHandle LightTable::AddAreaLight(const AreaLightDesc& desc, LightUpdateFrequency frequency)
+	{
+		UNREFERENCED_PARAMETER(desc);
+		UNREFERENCED_PARAMETER(frequency);
+		return LightHandle();
 	}
 
 	void LightTable::FinalizeUpdates()
