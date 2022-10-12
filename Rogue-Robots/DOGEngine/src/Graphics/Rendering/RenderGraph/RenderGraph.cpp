@@ -394,12 +394,13 @@ namespace DOG::gfx
 			for (const auto& output : pass->outputs)
 			{
 				const auto lookupID = output.originalID ? *output.originalID : output.id;
+				std::set<u32> concernedSubresources;
 
 				if (output.type == RGResourceType::Texture)
 				{
 					const auto& viewDesc = std::get<TextureViewDesc>(*output.viewDesc);
 					const auto resource = Texture(m_resMan->GetResource(output.id));
-					const auto view = m_rd->CreateView(resource, viewDesc);
+					const auto view = m_rd->CreateView(resource, viewDesc, &concernedSubresources);
 
 					// Hold views for deallocation
 					passResources.m_textureViews.push_back(view);
@@ -440,6 +441,7 @@ namespace DOG::gfx
 						const auto& viewDesc = std::get<BufferViewDesc>(*output.viewDesc);
 						// Create view and immediately convert to global descriptor index
 						auto view = m_rd->CreateView(resource, viewDesc);
+						concernedSubresources.insert(0);
 						//passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
 						passResources.m_views[output.viewID] = m_rd->GetGlobalDescriptor(view);
 						passResources.m_bufferViewsLookup[output.viewID] = view;
@@ -456,12 +458,14 @@ namespace DOG::gfx
 					continue;
 
 				const auto lookupID = input.originalID ? *input.originalID : input.id;
+				std::set<u32> concernedSubresources;
+
 
 				if (input.type == RGResourceType::Texture)
 				{
 					const auto& viewDesc = std::get<TextureViewDesc>(*input.viewDesc);
 					const auto resource = Texture(m_resMan->GetResource(input.id));
-					const auto view = m_rd->CreateView(resource, viewDesc);
+					const auto view = m_rd->CreateView(resource, viewDesc, &concernedSubresources);
 					passResources.m_textureViews.push_back(view);
 					passResources.m_textures[lookupID] = resource;
 
@@ -499,6 +503,7 @@ namespace DOG::gfx
 					// Create view and immediately convert to global descriptor index
 					const auto resource = Buffer(m_resMan->GetResource(input.id));
 					auto view = m_rd->CreateView(resource, viewDesc);
+					concernedSubresources.insert(0);
 					passResources.m_bufferViews.push_back(view);
 					passResources.m_buffers[lookupID] = resource;
 

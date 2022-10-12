@@ -31,7 +31,7 @@ namespace DOG::gfx
 		Pipeline CreateComputePipeline(const ComputePipelineDesc& desc);
 		RenderPass CreateRenderPass(const RenderPassDesc& desc);
 		BufferView CreateView(Buffer buffer, const BufferViewDesc& desc);
-		TextureView CreateView(Texture texture, const TextureViewDesc& desc);
+		TextureView CreateView(Texture texture, const TextureViewDesc& desc, std::set<u32>* subresources = nullptr);
 
 		// Free/recycle when appropriate! Sensitive resources that may be in-flight
 		void FreeBuffer(Buffer handle);

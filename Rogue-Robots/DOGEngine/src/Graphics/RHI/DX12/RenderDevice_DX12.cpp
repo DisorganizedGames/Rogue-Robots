@@ -366,7 +366,7 @@ namespace DOG::gfx
 
 	}
 
-	TextureView RenderDevice_DX12::CreateView(Texture texture, const TextureViewDesc& desc)
+	TextureView RenderDevice_DX12::CreateView(Texture texture, const TextureViewDesc& desc, std::set<u32>* subresources)
 	{
 		assert(desc.viewType != ViewType::None);
 		assert(desc.viewType != ViewType::Constant);
@@ -391,25 +391,24 @@ namespace DOG::gfx
 			view_desc = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		std::optional<DX12DescriptorChunk> uavClear;
-		std::set<u32> subresources;
 		if (desc.viewType == ViewType::DepthStencil)
 		{
-			auto dsv = to_dsv(desc, mipLevels, tex_storage.desc.depth, &subresources);
+			auto dsv = to_dsv(desc, mipLevels, tex_storage.desc.depth, subresources);
 			m_device->CreateDepthStencilView(tex_storage.resource.Get(), &dsv, view_desc.cpu_handle(0));
 		}
 		else if (desc.viewType == ViewType::RenderTarget)
 		{
-			auto rtv = to_rtv(desc, mipLevels, tex_storage.desc.depth, &subresources);
+			auto rtv = to_rtv(desc, mipLevels, tex_storage.desc.depth, subresources);
 			m_device->CreateRenderTargetView(tex_storage.resource.Get(), &rtv, view_desc.cpu_handle(0));
 		}
 		else if (desc.viewType == ViewType::ShaderResource)
 		{
-			auto srv = to_srv(desc, mipLevels, tex_storage.desc.depth, &subresources);
+			auto srv = to_srv(desc, mipLevels, tex_storage.desc.depth, subresources);
 			m_device->CreateShaderResourceView(tex_storage.resource.Get(), &srv, view_desc.cpu_handle(0));
 		}
 		else if (desc.viewType == ViewType::UnorderedAccess)
 		{
-			auto uav = to_uav(desc, tex_storage.desc.mipLevels, tex_storage.desc.depth, &subresources);
+			auto uav = to_uav(desc, tex_storage.desc.mipLevels, tex_storage.desc.depth, subresources);
 
 			uavClear = m_descriptorMgr->allocate_cbv_srv_uav_cpu(1);
 			m_device->CreateUnorderedAccessView(tex_storage.resource.Get(), nullptr, &uav, view_desc.cpu_handle(0));

@@ -19,13 +19,13 @@ namespace DOG::gfx
 		virtual Pipeline CreateComputePipeline(const ComputePipelineDesc& desc) = 0;
 		virtual RenderPass CreateRenderPass(const RenderPassDesc& desc) = 0;
 		virtual BufferView CreateView(Buffer buffer, const BufferViewDesc& desc) = 0;
-		virtual TextureView CreateView(Texture texture, const TextureViewDesc& desc) = 0;
+		virtual TextureView CreateView(Texture texture, const TextureViewDesc& desc, std::set<u32>* subresources = nullptr) = 0; // Optionally retrieve concerned subresources declared by view
 
 		virtual Monitor GetMonitor() = 0;
 
 		// Free/recycle when appropriate! Sensitive resources that may be in-flight
 		virtual void FreeBuffer(Buffer handle) = 0;
-		virtual void FreeTexture(Texture handle) = 0;
+		virtual void FreeTexture(Texture handle) = 0;		
 		virtual void FreePipeline(Pipeline handle) = 0;
 		virtual void FreeRenderPass(RenderPass handle) = 0;
 		virtual void FreeView(BufferView handle) = 0;
