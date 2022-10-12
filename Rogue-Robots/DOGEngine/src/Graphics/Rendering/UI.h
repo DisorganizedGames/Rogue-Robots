@@ -22,10 +22,10 @@ class UI
    UINT AddUIlEmentToScene(UINT sceneID, std::unique_ptr<UIElement> element);
    UINT GenerateUID();
    UINT AddScene();
-   UINT QuerryScene(UINT sceneID);
    void RemoveScene(UINT sceneID);
 
    private:
+   UINT QuerryScene(UINT sceneID);
    std::vector<std::unique_ptr<UIScene>> m_scenes;
    UINT m_currsceneID, m_currsceneIndex;
    bool m_visible;
@@ -92,7 +92,19 @@ class UISplashScreen : public UIElement
 
 class UIHealthBar : public UIElement
 {
-   private:
-   D2D1_RECT_F m_background;
+   public:
+   UIHealthBar(float x, float y, float width, float height, DOG::gfx::D2DBackend_DX12& m_d2d, UINT id);
+   ~UIHealthBar();
+   
+   void Draw(DOG::gfx::D2DBackend_DX12& m_d2d) override;
+   void Update(DOG::gfx::D2DBackend_DX12& m_d2d) override;
 
+   void SetBarValue(float value);
+
+   private:
+   D2D1_RECT_F m_border, m_bar;
+   std::wstring m_text;
+   ComPtr<ID2D1SolidColorBrush> m_barBrush, m_borderBrush;
+   ComPtr<IDWriteTextFormat> m_textFormat;
+   float m_value, m_barWidth, m_test;
 };
