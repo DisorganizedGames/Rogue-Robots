@@ -51,7 +51,9 @@ namespace DOG
 	{
 		bool collisionCheck = false;
 		bool activeCollision = false;
-		RigidbodyHandle rigidbodyHandle;
+		bool ghost = false;
+		//This can be a rigidbody and a ghost
+		RigidbodyHandle collisionbodyHandle;
 	};
 
 	struct GhostObjectData
@@ -170,7 +172,6 @@ namespace DOG
 		void FreeRigidbodyData(const RigidbodyHandle& rigidbodyHandle, bool freeCollisionShape);
 		void FreeCollisionShape(const CollisionShapeHandle& collisionShapeHandle);
 		void CheckRigidbodyCollisions();
-		void CheckGhostObjectCollisions();
 
 	public:
 		~PhysicsEngine();

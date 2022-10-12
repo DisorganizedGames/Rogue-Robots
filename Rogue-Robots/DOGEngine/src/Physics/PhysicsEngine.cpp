@@ -100,6 +100,8 @@ namespace DOG
 						btTransform trans;
 						trans.setFromOpenGLMatrix((float*)(&transform.worldMatrix));
 						rigidBody->rigidBody->getMotionState()->setWorldTransform(trans);
+
+						//s_physicsEngine.m_dynamicsWorld->updateSingleAabb(rigidBody->rigidBody);
 					}
 				});
 
@@ -112,6 +114,8 @@ namespace DOG
 						btTransform trans;
 						trans.setFromOpenGLMatrix((float*)(&transform.worldMatrix));
 						rigidBody->rigidBody->getMotionState()->setWorldTransform(trans);
+
+						//s_physicsEngine.m_dynamicsWorld->updateSingleAabb(rigidBody->rigidBody);
 					}
 				});
 
@@ -124,10 +128,25 @@ namespace DOG
 						btTransform trans;
 						trans.setFromOpenGLMatrix((float*)(&transform.worldMatrix));
 						rigidBody->rigidBody->getMotionState()->setWorldTransform(trans);
+
+						//s_physicsEngine.m_dynamicsWorld->updateSingleAabb(rigidBody->rigidBody);
+					}
+				});
+
+			EntityManager::Get().Collect<TransformComponent, BoxTriggerComponent>().Do([&](TransformComponent& transform, BoxTriggerComponent& trigger)
+				{
+					//Get ghostObject
+					auto* ghostObjectData = s_physicsEngine.GetGhostObjectData(trigger.ghostObjectHandle);
+					if (ghostObjectData->ghostObject) //&& rigidBody->rigidBody && rigidBody->rigidBody->getMotionState())
+					{
+						btTransform trans;
+						trans.setFromOpenGLMatrix((float*)(&transform.worldMatrix));
+						ghostObjectData->ghostObject->setWorldTransform(trans);
+
+						//s_physicsEngine.m_dynamicsWorld->updateSingleAabb(ghostObjectData->ghostObject);
 					}
 				});
 		}
-
 		s_physicsEngine.GetDynamicsWorld()->stepSimulation(deltaTime, 10);
 
 		EntityManager::Get().Collect<TransformComponent, BoxColliderComponent>().Do([&](TransformComponent& transform, BoxColliderComponent& collider)
@@ -172,11 +191,22 @@ namespace DOG
 				}
 			});
 
+		EntityManager::Get().Collect<TransformComponent, BoxTriggerComponent>().Do([&](TransformComponent& transform, BoxTriggerComponent& trigger)
+			{
+				//Get ghostObject
+				auto* ghostObjectData = s_physicsEngine.GetGhostObjectData(trigger.ghostObjectHandle);
+				if (ghostObjectData->ghostObject) //&& rigidBody->rigidBody && rigidBody->rigidBody->getMotionState())
+				{
+					btTransform trans;
+					trans = ghostObjectData->ghostObject->getWorldTransform();
+					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
+				}
+			});
+
 		s_physicsEngine.CheckRigidbodyCollisions();
-		s_physicsEngine.CheckGhostObjectCollisions();
 
 		//Because for now we do not have any callbacks to c++ we only have to check if entity have a ScriptComponent
-		EntityManager::Get().Collect<RigidbodyComponent, ScriptComponent>().Do([&](RigidbodyComponent& rigidbody, ScriptComponent&)
+		EntityManager::Get().Collect<RigidbodyComponent, ScriptComponent>().Do([&](entity obj0entity, RigidbodyComponent& rigidbody, ScriptComponent&)
 			{
 				//Get rigidbody
 				auto* rigidBody = s_physicsEngine.GetRigidbodyColliderData(rigidbody.rigidbodyHandle);
@@ -197,14 +227,17 @@ namespace DOG
 						if (it->second.activeCollision != beforeCollision)
 						{
 							//Get RigidbodyColliderData to get the corresponding entities
-							RigidbodyColliderData* obj0RigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(rigidbody.rigidbodyHandle);
-							RigidbodyColliderData* obj1RigidbodyColliderData = PhysicsEngine::GetRigidbodyColliderData(it->second.rigidbodyHandle);
+							entity obj1entity = 0;
+							if (!it->second.ghost)
+								obj1entity = PhysicsEngine::GetRigidbodyColliderData(it->second.collisionbodyHandle)->rigidbodyEntity;
+							else
+								obj1entity = PhysicsEngine::GetGhostObjectData((GhostObjectHandle)(it->second.collisionbodyHandle.handle))->ghostObjectEntity;
 
 							//Fix later
 							//if (it->second.activeCollision && rigidbody.onCollisionEnter != nullptr)
 							//	rigidbody.onCollisionEnter(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
 							if (it->second.activeCollision)
-								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0RigidbodyColliderData->rigidbodyEntity, "OnCollisionEnter", obj1RigidbodyColliderData->rigidbodyEntity);
+								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0entity, "OnCollisionEnter", obj1entity);
 
 							//Set collisionCheck false for next collision check
 							it->second.collisionCheck = false;
@@ -215,7 +248,7 @@ namespace DOG
 								//if (rigidbody.onCollisionExit != nullptr)
 								//	rigidbody.onCollisionExit(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
 								//else
-								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0RigidbodyColliderData->rigidbodyEntity, "OnCollisionExit", obj1RigidbodyColliderData->rigidbodyEntity);
+								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0entity, "OnCollisionExit", obj1entity);
 
 								//Remove the collision because we do not need to keep track of it anymore
  								collisions->second.erase(it++);
@@ -538,10 +571,11 @@ namespace DOG
 					if (collisions == PhysicsEngine::s_physicsEngine.m_rigidbodyCollision.end())
 						continue;
 
-					//Get obj1 rigidbody handle
-					u64 obj1RigidbodyHandle = (obj1->getUserIndex2() << byteShift) | obj1->getUserIndex();
+					//This can be either a rigidbody or a ghost
+					//Get obj1 collisionbody handle
+					u64 obj1CollisionHandle = (obj1->getUserIndex2() << byteShift) | obj1->getUserIndex();
 					//Get handle for obj1
-					u32 obj1Handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(obj1RigidbodyHandle);
+					u32 obj1Handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(obj1CollisionHandle);
 
 					//Check if obj1 exist in the collisionKeeper if it does then we set the collisionCheck true
 					auto obj1Collision = collisions->second.find(obj1Handle);
@@ -555,9 +589,12 @@ namespace DOG
 						RigidbodyCollisionData collisionData;
 						collisionData.activeCollision = false;
 						collisionData.collisionCheck = true;
+						//Ghost objects can also enter here!
+						collisionData.ghost = !obj1->getUserIndex3();
+						//This is little bit sus but RigidbodyHandle and GhostObjectHandle only have u64 in them
 						RigidbodyHandle handle;
-						handle.handle = obj1RigidbodyHandle;
-						collisionData.rigidbodyHandle = handle;
+						handle.handle = obj1CollisionHandle;
+						collisionData.collisionbodyHandle = handle;
 						collisions->second.insert({ obj1Handle, collisionData });
 					}
 
@@ -566,131 +603,6 @@ namespace DOG
 				}
 			}
 		}
-	}
-
-	void PhysicsEngine::CheckGhostObjectCollisions()
-	{
-		static btManifoldArray manifoldsArray;
-		u64 checkedGhostObjects = 0;
-		//Handles start at one
-		u64 ghostObjectIndex = 1;
-		while (checkedGhostObjects < m_nrGhostObjects)
-		{
-			if (m_ghostObjectDatas[ghostObjectIndex].ghostObject != nullptr)
-			{
-				GhostObjectData* ghostObjectData = &m_ghostObjectDatas[ghostObjectIndex];
-				m_dynamicsWorld->getDispatcher()->dispatchAllCollisionPairs(ghostObjectData->ghostObject->getOverlappingPairCache(), m_dynamicsWorld->getDispatchInfo(), m_dynamicsWorld->getDispatcher());
-
-				for (int i = 0; i < ghostObjectData->ghostObject->getOverlappingPairCache()->getNumOverlappingPairs(); ++i)
-				{
-					btBroadphasePair* collisionPair = &ghostObjectData->ghostObject->getOverlappingPairCache()->getOverlappingPairArray()[i];
-					
-					btCollisionObject* obj0 = static_cast<btCollisionObject*>(collisionPair->m_pProxy0->m_clientObject);
-					btCollisionObject* obj1 = static_cast<btCollisionObject*>(collisionPair->m_pProxy1->m_clientObject);
-
-					if (!obj0->getUserIndex3() && !obj1->getUserIndex3())
-					{
-						std::cout << "Two ghosts\n";
-						continue;
-					}
-
-					const u32 byteShift = 4;
-					//Get obj1 rigidbody handle
-					u64 obj0CollisionObjectHandle = (obj0->getUserIndex2() << byteShift) | obj0->getUserIndex();
-					//Get handle for obj1
-					u32 obj0Handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(obj0CollisionObjectHandle);
-
-					if (obj0->getUserIndex3())
-					{
-						RigidbodyColliderData* obj = PhysicsEngine::s_physicsEngine.GetRigidbodyColliderData((RigidbodyHandle)obj0CollisionObjectHandle);
-						if (EntityManager::Get().HasComponent<RigidbodyComponent>(obj->rigidbodyEntity))
-						{
-							std::cout << "obj0 has an rigidbody\n";
-						}
-					}
-
-					//Get obj1 rigidbody handle
-					u64 obj1CollisionObjectHandle = (obj1->getUserIndex2() << byteShift) | obj1->getUserIndex();
-					//Get handle for obj1
-					u32 obj1Handle = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(obj1CollisionObjectHandle);
-
-					if (obj1->getUserIndex3())
-					{
-						RigidbodyColliderData* obj = PhysicsEngine::s_physicsEngine.GetRigidbodyColliderData((RigidbodyHandle)obj1CollisionObjectHandle);
-						if (EntityManager::Get().HasComponent<RigidbodyComponent>(obj->rigidbodyEntity))
-						{
-							std::cout << "obj1 has an rigidbody\n";
-						}
-					}
-
-					//Check for flags here???
-
-					if (collisionPair->m_algorithm)
-					{
-						collisionPair->m_algorithm->getAllContactManifolds(manifoldsArray);
-					}
-					else
-					{
-						continue;
-					}
-
-					for (int j = 0; j < manifoldsArray.size(); ++j)
-					{
-						btPersistentManifold* manifold = manifoldsArray[j];
-						for (int k = 0; k < manifold->getNumContacts(); ++k)
-						{
-							const btManifoldPoint& pt = manifold->getContactPoint(k);
-
-							if (pt.getDistance() < 0.0f)
-							{
-								std::cout << "Collisions Check\n";
-								//If the two objects did collide then we do not need to check the other collision points
-								j = manifoldsArray.size();
-								break;
-							}
-						}
-					}
-				}
-
-				++checkedGhostObjects;
-			}
-
-			++ghostObjectIndex;
-		}
-
-		//m_dynamicsWorld->setInternalTickCallback
-
-		//btBroadphasePairArray& collisionPairs = m_ghostObject->getOverlappingPairCache()->getOverlappingPairArray();	//New
-		//const int	numObjects = collisionPairs.size();
-		//static btManifoldArray	m_manifoldArray;
-		//bool added;
-		//for (int i = 0; i < numObjects; i++) {
-		//	const btBroadphasePair& collisionPair = collisionPairs[i];
-		//	m_manifoldArray.resize(0);
-		//	if (collisionPair.m_algorithm) collisionPair.m_algorithm->getAllContactManifolds(m_manifoldArray);
-		//	else printf("No collisionPair.m_algorithm - probably m_dynamicsWorld->getDispatcher()->dispatchAllCollisionPairs(...) must be missing.\n");
-		//	added = false;
-		//	for (int j = 0; j < m_manifoldArray.size(); j++) {
-		//		btPersistentManifold* manifold = m_manifoldArray[j];
-		//		// Here we are in the narrowphase, but can happen that manifold->getNumContacts()==0:
-		//		if (m_processOnlyObjectsWithNegativePenetrationDistance) {
-		//			for (int p = 0; p < manifold->getNumContacts(); p++) {
-		//				const btManifoldPoint& pt = manifold->getContactPoint(p);
-		//				if (pt.getDistance() < 0.0) {
-		//					// How can I be sure that the colObjs are all distinct ? I use the "added" flag.
-		//					m_objectsInFrustum.push_back((btCollisionObject*)(manifold->getBody0() == m_ghostObject ? manifold->getBody1() : manifold->getBody0()));
-		//					added = true;
-		//					break;
-		//				}
-		//			}
-		//			if (added) break;
-		//		}
-		//		else if (manifold->getNumContacts() > 0) {
-		//			m_objectsInFrustum.push_back((btCollisionObject*)(manifold->getBody0() == m_ghostObject ? manifold->getBody1() : manifold->getBody0()));
-		//			break;
-		//		}
-		//	}
-		//}
 	}
 
 	BoxColliderComponent::BoxColliderComponent(entity entity, const DirectX::SimpleMath::Vector3& boxColliderSize, bool dynamic, float mass) noexcept
