@@ -51,22 +51,24 @@ namespace DOG
 					UpdateMovementAnimation(animatorC, (f32)Time::DeltaTime());
 					auto trs = CalculateTranslation(m_rootBoneIdx, model->animation, animatorC) * 0.01f;
 					trs *= m_imguiMovementSpeed < 0.f ? -1.f : 1.f;
-					m_previousTrans = trs;
-					tfC.SetPosition(XMVectorAdd(tfC.GetPosition(), trs));
-					m_imguiTmpScale ? tfC.SetScale({ 1.f, 1.f, 1.f }) : tfC.SetScale({ .01f, .01f, .01f });
-					auto blyat = 0;
+					if(m_imguiRootTranslation)
+						tfC.SetPosition(XMVectorAdd(tfC.GetPosition(), trs));
+					auto asdf = 0;
 				}
 				else
 				{
 					UpdateClips(animatorC, (f32)Time::DeltaTime());
 					auto trs = CalculateTranslation(m_rootBoneIdx, model->animation, animatorC) * 0.01f;
 					trs *= m_imguiMovementSpeed < 0.f ? -1.f : 1.f;
-					tfC.SetPosition(XMVectorAdd(tfC.GetPosition(), trs));
+					if (m_imguiRootTranslation)
+						tfC.SetPosition(XMVectorAdd(tfC.GetPosition(), trs));
+				}
+				if (m_imguiResetPos)
+				{
+					m_imguiResetPos = false;
+					tfC.SetPosition({ 0.f, 0.f, 0.f });
 				}
 				//UpdateAnimationComponent(model->animation.animations, animatorC, (f32)Time::DeltaTime());
-				static bool firstTime = true;
-				if(firstTime)
-					m_previousTrans = CalculateTranslation(m_rootBoneIdx, model->animation, animatorC);
 				for (i32 i = 0; i < m_imguiProfilePerformUpdate; i++)
 					UpdateSkeleton(model->animation, animatorC);
 			}
@@ -92,8 +94,9 @@ namespace DOG
 				static AnimationComponent* imguiAnimC;
 				static AnimationComponent::AnimationClip clip0;
 				static AnimationComponent::AnimationClip clip1;
-				static i32 animation[MAX_ANIMATIONS] = { 0, 0 };
-				static i32 blendMode[MAX_ANIMATIONS] = { 0, 0 };
+				static AnimationComponent::AnimationClip clip2;
+				static i32 animation[MAX_ANIMATIONS] = { 0 };
+				static i32 blendMode[MAX_ANIMATIONS] = { 0 };
 				static const char* imguiBlendModes[] = { "normal", "linear", "bezier" };
 				static i32 rig = 0;
 				static bool rigLoaded = m_rigs.size();
@@ -128,7 +131,8 @@ namespace DOG
 				};
 				ImGui::Checkbox("Apply Root translation", &m_imguiRootTranslation);
 				ImGui::Checkbox("testMovement", &m_imguiTestMovement);
-				ImGui::Checkbox("large?", &m_imguiTmpScale);
+				if (ImGui::Button("reset position"))
+					m_imguiResetPos = true;
 				if (m_imguiTestMovement)
 				{
 					ImGui::SliderFloat(setName("movementSpeed").c_str(), &m_imguiMovementSpeed, -3.0f, 3.0f, "%.5f");
@@ -184,6 +188,12 @@ namespace DOG
 					setClip(1, clip1);
 					ImGui::SliderFloat(setName("n Time").c_str(), &imguiAnimC->clips[1].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
 					ImGui::SliderFloat(setName("weight").c_str(), &imguiAnimC->clips[1].currentWeight, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
+					
+					ImGui::NextColumn();
+					// Second Clip
+					setClip(2, clip2);
+					ImGui::SliderFloat(setName("n Time").c_str(), &imguiAnimC->clips[2].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
+					ImGui::SliderFloat(setName("weight").c_str(), &imguiAnimC->clips[2].currentWeight, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
 				}
 				ImGui::Columns();
 				if (ImGui::Button("Apply Clips")) // tmp
@@ -191,6 +201,7 @@ namespace DOG
 					m_imguiPause = !m_imguiPause;
 					imguiAnimC->clips[0] = clip0;
 					imguiAnimC->clips[1] = clip1;
+					imguiAnimC->clips[2] = clip2;
 				}
 				ImGui::SameLine(); ImGui::Checkbox("matchNormTime", &m_imguiMatching);
 
@@ -225,6 +236,14 @@ namespace DOG
 		}
 	}
 
+	DirectX::FXMMATRIX AnimationManager::ImguiTransform(i32 i)
+	{
+		return DirectX::XMMatrixScaling(m_imguiSca[i].x, m_imguiSca[i].y, m_imguiSca[i].z) *
+			DirectX::XMMatrixRotationRollPitchYaw(m_imguiRot[i].x, m_imguiRot[i].y, m_imguiRot[i].z) *
+			DirectX::XMMatrixTranslation(m_imguiPos[i].x, m_imguiPos[i].y, m_imguiPos[i].z);
+	}
+
+
 	void AnimationManager::UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator)
 	{
 		using namespace DirectX;
@@ -237,50 +256,24 @@ namespace DOG
 		for (i32 i = 1; i < rig.nodes.size(); ++i)
 		{
 			auto ntf = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
-			auto ntf2 = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
 
-			const auto sca = CalculateScaling(i, rig, animator);
-			const auto rot = CalculateRotation(i, rig, animator);
-			/*AXEL*/
-			const auto tra = CalculateTranslation(i, rig, animator);
-			if (i == 2)
-			{
-				auto asd = 0;
-				fromKeyT = CalculateTranslation(i, rig, animator);
-			}
 			if (i < m_imguiMinMaskIdx || i > m_imguiMaxMaskIdx)
 			{
-				if (i > m_rootBoneIdx) // apply translation
-					ntf = XMMatrixTranspose(XMMatrixScalingFromVector(sca) * XMMatrixRotationQuaternion(rot) * XMMatrixTranslationFromVector(tra));
-				else
-					ntf = XMMatrixTranspose(XMMatrixScalingFromVector(sca) * XMMatrixRotationQuaternion(rot) * XMMatrixTranslationFromVector(nullT));
-				
-				if (i > 2)
-					ntf2 = XMMatrixTranspose(XMMatrixScalingFromVector(sca) * XMMatrixRotationQuaternion(rot) * XMMatrixTranslationFromVector(tra));
+				const auto sca = CalculateScaling(i, rig, animator);
+				const auto rot = CalculateRotation2(i, rig, animator);
+				const auto tra = i > m_rootBoneIdx ? CalculateTranslation(i, rig, animator) : XMVECTOR{};
+				ntf = XMMatrixTranspose(XMMatrixScalingFromVector(sca) * XMMatrixRotationQuaternion(rot) * XMMatrixTranslationFromVector(tra));
 			}
 
 #if defined _DEBUG
-			DirectX::XMMATRIX imguiMatrix = DirectX::XMMatrixScaling(m_imguiSca[i].x, m_imguiSca[i].y, m_imguiSca[i].z) *
-				DirectX::XMMatrixRotationRollPitchYaw(m_imguiRot[i].x, m_imguiRot[i].y, m_imguiRot[i].z) *
-				DirectX::XMMatrixTranslation(m_imguiPos[i].x, m_imguiPos[i].y, m_imguiPos[i].z);
-			ntf *= imguiMatrix;
+			ntf *= ImguiTransform(i);
 #endif
 			hereditaryTFs.push_back(ntf);
-			investigate.push_back(ntf2);
 		}
 		// Apply parent Transformation
 		for (size_t i = 1; i < hereditaryTFs.size(); ++i)
-		{
-			XMVECTOR preS = {}, postS = {};
-			XMVECTOR preR = {}, postR = {};
-			XMVECTOR preT = {}, postT = {};
-			XMMatrixDecompose(&preS, &preR, &preT, XMMatrixTranspose(hereditaryTFs[2]));
-			XMMatrixDecompose(&postS, &postR, &postT, XMMatrixTranspose(hereditaryTFs[2]));
 			hereditaryTFs[i] = hereditaryTFs[rig.nodes[i].parentIdx] * hereditaryTFs[i];
-			investigate[i] = investigate[rig.nodes[i].parentIdx] * investigate[i];
 
-			auto ahfjag = 0;
-		}
 		const auto rootTF = XMLoadFloat4x4(&rig.nodes[0].transformation);
 		for (size_t n = 0; n < rig.nodes.size(); ++n)
 		{
@@ -288,67 +281,7 @@ namespace DOG
 			if (joint != -1)
 				XMStoreFloat4x4(&m_vsJoints[animator.offset + joint],
 					rootTF * hereditaryTFs[n] * XMLoadFloat4x4(&rig.jointOffsets[joint]));
-			if(n == 2)
-			{
-				XMVECTOR nullT = { 0, 0, 0, 0 };
-				XMVECTOR wo_s = {}, w_s = {}, sJnt = {}, sFinal = {};
-				XMVECTOR wo_r = {}, w_r = {}, rJnt = {}, rFinal = {};
-				XMVECTOR wo_t = {}, w_t = {}, tJnt = {}, tFinal = {};
-				XMMatrixDecompose(&sJnt, &rJnt, &tJnt, XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[animator.offset + joint])));
-				XMMatrixDecompose(&wo_s, &wo_r, &wo_t, XMMatrixTranspose(hereditaryTFs[n]));
-				XMMatrixDecompose(&w_s, &w_r, &w_t, XMMatrixTranspose(investigate[n]));
-				auto withT = hereditaryTFs[n];
-				auto withoutT = investigate[n];
-			}
 		}
-	}
-
-	DirectX::FXMMATRIX AnimationManager::CalculateNodeTransformation(const DOG::AnimationData& animation, i32 nodeID, f32 tick)
-	{
-		using namespace DirectX;
-		XMFLOAT3 scaling = m_baseScale;
-		XMFLOAT4 rotation = m_baseRotation;
-		XMFLOAT3 translation = m_baseTranslation;
-
-		const auto keyExists = [&nodeID](const std::unordered_map<i32, std::vector<AnimationKey>>& keys)
-		{ return keys.find(nodeID) != keys.end(); };
-		const auto thereIsOnlyOneKeyIn = [](const std::vector<AnimationKey>& keys)
-		{ return keys.size() == 1; };
-
-		// Scaling
-		if (keyExists(animation.scaKeys))
-		{
-			const auto& scalingKeys = animation.scaKeys.at(nodeID);
-			if (thereIsOnlyOneKeyIn(scalingKeys))
-				XMStoreFloat3(&scaling, XMLoadFloat4(&scalingKeys[0].value));
-			else
-				XMStoreFloat3(&scaling, GetKeyValue(animation.scaKeys.at(nodeID), KeyType::Scale, tick));
-		}
-		// Rotation
-		if (keyExists(animation.rotKeys))
-		{
-			const auto& rotKeys = animation.rotKeys.at(nodeID);
-			if (thereIsOnlyOneKeyIn(rotKeys))
-				rotation = rotKeys[0].value;
-			else
-				XMStoreFloat4(&rotation, GetKeyValue(animation.rotKeys.at(nodeID), KeyType::Rotation, tick));
-		}
-		// Translation
-		const bool applyTranslation = (m_imguiRootTranslation || nodeID > m_rootBoneIdx);
-		if (keyExists(animation.posKeys) && applyTranslation)
-		{
-			const auto& posKeys = animation.posKeys.at(nodeID);
-			if (thereIsOnlyOneKeyIn(posKeys))
-				XMStoreFloat3(&translation, XMLoadFloat4(&posKeys[0].value));
-			else
-				DirectX::XMStoreFloat3(&translation, GetKeyValue(animation.posKeys.at(nodeID), KeyType::Translation, tick));
-		}
-
-		auto nodeTransform = XMMatrixScaling(scaling.x, scaling.y, scaling.z) *
-			XMMatrixRotationQuaternion(XMQuaternionNormalize(DirectX::XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w))) *
-			XMMatrixTranslation(translation.x, translation.y, translation.z);
-
-		return XMMatrixTranspose(nodeTransform);
 	}
 
 	DirectX::FXMVECTOR AnimationManager::GetKeyValue(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick)
@@ -363,23 +296,21 @@ namespace DOG
 		while (key2Idx < keys.size() - 1 && keys[key2Idx].time <= tick)
 			key2Idx++;
 		key2Idx = std::clamp(key2Idx, 1, i32(keys.size() - 1));
-		i32 key1Idx = key2Idx - 1;
+		i32 key1Idx = (key2Idx == 1) ? keys.size() - 1 : key2Idx - 1;
 		
 		const auto& key1 = keys[key1Idx];
 		const auto& key2 = keys[key2Idx];
-		const auto blendFactor = (tick - key1.time) / (key2.time - key1.time);
+		const auto t1 = (key2Idx == 1) ? 0.f : key1.time;
+		const auto t2 = key2.time;
+		const auto blendFactor = (tick - t1) / (t2 - t1);
 
-		if (component == KeyType::Rotation)
-			return XMQuaternionSlerp(XMLoadFloat4(&key1.value), XMLoadFloat4(&key2.value), blendFactor);
-		else
-			return XMVectorLerp(XMLoadFloat4(&key1.value), XMLoadFloat4(&key2.value), blendFactor);
+		return (component == KeyType::Rotation) ?
+			XMQuaternionSlerp(XMLoadFloat4(&key1.value), XMLoadFloat4(&key2.value), blendFactor) :
+			XMVectorLerp(XMLoadFloat4(&key1.value), XMLoadFloat4(&key2.value), blendFactor);
 	}
 
 	void AnimationManager::UpdateClips(DOG::AnimationComponent& ac, const f32 dt)
 	{
-		static constexpr i32 linear = 1;
-		static constexpr i32 belzier = 2;
-
 		f32 weightSum = 0.0f;
 		for (auto& c : ac.clips)
 		{
@@ -403,7 +334,7 @@ namespace DOG
 
 		// Tmp set matching norm time, required for run/walk etc.
 		if (m_imguiMatching)
-			ac.clips[1].normalizedTime = ac.clips[0].normalizedTime;
+			ac.clips[2].normalizedTime = ac.clips[1].normalizedTime = ac.clips[0].normalizedTime;
 	}
 	void AnimationManager::UpdateBezier(AnimationComponent::AnimationClip& clip, const f32 dt)
 	{
@@ -475,49 +406,6 @@ namespace DOG
 		return rotVec;
 	}
 
-	DirectX::FXMMATRIX AnimationManager::CalculateBlendTransformation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac)
-	{
-		using namespace DirectX;
-		XMFLOAT3 scaling = m_baseScale;
-		XMFLOAT4 rotation = m_baseRotation;
-		XMFLOAT3 translation = m_baseTranslation;
-
-		const auto keyExists = [&nodeID](const std::unordered_map<i32, std::vector<AnimationKey>>& keys)
-		{ return keys.find(nodeID) != keys.end(); };
-
-		XMVECTOR scaleVec = XMVECTOR{};
-		XMVECTOR transVec = XMVECTOR{};
-
-		for (auto& c : ac.clips)
-		{
-			// Weighted average for scaling/translation
-			const auto& anim = rig.animations[c.animationID];
-			scaleVec += c.currentWeight * GetKeyValue(anim.scaKeys.at(nodeID), KeyType::Scale, c.currentTick);
-			transVec += c.currentWeight * GetKeyValue(anim.posKeys.at(nodeID), KeyType::Translation, c.currentTick);
-		}
-
-		const auto& clip0 = ac.clips[0];
-		const auto& clip1 = ac.clips[1];
-		const auto& animation0 = rig.animations[clip0.animationID];
-		const auto& animation1 = rig.animations[clip1.animationID];
-
-		// Rotation
-		if (keyExists(animation0.rotKeys))
-		{
-			auto rot0 = GetKeyValue(animation0.rotKeys.at(nodeID), KeyType::Rotation, clip0.currentTick);
-			auto rot1 = GetKeyValue(animation1.rotKeys.at(nodeID), KeyType::Rotation, clip1.currentTick);
-			DirectX::XMStoreFloat4(&rotation, XMQuaternionSlerp(rot0, rot1, 1.0f - clip0.currentWeight));
-		}
-
-		DirectX::XMStoreFloat3(&scaling, scaleVec);
-		const bool applyTranslation = (m_imguiRootTranslation || nodeID > m_rootBoneIdx);
-		if (applyTranslation) DirectX::XMStoreFloat3(&translation, transVec);
-
-		return XMMatrixTranspose(XMMatrixScaling(scaling.x, scaling.y, scaling.z) *
-			XMMatrixRotationQuaternion(XMQuaternionNormalize(DirectX::XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w))) *
-			XMMatrixTranslation(translation.x, translation.y, translation.z));
-	}
-
 	void AnimationManager::UpdateMovementAnimation(DOG::AnimationComponent& ac, const f32 dt)
 	{
 		auto& clip0 = ac.clips[0];
@@ -574,6 +462,36 @@ namespace DOG
 			clip.transitionTime -= tCurrent;
 			clip.transitionStart += tCurrent;
 		}
+	}
+
+	DirectX::FXMVECTOR AnimationManager::CalculateRotation2(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac)
+	{
+		// weighted avg. of rotation quaternions, works for 'similar' rotation q's
+		using namespace DirectX;
+		XMVECTOR rotQ = XMVECTOR{};
+		const auto& clip0 = ac.clips[0];
+		const auto& animation0 = rig.animations[clip0.animationID];
+
+		const auto keyExists = [&nodeID](const std::unordered_map<i32, std::vector<AnimationKey>>& keys)
+		{ return keys.find(nodeID) != keys.end(); };
+		// Rotation
+		if (keyExists(animation0.rotKeys))
+		{
+			XMVECTOR q0 = GetKeyValue(animation0.rotKeys.at(nodeID), KeyType::Rotation, ac.clips[0].currentTick);
+			for (i32 i = 0; i < ac.clips.size(); i++)
+			{
+				const auto& c = ac.clips[i];
+				const auto& anim = rig.animations[c.animationID];
+				XMVECTOR q = GetKeyValue(anim.rotKeys.at(nodeID), KeyType::Rotation, c.currentTick);
+				f32 w = c.currentWeight;
+				auto dot = XMVector4Dot(q0, q);
+				if (i > 0 && dot.m128_f32[0] < 0.0)
+					w = -w;
+
+				rotQ += w * q;
+			}
+		}
+		return XMVector4Normalize(rotQ);
 	}
 
 }
