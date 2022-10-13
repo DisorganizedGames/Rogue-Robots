@@ -28,7 +28,7 @@ struct AgentStatsComponent
 
 struct BulletComponent
 {
-
+	INT8 playerId;
 };
 
 struct NetworkAgentStats

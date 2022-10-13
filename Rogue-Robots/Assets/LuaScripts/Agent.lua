@@ -227,7 +227,8 @@ function OnCollisionEnter(self, e1, e2)
 		entity = e1
 	end
 	if Entity:HasComponent(entity, "Bullet") and Agent.stats.hp > 0.0 then
-		Agent:Damage(1000)
+		if Entity:IsBulletLocal(e2) then
+			Agent:Damage(1000)
 	else
 		print("Agent touched " .. entity .. " at  " .. Agent.pos)
 		Agent:Collision(entity)

@@ -92,6 +92,7 @@ public:
 	void HasComponent(DOG::LuaContext* context);
 
 	void PlayAudio(DOG::LuaContext* context);
+	void IsBulletLocal(DOG::LuaContext* context);
 
 private:
 	void AddModel(DOG::LuaContext* context, DOG::entity e);
@@ -107,6 +108,8 @@ private:
 	void AddBoxCollider(DOG::LuaContext* context, DOG::entity e);
 
 	void AddRigidbody(DOG::LuaContext* context, DOG::entity e);
+
+	void AddBullet(DOG::LuaContext* context, DOG::entity e);
 
 	void ModifyTransform(DOG::LuaContext* context, DOG::entity e);
 	

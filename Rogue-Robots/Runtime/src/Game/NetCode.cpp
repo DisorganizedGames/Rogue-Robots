@@ -209,17 +209,6 @@ void NetCode::Recive()
 
 						});
 				}
-				//Sync all stats component that this player has hit
-				EntityManager::Get().Collect<NetworkAgentStats, AgentStatsComponent>().Do([&](NetworkAgentStats& netC, AgentStatsComponent& aStats)
-					{
-						if (netC.playerId = netC.playerId)
-						{
-							netC.stats = aStats;
-							memcpy(sendBuffer + bufferSize, &netC, sizeof(NetworkTransform));
-							m_inputTcp.nrOfNetStats++;
-							bufferSize += sizeof(NetworkTransform);
-						}
-					});
 				//put in the client data
 				memcpy(sendBuffer, (char*)&m_inputTcp, sizeof(m_inputTcp));
 				
@@ -234,16 +223,15 @@ void NetCode::Recive()
 					int bufferReciveSize = 0;
 					//�pdate the players entites stats
 					memcpy(m_outputTcp, reciveBuffer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
-
-					//Update the transfroms, Only none hosts
-					
-					if (m_inputTcp.playerId > 0 && m_outputTcp->playerId < MAX_PLAYER_COUNT)
+					bufferReciveSize += sizeof(Client::ClientsData) * MAX_PLAYER_COUNT;
+					if (m_outputTcp->nrOfNetTransform > 0 && m_outputTcp->playerId < 10)
 					{
+						//Update the transfroms, Only none hosts
 						NetworkTransform* temp = new NetworkTransform;
 						memcpy(temp, reciveBuffer + sizeof(Client::ClientsData) * MAX_PLAYER_COUNT, sizeof(NetworkTransform));
-						EntityManager::Get().Collect<NetworkTransform, TransformComponent>().Do([&](entity id, NetworkTransform& networkC, TransformComponent& transC)
-							{
-								for (int i = 0; i < m_outputTcp[0].nrOfNetTransform; ++i)
+						if (m_inputTcp.playerId > 0)
+						{
+							EntityManager::Get().Collect<NetworkTransform, TransformComponent>().Do([&](entity id, NetworkTransform&, TransformComponent& transC)
 								{
 									for (int i = 0; i < m_outputTcp[0].nrOfNetTransform; ++i)
 									{
@@ -258,7 +246,6 @@ void NetCode::Recive()
 						}
 					}
 				}
-				
 			}
 			delete[] reciveBuffer;
 		}
