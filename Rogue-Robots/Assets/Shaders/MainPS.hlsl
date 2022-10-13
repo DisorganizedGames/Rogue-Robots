@@ -299,6 +299,7 @@ float4 main(VS_OUT input) : SV_TARGET
         Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL * (contrib);
     }
 
+ 
     // add temp directional light
     {
         // calculate per-light radiance
