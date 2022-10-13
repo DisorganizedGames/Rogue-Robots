@@ -9,11 +9,11 @@
 
 namespace DOG::gfx
 {
-	Bloom::Bloom(GlobalEffectData& globalEffectData, GPUDynamicConstants* dynConsts)
-		: RenderEffect(globalEffectData), m_dynamicConstants(dynConsts)
+	Bloom::Bloom(GlobalEffectData& globalEffectData, GPUDynamicConstants* dynConsts, u32 renderResX, u32 renderResY)
+		: RenderEffect(globalEffectData), m_dynamicConstants(dynConsts), m_hdrRenderTargerResX(renderResX), m_hdrRenderTargerResY(renderResY)
 	{
-		m_width = 1280;
-		m_height = 720;
+		m_width = m_hdrRenderTargerResX / 2;
+		m_height = m_hdrRenderTargerResY / 2;
 
 		auto& device = globalEffectData.rd;
 
@@ -48,6 +48,20 @@ namespace DOG::gfx
 			desc.width /= 2;
 			desc.height /= 2;
 		}
+	}
+
+	Bloom::~Bloom()
+	{
+		auto& device = m_globalEffectData.rd;
+		for (auto& [texture, desc] : m_bloomTexture)
+		{
+			device->FreeTexture(texture);
+		}
+
+		device->FreePipeline(m_compPipDebug);
+		device->FreePipeline(m_compPipeBloomSelect);
+		device->FreePipeline(m_compPipeDownSample);
+		device->FreePipeline(m_compPipeUpSample);
 	}
 
 	void Bloom::Add(RenderGraph& rg)
@@ -177,6 +191,36 @@ namespace DOG::gfx
 					rd->Cmd_Dispatch(cmdl, tgx, tgy, 1);
 				});
 		}
+
+
+		rg.AddPass<PassData>("Bloom composit Pass",
+			[&](PassData& passData, RenderGraph::PassBuilder& builder)		// Build
+			{
+				passData.srcTextureHandle = builder.ReadResource(RGResourceID("BloomTexture0"), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+					TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+				passData.dstTextureHandle = builder.ReadWriteTarget(RG_RESOURCE(LitHDR), TextureViewDesc(ViewType::UnorderedAccess,
+					TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+			},
+			[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)		// Execute
+			{
+				u32 bloomReadHandle = resources.GetView(passData.srcTextureHandle);
+				u32 hdrRenderTargetWriteHandle = resources.GetView(passData.dstTextureHandle);
+
+				rd->Cmd_SetPipeline(cmdl, m_compPipeUpSample);
+				auto args = ShaderArgs()
+					.AppendConstant(bloomReadHandle)
+					.AppendConstant(hdrRenderTargetWriteHandle)
+					.AppendConstant(m_hdrRenderTargerResX)
+					.AppendConstant(m_hdrRenderTargerResY);
+				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
+
+				u32 tgx = m_hdrRenderTargerResX / computeGroupSize + 1 * static_cast<bool>(m_hdrRenderTargerResX % computeGroupSize);
+				u32 tgy = m_hdrRenderTargerResY / computeGroupSize + 1 * static_cast<bool>(m_hdrRenderTargerResY % computeGroupSize);
+
+				rd->Cmd_Dispatch(cmdl, tgx, tgy, 1);
+			});
+
 
 
 		// Just here to help debug how the different textures look like

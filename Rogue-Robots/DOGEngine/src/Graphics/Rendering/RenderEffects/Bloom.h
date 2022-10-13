@@ -11,8 +11,8 @@ namespace DOG::gfx
 	class Bloom : public RenderEffect
 	{
 	public:
-		Bloom(GlobalEffectData& globalEffectData, GPUDynamicConstants* dynConsts);
-
+		Bloom(GlobalEffectData& globalEffectData, GPUDynamicConstants* dynConsts, u32 renderResX, u32 renderResY);
+		~Bloom();
 		void Add(RenderGraph& rg) override;
 
 	private:
@@ -25,6 +25,8 @@ namespace DOG::gfx
 		// Untill the rendergraph can handle subresources we will use fake mip levels by using more textures
 		std::vector<std::pair<Texture, TextureDesc>> m_bloomTexture;
 
+		u32 m_hdrRenderTargerResX;
+		u32 m_hdrRenderTargerResY;
 
 		u32 m_width;
 		u32 m_height;

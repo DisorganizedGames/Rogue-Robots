@@ -225,7 +225,7 @@ namespace DOG::gfx
 		*/
 		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
 		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
-		m_bloomEffect = std::make_unique<Bloom>(m_globalEffectData, m_dynConstants.get());
+		m_bloomEffect = std::make_unique<Bloom>(m_globalEffectData, m_dynConstants.get(), m_renderWidth, m_renderHeight);
 
 		ImGuiMenuLayer::RegisterDebugWindow("Renderer Debug", [this](bool& open) { SpawnRenderDebugWindow(open); });
 	}
@@ -540,6 +540,14 @@ namespace DOG::gfx
 	void Renderer::SetGraphicsSettings(GraphicsSettings requestedSettings)
 	{
 		assert(requestedSettings.displayMode);
+
+		Flush();
+		if (m_renderWidth != requestedSettings.renderResolution.x || m_renderHeight != requestedSettings.renderResolution.y)
+		{
+			m_bloomEffect.reset();
+			m_bloomEffect = std::make_unique<Bloom>(m_globalEffectData, m_dynConstants.get(), requestedSettings.renderResolution.x, requestedSettings.renderResolution.y);
+		}
+
 		m_renderWidth = requestedSettings.renderResolution.x;
 		m_renderHeight = requestedSettings.renderResolution.y;
 		m_globalEffectData.defRenderScissors = ScissorRects().Append(0, 0, m_renderWidth, m_renderHeight);
