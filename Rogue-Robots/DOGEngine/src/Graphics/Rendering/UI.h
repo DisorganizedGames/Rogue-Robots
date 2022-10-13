@@ -25,6 +25,7 @@ class UI
    void RemoveScene(UINT sceneID);
 
    private:
+   UINT menuID, gameID;
    UINT QuerryScene(UINT sceneID);
    std::vector<std::unique_ptr<UIScene>> m_scenes;
    UINT m_currsceneID, m_currsceneIndex;
@@ -95,7 +96,7 @@ class UIHealthBar : public UIElement
    public:
    UIHealthBar(float x, float y, float width, float height, DOG::gfx::D2DBackend_DX12& m_d2d, UINT id);
    ~UIHealthBar();
-   
+
    void Draw(DOG::gfx::D2DBackend_DX12& m_d2d) override;
    void Update(DOG::gfx::D2DBackend_DX12& m_d2d) override;
 
@@ -107,4 +108,18 @@ class UIHealthBar : public UIElement
    ComPtr<ID2D1SolidColorBrush> m_barBrush, m_borderBrush;
    ComPtr<IDWriteTextFormat> m_textFormat;
    float m_value, m_barWidth, m_test;
+};
+
+class UIBackground : public UIElement
+{
+   public:
+   UIBackground(float width, float heigt, DOG::gfx::D2DBackend_DX12& m_d2d, UINT id);
+   ~UIBackground();
+   void Draw(DOG::gfx::D2DBackend_DX12& m_d2d) override;
+   void Update(DOG::gfx::D2DBackend_DX12& m_d2d) override;
+   private:
+   D2D1_RECT_F m_background, m_textRect;
+   std::wstring m_title;
+   ComPtr<IDWriteTextFormat> m_textFormat;
+   ComPtr<ID2D1SolidColorBrush> m_textBrush, m_backBrush;
 };

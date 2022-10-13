@@ -19,14 +19,17 @@ UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HW
    m_width = wrect.right;
    m_height = wrect.bottom;
    m_d2d = std::make_unique<DOG::gfx::D2DBackend_DX12>(rd, sc, numBuffers, hwnd);
-   UINT menuID = AddScene();
-   UINT gameID = AddScene();
+   menuID = AddScene();
+   gameID = AddScene();
    ChangeUIscene(menuID);
    auto hID = GenerateUID();
    auto h = std::make_unique<UIHealthBar>(40.f, m_height - 60.f, 250.f, 30.f, *m_d2d, hID);
    AddUIlEmentToScene(gameID, std::move(h));
+   auto backID = GenerateUID();
+   auto back = std::make_unique<UIBackground>(m_width, m_height, *m_d2d, backID);
+   AddUIlEmentToScene(menuID, std::move(back));
    auto bID = GenerateUID();
-   auto b = std::make_unique<UIButton>(m_width / 2.f - 150.f / 2, m_height / 2 - 60.f / 2, 150.f, 60.f, std::wstring(L"Play"), buttonfunc, bID);
+   auto b = std::make_unique<UIButton>(m_width / 2.f - 150.f / 2, m_height / 2 - 60.f / 2, 150.f, 60.f, std::wstring(L"Play"), std::function<void()>(buttonfunc), bID);
    AddUIlEmentToScene(menuID, std::move(b));
    auto sID = GenerateUID();
    auto s = std::make_unique<UISplashScreen>(*m_d2d, (float)m_width, (float)m_height, sID);
@@ -43,9 +46,9 @@ UI::~UI()
 void UI::DrawUI()
 {
    if (DOG::Keyboard::IsKeyPressed(DOG::Key::G))
-   {
-      m_visible = false;
-   }
+      ChangeUIscene(gameID);
+   if (DOG::Keyboard::IsKeyPressed(DOG::Key::M))
+      ChangeUIscene(menuID);
    if (m_visible)
    {
       for (auto&& e : m_scenes[m_currsceneIndex]->m_scene)
@@ -305,4 +308,45 @@ void UIHealthBar::SetBarValue(float value)
 {
    m_value = value;
    m_text = std::to_wstring(value) + L'%';
+}
+
+UIBackground::UIBackground(float width, float heigt, DOG::gfx::D2DBackend_DX12& m_d2d, UINT id) : UIElement(id)
+{
+   m_title = L"Rogue Robots";
+   m_background = D2D1::RectF(0.0f, 0.0f, width, heigt);
+   m_textRect = D2D1::RectF(width / 2 - 350.f /2, heigt / 2 - 150.f, width / 2 + 300.f, heigt / 2 - 50.f );
+   HRESULT hr = m_d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_textBrush);
+   HR_VFY(hr);
+   hr = m_d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_backBrush);
+   HR_VFY(hr);
+   hr = m_d2d.m_dwritwf->CreateTextFormat(
+      L"Robot Radicals",
+      NULL,
+      DWRITE_FONT_WEIGHT_NORMAL,
+      DWRITE_FONT_STYLE_NORMAL,
+      DWRITE_FONT_STRETCH_NORMAL,
+      50,
+      L"en-us",
+      &m_textFormat
+   );
+}
+
+UIBackground::~UIBackground()
+{
+
+}
+
+void UIBackground::Draw(DOG::gfx::D2DBackend_DX12& m_d2d)
+{
+   m_d2d.m_2ddc->FillRectangle(m_background, m_backBrush.Get());
+   m_d2d.m_2ddc->DrawTextW(
+      m_title.c_str(),
+      (UINT32)m_title.length(),
+      m_textFormat.Get(),
+      &m_textRect,
+      m_textBrush.Get());
+}
+void UIBackground::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
+{
+
 }
