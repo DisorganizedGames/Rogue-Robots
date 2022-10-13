@@ -63,7 +63,8 @@ namespace DOG
 		static constexpr i32 m_modeTransitionLinearBlend = 1;
 		static constexpr i32 m_modeTransitionBezierBlend = 2;
 		// IMGUI RELATED
-		bool m_imguiTestMovement = false;
+		bool m_imguiTmpScale = true;
+		bool m_imguiTestMovement = true;
 		f32 m_imguiMovementSpeed = 0.0f;
 		bool m_imguiPause = false;
 		bool m_imguiMatching = false;
