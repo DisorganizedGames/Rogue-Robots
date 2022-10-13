@@ -24,19 +24,30 @@ MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 	m_polar = XM_PI / 2;
 	m_moveSpeed = 10.0f;
 
+	m_debugCamera = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<TransformComponent>(m_debugCamera);
 }
 
 void MainPlayer::OnUpdate()
 {
+	static bool fpressed = false;
+	if (fpressed && !Keyboard::IsKeyPressed(Key::F))
+	{
+		fpressed = false;
+	}
+	else if(!fpressed && Keyboard::IsKeyPressed(Key::F))
+	{
+		fpressed = true;
+		m_useDebugView = !m_useDebugView;
+	}
+
 	EntityManager::Get().Collect<InputController, CameraComponent, TransformComponent, RigidbodyComponent>()
 		.Do([&](InputController& inputC, CameraComponent& cameraC, TransformComponent& transformC, RigidbodyComponent& rb)
 		{
-	
 			f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
 			CameraComponent::s_mainCamera = &cameraC;
 			cameraC.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
 			
-			auto& view = cameraC.viewMatrix;
 			auto speed = m_entityManager.GetComponent<PlayerStatsComponent>(m_playerEntity).speed;
 			if (m_moveView)
 			{
@@ -80,25 +91,36 @@ void MainPlayer::OnUpdate()
 				moveTowards += m_right;
 			}
 
-			f32 lengthVec = moveTowards.Length();
 			moveTowards = XMVector3Normalize(moveTowards);
-			rb.linearVelocity.x = moveTowards.x * speed;
-			rb.linearVelocity.z = moveTowards.z * speed;
-			//transformC.SetPosition((transformC.GetPosition() += moveTowards * speed * (f32)Time::DeltaTime()));
+			TransformComponent* useTransform = &transformC;
+
+			if (m_useDebugView)
+			{
+				useTransform = &m_entityManager.GetComponent<TransformComponent>(m_debugCamera);
+
+				useTransform->SetPosition((useTransform->GetPosition() += moveTowards * speed * (f32)Time::DeltaTime()));
+
+				if (inputC.up)
+					useTransform->SetPosition(useTransform->GetPosition() += s_globalUp * speed * (f32)Time::DeltaTime());
+
+				if (inputC.down)
+					useTransform->SetPosition(useTransform->GetPosition() -= s_globalUp * speed * (f32)Time::DeltaTime());
+			}
+			else
+			{
+				rb.linearVelocity.x = moveTowards.x * speed;
+				rb.linearVelocity.z = moveTowards.z * speed;
+				
+				if(inputC.up)
+					rb.linearVelocity.y = speed * inputC.up;
+			}
 			
-			if (inputC.up)
-			{
-				rb.linearVelocity.y = speed;
-			}
-			if (inputC.down)
-			{
-				//transformC.SetPosition(transformC.GetPosition() -= s_globalUp * speed * (f32)Time::DeltaTime());
-			}
-
 			m_up = m_forward.Cross(m_right);
-
-			view = XMMatrixLookToLH(transformC.GetPosition(), m_forward, m_up);
-			transformC.worldMatrix = view.Invert();
+			
+			auto& view = cameraC.viewMatrix;
+			view = XMMatrixLookToLH(useTransform->GetPosition(), m_forward, m_up);
+			
+			useTransform->worldMatrix = cameraC.viewMatrix.Invert();
 		});
 
 }
