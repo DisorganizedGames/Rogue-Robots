@@ -22,9 +22,16 @@ namespace DOG::gfx
 		u32 mipLevels{ 0 };
 		if (desc.mipLevels == 0)
 			mipLevels = (u32)(std::min)(log2(desc.width) + 1, log2(desc.height) + 1);
+		else
+			mipLevels = desc.mipLevels;
 		u32 numSubresources = mipLevels * desc.depth;
+		decl.currStates.resize(numSubresources);
 		for (u32 i = 0; i < numSubresources; ++i)
-			decl.currSubresourceState.insert({ i, desc.initState });
+		{
+			decl.subresources.insert(i);
+			decl.currStates[i] = desc.initState;
+		}
+
 
 		auto& res = m_resources[id];
 		res.resourceType = RGResourceType::Texture;
@@ -45,8 +52,16 @@ namespace DOG::gfx
 
 		// Initialize subresource states
 		u32 numSubresources = numMips * arraySize;
+		imported.currStates.resize(numSubresources);
+		imported.entryStates.resize(numSubresources);
+		imported.exitStates.resize(numSubresources);
 		for (u32 i = 0; i < numSubresources; ++i)
-			imported.currSubresourceState.insert({ i, entryState });
+		{
+			imported.subresources.insert(i);
+			imported.currStates[i] = entryState;
+			imported.entryStates[i] = entryState;
+			imported.exitStates[i] = exitState;
+		}
 
 		res.resource = texture.handle;
 		res.resourceType = RGResourceType::Texture;
@@ -62,7 +77,8 @@ namespace DOG::gfx
 		decl.desc = desc;
 		decl.currState = desc.initState;
 
-		decl.currSubresourceState.insert({ 0, desc.initState });
+		decl.subresources.insert(0);
+		decl.currStates.push_back(desc.initState);
 
 		auto& res = m_resources[id];
 		res.variantType = RGResourceVariant::Declared;
@@ -81,9 +97,9 @@ namespace DOG::gfx
 		imported.currState = entryState;
 		imported.importExitState = exitState;
 
-		imported.currSubresourceState.insert({ 0, entryState });
-		imported.subresourceEntryState.insert({ 0, entryState });
-		imported.subresourceExitState.insert({ 0, entryState });
+		imported.subresources.insert(0);
+		imported.entryStates.push_back(entryState);
+		imported.exitStates.push_back(exitState);
 
 
 		res.resource = buffer.handle;
@@ -287,6 +303,21 @@ namespace DOG::gfx
 			return std::get<RGResourceImported>(resource->variants).currState;
 	}
 
+	D3D12_RESOURCE_STATES RGResourceManager::GetCurrentState(RGResourceID id, u32 subresource) const
+	{
+		const auto& res = m_resources.find(id)->second;
+
+		// Get all the way back to the Declared/Imported resource
+		const RGResourceManager::RGResource* resource{ &res };
+		while (resource->variantType == RGResourceVariant::Aliased)
+			resource = &m_resources.find(std::get<RGResourceAliased>(resource->variants).prevID)->second;
+
+		if (resource->variantType == RGResourceVariant::Declared)
+			return std::get<RGResourceDeclared>(resource->variants).currStates[subresource];
+		else
+			return std::get<RGResourceImported>(resource->variants).currStates[subresource];
+	}
+
 	std::pair<u32, u32>& RGResourceManager::GetMutableUsageLifetime(RGResourceID id)
 	{
 		return m_resources.find(id)->second.usageLifetime;
@@ -341,4 +372,55 @@ namespace DOG::gfx
 				currState = state;
 		}
 	}
+
+	void RGResourceManager::SetCurrentState(RGResourceID id, u32 subresource, D3D12_RESOURCE_STATES state)
+	{
+		auto& res = m_resources.find(id)->second;
+
+		// Get all the way back to the Declared/Imported resource
+		RGResourceManager::RGResource* resource{ &res };
+		while (resource->variantType == RGResourceVariant::Aliased)
+			resource = &m_resources.find(std::get<RGResourceAliased>(resource->variants).prevID)->second;
+
+		//if (resource->variantType == RGResourceVariant::Declared)
+		//	std::get<RGResourceDeclared>(resource->variants).currState = state;
+		//else
+		//	std::get<RGResourceImported>(resource->variants).currState = state;
+
+		// This relies on Dependency Level doing read-combines
+		if (resource->variantType == RGResourceVariant::Declared)
+		{
+			auto& currState = std::get<RGResourceDeclared>(resource->variants).currStates[subresource];
+			if (IsReadState(currState))
+				currState |= state;
+			else
+				currState = state;
+		}
+		else
+		{
+			auto& currState = std::get<RGResourceImported>(resource->variants).currStates[subresource];
+			if (IsReadState(currState))
+				currState |= state;
+			else
+				currState = state;
+		}
+	}
+
+	const std::unordered_set<u32>& RGResourceManager::GetSubresources(RGResourceID id)
+	{
+		auto& res = m_resources.find(id)->second;
+
+		// Get all the way back to the Declared/Imported resource
+		RGResourceManager::RGResource* resource{ &res };
+		while (resource->variantType == RGResourceVariant::Aliased)
+			resource = &m_resources.find(std::get<RGResourceAliased>(resource->variants).prevID)->second;
+
+
+		// This relies on Dependency Level doing read-combines
+		if (resource->variantType == RGResourceVariant::Declared)
+			return std::get<RGResourceDeclared>(resource->variants).subresources;
+		else
+			return std::get<RGResourceImported>(resource->variants).subresources;
+	}
+
 }

@@ -8,15 +8,6 @@ namespace DOG::gfx
 	class GPUGarbageBin;
 
 
-	// Hash function 
-	struct SubresourceHashFunction
-	{
-		size_t operator()(const std::pair<u32, D3D12_RESOURCE_STATES>& x) const
-		{
-			return x.first;
-		}
-	};
-
 	class RGResourceManager
 	{
 		friend class RenderGraph;
@@ -43,13 +34,15 @@ namespace DOG::gfx
 		void DeclareProxy(RGResourceID id);
 	private:
 
+
 		struct RGResourceDeclared
 		{
 			std::variant<RGTextureDesc, RGBufferDesc> desc;
 			std::pair<u32, u32> resourceLifetime{ std::numeric_limits<u32>::max(), std::numeric_limits<u32>::min() };		// Lifetime of the underlying resource
 			D3D12_RESOURCE_STATES currState{ D3D12_RESOURCE_STATE_COMMON };
-
-			std::unordered_set<std::pair<u32, D3D12_RESOURCE_STATES>, SubresourceHashFunction> currSubresourceState;
+		
+			std::unordered_set<u32> subresources;
+			std::vector<D3D12_RESOURCE_STATES> currStates;
 		};
 
 		struct RGResourceImported
@@ -61,9 +54,10 @@ namespace DOG::gfx
 			// Infinite lifetime from graphs perspective
 			std::pair<u32, u32> resourceLifetime{ std::numeric_limits<u32>::max(), std::numeric_limits<u32>::min() };
 
-			std::unordered_set<std::pair<u32, D3D12_RESOURCE_STATES>, SubresourceHashFunction> subresourceEntryState;
-			std::unordered_set<std::pair<u32, D3D12_RESOURCE_STATES>, SubresourceHashFunction> subresourceExitState;
-			std::unordered_set<std::pair<u32, D3D12_RESOURCE_STATES>, SubresourceHashFunction> currSubresourceState;
+			std::unordered_set<u32> subresources;
+			std::vector<D3D12_RESOURCE_STATES> entryStates;
+			std::vector<D3D12_RESOURCE_STATES> exitStates;
+			std::vector<D3D12_RESOURCE_STATES> currStates;
 		};
 
 		struct RGResourceAliased
@@ -97,6 +91,7 @@ namespace DOG::gfx
 		RGResourceType GetResourceType(RGResourceID id) const;
 		RGResourceVariant GetResourceVariant(RGResourceID id) const;
 		D3D12_RESOURCE_STATES GetCurrentState(RGResourceID id) const;
+		D3D12_RESOURCE_STATES GetCurrentState(RGResourceID id, u32 subresource) const;
 		std::pair<u32, u32>& GetMutableUsageLifetime(RGResourceID id);		// Lifetime of specific graph resource
 
 		// ========= Declared & Alias specific
@@ -106,6 +101,11 @@ namespace DOG::gfx
 
 		// Helper for JIT state transitions
 		void SetCurrentState(RGResourceID id, D3D12_RESOURCE_STATES state);
+
+		// Subresource JIT state helpers
+		void SetCurrentState(RGResourceID id, u32 subresource, D3D12_RESOURCE_STATES state);
+
+		const std::unordered_set<u32>& GetSubresources(RGResourceID id);
 
 	private:
 		RenderDevice* m_rd{ nullptr };
