@@ -70,6 +70,7 @@ namespace DOG
 		
 		void LoadMesh(entity entity, u32 modelID);
 
+		u32 meshColliderModelID;
 		bool drawMeshColliderOverride = false;		// If user wants to draw the mesh collider instead of the model, set to true
 		bool meshNotLoaded = true;
 		RigidbodyHandle rigidbodyHandle;

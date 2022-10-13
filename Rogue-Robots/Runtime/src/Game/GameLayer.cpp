@@ -415,7 +415,7 @@ void GameLayer::LoadLevel()
 						m_entityManager.AddComponent<ModularBlockComponent>(blockEntity);
 						m_entityManager.AddComponent<MeshColliderComponent>(blockEntity,
 							blockEntity, 
-							aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + "_Col.fbx", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | DOG::AssetLoadFlag::CPUMemory)),
+							aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + "_Col.fbx", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::CPUMemory | DOG::AssetLoadFlag::GPUMemory))),
 							false);		// Set this to true if you want to see colliders only in wireframe
 					}
 

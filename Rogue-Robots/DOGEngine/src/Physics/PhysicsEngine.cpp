@@ -537,6 +537,8 @@ namespace DOG
 
 	MeshColliderComponent::MeshColliderComponent(entity entity, u32 modelID, bool drawOverride) noexcept
 	{	
+		meshColliderModelID = modelID;
+
 		drawMeshColliderOverride = drawOverride;
 		AssetFlags modelFlags = AssetManager::Get().GetAssetFlags(modelID);
 

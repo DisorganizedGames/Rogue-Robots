@@ -127,8 +127,13 @@ namespace DOG
 							if (EntityManager::Get().HasComponent<MeshColliderComponent>(e) &&
 								EntityManager::Get().GetComponent<MeshColliderComponent>(e).drawMeshColliderOverride)
 							{
-								for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
-									m_renderer->SubmitMeshWireframeNoFaceCulling(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+								u32 meshColliderModelID = EntityManager::Get().GetComponent<MeshColliderComponent>(e).meshColliderModelID;
+								ModelAsset * meshColliderModel = AssetManager::Get().GetAsset<ModelAsset>(meshColliderModelID);
+								if (meshColliderModel && meshColliderModel->gfxModel)
+								{
+									for (u32 i = 0; i < meshColliderModel->gfxModel->mesh.numSubmeshes; ++i)
+										m_renderer->SubmitMeshWireframeNoFaceCulling(meshColliderModel->gfxModel->mesh.mesh, i, meshColliderModel->gfxModel->mats[i], transformC);
+								}
 							}
 							else
 							{
