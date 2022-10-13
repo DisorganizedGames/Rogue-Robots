@@ -1,10 +1,21 @@
 #pragma once
 #include "RGTypes.h"
 
+
 namespace DOG::gfx
 {
 	class RenderDevice;
 	class GPUGarbageBin;
+
+
+	// Hash function 
+	struct SubresourceHashFunction
+	{
+		size_t operator()(const std::pair<u32, D3D12_RESOURCE_STATES>& x) const
+		{
+			return x.first;
+		}
+	};
 
 	class RGResourceManager
 	{
@@ -37,6 +48,8 @@ namespace DOG::gfx
 			std::variant<RGTextureDesc, RGBufferDesc> desc;
 			std::pair<u32, u32> resourceLifetime{ std::numeric_limits<u32>::max(), std::numeric_limits<u32>::min() };		// Lifetime of the underlying resource
 			D3D12_RESOURCE_STATES currState{ D3D12_RESOURCE_STATE_COMMON };
+
+			std::unordered_set<std::pair<u32, D3D12_RESOURCE_STATES>, SubresourceHashFunction> currSubresourceState;
 		};
 
 		struct RGResourceImported
@@ -47,6 +60,10 @@ namespace DOG::gfx
 			
 			// Infinite lifetime from graphs perspective
 			std::pair<u32, u32> resourceLifetime{ std::numeric_limits<u32>::max(), std::numeric_limits<u32>::min() };
+
+			std::unordered_set<std::pair<u32, D3D12_RESOURCE_STATES>, SubresourceHashFunction> subresourceEntryState;
+			std::unordered_set<std::pair<u32, D3D12_RESOURCE_STATES>, SubresourceHashFunction> subresourceExitState;
+			std::unordered_set<std::pair<u32, D3D12_RESOURCE_STATES>, SubresourceHashFunction> currSubresourceState;
 		};
 
 		struct RGResourceAliased
