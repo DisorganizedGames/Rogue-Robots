@@ -46,6 +46,28 @@ namespace DOG::gfx
 		};
 
 	private:
+		struct CommonPassIO
+		{
+			std::optional<RGResourceID> originalID;				// If aliased, holds original resource
+			RGResourceID id;
+			RGResourceType type{ RGResourceType::Texture };
+			RGResourceView viewID;
+			std::optional<std::variant<TextureViewDesc, BufferViewDesc>> viewDesc;
+			D3D12_RESOURCE_STATES desiredState{ D3D12_RESOURCE_STATE_COMMON };
+		};
+
+		struct PassInput : CommonPassIO
+		{
+			// PassInput only holds what CommonPassIO already have
+		};
+
+		struct PassOutput : CommonPassIO
+		{
+			std::optional<RenderPassAccessType> rpAccessType;			// Render Target / Depth
+			std::optional<RenderPassAccessType> rpStencilAccessType;	// Stencil
+			bool aliasWrite{ false };
+		};
+
 		struct PassIO
 		{
 			// I/O data
