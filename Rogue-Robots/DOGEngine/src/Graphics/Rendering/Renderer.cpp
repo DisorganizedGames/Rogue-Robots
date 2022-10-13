@@ -371,10 +371,7 @@ namespace DOG::gfx
 		//m_projMat = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_renderWidth / m_renderHeight, 0.1f, 800.f);
 	}
 
-	void Renderer::BeginGUI()
-	{
-		m_imgui->BeginFrame();
-	}
+
 
 	void Renderer::SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
 	{
@@ -1074,6 +1071,11 @@ namespace DOG::gfx
 	{
 		m_rd->Flush();
 		m_bin->ForceClear();
+	}
+
+	void Renderer::BeginGUI()
+	{
+		m_imgui->BeginFrame();
 	}
 
 	void Renderer::EndGUI()
