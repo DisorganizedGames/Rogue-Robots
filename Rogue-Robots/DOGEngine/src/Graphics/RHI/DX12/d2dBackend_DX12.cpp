@@ -134,7 +134,7 @@ DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
             hr = bformat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
             HR_VFY(hr);
             hr = bformat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-            
+            HR_VFY(hr);
         }
     }
 }

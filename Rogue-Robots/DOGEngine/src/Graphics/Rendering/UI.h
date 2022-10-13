@@ -13,8 +13,6 @@ class UIScene;
 class UI
 {
    public:
-   std::unique_ptr<DOG::gfx::D2DBackend_DX12> m_d2d; //The thing that renders everything
-   UINT m_width, m_height;
    UI(DOG::gfx::RenderDevice* m_rd, DOG::gfx::Swapchain* sc, u_int maxFramesInFlight, HWND hwnd);
    ~UI();
    void DrawUI();
@@ -23,8 +21,10 @@ class UI
    UINT GenerateUID();
    UINT AddScene();
    void RemoveScene(UINT sceneID);
+   std::unique_ptr<DOG::gfx::D2DBackend_DX12> m_d2d; //The thing that renders everything
 
    private:
+   UINT m_width, m_height;
    UINT menuID, gameID;
    UINT QuerryScene(UINT sceneID);
    std::vector<std::unique_ptr<UIScene>> m_scenes;
