@@ -18,6 +18,14 @@ namespace DOG::gfx
 		decl.desc = desc;
 		decl.currState = desc.initState;
 
+		// Initialize subresource states
+		u32 mipLevels{ 0 };
+		if (desc.mipLevels == 0)
+			mipLevels = (u32)(std::min)(log2(desc.width) + 1, log2(desc.height) + 1);
+		u32 numSubresources = mipLevels * desc.depth;
+		for (u32 i = 0; i < numSubresources; ++i)
+			decl.currSubresourceState.insert({ i, desc.initState });
+
 		auto& res = m_resources[id];
 		res.resourceType = RGResourceType::Texture;
 		res.variantType = RGResourceVariant::Declared;
