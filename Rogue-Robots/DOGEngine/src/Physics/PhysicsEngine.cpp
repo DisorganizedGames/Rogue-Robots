@@ -218,7 +218,7 @@ namespace DOG
 		s_physicsEngine.CheckRigidbodyCollisions();
 
 		//Because for now we do not have any callbacks to c++ we only have to check if entity have a ScriptComponent
-		EntityManager::Get().Collect<RigidbodyComponent, ScriptComponent>().Do([&](entity obj0entity, RigidbodyComponent& rigidbody, ScriptComponent&)
+		EntityManager::Get().Collect<RigidbodyComponent, ScriptComponent>().Do([&](entity obj0Entity, RigidbodyComponent& rigidbody, ScriptComponent&)
 			{
 				//Get rigidbody
 				auto* rigidBody = s_physicsEngine.GetRigidbodyColliderData(rigidbody.rigidbodyHandle);
@@ -239,17 +239,17 @@ namespace DOG
 						if (it->second.activeCollision != beforeCollision)
 						{
 							//Get RigidbodyColliderData to get the corresponding entities
-							entity obj1entity = 0;
+							entity obj1Entity = 0;
 							if (!it->second.ghost)
-								obj1entity = PhysicsEngine::GetRigidbodyColliderData(it->second.collisionbodyHandle)->rigidbodyEntity;
+								obj1Entity = PhysicsEngine::GetRigidbodyColliderData(it->second.collisionBodyHandle)->rigidbodyEntity;
 							else
-								obj1entity = PhysicsEngine::GetGhostObjectData((GhostObjectHandle)(it->second.collisionbodyHandle.handle))->ghostObjectEntity;
+								obj1Entity = PhysicsEngine::GetGhostObjectData((GhostObjectHandle)(it->second.collisionBodyHandle.handle))->ghostObjectEntity;
 
 							//Fix later
 							//if (it->second.activeCollision && rigidbody.onCollisionEnter != nullptr)
 							//	rigidbody.onCollisionEnter(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
 							if (it->second.activeCollision)
-								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0entity, "OnCollisionEnter", obj1entity);
+								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0Entity, "OnCollisionEnter", obj1Entity);
 
 							//Set collisionCheck false for next collision check
 							it->second.collisionCheck = false;
@@ -260,7 +260,7 @@ namespace DOG
 								//if (rigidbody.onCollisionExit != nullptr)
 								//	rigidbody.onCollisionExit(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
 								//else
-								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0entity, "OnCollisionExit", obj1entity);
+								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0Entity, "OnCollisionExit", obj1Entity);
 
 								//Remove the collision because we do not need to keep track of it anymore
  								collisions->second.erase(it++);
@@ -584,16 +584,16 @@ namespace DOG
 
 	void PhysicsEngine::CheckRigidbodyCollisions()
 	{
-		int num_manifolds = s_physicsEngine.m_dynamicsWorld->getDispatcher()->getNumManifolds();
-		for (int i = 0; i < num_manifolds; i++)
+		int numManifolds = s_physicsEngine.m_dynamicsWorld->getDispatcher()->getNumManifolds();
+		for (int i = 0; i < numManifolds; i++)
 		{
-			btPersistentManifold* contact_manifold = s_physicsEngine.m_dynamicsWorld->getDispatcher()->getManifoldByIndexInternal(i);
-			btCollisionObject* obj0 = (btCollisionObject*)(contact_manifold->getBody0());
-			btCollisionObject* obj1 = (btCollisionObject*)(contact_manifold->getBody1());
+			btPersistentManifold* contactManifold = s_physicsEngine.m_dynamicsWorld->getDispatcher()->getManifoldByIndexInternal(i);
+			btCollisionObject* obj0 = (btCollisionObject*)(contactManifold->getBody0());
+			btCollisionObject* obj1 = (btCollisionObject*)(contactManifold->getBody1());
 
-			for (int j = 0; j < contact_manifold->getNumContacts(); j++)
+			for (int j = 0; j < contactManifold->getNumContacts(); j++)
 			{
-				btManifoldPoint& pt = contact_manifold->getContactPoint(j);
+				btManifoldPoint& pt = contactManifold->getContactPoint(j);
 				if (pt.getDistance() < 0.0f)
 				{
 					//Get obj0 rigidbody handle
@@ -632,7 +632,7 @@ namespace DOG
 						//This is little bit sus but RigidbodyHandle and GhostObjectHandle only have u64 in them
 						RigidbodyHandle handle;
 						handle.handle = obj1CollisionHandle;
-						collisionData.collisionbodyHandle = handle;
+						collisionData.collisionBodyHandle = handle;
 						collisions->second.insert({ obj1Handle, collisionData });
 					}
 

@@ -53,7 +53,7 @@ namespace DOG
 		bool activeCollision = false;
 		bool ghost = false;
 		//This can be a rigidbody and a ghost
-		RigidbodyHandle collisionbodyHandle;
+		RigidbodyHandle collisionBodyHandle;
 	};
 
 	struct GhostObjectData
