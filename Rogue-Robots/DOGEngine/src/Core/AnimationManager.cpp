@@ -39,6 +39,8 @@ namespace DOG
 				});
 			return;
 		}
+		static bool open = true;
+		SpawnControlWindow(open);
 		EntityManager::Get().Collect<ModelComponent, AnimationComponent, TransformComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC, TransformComponent& tfC)
 		{
 			ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
@@ -47,14 +49,20 @@ namespace DOG
 				if (m_imguiTestMovement)
 				{
 					UpdateMovementAnimation(animatorC, (f32)Time::DeltaTime());
-					auto trs = CalculateTranslation(m_rootBoneIdx, model->animation, animatorC) - m_previousTrans;
+					auto trs = CalculateTranslation(m_rootBoneIdx, model->animation, animatorC) * 0.01f;
+					trs *= m_imguiMovementSpeed < 0.f ? -1.f : 1.f;
 					m_previousTrans = trs;
-					XMVECTOR tst = { 0.0f, 0.01f, 0.0f };
-					tfC.SetPosition(XMVectorAdd(tfC.GetPosition(), tst));
+					tfC.SetPosition(XMVectorAdd(tfC.GetPosition(), trs));
+					m_imguiTmpScale ? tfC.SetScale({ 1.f, 1.f, 1.f }) : tfC.SetScale({ .01f, .01f, .01f });
 					auto blyat = 0;
 				}
 				else
+				{
 					UpdateClips(animatorC, (f32)Time::DeltaTime());
+					auto trs = CalculateTranslation(m_rootBoneIdx, model->animation, animatorC) * 0.01f;
+					trs *= m_imguiMovementSpeed < 0.f ? -1.f : 1.f;
+					tfC.SetPosition(XMVectorAdd(tfC.GetPosition(), trs));
+				}
 				//UpdateAnimationComponent(model->animation.animations, animatorC, (f32)Time::DeltaTime());
 				static bool firstTime = true;
 				if(firstTime)
@@ -120,6 +128,7 @@ namespace DOG
 				};
 				ImGui::Checkbox("Apply Root translation", &m_imguiRootTranslation);
 				ImGui::Checkbox("testMovement", &m_imguiTestMovement);
+				ImGui::Checkbox("large?", &m_imguiTmpScale);
 				if (m_imguiTestMovement)
 				{
 					ImGui::SliderFloat(setName("movementSpeed").c_str(), &m_imguiMovementSpeed, -3.0f, 3.0f, "%.5f");
@@ -228,16 +237,26 @@ namespace DOG
 		for (i32 i = 1; i < rig.nodes.size(); ++i)
 		{
 			auto ntf = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
+			auto ntf2 = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
 
 			const auto sca = CalculateScaling(i, rig, animator);
 			const auto rot = CalculateRotation(i, rig, animator);
-			const auto tra = i>m_rootBoneIdx ? CalculateTranslation(i, rig, animator) : XMVECTOR{};
-
+			/*AXEL*/
+			const auto tra = CalculateTranslation(i, rig, animator);
+			if (i == 2)
+			{
+				auto asd = 0;
+				fromKeyT = CalculateTranslation(i, rig, animator);
+			}
 			if (i < m_imguiMinMaskIdx || i > m_imguiMaxMaskIdx)
 			{
-				ntf = XMMatrixTranspose(XMMatrixScalingFromVector(sca) *
-						XMMatrixRotationQuaternion(rot) *
-						XMMatrixTranslationFromVector(tra));
+				if (i > m_rootBoneIdx) // apply translation
+					ntf = XMMatrixTranspose(XMMatrixScalingFromVector(sca) * XMMatrixRotationQuaternion(rot) * XMMatrixTranslationFromVector(tra));
+				else
+					ntf = XMMatrixTranspose(XMMatrixScalingFromVector(sca) * XMMatrixRotationQuaternion(rot) * XMMatrixTranslationFromVector(nullT));
+				
+				if (i > 2)
+					ntf2 = XMMatrixTranspose(XMMatrixScalingFromVector(sca) * XMMatrixRotationQuaternion(rot) * XMMatrixTranslationFromVector(tra));
 			}
 
 #if defined _DEBUG
@@ -247,18 +266,40 @@ namespace DOG
 			ntf *= imguiMatrix;
 #endif
 			hereditaryTFs.push_back(ntf);
+			investigate.push_back(ntf2);
 		}
 		// Apply parent Transformation
 		for (size_t i = 1; i < hereditaryTFs.size(); ++i)
+		{
+			XMVECTOR preS = {}, postS = {};
+			XMVECTOR preR = {}, postR = {};
+			XMVECTOR preT = {}, postT = {};
+			XMMatrixDecompose(&preS, &preR, &preT, XMMatrixTranspose(hereditaryTFs[2]));
+			XMMatrixDecompose(&postS, &postR, &postT, XMMatrixTranspose(hereditaryTFs[2]));
 			hereditaryTFs[i] = hereditaryTFs[rig.nodes[i].parentIdx] * hereditaryTFs[i];
+			investigate[i] = investigate[rig.nodes[i].parentIdx] * investigate[i];
 
-		const auto rootTF = DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation);
+			auto ahfjag = 0;
+		}
+		const auto rootTF = XMLoadFloat4x4(&rig.nodes[0].transformation);
 		for (size_t n = 0; n < rig.nodes.size(); ++n)
 		{
 			auto joint = rig.nodes[n].jointIdx;
 			if (joint != -1)
-				DirectX::XMStoreFloat4x4(&m_vsJoints[animator.offset + joint],
-					rootTF * hereditaryTFs[n] * DirectX::XMLoadFloat4x4(&rig.jointOffsets[joint]));
+				XMStoreFloat4x4(&m_vsJoints[animator.offset + joint],
+					rootTF * hereditaryTFs[n] * XMLoadFloat4x4(&rig.jointOffsets[joint]));
+			if(n == 2)
+			{
+				XMVECTOR nullT = { 0, 0, 0, 0 };
+				XMVECTOR wo_s = {}, w_s = {}, sJnt = {}, sFinal = {};
+				XMVECTOR wo_r = {}, w_r = {}, rJnt = {}, rFinal = {};
+				XMVECTOR wo_t = {}, w_t = {}, tJnt = {}, tFinal = {};
+				XMMatrixDecompose(&sJnt, &rJnt, &tJnt, XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[animator.offset + joint])));
+				XMMatrixDecompose(&wo_s, &wo_r, &wo_t, XMMatrixTranspose(hereditaryTFs[n]));
+				XMMatrixDecompose(&w_s, &w_r, &w_t, XMMatrixTranspose(investigate[n]));
+				auto withT = hereditaryTFs[n];
+				auto withoutT = investigate[n];
+			}
 		}
 	}
 
