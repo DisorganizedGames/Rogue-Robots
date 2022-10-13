@@ -26,7 +26,7 @@ UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HW
    auto h = std::make_unique<UIHealthBar>(40.f, m_height - 60.f, 250.f, 30.f, *m_d2d, hID);
    AddUIlEmentToScene(gameID, std::move(h));
    auto backID = GenerateUID();
-   auto back = std::make_unique<UIBackground>(m_width, m_height, *m_d2d, backID);
+   auto back = std::make_unique<UIBackground>((FLOAT)m_width, (FLOAT)m_height, *m_d2d, backID);
    AddUIlEmentToScene(menuID, std::move(back));
    auto bID = GenerateUID();
    auto b = std::make_unique<UIButton>(m_width / 2.f - 150.f / 2, m_height / 2 - 60.f / 2, 150.f, 60.f, std::wstring(L"Play"), std::function<void()>(buttonfunc), bID);
@@ -300,6 +300,7 @@ void UIHealthBar::Draw(DOG::gfx::D2DBackend_DX12& m_d2d)
 }
 void UIHealthBar::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
 {
+   UNREFERENCED_PARAMETER(m_d2d);
    auto val = abs(sinf(m_value += 0.01f));
    m_bar.right = val * (m_barWidth)+m_bar.left - 1.0f;
    m_text = std::to_wstring((UINT)(val * 100.f + 1.f)) + L'%';
@@ -348,5 +349,6 @@ void UIBackground::Draw(DOG::gfx::D2DBackend_DX12& m_d2d)
 }
 void UIBackground::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
 {
+   UNREFERENCED_PARAMETER(m_d2d);
 
 }
