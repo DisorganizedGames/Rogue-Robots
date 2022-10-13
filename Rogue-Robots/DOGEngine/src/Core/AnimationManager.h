@@ -14,7 +14,7 @@ namespace DOG
 	{
 	private:
 		// tmp
-		static constexpr u8 MAX_ANIMATIONS = 2;
+		static constexpr u8 MAX_ANIMATIONS = 3;
 		static constexpr i32 m_noAnimation = -1;
 		static constexpr u8 m_animationNumeroUno = 0;
 		static constexpr u8 m_animationNumeroDos = 1;
@@ -33,14 +33,14 @@ namespace DOG
 	private:
 		void UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
 		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator);
+
 		void UpdateMovementAnimation(DOG::AnimationComponent& ac, const f32 dt);
+		void UpdateMovementAnimation2(DOG::AnimationComponent& ac, const f32 dt);
 
 		DirectX::FXMVECTOR GetKeyValue(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick);
-		DirectX::FXMMATRIX CalculateNodeTransformation(const DOG::AnimationData&, i32 nodeID, f32 animTick);
-		DirectX::FXMMATRIX CalculateBlendTransformation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
-
 		DirectX::FXMVECTOR CalculateScaling(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 		DirectX::FXMVECTOR CalculateRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
+		DirectX::FXMVECTOR CalculateRotation2(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 		DirectX::FXMVECTOR CalculateTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 
 		void UpdateClips(DOG::AnimationComponent& ac, const f32 dt);
@@ -49,7 +49,6 @@ namespace DOG
 		void UpdateLinearGT(AnimationComponent::AnimationClip& clip, const f32 globalTime, const f32 dt);
 		std::vector<ImportedRig*> m_rigs;
 	private:
-		DirectX::XMVECTOR m_previousTrans = {};
 		bool m_bonesLoaded = false;
 		i32 m_imguiMinMaskIdx = 100;
 		i32 m_imguiMaxMaskIdx = 0;
@@ -63,9 +62,12 @@ namespace DOG
 		static constexpr i32 m_modeTransitionLinearBlend = 1;
 		static constexpr i32 m_modeTransitionBezierBlend = 2;
 		// IMGUI RELATED
-		bool m_imguiTmpScale = true;
+		DirectX::FXMMATRIX ImguiTransform(i32 joint);
+
+		bool m_imguiResetPos = false;
 		bool m_imguiTestMovement = true;
 		f32 m_imguiMovementSpeed = 0.0f;
+		f32 m_imguiMovementAngle = 0.0f;
 		bool m_imguiPause = false;
 		bool m_imguiMatching = false;
 		i32 m_imguiProfilePerformUpdate = 1;
