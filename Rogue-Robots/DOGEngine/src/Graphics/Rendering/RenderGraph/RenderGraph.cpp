@@ -101,23 +101,54 @@ namespace DOG::gfx
 		};
 		m_bin->PushDeferredDeletion(delFunc);
 
+		//// Clean up views
+		//for (const auto& pass : m_sortedPasses)
+		//{
+		//	for (const auto& view : pass->passResources.m_bufferViews)
+		//	{
+		//		auto df = [rd = m_rd, view = view]()
+		//		{
+		//			rd->FreeView(view);
+		//		};
+		//		m_bin->PushDeferredDeletion(df);
+		//	}
+
+		//	for (const auto& view : pass->passResources.m_textureViews)
+		//	{
+		//		auto df = [rd = m_rd, view = view]()
+		//		{
+		//			rd->FreeView(view);
+		//		};
+		//		m_bin->PushDeferredDeletion(df);
+		//	}
+
+		//	if (pass->rp)
+		//	{
+		//		auto df = [rd = m_rd, rp = *pass->rp]()
+		//		{
+		//			rd->FreeRenderPass(rp);
+		//		};
+		//		m_bin->PushDeferredDeletion(df);
+		//	}
+		//}
+
 		// Clean up views
 		for (const auto& pass : m_sortedPasses)
 		{
-			for (const auto& view : pass->passResources.m_bufferViews)
 			{
-				auto df = [rd = m_rd, view = view]()
+				auto df = [rd = m_rd, views = std::move(pass->passResources.m_bufferViews)]() mutable
 				{
-					rd->FreeView(view);
+					for (const auto& view : views)
+						rd->FreeView(view);
 				};
 				m_bin->PushDeferredDeletion(df);
 			}
 
-			for (const auto& view : pass->passResources.m_textureViews)
 			{
-				auto df = [rd = m_rd, view = view]()
+				auto df = [rd = m_rd, views = std::move(pass->passResources.m_textureViews)]() mutable
 				{
-					rd->FreeView(view);
+					for (const auto& view : views)
+						rd->FreeView(view);
 				};
 				m_bin->PushDeferredDeletion(df);
 			}
@@ -131,6 +162,7 @@ namespace DOG::gfx
 				m_bin->PushDeferredDeletion(df);
 			}
 		}
+
 	}
 
 	void RenderGraph::AddProxies()
@@ -455,7 +487,6 @@ namespace DOG::gfx
 					passResources.m_textureViews.push_back(view);
 					passResources.m_textures[lookupID] = resource;
 
-
 					// Read only DSV
 					if (viewDesc.viewType == ViewType::DepthStencil)
 					{
@@ -467,31 +498,21 @@ namespace DOG::gfx
 							depthAccesses.first, depthAccesses.second,
 							stencilAccesses.first, stencilAccesses.second);
 					}
-					// RTV as input not allowed! (This should be caught earlier)
-					else if (viewDesc.viewType == ViewType::RenderTarget)
-					{
-						assert(false);
-					}
 					else 
 					{
-						//passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
 						passResources.m_views[input.viewID] = m_rd->GetGlobalDescriptor(view);
 						passResources.m_textureViewsLookup[input.viewID] = view;
-
 					}
 				}
 				else
 				{
 					const auto& viewDesc = std::get<BufferViewDesc>(*input.viewDesc);
 
-					// @todo: do we need view checks?
-
 					// Create view and immediately convert to global descriptor index
 					const auto resource = Buffer(m_resMan->GetResource(input.id));
 					auto view = m_rd->CreateView(resource, viewDesc);
 					passResources.m_bufferViews.push_back(view);
 					passResources.m_buffers[lookupID] = resource;
-
 					passResources.m_views[input.viewID] = m_rd->GetGlobalDescriptor(view);
 					passResources.m_bufferViewsLookup[input.viewID] = view;
 				}
@@ -616,6 +637,8 @@ namespace DOG::gfx
 
 	void RenderGraph::PassBuilder::WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc)
 	{
+		assert(desc.viewType == ViewType::RenderTarget);
+
 		// Automatically aliases if same resource already exists
 		if (m_globalData.writes.contains(id))
 		{
@@ -626,9 +649,6 @@ namespace DOG::gfx
 			// Explicitly connects prevID to newID
 			const auto& prevID = ids.first;
 			const auto& newID = ids.second;
-
-			// Write aliased render target
-			assert(desc.viewType == ViewType::RenderTarget);
 
 			assert(!m_globalData.writes.contains(newID));
 			m_globalData.writes.insert(newID);
@@ -654,7 +674,6 @@ namespace DOG::gfx
 		}
 		else
 		{
-			assert(desc.viewType == ViewType::RenderTarget);
 			m_globalData.writeCount[id] = 1;
 
 			PassIO output;

@@ -32,6 +32,7 @@ namespace DOG::gfx
 		RenderPass CreateRenderPass(const RenderPassDesc& desc);
 		BufferView CreateView(Buffer buffer, const BufferViewDesc& desc);
 		TextureView CreateView(Texture texture, const TextureViewDesc& desc);
+		MemoryPool CreateMemoryPool(const MemoryPoolDesc& desc);
 
 		// Free/recycle when appropriate! Sensitive resources that may be in-flight
 		void FreeBuffer(Buffer handle);
@@ -40,6 +41,7 @@ namespace DOG::gfx
 		void FreeRenderPass(RenderPass handle);
 		void FreeView(BufferView handle);
 		void FreeView(TextureView handle);
+		void FreeMemoryPool(MemoryPool handle);
 		void RecycleSync(SyncReceipt receipt);
 		void RecycleCommandList(CommandList handle);
 
@@ -229,6 +231,12 @@ namespace DOG::gfx
 			TextureDesc desc;
 		};
 
+		struct MemoryPool_Storage
+		{
+			MemoryPoolDesc desc;
+
+		};
+
 		struct BufferView_Storage
 		{
 			Buffer buf;
@@ -304,6 +312,7 @@ namespace DOG::gfx
 
 		std::vector<std::optional<Buffer_Storage>> m_buffers;
 		std::vector<std::optional<Texture_Storage>> m_textures;
+		std::vector<std::optional<MemoryPool_Storage>> m_memoryPools;
 		std::vector<std::optional<BufferView_Storage>> m_bufferViews;
 		std::vector<std::optional<TextureView_Storage>> m_textureViews;
 		std::vector<std::optional<Pipeline_Storage>> m_pipelines;

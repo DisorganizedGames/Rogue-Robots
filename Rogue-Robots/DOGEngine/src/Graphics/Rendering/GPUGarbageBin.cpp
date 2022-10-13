@@ -7,6 +7,7 @@ namespace DOG::gfx
 	GPUGarbageBin::GPUGarbageBin(u8 maxFramesInFlight) :
 		m_maxFramesInFlight(maxFramesInFlight)
 	{
+		m_deletes2.resize(maxFramesInFlight);
 	}
 
 	void GPUGarbageBin::PushDeferredDeletion(const std::function<void()>& deletionFunc)
@@ -14,12 +15,13 @@ namespace DOG::gfx
 		ZoneScopedN("GPU Garbage Bin: Add Deferred Deletion");
 
 
-		Deletion_Storage storage{};
-		storage.frameIdxOnRequest = m_currFrameIdx;
-		storage.func = deletionFunc;
+		//Deletion_Storage storage{};
+		//storage.frameIdxOnRequest = m_currFrameIdx;
+		//storage.func = deletionFunc;
 
-		m_deletes.push(storage);
-		//m_deletes.push_front(storage);
+		//m_deletes.push(storage);
+
+		m_deletes2[m_currFrameIdx].push_back(deletionFunc);
 	}
 
 	void GPUGarbageBin::BeginFrame()
@@ -32,30 +34,23 @@ namespace DOG::gfx
 			Assuming deletes are always grouped contiguously:
 			[ 0, 0, 0, 1, 1, 1, 2, 2, 2, 0, 0, 0, ...]
 		*/
-		while (!m_deletes.empty())
-		{
-			ZoneNamedN(BinPerDelete, "GPU Garbage Bin: Per Deferred Deletion", true);
-			auto storage = std::move(m_deletes.front());
-			if (storage.frameIdxOnRequest != m_currFrameIdx)
-				break;
-
-			storage.func();	// delete
-			m_deletes.pop();
-		}
-
 		//while (!m_deletes.empty())
 		//{
 		//	ZoneNamedN(BinPerDelete, "GPU Garbage Bin: Per Deferred Deletion", true);
-		//	auto& storage = m_deletes.back();
+		//	auto& storage = m_deletes.front();
 		//	if (storage.frameIdxOnRequest != m_currFrameIdx)
 		//		break;
 
-		//	{
-		//		ZoneNamedN(BinFunc, "GPU Garbage Bin: Lambda Func", true);
-		//		storage.func();
-		//	}
-		//	m_deletes.pop_back();
+		//	storage.func();	// delete
+		//	m_deletes.pop();
 		//}
+
+		for (const auto& f : m_deletes2[m_currFrameIdx])
+		{
+			ZoneNamedN(BinPerDelete, "GPU Garbage Bin: Per Deferred Deletion", true);
+			f();
+		}
+		m_deletes2[m_currFrameIdx].clear();
 	}
 
 	void GPUGarbageBin::EndFrame()
@@ -65,18 +60,18 @@ namespace DOG::gfx
 
 	void GPUGarbageBin::ForceClear()
 	{
-		while (!m_deletes.empty())
-		{
-			auto& storage = m_deletes.front();
-			storage.func();	// delete
-			m_deletes.pop();
-		}
-
 		//while (!m_deletes.empty())
 		//{
-		//	auto& storage = m_deletes.back();
-		//	storage.func();
-		//	m_deletes.pop_back();
+		//	auto& storage = m_deletes.front();
+		//	storage.func();	// delete
+		//	m_deletes.pop();
 		//}
+
+		for (auto& deletes : m_deletes2)
+		{
+			for (const auto& f : deletes)
+				f();
+			deletes.clear();
+		}
 	}
 }

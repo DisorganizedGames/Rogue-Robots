@@ -424,6 +424,19 @@ namespace DOG::gfx
 		return handle;
 	}
 
+	MemoryPool RenderDevice_DX12::CreateMemoryPool(const MemoryPoolDesc& desc)
+	{
+		ComPtr<D3D12MA::Pool> pool;
+		D3D12MA::POOL_DESC pd{};
+		HRESULT hr = m_dma->CreatePool(&pd, pool.GetAddressOf());
+		HR_VFY(hr);
+		assert(false);
+
+
+
+		return MemoryPool();
+	}
+
 	void RenderDevice_DX12::FreeBuffer(Buffer handle)
 	{
 		HandleAllocator::FreeStorage(m_rhp, m_buffers, handle);
@@ -460,6 +473,12 @@ namespace DOG::gfx
 		if (res.uavClear)
 			m_descriptorMgr->free_cbv_srv_uav_cpu(&*res.uavClear);
 		HandleAllocator::FreeStorage(m_rhp, m_textureViews, handle);
+	}
+
+	void RenderDevice_DX12::FreeMemoryPool(MemoryPool handle)
+	{
+		HandleAllocator::FreeStorage(m_rhp, m_memoryPools, handle);
+		assert(false);		// cleanup to D3D12MA?
 	}
 
 	void RenderDevice_DX12::RecycleSync(SyncReceipt receipt)
