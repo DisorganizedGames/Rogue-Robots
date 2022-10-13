@@ -321,4 +321,30 @@ namespace DOG::gfx
 				currState = state;
 		}
 	}
+	void RGResourceManager::SetCurrentState2(RGResourceID id, D3D12_RESOURCE_STATES state)
+	{
+		auto& res = m_resources.find(id)->second;
+
+		// Get all the way back to the Declared/Imported resource
+		RGResourceManager::RGResource* resource{ &res };
+		while (resource->variantType == RGResourceVariant::Aliased)
+			resource = &m_resources.find(std::get<RGResourceAliased>(resource->variants).prevID)->second;
+
+		//if (resource->variantType == RGResourceVariant::Declared)
+		//	std::get<RGResourceDeclared>(resource->variants).currState = state;
+		//else
+		//	std::get<RGResourceImported>(resource->variants).currState = state;
+
+		// This relies on Dependency Level doing read-combines
+		if (resource->variantType == RGResourceVariant::Declared)
+		{
+			auto& currState = std::get<RGResourceDeclared>(resource->variants).currState;
+			currState = state;
+		}
+		else
+		{
+			auto& currState = std::get<RGResourceImported>(resource->variants).currState;
+			currState = state;
+		}
+	}
 }

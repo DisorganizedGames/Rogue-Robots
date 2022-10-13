@@ -90,6 +90,9 @@ namespace DOG::gfx
 		// Helper for JIT state transitions
 		void SetCurrentState(RGResourceID id, D3D12_RESOURCE_STATES state);
 
+
+		void SetCurrentState2(RGResourceID id, D3D12_RESOURCE_STATES state);
+
 	private:
 		RenderDevice* m_rd{ nullptr };
 		GPUGarbageBin* m_bin{ nullptr };

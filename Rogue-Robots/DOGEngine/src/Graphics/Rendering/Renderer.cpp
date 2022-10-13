@@ -921,7 +921,7 @@ namespace DOG::gfx
 
 		// Test compute on Lit HDR
 		// Uncomment to enable the test compute effect!
-		//m_testComputeEffect->Add(rg);
+		m_testComputeEffect->Add(rg);
 
 		if(m_bloomEffect) 
 			m_bloomEffect->Add(rg);
@@ -951,6 +951,9 @@ namespace DOG::gfx
 
 					passData.litHDRView = builder.ReadResource(RG_RESOURCE(LitHDR), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+					passData.bogusView = builder.ReadResource(RG_RESOURCE(LitHDR), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
 					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
 
