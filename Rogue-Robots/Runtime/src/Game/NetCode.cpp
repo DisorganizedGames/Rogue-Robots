@@ -131,7 +131,7 @@ void NetCode::Recive()
 		{
 			std::cout << "Enter ip address to host('d' to connect to default ip address): ";
 			std::string inputString;
-			fseek(stdin, 0, SEEK_END);
+			//fseek(stdin, 0, SEEK_END);
 			std::cin >> inputString;
 			if (inputString[0] == 'd')
 			{
@@ -163,7 +163,7 @@ void NetCode::Recive()
 		if (start == FALSE)
 		{
 			std::cout << "Failed input, try agiain" << std::endl;
-			fseek(stdin, 0, SEEK_END);
+			//fseek(stdin, 0, SEEK_END);
 		}
 	}
 	m_threadUdp = std::thread(&NetCode::ReciveUdp, this);
