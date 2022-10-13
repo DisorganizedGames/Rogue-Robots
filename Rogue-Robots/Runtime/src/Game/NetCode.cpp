@@ -258,7 +258,7 @@ void NetCode::Recive()
 						}
 					}
 				}
-				delete[] reciveBuffer;
+				
 			}
 			delete[] reciveBuffer;
 		}
