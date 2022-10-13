@@ -148,7 +148,7 @@ void Server::ServerReciveConnectionsTCP(SOCKET listenSocket)
 				{
 					bool turn = true;
 					std::cout << "Server: Connection Accepted" << std::endl;
-					//setsockopt(clientSocket, SOL_SOCKET, TCP_NODELAY, (char*)&turn, sizeof(bool));
+					setsockopt(clientSocket, SOL_SOCKET, TCP_NODELAY, (char*)&turn, sizeof(bool));
 					WSAPOLLFD m_clientPoll;
 					Client::ClientsData input;
 					std::cout << "\nServer: Accept a connection from clientSocket: " << clientSocket << ", From player: " << m_playerIds.front() + 1 << std::endl;
@@ -193,14 +193,14 @@ void Server::ServerPollTCP()
 	//sets the minium resolution for ticks
 	UINT sleepGranularityMs = 1;
 	timeBeginPeriod(sleepGranularityMs);
-	char sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
-	char reciveBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
-	int bufferSendSize = 0;
-	int bufferReciveSize = 0;
+
 	std::vector<NetworkAgentStats> statsChanged;
 	do {
 		QueryPerformanceCounter(&tickStartTime);
-		bufferSendSize = 0;
+		char sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
+		char reciveBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
+		int bufferSendSize = 0;
+		int bufferReciveSize = 0;
 		m_holdSocketsTcp = m_clientsSocketsTcp;
 		bufferSendSize += sizeof(m_playersServer);
 		if (WSAPoll(m_holdSocketsTcp.data(), (u32)m_holdSocketsTcp.size(), 1) > 0)

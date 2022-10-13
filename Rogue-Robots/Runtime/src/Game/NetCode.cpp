@@ -175,7 +175,6 @@ void NetCode::Recive()
 		}
 	}
 	m_threadUdp = std::thread(&NetCode::ReciveUdp, this);
-
 	if (m_netCodeAlive)
 	{
 		if (m_active == false)
@@ -235,15 +234,16 @@ void NetCode::Recive()
 					int bufferReciveSize = 0;
 					//�pdate the players entites stats
 					memcpy(m_outputTcp, reciveBuffer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
-					bufferReciveSize += sizeof(Client::ClientsData) * MAX_PLAYER_COUNT;
-					if (m_outputTcp->nrOfNetTransform > 0 && m_outputTcp->playerId < 10)
+
+					//Update the transfroms, Only none hosts
+					
+					if (m_inputTcp.playerId > 0 && m_outputTcp->playerId < MAX_PLAYER_COUNT)
 					{
-						//Update the transfroms, Only none hosts
 						NetworkTransform* temp = new NetworkTransform;
 						memcpy(temp, reciveBuffer + sizeof(Client::ClientsData) * MAX_PLAYER_COUNT, sizeof(NetworkTransform));
-						if (m_inputTcp.playerId > 0)
-						{
-							EntityManager::Get().Collect<NetworkTransform, TransformComponent>().Do([&](entity id, NetworkTransform&, TransformComponent& transC)
+						EntityManager::Get().Collect<NetworkTransform, TransformComponent>().Do([&](entity id, NetworkTransform& networkC, TransformComponent& transC)
+							{
+								for (int i = 0; i < m_outputTcp[0].nrOfNetTransform; ++i)
 								{
 									for (int i = 0; i < m_outputTcp[0].nrOfNetTransform; ++i)
 									{
@@ -258,6 +258,7 @@ void NetCode::Recive()
 						}
 					}
 				}
+				delete[] reciveBuffer;
 			}
 			delete[] reciveBuffer;
 		}

@@ -80,7 +80,7 @@ int Client::ConnectTcpServer(std::string ipAdress)
 	}
 
 	//set socket to tcp_nodelay
-	//check = setsockopt(m_connectSocket, SOL_SOCKET, TCP_NODELAY, (char*)&turn, sizeof(bool));
+	check = setsockopt(m_connectSocket, SOL_SOCKET, TCP_NODELAY, (char*)&turn, sizeof(bool));
 	if (check == SOCKET_ERROR)
 	{
 		std::cout << "Client: Failed to set socket to tcp_nodelay on client, ErrorCode: " << WSAGetLastError() << std::endl;
