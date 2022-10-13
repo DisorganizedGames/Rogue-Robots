@@ -98,9 +98,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<ModelComponent>(entity81, m_magentaCube);
 	auto& t81 = m_entityManager.AddComponent<TransformComponent>(entity81);
 	t81.worldMatrix = t4.worldMatrix;
-	m_entityManager.AddComponent<BoxColliderComponent>(entity81, entity81, Vector3(1, 1, 1), true);
-	m_entityManager.AddComponent<RigidbodyComponent>(entity81, entity81);
-	
+	m_entityManager.AddComponent<BoxTriggerComponent>(entity81, entity81, Vector3(1, 1, 1));
 
 
 	LuaMain::Initialize();
@@ -110,7 +108,6 @@ GameLayer::GameLayer() noexcept
 
 	//Do startup of lua
 	LuaMain::GetScriptManager()->RunLuaFile("LuaStartUp.lua");
-
 
 	//Register Lua interfaces
 	RegisterLuaInterfaces();

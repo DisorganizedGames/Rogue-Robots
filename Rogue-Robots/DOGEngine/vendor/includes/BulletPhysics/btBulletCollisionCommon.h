@@ -22,6 +22,9 @@ subject to the following restrictions:
 #include "BulletCollision/CollisionDispatch/btCollisionWorld.h"
 #include "BulletCollision/CollisionDispatch/btCollisionObject.h"
 
+//Triggers
+#include "BulletCollision/CollisionDispatch/btGhostObject.h"
+
 ///Collision Shapes
 #include "BulletCollision/CollisionShapes/btBoxShape.h"
 #include "BulletCollision/CollisionShapes/btSphereShape.h"
