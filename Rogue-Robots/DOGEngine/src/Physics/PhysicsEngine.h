@@ -83,9 +83,9 @@ namespace DOG
 	};
 	struct MeshColliderComponent
 	{
-		MeshColliderComponent(entity entity, u32 modelID, bool drawOverride = false) noexcept;
+		MeshColliderComponent(entity entity, u32 modelID, const DirectX::SimpleMath::Vector3& localMeshScale = {1.0f, 1.0f, 1.0f}, bool drawOverride = false) noexcept;
 		
-		void LoadMesh(entity entity, u32 modelID);
+		void LoadMesh(entity entity, u32 modelID, const DirectX::SimpleMath::Vector3& localMeshScale);
 
 		u32 meshColliderModelID;
 		bool drawMeshColliderOverride = false;		// If user wants to draw the mesh collider instead of the model, set to true
@@ -110,6 +110,7 @@ namespace DOG
 	{
 		entity meshEntity;
 		u32 meshModelID;
+		DirectX::SimpleMath::Vector3 localMeshScale;
 	};
 
 	struct MeshColliderData

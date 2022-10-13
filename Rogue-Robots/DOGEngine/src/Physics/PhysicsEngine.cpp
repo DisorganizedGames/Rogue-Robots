@@ -477,7 +477,8 @@ namespace DOG
 			if (model)
 			{
 				MeshColliderComponent component = EntityManager::Get().GetComponent<MeshColliderComponent>(m_meshCollidersWaitingForModels[index].meshEntity);
-				component.LoadMesh(m_meshCollidersWaitingForModels[index].meshEntity, m_meshCollidersWaitingForModels[index].meshModelID);
+				component.LoadMesh(m_meshCollidersWaitingForModels[index].meshEntity, m_meshCollidersWaitingForModels[index].meshModelID, 
+					m_meshCollidersWaitingForModels[index].localMeshScale);
 				m_meshCollidersWaitingForModels.erase(m_meshCollidersWaitingForModels.begin() + index);
 				--index;
 			}
@@ -678,7 +679,7 @@ namespace DOG
 		rigidbodyHandle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
 	}
 
-	MeshColliderComponent::MeshColliderComponent(entity entity, u32 modelID, bool drawOverride) noexcept
+	MeshColliderComponent::MeshColliderComponent(entity entity, u32 modelID, const DirectX::SimpleMath::Vector3& localMeshScale, bool drawOverride) noexcept
 	{	
 		meshColliderModelID = modelID;
 
@@ -704,15 +705,16 @@ namespace DOG
 			MeshWaitData meshWaitData;
 			meshWaitData.meshEntity = entity;
 			meshWaitData.meshModelID = modelID;
+			meshWaitData.localMeshScale = localMeshScale;
 			PhysicsEngine::AddMeshColliderWaitForModel(meshWaitData);
 			return;
 		}
 
 		//The model is loaded in
-		LoadMesh(entity, modelID);
+		LoadMesh(entity, modelID, localMeshScale);
 	}
 
-	void MeshColliderComponent::LoadMesh(entity entity, u32 modelID)
+	void MeshColliderComponent::LoadMesh(entity entity, u32 modelID, const DirectX::SimpleMath::Vector3& localMeshScale)
 	{
 		RigidbodyColliderData rCD;
 
@@ -723,7 +725,27 @@ namespace DOG
 		rCD.collisionShapeHandle = meshColliderData.collisionShapeHandle;
 
 		//For the handle 0 is default value
-		if (meshColliderData.collisionShapeHandle.handle == 0)
+		if (meshColliderData.collisionShapeHandle.handle != 0)
+		{
+			//We check if the existing scaledMeshCollider has the same scale of the incoming meshcollider
+			//If it does not we create a new scaledMeshCollider with the scale requested
+			btScaledBvhTriangleMeshShape* scaledMeshCollider = (btScaledBvhTriangleMeshShape*)PhysicsEngine::s_physicsEngine.GetCollisionShape(rCD.collisionShapeHandle);
+			if (btVector3(localMeshScale.x, localMeshScale.y, localMeshScale.z) != scaledMeshCollider->getLocalScaling())
+			{
+				//The new scaledMeshCollider uses the mesh collider of the old scaledMeshCollider, so we do not create a new meshCollider (we save nemory)
+				btScaledBvhTriangleMeshShape* newScaledMeshCollider = new btScaledBvhTriangleMeshShape(scaledMeshCollider->getChildShape(), btVector3(localMeshScale.x, localMeshScale.y, localMeshScale.z));
+
+				//Add the scaled mesh to the existing mesh vector
+				MeshColliderData newMeshColliderData;
+				newMeshColliderData.meshModelID = modelID;
+				newMeshColliderData.collisionShapeHandle = PhysicsEngine::AddCollisionShape(newScaledMeshCollider);
+				PhysicsEngine::AddMeshColliderData(newMeshColliderData);
+
+				rCD.collisionShapeHandle = newMeshColliderData.collisionShapeHandle;
+			}
+		}
+		//We load in a new mesh as a mesh collider and then we reuse it for other mesh colliders who uses the same model
+		else if (meshColliderData.collisionShapeHandle.handle == 0)
 		{
 			btTriangleMesh* mesh = new btTriangleMesh();
 			ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelID);
@@ -759,12 +781,15 @@ namespace DOG
 
 			mesh->addIndexedMesh(indexedMesh);
 
-			btCollisionShape* meshCollider = new btBvhTriangleMeshShape(mesh, true);
+			btBvhTriangleMeshShape* meshCollider = new btBvhTriangleMeshShape(mesh, true);
+
+			//Create a mesh collider which we can scale! (this is needed for the flipped models)
+			btScaledBvhTriangleMeshShape* scaledMeshCollider = new btScaledBvhTriangleMeshShape(meshCollider, btVector3(localMeshScale.x, localMeshScale.y, localMeshScale.z));
 
 			//Add the mesh to the existing mesh vector
 			MeshColliderData newMeshColliderData;
 			newMeshColliderData.meshModelID = modelID;
-			newMeshColliderData.collisionShapeHandle = PhysicsEngine::AddCollisionShape(meshCollider);
+			newMeshColliderData.collisionShapeHandle = PhysicsEngine::AddCollisionShape(scaledMeshCollider);
 			PhysicsEngine::AddMeshColliderData(newMeshColliderData);
 
 			rCD.collisionShapeHandle = newMeshColliderData.collisionShapeHandle;

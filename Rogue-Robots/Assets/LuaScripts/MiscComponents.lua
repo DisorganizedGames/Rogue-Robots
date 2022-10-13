@@ -61,7 +61,7 @@ function MiscComponent.ChargeShot()
 					forward = forward,
 					startPos = pos,
 					speed = 75.0,
-					size = Vector3.New(2, 2, 2) + Vector3.New(self.shotPower, self.shotPower, self.shotPower),
+					size = Vector3.New(30, 30, 30) + Vector3.New(self.shotPower, self.shotPower, self.shotPower),
 					lifetime = 0
 				}
 
