@@ -13,7 +13,7 @@ class UIScene;
 class UI
 {
    public:
-   UI(DOG::gfx::RenderDevice* m_rd, DOG::gfx::Swapchain* sc, u_int maxFramesInFlight, HWND hwnd);
+   UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int maxFramesInFlight, HWND hwnd);
    ~UI();
    void DrawUI();
    void ChangeUIscene(UINT sceneID);
@@ -25,7 +25,7 @@ class UI
 
    private:
    UINT m_width, m_height;
-   UINT menuID, gameID;
+   UINT m_menuID, m_gameID;
    UINT QuerryScene(UINT sceneID);
    std::vector<std::unique_ptr<UIScene>> m_scenes;
    UINT m_currsceneID, m_currsceneIndex;
@@ -51,8 +51,8 @@ class UIElement
 {
    public:
    UIElement(UINT id);
-   virtual void Draw(DOG::gfx::D2DBackend_DX12& m_d2d) = 0;
-   virtual void Update(DOG::gfx::D2DBackend_DX12& m_d2d);
+   virtual void Draw(DOG::gfx::D2DBackend_DX12& d2d) = 0;
+   virtual void Update(DOG::gfx::D2DBackend_DX12& d2d);
 
    virtual ~UIElement();
    UINT m_ID;
@@ -64,8 +64,8 @@ class UIButton : public UIElement
    public:
    bool pressed;
    UIButton(float x, float y, float width, float height, std::wstring text, std::function<void(void)> callback, UINT id);
-   void Draw(DOG::gfx::D2DBackend_DX12& m_d2d) override;
-   void Update(DOG::gfx::D2DBackend_DX12& m_d2d) override;
+   void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
+   void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
    ~UIButton();
    private:
    D2D_POINT_2F m_pos;
@@ -79,9 +79,9 @@ class UIButton : public UIElement
 class UISplashScreen : public UIElement
 {
    public:
-   UISplashScreen(DOG::gfx::D2DBackend_DX12& m_d2d, float width, float height, UINT id);
-   void Draw(DOG::gfx::D2DBackend_DX12& m_d2d) override;
-   void Update(DOG::gfx::D2DBackend_DX12& m_d2d) override;
+   UISplashScreen(DOG::gfx::D2DBackend_DX12& d2d, float width, float height, UINT id);
+   void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
+   void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
    ~UISplashScreen();
    private:
    D2D1_RECT_F m_background;
@@ -94,11 +94,11 @@ class UISplashScreen : public UIElement
 class UIHealthBar : public UIElement
 {
    public:
-   UIHealthBar(float x, float y, float width, float height, DOG::gfx::D2DBackend_DX12& m_d2d, UINT id);
+   UIHealthBar(float x, float y, float width, float height, DOG::gfx::D2DBackend_DX12& d2d, UINT id);
    ~UIHealthBar();
 
-   void Draw(DOG::gfx::D2DBackend_DX12& m_d2d) override;
-   void Update(DOG::gfx::D2DBackend_DX12& m_d2d) override;
+   void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
+   void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
 
    void SetBarValue(float value);
 
@@ -113,10 +113,10 @@ class UIHealthBar : public UIElement
 class UIBackground : public UIElement
 {
    public:
-   UIBackground(float width, float heigt, DOG::gfx::D2DBackend_DX12& m_d2d, UINT id);
+   UIBackground(float width, float heigt, DOG::gfx::D2DBackend_DX12& d2d, UINT id);
    ~UIBackground();
-   void Draw(DOG::gfx::D2DBackend_DX12& m_d2d) override;
-   void Update(DOG::gfx::D2DBackend_DX12& m_d2d) override;
+   void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
+   void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
    private:
    D2D1_RECT_F m_background, m_textRect;
    std::wstring m_title;
