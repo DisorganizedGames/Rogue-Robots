@@ -35,6 +35,8 @@ public:
 
 	//Takes a string as argument.
 	void IsKeyPressed(DOG::LuaContext* context);
+
+	void GetMouseDelta(DOG::LuaContext* context);
 };
 
 class AudioInterface : public LuaInterface

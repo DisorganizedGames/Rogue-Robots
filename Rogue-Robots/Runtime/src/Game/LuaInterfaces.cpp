@@ -22,6 +22,15 @@ void InputInterface::IsKeyPressed(LuaContext* context)
 	context->ReturnBoolean(Keyboard::IsKeyPressed((Key)std::toupper(input[0]))); //Usch
 }
 
+void InputInterface::GetMouseDelta(DOG::LuaContext* context)
+{
+	auto [x, y] = DOG::Mouse::GetDeltaCoordinates();
+	LuaTable t;
+	t.AddIntToTable("x", x);
+	t.AddIntToTable("y", y);
+	context->ReturnTable(t);
+};
+
 //---------------------------------------------------------------------------------------------------------
 //Audio
 void AudioInterface::Play(LuaContext* context)
