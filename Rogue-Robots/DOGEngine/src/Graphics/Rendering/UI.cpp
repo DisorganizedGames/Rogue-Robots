@@ -10,15 +10,12 @@ void buttonfunc()
    OutputDebugString(L"Button pressed");
 }
 
-UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HWND hwnd) : m_visible(true)
+UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, UINT clientWidth, UINT clientHeight) : m_visible(true)
 {
    srand((UINT)time(NULL));
-   RECT wrect;
-   if (!GetClientRect(hwnd, &wrect))
-      OutputDebugString(L"Error retreiving client rect in UI creation\n");
-   m_width = wrect.right;
-   m_height = wrect.bottom;
-   m_d2d = std::make_unique<DOG::gfx::D2DBackend_DX12>(rd, sc, numBuffers, hwnd);
+   m_width = clientWidth;
+   m_height = clientHeight;
+   m_d2d = std::make_unique<DOG::gfx::D2DBackend_DX12>(rd, sc, numBuffers);
    m_menuID = AddScene();
    m_gameID = AddScene();
    ChangeUIscene(m_menuID);
