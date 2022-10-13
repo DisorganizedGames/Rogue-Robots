@@ -6,7 +6,7 @@
 #include <memory>
 
 
-DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_int numBuffers, HWND hwnd) : rd(rd), sc(sc), m_numBuffers(numBuffers)
+DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_int numBuffers) : rd(rd), sc(sc), m_numBuffers(numBuffers)
 {
     // This is guaranteed since we have no other backends than DX12
     auto rd12 = (RenderDevice_DX12*)rd;
@@ -55,12 +55,10 @@ DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
     }
 
 
-    float dpi = (float)GetDpiForWindow(hwnd);
+    //float dpi = (float)GetDpiForWindow(hwnd);
     D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1(
         D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-        D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED),
-        dpi,
-        dpi);
+        D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED));
 
     {
 

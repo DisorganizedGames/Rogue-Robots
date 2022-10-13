@@ -13,7 +13,7 @@ class UIScene;
 class UI
 {
    public:
-   UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int maxFramesInFlight, HWND hwnd);
+   UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, UINT clientWidth, UINT clientHeight);
    ~UI();
    void DrawUI();
    void ChangeUIscene(UINT sceneID);
