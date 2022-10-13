@@ -15,4 +15,5 @@ namespace DOG::gfx
 	struct TextureView { friend TypedHandlePool; u64 handle{ 0 }; };
 
 	struct CommandList { friend TypedHandlePool; u64 handle{ 0 }; };
+	struct MemoryPool { friend TypedHandlePool; u64 handle{ 0 }; };
 }

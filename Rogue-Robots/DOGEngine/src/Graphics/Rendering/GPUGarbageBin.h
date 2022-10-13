@@ -34,5 +34,7 @@ namespace DOG::gfx
 		//PrivateQueue<Deletion_Storage> m_deletes;
 		//std::deque<Deletion_Storage> m_deletes;
 
+		std::vector<std::vector<std::function<void()>>> m_deletes2;
+
 	};
 }

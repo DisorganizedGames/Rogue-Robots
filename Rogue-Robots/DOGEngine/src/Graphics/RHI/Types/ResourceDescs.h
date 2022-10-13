@@ -98,6 +98,12 @@ namespace DOG::gfx
 
 	};
 
+	struct MemoryPoolDesc
+	{
+		D3D12_HEAP_TYPE heapType{ D3D12_HEAP_TYPE_DEFAULT };
+		u32 size{ 0 };
+	};
+
 	struct BufferViewDesc
 	{
 		ViewType viewType{ ViewType::None };
