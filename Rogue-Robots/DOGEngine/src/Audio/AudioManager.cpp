@@ -26,9 +26,9 @@ void AudioManager::AudioSystem()
 	if (!s_deviceInitialized)
 		return;
 
-	EntityManager::Get().Collect<AudioComponent>().Do([](AudioComponent& ac)
+	EntityManager::Get().Collect<AudioComponent>().Do([](entity e, AudioComponent& ac)
 		{
-			s_device->HandleComponent(ac);
+			s_device->HandleComponent(ac, e);
 		});
 	
 	s_device->Commit();

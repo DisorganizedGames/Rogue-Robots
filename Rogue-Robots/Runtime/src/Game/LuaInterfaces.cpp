@@ -338,11 +338,13 @@ void EntityInterface::AddAudio(LuaContext* context, entity e)
 {
 	auto assetID = context->GetInteger();
 	auto shouldPlay = context->GetBoolean();
+	auto is3D = context->GetBoolean();
 
 	auto& comp = EntityManager::Get().AddComponent<AudioComponent>(e);
 
 	comp.assetID = assetID;
 	comp.shouldPlay = shouldPlay;
+	comp.is3D = is3D;
 }
 
 void EntityInterface::AddBoxCollider(LuaContext* context, entity e)

@@ -122,6 +122,8 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<InputController>(Player1);
 	m_entityManager.AddComponent<CameraComponent>(Player1);
 	m_entityManager.AddComponent<ThisPlayer>(Player1);
+	m_entityManager.AddComponent<AudioListenerComponent>(Player1);
+
 	ScriptManager* scriptManager = LuaMain::GetScriptManager();
 	scriptManager->AddScript(Player1, "Gun.lua");
 

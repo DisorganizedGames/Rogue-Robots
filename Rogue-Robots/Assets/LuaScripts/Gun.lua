@@ -135,7 +135,7 @@ function NormalBulletSpawn(bullet)
 	Entity:ModifyComponent(bullet.entity, "Transform", bullet.startPos, 1)
 
 	Entity:AddComponent(bullet.entity, "Model", bulletModel)
-	Entity:AddComponent(bullet.entity, "Audio", gunShotSound, true)
+	Entity:AddComponent(bullet.entity, "Audio", gunShotSound, true, false)
 	Entity:AddComponent(bullet.entity, "BoxCollider", Vector3.New(.1, .1, .1), true)
 	Entity:AddComponent(bullet.entity, "Rigidbody", false)
 	Entity:AddComponent(bullet.entity, "Bullet")

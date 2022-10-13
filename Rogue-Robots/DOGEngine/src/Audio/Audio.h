@@ -37,6 +37,7 @@ namespace DOG
 		void Play(std::vector<u8> data);
 		void PlayAsync();
 		void Stop();
+		void SetVolume(f32 volume);
 
 		void SetOutputMatrix(const std::vector<f32>& matrix, IXAudio2Voice* dest);
 
@@ -68,13 +69,13 @@ namespace DOG
 		AudioDevice();
 		~AudioDevice();
 
-		void HandleComponent(AudioComponent& comp);
+		void HandleComponent(AudioComponent& comp, entity e);
 		void Commit();
 
 	private:
 		void AudioThreadRoutine();
 		u64 GetFreeVoice(const WAVEFORMATEX& m_wfx);
-		void Handle3DComponent(SourceVoice* source);
+		void Handle3DComponent(SourceVoice* source, entity e);
 	};
 
 }

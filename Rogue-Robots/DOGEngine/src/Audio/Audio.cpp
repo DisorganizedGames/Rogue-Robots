@@ -41,7 +41,7 @@ AudioDevice::~AudioDevice()
 	m_xaudio->Release();
 }
 
-void AudioDevice::HandleComponent(AudioComponent& comp)
+void AudioDevice::HandleComponent(AudioComponent& comp, entity e)
 {
 	if (comp.shouldPlay)
 	{
@@ -101,7 +101,7 @@ void AudioDevice::HandleComponent(AudioComponent& comp)
 	if (comp.is3D)
 	{
 		auto& source = m_sources[comp.source];
-		Handle3DComponent(source.get());
+		Handle3DComponent(source.get(), e);
 	}
 }
 
@@ -171,7 +171,7 @@ u64 AudioDevice::GetFreeVoice(const WAVEFORMATEX& m_wfx)
 	return u64(-1);
 }
 
-void AudioDevice::Handle3DComponent(SourceVoice* source)
+void AudioDevice::Handle3DComponent(SourceVoice* source, entity e)
 {
 	std::vector<f32> azimuths(source->m_wfx.nChannels);
 	std::iota(azimuths.begin(), azimuths.end(), 0.f);
@@ -180,6 +180,7 @@ void AudioDevice::Handle3DComponent(SourceVoice* source)
 	X3DAUDIO_EMITTER es = {
 		.OrientFront = {0, 0, 1},
 		.OrientTop = {0, 1, 0},
+		.Position = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition(),
 		.ChannelCount = source->m_wfx.nChannels,
 		.ChannelRadius = 1.0f,
 		.pChannelAzimuths = azimuths.data(),
@@ -190,9 +191,11 @@ void AudioDevice::Handle3DComponent(SourceVoice* source)
 		.SrcChannelCount = es.ChannelCount,
 		.DstChannelCount = m_masterDetails.InputChannels,
 	};
+	bool listenersExist = false;
 	EntityManager::Get().Collect<AudioListenerComponent, TransformComponent>()
 		.Do([&](AudioListenerComponent& /*listener*/, TransformComponent& transform)
 			{
+				listenersExist = true;
 				std::vector<f32> matrix(dspSettings.DstChannelCount * dspSettings.SrcChannelCount);
 				X3DAUDIO_LISTENER ls = {
 					.OrientFront = transform.worldMatrix.Forward(),
@@ -206,6 +209,10 @@ void AudioDevice::Handle3DComponent(SourceVoice* source)
 				X3DAudioCalculate(m_x3daudio, &ls, &es, X3DAUDIO_CALCULATE_MATRIX, &dspSettings);
 				source->SetOutputMatrix(matrix, m_master);
 			});
+	if (!listenersExist)
+	{
+		source->SetVolume(0.f);
+	}
 }
 
 // ------- SOURCE VOICE ----------
@@ -247,6 +254,11 @@ void SourceVoice::Stop()
 	m_source->FlushSourceBuffers();
 	m_source->Discontinuity();
 	m_externalBuffer.resize(0);
+}
+
+void SourceVoice::SetVolume(f32 volume)
+{
+	m_source->SetVolume(volume);
 }
 
 void SourceVoice::SetOutputMatrix(const std::vector<f32>& matrix, IXAudio2Voice* dest)
