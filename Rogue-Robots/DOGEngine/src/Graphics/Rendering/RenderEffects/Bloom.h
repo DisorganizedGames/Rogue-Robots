@@ -16,13 +16,11 @@ namespace DOG::gfx
 		void Add(RenderGraph& rg) override;
 
 	private:
+		static constexpr u32 computeGroupSize = 32;
 		struct BloomConstantBuffer
 		{
-			DirectX::SimpleMath::Vector3 color;
 			f32 threshold;
 		};
-
-		TextureDesc m_bloomTexDesc;
 
 		// Untill the rendergraph can handle subresources we will use fake mip levels by using more textures
 		std::vector<std::pair<Texture, TextureDesc>> m_bloomTexture;
@@ -32,8 +30,9 @@ namespace DOG::gfx
 		u32 m_height;
 
 		GPUDynamicConstants* m_dynamicConstants{ nullptr };
-		Pipeline m_computePipe;
-		Pipeline m_compPipDownSample;
+		Pipeline m_compPipeBloomSelect;
+		Pipeline m_compPipeDownSample;
+		Pipeline m_compPipeUpSample;
 		Pipeline m_compPipDebug;
 	};
 }
