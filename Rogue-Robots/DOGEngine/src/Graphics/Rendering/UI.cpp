@@ -83,7 +83,8 @@ UINT UI::QuerryScene(UINT sceneID)
    else
    {
       ptrdiff_t ptrdiff = std::distance(m_scenes.begin(), res);
-      HR_VFY(PtrdiffTToUInt(ptrdiff, &index));
+      HRESULT hr = PtrdiffTToUInt(ptrdiff, &index);
+      HR_VFY(hr);
       return index;
    }
 }
