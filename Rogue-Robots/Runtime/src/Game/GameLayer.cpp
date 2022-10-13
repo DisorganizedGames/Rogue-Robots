@@ -128,6 +128,8 @@ GameLayer::GameLayer() noexcept
 	entity Player2 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(Player2, m_redCube);
 	m_entityManager.AddComponent<TransformComponent>(Player2, Vector3(-10, 10, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
+	m_entityManager.AddComponent<CapsuleColliderComponent>(Player2, Player2, 1.f, 1.8f, true, 75.f);
+	m_entityManager.AddComponent<RigidbodyComponent>(Player2, Player2).ConstrainRotation(true, true, true);
 	m_entityManager.AddComponent<NetworkPlayerComponent>(Player2).playerId = 1;
 	m_entityManager.AddComponent<InputController>(Player2);
 	m_entityManager.AddComponent<OnlinePlayer>(Player2);
@@ -136,6 +138,8 @@ GameLayer::GameLayer() noexcept
 	entity Player3 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(Player3, m_blueCube);
 	m_entityManager.AddComponent<TransformComponent>(Player3, Vector3(-10, 20, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
+	m_entityManager.AddComponent<CapsuleColliderComponent>(Player3, Player3, 1.f, 1.8f, true, 75.f);
+	m_entityManager.AddComponent<RigidbodyComponent>(Player3, Player3).ConstrainRotation(true, true, true);
 	m_entityManager.AddComponent<NetworkPlayerComponent>(Player3).playerId = 2;
 	m_entityManager.AddComponent<InputController>(Player3);
 	m_entityManager.AddComponent<OnlinePlayer>(Player3);
@@ -144,6 +148,8 @@ GameLayer::GameLayer() noexcept
 	entity Player4 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(Player4, m_magentaCube);
 	m_entityManager.AddComponent<TransformComponent>(Player4, Vector3(-10, 30, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
+	m_entityManager.AddComponent<CapsuleColliderComponent>(Player4, Player4, 1.f, 1.8f, true, 75.f);
+	m_entityManager.AddComponent<RigidbodyComponent>(Player4, Player4).ConstrainRotation(true, true, true);
 	m_entityManager.AddComponent<NetworkPlayerComponent>(Player4).playerId = 3;
 	m_entityManager.AddComponent<InputController>(Player4);
 	m_entityManager.AddComponent<OnlinePlayer>(Player4);
