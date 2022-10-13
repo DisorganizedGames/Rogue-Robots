@@ -63,7 +63,7 @@ namespace DOG::gfx
 
 
 
-		const u32 maxConstantsPerFrame = 1000;
+		const u32 maxConstantsPerFrame = 10'000;
 		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), maxConstantsPerFrame);
 
 		// multiple of curr loaded mixamo skeleton
@@ -140,6 +140,26 @@ namespace DOG::gfx
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.SetRasterizer(RasterizerBuilder().SetCullMode(D3D12_CULL_MODE_NONE))
 			.Build());
+
+		m_meshPipeWireframe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
+			.SetShader(meshVS.get())
+			.SetShader(meshPS.get())
+			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+			.SetDepthFormat(DepthFormat::D32)
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.SetRasterizer(RasterizerBuilder().SetFillMode(D3D12_FILL_MODE_WIREFRAME))
+			.Build());
+
+		m_meshPipeWireframeNoCull = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
+			.SetShader(meshVS.get())
+			.SetShader(meshPS.get())
+			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+			.SetDepthFormat(DepthFormat::D32)
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.SetRasterizer(RasterizerBuilder().SetFillMode(D3D12_FILL_MODE_WIREFRAME).SetCullMode(D3D12_CULL_MODE_NONE))
+			.Build());
+
+
 
 		m_rgResMan = std::make_unique<RGResourceManager>(m_rd, m_bin.get());
 
@@ -257,6 +277,26 @@ namespace DOG::gfx
 		m_noCullSubmissions.push_back(sub);
 	}
 
+	void DOG::gfx::Renderer::SubmitMeshWireframe(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
+	{
+		RenderSubmission sub{};
+		sub.mesh = mesh;
+		sub.submesh = submesh;
+		sub.mat = material;
+		sub.world = world;
+		m_wireframeDraws.push_back(sub);
+	}
+
+	void DOG::gfx::Renderer::SubmitMeshWireframeNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
+	{
+		RenderSubmission sub{};
+		sub.mesh = mesh;
+		sub.submesh = submesh;
+		sub.mat = material;
+		sub.world = world;
+		m_noCullWireframeDraws.push_back(sub);
+	}
+
 	void Renderer::SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
 	{
 		RenderSubmission sub{};
@@ -356,7 +396,7 @@ namespace DOG::gfx
 					Perhaps go through the submissions and collect data --> Upload to GPU (maybe instance it as well?)
 					and during forward pass we simply read from it 
 			*/
-			auto drawSubmissions = [this](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission> submissions, bool animated = false)
+			auto drawSubmissions = [this](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission> submissions, bool animated = false, bool wireframe = false)
 			{
 				for (const auto& sub : submissions)
 				{
@@ -382,7 +422,8 @@ namespace DOG::gfx
 					auto args = ShaderArgs()
 						.AppendConstant(m_globalEffectData.globalDataDescriptor)
 						.AppendConstant(m_currPfDescriptor)
-						.AppendConstant(perDrawHandle.globalDescriptor);
+						.AppendConstant(perDrawHandle.globalDescriptor)
+						.AppendConstant(wireframe ? 1 : 0);
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
@@ -417,6 +458,12 @@ namespace DOG::gfx
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
 					drawSubmissions(rd, cmdl, m_noCullSubmissions);
+
+					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframe);
+					drawSubmissions(rd, cmdl, m_wireframeDraws, false, true);
+
+					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframeNoCull);
+					drawSubmissions(rd, cmdl, m_noCullWireframeDraws, false, true);
 				});
 		}
 
@@ -511,6 +558,8 @@ namespace DOG::gfx
 		m_submissions.clear();
 		m_noCullSubmissions.clear();
 		m_animatedDraws.clear();
+		m_wireframeDraws.clear();
+		m_noCullWireframeDraws.clear();
 
 		m_sc->Present(vsync);
 	}

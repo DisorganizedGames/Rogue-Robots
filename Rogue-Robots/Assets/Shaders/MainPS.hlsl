@@ -29,6 +29,7 @@ struct PushConstantElement
     uint perFrameOffset;
     
     uint perDrawCB;
+    uint wireframe;
 };
 CONSTANTS(g_constants, PushConstantElement)
 
@@ -40,7 +41,10 @@ float4 main(VS_OUT input) : SV_TARGET
     // Get per draw dat
     ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[g_constants.perDrawCB];
     
-    // Get global data
+    if (g_constants.wireframe == 1)
+        return float4(0.f, 1.f, 0.f, 1.f);
+        
+    
     StructuredBuffer<ShaderInterop_GlobalData> gds = ResourceDescriptorHeap[g_constants.gdDescriptor];
     ShaderInterop_GlobalData gd = gds[0];
     
