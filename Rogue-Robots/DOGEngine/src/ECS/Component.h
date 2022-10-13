@@ -48,10 +48,10 @@ namespace DOG
 		int playerId;
 	};
 
-	struct NetworkComponent
+	struct NetworkTransform
 	{
-		int playerId;
-		int objectId;
+		u32 objectId;
+		DirectX::SimpleMath::Matrix transform;
 	};
 
 	struct AnimationComponent

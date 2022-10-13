@@ -15,6 +15,7 @@ struct PlayerStatsComponent
 	//...
 };
 
+
 struct AgentStatsComponent
 {
 	float hp;
@@ -26,4 +27,10 @@ struct AgentStatsComponent
 struct BulletComponent
 {
 
+};
+struct NetworkAgentStats
+{
+	int playerId;
+	u32 objectId;
+	AgentStatsComponent stats;
 };

@@ -10,11 +10,11 @@ public:
 	virtual void OnStartUp() noexcept override final;
 	virtual void OnShutDown() noexcept override final;
 	virtual void OnRestart() noexcept override final;
-	virtual void OnEvent(IEvent& event) noexcept final;
+	virtual void OnEvent(DOG::IEvent& event) noexcept final;
 
 private:
 	bool m_showImGuiMenu = false;
 	GameLayer m_gameLayer;
-	ImGuiMenuLayer m_imGuiMenuLayer;
+	DOG::ImGuiMenuLayer m_imGuiMenuLayer;
 	EmilFDebugLayer m_EmilFDebugLayer;
 };

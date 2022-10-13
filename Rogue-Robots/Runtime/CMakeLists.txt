@@ -8,7 +8,8 @@ set(SourceFiles
 		"src/Game/MainPlayer.h" "src/Game/MainPlayer.cpp"
 		"src/Pathfinder/Pathfinder.h" "src/Pathfinder/Pathfinder.cpp"
 		"src/Game/LuaInterfaces.h" "src/Game/LuaInterfaces.cpp"
-		 "src/Game/Agent.h" "src/Game/Agent.cpp")
+		 "src/Game/Agent.h" "src/Game/Agent.cpp"
+		"src/Network/Server.h" "src/Network/Server.cpp" "src/Network/Client.h" "src/Network/Client.cpp")
 		
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")

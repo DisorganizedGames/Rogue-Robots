@@ -61,7 +61,7 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddTransform(context, e);
 	}
-	else if (compType == "Network")
+	else if (compType == "NetworkTransform")
 	{
 		AddNetwork(e);
 	}
@@ -235,7 +235,8 @@ const std::unordered_map<std::string, bool (*) (entity)> componentMap = {
 	{ "Transform", HasComp<TransformComponent> },
 	{ "Model", HasComp<ModelComponent> },
 	{ "Audio", HasComp<AudioComponent>},
-	{ "Network", HasComp<NetworkComponent>},
+	{ "NetworkTransform", HasComp<NetworkTransform>},
+	{ "NetworkAgentStats", HasComp<NetworkAgentStats>},
 	{ "Rigidbody", HasComp<RigidbodyComponent>},
 	{ "BoxCollider", HasComp<BoxColliderComponent>},
 	
@@ -319,7 +320,7 @@ void EntityInterface::AddTransform(LuaContext* context, entity e)
 
 void EntityInterface::AddNetwork(DOG::entity e)
 {
-	EntityManager::Get().AddComponent<NetworkComponent>(e);
+	EntityManager::Get().AddComponent<NetworkTransform>(e);
 }
 
 void EntityInterface::AddAgentStats(LuaContext* context, entity e)

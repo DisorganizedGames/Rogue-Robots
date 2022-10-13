@@ -5,7 +5,7 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Core/AssetManager.h" "src/Core/AssetManager.cpp" "src/Core/AssimpImporter.h" "src/Core/AssimpImporter.cpp" "src/Core/DOGEngineTypes.h" "src/Core/DOGEngineTypes.cpp" "src/Core/MaterialManager.h" "src/Core/MaterialManager.cpp" 
 	"src/EventSystem/Layer.h" "src/EventSystem/LayerStack.h" "src/EventSystem/LayerStack.cpp" "src/EventSystem/IEvent.h" "src/EventSystem/WindowEvents.h" 
 	"src/EventSystem/EventPublisher.h"  "src/EventSystem/EventBus.h" "src/EventSystem/EventBus.cpp" "src/Core/CoreUtils.h" "src/EventSystem/MouseEvents.h" 
-	"src/EventSystem/KeyboardEvents.h" "src/EventSystem/EventPublisher.cpp" "src/Network/Server.h" "src/Network/Server.cpp" "src/Network/Client.h" "src/Network/Client.cpp" 
+	"src/EventSystem/KeyboardEvents.h" "src/EventSystem/EventPublisher.cpp"  
     "src/Core/Time.h"
 	"src/Audio/Audio.h" "src/Audio/Audio.cpp" "src/Audio/AudioManager.cpp" "src/Audio/AudioManager.h" "src/common/ErrorTypes.h"
     "src/Core/Types/GraphicsTypes.h"  "src/Core/Types/AssetTypes.h" "src/Graphics/Rendering/MaterialTable.h" "src/Graphics/Rendering/MaterialTable.cpp"

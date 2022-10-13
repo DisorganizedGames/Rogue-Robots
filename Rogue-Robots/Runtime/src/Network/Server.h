@@ -1,8 +1,8 @@
 #pragma once
+#include <DOGEngine.h>
 #include "Client.h"
+#include "..\Game\GameComponent.h"
 
-namespace DOG
-{
 
 	class Server
 	{
@@ -42,4 +42,3 @@ namespace DOG
 
 
 	};
-}
