@@ -590,15 +590,15 @@ namespace DOG::gfx
 					perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
 					perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
 
+					GPUDynamicConstant jointsHandle;
 					if (animated)
 					{
-						// Resolve joints
 						JointData jointsData{};
-						auto jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+						// Resolve joints
+						jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
 						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); ++i)
 							jointsData.joints[i] = m_boneJourno->m_vsJoints[i];
 						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
-						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
 					}
 
 					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
@@ -1047,6 +1047,8 @@ namespace DOG::gfx
 	{
 		m_rd->Flush();
 
+		m_dynConstants->Tick();
+		m_dynConstantsAnimated->Tick();
 		m_rgResMan->Tick();
 		m_bin->BeginFrame();
 		m_rd->RecycleCommandList(m_cmdl);

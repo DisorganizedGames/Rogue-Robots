@@ -847,9 +847,34 @@ namespace DOG::gfx
 		auto& cmdlRes = HandleAllocator::TryGet(m_cmdls, HandleAllocator::GetSlot(list.handle));
 
 		if (targetQueue == QueueType::Graphics)
+		{
 			cmdlRes.pair.list->SetGraphicsRoot32BitConstants(0, args.numConstants, args.constants.data(), 0);
+			if (args.mainCBV.handle != 0)
+			{
+				auto& storage = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(args.mainCBV.handle));
+				cmdlRes.pair.list->SetGraphicsRootConstantBufferView(1, storage.resource->GetGPUVirtualAddress() + args.mainCBVOffset);
+			}
+			if (args.secondaryCBV.handle != 0)
+			{
+				auto& storage = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(args.secondaryCBV.handle));
+				cmdlRes.pair.list->SetGraphicsRootConstantBufferView(2, storage.resource->GetGPUVirtualAddress() + args.secondaryCBVOffset);
+			}
+		}
 		else if (targetQueue == QueueType::Compute)
+		{
 			cmdlRes.pair.list->SetComputeRoot32BitConstants(0, args.numConstants, args.constants.data(), 0);
+			if (args.mainCBV.handle != 0)
+			{
+				auto& storage = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(args.mainCBV.handle));
+				cmdlRes.pair.list->SetComputeRootConstantBufferView(1, storage.resource->GetGPUVirtualAddress() + args.mainCBVOffset);
+			}
+			if (args.secondaryCBV.handle != 0)
+			{
+				auto& storage = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(args.secondaryCBV.handle));
+				cmdlRes.pair.list->SetComputeRootConstantBufferView(2, storage.resource->GetGPUVirtualAddress() + args.secondaryCBVOffset);
+			}
+		}
+
 	}
 
 	void RenderDevice_DX12::Cmd_CopyBuffer(CommandList list, Buffer dst, u32 dstOffset, Buffer src, u32 srcOffset, u32 size)
@@ -1044,6 +1069,16 @@ namespace DOG::gfx
 		param.Constants.ShaderRegister = 0;
 		param.Constants.Num32BitValues = num_constants + 1;		// Indirect Set Constant requires 2 for some reason to start working with Debug Validation Layer is on
 		params.push_back(param);
+
+		D3D12_ROOT_PARAMETER cbvParam{};
+		cbvParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+		cbvParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+		cbvParam.Descriptor.RegisterSpace = 0;
+		cbvParam.Descriptor.ShaderRegister = 1;
+		params.push_back(cbvParam);
+		cbvParam.Descriptor.ShaderRegister = 2;
+		params.push_back(cbvParam);
+
 
 		D3D12_ROOT_SIGNATURE_DESC rsd{};
 		rsd.NumParameters = (UINT)params.size();

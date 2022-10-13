@@ -62,7 +62,7 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
 {
     VS_OUT output = (VS_OUT) 0;
     
-    ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[constants.perDrawCB];
+    ConstantBuffer<PerDrawData> perDrawData = pdData;
     
     StructuredBuffer<ShaderInterop_GlobalData> gds = ResourceDescriptorHeap[constants.gdDescriptor];
     ShaderInterop_GlobalData gd = gds[0];
@@ -88,7 +88,7 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     
     if (md.blendCount > 0)
     {
-        ConstantBuffer<JointsData> jointsData = ResourceDescriptorHeap[perDrawData.jointsDescriptor];
+        //ConstantBuffer<JointsData> jointsData = ResourceDescriptorHeap[perDrawData.jointsDescriptor];
         
         matrix mat = jointsData.joints[bw.iw[0].idx] * bw.iw[0].weight;
         mat += jointsData.joints[bw.iw[1].idx] * bw.iw[1].weight;

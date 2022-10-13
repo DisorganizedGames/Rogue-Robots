@@ -161,7 +161,15 @@ namespace DOG::gfx
 		std::array<u32, 15> constants{};
 		u8 numConstants{ 0 };
 
+		Buffer mainCBV;
+		u32 mainCBVOffset{ 0 };
+
+		Buffer secondaryCBV;
+		u32 secondaryCBVOffset{ 0 };
+
 		ShaderArgs& AppendConstant(u32 constant) { assert(numConstants < 15); constants[numConstants++] = constant; return *this; }
+		ShaderArgs& SetPrimaryCBV(Buffer buf, u32 offset) { mainCBV = buf; mainCBVOffset = offset; return *this; };
+		ShaderArgs& SetSecondaryCBV(Buffer buf, u32 offset) { secondaryCBV = buf; secondaryCBVOffset = offset; return *this; };
 	};
 
 	struct Viewports
