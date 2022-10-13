@@ -32,7 +32,7 @@ namespace DOG::gfx
 		res.variants = decl;
 	}
 
-	void RGResourceManager::ImportTexture(RGResourceID id, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState)
+	void RGResourceManager::ImportTexture(RGResourceID id, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState, u32 numMips, u32 arraySize)
 	{
 		assert(!m_resources.contains(id));
 
@@ -42,6 +42,11 @@ namespace DOG::gfx
 		imported.importEntryState = entryState;
 		imported.currState = entryState;
 		imported.importExitState = exitState;
+
+		// Initialize subresource states
+		u32 numSubresources = numMips * arraySize;
+		for (u32 i = 0; i < numSubresources; ++i)
+			imported.currSubresourceState.insert({ i, entryState });
 
 		res.resource = texture.handle;
 		res.resourceType = RGResourceType::Texture;
@@ -56,6 +61,8 @@ namespace DOG::gfx
 		RGResourceDeclared decl;
 		decl.desc = desc;
 		decl.currState = desc.initState;
+
+		decl.currSubresourceState.insert({ 0, desc.initState });
 
 		auto& res = m_resources[id];
 		res.variantType = RGResourceVariant::Declared;
@@ -73,6 +80,11 @@ namespace DOG::gfx
 		imported.importEntryState = entryState;
 		imported.currState = entryState;
 		imported.importExitState = exitState;
+
+		imported.currSubresourceState.insert({ 0, entryState });
+		imported.subresourceEntryState.insert({ 0, entryState });
+		imported.subresourceExitState.insert({ 0, entryState });
+
 
 		res.resource = buffer.handle;
 		res.variantType = RGResourceVariant::Imported;

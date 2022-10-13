@@ -34,7 +34,7 @@ namespace DOG::gfx
 		
 		// These interfaces are exposed through PassBuilder
 		void DeclareTexture(RGResourceID id, RGTextureDesc desc);
-		void ImportTexture(RGResourceID id, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
+		void ImportTexture(RGResourceID id, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState, u32 numMips = 1, u32 arraySize = 1);
 
 		void DeclareBuffer(RGResourceID id, RGBufferDesc desc);
 		void ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
