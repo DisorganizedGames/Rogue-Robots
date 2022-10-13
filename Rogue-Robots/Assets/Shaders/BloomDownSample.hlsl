@@ -38,12 +38,12 @@ void main(uint3 globalId : SV_DispatchThreadID)
         float3 color = float3(0, 0, 0);
         for (int x = 0; x < 7; x++)
         {
-            //float u = pixelWidth * (globalId.x + 1 - 3 + x);
-            float u = pixelWidth * (globalId.x + x - 2); // -2 pixels. +1: We downscale to half resolution gives. -3: The filter is 7 pixels wide and and -3 is the start offset
+            //float u = pixelWidth * (globalId.x + 0.5f - 3 + x);
+            float u = pixelWidth * (globalId.x + x - 2.5f); // -2.5 pixels. +0.5: We downscale to half resolution gives. -3: The filter is 7 pixels wide and and -3 is the start offset
             if (u < 0.0f || u > 1.0f) continue;
             for (int y = 0; y < 7; y++)
             {
-                float v = pixelHeight * (globalId.y + 1 - 3 + y);
+                float v = pixelHeight * (globalId.y + y - 2.5f);
                 if (v < 0.0f || v > 1.0f) continue;
                 color += filter[x][y] * bloomSrcTexture.Sample(g_bilinear_clamp_samp, float2(u, v)).rgb;
                 //color += filter[x][y] * bloomSrcTexture.Sample(g_point_clamp_samp, float2(u, v)).rgb;

@@ -21,6 +21,6 @@ void main(uint3 globalId : SV_DispatchThreadID)
         float pixelWidth = 1.0f / g_constants.width;
         float pixelHeight = 1.0f / g_constants.height;
 
-        bloomDstTexture[globalId.xy].rgb += bloomSrcTexture.Sample(g_bilinear_clamp_samp, float2(globalId.x * pixelWidth, globalId.y * pixelHeight)).rgb;
+        bloomDstTexture[globalId.xy].rgb += bloomSrcTexture.Sample(g_bilinear_clamp_samp, float2((globalId.x + 0.5f) * pixelWidth, (globalId.y + 0.5f) * pixelHeight)).rgb;
     }
 }
