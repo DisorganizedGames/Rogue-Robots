@@ -34,6 +34,19 @@ void CreateSpotLight(DirectX::SimpleMath::Vector3 position)
 	);
 	f32 aspectRatio = (f32)DOG::Window::GetWidth() / DOG::Window::GetHeight();
 	c.projMatrix = DirectX::XMMatrixPerspectiveFovLH(80.f * DirectX::XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
+
+	auto dd = DOG::SpotLightDesc();
+	dd.position = tc.GetPosition();
+	dd.color = { 1.f, 1.f, 1.f };
+	dd.direction = { tc.GetPosition().x + tc.GetForward().x, tc.GetPosition().y + tc.GetForward().y, tc.GetPosition().z + tc.GetForward().z };
+	dd.strength = 1.f;
+	auto lh = DOG::LightManager::Get().AddSpotLight(dd, DOG::LightUpdateFrequency::PerFrame);
+	auto& slc = DOG::EntityManager::Get().AddComponent<DOG::SpotLightComponent>(flashlightEntity);
+
+	slc.handle = lh;
+	slc.color = dd.color;
+	slc.direction = dd.direction;
+	slc.strength = dd.strength;
 }
 
 void EmilFDebugLayer::OnAttach()
@@ -82,7 +95,7 @@ void EmilFDebugLayer::OnImGuiRender()
 
 	ImGui::Begin("Flashlights");
 	ImGui::Text("Flashlight entities:");
-	m_entityManager.Collect<DOG::TransformComponent, DOG::CameraComponent>().Do([](DOG::entity e, DOG::TransformComponent&, DOG::CameraComponent&)
+	m_entityManager.Collect<DOG::TransformComponent, DOG::CameraComponent, DOG::SpotLightComponent>().Do([](DOG::entity e, DOG::TransformComponent&, DOG::CameraComponent&, DOG::SpotLightComponent&)
 		{
 			if (!DOG::EntityManager::Get().HasComponent<DOG::ThisPlayer>(e))
 			{
@@ -107,6 +120,7 @@ void EmilFDebugLayer::OnImGuiRender()
 	{
 		auto& tc = m_entityManager.GetComponent<DOG::TransformComponent>(selectedEntity);
 		auto& cc = m_entityManager.GetComponent<DOG::CameraComponent>(selectedEntity);
+		auto& slc = m_entityManager.GetComponent<DOG::SpotLightComponent>(selectedEntity);
 
 		auto pos = tc.GetPosition();
 		auto forward = tc.GetForward();
@@ -127,6 +141,7 @@ void EmilFDebugLayer::OnImGuiRender()
 				{ tc.GetPosition().x + tc.GetForward().x, tc.GetPosition().y + tc.GetForward().y, tc.GetPosition().z + tc.GetForward().z },
 				{ up.x, up.y, up.z }
 			);
+			slc.dirty = true;
 		}
 		static float rotDeg[3] = { DirectX::XMConvertToDegrees(tc.worldMatrix.ToEuler().x), DirectX::XMConvertToDegrees(tc.worldMatrix.ToEuler().y), DirectX::XMConvertToDegrees(tc.worldMatrix.ToEuler().z) };
 		static float newRotDeg[3] = { DirectX::XMConvertToDegrees(tc.worldMatrix.ToEuler().x), DirectX::XMConvertToDegrees(tc.worldMatrix.ToEuler().y), DirectX::XMConvertToDegrees(tc.worldMatrix.ToEuler().z) };
@@ -149,6 +164,10 @@ void EmilFDebugLayer::OnImGuiRender()
 				{ tc.GetPosition().x + tc.GetForward().x, tc.GetPosition().y + tc.GetForward().y, tc.GetPosition().z + tc.GetForward().z },
 				{ up.x, up.y, up.z }
 			);
+			slc.direction = { tc.GetPosition().x + tc.GetForward().x, tc.GetPosition().y + tc.GetForward().y, tc.GetPosition().z + tc.GetForward().z };
+			slc.direction.Normalize();
+			
+			slc.dirty = true;
 		}
 		ImGui::Text("Forward: (%f,%f,%f)", forward.x, forward.y, forward.z);
 		ImGui::Text("Focus point: (%f,%f,%f) ", tc.GetPosition().x + tc.GetForward().x, tc.GetPosition().y + tc.GetForward().y, tc.GetPosition().z + tc.GetForward().z);
