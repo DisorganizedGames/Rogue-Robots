@@ -450,6 +450,51 @@ namespace DOG
 			ac.clips[1].normalizedTime = ac.clips[0].normalizedTime;
 	}
 
+	void AnimationManager::UpdateMovementAnimation2(DOG::AnimationComponent& ac, const f32 dt)
+	{
+		auto& clip0 = ac.clips[0];
+		auto& clip1 = ac.clips[1];
+		auto& clip2 = ac.clips[2];
+		clip0.loop = true;
+		clip1.loop = true;
+		const auto absMS = abs(m_imguiMovementSpeed);
+
+		if (absMS < 0.5f) // clip0 = walk, clip1 = idle
+		{
+			const auto& anim0 = m_rigs[0]->animations[2];
+			const auto& anim1 = m_rigs[0]->animations[4];
+			if (clip0.animationID != 4) clip0.SetAnimation(4, anim1.ticks, anim1.duration);
+			if (clip1.animationID != 2) clip1.SetAnimation(2, anim0.ticks, anim0.duration);
+			m_imguiMatching = true;
+			clip1.currentWeight = 1.0f - absMS / 0.5f;
+			clip0.currentWeight = 1.0f - clip1.currentWeight;
+		}
+		else // clip0 = walk, clip1 = run
+		{
+			const auto& anim0 = m_rigs[0]->animations[4];
+			const auto& anim1 = m_rigs[0]->animations[5];
+			if (clip0.animationID != 4) clip0.SetAnimation(4, anim0.ticks, anim0.duration, clip1.normalizedTime);
+			if (clip1.animationID != 5) clip1.SetAnimation(5, anim1.ticks, anim1.duration, clip0.normalizedTime);
+			m_imguiMatching = true;
+			clip0.currentWeight = 1.0f - std::clamp(absMS - 0.5f, 0.0f, 0.5f) * 2.0f;
+			clip1.currentWeight = 1.0f - clip0.currentWeight;
+			// Additional speed increases playback rate of animation
+			clip0.timeScale = 1.0f + std::clamp(absMS - 0.5f, 0.0f, 2.f);
+		}
+		bool forward = m_imguiMovementSpeed > 0.f;
+		bool positiv = clip0.timeScale > 0.f;
+		if (forward != positiv)
+		{
+			clip0.timeScale *= -1.f;
+			clip1.timeScale *= -1.f;
+		}
+		clip0.UpdateClip(dt);
+		clip1.UpdateClip(dt);
+		// Tmp set matching norm time, required for run/walk etc.
+		if (m_imguiMatching)
+			ac.clips[1].normalizedTime = ac.clips[0].normalizedTime;
+	}
+
 	void AnimationManager::UpdateLinearGT(AnimationComponent::AnimationClip& clip, const f32 globalTime, const f32 dt)
 	{
 		// Linear transition between current weight to target weight of clip on a "global" timeline
