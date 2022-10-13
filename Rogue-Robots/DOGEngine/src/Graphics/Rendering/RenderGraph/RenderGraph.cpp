@@ -84,8 +84,8 @@ namespace DOG::gfx
 
 		{
 			ZoneNamedN(RGFinalizeDependencyLevels, "RG Building: Finalize Dependency Levels", true);
-			for (auto& depLevel : m_dependencyLevels)
-				depLevel.Finalize();
+			//for (auto& depLevel : m_dependencyLevels)
+			//	depLevel.Finalize();
 		}
 
 
@@ -306,80 +306,180 @@ namespace DOG::gfx
 
 	void RenderGraph::TrackTransitions()
 	{
-		const auto recordBarrier = [this](
-			u64 resource, RGResourceType type, DependencyLevel& depLevel,
-			D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES desiredState)
-		{
-			GPUBarrier transitionBarrier{};
+		//const auto recordBarrier = [this](
+		//	u64 resource, RGResourceType type, DependencyLevel& depLevel,
+		//	D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES desiredState)
+		//{
+		//	GPUBarrier transitionBarrier{};
 
-			// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_uav_barrier
-			// UAV Barrier not required if user only does read on the resource.
-			// But we will always assume a write and insert a UAV barrier to avoid potential user bugs (e.g specifying read only but actually writing to it)
-			// We cannot detect if a user writes to a resource or not (since it's on the shader side)
-			std::optional<GPUBarrier> uavBarrier;
+		//	// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_uav_barrier
+		//	// UAV Barrier not required if user only does read on the resource.
+		//	// But we will always assume a write and insert a UAV barrier to avoid potential user bugs (e.g specifying read only but actually writing to it)
+		//	// We cannot detect if a user writes to a resource or not (since it's on the shader side)
+		//	std::optional<GPUBarrier> uavBarrier;
 
-			if (type == RGResourceType::Texture)
-			{
-				transitionBarrier = GPUBarrier::Transition(
-					Texture(resource),
-					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-					currState, desiredState);
+		//	if (type == RGResourceType::Texture)
+		//	{
+		//		transitionBarrier = GPUBarrier::Transition(
+		//			Texture(resource),
+		//			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+		//			currState, desiredState);
 
-				uavBarrier = GPUBarrier::UAV(Texture(resource));
-			}
-			else
-			{
-				transitionBarrier = GPUBarrier::Transition(
-					Buffer(resource),
-					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-					currState, desiredState);
+		//		uavBarrier = GPUBarrier::UAV(Texture(resource));
+		//	}
+		//	else
+		//	{
+		//		transitionBarrier = GPUBarrier::Transition(
+		//			Buffer(resource),
+		//			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+		//			currState, desiredState);
 
-				uavBarrier = GPUBarrier::UAV(Buffer(resource));
-			}
+		//		uavBarrier = GPUBarrier::UAV(Buffer(resource));
+		//	}
 
-			// Assure that any acceses AFTER an unordered access always gets write results
-			if (uavBarrier && currState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
-				depLevel.AddEntryBarrier(*uavBarrier);
+		//	// Assure that any acceses AFTER an unordered access always gets write results
+		//	if (uavBarrier && currState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+		//		depLevel.AddEntryBarrier(*uavBarrier);
 	
-			// No need for state transition, return early.
-			if (currState == desiredState || depLevel.BarrierExists(resource, D3D12_RESOURCE_BARRIER_TYPE_TRANSITION))
-				return false;
+		//	// No need for state transition, return early.
+		//	if (currState == desiredState || depLevel.BarrierExists(resource, D3D12_RESOURCE_BARRIER_TYPE_TRANSITION))
+		//		return false;
 
-			depLevel.AddEntryBarrier(transitionBarrier);
+		//	depLevel.AddEntryBarrier(transitionBarrier);
 
-			return true;
+		//	return true;
+		//};
+
+		//for (const auto& pass : m_sortedPasses)
+		//{
+		//	auto& depLevel = m_dependencyLevels[pass->depth];
+		//	for (const auto& input : pass->inputs)
+		//	{
+		//		// Track resource state transitions
+		//		const auto resource = m_resMan->GetResource(input.id);
+		//		const auto currState = m_resMan->GetCurrentState(input.id);
+		//		const auto desiredState = input.desiredState;
+
+		//		// If aliased, output takes care of picking up state transition
+		//		if (!input.aliasWrite &&
+		//			recordBarrier(resource, input.type, depLevel, currState, desiredState))
+		//		{
+		//			m_resMan->SetCurrentState(input.id, desiredState);
+		//		}
+		//	}
+
+		//	for (const auto& output : pass->outputs)
+		//	{
+		//		// Track resource state transitions
+		//		const auto resource = m_resMan->GetResource(output.id);
+		//		const auto currState = m_resMan->GetCurrentState(output.id);
+		//		const auto desiredState = output.desiredState;
+
+		//		if (recordBarrier(resource, output.type, depLevel, currState, desiredState))
+		//			m_resMan->SetCurrentState(output.id, desiredState);
+		//	}
+
+		//}
+
+		struct TransitionMetadata
+		{
+			D3D12_RESOURCE_STATES before{ D3D12_RESOURCE_STATE_COMMON };
+			D3D12_RESOURCE_STATES after{ D3D12_RESOURCE_STATE_COMMON };
+			RGResourceType type{ RGResourceType::Texture };
 		};
 
-		for (const auto& pass : m_sortedPasses)
+		// Resolve state transitions PER dependency level (finds read state-combines if any)
+		for (auto& depLevel : m_dependencyLevels)
 		{
-			auto& depLevel = m_dependencyLevels[pass->depth];
-			for (const auto& input : pass->inputs)
+			std::unordered_map<RGResourceID, TransitionMetadata> resourceStates;
+			for (const auto& pass : depLevel.GetPasses())
 			{
-				// Track resource state transitions
-				const auto resource = m_resMan->GetResource(input.id);
-				const auto currState = m_resMan->GetCurrentState(input.id);
-				const auto desiredState = input.desiredState;
-
-				// If aliased, output takes care of picking up state transition
-				if (!input.aliasWrite &&
-					recordBarrier(resource, input.type, depLevel, currState, desiredState))
+				for (const auto& input : pass->inputs)
 				{
-					m_resMan->SetCurrentState(input.id, desiredState);
+					// Alias write is a special case --> Underlying resource WILL be the same
+					// This is the only simultaneous read-write we will allow (this will get picked up when iterating over outputs)
+					if (input.aliasWrite)
+						continue;
+
+					auto& states = resourceStates[input.id];
+					states.before = m_resMan->GetCurrentState(input.id);
+					states.type = input.type;
+
+					// If tracked state is read combination --> Forbid writes
+					if (IsReadState(states.after))
+						assert(IsReadState(input.desiredState));
+					// If write state --> Exclusive writer pass already exists and all other accesses are forbidden
+					else
+						assert(states.after == D3D12_RESOURCE_STATE_COMMON);	// Common is synonymous with uninitialized here
+
+					// Read state-combine if all is well
+					states.after |= input.desiredState;
 				}
+
+				for (const auto& output : pass->outputs)
+				{
+					// Sanity check that the graph author always puts a write state for outputs
+					assert(!IsReadState(output.desiredState));
+
+					auto& states = resourceStates[output.id];
+					states.before = m_resMan->GetCurrentState(output.id);
+					states.type = output.type;
+
+					// We assert that state has to be COMMON, meaning it is uninitialized (no writers and no readers yet)
+					// If this asserts false --> A read or write has already been applied --> Illegal simultaneous read/write detected
+					assert(states.after == D3D12_RESOURCE_STATE_COMMON);
+
+					// Set exclusive write state
+					states.after = output.desiredState;
+				}
+				
 			}
 
-			for (const auto& output : pass->outputs)
+			for (const auto& [rgResource, states] : resourceStates)
 			{
-				// Track resource state transitions
-				const auto resource = m_resMan->GetResource(output.id);
-				const auto currState = m_resMan->GetCurrentState(output.id);
-				const auto desiredState = output.desiredState;
+				auto resource = m_resMan->GetResource(rgResource);
 
-				if (recordBarrier(resource, output.type, depLevel, currState, desiredState))
-					m_resMan->SetCurrentState(output.id, desiredState);
+				// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_uav_barrier
+				// UAV Barrier not required if user only does read on the resource.
+				// But we will always assume a write and insert a UAV barrier to avoid potential user bugs (e.g specifying read only but actually writing to it)
+				// We cannot detect if a user writes to a resource or not (since it's on the shader side)
+				std::optional<GPUBarrier> uavBarrier;
+				GPUBarrier transitionBarrier{};
+
+				if (states.type == RGResourceType::Texture)
+				{
+					transitionBarrier = GPUBarrier::Transition(
+						Texture(resource),
+						D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+						states.before, states.after);
+
+					if (states.before == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+						uavBarrier = GPUBarrier::UAV(Texture(resource));
+				}
+				else
+				{
+					transitionBarrier = GPUBarrier::Transition(
+						Buffer(resource),
+						D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+						states.before, states.after);
+
+					if (states.before == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+						uavBarrier = GPUBarrier::UAV(Buffer(resource));
+				}
+
+				// Assure that any acceses AFTER an unordered access always gets write results
+				if (uavBarrier)
+					depLevel.AddEntryBarrier(*uavBarrier);
+
+				// No need for state transition, return early
+				if (states.before != states.after)
+					depLevel.AddEntryBarrier(transitionBarrier);
+
+				m_resMan->SetCurrentState2(rgResource, states.after);
 			}
-
 		}
+
+		std::cout << "done\n";
 	}
 
 	void RenderGraph::RealizeViews()

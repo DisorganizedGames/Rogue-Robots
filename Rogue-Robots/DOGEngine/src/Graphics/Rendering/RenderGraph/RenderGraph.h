@@ -26,27 +26,21 @@ namespace DOG::gfx
 		public:
 			PassResources() = default;
 
-			// Pass local
 			u32 GetView(RGResourceView id) const;			// SRV/UAVs
 
-			// Unsafe
 			TextureView GetTextureView(RGResourceView id) const;
 			BufferView GetBufferView(RGResourceView id) const;
 
-			// Graph global
 			Texture GetTexture(RGResourceID id);
 			Buffer GetBuffer(RGResourceID id);
 
 		private:
 			friend class RenderGraph;
-			//std::unordered_map<RGResourceID, u32> m_views;			// Views already converted to global indices for immediate use
-			std::unordered_map<RGResourceView, u32> m_views;			// Views already converted to global indices for immediate use
-			std::unordered_map<RGResourceID, Buffer> m_buffers;		// Underlying buffer resources
-			std::unordered_map<RGResourceID, Texture> m_textures;	// Underlying texture resources
-
-			// @todo should replace vectors below
-			std::unordered_map<RGResourceView, TextureView> m_textureViewsLookup;
-			std::unordered_map<RGResourceView, BufferView> m_bufferViewsLookup;
+			std::unordered_map<RGResourceView, u32> m_views;						// Views already converted to global indices for immediate use
+			std::unordered_map<RGResourceID, Buffer> m_buffers;						// Underlying buffer resources
+			std::unordered_map<RGResourceID, Texture> m_textures;					// Underlying texture resources
+			std::unordered_map<RGResourceView, TextureView> m_textureViewsLookup;	// Underlying texture view
+			std::unordered_map<RGResourceView, BufferView> m_bufferViewsLookup;		// Underlying buffer view
 
 			// Held for cleanup
 			std::vector<TextureView> m_textureViews;
@@ -56,12 +50,15 @@ namespace DOG::gfx
 	private:
 		struct PassIO
 		{
-			std::optional<RGResourceID> originalID;			// if aliased --> holds original resource name
+			// I/O data
+			std::optional<RGResourceID> originalID;	// If aliased, holds original resource
 			RGResourceID id;
 			RGResourceType type{ RGResourceType::Texture };
 			RGResourceView viewID;
 			std::optional<std::variant<TextureViewDesc, BufferViewDesc>> viewDesc;
 			D3D12_RESOURCE_STATES desiredState{ D3D12_RESOURCE_STATE_COMMON };
+
+			// Output specific data
 			std::optional<RenderPassAccessType> rpAccessType;			// Render Target & Depth
 			std::optional<RenderPassAccessType> rpStencilAccessType;	// Stencil
 			bool aliasWrite{ false };
@@ -79,10 +76,11 @@ namespace DOG::gfx
 			// Filled by implementation
 			std::string name;
 			u32 id{ 0 };
-			std::function<void(RenderDevice*, CommandList, PassResources&)> execFunc;
 			u32 depth{ 0 };
+			std::function<void(RenderDevice*, CommandList, PassResources&)> execFunc;
 			PassResources passResources;
-
+			
+			// If pass writes to render target, render pass is sued
 			std::optional<RenderPass> rp;
 		};
 
@@ -102,6 +100,8 @@ namespace DOG::gfx
 				and combines multiple reads on the same resource if possible.
 			*/
 			void Finalize();
+
+			const std::vector<Pass*>& GetPasses() const { return m_passes; }
 
 		private:
 			RGResourceManager* m_resMan{ nullptr };
