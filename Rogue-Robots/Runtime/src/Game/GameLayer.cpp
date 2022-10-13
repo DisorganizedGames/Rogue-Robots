@@ -116,7 +116,7 @@ GameLayer::GameLayer() noexcept
 	entity Player1 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(Player1, m_greenCube);
 	m_entityManager.AddComponent<TransformComponent>(Player1, Vector3(25, 25, 15), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
-	m_entityManager.AddComponent<CapsuleColliderComponent>(Player1, Player1, 1.f, 2.f, true, 75.f);
+	m_entityManager.AddComponent<CapsuleColliderComponent>(Player1, Player1, 1.f, 1.8f, true, 75.f);
 	m_entityManager.AddComponent<RigidbodyComponent>(Player1, Player1).ConstrainRotation(true, true, true);
 	m_entityManager.AddComponent<NetworkPlayerComponent>(Player1).playerId = 0;
 	m_entityManager.AddComponent<InputController>(Player1);
@@ -287,6 +287,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<InputInterface, &InputInterface::IsLeftPressed>("IsLeftPressed");
 	luaInterface.AddFunction<InputInterface, &InputInterface::IsRightPressed>("IsRightPressed");
 	luaInterface.AddFunction<InputInterface, &InputInterface::IsKeyPressed>("IsKeyPressed");
+	luaInterface.AddFunction<InputInterface, &InputInterface::GetMouseDelta>("MouseDelta");
 	global->SetLuaInterface(luaInterface);
 	//Make the object accessible from lua. Is used by: Input.FunctionName()
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Input", "InputInterface");

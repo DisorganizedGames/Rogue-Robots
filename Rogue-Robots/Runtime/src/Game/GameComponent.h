@@ -28,9 +28,24 @@ struct BulletComponent
 {
 
 };
+
 struct NetworkAgentStats
 {
 	int playerId;
 	u32 objectId;
 	AgentStatsComponent stats;
+};
+
+struct InputController
+{
+	bool forward = false;
+	bool left = false;
+	bool right = false;
+	bool backwards = false;
+	bool up = false;
+	bool down = false;
+	bool shoot = false;
+	bool jump = false;
+	bool switchComp = false;
+	bool activateActiveItem = false;
 };

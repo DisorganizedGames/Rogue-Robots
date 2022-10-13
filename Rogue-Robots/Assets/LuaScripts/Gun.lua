@@ -88,7 +88,7 @@ function OnUpdate()
 
 	-- Switch misc component if we should 
 	-- THIS IS TEMPORARY
-	if Entity:GetAction(EntityID, 4) and not switched then
+	if Entity:GetAction(EntityID, "SwitchComponent") and not switched then
 		switched = true
 		if componentIdx == 0 then
 			miscComponent = MiscComponent.NormalGun()
@@ -97,7 +97,7 @@ function OnUpdate()
 			miscComponent = MiscComponent.ChargeShot()
 			componentIdx = 0
 		end
-	elseif not Entity:GetAction(EntityID, 4) then
+	elseif not Entity:GetAction(EntityID, "SwitchComponent") then
 		switched = false
 	end
 
