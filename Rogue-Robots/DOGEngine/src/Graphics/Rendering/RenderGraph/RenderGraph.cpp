@@ -252,6 +252,7 @@ namespace DOG::gfx
 	void RenderGraph::BuildDependencyLevels()
 	{
 		// Add passes to dependency level
+		m_dependencyLevels.reserve(m_maxDepth + 1);
 		for (u32 i = 0; i < m_maxDepth + 1; ++i)
 			m_dependencyLevels.push_back(DependencyLevel(m_resMan));
 
@@ -267,37 +268,10 @@ namespace DOG::gfx
 		for (const auto& pass : m_sortedPasses)
 		{
 			for (const auto& input : pass->inputs)
-			{
 				m_resMan->ResolveLifetime(input.id, pass->depth);
-				
-				//// Track start lifetime
-				//auto& resourceLifetime = m_resMan->GetMutableResourceLifetime(input.id);
-				//resourceLifetime.first = (std::min)(pass->depth, resourceLifetime.first);
-				//resourceLifetime.second = (std::max)(pass->depth, resourceLifetime.second);
-
-				//// Track usage lifetime
-				//auto& usageLifetime = m_resMan->GetMutableUsageLifetime(input.id);
-				//usageLifetime.first = (std::min)(pass->depth, usageLifetime.first);
-				//usageLifetime.second = (std::max)(pass->depth, usageLifetime.second);
-			}
-
 			for (const auto& output : pass->outputs)
-			{
 				m_resMan->ResolveLifetime(output.id, pass->depth);
-
-				//// Track end lifetime
-				//auto& resourceLifetime = m_resMan->GetMutableResourceLifetime(output.id);
-				//resourceLifetime.first = (std::min)(pass->depth, resourceLifetime.first);
-				//resourceLifetime.second = (std::max)(pass->depth, resourceLifetime.second);
-
-				//// Track usage lifetime
-				//auto& usageLifetime = m_resMan->GetMutableUsageLifetime(output.id);
-				//usageLifetime.first = (std::min)(pass->depth, usageLifetime.first);
-				//usageLifetime.second = (std::max)(pass->depth, usageLifetime.second);
-			}
 		}
-
-		std::cout << "done\n";
 	}
 
 	void RenderGraph::TrackTransitions()
