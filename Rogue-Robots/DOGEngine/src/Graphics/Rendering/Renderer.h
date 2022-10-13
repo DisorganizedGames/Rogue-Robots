@@ -4,7 +4,6 @@
 #include "../RHI/Types/HardwareTypes.h"
 #include "../../Core/AnimationManager.h"
 #include "../../Core/CoreUtils.h"
-#include "UI.h"
 #include "GPUTable.h"
 
 #include "RenderEffects/RenderEffect.h"
@@ -14,7 +13,6 @@ namespace DOG::gfx
 {
 	class RenderBackend;
 	class ImGUIBackend;
-	class D2DBackend;
 	class RenderDevice;
 	class Swapchain;
 	class ShaderCompilerDXC;
@@ -108,7 +106,6 @@ namespace DOG::gfx
 		std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> m_wmCallback;
 		std::unique_ptr<RenderBackend> m_backend;
 		std::unique_ptr<ImGUIBackend> m_imgui;
-		std::unique_ptr<UI> m_ui; 
 		std::unique_ptr<ShaderCompilerDXC> m_sclr;
 		std::unique_ptr<GPUGarbageBin> m_bin;
 		RenderDevice* m_rd{ nullptr };

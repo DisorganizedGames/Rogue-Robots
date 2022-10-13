@@ -35,8 +35,7 @@ namespace DOG::gfx
 		// Implementation interface
 	public:
 		HWND GetHWND() const { return m_hwnd; }
-		ComPtr<ID3D12Resource> GetD12Buffer(u8 idx);
-	
+
 
 	private:
 		bool IsTearingSupported();

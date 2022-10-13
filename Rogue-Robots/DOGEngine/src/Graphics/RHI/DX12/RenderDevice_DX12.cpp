@@ -31,10 +31,9 @@ namespace DOG::gfx
 		InitDMA(adapter);
 
 		m_descriptorMgr = std::make_unique<DX12DescriptorManager>(m_device.Get());
-		
 
 		m_reservedDescriptor = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		m_d2dReservedDescriptor = m_descriptorMgr->allocate(2, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
 		InitRootsig();
 	}
 
@@ -59,9 +58,6 @@ namespace DOG::gfx
 
 		if (m_reservedDescriptor)
 			m_descriptorMgr->free(&(*m_reservedDescriptor));
-		
-		if (m_d2dReservedDescriptor)
-			m_descriptorMgr->free(&(*m_d2dReservedDescriptor));
 	}
 
 	Swapchain* RenderDevice_DX12::CreateSwapchain(void* hwnd, u8 numBuffers)
@@ -932,15 +928,7 @@ namespace DOG::gfx
 
 
 
-	ID3D12CommandQueue* RenderDevice_DX12::GetQueue()
-	{
-		return *m_directQueue;
-	}
 
-	D3D12_CPU_DESCRIPTOR_HANDLE RenderDevice_DX12::GetReservedRTV(u8 offset)
-	{
-		return m_d2dReservedDescriptor.value().cpu_handle(offset);
-	}
 
 
 

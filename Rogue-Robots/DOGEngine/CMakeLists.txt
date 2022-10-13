@@ -14,8 +14,7 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Graphics/Rendering/MaterialTable.h"  "src/Core/TextureFileImporter.h" "src/Core/TextureFileImporter.cpp" 
     "src/Graphics/Rendering/MaterialTable.cpp" "src/Graphics/Rendering/MaterialTable.h" "src/Graphics/Rendering/MaterialTable.cpp"   
     "src/Graphics/Rendering/TextureManager.h" "src/Graphics/Rendering/TextureManager.cpp" "src/Graphics/Rendering/Renderer.h" "src/Graphics/Rendering/Renderer.cpp" 
-      "src/Graphics/RHI/DX12/ImGUIBackend_DX12.h" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.cpp" "src/Graphics/RHI/ImGUIBackend.h" "src/Graphics/RHI/D2DBackend.h" "src/Graphics/RHI/DX12/D2DBackend_DX12.h"
-    "src/Graphics/RHI/DX12/D2DBackend_DX12.cpp" "src/Graphics/Rendering/UI.h" "src/Graphics/Rendering/UI.cpp" "src/Graphics/Rendering/GraphicsBuilder.h" "src/Graphics/Rendering/GraphicsBuilder.cpp"
+      "src/Graphics/RHI/DX12/ImGUIBackend_DX12.h" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.cpp" "src/Graphics/RHI/ImGUIBackend.h" "src/Graphics/Rendering/GraphicsBuilder.h" "src/Graphics/Rendering/GraphicsBuilder.cpp"
     "src/ECS/EntityManager.h" "src/ECS/EntityManager.cpp" "src/ECS/Component.h" "src/ECS/Component.cpp" 
     "src/Scripting/LuaW.h" "src/Scripting/LuaW.cpp" "src/Scripting/LuaTable.h" "src/Scripting/LuaTable.cpp" "src/Scripting/LuaGlobal.h" "src/Scripting/LuaGlobal.cpp" "src/Scripting/LuaEvent.h" 
     "src/Scripting/LuaEvent.cpp" "src/Scripting/ScriptManager.h" "src/Scripting/ScriptManager.cpp" "src/Scripting/LuaContext.h" "src/Scripting/LuaContext.cpp" "src/Scripting/LuaMain.h" "src/Scripting/LuaMain.cpp"
@@ -52,7 +51,7 @@ add_library("${LibraryName}" STATIC "${SourceFiles}" "${TempGraphics}"   )
 target_include_directories("${LibraryName}" PRIVATE "${CMAKE_SOURCE_DIR}/Core/src/" "${ExternalIncludePath}")
 target_compile_options("${LibraryName}" PRIVATE "/W4")
 set_target_properties("${LibraryName}" PROPERTIES LINKER_LANGUAGE "CXX")
-target_link_libraries("${LibraryName}" PRIVATE "xaudio2" "ole32" "d3d12" "d3d11" "D2d1" "Dwrite" "dxgi" "dxguid" "dxcompiler" "Ws2_32" "winmm.lib")
+target_link_libraries("${LibraryName}" PRIVATE "xaudio2" "ole32" "d3d12" "dxgi" "dxguid" "dxcompiler" "Ws2_32" "winmm.lib")
 
 target_precompile_headers("${LibraryName}" PUBLIC "src/pch.h")
 
