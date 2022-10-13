@@ -530,12 +530,6 @@ namespace DOG::gfx
 
 
 
-	RenderGraph::PassBuilder::PassBuilder(PassBuilderGlobalData& globalData, RGResourceManager* resMan) :
-		m_globalData(globalData),
-		m_resMan(resMan)
-	{
-	}
-
 	void RenderGraph::PassBuilder::DeclareTexture(RGResourceID name, RGTextureDesc desc)
 	{
 		m_resMan->DeclareTexture(name, desc);
@@ -555,6 +549,8 @@ namespace DOG::gfx
 	{
 		m_resMan->ImportBuffer(id, buffer, entryState, exitState);
 	}
+
+
 
 	RGResourceView RenderGraph::PassBuilder::ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc)
 	{

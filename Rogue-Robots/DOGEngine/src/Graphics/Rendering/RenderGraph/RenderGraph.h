@@ -64,6 +64,11 @@ namespace DOG::gfx
 
 		struct Pass
 		{
+			Pass(const std::string& name, u32 id) :
+				name(name),
+				id(id)
+			{}
+
 			// Declared by user
 			std::vector<PassIO> inputs;
 			std::vector<PassIO> outputs;
@@ -123,7 +128,11 @@ namespace DOG::gfx
 		struct PassBuilder
 		{
 		public:
-			PassBuilder(PassBuilderGlobalData& globalData, RGResourceManager* resMan);
+			PassBuilder(PassBuilderGlobalData& globalData, RGResourceManager* resMan, Pass& pass) : 
+				m_globalData(globalData), 
+				m_resMan(resMan),
+				m_pass(pass)
+			{};
 
 			// ResourceManager interface
 			void DeclareTexture(RGResourceID id, RGTextureDesc desc);
@@ -145,7 +154,6 @@ namespace DOG::gfx
 			void CopyFromResource(RGResourceID id, RGResourceType type);
 
 
-
 		private:
 			// Auto-proxy and auto-alias helpers
 			std::pair<RGResourceID, RGResourceID> ResolveAliasingIDs(RGResourceID input);
@@ -154,16 +162,13 @@ namespace DOG::gfx
 			RGResourceID GetNextID(RGResourceID id);
 			void FlushReadsAndConnectProxy(RGResourceID id);
 
-		
-
 			// Proxy now handled internally
 			void ProxyWrite(RGResourceID id);
 			void ProxyRead(RGResourceID id);
 
-			friend class RenderGraph;
 			PassBuilderGlobalData& m_globalData;
 			RGResourceManager* m_resMan{ nullptr };
-			Pass m_pass;
+			Pass& m_pass;
 		};
 
 	public:
@@ -174,15 +179,14 @@ namespace DOG::gfx
 			const std::function<void(PassData&, PassBuilder&)>& buildFunc,
 			const std::function<void(const PassData&, RenderDevice*, CommandList, PassResources&)>& execFunc)
 		{
-			PassBuilder builder(m_passBuilderGlobalData, m_resMan);
-			builder.m_pass.id = m_nextPassID++;
-			builder.m_pass.name = name;
+			Pass newPass(name, m_nextPassID++);
+			PassBuilder builder(m_passBuilderGlobalData, m_resMan, newPass);
 
 			PassData passData{};
 			buildFunc(passData, builder);
 
 			// Construct pass data
-			auto pass = std::make_unique<Pass>(std::move(builder.m_pass));
+			auto pass = std::make_unique<Pass>(std::move(newPass));
 			pass->execFunc = [execFunc, passData](RenderDevice* rd, CommandList cmdl, PassResources& resources)
 			{
 				execFunc(passData, rd, cmdl, resources);
@@ -223,6 +227,5 @@ namespace DOG::gfx
 		std::vector<DependencyLevel> m_dependencyLevels;
 
 		CommandList m_cmdl;
-	
 	};
 }
