@@ -15,6 +15,9 @@ public:
 private:
 	DOG::EntityManager& m_entityManager;
 	DOG::entity m_playerEntity;
+
+	bool m_useDebugView = false;
+	DOG::entity m_debugCamera;
 	
 	f32 m_azim, m_polar;
 	Vector3 m_forward, m_right, m_up, m_position;

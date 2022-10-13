@@ -8,7 +8,7 @@ function MiscComponent.NormalGun()
 
 		Update = function(self, parentEntity) 
 			self.cooldown = self.cooldown - DeltaTime
-			if self.cooldown <= 0.0 and Entity:GetAction(parentEntity, 1) then
+			if self.cooldown <= 0.0 and Entity:GetAction(parentEntity, "Shoot") then
 				self.cooldown = 0.1
 				
 				local pos = Vector3.FromTable(Entity:GetTransformPosData(parentEntity))
@@ -42,7 +42,7 @@ function MiscComponent.ChargeShot()
 
 		Update = function(self, parentEntity)
 			
-			if Entity:GetAction(parentEntity, 1) then
+			if Entity:GetAction(parentEntity, "Shoot") then
 				self.pressing = true
 				self.shotPower = self.shotPower + self.chargeSpeed * DeltaTime
 

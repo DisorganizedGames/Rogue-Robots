@@ -45,7 +45,11 @@ Vector3 = {
 
 	-- Stringify
 	__tostring = function(vec)
-		return "(" .. vec.x .. ", " .. vec.y .. ", " .. vec.z .. ")"
+		if vec.z then
+			return "(" .. vec.x .. ", " .. vec.y .. ", " .. vec.z .. ")"
+		else
+			return "(" .. vec.x .. ", " .. vec.y .. ")"
+		end
 	end
 }
 
@@ -64,6 +68,15 @@ function Scale(v, s)
 	return v * s
 end
 
+-- Cross vector v with vector u
+function Cross(v, u)
+	return Vector3.New(
+		(v.y * u.z) - (v.z * u.y),
+		-((v.x * u.z) - (v.z * u.x)),
+		(v.x * u.y) - (v.y * u.x)
+	)
+end
+
 -- Length of vector v
 function Length(v)
 	return math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z)
@@ -71,7 +84,12 @@ end
 
 -- Normalize vector v
 function Norm(v)
-	return Vector3.New(v.x, v.y, v.z) * (1/Length(v))
+	local length = Length(v)
+	if length > 0 then
+		return Vector3.New(v.x, v.y, v.z) * (1/Length(v))
+	else
+		return Vector3.Zero()
+	end
 end
 
 function QuatMul(q, p)

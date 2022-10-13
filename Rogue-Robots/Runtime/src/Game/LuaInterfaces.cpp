@@ -22,6 +22,15 @@ void InputInterface::IsKeyPressed(LuaContext* context)
 	context->ReturnBoolean(Keyboard::IsKeyPressed((Key)std::toupper(input[0]))); //Usch
 }
 
+void InputInterface::GetMouseDelta(DOG::LuaContext* context)
+{
+	auto [x, y] = DOG::Mouse::GetDeltaCoordinates();
+	LuaTable t;
+	t.AddIntToTable("x", x);
+	t.AddIntToTable("y", y);
+	context->ReturnTable(t);
+};
+
 //---------------------------------------------------------------------------------------------------------
 //Audio
 void AudioInterface::Play(LuaContext* context)
@@ -160,43 +169,33 @@ void EntityInterface::GetRight(DOG::LuaContext* context)
 	t.AddFloatToTable("z", world._13);
 	context->ReturnTable(t);
 }
-//1. Shoot, 2. Jump, 3.activateActiveItem 
+
+static bool GetActionState(InputController& input, const std::string& action) {
+	std::unordered_map<std::string, bool> map = {
+		{"Shoot", input.shoot},
+		{"Jump", input.jump},
+		{"Forwards", input.forward},
+		{"Backwards", input.backwards},
+		{"Left", input.left},
+		{"Right", input.right},
+		{"ActivateItem", input.activateActiveItem},
+		{"SwitchComponent", input.switchComp},
+	};
+
+	return map.at(action);
+}
+
+//1. Shoot, 2. Jump, 3.activateActiveItem
 void EntityInterface::GetAction(DOG::LuaContext* context)
 {
 	entity e = context->GetInteger();
-	int action = context->GetInteger();
+	std::string action = context->GetString();
 	InputController& input = EntityManager::Get().GetComponent<InputController>(e);
-	switch (action)
-	{
-	case 1:
-		if (input.shoot)
-			context->ReturnBoolean(true);
-		else
-			context->ReturnBoolean(false);
-		break;
-	case 2:
-		if (input.jump)
-			context->ReturnBoolean(true);
-		else
-			context->ReturnBoolean(false);
-		break;
-	case 3:
-		if (input.activateActiveItem)
-			context->ReturnBoolean(true);
-		else
-			context->ReturnBoolean(false);
-		break;
-	case 4:
-		if (input.switchComp)
-			context->ReturnBoolean(true);
-		else
-			context->ReturnBoolean(false);
-		break;
-	default:
-		break;
-	}
-	
-}void EntityInterface::SetAction(DOG::LuaContext* context)
+
+	context->ReturnBoolean(GetActionState(input, action));
+}
+
+void EntityInterface::SetAction(DOG::LuaContext* context)
 {
 	entity e = context->GetInteger();
 	int action = context->GetInteger();
@@ -225,7 +224,7 @@ void EntityInterface::GetAction(DOG::LuaContext* context)
 #pragma region HasComponent
 
 template<typename ComponentType>
-bool HasComp(entity e)
+static bool HasComp(entity e)
 {
 	return EntityManager::Get().HasComponent<ComponentType>(e);
 }
