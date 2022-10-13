@@ -62,6 +62,8 @@ namespace DOG::gfx
 			RGResourceView viewID;
 			std::optional<std::variant<TextureViewDesc, BufferViewDesc>> viewDesc;
 			D3D12_RESOURCE_STATES desiredState{ D3D12_RESOURCE_STATE_COMMON };
+
+
 			std::optional<RenderPassAccessType> rpAccessType;			// Render Target & Depth
 			std::optional<RenderPassAccessType> rpStencilAccessType;	// Stencil
 			bool aliasWrite{ false };
@@ -129,6 +131,9 @@ namespace DOG::gfx
 
 			// When alias is reset, a proxy is created as it marks the last read-to-write
 			std::vector<std::pair<u32, u32>> proxies;
+
+			// Hold resource
+			std::unordered_map<RGResourceID, std::pair<u32, u32>> resourceMipAndArraySize;
 		};
 
 	public:

@@ -32,7 +32,6 @@ namespace DOG::gfx
 			decl.currStates[i] = desc.initState;
 		}
 
-
 		auto& res = m_resources[id];
 		res.resourceType = RGResourceType::Texture;
 		res.variantType = RGResourceVariant::Declared;

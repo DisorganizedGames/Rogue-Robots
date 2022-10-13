@@ -571,6 +571,8 @@ namespace DOG::gfx
 		m_resMan->ImportBuffer(id, buffer, entryState, exitState);
 	}
 
+
+
 	RGResourceView RenderGraph::PassBuilder::ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc)
 	{
 		assert(IsReadState(state));
@@ -904,6 +906,8 @@ namespace DOG::gfx
 		input.type = type;
 		m_pass.inputs.push_back(input);
 	}
+
+
 
 
 
