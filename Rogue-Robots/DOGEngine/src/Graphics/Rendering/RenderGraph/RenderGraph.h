@@ -17,10 +17,8 @@ namespace DOG::gfx
 	class RenderGraph
 	{
 	public:
-		/*
-			Specialized interface to return usable GPU elements in the execution logic in each pass.
-			Views that are retrieved here local to the declared resources! 
-		*/
+		// Specialized interface to return usable GPU primitives in the execution logic in each pass.
+		// Only pass local resources are obtainable
 		class PassResources
 		{
 		public:
@@ -42,7 +40,7 @@ namespace DOG::gfx
 			std::unordered_map<RGResourceView, TextureView> m_textureViewsLookup;	// Underlying texture view
 			std::unordered_map<RGResourceView, BufferView> m_bufferViewsLookup;		// Underlying buffer view
 
-			// Held for cleanup
+			// Stores all views associated with this PassResources, held for cleanup
 			std::vector<TextureView> m_textureViews;
 			std::vector<BufferView> m_bufferViews;
 		};
@@ -87,29 +85,19 @@ namespace DOG::gfx
 		class DependencyLevel
 		{
 		public:
-			DependencyLevel(RGResourceManager* resMan);
+			DependencyLevel(RGResourceManager* resMan) : m_resMan(resMan) {}
 
 			void Execute(RenderDevice* rd, CommandList cmdl);
 	
-			void AddPass(Pass* pass);
-			void AddEntryBarrier(GPUBarrier barrier);
-			bool BarrierExists(u64 resource, D3D12_RESOURCE_BARRIER_TYPE type);
-			/*
-				Called after all barriers have been inserted.
-				This checks for any simultaneous read/write on the same resource (forbidden)
-				and combines multiple reads on the same resource if possible.
-			*/
-			void Finalize();
+			void AddPass(Pass* pass) { m_passes.push_back(pass); }
+			void AddEntryBarrier(GPUBarrier barrier) { m_entryBarriers.push_back(barrier); }
 
 			const std::vector<Pass*>& GetPasses() const { return m_passes; }
 
 		private:
 			RGResourceManager* m_resMan{ nullptr };
-
 			std::vector<Pass*> m_passes;
-
-			// Barriers for all resources upon entry into this dependency level
-			std::vector<GPUBarrier> m_batchedEntryBarriers;
+			std::vector<GPUBarrier> m_entryBarriers;
 		};
 
 		struct PassBuilderGlobalData
@@ -235,8 +223,6 @@ namespace DOG::gfx
 		std::vector<DependencyLevel> m_dependencyLevels;
 
 		CommandList m_cmdl;
-		
-
-
+	
 	};
 }
