@@ -189,5 +189,10 @@ namespace DOG
 		u32 entitiesCount{ 0 };
 		entity entities[maxCount] = { NULL_ENTITY };
 	};
+	
+	struct ShadowComponent
+	{
+
+	};
 }
 

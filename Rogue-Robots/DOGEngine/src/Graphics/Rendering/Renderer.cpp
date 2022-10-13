@@ -158,11 +158,20 @@ namespace DOG::gfx
 			.Build());
 
 		auto meshVS = m_sclr->CompileFromFile("MainVS.hlsl", ShaderType::Vertex);
+		auto shadowVS = m_sclr->CompileFromFile("ShadowVS.hlsl", ShaderType::Vertex);
+		auto shadowPS = m_sclr->CompileFromFile("ShadowPS.hlsl", ShaderType::Pixel);
 		auto meshPS = m_sclr->CompileFromFile("MainPS.hlsl", ShaderType::Pixel);
 		m_meshPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
 			.SetShader(meshVS.get())
 			.SetShader(meshPS.get())
 			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+			.SetDepthFormat(DepthFormat::D32)
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.Build());
+
+		m_shadowPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
+			.SetShader(shadowVS.get())
+			.SetShader(shadowPS.get())
 			.SetDepthFormat(DepthFormat::D32)
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
@@ -197,9 +206,6 @@ namespace DOG::gfx
 
 
 		m_rgResMan = std::make_unique<RGResourceManager>(m_rd, m_bin.get());
-
-
-
 
 
 
@@ -344,6 +350,16 @@ namespace DOG::gfx
 		m_animatedDraws.push_back(sub);
 	}
 
+	void DOG::gfx::Renderer::SubmitShadowMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
+	{
+		RenderSubmission sub{};
+		sub.mesh = mesh;
+		sub.submesh = submesh;
+		sub.mat = material;
+		sub.world = world;
+		m_shadowSubmissions.push_back(sub);
+	}
+
 	void Renderer::Update(f32 dt)
 	{
 		m_boneJourno->UpdateJoints();
@@ -430,62 +446,150 @@ namespace DOG::gfx
 				u32 jointsDescriptor{ UINT_MAX };
 			};
 
+			struct PerLightData
+			{
+				DirectX::XMMATRIX view;
+				DirectX::XMMATRIX proj;
+			};
+
 			/*
 				@todo:
 					Still need some way to pre-allocate per draw data prior to render pass.
 					Perhaps go through the submissions and collect data --> Upload to GPU (maybe instance it as well?)
 					and during forward pass we simply read from it
 			*/
-			auto drawSubmissions = [this](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission> submissions, bool animated = false, bool wireframe = false)
+			struct PassData
 			{
-				for (const auto& sub : submissions)
+				RGResourceView shadowView;
+			};
+
+			auto drawSubmissions = [this](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission> submissions, RenderGraph::PassResources& resources, const PassData& passData, bool animated = false, bool wireframe = false)
+			{	
+				EntityManager::Get().Collect<SpotLightComponent, CameraComponent>().Do([&](SpotLightComponent& slc, CameraComponent& cc)
 				{
-					auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
-					PerDrawData perDrawData{};
-					perDrawData.world = sub.world;
-					perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
-					perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
+					auto perLightHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerLightData) / (float)256));
+					PerLightData perLightData{};
+					perLightData.view = cc.viewMatrix;
+					perLightData.proj = cc.projMatrix;
+					std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
 
-					if (animated)
+					for (const auto& sub : submissions)
 					{
-						// Resolve joints
-						JointData jointsData{};
-						auto jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
-						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); ++i)
-							jointsData.joints[i] = m_boneJourno->m_vsJoints[i];
-						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
-						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
-					}
+						auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
+						PerDrawData perDrawData{};
+						perDrawData.world = sub.world;
+						perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
+						perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
 
-					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
+						if (animated)
+						{
+							// Resolve joints
+							JointData jointsData{};
+							auto jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+							for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); ++i)
+								jointsData.joints[i] = m_boneJourno->m_vsJoints[i];
+							std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
+							perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
+						}
+
+						std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
+
+						auto args = ShaderArgs()
+							.AppendConstant(m_globalEffectData.globalDataDescriptor)
+							.AppendConstant(m_currPfDescriptor)
+							.AppendConstant(perDrawHandle.globalDescriptor)
+							.AppendConstant(resources.GetView(passData.shadowView))
+							.AppendConstant(perLightHandle.globalDescriptor);
+
+						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
+
+						auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+						rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
+					}
+				}
+			};
+
+			auto shadowDrawSubmissions = [this](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission> submissions, bool animated = false)
+			{
+				EntityManager::Get().Collect<SpotLightComponent, CameraComponent>().Do([&](SpotLightComponent& slc, CameraComponent& cc)
+					{
+						auto perLightHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerLightData) / (float)256));
+						PerLightData perLightData{};
+						perLightData.view = cc.viewMatrix;
+						perLightData.proj = cc.projMatrix;
+						std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
+
+						for (const auto& sub : submissions)
+						{
+							auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
+							PerDrawData perDrawData{};
+							perDrawData.world = sub.world;
+							perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
+							perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
+
+							if (animated)
+							{
+								// Resolve joints
+								JointData jointsData{};
+								auto jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+								for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); ++i)
+									jointsData.joints[i] = m_boneJourno->m_vsJoints[i];
+								std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
+								perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
+							}
+
+							std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
 
 					auto args = ShaderArgs()
 						.AppendConstant(m_globalEffectData.globalDataDescriptor)
 						.AppendConstant(m_currPfDescriptor)
 						.AppendConstant(perDrawHandle.globalDescriptor)
-						.AppendConstant(wireframe ? 1 : 0);
+						.AppendConstant(wireframe ? 1 : 0)
+						.AppendConstant(perLightHandle.globalDescriptor);
 
-					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
+							rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
-					auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
-					rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
-				}
+							auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+							rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
+						}
+					});
 			};
 
-			struct PassData {};
-			rg.AddPass<PassData>("Forward Pass",
+
+			rg.AddPass<PassData>("Shadow Pass", 
 				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					builder.DeclareTexture(RG_RESOURCE(ShadowDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, 1024, 1024));
+					builder.WriteDepthStencil(RG_RESOURCE(ShadowDepth), RenderPassAccessType::ClearDiscard,
+						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
+				},
+				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
+				{
+					rd->Cmd_SetViewports(cmdl, Viewports().Append(0.f, 0.f, 1024.f, 1024.f));
+					rd->Cmd_SetScissorRects(cmdl, ScissorRects().Append(0, 0, 1024, 1024));
+
+					rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
+
+					rd->Cmd_SetPipeline(cmdl, m_shadowPipe);
+					shadowDrawSubmissions(rd, cmdl, m_shadowSubmissions);
+				});
+
+			rg.AddPass<PassData>("Forward Pass",
+				[&](PassData& p, RenderGraph::PassBuilder& builder)
 				{
 					builder.DeclareTexture(RG_RESOURCE(MainDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_renderWidth, m_renderHeight));
 					builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight)
 						.AddFlag(D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
+
+					p.shadowView = builder.ReadResource(RG_RESOURCE(ShadowDepth), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R32_FLOAT));
 
 					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 					builder.WriteDepthStencil(RG_RESOURCE(MainDepth), RenderPassAccessType::ClearDiscard,
 						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
 				},
-				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
+				[&](const PassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
 				{
 					rd->Cmd_SetViewports(cmdl, m_globalEffectData.defRenderVPs);
 					rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.defRenderScissors);
@@ -493,17 +597,18 @@ namespace DOG::gfx
 					rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipe);
-					drawSubmissions(rd, cmdl, m_submissions);
-					drawSubmissions(rd, cmdl, m_animatedDraws, true);
+
+					drawSubmissions(rd, cmdl, m_submissions, resources, p);
+					drawSubmissions(rd, cmdl, m_animatedDraws, resources, p, true );
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
-					drawSubmissions(rd, cmdl, m_noCullSubmissions);
+					drawSubmissions(rd, cmdl, m_noCullSubmissions, resources, p);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframe);
-					drawSubmissions(rd, cmdl, m_wireframeDraws, false, true);
+					drawSubmissions(rd, cmdl, m_wireframeDraws, resources, p, false, true);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframeNoCull);
-					drawSubmissions(rd, cmdl, m_noCullWireframeDraws, false, true);
+					drawSubmissions(rd, cmdl, m_noCullWireframeDraws, resources, p, false, true);
 				});
 		}
 
@@ -622,6 +727,7 @@ namespace DOG::gfx
 		m_animatedDraws.clear();
 		m_wireframeDraws.clear();
 		m_noCullWireframeDraws.clear();
+		m_shadowSubmissions.clear();
 
 		m_sc->Present(vsync);
 	}

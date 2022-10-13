@@ -8,6 +8,7 @@
 struct VS_OUT
 {
     float4 pos : SV_POSITION;
+    float4 shadowPos : SHADOW_POSITION;
     float2 uv : TEXCOORD;
     float3 nor : NORMAL;
     float3 tan : TANGENT;
@@ -30,6 +31,7 @@ struct PushConstantElement
     
     uint perDrawCB;
     uint wireframe;
+    uint depth;
 };
 CONSTANTS(g_constants, PushConstantElement)
 
@@ -59,11 +61,8 @@ float4 main(VS_OUT input) : SV_TARGET
 
     
     
-    
-    
-
-    
-    
+    Texture2D depth = ResourceDescriptorHeap[g_constants.depth];
+    return depth.Sample(g_point_samp_shadows, input.uv);
     
     
     StructuredBuffer<ShaderInterop_MaterialElement> mats = ResourceDescriptorHeap[gd.materialTable];

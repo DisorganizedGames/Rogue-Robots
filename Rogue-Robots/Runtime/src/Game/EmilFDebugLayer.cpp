@@ -32,13 +32,12 @@ void CreateSpotLight(DirectX::SimpleMath::Vector3 position)
 		{ tc.GetPosition().x + tc.GetForward().x, tc.GetPosition().y + tc.GetForward().y, tc.GetPosition().z + tc.GetForward().z },
 		{ up.x, up.y, up.z }
 	);
-	f32 aspectRatio = (f32)DOG::Window::GetWidth() / DOG::Window::GetHeight();
-	c.projMatrix = DirectX::XMMatrixPerspectiveFovLH(80.f * DirectX::XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
 
 	auto dd = DOG::SpotLightDesc();
 	dd.position = tc.GetPosition();
 	dd.color = { 1.f, 1.f, 1.f };
-	dd.direction = { tc.GetPosition().x + tc.GetForward().x, tc.GetPosition().y + tc.GetForward().y, tc.GetPosition().z + tc.GetForward().z };
+	//dd.direction = { tc.GetPosition().x + tc.GetForward().x, tc.GetPosition().y + tc.GetForward().y, tc.GetPosition().z + tc.GetForward().z };
+	dd.direction = tc.GetForward();
 	dd.strength = 1.f;
 	auto lh = DOG::LightManager::Get().AddSpotLight(dd, DOG::LightUpdateFrequency::PerFrame);
 	auto& slc = DOG::EntityManager::Get().AddComponent<DOG::SpotLightComponent>(flashlightEntity);
@@ -47,6 +46,10 @@ void CreateSpotLight(DirectX::SimpleMath::Vector3 position)
 	slc.color = dd.color;
 	slc.direction = dd.direction;
 	slc.strength = dd.strength;
+
+	f32 aspectRatio = (f32)DOG::Window::GetWidth() / DOG::Window::GetHeight();
+	auto fov = (slc.cutoffAngle * 2) * DirectX::XM_PI / 180.f;
+	c.projMatrix = DirectX::XMMatrixPerspectiveFovLH(fov, 4/3, 800.f, 0.1f);
 }
 
 void EmilFDebugLayer::OnAttach()
@@ -60,6 +63,7 @@ void EmilFDebugLayer::OnAttach()
 		.SetPosition({ 0.0f, 0.0f, 5.0f })
 		.SetScale({ 1.0f, 1.0f, 1.0f })
 		.SetRotation({ 0.0f, 0.0f, 0.0f });
+	m_entityManager.AddComponent<DOG::ShadowComponent>(m_cubeEntity);
 
 	constexpr auto tessFactor = 1;
 	auto sheet = assetManager.LoadShapeAsset(DOG::Shape::sheet, tessFactor);
@@ -69,9 +73,10 @@ void EmilFDebugLayer::OnAttach()
 		.SetPosition({ 0.0f, 0.0f, 10.0f })
 		.SetScale({ 10.0f, 10.0f, 10.0f })
 		.SetRotation({-DirectX::XM_PIDIV2, 0.0f, 0.0f});
+	m_entityManager.AddComponent<DOG::ShadowComponent>(m_sheetEntity);
 
 	CreateSpotLight({ 0.0f, 0.0f, 0.0f });
-	CreateSpotLight({ 7.0f, 0.0f, 0.0f });
+	//CreateSpotLight({ 7.0f, 0.0f, 0.0f });
 }
 
 void EmilFDebugLayer::OnDetach()
@@ -164,7 +169,7 @@ void EmilFDebugLayer::OnImGuiRender()
 				{ tc.GetPosition().x + tc.GetForward().x, tc.GetPosition().y + tc.GetForward().y, tc.GetPosition().z + tc.GetForward().z },
 				{ up.x, up.y, up.z }
 			);
-			slc.direction = { tc.GetPosition().x + tc.GetForward().x, tc.GetPosition().y + tc.GetForward().y, tc.GetPosition().z + tc.GetForward().z };
+			slc.direction = tc.GetForward();
 			slc.direction.Normalize();
 			
 			slc.dirty = true;
@@ -172,6 +177,15 @@ void EmilFDebugLayer::OnImGuiRender()
 		ImGui::Text("Forward: (%f,%f,%f)", forward.x, forward.y, forward.z);
 		ImGui::Text("Focus point: (%f,%f,%f) ", tc.GetPosition().x + tc.GetForward().x, tc.GetPosition().y + tc.GetForward().y, tc.GetPosition().z + tc.GetForward().z);
 		ImGui::Text("Up: (%f,%f,%f)", up.x, up.y, up.z);
+
+		float cutOff = slc.cutoffAngle;
+		if (ImGui::DragFloat("Cut off angle", &cutOff))
+		{
+			slc.cutoffAngle = cutOff;
+			auto fov = (slc.cutoffAngle * 2) * DirectX::XM_PI / 180.f;
+			cc.projMatrix = DirectX::XMMatrixPerspectiveFovLH(fov, (4 / 3), 800.f, 0.1f);
+			slc.dirty = true;
+		}
 
 		static bool checked = false;
 		if (ImGui::Checkbox("Light camera", &checked))

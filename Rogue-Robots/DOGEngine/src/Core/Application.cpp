@@ -152,6 +152,14 @@ namespace DOG
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 					if (model && model->gfxModel)
 					{
+						// Shadow submission:
+						if (EntityManager::Get().HasComponent<ShadowComponent>(e))
+						{
+							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
+								m_renderer->SubmitShadowMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+						}
+
+
 						if (EntityManager::Get().HasComponent<ModularBlockComponent>(e))
 						{
 							if (EntityManager::Get().HasComponent<MeshColliderComponent>(e) &&
