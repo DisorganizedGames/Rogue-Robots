@@ -10,6 +10,10 @@ namespace DOG::gfx
 	struct GPUDynamicConstant
 	{
 		u8* memory{ nullptr };
+
+		Buffer buffer;
+		u32 bufferOffset{ 0 };
+
 		u32 globalDescriptor{ 0 };
 	};
 
@@ -20,6 +24,8 @@ namespace DOG::gfx
 	public:
 		GPUDynamicConstants(RenderDevice* rd, GPUGarbageBin* bin, u32 maxTotalElements);
 
+		void Tick();
+
 		// Grab a 256 byte constant data
 		GPUDynamicConstant Allocate(u32 count);
 
@@ -29,5 +35,7 @@ namespace DOG::gfx
 
 		Buffer m_buffer;
 		RingBuffer m_ator;
+
+		u32 m_numToPop{ 0 };
 	};
 }
