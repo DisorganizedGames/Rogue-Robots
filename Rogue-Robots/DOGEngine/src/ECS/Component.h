@@ -94,7 +94,7 @@ namespace DOG
 			bool HasActiveAnimation() const { return animationID != -1; };
 			void SetAnimation(const i32 id, const f32 nTicks, const f32 duration, const f32 startTime = 0.0f);
 		};
-		std::array<AnimationClip, 2> clips;
+		std::array<AnimationClip, 3> clips;
 		// Update 
 		void Update(const f32 dt);
 	};
