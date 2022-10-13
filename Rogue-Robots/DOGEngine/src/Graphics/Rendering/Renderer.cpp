@@ -44,7 +44,7 @@ namespace DOG::gfx
 		m_backend = std::make_unique<gfx::RenderBackend_DX12>(debug);
 		m_rd = m_backend->CreateDevice();
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
-		m_ui = std::make_unique<UI>(m_rd, m_sc, S_NUM_BACKBUFFERS, hwnd);
+		m_ui = std::make_unique<UI>(m_rd, m_sc, S_NUM_BACKBUFFERS, clientWidth, clientHeight);
 		m_imgui = std::make_unique<gfx::ImGUIBackend_DX12>(m_rd, m_sc, S_MAX_FIF);
 		
 		m_sclr = std::make_unique<ShaderCompilerDXC>();
@@ -523,11 +523,11 @@ namespace DOG::gfx
 		m_ui->m_d2d->BeginFrame();
 		m_ui->DrawUI();
 		m_ui->m_d2d->EndFrame();
-
 	}
 
 	void Renderer::OnResize(u32 clientWidth, u32 clientHeight)
 	{
+		m_ui.reset();
 		if (clientWidth != 0 && clientHeight != 0)
 		{
 			m_globalEffectData.bbScissor = ScissorRects().Append(0, 0, clientWidth, clientHeight);
@@ -535,6 +535,7 @@ namespace DOG::gfx
 		}
 
 		m_sc->OnResize(clientWidth, clientHeight);
+		m_ui = std::make_unique<UI>(m_rd, m_sc, S_NUM_BACKBUFFERS, clientWidth, clientHeight);
 	}
 
 	WindowMode DOG::gfx::Renderer::GetFullscreenState() const

@@ -17,7 +17,7 @@ namespace DOG::gfx
 	class D2DBackend_DX12 final : public D2DBackend
 	{
 	public:
-		D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_int numBuffers, HWND hwnd);
+		D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_int numBuffers);
 		~D2DBackend_DX12();
 		RenderDevice* rd;
 		Swapchain* sc;
