@@ -113,8 +113,6 @@ namespace DOG
 					}
 				});
 
-			EntityManager::Get().Bundle<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
-
 
 			// We need to bucket in a better way..
 			EntityManager::Get().Collect<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
