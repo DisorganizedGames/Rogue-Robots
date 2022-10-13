@@ -19,21 +19,21 @@ UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, HW
    m_width = wrect.right;
    m_height = wrect.bottom;
    m_d2d = std::make_unique<DOG::gfx::D2DBackend_DX12>(rd, sc, numBuffers, hwnd);
-   menuID = AddScene();
-   gameID = AddScene();
-   ChangeUIscene(menuID);
+   m_menuID = AddScene();
+   m_gameID = AddScene();
+   ChangeUIscene(m_menuID);
    auto hID = GenerateUID();
    auto h = std::make_unique<UIHealthBar>(40.f, m_height - 60.f, 250.f, 30.f, *m_d2d, hID);
-   AddUIlEmentToScene(gameID, std::move(h));
+   AddUIlEmentToScene(m_gameID, std::move(h));
    auto backID = GenerateUID();
    auto back = std::make_unique<UIBackground>((FLOAT)m_width, (FLOAT)m_height, *m_d2d, backID);
-   AddUIlEmentToScene(menuID, std::move(back));
+   AddUIlEmentToScene(m_menuID, std::move(back));
    auto bID = GenerateUID();
    auto b = std::make_unique<UIButton>(m_width / 2.f - 150.f / 2, m_height / 2 - 60.f / 2, 150.f, 60.f, std::wstring(L"Play"), std::function<void()>(buttonfunc), bID);
-   AddUIlEmentToScene(menuID, std::move(b));
+   AddUIlEmentToScene(m_menuID, std::move(b));
    auto sID = GenerateUID();
    auto s = std::make_unique<UISplashScreen>(*m_d2d, (float)m_width, (float)m_height, sID);
-   AddUIlEmentToScene(menuID, std::move(s));
+   AddUIlEmentToScene(m_menuID, std::move(s));
 
 }
 
@@ -46,9 +46,9 @@ UI::~UI()
 void UI::DrawUI()
 {
    if (DOG::Keyboard::IsKeyPressed(DOG::Key::G))
-      ChangeUIscene(gameID);
+      ChangeUIscene(m_gameID);
    if (DOG::Keyboard::IsKeyPressed(DOG::Key::M))
-      ChangeUIscene(menuID);
+      ChangeUIscene(m_menuID);
    if (m_visible)
    {
       for (auto&& e : m_scenes[m_currsceneIndex]->m_scene)
@@ -152,9 +152,9 @@ UIElement::~UIElement()
 {
 }
 
-void UIElement::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
+void UIElement::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   UNREFERENCED_PARAMETER(m_d2d);
+   UNREFERENCED_PARAMETER(d2d);
    return;
 }
 
@@ -170,61 +170,61 @@ UIButton::~UIButton()
 
 }
 
-void UIButton::Draw(DOG::gfx::D2DBackend_DX12& m_d2d)
+void UIButton::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   m_d2d.m_2ddc->DrawRectangle(m_textRect, m_d2d.brush.Get());
-   m_d2d.m_2ddc->DrawTextW(
+   d2d.m_2ddc->DrawRectangle(m_textRect, d2d.brush.Get());
+   d2d.m_2ddc->DrawTextW(
       m_text.c_str(),
       (UINT32)m_text.length(),
-      m_d2d.bformat.Get(),
+      d2d.bformat.Get(),
       &m_textRect,
-      m_d2d.brush.Get()
+      d2d.brush.Get()
    );
 }
 
-void UIButton::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
+void UIButton::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
 
    auto m = DOG::Mouse::GetCoordinates();
    if (m.first >= m_textRect.left && m.first <= m_textRect.right && m.second >= m_textRect.top && m.second <= m_textRect.bottom)
    {
-      m_d2d.brush.Get()->SetOpacity(1.0f);
+      d2d.brush.Get()->SetOpacity(1.0f);
       if (DOG::Mouse::IsButtonPressed(DOG::Button::Left))
          m_callback();
    }
    else
-      m_d2d.brush.Get()->SetOpacity(0.5f);
+      d2d.brush.Get()->SetOpacity(0.5f);
 
 }
 
-UISplashScreen::UISplashScreen(DOG::gfx::D2DBackend_DX12& m_d2d, float width, float height, UINT id) : UIElement(id)
+UISplashScreen::UISplashScreen(DOG::gfx::D2DBackend_DX12& d2d, float width, float height, UINT id) : UIElement(id)
 {
-   UNREFERENCED_PARAMETER(m_d2d);
+   UNREFERENCED_PARAMETER(d2d);
    m_timer = clock();
    m_background = D2D1::RectF(0.0f, 0.0f, width, height);
    m_text = L"Disorganized Games";
 
-   HRESULT hr = m_d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black, 1.0f), &m_splashBrush);
+   HRESULT hr = d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black, 1.0f), &m_splashBrush);
    HR_VFY(hr);
-   hr = m_d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &m_textBrush);
+   hr = d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &m_textBrush);
    HR_VFY(hr);
    m_backOp = 1.0f;
    m_textOp = 0.0f;
 }
 
-void UISplashScreen::Draw(DOG::gfx::D2DBackend_DX12& m_d2d)
+void UISplashScreen::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   m_d2d.m_2ddc->FillRectangle(m_background, m_splashBrush.Get());
-   m_d2d.m_2ddc->DrawTextW(
+   d2d.m_2ddc->FillRectangle(m_background, m_splashBrush.Get());
+   d2d.m_2ddc->DrawTextW(
       m_text.c_str(),
       (UINT32)m_text.length(),
-      m_d2d.format.Get(),
+      d2d.format.Get(),
       &m_background,
       m_textBrush.Get());
 }
-void UISplashScreen::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
+void UISplashScreen::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   UNREFERENCED_PARAMETER(m_d2d);
+   UNREFERENCED_PARAMETER(d2d);
    float time = (float)(clock() / CLOCKS_PER_SEC);
    if (time <= 4 && time >= 0)
    {
@@ -254,18 +254,18 @@ UIScene::UIScene(UINT id) : m_ID(id)
 
 }
 
-UIHealthBar::UIHealthBar(float x, float y, float width, float height, DOG::gfx::D2DBackend_DX12& m_d2d, UINT id) : UIElement(id)
+UIHealthBar::UIHealthBar(float x, float y, float width, float height, DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
 {
    m_text = L"100%";
    m_value = m_test = 1.0f;
    m_barWidth = width - 2.f;
    m_border = D2D1::RectF(x, y, x + width, y + height);
    m_bar = D2D1::RectF(x + 2.0f, y + 2.0f, x + width - 2.f, y + height - 2.f);
-   HRESULT hr = m_d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &m_borderBrush);
+   HRESULT hr = d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &m_borderBrush);
    HR_VFY(hr);
-   hr = m_d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::GreenYellow, 0.5f), &m_barBrush);
+   hr = d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::GreenYellow, 0.5f), &m_barBrush);
    HR_VFY(hr);
-   hr = m_d2d.m_dwritwf->CreateTextFormat(
+   hr = d2d.m_dwritwf->CreateTextFormat(
       L"Robot Radicals",
       NULL,
       DWRITE_FONT_WEIGHT_NORMAL,
@@ -287,11 +287,11 @@ UIHealthBar::~UIHealthBar()
 
 }
 
-void UIHealthBar::Draw(DOG::gfx::D2DBackend_DX12& m_d2d)
+void UIHealthBar::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   m_d2d.m_2ddc->FillRectangle(m_bar, m_barBrush.Get());
-   m_d2d.m_2ddc->DrawRectangle(m_border, m_barBrush.Get());
-   m_d2d.m_2ddc->DrawTextW(
+   d2d.m_2ddc->FillRectangle(m_bar, m_barBrush.Get());
+   d2d.m_2ddc->DrawRectangle(m_border, m_barBrush.Get());
+   d2d.m_2ddc->DrawTextW(
       m_text.c_str(),
       (UINT32)m_text.length(),
       m_textFormat.Get(),
@@ -299,9 +299,9 @@ void UIHealthBar::Draw(DOG::gfx::D2DBackend_DX12& m_d2d)
       m_borderBrush.Get());
 
 }
-void UIHealthBar::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
+void UIHealthBar::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   UNREFERENCED_PARAMETER(m_d2d);
+   UNREFERENCED_PARAMETER(d2d);
    auto val = abs(sinf(m_value += 0.01f));
    m_bar.right = val * (m_barWidth)+m_bar.left - 1.0f;
    m_text = std::to_wstring((UINT)(val * 100.f + 1.f)) + L'%';
@@ -312,16 +312,16 @@ void UIHealthBar::SetBarValue(float value)
    m_text = std::to_wstring(value) + L'%';
 }
 
-UIBackground::UIBackground(float width, float heigt, DOG::gfx::D2DBackend_DX12& m_d2d, UINT id) : UIElement(id)
+UIBackground::UIBackground(float width, float heigt, DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
 {
    m_title = L"Rogue Robots";
    m_background = D2D1::RectF(0.0f, 0.0f, width, heigt);
    m_textRect = D2D1::RectF(width / 2 - 350.f /2, heigt / 2 - 150.f, width / 2 + 300.f, heigt / 2 - 50.f );
-   HRESULT hr = m_d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_textBrush);
+   HRESULT hr = d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_textBrush);
    HR_VFY(hr);
-   hr = m_d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_backBrush);
+   hr = d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_backBrush);
    HR_VFY(hr);
-   hr = m_d2d.m_dwritwf->CreateTextFormat(
+   hr = d2d.m_dwritwf->CreateTextFormat(
       L"Robot Radicals",
       NULL,
       DWRITE_FONT_WEIGHT_NORMAL,
@@ -338,18 +338,18 @@ UIBackground::~UIBackground()
 
 }
 
-void UIBackground::Draw(DOG::gfx::D2DBackend_DX12& m_d2d)
+void UIBackground::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   m_d2d.m_2ddc->FillRectangle(m_background, m_backBrush.Get());
-   m_d2d.m_2ddc->DrawTextW(
+   d2d.m_2ddc->FillRectangle(m_background, m_backBrush.Get());
+   d2d.m_2ddc->DrawTextW(
       m_title.c_str(),
       (UINT32)m_title.length(),
       m_textFormat.Get(),
       &m_textRect,
       m_textBrush.Get());
 }
-void UIBackground::Update(DOG::gfx::D2DBackend_DX12& m_d2d)
+void UIBackground::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   UNREFERENCED_PARAMETER(m_d2d);
+   UNREFERENCED_PARAMETER(d2d);
 
 }
