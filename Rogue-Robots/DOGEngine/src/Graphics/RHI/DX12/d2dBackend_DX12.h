@@ -7,7 +7,7 @@
 #include <memory>
 #include "CommonIncludes_DX12.h"
 #include "Utilities/DX12DescriptorManager.h"
-#include "../d2dBackend.h"
+#include "../D2DBackend.h"
 
 namespace DOG::gfx
 {

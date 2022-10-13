@@ -4,6 +4,7 @@
 #include "../RHI/Types/HardwareTypes.h"
 #include "../../Core/AnimationManager.h"
 #include "../../Core/CoreUtils.h"
+#include "UI.h"
 #include "GPUTable.h"
 
 #include "RenderEffects/RenderEffect.h"
