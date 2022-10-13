@@ -110,6 +110,7 @@ namespace DOG
 
 	ImportedRig ImportAnimation(const aiScene* scene, std::shared_ptr<ImportedModel>& m_model)
 	{
+		using namespace DirectX;
 		std::unordered_map<std::string, aiBone*> nameToJoint;
 		std::unordered_map<std::string, i32> nameToJointIdx;
 		std::vector<aiNode*> allNodes;
@@ -129,7 +130,7 @@ namespace DOG
 		// Store model Root Node
 		nodeArray.push_back(JointNode{});
 		nodeArray.back().name = allNodes[0]->mName.C_Str();
-		DirectX::XMStoreFloat4x4(&nodeArray.back().transformation, DirectX::XMMATRIX(&allNodes[0]->mTransformation.a1));
+		XMStoreFloat4x4(&nodeArray.back().transformation, XMMATRIX(&allNodes[0]->mTransformation.a1));
 
 		// Find and store Root of bone Hierarchy (Parent of first node associated with a bone)
 		u32 boneRootIdx = {};
@@ -145,8 +146,8 @@ namespace DOG
 		for (auto& n : allNodes)
 			if (nameToJoint.find(n->mName.C_Str()) != nameToJoint.end())
 			{
-				DirectX::XMStoreFloat4x4(&boneArray[nameToJointIdx.at(n->mName.C_Str())],
-					DirectX::XMMATRIX(&nameToJoint.at(n->mName.C_Str())->mOffsetMatrix.a1));
+				XMStoreFloat4x4(&boneArray[nameToJointIdx.at(n->mName.C_Str())],
+					XMMATRIX(&nameToJoint.at(n->mName.C_Str())->mOffsetMatrix.a1));
 
 			}
 
@@ -231,10 +232,10 @@ namespace DOG
 			importedAnim.animations.back().ticksPerSec = (f32)animation->mTicksPerSecond;
 			importedAnim.animations.back().ticks = (f32)animation->mDuration;
 			importedAnim.animations.back().name = animation->mName.C_Str();
-
-			for (u32 ch_i = 0; ch_i < scene->mAnimations[i]->mNumChannels; ch_i++)
+			// extract animation SRT keyframes
+			for (u32 ch_i = 0; ch_i < animation->mNumChannels; ch_i++)
 			{
-				const auto channel = scene->mAnimations[i]->mChannels[ch_i];
+				const auto channel = animation->mChannels[ch_i];
 
 				std::vector<AnimationKey> posKeys;
 				std::vector<AnimationKey> rotKeys;
@@ -262,6 +263,20 @@ namespace DOG
 				std::string nodeName = channel->mNodeName.C_Str();
 				if (nameToNodeIdx.find(nodeName) == nameToNodeIdx.end())
 					nameToNodeIdx.insert({ nodeName, -1 });
+				if (nameToNodeIdx.find(nodeName) != nameToNodeIdx.end() && nameToNodeIdx.at(nodeName) == boneRootIdx)
+				{
+					// remove root relative translation might need to consider special cases later
+					auto rootV = XMLoadFloat4(&posKeys[0].value);
+					auto lastV = XMLoadFloat4(&posKeys.rbegin()[0].value);
+					for (i32 k = posKeys.size() - 1; k > 0; --k)
+					{
+						auto value = XMLoadFloat4(&posKeys[k].value);
+						auto prev = XMLoadFloat4(&posKeys[k-1].value);
+						XMStoreFloat4(&posKeys[k].value, value - prev);
+					}
+					posKeys[0].value = posKeys[1].value;
+					//XMStoreFloat4(&posKeys[0].value, lastV - rootV);
+				}
 
 				i32 nodeID = nameToNodeIdx.at(nodeName);
 				importedAnim.animations.back().scaKeys.insert({nodeID, scaKeys});
