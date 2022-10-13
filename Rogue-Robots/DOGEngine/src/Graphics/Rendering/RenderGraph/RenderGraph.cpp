@@ -82,14 +82,6 @@ namespace DOG::gfx
 			TrackTransitions();
 		}
 
-		{
-			ZoneNamedN(RGFinalizeDependencyLevels, "RG Building: Finalize Dependency Levels", true);
-			//for (auto& depLevel : m_dependencyLevels)
-			//	depLevel.Finalize();
-		}
-
-
-
 	}
 
 	void RenderGraph::Execute()
@@ -139,8 +131,6 @@ namespace DOG::gfx
 				m_bin->PushDeferredDeletion(df);
 			}
 		}
-
-
 	}
 
 	void RenderGraph::AddProxies()
@@ -278,109 +268,40 @@ namespace DOG::gfx
 		{
 			for (const auto& input : pass->inputs)
 			{
-				// Track start lifetime
-				auto& resourceLifetime = m_resMan->GetMutableResourceLifetime(input.id);
-				resourceLifetime.first = (std::min)(pass->depth, resourceLifetime.first);
-				resourceLifetime.second = (std::max)(pass->depth, resourceLifetime.second);
+				m_resMan->ResolveLifetime(input.id, pass->depth);
+				
+				//// Track start lifetime
+				//auto& resourceLifetime = m_resMan->GetMutableResourceLifetime(input.id);
+				//resourceLifetime.first = (std::min)(pass->depth, resourceLifetime.first);
+				//resourceLifetime.second = (std::max)(pass->depth, resourceLifetime.second);
 
-				// Track usage lifetime
-				auto& usageLifetime = m_resMan->GetMutableUsageLifetime(input.id);
-				usageLifetime.first = (std::min)(pass->depth, usageLifetime.first);
-				usageLifetime.second = (std::max)(pass->depth, usageLifetime.second);
+				//// Track usage lifetime
+				//auto& usageLifetime = m_resMan->GetMutableUsageLifetime(input.id);
+				//usageLifetime.first = (std::min)(pass->depth, usageLifetime.first);
+				//usageLifetime.second = (std::max)(pass->depth, usageLifetime.second);
 			}
 
 			for (const auto& output : pass->outputs)
 			{
-				// Track end lifetime
-				auto& resourceLifetime = m_resMan->GetMutableResourceLifetime(output.id);
-				resourceLifetime.first = (std::min)(pass->depth, resourceLifetime.first);
-				resourceLifetime.second = (std::max)(pass->depth, resourceLifetime.second);
+				m_resMan->ResolveLifetime(output.id, pass->depth);
 
-				// Track usage lifetime
-				auto& usageLifetime = m_resMan->GetMutableUsageLifetime(output.id);
-				usageLifetime.first = (std::min)(pass->depth, usageLifetime.first);
-				usageLifetime.second = (std::max)(pass->depth, usageLifetime.second);
+				//// Track end lifetime
+				//auto& resourceLifetime = m_resMan->GetMutableResourceLifetime(output.id);
+				//resourceLifetime.first = (std::min)(pass->depth, resourceLifetime.first);
+				//resourceLifetime.second = (std::max)(pass->depth, resourceLifetime.second);
+
+				//// Track usage lifetime
+				//auto& usageLifetime = m_resMan->GetMutableUsageLifetime(output.id);
+				//usageLifetime.first = (std::min)(pass->depth, usageLifetime.first);
+				//usageLifetime.second = (std::max)(pass->depth, usageLifetime.second);
 			}
 		}
+
+		std::cout << "done\n";
 	}
 
 	void RenderGraph::TrackTransitions()
 	{
-		//const auto recordBarrier = [this](
-		//	u64 resource, RGResourceType type, DependencyLevel& depLevel,
-		//	D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES desiredState)
-		//{
-		//	GPUBarrier transitionBarrier{};
-
-		//	// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_uav_barrier
-		//	// UAV Barrier not required if user only does read on the resource.
-		//	// But we will always assume a write and insert a UAV barrier to avoid potential user bugs (e.g specifying read only but actually writing to it)
-		//	// We cannot detect if a user writes to a resource or not (since it's on the shader side)
-		//	std::optional<GPUBarrier> uavBarrier;
-
-		//	if (type == RGResourceType::Texture)
-		//	{
-		//		transitionBarrier = GPUBarrier::Transition(
-		//			Texture(resource),
-		//			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-		//			currState, desiredState);
-
-		//		uavBarrier = GPUBarrier::UAV(Texture(resource));
-		//	}
-		//	else
-		//	{
-		//		transitionBarrier = GPUBarrier::Transition(
-		//			Buffer(resource),
-		//			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-		//			currState, desiredState);
-
-		//		uavBarrier = GPUBarrier::UAV(Buffer(resource));
-		//	}
-
-		//	// Assure that any acceses AFTER an unordered access always gets write results
-		//	if (uavBarrier && currState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
-		//		depLevel.AddEntryBarrier(*uavBarrier);
-	
-		//	// No need for state transition, return early.
-		//	if (currState == desiredState || depLevel.BarrierExists(resource, D3D12_RESOURCE_BARRIER_TYPE_TRANSITION))
-		//		return false;
-
-		//	depLevel.AddEntryBarrier(transitionBarrier);
-
-		//	return true;
-		//};
-
-		//for (const auto& pass : m_sortedPasses)
-		//{
-		//	auto& depLevel = m_dependencyLevels[pass->depth];
-		//	for (const auto& input : pass->inputs)
-		//	{
-		//		// Track resource state transitions
-		//		const auto resource = m_resMan->GetResource(input.id);
-		//		const auto currState = m_resMan->GetCurrentState(input.id);
-		//		const auto desiredState = input.desiredState;
-
-		//		// If aliased, output takes care of picking up state transition
-		//		if (!input.aliasWrite &&
-		//			recordBarrier(resource, input.type, depLevel, currState, desiredState))
-		//		{
-		//			m_resMan->SetCurrentState(input.id, desiredState);
-		//		}
-		//	}
-
-		//	for (const auto& output : pass->outputs)
-		//	{
-		//		// Track resource state transitions
-		//		const auto resource = m_resMan->GetResource(output.id);
-		//		const auto currState = m_resMan->GetCurrentState(output.id);
-		//		const auto desiredState = output.desiredState;
-
-		//		if (recordBarrier(resource, output.type, depLevel, currState, desiredState))
-		//			m_resMan->SetCurrentState(output.id, desiredState);
-		//	}
-
-		//}
-
 		struct TransitionMetadata
 		{
 			D3D12_RESOURCE_STATES before{ D3D12_RESOURCE_STATE_COMMON };
@@ -475,11 +396,9 @@ namespace DOG::gfx
 				if (states.before != states.after)
 					depLevel.AddEntryBarrier(transitionBarrier);
 
-				m_resMan->SetCurrentState2(rgResource, states.after);
+				m_resMan->SetCurrentState(rgResource, states.after);
 			}
 		}
-
-		std::cout << "done\n";
 	}
 
 	void RenderGraph::RealizeViews()
@@ -522,12 +441,10 @@ namespace DOG::gfx
 							depthAccesses.first, depthAccesses.second,
 							stencilAccesses.first, stencilAccesses.second);
 					}
-					else if (viewDesc.viewType == ViewType::UnorderedAccess)
+					else if (viewDesc.viewType == ViewType::UnorderedAccess || viewDesc.viewType == ViewType::RaytracingAS)
 					{
-						//passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
 						passResources.m_views[output.viewID] = m_rd->GetGlobalDescriptor(view);
 						passResources.m_textureViewsLookup[output.viewID] = view;
-
 					}
 				}
 				else
@@ -537,10 +454,9 @@ namespace DOG::gfx
 
 					if (output.viewDesc)
 					{
-						const auto& viewDesc = std::get<BufferViewDesc>(*output.viewDesc);
 						// Create view and immediately convert to global descriptor index
+						const auto& viewDesc = std::get<BufferViewDesc>(*output.viewDesc);
 						auto view = m_rd->CreateView(resource, viewDesc);
-						//passResources.m_views[lookupID] = m_rd->GetGlobalDescriptor(view);
 						passResources.m_views[output.viewID] = m_rd->GetGlobalDescriptor(view);
 						passResources.m_bufferViewsLookup[output.viewID] = view;
 						passResources.m_bufferViews.push_back(view);
@@ -669,23 +585,17 @@ namespace DOG::gfx
 	RGResourceView RenderGraph::PassBuilder::ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc)
 	{
 		assert(IsReadState(state));
-		assert(desc.viewType != ViewType::RenderTarget);
-		assert(desc.viewType != ViewType::UnorderedAccess);
-		assert(desc.viewType != ViewType::DepthStencil);
+		assert(desc.viewType == ViewType::ShaderResource || desc.viewType == ViewType::RaytracingAS);
 
+		// Assert that the RG has written to this resource before
+		assert(m_globalData.writes.contains(id));
 
 		PassIO input;
 		input.originalID = id;
 
 		// Automatically deduces the correct read if ID is an aliased resource
-		if (m_globalData.writes.contains(id))
-		{
-			PushPassReader(id);
-			id = GetPrevious(id);
-		}
-		// RG can read from resources that the RG has never written to before (imported resources)
-		//else
-		//	assert(false);		// RG has never written to this resource, and is therefore an invalid read.
+		PushPassReader(id);
+		id = GetPrevious(id);
 
 		input.id = id;
 		input.desiredState = state;
@@ -1003,6 +913,8 @@ namespace DOG::gfx
 
 
 
+
+
 	std::pair<RGResourceID, RGResourceID> RenderGraph::PassBuilder::ResolveAliasingIDs(RGResourceID input)
 	{
 		/*
@@ -1079,15 +991,11 @@ namespace DOG::gfx
 
 
 
-	RenderGraph::DependencyLevel::DependencyLevel(RGResourceManager* resMan) :
-		m_resMan(resMan)
-	{
-	}
 
 	void RenderGraph::DependencyLevel::Execute(RenderDevice* rd, CommandList cmdl)
 	{
-		if (!m_batchedEntryBarriers.empty())
-			rd->Cmd_Barrier(cmdl, m_batchedEntryBarriers);
+		if (!m_entryBarriers.empty())
+			rd->Cmd_Barrier(cmdl, m_entryBarriers);
 
 		for (const auto& pass : m_passes)
 		{
@@ -1106,82 +1014,6 @@ namespace DOG::gfx
 		}
 	}
 
-	void RenderGraph::DependencyLevel::AddPass(Pass* pass)
-	{
-		m_passes.push_back(pass);
-	}
-
-	void RenderGraph::DependencyLevel::AddEntryBarrier(GPUBarrier barrier)
-	{
-		m_batchedEntryBarriers.push_back(barrier);
-	}
-
-	bool RenderGraph::DependencyLevel::BarrierExists(u64 resource, D3D12_RESOURCE_BARRIER_TYPE type)
-	{
-		for (const auto& barrier : m_batchedEntryBarriers)
-			if (barrier.resource == resource && barrier.type == type)
-				return true;
-		return false;
-	}
-
-	void RenderGraph::DependencyLevel::Finalize()
-	{
-		// Assuming initial state upon element initialization in the hash map is D3D12_RESOURCE_STATE_COMMON (since value is 0)
-		std::unordered_map<u64, D3D12_RESOURCE_STATES> resourceDesiredStates;
-		for (const auto& pass : m_passes)
-		{
-			for (const auto& input : pass->inputs)
-			{
-				auto resource = m_resMan->GetResource(input.id);
-				auto& states = resourceDesiredStates[resource];
-
-				// Alias write is a special case --> Underlying resource WILL be the same
-				// This is the only simultaneous read-write we will allow (this will get picked up when iterating over outputs)
-				if (input.aliasWrite)
-					continue;
-				
-				// If tracked state is read combination --> Forbid writes
-				if (IsReadState(states))
-					assert(IsReadState(input.desiredState));
-				// If write state --> Exclusive writer pass already exists and all other accesses are forbidden
-				else
-				{
-					if (states != D3D12_RESOURCE_STATE_COMMON)	// Common is currently is synonymous with uninitialized (for the resourceDesiredStates)
-						assert(false);
-				}
-
-				// Read-combine if all is well
-				states |= input.desiredState;
-			}
-
-			for (const auto& output : pass->outputs)
-			{
-				auto resource = m_resMan->GetResource(output.id);
-				auto& states = resourceDesiredStates[resource];
-
-				// We assert that state has to be COMMON, meaning it is uninitialized (no writers and no readers yet)
-				// If this asserts false --> A read or write has already been applied --> Illegal simultaneous read/write detected
-				assert(resourceDesiredStates[resource] == D3D12_RESOURCE_STATE_COMMON);
-				//assert(states == D3D12_RESOURCE_STATE_COMMON);
-
-				// Sanity check that the graph author always puts a write state for outputs
-				assert(!IsReadState(output.desiredState));
-
-				// Set exclusive write state
-				states = output.desiredState;
-			}
-		}
-
-		// Apply combined read-state (if any) or exclusive write state
-		for (auto& barrier : m_batchedEntryBarriers)
-		{
-			if (barrier.type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
-			{
-				barrier.stateAfter = resourceDesiredStates[barrier.resource];
-			}
-		}
-
-	}
 
 
 

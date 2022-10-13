@@ -76,6 +76,8 @@ namespace DOG::gfx
 		void SanitizeAliasingLifetimes();
 		void ImportedResourceExitTransition(CommandList cmdl);
 
+		void ResolveLifetime(RGResourceID id, u32 depth);
+
 		u64 GetResource(RGResourceID id) const;
 		RGResourceType GetResourceType(RGResourceID id) const;
 		RGResourceVariant GetResourceVariant(RGResourceID id) const;
@@ -89,9 +91,6 @@ namespace DOG::gfx
 
 		// Helper for JIT state transitions
 		void SetCurrentState(RGResourceID id, D3D12_RESOURCE_STATES state);
-
-
-		void SetCurrentState2(RGResourceID id, D3D12_RESOURCE_STATES state);
 
 	private:
 		RenderDevice* m_rd{ nullptr };

@@ -199,15 +199,8 @@ namespace DOG::gfx
 
 			const auto parentEnd = parentLifetime.second;
 			const auto aliasBegin = thisLifetime.first;
-			if (parentEnd > aliasBegin)
-				assert(false);
-
-			//assert(parentEnd <= aliasBegin);
-
-			// Additionally, only read accesses should be allowed in the range (parentBegin, aliasBegin) (exclusive)
-			/*
-				e.g: After a resource has been aliased, that resource should not be able to be written to. (Forbid targets and other writes)
-			*/
+			
+			assert(parentEnd <= aliasBegin);
 		}
 	}
 
@@ -232,6 +225,34 @@ namespace DOG::gfx
 
 		if (!barriers.empty())
 			m_rd->Cmd_Barrier(cmdl, barriers);
+	}
+
+	void RGResourceManager::ResolveLifetime(RGResourceID id, u32 depth)
+	{
+		// Track start lifetime
+		{
+			auto& res = m_resources.find(id)->second;
+			// Get all the way back to the Declared/Imported resource
+			RGResourceManager::RGResource* resource{ &res };
+			while (resource->variantType == RGResourceVariant::Aliased)
+				resource = &m_resources.find(std::get<RGResourceAliased>(resource->variants).prevID)->second;
+
+			std::pair<u32, u32>* resourceLifetime;
+			if (resource->variantType == RGResourceVariant::Declared)
+				resourceLifetime = &std::get<RGResourceDeclared>(resource->variants).resourceLifetime;
+			else
+				resourceLifetime = &std::get<RGResourceImported>(resource->variants).resourceLifetime;
+
+			resourceLifetime->first = (std::min)(depth, resourceLifetime->first);
+			resourceLifetime->second = (std::max)(depth, resourceLifetime->second);
+		}
+
+		// Track usage lifetime
+		{
+			auto& usageLifetime = m_resources.find(id)->second.usageLifetime;
+			usageLifetime.first = (std::min)(depth, usageLifetime.first);
+			usageLifetime.second = (std::max)(depth, usageLifetime.second);
+		}
 	}
 
 
@@ -298,53 +319,9 @@ namespace DOG::gfx
 		while (resource->variantType == RGResourceVariant::Aliased)
 			resource = &m_resources.find(std::get<RGResourceAliased>(resource->variants).prevID)->second;
 
-		//if (resource->variantType == RGResourceVariant::Declared)
-		//	std::get<RGResourceDeclared>(resource->variants).currState = state;
-		//else
-		//	std::get<RGResourceImported>(resource->variants).currState = state;
-
-		// This relies on Dependency Level doing read-combines
 		if (resource->variantType == RGResourceVariant::Declared)
-		{
-			auto& currState = std::get<RGResourceDeclared>(resource->variants).currState;
-			if (IsReadState(currState))
-				currState |= state;
-			else
-				currState = state;
-		}
+			std::get<RGResourceDeclared>(resource->variants).currState = state;
 		else
-		{
-			auto& currState = std::get<RGResourceImported>(resource->variants).currState;
-			if (IsReadState(currState))
-				currState |= state;
-			else
-				currState = state;
-		}
-	}
-	void RGResourceManager::SetCurrentState2(RGResourceID id, D3D12_RESOURCE_STATES state)
-	{
-		auto& res = m_resources.find(id)->second;
-
-		// Get all the way back to the Declared/Imported resource
-		RGResourceManager::RGResource* resource{ &res };
-		while (resource->variantType == RGResourceVariant::Aliased)
-			resource = &m_resources.find(std::get<RGResourceAliased>(resource->variants).prevID)->second;
-
-		//if (resource->variantType == RGResourceVariant::Declared)
-		//	std::get<RGResourceDeclared>(resource->variants).currState = state;
-		//else
-		//	std::get<RGResourceImported>(resource->variants).currState = state;
-
-		// This relies on Dependency Level doing read-combines
-		if (resource->variantType == RGResourceVariant::Declared)
-		{
-			auto& currState = std::get<RGResourceDeclared>(resource->variants).currState;
-			currState = state;
-		}
-		else
-		{
-			auto& currState = std::get<RGResourceImported>(resource->variants).currState;
-			currState = state;
-		}
+			std::get<RGResourceImported>(resource->variants).currState = state;
 	}
 }
