@@ -32,20 +32,6 @@ void InputInterface::GetMouseDelta(DOG::LuaContext* context)
 };
 
 //---------------------------------------------------------------------------------------------------------
-//Audio
-void AudioInterface::Play(LuaContext* context)
-{
-	auto path = context->GetString();
-	auto audioAsset = AssetManager::Get().LoadAudio(path, AssetLoadFlag::CPUMemory);
-
-	static auto tempEntityForLuaAudio = EntityManager::Get().CreateEntity();
-	auto& audioComponent = EntityManager::Get().AddComponent<AudioComponent>(tempEntityForLuaAudio);
-
-	audioComponent.assetID = audioAsset;
-	audioComponent.shouldPlay = true;
-}
-
-//---------------------------------------------------------------------------------------------------------
 //Entity
 void EntityInterface::CreateEntity(LuaContext* context)
 {
@@ -250,6 +236,18 @@ void EntityInterface::HasComponent(LuaContext* context)
 	context->ReturnBoolean(hasComp);
 }
 
+void EntityInterface::PlayAudio(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	u32 asset = (u32)context->GetInteger();
+	bool is3D = context->GetBoolean();
+
+	auto& comp = EntityManager::Get().GetComponent<AudioComponent>(e);
+	comp.assetID = asset;
+	comp.is3D = is3D;
+	comp.shouldPlay = true;
+}
+
 #pragma endregion
 
 void EntityInterface::GetTransformScaleData(LuaContext* context)
@@ -338,11 +336,13 @@ void EntityInterface::AddAudio(LuaContext* context, entity e)
 {
 	auto assetID = context->GetInteger();
 	auto shouldPlay = context->GetBoolean();
+	auto is3D = context->GetBoolean();
 
 	auto& comp = EntityManager::Get().AddComponent<AudioComponent>(e);
 
 	comp.assetID = assetID;
 	comp.shouldPlay = shouldPlay;
+	comp.is3D = is3D;
 }
 
 void EntityInterface::AddBoxCollider(LuaContext* context, entity e)

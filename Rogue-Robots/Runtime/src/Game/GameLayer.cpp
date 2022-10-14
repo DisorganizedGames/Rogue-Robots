@@ -122,6 +122,8 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<InputController>(Player1);
 	m_entityManager.AddComponent<CameraComponent>(Player1);
 	m_entityManager.AddComponent<ThisPlayer>(Player1);
+	m_entityManager.AddComponent<AudioListenerComponent>(Player1);
+
 	ScriptManager* scriptManager = LuaMain::GetScriptManager();
 	scriptManager->AddScript(Player1, "Gun.lua");
 
@@ -299,17 +301,6 @@ void GameLayer::RegisterLuaInterfaces()
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Input", "InputInterface");
 
 	//-----------------------------------------------------------------------------------------------
-	//Audio
-	luaInterfaceObject = std::make_shared<AudioInterface>();
-	m_luaInterfaces.push_back(luaInterfaceObject);
-
-	luaInterface = global->CreateLuaInterface("AudioInterface");
-	luaInterface.AddFunction<AudioInterface, &AudioInterface::Play>("Play");
-	global->SetLuaInterface(luaInterface);
-
-	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Audio", "AudioInterface");
-
-	//-----------------------------------------------------------------------------------------------
 	//Entities
 	luaInterfaceObject = std::make_shared<EntityInterface>();
 	m_luaInterfaces.push_back(luaInterfaceObject);
@@ -328,6 +319,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAction>("GetAction");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetAction>("SetAction");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::HasComponent>("HasComponent");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::PlayAudio>("PlayAudio");
 
 	global->SetLuaInterface(luaInterface);
 

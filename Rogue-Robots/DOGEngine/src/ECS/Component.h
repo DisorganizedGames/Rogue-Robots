@@ -79,6 +79,13 @@ namespace DOG
 		bool shouldPlay = false;
 		bool playing = false;
 		bool shouldStop = false;
+		
+		bool is3D = false; // Uses the object's transform as a sound source
+	};
+
+	struct AudioListenerComponent
+	{
+		// Maybe add options here like cone and such
 	};
 
 	struct ModularBlockComponent
