@@ -5,5 +5,14 @@ Settings =
 	clientHeight = 720,
 	renderResolutionWidth = 1920,
 	renderResolutionHeight = 1080,
-	vsync = false
+	vsync = false,
+
+	--DXGI_MODE_DESC,
+	displayWidth = 1920,
+	displayHeight = 1080,
+	refreshRateNumerator = 60000,
+	refreshRateDenominator = 1000,
+	format = 28,
+	scanLine = 1,
+	scaling = 0
 }
