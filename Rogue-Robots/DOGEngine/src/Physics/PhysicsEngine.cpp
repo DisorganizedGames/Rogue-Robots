@@ -7,6 +7,8 @@
 #include "../Scripting/LuaMain.h"
 #include "PhysicsRigidbody.h"
 
+using namespace DirectX::SimpleMath;
+
 namespace DOG
 {
 	PhysicsEngine PhysicsEngine::s_physicsEngine;
@@ -644,7 +646,7 @@ namespace DOG
 		}
 	}
 
-	BoxColliderComponent::BoxColliderComponent(entity entity, const DirectX::SimpleMath::Vector3& boxColliderSize, bool dynamic, float mass) noexcept
+	BoxColliderComponent::BoxColliderComponent(entity entity, const Vector3& boxColliderSize, bool dynamic, float mass) noexcept
 	{
 		RigidbodyColliderData rCD; 
 		rCD.collisionShapeHandle = PhysicsEngine::AddCollisionShape(new btBoxShape(btVector3(boxColliderSize.x, boxColliderSize.y, boxColliderSize.z)));
@@ -679,7 +681,7 @@ namespace DOG
 		rigidbodyHandle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
 	}
 
-	MeshColliderComponent::MeshColliderComponent(entity entity, u32 modelID, const DirectX::SimpleMath::Vector3& localMeshScale, bool drawOverride) noexcept
+	MeshColliderComponent::MeshColliderComponent(entity entity, u32 modelID, const Vector3& localMeshScale, bool drawOverride) noexcept
 	{	
 		meshColliderModelID = modelID;
 
@@ -714,7 +716,7 @@ namespace DOG
 		LoadMesh(entity, modelID, localMeshScale);
 	}
 
-	void MeshColliderComponent::LoadMesh(entity entity, u32 modelID, const DirectX::SimpleMath::Vector3& localMeshScale)
+	void MeshColliderComponent::LoadMesh(entity entity, u32 modelID, const Vector3& localMeshScale)
 	{
 		RigidbodyColliderData rCD;
 
@@ -804,7 +806,7 @@ namespace DOG
 		meshNotLoaded = false;
 	}
 
-	BoxTriggerComponent::BoxTriggerComponent(entity entity, const DirectX::SimpleMath::Vector3& boxColliderSize) noexcept
+	BoxTriggerComponent::BoxTriggerComponent(entity entity, const Vector3& boxColliderSize) noexcept
 	{
 		GhostObjectData ghostObjectData;
 		ghostObjectData.collisionShapeHandle = PhysicsEngine::AddCollisionShape(new btBoxShape(btVector3(boxColliderSize.x, boxColliderSize.y, boxColliderSize.z)));
