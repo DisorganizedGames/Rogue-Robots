@@ -8,6 +8,19 @@ namespace DOG::gfx
 		m_rd(rd),
 		m_bin(bin)
 	{
+		MemoryPoolDesc d{};
+		d.size = 100'000'000;
+		m_memoryPool = m_rd->CreateMemoryPool(d);
+	}
+
+	RGResourceManager::~RGResourceManager()
+	{
+		m_rd->FreeMemoryPool(m_memoryPool);
+	}
+
+	const GPUPoolMemoryInfo& RGResourceManager::GetMemoryInfo() const
+	{
+		return m_rd->GetPoolMemoryInfo(m_memoryPool);
 	}
 
 	void RGResourceManager::DeclareTexture(RGResourceID id, RGTextureDesc desc)
@@ -159,14 +172,14 @@ namespace DOG::gfx
 					rgDesc.width, rgDesc.height, rgDesc.depth,
 					rgDesc.flags, rgDesc.initState)
 					.SetMipLevels(rgDesc.mipLevels);
-				resource.resource = m_rd->CreateTexture(desc).handle;
+				resource.resource = m_rd->CreateTexture(desc, m_memoryPool).handle;
 			}
 			else
 			{
 				const auto& rgDesc = std::get<RGBufferDesc>(decl.desc);
 
 				BufferDesc desc(MemoryType::Default, rgDesc.size, rgDesc.flags, rgDesc.initState);
-				resource.resource = m_rd->CreateBuffer(desc).handle;
+				resource.resource = m_rd->CreateBuffer(desc, m_memoryPool).handle;
 			}
 		}
 

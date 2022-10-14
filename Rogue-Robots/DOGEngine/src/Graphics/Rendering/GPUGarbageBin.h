@@ -8,7 +8,7 @@ namespace DOG::gfx
 	public:
 		GPUGarbageBin(u8 maxFramesInFlight);
 
-		void PushDeferredDeletion(const std::function<void()>& deletionFunc);
+		void PushDeferredDeletion(std::function<void()>&& deletionFunc);
 
 		void BeginFrame();
 		void EndFrame();

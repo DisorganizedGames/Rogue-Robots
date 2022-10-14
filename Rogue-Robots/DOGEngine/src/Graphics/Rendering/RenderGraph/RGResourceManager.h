@@ -1,5 +1,6 @@
 #pragma once
 #include "RGTypes.h"
+#include "../../RHI/Types/GPUInfo.h"
 
 namespace DOG::gfx
 {
@@ -11,6 +12,9 @@ namespace DOG::gfx
 		friend class RenderGraph;
 	public:
 		RGResourceManager(RenderDevice* rd, GPUGarbageBin* bin);
+		~RGResourceManager();
+
+		const GPUPoolMemoryInfo& GetMemoryInfo() const;
 
 		/*
 			Discards the resources stored safely and clears map for re-use.
@@ -96,5 +100,7 @@ namespace DOG::gfx
 		RenderDevice* m_rd{ nullptr };
 		GPUGarbageBin* m_bin{ nullptr };
 		std::unordered_map<RGResourceID, RGResource> m_resources;
+
+		MemoryPool m_memoryPool;
 	};
 }

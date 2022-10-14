@@ -13,15 +13,19 @@ namespace DOG::gfx
 	public:
 		virtual Swapchain* CreateSwapchain(void* hwnd, u8 numBuffers) = 0;
 
-		virtual Buffer CreateBuffer(const BufferDesc& desc) = 0;
-		virtual Texture CreateTexture(const TextureDesc& desc) = 0;
+		virtual Buffer CreateBuffer(const BufferDesc& desc, MemoryPool pool = {}) = 0;
+		virtual Texture CreateTexture(const TextureDesc& desc, MemoryPool pool = {}) = 0;
 		virtual Pipeline CreateGraphicsPipeline(const GraphicsPipelineDesc& desc) = 0;
 		virtual Pipeline CreateComputePipeline(const ComputePipelineDesc& desc) = 0;
 		virtual RenderPass CreateRenderPass(const RenderPassDesc& desc) = 0;
 		virtual BufferView CreateView(Buffer buffer, const BufferViewDesc& desc) = 0;
 		virtual TextureView CreateView(Texture texture, const TextureViewDesc& desc) = 0;
+		virtual MemoryPool CreateMemoryPool(const MemoryPoolDesc& desc) = 0;
+
 
 		virtual Monitor GetMonitor() = 0;
+		virtual const GPUPoolMemoryInfo& GetPoolMemoryInfo(MemoryPool pool) = 0;
+		virtual const GPUTotalMemoryInfo& GetTotalMemoryInfo() = 0;
 
 		// Free/recycle when appropriate! Sensitive resources that may be in-flight
 		virtual void FreeBuffer(Buffer handle) = 0;
@@ -32,6 +36,8 @@ namespace DOG::gfx
 		virtual void FreeView(TextureView handle) = 0;
 		virtual void RecycleSync(SyncReceipt receipt) = 0;
 		virtual void RecycleCommandList(CommandList handle) = 0;
+		virtual void FreeMemoryPool(MemoryPool handle) = 0;
+
 
 		virtual CommandList AllocateCommandList(QueueType queue = QueueType::Graphics) = 0;
 

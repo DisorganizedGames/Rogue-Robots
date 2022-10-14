@@ -10,7 +10,7 @@ namespace DOG::gfx
 		m_deletes2.resize(maxFramesInFlight);
 	}
 
-	void GPUGarbageBin::PushDeferredDeletion(const std::function<void()>& deletionFunc)
+	void GPUGarbageBin::PushDeferredDeletion(std::function<void()>&& deletionFunc)
 	{
 		ZoneScopedN("GPU Garbage Bin: Add Deferred Deletion");
 

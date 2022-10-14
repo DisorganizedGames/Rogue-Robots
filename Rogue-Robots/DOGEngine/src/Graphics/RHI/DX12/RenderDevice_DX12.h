@@ -23,10 +23,13 @@ namespace DOG::gfx
 		RenderDevice_DX12(ComPtr<ID3D12Device5> device, IDXGIAdapter* adapter, bool debug, UINT numBackBuffers);
 		~RenderDevice_DX12();
 
-		Swapchain* CreateSwapchain(void* hwnd, u8 numBuffers);
 		Monitor GetMonitor() override;
-		Buffer CreateBuffer(const BufferDesc& desc);
-		Texture CreateTexture(const TextureDesc& desc);
+		const GPUPoolMemoryInfo& GetPoolMemoryInfo(MemoryPool pool);
+		const GPUTotalMemoryInfo& GetTotalMemoryInfo();
+
+		Swapchain* CreateSwapchain(void* hwnd, u8 numBuffers);
+		Buffer CreateBuffer(const BufferDesc& desc, MemoryPool = {});
+		Texture CreateTexture(const TextureDesc& desc, MemoryPool = {});
 		Pipeline CreateGraphicsPipeline(const GraphicsPipelineDesc& desc);
 		Pipeline CreateComputePipeline(const ComputePipelineDesc& desc);
 		RenderPass CreateRenderPass(const RenderPassDesc& desc);
@@ -234,7 +237,8 @@ namespace DOG::gfx
 		struct MemoryPool_Storage
 		{
 			MemoryPoolDesc desc;
-
+			ComPtr<D3D12MA::Pool> pool;
+			GPUPoolMemoryInfo info;
 		};
 
 		struct BufferView_Storage
@@ -331,6 +335,7 @@ namespace DOG::gfx
 
 		//Ui
 		std::optional<DX12DescriptorChunk> m_d2dReservedDescriptor;
+		GPUTotalMemoryInfo m_totalMemoryInfo;
 	};
 }
 
