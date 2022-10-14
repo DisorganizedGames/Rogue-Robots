@@ -55,6 +55,7 @@ void NetCode::OnUpdate()
 						m_entityManager.RemoveComponent<CameraComponent>(id);
 						m_entityManager.RemoveComponent<AudioListenerComponent>(id);
 						transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
+						//transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
 					}
 
 				});
@@ -67,7 +68,7 @@ void NetCode::OnUpdate()
 						m_entityManager.AddComponent<AudioListenerComponent>(id);
 						m_entityManager.RemoveComponent<OnlinePlayer>(id);
 					}
-					transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
+					//transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
 				});
 			
 			m_startUp = false;
@@ -93,8 +94,6 @@ void NetCode::OnUpdate()
 				inputC.jump = m_outputUdp.m_holdplayersUdp[networkC.playerId].jump;
 				inputC.activateActiveItem = m_outputUdp.m_holdplayersUdp[networkC.playerId].activateActiveItem;
 				inputC.switchComp = m_outputUdp.m_holdplayersUdp[networkC.playerId].switchComp;
-				
-
 			});
 
 
@@ -224,7 +223,7 @@ void NetCode::Recive()
 					//�pdate the players entites stats
 					memcpy(m_outputTcp, reciveBuffer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
 					bufferReciveSize += sizeof(Client::ClientsData) * MAX_PLAYER_COUNT;
-					if (m_outputTcp->nrOfNetTransform > 0 && m_outputTcp->playerId < 10)
+					if (m_outputTcp->nrOfNetTransform > 0 && m_outputTcp->playerId < MAX_PLAYER_COUNT)
 					{
 						//Update the transfroms, Only none hosts
 						NetworkTransform* temp = new NetworkTransform;
