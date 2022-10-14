@@ -32,20 +32,6 @@ void InputInterface::GetMouseDelta(DOG::LuaContext* context)
 };
 
 //---------------------------------------------------------------------------------------------------------
-//Audio
-void AudioInterface::Play(LuaContext* context)
-{
-	auto path = context->GetString();
-	auto audioAsset = AssetManager::Get().LoadAudio(path, AssetLoadFlag::CPUMemory);
-
-	static auto tempEntityForLuaAudio = EntityManager::Get().CreateEntity();
-	auto& audioComponent = EntityManager::Get().AddComponent<AudioComponent>(tempEntityForLuaAudio);
-
-	audioComponent.assetID = audioAsset;
-	audioComponent.shouldPlay = true;
-}
-
-//---------------------------------------------------------------------------------------------------------
 //Entity
 void EntityInterface::CreateEntity(LuaContext* context)
 {

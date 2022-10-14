@@ -301,17 +301,6 @@ void GameLayer::RegisterLuaInterfaces()
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Input", "InputInterface");
 
 	//-----------------------------------------------------------------------------------------------
-	//Audio
-	luaInterfaceObject = std::make_shared<AudioInterface>();
-	m_luaInterfaces.push_back(luaInterfaceObject);
-
-	luaInterface = global->CreateLuaInterface("AudioInterface");
-	luaInterface.AddFunction<AudioInterface, &AudioInterface::Play>("Play");
-	global->SetLuaInterface(luaInterface);
-
-	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Audio", "AudioInterface");
-
-	//-----------------------------------------------------------------------------------------------
 	//Entities
 	luaInterfaceObject = std::make_shared<EntityInterface>();
 	m_luaInterfaces.push_back(luaInterfaceObject);

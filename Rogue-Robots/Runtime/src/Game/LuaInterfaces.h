@@ -39,22 +39,6 @@ public:
 	void GetMouseDelta(DOG::LuaContext* context);
 };
 
-class AudioInterface : public LuaInterface
-{
-public:
-	AudioInterface() noexcept
-	{
-
-	}
-	~AudioInterface() noexcept
-	{
-
-	}
-
-	//Takes a string as argument
-	void Play(DOG::LuaContext* context);
-};
-
 class EntityInterface : public LuaInterface
 {
 public:
