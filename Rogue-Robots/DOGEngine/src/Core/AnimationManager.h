@@ -73,6 +73,7 @@ namespace DOG
 		i32 m_imguiProfilePerformUpdate = 1;
 		bool m_imguiRootTranslation = false;
 		i32 m_imguiSelectedBone = 1;
+
 		std::vector<DirectX::XMFLOAT3> m_imguiSca;
 		std::vector<DirectX::XMFLOAT3> m_imguiRot;
 		std::vector<DirectX::XMFLOAT3> m_imguiPos;
