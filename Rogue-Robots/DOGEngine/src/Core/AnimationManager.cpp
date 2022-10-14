@@ -25,6 +25,7 @@ namespace DOG
 
 	void AnimationManager::UpdateJoints()
 	{
+		ZoneScopedN("updateJoints_ppp");
 		using namespace DirectX;
 		if (!m_bonesLoaded) {
 			EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
@@ -35,12 +36,13 @@ namespace DOG
 						m_bonesLoaded = true;
 						// for imgui
 						m_rigs.push_back(&model->animation);
+						modelaC.clips[2].currentWeight = 0.0f;
 					}
 				});
 			return;
 		}
-		static bool open = true;
-		SpawnControlWindow(open);
+		//static bool open = true;
+		//SpawnControlWindow(open);
 		EntityManager::Get().Collect<ModelComponent, AnimationComponent, TransformComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC, TransformComponent& tfC)
 		{
 			ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
@@ -100,17 +102,17 @@ namespace DOG
 				static i32 rig = 0;
 				static bool rigLoaded = m_rigs.size();
 				EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC)
+				{
+					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
+					if (model)
 					{
-						ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-						if (model)
-						{
-							imguiAnimC = &animatorC;
-							if (!rigLoaded)
-								m_rigs.push_back(&model->animation);
-						}
-						else
-							return ImGui::End(); // "Animator";
-					});
+						imguiAnimC = &animatorC;
+						if (!rigLoaded)
+							m_rigs.push_back(&model->animation);
+					}
+					else
+						return ImGui::End(); // "Animator";
+				});
 				if (ImGui::BeginCombo("rig", std::to_string(rig).c_str()))
 				{
 					for (i32 i = 0; i < std::size(m_rigs); i++)
