@@ -79,6 +79,7 @@ void EntityInterface::AddComponent(LuaContext* context)
 	else if (compType == "Bullet")
 	{
 		EntityManager::Get().AddComponent<BulletComponent>(e);
+		EntityManager::Get().GetComponent<RigidbodyComponent>(e).continuousCollisionDetection = true;
 	}
 	//Add more component types here.
 	else

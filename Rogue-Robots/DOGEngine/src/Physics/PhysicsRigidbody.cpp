@@ -41,6 +41,8 @@ namespace DOG
 			assert(rigidbodyColliderData->dynamic && "Must be dynamic and kinematic");
 			rigidbodyColliderData->rigidBody->setCollisionFlags(rigidbodyColliderData->rigidBody->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
 			rigidbodyColliderData->rigidBody->setActivationState(DISABLE_DEACTIVATION);
+			disableDeactivation = true;
+			
 		}
 		else if (!rigidbodyColliderData->dynamic)
 		{
@@ -95,6 +97,16 @@ namespace DOG
 				z = rigidbody.constrainRotationZ ? 0.0f : 1.0f;
 
 				bulletRigidbody->setAngularFactor(btVector3(x, y, z));
+
+				//Can only turn off deactivation not turn it on again
+				if (rigidbody.disableDeactivation)
+					bulletRigidbody->setActivationState(DISABLE_DEACTIVATION);
+
+				if (rigidbody.continuousCollisionDetection)
+				{
+					bulletRigidbody->setCcdMotionThreshold(rigidbody.continuousCollisionDetectionMotionThreshold);
+					bulletRigidbody->setCcdSweptSphereRadius(rigidbody.continuousCollisionDetectionSweptSphereRadius);
+				}
 			});
 	}
 

@@ -117,7 +117,9 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<ModelComponent>(Player1, m_greenCube);
 	m_entityManager.AddComponent<TransformComponent>(Player1, Vector3(25, 25, 15), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
 	m_entityManager.AddComponent<CapsuleColliderComponent>(Player1, Player1, 1.f, 1.8f, true, 75.f);
-	m_entityManager.AddComponent<RigidbodyComponent>(Player1, Player1).ConstrainRotation(true, true, true);
+	auto& player1Rigidbody = m_entityManager.AddComponent<RigidbodyComponent>(Player1, Player1);
+	player1Rigidbody.ConstrainRotation(true, true, true);
+	player1Rigidbody.disableDeactivation = true;
 	m_entityManager.AddComponent<NetworkPlayerComponent>(Player1).playerId = 0;
 	m_entityManager.AddComponent<InputController>(Player1);
 	m_entityManager.AddComponent<CameraComponent>(Player1);
@@ -131,7 +133,9 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<ModelComponent>(Player2, m_redCube);
 	m_entityManager.AddComponent<TransformComponent>(Player2, Vector3(-10, 10, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
 	m_entityManager.AddComponent<CapsuleColliderComponent>(Player2, Player2, 1.f, 1.8f, true, 75.f);
-	m_entityManager.AddComponent<RigidbodyComponent>(Player2, Player2).ConstrainRotation(true, true, true);
+	auto& player2Rigidbody = m_entityManager.AddComponent<RigidbodyComponent>(Player2, Player2);
+	player2Rigidbody.ConstrainRotation(true, true, true);
+	player2Rigidbody.disableDeactivation = true;
 	m_entityManager.AddComponent<NetworkPlayerComponent>(Player2).playerId = 1;
 	m_entityManager.AddComponent<InputController>(Player2);
 	m_entityManager.AddComponent<OnlinePlayer>(Player2);
@@ -141,7 +145,9 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<ModelComponent>(Player3, m_blueCube);
 	m_entityManager.AddComponent<TransformComponent>(Player3, Vector3(-10, 20, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
 	m_entityManager.AddComponent<CapsuleColliderComponent>(Player3, Player3, 1.f, 1.8f, true, 75.f);
-	m_entityManager.AddComponent<RigidbodyComponent>(Player3, Player3).ConstrainRotation(true, true, true);
+	auto& player3Rigidbody = m_entityManager.AddComponent<RigidbodyComponent>(Player3, Player3);
+	player3Rigidbody.ConstrainRotation(true, true, true);
+	player3Rigidbody.disableDeactivation = true;
 	m_entityManager.AddComponent<NetworkPlayerComponent>(Player3).playerId = 2;
 	m_entityManager.AddComponent<InputController>(Player3);
 	m_entityManager.AddComponent<OnlinePlayer>(Player3);
@@ -151,7 +157,9 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<ModelComponent>(Player4, m_magentaCube);
 	m_entityManager.AddComponent<TransformComponent>(Player4, Vector3(-10, 30, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
 	m_entityManager.AddComponent<CapsuleColliderComponent>(Player4, Player4, 1.f, 1.8f, true, 75.f);
-	m_entityManager.AddComponent<RigidbodyComponent>(Player4, Player4).ConstrainRotation(true, true, true);
+	auto& player4Rigidbody = m_entityManager.AddComponent<RigidbodyComponent>(Player4, Player4);
+	player4Rigidbody.ConstrainRotation(true, true, true);
+	player4Rigidbody.disableDeactivation = true;
 	m_entityManager.AddComponent<NetworkPlayerComponent>(Player4).playerId = 3;
 	m_entityManager.AddComponent<InputController>(Player4);
 	m_entityManager.AddComponent<OnlinePlayer>(Player4);
@@ -406,14 +414,18 @@ void GameLayer::LoadLevel()
 
 						entity blockEntity = m_entityManager.CreateEntity();
 						m_entityManager.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".fbx"));
-						m_entityManager.AddComponent<TransformComponent>(blockEntity)
-							.SetPosition({ x * blockDim, y * blockDim, z * blockDim })
-							.SetRotation({ piDiv2, piDiv2 * blockRot - piDiv2, 0.0f })
-							.SetScale({ xFlip, -1.0f * yFlip, 1.0f }); //yFlip is on Z because of left-hand/right-hand.
+						m_entityManager.AddComponent<TransformComponent>(blockEntity,
+							Vector3(x * blockDim, y * blockDim, z * blockDim),
+							Vector3(piDiv2, piDiv2 * blockRot - piDiv2, 0.0f),
+							Vector3(xFlip, -1.0f * yFlip, 1.0f)); //yFlip is on Z because of left-hand/right-hand.
+
+						Vector3 localMeshColliderScale = Vector3(-xFlip, yFlip, 1.0f);
+
 						m_entityManager.AddComponent<ModularBlockComponent>(blockEntity);
 						m_entityManager.AddComponent<MeshColliderComponent>(blockEntity,
 							blockEntity, 
 							aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + "_Col.fbx", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::CPUMemory | DOG::AssetLoadFlag::GPUMemory))),
+							localMeshColliderScale,
 							false);		// Set this to true if you want to see colliders only in wireframe
 					}
 

@@ -23,6 +23,12 @@ namespace DOG
 		DirectX::SimpleMath::Vector3 linearVelocity;
 		DirectX::SimpleMath::Vector3 centralForce;
 		float mass = 1.0f;
+		bool disableDeactivation = false;
+
+		//Continuous Collision Detection (used for fast moving objects like bullets)
+		bool continuousCollisionDetection = false;
+		float continuousCollisionDetectionMotionThreshold = (float)1e-7;
+		float continuousCollisionDetectionSweptSphereRadius = 0.2f;
 	};
 
 	class PhysicsRigidbody
