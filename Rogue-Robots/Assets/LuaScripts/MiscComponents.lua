@@ -23,7 +23,7 @@ function MiscComponent.NormalGun()
 					forward = forward,
 					startPos = pos,
 					speed = 75.0,
-					size = Vector3.New(3, 3, 3),
+					size = Vector3.New(15, 15, 15),
 					lifetime = 0
 				}
 
@@ -61,7 +61,7 @@ function MiscComponent.ChargeShot()
 					forward = forward,
 					startPos = pos,
 					speed = 75.0,
-					size = Vector3.New(30, 30, 30) + Vector3.New(self.shotPower, self.shotPower, self.shotPower),
+					size = Vector3.New(10, 10, 10) + Vector3.New(self.shotPower, self.shotPower, self.shotPower),
 					lifetime = 0
 				}
 

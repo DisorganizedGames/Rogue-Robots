@@ -730,6 +730,7 @@ namespace DOG
 			//We check if the existing scaledMeshCollider has the same scale of the incoming meshcollider
 			//If it does not we create a new scaledMeshCollider with the scale requested
 			btScaledBvhTriangleMeshShape* scaledMeshCollider = (btScaledBvhTriangleMeshShape*)PhysicsEngine::s_physicsEngine.GetCollisionShape(rCD.collisionShapeHandle);
+
 			if (btVector3(localMeshScale.x, localMeshScale.y, localMeshScale.z) != scaledMeshCollider->getLocalScaling())
 			{
 				//The new scaledMeshCollider uses the mesh collider of the old scaledMeshCollider, so we do not create a new meshCollider (we save nemory)
@@ -745,7 +746,7 @@ namespace DOG
 			}
 		}
 		//We load in a new mesh as a mesh collider and then we reuse it for other mesh colliders who uses the same model
-		else if (meshColliderData.collisionShapeHandle.handle == 0)
+		else
 		{
 			btTriangleMesh* mesh = new btTriangleMesh();
 			ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelID);

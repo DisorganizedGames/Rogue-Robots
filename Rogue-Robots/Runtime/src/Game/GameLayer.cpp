@@ -406,15 +406,18 @@ void GameLayer::LoadLevel()
 
 						entity blockEntity = m_entityManager.CreateEntity();
 						m_entityManager.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".fbx"));
-						m_entityManager.AddComponent<TransformComponent>(blockEntity)
-							.SetPosition({ x * blockDim, y * blockDim, z * blockDim })
-							.SetRotation({ piDiv2, piDiv2 * blockRot - piDiv2, 0.0f })
-							.SetScale({ xFlip, -1.0f * yFlip, 1.0f }); //yFlip is on Z because of left-hand/right-hand.
+						m_entityManager.AddComponent<TransformComponent>(blockEntity,
+							Vector3(x * blockDim, y * blockDim, z * blockDim),
+							Vector3(piDiv2, piDiv2 * blockRot - piDiv2, 0.0f),
+							Vector3(xFlip, -1.0f * yFlip, 1.0f)); //yFlip is on Z because of left-hand/right-hand.
+
+						Vector3 localMeshColliderScale = Vector3(-xFlip, yFlip, 1.0f);
+
 						m_entityManager.AddComponent<ModularBlockComponent>(blockEntity);
 						m_entityManager.AddComponent<MeshColliderComponent>(blockEntity,
 							blockEntity, 
 							aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + "_Col.fbx", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::CPUMemory | DOG::AssetLoadFlag::GPUMemory))),
-							Vector3(-xFlip, yFlip, 1.0f),
+							localMeshColliderScale,
 							false);		// Set this to true if you want to see colliders only in wireframe
 					}
 
