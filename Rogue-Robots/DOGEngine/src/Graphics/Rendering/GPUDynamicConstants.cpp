@@ -61,7 +61,7 @@ namespace DOG::gfx
 		//m_bin->PushDeferredDeletion(delFunc);
 
 		ret.buffer = m_buffer;
-		ret.bufferOffset = offset;
+		ret.bufferOffset = (u32)offset;
 
 
 		return ret;

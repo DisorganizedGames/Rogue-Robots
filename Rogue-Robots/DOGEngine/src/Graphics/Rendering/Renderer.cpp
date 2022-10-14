@@ -1100,6 +1100,15 @@ namespace DOG::gfx
 			if (ImGui::Begin("Effects Manager", &open))
 			{
 				ImGui::Checkbox("SSAO", &m_ssaoOn);
+	
+			if (ImGui::Begin("Render Graph GPU Statistics", &open))
+			{
+				//auto& info = m_rgResMan->GetMemoryInfo();
+				auto& info = m_rd->GetTotalMemoryInfo().heap[0];
+				ImGui::Text("Used allocations: %f (Mb)", info.allocationBytes / 1048576.f);
+				ImGui::Text("Memory allocated: %f (Mb)", info.blockBytes / 1048576.f);
+				ImGui::Text("Smallest allocation: %f (Mb)", info.smallestAllocation / 1048576.f);
+				ImGui::Text("Largest allocation: %f (Mb)", info.largestAllocation / 1048576.f);
 			}
 			ImGui::End();
 		}

@@ -10,8 +10,27 @@
 #include "Utilities/DX12Queue.h"
 #include "Utilities/DX12Fence.h"
 
+#include "Tracy/Tracy.hpp"
+
 namespace DOG::gfx
 {
+	GPUPoolMemoryInfo ToMemoryInfo(const D3D12MA::DetailedStatistics& stats)
+	{
+		GPUPoolMemoryInfo info{};
+		info.blocksAllocated = stats.Stats.BlockCount;
+		info.numAllocations = stats.Stats.AllocationCount;
+		info.blockBytes = stats.Stats.BlockBytes;
+		info.allocationBytes = stats.Stats.AllocationBytes;
+		info.allocatedButUnusedBytes = info.blockBytes - info.allocationBytes;
+
+		info.numUnusedRange = stats.UnusedRangeCount;
+		info.smallestAllocation = stats.AllocationSizeMin;
+		info.largestAllocation = stats.AllocationSizeMax;
+		info.smallestUnusedRange = stats.UnusedRangeSizeMin;
+		info.largestUnusedRange = stats.UnusedRangeSizeMax;
+		return info;
+	};
+
 
 	RenderDevice_DX12::RenderDevice_DX12(ComPtr<ID3D12Device5> device, IDXGIAdapter* adapter, bool debug, UINT numBackBuffers) :
 		m_device(device),
@@ -26,6 +45,7 @@ namespace DOG::gfx
 		m_cmdls.resize(1);
 		m_bufferViews.resize(1);
 		m_textureViews.resize(1);
+		m_memoryPools.resize(1);
 
 		CreateQueues();
 		InitDMA(adapter);
@@ -78,12 +98,42 @@ namespace DOG::gfx
 		return monitor;
 	}
 
-	Buffer RenderDevice_DX12::CreateBuffer(const BufferDesc& desc)
+	const GPUPoolMemoryInfo& RenderDevice_DX12::GetPoolMemoryInfo(MemoryPool pool)
+	{
+		auto& storage = HandleAllocator::TryGet(m_memoryPools, HandleAllocator::GetSlot(pool.handle));
+
+		D3D12MA::DetailedStatistics stats{};
+		storage.pool->CalculateStatistics(&stats);
+		storage.info = ToMemoryInfo(stats);
+	
+		return storage.info;
+	}
+
+	const GPUTotalMemoryInfo& RenderDevice_DX12::GetTotalMemoryInfo()
+	{	
+		D3D12MA::TotalStatistics stats;
+		m_dma->CalculateStatistics(&stats);
+		
+		for (u32 i = 0; i < 4; ++i)
+			m_totalMemoryInfo.heap[i] = ToMemoryInfo(stats.HeapType[i]);
+		m_totalMemoryInfo.total = ToMemoryInfo(stats.Total);
+
+		return m_totalMemoryInfo;
+	}
+
+	Buffer RenderDevice_DX12::CreateBuffer(const BufferDesc& desc, MemoryPool pool)
 	{
 		HRESULT hr{ S_OK };
 
 		D3D12MA::ALLOCATION_DESC ad{};
 		ad.HeapType = to_internal(desc.memType);
+		if (pool.handle != 0)
+		{
+			auto poolStorage = HandleAllocator::TryGet(m_memoryPools, HandleAllocator::GetSlot(pool.handle));
+			ad.CustomPool = poolStorage.pool.Get();
+			ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT;
+			assert(ad.HeapType == poolStorage.desc.heapType);
+		}
 
 		D3D12_RESOURCE_DESC rd{};
 		rd.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
@@ -113,7 +163,7 @@ namespace DOG::gfx
 		return handle;
 	}
 
-	Texture RenderDevice_DX12::CreateTexture(const TextureDesc& desc)
+	Texture RenderDevice_DX12::CreateTexture(const TextureDesc& desc, MemoryPool pool)
 	{
 		HRESULT hr{ S_OK };
 
@@ -121,7 +171,13 @@ namespace DOG::gfx
 		ad.HeapType = to_internal(desc.memType);
 		//ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT | D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET;
 		//ad.CustomPool = m_pool.Get();
-		ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT;
+		if (pool.handle != 0)
+		{
+			auto poolStorage = HandleAllocator::TryGet(m_memoryPools, HandleAllocator::GetSlot(pool.handle));
+			ad.CustomPool = poolStorage.pool.Get();
+			ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT;
+			assert(ad.HeapType == poolStorage.desc.heapType);
+		}
 
 		D3D12_RESOURCE_DESC rd{};
 		rd.Dimension = to_internal(desc.type);
@@ -428,13 +484,33 @@ namespace DOG::gfx
 	{
 		ComPtr<D3D12MA::Pool> pool;
 		D3D12MA::POOL_DESC pd{};
+		pd.HeapFlags = D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES;
+		pd.HeapProperties.Type = desc.heapType;
+		pd.BlockSize = desc.size;
 		HRESULT hr = m_dma->CreatePool(&pd, pool.GetAddressOf());
 		HR_VFY(hr);
-		assert(false);
 
+		MemoryPool_Storage storage{};
+		storage.desc = desc;
+		storage.pool = pool;
 
+		D3D12MA::DetailedStatistics stats{};
+		pool->CalculateStatistics(&stats);
+		storage.info.blocksAllocated = stats.Stats.BlockCount;
+		storage.info.numAllocations = stats.Stats.AllocationCount;
+		storage.info.blockBytes = stats.Stats.BlockBytes;
+		storage.info.allocationBytes = stats.Stats.AllocationBytes;
 
-		return MemoryPool();
+		storage.info.numUnusedRange = stats.UnusedRangeCount;
+		storage.info.smallestAllocation = stats.AllocationSizeMin;
+		storage.info.largestAllocation = stats.AllocationSizeMax;
+		storage.info.smallestUnusedRange = stats.UnusedRangeSizeMin;
+		storage.info.largestUnusedRange = stats.UnusedRangeSizeMax;
+
+		auto handle = m_rhp.Allocate<MemoryPool>();
+		HandleAllocator::TryInsertMove(m_memoryPools, std::move(storage), HandleAllocator::GetSlot(handle.handle));
+
+		return handle;
 	}
 
 	void RenderDevice_DX12::FreeBuffer(Buffer handle)
@@ -444,6 +520,7 @@ namespace DOG::gfx
 
 	void RenderDevice_DX12::FreeTexture(Texture handle)
 	{
+		ZoneScopedN("RD Texture Free");
 		HandleAllocator::FreeStorage(m_rhp, m_textures, handle);
 	}
 
