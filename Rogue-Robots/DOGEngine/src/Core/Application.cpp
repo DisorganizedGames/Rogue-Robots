@@ -174,6 +174,10 @@ namespace DOG
 
 			m_renderer->EndFrame_GPU(m_specification.graphicsSettings.vSync);
 
+
+			//Deferred deletions happen here!!!
+			EntityManager::Get().DestroyDeferredDestroyEntities();
+
 			Time::End();
 		}
 

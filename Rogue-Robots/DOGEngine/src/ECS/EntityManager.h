@@ -91,6 +91,8 @@ namespace DOG
 
 		entity CreateEntity() noexcept;
 		void DestroyEntity(const entity entityID) noexcept;
+		void EntityDeferredDestruction(const entity entityID) noexcept;
+		void DestroyDeferredDestroyEntities() noexcept;
 		[[nodiscard]] const std::vector<entity>& GetAllEntities() const noexcept;
 		[[nodiscard]] u32 GetNrOfEntities() const noexcept { return MAX_ENTITIES - (u32)m_freeList.size(); }
 		void Reset() noexcept;

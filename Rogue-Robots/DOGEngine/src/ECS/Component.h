@@ -121,5 +121,11 @@ namespace DOG
 
 		bool dirty{ true };		// If static handle, dirty bool is ignored
 	};
+
+	//Is set on entities which are going to be destroyed at the end of the frame!
+	struct DeferredDeletionComponent
+	{
+
+	};
 }
 

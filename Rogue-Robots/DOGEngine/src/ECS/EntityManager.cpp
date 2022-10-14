@@ -48,6 +48,21 @@ namespace DOG
 			}});
 	}
 
+	void EntityManager::EntityDeferredDestruction(const entity entityID) noexcept
+	{
+		//Add flag for deletion at the end of the frame
+		AddComponent<DeferredDeletionComponent>(entityID);
+	}
+
+	void EntityManager::DestroyDeferredDestroyEntities() noexcept
+	{
+		//Destroy all of the entities with the deferred deletion flag set
+		Collect<DeferredDeletionComponent>().Do([&](entity entity, DeferredDeletionComponent&)
+			{
+				DestroyEntity(entity);
+			});
+	}
+
 	const std::vector<entity>& EntityManager::GetAllEntities() const noexcept
 	{
 		return m_entities;
