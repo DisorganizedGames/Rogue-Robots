@@ -53,7 +53,6 @@ namespace DOG
 					trs *= m_imguiMovementSpeed < 0.f ? -1.f : 1.f;
 					if(m_imguiRootTranslation)
 						tfC.SetPosition(XMVectorAdd(tfC.GetPosition(), trs));
-					auto asdf = 0;
 				}
 				else
 				{
@@ -296,7 +295,7 @@ namespace DOG
 		while (key2Idx < keys.size() - 1 && keys[key2Idx].time <= tick)
 			key2Idx++;
 		key2Idx = std::clamp(key2Idx, 1, i32(keys.size() - 1));
-		i32 key1Idx = (key2Idx == 1) ? keys.size() - 1 : key2Idx - 1;
+		i32 key1Idx = (key2Idx == 1) ? (i32)keys.size() - 1 : key2Idx - 1;
 		
 		const auto& key1 = keys[key1Idx];
 		const auto& key2 = keys[key2Idx];
@@ -318,9 +317,9 @@ namespace DOG
 			switch (c.blendMode)
 			{
 			case AnimationBlendMode::linear:
-				UpdateLinear(c, dt);
+				UpdateLinear(c);
 			case AnimationBlendMode::bezier:
-				UpdateBezier(c, dt);
+				UpdateBezier(c);
 			default:
 				break;
 			}
@@ -336,7 +335,7 @@ namespace DOG
 		if (m_imguiMatching)
 			ac.clips[2].normalizedTime = ac.clips[1].normalizedTime = ac.clips[0].normalizedTime;
 	}
-	void AnimationManager::UpdateBezier(AnimationComponent::AnimationClip& clip, const f32 dt)
+	void AnimationManager::UpdateBezier(AnimationComponent::AnimationClip& clip)
 	{
 		if (clip.normalizedTime > clip.transitionStart)
 		{
@@ -349,7 +348,7 @@ namespace DOG
 			clip.currentWeight = std::clamp(clip.currentWeight, 0.0f, 1.0f);
 		}
 	}
-	void AnimationManager::UpdateLinear(AnimationComponent::AnimationClip& clip, const f32 dt)
+	void AnimationManager::UpdateLinear(AnimationComponent::AnimationClip& clip)
 	{
 		if (clip.normalizedTime > clip.transitionStart && clip.currentWeight != clip.targetWeight)
 		{
@@ -454,7 +453,6 @@ namespace DOG
 	{
 		auto& clip0 = ac.clips[0];
 		auto& clip1 = ac.clips[1];
-		auto& clip2 = ac.clips[2];
 		clip0.loop = true;
 		clip1.loop = true;
 		const auto absMS = abs(m_imguiMovementSpeed);
@@ -495,7 +493,7 @@ namespace DOG
 			ac.clips[1].normalizedTime = ac.clips[0].normalizedTime;
 	}
 
-	void AnimationManager::UpdateLinearGT(AnimationComponent::AnimationClip& clip, const f32 globalTime, const f32 dt)
+	void AnimationManager::UpdateLinearGT(AnimationComponent::AnimationClip& clip, const f32 globalTime)
 	{
 		// Linear transition between current weight to target weight of clip on a "global" timeline
 		if (globalTime > clip.transitionStart && clip.currentWeight != clip.targetWeight)
