@@ -44,9 +44,9 @@ namespace DOG
 		DirectX::FXMVECTOR CalculateTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 
 		void UpdateClips(DOG::AnimationComponent& ac, const f32 dt);
-		void UpdateBezier(AnimationComponent::AnimationClip& clip, const f32 dt);
-		void UpdateLinear(AnimationComponent::AnimationClip& clip, const f32 dt);
-		void UpdateLinearGT(AnimationComponent::AnimationClip& clip, const f32 globalTime, const f32 dt);
+		void UpdateBezier(AnimationComponent::AnimationClip& clip);
+		void UpdateLinear(AnimationComponent::AnimationClip& clip);
+		void UpdateLinearGT(AnimationComponent::AnimationClip& clip, const f32 globalTime);
 		std::vector<ImportedRig*> m_rigs;
 	private:
 		bool m_bonesLoaded = false;
