@@ -22,8 +22,8 @@ static const float filter[7][7] =
     0.0166297, 0.0183786, 0.0195151, 0.0199093, 0.0195151, 0.0183786, 0.0166297
 };
 
-
-[numthreads(32, 32, 1)]
+#define groupSize 32
+[numthreads(groupSize, groupSize, 1)]
 void main(uint3 globalId : SV_DispatchThreadID)
 {
     if (globalId.x < g_constants.width && globalId.y < g_constants.height)

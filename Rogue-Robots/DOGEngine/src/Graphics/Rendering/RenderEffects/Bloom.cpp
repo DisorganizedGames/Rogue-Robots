@@ -42,11 +42,14 @@ namespace DOG::gfx
 		desc.width = topLevelBloomDesc.width / 2;
 		desc.height = topLevelBloomDesc.height / 2;
 		constexpr u32 minMipSize = 8;
-		while (desc.width > minMipSize && desc.height > minMipSize)
+		constexpr u32 maxMips = 6;
+		int n = 0;
+		while (desc.width > minMipSize && desc.height > minMipSize && n < maxMips)
 		{
 			m_bloomTexture.emplace_back(device->CreateTexture(desc), desc);
 			desc.width /= 2;
 			desc.height /= 2;
+			n++;
 		}
 	}
 
@@ -91,7 +94,7 @@ namespace DOG::gfx
 				passData.dstTextureHandle = builder.ReadWriteTarget(RG_RESOURCE(BloomTexture0), TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 
 				BloomConstantBuffer perDrawData{};
-				perDrawData.threshold = 0.12f;
+				perDrawData.threshold = 0.2f;
 
 				*reinterpret_cast<BloomConstantBuffer*>(passData.constantBufferHandle.memory) = perDrawData;
 			},

@@ -16,7 +16,8 @@ struct PerDrawData
 
 ConstantBuffer<PushConstantElement> g_constants : register(b0, space0);
 
-[numthreads(32, 32, 1)]
+#define groupSize 32
+[numthreads(groupSize, groupSize, 1)]
 void main(uint3 globalId : SV_DispatchThreadID)
 {
     if (globalId.x < g_constants.width && globalId.y < g_constants.height)
@@ -32,7 +33,9 @@ void main(uint3 globalId : SV_DispatchThreadID)
 
         if (length(color.rgb) > length(cb.threshold * float3(1, 1, 1)))
         {
-            bloomTexture[globalId.xy].rgb = color;
+            float luma = dot(float3(0.2126f, 0.7152f, 0.0722), color);
+            float weight = 1.0f / (1.0f + luma);
+            bloomTexture[globalId.xy].rgb = color * weight;
         }
     }
 }
