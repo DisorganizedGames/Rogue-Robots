@@ -101,6 +101,8 @@ public:
 
 	void HasComponent(DOG::LuaContext* context);
 
+	void PlayAudio(DOG::LuaContext* context);
+
 private:
 	void AddModel(DOG::LuaContext* context, DOG::entity e);
 

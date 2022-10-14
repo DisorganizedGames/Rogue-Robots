@@ -250,6 +250,18 @@ void EntityInterface::HasComponent(LuaContext* context)
 	context->ReturnBoolean(hasComp);
 }
 
+void EntityInterface::PlayAudio(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	u32 asset = (u32)context->GetInteger();
+	bool is3D = context->GetBoolean();
+
+	auto& comp = EntityManager::Get().GetComponent<AudioComponent>(e);
+	comp.assetID = asset;
+	comp.is3D = is3D;
+	comp.shouldPlay = true;
+}
+
 #pragma endregion
 
 void EntityInterface::GetTransformScaleData(LuaContext* context)

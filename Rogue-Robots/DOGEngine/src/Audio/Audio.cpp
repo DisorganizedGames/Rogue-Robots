@@ -90,17 +90,22 @@ void AudioDevice::HandleComponent(AudioComponent& comp, entity e)
 		return;
 	}
 
+	auto& source = m_sources[comp.source];
+	if (source->HasFinished())
+	{
+		comp.playing = false;
+	}
+
 	if (comp.shouldStop)
 	{
-		m_sources[comp.source]->Stop();
+		source->Stop();
 
 		comp.playing = false;
 		comp.shouldStop = false;
 	}
 
-	if (comp.is3D)
+	if (comp.is3D && comp.playing)
 	{
-		auto& source = m_sources[comp.source];
 		Handle3DComponent(source.get(), e);
 	}
 }
@@ -177,10 +182,12 @@ void AudioDevice::Handle3DComponent(SourceVoice* source, entity e)
 	std::iota(azimuths.begin(), azimuths.end(), 0.f);
 	std::transform(azimuths.begin(), azimuths.end(), azimuths.begin(), [](auto angle) { return (angle + 0.5f) * X3DAUDIO_PI; });
 
+	auto playPos = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
+
 	X3DAUDIO_EMITTER es = {
 		.OrientFront = {0, 0, 1},
 		.OrientTop = {0, 1, 0},
-		.Position = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition(),
+		.Position = playPos,
 		.ChannelCount = source->m_wfx.nChannels,
 		.ChannelRadius = 1.0f,
 		.pChannelAzimuths = azimuths.data(),

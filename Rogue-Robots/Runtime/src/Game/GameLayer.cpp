@@ -330,6 +330,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAction>("GetAction");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetAction>("SetAction");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::HasComponent>("HasComponent");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::PlayAudio>("PlayAudio");
 
 	global->SetLuaInterface(luaInterface);
 
