@@ -78,9 +78,9 @@ namespace DOG
         }
     }
 
-    void ImGuiMenuLayer::RegisterDebugWindow(const std::string& name, std::function<void(bool&)> func)
+    void ImGuiMenuLayer::RegisterDebugWindow(const std::string& name, std::function<void(bool&)> func, bool startOpen)
     {
-        s_debugWindows[name] = std::make_pair(func, false);
+        s_debugWindows[name] = std::make_pair(func, startOpen);
     }
 
     void ImGuiMenuLayer::UnRegisterDebugWindow(const std::string& name)

@@ -55,7 +55,7 @@ namespace DOG
 		while (m_isRunning)
 		{
 			Time::Start();
-			MiniProfiler AppP("Application::Run");
+			MINIPROFILE
 			Window::OnUpdate();
 
 			// Early break if WM tells us to
@@ -162,12 +162,6 @@ namespace DOG
 						}
 					}
 				});
-
-
-			std::sort(MiniProfiler::s_times.begin(), MiniProfiler::s_times.end(), [](auto& a, auto& b) {return a.second > b.second; });
-			for(auto& [n, t] : MiniProfiler::s_times)
-				ImGui::Text((n + " " + std::to_string(1E-6 * t)).c_str());
-			MiniProfiler::s_times.clear();
 
 			auto mainCam = CameraComponent::s_mainCamera;
 			auto& proj = (DirectX::XMMATRIX&)mainCam->projMatrix;
@@ -295,10 +289,12 @@ namespace DOG
 		PhysicsEngine::Initialize();
 
 		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); });
+		ImGuiMenuLayer::RegisterDebugWindow("MiniProfiler", [](bool& open) { MiniProfiler::DrawResultWithImGui(open); }, true);
 	}
 
 	void Application::OnShutDown() noexcept
 	{
+		ImGuiMenuLayer::UnRegisterDebugWindow("MiniProfiler");
 		ImGuiMenuLayer::UnRegisterDebugWindow("ApplicationSetting");
 		AssetManager::Destroy();
 		AudioManager::Destroy();
