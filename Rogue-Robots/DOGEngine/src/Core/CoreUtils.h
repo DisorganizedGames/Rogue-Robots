@@ -9,6 +9,8 @@ namespace DOG
 		Vector2u renderResolution{ 1920, 1080 };
 		std::optional<DXGI_MODE_DESC> displayMode = std::nullopt;
 		bool vSync = false;
+		bool bloom = true;
+		float bloomThreshold = 0.2f;
 	};
 
 

@@ -94,7 +94,7 @@ namespace DOG::gfx
 				passData.dstTextureHandle = builder.ReadWriteTarget(RG_RESOURCE(BloomTexture0), TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 
 				BloomConstantBuffer perDrawData{};
-				perDrawData.threshold = 0.2f;
+				perDrawData.threshold = m_threshold;
 
 				*reinterpret_cast<BloomConstantBuffer*>(passData.constantBufferHandle.memory) = perDrawData;
 			},
@@ -259,5 +259,9 @@ namespace DOG::gfx
 
 		//		rd->Cmd_Dispatch(cmdl, tgx, tgy, 1);
 		//	});
+	}
+	void Bloom::SetGraphicsSettings(const GraphicsSettings& settings)
+	{
+		m_threshold = settings.bloomThreshold;
 	}
 }

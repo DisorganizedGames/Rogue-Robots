@@ -108,6 +108,8 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 	outFile << ",\n\t" << "renderResolutionWidth = " << spec.graphicsSettings.renderResolution.x;
 	outFile << ",\n\t" << "renderResolutionHeight = " << spec.graphicsSettings.renderResolution.y;
 	outFile << ",\n\t" << "vsync = " << (spec.graphicsSettings.vSync ? "true" : "false");
+	outFile << ",\n\t" << "bloom = " << (spec.graphicsSettings.bloom ? "true" : "false");
+	outFile << ",\n\t" << "bloomTreshold = " << spec.graphicsSettings.bloomThreshold;
 
 	if (spec.graphicsSettings.displayMode)
 	{
@@ -151,6 +153,8 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 		err |= !tryGetSpec("renderResolutionHeight", appSpec.graphicsSettings.renderResolution.y);
 		err |= !tryGetSpec("vsync", appSpec.graphicsSettings.vSync);
 		err |= !tryGetSpec("fullscreen", (int&)appSpec.graphicsSettings.windowMode);
+		err |= !tryGetSpec("bloom", appSpec.graphicsSettings.bloom);
+		err |= !tryGetSpec("bloomTreshold", appSpec.graphicsSettings.bloomThreshold);
 
 		bool modeErr = false;
 		appSpec.graphicsSettings.displayMode = DXGI_MODE_DESC{};

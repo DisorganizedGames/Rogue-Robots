@@ -475,7 +475,7 @@ namespace DOG::gfx
 		// Uncomment to enable the test compute effect!
 		//m_testComputeEffect->Add(rg);
 
-		m_bloomEffect->Add(rg);
+		if(m_bloomEffect) m_bloomEffect->Add(rg);
 
 		// Blit HDR to LDR
 		{
@@ -542,12 +542,16 @@ namespace DOG::gfx
 		assert(requestedSettings.displayMode);
 
 		Flush();
-		if (m_renderWidth != requestedSettings.renderResolution.x || m_renderHeight != requestedSettings.renderResolution.y)
+		if (!requestedSettings.bloom)
+		{
+			m_bloomEffect = nullptr;
+		}
+		else if (!m_bloomEffect || m_renderWidth != requestedSettings.renderResolution.x || m_renderHeight != requestedSettings.renderResolution.y)
 		{
 			m_bloomEffect.reset();
 			m_bloomEffect = std::make_unique<Bloom>(m_globalEffectData, m_dynConstants.get(), requestedSettings.renderResolution.x, requestedSettings.renderResolution.y);
 		}
-
+		if (m_bloomEffect) m_bloomEffect->SetGraphicsSettings(requestedSettings);
 		m_renderWidth = requestedSettings.renderResolution.x;
 		m_renderHeight = requestedSettings.renderResolution.y;
 		m_globalEffectData.defRenderScissors = ScissorRects().Append(0, 0, m_renderWidth, m_renderHeight);

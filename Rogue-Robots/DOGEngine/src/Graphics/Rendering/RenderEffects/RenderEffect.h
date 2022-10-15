@@ -1,5 +1,6 @@
 #pragma once
 #include "EffectData/GlobalEffectData.h"
+#include "../../../Core/CoreUtils.h"
 
 namespace DOG::gfx
 {
@@ -21,6 +22,7 @@ namespace DOG::gfx
 		virtual ~RenderEffect() {}
 
 		virtual void Add(RenderGraph& rg) = 0;
+		virtual void SetGraphicsSettings(const GraphicsSettings& settings) {};
 
 	protected:
 		RenderEffect(GlobalEffectData& globalEffectData) :

@@ -519,6 +519,16 @@ namespace DOG
 					ImGui::EndCombo();
 				}
 
+				if (ImGui::Checkbox("Bloom", &m_specification.graphicsSettings.bloom))
+				{
+					m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
+				}
+
+				if (ImGui::SliderFloat("BloomThreshold", &m_specification.graphicsSettings.bloomThreshold, 0.1, 3))
+				{
+					m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
+				}
+
 				firstTime = false;
 
 				//--------------
