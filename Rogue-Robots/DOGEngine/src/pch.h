@@ -73,5 +73,6 @@
 
 
 #include "common/Utils.h"
+#include "common/MiniProfiler.h"
 
 #include "common/ErrorTypes.h"

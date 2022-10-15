@@ -4,8 +4,10 @@
 namespace DOG
 {
 	std::unordered_map<std::string, u64> MiniProfiler::s_times;
+	std::unordered_map<std::string, u64> MiniProfiler::s_accTime;
 	std::unordered_map<std::string, MiniProfiler::RollingAvg> MiniProfiler::s_avg;
 	bool MiniProfiler::s_isActive = true;
+	u64 MiniProfiler::s_frameCounter = 0;
 
 	MiniProfiler::MiniProfiler(const std::string& name) : m_name(name)
 	{
@@ -15,9 +17,20 @@ namespace DOG
 	MiniProfiler::~MiniProfiler()
 	{
 		u64 time = static_cast<u64>(duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - m_start).count());
-		s_times[m_name] = s_avg[m_name](time);
+		/*s_times[m_name] = s_avg[m_name](time);*/
+		s_accTime[m_name] += time;
 	}
 
+
+	void MiniProfiler::Update()
+	{
+		for (auto& [n, t] : s_accTime)
+		{
+			s_times[n] = s_avg[n](t);
+			s_frameCounter++;
+		}
+		s_accTime.clear();
+	}
 
 	void MiniProfiler::DrawResultWithImGui(bool& open)
 	{

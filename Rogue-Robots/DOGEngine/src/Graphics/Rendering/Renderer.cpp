@@ -363,6 +363,7 @@ namespace DOG::gfx
 	void Renderer::Render(f32)
 	{
 		ZoneNamedN(RenderScope, "Render", true);
+		MINIPROFILE
 
 
 		// Resolve any per frame copies from CPU

@@ -29,6 +29,7 @@ bool DX12Fence::gpu_wait(ID3D12CommandQueue* queue) const
 
 bool DX12Fence::cpu_wait() const
 {
+	MINIPROFILE
 	if (m_fence->GetCompletedValue() < m_wait_for_value)
 	{
 		// Raise an event when fence reaches the value

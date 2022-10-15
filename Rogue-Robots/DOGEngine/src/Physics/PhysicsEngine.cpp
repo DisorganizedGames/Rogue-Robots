@@ -99,6 +99,7 @@ namespace DOG
 
 	void PhysicsEngine::UpdatePhysics(float deltaTime)
 	{
+		MINIPROFILE
 		s_physicsEngine.CheckMeshColliders();
 
 		PhysicsRigidbody::UpdateRigidbodies();

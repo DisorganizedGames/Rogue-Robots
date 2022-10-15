@@ -242,6 +242,7 @@ namespace DOG
 	template<typename ComponentType>
 	ComponentType& EntityManager::GetComponent(const entity entityID) const noexcept
 	{
+		MINIPROFILE
 		auto constexpr componentID = sti::getTypeIndex<ComponentType>();
 		ASSERT(Exists(entityID), "Entity is invalid");
 		ASSERT(HasComponent<ComponentType>(entityID), "Entity does not have that component.");
