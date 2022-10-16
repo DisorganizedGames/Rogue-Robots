@@ -27,6 +27,40 @@ namespace DOG::gfx
 		m_dirty = true;
 
 
+		// Clean up views
+		for (const auto& pass : m_sortedPasses)
+		{
+			{
+				auto df = [rd = m_rd, views = std::move(pass->passResources.m_bufferViews)]() mutable
+				{
+					for (const auto& view : views)
+						rd->FreeView(view);
+				};
+				m_bin->PushDeferredDeletion(df);
+			}
+
+			{
+				auto df = [rd = m_rd, views = std::move(pass->passResources.m_textureViews)]() mutable
+				{
+					for (const auto& view : views)
+						rd->FreeView(view);
+				};
+				m_bin->PushDeferredDeletion(df);
+			}
+
+			if (pass->rp)
+			{
+				auto df = [rd = m_rd, rp = *pass->rp]()
+				{
+					rd->FreeRenderPass(rp);
+				};
+				m_bin->PushDeferredDeletion(df);
+			}
+
+			pass->passResources = {};
+			pass->rp = std::nullopt;
+		}
+
 
 		// Clear resources declared by this graph
 		m_resMan->ClearDeclaredResources();
