@@ -21,6 +21,7 @@ namespace DOG
 
 	LRESULT Window::WindowProcedure(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
 	{
+		MINIPROFILE
 		if (s_wmHook)
 		{
 			if ((*s_wmHook)(windowHandle, message, wParam, lParam))

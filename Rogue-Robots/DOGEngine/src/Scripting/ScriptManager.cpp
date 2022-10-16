@@ -367,6 +367,7 @@ namespace DOG
 
 	void ScriptManager::UpdateScripts()
 	{
+		MINIPROFILE
 		//Run the scripts which should happen first!
 		for (u32 index = 0; index < m_sortedScriptsHalfwayIndex; ++index)
 		{

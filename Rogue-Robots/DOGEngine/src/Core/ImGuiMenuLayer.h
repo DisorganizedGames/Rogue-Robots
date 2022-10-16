@@ -18,7 +18,7 @@ namespace DOG
 		virtual void OnImGuiRender() override final;
 		virtual void OnEvent(IEvent& event) override final;
 
-		static void RegisterDebugWindow(const std::string& name, std::function<void(bool&)> func);
+		static void RegisterDebugWindow(const std::string& name, std::function<void(bool&)> func, bool startOpen = false);
 		static void UnRegisterDebugWindow(const std::string& name);
 
 	private:

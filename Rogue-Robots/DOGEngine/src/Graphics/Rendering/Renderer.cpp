@@ -31,6 +31,7 @@
 
 #include "ImGUI/imgui.h"
 #include "../../Core/ImGuiMenuLayer.h"
+#include "../../common/MiniProfiler.h"
 
 namespace DOG::gfx
 {
@@ -363,6 +364,7 @@ namespace DOG::gfx
 	void Renderer::Render(f32)
 	{
 		ZoneNamedN(RenderScope, "Render", true);
+		MINIPROFILE
 
 
 		// Resolve any per frame copies from CPU

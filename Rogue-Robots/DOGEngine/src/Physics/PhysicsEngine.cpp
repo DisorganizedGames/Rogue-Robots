@@ -6,6 +6,7 @@
 #include "../Core/AssetManager.h"
 #include "../Scripting/LuaMain.h"
 #include "PhysicsRigidbody.h"
+#include "../common/MiniProfiler.h"
 
 using namespace DirectX::SimpleMath;
 
@@ -99,6 +100,7 @@ namespace DOG
 
 	void PhysicsEngine::UpdatePhysics(float deltaTime)
 	{
+		MINIPROFILE
 		s_physicsEngine.CheckMeshColliders();
 
 		PhysicsRigidbody::UpdateRigidbodies();

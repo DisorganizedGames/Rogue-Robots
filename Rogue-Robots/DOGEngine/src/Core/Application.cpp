@@ -20,6 +20,7 @@
 #include "../Audio/AudioManager.h"
 #include "ImGuiMenuLayer.h"
 
+#include "../common/MiniProfiler.h"
 
 namespace DOG
 {
@@ -54,6 +55,8 @@ namespace DOG
 		while (m_isRunning)
 		{
 			Time::Start();
+			MiniProfiler::Update();
+			MINIPROFILE
 			Window::OnUpdate();
 
 			// Early break if WM tells us to
@@ -117,6 +120,7 @@ namespace DOG
 			// We need to bucket in a better way..
 			EntityManager::Get().Collect<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
 				{
+					MINIPROFILE_NAMED("RenderSystem")
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 					if (model && model->gfxModel)
 					{
@@ -287,10 +291,12 @@ namespace DOG
 		PhysicsEngine::Initialize();
 
 		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); });
+		ImGuiMenuLayer::RegisterDebugWindow("MiniProfiler", [](bool& open) { MiniProfiler::DrawResultWithImGui(open); }, true);
 	}
 
 	void Application::OnShutDown() noexcept
 	{
+		ImGuiMenuLayer::UnRegisterDebugWindow("MiniProfiler");
 		ImGuiMenuLayer::UnRegisterDebugWindow("ApplicationSetting");
 		AssetManager::Destroy();
 		AudioManager::Destroy();

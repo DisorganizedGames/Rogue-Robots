@@ -210,6 +210,7 @@ void GameLayer::OnDetach()
 
 void GameLayer::OnUpdate()
 {
+	MINIPROFILE
 	for (auto& system : m_entityManager)
 	{
 		system->EarlyUpdate();
