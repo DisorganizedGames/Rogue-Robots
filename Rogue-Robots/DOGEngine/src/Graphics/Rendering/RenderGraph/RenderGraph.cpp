@@ -149,7 +149,7 @@ namespace DOG::gfx
 			pass->rp = std::nullopt;
 		}
 
-		// Track new transitions (for each transition --> Just keep track of ResourceID and update the underlying resource using GetResourceState()
+		// @todo: Track new transitions (for each transition --> Just keep track of ResourceID and update the underlying resource using GetResourceState()
 		for (auto& dep : m_dependencyLevels)
 			dep.ClearBarriers();
 		TrackTransitions();
