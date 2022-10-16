@@ -17,7 +17,6 @@ namespace DOG
 	MiniProfiler::~MiniProfiler()
 	{
 		u64 time = static_cast<u64>(duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - m_start).count());
-		/*s_times[m_name] = s_avg[m_name](time);*/
 		s_accTime[m_name] += time;
 	}
 
@@ -35,17 +34,19 @@ namespace DOG
 	void MiniProfiler::DrawResultWithImGui(bool& open)
 	{
 		static bool allowMove = false;
+		static int textOpacity = 180;
 		if (ImGui::BeginMenu("MiniProfiler"))
 		{
 			ImGui::MenuItem("Active", nullptr, &open);
 			ImGui::MenuItem("Unlock", nullptr, &allowMove);
+			ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.8f);
+			ImGui::SliderInt("##1", &textOpacity, 70, 255, "Opacity");
 			ImGui::EndMenu(); // "MiniProfiler"
 		}
 
 
 		if (open)
 		{
-			//allowMove = true;
 			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 			if (ImGui::Begin("MiniProfiler", &open, (allowMove ? ImGuiWindowFlags_None : ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground)))
 			{
@@ -61,22 +62,15 @@ namespace DOG
 					for (auto& [n, t] : results)
 					{
 						double milisec = 1E-6 * t;
-						int styleStackToPop = 0;
 						if (milisec > 16)
-						{
-							styleStackToPop++;
-							ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
-						}
+							ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, textOpacity));
 						else if (milisec > 4)
-						{
-							styleStackToPop++;
-							ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 0, 255));
-						}
+							ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 0, textOpacity));
 						else if (milisec < 1)
-						{
-							styleStackToPop++;
-							ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
-						}
+							ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, textOpacity));
+						else
+							ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, textOpacity));
+
 						ImGui::TableNextRow();
 						ImGui::TableSetColumnIndex(0);
 						ImGui::Text("%s", n.c_str());
@@ -84,7 +78,7 @@ namespace DOG
 						ImGui::TableSetColumnIndex(1);
 						ImGui::Text("%-6.2fms", milisec);
 
-						ImGui::PopStyleColor(styleStackToPop);
+						ImGui::PopStyleColor();
 					}
 					ImGui::EndTable();
 				}
@@ -92,7 +86,7 @@ namespace DOG
 				MiniProfiler::s_times.clear();
 			}
 			ImGui::End(); // "MiniProfiler"
-			ImGui::PopStyleColor(1);
+			ImGui::PopStyleColor();
 		}
 	}
 
