@@ -45,6 +45,7 @@ namespace DOG::gfx
 			// Stores all views associated with this PassResources, held for cleanup
 			std::vector<TextureView> m_textureViews;
 			std::vector<BufferView> m_bufferViews;
+
 		};
 
 	private:
@@ -99,6 +100,7 @@ namespace DOG::gfx
 	
 			void AddPass(Pass* pass) { m_passes.push_back(pass); }
 			void AddEntryBarrier(GPUBarrier barrier) { m_entryBarriers.push_back(barrier); }
+			void ClearBarriers() { m_entryBarriers.clear(); }
 
 			const std::vector<Pass*>& GetPasses() const { return m_passes; }
 
@@ -185,6 +187,11 @@ namespace DOG::gfx
 			std::optional<std::function<void(PassData&)>> postGraphExecuteFunc = {})							// Free any transient resources used)	
 		{
 			static_assert(std::is_trivially_copyable<PassData>::value && "PassData must be trivially copyable");
+			// Allow adding passes only if Graph has been marked as dirty
+			// Graph has to be set to dirty before changing
+			//assert(m_dirty);
+			if (!m_dirty)
+				return;
 
 			Pass newPass(name, m_nextPassID++);
 			PassBuilder builder(m_passBuilderGlobalData, m_resMan, newPass);
@@ -217,10 +224,13 @@ namespace DOG::gfx
 			m_passes.push_back(std::move(pass));
 		}
 
+		void Clear();
+		void TryBuild();
 		void Build();
 		void Execute();
 
 	private:
+
 		void AddProxies();
 		void BuildAdjacencyMap();
 		void SortPassesTopologically();
@@ -252,5 +262,7 @@ namespace DOG::gfx
 		std::unique_ptr<BumpAllocator> m_passDataAllocator;
 
 		CommandList m_cmdl;
+
+		bool m_dirty{ false };
 	};
 }
