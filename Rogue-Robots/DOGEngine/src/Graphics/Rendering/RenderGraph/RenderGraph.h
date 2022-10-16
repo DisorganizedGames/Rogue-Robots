@@ -178,7 +178,6 @@ namespace DOG::gfx
 
 	public:
 		RenderGraph(RenderDevice* rd, RGResourceManager* resMan, GPUGarbageBin* bin);
-		~RenderGraph() { Clear(); }
 
 		template <typename PassData>
 		void AddPass(const std::string& name,

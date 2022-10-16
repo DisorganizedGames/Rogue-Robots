@@ -75,7 +75,8 @@ namespace DOG::gfx
 			if (view.has_value())
 			{
 				m_descriptorMgr->free(&(*view).view);
-				m_descriptorMgr->free_cbv_srv_uav_cpu(&(*view->uavClear));
+				if (view->uavClear)
+					m_descriptorMgr->free_cbv_srv_uav_cpu(&(*view->uavClear));
 			}
 		}
 
