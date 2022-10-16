@@ -15,6 +15,7 @@ namespace DOG::gfx
 
 	RGResourceManager::~RGResourceManager()
 	{
+
 	}
 
 	const GPUPoolMemoryInfo& RGResourceManager::GetMemoryInfo() const
@@ -84,6 +85,22 @@ namespace DOG::gfx
 		res.variants = imported;
 	}
 
+	void RGResourceManager::ChangeImportedTexture(RGResourceID id, Texture texture)
+	{
+		assert(m_resources.contains(id));
+		auto& res = m_resources[id];
+		assert(res.resourceType == RGResourceType::Texture);
+		res.resource = texture.handle;
+	}
+
+	void RGResourceManager::ChangeImportedBuffer(RGResourceID id, Buffer buffer)
+	{
+		assert(m_resources.contains(id));
+		auto& res = m_resources[id];
+		assert(res.resourceType == RGResourceType::Buffer);
+		res.resource = buffer.handle;
+	}
+
 	void RGResourceManager::AliasResource(RGResourceID newID, RGResourceID oldID, RGResourceType type)
 	{
 		assert(!m_resources.contains(newID));
@@ -121,10 +138,13 @@ namespace DOG::gfx
 
 
 
-	void RGResourceManager::Tick()
+	void RGResourceManager::ClearDeclaredResources()
 	{
-		for (const auto& [_, resource] : m_resources)
+		for (const auto& [name, resource] : m_resources)
 		{
+			if (resource.variantType == RGResourceVariant::Imported)
+				m_importedTransfer.push_back({ name, resource });
+
 			// We only release graph created resources (declared)
 			if (resource.variantType != RGResourceVariant::Declared)
 				continue;
@@ -149,6 +169,18 @@ namespace DOG::gfx
 		}
 
 		m_resources.clear();
+
+		// Place back the imported resources
+		for (auto& [name, resource] : m_importedTransfer)
+		{
+			// Reset
+			resource.hasBeenAliased = false;
+			resource.usageLifetime = { std::numeric_limits<u32>::max(), std::numeric_limits<u32>::min() };
+
+			// Move
+			m_resources[std::move(name)] = std::move(resource);
+		}
+		m_importedTransfer.clear();
 	}
 
 	void RGResourceManager::RealizeResources()
@@ -219,7 +251,6 @@ namespace DOG::gfx
 	void RGResourceManager::ImportedResourceExitTransition(CommandList cmdl)
 	{
 		std::vector<GPUBarrier> barriers;
-		// Assign underlying resource to aliased resources
 		for (auto& [_, resource] : m_resources)
 		{
 			if (resource.variantType != RGResourceVariant::Imported)
@@ -229,10 +260,56 @@ namespace DOG::gfx
 			if (imported.currState == imported.importExitState)
 				continue;
 
+			/*
+				We transition Imported textures to the desired Exit State for external usage, but for the graph,
+				we reset its internal resource state to the declared Entry State declared by the user upon resource entry to the graph.
+			*/
 			if (resource.resourceType == RGResourceType::Texture)
+			{
 				barriers.push_back(GPUBarrier::Transition(Texture(resource.resource), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, imported.currState, imported.importExitState));
+				imported.currState = imported.importEntryState;
+			}
 			else
+			{
 				barriers.push_back(GPUBarrier::Transition(Buffer(resource.resource), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, imported.currState, imported.importExitState));
+				imported.currState = imported.importEntryState;
+			}
+		}
+
+		if (!barriers.empty())
+			m_rd->Cmd_Barrier(cmdl, barriers);
+	}
+
+	void RGResourceManager::DeclaredResourceTransitionToInit(CommandList cmdl)
+	{
+		std::vector<GPUBarrier> barriers;
+		for (auto& [_, resource] : m_resources)
+		{
+			if (resource.variantType != RGResourceVariant::Declared)
+				continue;
+
+			RGResourceDeclared& declared = std::get<RGResourceDeclared>(resource.variants);
+
+
+			if (resource.resourceType == RGResourceType::Texture)
+			{
+				RGTextureDesc& d = std::get<RGTextureDesc>(declared.desc);
+				if (declared.currState == d.initState)
+					continue;
+				barriers.push_back(GPUBarrier::Transition(Texture(resource.resource), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, declared.currState, d.initState));
+				declared.currState = d.initState;
+
+			}
+			else
+			{
+				RGBufferDesc& d = std::get<RGBufferDesc>(declared.desc);
+				if (declared.currState == d.initState)
+					continue;
+				barriers.push_back(GPUBarrier::Transition(Buffer(resource.resource), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, declared.currState, d.initState));
+				declared.currState = d.initState;
+
+			}
+			
 		}
 
 		if (!barriers.empty())
@@ -270,9 +347,23 @@ namespace DOG::gfx
 
 
 
-	u64 RGResourceManager::GetResource(RGResourceID id) const
+	u64 RGResourceManager::GetResource(RGResourceID id)
 	{
-		return m_resources.find(id)->second.resource;
+		// Aliasing always goes to the original resource
+		auto& res = m_resources.find(id)->second;
+		if (res.variantType == RGResourceVariant::Aliased)
+		{
+			RGResourceAliased& aliased = std::get<RGResourceAliased>(res.variants);
+			auto& originalRes = m_resources.find(aliased.originalID)->second;
+
+			res.resource = originalRes.resource;		// Update resource
+			return res.resource;
+		}
+		else
+		{
+			return m_resources.find(id)->second.resource;
+		}
+
 	}
 
 	RGResourceType RGResourceManager::GetResourceType(RGResourceID id) const

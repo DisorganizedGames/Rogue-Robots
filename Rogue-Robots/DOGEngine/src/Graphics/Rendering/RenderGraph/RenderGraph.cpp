@@ -22,6 +22,31 @@ namespace DOG::gfx
 		m_passDataAllocator = std::make_unique<BumpAllocator>(131'072);	// 128 Kb
 	}
 
+	void RenderGraph::Clear()
+	{
+		m_dirty = true;
+
+
+
+		// Clear resources declared by this graph
+		m_resMan->ClearDeclaredResources();
+
+		// Clear cached local graph data
+		m_passBuilderGlobalData = {};
+		m_nextPassID = 0;
+		m_passes.clear();
+		m_adjacencyMap.clear();
+		m_sortedPasses.clear();
+		m_maxDepth = 0;
+		m_dependencyLevels.clear();
+	}
+
+	void RenderGraph::TryBuild()
+	{
+		if (m_dirty)
+			Build();
+	}
+
 	void RenderGraph::Build()
 	{
 		{
@@ -75,18 +100,67 @@ namespace DOG::gfx
 
 		{
 			ZoneNamedN(RGRealizeViews, "RG Building: Realize Views", true);
-			RealizeViews();
+			//RealizeViews();
 		}
 
 		{
 			ZoneNamedN(RGTrackTransitions, "RG Building: Track Transitions", true);
-			TrackTransitions();
+			//TrackTransitions();
 		}
 
+		m_dirty = false;
 	}
 
 	void RenderGraph::Execute()
 	{
+		assert(!m_dirty);
+
+		// Clean up views
+		for (const auto& pass : m_sortedPasses)
+		{
+			{
+				auto df = [rd = m_rd, views = std::move(pass->passResources.m_bufferViews)]() mutable
+				{
+					for (const auto& view : views)
+						rd->FreeView(view);
+				};
+				m_bin->PushDeferredDeletion(df);
+			}
+
+			{
+				auto df = [rd = m_rd, views = std::move(pass->passResources.m_textureViews)]() mutable
+				{
+					for (const auto& view : views)
+						rd->FreeView(view);
+				};
+				m_bin->PushDeferredDeletion(df);
+			}
+
+			if (pass->rp)
+			{
+				auto df = [rd = m_rd, rp = *pass->rp]()
+				{
+					rd->FreeRenderPass(rp);
+				};
+				m_bin->PushDeferredDeletion(df);
+			}
+
+			pass->passResources = {};
+			pass->rp = std::nullopt;
+		}
+
+		// Track new transitions (for each transition --> Just keep track of ResourceID and update the underlying resource using GetResourceState()
+		for (auto& dep : m_dependencyLevels)
+			dep.ClearBarriers();
+		TrackTransitions();
+
+		// Recreate views for this new graph
+		RealizeViews();
+
+
+
+
+
 		m_cmdl = m_rd->AllocateCommandList();
 
 		for (auto& pass : m_sortedPasses)
@@ -99,6 +173,8 @@ namespace DOG::gfx
 			depLevel.Execute(m_rd, m_cmdl);
 
 		m_resMan->ImportedResourceExitTransition(m_cmdl);
+		m_resMan->DeclaredResourceTransitionToInit(m_cmdl);
+
 		m_rd->SubmitCommandList(m_cmdl);
 
 
@@ -146,36 +222,36 @@ namespace DOG::gfx
 		//	}
 		//}
 
-		// Clean up views
-		for (const auto& pass : m_sortedPasses)
-		{
-			{
-				auto df = [rd = m_rd, views = std::move(pass->passResources.m_bufferViews)]() mutable
-				{
-					for (const auto& view : views)
-						rd->FreeView(view);
-				};
-				m_bin->PushDeferredDeletion(df);
-			}
+		//// Clean up views
+		//for (const auto& pass : m_sortedPasses)
+		//{
+		//	{
+		//		auto df = [rd = m_rd, views = std::move(pass->passResources.m_bufferViews)]() mutable
+		//		{
+		//			for (const auto& view : views)
+		//				rd->FreeView(view);
+		//		};
+		//		m_bin->PushDeferredDeletion(df);
+		//	}
 
-			{
-				auto df = [rd = m_rd, views = std::move(pass->passResources.m_textureViews)]() mutable
-				{
-					for (const auto& view : views)
-						rd->FreeView(view);
-				};
-				m_bin->PushDeferredDeletion(df);
-			}
+		//	{
+		//		auto df = [rd = m_rd, views = std::move(pass->passResources.m_textureViews)]() mutable
+		//		{
+		//			for (const auto& view : views)
+		//				rd->FreeView(view);
+		//		};
+		//		m_bin->PushDeferredDeletion(df);
+		//	}
 
-			if (pass->rp)
-			{
-				auto df = [rd = m_rd, rp = *pass->rp]()
-				{
-					rd->FreeRenderPass(rp);
-				};
-				m_bin->PushDeferredDeletion(df);
-			}
-		}
+		//	if (pass->rp)
+		//	{
+		//		auto df = [rd = m_rd, rp = *pass->rp]()
+		//		{
+		//			rd->FreeRenderPass(rp);
+		//		};
+		//		m_bin->PushDeferredDeletion(df);
+		//	}
+		//}
 
 		m_passDataAllocator->Clear();
 

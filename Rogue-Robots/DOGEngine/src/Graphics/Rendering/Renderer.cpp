@@ -337,11 +337,12 @@ namespace DOG::gfx
 
 		}
 
-
-
-
-
 		ImGuiMenuLayer::RegisterDebugWindow("Renderer Debug", [this](bool& open) { SpawnRenderDebugWindow(open); }, false, std::make_pair(DOG::Key::LCtrl, DOG::Key::N));
+
+		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
+
+		// Import long-lived resources
+		m_rgResMan->ImportTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
 	}
 
 	Renderer::~Renderer()
@@ -489,10 +490,93 @@ namespace DOG::gfx
 
 	}
 
+	static bool s_donez = false;
 	void Renderer::Render(f32)
 	{
 		ZoneNamedN(RenderScope, "Render", true);
 		MINIPROFILE
+
+		/*
+			rMan->ImportTexture(RG_RESOURCE(Name), texture);
+
+			// New features
+			rMan->OverrideImportedTexture(RG_RESOURCE(Name), texture2);
+			rMan->RemoveImported(RG_RESOURCE(Name);		--> Push deferred deletion
+
+			OnGraphicsChange()
+			{
+				graph->MarkDirty()
+
+				... graph->AddPass(..) ...
+			}
+
+
+			graph->TryBuild()
+			{
+				if (!built)
+					::Build();
+			}
+
+			graph::Build()
+			{
+				rMan->ClearDeclaredResources()	--> Push all declared resources in rman to deferred garbage bin
+
+				... resolve graph ...
+				... realize resources and views ...
+
+				built = true;
+			}
+
+			graph::Execute()
+			{
+				... execute ...
+				... transition imported to exit state ...
+
+
+				... transition declared ...
+
+				... transition declared back to init state ... 
+			}
+
+			graph::AddPass("pass",
+			[](PassData& passData)			---> Fills PassData
+			{
+				... declare resource usage ...
+			},
+			[&drawCount, &..., &EffectSpecifics](const PassData& passData, StackAllocator& ator) -> Q*
+			{
+				... pre graph-exec ...
+
+				Q data{};
+				Q* memory = (Q*)ator.Allocate(sizeof(data))
+				
+				... fill data ...
+				data.dynAllocator = m_dynAllocator;		// grab an allocator to a chunk 
+
+
+				std::memcpy(memory, &data, sizeof(data));
+
+				return memory;
+			},
+			[](..., Q* data)
+			{
+				... execution ...
+
+				... access Q (data parallel, so thread-safe) ...
+			},
+			[&EffectSpecificAllocators // Structures that need cleanup](Q* data)
+			{
+				... post graph-exec
+
+				... cleanup data ...
+
+				effect.ator->Free(data.somethingAllocated)
+			});
+
+
+		
+		
+		*/
 
 
 			// Resolve any per frame copies from CPU
@@ -555,10 +639,17 @@ namespace DOG::gfx
 		*/
 
 		
-		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
+		//m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
 		auto& rg = *m_rg;
 
-		// Depth prepass
+		if (!s_donez)
+		{
+			rg.Clear();
+			s_donez = true;
+		}
+
+		// Change backbuffer resource for this frame
+		m_rgResMan->ChangeImportedTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface());
 
 
 		// Forward pass to HDR
@@ -999,7 +1090,6 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("Blit to HDR Pass",
 				[&](PassData& passData, RenderGraph::PassBuilder& builder)
 				{
-					builder.ImportTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 					passData.ao = builder.ReadResource(RG_RESOURCE(AOBlurred), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
@@ -1049,7 +1139,8 @@ namespace DOG::gfx
 
 		{
 			ZoneNamedN(RGBuildScope, "RG Building", true);
-			rg.Build();
+			//rg.Build();
+			rg.TryBuild();
 		}
 
 		{
@@ -1111,7 +1202,7 @@ namespace DOG::gfx
 
 		m_dynConstants->Tick();
 		m_dynConstantsAnimated->Tick();
-		m_rgResMan->Tick();
+		//m_rgResMan->ClearDeclaredResources();
 		m_bin->BeginFrame();
 		m_rd->RecycleCommandList(m_cmdl);
 		m_cmdl = m_rd->AllocateCommandList();
