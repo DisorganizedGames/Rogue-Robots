@@ -1265,8 +1265,14 @@ namespace DOG::gfx
 				ImGui::Text("Memory allocated: %f (Mb)", info.blockBytes / 1048576.f);
 				ImGui::Text("Smallest allocation: %f (Mb)", info.smallestAllocation / 1048576.f);
 				ImGui::Text("Largest allocation: %f (Mb)", info.largestAllocation / 1048576.f);
+
+
+				if (ImGui::Button("Render Graph Rebuild"))
+					s_donez = false;
 			}
 			ImGui::End();
+
+
 		}
 	}
 
