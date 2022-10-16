@@ -31,6 +31,7 @@
 
 #include "ImGUI/imgui.h"
 #include "../../Core/ImGuiMenuLayer.h"
+#include "../../common/MiniProfiler.h"
 
 namespace DOG::gfx
 {
