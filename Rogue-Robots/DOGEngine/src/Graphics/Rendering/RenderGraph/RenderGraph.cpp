@@ -115,47 +115,51 @@ namespace DOG::gfx
 	{
 		assert(!m_dirty);
 
-		// Clean up views
-		for (const auto& pass : m_sortedPasses)
 		{
+			ZoneNamedN(RGAddProxies, "RG Exec: Setup Metadata", true);
+
+			// Clean up views
+			for (const auto& pass : m_sortedPasses)
 			{
-				auto df = [rd = m_rd, views = std::move(pass->passResources.m_bufferViews)]() mutable
 				{
-					for (const auto& view : views)
-						rd->FreeView(view);
-				};
-				m_bin->PushDeferredDeletion(df);
+					auto df = [rd = m_rd, views = std::move(pass->passResources.m_bufferViews)]() mutable
+					{
+						for (const auto& view : views)
+							rd->FreeView(view);
+					};
+					m_bin->PushDeferredDeletion(df);
+				}
+
+				{
+					auto df = [rd = m_rd, views = std::move(pass->passResources.m_textureViews)]() mutable
+					{
+						for (const auto& view : views)
+							rd->FreeView(view);
+					};
+					m_bin->PushDeferredDeletion(df);
+				}
+
+				if (pass->rp)
+				{
+					auto df = [rd = m_rd, rp = *pass->rp]()
+					{
+						rd->FreeRenderPass(rp);
+					};
+					m_bin->PushDeferredDeletion(df);
+				}
+
+				pass->passResources = {};
+				pass->rp = std::nullopt;
 			}
 
-			{
-				auto df = [rd = m_rd, views = std::move(pass->passResources.m_textureViews)]() mutable
-				{
-					for (const auto& view : views)
-						rd->FreeView(view);
-				};
-				m_bin->PushDeferredDeletion(df);
-			}
+			// @todo: Track new transitions (for each transition --> Just keep track of ResourceID and update the underlying resource using GetResourceState()
+			for (auto& dep : m_dependencyLevels)
+				dep.ClearBarriers();
+			TrackTransitions();
 
-			if (pass->rp)
-			{
-				auto df = [rd = m_rd, rp = *pass->rp]()
-				{
-					rd->FreeRenderPass(rp);
-				};
-				m_bin->PushDeferredDeletion(df);
-			}
-
-			pass->passResources = {};
-			pass->rp = std::nullopt;
+			// Recreate views for this new graph
+			RealizeViews();
 		}
-
-		// @todo: Track new transitions (for each transition --> Just keep track of ResourceID and update the underlying resource using GetResourceState()
-		for (auto& dep : m_dependencyLevels)
-			dep.ClearBarriers();
-		TrackTransitions();
-
-		// Recreate views for this new graph
-		RealizeViews();
 
 
 
