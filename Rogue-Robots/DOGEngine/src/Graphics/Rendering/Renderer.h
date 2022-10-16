@@ -176,9 +176,9 @@ namespace DOG::gfx
 		// Reusing a single command list for now
 		CommandList m_cmdl;
 
-		std::unique_ptr<RenderGraph> m_rg;
 		std::unique_ptr<RGResourceManager> m_rgResMan;
 		std::unique_ptr<RGBlackboard> m_rgBlackboard;
+		std::unique_ptr<RenderGraph> m_rg;
 
 
 
