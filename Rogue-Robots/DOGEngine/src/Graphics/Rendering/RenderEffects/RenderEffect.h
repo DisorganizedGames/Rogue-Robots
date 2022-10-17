@@ -22,7 +22,7 @@ namespace DOG::gfx
 		virtual ~RenderEffect() {}
 
 		virtual void Add(RenderGraph& rg) = 0;
-		virtual void SetGraphicsSettings(const GraphicsSettings& settings) {};
+		virtual void SetGraphicsSettings([[maybe_unused]] const GraphicsSettings& settings) {};
 
 	protected:
 		RenderEffect(GlobalEffectData& globalEffectData) :

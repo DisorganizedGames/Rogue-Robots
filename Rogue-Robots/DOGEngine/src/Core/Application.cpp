@@ -524,7 +524,7 @@ namespace DOG
 					m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
 				}
 
-				if (ImGui::SliderFloat("BloomThreshold", &m_specification.graphicsSettings.bloomThreshold, 0.1, 3))
+				if (ImGui::SliderFloat("BloomThreshold", &m_specification.graphicsSettings.bloomThreshold, 0.1f, 3))
 				{
 					m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
 				}
