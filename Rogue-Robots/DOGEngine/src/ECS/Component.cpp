@@ -171,7 +171,13 @@ namespace DOG
 	{
 		UpdateClip(dt);
 		// Linear transition between current weight to target weight of clip
-		if (normalizedTime > transitionStart && targetWeight != 0.0f)
+
+		if (transitionTime <= 0.f) // apply desired weight
+		{
+			currentWeight = targetWeight;
+			blendMode = AnimationBlendMode::normal;
+		}
+		else if (normalizedTime > transitionStart)
 		{
 			const f32 wDiff = targetWeight - currentWeight;
 			const f32 tCurrent = normalizedTime - transitionStart;
