@@ -19,6 +19,7 @@ namespace DOG::gfx
 	public:
 		D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_int numBuffers);
 		~D2DBackend_DX12();
+		void OnResize();
 		RenderDevice* rd;
 		Swapchain* sc;
 
@@ -39,8 +40,7 @@ namespace DOG::gfx
 		std::vector<ComPtr<ID3D11Resource>> m_wrappedBackBuffers;
 		ComPtr<IDXGISurface> surface;
 		std::vector<ComPtr<ID2D1Bitmap1>> m_d2dRenderTargets;
-		ComPtr<ID2D1SolidColorBrush> brush;
-      ComPtr<IDWriteTextFormat> format, bformat;
+      
 	private:
       u_int m_numBuffers;
 	};

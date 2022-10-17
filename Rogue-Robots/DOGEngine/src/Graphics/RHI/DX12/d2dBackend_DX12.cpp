@@ -96,57 +96,61 @@ DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
             );
             HR_VFY(hr);
         }
-        {
-            ComPtr<IDWriteFactory> dwritef;
-            hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)dwritef.GetAddressOf());
-            HR_VFY(hr);
 
-            hr = m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &brush);
+            hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)this->m_dwritwf.GetAddressOf());
             HR_VFY(hr);
-            hr = dwritef->CreateTextFormat(
-                L"Robot Radicals",
-                NULL,
-                DWRITE_FONT_WEIGHT_NORMAL,
-                DWRITE_FONT_STYLE_NORMAL,
-                DWRITE_FONT_STRETCH_NORMAL,
-                40,
-                L"en-us",
-                &format
-            );
-            HR_VFY(hr);
-            hr = format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-            HR_VFY(hr);
-            hr = format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-            HR_VFY(hr);
-            hr = dwritef->CreateTextFormat(
-                L"Robot Radicals",
-                NULL,
-                DWRITE_FONT_WEIGHT_NORMAL,
-                DWRITE_FONT_STYLE_NORMAL,
-                DWRITE_FONT_STRETCH_NORMAL,
-                20,
-                L"en-us",
-                &bformat
-            );
-            HR_VFY(hr);
-            hr = bformat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-            HR_VFY(hr);
-            hr = bformat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-            HR_VFY(hr);
-        }
+    }
+}
+
+void DOG::gfx::D2DBackend_DX12::OnResize()
+{
+    auto rd12 = (RenderDevice_DX12*)rd;
+    auto sc12 = (Swapchain_DX12*)sc;
+    surface.Reset();
+    for (u8 n = 0; n < m_numBuffers; n++)
+    {
+        m_renderTargets[n].Reset();
+    }
+
+    D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1(
+        D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+        D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED));
+    for (u8 n = 0; n < m_numBuffers; n++)
+    {
+        D3D12_CPU_DESCRIPTOR_HANDLE rtv = rd12->GetReservedRTV(n);
+        m_renderTargets[n] = sc12->GetD12Buffer((u8)n);
+        
+        rd12->GetDevice()->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtv);
+        D3D11_RESOURCE_FLAGS d3d11Flags = { D3D11_BIND_RENDER_TARGET };
+        HRESULT hr = m_11on12d->CreateWrappedResource(
+            m_renderTargets[n].Get(),
+            &d3d11Flags,
+            D3D12_RESOURCE_STATE_RENDER_TARGET,
+            D3D12_RESOURCE_STATE_PRESENT,
+            IID_PPV_ARGS(&m_wrappedBackBuffers[n])
+        );
+        hr = m_wrappedBackBuffers[n].As(&surface);
+        HR_VFY(hr);
+        hr = m_2ddc->CreateBitmapFromDxgiSurface(
+            surface.Get(),
+            bitmapProperties,
+            m_d2dRenderTargets[n].GetAddressOf()
+        );
+        HR_VFY(hr);
+        
     }
 }
 
 DOG::gfx::D2DBackend_DX12::~D2DBackend_DX12()
 {
-    
+
 }
 
 void DOG::gfx::D2DBackend_DX12::BeginFrame()
 {
     u_char idx = sc->GetNextDrawSurfaceIdx();
-    D2D1_SIZE_F rtSize = m_d2dRenderTargets[idx]->GetSize();
-    
+    D2D1_SIZE_U rtSize = m_d2dRenderTargets[idx]->GetPixelSize();
+
 
     m_11on12d->AcquireWrappedResources(m_wrappedBackBuffers[idx].GetAddressOf(), 1);
 
@@ -156,7 +160,7 @@ void DOG::gfx::D2DBackend_DX12::BeginFrame()
 
 void DOG::gfx::D2DBackend_DX12::Render()
 {
-    
+
 }
 
 void DOG::gfx::D2DBackend_DX12::EndFrame()

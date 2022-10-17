@@ -21,6 +21,7 @@ class UI
    UINT GenerateUID();
    UINT AddScene();
    void RemoveScene(UINT sceneID);
+   void Resize(UINT clientWidth, UINT clientHeight);
    std::unique_ptr<DOG::gfx::D2DBackend_DX12> m_d2d; //The thing that renders everything
 
    private:
@@ -63,7 +64,7 @@ class UIButton : public UIElement
 {
    public:
    bool pressed;
-   UIButton(float x, float y, float width, float height, std::wstring text, std::function<void(void)> callback, UINT id);
+   UIButton(DOG::gfx::D2DBackend_DX12& d2d, float x, float y, float width, float height,float fontSize, std::wstring text, std::function<void(void)> callback, UINT id);
    void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
    void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
    ~UIButton();
@@ -73,6 +74,8 @@ class UIButton : public UIElement
    D2D_VECTOR_2F m_size;
    std::wstring m_text;
    std::function<void(void)> m_callback;
+   ComPtr<IDWriteTextFormat> m_format;
+   ComPtr<ID2D1SolidColorBrush> m_brush;
 };
 
 
@@ -87,6 +90,7 @@ class UISplashScreen : public UIElement
    D2D1_RECT_F m_background;
    clock_t m_timer;
    ComPtr<ID2D1SolidColorBrush> m_splashBrush, m_textBrush;
+   ComPtr<IDWriteTextFormat> m_format;
    std::wstring m_text;
    float m_textOp, m_backOp;
 };
@@ -113,7 +117,7 @@ class UIHealthBar : public UIElement
 class UIBackground : public UIElement
 {
    public:
-   UIBackground(float width, float heigt, DOG::gfx::D2DBackend_DX12& d2d, UINT id);
+   UIBackground(float width, float heigt,std::wstring title, DOG::gfx::D2DBackend_DX12& d2d, UINT id);
    ~UIBackground();
    void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
    void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
@@ -122,4 +126,18 @@ class UIBackground : public UIElement
    std::wstring m_title;
    ComPtr<IDWriteTextFormat> m_textFormat;
    ComPtr<ID2D1SolidColorBrush> m_textBrush, m_backBrush;
+};
+
+class UICrosshair : public UIElement
+{
+   public:
+   UICrosshair(DOG::gfx::D2DBackend_DX12& d2d, UINT id);
+   ~UICrosshair();
+   void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
+   //void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
+   private:
+   ComPtr<IDWriteTextFormat> m_textFormat;
+   ComPtr<ID2D1SolidColorBrush> m_brush;
+   D2D_RECT_F m_screenSize;
+
 };
