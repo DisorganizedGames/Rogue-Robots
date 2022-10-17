@@ -381,14 +381,21 @@ void GameLayer::LoadLevel()
 							yFlip = -1.0f;
 						}
 
+						//Most models follow this formula except one!!! 
+						Vector3 localMeshColliderScale = Vector3(-xFlip, yFlip, 1.0f);
+						//Hard coded! I can't figure out the solution, if someone else wants to find one they can!
+						//I'm not a big fan of -scaling!!!
+						if (blockRot == 3 && xFlip == 1 && yFlip == 1)
+						{
+							localMeshColliderScale = Vector3(1.0f, -1.0f, 1.0f);
+						}
+
 						entity blockEntity = m_entityManager.CreateEntity();
 						m_entityManager.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".fbx"));
 						m_entityManager.AddComponent<TransformComponent>(blockEntity,
 							Vector3(x * blockDim, y * blockDim, z * blockDim),
 							Vector3(piDiv2, piDiv2 * blockRot - piDiv2, 0.0f),
 							Vector3(xFlip, -1.0f * yFlip, 1.0f)); //yFlip is on Z because of left-hand/right-hand.
-
-						Vector3 localMeshColliderScale = Vector3(-xFlip, yFlip, 1.0f);
 
 						m_entityManager.AddComponent<ModularBlockComponent>(blockEntity);
 						m_entityManager.AddComponent<MeshColliderComponent>(blockEntity,
