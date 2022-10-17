@@ -26,8 +26,8 @@ namespace DOG::gfx
 		auto upSampleShader = globalEffectData.sclr->CompileFromFile("BloomUpSample.hlsl", ShaderType::Compute);
 		m_compPipeUpSample = device->CreateComputePipeline(ComputePipelineDesc(upSampleShader.get()));
 
-		auto debugShader = globalEffectData.sclr->CompileFromFile("BloomDebug.hlsl", ShaderType::Compute);
-		m_compPipDebug = device->CreateComputePipeline(ComputePipelineDesc(debugShader.get()));
+		/*auto debugShader = globalEffectData.sclr->CompileFromFile("BloomDebug.hlsl", ShaderType::Compute);
+		m_compPipDebug = device->CreateComputePipeline(ComputePipelineDesc(debugShader.get()));*/
 
 		TextureDesc topLevelBloomDesc;
 		topLevelBloomDesc.width = m_width;
@@ -61,7 +61,7 @@ namespace DOG::gfx
 			device->FreeTexture(texture);
 		}
 
-		device->FreePipeline(m_compPipDebug);
+		//device->FreePipeline(m_compPipDebug);
 		device->FreePipeline(m_compPipeBloomSelect);
 		device->FreePipeline(m_compPipeDownSample);
 		device->FreePipeline(m_compPipeUpSample);

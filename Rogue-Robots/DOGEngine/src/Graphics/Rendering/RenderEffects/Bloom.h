@@ -35,6 +35,6 @@ namespace DOG::gfx
 		Pipeline m_compPipeBloomSelect;
 		Pipeline m_compPipeDownSample;
 		Pipeline m_compPipeUpSample;
-		Pipeline m_compPipDebug;
+		//Pipeline m_compPipDebug;
 	};
 }

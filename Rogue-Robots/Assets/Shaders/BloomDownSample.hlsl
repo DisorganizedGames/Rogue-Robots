@@ -34,7 +34,7 @@ void main(uint3 globalId : SV_DispatchThreadID)
         float pixelWidth = 1.0f / g_constants.width;
         float pixelHeight = 1.0f / g_constants.height;
 
-        // Swap to have y in the outer loop might give better performance, but this pass should be replaced with a two stage blure pass if performance is a problem
+        // Swap to have y in the outer loop might give better performance, but this pass should be replaced with a two stage blur pass if performance is a problem
         float3 color = float3(0, 0, 0);
         for (int x = 0; x < 7; x++)
         {
