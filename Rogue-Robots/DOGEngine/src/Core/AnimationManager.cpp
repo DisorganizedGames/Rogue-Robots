@@ -48,10 +48,11 @@ namespace DOG
 			ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 			if (model)
 			{
+				static constexpr f32 scaleFactor = 0.01f;
 				if (m_imguiTestMovement)
 				{
 					UpdateMovementAnimation(animatorC, (f32)Time::DeltaTime());
-					auto trs = CalculateTranslation(m_rootBoneIdx, model->animation, animatorC) * 0.01f;
+					auto trs = ExtractRootTranslation(m_rootBoneIdx, model->animation, animatorC) * scaleFactor;
 					trs *= m_imguiMovementSpeed < 0.f ? -1.f : 1.f;
 					if(m_imguiRootTranslation)
 						tfC.SetPosition(XMVectorAdd(tfC.GetPosition(), trs));
@@ -59,7 +60,7 @@ namespace DOG
 				else
 				{
 					UpdateClips(animatorC, (f32)Time::DeltaTime());
-					auto trs = CalculateTranslation(m_rootBoneIdx, model->animation, animatorC) * 0.01f;
+					auto trs = ExtractRootTranslation(m_rootBoneIdx, model->animation, animatorC) * scaleFactor;
 					trs *= m_imguiMovementSpeed < 0.f ? -1.f : 1.f;
 					if (m_imguiRootTranslation)
 						tfC.SetPosition(XMVectorAdd(tfC.GetPosition(), trs));
@@ -92,6 +93,8 @@ namespace DOG
 			ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
 			if (ImGui::Begin("Animation Clip Setter", &open))
 			{
+				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+				ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 				static AnimationComponent* imguiAnimC;
 				static AnimationComponent::AnimationClip clip0;
 				static AnimationComponent::AnimationClip clip1;
@@ -142,60 +145,60 @@ namespace DOG
 				}
 
 				// Set Animation Clips
+				static auto setClipAnim = [&setName, animations = m_rigs[rig]->animations](i32& currentAnimIdx, u8 aIdx, AnimationComponent::AnimationClip& clip)
 				{
-					auto setClipAnim = [&setName, animations = m_rigs[rig]->animations, animation = animation](u8 aIdx, AnimationComponent::AnimationClip& clip)
+					ImGui::Text(("Animation Clip" + std::to_string(aIdx) + " Struct\n{").c_str());
+					if (ImGui::BeginCombo(setName("    animation  ").c_str(), animations[currentAnimIdx].name.c_str()))
 					{
-						auto& currentAnimIdx = animation[aIdx];
-						if (ImGui::BeginCombo(setName("    animation  ").c_str(), animations[currentAnimIdx].name.c_str()))
-						{
-							for (i32 i = 0; i < std::size(animations); i++)
-								if (ImGui::Selectable(animations[i].name.c_str(), (i == currentAnimIdx)))
+						for (i32 i = 0; i < std::size(animations); i++)
+							if (ImGui::Selectable(animations[i].name.c_str(), (i == currentAnimIdx)))
+							{
+								if (currentAnimIdx != i) // set new animation
 								{
-									if (currentAnimIdx != i) // set new animation
-									{
-										const auto& anim = animations[i];
-										clip.SetAnimation(i, anim.ticks, anim.duration);
-										currentAnimIdx = i;
-									}
+									const auto& anim = animations[i];
+									clip.SetAnimation(i, anim.ticks, anim.duration);
+									currentAnimIdx = i;
 								}
-							ImGui::EndCombo();
-						}
-					};
-					auto setClip = [&setName, &setClipAnim](u8 aIdx, AnimationComponent::AnimationClip& clip)
-					{
-						ImGui::Text(("Animation Clip" + std::to_string(aIdx) + " Struct\n{").c_str());
-						setClipAnim(aIdx, clip);
-						ImGui::SliderFloat(setName("	timeScale       ").c_str(), &clip.timeScale, m_imguiTimeScaleMin, m_imguiTimeScaleMax, "%.5f");
-						ImGui::SliderFloat(setName("	currentWeight   ").c_str(), &clip.currentWeight, 0.0f, 1.0f, "%.5f");
-						ImGui::SliderFloat(setName("	targetWeight    ").c_str(), &clip.targetWeight, 0.0f, 1.0f, "%.5f");
-						ImGui::SliderFloat(setName("	transitionStart ").c_str(), &clip.transitionStart, 0.0f, 1.0f, "%.5f");
-						ImGui::SliderFloat(setName("	transitionLength").c_str(), &clip.transitionTime, 0.0f, 1.0f, "%.5f");
-						ImGui::Combo(setName("    BlendMode    ").c_str(), &blendMode[aIdx], imguiBlendModes, IM_ARRAYSIZE(imguiBlendModes));
-						if (blendMode[aIdx] == 0) clip.blendMode = AnimationBlendMode::normal;
-						else clip.blendMode = blendMode[aIdx] == 1 ? AnimationBlendMode::linear : AnimationBlendMode::bezier;
-						ImGui::Checkbox(setName("    loop         ").c_str(), &clip.loop);
-						if (ImGui::Button(("Apply Animation Clip"+std::to_string(aIdx)).c_str()))
-							imguiAnimC->clips[aIdx] = clip0;
-						ImGui::Text("}\n");
-					};
-					ImGui::Columns(MAX_ANIMATIONS, nullptr, true);
-					// First Clip
-					setClip(0, clip0);
-					ImGui::SliderFloat(setName("n Time").c_str(), &imguiAnimC->clips[0].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
-					ImGui::SliderFloat(setName("weight").c_str(), &imguiAnimC->clips[0].currentWeight, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
+							}
+						ImGui::EndCombo();
+					}
+				};
+				static auto setClip = [&setName](u8 aIdx, AnimationComponent::AnimationClip& clip)
+				{
+					ImGui::SliderFloat(setName("	timeScale       ").c_str(), &clip.timeScale, m_imguiTimeScaleMin, m_imguiTimeScaleMax, "%.5f");
+					ImGui::SliderFloat(setName("	currentWeight   ").c_str(), &clip.currentWeight, 0.0f, 1.0f, "%.5f");
+					ImGui::SliderFloat(setName("	targetWeight    ").c_str(), &clip.targetWeight, 0.0f, 1.0f, "%.5f");
+					ImGui::SliderFloat(setName("	transitionStart ").c_str(), &clip.transitionStart, 0.0f, 1.0f, "%.5f");
+					ImGui::SliderFloat(setName("	transitionLength").c_str(), &clip.transitionTime, 0.0f, 1.0f, "%.5f");
+					ImGui::Combo(setName("    BlendMode    ").c_str(), &blendMode[aIdx], imguiBlendModes, IM_ARRAYSIZE(imguiBlendModes));
+					if (blendMode[aIdx] == 0) clip.blendMode = AnimationBlendMode::normal;
+					else clip.blendMode = blendMode[aIdx] == 1 ? AnimationBlendMode::linear : AnimationBlendMode::bezier;
+					ImGui::Checkbox(setName("    loop         ").c_str(), &clip.loop);
+					if (ImGui::Button(("Apply Animation Clip"+std::to_string(aIdx)).c_str()))
+						imguiAnimC->clips[aIdx] = clip0;
+					ImGui::Text("}\n");
+				};
+				ImGui::Columns(MAX_ANIMATIONS, nullptr, true);
+				// First Clip
+				setClipAnim(animation[0], 0, clip0);
+				setClip(0, clip0);
+				ImGui::SliderFloat(setName("n Time").c_str(), &imguiAnimC->clips[0].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
+				ImGui::SliderFloat(setName("weight").c_str(), &imguiAnimC->clips[0].currentWeight, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
 
-					ImGui::NextColumn();
-					// Second Clip
-					setClip(1, clip1);
-					ImGui::SliderFloat(setName("n Time").c_str(), &imguiAnimC->clips[1].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
-					ImGui::SliderFloat(setName("weight").c_str(), &imguiAnimC->clips[1].currentWeight, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
-					
-					ImGui::NextColumn();
-					// Second Clip
-					setClip(2, clip2);
-					ImGui::SliderFloat(setName("n Time").c_str(), &imguiAnimC->clips[2].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
-					ImGui::SliderFloat(setName("weight").c_str(), &imguiAnimC->clips[2].currentWeight, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
-				}
+				ImGui::NextColumn();
+				// Second Clip
+				setClipAnim(animation[1], 1, clip1);
+				setClip(1, clip1);
+				ImGui::SliderFloat(setName("n Time").c_str(), &imguiAnimC->clips[1].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
+				ImGui::SliderFloat(setName("weight").c_str(), &imguiAnimC->clips[1].currentWeight, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
+				
+				ImGui::NextColumn();
+				// Second Clip
+				setClipAnim(animation[2], 2, clip2);
+				setClip(2, clip2);
+				ImGui::SliderFloat(setName("n Time").c_str(), &imguiAnimC->clips[2].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
+				ImGui::SliderFloat(setName("weight").c_str(), &imguiAnimC->clips[2].currentWeight, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
+
 				ImGui::Columns();
 				if (ImGui::Button("Apply Clips")) // tmp
 				{
@@ -207,31 +210,29 @@ namespace DOG
 				ImGui::SameLine(); ImGui::Checkbox("matchNormTime", &m_imguiMatching);
 
 				// ImGui individual joint sliders
+				if (ImGui::BeginCombo("tfs", m_rigs[0]->nodes[m_imguiSelectedBone].name.c_str()))
 				{
-					if (ImGui::BeginCombo("tfs", m_rigs[0]->nodes[m_imguiSelectedBone].name.c_str()))
-					{
-						for (i32 i = 1; i < std::size(m_rigs[0]->nodes); i++)
-							if (ImGui::Selectable((m_rigs[0]->nodes[i].name + "  " + std::to_string(i)).c_str(), (i == m_imguiSelectedBone)))
-								m_imguiSelectedBone = i;
-						ImGui::EndCombo();
-					}
-					ImGui::Text("Mask");
-					ImGui::SliderInt(setName("'minMask'").c_str(), &m_imguiMinMaskIdx, 0, 100);
-					ImGui::SliderInt(setName("'maxMask'").c_str(), &m_imguiMaxMaskIdx, 0, 100);
-
-					ImGui::Text("Orientation");
-					ImGui::SliderAngle("Roll", &m_imguiRot[m_imguiSelectedBone].z, m_imguiJointRotMin, m_imguiJointRotMax);
-					ImGui::SliderAngle("Pitch", &m_imguiRot[m_imguiSelectedBone].x, m_imguiJointRotMin, m_imguiJointRotMax);
-					ImGui::SliderAngle("Yaw", &m_imguiRot[m_imguiSelectedBone].y, m_imguiJointRotMin, m_imguiJointRotMax);
-					ImGui::Text("Translation");
-					ImGui::SliderFloat("pos X", &m_imguiPos[m_imguiSelectedBone].x, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
-					ImGui::SliderFloat("pos Y", &m_imguiPos[m_imguiSelectedBone].y, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
-					ImGui::SliderFloat("pos Z", &m_imguiPos[m_imguiSelectedBone].z, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
-					ImGui::Text("Scale");
-					ImGui::SliderFloat("X", &m_imguiSca[m_imguiSelectedBone].x, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
-					ImGui::SliderFloat("Y", &m_imguiSca[m_imguiSelectedBone].y, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
-					ImGui::SliderFloat("Z", &m_imguiSca[m_imguiSelectedBone].z, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
+					for (i32 i = 1; i < std::size(m_rigs[0]->nodes); i++)
+						if (ImGui::Selectable((m_rigs[0]->nodes[i].name + "  " + std::to_string(i)).c_str(), (i == m_imguiSelectedBone)))
+							m_imguiSelectedBone = i;
+					ImGui::EndCombo();
 				}
+				ImGui::Text("Mask");
+				ImGui::SliderInt(setName("'minMask'").c_str(), &m_imguiMinMaskIdx, 0, 100);
+				ImGui::SliderInt(setName("'maxMask'").c_str(), &m_imguiMaxMaskIdx, 0, 100);
+
+				ImGui::Text("Orientation");
+				ImGui::SliderAngle("Roll", &m_imguiRot[m_imguiSelectedBone].z, m_imguiJointRotMin, m_imguiJointRotMax);
+				ImGui::SliderAngle("Pitch", &m_imguiRot[m_imguiSelectedBone].x, m_imguiJointRotMin, m_imguiJointRotMax);
+				ImGui::SliderAngle("Yaw", &m_imguiRot[m_imguiSelectedBone].y, m_imguiJointRotMin, m_imguiJointRotMax);
+				ImGui::Text("Translation");
+				ImGui::SliderFloat("pos X", &m_imguiPos[m_imguiSelectedBone].x, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
+				ImGui::SliderFloat("pos Y", &m_imguiPos[m_imguiSelectedBone].y, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
+				ImGui::SliderFloat("pos Z", &m_imguiPos[m_imguiSelectedBone].z, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
+				ImGui::Text("Scale");
+				ImGui::SliderFloat("X", &m_imguiSca[m_imguiSelectedBone].x, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
+				ImGui::SliderFloat("Y", &m_imguiSca[m_imguiSelectedBone].y, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
+				ImGui::SliderFloat("Z", &m_imguiSca[m_imguiSelectedBone].z, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
 			}
 			ImGui::End(); // "Clip Setter"
 		}
@@ -260,9 +261,9 @@ namespace DOG
 
 			if (i < m_imguiMinMaskIdx || i > m_imguiMaxMaskIdx)
 			{
-				const auto sca = CalculateScaling(i, rig, animator);
-				const auto rot = CalculateRotation2(i, rig, animator);
-				const auto tra = i > m_rootBoneIdx ? CalculateTranslation(i, rig, animator) : XMVECTOR{};
+				const auto sca = ExtractScaling(i, rig, animator);
+				const auto rot = ExtractWeightedAvgRotation(i, rig, animator);
+				const auto tra = i > m_rootBoneIdx ? ExtractRootTranslation(i, rig, animator) : XMVECTOR{};
 				ntf = XMMatrixTranspose(XMMatrixScalingFromVector(sca) * XMMatrixRotationQuaternion(rot) * XMMatrixTranslationFromVector(tra));
 			}
 
@@ -312,24 +313,14 @@ namespace DOG
 
 	void AnimationManager::UpdateClips(DOG::AnimationComponent& ac, const f32 dt)
 	{
+		ac.Update(dt);
+
 		f32 weightSum = 0.0f;
 		for (auto& c : ac.clips)
-		{
-			c.UpdateClip(dt);
-			switch (c.blendMode)
-			{
-			case AnimationBlendMode::linear:
-				UpdateLinear(c);
-			case AnimationBlendMode::bezier:
-				UpdateBezier(c);
-			default:
-				break;
-			}
 			weightSum += c.currentWeight;
-		}
 
 		// Normalize weights
-		if(weightSum != 0)
+		if(weightSum > 0)
 			for (auto& c : ac.clips)
 				c.currentWeight /= weightSum;
 
@@ -337,44 +328,8 @@ namespace DOG
 		if (m_imguiMatching)
 			ac.clips[2].normalizedTime = ac.clips[1].normalizedTime = ac.clips[0].normalizedTime;
 	}
-	void AnimationManager::UpdateBezier(AnimationComponent::AnimationClip& clip)
-	{
-		if (clip.normalizedTime > clip.transitionStart)
-		{
-			const f32 diff = clip.targetWeight - clip.currentWeight;
-			const f32 tstart = clip.transitionStart;
-			const f32 t = clip.normalizedTime - tstart;
-			const f32 u = t / (clip.transitionTime);
-			const f32 v = (1.0f - u);
-			clip.currentWeight += diff * (3.f * v * u * u + std::powf(u, 3.f));
-			clip.currentWeight = std::clamp(clip.currentWeight, 0.0f, 1.0f);
-		}
-	}
-	void AnimationManager::UpdateLinear(AnimationComponent::AnimationClip& clip)
-	{
-		if (clip.normalizedTime > clip.transitionStart && clip.currentWeight != clip.targetWeight)
-		{
-			const f32 diff = clip.targetWeight - clip.currentWeight;
-			const f32 tStart = clip.transitionStart;
-			const f32 tCurrent = clip.normalizedTime - tStart;
-			clip.currentWeight += diff * tCurrent / clip.transitionTime;
-			clip.currentWeight = std::clamp(clip.currentWeight, 0.0f, 1.0f);
-		}
-	}
 
-	DirectX::FXMVECTOR AnimationManager::CalculateScaling(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac)
-	{
-		using namespace DirectX;
-		// Scaling Weighted Average
-		XMVECTOR scaleVec = XMVECTOR{};
-		for (auto& c : ac.clips)
-		{
-			const auto& anim = rig.animations[c.animationID];
-			scaleVec += c.currentWeight * GetKeyValue(anim.scaKeys.at(nodeID), KeyType::Scale, c.currentTick);
-		}
-		return scaleVec;
-	}
-	DirectX::FXMVECTOR AnimationManager::CalculateTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac)
+	DirectX::FXMVECTOR AnimationManager::ExtractRootTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac)
 	{
 		using namespace DirectX;
 		// Translation Weighted Average
@@ -386,7 +341,21 @@ namespace DOG
 		}
 		return translationVec;
 	}
-	DirectX::FXMVECTOR AnimationManager::CalculateRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac)
+
+	DirectX::FXMVECTOR AnimationManager::ExtractScaling(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac)
+	{
+		using namespace DirectX;
+		// Scaling Weighted Average
+		XMVECTOR scaleVec = XMVECTOR{};
+		for (auto& c : ac.clips)
+		{
+			const auto& anim = rig.animations[c.animationID];
+			scaleVec += c.currentWeight * GetKeyValue(anim.scaKeys.at(nodeID), KeyType::Scale, c.currentTick);
+		}
+		return scaleVec;
+	}
+	
+	DirectX::FXMVECTOR AnimationManager::ExtractRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac)
 	{
 		using namespace DirectX;
 		XMVECTOR rotVec = XMVECTOR{};
@@ -509,7 +478,7 @@ namespace DOG
 		}
 	}
 
-	DirectX::FXMVECTOR AnimationManager::CalculateRotation2(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac)
+	DirectX::FXMVECTOR AnimationManager::ExtractWeightedAvgRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac)
 	{
 		// weighted avg. of rotation quaternions, works for 'similar' rotation q's
 		using namespace DirectX;

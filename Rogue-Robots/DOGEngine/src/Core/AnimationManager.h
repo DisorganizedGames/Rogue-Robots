@@ -38,10 +38,10 @@ namespace DOG
 		void UpdateMovementAnimation2(DOG::AnimationComponent& ac, const f32 dt);
 
 		DirectX::FXMVECTOR GetKeyValue(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick);
-		DirectX::FXMVECTOR CalculateScaling(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
-		DirectX::FXMVECTOR CalculateRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
-		DirectX::FXMVECTOR CalculateRotation2(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
-		DirectX::FXMVECTOR CalculateTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
+		DirectX::FXMVECTOR ExtractScaling(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
+		DirectX::FXMVECTOR ExtractRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
+		DirectX::FXMVECTOR ExtractWeightedAvgRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
+		DirectX::FXMVECTOR ExtractRootTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 
 		void UpdateClips(DOG::AnimationComponent& ac, const f32 dt);
 		void UpdateBezier(AnimationComponent::AnimationClip& clip);
