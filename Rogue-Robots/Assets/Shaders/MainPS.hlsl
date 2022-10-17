@@ -148,7 +148,9 @@ float4 main(VS_OUT input) : SV_TARGET
     for (int i = 0; i < lightsMD.staticPointLightRange.count; ++i)
     {
         ShaderInterop_PointLight pointLight = pointLights[pfData.pointLightOffsets.staticOffset + i];
-        
+        if (pointLight.strength == 0)
+            continue;
+
         // calculate per-light radiance
         float3 L = normalize(pointLight.position.xyz - input.wsPos);
         float3 H = normalize(V + L);
@@ -180,7 +182,9 @@ float4 main(VS_OUT input) : SV_TARGET
     for (int i = 0; i < lightsMD.dynPointLightRange.count; ++i)
     {
         ShaderInterop_PointLight pointLight = pointLights[pfData.pointLightOffsets.dynOffset + i];
-        
+        if (pointLight.strength == 0)
+            continue;
+
         // calculate per-light radiance
         float3 L = normalize(pointLight.position.xyz - input.wsPos);
         float3 H = normalize(V + L);
@@ -217,7 +221,9 @@ float4 main(VS_OUT input) : SV_TARGET
     for (int i = 0; i < lightsMD.staticSpotLightRange.count; ++i)
     {
         ShaderInterop_SpotLight spotLight = spotLights[pfData.spotLightOffsets.staticOffset + i];
-        
+        if (spotLight.strength == 0)
+            continue;
+
         // check contribution from based on spotlight angle
         float3 lightToPosDir = normalize(input.wsPos - spotLight.position.xyz);
         float3 lightToPosDist = length(input.wsPos - spotLight.position.xyz);
@@ -256,7 +262,9 @@ float4 main(VS_OUT input) : SV_TARGET
     for (int i = 0; i < lightsMD.dynSpotLightRange.count; ++i)
     {
         ShaderInterop_SpotLight spotLight = spotLights[pfData.spotLightOffsets.dynOffset + i];
-        
+        if (spotLight.strength == 0)
+            continue;
+
         // check contribution from based on spotlight angle
         float3 lightToPosDir = normalize(input.wsPos - spotLight.position.xyz);
         float3 lightToPosDist = length(input.wsPos - spotLight.position.xyz);
