@@ -10,7 +10,7 @@ namespace DOG
 		std::optional<DXGI_MODE_DESC> displayMode = std::nullopt;
 		bool vSync = false;
 		bool bloom = true;
-		float bloomThreshold = 0.2f;
+		float bloomThreshold = 0.5f;
 	};
 
 

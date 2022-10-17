@@ -104,6 +104,17 @@ GameLayer::GameLayer() noexcept
 	entity isoSphereEntity = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(isoSphereEntity, am.LoadModelAsset("Assets/iso_sphere.glb"));
 	m_entityManager.AddComponent<TransformComponent>(isoSphereEntity, Vector3(20, 10, 30)).SetScale({ 2,2,2 });
+	auto& isoSphereLight = m_entityManager.AddComponent<PointLightComponent>(isoSphereEntity);
+	isoSphereLight.color = Vector3(0.1f, 1.0f, 0.2f);
+	isoSphereLight.strength = 30;
+	isoSphereLight.handle = LightManager::Get().AddPointLight(
+		PointLightDesc
+		{
+			.position = m_entityManager.GetComponent<TransformComponent>(isoSphereEntity).GetPosition(),
+			.color = isoSphereLight.color,
+			.strength = isoSphereLight.strength
+		},
+		LightUpdateFrequency::PerFrame);
 	
 
 	LuaMain::Initialize();

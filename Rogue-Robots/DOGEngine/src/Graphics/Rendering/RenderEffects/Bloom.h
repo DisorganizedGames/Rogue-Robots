@@ -21,7 +21,7 @@ namespace DOG::gfx
 		{
 			f32 threshold;
 		};
-		f32 m_threshold = 0.2f;
+		f32 m_threshold = 0.5f;
 		// Untill the rendergraph can handle subresources we will use fake mip levels by using more textures
 		std::vector<std::pair<Texture, TextureDesc>> m_bloomTexture;
 
