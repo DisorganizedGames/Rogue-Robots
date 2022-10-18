@@ -97,7 +97,15 @@ float4 main(VS_OUT input) : SV_TARGET
     if (mat.normal != NO_TEXTURE)
         N = normalize(GetFinalNormal(g_aniso_samp, ResourceDescriptorHeap[mat.normal], normalize(input.tan), normalize(input.bitan), normalize(input.nor), input.uv));
     
-    float3 amb = 0.03f * albedoInput;
+    
+    float3 emissiveInput = mat.emissiveFactor.rgb;
+    if (mat.emissive != NO_TEXTURE)
+    {
+        Texture2D emissive = ResourceDescriptorHeap[mat.emissive];
+        emissiveInput *= emissive.Sample(g_aniso_samp, input.uv).rgb;
+    }
+    
+    float3 amb = 0.03f * albedoInput + emissiveInput;
     
 
     
@@ -313,7 +321,7 @@ float4 main(VS_OUT input) : SV_TARGET
 
         
     float3 hdr = amb + Lo;
-    return float4(hdr, 1.f);
+    return float4(hdr, albedoAlpha);
     
 }
 

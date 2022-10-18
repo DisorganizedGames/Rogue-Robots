@@ -28,6 +28,7 @@
 // Passes
 #include "RenderEffects/ImGUIEffect.h"
 #include "RenderEffects/TestComputeEffect.h"
+#include "RenderEffects/Bloom.h"
 
 #include "ImGUI/imgui.h"
 #include "../../Core/ImGuiMenuLayer.h"
@@ -224,6 +225,7 @@ namespace DOG::gfx
 		*/
 		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
 		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
+		m_bloomEffect = std::make_unique<Bloom>(m_globalEffectData, m_dynConstants.get(), m_renderWidth, m_renderHeight);
 
 		ImGuiMenuLayer::RegisterDebugWindow("Renderer Debug", [this](bool& open) { SpawnRenderDebugWindow(open); });
 	}
@@ -473,6 +475,8 @@ namespace DOG::gfx
 		// Uncomment to enable the test compute effect!
 		//m_testComputeEffect->Add(rg);
 
+		if(m_bloomEffect) m_bloomEffect->Add(rg);
+
 		// Blit HDR to LDR
 		{
 			struct PassData 
@@ -536,6 +540,18 @@ namespace DOG::gfx
 	void Renderer::SetGraphicsSettings(GraphicsSettings requestedSettings)
 	{
 		assert(requestedSettings.displayMode);
+
+		Flush();
+		if (!requestedSettings.bloom)
+		{
+			m_bloomEffect = nullptr;
+		}
+		else if (!m_bloomEffect || m_renderWidth != requestedSettings.renderResolution.x || m_renderHeight != requestedSettings.renderResolution.y)
+		{
+			m_bloomEffect.reset();
+			m_bloomEffect = std::make_unique<Bloom>(m_globalEffectData, m_dynConstants.get(), requestedSettings.renderResolution.x, requestedSettings.renderResolution.y);
+		}
+		if (m_bloomEffect) m_bloomEffect->SetGraphicsSettings(requestedSettings);
 		m_renderWidth = requestedSettings.renderResolution.x;
 		m_renderHeight = requestedSettings.renderResolution.y;
 		m_globalEffectData.defRenderScissors = ScissorRects().Append(0, 0, m_renderWidth, m_renderHeight);

@@ -224,6 +224,7 @@ namespace DOG::gfx
 		// Passes
 		std::unique_ptr<RenderEffect> m_imGUIEffect;
 		std::unique_ptr<RenderEffect> m_testComputeEffect;
+		std::unique_ptr<RenderEffect> m_bloomEffect;
 
 	};
 }

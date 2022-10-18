@@ -32,6 +32,7 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Physics/PhysicsRigidbody.h" "src/Physics/PhysicsRigidbody.cpp"
     "src/Graphics/Rendering/LightTable.h" "src/Graphics/Rendering/LightTable.cpp"
     "src/Core/LightManager.h" "src/Core/LightManager.cpp" "src/common/MiniProfiler.h" "src/common/MiniProfiler.cpp"
+    "src/Graphics/Rendering/RenderEffects/Bloom.h" "src/Graphics/Rendering/RenderEffects/Bloom.cpp"
     )
 
 	file(GLOB_RECURSE TempGraphics
