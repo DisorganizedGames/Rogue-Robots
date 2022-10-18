@@ -67,7 +67,7 @@ namespace DOG::gfx
 		{
 			DirectX::SimpleMath::Vector4 position{ 0.f, 0.f, 0.f, 1.f };
 			DirectX::SimpleMath::Vector4 color{ 0.f, 0.f, 0.f, 1.f };
-			float strength{ 1.f };
+			float strength{ 0.f };
 		};
 
 		struct SpotLight_GPUElement
@@ -76,7 +76,7 @@ namespace DOG::gfx
 			DirectX::SimpleMath::Vector3 color{ 0.f, 0.f, 0.f };
 			float cutoffAngle{ 15.f };
 			DirectX::SimpleMath::Vector3 direction{ 0.f, 0.f, 1.f };
-			float strength{ 1.f };
+			float strength{ 0.f };
 		};
 
 		struct AreaLight_GPUElement
