@@ -115,7 +115,7 @@ namespace DOG::gfx
 
 
 		// multiple of curr loaded mixamo skeleton
-		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 33 * 5);
+		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 33 * 25);		
 		m_cmdl = m_rd->AllocateCommandList();
 
 		// Startup

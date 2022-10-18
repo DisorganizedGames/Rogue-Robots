@@ -60,10 +60,10 @@ namespace DOG
 				else
 				{
 					UpdateClips(animatorC, (f32)Time::DeltaTime());
-					auto trs = ExtractRootTranslation(m_rootBoneIdx, model->animation, animatorC) * scaleFactor;
+					/*auto trs = ExtractRootTranslation(m_rootBoneIdx, model->animation, animatorC) * scaleFactor;
 					trs *= m_imguiMovementSpeed < 0.f ? -1.f : 1.f;
 					if (m_imguiRootTranslation)
-						tfC.SetPosition(XMVectorAdd(tfC.GetPosition(), trs));
+						tfC.SetPosition(XMVectorAdd(tfC.GetPosition(), trs));*/
 				}
 				if (m_imguiResetPos)
 				{
@@ -263,7 +263,8 @@ namespace DOG
 			{
 				const auto sca = ExtractScaling(i, rig, animator);
 				const auto rot = ExtractWeightedAvgRotation(i, rig, animator);
-				const auto tra = i > m_rootBoneIdx ? ExtractRootTranslation(i, rig, animator) : XMVECTOR{};
+				const auto tra = i > m_rootBoneIdx || m_imguiRootTranslation
+					? ExtractRootTranslation(i, rig, animator) : XMVECTOR{};
 				ntf = XMMatrixTranspose(XMMatrixScalingFromVector(sca) * XMMatrixRotationQuaternion(rot) * XMMatrixTranslationFromVector(tra));
 			}
 
@@ -281,8 +282,10 @@ namespace DOG
 		{
 			auto joint = rig.nodes[n].jointIdx;
 			if (joint != -1)
+			{
 				XMStoreFloat4x4(&m_vsJoints[animator.offset + joint],
 					rootTF * hereditaryTFs[n] * XMLoadFloat4x4(&rig.jointOffsets[joint]));
+			}
 		}
 	}
 
