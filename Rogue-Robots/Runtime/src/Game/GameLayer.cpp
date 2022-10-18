@@ -483,6 +483,7 @@ void GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 		auto& rb = m_entityManager.AddComponent<RigidbodyComponent>(playerI, playerI);
 		rb.ConstrainRotation(true, true, true);
 		rb.disableDeactivation = true;
+		rb.getControllOfTransform = true;
 
 		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = i;
 		m_entityManager.AddComponent<InputController>(playerI);
