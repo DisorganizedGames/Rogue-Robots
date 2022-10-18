@@ -128,58 +128,10 @@ GameLayer::GameLayer() noexcept
 	//Register Lua interfaces
 	RegisterLuaInterfaces();
 	//...
-
-	entity Player1 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelComponent>(Player1, m_greenCube);
-	m_entityManager.AddComponent<TransformComponent>(Player1, Vector3(25, 25, 15), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
-	m_entityManager.AddComponent<CapsuleColliderComponent>(Player1, Player1, 1.f, 1.8f, true, 75.f);
-	auto& player1Rigidbody = m_entityManager.AddComponent<RigidbodyComponent>(Player1, Player1);
-	player1Rigidbody.ConstrainRotation(true, true, true);
-	player1Rigidbody.disableDeactivation = true;
-	m_entityManager.AddComponent<NetworkPlayerComponent>(Player1).playerId = 0;
-	m_entityManager.AddComponent<InputController>(Player1);
-	m_entityManager.AddComponent<CameraComponent>(Player1);
-	m_entityManager.AddComponent<ThisPlayer>(Player1);
-	m_entityManager.AddComponent<AudioListenerComponent>(Player1);
-
-	ScriptManager* scriptManager = LuaMain::GetScriptManager();
-	scriptManager->AddScript(Player1, "Gun.lua");
-
-	entity Player2 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelComponent>(Player2, m_redCube);
-	m_entityManager.AddComponent<TransformComponent>(Player2, Vector3(-10, 10, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
-	m_entityManager.AddComponent<CapsuleColliderComponent>(Player2, Player2, 1.f, 1.8f, true, 75.f);
-	auto& player2Rigidbody = m_entityManager.AddComponent<RigidbodyComponent>(Player2, Player2);
-	player2Rigidbody.ConstrainRotation(true, true, true);
-	player2Rigidbody.disableDeactivation = true;
-	m_entityManager.AddComponent<NetworkPlayerComponent>(Player2).playerId = 1;
-	m_entityManager.AddComponent<InputController>(Player2);
-	m_entityManager.AddComponent<OnlinePlayer>(Player2);
-	scriptManager->AddScript(Player2, "Gun.lua");
-
-	entity Player3 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelComponent>(Player3, m_blueCube);
-	m_entityManager.AddComponent<TransformComponent>(Player3, Vector3(-10, 20, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
-	m_entityManager.AddComponent<CapsuleColliderComponent>(Player3, Player3, 1.f, 1.8f, true, 75.f);
-	auto& player3Rigidbody = m_entityManager.AddComponent<RigidbodyComponent>(Player3, Player3);
-	player3Rigidbody.ConstrainRotation(true, true, true);
-	player3Rigidbody.disableDeactivation = true;
-	m_entityManager.AddComponent<NetworkPlayerComponent>(Player3).playerId = 2;
-	m_entityManager.AddComponent<InputController>(Player3);
-	m_entityManager.AddComponent<OnlinePlayer>(Player3);
-	scriptManager->AddScript(Player3, "Gun.lua");
 	
-	entity Player4 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelComponent>(Player4, m_magentaCube);
-	m_entityManager.AddComponent<TransformComponent>(Player4, Vector3(-10, 30, 0), Vector3(0.1f, 0, 0), Vector3(0.5f, 0.5f, 0.5f));
-	m_entityManager.AddComponent<CapsuleColliderComponent>(Player4, Player4, 1.f, 1.8f, true, 75.f);
-	auto& player4Rigidbody = m_entityManager.AddComponent<RigidbodyComponent>(Player4, Player4);
-	player4Rigidbody.ConstrainRotation(true, true, true);
-	player4Rigidbody.disableDeactivation = true;
-	m_entityManager.AddComponent<NetworkPlayerComponent>(Player4).playerId = 3;
-	m_entityManager.AddComponent<InputController>(Player4);
-	m_entityManager.AddComponent<OnlinePlayer>(Player4);
-	scriptManager->AddScript(Player4, "Gun.lua");
+	/* Spawn players in a square around a given point */
+	m_playerModels = {m_greenCube, m_redCube, m_blueCube, m_magentaCube};
+	SpawnPlayers(Vector3(25, 25, 15), 4, 10.f);
 
 	// Setup lights
 
@@ -502,6 +454,44 @@ void GameLayer::Release(DOG::Key key)
 			if (key == DOG::Key::Q)
 				inputC.switchComp = false;
 		});
+}
+
+void GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
+{
+	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
+	ASSERT(playerCount <= MAX_PLAYER_COUNT, "No more than 4 players can be spawned. I.e. playerCount can't exceed 4");
+
+	auto* scriptManager = LuaMain::GetScriptManager();
+	for (auto i = 0; i < playerCount; ++i)
+	{
+		entity playerI = m_entityManager.CreateEntity();
+		Vector3 offset = {
+			spread * (i % 2) - (spread / 2.f),
+			0,
+			spread * (i / 2) - (spread / 2.f),
+		};
+		m_entityManager.AddComponent<TransformComponent>(playerI, pos - offset);
+		m_entityManager.AddComponent<ModelComponent>(playerI, m_playerModels[i]);
+		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 1.f, 1.8f, true, 75.f);
+		auto& rb = m_entityManager.AddComponent<RigidbodyComponent>(playerI, playerI);
+		rb.ConstrainRotation(true, true, true);
+		rb.disableDeactivation = true;
+
+		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = i;
+		m_entityManager.AddComponent<InputController>(playerI);
+		scriptManager->AddScript(playerI, "Gun.lua");
+
+		if (i == 0) // Only for this player
+		{
+			m_entityManager.AddComponent<ThisPlayer>(playerI);
+			m_entityManager.AddComponent<CameraComponent>(playerI);
+			m_entityManager.AddComponent<AudioListenerComponent>(playerI);
+		}
+		else
+		{
+			m_entityManager.AddComponent<OnlinePlayer>(playerI);
+		}
+	}
 }
 
 
