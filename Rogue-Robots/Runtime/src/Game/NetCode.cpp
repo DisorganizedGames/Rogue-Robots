@@ -208,6 +208,16 @@ void NetCode::Recive()
 
 						});
 				}
+
+				EntityManager::Get().Collect<NetworkAgentStats, AgentStatsComponent>().Do([&](entity id, NetworkAgentStats& netC, AgentStatsComponent& AgentS)
+					{
+						netC.objectId = id; // replace with enemy id
+						netC.stats = AgentS;
+						memcpy(sendBuffer + bufferSize, &netC, sizeof(NetworkAgentStats));
+						m_inputTcp.nrOfNetStats++;
+						bufferSize += sizeof(NetworkAgentStats);
+
+					});
 				//put in the client data
 				memcpy(sendBuffer, (char*)&m_inputTcp, sizeof(m_inputTcp));
 				
@@ -220,7 +230,7 @@ void NetCode::Recive()
 				else
 				{
 					int bufferReciveSize = 0;
-					//�pdate the players entites stats
+					
 					memcpy(m_outputTcp, reciveBuffer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
 					bufferReciveSize += sizeof(Client::ClientsData) * MAX_PLAYER_COUNT;
 					if (m_outputTcp->nrOfNetTransform > 0 && m_outputTcp->playerId < MAX_PLAYER_COUNT)

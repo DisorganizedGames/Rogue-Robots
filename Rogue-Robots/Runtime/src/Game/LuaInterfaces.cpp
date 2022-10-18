@@ -78,8 +78,7 @@ void EntityInterface::AddComponent(LuaContext* context)
 	}
 	else if (compType == "Bullet")
 	{
-		EntityManager::Get().AddComponent<BulletComponent>(e);
-		EntityManager::Get().GetComponent<RigidbodyComponent>(e).continuousCollisionDetection = true;
+
 		AddBullet(context, e);
 	}
 	//Add more component types here.
@@ -387,6 +386,7 @@ void EntityInterface::AddBullet(LuaContext* context, entity e)
 	int playerEntity = context->GetInteger();
 	NetworkPlayerComponent& player = EntityManager::Get().GetComponent<NetworkPlayerComponent>(playerEntity);
 	EntityManager::Get().AddComponent<BulletComponent>(e).playerId = player.playerId;
+	EntityManager::Get().GetComponent<RigidbodyComponent>(e).continuousCollisionDetection = true;
 }
 
 void EntityInterface::ModifyTransform(LuaContext* context, entity e)
