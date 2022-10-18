@@ -459,7 +459,7 @@ void GameLayer::Release(DOG::Key key)
 void GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 {
 	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
-	ASSERT(playerCount < 5, "No more than 4 players can be spawned. I.e. playerCount can't exceed 4");
+	ASSERT(playerCount <= MAX_PLAYER_COUNT, "No more than 4 players can be spawned. I.e. playerCount can't exceed 4");
 
 	auto* scriptManager = LuaMain::GetScriptManager();
 	for (auto i = 0; i < playerCount; ++i)
@@ -477,7 +477,7 @@ void GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 		rb.ConstrainRotation(true, true, true);
 		rb.disableDeactivation = true;
 
-		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = 2;
+		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = i;
 		m_entityManager.AddComponent<InputController>(playerI);
 		scriptManager->AddScript(playerI, "Gun.lua");
 
