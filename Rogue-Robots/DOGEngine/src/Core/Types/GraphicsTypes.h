@@ -49,7 +49,7 @@ namespace DOG
 	{
 		DirectX::SimpleMath::Vector3 position{ 0.f, 0.f, 0.f };
 		DirectX::SimpleMath::Vector3 color{ 1.f, 1.f, 1.f };
-		float strength{ 1.f };
+		float strength{ 0.f };
 	};
 
 	struct SpotLightDesc
@@ -57,7 +57,7 @@ namespace DOG
 		DirectX::SimpleMath::Vector3 position{ 0.f, 0.f, 0.f };
 		DirectX::SimpleMath::Vector3 color{ 1.f, 1.f, 1.f };
 		DirectX::SimpleMath::Vector3 direction{ 0.f, 0.f, 1.f };
-		float strength{ 1.f };
+		float strength{ 0.f };
 		float cutoffAngle{ 15.f };
 	};
 
