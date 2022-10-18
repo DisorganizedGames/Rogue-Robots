@@ -125,8 +125,11 @@ struct Client::ClientsData* Client::ReciveTcp()
 char* Client::ReciveCharArrayTcp(char* reciveBuffer)
 {
 	int j = recv(m_connectSocket, reciveBuffer, SEND_AND_RECIVE_BUFFER_SIZE, 0);
-	if (j < (sizeof(Client::ClientsData) * MAX_PLAYER_COUNT))
+	if (j == -1)
+	{
+		std::cout <<  "Client: Error reciving tcp packet: " << WSAGetLastError() << std::endl;
 		return nullptr;
+	}
 	return reciveBuffer;
 }
 

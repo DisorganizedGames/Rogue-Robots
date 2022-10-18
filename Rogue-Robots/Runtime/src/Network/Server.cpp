@@ -10,7 +10,6 @@ Server::Server()
 	for (UINT8 i = 0; i < MAX_PLAYER_COUNT; i++)
 	{
 		m_playersServer[i].playerId = i;
-		m_playersServer[i].matrix = {};
 	
 		m_holdPlayersUdp[i].playerId = i;
 		m_holdPlayersUdp[i].matrix = {};
@@ -201,6 +200,7 @@ void Server::ServerPollTCP()
 		char reciveBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
 		int bufferSendSize = 0;
 		int bufferReciveSize = 0;
+		bool readyToSend = false;
 		m_holdSocketsTcp = m_clientsSocketsTcp;
 		bufferSendSize += sizeof(m_playersServer);
 		if (WSAPoll(m_holdSocketsTcp.data(), (u32)m_holdSocketsTcp.size(), 1) > 0)
@@ -214,6 +214,7 @@ void Server::ServerPollTCP()
 				//read in from clients that have send data
 				else if (m_holdSocketsTcp[i].revents & POLLRDNORM)
 				{
+					readyToSend = true; 
 					bufferReciveSize = 0;
 					recv(m_holdSocketsTcp[i].fd, reciveBuffer, SEND_AND_RECIVE_BUFFER_SIZE, 0);
 					memcpy(&holdClientsData, &reciveBuffer, sizeof(Client::ClientsData));
@@ -259,15 +260,19 @@ void Server::ServerPollTCP()
 			}
 
 		}
-		m_playersServer[0].nrOfNetStats = statsChanged.size();
+		if (readyToSend)
+		{
+			m_playersServer[0].nrOfNetStats = statsChanged.size();
 
-		
-		memcpy(sendBuffer, (char*)m_playersServer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
-		memcpy(sendBuffer + bufferSendSize, (char*)statsChanged.data(), statsChanged.size());
-		bufferSendSize += statsChanged.size();
-		//memcpy(reciveBuffer, (char*)&m_playersServer, sizeof(Client::ClientsData) *4);
-		for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
-			send(m_holdSocketsTcp[i].fd, sendBuffer, bufferSendSize, 0);
+
+			memcpy(sendBuffer, (char*)m_playersServer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
+			memcpy(sendBuffer + bufferSendSize, (char*)statsChanged.data(), statsChanged.size());
+			bufferSendSize += statsChanged.size();
+			//memcpy(reciveBuffer, (char*)&m_playersServer, sizeof(Client::ClientsData) *4);
+			for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
+				send(m_holdSocketsTcp[i].fd, sendBuffer, bufferSendSize, 0);
+			
+		}
 		statsChanged.clear();
 		//wait untill tick is done 
 		float timeTakenS = TickTimeLeftTCP(tickStartTime, clockFrequency);

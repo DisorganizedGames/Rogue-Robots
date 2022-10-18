@@ -6,7 +6,6 @@ NetCode::NetCode()
 
 	m_netCodeAlive = TRUE;
 	m_outputTcp = nullptr;
-	m_inputTcp.matrix = {};
 	m_inputTcp.nrOfNetTransform = 0;
 	m_inputTcp.nrOfNetStats = 0;
 	m_playerInputUdp.playerId = 0;
@@ -40,7 +39,6 @@ void NetCode::OnUpdate()
 {
 	EntityManager::Get().Collect<ThisPlayer, TransformComponent>().Do([&](ThisPlayer&, TransformComponent& transC)
 		{
-			AddMatrixTcp(transC.worldMatrix);
 			AddMatrixUdp(transC.worldMatrix);
 		});
 
@@ -59,8 +57,6 @@ void NetCode::OnUpdate()
 						m_entityManager.RemoveComponent<ThisPlayer>(id);
 						m_entityManager.RemoveComponent<CameraComponent>(id);
 						m_entityManager.RemoveComponent<AudioListenerComponent>(id);
-						//transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
-						//transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
 					}
 
 				});
@@ -73,7 +69,6 @@ void NetCode::OnUpdate()
 						m_entityManager.AddComponent<AudioListenerComponent>(id);
 						m_entityManager.RemoveComponent<OnlinePlayer>(id);
 					}
-					//transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
 				});
 
 			m_startUp = false;
@@ -134,7 +129,7 @@ void NetCode::OnUpdate()
 
 				});
 
-			memcpy(m_sendBuffer, (char*)&m_inputTcp, sizeof(m_inputTcp));
+			
 			m_dataIsReadyToBeSentTcp = true;
 		}
 			// Recived data
@@ -259,18 +254,21 @@ void NetCode::Recive()
 		{
 			if (m_dataIsReadyToBeSentTcp)
 			{
+				m_mut.lock();
+				memcpy(m_sendBuffer, (char*)&m_inputTcp, sizeof(m_inputTcp));
+				m_mut.unlock();
 
 				m_client.SendChararrayTcp(m_sendBuffer, m_bufferSize);
 				m_reciveBuffer = m_client.ReciveCharArrayTcp(m_reciveBuffer);
 				if (m_reciveBuffer == nullptr)
 				{
-					std::cout << "bad tcp packet \n";
+					std::cout << "Bad tcp packet \n";
 				}
 				else
 				{
 					m_dataIsReadyToBeRecivedTcp = true;
-
 				}
+				m_bufferSize = 0;
 				m_dataIsReadyToBeSentTcp = false;
 			}
 		}
@@ -290,14 +288,6 @@ void NetCode::ReciveUdp()
 	}
 
 }
-
-void NetCode::AddMatrixTcp(DirectX::XMMATRIX input)
-{
-	m_mut.lock();
-	m_inputTcp.matrix = input;
-	m_mut.unlock();
-}
-
 
 void NetCode::AddMatrixUdp(DirectX::XMMATRIX input) 
 {

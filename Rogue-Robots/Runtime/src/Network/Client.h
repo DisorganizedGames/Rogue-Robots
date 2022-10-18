@@ -45,7 +45,6 @@
 			int playerId = 0;
 			int nrOfNetTransform = 0;
 			int nrOfNetStats = 0;
-			DirectX::XMMATRIX matrix = {};
 		};
 		struct HostData
 		{

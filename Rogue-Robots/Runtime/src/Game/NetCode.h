@@ -27,11 +27,9 @@ private:
 	void Recive();
 	void ReciveUdp();
 
-	void AddMatrixTcp(DirectX::XMMATRIX input);
 
 	void AddMatrixUdp(DirectX::XMMATRIX input);
 
-	void AddNetworkEntity(int id);
 	
 	Client::ClientsData m_inputTcp;
 	Client::PlayerNetworkComponent m_playerInputUdp;
