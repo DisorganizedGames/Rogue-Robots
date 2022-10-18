@@ -5,6 +5,8 @@
 #include "Pathfinder/Pathfinder.h"
 #include "Agent.h"
 #include "GameComponent.h"
+#include "GameSystems.h"
+
 class GameLayer : public DOG::Layer
 {
 public:

@@ -133,6 +133,15 @@ GameLayer::GameLayer() noexcept
 	m_playerModels = {m_greenCube, m_redCube, m_blueCube, m_magentaCube};
 	SpawnPlayers(Vector3(25, 25, 15), 4, 10.f);
 
+
+	// Temporary door code
+	entity doorTest = m_entityManager.CreateEntity();
+	m_entityManager.AddComponent<DoorComponent>(doorTest).roomId = 0;
+	m_entityManager.AddComponent<TransformComponent>(doorTest, Vector3(25, 6, 15));
+	m_entityManager.AddComponent<ModelComponent>(doorTest, m_magentaCube);
+	
+	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
+
 	// Setup lights
 
 	// Default lights

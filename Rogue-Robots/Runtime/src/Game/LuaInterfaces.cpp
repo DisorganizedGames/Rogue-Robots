@@ -329,7 +329,8 @@ void EntityInterface::AddAgentStats(LuaContext* context, entity e)
 	agentStats = {
 		.hp = stats.GetFloatFromTable("hp"),
 		.maxHP = stats.GetFloatFromTable("maxHP"),
-		.speed = stats.GetFloatFromTable("speed")
+		.speed = stats.GetFloatFromTable("speed"),
+		.roomId = static_cast<u32>(stats.GetIntFromTable("roomId")),
 	};
 }
 
