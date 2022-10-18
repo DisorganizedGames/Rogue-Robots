@@ -23,7 +23,7 @@ private:
 	void Input(DOG::Key key);
 	void Release(DOG::Key key);
 	void CameraUpdate();
-	void SpawnPlayers(const DirectX::SimpleMath::Vector3& pos, u8 playerCount);
+	void SpawnPlayers(const DirectX::SimpleMath::Vector3& pos, u8 playerCount, f32 spread = 10.f);
 private:
 	u32 m_mixamo{ 0 };
 	u32 m_redCube{ 0 };

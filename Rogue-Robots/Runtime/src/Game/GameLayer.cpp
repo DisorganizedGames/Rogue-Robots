@@ -129,8 +129,9 @@ GameLayer::GameLayer() noexcept
 	RegisterLuaInterfaces();
 	//...
 	
+	/* Spawn players in a square around a given point */
 	m_playerModels = {m_greenCube, m_redCube, m_blueCube, m_magentaCube};
-	SpawnPlayers(Vector3(25, 25, 15), 4);
+	SpawnPlayers(Vector3(25, 25, 15), 4, 10.f);
 
 	// Setup lights
 
@@ -455,7 +456,7 @@ void GameLayer::Release(DOG::Key key)
 		});
 }
 
-void GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount)
+void GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 {
 	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
 	ASSERT(playerCount < 5, "No more than 4 players can be spawned. I.e. playerCount can't exceed 4");
@@ -465,9 +466,9 @@ void GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount)
 	{
 		entity playerI = m_entityManager.CreateEntity();
 		Vector3 offset = {
-			10.f * (i % 2) - 5.f,
+			spread * (i % 2) - (spread / 2.f),
 			0,
-			10.f * (i / 2) - 5.f,
+			spread * (i / 2) - (spread / 2.f),
 		};
 		m_entityManager.AddComponent<TransformComponent>(playerI, pos - offset);
 		m_entityManager.AddComponent<ModelComponent>(playerI, m_playerModels[i]);
