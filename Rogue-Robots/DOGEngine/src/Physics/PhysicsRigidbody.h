@@ -29,6 +29,10 @@ namespace DOG
 		bool continuousCollisionDetection = false;
 		float continuousCollisionDetectionMotionThreshold = (float)1e-7;
 		float continuousCollisionDetectionSweptSphereRadius = 0.2f;
+
+		//With this you can rotate and change the position of the transform directly (do not change the transform every frame as this causes the physics to not work properly)
+		bool getControlOfTransform = false;
+		DirectX::SimpleMath::Vector3 lastFramePositionDifferance;
 	};
 
 	class PhysicsRigidbody
