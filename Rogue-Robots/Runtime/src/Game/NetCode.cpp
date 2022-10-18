@@ -59,7 +59,7 @@ void NetCode::OnUpdate()
 						m_entityManager.RemoveComponent<ThisPlayer>(id);
 						m_entityManager.RemoveComponent<CameraComponent>(id);
 						m_entityManager.RemoveComponent<AudioListenerComponent>(id);
-						transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
+						//transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
 						//transC.worldMatrix = m_outputTcp[networkC.playerId].matrix;
 					}
 
