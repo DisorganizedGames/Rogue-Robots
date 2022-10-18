@@ -201,4 +201,116 @@ namespace DOG
 			currentWeight = std::clamp(currentWeight, 0.0f, 1.0f);
 		}
 	}
+
+	// Animation update
+	void RealAnimationComponent::AnimationClip::UpdateState(const f32 gt, const f32 dt)
+	{
+		static constexpr i32 noAnimation = -1;
+		activeAnimation = animationID != noAnimation &&
+						(gt > transitionStart &&
+						(gt + dt < transitionStart + transitionLength || loop));
+	}
+
+
+	f32 RealAnimationComponent::AnimationClip::UpdateClipTick(const f32 dt)
+	{
+		normalizedTime += timeScale * dt / duration;
+		// reset normalized time
+		if (loop)
+		{
+			while (normalizedTime > 1.0f)
+				normalizedTime -= 1.0f;
+			while (normalizedTime < 0.0f)
+				normalizedTime += 1.0f;
+		}
+		normalizedTime = std::clamp(normalizedTime, 0.0f, 1.0f);
+		currentTick = normalizedTime * totalTicks;
+
+		return currentTick;
+	};
+
+	f32 RealAnimationComponent::AnimationClip::UpdateWeightLinear(const f32 gt, const f32 dt)
+	{
+		const f32 transitionTime = gt - transitionStart;
+		if (transitionTime > transitionLength) // Transition is done
+			currentWeight = targetWeight;
+		else if (transitionTime > 0.0f) // Linear weight transition
+			currentWeight = startWeight + transitionTime * (targetWeight - startWeight) / transitionLength;
+
+		assert(currentWeight >= 0.0f);
+		return currentWeight;
+	}
+
+	f32 RealAnimationComponent::AnimationClip::UpdateWeightBezier(const f32 gt, const f32 dt)
+	{
+		const f32 transitionTime = gt - transitionStart;
+		if (transitionTime > transitionLength) // Transition is done
+			currentWeight = targetWeight;
+		else if (transitionTime > 0.0f) // bezier curve transition
+		{
+			const f32 u = transitionTime / transitionLength;
+			const f32 v = 1.0f - u;
+			currentWeight = startWeight * (pow(v, 3) + 3 * pow(v, 2) * u) +
+							targetWeight * (3 * v * pow(u, 2) + pow(u, 3));
+		}
+		assert(currentWeight >= 0.0f);
+		return currentWeight;
+	}
+	void RealAnimationComponent::AnimationClip::ResetClip()
+	{
+		static constexpr i32 noanimation = -1;
+		
+		animationID = noanimation;
+		activeAnimation = false;
+	}
+
+	void RealAnimationComponent::Update(const f32 dt)
+	{
+		globalTime += dt;
+
+		u32 activeClips = 0;
+		u32 activatedClips = 0;
+		f32 newTargetWeights[10] = { 0.f };
+		f32 newTargetWeightsSum = 0.0f;
+		f32 currentWeightSum = 0.0f;
+		
+		// update clip states and count active clips
+		for (auto& c : clips)
+		{
+			// Keep track of added targetWeights
+			if (c.BecameActive(globalTime, dt))
+			{
+				newTargetWeights[activatedClips++] = c.targetWeight;
+				newTargetWeightsSum = newTargetWeightsSum + c.targetWeight;
+			}
+			c.UpdateState(globalTime, dt);
+			activeClips += c.activeAnimation;
+			currentWeightSum += c.activeAnimation * c.currentWeight;
+		}
+		
+		// normalize current weights and Recalculate target Weights if new clips were activated
+		if (activatedClips > 0)
+		{
+			for (auto& c : clips)
+			{
+				// recalculate target weight on previously active clips
+				if (!c.BecameActive(globalTime, dt))
+					c.targetWeight *= std::clamp(1.f - newTargetWeightsSum, 0.f, 1.f) * (activeClips - activatedClips);
+				// normalize added targets if added weights exceed one
+				else if (newTargetWeightsSum > 1.0f)
+					c.targetWeight /= newTargetWeightsSum;
+			}
+		}
+			
+		// sort clips Active>group>targetWeight>currentWeight
+		std::sort(clips.begin(), clips.end());
+
+		// Update weights / tick of active clips
+		for (u32 i = 0; i < activeClips; i++)
+		{
+			auto& c = clips[i];
+			c.UpdateClipTick(dt);
+			c.UpdateWeightLinear(globalTime, dt);
+		}
+	}
 }

@@ -159,6 +159,14 @@ namespace DOG
 		};
 		struct BoneWeights{
 			f32 weights[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+			i32 MinIdx()
+			{
+				i32 minIdx = 0;
+				for (i32 i = 1; i < 4; i++)
+					minIdx = weights[i] < weights[minIdx] ? i : minIdx;
+				return minIdx;
+			}
+
 		};
 		std::vector<BoneIndices> boneIndices;
 		std::vector<BoneWeights> boneWeights;
@@ -188,9 +196,10 @@ namespace DOG
 				{
 					auto vWeight = bone->mWeights[weight_idx];
 					u32 vertex = submesh_start + vWeight.mVertexId;
+					auto vertexBoneIdx = boneWeights[vertex].MinIdx();
 
-					boneIndices[vertex].indices[boneWeightIdx[vertex]] = nameToJointIdx[bone->mName.C_Str()];
-					boneWeights[vertex].weights[boneWeightIdx[vertex]] = vWeight.mWeight;
+					boneIndices[vertex].indices[vertexBoneIdx] = nameToJointIdx[bone->mName.C_Str()];
+					boneWeights[vertex].weights[vertexBoneIdx] = vWeight.mWeight;
 
 					boneWeightIdx[vertex]++;
 				}
@@ -263,20 +272,20 @@ namespace DOG
 				std::string nodeName = channel->mNodeName.C_Str();
 				if (nameToNodeIdx.find(nodeName) == nameToNodeIdx.end())
 					nameToNodeIdx.insert({ nodeName, -1 });
-				if (nameToNodeIdx.find(nodeName) != nameToNodeIdx.end() && nameToNodeIdx.at(nodeName) == boneRootIdx)
-				{
-					// remove root relative translation might need to consider special cases later
-					auto rootV = XMLoadFloat4(&posKeys[0].value);
-					auto lastV = XMLoadFloat4(&posKeys.rbegin()[0].value);
-					for (i32 k = posKeys.size() - 1; k > 0; --k)
-					{
-						auto value = XMLoadFloat4(&posKeys[k].value);
-						auto prev = XMLoadFloat4(&posKeys[k-1].value);
-						XMStoreFloat4(&posKeys[k].value, value - prev);
-					}
-					posKeys[0].value = posKeys[1].value;
-					//XMStoreFloat4(&posKeys[0].value, lastV - rootV);
-				}
+				//if (nameToNodeIdx.find(nodeName) != nameToNodeIdx.end() && nameToNodeIdx.at(nodeName) == boneRootIdx)
+				//{
+				//	// remove root relative translation might need to consider special cases later
+				//	auto rootV = XMLoadFloat4(&posKeys[0].value);
+				//	auto lastV = XMLoadFloat4(&posKeys.rbegin()[0].value);
+				//	for (i32 k = posKeys.size() - 1; k > 0; --k)
+				//	{
+				//		auto value = XMLoadFloat4(&posKeys[k].value);
+				//		auto prev = XMLoadFloat4(&posKeys[k-1].value);
+				//		XMStoreFloat4(&posKeys[k].value, value - prev);
+				//	}
+				//	posKeys[0].value = posKeys[1].value;
+				//	//XMStoreFloat4(&posKeys[0].value, lastV - rootV);
+				//}
 
 				i32 nodeID = nameToNodeIdx.at(nodeName);
 				importedAnim.animations.back().scaKeys.insert({nodeID, scaKeys});
