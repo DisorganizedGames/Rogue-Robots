@@ -305,7 +305,7 @@ namespace DOG::gfx
 		}
 		HR_VFY(hr);
 
-		OnResize(mode.Width, mode.Height);
+		//OnResize(mode.Width, mode.Height);
 
 		return true;
 	}

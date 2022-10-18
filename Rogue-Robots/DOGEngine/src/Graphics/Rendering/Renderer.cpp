@@ -35,8 +35,11 @@
 #include "../../common/MiniProfiler.h"
 
 ///TODO: This is going to be moved to an appropriate place.
-std::unique_ptr<UI> ui;
+std::unique_ptr<DOG::UI> ui;
 UINT menuID, gameID, optionsID, multiID;
+
+void UIRebuild(UINT clientHeight, UINT clientWidth);
+void AddScenes();
 
 void PlayButtonFunc(void)
 {
@@ -51,6 +54,11 @@ void OptionsButtonFunc(void)
 void MultiplayerButtonFunc(void)
 {
 	ui->ChangeUIscene(multiID);
+}
+
+void ToMenuButtonFunc(void)
+{
+	ui->ChangeUIscene(menuID);
 }
 
 void ExitButtonFunc(void)
@@ -68,56 +76,10 @@ namespace DOG::gfx
 		m_backend = std::make_unique<gfx::RenderBackend_DX12>(debug);
 		m_rd = m_backend->CreateDevice();
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
-		ui = std::make_unique<UI>(m_rd, m_sc, S_NUM_BACKBUFFERS, clientWidth, clientHeight);
+		ui = std::make_unique<DOG::UI>(m_rd, m_sc, S_NUM_BACKBUFFERS, clientWidth, clientHeight);
 
-		///TODO: This is going to be moved to an appropriate place.
-		//Scenes
-		menuID = ui->AddScene();
-		gameID = ui->AddScene();
-		multiID = ui->AddScene();
-		optionsID = ui->AddScene();
-		ui->ChangeUIscene(menuID);
-
-		//HealthBar
-		auto hID = ui->GenerateUID();
-		auto h = std::make_unique<UIHealthBar>(40.f, clientHeight - 60.f, 250.f, 30.f, *ui->m_d2d, hID);
-		ui->AddUIlEmentToScene(gameID, std::move(h));
-
-		//Crosshair
-		UINT cID = ui->GenerateUID();
-		auto c = std::make_unique<UICrosshair>(*ui->m_d2d, cID);
-		ui->AddUIlEmentToScene(gameID, std::move(c));
-
-		//Menu backgrounds
-		auto menuBackID = ui->GenerateUID();
-		auto optionsBackID = ui->GenerateUID();
-		auto multiBackID = ui->GenerateUID();
-		auto menuBack = std::make_unique<UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Rogue Robots"), *ui->m_d2d, menuBackID);
-		ui->AddUIlEmentToScene(menuID, std::move(menuBack));
-		auto optionsBack = std::make_unique<UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Options"), *ui->m_d2d, optionsBackID);
-		ui->AddUIlEmentToScene(optionsID, std::move(optionsBack));
-		auto multiBack = std::make_unique<UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Muliplayer"), *ui->m_d2d, multiBackID);
-		ui->AddUIlEmentToScene(multiID, std::move(multiBack));
-
-		//Menu buttons
-		auto bpID = ui->GenerateUID();
-		auto bmID = ui->GenerateUID();
-		auto boID = ui->GenerateUID();
-		auto beID = ui->GenerateUID();
-		auto bp = std::make_unique<UIButton>(*ui->m_d2d, clientWidth / 2.f - 150.f / 2, clientHeight / 2, 150.f, 60.f, 20.f, std::wstring(L"Play"), std::function<void()>(PlayButtonFunc), bpID);
-		auto bm = std::make_unique<UIButton>(*ui->m_d2d, clientWidth / 2.f - 150.f / 2, clientHeight / 2 + 70.f, 150.f, 60.f, 20.f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc), bmID);
-		auto bo = std::make_unique<UIButton>(*ui->m_d2d, clientWidth / 2.f - 150.f / 2, clientHeight / 2 + 140.f, 150.f, 60.f, 20.f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc), boID);
-		auto be = std::make_unique<UIButton>(*ui->m_d2d, clientWidth / 2.f - 150.f / 2, clientHeight / 2 + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc), beID);
-		ui->AddUIlEmentToScene(menuID, std::move(bp));
-		ui->AddUIlEmentToScene(menuID, std::move(bm));
-		ui->AddUIlEmentToScene(menuID, std::move(bo));
-		ui->AddUIlEmentToScene(menuID, std::move(be));
-
-		//Splash screen
-		auto sID = ui->GenerateUID();
-		auto s = std::make_unique<UISplashScreen>(*ui->m_d2d, (float)clientWidth, (float)clientHeight, sID);
-		ui->AddUIlEmentToScene(menuID, std::move(s));
-
+		AddScenes();
+		UIRebuild(clientHeight, clientWidth);
 
 		m_imgui = std::make_unique<gfx::ImGUIBackend_DX12>(m_rd, m_sc, S_MAX_FIF);
 
@@ -440,7 +402,7 @@ namespace DOG::gfx
 		MINIPROFILE
 
 
-		// Resolve any per frame copies from CPU
+			// Resolve any per frame copies from CPU
 		{
 			ZoneNamedN(FrameCopyResolve, "Frame Copies", true);
 			m_perFrameUploadCtx->SubmitCopies();
@@ -596,7 +558,7 @@ namespace DOG::gfx
 
 	void Renderer::OnResize(u32 clientWidth, u32 clientHeight)
 	{
-		ui.reset();
+		ui->FreeResize();
 		if (clientWidth != 0 && clientHeight != 0)
 		{
 			m_globalEffectData.bbScissor = ScissorRects().Append(0, 0, clientWidth, clientHeight);
@@ -604,56 +566,11 @@ namespace DOG::gfx
 		}
 
 		m_sc->OnResize(clientWidth, clientHeight);
-		ui = std::make_unique<UI>(m_rd, m_sc, S_NUM_BACKBUFFERS, clientWidth, clientHeight);
-		///TODO: Move rebuild of ui to a reasonable place.
-		{
-			//Scenes
-			menuID = ui->AddScene();
-			gameID = ui->AddScene();
-			multiID = ui->AddScene();
-			optionsID = ui->AddScene();
-			ui->ChangeUIscene(menuID);
+		ui->Resize(clientWidth, clientHeight);
 
-			//HealthBar
-			auto hID = ui->GenerateUID();
-			auto h = std::make_unique<UIHealthBar>(40.f, clientHeight - 60.f, 250.f, 30.f, *ui->m_d2d, hID);
-			ui->AddUIlEmentToScene(gameID, std::move(h));
+		UIRebuild(clientHeight, clientWidth);
 
-			//Crosshair
-			UINT cID = ui->GenerateUID();
-			auto c = std::make_unique<UICrosshair>(*ui->m_d2d, cID);
-			ui->AddUIlEmentToScene(gameID, std::move(c));
 
-			//Menu backgrounds
-			auto menuBackID = ui->GenerateUID();
-			auto optionsBackID = ui->GenerateUID();
-			auto multiBackID = ui->GenerateUID();
-			auto menuBack = std::make_unique<UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Rogue Robots"), *ui->m_d2d, menuBackID);
-			ui->AddUIlEmentToScene(menuID, std::move(menuBack));
-			auto optionsBack = std::make_unique<UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Options"), *ui->m_d2d, optionsBackID);
-			ui->AddUIlEmentToScene(optionsID, std::move(optionsBack));
-			auto multiBack = std::make_unique<UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Muliplayer"), *ui->m_d2d, multiBackID);
-			ui->AddUIlEmentToScene(multiID, std::move(multiBack));
-
-			//Menu buttons
-			auto bpID = ui->GenerateUID();
-			auto bmID = ui->GenerateUID();
-			auto boID = ui->GenerateUID();
-			auto beID = ui->GenerateUID();
-			auto bp = std::make_unique<UIButton>(*ui->m_d2d, clientWidth / 2.f - 150.f / 2, clientHeight / 2, 150.f, 60.f, 20.f, std::wstring(L"Play"), std::function<void()>(PlayButtonFunc), bpID);
-			auto bm = std::make_unique<UIButton>(*ui->m_d2d, clientWidth / 2.f - 150.f / 2, clientHeight / 2 + 70.f, 150.f, 60.f, 20.f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc), bmID);
-			auto bo = std::make_unique<UIButton>(*ui->m_d2d, clientWidth / 2.f - 150.f / 2, clientHeight / 2 + 140.f, 150.f, 60.f, 20.f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc), boID);
-			auto be = std::make_unique<UIButton>(*ui->m_d2d, clientWidth / 2.f - 150.f / 2, clientHeight / 2 + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc), beID);
-			ui->AddUIlEmentToScene(menuID, std::move(bp));
-			ui->AddUIlEmentToScene(menuID, std::move(bm));
-			ui->AddUIlEmentToScene(menuID, std::move(bo));
-			ui->AddUIlEmentToScene(menuID, std::move(be));
-
-			//Splash screen
-			auto sID = ui->GenerateUID();
-			auto s = std::make_unique<UISplashScreen>(*ui->m_d2d, (float)clientWidth, (float)clientHeight, sID);
-			ui->AddUIlEmentToScene(menuID, std::move(s));
-		}
 	}
 
 	WindowMode DOG::gfx::Renderer::GetFullscreenState() const
@@ -746,4 +663,64 @@ namespace DOG::gfx
 			return false;
 	}
 
+}
+
+void UIRebuild(UINT clientHeight, UINT clientWidth)
+{
+	//HealthBar
+	auto hID = ui->GenerateUID();
+	auto h = std::make_unique<DOG::UIHealthBar>(40.f, clientHeight - 60.f, 250.f, 30.f, *ui->m_d2d, hID);
+	ui->AddUIlEmentToScene(gameID, std::move(h));
+
+	//Crosshair
+	UINT cID = ui->GenerateUID();
+	auto c = std::make_unique<DOG::UICrosshair>(*ui->m_d2d, cID);
+	ui->AddUIlEmentToScene(gameID, std::move(c));
+
+	//Menu backgrounds
+	auto menuBackID = ui->GenerateUID();
+	auto optionsBackID = ui->GenerateUID();
+	auto multiBackID = ui->GenerateUID();
+	auto menuBack = std::make_unique<DOG::UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Rogue Robots"), *ui->m_d2d, menuBackID);
+	ui->AddUIlEmentToScene(menuID, std::move(menuBack));
+	auto optionsBack = std::make_unique<DOG::UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Options"), *ui->m_d2d, optionsBackID);
+	ui->AddUIlEmentToScene(optionsID, std::move(optionsBack));
+	auto multiBack = std::make_unique<DOG::UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Muliplayer"), *ui->m_d2d, multiBackID);
+	ui->AddUIlEmentToScene(multiID, std::move(multiBack));
+
+	//Menu buttons
+	auto bpID = ui->GenerateUID();
+	auto bmID = ui->GenerateUID();
+	auto boID = ui->GenerateUID();
+	auto beID = ui->GenerateUID();
+	auto optbackID = ui->GenerateUID();
+	auto mulbackID = ui->GenerateUID();
+	auto bp = std::make_unique<DOG::UIButton>(*ui->m_d2d, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, std::wstring(L"Play"), std::function<void()>(PlayButtonFunc), bpID);
+	auto bm = std::make_unique<DOG::UIButton>(*ui->m_d2d, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 150.f, 60.f, 20.f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc), bmID);
+	auto bo = std::make_unique<DOG::UIButton>(*ui->m_d2d, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc), boID);
+	auto be = std::make_unique<DOG::UIButton>(*ui->m_d2d, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc), beID);
+	auto optback = std::make_unique<DOG::UIButton>(*ui->m_d2d, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc), optbackID);
+	auto mulback = std::make_unique<DOG::UIButton>(*ui->m_d2d, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc), mulbackID);
+	ui->AddUIlEmentToScene(menuID, std::move(bp));
+	ui->AddUIlEmentToScene(menuID, std::move(bm));
+	ui->AddUIlEmentToScene(menuID, std::move(bo));
+	ui->AddUIlEmentToScene(menuID, std::move(be));
+	ui->AddUIlEmentToScene(optionsID, std::move(optback));
+	ui->AddUIlEmentToScene(multiID, std::move(mulback));
+
+
+	//Splash screen
+	auto sID = ui->GenerateUID();
+	auto s = std::make_unique<DOG::UISplashScreen>(*ui->m_d2d, (float)clientWidth, (float)clientHeight, sID);
+	ui->AddUIlEmentToScene(menuID, std::move(s));
+
+}
+
+void AddScenes()
+{
+	menuID = ui->AddScene();
+	gameID = ui->AddScene();
+	multiID = ui->AddScene();
+	optionsID = ui->AddScene();
+	ui->ChangeUIscene(menuID);
 }

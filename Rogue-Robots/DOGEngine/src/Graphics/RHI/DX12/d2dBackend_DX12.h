@@ -3,8 +3,6 @@
 #include <d3d11on12.h>
 #include <d2d1_3.h>
 #include <dwrite.h>
-#include <vector>
-#include <memory>
 #include "CommonIncludes_DX12.h"
 #include "Utilities/DX12DescriptorManager.h"
 #include "../D2DBackend.h"
@@ -20,8 +18,9 @@ namespace DOG::gfx
 		D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_int numBuffers);
 		~D2DBackend_DX12();
 		void OnResize();
-		RenderDevice* rd;
-		Swapchain* sc;
+		void FreeResize();
+		RenderDevice* m_rd;
+		Swapchain* m_sc;
 
 		// Public interface
 		void BeginFrame() override;

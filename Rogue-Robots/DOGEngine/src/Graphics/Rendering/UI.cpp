@@ -1,11 +1,7 @@
 #include "UI.h"
 #include "../../Input/Mouse.h"
-#include "../../Input/Keyboard.h"
-#include <assert.h>
-#include <Intsafe.h>
-#include <algorithm>
 
-UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, UINT clientWidth, UINT clientHeight) : m_visible(true)
+DOG::UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, UINT clientWidth, UINT clientHeight) : m_visible(true)
 {
    srand((UINT)time(NULL));
    m_width = clientWidth;
@@ -13,14 +9,14 @@ UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, UI
    m_d2d = std::make_unique<DOG::gfx::D2DBackend_DX12>(rd, sc, numBuffers);
 }
 
-UI::~UI()
+DOG::UI::~UI()
 {
 
 }
 
-void UI::DrawUI()
+void DOG::UI::DrawUI()
 {
-   if (m_visible)
+   if (m_visible && m_scenes.size() > 0)
    {
       for (auto&& e : m_scenes[m_currsceneIndex]->m_scene)
       {
@@ -30,17 +26,28 @@ void UI::DrawUI()
    }
 }
 
-void UI::Resize(UINT clientWidth, UINT clientHeight)
+void DOG::UI::Resize(UINT clientWidth, UINT clientHeight)
 {
+   
    m_width = clientWidth;
    m_height = clientHeight;
    m_d2d->OnResize();
+}
 
+void DOG::UI::FreeResize()
+{  
+
+   for (auto &&e : m_scenes)
+   {
+      e->m_scene.clear();
+   }
+   
+   m_d2d->FreeResize();
 }
 
 /// @brief Generates a unique ID
 /// @return Unique ID
-UINT UI::GenerateUID()
+UINT DOG::UI::GenerateUID()
 {
    UINT uid;
    do
@@ -53,7 +60,7 @@ UINT UI::GenerateUID()
 /// @brief Querrys a scene from a specific sceneID
 /// @param sceneID The ID of the scene
 /// @return Returns the index of the scene witrh the specific sceneID. If scene is not found UINT_MAX is returned;
-UINT UI::QuerryScene(UINT sceneID)
+UINT DOG::UI::QuerryScene(UINT sceneID)
 {
    UINT index;
    auto res = std::find_if(m_scenes.begin(), m_scenes.end(), [&](std::unique_ptr<UIScene> const& s) { return s->m_ID == sceneID; });
@@ -72,7 +79,7 @@ UINT UI::QuerryScene(UINT sceneID)
 /// @param sceneID The ID of the scene
 /// @param element The element to be added
 /// @return The unique ID of the element. If the scene does not exist UINT_MAX is returned
-UINT UI::AddUIlEmentToScene(UINT sceneID, std::unique_ptr<UIElement> element)
+UINT DOG::UI::AddUIlEmentToScene(UINT sceneID, std::unique_ptr<UIElement> element)
 {
    UINT index = QuerryScene(sceneID);
    UINT id;
@@ -88,7 +95,7 @@ UINT UI::AddUIlEmentToScene(UINT sceneID, std::unique_ptr<UIElement> element)
 
 /// @brief Adds a scene to the UI manager
 /// @return A unique ID for the newly created scene
-UINT UI::AddScene()
+UINT DOG::UI::AddScene()
 {
    auto scene = std::make_unique<UIScene>(GenerateUID());
    UINT id = scene->m_ID;
@@ -98,7 +105,7 @@ UINT UI::AddScene()
 
 /// @brief Removes a scene with a specific ID
 /// @param sceneID The ID of the scene to be removed
-void UI::RemoveScene(UINT sceneID)
+void DOG::UI::RemoveScene(UINT sceneID)
 {
    UINT index = QuerryScene(sceneID);
    if (index == UINT_MAX)
@@ -110,7 +117,7 @@ void UI::RemoveScene(UINT sceneID)
 
 /// @brief Changes the current scene to a scene with a specific ID
 /// @param sceneID The ID of the scene to switch to
-void UI::ChangeUIscene(UINT sceneID)
+void DOG::UI::ChangeUIscene(UINT sceneID)
 {
    UINT index = QuerryScene(sceneID);
    if (index == UINT_MAX)
@@ -122,22 +129,22 @@ void UI::ChangeUIscene(UINT sceneID)
    }
 }
 
-UIElement::UIElement(UINT id) : m_ID(id)
+DOG::UIElement::UIElement(UINT id) : m_ID(id)
 {
 
 }
 
-UIElement::~UIElement()
+DOG::UIElement::~UIElement()
 {
 }
 
-void UIElement::Update(DOG::gfx::D2DBackend_DX12& d2d)
+void DOG::UIElement::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
    UNREFERENCED_PARAMETER(d2d);
    return;
 }
 
-UIButton::UIButton(DOG::gfx::D2DBackend_DX12& d2d, float x, float y, float width, float height, float fontSize, std::wstring text, std::function<void(void)> callback, UINT id) : pressed(false), m_callback(callback), UIElement(id)
+DOG::UIButton::UIButton(DOG::gfx::D2DBackend_DX12& d2d, float x, float y, float width, float height, float fontSize, std::wstring text, std::function<void(void)> callback, UINT id) : pressed(false), m_callback(callback), UIElement(id)
 {
    this->m_size = D2D1::Vector2F(width, height);
    m_textRect = D2D1::RectF(x, y, x + width, y + height);
@@ -161,12 +168,12 @@ UIButton::UIButton(DOG::gfx::D2DBackend_DX12& d2d, float x, float y, float width
    HR_VFY(hr);
 }
 
-UIButton::~UIButton()
+DOG::UIButton::~UIButton()
 {
 
 }
 
-void UIButton::Draw(DOG::gfx::D2DBackend_DX12& d2d)
+void DOG::UIButton::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
    d2d.m_2ddc->DrawRectangle(m_textRect, m_brush.Get());
    d2d.m_2ddc->DrawTextW(
@@ -178,9 +185,9 @@ void UIButton::Draw(DOG::gfx::D2DBackend_DX12& d2d)
    );
 }
 
-void UIButton::Update(DOG::gfx::D2DBackend_DX12& d2d)
+void DOG::UIButton::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
-
+   UNREFERENCED_PARAMETER(d2d);
    auto m = DOG::Mouse::GetCoordinates();
    if (m.first >= m_textRect.left && m.first <= m_textRect.right && m.second >= m_textRect.top && m.second <= m_textRect.bottom)
    {
@@ -193,7 +200,7 @@ void UIButton::Update(DOG::gfx::D2DBackend_DX12& d2d)
 
 }
 
-UISplashScreen::UISplashScreen(DOG::gfx::D2DBackend_DX12& d2d, float width, float height, UINT id) : UIElement(id)
+DOG::UISplashScreen::UISplashScreen(DOG::gfx::D2DBackend_DX12& d2d, float width, float height, UINT id) : UIElement(id)
 {
    UNREFERENCED_PARAMETER(d2d);
    m_timer = clock();
@@ -222,7 +229,7 @@ UISplashScreen::UISplashScreen(DOG::gfx::D2DBackend_DX12& d2d, float width, floa
    m_textOp = 0.0f;
 }
 
-void UISplashScreen::Draw(DOG::gfx::D2DBackend_DX12& d2d)
+void DOG::UISplashScreen::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
    d2d.m_2ddc->FillRectangle(m_background, m_splashBrush.Get());
    d2d.m_2ddc->DrawTextW(
@@ -232,7 +239,7 @@ void UISplashScreen::Draw(DOG::gfx::D2DBackend_DX12& d2d)
       &m_background,
       m_textBrush.Get());
 }
-void UISplashScreen::Update(DOG::gfx::D2DBackend_DX12& d2d)
+void DOG::UISplashScreen::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
    UNREFERENCED_PARAMETER(d2d);
    float time = (float)(clock() / CLOCKS_PER_SEC);
@@ -249,7 +256,7 @@ void UISplashScreen::Update(DOG::gfx::D2DBackend_DX12& d2d)
 
 }
 
-UISplashScreen::~UISplashScreen()
+DOG::UISplashScreen::~UISplashScreen()
 {
 
 }
@@ -259,12 +266,12 @@ float easeOutCubic(float x)
    return 1 - powf(1 - x, 3);
 }
 
-UIScene::UIScene(UINT id) : m_ID(id)
+DOG::UIScene::UIScene(UINT id) : m_ID(id)
 {
 
 }
 
-UIHealthBar::UIHealthBar(float x, float y, float width, float height, DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
+DOG::UIHealthBar::UIHealthBar(float x, float y, float width, float height, DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
 {
    m_text = L"100%";
    m_value = m_test = 1.0f;
@@ -292,12 +299,12 @@ UIHealthBar::UIHealthBar(float x, float y, float width, float height, DOG::gfx::
    HR_VFY(hr);
 }
 
-UIHealthBar::~UIHealthBar()
+DOG::UIHealthBar::~UIHealthBar()
 {
 
 }
 
-void UIHealthBar::Draw(DOG::gfx::D2DBackend_DX12& d2d)
+void DOG::UIHealthBar::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
    d2d.m_2ddc->FillRectangle(m_bar, m_barBrush.Get());
    d2d.m_2ddc->DrawRectangle(m_border, m_barBrush.Get());
@@ -309,20 +316,20 @@ void UIHealthBar::Draw(DOG::gfx::D2DBackend_DX12& d2d)
       m_borderBrush.Get());
 
 }
-void UIHealthBar::Update(DOG::gfx::D2DBackend_DX12& d2d)
+void DOG::UIHealthBar::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
    UNREFERENCED_PARAMETER(d2d);
    auto val = abs(sinf(m_value += 0.01f));
    m_bar.right = val * (m_barWidth)+m_bar.left - 1.0f;
    m_text = std::to_wstring((UINT)(val * 100.f + 1.f)) + L'%';
 }
-void UIHealthBar::SetBarValue(float value)
+void DOG::UIHealthBar::SetBarValue(float value)
 {
    m_value = value;
    m_text = std::to_wstring(value) + L'%';
 }
 
-UIBackground::UIBackground(float width, float heigt, std::wstring title, DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
+DOG::UIBackground::UIBackground(float width, float heigt, std::wstring title, DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
 {
    m_title = title;
    m_background = D2D1::RectF(0.0f, 0.0f, width, heigt);
@@ -343,12 +350,12 @@ UIBackground::UIBackground(float width, float heigt, std::wstring title, DOG::gf
    );
 }
 
-UIBackground::~UIBackground()
+DOG::UIBackground::~UIBackground()
 {
 
 }
 
-void UIBackground::Draw(DOG::gfx::D2DBackend_DX12& d2d)
+void DOG::UIBackground::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
    d2d.m_2ddc->FillRectangle(m_background, m_backBrush.Get());
    d2d.m_2ddc->DrawTextW(
@@ -358,13 +365,13 @@ void UIBackground::Draw(DOG::gfx::D2DBackend_DX12& d2d)
       &m_textRect,
       m_textBrush.Get());
 }
-void UIBackground::Update(DOG::gfx::D2DBackend_DX12& d2d)
+void DOG::UIBackground::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
    UNREFERENCED_PARAMETER(d2d);
 
 }
 
-UICrosshair::UICrosshair(DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
+DOG::UICrosshair::UICrosshair(DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
 {
    HRESULT hr = d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.3f), &m_brush);
    hr = d2d.m_dwritwf->CreateTextFormat(
@@ -387,12 +394,12 @@ UICrosshair::UICrosshair(DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id
 
 }
 
-UICrosshair::~UICrosshair()
+DOG::UICrosshair::~UICrosshair()
 {
 
 }
 
-void UICrosshair::Draw(DOG::gfx::D2DBackend_DX12& d2d)
+void DOG::UICrosshair::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
    d2d.m_2ddc->DrawTextW(
       L"+",
