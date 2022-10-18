@@ -152,13 +152,27 @@ void NetCode::OnUpdate()
 									if (id == temp->objectId)
 									{
 										transC.worldMatrix = temp->transform;
+										m_bufferReciveSize += sizeof(NetworkTransform);
 									}
 
 								}
 							});
 					}
 				}
+				NetworkAgentStats* tempS = new NetworkAgentStats;
+				EntityManager::Get().Collect<NetworkAgentStats, AgentStatsComponent>().Do([&](entity id, NetworkAgentStats&, AgentStatsComponent& Agent)
+					{
+						for (int i = 0; i < m_outputTcp[0].nrOfNetStats; ++i)
+						{
+							memcpy(tempS, m_reciveBuffer + m_bufferReciveSize + sizeof(NetworkAgentStats) * i, sizeof(NetworkAgentStats));
+							if (id == tempS->objectId)
+							{
+								Agent = tempS->stats;
+								m_bufferReciveSize += sizeof(NetworkTransform);
+							}
 
+						}
+					});
 				//reset recived bufferSize
 				m_bufferReciveSize = 0;
 				m_dataIsReadyToBeRecivedTcp = false;
