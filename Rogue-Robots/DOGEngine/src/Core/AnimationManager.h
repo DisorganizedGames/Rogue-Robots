@@ -65,7 +65,7 @@ namespace DOG
 		DirectX::FXMMATRIX ImguiTransform(i32 joint);
 
 		bool m_imguiResetPos = false;
-		bool m_imguiTestMovement = true;
+		bool m_imguiTestMovement = false;
 		f32 m_imguiMovementSpeed = 0.0f;
 		f32 m_imguiMovementAngle = 0.0f;
 		bool m_imguiPause = false;

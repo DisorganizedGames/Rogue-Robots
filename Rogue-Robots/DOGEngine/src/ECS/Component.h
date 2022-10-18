@@ -99,6 +99,61 @@ namespace DOG
 		void Update(const f32 dt);
 	};
 
+	struct RealAnimationComponent
+	{
+		i32 offset = 0;
+		f32 globalTime = 0.0f;
+		struct AnimationClip
+		{
+			i32 group = 0;
+			// Animation Specifics
+			i32 animationID = 0;
+			f32 totalTicks = 1.0f;
+			f32 duration = 1.0f;
+			// Clip Specifics
+			f32 normalizedTime = 0.f;
+			f32 currentTick = 0.0f;
+			f32 timeScale = 1.0f;
+			f32 startWeight = 1.0f;
+			f32 targetWeight = 0.0f;
+			f32 currentWeight = 1.0f;
+			bool loop = false;
+			bool activeAnimation = false;
+			// Blend/transition Specifics
+			AnimationBlendMode blendMode = AnimationBlendMode::normal;
+			f32 transitionStart = 0.0f;
+			f32 transitionLength = 0.0f;
+			bool matchingTime = false; //bs
+
+			f32 UpdateClipTick(const f32 dt);
+			f32 UpdateWeightLinear(const f32 gt, const f32 dt);
+			f32 UpdateWeightBezier(const f32 gt, const f32 dt);
+			void UpdateState(const f32 gt, const f32 dt);
+			void ResetClip();
+			bool HasActiveAnimation() const { return animationID != -1; };
+			void SetAnimation(const i32 id, const f32 nTicks, const f32 duration, const f32 startTime = 0.0f);
+			bool operator <(const AnimationClip& o) const{
+				return !o.activeAnimation ||
+					!o.activeAnimation && group < o.group ||
+					!o.activeAnimation && group == o.group && targetWeight > o.targetWeight ||
+					!o.activeAnimation && group == o.group && targetWeight == o.targetWeight && currentWeight > o.currentWeight;}
+			bool operator ==(const AnimationClip& o) const{
+				return animationID == o.animationID;}
+			bool BecameActive(const f32 gt, const f32 dt) {
+				return (gt > transitionStart) && (gt - dt <= transitionStart);
+			}
+		};
+		std::array<AnimationClip, 3> clips;
+		u32 nGroupA = 0;
+		u32 nGroupB = 0;
+		u32 nGroupC = 0;
+		u32 nAdded = 0;
+		// Update
+		void Update(const f32 dt);
+		void AddAnimation(i32 id, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight);
+		i32 ActiveClipCount();
+	};
+
 	struct AudioComponent
 	{
 		u32 assetID = u32(-1);

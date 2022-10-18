@@ -260,7 +260,6 @@ namespace DOG
 	{
 		auto constexpr componentID = sti::getTypeIndex<ComponentType>();
 		ASSERT(Exists(entityID), "Entity is invalid");
-
 		return 
 			(
 			m_components.contains(componentID)

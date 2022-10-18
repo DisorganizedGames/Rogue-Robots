@@ -243,7 +243,7 @@ namespace DOG
 			EntityManager::Get().DestroyDeferredEntities();
 
 			Time::End();
-		}
+ 		}
 
 		//rd->Flush();
 		//bin.ForceClear();
