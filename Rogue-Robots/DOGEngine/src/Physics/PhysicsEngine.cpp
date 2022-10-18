@@ -151,7 +151,7 @@ namespace DOG
 						if (EntityManager::Get().HasComponent<RigidbodyComponent>(rigidBody->rigidbodyEntity))
 						{
 							RigidbodyComponent& rigidbodyComponent = EntityManager::Get().GetComponent<RigidbodyComponent>(rigidBody->rigidbodyEntity);
-							if (rigidbodyComponent.getControllOfTransform)
+							if (rigidbodyComponent.getControlOfTransform)
 							{
 								btTransform rigidbodyTransform;
 								rigidbodyTransform = rigidBody->rigidBody->getWorldTransform();
@@ -247,7 +247,7 @@ namespace DOG
 					if (EntityManager::Get().HasComponent<RigidbodyComponent>(rigidBody->rigidbodyEntity))
 					{
 						RigidbodyComponent& rigidbodyComponent = EntityManager::Get().GetComponent<RigidbodyComponent>(rigidBody->rigidbodyEntity);
-						if (rigidbodyComponent.getControllOfTransform)
+						if (rigidbodyComponent.getControlOfTransform)
 						{
 							btTransform rigidbodyTransform;
 							rigidbodyTransform = rigidBody->rigidBody->getWorldTransform();
