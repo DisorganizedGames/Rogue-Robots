@@ -146,6 +146,31 @@ namespace DOG
 						rigidBody->rigidBody->getMotionState()->setWorldTransform(trans);
 						//If the user updates the scale after creation
 						rigidBody->rigidbodyScale = transform.GetScale();
+
+						//Check if the capsule has an rigidbodycomponent and if it should have controll over the transform
+						if (EntityManager::Get().HasComponent<RigidbodyComponent>(rigidBody->rigidbodyEntity))
+						{
+							RigidbodyComponent& rigidbodyComponent = EntityManager::Get().GetComponent<RigidbodyComponent>(rigidBody->rigidbodyEntity);
+							if (rigidbodyComponent.getControllOfTransform)
+							{
+								btTransform rigidbodyTransform;
+								rigidbodyTransform = rigidBody->rigidBody->getWorldTransform();
+
+								//Get the rotation from the world matrix
+								Vector3 scale, position;
+								Quaternion rotation;
+								transform.worldMatrix.Decompose(scale, rotation, position);
+								btQuaternion quat(rotation.x, rotation.y, rotation.z, rotation.w);
+								rigidbodyTransform.setRotation(quat);
+
+								btVector3 newPosition = { rigidbodyComponent.lastFramePositionDifferance.x, rigidbodyComponent.lastFramePositionDifferance.y, rigidbodyComponent.lastFramePositionDifferance.z };
+								//We add the position of the motion state transform
+								newPosition += trans.getOrigin();
+								rigidbodyTransform.setOrigin(newPosition);
+
+								rigidBody->rigidBody->setWorldTransform(rigidbodyTransform);
+							}
+						}
 					}
 				});
 
@@ -175,6 +200,7 @@ namespace DOG
 					}
 				});
 		}
+
 		s_physicsEngine.GetDynamicsWorld()->stepSimulation(deltaTime, 10);
 
 		EntityManager::Get().Collect<TransformComponent, BoxColliderComponent>().Do([&](TransformComponent& transform, BoxColliderComponent& collider)
@@ -216,6 +242,20 @@ namespace DOG
 					trans.getOpenGLMatrix((float*)(&transform.worldMatrix));
 					//The scale is set to 1 by bullet physics, so we set it back to the original scale
 					transform.SetScale(rigidBody->rigidbodyScale);
+
+					//Check if the capsule has an rigidbodycomponent and if it should have controll over the transform
+					if (EntityManager::Get().HasComponent<RigidbodyComponent>(rigidBody->rigidbodyEntity))
+					{
+						RigidbodyComponent& rigidbodyComponent = EntityManager::Get().GetComponent<RigidbodyComponent>(rigidBody->rigidbodyEntity);
+						if (rigidbodyComponent.getControllOfTransform)
+						{
+							btTransform rigidbodyTransform;
+							rigidbodyTransform = rigidBody->rigidBody->getWorldTransform();
+							btVector3 difference = rigidbodyTransform.getOrigin() - trans.getOrigin();
+							//Because the motion state and rigidbody have different positions sometimes we need this for it to work properly
+							rigidbodyComponent.lastFramePositionDifferance = { difference.getX(), difference.getY(), difference.getZ() };
+						}
+					}
 				}
 			});
 
