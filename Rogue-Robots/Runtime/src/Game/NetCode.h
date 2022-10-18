@@ -50,4 +50,10 @@ private:
 	std::string m_inputString;
 	Client m_client;
 	std::mutex m_mut;
+	int m_bufferSize;
+	int m_bufferReciveSize;
+	char m_sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
+	char* m_reciveBuffer;
+	bool m_dataIsReadyToBeSentTcp;
+	bool m_dataIsReadyToBeRecivedTcp;
 };
