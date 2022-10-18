@@ -50,7 +50,16 @@ Vector3 = {
 		else
 			return "(" .. vec.x .. ", " .. vec.y .. ")"
 		end
-	end
+	end,
+
+	-- Concatenate
+	__concat = function(a, b)
+		if type(a) == "string" then
+			return a .. Vector3.__tostring(b)
+		else
+			return Vector3.__tostring(a) .. b
+		end
+	end,
 }
 
 -- Returns the vector sum of vectors v and u

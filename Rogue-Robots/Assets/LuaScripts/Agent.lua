@@ -8,24 +8,167 @@ local ObjectManager = require("Object")
 
 
 
----------------------
---  Agent script   --
----------------------
+
+-----------------
+--  Behaviors  --
+-----------------
+local idle = ObjectManager:CreateObject()
+idle.name = "idle"
+local death = ObjectManager:CreateObject()
+death.name = "death"
+local chasePlayer = ObjectManager:CreateObject()
+chasePlayer.name = "chasePlayer"
+local default = ObjectManager:CreateObject()
+default.name = "default"
+
+
+-------------
+--  Agent  --
+-------------
 local Agent = ObjectManager:CreateObject()
+Agent.behaviorStack = { idle }
 Agent.pos = Vector3.New(25.0, 12.0, 25.0)
 Agent.rot = Vector3.New(0.0, 0.0, 0.0)
 Agent.stats = {
 	hp = 100.0,
 	maxHP = 100.0,
-	speed = 5.0
+	speed = 15.0
 }
 
+------------------------
+--  Define behaviors  --
+------------------------
+--	idle  --
+function idle:OnUpdate()
+	return true
+end
+--	death  --
+death.fall = 9
+function death:OnUpdate()
+	if Agent.rot.x < math.pi then
+		Agent.rot.x = Agent.rot.x + math.pi * DeltaTime
+		Entity:ModifyComponent(EntityID, "Transform", Agent.rot, 2)
+	else
+		Agent.pos.y = Agent.pos.y - self.fall * DeltaTime
+		self.fall = self.fall + self.fall * DeltaTime
+		Entity:ModifyComponent(EntityID, "Transform", Agent.pos, 1)
+	end
+	if Agent.pos.y < 0.0 then
+		Agent:Init()
+		self.fall = 9
+	end
+	return true
+end
+--  chase player  --
+chasePlayer.target = nil
+function chasePlayer:OnUpdate()
+	if Agent.stats.hp <= 0.0 then
+		print("problem, hp less than 0")
+	end
+	distances = Host:DistanceToPlayers(Agent.pos)
+	if distances[1].dist > 10.0 then
+		print("Lost sight of player " .. chasePlayer.target)
+		chasePlayer.target = nil
+	elseif distances[1].dist < 0.05 then
+		--print("Attacking player " .. distances[1].id)
+	else
+		local dir = distances[1].pos - Agent.pos;
+		dir = dir * (1 / distances[1].dist)
+		Agent.pos = Agent.pos + dir * Agent.stats.speed * DeltaTime
+		Entity:ModifyComponent(EntityID, "Transform", Agent.pos, 1)
+		--print("Distance to player " .. distances[1].id .. " is " .. distances[1].dist)
+	end
+		
+		return self.target ~= nil
+	end
+	--	default  --
+	default.target = 0
+	default.cooldown = 0
+	default.checkpoints = {
+		Vector3.New(30.0, 10.3, 41.2),
+		Vector3.New(33.0, 18.3, 50.2),
+		Vector3.New(46.0, 20.3, 27.2),
+		Vector3.New(52.0, 23.3, 47.2),
+		Vector3.New(43.0, 8.3, 31.2),
+		Vector3.New(38.0, 22.3, 39.2),
+	}
+	function default:ChangeDir()
+		if self.cooldown <= 0 then
+			self.target = self.target % #self.checkpoints + 1
+			self.dir = Norm(self.checkpoints[self.target] - Agent.pos)
+			self.cooldown = 1
+		end
+	end
+	default:ChangeDir()
+	function default:OnUpdate()
+		if self.cooldown > 0 then
+			self.cooldown = self.cooldown - DeltaTime
+		end
+		local move = Agent.stats.speed * DeltaTime
+		Agent.pos = Agent.pos + self.dir * move
+		--local dir = Norm(Vector3.New(35.0, 15.0, 40.0) - Agent.pos)
+		--Agent.pos = Agent.pos + dir * move
+		distances = Host:DistanceToPlayers(Agent.pos)
+		if distances[1].dist < 8.0 then
+			chasePlayer.target = distances[1].playerID
+			-- print("Chasing player " .. chasePlayer.target)
+			Agent:pushBehavior(chasePlayer)
+		end
+	if Length(Vector3.New(35, 15, 40) - Agent.pos) > 100 then
+		print("Agent has escaped: " .. Agent.pos)
+		Agent:Die()
+	end
+	Entity:ModifyComponent(EntityID, "Transform", Agent.pos, 1)
+
+	return true
+end
+
+---------------------
+--  Agent script   --
+---------------------
+
+function Agent:Init()
+	print("Init Agent")
+	while #self.behaviorStack > 1 do
+		self:popBehavior()
+	end
+	self.pos = self.spawnPoints[self.nextSpawnPoint]
+	self.nextSpawnPoint = self.nextSpawnPoint % #self.spawnPoints + 1
+	print("Agent spawned at " .. self.pos)
+	self.rot = Vector3.New(0.0, 0.0, 0.0)
+	self.stats.hp = 100.0
+	Entity:ModifyComponent(EntityID, "Transform", self.rot, 2)
+	Entity:ModifyComponent(EntityID, "Transform", self.pos, 1)
+	self:pushBehavior(default)
+end
+
+Agent.spawnPoints = {
+		Vector3.New(13.0, 10.3, 41.2),
+		Vector3.New(33.0, 28.3, 5.2),
+		Vector3.New(36.0, 27.3, 37.2),
+		Vector3.New(42.0, 17.3, 17.2),
+		Vector3.New(23.0, 18.3, 31.2),
+		Vector3.New(38.0, 12.3, 9.2),
+}
+Agent.nextSpawnPoint = 1
+
 function Agent:popBehavior()
+	print("popping " .. self.behaviorStack[#self.behaviorStack].name)
 	self.behaviorStack[#self.behaviorStack] = nil
+	self:PrintStack()
 end
 
 function Agent:pushBehavior(behavior)
+	print("pushing " .. behavior.name)
 	self.behaviorStack[#self.behaviorStack + 1] = behavior
+	self:PrintStack()
+end
+
+function Agent:PrintStack()
+	print("Behavior stack:")
+	for i, b in ipairs(self.behaviorStack) do
+		print("    " .. i .. " " .. b.name)
+	end
 end
 
 function Agent:doBehavior()
@@ -34,90 +177,33 @@ function Agent:doBehavior()
 	end
 end
 
+function Agent:Damage(damage)
+	self.stats.hp = self.stats.hp - damage
+	print("Agent took " .. damage .. ". Current HP: " .. self.stats.hp)
+	if self.stats.hp <= 0.0 then
+		self:Die()
+	end
+end
+
+function Agent:Die()
+	print("Agent dies")
+	while #self.behaviorStack > 1 do
+		self:popBehavior()
+	end
+	self:pushBehavior(death)
+end
+
+function Agent:Collision(entity)
+	b = self.behaviorStack[#self.behaviorStack]
+	if b.name == "default" then
+		b:ChangeDir()
+	end
+end
 
 -- In future move to more specific Agent script --
 function OnStart()
-
-	-----------------------------
-	--  Define some behaviors  --
-	-----------------------------
-	--	idle  --
-	local idle = ObjectManager:CreateObject()
-	function idle:OnUpdate()
-		return true
-	end
-	--	death  --
-	local death = ObjectManager:CreateObject()
-	function death:OnUpdate()
-		if Agent.rot.x < 3.1415 then
-			Agent.rot.x = Agent.rot.x + math.pi * DeltaTime
-			Entity:ModifyComponent(EntityID, "Transform", Agent.rot, 2)
-		else
-			Agent.pos.y = Agent.pos.y - 1.0 * DeltaTime
-			Entity:ModifyComponent(EntityID, "Transform", Agent.pos, 1)
-		end
-		return Agent.pos.y > 0.0
-	end
-	--  chase player  --
-	local chasePlayer = ObjectManager:CreateObject()
-	chasePlayer.target = nil
-	function chasePlayer:OnUpdate()
-		if Agent.stats.hp <= 0.0 then -- Temporary hack
-			Agent:pushBehavior(idle)
-			Agent:pushBehavior(death)
-		end
-
-		distances = Host:DistanceToPlayers(Agent.pos)
-		if distances[1].dist > 10.0 then
-			print("Lost sight of player " .. chasePlayer.target)
-			chasePlayer.target = nil
-		elseif distances[1].dist < 0.05 then
-			--print("Attacking player " .. distances[1].id)
-		else
-			local dir = distances[1].pos - Agent.pos;
-			dir = dir * (1 / distances[1].dist)
-			Agent.pos = Agent.pos + dir * Agent.stats.speed * DeltaTime
-			Entity:ModifyComponent(EntityID, "Transform", Agent.pos, 1)
-			--print("Distance to player " .. distances[1].id .. " is " .. distances[1].dist)
-		end
-		
-		return self.target ~= nil
-	end
-	--	default  --
-	local default = ObjectManager:CreateObject()
-	default.target = 1
-	default.checkpoints = {
-		Vector3.New(10.0, 10.3, 1.2),
-		Vector3.New(33.0, 8.3, 38.2),
-		Vector3.New(26.0, 2.3, 2.2),
-		Vector3.New(12.0, 3.3, 27.2),
-		Vector3.New(23.0, 2.3, 11.2),
-		Vector3.New(18.0, 2.3, 9.2),
-	}
-	function default:OnUpdate()
-		local dir = self.checkpoints[self.target] - Agent.pos;
-		local len = Length(dir)
-		dir = dir * (1 / len)
-		local move = Agent.stats.speed * DeltaTime
-		Agent.pos = Agent.pos + dir * move
-		if (len - move) < 0.05 then
-			local prev = self.target
-			self.target = self.target % #self.checkpoints + 1
-			--print("Switching target: " .. prev .. " --> " .. self.target .. ": ", self.checkpoints[prev], self.checkpoints[self.target])
-		end
-		distances = Host:DistanceToPlayers(Agent.pos)
-		if distances[1].dist < 8.0 then
-			chasePlayer.target = distances[1].playerID
-			-- print("Chasing player " .. chasePlayer.target)
-			Agent:pushBehavior(chasePlayer)
-		end
-
-		Entity:ModifyComponent(EntityID, "Transform", Agent.pos, 1)
-		return Agent.stats.hp > 0.0
-	end
-
-
-	Agent.behaviorStack = {idle, death, default}	--ultimately keep only common behavior
+	Agent:pushBehavior(idle)
+	Agent:Init()
 
 	Agent.model = Asset:LoadModel("Assets/suzanne.glb")
 	--Agent.model = Asset:LoadModel("Assets/temp_Robot.fbx")
@@ -126,7 +212,6 @@ function OnStart()
 	Entity:AddComponent(EntityID, "BoxCollider", Vector3.New(1, 1, 1), true)
 	Entity:AddComponent(EntityID, "Rigidbody", true)
 
-	Agent.behaviorStack = {idle, death, default}
 end
 
 function OnUpdate()
@@ -135,8 +220,15 @@ function OnUpdate()
 end
 
 function OnCollisionEnter(self, e1, e2)
-	if (Entity:HasComponent(e1, "Bullet") or Entity:HasComponent(e2, "Bullet")) and Agent.stats.hp > 0.0 then
-		Agent.stats.hp = Agent.stats.hp - 1000
+	entity = e2
+	if entity == EntityID then
+		entity = e1
+	end
+	if Entity:HasComponent(entity, "Bullet") and Agent.stats.hp > 0.0 then
+		Agent:Damage(1000)
+	else
+		print("Agent touched " .. entity .. " at  " .. Agent.pos)
+		Agent:Collision(entity)
 	end
 end
 
