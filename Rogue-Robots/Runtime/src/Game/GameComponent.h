@@ -22,6 +22,8 @@ struct AgentStatsComponent
 	float maxHP;
 	float speed;
 	//...
+
+	u32 roomId;
 };
 
 struct BulletComponent
@@ -48,4 +50,11 @@ struct InputController
 	bool jump = false;
 	bool switchComp = false;
 	bool activateActiveItem = false;
+};
+
+struct DoorComponent
+{
+	u32 roomId = u32(-1);
+	bool isOpening = false;
+	f32 openValue = 0.f; 
 };

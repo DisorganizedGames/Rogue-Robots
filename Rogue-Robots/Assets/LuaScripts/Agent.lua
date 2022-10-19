@@ -32,7 +32,9 @@ Agent.rot = Vector3.New(0.0, 0.0, 0.0)
 Agent.stats = {
 	hp = 100.0,
 	maxHP = 100.0,
-	speed = 15.0
+	speed = 15.0,
+
+	roomId = 0,
 }
 
 ------------------------
