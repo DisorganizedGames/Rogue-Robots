@@ -153,22 +153,32 @@ namespace DOG
 							RigidbodyComponent& rigidbodyComponent = EntityManager::Get().GetComponent<RigidbodyComponent>(rigidBody->rigidbodyEntity);
 							if (rigidbodyComponent.getControlOfTransform)
 							{
-								btTransform rigidbodyTransform;
-								rigidbodyTransform = rigidBody->rigidBody->getWorldTransform();
-
-								//Get the rotation from the world matrix
-								Vector3 scale, position;
-								Quaternion rotation;
-								transform.worldMatrix.Decompose(scale, rotation, position);
-								btQuaternion quat(rotation.x, rotation.y, rotation.z, rotation.w);
-								rigidbodyTransform.setRotation(quat);
-
 								btVector3 newPosition = { rigidbodyComponent.lastFramePositionDifferance.x, rigidbodyComponent.lastFramePositionDifferance.y, rigidbodyComponent.lastFramePositionDifferance.z };
-								//We add the position of the motion state transform
-								newPosition += trans.getOrigin();
-								rigidbodyTransform.setOrigin(newPosition);
 
-								rigidBody->rigidBody->setWorldTransform(rigidbodyTransform);
+								//This will cause some wrong movements sometimes, but it works!
+								//Check if the distance between the rigidbody and the motion state so that they are not too far from each other
+								//If they are, we set the rigidbody with the motion state world transform!
+								const float maxDistance = 1.0f;
+								if (abs(newPosition.getX()) > maxDistance || abs(newPosition.getY()) > maxDistance || abs(newPosition.getZ()) > maxDistance)
+									rigidBody->rigidBody->setWorldTransform(trans);
+								else
+								{
+									btTransform rigidbodyTransform;
+									rigidbodyTransform = rigidBody->rigidBody->getWorldTransform();
+
+									//Get the rotation from the world matrix
+									Vector3 scale, position;
+									Quaternion rotation;
+									transform.worldMatrix.Decompose(scale, rotation, position);
+									btQuaternion quat(rotation.x, rotation.y, rotation.z, rotation.w);
+									rigidbodyTransform.setRotation(quat);
+
+									//We add the position of the motion state transform
+									newPosition += trans.getOrigin();
+									rigidbodyTransform.setOrigin(newPosition);
+
+									rigidBody->rigidBody->setWorldTransform(rigidbodyTransform);
+								}
 							}
 						}
 					}
