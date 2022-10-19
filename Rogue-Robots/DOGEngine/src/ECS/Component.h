@@ -7,6 +7,7 @@ namespace DOG
 	constexpr const u32 NULL_ENTITY = MAX_ENTITIES;
 	typedef u32 entity;
 	enum class AnimationBlendMode
+	enum class WeightBlendMode
 	{
 		normal,
 		linear,
@@ -83,7 +84,7 @@ namespace DOG
 			f32 targetWeight = 0.0f;
 			bool loop = false;
 			// Blend Specifics
-			AnimationBlendMode blendMode = AnimationBlendMode::normal;
+			WeightBlendMode blendMode = WeightBlendMode::normal;
 			f32 transitionStart = 0.0f;
 			f32 transitionTime = 0.0f;
 			bool matchingTime = false; //bs
@@ -101,6 +102,7 @@ namespace DOG
 
 	struct RealAnimationComponent
 	{
+		static constexpr u8 maxClips = 3;
 		i32 offset = 0;
 		f32 globalTime = 0.0f;
 		struct AnimationClip
@@ -120,38 +122,39 @@ namespace DOG
 			bool loop = false;
 			bool activeAnimation = false;
 			// Blend/transition Specifics
-			AnimationBlendMode blendMode = AnimationBlendMode::normal;
+			WeightBlendMode blendMode = WeightBlendMode::normal;
 			f32 transitionStart = 0.0f;
 			f32 transitionLength = 0.0f;
 			bool matchingTime = false; //bs
 
-			f32 UpdateClipTick(const f32 dt);
-			f32 UpdateWeightLinear(const f32 gt, const f32 dt);
-			f32 UpdateWeightBezier(const f32 gt, const f32 dt);
+			f32 UpdateClipTick(const f32 gt);
+			f32 UpdateWeightLinear(const f32 gt);
+			f32 UpdateWeightBezier(const f32 gt);
 			void UpdateState(const f32 gt, const f32 dt);
 			void ResetClip();
 			bool HasActiveAnimation() const { return animationID != -1; };
 			void SetAnimation(const i32 id, const f32 nTicks, const f32 duration, const f32 startTime = 0.0f);
 			bool operator <(const AnimationClip& o) const{
 				return !o.activeAnimation ||
-					!o.activeAnimation && group < o.group ||
-					!o.activeAnimation && group == o.group && targetWeight > o.targetWeight ||
-					!o.activeAnimation && group == o.group && targetWeight == o.targetWeight && currentWeight > o.currentWeight;}
+					o.activeAnimation && group < o.group ||
+					o.activeAnimation && group == o.group && targetWeight > o.targetWeight ||
+					o.activeAnimation && group == o.group && targetWeight == o.targetWeight && currentWeight > o.currentWeight;}
 			bool operator ==(const AnimationClip& o) const{
 				return animationID == o.animationID;}
 			bool BecameActive(const f32 gt, const f32 dt) {
-				return (gt > transitionStart) && (gt - dt <= transitionStart);
-			}
+				return (gt > transitionStart) && (gt - dt < transitionStart);}
+			bool Deactivated(const f32 gt, const f32 dt) {
+				return activeAnimation && (gt+dt > transitionStart+transitionLength && !loop);}
 		};
-		std::array<AnimationClip, 3> clips;
-		u32 nGroupA = 0;
-		u32 nGroupB = 0;
-		u32 nGroupC = 0;
-		u32 nAdded = 0;
+		std::array<AnimationClip, maxClips> clips;
+		u32 animsPerGroup[maxClips] = { 0 };
+		u32 nAddedClips = 0;
 		// Update
 		void Update(const f32 dt);
-		void AddAnimation(i32 id, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight);
-		i32 ActiveClipCount();
+		void AddAnimation(i32 id, u32 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop = false, f32 timeScale = 1.f);
+		i32 ActiveClipCount(){
+			return animsPerGroup[0] + animsPerGroup[1] + animsPerGroup[2];
+		}
 	};
 
 	struct AudioComponent
