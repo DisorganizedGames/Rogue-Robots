@@ -239,19 +239,16 @@ void Server::ServerPollTCP()
 						NetworkAgentStats test;
 						memcpy(&test, reciveBuffer + bufferReciveSize, sizeof(NetworkAgentStats));
 						int n = sizeof(test);
-						DOG::EntityManager::Get().Collect<NetworkAgentStats, AgentStatsComponent>().Do([&](DOG::entity id, NetworkAgentStats& networkC, AgentStatsComponent& statsC)
+						for (size_t i = 0; i < statsChanged.size(); i++)
+						{
+							if (statsChanged[i].objectId == test.objectId)
 							{
-									for (size_t i = 0; i < statsChanged.size(); i++)
-									{
-										if (statsChanged[i].objectId == test.objectId)
-										{
-											alreadyIn = true;
-											statsChanged.at(i).stats.hp = statsC.hp - networkC.stats.hp;
-											break;
-										}
-									 //todo hasch
-								}
-							});
+								alreadyIn = true;
+								statsChanged.at(i).stats.hp = statsChanged.at(i).stats.hp - test.stats.hp;
+								break;
+							}
+						}
+						
 						if(!alreadyIn)
 							statsChanged.push_back(test);
 					}
