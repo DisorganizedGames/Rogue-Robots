@@ -140,25 +140,27 @@ void NetCode::OnUpdate()
 				if (m_outputTcp->nrOfNetTransform > 0 && m_outputTcp->playerId < MAX_PLAYER_COUNT)
 				{
 					//Update the transfroms, Only none hosts
-					NetworkTransform* temp = new NetworkTransform;
-					memcpy(temp, m_reciveBuffer + m_bufferReciveSize, sizeof(NetworkTransform));
 					if (m_inputTcp.playerId > 0)
 					{
+						NetworkTransform* temp = new NetworkTransform;
 						EntityManager::Get().Collect<NetworkTransform, TransformComponent>().Do([&](entity id, NetworkTransform&, TransformComponent& transC)
 							{
 								for (int i = 0; i < m_outputTcp[0].nrOfNetTransform; ++i)
 								{
+									//todo make better
 									memcpy(temp, m_reciveBuffer + m_bufferReciveSize + sizeof(NetworkTransform) * i, sizeof(NetworkTransform));
 									if (id == temp->objectId)
 									{
 										transC.worldMatrix = temp->transform;
-										m_bufferReciveSize += sizeof(NetworkTransform);
 									}
 
 								}
+
 							});
 					}
+					m_bufferReciveSize += m_outputTcp->nrOfNetTransform * sizeof(NetworkTransform);
 				}
+
 				NetworkAgentStats* tempS = new NetworkAgentStats;
 				EntityManager::Get().Collect<NetworkAgentStats, AgentStatsComponent>().Do([&](entity id, NetworkAgentStats&, AgentStatsComponent& Agent)
 					{
@@ -168,11 +170,11 @@ void NetCode::OnUpdate()
 							if (id == tempS->objectId)
 							{
 								Agent = tempS->stats;
-								m_bufferReciveSize += sizeof(NetworkTransform);
 							}
 
 						}
 					});
+				m_bufferReciveSize += sizeof(NetworkAgentStats) * m_outputTcp->nrOfNetTransform;
 				//reset recived bufferSize
 				m_bufferReciveSize = 0;
 				m_dataIsReadyToBeRecivedTcp = false;

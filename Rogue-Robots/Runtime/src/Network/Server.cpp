@@ -226,7 +226,6 @@ void Server::ServerPollTCP()
 					{
 						for (int j = 0; j < holdClientsData.nrOfNetTransform; j++)
 						{
-							DOG::NetworkTransform test;
 							memcpy(sendBuffer + bufferSendSize, reciveBuffer + bufferReciveSize, sizeof(DOG::NetworkTransform));
 							bufferReciveSize += sizeof(DOG::NetworkTransform);
 							bufferSendSize += sizeof(DOG::NetworkTransform);
@@ -236,25 +235,25 @@ void Server::ServerPollTCP()
 					//Sync the enemies stats
 					for (int j = 0; j < holdClientsData.nrOfNetStats; j++)
 					{
+						bool alreadyIn = false;
 						NetworkAgentStats test;
 						memcpy(&test, reciveBuffer + bufferReciveSize, sizeof(NetworkAgentStats));
+						int n = sizeof(test);
 						DOG::EntityManager::Get().Collect<NetworkAgentStats, AgentStatsComponent>().Do([&](DOG::entity id, NetworkAgentStats& networkC, AgentStatsComponent& statsC)
 							{
-								if (id == test.objectId)
-								{
 									for (size_t i = 0; i < statsChanged.size(); i++)
 									{
-										if (statsChanged[i].objectId == networkC.objectId)
+										if (statsChanged[i].objectId == test.objectId)
 										{
+											alreadyIn = true;
 											statsChanged.at(i).stats.hp = statsC.hp - networkC.stats.hp;
 											break;
 										}
-
-									}
-									networkC.stats.hp = statsC.hp - networkC.stats.hp;
-									statsChanged.push_back(networkC); //todo hasch
+									 //todo hasch
 								}
 							});
+						if(!alreadyIn)
+							statsChanged.push_back(test);
 					}
 				}
 			}
@@ -264,11 +263,11 @@ void Server::ServerPollTCP()
 		{
 			m_playersServer[0].nrOfNetStats = statsChanged.size();
 
-
 			memcpy(sendBuffer, (char*)m_playersServer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
-			memcpy(sendBuffer + bufferSendSize, (char*)statsChanged.data(), statsChanged.size());
-			bufferSendSize += statsChanged.size();
-			//memcpy(reciveBuffer, (char*)&m_playersServer, sizeof(Client::ClientsData) *4);
+			
+			if(statsChanged.size())
+				memcpy(sendBuffer + bufferSendSize, (char*)statsChanged.data(), statsChanged.size() * sizeof(NetworkAgentStats));
+			bufferSendSize += statsChanged.size() * sizeof(NetworkAgentStats);
 			for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
 				send(m_holdSocketsTcp[i].fd, sendBuffer, bufferSendSize, 0);
 			
