@@ -833,7 +833,7 @@ namespace DOG
 				{
 					if (ImGui::MenuItem("Sponza"))
 					{
-						constexpr std::string_view path = "Assets/Sponza_gltf/glTF/Sponza.gltf";
+						constexpr std::string_view path = "Assets/Models/Temporary_Assets/Sponza_gltf/glTF/Sponza.gltf";
 						if (std::filesystem::exists(path))
 						{
 							u32 id = DOG::AssetManager::Get().LoadModelAsset(path.data());
@@ -842,7 +842,7 @@ namespace DOG
 					}
 					if (ImGui::MenuItem("Suzanne"))
 					{
-						constexpr std::string_view path = "Assets/suzanne.glb";
+						constexpr std::string_view path = "Assets/Models/Temporary_Assets/suzanne.glb";
 						if (std::filesystem::exists(path))
 						{
 							u32 id = DOG::AssetManager::Get().LoadModelAsset(path.data());
@@ -882,7 +882,7 @@ namespace DOG
 			if (ImGui::Begin("Asset manager", &open))
 			{
 				static int selectedModelPath = 0;
-				std::array<const char*, 2> modelPaths = { "Assets/Sponza_gltf/glTF/Sponza.gltf", "Assets/suzanne.glb" };
+				std::array<const char*, 2> modelPaths = { "Assets/Models/Temporary_Assets/Sponza_gltf/glTF/Sponza.gltf", "Assets/Models/Temporary_Assets/suzanne.glb" };
 				ImGui::Combo("Model path", &selectedModelPath, modelPaths.data(), static_cast<int>(modelPaths.size()));
 
 
