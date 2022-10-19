@@ -101,6 +101,8 @@ namespace DOG
 		//
 		template<class ...Args>
 		void CallFunctionOnAllEntityScripts(entity entity, const std::string& functionName, Args&&... args);
+
+		void RemoveScriptsFromDeferredEntities();
 	};
 
 	template<typename T, class ...Args>
