@@ -27,12 +27,13 @@ namespace DOG
 		m_table = m_luaW->CreateTable();
 	}
 
-	LuaTable::LuaTable(Table& table, bool addReference) : m_table(table)
+	LuaTable::LuaTable(Table table, bool addReference) : m_table(table)
 	{
 		m_luaW = &LuaW::GetLuaW();
 		if (addReference)
 			m_luaW->AddReferenceToTable(table);
 	}
+
 
 	LuaTable::~LuaTable()
 	{

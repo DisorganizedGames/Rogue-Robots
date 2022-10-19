@@ -65,6 +65,15 @@ function OnStart()
 	--Events
 	EventSystem:Register("NormalBulletUpdate" .. EntityID, NormalBulletUpdate) --Is called if there is no barrelcomponent.
 	EventSystem:Register("NormalBulletSpawn" .. EntityID, NormalBulletSpawn) --Is called if there is no barrelcomponent.
+	
+	function EvalShotCooldown()
+		return shootTimer < 0.01
+	end
+
+	EventSystem:InvokeEvent("Game_AddFinishCondition", { "Tag1" }, EvalShotCooldown)
+	print("BREH")
+
+
 end
 
 local tempMode = 0
@@ -102,7 +111,6 @@ function OnUpdate()
 		switched = false
 	end
 
-
 	-- Gun firing logic
 	local bullet = miscComponent:Update(EntityID)
 	EventSystem:InvokeEvent("NormalBulletUpdate" .. tostring(EntityID))
@@ -112,6 +120,9 @@ function OnUpdate()
 	end
 
 	EventSystem:InvokeEvent("NormalBulletSpawn" .. tostring(EntityID), bullet)
+
+ 
+
 
 	--BarrelComponent:Update(barrelComponent)
 	--MagazineComponent:Update(magazineComponent)

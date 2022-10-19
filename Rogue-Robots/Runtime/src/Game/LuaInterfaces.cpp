@@ -249,6 +249,17 @@ void EntityInterface::PlayAudio(DOG::LuaContext* context)
 	comp.shouldPlay = true;
 }
 
+void EntityInterface::GetScriptData(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	const auto& scriptName = context->GetString();
+	assert(!scriptName.empty());
+
+	LuaTable t(LuaMain::GetScriptManager()->GetScript(e, scriptName).scriptTable, true);
+	context->ReturnTable(t);
+
+}
+
 #pragma endregion
 
 void EntityInterface::GetTransformScaleData(LuaContext* context)

@@ -162,12 +162,19 @@ GameLayer::GameLayer() noexcept
 	m_movingPointLight = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<TransformComponent>(m_movingPointLight, Vector3(10, 10, 10), Vector3(0, 0, 0), Vector3(1.f));
 	m_entityManager.AddComponent<PointLightComponent>(m_movingPointLight, pointLight, Vector3(1.f, 1.f, 0.f), 5.f);
+	
+	// Game state manager
+	auto gameStateEntity = m_entityManager.CreateEntity();
+	LuaMain::GetScriptManager()->AddScript(gameStateEntity, "GameStateManager.lua");
+	LuaMain::GetScriptManager()->OrderScript("GameStateManager.lua", -1);
+
 }
 
 void GameLayer::OnAttach()
 {
 	LoadLevel();
 	m_Agent = std::make_shared<Agent>();
+	LuaMain::GetScriptManager()->SortOrderScripts();
 	LuaMain::GetScriptManager()->StartScripts();
 }
 
@@ -297,6 +304,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetAction>("SetAction");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::HasComponent>("HasComponent");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::PlayAudio>("PlayAudio");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetScriptData>("GetScriptData");
 
 	global->SetLuaInterface(luaInterface);
 
