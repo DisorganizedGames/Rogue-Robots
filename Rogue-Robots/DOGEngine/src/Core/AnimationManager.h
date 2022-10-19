@@ -49,6 +49,14 @@ namespace DOG
 		void UpdateLinearGT(AnimationComponent::AnimationClip& clip, const f32 globalTime);
 		std::vector<ImportedRig*> m_rigs;
 	private:
+		//test
+		struct LogClip
+		{
+			std::vector<f32> logWeights;
+			std::vector<f32> logNormalizedTime;
+			std::vector<f32> logCurrentTick;
+		};
+		std::vector<LogClip> loggedClips;
 		bool m_bonesLoaded = false;
 		i32 m_imguiMinMaskIdx = 100;
 		i32 m_imguiMaxMaskIdx = 0;
