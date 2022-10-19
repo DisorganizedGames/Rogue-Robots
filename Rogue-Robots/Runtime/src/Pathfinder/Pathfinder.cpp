@@ -34,7 +34,7 @@ Pathfinder::Pathfinder() noexcept
 	GenerateNavMeshes(map1, GridCoord(startX, startY), symbol);
 }
 
-void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord origin, char& symbol)
+void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord origin, char& symbol, NavNodeID currentNode = NavNodeID(-1))
 {
 	constexpr char printif = 'e';
 	size_t gridSizeX = map[0].size();
@@ -208,57 +208,114 @@ void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord orig
 		std::cout << "====================================================" << std::endl;
 	};
 	print(largest);
-	Box border = largest + 1;
+	Box outside = largest + 1;
 	if (largest.Area() > 0)
 	{
-		std::cout << "border: " << border.str() << std::endl;
-		GridCoord nxt1 = border.low;
+		NavMeshID thisMesh = NewMesh(largest);
+		if (currentNode != NavNodeID(-1))
+			ConnectMeshAndNode(thisMesh, currentNode);
+		//std::cout << "border: " << outside.str() << std::endl;
+		GridCoord nxt1 = outside.low;
 		GridCoord nxt2 = nxt1;
 		// expand left
-		while (nxt1.y < border.high.y && nxt2.y < border.high.y)
+		while (nxt1.y < outside.high.y && nxt2.y < outside.high.y)
 		{
-			while (++nxt1.y < border.high.y && map[nxt1.y][nxt1.x] != ' ');
+			while (++nxt1.y < outside.high.y && map[nxt1.y][nxt1.x] != ' ');
 			nxt2 = nxt1;
-			while (++nxt2.y < border.high.y && map[nxt2.y][nxt2.x] == ' ');
-			if (nxt1.y < border.high.y)
-				GenerateNavMeshes(map, GridCoord(nxt2.x, nxt1.y + (nxt2.y - nxt1.y) / 2, 0), ++symbol);
+			while (++nxt2.y < outside.high.y && map[nxt2.y][nxt2.x] == ' ');
+			if (nxt1.y < outside.high.y)
+			{
+				// TODO: check if (some part of the) border is inside an existing NavMesh
+				for (Box open : ConnectToNeighborsAndReturnOpen(Box(nxt1, nxt2))
+				{
+
+				}
+				NavNodeID newNode = m_navNodes.size();
+				GridCoord inside = nxt1;
+				inside.x += 1;
+				m_navNodes.emplace_back(NavNode(Box(inside, nxt2), thisMesh));
+				GenerateNavMeshes(map, GridCoord(nxt2.x, nxt1.y + (nxt2.y - nxt1.y) / 2, 0), ++symbol, newNode);
+			}
 		}
-		nxt1.x = border.low.x; nxt1.y = border.high.y;
+		nxt1.x = outside.low.x; nxt1.y = outside.high.y;
 		nxt2 = nxt1;
 		// expand down
-		while (nxt1.x < border.high.x && nxt2.x < border.high.x)
+		while (nxt1.x < outside.high.x && nxt2.x < outside.high.x)
 		{
-			while (++nxt1.x < border.high.x && map[nxt1.y][nxt1.x] != ' ');
+			while (++nxt1.x < outside.high.x && map[nxt1.y][nxt1.x] != ' ');
 			nxt2 = nxt1;
-			while (++nxt2.x < border.high.x && map[nxt2.y][nxt2.x] == ' ');
-			if (nxt1.x < border.high.x)
+			while (++nxt2.x < outside.high.x && map[nxt2.y][nxt2.x] == ' ');
+			if (nxt1.x < outside.high.x)
+			{
+				// TODO: check if (some part of the) border is inside an existing NavMesh
+				NavNodeID newNode = m_navNodes.size();
+				GridCoord inside = nxt1;
+				inside.y -= 1;
+				m_navNodes.emplace_back(NavNode(Box(inside, nxt2), thisMesh));
 				GenerateNavMeshes(map, GridCoord(nxt1.x + (nxt2.x - nxt1.x) / 2, nxt2.y, 0), ++symbol);
+			}
 		}
-		nxt1 = border.high;
+		nxt1 = outside.high;
 		nxt2 = nxt1;
 		// expand right
-		while (border.low.y < nxt1.y && border.low.y < nxt2.y)
+		while (outside.low.y < nxt1.y && outside.low.y < nxt2.y)
 		{
-			while (border.low.y < --nxt1.y && map[nxt1.y][nxt1.x] != ' ');
+			while (outside.low.y < --nxt1.y && map[nxt1.y][nxt1.x] != ' ');
 			nxt2 = nxt1;
-			while (border.low.y < --nxt2.y && map[nxt2.y][nxt2.x] == ' ');
-			if (border.low.y < nxt1.y)
+			while (outside.low.y < --nxt2.y && map[nxt2.y][nxt2.x] == ' ');
+			if (outside.low.y < nxt1.y)
+			{
+				// TODO: check if (some part of the) border is inside an existing NavMesh
+				NavNodeID newNode = m_navNodes.size();
+				GridCoord inside = nxt1;
+				inside.x -= 1;
+				m_navNodes.emplace_back(NavNode(Box(inside, nxt2), thisMesh));
 				GenerateNavMeshes(map, GridCoord(nxt2.x, nxt1.y - (nxt1.y - nxt2.y) / 2, 0), ++symbol);
+			}
 		}
-		nxt1.x = border.high.x; nxt1.y = border.low.y;
+		nxt1.x = outside.high.x; nxt1.y = outside.low.y;
 		nxt2 = nxt1;
 		// expand up
-		while (border.low.x < nxt1.x && border.low.x < nxt2.x)
+		while (outside.low.x < nxt1.x && outside.low.x < nxt2.x)
 		{
-			while (border.low.x < --nxt1.x && map[nxt1.y][nxt1.x] != ' ');
+			while (outside.low.x < --nxt1.x && map[nxt1.y][nxt1.x] != ' ');
 			nxt2 = nxt1;
-			while (border.low.x < --nxt2.x && map[nxt2.y][nxt2.x] == ' ');
-			if (border.low.x < nxt1.x)
+			while (outside.low.x < --nxt2.x && map[nxt2.y][nxt2.x] == ' ');
+			if (outside.low.x < nxt1.x)
+			{
+				// TODO: check if (some part of the) border is inside an existing NavMesh
+				NavNodeID newNode = m_navNodes.size();
+				GridCoord inside = nxt1;
+				inside.y += 1;
+				m_navNodes.emplace_back(NavNode(Box(inside, nxt2), thisMesh));
 				GenerateNavMeshes(map, GridCoord(nxt1.x - (nxt1.x - nxt2.x) / 2, nxt2.y, 0), ++symbol);
+			}
 		}
 	}
 	else
 		std::cout << "finished generating NavMeshes" << std::endl;
+}
+
+Pathfinder::Box Pathfinder::Box::Intersection(const Box other)
+{
+	// find necessary translation to move both boxes to positive space
+	// note: GridCoords are as of now always positive
+	//GridCoord translate;
+	//translate.x = std::min(0, std::min(low.x, other.low.x)) * (-1);
+	//translate.y = std::min(0, std::min(low.y, other.low.y)) * (-1);
+	//translate.z = std::min(0, std::min(low.z, other.low.z)) * (-1);
+	Box result = other;
+	// should work as long as both boxes are in positive space
+	result.low.x = std::max(result.low.x, std::min(result.high.x, low.x));
+	result.low.y = std::max(result.low.y, std::min(result.high.y, low.y));
+	result.low.z = std::max(result.low.z, std::min(result.high.z, low.z));
+	result.high.x = std::min(result.high.x, std::max(result.low.x, high.x));
+	result.high.y = std::min(result.high.y, std::max(result.low.y, high.y));
+	result.high.z = std::min(result.high.z, std::max(result.low.z, high.z));
+	if (Contains(result.low) && Contains(result.high))
+		return result;
+	else
+		return Box();  // basically a point
 }
 
 size_t Pathfinder::FindNavMeshContaining(const Vector3 pos)
@@ -436,8 +493,60 @@ std::vector<Pathfinder::NavNode*> Pathfinder::Astar(const Vector3 start, const V
 	return std::vector<NavNode*>();
 }
 
-Pathfinder::NavMesh::NavMesh(Vector3 low, Vector3 hi) : lowCorner(low), hiCorner(hi)
+Pathfinder::NavMesh::NavMesh(Vector3 low, Vector3 hi) : lowCorner(low), hiCorner(hi), corners(Box(low, hi))
 {
+}
+
+Pathfinder::NavMesh::NavMesh(Box extents) : corners(extents)
+{
+	lowCorner = Vector3(corners.low.x, corners.low.y, corners.low.z);
+	hiCorner = Vector3(corners.high.x, corners.high.y, corners.high.z);
+}
+
+Pathfinder::NavMeshID Pathfinder::NewMesh(Box extents)
+{
+	NavMeshID id = m_navMeshes.size();
+	m_navMeshes.emplace_back(NavMesh(extents));
+	return id;
+}
+
+Pathfinder::NavNodeID Pathfinder::NewNode(NavMeshID mesh, Box node)
+{
+	NavNodeID id = m_navNodes.size();
+	m_navMeshes.emplace_back(NavNode(node, mesh));
+	return id;
+}
+
+void Pathfinder::ConnectMeshAndNode(NavMeshID mesh, NavNodeID node)
+{
+	m_navNodes[node].AddNavMesh(mesh);
+	m_navMeshes[mesh].AddNavNode(node);
+}
+
+std::vector<Pathfinder::Box> Pathfinder::ConnectToNeighborsAndReturnOpen(NavMeshID mesh, Box border)
+{
+	std::vector<Box> open{border};
+	for (NavMeshID existing = 0; existing < m_navMeshes.size(); ++existing)
+	{
+		Box intersection = m_navMeshes[existing].corners.Intersection(border);
+		if (intersection.Area() > 0)
+		{
+			ConnectMeshAndNode(existing, NewNode(mesh, intersection));
+			std::vector<Box> newOpen;
+			for (Box segment : open)
+			{
+				if (segment.Contains(intersection))
+				{
+					// newOpen.push_back(high_side);
+					// open.push_back(low_side);
+				}
+				else
+					newOpen.push_back(segment);
+			}
+			open = newOpen;
+		}
+	}
+	return open;
 }
 
 void Pathfinder::NavMesh::AddNavNode(NavNodeID nodeID)
@@ -454,6 +563,11 @@ bool Pathfinder::NavMesh::Contains(const Vector3 pos)
 		&& lowCorner.z <= pos.z && pos.z < hiCorner.z;
 }
 
+bool Pathfinder::NavMesh::Contains(const GridCoord pos)
+{
+	return corners.Contains(pos);
+}
+
 float Pathfinder::NavMesh::CostWalk(const Vector3 enter, const Vector3 exit)
 {
 	return (exit - enter).Length();
@@ -463,6 +577,19 @@ float Pathfinder::NavMesh::CostFly(const Vector3 enter, const Vector3 exit)
 {
 	return (exit - enter).Length();
 }
+
+Pathfinder::NavNode::NavNode(Vector3 low, Vector3 hi, NavMeshID one, NavMeshID two) :
+	lowCorner(low), hiCorner(hi), iMesh1(one), iMesh2(two) {}
+
+Pathfinder::NavNode::NavNode(Box area, NavMeshID meshIdx) :
+	corners(area), iMesh1(meshIdx), iMesh2(NavMeshID(-1))
+{
+	lowCorner = Vector3(area.low.x, area.low.y, area.low.z);
+	hiCorner = Vector3(area.high.x, area.high.y, area.high.z);
+}
+
+Pathfinder::NavNode::NavNode(Vector3 pos, NavMeshID meshIdx) :
+	lowCorner(pos), hiCorner(pos), iMesh1(meshIdx), iMesh2(meshIdx) {}
 
 Vector3 Pathfinder::NavNode::Midpoint()
 {
