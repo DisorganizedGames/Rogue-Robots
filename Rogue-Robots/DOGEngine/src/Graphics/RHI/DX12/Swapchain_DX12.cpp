@@ -343,7 +343,8 @@ namespace DOG::gfx
 	{
 		assert(idx < m_buffers.size());
 		ComPtr<ID3D12Resource> backBuff;
-		HRESULT hr = m_sc->GetBuffer(idx,IID_PPV_ARGS(backBuff.GetAddressOf()));
+		HRESULT hr = S_OK;
+		hr = m_sc->GetBuffer(idx,IID_PPV_ARGS(backBuff.GetAddressOf()));
 		HR_VFY(hr);
 		return backBuff;
 	}

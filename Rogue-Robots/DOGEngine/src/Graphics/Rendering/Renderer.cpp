@@ -685,7 +685,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 	ui->AddUIlEmentToScene(menuID, std::move(menuBack));
 	auto optionsBack = std::make_unique<DOG::UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Options"), *ui->m_d2d, optionsBackID);
 	ui->AddUIlEmentToScene(optionsID, std::move(optionsBack));
-	auto multiBack = std::make_unique<DOG::UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Muliplayer"), *ui->m_d2d, multiBackID);
+	auto multiBack = std::make_unique<DOG::UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Multiplayer"), *ui->m_d2d, multiBackID);
 	ui->AddUIlEmentToScene(multiID, std::move(multiBack));
 
 	//Menu buttons
@@ -710,9 +710,9 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
 
 	//Splash screen
-	auto sID = ui->GenerateUID();
-	auto s = std::make_unique<DOG::UISplashScreen>(*ui->m_d2d, (float)clientWidth, (float)clientHeight, sID);
-	ui->AddUIlEmentToScene(menuID, std::move(s));
+	// auto sID = ui->GenerateUID();
+	// auto s = std::make_unique<DOG::UISplashScreen>(*ui->m_d2d, (float)clientWidth, (float)clientHeight, sID);
+	// ui->AddUIlEmentToScene(menuID, std::move(s));
 
 }
 
@@ -722,5 +722,5 @@ void AddScenes()
 	gameID = ui->AddScene();
 	multiID = ui->AddScene();
 	optionsID = ui->AddScene();
-	ui->ChangeUIscene(menuID);
+	ui->ChangeUIscene(gameID);
 }

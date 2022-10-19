@@ -186,8 +186,6 @@ void DOG::gfx::D2DBackend_DX12::FreeResize()
     m_dc.Reset();
     m_2ddc.Reset();
     m_dxd.Reset();
-    //m_dwritwf.Reset();
-    //m_factory.Reset();
 }
 
 DOG::gfx::D2DBackend_DX12::~D2DBackend_DX12()
@@ -215,7 +213,8 @@ void DOG::gfx::D2DBackend_DX12::Render()
 void DOG::gfx::D2DBackend_DX12::EndFrame()
 {
     u_char idx = m_sc->GetNextDrawSurfaceIdx();
-    HRESULT hr = m_2ddc->EndDraw(); //warning
+    HRESULT hr = S_OK;
+    hr = m_2ddc->EndDraw();
     HR_VFY(hr);
 
     m_11on12d->ReleaseWrappedResources(m_wrappedBackBuffers[idx].GetAddressOf(), 1);

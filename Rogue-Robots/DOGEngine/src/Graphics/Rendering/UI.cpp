@@ -69,7 +69,8 @@ UINT DOG::UI::QuerryScene(UINT sceneID)
    else
    {
       ptrdiff_t ptrdiff = std::distance(m_scenes.begin(), res);
-      HRESULT hr = PtrdiffTToUInt(ptrdiff, &index);
+      HRESULT hr = S_OK;
+      hr = PtrdiffTToUInt(ptrdiff, &index);
       HR_VFY(hr);
       return index;
    }
