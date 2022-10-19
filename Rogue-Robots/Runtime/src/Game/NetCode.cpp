@@ -117,20 +117,22 @@ void NetCode::OnUpdate()
 
 						});
 				}
+				
+				EntityManager::Get().Collect<NetworkAgentStats, AgentStatsComponent>().Do([&](entity id, NetworkAgentStats& netC, AgentStatsComponent& AgentS)
+					{
+						netC.objectId = id; // replace with enemy id
+						netC.stats = AgentS;
+						memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkAgentStats));
+						m_inputTcp.nrOfNetStats++;
+						m_bufferSize += sizeof(NetworkAgentStats);
+
+					});
+
+
+				m_dataIsReadyToBeSentTcp = true;
 			}
 
-			EntityManager::Get().Collect<NetworkAgentStats, AgentStatsComponent>().Do([&](entity id, NetworkAgentStats& netC, AgentStatsComponent& AgentS)
-				{
-					netC.objectId = id; // replace with enemy id
-					netC.stats = AgentS;
-					memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkAgentStats));
-					m_inputTcp.nrOfNetStats++;
-					m_bufferSize += sizeof(NetworkAgentStats);
 
-				});
-
-			
-			m_dataIsReadyToBeSentTcp = true;
 		}
 			// Recived data
 		if (m_dataIsReadyToBeRecivedTcp)

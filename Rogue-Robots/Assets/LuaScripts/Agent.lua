@@ -218,8 +218,9 @@ end
 
 function OnUpdate()
 	Agent.pos = Vector3.FromTable(Entity:GetTransformPosData(EntityID))
-	if self.stats.hp <= 0.0 then
+	if Agent.stats.hp <= 0.0 then
 		self:Die()
+	end
 	Agent:doBehavior()
 
 end

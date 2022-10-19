@@ -246,9 +246,9 @@ void Server::ServerPollTCP()
 						{
 							if (statsChanged[i].objectId == test.objectId)
 							{
-								if (statsChanged.at(i).stats.hp < test.stats.hp)
+								if (statsChanged[i].stats.hp > test.stats.hp)
 								{
-									statsChanged.at(i).stats.hp = test.stats.hp;
+									statsChanged[i].stats.hp = test.stats.hp;
 								}
 								alreadyIn = true;
 								break;
