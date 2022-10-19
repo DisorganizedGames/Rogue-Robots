@@ -202,6 +202,10 @@ void Server::ServerPollTCP()
 		int bufferReciveSize = 0;
 		m_holdSocketsTcp = m_clientsSocketsTcp;
 		bufferSendSize += sizeof(m_playersServer);
+		for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
+		{
+			m_holdSocketsTcp[i].events = POLLRDNORM;
+		}
 		if (WSAPoll(m_holdSocketsTcp.data(), (u32)m_holdSocketsTcp.size(), 1) > 0)
 		{
 			for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
@@ -259,19 +263,27 @@ void Server::ServerPollTCP()
 
 			
 		memcpy(sendBuffer, (char*)m_playersServer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
-
 			if (statsChanged.size())
 				memcpy(sendBuffer + bufferSendSize, (char*)statsChanged.data(), statsChanged.size() * sizeof(NetworkAgentStats));
+	
 			bufferSendSize += statsChanged.size() * sizeof(NetworkAgentStats);
+
 			for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
 			{
-				int h = send(m_holdSocketsTcp[i].fd, sendBuffer, bufferSendSize, 0);
-				if (h > 2000)
-				{
-					std::cout << "Too much data send" << std::endl;
-				}
+				m_holdSocketsTcp[i].events = POLLWRNORM;
 			}
 
+			if (WSAPoll(m_holdSocketsTcp.data(), (u32)m_holdSocketsTcp.size(), 10) > 0)
+			{
+
+				for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
+				{
+					if (m_holdSocketsTcp[i].revents & POLLWRNORM)
+					{
+						send(m_holdSocketsTcp[i].fd, sendBuffer, bufferSendSize, 0);
+					}
+				}
+			}
 		statsChanged.clear();
 		//wait untill tick is done 
 		float timeTakenS = TickTimeLeftTCP(tickStartTime, clockFrequency);

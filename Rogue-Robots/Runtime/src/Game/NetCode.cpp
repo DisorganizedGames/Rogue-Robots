@@ -268,7 +268,7 @@ void NetCode::Recive()
 		
 		while (m_netCodeAlive)
 		{
-			if (m_dataIsReadyToBeSentTcp)
+  			if (m_dataIsReadyToBeSentTcp)
 			{
 				m_mut.lock();
 				memcpy(m_sendBuffer, (char*)&m_inputTcp, sizeof(m_inputTcp));
