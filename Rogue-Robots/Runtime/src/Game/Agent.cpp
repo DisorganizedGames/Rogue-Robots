@@ -14,6 +14,6 @@ Agent::Agent() : m_entityManager(EntityManager::Get()), m_agentEntity(m_entityMa
 
 Agent::~Agent()
 {
-	LuaMain::GetScriptManager()->RemoveAllEntityScripts(m_agentEntity);
-	m_entityManager.DeferredEntityDestruction(m_agentEntity);
+	//LuaMain::GetScriptManager()->RemoveAllEntityScripts(m_agentEntity);
+	//m_entityManager.DeferredEntityDestruction(m_agentEntity);
 }
