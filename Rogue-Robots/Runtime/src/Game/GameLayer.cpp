@@ -1,5 +1,6 @@
 #include "GameLayer.h"
 #include "TestScene.h"
+#include "SimpleAnimationSystems.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -95,6 +96,7 @@ GameLayer::GameLayer() noexcept
 
 void GameLayer::OnAttach()
 {
+	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 	m_testScene = std::make_unique<TestScene>();
 	m_testScene->SetUpScene();
 	LoadLevel();

@@ -103,6 +103,12 @@ void TestScene::SetUpScene()
 		},
 		LightUpdateFrequency::PerFrame);
 
+	auto& lerpAnimator = AddComponent<LerpAnimateComponent>(isoSphereEntity);
+	lerpAnimator.origin = s_entityManager.GetComponent<TransformComponent>(isoSphereEntity).GetPosition();
+	lerpAnimator.target = lerpAnimator.origin + Vector3(0, 5, 0);
+	lerpAnimator.loops = -1;
+	lerpAnimator.scale = 0.2;
+
 	u32 magentaCubeID = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
 	entity doorTest = CreateEntity();
 	AddComponent<DoorComponent>(doorTest).roomId = 0;
@@ -137,6 +143,11 @@ void TestScene::SetUpScene()
 	// Moving light
 	LightHandle pointLight = LightManager::Get().AddPointLight(PointLightDesc(), LightUpdateFrequency::PerFrame);
 	entity movingPointLight = CreateEntity();
-	AddComponent<TransformComponent>(movingPointLight, Vector3(10, 10, 10), Vector3(0, 0, 0), Vector3(1.f));
+	AddComponent<TransformComponent>(movingPointLight, Vector3(12, 10, 10), Vector3(0, 0, 0), Vector3(1.f));
 	AddComponent<PointLightComponent>(movingPointLight, pointLight, Vector3(1.f, 1.f, 0.f), 5.f);
+	auto& lightAnimation = AddComponent<LerpAnimateComponent>(movingPointLight);
+	lightAnimation.origin = s_entityManager.GetComponent<TransformComponent>(movingPointLight).GetPosition();
+	lightAnimation.target = lightAnimation.origin + Vector3(0, 0, 30);
+	lightAnimation.loops = -1;
+	lightAnimation.scale = 0.3;
 }
