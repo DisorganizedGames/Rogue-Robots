@@ -6,6 +6,12 @@ set(SourceFiles
 
 	"src/Game/NetCode.h" "src/Game/NetCode.cpp"
 	"src/Pathfinder/Pathfinder.h" "src/Pathfinder/Pathfinder.cpp"
+	"src/Pathfinder/NavMesh.h" "src/Pathfinder/NavMesh.cpp"
+	"src/Pathfinder/NavNode.h" "src/Pathfinder/NavNode.cpp"
+	"src/Pathfinder/Pathfinder.h" "src/Pathfinder/Pathfinder.cpp"
+	"src/Pathfinder/GridCoord.h" "src/Pathfinder/GridCoord.cpp"
+	"src/Pathfinder/Box.h" "src/Pathfinder/Box.cpp"
+	
 	"src/Game/LuaInterfaces.h" "src/Game/LuaInterfaces.cpp"
 	"src/Game/EntitesTypes.h"
 	"src/Game/TestScene.h" "src/Game/TestScene.cpp"  
