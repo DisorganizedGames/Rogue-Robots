@@ -218,7 +218,10 @@ end
 
 function OnUpdate()
 	Agent.pos = Vector3.FromTable(Entity:GetTransformPosData(EntityID))
+	if self.stats.hp <= 0.0 then
+		self:Die()
 	Agent:doBehavior()
+
 end
 
 function OnCollisionEnter(self, e1, e2)
@@ -227,13 +230,14 @@ function OnCollisionEnter(self, e1, e2)
 		entity = e1
 	end
 	if Entity:HasComponent(entity, "Bullet") and Agent.stats.hp > 0.0 then
-		print(". Current HP: " .. self.stats.hp)
 		if Entity:IsBulletLocal(e2) then
 			print("Bullet is local")
 			Agent:Damage(10)
 		else
 			print("Bullet is Not Local, Bullet from other player")
 		end
+		print(" Current HP: " .. Agent.stats.hp)
+
 	else
 		--print("Agent touched " .. entity .. " at  " .. Agent.pos)
 		Agent:Collision(entity)

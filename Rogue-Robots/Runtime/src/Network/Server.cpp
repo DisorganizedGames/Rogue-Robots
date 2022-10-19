@@ -202,6 +202,7 @@ void Server::ServerPollTCP()
 		int bufferReciveSize = 0;
 		m_holdSocketsTcp = m_clientsSocketsTcp;
 		bufferSendSize += sizeof(m_playersServer);
+
 		for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
 		{
 			m_holdSocketsTcp[i].events = POLLRDNORM;
@@ -245,8 +246,11 @@ void Server::ServerPollTCP()
 						{
 							if (statsChanged[i].objectId == test.objectId)
 							{
+								if (statsChanged.at(i).stats.hp < test.stats.hp)
+								{
+									statsChanged.at(i).stats.hp = test.stats.hp;
+								}
 								alreadyIn = true;
-								statsChanged.at(i).stats.hp = statsChanged.at(i).stats.hp - test.stats.hp;
 								break;
 							}
 						}
