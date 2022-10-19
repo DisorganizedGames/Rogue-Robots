@@ -219,20 +219,17 @@ void Server::ServerPollTCP()
 				else if (m_holdSocketsTcp[i].revents & POLLRDNORM)
 				{
 					bufferReciveSize = 0;
-					recv(m_holdSocketsTcp[i].fd, reciveBuffer, SEND_AND_RECIVE_BUFFER_SIZE, 0);
+					int n = recv(m_holdSocketsTcp[i].fd, reciveBuffer, SEND_AND_RECIVE_BUFFER_SIZE, 0);
 					memcpy(&holdClientsData, &reciveBuffer, sizeof(Client::ClientsData));
 					memcpy(&m_playersServer[holdClientsData.playerId], &holdClientsData, sizeof(Client::ClientsData));
 					bufferReciveSize += sizeof(Client::ClientsData);
 
-					//check if host and then add transforms
-					if (holdClientsData.playerId == 0)
+					//add transforms
+					for (int j = 0; j < holdClientsData.nrOfNetTransform; j++)
 					{
-						for (int j = 0; j < holdClientsData.nrOfNetTransform; j++)
-						{
-							memcpy(sendBuffer + bufferSendSize, reciveBuffer + bufferReciveSize, sizeof(DOG::NetworkTransform));
-							bufferReciveSize += sizeof(DOG::NetworkTransform);
-							bufferSendSize += sizeof(DOG::NetworkTransform);
-						}
+						memcpy(sendBuffer + bufferSendSize, reciveBuffer + bufferReciveSize, sizeof(DOG::NetworkTransform));
+						bufferReciveSize += sizeof(DOG::NetworkTransform);
+						bufferSendSize += sizeof(DOG::NetworkTransform);
 					}
 
 					//Sync the enemies stats
