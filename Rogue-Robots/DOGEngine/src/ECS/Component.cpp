@@ -265,6 +265,7 @@ namespace DOG
 		static constexpr i32 noanimation = -1;
 		timeScale = 1.f;
 		animationID = noanimation;
+		group = 4;
 		activeAnimation = false;
 	}
 
@@ -308,15 +309,18 @@ namespace DOG
 		for (u32 i = 0; i < activeClips; i++)
 			if (groupWeightSum[clips[i].group] > 0.0f)
 				clips[i].currentWeight /= groupWeightSum[clips[i].group];
+
+		// reset added clips for next frame
+		nAddedClips = 0;
 	}
 
-	void RealAnimationComponent::AddAnimation(i32 id, u32 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop, f32 timeScale)
+	void RealAnimationComponent::AddAnimationClip(i32 id, u32 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop, f32 timeScale)
 	{
 		//if (ActiveClipCount() == maxClips)
 		//{
 		//	//remove clip ere
 		//}
-
+		
 		// set new clip
 		auto& addedClip = clips[ActiveClipCount()];
 		addedClip.animationID = id;
@@ -328,5 +332,18 @@ namespace DOG
 		addedClip.targetWeight = targetWeight;
 		addedClip.timeScale = timeScale;
 		addedClip.loop = loop;
+		++nAddedClips;
 	}
+
+	void RealAnimationComponent::AnimationClip::SetAnimation(const f32 nTicks, const f32 animationDuration)
+	{
+		duration = animationDuration;
+		totalTicks = nTicks;
+	}
+
+	void RealAnimationComponent::SetAnimationClip(f32 duration, f32 nTicks)
+	{
+
+	}
+
 }
