@@ -15,6 +15,9 @@ namespace DOG
 		m_imguiPos.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_imguiRot.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_vsJoints.assign(130, {});
+		loggedClips.push_back({});
+		loggedClips.push_back({});
+		loggedClips.push_back({});
 		ImGuiMenuLayer::RegisterDebugWindow("Animation Clip Setter", [this](bool& open) {SpawnControlWindow(open); });
 	};
 
@@ -27,6 +30,7 @@ namespace DOG
 	{
 		ZoneScopedN("updateJoints_ppp");
 		using namespace DirectX;
+		const auto deltaTime = (f32)Time::DeltaTime();
 		if (!m_bonesLoaded) {
 			EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
 				{
@@ -46,25 +50,31 @@ namespace DOG
 			ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 			if (model)
 			{
-				if(aC.ActiveClipCount() < aC.maxClips)
-					aC.AddAnimationClip(1, 0, 0.5f, 1.0f, 0.0f, 1.0f, 1.0f);
+				if(aC.clipCount() < aC.maxClips)
+					aC.AddAnimationClip(1, 0, 0.5f, 1.0f, 0.0f, 1.0f);
 			}
 			// clips added this frame needs data from corresponding animation
-			for (i32 i = 0; i < aC.nAddedClips; i++)
+			for (u32 i = 0; i < aC.nAddedClips; i++)
 			{
-				const i32 idx = i + aC.ActiveClipCount();
+				const u32 idx = i + aC.ActiveClipCount();
 				auto& clip = aC.clips[idx];
 				auto& anim = m_rigs[0]->animations.at(clip.animationID);
 				clip.SetAnimation(anim.duration, anim.ticks);
 			}
-			aC.Update((f32)Time::DeltaTime());
+			aC.Update(deltaTime);
 			for (size_t i = 0; i < aC.ActiveClipCount(); i++)
 			{
-				auto& c = aC.clips[i];
-				logWeights.push_back(c.currentWeight);
-				logNormalizedTime.push_back(c.currentWeight);
-				logCurrentTick.push_back(c.currentTick);
+				auto& lc = loggedClips[i];
+				if (lc.logCurrentTick.size() < 100)
+				{
+					auto& c = aC.clips[i];
+					lc.logWeights.push_back(c.currentWeight);
+					lc.logNormalizedTime.push_back(c.currentWeight);
+					lc.logCurrentTick.push_back(c.currentTick);
+				}
 			}
+			if (loggedClips[0].logCurrentTick.size() >= 100)
+				auto stop = 0;
 		});
 		return;
 		//static bool open = true;

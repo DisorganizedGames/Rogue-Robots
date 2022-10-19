@@ -111,7 +111,7 @@ namespace DOG
 		f32 globalTime = 0.0f;
 		struct AnimationClip
 		{
-			i32 group = 4;
+			i32 group = 3;
 			// Animation Specifics
 			i32 animationID = 0;
 			f32 totalTicks = 1.0f;
@@ -137,12 +137,15 @@ namespace DOG
 			void ResetClip();
 			void UpdateState(const f32 gt, const f32 dt);
 			bool HasActiveAnimation() const { return animationID != -1; };
-			void SetAnimation(const f32 nTicks, const f32 duration);
-			bool operator <(const AnimationClip& o) const{
+			void SetAnimation(const f32 animationDuration, const f32 nTicks);
+			/*bool operator <(const AnimationClip& o) const{
 				return !o.activeAnimation ||
 					o.activeAnimation && group < o.group ||
 					o.activeAnimation && group == o.group && targetWeight > o.targetWeight ||
-					o.activeAnimation && group == o.group && targetWeight == o.targetWeight && currentWeight > o.currentWeight;}
+					o.activeAnimation && group == o.group && targetWeight == o.targetWeight && currentWeight > o.currentWeight;}*/
+			bool operator <(const AnimationClip& o) const {
+				return group < o.group;
+			}
 			bool operator ==(const AnimationClip& o) const{
 				return animationID == o.animationID;}
 			bool BecameActive(const f32 gt, const f32 dt) {
@@ -157,9 +160,14 @@ namespace DOG
 		// Update
 		void Update(const f32 dt);
 		void AddAnimationClip(i32 id, u32 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop = false, f32 timeScale = 1.f);
-		void SetAnimationClip(f32 duration, f32 nTicks);
 		i32 ActiveClipCount(){
 			return animsPerGroup[0] + animsPerGroup[1] + animsPerGroup[2];
+		}
+		i32 clipCount() {
+			i32 count = 0;
+			for (auto& c : clips)
+				count += (c.group != 3);
+			return count;
 		}
 	};
 

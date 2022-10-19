@@ -265,7 +265,7 @@ namespace DOG
 		static constexpr i32 noanimation = -1;
 		timeScale = 1.f;
 		animationID = noanimation;
-		group = 4;
+		group = 3;
 		activeAnimation = false;
 	}
 
@@ -322,7 +322,7 @@ namespace DOG
 		//}
 		
 		// set new clip
-		auto& addedClip = clips[ActiveClipCount()];
+		auto& addedClip = clips[clipCount()];
 		addedClip.animationID = id;
 		addedClip.group = group;
 		addedClip.transitionStart = globalTime + startDelay;
@@ -335,15 +335,9 @@ namespace DOG
 		++nAddedClips;
 	}
 
-	void RealAnimationComponent::AnimationClip::SetAnimation(const f32 nTicks, const f32 animationDuration)
+	void RealAnimationComponent::AnimationClip::SetAnimation(const f32 animationDuration, const f32 nTicks)
 	{
 		duration = animationDuration;
 		totalTicks = nTicks;
 	}
-
-	void RealAnimationComponent::SetAnimationClip(f32 duration, f32 nTicks)
-	{
-
-	}
-
 }
