@@ -20,7 +20,7 @@ namespace DOG::gfx
 	class RenderDevice_DX12 final : public RenderDevice
 	{
 	public:
-		RenderDevice_DX12(ComPtr<ID3D12Device5> device, IDXGIAdapter* adapter, bool debug);
+		RenderDevice_DX12(ComPtr<ID3D12Device5> device, IDXGIAdapter* adapter, bool debug, UINT numBackBuffers);
 		~RenderDevice_DX12();
 
 		Swapchain* CreateSwapchain(void* hwnd, u8 numBuffers);

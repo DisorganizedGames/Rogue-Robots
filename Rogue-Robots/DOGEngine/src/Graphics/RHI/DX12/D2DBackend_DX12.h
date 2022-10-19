@@ -19,13 +19,16 @@ namespace DOG::gfx
 		~D2DBackend_DX12();
 		void OnResize();
 		void FreeResize();
-		RenderDevice* m_rd;
-		Swapchain* m_sc;
-
-		// Public interface
 		void BeginFrame() override;
 		void EndFrame() override;
 		void Render() override;
+		ComPtr<ID2D1DeviceContext> Get2DDeviceContext();
+		ComPtr<IDWriteFactory> GetDWriteFactory();
+		D2D_SIZE_U GetRTPixelSize();
+	private:
+		RenderDevice* m_rd;
+		Swapchain* m_sc;
+
 
 		ComPtr<ID3D11Device> m_d;
 		ComPtr<ID3D11DeviceContext> m_dc;

@@ -17,19 +17,20 @@ namespace DOG
       ~UI();
       void DrawUI();
       void ChangeUIscene(UINT sceneID);
-      UINT AddUIlEmentToScene(UINT sceneID, std::unique_ptr<UIElement> element);
+      UINT AddUIElementToScene(UINT sceneID, std::unique_ptr<UIElement> element);
       UINT GenerateUID();
       UINT AddScene();
       void RemoveScene(UINT sceneID);
       void Resize(UINT clientWidth, UINT clientHeight);
       void FreeResize();
-      std::unique_ptr<DOG::gfx::D2DBackend_DX12> m_d2d; //The thing that renders everything
+      DOG::gfx::D2DBackend_DX12* GetBackend();
 
    private:
+      std::vector<std::unique_ptr<UIScene>> m_scenes;
+      std::unique_ptr<DOG::gfx::D2DBackend_DX12> m_d2d; //The thing that renders everything
       UINT m_width, m_height;
       UINT m_menuID, m_gameID;
-      UINT QuerryScene(UINT sceneID);
-      std::vector<std::unique_ptr<UIScene>> m_scenes;
+      UINT QueryScene(UINT sceneID);
       UINT m_currsceneID, m_currsceneIndex;
       bool m_visible;
       void BuildMenuUI();
@@ -42,8 +43,11 @@ namespace DOG
    public:
       UIScene(UINT id);
       ~UIScene() = default;
-      UINT m_ID;
+      UINT GetID();
+      std::vector<std::unique_ptr<UIElement>>& GetScene();
+   private:
       std::vector<std::unique_ptr<UIElement>> m_scene;
+      UINT m_ID;
 
    };
 
@@ -51,12 +55,12 @@ namespace DOG
    {
    public:
       UIElement(UINT id);
+      virtual ~UIElement();
       virtual void Draw(DOG::gfx::D2DBackend_DX12& d2d) = 0;
       virtual void Update(DOG::gfx::D2DBackend_DX12& d2d);
-
-      virtual ~UIElement();
-      UINT m_ID;
+      UINT GetID();
    private:
+      UINT m_ID;
    };
 
    class UIButton : public UIElement

@@ -193,6 +193,21 @@ DOG::gfx::D2DBackend_DX12::~D2DBackend_DX12()
 
 }
 
+ComPtr<ID2D1DeviceContext> DOG::gfx::D2DBackend_DX12::Get2DDeviceContext()
+{
+    return m_2ddc;
+}
+
+ComPtr<IDWriteFactory> DOG::gfx::D2DBackend_DX12::GetDWriteFactory()
+{
+    return m_dwritwf;
+}
+
+D2D_SIZE_U DOG::gfx::D2DBackend_DX12::GetRTPixelSize()
+{
+    return m_d2dRenderTargets[0]->GetPixelSize();
+}
+
 void DOG::gfx::D2DBackend_DX12::BeginFrame()
 {
     u_char idx = m_sc->GetNextDrawSurfaceIdx();

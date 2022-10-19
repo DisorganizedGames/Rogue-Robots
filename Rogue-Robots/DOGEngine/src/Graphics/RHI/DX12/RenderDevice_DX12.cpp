@@ -13,7 +13,7 @@
 namespace DOG::gfx
 {
 
-	RenderDevice_DX12::RenderDevice_DX12(ComPtr<ID3D12Device5> device, IDXGIAdapter* adapter, bool debug) :
+	RenderDevice_DX12::RenderDevice_DX12(ComPtr<ID3D12Device5> device, IDXGIAdapter* adapter, bool debug, UINT numBackBuffers) :
 		m_device(device),
 		m_debugOn(debug)
 	{
@@ -34,7 +34,7 @@ namespace DOG::gfx
 		
 
 		m_reservedDescriptor = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		m_d2dReservedDescriptor = m_descriptorMgr->allocate(2, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		m_d2dReservedDescriptor = m_descriptorMgr->allocate(numBackBuffers, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		InitRootsig();
 	}
 

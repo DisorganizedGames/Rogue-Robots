@@ -14,11 +14,16 @@ DOG::UI::~UI()
 
 }
 
+DOG::gfx::D2DBackend_DX12* DOG::UI::GetBackend()
+{
+   return m_d2d.get();
+}
+
 void DOG::UI::DrawUI()
 {
    if (m_visible && m_scenes.size() > 0)
    {
-      for (auto&& e : m_scenes[m_currsceneIndex]->m_scene)
+      for (auto&& e : m_scenes[m_currsceneIndex]->GetScene())
       {
          e->Update(*m_d2d);
          e->Draw(*m_d2d);
@@ -28,20 +33,20 @@ void DOG::UI::DrawUI()
 
 void DOG::UI::Resize(UINT clientWidth, UINT clientHeight)
 {
-   
+
    m_width = clientWidth;
    m_height = clientHeight;
    m_d2d->OnResize();
 }
 
 void DOG::UI::FreeResize()
-{  
+{
 
-   for (auto &&e : m_scenes)
+   for (auto&& e : m_scenes)
    {
-      e->m_scene.clear();
+      e->GetScene().clear();
    }
-   
+
    m_d2d->FreeResize();
 }
 
@@ -60,10 +65,10 @@ UINT DOG::UI::GenerateUID()
 /// @brief Querrys a scene from a specific sceneID
 /// @param sceneID The ID of the scene
 /// @return Returns the index of the scene witrh the specific sceneID. If scene is not found UINT_MAX is returned;
-UINT DOG::UI::QuerryScene(UINT sceneID)
+UINT DOG::UI::QueryScene(UINT sceneID)
 {
    UINT index;
-   auto res = std::find_if(m_scenes.begin(), m_scenes.end(), [&](std::unique_ptr<UIScene> const& s) { return s->m_ID == sceneID; });
+   auto res = std::find_if(m_scenes.begin(), m_scenes.end(), [&](std::unique_ptr<UIScene> const& s) { return s->GetID() == sceneID; });
    if (res == m_scenes.end())
       return UINT_MAX;
    else
@@ -80,16 +85,16 @@ UINT DOG::UI::QuerryScene(UINT sceneID)
 /// @param sceneID The ID of the scene
 /// @param element The element to be added
 /// @return The unique ID of the element. If the scene does not exist UINT_MAX is returned
-UINT DOG::UI::AddUIlEmentToScene(UINT sceneID, std::unique_ptr<UIElement> element)
+UINT DOG::UI::AddUIElementToScene(UINT sceneID, std::unique_ptr<UIElement> element)
 {
-   UINT index = QuerryScene(sceneID);
+   UINT index = QueryScene(sceneID);
    UINT id;
    if (index == UINT_MAX)
       return UINT_MAX;
    else
    {
-      id = element->m_ID;
-      m_scenes[index]->m_scene.push_back(std::move(element));
+      id = element->GetID();
+      m_scenes[index]->GetScene().push_back(std::move(element));
    }
    return id;
 }
@@ -99,7 +104,7 @@ UINT DOG::UI::AddUIlEmentToScene(UINT sceneID, std::unique_ptr<UIElement> elemen
 UINT DOG::UI::AddScene()
 {
    auto scene = std::make_unique<UIScene>(GenerateUID());
-   UINT id = scene->m_ID;
+   UINT id = scene->GetID();
    m_scenes.push_back(std::move(scene));
    return id;
 }
@@ -108,7 +113,7 @@ UINT DOG::UI::AddScene()
 /// @param sceneID The ID of the scene to be removed
 void DOG::UI::RemoveScene(UINT sceneID)
 {
-   UINT index = QuerryScene(sceneID);
+   UINT index = QueryScene(sceneID);
    if (index == UINT_MAX)
       return;
    else
@@ -120,7 +125,7 @@ void DOG::UI::RemoveScene(UINT sceneID)
 /// @param sceneID The ID of the scene to switch to
 void DOG::UI::ChangeUIscene(UINT sceneID)
 {
-   UINT index = QuerryScene(sceneID);
+   UINT index = QueryScene(sceneID);
    if (index == UINT_MAX)
       return;
    else
@@ -128,6 +133,16 @@ void DOG::UI::ChangeUIscene(UINT sceneID)
       m_currsceneIndex = index;
       m_currsceneID = sceneID;
    }
+}
+
+UINT DOG::UIScene::GetID()
+{
+   return m_ID;
+}
+
+std::vector<std::unique_ptr<DOG::UIElement>>& DOG::UIScene::GetScene()
+{
+   return m_scene;
 }
 
 DOG::UIElement::UIElement(UINT id) : m_ID(id)
@@ -145,14 +160,19 @@ void DOG::UIElement::Update(DOG::gfx::D2DBackend_DX12& d2d)
    return;
 }
 
+UINT DOG::UIElement::GetID()
+{
+   return m_ID;
+}
+
 DOG::UIButton::UIButton(DOG::gfx::D2DBackend_DX12& d2d, float x, float y, float width, float height, float fontSize, std::wstring text, std::function<void(void)> callback, UINT id) : pressed(false), m_callback(callback), UIElement(id)
 {
    this->m_size = D2D1::Vector2F(width, height);
    m_textRect = D2D1::RectF(x, y, x + width, y + height);
    this->m_text = text;
-   HRESULT hr = d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &m_brush);
+   HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &m_brush);
    HR_VFY(hr);
-   hr = d2d.m_dwritwf->CreateTextFormat(
+   hr = d2d.GetDWriteFactory()->CreateTextFormat(
       L"Robot Radicals",
       NULL,
       DWRITE_FONT_WEIGHT_NORMAL,
@@ -176,8 +196,8 @@ DOG::UIButton::~UIButton()
 
 void DOG::UIButton::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   d2d.m_2ddc->DrawRectangle(m_textRect, m_brush.Get());
-   d2d.m_2ddc->DrawTextW(
+   d2d.Get2DDeviceContext()->DrawRectangle(m_textRect, m_brush.Get());
+   d2d.Get2DDeviceContext()->DrawTextW(
       m_text.c_str(),
       (UINT32)m_text.length(),
       m_format.Get(),
@@ -208,11 +228,11 @@ DOG::UISplashScreen::UISplashScreen(DOG::gfx::D2DBackend_DX12& d2d, float width,
    m_background = D2D1::RectF(0.0f, 0.0f, width, height);
    m_text = L"Disorganized Games";
 
-   HRESULT hr = d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black, 1.0f), &m_splashBrush);
+   HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black, 1.0f), &m_splashBrush);
    HR_VFY(hr);
-   hr = d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &m_textBrush);
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &m_textBrush);
    HR_VFY(hr);
-   hr = d2d.m_dwritwf->CreateTextFormat(
+   hr = d2d.GetDWriteFactory()->CreateTextFormat(
       L"Robot Radicals",
       NULL,
       DWRITE_FONT_WEIGHT_NORMAL,
@@ -232,8 +252,8 @@ DOG::UISplashScreen::UISplashScreen(DOG::gfx::D2DBackend_DX12& d2d, float width,
 
 void DOG::UISplashScreen::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   d2d.m_2ddc->FillRectangle(m_background, m_splashBrush.Get());
-   d2d.m_2ddc->DrawTextW(
+   d2d.Get2DDeviceContext()->FillRectangle(m_background, m_splashBrush.Get());
+   d2d.Get2DDeviceContext()->DrawTextW(
       m_text.c_str(),
       (UINT32)m_text.length(),
       m_format.Get(),
@@ -279,11 +299,11 @@ DOG::UIHealthBar::UIHealthBar(float x, float y, float width, float height, DOG::
    m_barWidth = width - 2.f;
    m_border = D2D1::RectF(x, y, x + width, y + height);
    m_bar = D2D1::RectF(x + 2.0f, y + 2.0f, x + width - 2.f, y + height - 2.f);
-   HRESULT hr = d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &m_borderBrush);
+   HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &m_borderBrush);
    HR_VFY(hr);
-   hr = d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::GreenYellow, 0.5f), &m_barBrush);
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::GreenYellow, 0.5f), &m_barBrush);
    HR_VFY(hr);
-   hr = d2d.m_dwritwf->CreateTextFormat(
+   hr = d2d.GetDWriteFactory()->CreateTextFormat(
       L"Robot Radicals",
       NULL,
       DWRITE_FONT_WEIGHT_NORMAL,
@@ -307,9 +327,9 @@ DOG::UIHealthBar::~UIHealthBar()
 
 void DOG::UIHealthBar::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   d2d.m_2ddc->FillRectangle(m_bar, m_barBrush.Get());
-   d2d.m_2ddc->DrawRectangle(m_border, m_barBrush.Get());
-   d2d.m_2ddc->DrawTextW(
+   d2d.Get2DDeviceContext()->FillRectangle(m_bar, m_barBrush.Get());
+   d2d.Get2DDeviceContext()->DrawRectangle(m_border, m_barBrush.Get());
+   d2d.Get2DDeviceContext()->DrawTextW(
       m_text.c_str(),
       (UINT32)m_text.length(),
       m_textFormat.Get(),
@@ -335,11 +355,11 @@ DOG::UIBackground::UIBackground(float width, float heigt, std::wstring title, DO
    m_title = title;
    m_background = D2D1::RectF(0.0f, 0.0f, width, heigt);
    m_textRect = D2D1::RectF(width / 2 - 350.f / 2, heigt / 2 - 200.f, width / 2 + 300.f, heigt / 2 - 50.f);
-   HRESULT hr = d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_textBrush);
+   HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_textBrush);
    HR_VFY(hr);
-   hr = d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_backBrush);
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_backBrush);
    HR_VFY(hr);
-   hr = d2d.m_dwritwf->CreateTextFormat(
+   hr = d2d.GetDWriteFactory()->CreateTextFormat(
       L"Robot Radicals",
       NULL,
       DWRITE_FONT_WEIGHT_NORMAL,
@@ -358,8 +378,8 @@ DOG::UIBackground::~UIBackground()
 
 void DOG::UIBackground::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   d2d.m_2ddc->FillRectangle(m_background, m_backBrush.Get());
-   d2d.m_2ddc->DrawTextW(
+   d2d.Get2DDeviceContext()->FillRectangle(m_background, m_backBrush.Get());
+   d2d.Get2DDeviceContext()->DrawTextW(
       m_title.c_str(),
       (UINT32)m_title.length(),
       m_textFormat.Get(),
@@ -374,8 +394,8 @@ void DOG::UIBackground::Update(DOG::gfx::D2DBackend_DX12& d2d)
 
 DOG::UICrosshair::UICrosshair(DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
 {
-   HRESULT hr = d2d.m_2ddc->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.3f), &m_brush);
-   hr = d2d.m_dwritwf->CreateTextFormat(
+   HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.3f), &m_brush);
+   hr = d2d.GetDWriteFactory()->CreateTextFormat(
       L"Arial",
       NULL,
       DWRITE_FONT_WEIGHT_ULTRA_LIGHT,
@@ -390,7 +410,7 @@ DOG::UICrosshair::UICrosshair(DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIEleme
    HR_VFY(hr);
    hr = m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
    HR_VFY(hr);
-   auto pixsize = d2d.m_d2dRenderTargets[0]->GetPixelSize();
+   auto pixsize = d2d.GetRTPixelSize();
    m_screenSize = D2D1::RectF(0.0f, 0.0f, (FLOAT)pixsize.width, (FLOAT)pixsize.height);
 
 }
@@ -402,7 +422,7 @@ DOG::UICrosshair::~UICrosshair()
 
 void DOG::UICrosshair::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   d2d.m_2ddc->DrawTextW(
+   d2d.Get2DDeviceContext()->DrawTextW(
       L"+",
       1u,
       m_textFormat.Get(),
