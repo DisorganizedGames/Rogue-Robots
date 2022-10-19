@@ -14,7 +14,7 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Graphics/Rendering/MaterialTable.h"  "src/Core/TextureFileImporter.h" "src/Core/TextureFileImporter.cpp" 
     "src/Graphics/Rendering/MaterialTable.cpp" "src/Graphics/Rendering/MaterialTable.h" "src/Graphics/Rendering/MaterialTable.cpp"   
     "src/Graphics/Rendering/TextureManager.h" "src/Graphics/Rendering/TextureManager.cpp" "src/Graphics/Rendering/Renderer.h" "src/Graphics/Rendering/Renderer.cpp" 
-      "src/Graphics/RHI/DX12/ImGUIBackend_DX12.h" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.cpp" "src/Graphics/RHI/ImGUIBackend.h" "src/Graphics/RHI/D2DBackend.h" "src/Graphics/RHI/DX12/D2DBackend_DX12.h"
+    "src/Graphics/RHI/DX12/ImGUIBackend_DX12.h" "src/Graphics/RHI/DX12/ImGUIBackend_DX12.cpp" "src/Graphics/RHI/ImGUIBackend.h" "src/Graphics/RHI/D2DBackend.h" "src/Graphics/RHI/DX12/D2DBackend_DX12.h"
     "src/Graphics/RHI/DX12/D2DBackend_DX12.cpp" "src/Graphics/Rendering/UI.h" "src/Graphics/Rendering/UI.cpp" "src/Graphics/Rendering/GraphicsBuilder.h" "src/Graphics/Rendering/GraphicsBuilder.cpp"
     "src/ECS/EntityManager.h" "src/ECS/EntityManager.cpp" "src/ECS/Component.h" "src/ECS/Component.cpp" 
     "src/Scripting/LuaW.h" "src/Scripting/LuaW.cpp" "src/Scripting/LuaTable.h" "src/Scripting/LuaTable.cpp" "src/Scripting/LuaGlobal.h" "src/Scripting/LuaGlobal.cpp" "src/Scripting/LuaEvent.h" 
@@ -34,7 +34,9 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Graphics/Rendering/LightTable.h" "src/Graphics/Rendering/LightTable.cpp"
     "src/Core/LightManager.h" "src/Core/LightManager.cpp" "src/common/MiniProfiler.h" "src/common/MiniProfiler.cpp"
     "src/Graphics/Rendering/RenderEffects/Bloom.h" "src/Graphics/Rendering/RenderEffects/Bloom.cpp"
-     "src/Core/CustomMaterialManager.h" "src/Core/CustomMaterialManager.cpp" "src/Core/CustomMeshManager.h" "src/Core/CustomMeshManager.cpp")
+    "src/Core/CustomMaterialManager.h" "src/Core/CustomMaterialManager.cpp" "src/Core/CustomMeshManager.h" "src/Core/CustomMeshManager.cpp"
+    "src/Core/Scene.h" "src/Core/Scene.cpp"
+    )
 
 	file(GLOB_RECURSE TempGraphics
     "src/Graphics/*.cpp")
