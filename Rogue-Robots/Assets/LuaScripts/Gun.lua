@@ -38,6 +38,7 @@ local bulletModel = nil
 local gunShotSound = nil
 local bullets = {}
 local shootTimer = 0.0
+shot = false
 
 local gunEntity = {
 	entityID = nil,
@@ -66,12 +67,15 @@ function OnStart()
 	EventSystem:Register("NormalBulletUpdate" .. EntityID, NormalBulletUpdate) --Is called if there is no barrelcomponent.
 	EventSystem:Register("NormalBulletSpawn" .. EntityID, NormalBulletSpawn) --Is called if there is no barrelcomponent.
 	
-	function EvalShotCooldown()
-		return shootTimer < 0.01
+	function EvalHasShot()
+		return shot
 	end
 
-	EventSystem:InvokeEvent("Game_AddFinishCondition", { "Tag1" }, EvalShotCooldown)
-	print("BREH")
+
+	if Entity:HasComponent(EntityID, "ThisPlayer") then
+		EventSystem:InvokeEvent("Game_AddFinishCondition", { "Tag1" }, EvalHasShot)
+	end
+
 
 
 end
@@ -120,6 +124,7 @@ function OnUpdate()
 	end
 
 	EventSystem:InvokeEvent("NormalBulletSpawn" .. tostring(EntityID), bullet)
+	shot = true
 
  
 

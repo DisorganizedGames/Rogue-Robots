@@ -228,12 +228,17 @@ const std::unordered_map<std::string, bool (*) (entity)> componentMap = {
 	
 	// Game Types
 	{ "Bullet", HasComp<BulletComponent>},
+	{ "ThisPlayer" , HasComp<ThisPlayer>}
 };
 
 void EntityInterface::HasComponent(LuaContext* context)
 {
 	entity e = context->GetInteger();
-	bool hasComp = componentMap.at(context->GetString())(e);
+	auto it = componentMap.find(context->GetString());
+	if (it == componentMap.cend())
+		context->ReturnBoolean(false);
+
+	bool hasComp = (it->second)(e);
 	context->ReturnBoolean(hasComp);
 }
 

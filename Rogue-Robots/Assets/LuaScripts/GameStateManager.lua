@@ -46,7 +46,6 @@ function OnStart()
 	print("Hello world from Game State Manager")
 
 	function EventAddFinishCondition(...)
-		print("FILIIIIPP")
 		FinishedStateManager:AddFinishCondition(...)
 	end
 
@@ -54,14 +53,9 @@ function OnStart()
 
 end
 
-
-local once = true
-
 function OnUpdate()
-	if once then
-		once = false
-		--print("Shot: ", FinishedStateManager:IsFinished({ "Tag1" }))
-	end
+	--print("Gun has shot: ", FinishedStateManager:IsFinished({ "Tag1" }))
+
 
 end
 

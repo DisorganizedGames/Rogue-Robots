@@ -163,10 +163,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<TransformComponent>(m_movingPointLight, Vector3(10, 10, 10), Vector3(0, 0, 0), Vector3(1.f));
 	m_entityManager.AddComponent<PointLightComponent>(m_movingPointLight, pointLight, Vector3(1.f, 1.f, 0.f), 5.f);
 	
-	// Game state manager
-	auto gameStateEntity = m_entityManager.CreateEntity();
-	LuaMain::GetScriptManager()->AddScript(gameStateEntity, "GameStateManager.lua");
-	LuaMain::GetScriptManager()->OrderScript("GameStateManager.lua", -1);
+
 
 }
 
@@ -174,7 +171,12 @@ void GameLayer::OnAttach()
 {
 	LoadLevel();
 	m_Agent = std::make_shared<Agent>();
+	LuaMain::GetScriptManager()->OrderScript("LuaTest.lua", 1);
+	LuaMain::GetScriptManager()->OrderScript("GameStateManager.lua", -1);
 	LuaMain::GetScriptManager()->SortOrderScripts();
+	// Game state manager
+	auto gameStateEntity = m_entityManager.CreateEntity();
+	LuaMain::GetScriptManager()->AddScript(gameStateEntity, "GameStateManager.lua");
 	LuaMain::GetScriptManager()->StartScripts();
 }
 
