@@ -2,6 +2,7 @@
 #include "Window.h"
 #include "Time.h"
 #include "../Physics/PhysicsEngine.h"
+#include "../Scripting//LuaMain.h"
 #include "AnimationManager.h"
 #include "AssetManager.h"
 #include "LightManager.h"
@@ -176,7 +177,9 @@ namespace DOG
 
 
 			//Deferred deletions happen here!!!
-			EntityManager::Get().DestroyDeferredDestroyEntities();
+			LuaMain::GetScriptManager()->RemoveScriptsFromDeferredEntities();
+			PhysicsEngine::FreePhysicsFromDeferredEntities();
+			EntityManager::Get().DestroyDeferredEntities();
 
 			Time::End();
 		}
@@ -293,6 +296,7 @@ namespace DOG
 		AssetManager::Initialize(m_renderer.get());
 		AudioManager::Initialize();
 		PhysicsEngine::Initialize();
+		LuaMain::Initialize();
 
 		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); });
 		ImGuiMenuLayer::RegisterDebugWindow("MiniProfiler", [](bool& open) { MiniProfiler::DrawResultWithImGui(open); }, true);

@@ -378,6 +378,15 @@ namespace DOG
 		}
 	}
 
+	void PhysicsEngine::FreePhysicsFromDeferredEntities()
+	{
+		//Destroy all of the entities with the deferred deletion flag set
+		EntityManager::Get().Collect<DeferredDeletionComponent>().Do([&](entity entity, DeferredDeletionComponent&)
+			{
+				PhysicsEngine::FreePhysicsFromEntity(entity);
+			});
+	}
+
 	RigidbodyHandle PhysicsEngine::AddRigidbodyColliderData(RigidbodyColliderData rigidbodyColliderData)
 	{
 		RigidbodyHandle rigidbodyHandle = s_physicsEngine.m_handleAllocator.Allocate<RigidbodyHandle>();

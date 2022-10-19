@@ -117,7 +117,6 @@ GameLayer::GameLayer() noexcept
 		LightUpdateFrequency::PerFrame);
 	
 
-	LuaMain::Initialize();
 	//LuaMain::GetScriptManager()->OrderScript("LuaTest.lua", 1);
 	//LuaMain::GetScriptManager()->OrderScript("ScriptTest.lua", -1);
 	LuaMain::GetScriptManager()->SortOrderScripts();

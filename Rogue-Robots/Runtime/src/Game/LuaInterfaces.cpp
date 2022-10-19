@@ -40,7 +40,7 @@ void EntityInterface::CreateEntity(LuaContext* context)
 
 void EntityInterface::DestroyEntity(LuaContext* context)
 {
-	EntityManager::Get().EntityDeferredDestruction(context->GetInteger());
+	EntityManager::Get().DeferredEntityDestruction(context->GetInteger());
 }
 
 void EntityInterface::AddComponent(LuaContext* context)

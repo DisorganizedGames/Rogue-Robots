@@ -188,5 +188,6 @@ namespace DOG
 		static void Initialize();
 		static void UpdatePhysics(float deltaTime);
 		static void FreePhysicsFromEntity(entity entity);
+		static void FreePhysicsFromDeferredEntities();
 	};
 }

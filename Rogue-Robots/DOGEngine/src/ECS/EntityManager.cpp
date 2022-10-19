@@ -48,13 +48,13 @@ namespace DOG
 			}});
 	}
 
-	void EntityManager::EntityDeferredDestruction(const entity entityID) noexcept
+	void EntityManager::DeferredEntityDestruction(const entity entityID) noexcept
 	{
 		//Add flag for deletion at the end of the frame
 		AddComponent<DeferredDeletionComponent>(entityID);
 	}
 
-	void EntityManager::DestroyDeferredDestroyEntities() noexcept
+	void EntityManager::DestroyDeferredEntities() noexcept
 	{
 		//Destroy all of the entities with the deferred deletion flag set
 		Collect<DeferredDeletionComponent>().Do([&](entity entity, DeferredDeletionComponent&)

@@ -433,4 +433,13 @@ namespace DOG
 		m_scriptsBeforeSorted.clear();
 		m_scriptsBeforeSorted.shrink_to_fit();
 	}
+
+	void ScriptManager::RemoveScriptsFromDeferredEntities()
+	{
+		//Destroy all of the entities with the deferred deletion flag set
+		EntityManager::Get().Collect<DeferredDeletionComponent>().Do([&](entity entity, DeferredDeletionComponent&)
+			{
+				RemoveAllEntityScripts(entity);
+			});
+	}
 }
