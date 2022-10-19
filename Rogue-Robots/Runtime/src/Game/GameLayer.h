@@ -32,6 +32,7 @@ private:
 	u32 m_greenCube{ 0 };
 	u32 m_blueCube{ 0 };
 	u32 m_magentaCube{ 0 };
+	std::unique_ptr<DOG::Scene> m_testScene;
 	std::vector<u32> m_shapes;
 	DOG::EntityManager& m_entityManager;
 	std::vector<std::shared_ptr<LuaInterface>> m_luaInterfaces;
@@ -40,7 +41,4 @@ private:
 	NetCode m_netCode;
 	//Pathfinder m_pathfinder;		// uncomment to activate pathfinder
 	std::shared_ptr <Agent> m_Agent;
-
-	DOG::entity m_movingPointLight;
-	f64 m_elapsedTime{ 0.f };
 };

@@ -1,10 +1,8 @@
 #pragma once
+#include "../ECS/EntityManager.h"
 
 namespace DOG
 {
-	class EntityManager;
-	typedef u32 entity;
-
 	enum class SceneType
 	{
 		Global = 0,
@@ -27,6 +25,13 @@ namespace DOG
 
 		virtual void SetUpScene() = 0;
 		[[nodiscard]] entity CreateEntity() const noexcept;
+
+		template<typename ComponentType, typename ...Args>
+		ComponentType& AddComponent(const entity entityID, Args&& ...args) noexcept
+		{
+			return s_entityManager.AddComponent<ComponentType, Args...>(entityID, std::forward<Args>(args)...);
+		}
+
 		SceneType GetSceneType() const noexcept;
 	protected:
 		SceneType m_sceneType;

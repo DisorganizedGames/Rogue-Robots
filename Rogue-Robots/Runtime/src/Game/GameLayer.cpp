@@ -1,4 +1,5 @@
 #include "GameLayer.h"
+#include "TestScene.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -12,55 +13,11 @@ GameLayer::GameLayer() noexcept
 	m_greenCube = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
 	m_blueCube = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
 	m_magentaCube = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
-	m_mixamo = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/walkmix.fbx");
-
-	// Create some shapes
-	{
-		u32 tessFactor[3] = { 1, 10, 100 };
-		for (u32 i = 0; i < 3; i++) // 3 sheets
-			m_shapes.push_back(am.LoadShapeAsset(Shape::sheet, tessFactor[i]));
-		for (u32 i = 0; i < 3; i++) // 3 spheres
-			m_shapes.push_back(am.LoadShapeAsset(Shape::sphere, 2 + tessFactor[i], 2 + tessFactor[i]));
-		for (u32 i = 0; i < 3; i++) // 3 cones
-			m_shapes.push_back(am.LoadShapeAsset(Shape::cone, 2 + tessFactor[i], 2 + tessFactor[i]));
-		for (u32 i = 0; i < 3; i++) // 3 prisms
-			m_shapes.push_back(am.LoadShapeAsset(Shape::prism, 2 + tessFactor[i], 2 + tessFactor[i]));
-		
-		for (i32 i = 0; i < 4; i++)
-		{
-			for (i32 j = 0; j < 3; j++)
-			{
-				entity e = m_entityManager.CreateEntity();
-				m_entityManager.AddComponent<ModelComponent>(e, m_shapes[i*3+j]);
-				m_entityManager.AddComponent<TransformComponent>(e, Vector3(f32(-3 + j * 3), (f32)(-4.5f + i * 3), 10), Vector3(0, 0, 0));
-			}
-		}
-		entity xAxis = m_entityManager.CreateEntity();
-		m_entityManager.AddComponent<ModelComponent>(xAxis, m_shapes[9]);
-		m_entityManager.AddComponent<TransformComponent>(xAxis, Vector3(0, 0, 0), Vector3(0, 0, DirectX::XM_PIDIV2), Vector3(0.02f, 100, 0.02f));
-		entity yAxis = m_entityManager.CreateEntity();
-		m_entityManager.AddComponent<ModelComponent>(yAxis, m_shapes[10]);
-		m_entityManager.AddComponent<TransformComponent>(yAxis, Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(0.02f, 100, 0.02f));
-		entity zAxis = m_entityManager.CreateEntity();
-		m_entityManager.AddComponent<ModelComponent>(zAxis, m_shapes[11]);
-		m_entityManager.AddComponent<TransformComponent>(zAxis, Vector3(0, 0, 0), Vector3(DirectX::XM_PIDIV2, 0, 0), Vector3(0.02f, 100, 0.02f));
-	}
 
 	// Temporary solution to not have the entity manager crash on audio system
 	entity testAudio = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<AudioComponent>(testAudio);
-
-	entity entity2 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelComponent>(entity2, m_greenCube);
-	m_entityManager.AddComponent<TransformComponent>(entity2, Vector3(-4, -2, 5), Vector3(0.1f, 0, 0));
 	
-
-	entity entity3 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelComponent>(entity3, m_blueCube);
-	auto& t3 = m_entityManager.AddComponent<TransformComponent>(entity3);
-	
-	t3.SetPosition({ 4, 2, 5 });
-	t3.SetScale({ 0.5f, 0.5f, 0.5f });
 
 	entity entity4 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity4, m_magentaCube);
@@ -70,29 +27,14 @@ GameLayer::GameLayer() noexcept
 	t4.worldMatrix(3, 1) = 30;
 	t4.worldMatrix(3, 2) = 40;
 
-	entity entity5 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelComponent>(entity5, m_mixamo);
-	m_entityManager.AddComponent<TransformComponent>(entity5, Vector3(0, -2, 5), Vector3(0, 0, 0), Vector3(0.02f, 0.02f, 0.02f));
-	m_entityManager.AddComponent<AnimationComponent>(entity5).offset = 0;
-
-	m_entityManager.AddComponent<SphereColliderComponent>(entity3, entity3, 1.0f, true);
-	m_entityManager.AddComponent<CapsuleColliderComponent>(entity5, entity5, 1.0f, 1.0f, false);
 	m_entityManager.AddComponent<BoxColliderComponent>(entity4, entity4, Vector3(1, 1, 1), true);
-	m_entityManager.AddComponent<MeshColliderComponent>(entity2, entity2, m_greenCube);
 	m_entityManager.AddComponent<RigidbodyComponent>(entity4, entity4);
-	m_entityManager.AddComponent<RigidbodyComponent>(entity3, entity3);
+	
 	//rigidbodyComponent.SetOnCollisionEnter([&](entity ent1, entity ent2) {std::cout << ent1 << " " << ent2 << " Enter Hello\n"; });
 	//rigidbodyComponent.SetOnCollisionExit([&](entity ent1, entity ent2) {std::cout << ent1 << " " << ent2 << " Exit Hello\n"; });
 
 	/*m_entityManager.GetComponent<RigidbodyComponent>(entity4).ConstrainPosition(true, false, true);*/
 	//m_entityManager.GetComponent<RigidbodyComponent>(entity4).ConstrainRotation(false, true, true);
-
-	entity entity80 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelComponent>(entity80, m_blueCube);
-	auto& t80 = m_entityManager.AddComponent<TransformComponent>(entity80);
-	t80.worldMatrix = t3.worldMatrix;
-	m_entityManager.AddComponent<SphereColliderComponent>(entity80, entity80, 1.0f, true);
-	m_entityManager.AddComponent<RigidbodyComponent>(entity80, entity80);
 
 	entity entity81 = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<ModelComponent>(entity81, m_magentaCube);
@@ -100,21 +42,6 @@ GameLayer::GameLayer() noexcept
 	t81.worldMatrix = t4.worldMatrix;
 	m_entityManager.AddComponent<BoxColliderComponent>(entity81, entity81, Vector3(1, 1, 1), true);
 	m_entityManager.AddComponent<RigidbodyComponent>(entity81, entity81);
-	
-	entity isoSphereEntity = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelComponent>(isoSphereEntity, am.LoadModelAsset("Assets/Models/Temporary_Assets/iso_sphere.glb"));
-	m_entityManager.AddComponent<TransformComponent>(isoSphereEntity, Vector3(20, 10, 30)).SetScale({ 2,2,2 });
-	auto& isoSphereLight = m_entityManager.AddComponent<PointLightComponent>(isoSphereEntity);
-	isoSphereLight.color = Vector3(0.1f, 1.0f, 0.2f);
-	isoSphereLight.strength = 30;
-	isoSphereLight.handle = LightManager::Get().AddPointLight(
-		PointLightDesc
-		{
-			.position = m_entityManager.GetComponent<TransformComponent>(isoSphereEntity).GetPosition(),
-			.color = isoSphereLight.color,
-			.strength = isoSphereLight.strength
-		},
-		LightUpdateFrequency::PerFrame);
 	
 
 	//LuaMain::GetScriptManager()->OrderScript("LuaTest.lua", 1);
@@ -131,45 +58,9 @@ GameLayer::GameLayer() noexcept
 	/* Spawn players in a square around a given point */
 	m_playerModels = {m_greenCube, m_redCube, m_blueCube, m_magentaCube};
 	SpawnPlayers(Vector3(25, 25, 15), 4, 10.f);
-
-
-	// Temporary door code
-	entity doorTest = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<DoorComponent>(doorTest).roomId = 0;
-	m_entityManager.AddComponent<TransformComponent>(doorTest, Vector3(25, 6, 15));
-	m_entityManager.AddComponent<ModelComponent>(doorTest, m_magentaCube);
 	
 	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
 
-	// Setup lights
-
-	// Default lights
-	u32 xOffset = 18;
-	u32 zOffset = 18;
-	for (u32 i = 0; i < 3; ++i)
-	{
-		for (u32 x = 0; x < 3; ++x)
-		{
-			auto pdesc = PointLightDesc();
-			pdesc.position = { xOffset + (f32)i * 7.f, 8.f, zOffset + (f32)x * 7.f };
-			pdesc.color = { 1.f, 0.f, 0.f };
-			pdesc.strength = 10.f;
-			LightManager::Get().AddPointLight(pdesc, LightUpdateFrequency::Never);
-
-			auto dd = SpotLightDesc();
-			dd.position = { xOffset + (f32)i * 7.f, 16.f, zOffset + (f32)x * 7.f };
-			dd.color = { 0.f, 0.f, 1.f };
-			dd.direction = { 0.f, 1.f, 0.f };
-			dd.strength = 1.f;
-			LightManager::Get().AddSpotLight(dd, LightUpdateFrequency::Never);
-		}
-	}
-
-	// Moving light
-	LightHandle pointLight = LightManager::Get().AddPointLight(PointLightDesc(), LightUpdateFrequency::PerFrame);
-	m_movingPointLight = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<TransformComponent>(m_movingPointLight, Vector3(10, 10, 10), Vector3(0, 0, 0), Vector3(1.f));
-	m_entityManager.AddComponent<PointLightComponent>(m_movingPointLight, pointLight, Vector3(1.f, 1.f, 0.f), 5.f);
 
 	// Load custom mesh and custom material (one sub-mesh + one material)
 	// Material is modifiable
@@ -204,6 +95,8 @@ GameLayer::GameLayer() noexcept
 
 void GameLayer::OnAttach()
 {
+	m_testScene = std::make_unique<TestScene>();
+	m_testScene->SetUpScene();
 	LoadLevel();
 	m_Agent = std::make_shared<Agent>();
 	LuaMain::GetScriptManager()->StartScripts();
@@ -229,13 +122,6 @@ void GameLayer::OnUpdate()
 	{
 		system->LateUpdate();
 	}
-	
-	m_elapsedTime += Time::DeltaTime();
-	m_entityManager.Get().GetComponent<PointLightComponent>(m_movingPointLight).dirty = true;
-	m_entityManager.Get().GetComponent<TransformComponent>(m_movingPointLight).SetPosition(Vector3(
-		15.f, 
-		8.f, 
-		10.f + 30.f * (cosf((f32)m_elapsedTime) * 0.5f + 0.5f)));
 
 
 	LuaGlobal* global = LuaMain::GetGlobal();
@@ -246,14 +132,14 @@ void GameLayer::OnUpdate()
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
 
-	EntityManager::Get().Collect<TransformComponent, SubmeshRenderer>().Do([&](entity, TransformComponent&, SubmeshRenderer& sr)
+	/*EntityManager::Get().Collect<TransformComponent, SubmeshRenderer>().Do([&](entity, TransformComponent&, SubmeshRenderer& sr)
 		{
 			sr.materialDesc.albedoFactor = { cosf((f32)m_elapsedTime) * 0.5f + 0.5f, 0.3f * sinf((f32)m_elapsedTime) * 0.5f + 0.5f, 0.2f, 1.f };
 			sr.dirty = true;
 
 
 
-		});
+		});*/
 } 
 void GameLayer::OnRender()
 {
