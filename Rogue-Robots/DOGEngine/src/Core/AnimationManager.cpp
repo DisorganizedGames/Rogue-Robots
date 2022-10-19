@@ -41,6 +41,21 @@ namespace DOG
 				});
 			return;
 		}
+		EntityManager::Get().Collect<ModelComponent, RealAnimationComponent, TransformComponent>().Do([&](ModelComponent& modelC, RealAnimationComponent& aC, TransformComponent& tfC)
+		{
+			ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
+			if (model)
+			{
+				if(aC.ActiveClipCount() < aC.maxClips)
+					aC.AddAnimation(1, 0, 0.5f, 1.0f, 0.0f, 1.0f, 1.0f);
+			}
+			aC.Update((f32)Time::DeltaTime());
+			for (size_t i = 0; i < aC.ActiveClipCount(); i++)
+			{
+				auto& c = aC.clips[i];
+				logWeights.push_back()
+			}
+		});
 		//static bool open = true;
 		//SpawnControlWindow(open);
 		EntityManager::Get().Collect<ModelComponent, AnimationComponent, TransformComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC, TransformComponent& tfC)
@@ -171,8 +186,8 @@ namespace DOG
 					ImGui::SliderFloat(setName("	transitionStart ").c_str(), &clip.transitionStart, 0.0f, 1.0f, "%.5f");
 					ImGui::SliderFloat(setName("	transitionLength").c_str(), &clip.transitionTime, 0.0f, 1.0f, "%.5f");
 					ImGui::Combo(setName("    BlendMode    ").c_str(), &blendMode[aIdx], imguiBlendModes, IM_ARRAYSIZE(imguiBlendModes));
-					if (blendMode[aIdx] == 0) clip.blendMode = AnimationBlendMode::normal;
-					else clip.blendMode = blendMode[aIdx] == 1 ? AnimationBlendMode::linear : AnimationBlendMode::bezier;
+					if (blendMode[aIdx] == 0) clip.blendMode = WeightBlendMode::normal;
+					else clip.blendMode = blendMode[aIdx] == 1 ? WeightBlendMode::linear : WeightBlendMode::bezier;
 					ImGui::Checkbox(setName("    loop         ").c_str(), &clip.loop);
 					if (ImGui::Button(("Apply Animation Clip"+std::to_string(aIdx)).c_str()))
 						imguiAnimC->clips[aIdx] = clip0;
