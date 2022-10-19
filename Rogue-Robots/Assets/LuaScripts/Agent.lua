@@ -227,9 +227,10 @@ function OnCollisionEnter(self, e1, e2)
 		entity = e1
 	end
 	if Entity:HasComponent(entity, "Bullet") and Agent.stats.hp > 0.0 then
+		print(". Current HP: " .. self.stats.hp)
 		if Entity:IsBulletLocal(e2) then
 			print("Bullet is local")
-			Agent:Damage(1000)
+			Agent:Damage(10)
 		else
 			print("Bullet is Not Local, Bullet from other player")
 		end
