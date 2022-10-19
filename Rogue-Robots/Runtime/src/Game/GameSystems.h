@@ -6,7 +6,7 @@ class DoorOpeningSystem : public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
 public:
-	SYSTEM_CLASS(DoorComponent);
+	SYSTEM_CLASS(DoorComponent, DOG::TransformComponent);
 	ON_UPDATE(DoorComponent, DOG::TransformComponent);
 	void OnUpdate(DoorComponent& door, DOG::TransformComponent& transform)
 	{
