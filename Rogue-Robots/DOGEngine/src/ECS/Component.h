@@ -103,11 +103,15 @@ namespace DOG
 	struct RealAnimationComponent
 	{
 		static constexpr u8 maxClips = 3;
+		static constexpr i32 groupA = 0;
+		static constexpr i32 groupB = 1;
+		static constexpr i32 groupC = 2;
+		static constexpr i32 noGroup = 3;
 		i32 offset = 0;
 		f32 globalTime = 0.0f;
 		struct AnimationClip
 		{
-			i32 group = 0;
+			i32 group = 4;
 			// Animation Specifics
 			i32 animationID = 0;
 			f32 totalTicks = 1.0f;
@@ -130,10 +134,10 @@ namespace DOG
 			f32 UpdateClipTick(const f32 gt);
 			f32 UpdateWeightLinear(const f32 gt);
 			f32 UpdateWeightBezier(const f32 gt);
-			void UpdateState(const f32 gt, const f32 dt);
 			void ResetClip();
+			void UpdateState(const f32 gt, const f32 dt);
 			bool HasActiveAnimation() const { return animationID != -1; };
-			void SetAnimation(const i32 id, const f32 nTicks, const f32 duration, const f32 startTime = 0.0f);
+			void SetAnimation(const f32 nTicks, const f32 duration);
 			bool operator <(const AnimationClip& o) const{
 				return !o.activeAnimation ||
 					o.activeAnimation && group < o.group ||
@@ -148,10 +152,12 @@ namespace DOG
 		};
 		std::array<AnimationClip, maxClips> clips;
 		u32 animsPerGroup[maxClips] = { 0 };
+		// number of new clips added to component this frame
 		u32 nAddedClips = 0;
 		// Update
 		void Update(const f32 dt);
-		void AddAnimation(i32 id, u32 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop = false, f32 timeScale = 1.f);
+		void AddAnimationClip(i32 id, u32 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop = false, f32 timeScale = 1.f);
+		void SetAnimationClip(f32 duration, f32 nTicks);
 		i32 ActiveClipCount(){
 			return animsPerGroup[0] + animsPerGroup[1] + animsPerGroup[2];
 		}
