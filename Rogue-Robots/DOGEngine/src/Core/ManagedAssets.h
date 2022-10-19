@@ -170,7 +170,7 @@ namespace DOG
 	{
 		bool async = false;
 		std::string filePath;
-		WAVProperties properties = {};
+		WAVEFORMATEX properties = {};
 		std::vector<u8> audioData;
 	};
 

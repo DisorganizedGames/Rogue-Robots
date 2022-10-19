@@ -439,17 +439,18 @@ namespace DOG
 		u64 fileSize = std::filesystem::file_size(path);
 		AudioAsset* newAudio = new AudioAsset;
 		newAudio->filePath = path;
+		WAVFileReader wfr(path);
+
+		newAudio->properties = wfr.ReadWFXProperties();
 
 		if (fileSize > MAX_AUDIO_SIZE_ASYNC)
 		{
 			newAudio->async = true;
-			newAudio->properties = ReadWAVProperties(path);
+			newAudio->properties = wfr.ReadWFXProperties();
 		}
 		else
 		{
-			auto [properties, data] = ReadWAV(path);
-			newAudio->properties = properties;
-			newAudio->audioData = data;
+			newAudio->audioData = wfr.ReadFull();
 		}
 		
 		if(id == 0)

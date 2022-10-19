@@ -52,27 +52,17 @@ void AudioDevice::HandleComponent(AudioComponent& comp, entity e)
 		}
 
 		AudioAsset* asset = AssetManager::Get().GetAsset<AudioAsset>(comp.assetID);
-		auto prop = asset->properties;
+		auto wfx = asset->properties;
 
-		WAVEFORMATEX m_wfx = {
-			.wFormatTag = (WORD)prop.format,
-			.nChannels = prop.channels,
-			.nSamplesPerSec = prop.sampleRate,
-			.nAvgBytesPerSec = prop.channels * prop.sampleRate * prop.bps / 8,
-			.nBlockAlign = static_cast<u16>(prop.channels * prop.bps / 8),
-			.wBitsPerSample = prop.bps,
-			.cbSize = 0,
-		};
-
-		auto freeVoice = (u32)GetFreeVoice(m_wfx);
+		auto freeVoice = (u32)GetFreeVoice(wfx);
 		auto& source = m_sources[freeVoice];
 
-		source = std::make_unique<SourceVoice>(m_xaudio, m_wfx);
+		source = std::make_unique<SourceVoice>(m_xaudio, wfx);
 		comp.source = freeVoice;
 
 		if (asset->async)
 		{
-			source->SetFileReader(DOG::WAVFileReader(asset->filePath));
+			source->SetFileReader(WAVFileReader(asset->filePath));
 			source->PlayAsync();
 		}
 		else
@@ -91,9 +81,10 @@ void AudioDevice::HandleComponent(AudioComponent& comp, entity e)
 	}
 
 	auto& source = m_sources[comp.source];
-	if (source->HasFinished())
+	if (source->Stopped())
 	{
 		comp.playing = false;
+		comp.source = u32(-1);
 	}
 
 	if (comp.shouldStop)
@@ -341,12 +332,18 @@ void SourceVoice::QueueNextAsync()
 {
 	XAUDIO2_VOICE_STATE state;
 	m_source->GetState(&state, XAUDIO2_VOICE_NOSAMPLESPLAYED);
+	const auto bufferRingSize = m_bufferRing.size();
 
-	while (state.BuffersQueued < m_bufferRing.size())
+	while (state.BuffersQueued < bufferRingSize)
 	{
 		auto& curBuffer = m_bufferRing[m_ringIdx++];
 
-		curBuffer = m_asyncWFR.ReadNextChunk(CHUNK_SIZE);
+		curBuffer = m_asyncWFR.ReadDataChunk(CHUNK_SIZE);
+		if (curBuffer.size() < CHUNK_SIZE)
+		{
+			Stop();
+			break;
+		}
 
 		XAUDIO2_BUFFER buf = {
 			.AudioBytes = (u32)curBuffer.size(),
@@ -357,15 +354,6 @@ void SourceVoice::QueueNextAsync()
 		hr.try_fail("Failed to submit source buffer");
 
 		m_ringIdx %= m_bufferRing.size();
-
-		m_idx += CHUNK_SIZE;
-
-		if (m_idx > m_externalBuffer.size())
-		{
-			m_idx = m_externalBuffer.size();
-			m_source->Discontinuity();
-			break;
-		}
 
 		m_source->GetState(&state, XAUDIO2_VOICE_NOSAMPLESPLAYED);
 	}

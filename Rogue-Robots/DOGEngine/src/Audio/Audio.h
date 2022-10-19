@@ -1,5 +1,4 @@
 #pragma once
-#define NOMINMAX
 #include "AudioFileReader.h"
 #include "../Core/AssetManager.h"
 #include "../ECS/EntityManager.h"
