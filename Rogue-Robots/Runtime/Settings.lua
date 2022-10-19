@@ -6,6 +6,8 @@ Settings =
 	renderResolutionWidth = 1920,
 	renderResolutionHeight = 1080,
 	vsync = false,
+	bloom = true,
+	bloomTreshold = 0.5,
 
 	--DXGI_MODE_DESC,
 	displayWidth = 1920,
