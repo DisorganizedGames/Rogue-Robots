@@ -47,15 +47,26 @@ namespace DOG
 			if (model)
 			{
 				if(aC.ActiveClipCount() < aC.maxClips)
-					aC.AddAnimation(1, 0, 0.5f, 1.0f, 0.0f, 1.0f, 1.0f);
+					aC.AddAnimationClip(1, 0, 0.5f, 1.0f, 0.0f, 1.0f, 1.0f);
+			}
+			// clips added this frame needs data from corresponding animation
+			for (i32 i = 0; i < aC.nAddedClips; i++)
+			{
+				const i32 idx = i + aC.ActiveClipCount();
+				auto& clip = aC.clips[idx];
+				auto& anim = m_rigs[0]->animations.at(clip.animationID);
+				clip.SetAnimation(anim.duration, anim.ticks);
 			}
 			aC.Update((f32)Time::DeltaTime());
 			for (size_t i = 0; i < aC.ActiveClipCount(); i++)
 			{
 				auto& c = aC.clips[i];
-				logWeights.push_back()
+				logWeights.push_back(c.currentWeight);
+				logNormalizedTime.push_back(c.currentWeight);
+				logCurrentTick.push_back(c.currentTick);
 			}
 		});
+		return;
 		//static bool open = true;
 		//SpawnControlWindow(open);
 		EntityManager::Get().Collect<ModelComponent, AnimationComponent, TransformComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC, TransformComponent& tfC)
