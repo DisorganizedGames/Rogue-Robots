@@ -8,11 +8,11 @@ GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
 {
 	auto& am = DOG::AssetManager::Get();
-	m_redCube = am.LoadModelAsset("Assets/red_cube.glb");
-	m_greenCube = am.LoadModelAsset("Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
-	m_blueCube = am.LoadModelAsset("Assets/blue_cube.glb");
-	m_magentaCube = am.LoadModelAsset("Assets/magenta_cube.glb");
-	m_mixamo = am.LoadModelAsset("Assets/mixamo/walkmix.fbx");
+	m_redCube = am.LoadModelAsset("Assets/Models/Temporary_Assets/red_cube.glb");
+	m_greenCube = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
+	m_blueCube = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
+	m_magentaCube = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
+	m_mixamo = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/walkmix.fbx");
 
 	// Create some shapes
 	{
@@ -102,7 +102,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<RigidbodyComponent>(entity81, entity81);
 	
 	entity isoSphereEntity = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelComponent>(isoSphereEntity, am.LoadModelAsset("Assets/iso_sphere.glb"));
+	m_entityManager.AddComponent<ModelComponent>(isoSphereEntity, am.LoadModelAsset("Assets/Models/Temporary_Assets/iso_sphere.glb"));
 	m_entityManager.AddComponent<TransformComponent>(isoSphereEntity, Vector3(20, 10, 30)).SetScale({ 2,2,2 });
 	auto& isoSphereLight = m_entityManager.AddComponent<PointLightComponent>(isoSphereEntity);
 	isoSphereLight.color = Vector3(0.1f, 1.0f, 0.2f);

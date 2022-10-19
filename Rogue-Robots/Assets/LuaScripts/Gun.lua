@@ -46,8 +46,8 @@ local gunEntity = {
 }
 
 function OnStart()
-	gunModel = Asset:LoadModel("Assets/Rifle/scene.gltf")
-	bulletModel = Asset:LoadModel("Assets/556x45_bullet.fbx")
+	gunModel = Asset:LoadModel("Assets/Models/Rifle/scene.gltf")
+	bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Bullet/556x45_bullet.fbx")
 	gunShotSound = Asset:LoadAudio("Assets/Audio/TestShoot.wav")
 
 	-- Initialize the gun view model entity

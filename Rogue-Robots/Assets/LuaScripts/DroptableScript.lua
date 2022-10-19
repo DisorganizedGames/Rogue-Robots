@@ -2,9 +2,9 @@
 local cubeDropTable = {}
 
 function OnStart()
-	cubeDropTable.red 	= {1, Asset:LoadModel("Assets/red_cube.glb")}
-	cubeDropTable.green = {1, Asset:LoadModel("Assets/green_cube.glb")}
-	cubeDropTable.blue 	= {1, Asset:LoadModel("Assets/blue_cube.glb")}
+	cubeDropTable.red 	= {1, Asset:LoadModel("Assets/Models/Temporary_Assets/red_cube.glb")}
+	cubeDropTable.green = {1, Asset:LoadModel("Assets/Models/Temporary_Assets/green_cube.glb")}
+	cubeDropTable.blue 	= {1, Asset:LoadModel("Assets/Models/Temporary_Assets/blue_cube.glb")}
 end
 
 function GetDrop(dropItem)
