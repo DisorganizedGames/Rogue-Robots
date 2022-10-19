@@ -130,6 +130,8 @@ char* Client::ReciveCharArrayTcp(char* reciveBuffer)
 		std::cout <<  "Client: Error reciving tcp packet: " << WSAGetLastError() << std::endl;
 		return nullptr;
 	}
+	if (j > 2000)
+		std::cout << "Client recived too much data: " <<  j << std::endl;
 	return reciveBuffer;
 }
 

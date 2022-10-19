@@ -200,7 +200,6 @@ void Server::ServerPollTCP()
 		char reciveBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
 		int bufferSendSize = 0;
 		int bufferReciveSize = 0;
-		bool readyToSend = false;
 		m_holdSocketsTcp = m_clientsSocketsTcp;
 		bufferSendSize += sizeof(m_playersServer);
 		if (WSAPoll(m_holdSocketsTcp.data(), (u32)m_holdSocketsTcp.size(), 1) > 0)
@@ -214,7 +213,6 @@ void Server::ServerPollTCP()
 				//read in from clients that have send data
 				else if (m_holdSocketsTcp[i].revents & POLLRDNORM)
 				{
-					readyToSend = true; 
 					bufferReciveSize = 0;
 					recv(m_holdSocketsTcp[i].fd, reciveBuffer, SEND_AND_RECIVE_BUFFER_SIZE, 0);
 					memcpy(&holdClientsData, &reciveBuffer, sizeof(Client::ClientsData));
@@ -256,19 +254,24 @@ void Server::ServerPollTCP()
 			}
 
 		}
-		if (readyToSend)
-		{
-			m_playersServer[0].nrOfNetStats = statsChanged.size();
-
-			memcpy(sendBuffer, (char*)m_playersServer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
 			
-			if(statsChanged.size())
+		m_playersServer[0].nrOfNetStats = statsChanged.size();
+
+			
+		memcpy(sendBuffer, (char*)m_playersServer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
+
+			if (statsChanged.size())
 				memcpy(sendBuffer + bufferSendSize, (char*)statsChanged.data(), statsChanged.size() * sizeof(NetworkAgentStats));
 			bufferSendSize += statsChanged.size() * sizeof(NetworkAgentStats);
 			for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
-				send(m_holdSocketsTcp[i].fd, sendBuffer, bufferSendSize, 0);
-			
-		}
+			{
+				int h = send(m_holdSocketsTcp[i].fd, sendBuffer, bufferSendSize, 0);
+				if (h > 2000)
+				{
+					std::cout << "Too much data send" << std::endl;
+				}
+			}
+
 		statsChanged.clear();
 		//wait untill tick is done 
 		float timeTakenS = TickTimeLeftTCP(tickStartTime, clockFrequency);
