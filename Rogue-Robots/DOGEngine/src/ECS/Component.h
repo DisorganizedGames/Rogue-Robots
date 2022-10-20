@@ -161,7 +161,7 @@ namespace DOG
 			bool operator ==(const AnimationClip& o) const{
 				return animationID == o.animationID && group == o.group;}
 			bool BecameActive(const f32 gt, const f32 dt) {
-				return (gt > transitionStart) && (gt - dt < transitionStart);}
+				return animationID != -1 && (gt > transitionStart) && (gt - dt < transitionStart);}
 			bool Deactivated(const f32 gt, const f32 dt) {
 				return activeAnimation && (gt+dt > transitionStart+transitionLength && !loop);}
 		};
@@ -195,7 +195,7 @@ namespace DOG
 		{
 			i32 idx = (clip.group > groupA) * clipsPerGroup[groupA] +
 						(clip.group > groupB) * clipsPerGroup[groupB];
-			const auto lastIdx = idx + clipsPerGroup[clip.group];
+			const i32 lastIdx = idx + clipsPerGroup[clip.group];
 			for (idx; idx < lastIdx; ++idx)
 				if (clips[idx].animationID == clip.animationID)
 				{
