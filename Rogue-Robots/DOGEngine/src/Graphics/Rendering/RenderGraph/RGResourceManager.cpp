@@ -258,7 +258,12 @@ namespace DOG::gfx
 
 			RGResourceImported& imported = std::get<RGResourceImported>(resource.variants);
 			if (imported.currState == imported.importExitState)
+			{
+				// Resource already in exit state --> Ready to be used outside of graph
+				// We also reset the currState to entry state for next entry
+				imported.currState = imported.importEntryState;
 				continue;
+			}
 
 			/*
 				We transition Imported textures to the desired Exit State for external usage, but for the graph,

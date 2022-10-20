@@ -229,68 +229,6 @@ namespace DOG::gfx
 		};
 		m_bin->PushDeferredDeletion(delFunc);
 
-		//// Clean up views
-		//for (const auto& pass : m_sortedPasses)
-		//{
-		//	for (const auto& view : pass->passResources.m_bufferViews)
-		//	{
-		//		auto df = [rd = m_rd, view = view]()
-		//		{
-		//			rd->FreeView(view);
-		//		};
-		//		m_bin->PushDeferredDeletion(df);
-		//	}
-
-		//	for (const auto& view : pass->passResources.m_textureViews)
-		//	{
-		//		auto df = [rd = m_rd, view = view]()
-		//		{
-		//			rd->FreeView(view);
-		//		};
-		//		m_bin->PushDeferredDeletion(df);
-		//	}
-
-		//	if (pass->rp)
-		//	{
-		//		auto df = [rd = m_rd, rp = *pass->rp]()
-		//		{
-		//			rd->FreeRenderPass(rp);
-		//		};
-		//		m_bin->PushDeferredDeletion(df);
-		//	}
-		//}
-
-		//// Clean up views
-		//for (const auto& pass : m_sortedPasses)
-		//{
-		//	{
-		//		auto df = [rd = m_rd, views = std::move(pass->passResources.m_bufferViews)]() mutable
-		//		{
-		//			for (const auto& view : views)
-		//				rd->FreeView(view);
-		//		};
-		//		m_bin->PushDeferredDeletion(df);
-		//	}
-
-		//	{
-		//		auto df = [rd = m_rd, views = std::move(pass->passResources.m_textureViews)]() mutable
-		//		{
-		//			for (const auto& view : views)
-		//				rd->FreeView(view);
-		//		};
-		//		m_bin->PushDeferredDeletion(df);
-		//	}
-
-		//	if (pass->rp)
-		//	{
-		//		auto df = [rd = m_rd, rp = *pass->rp]()
-		//		{
-		//			rd->FreeRenderPass(rp);
-		//		};
-		//		m_bin->PushDeferredDeletion(df);
-		//	}
-		//}
-
 		m_passDataAllocator->Clear();
 
 	}
