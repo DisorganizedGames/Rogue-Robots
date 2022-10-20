@@ -171,8 +171,8 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.AddComponent<TransformComponent>(m_movingPointLight, Vector3(10, 10, 10), Vector3(0, 0, 0), Vector3(1.f));
 	m_entityManager.AddComponent<PointLightComponent>(m_movingPointLight, pointLight, Vector3(1.f, 1.f, 0.f), 5.f);
 
-	// test load single submesh single material 
-	// custom cube mesh and custom material
+	// Load custom mesh and custom material (one sub-mesh + one material)
+	// Material is modifiable
 	{
 		// Load mesh
 		MeshDesc md{};
@@ -189,21 +189,17 @@ GameLayer::GameLayer() noexcept
 		// Load material
 		MaterialDesc d{};
 		d.albedoFactor = { 1.f, 0.f, 0.f };
-		d.roughnessFactor = 0.3f;
+		d.roughnessFactor = 0.15f;
+		d.metallicFactor = 0.85f;
 		auto mat = CustomMaterialManager::Get().AddMaterial(d);
 
 		auto testE = m_entityManager.CreateEntity();
 		m_entityManager.AddComponent<TransformComponent>(testE, 
-			DirectX::SimpleMath::Vector3{ 0.f, 5.f, 0.f }, 
+			DirectX::SimpleMath::Vector3{ 25.f, 10.f, 25.f }, 
 			DirectX::SimpleMath::Vector3{}, 
 			DirectX::SimpleMath::Vector3{ 3.f, 3.f, 3.f });
-		m_entityManager.AddComponent<SubmeshRenderer>(testE, meshData.first, mat, d);
-		
+		m_entityManager.AddComponent<SubmeshRenderer>(testE, meshData.first, mat, d);	
 	}
-
-
-
-
 }
 
 void GameLayer::OnAttach()
@@ -257,8 +253,6 @@ void GameLayer::OnUpdate()
 	EntityManager::Get().Collect<TransformComponent, SubmeshRenderer>().Do([&](entity e, TransformComponent& tr, SubmeshRenderer& sr)
 		{
 			sr.materialDesc.albedoFactor = { cosf(timeElapsed) * 0.5f + 0.5f, 0.3f * sinf(timeElapsed) * 0.5f + 0.5f, 0.2f, 1.f };
-			sr.materialDesc.metallicFactor = 0.5f;
-			sr.materialDesc.roughnessFactor = 0.1f;
 			sr.dirty = true;
 
 
