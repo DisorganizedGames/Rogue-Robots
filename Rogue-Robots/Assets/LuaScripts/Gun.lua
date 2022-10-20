@@ -51,7 +51,7 @@ function OnStart()
 	gunShotSound = Asset:LoadAudio("Assets/Audio/TestShoot.wav")
 
 	-- Initialize the gun view model entity
-	gunID = Entity:CreateEntity()
+	gunID = Scene:CreateEntity(EntityID)
 	gunEntity.entityID = gunID
 	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.15,y=.15,z=.15})
 	Entity:AddComponent(gunID, "Model", gunModel)
@@ -119,7 +119,7 @@ end
 
 --If there is not barrel component start.
 function NormalBulletSpawn(bullet)
-	bullet.entity = Entity:CreateEntity()
+	bullet.entity = Scene:CreateEntity(EntityID)
 	table.insert(bullets, bullet)
 
 	Entity:AddComponent(bullet.entity, "Transform",

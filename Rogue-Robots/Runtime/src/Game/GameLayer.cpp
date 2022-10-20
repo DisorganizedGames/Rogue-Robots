@@ -207,6 +207,20 @@ void GameLayer::RegisterLuaInterfaces()
 
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Entity", "EntityInterface");
 
+
+	//-----------------------------------------------------------------------------------------------
+	//Scene
+	luaInterfaceObject = std::make_shared<SceneInterface>();
+	m_luaInterfaces.push_back(luaInterfaceObject);
+
+	luaInterface = global->CreateLuaInterface("SceneInterface");
+
+	luaInterface.AddFunction<SceneInterface, &SceneInterface::CreateEntity>("CreateEntity");
+
+	global->SetLuaInterface(luaInterface);
+	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Scene", "SceneInterface");
+
+
 	//-----------------------------------------------------------------------------------------------
 	//Assets
 	luaInterfaceObject = std::make_shared<AssetInterface>();

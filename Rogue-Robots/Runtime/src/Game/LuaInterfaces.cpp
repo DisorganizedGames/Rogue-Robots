@@ -480,3 +480,13 @@ LuaTable LuaVector3::Create(Vector3 vec)
 	tbl.AddFloatToTable("z", vec.z);
 	return tbl;
 }
+
+void SceneInterface::CreateEntity(LuaContext* context)
+{
+	entity e = context->GetInteger();
+	assert(EntityManager::Get().Exists(e));
+	entity newEntity = EntityManager::Get().CreateEntity();
+	if (EntityManager::Get().HasComponent<SceneComponent>(e))
+		EntityManager::Get().AddComponent<SceneComponent>(newEntity, EntityManager::Get().GetComponent<SceneComponent>(e).scene);
+	context->ReturnInteger(newEntity);
+}
