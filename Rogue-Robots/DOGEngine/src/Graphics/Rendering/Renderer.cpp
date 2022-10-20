@@ -342,7 +342,7 @@ namespace DOG::gfx
 		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
 
 		// Import long-lived resources
-		m_rgResMan->ImportTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
+		m_rgResMan->ImportTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
 
 	Renderer::~Renderer()
@@ -1074,7 +1074,7 @@ namespace DOG::gfx
 
 		// Test compute on Lit HDR
 		// Uncomment to enable the test compute effect!
-		m_testComputeEffect->Add(rg);
+		//m_testComputeEffect->Add(rg);
 
 		if(m_bloomEffect) 
 			m_bloomEffect->Add(rg);
