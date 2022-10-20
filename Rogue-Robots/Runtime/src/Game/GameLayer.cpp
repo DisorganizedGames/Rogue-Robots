@@ -178,7 +178,7 @@ GameLayer::GameLayer() noexcept
 		MeshDesc md{};
 		SubmeshMetadata smMd{};
 
-		auto mod = ShapeCreator(Shape::cone, 2).GetResult();
+		auto mod = ShapeCreator(Shape::cone, 4).GetResult();
 		md.indices = mod->mesh.indices;
 		md.submeshData = mod->submeshes;
 			
