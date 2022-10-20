@@ -84,6 +84,7 @@ namespace DOG
 	void AddNode(std::unordered_map<std::string, i32>& nameToJointIdx, const std::unordered_map<std::string, aiBone*>& nameToJoint,
 		std::vector<JointNode>& nodeArray, const aiNode* node, i32 parentIdx)
 	{
+		using namespace DirectX;
 		JointNode n = {};
 		std::string nodeName = node->mName.C_Str();
 
@@ -97,7 +98,7 @@ namespace DOG
 		// Store Node if it is associated with bone or is root of bone hierarchy
 		if (hasJoint || parentIdx == 0)
 		{
-			n.transformation = DirectX::XMFLOAT4X4(&node->mTransformation.a1);
+			n.transformation = XMFLOAT4X4(&node->mTransformation.a1);
 			n.parentIdx = parentIdx;
 			n.name = node->mName.C_Str();
 			parentIdx = (i32)nodeArray.size();
@@ -130,14 +131,14 @@ namespace DOG
 		// Store model Root Node
 		nodeArray.push_back(JointNode{});
 		nodeArray.back().name = allNodes[0]->mName.C_Str();
-		XMStoreFloat4x4(&nodeArray.back().transformation, XMMATRIX(&allNodes[0]->mTransformation.a1));
+		XMStoreFloat4x4(&nodeArray.back().transformation, XMMatrixRotationRollPitchYaw(XM_PIDIV4, 0.0f, 0.0f) * XMMATRIX(&allNodes[0]->mTransformation.a1));
 
-		// Find and store Root of bone Hierarchy (Parent of first node associated with a bone)
+		// Find and store Root of bone Hierarchy (Parent of first node associated with a bone, except if gltf... hate)
 		u32 boneRootIdx = {};
 		for (boneRootIdx = 0; boneRootIdx < allNodes.size(); boneRootIdx++)
 			if (nameToJoint.find(allNodes[boneRootIdx]->mName.C_Str()) != nameToJoint.end())
 				break;
-		const aiNode* boneRootNode = allNodes[boneRootIdx]->mParent;
+		aiNode* boneRootNode = allNodes[boneRootIdx]->mParent;
 		// Add bone hierarchy
 		AddNode(nameToJointIdx, nameToJoint, nodeArray, boneRootNode, 0);
 
@@ -148,7 +149,6 @@ namespace DOG
 			{
 				XMStoreFloat4x4(&boneArray[nameToJointIdx.at(n->mName.C_Str())],
 					XMMATRIX(&nameToJoint.at(n->mName.C_Str())->mOffsetMatrix.a1));
-
 			}
 
 		// Store vertices BoneWeight and Indices

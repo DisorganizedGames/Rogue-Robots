@@ -109,8 +109,17 @@ namespace DOG
 		static constexpr i32 noGroup = 3;
 		i32 offset = 0;
 		f32 globalTime = 0.0f;
+		// DEBUG
+		f32 debugTime = 0.0f;
+		i32 debugCount = 0;
+		i32 nextDebugID = 0;
+		f32 debugWeights[3] = { 0.f };
+
 		struct AnimationClip
 		{
+			i32 debugID = 0;
+			i32 debugCount = 0;
+			f32 debugTime = 0.f;
 			i32 group = 3;
 			// Animation Specifics
 			i32 animationID = 0;
@@ -144,32 +153,72 @@ namespace DOG
 					o.activeAnimation && group == o.group && targetWeight > o.targetWeight ||
 					o.activeAnimation && group == o.group && targetWeight == o.targetWeight && currentWeight > o.currentWeight;}*/
 			bool operator <(const AnimationClip& o) const {
-				return group < o.group;
+				return activeAnimation && !o.activeAnimation ||
+					activeAnimation == o.activeAnimation && group < o.group ||
+					activeAnimation == o.activeAnimation && group == o.group && currentWeight > o.currentWeight ||
+					activeAnimation == o.activeAnimation && group == o.group && currentWeight == o.currentWeight && targetWeight > o.targetWeight;
 			}
 			bool operator ==(const AnimationClip& o) const{
-				return animationID == o.animationID;}
+				return animationID == o.animationID && group == o.group;}
 			bool BecameActive(const f32 gt, const f32 dt) {
 				return (gt > transitionStart) && (gt - dt < transitionStart);}
 			bool Deactivated(const f32 gt, const f32 dt) {
 				return activeAnimation && (gt+dt > transitionStart+transitionLength && !loop);}
 		};
 		std::array<AnimationClip, maxClips> clips;
-		u32 animsPerGroup[maxClips] = { 0 };
+		u32 clipsPerGroup[4] = { 0 };
 		// number of new clips added to component this frame
 		u32 nAddedClips = 0;
 		// Update
 		void Update(const f32 dt);
 		void AddAnimationClip(i32 id, u32 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop = false, f32 timeScale = 1.f);
 		i32 ActiveClipCount(){
-			return animsPerGroup[0] + animsPerGroup[1] + animsPerGroup[2];
+			return clipsPerGroup[0] + clipsPerGroup[1] + clipsPerGroup[2];
 		}
 		i32 clipCount() {
 			i32 count = 0;
 			for (auto& c : clips)
 				count += (c.group != 3);
-			return count;
+			return count-nAddedClips;
+		}
+		void Debug(f32 t) {
+			for (auto& c : clips)
+			{
+				if (c.activeAnimation)
+				{
+					c.debugTime = t;
+					c.debugCount++;
+				}
+			}
+		}
+		i32 ReplaceClip(AnimationClip& clip, const i32 cidx)
+		{
+			i32 idx = (clip.group > groupA) * clipsPerGroup[groupA] +
+						(clip.group > groupB) * clipsPerGroup[groupB];
+			const auto lastIdx = idx + clipsPerGroup[clip.group];
+			for (idx; idx < lastIdx; ++idx)
+				if (clips[idx].animationID == clip.animationID)
+				{
+					bool replaceClip = idx < cidx && clips[idx].loop != clip.loop && clips[idx].activeAnimation;
+					if (replaceClip)
+					{
+						clips[idx].targetWeight = clip.targetWeight;
+						clips[idx].transitionStart = clip.transitionStart;
+						f32 durationLeft = (1.f - clips[idx].normalizedTime) * clips[idx].duration;
+						clips[idx].transitionLength = clip.transitionLength < durationLeft ? 
+							clip.transitionLength : durationLeft;
+
+						clips[idx].blendMode = clip.blendMode;
+						clips[idx].loop = clip.loop;
+						--nextDebugID;
+						clip.ResetClip();
+						return idx;
+					}
+				}
+			return -1;
 		}
 	};
+	static_assert(std::is_trivially_copyable_v<RealAnimationComponent>);
 
 	struct AudioComponent
 	{
