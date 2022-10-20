@@ -7,11 +7,12 @@
 namespace DOG::gfx
 {
 	class RenderGraph;
+	class RGResourceManager;
 	class GPUDynamicConstants;
 	class Bloom : public RenderEffect
 	{
 	public:
-		Bloom(GlobalEffectData& globalEffectData, GPUDynamicConstants* dynConsts, u32 renderResX, u32 renderResY);
+		Bloom(RGResourceManager* resMan, GlobalEffectData& globalEffectData, GPUDynamicConstants* dynConsts, u32 renderResX, u32 renderResY);
 		~Bloom();
 		void Add(RenderGraph& rg) override;
 		void SetGraphicsSettings(const GraphicsSettings& settings) override;
@@ -36,5 +37,7 @@ namespace DOG::gfx
 		Pipeline m_compPipeDownSample;
 		Pipeline m_compPipeUpSample;
 		//Pipeline m_compPipDebug;
+
+		RGResourceManager* m_resMan{ nullptr };
 	};
 }

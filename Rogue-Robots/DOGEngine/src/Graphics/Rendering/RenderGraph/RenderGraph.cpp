@@ -218,7 +218,7 @@ namespace DOG::gfx
 
 		for (auto& pass : m_sortedPasses)
 		{
-			if (pass->preGraphExecute)
+			if (pass->postGraphExecute)
 				(*pass->postGraphExecute)();
 		}
 

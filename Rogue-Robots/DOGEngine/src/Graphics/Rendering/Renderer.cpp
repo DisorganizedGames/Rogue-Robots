@@ -1043,6 +1043,8 @@ namespace DOG::gfx
 		assert(requestedSettings.displayMode);
 
 		Flush();
+		s_donez = false;
+
 		if (!requestedSettings.bloom)
 		{
 			m_bloomEffect = nullptr;
@@ -1050,7 +1052,7 @@ namespace DOG::gfx
 		else if (!m_bloomEffect || m_renderWidth != requestedSettings.renderResolution.x || m_renderHeight != requestedSettings.renderResolution.y)
 		{
 			m_bloomEffect.reset();
-			m_bloomEffect = std::make_unique<Bloom>(m_globalEffectData, m_dynConstants.get(), requestedSettings.renderResolution.x, requestedSettings.renderResolution.y);
+			m_bloomEffect = std::make_unique<Bloom>(m_rgResMan.get(), m_globalEffectData, m_dynConstants.get(), requestedSettings.renderResolution.x, requestedSettings.renderResolution.y);
 		}
 		if (m_bloomEffect) m_bloomEffect->SetGraphicsSettings(requestedSettings);
 		m_renderWidth = requestedSettings.renderResolution.x;
