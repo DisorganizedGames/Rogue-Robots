@@ -1,10 +1,15 @@
 #pragma once
+#include "../../Graphics/RHI/RenderResourceHandles.h"
 
 namespace DOG
 {
+	struct LightHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
+	struct MaterialHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
+	struct Mesh { u64 handle{ 0 }; friend class TypedHandlePool; };
+
+
 	namespace gfx
 	{
-		struct MaterialHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
 
 		enum class MaterialTextureType
 		{
@@ -15,7 +20,6 @@ namespace DOG
 			COUNT
 		};
 
-		struct Mesh { u64 handle{ 0 }; friend class TypedHandlePool; };
 
 		struct MeshContainer
 		{
@@ -31,13 +35,56 @@ namespace DOG
 	}
 
 
-	struct LightHandle { u64 handle{ 0 }; friend class TypedHandlePool; };
+	enum class VertexAttribute
+	{
+		Position,
+		Normal,
+		UV,
+		Tangent,
+		BlendData
+	};
+
+
+	struct SubmeshMetadata
+	{
+		u32 vertexStart{ 0 };
+		u32 vertexCount{ 0 };
+		u32 indexStart{ 0 };
+		u32 indexCount{ 0 };
+		u32 blendStart{ 0 };
+		u32 blendCount{ 0 };
+	};
+
+	enum class DataUpdateFrequency
+	{
+		Never,
+		Sometimes,
+		PerFrame
+	};
+
+	struct MeshDesc
+	{
+		std::unordered_map<VertexAttribute, std::span<u8>> vertexDataPerAttribute;
+		std::span<u32> indices;
+		std::vector<SubmeshMetadata> submeshData;
+	};
+
+	struct MaterialDesc
+	{
+		std::optional<gfx::TextureView> albedo, normal, metallicRoughness, emissive;
+
+		DirectX::SimpleMath::Vector4 albedoFactor{ 1.f, 1.f, 1.f, 1.f };
+		DirectX::SimpleMath::Vector4 emissiveFactor{ 0.f, 0.f, 0.f, 1.f };
+		f32 metallicFactor{ 0.f };
+		f32 roughnessFactor{ 1.f };
+	};
 
 	enum class LightType
 	{
 		Point, Spot, Area
 	};
 
+	// Should be replaced with DataUpdateFrequency later
 	enum class LightUpdateFrequency
 	{
 		Never,		// Static light
@@ -66,22 +113,5 @@ namespace DOG
 
 	};
 
-	enum class VertexAttribute
-	{
-		Position,
-		Normal,
-		UV,
-		Tangent,
-		BlendData
-	};
 
-	struct SubmeshMetadata
-	{
-		u32 vertexStart{ 0 };
-		u32 vertexCount{ 0 };
-		u32 indexStart{ 0 };
-		u32 indexCount{ 0 };
-		u32 blendStart{ 0 };
-		u32 blendCount{ 0 };
-	};
 }

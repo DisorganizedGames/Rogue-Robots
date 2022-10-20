@@ -4,6 +4,8 @@
 #include "src/Core/Time.h"
 #include "src/Core/AssetManager.h"
 #include "src/Core/LightManager.h"
+#include "src/Core/CustomMeshManager.h"
+#include "src/Core/CustomMaterialManager.h"
 #include "src/Core/Types/GraphicsTypes.h"
 #include "src/Core/AnimationManager.h"
 #include "src/Core/ImGuiMenuLayer.h"

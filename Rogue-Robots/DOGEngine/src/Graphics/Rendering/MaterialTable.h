@@ -32,7 +32,7 @@ namespace DOG::gfx
 	public:
 		MaterialTable(RenderDevice* rd, GPUGarbageBin* bin, const MemorySpecification& spec, bool async = false);
 
-		MaterialHandle LoadMaterial(const MaterialSpecification& spec, UploadContext& ctx);
+		MaterialHandle LoadMaterial(const MaterialSpecification& spec);
 		void FreeMaterial(MaterialHandle handle);
 
 		void UpdateMaterial(MaterialHandle handle, const MaterialSpecification& spec);
@@ -74,6 +74,8 @@ namespace DOG::gfx
 
 		HandleAllocator m_handleAtor;
 		std::vector<std::optional<Material_Storage>> m_resources;
+		u32 m_resCapacity{ 0 };
+		bool m_resCapacityChanged{ false };
 
 		std::unique_ptr<GPUTableDeviceLocal<GPUMatHandle>> m_matTable;
 	};

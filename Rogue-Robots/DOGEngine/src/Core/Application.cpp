@@ -6,6 +6,8 @@
 #include "AnimationManager.h"
 #include "AssetManager.h"
 #include "LightManager.h"
+#include "CustomMaterialManager.h"
+#include "CustomMeshManager.h"
 #include "../ECS/EntityManager.h"
 #include "../Input/Mouse.h"
 #include "../Input/Keyboard.h"
@@ -117,6 +119,13 @@ namespace DOG
 					}
 				});
 
+
+			EntityManager::Get().Collect<TransformComponent, SubmeshRenderer>().Do([&](entity e, TransformComponent& tr, SubmeshRenderer& sr)
+				{
+					if (sr.dirty)
+						CustomMaterialManager::Get().UpdateMaterial(sr.material, sr.materialDesc);
+					m_renderer->SubmitMesh(sr.mesh, 0, sr.material, tr);
+				});
 
 			// We need to bucket in a better way..
 			EntityManager::Get().Collect<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
@@ -291,6 +300,8 @@ namespace DOG
 		ApplyGraphicsSettings();
 		Window::SetWMHook(m_renderer->GetWMCallback());
 		LightManager::Initialize(m_renderer.get());
+		CustomMeshManager::Initialize(m_renderer.get());
+		CustomMaterialManager::Initialize(m_renderer.get());
 
 
 		AssetManager::Initialize(m_renderer.get());
@@ -310,6 +321,8 @@ namespace DOG
 		AudioManager::Destroy();
 		
 		LightManager::Destroy();
+		CustomMeshManager::Destroy();
+		CustomMaterialManager::Destroy();
 		::DestroyWindow(Window::GetHandle());
 		//...
 	}

@@ -170,6 +170,40 @@ GameLayer::GameLayer() noexcept
 	m_movingPointLight = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<TransformComponent>(m_movingPointLight, Vector3(10, 10, 10), Vector3(0, 0, 0), Vector3(1.f));
 	m_entityManager.AddComponent<PointLightComponent>(m_movingPointLight, pointLight, Vector3(1.f, 1.f, 0.f), 5.f);
+
+	// test load single submesh single material 
+	// custom cube mesh and custom material
+	{
+		// Load mesh
+		MeshDesc md{};
+		SubmeshMetadata smMd{};
+
+		auto mod = ShapeCreator(Shape::cone, 2).GetResult();
+		md.indices = mod->mesh.indices;
+		md.submeshData = mod->submeshes;
+			
+		for (const auto& [k, _] : mod->mesh.vertexData)
+			md.vertexDataPerAttribute[k] = mod->mesh.vertexData[k];
+		auto meshData = CustomMeshManager::Get().AddMesh(md);
+
+		// Load material
+		MaterialDesc d{};
+		d.albedoFactor = { 1.f, 0.f, 0.f };
+		d.roughnessFactor = 0.3f;
+		auto mat = CustomMaterialManager::Get().AddMaterial(d);
+
+		auto testE = m_entityManager.CreateEntity();
+		m_entityManager.AddComponent<TransformComponent>(testE, 
+			DirectX::SimpleMath::Vector3{ 0.f, 5.f, 0.f }, 
+			DirectX::SimpleMath::Vector3{}, 
+			DirectX::SimpleMath::Vector3{ 3.f, 3.f, 3.f });
+		m_entityManager.AddComponent<SubmeshRenderer>(testE, meshData.first, mat, d);
+		
+	}
+
+
+
+
 }
 
 void GameLayer::OnAttach()
@@ -183,6 +217,8 @@ void GameLayer::OnDetach()
 {
 
 }
+
+static f32 timeElapsed{ 0.f };
 
 void GameLayer::OnUpdate()
 {
@@ -215,15 +251,30 @@ void GameLayer::OnUpdate()
 	m_netCode.OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
+
+	timeElapsed += Time::DeltaTime();
+
+	EntityManager::Get().Collect<TransformComponent, SubmeshRenderer>().Do([&](entity e, TransformComponent& tr, SubmeshRenderer& sr)
+		{
+			sr.materialDesc.albedoFactor = { cosf(timeElapsed) * 0.5f + 0.5f, 0.3f * sinf(timeElapsed) * 0.5f + 0.5f, 0.2f, 1.f };
+			sr.materialDesc.metallicFactor = 0.5f;
+			sr.materialDesc.roughnessFactor = 0.1f;
+			sr.dirty = true;
+
+
+
+		});
 } 
 void GameLayer::OnRender()
 {
 	//...
 }
 
+
 void GameLayer::OnImGuiRender()
 {
-	//...
+
+
 }
 
 //Place-holder example on how to use event system:

@@ -24,7 +24,7 @@ namespace DOG::gfx
 		std::vector<MaterialHandle> loadedMats;
 		loadedMats.reserve(matSpecs.size());
 		for (const auto& mat : matSpecs)
-			loadedMats.push_back(m_matTable->LoadMaterial(mat, *m_uploadCtx));
+			loadedMats.push_back(m_matTable->LoadMaterial(mat));
 
 		// Execute copies
 		m_uploadCtx->SubmitCopies();
