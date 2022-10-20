@@ -15,9 +15,7 @@ namespace DOG
 		m_imguiPos.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_imguiRot.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_vsJoints.assign(130, {});
-		loggedClips.push_back({});
-		loggedClips.push_back({});
-		loggedClips.push_back({});
+		
 		ImGuiMenuLayer::RegisterDebugWindow("Animation Clip Setter", [this](bool& open) {SpawnControlWindow(open); });
 	};
 
@@ -30,7 +28,9 @@ namespace DOG
 	{
 		ZoneScopedN("updateJoints_ppp");
 		using namespace DirectX;
-		const auto deltaTime = (f32)Time::DeltaTime();
+		//const auto deltaTime = (f32)Time::DeltaTime();
+		const auto deltaTime = 0.05f;
+
 		if (!m_bonesLoaded) {
 			EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
 				{
@@ -45,36 +45,52 @@ namespace DOG
 				});
 			return;
 		}
+		m_debugTime += deltaTime;
+		static bool firstClip = true;
 		EntityManager::Get().Collect<ModelComponent, RealAnimationComponent, TransformComponent>().Do([&](ModelComponent& modelC, RealAnimationComponent& aC, TransformComponent& tfC)
 		{
 			ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 			if (model)
 			{
-				if(aC.clipCount() < aC.maxClips)
-					aC.AddAnimationClip(1, 0, 0.5f, 1.0f, 0.0f, 1.0f);
+				if (aC.clipCount() < aC.maxClips)
+				{
+					aC.AddAnimationClip(1, 0, 0.5f, 1.0f, 0.0f, 1.0f, firstClip);
+					firstClip = false;
+				}
 			}
 			// clips added this frame needs data from corresponding animation
 			for (u32 i = 0; i < aC.nAddedClips; i++)
 			{
-				const u32 idx = i + aC.ActiveClipCount();
+				const u32 idx = i + aC.clipCount();
+				if (idx >= aC.maxClips)
+					auto why = 0;
+				
 				auto& clip = aC.clips[idx];
 				auto& anim = m_rigs[0]->animations.at(clip.animationID);
 				clip.SetAnimation(anim.duration, anim.ticks);
 			}
 			aC.Update(deltaTime);
+			aC.Debug(m_debugTime);
+
 			for (size_t i = 0; i < aC.ActiveClipCount(); i++)
 			{
-				auto& lc = loggedClips[i];
-				if (lc.logCurrentTick.size() < 100)
+				auto& c = aC.clips[i];
+				if (loggedClips.size() <= c.debugID)
+					loggedClips.push_back({});
+				if (loggedClips.size() <= c.debugID)
+					c.debugID = loggedClips.size() -1;
+				auto& lc = loggedClips[c.debugID];
+				if (lc.size() < 100)
 				{
-					auto& c = aC.clips[i];
-					lc.logWeights.push_back(c.currentWeight);
-					lc.logNormalizedTime.push_back(c.currentWeight);
-					lc.logCurrentTick.push_back(c.currentTick);
+					lc.push_back(LogClip{ m_debugTime, aC.debugWeights[i], c.currentWeight, c.normalizedTime, c.currentTick, c.totalTicks });
+					if (lc.size() > 1)
+						lc.back().localT = lc.rbegin()[1].localT + deltaTime;
 				}
 			}
-			if (loggedClips[0].logCurrentTick.size() >= 100)
+			if (loggedClips.size() > 10)
+			{
 				auto stop = 0;
+			}
 		});
 		return;
 		//static bool open = true;
@@ -85,22 +101,8 @@ namespace DOG
 			if (model)
 			{
 				static constexpr f32 scaleFactor = 0.01f;
-				if (m_imguiTestMovement)
-				{
-					UpdateMovementAnimation(animatorC, (f32)Time::DeltaTime());
-					auto trs = ExtractRootTranslation(m_rootBoneIdx, model->animation, animatorC) * scaleFactor;
-					trs *= m_imguiMovementSpeed < 0.f ? -1.f : 1.f;
-					if(m_imguiRootTranslation)
-						tfC.SetPosition(XMVectorAdd(tfC.GetPosition(), trs));
-				}
-				else
-				{
-					UpdateClips(animatorC, (f32)Time::DeltaTime());
-					/*auto trs = ExtractRootTranslation(m_rootBoneIdx, model->animation, animatorC) * scaleFactor;
-					trs *= m_imguiMovementSpeed < 0.f ? -1.f : 1.f;
-					if (m_imguiRootTranslation)
-						tfC.SetPosition(XMVectorAdd(tfC.GetPosition(), trs));*/
-				}
+				UpdateClips(animatorC, (f32)Time::DeltaTime());
+
 				if (m_imguiResetPos)
 				{
 					m_imguiResetPos = false;
@@ -170,15 +172,6 @@ namespace DOG
 					return uniqueName;
 				};
 				ImGui::Checkbox("Apply Root translation", &m_imguiRootTranslation);
-				ImGui::Checkbox("testMovement", &m_imguiTestMovement);
-				if (ImGui::Button("reset position"))
-					m_imguiResetPos = true;
-				if (m_imguiTestMovement)
-				{
-					ImGui::SliderFloat(setName("movementSpeed").c_str(), &m_imguiMovementSpeed, -3.0f, 3.0f, "%.5f");
-					ImGui::End(); // "Clip Setter"
-					return;
-				}
 
 				// Set Animation Clips
 				static auto setClipAnim = [&setName, animations = m_rigs[rig]->animations](i32& currentAnimIdx, u8 aIdx, AnimationComponent::AnimationClip& clip)
@@ -376,7 +369,8 @@ namespace DOG
 		for (auto& c : ac.clips)
 		{
 			const auto& anim = rig.animations[c.animationID];
-			translationVec += c.currentWeight * GetKeyValue(anim.posKeys.at(nodeID), KeyType::Translation, c.currentTick);
+			if (anim.posKeys.find(nodeID) != anim.posKeys.end())
+				translationVec += c.currentWeight * GetKeyValue(anim.posKeys.at(nodeID), KeyType::Translation, c.currentTick);
 		}
 		return translationVec;
 	}
@@ -386,12 +380,17 @@ namespace DOG
 		using namespace DirectX;
 		// Scaling Weighted Average
 		XMVECTOR scaleVec = XMVECTOR{};
+		bool foundKey = false;
 		for (auto& c : ac.clips)
 		{
 			const auto& anim = rig.animations[c.animationID];
-			scaleVec += c.currentWeight * GetKeyValue(anim.scaKeys.at(nodeID), KeyType::Scale, c.currentTick);
+			if (anim.scaKeys.find(nodeID) != anim.scaKeys.end())
+			{
+				scaleVec += c.currentWeight * GetKeyValue(anim.scaKeys.at(nodeID), KeyType::Scale, c.currentTick);
+				foundKey = true;
+			}
 		}
-		return scaleVec;
+		return foundKey ? scaleVec : XMVECTOR{1.f, 1.f, 1.f, 1.f};
 	}
 	
 	DirectX::FXMVECTOR AnimationManager::ExtractRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac)
@@ -413,94 +412,6 @@ namespace DOG
 			rotVec = XMQuaternionNormalize(XMQuaternionSlerp(rot0, rot1, 1.0f - clip0.currentWeight));
 		}
 		return rotVec;
-	}
-
-	void AnimationManager::UpdateMovementAnimation(DOG::AnimationComponent& ac, const f32 dt)
-	{
-		auto& clip0 = ac.clips[0];
-		auto& clip1 = ac.clips[1];
-		clip0.loop = true;
-		clip1.loop = true;
-		const auto absMS = abs(m_imguiMovementSpeed);
-
-		if (absMS < 0.5f) // clip0 = walk, clip1 = idle
-		{
-			const auto& anim0 = m_rigs[0]->animations[2];
-			const auto& anim1 = m_rigs[0]->animations[4];
-			if (clip0.animationID != 4) clip0.SetAnimation(4, anim1.ticks, anim1.duration);
-			if (clip1.animationID != 2) clip1.SetAnimation(2, anim0.ticks, anim0.duration);
-			m_imguiMatching = true;
-			clip1.currentWeight = 1.0f - absMS / 0.5f;
-			clip0.currentWeight = 1.0f - clip1.currentWeight;
-		}
-		else // clip0 = walk, clip1 = run
-		{
-			const auto& anim0 = m_rigs[0]->animations[4];
-			const auto& anim1 = m_rigs[0]->animations[5];
-			if (clip0.animationID != 4) clip0.SetAnimation(4, anim0.ticks, anim0.duration, clip1.normalizedTime);
-			if (clip1.animationID != 5) clip1.SetAnimation(5, anim1.ticks, anim1.duration, clip0.normalizedTime);
-			m_imguiMatching = true;
-			clip0.currentWeight = 1.0f - std::clamp(absMS-0.5f, 0.0f, 0.5f) * 2.0f;
-			clip1.currentWeight = 1.0f - clip0.currentWeight;
-			// Additional speed increases playback rate of animation
-			clip0.timeScale = 1.0f + std::clamp(absMS - 0.5f, 0.0f, 2.f);
-		}
-		bool forward = m_imguiMovementSpeed > 0.f;
-		bool positiv = clip0.timeScale > 0.f;
-		if (forward != positiv)
-		{
-			clip0.timeScale *= -1.f;
-			clip1.timeScale *= -1.f;
-		}
-		clip0.UpdateClip(dt);
-		clip1.UpdateClip(dt);
-		// Tmp set matching norm time, required for run/walk etc.
-		if (m_imguiMatching)
-			ac.clips[1].normalizedTime = ac.clips[0].normalizedTime;
-	}
-
-	void AnimationManager::UpdateMovementAnimation2(DOG::AnimationComponent& ac, const f32 dt)
-	{
-		auto& clip0 = ac.clips[0];
-		auto& clip1 = ac.clips[1];
-		clip0.loop = true;
-		clip1.loop = true;
-		const auto absMS = abs(m_imguiMovementSpeed);
-
-		if (absMS < 0.5f) // clip0 = walk, clip1 = idle
-		{
-			const auto& anim0 = m_rigs[0]->animations[2];
-			const auto& anim1 = m_rigs[0]->animations[4];
-			if (clip0.animationID != 4) clip0.SetAnimation(4, anim1.ticks, anim1.duration);
-			if (clip1.animationID != 2) clip1.SetAnimation(2, anim0.ticks, anim0.duration);
-			m_imguiMatching = true;
-			clip1.currentWeight = 1.0f - absMS / 0.5f;
-			clip0.currentWeight = 1.0f - clip1.currentWeight;
-		}
-		else // clip0 = walk, clip1 = run
-		{
-			const auto& anim0 = m_rigs[0]->animations[4];
-			const auto& anim1 = m_rigs[0]->animations[5];
-			if (clip0.animationID != 4) clip0.SetAnimation(4, anim0.ticks, anim0.duration, clip1.normalizedTime);
-			if (clip1.animationID != 5) clip1.SetAnimation(5, anim1.ticks, anim1.duration, clip0.normalizedTime);
-			m_imguiMatching = true;
-			clip0.currentWeight = 1.0f - std::clamp(absMS - 0.5f, 0.0f, 0.5f) * 2.0f;
-			clip1.currentWeight = 1.0f - clip0.currentWeight;
-			// Additional speed increases playback rate of animation
-			clip0.timeScale = 1.0f + std::clamp(absMS - 0.5f, 0.0f, 2.f);
-		}
-		bool forward = m_imguiMovementSpeed > 0.f;
-		bool positiv = clip0.timeScale > 0.f;
-		if (forward != positiv)
-		{
-			clip0.timeScale *= -1.f;
-			clip1.timeScale *= -1.f;
-		}
-		clip0.UpdateClip(dt);
-		clip1.UpdateClip(dt);
-		// Tmp set matching norm time, required for run/walk etc.
-		if (m_imguiMatching)
-			ac.clips[1].normalizedTime = ac.clips[0].normalizedTime;
 	}
 
 	void AnimationManager::UpdateLinearGT(AnimationComponent::AnimationClip& clip, const f32 globalTime)

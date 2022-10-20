@@ -34,9 +34,6 @@ namespace DOG
 		void UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
 		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator);
 
-		void UpdateMovementAnimation(DOG::AnimationComponent& ac, const f32 dt);
-		void UpdateMovementAnimation2(DOG::AnimationComponent& ac, const f32 dt);
-
 		DirectX::FXMVECTOR GetKeyValue(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick);
 		DirectX::FXMVECTOR ExtractScaling(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 		DirectX::FXMVECTOR ExtractRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
@@ -50,13 +47,21 @@ namespace DOG
 		std::vector<ImportedRig*> m_rigs;
 	private:
 		//test
+		static constexpr u32 nDebugClips = 3;
+		f32 m_debugTime = 0.0f;
 		struct LogClip
 		{
-			std::vector<f32> logWeights;
-			std::vector<f32> logNormalizedTime;
-			std::vector<f32> logCurrentTick;
+			f32 weight = 0.0f;
+			f32 normW = 0.0f;
+			f32 localT = 0.f;
+			f32 debugT = 0.0f;
+			f32 normT = 0.0f;
+			f32 cTick = 0.0f;
+			f32 nTicks = 0.0f;
+			LogClip(f32 t, f32 w, f32 nw, f32 nt, f32 ct, f32 tt)
+				: debugT(t), weight(w), normW(nw), normT(nt), cTick(ct), nTicks(tt) {};
 		};
-		std::vector<LogClip> loggedClips;
+		std::vector<std::vector<LogClip>> loggedClips;
 		bool m_bonesLoaded = false;
 		i32 m_imguiMinMaskIdx = 100;
 		i32 m_imguiMaxMaskIdx = 0;
@@ -73,7 +78,6 @@ namespace DOG
 		DirectX::FXMMATRIX ImguiTransform(i32 joint);
 
 		bool m_imguiResetPos = false;
-		bool m_imguiTestMovement = false;
 		f32 m_imguiMovementSpeed = 0.0f;
 		f32 m_imguiMovementAngle = 0.0f;
 		bool m_imguiPause = false;
