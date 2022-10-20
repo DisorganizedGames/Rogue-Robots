@@ -1,3 +1,4 @@
+#include <DOGEngine.h>
 #include "GameLayer.h"
 #include "MainScene.h"
 #include "TestScene.h"
@@ -53,6 +54,8 @@ GameLayer::GameLayer() noexcept
 
 void GameLayer::OnAttach()
 {
+	//DOG::ImGuiMenuLayer::RegisterDebugWindow("GameLayer", [this](bool& open) { GameLayer::GameLayerDebugMenu(open); });
+	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameLayer", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1));
 	m_Agent = std::make_shared<Agent>();
 
 	m_testScene = std::make_unique<TestScene>();
@@ -70,6 +73,7 @@ void GameLayer::OnAttach()
 
 void GameLayer::OnDetach()
 {
+	DOG::ImGuiMenuLayer::UnRegisterDebugWindow("GameLayer");
 	m_testScene.reset();
 	m_testScene = nullptr;
 
@@ -426,6 +430,55 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		}
 	}
 	return players;
+}
+
+void GameLayer::GameLayerDebugMenu(bool& open)
+{
+	if (ImGui::BeginMenu("View"))
+	{
+		if (ImGui::MenuItem("GameLayer"))
+		{
+			open = true;
+		}
+		ImGui::EndMenu(); // "View"
+	}
+
+	if (open)
+	{
+		if (ImGui::Begin("GameLayer", &open))
+		{
+			bool checkboxTestScene = m_testScene != nullptr;
+			if (ImGui::Checkbox("TestScene", &checkboxTestScene))
+			{
+				if (checkboxTestScene)
+				{
+					m_testScene = std::make_unique<TestScene>();
+					m_testScene->SetUpScene();
+				}
+				else
+				{
+					m_testScene.reset();
+					m_testScene = nullptr;
+				}
+			}
+
+			bool checkboxMainScene = m_mainScene != nullptr;
+			if (ImGui::Checkbox("MainScene", &checkboxMainScene))
+			{
+				if (checkboxMainScene)
+				{
+					m_mainScene = std::make_unique<MainScene>();
+					m_mainScene->SetUpScene();
+				}
+				else
+				{
+					m_mainScene.reset();
+					m_mainScene = nullptr;
+				}
+			}
+		}
+		ImGui::End(); // "GameLayer"
+	}
 }
 
 

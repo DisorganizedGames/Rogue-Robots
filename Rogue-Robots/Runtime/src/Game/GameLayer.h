@@ -26,6 +26,8 @@ private:
 	void Release(DOG::Key key);
 	void CameraUpdate();
 	std::vector<DOG::entity> SpawnPlayers(const DirectX::SimpleMath::Vector3& pos, u8 playerCount, f32 spread = 10.f);
+
+	void GameLayerDebugMenu(bool& open);
 private:
 	std::unique_ptr<DOG::Scene> m_testScene;
 	std::unique_ptr<DOG::Scene> m_mainScene;

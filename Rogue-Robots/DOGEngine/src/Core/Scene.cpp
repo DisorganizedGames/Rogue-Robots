@@ -13,7 +13,7 @@ namespace DOG
 			{
 				if (sceneC.scene == m_sceneType)
 				{
-					s_entityManager.DestroyEntity(e);
+					s_entityManager.DeferredEntityDestruction(e);
 				}
 			});
 	}
