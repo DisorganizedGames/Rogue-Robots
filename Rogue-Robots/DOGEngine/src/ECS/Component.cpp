@@ -291,6 +291,8 @@ namespace DOG
 			}
 			else if(c.Deactivated(globalTime, dt))
 			{
+				if (clipsPerGroup[c.group] == 0)
+					auto axelStop = 0;
 				--clipsPerGroup[c.group];
 				c.ResetClip();
 			}
