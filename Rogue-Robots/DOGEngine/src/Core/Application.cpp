@@ -122,6 +122,7 @@ namespace DOG
 
 			EntityManager::Get().Collect<TransformComponent, SubmeshRenderer>().Do([&](entity e, TransformComponent& tr, SubmeshRenderer& sr)
 				{
+					// We are assuming that this is a totally normal submesh with no weird branches (i.e on ModularBlock or whatever)
 					if (sr.dirty)
 						CustomMaterialManager::Get().UpdateMaterial(sr.material, sr.materialDesc);
 					m_renderer->SubmitMesh(sr.mesh, 0, sr.material, tr);
