@@ -1,8 +1,8 @@
 Settings =
 {
 	fullscreen = 0,
-	clientWidth = 1280,
-	clientHeight = 720,
+	clientWidth = 1442,
+	clientHeight = 861,
 	renderResolutionWidth = 1920,
 	renderResolutionHeight = 1080,
 	vsync = false,
