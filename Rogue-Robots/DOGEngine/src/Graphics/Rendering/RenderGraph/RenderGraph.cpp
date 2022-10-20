@@ -624,20 +624,12 @@ namespace DOG::gfx
 		m_resMan->DeclareTexture(name, desc);
 	}
 
-	void RenderGraph::PassBuilder::ImportTexture(RGResourceID name, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState)
-	{
-		m_resMan->ImportTexture(name, texture, entryState, exitState);
-	}
 
 	void RenderGraph::PassBuilder::DeclareBuffer(RGResourceID id, RGBufferDesc desc)
 	{
 		m_resMan->DeclareBuffer(id, desc);
 	}
 
-	void RenderGraph::PassBuilder::ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState)
-	{
-		m_resMan->ImportBuffer(id, buffer, entryState, exitState);
-	}
 
 
 

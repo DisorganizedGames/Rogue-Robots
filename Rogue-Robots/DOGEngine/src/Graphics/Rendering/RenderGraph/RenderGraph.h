@@ -142,9 +142,7 @@ namespace DOG::gfx
 
 			// ResourceManager interface
 			void DeclareTexture(RGResourceID id, RGTextureDesc desc);
-			void ImportTexture(RGResourceID id, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
 			void DeclareBuffer(RGResourceID id, RGBufferDesc desc);
-			void ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
 
 			// Texture read views
 			[[nodiscard]] RGResourceView ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc);
