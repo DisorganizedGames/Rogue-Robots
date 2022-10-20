@@ -314,9 +314,9 @@ namespace DOG::gfx
 
 		HandleAllocator m_rhp;
 
+		std::vector<std::optional<MemoryPool_Storage>> m_memoryPools;
 		std::vector<std::optional<Buffer_Storage>> m_buffers;
 		std::vector<std::optional<Texture_Storage>> m_textures;
-		std::vector<std::optional<MemoryPool_Storage>> m_memoryPools;
 		std::vector<std::optional<BufferView_Storage>> m_bufferViews;
 		std::vector<std::optional<TextureView_Storage>> m_textureViews;
 		std::vector<std::optional<Pipeline_Storage>> m_pipelines;

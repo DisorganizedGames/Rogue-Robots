@@ -60,8 +60,9 @@ namespace DOG::gfx
 
 	RenderDevice_DX12::~RenderDevice_DX12()
 	{
-		// Destroy any leftover views automatically
-		for (auto view : m_bufferViews)
+		RenderDevice_DX12::Flush();
+
+		for (auto& view : m_bufferViews)
 		{
 			if (view.has_value())
 			{
@@ -69,13 +70,14 @@ namespace DOG::gfx
 			}
 		}
 
-		for (auto view : m_textureViews)
+		for (auto& view : m_textureViews)
 		{
 			if (view.has_value())
 			{
 				m_descriptorMgr->free(&(*view).view);
 			}
 		}
+
 
 		if (m_reservedDescriptor)
 			m_descriptorMgr->free(&(*m_reservedDescriptor));

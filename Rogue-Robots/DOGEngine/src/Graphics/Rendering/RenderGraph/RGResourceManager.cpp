@@ -15,7 +15,6 @@ namespace DOG::gfx
 
 	RGResourceManager::~RGResourceManager()
 	{
-		m_rd->FreeMemoryPool(m_memoryPool);
 	}
 
 	const GPUPoolMemoryInfo& RGResourceManager::GetMemoryInfo() const
