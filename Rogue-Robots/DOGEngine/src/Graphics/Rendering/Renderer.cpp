@@ -739,7 +739,7 @@ namespace DOG::gfx
 				},
 				[&](const PassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
 				{
-					std::cout << "Doing forward pass with: " << passData.somethingAllocated << "\n";
+					//std::cout << "Doing forward pass with: " << passData.somethingAllocated << "\n";
 
 					rd->Cmd_SetViewports(cmdl, m_globalEffectData.defRenderVPs);
 					rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.defRenderScissors);
@@ -787,12 +787,12 @@ namespace DOG::gfx
 				[&](PassData& passData)
 				{
 					passData.somethingAllocated = 10;
-					std::cout << "Pre! Allocating " << passData.somethingAllocated << "\n";
+					//std::cout << "Pre! Allocating " << passData.somethingAllocated << "\n";
 				},
 				[&](PassData& passData)
 				{
 					passData.somethingAllocated = 10;
-					std::cout << "Post! Deallocating " << passData.somethingAllocated << "\n\n";
+					//std::cout << "Post! Deallocating " << passData.somethingAllocated << "\n\n";
 				});
 		}
 

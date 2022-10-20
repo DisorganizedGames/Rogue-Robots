@@ -99,7 +99,7 @@ namespace DOG::gfx
 			void Execute(RenderDevice* rd, CommandList cmdl);
 	
 			void AddPass(Pass* pass) { m_passes.push_back(pass); }
-			void AddEntryBarrier(GPUBarrier barrier) { m_entryBarriers.push_back(barrier); }
+			void AddEntryBarrier(GPUBarrier barrier, RGResourceID id) { m_entryBarriers.push_back(barrier); m_barrierResourceIDs.push_back(id); }
 			void ClearBarriers() { m_entryBarriers.clear(); }
 
 			const std::vector<Pass*>& GetPasses() const { return m_passes; }
@@ -108,6 +108,7 @@ namespace DOG::gfx
 			RGResourceManager* m_resMan{ nullptr };
 			std::vector<Pass*> m_passes;
 			std::vector<GPUBarrier> m_entryBarriers;
+			std::vector<RGResourceID> m_barrierResourceIDs;
 		};
 
 		struct PassBuilderGlobalData
