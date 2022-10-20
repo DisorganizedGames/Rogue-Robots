@@ -2,19 +2,25 @@
 
 int main()
 {
-    uint32_t w = 13;
-    uint32_t h = 7;
-    uint32_t d = 12;
+    //Dimensions for the whole level.
+    uint32_t w = 50;
+    uint32_t h = 20;
+    uint32_t d = 50;
+
+    //Number of levels to generate.
+    uint32_t nrOfRooms = 7;
 
     std::string input = "largerTestOutput";
 
     //Create a WFC interface and send the input.
     WFC* wfc = new WFC(w, h, d);
+
+    //Change so that we can setinput per room.
     wfc->SetInput(input + ".txt");
 
     //The generation has a certain amount of chances to succeed.
     unsigned chances = 100;
-    while (!wfc->GenerateLevel() && chances > 0)
+    while (!wfc->GenerateLevel(nrOfRooms) && chances > 0)
     {
         chances--;
     }
@@ -24,7 +30,7 @@ int main()
         std::vector<std::string> generatedLevel = wfc->GetGeneratedLevel();
 
         std::ofstream output;
-        output.open(input + "_generatedLevel.txt");
+        output.open("testRooms_generatedLevel.txt");
 
         for (uint32_t i{ 0u }; i < d; ++i)
         {

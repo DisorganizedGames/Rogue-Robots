@@ -1,6 +1,6 @@
 #include "WFC.h"
 
-bool WFC::EdgeConstrain(uint32_t cellIndex, uint32_t dir)
+bool WFC::EdgeConstrain(uint32_t cellIndex, uint32_t dir, Room& room)
 {
 	bool removed = false;
 	for (uint32_t j{ 0u }; j < m_entropy[cellIndex].possibilities.size(); ++j) //Go through all the current possibilities in the cell
@@ -8,7 +8,8 @@ bool WFC::EdgeConstrain(uint32_t cellIndex, uint32_t dir)
 		std::string possibility = m_entropy[cellIndex].possibilities[j];
 
 		//Check if the possibility cannot have a boundary in the direction.
-		if (!std::count(m_blockPossibilities[possibility].dirPossibilities[dir].begin(), m_blockPossibilities[possibility].dirPossibilities[dir].end(), "Edge"))
+		if (!std::count(m_blockPossibilities[possibility].dirPossibilities[dir].begin(), m_blockPossibilities[possibility].dirPossibilities[dir].end(), "Edge") &&
+			!std::count(m_blockPossibilities[possibility].dirPossibilities[dir].begin(), m_blockPossibilities[possibility].dirPossibilities[dir].end(), "Void")) //This has to be tested. Might fuck everything
 		{
 			//If it can not we remove the possibility.
 			m_entropy[cellIndex].possibilities.erase(m_entropy[cellIndex].possibilities.begin() + j);
@@ -36,7 +37,7 @@ bool WFC::EdgeConstrain(uint32_t cellIndex, uint32_t dir)
 		while (!m_recursiveStack.empty())
 		{
 			uint32_t data = m_recursiveStack.front();
-			PropogateConstrain(data);
+			PropogateConstrain(data, room);
 			m_recursiveStack.pop();
 		}
 	}
@@ -44,19 +45,202 @@ bool WFC::EdgeConstrain(uint32_t cellIndex, uint32_t dir)
 	return true;
 }
 
-bool WFC::GenerateLevel()
+bool WFC::IntroduceConstraints(Room& room)
 {
+	//First we set up the entropy.
+	//A vector with all unique id's.
+	std::vector<std::string> allBlocks;
+	for (auto& possibility : m_blockPossibilities)
+	{
+		allBlocks.push_back(possibility.first);
+	}
+
+	m_entropy.clear();
+	//Create an entropy block for each cell.
+	//Set the id to be the index, and the possibilities as all blocks for now.
+	for (uint32_t i{ 0u }; i < room.width * room.height * room.depth; ++i)
+	{
+		EntropyBlock temp;
+		temp.id = i;
+		temp.possibilities = allBlocks;
+		m_entropy.push_back(temp);
+	}
+
+	//ADD A NICE WAY TO INTRODUCE MULTIPLE CONSTRAINTS HERE!
+	{
+		//We now go through the entropy and introduce the boundary constraint.
+		for (uint32_t i{ 0u }; i < room.width * room.height * room.depth; ++i)
+		{
+			if (i >= room.width * room.height * (room.depth - 1)) //If the index is on x = width
+			{
+				if (!EdgeConstrain(i, 0, room))
+				{
+					break;
+				}
+			}
+			if (i < room.width * room.height) //If the index is on x = 0.
+			{
+				if (!EdgeConstrain(i, 1, room))
+				{
+					break;
+				}
+			}
+
+			if (i % room.width == room.width - 1) //If the index is on z = depth
+			{
+				if (!EdgeConstrain(i, 2, room))
+				{
+					break;
+				}
+			}
+			if (i % room.width == 0) //If the index is on z = 0
+			{
+				if (!EdgeConstrain(i, 3, room))
+				{
+					break;
+				}
+			}
+
+			uint32_t remainder = i % (room.width * room.height);
+			if (remainder < room.width) //If the index is on y = 0
+			{
+				if (!EdgeConstrain(i, 5, room))
+				{
+					break;
+				}
+			}
+			if (remainder < room.width * room.height && remainder >= room.width * (room.height - 1)) //If the index is on y = height
+			{
+				if (!EdgeConstrain(i, 4, room))
+				{
+					break;
+				}
+			}
+		}
+	}
+
+	if (m_failed) //If we fail here it means that the contraints imposed can not generate any output.
+	{
+		m_failed = false;
+		m_entropy.clear();
+		return false;
+	}
+
+	return true;
+}
+
+bool WFC::GenerateLevel(uint32_t nrOfRooms)
+{
+	m_generatedLevel.assign(m_width * m_height * m_depth, "Void");
+
+	//First we construct a virtual space containing blocks that represents the rooms.
+	std::vector<uint32_t> min = {0u, 0u, 0u};
+	std::vector<uint32_t> max = { m_width, m_height, m_depth };
+	std::shared_ptr<Box> base = std::make_shared<Box>(min, max);
+
+	//The generated space converges around these sizes.
+	uint32_t maxWidth = 10;
+	uint32_t maxHeight = 4;
+	uint32_t maxDepth = 10;
+
+	std::default_random_engine gen;
+	gen.seed(static_cast<unsigned int>(time(NULL)));
+
+	std::vector<std::shared_ptr<Box>> viableOptions;
+	if (base->Divide(maxWidth, maxHeight, maxDepth, gen))
+	{
+		viableOptions.push_back(base);
+	}
+	else
+	{
+		viableOptions = base->viable;
+		base->viable.clear();
+	}
+
+	if (viableOptions.size() < nrOfRooms) //Return false if the number of viable rooms is less than
+	{
+		return false;
+	}
+
+	//For each room to generate.
+	for (uint32_t i{ 0u }; i < nrOfRooms; i++)
+	{
+		//Now we need to choose nrOfRooms from the viable rooms.
+		std::uniform_int_distribution<size_t> roomID(0u, viableOptions.size() - 1u);
+		uint32_t index = static_cast<uint32_t>(roomID(gen));
+		std::shared_ptr<Box> chosenBox = viableOptions[index];
+		//Remove the option from the vector.
+		viableOptions.erase(viableOptions.begin() + index);
+
+		Room newRoom;
+		newRoom.globalPos[0] = chosenBox->min[0];
+		newRoom.globalPos[1] = chosenBox->min[1];
+		newRoom.globalPos[2] = chosenBox->min[2];
+		newRoom.width = chosenBox->max[0] - chosenBox->min[0];
+		newRoom.height = chosenBox->max[1] - chosenBox->min[1];
+		newRoom.depth = chosenBox->max[2] - chosenBox->min[2];
+		newRoom.generationSuccess = false;
+
+		//Introduce the constraints.
+		if (!IntroduceConstraints(newRoom))
+		{
+			return false;
+		}
+
+		std::cout << "Done introducing constraints." << std::endl;
+
+		uint32_t chances = 100;
+		while((!GenerateRoom(newRoom) && chances != 0) || !newRoom.generationSuccess)
+		{
+			std::cout << "FAILED!" << std::endl;
+			--chances;
+		}
+		if (chances == 0)
+		{
+			return false;
+		}
+		std::cout << "Done with 1 room, id: " << i << std::endl;
+		std::cout << "Block count for this room: " << newRoom.width * newRoom.height * newRoom.depth << std::endl;
+		std::cout << "Count of voids:" << std::count(newRoom.generatedRoom.begin(), newRoom.generatedRoom.end(), "Void") << std::endl;
+
+		m_generatedRooms.push_back(newRoom);
+	}
+
+	for (Room& room : m_generatedRooms) //For each generated room.
+	{
+		//Go through and put the room in the final generated level.
+		uint32_t idStart = (room.globalPos[0]) + (room.globalPos[1] * m_width) + (room.globalPos[2] * m_width * m_height);
+
+		for (uint32_t z{ 0u }; z < room.depth; ++z)
+		{
+			for (uint32_t y{ 0u }; y < room.height; ++y)
+			{
+				for (uint32_t x{ 0u }; x < room.width; ++x)
+				{
+					m_generatedLevel[idStart + x + (y * m_width) + (z * m_width * m_height)] = room.generatedRoom[x + (y * room.width) + (z * room.width * room.height)];
+				}
+			}
+		}
+	}
+	return true;
+}
+
+bool WFC::GenerateRoom(Room& room)
+{
+	m_currentEntropy.clear();
 	m_currentEntropy = m_entropy;
 
 	//The priority queue is not needed for the constraints. As they do not use a priority.
 	//All the entropy blocks should now be placed in a priority queue based on their Shannon entropy.
-	m_priorityQueue = new PriorityQueue(m_currentEntropy, m_blockPossibilities, m_width, m_height, m_depth);
+	m_priorityQueue = new PriorityQueue(m_currentEntropy, m_blockPossibilities, room.width, room.height, room.depth);
 
-	m_generatedLevel.assign(m_width * m_height * m_depth, "N/A");
-
+	room.generatedRoom.assign(room.width * room.height * room.depth, "N/A");
+	room.generationSuccess = false;
 	//Here the WFC starts.
 	//Pop the index with the lowest entropy.
 	uint32_t index = m_priorityQueue->Pop();
+
+#ifdef _DEBUG
 	if (index == -1)
 	{
 		std::cout << "MEGA FAIL! SHOULD NEVER HAPPEN!!!" << std::endl;
@@ -65,12 +249,14 @@ bool WFC::GenerateLevel()
 		m_currentEntropy.clear();
 		return false;
 	}
+#endif
 
 	//Firstly we go through all the blocks with just 1 possibility.
 	while (m_currentEntropy[index].possibilities.size() == 1)
 	{
 		std::string possibility = m_currentEntropy[index].possibilities[0]; //It only has 1 possibility.
-		m_generatedLevel[index] = possibility; //Put the block in the generated level.
+		room.generatedRoom[index] = possibility; //Put the block in the generated room.
+		room.generationSuccess = true;
 
 		index = m_priorityQueue->Pop();
 
@@ -83,7 +269,6 @@ bool WFC::GenerateLevel()
 			//If the generation failed.
 			if (m_failed)
 			{
-				std::cout << "FAILED!" << std::endl;
 				m_failed = false;
 				m_currentEntropy.clear();
 				return false;
@@ -110,7 +295,7 @@ bool WFC::GenerateLevel()
 		std::uniform_real_distribution<float> dist(0.0f, total);
 		float val = dist(gen);
 
-		std::string c;
+		std::string chosenBlock;
 		float count = 0.0f;
 		//Go through all possibilities and if the generated value is less than the frequency counter that possibility is chosen.
 		for (auto& current : m_currentEntropy[index].possibilities)
@@ -118,7 +303,7 @@ bool WFC::GenerateLevel()
 			count += m_blockPossibilities[current].frequency;
 			if (val < count)
 			{
-				c = current;
+				chosenBlock = current;
 				break;
 			}
 		}
@@ -128,7 +313,7 @@ bool WFC::GenerateLevel()
 		for (uint32_t i{ 0u }; i < m_currentEntropy[index].possibilities.size(); ++i)
 		{
 			std::string current = m_currentEntropy[index].possibilities[i];
-			if (current != c)
+			if (current != chosenBlock)
 			{
 				m_currentEntropy[index].possibilities.erase(m_currentEntropy[index].possibilities.begin() + i);
 				i--;
@@ -160,12 +345,13 @@ bool WFC::GenerateLevel()
 			while (!m_recursiveStack.empty())
 			{
 				uint32_t data = m_recursiveStack.front();
-				Propogate(data);
+				Propogate(data, room);
 				m_recursiveStack.pop();
 			}
 		}
 		//We then set the chosen value in the generated level.
-		m_generatedLevel[index] = c;
+		room.generatedRoom[index] = chosenBlock;
+		room.generationSuccess = true;
 
 		index = m_priorityQueue->Pop();
 	}
@@ -177,7 +363,6 @@ bool WFC::GenerateLevel()
 	//If the generation failed we return false.
 	if (m_failed)
 	{
-		std::cout << "FAILED!" << std::endl;
 		m_failed = false;
 		m_currentEntropy.clear();
 		return false;
@@ -251,7 +436,7 @@ bool WFC::ReadInput(std::string input)
 		block.second.frequency /= m_totalCount;
 
 		//Here we can tweak the frequencies.
-		float squishValue = 0.5f;
+		float squishValue = 0.7f;
 		block.second.frequency += squishValue * (1.0f - block.second.frequency);
 
 		if (block.first == "Void")
@@ -264,125 +449,46 @@ bool WFC::ReadInput(std::string input)
 		}
 	}
 
-	//First we set up the entropy.
-	//A vector with all unique id's.
-	std::vector<std::string> allBlocks;
-	for (auto& c : m_blockPossibilities)
-	{
-		allBlocks.push_back(c.first);
-	}
-
-	//Create an entropy block for each cell.
-	//Set the id to be the index, and the possibilities as all blocks for now.
-	for (uint32_t i{ 0u }; i < m_width * m_height * m_depth; ++i)
-	{
-		EntropyBlock temp;
-		temp.id = i;
-		temp.possibilities = allBlocks;
-		m_entropy.push_back(temp);
-	}
-	
-	//ADD A NICE WAY TO INTRODUCE MULTIPLE CONSTRAINTS HERE!
-	{
-		//We now go through the entropy and introduce the boundary constraint.
-		for (uint32_t i{ 0u }; i < m_width * m_height * m_depth; ++i)
-		{
-			if (i >= m_width * m_height * (m_depth - 1)) //If the index is on x = width
-			{
-				if (!EdgeConstrain(i, 0))
-				{
-					break;
-				}
-			}
-			if (i < m_width * m_height) //If the index is on x = 0.
-			{
-				if (!EdgeConstrain(i, 1))
-				{
-					break;
-				}
-			}
-
-			if (i % m_width == m_width - 1) //If the index is on z = depth
-			{
-				if (!EdgeConstrain(i, 2))
-				{
-					break;
-				}
-			}
-			if (i % m_width == 0) //If the index is on z = 0
-			{
-				if (!EdgeConstrain(i, 3))
-				{
-					break;
-				}
-			}
-
-			uint32_t remainder = i % (m_width * m_height);
-			if (remainder < m_width) //If the index is on y = 0
-			{
-				if (!EdgeConstrain(i, 5))
-				{
-					break;
-				}
-			}
-			if (remainder < m_width * m_height && remainder >= m_width * (m_height - 1)) //If the index is on y = height
-			{
-				if (!EdgeConstrain(i, 4))
-				{
-					break;
-				}
-			}
-		}
-	}
-
-	if (m_failed) //If we fail here it means that the contraints imposed can not generate any output.
-	{
-		std::cout << "FAILED!" << std::endl;
-		m_failed = false;
-		m_entropy.clear();
-		return false;
-	}
-	
 	return true;
 }
 
-bool WFC::Propogate(uint32_t index)
+bool WFC::Propogate(uint32_t index, Room& room)
 {	
 	//If the index is not z = 0 we can propogate in the negative z direction.
-	if (index % m_width != 0)
+	if (index % room.width != 0)
 	{
 		CheckForPropogation(index, index - 1, 2);
 	}
 
 	//If the index is not z = width we can propogate in the positive z direction.
-	if (index % m_width != m_width - 1)
+	if (index % room.width != room.width - 1)
 	{
 		CheckForPropogation(index, index + 1, 3);
 	}
 
 	//If the index is not y = 0 we can propogate in the negative y direction.
-	uint32_t remainder = index % (m_width * m_height);
-	if (remainder >= m_width)
+	uint32_t remainder = index % (room.width * room.height);
+	if (remainder >= room.width)
 	{
-		CheckForPropogation(index, index - m_width, 4);
+		CheckForPropogation(index, index - room.width, 4);
 	}
 
 	//If the index is not y = height we can propogate in the positive y direction.
-	if (remainder < m_width * (m_height - 1))
+	if (remainder < room.width * (room.height - 1))
 	{
-		CheckForPropogation(index, index + m_width, 5);
+		CheckForPropogation(index, index + room.width, 5);
 	}
 
 	//If the index is not x = 0 we can propogate in the negative x direction.
-	if (index >= m_width * m_height)
+	if (index >= room.width * room.height)
 	{
-		CheckForPropogation(index, index - (m_width * m_height), 0);
+		CheckForPropogation(index, index - (room.width * room.height), 0);
 	}
 
 	//If the index is not x = depth we can propogate in the positive x direction.
-	if (index < m_width * m_height * (m_depth - 1))
+	if (index < room.width * room.height * (room.depth - 1))
 	{
-		CheckForPropogation(index, index + (m_width * m_height), 1);
+		CheckForPropogation(index, index + (room.width * room.height), 1);
 	}
 
 	return true;
@@ -434,43 +540,43 @@ void WFC::CheckForPropogation(uint32_t currentIndex, uint32_t neighborIndex, uns
 	}
 }
 
-bool WFC::PropogateConstrain(uint32_t index)
+bool WFC::PropogateConstrain(uint32_t index, Room& room)
 {
 	//If the index is not z = 0 we can propogate in the negative z direction.
-	if (index % m_width != 0)
+	if (index % room.width != 0)
 	{
 		CheckForPropogationConstrain(index, index - 1, 2);
 	}
 
 	//If the index is not z = width we can propogate in the positive z direction.
-	if (index % m_width != m_width - 1)
+	if (index % room.width != room.width - 1)
 	{
 		CheckForPropogationConstrain(index, index + 1, 3);
 	}
 
 	//If the index is not y = 0 we can propogate in the negative y direction.
-	uint32_t remainder = index % (m_width * m_height);
-	if (remainder >= m_width)
+	uint32_t remainder = index % (room.width * room.height);
+	if (remainder >= room.width)
 	{
-		CheckForPropogationConstrain(index, index - m_width, 4);
+		CheckForPropogationConstrain(index, index - room.width, 4);
 	}
 
 	//If the index is not y = height we can propogate in the positive y direction.
-	if (remainder < m_width * (m_height - 1))
+	if (remainder < room.width * (room.height - 1))
 	{
-		CheckForPropogationConstrain(index, index + m_width, 5);
+		CheckForPropogationConstrain(index, index + room.width, 5);
 	}
 
 	//If the index is not x = 0 we can propogate in the negative x direction.
-	if (index >= m_width * m_height)
+	if (index >= room.width * room.height)
 	{
-		CheckForPropogationConstrain(index, index - (m_width * m_height), 0);
+		CheckForPropogationConstrain(index, index - (room.width * room.height), 0);
 	}
 
 	//If the index is not x = depth we can propogate in the positive x direction.
-	if (index < m_width * m_height * (m_depth - 1))
+	if (index < room.width * room.height * (room.depth - 1))
 	{
-		CheckForPropogationConstrain(index, index + (m_width * m_height), 1);
+		CheckForPropogationConstrain(index, index + (room.width * room.height), 1);
 	}
 
 	return true;
@@ -522,9 +628,12 @@ void WFC::CheckForPropogationConstrain(uint32_t currentIndex, uint32_t neighborI
 	}
 }
 
-#ifdef _DEBUG
+
 void WFC::PrintLevel()
 {
+#ifndef _DEBUG
+	return;
+#endif
 	std::cout << std::endl;
 	std::cout << "|||||||||||||||NEWPRINT|||||||||||||||||||" << std::endl;
 	unsigned int count = 1;
@@ -549,4 +658,3 @@ void WFC::PrintLevel()
 		}
 	}
 }
-#endif
