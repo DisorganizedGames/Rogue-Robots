@@ -14,30 +14,29 @@ void TestScene::SetUpScene()
 {
 	auto& am = DOG::AssetManager::Get();
 
+	u32 greenCubeID = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
+	u32 magentaCubeID = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
+	u32 blueCubeID = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
+	u32 mixamoID = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/walkmix.fbx");
+	u32 isoSphereID = am.LoadModelAsset("Assets/Models/Temporary_Assets/iso_sphere.glb");
 
 	u32 sphereID = am.LoadShapeAsset(Shape::sphere, 8, 8);
 	entity sphereEntity = CreateEntity();
 	AddComponent<TransformComponent>(sphereEntity, Vector3(30, 20, 30));
 	AddComponent<ModelComponent>(sphereEntity, sphereID);
 
-
-
-	u32 greenCubeID = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
 	entity entity2 = CreateEntity();
 	AddComponent<ModelComponent>(entity2, greenCubeID);
 	AddComponent<TransformComponent>(entity2, Vector3(-4, -2, 5), Vector3(0.1f, 0, 0));
 	AddComponent<MeshColliderComponent>(entity2, entity2, greenCubeID);
 
-	u32 blueCubeID = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
 	entity entity3 = CreateEntity();
 	AddComponent<ModelComponent>(entity3, blueCubeID);
 	auto& t3 = AddComponent<TransformComponent>(entity3);
-
 	t3.SetPosition({ 4, 2, 5 });
 	t3.SetScale({ 0.5f, 0.5f, 0.5f });
 	AddComponent<SphereColliderComponent>(entity3, entity3, 1.0f, true);
 	AddComponent<RigidbodyComponent>(entity3, entity3);
-
 
 	entity entity80 = CreateEntity();
 	AddComponent<ModelComponent>(entity80, blueCubeID);
@@ -46,7 +45,12 @@ void TestScene::SetUpScene()
 	AddComponent<SphereColliderComponent>(entity80, entity80, 1.0f, true);
 	AddComponent<RigidbodyComponent>(entity80, entity80);
 
-	u32 mixamoID = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/walkmix.fbx");
+	entity entity81 = CreateEntity();
+	AddComponent<ModelComponent>(entity81, magentaCubeID);
+	auto& t81 = AddComponent<TransformComponent>(entity81, Vector3(39, 30, 40));
+	AddComponent<BoxColliderComponent>(entity81, entity81, Vector3(1, 1, 1), true);
+	AddComponent<RigidbodyComponent>(entity81, entity81);
+
 	entity entity5 = CreateEntity();
 	AddComponent<ModelComponent>(entity5, mixamoID);
 	AddComponent<TransformComponent>(entity5, Vector3(0, -2, 5), Vector3(0, 0, 0), Vector3(0.02f, 0.02f, 0.02f));
@@ -87,9 +91,8 @@ void TestScene::SetUpScene()
 		AddComponent<TransformComponent>(zAxis, Vector3(0, 0, 0), Vector3(XM_PIDIV2, 0, 0), Vector3(0.02f, 100, 0.02f));
 	}
 
-
 	entity isoSphereEntity = CreateEntity();
-	AddComponent<ModelComponent>(isoSphereEntity, am.LoadModelAsset("Assets/Models/Temporary_Assets/iso_sphere.glb"));
+	AddComponent<ModelComponent>(isoSphereEntity, isoSphereID);
 	AddComponent<TransformComponent>(isoSphereEntity, Vector3(20, 10, 30)).SetScale({ 2,2,2 });
 	auto& isoSphereLight = AddComponent<PointLightComponent>(isoSphereEntity);
 	isoSphereLight.color = Vector3(0.1f, 1.0f, 0.2f);
@@ -109,15 +112,12 @@ void TestScene::SetUpScene()
 	lerpAnimator.loops = -1;
 	lerpAnimator.scale = 0.2;
 
-	u32 magentaCubeID = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
 	entity doorTest = CreateEntity();
 	AddComponent<DoorComponent>(doorTest).roomId = 0;
 	AddComponent<TransformComponent>(doorTest, Vector3(25, 6, 15));
 	AddComponent<ModelComponent>(doorTest, magentaCubeID);
 
-
 	// Setup lights
-
 	// Default lights
 	u32 xOffset = 18;
 	u32 zOffset = 18;

@@ -9,58 +9,14 @@ using namespace DirectX::SimpleMath;
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
 {
-	auto& am = DOG::AssetManager::Get();
-	m_redCube = am.LoadModelAsset("Assets/Models/Temporary_Assets/red_cube.glb");
-	m_greenCube = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
-	m_blueCube = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
-	m_magentaCube = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
-
-	// Temporary solution to not have the entity manager crash on audio system
-	entity testAudio = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<AudioComponent>(testAudio);
-	
-
-	entity entity4 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelComponent>(entity4, m_magentaCube);
-	auto& t4 = m_entityManager.AddComponent<TransformComponent>(entity4);
-	m_entityManager.AddComponent<NetworkPlayerComponent>(entity4).playerId = 3;
-	t4.worldMatrix(3, 0) = 39;
-	t4.worldMatrix(3, 1) = 30;
-	t4.worldMatrix(3, 2) = 40;
-
-	m_entityManager.AddComponent<BoxColliderComponent>(entity4, entity4, Vector3(1, 1, 1), true);
-	m_entityManager.AddComponent<RigidbodyComponent>(entity4, entity4);
-	
-	//rigidbodyComponent.SetOnCollisionEnter([&](entity ent1, entity ent2) {std::cout << ent1 << " " << ent2 << " Enter Hello\n"; });
-	//rigidbodyComponent.SetOnCollisionExit([&](entity ent1, entity ent2) {std::cout << ent1 << " " << ent2 << " Exit Hello\n"; });
-
-	/*m_entityManager.GetComponent<RigidbodyComponent>(entity4).ConstrainPosition(true, false, true);*/
-	//m_entityManager.GetComponent<RigidbodyComponent>(entity4).ConstrainRotation(false, true, true);
-
-	entity entity81 = m_entityManager.CreateEntity();
-	m_entityManager.AddComponent<ModelComponent>(entity81, m_magentaCube);
-	auto& t81 = m_entityManager.AddComponent<TransformComponent>(entity81);
-	t81.worldMatrix = t4.worldMatrix;
-	m_entityManager.AddComponent<BoxColliderComponent>(entity81, entity81, Vector3(1, 1, 1), true);
-	m_entityManager.AddComponent<RigidbodyComponent>(entity81, entity81);
-	
-
-	//LuaMain::GetScriptManager()->OrderScript("LuaTest.lua", 1);
-	//LuaMain::GetScriptManager()->OrderScript("ScriptTest.lua", -1);
 	LuaMain::GetScriptManager()->SortOrderScripts();
-
 	//Do startup of lua
 	LuaMain::GetScriptManager()->RunLuaFile("LuaStartUp.lua");
-
 	//Register Lua interfaces
 	RegisterLuaInterfaces();
-	//...
-	
-	/* Spawn players in a square around a given point */
-	m_playerModels = {m_greenCube, m_redCube, m_blueCube, m_magentaCube};
-	SpawnPlayers(Vector3(25, 25, 15), 4, 10.f);
 	
 	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 
 
 	// Load custom mesh and custom material (one sub-mesh + one material)
@@ -96,17 +52,21 @@ GameLayer::GameLayer() noexcept
 
 void GameLayer::OnAttach()
 {
-	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 	m_testScene = std::make_unique<TestScene>();
 	m_testScene->SetUpScene();
 	LoadLevel();
+
+	/* Spawn players in a square around a given point */
+	SpawnPlayers(Vector3(25, 25, 15), 4, 10.f);
+
 	m_Agent = std::make_shared<Agent>();
 	LuaMain::GetScriptManager()->StartScripts();
 }
 
 void GameLayer::OnDetach()
 {
-
+	m_testScene.reset();
+	m_testScene = nullptr;
 }
 
 void GameLayer::OnUpdate()
@@ -401,6 +361,12 @@ void GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 {
 	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
 	ASSERT(playerCount <= MAX_PLAYER_COUNT, "No more than 4 players can be spawned. I.e. playerCount can't exceed 4");
+
+	auto& am = DOG::AssetManager::Get();
+	m_playerModels[0] = am.LoadModelAsset("Assets/Models/Temporary_Assets/red_cube.glb");
+	m_playerModels[1] = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
+	m_playerModels[2] = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
+	m_playerModels[3] = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
 
 	auto* scriptManager = LuaMain::GetScriptManager();
 	for (auto i = 0; i < playerCount; ++i)
