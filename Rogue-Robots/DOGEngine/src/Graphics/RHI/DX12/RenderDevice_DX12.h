@@ -20,7 +20,7 @@ namespace DOG::gfx
 	class RenderDevice_DX12 final : public RenderDevice
 	{
 	public:
-		RenderDevice_DX12(ComPtr<ID3D12Device5> device, IDXGIAdapter* adapter, bool debug);
+		RenderDevice_DX12(ComPtr<ID3D12Device5> device, IDXGIAdapter* adapter, bool debug, UINT numBackBuffers);
 		~RenderDevice_DX12();
 
 		Swapchain* CreateSwapchain(void* hwnd, u8 numBuffers);
@@ -47,6 +47,8 @@ namespace DOG::gfx
 
 		u32 GetGlobalDescriptor(BufferView view) const;
 		u32 GetGlobalDescriptor(TextureView view) const;
+
+		
 
 		void Flush();
 
@@ -176,6 +178,9 @@ namespace DOG::gfx
 		ID3D12DescriptorHeap* GetMainResourceDH() const;
 		ID3D12GraphicsCommandList4* GetListForExternal(CommandList cmdl);
 
+		ID3D12CommandQueue* GetQueue();
+		D3D12_CPU_DESCRIPTOR_HANDLE GetReservedRTV(u8 offset);
+
 		// Helpers
 	private:
 		struct CommandAtorAndList
@@ -293,6 +298,7 @@ namespace DOG::gfx
 #endif
 		ComPtr<ID3D12RootSignature> m_gfxRsig;
 		std::unique_ptr<DX12DescriptorManager> m_descriptorMgr;
+		
 
 		HandleAllocator m_rhp;
 
@@ -313,6 +319,9 @@ namespace DOG::gfx
 
 		// ImGUI
 		std::optional<DX12DescriptorChunk> m_reservedDescriptor;
+
+		//Ui
+		std::optional<DX12DescriptorChunk> m_d2dReservedDescriptor;
 	};
 }
 

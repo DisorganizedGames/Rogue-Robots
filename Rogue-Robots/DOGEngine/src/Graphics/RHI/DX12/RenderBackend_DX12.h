@@ -15,7 +15,7 @@ namespace DOG::gfx
 	public:
 		RenderBackend_DX12(bool debug = false);
 
-		RenderDevice* CreateDevice();
+		RenderDevice* CreateDevice(UINT numBackBuffers);
 
 	private:
 		void CreateAdapterFac();

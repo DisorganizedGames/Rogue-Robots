@@ -34,6 +34,38 @@
 #include "../../Core/ImGuiMenuLayer.h"
 #include "../../common/MiniProfiler.h"
 
+///TODO: This is going to be moved to an appropriate place.
+std::unique_ptr<DOG::UI> ui;
+UINT menuID, gameID, optionsID, multiID;
+
+void UIRebuild(UINT clientHeight, UINT clientWidth);
+void AddScenes();
+
+void PlayButtonFunc(void)
+{
+	ui->ChangeUIscene(gameID);
+}
+
+void OptionsButtonFunc(void)
+{
+	ui->ChangeUIscene(optionsID);
+}
+
+void MultiplayerButtonFunc(void)
+{
+	ui->ChangeUIscene(multiID);
+}
+
+void ToMenuButtonFunc(void)
+{
+	ui->ChangeUIscene(menuID);
+}
+
+void ExitButtonFunc(void)
+{
+	//Exit game
+}
+
 namespace DOG::gfx
 {
 	Renderer::Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug) :
@@ -42,9 +74,15 @@ namespace DOG::gfx
 	{
 		m_boneJourno = std::make_unique<AnimationManager>();
 		m_backend = std::make_unique<gfx::RenderBackend_DX12>(debug);
-		m_rd = m_backend->CreateDevice();
+		m_rd = m_backend->CreateDevice(S_NUM_BACKBUFFERS);
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
+		ui = std::make_unique<DOG::UI>(m_rd, m_sc, S_NUM_BACKBUFFERS, clientWidth, clientHeight);
+
+		AddScenes();
+		UIRebuild(clientHeight, clientWidth);
+
 		m_imgui = std::make_unique<gfx::ImGUIBackend_DX12>(m_rd, m_sc, S_MAX_FIF);
+
 		m_sclr = std::make_unique<ShaderCompilerDXC>();
 
 		m_wmCallback = [this](HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -69,7 +107,7 @@ namespace DOG::gfx
 		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), maxConstantsPerFrame);
 
 		// multiple of curr loaded mixamo skeleton
-		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 33 * 5);		
+		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 33 * 5);
 		m_cmdl = m_rd->AllocateCommandList();
 
 		// Startup
@@ -95,12 +133,6 @@ namespace DOG::gfx
 		// Default storage
 		auto lightStorageSpec = LightTable::StorageSpecification();
 		m_globalLightTable = std::make_unique<LightTable>(m_rd, m_bin.get(), lightStorageSpec, false);
-
-
-
-
-
-
 
 
 
@@ -201,7 +233,7 @@ namespace DOG::gfx
 		m_globalEffectData.bbVP = Viewports().Append(0.f, 0.f, (f32)clientWidth, (f32)clientHeight);
 		// render vps/scissors subject to change
 		m_globalEffectData.defRenderScissors = ScissorRects().Append(0, 0, m_renderWidth, m_renderHeight);
-		m_globalEffectData.defRenderVPs= Viewports().Append(0.f, 0.f, (f32)m_renderWidth, (f32)m_renderHeight);
+		m_globalEffectData.defRenderVPs = Viewports().Append(0.f, 0.f, (f32)m_renderWidth, (f32)m_renderHeight);
 		m_globalEffectData.globalDataDescriptor = m_globalDataTable->GetGlobalDescriptor();
 		m_globalEffectData.meshTable = m_globalMeshTable.get();
 
@@ -217,11 +249,11 @@ namespace DOG::gfx
 			you can then find rendergraph.txt in the Assets folder and simply copy paste it to Graphviz Online.
 			The graph is to be traversed in topological order, so you can then verify that everything is executed
 			in the order you expect them to.
-			
+
 			Remember that you do not have to immediately create an Effect class to play around.
 			You can simply define passes as lambdas just like Forward Pass in the Render function to get acquainted
 			(i.e try defining a few passes with only read/write declarations to see if the generated graph is as expected!)
-			
+
 		*/
 		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
 		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
@@ -234,6 +266,7 @@ namespace DOG::gfx
 	{
 		Flush();
 		m_sc->SetFullscreenState(false, {}); // safeguard to prevent crash if game has not exited fullscreen before exit
+		ui.reset();
 	}
 
 	Monitor Renderer::GetMonitor() const
@@ -369,13 +402,13 @@ namespace DOG::gfx
 		MINIPROFILE
 
 
-		// Resolve any per frame copies from CPU
+			// Resolve any per frame copies from CPU
 		{
 			ZoneNamedN(FrameCopyResolve, "Frame Copies", true);
 			m_perFrameUploadCtx->SubmitCopies();
 		}
 
-		
+
 		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
 		auto& rg = *m_rg;
 
@@ -398,7 +431,7 @@ namespace DOG::gfx
 				@todo:
 					Still need some way to pre-allocate per draw data prior to render pass.
 					Perhaps go through the submissions and collect data --> Upload to GPU (maybe instance it as well?)
-					and during forward pass we simply read from it 
+					and during forward pass we simply read from it
 			*/
 			auto drawSubmissions = [this](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission> submissions, bool animated = false, bool wireframe = false)
 			{
@@ -453,7 +486,7 @@ namespace DOG::gfx
 				{
 					rd->Cmd_SetViewports(cmdl, m_globalEffectData.defRenderVPs);
 					rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.defRenderScissors);
-						
+
 					rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipe);
@@ -479,14 +512,14 @@ namespace DOG::gfx
 
 		// Blit HDR to LDR
 		{
-			struct PassData 
+			struct PassData
 			{
 				RGResourceView litHDRView;
 			};
 			rg.AddPass<PassData>("Blit to HDR Pass",
 				[&](PassData& passData, RenderGraph::PassBuilder& builder)
 				{
-					builder.ImportTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
+					builder.ImportTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 					passData.litHDRView = builder.ReadResource(RG_RESOURCE(LitHDR), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
@@ -518,11 +551,14 @@ namespace DOG::gfx
 			ZoneNamedN(RGExecuteScope, "RG Execution", true);
 			rg.Execute();
 		}
-
+		ui->GetBackend()->BeginFrame();
+		ui->DrawUI();
+		ui->GetBackend()->EndFrame();
 	}
 
 	void Renderer::OnResize(u32 clientWidth, u32 clientHeight)
 	{
+		ui->FreeResize();
 		if (clientWidth != 0 && clientHeight != 0)
 		{
 			m_globalEffectData.bbScissor = ScissorRects().Append(0, 0, clientWidth, clientHeight);
@@ -530,6 +566,11 @@ namespace DOG::gfx
 		}
 
 		m_sc->OnResize(clientWidth, clientHeight);
+		ui->Resize(clientWidth, clientHeight);
+
+		UIRebuild(clientHeight, clientWidth);
+
+
 	}
 
 	WindowMode DOG::gfx::Renderer::GetFullscreenState() const
@@ -612,7 +653,7 @@ namespace DOG::gfx
 			ImGui::End();
 		}
 	}
-	
+
 
 	LRESULT Renderer::WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
@@ -622,4 +663,64 @@ namespace DOG::gfx
 			return false;
 	}
 
+}
+
+void UIRebuild(UINT clientHeight, UINT clientWidth)
+{
+	//HealthBar
+	auto hID = ui->GenerateUID();
+	auto h = std::make_unique<DOG::UIHealthBar>(40.f, clientHeight - 60.f, 250.f, 30.f, *ui->GetBackend(), hID);
+	ui->AddUIElementToScene(gameID, std::move(h));
+
+	//Crosshair
+	UINT cID = ui->GenerateUID();
+	auto c = std::make_unique<DOG::UICrosshair>(*ui->GetBackend(), cID);
+	ui->AddUIElementToScene(gameID, std::move(c));
+
+	//Menu backgrounds
+	auto menuBackID = ui->GenerateUID();
+	auto optionsBackID = ui->GenerateUID();
+	auto multiBackID = ui->GenerateUID();
+	auto menuBack = std::make_unique<DOG::UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Rogue Robots"), *ui->GetBackend(), menuBackID);
+	ui->AddUIElementToScene(menuID, std::move(menuBack));
+	auto optionsBack = std::make_unique<DOG::UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Options"), *ui->GetBackend(), optionsBackID);
+	ui->AddUIElementToScene(optionsID, std::move(optionsBack));
+	auto multiBack = std::make_unique<DOG::UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Multiplayer"), *ui->GetBackend(), multiBackID);
+	ui->AddUIElementToScene(multiID, std::move(multiBack));
+
+	//Menu buttons
+	auto bpID = ui->GenerateUID();
+	auto bmID = ui->GenerateUID();
+	auto boID = ui->GenerateUID();
+	auto beID = ui->GenerateUID();
+	auto optbackID = ui->GenerateUID();
+	auto mulbackID = ui->GenerateUID();
+	auto bp = std::make_unique<DOG::UIButton>(*ui->GetBackend(), (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, std::wstring(L"Play"), std::function<void()>(PlayButtonFunc), bpID);
+	auto bm = std::make_unique<DOG::UIButton>(*ui->GetBackend(), (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 150.f, 60.f, 20.f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc), bmID);
+	auto bo = std::make_unique<DOG::UIButton>(*ui->GetBackend(), (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc), boID);
+	auto be = std::make_unique<DOG::UIButton>(*ui->GetBackend(), (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc), beID);
+	auto optback = std::make_unique<DOG::UIButton>(*ui->GetBackend(), (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc), optbackID);
+	auto mulback = std::make_unique<DOG::UIButton>(*ui->GetBackend(), (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc), mulbackID);
+	ui->AddUIElementToScene(menuID, std::move(bp));
+	ui->AddUIElementToScene(menuID, std::move(bm));
+	ui->AddUIElementToScene(menuID, std::move(bo));
+	ui->AddUIElementToScene(menuID, std::move(be));
+	ui->AddUIElementToScene(optionsID, std::move(optback));
+	ui->AddUIElementToScene(multiID, std::move(mulback));
+
+
+	//Splash screen
+	// auto sID = ui->GenerateUID();
+	// auto s = std::make_unique<DOG::UISplashScreen>(*ui->m_d2d, (float)clientWidth, (float)clientHeight, sID);
+	// ui->AddUIlEmentToScene(menuID, std::move(s));
+
+}
+
+void AddScenes()
+{
+	menuID = ui->AddScene();
+	gameID = ui->AddScene();
+	multiID = ui->AddScene();
+	optionsID = ui->AddScene();
+	ui->ChangeUIscene(gameID);
 }

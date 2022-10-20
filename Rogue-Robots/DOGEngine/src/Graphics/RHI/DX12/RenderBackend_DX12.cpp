@@ -25,7 +25,7 @@ namespace DOG::gfx
 		CheckFeatureSupport();
 	}
 
-	RenderDevice* RenderBackend_DX12::CreateDevice()
+	RenderDevice* RenderBackend_DX12::CreateDevice(UINT numBackBuffers)
 	{
 		HRESULT hr{ S_OK };
 		ComPtr<ID3D12Device5> dev;
@@ -49,7 +49,7 @@ namespace DOG::gfx
 		hr = D3D12CreateDevice(m_adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(dev.GetAddressOf()));
 		HR_VFY(hr);
 
-		auto render_device = std::make_unique<RenderDevice_DX12>(dev, m_adapter.Get(), m_debug_on);
+		auto render_device = std::make_unique<RenderDevice_DX12>(dev, m_adapter.Get(), m_debug_on, numBackBuffers);
 		auto ret = render_device.get();
 
 		m_devices.insert({ render_device.get(), dev });
