@@ -11,7 +11,7 @@ namespace DOG::gfx
 	{
 		// Store persistent non-moving memory for materials 
 		m_resources.resize(600);
-		m_resCapacity = m_resources.capacity();
+		m_resCapacity = (u32)m_resources.capacity();
 
 		assert(spec.maxElements != 0);
 		m_matTable = std::make_unique<GPUTableDeviceLocal<GPUMatHandle>>(rd, bin, (u32)sizeof(Material_GPUElement), spec.maxElements, async);
@@ -30,7 +30,7 @@ namespace DOG::gfx
 		auto& toFill = HandleAllocator::TryGet(m_resources, HandleAllocator::GetSlot(hdl.handle));
 		if (m_resCapacity != m_resources.capacity())
 		{
-			m_resCapacity = m_resources.capacity();
+			m_resCapacity = (u32)m_resources.capacity();
 			m_resCapacityChanged = true;
 		}
 

@@ -214,8 +214,6 @@ void GameLayer::OnDetach()
 
 }
 
-static f32 timeElapsed{ 0.f };
-
 void GameLayer::OnUpdate()
 {
 	MINIPROFILE
@@ -248,11 +246,9 @@ void GameLayer::OnUpdate()
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
 
-	timeElapsed += Time::DeltaTime();
-
-	EntityManager::Get().Collect<TransformComponent, SubmeshRenderer>().Do([&](entity e, TransformComponent& tr, SubmeshRenderer& sr)
+	EntityManager::Get().Collect<TransformComponent, SubmeshRenderer>().Do([&](entity, TransformComponent&, SubmeshRenderer& sr)
 		{
-			sr.materialDesc.albedoFactor = { cosf(timeElapsed) * 0.5f + 0.5f, 0.3f * sinf(timeElapsed) * 0.5f + 0.5f, 0.2f, 1.f };
+			sr.materialDesc.albedoFactor = { cosf((f32)m_elapsedTime) * 0.5f + 0.5f, 0.3f * sinf((f32)m_elapsedTime) * 0.5f + 0.5f, 0.2f, 1.f };
 			sr.dirty = true;
 
 
