@@ -19,42 +19,11 @@ GameLayer::GameLayer() noexcept
 	
 	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
-
-
-	// Load custom mesh and custom material (one sub-mesh + one material)
-	// Material is modifiable
-	{
-		// Load mesh
-		MeshDesc md{};
-		SubmeshMetadata smMd{};
-
-		auto mod = ShapeCreator(Shape::cone, 4).GetResult();
-		md.indices = mod->mesh.indices;
-		md.submeshData = mod->submeshes;
-			
-		for (const auto& [k, _] : mod->mesh.vertexData)
-			md.vertexDataPerAttribute[k] = mod->mesh.vertexData[k];
-		auto meshData = CustomMeshManager::Get().AddMesh(md);
-
-		// Load material
-		MaterialDesc d{};
-		d.albedoFactor = { 1.f, 0.f, 0.f };
-		d.roughnessFactor = 0.15f;
-		d.metallicFactor = 0.85f;
-		auto mat = CustomMaterialManager::Get().AddMaterial(d);
-
-		auto testE = m_entityManager.CreateEntity();
-		m_entityManager.AddComponent<TransformComponent>(testE, 
-			DirectX::SimpleMath::Vector3{ 25.f, 10.f, 25.f }, 
-			DirectX::SimpleMath::Vector3{}, 
-			DirectX::SimpleMath::Vector3{ 3.f, 3.f, 3.f });
-		m_entityManager.AddComponent<SubmeshRenderer>(testE, meshData.first, mat, d);	
-	}
+	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
 }
 
 void GameLayer::OnAttach()
 {
-	//DOG::ImGuiMenuLayer::RegisterDebugWindow("GameLayer", [this](bool& open) { GameLayer::GameLayerDebugMenu(open); });
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameLayer", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1));
 	m_Agent = std::make_shared<Agent>();
 
@@ -105,15 +74,6 @@ void GameLayer::OnUpdate()
 	m_netCode.OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
-
-	/*EntityManager::Get().Collect<TransformComponent, SubmeshRenderer>().Do([&](entity, TransformComponent&, SubmeshRenderer& sr)
-		{
-			sr.materialDesc.albedoFactor = { cosf((f32)m_elapsedTime) * 0.5f + 0.5f, 0.3f * sinf((f32)m_elapsedTime) * 0.5f + 0.5f, 0.2f, 1.f };
-			sr.dirty = true;
-
-
-
-		});*/
 } 
 void GameLayer::OnRender()
 {

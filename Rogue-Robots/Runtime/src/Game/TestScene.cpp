@@ -157,4 +157,40 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	lightAnimation.target = lightAnimation.origin + Vector3(0, 0, 30);
 	lightAnimation.loops = -1;
 	lightAnimation.scale = 0.3;
+
+
+	// Load custom mesh and custom material (one sub-mesh + one material)
+	// Material is modifiable
+	{
+		// Load mesh
+		MeshDesc md{};
+		SubmeshMetadata smMd{};
+
+		auto mod = ShapeCreator(Shape::cone, 4).GetResult();
+		md.indices = mod->mesh.indices;
+		md.submeshData = mod->submeshes;
+
+		for (const auto& [k, _] : mod->mesh.vertexData)
+			md.vertexDataPerAttribute[k] = mod->mesh.vertexData[k];
+		auto meshData = CustomMeshManager::Get().AddMesh(md);
+
+		// Load material
+		MaterialDesc d{};
+		d.albedoFactor = { 1.f, 0.5f, 0.f };
+		d.roughnessFactor = 0.3f;
+		d.metallicFactor = 0.6f;
+		auto mat = CustomMaterialManager::Get().AddMaterial(d);
+
+		auto testE = CreateEntity();
+		AddComponent<TransformComponent>(testE,
+			DirectX::SimpleMath::Vector3{ 25.f, 10.f, 25.f },
+			DirectX::SimpleMath::Vector3{},
+			DirectX::SimpleMath::Vector3{ 3.f, 3.f, 3.f });
+		AddComponent<SubmeshRenderer>(testE, meshData.first, mat, d);
+		auto& lerpColor = AddComponent<LerpColorComponent>(testE);
+		lerpColor.origin = Vector3(d.albedoFactor);
+		lerpColor.target = Vector3(1, 1, 1) - lerpColor.origin;
+		lerpColor.loops = -1;
+		lerpColor.scale = 0.7;
+	}
 }

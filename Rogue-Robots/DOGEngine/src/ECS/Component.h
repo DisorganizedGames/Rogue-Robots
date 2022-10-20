@@ -131,6 +131,15 @@ namespace DOG
 		i32 loops{ 1 };
 	};
 
+	struct LerpColorComponent
+	{
+		DirectX::SimpleMath::Vector3 origin{ 0,0,0 };
+		DirectX::SimpleMath::Vector3 target{ 1,1,1 };
+		f64 t{ 0 };
+		f64 scale{ 1 };
+		i32 loops{ 1 };
+	};
+
 	struct DirtyComponent
 	{
 		static constexpr u8 positionChanged = 0;

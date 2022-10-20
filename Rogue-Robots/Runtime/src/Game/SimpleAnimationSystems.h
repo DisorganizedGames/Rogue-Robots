@@ -39,3 +39,43 @@ public:
 		}
 	}
 };
+
+
+
+
+class LerpColorSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	using Vector4 = DirectX::SimpleMath::Vector4;
+public:
+	SYSTEM_CLASS(DOG::LerpColorComponent, DOG::SubmeshRenderer);
+	ON_UPDATE_ID(DOG::LerpColorComponent, DOG::SubmeshRenderer);
+	void OnUpdate(DOG::entity entityID, DOG::LerpColorComponent& animator, DOG::SubmeshRenderer& mat)
+	{
+		if (abs(animator.loops) > 0)
+		{
+			f64 dt = DOG::Time::DeltaTime<>();
+			animator.t += dt * animator.scale;
+			f64 t01 = std::clamp(animator.t, 0.0, 1.0);
+			Vector3 color = Vector3::Lerp(animator.origin, animator.target, static_cast<float>(t01));
+			mat.materialDesc.albedoFactor = Vector4(color.x, color.y, color.z, 1);
+			mat.dirty = true;
+			if (animator.t < t01)
+			{
+				animator.scale = abs(animator.scale);
+				animator.t = t01 - animator.t;
+				animator.loops--;
+			}
+			else if (animator.t > t01)
+			{
+				animator.scale = -abs(animator.scale);
+				animator.t = 1.0 + t01 - animator.t;
+				animator.loops--;
+			}
+		}
+		if (animator.loops == 0)
+		{
+			DOG::EntityManager::Get().RemoveComponent<DOG::LerpColorComponent>(entityID);
+		}
+	}
+};
