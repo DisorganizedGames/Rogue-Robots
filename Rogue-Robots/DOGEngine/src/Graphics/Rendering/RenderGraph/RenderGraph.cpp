@@ -139,7 +139,7 @@ namespace DOG::gfx
 
 		{
 			ZoneNamedN(RGTrackTransitions, "RG Building: Track Transitions", true);
-			//TrackTransitions();
+			TrackTransitions();
 		}
 
 		m_dirty = false;
@@ -1053,7 +1053,10 @@ namespace DOG::gfx
 	{
 		// Resolve potentially changed resources
 		for (u32 i = 0; i < m_entryBarriers.size(); ++i)
+		{
 			m_entryBarriers[i].resource = m_resMan->GetResource(m_barrierResourceIDs[i]);
+			m_resMan->SetCurrentState(m_barrierResourceIDs[i], m_entryBarriers[i].stateAfter);
+		}
 
 		if (!m_entryBarriers.empty())
 			rd->Cmd_Barrier(cmdl, m_entryBarriers);
