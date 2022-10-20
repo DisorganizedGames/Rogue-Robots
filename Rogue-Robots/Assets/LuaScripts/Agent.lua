@@ -188,7 +188,6 @@ function Agent:Damage(damage)
 end
 
 function Agent:Die()
-	print("Agent dies")
 	while #self.behaviorStack > 1 do
 		self:popBehavior()
 	end

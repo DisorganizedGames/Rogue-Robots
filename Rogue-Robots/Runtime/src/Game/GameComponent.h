@@ -71,5 +71,5 @@ struct CreateAndDestroyEntityComponent
 	u32 id;
 	bool alive;
 	INT8 playerId; 
-	Matrix trans;
+	Vector3 position;
 };

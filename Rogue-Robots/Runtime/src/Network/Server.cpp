@@ -225,11 +225,11 @@ void Server::ServerPollTCP()
 					bufferReciveSize += sizeof(Client::ClientsData);
 
 					//add transforms
-					for (int j = 0; j < holdClientsData.nrOfNetTransform; j++)
+					if(holdClientsData.nrOfNetTransform > 0)
 					{
-						memcpy(sendBuffer + bufferSendSize, reciveBuffer + bufferReciveSize, sizeof(DOG::NetworkTransform));
-						bufferReciveSize += sizeof(DOG::NetworkTransform);
-						bufferSendSize += sizeof(DOG::NetworkTransform);
+						memcpy(sendBuffer + bufferSendSize, reciveBuffer + bufferReciveSize, sizeof(DOG::NetworkTransform) * holdClientsData.nrOfNetTransform);
+						bufferReciveSize += sizeof(DOG::NetworkTransform) * holdClientsData.nrOfNetTransform;
+						bufferSendSize += sizeof(DOG::NetworkTransform) * holdClientsData.nrOfNetTransform;
 					}
 
 					//Sync the enemies stats
@@ -254,6 +254,16 @@ void Server::ServerPollTCP()
 						
 						if(!alreadyIn)
 							statsChanged.push_back(test);
+						bufferReciveSize += sizeof(NetworkAgentStats);
+					}
+
+					//Add the Create and destroy components
+					if (holdClientsData.nrOfCreateAndDestroy > 0)
+					{
+						memcpy(sendBuffer + bufferSendSize, reciveBuffer + bufferReciveSize, sizeof(CreateAndDestroyEntityComponent) * holdClientsData.nrOfCreateAndDestroy);
+						bufferReciveSize += sizeof(CreateAndDestroyEntityComponent) * holdClientsData.nrOfCreateAndDestroy;
+						bufferSendSize += sizeof(CreateAndDestroyEntityComponent) * holdClientsData.nrOfCreateAndDestroy;
+
 					}
 				}
 			}
