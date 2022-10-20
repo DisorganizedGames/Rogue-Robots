@@ -8,8 +8,8 @@ class Agent
 public:
 	Agent();
 	~Agent();
-
+	DOG::entity MakeAgent(DOG::entity e) noexcept;
 private:
+	bool m_useNetworking = true;
 	DOG::EntityManager& m_entityManager;
-	DOG::entity m_agentEntity;
 };

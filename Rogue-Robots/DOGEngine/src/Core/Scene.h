@@ -23,7 +23,7 @@ namespace DOG
 		Scene& operator=(const Scene& other) = delete;
 		virtual ~Scene();
 
-		virtual void SetUpScene() = 0;
+		virtual void SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>> entityCreators = {}) = 0;
 		[[nodiscard]] entity CreateEntity() const noexcept;
 
 		template<typename ComponentType, typename ...Args>

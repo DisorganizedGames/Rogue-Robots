@@ -10,8 +10,15 @@ TestScene::TestScene() : Scene(SceneType::TestScene)
 
 }
 
-void TestScene::SetUpScene()
+void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>> entityCreators)
 {
+	for(auto& func : entityCreators)
+	{
+		auto entities = func();
+		for (entity e : entities)
+			AddComponent<SceneComponent>(e, m_sceneType);
+	}
+
 	auto& am = DOG::AssetManager::Get();
 
 	u32 greenCubeID = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
@@ -47,7 +54,7 @@ void TestScene::SetUpScene()
 
 	entity entity81 = CreateEntity();
 	AddComponent<ModelComponent>(entity81, magentaCubeID);
-	auto& t81 = AddComponent<TransformComponent>(entity81, Vector3(39, 30, 40));
+	AddComponent<TransformComponent>(entity81, Vector3(39, 30, 40));
 	AddComponent<BoxColliderComponent>(entity81, entity81, Vector3(1, 1, 1), true);
 	AddComponent<RigidbodyComponent>(entity81, entity81);
 

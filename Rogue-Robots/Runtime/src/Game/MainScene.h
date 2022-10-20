@@ -1,9 +1,9 @@
 #pragma once
 #include <DOGEngine.h>
 
-class TestScene : public DOG::Scene
+class MainScene : public DOG::Scene
 {
 public:
-	TestScene();
+	MainScene();
 	void SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>> entityCreators = {}) override;
 };

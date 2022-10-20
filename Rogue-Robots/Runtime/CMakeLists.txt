@@ -10,7 +10,7 @@ set(SourceFiles
 		"src/Game/LuaInterfaces.h" "src/Game/LuaInterfaces.cpp"
 		 "src/Game/Agent.h" "src/Game/Agent.cpp"
 		"src/Network/Server.h" "src/Network/Server.cpp" "src/Network/Client.h" "src/Network/Client.cpp"
-		"src/Game/TestScene.h" "src/Game/TestScene.cpp"
+		"src/Game/TestScene.h" "src/Game/TestScene.cpp" "src/Game/MainScene.h" "src/Game/MainScene.cpp"
 		)
 		
 set(ExecutableName "Runtime")

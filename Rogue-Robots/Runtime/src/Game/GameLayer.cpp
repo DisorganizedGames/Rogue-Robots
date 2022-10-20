@@ -1,4 +1,5 @@
 #include "GameLayer.h"
+#include "MainScene.h"
 #include "TestScene.h"
 #include "SimpleAnimationSystems.h"
 
@@ -52,14 +53,18 @@ GameLayer::GameLayer() noexcept
 
 void GameLayer::OnAttach()
 {
+	m_Agent = std::make_shared<Agent>();
+
 	m_testScene = std::make_unique<TestScene>();
 	m_testScene->SetUpScene();
-	LoadLevel();
 
-	/* Spawn players in a square around a given point */
-	SpawnPlayers(Vector3(25, 25, 15), 4, 10.f);
+	m_mainScene = std::make_unique<MainScene>();
+	m_mainScene->SetUpScene({
+		[this]() { return SpawnPlayers(Vector3(25, 25, 15), 4, 10.f); },
+		[this]() { return LoadLevel(); },
+		[this]() { return std::vector<entity>(1, m_Agent->MakeAgent(m_entityManager.CreateEntity())); }
+		});
 
-	m_Agent = std::make_shared<Agent>();
 	LuaMain::GetScriptManager()->StartScripts();
 }
 
@@ -67,6 +72,9 @@ void GameLayer::OnDetach()
 {
 	m_testScene.reset();
 	m_testScene = nullptr;
+
+	m_mainScene.reset();
+	m_mainScene = nullptr;
 }
 
 void GameLayer::OnUpdate()
@@ -235,7 +243,7 @@ void GameLayer::RegisterLuaInterfaces()
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Physics", "PhysicsInterface");
 }
 
-void GameLayer::LoadLevel()
+std::vector<entity> GameLayer::LoadLevel()
 {
 	float blockDim = 5.0f;
 
@@ -243,6 +251,8 @@ void GameLayer::LoadLevel()
 	std::ifstream inputFile("..\\Offline-Tools\\PCG\\showOff_generatedLevel.txt");
 
 	AssetManager& aManager = AssetManager::Get();
+
+	std::vector<entity> levelBlocks;
 
 	unsigned x = 0;
 	unsigned y = 0;
@@ -281,7 +291,7 @@ void GameLayer::LoadLevel()
 						//Correct scaling for the mesh colliders (I think)
 						Vector3 localMeshColliderScale = Vector3(-xFlip, yFlip, 1.0f);
 
-						entity blockEntity = m_entityManager.CreateEntity();
+						entity blockEntity = levelBlocks.emplace_back(m_entityManager.CreateEntity());
 						m_entityManager.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".fbx"));
 						TransformComponent& transform = m_entityManager.AddComponent<TransformComponent>(blockEntity,
 							Vector3(x * blockDim, y * blockDim, z * blockDim),
@@ -312,6 +322,7 @@ void GameLayer::LoadLevel()
 			}
 		}
 	}
+	return levelBlocks;
 }
 
 void GameLayer::Input(DOG::Key key)
@@ -357,7 +368,7 @@ void GameLayer::Release(DOG::Key key)
 		});
 }
 
-void GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
+std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 {
 	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
 	ASSERT(playerCount <= MAX_PLAYER_COUNT, "No more than 4 players can be spawned. I.e. playerCount can't exceed 4");
@@ -367,11 +378,11 @@ void GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 	m_playerModels[1] = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
 	m_playerModels[2] = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
 	m_playerModels[3] = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
-
+	std::vector<entity> players;
 	auto* scriptManager = LuaMain::GetScriptManager();
 	for (auto i = 0; i < playerCount; ++i)
 	{
-		entity playerI = m_entityManager.CreateEntity();
+		entity playerI = players.emplace_back(m_entityManager.CreateEntity());
 		Vector3 offset = {
 			spread * (i % 2) - (spread / 2.f),
 			0,
@@ -400,6 +411,7 @@ void GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 			m_entityManager.AddComponent<OnlinePlayer>(playerI);
 		}
 	}
+	return players;
 }
 
 

@@ -21,18 +21,14 @@ public:
 
 private:
 	void RegisterLuaInterfaces();
-	void LoadLevel(); //Loads a PCG generated level.
+	std::vector<DOG::entity> LoadLevel(); //Loads a PCG generated level.
 	void Input(DOG::Key key);
 	void Release(DOG::Key key);
 	void CameraUpdate();
-	void SpawnPlayers(const DirectX::SimpleMath::Vector3& pos, u8 playerCount, f32 spread = 10.f);
+	std::vector<DOG::entity> SpawnPlayers(const DirectX::SimpleMath::Vector3& pos, u8 playerCount, f32 spread = 10.f);
 private:
-	u32 m_mixamo{ 0 };
-	u32 m_redCube{ 0 };
-	u32 m_greenCube{ 0 };
-	u32 m_blueCube{ 0 };
-	u32 m_magentaCube{ 0 };
 	std::unique_ptr<DOG::Scene> m_testScene;
+	std::unique_ptr<DOG::Scene> m_mainScene;
 	std::vector<u32> m_shapes;
 	DOG::EntityManager& m_entityManager;
 	std::vector<std::shared_ptr<LuaInterface>> m_luaInterfaces;
