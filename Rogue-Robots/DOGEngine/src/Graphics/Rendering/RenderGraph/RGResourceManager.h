@@ -22,6 +22,8 @@ namespace DOG::gfx
 		void ImportTexture(RGResourceID id, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
 		void ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
 
+		void FreeImported(RGResourceID id);
+
 		void ChangeImportedTexture(RGResourceID id, Texture texture);
 		void ChangeImportedBuffer(RGResourceID id, Buffer buffer);
 

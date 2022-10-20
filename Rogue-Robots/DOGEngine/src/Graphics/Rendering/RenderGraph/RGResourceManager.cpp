@@ -54,6 +54,12 @@ namespace DOG::gfx
 		res.variants = imported;
 	}
 
+	void RGResourceManager::FreeImported(RGResourceID id)
+	{
+		m_resources.erase(id);
+	}
+
+
 	void RGResourceManager::DeclareBuffer(RGResourceID id, RGBufferDesc desc)
 	{
 		assert(!m_resources.contains(id));

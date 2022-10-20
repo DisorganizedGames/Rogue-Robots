@@ -40,18 +40,16 @@ namespace DOG::gfx
 		}
 
 		// Yes it is a big performance hazard
-		//// Create temporary view (potential performance hazard?)
-		//auto view = m_rd->CreateView(m_buffer, BufferViewDesc(ViewType::Constant, (u32)offset, ELEMENTSIZE * count, 1));
-		//ret.globalDescriptor = m_rd->GetGlobalDescriptor(view);
+		// Create temporary view (potential performance hazard?)
+		auto view = m_rd->CreateView(m_buffer, BufferViewDesc(ViewType::Constant, (u32)offset, ELEMENTSIZE * count, 1));
+		ret.globalDescriptor = m_rd->GetGlobalDescriptor(view);
 
-		//// Safely delete later
-		//auto delFunc = [this, view, toPop = count]()
-		//{
-		//	for (u32 i = 0; i < toPop; ++i)
-		//		m_ator.Pop();
-		//	m_rd->FreeView(view);
-		//};
-		//m_bin->PushDeferredDeletion(delFunc);
+		// Safely delete later
+		auto delFunc = [this, view, toPop = count]()
+		{
+			m_rd->FreeView(view);
+		};
+		m_bin->PushDeferredDeletion(delFunc);
 
 		//auto delFunc = [this, toPop = count]()
 		//{
