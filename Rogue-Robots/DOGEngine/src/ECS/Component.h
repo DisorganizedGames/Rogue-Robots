@@ -127,5 +127,18 @@ namespace DOG
 	{
 
 	};
+
+	
+	// Single submesh single material helper
+	struct SubmeshRenderer
+	{
+		Mesh mesh;
+
+		MaterialHandle material;
+		MaterialDesc materialDesc;
+
+		bool dirty{ false };
+	};
+
 }
 

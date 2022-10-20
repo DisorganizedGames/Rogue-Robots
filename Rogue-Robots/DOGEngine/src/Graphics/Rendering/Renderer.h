@@ -47,6 +47,9 @@ namespace DOG::gfx
 		Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug);
 		~Renderer();
 
+		UploadContext* GetMeshUploadContext() const { return m_meshUploadCtx.get(); }
+		MeshTable* GetMeshTable() const { return m_globalMeshTable.get(); }
+		MaterialTable* GetMaterialTable() const { return m_globalMaterialTable.get(); }
 		LightTable* GetLightTable() const { return m_globalLightTable.get(); }
 		GraphicsBuilder* GetBuilder() const { return m_builder.get(); }
 		Monitor GetMonitor() const;
@@ -141,6 +144,7 @@ namespace DOG::gfx
 		std::unique_ptr<UploadContext> m_uploadCtx;
 		std::unique_ptr<UploadContext> m_perFrameUploadCtx;
 		std::unique_ptr<UploadContext> m_texUploadCtx;
+		std::unique_ptr<UploadContext> m_meshUploadCtx;
 
 		// Ring-buffered dynamic constant allocator (allocate, use, and forget)
 		std::unique_ptr<GPUDynamicConstants> m_dynConstants;

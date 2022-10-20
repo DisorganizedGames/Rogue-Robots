@@ -1,5 +1,6 @@
 #pragma once
-#include "../ECS/Component.h"
+#include "../Core/Types/GraphicsTypes.h"
+
 
 namespace DOG
 {

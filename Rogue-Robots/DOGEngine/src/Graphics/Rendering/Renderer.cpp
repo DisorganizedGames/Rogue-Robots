@@ -96,6 +96,7 @@ namespace DOG::gfx
 		m_bin = std::make_unique<GPUGarbageBin>(S_MAX_FIF);
 		m_uploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, S_MAX_FIF);
 		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeTextures, S_MAX_FIF);
+		m_meshUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, S_MAX_FIF);
 
 		// For internal per frame management
 		const u32 maxUploadPerFrame = 512'000;
@@ -391,7 +392,9 @@ namespace DOG::gfx
 
 
 		m_globalLightTable->SendCopyRequests(*m_perFrameUploadCtx);
+		m_globalMaterialTable->SendCopyRequests(*m_perFrameUploadCtx);
 		m_pfDataTable->SendCopyRequests(*m_perFrameUploadCtx);
+
 
 
 	}
