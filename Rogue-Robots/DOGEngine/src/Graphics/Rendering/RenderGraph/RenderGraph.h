@@ -3,6 +3,7 @@
 #include "../../RHI/Types/ResourceDescs.h"
 #include "../../RHI/Types/BarrierDesc.h"
 #include "../../RHI/Types/RenderPassDesc.h"
+#include "../../Memory/BumpAllocator.h"
 #include "RGTypes.h"
 #include <unordered_set>
 
@@ -13,6 +14,7 @@ namespace DOG::gfx
 	class RenderDevice;
 	class RGResourceManager;
 	class GPUGarbageBin;
+	class BumpAllocator;
 
 	class RenderGraph
 	{
@@ -80,6 +82,7 @@ namespace DOG::gfx
 			std::string name;
 			u32 id{ 0 };
 			u32 depth{ 0 };
+			std::optional<std::function<void()>> preGraphExecute, postGraphExecute;
 			std::function<void(RenderDevice*, CommandList, PassResources&)> execFunc;
 			PassResources passResources;
 			
@@ -176,21 +179,40 @@ namespace DOG::gfx
 
 		template <typename PassData>
 		void AddPass(const std::string& name,
-			const std::function<void(PassData&, PassBuilder&)>& buildFunc,
-			const std::function<void(const PassData&, RenderDevice*, CommandList, PassResources&)>& execFunc)
+			const std::function<void(PassData&, PassBuilder&)>& buildFunc,										// Declare resources and populate persistent PassData
+			const std::function<void(const PassData&, RenderDevice*, CommandList, PassResources&)>& execFunc,	// Render work (potentially asynchronously)
+			std::optional<std::function<void(PassData&)>> preGraphExecuteFunc = {},								// Allocate any transient resources up-front
+			std::optional<std::function<void(PassData&)>> postGraphExecuteFunc = {})							// Free any transient resources used)	
 		{
+			static_assert(std::is_trivially_copyable<PassData>::value && "PassData must be trivially copyable");
+
 			Pass newPass(name, m_nextPassID++);
 			PassBuilder builder(m_passBuilderGlobalData, m_resMan, newPass);
+			
+			u8* passDataMemory = m_passDataAllocator->Allocate(sizeof(PassData));
+			buildFunc(*(PassData*)passDataMemory, builder);
 
-			PassData passData{};
-			buildFunc(passData, builder);
-
-			// Construct pass data
 			auto pass = std::make_unique<Pass>(std::move(newPass));
-			pass->execFunc = [execFunc, passData](RenderDevice* rd, CommandList cmdl, PassResources& resources)
+			pass->execFunc = [execFunc, memory = passDataMemory](RenderDevice* rd, CommandList cmdl, PassResources& resources)
 			{
-				execFunc(passData, rd, cmdl, resources);
+				execFunc(*(PassData*)memory, rd, cmdl, resources);
 			};
+
+			if (preGraphExecuteFunc)
+			{
+				pass->preGraphExecute = [preGraphExecuteFunc, memory = passDataMemory]()
+				{
+					(*preGraphExecuteFunc)(*(PassData*)memory);
+				};
+			}
+			
+			if (postGraphExecuteFunc)
+			{
+				pass->postGraphExecute = [postGraphExecuteFunc, memory = passDataMemory]()
+				{
+					(*postGraphExecuteFunc)(*(PassData*)memory);
+				};
+			}
 
 			m_passes.push_back(std::move(pass));
 		}
@@ -225,6 +247,9 @@ namespace DOG::gfx
 
 		u32 m_maxDepth{ 0 };
 		std::vector<DependencyLevel> m_dependencyLevels;
+
+		// Bump allocator which is reset after each graph execution
+		std::unique_ptr<BumpAllocator> m_passDataAllocator;
 
 		CommandList m_cmdl;
 	};

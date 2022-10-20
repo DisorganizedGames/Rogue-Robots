@@ -19,6 +19,7 @@ namespace DOG::gfx
 		m_passes.reserve(PASS_RESERVED);
 		m_sortedPasses.reserve(PASS_RESERVED);
 		m_dependencyLevels.reserve(DEP_LEVELS_RESERVED);
+		m_passDataAllocator = std::make_unique<BumpAllocator>(131'072);	// 128 Kb
 	}
 
 	void RenderGraph::Build()
@@ -88,11 +89,24 @@ namespace DOG::gfx
 	{
 		m_cmdl = m_rd->AllocateCommandList();
 
+		for (auto& pass : m_sortedPasses)
+		{
+			if (pass->preGraphExecute)
+				(*pass->preGraphExecute)();
+		}
+
 		for (auto& depLevel : m_dependencyLevels)
 			depLevel.Execute(m_rd, m_cmdl);
 
 		m_resMan->ImportedResourceExitTransition(m_cmdl);
 		m_rd->SubmitCommandList(m_cmdl);
+
+
+		for (auto& pass : m_sortedPasses)
+		{
+			if (pass->preGraphExecute)
+				(*pass->postGraphExecute)();
+		}
 
 		// Clean up command list
 		auto delFunc = [rd = m_rd, cmdl = m_cmdl]()
@@ -162,6 +176,8 @@ namespace DOG::gfx
 				m_bin->PushDeferredDeletion(df);
 			}
 		}
+
+		m_passDataAllocator->Clear();
 
 	}
 
