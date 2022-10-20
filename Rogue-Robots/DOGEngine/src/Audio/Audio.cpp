@@ -95,7 +95,38 @@ void AudioDevice::HandleComponent(AudioComponent& comp, entity e)
 		comp.shouldStop = false;
 	}
 
-	if (comp.is3D && comp.playing)
+	if (!comp.playing)
+		return;
+
+	if (comp.loop)
+	{
+		if (comp.loopEnd <= comp.loopStart)
+		{
+			comp.loopEnd = source->AudioLengthInSeconds() - 0.1;
+		}
+
+		f32 played = source->SecondsPlayed();
+		
+		constexpr f32 timeToFade = 0.05f;
+
+		f32 startFadeOut = comp.loopEnd - timeToFade;
+
+		if (played >= startFadeOut)
+		{
+			f32 fadeOutTime = played - startFadeOut;
+			source->m_source->SetVolume(2.f * (1 - fadeOutTime / timeToFade));
+		}
+
+		if (played >= comp.loopEnd)
+		{
+			std::scoped_lock<std::mutex> lock(source->m_loopMutex);
+			source->m_source->FlushSourceBuffers();
+			source->SeekTo(comp.loopStart);
+			source->PlayAsync();
+		}
+	}
+
+	if (comp.is3D)
 	{
 		Handle3DComponent(source.get(), e);
 	}
@@ -115,10 +146,13 @@ void AudioDevice::AudioThreadRoutine()
 			if (!source || source->Stopped())
 				continue;
 
+			std::scoped_lock<std::mutex> lock(source->m_loopMutex);
+
 			if (source->m_async)
 				source->QueueNextAsync();
 			else
 				source->QueueNext();
+
 		}
 	}
 }
@@ -252,6 +286,8 @@ void SourceVoice::Stop()
 	m_source->FlushSourceBuffers();
 	m_source->Discontinuity();
 	m_externalBuffer.resize(0);
+	m_samplesPlayed = 0;
+	m_lastSamplesPlayed = 0;
 }
 
 void SourceVoice::SetVolume(f32 volume)
@@ -264,6 +300,19 @@ void SourceVoice::SetOutputMatrix(const std::vector<f32>& matrix, IXAudio2Voice*
 	auto destChannels = matrix.size()/m_wfx.nChannels;
 	HR hr = m_source->SetOutputMatrix(dest, m_wfx.nChannels, (u32)destChannels, matrix.data());
 	hr.try_fail("Failed to set output matrix for source voice");
+}
+
+void SourceVoice::SeekTo(f32 seconds)
+{
+	u32 loopStartSample = seconds * m_wfx.nSamplesPerSec;
+	m_asyncWFR.SeekToSample(loopStartSample);
+
+	m_samplesPlayed = loopStartSample;
+	m_lastSeek = m_samplesPlayed;
+
+	XAUDIO2_VOICE_STATE state;
+	m_source->GetState(&state);
+	m_lastSamplesPlayed = state.SamplesPlayed;
 }
 
 bool SourceVoice::HasFinished()
@@ -283,6 +332,29 @@ bool SourceVoice::HasFinished()
 	}
 
 	return state.BuffersQueued == 0;
+}
+
+f32 SourceVoice::SecondsPlayed()
+{
+	XAUDIO2_VOICE_STATE state;
+	m_source->GetState(&state);
+
+	m_samplesPlayed = m_lastSeek + (state.SamplesPlayed - m_lastSamplesPlayed);
+
+	return static_cast<f32>(m_samplesPlayed) / static_cast<f32>(m_wfx.nSamplesPerSec);
+}
+
+f32 SourceVoice::AudioLengthInSeconds()
+{
+	std::scoped_lock lock(m_loopMutex);
+
+	if (m_async)
+	{
+		auto bytes = m_asyncWFR.DataSize();
+		auto seconds = bytes / static_cast<f32>(m_wfx.nAvgBytesPerSec);
+		return seconds;
+	}
+	return 0.f;
 }
 
 void SourceVoice::QueueNext()

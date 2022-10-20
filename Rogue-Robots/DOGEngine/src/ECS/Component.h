@@ -76,9 +76,14 @@ namespace DOG
 
 		u32 source = u32(-1);
 
+		f32 loopStart = 0.0;
+		f32 loopEnd = 0.0;
+
 		bool shouldPlay = false;
 		bool playing = false;
 		bool shouldStop = false;
+
+		bool loop = false;
 		
 		bool is3D = false; // Uses the object's transform as a sound source
 	};

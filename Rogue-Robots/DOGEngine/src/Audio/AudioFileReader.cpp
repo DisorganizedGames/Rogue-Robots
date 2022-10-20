@@ -18,9 +18,9 @@ WAVEFORMATEX WAVFileReader::ReadWFXProperties()
 		std::cout << "Skipping chunk type: " << (i32)chunkType << std::endl;
 		SkipChunk(chunkType);
 	}
-	auto wfx = ReadFormat();
+	ReadFormat();
 	m_file.seekg(curPos, std::ios_base::beg);
-	return wfx;
+	return m_wfx;
 }
 
 std::vector<u8> WAVFileReader::ReadDataChunk(u32 chunkSize)
@@ -36,6 +36,13 @@ std::vector<u8> WAVFileReader::ReadDataChunk(u32 chunkSize)
 		if (chunkType == ChunkType::EndOfFile) return {};
 
 		m_file.read((char*)&m_dataChunkBytesLeft, sizeof(u32));
+		m_dataSize = m_dataChunkBytesLeft;
+
+		if (m_dataStart == 0)
+		{
+			m_dataStart = m_file.tellg();
+			m_dataStart -= 4;
+		}
 	}
 	chunkSize = std::min(m_dataChunkBytesLeft, chunkSize);
 
@@ -71,6 +78,36 @@ std::vector<u8> WAVFileReader::ReadFull()
 	return outData;
 }
 
+u32 WAVFileReader::DataSize()
+{
+	if (m_dataSize)
+	{
+		return m_dataSize;
+	}
+
+	return 0;
+}
+
+void WAVFileReader::SeekToSample(u32 sample)
+{
+	if (m_wfx.wFormatTag == 0)
+	{
+		ReadWFXProperties();
+	}
+	if (m_dataStart == 0)
+	{
+		ReadDataChunk(0); // Dummy read to find data chunk
+	}
+
+	auto sampleSize = m_wfx.nBlockAlign;
+	m_file.seekg(m_dataStart);
+	m_file.read((char*)&m_dataChunkBytesLeft, sizeof(u32));
+
+	m_file.seekg(sample*sampleSize, std::ios_base::cur);
+
+	m_dataChunkBytesLeft -= sample;
+}
+
 void WAVFileReader::SkipChunk(ChunkType type)
 {
 	constexpr u32 RIFF_CHUNK_SIZE = 12;
@@ -92,23 +129,25 @@ void WAVFileReader::SkipChunk(ChunkType type)
 	}
 	skip += (skip % 2);
 	m_file.seekg((i32)skip, std::ios_base::cur);
+	auto tellg = m_file.tellg();
 	std::cout << "Skipping " << skip << " bytes" << std::endl;
 }
 
-WAVEFORMATEX WAVFileReader::ReadFormat()
+void WAVFileReader::ReadFormat()
 {
+	if (m_wfx.wFormatTag)
+		return;
+
 	constexpr u64 FORMAT_CHUNK_SIZE = 24;
 	u32 chunkSize = 0;
 	m_file.read((char*)&chunkSize, sizeof(u32));
 
-	WAVEFORMATEX wfx = {};
-	m_file.read((char*)&wfx, FORMAT_CHUNK_SIZE - 8);
-
-	return wfx;
+	m_file.read((char*)&m_wfx, FORMAT_CHUNK_SIZE - 8);
 }
 
 WAVFileReader::ChunkType WAVFileReader::ReadNextChunkType()
 {
+	auto tellg = m_file.tellg();
 	if (m_file.tellg() == static_cast<std::streampos>(m_fileSize))
 	{
 		return ChunkType::EndOfFile;

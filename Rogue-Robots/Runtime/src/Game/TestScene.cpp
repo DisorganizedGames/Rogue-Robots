@@ -199,7 +199,9 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	u32 rogueRobotsMusic = AssetManager::Get().LoadAudio("Assets/Audio/RogueRobots.wav");
 	AddComponent<AudioComponent>(musicPlayer) = {
 		.assetID = rogueRobotsMusic,
-		.shouldPlay = true,
-
+		.loopStart = 15.f,
+		.loopEnd = 110.f,
+		.shouldPlay = false,
+		.loop = true,
 	};
 }
