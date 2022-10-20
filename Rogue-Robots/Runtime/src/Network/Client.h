@@ -45,6 +45,7 @@
 			int playerId = 0;
 			int nrOfNetTransform = 0;
 			int nrOfNetStats = 0;
+			int nrOfCreateAndDestroy = 0;
 		};
 		struct HostData
 		{

@@ -36,7 +36,7 @@ private:
 
 	Client::ClientsData* m_outputTcp;
 	Client::UdpReturnData m_outputUdp;
-
+	
 	std::atomic_bool m_active;
 	std::atomic_bool m_startUp;
 	std::atomic_bool m_hardSyncTcp;
