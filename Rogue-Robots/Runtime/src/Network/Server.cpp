@@ -284,39 +284,24 @@ void Server::ServerPollTCP()
 				memcpy(sendBuffer + bufferSendSize, (char*)createAndDestroy.data(), createAndDestroy.size() * sizeof(CreateAndDestroyEntityComponent));
 			bufferSendSize += createAndDestroy.size() * sizeof(CreateAndDestroyEntityComponent);
 
-
+			m_playersServer[0].nrOfNetStats = statsChanged.size();
+			memcpy(sendBuffer, (char*)m_playersServer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
 		}
-		if (holdClientsData.nrOfNetStats == 1 && m_playersServer[holdClientsData.playerId].nrOfNetStats == 0)
-		{
-			std::cout << "weird: ";
-		}
-		m_playersServer[0].nrOfNetStats = statsChanged.size();
+		
 
 			
-		memcpy(sendBuffer, (char*)m_playersServer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
-
-
-		for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
-			{
-				m_holdSocketsTcp[i].events = POLLWRNORM;
-			}
-
-			if (WSAPoll(m_holdSocketsTcp.data(), (u32)m_holdSocketsTcp.size(), 10) > 0)
-			{
+	
 
 				for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
 				{
-					if (m_holdSocketsTcp[i].revents & POLLWRNORM)
-					{
+	
 						int n = send(m_holdSocketsTcp[i].fd, sendBuffer, bufferSendSize, 0);
-						std::cout << "Bytes send: " << n << " BufferSendSize: " << bufferSendSize << " To socket: " << m_holdSocketsTcp[i].fd << 
-							 " Nr of transforms: " << m_playersServer[0].nrOfNetTransform << " Nr of stats: " << m_playersServer[0].nrOfNetStats
-							<< " Nr of Create and destroy: " << m_playersServer[0].nrOfCreateAndDestroy << " sizo of transform: "<< 
-							sizeof(DOG::NetworkTransform) << " size of stats: " << sizeof(NetworkAgentStats) << " size of create and destroy: " << 
-							sizeof(CreateAndDestroyEntityComponent) << std::endl;
-					}
+						//std::cout << "Bytes send: " << n << " BufferSendSize: " << bufferSendSize << " To socket: " << m_holdSocketsTcp[i].fd << 
+						//	 " Nr of transforms: " << m_playersServer[0].nrOfNetTransform << " Nr of stats: " << m_playersServer[0].nrOfNetStats
+						//	<< " Nr of Create and destroy: " << m_playersServer[0].nrOfCreateAndDestroy << " sizo of transform: "<< 
+						//	sizeof(DOG::NetworkTransform) << " size of stats: " << sizeof(NetworkAgentStats) << " size of create and destroy: " << 
+						//	sizeof(CreateAndDestroyEntityComponent) << std::endl;
 				}
-			}
 		
 		//wait untill tick is done 
 		float timeTakenS = TickTimeLeftTCP(tickStartTime, clockFrequency);
