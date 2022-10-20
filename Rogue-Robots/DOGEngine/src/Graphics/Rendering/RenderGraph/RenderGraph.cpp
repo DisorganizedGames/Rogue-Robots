@@ -187,9 +187,9 @@ namespace DOG::gfx
 			}
 
 			// @todo: Track new transitions (for each transition --> Just keep track of ResourceID and update the underlying resource using GetResourceState()
-			for (auto& dep : m_dependencyLevels)
-				dep.ClearBarriers();
-			TrackTransitions();
+			//for (auto& dep : m_dependencyLevels)
+			//	dep.ClearBarriers();
+			//TrackTransitions();
 
 			// Recreate views for this new graph
 			RealizeViews();
@@ -464,11 +464,11 @@ namespace DOG::gfx
 
 				// Assure that any acceses AFTER an unordered access always gets write results
 				if (uavBarrier)
-					depLevel.AddEntryBarrier(*uavBarrier);
+					depLevel.AddEntryBarrier(*uavBarrier, rgResource);
 
 				// No need for state transition, return early
 				if (states.before != states.after)
-					depLevel.AddEntryBarrier(transitionBarrier);
+					depLevel.AddEntryBarrier(transitionBarrier, rgResource);
 
 				m_resMan->SetCurrentState(rgResource, states.after);
 			}
@@ -1051,6 +1051,10 @@ namespace DOG::gfx
 
 	void RenderGraph::DependencyLevel::Execute(RenderDevice* rd, CommandList cmdl)
 	{
+		// Resolve potentially changed resources
+		for (u32 i = 0; i < m_entryBarriers.size(); ++i)
+			m_entryBarriers[i].resource = m_resMan->GetResource(m_barrierResourceIDs[i]);
+
 		if (!m_entryBarriers.empty())
 			rd->Cmd_Barrier(cmdl, m_entryBarriers);
 
