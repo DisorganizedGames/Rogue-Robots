@@ -23,6 +23,9 @@ local miscComponent = nil
 local switched = false
 local componentIdx = 0
 
+local barrelSwitched = false
+local barrelComponentIdx = 0
+
 --A template. Not supposed to be used, simply here to show what variables exist to be used.
 local bulletTemplate = {
 	entity = 0,					-- ID used by the ECS.
@@ -60,8 +63,8 @@ function OnStart()
 
 	-- Initialize base components
 	miscComponent = MiscComponent.BasicShot()
-	--barrelComponent = BarrelManager.BasicBarrel() 
-	barrelComponent = BarrelManager.Grenade()  --ObjectManager:CreateObject()
+	barrelComponent = BarrelManager.BasicBarrel() 
+	--barrelComponent = BarrelManager.Grenade()  --ObjectManager:CreateObject()
 	magazineComponent = MagazineManager.BasicEffect()--ObjectManager:CreateObject()
 end
 
@@ -98,6 +101,18 @@ function OnUpdate()
 		end
 	elseif not Entity:GetAction(EntityID, "SwitchComponent") then
 		switched = false
+	end
+	if Entity:GetAction(EntityID, "SwitchBarrelComponent") and not barrelSwitched then
+		barrelSwitched = true
+		if barrelComponentIdx == 0 then
+			barrelComponent = BarrelManager.Grenade() 
+			barrelComponentIdx = 1
+		else
+			barrelComponent = BarrelManager.BasicBarrel()
+			barrelComponentIdx = 0
+		end
+	elseif not Entity:GetAction(EntityID, "SwitchBarrelComponent") then
+		barrelSwitched = false
 	end
 
 	NormalBulletUpdate()

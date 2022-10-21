@@ -405,7 +405,8 @@ void GameLayer::Input(DOG::Key key)
 				inputC.up = true;
 			if (key == DOG::Key::Q)
 				inputC.switchComp = true;
-
+			if (key == DOG::Key::E)
+				inputC.switchBarrelComp = true;
 	});
 }
 
@@ -427,6 +428,8 @@ void GameLayer::Release(DOG::Key key)
 				inputC.up = false;
 			if (key == DOG::Key::Q)
 				inputC.switchComp = false;
+			if (key == DOG::Key::E)
+				inputC.switchBarrelComp = false;
 		});
 }
 
