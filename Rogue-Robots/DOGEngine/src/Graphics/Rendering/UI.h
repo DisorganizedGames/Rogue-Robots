@@ -19,7 +19,7 @@ namespace DOG
       void DrawUI();
       void ChangeUIscene(UINT sceneID);
       UINT AddUIElementToScene(UINT sceneID, std::unique_ptr<UIElement> element);
-      UINT GenerateUID();
+      UINT RemoveUIElement(UINT elementID);
       UINT AddScene();
       void RemoveScene(UINT sceneID);
       void Resize(UINT clientWidth, UINT clientHeight);
@@ -46,6 +46,7 @@ namespace DOG
       UINT QueryScene(UINT sceneID);
       UINT m_currsceneID, m_currsceneIndex;
       bool m_visible;
+      UINT GenerateUID();
       void BuildMenuUI();
       void BuildGameUI();
       std::vector<UINT> m_generatedIDs;
