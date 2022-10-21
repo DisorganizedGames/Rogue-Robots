@@ -138,21 +138,6 @@ void GameLayer::OnImGuiRender()
 
 }
 
-void GameLayer::StartMainScene()
-{
-	assert(m_mainScene == nullptr);
-
-	m_mainScene = std::make_unique<MainScene>();
-	m_mainScene->SetUpScene({
-		[this]() { return SpawnPlayers(Vector3(25, 25, 15), 4, 10.f); },
-		[this]() { return LoadLevel(); },
-		[this]() { return std::vector<entity>(1, m_Agent->MakeAgent(m_entityManager.CreateEntity())); }
-		});
-
-	m_gameState = GameState::Playing;
-}
-
-
 //Place-holder example on how to use event system:
 void GameLayer::OnEvent(DOG::IEvent& event)
 {
