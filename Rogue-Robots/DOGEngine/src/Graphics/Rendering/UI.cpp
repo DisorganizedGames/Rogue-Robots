@@ -123,6 +123,23 @@ UINT DOG::UI::AddUIElementToScene(UINT sceneID, std::unique_ptr<UIElement> eleme
    return id;
 }
 
+UINT DOG::UI::RemoveUIElement(UINT elementID)
+{
+   UINT id;
+   for (auto&& s : m_scenes)
+   {
+      auto res = std::find_if(s->GetScene().begin(), s->GetScene().end(), [&](std::unique_ptr<UIElement> const& e) { return e->GetID() == elementID; });
+      if (res == s->GetScene().end())
+         continue;
+      else
+      {
+         s->GetScene().erase(res);
+         return s->GetID();
+      }
+   }
+   return UINT_MAX;
+}
+
 /// @brief Adds a scene to the UI manager
 /// @return A unique ID for the newly created scene
 UINT DOG::UI::AddScene()
