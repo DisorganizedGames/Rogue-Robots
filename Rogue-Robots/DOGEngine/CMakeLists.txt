@@ -8,6 +8,7 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
 	"src/EventSystem/KeyboardEvents.h" "src/EventSystem/EventPublisher.cpp"  
     "src/Core/Time.h"
 	"src/Audio/Audio.h" "src/Audio/Audio.cpp" "src/Audio/AudioManager.cpp" "src/Audio/AudioManager.h" "src/common/ErrorTypes.h"
+    "src/Audio/AudioFileReader.h" "src/Audio/AudioFileReader.cpp"
     "src/Core/Types/GraphicsTypes.h"  "src/Core/Types/AssetTypes.h" "src/Graphics/Rendering/MaterialTable.h" "src/Graphics/Rendering/MaterialTable.cpp"
     "src/Core/AssetManager.h" "src/Core/AssetManager.cpp" "src/Core/AssimpImporter.h" "src/Core/AssimpImporter.cpp" "src/Core/DOGEngineTypes.h" "src/Core/DOGEngineTypes.cpp"
     "src/Core/MaterialManager.h" "src/Core/MaterialManager.cpp"

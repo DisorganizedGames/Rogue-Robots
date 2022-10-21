@@ -1,5 +1,4 @@
 #pragma once
-#define NOMINMAX
 #include "AudioFileReader.h"
 #include "../Core/AssetManager.h"
 #include "../ECS/EntityManager.h"
@@ -23,8 +22,14 @@ namespace DOG
 		std::vector<u8> m_externalBuffer;
 
 		u64 m_ringIdx = 0;
-		std::array<std::vector<u8>, 4> m_bufferRing;
+		std::array<std::vector<u8>, 16> m_bufferRing;
 		DOG::WAVFileReader m_asyncWFR;
+
+		u64 m_lastSeek = 0;
+		u64 m_lastSamplesPlayed = 0;
+		u64 m_samplesPlayed = 0;
+
+		std::mutex m_loopMutex;
 
 		static constexpr u64 CHUNK_SIZE = 1024;
 
@@ -40,9 +45,12 @@ namespace DOG
 		void SetVolume(f32 volume);
 
 		void SetOutputMatrix(const std::vector<f32>& matrix, IXAudio2Voice* dest);
+		void SeekTo(f32 seconds);
 
 		bool HasFinished();
 		bool Stopped() { return m_stopped; }
+		f32 SecondsPlayed();
+		f32 AudioLengthInSeconds();
 
 		void SetFileReader(DOG::WAVFileReader&& wfr) { this->m_asyncWFR = std::move(wfr); }
 		void QueueNext();

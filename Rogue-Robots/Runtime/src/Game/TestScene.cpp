@@ -193,4 +193,15 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 		lerpColor.loops = -1;
 		lerpColor.scale = 0.7;
 	}
+	
+	/* Set up music player */
+	entity musicPlayer = CreateEntity();
+	u32 rogueRobotsMusic = AssetManager::Get().LoadAudio("Assets/Audio/RogueRobots.wav");
+	AddComponent<AudioComponent>(musicPlayer) = {
+		.assetID = rogueRobotsMusic,
+		.loopStart = 15.f,
+		.loopEnd = 110.f,
+		.shouldPlay = false,
+		.loop = true,
+	};
 }
