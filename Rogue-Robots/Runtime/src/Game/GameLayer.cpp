@@ -29,8 +29,6 @@ void GameLayer::OnAttach()
 
 	//m_testScene = std::make_unique<TestScene>();
 	//m_testScene->SetUpScene();
-
-	LuaMain::GetScriptManager()->StartScripts();
 }
 
 void GameLayer::OnDetach()
@@ -85,11 +83,38 @@ void GameLayer::OnUpdate()
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
 
-	m_player->OnUpdate();
+	
 	m_netCode.OnUpdate();
+}
+
+void GameLayer::UpdateLobby()
+{
+	m_gameState = GameState::StartPlaying;
+}
+
+void GameLayer::StartMainScene()
+{
+	assert(m_mainScene == nullptr);
+	m_mainScene = std::make_unique<MainScene>();
+	m_mainScene->SetUpScene({
+		[this]() { return SpawnPlayers(Vector3(25, 25, 15), 4, 10.f); },
+		[this]() { return LoadLevel(); },
+		[this]() { return std::vector<entity>(1, m_Agent->MakeAgent(m_entityManager.CreateEntity())); }
+		});
+
+	m_player = std::make_shared<MainPlayer>();
+
+	LuaMain::GetScriptManager()->StartScripts();
+	m_gameState = GameState::Playing;
+}
+
+void GameLayer::UpdateGame()
+{
+	m_player->OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
-} 
+}
+
 void GameLayer::OnRender()
 {
 	//...
@@ -101,21 +126,6 @@ void GameLayer::OnImGuiRender()
 
 
 }
-
-void GameLayer::StartMainScene()
-{
-	assert(m_mainScene == nullptr);
-
-	m_mainScene = std::make_unique<MainScene>();
-	m_mainScene->SetUpScene({
-		[this]() { return SpawnPlayers(Vector3(25, 25, 15), 4, 10.f); },
-		[this]() { return LoadLevel(); },
-		[this]() { return std::vector<entity>(1, m_Agent->MakeAgent(m_entityManager.CreateEntity())); }
-		});
-
-	m_gameState = GameState::Playing;
-}
-
 
 //Place-holder example on how to use event system:
 void GameLayer::OnEvent(DOG::IEvent& event)
@@ -262,7 +272,7 @@ void GameLayer::RegisterLuaInterfaces()
 
 	//-----------------------------------------------------------------------------------------------
 	//Host
-	m_player = std::make_shared<MainPlayer>();
+	
 	luaInterfaceObject = std::make_shared<HostInterface>();
 	m_luaInterfaces.push_back(luaInterfaceObject);
 
