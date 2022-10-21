@@ -31,6 +31,8 @@ void DOG::UI::DrawUI()
    }
 }
 
+
+
 void DOG::UI::Resize(UINT clientWidth, UINT clientHeight)
 {
 
@@ -165,7 +167,7 @@ UINT DOG::UIElement::GetID()
    return m_ID;
 }
 
-DOG::UIButton::UIButton(DOG::gfx::D2DBackend_DX12& d2d, float x, float y, float width, float height, float fontSize, std::wstring text, std::function<void(void)> callback, UINT id) : pressed(false), m_callback(callback), UIElement(id)
+DOG::UIButton::UIButton(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, std::wstring text, std::function<void(void)> callback) : pressed(false), m_callback(callback), UIElement(id)
 {
    this->m_size = D2D1::Vector2F(width, height);
    m_textRect = D2D1::RectF(x, y, x + width, y + height);
@@ -221,7 +223,7 @@ void DOG::UIButton::Update(DOG::gfx::D2DBackend_DX12& d2d)
 
 }
 
-DOG::UISplashScreen::UISplashScreen(DOG::gfx::D2DBackend_DX12& d2d, float width, float height, UINT id) : UIElement(id)
+DOG::UISplashScreen::UISplashScreen(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float height) : UIElement(id)
 {
    UNREFERENCED_PARAMETER(d2d);
    m_timer = clock();
@@ -292,7 +294,7 @@ DOG::UIScene::UIScene(UINT id) : m_ID(id)
 
 }
 
-DOG::UIHealthBar::UIHealthBar(float x, float y, float width, float height, DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
+DOG::UIHealthBar::UIHealthBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height) : UIElement(id)
 {
    m_text = L"100%";
    m_value = m_test = 1.0f;
@@ -350,7 +352,7 @@ void DOG::UIHealthBar::SetBarValue(float value)
    m_text = std::to_wstring(value) + L'%';
 }
 
-DOG::UIBackground::UIBackground(float width, float heigt, std::wstring title, DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
+DOG::UIBackground::UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float heigt, std::wstring title) : UIElement(id)
 {
    m_title = title;
    m_background = D2D1::RectF(0.0f, 0.0f, width, heigt);
