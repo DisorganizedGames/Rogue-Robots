@@ -47,11 +47,11 @@ function BarrelComponents:Grenade()
 			local up = Vector3.FromTable(Entity:GetUp(parentEntityID))
 			local right = Vector3.FromTable(Entity:GetRight(parentEntityID))
 
-			-- this code breaks the transform (???) for some grenades need to be fixed
 			local angle = -math.pi / 2
 
-			--local newForward = RotateAroundAxis(Entity:GetForward(parentEntityID), right, angle)
-			--Entity:SetRotationForwardUp(bullet.entity, newForward, up)
+			local newForward = RotateAroundAxis(Entity:GetForward(parentEntityID), right, angle)
+			local newUp = RotateAroundAxis(up, right, angle)
+			Entity:SetRotationForwardUp(bullet.entity, newForward, newUp)
 
 			Entity:ModifyComponent(bullet.entity, "Transform", bullet.startPos, 1)
 
