@@ -1245,6 +1245,7 @@ namespace DOG::gfx
 
 void UIRebuild(UINT clientHeight, UINT clientWidth)
 {
+	UNREFERENCED_PARAMETER(clientWidth);
 	//HealthBar
 	//auto hID = ui->GenerateUID();
 	//auto h = std::make_unique<DOG::UIHealthBar>(40.f, clientHeight - 60.f, 250.f, 30.f, *ui->GetBackend(), hID);
