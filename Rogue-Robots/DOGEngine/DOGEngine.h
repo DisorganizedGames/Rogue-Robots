@@ -11,6 +11,8 @@
 #include "src/Core/ImGuiMenuLayer.h"
 #include "src/Core/Scene.h"
 
+#include "src/Graphics/Rendering/UI.h"
+
 #include "src/Input/Keyboard.h"
 #include "src/Input/Mouse.h"
 

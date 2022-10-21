@@ -74,7 +74,12 @@ function OnStart()
 		print("LUA function called!!")
 	end
 
-	UI:CreateButton(doSomething)
+	local sceneID = UI:CreateScene()
+	local uid = UI:CreateProgressBar(sceneID, 40.0, 60.0, 250.0, 30.0)
+	UI:ChangeScene(sceneID)
+
+	
+
 end
 
 local tempMode = 0

@@ -700,6 +700,12 @@ void RenderInterface::CreateMaterial(DOG::LuaContext* context)
 }
 
 
+void UIInterface::CreateScene(DOG::LuaContext* context)
+{
+	auto sceneID = UI::Get().AddScene();
+	context->ReturnInteger(sceneID);
+}
+
 void UIInterface::CreateButton(DOG::LuaContext* context)
 {
 	auto sceneID = context->GetInteger();
@@ -716,11 +722,25 @@ void UIInterface::CreateButton(DOG::LuaContext* context)
 void UIInterface::CreateProgressBar(DOG::LuaContext* context)
 {
 	auto sceneID = context->GetInteger();
-	
-	/*
-		UI::Get().Create<UIProgressBar>(uid)(args)
-	*/
+	auto x = context->GetDouble();
+	auto y = context->GetDouble();
+	auto width = context->GetDouble();
+	auto height = context->GetDouble();
+
+	UINT uid;
+	auto el = UI::Get().Create<DOG::UIHealthBar>(uid, x, y, width, height);
+
+	UI::Get().AddUIElementToScene(sceneID, std::move(el));
+
+	context->ReturnInteger(uid);
 }
+
+void UIInterface::ChangeScene(DOG::LuaContext* context)
+{
+	auto sceneID = context->GetInteger();
+	UI::Get().ChangeUIscene(sceneID);
+}
+
 
 void UIInterface::SetProgressBarValue(DOG::LuaContext* context)
 {
@@ -733,11 +753,16 @@ void UIInterface::SetProgressBarValue(DOG::LuaContext* context)
 
 void UIInterface::RemoveElement(DOG::LuaContext* context)
 {
-	auto sceneID = context->GetInteger();
 	auto elementID = context->GetInteger();
-
-	// UI::Get().Remove(sceneID, elementID);
+	UI::Get().RemoveUIElement(elementID);
 }
+
+void UIInterface::RemoveScene(DOG::LuaContext* context)
+{
+	auto sceneID = context->GetInteger();
+	UI::Get().RemoveScene(sceneID);
+}
+
 
 void UIInterface::ClearScene(DOG::LuaContext* context)
 {
