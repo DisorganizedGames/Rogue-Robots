@@ -35,7 +35,6 @@
 #include "../../common/MiniProfiler.h"
 
 
-std::unique_ptr<DOG::UI> ui;
 UINT menuID, gameID, optionsID, multiID;
 
 void UIRebuild(UINT clientHeight, UINT clientWidth);
@@ -43,22 +42,22 @@ void AddScenes();
 
 void PlayButtonFunc(void)
 {
-	ui->ChangeUIscene(gameID);
+	DOG::UI::Get().ChangeUIscene(gameID);
 }
 
 void OptionsButtonFunc(void)
 {
-	ui->ChangeUIscene(optionsID);
+	DOG::UI::Get().ChangeUIscene(optionsID);
 }
 
 void MultiplayerButtonFunc(void)
 {
-	ui->ChangeUIscene(multiID);
+	DOG::UI::Get().ChangeUIscene(multiID);
 }
 
 void ToMenuButtonFunc(void)
 {
-	ui->ChangeUIscene(menuID);
+	DOG::UI::Get().ChangeUIscene(menuID);
 }
 
 void ExitButtonFunc(void)
@@ -76,7 +75,7 @@ namespace DOG::gfx
 		m_backend = std::make_unique<gfx::RenderBackend_DX12>(debug);
 		m_rd = m_backend->CreateDevice(S_NUM_BACKBUFFERS);
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
-		ui = std::make_unique<DOG::UI>(m_rd, m_sc, S_NUM_BACKBUFFERS, clientWidth, clientHeight);
+		UI::Initialize(m_rd, m_sc, S_NUM_BACKBUFFERS, clientWidth, clientHeight);
 
 		m_frameSyncs.resize(S_MAX_FIF);
 
@@ -85,7 +84,7 @@ namespace DOG::gfx
 
 		AddScenes();
 		UIRebuild(clientHeight, clientWidth);
-		
+
 
 		m_imgui = std::make_unique<gfx::ImGUIBackend_DX12>(m_rd, m_sc, S_MAX_FIF);
 
@@ -371,9 +370,9 @@ namespace DOG::gfx
 
 	Renderer::~Renderer()
 	{
+		DOG::UI::Destroy();	
 		Flush();
 		m_sc->SetFullscreenState(false, {}); // safeguard to prevent crash if game has not exited fullscreen before exit
-		ui.reset();
 	}
 
 	Monitor Renderer::GetMonitor() const
@@ -1056,14 +1055,14 @@ namespace DOG::gfx
 			ZoneNamedN(RGExecuteScope, "RG Execution", true);
 			m_frameSyncs[m_currFrameIdx] = rg.Execute(m_frameCopyReceipt, true);
 		}
-		ui->GetBackend()->BeginFrame();
-		ui->DrawUI();
-		ui->GetBackend()->EndFrame();
+		DOG::UI::Get().GetBackend()->BeginFrame();
+		DOG::UI::Get().DrawUI();
+		DOG::UI::Get().GetBackend()->EndFrame();
 	}
 
 	void Renderer::OnResize(u32 clientWidth, u32 clientHeight)
 	{
-		ui->FreeResize();
+		DOG::UI::Get().FreeResize();
 		if (clientWidth != 0 && clientHeight != 0)
 		{
 			m_globalEffectData.bbScissor = ScissorRects().Append(0, 0, clientWidth, clientHeight);
@@ -1071,7 +1070,7 @@ namespace DOG::gfx
 		}
 
 		m_sc->OnResize(clientWidth, clientHeight);
-		ui->Resize(clientWidth, clientHeight);
+		DOG::UI::Get().Resize(clientWidth, clientHeight);
 
 		UIRebuild(clientHeight, clientWidth);
 
@@ -1253,9 +1252,9 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
 	//Crosshair
 	UINT cID;
-	auto c = ui->Create<DOG::UICrosshair>(cID);
+	auto c = DOG::UI::Get().Create<DOG::UICrosshair>(cID);
 	//auto c = std::make_unique<DOG::UICrosshair>(*ui->GetBackend(), cID);
-	ui->AddUIElementToScene(gameID, std::move(c));
+	DOG::UI::Get().AddUIElementToScene(gameID, std::move(c));
 
 	//Menu backgrounds
 	// auto menuBackID = ui->GenerateUID();
@@ -1298,9 +1297,9 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
 void AddScenes()
 {
-	menuID = ui->AddScene();
-	gameID = ui->AddScene();
-	multiID = ui->AddScene();
-	optionsID = ui->AddScene();
-	ui->ChangeUIscene(gameID);
+	menuID = DOG::UI::Get().AddScene();
+	gameID = DOG::UI::Get().AddScene();
+	multiID = DOG::UI::Get().AddScene();
+	optionsID = DOG::UI::Get().AddScene();
+	DOG::UI::Get().ChangeUIscene(gameID);
 }

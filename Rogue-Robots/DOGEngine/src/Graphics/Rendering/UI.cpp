@@ -1,6 +1,8 @@
 #include "UI.h"
 #include "../../Input/Mouse.h"
 
+DOG::UI* DOG::UI::s_instance = nullptr;
+
 DOG::UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, UINT clientWidth, UINT clientHeight) : m_visible(true)
 {
    srand((UINT)time(NULL));
@@ -35,7 +37,6 @@ void DOG::UI::DrawUI()
 
 void DOG::UI::Resize(UINT clientWidth, UINT clientHeight)
 {
-
    m_width = clientWidth;
    m_height = clientHeight;
    m_d2d->OnResize();
@@ -50,6 +51,27 @@ void DOG::UI::FreeResize()
    }
 
    m_d2d->FreeResize();
+}
+
+DOG::UI& DOG::UI::Get()
+{
+   assert(s_instance);
+   return *s_instance;
+}
+
+void DOG::UI::Initialize(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, UINT clientWidth, UINT clientHeight)
+{
+   if (!s_instance)
+      s_instance = new UI(rd, sc, numBuffers, clientWidth, clientHeight);
+}
+
+void DOG::UI::Destroy()
+{
+   if (s_instance)
+   {
+      delete s_instance;
+      s_instance = nullptr;
+   }
 }
 
 /// @brief Generates a unique ID
