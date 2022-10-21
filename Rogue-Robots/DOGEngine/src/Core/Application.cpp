@@ -183,9 +183,12 @@ namespace DOG
 					}
 				});
 
-			auto mainCam = CameraComponent::s_mainCamera;
-			auto& proj = (DirectX::XMMATRIX&)mainCam->projMatrix;
-			m_renderer->SetMainRenderCamera(mainCam->viewMatrix, &proj);
+			if (CameraComponent::s_mainCamera)
+			{
+				auto mainCam = CameraComponent::s_mainCamera;
+				auto& proj = (DirectX::XMMATRIX&)mainCam->projMatrix;
+				m_renderer->SetMainRenderCamera(mainCam->viewMatrix, &proj);
+			}
 			
 			m_renderer->Update(0.0f);
 			m_renderer->Render(0.0f);
