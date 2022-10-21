@@ -271,10 +271,7 @@ void NetCode::Recive()
 			}
 			if (m_inputTcp.playerId > -1)
 			{
-				EntityManager::Get().Collect<HostOrClient>().Do([&](HostOrClient& hc)
-					{
-						hc.host = false;
-					});
+
 
 				m_outputTcp = m_client.ReciveTcp();
 
