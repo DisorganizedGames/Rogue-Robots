@@ -43,6 +43,8 @@ function BarrelComponents:Grenade()
 		grenadeSpeed = 9.2,
 		upSpeed = 5.0,
 		grenadeSize = Vector3.New(0.2, 0.2, 0.2),
+		waitForFire = 0.0,
+		timeBetweenShots = 0.5,
 
 		Update = function(self, gunEntity, parentEntityID, bullet)
 			
@@ -71,6 +73,14 @@ function BarrelComponents:Grenade()
 
 		Destroy = function(self, bullet)
 			Physics:Explosion(bullet.entity, 20.0, 5.0)
+		end,
+
+		CreateBullet = function(self)
+			if self.waitForFire < ElapsedTime then
+				self.waitForFire = self.timeBetweenShots + ElapsedTime
+				return true
+			end
+			return false
 		end
 	}
 end

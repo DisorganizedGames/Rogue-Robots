@@ -60,7 +60,8 @@ function OnStart()
 
 	-- Initialize base components
 	miscComponent = MiscComponent.BasicShot()
-	barrelComponent = BarrelManager.Grenade() --ObjectManager:CreateObject()
+	--barrelComponent = BarrelManager.BasicBarrel() 
+	barrelComponent = BarrelManager.Grenade()  --ObjectManager:CreateObject()
 	magazineComponent = MagazineManager.BasicEffect()--ObjectManager:CreateObject()
 end
 
@@ -109,9 +110,15 @@ function OnUpdate()
 	end
 	for i=1, #newBullets do
 		
-		CreateBulletEntity(newBullets[i])
-		barrelComponent:Update(gunEntity, EntityID, newBullets[i])
-		magazineComponent:Update()
+		local createBullet = true
+		if barrelComponent.CreateBullet then
+			createBullet = barrelComponent:CreateBullet()
+		end
+		if createBullet then
+			CreateBulletEntity(newBullets[i])
+			barrelComponent:Update(gunEntity, EntityID, newBullets[i])
+			magazineComponent:Update()
+		end
 	end
 	--NormalBulletUpdate()
 
