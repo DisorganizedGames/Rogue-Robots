@@ -64,7 +64,6 @@ void GameLayer::OnUpdate()
 		break;
 	}
 
-
 	MINIPROFILE
 	for (auto& system : m_entityManager)
 	{
@@ -79,12 +78,8 @@ void GameLayer::OnUpdate()
 		system->LateUpdate();
 	}
 
-
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
-
-	
-	m_netCode.OnUpdate();
 }
 
 
@@ -107,6 +102,7 @@ void GameLayer::StartMainScene()
 void GameLayer::UpdateGame()
 {
 	m_player->OnUpdate();
+	m_netCode.OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
 }
