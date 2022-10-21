@@ -102,7 +102,7 @@ void AudioDevice::HandleComponent(AudioComponent& comp, entity e)
 	{
 		if (comp.loopEnd <= comp.loopStart)
 		{
-			comp.loopEnd = source->AudioLengthInSeconds() - 0.1;
+			comp.loopEnd = source->AudioLengthInSeconds() - 0.1f;
 		}
 
 		f32 played = source->SecondsPlayed();
@@ -304,7 +304,7 @@ void SourceVoice::SetOutputMatrix(const std::vector<f32>& matrix, IXAudio2Voice*
 
 void SourceVoice::SeekTo(f32 seconds)
 {
-	u32 loopStartSample = seconds * m_wfx.nSamplesPerSec;
+	u32 loopStartSample = static_cast<u32>(seconds * m_wfx.nSamplesPerSec);
 	m_asyncWFR.SeekToSample(loopStartSample);
 
 	m_samplesPlayed = loopStartSample;
