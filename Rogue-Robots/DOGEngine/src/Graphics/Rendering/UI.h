@@ -24,6 +24,9 @@ namespace DOG
       void RemoveScene(UINT sceneID);
       void Resize(UINT clientWidth, UINT clientHeight);
       void FreeResize();
+      static void Initialize(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, UINT clientWidth, UINT clientHeight);
+      static UI& Get();
+      static void Destroy();
       DOG::gfx::D2DBackend_DX12* GetBackend();
       template<typename T, typename... Params>
       std::unique_ptr<T> Create(UINT& uidOut, Params... args)
@@ -31,8 +34,11 @@ namespace DOG
          uidOut = GenerateUID();
          return std::make_unique<T>(*m_d2d.get(), uidOut, std::forward<Params>(args)...);
       }
+      UI(UI& other) = delete;
+      void operator=(const UI&) = delete;
 
       private:
+      static UI* s_instance;
       std::vector<std::unique_ptr<UIScene>> m_scenes;
       std::unique_ptr<DOG::gfx::D2DBackend_DX12> m_d2d; //The thing that renders everything
       UINT m_width, m_height;
