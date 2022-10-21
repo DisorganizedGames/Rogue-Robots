@@ -80,6 +80,8 @@ void GameLayer::OnUpdate()
 
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
+	global->SetNumber("ElapsedTime", Time::ElapsedTime());
+
 }
 
 
@@ -275,6 +277,7 @@ void GameLayer::RegisterLuaInterfaces()
 
 	luaInterface = global->CreateLuaInterface("PhysicsInterface");
 	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBSetVelocity>("RBSetVelocity");
+	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::Explosion>("Explosion");
 	
 	global->SetLuaInterface(luaInterface);
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Physics", "PhysicsInterface");
@@ -380,7 +383,8 @@ void GameLayer::Input(DOG::Key key)
 				inputC.up = true;
 			if (key == DOG::Key::Q)
 				inputC.switchComp = true;
-
+			if (key == DOG::Key::E)
+				inputC.switchBarrelComp = true;
 	});
 }
 
@@ -402,6 +406,8 @@ void GameLayer::Release(DOG::Key key)
 				inputC.up = false;
 			if (key == DOG::Key::Q)
 				inputC.switchComp = false;
+			if (key == DOG::Key::E)
+				inputC.switchBarrelComp = false;
 		});
 }
 

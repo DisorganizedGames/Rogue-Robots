@@ -72,6 +72,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddBoxCollider(context, e);
 	}
+	else if (compType == "SphereCollider")
+	{
+		AddSphereCollider(context, e);
+	}
 	else if (compType == "Rigidbody")
 	{
 		AddRigidbody(context, e);
@@ -167,6 +171,7 @@ static bool GetActionState(InputController& input, const std::string& action) {
 		{"Right", input.right},
 		{"ActivateItem", input.activateActiveItem},
 		{"SwitchComponent", input.switchComp},
+		{"SwitchBarrelComponent", input.switchBarrelComp},
 	};
 
 	return map.at(action);
@@ -201,6 +206,9 @@ void EntityInterface::SetAction(DOG::LuaContext* context)
 		break;
 	case 4:
 		input.switchComp = active;
+		break;
+	case 5:
+		input.switchBarrelComp = active;
 		break;
 	default:
 		break;
@@ -395,6 +403,14 @@ void EntityInterface::AddBoxCollider(LuaContext* context, entity e)
 	EntityManager::Get().AddComponent<BoxColliderComponent>(e, e, Vector3{ boxDim.x, boxDim.y, boxDim.z }, dynamic);
 }
 
+void EntityInterface::AddSphereCollider(DOG::LuaContext* context, DOG::entity e)
+{
+	float radius = (float)context->GetDouble();
+	bool dynamic = context->GetBoolean();
+
+	EntityManager::Get().AddComponent<SphereColliderComponent>(e, e, radius, dynamic);
+}
+
 void EntityInterface::AddRigidbody(LuaContext* context, entity e)
 {
 	bool kinematic = context->GetBoolean();
@@ -509,6 +525,32 @@ void PhysicsInterface::RBSetVelocity(LuaContext* context)
 	LuaVector3 vel(t);
 	auto& rigid = EntityManager::Get().GetComponent<RigidbodyComponent>(e);
 	rigid.linearVelocity = { vel.x, vel.y, vel.z };
+}
+
+void PhysicsInterface::Explosion(DOG::LuaContext* context)
+{
+	entity explosionEntity = static_cast<u64>(context->GetInteger());
+	Vector3 explosionPosition = EntityManager::Get().GetComponent<TransformComponent>(explosionEntity).GetPosition();
+
+	float power = (float)context->GetDouble();
+	float radius = (float)context->GetDouble();
+
+	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([&](entity e, TransformComponent& transform, RigidbodyComponent& rigidbody)
+		{
+			Vector3 position = transform.GetPosition();
+			float distance = Vector3::Distance(position, explosionPosition);
+			if (distance > radius)
+				return;
+
+			//float squaredDistance = Vector3::DistanceSquared(position, explosionPosition);
+			//if (squaredDistance < 1.0f)
+			//	squaredDistance = 1.0f;
+			//power /= squaredDistance;
+
+			Vector3 direction = (position - explosionPosition);
+			direction.Normalize();
+			rigidbody.centralImpulse = direction * rigidbody.mass * power;
+		});
 }
 
 LuaVector3::LuaVector3(LuaTable& table)

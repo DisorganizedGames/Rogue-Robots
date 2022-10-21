@@ -110,6 +110,8 @@ private:
 
 	void AddBoxCollider(DOG::LuaContext* context, DOG::entity e);
 
+	void AddSphereCollider(DOG::LuaContext* context, DOG::entity e);
+
 	void AddRigidbody(DOG::LuaContext* context, DOG::entity e);
 
 	void AddBullet(DOG::LuaContext* context, DOG::entity e);
@@ -161,4 +163,5 @@ public:
 	~PhysicsInterface() noexcept {};
 
 	void RBSetVelocity(DOG::LuaContext* context);
+	void Explosion(DOG::LuaContext* context);
 };
