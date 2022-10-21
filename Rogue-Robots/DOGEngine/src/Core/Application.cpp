@@ -217,6 +217,7 @@ namespace DOG
 			PhysicsEngine::FreePhysicsFromDeferredEntities();
 			AudioManager::StopAudioOnDeferredEntities();
 			EntityManager::Get().DestroyDeferredEntities();
+			LightManager::Get().DestroyDeferredEntities();
 
 			Time::End();
 		}
