@@ -156,7 +156,26 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 
 void GameLayer::UpdateLobby()
 {
-	m_gameState = GameState::Playing;
+	static bool inLobby = true;
+	static char input[64]{};
+	ImGui::InputText("input", input, 64);
+
+	if (ImGui::Button("Host"))
+	{
+		m_netCode.Host();
+		inLobby = false;
+	}
+	if (ImGui::Button("Join"))
+	{
+		if( m_netCode.Join(input))
+			inLobby = false;
+	}
+	if (ImGui::Button("Offline"))
+	{
+		inLobby = false;
+	}
+	if(!inLobby)
+		m_gameState = GameState::StartPlaying;
 }
 
 

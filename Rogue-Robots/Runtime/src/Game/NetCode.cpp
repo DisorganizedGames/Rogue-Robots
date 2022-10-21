@@ -24,7 +24,7 @@ NetCode::NetCode()
 	m_reciveBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
 	m_dataIsReadyToBeSentTcp = false;
 	m_dataIsReadyToBeRecivedTcp = false;
-	
+	m_start = false;
 }
 
 NetCode::~NetCode()
@@ -223,8 +223,6 @@ void NetCode::OnUpdate()
 
 void NetCode::Recive()
 {
-	Server serverHost;
-	
 	bool start = FALSE;
 	char input = 'o';
 	while (start == FALSE)
@@ -236,47 +234,11 @@ void NetCode::Recive()
 		{
 		case 'h':
 		{
-			bool server = serverHost.StartTcpServer();
-			if (server)
-			{
-				// join server
-				std::string ip = serverHost.GetIpAddress();
-				if (ip != "")
-				{
-					std::cout << "Hosting at: " << ip << std::endl;
-					m_inputTcp.playerId = m_client.ConnectTcpServer(ip);
-					if (m_inputTcp.playerId > -1)
-					{
-						m_client.SendTcp(m_inputTcp);
-						m_outputTcp = m_client.ReciveTcp();
-						start = TRUE;
-					}
-				}
-			}
 			break;
 		}
 		case 'j':
 		{
-			std::cout << "Enter ip address to host('d' to connect to default ip address): ";
-			std::string inputString;
-			//fseek(stdin, 0, SEEK_END);
-			std::cin >> inputString;
-			if (inputString[0] == 'd')
-			{
-				m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.74"); //192.168.1.55 || 192.168.50.214
-			}
-			else
-			{
-				m_inputTcp.playerId = m_client.ConnectTcpServer(inputString);
-			}
-			if (m_inputTcp.playerId > -1)
-			{
-
-
-				m_outputTcp = m_client.ReciveTcp();
-
-				start = TRUE;
-			}
+			
 			break;
 		}
 		case 'o':
@@ -353,4 +315,44 @@ void NetCode::AddMatrixUdp(DirectX::XMMATRIX input)
 	m_mut.unlock();
 }
 
+void NetCode::Host()
+{
+	Server serverHost;
+	bool server = serverHost.StartTcpServer();
+	if (server)
+	{
+		// join server
+		std::string ip = serverHost.GetIpAddress();
+		if (ip != "")
+		{
+			std::cout << "Hosting at: " << ip << std::endl;
+			m_inputTcp.playerId = m_client.ConnectTcpServer(ip);
+			if (m_inputTcp.playerId > -1)
+			{
+				m_client.SendTcp(m_inputTcp);
+				m_outputTcp = m_client.ReciveTcp();
+				m_start = true;
+			}
+		}
+	}
+}
 
+bool NetCode::Join(char* inputString)
+{
+	if (inputString[0] == 'd')
+	{
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.74"); //192.168.1.55 || 192.168.50.214
+		return true;
+	}
+	else
+	{
+		m_inputTcp.playerId = m_client.ConnectTcpServer(inputString);
+		return true;
+	}
+	if (m_inputTcp.playerId > -1)
+	{
+		m_outputTcp = m_client.ReciveTcp();
+		m_start = true;
+	}
+	return false;
+}

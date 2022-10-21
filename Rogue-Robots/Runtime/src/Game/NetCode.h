@@ -20,7 +20,8 @@ public:
 	~NetCode();
 	
 	void OnUpdate();
-
+	void Host();
+	bool Join(char* input);
 
 
 private:
@@ -54,4 +55,5 @@ private:
 	char* m_reciveBuffer;
 	bool m_dataIsReadyToBeSentTcp;
 	bool m_dataIsReadyToBeRecivedTcp;
+	bool m_start;
 };
