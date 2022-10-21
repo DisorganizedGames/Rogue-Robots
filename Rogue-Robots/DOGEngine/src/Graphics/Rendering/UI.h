@@ -28,12 +28,15 @@ namespace DOG
       static UI& Get();
       static void Destroy();
       DOG::gfx::D2DBackend_DX12* GetBackend();
+
+
       template<typename T, typename... Params>
       std::unique_ptr<T> Create(UINT& uidOut, Params... args)
       {
          uidOut = GenerateUID();
          return std::make_unique<T>(*m_d2d.get(), uidOut, std::forward<Params>(args)...);
       }
+      
       UI(UI& other) = delete;
       void operator=(const UI&) = delete;
 
@@ -43,9 +46,9 @@ namespace DOG
       std::unique_ptr<DOG::gfx::D2DBackend_DX12> m_d2d; //The thing that renders everything
       UINT m_width, m_height;
       UINT m_menuID, m_gameID;
-      UINT QueryScene(UINT sceneID);
       UINT m_currsceneID, m_currsceneIndex;
       bool m_visible;
+      UINT QueryScene(UINT sceneID);
       UINT GenerateUID();
       void BuildMenuUI();
       void BuildGameUI();
