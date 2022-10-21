@@ -91,6 +91,13 @@ namespace DOG
 			m_renderer->BeginFrame_GPU();
 
 			// Update lights
+
+			EntityManager::Get().Collect<DirtyComponent, PointLightComponent>().Do([](entity, DirtyComponent& dirty, PointLightComponent& light) {
+				light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged); });
+
+			EntityManager::Get().Collect<DirtyComponent, SpotLightComponent>().Do([](entity, DirtyComponent& dirty, SpotLightComponent& light) {
+				light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged) || dirty.IsDirty(DirtyComponent::rotationChanged); });
+
 			EntityManager::Get().Collect<TransformComponent, SpotLightComponent>().Do([&](entity, TransformComponent tr, SpotLightComponent& light)
 				{
 					if (light.dirty)
@@ -185,6 +192,8 @@ namespace DOG
 
 			m_renderer->EndFrame_GPU(m_specification.graphicsSettings.vSync);
 
+
+			EntityManager::Get().Collect<DirtyComponent>().Do([](entity, DirtyComponent& dirty) { dirty.dirtyBitSet &= 0; });
 
 			//Deferred deletions happen here!!!
 			LuaMain::GetScriptManager()->RemoveScriptsFromDeferredEntities();

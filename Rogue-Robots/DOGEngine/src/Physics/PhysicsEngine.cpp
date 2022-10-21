@@ -539,7 +539,7 @@ namespace DOG
 			ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(m_meshCollidersWaitingForModels[index].meshModelID);
 			if (model)
 			{
-				MeshColliderComponent component = EntityManager::Get().GetComponent<MeshColliderComponent>(m_meshCollidersWaitingForModels[index].meshEntity);
+				MeshColliderComponent& component = EntityManager::Get().GetComponent<MeshColliderComponent>(m_meshCollidersWaitingForModels[index].meshEntity);
 				component.LoadMesh(m_meshCollidersWaitingForModels[index].meshEntity, m_meshCollidersWaitingForModels[index].meshModelID, 
 					m_meshCollidersWaitingForModels[index].localMeshScale);
 				m_meshCollidersWaitingForModels.erase(m_meshCollidersWaitingForModels.begin() + index);

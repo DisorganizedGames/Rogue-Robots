@@ -122,6 +122,39 @@ namespace DOG
 		bool dirty{ true };		// If static handle, dirty bool is ignored
 	};
 
+	struct LerpAnimateComponent
+	{
+		DirectX::SimpleMath::Vector3 origin{ 0,0,0 };
+		DirectX::SimpleMath::Vector3 target{ 1,1,1 };
+		f64 t{ 0 };
+		f64 scale { 1 };
+		i32 loops{ 1 };
+	};
+
+	struct LerpColorComponent
+	{
+		DirectX::SimpleMath::Vector3 origin{ 0,0,0 };
+		DirectX::SimpleMath::Vector3 target{ 1,1,1 };
+		f64 t{ 0 };
+		f64 scale{ 1 };
+		i32 loops{ 1 };
+	};
+
+	struct DirtyComponent
+	{
+		static constexpr u8 positionChanged = 0;
+		static constexpr u8 rotationChanged = 1;
+		DirtyComponent& SetDirty(u8 index)
+		{
+			dirtyBitSet[index] = true;
+		}
+		bool IsDirty(u8 index)
+		{
+			return dirtyBitSet[index];
+		}
+		std::bitset<2> dirtyBitSet;
+	};
+
 	//Is set on entities which are going to be destroyed at the end of the frame!
 	struct DeferredDeletionComponent
 	{

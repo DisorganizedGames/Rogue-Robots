@@ -46,10 +46,10 @@ namespace DOG
 		static inline u64 s_deltaTime = 0;
 
 	public:
-		template<TimeType type = TimeType::Seconds>
-		static f64 DeltaTime()
+		template<TimeType type = TimeType::Seconds, typename T = f64>
+		static T DeltaTime()
 		{
-			return s_deltaTime / static_cast<f64>(type);
+			return s_deltaTime / static_cast<T>(type);
 		}
 
 		static void Start()

@@ -39,6 +39,12 @@ public:
 	void GetMouseDelta(DOG::LuaContext* context);
 };
 
+class SceneInterface : public LuaInterface
+{
+public:
+	void CreateEntity(DOG::LuaContext* context);
+};
+
 class EntityInterface : public LuaInterface
 {
 public:
