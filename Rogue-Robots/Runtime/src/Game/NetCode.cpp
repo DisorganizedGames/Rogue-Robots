@@ -24,7 +24,6 @@ NetCode::NetCode()
 	m_reciveBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
 	m_dataIsReadyToBeSentTcp = false;
 	m_dataIsReadyToBeRecivedTcp = false;
-	m_start = false;
 }
 
 NetCode::~NetCode()
@@ -280,14 +279,14 @@ void NetCode::AddMatrixUdp(DirectX::XMMATRIX input)
 	m_mut.unlock();
 }
 
-void NetCode::Host()
+bool NetCode::Host()
 {
-	Server serverHost;
-	bool server = serverHost.StartTcpServer();
+	
+	bool server = m_serverHost.StartTcpServer();
 	if (server)
 	{
 		// join server
-		std::string ip = serverHost.GetIpAddress();
+		std::string ip = m_serverHost.GetIpAddress();
 		if (ip != "")
 		{
 			std::cout << "Hosting at: " << ip << std::endl;
@@ -297,16 +296,18 @@ void NetCode::Host()
 				m_client.SendTcp(m_inputTcp);
 				m_outputTcp = m_client.ReciveTcp();
 				m_thread = std::thread(&NetCode::Recive, this);
+				return server;
 			}
 		}
 	}
+	return server;
 }
 
 bool NetCode::Join(char* inputString)
 {
 	if (inputString[0] == 'd')
 	{
-		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.74"); //192.168.1.55 || 192.168.50.214
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.72"); //192.168.1.55 || 192.168.50.214
 	}
 	else
 	{
