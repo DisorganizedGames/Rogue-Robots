@@ -9,7 +9,7 @@ using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
 GameLayer::GameLayer() noexcept
-	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
+	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }, m_gameState(GameState::Initializing)
 {
 	LuaMain::GetScriptManager()->SortOrderScripts();
 	//Do startup of lua
@@ -27,15 +27,8 @@ void GameLayer::OnAttach()
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameLayer", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1));
 	m_Agent = std::make_shared<Agent>();
 
-	m_testScene = std::make_unique<TestScene>();
-	m_testScene->SetUpScene();
-
-	m_mainScene = std::make_unique<MainScene>();
-	m_mainScene->SetUpScene({
-		[this]() { return SpawnPlayers(Vector3(25, 25, 15), 4, 10.f); },
-		[this]() { return LoadLevel(); },
-		[this]() { return std::vector<entity>(1, m_Agent->MakeAgent(m_entityManager.CreateEntity())); }
-		});
+	//m_testScene = std::make_unique<TestScene>();
+	//m_testScene->SetUpScene();
 
 	LuaMain::GetScriptManager()->StartScripts();
 }
@@ -52,6 +45,28 @@ void GameLayer::OnDetach()
 
 void GameLayer::OnUpdate()
 {
+	GameState nextGameState;
+	switch (m_gameState)
+	{
+	case GameState::Initializing:
+		m_gameState = GameState::Lobby;
+		break;
+	case GameState::Lobby:
+		UpdateLobby();
+		break;
+	case GameState::StartPlaying:
+		StartMainScene();
+		break;
+	case GameState::Playing:
+		UpdateGame();
+		break;
+	case GameState::Closing:
+		break;
+	default:
+		break;
+	}
+
+
 	MINIPROFILE
 	for (auto& system : m_entityManager)
 	{
@@ -86,6 +101,21 @@ void GameLayer::OnImGuiRender()
 
 
 }
+
+void GameLayer::StartMainScene()
+{
+	assert(m_mainScene == nullptr);
+
+	m_mainScene = std::make_unique<MainScene>();
+	m_mainScene->SetUpScene({
+		[this]() { return SpawnPlayers(Vector3(25, 25, 15), 4, 10.f); },
+		[this]() { return LoadLevel(); },
+		[this]() { return std::vector<entity>(1, m_Agent->MakeAgent(m_entityManager.CreateEntity())); }
+		});
+
+	m_gameState = GameState::Playing;
+}
+
 
 //Place-holder example on how to use event system:
 void GameLayer::OnEvent(DOG::IEvent& event)
@@ -123,6 +153,18 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	}
 	}
 }
+
+void GameLayer::UpdateLobby()
+{
+	m_gameState = GameState::Playing;
+}
+
+
+void GameLayer::UpdateGame()
+{
+	
+}
+
 
 void GameLayer::RegisterLuaInterfaces()
 {
