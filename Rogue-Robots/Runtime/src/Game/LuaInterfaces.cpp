@@ -720,7 +720,6 @@ void UIInterface::CreateProgressBar(DOG::LuaContext* context)
 	/*
 		UI::Get().Create<UIProgressBar>(uid)(args)
 	*/
-
 }
 
 void UIInterface::SetProgressBarValue(DOG::LuaContext* context)
@@ -738,4 +737,8 @@ void UIInterface::RemoveElement(DOG::LuaContext* context)
 	auto elementID = context->GetInteger();
 
 	// UI::Get().Remove(sceneID, elementID);
+}
+
+void UIInterface::ClearScene(DOG::LuaContext* context)
+{
 }

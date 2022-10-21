@@ -200,16 +200,14 @@ public:
 	
 	*/
 
+	// Creation
 	void CreateButton(DOG::LuaContext* context);
-
 	void CreateProgressBar(DOG::LuaContext* context);
+
+	// Mutate
 	void SetProgressBarValue(DOG::LuaContext* context);
 	
+	// Removal
 	void RemoveElement(DOG::LuaContext* context);
-
-	/*
-	void ClearScene()...
-
-	
-	*/
+	void ClearScene(DOG::LuaContext* context);
 };
