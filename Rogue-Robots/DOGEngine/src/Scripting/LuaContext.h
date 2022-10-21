@@ -24,6 +24,7 @@ namespace DOG
 		LuaTable GetTable() const;
 		template <typename T>
 		T* GetUserData() const;
+		Function GetFunction() const;
 
 		void ReturnInteger(int integer);
 		void ReturnDouble(double number);

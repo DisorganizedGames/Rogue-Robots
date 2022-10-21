@@ -69,6 +69,12 @@ function OnStart()
 	barrelComponent = BarrelManager.BasicBarrel() 
 	--barrelComponent = BarrelManager.Grenade()  --ObjectManager:CreateObject()
 	magazineComponent = MagazineManager.BasicEffect() --ObjectManager:CreateObject()
+
+	function doSomething()
+		print("LUA function called!!")
+	end
+
+	UI:CreateButton(doSomething)
 end
 
 local tempMode = 0

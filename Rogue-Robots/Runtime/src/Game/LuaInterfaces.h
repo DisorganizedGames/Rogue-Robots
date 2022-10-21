@@ -187,3 +187,29 @@ public:
 
 	void CreateMaterial(DOG::LuaContext* context);
 };
+
+class UIInterface : public LuaInterface
+{
+public:
+	UIInterface() noexcept {};
+	~UIInterface() noexcept {};
+
+	/*
+		All creation functions always have take
+			'sceneID' as first argument
+	
+	*/
+
+	void CreateButton(DOG::LuaContext* context);
+
+	void CreateProgressBar(DOG::LuaContext* context);
+	void SetProgressBarValue(DOG::LuaContext* context);
+	
+	void RemoveElement(DOG::LuaContext* context);
+
+	/*
+	void ClearScene()...
+
+	
+	*/
+};

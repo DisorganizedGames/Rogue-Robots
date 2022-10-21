@@ -98,7 +98,7 @@ namespace DOG
 		return m_luaW->GetGlobalUserData(luaGlobalName);
 	}
 
-	LuaFunctionReturn LuaGlobal::CallGlobalFunction(Function& function)
+	LuaFunctionReturn LuaGlobal::CallGlobalFunction(Function function)
 	{
 		return m_luaW->CallLuaFunctionReturn(function);
 	}

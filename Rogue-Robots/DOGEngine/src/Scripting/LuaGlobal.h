@@ -39,7 +39,7 @@ namespace DOG
 		LuaFunctionReturn CallGlobalFunction(Function& function, Args... args);
 		template <class... Args>
 		LuaFunctionReturn CallGlobalFunction(const std::string& name, Args... args);
-		LuaFunctionReturn CallGlobalFunction(Function& function);
+		LuaFunctionReturn CallGlobalFunction(Function function);
 		LuaFunctionReturn CallGlobalFunction(const std::string& name);
 	};
 

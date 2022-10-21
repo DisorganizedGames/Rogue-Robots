@@ -354,6 +354,16 @@ void GameLayer::RegisterLuaInterfaces()
 
 	global->SetLuaInterface(luaInterface);
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Render", "RenderInterface");
+	//UI
+	luaInterfaceObject = std::make_shared<UIInterface>();
+	m_luaInterfaces.push_back(luaInterfaceObject);
+
+	luaInterface = global->CreateLuaInterface("UIInterface");
+	luaInterface.AddFunction<UIInterface, &UIInterface::CreateButton>("CreateButton");
+
+	global->SetLuaInterface(luaInterface);
+	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "UI", "UIInterface");
+
 }
 
 std::vector<entity> GameLayer::LoadLevel()

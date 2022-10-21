@@ -698,3 +698,44 @@ void RenderInterface::CreateMaterial(DOG::LuaContext* context)
 
 	context->ReturnTable(material);
 }
+
+
+void UIInterface::CreateButton(DOG::LuaContext* context)
+{
+	auto sceneID = context->GetInteger();
+
+	auto luaCallback = context->GetFunction();
+	auto func = [luaCallback]()
+	{
+		LuaMain::GetGlobal()->CallGlobalFunction(luaCallback);
+	};
+
+	
+}
+
+void UIInterface::CreateProgressBar(DOG::LuaContext* context)
+{
+	auto sceneID = context->GetInteger();
+	
+	/*
+		UI::Get().Create<UIProgressBar>(uid)(args)
+	*/
+
+}
+
+void UIInterface::SetProgressBarValue(DOG::LuaContext* context)
+{
+	auto uid = context->GetInteger();
+	auto value = context->GetDouble();
+
+	// Static cast from UIElement (parent) to subclass UIProgressBar to access progress bar specifics
+	// UI::Get().GetUI<UIProgressBar>(uid)->SetValue(value)
+}
+
+void UIInterface::RemoveElement(DOG::LuaContext* context)
+{
+	auto sceneID = context->GetInteger();
+	auto elementID = context->GetInteger();
+
+	// UI::Get().Remove(sceneID, elementID);
+}

@@ -92,6 +92,23 @@ namespace DOG
 		return LuaTable();
 	}
 
+	Function LuaContext::GetFunction() const
+	{
+		const int max = m_luaW->GetNumberOfStackItems();
+
+		for (int index = 1; index <= max; ++index)
+			if (m_luaW->IsFunction(index))
+			{
+				Function getFunction = m_luaW->GetFunctionFromStack(index);
+				return getFunction;
+			}
+
+		m_luaW->Error("Error: Couldn't Find Table In Arguments\n");
+
+		return Function{ -1 };
+	}
+
+
 	void LuaContext::ReturnInteger(int integer)
 	{
 		IncreaseReturnArgument();
