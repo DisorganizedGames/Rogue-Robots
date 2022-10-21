@@ -837,6 +837,7 @@ namespace DOG::gfx
 
 void UIRebuild(UINT clientHeight, UINT clientWidth)
 {
+	UNREFERENCED_PARAMETER(clientWidth);
 	//HealthBar
 	UINT hID;
 	auto h = DOG::UI::Get().Create<DOG::UIHealthBar, float, float, float, float>(hID, 40.f, clientHeight - 60.f, 250.f, 30.f);

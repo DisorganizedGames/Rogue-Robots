@@ -128,7 +128,6 @@ UINT DOG::UI::AddUIElementToScene(UINT sceneID, std::unique_ptr<UIElement> eleme
 /// @return returns the ID of the scene in which the element was found. If the element is non existant UINT_MAX is returned
 UINT DOG::UI::RemoveUIElement(UINT elementID)
 {
-   UINT id;
    for (auto&& s : m_scenes)
    {
       auto res = std::find_if(s->GetScene().begin(), s->GetScene().end(), [&](std::unique_ptr<UIElement> const& e) { return e->GetID() == elementID; });
