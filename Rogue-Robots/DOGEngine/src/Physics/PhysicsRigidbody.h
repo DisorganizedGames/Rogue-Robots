@@ -22,6 +22,7 @@ namespace DOG
 		bool constrainPositionX, constrainPositionY, constrainPositionZ;
 		DirectX::SimpleMath::Vector3 linearVelocity;
 		DirectX::SimpleMath::Vector3 centralForce;
+		DirectX::SimpleMath::Vector3 centralImpulse;
 		float mass = 1.0f;
 		bool disableDeactivation = false;
 

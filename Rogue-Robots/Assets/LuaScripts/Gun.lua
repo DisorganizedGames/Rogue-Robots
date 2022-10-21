@@ -29,7 +29,8 @@ local bulletTemplate = {
 	forward = {},				-- Vector3 that describes the direction of the bullet.
 	startPos = {},				-- Vector3 that describes the initial spawn position of the bullet.
 	speed = InitialBulletSpeed, -- Float that describes the current speed of the bullet. 
-	lifetime = 0				-- Counter to know when to kill the bullet entity
+	lifetime = 0,				-- Counter to know when to kill the bullet entity.
+	size = {},					-- Vector3 that describes the scale of the bullet.
 }
 
 --Non-tweakable
@@ -58,13 +59,9 @@ function OnStart()
 	Entity:AddComponent(gunID, "Audio", gunShotSound, false, true)
 
 	-- Initialize base components
-	miscComponent = MiscComponent.ChargeShot()
-	barrelComponent = ObjectManager:CreateObject()
-	magazineComponent = ObjectManager:CreateObject()
-
-	--Events
-	EventSystem:Register("NormalBulletUpdate" .. EntityID, NormalBulletUpdate) --Is called if there is no barrelcomponent.
-	EventSystem:Register("NormalBulletSpawn" .. EntityID, NormalBulletSpawn) --Is called if there is no barrelcomponent.
+	miscComponent = MiscComponent.BasicShot()
+	barrelComponent = BarrelManager.Grenade() --ObjectManager:CreateObject()
+	magazineComponent = MagazineManager.BasicEffect()--ObjectManager:CreateObject()
 end
 
 local tempMode = 0
@@ -92,7 +89,7 @@ function OnUpdate()
 	if Entity:GetAction(EntityID, "SwitchComponent") and not switched then
 		switched = true
 		if componentIdx == 0 then
-			miscComponent = MiscComponent.NormalGun()
+			miscComponent = MiscComponent.FullAuto()
 			componentIdx = 1
 		else
 			miscComponent = MiscComponent.ChargeShot()
@@ -102,19 +99,47 @@ function OnUpdate()
 		switched = false
 	end
 
+	NormalBulletUpdate()
 
 	-- Gun firing logic
-	local bullet = miscComponent:Update(EntityID)
-	EventSystem:InvokeEvent("NormalBulletUpdate" .. tostring(EntityID))
-
-	if not bullet then
+	-- Returns a table of bullets
+	local newBullets = miscComponent:Update(EntityID)
+	if not newBullets then
 		return
 	end
+	for i=1, #newBullets do
+		CreateBulletEntity(newBullets[i])
+		barrelComponent:Update(gunEntity, EntityID, newBullets[i])
+		magazineComponent:Update()
+	end
+	--NormalBulletUpdate()
 
-	EventSystem:InvokeEvent("NormalBulletSpawn" .. tostring(EntityID), bullet)
+	--if not bullet then
+	--	return
+	--end
+
+	--NormalBulletSpawn(bullet)
 
 	--BarrelComponent:Update(barrelComponent)
 	--MagazineComponent:Update(magazineComponent)
+end
+
+function CreateBulletEntity(bullet)
+	bullet.entity = Entity:CreateEntity()
+	table.insert(bullets, bullet)
+
+	Entity:AddComponent(bullet.entity, "Transform",
+		Vector3.Zero(),
+		Vector3.Zero(),
+		bullet.size
+	)
+	local up = Vector3.FromTable(Entity:GetUp(EntityID))
+	local angle = -math.pi / 2
+
+	local newForward = RotateAroundAxis(Entity:GetForward(EntityID), up, angle)
+	Entity:SetRotationForwardUp(bullet.entity, newForward, up)
+
+	Entity:ModifyComponent(bullet.entity, "Transform", bullet.startPos, 1)
 end
 
 --If there is not barrel component start.
@@ -150,6 +175,7 @@ function NormalBulletUpdate()
 	for i = #bullets, 1, -1 do -- Iterate through bullets backwards to make removal of elements safe
 		bullets[i].lifetime = bullets[i].lifetime + DeltaTime
 		if bullets[i].lifetime > 5.0 then
+			barrelComponent:Destroy(bullets[i])
 			Entity:DestroyEntity(bullets[i].entity)
 			table.remove(bullets, i)
 		end
