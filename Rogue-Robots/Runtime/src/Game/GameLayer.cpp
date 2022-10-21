@@ -87,10 +87,6 @@ void GameLayer::OnUpdate()
 	m_netCode.OnUpdate();
 }
 
-void GameLayer::UpdateLobby()
-{
-	m_gameState = GameState::StartPlaying;
-}
 
 void GameLayer::StartMainScene()
 {
@@ -186,12 +182,6 @@ void GameLayer::UpdateLobby()
 	}
 	if(!inLobby)
 		m_gameState = GameState::StartPlaying;
-}
-
-
-void GameLayer::UpdateGame()
-{
-	
 }
 
 

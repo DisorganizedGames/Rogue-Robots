@@ -17,7 +17,7 @@ NetCode::NetCode()
 	m_hardSyncTcp = FALSE;
 	m_active = FALSE;
 	m_startUp = FALSE;
-	m_thread = std::thread(&NetCode::Recive, this);
+	
 
 	m_bufferSize = 0;
 	m_bufferReciveSize = 0;
@@ -223,41 +223,6 @@ void NetCode::OnUpdate()
 
 void NetCode::Recive()
 {
-	bool start = FALSE;
-	char input = 'o';
-	while (start == FALSE)
-	{
-
-		std::cout << "\nInput 'h' to host, 'j' to join, 'o' to play offline: ";
-		input = getchar(); // uncomment to startup online
-		switch (input)
-		{
-		case 'h':
-		{
-			break;
-		}
-		case 'j':
-		{
-			
-			break;
-		}
-		case 'o':
-		{
-			std::cout << " Offline mode Selected" << std::endl;
-			start = TRUE;
-			while (m_netCodeAlive)
-				continue;
-			break;
-		}
-		default:
-			break;
-		}
-		if (start == FALSE)
-		{
-			std::cout << "Failed input, try agiain" << std::endl;
-			//fseek(stdin, 0, SEEK_END);
-		}
-	}
 	m_threadUdp = std::thread(&NetCode::ReciveUdp, this);
 	if (m_netCodeAlive)
 	{
@@ -331,7 +296,7 @@ void NetCode::Host()
 			{
 				m_client.SendTcp(m_inputTcp);
 				m_outputTcp = m_client.ReciveTcp();
-				m_start = true;
+				m_thread = std::thread(&NetCode::Recive, this);
 			}
 		}
 	}
@@ -342,17 +307,21 @@ bool NetCode::Join(char* inputString)
 	if (inputString[0] == 'd')
 	{
 		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.74"); //192.168.1.55 || 192.168.50.214
-		return true;
 	}
 	else
 	{
 		m_inputTcp.playerId = m_client.ConnectTcpServer(inputString);
-		return true;
 	}
+
 	if (m_inputTcp.playerId > -1)
 	{
 		m_outputTcp = m_client.ReciveTcp();
-		m_start = true;
+		m_thread = std::thread(&NetCode::Recive, this);
 	}
 	return false;
+}
+
+void NetCode::Offline()
+{
+	std::cout << " Offline mode Selected" << std::endl;
 }

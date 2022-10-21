@@ -22,6 +22,7 @@ public:
 	void OnUpdate();
 	void Host();
 	bool Join(char* input);
+	void Offline();
 
 
 private:
