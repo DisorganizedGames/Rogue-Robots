@@ -26,10 +26,7 @@ struct AgentStatsComponent
 	u32 roomId;
 };
 
-struct BulletComponent
-{
-
-};
+struct BulletComponent {};
 
 struct NetworkAgentStats
 {
@@ -56,5 +53,15 @@ struct DoorComponent
 {
 	u32 roomId = u32(-1);
 	bool isOpening = false;
-	f32 openValue = 0.f; 
+	f32 openValue = 0.f;
 };
+
+struct PassiveItemComponent {
+	enum class Type
+	{
+		Template
+	};
+
+	Type type;
+};
+

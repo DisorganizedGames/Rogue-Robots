@@ -228,6 +228,8 @@ const std::unordered_map<std::string, bool (*) (entity)> componentMap = {
 	
 	// Game Types
 	{ "Bullet", HasComp<BulletComponent>},
+	{ "PlayerStats", HasComp<PlayerStatsComponent> },
+	{ "PassiveItem", HasComp<PassiveItemComponent> },
 };
 
 void EntityInterface::HasComponent(LuaContext* context)
@@ -236,6 +238,8 @@ void EntityInterface::HasComponent(LuaContext* context)
 	bool hasComp = componentMap.at(context->GetString())(e);
 	context->ReturnBoolean(hasComp);
 }
+
+#pragma endregion
 
 void EntityInterface::PlayAudio(DOG::LuaContext* context)
 {
@@ -249,7 +253,16 @@ void EntityInterface::PlayAudio(DOG::LuaContext* context)
 	comp.shouldPlay = true;
 }
 
-#pragma endregion
+const std::unordered_map<PassiveItemComponent::Type, std::string> passiveTypeMap = {
+	{ PassiveItemComponent::Type::Template, "Template"},
+};
+
+void EntityInterface::GetPassiveType(LuaContext* context)
+{
+	entity e = context->GetInteger();
+	auto type = EntityManager::Get().GetComponent<PassiveItemComponent>(e).type;
+	context->ReturnString(passiveTypeMap.at(type));
+}
 
 void EntityInterface::GetTransformScaleData(LuaContext* context)
 {
