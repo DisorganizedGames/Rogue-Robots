@@ -2,10 +2,7 @@
 #include <DOGEngine.h>
 using namespace DirectX::SimpleMath;
 
-enum ItemsAndEnemies
-{
-	Scorpio
-};
+
 
 struct GunComponent
 {
@@ -34,7 +31,7 @@ struct AgentStatsComponent
 
 struct BulletComponent
 {
-	INT8 playerId;
+	i8 playerId;
 };
 
 struct NetworkAgentStats
@@ -76,9 +73,9 @@ struct PassiveItemComponent {
 
 struct CreateAndDestroyEntityComponent
 {
-	u32 entityTypeId;
-	u32 id;
-	bool alive;
-	INT8 playerId; 
+	u32 entityTypeId = 0;
+	u32 id = 0;
+	bool alive = true;
+	i8 playerId = 0; 
 	Vector3 position;
 };

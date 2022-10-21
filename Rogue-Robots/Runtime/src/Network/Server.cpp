@@ -223,7 +223,7 @@ void Server::ServerPollTCP()
 				else if (m_holdSocketsTcp[i].revents & POLLRDNORM)
 				{
 					bufferReciveSize = 0;
-					int n = recv(m_holdSocketsTcp[i].fd, reciveBuffer, SEND_AND_RECIVE_BUFFER_SIZE, 0);
+					recv(m_holdSocketsTcp[i].fd, reciveBuffer, SEND_AND_RECIVE_BUFFER_SIZE, 0);
 					memcpy(&holdClientsData, reciveBuffer, sizeof(Client::ClientsData));
 					m_playersServer[holdClientsData.playerId] = holdClientsData;
 
@@ -238,19 +238,18 @@ void Server::ServerPollTCP()
 					}
 
 					//Sync the enemies stats
-					for (int j = 0; j < holdClientsData.nrOfNetStats; j++)
+					for (int j = 0; j < holdClientsData.nrOfNetStats; ++j)
 					{
 						bool alreadyIn = false;
 						NetworkAgentStats test;
 						memcpy(&test, reciveBuffer + bufferReciveSize, sizeof(NetworkAgentStats));
-						int n = sizeof(test);
-						for (size_t i = 0; i < statsChanged.size(); i++)
+						for (size_t k = 0; k < statsChanged.size(); k++)
 						{
-							if (statsChanged[i].objectId == test.objectId)
+							if (statsChanged[k].objectId == test.objectId)
 							{
-								if (statsChanged[i].stats.hp > test.stats.hp)
+								if (statsChanged[k].stats.hp > test.stats.hp)
 								{
-									statsChanged[i].stats.hp = test.stats.hp;
+									statsChanged[k].stats.hp = test.stats.hp;
 								}
 								alreadyIn = true;
 								break;
@@ -264,7 +263,7 @@ void Server::ServerPollTCP()
 					
 
 					//Add the Create and destroy components Todo improve 
-					for (int i = 0; i < holdClientsData.nrOfCreateAndDestroy; ++i)
+					for (int j = 0; j < holdClientsData.nrOfCreateAndDestroy; ++j)
 					{
 						CreateAndDestroyEntityComponent test;
 						memcpy(&test, reciveBuffer + bufferReciveSize, sizeof(CreateAndDestroyEntityComponent));
@@ -278,13 +277,13 @@ void Server::ServerPollTCP()
 
 			if (statsChanged.size())
 				memcpy(sendBuffer + bufferSendSize, (char*)statsChanged.data(), statsChanged.size() * sizeof(NetworkAgentStats));
-			bufferSendSize += statsChanged.size() * sizeof(NetworkAgentStats);
+			bufferSendSize += (int)statsChanged.size() * sizeof(NetworkAgentStats);
 
 			if (createAndDestroy.size())
 				memcpy(sendBuffer + bufferSendSize, (char*)createAndDestroy.data(), createAndDestroy.size() * sizeof(CreateAndDestroyEntityComponent));
-			bufferSendSize += createAndDestroy.size() * sizeof(CreateAndDestroyEntityComponent);
+			bufferSendSize += (int)createAndDestroy.size() * sizeof(CreateAndDestroyEntityComponent);
 
-			m_playersServer[0].nrOfNetStats = statsChanged.size();
+			m_playersServer[0].nrOfNetStats = (int)statsChanged.size();
 			memcpy(sendBuffer, (char*)m_playersServer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
 		}
 		
@@ -295,7 +294,7 @@ void Server::ServerPollTCP()
 				for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
 				{
 	
-						int n = send(m_holdSocketsTcp[i].fd, sendBuffer, bufferSendSize, 0);
+						send(m_holdSocketsTcp[i].fd, sendBuffer, bufferSendSize, 0);
 						//std::cout << "Bytes send: " << n << " BufferSendSize: " << bufferSendSize << " To socket: " << m_holdSocketsTcp[i].fd << 
 						//	 " Nr of transforms: " << m_playersServer[0].nrOfNetTransform << " Nr of stats: " << m_playersServer[0].nrOfNetStats
 						//	<< " Nr of Create and destroy: " << m_playersServer[0].nrOfCreateAndDestroy << " sizo of transform: "<< 
@@ -496,4 +495,9 @@ void Server::ReciveLoopUdp()
 			}
 		}
 	}
+}
+
+INT8 Server::GetNrOfConnectedPlayers()
+{
+	return (INT8)m_holdPlayerIds.size();
 }

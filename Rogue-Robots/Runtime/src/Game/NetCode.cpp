@@ -20,18 +20,21 @@ NetCode::NetCode()
 	
 
 	m_bufferSize = 0;
-	m_bufferReciveSize = 0;
-	m_reciveBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
+	m_bufferReceiveSize = 0;
+	m_receiveBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
 	m_dataIsReadyToBeSentTcp = false;
-	m_dataIsReadyToBeRecivedTcp = false;
+	m_dataIsReadyToBeReceivedTcp = false;
 }
 
 NetCode::~NetCode()
 {
 	m_netCodeAlive = FALSE;
-	m_thread.join();
-	m_threadUdp.join();
-	delete[] m_reciveBuffer;
+	if(m_thread.joinable())
+		m_thread.join();
+	if (m_threadUdp.joinable())
+		m_threadUdp.join();
+	
+	delete[] m_receiveBuffer;
 }
 
 
@@ -49,7 +52,7 @@ void NetCode::OnUpdate()
 		{
 
 
-			EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, TransformComponent>().Do([&](entity id, NetworkPlayerComponent& networkC, ThisPlayer&, TransformComponent& transC)
+			EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, TransformComponent>().Do([&](entity id, NetworkPlayerComponent& networkC, ThisPlayer&, TransformComponent&)
 				{
 					if (networkC.playerId != m_inputTcp.playerId)
 					{
@@ -60,7 +63,7 @@ void NetCode::OnUpdate()
 					}
 
 				});
-			EntityManager::Get().Collect<NetworkPlayerComponent, TransformComponent, OnlinePlayer>().Do([&](entity id, NetworkPlayerComponent& networkC, TransformComponent& transC, OnlinePlayer&)
+			EntityManager::Get().Collect<NetworkPlayerComponent, TransformComponent, OnlinePlayer>().Do([&](entity id, NetworkPlayerComponent& networkC, TransformComponent&, OnlinePlayer&)
 				{
 					if (networkC.playerId == m_inputTcp.playerId)
 					{
@@ -141,89 +144,92 @@ void NetCode::OnUpdate()
 					m_dataIsReadyToBeSentTcp = true;
 				}
 				// Recived data
-				if (m_dataIsReadyToBeRecivedTcp)
+				if (m_dataIsReadyToBeReceivedTcp)
 				{
-					memcpy(m_outputTcp, m_reciveBuffer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
-					m_bufferReciveSize += sizeof(Client::ClientsData) * MAX_PLAYER_COUNT;
+					memcpy(m_outputTcp, m_receiveBuffer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
+					m_bufferReceiveSize += sizeof(Client::ClientsData) * MAX_PLAYER_COUNT;
 					if (m_outputTcp->nrOfNetTransform > 0 && m_outputTcp->playerId < MAX_PLAYER_COUNT)
 					{
 						//Update the transfroms, Only none hosts
 						if (m_inputTcp.playerId > 0)
 						{
-							NetworkTransform* temp = new NetworkTransform;
+							NetworkTransform* tempTransfrom = new NetworkTransform;
 							EntityManager::Get().Collect<NetworkTransform, TransformComponent>().Do([&](entity id, NetworkTransform&, TransformComponent& transC)
 								{
 									for (int i = 0; i < m_outputTcp[0].nrOfNetTransform; ++i)
 									{
 										//todo make better
-										memcpy(temp, m_reciveBuffer + m_bufferReciveSize + sizeof(NetworkTransform) * i, sizeof(NetworkTransform));
-										if (id == temp->objectId)
+										memcpy(tempTransfrom, m_receiveBuffer + m_bufferReceiveSize + sizeof(NetworkTransform) * i, sizeof(NetworkTransform));
+										if (id == tempTransfrom->objectId)
 										{
-											transC.worldMatrix = temp->transform;
+											transC.worldMatrix = tempTransfrom->transform;
 										}
 
 									}
 
 								});
+							delete tempTransfrom;
 						}
-						m_bufferReciveSize += m_outputTcp->nrOfNetTransform * sizeof(NetworkTransform);
+						m_bufferReceiveSize += m_outputTcp->nrOfNetTransform * sizeof(NetworkTransform);
 					}
 
 					if (m_outputTcp->nrOfNetStats > 0)
 					{
-						NetworkAgentStats* tempS = new NetworkAgentStats;
+						NetworkAgentStats* tempStats = new NetworkAgentStats;
 						EntityManager::Get().Collect<NetworkAgentStats, AgentStatsComponent>().Do([&](entity id, NetworkAgentStats&, AgentStatsComponent& Agent)
 							{
 								for (int i = 0; i < m_outputTcp[0].nrOfNetStats; ++i)
 								{
-									memcpy(tempS, m_reciveBuffer + m_bufferReciveSize + sizeof(NetworkAgentStats) * i, sizeof(NetworkAgentStats));
-									if (id == tempS->objectId)
+									memcpy(tempStats, m_receiveBuffer + m_bufferReceiveSize + sizeof(NetworkAgentStats) * i, sizeof(NetworkAgentStats));
+									if (id == tempStats->objectId)
 									{
-										Agent = tempS->stats;
+										Agent = tempStats->stats;
 									}
 
 								}
 							});
-						m_bufferReciveSize += sizeof(NetworkAgentStats) * m_outputTcp->nrOfNetTransform;
+						m_bufferReceiveSize += sizeof(NetworkAgentStats) * m_outputTcp->nrOfNetTransform;
+						delete tempStats;
 					}
 
 					if (m_outputTcp->nrOfCreateAndDestroy > 0)
 					{
-						CreateAndDestroyEntityComponent* tempC = new CreateAndDestroyEntityComponent;
+						CreateAndDestroyEntityComponent* tempCreate = new CreateAndDestroyEntityComponent;
 						for (int i = 0; i < m_outputTcp[0].nrOfNetStats; ++i)
 						{
-							memcpy(tempC, m_reciveBuffer + m_bufferReciveSize + sizeof(CreateAndDestroyEntityComponent) * i, sizeof(CreateAndDestroyEntityComponent));
-							if (tempC->playerId != m_inputTcp.playerId)
+							memcpy(tempCreate, m_receiveBuffer + m_bufferReceiveSize + sizeof(CreateAndDestroyEntityComponent) * i, sizeof(CreateAndDestroyEntityComponent));
+							if (tempCreate->playerId != m_inputTcp.playerId)
 							{
-								if (tempC->alive)
+								if (tempCreate->alive)
 								{
-									std::cout << "Created entity of type: " << tempC->entityTypeId << " With id: " << tempC->id << "From player: " << tempC->playerId
+									std::cout << "Created entity of type: " << tempCreate->entityTypeId << " With id: " << tempCreate->id << "From player: " << tempCreate->playerId
 										<< std::endl;
 									//send to correct entity type spawner 
 								}
 								else
 								{
-									std::cout << "Destroyed entity of type: " << tempC->entityTypeId << " With id: " << tempC->id << "From player: " << tempC->playerId
+									std::cout << "Destroyed entity of type: " << tempCreate->entityTypeId << " With id: " << tempCreate->id << "From player: " << tempCreate->playerId
 										<< std::endl;
 									//send to correct entity type destroyer
 								}
 							}
 						}
+						delete tempCreate;
 
 					}
 
 					//reset recived bufferSize
-					m_bufferReciveSize = 0;
-					m_dataIsReadyToBeRecivedTcp = false;
+					m_bufferReceiveSize = 0;
+					m_dataIsReadyToBeReceivedTcp = false;
 				}
 			}
 		}
 	}
 }
 
-void NetCode::Recive()
+void NetCode::Receive()
 {
-	m_threadUdp = std::thread(&NetCode::ReciveUdp, this);
+	m_threadUdp = std::thread(&NetCode::ReceiveUdp, this);
 	while (m_startUp)
 		continue;
 	if (m_netCodeAlive)
@@ -235,19 +241,16 @@ void NetCode::Recive()
 		{
   			if (m_dataIsReadyToBeSentTcp)
 			{
-				m_mut.lock();
 				memcpy(m_sendBuffer, (char*)&m_inputTcp, sizeof(m_inputTcp));
-				m_mut.unlock();
-
 				m_client.SendChararrayTcp(m_sendBuffer, m_bufferSize);
-				m_reciveBuffer = m_client.ReciveCharArrayTcp(m_reciveBuffer); // todo put in own thread
-				if (m_reciveBuffer == nullptr)
+				m_receiveBuffer = m_client.ReceiveCharArrayTcp(m_receiveBuffer); // todo put in own thread
+				if (m_receiveBuffer == nullptr)
 				{
 					std::cout << "Bad tcp packet \n";
 				}
 				else
 				{
-					m_dataIsReadyToBeRecivedTcp = true;
+					m_dataIsReadyToBeReceivedTcp = true;
 				}
 				m_bufferSize = 0;
 				m_dataIsReadyToBeSentTcp = false;
@@ -257,7 +260,7 @@ void NetCode::Recive()
 		}
 }
 	
-void NetCode::ReciveUdp()
+void NetCode::ReceiveUdp()
 {
 	m_playerInputUdp.playerId = m_inputTcp.playerId;
 	while (m_netCodeAlive)
@@ -265,15 +268,15 @@ void NetCode::ReciveUdp()
 		m_mut.lock();
 		m_client.SendUdp(m_playerInputUdp);
 		m_mut.unlock();
-		m_outputUdp = m_client.ReciveUdp();
+		m_outputUdp = m_client.ReceiveUdp();
 	}
 
 }
 
-void NetCode::AddMatrixUdp(DirectX::XMMATRIX input) 
+void NetCode::AddMatrixUdp(DirectX::XMMATRIX input)
 {
 	m_mut.lock();
-	m_playerInputUdp.matrix = input; 
+	m_playerInputUdp.matrix = input;
 	m_mut.unlock();
 }
 
@@ -292,14 +295,14 @@ bool NetCode::Host()
 			if (m_inputTcp.playerId > -1)
 			{
 				m_client.SendTcp(m_inputTcp);
-				m_outputTcp = m_client.ReciveTcp();
+				m_outputTcp = m_client.ReceiveTcp();
 				if (m_active == false)
 				{
 					m_startUp = true;
 					m_active = true;
 
 				}
-				m_thread = std::thread(&NetCode::Recive, this);
+				m_thread = std::thread(&NetCode::Receive, this);
 				return server;
 			}
 		}
@@ -320,20 +323,26 @@ bool NetCode::Join(char* inputString)
 
 	if (m_inputTcp.playerId > -1)
 	{
-		m_outputTcp = m_client.ReciveTcp();		
+		m_outputTcp = m_client.ReceiveTcp();		
 		if (m_active == false)
 		{
 			m_startUp = true;
 			m_active = true;
 
 		}
-		m_thread = std::thread(&NetCode::Recive, this);
+		m_thread = std::thread(&NetCode::Receive, this);
 		return true;
 	}
 	return false;
 }
 
-void NetCode::Offline()
+INT8 NetCode::Play()
 {
-	std::cout << "Offline mode Selected" << std::endl;
+	if (m_active)
+		return m_serverHost.GetNrOfConnectedPlayers();
+	else if (m_inputTcp.playerId == 0)
+		return 1;
+	else
+		std::cout << "Beep boop You are not the host, please dont press Play it hurts" << std::endl;
+	return -1;
 }

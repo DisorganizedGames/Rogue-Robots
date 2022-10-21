@@ -59,4 +59,5 @@ private:
 	NetCode m_netCode;
 	//Pathfinder m_pathfinder;		// uncomment to activate pathfinder
 	std::shared_ptr <Agent> m_Agent;
+	INT8 m_nrOfPlayers;
 };

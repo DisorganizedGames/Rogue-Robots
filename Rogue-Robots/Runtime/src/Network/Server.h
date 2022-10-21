@@ -12,6 +12,7 @@
 
 		bool StartTcpServer();
 		std::string GetIpAddress();
+		INT8 GetNrOfConnectedPlayers();
 	private:
 		void ServerReciveConnectionsTCP(SOCKET listenSocket);
 		void ServerPollTCP();

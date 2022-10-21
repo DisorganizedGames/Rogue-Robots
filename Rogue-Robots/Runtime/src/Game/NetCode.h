@@ -1,5 +1,6 @@
 #pragma once
 #include <DOGEngine.h>
+#include "..\Game\EntitesTypes.h"
 #include  "..\Network\Client.h"
 #include  "..\Network\Server.h"
 #include "..\Game\MainPlayer.h"
@@ -22,12 +23,12 @@ public:
 	void OnUpdate();
 	bool Host();
 	bool Join(char* input);
-	void Offline();
+	INT8 Play();
 
 
 private:
-	void Recive();
-	void ReciveUdp();
+	void Receive();
+	void ReceiveUdp();
 
 
 	void AddMatrixUdp(DirectX::XMMATRIX input);
@@ -51,10 +52,10 @@ private:
 	Client m_client;
 	std::mutex m_mut;
 	int m_bufferSize;
-	int m_bufferReciveSize;
+	int m_bufferReceiveSize;
 	char m_sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
-	char* m_reciveBuffer;
+	char* m_receiveBuffer;
 	bool m_dataIsReadyToBeSentTcp;
-	bool m_dataIsReadyToBeRecivedTcp;
+	bool m_dataIsReadyToBeReceivedTcp;
 	Server m_serverHost;
 };
