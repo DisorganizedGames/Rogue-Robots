@@ -171,6 +171,7 @@ static bool GetActionState(InputController& input, const std::string& action) {
 		{"Right", input.right},
 		{"ActivateItem", input.activateActiveItem},
 		{"SwitchComponent", input.switchComp},
+		{"SwitchBarrelComponent", input.switchBarrelComp},
 	};
 
 	return map.at(action);
@@ -205,6 +206,9 @@ void EntityInterface::SetAction(DOG::LuaContext* context)
 		break;
 	case 4:
 		input.switchComp = active;
+		break;
+	case 5:
+		input.switchBarrelComp = active;
 		break;
 	default:
 		break;

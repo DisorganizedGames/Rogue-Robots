@@ -49,6 +49,7 @@ struct InputController
 	bool shoot = false;
 	bool jump = false;
 	bool switchComp = false;
+	bool switchBarrelComp = false;
 	bool activateActiveItem = false;
 };
 
