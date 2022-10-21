@@ -138,7 +138,7 @@ void NetCode::OnUpdate()
 						m_entityManager.RemoveComponent<CreateAndDestroyEntityComponent>(id);
 						m_inputTcp.nrOfCreateAndDestroy++;
 					});
-
+			
 				m_dataIsReadyToBeSentTcp = true;
 			}
 			// Recived data
@@ -194,15 +194,21 @@ void NetCode::OnUpdate()
 					for (int i = 0; i < m_outputTcp[0].nrOfNetStats; ++i)
 					{
 						memcpy(tempC, m_reciveBuffer + m_bufferReciveSize + sizeof(CreateAndDestroyEntityComponent) * i, sizeof(CreateAndDestroyEntityComponent));
-						if (tempC->alive)
+						if (tempC->playerId != m_inputTcp.playerId)
 						{
-							//send to correct entity type spawner 
+							if (tempC->alive)
+							{
+								std::cout << "Created entity of type: " << tempC->entityTypeId << " With id: " << tempC->id << "From player: " << tempC->playerId
+									<< std::endl;
+								//send to correct entity type spawner 
+							}
+							else
+							{
+								std::cout << "Destroyed entity of type: " << tempC->entityTypeId << " With id: " << tempC->id << "From player: " << tempC->playerId
+									<< std::endl;
+								//send to correct entity type destroyer
+							}
 						}
-						else
-						{
-							//send to correct entity type destroyer
-						}
-
 					}
 
 				}
@@ -265,8 +271,13 @@ void NetCode::Recive()
 			}
 			if (m_inputTcp.playerId > -1)
 			{
-				
+				EntityManager::Get().Collect<HostOrClient>().Do([&](HostOrClient& hc)
+					{
+						hc.host = false;
+					});
+
 				m_outputTcp = m_client.ReciveTcp();
+
 				start = TRUE;
 			}
 			break;

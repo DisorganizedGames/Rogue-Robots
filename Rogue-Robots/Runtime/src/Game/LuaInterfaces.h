@@ -92,7 +92,10 @@ public:
 	void HasComponent(DOG::LuaContext* context);
 
 	void PlayAudio(DOG::LuaContext* context);
+
 	void IsBulletLocal(DOG::LuaContext* context);
+
+	void IsPlayerHost(DOG::LuaContext* context);
 
 private:
 	void AddModel(DOG::LuaContext* context, DOG::entity e);

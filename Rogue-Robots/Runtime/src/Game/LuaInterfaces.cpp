@@ -226,6 +226,21 @@ void EntityInterface::IsBulletLocal(DOG::LuaContext* context)
 	
 }
 
+void EntityInterface::IsPlayerHost(DOG::LuaContext* context)
+{
+	EntityManager::Get().Collect<HostOrClient>().Do([&](HostOrClient& hoc )
+		{
+			if (hoc.host)
+			{
+				context->ReturnBoolean(true);
+			}
+			else
+			{
+				context->ReturnBoolean(false);
+			}
+		});
+}
+
 #pragma region HasComponent
 
 template<typename ComponentType>
