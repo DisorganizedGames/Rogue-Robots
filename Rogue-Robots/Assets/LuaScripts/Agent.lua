@@ -216,11 +216,8 @@ function OnStart()
 end
 
 function OnUpdate()
-	if Entity:IsPlayerHost() then
-		Agent:doBehavior()
-	else
-		Agent.pos = Vector3.FromTable(Entity:GetTransformPosData(EntityID))
-	end
+	Agent:doBehavior()
+	Agent.pos = Vector3.FromTable(Entity:GetTransformPosData(EntityID))
 end
 
 function OnCollisionEnter(self, e1, e2)

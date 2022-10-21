@@ -177,9 +177,5 @@ namespace DOG
 		bool dirty{ false };
 	};
 
-	struct HostOrClient
-	{
-		bool host = true;
-	};
 }
 

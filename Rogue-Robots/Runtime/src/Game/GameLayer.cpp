@@ -117,6 +117,7 @@ void GameLayer::EvaluateWinCondition()
 void GameLayer::UpdateGame()
 {
 	m_player->OnUpdate();
+	m_netCode.OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
 
@@ -198,7 +199,6 @@ void GameLayer::UpdateLobby()
 	if(!inLobby)
 		m_gameState = GameState::StartPlaying;
 }
-
 
 
 void GameLayer::RegisterLuaInterfaces()

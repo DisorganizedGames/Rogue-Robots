@@ -4,7 +4,7 @@ using namespace DirectX::SimpleMath;
 
 enum ItemsAndEnemies
 {
-	Scorpio = 1
+	Scorpio
 };
 
 struct GunComponent

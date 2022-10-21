@@ -17,14 +17,13 @@ NetCode::NetCode()
 	m_hardSyncTcp = FALSE;
 	m_active = FALSE;
 	m_startUp = FALSE;
-	m_thread = std::thread(&NetCode::Recive, this);
+	
 
 	m_bufferSize = 0;
 	m_bufferReciveSize = 0;
 	m_reciveBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
 	m_dataIsReadyToBeSentTcp = false;
 	m_dataIsReadyToBeRecivedTcp = false;
-	m_start = false;
 }
 
 NetCode::~NetCode()
@@ -46,7 +45,7 @@ void NetCode::OnUpdate()
 	if (m_active)
 	{
 		DOG::EntityManager& m_entityManager = DOG::EntityManager::Get();
-		if (m_startUp == TRUE)
+		if (m_startUp == true)
 		{
 
 
@@ -74,148 +73,149 @@ void NetCode::OnUpdate()
 
 			m_startUp = false;
 		}
-
-
-		// Update this players actions
-		EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, InputController>().Do([&](NetworkPlayerComponent&, ThisPlayer&, InputController& inputC)
-			{
-
-				m_playerInputUdp.shoot = inputC.shoot;
-				m_playerInputUdp.jump = inputC.jump;
-				m_playerInputUdp.activateActiveItem = inputC.activateActiveItem;
-				m_playerInputUdp.switchComp = inputC.switchComp;
-
-			});
-		//Update the others players
-		EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent, InputController, OnlinePlayer>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&)
-			{
-				transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].matrix;
-				transformC.SetScale(DirectX::SimpleMath::Vector3(0.5f, 0.5f, 0.5f));
-				inputC.shoot = m_outputUdp.m_holdplayersUdp[networkC.playerId].shoot;
-				inputC.jump = m_outputUdp.m_holdplayersUdp[networkC.playerId].jump;
-				inputC.activateActiveItem = m_outputUdp.m_holdplayersUdp[networkC.playerId].activateActiveItem;
-				inputC.switchComp = m_outputUdp.m_holdplayersUdp[networkC.playerId].switchComp;
-			});
-
-		// Sync the rest
-		if (m_dataIsReadyToBeSentTcp == false)
+		else
 		{
-			m_inputTcp.nrOfNetTransform = 0;
-			m_inputTcp.nrOfNetStats = 0;
-			m_inputTcp.nrOfCreateAndDestroy = 0;
-			if (m_inputTcp.playerId > -1)
-			{
-				m_bufferSize += sizeof(Client::ClientsData);
-				//sync all transforms Host only
-				if (m_inputTcp.playerId == 0)
+			// Update this players actions
+			EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, InputController>().Do([&](NetworkPlayerComponent&, ThisPlayer&, InputController& inputC)
 				{
-					EntityManager::Get().Collect<NetworkTransform, TransformComponent>().Do([&](entity id, NetworkTransform& netC, TransformComponent& transC)
-						{
-							netC.objectId = id;
-							netC.transform = transC.worldMatrix;
-							memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkTransform));
-							m_inputTcp.nrOfNetTransform++;
-							m_bufferSize += sizeof(NetworkTransform);
 
-						});
-				}
+					m_playerInputUdp.shoot = inputC.shoot;
+					m_playerInputUdp.jump = inputC.jump;
+					m_playerInputUdp.activateActiveItem = inputC.activateActiveItem;
+					m_playerInputUdp.switchComp = inputC.switchComp;
 
-				EntityManager::Get().Collect<NetworkAgentStats, AgentStatsComponent>().Do([&](entity id, NetworkAgentStats& netC, AgentStatsComponent& AgentS)
-					{
-						netC.objectId = id; // replace with enemy id
-						netC.stats = AgentS;
-						memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkAgentStats));
-						m_inputTcp.nrOfNetStats++;
-						m_bufferSize += sizeof(NetworkAgentStats);
-
-					});
-
-				EntityManager::Get().Collect<CreateAndDestroyEntityComponent>().Do([&](entity id, CreateAndDestroyEntityComponent& cdC)
-					{
-						cdC.playerId = m_inputTcp.playerId;
-						memcpy(m_sendBuffer + m_bufferSize, &cdC, sizeof(CreateAndDestroyEntityComponent));
-						m_bufferSize += sizeof(CreateAndDestroyEntityComponent);
-						m_entityManager.RemoveComponent<CreateAndDestroyEntityComponent>(id);
-						m_inputTcp.nrOfCreateAndDestroy++;
-					});
-			
-				m_dataIsReadyToBeSentTcp = true;
-			}
-			// Recived data
-			if (m_dataIsReadyToBeRecivedTcp)
-			{
-				memcpy(m_outputTcp, m_reciveBuffer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
-				m_bufferReciveSize += sizeof(Client::ClientsData) * MAX_PLAYER_COUNT;
-				if (m_outputTcp->nrOfNetTransform > 0 && m_outputTcp->playerId < MAX_PLAYER_COUNT)
+				});
+			//Update the others players
+			EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent, InputController, OnlinePlayer>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&)
 				{
-					//Update the transfroms, Only none hosts
-					if (m_inputTcp.playerId > 0)
+					transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].matrix;
+					transformC.SetScale(DirectX::SimpleMath::Vector3(0.5f, 0.5f, 0.5f));
+					inputC.shoot = m_outputUdp.m_holdplayersUdp[networkC.playerId].shoot;
+					inputC.jump = m_outputUdp.m_holdplayersUdp[networkC.playerId].jump;
+					inputC.activateActiveItem = m_outputUdp.m_holdplayersUdp[networkC.playerId].activateActiveItem;
+					inputC.switchComp = m_outputUdp.m_holdplayersUdp[networkC.playerId].switchComp;
+				});
+
+			// Sync the rest
+			if (m_dataIsReadyToBeSentTcp == false)
+			{
+				m_inputTcp.nrOfNetTransform = 0;
+				m_inputTcp.nrOfNetStats = 0;
+				m_inputTcp.nrOfCreateAndDestroy = 0;
+				if (m_inputTcp.playerId > -1)
+				{
+					m_bufferSize += sizeof(Client::ClientsData);
+					//sync all transforms Host only
+					if (m_inputTcp.playerId == 0)
 					{
-						NetworkTransform* temp = new NetworkTransform;
-						EntityManager::Get().Collect<NetworkTransform, TransformComponent>().Do([&](entity id, NetworkTransform&, TransformComponent& transC)
+						EntityManager::Get().Collect<NetworkTransform, TransformComponent>().Do([&](entity id, NetworkTransform& netC, TransformComponent& transC)
 							{
-								for (int i = 0; i < m_outputTcp[0].nrOfNetTransform; ++i)
-								{
-									//todo make better
-									memcpy(temp, m_reciveBuffer + m_bufferReciveSize + sizeof(NetworkTransform) * i, sizeof(NetworkTransform));
-									if (id == temp->objectId)
-									{
-										transC.worldMatrix = temp->transform;
-									}
-
-								}
+								netC.objectId = id;
+								netC.transform = transC.worldMatrix;
+								memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkTransform));
+								m_inputTcp.nrOfNetTransform++;
+								m_bufferSize += sizeof(NetworkTransform);
 
 							});
 					}
-					m_bufferReciveSize += m_outputTcp->nrOfNetTransform * sizeof(NetworkTransform);
-				}
 
-				if (m_outputTcp->nrOfNetStats > 0)
-				{
-					NetworkAgentStats* tempS = new NetworkAgentStats;
-					EntityManager::Get().Collect<NetworkAgentStats, AgentStatsComponent>().Do([&](entity id, NetworkAgentStats&, AgentStatsComponent& Agent)
+					EntityManager::Get().Collect<NetworkAgentStats, AgentStatsComponent>().Do([&](entity id, NetworkAgentStats& netC, AgentStatsComponent& AgentS)
 						{
-							for (int i = 0; i < m_outputTcp[0].nrOfNetStats; ++i)
-							{
-								memcpy(tempS, m_reciveBuffer + m_bufferReciveSize + sizeof(NetworkAgentStats) * i, sizeof(NetworkAgentStats));
-								if (id == tempS->objectId)
-								{
-									Agent = tempS->stats;
-								}
+							netC.objectId = id; // replace with enemy id
+							netC.stats = AgentS;
+							memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkAgentStats));
+							m_inputTcp.nrOfNetStats++;
+							m_bufferSize += sizeof(NetworkAgentStats);
 
-							}
 						});
-					m_bufferReciveSize += sizeof(NetworkAgentStats) * m_outputTcp->nrOfNetTransform;
-				}
 
-				if (m_outputTcp->nrOfCreateAndDestroy > 0)
-				{
-					CreateAndDestroyEntityComponent* tempC = new CreateAndDestroyEntityComponent;
-					for (int i = 0; i < m_outputTcp[0].nrOfNetStats; ++i)
-					{
-						memcpy(tempC, m_reciveBuffer + m_bufferReciveSize + sizeof(CreateAndDestroyEntityComponent) * i, sizeof(CreateAndDestroyEntityComponent));
-						if (tempC->playerId != m_inputTcp.playerId)
+					EntityManager::Get().Collect<CreateAndDestroyEntityComponent>().Do([&](entity id, CreateAndDestroyEntityComponent& cdC)
 						{
-							if (tempC->alive)
-							{
-								std::cout << "Created entity of type: " << tempC->entityTypeId << " With id: " << tempC->id << "From player: " << tempC->playerId
-									<< std::endl;
-								//send to correct entity type spawner 
-							}
-							else
-							{
-								std::cout << "Destroyed entity of type: " << tempC->entityTypeId << " With id: " << tempC->id << "From player: " << tempC->playerId
-									<< std::endl;
-								//send to correct entity type destroyer
-							}
+							cdC.playerId = m_inputTcp.playerId;
+							memcpy(m_sendBuffer + m_bufferSize, &cdC, sizeof(CreateAndDestroyEntityComponent));
+							m_bufferSize += sizeof(CreateAndDestroyEntityComponent);
+							m_entityManager.RemoveComponent<CreateAndDestroyEntityComponent>(id);
+							m_inputTcp.nrOfCreateAndDestroy++;
+						});
+
+					m_dataIsReadyToBeSentTcp = true;
+				}
+				// Recived data
+				if (m_dataIsReadyToBeRecivedTcp)
+				{
+					memcpy(m_outputTcp, m_reciveBuffer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
+					m_bufferReciveSize += sizeof(Client::ClientsData) * MAX_PLAYER_COUNT;
+					if (m_outputTcp->nrOfNetTransform > 0 && m_outputTcp->playerId < MAX_PLAYER_COUNT)
+					{
+						//Update the transfroms, Only none hosts
+						if (m_inputTcp.playerId > 0)
+						{
+							NetworkTransform* temp = new NetworkTransform;
+							EntityManager::Get().Collect<NetworkTransform, TransformComponent>().Do([&](entity id, NetworkTransform&, TransformComponent& transC)
+								{
+									for (int i = 0; i < m_outputTcp[0].nrOfNetTransform; ++i)
+									{
+										//todo make better
+										memcpy(temp, m_reciveBuffer + m_bufferReciveSize + sizeof(NetworkTransform) * i, sizeof(NetworkTransform));
+										if (id == temp->objectId)
+										{
+											transC.worldMatrix = temp->transform;
+										}
+
+									}
+
+								});
 						}
+						m_bufferReciveSize += m_outputTcp->nrOfNetTransform * sizeof(NetworkTransform);
 					}
 
-				}
+					if (m_outputTcp->nrOfNetStats > 0)
+					{
+						NetworkAgentStats* tempS = new NetworkAgentStats;
+						EntityManager::Get().Collect<NetworkAgentStats, AgentStatsComponent>().Do([&](entity id, NetworkAgentStats&, AgentStatsComponent& Agent)
+							{
+								for (int i = 0; i < m_outputTcp[0].nrOfNetStats; ++i)
+								{
+									memcpy(tempS, m_reciveBuffer + m_bufferReciveSize + sizeof(NetworkAgentStats) * i, sizeof(NetworkAgentStats));
+									if (id == tempS->objectId)
+									{
+										Agent = tempS->stats;
+									}
 
-				//reset recived bufferSize
-				m_bufferReciveSize = 0;
-				m_dataIsReadyToBeRecivedTcp = false;
+								}
+							});
+						m_bufferReciveSize += sizeof(NetworkAgentStats) * m_outputTcp->nrOfNetTransform;
+					}
+
+					if (m_outputTcp->nrOfCreateAndDestroy > 0)
+					{
+						CreateAndDestroyEntityComponent* tempC = new CreateAndDestroyEntityComponent;
+						for (int i = 0; i < m_outputTcp[0].nrOfNetStats; ++i)
+						{
+							memcpy(tempC, m_reciveBuffer + m_bufferReciveSize + sizeof(CreateAndDestroyEntityComponent) * i, sizeof(CreateAndDestroyEntityComponent));
+							if (tempC->playerId != m_inputTcp.playerId)
+							{
+								if (tempC->alive)
+								{
+									std::cout << "Created entity of type: " << tempC->entityTypeId << " With id: " << tempC->id << "From player: " << tempC->playerId
+										<< std::endl;
+									//send to correct entity type spawner 
+								}
+								else
+								{
+									std::cout << "Destroyed entity of type: " << tempC->entityTypeId << " With id: " << tempC->id << "From player: " << tempC->playerId
+										<< std::endl;
+									//send to correct entity type destroyer
+								}
+							}
+						}
+
+					}
+
+					//reset recived bufferSize
+					m_bufferReciveSize = 0;
+					m_dataIsReadyToBeRecivedTcp = false;
+				}
 			}
 		}
 	}
@@ -223,50 +223,12 @@ void NetCode::OnUpdate()
 
 void NetCode::Recive()
 {
-	bool start = FALSE;
-	char input = 'o';
-	while (start == FALSE)
-	{
-
-		std::cout << "\nInput 'h' to host, 'j' to join, 'o' to play offline: ";
-		input = getchar(); // uncomment to startup online
-		switch (input)
-		{
-		case 'h':
-		{
-			break;
-		}
-		case 'j':
-		{
-			
-			break;
-		}
-		case 'o':
-		{
-			std::cout << " Offline mode Selected" << std::endl;
-			start = TRUE;
-			while (m_netCodeAlive)
-				continue;
-			break;
-		}
-		default:
-			break;
-		}
-		if (start == FALSE)
-		{
-			std::cout << "Failed input, try agiain" << std::endl;
-			//fseek(stdin, 0, SEEK_END);
-		}
-	}
 	m_threadUdp = std::thread(&NetCode::ReciveUdp, this);
+	while (m_startUp)
+		continue;
 	if (m_netCodeAlive)
 	{
-		if (m_active == false)
-		{
-			m_startUp = true;
-			m_active = true;
-			
-		}
+
 		//tcp
 		
 		while (m_netCodeAlive)
@@ -315,14 +277,14 @@ void NetCode::AddMatrixUdp(DirectX::XMMATRIX input)
 	m_mut.unlock();
 }
 
-void NetCode::Host()
+bool NetCode::Host()
 {
-	Server serverHost;
-	bool server = serverHost.StartTcpServer();
+	
+	bool server = m_serverHost.StartTcpServer();
 	if (server)
 	{
 		// join server
-		std::string ip = serverHost.GetIpAddress();
+		std::string ip = m_serverHost.GetIpAddress();
 		if (ip != "")
 		{
 			std::cout << "Hosting at: " << ip << std::endl;
@@ -331,28 +293,47 @@ void NetCode::Host()
 			{
 				m_client.SendTcp(m_inputTcp);
 				m_outputTcp = m_client.ReciveTcp();
-				m_start = true;
+				if (m_active == false)
+				{
+					m_startUp = true;
+					m_active = true;
+
+				}
+				m_thread = std::thread(&NetCode::Recive, this);
+				return server;
 			}
 		}
 	}
+	return server;
 }
 
 bool NetCode::Join(char* inputString)
 {
 	if (inputString[0] == 'd')
 	{
-		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.74"); //192.168.1.55 || 192.168.50.214
-		return true;
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.72"); //192.168.1.55 || 192.168.50.214
 	}
 	else
 	{
 		m_inputTcp.playerId = m_client.ConnectTcpServer(inputString);
-		return true;
 	}
+
 	if (m_inputTcp.playerId > -1)
 	{
-		m_outputTcp = m_client.ReciveTcp();
-		m_start = true;
+		m_outputTcp = m_client.ReciveTcp();		
+		if (m_active == false)
+		{
+			m_startUp = true;
+			m_active = true;
+
+		}
+		m_thread = std::thread(&NetCode::Recive, this);
+		return true;
 	}
 	return false;
+}
+
+void NetCode::Offline()
+{
+	std::cout << "Offline mode Selected" << std::endl;
 }
