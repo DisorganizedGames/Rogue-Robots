@@ -36,7 +36,7 @@ function MiscComponent.BasicShot()
 				startPos = pos,
 				speed = 0.0,
 				--speed = 300.0,
-				size = Vector3.New(20, 20, 20),
+				size = Vector3.Zero(),
 				lifetime = 0
 			}
 
@@ -69,7 +69,8 @@ function MiscComponent.FullAuto()
 					startPos = pos,
 					speed = 0.0,
 					--speed = 75.0,
-					size = Vector3.New(15, 15, 15),
+					--size = Vector3.New(15, 15, 15),
+					size = Vector3.Zero(),
 					lifetime = 0
 				}
 
@@ -110,7 +111,8 @@ function MiscComponent.ChargeShot()
 					startPos = pos,
 					speed = 0.0,
 					--speed = 75.0,
-					size = Vector3.New(10, 10, 10) + Vector3.New(self.shotPower, self.shotPower, self.shotPower),
+					--size = Vector3.New(10, 10, 10) + Vector3.New(self.shotPower, self.shotPower, self.shotPower),
+					size = Vector3.New(self.shotPower, self.shotPower, self.shotPower),
 					lifetime = 0
 				}
 
