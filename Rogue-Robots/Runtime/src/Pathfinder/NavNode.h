@@ -18,6 +18,7 @@ struct NavNode
 	NavNode(NavNode&& other) = default;
 
 	// Methods
-	Vector3 Midpoint();
-	void AddNavMesh(NavMeshID navMesh);
+	bool Contains(GridCoord pt) const;
+	Vector3 Midpoint() const;
+	bool AddNavMesh(NavMeshID navMesh);
 };

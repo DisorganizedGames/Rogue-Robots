@@ -16,6 +16,9 @@ Box Box::Intersection(const Box other)
 	result.high.x = std::min(result.high.x, std::max(result.low.x, high.x));
 	result.high.y = std::min(result.high.y, std::max(result.low.y, high.y));
 	result.high.z = std::min(result.high.z, std::max(result.low.z, high.z));
+	//Box out = (Contains(result.low) && Contains(result.high) ? result : Box());
+	//std::cout << Box(low, high).str() << " / " << other.str() << " = " << result.str() << " [" << result.Area() << "]" << std::endl;
+	//std::cout << Box(low, high).str() << " / " << other.str() << " = " << (Contains(result.low) && Contains(result.high) ? result.str() : Box().str()) << std::endl;
 	if (Contains(result.low) && Contains(result.high))
 		return result;
 	else
@@ -36,5 +39,17 @@ int Box::Area() const
 	int length = high.x - low.x;
 	int width = high.y - low.y;
 	return ((length == 0) ? 1 : length) * ((width == 0) ? 1 : width);
+}
+int Box::RealArea() const
+{
+	if (high == low) return 0;
+	int length = high.x - low.x;
+	int width = high.y - low.y;
+	return length * width;
+}
+
+GridCoord Box::Midpoint()
+{
+	return GridCoord(low.x + (high.x - low.x) / 2, low.y + (high.y - low.y) / 2, 0);
 }
 

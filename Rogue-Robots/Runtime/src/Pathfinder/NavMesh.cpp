@@ -1,6 +1,6 @@
 #include "NavMesh.h"
 
-bool NavMesh::Contains(const Vector3 pos)
+bool NavMesh::Contains(const Vector3 pos) const
 {
 	// pos is part of the mesh on the lower border
 	// but part of the adjoining mesh on the higher
@@ -9,7 +9,7 @@ bool NavMesh::Contains(const Vector3 pos)
 		&& lowCorner.z <= pos.z && pos.z < hiCorner.z;
 }
 
-bool NavMesh::Contains(const GridCoord pos)
+bool NavMesh::Contains(const GridCoord pos) const
 {
 	return corners.Contains(pos);
 }
@@ -36,7 +36,12 @@ NavMesh::NavMesh(Box extents) : corners(extents)
 	hiCorner = Vector3(static_cast<float>(corners.high.x), static_cast<float>(corners.high.y), static_cast<float>(corners.high.z));
 }
 
-void NavMesh::AddNavNode(NavNodeID nodeID)
+bool NavMesh::AddNavNode(NavNodeID nodeID)
 {
+	//auto it = std::find(navNodes.begin(), navNodes.end(), nodeID);
+	//if (it == navNodes.end())
+	//	navNodes.push_back(nodeID);
+	//return it != navNodes.end();
 	navNodes.push_back(nodeID);
+	return true;
 }

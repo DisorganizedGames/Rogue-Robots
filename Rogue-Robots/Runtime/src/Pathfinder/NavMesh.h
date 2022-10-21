@@ -17,9 +17,9 @@ struct NavMesh
 	// Methods
 	NavMesh(Vector3 low, Vector3 hi);
 	NavMesh(Box extents);
-	bool Contains(const Vector3 pos);
-	bool Contains(const GridCoord pos);
+	bool Contains(const Vector3 pos) const;
+	bool Contains(const GridCoord pos) const;
 	float CostWalk(const Vector3 enter, const Vector3 exit);
 	float CostFly(const Vector3 enter, const Vector3 exit);
-	void AddNavNode(NavNodeID nodeID);
+	bool AddNavNode(NavNodeID nodeID);
 };

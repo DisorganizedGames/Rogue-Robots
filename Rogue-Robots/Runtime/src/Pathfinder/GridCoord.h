@@ -19,5 +19,5 @@ struct GridCoord
 	void operator--() { --x; --y;/* --z;*/ }
 	GridCoord operator+(int n) { return GridCoord(x + n, y + n, z + n); }
 	GridCoord operator-(int n) { return GridCoord(x - n, y - n, z - n); }
-	std::string str() { return "(" + std::to_string(x) + ", " + std::to_string(y) + ")"; }
+	std::string str() const { return "(" + std::to_string(x) + ", " + std::to_string(y) + ")"; }
 };

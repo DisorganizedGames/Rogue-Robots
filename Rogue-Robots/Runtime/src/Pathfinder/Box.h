@@ -21,10 +21,12 @@ struct Box
 	Box operator-(int n) { return Box(low + n, high - n); }
 	Box operator+(int n) { return Box(low - n, high + n); }
 	int Area() const;
+	int RealArea() const;
 	bool operator<(const Box& other) const { return this->Area() < other.Area(); }
 	bool Contains(const GridCoord pt) const { return low <= pt && pt <= high; }
 	bool Contains(const Box box) const { return Contains(box.low) && Contains(box.high); }
 	bool ContainsAny(const std::vector<GridCoord>& pts) const;
 	Box Intersection(const Box other);
-	std::string str() { return low.str() + " " + high.str(); }
+	GridCoord Midpoint();
+	std::string str() const { return "[" + low.str() + "-" + high.str() + "]"; }
 };

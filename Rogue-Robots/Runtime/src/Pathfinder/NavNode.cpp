@@ -16,16 +16,24 @@ NavNode::NavNode(Box area, NavMeshID meshIdx) :
 NavNode::NavNode(Vector3 pos, NavMeshID meshIdx) :
 	lowCorner(pos), hiCorner(pos), iMesh1(meshIdx), iMesh2(meshIdx) {}
 
-Vector3 NavNode::Midpoint()
+Vector3 NavNode::Midpoint() const
 {
 	return (hiCorner - lowCorner) / 2;
 }
 
-void NavNode::AddNavMesh(NavMeshID navMesh)
+bool NavNode::AddNavMesh(NavMeshID navMesh)
 {
+	bool inserted = true;
 	if (iMesh2 == NavMeshID(-1))
 		iMesh2 = navMesh;
 	else if (iMesh1 == NavMeshID(-1))
 		iMesh1 = navMesh;
+	else
+		inserted = false;
+	return inserted;
 }
 
+bool NavNode::Contains(GridCoord pt) const
+{
+	return corners.Contains(pt);
+}
