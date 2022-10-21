@@ -123,6 +123,9 @@ UINT DOG::UI::AddUIElementToScene(UINT sceneID, std::unique_ptr<UIElement> eleme
    return id;
 }
 
+/// @brief Removes an element with a specific UID
+/// @param elementID The ID of the element to be removed.
+/// @return returns the ID of the scene in which the element was found. If the element is non existant UINT_MAX is returned
 UINT DOG::UI::RemoveUIElement(UINT elementID)
 {
    UINT id;
