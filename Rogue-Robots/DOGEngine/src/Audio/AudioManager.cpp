@@ -33,3 +33,18 @@ void AudioManager::AudioSystem()
 	
 	s_device->Commit();
 }
+
+void AudioManager::StopAudioOnDeferredEntities()
+{
+	if (!s_deviceInitialized)
+		return;
+
+	EntityManager::Get().Collect<AudioComponent, DeferredDeletionComponent>().Do([](AudioComponent& ac, DeferredDeletionComponent&)
+		{
+			ac.shouldStop = true;
+		});
+
+	AudioSystem(); // Stop entities that have shouldStop applied
+
+	s_device->Commit();
+}

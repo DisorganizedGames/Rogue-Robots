@@ -11,6 +11,8 @@ namespace DOG
 
 		static void AudioSystem();
 
+		static void StopAudioOnDeferredEntities();
+
 	private:
 		static inline std::unique_ptr<AudioDevice> s_device = nullptr;
 		static inline bool s_deviceInitialized = false;
