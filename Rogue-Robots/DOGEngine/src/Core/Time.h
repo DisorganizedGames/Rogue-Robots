@@ -44,12 +44,18 @@ namespace DOG
 	private:
 		static inline Timer s_timer;
 		static inline u64 s_deltaTime = 0;
+		static inline f64 s_elapsedTime = 0;
 
 	public:
 		template<TimeType type = TimeType::Seconds, typename T = f64>
 		static T DeltaTime()
 		{
 			return s_deltaTime / static_cast<T>(type);
+		}
+
+		static f64 ElapsedTime()
+		{
+			return s_elapsedTime;
 		}
 
 		static void Start()
@@ -60,6 +66,8 @@ namespace DOG
 		static void End()
 		{
 			s_deltaTime = s_timer.Stop();
+
+			s_elapsedTime += DeltaTime();
 		}
 	};
 }

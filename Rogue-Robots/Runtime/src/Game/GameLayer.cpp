@@ -76,6 +76,7 @@ void GameLayer::OnUpdate()
 
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
+	global->SetNumber("ElapsedTime", Time::ElapsedTime());
 
 	m_netCode.OnUpdate();
 }
