@@ -152,13 +152,13 @@ namespace DOG
 		{
 			switch (c.blendMode)
 			{
-			case DOG::WeightBlendMode::normal:
+			case DOG::BlendMode::normal:
 				c.UpdateClip(dt);
 				break;
-			case DOG::WeightBlendMode::linear:
+			case DOG::BlendMode::linear:
 				c.UpdateLinear(dt);
 				break;
-			case DOG::WeightBlendMode::bezier:
+			case DOG::BlendMode::bezier:
 				c.UpdateBezier(dt);
 				break;
 			default:
@@ -175,7 +175,7 @@ namespace DOG
 		if (transitionTime <= 0.f) // apply desired weight
 		{
 			currentWeight = targetWeight;
-			blendMode = WeightBlendMode::normal;
+			blendMode = BlendMode::normal;
 		}
 		else if (normalizedTime > transitionStart)
 		{
@@ -203,22 +203,12 @@ namespace DOG
 	}
 
 	// Animation update
-	void RealAnimationComponent::AnimationClip::UpdateState(const f32 gt, const f32 dt)
+	f32 RealAnimationComponent::AnimationClip::UpdateClipTick(const f32 gt, const f32 dt)
 	{
-		static constexpr i32 noAnimation = -1;
-		activeAnimation = animationID != noAnimation &&
-						(gt > transitionStart && (gt < (transitionStart + transitionLength) || loop));
-		/*Based on normalized time instead??
-		activeAnimation = animationID != noAnimation &&
-							(gt > transitionStart && (normalizedTime < 1.0f || loop));
-		*/
-	}
-
-
-	f32 RealAnimationComponent::AnimationClip::UpdateClipTick(const f32 gt)
-	{
-		normalizedTime = timeScale * (gt-transitionStart) / duration;
-		// reset normalized time
+		//normalizedTime = timeScale * (gt-transitionStart) / duration;
+		const auto delta = (gt - transitionStart) < dt ? (gt - transitionStart) : dt;
+		normalizedTime += delta * timeScale / duration;
+		// loop normalized time
 		if (loop)
 		{
 			//normalizedTime = fmodf(normalizedTime, 1.0f);
@@ -228,6 +218,20 @@ namespace DOG
 				normalizedTime += 1.0f;
 		}
 		normalizedTime = std::clamp(normalizedTime, 0.0f, 1.0f);
+		currentTick = normalizedTime * totalTicks;
+
+		return currentTick;
+	};
+
+	f32 RealAnimationComponent::AnimationClip::UpdateClipTick(const f32 delta)
+	{
+		normalizedTime += delta * timeScale / duration;
+		// loop normalized time
+		if (loop)
+			normalizedTime = fmodf(normalizedTime, 1.0f);
+		else
+			normalizedTime = std::clamp(normalizedTime, 0.0f, 1.0f);
+
 		currentTick = normalizedTime * totalTicks;
 
 		return currentTick;
@@ -262,9 +266,8 @@ namespace DOG
 	}
 	void RealAnimationComponent::AnimationClip::ResetClip()
 	{
-		static constexpr i32 noanimation = -1;
 		timeScale = 1.f;
-		animationID = noanimation;
+		animationID = noAnimation;
 		group = noGroup;
 		activeAnimation = false;
 	}
@@ -277,22 +280,21 @@ namespace DOG
 		f32 groupWeightSum[3] = { 0.f };
 		
 		// update clip states and count active clips
+		debugCount++;
 		auto debugIdx = 0;
 		bool debugReplace = false;
 		for (auto& c : clips)
 		{
 			// Keep track of clips that activated/deactivated this frame
-			if (c.BecameActive(globalTime, dt))
+			if (c.Activated(globalTime, dt))
 			{
-				i32 replacedClip = ReplaceClip(c, debugIdx);
-				const bool replaceClip = replacedClip != -1;
-				if(!replaceClip)
+				if (!ReplacedClip(c, debugIdx))
 					++clipsPerGroup[c.group];
+				else
+					auto debugStop = 0;
 			}
 			else if(c.Deactivated(globalTime, dt))
 			{
-				if (clipsPerGroup[c.group] == 0)
-					auto axelStop = 0;
 				--clipsPerGroup[c.group];
 				c.ResetClip();
 			}
@@ -301,7 +303,7 @@ namespace DOG
 			++debugIdx;
 		}
 			
-		// sort clips Active>group>targetWeight>currentWeight
+		// sort clips Active-group-targetWeight-currentWeight
 		std::sort(clips.begin(), clips.end());
 
 		u32 activeClips = ActiveClipCount();
@@ -309,13 +311,17 @@ namespace DOG
 		for (u32 i = 0; i < activeClips; i++)
 		{
 			auto& c = clips[i];
-			c.UpdateClipTick(globalTime);
+			const auto transitionTime = globalTime - c.transitionStart;
+			//c.UpdateClipTick(globalTime, dt);
+			c.UpdateClipTick(transitionTime < dt ? transitionTime : dt);
 			switch (c.blendMode)
 			{
-			case WeightBlendMode::linear:
-				c.UpdateWeightLinear(globalTime);
-			case WeightBlendMode::bezier:
-				c.UpdateWeightBezier(globalTime);
+			case BlendMode::linear:
+				c.currentWeight = LinearBlend(transitionTime, c.transitionLength, c.startWeight, c.targetWeight, c.currentWeight);
+				//c.UpdateWeightLinear(globalTime);
+			case BlendMode::bezier:
+				c.currentWeight = BezierBlend(transitionTime, c.transitionLength, c.startWeight, c.targetWeight, c.currentWeight);
+				//c.UpdateWeightBezier(globalTime);
 			default:
 				break;
 			}
@@ -323,14 +329,31 @@ namespace DOG
 			groupWeightSum[c.group] += c.currentWeight;
 		}
 
-		// normalize group weights
+		// Normalize group weights
 		for (u32 i = 0; i < activeClips; i++)
 		{
-			clips[i].debugCount++;
-			if (groupWeightSum[clips[i].group] > 0.0f)
-				clips[i].currentWeight /= groupWeightSum[clips[i].group];
+			if (i<clipsPerGroup[groupA])
+				debugWeights[i] /= groupWeightSum[groupA];
+			else if (i < clipsPerGroup[groupA] + clipsPerGroup[groupB])
+				debugWeights[i] /= groupWeightSum[groupB];
+			else if(i < clipsPerGroup[groupA] + clipsPerGroup[groupB] + clipsPerGroup[groupC]) // (else)
+				debugWeights[i] /= groupWeightSum[groupC];
 		}
 
+		// Group transition/update
+		for (i32 i = 0; i < nGroups; i++)
+		{
+			auto& group = groups[i];
+			switch (group.blendMode)
+			{
+			case BlendMode::linear:
+				groupWeights[i] = LinearBlend(globalTime - group.tStart, group.tLen, group.sWeight, group.tWeight, groupWeights[i]);
+			case BlendMode::bezier:
+				groupWeights[i] = BezierBlend(globalTime - group.tStart, group.tLen, group.sWeight, group.tWeight, groupWeights[i]);
+			default:
+				break;
+			}
+		}
 		// reset added clips for next frame
 		nAddedClips = 0;
 	}
@@ -349,9 +372,9 @@ namespace DOG
 		addedClip.group = group;
 		addedClip.transitionStart = globalTime + startDelay;
 		addedClip.transitionLength = transitionLength;
-		//addedClip.blendMode = WeightBlendMode::linear;
-		addedClip.blendMode = WeightBlendMode::bezier;
-		addedClip.startWeight = startWeight;
+		addedClip.blendMode = BlendMode::linear;
+		//addedClip.blendMode = WeightBlendMode::bezier;
+		addedClip.startWeight = addedClip.currentWeight = startWeight;
 		addedClip.targetWeight = targetWeight;
 		addedClip.timeScale = timeScale;
 		addedClip.loop = loop;
@@ -361,5 +384,82 @@ namespace DOG
 	{
 		duration = animationDuration;
 		totalTicks = nTicks;
+	}
+	bool RealAnimationComponent::AnimationClip::Activated(const f32 gt, const f32 dt)
+	{
+		return animationID != noAnimation && (gt >= transitionStart) && (gt - dt < transitionStart);
+	}
+	bool RealAnimationComponent::AnimationClip::Deactivated(const f32 gt, const f32 dt)
+	{
+		return activeAnimation && (normalizedTime == 1.f && !loop);
+	}
+	void RealAnimationComponent::AnimationClip::UpdateState(const f32 gt, const f32 dt)
+	{
+		activeAnimation = animationID != noAnimation &&
+			(gt >= transitionStart && (normalizedTime < 1.0f || loop));
+	}
+	i32 RealAnimationComponent::ClipCount() {
+		i32 count = 0;
+		for (auto& c : clips)
+			count += (c.group != 3);
+		return count - nAddedClips;
+	}
+	i32 RealAnimationComponent::ActiveClipCount()
+	{
+		return clipsPerGroup[0] + clipsPerGroup[1] + clipsPerGroup[2];
+	}
+	bool RealAnimationComponent::ReplacedClip(AnimationClip& clip, const i32 cidx)
+	{
+		bool overwriteClip = false;
+		i32 idx = (clip.group > groupA) * clipsPerGroup[groupA] +
+			(clip.group > groupB) * clipsPerGroup[groupB];
+		const i32 lastIdx = idx + clipsPerGroup[clip.group];
+		for (idx; idx < lastIdx; ++idx)
+			if (clips[idx].animationID == clip.animationID)
+			{
+				overwriteClip = clips[idx].loop != clip.loop;
+				// Replace a current active clip with same group and animation
+				if (overwriteClip)
+				{
+					clips[idx].startWeight = clips[idx].currentWeight;;
+					clips[idx].targetWeight = clip.targetWeight;
+					clips[idx].transitionStart = clip.transitionStart;
+
+					const f32 durationLeft = (1.f - clips[idx].normalizedTime) * clips[idx].duration;
+					clips[idx].transitionLength = clip.transitionLength < durationLeft || clip.loop ?
+						clip.transitionLength : durationLeft;
+
+					clips[idx].blendMode = clip.blendMode;
+					clips[idx].loop = clip.loop;
+					--nextDebugID;
+					clip.ResetClip();
+					return overwriteClip;
+				}
+			}
+		return overwriteClip;
+	}
+
+	f32 RealAnimationComponent::BezierBlend(const f32 currentTime, const f32 transitionLength, const f32 startValue, const f32 targetValue, f32 currentValue)
+	{
+		if (currentTime >= transitionLength) // Transition is done
+			currentValue = targetValue;
+		else if (currentTime > 0.0f) // bezier curve transition
+		{
+			const f32 u = currentTime / transitionLength;
+			const f32 v = 1.0f - u;
+			currentValue = startValue * (powf(v, 3) + 3 * powf(v, 2) * u) +
+						targetValue * (3 * v * powf(u, 2) + powf(u, 3));
+		}
+		return currentValue;
+	}
+
+	f32 RealAnimationComponent::LinearBlend(const f32 currentTime, const f32 transitionLength, const f32 startValue, const f32 targetValue, f32 currentValue)
+	{
+		if (currentTime > transitionLength) // Transition is done
+			currentValue = targetValue;
+		else if (currentTime > 0.0f) // Linear weight transition
+			currentValue = startValue + currentTime * (targetValue - startValue) / transitionLength;
+
+		return currentValue;
 	}
 }

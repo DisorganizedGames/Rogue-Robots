@@ -28,8 +28,7 @@ namespace DOG
 	{
 		ZoneScopedN("updateJoints_ppp");
 		using namespace DirectX;
-		//const auto deltaTime = (f32)Time::DeltaTime();
-		const auto deltaTime = 0.05f;
+		auto deltaTime = (f32)Time::DeltaTime();
 
 		if (!m_bonesLoaded) {
 			EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
@@ -45,6 +44,8 @@ namespace DOG
 				});
 			return;
 		}
+		//--------------Tmp DEBUG-------------
+		deltaTime = 0.10f;
 		m_debugTime += deltaTime;
 		static bool firstClip = true;
 		EntityManager::Get().Collect<ModelComponent, RealAnimationComponent, TransformComponent>().Do([&](ModelComponent& modelC, RealAnimationComponent& aC, TransformComponent& tfC)
@@ -52,25 +53,30 @@ namespace DOG
 			ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 			if (model)
 			{
-				if (aC.clipCount() < aC.maxClips)
+				if (aC.ClipCount() < aC.maxClips)
 				{
-					aC.AddAnimationClip(1, 0, 0.5f, 1.0f, 0.0f, 1.0f, firstClip);
-					firstClip = false;
+					if(firstClip)
+					{
+						aC.AddAnimationClip(1, 0, 0.3f, 1.0f, 0.0f, 1.0f, firstClip);
+						aC.AddAnimationClip(1, 1, 0.35f, 1.f, 0.f, 1.f, false);
+						firstClip = false;
+					}
+					if(0.02f > abs(m_debugTime - 6.0f))
+						aC.AddAnimationClip(1, 1, 0.35f, 1.f, 0.f, 1.f, false); // should not replace
+					if (0.02f > abs(m_debugTime - 6.2f))
+						aC.AddAnimationClip(1, 1, 0.35f, 0.5f, 0.f, 1.f, true); // should replace above
+					if (0.02f > abs(m_debugTime - 6.3f))
+						aC.AddAnimationClip(1, 0, 0.05f, 0.5f, 0.f, .7f, false); // should replace firstclip
 				}
 			}
 			// clips added this frame needs data from corresponding animation
-			for (u32 i = 0; i < aC.nAddedClips; i++)
+			for (u32 i = 0; i < aC.nAddedClips; ++i)
 			{
-				const u32 idx = i + aC.clipCount();
-				if (idx >= aC.maxClips)
-					auto why = 0;
-				
-				auto& clip = aC.clips[idx];
+				auto& clip = aC.clips.rbegin()[i];
 				auto& anim = m_rigs[0]->animations.at(clip.animationID);
 				clip.SetAnimation(anim.duration, anim.ticks);
 			}
 			aC.Update(deltaTime);
-			aC.Debug(m_debugTime);
 
 			for (size_t i = 0; i < aC.ActiveClipCount(); i++)
 			{
@@ -95,6 +101,7 @@ namespace DOG
 		return;
 		//static bool open = true;
 		//SpawnControlWindow(open);
+		//--------------end Tmp DEBUG-------------
 		EntityManager::Get().Collect<ModelComponent, AnimationComponent, TransformComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC, TransformComponent& tfC)
 		{
 			ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
@@ -200,8 +207,8 @@ namespace DOG
 					ImGui::SliderFloat(setName("	transitionStart ").c_str(), &clip.transitionStart, 0.0f, 1.0f, "%.5f");
 					ImGui::SliderFloat(setName("	transitionLength").c_str(), &clip.transitionTime, 0.0f, 1.0f, "%.5f");
 					ImGui::Combo(setName("    BlendMode    ").c_str(), &blendMode[aIdx], imguiBlendModes, IM_ARRAYSIZE(imguiBlendModes));
-					if (blendMode[aIdx] == 0) clip.blendMode = WeightBlendMode::normal;
-					else clip.blendMode = blendMode[aIdx] == 1 ? WeightBlendMode::linear : WeightBlendMode::bezier;
+					if (blendMode[aIdx] == 0) clip.blendMode = BlendMode::normal;
+					else clip.blendMode = blendMode[aIdx] == 1 ? BlendMode::linear : BlendMode::bezier;
 					ImGui::Checkbox(setName("    loop         ").c_str(), &clip.loop);
 					if (ImGui::Button(("Apply Animation Clip"+std::to_string(aIdx)).c_str()))
 						imguiAnimC->clips[aIdx] = clip0;
