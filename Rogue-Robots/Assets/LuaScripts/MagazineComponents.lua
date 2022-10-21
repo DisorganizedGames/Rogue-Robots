@@ -5,6 +5,14 @@ ARGUMENTS
 1:
 ]]
 
+function MagazineComponents:BasicEffect()
+	return
+	{
+		Update = function(self)
+		end
+	}
+end
+
 function MagazineComponents:FireEffect()
 	return
 end

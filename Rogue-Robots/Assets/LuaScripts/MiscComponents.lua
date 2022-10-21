@@ -2,8 +2,52 @@ require("VectorMath")
 
 MiscComponent = {}
 
-function MiscComponent.NormalGun()
-	return {
+function MiscComponent.BasicShot()
+	return 
+	{
+		pressed = false,
+
+		Update = function(self, parentEntity)
+			spawnBullet = false
+			if Entity:GetAction(parentEntity, "Shoot") then
+				if not self.pressed then
+					self.pressed = true
+					spawnBullet = true
+				end
+			else
+				self.pressed = false
+			end
+
+			if not spawnBullet then
+				return nil
+			end
+
+			local pos = Vector3.FromTable(Entity:GetTransformPosData(parentEntity))
+			local forward = Vector3.FromTable(Entity:GetForward(parentEntity))
+			local up = Vector3.FromTable(Entity:GetUp(parentEntity))
+			local right = Vector3.FromTable(Entity:GetRight(parentEntity))
+
+			pos = pos + up * -0.14 + right * 0.2 + forward * 0.6
+
+			local bullet = 
+			{
+				entity = 0,
+				forward = forward,
+				startPos = pos,
+				speed = 0.0,
+				--speed = 300.0,
+				size = Vector3.New(20, 20, 20),
+				lifetime = 0
+			}
+
+			return {bullet} 
+		end
+	}
+end
+
+function MiscComponent.FullAuto()
+	return 
+	{
 		cooldown = 0,
 
 		Update = function(self, parentEntity) 
@@ -18,16 +62,18 @@ function MiscComponent.NormalGun()
 
 				pos = pos + up * -0.14 + right * 0.2 + forward * 0.6
 
-				local bullet = {
+				local bullet = 
+				{
 					entity = 0,
 					forward = forward,
 					startPos = pos,
-					speed = 75.0,
+					speed = 0.0,
+					--speed = 75.0,
 					size = Vector3.New(15, 15, 15),
 					lifetime = 0
 				}
 
-				return bullet 
+				return {bullet} 
 			end
 			return nil
 		end
@@ -35,7 +81,8 @@ function MiscComponent.NormalGun()
 end
 
 function MiscComponent.ChargeShot()
-	return {
+	return 
+	{
 		shotPower = 0.0,
 		chargeSpeed = 10.0,
 		pressing = false,
@@ -56,18 +103,20 @@ function MiscComponent.ChargeShot()
 
 				pos = pos + up * -0.14 + right * 0.2 + forward * 0.6
 
-				local bullet = {
+				local bullet = 
+				{
 					entity = 0,
 					forward = forward,
 					startPos = pos,
-					speed = 75.0,
+					speed = 0.0,
+					--speed = 75.0,
 					size = Vector3.New(10, 10, 10) + Vector3.New(self.shotPower, self.shotPower, self.shotPower),
 					lifetime = 0
 				}
 
 				self.shotPower = 0.0
 
-				return bullet
+				return {bullet}
 
 			end
 			return nil
