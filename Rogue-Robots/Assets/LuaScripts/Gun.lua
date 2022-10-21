@@ -108,6 +108,7 @@ function OnUpdate()
 		return
 	end
 	for i=1, #newBullets do
+		
 		CreateBulletEntity(newBullets[i])
 		barrelComponent:Update(gunEntity, EntityID, newBullets[i])
 		magazineComponent:Update()
@@ -128,10 +129,15 @@ function CreateBulletEntity(bullet)
 	bullet.entity = Entity:CreateEntity()
 	table.insert(bullets, bullet)
 
+	size = Vector3.New(1.0, 1.0, 1.0)
+	if Vector3.Zero == bullet.size then
+		size = bullet.size
+	end
+
 	Entity:AddComponent(bullet.entity, "Transform",
 		Vector3.Zero(),
 		Vector3.Zero(),
-		bullet.size
+		size--bullet.size
 	)
 	local up = Vector3.FromTable(Entity:GetUp(EntityID))
 	local angle = -math.pi / 2
