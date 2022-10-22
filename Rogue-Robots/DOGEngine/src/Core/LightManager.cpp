@@ -89,7 +89,7 @@ namespace DOG
 				RemoveLight(lc.handle);
 			});
 
-		EntityManager::Get().Collect<SpotLightComponent, DeferredDeletionComponent>().Do([&](entity entity, PointLightComponent& lc, DeferredDeletionComponent&)
+		EntityManager::Get().Collect<PointLightComponent, DeferredDeletionComponent>().Do([&](entity entity, PointLightComponent& lc, DeferredDeletionComponent&)
 			{
 				RemoveLight(lc.handle);
 			});
