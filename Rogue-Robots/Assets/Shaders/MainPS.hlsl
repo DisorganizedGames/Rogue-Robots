@@ -167,7 +167,8 @@ float4 main(VS_OUT input) : SV_TARGET
         emissiveInput *= emissive.Sample(g_aniso_samp, input.uv).rgb;
     }
     
-    float3 amb = 0.03f * albedoInput + emissiveInput;
+    //float3 amb = 0.03f * albedoInput + emissiveInput;
+    float3 amb = 0.23f * albedoInput + emissiveInput;
     
 
     
