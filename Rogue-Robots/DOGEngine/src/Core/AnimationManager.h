@@ -13,17 +13,37 @@ namespace DOG
 	class AnimationManager
 	{
 	private:
+		static constexpr u8 m_nRigs = 1;
+		static constexpr u8 m_mixamoIdx = 0;
+		static constexpr u8 m_enemyIdx = 1;
+		static constexpr u8 m_mixamoTotalJoints = 65;
+		static constexpr u8 m_mixamoTotalNodes = 67;
+		static constexpr u8 m_mixamoGroupAStrtIdx = 57;	// LowerBody
+		static constexpr u8 m_mixamoGroupAStopIdx = 67; // LowerBody
+		static constexpr u8 m_mixamoGroupBStrtIdx = 2;	// UpperBody
+		static constexpr u8 m_mixamoGroupBStopIdx = 57;	// UpperBody
 		// tmp
 		static constexpr u8 MAX_ANIMATIONS = 3;
 		static constexpr i32 m_noAnimation = -1;
 		static constexpr u8 m_animationNumeroUno = 0;
 		static constexpr u8 m_animationNumeroDos = 1;
+		static constexpr u8 m_maxClips = 4;
 		enum class KeyType
 		{
 			Scale,
 			Rotation,
 			Translation,
 		};
+		struct RigSpecifics
+		{
+			u8 nJoints;
+			u8 nNodes;
+			u8 groupAmaskStrt;
+			u8 groupAmaskStop;
+			u8 groupBmaskStrt;
+			u8 groupBmaskStop;
+		};
+		std::array<RigSpecifics, m_nRigs> m_rigSpecifics;
 	public:
 		AnimationManager();
 		~AnimationManager();
@@ -40,6 +60,22 @@ namespace DOG
 		DirectX::FXMVECTOR ExtractWeightedAvgRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 		DirectX::FXMVECTOR ExtractRootTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 
+
+
+		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::RealAnimationComponent& animator);
+
+		void SetScaling(std::vector<DirectX::XMVECTOR>& finalScaling, const u8 rigID, const RealAnimationComponent& ac);
+		void SetGroupScalingInfluence(std::vector<DirectX::XMVECTOR>& scaling, const u8 group, const ImportedRig& rig, const RigSpecifics& rigSpec, const RealAnimationComponent& ac);
+
+		void SetTranslation(std::vector<DirectX::XMVECTOR>& finalTranslation, const u8 rigID, const RealAnimationComponent& ac);
+		void SetGroupTranslationInfluence(std::vector<DirectX::XMVECTOR>& translation, const u8 group, const ImportedRig& rig, const RigSpecifics& rigSpec, const RealAnimationComponent& ac);
+
+		void SetRotation(std::vector<DirectX::XMVECTOR>& finalRotation, const u8 rigID, const RealAnimationComponent& ac);
+		void SetGroupRotationInfluence(std::vector<DirectX::XMVECTOR>& rotation, const u8 group, const ImportedRig& rig, const RigSpecifics& rigSpec, const RealAnimationComponent& ac);
+
+		std::vector<DirectX::FXMVECTOR> ExtractPose(const RigSpecifics& rigSpecs, const std::vector<AnimationData>& animations, const RealAnimationComponent& ac);
+
+
 		void UpdateClips(DOG::AnimationComponent& ac, const f32 dt);
 		void UpdateBezier(AnimationComponent::AnimationClip& clip);
 		void UpdateLinear(AnimationComponent::AnimationClip& clip);
@@ -47,6 +83,13 @@ namespace DOG
 		std::vector<ImportedRig*> m_rigs;
 	private:
 		//test
+		bool m_gogogo = false;
+		bool oldFirstTime = true;
+		bool newFirstTime = true;
+		DirectX::XMVECTOR m_oldDebugVec5[3];
+		DirectX::XMVECTOR m_newDebugVec5[3];
+		std::vector<DirectX::XMMATRIX> m_debugOldTF;
+		std::vector<DirectX::XMMATRIX> m_debugNewTF;
 		static constexpr u32 nDebugClips = 3;
 		f32 m_debugTime = 0.0f;
 		struct LogClip
@@ -63,8 +106,10 @@ namespace DOG
 		};
 		std::vector<std::vector<LogClip>> loggedClips;
 		bool m_bonesLoaded = false;
-		i32 m_imguiMinMaskIdx = 100;
-		i32 m_imguiMaxMaskIdx = 0;
+		i32 m_imguiMaskSpan1Strt = 0;
+		i32 m_imguiMaskSpan1Stop = 100;
+		i32 m_imguiMaskSpan2Strt = 0;
+		i32 m_imguiMaskSpan2Stop = 100;
 		static constexpr i32 m_rootNodeIdx = 0;
 		static constexpr i32 m_rootBoneIdx = 2;
 		static constexpr DirectX::XMFLOAT3 m_baseScale = { 1.f, 1.f, 1.f };

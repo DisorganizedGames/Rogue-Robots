@@ -107,6 +107,7 @@ namespace DOG
 		static constexpr i32 groupB = 1; // Lower body
 		static constexpr i32 groupC = 2; // Upper body 
 		static constexpr i32 noGroup = 3;
+		static constexpr i32 nGroups = 3;
 		i32 offset = 0;
 		f32 globalTime = 0.0f;
 		// -DEBUG-
@@ -171,24 +172,19 @@ namespace DOG
 			}
 		};
 		std::array<AnimationClip, maxClips> clips;
-		// Active clips per group
-		u32 clipsPerGroup[4] = { 0 };
 		// Number of new clips added to component this frame
 		u32 nAddedClips = 0;
+		// Active clips per group
+		u32 clipsPerGroup[3] = { 0 };
+		struct ClipRigData
+		{
+			u8 aID;
+			f32 weight;
+			f32 tick;
+		};
+		std::array<ClipRigData, maxClips> clipData;
+		f32 groupWeights[nGroups] = { 1.0f, 0.f, 0.f };
 
-		/* optimization for later
-		* struct ClipRigData
-		* {
-		*	u8 aID;
-		*	f32 weight;
-		*	f32 tick;
-		* }
-		* std::array<ClipRigData> forJointManager
-		*/
-		// Group Blend Specifics
-		f32 LinearBlend(const f32 currentTime, const f32 stopTime, const f32 startValue, const f32 targetValue, f32 currentValue = 0.0f);
-		f32 BezierBlend(const f32 currentTime, const f32 stopTime, const f32 startValue, const f32 targetValue, f32 currentValue = 0.0f);
-		static constexpr i32 nGroups = 2;
 		struct GroupBlendSpec
 		{
 			BlendMode blendMode = BlendMode::linear;
@@ -197,17 +193,19 @@ namespace DOG
 			f32 tStart = 0.f;
 			f32 tLen = 0.f;
 		};
-		f32 groupWeights[nGroups] = { 0.f };
 		// Full body group not needed (?)
 		std::array<GroupBlendSpec, nGroups> groups;
 		// Update clip weights and ticks
 		void Update(const f32 dt);
+		// Group Blend Specifics
+		f32 LinearBlend(const f32 currentTime, const f32 stopTime, const f32 startValue, const f32 targetValue, f32 currentValue = 0.0f);
+		f32 BezierBlend(const f32 currentTime, const f32 stopTime, const f32 startValue, const f32 targetValue, f32 currentValue = 0.0f);
 		// Overwrites an active clip with values from newly activated clip if applicable
 		bool ReplacedClip(AnimationClip& clip, const i32 cidx);
 		// Add a new animation clip to components timeline
 		void AddAnimationClip(i32 id, u32 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop = false, f32 timeScale = 1.f);
 		// Returns number of currently active clips contributing to current pose
-		i32 ActiveClipCount();
+		i32 ActiveClipCount() const;
 		// Return number of clips on the timeline
 		i32 ClipCount();
 	};

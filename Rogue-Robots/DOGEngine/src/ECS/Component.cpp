@@ -338,6 +338,11 @@ namespace DOG
 				debugWeights[i] /= groupWeightSum[groupB];
 			else if(i < clipsPerGroup[groupA] + clipsPerGroup[groupB] + clipsPerGroup[groupC]) // (else)
 				debugWeights[i] /= groupWeightSum[groupC];
+
+			const auto& c = clips[i];
+			clipData[i].aID = c.animationID;
+			clipData[i].weight = debugWeights[i];
+			clipData[i].tick = c.currentTick;
 		}
 
 		// Group transition/update
@@ -387,7 +392,7 @@ namespace DOG
 	}
 	bool RealAnimationComponent::AnimationClip::Activated(const f32 gt, const f32 dt)
 	{
-		return animationID != noAnimation && (gt >= transitionStart) && (gt - dt < transitionStart);
+		return animationID != noAnimation && (gt >= transitionStart) && (gt - dt <= transitionStart);
 	}
 	bool RealAnimationComponent::AnimationClip::Deactivated(const f32 gt, const f32 dt)
 	{
@@ -404,7 +409,7 @@ namespace DOG
 			count += (c.group != 3);
 		return count - nAddedClips;
 	}
-	i32 RealAnimationComponent::ActiveClipCount()
+	i32 RealAnimationComponent::ActiveClipCount() const
 	{
 		return clipsPerGroup[0] + clipsPerGroup[1] + clipsPerGroup[2];
 	}
