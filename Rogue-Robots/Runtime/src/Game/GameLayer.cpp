@@ -102,8 +102,11 @@ void GameLayer::StartMainScene()
 
 void GameLayer::CloseMainScene()
 {
-	m_entityManager.DeferredEntityDestruction(m_player->GetEntity());
-	m_player.reset();
+	if (m_player)
+	{
+		m_entityManager.DeferredEntityDestruction(m_player->GetEntity());
+		m_player.reset();
+	}	
 	m_mainScene.reset();
 }
 
@@ -463,6 +466,11 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 			if (ImGui::Button("Win"))
 			{
 				m_gameState = GameState::Won;
+			}
+			if (ImGui::Button("Lobby"))
+			{
+				CloseMainScene();
+				m_gameState = GameState::Lobby;
 			}
 
 
