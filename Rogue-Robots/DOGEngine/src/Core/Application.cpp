@@ -66,12 +66,18 @@ namespace DOG
 			if (!m_isRunning)
 				break;
 
+			AssetManager::Get().Update();
+
+			for (auto& system : EntityManager::Get())
+			{
+				system->EarlyUpdate();
+			}
+
 			PhysicsEngine::UpdatePhysics((f32)Time::DeltaTime());
 
 			// All ImGUI calls must happen after this call
 			m_renderer->BeginGUI();
 
-			AssetManager::Get().Update();
 			AudioManager::AudioSystem();
 
 			for (auto const layer : m_layerStack)
@@ -85,6 +91,10 @@ namespace DOG
 				layer->OnImGuiRender();
 			}
 #endif
+			for (auto& system : EntityManager::Get())
+			{
+				system->Update();
+			}
 			Mouse::Reset();
 
 			//// ====== GPU
@@ -195,6 +205,10 @@ namespace DOG
 
 			m_renderer->EndFrame_GPU(m_specification.graphicsSettings.vSync);
 
+			for (auto& system : EntityManager::Get())
+			{
+				system->LateUpdate();
+			}
 
 			EntityManager::Get().Collect<DirtyComponent>().Do([](entity, DirtyComponent& dirty) { dirty.dirtyBitSet &= 0; });
 

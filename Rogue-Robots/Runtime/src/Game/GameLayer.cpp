@@ -43,6 +43,7 @@ void GameLayer::OnDetach()
 
 void GameLayer::OnUpdate()
 {
+	MINIPROFILE
 	switch (m_gameState)
 	{
 	case GameState::None:
@@ -72,25 +73,9 @@ void GameLayer::OnUpdate()
 	}
 
 
-	MINIPROFILE
-	for (auto& system : m_entityManager)
-	{
-		system->EarlyUpdate();
-	}
-	for (auto& system : m_entityManager)
-	{
-		system->Update();
-	}
-	for (auto& system : m_entityManager)
-	{
-		system->LateUpdate();
-	}
-
-
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
 
-	
 	m_netCode.OnUpdate();
 }
 
