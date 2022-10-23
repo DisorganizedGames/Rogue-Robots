@@ -15,7 +15,7 @@ WAVEFORMATEX WAVFileReader::ReadWFXProperties()
 
 	while ((chunkType = ReadNextChunkType()) != ChunkType::Format)
 	{
-		std::cout << "Skipping chunk type: " << (i32)chunkType << std::endl;
+		//std::cout << "Skipping chunk type: " << (i32)chunkType << std::endl;
 		SkipChunk(chunkType);
 	}
 	ReadFormat();
@@ -121,7 +121,7 @@ void WAVFileReader::SkipChunk(ChunkType type)
 	else if (type == ChunkType{ -1 })
 	{
 		m_file.read((char*)&skip, sizeof(u32));
-		std::cout << "Skipping unknown chunk: " << skip << " bytes" << std::endl;
+		//std::cout << "Skipping unknown chunk: " << skip << " bytes" << std::endl;
 	}
 	else
 	{
@@ -130,7 +130,7 @@ void WAVFileReader::SkipChunk(ChunkType type)
 	skip += (skip % 2);
 	m_file.seekg((i32)skip, std::ios_base::cur);
 	auto tellg = m_file.tellg();
-	std::cout << "Skipping " << skip << " bytes" << std::endl;
+	//std::cout << "Skipping " << skip << " bytes" << std::endl;
 }
 
 void WAVFileReader::ReadFormat()
@@ -159,50 +159,50 @@ WAVFileReader::ChunkType WAVFileReader::ReadNextChunkType()
 	// Compare to little-endian int representation of chunk types
 	if (type == 0x46464952)
 	{
-		std::cout << "Chunk type is RIFF" << std::endl;
+		//std::cout << "Chunk type is RIFF" << std::endl;
 		return ChunkType::RIFF;
 	}
 	if (type == 0x20746D66)
 	{
-		std::cout << "Chunk type is Format" << std::endl;
+		//std::cout << "Chunk type is Format" << std::endl;
 		return ChunkType::Format;
 	}
 	if (type == 0x4B4E554A)
 	{
-		std::cout << "Chunk type is JUNK" << std::endl;
+		//std::cout << "Chunk type is JUNK" << std::endl;
 		return ChunkType::Junk;
 	}
 	if (type == 0x5453494C)
 	{
-		std::cout << "Chunk type is LIST" << std::endl;
+		//std::cout << "Chunk type is LIST" << std::endl;
 		return ChunkType::List;
 	}
 	if (type == 0x61746164)
 	{
-		std::cout << "Chunk type is data" << std::endl;
+		//std::cout << "Chunk type is data" << std::endl;
 		return ChunkType::Data;
 	}
 	if (type == 0x494E4679)
 	{
-		std::cout << "Chunk type is INFO" << std::endl;
+		//std::cout << "Chunk type is INFO" << std::endl;
 		return ChunkType::Info;
 	}
 	if (type == 0x55736552)
 	{
-		std::cout << "Chunk type is ResU" << std::endl;
+		//std::cout << "Chunk type is ResU" << std::endl;
 		return ChunkType::ResU;
 	}
 	if (type == 0x74786562)
 	{
-		std::cout << "Chunk type is bext" << std::endl;
+		//std::cout << "Chunk type is bext" << std::endl;
 		return ChunkType::Bext;
 	}
 	else
 	{
-		char charRep[5] = { 0 };
-		memcpy(charRep, &type, sizeof(type));
-		std::cout << "Chunk type is " << charRep << std::endl;
-		std::cout << "Skipping" << std::endl;
+		//char charRep[5] = { 0 };
+		//memcpy(charRep, &type, sizeof(type));
+		//std::cout << "Chunk type is " << charRep << std::endl;
+		//std::cout << "Skipping" << std::endl;
 		SkipChunk(ChunkType{ -1 });
 		return ReadNextChunkType();
 	}
