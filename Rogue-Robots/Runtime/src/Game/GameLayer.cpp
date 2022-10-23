@@ -24,7 +24,7 @@ GameLayer::GameLayer() noexcept
 
 void GameLayer::OnAttach()
 {
-	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameLayer", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1));
+	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameManager", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1));
 	m_Agent = std::make_shared<Agent>();
 
 	//m_testScene = std::make_unique<TestScene>();
@@ -33,7 +33,7 @@ void GameLayer::OnAttach()
 
 void GameLayer::OnDetach()
 {
-	DOG::ImGuiMenuLayer::UnRegisterDebugWindow("GameLayer");
+	DOG::ImGuiMenuLayer::UnRegisterDebugWindow("GameManager");
 	m_testScene.reset();
 	m_testScene = nullptr;
 
@@ -43,9 +43,10 @@ void GameLayer::OnDetach()
 
 void GameLayer::OnUpdate()
 {
-	GameState nextGameState;
 	switch (m_gameState)
 	{
+	case GameState::None:
+		break;
 	case GameState::Initializing:
 		m_gameState = GameState::Lobby;
 		break;
@@ -58,7 +59,13 @@ void GameLayer::OnUpdate()
 	case GameState::Playing:
 		UpdateGame();
 		break;
-	case GameState::Closing:
+	case GameState::Won:
+		CloseMainScene();
+		m_gameState = GameState::Lobby;
+		break;
+	case GameState::Exiting:
+		CloseMainScene();
+		m_gameState = GameState::None;
 		break;
 	default:
 		break;
@@ -108,11 +115,31 @@ void GameLayer::StartMainScene()
 	m_gameState = GameState::Playing;
 }
 
+void GameLayer::CloseMainScene()
+{
+	m_entityManager.DeferredEntityDestruction(m_player->GetEntity());
+	m_player.reset();
+	m_mainScene.reset();
+}
+
+void GameLayer::EvaluateWinCondition()
+{
+	/*if (ImGui::Button("Win"))
+	{
+		m_gameState = GameState::Won;
+	}*/
+}
+
 void GameLayer::UpdateGame()
 {
 	m_player->OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
+
+
+
+	EvaluateWinCondition();
+
 }
 
 void GameLayer::OnRender()
@@ -437,7 +464,7 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 {
 	if (ImGui::BeginMenu("View"))
 	{
-		if (ImGui::MenuItem("GameLayer"))
+		if (ImGui::MenuItem("GameManager"))
 		{
 			open = true;
 		}
@@ -446,8 +473,14 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 
 	if (open)
 	{
-		if (ImGui::Begin("GameLayer", &open))
+		if (ImGui::Begin("GameManager", &open))
 		{
+			if (ImGui::Button("Win"))
+			{
+				m_gameState = GameState::Won;
+			}
+
+
 			bool checkboxTestScene = m_testScene != nullptr;
 			if (ImGui::Checkbox("TestScene", &checkboxTestScene))
 			{
@@ -463,7 +496,8 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 				}
 			}
 
-			bool checkboxMainScene = m_mainScene != nullptr;
+			// Commented out until a propper debug camera is implemented.
+			/*bool checkboxMainScene = m_mainScene != nullptr;
 			if (ImGui::Checkbox("MainScene", &checkboxMainScene))
 			{
 				if (checkboxMainScene)
@@ -476,9 +510,9 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 					m_mainScene.reset();
 					m_mainScene = nullptr;
 				}
-			}
+			}*/
 		}
-		ImGui::End(); // "GameLayer"
+		ImGui::End(); // "GameManager"
 	}
 }
 

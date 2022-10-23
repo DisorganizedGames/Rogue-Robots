@@ -10,11 +10,13 @@
 
 enum class GameState
 {
-	Initializing = 0,
+	None = 0,
+	Initializing,
 	Lobby,
 	StartPlaying,
 	Playing,
-	Closing
+	Won,
+	Exiting,
 };
 
 class GameLayer : public DOG::Layer
@@ -33,6 +35,9 @@ private:
 	void UpdateLobby();
 	void UpdateGame();
 	void StartMainScene();
+	void CloseMainScene();
+
+	void EvaluateWinCondition();
 
 	void RegisterLuaInterfaces();
 	std::vector<DOG::entity> LoadLevel(); //Loads a PCG generated level.
