@@ -84,12 +84,12 @@ namespace DOG
 
 	void LightManager::DestroyDeferredEntities()
 	{
-		EntityManager::Get().Collect<SpotLightComponent, DeferredDeletionComponent>().Do([&](entity entity, SpotLightComponent& lc, DeferredDeletionComponent&)
+		EntityManager::Get().Collect<SpotLightComponent, DeferredDeletionComponent>().Do([&](entity, SpotLightComponent& lc, DeferredDeletionComponent&)
 			{
 				RemoveLight(lc.handle);
 			});
 
-		EntityManager::Get().Collect<PointLightComponent, DeferredDeletionComponent>().Do([&](entity entity, PointLightComponent& lc, DeferredDeletionComponent&)
+		EntityManager::Get().Collect<PointLightComponent, DeferredDeletionComponent>().Do([&](entity, PointLightComponent& lc, DeferredDeletionComponent&)
 			{
 				RemoveLight(lc.handle);
 			});

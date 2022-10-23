@@ -216,8 +216,8 @@ namespace DOG
 			LuaMain::GetScriptManager()->RemoveScriptsFromDeferredEntities();
 			PhysicsEngine::FreePhysicsFromDeferredEntities();
 			AudioManager::StopAudioOnDeferredEntities();
-			EntityManager::Get().DestroyDeferredEntities();
 			LightManager::Get().DestroyDeferredEntities();
+			EntityManager::Get().DestroyDeferredEntities();
 
 			Time::End();
 		}

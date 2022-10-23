@@ -126,6 +126,9 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 
 	// Setup lights
 	// Default lights
+
+	// TODO add a way of deleting static lights
+	/*
 	u32 xOffset = 18;
 	u32 zOffset = 18;
 	for (u32 i = 0; i < 3; ++i)
@@ -145,7 +148,7 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 			dd.strength = 1.f;
 			LightManager::Get().AddSpotLight(dd, LightUpdateFrequency::Never);
 		}
-	}
+	}*/
 
 	// Moving light
 	LightHandle pointLight = LightManager::Get().AddPointLight(PointLightDesc(), LightUpdateFrequency::PerFrame);
