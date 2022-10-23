@@ -20,6 +20,7 @@ namespace DOG
 
 		static void RegisterDebugWindow(const std::string& name, std::function<void(bool&)> func, bool startOpen = false);
 		static void UnRegisterDebugWindow(const std::string& name);
+		static void RemoveFocus();
 
 	private:
 		static void ModelSpawner(bool& open);
@@ -29,6 +30,7 @@ namespace DOG
 #endif
 	private:
 		static std::map<std::string, std::pair<std::function<void(bool&)>, bool>> s_debugWindows;
+		static bool s_forceFocusLoss;
 
 		bool m_showEmptyWindow = false;
 		bool m_showDemoWindow = false;

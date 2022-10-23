@@ -8,6 +8,7 @@
 namespace DOG
 {
     std::map<std::string, std::pair<std::function<void(bool&)>, bool>> ImGuiMenuLayer::s_debugWindows;
+    bool ImGuiMenuLayer::s_forceFocusLoss = false;
 
     ImGuiMenuLayer::ImGuiMenuLayer() noexcept : Layer("ImGuiMenu layer")
     {
@@ -32,6 +33,12 @@ namespace DOG
 
     void ImGuiMenuLayer::OnRender()
     {
+        if (s_forceFocusLoss)
+        {
+            s_forceFocusLoss = false;
+            return;
+        }
+
         // The menu bar at the top
         if (ImGui::BeginMainMenuBar())
         {
@@ -76,6 +83,12 @@ namespace DOG
                 event.StopPropagation();
             }
         }
+    }
+
+    void ImGuiMenuLayer::RemoveFocus()
+    {
+        if(ImGui::GetIO().WantCaptureKeyboard || ImGui::GetIO().WantCaptureMouse)
+            s_forceFocusLoss = true;
     }
 
     void ImGuiMenuLayer::RegisterDebugWindow(const std::string& name, std::function<void(bool&)> func, bool startOpen)
