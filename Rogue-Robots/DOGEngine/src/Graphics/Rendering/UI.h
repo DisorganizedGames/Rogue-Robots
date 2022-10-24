@@ -11,10 +11,22 @@ namespace DOG
    class Swapchain;
    class UIScene;
 
+   class UIElement
+   {
+      public:
+      UIElement(UINT id);
+      virtual ~UIElement();
+      virtual void Draw(DOG::gfx::D2DBackend_DX12& d2d) = 0;
+      virtual void Update(DOG::gfx::D2DBackend_DX12& d2d);
+      UINT GetID();
+      private:
+      UINT m_ID;
+   };
+
    class UI
    {
       public:
-      UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, UINT clientWidth, UINT clientHeight);
+      UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight);
       ~UI();
       void DrawUI();
       void ChangeUIscene(UINT sceneID);
@@ -24,7 +36,7 @@ namespace DOG
       void RemoveScene(UINT sceneID);
       void Resize(UINT clientWidth, UINT clientHeight);
       void FreeResize();
-      static void Initialize(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, UINT clientWidth, UINT clientHeight);
+      static void Initialize(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight);
       static UI& Get();
       static void Destroy();
       DOG::gfx::D2DBackend_DX12* GetBackend();
@@ -36,7 +48,21 @@ namespace DOG
          uidOut = GenerateUID();
          return std::make_unique<T>(*m_d2d.get(), uidOut, std::forward<Params>(args)...);
       }
-      
+
+      template<typename T>
+      T* GetUI(UINT& elementID)
+      {
+         for (auto&& s : m_scenes)
+         {
+            auto res = std::find_if(s->GetScene().begin(), s->GetScene().end(), [&](std::unique_ptr<UIElement> const& e) { return e->GetID() == elementID; });
+            if (res == s->GetScene().end())
+               continue;
+            else
+               return static_cast<T*>((*res).get());
+         }
+         return nullptr;
+      }
+
       UI(UI& other) = delete;
       void operator=(const UI&) = delete;
 
@@ -68,17 +94,7 @@ namespace DOG
 
    };
 
-   class UIElement
-   {
-      public:
-      UIElement(UINT id);
-      virtual ~UIElement();
-      virtual void Draw(DOG::gfx::D2DBackend_DX12& d2d) = 0;
-      virtual void Update(DOG::gfx::D2DBackend_DX12& d2d);
-      UINT GetID();
-      private:
-      UINT m_ID;
-   };
+   
 
    class UIButton : public UIElement
    {
