@@ -2,7 +2,7 @@ require("VectorMath")
 
 MiscComponent = {}
 
-function MiscComponent.BasicShot()
+function MiscComponent:BasicShot()
 	return 
 	{
 		pressed = false,
@@ -45,7 +45,7 @@ function MiscComponent.BasicShot()
 	}
 end
 
-function MiscComponent.FullAuto()
+function MiscComponent:FullAuto()
 	return 
 	{
 		cooldown = 0,
@@ -81,7 +81,7 @@ function MiscComponent.FullAuto()
 	}
 end
 
-function MiscComponent.ChargeShot()
+function MiscComponent:ChargeShot()
 	return 
 	{
 		shotPower = 0.0,

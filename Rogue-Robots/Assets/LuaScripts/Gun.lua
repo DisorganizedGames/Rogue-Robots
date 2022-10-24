@@ -65,7 +65,7 @@ function OnStart()
 	miscComponent = MiscComponent.BasicShot()
 	barrelComponent = BarrelManager.BasicBarrel() 
 	--barrelComponent = BarrelManager.Grenade()  --ObjectManager:CreateObject()
-	magazineComponent = MagazineManager.BasicEffect()--ObjectManager:CreateObject()
+	magazineComponent = MagazineManager.FrostEffect()--MagazineManager.BasicEffect()--ObjectManager:CreateObject()
 end
 
 local tempMode = 0
@@ -94,9 +94,11 @@ function OnUpdate()
 		switched = true
 		if componentIdx == 0 then
 			miscComponent = MiscComponent.FullAuto()
+			magazineComponent = MagazineManager.BasicEffect()
 			componentIdx = 1
 		else
 			miscComponent = MiscComponent.ChargeShot()
+			magazineComponent = MagazineManager.FrostEffect()
 			componentIdx = 0
 		end
 	elseif not Entity:GetAction(EntityID, "SwitchComponent") then
@@ -132,7 +134,9 @@ function OnUpdate()
 		if createBullet then
 			CreateBulletEntity(newBullets[i])
 			barrelComponent:Update(gunEntity, EntityID, newBullets[i])
-			magazineComponent:Update()
+			--Keep track of which barrel created the bullet
+			newBullets[i].barrel = barrelComponent
+			magazineComponent:Update(newBullets[i])
 		end
 	end
 	--NormalBulletUpdate()
@@ -203,7 +207,7 @@ function NormalBulletUpdate()
 	for i = #bullets, 1, -1 do -- Iterate through bullets backwards to make removal of elements safe
 		bullets[i].lifetime = bullets[i].lifetime + DeltaTime
 		if bullets[i].lifetime > 5.0 then
-			barrelComponent:Destroy(bullets[i])
+			bullets[i].barrel:Destroy(bullets[i])
 			Entity:DestroyEntity(bullets[i].entity)
 			table.remove(bullets, i)
 		end

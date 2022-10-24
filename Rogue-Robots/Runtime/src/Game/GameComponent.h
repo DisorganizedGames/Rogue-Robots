@@ -80,3 +80,9 @@ struct CreateAndDestroyEntityComponent
 	i8 playerId = 0; 
 	Vector3 position;
 };
+
+struct FrostEffectComponent
+{
+	//??
+	float frostTimer = 0.0f;
+};

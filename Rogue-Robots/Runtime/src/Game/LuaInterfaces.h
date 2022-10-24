@@ -116,6 +116,8 @@ private:
 	void AddRigidbody(DOG::LuaContext* context, DOG::entity e);
 
 	void AddBullet(DOG::LuaContext* context, DOG::entity e);
+	
+	void AddSubmeshRender(DOG::LuaContext* context, DOG::entity e);
 
 	void ModifyTransform(DOG::LuaContext* context, DOG::entity e);
 	
@@ -165,4 +167,13 @@ public:
 
 	void RBSetVelocity(DOG::LuaContext* context);
 	void Explosion(DOG::LuaContext* context);
+};
+
+class RenderInterface : public LuaInterface
+{
+public:
+	RenderInterface() noexcept {};
+	~RenderInterface() noexcept {};
+
+	void CreateMaterial(DOG::LuaContext* context);
 };

@@ -182,7 +182,7 @@ namespace DOG
 		RegisterClassFunctions CreateLuaInterface(const std::string& interfaceName);
 		void PushLuaInterface(RegisterClassFunctions& registerInterface);
 
-		void PrintStack();
+		static void PrintStack();
 
 		int GetGlobalInteger(const std::string& luaGlobalName);
 		float GetGlobalFloat(const std::string& luaGlobalName);
