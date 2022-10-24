@@ -14,6 +14,7 @@ namespace DOG
 		if (!s_initialized)
 		{
 			CMP_InitFramework();
+			s_initialized = true;
 		}
 
 		CMP_MipSet mipSetIn;

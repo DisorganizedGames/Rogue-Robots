@@ -61,6 +61,11 @@ namespace DOG::gfx
 		u32 srcDepth, 
 		u32 srcRowPitch)
 	{
+		// Textures that are not power of 2 not allowed
+		assert(
+			abs(fmod(std::log2f((f32)srcWidth), 1.f)) < std::numeric_limits<f32>::epsilon() &&
+			abs(fmod(std::log2f((f32)srcHeight), 1.f)) < std::numeric_limits<f32>::epsilon());
+
 		auto& version = m_storage[m_currVersion];
 
 		// Reset version.. safely..
@@ -85,6 +90,7 @@ namespace DOG::gfx
 
 		// Copy to staging
 		std::memcpy(memory, srcData, totalSize);
+		//std::memcpy(memory, srcData, srcWidth * srcHeight * 4);		// assuming 32bit per channel
 
 		// Record GPU-GPU copy
 		m_rd->Cmd_CopyBufferToImage(version.copyCmdl,
