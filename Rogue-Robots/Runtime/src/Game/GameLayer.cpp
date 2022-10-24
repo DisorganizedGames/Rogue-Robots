@@ -222,6 +222,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetAction>("SetAction");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::HasComponent>("HasComponent");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::PlayAudio>("PlayAudio");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPassiveType>("GetPassiveType");
 
 	global->SetLuaInterface(luaInterface);
 
@@ -430,9 +431,11 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		rb.disableDeactivation = true;
 		rb.getControlOfTransform = false;
 
+		m_entityManager.AddComponent<PlayerStatsComponent>(playerI);
 		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = i;
 		m_entityManager.AddComponent<InputController>(playerI);
 		scriptManager->AddScript(playerI, "Gun.lua");
+		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
 
 		if (i == 0) // Only for this player
 		{

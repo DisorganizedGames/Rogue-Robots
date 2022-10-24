@@ -93,6 +93,8 @@ public:
 
 	void PlayAudio(DOG::LuaContext* context);
 
+	void GetPassiveType(DOG::LuaContext* context);
+
 private:
 	void AddModel(DOG::LuaContext* context, DOG::entity e);
 
