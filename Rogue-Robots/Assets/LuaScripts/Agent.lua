@@ -72,11 +72,7 @@ function chasePlayer:OnUpdate()
 		print("Lost sight of player " .. chasePlayer.target)
 		chasePlayer.target = nil
 	elseif distances[1].dist < 0.05 then
-		--print("Attacking player " .. distances[1].entityID, distances[1].playerID, distances[1].dist, distances[1].pos)
-		local playerStats = Entity:GetPlayerStats(distances[1].entityID)
-		playerStats.health = playerStats.health - 10.0
-		print(playerStats.health)
-		Entity:ModifyComponent(distances[1].entityID, "PlayerStats", playerStats)
+		--print("Attacking player " .. distances[1].id)
 	else
 		local dir = distances[1].pos - Agent.pos;
 		dir = dir * (1 / distances[1].dist)
@@ -159,15 +155,15 @@ Agent.spawnPoints = {
 Agent.nextSpawnPoint = 1
 
 function Agent:popBehavior()
-	--print("popping " .. self.behaviorStack[#self.behaviorStack].name)
+	print("popping " .. self.behaviorStack[#self.behaviorStack].name)
 	self.behaviorStack[#self.behaviorStack] = nil
-	--self:PrintStack()
+	self:PrintStack()
 end
 
 function Agent:pushBehavior(behavior)
-	--print("pushing " .. behavior.name)
+	print("pushing " .. behavior.name)
 	self.behaviorStack[#self.behaviorStack + 1] = behavior
-	--self:PrintStack()
+	self:PrintStack()
 end
 
 function Agent:PrintStack()
@@ -239,8 +235,7 @@ function OnCollisionEnter(self, e1, e2)
 		print(" Current HP: " .. Agent.stats.hp)
 
 	else
-		--print("Agent touched " .. entity .. " at  " .. Agent.pos)
+		print("Agent touched " .. entity .. " at  " .. Agent.pos)
 		Agent:Collision(entity)
 	end
 end
-

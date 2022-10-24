@@ -1,6 +1,6 @@
 #pragma once
 #include <DOGEngine.h>
-using namespace DirectX::SimpleMath;
+#include "AgentManager/AgentComponents.h"
 
 
 
@@ -18,27 +18,9 @@ struct PlayerStatsComponent
 	//...
 };
 
-
-struct AgentStatsComponent
-{
-	float hp;
-	float maxHP;
-	float speed;
-	//...
-
-	u32 roomId;
-};
-
 struct BulletComponent
 {
 	i8 playerId;
-};
-
-struct NetworkAgentStats
-{
-	int playerId;
-	u32 objectId;
-	AgentStatsComponent stats;
 };
 
 struct InputController
@@ -78,7 +60,7 @@ struct CreateAndDestroyEntityComponent
 	u32 id = 0;
 	bool alive = true;
 	i8 playerId = 0; 
-	Vector3 position;
+	DirectX::SimpleMath::Vector3 position;
 };
 
 struct FrostEffectComponent
