@@ -122,7 +122,8 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	entity doorTest = CreateEntity();
 	AddComponent<DoorComponent>(doorTest).roomId = 0;
 	AddComponent<TransformComponent>(doorTest, Vector3(25, 6, 15));
-	AddComponent<ModelComponent>(doorTest, magentaCubeID);
+	u32 doorModelID = am.LoadModelAsset("Assets/Models/Temporary_Assets/Door.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
+	AddComponent<ModelComponent>(doorTest, doorModelID);
 
 	// Setup lights
 	// Default lights
