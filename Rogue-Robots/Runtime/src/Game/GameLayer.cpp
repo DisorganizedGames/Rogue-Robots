@@ -20,7 +20,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
-	m_nrOfPlayers = 1;
+	m_nrOfPlayers = MAX_PLAYER_COUNT;
 }
 
 void GameLayer::OnAttach()
@@ -77,8 +77,6 @@ void GameLayer::OnUpdate()
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
 	global->SetNumber("ElapsedTime", Time::ElapsedTime());
-
-	m_netCode.OnUpdate();
 }
 
 
@@ -188,16 +186,17 @@ void GameLayer::UpdateLobby()
 	if (ImGui::Button("Host"))
 	{
 		m_netCode.Host();
+		inLobby = false;
 	}
 	if (ImGui::Button("Join"))
 	{
-		m_netCode.Join(input);
+		if(m_netCode.Join(input))
+			inLobby = false;
 	}
 	if (ImGui::Button("Play"))
 	{
 		m_nrOfPlayers = m_netCode.Play();
-		if (m_nrOfPlayers > 0)
-			inLobby = false;
+		inLobby = false;
 	}
 	if(!inLobby)
 		m_gameState = GameState::StartPlaying;

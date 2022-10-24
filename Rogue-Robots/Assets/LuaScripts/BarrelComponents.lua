@@ -22,7 +22,7 @@ function BarrelComponents:BasicBarrel()
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
 			Entity:AddComponent(bullet.entity, "BoxCollider", Vector3.New(.1, .1, .1), true)
 			Entity:AddComponent(bullet.entity, "Rigidbody", false)
-			Entity:AddComponent(bullet.entity, "Bullet")
+			Entity:AddComponent(bullet.entity, "Bullet", parentEntityID)
 
 			Entity:PlayAudio(gunEntity.entityID, self.gunShotSound, true)
 
@@ -64,7 +64,7 @@ function BarrelComponents:Grenade()
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
 			Entity:AddComponent(bullet.entity, "SphereCollider", 0.2, true)
 			Entity:AddComponent(bullet.entity, "Rigidbody", false)
-			Entity:AddComponent(bullet.entity, "Bullet")
+			Entity:AddComponent(bullet.entity, "Bullet", parentEntityID)
 
 			Entity:PlayAudio(gunEntity.entityID, self.gunShotSound, true)
 

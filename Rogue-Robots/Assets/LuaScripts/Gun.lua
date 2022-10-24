@@ -148,7 +148,7 @@ function OnUpdate()
 end
 
 function CreateBulletEntity(bullet)
-	bullet.entity = Entity:CreateEntity()
+	bullet.entity = Scene:CreateEntity(EntityID)
 	table.insert(bullets, bullet)
 
 	size = Vector3.New(1.0, 1.0, 1.0)
