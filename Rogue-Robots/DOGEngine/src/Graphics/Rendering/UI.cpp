@@ -3,7 +3,7 @@
 
 DOG::UI* DOG::UI::s_instance = nullptr;
 
-DOG::UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, UINT clientWidth, UINT clientHeight) : m_visible(true)
+DOG::UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight) : m_visible(true)
 {
    srand((UINT)time(NULL));
    m_width = clientWidth;
@@ -59,7 +59,7 @@ DOG::UI& DOG::UI::Get()
    return *s_instance;
 }
 
-void DOG::UI::Initialize(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, u_int numBuffers, UINT clientWidth, UINT clientHeight)
+void DOG::UI::Initialize(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight)
 {
    if (!s_instance)
       s_instance = new UI(rd, sc, numBuffers, clientWidth, clientHeight);

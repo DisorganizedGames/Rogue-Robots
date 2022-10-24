@@ -842,6 +842,8 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 	UINT hID;
 	auto h = DOG::UI::Get().Create<DOG::UIHealthBar, float, float, float, float>(hID, 40.f, clientHeight - 60.f, 250.f, 30.f);
 	DOG::UI::Get().AddUIElementToScene(gameID, std::move(h));
+	auto hp = DOG::UI::Get().GetUI<DOG::UIHealthBar>(hID);
+	hp->SetBarValue(0.1f);
 
 	//Crosshair
 	UINT cID;
