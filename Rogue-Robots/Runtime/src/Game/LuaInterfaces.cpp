@@ -756,11 +756,10 @@ void UIInterface::ChangeScene(DOG::LuaContext* context)
 
 void UIInterface::SetProgressBarValue(DOG::LuaContext* context)
 {
-	auto uid = context->GetInteger();
+	UINT uid = context->GetInteger();
 	auto value = context->GetDouble();
 
-	// Static cast from UIElement (parent) to subclass UIProgressBar to access progress bar specifics
-	// UI::Get().GetUI<UIProgressBar>(uid)->SetValue(value)
+	UI::Get().GetUI<UIHealthBar>(uid)->SetBarValue(value);
 }
 
 void UIInterface::RemoveElement(DOG::LuaContext* context)

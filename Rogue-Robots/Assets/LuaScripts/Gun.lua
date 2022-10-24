@@ -81,6 +81,8 @@ function OnStart()
 		150.0, 80.0, 
 		20.0, "Click me", doSomething)
 
+	UI:SetProgressBarValue(uid, 0.8)
+
 	UI:ChangeScene(sceneID)
 
 	

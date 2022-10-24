@@ -365,6 +365,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<UIInterface, &UIInterface::ChangeScene>("ChangeScene");
 	luaInterface.AddFunction<UIInterface, &UIInterface::RemoveScene>("RemoveScene");
 	luaInterface.AddFunction<UIInterface, &UIInterface::RemoveElement>("RemoveElement");
+	luaInterface.AddFunction<UIInterface, &UIInterface::SetProgressBarValue>("SetProgressBarValue");
 
 	global->SetLuaInterface(luaInterface);
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "UI", "UIInterface");
