@@ -80,7 +80,7 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 212,
+            "count" : 244,
             "max" : [
                 3.650550365447998,
                 1.996720552444458,
@@ -96,57 +96,57 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 212,
+            "count" : 244,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 212,
+            "count" : 244,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 212,
+            "count" : 244,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 354,
+            "count" : 402,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 2544,
+            "byteLength" : 2928,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2544,
-            "byteOffset" : 2544,
+            "byteLength" : 2928,
+            "byteOffset" : 2928,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1696,
-            "byteOffset" : 5088,
+            "byteLength" : 1952,
+            "byteOffset" : 5856,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1696,
-            "byteOffset" : 6784,
+            "byteLength" : 1952,
+            "byteOffset" : 7808,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 708,
-            "byteOffset" : 8480,
+            "byteLength" : 804,
+            "byteOffset" : 9760,
             "target" : 34963
         }
     ],
@@ -158,7 +158,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 9188,
+            "byteLength" : 10564,
             "uri" : "Door.bin"
         }
     ]
