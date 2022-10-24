@@ -13,7 +13,8 @@ namespace DOG
 	class AnimationManager
 	{
 	private:
-		static constexpr u8 m_nRigs = 1;
+		using ClipData = DOG::RealAnimationComponent::ClipRigData;
+
 		static constexpr u8 m_mixamoIdx = 0;
 		static constexpr u8 m_enemyIdx = 1;
 		static constexpr u8 m_mixamoTotalJoints = 65;
@@ -30,12 +31,14 @@ namespace DOG
 		static constexpr u8 m_maxClips = 4;
 		enum class KeyType
 		{
-			Scale,
+			Scale = 0,
 			Rotation,
 			Translation,
 		};
 		struct RigSpecifics
 		{
+			static constexpr u8 groupA = 0;
+			static constexpr u8 groupB = 0;
 			u8 nJoints;
 			u8 nNodes;
 			u8 groupAmaskStrt;
@@ -43,7 +46,20 @@ namespace DOG
 			u8 groupBmaskStrt;
 			u8 groupBmaskStop;
 		};
-		std::array<RigSpecifics, m_nRigs> m_rigSpecifics;
+		std::pair<u8, u8> GetNodeStartAndCount(const struct RigSpecifics rs, const u8 group) const
+		{
+			if (group == rs.groupA)
+				return { rs.groupAmaskStrt, (u8)(rs.groupAmaskStop - rs.groupAmaskStrt) };
+			else if (group == rs.groupB)
+				return { rs.groupAmaskStrt, (u8)(rs.groupBmaskStop - rs.groupBmaskStrt) };
+			else
+				return { (u8)0, rs.nNodes };
+		}
+		static constexpr u8 m_nRigs = 1;
+		static constexpr u8 m_mixamoRigId = 0;
+		static constexpr RigSpecifics m_mixamoRigSpecs = { 65, 67, 57, 67, 2, 57 };
+		//static constexpr RigSpecifics m_enemy1RigSpecs = { 65, 67, 57, 67, 2, 57 };
+		static constexpr RigSpecifics m_rigSpecifics[m_nRigs]{ m_mixamoRigSpecs };
 	public:
 		AnimationManager();
 		~AnimationManager();
@@ -53,6 +69,7 @@ namespace DOG
 	private:
 		void UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
 		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator);
+		void UpdateSkeleton3(const DOG::ImportedRig& rig, const DOG::RealAnimationComponent& animator);
 
 		DirectX::FXMVECTOR GetKeyValue(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick);
 		DirectX::FXMVECTOR ExtractScaling(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
@@ -60,7 +77,14 @@ namespace DOG
 		DirectX::FXMVECTOR ExtractWeightedAvgRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 		DirectX::FXMVECTOR ExtractRootTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 
+		void ExtractClipNodeInfluences(const ClipData* pcData, const std::vector<AnimationData>& anims, const KeyType key, const u8 nClips, const u8 rigID, const u8 group);
 
+		void CalculateSRT(const u8 rigID, const std::vector<AnimationData>& anims, const RealAnimationComponent& ac);
+		void SetGroupInfluence(std::vector<DirectX::XMVECTOR>& srtVector, const std::vector<AnimationData>& anims, const RigSpecifics& rigSpec, const RealAnimationComponent& ac);
+		void SetGroupInfluence(std::vector<DirectX::XMVECTOR>& srtVector, const u8 group, const std::vector<AnimationData>& anims, const RigSpecifics& rigSpec, const RealAnimationComponent& ac);
+
+		void SetClipNodeInfluence(std::vector<DirectX::XMVECTOR>& tfv, const std::vector<AnimationData>& anims, const KeyType key, const RigSpecifics& rigSpec, const RealAnimationComponent& ac);
+		void SumNodeInfluences(std::vector<DirectX::XMVECTOR>& keyValues, const ClipData* cData, const KeyType key, const u8 nClips, const u8 startNode, const u8 nNodes);
 
 		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::RealAnimationComponent& animator);
 
@@ -83,13 +107,18 @@ namespace DOG
 		std::vector<ImportedRig*> m_rigs;
 	private:
 		//test
+		std::array<DirectX::XMVECTOR, m_maxClips * m_rigSpecifics[m_mixamoIdx].nNodes> m_srtValues { DirectX::XMVECTOR{} };
+		bool m_up3 = false;
 		bool m_gogogo = false;
 		bool oldFirstTime = true;
 		bool newFirstTime = true;
+		bool newNewFirstTime = true;
 		DirectX::XMVECTOR m_oldDebugVec5[3];
 		DirectX::XMVECTOR m_newDebugVec5[3];
+		DirectX::XMVECTOR m_newNewDebugVec5[3];
 		std::vector<DirectX::XMMATRIX> m_debugOldTF;
 		std::vector<DirectX::XMMATRIX> m_debugNewTF;
+		std::vector<DirectX::XMMATRIX> m_debugNewNewTF;
 		static constexpr u32 nDebugClips = 3;
 		f32 m_debugTime = 0.0f;
 		struct LogClip

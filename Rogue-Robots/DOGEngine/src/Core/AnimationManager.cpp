@@ -16,13 +16,6 @@ namespace DOG
 		m_imguiRot.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_vsJoints.assign(130, {});
 
-		m_rigSpecifics[m_mixamoIdx].nJoints = m_mixamoTotalJoints;
-		m_rigSpecifics[m_mixamoIdx].nNodes = m_mixamoTotalNodes;
-		m_rigSpecifics[m_mixamoIdx].groupAmaskStrt = m_mixamoGroupAStrtIdx;	// Lower body mask
-		m_rigSpecifics[m_mixamoIdx].groupAmaskStop = m_mixamoGroupAStopIdx;	// Lower body mask
-		m_rigSpecifics[m_mixamoIdx].groupBmaskStrt = m_mixamoGroupBStrtIdx;	// Upper body mask
-		m_rigSpecifics[m_mixamoIdx].groupBmaskStop = m_mixamoGroupBStopIdx;	// Upper body mask
-
 		ImGuiMenuLayer::RegisterDebugWindow("Animation Clip Setter", [this](bool& open) {SpawnControlWindow(open); });
 	};
 
@@ -119,8 +112,8 @@ namespace DOG
 					{
 						if (firstTime)
 						{
-							rAC.AddAnimationClip(2, 0, 0.f, 0.f, 1.0f, 1.0f, true);
-							rAC.AddAnimationClip(2, 1, 0.f, 0.f, 1.0f, 1.0f, true);
+							rAC.AddAnimationClip(2, 2, 0.f, 0.f, 1.0f, 1.0f, true);
+							//rAC.AddAnimationClip(2, 1, 0.f, 0.f, 1.0f, 1.0f, true);
 							firstTime = false;
 						}
 						for (u32 i = 0; i < rAC.nAddedClips; ++i)
@@ -141,9 +134,10 @@ namespace DOG
 							tfC.SetPosition({ 0.f, 0.f, 0.f });
 						}
 						//UpdateAnimationComponent(model->animation.animations, animatorC, (f32)Time::DeltaTime());
-						for (i32 i = 0; i < m_imguiProfilePerformUpdate; i++)
-							UpdateSkeleton(model->animation, animatorC);
-						UpdateSkeleton(model->animation, rAC);
+						UpdateSkeleton(model->animation, animatorC);
+						//UpdateSkeleton(model->animation, rAC);
+						if(m_up3)
+							UpdateSkeleton3(model->animation, rAC);
 						auto stt = 0;
 					}
 				});
@@ -168,6 +162,8 @@ namespace DOG
 			{
 				if (ImGui::Button("gogogo")) // tmp
 					m_gogogo = !m_gogogo;
+				if (ImGui::Button("mu3")) // tmp
+					m_up3 = !m_up3;
 				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 				ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 				static AnimationComponent* imguiAnimC;
@@ -318,53 +314,55 @@ namespace DOG
 	{
 		using namespace DirectX;
 		ZoneScopedN("skeletonUpdate");
-
-		// Set node animation transformations
-		std::vector<DirectX::XMMATRIX> hereditaryTFs;
-		hereditaryTFs.reserve(rig.nodes.size());
-		hereditaryTFs.push_back(DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation));
-		for (i32 i = 1; i < rig.nodes.size(); ++i)
+		for (i32 k = 0; k < m_imguiProfilePerformUpdate; k++)
 		{
-			auto ntf = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
-
-			if ( i <= 3 || (i > m_imguiMaskSpan1Strt && i < m_imguiMaskSpan1Stop) || (i > m_imguiMaskSpan2Strt && i < m_imguiMaskSpan2Stop))
+			// Set node animation transformations
+			std::vector<DirectX::XMMATRIX> hereditaryTFs;
+			hereditaryTFs.reserve(rig.nodes.size());
+			hereditaryTFs.push_back(DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation));
+			for (i32 i = 1; i < rig.nodes.size(); ++i)
 			{
-				const auto sca = ExtractScaling(i, rig, animator);
-				const auto rot = ExtractWeightedAvgRotation(i, rig, animator);
-				const auto tra = i > m_rootBoneIdx || m_imguiRootTranslation
-					? ExtractRootTranslation(i, rig, animator) : XMVECTOR{};
+				auto ntf = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
 
-				if (i == 5)
+				if (i <= 3 || (i > m_imguiMaskSpan1Strt && i < m_imguiMaskSpan1Stop) || (i > m_imguiMaskSpan2Strt && i < m_imguiMaskSpan2Stop))
 				{
-					m_oldDebugVec5[0] = sca;
-					m_oldDebugVec5[1] = rot;
-					m_oldDebugVec5[2] = tra;
+					const auto sca = ExtractScaling(i, rig, animator);
+					const auto rot = ExtractWeightedAvgRotation(i, rig, animator);
+					const auto tra = i > m_rootBoneIdx || m_imguiRootTranslation
+						? ExtractRootTranslation(i, rig, animator) : XMVECTOR{};
+
+					if (i == 5)
+					{
+						m_oldDebugVec5[0] = sca;
+						m_oldDebugVec5[1] = rot;
+						m_oldDebugVec5[2] = tra;
+					}
+					ntf = XMMatrixTranspose(XMMatrixScalingFromVector(sca) * XMMatrixRotationQuaternion(rot) * XMMatrixTranslationFromVector(tra));
 				}
-				ntf = XMMatrixTranspose(XMMatrixScalingFromVector(sca) * XMMatrixRotationQuaternion(rot) * XMMatrixTranslationFromVector(tra));
-			}
 
 #if defined _DEBUG
-			ntf *= ImguiTransform(i);
+				ntf *= ImguiTransform(i);
 #endif
-			hereditaryTFs.push_back(ntf);
-		}
-		if (oldFirstTime)
-		{
-			m_debugOldTF = hereditaryTFs;
-			oldFirstTime = false;
-		}
-		// Apply parent Transformation
-		for (size_t i = 1; i < hereditaryTFs.size(); ++i)
-			hereditaryTFs[i] = hereditaryTFs[rig.nodes[i].parentIdx] * hereditaryTFs[i];
-
-		const auto rootTF = XMLoadFloat4x4(&rig.nodes[0].transformation);
-		for (size_t n = 0; n < rig.nodes.size(); ++n)
-		{
-			auto joint = rig.nodes[n].jointIdx;
-			if (joint != -1)
+				hereditaryTFs.push_back(ntf);
+			}
+			if (oldFirstTime)
 			{
-				XMStoreFloat4x4(&m_vsJoints[animator.offset + joint],
-					rootTF * hereditaryTFs[n] * XMLoadFloat4x4(&rig.jointOffsets[joint]));
+				m_debugOldTF = hereditaryTFs;
+				oldFirstTime = false;
+			}
+			// Apply parent Transformation
+			for (size_t i = 1; i < hereditaryTFs.size(); ++i)
+				hereditaryTFs[i] = hereditaryTFs[rig.nodes[i].parentIdx] * hereditaryTFs[i];
+
+			const auto rootTF = XMLoadFloat4x4(&rig.nodes[0].transformation);
+			for (size_t n = 0; n < rig.nodes.size(); ++n)
+			{
+				auto joint = rig.nodes[n].jointIdx;
+				if (joint != -1)
+				{
+					XMStoreFloat4x4(&m_vsJoints[animator.offset + joint],
+						rootTF * hereditaryTFs[n] * XMLoadFloat4x4(&rig.jointOffsets[joint]));
+				}
 			}
 		}
 	}
@@ -372,60 +370,121 @@ namespace DOG
 	void AnimationManager::UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::RealAnimationComponent& animator)
 	{
 		using namespace DirectX;
-		ZoneScopedN("skeletonUpdate");
-
-		// Set node animation transformations
-		std::vector<XMMATRIX> hereditaryTFs;
-		std::vector<XMVECTOR> scaling;
-		std::vector<XMVECTOR> rotation;
-		std::vector<XMVECTOR> translation;
-		SetScaling(scaling, 0, animator);
-		SetRotation(rotation, 0, animator);
-		SetTranslation(translation, 0, animator);
-
-		hereditaryTFs.reserve(rig.nodes.size());
-		hereditaryTFs.push_back(DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation));
-		for (i32 i = 1; i < rig.nodes.size(); ++i)
+		ZoneScopedN("skeletonUpdate2");
+		for (i32 k = 0; k < m_imguiProfilePerformUpdate; k++)
 		{
-			auto ntf = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
-			if (i == 5)
+			// Set node animation transformations
+			std::vector<XMMATRIX> hereditaryTFs;
+			std::vector<XMVECTOR> scaling;
+			std::vector<XMVECTOR> rotation;
+			std::vector<XMVECTOR> translation;
+			SetScaling(scaling, 0, animator);
+			SetRotation(rotation, 0, animator);
+			SetTranslation(translation, 0, animator);
+
+			hereditaryTFs.reserve(rig.nodes.size());
+			hereditaryTFs.push_back(DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation));
+			for (i32 i = 1; i < rig.nodes.size(); ++i)
 			{
-				m_newDebugVec5[0] = scaling[i];
-				m_newDebugVec5[1] = rotation[i];
-				m_newDebugVec5[2] = translation[i];
-			}
-			ntf = XMMatrixTranspose(
-				XMMatrixScalingFromVector(scaling[i]) * 
-				XMMatrixRotationQuaternion(rotation[i]) * 
-				XMMatrixTranslationFromVector(translation[i])
-			);
+				auto ntf = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
+				if (i == 5)
+				{
+					m_newDebugVec5[0] = scaling[i];
+					m_newDebugVec5[1] = rotation[i];
+					m_newDebugVec5[2] = translation[i];
+				}
+				ntf = XMMatrixTranspose(
+					XMMatrixScalingFromVector(scaling[i]) *
+					XMMatrixRotationQuaternion(rotation[i]) *
+					XMMatrixTranslationFromVector(translation[i])
+				);
 
 #if defined _DEBUG
-			ntf *= ImguiTransform(i);
+				ntf *= ImguiTransform(i);
 #endif
-			hereditaryTFs.push_back(ntf);
-		}
-		if (newFirstTime)
-		{
-			m_debugNewTF = hereditaryTFs;
-			hereditaryTFs[1] = m_debugOldTF[1];
-			hereditaryTFs[2] = m_debugOldTF[2];
-			auto asd = m_newDebugVec5[0];
-			auto qwe = m_oldDebugVec5[0];
-			newFirstTime = false;
-		}
-		// Apply parent Transformation
-		for (size_t i = 1; i < hereditaryTFs.size(); ++i)
-			hereditaryTFs[i] = hereditaryTFs[rig.nodes[i].parentIdx] * hereditaryTFs[i];
-
-		const auto rootTF = XMLoadFloat4x4(&rig.nodes[0].transformation);
-		for (size_t n = 0; n < rig.nodes.size(); ++n)
-		{
-			auto joint = rig.nodes[n].jointIdx;
-			if (joint != -1)
+				hereditaryTFs.push_back(ntf);
+			}
+			if (newFirstTime)
 			{
-				XMStoreFloat4x4(&m_vsJoints[animator.offset + joint],
-					rootTF * hereditaryTFs[n] * XMLoadFloat4x4(&rig.jointOffsets[joint]));
+				m_debugNewTF = hereditaryTFs;
+				hereditaryTFs[1] = m_debugOldTF[1];
+				hereditaryTFs[2] = m_debugOldTF[2];
+				auto asd = m_newDebugVec5[0];
+				auto qwe = m_oldDebugVec5[0];
+				newFirstTime = false;
+			}
+			// Apply parent Transformation
+			for (size_t i = 1; i < hereditaryTFs.size(); ++i)
+				hereditaryTFs[i] = hereditaryTFs[rig.nodes[i].parentIdx] * hereditaryTFs[i];
+
+			const auto rootTF = XMLoadFloat4x4(&rig.nodes[0].transformation);
+			for (size_t n = 0; n < rig.nodes.size(); ++n)
+			{
+				auto joint = rig.nodes[n].jointIdx;
+				if (joint != -1)
+				{
+					XMStoreFloat4x4(&m_vsJoints[animator.offset + joint],
+						rootTF * hereditaryTFs[n] * XMLoadFloat4x4(&rig.jointOffsets[joint]));
+				}
+			}
+		}
+	}
+
+	void AnimationManager::UpdateSkeleton3(const DOG::ImportedRig& rig, const DOG::RealAnimationComponent& animator)
+	{
+		using namespace DirectX;
+		ZoneScopedN("skeletonUpdate3");
+		for (i32 k = 0; k < m_imguiProfilePerformUpdate; k++)
+		{
+			CalculateSRT(m_mixamoIdx, rig.animations, animator);
+			// Set node animation transformations
+			std::vector<XMMATRIX> hereditaryTFs;
+
+			hereditaryTFs.reserve(rig.nodes.size());
+			hereditaryTFs.push_back(DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation));
+			for (i32 i = 1; i < rig.nodes.size(); ++i)
+			{
+				auto ntf = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
+				if (i == 5)
+				{
+					m_newNewDebugVec5[0] = m_srtValues[i * 3 + 0];
+					m_newNewDebugVec5[1] = m_srtValues[i * 3 + 1];
+					m_newNewDebugVec5[2] = m_srtValues[i * 3 + 2];
+				}
+				ntf = XMMatrixTranspose(
+					XMMatrixScalingFromVector(m_srtValues[i*3+0]) *
+					XMMatrixRotationQuaternion(m_srtValues[i*3+1]) *
+					XMMatrixTranslationFromVector(m_srtValues[i*3+2])
+				);
+
+#if defined _DEBUG
+				ntf *= ImguiTransform(i);
+#endif
+				hereditaryTFs.push_back(ntf);
+			}
+			{
+				if (newNewFirstTime)
+					m_debugNewTF = hereditaryTFs;
+				/*hereditaryTFs[1] = m_debugOldTF[1];
+				hereditaryTFs[2] = m_debugOldTF[2];*/
+				auto zxc = m_newNewDebugVec5[0];
+				auto asd = m_newDebugVec5[0];
+				auto qwe = m_oldDebugVec5[0];
+				newNewFirstTime = false;
+			}
+			// Apply parent Transformation
+			for (size_t i = 1; i < hereditaryTFs.size(); ++i)
+				hereditaryTFs[i] = hereditaryTFs[rig.nodes[i].parentIdx] * hereditaryTFs[i];
+
+			const auto rootTF = XMLoadFloat4x4(&rig.nodes[0].transformation);
+			for (size_t n = 0; n < rig.nodes.size(); ++n)
+			{
+				auto joint = rig.nodes[n].jointIdx;
+				if (joint != -1)
+				{
+					XMStoreFloat4x4(&m_vsJoints[animator.offset + joint],
+						rootTF * hereditaryTFs[n] * XMLoadFloat4x4(&rig.jointOffsets[joint]));
+				}
 			}
 		}
 	}
@@ -579,7 +638,7 @@ namespace DOG
 		const auto nClips = ac.clipsPerGroup[group];
 
 		// Vector to store clip influences in, node adjacent
-		std::vector<XMVECTOR> groupScale(ac.clipsPerGroup[group] * nNodes, XMVECTOR{});
+		std::vector<XMVECTOR> groupScale(nNodes * ac.clipsPerGroup[group], XMVECTOR{});
 
 		auto startClip = 0;
 		for (u8 i = 0; i < group; i++)
@@ -937,6 +996,174 @@ namespace DOG
 				ac.groupWeights[ac.groupA] : ac.groupWeights[ac.groupB];
 
 			finalTrans[nodeIdx] = XMVectorLerp(finalTrans[nodeIdx], groupTrans[nodeIdx], lerpFactor);
+		}
+	}
+
+	void AnimationManager::CalculateSRT(const u8 rigID, const std::vector<AnimationData>& anims, const RealAnimationComponent& ac)
+	{
+		ZoneScopedN("Calc");
+		using namespace DirectX;
+		const auto rigSpec = m_rigSpecifics[rigID];
+		const auto nSRT = 3 * rigSpec.nNodes;
+		// Store scaling, translation, rotation extracted from anim keyframes
+		std::fill(m_srtValues.begin(), m_srtValues.begin() + nSRT, XMVECTOR{});
+
+		for (u8 g = 0; g < ac.nGroups; g++)
+		{
+			if (ac.clipsPerGroup[g])
+			{
+				const auto gClipIdx = ac.GetGroupIndex(g);
+				const auto [startNode, nNodes] = GetNodeStartAndCount(rigSpec, g);
+				ExtractClipNodeInfluences(&ac.clipData[gClipIdx], anims, KeyType::Scale, ac.clipsPerGroup[g], startNode, nNodes);
+				ExtractClipNodeInfluences(&ac.clipData[gClipIdx], anims, KeyType::Rotation, ac.clipsPerGroup[g], startNode, nNodes);
+				ExtractClipNodeInfluences(&ac.clipData[gClipIdx], anims, KeyType::Translation, ac.clipsPerGroup[g], startNode, nNodes);
+			}
+		}
+	}
+
+	void AnimationManager::ExtractClipNodeInfluences(const ClipData* cData, const std::vector<AnimationData>& anims, const KeyType key, const u8 nClips, const u8 startNode, const u8 nNodes)
+	{
+		ZoneScopedN("Extract");
+		using namespace DirectX;
+		using AnimKeys = std::unordered_map<i32, std::vector<AnimationKey>>;
+
+		std::vector<XMVECTOR> keyValues(nClips * nNodes, XMVECTOR{});
+
+		// For every clip in clip group
+		for (u8 i = 0; i < nClips; i++)
+		{
+			const auto aID = cData[i].aID;
+			const auto weight = cData[i].weight;
+			const auto tick = cData[i].tick;
+
+			const auto& animation = anims[aID];
+			// Store influence that the clip animation has on each node
+			for (u8 node = 0; node < nNodes; node++)
+			{
+				const auto storeIdx = node * nClips;
+				const auto rigNodeIdx = startNode + node;
+				const AnimKeys* keys = nullptr;
+				switch (key)
+				{
+				case KeyType::Scale:
+					keys = &animation.scaKeys;
+					break;
+				case KeyType::Rotation:
+					keys = &animation.rotKeys;
+					break;
+				default:
+					keys = &animation.posKeys;
+					break;
+				}
+				// Keyframe influence exist, store it
+				if (keys->find(rigNodeIdx) != keys->end())
+				{
+					auto keyVal = GetKeyValue(keys->at(rigNodeIdx), key, tick);
+					keyValues[storeIdx] = key == KeyType::Rotation ? weight * keyVal : keyVal;
+				}
+			}
+		}
+		SumNodeInfluences(keyValues, cData, key, nClips, startNode, nNodes);
+	}
+	
+	void AnimationManager::SumNodeInfluences(std::vector<DirectX::XMVECTOR>& keyValues, const ClipData* cData, const KeyType key, const u8 nClips, const u8 startNode, const u8 nNodes)
+	{
+		ZoneScopedN("sumNodeINf");
+		using namespace DirectX;
+		static constexpr u8 nKeyValues = 3;
+		// Sum each influence from each clip
+		for (u8 i = 0; i < nNodes; i++)
+		{
+			const auto frstClipIdx = i * nClips;
+			const auto rigNodeIdx = nKeyValues*(startNode + i) + u8(key);
+			// Sum clip key values for weighted average
+			if(key != KeyType::Rotation)
+			{
+				for (u8 i = 0; i < nClips; ++i)
+				{
+					const auto clipIdx = frstClipIdx + i;
+					m_srtValues[rigNodeIdx] += keyValues[clipIdx];
+				}
+				// if no keyframe scaling/translation influence set base value
+				if (XMComparisonAllTrue(XMVector3EqualR(m_srtValues[rigNodeIdx], {})) || (i == m_rootBoneIdx && key == KeyType::Translation))
+				{
+					const auto defaultValue = key == KeyType::Scale ? XMLoadFloat3(&m_baseScale) : XMLoadFloat3(&m_baseTranslation);
+					m_srtValues[rigNodeIdx] = defaultValue;
+				}
+			}
+			else
+			{
+				// weighted avg. is different for rotationQuaternions
+				XMVECTOR q0 = keyValues[frstClipIdx];
+				for (u8 i = 0; i < nClips; ++i)
+				{
+					const auto clipIdx = frstClipIdx + i;
+					auto w = cData[i].weight;
+					XMVECTOR& q = keyValues[clipIdx];
+					auto dot = XMVector4Dot(q0, q);
+					if (i > 0 && dot.m128_f32[0] < 0.0)
+						w = -w;
+
+					m_srtValues[rigNodeIdx] += w * q;
+				}
+				m_srtValues[rigNodeIdx] = XMVector4Normalize(m_srtValues[rigNodeIdx]);
+
+				// if no keyframe rotation influence set base rotation
+				if (XMComparisonAllTrue(XMVector4EqualR(m_srtValues[rigNodeIdx], {})))
+					m_srtValues[rigNodeIdx] = XMLoadFloat4(&m_baseRotation);
+			}
+		}
+	}
+
+
+	void AnimationManager::SetGroupInfluence(std::vector<DirectX::XMVECTOR>& srtVector, const u8 group, const std::vector<AnimationData>& anims, const RigSpecifics& rigSpec, const RealAnimationComponent& ac)
+	{
+		using namespace DirectX;
+
+		const auto startNode = group == ac.groupA ? rigSpec.groupAmaskStrt : rigSpec.groupBmaskStrt;
+		const auto stopNode = group == ac.groupA ? rigSpec.groupAmaskStop : rigSpec.groupBmaskStop;
+		const auto nNodes = stopNode - startNode;
+		const auto nClips = ac.clipsPerGroup[group];
+
+		// Vector to store clip influences in, node adjacent
+		std::vector<XMVECTOR> groupScale(nNodes * ac.clipsPerGroup[group], XMVECTOR{});
+
+		auto startClip = 0;
+		for (u8 i = 0; i < group; i++)
+			startClip += ac.clipsPerGroup[i];
+
+		// Go through all animation clips in group
+		for (u8 i = 0; i < nClips; i++)
+		{
+			const auto clipIdx = startClip + i;
+			const auto& clipData = ac.clipData[clipIdx];
+			const auto& animation = anims[clipData.aID];
+			// Store influence that the clip has on each node
+			for (u8 node = 0; node < nNodes; node++)
+			{
+				const auto storeIdx = node * nClips;
+				const auto rigNodeIdx = startNode + node;
+				// Keyframe influence exist, store it
+				if (animation.scaKeys.find(rigNodeIdx) != animation.scaKeys.end())
+				{
+					groupScale[storeIdx] = clipData.weight * GetKeyValue(animation.scaKeys.at(rigNodeIdx), KeyType::Scale, clipData.tick);
+				}
+			}
+		}
+		// Sum nodewise influence from each clip
+		for (u8 nodeIdx = 0; nodeIdx < nNodes; nodeIdx++)
+		{
+			const auto clipsStartIdx = nodeIdx * nClips;
+			const auto rigNodeIdx = startNode + nodeIdx;
+			for (u8 i = 0; i < nClips; i++)
+			{
+				const auto clipIdx = clipsStartIdx + i;
+				srtVector[rigNodeIdx] += groupScale[clipIdx];
+			}
+
+			// if no keyframe scaling influence set base scale
+			if (XMComparisonAllTrue(XMVector3EqualR(srtVector[rigNodeIdx], {})))
+				srtVector[rigNodeIdx] = XMLoadFloat3(&m_baseScale);
 		}
 	}
 }

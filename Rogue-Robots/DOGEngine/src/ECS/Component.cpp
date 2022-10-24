@@ -290,8 +290,6 @@ namespace DOG
 			{
 				if (!ReplacedClip(c, debugIdx))
 					++clipsPerGroup[c.group];
-				else
-					auto debugStop = 0;
 			}
 			else if(c.Deactivated(globalTime, dt))
 			{
@@ -312,7 +310,7 @@ namespace DOG
 		{
 			auto& c = clips[i];
 			const auto transitionTime = globalTime - c.transitionStart;
-			//c.UpdateClipTick(globalTime, dt);
+
 			c.UpdateClipTick(transitionTime < dt ? transitionTime : dt);
 			switch (c.blendMode)
 			{
@@ -345,6 +343,7 @@ namespace DOG
 			clipData[i].tick = c.currentTick;
 		}
 
+		//std::sort(groups.begin(), groups.end());
 		// Group transition/update
 		for (i32 i = 0; i < nGroups; i++)
 		{
@@ -408,6 +407,13 @@ namespace DOG
 		for (auto& c : clips)
 			count += (c.group != 3);
 		return count - nAddedClips;
+	}
+	u8 RealAnimationComponent::GetGroupIndex(const u8 group) const
+	{
+		u8 idx = 0;
+		for (u8 i = 0; i < group; i++)
+			idx += clipsPerGroup[i];
+		return idx;
 	}
 	i32 RealAnimationComponent::ActiveClipCount() const
 	{
