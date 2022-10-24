@@ -10,9 +10,7 @@ NetCode::NetCode()
 	m_inputTcp.nrOfNetStats = 0;
 	m_playerInputUdp.playerId = 0;
 	m_playerInputUdp.matrix = {};
-	m_playerInputUdp.shoot = FALSE;
-	m_playerInputUdp.jump = FALSE;
-	m_playerInputUdp.activateActiveItem = FALSE;
+
 
 	m_hardSyncTcp = FALSE;
 	m_active = FALSE;
@@ -82,25 +80,18 @@ void NetCode::OnUpdate()
 			EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, InputController>().Do([&](NetworkPlayerComponent&, ThisPlayer&, InputController& inputC)
 				{
 
-					m_playerInputUdp.shoot = inputC.shoot;
-					m_playerInputUdp.jump = inputC.jump;
-					m_playerInputUdp.activateActiveItem = inputC.activateActiveItem;
-					m_playerInputUdp.switchComp = inputC.switchComp;
-
+					m_playerInputUdp.action = inputC;
 				});
 			//Update the others players
 			EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent, InputController, OnlinePlayer>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&)
 				{
 					transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].matrix;
 					transformC.SetScale(DirectX::SimpleMath::Vector3(0.5f, 0.5f, 0.5f));
-					inputC.shoot = m_outputUdp.m_holdplayersUdp[networkC.playerId].shoot;
-					inputC.jump = m_outputUdp.m_holdplayersUdp[networkC.playerId].jump;
-					inputC.activateActiveItem = m_outputUdp.m_holdplayersUdp[networkC.playerId].activateActiveItem;
-					inputC.switchComp = m_outputUdp.m_holdplayersUdp[networkC.playerId].switchComp;
+					inputC = m_outputUdp.m_holdplayersUdp[networkC.playerId].action;
 				});
 
 			// Sync the rest
-			if (m_dataIsReadyToBeSentTcp == false)
+			if (!m_dataIsReadyToBeSentTcp)
 			{
 				m_inputTcp.nrOfNetTransform = 0;
 				m_inputTcp.nrOfNetStats = 0;
@@ -142,9 +133,13 @@ void NetCode::OnUpdate()
 						});
 
 					m_dataIsReadyToBeSentTcp = true;
+					memcpy(m_sendBuffer, (char*)&m_inputTcp, sizeof(m_inputTcp));
+					m_client.SendChararrayTcp(m_sendBuffer, m_bufferSize);
+					m_bufferSize = 0;
 				}
-				// Recived data
-				if (m_dataIsReadyToBeReceivedTcp)
+			}
+			// Recived data
+			if (m_dataIsReadyToBeReceivedTcp)
 				{
 					memcpy(m_outputTcp, m_receiveBuffer, sizeof(Client::ClientsData) * MAX_PLAYER_COUNT);
 					m_bufferReceiveSize += sizeof(Client::ClientsData) * MAX_PLAYER_COUNT;
@@ -225,7 +220,7 @@ void NetCode::OnUpdate()
 			}
 		}
 	}
-}
+
 
 void NetCode::Receive()
 {
@@ -236,25 +231,25 @@ void NetCode::Receive()
 	{
 
 		//tcp
-		
+		if (m_active == false)
+		{
+			m_startUp = true;
+			m_active = true;
+		}
 		while (m_netCodeAlive)
 		{
-  			if (m_dataIsReadyToBeSentTcp)
-			{
-				memcpy(m_sendBuffer, (char*)&m_inputTcp, sizeof(m_inputTcp));
-				m_client.SendChararrayTcp(m_sendBuffer, m_bufferSize);
 				m_receiveBuffer = m_client.ReceiveCharArrayTcp(m_receiveBuffer); // todo put in own thread
+
 				if (m_receiveBuffer == nullptr)
 				{
 					std::cout << "Bad tcp packet \n";
 				}
 				else
 				{
+
 					m_dataIsReadyToBeReceivedTcp = true;
 				}
-				m_bufferSize = 0;
 				m_dataIsReadyToBeSentTcp = false;
-			}
 		}
 			
 		}
@@ -296,12 +291,6 @@ bool NetCode::Host()
 			{
 				m_client.SendTcp(m_inputTcp);
 				m_outputTcp = m_client.ReceiveTcp();
-				if (m_active == false)
-				{
-					m_startUp = true;
-					m_active = true;
-
-				}
 				m_thread = std::thread(&NetCode::Receive, this);
 				return server;
 			}
@@ -314,7 +303,7 @@ bool NetCode::Join(char* inputString)
 {
 	if (inputString[0] == 'd')
 	{
-		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.72"); //192.168.1.55 || 192.168.50.214
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.74"); //192.168.1.55 || 192.168.50.214
 	}
 	else
 	{
@@ -323,13 +312,7 @@ bool NetCode::Join(char* inputString)
 
 	if (m_inputTcp.playerId > -1)
 	{
-		m_outputTcp = m_client.ReceiveTcp();		
-		if (m_active == false)
-		{
-			m_startUp = true;
-			m_active = true;
-
-		}
+		m_outputTcp = m_client.ReceiveTcp();
 		m_thread = std::thread(&NetCode::Receive, this);
 		return true;
 	}
@@ -338,11 +321,15 @@ bool NetCode::Join(char* inputString)
 
 INT8 NetCode::Play()
 {
-	if (m_active)
+
+	return MAX_PLAYER_COUNT;
+	/* 
+	if (m_active && m_inputTcp.playerId == 0)
 		return m_serverHost.GetNrOfConnectedPlayers();
 	else if (m_inputTcp.playerId == 0)
 		return 1;
 	else
 		std::cout << "Beep boop You are not the host, please dont press Play it hurts" << std::endl;
 	return -1;
+	*/
 }

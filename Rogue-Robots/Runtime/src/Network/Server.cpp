@@ -10,16 +10,9 @@ Server::Server()
 	for (UINT8 i = 0; i < MAX_PLAYER_COUNT; i++)
 	{
 		m_playersServer[i].playerId = i;
-	
 		m_holdPlayersUdp[i].playerId = i;
 		m_holdPlayersUdp[i].matrix = {};
-		m_holdPlayersUdp[i].jump  = false;
-		m_holdPlayersUdp[i].shoot  = false;
-		m_holdPlayersUdp[i].activateActiveItem  = false;
-
-		
 		m_playerIds.at(i) = i;
-
 	}
 
 	//Change denominator to set tick rate

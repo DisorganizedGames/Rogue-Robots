@@ -1,6 +1,6 @@
 #pragma once
 #include <DOGEngine.h>
-
+#include "Game/GameComponent.h"
 
 	constexpr int MAX_PLAYER_COUNT = 4;
 	constexpr int SEND_AND_RECIVE_BUFFER_SIZE = 4096;
@@ -23,11 +23,7 @@
 			int playerId = 0;
 			int udpId = 0;
 			DirectX::XMMATRIX matrix = {};
-			bool shoot = false;
-			bool jump = false;
-			bool activateActiveItem = false;
-			bool switchComp = false;
-
+			InputController action;
 
 		};
 		struct UdpData

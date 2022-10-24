@@ -48,6 +48,8 @@ namespace DOG
 		{
 			rigidbodyColliderData->rigidBody->setCollisionFlags(rigidbodyColliderData->rigidBody->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
 		}
+
+		mass = rigidbodyColliderData->rigidBody->getMass();
 	}
 
 	//Fix later
@@ -83,6 +85,7 @@ namespace DOG
 
 				bulletRigidbody->setLinearVelocity(btVector3(rigidbody.linearVelocity.x, rigidbody.linearVelocity.y, rigidbody.linearVelocity.z));
 				bulletRigidbody->applyCentralForce(btVector3(rigidbody.centralForce.x, rigidbody.centralForce.y, rigidbody.centralForce.z));
+				bulletRigidbody->applyCentralImpulse(btVector3(rigidbody.centralImpulse.x, rigidbody.centralImpulse.y, rigidbody.centralImpulse.z));
 
 				////Set freeze position in x,y,z
 				float x = rigidbody.constrainPositionX ? 0.0f : 1.0f;
@@ -123,6 +126,8 @@ namespace DOG
 				rigidbody.linearVelocity.z = linearVelocity.getZ();
 
 				rigidbody.centralForce = DirectX::SimpleMath::Vector3::Zero;
+
+				rigidbody.centralImpulse = DirectX::SimpleMath::Vector3::Zero;
 			});
 	}
 }

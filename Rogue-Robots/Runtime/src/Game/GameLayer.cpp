@@ -20,7 +20,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
-	m_nrOfPlayers = 1;
+	m_nrOfPlayers = MAX_PLAYER_COUNT;
 }
 
 void GameLayer::OnAttach()
@@ -76,8 +76,7 @@ void GameLayer::OnUpdate()
 
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
-
-	m_netCode.OnUpdate();
+	global->SetNumber("ElapsedTime", Time::ElapsedTime());
 }
 
 
@@ -187,16 +186,17 @@ void GameLayer::UpdateLobby()
 	if (ImGui::Button("Host"))
 	{
 		m_netCode.Host();
+		inLobby = false;
 	}
 	if (ImGui::Button("Join"))
 	{
-		m_netCode.Join(input);
+		if(m_netCode.Join(input))
+			inLobby = false;
 	}
 	if (ImGui::Button("Play"))
 	{
 		m_nrOfPlayers = m_netCode.Play();
-		if (m_nrOfPlayers > 0)
-			inLobby = false;
+		inLobby = false;
 	}
 	if(!inLobby)
 		m_gameState = GameState::StartPlaying;
@@ -298,6 +298,7 @@ void GameLayer::RegisterLuaInterfaces()
 
 	luaInterface = global->CreateLuaInterface("PhysicsInterface");
 	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBSetVelocity>("RBSetVelocity");
+	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::Explosion>("Explosion");
 	
 	global->SetLuaInterface(luaInterface);
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Physics", "PhysicsInterface");
@@ -403,7 +404,8 @@ void GameLayer::Input(DOG::Key key)
 				inputC.up = true;
 			if (key == DOG::Key::Q)
 				inputC.switchComp = true;
-
+			if (key == DOG::Key::E)
+				inputC.switchBarrelComp = true;
 	});
 }
 
@@ -425,6 +427,8 @@ void GameLayer::Release(DOG::Key key)
 				inputC.up = false;
 			if (key == DOG::Key::Q)
 				inputC.switchComp = false;
+			if (key == DOG::Key::E)
+				inputC.switchBarrelComp = false;
 		});
 }
 
