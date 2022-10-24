@@ -398,7 +398,7 @@ void EntityInterface::AddBullet(LuaContext* context, entity e)
 {
 	int playerEntity = context->GetInteger();
 	NetworkPlayerComponent& player = EntityManager::Get().GetComponent<NetworkPlayerComponent>(playerEntity);
-	EntityManager::Get().AddComponent<BulletComponent>(e).playerId = player.playerId;
+	EntityManager::Get().AddComponent<BulletComponent>(e).playerId =(i8)player.playerId;
 	EntityManager::Get().GetComponent<RigidbodyComponent>(e).continuousCollisionDetection = true;
 }
 
