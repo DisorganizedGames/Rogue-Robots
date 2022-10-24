@@ -178,6 +178,7 @@ namespace DOG::gfx
 				case LightUpdateFrequency::Never:
 					ret = statics.freeSlots.top();
 					statics.freeSlots.pop();
+					SetStaticsChunkDirty(true);
 					break;
 				case LightUpdateFrequency::Sometimes:
 					ret = infreqs.freeSlots.top();
@@ -266,7 +267,7 @@ namespace DOG::gfx
 			{
 				if (statics.handle.second)
 				{
-					statics.handle.second = false;
+					//statics.handle.second = false;
 					bufferGPU->RequestUpdate(
 						statics.handle.first,
 						chunkStart,

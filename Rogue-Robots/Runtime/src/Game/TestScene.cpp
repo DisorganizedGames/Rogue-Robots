@@ -128,27 +128,40 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	// Default lights
 
 	// TODO add a way of deleting static lights
-	/*
+	
 	u32 xOffset = 18;
 	u32 zOffset = 18;
 	for (u32 i = 0; i < 3; ++i)
 	{
 		for (u32 x = 0; x < 3; ++x)
 		{
+			auto e = CreateEntity();
+
 			auto pdesc = PointLightDesc();
 			pdesc.position = { xOffset + (f32)i * 7.f, 8.f, zOffset + (f32)x * 7.f };
 			pdesc.color = { 1.f, 0.f, 0.f };
 			pdesc.strength = 10.f;
-			LightManager::Get().AddPointLight(pdesc, LightUpdateFrequency::Never);
+			auto& plc = AddComponent<PointLightComponent>(e);
+			plc.handle = LightManager::Get().AddPointLight(pdesc, LightUpdateFrequency::Never);
+			plc.color = pdesc.color;
+			plc.strength = pdesc.strength;
 
+
+
+			auto e2 = CreateEntity();
 			auto dd = SpotLightDesc();
 			dd.position = { xOffset + (f32)i * 7.f, 16.f, zOffset + (f32)x * 7.f };
 			dd.color = { 0.f, 0.f, 1.f };
 			dd.direction = { 0.f, 1.f, 0.f };
 			dd.strength = 1.f;
-			LightManager::Get().AddSpotLight(dd, LightUpdateFrequency::Never);
+			auto& slc = AddComponent<SpotLightComponent>(e2);
+			slc.handle = LightManager::Get().AddSpotLight(dd, LightUpdateFrequency::Never);
+			slc.color = dd.color;
+			slc.strength = dd.strength;
+			slc.direction = dd.direction;
+			slc.cutoffAngle = dd.cutoffAngle;
 		}
-	}*/
+	}
 
 	// Moving light
 	LightHandle pointLight = LightManager::Get().AddPointLight(PointLightDesc(), LightUpdateFrequency::PerFrame);

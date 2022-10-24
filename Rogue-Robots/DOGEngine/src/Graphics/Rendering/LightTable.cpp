@@ -250,6 +250,7 @@ namespace DOG::gfx
 		gpu.color = desc.color;
 		gpu.direction = desc.direction;
 		gpu.strength = desc.strength;
+		gpu.cutoffAngle = desc.cutoffAngle;
 
 		// Store
 		const auto lightHandle = m_handleAtor.Allocate<LightHandle>();
