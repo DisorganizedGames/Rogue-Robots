@@ -103,11 +103,12 @@ namespace DOG
 	struct RealAnimationComponent
 	{
 		static constexpr u8 maxClips = 4;
-		static constexpr i32 groupA = 0; // Full body animation
-		static constexpr i32 groupB = 1; // Lower body
-		static constexpr i32 groupC = 2; // Upper body 
-		static constexpr i32 noGroup = 3;
-		static constexpr i32 nGroups = 3;
+		static constexpr u8 groupA = 0; // Full body animation
+		static constexpr u8 groupB = 1; // Lower body
+		static constexpr u8 groupC = 2; // Upper body 
+		static constexpr u8 noGroup = 3;
+		static constexpr u8 nGroups = 3;
+		static constexpr u8 nMaxGroupSpecs = 5;
 		i32 offset = 0;
 		f32 globalTime = 0.0f;
 		// -DEBUG-
@@ -175,23 +176,27 @@ namespace DOG
 		// Number of new clips added to component this frame
 		u32 nAddedClips = 0;
 		// Active clips per group
-		u32 clipsPerGroup[3] = { 0 };
+		u32 clipsPerGroup[nGroups] = { 0 };
 		struct ClipRigData
 		{
 			u8 aID;
 			f32 weight;
 			f32 tick;
 		};
-		std::array<ClipRigData, maxClips> clipData;
+		ClipRigData clipData[maxClips];
 		f32 groupWeights[nGroups] = { 1.0f, 0.f, 0.f };
 
 		struct GroupBlendSpec
 		{
 			BlendMode blendMode = BlendMode::linear;
+			u8 group = noGroup;
 			f32 sWeight = 0.f;
 			f32 tWeight = 0.f;
 			f32 tStart = 0.f;
 			f32 tLen = 0.f;
+			bool operator <(const GroupBlendSpec& o) const{
+				return group < o.group || (group == o.group && tStart < o.tStart);
+			}
 		};
 		// Full body group not needed (?)
 		std::array<GroupBlendSpec, nGroups> groups;
@@ -206,6 +211,8 @@ namespace DOG
 		void AddAnimationClip(i32 id, u32 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop = false, f32 timeScale = 1.f);
 		// Returns number of currently active clips contributing to current pose
 		i32 ActiveClipCount() const;
+		// Returns index of first clip in group
+		u8 GetGroupIndex(const u8 group) const;
 		// Return number of clips on the timeline
 		i32 ClipCount();
 	};
