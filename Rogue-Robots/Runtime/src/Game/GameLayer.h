@@ -7,6 +7,18 @@
 #include "GameComponent.h"
 #include "GameSystems.h"
 
+
+enum class GameState
+{
+	None = 0,
+	Initializing,
+	Lobby,
+	StartPlaying,
+	Playing,
+	Won,
+	Exiting,
+};
+
 class GameLayer : public DOG::Layer
 {
 public:
@@ -20,6 +32,13 @@ public:
 	virtual void OnEvent(DOG::IEvent& event) override final;
 
 private:
+	void UpdateLobby();
+	void UpdateGame();
+	void StartMainScene();
+	void CloseMainScene();
+
+	void EvaluateWinCondition();
+
 	void RegisterLuaInterfaces();
 	std::vector<DOG::entity> LoadLevel(); //Loads a PCG generated level.
 	void Input(DOG::Key key);
@@ -29,6 +48,7 @@ private:
 
 	void GameLayerDebugMenu(bool& open);
 private:
+	GameState m_gameState;
 	std::unique_ptr<DOG::Scene> m_testScene;
 	std::unique_ptr<DOG::Scene> m_mainScene;
 	std::vector<u32> m_shapes;

@@ -9,7 +9,7 @@ using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
 GameLayer::GameLayer() noexcept
-	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
+	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }, m_gameState(GameState::Initializing)
 {
 	LuaMain::GetScriptManager()->SortOrderScripts();
 	//Do startup of lua
@@ -24,25 +24,16 @@ GameLayer::GameLayer() noexcept
 
 void GameLayer::OnAttach()
 {
-	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameLayer", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1));
+	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameManager", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1), false, std::make_pair(DOG::Key::LCtrl, DOG::Key::G));
 	m_Agent = std::make_shared<Agent>();
 
-	m_testScene = std::make_unique<TestScene>();
-	m_testScene->SetUpScene();
-
-	m_mainScene = std::make_unique<MainScene>();
-	m_mainScene->SetUpScene({
-		[this]() { return SpawnPlayers(Vector3(25, 25, 15), 4, 10.f); },
-		[this]() { return LoadLevel(); },
-		[this]() { return std::vector<entity>(1, m_Agent->MakeAgent(m_entityManager.CreateEntity())); }
-		});
-
-	LuaMain::GetScriptManager()->StartScripts();
+	//m_testScene = std::make_unique<TestScene>();
+	//m_testScene->SetUpScene();
 }
 
 void GameLayer::OnDetach()
 {
-	DOG::ImGuiMenuLayer::UnRegisterDebugWindow("GameLayer");
+	DOG::ImGuiMenuLayer::UnRegisterDebugWindow("GameManager");
 	m_testScene.reset();
 	m_testScene = nullptr;
 
@@ -53,28 +44,92 @@ void GameLayer::OnDetach()
 void GameLayer::OnUpdate()
 {
 	MINIPROFILE
-	for (auto& system : m_entityManager)
+	switch (m_gameState)
 	{
-		system->EarlyUpdate();
-	}
-	for (auto& system : m_entityManager)
-	{
-		system->Update();
-	}
-	for (auto& system : m_entityManager)
-	{
-		system->LateUpdate();
+	case GameState::None:
+		break;
+	case GameState::Initializing:
+		m_gameState = GameState::Lobby;
+		break;
+	case GameState::Lobby:
+		UpdateLobby();
+		break;
+	case GameState::StartPlaying:
+		StartMainScene();
+		break;
+	case GameState::Playing:
+		UpdateGame();
+		break;
+	case GameState::Won:
+		CloseMainScene();
+		m_gameState = GameState::Lobby;
+		break;
+	case GameState::Exiting:
+		CloseMainScene();
+		m_gameState = GameState::None;
+		break;
+	default:
+		break;
 	}
 
 
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
 
-	m_player->OnUpdate();
 	m_netCode.OnUpdate();
+}
+
+void GameLayer::UpdateLobby()
+{
+	m_gameState = GameState::StartPlaying;
+}
+
+void GameLayer::StartMainScene()
+{
+	assert(m_mainScene == nullptr);
+	m_mainScene = std::make_unique<MainScene>();
+	m_mainScene->SetUpScene({
+		[this]() { return SpawnPlayers(Vector3(25, 25, 15), 4, 10.f); },
+		[this]() { return LoadLevel(); },
+		[this]() { return std::vector<entity>(1, m_Agent->MakeAgent(m_entityManager.CreateEntity())); }
+		});
+
+	m_player = std::make_shared<MainPlayer>();
+
+	LuaMain::GetScriptManager()->StartScripts();
+	m_gameState = GameState::Playing;
+}
+
+void GameLayer::CloseMainScene()
+{
+	if (m_player)
+	{
+		m_entityManager.DeferredEntityDestruction(m_player->GetEntity());
+		m_player.reset();
+	}	
+	m_mainScene.reset();
+}
+
+void GameLayer::EvaluateWinCondition()
+{
+	/*if (ImGui::Button("Win"))
+	{
+		m_gameState = GameState::Won;
+	}*/
+}
+
+void GameLayer::UpdateGame()
+{
+	m_player->OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
-} 
+
+
+
+	EvaluateWinCondition();
+
+}
+
 void GameLayer::OnRender()
 {
 	//...
@@ -123,6 +178,7 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	}
 	}
 }
+
 
 void GameLayer::RegisterLuaInterfaces()
 {
@@ -199,7 +255,7 @@ void GameLayer::RegisterLuaInterfaces()
 
 	//-----------------------------------------------------------------------------------------------
 	//Host
-	m_player = std::make_shared<MainPlayer>();
+	
 	luaInterfaceObject = std::make_shared<HostInterface>();
 	m_luaInterfaces.push_back(luaInterfaceObject);
 
@@ -396,7 +452,7 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 {
 	if (ImGui::BeginMenu("View"))
 	{
-		if (ImGui::MenuItem("GameLayer"))
+		if (ImGui::MenuItem("GameManager", "Ctrl+G"))
 		{
 			open = true;
 		}
@@ -405,8 +461,19 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 
 	if (open)
 	{
-		if (ImGui::Begin("GameLayer", &open))
+		if (ImGui::Begin("GameManager", &open))
 		{
+			if (ImGui::Button("Win"))
+			{
+				m_gameState = GameState::Won;
+			}
+			if (ImGui::Button("Lobby"))
+			{
+				CloseMainScene();
+				m_gameState = GameState::Lobby;
+			}
+
+
 			bool checkboxTestScene = m_testScene != nullptr;
 			if (ImGui::Checkbox("TestScene", &checkboxTestScene))
 			{
@@ -422,7 +489,8 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 				}
 			}
 
-			bool checkboxMainScene = m_mainScene != nullptr;
+			// Commented out until a propper debug camera is implemented.
+			/*bool checkboxMainScene = m_mainScene != nullptr;
 			if (ImGui::Checkbox("MainScene", &checkboxMainScene))
 			{
 				if (checkboxMainScene)
@@ -435,9 +503,9 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 					m_mainScene.reset();
 					m_mainScene = nullptr;
 				}
-			}
+			}*/
 		}
-		ImGui::End(); // "GameLayer"
+		ImGui::End(); // "GameManager"
 	}
 }
 

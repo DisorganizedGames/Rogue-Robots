@@ -7,7 +7,8 @@
 
 namespace DOG
 {
-    std::map<std::string, std::pair<std::function<void(bool&)>, bool>> ImGuiMenuLayer::s_debugWindows;
+    std::map<std::string, ImGuiMenuLayer::DebugMenu> ImGuiMenuLayer::s_debugWindows;
+    bool ImGuiMenuLayer::s_forceFocusLoss = false;
 
     ImGuiMenuLayer::ImGuiMenuLayer() noexcept : Layer("ImGuiMenu layer")
     {
@@ -32,6 +33,12 @@ namespace DOG
 
     void ImGuiMenuLayer::OnRender()
     {
+        if (s_forceFocusLoss)
+        {
+            s_forceFocusLoss = false;
+            return;
+        }
+
         // The menu bar at the top
         if (ImGui::BeginMainMenuBar())
         {
@@ -40,7 +47,7 @@ namespace DOG
 
             for (auto& [n, w] : s_debugWindows)
             {
-                w.first(w.second);
+                w.implementation(w.open);
             }
             ImGui::EndMainMenuBar();
         }
@@ -61,6 +68,19 @@ namespace DOG
                 case DOG::Key::F1:
                     return;
                 }
+
+                for (auto& [n, m] : s_debugWindows)
+                {
+                    if (m.shortCut && m.shortCut->second == EVENT(KeyPressedEvent).key)
+                    {
+                        if (DOG::Keyboard::IsKeyPressed(m.shortCut->first))
+                        {
+                            m.open = true;
+                            event.StopPropagation();
+                            break;
+                        }
+                    }
+                }
             }
 
             if (ImGui::GetIO().WantCaptureKeyboard)
@@ -78,9 +98,20 @@ namespace DOG
         }
     }
 
-    void ImGuiMenuLayer::RegisterDebugWindow(const std::string& name, std::function<void(bool&)> func, bool startOpen)
+    void ImGuiMenuLayer::RemoveFocus()
     {
-        s_debugWindows[name] = std::make_pair(func, startOpen);
+        if(ImGui::GetIO().WantCaptureKeyboard || ImGui::GetIO().WantCaptureMouse)
+            s_forceFocusLoss = true;
+    }
+
+    void ImGuiMenuLayer::RegisterDebugWindow(const std::string& name, std::function<void(bool&)> func, bool startOpen, std::optional<std::pair<DOG::Key, DOG::Key>> shortCut)
+    {
+        s_debugWindows[name] = ImGuiMenuLayer::DebugMenu
+        {
+            .implementation = func,
+            .open = startOpen,
+            .shortCut = shortCut
+        };
     }
 
     void ImGuiMenuLayer::UnRegisterDebugWindow(const std::string& name)

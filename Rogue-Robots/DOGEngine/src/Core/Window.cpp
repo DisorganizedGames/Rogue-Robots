@@ -24,9 +24,29 @@ namespace DOG
 		MINIPROFILE
 		if (s_wmHook)
 		{
-			if ((*s_wmHook)(windowHandle, message, wParam, lParam))
+
+			switch (message)
 			{
-				return true;
+			case WM_MOUSEMOVE:
+			case WM_LBUTTONDOWN:
+			case WM_LBUTTONUP:
+			case WM_RBUTTONDOWN:
+			case WM_RBUTTONUP:
+			case WM_MBUTTONDOWN:
+			case WM_MBUTTONUP:
+			case WM_MOUSEWHEEL:
+			case WM_INPUT:
+			{
+				if ((Window::GetCursorMode() & CursorMode::Visible) != CursorMode::Visible)
+				{
+					break;
+				}
+			}
+			default:
+				if ((*s_wmHook)(windowHandle, message, wParam, lParam))
+				{
+					return true;
+				}
 			}
 		}
 

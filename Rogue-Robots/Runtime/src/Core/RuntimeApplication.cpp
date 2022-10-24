@@ -62,9 +62,14 @@ void RuntimeApplication::OnEvent(IEvent& event) noexcept
 		{
 			static bool lockMouse = false;
 			if (lockMouse)
+			{
 				Window::SetCursorMode(CursorMode::Confined);
+				if (m_showImGuiMenu) m_imGuiMenuLayer.RemoveFocus();
+			}
 			else
+			{
 				Window::SetCursorMode(CursorMode::Visible);
+			}
 
 			lockMouse = !lockMouse;
 			event.StopPropagation();
