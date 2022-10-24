@@ -709,14 +709,26 @@ void UIInterface::CreateScene(DOG::LuaContext* context)
 void UIInterface::CreateButton(DOG::LuaContext* context)
 {
 	auto sceneID = context->GetInteger();
+	auto x = context->GetDouble();
+	auto y = context->GetDouble();
+	auto width = context->GetDouble();
+	auto height = context->GetDouble();
+	auto fontSize = context->GetDouble();
+	auto text = context->GetString();
 
 	auto luaCallback = context->GetFunction();
 	auto func = [luaCallback]()
 	{
 		LuaMain::GetGlobal()->CallGlobalFunction(luaCallback);
 	};
-
 	
+	UINT uid;
+	const auto& wstrText = std::filesystem::path(text).wstring();
+	auto el = UI::Get().Create<DOG::UIButton>(uid, x, y, width, height, fontSize, wstrText, func);
+
+	UI::Get().AddUIElementToScene(sceneID, std::move(el));
+
+	context->ReturnInteger(uid);
 }
 
 void UIInterface::CreateProgressBar(DOG::LuaContext* context)
