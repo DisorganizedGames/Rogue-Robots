@@ -168,7 +168,7 @@ namespace DOG::gfx
 	{
 		const auto& storage = HandleAllocator::TryGet(m_lights, HandleAllocator::GetSlot(handle.handle));
 		assert(storage.freq != LightUpdateFrequency::Never);
-		assert(storage.type == LightType::Spot);
+		assert(storage.type == LightType::Point);
 
 		auto& gpu = m_pointLights[storage.localLightID];
 		gpu.position = DirectX::SimpleMath::Vector4(desc.position.x, desc.position.y, desc.position.z, 1.f);
@@ -232,7 +232,7 @@ namespace DOG::gfx
 		const auto lightHandle = m_handleAtor.Allocate<LightHandle>();
 		Light_Storage storage{};
 		storage.localLightID = nextIdx;
-		storage.type = LightType::Spot;
+		storage.type = LightType::Point;
 		storage.freq = frequency;
 
 		HandleAllocator::TryInsertMove(m_lights, std::move(storage), HandleAllocator::GetSlot(lightHandle.handle));
@@ -250,6 +250,7 @@ namespace DOG::gfx
 		gpu.color = desc.color;
 		gpu.direction = desc.direction;
 		gpu.strength = desc.strength;
+		gpu.cutoffAngle = desc.cutoffAngle;
 
 		// Store
 		const auto lightHandle = m_handleAtor.Allocate<LightHandle>();

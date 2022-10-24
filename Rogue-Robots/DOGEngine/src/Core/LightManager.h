@@ -30,6 +30,8 @@ namespace DOG
 		void UpdateSpotLight(LightHandle handle, const SpotLightDesc& desc);
 		void UpdateAreaLight(LightHandle handle, const AreaLightDesc& desc);
 
+		void DestroyDeferredEntities();
+
 	private:
 		LightManager(gfx::Renderer* renderer);
 		~LightManager();
