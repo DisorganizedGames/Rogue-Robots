@@ -6,14 +6,6 @@ using namespace DirectX;
 MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 {
 	//Camera
-	m_playerEntity = m_entityManager.CreateEntity();
-
-	auto& psComp = m_entityManager.AddComponent<PlayerStatsComponent>(m_playerEntity);
-	psComp = {
-		.health = 100.f,
-		.maxHealth = 100.f,
-		.speed = 10.f
-	};
 	m_right		= Vector3(1, 0, 0);
 	m_up		= Vector3(0, 1, 0);
 	m_forward	= Vector3(0, 0, 1);
@@ -26,6 +18,11 @@ MainPlayer::MainPlayer() : m_entityManager(EntityManager::Get())
 
 	m_debugCamera = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<TransformComponent>(m_debugCamera);
+}
+
+MainPlayer::~MainPlayer()
+{
+	m_entityManager.DeferredEntityDestruction(m_debugCamera);
 }
 
 void MainPlayer::OnUpdate()
@@ -48,7 +45,7 @@ void MainPlayer::OnUpdate()
 			CameraComponent::s_mainCamera = &cameraC;
 			cameraC.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
 			
-			auto speed = m_entityManager.GetComponent<PlayerStatsComponent>(m_playerEntity).speed;
+			float speed = 10;
 			if (m_moveView)
 			{
 				auto [mouseX, mouseY] = DOG::Mouse::GetDeltaCoordinates();
@@ -122,11 +119,4 @@ void MainPlayer::OnUpdate()
 			
 			useTransform->worldMatrix = cameraC.viewMatrix.Invert();
 		});
-
-}
-
-
-const DOG::entity MainPlayer::GetEntity() const noexcept
-{
-	return m_playerEntity;
 }

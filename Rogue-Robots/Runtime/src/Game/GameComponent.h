@@ -12,8 +12,8 @@ struct GunComponent
 
 struct PlayerStatsComponent
 {
-	float health;
-	float maxHealth;
+	float maxHealth = 100.0f;
+	float health = maxHealth;
 	float speed;
 	//...
 };

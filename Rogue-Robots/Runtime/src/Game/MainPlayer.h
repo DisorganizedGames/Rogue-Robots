@@ -7,14 +7,12 @@ class MainPlayer
 	using Vector3 = DirectX::SimpleMath::Vector3;
 public:
 	MainPlayer();
+	~MainPlayer();
 
 public:
 	void OnUpdate();
-
-	const DOG::entity GetEntity() const noexcept;
 private:
 	DOG::EntityManager& m_entityManager;
-	DOG::entity m_playerEntity;
 
 	bool m_useDebugView = false;
 	DOG::entity m_debugCamera;

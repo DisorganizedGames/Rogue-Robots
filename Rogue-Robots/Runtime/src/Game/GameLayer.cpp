@@ -65,6 +65,10 @@ void GameLayer::OnUpdate()
 		CloseMainScene();
 		m_gameState = GameState::Lobby;
 		break;
+	case GameState::Lost:
+		CloseMainScene();
+		m_gameState = GameState::Lobby;
+		break;
 	case GameState::Exiting:
 		CloseMainScene();
 		m_gameState = GameState::None;
@@ -98,11 +102,7 @@ void GameLayer::StartMainScene()
 
 void GameLayer::CloseMainScene()
 {
-	if (m_player)
-	{
-		m_entityManager.DeferredEntityDestruction(m_player->GetEntity());
-		m_player.reset();
-	}	
+	m_player.reset();
 	m_mainScene.reset();
 }
 
@@ -112,6 +112,19 @@ void GameLayer::EvaluateWinCondition()
 	{
 		m_gameState = GameState::Won;
 	}*/
+}
+
+void GameLayer::EvaluateLoseCondition()
+{
+	bool playersAlive = false;
+	EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](PlayerStatsComponent& playerStats)
+		{
+			playersAlive |= playerStats.health > 0.0f;
+		});
+	if (!playersAlive)
+	{
+		m_gameState = GameState::Lost;
+	}
 }
 
 void GameLayer::UpdateGame()
@@ -124,6 +137,7 @@ void GameLayer::UpdateGame()
 
 
 	EvaluateWinCondition();
+	EvaluateLoseCondition();
 
 }
 
@@ -536,6 +550,45 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 					m_mainScene = nullptr;
 				}
 			}*/
+
+			std::vector<entity> players;
+			EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](entity e, PlayerStatsComponent&)
+				{
+					players.push_back(e);
+				});
+
+			auto&& playerToString = [&](entity e) -> std::pair<std::string, std::string>
+			{
+				auto& stats = EntityManager::Get().GetComponent<PlayerStatsComponent>(e);
+				std::string str2 = "hp: " + std::to_string(stats.health);
+				std::string str1;
+				if (EntityManager::Get().HasComponent<NetworkPlayerComponent>(e))
+					str1 = "Player: " + std::to_string(EntityManager::Get().GetComponent<NetworkPlayerComponent>(e).playerId);
+				return std::make_pair(str1, str2);
+			};
+
+			if (ImGui::BeginTable("Players", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV))
+			{
+				for (int i = 0; i < players.size(); i++)
+				{
+					auto row = playerToString(players[i]);
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Selectable((row.first + "##" + std::to_string(i)).c_str(), false, ImGuiSelectableFlags_SpanAllColumns);
+					if (ImGui::BeginPopupContextItem())
+					{
+						if (ImGui::Button("Kill player"))
+						{
+							EntityManager::Get().GetComponent<PlayerStatsComponent>(players[i]).health = 0;
+							ImGui::CloseCurrentPopup();
+						}
+						ImGui::EndPopup();
+					}
+					ImGui::TableSetColumnIndex(1);
+					ImGui::Text(row.second.c_str());
+				}
+				ImGui::EndTable();
+			}
 		}
 		ImGui::End(); // "GameManager"
 	}
