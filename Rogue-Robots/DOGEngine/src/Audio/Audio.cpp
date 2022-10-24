@@ -255,9 +255,9 @@ SourceVoice::SourceVoice(IXAudio2* audioDevice, WAVEFORMATEX wfx) : m_wfx(std::m
 	if (FAILED(hr)) { throw false; }
 }
 
-void SourceVoice::Play(std::vector<u8> data)
+void SourceVoice::Play(std::span<u8> data)
 {
-	m_externalBuffer = data; // Not great
+	m_externalBuffer = data;
 	m_idx = 0;
 
 	QueueNext();
@@ -285,7 +285,6 @@ void SourceVoice::Stop()
 	m_source->SetVolume(0.0);
 	m_source->FlushSourceBuffers();
 	m_source->Discontinuity();
-	m_externalBuffer.resize(0);
 	m_samplesPlayed = 0;
 	m_lastSamplesPlayed = 0;
 }
