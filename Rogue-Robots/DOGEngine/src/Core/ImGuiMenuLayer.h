@@ -2,6 +2,7 @@
 
 #include "../EventSystem/Layer.h"
 #include "../EventSystem/IEvent.h"
+#include "../Input/Keyboard.h"
 
 namespace DOG
 {
@@ -18,7 +19,7 @@ namespace DOG
 		virtual void OnImGuiRender() override final;
 		virtual void OnEvent(IEvent& event) override final;
 
-		static void RegisterDebugWindow(const std::string& name, std::function<void(bool&)> func, bool startOpen = false);
+		static void RegisterDebugWindow(const std::string& name, std::function<void(bool&)> func, bool startOpen = false, std::optional<std::pair<Key, Key>> shortCut = std::nullopt);
 		static void UnRegisterDebugWindow(const std::string& name);
 		static void RemoveFocus();
 
@@ -29,7 +30,13 @@ namespace DOG
 		static void ECSPanel(bool& open);
 #endif
 	private:
-		static std::map<std::string, std::pair<std::function<void(bool&)>, bool>> s_debugWindows;
+		struct DebugMenu
+		{
+			std::function<void(bool&)> implementation;
+			bool open;
+			std::optional<std::pair<Key, Key>> shortCut;
+		};
+		static std::map<std::string, DebugMenu> s_debugWindows;
 		static bool s_forceFocusLoss;
 
 		bool m_showEmptyWindow = false;

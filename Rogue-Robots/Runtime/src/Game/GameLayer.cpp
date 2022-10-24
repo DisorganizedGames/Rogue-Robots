@@ -24,7 +24,7 @@ GameLayer::GameLayer() noexcept
 
 void GameLayer::OnAttach()
 {
-	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameManager", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1));
+	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameManager", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1), false, std::make_pair(DOG::Key::LCtrl, DOG::Key::G));
 	m_Agent = std::make_shared<Agent>();
 
 	//m_testScene = std::make_unique<TestScene>();
@@ -452,7 +452,7 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 {
 	if (ImGui::BeginMenu("View"))
 	{
-		if (ImGui::MenuItem("GameManager"))
+		if (ImGui::MenuItem("GameManager", "Ctrl+G"))
 		{
 			open = true;
 		}
