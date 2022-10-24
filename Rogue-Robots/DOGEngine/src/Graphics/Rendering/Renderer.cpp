@@ -1254,10 +1254,8 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 	//Crosshair
 	UINT cID;
 	auto c = DOG::UI::Get().Create<DOG::UICrosshair>(cID);
-	//auto c = std::make_unique<DOG::UICrosshair>(*ui->GetBackend(), cID);
 	DOG::UI::Get().AddUIElementToScene(gameID, std::move(c));
 
-	DOG::UI::Get().RemoveUIElement(hID);
 
 	//Menu backgrounds
 	// auto menuBackID = ui->GenerateUID();

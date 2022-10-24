@@ -370,7 +370,8 @@ DOG::UIHealthBar::~UIHealthBar()
 
 void DOG::UIHealthBar::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   d2d.Get2DDeviceContext()->FillRectangle(m_bar, m_barBrush.Get());
+   if(m_value > 0.0f)
+      d2d.Get2DDeviceContext()->FillRectangle(m_bar, m_barBrush.Get());
    d2d.Get2DDeviceContext()->DrawRectangle(m_border, m_barBrush.Get());
    d2d.Get2DDeviceContext()->DrawTextW(
       m_text.c_str(),
@@ -383,14 +384,12 @@ void DOG::UIHealthBar::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 void DOG::UIHealthBar::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
    UNREFERENCED_PARAMETER(d2d);
-   auto val = abs(sinf(m_value += 0.01f));
-   m_bar.right = val * (m_barWidth)+m_bar.left - 1.0f;
-   m_text = std::to_wstring((UINT)(val * 100.f + 1.f)) + L'%';
+   m_bar.right = m_value * m_barWidth + m_bar.left - 2.0f;
+   m_text = std::to_wstring((UINT)(m_value * 100.f)) + L'%';
 }
 void DOG::UIHealthBar::SetBarValue(float value)
 {
    m_value = value;
-   m_text = std::to_wstring(value) + L'%';
 }
 
 DOG::UIBackground::UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float heigt, std::wstring title) : UIElement(id)
