@@ -155,22 +155,22 @@ Agent.spawnPoints = {
 Agent.nextSpawnPoint = 1
 
 function Agent:popBehavior()
-	print("popping " .. self.behaviorStack[#self.behaviorStack].name)
+	--print("popping " .. self.behaviorStack[#self.behaviorStack].name)
 	self.behaviorStack[#self.behaviorStack] = nil
 	self:PrintStack()
 end
 
 function Agent:pushBehavior(behavior)
-	print("pushing " .. behavior.name)
+	--print("pushing " .. behavior.name)
 	self.behaviorStack[#self.behaviorStack + 1] = behavior
 	self:PrintStack()
 end
 
 function Agent:PrintStack()
-	print("Behavior stack:")
-	for i, b in ipairs(self.behaviorStack) do
-		print("    " .. i .. " " .. b.name)
-	end
+	--print("Behavior stack:")
+	--for i, b in ipairs(self.behaviorStack) do
+	--	print("    " .. i .. " " .. b.name)
+	--end
 end
 
 function Agent:doBehavior()
@@ -188,7 +188,6 @@ function Agent:Damage(damage)
 end
 
 function Agent:Die()
-	print("Agent dies")
 	while #self.behaviorStack > 1 do
 		self:popBehavior()
 	end
@@ -217,8 +216,8 @@ function OnStart()
 end
 
 function OnUpdate()
-	Agent.pos = Vector3.FromTable(Entity:GetTransformPosData(EntityID))
 	Agent:doBehavior()
+	Agent.pos = Vector3.FromTable(Entity:GetTransformPosData(EntityID))
 end
 
 function OnCollisionEnter(self, e1, e2)
@@ -227,9 +226,16 @@ function OnCollisionEnter(self, e1, e2)
 		entity = e1
 	end
 	if Entity:HasComponent(entity, "Bullet") and Agent.stats.hp > 0.0 then
-		Agent:Damage(1000)
+		if Entity:IsBulletLocal(e2) then
+			print("Bullet is local")
+			Agent:Damage(10)
+		else
+			print("Bullet is Not Local, Bullet from other player")
+		end
+		print(" Current HP: " .. Agent.stats.hp)
+
 	else
-		print("Agent touched " .. entity .. " at  " .. Agent.pos)
+		--print("Agent touched " .. entity .. " at  " .. Agent.pos)
 		Agent:Collision(entity)
 	end
 end

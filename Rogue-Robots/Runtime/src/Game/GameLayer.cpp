@@ -20,6 +20,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
+	m_nrOfPlayers = 1;
 }
 
 void GameLayer::OnAttach()
@@ -49,7 +50,7 @@ void GameLayer::OnUpdate()
 	case GameState::None:
 		break;
 	case GameState::Initializing:
-		m_gameState = GameState::Lobby;
+		m_gameState = GameState::StartPlaying;
 		break;
 	case GameState::Lobby:
 		UpdateLobby();
@@ -79,17 +80,13 @@ void GameLayer::OnUpdate()
 	m_netCode.OnUpdate();
 }
 
-void GameLayer::UpdateLobby()
-{
-	m_gameState = GameState::StartPlaying;
-}
 
 void GameLayer::StartMainScene()
 {
 	assert(m_mainScene == nullptr);
 	m_mainScene = std::make_unique<MainScene>();
 	m_mainScene->SetUpScene({
-		[this]() { return SpawnPlayers(Vector3(25, 25, 15), 4, 10.f); },
+		[this]() { return SpawnPlayers(Vector3(25, 25, 15), m_nrOfPlayers, 10.f); },
 		[this]() { return LoadLevel(); },
 		[this]() { return std::vector<entity>(1, m_Agent->MakeAgent(m_entityManager.CreateEntity())); }
 		});
@@ -121,6 +118,7 @@ void GameLayer::EvaluateWinCondition()
 void GameLayer::UpdateGame()
 {
 	m_player->OnUpdate();
+	m_netCode.OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
 
@@ -179,6 +177,31 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	}
 }
 
+void GameLayer::UpdateLobby()
+{
+	bool inLobby = m_gameState == GameState::Lobby;
+	static char input[64]{};
+	ImGui::Text("Enter Ip address of host\n if you are host leave empty");
+	ImGui::InputText("Ip", input, 64);
+
+	if (ImGui::Button("Host"))
+	{
+		m_netCode.Host();
+	}
+	if (ImGui::Button("Join"))
+	{
+		m_netCode.Join(input);
+	}
+	if (ImGui::Button("Play"))
+	{
+		m_nrOfPlayers = m_netCode.Play();
+		if (m_nrOfPlayers > 0)
+			inLobby = false;
+	}
+	if(!inLobby)
+		m_gameState = GameState::StartPlaying;
+}
+
 
 void GameLayer::RegisterLuaInterfaces()
 {
@@ -223,6 +246,8 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::HasComponent>("HasComponent");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::PlayAudio>("PlayAudio");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPassiveType>("GetPassiveType");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::IsBulletLocal>("IsBulletLocal");
+	
 
 	global->SetLuaInterface(luaInterface);
 

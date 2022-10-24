@@ -1,5 +1,8 @@
 #pragma once
 #include <DOGEngine.h>
+using namespace DirectX::SimpleMath;
+
+
 
 struct GunComponent
 {
@@ -26,7 +29,10 @@ struct AgentStatsComponent
 	u32 roomId;
 };
 
-struct BulletComponent {};
+struct BulletComponent
+{
+	i8 playerId;
+};
 
 struct NetworkAgentStats
 {
@@ -65,3 +71,11 @@ struct PassiveItemComponent {
 	Type type;
 };
 
+struct CreateAndDestroyEntityComponent
+{
+	u32 entityTypeId = 0;
+	u32 id = 0;
+	bool alive = true;
+	i8 playerId = 0; 
+	Vector3 position;
+};

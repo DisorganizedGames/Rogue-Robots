@@ -3,7 +3,7 @@
 
 
 	constexpr int MAX_PLAYER_COUNT = 4;
-	constexpr int SEND_AND_RECIVE_BUFFER_SIZE = 2048;
+	constexpr int SEND_AND_RECIVE_BUFFER_SIZE = 4096;
 	constexpr const char* PORTNUMBER_OUT = "50005";
 	constexpr const char* PORTNUMBER_IN  = "50004";
 	constexpr int PORTNUMBER_OUT_INT = 50006;
@@ -42,10 +42,10 @@
 		};
 		struct ClientsData
 		{
-			int playerId = 0;
+			INT8 playerId = 0;
 			int nrOfNetTransform = 0;
 			int nrOfNetStats = 0;
-			DirectX::XMMATRIX matrix = {};
+			int nrOfCreateAndDestroy = 0;
 		};
 		struct HostData
 		{
@@ -56,15 +56,15 @@
 
 		Client();
 		~Client();
-		int ConnectTcpServer(std::string ipAdress);
+		INT8 ConnectTcpServer(std::string ipAdress);
 		void SendTcp(ClientsData input); 
 		void SendChararrayTcp(char* input, int size);
-		char* ReciveCharArrayTcp(char* recivebuffer);
-		ClientsData* ReciveTcp();
+		char* ReceiveCharArrayTcp(char* recivebuffer);
+		ClientsData* ReceiveTcp();
 		ClientsData* SendandReciveTcp(ClientsData input);
 		void SetUpUdp();
 		void SendUdp(PlayerNetworkComponent input);
-		UdpReturnData ReciveUdp();
+		UdpReturnData ReceiveUdp();
 		UdpReturnData SendandReciveUdp(PlayerNetworkComponent input);
 
 	private:

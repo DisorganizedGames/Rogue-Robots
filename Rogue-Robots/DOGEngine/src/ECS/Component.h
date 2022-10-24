@@ -50,7 +50,7 @@ namespace DOG
 
 	struct NetworkTransform
 	{
-		u32 objectId;
+		u32 objectId  = 0;
 		DirectX::SimpleMath::Matrix transform;
 	};
 

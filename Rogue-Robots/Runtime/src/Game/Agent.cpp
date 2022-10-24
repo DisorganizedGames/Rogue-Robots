@@ -22,8 +22,11 @@ entity Agent::MakeAgent(DOG::entity e) noexcept
 
 	if (m_useNetworking)
 	{
+		// replace with enemy id
 		if (!m_entityManager.HasComponent<NetworkTransform>(e))
 			m_entityManager.AddComponent<NetworkTransform>(e).objectId = e;
+		if (!m_entityManager.HasComponent<NetworkAgentStats>(e))
+			m_entityManager.AddComponent<NetworkAgentStats>(e).objectId = e;
 	}
 
 	// Attach correct script

@@ -22,13 +22,14 @@ Client::~Client()
 	delete[] m_reciveUdpBuffer;
 }
 
-int Client::ConnectTcpServer(std::string ipAdress)
+INT8 Client::ConnectTcpServer(std::string ipAdress)
 {
 	WSADATA socketStart;
 	addrinfo client, * addrOutput = NULL, * ptr = NULL;
 	BOOL turn = TRUE;
 	char inputSend[sizeof(int)];
-	int check, returnValue;
+	int check;
+	INT8 returnValue;
 
 	strcpy_s(m_hostIp, sizeof(ipAdress), ipAdress.c_str());
 
@@ -89,7 +90,7 @@ int Client::ConnectTcpServer(std::string ipAdress)
 
 	//get player number
 	check = recv(m_connectSocket, inputSend, sizeof(int), 0);
-	returnValue = atoi(inputSend);
+	returnValue = (INT8)atoi(inputSend);
 
 	SetUpUdp();
 	if (returnValue == -1)
@@ -116,17 +117,22 @@ void Client::SendChararrayTcp(char* input, int size)
 	return;
 }
 
-struct Client::ClientsData* Client::ReciveTcp()
+struct Client::ClientsData* Client::ReceiveTcp()
 {
 	recv(m_connectSocket, (char*)&m_playersClient, sizeof(m_playersClient), 0);
 	return m_playersClient;
 }
 
-char* Client::ReciveCharArrayTcp(char* reciveBuffer)
+char* Client::ReceiveCharArrayTcp(char* reciveBuffer)
 {
 	int j = recv(m_connectSocket, reciveBuffer, SEND_AND_RECIVE_BUFFER_SIZE, 0);
-	if (j < (sizeof(Client::ClientsData) * MAX_PLAYER_COUNT))
+	if (j == -1)
+	{
+		std::cout <<  "Client: Error reciving tcp packet: " << WSAGetLastError() << std::endl;
 		return nullptr;
+	}
+	if (j > 2000)
+		std::cout << "Client recived too much data: " <<  j << std::endl;
 	return reciveBuffer;
 }
 
@@ -228,7 +234,7 @@ void Client::SendUdp(PlayerNetworkComponent input)
 	sendto(m_udpSendSocket, (char*)&input, sizeof(input), 0, (struct sockaddr*)&m_hostAddressUdp, sizeof(m_hostAddressUdp));
 }
 
-struct Client::UdpReturnData Client::ReciveUdp()
+struct Client::UdpReturnData Client::ReceiveUdp()
 {
 	int bytesRecived = 0, hostAddressLength = sizeof(m_reciveAddressUdp);
 	UdpData header;
