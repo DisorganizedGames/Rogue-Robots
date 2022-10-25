@@ -14,71 +14,71 @@ namespace DOG
    class UIElement
    {
       public:
-      UIElement(UINT id);
-      virtual ~UIElement();
-      virtual void Draw(DOG::gfx::D2DBackend_DX12& d2d) = 0;
-      virtual void Update(DOG::gfx::D2DBackend_DX12& d2d);
-      UINT GetID();
+         UIElement(UINT id);
+         virtual ~UIElement();
+         virtual void Draw(DOG::gfx::D2DBackend_DX12& d2d) = 0;
+         virtual void Update(DOG::gfx::D2DBackend_DX12& d2d);
+         UINT GetID();
       private:
-      UINT m_ID;
+         UINT m_ID;
    };
 
    class UI
    {
       public:
-      UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight);
-      ~UI();
-      void DrawUI();
-      void ChangeUIscene(UINT sceneID);
-      UINT AddUIElementToScene(UINT sceneID, std::unique_ptr<UIElement> element);
-      UINT RemoveUIElement(UINT elementID);
-      UINT AddScene();
-      void RemoveScene(UINT sceneID);
-      void Resize(UINT clientWidth, UINT clientHeight);
-      void FreeResize();
-      static void Initialize(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight);
-      static UI& Get();
-      static void Destroy();
-      DOG::gfx::D2DBackend_DX12* GetBackend();
+         UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight);
+         ~UI();
+         void DrawUI();
+         void ChangeUIscene(UINT sceneID);
+         UINT AddUIElementToScene(UINT sceneID, std::unique_ptr<UIElement> element);
+         UINT RemoveUIElement(UINT elementID);
+         UINT AddScene();
+         void RemoveScene(UINT sceneID);
+         void Resize(UINT clientWidth, UINT clientHeight);
+         void FreeResize();
+         static void Initialize(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight);
+         static UI& Get();
+         static void Destroy();
+         DOG::gfx::D2DBackend_DX12* GetBackend();
 
 
-      template<typename T, typename... Params>
-      std::unique_ptr<T> Create(UINT& uidOut, Params... args)
-      {
-         uidOut = GenerateUID();
-         return std::make_unique<T>(*m_d2d.get(), uidOut, std::forward<Params>(args)...);
-      }
-
-      template<typename T>
-      T* GetUI(UINT& elementID)
-      {
-         for (auto&& s : m_scenes)
+         template<typename T, typename... Params>
+         std::unique_ptr<T> Create(UINT& uidOut, Params... args)
          {
-            auto res = std::find_if(s->GetScene().begin(), s->GetScene().end(), [&](std::unique_ptr<UIElement> const& e) { return e->GetID() == elementID; });
-            if (res == s->GetScene().end())
-               continue;
-            else
-               return static_cast<T*>((*res).get());
+            uidOut = GenerateUID();
+            return std::make_unique<T>(*m_d2d.get(), uidOut, std::forward<Params>(args)...);
          }
-         return nullptr;
-      }
 
-      UI(UI& other) = delete;
-      void operator=(const UI&) = delete;
+         template<typename T>
+         T* GetUI(UINT& elementID)
+         {
+            for (auto&& s : m_scenes)
+            {
+               auto res = std::find_if(s->GetScene().begin(), s->GetScene().end(), [&](std::unique_ptr<UIElement> const& e) { return e->GetID() == elementID; });
+               if (res == s->GetScene().end())
+                  continue;
+               else
+                  return static_cast<T*>((*res).get());
+            }
+            return nullptr;
+         }
+
+         UI(UI& other) = delete;
+         void operator=(const UI&) = delete;
 
       private:
-      static UI* s_instance;
-      std::vector<std::unique_ptr<UIScene>> m_scenes;
-      std::unique_ptr<DOG::gfx::D2DBackend_DX12> m_d2d; //The thing that renders everything
-      UINT m_width, m_height;
-      UINT m_menuID, m_gameID;
-      UINT m_currsceneID, m_currsceneIndex;
-      bool m_visible;
-      UINT QueryScene(UINT sceneID);
-      UINT GenerateUID();
-      void BuildMenuUI();
-      void BuildGameUI();
-      std::vector<UINT> m_generatedIDs;
+         static UI* s_instance;
+         std::vector<std::unique_ptr<UIScene>> m_scenes;
+         std::unique_ptr<DOG::gfx::D2DBackend_DX12> m_d2d; //The thing that renders everything
+         UINT m_width, m_height;
+         UINT m_menuID, m_gameID;
+         UINT m_currsceneID, m_currsceneIndex;
+         bool m_visible;
+         UINT QueryScene(UINT sceneID);
+         UINT GenerateUID();
+         void BuildMenuUI();
+         void BuildGameUI();
+         std::vector<UINT> m_generatedIDs;
    };
 
    class UIScene
@@ -99,82 +99,91 @@ namespace DOG
    class UIButton : public UIElement
    {
       public:
-      bool pressed;
-      UIButton(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, std::wstring text, std::function<void(void)> callback);
-      void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
-      void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
-      ~UIButton();
+         bool pressed;
+         UIButton(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, std::wstring text, std::function<void(void)> callback);
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
+         ~UIButton();
       private:
-      D2D_POINT_2F m_pos;
-      D2D1_RECT_F m_textRect;
-      D2D_VECTOR_2F m_size;
-      std::wstring m_text;
-      std::function<void(void)> m_callback;
-      ComPtr<IDWriteTextFormat> m_format;
-      ComPtr<ID2D1SolidColorBrush> m_brush;
+         D2D_POINT_2F m_pos;
+         D2D1_RECT_F m_textRect;
+         D2D_VECTOR_2F m_size;
+         std::wstring m_text;
+         std::function<void(void)> m_callback;
+         ComPtr<IDWriteTextFormat> m_format;
+         ComPtr<ID2D1SolidColorBrush> m_brush;
    };
 
 
    class UISplashScreen : public UIElement
    {
       public:
-      UISplashScreen(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float height);
-      void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
-      void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
-      ~UISplashScreen();
+         UISplashScreen(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float height);
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
+         ~UISplashScreen();
       private:
-      D2D1_RECT_F m_background;
-      clock_t m_timer;
-      ComPtr<ID2D1SolidColorBrush> m_splashBrush, m_textBrush;
-      ComPtr<IDWriteTextFormat> m_format;
-      std::wstring m_text;
-      float m_textOp, m_backOp;
+         D2D1_RECT_F m_background;
+         clock_t m_timer;
+         ComPtr<ID2D1SolidColorBrush> m_splashBrush, m_textBrush;
+         ComPtr<IDWriteTextFormat> m_format;
+         std::wstring m_text;
+         float m_textOp, m_backOp;
    };
 
    class UIHealthBar : public UIElement
    {
       public:
-      UIHealthBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height);
-      ~UIHealthBar();
+         UIHealthBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height);
+         ~UIHealthBar();
 
-      void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
-      void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
 
-      void SetBarValue(float value);
+         void SetBarValue(float value);
 
       private:
-      D2D1_RECT_F m_border, m_bar;
-      std::wstring m_text;
-      ComPtr<ID2D1SolidColorBrush> m_barBrush, m_borderBrush;
-      ComPtr<IDWriteTextFormat> m_textFormat;
-      float m_value, m_barWidth, m_test;
+         D2D1_RECT_F m_border, m_bar;
+         std::wstring m_text;
+         ComPtr<ID2D1SolidColorBrush> m_barBrush, m_borderBrush;
+         ComPtr<IDWriteTextFormat> m_textFormat;
+         float m_value, m_barWidth, m_test;
    };
 
    class UIBackground : public UIElement
    {
       public:
-      UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float heigt, std::wstring title);
-      ~UIBackground();
-      void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
-      void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
+         UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float heigt, std::wstring title);
+         ~UIBackground();
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
       private:
-      D2D1_RECT_F m_background, m_textRect;
-      std::wstring m_title;
-      ComPtr<IDWriteTextFormat> m_textFormat;
-      ComPtr<ID2D1SolidColorBrush> m_textBrush, m_backBrush;
+         D2D1_RECT_F m_background, m_textRect;
+         std::wstring m_title;
+         ComPtr<IDWriteTextFormat> m_textFormat;
+         ComPtr<ID2D1SolidColorBrush> m_textBrush, m_backBrush;
    };
 
    class UICrosshair : public UIElement
    {
       public:
-      UICrosshair(DOG::gfx::D2DBackend_DX12& d2d, UINT id);
-      ~UICrosshair();
-      void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
+         UICrosshair(DOG::gfx::D2DBackend_DX12& d2d, UINT id);
+         ~UICrosshair();
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
       private:
-      ComPtr<IDWriteTextFormat> m_textFormat;
-      ComPtr<ID2D1SolidColorBrush> m_brush;
-      D2D_RECT_F m_screenSize;
+         ComPtr<IDWriteTextFormat> m_textFormat;
+         ComPtr<ID2D1SolidColorBrush> m_brush;
+         D2D_RECT_F m_screenSize;
 
+   };
+
+   class UITextField : public UIElement
+   {
+      public:
+         UITextField(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height);
+         ~UITextField();
+      private:
+         std::string text;
    };
 
 }

@@ -1258,41 +1258,34 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
 
 	//Menu backgrounds
-	// auto menuBackID = ui->GenerateUID();
-	// auto optionsBackID = ui->GenerateUID();
-	// auto multiBackID = ui->GenerateUID();
-	// auto menuBack = std::make_unique<DOG::UIBackground>(*ui->GetBackend(), menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Rogue Robots"), );
-	// ui->AddUIElementToScene(menuID, std::move(menuBack));
-	// auto optionsBack = std::make_unique<DOG::UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Options"), *ui->GetBackend(), optionsBackID);
-	// ui->AddUIElementToScene(optionsID, std::move(optionsBack));
-	// auto multiBack = std::make_unique<DOG::UIBackground>((FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Multiplayer"), *ui->GetBackend(), multiBackID);
-	// ui->AddUIElementToScene(multiID, std::move(multiBack));
+	// UINT menuBackID, optionsBackID, multiBackID;
+	// auto menuBack = DOG::UI::Get().Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Rogue Robots"));
+	// DOG::UI::Get().AddUIElementToScene(menuID, std::move(menuBack));
+	// auto optionsBack =DOG::UI::Get().Create<DOG::UIBackground, float, float, std::wstring>(optionsBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Options"));
+	// DOG::UI::Get().AddUIElementToScene(optionsID, std::move(optionsBack));
+	// auto multiBack = DOG::UI::Get().Create<DOG::UIBackground, float, float, std::wstring>(multiBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Multiplayer"));
+	// DOG::UI::Get().AddUIElementToScene(multiID, std::move(multiBack));
 
-	// //Menu buttons
-	// auto bpID = ui->GenerateUID();
-	// auto bmID = ui->GenerateUID();
-	// auto boID = ui->GenerateUID();
-	// auto beID = ui->GenerateUID();
-	// auto optbackID = ui->GenerateUID();
-	// auto mulbackID = ui->GenerateUID();
-	// auto bp = std::make_unique<DOG::UIButton>(*ui->GetBackend(), (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, std::wstring(L"Play"), std::function<void()>(PlayButtonFunc), bpID);
-	// auto bm = std::make_unique<DOG::UIButton>(*ui->GetBackend(), (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 150.f, 60.f, 20.f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc), bmID);
-	// auto bo = std::make_unique<DOG::UIButton>(*ui->GetBackend(), (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc), boID);
-	// auto be = std::make_unique<DOG::UIButton>(*ui->GetBackend(), (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc), beID);
-	// auto optback = std::make_unique<DOG::UIButton>(*ui->GetBackend(), (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc), optbackID);
-	// auto mulback = std::make_unique<DOG::UIButton>(*ui->GetBackend(), (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc), mulbackID);
-	// ui->AddUIElementToScene(menuID, std::move(bp));
-	// ui->AddUIElementToScene(menuID, std::move(bm));
-	// ui->AddUIElementToScene(menuID, std::move(bo));
-	// ui->AddUIElementToScene(menuID, std::move(be));
-	// ui->AddUIElementToScene(optionsID, std::move(optback));
-	// ui->AddUIElementToScene(multiID, std::move(mulback));
+	//Menu buttons
+	// UINT bpID, bmID, boID, beID, optbackID, mulbackID;
+	// auto bp = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, std::wstring(L"Play"), std::function<void()>(PlayButtonFunc));
+	// auto bm = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(bmID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 150.f, 60.f, 20.f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
+	// auto bo = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
+	// auto be = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(beID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
+	// auto optback = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(optbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
+	// auto mulback = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
+	// DOG::UI::Get().AddUIElementToScene(menuID, std::move(bp));
+	// DOG::UI::Get().AddUIElementToScene(menuID, std::move(bm));
+	// DOG::UI::Get().AddUIElementToScene(menuID, std::move(bo));
+	// DOG::UI::Get().AddUIElementToScene(menuID, std::move(be));
+	// DOG::UI::Get().AddUIElementToScene(optionsID, std::move(optback));
+	// DOG::UI::Get().AddUIElementToScene(multiID, std::move(mulback));
 
 
 	//Splash screen
-	// auto sID = ui->GenerateUID();
-	// auto s = std::make_unique<DOG::UISplashScreen>(*ui->m_d2d, (float)clientWidth, (float)clientHeight, sID);
-	// ui->AddUIlEmentToScene(menuID, std::move(s));
+	// UINT sID;
+	// auto s = DOG::UI::Get().Create<DOG::UISplashScreen, float, float>(sID, (float)clientWidth, (float)clientHeight);
+	// DOG::UI::Get().AddUIElementToScene(menuID, std::move(s));
 
 }
 
