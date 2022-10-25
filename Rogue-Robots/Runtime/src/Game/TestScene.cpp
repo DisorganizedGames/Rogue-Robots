@@ -246,3 +246,14 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 		.loop = true,
 	};
 }
+
+void TestScene::SpawnMissile()
+{
+	entity missile = CreateEntity();
+	AddComponent<ModelComponent>(missile, AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/missile.glb"));
+	AddComponent<TransformComponent>(missile, Vector3(20, 10, 40));
+	AddComponent<BoxColliderComponent>(missile, missile, Vector3(0.2f, 0.2f, 1.0f), true, 12.0f);
+	AddComponent<RigidbodyComponent>(missile, missile);
+	AddComponent<HomingMissileComponent>(missile);
+
+}

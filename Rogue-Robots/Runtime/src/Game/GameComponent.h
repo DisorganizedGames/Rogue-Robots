@@ -25,6 +25,11 @@ struct BulletComponent
 	i8 playerId;
 };
 
+struct HomingMissileComponent
+{
+	
+};
+
 struct InputController
 {
 	bool forward = false;
