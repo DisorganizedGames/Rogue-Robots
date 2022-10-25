@@ -19,7 +19,7 @@ namespace DOG
 		std::atomic_bool m_async = false;
 
 		u64 m_idx = 0;
-		std::vector<u8> m_externalBuffer;
+		std::span<u8> m_externalBuffer;
 
 		u64 m_ringIdx = 0;
 		std::array<std::vector<u8>, 16> m_bufferRing;
@@ -39,7 +39,7 @@ namespace DOG
 		~SourceVoice() { if (m_source) m_source->DestroyVoice(); }
 
 	public:
-		void Play(std::vector<u8> data);
+		void Play(std::span<u8> data);
 		void PlayAsync();
 		void Stop();
 		void SetVolume(f32 volume);
