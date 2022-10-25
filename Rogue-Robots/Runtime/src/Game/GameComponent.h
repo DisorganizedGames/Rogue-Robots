@@ -1,6 +1,7 @@
 #pragma once
 #include <DOGEngine.h>
 #include "AgentManager/AgentComponents.h"
+#include "EntitesTypes.h"
 
 
 
@@ -56,7 +57,7 @@ struct PassiveItemComponent {
 
 struct CreateAndDestroyEntityComponent
 {
-	u32 entityTypeId = 0;
+	EntityTypes entityTypeId = EntityTypes::Default;
 	u32 id = 0;
 	bool alive = true;
 	i8 playerId = 0; 

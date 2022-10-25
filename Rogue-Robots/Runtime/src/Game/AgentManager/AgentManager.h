@@ -1,6 +1,6 @@
 #pragma once
 #include <DOGEngine.h>
-#include "AgentComponents.h"
+#include "../GameComponent.h"
 
 
 class AgentManager
@@ -8,11 +8,11 @@ class AgentManager
 	using Vector3 = DirectX::SimpleMath::Vector3;
 
 public:
-	entity CreateAgent(/*entityTypeId*/u32 type, Vector3 pos, DOG::SceneType scene);
-	void CreateOrDestroyShadowAgent(/*CreateAndDestroyEntityComponent& entityDesc*/);
+	DOG::entity CreateAgent(EntityTypes type, const Vector3& pos);
+	void CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& entityDesc);
 
 	AgentManager();
-	~AgentManager();
+	~AgentManager() = default;
 
 private:
 	bool m_useNetworking = true;
@@ -20,5 +20,5 @@ private:
 	std::vector<u32> m_models;
 	u32 m_agentIdCounter;
 
-	entity CreateAgentCore(u32 model, Vector3 pos, DOG::SceneType scene);	// Setup common for all agents
+	DOG::entity CreateAgentCore(u32 model, const Vector3& pos);	// Setup common for all agents
 };

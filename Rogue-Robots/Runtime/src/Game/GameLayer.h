@@ -4,6 +4,7 @@
 #include "NetCode.h"
 #include "Pathfinder/Pathfinder.h"
 #include "Agent.h"
+#include "AgentManager/AgentManager.h"
 #include "GameComponent.h"
 #include "GameSystems.h"
 
@@ -47,6 +48,7 @@ private:
 	void Release(DOG::Key key);
 	void CameraUpdate();
 	std::vector<DOG::entity> SpawnPlayers(const DirectX::SimpleMath::Vector3& pos, u8 playerCount, f32 spread = 10.f);
+	std::vector<DOG::entity> SpawnAgents(const EntityTypes type, const DirectX::SimpleMath::Vector3& pos, u8 agentCount, f32 spread = 10.f);
 
 	void GameLayerDebugMenu(bool& open);
 private:
@@ -62,4 +64,5 @@ private:
 	//Pathfinder m_pathfinder;		// uncomment to activate pathfinder
 	std::shared_ptr <Agent> m_Agent;
 	INT8 m_nrOfPlayers;
+	AgentManager m_agentManager;
 };

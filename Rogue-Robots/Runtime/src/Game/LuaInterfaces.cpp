@@ -533,7 +533,7 @@ void AssetInterface::LoadAudio(LuaContext* context)
 	context->ReturnInteger((i32)audioAssetID); // Pray we don't have over 2 billion assets
 }
 
-//---------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------wwwwwwwwwwwwww----------------
 //Host
 void HostInterface::DistanceToPlayers(DOG::LuaContext* context)
 {

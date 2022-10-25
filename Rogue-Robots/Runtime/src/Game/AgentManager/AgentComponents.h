@@ -22,7 +22,6 @@ struct AgentStatsComponent
 struct AgentIdComponent
 {
 	u32 id;
-	DOG::SceneType inScene;
 };
 
 struct AgentMovementComponent
@@ -39,27 +38,25 @@ struct AgentHPComponent
 
 struct AgentPathfinderComponent
 {
-	DirectX::SimpleMath::Vector3 currentPos;
 	DirectX::SimpleMath::Vector3 targetPos;
 	// TODO: PlannedPath
 };
 
 struct AgentSeekPlayerComponent
 {
-	AgentSeekPlayerComponent() : playerID(-1), playerPos(Vector3{0,0,0})
-	int playerID;
-	Vector3 playerPos;
+	i8 playerID = -1;
+	DOG::entity entityID = 0;
 };
 
-struct AgentBehaviorComponent
-{
-	AgentBehaviorComponent() : top(-1), stack{0} {}
-	AgentBehavior Doing() { return top < -1 ? AgentBehavior::Default : stack[top]; }
-	bool Push(AgentBehavior b) { return (top + 1) < stack.max_size() ? (stack[++top] = b) == b : false; }
-	void Pop() { top < 0 ? top = -1 : --top; }
-	char top;
-	std::array<AgentBehavior, 5> stack;
-};
+//struct AgentBehaviorComponent
+//{
+//	AgentBehaviorComponent() : top(-1), stack{0} {}
+//	AgentBehavior Doing() { return top < -1 ? AgentBehavior::Default : stack[top]; }
+//	bool Push(AgentBehavior b) { return (top + 1) < stack.max_size() ? (stack[++top] = b) == b : false; }
+//	void Pop() { top < 0 ? top = -1 : --top; }
+//	char top;
+//	std::array<AgentBehavior, 5> stack;
+//};
 
 
 /*******************************************
@@ -79,4 +76,9 @@ struct NetworkAgentBehaviorSync
 {
 	u32 agentID;
 	AgentBehavior behavior;
+};
+
+struct NetworkAgentSeekPlayer
+{
+	i8 playerID = -1;
 };
