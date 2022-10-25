@@ -12,6 +12,7 @@ namespace DOG
 		normal,
 		linear,
 		bezier,
+		interrupt,
 	};
 
 	struct TransformComponent
@@ -99,13 +100,13 @@ namespace DOG
 		// Update 
 		void Update(const f32 dt);
 	};
-
+	
 	struct RealAnimationComponent
 	{
-		static constexpr u8 maxClips = 4;
-		static constexpr u8 groupA = 0; // Full body animation
-		static constexpr u8 groupB = 1; // Lower body
-		static constexpr u8 groupC = 2; // Upper body 
+		static constexpr u8 maxClips = 10;
+		static constexpr u8 groupA = 0; // Lower body
+		static constexpr u8 groupB = 1; // Upper body
+		static constexpr u8 groupC = 2; // Full body animation 
 		static constexpr u8 noGroup = 3;
 		static constexpr u8 nGroups = 3;
 		static constexpr u8 nMaxGroupSpecs = 5;
@@ -117,6 +118,21 @@ namespace DOG
 		i32 nextDebugID = 0;
 		f32 debugWeights[3] = { 0.f };
 		// -------
+		struct ClipRigData
+		{
+			u8 aID;
+			f32 weight;
+			f32 tick;
+		};
+		struct GroupBlendSpec
+		{
+			BlendMode blendMode = BlendMode::linear;
+			f32 duration = 0.f;
+			f32 startWeight = 0.f;
+			f32 targetWeight = 0.f;
+			f32 transitionStart = 0.f;
+			f32 transitionLength = 0.f;
+		};
 		struct AnimationClip
 		{
 			static constexpr i32 noAnimation = -1;
@@ -148,11 +164,7 @@ namespace DOG
 			// Resets Clip to inactive state
 			void ResetClip();
 			// Update animation tick of clip
-			f32 UpdateClipTick(const f32 gt, const f32 dt);
 			f32 UpdateClipTick(const f32 transitionTime);
-			// Update weight functions
-			f32 UpdateWeightLinear(const f32 gt);
-			f32 UpdateWeightBezier(const f32 gt);
 			bool HasActiveAnimation() const { return animationID != noAnimation; };
 			// Set animation specifics fetched from rig
 			void SetAnimation(const f32 animationDuration, const f32 nTicks);
@@ -177,29 +189,15 @@ namespace DOG
 		u32 nAddedClips = 0;
 		// Active clips per group
 		u32 clipsPerGroup[nGroups] = { 0 };
-		struct ClipRigData
-		{
-			u8 aID;
-			f32 weight;
-			f32 tick;
-		};
+		
 		ClipRigData clipData[maxClips];
-		f32 groupWeights[nGroups] = { 1.0f, 0.f, 0.f };
 
-		struct GroupBlendSpec
-		{
-			BlendMode blendMode = BlendMode::linear;
-			u8 group = noGroup;
-			f32 sWeight = 0.f;
-			f32 tWeight = 0.f;
-			f32 tStart = 0.f;
-			f32 tLen = 0.f;
-			bool operator <(const GroupBlendSpec& o) const{
-				return group < o.group || (group == o.group && tStart < o.tStart);
-			}
-		};
-		// Full body group not needed (?)
-		std::array<GroupBlendSpec, nGroups> groups;
+		f32 groupWeights[nGroups-1] = { .0f, 0.f };
+		static constexpr u8 activeBlendIdxA = 0;
+		static constexpr u8 activeBlendIdxB = 1;
+		static constexpr u8 inactiveBlendIdxA = 2;
+		static constexpr u8 inactiveBlendIdxB = 3;
+		std::array<GroupBlendSpec, 4> groups;
 		// Update clip weights and ticks
 		void Update(const f32 dt);
 		// Group Blend Specifics
@@ -209,12 +207,19 @@ namespace DOG
 		bool ReplacedClip(AnimationClip& clip, const i32 cidx);
 		// Add a new animation clip to components timeline
 		void AddAnimationClip(i32 id, u32 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop = false, f32 timeScale = 1.f);
+		void AddBlendSpecification(f32 startDelay, f32 transitionLength, u32 group, f32 targetWeight, f32 duration = -1.f);
 		// Returns number of currently active clips contributing to current pose
 		i32 ActiveClipCount() const;
 		// Returns index of first clip in group
 		u8 GetGroupIndex(const u8 group) const;
 		// Return number of clips on the timeline
 		i32 ClipCount();
+
+		bool Activated(const f32 dt, const f32 transitionStart)
+		{
+			return (globalTime >= transitionStart) && (globalTime - dt <= transitionStart);
+		}
+		
 	};
 	static_assert(std::is_trivially_copyable_v<RealAnimationComponent>);
 
