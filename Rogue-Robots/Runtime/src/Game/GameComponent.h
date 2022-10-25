@@ -67,7 +67,7 @@ struct CreateAndDestroyEntityComponent
 
 struct FrostEffectComponent
 {
-	//??
+	//???
 	float frostTimer = 0.0f;
 };
 

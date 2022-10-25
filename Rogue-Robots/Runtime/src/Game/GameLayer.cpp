@@ -22,6 +22,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightMoveSystem>());
 	m_nrOfPlayers = MAX_PLAYER_COUNT;
+	m_networkStatus = 0;
 }
 
 void GameLayer::OnAttach()
@@ -74,11 +75,13 @@ void GameLayer::OnUpdate()
 		CloseMainScene();
 		m_gameState = GameState::None;
 		break;
+
 	default:
 		break;
 	}
 
-
+	if (m_networkStatus > 0)
+		m_netCode.OnUpdate();
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
 	global->SetNumber("ElapsedTime", Time::ElapsedTime());
@@ -108,6 +111,7 @@ void GameLayer::StartMainScene()
 	m_player = std::make_shared<MainPlayer>();
 
 	LuaMain::GetScriptManager()->StartScripts();
+	m_netCode.OnStartup();
 	m_gameState = GameState::Playing;
 }
 
@@ -141,7 +145,6 @@ void GameLayer::EvaluateLoseCondition()
 void GameLayer::UpdateGame()
 {
 	m_player->OnUpdate();
-	m_netCode.OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
 
@@ -217,24 +220,68 @@ void GameLayer::UpdateLobby()
 {
 	bool inLobby = m_gameState == GameState::Lobby;
 	static char input[64]{};
-	ImGui::Text("Enter Ip address of host\n if you are host leave empty");
-	ImGui::InputText("Ip", input, 64);
 
-	if (ImGui::Button("Host"))
+	ImGui::Text("Nr of players connected: %d", m_netCode.GetNrOfPlayers());
+	if(m_networkStatus == 0)
 	{
-		m_netCode.Host();
-		inLobby = false;
+		ImGui::Text("Enter Ip address of host\n if you are host leave empty");
+		ImGui::InputText("Ip", input, 64);
+		if (ImGui::Button("Host"))
+		{
+			if (m_netCode.Host())
+			{
+				m_networkStatus = 1;
+			}
+
+		}
+		if (ImGui::Button("Join"))
+		{
+			if (m_netCode.Join(input))
+			{
+				m_networkStatus = 2;
+			}
+		}
+		if (ImGui::Button("Play"))
+		{
+			if (m_networkStatus == 1)
+			{
+				m_netCode.Play();
+				inLobby = false;
+			}
+			else
+			{
+				m_nrOfPlayers = m_netCode.Play();
+				inLobby = false;
+			}
+
 	}
-	if (ImGui::Button("Join"))
+	}
+	else if (m_networkStatus == 1)
 	{
-		if(m_netCode.Join(input))
-			inLobby = false;
+		char ip[64];
+		strcpy(ip, m_netCode.GetIpAdress().c_str());
+		ImGui::Text("Youre ip adress: %s", ip);
+		if (ImGui::Button("Play"))
+		{
+			if (m_networkStatus == 1)
+			{
+				m_netCode.Play();
+				inLobby = false;
+			}
+			else
+			{
+				m_nrOfPlayers = m_netCode.Play();
+				inLobby = false;
+			}
+
+		}
 	}
-	if (ImGui::Button("Play"))
+	else if (m_networkStatus == 2)
 	{
-		m_nrOfPlayers = m_netCode.Play();
-		inLobby = false;
+		ImGui::Text("Waiting for Host to press Play...");
+	
 	}
+	inLobby = m_netCode.IsLobbyAlive();
 	if(!inLobby)
 		m_gameState = GameState::StartPlaying;
 }
