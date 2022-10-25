@@ -29,11 +29,12 @@ struct HomingMissileComponent
 {
 	HomingMissileComponent() = default;
 	HomingMissileComponent(DOG::entity target) : homingTarget(target) {}
-	float maxFuel = 4.0f;
-	float fuelConsumtion = 0.8f;
-	float fuel = maxFuel;
-	float specificImpules = 200.0f;
+	float speed = 30;
+	float turnSpeed = 5;
+	float engineBurnTime = 1.8f;
 	DOG::entity homingTarget = DOG::NULL_ENTITY;
+	bool homeInOnPosition = false;
+	DirectX::SimpleMath::Vector3 targetPosition;
 	bool launched = true;
 };
 
