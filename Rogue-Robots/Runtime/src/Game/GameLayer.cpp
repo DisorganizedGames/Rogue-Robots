@@ -316,6 +316,17 @@ void GameLayer::RegisterLuaInterfaces()
 	
 	global->SetLuaInterface(luaInterface);
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Physics", "PhysicsInterface");
+
+	//-----------------------------------------------------------------------------------------------
+	//Render
+	luaInterfaceObject = std::make_shared<RenderInterface>();
+	m_luaInterfaces.push_back(luaInterfaceObject);
+
+	luaInterface = global->CreateLuaInterface("RenderInterface");
+	luaInterface.AddFunction<RenderInterface, &RenderInterface::CreateMaterial>("CreateMaterial");
+
+	global->SetLuaInterface(luaInterface);
+	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Render", "RenderInterface");
 }
 
 std::vector<entity> GameLayer::LoadLevel()
@@ -472,7 +483,7 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		auto& rb = m_entityManager.AddComponent<RigidbodyComponent>(playerI, playerI);
 		rb.ConstrainRotation(true, true, true);
 		rb.disableDeactivation = true;
-		rb.getControlOfTransform = false;
+		rb.getControlOfTransform = true;
 
 		m_entityManager.AddComponent<PlayerStatsComponent>(playerI);
 		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = i;

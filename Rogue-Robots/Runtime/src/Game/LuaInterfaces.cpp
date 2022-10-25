@@ -85,6 +85,14 @@ void EntityInterface::AddComponent(LuaContext* context)
 
 		AddBullet(context, e);
 	}
+	else if (compType == "FrostEffect")
+	{
+		EntityManager::Get().AddComponent<FrostEffectComponent>(e).frostTimer = (float)context->GetDouble();
+	}
+	else if (compType == "SubMeshRender")
+	{
+		AddSubmeshRender(context, e);
+	}
 	//Add more component types here.
 	else
 	{
@@ -418,6 +426,35 @@ void EntityInterface::AddBullet(LuaContext* context, entity e)
 	EntityManager::Get().GetComponent<RigidbodyComponent>(e).continuousCollisionDetection = true;
 }
 
+void EntityInterface::AddSubmeshRender(LuaContext* context, entity e)
+{
+	//Get material information from table
+	LuaTable materialTable = context->GetTable();
+
+	ModelComponent& model = EntityManager::Get().GetComponent<ModelComponent>(e);
+
+	ModelAsset* modelAsset = AssetManager::Get().GetAsset<ModelAsset>(model.id);
+
+	if (!modelAsset)
+	{
+		std::cout << "Model has not been loaded in yet! Model ID: " << model.id << "\n";
+		return;
+	}
+
+	MaterialHandle materialHandle;
+	materialHandle.handle = static_cast<u64>(materialTable.GetIntFromTable("materialHandle"));
+
+	LuaTable albedoFactor = materialTable.GetTableFromTable("albedoFactor");
+	LuaVector3 albedoFactorVector(albedoFactor);
+
+	MaterialDesc materialDesc{};
+	materialDesc.albedoFactor = { albedoFactorVector.x, albedoFactorVector.y, albedoFactorVector.z };
+	materialDesc.roughnessFactor = (float)materialTable.GetDoubleFromTable("roughnessFactor");
+	materialDesc.metallicFactor = (float)materialTable.GetDoubleFromTable("metallicFactor");
+
+	EntityManager::Get().AddComponent<SubmeshRenderer>(e, modelAsset->gfxModel->mesh.mesh, materialHandle, materialDesc);
+}
+
 void EntityInterface::ModifyTransform(LuaContext* context, entity e)
 {
 	TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
@@ -528,7 +565,7 @@ void PhysicsInterface::Explosion(DOG::LuaContext* context)
 	float power = (float)context->GetDouble();
 	float radius = (float)context->GetDouble();
 
-	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([&](entity e, TransformComponent& transform, RigidbodyComponent& rigidbody)
+	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([&](TransformComponent& transform, RigidbodyComponent& rigidbody)
 		{
 			Vector3 position = transform.GetPosition();
 			float distance = Vector3::Distance(position, explosionPosition);
@@ -570,4 +607,34 @@ void SceneInterface::CreateEntity(LuaContext* context)
 	if (EntityManager::Get().HasComponent<SceneComponent>(e))
 		EntityManager::Get().AddComponent<SceneComponent>(newEntity, EntityManager::Get().GetComponent<SceneComponent>(e).scene);
 	context->ReturnInteger(newEntity);
+}
+
+void RenderInterface::CreateMaterial(DOG::LuaContext* context)
+{
+	//Create a new table and push the data to lua
+	LuaTable table = context->GetTable();
+	float roughnessFactor = (float)context->GetDouble();
+	float metallicFactor = (float)context->GetDouble();
+
+	LuaVector3 albedoFactor(table);
+
+	MaterialDesc d{};
+	d.albedoFactor = { albedoFactor.x, albedoFactor.y, albedoFactor.z };
+	d.roughnessFactor = roughnessFactor;
+	d.metallicFactor = metallicFactor;
+	auto mat = CustomMaterialManager::Get().AddMaterial(d);
+
+	LuaTable material;
+	material.AddIntToTable("materialHandle", (int)mat.handle);
+
+	LuaTable returnAlbedoFactor;
+	returnAlbedoFactor.AddFloatToTable("x", d.albedoFactor.x);
+	returnAlbedoFactor.AddFloatToTable("y", d.albedoFactor.y);
+	returnAlbedoFactor.AddFloatToTable("z", d.albedoFactor.z);
+	material.AddTableToTable("albedoFactor", returnAlbedoFactor);
+
+	material.AddFloatToTable("roughnessFactor", d.roughnessFactor);
+	material.AddFloatToTable("metallicFactor", d.metallicFactor);
+
+	context->ReturnTable(material);
 }

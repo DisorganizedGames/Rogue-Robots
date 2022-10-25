@@ -86,7 +86,7 @@ void NetCode::OnUpdate()
 			EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent, InputController, OnlinePlayer>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&)
 				{
 					transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].matrix;
-					transformC.SetScale(DirectX::SimpleMath::Vector3(0.5f, 0.5f, 0.5f));
+					transformC.SetScale(DirectX::SimpleMath::Vector3(1.0f, 1.0f, 1.0f));
 					inputC = m_outputUdp.m_holdplayersUdp[networkC.playerId].action;
 				});
 

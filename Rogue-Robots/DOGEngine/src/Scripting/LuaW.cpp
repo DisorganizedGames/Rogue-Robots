@@ -116,26 +116,26 @@ namespace DOG
 	void LuaW::PrintStack()
 	{
 		std::cout << "Stack:\n";
-		int top = lua_gettop(m_luaState);
+		int top = lua_gettop(s_luaW.m_luaState);
 		for (int i = 1; i <= top; i++)
 		{
-			printf("%d\t%s\t", i, luaL_typename(m_luaState, i));
-			switch (lua_type(m_luaState, i))
+			printf("%d\t%s\t", i, luaL_typename(s_luaW.m_luaState, i));
+			switch (lua_type(s_luaW.m_luaState, i))
 			{
 			case LUA_TNUMBER:
-				std::cout << lua_tonumber(m_luaState, i) << std::endl;
+				std::cout << lua_tonumber(s_luaW.m_luaState, i) << std::endl;
 				break;
 			case LUA_TSTRING:
-				std::cout << lua_tostring(m_luaState, i) << std::endl;
+				std::cout << lua_tostring(s_luaW.m_luaState, i) << std::endl;
 				break;
 			case LUA_TBOOLEAN:
-				std::cout << (lua_toboolean(m_luaState, i) ? "true" : "false") << std::endl;
+				std::cout << (lua_toboolean(s_luaW.m_luaState, i) ? "true" : "false") << std::endl;
 				break;
 			case LUA_TNIL:
 				std::cout << "nil" << std::endl;
 				break;
 			default:
-				std::cout << lua_topointer(m_luaState, i) << std::endl;
+				std::cout << lua_topointer(s_luaW.m_luaState, i) << std::endl;
 				break;
 			}
 		}
