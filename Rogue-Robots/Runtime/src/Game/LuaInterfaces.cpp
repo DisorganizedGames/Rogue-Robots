@@ -435,7 +435,11 @@ void EntityInterface::AddSubmeshRender(LuaContext* context, entity e)
 
 	ModelAsset* modelAsset = AssetManager::Get().GetAsset<ModelAsset>(model.id);
 
-	assert(modelAsset);
+	if (!modelAsset)
+	{
+		std::cout << "Model has not been loaded in yet! Model ID: " << model.id << "\n";
+		return;
+	}
 
 	MaterialHandle materialHandle;
 	materialHandle.handle = static_cast<u64>(materialTable.GetIntFromTable("materialHandle"));
