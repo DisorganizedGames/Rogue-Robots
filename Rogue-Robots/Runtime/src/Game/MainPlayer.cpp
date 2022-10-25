@@ -39,7 +39,7 @@ void MainPlayer::OnUpdate()
 	}
 
 	EntityManager::Get().Collect<InputController, CameraComponent, TransformComponent, RigidbodyComponent>()
-		.Do([&](InputController& inputC, CameraComponent& cameraC, TransformComponent& transformC, RigidbodyComponent& rb)
+		.Do([&](entity e, InputController& inputC, CameraComponent& cameraC, TransformComponent& transformC, RigidbodyComponent& rb)
 		{
 			f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
 			CameraComponent::s_mainCamera = &cameraC;
