@@ -27,7 +27,14 @@ struct BulletComponent
 
 struct HomingMissileComponent
 {
-	
+	HomingMissileComponent() = default;
+	HomingMissileComponent(DOG::entity target) : homingTarget(target) {}
+	float maxFuel = 4.0f;
+	float fuelConsumtion = 0.8f;
+	float fuel = maxFuel;
+	float specificImpules = 200.0f;
+	DOG::entity homingTarget = DOG::NULL_ENTITY;
+	bool launched = true;
 };
 
 struct InputController
