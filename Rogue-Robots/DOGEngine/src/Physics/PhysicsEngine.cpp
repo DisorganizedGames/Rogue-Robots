@@ -305,8 +305,6 @@ namespace DOG
 							if (it->second.activeCollision)
 							{
 								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0Entity, "OnCollisionEnter", obj1Entity);
-								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj1Entity, "OnCollisionEnter", obj0Entity);
-							}
 
 								//Call OnCollisionEnter for both entities if it has an rigidbody and a script
 								if (EntityManager::Get().HasComponent<RigidbodyComponent>(obj1Entity) && EntityManager::Get().HasComponent<ScriptComponent>(obj1Entity))
@@ -734,7 +732,8 @@ namespace DOG
 		for (auto collisions = s_physicsEngine.m_rigidbodyCollision.begin(); collisions != s_physicsEngine.m_rigidbodyCollision.end(); ++collisions)
 		{
 			//Remove the collisionObject from the rigidbody
-			auto foundCollisionObject = collisions->second.find(collisionObjectHandle.handle);
+			u32 collisionObject = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(collisionObjectHandle.handle);
+			auto foundCollisionObject = collisions->second.find(collisionObject);
 			if (foundCollisionObject != collisions->second.end())
 			{
 				collisions->second.erase(foundCollisionObject->first);
