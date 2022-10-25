@@ -2,6 +2,7 @@
 #include <DOGEngine.h>
 #include "GameComponent.h"
 
+extern DOG::entity g_newestAgent;
 
 class Agent
 {

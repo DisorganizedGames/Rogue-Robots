@@ -1,5 +1,6 @@
 #include "TestScene.h"
 #include "GameComponent.h"
+#include "Agent.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -257,4 +258,5 @@ void TestScene::SpawnMissile()
 	auto& m = AddComponent<HomingMissileComponent>(missile);
 	m.homeInOnPosition = true;
 	m.targetPosition = Vector3(20, 10, 30);
+	m.homingTarget = g_newestAgent;
 }
