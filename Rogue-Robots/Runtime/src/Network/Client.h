@@ -12,12 +12,6 @@
 	class Client
 	{
 	public:
-		struct NetworkEntity
-		{
-			int playerId;
-			int componentId;
-			DirectX::XMMATRIX componentMatrix;
-		};
 		struct PlayerNetworkComponent
 		{
 			int playerId = 0;
@@ -36,28 +30,34 @@
 		{
 			PlayerNetworkComponent m_holdplayersUdp[MAX_PLAYER_COUNT];
 		};
+		struct TcpHeader
+		{
+			i8 playerId = 0;
+			i8 nrOfPlayersConnected = 0;
+			u16 sizeOfPayload = 0;
+			u16 nrOfNetTransform = 0;
+			u16 nrOfNetStats = 0;
+			u16 nrOfCreateAndDestroy = 0;
+			bool lobbyAlive = true;
+			
+		};
 		struct ClientsData
 		{
-			INT8 playerId = 0;
-			int nrOfNetTransform = 0;
-			int nrOfNetStats = 0;
-			int nrOfCreateAndDestroy = 0;
-		};
-		struct HostData
-		{
-			int playerId = 0;
-			int nrOfNetworkEntites = 0;
-			DirectX::XMMATRIX matrix = {};
+			i8 playerId = 0;
+			u8 nrOfPlayersConnected = 0;
+			u16 sizeOfPayload = 0;
+			u16 nrOfNetTransform = 0;
+			u16 nrOfNetStats = 0;
+			u16 nrOfCreateAndDestroy = 0;
+			bool lobbyAlive = false;
 		};
 
 		Client();
 		~Client();
 		INT8 ConnectTcpServer(std::string ipAdress);
-		void SendTcp(ClientsData input); 
 		void SendChararrayTcp(char* input, int size);
-		char* ReceiveCharArrayTcp(char* recivebuffer);
-		ClientsData* ReceiveTcp();
-		ClientsData* SendandReciveTcp(ClientsData input);
+		u8 ReceiveCharArrayTcp(char* recivebuffer);
+	public:
 		void SetUpUdp();
 		void SendUdp(PlayerNetworkComponent input);
 		UdpReturnData ReceiveUdp();

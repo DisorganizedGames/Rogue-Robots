@@ -18,7 +18,7 @@ enum class GameState
 	Playing,
 	Won,
 	Lost,
-	Exiting,
+	Exiting
 };
 
 class GameLayer : public DOG::Layer
@@ -66,4 +66,5 @@ private:
 	std::shared_ptr <Agent> m_Agent;
 	INT8 m_nrOfPlayers;
 	AgentManager m_agentManager;
+	u8 m_networkStatus;
 };
