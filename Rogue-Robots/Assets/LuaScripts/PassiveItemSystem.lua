@@ -3,7 +3,7 @@ require("PassiveItems")
 local originalPlayerStats = nil
 local itemsDirty = true
 passiveItems = {
-	Template = {passiveItemsMap["Template"], 1}
+
 }
 
 function OnStart() 
