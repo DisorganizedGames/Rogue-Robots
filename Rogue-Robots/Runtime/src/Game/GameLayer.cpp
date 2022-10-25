@@ -91,15 +91,13 @@ void GameLayer::StartMainScene()
 	m_mainScene->SetUpScene({
 		[this]() { return SpawnPlayers(Vector3(25, 25, 15), m_nrOfPlayers, 10.f); },
 		[this]() { return LoadLevel(); },
-		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(35, 25, 35), 4, 10.f); }
-		//[this]() { return std::vector<entity>(1, m_Agent->MakeAgent(m_entityManager.CreateEntity())); }
+		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(35, 25, 50), 25, 2.5f); }
 		});
 
 	m_player = std::make_shared<MainPlayer>();
 
 	LuaMain::GetScriptManager()->StartScripts();
 	m_gameState = GameState::Playing;
-	//m_agentManager.CreateAgent(EntityTypes::Scorpio, Vector3(5, 5, 5), DOG::SceneType::MainScene);
 }
 
 void GameLayer::CloseMainScene()
@@ -498,7 +496,7 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		rb.getControlOfTransform = true;
 
 		m_entityManager.AddComponent<PlayerStatsComponent>(playerI);
-		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = i;
+		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = static_cast<i8>(i);
 		m_entityManager.AddComponent<InputController>(playerI);
 		scriptManager->AddScript(playerI, "Gun.lua");
 		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
@@ -530,7 +528,7 @@ std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3
 			0,
 			spread * (i / 2) - (spread / 2.f),
 		};
-		entity agentI = agents.emplace_back(m_agentManager.CreateAgent(type, pos - offset));
+		agents.emplace_back(m_agentManager.CreateAgent(type, pos - offset));
 	}
 	return agents;
 }

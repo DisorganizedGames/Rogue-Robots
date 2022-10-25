@@ -29,11 +29,12 @@ void AgentManager::CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& e
 AgentManager::AgentManager() : m_entityManager(EntityManager::Get()), m_agentIdCounter(0)
 {
 	// Load (all) agent model asset(s)
-	m_models.push_back(AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/suzanne.glb"));
+	m_models.push_back(AssetManager::Get().LoadModelAsset("Assets/Models/Enemies/enemy1.gltf"));
 	//m_models.push_back(AssetManager::Get().LoadModelAsset("Assets/Models/Enemies/enemy.gltf"));
 
 	// Register agent systems
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentSeekPlayerSystem>());
+	EntityManager::Get().RegisterSystem(std::make_unique<AgentMovementSystem>());
 }
 
 
@@ -56,15 +57,15 @@ entity AgentManager::CreateAgentCore(u32 model, const Vector3& pos)
 	if (!m_entityManager.HasComponent<ModelComponent>(e))
 		m_entityManager.AddComponent<ModelComponent>(e, model);
 
-	if (!m_entityManager.HasComponent<BoxColliderComponent>(e))
-		m_entityManager.AddComponent<BoxColliderComponent>(e, e, Vector3{ 1, 1, 1 }, true);
+	if (!m_entityManager.HasComponent<CapsuleColliderComponent>(e))
+		m_entityManager.AddComponent<CapsuleColliderComponent>(e, e, 0.25, 1, true);
 	
 	if (!m_entityManager.HasComponent<RigidbodyComponent>(e))
 	{
 		RigidbodyComponent& rb = m_entityManager.AddComponent<RigidbodyComponent>(e, e);
-		rb.ConstrainRotation(true, true, true);
+		rb.ConstrainRotation(true, false, true);
 		rb.disableDeactivation = true;
-		rb.getControlOfTransform = false;
+		rb.getControlOfTransform = true;
 	}
 	
 	if (!m_entityManager.HasComponent<AgentIdComponent>(e))
@@ -75,6 +76,12 @@ entity AgentManager::CreateAgentCore(u32 model, const Vector3& pos)
 
 	if (!m_entityManager.HasComponent<AgentSeekPlayerComponent>(e))
 		m_entityManager.AddComponent<AgentSeekPlayerComponent>(e);
+	
+	if (!m_entityManager.HasComponent<AgentMovementComponent>(e))
+		m_entityManager.AddComponent<AgentMovementComponent>(e);
+	
+	if (!m_entityManager.HasComponent<AgentPathfinderComponent>(e))
+		m_entityManager.AddComponent<AgentPathfinderComponent>(e);
 	
 	// Add networking components
 	if (m_useNetworking)

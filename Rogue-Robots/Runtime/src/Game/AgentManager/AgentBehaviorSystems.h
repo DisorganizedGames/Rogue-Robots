@@ -2,11 +2,13 @@
 #include <DOGEngine.h>
 #include "../GameComponent.h"
 
-
+#include "DirectXMath.h"
+#include <DirectXTK/SimpleMath.h>
 
 class AgentSeekPlayerSystem: public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
+	using Matrix = DirectX::SimpleMath::Matrix;
 public:
 	SYSTEM_CLASS(AgentSeekPlayerComponent, AgentIdComponent, DOG::TransformComponent);
 	ON_UPDATE_ID(AgentSeekPlayerComponent, AgentIdComponent, DOG::TransformComponent);
@@ -17,10 +19,16 @@ public:
 		struct PlayerDist
 		{
 			DOG::entity entityID;
-			int id;
+			i8 id;
 			Vector3 pos;
+			Vector3 dir;
 			float dist;
-			PlayerDist(DOG::entity eID, int pID, Vector3 p, float d) : entityID(eID), id(pID), pos(p), dist(d) {}
+			PlayerDist(DOG::entity eID, i8 pID, const Vector3& p, const Vector3& a) : entityID(eID), id(pID), pos(p)
+			{
+				dir = p - a;
+				dist = dir.Length();
+				dir.Normalize();
+			}
 			bool operator<(PlayerDist& o) { return dist < o.dist; }
 		};
 
@@ -31,12 +39,14 @@ public:
 
 		eMan.Collect<DOG::ThisPlayer, DOG::TransformComponent, DOG::NetworkPlayerComponent>().Do(
 			[&](DOG::entity id, DOG::ThisPlayer&, DOG::TransformComponent& transC, DOG::NetworkPlayerComponent& netPlayer) {
-				players.push_back(PlayerDist(id, netPlayer.playerId, transC.GetPosition(), (agentPos - transC.GetPosition()).Length()));
+				PlayerDist dist(id, netPlayer.playerId, transC.GetPosition(), agentPos);
+				players.push_back(dist);
 			});
 
 		eMan.Collect<DOG::OnlinePlayer, DOG::TransformComponent, DOG::NetworkPlayerComponent>().Do(
 			[&](DOG::entity id, DOG::OnlinePlayer&, DOG::TransformComponent& transC, DOG::NetworkPlayerComponent& netPlayer) {
-				players.push_back(PlayerDist(id, netPlayer.playerId, transC.GetPosition(), (agentPos - transC.GetPosition()).Length()));
+				PlayerDist dist(id, netPlayer.playerId, transC.GetPosition(), agentPos);
+				players.push_back(dist);
 			});
 
 		std::sort(players.begin(), players.end());	// sort players in acending distance to agent
@@ -47,9 +57,10 @@ public:
 			// new target
 			if (player.id != seek.playerID)
 			{
-				std::cout << "Agent " << agent.id << " detected player " << player.id << std::endl;
+				//std::cout << "Agent " << agent.id << " detected player " << static_cast<int>(player.id) << std::endl;
 				seek.playerID = player.id;
 				seek.entityID = player.entityID;
+				seek.direction = player.dir;
 				// add network signal
 				if (!eMan.HasComponent<NetworkAgentSeekPlayer>(e))
 				{
@@ -65,8 +76,8 @@ public:
 		}
 		else if (seek.playerID != -1)
 		{
-			std::cout << "Agent " << agent.id << " lost sight of player " << seek.playerID << std::endl;
 			// Lost target
+			//std::cout << "Agent " << agent.id << " lost sight of player " << static_cast<int>(seek.playerID) << std::endl;
 			seek.playerID = -1;
 			// add network signal
 			if (!eMan.HasComponent<NetworkAgentSeekPlayer>(e))
@@ -83,13 +94,14 @@ public:
 	}
 };
 
-class AgentMoveToSystem : public DOG::ISystem
+class AgentMovementSystem : public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
+	using Matrix = DirectX::SimpleMath::Matrix;
 public:
-	SYSTEM_CLASS(AgentMovementComponent, AgentPathfinderComponent, AgentSeekPlayerComponent);
-	ON_UPDATE(AgentMovementComponent, AgentPathfinderComponent, AgentSeekPlayerComponent);
-	void OnUpdate(AgentMovementComponent& movement, AgentPathfinderComponent& pathfinder, AgentSeekPlayerComponent& seek)
+	SYSTEM_CLASS(AgentMovementComponent, AgentPathfinderComponent, AgentSeekPlayerComponent, DOG::TransformComponent);
+	ON_UPDATE(AgentMovementComponent, AgentPathfinderComponent, AgentSeekPlayerComponent, DOG::TransformComponent);
+	void OnUpdate(AgentMovementComponent& movement, AgentPathfinderComponent& pathfinder, AgentSeekPlayerComponent& seek, DOG::TransformComponent& trans)
 	{
 		if (seek.playerID == -1)
 		{
@@ -97,7 +109,11 @@ public:
 		}
 		else
 		{
+			//std::cout << "(" << seek.direction.x << ", " << seek.direction.y << ", " << seek.direction.z << ")" << std::endl;
 			pathfinder.targetPos = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(seek.entityID).GetPosition();
+			trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pathfinder.targetPos, Vector3(0, 1, 0)).Invert();			
+			movement.forward = seek.direction;
+			trans.SetPosition(trans.GetPosition() + movement.forward * movement.speed * DOG::Time::DeltaTime());
 		}
 	}
 };

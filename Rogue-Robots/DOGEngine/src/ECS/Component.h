@@ -45,7 +45,7 @@ namespace DOG
 
 	struct NetworkPlayerComponent
 	{
-		int playerId;
+		i8 playerId;
 	};
 
 	struct NetworkTransform

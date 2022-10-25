@@ -26,8 +26,8 @@ struct AgentIdComponent
 
 struct AgentMovementComponent
 {
-	float speed;
-	DirectX::SimpleMath::Vector3 forward;
+	float speed = 15;
+	DirectX::SimpleMath::Vector3 forward{1, 0, 0};
 };
 
 struct AgentHPComponent
@@ -46,17 +46,8 @@ struct AgentSeekPlayerComponent
 {
 	i8 playerID = -1;
 	DOG::entity entityID = 0;
+	DirectX::SimpleMath::Vector3 direction;
 };
-
-//struct AgentBehaviorComponent
-//{
-//	AgentBehaviorComponent() : top(-1), stack{0} {}
-//	AgentBehavior Doing() { return top < -1 ? AgentBehavior::Default : stack[top]; }
-//	bool Push(AgentBehavior b) { return (top + 1) < stack.max_size() ? (stack[++top] = b) == b : false; }
-//	void Pop() { top < 0 ? top = -1 : --top; }
-//	char top;
-//	std::array<AgentBehavior, 5> stack;
-//};
 
 
 /*******************************************
