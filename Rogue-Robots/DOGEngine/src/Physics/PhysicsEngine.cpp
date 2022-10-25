@@ -92,7 +92,7 @@ namespace DOG
 		s_physicsEngine.m_dynamicsWorld = std::make_unique<btDiscreteDynamicsWorld>(s_physicsEngine.m_collisionDispatcher.get(),
 			s_physicsEngine.m_broadphaseInterface.get(), s_physicsEngine.m_sequentialImpulseContraintSolver.get(), s_physicsEngine.m_collisionConfiguration.get());
 
-		s_physicsEngine.m_dynamicsWorld->setGravity({0.0f, -9.82f, 0.0f});
+		s_physicsEngine.m_dynamicsWorld->setGravity({0.0f, -PhysicsEngine::standardGravity, 0.0f});
 
 		//For checking trigger collisions (i'm pretty sure)
 		s_physicsEngine.m_dynamicsWorld->getBroadphase()->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
