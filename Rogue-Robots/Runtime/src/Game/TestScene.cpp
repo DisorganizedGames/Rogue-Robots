@@ -26,6 +26,7 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	u32 blueCubeID = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
 	u32 mixamoID = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/walkmix.fbx");
 	u32 isoSphereID = am.LoadModelAsset("Assets/Models/Temporary_Assets/iso_sphere.glb");
+	u32 medkitID = am.LoadModelAsset("Assets/Models/Temporary_Assets/medkit.glb");
 
 	u32 sphereID = am.LoadShapeAsset(Shape::sphere, 8, 8);
 	entity sphereEntity = CreateEntity();
@@ -124,6 +125,15 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	AddComponent<TransformComponent>(doorTest, Vector3(25, 6, 15));
 	u32 doorModelID = am.LoadModelAsset("Assets/Models/Temporary_Assets/Door.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
 	AddComponent<ModelComponent>(doorTest, doorModelID);
+
+
+	entity passiveItemTest = CreateEntity();
+	AddComponent<PassiveItemComponent>(passiveItemTest).type = PassiveItemComponent::Type::Template;
+	AddComponent<ModelComponent>(passiveItemTest, medkitID);
+	AddComponent<TransformComponent>(passiveItemTest, Vector3(25, 15, 30));
+	AddComponent<BoxColliderComponent>(passiveItemTest, passiveItemTest, Vector3(0.2f, 0.2f, 0.2f), true);
+	AddComponent<RigidbodyComponent>(passiveItemTest, passiveItemTest, false);
+	LuaMain::GetScriptManager()->AddScript(passiveItemTest, "Pickupable.lua");
 
 	// Setup lights
 	// Default lights
