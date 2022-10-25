@@ -4,6 +4,7 @@
 #include "TestScene.h"
 #include "SimpleAnimationSystems.h"
 #include "ExplosionSystems.h"
+#include "HomingMissileSystem.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -24,6 +25,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightMoveSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<HomingMissileSystem>());
 	m_nrOfPlayers = MAX_PLAYER_COUNT;
 }
 
@@ -207,6 +209,11 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 		}
 		else
 			Input(EVENT(KeyPressedEvent).key);
+
+		if (EVENT(KeyPressedEvent).key == DOG::Key::M)
+		{
+			if (m_testScene) static_cast<TestScene*>(m_testScene.get())->SpawnMissile();
+		}
 		break;
 	}
 	case EventType::KeyReleasedEvent:
