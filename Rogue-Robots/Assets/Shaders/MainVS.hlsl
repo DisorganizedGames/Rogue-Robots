@@ -59,9 +59,7 @@ struct PushConstantElement
     uint perDrawCB;
     uint wireframe;
     
-    uint perDrawLight;
-    uint depth1;
-    uint depth2;
+    uint spotlightArrayStructureIndex;
 };
 ConstantBuffer<PushConstantElement> constants : register(b0, space0);
 
@@ -104,7 +102,7 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
         pos = (float3) mul(float4(pos, 1.0f), mat);
     }
     
-    ConstantBuffer<PerLightData> perLightData = ResourceDescriptorHeap[constants.perDrawLight];
+    ConstantBuffer<PerLightData> perLightData = ResourceDescriptorHeap[constants.spotlightArrayStructureIndex];
     
     output.wsPos = mul(perDrawData.world, float4(pos, 1.f)).xyz;
     output.pos = mul(pfData.projMatrix, mul(pfData.viewMatrix, float4(output.wsPos, 1.f)));

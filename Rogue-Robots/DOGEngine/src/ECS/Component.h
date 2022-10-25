@@ -120,6 +120,7 @@ namespace DOG
 		u32 id = (u32)- 1;
 
 		bool dirty{ true };		// If static handle, dirty bool is ignored
+		bool isMainPlayerSpotlight{ false };
 	};
 
 	struct PointLightComponent

@@ -85,8 +85,8 @@ void EmilFDebugLayer::OnAttach()
 	m_sheetEntity = m_entityManager.CreateEntity();
 	m_entityManager.AddComponent<DOG::ModelComponent>(m_sheetEntity, sheet);
 	m_entityManager.AddComponent<DOG::TransformComponent>(m_sheetEntity)
-		.SetPosition({ 0.0f, 0.0f, 10.0f })
-		.SetScale({ 10.0f, 10.0f, 10.0f })
+		.SetPosition({ 0.0f, 0.0f, 30.0f })
+		.SetScale({ 20.0f, 20.0f, 20.0f })
 		.SetRotation({-DirectX::XM_PIDIV2, 0.0f, 0.0f});
 	m_entityManager.AddComponent<DOG::ShadowReceiverComponent>(m_sheetEntity);
 
@@ -101,9 +101,12 @@ void EmilFDebugLayer::OnAttach()
 	m_entityManager.AddComponent<DOG::ShadowReceiverComponent>(m_sheetEntity2);
 
 	m_FlashLightEntity = CreateSpotLight({ 0.0f, 0.0f, 0.0f }, 0);
+	auto& slc = DOG::EntityManager::Get().GetComponent<DOG::SpotLightComponent>(m_FlashLightEntity);
+	slc.isMainPlayerSpotlight = true;
+	
 	CreateSpotLight({0.0f, 0.0f, -5.0f}, 1);
-	//CreateSpotLight({ 4.0f, 0.0f, -5.0f }, 2);
-	//CreateSpotLight({ -4.0f, -2.0f, -5.0f }, 3);
+	CreateSpotLight({ 4.0f, 0.0f, -5.0f }, 2);
+	CreateSpotLight({ -4.0f, -2.0f, -5.0f }, 3);
 }
 
 void EmilFDebugLayer::OnDetach()
@@ -278,10 +281,13 @@ void EmilFDebugLayer::OnEvent(DOG::IEvent& event)
 		{
 			m_entityManager.Collect<DOG::SpotLightComponent>().Do([](DOG::SpotLightComponent& slc)
 				{
-					if (slc.strength == 0.6f)
-						slc.strength = 0.0f;
-					else
-						slc.strength = 0.6f;
+					if (slc.isMainPlayerSpotlight)
+					{
+						if (slc.strength == 0.6f)
+							slc.strength = 0.0f;
+						else
+							slc.strength = 0.6f;
+					}
 				});
 		}
 	}
