@@ -303,7 +303,10 @@ namespace DOG
 							//if (it->second.activeCollision && rigidbody.onCollisionEnter != nullptr)
 							//	rigidbody.onCollisionEnter(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
 							if (it->second.activeCollision)
+							{
 								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0Entity, "OnCollisionEnter", obj1Entity);
+								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj1Entity, "OnCollisionEnter", obj0Entity);
+							}
 
 							//Set collisionCheck false for next collision check
 							it->second.collisionCheck = false;

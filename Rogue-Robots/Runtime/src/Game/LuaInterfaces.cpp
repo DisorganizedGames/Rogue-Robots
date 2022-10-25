@@ -280,7 +280,7 @@ void EntityInterface::PlayAudio(DOG::LuaContext* context)
 }
 
 const std::unordered_map<PassiveItemComponent::Type, std::string> passiveTypeMap = {
-	{ PassiveItemComponent::Type::Template, "Template"},
+	{ PassiveItemComponent::Type::Template, "Template" },
 };
 
 void EntityInterface::GetPassiveType(LuaContext* context)

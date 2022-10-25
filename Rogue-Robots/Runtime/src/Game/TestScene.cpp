@@ -124,6 +124,13 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	AddComponent<TransformComponent>(doorTest, Vector3(25, 6, 15));
 	u32 doorModelID = am.LoadModelAsset("Assets/Models/Temporary_Assets/Door.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
 	AddComponent<ModelComponent>(doorTest, doorModelID);
+	entity passiveItemTest = CreateEntity();
+	AddComponent<PassiveItemComponent>(passiveItemTest).type = PassiveItemComponent::Type::Template;
+	AddComponent<ModelComponent>(passiveItemTest, isoSphereID);
+	AddComponent<TransformComponent>(passiveItemTest, Vector3(25, 15, 30));
+	AddComponent<SphereColliderComponent>(passiveItemTest, passiveItemTest, 1.f, true);
+	AddComponent<RigidbodyComponent>(passiveItemTest, passiveItemTest, false);
+	LuaMain::GetScriptManager()->AddScript(passiveItemTest, "Pickupable.lua");
 
 	// Setup lights
 	// Default lights

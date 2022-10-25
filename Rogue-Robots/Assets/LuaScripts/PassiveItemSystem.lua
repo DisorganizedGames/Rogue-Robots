@@ -7,7 +7,7 @@ passiveItems = {
 }
 
 function OnStart() 
-	EventSystem:Register("PassiveItemPickup" .. EntityID, function() itemsDirty = true end)
+	EventSystem:Register("ItemPickup" .. EntityID, OnPickup)
 end
 
 function OnUpdate()
@@ -35,19 +35,15 @@ function OnUpdate()
 	itemsDirty = false
 end
 
-function OnCollisionEnter(self, e1, e2)
-	-- Physics makes this not work, but the code is left here for future reference
-	if Entity:HasComponent(e2, "PassiveItem") then
-		local pType = Entity:GetPassiveType(e2)
-
-		if passiveItems[pType] then
-			passiveItems[pType][2] = passiveItems[pType][2] + 1
+function OnPickup(pickup)
+	if Entity:HasComponent(pickup, "PassiveItem") then
+		local type = Entity:GetPassiveType(pickup)
+		if passiveItems[type] then
+			passiveItems[type][2] = passiveItems[type][2] + 1
 		else
-			passiveItems[pType] = { passiveItemsMap[pType], 1 }
+			passiveItems[type] = { passiveItemsMap[type], 1 }
 		end
-
-		Entity:DestroyEntity(e2)
-		EventSystem:InvokeEvent("PassiveItemPickup" .. EntityID)
+		itemsDirty = true
 	end
 end
 
