@@ -42,6 +42,11 @@ struct PerLightDataForShadows
     uint actualNrOfSpotlights;
 };
 
+struct Shadow
+{
+    uint shadowMaps[12];
+};
+
 struct PushConstantElement
 {
     uint gdDescriptor;
@@ -49,10 +54,8 @@ struct PushConstantElement
     
     uint perDrawCB;
     uint wireframe;
-    uint depth1;
-    uint depth2;
     uint perDrawLight;
-
+    uint depth;
 };
 
 CONSTANTS(g_constants, PushConstantElement)
@@ -311,6 +314,7 @@ float4 main(VS_OUT input) : SV_TARGET
     
     //calculate dynamic spot lights
     ConstantBuffer<PerLightDataForShadows> perLightData = ResourceDescriptorHeap[g_constants.perDrawLight];
+    ConstantBuffer<Shadow> shadowMaps = ResourceDescriptorHeap[g_constants.depth];
     for (int k = 0; k < perLightData.actualNrOfSpotlights; ++k)
     {
         if (perLightData.lightData[k].strength == 0)
@@ -346,18 +350,22 @@ float4 main(VS_OUT input) : SV_TARGET
         // add to outgoing radiance Lo
         float NdotL = max(dot(N, L), 0.0);
         
-        float shadowFactor = 1.0f;
-        if (k == 0)
-        {
-            Texture2D shadowMap = ResourceDescriptorHeap[g_constants.depth1];
-            shadowFactor = CalculateShadowFactor(shadowMap, input.wsPos, N, -lightToPosDir, perLightData.lightData[k].view, perLightData.lightData[k].proj);
-        }
-        else if (k == 1)
-        {
-            Texture2D shadowMap = ResourceDescriptorHeap[g_constants.depth2];
-            shadowFactor = CalculateShadowFactor(shadowMap, input.wsPos, N, -lightToPosDir, perLightData.lightData[k].view, perLightData.lightData[k].proj);
-        }
-     
+        //float shadowFactor = 1.0f;
+        //if (k == 0)
+        //{
+        //    Texture2D shadowMap = ResourceDescriptorHeap[g_constants.depth1];
+        //    shadowFactor = CalculateShadowFactor(shadowMap, input.wsPos, N, -lightToPosDir, perLightData.lightData[k].view, perLightData.lightData[k].proj);
+        //}
+        //else if (k == 1)
+        //{
+        //    Texture2D shadowMap = ResourceDescriptorHeap[g_constants.depth2];
+        //    shadowFactor = CalculateShadowFactor(shadowMap, input.wsPos, N, -lightToPosDir, perLightData.lightData[k].view, perLightData.lightData[k].proj);
+        //}
+        
+        
+        //Texture2D shadowMap = ResourceDescriptorHeap[NonUniformResourceIndex(shadowMaps.shadowMaps[k])];
+        Texture2D shadowMap = ResourceDescriptorHeap[shadowMaps.shadowMaps[k]];
+        float shadowFactor = CalculateShadowFactor(shadowMap, input.wsPos, N, -lightToPosDir, perLightData.lightData[k].view, perLightData.lightData[k].proj);
         Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL * (contrib) * shadowFactor;
     }
     

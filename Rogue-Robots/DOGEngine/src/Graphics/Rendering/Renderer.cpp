@@ -465,6 +465,11 @@ namespace DOG::gfx
 				u32 actualNrOfSpotlights = 0u;
 			};
 
+			struct Shadow
+			{
+				u32 shadowMaps[12];
+			};
+
 			/*
 				@todo:
 					Still need some way to pre-allocate per draw data prior to render pass.
@@ -480,25 +485,30 @@ namespace DOG::gfx
 				entity entityID;
 			};
 
-			auto drawSubmissions = [&](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission> submissions, RenderGraph::PassResources& resources, const PassData& passData, bool animated = false, bool wireframe = false)
+			auto drawSubmissions = [&](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission> submissions, RenderGraph::PassResources& resources, const PassData& passData, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false)
 			{	
-				PerLightDataForShadows perLightData{};
-				auto perLightHandle = m_dynConstantsTemp->Allocate((u32)std::ceilf(sizeof(PerLightDataForShadows) / (float)256));
-				for (u32 i{0u}; i < m_lightEntities.size(); ++i)
-				{
-					auto& cc = EntityManager::Get().GetComponent<CameraComponent>(m_lightEntities[i]);
-					auto& slc = EntityManager::Get().GetComponent<SpotLightComponent>(m_lightEntities[i]);
-					auto& tc = EntityManager::Get().GetComponent<TransformComponent>(m_lightEntities[i]);
-					perLightData.perLightDatas[i].view = cc.viewMatrix;
-					perLightData.perLightDatas[i].proj = cc.projMatrix;
-					perLightData.perLightDatas[i].position = { tc.GetPosition().x, tc.GetPosition().y, tc.GetPosition().z, 1.0f};
-					perLightData.perLightDatas[i].color = { slc.color.x, slc.color.y, slc.color.z,};
-					perLightData.perLightDatas[i].direction = slc.direction;
-					perLightData.perLightDatas[i].cutoffAngle = slc.cutoffAngle;
-					perLightData.perLightDatas[i].strength = slc.strength;
-				}
-				perLightData.actualNrOfSpotlights = m_lightEntities.size();
-				std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
+				//PerLightDataForShadows perLightData{};
+				//Shadow shadowMaps{};
+				//auto perLightHandle = m_dynConstantsTemp->Allocate((u32)std::ceilf(sizeof(PerLightDataForShadows) / (float)256));
+				//auto shadowHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(Shadow) / float(256)));
+				//for (u32 i{0u}; i < m_lightEntities.size(); ++i)
+				//{
+				//	auto& cc = EntityManager::Get().GetComponent<CameraComponent>(m_lightEntities[i]);
+				//	auto& slc = EntityManager::Get().GetComponent<SpotLightComponent>(m_lightEntities[i]);
+				//	auto& tc = EntityManager::Get().GetComponent<TransformComponent>(m_lightEntities[i]);
+				//	perLightData.perLightDatas[i].view = cc.viewMatrix;
+				//	perLightData.perLightDatas[i].proj = cc.projMatrix;
+				//	perLightData.perLightDatas[i].position = { tc.GetPosition().x, tc.GetPosition().y, tc.GetPosition().z, 1.0f};
+				//	perLightData.perLightDatas[i].color = { slc.color.x, slc.color.y, slc.color.z,};
+				//	perLightData.perLightDatas[i].direction = slc.direction;
+				//	perLightData.perLightDatas[i].cutoffAngle = slc.cutoffAngle;
+				//	perLightData.perLightDatas[i].strength = slc.strength;
+
+				//	//shadowMaps.shadowMaps[i] = passData.shadowView[i]
+				//}
+				//perLightData.actualNrOfSpotlights = m_lightEntities.size();
+				//std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
+				//std::memcpy(shadowHandle.memory, &shadowMaps, sizeof(shadowMaps));
 
 				for (const auto& sub : submissions)
 				{
@@ -525,9 +535,9 @@ namespace DOG::gfx
 						.AppendConstant(m_globalEffectData.globalDataDescriptor)
 						.AppendConstant(m_currPfDescriptor)
 						.AppendConstant(perDrawHandle.globalDescriptor)
-						.AppendConstant(resources.GetView(passData.shadowView[0]))
-						.AppendConstant(resources.GetView(passData.shadowView[1]))
-						.AppendConstant(perLightHandle.globalDescriptor);
+						.AppendConstant(wireframe ? 1 : 0)
+						.AppendConstant(perLightHandle)
+						.AppendConstant(shadowHandle);
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
@@ -643,17 +653,42 @@ namespace DOG::gfx
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipe);
 
-					drawSubmissions(rd, cmdl, m_submissions, resources, p);
-					drawSubmissions(rd, cmdl, m_animatedDraws, resources, p, true );
+
+					PerLightDataForShadows perLightData{};
+					Shadow shadowMaps{};
+					auto perLightHandle = m_dynConstantsTemp->Allocate((u32)std::ceilf(sizeof(PerLightDataForShadows) / (float)256));
+					auto shadowHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(Shadow) / float(256)));
+					for (u32 i{ 0u }; i < m_lightEntities.size(); ++i)
+					{
+						auto& cc = EntityManager::Get().GetComponent<CameraComponent>(m_lightEntities[i]);
+						auto& slc = EntityManager::Get().GetComponent<SpotLightComponent>(m_lightEntities[i]);
+						auto& tc = EntityManager::Get().GetComponent<TransformComponent>(m_lightEntities[i]);
+						perLightData.perLightDatas[i].view = cc.viewMatrix;
+						perLightData.perLightDatas[i].proj = cc.projMatrix;
+						perLightData.perLightDatas[i].position = { tc.GetPosition().x, tc.GetPosition().y, tc.GetPosition().z, 1.0f };
+						perLightData.perLightDatas[i].color = { slc.color.x, slc.color.y, slc.color.z, };
+						perLightData.perLightDatas[i].direction = slc.direction;
+						perLightData.perLightDatas[i].cutoffAngle = slc.cutoffAngle;
+						perLightData.perLightDatas[i].strength = slc.strength;
+
+						shadowMaps.shadowMaps[i] = resources.GetView(p.shadowView[i]);
+					}
+
+					perLightData.actualNrOfSpotlights = m_lightEntities.size();
+					std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
+					std::memcpy(shadowHandle.memory, &shadowMaps, sizeof(shadowMaps));
+
+					drawSubmissions(rd, cmdl, m_submissions, resources, p, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
+					drawSubmissions(rd, cmdl, m_animatedDraws, resources, p, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, true );
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
-					drawSubmissions(rd, cmdl, m_noCullSubmissions, resources, p);
+					drawSubmissions(rd, cmdl, m_noCullSubmissions, resources, p, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframe);
-					drawSubmissions(rd, cmdl, m_wireframeDraws, resources, p, false, true);
+					drawSubmissions(rd, cmdl, m_wireframeDraws, resources, p, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, false, true);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframeNoCull);
-					drawSubmissions(rd, cmdl, m_noCullWireframeDraws, resources, p, false, true);
+					drawSubmissions(rd, cmdl, m_noCullWireframeDraws, resources, p, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, false, true);
 				});
 		}
 
