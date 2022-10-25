@@ -438,7 +438,7 @@ void EntityInterface::AddSubmeshRender(LuaContext* context, entity e)
 	assert(modelAsset);
 
 	MaterialHandle materialHandle;
-	materialHandle.handle = static_cast<u64>(std::stoull(materialTable.GetStringFromTable("materialHandle")));
+	materialHandle.handle = static_cast<u64>(materialTable.GetIntFromTable("materialHandle"));
 
 	LuaTable albedoFactor = materialTable.GetTableFromTable("albedoFactor");
 	LuaVector3 albedoFactorVector(albedoFactor);
@@ -621,7 +621,7 @@ void RenderInterface::CreateMaterial(DOG::LuaContext* context)
 	auto mat = CustomMaterialManager::Get().AddMaterial(d);
 
 	LuaTable material;
-	material.AddStringToTable("materialHandle", std::to_string(mat.handle));
+	material.AddIntToTable("materialHandle", (int)mat.handle);
 
 	LuaTable returnAlbedoFactor;
 	returnAlbedoFactor.AddFloatToTable("x", d.albedoFactor.x);
