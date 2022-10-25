@@ -152,7 +152,7 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 
 	// TODO add a way of deleting static lights
 	
-	u32 xOffset = 18;
+	u32 xOffset = 15;
 	u32 zOffset = 18;
 	for (u32 i = 0; i < 3; ++i)
 	{
@@ -161,9 +161,9 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 			auto e = CreateEntity();
 
 			auto pdesc = PointLightDesc();
-			pdesc.position = { xOffset + (f32)i * 7.f, 8.f, zOffset + (f32)x * 7.f };
-			pdesc.color = { 1.f, 0.f, 0.f };
-			pdesc.strength = 10.f;
+			pdesc.position = { xOffset + (f32)i * 15.f, 12.f, zOffset + (f32)x * 15.f };
+			pdesc.color = { 1.f, 0.f, 1.f };
+			pdesc.strength = 35.f;
 			auto& plc = AddComponent<PointLightComponent>(e);
 			plc.handle = LightManager::Get().AddPointLight(pdesc, LightUpdateFrequency::Never);
 			plc.color = pdesc.color;

@@ -33,6 +33,7 @@ struct ShaderInterop_LightOffsets
 struct ShaderInterop_PerFrameData
 {
     matrix viewMatrix;
+    matrix invViewMatrix;
     matrix projMatrix;
     matrix invProjMatrix;
     float4 camPos;

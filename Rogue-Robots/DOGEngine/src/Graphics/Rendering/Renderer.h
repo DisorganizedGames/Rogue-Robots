@@ -164,6 +164,14 @@ namespace DOG::gfx
 
 		Pipeline m_pipe, m_meshPipe, m_meshPipeNoCull, m_shadowPipe;;
 		Pipeline m_meshPipeWireframe, m_meshPipeWireframeNoCull;
+		Pipeline m_ssaoPipe;
+
+		Pipeline m_boxBlurPipe;
+
+		Texture m_ssaoNoise;
+		Buffer m_ssaoSamples;
+		bool m_ssaoOn{ true };
+
 
 		// Reusing a single command list for now
 		CommandList m_cmdl;
@@ -196,6 +204,7 @@ namespace DOG::gfx
 		struct PerFrameData
 		{
 			DirectX::SimpleMath::Matrix viewMatrix;
+			DirectX::SimpleMath::Matrix invViewMatrix;
 			DirectX::SimpleMath::Matrix projMatrix;
 			DirectX::SimpleMath::Matrix invProjMatrix;
 			DirectX::SimpleMath::Vector4 camPos;

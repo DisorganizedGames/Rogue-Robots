@@ -199,10 +199,14 @@ namespace DOG::gfx
 		rg.AddPass<PassData>("Bloom composit Pass",
 			[&](PassData& passData, RenderGraph::PassBuilder& builder)		// Build
 			{
+				builder.DeclareTexture(RG_RESOURCE(FinalBloom), RGTextureDesc::ReadWrite2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_hdrRenderTargerResX, m_hdrRenderTargerResY));
+
 				passData.srcTextureHandle = builder.ReadResource(RGResourceID("BloomTexture0"), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 					TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 
-				passData.dstTextureHandle = builder.ReadWriteTarget(RG_RESOURCE(LitHDR), TextureViewDesc(ViewType::UnorderedAccess,
+				//passData.dstTextureHandle = builder.ReadWriteTarget(RG_RESOURCE(LitHDR), TextureViewDesc(ViewType::UnorderedAccess,
+				//	TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+				passData.dstTextureHandle = builder.ReadWriteTarget(RG_RESOURCE(FinalBloom), TextureViewDesc(ViewType::UnorderedAccess,
 					TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 			},
 			[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)		// Execute
@@ -217,6 +221,9 @@ namespace DOG::gfx
 					.AppendConstant(m_hdrRenderTargerResX)
 					.AppendConstant(m_hdrRenderTargerResY);
 				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
+
+				rd->Cmd_ClearUnorderedAccessFLOAT(cmdl,
+					resources.GetTextureView(passData.dstTextureHandle), { 0.f, 0.f, 0.f, 1.f }, ScissorRects().Append(0, 0, m_hdrRenderTargerResX, m_hdrRenderTargerResY));
 
 				u32 tgx = m_hdrRenderTargerResX / computeGroupSize + 1 * static_cast<bool>(m_hdrRenderTargerResX % computeGroupSize);
 				u32 tgy = m_hdrRenderTargerResY / computeGroupSize + 1 * static_cast<bool>(m_hdrRenderTargerResY % computeGroupSize);
