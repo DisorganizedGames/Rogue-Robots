@@ -23,6 +23,8 @@ namespace DOG
 		DirectX::SimpleMath::Vector3 linearVelocity;
 		DirectX::SimpleMath::Vector3 centralForce;
 		DirectX::SimpleMath::Vector3 centralImpulse;
+		DirectX::SimpleMath::Vector3 torque;
+		DirectX::SimpleMath::Vector3 angularVelocity;
 		float mass = 1.0f;
 		bool disableDeactivation = false;
 
