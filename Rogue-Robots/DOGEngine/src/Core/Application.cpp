@@ -118,6 +118,7 @@ namespace DOG
 						d.cutoffAngle = light.cutoffAngle;
 						d.direction = light.direction;
 						d.strength = light.strength;
+						d.id = light.id;
 						LightManager::Get().UpdateSpotLight(light.handle, d);
 						light.dirty = false;
 					}
@@ -153,7 +154,7 @@ namespace DOG
 					if (model && model->gfxModel)
 					{
 						// Shadow submission:
-						if (EntityManager::Get().HasComponent<ShadowComponent>(e))
+						if (EntityManager::Get().HasComponent<ShadowReceiverComponent>(e))
 						{
 							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
 								m_renderer->SubmitShadowMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);

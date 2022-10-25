@@ -3,13 +3,19 @@
 
 struct VS_OUT
 {
-    float4 pos : SV_POSITION;
+    float4 pos  : SV_POSITION;
 };
 
 struct PerLightData
 {
     matrix view;
     matrix proj;
+    //----
+    float4 position;
+    float3 color;
+    float cutoffAngle;
+    float3 direction;
+    float strength;
 };
 
 struct PerDrawData
@@ -83,6 +89,6 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     
     float3 wsPos = mul(perDrawData.world, float4(pos, 1.f)).xyz;
     output.pos = mul(perLightData.proj, mul(perLightData.view, float4(wsPos, 1.f)));
- 
+    
     return output;
 }

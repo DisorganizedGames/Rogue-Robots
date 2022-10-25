@@ -106,6 +106,7 @@ namespace DOG
 		DirectX::SimpleMath::Vector3 direction{ 0.f, 0.f, 1.f };
 		float strength{ 0.f };
 		float cutoffAngle{ 15.f };
+		u32 id;
 	};
 
 	struct AreaLightDesc

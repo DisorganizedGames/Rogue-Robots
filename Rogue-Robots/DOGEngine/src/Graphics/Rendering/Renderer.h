@@ -137,8 +137,10 @@ namespace DOG::gfx
 		std::vector<RenderSubmission> m_noCullWireframeDraws;		// temp
 		std::vector<RenderSubmission> m_shadowSubmissions;	// maybe temp, also? (Emil F)
 
-		DirectX::XMMATRIX m_viewMat, m_projMat;
+		std::vector<entity> m_lightEntities;
+		entity* currentEntityPointer = nullptr;
 
+		DirectX::XMMATRIX m_viewMat, m_projMat;
 
 		
 
@@ -149,6 +151,7 @@ namespace DOG::gfx
 
 		// Ring-buffered dynamic constant allocator (allocate, use, and forget)
 		std::unique_ptr<GPUDynamicConstants> m_dynConstants;
+		std::unique_ptr<GPUDynamicConstants> m_dynConstantsTemp;
 		std::unique_ptr<GPUDynamicConstants> m_dynConstantsAnimated;		// temp storage for per draw joints
 
 		

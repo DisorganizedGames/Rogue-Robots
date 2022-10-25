@@ -12,12 +12,6 @@ struct VS_OUT
     float3 wsPos : WS_POSITION;
 };
 
-struct PerLightData
-{
-    matrix view;
-    matrix proj;
-};
-
 struct PerDrawData
 {
     matrix world;
@@ -45,8 +39,17 @@ struct Blend
     BlendWeight iw[4];
 };
 
-
-
+struct PerLightData
+{
+    matrix view;
+    matrix proj;
+    //----
+    float4 position;
+    float3 color;
+    float cutoffAngle;
+    float3 direction;
+    float strength;
+};
 
 struct PushConstantElement
 {
@@ -56,10 +59,11 @@ struct PushConstantElement
     uint perDrawCB;
     uint wireframe;
     
+    uint depth1;
+    uint depth2;
     uint perDrawLight;
 };
 ConstantBuffer<PushConstantElement> constants : register(b0, space0);
-
 
 VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
 {
@@ -105,6 +109,7 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     output.wsPos = mul(perDrawData.world, float4(pos, 1.f)).xyz;
     output.pos = mul(pfData.projMatrix, mul(pfData.viewMatrix, float4(output.wsPos, 1.f)));
     output.shadowPos = mul(perLightData.proj, mul(perLightData.view, float4(output.wsPos, 1.f)));
+    
     output.nor = mul(perDrawData.world, float4(nor, 0.f)).xyz;
     output.tan = mul(perDrawData.world, float4(tan, 0.f)).xyz;
     output.bitan = normalize(cross(output.tan, output.nor));

@@ -117,6 +117,7 @@ namespace DOG
 		float strength{ 1.f };
 		DirectX::SimpleMath::Vector3 direction{ 0.f, 0.f, 1.f };
 		float cutoffAngle{ 15.f };
+		u32 id = (u32)- 1;
 
 		bool dirty{ true };		// If static handle, dirty bool is ignored
 	};
@@ -190,9 +191,14 @@ namespace DOG
 		entity entities[maxCount] = { NULL_ENTITY };
 	};
 	
-	struct ShadowComponent
+	struct ShadowReceiverComponent
 	{
+		//A.t.m. only an identifier
+	};
 
+	struct ShadowCasterComponent
+	{
+		//A.t.m. only an identifier
 	};
 }
 

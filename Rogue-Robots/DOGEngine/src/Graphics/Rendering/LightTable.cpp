@@ -198,6 +198,7 @@ namespace DOG::gfx
 		gpu.color = desc.color;
 		gpu.direction = desc.direction;
 		gpu.strength = desc.strength;
+		gpu.id = desc.id;
 
 		switch (storage.freq)
 		{

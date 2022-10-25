@@ -39,6 +39,7 @@ struct ShaderInterop_SpotLight
     float cutoffAngle;
     float3 direction;
     float strength;
+    uint id;
 };
 
 struct ShaderInterop_AreaLight

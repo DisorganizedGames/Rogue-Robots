@@ -24,6 +24,24 @@ struct PerDrawData
     uint jointsDescriptor;
 };
 
+struct PerLightData
+{
+    matrix view;
+    matrix proj;
+    //----
+    float4 position;
+    float3 color;
+    float cutoffAngle;
+    float3 direction;
+    float strength;
+};
+
+struct PerLightDataForShadows
+{
+    PerLightData lightData[12];
+    uint actualNrOfSpotlights;
+};
+
 struct PushConstantElement
 {
     uint gdDescriptor;
@@ -31,16 +49,61 @@ struct PushConstantElement
     
     uint perDrawCB;
     uint wireframe;
-    uint depth;
-};
-CONSTANTS(g_constants, PushConstantElement)
+    uint depth1;
+    uint depth2;
+    uint perDrawLight;
 
+};
+
+CONSTANTS(g_constants, PushConstantElement)
 
 static const uint NO_TEXTURE = 0xffffffff;
 
+float CalculateShadowFactor(Texture2D depth, float3 worldPosition, float3 worldNormal, float3 surfaceToLightDir, matrix view, matrix proj)
+{
+    float shadowmapTexelSize = 2.0f / 1024.0f;
+    float4 plv = mul(view, float4(worldPosition, 1.0f));
+    float shadowFOVFactor = max(proj[0].x, proj[1].y);
+    shadowmapTexelSize *= abs(plv.z) * shadowFOVFactor;
+        
+    float cosLight = dot(surfaceToLightDir, worldNormal);
+    float slopeScale = saturate(1 - cosLight);
+        
+    float normalOffsetScale = slopeScale * shadowmapTexelSize;
+        
+    float3 normalOffset = float3(worldNormal * normalOffsetScale);
+    float3 shadowPositionTemp = worldPosition + normalOffset;
+            
+    float4 shadowPosition = mul(proj, mul(view, float4(shadowPositionTemp, 1.f)));
+    float3 positionLightSS = shadowPosition.xyz / shadowPosition.w;
+    float2 shadowMapTextureCoords = float2(0.5f * positionLightSS.x + 0.5f, -0.5f * positionLightSS.y + 0.5f);
+    float actualDepth = positionLightSS.z;
+    
+    float shadowFactor = 0.0f;
+    if (positionLightSS.z > 1.0f || positionLightSS.z < 0.0f)
+    {
+        shadowFactor = 1.0f;
+    }
+    else
+    {
+        [unroll]
+        for (int x = -2; x <= 2; x++)
+        {
+            [unroll]
+            for (int y = -2; y <= 2; y++)
+            {
+                shadowFactor += depth.SampleCmpLevelZero(g_linear_PCF_sampler, shadowMapTextureCoords, actualDepth + 0.0001f, int2(x, y));
+            }
+        }
+        shadowFactor /= (5 * 5);
+        shadowFactor = (1 - shadowFactor);
+    }
+    return shadowFactor;
+}
+
 float4 main(VS_OUT input) : SV_TARGET
 {    
-    // Get per draw dat
+    // Get per draw data
     ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[g_constants.perDrawCB];
     
     if (g_constants.wireframe == 1)
@@ -57,13 +120,6 @@ float4 main(VS_OUT input) : SV_TARGET
     // Get per frame data
     StructuredBuffer<ShaderInterop_PerFrameData> pfDatas = ResourceDescriptorHeap[gd.perFrameTable];
     ShaderInterop_PerFrameData pfData = pfDatas[g_constants.perFrameOffset];
-    
-
-    
-    
-    Texture2D depth = ResourceDescriptorHeap[g_constants.depth];
-    return depth.Sample(g_point_samp_shadows, input.uv);
-    
     
     StructuredBuffer<ShaderInterop_MaterialElement> mats = ResourceDescriptorHeap[gd.materialTable];
     ShaderInterop_MaterialElement mat = mats[perDrawData.materialID];
@@ -90,7 +146,7 @@ float4 main(VS_OUT input) : SV_TARGET
         roughnessInput = metallicRoughness.Sample(g_aniso_samp, input.uv).g * mat.roughnessFactor;
         
     }
-           
+    
     // Grab normal from normal map if available
     float3 N = normalize(input.nor);
     if (mat.normal != NO_TEXTURE)
@@ -211,33 +267,68 @@ float4 main(VS_OUT input) : SV_TARGET
         
     }
     
-    
-    
-    
-    
     // calculate static spot lights
-    StructuredBuffer<ShaderInterop_SpotLight> spotLights = ResourceDescriptorHeap[gd.spotLightTable];
-    for (int i = 0; i < lightsMD.staticSpotLightRange.count; ++i)
+    //StructuredBuffer<ShaderInterop_SpotLight> spotLights = ResourceDescriptorHeap[gd.spotLightTable];
+    //for (int i = 0; i < lightsMD.staticSpotLightRange.count; ++i)
+    //{
+    //    ShaderInterop_SpotLight spotLight = spotLights[pfData.spotLightOffsets.staticOffset + i];
+    //    
+    //    // check contribution from based on spotlight angle
+    //    float3 lightToPosDir = normalize(input.wsPos - spotLight.position.xyz);
+    //    float3 lightToPosDist = length(input.wsPos - spotLight.position.xyz);
+    //    float theta = dot(normalize(spotLight.direction), lightToPosDir);
+    //
+    //    float contrib = 0.f;
+    //    if (acos(theta) > spotLight.cutoffAngle * 3.1415f / 180.f)
+    //        contrib = 0.0f;
+    //    else
+    //    {
+    //        contrib = 1.f;
+    //    }
+    //    
+    //    // calculate per-light radiance
+    //    float3 L = normalize(spotLight.position.xyz - input.wsPos);
+    //    float3 H = normalize(V + L);
+    //    float3 radiance = spotLight.color * spotLight.strength;
+    //    
+    //    // cook-torrance brdf
+    //    float NDF = DistributionGGX(N, H, roughnessInput);
+    //    float G = GeometrySmith(N, V, L, roughnessInput);
+    //    float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
+    //    
+    //    float3 kS = F;
+    //    float3 kD = float3(1.f, 1.f, 1.f) - kS;
+    //    kD *= 1.0 - metallicInput;
+    //    
+    //    float3 numerator = NDF * G * F;
+    //    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+    //    float3 specular = numerator / max(denominator, 0.001);
+    //   
+    //    // add to outgoing radiance Lo
+    //    float NdotL = max(dot(N, L), 0.0);
+    //    Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL * (contrib);
+    //}
+    
+    //calculate dynamic spot lights
+    ConstantBuffer<PerLightDataForShadows> perLightData = ResourceDescriptorHeap[g_constants.perDrawLight];
+    for (int k = 0; k < perLightData.actualNrOfSpotlights; ++k)
     {
-        ShaderInterop_SpotLight spotLight = spotLights[pfData.spotLightOffsets.staticOffset + i];
-        if (spotLight.strength == 0)
+        if (perLightData.lightData[k].strength == 0)
             continue;
-
         // check contribution from based on spotlight angle
-        float3 lightToPosDir = normalize(input.wsPos - spotLight.position.xyz);
-        float3 lightToPosDist = length(input.wsPos - spotLight.position.xyz);
-        float theta = dot(normalize(spotLight.direction), lightToPosDir);
+            float3 lightToPosDir = normalize(input.wsPos - perLightData.lightData[k].position.xyz);
+        float theta = dot(normalize(perLightData.lightData[k].direction), lightToPosDir);
     
         float contrib = 0.f;
-        if (acos(theta) > spotLight.cutoffAngle * 3.1415f / 180.f)
+        if (acos(theta) > perLightData.lightData[k].cutoffAngle * 3.1415f / 180.f)
             contrib = 0.0f;
         else
             contrib = 1.f;
         
         // calculate per-light radiance
-        float3 L = normalize(spotLight.position.xyz - input.wsPos);
+        float3 L = normalize(perLightData.lightData[k].position.xyz - input.wsPos);
         float3 H = normalize(V + L);
-        float3 radiance = spotLight.color * spotLight.strength;
+        float3 radiance = perLightData.lightData[k].color * perLightData.lightData[k].strength;
         
         // cook-torrance brdf
         float NDF = DistributionGGX(N, H, roughnessInput);
@@ -254,79 +345,77 @@ float4 main(VS_OUT input) : SV_TARGET
        
         // add to outgoing radiance Lo
         float NdotL = max(dot(N, L), 0.0);
-        Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL * (contrib); 
+        
+        float shadowFactor = 1.0f;
+        if (k == 0)
+        {
+            Texture2D shadowMap = ResourceDescriptorHeap[g_constants.depth1];
+            shadowFactor = CalculateShadowFactor(shadowMap, input.wsPos, N, -lightToPosDir, perLightData.lightData[k].view, perLightData.lightData[k].proj);
+        }
+        else if (k == 1)
+        {
+            Texture2D shadowMap = ResourceDescriptorHeap[g_constants.depth2];
+            shadowFactor = CalculateShadowFactor(shadowMap, input.wsPos, N, -lightToPosDir, perLightData.lightData[k].view, perLightData.lightData[k].proj);
+        }
+     
+        Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL * (contrib) * shadowFactor;
     }
+    
+    //Texture2D sm = ResourceDescriptorHeap[g_constants.depth1];
+    
+    
+    //return float4(sm.Sample(g_point_samp, 0.5.rr).rrr, 1.f);
+    
     
     // calculate dynamic spot lights
-    for (int i = 0; i < lightsMD.dynSpotLightRange.count; ++i)
-    {
-        ShaderInterop_SpotLight spotLight = spotLights[pfData.spotLightOffsets.dynOffset + i];
-        if (spotLight.strength == 0)
-            continue;
-
-        // check contribution from based on spotlight angle
-        float3 lightToPosDir = normalize(input.wsPos - spotLight.position.xyz);
-        float3 lightToPosDist = length(input.wsPos - spotLight.position.xyz);
-        float theta = dot(normalize(spotLight.direction), lightToPosDir);
-    
-        float contrib = 0.f;
-        if (acos(theta) > spotLight.cutoffAngle * 3.1415f / 180.f)
-            contrib = 0.0f;
-        else
-            contrib = 1.f;
-        
-        // calculate per-light radiance
-        float3 L = normalize(spotLight.position.xyz - input.wsPos);
-        float3 H = normalize(V + L);
-        float3 radiance = spotLight.color * spotLight.strength;
-        
-        // cook-torrance brdf
-        float NDF = DistributionGGX(N, H, roughnessInput);
-        float G = GeometrySmith(N, V, L, roughnessInput);
-        float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
-        
-        float3 kS = F;
-        float3 kD = float3(1.f, 1.f, 1.f) - kS;
-        kD *= 1.0 - metallicInput;
-        
-        float3 numerator = NDF * G * F;
-        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-        float3 specular = numerator / max(denominator, 0.001);
-       
-        // add to outgoing radiance Lo
-        float NdotL = max(dot(N, L), 0.0);
-        Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL * (contrib);
-    }
-
- 
-    // add temp directional light
-    {
-        // calculate per-light radiance
-        float3 L = normalize(-float3(-1.f, -1.f, 1.f));
-        float3 H = normalize(V + L);
-        float3 radiance = float3(1.f, 1.f, 1.f); // no attenuation
-
-        // cook-torrance brdf
-        float NDF = DistributionGGX(N, H, roughnessInput);
-        float G = GeometrySmith(N, V, L, roughnessInput);
-        float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
-
-        float3 kS = F;
-        float3 kD = float3(1.f, 1.f, 1.f) - kS;
-        kD *= 1.0 - metallicInput;
-
-        float3 numerator = NDF * G * F;
-        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-        float3 specular = numerator / max(denominator, 0.001);
-
-
-        // add to outgoing radiance Lo
-        float NdotL = max(dot(N, L), 0.0);
-        Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL;
-    }
-
-
-
+    //for (int i = 0; i < perLightData.actualNrOfSpotlights; ++i)
+    //{
+    //    ShaderInterop_SpotLight spotLight = spotLights[pfData.spotLightOffsets.dynOffset + i];
+    //    
+    //    
+    //    
+    //    // check contribution from based on spotlight angle
+    //    float3 lightToPosDir = normalize(input.wsPos - spotLight.position.xyz);
+    //    float theta = dot(normalize(spotLight.direction), lightToPosDir);
+    //
+    //    float contrib = 0.f;
+    //    if (acos(theta) > spotLight.cutoffAngle * 3.1415f / 180.f)
+    //        contrib = 0.0f;
+    //    else
+    //        contrib = 1.f;
+    //    
+    //    // calculate per-light radiance
+    //    float3 L = normalize(spotLight.position.xyz - input.wsPos);
+    //    float3 H = normalize(V + L);
+    //    float3 radiance = spotLight.color * spotLight.strength;
+    //    
+    //    // cook-torrance brdf
+    //    float NDF = DistributionGGX(N, H, roughnessInput);
+    //    float G = GeometrySmith(N, V, L, roughnessInput);
+    //    float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
+    //    
+    //    float3 kS = F;
+    //    float3 kD = float3(1.f, 1.f, 1.f) - kS;
+    //    kD *= 1.0 - metallicInput;
+    //    
+    //    float3 numerator = NDF * G * F;
+    //    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+    //    float3 specular = numerator / max(denominator, 0.001);
+    //   
+    //    // add to outgoing radiance Lo
+    //    float NdotL = max(dot(N, L), 0.0);
+    //    
+    //    Texture2D shadowMap;
+    //    float shadowFactor = 1.0f;
+    //    if (i == 1)
+    //        shadowMap = ResourceDescriptorHeap[g_constants.depth2];
+    //    else
+    //        shadowMap = ResourceDescriptorHeap[g_constants.depth1];
+    //    
+    //    shadowFactor = CalculateShadowFactor(shadowMap, input.wsPos, N, -lightToPosDir, perLightData.lightData[i].view, perLightData.lightData[i].proj);
+    // 
+    //    Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL * (contrib) * shadowFactor;
+    //}
         
     float3 hdr = amb + Lo;
     return float4(hdr, albedoAlpha);
