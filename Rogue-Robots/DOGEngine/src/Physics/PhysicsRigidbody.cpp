@@ -84,8 +84,10 @@ namespace DOG
 				btRigidBody* bulletRigidbody = PhysicsEngine::GetRigidbodyColliderData(rigidbody.rigidbodyHandle)->rigidBody;
 
 				bulletRigidbody->setLinearVelocity(btVector3(rigidbody.linearVelocity.x, rigidbody.linearVelocity.y, rigidbody.linearVelocity.z));
+				bulletRigidbody->setAngularVelocity(btVector3(rigidbody.angularVelocity.x, rigidbody.angularVelocity.y, rigidbody.angularVelocity.z));
 				bulletRigidbody->applyCentralForce(btVector3(rigidbody.centralForce.x, rigidbody.centralForce.y, rigidbody.centralForce.z));
 				bulletRigidbody->applyCentralImpulse(btVector3(rigidbody.centralImpulse.x, rigidbody.centralImpulse.y, rigidbody.centralImpulse.z));
+				bulletRigidbody->applyTorque(btVector3(rigidbody.torque.x, rigidbody.torque.y, rigidbody.torque.z));
 
 				////Set freeze position in x,y,z
 				float x = rigidbody.constrainPositionX ? 0.0f : 1.0f;
@@ -125,9 +127,15 @@ namespace DOG
 				rigidbody.linearVelocity.y = linearVelocity.getY();
 				rigidbody.linearVelocity.z = linearVelocity.getZ();
 
+				btVector3 turnVelocity = bulletRigidbody->getTurnVelocity();
+				rigidbody.angularVelocity.x = turnVelocity.getX();
+				rigidbody.angularVelocity.y = turnVelocity.getY();
+				rigidbody.angularVelocity.z = turnVelocity.getZ();
+
 				rigidbody.centralForce = DirectX::SimpleMath::Vector3::Zero;
 
 				rigidbody.centralImpulse = DirectX::SimpleMath::Vector3::Zero;
+				rigidbody.torque = DirectX::SimpleMath::Vector3::Zero;
 			});
 	}
 }
