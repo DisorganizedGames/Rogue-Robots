@@ -16,6 +16,7 @@ enum class GameState
 	StartPlaying,
 	Playing,
 	Won,
+	Lost,
 	Exiting,
 };
 
@@ -38,6 +39,7 @@ private:
 	void CloseMainScene();
 
 	void EvaluateWinCondition();
+	void EvaluateLoseCondition();
 
 	void RegisterLuaInterfaces();
 	std::vector<DOG::entity> LoadLevel(); //Loads a PCG generated level.
