@@ -95,7 +95,9 @@ struct Box
 			newMin.push_back(min[2] + static_cast<uint32_t>(std::ceil(static_cast<float>(max[2] - min[2]) / 2.0f)));
 		}
 
-		std::uniform_real_distribution<float> dist(0.8f, 1.3f);
+		//reduce min to get more bigger rooms
+		//Increase max to get more smaller rooms
+		std::uniform_real_distribution<float> dist(1.0f, 1.0f);
 		float val = dist(gen);
 		//Check if the highest difference in dimension is lower than that dimensions maxvalue.
 		if (static_cast<float>(highestDiff) / 2.0f < (static_cast<float>(maxDimension) * val))

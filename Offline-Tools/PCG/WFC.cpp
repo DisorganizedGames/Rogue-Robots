@@ -52,7 +52,10 @@ bool WFC::IntroduceConstraints(Room& room)
 	std::vector<std::string> allBlocks;
 	for (auto& possibility : m_blockPossibilities)
 	{
-		allBlocks.push_back(possibility.first);
+		if (possibility.first.find("Door") == std::string::npos) //Dont add special blocks.
+		{
+			allBlocks.push_back(possibility.first);
+		}
 	}
 
 	m_entropy.clear();
@@ -139,9 +142,9 @@ bool WFC::GenerateLevel(uint32_t nrOfRooms)
 	std::shared_ptr<Box> base = std::make_shared<Box>(min, max);
 
 	//The generated space converges around these sizes.
-	uint32_t maxWidth = 10;
+	uint32_t maxWidth = 9;
 	uint32_t maxHeight = 4;
-	uint32_t maxDepth = 10;
+	uint32_t maxDepth = 9;
 
 	std::default_random_engine gen;
 	gen.seed(static_cast<unsigned int>(time(NULL)));
@@ -157,10 +160,7 @@ bool WFC::GenerateLevel(uint32_t nrOfRooms)
 		base->viable.clear();
 	}
 
-	if (viableOptions.size() < nrOfRooms) //Return false if the number of viable rooms is less than
-	{
-		return false;
-	}
+	nrOfRooms = std::min(static_cast<uint32_t>(viableOptions.size()), nrOfRooms);
 
 	//For each room to generate.
 	for (uint32_t i{ 0u }; i < nrOfRooms; i++)
@@ -181,6 +181,8 @@ bool WFC::GenerateLevel(uint32_t nrOfRooms)
 		newRoom.depth = chosenBox->max[2] - chosenBox->min[2];
 		newRoom.generationSuccess = false;
 
+		std::cout << "Block count for this next room: " << newRoom.width * newRoom.height * newRoom.depth << std::endl;
+
 		//Introduce the constraints.
 		if (!IntroduceConstraints(newRoom))
 		{
@@ -190,17 +192,19 @@ bool WFC::GenerateLevel(uint32_t nrOfRooms)
 		std::cout << "Done introducing constraints." << std::endl;
 
 		uint32_t chances = 100;
+		
 		while((!GenerateRoom(newRoom) && chances != 0) || !newRoom.generationSuccess)
 		{
 			std::cout << "FAILED!" << std::endl;
 			--chances;
 		}
+		
+		//GenerateRoom(newRoom);
 		if (chances == 0)
 		{
 			return false;
 		}
 		std::cout << "Done with 1 room, id: " << i << std::endl;
-		std::cout << "Block count for this room: " << newRoom.width * newRoom.height * newRoom.depth << std::endl;
 		std::cout << "Count of voids:" << std::count(newRoom.generatedRoom.begin(), newRoom.generatedRoom.end(), "Void") << std::endl;
 
 		m_generatedRooms.push_back(newRoom);
@@ -230,11 +234,16 @@ bool WFC::GenerateRoom(Room& room)
 	m_currentEntropy.clear();
 	m_currentEntropy = m_entropy;
 
+	while (!m_recursiveStack.empty())
+	{
+		m_recursiveStack.pop();
+	}
+
 	//The priority queue is not needed for the constraints. As they do not use a priority.
 	//All the entropy blocks should now be placed in a priority queue based on their Shannon entropy.
 	m_priorityQueue = new PriorityQueue(m_currentEntropy, m_blockPossibilities, room.width, room.height, room.depth);
 
-	room.generatedRoom.assign(room.width * room.height * room.depth, "N/A");
+	room.generatedRoom.assign(room.width * room.height * room.depth, "Void");
 	room.generationSuccess = false;
 	//Here the WFC starts.
 	//Pop the index with the lowest entropy.
@@ -405,7 +414,7 @@ bool WFC::ReadInput(std::string input)
 		{
 			size_t delim = line.find(' ');
 			std::string id = line.substr(0, delim);
-
+			
 			m_blockPossibilities[id].id = id;
 			//Put the count in the frequency and increment the totalcount.
 			m_blockPossibilities[id].frequency = static_cast<float>(std::stoi(line.substr(delim + 1, line.size())));
@@ -434,19 +443,40 @@ bool WFC::ReadInput(std::string input)
 	for (auto& block : m_blockPossibilities)
 	{
 		block.second.frequency /= m_totalCount;
-
+		//block.second.frequency = 1.0f;
 		//Here we can tweak the frequencies.
 		float squishValue = 0.7f;
 		block.second.frequency += squishValue * (1.0f - block.second.frequency);
-
+		
 		if (block.first == "Void")
 		{
-			block.second.frequency *= 0.1f;
+			block.second.frequency *= 0.2f;
 		}
 		else if (block.first == "Empty")
 		{
 			block.second.frequency *= 1.0f;
 		}
+		else if (block.first.substr(0, block.first.find('_')) == "Floor1")
+		{
+			block.second.frequency *= 0.7f;
+		}
+		else if (block.first.find("Tunnel") != std::string::npos)
+		{
+			block.second.frequency *= 7.0f;
+		}
+		else if (block.first.find("Bridge") != std::string::npos)
+		{
+			block.second.frequency *= 4.0f;
+		}
+		else if (block.first.find("Cliff") != std::string::npos)
+		{
+			block.second.frequency *= 2.0f;
+		}
+		else if (block.first.find("Riverbed") != std::string::npos)
+		{
+			block.second.frequency *= 2.0f;
+		}
+		
 	}
 
 	return true;

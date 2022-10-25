@@ -736,37 +736,95 @@ def map_print():
 def map_analysis():
     blockDict = {}
     for (x, y, z), block_id in all_blocks(): #Go through all blocks in the input level.
+        if block_id != "Empty" and block_id != "Void":
+            blockName = block_id.split('_')[0]
+            blockRot = block_id.split('_')[1]
+            blockFlip = block_id.split('_')[2]
+        
+            currentRot = int(blockRot[1])
+        
+        xPlus = get_block(x + 1, y, z)
+        xMinus = get_block(x - 1, y, z)
+        yPlus = get_block(x, y + 1, z)
+        yMinus = get_block(x, y - 1, z)
+        zPlus = get_block(x, y, z + 1)
+        zMinus = get_block(x, y, z - 1)
+        
         if block_id not in blockDict: #If the current block is not in the dictionary yet we create an entry for it.
         #order: +x  -x  +y  -y  +z  -z
         #IN ENGINE WE USE LEFT HAND! Y AND Z CHANGES PLACE!
-            blockDict[block_id] = [1, [get_block(x + 1, y, z)], [get_block(x - 1, y, z)], [get_block(x, y + 1, z)], [get_block(x, y - 1, z)], [get_block(x, y, z + 1)], [get_block(x, y, z - 1)]]
+            blockDict[block_id] = [1, [xPlus], [xMinus], [yPlus], [yMinus], [zPlus], [zMinus]]
 
         else: #If the entry already exist we have to check if the neighboring blocks already exists in the id's lists.
             blockDict[block_id][0] += 1
             
-            r = get_block(x + 1, y, z) #Get the block next to the current one.
-            if blockDict[block_id][1].count(r) == 0: #Check if that block's id already exists in this block's list in that direction.
-                blockDict[block_id][1].append(r)
+            if blockDict[block_id][1].count(xPlus) == 0: #Check if that block's id already exists in this block's list in that direction.
+                blockDict[block_id][1].append(xPlus)
 
-            l = get_block(x - 1, y, z)
-            if blockDict[block_id][2].count(l) == 0:
-                blockDict[block_id][2].append(l)
+            if blockDict[block_id][2].count(xMinus) == 0:
+                blockDict[block_id][2].append(xMinus)
 
-            f = get_block(x, y + 1, z)
-            if blockDict[block_id][3].count(f) == 0:
-                blockDict[block_id][3].append(f)
+            if blockDict[block_id][3].count(yPlus) == 0:
+                blockDict[block_id][3].append(yPlus)
 
-            b = get_block(x, y - 1, z)
-            if blockDict[block_id][4].count(b) == 0:
-                blockDict[block_id][4].append(b)
+            if blockDict[block_id][4].count(yMinus) == 0:
+                blockDict[block_id][4].append(yMinus)
 
-            u = get_block(x, y, z + 1)
-            if blockDict[block_id][5].count(u) == 0:
-                blockDict[block_id][5].append(u)
+            if blockDict[block_id][5].count(zPlus) == 0:
+                blockDict[block_id][5].append(zPlus)
 
-            d = get_block(x, y, z - 1)
-            if blockDict[block_id][6].count(d) == 0:
-                blockDict[block_id][6].append(d)
+            if blockDict[block_id][6].count(zMinus) == 0:
+                blockDict[block_id][6].append(zMinus)
+        
+        #Now we have to add the neighbor blocks to the permutations.
+        newName = block_id
+        for i in range(1, 4):
+            #Rotate all the strings.
+            if block_id != "Empty" and block_id != "Void":
+                newName = rotate_string(newName)
+                
+            if xPlus != "Empty" and xPlus != "Edge" and xPlus != "Void":
+                xPlus = rotate_string(xPlus)
+            if xMinus != "Empty" and xMinus != "Edge" and xMinus != "Void":
+                xMinus = rotate_string(xMinus)
+            if yPlus != "Empty" and yPlus != "Edge" and yPlus != "Void":
+                yPlus = rotate_string(yPlus)
+            if yMinus != "Empty" and yMinus != "Edge" and yMinus != "Void":
+                yMinus = rotate_string(yMinus)
+            if zPlus != "Empty" and zPlus != "Edge" and zPlus != "Void":
+                zPlus = rotate_string(zPlus)
+            if zMinus != "Empty" and zMinus != "Edge" and zMinus != "Void":
+                zMinus = rotate_string(zMinus)
+            
+            #Re-orient the neighborblocks.
+            temp = xMinus
+            xMinus = yPlus
+            yPlus = xPlus
+            xPlus = yMinus
+            yMinus = temp
+            
+            if newName not in blockDict:
+                blockDict[newName] = [1, [xPlus], [xMinus], [yPlus], [yMinus], [zPlus], [zMinus]]
+            else:
+                blockDict[newName][0] += 1
+            
+                if blockDict[newName][1].count(xPlus) == 0: #Check if that block's id already exists in this block's list in that direction.
+                    blockDict[newName][1].append(xPlus)
+
+                if blockDict[newName][2].count(xMinus) == 0:
+                    blockDict[newName][2].append(xMinus)
+
+                if blockDict[newName][3].count(yPlus) == 0:
+                    blockDict[newName][3].append(yPlus)
+
+                if blockDict[newName][4].count(yMinus) == 0:
+                    blockDict[newName][4].append(yMinus)
+
+                if blockDict[newName][5].count(zPlus) == 0:
+                    blockDict[newName][5].append(zPlus)
+
+                if blockDict[newName][6].count(zMinus) == 0:
+                    blockDict[newName][6].append(zMinus)
         
     blendFileName = D.filepath.split('\\')[-1].split('.')[0] #Get the name of the blendfile.
     f = open(blendFileName + 'Output.txt', 'w')
@@ -780,10 +838,17 @@ def map_analysis():
             f.write('\n')
         f.write('\n')
 
+def rotate_string(oldName):
+    name = oldName.split('_')[0]
+    rotation = int(oldName.split('_')[1][1])
+    flip = oldName.split('_')[2]
+    
+    rotation += 1
+    if rotation == 4:
+        rotation = 0
         
-
-
-
+    return name + "_r" + str(rotation) + '_' + flip
+    
 #######################################################
 #                MAIN
 #######################################################

@@ -8,9 +8,9 @@ int main()
     uint32_t d = 50;
 
     //Number of levels to generate.
-    uint32_t nrOfRooms = 7;
+    uint32_t nrOfRooms = 8;
 
-    std::string input = "largerTestOutput";
+    std::string input = "largerTest1Output";
 
     //Create a WFC interface and send the input.
     WFC* wfc = new WFC(w, h, d);
@@ -23,6 +23,7 @@ int main()
     while (!wfc->GenerateLevel(nrOfRooms) && chances > 0)
     {
         chances--;
+        std::cout << chances << std::endl;
     }
     if (chances != 0)
     {
