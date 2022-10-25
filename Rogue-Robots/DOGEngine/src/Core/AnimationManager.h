@@ -29,6 +29,7 @@ namespace DOG
 		static constexpr u8 m_animationNumeroUno = 0;
 		static constexpr u8 m_animationNumeroDos = 1;
 		static constexpr u8 m_maxClips = 4;
+		static constexpr u8 m_extra = 5;
 		enum class KeyType
 		{
 			Scale = 0,
@@ -38,9 +39,11 @@ namespace DOG
 		struct RigSpecifics
 		{
 			static constexpr u8 groupA = 0;
-			static constexpr u8 groupB = 0;
+			static constexpr u8 groupB = 1;
 			u8 nJoints;
 			u8 nNodes;
+			u8 nPartialGroups;
+			u8 fullbodyGroup;
 			u8 groupAmaskStrt;
 			u8 groupAmaskStop;
 			u8 groupBmaskStrt;
@@ -49,17 +52,16 @@ namespace DOG
 		std::pair<u8, u8> GetNodeStartAndCount(const struct RigSpecifics rs, const u8 group) const
 		{
 			if (group == rs.groupA)
-				return { rs.groupAmaskStrt, (u8)(rs.groupAmaskStop - rs.groupAmaskStrt) };
+				return { rs.groupAmaskStrt, (u8)(rs.groupAmaskStop - rs.groupAmaskStrt + m_extra) };
 			else if (group == rs.groupB)
-				return { rs.groupAmaskStrt, (u8)(rs.groupBmaskStop - rs.groupBmaskStrt) };
+				return { rs.groupBmaskStrt, (u8)(rs.groupBmaskStop - rs.groupBmaskStrt) };
 			else
 				return { (u8)0, rs.nNodes };
 		}
 		static constexpr u8 m_nRigs = 1;
 		static constexpr u8 m_mixamoRigId = 0;
-		static constexpr RigSpecifics m_mixamoRigSpecs = { 65, 67, 57, 67, 2, 57 };
-		//static constexpr RigSpecifics m_enemy1RigSpecs = { 65, 67, 57, 67, 2, 57 };
-		static constexpr RigSpecifics m_rigSpecifics[m_nRigs]{ m_mixamoRigSpecs };
+		//static constexpr RigSpecifics m_enemy1RigSpecs = { 65, 67, 3, 57, 67, 2, 57, 0 };
+		static constexpr RigSpecifics m_rigSpecifics[m_nRigs]{ { 65, 67, 2, 2, 57, 67, 4, 57 } };
 	public:
 		AnimationManager();
 		~AnimationManager();
@@ -77,14 +79,17 @@ namespace DOG
 		DirectX::FXMVECTOR ExtractWeightedAvgRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 		DirectX::FXMVECTOR ExtractRootTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 
-		void ExtractClipNodeInfluences(const ClipData* pcData, const std::vector<AnimationData>& anims, const KeyType key, const u8 nClips, const u8 rigID, const u8 group);
 
-		void CalculateSRT(const u8 rigID, const std::vector<AnimationData>& anims, const RealAnimationComponent& ac);
+		void CalculateSRT(const std::vector<AnimationData>& anims, const RealAnimationComponent& ac, const u8 rigID);
+		// Gets the S/R/T keyframe data from active animation clips in animation component
+		void ExtractClipNodeInfluences(const ClipData* pcData, const std::vector<AnimationData>& anims, const KeyType key, const u8 nClips, const u8 rigID, const u8 group);
+		// Weighted average sum of the animation clip influences
+		void SumNodeInfluences(std::vector<DirectX::XMVECTOR>& keyValues, const ClipData* cData, const KeyType key, const u8 nClips, const u8 startNode, const u8 nNodes, bool fullbody = false);
+
 		void SetGroupInfluence(std::vector<DirectX::XMVECTOR>& srtVector, const std::vector<AnimationData>& anims, const RigSpecifics& rigSpec, const RealAnimationComponent& ac);
 		void SetGroupInfluence(std::vector<DirectX::XMVECTOR>& srtVector, const u8 group, const std::vector<AnimationData>& anims, const RigSpecifics& rigSpec, const RealAnimationComponent& ac);
 
 		void SetClipNodeInfluence(std::vector<DirectX::XMVECTOR>& tfv, const std::vector<AnimationData>& anims, const KeyType key, const RigSpecifics& rigSpec, const RealAnimationComponent& ac);
-		void SumNodeInfluences(std::vector<DirectX::XMVECTOR>& keyValues, const ClipData* cData, const KeyType key, const u8 nClips, const u8 startNode, const u8 nNodes);
 
 		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::RealAnimationComponent& animator);
 
@@ -99,15 +104,21 @@ namespace DOG
 
 		std::vector<DirectX::FXMVECTOR> ExtractPose(const RigSpecifics& rigSpecs, const std::vector<AnimationData>& animations, const RealAnimationComponent& ac);
 
-
+	private:
+		// Animation Component functions
 		void UpdateClips(DOG::AnimationComponent& ac, const f32 dt);
 		void UpdateBezier(AnimationComponent::AnimationClip& clip);
 		void UpdateLinear(AnimationComponent::AnimationClip& clip);
 		void UpdateLinearGT(AnimationComponent::AnimationClip& clip, const f32 globalTime);
+		f32 GetGroupWeight(RealAnimationComponent& ac, u8 group)
+		{
+			return ac.groupWeights[group];
+		};
 		std::vector<ImportedRig*> m_rigs;
 	private:
 		//test
-		std::array<DirectX::XMVECTOR, m_maxClips * m_rigSpecifics[m_mixamoIdx].nNodes> m_srtValues { DirectX::XMVECTOR{} };
+		std::array<DirectX::XMVECTOR, m_maxClips * m_rigSpecifics[m_mixamoIdx].nNodes> m_partialMixamoSRT { DirectX::XMVECTOR{} };
+		std::array<DirectX::XMVECTOR, m_maxClips * m_rigSpecifics[m_mixamoIdx].nNodes> m_fullbodyMixamoSRT{ DirectX::XMVECTOR{} };
 		bool m_up3 = false;
 		bool m_gogogo = false;
 		bool oldFirstTime = true;
@@ -135,6 +146,8 @@ namespace DOG
 		};
 		std::vector<std::vector<LogClip>> loggedClips;
 		bool m_bonesLoaded = false;
+		f32 m_imguiGroupWeightA = 0.0f;
+		f32 m_imguiGroupWeightB = 0.0f;
 		i32 m_imguiMaskSpan1Strt = 0;
 		i32 m_imguiMaskSpan1Stop = 100;
 		i32 m_imguiMaskSpan2Strt = 0;

@@ -44,64 +44,7 @@ namespace DOG
 				});
 			return;
 		}
-		//--------------Tmp DEBUG-------------
-		deltaTime = 0.10f;
-		//m_debugTime += deltaTime;
-		//static bool firstClip = true;
-		//EntityManager::Get().Collect<ModelComponent, RealAnimationComponent, TransformComponent>().Do([&](ModelComponent& modelC, RealAnimationComponent& aC, TransformComponent& tfC)
-		//{
-		//	ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-		//	if (model)
-		//	{
-		//		if (aC.ClipCount() < aC.maxClips)
-		//		{
-		//			if(firstClip)
-		//			{
-		//				aC.AddAnimationClip(1, 0, 0.3f, 1.0f, 0.0f, 1.0f, firstClip);
-		//				aC.AddAnimationClip(1, 1, 0.35f, 1.f, 0.f, 1.f, false);
-		//				firstClip = false;
-		//			}
-		//			if(0.02f > abs(m_debugTime - 6.0f))
-		//				aC.AddAnimationClip(1, 1, 0.35f, 1.f, 0.f, 1.f, false); // should not replace
-		//			if (0.02f > abs(m_debugTime - 6.2f))
-		//				aC.AddAnimationClip(1, 1, 0.35f, 0.5f, 0.f, 1.f, true); // should replace above
-		//			if (0.02f > abs(m_debugTime - 6.3f))
-		//				aC.AddAnimationClip(1, 0, 0.05f, 0.5f, 0.f, .7f, false); // should replace firstclip
-		//		}
-		//	}
-		//	// clips added this frame needs data from corresponding animation
-		//	for (u32 i = 0; i < aC.nAddedClips; ++i)
-		//	{
-		//		auto& clip = aC.clips.rbegin()[i];
-		//		auto& anim = m_rigs[0]->animations.at(clip.animationID);
-		//		clip.SetAnimation(anim.duration, anim.ticks);
-		//	}
-		//	aC.Update(deltaTime);
-
-		//	for (size_t i = 0; i < aC.ActiveClipCount(); i++)
-		//	{
-		//		auto& c = aC.clips[i];
-		//		if (loggedClips.size() <= c.debugID)
-		//			loggedClips.push_back({});
-		//		if (loggedClips.size() <= c.debugID)
-		//			c.debugID = loggedClips.size() -1;
-		//		auto& lc = loggedClips[c.debugID];
-		//		if (lc.size() < 100)
-		//		{
-		//			lc.push_back(LogClip{ m_debugTime, aC.debugWeights[i], c.currentWeight, c.normalizedTime, c.currentTick, c.totalTicks });
-		//			if (lc.size() > 1)
-		//				lc.back().localT = lc.rbegin()[1].localT + deltaTime;
-		//		}
-		//	}
-		//	if (loggedClips.size() > 10)
-		//	{
-		//		auto stop = 0;
-		//	}
-		//});
-		//return;
-		//static bool open = true;
-		//SpawnControlWindow(open);
-		//--------------end Tmp DEBUG-------------
+		deltaTime = 0.05f;
 		static bool firstTime = true;
 		if(m_gogogo)
 		{
@@ -112,7 +55,9 @@ namespace DOG
 					{
 						if (firstTime)
 						{
-							rAC.AddAnimationClip(2, 2, 0.f, 0.f, 1.0f, 1.0f, true);
+							rAC.AddAnimationClip(3, 0, 0.f, 0.f, 1.0f, 1.0f, true); // lower body i
+							//rAC.AddAnimationClip(4, 1, 0.f, 0.f, 1.0f, 1.0f, true); // upper body g
+							rAC.AddAnimationClip(1, 2, 0.f, 0.f, 1.0f, 1.0f, true); // full body i
 							//rAC.AddAnimationClip(2, 1, 0.f, 0.f, 1.0f, 1.0f, true);
 							firstTime = false;
 						}
@@ -160,6 +105,9 @@ namespace DOG
 			ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
 			if (ImGui::Begin("Animation Clip Setter", &open))
 			{
+				ImGui::SliderFloat("groupAWeight", &m_imguiGroupWeightA, 0.0f, 1.0f, "%.5f");
+				ImGui::SliderFloat("groupBWeight", &m_imguiGroupWeightB, 0.0f, 1.0f, "%.5f");
+
 				if (ImGui::Button("gogogo")) // tmp
 					m_gogogo = !m_gogogo;
 				if (ImGui::Button("mu3")) // tmp
@@ -167,6 +115,7 @@ namespace DOG
 				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 				ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 				static AnimationComponent* imguiAnimC;
+				static RealAnimationComponent* imguiRAC;
 				static AnimationComponent::AnimationClip clip0;
 				static AnimationComponent::AnimationClip clip1;
 				static AnimationComponent::AnimationClip clip2;
@@ -175,12 +124,13 @@ namespace DOG
 				static const char* imguiBlendModes[] = { "normal", "linear", "bezier" };
 				static i32 rig = 0;
 				static bool rigLoaded = m_rigs.size();
-				EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC)
+				EntityManager::Get().Collect<ModelComponent, AnimationComponent, RealAnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC, RealAnimationComponent& rAC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-					if (model)
+					if (model && animatorC.offset == 0)
 					{
 						imguiAnimC = &animatorC;
+						imguiRAC = &rAC;
 						if (!rigLoaded)
 							m_rigs.push_back(&model->animation);
 					}
@@ -204,72 +154,100 @@ namespace DOG
 					ImGui::SameLine();
 					return uniqueName;
 				};
-				ImGui::Checkbox("Apply Root translation", &m_imguiRootTranslation);
-
-				// Set Animation Clips
-				static auto setClipAnim = [&setName, animations = m_rigs[rig]->animations](i32& currentAnimIdx, u8 aIdx, AnimationComponent::AnimationClip& clip)
+				if (!m_up3)
 				{
-					ImGui::Text(("Animation Clip" + std::to_string(aIdx) + " Struct\n{").c_str());
-					if (ImGui::BeginCombo(setName("    animation  ").c_str(), animations[currentAnimIdx].name.c_str()))
+					ImGui::Checkbox("Apply Root translation", &m_imguiRootTranslation);
+
+					// Set Animation Clips
+					static auto setClipAnim = [&setName, animations = m_rigs[rig]->animations](i32& currentAnimIdx, u8 aIdx, AnimationComponent::AnimationClip& clip)
 					{
-						for (i32 i = 0; i < std::size(animations); i++)
-							if (ImGui::Selectable(animations[i].name.c_str(), (i == currentAnimIdx)))
-							{
-								if (currentAnimIdx != i) // set new animation
+						ImGui::Text(("Animation Clip" + std::to_string(aIdx) + " Struct\n{").c_str());
+						if (ImGui::BeginCombo(setName("    animation  ").c_str(), animations[currentAnimIdx].name.c_str()))
+						{
+							for (i32 i = 0; i < std::size(animations); i++)
+								if (ImGui::Selectable(animations[i].name.c_str(), (i == currentAnimIdx)))
 								{
-									const auto& anim = animations[i];
-									clip.SetAnimation(i, anim.ticks, anim.duration);
-									currentAnimIdx = i;
+									if (currentAnimIdx != i) // set new animation
+									{
+										const auto& anim = animations[i];
+										clip.SetAnimation(i, anim.ticks, anim.duration);
+										currentAnimIdx = i;
+									}
 								}
-							}
-						ImGui::EndCombo();
+							ImGui::EndCombo();
+						}
+					};
+					static auto setClip = [&setName](u8 aIdx, AnimationComponent::AnimationClip& clip)
+					{
+						ImGui::SliderFloat(setName("	timeScale       ").c_str(), &clip.timeScale, m_imguiTimeScaleMin, m_imguiTimeScaleMax, "%.5f");
+						ImGui::SliderFloat(setName("	currentWeight   ").c_str(), &clip.currentWeight, 0.0f, 1.0f, "%.5f");
+						ImGui::SliderFloat(setName("	targetWeight    ").c_str(), &clip.targetWeight, 0.0f, 1.0f, "%.5f");
+						ImGui::SliderFloat(setName("	transitionStart ").c_str(), &clip.transitionStart, 0.0f, 1.0f, "%.5f");
+						ImGui::SliderFloat(setName("	transitionLength").c_str(), &clip.transitionTime, 0.0f, 1.0f, "%.5f");
+						ImGui::Combo(setName("    BlendMode    ").c_str(), &blendMode[aIdx], imguiBlendModes, IM_ARRAYSIZE(imguiBlendModes));
+						if (blendMode[aIdx] == 0) clip.blendMode = BlendMode::normal;
+						else clip.blendMode = blendMode[aIdx] == 1 ? BlendMode::linear : BlendMode::bezier;
+						ImGui::Checkbox(setName("    loop         ").c_str(), &clip.loop);
+						if (ImGui::Button(("Apply Animation Clip" + std::to_string(aIdx)).c_str()))
+							imguiAnimC->clips[aIdx] = clip0;
+						ImGui::Text("}\n");
+					};
+					ImGui::Columns(MAX_ANIMATIONS, nullptr, true);
+					// First Clip
+					setClipAnim(animation[0], 0, clip0);
+					setClip(0, clip0);
+					ImGui::SliderFloat(setName("n Time").c_str(), &imguiAnimC->clips[0].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
+					ImGui::SliderFloat(setName("weight").c_str(), &imguiAnimC->clips[0].currentWeight, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
+
+					ImGui::NextColumn();
+					// Second Clip
+					setClipAnim(animation[1], 1, clip1);
+					setClip(1, clip1);
+					ImGui::SliderFloat(setName("n Time").c_str(), &imguiAnimC->clips[1].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
+					ImGui::SliderFloat(setName("weight").c_str(), &imguiAnimC->clips[1].currentWeight, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
+
+					ImGui::NextColumn();
+					// Second Clip
+					setClipAnim(animation[2], 2, clip2);
+					setClip(2, clip2);
+					ImGui::SliderFloat(setName("n Time").c_str(), &imguiAnimC->clips[2].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
+					ImGui::SliderFloat(setName("weight").c_str(), &imguiAnimC->clips[2].currentWeight, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
+
+					ImGui::Columns();
+					if (ImGui::Button("Apply Clips")) // tmp
+					{
+						m_imguiPause = !m_imguiPause;
+						imguiAnimC->clips[0] = clip0;
+						imguiAnimC->clips[1] = clip1;
+						imguiAnimC->clips[2] = clip2;
 					}
-				};
-				static auto setClip = [&setName](u8 aIdx, AnimationComponent::AnimationClip& clip)
-				{
-					ImGui::SliderFloat(setName("	timeScale       ").c_str(), &clip.timeScale, m_imguiTimeScaleMin, m_imguiTimeScaleMax, "%.5f");
-					ImGui::SliderFloat(setName("	currentWeight   ").c_str(), &clip.currentWeight, 0.0f, 1.0f, "%.5f");
-					ImGui::SliderFloat(setName("	targetWeight    ").c_str(), &clip.targetWeight, 0.0f, 1.0f, "%.5f");
-					ImGui::SliderFloat(setName("	transitionStart ").c_str(), &clip.transitionStart, 0.0f, 1.0f, "%.5f");
-					ImGui::SliderFloat(setName("	transitionLength").c_str(), &clip.transitionTime, 0.0f, 1.0f, "%.5f");
-					ImGui::Combo(setName("    BlendMode    ").c_str(), &blendMode[aIdx], imguiBlendModes, IM_ARRAYSIZE(imguiBlendModes));
-					if (blendMode[aIdx] == 0) clip.blendMode = BlendMode::normal;
-					else clip.blendMode = blendMode[aIdx] == 1 ? BlendMode::linear : BlendMode::bezier;
-					ImGui::Checkbox(setName("    loop         ").c_str(), &clip.loop);
-					if (ImGui::Button(("Apply Animation Clip"+std::to_string(aIdx)).c_str()))
-						imguiAnimC->clips[aIdx] = clip0;
-					ImGui::Text("}\n");
-				};
-				ImGui::Columns(MAX_ANIMATIONS, nullptr, true);
-				// First Clip
-				setClipAnim(animation[0], 0, clip0);
-				setClip(0, clip0);
-				ImGui::SliderFloat(setName("n Time").c_str(), &imguiAnimC->clips[0].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
-				ImGui::SliderFloat(setName("weight").c_str(), &imguiAnimC->clips[0].currentWeight, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
-
-				ImGui::NextColumn();
-				// Second Clip
-				setClipAnim(animation[1], 1, clip1);
-				setClip(1, clip1);
-				ImGui::SliderFloat(setName("n Time").c_str(), &imguiAnimC->clips[1].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
-				ImGui::SliderFloat(setName("weight").c_str(), &imguiAnimC->clips[1].currentWeight, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
-				
-				ImGui::NextColumn();
-				// Second Clip
-				setClipAnim(animation[2], 2, clip2);
-				setClip(2, clip2);
-				ImGui::SliderFloat(setName("n Time").c_str(), &imguiAnimC->clips[2].normalizedTime, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
-				ImGui::SliderFloat(setName("weight").c_str(), &imguiAnimC->clips[2].currentWeight, m_imguiNormalizedTimeMin, m_imguiNormalizedTimeMax, "%.5f");
-
-				ImGui::Columns();
-				if (ImGui::Button("Apply Clips")) // tmp
-				{
-					m_imguiPause = !m_imguiPause;
-					imguiAnimC->clips[0] = clip0;
-					imguiAnimC->clips[1] = clip1;
-					imguiAnimC->clips[2] = clip2;
+					ImGui::SameLine(); ImGui::Checkbox("matchNormTime", &m_imguiMatching);
 				}
-				ImGui::SameLine(); ImGui::Checkbox("matchNormTime", &m_imguiMatching);
+				else
+				{
+					static f32 playbackRate = 1.0f;
+					static i32 transitionDiv = 6;
+					ImGui::SliderInt("tDiv", &transitionDiv, 2, 10, "%.5f");
+					ImGui::SliderFloat("playback rate", &playbackRate, 0.01f, 2.f, "%.5f");
+					if (ImGui::Button("Grenade"))
+					{
+						imguiRAC->AddAnimationClip(4, 1, 0.f, 0.4f, 0.f, 1.0f);
+						imguiRAC->AddBlendSpecification(0.0f, .4f, 1, 1.f, 3.2f);
+					}
+					if (ImGui::Button("Reload"))
+					{
+						imguiRAC->AddAnimationClip(5, 1, 0.f, 0.4f, 0.f, 1.0f);
+						imguiRAC->AddBlendSpecification(0.0f, .4f, 1, 1.f, 3.3f);
+					}
+					if (ImGui::Button("Shoot"))
+					{
+						static constexpr f32 animDuration = 0.3f;
+						f32 duration = animDuration / playbackRate;
+						f32 tl = duration / (f32)transitionDiv;
+						imguiRAC->AddAnimationClip(6, 1, 0.f, tl, 0.f, 1.0f, false, playbackRate);
+						imguiRAC->AddBlendSpecification(0.0f, tl, 1, 1.f, duration);
+					}
+				}
 
 				// ImGui individual joint sliders
 				if (ImGui::BeginCombo("tfs", m_rigs[0]->nodes[m_imguiSelectedBone].name.c_str()))
@@ -436,7 +414,7 @@ namespace DOG
 		ZoneScopedN("skeletonUpdate3");
 		for (i32 k = 0; k < m_imguiProfilePerformUpdate; k++)
 		{
-			CalculateSRT(m_mixamoIdx, rig.animations, animator);
+			CalculateSRT(rig.animations, animator, m_mixamoIdx);
 			// Set node animation transformations
 			std::vector<XMMATRIX> hereditaryTFs;
 
@@ -447,14 +425,14 @@ namespace DOG
 				auto ntf = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
 				if (i == 5)
 				{
-					m_newNewDebugVec5[0] = m_srtValues[i * 3 + 0];
-					m_newNewDebugVec5[1] = m_srtValues[i * 3 + 1];
-					m_newNewDebugVec5[2] = m_srtValues[i * 3 + 2];
+					m_newNewDebugVec5[0] = m_fullbodyMixamoSRT[i * 3 + 0];
+					m_newNewDebugVec5[1] = m_fullbodyMixamoSRT[i * 3 + 1];
+					m_newNewDebugVec5[2] = m_fullbodyMixamoSRT[i * 3 + 2];
 				}
 				ntf = XMMatrixTranspose(
-					XMMatrixScalingFromVector(m_srtValues[i*3+0]) *
-					XMMatrixRotationQuaternion(m_srtValues[i*3+1]) *
-					XMMatrixTranslationFromVector(m_srtValues[i*3+2])
+					XMMatrixScalingFromVector(m_fullbodyMixamoSRT[i*3+0]) *
+					XMMatrixRotationQuaternion(m_fullbodyMixamoSRT[i*3+1]) *
+					XMMatrixTranslationFromVector(m_fullbodyMixamoSRT[i*3+2])
 				);
 
 #if defined _DEBUG
@@ -999,33 +977,58 @@ namespace DOG
 		}
 	}
 
-	void AnimationManager::CalculateSRT(const u8 rigID, const std::vector<AnimationData>& anims, const RealAnimationComponent& ac)
+	void AnimationManager::CalculateSRT(const std::vector<AnimationData>& animations, const RealAnimationComponent& ac, const u8 rigID)
 	{
 		ZoneScopedN("Calc");
 		using namespace DirectX;
 		const auto rigSpec = m_rigSpecifics[rigID];
 		const auto nSRT = 3 * rigSpec.nNodes;
 		// Store scaling, translation, rotation extracted from anim keyframes
-		std::fill(m_srtValues.begin(), m_srtValues.begin() + nSRT, XMVECTOR{});
+		std::fill(m_partialMixamoSRT.begin(), m_partialMixamoSRT.begin() + nSRT, XMVECTOR{});
+		std::fill(m_fullbodyMixamoSRT.begin(), m_fullbodyMixamoSRT.begin() + nSRT, XMVECTOR{});
 
-		for (u8 g = 0; g < ac.nGroups; g++)
+		for (u8 group = 0; group < ac.nGroups; group++)
 		{
-			if (ac.clipsPerGroup[g])
+			if (ac.clipsPerGroup[group])
 			{
-				const auto gClipIdx = ac.GetGroupIndex(g);
-				const auto [startNode, nNodes] = GetNodeStartAndCount(rigSpec, g);
-				ExtractClipNodeInfluences(&ac.clipData[gClipIdx], anims, KeyType::Scale, ac.clipsPerGroup[g], startNode, nNodes);
-				ExtractClipNodeInfluences(&ac.clipData[gClipIdx], anims, KeyType::Rotation, ac.clipsPerGroup[g], startNode, nNodes);
-				ExtractClipNodeInfluences(&ac.clipData[gClipIdx], anims, KeyType::Translation, ac.clipsPerGroup[g], startNode, nNodes);
+				const auto gClipIdx = ac.GetGroupIndex(group);
+				ExtractClipNodeInfluences(&ac.clipData[gClipIdx], animations, KeyType::Scale, ac.clipsPerGroup[group], rigID, group);
+				ExtractClipNodeInfluences(&ac.clipData[gClipIdx], animations, KeyType::Rotation, ac.clipsPerGroup[group], rigID, group);
+				ExtractClipNodeInfluences(&ac.clipData[gClipIdx], animations, KeyType::Translation, ac.clipsPerGroup[group], rigID, group);
 			}
 		}
+		// Blend between the partial body group and the full body animation group
+		//const auto weightGroupA = ac.groupWeights[ac.groupA];
+		const auto weightGroupB = ac.groupWeights[ac.groupB];
+		const auto weightGroupA = m_imguiGroupWeightA;
+		//const auto weightGroupB = m_imguiGroupWeightB;
+		for (u32 i = 0; i < rigSpec.nNodes; ++i)
+		{
+			f32 weight = 0.0f;
+			if (i < m_extra || (i >= rigSpec.groupAmaskStrt && i < rigSpec.groupAmaskStop)) // lower body
+				weight = weightGroupA;
+			else if (i >= rigSpec.groupBmaskStrt && i < rigSpec.groupBmaskStop) // upper body
+				weight = weightGroupB;
+
+			const u32 sIdx = i * 3, rIdx = i * 3 + 1, tIdx = i * 3 + 2;
+			const XMVECTOR scaling1 = m_fullbodyMixamoSRT[sIdx], scaling2 = m_partialMixamoSRT[sIdx];
+			const XMVECTOR rotation1 = m_fullbodyMixamoSRT[rIdx], rotation2 = m_partialMixamoSRT[rIdx];
+			const XMVECTOR translation1 = m_fullbodyMixamoSRT[tIdx], translation2 = m_partialMixamoSRT[tIdx];
+			m_fullbodyMixamoSRT[sIdx] = XMVectorLerp(scaling1, scaling2, weight);
+			m_fullbodyMixamoSRT[rIdx] = XMQuaternionSlerp(rotation1, rotation2, weight);
+			m_fullbodyMixamoSRT[tIdx] = XMVectorLerp(translation1, translation2, weight);
+		}
+		auto c = 0;
 	}
 
-	void AnimationManager::ExtractClipNodeInfluences(const ClipData* cData, const std::vector<AnimationData>& anims, const KeyType key, const u8 nClips, const u8 startNode, const u8 nNodes)
+	void AnimationManager::ExtractClipNodeInfluences(const ClipData* cData, const std::vector<AnimationData>& anims, const KeyType key, const u8 nClips, const u8 rigID, const u8 group)
 	{
 		ZoneScopedN("Extract");
 		using namespace DirectX;
-		using AnimKeys = std::unordered_map<i32, std::vector<AnimationKey>>;
+		using AnimationKeys = std::unordered_map<i32, std::vector<AnimationKey>>;
+
+		const auto [startNode, nNodes] = GetNodeStartAndCount(m_rigSpecifics[rigID], group);
+		const bool fullbodyGroup = group == m_rigSpecifics[rigID].fullbodyGroup;
 
 		std::vector<XMVECTOR> keyValues(nClips * nNodes, XMVECTOR{});
 
@@ -1038,11 +1041,16 @@ namespace DOG
 
 			const auto& animation = anims[aID];
 			// Store influence that the clip animation has on each node
-			for (u8 node = 0; node < nNodes; node++)
+			for (u32 node = 0; node < nNodes; node++)
 			{
 				const auto storeIdx = node * nClips;
-				const auto rigNodeIdx = startNode + node;
-				const AnimKeys* keys = nullptr;
+				auto rigNodeIdx = startNode + node;
+				if (group == 0)
+				{
+					rigNodeIdx = node < m_extra ? node : rigNodeIdx-m_extra;
+					auto stio = 0;
+				}
+				const AnimationKeys* keys = {};
 				switch (key)
 				{
 				case KeyType::Scale:
@@ -1063,54 +1071,63 @@ namespace DOG
 				}
 			}
 		}
-		SumNodeInfluences(keyValues, cData, key, nClips, startNode, nNodes);
+		SumNodeInfluences(keyValues, cData, key, nClips, startNode, nNodes, fullbodyGroup);
 	}
 	
-	void AnimationManager::SumNodeInfluences(std::vector<DirectX::XMVECTOR>& keyValues, const ClipData* cData, const KeyType key, const u8 nClips, const u8 startNode, const u8 nNodes)
+	void AnimationManager::SumNodeInfluences(std::vector<DirectX::XMVECTOR>& keyValues, const ClipData* cData, const KeyType key, const u8 nClips, const u8 startNode, const u8 nNodes, bool fullbody)
 	{
 		ZoneScopedN("sumNodeINf");
 		using namespace DirectX;
-		static constexpr u8 nKeyValues = 3;
+		static constexpr u8 nKeyValues = 3; // scale, rot, translation
+		
+		auto& storeSRT = fullbody ? m_fullbodyMixamoSRT : m_partialMixamoSRT;
+
 		// Sum each influence from each clip
 		for (u8 i = 0; i < nNodes; i++)
 		{
 			const auto frstClipIdx = i * nClips;
-			const auto rigNodeIdx = nKeyValues*(startNode + i) + u8(key);
+			auto rigNodeIdx = startNode + i;
+			if (nNodes == 10 + m_extra)
+			{
+				rigNodeIdx = i < m_extra ? i : rigNodeIdx - m_extra;
+				auto stio = 0;
+			}
+			const auto rigKeyIdx = nKeyValues * rigNodeIdx + (u8)key;
 			// Sum clip key values for weighted average
 			if(key != KeyType::Rotation)
 			{
-				for (u8 i = 0; i < nClips; ++i)
+				for (u8 j = 0; j < nClips; ++j)
 				{
-					const auto clipIdx = frstClipIdx + i;
-					m_srtValues[rigNodeIdx] += keyValues[clipIdx];
+					const auto clipIdx = frstClipIdx + j;
+					storeSRT[rigKeyIdx] += keyValues[clipIdx];
 				}
 				// if no keyframe scaling/translation influence set base value
-				if (XMComparisonAllTrue(XMVector3EqualR(m_srtValues[rigNodeIdx], {})) || (i == m_rootBoneIdx && key == KeyType::Translation))
+				if (XMComparisonAllTrue(XMVector3EqualR(storeSRT[rigKeyIdx], {})) || (rigNodeIdx == m_rootBoneIdx && key == KeyType::Translation))
 				{
 					const auto defaultValue = key == KeyType::Scale ? XMLoadFloat3(&m_baseScale) : XMLoadFloat3(&m_baseTranslation);
-					m_srtValues[rigNodeIdx] = defaultValue;
+					storeSRT[rigKeyIdx] = defaultValue;
 				}
 			}
 			else
 			{
 				// weighted avg. is different for rotationQuaternions
 				XMVECTOR q0 = keyValues[frstClipIdx];
-				for (u8 i = 0; i < nClips; ++i)
+				for (u8 j = 0; j < nClips; ++j)
 				{
-					const auto clipIdx = frstClipIdx + i;
-					auto w = cData[i].weight;
+					const auto clipIdx = frstClipIdx + j;
+					auto w = cData[j].weight;
 					XMVECTOR& q = keyValues[clipIdx];
 					auto dot = XMVector4Dot(q0, q);
-					if (i > 0 && dot.m128_f32[0] < 0.0)
+					if (j > 0 && dot.m128_f32[0] < 0.0)
 						w = -w;
 
-					m_srtValues[rigNodeIdx] += w * q;
+					storeSRT[rigKeyIdx] += w * q;
 				}
-				m_srtValues[rigNodeIdx] = XMVector4Normalize(m_srtValues[rigNodeIdx]);
+				storeSRT[rigKeyIdx] = XMVector4Normalize(storeSRT[rigKeyIdx]);
 
 				// if no keyframe rotation influence set base rotation
-				if (XMComparisonAllTrue(XMVector4EqualR(m_srtValues[rigNodeIdx], {})))
-					m_srtValues[rigNodeIdx] = XMLoadFloat4(&m_baseRotation);
+				if (XMComparisonAllTrue(XMVector4EqualR(storeSRT[rigKeyIdx], {})))
+					storeSRT[rigKeyIdx] = XMLoadFloat4(&m_baseRotation);
 			}
 		}
 	}
