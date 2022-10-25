@@ -10,15 +10,23 @@ public:
 	ON_UPDATE(HomingMissileComponent, DOG::TransformComponent, DOG::RigidbodyComponent);
 	void OnUpdate(HomingMissileComponent& missile, DOG::TransformComponent& transform, DOG::RigidbodyComponent& rigidBody)
 	{
-		if (missile.launched && missile.fuel > 0)
+		if (missile.launched && missile.engineBurnTime > 0)
 		{
-			float ve = DOG::PhysicsEngine::standardGravity * missile.specificImpules;
-			float force = missile.fuelConsumtion * ve;
-			rigidBody.centralForce = force * -transform.worldMatrix.Forward();
-			
-			float fuelBurnt = std::min(missile.fuel, missile.fuelConsumtion * DOG::Time::DeltaTime<DOG::TimeType::Seconds, f32>());
-			missile.fuel -= fuelBurnt;
-			rigidBody.mass -= fuelBurnt;
+			missile.engineBurnTime -= DOG::Time::DeltaTime<DOG::TimeType::Seconds, f32>();
+
+			Vector3 forwad = -transform.worldMatrix.Forward();
+			if (missile.homeInOnPosition)
+			{
+				Vector3 targetDir =  missile.targetPosition - transform.GetPosition();
+				targetDir.Normalize();
+				Vector3 t = forwad.Cross(targetDir);
+				rigidBody.angularVelocity = missile.turnSpeed * t;
+				rigidBody.linearVelocity = missile.speed * forwad;
+			}
+			else
+			{
+				rigidBody.linearVelocity = missile.speed * forwad;
+			}
 		}
 	}
 };

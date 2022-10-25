@@ -251,9 +251,10 @@ void TestScene::SpawnMissile()
 {
 	entity missile = CreateEntity();
 	AddComponent<ModelComponent>(missile, AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/missile.glb"));
-	AddComponent<TransformComponent>(missile, Vector3(20, 10, 40));
+	AddComponent<TransformComponent>(missile, Vector3(50, 10, 10), Vector3(-0.3f, 0, 0));
 	AddComponent<BoxColliderComponent>(missile, missile, Vector3(0.2f, 0.2f, 1.0f), true, 12.0f);
 	AddComponent<RigidbodyComponent>(missile, missile).continuousCollisionDetection = true;
-	AddComponent<HomingMissileComponent>(missile);
-
+	auto& m = AddComponent<HomingMissileComponent>(missile);
+	m.homeInOnPosition = true;
+	m.targetPosition = Vector3(20, 10, 30);
 }
