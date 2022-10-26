@@ -72,7 +72,7 @@ namespace DOG::gfx
 		m_renderWidth(1920),
 		m_renderHeight(1080)
 	{
-		m_boneJourno = std::make_unique<AnimationManager>();
+		m_jointMan = std::make_unique<AnimationManager>();
 		m_backend = std::make_unique<gfx::RenderBackend_DX12>(debug);
 		m_rd = m_backend->CreateDevice(S_NUM_BACKBUFFERS);
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
@@ -481,7 +481,7 @@ namespace DOG::gfx
 
 	void Renderer::Update(f32 dt)
 	{
-		m_boneJourno->UpdateJoints();
+		m_jointMan->UpdateJoints();
 		m_globalLightTable->FinalizeUpdates();
 
 
@@ -627,10 +627,9 @@ namespace DOG::gfx
 					if (animated)
 					{
 						JointData jointsData{};
-						// Resolve joints
-						jointsHandle = dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
-						for (size_t i = 0; i < bonezy->m_vsJoints.size(); ++i)
-							jointsData.joints[i] = bonezy->m_vsJoints[i];
+						auto jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+						for (size_t i = 0; i < m_jointMan->m_vsJoints.size(); ++i)
+							jointsData.joints[i] = m_jointMan->m_vsJoints[i];
 						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
 					}
 
