@@ -232,7 +232,8 @@ void EntityInterface::SetAction(DOG::LuaContext* context)
 	}
 
 }
-
+
+
 void EntityInterface::Exists(DOG::LuaContext* context)
 {
 	entity e = context->GetInteger();
