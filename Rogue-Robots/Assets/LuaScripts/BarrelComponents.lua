@@ -41,6 +41,7 @@ function BarrelComponents:Grenade()
 	return 
 	{
 		bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Grenade/Grenade.fbx"),
+		explosionModel = Asset:LoadModel("Assets/Models/Temporary_Assets/Explosion.glb"),
 		gunShotSound = Asset:LoadAudio("Assets/Audio/TestShoot.wav"),
 		grenadeSpeed = 9.2,
 		upSpeed = 5.0,
@@ -80,6 +81,9 @@ function BarrelComponents:Grenade()
 			local power = 20.0 + change
 			local radius = 5.0 + change
 			Physics:Explosion(bullet.entity, power, radius)
+			
+			explosionTrigger = Game:ExplosionEffect(bullet.entity, radius)
+			Entity:AddComponent(explosionTrigger, "SphereTrigger", radius)
 		end,
 
 		CreateBullet = function(self)

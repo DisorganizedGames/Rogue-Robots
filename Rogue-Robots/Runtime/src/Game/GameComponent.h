@@ -71,3 +71,18 @@ struct FrostEffectComponent
 	float frostTimer = 0.0f;
 };
 
+struct ExplosionComponent
+{
+	ExplosionComponent(float explosionPower, float explosionRadius) noexcept
+	{
+		power = explosionPower;
+		radius = explosionRadius;
+	};
+	float power;
+	float radius;
+};
+
+struct ExplosionEffectComponent
+{
+
+};

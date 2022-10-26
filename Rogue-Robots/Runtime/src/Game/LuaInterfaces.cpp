@@ -1,5 +1,6 @@
 #include "LuaInterfaces.h"
 #include "GameComponent.h"
+#include "ExplosionSystems.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -80,6 +81,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddSphereCollider(context, e);
 	}
+	else if (compType == "SphereTrigger")
+	{
+		AddSphereTrigger(context, e);
+	}
 	else if (compType == "Rigidbody")
 	{
 		AddRigidbody(context, e);
@@ -90,7 +95,6 @@ void EntityInterface::AddComponent(LuaContext* context)
 	}
 	else if (compType == "Bullet")
 	{
-
 		AddBullet(context, e);
 	}
 	else if (compType == "FrostEffect")
@@ -453,6 +457,13 @@ void EntityInterface::AddSphereCollider(DOG::LuaContext* context, DOG::entity e)
 	EntityManager::Get().AddComponent<SphereColliderComponent>(e, e, radius, dynamic);
 }
 
+void EntityInterface::AddSphereTrigger(DOG::LuaContext* context, DOG::entity e)
+{
+	float radius = (float)context->GetDouble();
+
+	EntityManager::Get().AddComponent<SphereTriggerComponent>(e, e, radius);
+}
+
 void EntityInterface::AddRigidbody(LuaContext* context, entity e)
 {
 	bool kinematic = context->GetBoolean();
@@ -606,27 +617,11 @@ void PhysicsInterface::RBSetVelocity(LuaContext* context)
 void PhysicsInterface::Explosion(DOG::LuaContext* context)
 {
 	entity explosionEntity = static_cast<u64>(context->GetInteger());
-	Vector3 explosionPosition = EntityManager::Get().GetComponent<TransformComponent>(explosionEntity).GetPosition();
 
 	float power = (float)context->GetDouble();
 	float radius = (float)context->GetDouble();
 
-	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([&](TransformComponent& transform, RigidbodyComponent& rigidbody)
-		{
-			Vector3 position = transform.GetPosition();
-			float distance = Vector3::Distance(position, explosionPosition);
-			if (distance > radius)
-				return;
-
-			//float squaredDistance = Vector3::DistanceSquared(position, explosionPosition);
-			//if (squaredDistance < 1.0f)
-			//	squaredDistance = 1.0f;
-			//power /= squaredDistance;
-
-			Vector3 direction = (position - explosionPosition);
-			direction.Normalize();
-			rigidbody.centralImpulse = direction * rigidbody.mass * power;
-		});
+	EntityManager::Get().AddComponent<ExplosionComponent>(explosionEntity, power, radius);
 }
 
 void PhysicsInterface::RBConstrainRotation(DOG::LuaContext* context)
@@ -697,4 +692,9 @@ void RenderInterface::CreateMaterial(DOG::LuaContext* context)
 	material.AddFloatToTable("metallicFactor", d.metallicFactor);
 
 	context->ReturnTable(material);
+}
+
+void GameInterface::ExplosionEffect(DOG::LuaContext* context)
+{
+	context->ReturnInteger(ExplosionEffectSystem::CreateExplosionEffect(context->GetInteger(), (float)context->GetDouble()));
 }

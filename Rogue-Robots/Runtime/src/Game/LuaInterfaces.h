@@ -119,6 +119,8 @@ private:
 
 	void AddSphereCollider(DOG::LuaContext* context, DOG::entity e);
 
+	void AddSphereTrigger(DOG::LuaContext* context, DOG::entity e);
+
 	void AddRigidbody(DOG::LuaContext* context, DOG::entity e);
 
 	void AddBullet(DOG::LuaContext* context, DOG::entity e);
@@ -186,4 +188,13 @@ public:
 	~RenderInterface() noexcept {};
 
 	void CreateMaterial(DOG::LuaContext* context);
+};
+
+class GameInterface : public LuaInterface
+{
+public:
+	GameInterface() noexcept {};
+	~GameInterface() noexcept {};
+
+	void ExplosionEffect(DOG::LuaContext* context);
 };

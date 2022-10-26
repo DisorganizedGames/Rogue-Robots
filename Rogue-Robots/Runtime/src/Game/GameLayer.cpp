@@ -3,6 +3,7 @@
 #include "MainScene.h"
 #include "TestScene.h"
 #include "SimpleAnimationSystems.h"
+#include "ExplosionSystems.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -21,6 +22,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightMoveSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
 	m_nrOfPlayers = MAX_PLAYER_COUNT;
 }
 
@@ -273,6 +275,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::AddComponent>("AddComponent");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::ModifyComponent>("ModifyComponent");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetTransformPosData>("GetTransformPosData");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetTransformScaleData>("GetTransformScaleData");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetRotationForwardUp>("SetRotationForwardUp");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPlayerStats>("GetPlayerStats");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetUp>("GetUp");
@@ -354,6 +357,17 @@ void GameLayer::RegisterLuaInterfaces()
 
 	global->SetLuaInterface(luaInterface);
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Render", "RenderInterface");
+
+	//-----------------------------------------------------------------------------------------------
+	//Game
+	luaInterfaceObject = std::make_shared<GameInterface>();
+	m_luaInterfaces.push_back(luaInterfaceObject);
+
+	luaInterface = global->CreateLuaInterface("GameInterface");
+	luaInterface.AddFunction<GameInterface, &GameInterface::ExplosionEffect>("ExplosionEffect");
+
+	global->SetLuaInterface(luaInterface);
+	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Game", "GameInterface");
 }
 
 std::vector<entity> GameLayer::LoadLevel()

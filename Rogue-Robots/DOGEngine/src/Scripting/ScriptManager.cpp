@@ -28,8 +28,8 @@ namespace DOG
 		entity entityID = m_luaW->GetIntegerFromTable(scriptData.scriptTable, "EntityID");
 		m_luaW->RemoveReferenceToTable(scriptData.scriptTable);
 		scriptData.scriptTable = m_luaW->CreateTable();
-		m_luaW->AddNumberToTable(scriptData.scriptTable, "EntityID", (int)entityID);
 		m_luaW->CreateEnvironment(scriptData.scriptTable, c_pathToScripts + fileName);
+		m_luaW->AddNumberToTable(scriptData.scriptTable, "EntityID", (int)entityID);
 
 		//Remove the old function references
 		m_luaW->RemoveReferenceToFunction(scriptData.onStartFunction);
