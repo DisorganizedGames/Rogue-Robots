@@ -153,6 +153,16 @@ void GameLayer::UpdateGame()
 
 	EvaluateWinCondition();
 	EvaluateLoseCondition();
+
+
+	EntityManager::Get().Collect<TransformComponent>().Do([](TransformComponent& transform)
+		{
+			if (Vector3 pos = transform.GetPosition(); pos.y < -20.0f)
+			{
+				pos.y = 10;
+				transform.SetPosition(pos);
+			}
+		});
 }
 
 void GameLayer::OnRender()
