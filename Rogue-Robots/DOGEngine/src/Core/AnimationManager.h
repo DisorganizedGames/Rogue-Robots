@@ -13,7 +13,7 @@ namespace DOG
 	class AnimationManager
 	{
 	private:
-		using ClipData = DOG::RealAnimationComponent::ClipRigData;
+		using ClipData = DOG::AnimationComponent::ClipRigData;
 		enum class KeyType
 		{
 			Scale = 0,
@@ -62,7 +62,7 @@ namespace DOG
 		std::vector<DirectX::XMFLOAT4X4> m_vsJoints;
 	private:
 		void UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
-		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::RealAnimationComponent& animator);
+		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator);
 
 		DirectX::FXMVECTOR GetKeyValue(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick);
 		DirectX::FXMVECTOR ExtractScaling(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
@@ -70,7 +70,7 @@ namespace DOG
 		DirectX::FXMVECTOR ExtractWeightedAvgRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 		DirectX::FXMVECTOR ExtractRootTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
 
-		void CalculateSRT(const std::vector<AnimationData>& anims, const RealAnimationComponent& ac, const u8 rigID);
+		void CalculateSRT(const std::vector<AnimationData>& anims, const AnimationComponent& ac, const u8 rigID);
 		// Gets the S/R/T keyframe data from active animation clips in animation component
 		void ExtractClipNodeInfluences(const ClipData* pcData, const std::vector<AnimationData>& anims, const KeyType key, const u8 nClips, const u8 rigID, const u8 group);
 	private:

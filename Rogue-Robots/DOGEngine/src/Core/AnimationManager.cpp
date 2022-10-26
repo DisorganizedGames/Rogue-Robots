@@ -49,7 +49,7 @@ namespace DOG
 			SpawnControlWindow(m_bonesLoaded);
 		}
 		static bool firstTime = true;
-		EntityManager::Get().Collect<ModelComponent, RealAnimationComponent>().Do([&](ModelComponent& modelC, RealAnimationComponent& rAC)
+		EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& rAC)
 			{
 				ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 				if (model && rAC.offset == 0)
@@ -94,9 +94,9 @@ namespace DOG
 			ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
 			if (ImGui::Begin("Animation Clip Setter", &open))
 			{
-				static RealAnimationComponent* imguiRAC;
+				static AnimationComponent* imguiRAC;
 				static bool rigLoaded = m_rigs.size();
-				EntityManager::Get().Collect<ModelComponent, AnimationComponent, RealAnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC, RealAnimationComponent& rAC)
+				EntityManager::Get().Collect<ModelComponent, AnimationComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC, AnimationComponent& rAC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 					if (model && animatorC.offset == 0)
@@ -194,7 +194,7 @@ namespace DOG
 	constexpr bool HasBone(const u32 v) {
 		return v != -1;
 	};
-	void AnimationManager::UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::RealAnimationComponent& animator)
+	void AnimationManager::UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator)
 	{
 		ZoneScopedN("skeletonUpdate");
 		using namespace DirectX;
@@ -280,7 +280,7 @@ namespace DOG
 		return translationVec;
 	}
 
-	void AnimationManager::CalculateSRT(const std::vector<AnimationData>& animations, const RealAnimationComponent& ac, const u8 rigID)
+	void AnimationManager::CalculateSRT(const std::vector<AnimationData>& animations, const AnimationComponent& ac, const u8 rigID)
 	{
 		ZoneScopedN("SRT calculation");
 		using namespace DirectX;
