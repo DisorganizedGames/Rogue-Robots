@@ -13,9 +13,9 @@ struct GunComponent
 
 struct PlayerStatsComponent
 {
-	float maxHealth = 100.0f;
-	float health = maxHealth;
-	float speed;
+	f32 maxHealth = 100.f;
+	f32 health = maxHealth;
+	f32 speed = 10.f;
 	//...
 };
 
@@ -68,7 +68,7 @@ struct CreateAndDestroyEntityComponent
 struct FrostEffectComponent
 {
 	//??
-	float frostTimer = 0.0f;
+	f32 frostTimer = 0.0f;
 };
 
 struct ExplosionComponent
