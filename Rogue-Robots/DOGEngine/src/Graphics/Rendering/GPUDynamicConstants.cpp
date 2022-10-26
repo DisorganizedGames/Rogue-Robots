@@ -16,8 +16,6 @@ namespace DOG::gfx
 	{
 		if (count == 0)
 			return {};
-		if (count == 33)
-			auto x = 0;
 		// Grab memory (base)
 		auto [mem, offset] = m_ator.AllocateWithOffset();
 		GPUDynamicConstant ret{};

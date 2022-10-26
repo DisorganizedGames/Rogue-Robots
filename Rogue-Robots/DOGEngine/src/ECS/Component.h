@@ -104,23 +104,17 @@ namespace DOG
 	struct RealAnimationComponent
 	{
 		static constexpr u8 maxClips = 10;
-		static constexpr u8 groupA = 0; // Lower body
-		static constexpr u8 groupB = 1; // Upper body
+		static constexpr u8 groupA = 0; // Lower body(for mixamo)
+		static constexpr u8 groupB = 1; // Upper body(for mixamo)
 		static constexpr u8 groupC = 2; // Full body animation 
 		static constexpr u8 noGroup = 3;
 		static constexpr u8 nGroups = 3;
-		static constexpr u8 nMaxGroupSpecs = 5;
 		i32 offset = 0;
 		f32 globalTime = 0.0f;
-		// -DEBUG-
-		f32 debugTime = 0.0f;
-		i32 debugCount = 0;
-		i32 nextDebugID = 0;
-		f32 debugWeights[3] = { 0.f };
-		// -------
+
 		struct ClipRigData
 		{
-			u8 aID;
+			u32 aID;
 			f32 weight;
 			f32 tick;
 		};
@@ -132,34 +126,32 @@ namespace DOG
 			f32 targetWeight = 0.f;
 			f32 transitionStart = 0.f;
 			f32 transitionLength = 0.f;
+			bool Activated(const f32 gt, const f32 dt) const{
+				return (gt >= transitionStart) && (gt - dt <= transitionStart);
+			}
 		};
 		struct AnimationClip
 		{
 			static constexpr i32 noAnimation = -1;
-			// -DEBUG-
-			i32 debugID = 0;
-			i32 debugCount = 0;
-			f32 debugTime = 0.f;
-			// -------
-			i32 group = 3;
+			u8 group = 3;
 			// Animation Specifics
 			bool activeAnimation = false;
-			i32 animationID = noAnimation; // Move for cache (boneManager)
+			i8 animationID = noAnimation;
 			f32 transitionStart = 0.0f;
 			f32 normalizedTime = 0.f;	// Tick
 			f32 timeScale = 1.0f;		// Tick
 			f32 duration = 1.0f;		// Tick
 			f32 totalTicks = 1.0f;		// Tick
 			bool loop = false;			// Tick
-			// Clip Specifics
-			f32 currentTick = 0.0f; // Move for cache (boneManager)
+			
+			f32 currentTick = 0.0f;
 			// Blend/transition Specifics
 			BlendMode blendMode = BlendMode::normal;
+
 			f32 startWeight = 1.0f;		// Weight
 			f32 targetWeight = 0.0f;	// Weight
 			f32 transitionLength = 0.0f;// Weight
-
-			f32 currentWeight = 0.0f;	// Weight   Maybe Move for cache (boneManager)
+			f32 currentWeight = 0.0f;	// Weight
 
 			// Resets Clip to inactive state
 			void ResetClip();
@@ -169,11 +161,11 @@ namespace DOG
 			// Set animation specifics fetched from rig
 			void SetAnimation(const f32 animationDuration, const f32 nTicks);
 			// True if clip activated this frame
-			bool Activated(const f32 gt, const f32 dt);
+			bool Activated(const f32 gt, const f32 dt) const;
 			// True if clip deactivated this frame
-			bool Deactivated(const f32 gt, const f32 dt);
+			bool Deactivated() const;
 			// Update state of clip
-			void UpdateState(const f32 gt, const f32 dt);
+			void UpdateState(const f32 gt);
 			bool operator <(const AnimationClip& o) const {
 				return activeAnimation && !o.activeAnimation ||
 					activeAnimation == o.activeAnimation && group < o.group ||
@@ -188,38 +180,28 @@ namespace DOG
 		// Number of new clips added to component this frame
 		u32 nAddedClips = 0;
 		// Active clips per group
-		u32 clipsInGroup[nGroups] = { 0 };
+		u8 clipsInGroup[nGroups] = { 0 };
 		
 		ClipRigData clipData[maxClips];
-
-		f32 groupWeights[nGroups-1] = { .0f, 0.f };
-		static constexpr u8 activeBlendIdxA = 0;
-		static constexpr u8 activeBlendIdxB = 1;
-		static constexpr u8 inactiveBlendIdxA = 2;
-		static constexpr u8 inactiveBlendIdxB = 3;
+		// weight between 
 		std::array<GroupBlendSpec, 4> groups;
+		f32 groupWeights[nGroups - 1] = { .0f };
 		// Update clip weights and ticks
 		void Update(const f32 dt);
 		// Group Blend Specifics
-		f32 LinearBlend(const f32 currentTime, const f32 stopTime, const f32 startValue, const f32 targetValue, f32 currentValue = 0.0f);
-		f32 BezierBlend(const f32 currentTime, const f32 stopTime, const f32 startValue, const f32 targetValue, f32 currentValue = 0.0f);
+		f32 LinearBlend(const f32 currentTime, const f32 stopTime, const f32 startValue, const f32 targetValue, f32 currentValue = 0.0f) const;
+		f32 BezierBlend(const f32 currentTime, const f32 stopTime, const f32 startValue, const f32 targetValue, f32 currentValue = 0.0f) const;
 		// Overwrites an active clip with values from newly activated clip if applicable
-		bool ReplacedClip(AnimationClip& clip, const i32 cidx);
+		bool ReplacedClip(AnimationClip& clip);
 		// Add a new animation clip to components timeline
-		void AddAnimationClip(i32 id, u32 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop = false, f32 timeScale = 1.f);
+		void AddAnimationClip(i8 id, u8 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop = false, f32 timeScale = 1.f);
 		void AddBlendSpecification(f32 startDelay, f32 transitionLength, u32 group, f32 targetWeight, f32 duration = -1.f);
 		// Returns number of currently active clips contributing to current pose
 		i32 ActiveClipCount() const;
 		// Returns index of first clip in group
 		u8 GetGroupIndex(const u8 group) const;
 		// Return number of clips on the timeline
-		i32 ClipCount();
-
-		bool Activated(const f32 dt, const f32 transitionStart)
-		{
-			return (globalTime >= transitionStart) && (globalTime - dt <= transitionStart);
-		}
-		
+		i32 ClipCount() const;
 	};
 	static_assert(std::is_trivially_copyable_v<RealAnimationComponent>);
 

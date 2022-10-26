@@ -133,7 +133,7 @@ namespace DOG
 		nodeArray.back().name = allNodes[0]->mName.C_Str();
 		XMStoreFloat4x4(&nodeArray.back().transformation, XMMatrixRotationRollPitchYaw(XM_PIDIV4, 0.0f, 0.0f) * XMMATRIX(&allNodes[0]->mTransformation.a1));
 
-		// Find and store Root of bone Hierarchy (Parent of first node associated with a bone, except if gltf... hate)
+		// Find and store Root of bone Hierarchy (Parent of first node associated with a bone)
 		u32 boneRootIdx = {};
 		for (boneRootIdx = 0; boneRootIdx < allNodes.size(); boneRootIdx++)
 			if (nameToJoint.find(allNodes[boneRootIdx]->mName.C_Str()) != nameToJoint.end())
@@ -272,21 +272,23 @@ namespace DOG
 				std::string nodeName = channel->mNodeName.C_Str();
 				if (nameToNodeIdx.find(nodeName) == nameToNodeIdx.end())
 					nameToNodeIdx.insert({ nodeName, -1 });
-				//if (nameToNodeIdx.find(nodeName) != nameToNodeIdx.end() && nameToNodeIdx.at(nodeName) == boneRootIdx)
-				//{
-				//	// remove root relative translation might need to consider special cases later
-				//	auto rootV = XMLoadFloat4(&posKeys[0].value);
-				//	auto lastV = XMLoadFloat4(&posKeys.rbegin()[0].value);
-				//	for (i32 k = posKeys.size() - 1; k > 0; --k)
-				//	{
-				//		auto value = XMLoadFloat4(&posKeys[k].value);
-				//		auto prev = XMLoadFloat4(&posKeys[k-1].value);
-				//		XMStoreFloat4(&posKeys[k].value, value - prev);
-				//	}
-				//	posKeys[0].value = posKeys[1].value;
-				//	//XMStoreFloat4(&posKeys[0].value, lastV - rootV);
-				//}
-
+				// temporary code for modifying root translation
+				constexpr u32 gltf_rootIdx = 2;
+				if (nameToNodeIdx.find(nodeName) != nameToNodeIdx.end() && nameToNodeIdx.at(nodeName) == gltf_rootIdx)
+				{
+					auto rootV = XMLoadFloat4(&posKeys[0].value);
+					auto lastV = XMLoadFloat4(&posKeys.rbegin()[0].value);
+					for (i32 k = 0; k < posKeys.size(); ++k)
+					{
+						auto value = XMLoadFloat4(&posKeys.rbegin()[k].value);
+						posKeys[k].value = { 0.f, 0.f, XMVectorGetZ(value), 0.f };
+						/*might need later
+						auto prev = XMLoadFloat4(&posKeys[k-1].value);
+						auto toStore = value - prev;*/
+					}
+					if(posKeys.size() > 1)posKeys[0].value = posKeys[1].value;
+				}
+				
 				i32 nodeID = nameToNodeIdx.at(nodeName);
 				importedAnim.animations.back().scaKeys.insert({nodeID, scaKeys});
 				importedAnim.animations.back().rotKeys.insert({nodeID, rotKeys});

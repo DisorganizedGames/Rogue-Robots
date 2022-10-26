@@ -212,9 +212,7 @@ namespace DOG
 		else
 			normalizedTime = std::clamp(normalizedTime, 0.0f, 1.0f);
 
-		currentTick = normalizedTime * totalTicks;
-
-		return currentTick;
+		return normalizedTime * totalTicks;
 	};
 
 	void RealAnimationComponent::AnimationClip::ResetClip()
@@ -228,7 +226,6 @@ namespace DOG
 
 	void RealAnimationComponent::Update(const f32 dt)
 	{
-		debugTime += dt;
 		globalTime += dt;
 
 		f32 groupWeightSum[nGroups] = { 0.f };
@@ -240,16 +237,15 @@ namespace DOG
 			// Keep track of clips that activated/deactivated this frame
 			if (c.Activated(globalTime, dt))
 			{
-				if (!ReplacedClip(c, i))
+				if (!ReplacedClip(c))
 					++clipsInGroup[c.group];
 			}
-			else if(c.Deactivated(globalTime, dt))
+			else if(c.Deactivated())
 			{
 				--clipsInGroup[c.group];
 				c.ResetClip();
 			}
-
-			c.UpdateState(globalTime, dt);
+			c.UpdateState(globalTime);
 		}
 			
 		// sort clips Active-group-targetWeight-currentWeight
@@ -260,41 +256,36 @@ namespace DOG
 		for (u32 i = 0; i < activeClips; i++)
 		{
 			auto& c = clips[i];
+			clipData[i].aID = c.animationID;
 			const auto transitionTime = globalTime - c.transitionStart;
 
-			c.UpdateClipTick(transitionTime < dt ? transitionTime : dt);
+			clipData[i].tick = c.UpdateClipTick(transitionTime < dt ? transitionTime : dt);
 			switch (c.blendMode)
 			{
 			case BlendMode::linear:
-				c.currentWeight = LinearBlend(transitionTime, c.transitionLength, c.startWeight, c.targetWeight, c.currentWeight);
-				//c.UpdateWeightLinear(globalTime);
+				clipData[i].weight = LinearBlend(transitionTime, c.transitionLength, c.startWeight, c.targetWeight, c.currentWeight);
 			case BlendMode::bezier:
-				c.currentWeight = BezierBlend(transitionTime, c.transitionLength, c.startWeight, c.targetWeight, c.currentWeight);
-				//c.UpdateWeightBezier(globalTime);
+				clipData[i].weight = BezierBlend(transitionTime, c.transitionLength, c.startWeight, c.targetWeight, c.currentWeight);
 			default:
 				break;
 			}
-			groupWeightSum[c.group] += c.currentWeight;
-			debugWeights[i] = c.currentWeight;
+			groupWeightSum[c.group] += clipData[i].weight;
 		}
 
 		// Normalize group weights
-		for (u32 i = 0; i < activeClips; i++)
+		for (u8 i = 0; i < activeClips; i++)
 		{
 			if (i<clipsInGroup[groupA])
-				debugWeights[i] /= groupWeightSum[groupA];
+				clipData[i].weight /= groupWeightSum[groupA];
 			else if (i < clipsInGroup[groupA] + clipsInGroup[groupB])
-				debugWeights[i] /= groupWeightSum[groupB];
-			else if(i < clipsInGroup[groupA] + clipsInGroup[groupB] + clipsInGroup[groupC]) // (else)
-				debugWeights[i] /= groupWeightSum[groupC];
-
-			const auto& c = clips[i];
-			clipData[i].aID = c.animationID;
-			clipData[i].weight = debugWeights[i];
-			clipData[i].tick = c.currentTick;
+				clipData[i].weight /= groupWeightSum[groupB];
+			else
+				clipData[i].weight /= groupWeightSum[groupC];
 		}
-
-		if (Activated(dt, groups[inactiveBlendIdxA].transitionStart))
+		// tmp sad blend solution
+		static constexpr u8 activeBlendIdxA = 0, activeBlendIdxB = 1;
+		static constexpr u8 inactiveBlendIdxA = 2, inactiveBlendIdxB = 3;
+		if (groups[inactiveBlendIdxA].Activated(globalTime, dt))
 		{
 			std::swap(groups[inactiveBlendIdxA], groups[activeBlendIdxA]);
 			auto& bsA = groups[activeBlendIdxA];
@@ -302,7 +293,7 @@ namespace DOG
 			if (bsA.duration > 0)
 				AddBlendSpecification(bsA.duration - bsA.transitionLength, bsA.transitionLength, groupA, groupWeights[groupA]);
 		}
-		if (Activated(dt, groups[inactiveBlendIdxB].transitionStart))
+		if (groups[inactiveBlendIdxB].Activated(globalTime, dt))
 		{
 			std::swap(groups[inactiveBlendIdxB], groups[activeBlendIdxB]);
 			auto& bsB = groups[activeBlendIdxB];
@@ -310,7 +301,7 @@ namespace DOG
 			if (bsB.duration > 0)
 				AddBlendSpecification(bsB.duration - bsB.transitionLength, bsB.transitionLength, groupB, groupWeights[groupB]);
 		}
-		//std::sort(groups.begin(), groups.end());
+
 		// Set Group weights for partial body groups
 		for (i32 i = 0; i < 2; i++)
 		{
@@ -334,15 +325,13 @@ namespace DOG
 		nAddedClips = 0;
 	}
 
-	void RealAnimationComponent::AddAnimationClip(i32 id, u32 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop, f32 timeScale)
+	void RealAnimationComponent::AddAnimationClip(i8 id, u8 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop, f32 timeScale)
 	{
 		++nAddedClips;
 		i32 clipIdx = (nAddedClips < maxClips) * (maxClips - nAddedClips);
 		
 		// set new clip
 		auto& addedClip = clips[clipIdx];
-
-		addedClip.debugID = nextDebugID++;
 
 		addedClip.animationID = id;
 		addedClip.group = group;
@@ -361,20 +350,20 @@ namespace DOG
 		duration = animationDuration;
 		totalTicks = nTicks;
 	}
-	bool RealAnimationComponent::AnimationClip::Activated(const f32 gt, const f32 dt)
+	bool RealAnimationComponent::AnimationClip::Activated(const f32 gt, const f32 dt) const
 	{
 		return animationID != noAnimation && (gt >= transitionStart) && (gt - dt <= transitionStart);
 	}
-	bool RealAnimationComponent::AnimationClip::Deactivated(const f32 gt, const f32 dt)
+	bool RealAnimationComponent::AnimationClip::Deactivated() const
 	{
 		return normalizedTime == 1.f && !loop;
 	}
-	void RealAnimationComponent::AnimationClip::UpdateState(const f32 gt, const f32 dt)
+	void RealAnimationComponent::AnimationClip::UpdateState(const f32 gt)
 	{
 		activeAnimation = animationID != noAnimation &&
 			(gt >= transitionStart && (normalizedTime < 1.0f || loop));
 	}
-	i32 RealAnimationComponent::ClipCount() {
+	i32 RealAnimationComponent::ClipCount() const{
 		i32 count = 0;
 		for (auto& c : clips)
 			count += (c.group != 3);
@@ -391,7 +380,7 @@ namespace DOG
 	{
 		return clipsInGroup[0] + clipsInGroup[1] + clipsInGroup[2];
 	}
-	bool RealAnimationComponent::ReplacedClip(AnimationClip& clip, const i32 cidx)
+	bool RealAnimationComponent::ReplacedClip(AnimationClip& clip)
 	{
 		bool overwriteClip = false;
 		i32 idx = (clip.group > groupA) * clipsInGroup[groupA] +
@@ -414,7 +403,6 @@ namespace DOG
 
 					clips[idx].blendMode = clip.blendMode;
 					clips[idx].loop = clip.loop;
-					--nextDebugID;
 					clip.ResetClip();
 					return overwriteClip;
 				}
@@ -422,7 +410,7 @@ namespace DOG
 		return overwriteClip;
 	}
 
-	f32 RealAnimationComponent::BezierBlend(const f32 currentTime, const f32 transitionLength, const f32 startValue, const f32 targetValue, f32 currentValue)
+	f32 RealAnimationComponent::BezierBlend(const f32 currentTime, const f32 transitionLength, const f32 startValue, const f32 targetValue, f32 currentValue) const
 	{
 		if (currentTime >= transitionLength) // Transition is done
 			currentValue = targetValue;
@@ -436,7 +424,7 @@ namespace DOG
 		return currentValue;
 	}
 
-	f32 RealAnimationComponent::LinearBlend(const f32 currentTime, const f32 transitionLength, const f32 startValue, const f32 targetValue, f32 currentValue)
+	f32 RealAnimationComponent::LinearBlend(const f32 currentTime, const f32 transitionLength, const f32 startValue, const f32 targetValue, f32 currentValue) const
 	{
 		if (currentTime > transitionLength) // Transition is done
 			currentValue = targetValue;
@@ -448,6 +436,8 @@ namespace DOG
 
 	void RealAnimationComponent::AddBlendSpecification(f32 startDelay, f32 transitionLength, u32 group, f32 targetWeight, f32 duration)
 	{  
+		// tmp group blend
+		static constexpr u8 inactiveBlendIdxA = 2, inactiveBlendIdxB = 3;
 		const auto idx = group == groupA ?
 			inactiveBlendIdxA : inactiveBlendIdxB;
 
