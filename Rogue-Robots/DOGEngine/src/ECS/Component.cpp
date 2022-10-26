@@ -118,92 +118,8 @@ namespace DOG
 		return *this;
 	}
 
-	// Animation update
-	void AnimationComponent::AnimationClip::UpdateClip(const f32 dt) 
-	{
-		if (HasActiveAnimation())
-		{
-			normalizedTime += timeScale * dt / duration;
-			if(loop)
-			{
-				while (normalizedTime > 1.0f)
-					normalizedTime -= 1.0f;
-				while (normalizedTime < 0.0f)
-					normalizedTime += 1.0f;
-			}
-			normalizedTime = std::clamp(normalizedTime, 0.0f, 1.0f);
-			currentTick = normalizedTime * totalTicks;
-		}
-	};
-
-	void AnimationComponent::AnimationClip::SetAnimation(const i32 id, const f32 nTicks, const f32 animDuration, const f32 startTime)
-	{
-		animationID = id;
-		totalTicks = nTicks;
-		duration = animDuration;
-		normalizedTime = startTime;
-	}
-
-
-	void AnimationComponent::Update(const f32 dt)
-	{
-		globalTime += dt;
-		for (auto& c : clips)
-		{
-			switch (c.blendMode)
-			{
-			case DOG::BlendMode::normal:
-				c.UpdateClip(dt);
-				break;
-			case DOG::BlendMode::linear:
-				c.UpdateLinear(dt);
-				break;
-			case DOG::BlendMode::bezier:
-				c.UpdateBezier(dt);
-				break;
-			default:
-				break;
-			}
-		}
-	}
-
-	void AnimationComponent::AnimationClip::UpdateLinear(const f32 dt)
-	{
-		UpdateClip(dt);
-		// Linear transition between current weight to target weight of clip
-
-		if (transitionTime <= 0.f) // apply desired weight
-		{
-			currentWeight = targetWeight;
-			blendMode = BlendMode::normal;
-		}
-		else if (normalizedTime > transitionStart)
-		{
-			const f32 wDiff = targetWeight - currentWeight;
-			const f32 tCurrent = normalizedTime - transitionStart;
-			currentWeight += wDiff * tCurrent / transitionTime;
-			currentWeight = std::clamp(currentWeight, 0.0f, 1.0f);
-			transitionTime -= tCurrent;
-			transitionStart += tCurrent;
-		}
-	}
-
-	void AnimationComponent::AnimationClip::UpdateBezier(const f32 dt)
-	{
-		UpdateClip(dt);
-		// Bezier curve transition between current weight to target weight of clip
-		if (normalizedTime > transitionStart)
-		{
-			const f32 t = normalizedTime - transitionStart;
-			const f32 u = t / (transitionTime);
-			const f32 v = (1.0f - u);
-			currentWeight += targetWeight * (3.f * v * u * u + std::powf(u, 3.f));
-			currentWeight = std::clamp(currentWeight, 0.0f, 1.0f);
-		}
-	}
-
 	// Realest one after all
-	f32 RealAnimationComponent::AnimationClip::UpdateClipTick(const f32 delta)
+	f32 AnimationComponent::AnimationClip::UpdateClipTick(const f32 delta)
 	{
 		normalizedTime += delta * timeScale / duration;
 		// loop normalized time
@@ -215,7 +131,7 @@ namespace DOG
 		return normalizedTime * totalTicks;
 	};
 
-	void RealAnimationComponent::AnimationClip::ResetClip()
+	void AnimationComponent::AnimationClip::ResetClip()
 	{
 		timeScale = 1.f;
 		animationID = noAnimation;
@@ -224,7 +140,7 @@ namespace DOG
 		activeAnimation = false;
 	}
 
-	void RealAnimationComponent::Update(const f32 dt)
+	void AnimationComponent::Update(const f32 dt)
 	{
 		globalTime += dt;
 
@@ -325,7 +241,7 @@ namespace DOG
 		nAddedClips = 0;
 	}
 
-	void RealAnimationComponent::AddAnimationClip(i8 id, u8 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop, f32 timeScale)
+	void AnimationComponent::AddAnimationClip(i8 id, u8 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop, f32 timeScale)
 	{
 		++nAddedClips;
 		i32 clipIdx = (nAddedClips < maxClips) * (maxClips - nAddedClips);
@@ -345,42 +261,42 @@ namespace DOG
 		addedClip.loop = loop;
 	}
 
-	void RealAnimationComponent::AnimationClip::SetAnimation(const f32 animationDuration, const f32 nTicks)
+	void AnimationComponent::AnimationClip::SetAnimation(const f32 animationDuration, const f32 nTicks)
 	{
 		duration = animationDuration;
 		totalTicks = nTicks;
 	}
-	bool RealAnimationComponent::AnimationClip::Activated(const f32 gt, const f32 dt) const
+	bool AnimationComponent::AnimationClip::Activated(const f32 gt, const f32 dt) const
 	{
 		return animationID != noAnimation && (gt >= transitionStart) && (gt - dt <= transitionStart);
 	}
-	bool RealAnimationComponent::AnimationClip::Deactivated() const
+	bool AnimationComponent::AnimationClip::Deactivated() const
 	{
 		return normalizedTime == 1.f && !loop;
 	}
-	void RealAnimationComponent::AnimationClip::UpdateState(const f32 gt)
+	void AnimationComponent::AnimationClip::UpdateState(const f32 gt)
 	{
 		activeAnimation = animationID != noAnimation &&
 			(gt >= transitionStart && (normalizedTime < 1.0f || loop));
 	}
-	i32 RealAnimationComponent::ClipCount() const{
+	i32 AnimationComponent::ClipCount() const{
 		i32 count = 0;
 		for (auto& c : clips)
 			count += (c.group != 3);
 		return count - nAddedClips;
 	}
-	u8 RealAnimationComponent::GetGroupIndex(const u8 group) const
+	u8 AnimationComponent::GetGroupIndex(const u8 group) const
 	{
 		u8 idx = 0;
 		for (u8 i = 0; i < group; i++)
 			idx += clipsInGroup[i];
 		return idx;
 	}
-	i32 RealAnimationComponent::ActiveClipCount() const
+	i32 AnimationComponent::ActiveClipCount() const
 	{
 		return clipsInGroup[0] + clipsInGroup[1] + clipsInGroup[2];
 	}
-	bool RealAnimationComponent::ReplacedClip(AnimationClip& clip)
+	bool AnimationComponent::ReplacedClip(AnimationClip& clip)
 	{
 		bool overwriteClip = false;
 		i32 idx = (clip.group > groupA) * clipsInGroup[groupA] +
@@ -410,7 +326,7 @@ namespace DOG
 		return overwriteClip;
 	}
 
-	f32 RealAnimationComponent::BezierBlend(const f32 currentTime, const f32 transitionLength, const f32 startValue, const f32 targetValue, f32 currentValue) const
+	f32 AnimationComponent::BezierBlend(const f32 currentTime, const f32 transitionLength, const f32 startValue, const f32 targetValue, f32 currentValue) const
 	{
 		if (currentTime >= transitionLength) // Transition is done
 			currentValue = targetValue;
@@ -424,7 +340,7 @@ namespace DOG
 		return currentValue;
 	}
 
-	f32 RealAnimationComponent::LinearBlend(const f32 currentTime, const f32 transitionLength, const f32 startValue, const f32 targetValue, f32 currentValue) const
+	f32 AnimationComponent::LinearBlend(const f32 currentTime, const f32 transitionLength, const f32 startValue, const f32 targetValue, f32 currentValue) const
 	{
 		if (currentTime > transitionLength) // Transition is done
 			currentValue = targetValue;
@@ -434,7 +350,7 @@ namespace DOG
 		return currentValue;
 	}
 
-	void RealAnimationComponent::AddBlendSpecification(f32 startDelay, f32 transitionLength, u32 group, f32 targetWeight, f32 duration)
+	void AnimationComponent::AddBlendSpecification(f32 startDelay, f32 transitionLength, u32 group, f32 targetWeight, f32 duration)
 	{  
 		// tmp group blend
 		static constexpr u8 inactiveBlendIdxA = 2, inactiveBlendIdxB = 3;
