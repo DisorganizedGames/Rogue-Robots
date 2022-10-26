@@ -25,10 +25,7 @@ namespace DOG
 #endif
 
 	#define sti static_type_info
-	
-	constexpr const u32 MAX_ENTITIES = 64'000u;
-	constexpr const u32 NULL_ENTITY = MAX_ENTITIES;
-	typedef u32 entity;
+
 	struct SparseSetBase;
 
 	template<typename... ComponentType>
