@@ -48,16 +48,16 @@ namespace DOG
 		{
 			SpawnControlWindow(m_bonesLoaded);
 		}
-		deltaTime = 0.05f;
 		static bool firstTime = true;
-		EntityManager::Get().Collect<ModelComponent, AnimationComponent, TransformComponent, RealAnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC, TransformComponent& tfC, RealAnimationComponent& rAC)
+		EntityManager::Get().Collect<ModelComponent, RealAnimationComponent>().Do([&](ModelComponent& modelC, RealAnimationComponent& rAC)
 			{
 				ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 				if (model && rAC.offset == 0)
 				{
+					// set base animation clips
 					if (firstTime)
 					{
-						rAC.AddAnimationClip(3, 0, 0.f, 0.f, 1.0f, 1.0f, true); // lower body walk
+						rAC.AddAnimationClip(3, 0, 0.f, 0.f, 1.0f, 1.0f, true, 1.5f); // lower body walk
 						rAC.AddAnimationClip(1, 2, 0.f, 0.f, 1.0f, 1.0f, true); // full body idle
 						firstTime = false;
 					}
@@ -87,7 +87,6 @@ namespace DOG
 				open = true;
 			ImGui::EndMenu(); // "View"
 		}
-		
 
 		if (open)
 		{
@@ -119,17 +118,18 @@ namespace DOG
 				}
 
 				// Some tmp imgui implementation for testing purposes
-				ImGui::SliderFloat("groupAWeight", &m_imguiGroupWeightA, 0.0f, 1.0f, "%.5f"); // tmp imgui controlling weight of groupA
 				static f32 playbackRate = 1.0f;
 				static i32 transitionDiv = 6;
-				ImGui::SliderInt("Transition Div", &transitionDiv, 2, 10, "%.5f");
-				ImGui::SliderFloat("playback rate", &playbackRate, 0.01f, 2.f, "%.5f");
-				
 				static f32 animDuration = {};
 				static u32 animID = {};
 				static f32 cooldown = {};
-				cooldown -= Time::DeltaTime();
+				cooldown -= static_cast<f32>(Time::DeltaTime());
 				static bool applyAnim = false;
+				ImGui::Checkbox("RootTranslation", &m_imguiApplyRootTranslation);
+				ImGui::SliderFloat("groupAWeight", &m_imguiGroupWeightA, 0.0f, 1.0f, "%.5f"); // tmp imgui controlling weight of groupA
+				ImGui::SliderInt("Transition Div", &transitionDiv, 2, 10, "%.5f");
+				ImGui::SliderFloat("playback rate", &playbackRate, 0.01f, 2.f, "%.5f");
+				
 				if (ImGui::Button("Grenade") && cooldown < 0.f)
 				{
 					applyAnim = true;
@@ -153,31 +153,32 @@ namespace DOG
 				{
 					const f32 duration = cooldown = animDuration / playbackRate;
 					const f32 tl = duration / static_cast<f32>(transitionDiv);
-					imguiRAC->AddAnimationClip(animID, groupB, 0.f, tl, 0.f, 1.0f, false, playbackRate);
+					imguiRAC->AddAnimationClip(static_cast<i8>(animID), groupB, 0.f, tl, 0.f, 1.0f, false, playbackRate);
 					imguiRAC->AddBlendSpecification(0.0f, tl, groupB, 1.f, duration);
 					applyAnim = false;
 				}
 				// ImGui individual joint sliders
-				if (ImGui::BeginCombo("tfs", m_rigs[0]->nodes[m_imguiSelectedBone].name.c_str()))
+				static i32 selectedBone = ROOT_NODE;
+				if (ImGui::BeginCombo("tfs", m_rigs[0]->nodes[selectedBone].name.c_str()))
 				{
 					for (i32 i = 1; i < std::size(m_rigs[0]->nodes); i++)
-						if (ImGui::Selectable((m_rigs[0]->nodes[i].name + "  " + std::to_string(i)).c_str(), (i == m_imguiSelectedBone)))
-							m_imguiSelectedBone = i;
+						if (ImGui::Selectable((m_rigs[0]->nodes[i].name + "  " + std::to_string(i)).c_str(), (i == selectedBone)))
+							selectedBone = i;
 					ImGui::EndCombo();
 				}
 				
 				ImGui::Text("Orientation");
-				ImGui::SliderAngle("Roll", &m_imguiRot[m_imguiSelectedBone].z, m_imguiJointRotMin, m_imguiJointRotMax);
-				ImGui::SliderAngle("Pitch", &m_imguiRot[m_imguiSelectedBone].x, m_imguiJointRotMin, m_imguiJointRotMax);
-				ImGui::SliderAngle("Yaw", &m_imguiRot[m_imguiSelectedBone].y, m_imguiJointRotMin, m_imguiJointRotMax);
+				ImGui::SliderAngle("Roll", &m_imguiRot[selectedBone].z, m_imguiJointRotMin, m_imguiJointRotMax);
+				ImGui::SliderAngle("Pitch", &m_imguiRot[selectedBone].x, m_imguiJointRotMin, m_imguiJointRotMax);
+				ImGui::SliderAngle("Yaw", &m_imguiRot[selectedBone].y, m_imguiJointRotMin, m_imguiJointRotMax);
 				ImGui::Text("Translation");
-				ImGui::SliderFloat("pos X", &m_imguiPos[m_imguiSelectedBone].x, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
-				ImGui::SliderFloat("pos Y", &m_imguiPos[m_imguiSelectedBone].y, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
-				ImGui::SliderFloat("pos Z", &m_imguiPos[m_imguiSelectedBone].z, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
+				ImGui::SliderFloat("pos X", &m_imguiPos[selectedBone].x, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
+				ImGui::SliderFloat("pos Y", &m_imguiPos[selectedBone].y, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
+				ImGui::SliderFloat("pos Z", &m_imguiPos[selectedBone].z, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
 				ImGui::Text("Scale");
-				ImGui::SliderFloat("X", &m_imguiSca[m_imguiSelectedBone].x, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
-				ImGui::SliderFloat("Y", &m_imguiSca[m_imguiSelectedBone].y, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
-				ImGui::SliderFloat("Z", &m_imguiSca[m_imguiSelectedBone].z, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
+				ImGui::SliderFloat("X", &m_imguiSca[selectedBone].x, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
+				ImGui::SliderFloat("Y", &m_imguiSca[selectedBone].y, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
+				ImGui::SliderFloat("Z", &m_imguiSca[selectedBone].z, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
 			}
 			ImGui::End();
 		}
@@ -197,7 +198,7 @@ namespace DOG
 		ZoneScopedN("skeletonUpdate");
 		using namespace DirectX;
 		
-		CalculateSRT(rig.animations, animator, m_mixamoIdx);
+		CalculateSRT(rig.animations, animator, MIXAMO_RIG_ID);
 		// Set node animation transformations
 		std::vector<XMMATRIX> hereditaryTFs;
 
@@ -289,8 +290,8 @@ namespace DOG
 		std::fill(m_fullbodySRT.begin(), m_fullbodySRT.begin() + nSRT, XMVECTOR{});
 
 		//const auto weightGroupA = ac.groupWeights[ac.groupA];
-		const auto weightGroupB = ac.groupWeights[ac.groupB];
 		const auto weightGroupA = m_imguiGroupWeightA; // tmp
+		const auto weightGroupB = ac.groupWeights[ac.groupB];
 
 		auto HasInfluence = [ac, rigID](const u8 group) {
 			bool ret = ac.clipsInGroup[group];
@@ -310,7 +311,7 @@ namespace DOG
 		}
 
 		// Blend between the partial body group and the full body animation group
-		for (u32 i = 1; i < rigSpec.nNodes; ++i)
+		for (u8 i = 1; i < rigSpec.nNodes; ++i)
 		{
 			f32 weight = 0.0f;
 			if (i < rigSpec.rootJoint || InGroup(groupA, rigID, i)) // lower body
@@ -386,7 +387,7 @@ namespace DOG
 		}
 
 		auto& storeSRT = group == RIG_SPECIFICS[rigID].fullbodyGroup ? 
-												 m_fullbodySRT : m_partialSRT;
+													m_fullbodySRT : m_partialSRT;
 
 		// Sum clip influences on each node for Weighted avg.
 		for (u8 i = 0; i < nNodes; i++)
@@ -409,8 +410,9 @@ namespace DOG
 					const auto clipIdx = frstClipIdx + j;
 					storeSRT[rigKeyIdx] += keyValues[clipIdx];
 				}
+				const bool rootDefault = key == KeyType::Translation && rigNodeIdx == ROOT_JOINT && !m_imguiApplyRootTranslation;
 				// if no keyframe scaling/translation influence set base value
-				if (XMComparisonAllTrue(XMVector3EqualR(storeSRT[rigKeyIdx], {})) || (rigNodeIdx == m_rootBoneIdx && key == KeyType::Translation))
+				if (XMComparisonAllTrue(XMVector3EqualR(storeSRT[rigKeyIdx], {})) || rootDefault)
 				{
 					const auto defaultValue = key == KeyType::Scale ? XMLoadFloat3(&m_baseScale) : XMLoadFloat3(&m_baseTranslation);
 					storeSRT[rigKeyIdx] = defaultValue;
