@@ -19,8 +19,9 @@ entity AgentManager::CreateAgent(EntityTypes type, const Vector3& pos)
 
 void AgentManager::CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& entityDesc)
 {
-	 if (entityDesc.alive)
-		CreateAgentCore(m_models[0], Vector3(0, 0, 0));
+	u32 i = static_cast<u32>(entityDesc.entityTypeId) - static_cast<u32>(EntityTypes::AgentsBegin);
+	if (entityDesc.alive)
+		CreateAgentCore(m_models[i], entityDesc.position);
 	// else destroy
 }
 
