@@ -39,3 +39,11 @@ public:
 		}
 	}
 };
+
+class HomingMissileImpacteSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(HomingMissileComponent, DOG::HasEnteredCollisionComponent);
+	ON_UPDATE_ID(HomingMissileComponent, DOG::HasEnteredCollisionComponent);
+	void OnUpdate(DOG::entity e, HomingMissileComponent& missile, DOG::HasEnteredCollisionComponent& collision);
+};
