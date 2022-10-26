@@ -182,5 +182,11 @@ namespace DOG
 		bool dirty{ false };
 	};
 
+	struct HasEnteredCollisionComponent
+	{
+		static constexpr u32 maxCount = 10;
+		u32 entitiesCount{ 0 };
+		entity entities[maxCount] = { NULL_ENTITY };
+	};
 }
 
