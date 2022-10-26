@@ -48,6 +48,14 @@ namespace DOG
 		bool isMainCamera = false;
 	};
 
+	struct LightCameraComponent
+	{
+		using Matrix = DirectX::SimpleMath::Matrix;
+
+		Matrix viewMatrix = DirectX::XMMatrixIdentity();
+		Matrix projMatrix = DirectX::XMMatrixIdentity();
+	};
+
 	struct NetworkPlayerComponent
 	{
 		i8 playerId;

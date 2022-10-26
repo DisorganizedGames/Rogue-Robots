@@ -48,8 +48,9 @@ struct PushConstantElement
     uint perFrameOffset;
     
     uint perDrawCB;
-    
+  
     uint perDrawLight;
+    uint wireframe;
 };
 ConstantBuffer<PushConstantElement> constants : register(b0, space0);
 

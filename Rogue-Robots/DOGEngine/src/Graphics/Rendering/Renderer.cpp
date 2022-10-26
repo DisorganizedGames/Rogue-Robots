@@ -514,9 +514,9 @@ namespace DOG::gfx
 						.AppendConstant(m_globalEffectData.globalDataDescriptor)
 						.AppendConstant(m_currPfDescriptor)
 						.AppendConstant(perDrawHandle.globalDescriptor)
-						.AppendConstant(wireframe ? 1 : 0)
 						.AppendConstant(perLightHandle)
-						.AppendConstant(shadowHandle);
+						.AppendConstant(shadowHandle)
+						.AppendConstant(wireframe ? 1 : 0);
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
@@ -525,7 +525,7 @@ namespace DOG::gfx
 				}
 			};
 
-			auto shadowDrawSubmissions = [&](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, entity entityID, bool animated = false)
+			auto shadowDrawSubmissions = [&](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, entity entityID, bool animated = false, bool wireframe = false)
 			{
 				auto& cc = EntityManager::Get().GetComponent<CameraComponent>(entityID);
 
@@ -560,8 +560,8 @@ namespace DOG::gfx
 						.AppendConstant(m_globalEffectData.globalDataDescriptor)
 						.AppendConstant(m_currPfDescriptor)
 						.AppendConstant(perDrawHandle.globalDescriptor)
-						.AppendConstant(wireframe ? 1 : 0)
-						.AppendConstant(perLightHandle.globalDescriptor);
+						.AppendConstant(perLightHandle.globalDescriptor)
+						.AppendConstant(wireframe ? 1 : 0);
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
