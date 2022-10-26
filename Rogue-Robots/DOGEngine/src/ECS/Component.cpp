@@ -241,11 +241,11 @@ namespace DOG
 			if (c.Activated(globalTime, dt))
 			{
 				if (!ReplacedClip(c, i))
-					++clipsPerGroup[c.group];
+					++clipsInGroup[c.group];
 			}
 			else if(c.Deactivated(globalTime, dt))
 			{
-				--clipsPerGroup[c.group];
+				--clipsInGroup[c.group];
 				c.ResetClip();
 			}
 
@@ -281,11 +281,11 @@ namespace DOG
 		// Normalize group weights
 		for (u32 i = 0; i < activeClips; i++)
 		{
-			if (i<clipsPerGroup[groupA])
+			if (i<clipsInGroup[groupA])
 				debugWeights[i] /= groupWeightSum[groupA];
-			else if (i < clipsPerGroup[groupA] + clipsPerGroup[groupB])
+			else if (i < clipsInGroup[groupA] + clipsInGroup[groupB])
 				debugWeights[i] /= groupWeightSum[groupB];
-			else if(i < clipsPerGroup[groupA] + clipsPerGroup[groupB] + clipsPerGroup[groupC]) // (else)
+			else if(i < clipsInGroup[groupA] + clipsInGroup[groupB] + clipsInGroup[groupC]) // (else)
 				debugWeights[i] /= groupWeightSum[groupC];
 
 			const auto& c = clips[i];
@@ -384,19 +384,19 @@ namespace DOG
 	{
 		u8 idx = 0;
 		for (u8 i = 0; i < group; i++)
-			idx += clipsPerGroup[i];
+			idx += clipsInGroup[i];
 		return idx;
 	}
 	i32 RealAnimationComponent::ActiveClipCount() const
 	{
-		return clipsPerGroup[0] + clipsPerGroup[1] + clipsPerGroup[2];
+		return clipsInGroup[0] + clipsInGroup[1] + clipsInGroup[2];
 	}
 	bool RealAnimationComponent::ReplacedClip(AnimationClip& clip, const i32 cidx)
 	{
 		bool overwriteClip = false;
-		i32 idx = (clip.group > groupA) * clipsPerGroup[groupA] +
-			(clip.group > groupB) * clipsPerGroup[groupB];
-		const i32 lastIdx = idx + clipsPerGroup[clip.group];
+		i32 idx = (clip.group > groupA) * clipsInGroup[groupA] +
+			(clip.group > groupB) * clipsInGroup[groupB];
+		const i32 lastIdx = idx + clipsInGroup[clip.group];
 		for (idx; idx < lastIdx; ++idx)
 			if (clips[idx].animationID == clip.animationID)
 			{
