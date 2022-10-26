@@ -97,6 +97,8 @@ public:
 	
 	void IsBulletLocal(DOG::LuaContext* context);
 
+	void Exists(DOG::LuaContext* context);
+
 
 private:
 	void AddModel(DOG::LuaContext* context, DOG::entity e);

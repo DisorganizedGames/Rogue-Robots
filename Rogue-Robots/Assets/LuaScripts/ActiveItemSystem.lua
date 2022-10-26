@@ -2,6 +2,7 @@ ActiveItems = require("ActiveItems")
 
 activeItem = nil
 clicked = false
+activeEntityCreated = nil
 
 function OnStart()
 	activeItem = ActiveItems.trampoline
@@ -13,13 +14,16 @@ function OnUpdate()
 		return
 	end
 
+	if activeEntityCreated and not Entity:Exists(activeEntityCreated) then
+		activeEntityCreated = nil
+	end
+
 	if Entity:GetAction(EntityID, "ActivateActiveItem") and activeItem then
-		if clicked == false then
-			activeItem:activate(EntityID)
+		if clicked == false and not activeEntityCreated then
+			activeEntityCreated = activeItem:activate(EntityID)
 			activeItem = ActiveItems.trampoline
 			clicked = true
 		end
-		--activeItem = nil
 	else
 		clicked = false
 	end

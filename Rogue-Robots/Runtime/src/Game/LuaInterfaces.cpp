@@ -232,6 +232,12 @@ void EntityInterface::SetAction(DOG::LuaContext* context)
 	}
 
 }
+
+void EntityInterface::Exists(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	context->ReturnBoolean(EntityManager::Get().Exists(e));
+}
 
 void EntityInterface::IsBulletLocal(DOG::LuaContext* context)
 {
