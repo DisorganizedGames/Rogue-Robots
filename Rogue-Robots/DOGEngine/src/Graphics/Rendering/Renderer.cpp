@@ -448,6 +448,7 @@ namespace DOG::gfx
 				u32 jointsDescriptor{ UINT_MAX };
 			};
 
+			/*Struct to be filled in and passed to shader per light*/
 			struct PerLightData
 			{
 				DirectX::XMFLOAT4X4 view;
@@ -459,22 +460,26 @@ namespace DOG::gfx
 				float strength;
 			};
 
+			/*Encompasses all the light datas for spotlights, which we currently limit to 12*/
 			struct PerLightDataForShadows
 			{
 				PerLightData perLightDatas[12];
 				u32 actualNrOfSpotlights = 0u;
 			};
 
+			/*We can have at most 12 shadow maps available on the GPU at any given time (meaning 12 shadowcasters!)*/
 			struct ShadowMapArrayStruct
 			{
 				u32 shadowMaps[12];
 			};
 
+			/*The views on the shadow maps (maximum of 12 currently)*/
 			struct PassData
 			{
 				RGResourceView shadowView[12];
 			};
 
+			/*Helper pass data to know the corresponding entity ID*/
 			struct ShadowPassData
 			{
 				entity entityID;
@@ -527,8 +532,8 @@ namespace DOG::gfx
 
 			auto shadowDrawSubmissions = [&](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, entity entityID, bool animated = false, bool wireframe = false)
 			{
+				/*entityID passed in is the equivalent spotlight, from which we collect the view and projection matrix to be used in the Vertex Shader.*/
 				auto& cc = EntityManager::Get().GetComponent<CameraComponent>(entityID);
-
 				auto perLightHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerLightData) / (float)256));
 				PerLightData perLightData{};
 				perLightData.view = cc.viewMatrix;
@@ -570,26 +575,23 @@ namespace DOG::gfx
 				}
 			};
 
-			
-
-			std::vector<entity> es;
-			EntityManager::Get().Collect<ShadowCasterComponent, SpotLightComponent>().Do([&](entity entityID, ShadowCasterComponent&, SpotLightComponent&)
+			/*We collect all spotlights and then perform one shadow pass per such spotlight, rendering a shadow map for each, later used in the forward pass.*/
+			EntityManager::Get().Collect<ShadowCasterComponent, SpotLightComponent>().Do([&](entity spotlightEntity, ShadowCasterComponent&, SpotLightComponent&)
 				{
-					es.push_back(entityID);
-					m_lightEntities.push_back(entityID);
+					m_lightEntities.push_back(spotlightEntity);
 				});
 
-			for (u32 i{ 0u }; i < es.size(); i++)
+			for (size_t i{ 0u }; i < m_lightEntities.size(); i++)
 			{
 				rg.AddPass<ShadowPassData>("Shadow Pass",
 					[&](ShadowPassData& p, RenderGraph::PassBuilder& builder)
 					{
-						std::string resourceID = std::string("ShadowDepth") + std::to_string(es[i]);
+						std::string resourceID = std::string("ShadowDepth") + std::to_string(m_lightEntities[i]);
 
 						builder.DeclareTexture(RGResourceID(resourceID), RGTextureDesc::DepthWrite2D(DepthFormat::D32, 1024, 1024));
 						builder.WriteDepthStencil(RGResourceID(resourceID), RenderPassAccessType::ClearPreserve,
 							TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
-						p.entityID = es[i];
+						p.entityID = m_lightEntities[i];
 					},
 					[&](const ShadowPassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
 					{
@@ -610,9 +612,10 @@ namespace DOG::gfx
 					builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight)
 						.AddFlag(D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
 
-					for (u32 i{ 0u }; i < es.size(); ++i)
+					/*Here the "views are loaded" to be used in the pixel shader, one for every shadow map available.*/
+					for (size_t i{ 0u }; i < m_lightEntities.size(); ++i)
 					{
-						std::string resourceID = std::string("ShadowDepth") + std::to_string(es[i]);
+						std::string resourceID = std::string("ShadowDepth") + std::to_string(m_lightEntities[i]);
 
 						p.shadowView[i] = builder.ReadResource(RGResourceID(resourceID), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 							TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R32_FLOAT));
@@ -636,7 +639,7 @@ namespace DOG::gfx
 					ShadowMapArrayStruct shadowMapArrayStruct{};
 					auto perLightHandle = m_dynConstantsTemp->Allocate((u32)std::ceilf(sizeof(PerLightDataForShadows) / (float)256));
 					auto shadowHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(ShadowMapArrayStruct) / float(256)));
-					for (u32 i{ 0u }; i < m_lightEntities.size(); ++i)
+					for (size_t i{ 0u }; i < m_lightEntities.size(); ++i)
 					{
 						auto& cc = EntityManager::Get().GetComponent<CameraComponent>(m_lightEntities[i]);
 						auto& slc = EntityManager::Get().GetComponent<SpotLightComponent>(m_lightEntities[i]);
@@ -652,7 +655,7 @@ namespace DOG::gfx
 						shadowMapArrayStruct.shadowMaps[i] = resources.GetView(p.shadowView[i]);
 					}
 
-					perLightData.actualNrOfSpotlights = m_lightEntities.size();
+					perLightData.actualNrOfSpotlights = (u32)m_lightEntities.size();
 					std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
 					std::memcpy(shadowHandle.memory, &shadowMapArrayStruct, sizeof(shadowMapArrayStruct));
 

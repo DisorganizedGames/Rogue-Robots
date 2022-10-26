@@ -20,6 +20,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightMoveSystem>());
 	m_nrOfPlayers = MAX_PLAYER_COUNT;
 }
 
@@ -89,7 +90,15 @@ void GameLayer::StartMainScene()
 	assert(m_mainScene == nullptr);
 	m_mainScene = std::make_unique<MainScene>();
 	m_mainScene->SetUpScene({
-		[this]() { return SpawnPlayers(Vector3(25, 25, 15), m_nrOfPlayers, 10.f); },
+		[this]() 
+		{
+			std::vector<entity> players = SpawnPlayers(Vector3(25, 25, 15), m_nrOfPlayers, 10.f); 
+			std::vector<entity> flashlights = AddFlashlightsToPlayers(players);
+
+			//For now, just combine them, using the player vector:
+			players.insert(players.end(), flashlights.begin(), flashlights.end());
+			return players;
+		},
 		[this]() { return LoadLevel(); },
 		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(35, 25, 50), 25, 2.5f); }
 		});
@@ -136,32 +145,6 @@ void GameLayer::UpdateGame()
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
 
-	//Temp flashlight:
-
-	m_entityManager.Collect<DOG::SpotLightComponent, DOG::CameraComponent, DOG::TransformComponent>().Do([&](DOG::SpotLightComponent& slc, DOG::CameraComponent& cc, DOG::TransformComponent& stc)
-		{
-			if (slc.isMainPlayerSpotlight)
-			{
-				m_entityManager.Collect<DOG::ThisPlayer, DOG::TransformComponent>().Do([&](DOG::ThisPlayer, DOG::TransformComponent& ptc)
-					{
-						stc.worldMatrix = ptc.worldMatrix;
-						stc.SetPosition(stc.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.2f, 0.0f));
-						slc.direction = ptc.GetForward();
-						slc.dirty = true;
-
-						auto up = ptc.worldMatrix.Up();
-						up.Normalize();
-
-						cc.viewMatrix = DirectX::XMMatrixLookAtLH
-						(
-							{ stc.GetPosition().x, stc.GetPosition().y, stc.GetPosition().z },
-							{ stc.GetPosition().x + stc.GetForward().x, stc.GetPosition().y + stc.GetForward().y, stc.GetPosition().z + stc.GetForward().z },
-							{ up.x, up.y, up.z }
-						);
-					});
-			}
-		});
-
 	EvaluateWinCondition();
 	EvaluateLoseCondition();
 }
@@ -178,7 +161,6 @@ void GameLayer::OnImGuiRender()
 
 }
 
-//Place-holder example on how to use event system:
 void GameLayer::OnEvent(DOG::IEvent& event)
 {
 	using namespace DOG;
@@ -204,6 +186,22 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	{
 		if (EVENT(KeyPressedEvent).key == DOG::Key::C)
 			m_player->m_moveView = !m_player->m_moveView;
+		else if (EVENT(KeyPressedEvent).key == DOG::Key::F)
+		{
+			if (m_gameState == GameState::Playing)
+			{
+				m_entityManager.Collect<DOG::SpotLightComponent>().Do([](DOG::SpotLightComponent& slc)
+					{
+						if (slc.isMainPlayerSpotlight)
+						{
+							if (slc.strength == 0.6f)
+								slc.strength = 0.0f;
+							else
+								slc.strength = 0.6f;
+						}
+					});
+			}
+		}
 		else
 			Input(EVENT(KeyPressedEvent).key);
 		break;
@@ -518,7 +516,7 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 			0,
 			spread * (i / 2) - (spread / 2.f),
 		};
-		auto& playerTransformComponent = m_entityManager.AddComponent<TransformComponent>(playerI, pos - offset);
+		m_entityManager.AddComponent<TransformComponent>(playerI, pos - offset);
 		m_entityManager.AddComponent<ModelComponent>(playerI, m_playerModels[i]);
 		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 1.f, 1.8f, true, 75.f);
 		auto& rb = m_entityManager.AddComponent<RigidbodyComponent>(playerI, playerI);
@@ -529,27 +527,48 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		m_entityManager.AddComponent<PlayerStatsComponent>(playerI);
 		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = static_cast<i8>(i);
 		m_entityManager.AddComponent<InputController>(playerI);
+		m_entityManager.AddComponent<ShadowReceiverComponent>(playerI);
 		scriptManager->AddScript(playerI, "Gun.lua");
 		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
 		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");
 
-		//Setup flashlight temp:
+		if (i == 0) // Only for this player
+		{
+			m_entityManager.AddComponent<ThisPlayer>(playerI);
+			auto& cc = m_entityManager.AddComponent<CameraComponent>(playerI);
+			cc.isMainCamera = true;
+			m_entityManager.AddComponent<AudioListenerComponent>(playerI);
+		}
+		else
+		{
+			m_entityManager.AddComponent<OnlinePlayer>(playerI);
+		}
+	}
+	return players;
+}
+
+std::vector<entity> GameLayer::AddFlashlightsToPlayers(const std::vector<entity>& players)
+{
+	std::vector<entity> flashlights;
+	for (auto i = 0; i < players.size(); ++i)
+	{
+		auto& playerTransformComponent = m_entityManager.GetComponent<TransformComponent>(players[i]);
+
 		entity flashLightEntity = m_entityManager.CreateEntity();
-		auto& tc = DOG::EntityManager::Get().AddComponent<DOG::TransformComponent>(flashLightEntity);
+		auto& tc = m_entityManager.AddComponent<DOG::TransformComponent>(flashLightEntity);
 		tc.SetPosition(playerTransformComponent.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.2f, 0.0f));
 
 		auto up = tc.worldMatrix.Up();
 		up.Normalize();
 
-		auto& fcc = DOG::EntityManager::Get().AddComponent<DOG::CameraComponent>(flashLightEntity);
-		fcc.isMainCamera = false;
-		fcc.viewMatrix = DirectX::XMMatrixLookAtLH
+		auto& cc = m_entityManager.AddComponent<DOG::CameraComponent>(flashLightEntity);
+		cc.isMainCamera = false;
+		cc.viewMatrix = DirectX::XMMatrixLookAtLH
 		(
 			{ tc.GetPosition().x, tc.GetPosition().y, tc.GetPosition().z },
 			{ tc.GetPosition().x + tc.GetForward().x, tc.GetPosition().y + tc.GetForward().y, tc.GetPosition().z + tc.GetForward().z },
 			{ up.x, up.y, up.z }
 		);
-
 
 		auto dd = DOG::SpotLightDesc();
 		dd.color = { 1.0f, 1.0f, 1.0f };
@@ -559,35 +578,27 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 
 		auto lh = DOG::LightManager::Get().AddSpotLight(dd, DOG::LightUpdateFrequency::PerFrame);
 
-		auto& slc = DOG::EntityManager::Get().AddComponent<DOG::SpotLightComponent>(flashLightEntity);
+		auto& slc = m_entityManager.AddComponent<DOG::SpotLightComponent>(flashLightEntity);
 		slc.color = dd.color;
 		slc.direction = tc.GetForward();
 		slc.strength = dd.strength;
 		slc.cutoffAngle = dd.cutoffAngle;
 		slc.handle = lh;
+		slc.owningPlayer = players[i];
 
 		float fov = ((slc.cutoffAngle + 0.1f) * 2.0f) * DirectX::XM_PI / 180.f;
-		fcc.projMatrix = DirectX::XMMatrixPerspectiveFovLH(fov, 1, 800.f, 0.1f);
+		cc.projMatrix = DirectX::XMMatrixPerspectiveFovLH(fov, 1, 800.f, 0.1f);
 
-		DOG::EntityManager::Get().AddComponent<DOG::ShadowCasterComponent>(flashLightEntity);
+		m_entityManager.AddComponent<DOG::ShadowCasterComponent>(flashLightEntity);
 
-
-		if (i == 0) // Only for this player
-		{
-			m_entityManager.AddComponent<ThisPlayer>(playerI);
-			auto& cc = m_entityManager.AddComponent<CameraComponent>(playerI);
-			cc.isMainCamera = true;
-			m_entityManager.AddComponent<AudioListenerComponent>(playerI);
+		if (i == 0) // Only for this/main player
 			slc.isMainPlayerSpotlight = true;
-		}
 		else
-		{
-			m_entityManager.AddComponent<OnlinePlayer>(playerI);
-			m_entityManager.AddComponent<ShadowReceiverComponent>(playerI);
 			slc.isMainPlayerSpotlight = false;
-		}
+
+		flashlights.push_back(flashLightEntity);
 	}
-	return players;
+	return flashlights;
 }
 
 std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3& pos, u8 agentCount, f32 spread)

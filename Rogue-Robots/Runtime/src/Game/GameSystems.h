@@ -58,3 +58,32 @@ public:
 		return (std::sinf(lerper*DirectX::XM_PI - DirectX::XM_PIDIV2) / 2.f + .5f);
 	}
 };
+
+class MVPFlashlightMoveSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DOG::SpotLightComponent, DOG::CameraComponent, DOG::TransformComponent);
+	ON_UPDATE(DOG::SpotLightComponent, DOG::CameraComponent, DOG::TransformComponent);
+
+	void OnUpdate(DOG::SpotLightComponent& slc, DOG::CameraComponent& cc, DOG::TransformComponent& stc)
+	{
+		if (slc.owningPlayer != DOG::NULL_ENTITY)
+		{
+			auto& ptc = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(slc.owningPlayer);
+			stc.worldMatrix = ptc.worldMatrix;
+			stc.SetPosition(stc.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.2f, 0.0f));
+			slc.direction = ptc.GetForward();
+			slc.dirty = true;
+
+			auto up = ptc.worldMatrix.Up();
+			up.Normalize();
+
+			cc.viewMatrix = DirectX::XMMatrixLookAtLH
+			(
+				{ stc.GetPosition().x, stc.GetPosition().y, stc.GetPosition().z },
+				{ stc.GetPosition().x + stc.GetForward().x, stc.GetPosition().y + stc.GetForward().y, stc.GetPosition().z + stc.GetForward().z },
+				{ up.x, up.y, up.z }
+			);
+		}
+	}
+};

@@ -48,14 +48,6 @@ namespace DOG
 		bool isMainCamera = false;
 	};
 
-	struct LightCameraComponent
-	{
-		using Matrix = DirectX::SimpleMath::Matrix;
-
-		Matrix viewMatrix = DirectX::XMMatrixIdentity();
-		Matrix projMatrix = DirectX::XMMatrixIdentity();
-	};
-
 	struct NetworkPlayerComponent
 	{
 		i8 playerId;
@@ -129,6 +121,7 @@ namespace DOG
 
 		bool dirty{ true };		// If static handle, dirty bool is ignored
 		bool isMainPlayerSpotlight{ false };
+		entity owningPlayer { NULL_ENTITY };
 	};
 
 	struct PointLightComponent

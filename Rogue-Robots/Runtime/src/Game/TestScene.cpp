@@ -231,6 +231,8 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 		lerpColor.target = Vector3(1, 1, 1) - lerpColor.origin;
 		lerpColor.loops = -1;
 		lerpColor.scale = 0.7;
+
+		AddComponent<ShadowReceiverComponent>(testE);
 	}
 	
 	/* Set up music player */

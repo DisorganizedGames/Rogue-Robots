@@ -26,11 +26,11 @@ MainPlayer::~MainPlayer()
 void MainPlayer::OnUpdate()
 {
 	static bool fpressed = false;
-	if (fpressed && !Keyboard::IsKeyPressed(Key::F))
+	if (fpressed && !Keyboard::IsKeyPressed(Key::H))
 	{
 		fpressed = false;
 	}
-	else if(!fpressed && Keyboard::IsKeyPressed(Key::F))
+	else if(!fpressed && Keyboard::IsKeyPressed(Key::H))
 	{
 		fpressed = true;
 		m_useDebugView = !m_useDebugView;

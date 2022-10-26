@@ -4,7 +4,6 @@
 struct VS_OUT
 {
     float4 pos : SV_POSITION;
-    float4 shadowPos : SHADOW_POSITION;
     float2 uv : TEXCOORD;
     float3 nor : NORMAL;
     float3 tan : TANGENT;
@@ -18,10 +17,7 @@ struct PerDrawData
     uint submeshID;
     uint materialID;
     uint jointsDescriptor;
-
 };
-
-
 
 struct JointsData
 {
@@ -43,7 +39,6 @@ struct PerLightData
 {
     matrix view;
     matrix proj;
-    //----
     float4 position;
     float3 color;
     float cutoffAngle;
@@ -106,7 +101,6 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     
     output.wsPos = mul(perDrawData.world, float4(pos, 1.f)).xyz;
     output.pos = mul(pfData.projMatrix, mul(pfData.viewMatrix, float4(output.wsPos, 1.f)));
-    output.shadowPos = mul(perLightData.proj, mul(perLightData.view, float4(output.wsPos, 1.f)));
     
     output.nor = mul(perDrawData.world, float4(nor, 0.f)).xyz;
     output.tan = mul(perDrawData.world, float4(tan, 0.f)).xyz;
