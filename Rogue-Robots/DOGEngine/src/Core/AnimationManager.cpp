@@ -57,6 +57,7 @@ namespace DOG
 					// set base animation clips
 					if (firstTime)
 					{
+						// tmp setting base states
 						rAC.AddAnimationClip(3, 0, 0.f, 0.f, 1.0f, 1.0f, true, 1.5f); // lower body walk
 						rAC.AddAnimationClip(1, 2, 0.f, 0.f, 1.0f, 1.0f, true); // full body idle
 						firstTime = false;

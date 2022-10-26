@@ -41,7 +41,7 @@ namespace DOG::gfx
 		m_renderWidth(1920),
 		m_renderHeight(1080)
 	{
-		m_boneJourno = std::make_unique<AnimationManager>();
+		m_jointMan = std::make_unique<AnimationManager>();
 		m_backend = std::make_unique<gfx::RenderBackend_DX12>(debug);
 		m_rd = m_backend->CreateDevice(S_NUM_BACKBUFFERS);
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
@@ -455,7 +455,7 @@ namespace DOG::gfx
 
 	void Renderer::Update(f32 dt)
 	{
-		m_boneJourno->UpdateJoints();
+		m_jointMan->UpdateJoints();
 		m_globalLightTable->FinalizeUpdates();
 
 
