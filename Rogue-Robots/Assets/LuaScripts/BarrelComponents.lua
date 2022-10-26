@@ -72,7 +72,10 @@ function BarrelComponents:Grenade()
 		end,
 
 		Destroy = function(self, bullet)
-			Physics:Explosion(bullet.entity, 20.0, 5.0)
+			local change = Length(bullet.size) * 0.1
+			local power = 20.0 + change
+			local radius = 5.0 + change
+			Physics:Explosion(bullet.entity, power, radius)
 		end,
 
 		CreateBullet = function(self)
