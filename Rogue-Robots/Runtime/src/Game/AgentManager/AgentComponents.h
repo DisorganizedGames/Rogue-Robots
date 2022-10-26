@@ -26,14 +26,22 @@ struct AgentIdComponent
 
 struct AgentMovementComponent
 {
-	float speed = 15;
+	f64 speed = 15.0f;
 	DirectX::SimpleMath::Vector3 forward{1, 0, 0};
 };
 
 struct AgentHPComponent
 {
-	float hp;
-	float maxHP;
+	f32 hp = 100.0f;
+	f32 maxHP = 100.0f;
+};
+
+struct AgentAttackComponent
+{
+	f32 radiusSquared = 1.5f;
+	f32 damage = 10.0f;
+	f32 coolDown = 1.0f;
+	f32 elapsedTime = coolDown;
 };
 
 struct AgentPathfinderComponent
@@ -47,6 +55,7 @@ struct AgentSeekPlayerComponent
 	i8 playerID = -1;
 	DOG::entity entityID = 0;
 	DirectX::SimpleMath::Vector3 direction;
+	f32 squaredDistance = 0.0f;
 };
 
 
@@ -58,7 +67,7 @@ struct AgentSeekPlayerComponent
 
 struct NetworkAgentStats
 {
-	int playerId;
+	i32 playerId;
 	u32 objectId;
 	AgentStatsComponent stats;
 };
@@ -72,4 +81,5 @@ struct NetworkAgentBehaviorSync
 struct NetworkAgentSeekPlayer
 {
 	i8 playerID = -1;
+	u32 agentID = u32(-1);
 };

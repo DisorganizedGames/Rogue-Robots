@@ -15,69 +15,68 @@ public:
 	void OnUpdate(DOG::entity e, AgentSeekPlayerComponent& seek, AgentIdComponent& agent, DOG::TransformComponent& transform)
 	{
 		DOG::EntityManager& eMan = DOG::EntityManager::Get();
-		constexpr float seekRadius = 10.0f;
+		constexpr float SEEK_RADIUS = 10.0f;
 		struct PlayerDist
 		{
-			DOG::entity entityID;
-			i8 id;
-			Vector3 pos;
-			Vector3 dir;
-			float dist;
+			DOG::entity entityID = DOG::NULL_ENTITY;
+			i8 id = 0;
+			Vector3 pos{ 0,0,0 };
+			Vector3 dir{ 0,0,0 };
+			float squaredDist = 0.0f;
+			PlayerDist() = default;
 			PlayerDist(DOG::entity eID, i8 pID, const Vector3& p, const Vector3& a) : entityID(eID), id(pID), pos(p)
 			{
 				dir = p - a;
-				dist = dir.Length();
+				squaredDist = Vector3::DistanceSquared(p, a);
 				dir.Normalize();
 			}
-			bool operator<(PlayerDist& o) { return dist < o.dist; }
+			bool operator<(PlayerDist& o) { return squaredDist < o.squaredDist; }
 		};
 
-		std::vector<PlayerDist> players;
-		players.reserve(4);
+		PlayerDist player;
 
 		Vector3 agentPos(transform.GetPosition());
 
 		eMan.Collect<DOG::ThisPlayer, DOG::TransformComponent, DOG::NetworkPlayerComponent>().Do(
 			[&](DOG::entity id, DOG::ThisPlayer&, DOG::TransformComponent& transC, DOG::NetworkPlayerComponent& netPlayer) {
 				PlayerDist dist(id, netPlayer.playerId, transC.GetPosition(), agentPos);
-				players.push_back(dist);
+				player = dist;
 			});
 
 		eMan.Collect<DOG::OnlinePlayer, DOG::TransformComponent, DOG::NetworkPlayerComponent>().Do(
 			[&](DOG::entity id, DOG::OnlinePlayer&, DOG::TransformComponent& transC, DOG::NetworkPlayerComponent& netPlayer) {
 				PlayerDist dist(id, netPlayer.playerId, transC.GetPosition(), agentPos);
-				players.push_back(dist);
+				if (dist < player)
+					player = dist;
 			});
 
-		std::sort(players.begin(), players.end());	// sort players in acending distance to agent
-
-		PlayerDist& player = players[0];
-		if (player.dist < seekRadius)
+		if (player.squaredDist < SEEK_RADIUS)
 		{
 			// new target
 			if (player.id != seek.playerID)
 			{
-				//std::cout << "Agent " << agent.id << " detected player " << static_cast<int>(player.id) << std::endl;
 				seek.playerID = player.id;
 				seek.entityID = player.entityID;
 				seek.direction = player.dir;
+				seek.squaredDistance = player.squaredDist;
 				// add network signal
 				if (!eMan.HasComponent<NetworkAgentSeekPlayer>(e))
 				{
 					NetworkAgentSeekPlayer& netSeek = eMan.AddComponent<NetworkAgentSeekPlayer>(e);
 					netSeek.playerID = player.id;
+					netSeek.agentID = agent.id;
 				}
 				else
 				{
 					NetworkAgentSeekPlayer& netSeek = eMan.GetComponent<NetworkAgentSeekPlayer>(e);
 					netSeek.playerID = player.id;
+					netSeek.agentID = agent.id;
 				}
 			}
 		}
 		else if (seek.playerID != -1)
 		{
 			// Lost target
-			//std::cout << "Agent " << agent.id << " lost sight of player " << static_cast<int>(seek.playerID) << std::endl;
 			seek.playerID = -1;
 			// add network signal
 			if (!eMan.HasComponent<NetworkAgentSeekPlayer>(e))
@@ -100,8 +99,8 @@ class AgentMovementSystem : public DOG::ISystem
 	using Matrix = DirectX::SimpleMath::Matrix;
 public:
 	SYSTEM_CLASS(AgentMovementComponent, AgentPathfinderComponent, AgentSeekPlayerComponent, DOG::TransformComponent);
-	ON_UPDATE(AgentMovementComponent, AgentPathfinderComponent, AgentSeekPlayerComponent, DOG::TransformComponent);
-	void OnUpdate(AgentMovementComponent& movement, AgentPathfinderComponent& pathfinder, AgentSeekPlayerComponent& seek, DOG::TransformComponent& trans)
+	ON_UPDATE_ID(AgentMovementComponent, AgentPathfinderComponent, AgentSeekPlayerComponent, DOG::TransformComponent);
+	void OnUpdate(DOG::entity e, AgentMovementComponent& movement, AgentPathfinderComponent& pathfinder, AgentSeekPlayerComponent& seek, DOG::TransformComponent& trans)
 	{
 		if (seek.playerID == -1)
 		{
@@ -109,11 +108,39 @@ public:
 		}
 		else
 		{
-			//std::cout << "(" << seek.direction.x << ", " << seek.direction.y << ", " << seek.direction.z << ")" << std::endl;
 			pathfinder.targetPos = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(seek.entityID).GetPosition();
+			pathfinder.targetPos += (-seek.direction * 2);
 			trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pathfinder.targetPos, Vector3(0, 1, 0)).Invert();			
 			movement.forward = seek.direction;
-			trans.SetPosition(trans.GetPosition() + movement.forward * movement.speed * DOG::Time::DeltaTime());
+			trans.SetPosition(trans.GetPosition() + movement.forward * static_cast<f32>(movement.speed * DOG::Time::DeltaTime()));
+			if (!DOG::EntityManager::Get().HasComponent<AgentAttackComponent>(e))
+				DOG::EntityManager::Get().AddComponent<AgentAttackComponent>(e);
+		}
+	}
+};
+
+class AgentAttackSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	using Matrix = DirectX::SimpleMath::Matrix;
+public:
+	SYSTEM_CLASS(AgentAttackComponent, AgentSeekPlayerComponent);
+	ON_UPDATE_ID(AgentAttackComponent, AgentSeekPlayerComponent);
+	void OnUpdate(DOG::entity e, AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
+	{
+		if (seek.playerID == -1)
+		{
+			DOG::EntityManager::Get().RemoveComponent<AgentAttackComponent>(e);
+		}
+		else if (attack.coolDown < attack.elapsedTime && attack.radiusSquared < seek.squaredDistance)
+		{
+			PlayerStatsComponent& player = DOG::EntityManager::Get().GetComponent<PlayerStatsComponent>(seek.entityID);
+			player.health -= attack.damage;
+			attack.elapsedTime = 0.0f;
+		}
+		else
+		{
+			attack.elapsedTime = static_cast<f32>(attack.elapsedTime + DOG::Time::DeltaTime());
 		}
 	}
 };

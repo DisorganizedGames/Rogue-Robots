@@ -10,8 +10,7 @@ using namespace DOG;
 
 entity AgentManager::CreateAgent(EntityTypes type, const Vector3& pos)
 {
-	u32 i = static_cast<u32>(type) - static_cast<u32>(EntityTypes::AgentsBegin); // RangeCastEntityTypes(EntityTypes::AgentsBegin, type);
-	//std::cout << sizeof(EntityTypes) << " " << i << " " << "(" << pos.x << "," << pos.y << "," << pos.z << ")" << std::endl;
+	u32 i = static_cast<u32>(type) - static_cast<u32>(EntityTypes::AgentsBegin);
 	entity e = CreateAgentCore(m_models[i], pos);
 	// Add CreateAndDestroyEntityComponent to ECS
 	return e;
@@ -30,11 +29,11 @@ AgentManager::AgentManager() : m_entityManager(EntityManager::Get()), m_agentIdC
 {
 	// Load (all) agent model asset(s)
 	m_models.push_back(AssetManager::Get().LoadModelAsset("Assets/Models/Enemies/enemy1.gltf"));
-	//m_models.push_back(AssetManager::Get().LoadModelAsset("Assets/Models/Enemies/enemy.gltf"));
 
 	// Register agent systems
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentSeekPlayerSystem>());
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentMovementSystem>());
+	EntityManager::Get().RegisterSystem(std::make_unique<AgentAttackSystem>());
 }
 
 
@@ -58,7 +57,7 @@ entity AgentManager::CreateAgentCore(u32 model, const Vector3& pos)
 		m_entityManager.AddComponent<ModelComponent>(e, model);
 
 	if (!m_entityManager.HasComponent<CapsuleColliderComponent>(e))
-		m_entityManager.AddComponent<CapsuleColliderComponent>(e, e, 0.25, 1, true);
+		m_entityManager.AddComponent<CapsuleColliderComponent>(e, e, 0.25f, 1.0f, true);
 	
 	if (!m_entityManager.HasComponent<RigidbodyComponent>(e))
 	{
