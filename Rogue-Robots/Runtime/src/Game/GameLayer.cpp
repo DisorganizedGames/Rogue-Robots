@@ -262,6 +262,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPassiveType>("GetPassiveType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::IsBulletLocal>("IsBulletLocal");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::Exists>("Exists");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::AgentHit>("AgentHit");
 	
 
 	global->SetLuaInterface(luaInterface);

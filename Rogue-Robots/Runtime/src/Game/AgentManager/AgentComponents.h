@@ -58,6 +58,12 @@ struct AgentSeekPlayerComponent
 	f32 squaredDistance = 0.0f;
 };
 
+struct AgentHitComponent
+{
+	i8 count = 0;
+	std::array<DOG::entity, 5> entityID{ DOG::NULL_ENTITY };
+	void HitBy(DOG::entity e) { entityID[count++ % entityID.max_size()] = e; }
+};
 
 /*******************************************
 
@@ -70,12 +76,6 @@ struct NetworkAgentStats
 	i32 playerId;
 	u32 objectId;
 	AgentStatsComponent stats;
-};
-
-struct NetworkAgentBehaviorSync
-{
-	u32 agentID;
-	AgentBehavior behavior;
 };
 
 struct NetworkAgentSeekPlayer

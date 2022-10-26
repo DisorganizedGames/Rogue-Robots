@@ -99,6 +99,8 @@ public:
 
 	void Exists(DOG::LuaContext* context);
 
+	void AgentHit(DOG::LuaContext* context);
+
 
 private:
 	void AddModel(DOG::LuaContext* context, DOG::entity e);
