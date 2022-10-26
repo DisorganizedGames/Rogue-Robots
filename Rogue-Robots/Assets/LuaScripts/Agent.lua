@@ -155,13 +155,13 @@ Agent.spawnPoints = {
 Agent.nextSpawnPoint = 1
 
 function Agent:popBehavior()
-	--print("popping " .. self.behaviorStack[#self.behaviorStack].name)
+	print("popping " .. self.behaviorStack[#self.behaviorStack].name)
 	self.behaviorStack[#self.behaviorStack] = nil
 	self:PrintStack()
 end
 
 function Agent:pushBehavior(behavior)
-	--print("pushing " .. behavior.name)
+	print("pushing " .. behavior.name)
 	self.behaviorStack[#self.behaviorStack + 1] = behavior
 	self:PrintStack()
 end
@@ -235,8 +235,7 @@ function OnCollisionEnter(self, e1, e2)
 		print(" Current HP: " .. Agent.stats.hp)
 
 	else
-		--print("Agent touched " .. entity .. " at  " .. Agent.pos)
+		print("Agent touched " .. entity .. " at  " .. Agent.pos)
 		Agent:Collision(entity)
 	end
 end
-

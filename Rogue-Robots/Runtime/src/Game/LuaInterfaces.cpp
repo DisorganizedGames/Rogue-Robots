@@ -232,7 +232,8 @@ void EntityInterface::SetAction(DOG::LuaContext* context)
 	}
 
 }
-
+
+
 void EntityInterface::Exists(DOG::LuaContext* context)
 {
 	entity e = context->GetInteger();
@@ -533,7 +534,7 @@ void AssetInterface::LoadAudio(LuaContext* context)
 	context->ReturnInteger((i32)audioAssetID); // Pray we don't have over 2 billion assets
 }
 
-//---------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------wwwwwwwwwwwwww----------------
 //Host
 void HostInterface::DistanceToPlayers(DOG::LuaContext* context)
 {

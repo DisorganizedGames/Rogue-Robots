@@ -91,7 +91,7 @@ void GameLayer::StartMainScene()
 	m_mainScene->SetUpScene({
 		[this]() { return SpawnPlayers(Vector3(25, 25, 15), m_nrOfPlayers, 10.f); },
 		[this]() { return LoadLevel(); },
-		[this]() { return std::vector<entity>(1, m_Agent->MakeAgent(m_entityManager.CreateEntity())); }
+		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(35, 25, 50), 25, 2.5f); }
 		});
 
 	m_player = std::make_shared<MainPlayer>();
@@ -496,7 +496,7 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		rb.getControlOfTransform = true;
 
 		m_entityManager.AddComponent<PlayerStatsComponent>(playerI);
-		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = i;
+		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = static_cast<i8>(i);
 		m_entityManager.AddComponent<InputController>(playerI);
 		scriptManager->AddScript(playerI, "Gun.lua");
 		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
@@ -514,6 +514,23 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		}
 	}
 	return players;
+}
+
+std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3& pos, u8 agentCount, f32 spread)
+{
+	ASSERT(EntityTypes::AgentsBegin <= type && type < EntityTypes::Agents, "type must be of in range EntityTypes::AgentBegin - EntityTypes::Agents");
+
+	std::vector<entity> agents;
+	for (auto i = 0; i < agentCount; ++i)
+	{
+		Vector3 offset = {
+			spread * (i % 2) - (spread / 2.f),
+			0,
+			spread * (i / 2) - (spread / 2.f),
+		};
+		agents.emplace_back(m_agentManager.CreateAgent(type, pos - offset));
+	}
+	return agents;
 }
 
 void GameLayer::GameLayerDebugMenu(bool& open)

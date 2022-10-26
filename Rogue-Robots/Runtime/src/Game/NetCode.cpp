@@ -197,13 +197,13 @@ void NetCode::OnUpdate()
 							{
 								if (tempCreate->alive)
 								{
-									std::cout << "Created entity of type: " << tempCreate->entityTypeId << " With id: " << tempCreate->id << "From player: " << tempCreate->playerId
+									std::cout << "Created entity of type: " << static_cast<u32>(tempCreate->entityTypeId) << " With id: " << tempCreate->id << "From player: " << tempCreate->playerId
 										<< std::endl;
 									//send to correct entity type spawner 
 								}
 								else
 								{
-									std::cout << "Destroyed entity of type: " << tempCreate->entityTypeId << " With id: " << tempCreate->id << "From player: " << tempCreate->playerId
+									std::cout << "Destroyed entity of type: " << static_cast<u32>(tempCreate->entityTypeId) << " With id: " << tempCreate->id << "From player: " << tempCreate->playerId
 										<< std::endl;
 									//send to correct entity type destroyer
 								}

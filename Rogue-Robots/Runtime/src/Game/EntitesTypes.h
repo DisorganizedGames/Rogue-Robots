@@ -1,16 +1,22 @@
 #pragma once
 
-enum class EntitesTypes
+#include <ostream>
+
+enum class EntityTypes
 {
 	//Agents
-	Scorpio,
-	Agents = Scorpio,
+	AgentsBegin,
+	Scorpio = AgentsBegin,
+	Agents,
 
 	//Pickups
-	Medkit,
-	Pickups = Medkit,
+	PickupsBegin,
+	Medkit = PickupsBegin,
+	Pickups,
 
 	//PassiveItem
-	IncreaseMaxHp,
-	PassiveItems = IncreaseMaxHp
+	PassiveItemsBegin,
+	IncreaseMaxHp = PassiveItemsBegin,
+	PassiveItems,
+	Default,
 };
