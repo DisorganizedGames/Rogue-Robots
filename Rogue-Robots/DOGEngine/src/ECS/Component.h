@@ -188,7 +188,7 @@ namespace DOG
 		// Number of new clips added to component this frame
 		u32 nAddedClips = 0;
 		// Active clips per group
-		u32 clipsPerGroup[nGroups] = { 0 };
+		u32 clipsInGroup[nGroups] = { 0 };
 		
 		ClipRigData clipData[maxClips];
 
