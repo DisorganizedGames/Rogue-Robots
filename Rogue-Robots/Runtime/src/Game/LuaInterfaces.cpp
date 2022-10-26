@@ -147,7 +147,7 @@ void EntityInterface::GetForward(LuaContext* context)
 	entity e = context->GetInteger();
 	TransformComponent& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
 	Matrix world = transform.worldMatrix;
-	
+
 	LuaTable t;
 	t.AddFloatToTable("x", world._31);
 	t.AddFloatToTable("y", world._32);
@@ -181,7 +181,8 @@ void EntityInterface::GetRight(DOG::LuaContext* context)
 	context->ReturnTable(t);
 }
 
-static bool GetActionState(InputController& input, const std::string& action) {
+static bool GetActionState(InputController& input, const std::string& action)
+{
 	std::unordered_map<std::string, bool> map = {
 		{"Shoot", input.shoot},
 		{"Jump", input.jump},
@@ -271,7 +272,7 @@ void EntityInterface::IsBulletLocal(DOG::LuaContext* context)
 				context->ReturnBoolean(false);
 			}
 		});
-	
+
 }
 
 #pragma region HasComponent
@@ -291,7 +292,7 @@ const std::unordered_map<std::string, bool (*) (entity)> componentMap = {
 	{ "NetworkAgentStats", HasComp<NetworkAgentStats>},
 	{ "Rigidbody", HasComp<RigidbodyComponent>},
 	{ "BoxCollider", HasComp<BoxColliderComponent>},
-	
+
 	// Game Types
 	{ "Bullet", HasComp<BulletComponent>},
 	{ "PlayerStats", HasComp<PlayerStatsComponent> },
@@ -368,14 +369,70 @@ void EntityInterface::SetRotationForwardUp(DOG::LuaContext* context)
 void EntityInterface::GetPlayerStats(DOG::LuaContext* context)
 {
 	entity e = context->GetInteger();
+
 	PlayerStatsComponent& psComp = EntityManager::Get().GetComponent<PlayerStatsComponent>(e);
 
 	LuaTable t;
 	t.AddDoubleToTable("health", psComp.health);
 	t.AddDoubleToTable("maxHealth", psComp.maxHealth);
 	t.AddDoubleToTable("speed", psComp.speed);
+	t.AddDoubleToTable("lifeSteal", psComp.speed);
 
 	context->ReturnTable(t);
+}
+
+void GetPlayerStat(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	auto stat = context->GetString();
+	
+	PlayerStatsComponent& psComp = EntityManager::Get().GetComponent<PlayerStatsComponent>(e);
+	
+	std::unordered_map<std::string, std::variant<f32>> statMap = {
+		{ "health", psComp.health },
+		{ "maxHealth", psComp.maxHealth },
+		{ "speed", psComp.speed },
+		{ "lifesteal", psComp.lifeSteal },
+	};
+	
+	auto& out = statMap.at(stat);
+	if (f32* val = std::get_if<f32>(&out))
+	{
+		context->ReturnDouble(*val);
+	}
+}
+
+void SetPlayerStats(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	auto stats = context->GetTable();
+	EntityManager::Get().GetComponent<PlayerStatsComponent>(e) = {
+		.maxHealth = stats.GetFloatFromTable("maxHealth"),
+		.health = stats.GetFloatFromTable("health"),
+		.speed = stats.GetFloatFromTable("speed"),
+		.lifeSteal = stats.GetFloatFromTable("speed"),
+	};
+}
+
+void SetPlayerStat(DOG::LuaContext* context) 
+{
+	entity e = context->GetInteger();
+	auto stat = context->GetString();
+
+	PlayerStatsComponent& psComp = EntityManager::Get().GetComponent<PlayerStatsComponent>(e);
+
+	std::unordered_map<std::string, std::variant<f32*>> statMap = {
+		{ "health", &psComp.health },
+		{ "maxHealth", &psComp.maxHealth },
+		{ "speed", &psComp.speed },
+		{ "lifesteal", &psComp.lifeSteal },
+	};
+
+	auto& out = statMap.at(stat);
+	if (f32** val = std::get_if<f32*>(&out))
+	{
+		*(*val) = static_cast<f32>(context->GetDouble());
+	}
 }
 
 void EntityInterface::AddModel(LuaContext* context, entity e)
@@ -582,12 +639,14 @@ void HostInterface::DistanceToPlayers(DOG::LuaContext* context)
 	distances.reserve(4);
 
 	EntityManager::Get().Collect<ThisPlayer, TransformComponent, NetworkPlayerComponent>().Do(
-		[&](entity id, ThisPlayer&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) {
+		[&](entity id, ThisPlayer&, TransformComponent& transC, NetworkPlayerComponent& netPlayer)
+		{
 			distances.push_back(PlayerDist(id, netPlayer.playerId, transC.GetPosition(), (agentPos - transC.GetPosition()).Length()));
 		});
 
 	EntityManager::Get().Collect<OnlinePlayer, TransformComponent, NetworkPlayerComponent>().Do(
-		[&](entity id, OnlinePlayer&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) {
+		[&](entity id, OnlinePlayer&, TransformComponent& transC, NetworkPlayerComponent& netPlayer)
+		{
 			distances.push_back(PlayerDist(id, netPlayer.playerId, transC.GetPosition(), (agentPos - transC.GetPosition()).Length()));
 		});
 
