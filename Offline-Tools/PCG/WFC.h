@@ -15,7 +15,7 @@ public:
 
 	//Generates a level from the read input in the constructor or SetInput.
 	//Can be called multiple times for different results each time.
-	bool GenerateLevel();
+	bool GenerateLevel(uint32_t nrOfRooms);
 	const std::vector<std::string>& GetGeneratedLevel() const
 	{
 		return m_generatedLevel;
@@ -29,21 +29,22 @@ public:
 
 private:
 
-#ifdef _DEBUG
 	//PRINT FOR DEBUGGING.
 	void PrintLevel();
-#endif
 
 	//CONSTRAINTS-FUNCTIONS
-	bool EdgeConstrain(uint32_t i, uint32_t dir);
+	bool EdgeConstrain(uint32_t i, uint32_t dir, Room& room);
+	bool IntroduceConstraints(Room& room);
+
+	bool GenerateRoom(Room& room);
 
 	//Reads input from a file and adds it to the block possibilities.
 	bool ReadInput(std::string input);
 
 	//The constrain functions are only used on startup for constraints, same code but uses m_entropy or m_currentEntropy.
 	//Propogates information to neighboring cells after a possibility is removed.
-	bool Propogate(uint32_t index);
-	bool PropogateConstrain(uint32_t index);
+	bool Propogate(uint32_t index, Room& room);
+	bool PropogateConstrain(uint32_t index, Room& room);
 
 	//Helper function
 	void CheckForPropogation(uint32_t currentIndex, uint32_t neighborIndex, unsigned dir);
@@ -59,6 +60,7 @@ private:
 	uint32_t m_height = 0;
 	uint32_t m_depth = 0;
 
+	std::vector<Room> m_generatedRooms; //The generated rooms. Rooms are placed here before the level is generated 
 	std::vector<std::string> m_generatedLevel; //The final level that is being generated.
 	std::vector<EntropyBlock> m_entropy; //The initial entropy. After the constraints.
 	std::vector<EntropyBlock> m_currentEntropy; //The current entropy of the generation.
