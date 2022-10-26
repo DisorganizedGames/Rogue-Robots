@@ -241,6 +241,16 @@ void EntityInterface::Exists(DOG::LuaContext* context)
 	context->ReturnBoolean(EntityManager::Get().Exists(e));
 }
 
+void EntityInterface::AgentHit(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	entity bullet = context->GetInteger();
+	if (!EntityManager::Get().HasComponent<AgentHitComponent>(e))
+		EntityManager::Get().AddComponent<AgentHitComponent>(e).HitBy(bullet);
+	else
+		EntityManager::Get().GetComponent<AgentHitComponent>(e).HitBy(bullet);
+}
+
 void EntityInterface::IsBulletLocal(DOG::LuaContext* context)
 {
 	entity e = context->GetInteger();

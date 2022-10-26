@@ -35,3 +35,23 @@ public:
 	ON_UPDATE_ID(AgentAttackComponent, AgentSeekPlayerComponent);
 	void OnUpdate(DOG::entity e, AgentAttackComponent& attack, AgentSeekPlayerComponent& seek);
 };
+
+class AgentHitSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	using Matrix = DirectX::SimpleMath::Matrix;
+public:
+	SYSTEM_CLASS(AgentHitComponent, AgentHPComponent);
+	ON_UPDATE_ID(AgentHitComponent, AgentHPComponent);
+	void OnUpdate(DOG::entity e, AgentHitComponent& hit, AgentHPComponent& hp);
+};
+
+class AgentDestructSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	using Matrix = DirectX::SimpleMath::Matrix;
+public:
+	SYSTEM_CLASS(AgentHPComponent);
+	ON_UPDATE_ID(AgentHPComponent);
+	void OnUpdate(DOG::entity e, AgentHPComponent& hp);
+};

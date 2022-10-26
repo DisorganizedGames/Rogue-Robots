@@ -85,7 +85,7 @@ void AgentMovementSystem::OnUpdate(DOG::entity e, AgentMovementComponent& moveme
 {
 	if (seek.playerID == -1)
 	{
-		// do other movement
+		// what to do when no player in sight
 	}
 	else
 	{
@@ -114,5 +114,23 @@ void AgentAttackSystem::OnUpdate(DOG::entity e, AgentAttackComponent& attack, Ag
 	else
 	{
 		attack.elapsedTime = static_cast<f32>(attack.elapsedTime + DOG::Time::DeltaTime());
+	}
+}
+
+void AgentHitSystem::OnUpdate(DOG::entity e, AgentHitComponent& hit, AgentHPComponent& hp)
+{
+	for (i8 i = 0; i < hit.count; ++i)
+		hp.hp -= 100;
+	if (hit.count >= hit.entityID.max_size())
+		std::cout << "Number of hits: " << (int)hit.count << std::endl;
+	EntityManager::Get().RemoveComponent<AgentHitComponent>(e);
+}
+
+void AgentDestructSystem::OnUpdate(DOG::entity e, AgentHPComponent& hp)
+{
+	if (hp.hp <= 0)
+	{
+		std::cout << "Agent " << e << " killed!" << std::endl;
+		EntityManager::Get().DeferredEntityDestruction(e);
 	}
 }

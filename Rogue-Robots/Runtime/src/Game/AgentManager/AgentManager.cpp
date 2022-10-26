@@ -34,6 +34,8 @@ AgentManager::AgentManager() : m_entityManager(EntityManager::Get()), m_agentIdC
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentSeekPlayerSystem>());
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentMovementSystem>());
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentAttackSystem>());
+	EntityManager::Get().RegisterSystem(std::make_unique<AgentHitSystem>());
+	EntityManager::Get().RegisterSystem(std::make_unique<AgentDestructSystem>());
 }
 
 
@@ -81,7 +83,12 @@ entity AgentManager::CreateAgentCore(u32 model, const Vector3& pos)
 	
 	if (!m_entityManager.HasComponent<AgentPathfinderComponent>(e))
 		m_entityManager.AddComponent<AgentPathfinderComponent>(e);
-	
+
+	if (!m_entityManager.HasComponent<AgentHPComponent>(e))
+		m_entityManager.AddComponent<AgentHPComponent>(e);
+
+	LuaMain::GetScriptManager()->AddScript(e, "AgentHit.lua");
+
 	// Add networking components
 	if (m_useNetworking)
 	{
