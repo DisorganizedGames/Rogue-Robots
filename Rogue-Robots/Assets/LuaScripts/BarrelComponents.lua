@@ -16,11 +16,13 @@ function BarrelComponents:BasicBarrel()
 		size = Vector3.New(15.0, 15.0, 15.0),
 
 		Update = function(self, gunEntity, parentEntityID, bullet)
-
+			
+			--Do not think the bullet models center is correct
+			local boxColliderSize = bullet.size * 0.005 + Vector3.New(.1, .1, .1)
 			Entity:ModifyComponent(bullet.entity, "Transform", bullet.size + self.size, 3)
 
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
-			Entity:AddComponent(bullet.entity, "BoxCollider", Vector3.New(.1, .1, .1), true)
+			Entity:AddComponent(bullet.entity, "BoxCollider", boxColliderSize, true)
 			Entity:AddComponent(bullet.entity, "Rigidbody", false)
 			Entity:AddComponent(bullet.entity, "Bullet", parentEntityID)
 
@@ -48,7 +50,9 @@ function BarrelComponents:Grenade()
 
 		Update = function(self, gunEntity, parentEntityID, bullet)
 			
-			Entity:ModifyComponent(bullet.entity, "Transform", bullet.size * 0.02 + self.grenadeSize, 3)
+			local newGrenadeSize = bullet.size * 0.02 + self.grenadeSize
+			local spherColliderRadius = bullet.size.x * 0.012 + self.grenadeSize.x
+			Entity:ModifyComponent(bullet.entity, "Transform", newGrenadeSize, 3)
 
 			local up = Vector3.FromTable(Entity:GetUp(parentEntityID))
 			local right = Vector3.FromTable(Entity:GetRight(parentEntityID))
@@ -62,7 +66,7 @@ function BarrelComponents:Grenade()
 			Entity:ModifyComponent(bullet.entity, "Transform", bullet.startPos, 1)
 
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
-			Entity:AddComponent(bullet.entity, "SphereCollider", 0.2, true)
+			Entity:AddComponent(bullet.entity, "SphereCollider", spherColliderRadius, true)
 			Entity:AddComponent(bullet.entity, "Rigidbody", false)
 			Entity:AddComponent(bullet.entity, "Bullet", parentEntityID)
 
