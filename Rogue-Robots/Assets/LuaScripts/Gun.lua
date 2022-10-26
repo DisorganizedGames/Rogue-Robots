@@ -26,6 +26,9 @@ local componentIdx = 0
 local barrelSwitched = false
 local barrelComponentIdx = 0
 
+local magazineSwitched = false
+local magazineComponentIdx = 0
+
 --A template. Not supposed to be used, simply here to show what variables exist to be used.
 local bulletTemplate = {
 	entity = 0,					-- ID used by the ECS.
@@ -65,7 +68,7 @@ function OnStart()
 	miscComponent = MiscComponent.BasicShot()
 	barrelComponent = BarrelManager.BasicBarrel() 
 	--barrelComponent = BarrelManager.Grenade()  --ObjectManager:CreateObject()
-	magazineComponent = MagazineManager.FrostEffect()--MagazineManager.BasicEffect()--ObjectManager:CreateObject()
+	magazineComponent = MagazineManager.BasicEffect() --ObjectManager:CreateObject()
 end
 
 local tempMode = 0
@@ -94,16 +97,15 @@ function OnUpdate()
 		switched = true
 		if componentIdx == 0 then
 			miscComponent = MiscComponent.FullAuto()
-			magazineComponent = MagazineManager.BasicEffect()
 			componentIdx = 1
 		else
 			miscComponent = MiscComponent.ChargeShot()
-			magazineComponent = MagazineManager.FrostEffect()
 			componentIdx = 0
 		end
 	elseif not Entity:GetAction(EntityID, "SwitchComponent") then
 		switched = false
 	end
+	--Barrel temp switch
 	if Entity:GetAction(EntityID, "SwitchBarrelComponent") and not barrelSwitched then
 		barrelSwitched = true
 		if barrelComponentIdx == 0 then
@@ -115,6 +117,19 @@ function OnUpdate()
 		end
 	elseif not Entity:GetAction(EntityID, "SwitchBarrelComponent") then
 		barrelSwitched = false
+	end
+	--Magazine temp switch
+	if Entity:GetAction(EntityID, "SwitchMagazineComponent") and not magazineSwitched then
+		magazineSwitched = true
+		if magazineComponentIdx == 0 then
+			magazineComponent = MagazineManager.FrostEffect() 
+			magazineComponentIdx = 1
+		else
+			magazineComponent = MagazineManager.BasicEffect()
+			magazineComponentIdx = 0
+		end
+	elseif not Entity:GetAction(EntityID, "SwitchMagazineComponent") then
+		magazineSwitched = false
 	end
 
 	NormalBulletUpdate()
