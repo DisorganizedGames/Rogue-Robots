@@ -3,6 +3,10 @@
 
 namespace DOG
 {
+	constexpr const u32 MAX_ENTITIES = 64'000u;
+	constexpr const u32 NULL_ENTITY = MAX_ENTITIES;
+	typedef u32 entity;
+
 	struct TransformComponent
 	{
 		TransformComponent(const DirectX::SimpleMath::Vector3& position = { 0.0f, 0.0f, 0.0f },
@@ -178,5 +182,11 @@ namespace DOG
 		bool dirty{ false };
 	};
 
+	struct HasEnteredCollisionComponent
+	{
+		static constexpr u32 maxCount = 10;
+		u32 entitiesCount{ 0 };
+		entity entities[maxCount] = { NULL_ENTITY };
+	};
 }
 

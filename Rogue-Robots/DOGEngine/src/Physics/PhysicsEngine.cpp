@@ -271,8 +271,7 @@ namespace DOG
 
 		s_physicsEngine.CheckRigidbodyCollisions();
 
-		//Because for now we do not have any callbacks to c++ we only have to check if entity have a ScriptComponent
-		EntityManager::Get().Collect<RigidbodyComponent, ScriptComponent>().Do([&](entity obj0Entity, RigidbodyComponent& rigidbody, ScriptComponent&)
+		EntityManager::Get().Collect<RigidbodyComponent>().Do([&](entity obj0Entity, RigidbodyComponent& rigidbody)
 			{
 				//Get rigidbody
 				auto* rigidBody = s_physicsEngine.GetRigidbodyColliderData(rigidbody.rigidbodyHandle);
@@ -304,7 +303,16 @@ namespace DOG
 							//	rigidbody.onCollisionEnter(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
 							if (it->second.activeCollision)
 							{
-								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0Entity, "OnCollisionEnter", obj1Entity);
+								if (!EntityManager::Get().HasComponent<HasEnteredCollisionComponent>(obj0Entity)) EntityManager::Get().AddComponent<HasEnteredCollisionComponent>(obj0Entity);
+								if (!EntityManager::Get().HasComponent<HasEnteredCollisionComponent>(obj1Entity)) EntityManager::Get().AddComponent<HasEnteredCollisionComponent>(obj1Entity);
+
+								auto& c0 = EntityManager::Get().GetComponent<HasEnteredCollisionComponent>(obj0Entity);
+								auto& c1 = EntityManager::Get().GetComponent<HasEnteredCollisionComponent>(obj1Entity);
+								if (c0.entitiesCount < HasEnteredCollisionComponent::maxCount) c0.entities[c0.entitiesCount++] = obj1Entity;
+								if (c1.entitiesCount < HasEnteredCollisionComponent::maxCount) c1.entities[c1.entitiesCount++] = obj0Entity;
+
+								if (EntityManager::Get().HasComponent<ScriptComponent>(obj0Entity))
+									LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0Entity, "OnCollisionEnter", obj1Entity);
 
 								//Call OnCollisionEnter for both entities if it has an rigidbody and a script
 								if (EntityManager::Get().HasComponent<RigidbodyComponent>(obj1Entity) && EntityManager::Get().HasComponent<ScriptComponent>(obj1Entity))
