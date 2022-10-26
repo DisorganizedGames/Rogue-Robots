@@ -180,6 +180,7 @@ namespace DOG
 		void FreeCollisionShape(const CollisionShapeHandle& collisionShapeHandle);
 		void FreeGhostObjectData(const GhostObjectHandle& ghostObjectHandle);
 		void CheckRigidbodyCollisions();
+		void RemoveCollisionObject(const RigidbodyHandle& collisionObjectHandle);
 
 	public:
 		~PhysicsEngine();

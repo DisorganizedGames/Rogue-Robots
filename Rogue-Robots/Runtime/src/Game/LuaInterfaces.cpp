@@ -72,6 +72,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddBoxCollider(context, e);
 	}
+	else if (compType == "BoxColliderMass")
+	{
+		AddBoxColliderMass(context, e);
+	}
 	else if (compType == "SphereCollider")
 	{
 		AddSphereCollider(context, e);
@@ -79,6 +83,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	else if (compType == "Rigidbody")
 	{
 		AddRigidbody(context, e);
+	}
+	else if (compType == "Script")
+	{
+		AddScript(context, e);
 	}
 	else if (compType == "Bullet")
 	{
@@ -180,6 +188,7 @@ static bool GetActionState(InputController& input, const std::string& action) {
 		{"ActivateItem", input.activateActiveItem},
 		{"SwitchComponent", input.switchComp},
 		{"SwitchBarrelComponent", input.switchBarrelComp},
+		{"ActivateActiveItem", input.activateActiveItem},
 	};
 
 	return map.at(action);
@@ -222,6 +231,12 @@ void EntityInterface::SetAction(DOG::LuaContext* context)
 		break;
 	}
 
+}
+
+void EntityInterface::Exists(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	context->ReturnBoolean(EntityManager::Get().Exists(e));
 }
 
 void EntityInterface::IsBulletLocal(DOG::LuaContext* context)
@@ -404,6 +419,18 @@ void EntityInterface::AddBoxCollider(LuaContext* context, entity e)
 	EntityManager::Get().AddComponent<BoxColliderComponent>(e, e, Vector3{ boxDim.x, boxDim.y, boxDim.z }, dynamic);
 }
 
+void EntityInterface::AddBoxColliderMass(DOG::LuaContext* context, DOG::entity e)
+{
+	LuaTable boxDimTable = context->GetTable();
+	bool dynamic = context->GetBoolean();
+
+	float mass = (float)context->GetDouble();
+
+	LuaVector3 boxDim = LuaVector3(boxDimTable);
+
+	EntityManager::Get().AddComponent<BoxColliderComponent>(e, e, Vector3{ boxDim.x, boxDim.y, boxDim.z }, dynamic, mass);
+}
+
 void EntityInterface::AddSphereCollider(DOG::LuaContext* context, DOG::entity e)
 {
 	float radius = (float)context->GetDouble();
@@ -453,6 +480,11 @@ void EntityInterface::AddSubmeshRender(LuaContext* context, entity e)
 	materialDesc.metallicFactor = (float)materialTable.GetDoubleFromTable("metallicFactor");
 
 	EntityManager::Get().AddComponent<SubmeshRenderer>(e, modelAsset->gfxModel->mesh.mesh, materialHandle, materialDesc);
+}
+
+void EntityInterface::AddScript(DOG::LuaContext* context, DOG::entity e)
+{
+	LuaMain::GetScriptManager()->AddScript(e, context->GetString());
 }
 
 void EntityInterface::ModifyTransform(LuaContext* context, entity e)
@@ -581,6 +613,20 @@ void PhysicsInterface::Explosion(DOG::LuaContext* context)
 			direction.Normalize();
 			rigidbody.centralImpulse = direction * rigidbody.mass * power;
 		});
+}
+
+void PhysicsInterface::RBConstrainRotation(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+
+	EntityManager::Get().GetComponent<RigidbodyComponent>(e).ConstrainRotation(context->GetBoolean(), context->GetBoolean(), context->GetBoolean());
+}
+
+void PhysicsInterface::RBConstrainPosition(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+
+	EntityManager::Get().GetComponent<RigidbodyComponent>(e).ConstrainPosition(context->GetBoolean(), context->GetBoolean(), context->GetBoolean());
 }
 
 LuaVector3::LuaVector3(LuaTable& table)

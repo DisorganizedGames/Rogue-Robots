@@ -97,6 +97,8 @@ public:
 	
 	void IsBulletLocal(DOG::LuaContext* context);
 
+	void Exists(DOG::LuaContext* context);
+
 
 private:
 	void AddModel(DOG::LuaContext* context, DOG::entity e);
@@ -111,6 +113,8 @@ private:
 
 	void AddBoxCollider(DOG::LuaContext* context, DOG::entity e);
 
+	void AddBoxColliderMass(DOG::LuaContext* context, DOG::entity e);
+
 	void AddSphereCollider(DOG::LuaContext* context, DOG::entity e);
 
 	void AddRigidbody(DOG::LuaContext* context, DOG::entity e);
@@ -118,6 +122,8 @@ private:
 	void AddBullet(DOG::LuaContext* context, DOG::entity e);
 	
 	void AddSubmeshRender(DOG::LuaContext* context, DOG::entity e);
+
+	void AddScript(DOG::LuaContext* context, DOG::entity e);
 
 	void ModifyTransform(DOG::LuaContext* context, DOG::entity e);
 	
@@ -167,6 +173,8 @@ public:
 
 	void RBSetVelocity(DOG::LuaContext* context);
 	void Explosion(DOG::LuaContext* context);
+	void RBConstrainRotation(DOG::LuaContext* context);
+	void RBConstrainPosition(DOG::LuaContext* context);
 };
 
 class RenderInterface : public LuaInterface

@@ -305,7 +305,12 @@ namespace DOG
 							if (it->second.activeCollision)
 							{
 								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0Entity, "OnCollisionEnter", obj1Entity);
-								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj1Entity, "OnCollisionEnter", obj0Entity);
+
+								//Call OnCollisionEnter for both entities if it has an rigidbody and a script
+								if (EntityManager::Get().HasComponent<RigidbodyComponent>(obj1Entity) && EntityManager::Get().HasComponent<ScriptComponent>(obj1Entity))
+								{
+									LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj1Entity, "OnCollisionEnter", obj0Entity);
+								}
 							}
 
 							//Set collisionCheck false for next collision check
@@ -318,6 +323,12 @@ namespace DOG
 								//	rigidbody.onCollisionExit(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
 								//else
 								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0Entity, "OnCollisionExit", obj1Entity);
+
+								//Call OnCollisionExit for both entities if it has an rigidbody and a script
+								if (EntityManager::Get().HasComponent<RigidbodyComponent>(obj1Entity) && EntityManager::Get().HasComponent<ScriptComponent>(obj1Entity))
+								{
+									LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj1Entity, "OnCollisionExit", obj0Entity);
+								}
 
 								//Remove the collision because we do not need to keep track of it anymore
  								collisions->second.erase(it++);
@@ -603,6 +614,8 @@ namespace DOG
 
 	void PhysicsEngine::FreeRigidbodyData(const RigidbodyHandle& rigidbodyHandle, bool freeCollisionShape)
 	{
+		RemoveCollisionObject(rigidbodyHandle);
+
 		RigidbodyColliderData* rigidbodyColliderData = GetRigidbodyColliderData(rigidbodyHandle);
 		if (rigidbodyColliderData->motionState)
 		{
@@ -638,6 +651,8 @@ namespace DOG
 
 	void PhysicsEngine::FreeGhostObjectData(const GhostObjectHandle& ghostObjectHandle)
 	{
+		RemoveCollisionObject((RigidbodyHandle)ghostObjectHandle.handle);
+
 		GhostObjectData* ghostObjectData = GetGhostObjectData(ghostObjectHandle);
 
 		m_dynamicsWorld->removeCollisionObject(ghostObjectData->ghostObject);
@@ -706,6 +721,22 @@ namespace DOG
 					//If the two objects did collide then we do not need to check the other collision points
 					break;
 				}
+			}
+		}
+	}
+
+	//Removes destroyed collision object from the rigidbodyCollision check, if it was included in the check
+	void PhysicsEngine::RemoveCollisionObject(const RigidbodyHandle& collisionObjectHandle)
+	{
+		//Check every rigidbody collision and see if the collisionObject is colliding with an rigidbody
+		for (auto collisions = s_physicsEngine.m_rigidbodyCollision.begin(); collisions != s_physicsEngine.m_rigidbodyCollision.end(); ++collisions)
+		{
+			//Remove the collisionObject from the rigidbody
+			u32 collisionObject = PhysicsEngine::s_physicsEngine.m_handleAllocator.GetSlot(collisionObjectHandle.handle);
+			auto foundCollisionObject = collisions->second.find(collisionObject);
+			if (foundCollisionObject != collisions->second.end())
+			{
+				collisions->second.erase(foundCollisionObject->first);
 			}
 		}
 	}

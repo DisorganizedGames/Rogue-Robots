@@ -261,6 +261,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::PlayAudio>("PlayAudio");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPassiveType>("GetPassiveType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::IsBulletLocal>("IsBulletLocal");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::Exists>("Exists");
 	
 
 	global->SetLuaInterface(luaInterface);
@@ -313,6 +314,8 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface = global->CreateLuaInterface("PhysicsInterface");
 	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBSetVelocity>("RBSetVelocity");
 	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::Explosion>("Explosion");
+	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBConstrainRotation>("RBConstrainRotation");
+	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBConstrainPosition>("RBConstrainPosition");
 	
 	global->SetLuaInterface(luaInterface);
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Physics", "PhysicsInterface");
@@ -434,6 +437,8 @@ void GameLayer::Input(DOG::Key key)
 				inputC.switchComp = true;
 			if (key == DOG::Key::E)
 				inputC.switchBarrelComp = true;
+			if (key == DOG::Key::G)
+				inputC.activateActiveItem = true;
 	});
 }
 
@@ -457,6 +462,8 @@ void GameLayer::Release(DOG::Key key)
 				inputC.switchComp = false;
 			if (key == DOG::Key::E)
 				inputC.switchBarrelComp = false;
+			if (key == DOG::Key::G)
+				inputC.activateActiveItem = false;
 		});
 }
 
@@ -493,6 +500,7 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		m_entityManager.AddComponent<InputController>(playerI);
 		scriptManager->AddScript(playerI, "Gun.lua");
 		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
+		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");
 
 		if (i == 0) // Only for this player
 		{
