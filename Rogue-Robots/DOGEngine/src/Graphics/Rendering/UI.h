@@ -3,6 +3,8 @@
 #include <functional>
 #include "../RHI/DX12/D2DBackend_DX12.h"
 #include "../RHI/RenderDevice.h"
+#include "../../EventSystem/IEvent.h"
+#include "../../EventSystem/Layer.h"
 
 namespace DOG
 {
@@ -101,8 +103,8 @@ namespace DOG
       public:
          bool pressed;
          UIButton(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, std::wstring text, std::function<void(void)> callback);
-         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
-         void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
          ~UIButton();
       private:
          D2D_POINT_2F m_pos;
@@ -119,8 +121,8 @@ namespace DOG
    {
       public:
          UISplashScreen(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float height);
-         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
-         void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
          ~UISplashScreen();
       private:
          D2D1_RECT_F m_background;
@@ -137,8 +139,8 @@ namespace DOG
          UIHealthBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height);
          ~UIHealthBar();
 
-         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
-         void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
 
          void SetBarValue(float value);
 
@@ -155,8 +157,8 @@ namespace DOG
       public:
          UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float heigt, std::wstring title);
          ~UIBackground();
-         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
-         void Update(DOG::gfx::D2DBackend_DX12& d2d) override;
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
       private:
          D2D1_RECT_F m_background, m_textRect;
          std::wstring m_title;
@@ -169,7 +171,7 @@ namespace DOG
       public:
          UICrosshair(DOG::gfx::D2DBackend_DX12& d2d, UINT id);
          ~UICrosshair();
-         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override;
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
       private:
          ComPtr<IDWriteTextFormat> m_textFormat;
          ComPtr<ID2D1SolidColorBrush> m_brush;
@@ -177,13 +179,23 @@ namespace DOG
 
    };
 
-   class UITextField : public UIElement
+   class UITextField : public UIElement, public DOG::Layer
    {
       public:
          UITextField(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height);
          ~UITextField();
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void OnEvent(DOG::IEvent& event) override final;
+
+         std::wstring GetText();
       private:
-         std::string text;
+         bool m_active;
+         D2D1_RECT_F m_border, m_background, m_cursor;
+         ComPtr<IDWriteTextFormat> m_textFormat;
+         ComPtr<ID2D1SolidColorBrush> m_backBrush, m_borderBrush, m_textBrush;
+         std::wstring m_text;
+         std::wstring m_displayText;
    };
 
 }

@@ -1,5 +1,9 @@
 #include "UI.h"
 #include "../../Input/Mouse.h"
+#include "../../Input/Keyboard.h"
+#include "../../EventSystem/IEvent.h"
+#include "../../EventSystem/KeyboardEvents.h"
+
 
 DOG::UI* DOG::UI::s_instance = nullptr;
 
@@ -370,7 +374,7 @@ DOG::UIHealthBar::~UIHealthBar()
 
 void DOG::UIHealthBar::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   if(m_value > 0.0f)
+   if (m_value > 0.0f)
       d2d.Get2DDeviceContext()->FillRectangle(m_bar, m_barBrush.Get());
    d2d.Get2DDeviceContext()->DrawRectangle(m_border, m_barBrush.Get());
    d2d.Get2DDeviceContext()->DrawTextW(
@@ -411,6 +415,9 @@ DOG::UIBackground::UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float w
       L"en-us",
       &m_textFormat
    );
+   HR_VFY(hr);
+   hr = m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+   HR_VFY(hr);
 }
 
 DOG::UIBackground::~UIBackground()
@@ -470,4 +477,131 @@ void DOG::UICrosshair::Draw(DOG::gfx::D2DBackend_DX12& d2d)
       m_textFormat.Get(),
       m_screenSize,
       m_brush.Get());
+}
+
+DOG::UITextField::UITextField(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height) : UIElement(id), Layer("UITextField")
+{
+   m_displayText = L"  IP";
+   m_active = false;
+   m_border = m_background = D2D1::RectF(x, y, x + width, y + height);
+   m_cursor = D2D1::RectF(x + 5.0f, y + 3.0f, x + 2.0f, y + height - 3.0f);
+   //m_bar = D2D1::RectF(x + 2.0f, y + 2.0f, x + width - 2.f, y + height - 2.f);
+   HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &m_borderBrush);
+   HR_VFY(hr);
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray, 0.3f), &m_backBrush);
+   HR_VFY(hr);
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::GhostWhite, 0.7f), &m_textBrush);
+   HR_VFY(hr);
+   hr = d2d.GetDWriteFactory()->CreateTextFormat(
+      L"Robot Radicals",
+      NULL,
+      DWRITE_FONT_WEIGHT_NORMAL,
+      DWRITE_FONT_STYLE_NORMAL,
+      DWRITE_FONT_STRETCH_NORMAL,
+      14,
+      L"en-us",
+      &m_textFormat
+   );
+   HR_VFY(hr);
+   // hr = m_textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+   // HR_VFY(hr);
+   hr = m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+   HR_VFY(hr);
+}
+
+DOG::UITextField::~UITextField()
+{
+
+}
+void DOG::UITextField::Update(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   auto m = DOG::Mouse::GetCoordinates();
+   if (DOG::Mouse::IsButtonPressed(DOG::Button::Left) && m.first >= m_border.left && m.first <= m_border.right && m.second >= m_border.top && m.second <= m_border.bottom)
+      m_active = true;
+   if (DOG::Mouse::IsButtonPressed(DOG::Button::Left) && !(m.first >= m_border.left && m.first <= m_border.right && m.second >= m_border.top && m.second <= m_border.bottom))
+      m_active = false;
+
+   if (DOG::Keyboard::IsKeyPressed(DOG::Key::A))
+   {
+      m_text.append(L"a");
+      m_cursor.left += m_textFormat->GetFontSize() * 0.64f;
+      m_cursor.right += m_textFormat->GetFontSize() * 0.64f;
+   }
+   if (DOG::Keyboard::IsKeyPressed(DOG::Key::BackSpace) && m_text.length() != 0)
+   {
+      m_text.pop_back();
+      m_cursor.left -= m_textFormat->GetFontSize() * 0.64f;
+      m_cursor.right -= m_textFormat->GetFontSize() * 0.64f;
+   }
+}
+
+void DOG::UITextField::Draw(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   d2d.Get2DDeviceContext()->DrawRectangle(m_border, m_borderBrush.Get());
+   d2d.Get2DDeviceContext()->FillRectangle(m_background, m_backBrush.Get());
+   if (m_active)
+   {
+      m_textBrush->SetOpacity(0.7f);
+      d2d.Get2DDeviceContext()->FillRectangle(m_cursor, m_borderBrush.Get());
+      d2d.Get2DDeviceContext()->DrawTextW(
+         m_text.c_str(),
+         (UINT32)m_text.length(),
+         m_textFormat.Get(),
+         &m_border,
+         m_textBrush.Get());
+
+   }
+   else if (!m_active && m_text.length() == 0)
+   {
+      m_textBrush->SetOpacity(0.3f);
+      d2d.Get2DDeviceContext()->DrawTextW(
+         m_displayText.c_str(),
+         (UINT32)m_displayText.length(),
+         m_textFormat.Get(),
+         &m_border,
+         m_textBrush.Get());
+   }
+   else
+   {
+      m_textBrush->SetOpacity(0.3f);
+      d2d.Get2DDeviceContext()->DrawTextW(
+         m_text.c_str(),
+         (UINT32)m_text.length(),
+         m_textFormat.Get(),
+         &m_border,
+         m_textBrush.Get());
+   }
+}
+
+void DOG::UITextField::OnEvent(DOG::IEvent& event)
+{
+   using namespace DOG;
+   switch (event.GetEventType())
+   {
+   case EventType::KeyPressedEvent:
+      if (m_active)
+      {
+         auto c = static_cast<int>(EVENT(KeyPressedEvent).key);
+         if (isgraph(c) != 0)
+         {
+            m_text.append(std::to_wstring(c));
+            m_cursor.left += m_textFormat->GetFontSize() * 0.64f;
+            m_cursor.right += m_textFormat->GetFontSize() * 0.64f;
+         }
+         else if (EVENT(KeyPressedEvent).key == DOG::Key::BackSpace)
+         {
+            m_text.pop_back();
+            m_cursor.left -= m_textFormat->GetFontSize() * 0.64f;
+            m_cursor.right -= m_textFormat->GetFontSize() * 0.64f;
+         }
+      }
+      break;
+   default:
+      break;
+   }
+}
+
+std::wstring DOG::UITextField::GetText()
+{
+   return m_text;
 }
