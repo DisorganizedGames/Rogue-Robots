@@ -210,7 +210,7 @@ namespace DOG::gfx
 
 
 		//TMP
-		std::unique_ptr<AnimationManager> m_boneJourno;
+		std::unique_ptr<AnimationManager> m_jointMan;
 
 
 
