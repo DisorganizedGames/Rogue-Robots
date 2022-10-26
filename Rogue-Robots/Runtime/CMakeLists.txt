@@ -14,7 +14,7 @@ set(SourceFiles
 		"src/Game/Agent.h" "src/Game/Agent.cpp"
 		"src/Game/AgentManager/AgentComponents.h"
 		"src/Game/AgentManager/AgentManager.h" "src/Game/AgentManager/AgentManager.cpp"
-		"src/Game/AgentManager/AgentBehaviorSystems.h"
+		"src/Game/AgentManager/AgentBehaviorSystems.h" "src/Game/AgentManager/AgentBehaviorSystems.cpp"
 		)
 		
 set(ExecutableName "Runtime")
