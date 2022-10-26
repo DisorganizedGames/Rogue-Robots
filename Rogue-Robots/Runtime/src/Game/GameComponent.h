@@ -36,6 +36,7 @@ struct InputController
 	bool jump = false;
 	bool switchComp = false;
 	bool switchBarrelComp = false;
+	bool switchMagazineComp = false;
 	bool activateActiveItem = false;
 };
 

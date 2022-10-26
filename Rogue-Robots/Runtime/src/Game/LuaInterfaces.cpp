@@ -188,6 +188,7 @@ static bool GetActionState(InputController& input, const std::string& action) {
 		{"ActivateItem", input.activateActiveItem},
 		{"SwitchComponent", input.switchComp},
 		{"SwitchBarrelComponent", input.switchBarrelComp},
+		{"SwitchMagazineComponent", input.switchMagazineComp},
 		{"ActivateActiveItem", input.activateActiveItem},
 	};
 
