@@ -1,14 +1,33 @@
-local aliveTime = 0.7
+local shrinkTime = 0.7
 local explosionSize = Vector3.FromTable(Entity:GetTransformScaleData(EntityID))
 local growTime = 0.13
 local growingTimer = growTime + ElapsedTime
 local growAcc = 0.0
 
-local destroyTime = growTime + aliveTime + ElapsedTime
+local setTime = false
+local destroyTime = growTime + shrinkTime + ElapsedTime
 
 function OnUpdate()
+	if not setTime then
+		destroyTime = growTime + shrinkTime + ElapsedTime
+		setTime = true
+		print("Enter")
+		print("GrowTime:", growTime)
+		print("GrowingTimer:", growingTimer)
+		print("ShrinkTime:", shrinkTime)
+		print("DestroyTimer:", destroyTime)
+		print("ElapsedTime", ElapsedTime)
+	end
+
 	if destroyTime < ElapsedTime then
 		Entity:DestroyEntity(EntityID)
+		print("Exit")
+		print("GrowTime:", growTime)
+		print("GrowingTimer:", growingTimer)
+		print("ShrinkTime:", shrinkTime)
+		print("DestroyTimer:", destroyTime)
+		print("ElapsedTime", ElapsedTime)
+		Entity:ModifyComponent(EntityID, "Transform", Vector3.Zero(), 3)
 		return
 	end
 
@@ -19,6 +38,6 @@ function OnUpdate()
 	end
 
 	local timeChange = (destroyTime - ElapsedTime)
-	local diff = timeChange * timeChange / (aliveTime * aliveTime)
-	Entity:ModifyComponent(EntityID, "Transform", explosionSize * diff, 3)
+	local shrink = timeChange * timeChange / (shrinkTime * shrinkTime)
+	Entity:ModifyComponent(EntityID, "Transform", explosionSize * shrink, 3)
 end

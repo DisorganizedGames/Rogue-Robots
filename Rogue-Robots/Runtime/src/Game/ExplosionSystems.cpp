@@ -1,4 +1,5 @@
 #include "ExplosionSystems.h"
+#include "ExplosionSystems.h"
 
 using Vector3 = DirectX::SimpleMath::Vector3;
 using namespace DOG;
@@ -30,7 +31,7 @@ void ExplosionSystem::OnUpdate(entity e, TransformComponent& explosionTransform,
 }
 
 u32 ExplosionEffectSystem::explosionEffectModelID = 0; 
-entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float radius)
+entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float radius, float growTime, float shrinkTime)
 {
 	if (explosionEffectModelID == 0)
 	{
@@ -47,6 +48,23 @@ entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float r
 	EntityManager::Get().AddComponent<TransformComponent>(newEntity, parentPosition, Vector3(.0f, .0f, .0f), Vector3(radius, radius, radius));
 	EntityManager::Get().AddComponent<ModelComponent>(newEntity, explosionEffectModelID);
 	LuaMain::GetScriptManager()->AddScript(newEntity, "ExplosionEffect.lua");
+	if (growTime != -1.0f || shrinkTime != -1.0f)
+	{
+		ScriptData scriptData = LuaMain::GetScriptManager()->GetScript(newEntity, "ExplosionEffect.lua");
+		LuaTable scriptTable(scriptData.scriptTable, true);
+
+		if (growTime != -1.0f)
+			scriptTable.AddFloatToTable("growTime", growTime);
+		if (shrinkTime != -1.0f)
+			scriptTable.AddFloatToTable("shrinkTime", shrinkTime);
+	}
 
 	return newEntity;
+}
+
+void ExplosionEffectSystem::OnUpdate(DOG::entity e, ExplosionEffectComponent& explosionInfo)
+{
+	CreateExplosionEffect(e, explosionInfo.radius, explosionInfo.growTime, explosionInfo.shrinkTime);
+
+	EntityManager::Get().RemoveComponent<ExplosionEffectComponent>(e);
 }

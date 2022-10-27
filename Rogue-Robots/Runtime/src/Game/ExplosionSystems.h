@@ -10,11 +10,15 @@ public:
 	void OnUpdate(DOG::entity e, DOG::TransformComponent& explosionTransform, ExplosionComponent& explosionInfo);
 };
 
-class ExplosionEffectSystem
+class ExplosionEffectSystem : public DOG::ISystem
 {
 private:
 	static u32 explosionEffectModelID;
 public:
-	//You do not have control over the entity! The script does!
-	static DOG::entity CreateExplosionEffect(DOG::entity parentEntity, float radius);
+	//You do not have control over the entity! The system does!
+	static DOG::entity CreateExplosionEffect(DOG::entity parentEntity, float radius, float growTime = -1.0f, float shrinkTime = -1.0f);
+
+	SYSTEM_CLASS(ExplosionEffectComponent);
+	ON_UPDATE_ID(ExplosionEffectComponent);
+	void OnUpdate(DOG::entity e, ExplosionEffectComponent& explosionInfo);
 };

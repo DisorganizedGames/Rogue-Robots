@@ -82,7 +82,14 @@ struct ExplosionComponent
 	float radius;
 };
 
+//You do not have control over the entity! The system does!
 struct ExplosionEffectComponent
 {
-
+	ExplosionEffectComponent(float explosionEffectRadius) noexcept
+	{
+		radius = explosionEffectRadius;
+	};
+	float radius;
+	float growTime = -1.0f; 
+	float shrinkTime = -1.0f;
 };

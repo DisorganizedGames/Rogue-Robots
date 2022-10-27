@@ -69,14 +69,13 @@ function BarrelComponents:Grenade()
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
 			Entity:AddComponent(bullet.entity, "SphereCollider", spherColliderRadius, true)
 			Entity:AddComponent(bullet.entity, "Rigidbody", false)
-			Entity:AddComponent(bullet.entity, "Bullet", parentEntityID)
 
 			Entity:PlayAudio(gunEntity.entityID, self.gunShotSound, true)
 
 			Physics:RBSetVelocity(bullet.entity, bullet.forward * (bullet.speed + self.grenadeSpeed) + up * self.upSpeed)
 		end,
 
-		Destroy = function(self, bullet)
+		Destroy = function(self, bullet, parentEntityID)
 			local change = Length(bullet.size) * 0.1
 			local power = 20.0 + change
 			local radius = 5.0 + change
@@ -84,6 +83,7 @@ function BarrelComponents:Grenade()
 			
 			explosionTrigger = Game:ExplosionEffect(bullet.entity, radius)
 			Entity:AddComponent(explosionTrigger, "SphereTrigger", radius)
+			Entity:AddComponent(explosionTrigger, "Bullet", parentEntityID)
 		end,
 
 		CreateBullet = function(self)
