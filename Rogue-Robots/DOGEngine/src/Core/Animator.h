@@ -30,6 +30,7 @@ namespace DOG
 		static constexpr u8 groupC = 2; // Full body
 		static constexpr u8 noGroup = 3;
 		static constexpr u8 nGroups = 3;
+		static constexpr i8 NO_ANIMATION = -1;
 		i32 offset = 0;
 		f32 globalTime = 0.0f;
 	
@@ -69,8 +70,6 @@ namespace DOG
 			f32 transitionLength = 0.0f;// Weight
 			f32 currentWeight = 0.0f;	// Weight
 	
-			// Resets Clip to inactive state
-			void ResetClip();
 			// Update animation tick of clip
 			f32 UpdateClipTick(const f32 transitionTime);
 			bool HasActiveAnimation() const { return animationID != noAnimation; };
@@ -108,7 +107,7 @@ namespace DOG
 		f32 LinearBlend(const f32 currentTime, const f32 stopTime, const f32 startValue, const f32 targetValue, f32 currentValue = 0.0f) const;
 		f32 BezierBlend(const f32 currentTime, const f32 stopTime, const f32 startValue, const f32 targetValue, f32 currentValue = 0.0f) const;
 		// Overwrites an active clip with values from newly activated clip if applicable
-		bool ReplacedClip(AnimationClip& clip);
+		bool ReplacedClip(AnimationClip& clip, u32 idx);
 		// Add a new animation clip to components timeline
 		void AddAnimationClip(i8 id, f32 duration, f32 ticks, u8 group, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop = false, f32 timeScale = 1.f, f32 startDelay = 0.f);
 		void AddBlendSpecification(f32 startDelay, f32 transitionLength, u32 group, f32 targetWeight, f32 duration = -1.f);
@@ -118,6 +117,10 @@ namespace DOG
 		u8 GetGroupIndex(const u8 group) const;
 		// Return number of clips on the timeline
 		i32 ClipCount() const;
+
+		void ResetClip(AnimationClip& clip);
+		bool OverwriteClip(AnimationClip& c);
+		u32 ClipIdx(const u8 group, const u8 animationID);
 	};
 }
 
