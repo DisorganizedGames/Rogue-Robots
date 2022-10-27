@@ -115,7 +115,7 @@ namespace DOG::gfx
 
 
 		// multiple of curr loaded mixamo skeleton
-		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 33 * 25);		
+		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 25);		
 		m_cmdl = m_rd->AllocateCommandList();
 
 		// Startup
@@ -564,7 +564,7 @@ namespace DOG::gfx
 		{
 			struct JointData
 			{
-				DirectX::XMFLOAT4X4 joints[130];
+				DirectX::XMFLOAT4X4 joints[300];
 			};
 
 			struct PerDrawData
