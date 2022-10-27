@@ -364,8 +364,8 @@ std::vector<entity> GameLayer::LoadLevel()
 	//testRooms
 	//Tunnels
 	//showOff
-	//std::ifstream inputFile("..\\Offline-Tools\\PCG\\showOff_generatedLevel.txt");
-	std::ifstream inputFile("..\\Offline-Tools\\PCG\\Tunnels_generatedLevel.txt");
+	std::ifstream inputFile("..\\Offline-Tools\\PCG\\showOff_generatedLevel.txt");
+	//std::ifstream inputFile("..\\Offline-Tools\\PCG\\Tunnels_generatedLevel.txt");
 
 	AssetManager& aManager = AssetManager::Get();
 
