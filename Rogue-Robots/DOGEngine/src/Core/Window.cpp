@@ -104,7 +104,7 @@ namespace DOG
 			}
 			if (wParam == VK_F4 && (lParam & (1 << 29) && !keyIsRepeated))
 			{
-				break; // We don't want to disable alt + f4.
+				PublishEvent<WindowClosedEvent>();  // Handle ALT+F4
 			}
 		}
 		case WM_KEYDOWN:
