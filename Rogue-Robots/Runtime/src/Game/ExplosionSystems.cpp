@@ -47,6 +47,8 @@ entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float r
 
 	EntityManager::Get().AddComponent<TransformComponent>(newEntity, parentPosition, Vector3(.0f, .0f, .0f), Vector3(radius, radius, radius));
 	EntityManager::Get().AddComponent<ModelComponent>(newEntity, explosionEffectModelID);
+
+	//Set values for explosions on the script
 	LuaMain::GetScriptManager()->AddScript(newEntity, "ExplosionEffect.lua");
 	if (growTime != -1.0f || shrinkTime != -1.0f)
 	{

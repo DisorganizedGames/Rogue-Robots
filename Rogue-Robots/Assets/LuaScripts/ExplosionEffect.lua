@@ -11,23 +11,10 @@ function OnUpdate()
 	if not setTime then
 		destroyTime = growTime + shrinkTime + ElapsedTime
 		setTime = true
-		print("Enter")
-		print("GrowTime:", growTime)
-		print("GrowingTimer:", growingTimer)
-		print("ShrinkTime:", shrinkTime)
-		print("DestroyTimer:", destroyTime)
-		print("ElapsedTime", ElapsedTime)
 	end
 
 	if destroyTime < ElapsedTime then
 		Entity:DestroyEntity(EntityID)
-		print("Exit")
-		print("GrowTime:", growTime)
-		print("GrowingTimer:", growingTimer)
-		print("ShrinkTime:", shrinkTime)
-		print("DestroyTimer:", destroyTime)
-		print("ElapsedTime", ElapsedTime)
-		Entity:ModifyComponent(EntityID, "Transform", Vector3.Zero(), 3)
 		return
 	end
 
