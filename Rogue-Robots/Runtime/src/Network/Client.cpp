@@ -88,6 +88,15 @@ INT8 Client::ConnectTcpServer(std::string ipAdress)
 		return -1;
 	}
 
+	//set socket to tcp_nodelay
+	DWORD ttl = 5020;
+	check = setsockopt(m_connectSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&ttl, sizeof(DWORD));
+	if (check == SOCKET_ERROR)
+	{
+		std::cout << "Client: Failed to set time to live to tcp_nodelay on client, ErrorCode: " << WSAGetLastError() << std::endl;
+		return -1;
+	}
+
 	//get player number
 	check = recv(m_connectSocket, inputSend, sizeof(int), 0);
 	returnValue = (INT8)atoi(inputSend);
