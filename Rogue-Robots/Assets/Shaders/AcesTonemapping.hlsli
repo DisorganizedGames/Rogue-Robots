@@ -43,3 +43,42 @@ float3 aces_fitted(float3 v)
     v = rtt_and_odt_fit(v);
     return mul2(v);
 }
+
+
+
+
+// Reinhard Jodie
+
+float luminance(float3 color)
+{
+    return dot(color, float3(0.2126f, 0.7152f, 0.0722f));
+}
+
+float3 reinhard_jodie(float3 v)
+{
+    float l = luminance(v);
+    float3 tv = v / (1.0f + v);
+    return lerp(v / (1.0f + l), tv, tv);
+}
+
+// Uncharted
+float3 uncharted2_tonemap_partial(float3 x)
+{
+    float A = 0.15f;
+    float B = 0.50f;
+    float C = 0.10f;
+    float D = 0.20f;
+    float E = 0.02f;
+    float F = 0.30f;
+    return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
+}
+
+float3 uncharted2_filmic(float3 v)
+{
+    float exposure_bias = 2.0f;
+    float3 curr = uncharted2_tonemap_partial(v * exposure_bias);
+
+    float3 W = float3(11.2f.rrr);
+    float3 white_scale = float3(1.0f.rrr) / uncharted2_tonemap_partial(W);
+    return curr * white_scale;
+}

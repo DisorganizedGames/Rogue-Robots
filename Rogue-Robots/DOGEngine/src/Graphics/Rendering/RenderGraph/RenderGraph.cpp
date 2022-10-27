@@ -583,8 +583,9 @@ namespace DOG::gfx
 			PushPassReader(id);
 			id = GetPrevious(id);
 		}
-		else
-			assert(false);		// RG has never written to this resource, and is therefore an invalid read.
+		// RG can read from resources that the RG has never written to before (imported resources)
+		//else
+		//	assert(false);		// RG has never written to this resource, and is therefore an invalid read.
 
 		input.id = id;
 		input.desiredState = state;

@@ -108,13 +108,25 @@ float CalculateShadowFactor(Texture2D shadowMap, float3 worldPosition, float3 wo
     return shadowFactor;
 }
 
-float4 main(VS_OUT input) : SV_TARGET
+struct PS_OUT
+{
+    float4 color : SV_TARGET0;
+    float4 normals : SV_TARGET1;
+};
+
+PS_OUT main(VS_OUT input)
 {    
-    // Get per draw data
+    PS_OUT output = (PS_OUT) 0;
+    output.normals = float4(normalize(input.nor), 0.f);
+    
+    // Get per draw dat
     ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[g_constants.perDrawCB];
     
     if (g_constants.wireframe == 1)
-        return float4(0.f, 1.f, 0.f, 1.f);
+    {
+        output.color = float4(0.f, 1.f, 0.f, 1.f);
+        return output;
+    }
         
     
     StructuredBuffer<ShaderInterop_GlobalData> gds = ResourceDescriptorHeap[g_constants.gdDescriptor];
@@ -159,6 +171,7 @@ float4 main(VS_OUT input) : SV_TARGET
     if (mat.normal != NO_TEXTURE)
         N = normalize(GetFinalNormal(g_aniso_samp, ResourceDescriptorHeap[mat.normal], normalize(input.tan), normalize(input.bitan), normalize(input.nor), input.uv));
     
+    output.normals = float4(N, 0.f);
     
     float3 emissiveInput = mat.emissiveFactor.rgb;
     if (mat.emissive != NO_TEXTURE)
@@ -167,7 +180,7 @@ float4 main(VS_OUT input) : SV_TARGET
         emissiveInput *= emissive.Sample(g_aniso_samp, input.uv).rgb;
     }
     
-    float3 amb = 0.03f * albedoInput + emissiveInput;
+    float3 amb = 0.001f * albedoInput + emissiveInput;
     
 
     
@@ -323,7 +336,8 @@ float4 main(VS_OUT input) : SV_TARGET
         if (perSpotlightData.spotlightArray[k].strength == 0)
             continue;
         // check contribution from based on spotlight angle
-        float3 lightToPosDir = normalize(input.wsPos - perSpotlightData.spotlightArray[k].worldPosition.xyz);
+        float3 lightToPos = input.wsPos - perSpotlightData.spotlightArray[k].worldPosition.xyz;
+        float3 lightToPosDir = normalize(lightToPos);
         float theta = dot(normalize(perSpotlightData.spotlightArray[k].direction), lightToPosDir);
     
         float contrib = 0.f;
@@ -331,6 +345,14 @@ float4 main(VS_OUT input) : SV_TARGET
             contrib = 0.0f;
         else
             contrib = 1.f;
+        
+        // Lighting falloff by distance
+        float SPOTLIGHT_DISTANCE = 100.f;
+        float distanceFallOffFactor = (1.f - clamp(length(lightToPos), 0.f, SPOTLIGHT_DISTANCE) / SPOTLIGHT_DISTANCE);
+        distanceFallOffFactor *= distanceFallOffFactor;     // quadratic falloff
+        contrib *= distanceFallOffFactor;
+            
+        
         
         // calculate per-light radiance
         float3 L = normalize(perSpotlightData.spotlightArray[k].worldPosition.xyz - input.wsPos);
@@ -373,6 +395,7 @@ float4 main(VS_OUT input) : SV_TARGET
     //    float G = GeometrySmith(N, V, L, roughnessInput);
     //    float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
     
+        
     //    float3 kS = F;
     //    float3 kD = float3(1.f, 1.f, 1.f) - kS;
     //    kD *= 1.0 - metallicInput;
@@ -387,9 +410,11 @@ float4 main(VS_OUT input) : SV_TARGET
     //    Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL;
     //}
     
-    float3 hdr = amb + Lo;
-    return float4(hdr, albedoAlpha);
     
+    float3 hdr = amb + Lo;
+    
+    output.color = float4(hdr, albedoAlpha);
+    return output;
 }
 
 

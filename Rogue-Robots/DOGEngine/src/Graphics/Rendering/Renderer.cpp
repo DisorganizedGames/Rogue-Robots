@@ -169,6 +169,7 @@ namespace DOG::gfx
 			.SetShader(meshVS.get())
 			.SetShader(meshPS.get())
 			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
 			.SetDepthFormat(DepthFormat::D32)
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
@@ -184,6 +185,8 @@ namespace DOG::gfx
 			.SetShader(meshVS.get())
 			.SetShader(meshPS.get())
 			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+
 			.SetDepthFormat(DepthFormat::D32)
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.SetRasterizer(RasterizerBuilder().SetCullMode(D3D12_CULL_MODE_NONE))
@@ -193,6 +196,8 @@ namespace DOG::gfx
 			.SetShader(meshVS.get())
 			.SetShader(meshPS.get())
 			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+
 			.SetDepthFormat(DepthFormat::D32)
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.SetRasterizer(RasterizerBuilder().SetFillMode(D3D12_FILL_MODE_WIREFRAME))
@@ -202,10 +207,21 @@ namespace DOG::gfx
 			.SetShader(meshVS.get())
 			.SetShader(meshPS.get())
 			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+
 			.SetDepthFormat(DepthFormat::D32)
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.SetRasterizer(RasterizerBuilder().SetFillMode(D3D12_FILL_MODE_WIREFRAME).SetCullMode(D3D12_CULL_MODE_NONE))
 			.Build());
+
+		auto ssaoCS = m_sclr->CompileFromFile("ssaoCS.hlsl", ShaderType::Compute);
+		m_ssaoPipe = m_rd->CreateComputePipeline(ComputePipelineDesc(ssaoCS.get()));
+
+
+		auto boxBlurCS = m_sclr->CompileFromFile("BoxBlurCS.hlsl", ShaderType::Compute);
+		m_boxBlurPipe = m_rd->CreateComputePipeline(ComputePipelineDesc(boxBlurCS.get()));
+
+
 
 
 
@@ -269,8 +285,62 @@ namespace DOG::gfx
 		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
 		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
 		m_bloomEffect = std::make_unique<Bloom>(m_globalEffectData, m_dynConstants.get(), m_renderWidth, m_renderHeight);
+	
+		{
+			// Create 4x4 SSAO noise
+			std::random_device rd;  // Will be used to obtain a seed for the random number engine
+			std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
+			std::uniform_real_distribution<f32> dis(0.f, 1.f);	// we will unpack to [-1, 1] in shader
 
-		ImGuiMenuLayer::RegisterDebugWindow("Renderer Debug", [this](bool& open) { SpawnRenderDebugWindow(open); });
+			const u32 noiseSamplePerDim = 4;
+			std::vector<DirectX::SimpleMath::Vector4> randomDirections;
+			for (auto i = 0; i < noiseSamplePerDim * noiseSamplePerDim; ++i)
+			{
+				DirectX::SimpleMath::Vector3 vec = { dis(gen), dis(gen), 0.f };
+				vec.Normalize();
+				randomDirections.push_back({ vec.x, vec.y, vec.z, 0.f });
+			}
+			TextureDesc noise(MemoryType::Default, DXGI_FORMAT_R32G32B32A32_FLOAT, noiseSamplePerDim, noiseSamplePerDim, 1);
+			m_ssaoNoise = m_rd->CreateTexture(noise);
+
+			auto rowPitch = noiseSamplePerDim * sizeof(randomDirections[0]);
+			m_perFrameUploadCtx->PushUploadToTexture(m_ssaoNoise, 0, { 0, 0, 0 },
+				randomDirections.data(), DXGI_FORMAT_R32G32B32A32_FLOAT,
+				noiseSamplePerDim, noiseSamplePerDim, 1,
+				(u32)rowPitch);
+
+			// Create 64 samples
+			std::uniform_real_distribution<f32> dis2(-1.f, 1.f);
+
+			const u32 hemiSamples = 64;
+			std::vector<DirectX::SimpleMath::Vector4> randomSamples;
+			// Generate points on the hemisphere
+			for (auto i = 0; i < hemiSamples; ++i)
+			{
+				DirectX::SimpleMath::Vector3 vec = { dis2(gen), dis2(gen), dis2(gen) };
+				vec.Normalize();
+				randomSamples.push_back({ vec.x, vec.y, vec.z, 0.f });
+			}
+			// Scale points to distribute them within the hemisphere (closer towards the center)
+			for (auto i = 0; i < hemiSamples; ++i)
+			{
+				float scale = float(i) / float(hemiSamples);
+				scale = std::lerp(0.1f, 1.f, scale * scale);
+				randomSamples[i] *= scale;
+			}
+
+			BufferDesc samples(MemoryType::Default, (u32)randomSamples.size() * sizeof(randomSamples[0]), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_COPY_DEST);
+			m_ssaoSamples = m_rd->CreateBuffer(samples);
+
+			m_perFrameUploadCtx->PushUpload(m_ssaoSamples, 0, randomSamples.data(), samples.size);
+
+		}
+
+
+
+
+
+		ImGuiMenuLayer::RegisterDebugWindow("Renderer Debug", [this](bool& open) { SpawnRenderDebugWindow(open); }, false, std::make_pair(DOG::Key::LCtrl, DOG::Key::N));
 	}
 
 	Renderer::~Renderer()
@@ -297,6 +367,7 @@ namespace DOG::gfx
 	{
 		m_viewMat = view;
 		m_projMat = proj ? *proj : DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_renderWidth / m_renderHeight, 800.f, 0.1f);
+		//m_projMat = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_renderWidth / m_renderHeight, 0.1f, 800.f);
 	}
 
 	void Renderer::BeginGUI()
@@ -373,6 +444,7 @@ namespace DOG::gfx
 		// Update per frame data
 		{
 			m_pfData.viewMatrix = m_viewMat;
+			m_pfData.viewMatrix.Invert(m_pfData.invViewMatrix);
 			m_pfData.projMatrix = m_projMat;
 			m_pfData.projMatrix.Invert(m_pfData.invProjMatrix);
 			m_pfData.time += dt;
@@ -435,6 +507,9 @@ namespace DOG::gfx
 		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
 		auto& rg = *m_rg;
 
+		// Depth prepass
+
+
 		// Forward pass to HDR
 		{
 			struct JointData
@@ -453,13 +528,13 @@ namespace DOG::gfx
 			/*Struct to be filled in and passed to shader per light*/
 			struct PerLightData
 			{
-				DirectX::XMFLOAT4X4 view;
-				DirectX::XMFLOAT4X4 proj;
+				DirectX::XMFLOAT4X4 view{};
+				DirectX::XMFLOAT4X4 proj{};
 				DirectX::SimpleMath::Vector4 position;
 				DirectX::SimpleMath::Vector3 color;
-				float cutoffAngle;
+				float cutoffAngle{ 0.f };
 				DirectX::SimpleMath::Vector3 direction;
-				float strength;
+				float strength{ 0.f };
 			};
 
 			/*Encompasses all the light datas for spotlights, which we currently limit to 12*/
@@ -613,6 +688,8 @@ namespace DOG::gfx
 					builder.DeclareTexture(RG_RESOURCE(MainDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_renderWidth, m_renderHeight));
 					builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight)
 						.AddFlag(D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
+					
+					builder.DeclareTexture(RG_RESOURCE(MainNormals), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight));
 
 					/*Here the "views are loaded" to be used in the pixel shader, one for every shadow map available.*/
 					for (size_t i{ 0u }; i < m_lightEntities.size(); ++i)
@@ -625,7 +702,12 @@ namespace DOG::gfx
 				
 					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
-					builder.WriteDepthStencil(RG_RESOURCE(MainDepth), RenderPassAccessType::ClearDiscard,
+
+					// Write normals
+					builder.WriteRenderTarget(RG_RESOURCE(MainNormals), RenderPassAccessType::ClearPreserve,
+						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+					builder.WriteDepthStencil(RG_RESOURCE(MainDepth), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
 				},
 				[&](const PassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
@@ -675,22 +757,175 @@ namespace DOG::gfx
 				});
 		}
 
+		// Generate SSAO
+		{
+			struct PassData
+			{
+				RGResourceView noise, samples;
+				RGResourceView depth;
+				RGResourceView nor;
+				RGResourceView aoOut;
+			};
+
+			rg.AddPass<PassData>("SSAO Pass",
+				[&](PassData& passData, RenderGraph::PassBuilder& builder)
+				{
+					builder.ImportTexture(RG_RESOURCE(NoiseSSAO), m_ssaoNoise, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COMMON);
+					builder.ImportBuffer(RG_RESOURCE(SamplesSSAO), m_ssaoSamples, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
+
+					// Compute read access
+					passData.depth = builder.ReadResource(RG_RESOURCE(MainDepth), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R32_FLOAT));
+					passData.nor = builder.ReadResource(RG_RESOURCE(MainNormals), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+					passData.noise = builder.ReadResource(RG_RESOURCE(NoiseSSAO), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R32G32B32A32_FLOAT));
+					passData.samples = builder.ReadResource(RG_RESOURCE(SamplesSSAO), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+						BufferViewDesc(ViewType::ShaderResource, 0, sizeof(DirectX::SimpleMath::Vector4), 64));
+
+					// screen space AO texture
+					builder.DeclareTexture(RG_RESOURCE(AmbientOcclusion), RGTextureDesc::ReadWrite2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight));
+					passData.aoOut = builder.ReadWriteTarget(RG_RESOURCE(AmbientOcclusion),
+						TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+				},
+				[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				{
+					if (m_ssaoOn)
+					{
+
+						rd->Cmd_SetPipeline(cmdl, m_ssaoPipe);
+						auto args = ShaderArgs()
+							.AppendConstant(m_globalEffectData.globalDataDescriptor)
+							.AppendConstant(m_currPfDescriptor)
+							.AppendConstant(m_renderWidth)
+							.AppendConstant(m_renderHeight)
+							.AppendConstant(resources.GetView(passData.aoOut))
+							.AppendConstant(resources.GetView(passData.depth))
+							.AppendConstant(resources.GetView(passData.nor))
+							.AppendConstant(resources.GetView(passData.noise))
+							.AppendConstant(resources.GetView(passData.samples));
+						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
+
+						rd->Cmd_ClearUnorderedAccessFLOAT(cmdl,
+							resources.GetTextureView(passData.aoOut), { 0.f, 0.f, 0.f, 1.f }, ScissorRects().Append(0, 0, m_renderWidth, m_renderHeight));
+
+						// assuming 64 threads per group --> 64 threads per wavefrom, warp is 32 --> use 64
+						// we are using 8x8 thread groups
+						auto xGroup = (u32)std::ceilf(m_renderWidth / 8.f);
+						auto yGroup = (u32)std::ceilf(m_renderHeight / 8.f);
+						rd->Cmd_Dispatch(cmdl, xGroup, yGroup, 1);
+					}
+					else
+					{
+						rd->Cmd_ClearUnorderedAccessFLOAT(cmdl,
+							resources.GetTextureView(passData.aoOut), { 1.f, 1.f, 1.f, 1.f }, ScissorRects().Append(0, 0, m_renderWidth, m_renderHeight));
+					}
+				});
+		}
+
+		// Box blur
+		{
+			struct PassData
+			{
+				RGResourceView input;
+				RGResourceView output;
+			};
+
+			rg.AddPass<PassData>("SSAO Blur",
+				[&](PassData& passData, RenderGraph::PassBuilder& builder)
+				{
+					builder.DeclareTexture(RG_RESOURCE(AOBlurred), RGTextureDesc::ReadWrite2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight));
+
+
+					passData.input = builder.ReadResource(RG_RESOURCE(AmbientOcclusion), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+					passData.output = builder.ReadWriteTarget(RG_RESOURCE(AOBlurred),
+						TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+				},
+				[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				{
+					// clear
+					rd->Cmd_ClearUnorderedAccessFLOAT(cmdl,
+						resources.GetTextureView(passData.output), { 1.f, 1.f, 1.f, 1.f }, ScissorRects().Append(0, 0, m_renderWidth, m_renderHeight));
+
+					if (m_ssaoOn)
+					{
+						rd->Cmd_SetPipeline(cmdl, m_boxBlurPipe);
+
+						{
+							auto args = ShaderArgs()
+								.AppendConstant(m_globalEffectData.globalDataDescriptor)
+								.AppendConstant(m_currPfDescriptor)
+								.AppendConstant(m_renderWidth)
+								.AppendConstant(m_renderHeight)
+								.AppendConstant(resources.GetView(passData.input))
+								.AppendConstant(resources.GetView(passData.output))
+								.AppendConstant(1);
+							rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
+
+							// assuming 64 threads per group --> 64 threads per wavefrom, warp is 32 --> use 64
+							// we are using 8x8 thread groups
+							// Using gather method
+							auto xGroup = (u32)std::ceilf(m_renderWidth / 8.f);
+							auto yGroup = (u32)std::ceilf(m_renderHeight / 8.f);
+							rd->Cmd_Dispatch(cmdl, xGroup, yGroup, 1);
+						}
+
+						{
+							auto args = ShaderArgs()
+								.AppendConstant(m_globalEffectData.globalDataDescriptor)
+								.AppendConstant(m_currPfDescriptor)
+								.AppendConstant(m_renderWidth)
+								.AppendConstant(m_renderHeight)
+								.AppendConstant(resources.GetView(passData.input))
+								.AppendConstant(resources.GetView(passData.output))
+								.AppendConstant(1);
+							rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
+
+							// assuming 64 threads per group --> 64 threads per wavefrom, warp is 32 --> use 64
+							// we are using 8x8 thread groups
+							// Using gather method
+							auto xGroup = (u32)std::ceilf(m_renderWidth / 8.f);
+							auto yGroup = (u32)std::ceilf(m_renderHeight / 8.f);
+							rd->Cmd_Dispatch(cmdl, xGroup, yGroup, 1);
+						}
+
+					}
+				});
+		}
+
+
+
 		// Test compute on Lit HDR
 		// Uncomment to enable the test compute effect!
 		//m_testComputeEffect->Add(rg);
 
-		if(m_bloomEffect) m_bloomEffect->Add(rg);
+		if(m_bloomEffect) 
+			m_bloomEffect->Add(rg);
 
 		// Blit HDR to LDR
 		{
 			struct PassData
 			{
 				RGResourceView litHDRView;
+				RGResourceView ao;
+				RGResourceView bloom;
 			};
 			rg.AddPass<PassData>("Blit to HDR Pass",
 				[&](PassData& passData, RenderGraph::PassBuilder& builder)
 				{
 					builder.ImportTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+					passData.ao = builder.ReadResource(RG_RESOURCE(AOBlurred), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+					if (m_bloomEffect)
+					{
+						passData.bloom = builder.ReadResource(RG_RESOURCE(FinalBloom), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+							TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+					}
+
 
 					passData.litHDRView = builder.ReadResource(RG_RESOURCE(LitHDR), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
@@ -704,8 +939,20 @@ namespace DOG::gfx
 					rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.bbScissor);
 
 					rd->Cmd_SetPipeline(cmdl, m_pipe);
-					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, ShaderArgs()
-						.AppendConstant(resources.GetView(passData.litHDRView)));
+
+					if (m_bloomEffect)
+					{
+						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, ShaderArgs()
+							.AppendConstant(resources.GetView(passData.ao))
+							.AppendConstant(resources.GetView(passData.litHDRView))
+							.AppendConstant(resources.GetView(passData.bloom)));
+					}
+					else
+					{
+						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, ShaderArgs()
+							.AppendConstant(resources.GetView(passData.ao))
+							.AppendConstant(resources.GetView(passData.litHDRView)));
+					}
 					rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
 				});
 		}
@@ -814,14 +1061,16 @@ namespace DOG::gfx
 			if (ImGui::MenuItem("Renderer"))
 			{
 				open = true;
+
 			}
 			ImGui::EndMenu(); // "View"
 		}
 
 		if (open)
 		{
-			if (ImGui::Begin("Light Manager", &open))
+			if (ImGui::Begin("Effects Manager", &open))
 			{
+				ImGui::Checkbox("SSAO", &m_ssaoOn);
 			}
 			ImGui::End();
 		}
