@@ -617,7 +617,7 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		};
 		m_entityManager.AddComponent<TransformComponent>(playerI, pos - offset);
 		m_entityManager.AddComponent<ModelComponent>(playerI, m_playerModels[i]);
-		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 1.f, 1.8f, true, 75.f);
+		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 0.8f, true, 75.f);
 		auto& rb = m_entityManager.AddComponent<RigidbodyComponent>(playerI, playerI);
 		rb.ConstrainRotation(true, true, true);
 		rb.disableDeactivation = true;
