@@ -70,6 +70,7 @@ namespace DOG
 	struct AnimationComponent
 	{
 		static constexpr u8 MAX_SETTERS = 10;
+		u32 offset;
 		i8 rigID = 0;
 		i8 animatorID = -1;
 		i8 addedSetters = 0;
@@ -81,9 +82,6 @@ namespace DOG
 			f32 transitionLength;
 			f32 playbackRate;
 			bool loop;
-			bool operator <(const Setter& o) const {
-				return desired && !o.desired;
-			}
 		};
 		std::array<Setter, MAX_SETTERS> animSetters;
 	};

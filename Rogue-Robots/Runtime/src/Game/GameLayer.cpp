@@ -286,7 +286,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::IsBulletLocal>("IsBulletLocal");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::Exists>("Exists");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::AgentHit>("AgentHit");
-	
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::ModifyAnimationComponent>("ModifyAnimationComponent");
 
 	global->SetLuaInterface(luaInterface);
 
@@ -503,10 +503,11 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 	ASSERT(playerCount <= MAX_PLAYER_COUNT, "No more than 4 players can be spawned. I.e. playerCount can't exceed 4");
 
 	auto& am = DOG::AssetManager::Get();
-	m_playerModels[1] = am.LoadModelAsset("Assets/Models/Players/Red/Rigged/red_marine.gltf");
-	m_playerModels[0] = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
-	m_playerModels[2] = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
-	m_playerModels[3] = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
+	//m_playerModels[0] = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
+	m_playerModels[0] = am.LoadModelAsset("Assets/Models/Players/Red/Rigged/red_marine.gltf");
+	m_playerModels[1] = am.LoadModelAsset("Assets/Models/Players/Green/Rigged/green_marine.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
+	m_playerModels[2] = am.LoadModelAsset("Assets/Models/Players/Blue/Rigged/blue_marine.gltf");
+	m_playerModels[3] = am.LoadModelAsset("Assets/Models/Players/Yellow/Rigged/yellow_marine.gltf");
 	std::vector<entity> players;
 	auto* scriptManager = LuaMain::GetScriptManager();
 	for (auto i = 0; i < playerCount; ++i)
@@ -518,8 +519,8 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 			spread * (i / 2) - (spread / 2.f),
 		};
 		auto& tf = m_entityManager.AddComponent<TransformComponent>(playerI, pos - offset);
-		m_entityManager.AddComponent<ModelComponent>(playerI, m_playerModels[i]);
-		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.65f, .6f, true, 75.f);
+		m_entityManager.AddComponent<ModelComponent>(playerI, m_playerModels[playerI]);
+		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.55f, .9f, true, 75.f);
 		auto& rb = m_entityManager.AddComponent<RigidbodyComponent>(playerI, playerI);
 		rb.ConstrainRotation(true, true, true);
 		rb.disableDeactivation = true;
@@ -533,22 +534,24 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
 		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");
 
-		if (i == 1) // Only for this player
-		{
-			tf.SetScale(Vector3(.01f, .01f, .01f));
-			auto& ac = m_entityManager.AddComponent<AnimationComponent>(playerI);
-			ac.rigID = 0;
-			ac.animatorID = 0;
-		}
+		
 		if (i == 0) // Only for this player
 		{
 			m_entityManager.AddComponent<ThisPlayer>(playerI);
 			auto& cc = m_entityManager.AddComponent<CameraComponent>(playerI);
 			cc.isMainCamera = true;
 			m_entityManager.AddComponent<AudioListenerComponent>(playerI);
+			auto& ac = m_entityManager.AddComponent<AnimationComponent>(playerI);
+			ac.rigID = 0;
+			ac.animatorID = 3;
+			tf.SetScale(Vector3(.01f, .01f, .01f));
 		}
 		else
 		{
+			auto& ac = m_entityManager.AddComponent<AnimationComponent>(playerI);
+			ac.rigID = 0;
+			ac.animatorID = i-1;
+			tf.SetScale(Vector3(.01f, .01f, .01f));
 			m_entityManager.AddComponent<OnlinePlayer>(playerI);
 		}
 	}

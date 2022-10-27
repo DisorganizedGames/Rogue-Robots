@@ -186,8 +186,10 @@ namespace DOG
 						}
 						else if (EntityManager::Get().HasComponent<AnimationComponent>(e))
 						{
+							auto& c = EntityManager::Get().GetComponent<AnimationComponent>(e);
+
 							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
-								m_renderer->SubmitAnimatedMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+								m_renderer->SubmitAnimatedMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC, c.offset);
 						}	
 						else
 						{

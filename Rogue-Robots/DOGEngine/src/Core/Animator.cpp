@@ -15,13 +15,15 @@ namespace DOG
 		return normalizedTime * totalTicks;
 	};
 	
-	void Animator::AnimationClip::ResetClip()
+	void Animator::ResetClip(AnimationClip& clip)
 	{
-		timeScale = 1.f;
-		animationID = noAnimation;
-		group = noGroup;
-		normalizedTime = 0.f;
-		activeAnimation = false;
+		if (clip.group != noGroup && clipsInGroup[clip.group] != 0)
+			clipsInGroup[clip.group]--;
+		clip.timeScale = 1.f;
+		clip.animationID = NO_ANIMATION;
+		clip.group = noGroup;
+		clip.normalizedTime = 0.f;
+		clip.activeAnimation = false;
 	}
 	
 	void Animator::Update(const f32 dt)
@@ -37,13 +39,12 @@ namespace DOG
 			// Keep track of clips that activated/deactivated this frame
 			if (c.Activated(globalTime, dt))
 			{
-				if (!ReplacedClip(c))
-					++clipsInGroup[c.group];
+				//if (!ReplacedClip(c, i))
+				++clipsInGroup[c.group];
 			}
 			else if (c.Deactivated())
 			{
-				--clipsInGroup[c.group];
-				c.ResetClip();
+				ResetClip(c);
 			}
 			c.UpdateState(globalTime);
 		}
@@ -59,7 +60,7 @@ namespace DOG
 			clipData[i].aID = c.animationID;
 			const auto transitionTime = globalTime - c.transitionStart;
 	
-			clipData[i].tick = c.UpdateClipTick(transitionTime < dt ? transitionTime : dt);
+			clipData[i].tick = c.UpdateClipTick(transitionTime < dt ? globalTime - c.transitionStart : dt);
 			clipData[i].weight = LinearBlend(transitionTime, c.transitionLength, c.startWeight, c.targetWeight, c.currentWeight);
 			
 			groupWeightSum[c.group] += clipData[i].weight;
@@ -80,19 +81,21 @@ namespace DOG
 		static constexpr u8 inactiveBlendIdxA = 2, inactiveBlendIdxB = 3;
 		if (groups[inactiveBlendIdxA].Activated(globalTime, dt))
 		{
+			f32 retWeight = groups[activeBlendIdxA].startWeight;
 			std::swap(groups[inactiveBlendIdxA], groups[activeBlendIdxA]);
 			auto& bsA = groups[activeBlendIdxA];
 			bsA.startWeight = groupWeights[groupA];
 			if (bsA.duration > 0)
-				AddBlendSpecification(bsA.duration - bsA.transitionLength, bsA.transitionLength, groupA, groupWeights[groupA]);
+				AddBlendSpecification(std::clamp(bsA.duration - bsA.transitionLength, 0.f, 1.f), bsA.transitionLength, groupA, retWeight);
 		}
 		if (groups[inactiveBlendIdxB].Activated(globalTime, dt))
 		{
+			f32 retWeight = groups[activeBlendIdxB].startWeight;
 			std::swap(groups[inactiveBlendIdxB], groups[activeBlendIdxB]);
 			auto& bsB = groups[activeBlendIdxB];
 			bsB.startWeight = groupWeights[groupB];
 			if (bsB.duration > 0)
-				AddBlendSpecification(bsB.duration - bsB.transitionLength, bsB.transitionLength, groupB, groupWeights[groupB]);
+				AddBlendSpecification(std::clamp(bsB.duration - bsB.transitionLength, 0.f, 1.f), bsB.transitionLength, groupB, retWeight);
 		}
 	
 		// Set Group weights for partial body groups
@@ -102,15 +105,43 @@ namespace DOG
 			groupWeights[i] = LinearBlend(globalTime - group.transitionStart, group.transitionLength, group.startWeight, group.targetWeight, groupWeights[i]);
 
 		}
+		// make sure weight is zeroed if no clips tmp solution
+		if(clipsInGroup[groupB] == 0)
+			groupWeights[groupB] = 0.f;
+		if (clipsInGroup[groupA] == 0)
+			groupWeights[groupA] = 0.f;
 		// reset added clips for next frame
 		nAddedClips = 0;
 	}
-	
+
+	bool Animator::OverwriteClip(AnimationClip& clip)
+	{
+		bool overwriteClip = false;
+		i32 idx = (clip.group > groupA) * clipsInGroup[groupA] +
+			(clip.group > groupB) * clipsInGroup[groupB];
+		const i32 lastIdx = idx + clipsInGroup[clip.group];
+		for (u32 i = 0; i < lastIdx; i++)
+		{
+			if (clip.animationID == clips[i].animationID && clip.group == clips[i].group)
+			{
+				clips[i].startWeight = clip.startWeight;
+				clips[i].targetWeight = clip.targetWeight;
+				clips[i].transitionStart = globalTime + clip.transitionStart;
+				clips[i].transitionLength = clip.transitionLength;
+				clips[i].normalizedTime = 0.f;
+				clips[i].loop = clip.loop;
+				clips[i].timeScale = clip.timeScale;
+				return true;
+			}
+		}
+		return false;
+	}
+
 	void Animator::AddAnimationClip(i8 id, f32 duration, f32 ticks, u8 group, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop, f32 timeScale, f32 startDelay)
 	{
-		++nAddedClips;
-		i32 clipIdx = (nAddedClips < maxClips) * (maxClips - nAddedClips);
-	
+		i32 clipIdx = ClipIdx(group, id);
+		ResetClip(clips[clipIdx]);
+
 		// set new clip
 		auto& addedClip = clips[clipIdx];
 	
@@ -125,6 +156,25 @@ namespace DOG
 		addedClip.loop = loop;
 		addedClip.duration = duration;
 		addedClip.totalTicks = ticks;
+	}
+
+	u32 Animator::ClipIdx(const u8 group, const u8 animationID)
+	{
+		//for (idx; idx < lastIdx; ++idx)
+		for (u32 idx = 0; idx < maxClips; ++idx)
+		{
+			if (clips[idx].animationID == animationID && clips[idx].group == group)
+			{
+				return idx;
+			}
+		}
+		++nAddedClips;
+		i32 clipIdx = maxClips - nAddedClips;
+		if (nAddedClips >= maxClips)
+		{
+			clipIdx = maxClips - 1;
+		}
+		return clipIdx;
 	}
 	
 	void Animator::AnimationClip::SetAnimation(const f32 animationDuration, const f32 nTicks)
@@ -142,7 +192,7 @@ namespace DOG
 	}
 	void Animator::AnimationClip::UpdateState(const f32 gt)
 	{
-		activeAnimation = animationID != noAnimation &&
+		activeAnimation = animationID != NO_ANIMATION &&
 			(gt >= transitionStart && (normalizedTime < 1.0f || loop));
 	}
 	i32 Animator::ClipCount() const {
@@ -162,7 +212,7 @@ namespace DOG
 	{
 		return clipsInGroup[0] + clipsInGroup[1] + clipsInGroup[2];
 	}
-	bool Animator::ReplacedClip(AnimationClip& clip)
+	bool Animator::ReplacedClip(AnimationClip& clip, u32 cidx)
 	{
 		bool overwriteClip = false;
 		i32 idx = (clip.group > groupA) * clipsInGroup[groupA] +
@@ -171,20 +221,18 @@ namespace DOG
 		for (idx; idx < lastIdx; ++idx)
 			if (clips[idx].animationID == clip.animationID)
 			{
-				overwriteClip = clips[idx].loop != clip.loop;
+				overwriteClip = true;
 				// Replace a current active clip with same group and animation
 				if (overwriteClip)
 				{
-					clips[idx].startWeight = clips[idx].currentWeight;;
+					clips[idx].startWeight = clip.startWeight;
 					clips[idx].targetWeight = clip.targetWeight;
 					clips[idx].transitionStart = clip.transitionStart;
-	
-					const f32 durationLeft = (1.f - clips[idx].normalizedTime) * clips[idx].duration;
-					clips[idx].transitionLength = clip.transitionLength < durationLeft || clip.loop ?
-						clip.transitionLength : durationLeft;
-	
+					clips[idx].transitionLength = clip.transitionLength;
+					clips[idx].normalizedTime = 0.f;
 					clips[idx].loop = clip.loop;
-					clip.ResetClip();
+					if(idx != cidx)
+						ResetClip(clip);
 					return overwriteClip;
 				}
 			}

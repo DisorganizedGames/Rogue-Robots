@@ -65,7 +65,7 @@ namespace DOG::gfx
 		void SubmitMeshWireframe(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 		void SubmitMeshWireframeNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 
-		void SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
+		void SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world, u32 num);
 
 		void SubmitShadowMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 
@@ -109,6 +109,7 @@ namespace DOG::gfx
 			DirectX::SimpleMath::Matrix world;
 
 			// bitflags for target passes? (i.e multipass)
+			u32 tempAnimNum{ 0 };
 		};
 
 	private:
@@ -132,7 +133,9 @@ namespace DOG::gfx
 
 		std::vector<RenderSubmission> m_submissions;		// temporary
 		std::vector<RenderSubmission> m_noCullSubmissions;	// temporary
+
 		std::vector<RenderSubmission> m_animatedDraws;		// temp
+
 		std::vector<RenderSubmission> m_wireframeDraws;		// temp
 		std::vector<RenderSubmission> m_noCullWireframeDraws;		// temp
 		std::vector<RenderSubmission> m_shadowSubmissions;	// maybe temp, also? (Emil F)
