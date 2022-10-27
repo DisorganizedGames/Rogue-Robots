@@ -307,7 +307,7 @@ namespace DOG::gfx
 			m_perFrameUploadCtx->PushUploadToTexture(m_ssaoNoise, 0, { 0, 0, 0 },
 				randomDirections.data(), DXGI_FORMAT_R32G32B32A32_FLOAT,
 				noiseSamplePerDim, noiseSamplePerDim, 1,
-				rowPitch);
+				(u32)rowPitch);
 
 			// Create 64 samples
 			std::uniform_real_distribution<f32> dis2(-1.f, 1.f);
@@ -329,7 +329,7 @@ namespace DOG::gfx
 				randomSamples[i] *= scale;
 			}
 
-			BufferDesc samples(MemoryType::Default, randomSamples.size() * sizeof(randomSamples[0]), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_COPY_DEST);
+			BufferDesc samples(MemoryType::Default, (u32)randomSamples.size() * sizeof(randomSamples[0]), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_COPY_DEST);
 			m_ssaoSamples = m_rd->CreateBuffer(samples);
 
 			m_perFrameUploadCtx->PushUpload(m_ssaoSamples, 0, randomSamples.data(), samples.size);
@@ -528,13 +528,13 @@ namespace DOG::gfx
 			/*Struct to be filled in and passed to shader per light*/
 			struct PerLightData
 			{
-				DirectX::XMFLOAT4X4 view;
-				DirectX::XMFLOAT4X4 proj;
+				DirectX::XMFLOAT4X4 view{};
+				DirectX::XMFLOAT4X4 proj{};
 				DirectX::SimpleMath::Vector4 position;
 				DirectX::SimpleMath::Vector3 color;
-				float cutoffAngle;
+				float cutoffAngle{ 0.f };
 				DirectX::SimpleMath::Vector3 direction;
-				float strength;
+				float strength{ 0.f };
 			};
 
 			/*Encompasses all the light datas for spotlights, which we currently limit to 12*/
