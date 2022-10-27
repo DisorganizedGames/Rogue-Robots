@@ -105,6 +105,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddSubmeshRender(context, e);
 	}
+	else if (compType == "HomingMissileComponent")
+	{
+		AddHomingMissile(context, e);
+	}
 	//Add more component types here.
 	else
 	{
@@ -576,6 +580,28 @@ void EntityInterface::AddSubmeshRender(LuaContext* context, entity e)
 void EntityInterface::AddScript(DOG::LuaContext* context, DOG::entity e)
 {
 	LuaMain::GetScriptManager()->AddScript(e, context->GetString());
+}
+
+void EntityInterface::AddHomingMissile(DOG::LuaContext* context, DOG::entity e)
+{
+	auto& em = EntityManager::Get();
+	entity owner = context->GetInteger();
+	assert(em.Exists(owner) && em.Exists(e));
+
+	i8 playerNetworkID{ 0 };
+	if (em.HasComponent<NetworkPlayerComponent>(owner))
+		playerNetworkID = em.GetComponent<NetworkPlayerComponent>(owner).playerId;
+
+	assert(!EntityManager::Get().HasComponent<HomingMissileComponent>(e));
+	auto& missile = em.AddComponent<HomingMissileComponent>(e);
+	missile.playerNetworkID = playerNetworkID;
+
+	assert(em.HasComponent<TransformComponent>(e));
+	auto& t = em.GetComponent<TransformComponent>(e);
+	t = em.GetComponent<TransformComponent>(owner);
+	t.SetPosition(t.GetPosition() + 2.2f * t.GetForward());
+	em.AddComponent<BoxColliderComponent>(e, e, Vector3(0.2f, 0.2f, 1.0f), true, 12.0f);
+	em.AddComponent<RigidbodyComponent>(e, e).continuousCollisionDetection = true;
 }
 
 void EntityInterface::ModifyTransform(LuaContext* context, entity e)
