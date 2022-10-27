@@ -55,3 +55,11 @@ public:
 	ON_UPDATE_ID(AgentHPComponent);
 	void OnUpdate(DOG::entity e, AgentHPComponent& hp);
 };
+
+class AgentFrostTimerSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(AgentMovementComponent, FrostEffectComponent);
+	ON_UPDATE_ID(AgentMovementComponent, FrostEffectComponent);
+	void OnUpdate(DOG::entity e, AgentMovementComponent& movement, FrostEffectComponent& frostEffect);
+};
