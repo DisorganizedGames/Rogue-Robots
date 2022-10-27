@@ -103,7 +103,7 @@ public:
 
 	void Exists(DOG::LuaContext* context);
 
-	void AgentHit(DOG::LuaContext* context);
+	//void AgentHit(DOG::LuaContext* context);
 
 
 private:

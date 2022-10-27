@@ -24,7 +24,7 @@ function BarrelComponents:BasicBarrel()
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
 			Entity:AddComponent(bullet.entity, "BoxCollider", boxColliderSize, true)
 			Entity:AddComponent(bullet.entity, "Rigidbody", false)
-			Entity:AddComponent(bullet.entity, "Bullet", parentEntityID)
+			Entity:AddComponent(bullet.entity, "Bullet", parentEntityID)		-- Note: bullet damage is added in Lua interface
 
 			Entity:PlayAudio(gunEntity.entityID, self.gunShotSound, true)
 
@@ -83,7 +83,7 @@ function BarrelComponents:Grenade()
 			
 			explosionTrigger = Game:ExplosionEffect(bullet.entity, radius)
 			Entity:AddComponent(explosionTrigger, "SphereTrigger", radius)
-			Entity:AddComponent(explosionTrigger, "Bullet", parentEntityID)
+			Entity:AddComponent(explosionTrigger, "Bullet", parentEntityID)		-- Note: bullet damage is added in Lua interface
 		end,
 
 		CreateBullet = function(self)

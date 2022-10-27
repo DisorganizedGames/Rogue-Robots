@@ -11,7 +11,7 @@ set(SourceFiles
 		 "src/Game/EntitesTypes.h"
 		"src/Game/TestScene.h" "src/Game/TestScene.cpp" "src/Game/MainScene.h" "src/Game/MainScene.cpp"
 		"src/Network/Server.h" "src/Network/Server.cpp" "src/Network/Client.h" "src/Network/Client.cpp"
-		"src/Game/Agent.h" "src/Game/Agent.cpp"
+		 
 		"src/Game/AgentManager/AgentComponents.h"
 		"src/Game/AgentManager/AgentManager.h" "src/Game/AgentManager/AgentManager.cpp"
 		"src/Game/AgentManager/AgentBehaviorSystems.h" "src/Game/AgentManager/AgentBehaviorSystems.cpp"

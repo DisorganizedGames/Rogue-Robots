@@ -22,7 +22,8 @@ struct PlayerStatsComponent
 
 struct BulletComponent
 {
-	i8 playerId;
+	DOG::entity playerEntityID;
+	f32 damage;
 };
 
 struct HomingMissileComponent
@@ -80,9 +81,9 @@ struct PassiveItemComponent {
 struct CreateAndDestroyEntityComponent
 {
 	EntityTypes entityTypeId = EntityTypes::Default;
-	u32 id = 0;
+	u32 id = u32(-1);
 	bool alive = true;
-	i8 playerId = 0; 
+	i8 playerId = -1; 
 	DirectX::SimpleMath::Vector3 position;
 };
 
