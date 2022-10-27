@@ -24,12 +24,12 @@ function OnUpdate()
 	if growingTimer > ElapsedTime then
 		growAcc = growAcc + DeltaTime / growTime
 		Entity:ModifyComponent(EntityID, "Transform", explosionSize * growAcc, 3)
-		Entity:ModifyComponent(EntityID, "Strength_PointLight", lightStrength * growAcc)
+		Entity:ModifyComponent(EntityID, "PointLightStrength", lightStrength * growAcc)
 		return
 	end
 
 	local timeChange = (destroyTime - ElapsedTime)
 	local shrink = timeChange * timeChange / (shrinkTime * shrinkTime)
 	Entity:ModifyComponent(EntityID, "Transform", explosionSize * shrink, 3)
-	Entity:ModifyComponent(EntityID, "Strength_PointLight", lightStrength * shrink)
+	Entity:ModifyComponent(EntityID, "PointLightStrength", lightStrength * shrink)
 end

@@ -125,7 +125,7 @@ void EntityInterface::ModifyComponent(LuaContext* context)
 	{
 		ModifyPlayerStats(context, e);
 	}
-	else if (compType == "Strength_PointLight")
+	else if (compType == "PointLightStrength")
 	{
 		ModifyPointLightStrength(context, e);
 	}
@@ -612,7 +612,7 @@ void EntityInterface::ModifyPointLightStrength(DOG::LuaContext* context, DOG::en
 {
 	auto& c = EntityManager::Get().GetComponent<PointLightComponent>(e);
 	c.dirty = true;
-	c.strength = context->GetDouble();
+	c.strength = (f32)context->GetDouble();
 }
 
 //---------------------------------------------------------------------------------------------------------
