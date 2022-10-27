@@ -44,6 +44,7 @@ struct InputController
 struct DoorComponent
 {
 	u32 roomId = u32(-1);
+	f32 openDisplacementY = 5.f;
 	bool isOpening = false;
 	f32 openValue = 0.f;
 };

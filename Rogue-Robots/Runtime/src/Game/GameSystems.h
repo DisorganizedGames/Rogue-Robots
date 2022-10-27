@@ -26,11 +26,11 @@ public:
 			// In order to not redundantly store the start position of the door, this calculates the start position given the current lerp value
 			// Could be changed if it somehow affects performance
 			auto pos = transform.GetPosition();
-			auto startY = pos.y - sinLerp(door.openValue);
+			auto startY = pos.y - (door.openDisplacementY * sinLerp(door.openValue));
 
 			door.openValue += .5f * static_cast<f32>(DOG::Time::DeltaTime());
 		
-			transform.SetPosition(Vector3(pos.x, startY + sinLerp(door.openValue), pos.z));
+			transform.SetPosition(Vector3(pos.x, startY + (door.openDisplacementY * sinLerp(door.openValue)), pos.z));
 
 			return;
 		}
