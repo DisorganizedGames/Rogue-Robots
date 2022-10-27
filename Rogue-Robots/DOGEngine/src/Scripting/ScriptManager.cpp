@@ -136,9 +136,12 @@ namespace DOG
 		}
 		else
 		{
+			bool foundFreePlace = false;
 			//Get already created position in the vector
 			if (m_freeScriptPositions.size())
 			{
+				//Improvement:
+				//Use a map of vectors instead so that we do not have to look through all free positions for all script types
 				for (u32 freeScriptIndex = 0; freeScriptIndex < m_freeScriptPositions.size(); ++freeScriptIndex)
 				{
 					StoredScriptData& freeStoredScriptData = m_freeScriptPositions[freeScriptIndex];
@@ -160,12 +163,14 @@ namespace DOG
 						{
 							m_unsortedScripts[itScriptToVector->second.vectorIndex][storedScriptData.scriptIndex] = scriptData;
 						}
+
+						foundFreePlace = true;
 						break;
 					}
 				}
 			}
-			//If there are no free positions we push it back in the vector
-			else
+			//If there are no free positions for that script type we push it back in the vector
+			if (!foundFreePlace)
 			{
 				if (itScriptToVector->second.sorted)
 				{
