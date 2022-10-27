@@ -13,7 +13,7 @@ struct PushConstantElement
     
     uint isHorizontal;
 };
-ConstantBuffer<PushConstantElement> g_constants : register(b0, space0);
+CONSTANTS(g_constants, PushConstantElement)
 
 
 static const float filter[7][7] =
@@ -55,15 +55,7 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
     int size = 3;
     
     float4 accum = 0.f;
-    //for (int y = -size; y <= size; ++y)
-    //{
-    //    for (int x = -size; x <= size; ++x)
-    //    {
-    //        //accum += input.Load(uint3(globalId.xy + uint2(x, y) * separation, 0));
-    //        accum += filter[x + size][y + size] * input.Load(uint3(globalId.xy + uint2(x, y), 0));
-    //    }
-    //}
-    
+
     if (g_constants.isHorizontal == 1)
     {
         for (int i = -size; i <= size; ++i)

@@ -37,7 +37,7 @@ float3 rtt_and_odt_fit(float3 v)
     return a / b;
 }
 
-float3 AcesFitted(float3 v)
+float3 aces_fitted(float3 v)
 {
     v = mul(v);
     v = rtt_and_odt_fit(v);
@@ -54,7 +54,7 @@ float luminance(float3 color)
     return dot(color, float3(0.2126f, 0.7152f, 0.0722f));
 }
 
-float3 ReinhardJodie(float3 v)
+float3 reinhard_jodie(float3 v)
 {
     float l = luminance(v);
     float3 tv = v / (1.0f + v);
