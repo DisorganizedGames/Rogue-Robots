@@ -104,7 +104,7 @@ namespace DOG::gfx
 
 
 
-		const u32 maxConstantsPerFrame = 30'000;
+		const u32 maxConstantsPerFrame = 150'000;
 		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), maxConstantsPerFrame);
 		m_dynConstantsTemp = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 3 * 4 * 12);
 
