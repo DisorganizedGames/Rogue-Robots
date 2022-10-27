@@ -23,6 +23,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightMoveSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<HomingMissileTargetingSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<HomingMissileSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<HomingMissileImpacteSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());

@@ -32,6 +32,8 @@ struct HomingMissileComponent
 	float speed = 30;
 	float turnSpeed = 5;
 	float engineBurnTime = 1.8f;
+	float explosionRadius = 7.0f;
+	float dmg = 300.0f;
 	DOG::entity homingTarget = DOG::NULL_ENTITY;
 	bool homeInOnPosition = false;
 	DirectX::SimpleMath::Vector3 targetPosition;

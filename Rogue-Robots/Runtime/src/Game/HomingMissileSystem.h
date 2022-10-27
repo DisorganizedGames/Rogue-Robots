@@ -43,7 +43,15 @@ public:
 class HomingMissileImpacteSystem : public DOG::ISystem
 {
 public:
-	SYSTEM_CLASS(HomingMissileComponent, DOG::HasEnteredCollisionComponent);
-	ON_UPDATE_ID(HomingMissileComponent, DOG::HasEnteredCollisionComponent);
-	void OnUpdate(DOG::entity e, HomingMissileComponent& missile, DOG::HasEnteredCollisionComponent& collision);
+	SYSTEM_CLASS(HomingMissileComponent, DOG::HasEnteredCollisionComponent, DOG::TransformComponent);
+	ON_UPDATE_ID(HomingMissileComponent, DOG::HasEnteredCollisionComponent, DOG::TransformComponent);
+	void OnUpdate(DOG::entity e, HomingMissileComponent& missile, DOG::HasEnteredCollisionComponent& collision, DOG::TransformComponent& transform);
+};
+
+class HomingMissileTargetingSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(HomingMissileComponent, DOG::TransformComponent);
+	ON_UPDATE(HomingMissileComponent, DOG::TransformComponent);
+	void OnUpdate(HomingMissileComponent& missile, DOG::TransformComponent& transform);
 };
