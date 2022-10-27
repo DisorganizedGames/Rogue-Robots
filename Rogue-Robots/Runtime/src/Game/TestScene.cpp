@@ -162,7 +162,7 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 
 			auto pdesc = PointLightDesc();
 			pdesc.position = { xOffset + (f32)i * 15.f, 12.f, zOffset + (f32)x * 15.f };
-			pdesc.color = { 1.f, 0.f, 1.f };
+			pdesc.color = { 0.f, 0.3f, 0.7f };
 			pdesc.strength = 35.f;
 			auto& plc = AddComponent<PointLightComponent>(e);
 			plc.handle = LightManager::Get().AddPointLight(pdesc, LightUpdateFrequency::Never);
