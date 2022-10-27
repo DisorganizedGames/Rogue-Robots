@@ -101,7 +101,7 @@ void AgentMovementSystem::OnUpdate(DOG::entity e, AgentMovementComponent& moveme
 		pathfinder.targetPos += (-seek.direction * 2);
 		trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pathfinder.targetPos, Vector3(0, 1, 0)).Invert();
 		movement.forward = seek.direction;
-		trans.SetPosition(trans.GetPosition() + movement.forward * static_cast<f32>(movement.speed * DOG::Time::DeltaTime()));
+		trans.SetPosition(trans.GetPosition() + movement.forward * static_cast<f32>(movement.currentSpeed * DOG::Time::DeltaTime()));
 		if (!DOG::EntityManager::Get().HasComponent<AgentAttackComponent>(e))
 			DOG::EntityManager::Get().AddComponent<AgentAttackComponent>(e);
 	}
@@ -133,9 +133,38 @@ void AgentAttackSystem::OnUpdate(entity e, AgentAttackComponent& attack, AgentSe
 void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent& hp)
 {
 	for (i8 i = 0; i < hit.count; ++i)
-		hp.hp -= 100;
+	{
+		hp.hp -= 25;
+	}
+	
+	/*Frost status*/
+	for (i8 i = 0; i < hit.count; ++i)
+	{
+		if (EntityManager::Get().HasComponent<FrostEffectComponent>(hit.entityID[i]))
+		{
+			//Bullet has a frost effect. AddOrReplaceComponent-feature would be nice here, as it would
+			//vastly shrink the following code block. (Note to self by Emil F)
+			auto& fecBullet = EntityManager::Get().GetComponent<FrostEffectComponent>(hit.entityID[i]);
+			if (EntityManager::Get().HasComponent<FrostEffectComponent>(e))
+			{
+				auto& fecAgent = EntityManager::Get().GetComponent<FrostEffectComponent>(e);
+				fecAgent.frostTimer = fecBullet.frostTimer;
+			}
+			else
+			{
+				EntityManager::Get().AddComponent<FrostEffectComponent>(e, fecBullet.frostTimer);
+			}
+			break;
+		}
+		//Agent speed is set to 1/3 of original for now:
+		EntityManager::Get().GetComponent<AgentMovementComponent>(e).currentSpeed /= 3.0f; 
+	}
+	
+	#if defined _DEBUG
 	if (hit.count >= hit.entityID.max_size())
 		std::cout << "Number of hits: " << (int)hit.count << std::endl;
+	#endif
+
 	EntityManager::Get().RemoveComponent<AgentHitComponent>(e);
 }
 
@@ -149,7 +178,19 @@ void AgentDestructSystem::OnUpdate(DOG::entity e, AgentHPComponent& hp)
 		});
 	if (host && hp.hp <= 0)
 	{
+		#if defined _DEBUG
 		std::cout << "Agent " << e << " killed!" << std::endl;
+		#endif
 		EntityManager::Get().DeferredEntityDestruction(e);
+	}
+}
+
+void AgentFrostTimerSystem::OnUpdate(DOG::entity e, AgentMovementComponent& movement, FrostEffectComponent& frostEffect)
+{
+	frostEffect.frostTimer -= (float)Time::DeltaTime();
+	if (frostEffect.frostTimer <= 0.0f)
+	{
+		movement.currentSpeed = movement.baseSpeed;
+		EntityManager::Get().RemoveComponent<FrostEffectComponent>(e);
 	}
 }

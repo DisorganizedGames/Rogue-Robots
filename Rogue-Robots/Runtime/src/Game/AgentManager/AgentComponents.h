@@ -26,7 +26,8 @@ struct AgentIdComponent
 
 struct AgentMovementComponent
 {
-	f64 speed = 15.0f;
+	f32 baseSpeed = 15.0f;
+	f32 currentSpeed = baseSpeed;
 	DirectX::SimpleMath::Vector3 forward{1, 0, 0};
 };
 
