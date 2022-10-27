@@ -13,7 +13,7 @@ namespace DOG
 		m_imguiSca.assign(150, { 1.0f, 1.0f, 1.0f });
 		m_imguiPos.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_imguiRot.assign(150, { 0.0f, 0.0f, 0.0f });
-		m_vsJoints.assign(130, {});
+		m_vsJoints.assign(300, {});
 
 		ImGuiMenuLayer::RegisterDebugWindow("Animation Clip Setter", [this](bool& open) {SpawnControlWindow(open); });
 	};
@@ -52,7 +52,7 @@ namespace DOG
 			SpawnControlWindow(m_bonesLoaded);
 		}
 		static bool firstTime = true;
-		EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& rAC)
+		EntityManager::Get().Collect<ModelComponent, AnimationComponent, TransformComponent>().Do([&](ModelComponent& modelC, AnimationComponent& rAC, TransformComponent& tfC)
 			{
 				ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 				if (model && rAC.animatorID != -1)
@@ -81,14 +81,14 @@ namespace DOG
 							);
 							f32 duration = rig->animations[s.animationID].duration / s.playbackRate;
 							f32 tl = duration / 6.f;
-							animator.AddBlendSpecification(0.0f, tl, groupB, 1.f, duration);
+							animator.AddBlendSpecification(0.0f, tl, s.group, 1.f, duration);
 							--addedAnimations;
 						}
 					}
 
 					animator.Update(deltaTime);
 					
-					UpdateSkeleton(model->animation, m_playerAnimators[0]);
+					UpdateSkeleton(model->animation, animator);
 				}
 			});
 	}
@@ -232,10 +232,10 @@ namespace DOG
 		std::vector<XMMATRIX> hereditaryTFs;
 
 		hereditaryTFs.reserve(rig.nodes.size());
-		hereditaryTFs.push_back(DirectX::XMLoadFloat4x4(&rig.nodes[0].transformation));
+		hereditaryTFs.push_back(XMLoadFloat4x4(&rig.nodes[0].transformation));
 		for (i32 i = 1; i < rig.nodes.size(); ++i)
 		{
-			auto ntf = DirectX::XMLoadFloat4x4(&rig.nodes[i].transformation);
+			auto ntf = XMLoadFloat4x4(&rig.nodes[i].transformation);
 			
 			// Compose pose matrix from keyframe values scale, rot, transl
 			const auto sIdx = i * N_KEYS, rIdx = sIdx + 1, tIdx = sIdx + 2;

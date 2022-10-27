@@ -936,8 +936,8 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 	LuaMain::GetGlobal()->GetTable("MaterialPrefabs").CallFunctionOnTable("OnStart");
 
 	auto& am = DOG::AssetManager::Get();
-	m_playerModels[0] = am.LoadModelAsset("Assets/Models/Temporary_Assets/red_cube.glb");
-	m_playerModels[1] = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
+	m_playerModels[1] = am.LoadModelAsset("Assets/Models/Players/Red/Rigged/red_marine.gltf");
+	m_playerModels[0] = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
 	m_playerModels[2] = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
 	m_playerModels[3] = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
 	std::vector<entity> players;
@@ -949,7 +949,7 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 			0,
 			spread * (i / 2) - (spread / 2.f),
 		};
-		m_entityManager.AddComponent<TransformComponent>(playerI, pos - offset);
+		auto& tf = m_entityManager.AddComponent<TransformComponent>(playerI, pos - offset);
 		m_entityManager.AddComponent<ModelComponent>(playerI, m_playerModels[i]);
 		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 0.8f, true, 75.f);
 		auto& rb = m_entityManager.AddComponent<RigidbodyComponent>(playerI, playerI);
@@ -967,6 +967,13 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
 		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");
 
+		if (i == 1) // Only for this player
+		{
+			tf.SetScale(Vector3(.01f, .01f, .01f));
+			auto& ac = m_entityManager.AddComponent<AnimationComponent>(playerI);
+			ac.rigID = 0;
+			ac.animatorID = 0;
+		}
 		if (i == 0) // Only for this player
 		{
 			m_entityManager.AddComponent<ThisPlayer>(playerI);
