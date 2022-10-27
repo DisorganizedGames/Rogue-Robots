@@ -21,7 +21,7 @@ struct PerDrawData
 
 struct JointsData
 {
-    matrix joints[130];
+    matrix joints[300];
 };
 
 struct BlendWeight
