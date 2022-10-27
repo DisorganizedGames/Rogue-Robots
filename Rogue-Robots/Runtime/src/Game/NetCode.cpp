@@ -248,7 +248,7 @@ void NetCode::Receive()
 		m_startUp = true;
 		while (m_netCodeAlive)
 		{
-			while (m_dataIsReadyToBeReceivedTcp)
+			while (m_dataIsReadyToBeReceivedTcp && m_netCodeAlive)
 				continue;
 			
 			m_numberOfPackets = m_client.ReceiveCharArrayTcp(m_receiveBuffer);
