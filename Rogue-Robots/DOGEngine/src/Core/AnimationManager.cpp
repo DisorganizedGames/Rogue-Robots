@@ -28,14 +28,16 @@ namespace DOG
 		ZoneScopedN("updateJoints_ppp");
 		using namespace DirectX;
 		auto deltaTime = (f32)Time::DeltaTime();
-		
-		if (!m_bonesLoaded) {
+		//tmp wtf
+		static i32 count = 0;
+		if (count <4) {
 			EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 					if (model && modelaC.rigID == MIXAMO_RIG_ID)
 					{
 						m_bonesLoaded = true;
+						count++;
 						m_rigs.push_back(&model->animation);
 						// tmp setting base states
 						auto& idle = m_rigs[modelaC.rigID]->animations[1];
@@ -47,11 +49,10 @@ namespace DOG
 				});
 			return;
 		}
-		else
-		{
-			SpawnControlWindow(m_bonesLoaded);
-		}
-		static bool firstTime = true;
+
+		// tmp
+		auto mixamoCount = 0;
+
 		EntityManager::Get().Collect<ModelComponent, AnimationComponent, TransformComponent>().Do([&](ModelComponent& modelC, AnimationComponent& rAC, TransformComponent& tfC)
 			{
 				ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
@@ -59,6 +60,8 @@ namespace DOG
 				{
 					auto& rig = m_rigs[rAC.rigID];
 					auto& animator = m_playerAnimators[rAC.animatorID];
+					animator.offset = mixamoCount * MIXAMO_RIG.nJoints;
+					rAC.offset = MIXAMO_RIG.nJoints * mixamoCount++;
 					auto& addedAnimations = rAC.addedSetters;
 					// Add animation clips for animations added this frame
 					auto idx = 0;
@@ -80,8 +83,8 @@ namespace DOG
 								s.playbackRate
 							);
 							f32 duration = rig->animations[s.animationID].duration / s.playbackRate;
-							f32 tl = duration / 6.f;
-							animator.AddBlendSpecification(0.0f, tl, s.group, 1.f, duration);
+							//f32 tl = duration / 6.f;
+							animator.AddBlendSpecification(0.0f, s.transitionLength, s.group, 1.f, duration);
 							--addedAnimations;
 						}
 					}
@@ -120,7 +123,7 @@ namespace DOG
 				EntityManager::Get().Collect<ModelComponent, AnimationComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC, AnimationComponent& rAC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-					if (model && animatorC.rigID == MIXAMO_RIG_ID)
+					if (model && animatorC.offset == 0)
 					{
 						imguiRAC = &rAC;
 						if (!rigLoaded)
@@ -255,7 +258,6 @@ namespace DOG
 		// Apply parent Transformation
 		for (size_t i = 1; i < hereditaryTFs.size(); ++i)
 			hereditaryTFs[i] = hereditaryTFs[rig.nodes[i].parentIdx] * hereditaryTFs[i];
-
 		// Finalize vertex shader joint matrix
 		const auto rootTF = XMLoadFloat4x4(&rig.nodes[0].transformation);
 		for (size_t n = 0; n < rig.nodes.size(); ++n)

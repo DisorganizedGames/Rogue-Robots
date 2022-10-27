@@ -115,7 +115,7 @@ namespace DOG::gfx
 
 
 		// multiple of curr loaded mixamo skeleton
-		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 25);		
+		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100);		
 		m_cmdl = m_rd->AllocateCommandList();
 
 		// Startup
@@ -437,13 +437,14 @@ namespace DOG::gfx
 		m_noCullWireframeDraws.push_back(sub);
 	}
 
-	void Renderer::SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
+	void Renderer::SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world, u32 num)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
 		sub.submesh = submesh;
 		sub.mat = material;
 		sub.world = world;
+		sub.tempAnimNum = num;
 		m_animatedDraws.push_back(sub);
 	}
 
@@ -650,6 +651,8 @@ namespace DOG::gfx
 						.AppendConstant(shadowHandle)
 						.AppendConstant(wireframe ? 1 : 0)
 						.AppendConstant(m_graphicsSettings.lit ? 1 : 0);
+						.AppendConstant(sub.tempAnimNum);
+
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
