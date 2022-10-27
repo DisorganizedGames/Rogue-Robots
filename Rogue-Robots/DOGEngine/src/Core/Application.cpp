@@ -118,6 +118,7 @@ namespace DOG
 						d.cutoffAngle = light.cutoffAngle;
 						d.direction = light.direction;
 						d.strength = light.strength;
+						d.id = light.id;
 						LightManager::Get().UpdateSpotLight(light.handle, d);
 						light.dirty = false;
 					}
@@ -137,9 +138,13 @@ namespace DOG
 				});
 
 
-			EntityManager::Get().Collect<TransformComponent, SubmeshRenderer>().Do([&](entity, TransformComponent& tr, SubmeshRenderer& sr)
+			EntityManager::Get().Collect<TransformComponent, SubmeshRenderer>().Do([&](entity e, TransformComponent& tr, SubmeshRenderer& sr)
 				{
 					// We are assuming that this is a totally normal submesh with no weird branches (i.e on ModularBlock or whatever)
+					if (EntityManager::Get().HasComponent<ShadowReceiverComponent>(e))
+					{
+							m_renderer->SubmitShadowMesh(sr.mesh, 0, sr.material, tr);
+					}
 					if (sr.dirty)
 						CustomMaterialManager::Get().UpdateMaterial(sr.material, sr.materialDesc);
 					m_renderer->SubmitMesh(sr.mesh, 0, sr.material, tr);
@@ -152,6 +157,14 @@ namespace DOG
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 					if (model && model->gfxModel)
 					{
+						// Shadow submission:
+						if (EntityManager::Get().HasComponent<ShadowReceiverComponent>(e))
+						{
+							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
+								m_renderer->SubmitShadowMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+						}
+
+
 						if (EntityManager::Get().HasComponent<ModularBlockComponent>(e))
 						{
 							if (EntityManager::Get().HasComponent<MeshColliderComponent>(e) &&
@@ -193,12 +206,17 @@ namespace DOG
 					}
 				});
 
-			if (CameraComponent::s_mainCamera)
-			{
-				auto mainCam = CameraComponent::s_mainCamera;
-				auto& proj = (DirectX::XMMATRIX&)mainCam->projMatrix;
-				m_renderer->SetMainRenderCamera(mainCam->viewMatrix, &proj);
-			}
+			CameraComponent cameraComponent;
+			EntityManager::Get().Collect<CameraComponent>().Do([&](CameraComponent& c) 
+				{
+					if (c.isMainCamera)
+					{
+						cameraComponent = c;
+					}
+				});
+
+			auto& proj = (DirectX::XMMATRIX&)cameraComponent.projMatrix;
+			m_renderer->SetMainRenderCamera(cameraComponent.viewMatrix, &proj);
 			
 			m_renderer->Update(0.0f);
 			m_renderer->Render(0.0f);

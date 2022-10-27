@@ -18,6 +18,7 @@ namespace DOG
 		TransformComponent& SetScale(const DirectX::SimpleMath::Vector3& scale) noexcept;
 		DirectX::SimpleMath::Vector3 GetPosition() const noexcept;
 		DirectX::SimpleMath::Matrix GetRotation() const noexcept;
+		DirectX::SimpleMath::Vector3 GetForward() const noexcept { return DirectX::SimpleMath::Vector3(worldMatrix._31, worldMatrix._32, worldMatrix._33); }
 		DirectX::SimpleMath::Vector3 GetScale() const noexcept;
 
 		TransformComponent& RotateW(const DirectX::SimpleMath::Vector3& rotation) noexcept;
@@ -44,7 +45,7 @@ namespace DOG
 		Matrix viewMatrix = DirectX::XMMatrixIdentity();
 		Matrix projMatrix = DirectX::XMMatrixIdentity();
 
-		inline static CameraComponent* s_mainCamera = nullptr;
+		bool isMainCamera = false;
 	};
 
 	struct NetworkPlayerComponent
@@ -116,8 +117,11 @@ namespace DOG
 		float strength{ 1.f };
 		DirectX::SimpleMath::Vector3 direction{ 0.f, 0.f, 1.f };
 		float cutoffAngle{ 15.f };
+		u32 id = (u32)- 1;
 
 		bool dirty{ true };		// If static handle, dirty bool is ignored
+		bool isMainPlayerSpotlight{ false };
+		entity owningPlayer { NULL_ENTITY };
 	};
 
 	struct PointLightComponent
@@ -187,6 +191,16 @@ namespace DOG
 		static constexpr u32 maxCount = 10;
 		u32 entitiesCount{ 0 };
 		entity entities[maxCount] = { NULL_ENTITY };
+	};
+	
+	struct ShadowReceiverComponent
+	{
+		//A.t.m. only an identifier
+	};
+
+	struct ShadowCasterComponent
+	{
+		//A.t.m. only an identifier
 	};
 }
 

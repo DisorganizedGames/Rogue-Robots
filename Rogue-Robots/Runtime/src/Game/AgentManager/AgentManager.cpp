@@ -97,5 +97,8 @@ entity AgentManager::CreateAgentCore(u32 model, const Vector3& pos)
 			m_entityManager.AddComponent<NetworkTransform>(e).objectId = e;
 	}
 
+	if (!m_entityManager.HasComponent<ShadowReceiverComponent>(e))
+		m_entityManager.AddComponent<ShadowReceiverComponent>(e);
+
 	return e;
 }

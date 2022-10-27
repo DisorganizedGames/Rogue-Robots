@@ -32,11 +32,13 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	entity sphereEntity = CreateEntity();
 	AddComponent<TransformComponent>(sphereEntity, Vector3(30, 20, 30));
 	AddComponent<ModelComponent>(sphereEntity, sphereID);
+	AddComponent<ShadowReceiverComponent>(sphereEntity);
 
 	entity entity2 = CreateEntity();
 	AddComponent<ModelComponent>(entity2, greenCubeID);
 	AddComponent<TransformComponent>(entity2, Vector3(-4, -2, 5), Vector3(0.1f, 0, 0));
 	AddComponent<MeshColliderComponent>(entity2, entity2, greenCubeID);
+	AddComponent<ShadowReceiverComponent>(entity2);
 
 	entity entity3 = CreateEntity();
 	AddComponent<ModelComponent>(entity3, blueCubeID);
@@ -45,6 +47,7 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	t3.SetScale({ 0.5f, 0.5f, 0.5f });
 	AddComponent<SphereColliderComponent>(entity3, entity3, 1.0f, true);
 	AddComponent<RigidbodyComponent>(entity3, entity3);
+	AddComponent<ShadowReceiverComponent>(entity3);
 
 	entity entity80 = CreateEntity();
 	AddComponent<ModelComponent>(entity80, blueCubeID);
@@ -52,18 +55,21 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	t80.worldMatrix = t3.worldMatrix;
 	AddComponent<SphereColliderComponent>(entity80, entity80, 1.0f, true);
 	AddComponent<RigidbodyComponent>(entity80, entity80);
+	AddComponent<ShadowReceiverComponent>(entity80);
 
 	entity entity81 = CreateEntity();
 	AddComponent<ModelComponent>(entity81, magentaCubeID);
 	AddComponent<TransformComponent>(entity81, Vector3(39, 30, 40));
 	AddComponent<BoxColliderComponent>(entity81, entity81, Vector3(1, 1, 1), true);
 	AddComponent<RigidbodyComponent>(entity81, entity81);
+	AddComponent<ShadowReceiverComponent>(entity81);
 
 	entity entity5 = CreateEntity();
 	AddComponent<ModelComponent>(entity5, mixamoID);
 	AddComponent<TransformComponent>(entity5, Vector3(0, -2, 5), Vector3(0, 0, 0), Vector3(0.02f, 0.02f, 0.02f));
 	AddComponent<AnimationComponent>(entity5).offset = 0;
 	AddComponent<CapsuleColliderComponent>(entity5, entity5, 1.0f, 1.0f, false);
+	AddComponent<ShadowReceiverComponent>(entity5);
 
 
 	// Create some shapes
@@ -86,17 +92,21 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 				entity e = CreateEntity();
 				AddComponent<ModelComponent>(e, shapes[i * 3 + j]);
 				AddComponent<TransformComponent>(e, Vector3(f32(-3 + j * 3), (f32)(-4.5f + i * 3), 10), Vector3(0, 0, 0));
+				AddComponent<ShadowReceiverComponent>(e);
 			}
 		}
 		entity xAxis = CreateEntity();
 		AddComponent<ModelComponent>(xAxis, shapes[9]);
 		AddComponent<TransformComponent>(xAxis, Vector3(0, 0, 0), Vector3(0, 0, XM_PIDIV2), Vector3(0.02f, 100, 0.02f));
+		AddComponent<ShadowReceiverComponent>(xAxis);
 		entity yAxis = CreateEntity();
 		AddComponent<ModelComponent>(yAxis, shapes[10]);
 		AddComponent<TransformComponent>(yAxis, Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(0.02f, 100, 0.02f));
+		AddComponent<ShadowReceiverComponent>(yAxis);
 		entity zAxis = CreateEntity();
 		AddComponent<ModelComponent>(zAxis, shapes[11]);
 		AddComponent<TransformComponent>(zAxis, Vector3(0, 0, 0), Vector3(XM_PIDIV2, 0, 0), Vector3(0.02f, 100, 0.02f));
+		AddComponent<ShadowReceiverComponent>(zAxis);
 	}
 
 	entity isoSphereEntity = CreateEntity();
@@ -125,6 +135,7 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	AddComponent<TransformComponent>(doorTest, Vector3(25, 6, 15));
 	u32 doorModelID = am.LoadModelAsset("Assets/Models/Temporary_Assets/Door.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
 	AddComponent<ModelComponent>(doorTest, doorModelID);
+	AddComponent<ShadowReceiverComponent>(doorTest);
 
 
 	entity passiveItemTest = CreateEntity();
@@ -133,6 +144,7 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	AddComponent<TransformComponent>(passiveItemTest, Vector3(25, 15, 30));
 	AddComponent<BoxColliderComponent>(passiveItemTest, passiveItemTest, Vector3(0.2f, 0.2f, 0.2f), true);
 	AddComponent<RigidbodyComponent>(passiveItemTest, passiveItemTest, false);
+	AddComponent<ShadowReceiverComponent>(passiveItemTest);
 	LuaMain::GetScriptManager()->AddScript(passiveItemTest, "Pickupable.lua");
 
 	// Setup lights
@@ -159,18 +171,18 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 
 
 
-			auto e2 = CreateEntity();
-			auto dd = SpotLightDesc();
-			dd.position = { xOffset + (f32)i * 7.f, 16.f, zOffset + (f32)x * 7.f };
-			dd.color = { 0.f, 0.f, 1.f };
-			dd.direction = { 0.f, 1.f, 0.f };
-			dd.strength = 1.f;
-			auto& slc = AddComponent<SpotLightComponent>(e2);
-			slc.handle = LightManager::Get().AddSpotLight(dd, LightUpdateFrequency::Never);
-			slc.color = dd.color;
-			slc.strength = dd.strength;
-			slc.direction = dd.direction;
-			slc.cutoffAngle = dd.cutoffAngle;
+			//auto e2 = CreateEntity();
+			//auto dd = SpotLightDesc();
+			//dd.position = { xOffset + (f32)i * 7.f, 16.f, zOffset + (f32)x * 7.f };
+			//dd.color = { 0.f, 0.f, 1.f };
+			//dd.direction = { 0.f, 1.f, 0.f };
+			//dd.strength = 1.f;
+			//auto& slc = AddComponent<SpotLightComponent>(e2);
+			//slc.handle = LightManager::Get().AddSpotLight(dd, LightUpdateFrequency::Never);
+			//slc.color = dd.color;
+			//slc.strength = dd.strength;
+			//slc.direction = dd.direction;
+			//slc.cutoffAngle = dd.cutoffAngle;
 		}
 	}
 
@@ -219,6 +231,8 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 		lerpColor.target = Vector3(1, 1, 1) - lerpColor.origin;
 		lerpColor.loops = -1;
 		lerpColor.scale = 0.7;
+
+		AddComponent<ShadowReceiverComponent>(testE);
 	}
 	
 	/* Set up music player */

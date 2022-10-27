@@ -67,6 +67,7 @@ namespace DOG::gfx
 
 		void SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 
+		void SubmitShadowMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 
 
 
@@ -134,10 +135,12 @@ namespace DOG::gfx
 		std::vector<RenderSubmission> m_animatedDraws;		// temp
 		std::vector<RenderSubmission> m_wireframeDraws;		// temp
 		std::vector<RenderSubmission> m_noCullWireframeDraws;		// temp
+		std::vector<RenderSubmission> m_shadowSubmissions;	// maybe temp, also? (Emil F)
 
+		std::vector<entity> m_lightEntities;
+		entity* currentEntityPointer = nullptr;
 
 		DirectX::XMMATRIX m_viewMat, m_projMat;
-
 
 		
 
@@ -148,9 +151,10 @@ namespace DOG::gfx
 
 		// Ring-buffered dynamic constant allocator (allocate, use, and forget)
 		std::unique_ptr<GPUDynamicConstants> m_dynConstants;
+		std::unique_ptr<GPUDynamicConstants> m_dynConstantsTemp;
 		std::unique_ptr<GPUDynamicConstants> m_dynConstantsAnimated;		// temp storage for per draw joints
 
-
+		
 	
 		// ================= External interfaces
 		std::unique_ptr<GraphicsBuilder> m_builder;
@@ -158,7 +162,7 @@ namespace DOG::gfx
 
 		// ================= RENDERING RESOURCES
 
-		Pipeline m_pipe, m_meshPipe, m_meshPipeNoCull;
+		Pipeline m_pipe, m_meshPipe, m_meshPipeNoCull, m_shadowPipe;;
 		Pipeline m_meshPipeWireframe, m_meshPipeWireframeNoCull;
 
 		// Reusing a single command list for now
@@ -230,6 +234,8 @@ namespace DOG::gfx
 		struct GlobalDataHandle{ friend class TypedHandlePool; u64 handle{ 0 }; };
 		std::unique_ptr<GPUTableDeviceLocal<GlobalDataHandle>> m_globalDataTable;
 		GlobalDataHandle m_gdHandle;
+
+		
 
 		// Passes
 		std::unique_ptr<RenderEffect> m_imGUIEffect;

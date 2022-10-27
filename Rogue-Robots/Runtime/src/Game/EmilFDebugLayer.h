@@ -14,4 +14,9 @@ public:
 
 private:
 	DOG::EntityManager& m_entityManager;
+	DOG::entity m_FlashLightEntity;
+	DOG::entity m_cubeEntity;
+	DOG::entity m_cubeEntity2;
+	DOG::entity m_sheetEntity;
+	DOG::entity m_sheetEntity2;
 };

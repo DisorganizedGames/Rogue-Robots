@@ -241,6 +241,7 @@ void EntityInterface::Exists(DOG::LuaContext* context)
 	context->ReturnBoolean(EntityManager::Get().Exists(e));
 }
 
+
 void EntityInterface::AgentHit(DOG::LuaContext* context)
 {
 	entity e = context->GetInteger();
@@ -376,6 +377,7 @@ void EntityInterface::GetPlayerStats(DOG::LuaContext* context)
 void EntityInterface::AddModel(LuaContext* context, entity e)
 {
 	EntityManager::Get().AddComponent<ModelComponent>(e, static_cast<u32>(std::stoull(context->GetString())));
+	EntityManager::Get().AddComponent<ShadowReceiverComponent>(e);
 }
 
 void EntityInterface::AddTransform(LuaContext* context, entity e)

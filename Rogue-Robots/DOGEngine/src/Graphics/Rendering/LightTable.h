@@ -13,9 +13,9 @@ namespace DOG::gfx
 	public:
 		struct PerTypeSpecification
 		{
-			u32 maxStatics{ 30 };
-			u32 maxDynamic{ 15 };
-			u32 maxSometimes{ 15 };
+			u32 maxStatics{ 12 };
+			u32 maxDynamic{ 12 };
+			u32 maxSometimes{ 12 };
 
 			u32 GetTotal() const { return maxStatics + maxDynamic + maxSometimes; }
 		};

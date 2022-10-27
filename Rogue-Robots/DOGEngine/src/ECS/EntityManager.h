@@ -25,7 +25,7 @@ namespace DOG
 #endif
 
 	#define sti static_type_info
-
+	
 	struct SparseSetBase;
 
 	template<typename... ComponentType>

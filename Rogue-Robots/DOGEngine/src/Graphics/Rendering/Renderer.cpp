@@ -106,6 +106,8 @@ namespace DOG::gfx
 
 		const u32 maxConstantsPerFrame = 30'000;
 		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), maxConstantsPerFrame);
+		m_dynConstantsTemp = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 3 * 4 * 12);
+
 
 		// multiple of curr loaded mixamo skeleton
 		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 33 * 5);
@@ -158,11 +160,20 @@ namespace DOG::gfx
 			.Build());
 
 		auto meshVS = m_sclr->CompileFromFile("MainVS.hlsl", ShaderType::Vertex);
+		auto shadowVS = m_sclr->CompileFromFile("ShadowVS.hlsl", ShaderType::Vertex);
+		auto shadowPS = m_sclr->CompileFromFile("ShadowPS.hlsl", ShaderType::Pixel);
 		auto meshPS = m_sclr->CompileFromFile("MainPS.hlsl", ShaderType::Pixel);
 		m_meshPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
 			.SetShader(meshVS.get())
 			.SetShader(meshPS.get())
 			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+			.SetDepthFormat(DepthFormat::D32)
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.Build());
+
+		m_shadowPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
+			.SetShader(shadowVS.get())
+			.SetShader(shadowPS.get())
 			.SetDepthFormat(DepthFormat::D32)
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
@@ -197,9 +208,6 @@ namespace DOG::gfx
 
 
 		m_rgResMan = std::make_unique<RGResourceManager>(m_rd, m_bin.get());
-
-
-
 
 
 
@@ -344,6 +352,16 @@ namespace DOG::gfx
 		m_animatedDraws.push_back(sub);
 	}
 
+	void DOG::gfx::Renderer::SubmitShadowMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
+	{
+		RenderSubmission sub{};
+		sub.mesh = mesh;
+		sub.submesh = submesh;
+		sub.mat = material;
+		sub.world = world;
+		m_shadowSubmissions.push_back(sub);
+	}
+
 	void Renderer::Update(f32 dt)
 	{
 		m_boneJourno->UpdateJoints();
@@ -430,14 +448,52 @@ namespace DOG::gfx
 				u32 jointsDescriptor{ UINT_MAX };
 			};
 
+			/*Struct to be filled in and passed to shader per light*/
+			struct PerLightData
+			{
+				DirectX::XMFLOAT4X4 view;
+				DirectX::XMFLOAT4X4 proj;
+				DirectX::SimpleMath::Vector4 position;
+				DirectX::SimpleMath::Vector3 color;
+				float cutoffAngle;
+				DirectX::SimpleMath::Vector3 direction;
+				float strength;
+			};
+
+			/*Encompasses all the light datas for spotlights, which we currently limit to 12*/
+			struct PerLightDataForShadows
+			{
+				PerLightData perLightDatas[12];
+				u32 actualNrOfSpotlights = 0u;
+			};
+
+			/*We can have at most 12 shadow maps available on the GPU at any given time (meaning 12 shadowcasters!)*/
+			struct ShadowMapArrayStruct
+			{
+				u32 shadowMaps[12];
+			};
+
+			/*The views on the shadow maps (maximum of 12 currently)*/
+			struct PassData
+			{
+				RGResourceView shadowView[12];
+			};
+
+			/*Helper pass data to know the corresponding entity ID*/
+			struct ShadowPassData
+			{
+				entity entityID;
+			};
+
 			/*
 				@todo:
 					Still need some way to pre-allocate per draw data prior to render pass.
 					Perhaps go through the submissions and collect data --> Upload to GPU (maybe instance it as well?)
-					and during forward pass we simply read from it
+					and during forward pass we simply read from it 
 			*/
-			auto drawSubmissions = [this](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission> submissions, bool animated = false, bool wireframe = false)
-			{
+
+			auto drawSubmissions = [&](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false)
+			{	
 				for (const auto& sub : submissions)
 				{
 					auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
@@ -463,6 +519,8 @@ namespace DOG::gfx
 						.AppendConstant(m_globalEffectData.globalDataDescriptor)
 						.AppendConstant(m_currPfDescriptor)
 						.AppendConstant(perDrawHandle.globalDescriptor)
+						.AppendConstant(perLightHandle)
+						.AppendConstant(shadowHandle)
 						.AppendConstant(wireframe ? 1 : 0);
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
@@ -472,20 +530,103 @@ namespace DOG::gfx
 				}
 			};
 
-			struct PassData {};
+			auto shadowDrawSubmissions = [&](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, entity entityID, bool animated = false, bool wireframe = false)
+			{
+				/*entityID passed in is the equivalent spotlight, from which we collect the view and projection matrix to be used in the Vertex Shader.*/
+				auto& cc = EntityManager::Get().GetComponent<CameraComponent>(entityID);
+				auto perLightHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerLightData) / (float)256));
+				PerLightData perLightData{};
+				perLightData.view = cc.viewMatrix;
+				perLightData.proj = cc.projMatrix;
+				std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
+
+				for (const auto& sub : submissions)
+				{
+					auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
+					PerDrawData perDrawData{};
+					perDrawData.world = sub.world;
+					perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
+					perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
+
+					if (animated)
+					{
+						// Resolve joints
+						JointData jointsData{};
+						auto jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); ++i)
+							jointsData.joints[i] = m_boneJourno->m_vsJoints[i];
+						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
+						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
+					}
+
+					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
+
+					auto args = ShaderArgs()
+						.AppendConstant(m_globalEffectData.globalDataDescriptor)
+						.AppendConstant(m_currPfDescriptor)
+						.AppendConstant(perDrawHandle.globalDescriptor)
+						.AppendConstant(perLightHandle.globalDescriptor)
+						.AppendConstant(wireframe ? 1 : 0);
+
+					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
+
+					auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+					rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
+				}
+			};
+
+			/*We collect all spotlights and then perform one shadow pass per such spotlight, rendering a shadow map for each, later used in the forward pass.*/
+			EntityManager::Get().Collect<ShadowCasterComponent, SpotLightComponent>().Do([&](entity spotlightEntity, ShadowCasterComponent&, SpotLightComponent&)
+				{
+					m_lightEntities.push_back(spotlightEntity);
+				});
+
+			for (size_t i{ 0u }; i < m_lightEntities.size(); i++)
+			{
+				rg.AddPass<ShadowPassData>("Shadow Pass",
+					[&](ShadowPassData& p, RenderGraph::PassBuilder& builder)
+					{
+						std::string resourceID = std::string("ShadowDepth") + std::to_string(m_lightEntities[i]);
+
+						builder.DeclareTexture(RGResourceID(resourceID), RGTextureDesc::DepthWrite2D(DepthFormat::D32, 1024, 1024));
+						builder.WriteDepthStencil(RGResourceID(resourceID), RenderPassAccessType::ClearPreserve,
+							TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
+						p.entityID = m_lightEntities[i];
+					},
+					[&](const ShadowPassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
+					{
+						rd->Cmd_SetViewports(cmdl, Viewports().Append(0.f, 0.f, 1024.f, 1024.f));
+						rd->Cmd_SetScissorRects(cmdl, ScissorRects().Append(0, 0, 1024, 1024));
+
+						rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
+
+						rd->Cmd_SetPipeline(cmdl, m_shadowPipe);
+						shadowDrawSubmissions(rd, cmdl, m_shadowSubmissions, p.entityID);
+					});
+			}
+
 			rg.AddPass<PassData>("Forward Pass",
-				[&](PassData&, RenderGraph::PassBuilder& builder)
+				[&](PassData& p, RenderGraph::PassBuilder& builder)
 				{
 					builder.DeclareTexture(RG_RESOURCE(MainDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_renderWidth, m_renderHeight));
 					builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight)
 						.AddFlag(D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
 
+					/*Here the "views are loaded" to be used in the pixel shader, one for every shadow map available.*/
+					for (size_t i{ 0u }; i < m_lightEntities.size(); ++i)
+					{
+						std::string resourceID = std::string("ShadowDepth") + std::to_string(m_lightEntities[i]);
+
+						p.shadowView[i] = builder.ReadResource(RGResourceID(resourceID), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+							TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R32_FLOAT));
+					}
+				
 					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 					builder.WriteDepthStencil(RG_RESOURCE(MainDepth), RenderPassAccessType::ClearDiscard,
 						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
 				},
-				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
+				[&](const PassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
 				{
 					rd->Cmd_SetViewports(cmdl, m_globalEffectData.defRenderVPs);
 					rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.defRenderScissors);
@@ -493,17 +634,42 @@ namespace DOG::gfx
 					rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipe);
-					drawSubmissions(rd, cmdl, m_submissions);
-					drawSubmissions(rd, cmdl, m_animatedDraws, true);
+
+					PerLightDataForShadows perLightData{};
+					ShadowMapArrayStruct shadowMapArrayStruct{};
+					auto perLightHandle = m_dynConstantsTemp->Allocate((u32)std::ceilf(sizeof(PerLightDataForShadows) / (float)256));
+					auto shadowHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(ShadowMapArrayStruct) / float(256)));
+					for (size_t i{ 0u }; i < m_lightEntities.size(); ++i)
+					{
+						auto& cc = EntityManager::Get().GetComponent<CameraComponent>(m_lightEntities[i]);
+						auto& slc = EntityManager::Get().GetComponent<SpotLightComponent>(m_lightEntities[i]);
+						auto& tc = EntityManager::Get().GetComponent<TransformComponent>(m_lightEntities[i]);
+						perLightData.perLightDatas[i].view = cc.viewMatrix;
+						perLightData.perLightDatas[i].proj = cc.projMatrix;
+						perLightData.perLightDatas[i].position = { tc.GetPosition().x, tc.GetPosition().y, tc.GetPosition().z, 1.0f };
+						perLightData.perLightDatas[i].color = { slc.color.x, slc.color.y, slc.color.z, };
+						perLightData.perLightDatas[i].direction = slc.direction;
+						perLightData.perLightDatas[i].cutoffAngle = slc.cutoffAngle;
+						perLightData.perLightDatas[i].strength = slc.strength;
+
+						shadowMapArrayStruct.shadowMaps[i] = resources.GetView(p.shadowView[i]);
+					}
+
+					perLightData.actualNrOfSpotlights = (u32)m_lightEntities.size();
+					std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
+					std::memcpy(shadowHandle.memory, &shadowMapArrayStruct, sizeof(shadowMapArrayStruct));
+
+					drawSubmissions(rd, cmdl, m_submissions, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
+					drawSubmissions(rd, cmdl, m_animatedDraws, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, true);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
-					drawSubmissions(rd, cmdl, m_noCullSubmissions);
+					drawSubmissions(rd, cmdl, m_noCullSubmissions, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframe);
-					drawSubmissions(rd, cmdl, m_wireframeDraws, false, true);
+					drawSubmissions(rd, cmdl, m_wireframeDraws, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, false, true);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframeNoCull);
-					drawSubmissions(rd, cmdl, m_noCullWireframeDraws, false, true);
+					drawSubmissions(rd, cmdl, m_noCullWireframeDraws, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, false, true);
 				});
 		}
 
@@ -622,6 +788,8 @@ namespace DOG::gfx
 		m_animatedDraws.clear();
 		m_wireframeDraws.clear();
 		m_noCullWireframeDraws.clear();
+		m_shadowSubmissions.clear();
+		m_lightEntities.clear();
 
 		m_sc->Present(vsync);
 	}

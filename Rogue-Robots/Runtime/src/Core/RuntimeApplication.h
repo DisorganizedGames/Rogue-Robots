@@ -16,5 +16,5 @@ private:
 	bool m_showImGuiMenu = false;
 	GameLayer m_gameLayer;
 	DOG::ImGuiMenuLayer m_imGuiMenuLayer;
-	EmilFDebugLayer m_EmilFDebugLayer;
+	//EmilFDebugLayer m_EmilFDebugLayer;
 };

@@ -20,6 +20,9 @@ entity Agent::MakeAgent(DOG::entity e) noexcept
 	if (!m_entityManager.HasComponent<TransformComponent>(e))
 		m_entityManager.AddComponent<TransformComponent>(e);
 
+	if (!m_entityManager.HasComponent<ShadowReceiverComponent>(e))
+		m_entityManager.AddComponent<ShadowReceiverComponent>(e);
+
 	if (m_useNetworking)
 	{
 		// replace with enemy id
