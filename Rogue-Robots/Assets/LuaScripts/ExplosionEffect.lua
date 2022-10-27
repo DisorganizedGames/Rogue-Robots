@@ -4,7 +4,8 @@ local growTime = 0.13
 local growingTimer = growTime + ElapsedTime
 local growAcc = 0.0
 
-local lightStrength = 160.0
+--local lightStrength = explosionSize.z * 45.0
+local lightStrength = explosionSize.z * 1000.0
 
 local setTime = false
 local destroyTime = growTime + shrinkTime + ElapsedTime
