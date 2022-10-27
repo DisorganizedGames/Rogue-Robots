@@ -76,11 +76,6 @@ function OnStart()
 
 	local sceneID = UI:CreateScene()
 	local uid = UI:CreateProgressBar(sceneID, 40.0, 60.0, 250.0, 30.0)
-	local uid2 = UI:CreateButton(sceneID, 
-		80.0, 500.0, 
-		150.0, 80.0, 
-		20.0, "Click me", doSomething)
-
 	UI:SetProgressBarValue(uid, 0.8)
 
 	UI:ChangeScene(sceneID)
