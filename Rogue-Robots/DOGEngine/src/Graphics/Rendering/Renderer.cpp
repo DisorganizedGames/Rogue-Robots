@@ -571,8 +571,18 @@ namespace DOG::gfx
 
 			auto drawSubmissions = [&](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false)
 			{	
+				TransformComponent camTransform;
+				camTransform.worldMatrix = ((DirectX::SimpleMath::Matrix)m_viewMat).Invert();
+				auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p) {
+					auto d = p - camPos;
+					if (d.LengthSquared() < 64) return false;
+					if (d.LengthSquared() > 80 * 80) return true;
+					d.Normalize();
+					return camForward.Dot(d) < 0.2f;
+				};
 				for (const auto& sub : submissions)
 				{
+					if (cull({ sub.world(3, 0), sub.world(3, 1), sub.world(3, 2) })) continue;
 					auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
 					PerDrawData perDrawData{};
 					perDrawData.world = sub.world;
@@ -607,6 +617,7 @@ namespace DOG::gfx
 				}
 			};
 
+			
 			auto shadowDrawSubmissions = [&](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, entity entityID, bool animated = false, bool wireframe = false)
 			{
 				/*entityID passed in is the equivalent spotlight, from which we collect the view and projection matrix to be used in the Vertex Shader.*/
@@ -616,9 +627,19 @@ namespace DOG::gfx
 				perLightData.view = cc.viewMatrix;
 				perLightData.proj = cc.projMatrix;
 				std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
+				TransformComponent camWorld;
+				camWorld.worldMatrix = cc.viewMatrix.Invert();
+				auto&& cull = [camForward = camWorld.GetForward(), camPos = camWorld.GetPosition()](DirectX::SimpleMath::Vector3 p) {
+					auto d = p - camPos;
+					if (d.LengthSquared() < 64) return false;
+					if (d.LengthSquared() > 80 * 80) return true;
+					d.Normalize();
+					return camForward.Dot(d) < 0.2f;
+				};
 
 				for (const auto& sub : submissions)
 				{
+					if (cull({ sub.world(3, 0), sub.world(3, 1), sub.world(3, 2) })) continue;
 					auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
 					PerDrawData perDrawData{};
 					perDrawData.world = sub.world;
