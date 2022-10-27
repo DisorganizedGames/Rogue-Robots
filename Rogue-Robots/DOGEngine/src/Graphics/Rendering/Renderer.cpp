@@ -110,7 +110,7 @@ namespace DOG::gfx
 
 
 		// multiple of curr loaded mixamo skeleton
-		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 33 * 25);		
+		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 25);		
 		m_cmdl = m_rd->AllocateCommandList();
 
 		// Startup
@@ -437,7 +437,7 @@ namespace DOG::gfx
 		{
 			struct JointData
 			{
-				DirectX::XMFLOAT4X4 joints[130];
+				DirectX::XMFLOAT4X4 joints[300];
 			};
 
 			struct PerDrawData
@@ -507,6 +507,7 @@ namespace DOG::gfx
 						// Resolve joints
 						JointData jointsData{};
 						auto jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+						auto asd = (u32)std::ceilf(sizeof(JointData) / (float)256);
 						for (size_t i = 0; i < m_jointMan->m_vsJoints.size(); ++i)
 							jointsData.joints[i] = m_jointMan->m_vsJoints[i];
 						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
@@ -553,8 +554,8 @@ namespace DOG::gfx
 						// Resolve joints
 						JointData jointsData{};
 						auto jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
-						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); ++i)
-							jointsData.joints[i] = m_boneJourno->m_vsJoints[i];
+						for (size_t i = 0; i < m_jointMan->m_vsJoints.size(); ++i)
+							jointsData.joints[i] = m_jointMan->m_vsJoints[i];
 						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
 						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
 					}
