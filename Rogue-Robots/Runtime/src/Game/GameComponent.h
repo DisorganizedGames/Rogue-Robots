@@ -71,3 +71,25 @@ struct FrostEffectComponent
 	float frostTimer = 0.0f;
 };
 
+struct ExplosionComponent
+{
+	ExplosionComponent(float explosionPower, float explosionRadius) noexcept
+	{
+		power = explosionPower;
+		radius = explosionRadius;
+	};
+	float power;
+	float radius;
+};
+
+//You do not have control over the entity! The system does!
+struct ExplosionEffectComponent
+{
+	ExplosionEffectComponent(float explosionEffectRadius) noexcept
+	{
+		radius = explosionEffectRadius;
+	};
+	float radius;
+	float growTime = -1.0f; 
+	float shrinkTime = -1.0f;
+};
