@@ -322,6 +322,9 @@ void EntityInterface::PlayAudio(DOG::LuaContext* context)
 
 const std::unordered_map<PassiveItemComponent::Type, std::string> passiveTypeMap = {
 	{ PassiveItemComponent::Type::Template, "Template" },
+	{ PassiveItemComponent::Type::MaxHealthBoost, "MaxHealthBoost" },
+	{ PassiveItemComponent::Type::SpeedBoost, "SpeedBoost" },
+	{ PassiveItemComponent::Type::LifeSteal, "LifeSteal" },
 };
 
 void EntityInterface::GetPassiveType(LuaContext* context)
@@ -366,7 +369,7 @@ void EntityInterface::SetRotationForwardUp(DOG::LuaContext* context)
 	transform.SetRotation(rotMat);
 }
 
-void EntityInterface::GetPlayerStats(DOG::LuaContext* context)
+void EntityInterface::GetPlayerStats(LuaContext* context)
 {
 	entity e = context->GetInteger();
 
@@ -376,12 +379,12 @@ void EntityInterface::GetPlayerStats(DOG::LuaContext* context)
 	t.AddDoubleToTable("health", psComp.health);
 	t.AddDoubleToTable("maxHealth", psComp.maxHealth);
 	t.AddDoubleToTable("speed", psComp.speed);
-	t.AddDoubleToTable("lifeSteal", psComp.speed);
+	t.AddDoubleToTable("lifeSteal", psComp.lifeSteal);
 
 	context->ReturnTable(t);
 }
 
-void GetPlayerStat(DOG::LuaContext* context)
+void EntityInterface::GetPlayerStat(LuaContext* context)
 {
 	entity e = context->GetInteger();
 	auto stat = context->GetString();
@@ -392,7 +395,7 @@ void GetPlayerStat(DOG::LuaContext* context)
 		{ "health", psComp.health },
 		{ "maxHealth", psComp.maxHealth },
 		{ "speed", psComp.speed },
-		{ "lifesteal", psComp.lifeSteal },
+		{ "lifeSteal", psComp.lifeSteal },
 	};
 	
 	auto& out = statMap.at(stat);
@@ -402,7 +405,7 @@ void GetPlayerStat(DOG::LuaContext* context)
 	}
 }
 
-void SetPlayerStats(DOG::LuaContext* context)
+void EntityInterface::SetPlayerStats(LuaContext* context)
 {
 	entity e = context->GetInteger();
 	auto stats = context->GetTable();
@@ -410,11 +413,11 @@ void SetPlayerStats(DOG::LuaContext* context)
 		.maxHealth = stats.GetFloatFromTable("maxHealth"),
 		.health = stats.GetFloatFromTable("health"),
 		.speed = stats.GetFloatFromTable("speed"),
-		.lifeSteal = stats.GetFloatFromTable("speed"),
+		.lifeSteal = stats.GetFloatFromTable("lifeSteal"),
 	};
 }
 
-void SetPlayerStat(DOG::LuaContext* context) 
+void EntityInterface::SetPlayerStat(LuaContext* context) 
 {
 	entity e = context->GetInteger();
 	auto stat = context->GetString();
@@ -425,13 +428,14 @@ void SetPlayerStat(DOG::LuaContext* context)
 		{ "health", &psComp.health },
 		{ "maxHealth", &psComp.maxHealth },
 		{ "speed", &psComp.speed },
-		{ "lifesteal", &psComp.lifeSteal },
+		{ "lifeSteal", &psComp.lifeSteal },
 	};
 
 	auto& out = statMap.at(stat);
 	if (f32** val = std::get_if<f32*>(&out))
 	{
 		*(*val) = static_cast<f32>(context->GetDouble());
+		//std::cout << "New value: " << **val << std::endl;
 	}
 }
 

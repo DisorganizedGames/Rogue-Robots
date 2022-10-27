@@ -42,15 +42,18 @@ local speedBoost = {
 		return newStats
 	end
 }
+passiveItemsMap:Register("SpeedBoost", speedBoost)
 
 -- Passive item that increases the lifesteal on bullet hit for the player that picked it up by "stealAmount"
 local lifeSteal = {
-	stealAmount = 1,
+	stealAmount = .2,
 
 	affect = function(self, stackCount, stats)
 		local newStats = stats
 		newStats.lifeSteal = newStats.lifeSteal + self.stealAmount * stackCount
+		print(newStats.lifeSteal)
 		return newStats
 	end
 }
+passiveItemsMap:Register("LifeSteal", lifeSteal)
 

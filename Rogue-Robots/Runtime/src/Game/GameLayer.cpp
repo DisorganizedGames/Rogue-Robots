@@ -279,6 +279,9 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetTransformScaleData>("GetTransformScaleData");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetRotationForwardUp>("SetRotationForwardUp");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPlayerStats>("GetPlayerStats");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPlayerStat>("GetPlayerStat");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetPlayerStats>("SetPlayerStats");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetPlayerStat>("SetPlayerStat");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetUp>("GetUp");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetForward>("GetForward");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetRight>("GetRight");
