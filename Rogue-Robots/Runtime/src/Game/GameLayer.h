@@ -3,7 +3,6 @@
 #include "LuaInterfaces.h"
 #include "NetCode.h"
 #include "Pathfinder/Pathfinder.h"
-#include "Agent.h"
 #include "AgentManager/AgentManager.h"
 #include "GameComponent.h"
 #include "GameSystems.h"
@@ -63,7 +62,6 @@ private:
 	std::array<u32, 4> m_playerModels;
 	NetCode m_netCode;
 	//Pathfinder m_pathfinder;		// uncomment to activate pathfinder
-	std::shared_ptr <Agent> m_Agent;
 	INT8 m_nrOfPlayers;
 	AgentManager m_agentManager;
 	u8 m_networkStatus;

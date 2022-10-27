@@ -2,6 +2,7 @@
 #include "AgentBehaviorSystems.h"
 
 using namespace DOG;
+using namespace DirectX::SimpleMath;
 
 
 /*******************************
@@ -11,7 +12,10 @@ using namespace DOG;
 entity AgentManager::CreateAgent(EntityTypes type, const Vector3& pos)
 {
 	u32 i = static_cast<u32>(type) - static_cast<u32>(EntityTypes::AgentsBegin);
-	entity e = CreateAgentCore(m_models[i], pos);
+	entity e = CreateAgentCore(m_models[i], pos, type);
+
+	m_entityManager.AddComponent<AgentSeekPlayerComponent>(e);
+
 	// Add CreateAndDestroyEntityComponent to ECS
 	return e;
 }
@@ -21,7 +25,11 @@ void AgentManager::CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& e
 {
 	u32 i = static_cast<u32>(entityDesc.entityTypeId) - static_cast<u32>(EntityTypes::AgentsBegin);
 	if (entityDesc.alive)
-		CreateAgentCore(m_models[i], entityDesc.position);
+	{
+		entity e = CreateAgentCore(m_models[i], entityDesc.position, entityDesc.entityTypeId);
+
+		m_entityManager.AddComponent<ShadowAgentSeekPlayerComponent>(e);
+	}
 	// else destroy
 }
 
@@ -35,9 +43,13 @@ AgentManager::AgentManager() : m_entityManager(EntityManager::Get()), m_agentIdC
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentSeekPlayerSystem>());
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentMovementSystem>());
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentAttackSystem>());
+	EntityManager::Get().RegisterSystem(std::make_unique<AgentHitDetectionSystem>());
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentHitSystem>());
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentFrostTimerSystem>());
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentDestructSystem>());
+
+	// Register shadow agent systems
+	EntityManager::Get().RegisterSystem(std::make_unique<ShadowAgentSeekPlayerSystem>());
 }
 
 
@@ -45,56 +57,42 @@ AgentManager::AgentManager() : m_entityManager(EntityManager::Get()), m_agentIdC
 		Private Methods
 *******************************/
 
-entity AgentManager::CreateAgentCore(u32 model, const Vector3& pos)
+entity AgentManager::CreateAgentCore(u32 model, const Vector3& pos, EntityTypes type)
 {
 	entity e = m_entityManager.CreateEntity();
 
 	// Set default components
-	if (!m_entityManager.HasComponent<TransformComponent>(e))
-	{
-		TransformComponent& trans = m_entityManager.AddComponent<TransformComponent>(e);
-		trans.SetPosition(pos);
-	}
+	TransformComponent& trans = m_entityManager.AddComponent<TransformComponent>(e);
+	trans.SetPosition(pos);
 
-	if (!m_entityManager.HasComponent<ModelComponent>(e))
-		m_entityManager.AddComponent<ModelComponent>(e, model);
+	m_entityManager.AddComponent<ModelComponent>(e, model);
 
-	if (!m_entityManager.HasComponent<CapsuleColliderComponent>(e))
-		m_entityManager.AddComponent<CapsuleColliderComponent>(e, e, 0.25f, 1.0f, true);
+	m_entityManager.AddComponent<CapsuleColliderComponent>(e, e, 0.5f, 0.5f, true, 50.0f);
 	
-	if (!m_entityManager.HasComponent<RigidbodyComponent>(e))
-	{
-		RigidbodyComponent& rb = m_entityManager.AddComponent<RigidbodyComponent>(e, e);
-		rb.ConstrainRotation(true, false, true);
-		rb.disableDeactivation = true;
-		rb.getControlOfTransform = true;
-	}
+	RigidbodyComponent& rb = m_entityManager.AddComponent<RigidbodyComponent>(e, e);
+	rb.ConstrainRotation(true, true, true);
+	rb.disableDeactivation = true;
+	rb.getControlOfTransform = true;
 	
-	if (!m_entityManager.HasComponent<AgentIdComponent>(e))
-	{
-		AgentIdComponent& id = m_entityManager.AddComponent<AgentIdComponent>(e);
-		id.id = m_agentIdCounter++;
-	}
+	AgentIdComponent& agent = m_entityManager.AddComponent<AgentIdComponent>(e);
+	agent.id = m_agentIdCounter++;
+	agent.type = type;
 
-	if (!m_entityManager.HasComponent<AgentSeekPlayerComponent>(e))
-		m_entityManager.AddComponent<AgentSeekPlayerComponent>(e);
+	AgentMovementComponent& move = m_entityManager.AddComponent<AgentMovementComponent>(e);
+	move.station = pos + GenerateRandomVector3(agent.id);
+	move.forward = move.station - pos;
+	move.forward.Normalize();
 	
-	if (!m_entityManager.HasComponent<AgentMovementComponent>(e))
-		m_entityManager.AddComponent<AgentMovementComponent>(e);
-	
-	if (!m_entityManager.HasComponent<AgentPathfinderComponent>(e))
-		m_entityManager.AddComponent<AgentPathfinderComponent>(e);
+	m_entityManager.AddComponent<AgentPathfinderComponent>(e);
 
-	if (!m_entityManager.HasComponent<AgentHPComponent>(e))
-		m_entityManager.AddComponent<AgentHPComponent>(e);
+	m_entityManager.AddComponent<AgentHPComponent>(e);
 
-	LuaMain::GetScriptManager()->AddScript(e, "AgentHit.lua");
+	//LuaMain::GetScriptManager()->AddScript(e, "AgentHit.lua");
 
 	// Add networking components
 	if (m_useNetworking)
 	{
-		if (!m_entityManager.HasComponent<NetworkTransform>(e))
-			m_entityManager.AddComponent<NetworkTransform>(e).objectId = e;
+		m_entityManager.AddComponent<NetworkTransform>(e).objectId = agent.id;
 	}
 
 	if (!m_entityManager.HasComponent<ShadowReceiverComponent>(e))
@@ -102,3 +100,13 @@ entity AgentManager::CreateAgentCore(u32 model, const Vector3& pos)
 
 	return e;
 }
+
+Vector3 AgentManager::GenerateRandomVector3(u32 seed, f32 max, f32 min)
+{
+	//static std::random_device rdev;
+	//static std::mt19937 gen(rdev());
+	static std::mt19937 gen(seed);
+	static std::uniform_real_distribution<f32> udis(min, max);
+	return Vector3(udis(gen), udis(gen), udis(gen));
+}
+

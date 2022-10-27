@@ -22,7 +22,7 @@ class AgentMovementSystem : public DOG::ISystem
 public:
 	SYSTEM_CLASS(AgentMovementComponent, AgentPathfinderComponent, AgentSeekPlayerComponent, DOG::TransformComponent);
 	ON_UPDATE_ID(AgentMovementComponent, AgentPathfinderComponent, AgentSeekPlayerComponent, DOG::TransformComponent);
-	void OnUpdate(DOG::entity e, AgentMovementComponent& movement, AgentPathfinderComponent& pathfinder, 
+	void OnUpdate(DOG::entity e, AgentMovementComponent& movement, AgentPathfinderComponent& pathfinder,
 		AgentSeekPlayerComponent& seek, DOG::TransformComponent& trans);
 };
 
@@ -34,6 +34,16 @@ public:
 	SYSTEM_CLASS(AgentAttackComponent, AgentSeekPlayerComponent);
 	ON_UPDATE_ID(AgentAttackComponent, AgentSeekPlayerComponent);
 	void OnUpdate(DOG::entity e, AgentAttackComponent& attack, AgentSeekPlayerComponent& seek);
+};
+
+class AgentHitDetectionSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	using Matrix = DirectX::SimpleMath::Matrix;
+public:
+	SYSTEM_CLASS(DOG::HasEnteredCollisionComponent, AgentSeekPlayerComponent);
+	ON_UPDATE_ID(DOG::HasEnteredCollisionComponent, AgentSeekPlayerComponent);
+	void OnUpdate(DOG::entity me, DOG::HasEnteredCollisionComponent& collision, AgentSeekPlayerComponent& seek);
 };
 
 class AgentHitSystem : public DOG::ISystem
@@ -51,9 +61,9 @@ class AgentDestructSystem : public DOG::ISystem
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
 public:
-	SYSTEM_CLASS(AgentHPComponent);
-	ON_UPDATE_ID(AgentHPComponent);
-	void OnUpdate(DOG::entity e, AgentHPComponent& hp);
+	SYSTEM_CLASS(AgentHPComponent, AgentIdComponent, DOG::TransformComponent);
+	ON_UPDATE_ID(AgentHPComponent, AgentIdComponent, DOG::TransformComponent);
+	void OnUpdate(DOG::entity e, AgentHPComponent& hp, AgentIdComponent& agent, DOG::TransformComponent& trans);
 };
 
 class AgentFrostTimerSystem : public DOG::ISystem
@@ -63,3 +73,21 @@ public:
 	ON_UPDATE_ID(AgentMovementComponent, FrostEffectComponent);
 	void OnUpdate(DOG::entity e, AgentMovementComponent& movement, FrostEffectComponent& frostEffect);
 };
+
+/***********************************************
+
+			Shadow Agent Systems
+
+***********************************************/
+
+
+class ShadowAgentSeekPlayerSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	using Matrix = DirectX::SimpleMath::Matrix;
+public:
+	SYSTEM_CLASS(ShadowAgentSeekPlayerComponent);
+	ON_UPDATE(ShadowAgentSeekPlayerComponent);
+	void OnUpdate(ShadowAgentSeekPlayerComponent& seek);
+};
+

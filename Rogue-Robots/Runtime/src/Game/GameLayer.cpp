@@ -35,7 +35,6 @@ GameLayer::GameLayer() noexcept
 void GameLayer::OnAttach()
 {
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameManager", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1), false, std::make_pair(DOG::Key::LCtrl, DOG::Key::G));
-	m_Agent = std::make_shared<Agent>();
 
 	//m_testScene = std::make_unique<TestScene>();
 	//m_testScene->SetUpScene();
@@ -110,10 +109,10 @@ void GameLayer::StartMainScene()
 			return players;
 		},
 		[this]() { return LoadLevel(); },
-		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(35, 25, 50), 25, 2.5f); }
+		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(20, 20, 50), 10, 3.0f); },
+		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(30, 20, 50), 10, 3.0f); },
+		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(40, 20, 50), 10, 3.0f); },
 		});
-
-
 
 	m_player = std::make_shared<MainPlayer>();
 
@@ -353,7 +352,6 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPassiveType>("GetPassiveType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::IsBulletLocal>("IsBulletLocal");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::Exists>("Exists");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::AgentHit>("AgentHit");
 	
 
 	global->SetLuaInterface(luaInterface);

@@ -255,34 +255,23 @@ void EntityInterface::Exists(DOG::LuaContext* context)
 }
 
 
-void EntityInterface::AgentHit(DOG::LuaContext* context)
-{
-	entity e = context->GetInteger();
-	entity bullet = context->GetInteger();
-	assert(EntityManager::Get().HasComponent<BulletComponent>(bullet));
-	i8 playerNetworkID = EntityManager::Get().GetComponent<BulletComponent>(bullet).playerId;
-	if (!EntityManager::Get().HasComponent<AgentHitComponent>(e))
-		EntityManager::Get().AddComponent<AgentHitComponent>(e).HitBy(bullet, playerNetworkID);
-	else
-		EntityManager::Get().GetComponent<AgentHitComponent>(e).HitBy(bullet, playerNetworkID);
-}
+//void EntityInterface::AgentHit(DOG::LuaContext* context)
+//{
+//	entity e = context->GetInteger();
+//	entity bullet = context->GetInteger();
+//	assert(EntityManager::Get().HasComponent<BulletComponent>(bullet));
+//	i8 playerNetworkID = EntityManager::Get().GetComponent<BulletComponent>(bullet).playerId;
+//	if (!EntityManager::Get().HasComponent<AgentHitComponent>(e))
+//		EntityManager::Get().AddComponent<AgentHitComponent>(e).HitBy(bullet, playerNetworkID);
+//	else
+//		EntityManager::Get().GetComponent<AgentHitComponent>(e).HitBy(bullet, playerNetworkID);
+//}
 
 void EntityInterface::IsBulletLocal(DOG::LuaContext* context)
 {
 	entity e = context->GetInteger();
 	BulletComponent& bullet = EntityManager::Get().GetComponent<BulletComponent>(e);
-	EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer>().Do([&](NetworkPlayerComponent& networkC, ThisPlayer&)
-		{
-			if (networkC.playerId == bullet.playerId)
-			{
-				context->ReturnBoolean(true);
-			}
-			else
-			{
-				context->ReturnBoolean(false);
-			}
-		});
-
+	context->ReturnBoolean(EntityManager::Get().HasComponent<ThisPlayer>(bullet.playerEntityID));
 }
 
 #pragma region HasComponent
@@ -544,8 +533,9 @@ void EntityInterface::AddRigidbody(LuaContext* context, entity e)
 void EntityInterface::AddBullet(LuaContext* context, entity e)
 {
 	int playerEntity = context->GetInteger();
-	NetworkPlayerComponent& player = EntityManager::Get().GetComponent<NetworkPlayerComponent>(playerEntity);
-	EntityManager::Get().AddComponent<BulletComponent>(e).playerId =(i8)player.playerId;
+	BulletComponent& bullet = EntityManager::Get().AddComponent<BulletComponent>(e);
+	bullet.playerEntityID = playerEntity;
+	bullet.damage = 25;
 	if (EntityManager::Get().HasComponent<RigidbodyComponent>(e))
 		EntityManager::Get().GetComponent<RigidbodyComponent>(e).continuousCollisionDetection = true;
 }

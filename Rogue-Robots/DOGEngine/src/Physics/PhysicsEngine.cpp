@@ -21,6 +21,9 @@ namespace DOG
 		m_collisionShapes.resize(PhysicsEngine::RESIZE_COLLISIONSHAPE_SIZE);
 
 		m_ghostObjectDatas.resize(PhysicsEngine::RESIZE_GHOST_OBJECT_SIZE);
+
+		//btCollisionWorld::RayResultCallback
+		//m_dynamicsWorld->rayTest();
 	}
 
 	void PhysicsEngine::AddMeshColliderWaitForModel(const MeshWaitData& meshColliderData)
