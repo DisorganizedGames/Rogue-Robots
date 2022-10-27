@@ -51,7 +51,7 @@ namespace DOG
 	void EntityManager::DeferredEntityDestruction(const entity entityID) noexcept
 	{
 		//Add flag for deletion at the end of the frame
-		if (!HasComponent<DeferredDeletionComponent>(entityID))
+		if (Exists(entityID) && !HasComponent<DeferredDeletionComponent>(entityID))
 			AddComponent<DeferredDeletionComponent>(entityID);
 	}
 

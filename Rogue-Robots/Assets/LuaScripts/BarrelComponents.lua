@@ -96,6 +96,31 @@ function BarrelComponents:Grenade()
 	}
 end
 
+function BarrelComponents:Missile()
+	return 
+	{
+		bulletModel = Asset:LoadModel("Assets/Models/Ammunition/missile.glb"),
+		gunShotSound = Asset:LoadAudio("Assets/Audio/TestShoot.wav"),
+		waitForFire = 0.0,
+		timeBetweenShots = 2.0,
+		
+		Update = function(self, gunEntity, parentEntityID, bullet)
+			Vector3.FromTable(Entity:GetForward(parentEntityID))
+			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
+			Entity:AddComponent(bullet.entity, "HomingMissileComponent", parentEntityID)
+		end,
+		Destroy = function(self, bullet)
+		end,
+		CreateBullet = function(self)
+			if self.waitForFire < ElapsedTime then
+				self.waitForFire = self.timeBetweenShots + ElapsedTime
+				return true
+			end
+			return false
+		end
+	}
+end
+
 --Add more components here.
 
 return BarrelComponents

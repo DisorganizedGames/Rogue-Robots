@@ -36,6 +36,7 @@ struct HomingMissileComponent
 	bool homeInOnPosition = false;
 	DirectX::SimpleMath::Vector3 targetPosition;
 	bool launched = true;
+	i8 playerNetworkID{ 0 };
 };
 
 struct InputController
