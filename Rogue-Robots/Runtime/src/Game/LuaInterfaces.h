@@ -78,6 +78,10 @@ public:
 	void SetRotationForwardUp(DOG::LuaContext* context);
 
 	void GetPlayerStats(DOG::LuaContext* context);
+	void GetPlayerStat(DOG::LuaContext* context);
+
+	void SetPlayerStats(DOG::LuaContext* context);
+	void SetPlayerStat(DOG::LuaContext* context);
 	
 	void GetForward(DOG::LuaContext* context);
 

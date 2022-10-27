@@ -13,9 +13,10 @@ struct GunComponent
 
 struct PlayerStatsComponent
 {
-	float maxHealth = 100.0f;
-	float health = maxHealth;
-	float speed;
+	f32 maxHealth = 100.f;
+	f32 health = 10.f;//maxHealth;
+	f32 speed = 10.f;
+	f32 lifeSteal = 0.f;
 	//...
 };
 
@@ -50,7 +51,10 @@ struct DoorComponent
 struct PassiveItemComponent {
 	enum class Type
 	{
-		Template
+		Template,
+		MaxHealthBoost,
+		SpeedBoost,
+		LifeSteal,
 	};
 
 	Type type;
@@ -68,7 +72,7 @@ struct CreateAndDestroyEntityComponent
 struct FrostEffectComponent
 {
 	//??
-	float frostTimer = 0.0f;
+	f32 frostTimer = 0.0f;
 };
 
 struct ExplosionComponent

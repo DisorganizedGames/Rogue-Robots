@@ -8,6 +8,9 @@ passiveItems = {
 
 function OnStart() 
 	EventSystem:Register("ItemPickup" .. EntityID, OnPickup)
+
+	-- Temporary until we have a more central place to keep it
+	EventSystem:Register("BulletEnemyHit" .. EntityID, OnBulletHit)
 end
 
 function OnUpdate()
@@ -23,14 +26,16 @@ function OnUpdate()
 	for k, v in pairs(originalPlayerStats) do
 		stats[k] = v
 	end
+	
+	local hp = Entity:GetPlayerStat(EntityID, "health")
 
 	for key, item in pairs(passiveItems) do
 		stats = item[1]:affect(item[2], stats)
 	end
 	
-	print(EntityID .. " Health: " .. stats.maxHealth)
+	stats.health = hp
 
-	Entity:ModifyComponent(EntityID, "PlayerStats",  stats)
+	Entity:SetPlayerStats(EntityID, stats)
 
 	itemsDirty = false
 end
@@ -45,5 +50,17 @@ function OnPickup(pickup)
 		end
 		itemsDirty = true
 	end
+end
+
+function OnBulletHit(enemy)
+	local health = Entity:GetPlayerStat(EntityID, "health")
+	local maxHealth = Entity:GetPlayerStat(EntityID, "maxHealth")
+	local lifeSteal = Entity:GetPlayerStat(EntityID, "lifeSteal")
+	
+	health = math.min(health + lifeSteal, maxHealth)
+
+	Entity:SetPlayerStat(EntityID, "health", health)
+
+	itemsDirty = true
 end
 

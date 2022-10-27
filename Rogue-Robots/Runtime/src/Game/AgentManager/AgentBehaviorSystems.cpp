@@ -117,6 +117,7 @@ void AgentAttackSystem::OnUpdate(entity e, AgentAttackComponent& attack, AgentSe
 		{
 			EntityManager::Get().RemoveComponent<AgentAttackComponent>(e);
 		}
+		// This check is broken it harms the player way too early
 		else if (attack.coolDown < attack.elapsedTime && attack.radiusSquared < seek.squaredDistance)
 		{
 			PlayerStatsComponent& player = EntityManager::Get().GetComponent<PlayerStatsComponent>(seek.entityID);
@@ -159,11 +160,18 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 		//Agent speed is set to 1/3 of original for now:
 		EntityManager::Get().GetComponent<AgentMovementComponent>(e).currentSpeed /= 3.0f; 
 	}
+
+	/* Signal to player that their bullet hit an enemy */
+	for (i8 i = 0; i < std::min((u64)hit.count, hit.entityID.size()); ++i)
+	{
+		auto& bullet = EntityManager::Get().GetComponent<BulletComponent>(hit.entityID[i]);
+		LuaMain::GetEventSystem()->InvokeEvent("BulletEnemyHit"+std::to_string(bullet.playerId), e);
+	}
 	
 	#if defined _DEBUG
 	if (hit.count >= hit.entityID.max_size())
 		std::cout << "Number of hits: " << (int)hit.count << std::endl;
-	#endif
+	#endif	
 
 	EntityManager::Get().RemoveComponent<AgentHitComponent>(e);
 }
