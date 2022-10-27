@@ -6,6 +6,7 @@
 
 #include "Types/AssetTypes.h"
 #include "DOGEngineTypes.h"
+#include "Animator.h"
 
 namespace DOG
 {
@@ -13,34 +14,18 @@ namespace DOG
 	class AnimationManager
 	{
 	private:
-		using ClipData = DOG::AnimationComponent::ClipRigData;
+		// scale, rot, trans
+		static constexpr u8 N_KEYS = 3;
+		static constexpr u8 MAX_CLIPS = 10;
+	private:
+		using ClipData = DOG::Animator::ClipRigData;
 		enum class KeyType
 		{
 			Scale = 0,
 			Rotation,
 			Translation,
 		};
-		struct RigSpecifics
-		{
-			u8 nJoints;
-			u8 nNodes;
-			u8 rootJoint;
-			u8 fullbodyGroup;
-			std::pair<u8, u8> groupMasks[2];
-		};
-
-		// scale, rot, trans
-		static constexpr u32 N_KEYS = 3;
-		// tmp
-		static constexpr u8 m_maxClips = 10;
-
-		static constexpr u8 groupA = 0;
-		static constexpr u8 groupB = 1;
-
-		static constexpr u8 N_RIGS = 1;
-		static constexpr u8 MIXAMO_RIG_ID = 0;
-		static constexpr RigSpecifics RIG_SPECIFICS[N_RIGS]{ { 65, 67, 4, 2, {std::make_pair<u8, u8>(57, 10), std::make_pair<u8, u8>(5u, 52u) }} };
-		static constexpr RigSpecifics MIXAMO_RIG = RIG_SPECIFICS[0];
+		
 		//static constexpr RigSpecifics SCORPIO_RIG = RIG_SPECIFICS[1];
 
 		static constexpr bool InGroup(const u8 group, const u8 rigID, const u8 idx) {
@@ -62,21 +47,22 @@ namespace DOG
 		std::vector<DirectX::XMFLOAT4X4> m_vsJoints;
 	private:
 		void UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
-		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator);
+		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::Animator& animator);
 
 		DirectX::FXMVECTOR GetKeyValue(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick);
-		DirectX::FXMVECTOR ExtractScaling(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
-		DirectX::FXMVECTOR ExtractRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
-		DirectX::FXMVECTOR ExtractWeightedAvgRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
-		DirectX::FXMVECTOR ExtractRootTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac);
+		DirectX::FXMVECTOR ExtractScaling(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::Animator& ac);
+		DirectX::FXMVECTOR ExtractRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::Animator& ac);
+		DirectX::FXMVECTOR ExtractWeightedAvgRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::Animator& ac);
+		DirectX::FXMVECTOR ExtractRootTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::Animator& ac);
 
-		void CalculateSRT(const std::vector<AnimationData>& anims, const AnimationComponent& ac, const u8 rigID);
+		void CalculateSRT(const std::vector<AnimationData>& anims, const Animator& ac, const u8 rigID);
 		// Gets the S/R/T keyframe data from active animation clips in animation component
 		void ExtractClipNodeInfluences(const ClipData* pcData, const std::vector<AnimationData>& anims, const KeyType key, const u8 nClips, const u8 rigID, const u8 group);
 	private:
 		std::vector<ImportedRig*> m_rigs;
-		std::array<DirectX::XMVECTOR, m_maxClips* MIXAMO_RIG.nNodes> m_partialSRT{ DirectX::XMVECTOR{} };
-		std::array<DirectX::XMVECTOR, m_maxClips* MIXAMO_RIG.nNodes> m_fullbodySRT{ DirectX::XMVECTOR{} };
+		std::array<Animator, 4> m_playerAnimators;
+		std::array<DirectX::XMVECTOR, MAX_CLIPS * MIXAMO_RIG.nNodes> m_partialSRT{ DirectX::XMVECTOR{} };
+		std::array<DirectX::XMVECTOR, MAX_CLIPS * MIXAMO_RIG.nNodes> m_fullbodySRT{ DirectX::XMVECTOR{} };
 	private:
 		bool m_bonesLoaded = false;
 		static constexpr i32 ROOT_NODE = 0;
@@ -88,18 +74,11 @@ namespace DOG
 		// IMGUI RELATED
 	private:
 		f32 m_imguiGroupWeightA = 0.0f;
+		bool m_imguiApplyRootTranslation = true;
 		DirectX::FXMMATRIX ImguiTransform(i32 joint);
-
 		std::vector<DirectX::XMFLOAT3> m_imguiSca;
 		std::vector<DirectX::XMFLOAT3> m_imguiRot;
 		std::vector<DirectX::XMFLOAT3> m_imguiPos;
-		bool m_imguiApplyRootTranslation = true;
-		static constexpr f32 m_imguiJointRotMin = -180.0f;
-		static constexpr f32 m_imguiJointRotMax = 180.0f;
-		static constexpr f32 m_imguiJointScaMin = -10.0f;
-		static constexpr f32 m_imguiJointScaMax = 10.0f;
-		static constexpr f32 m_imguiJointPosMin = -1.0f;
-		static constexpr f32 m_imguiJointPosMax = 1.0f;
 	public:
 		void SpawnControlWindow(bool& open);
 	};

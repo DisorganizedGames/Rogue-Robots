@@ -6,7 +6,6 @@
 #include "ImGuiMenuLayer.h"
 #include "Tracy/Tracy.hpp"
 
-
 namespace DOG
 {
 	AnimationManager::AnimationManager()
@@ -29,17 +28,21 @@ namespace DOG
 		ZoneScopedN("updateJoints_ppp");
 		using namespace DirectX;
 		auto deltaTime = (f32)Time::DeltaTime();
-
+		
 		if (!m_bonesLoaded) {
 			EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-					if (model && modelaC.offset == 0)
+					if (model && modelaC.rigID == MIXAMO_RIG_ID)
 					{
 						m_bonesLoaded = true;
-						// for imgui
 						m_rigs.push_back(&model->animation);
-						modelaC.clips[2].currentWeight = 0.0f;
+						// tmp setting base states
+						auto& idle = m_rigs[modelaC.rigID]->animations[1];
+						auto& walk = m_rigs[modelaC.rigID]->animations[3];
+						auto& a = m_playerAnimators[modelaC.animatorID];
+						a.AddAnimationClip(3, walk.duration, walk.ticks, 0, 0.f, 1.0f, 1.0f, true, 1.5f); // lower body walk
+						a.AddAnimationClip(1, idle.duration, idle.ticks, 2, 0.f, 1.0f, 1.0f, true); // full body idle
 					}
 				});
 			return;
@@ -52,35 +55,53 @@ namespace DOG
 		EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& rAC)
 			{
 				ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-				if (model && rAC.offset == 0)
+				if (model && rAC.animatorID != -1)
 				{
-					// set base animation clips
-					if (firstTime)
+					auto& rig = m_rigs[rAC.rigID];
+					auto& animator = m_playerAnimators[rAC.animatorID];
+					auto& addedAnimations = rAC.addedSetters;
+					// Add animation clips for animations added this frame
+					auto idx = 0;
+					while(addedAnimations)
 					{
-						// tmp setting base states
-						rAC.AddAnimationClip(3, 0, 0.f, 0.f, 1.0f, 1.0f, true, 1.5f); // lower body walk
-						rAC.AddAnimationClip(1, 2, 0.f, 0.f, 1.0f, 1.0f, true); // full body idle
-						firstTime = false;
+						auto& s = rAC.animSetters[idx++];
+						if (s.desired)
+						{
+							s.desired = false;
+							animator.AddAnimationClip(
+								s.animationID,
+								rig->animations[s.animationID].duration,
+								rig->animations[s.animationID].ticks,
+								s.group,
+								s.transitionLength,
+								0.0f, // start weight
+								1.0f, // target weight
+								s.loop,
+								s.playbackRate
+							);
+							f32 duration = rig->animations[s.animationID].duration / s.playbackRate;
+							f32 tl = duration / 6.f;
+							animator.AddBlendSpecification(0.0f, tl, groupB, 1.f, duration);
+							--addedAnimations;
+						}
 					}
-					for (u32 i = 0; i < rAC.nAddedClips; ++i)
-					{
-						auto& clip = rAC.clips.rbegin()[i];
-						auto& anim = m_rigs[0]->animations.at(clip.animationID);
-						clip.SetAnimation(anim.duration, anim.ticks);
-					}
-					rAC.Update(deltaTime);
-					if (rAC.ActiveClipCount() == 0)
-						return;
 
-					UpdateSkeleton(model->animation, rAC);
+					animator.Update(deltaTime);
+					
+					UpdateSkeleton(model->animation, m_playerAnimators[0]);
 				}
 			});
-		
 	}
 
 	void AnimationManager::SpawnControlWindow(bool& open)
 	{
 		ZoneScopedN("animImgui3");
+		static constexpr f32 m_imguiJointRotMin = -180.0f;
+		static constexpr f32 m_imguiJointRotMax = 180.0f;
+		static constexpr f32 m_imguiJointScaMin = -10.0f;
+		static constexpr f32 m_imguiJointScaMax = 10.0f;
+		static constexpr f32 m_imguiJointPosMin = -1.0f;
+		static constexpr f32 m_imguiJointPosMax = 1.0f;
 
 		if (ImGui::BeginMenu("View"))
 		{
@@ -99,7 +120,7 @@ namespace DOG
 				EntityManager::Get().Collect<ModelComponent, AnimationComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC, AnimationComponent& rAC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-					if (model && animatorC.offset == 0)
+					if (model && animatorC.rigID == MIXAMO_RIG_ID)
 					{
 						imguiRAC = &rAC;
 						if (!rigLoaded)
@@ -149,13 +170,20 @@ namespace DOG
 					animDuration = 0.3f;
 					animID = 6;
 				}
-
+				
 				if (applyAnim)
 				{
 					const f32 duration = cooldown = animDuration / playbackRate;
 					const f32 tl = duration / static_cast<f32>(transitionDiv);
-					imguiRAC->AddAnimationClip(static_cast<i8>(animID), groupB, 0.f, tl, 0.f, 1.0f, false, playbackRate);
-					imguiRAC->AddBlendSpecification(0.0f, tl, groupB, 1.f, duration);
+					auto& setter = imguiRAC->animSetters[imguiRAC->addedSetters++];
+					setter.animationID = static_cast<u8>(animID);
+					setter.desired = true;
+					setter.group = groupB;
+					setter.loop = false;
+					setter.transitionLength = tl;
+					setter.playbackRate = playbackRate;
+					//m_playerAnimators[0].AddAnimationClip(static_cast<i8>(animID), anim.duration, anim.ticks, groupB, tl, 0.f, 1.0f, false, playbackRate);
+					//m_playerAnimators[0].AddBlendSpecification(0.0f, tl, groupB, 1.f, duration);
 					applyAnim = false;
 				}
 				// ImGui individual joint sliders
@@ -194,7 +222,7 @@ namespace DOG
 	constexpr bool HasBone(const u32 v) {
 		return v != -1;
 	};
-	void AnimationManager::UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::AnimationComponent& animator)
+	void AnimationManager::UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::Animator& animator)
 	{
 		ZoneScopedN("skeletonUpdate");
 		using namespace DirectX;
@@ -266,7 +294,7 @@ namespace DOG
 			XMVectorLerp(XMLoadFloat4(&key1.value), XMLoadFloat4(&key2.value), blendFactor);
 	}
 
-	DirectX::FXMVECTOR AnimationManager::ExtractRootTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::AnimationComponent& ac)
+	DirectX::FXMVECTOR AnimationManager::ExtractRootTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::Animator& ac)
 	{
 		using namespace DirectX;
 		// Translation Weighted Average
@@ -280,7 +308,7 @@ namespace DOG
 		return translationVec;
 	}
 
-	void AnimationManager::CalculateSRT(const std::vector<AnimationData>& animations, const AnimationComponent& ac, const u8 rigID)
+	void AnimationManager::CalculateSRT(const std::vector<AnimationData>& animations, const Animator& ac, const u8 rigID)
 	{
 		ZoneScopedN("SRT calculation");
 		using namespace DirectX;

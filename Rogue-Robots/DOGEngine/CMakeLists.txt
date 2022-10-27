@@ -37,7 +37,7 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Graphics/Rendering/RenderEffects/Bloom.h" "src/Graphics/Rendering/RenderEffects/Bloom.cpp"
     "src/Core/CustomMaterialManager.h" "src/Core/CustomMaterialManager.cpp" "src/Core/CustomMeshManager.h" "src/Core/CustomMeshManager.cpp"
     "src/Core/Scene.h" "src/Core/Scene.cpp"
-    )
+    "src/Core/Animator.h" "src/Core/Animator.cpp")
 
 	file(GLOB_RECURSE TempGraphics
     "src/Graphics/*.cpp")
