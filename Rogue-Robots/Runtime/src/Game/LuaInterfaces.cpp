@@ -484,6 +484,30 @@ void EntityInterface::AddAgentStats(LuaContext* context, entity e)
 	};
 }
 
+void EntityInterface::ModifyAnimationComponent(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+
+	int animID = context->GetInteger();
+	int group = context->GetInteger();
+	float transitionLength = context->GetDouble();
+	float playbackRate = context->GetDouble();
+	bool loop = context->GetBoolean();
+
+	if (!EntityManager::Get().HasComponent<AnimationComponent>(e))
+		return;
+
+	auto& aComp = EntityManager::Get().GetComponent<AnimationComponent>(e);
+
+	auto& setter = aComp.animSetters[aComp.addedSetters++];
+	setter.desired = true;
+	setter.animationID = animID;
+	setter.group = group;
+	setter.transitionLength = transitionLength;
+	setter.playbackRate = playbackRate;
+	setter.loop = loop;
+}
+
 void EntityInterface::AddAudio(LuaContext* context, entity e)
 {
 	auto assetID = context->GetInteger();

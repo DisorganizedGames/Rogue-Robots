@@ -123,7 +123,7 @@ void EmilFDebugLayer::OnUpdate()
 			auto& cc = m_entityManager.GetComponent<DOG::CameraComponent>(m_FlashLightEntity);
 
 			stc.worldMatrix = tc.worldMatrix;
-			stc.SetPosition(stc.GetPosition() + DirectX::SimpleMath::Vector3(1.0f, 1.0f, 0.0f));
+			//stc.SetPosition(stc.GetPosition() + DirectX::SimpleMath::Vector3(1.0f, 1.0f, 0.0f));
 			slc.direction = tc.GetForward();
 			slc.dirty = true;
 
