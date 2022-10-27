@@ -684,7 +684,7 @@ namespace DOG
 			for (int j = 0; j < contactManifold->getNumContacts(); j++)
 			{
 				btManifoldPoint& pt = contactManifold->getContactPoint(j);
-				if (pt.getDistance() < 0.0f)
+				//if (pt.getDistance() < 0.0f)
 				{
 					//Get obj0 rigidbody handle
 					const u32 byteShift = 4;
