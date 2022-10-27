@@ -48,12 +48,22 @@ entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float r
 	EntityManager::Get().AddComponent<TransformComponent>(newEntity, parentPosition, Vector3(.0f, .0f, .0f), Vector3(radius, radius, radius));
 	EntityManager::Get().AddComponent<ModelComponent>(newEntity, explosionEffectModelID);
 
+	// Add dynamic point light
+	auto pdesc = PointLightDesc();
+	pdesc.color = { 0.8f, 0.f, 0.f };
+	pdesc.strength = 100.f;
+	auto& plc = EntityManager::Get().AddComponent<PointLightComponent>(newEntity);
+	plc.handle = LightManager::Get().AddPointLight(pdesc, LightUpdateFrequency::PerFrame);
+	plc.color = pdesc.color;
+	plc.strength = pdesc.strength;
+
 	//Set values for explosions on the script
 	LuaMain::GetScriptManager()->AddScript(newEntity, "ExplosionEffect.lua");
 	if (growTime != -1.0f || shrinkTime != -1.0f)
 	{
 		ScriptData scriptData = LuaMain::GetScriptManager()->GetScript(newEntity, "ExplosionEffect.lua");
 		LuaTable scriptTable(scriptData.scriptTable, true);
+
 
 		if (growTime != -1.0f)
 			scriptTable.AddFloatToTable("growTime", growTime);

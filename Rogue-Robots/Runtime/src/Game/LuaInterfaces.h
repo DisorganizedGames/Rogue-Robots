@@ -136,6 +136,8 @@ private:
 	void ModifyTransform(DOG::LuaContext* context, DOG::entity e);
 	
 	void ModifyPlayerStats(DOG::LuaContext* context, DOG::entity e);
+
+	void ModifyPointLightStrength(DOG::LuaContext* context, DOG::entity e);
 };
 
 class AssetInterface : public LuaInterface

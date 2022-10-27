@@ -362,30 +362,30 @@ float4 main(VS_OUT input) : SV_TARGET
     }
     
     // add temp directional light
-    {
-        // calculate per-light radiance
-        float3 L = normalize(-float3(-1.f, -1.f, 1.f));
-        float3 H = normalize(V + L);
-        float3 radiance = float3(1.f, 1.f, 1.f); // no attenuation
+    //{
+    //    // calculate per-light radiance
+    //    float3 L = normalize(-float3(-1.f, -1.f, 1.f));
+    //    float3 H = normalize(V + L);
+    //    float3 radiance = float3(1.f, 1.f, 1.f); // no attenuation
     
-        // cook-torrance brdf
-        float NDF = DistributionGGX(N, H, roughnessInput);
-        float G = GeometrySmith(N, V, L, roughnessInput);
-        float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
+    //    // cook-torrance brdf
+    //    float NDF = DistributionGGX(N, H, roughnessInput);
+    //    float G = GeometrySmith(N, V, L, roughnessInput);
+    //    float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
     
-        float3 kS = F;
-        float3 kD = float3(1.f, 1.f, 1.f) - kS;
-        kD *= 1.0 - metallicInput;
+    //    float3 kS = F;
+    //    float3 kD = float3(1.f, 1.f, 1.f) - kS;
+    //    kD *= 1.0 - metallicInput;
     
-        float3 numerator = NDF * G * F;
-        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-        float3 specular = numerator / max(denominator, 0.001);
+    //    float3 numerator = NDF * G * F;
+    //    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+    //    float3 specular = numerator / max(denominator, 0.001);
     
     
-        // add to outgoing radiance Lo
-        float NdotL = max(dot(N, L), 0.0);
-        Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL;
-    }
+    //    // add to outgoing radiance Lo
+    //    float NdotL = max(dot(N, L), 0.0);
+    //    Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL;
+    //}
     
     float3 hdr = amb + Lo;
     return float4(hdr, albedoAlpha);
