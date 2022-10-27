@@ -69,105 +69,23 @@ namespace DOG
 
 	struct AnimationComponent
 	{
-		static constexpr u8 maxClips = 10;
-		static constexpr u8 groupA = 0; // Lower body 
-		static constexpr u8 groupB = 1; // Upper body
-		static constexpr u8 groupC = 2; // Full body
-		static constexpr u8 noGroup = 3;
-		static constexpr u8 nGroups = 3;
-		i32 offset = 0;
-		f32 globalTime = 0.0f;
-
-		struct ClipRigData
+		static constexpr u8 MAX_SETTERS = 10;
+		i8 rigID = 0;
+		i8 animatorID = -1;
+		i8 addedSetters = 0;
+		struct Setter
 		{
-			u32 aID;
-			f32 weight;
-			f32 tick;
-		};
-		struct GroupBlendSpec
-		{
-			BlendMode blendMode = BlendMode::linear;
-			f32 duration = 0.f;
-			f32 startWeight = 0.f;
-			f32 targetWeight = 0.f;
-			f32 transitionStart = 0.f;
-			f32 transitionLength = 0.f;
-			bool Activated(const f32 gt, const f32 dt) const{
-				return (gt >= transitionStart) && (gt - dt <= transitionStart);
+			bool desired;
+			u8 animationID;
+			u8 group;
+			f32 transitionLength;
+			f32 playbackRate;
+			bool loop;
+			bool operator <(const Setter& o) const {
+				return desired && !o.desired;
 			}
 		};
-		struct AnimationClip
-		{
-			static constexpr i32 noAnimation = -1;
-			u8 group = 3;
-			// Animation Specifics
-			bool activeAnimation = false;
-			i8 animationID = noAnimation;
-			f32 transitionStart = 0.0f;
-			f32 normalizedTime = 0.f;	// Tick
-			f32 timeScale = 1.0f;		// Tick
-			f32 duration = 1.0f;		// Tick
-			f32 totalTicks = 1.0f;		// Tick
-			bool loop = false;			// Tick
-			
-			f32 currentTick = 0.0f;
-			// Blend/transition Specifics
-			BlendMode blendMode = BlendMode::normal;
-
-			f32 startWeight = 1.0f;		// Weight
-			f32 targetWeight = 0.0f;	// Weight
-			f32 transitionLength = 0.0f;// Weight
-			f32 currentWeight = 0.0f;	// Weight
-
-			// Resets Clip to inactive state
-			void ResetClip();
-			// Update animation tick of clip
-			f32 UpdateClipTick(const f32 transitionTime);
-			bool HasActiveAnimation() const { return animationID != noAnimation; };
-			// Set animation specifics fetched from rig
-			void SetAnimation(const f32 animationDuration, const f32 nTicks);
-			// True if clip activated this frame
-			bool Activated(const f32 gt, const f32 dt) const;
-			// True if clip deactivated this frame
-			bool Deactivated() const;
-			// Update state of clip
-			void UpdateState(const f32 gt);
-			bool operator <(const AnimationClip& o) const {
-				return activeAnimation && !o.activeAnimation ||
-					activeAnimation == o.activeAnimation && group < o.group ||
-					activeAnimation == o.activeAnimation && group == o.group && currentWeight > o.currentWeight ||
-					activeAnimation == o.activeAnimation && group == o.group && currentWeight == o.currentWeight && targetWeight > o.targetWeight;
-			}
-			bool operator ==(const AnimationClip& o) const {
-				return animationID == o.animationID && group == o.group;
-			}
-		};
-		std::array<AnimationClip, maxClips> clips;
-		// Number of new clips added to component this frame
-		u32 nAddedClips = 0;
-		// Active clips per group
-		u8 clipsInGroup[nGroups] = { 0 };
-		
-		ClipRigData clipData[maxClips];
-		// weight between 
-		std::array<GroupBlendSpec, 4> groups;
-		f32 groupWeights[nGroups - 1] = { .0f };
-		// Update clip weights and ticks
-		void Update(const f32 dt);
-		// Group Blend Specifics
-		f32 LinearBlend(const f32 currentTime, const f32 stopTime, const f32 startValue, const f32 targetValue, f32 currentValue = 0.0f) const;
-		f32 BezierBlend(const f32 currentTime, const f32 stopTime, const f32 startValue, const f32 targetValue, f32 currentValue = 0.0f) const;
-		// Overwrites an active clip with values from newly activated clip if applicable
-		bool ReplacedClip(AnimationClip& clip);
-		// Add a new animation clip to components timeline
-		void AddAnimationClip(i8 id, u8 group, f32 startDelay, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop = false, f32 timeScale = 1.f);
-		void AddBlendSpecification(f32 startDelay, f32 transitionLength, u32 group, f32 targetWeight, f32 duration = -1.f);
-		// Returns number of currently active clips contributing to current pose
-		i32 ActiveClipCount() const;
-		// Returns index of first clip in group
-		u8 GetGroupIndex(const u8 group) const;
-		// Return number of clips on the timeline
-		i32 ClipCount() const;
+		std::array<Setter, MAX_SETTERS> animSetters;
 	};
 	static_assert(std::is_trivially_copyable_v<AnimationComponent>);
 
