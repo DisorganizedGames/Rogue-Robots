@@ -24,6 +24,7 @@ void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& miss
 				EntityManager::Get().GetComponent<AgentHPComponent>(collision.entities[i]).hp = 0;
 			}
 		}
+		EntityManager::Get().AddComponent<ExplosionEffectComponent>(e, 5.0f);
 		EntityManager::Get().DeferredEntityDestruction(e);
 	}
 }

@@ -23,10 +23,10 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightMoveSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<HomingMissileSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<HomingMissileImpacteSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
 	m_nrOfPlayers = MAX_PLAYER_COUNT;
 }
 
