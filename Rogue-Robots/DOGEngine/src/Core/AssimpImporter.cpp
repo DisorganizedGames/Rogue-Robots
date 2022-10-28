@@ -131,7 +131,7 @@ namespace DOG
 		// Store model Root Node
 		nodeArray.push_back(JointNode{});
 		nodeArray.back().name = allNodes[0]->mName.C_Str();
-		XMStoreFloat4x4(&nodeArray.back().transformation, XMMatrixRotationRollPitchYaw(XM_PIDIV4, 0.0f, 0.0f) * XMMATRIX(&allNodes[0]->mTransformation.a1));
+		XMStoreFloat4x4(&nodeArray.back().transformation, XMMATRIX(&allNodes[0]->mTransformation.a1));
 
 		// Find and store Root of bone Hierarchy (Parent of first node associated with a bone)
 		u32 boneRootIdx = {};
@@ -278,13 +278,13 @@ namespace DOG
 				{
 					auto rootV = XMLoadFloat4(&posKeys[0].value);
 					auto lastV = XMLoadFloat4(&posKeys.rbegin()[0].value);
-					for (i32 k = 0; k < posKeys.size(); ++k)
+					for (i32 k = 0; k < posKeys.size()-1; ++k)
 					{
 						auto value = XMLoadFloat4(&posKeys.rbegin()[k].value);
-						posKeys[k].value = { 0.f, 0.f, XMVectorGetZ(value), 0.f };
-						/*might need later
-						auto prev = XMLoadFloat4(&posKeys[k-1].value);
-						auto toStore = value - prev;*/
+						auto prev = XMLoadFloat4(&posKeys.rbegin()[k +1].value);
+						auto toStore = value - prev;
+						posKeys.rbegin()[k].value = {0.f, XMVectorGetY(toStore), 0.f, 0.f};
+						//posKeys.rbegin()[k].value = { 0.f, XMVectorGetY(value) / 2.f, 0.f, 0.f };
 					}
 					if(posKeys.size() > 1)posKeys[0].value = posKeys[1].value;
 				}

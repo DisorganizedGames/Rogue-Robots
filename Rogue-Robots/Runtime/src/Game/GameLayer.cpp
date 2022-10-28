@@ -504,10 +504,11 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 
 	auto& am = DOG::AssetManager::Get();
 	//m_playerModels[0] = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
-	m_playerModels[0] = am.LoadModelAsset("Assets/Models/Players/Red/Rigged/red_marine.gltf");
-	m_playerModels[1] = am.LoadModelAsset("Assets/Models/Players/Green/Rigged/green_marine.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
-	m_playerModels[2] = am.LoadModelAsset("Assets/Models/Players/Blue/Rigged/blue_marine.gltf");
-	m_playerModels[3] = am.LoadModelAsset("Assets/Models/Players/Yellow/Rigged/yellow_marine.gltf");
+	
+	m_playerModels[0] = am.LoadModelAsset("Assets/Models/Players/Test/Red/player_red.gltf");
+	m_playerModels[3] = am.LoadModelAsset("Assets/Models/Players/Test/Green/player_green.gltf");
+	m_playerModels[1] = am.LoadModelAsset("Assets/Models/Players/Test/Blue/player_blue.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
+	m_playerModels[2] = am.LoadModelAsset("Assets/Models/Players/Test/Yellow/player_yellow.gltf");
 	std::vector<entity> players;
 	auto* scriptManager = LuaMain::GetScriptManager();
 	for (auto i = 0; i < playerCount; ++i)
@@ -520,7 +521,7 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		};
 		auto& tf = m_entityManager.AddComponent<TransformComponent>(playerI, pos - offset);
 		m_entityManager.AddComponent<ModelComponent>(playerI, m_playerModels[playerI]);
-		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.55f, .9f, true, 75.f);
+		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.5f, 1.8f, true, 75.f);
 		auto& rb = m_entityManager.AddComponent<RigidbodyComponent>(playerI, playerI);
 		rb.ConstrainRotation(true, true, true);
 		rb.disableDeactivation = true;
@@ -543,15 +544,11 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 			m_entityManager.AddComponent<AudioListenerComponent>(playerI);
 			auto& ac = m_entityManager.AddComponent<AnimationComponent>(playerI);
 			ac.rigID = 0;
-			ac.animatorID = 3;
-			tf.SetScale(Vector3(.01f, .01f, .01f));
 		}
 		else
 		{
 			auto& ac = m_entityManager.AddComponent<AnimationComponent>(playerI);
 			ac.rigID = 0;
-			ac.animatorID = i-1;
-			tf.SetScale(Vector3(.01f, .01f, .01f));
 			m_entityManager.AddComponent<OnlinePlayer>(playerI);
 		}
 	}

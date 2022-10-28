@@ -115,5 +115,7 @@ void MainPlayer::OnUpdate()
 			view = XMMatrixLookToLH(useTransform->GetPosition(), m_forward, m_up);
 			
 			useTransform->worldMatrix = cameraC.viewMatrix.Invert();
+
+			//useTransform->SetScale()
 		});
 }

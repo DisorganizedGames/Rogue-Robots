@@ -170,7 +170,7 @@ function CreateBulletEntity(bullet)
 	bullet.entity = Scene:CreateEntity(EntityID)
 
 	-- test shoot anim --
-	local animID = 6
+	local animID = 9
 	local upperBody = 1
 	local animDuration = 0.2
 	local playbackRate = animDuration / ShootCooldown;
