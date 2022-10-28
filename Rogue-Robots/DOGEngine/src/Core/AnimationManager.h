@@ -58,6 +58,12 @@ namespace DOG
 		void CalculateSRT(const std::vector<AnimationData>& anims, const Animator& ac, const u8 rigID);
 		// Gets the S/R/T keyframe data from active animation clips in animation component
 		void ExtractClipNodeInfluences(const ClipData* pcData, const std::vector<AnimationData>& anims, const KeyType key, const u8 nClips, const u8 rigID, const u8 group);
+
+		i8 GetNextAnimatorID()
+		{
+			static i8 id = 0;
+			return id++;
+		}
 	private:
 		std::vector<ImportedRig*> m_rigs;
 		std::array<Animator, 4> m_playerAnimators;
