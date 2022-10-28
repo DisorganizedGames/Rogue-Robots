@@ -121,7 +121,7 @@ void GameLayer::StartMainScene()
 	m_mainScene->SetUpScene({
 		[this]() 
 		{
-			std::vector<entity> players = SpawnPlayers(Vector3(20.0f, 8.0f, 70), m_nrOfPlayers, 10.f); 
+			std::vector<entity> players = SpawnPlayers(Vector3(25.0f, 25.0f, 15.0f), m_nrOfPlayers, 10.f); 
 			std::vector<entity> flashlights = AddFlashlightsToPlayers(players);
 
 			//For now, just combine them, using the player vector:
@@ -462,8 +462,8 @@ std::vector<entity> GameLayer::LoadLevel()
 	//testRooms
 	//Tunnels
 	//showOff
-	//std::ifstream inputFile("..\\Offline-Tools\\PCG\\showOff_generatedLevel.txt");
-	std::ifstream inputFile("..\\Offline-Tools\\PCG\\Tunnels_generatedLevel.txt");
+	std::ifstream inputFile("..\\Offline-Tools\\PCG\\showOff_generatedLevel.txt");
+	//std::ifstream inputFile("..\\Offline-Tools\\PCG\\Tunnels_generatedLevel.txt");
 
 	AssetManager& aManager = AssetManager::Get();
 
@@ -508,10 +508,10 @@ std::vector<entity> GameLayer::LoadLevel()
 
 						entity blockEntity = levelBlocks.emplace_back(m_entityManager.CreateEntity());
 						m_entityManager.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".fbx"));
-						TransformComponent& transform = m_entityManager.AddComponent<TransformComponent>(blockEntity,
+						m_entityManager.AddComponent<TransformComponent>(blockEntity,
 							Vector3(x * blockDim, y * blockDim, z * blockDim),
-							Vector3(piDiv2, blockRot * piDiv2 - piDiv2, 0.0f),//blockRot * piDiv2 - piDiv2, 0.0f),
-							Vector3(xFlip, -yFlip, 1.0f)); //Moved the scaling to later so the mesh collider is not confused by the scaling
+							Vector3(piDiv2, blockRot * piDiv2 - piDiv2, 0.0f),
+							Vector3(xFlip, -yFlip, 1.0f));
 
 						m_entityManager.AddComponent<ModularBlockComponent>(blockEntity);
 						m_entityManager.AddComponent<MeshColliderComponent>(blockEntity,
@@ -520,9 +520,6 @@ std::vector<entity> GameLayer::LoadLevel()
 							localMeshColliderScale,
 							false);		// Set this to true if you want to see colliders only in wireframe
 						m_entityManager.AddComponent<ShadowReceiverComponent>(blockEntity);
-
-						//Sets the stupid scaling last seems to fix our problems!
-						//transform.SetScale(Vector3(xFlip, -1.0f * yFlip, 1.0f)); //yFlip is on Z because of left-hand/right-hand.
 					}
 
 					++x;

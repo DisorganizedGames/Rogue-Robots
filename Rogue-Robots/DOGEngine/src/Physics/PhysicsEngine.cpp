@@ -830,7 +830,7 @@ namespace DOG
 		rCD.collisionShapeHandle = meshColliderData.collisionShapeHandle;
 
 		//For the handle 0 is default value
-		if (meshColliderData.collisionShapeHandle.handle != 0 && false)
+		if (meshColliderData.collisionShapeHandle.handle != 0)
 		{
 			//We check if the existing scaledMeshCollider has the same scale of the incoming meshcollider
 			//If it does not we create a new scaledMeshCollider with the scale requested
