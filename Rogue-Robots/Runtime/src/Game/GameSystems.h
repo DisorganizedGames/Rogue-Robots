@@ -72,18 +72,19 @@ public:
 			auto& ptc = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(slc.owningPlayer);
 			stc.worldMatrix = ptc.worldMatrix;
 			stc.SetPosition(stc.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.6f, 0.f));
-			slc.direction = ptc.GetForward();
 			slc.dirty = true;
 
 			auto up = ptc.worldMatrix.Up();
 			up.Normalize();
-
-			cc.viewMatrix = DirectX::XMMatrixLookAtLH
-			(
-				{ stc.GetPosition().x, stc.GetPosition().y, stc.GetPosition().z },
-				{ stc.GetPosition().x + stc.GetForward().x, stc.GetPosition().y + stc.GetForward().y, stc.GetPosition().z + stc.GetForward().z },
-				{ up.x, up.y, up.z }
-			);
+			
+			auto& pcc = DOG::EntityManager::Get().GetComponent<PlayerControllerComponent>(slc.owningPlayer);
+			auto& playerCameraTransform = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(pcc.cameraEntity);
+			
+			auto pos = stc.GetPosition();
+			auto forward = playerCameraTransform.GetForward();
+			
+			slc.direction = forward;
+			cc.viewMatrix = DirectX::XMMatrixLookToLH(pos, forward, up);
 		}
 	}
 };
