@@ -18,9 +18,11 @@ namespace DOG
 
 	static constexpr u8 N_RIGS = 1;
 	static constexpr u8 MIXAMO_RIG_ID = 0;
-	static constexpr RigSpecifics RIG_SPECIFICS[N_RIGS]{ { 65, 67, 4, 2, {std::make_pair<u8, u8>(57, 10), std::make_pair<u8, u8>(5u, 52u) }} };
-	static constexpr RigSpecifics MIXAMO_RIG = RIG_SPECIFICS[0];
+	static constexpr u8 SCRPIO_RIG_ID = 1;
 
+	static constexpr RigSpecifics RIG_SPECIFICS[N_RIGS]{ { 65, 67, 4, 2, {std::make_pair<u8, u8>(57, 10), std::make_pair<u8, u8>(5u, 52u) }} };
+	static constexpr RigSpecifics MIXAMO_RIG = RIG_SPECIFICS[MIXAMO_RIG_ID];
+	//static constexpr RigSpecifics SCRPIO_RIG = RIG_SPECIFICS[SCRPIO_RIG_ID];
 
 	struct Animator
 	{

@@ -1,4 +1,5 @@
 #include "Animator.h"
+#include "Tracy/Tracy.hpp"
 
 namespace DOG
 {
@@ -18,7 +19,7 @@ namespace DOG
 	void Animator::ResetClip(AnimationClip& clip)
 	{
 		if (clip.group != noGroup && clipsInGroup[clip.group] != 0)
-			clipsInGroup[clip.group]--;
+			--clipsInGroup[clip.group];
 		clip.timeScale = 1.f;
 		clip.animationID = NO_ANIMATION;
 		clip.group = noGroup;
@@ -28,6 +29,7 @@ namespace DOG
 	
 	void Animator::Update(const f32 dt)
 	{
+		ZoneScopedN("animatorUpdate");
 		globalTime += dt;
 	
 		f32 groupWeightSum[nGroups] = { 0.f };
@@ -40,7 +42,15 @@ namespace DOG
 			if (c.Activated(globalTime, dt))
 			{
 				//if (!ReplacedClip(c, i))
-				++clipsInGroup[c.group];
+				// hack
+				if (clipsInGroup[groupC] > 1 && c.group == groupC)
+				{
+					ResetClip(c);
+				}
+				else
+				{
+					++clipsInGroup[c.group];
+				}
 			}
 			else if (c.Deactivated())
 			{
@@ -48,7 +58,8 @@ namespace DOG
 			}
 			c.UpdateState(globalTime);
 		}
-	
+		
+		
 		// sort clips Active-group-targetWeight-currentWeight
 		std::sort(clips.begin(), clips.end());
 	
