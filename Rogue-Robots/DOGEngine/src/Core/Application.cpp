@@ -143,7 +143,7 @@ namespace DOG
 					// We are assuming that this is a totally normal submesh with no weird branches (i.e on ModularBlock or whatever)
 					if (EntityManager::Get().HasComponent<ShadowReceiverComponent>(e))
 					{
-							m_renderer->SubmitShadowMesh(sr.mesh, 0, sr.material, tr);
+						m_renderer->SubmitShadowMesh(sr.mesh, 0, sr.material, tr);
 					}
 					if (sr.dirty)
 						CustomMaterialManager::Get().UpdateMaterial(sr.material, sr.materialDesc);
@@ -161,7 +161,12 @@ namespace DOG
 						if (EntityManager::Get().HasComponent<ShadowReceiverComponent>(e))
 						{
 							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
-								m_renderer->SubmitShadowMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+							{
+								if (EntityManager::Get().HasComponent<ModularBlockComponent>(e))
+									m_renderer->SubmitShadowMeshNoFaceCulling(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+								else
+									m_renderer->SubmitShadowMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+							}
 						}
 
 

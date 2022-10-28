@@ -604,6 +604,12 @@ namespace DOG::gfx
 		apiDesc.pRootSignature = rsig;
 		apiDesc.VS = to_internal(desc.vs);
 		apiDesc.PS = to_internal(desc.ps);
+		if (desc.gs)
+			apiDesc.GS = to_internal(desc.gs);
+		if (desc.ds)
+			apiDesc.DS = to_internal(desc.ds);
+		if (desc.hs)
+			apiDesc.HS = to_internal(desc.hs);
 		apiDesc.RasterizerState = desc.rasterizer;
 		apiDesc.DepthStencilState = desc.depthStencil;
 
