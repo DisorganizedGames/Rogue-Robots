@@ -5,7 +5,6 @@ set(SourceFiles
 		"src/Game/EmilFDebugLayer.h" "src/Game/EmilFDebugLayer.cpp"
 		"src/Game/MainPlayer.h" "src/Game/MainPlayer.cpp" 
 		"src/Game/NetCode.h" "src/Game/NetCode.cpp"
-		"src/Game/MainPlayer.h" "src/Game/MainPlayer.cpp"
 		"src/Pathfinder/Pathfinder.h" "src/Pathfinder/Pathfinder.cpp"
 		"src/Game/LuaInterfaces.h" "src/Game/LuaInterfaces.cpp"
 		 "src/Game/EntitesTypes.h"
