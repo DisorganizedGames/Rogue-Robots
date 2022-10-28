@@ -172,6 +172,8 @@ float Server::TickTimeLeftTCP(LARGE_INTEGER t, LARGE_INTEGER frequency)
 	return float(now.QuadPart - t.QuadPart) / float(frequency.QuadPart);
 }
 
+#pragma warning( disable : 6262 )
+#pragma warning( disable : 6385 )
 void Server::ServerPollTCP()
 {
 	std::cout << "Server: Started to tick" << std::endl;
