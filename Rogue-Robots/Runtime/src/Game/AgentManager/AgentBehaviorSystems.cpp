@@ -135,17 +135,17 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 {
 	for (i8 i = 0; i < hit.count; ++i)
 	{
-		hp.hp -= 25;
+		hp.hp -= hit.hits[i].damage;
 	}
 	
 	/*Frost status*/
 	for (i8 i = 0; i < hit.count; ++i)
 	{
-		if (EntityManager::Get().HasComponent<FrostEffectComponent>(hit.entityID[i]))
+		if (EntityManager::Get().HasComponent<FrostEffectComponent>(hit.hits[i].entityHitBy))
 		{
 			//Bullet has a frost effect. AddOrReplaceComponent-feature would be nice here, as it would
 			//vastly shrink the following code block. (Note to self by Emil F)
-			auto& fecBullet = EntityManager::Get().GetComponent<FrostEffectComponent>(hit.entityID[i]);
+			auto& fecBullet = EntityManager::Get().GetComponent<FrostEffectComponent>(hit.hits[i].entityHitBy);
 			if (EntityManager::Get().HasComponent<FrostEffectComponent>(e))
 			{
 				auto& fecAgent = EntityManager::Get().GetComponent<FrostEffectComponent>(e);
@@ -162,14 +162,14 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 	}
 
 	/* Signal to player that their bullet hit an enemy */
-	for (i8 i = 0; i < std::min((u64)hit.count, hit.entityID.size()); ++i)
+	for (i8 i = 0; i < std::min((u64)hit.count, hit.hits.size()); ++i)
 	{
-		auto& bullet = EntityManager::Get().GetComponent<BulletComponent>(hit.entityID[i]);
+		auto& bullet = EntityManager::Get().GetComponent<BulletComponent>(hit.hits[i].entityHitBy);
 		LuaMain::GetEventSystem()->InvokeEvent("BulletEnemyHit"+std::to_string(bullet.playerId), e);
 	}
 	
 	#if defined _DEBUG
-	if (hit.count >= hit.entityID.max_size())
+	if (hit.count >= hit.hits.max_size())
 		std::cout << "Number of hits: " << (int)hit.count << std::endl;
 	#endif	
 
