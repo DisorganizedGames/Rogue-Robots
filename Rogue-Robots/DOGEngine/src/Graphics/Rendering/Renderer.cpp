@@ -300,7 +300,8 @@ namespace DOG::gfx
 				vec.Normalize();
 				randomDirections.push_back({ vec.x, vec.y, vec.z, 0.f });
 			}
-			TextureDesc noise(MemoryType::Default, DXGI_FORMAT_R32G32B32A32_FLOAT, noiseSamplePerDim, noiseSamplePerDim, 1);
+			auto noise = TextureDesc(MemoryType::Default, DXGI_FORMAT_R32G32B32A32_FLOAT, noiseSamplePerDim, noiseSamplePerDim, 1)
+				.SetMipLevels(1);
 			m_ssaoNoise = m_rd->CreateTexture(noise);
 
 			auto rowPitch = noiseSamplePerDim * sizeof(randomDirections[0]);
