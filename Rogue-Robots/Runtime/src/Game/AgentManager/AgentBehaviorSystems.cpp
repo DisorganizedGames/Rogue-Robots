@@ -162,7 +162,6 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 {
 	for (i8 i = 0; i < hit.count; ++i)
 	{
-		//std::cout << hit.hits[i].hitByEntity << std::endl;;
 		if (EntityManager::Get().HasComponent<ThisPlayer>(hit.hits[i].playerEntity))
 		{
 			hp.hp -= hit.hits[i].damage;
@@ -196,9 +195,12 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 	/* Signal to player that their bullet hit an enemy */
 	for (i8 i = 0; i < std::min((u64)hit.count, hit.hits.size()); ++i)
 	{
-		auto& bullet = EntityManager::Get().GetComponent<BulletComponent>(hit.hits[i].hitByEntity);
-		LuaMain::GetEventSystem()->InvokeEvent("BulletEnemyHit"+std::to_string(bullet.playerEntityID), e);	// should it be entityID of player or hit object?
-		//LuaMain::GetEventSystem()->InvokeEvent("BulletEnemyHit"+std::to_string(bullet.playerId), e);		// or is playerId needed, as in previous version?
+		if (EntityManager::Get().HasComponent<BulletComponent>(hit.hits[i].hitByEntity))
+		{
+			auto& bullet = EntityManager::Get().GetComponent<BulletComponent>(hit.hits[i].hitByEntity);
+			LuaMain::GetEventSystem()->InvokeEvent("BulletEnemyHit"+std::to_string(bullet.playerEntityID), e);	// should it be entityID of player or hit object?
+			//LuaMain::GetEventSystem()->InvokeEvent("BulletEnemyHit"+std::to_string(bullet.playerId), e);		// or is playerId needed, as in previous version?
+		}
 	}
 
 	EntityManager::Get().RemoveComponent<AgentHitComponent>(e);
@@ -210,11 +212,11 @@ void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, AgentIdCompon
 	{
 		EntityManager& eMan = EntityManager::Get();
 		#if defined _DEBUG
-		std::cout << "Agent " << eMan.GetComponent<AgentIdComponent>(e).id << " killed! ";
+		std::cout << "Agent " << eMan.GetComponent<AgentIdComponent>(e).id;
 		if (hp.hp <= 0)
-			std::cout << "HP: " << hp.hp << std::endl;
+			std::cout << " killed! HP: " << hp.hp << std::endl;
 		else
-			std::cout << "Position: (" << trans.GetPosition().x << ", " << trans.GetPosition().y << ", " << trans.GetPosition().z << ")" << std::endl;
+			std::cout << " hopelessly lost in void at position: (" << trans.GetPosition().x << ", " << trans.GetPosition().y << ", " << trans.GetPosition().z << ")" << std::endl;
 		#endif
 		
 		// Send network signal to destroy agent

@@ -33,13 +33,13 @@ struct HomingMissileComponent
 	float speed = 30;
 	float turnSpeed = 5;
 	float engineBurnTime = 1.8f;
-	float explosionRadius = 7.0f;
+	float explosionRadius = 10.0f;
 	float dmg = 300.0f;
 	DOG::entity homingTarget = DOG::NULL_ENTITY;
+	DOG::entity playerEntityID = DOG::NULL_ENTITY;
 	bool homeInOnPosition = false;
 	DirectX::SimpleMath::Vector3 targetPosition;
 	bool launched = true;
-	i8 playerNetworkID{ 0 };
 };
 
 struct InputController

@@ -18,7 +18,6 @@ GameLayer::GameLayer() noexcept
 	LuaMain::GetScriptManager()->RunLuaFile("LuaStartUp.lua");
 	//Register Lua interfaces
 	RegisterLuaInterfaces();
-	
 	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
@@ -28,8 +27,14 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<HomingMissileImpacteSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
+	m_agentManager = new AgentManager();
 	m_nrOfPlayers = MAX_PLAYER_COUNT;
 	m_networkStatus = 0;
+}
+
+GameLayer::~GameLayer()
+{
+	delete m_agentManager;
 }
 
 void GameLayer::OnAttach()
@@ -691,7 +696,7 @@ std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3
 			0,
 			spread * (i / 2) - (spread / 2.f),
 		};
-		agents.emplace_back(m_agentManager.CreateAgent(type, pos - offset));
+		agents.emplace_back(m_agentManager->CreateAgent(type, pos - offset));
 	}
 	return agents;
 }
