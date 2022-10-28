@@ -147,7 +147,7 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 			//multiple packets detected
 			else if ((bytesRecived - processedBytes) > packet.sizeOfPayload)
 			{
-				int nrOfPackets = 0;
+				u8 nrOfPackets = 0;
 
 				while ( (bytesRecived - processedBytes) > 0)
 				{
