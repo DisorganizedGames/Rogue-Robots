@@ -581,13 +581,9 @@ void EntityInterface::AddHomingMissile(DOG::LuaContext* context, DOG::entity e)
 	entity owner = context->GetInteger();
 	assert(em.Exists(owner) && em.Exists(e));
 
-	i8 playerNetworkID{ 0 };
-	if (em.HasComponent<NetworkPlayerComponent>(owner))
-		playerNetworkID = em.GetComponent<NetworkPlayerComponent>(owner).playerId;
-
 	assert(!EntityManager::Get().HasComponent<HomingMissileComponent>(e));
 	auto& missile = em.AddComponent<HomingMissileComponent>(e);
-	missile.playerNetworkID = playerNetworkID;
+	missile.playerEntityID = owner;
 
 	assert(em.HasComponent<TransformComponent>(e));
 	auto& t = em.GetComponent<TransformComponent>(e);

@@ -24,7 +24,7 @@ class GameLayer : public DOG::Layer
 {
 public:
 	GameLayer() noexcept;
-	virtual ~GameLayer() override final = default;
+	virtual ~GameLayer() override final;
 	virtual void OnAttach() override final;
 	virtual void OnDetach() override final;
 	virtual void OnUpdate() override final;
@@ -65,7 +65,7 @@ private:
 	NetCode m_netCode;
 	//Pathfinder m_pathfinder;		// uncomment to activate pathfinder
 	INT8 m_nrOfPlayers;
-	AgentManager m_agentManager;
+	AgentManager* m_agentManager;
 	u8 m_networkStatus;
 	ImFont* m_imguiFont = nullptr;
 
