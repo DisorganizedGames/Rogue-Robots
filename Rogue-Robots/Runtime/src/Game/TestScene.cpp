@@ -147,6 +147,13 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	AddComponent<ShadowReceiverComponent>(passiveItemTest);
 	LuaMain::GetScriptManager()->AddScript(passiveItemTest, "Pickupable.lua");
 
+	CreateTrampolinePickup(Vector3(20, 15, 30));
+	CreateTrampolinePickup(Vector3(20, 15, 35));
+	CreateTrampolinePickup(Vector3(55, 15, 35));
+	CreateTrampolinePickup(Vector3(60, 15, 35));
+	CreateTrampolinePickup(Vector3(55, 5, 35));
+	CreateTrampolinePickup(Vector3(20, 10, 35));
+
 	// Setup lights
 	// Default lights
 
@@ -245,4 +252,18 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 		.shouldPlay = false,
 		.loop = true,
 	};
+}
+
+void TestScene::CreateTrampolinePickup(DirectX::SimpleMath::Vector3 position)
+{
+	u32 trampolineID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Trampoline.glb");
+
+	entity trampolineEntity = CreateEntity();
+	AddComponent<ActiveItemComponent>(trampolineEntity).type = ActiveItemComponent::Type::Trampoline;
+	AddComponent<ModelComponent>(trampolineEntity, trampolineID);
+	AddComponent<TransformComponent>(trampolineEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
+	AddComponent<BoxColliderComponent>(trampolineEntity, trampolineEntity, Vector3(0.2f, 0.2f, 0.2f), true);
+	AddComponent<RigidbodyComponent>(trampolineEntity, trampolineEntity, false);
+	AddComponent<ShadowReceiverComponent>(trampolineEntity);
+	LuaMain::GetScriptManager()->AddScript(trampolineEntity, "Pickupable.lua");
 }
