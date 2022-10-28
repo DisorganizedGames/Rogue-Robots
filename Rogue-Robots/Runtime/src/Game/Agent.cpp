@@ -3,6 +3,8 @@ using namespace DOG;
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
+entity g_newestAgent = NULL_ENTITY;
+
 Agent::Agent() : m_entityManager(EntityManager::Get())
 {
 
@@ -34,5 +36,6 @@ entity Agent::MakeAgent(DOG::entity e) noexcept
 
 	// Attach correct script
 	LuaMain::GetScriptManager()->AddScript(e, "Agent.lua");
+	g_newestAgent = e;
 	return e;
 }

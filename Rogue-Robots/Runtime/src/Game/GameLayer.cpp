@@ -4,6 +4,7 @@
 #include "TestScene.h"
 #include "SimpleAnimationSystems.h"
 #include "ExplosionSystems.h"
+#include "HomingMissileSystem.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -22,6 +23,9 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightMoveSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<HomingMissileTargetingSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<HomingMissileSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<HomingMissileImpacteSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
 	m_nrOfPlayers = MAX_PLAYER_COUNT;
@@ -153,6 +157,16 @@ void GameLayer::UpdateGame()
 
 	EvaluateWinCondition();
 	EvaluateLoseCondition();
+
+
+	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([](TransformComponent& transform, RigidbodyComponent&)
+		{
+			if (Vector3 pos = transform.GetPosition(); pos.y < -20.0f)
+			{
+				pos.y = 10;
+				transform.SetPosition(pos);
+			}
+		});
 }
 
 void GameLayer::OnRender()

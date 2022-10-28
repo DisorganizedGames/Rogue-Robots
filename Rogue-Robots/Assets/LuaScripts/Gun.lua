@@ -111,6 +111,9 @@ function OnUpdate()
 		if barrelComponentIdx == 0 then
 			barrelComponent = BarrelManager.Grenade() 
 			barrelComponentIdx = 1
+		elseif barrelComponentIdx == 1 then
+			barrelComponent = BarrelManager.Missile()
+			barrelComponentIdx = 2
 		else
 			barrelComponent = BarrelManager.BasicBarrel()
 			barrelComponentIdx = 0

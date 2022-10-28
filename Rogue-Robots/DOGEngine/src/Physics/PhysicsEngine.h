@@ -183,6 +183,7 @@ namespace DOG
 		void RemoveCollisionObject(const RigidbodyHandle& collisionObjectHandle);
 
 	public:
+		static constexpr float standardGravity = 9.80665f;
 		~PhysicsEngine();
 		PhysicsEngine(const PhysicsEngine& other) = delete;
 		PhysicsEngine& operator=(const PhysicsEngine& other) = delete;

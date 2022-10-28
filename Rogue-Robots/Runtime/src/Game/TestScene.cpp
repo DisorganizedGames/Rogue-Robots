@@ -1,5 +1,6 @@
 #include "TestScene.h"
 #include "GameComponent.h"
+#include "Agent.h"
 
 using namespace DOG;
 using namespace DirectX;

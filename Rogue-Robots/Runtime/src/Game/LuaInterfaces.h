@@ -133,6 +133,9 @@ private:
 
 	void AddScript(DOG::LuaContext* context, DOG::entity e);
 
+
+	void AddHomingMissile(DOG::LuaContext* context, DOG::entity e);
+
 	void ModifyTransform(DOG::LuaContext* context, DOG::entity e);
 	
 	void ModifyPlayerStats(DOG::LuaContext* context, DOG::entity e);
