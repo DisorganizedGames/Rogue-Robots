@@ -109,11 +109,28 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddHomingMissile(context, e);
 	}
+	else if (compType == "ActiveItem")
+	{
+		AddActiveItem(context, e);
+	}
 	//Add more component types here.
 	else
 	{
 		assert(false && "Lua can't create component");
 	}
+}
+
+void EntityInterface::RemoveComponent(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	std::string compType = context->GetString();
+	if (compType == "ActiveItem")
+	{
+		EntityManager::Get().RemoveComponent<ActiveItemComponent>(e);
+		return;
+	}
+
+	ASSERT(false, "Lua can't remove component");
 }
 
 void EntityInterface::ModifyComponent(LuaContext* context)
@@ -297,6 +314,7 @@ const std::unordered_map<std::string, bool (*) (entity)> componentMap = {
 	{ "Bullet", HasComp<BulletComponent>},
 	{ "PlayerStats", HasComp<PlayerStatsComponent> },
 	{ "PassiveItem", HasComp<PassiveItemComponent> },
+	{ "ActiveItem", HasComp<ActiveItemComponent> },
 	{ "ThisPlayer", HasComp<ThisPlayer> },
 	{ "FrostEffect", HasComp<FrostEffectComponent> },
 };
@@ -329,11 +347,22 @@ const std::unordered_map<PassiveItemComponent::Type, std::string> passiveTypeMap
 	{ PassiveItemComponent::Type::LifeSteal, "LifeSteal" },
 };
 
+const std::unordered_map<ActiveItemComponent::Type, std::string> activeTypeMap = {
+	{ ActiveItemComponent::Type::Trampoline, "Trampoline" },
+};
+
 void EntityInterface::GetPassiveType(LuaContext* context)
 {
 	entity e = context->GetInteger();
 	auto type = EntityManager::Get().GetComponent<PassiveItemComponent>(e).type;
 	context->ReturnString(passiveTypeMap.at(type));
+}
+
+void EntityInterface::GetActiveType(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	auto type = EntityManager::Get().GetComponent<ActiveItemComponent>(e).type;
+	context->ReturnString(activeTypeMap.at(type));
 }
 
 void EntityInterface::GetTransformScaleData(LuaContext* context)
@@ -631,6 +660,12 @@ void EntityInterface::ModifyPointLightStrength(DOG::LuaContext* context, DOG::en
 	auto& c = EntityManager::Get().GetComponent<PointLightComponent>(e);
 	c.dirty = true;
 	c.strength = (f32)context->GetDouble();
+}
+
+void EntityInterface::AddActiveItem(DOG::LuaContext* context, DOG::entity e)
+{
+	ActiveItemComponent::Type type = (ActiveItemComponent::Type)context->GetInteger();
+	EntityManager::Get().AddComponent<ActiveItemComponent>(e).type = type;
 }
 
 //---------------------------------------------------------------------------------------------------------
