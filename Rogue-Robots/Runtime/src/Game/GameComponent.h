@@ -61,17 +61,17 @@ struct BulletComponent
 
 struct HomingMissileComponent
 {
-	HomingMissileComponent() = default;
-	HomingMissileComponent(DOG::entity target) : homingTarget(target) {}
-	float speed = 30;
-	float turnSpeed = 5;
-	float engineBurnTime = 1.8f;
+	float startMotorSpeed = 5.0f;
+	float mainMotorSpeed = 30;
+	float turnSpeed = 4.0f;
+	float flightTime = 0.0f;
+	float engineStartTime = 0.3f;
+	float attackFlightPhaseStartTime = 0.7f;
+	float lifeTime = 2.5f;
 	float explosionRadius = 10.0f;
 	float dmg = 600.0f;
 	DOG::entity homingTarget = DOG::NULL_ENTITY;
 	DOG::entity playerEntityID = DOG::NULL_ENTITY;
-	bool homeInOnPosition = false;
-	DirectX::SimpleMath::Vector3 targetPosition;
 	bool launched = true;
 };
 

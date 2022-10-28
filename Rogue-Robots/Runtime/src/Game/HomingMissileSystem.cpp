@@ -6,32 +6,46 @@ using namespace DirectX::SimpleMath;
 
 void HomingMissileSystem::OnUpdate(HomingMissileComponent& missile, DOG::TransformComponent& transform, DOG::RigidbodyComponent& rigidBody)
 {
-	if (missile.launched && missile.engineBurnTime > 0)
+	if (missile.launched && missile.flightTime < missile.lifeTime)
 	{
-		missile.engineBurnTime -= DOG::Time::DeltaTime<DOG::TimeType::Seconds, f32>();
+		Vector3 forward = transform.GetForward();
+		float dt = DOG::Time::DeltaTime<DOG::TimeType::Seconds, f32>();
 
-		Vector3 forward = -transform.worldMatrix.Forward();
 		if (DOG::EntityManager::Get().Exists(missile.homingTarget) && DOG::EntityManager::Get().HasComponent<DOG::TransformComponent>(missile.homingTarget))
 		{
-			Vector3 target = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(missile.homingTarget).GetPosition();
-			Vector3 targetDir = target - transform.GetPosition();
-			targetDir.Normalize();
-			Vector3 t = forward.Cross(targetDir);
-			rigidBody.angularVelocity = missile.turnSpeed * t;
-			rigidBody.linearVelocity = missile.speed * forward;
-		}
-		else if (missile.homeInOnPosition)
-		{
-			Vector3 targetDir = missile.targetPosition - transform.GetPosition();
-			targetDir.Normalize();
-			Vector3 t = forward.Cross(targetDir);
-			rigidBody.angularVelocity = missile.turnSpeed * t;
-			rigidBody.linearVelocity = missile.speed * forward;
+			if (missile.flightTime == 0.0f)
+			{
+				rigidBody.linearVelocity = missile.startMotorSpeed * forward;
+			}
+			else if (missile.flightTime < missile.engineStartTime)
+			{
+			}
+			else if (missile.flightTime < missile.attackFlightPhaseStartTime)
+			{
+				Vector3 targetDir = forward;
+				targetDir.y = 0;
+				targetDir.Normalize();
+				targetDir.y = 2;
+				targetDir.Normalize();
+				Vector3 t = forward.Cross(targetDir);
+				rigidBody.angularVelocity = missile.turnSpeed * t;
+				rigidBody.linearVelocity = (missile.mainMotorSpeed / std::max(1.0f, 3 * missile.attackFlightPhaseStartTime)) * forward;
+			}
+			else
+			{
+				Vector3 target = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(missile.homingTarget).GetPosition();
+				Vector3 targetDir = target - transform.GetPosition();
+				targetDir.Normalize();
+				Vector3 t = forward.Cross(targetDir);
+				rigidBody.angularVelocity = missile.turnSpeed * t;
+				rigidBody.linearVelocity = missile.mainMotorSpeed * forward;
+			}
 		}
 		else
 		{
-			rigidBody.linearVelocity = missile.speed * forward;
+			rigidBody.linearVelocity = missile.mainMotorSpeed * forward;
 		}
+		missile.flightTime += dt;
 	}
 }
 
