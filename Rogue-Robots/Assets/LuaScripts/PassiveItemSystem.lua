@@ -49,7 +49,7 @@ function OnPickup(pickup)
 			passiveItems[type] = { passiveItemsMap[type], 1 }
 		end
 		itemsDirty = true
-	end
+		end
 end
 
 function OnBulletHit(enemy)
