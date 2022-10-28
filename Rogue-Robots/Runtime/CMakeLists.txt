@@ -7,7 +7,7 @@ set(SourceFiles
 		"src/Game/NetCode.h" "src/Game/NetCode.cpp"
 		"src/Pathfinder/Pathfinder.h" "src/Pathfinder/Pathfinder.cpp"
 		"src/Game/LuaInterfaces.h" "src/Game/LuaInterfaces.cpp"
-		 "src/Game/EntitesTypes.h"
+		"src/Game/EntitesTypes.h"
 		"src/Game/TestScene.h" "src/Game/TestScene.cpp" "src/Game/MainScene.h" "src/Game/MainScene.cpp"
 		"src/Network/Server.h" "src/Network/Server.cpp" "src/Network/Client.h" "src/Network/Client.cpp"
 		 
@@ -16,7 +16,8 @@ set(SourceFiles
 		"src/Game/AgentManager/AgentBehaviorSystems.h" "src/Game/AgentManager/AgentBehaviorSystems.cpp"
 		 "src/Game/ExplosionSystems.h" "src/Game/ExplosionSystems.cpp" "src/Network/Network.h"
 		"src/Game/HomingMissileSystem.h" "src/Game/HomingMissileSystem.cpp"
-		)
+		"src/Game/GameSystems.h" "src/Game/GameSystems.cpp"
+)
 		
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")

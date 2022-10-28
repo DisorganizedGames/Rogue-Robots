@@ -27,6 +27,8 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<HomingMissileImpacteSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<PlayerMovementSystem>());
+	
 	m_agentManager = new AgentManager();
 	m_nrOfPlayers = MAX_PLAYER_COUNT;
 	m_networkStatus = 0;
@@ -255,7 +257,8 @@ void GameLayer::KillPlayer(DOG::entity e)
 
 void GameLayer::UpdateGame()
 {
-	m_player->OnUpdate();
+	//m_player->OnUpdate();
+	m_netCode.OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
 
@@ -728,6 +731,7 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		rb.getControlOfTransform = true;
 
 		m_entityManager.AddComponent<PlayerStatsComponent>(playerI);
+		m_entityManager.AddComponent<PlayerControllerComponent>(playerI);
 		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = static_cast<i8>(i);
 		m_entityManager.AddComponent<InputController>(playerI);
 		m_entityManager.AddComponent<ShadowReceiverComponent>(playerI);
@@ -739,8 +743,6 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		if (i == 0) // Only for this player
 		{
 			m_entityManager.AddComponent<ThisPlayer>(playerI);
-			auto& cc = m_entityManager.AddComponent<CameraComponent>(playerI);
-			cc.isMainCamera = true;
 			m_entityManager.AddComponent<AudioListenerComponent>(playerI);
 		}
 		else

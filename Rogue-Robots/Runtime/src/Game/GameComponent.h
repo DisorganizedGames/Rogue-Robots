@@ -3,7 +3,17 @@
 #include "AgentManager/AgentComponents.h"
 #include "EntitesTypes.h"
 
+struct PlayerControllerComponent
+{
+	f32 azimuthal = DirectX::XM_PIDIV2;
+	f32 polar = DirectX::XM_PIDIV2;
 
+	f32 mouseSensitivity = 1 / 2000.f;
+
+	DOG::entity cameraEntity = 0;
+
+	bool moveView = true;
+};
 
 struct GunComponent
 {

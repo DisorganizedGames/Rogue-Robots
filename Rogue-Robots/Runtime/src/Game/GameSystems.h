@@ -87,3 +87,32 @@ public:
 		}
 	}
 };
+
+class PlayerMovementSystem : public DOG::ISystem
+{
+	using TransformComponent = DOG::TransformComponent;
+	using CameraComponent = DOG::CameraComponent;
+	using RigidbodyComponent = DOG::RigidbodyComponent;
+	using Entity = DOG::entity;
+
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	using Matrix = DirectX::SimpleMath::Matrix;
+
+public:
+	SYSTEM_CLASS(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController);
+	ON_UPDATE_ID(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController);
+
+	void OnUpdate(Entity, PlayerControllerComponent&, PlayerStatsComponent&, TransformComponent&, RigidbodyComponent&, InputController&);
+
+private:
+	Entity m_debugCamera = 0;
+
+	inline static constexpr Vector3 s_globUp = Vector3(0, 1, 0);
+
+private:
+	void CreateDebugCamera() noexcept;
+	Vector3 GetNewForward(PlayerControllerComponent& player)  const noexcept;
+
+	Vector3 GetMoveTowards(const InputController& input, Vector3 forward, Vector3 right) const noexcept;
+
+};
