@@ -337,15 +337,15 @@ void Server::ServerPollTCP()
 
 				if(transforms.size())
 					memcpy(sendBuffer + bufferSendSize, (char*)transforms.data(), transforms.size() * sizeof(DOG::NetworkTransform));
-				bufferSendSize += (int)transforms.size() * sizeof(DOG::NetworkTransform);
+				bufferSendSize += (u16)transforms.size() * sizeof(DOG::NetworkTransform);
 
 				if (statsChanged.size())
 					memcpy(sendBuffer + bufferSendSize, (char*)statsChanged.data(), statsChanged.size() * sizeof(NetworkAgentStats));
-				bufferSendSize += (int)statsChanged.size() * sizeof(NetworkAgentStats);
+				bufferSendSize += (u16)statsChanged.size() * sizeof(NetworkAgentStats);
 
 				if (createAndDestroy.size())
 					memcpy(sendBuffer + bufferSendSize, (char*)createAndDestroy.data(), createAndDestroy.size() * sizeof(CreateAndDestroyEntityComponent));
-				bufferSendSize += (int)createAndDestroy.size() * sizeof(CreateAndDestroyEntityComponent);
+				bufferSendSize += (u16)createAndDestroy.size() * sizeof(CreateAndDestroyEntityComponent);
 
 
 			}
