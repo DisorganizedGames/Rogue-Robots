@@ -412,6 +412,22 @@ namespace DOG
 			});
 	}
 
+	void PhysicsEngine::SetContactResponse(RigidbodyHandle handle, bool value)
+	{
+		btRigidBody* rb = GetRigidbodyColliderData(handle)->rigidBody;
+		if(value)
+			rb->setCollisionFlags(rb->getCollisionFlags() & ~btCollisionObject::CF_NO_CONTACT_RESPONSE);
+		else
+			rb->setCollisionFlags(rb->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
+	}
+
+	void PhysicsEngine::SetIgnoreCollisionCheck(RigidbodyHandle handleA, RigidbodyHandle handleB, bool value)
+	{
+		btRigidBody* rbA = GetRigidbodyColliderData(handleA)->rigidBody;
+		btRigidBody* rbB = GetRigidbodyColliderData(handleB)->rigidBody;
+		rbA->setIgnoreCollisionCheck(rbB, value);
+	}
+
 	RigidbodyHandle PhysicsEngine::AddRigidbodyColliderData(RigidbodyColliderData rigidbodyColliderData)
 	{
 		RigidbodyHandle rigidbodyHandle = s_physicsEngine.m_handleAllocator.Allocate<RigidbodyHandle>();

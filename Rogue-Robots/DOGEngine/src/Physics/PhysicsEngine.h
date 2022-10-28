@@ -191,5 +191,7 @@ namespace DOG
 		static void UpdatePhysics(float deltaTime);
 		static void FreePhysicsFromEntity(entity entity);
 		static void FreePhysicsFromDeferredEntities();
+		static void SetContactResponse(RigidbodyHandle handle, bool value);
+		static void SetIgnoreCollisionCheck(RigidbodyHandle handleA, RigidbodyHandle handleB, bool value);
 	};
 }
