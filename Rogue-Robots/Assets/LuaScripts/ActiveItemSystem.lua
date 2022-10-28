@@ -5,9 +5,8 @@ clicked = false
 activeEntityCreated = nil
 
 function OnStart()
-	activeItem = ActiveItems.trampoline
+	EventSystem:Register("ItemPickup" .. EntityID, OnPickup)
 end
-
 
 function OnUpdate()
 	if not activeItem then
@@ -21,10 +20,24 @@ function OnUpdate()
 	if Entity:GetAction(EntityID, "ActivateActiveItem") and activeItem then
 		if clicked == false and not activeEntityCreated then
 			activeEntityCreated = activeItem:activate(EntityID)
-			activeItem = ActiveItems.trampoline
+			activeItem = nil
+			Entity:RemoveComponent(EntityID, "ActiveItem")
 			clicked = true
 		end
 	else
 		clicked = false
+	end
+end
+
+function OnPickup(pickup)
+	if Entity:HasComponent(pickup, "ActiveItem") then
+		local type = Entity:GetActiveType(pickup)
+		if Entity:HasComponent(EntityID, "ActiveItem") then
+			Entity:RemoveComponent(EntityID, "ActiveItem")
+		end
+		if type == "Trampoline" then
+			Entity:AddComponent(EntityID, "ActiveItem", 0) -- '0' is the trampoline enum!
+			activeItem = ActiveItems.trampoline
+		end
 	end
 end

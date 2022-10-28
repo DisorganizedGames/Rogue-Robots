@@ -597,6 +597,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::CreateEntity>("CreateEntity");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::DestroyEntity>("DestroyEntity");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::AddComponent>("AddComponent");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::RemoveComponent>("RemoveComponent");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::ModifyComponent>("ModifyComponent");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetTransformPosData>("GetTransformPosData");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetTransformScaleData>("GetTransformScaleData");
@@ -614,6 +615,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::HasComponent>("HasComponent");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::PlayAudio>("PlayAudio");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPassiveType>("GetPassiveType");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetActiveType>("GetActiveType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::IsBulletLocal>("IsBulletLocal");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::Exists>("Exists");
 	
