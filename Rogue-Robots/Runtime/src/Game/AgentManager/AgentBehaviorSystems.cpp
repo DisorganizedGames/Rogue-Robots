@@ -215,10 +215,12 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 
 void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComponent& trans)
 {
+	EntityManager& eMan = EntityManager::Get();
+	ImGui::Text("Enmemy Id: %d , Hp: %f", eMan.GetComponent<AgentIdComponent>(e).id, hp.hp);
 	if (hp.hp <= 0 || trans.GetPosition().y < -10.0f)
 	{
 		#if defined _DEBUG
-		EntityManager& eMan = EntityManager::Get();
+		//EntityManager& eMan = EntityManager::Get();
 		std::cout << "Agent " << eMan.GetComponent<AgentIdComponent>(e).id;
 		if (hp.hp <= 0)
 			std::cout << " killed! HP: " << hp.hp << std::endl;

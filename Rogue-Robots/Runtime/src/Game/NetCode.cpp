@@ -7,7 +7,7 @@ NetCode::NetCode()
 	m_netCodeAlive = TRUE;
 	m_inputTcp.lobbyAlive = true;
 	m_playerInputUdp.playerId = 0;
-	m_playerInputUdp.matrix = {};
+	m_playerInputUdp.playerTransform = {};
 
 
 	m_hardSyncTcp = FALSE;
@@ -60,39 +60,40 @@ void NetCode::OnStartup()
 
 }
 
-void NetCode::OnUpdate()
+void NetCode::OnUpdate(AgentManager* agentManager)
 {
-	EntityManager::Get().Collect<ThisPlayer, TransformComponent>().Do([&](ThisPlayer&, TransformComponent& transC)
-		{
-			AddMatrixUdp(transC.worldMatrix);
-		});
+	UpdateSendUdp();
 
 	if (m_active)
 	{
 		DOG::EntityManager& m_entityManager = DOG::EntityManager::Get();
+		//UDP /////////////////////////////////////////////////////////////////////
 		// Update this players actions
 		EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, InputController>().Do([&](NetworkPlayerComponent&, ThisPlayer&, InputController& inputC)
 			{
 
-				m_playerInputUdp.action = inputC;
+				m_playerInputUdp.actions = inputC;
 			});
 		//Update the others players
-		EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent, InputController, OnlinePlayer>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&)
+		EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent, InputController, OnlinePlayer, PlayerStatsComponent
+		>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&, PlayerStatsComponent& statsC)
 			{
-				transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].matrix;
+				transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerTransform;
 				transformC.SetScale(DirectX::SimpleMath::Vector3(1.0f, 1.0f, 1.0f));
-				inputC = m_outputUdp.m_holdplayersUdp[networkC.playerId].action;
-			});
+				inputC = m_outputUdp.m_holdplayersUdp[networkC.playerId].actions;
+				statsC = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat;
 
+			});
+		//Tcp////////////////////////////////////////////////////////////////////////
 			// Collect data to send
 			m_inputTcp.nrOfNetTransform = 0;
-			m_inputTcp.nrOfNetStats = 0;
+			m_inputTcp.nrOfChangedAgentsHp = 0;
 			m_inputTcp.nrOfCreateAndDestroy = 0;
 
 			//check if player has valid id
 			if (m_inputTcp.playerId > -1)
 			{
-				m_bufferSize += sizeof(Client::ClientsData);
+				m_bufferSize += sizeof(ClientsData);
 				//sync all transforms Host only
 				if (m_inputTcp.playerId == 0)
 				{
@@ -107,14 +108,18 @@ void NetCode::OnUpdate()
 					});
 				}
 
-				EntityManager::Get().Collect<NetworkAgentStats, AgentStatsComponent>().Do([&](entity id, NetworkAgentStats& netC, AgentStatsComponent& AgentS)
+				EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](NetworkAgentStats& netC, AgentHPComponent& AgentS, AgentIdComponent& idC)
 					{
-						netC.objectId = id; // replace with enemy id
-						netC.stats = AgentS;
-						memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkAgentStats));
-						m_inputTcp.nrOfNetStats++;
-						m_bufferSize += sizeof(NetworkAgentStats);
-
+						if (AgentS.damageThisFrame)
+						{
+							AgentS.damageThisFrame = false;
+							netC.playerId = m_inputTcp.playerId;
+							netC.objectId = idC.id;
+							netC.hp = AgentS;
+							memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkAgentStats));
+							m_inputTcp.nrOfChangedAgentsHp++;
+							m_bufferSize += sizeof(NetworkAgentStats);
+						}
 					});
 
 				EntityManager::Get().Collect<CreateAndDestroyEntityComponent>().Do([&](entity id, CreateAndDestroyEntityComponent& cdC)
@@ -133,19 +138,15 @@ void NetCode::OnUpdate()
 			}
 			
 			// Recived data
-			int loop = 0;
 			while(m_numberOfPackets > 0 && m_dataIsReadyToBeReceivedTcp)
 				{
-				loop++;
 					//Get the header
-					Client::TcpHeader header;
-					memcpy(&header, m_receiveBuffer+ m_bufferReceiveSize, sizeof(Client::TcpHeader));
-					m_bufferReceiveSize += sizeof(Client::TcpHeader);
-					if (header.nrOfNetTransform > 10 && header.sizeOfPayload < 100)
-						std::cout << "Client more then 10 transforms: " << header.nrOfNetTransform << std::endl;
+					TcpHeader header;
+					memcpy(&header, m_receiveBuffer+ m_bufferReceiveSize, sizeof(TcpHeader));
+					m_bufferReceiveSize += sizeof(TcpHeader);
 					if (header.playerId > MAX_PLAYER_COUNT || header.playerId < 0)
 					{
-						std::cout << "Error: header is corrupt: " << loop << std::endl;
+						std::cout << "Error: header is corrupt: " << std::endl;
 						m_numberOfPackets = 0;
 						m_dataIsReadyToBeReceivedTcp = false;
 					}
@@ -163,13 +164,13 @@ void NetCode::OnUpdate()
 							if (m_inputTcp.playerId > 0)
 							{
 								NetworkTransform* tempTransfrom = new NetworkTransform;
-								EntityManager::Get().Collect<NetworkTransform, TransformComponent>().Do([&](entity id, NetworkTransform&, TransformComponent& transC)
+								EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent>().Do([&](NetworkTransform&, TransformComponent& transC, AgentIdComponent& idC)
 									{
 										for (u32 i = 0; i < header.nrOfNetTransform; ++i)
 										{
 											//todo make better
 											memcpy(tempTransfrom, m_receiveBuffer + m_bufferReceiveSize + sizeof(NetworkTransform) * i, sizeof(NetworkTransform));
-											if (id == tempTransfrom->objectId)
+											if (idC.id == tempTransfrom->objectId)
 											{
 												transC.worldMatrix = tempTransfrom->transform;
 											}
@@ -181,23 +182,24 @@ void NetCode::OnUpdate()
 							}
 							m_bufferReceiveSize += header.nrOfNetTransform * sizeof(NetworkTransform);
 						}
+ 
 
-						if (header.nrOfNetStats > 0)
+						if (header.nrOfChangedAgentsHp > 0)
 						{
 							NetworkAgentStats* tempStats = new NetworkAgentStats;
-							EntityManager::Get().Collect<NetworkAgentStats, AgentStatsComponent>().Do([&](entity id, NetworkAgentStats&, AgentStatsComponent& Agent)
+							EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](NetworkAgentStats&, AgentHPComponent& Agent, AgentIdComponent& idC)
 								{
-									for (u32 i = 0; i < header.nrOfNetStats; ++i)
+									for (u32 i = 0; i < header.nrOfChangedAgentsHp; ++i)
 									{
 										memcpy(tempStats, m_receiveBuffer + m_bufferReceiveSize + sizeof(NetworkAgentStats) * i, sizeof(NetworkAgentStats));
-										if (id == tempStats->objectId)
+										if (idC.id == tempStats->objectId && tempStats->hp.hp < Agent.hp)
 										{
-											Agent = tempStats->stats;
+											Agent = tempStats->hp;
 										}
 
 									}
 								});
-							m_bufferReceiveSize += sizeof(NetworkAgentStats) * header.nrOfNetStats;
+							m_bufferReceiveSize += sizeof(NetworkAgentStats) * header.nrOfChangedAgentsHp;
 							delete tempStats;
 						}
 
@@ -209,11 +211,9 @@ void NetCode::OnUpdate()
 								memcpy(tempCreate, m_receiveBuffer + m_bufferReceiveSize + sizeof(CreateAndDestroyEntityComponent) * i, sizeof(CreateAndDestroyEntityComponent));
 								if (tempCreate->playerId != m_inputTcp.playerId)
 								{
-									if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Agents)
+									if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Agents && !tempCreate->alive)
 									{
-										std::cout << "Created entity of type: " << static_cast<u32>(tempCreate->entityTypeId) << " With id: " << tempCreate->id << "From player: " << tempCreate->playerId
-											<< std::endl;
-										//send to correct entity type spawner 
+										agentManager->CreateOrDestroyShadowAgent(*tempCreate);
 									}
 									else if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Pickups)
 									{
@@ -278,10 +278,21 @@ void NetCode::ReceiveUdp()
 
 }
 
+void NetCode::UpdateSendUdp()
+{
+	EntityManager::Get().Collect<ThisPlayer, TransformComponent, PlayerStatsComponent, InputController>().Do([&](
+		ThisPlayer&, TransformComponent& transC, PlayerStatsComponent& statsC, InputController& inputC)
+		{
+			m_playerInputUdp.playerTransform = transC.worldMatrix;
+			m_playerInputUdp.playerStat = statsC;
+			m_playerInputUdp.actions = inputC;
+		});
+}
+
 void NetCode::AddMatrixUdp(DirectX::XMMATRIX input)
 {
 	m_mut.lock();
-	m_playerInputUdp.matrix = input;
+	m_playerInputUdp.playerTransform = input;
 	m_mut.unlock();
 }
 

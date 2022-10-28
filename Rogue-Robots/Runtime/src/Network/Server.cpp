@@ -10,7 +10,7 @@ Server::Server()
 	for (UINT8 i = 0; i < MAX_PLAYER_COUNT; i++)
 	{
 		m_holdPlayersUdp[i].playerId = i;
-		m_holdPlayersUdp[i].matrix = {};
+		m_holdPlayersUdp[i].playerTransform = {};
 		m_playerIds.at(i) = i;
 	}
 
@@ -141,7 +141,7 @@ void Server::ServerReciveConnectionsTCP(SOCKET listenSocket)
 					std::cout << "Server: Connection Accepted" << std::endl;
 					setsockopt(clientSocket, SOL_SOCKET, TCP_NODELAY, (char*)&turn, sizeof(bool));
 					WSAPOLLFD m_clientPoll;
-					Client::ClientsData input;
+					ClientsData input;
 					std::cout << "\nServer: Accept a connection from clientSocket: " << clientSocket << ", From player: " << m_playerIds.front() + 1 << std::endl;
 					//give connections a player id
 					UINT8 playerId = m_playerIds.front();
@@ -179,7 +179,7 @@ void Server::ServerPollTCP()
 	std::cout << "Server: Started to tick" << std::endl;
 
 	LARGE_INTEGER tickStartTime;
-	Client::ClientsData holdClientsData;
+	ClientsData holdClientsData;
 	LARGE_INTEGER clockFrequency;
 	QueryPerformanceFrequency(&clockFrequency);
 	
@@ -200,7 +200,7 @@ void Server::ServerPollTCP()
 		u16 bufferSendSize = 0;
 		int bufferReciveSize = 0;
 		
-		Client::TcpHeader sendHeader;
+		TcpHeader sendHeader;
 		m_holdSocketsTcp = m_clientsSocketsTcp;
 
 
@@ -236,7 +236,7 @@ void Server::ServerPollTCP()
 							if (isItFirstTime)
 							{
 								isItFirstTime = false;
-								memcpy(&holdClientsData, reciveBuffer, sizeof(Client::ClientsData));
+								memcpy(&holdClientsData, reciveBuffer, sizeof(ClientsData));
 							}
 
 							//if correct stop
@@ -251,7 +251,7 @@ void Server::ServerPollTCP()
 								while ((bytesRecived - processedBytes) > 0)
 								{
 									processedBytes += holdClientsData.sizeOfPayload;
-									memcpy(&holdClientsData, reciveBuffer + processedBytes, sizeof(Client::TcpHeader));
+									memcpy(&holdClientsData, reciveBuffer + processedBytes, sizeof(TcpHeader));
 									nrOfPackets++;
 								}
 								receiving = false;
@@ -277,9 +277,9 @@ void Server::ServerPollTCP()
 					while (nrOfPackets)
 					{
 						if(bufferSendSize == 0)
-							bufferSendSize += sizeof(Client::TcpHeader);
-						memcpy(&holdClientsData, reciveBuffer + bufferReciveSize, sizeof(Client::ClientsData));
-						bufferReciveSize += sizeof(Client::ClientsData);
+							bufferSendSize += sizeof(TcpHeader);
+						memcpy(&holdClientsData, reciveBuffer + bufferReciveSize, sizeof(ClientsData));
+						bufferReciveSize += sizeof(ClientsData);
 						//check if lobby is still going
 						if (holdClientsData.playerId == 0)
 						{
@@ -297,8 +297,7 @@ void Server::ServerPollTCP()
 						}
 
 						//Sync the enemies stats
-						sendHeader.nrOfNetStats += holdClientsData.nrOfNetStats;
-						for (u32 j = 0; j < holdClientsData.nrOfNetStats; ++j)
+						for (u32 j = 0; j < holdClientsData.nrOfChangedAgentsHp; ++j)
 						{
 							bool alreadyIn = false;
 							NetworkAgentStats test;
@@ -307,9 +306,9 @@ void Server::ServerPollTCP()
 							{
 								if (statsChanged[k].objectId == test.objectId)
 								{
-									if (statsChanged[k].stats.hp > test.stats.hp)
+									if (statsChanged[k].hp.hp < test.hp.hp)
 									{
-										statsChanged[k].stats.hp = test.stats.hp;
+										statsChanged[k].hp = test.hp;
 									}
 									alreadyIn = true;
 									break;
@@ -317,7 +316,10 @@ void Server::ServerPollTCP()
 							}
 
 							if (!alreadyIn)
+							{
+								sendHeader.nrOfChangedAgentsHp++;
 								statsChanged.push_back(test);
+							}
 							bufferReciveSize += sizeof(NetworkAgentStats);
 						}
 
@@ -353,7 +355,7 @@ void Server::ServerPollTCP()
 			sendHeader.sizeOfPayload = bufferSendSize;
 			if (sendHeader.playerId > 1)
 				std::cout << "Server wrong player id" << std::endl;
-			memcpy(sendBuffer, (char*)&sendHeader, sizeof(Client::TcpHeader));
+			memcpy(sendBuffer, (char*)&sendHeader, sizeof(TcpHeader));
 			for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
 			{
 				send(m_holdSocketsTcp[i].fd, sendBuffer, bufferSendSize, 0);
@@ -446,7 +448,7 @@ void Server::GameLoopUdp()
 	//sets the minium resolution for ticks
 	UINT sleepGranularityMs = 1;
 	timeBeginPeriod(sleepGranularityMs);
-	Client::UdpData holdHeaderUdp;
+	UdpData holdHeaderUdp;
 
 	while (m_gameAlive)
 	{
@@ -456,7 +458,7 @@ void Server::GameLoopUdp()
 
 
 		char sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
-		memcpy(sendBuffer, &holdHeaderUdp, sizeof(Client::UdpData));
+		memcpy(sendBuffer, &holdHeaderUdp, sizeof(UdpData));
 		m_outputUdp.nrOfEntites = 0;
 
 		m_mut.lock();
@@ -493,7 +495,7 @@ void Server::ReciveLoopUdp()
 	bool turn = true;
 	DWORD ttl = 1000;
 	int hostAddressLength = sizeof(hostAddress);
-	Client::PlayerNetworkComponent holderPlayer;
+	PlayerNetworkComponentUdp holderPlayer;
 
 	udpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (udpSocket == INVALID_SOCKET)

@@ -14,7 +14,7 @@ entity AgentManager::CreateAgent(EntityTypes type, const Vector3& pos)
 	entity e = CreateAgentCore(GetModel(type), pos, type);
 
 	m_entityManager.AddComponent<AgentSeekPlayerComponent>(e);
-
+	m_entityManager.AddComponent<NetworkAgentStats>(e);
 	// Add CreateAndDestroyEntityComponent to ECS
 	if (m_useNetworking)
 	{

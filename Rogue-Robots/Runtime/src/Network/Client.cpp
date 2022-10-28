@@ -6,7 +6,7 @@ Client::Client()
 	m_connectSocket = INVALID_SOCKET;
 	m_inputSend = new char[sizeof(ClientsData)];
 	m_hostIp = new char[64];
-	m_sendUdpBuffer = new char[sizeof(Client::PlayerNetworkComponent)];
+	m_sendUdpBuffer = new char[sizeof(PlayerNetworkComponentUdp)];
 	m_reciveUdpBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
 	m_udpId = 0;
 	m_sendUdpId = 0;
@@ -124,7 +124,7 @@ void Client::SendChararrayTcp(char* input, int size)
 
 u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 {
-	Client::TcpHeader packet;
+	TcpHeader packet;
 	int bytesRecived, processedBytes = 0;
 	bool isItFirstTime = true;
 	while (true)
@@ -137,7 +137,7 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 			if (isItFirstTime)
 			{
 				isItFirstTime = false;
-				memcpy(&packet, reciveBuffer, sizeof(Client::TcpHeader));
+				memcpy(&packet, reciveBuffer, sizeof(TcpHeader));
 			}
 			//if correct return the packet
 			if (bytesRecived + processedBytes == packet.sizeOfPayload)
@@ -152,7 +152,7 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 				while ( (bytesRecived - processedBytes) > 0)
 				{
 					processedBytes += packet.sizeOfPayload;
-					memcpy(&packet, reciveBuffer + processedBytes, sizeof(Client::TcpHeader));
+					memcpy(&packet, reciveBuffer + processedBytes, sizeof(TcpHeader));
 					nrOfPackets++;
 				}
 				return nrOfPackets;
@@ -235,7 +235,7 @@ void Client::SetUpUdp()
 	}
 }
 
-struct Client::UdpReturnData Client::SendandReciveUdp(PlayerNetworkComponent input)
+struct UdpReturnData Client::SendandReciveUdp(PlayerNetworkComponentUdp input)
 {
 	input.udpId = m_sendUdpId++;
 	sendto(m_udpSendSocket, (char*)&input, sizeof(input), 0, (struct sockaddr*)&m_hostAddressUdp, sizeof(m_hostAddressUdp));
@@ -258,13 +258,13 @@ struct Client::UdpReturnData Client::SendandReciveUdp(PlayerNetworkComponent inp
 	return returnData;
 }
 
-void Client::SendUdp(PlayerNetworkComponent input)
+void Client::SendUdp(PlayerNetworkComponentUdp input)
 {
 	input.udpId = ++m_sendUdpId;
 	sendto(m_udpSendSocket, (char*)&input, sizeof(input), 0, (struct sockaddr*)&m_hostAddressUdp, sizeof(m_hostAddressUdp));
 }
 
-struct Client::UdpReturnData Client::ReceiveUdp()
+struct UdpReturnData Client::ReceiveUdp()
 {
 	int bytesRecived = 0, hostAddressLength = sizeof(m_reciveAddressUdp);
 	UdpData header;
