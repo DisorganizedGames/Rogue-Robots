@@ -117,6 +117,13 @@ struct PassiveItemComponent {
 	Type type;
 };
 
+struct ActiveItemComponent
+{
+	enum class Type{ Trampoline = 0 };
+
+	Type type;
+};
+
 struct CreateAndDestroyEntityComponent
 {
 	EntityTypes entityTypeId = EntityTypes::Default;
