@@ -573,6 +573,7 @@ void EntityInterface::AddSubmeshRender(LuaContext* context, entity e)
 	materialDesc.metallicFactor = (float)materialTable.GetDoubleFromTable("metallicFactor");
 
 	EntityManager::Get().AddComponent<SubmeshRenderer>(e, modelAsset->gfxModel->mesh.mesh, materialHandle, materialDesc);
+	EntityManager::Get().RemoveComponent<ModelComponent>(e);
 }
 
 void EntityInterface::AddScript(DOG::LuaContext* context, DOG::entity e)
