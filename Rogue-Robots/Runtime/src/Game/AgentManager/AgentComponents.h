@@ -61,9 +61,16 @@ struct AgentSeekPlayerComponent
 
 struct AgentHitComponent
 {
+	struct Hit
+	{
+		DOG::entity entityHitBy{ DOG::NULL_ENTITY };
+		f32 damage{ 0.0f };
+		i8 playerNetworkID{ -1 };
+	};
 	i8 count = 0;
-	std::array<DOG::entity, 5> entityID{ DOG::NULL_ENTITY };
-	void HitBy(DOG::entity e) { entityID[count++ % entityID.max_size()] = e; }
+	std::array<Hit, 20> hits;
+	void HitBy(DOG::entity e, i8 playerNetworkID) { hits[count++ % hits.max_size()] = {e, 25.0f, playerNetworkID }; } // Temporary default dmg for bullets that don't know how much dmg they want to do.
+	void HitBy(Hit hit) { hits[count++ % hits.max_size()] = hit; }
 };
 
 /*******************************************

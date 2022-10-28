@@ -255,10 +255,12 @@ void EntityInterface::AgentHit(DOG::LuaContext* context)
 {
 	entity e = context->GetInteger();
 	entity bullet = context->GetInteger();
+	assert(EntityManager::Get().HasComponent<BulletComponent>(bullet));
+	i8 playerNetworkID = EntityManager::Get().GetComponent<BulletComponent>(bullet).playerId;
 	if (!EntityManager::Get().HasComponent<AgentHitComponent>(e))
-		EntityManager::Get().AddComponent<AgentHitComponent>(e).HitBy(bullet);
+		EntityManager::Get().AddComponent<AgentHitComponent>(e).HitBy(bullet, playerNetworkID);
 	else
-		EntityManager::Get().GetComponent<AgentHitComponent>(e).HitBy(bullet);
+		EntityManager::Get().GetComponent<AgentHitComponent>(e).HitBy(bullet, playerNetworkID);
 }
 
 void EntityInterface::IsBulletLocal(DOG::LuaContext* context)
