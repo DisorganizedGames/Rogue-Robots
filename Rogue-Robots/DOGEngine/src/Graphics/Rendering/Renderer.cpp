@@ -722,8 +722,8 @@ namespace DOG::gfx
 				},
 				[&](const ShadowPassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
 				{
-					rd->Cmd_SetViewports(cmdl, Viewports().Append(0.f, 0.f, 1024.f, 1024.f).Append(0.f, 0.f, 1024.f, 1024.f));
-					rd->Cmd_SetScissorRects(cmdl, ScissorRects().Append(0, 0, 1024, 1024).Append(0, 0, 1024, 1024));
+					rd->Cmd_SetViewports(cmdl, Viewports().Append(0.f, 0.f, 1024.f, 1024.f));
+					rd->Cmd_SetScissorRects(cmdl, ScissorRects().Append(0, 0, 1024, 1024));
 
 					rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
 
