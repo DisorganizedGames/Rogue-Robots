@@ -140,6 +140,7 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 
 	entity passiveItemTest = CreateEntity();
 	AddComponent<PassiveItemComponent>(passiveItemTest).type = PassiveItemComponent::Type::Template;
+	AddComponent<PickupComponent>(passiveItemTest);
 	AddComponent<ModelComponent>(passiveItemTest, medkitID);
 	AddComponent<TransformComponent>(passiveItemTest, Vector3(25, 15, 30));
 	AddComponent<BoxColliderComponent>(passiveItemTest, passiveItemTest, Vector3(0.2f, 0.2f, 0.2f), true);
@@ -147,12 +148,12 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	AddComponent<ShadowReceiverComponent>(passiveItemTest);
 	LuaMain::GetScriptManager()->AddScript(passiveItemTest, "Pickupable.lua");
 
-	CreateTrampolinePickup(Vector3(20, 15, 30));
-	CreateTrampolinePickup(Vector3(20, 15, 35));
-	CreateTrampolinePickup(Vector3(55, 15, 35));
-	CreateTrampolinePickup(Vector3(60, 15, 35));
-	CreateTrampolinePickup(Vector3(55, 5, 35));
-	CreateTrampolinePickup(Vector3(20, 10, 35));
+	CreateTrampolinePickup(Vector3(23, 6.0f, 30));
+	CreateTrampolinePickup(Vector3(20, 6.0f, 35));
+	CreateTrampolinePickup(Vector3(55, 6.0f, 35));
+	CreateTrampolinePickup(Vector3(60, 6.0f, 35));
+	CreateTrampolinePickup(Vector3(47, 6.0f, 35));
+	CreateTrampolinePickup(Vector3(18, 6.0f, 35));
 
 	// Setup lights
 	// Default lights
@@ -260,10 +261,14 @@ void TestScene::CreateTrampolinePickup(DirectX::SimpleMath::Vector3 position)
 
 	entity trampolineEntity = CreateEntity();
 	AddComponent<ActiveItemComponent>(trampolineEntity).type = ActiveItemComponent::Type::Trampoline;
+	AddComponent<PickupComponent>(trampolineEntity);
 	AddComponent<ModelComponent>(trampolineEntity, trampolineID);
 	AddComponent<TransformComponent>(trampolineEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
-	AddComponent<BoxColliderComponent>(trampolineEntity, trampolineEntity, Vector3(0.2f, 0.2f, 0.2f), true);
-	AddComponent<RigidbodyComponent>(trampolineEntity, trampolineEntity, false);
 	AddComponent<ShadowReceiverComponent>(trampolineEntity);
 	LuaMain::GetScriptManager()->AddScript(trampolineEntity, "Pickupable.lua");
+
+	auto& lerpAnimator = AddComponent<PickupLerpAnimateComponent>(trampolineEntity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(trampolineEntity).GetPosition().y;
+	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
 }
