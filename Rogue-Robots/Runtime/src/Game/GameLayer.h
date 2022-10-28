@@ -61,6 +61,8 @@ private:
 	void Release(DOG::Key key);
 	void CameraUpdate();
 	std::vector<DOG::entity> SpawnAgents(const EntityTypes type, const DirectX::SimpleMath::Vector3& pos, u8 agentCount, f32 spread = 10.f);
+	void ToggleFlashlight();
+	void PickUpItem();
 
 	void HandleCheats();
 
