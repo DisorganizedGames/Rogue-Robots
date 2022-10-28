@@ -29,8 +29,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	{
 		player.cameraEntity = EntityManager::Get().CreateEntity();
 		EntityManager::Get().AddComponent<TransformComponent>(player.cameraEntity).SetScale(Vector3(1, 1, 1));
-		auto& camera = EntityManager::Get().AddComponent<CameraComponent>(player.cameraEntity);
-		
+		EntityManager::Get().AddComponent<CameraComponent>(player.cameraEntity);
 	}
 
 	CameraComponent& camera = EntityManager::Get().GetComponent<CameraComponent>(player.cameraEntity);
