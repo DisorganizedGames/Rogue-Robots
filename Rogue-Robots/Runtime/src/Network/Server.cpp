@@ -195,7 +195,7 @@ void Server::ServerPollTCP()
 		createAndDestroy.clear();
 		char sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
 		char reciveBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
-		int bufferSendSize = 0;
+		u16 bufferSendSize = 0;
 		int bufferReciveSize = 0;
 		
 		Client::TcpHeader sendHeader;
@@ -347,7 +347,7 @@ void Server::ServerPollTCP()
 
 
 			}
-			sendHeader.nrOfPlayersConnected = m_holdPlayerIds.size();
+			sendHeader.nrOfPlayersConnected = (i8)m_holdPlayerIds.size();
 			sendHeader.sizeOfPayload = bufferSendSize;
 			if (sendHeader.playerId > 1)
 				std::cout << "Server wrong player id" << std::endl;

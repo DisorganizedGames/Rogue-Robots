@@ -3,7 +3,7 @@
 #include "Game/GameComponent.h"
 
 	constexpr int MAX_PLAYER_COUNT = 4;
-	constexpr int SEND_AND_RECIVE_BUFFER_SIZE = 4096;
+	constexpr int SEND_AND_RECIVE_BUFFER_SIZE = 8192;
 	constexpr const char* PORTNUMBER_OUT = "50005";
 	constexpr const char* PORTNUMBER_IN  = "50004";
 	constexpr int PORTNUMBER_OUT_INT = 50006;

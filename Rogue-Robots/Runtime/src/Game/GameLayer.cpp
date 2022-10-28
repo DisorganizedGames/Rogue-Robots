@@ -262,7 +262,7 @@ void GameLayer::UpdateLobby()
 	else if (m_networkStatus == 1)
 	{
 		char ip[64];
-		strcpy(ip, m_netCode.GetIpAdress().c_str());
+		strcpy_s(ip, m_netCode.GetIpAdress().c_str());
 		ImGui::Text("Youre ip adress: %s", ip);
 		if (ImGui::Button("Play"))
 		{
