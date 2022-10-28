@@ -15,6 +15,7 @@ namespace DOG
 		static const u32 GetHeight() noexcept;
 		static const std::pair<u32, u32> GetDimensions() noexcept;
 		static const WindowMode GetMode() noexcept;
+		static const RECT GetWindowRect() noexcept;
 		static const HWND GetHandle() noexcept;
 		static void SetCursorMode(CursorMode mode) noexcept;
 		static CursorMode GetCursorMode() noexcept;

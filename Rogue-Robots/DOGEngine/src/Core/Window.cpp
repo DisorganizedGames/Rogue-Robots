@@ -288,6 +288,13 @@ namespace DOG
 		return s_windowData.mode;
 	}
 
+	const RECT Window::GetWindowRect() noexcept
+	{
+		RECT r;
+		::GetWindowRect(s_windowData.windowHandle, &r);
+		return r;
+	}
+
 	const HWND Window::GetHandle() noexcept
 	{
 		return s_windowData.windowHandle;
