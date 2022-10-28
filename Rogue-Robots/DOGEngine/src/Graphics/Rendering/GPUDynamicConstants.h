@@ -27,7 +27,7 @@ namespace DOG::gfx
 		void Tick();
 
 		// Grab a 256 byte constant data
-		GPUDynamicConstant Allocate(u32 count);
+		GPUDynamicConstant Allocate(u32 count, bool generateDescriptor = true);
 
 	private:
 		RenderDevice* m_rd{ nullptr };

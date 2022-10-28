@@ -106,7 +106,7 @@ namespace DOG::gfx
 
 		const u32 maxConstantsPerFrame = 150'000;
 		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), maxConstantsPerFrame);
-		m_dynConstantsTemp = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 3 * 4 * 12);
+		m_dynConstantsTemp = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 3 * 4 * 24);
 
 
 		// multiple of curr loaded mixamo skeleton
@@ -162,8 +162,6 @@ namespace DOG::gfx
 			.Build());
 
 		auto meshVS = m_sclr->CompileFromFile("MainVS.hlsl", ShaderType::Vertex);
-		auto shadowVS = m_sclr->CompileFromFile("ShadowVS.hlsl", ShaderType::Vertex);
-		auto shadowPS = m_sclr->CompileFromFile("ShadowPS.hlsl", ShaderType::Pixel);
 		auto meshPS = m_sclr->CompileFromFile("MainPS.hlsl", ShaderType::Pixel);
 		m_meshPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
 			.SetShader(meshVS.get())
@@ -174,11 +172,24 @@ namespace DOG::gfx
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
 
+		auto shadowVS = m_sclr->CompileFromFile("ShadowVS.hlsl", ShaderType::Vertex);
+		auto shadowGS = m_sclr->CompileFromFile("ShadowGS.hlsl", ShaderType::Geometry);
+		auto shadowPS = m_sclr->CompileFromFile("ShadowPS.hlsl", ShaderType::Pixel);
 		m_shadowPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
 			.SetShader(shadowVS.get())
+			.SetShader(shadowGS.get())
 			.SetShader(shadowPS.get())
 			.SetDepthFormat(DepthFormat::D32)
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.Build());
+
+		m_shadowPipeNoCull = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
+			.SetShader(shadowVS.get())
+			.SetShader(shadowGS.get())
+			.SetShader(shadowPS.get())
+			.SetDepthFormat(DepthFormat::D32)
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.SetRasterizer(RasterizerBuilder().SetCullMode(D3D12_CULL_MODE_NONE))
 			.Build());
 
 		m_meshPipeNoCull = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
@@ -284,7 +295,7 @@ namespace DOG::gfx
 		*/
 		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
 		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
-		m_bloomEffect = std::make_unique<Bloom>(m_globalEffectData, m_dynConstants.get(), m_renderWidth, m_renderHeight);
+		m_bloomEffect = std::make_unique<Bloom>(m_rgResMan.get(), m_globalEffectData, m_dynConstants.get(), m_renderWidth, m_renderHeight);
 	
 		{
 			// Create 4x4 SSAO noise
@@ -343,6 +354,9 @@ namespace DOG::gfx
 
 		// Import long-lived resources
 		m_rgResMan->ImportTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+		m_rgResMan->ImportTexture(RG_RESOURCE(NoiseSSAO), m_ssaoNoise, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
+		m_rgResMan->ImportBuffer(RG_RESOURCE(SamplesSSAO), m_ssaoSamples, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
 	}
 
 	Renderer::~Renderer()
@@ -432,6 +446,16 @@ namespace DOG::gfx
 		sub.mat = material;
 		sub.world = world;
 		m_shadowSubmissions.push_back(sub);
+	}
+
+	void DOG::gfx::Renderer::SubmitShadowMeshNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
+	{
+		RenderSubmission sub{};
+		sub.mesh = mesh;
+		sub.submesh = submesh;
+		sub.mat = material;
+		sub.world = world;
+		m_shadowSubmissionsNoCull.push_back(sub);
 	}
 
 	void Renderer::Update(f32 dt)
@@ -559,13 +583,12 @@ namespace DOG::gfx
 			/*The views on the shadow maps (maximum of 12 currently)*/
 			struct PassData
 			{
-				RGResourceView shadowView[12];
+				RGResourceView shadowView;
 			};
 
 			/*Helper pass data to know the corresponding entity ID*/
 			struct ShadowPassData
 			{
-				entity entityID;
 			};
 
 			/*
@@ -589,7 +612,7 @@ namespace DOG::gfx
 				for (const auto& sub : submissions)
 				{
 					if (cull({ sub.world(3, 0), sub.world(3, 1), sub.world(3, 2) })) continue;
-					auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
+					auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
 					PerDrawData perDrawData{};
 					perDrawData.world = sub.world;
 					perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
@@ -611,7 +634,7 @@ namespace DOG::gfx
 					auto args = ShaderArgs()
 						.AppendConstant(m_globalEffectData.globalDataDescriptor)
 						.AppendConstant(m_currPfDescriptor)
-						.AppendConstant(perDrawHandle.globalDescriptor)
+						.SetPrimaryCBV(perDrawHandle.buffer, perDrawHandle.bufferOffset)
 						.AppendConstant(perLightHandle)
 						.AppendConstant(shadowHandle)
 						.AppendConstant(wireframe ? 1 : 0);
@@ -622,9 +645,8 @@ namespace DOG::gfx
 					rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
 				}
 			};
-
-			
-			auto shadowDrawSubmissions = [&](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, entity entityID, bool animated = false, bool wireframe = false)
+		
+			auto shadowDrawSubmissions = [&](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 smIdx, entity entityID, bool animated = false, bool wireframe = false)
 			{
 				/*entityID passed in is the equivalent spotlight, from which we collect the view and projection matrix to be used in the Vertex Shader.*/
 				auto& cc = EntityManager::Get().GetComponent<CameraComponent>(entityID);
@@ -646,7 +668,7 @@ namespace DOG::gfx
 				for (const auto& sub : submissions)
 				{
 					if (cull({ sub.world(3, 0), sub.world(3, 1), sub.world(3, 2) })) continue;
-					auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
+					auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
 					PerDrawData perDrawData{};
 					perDrawData.world = sub.world;
 					perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
@@ -668,9 +690,10 @@ namespace DOG::gfx
 					auto args = ShaderArgs()
 						.AppendConstant(m_globalEffectData.globalDataDescriptor)
 						.AppendConstant(m_currPfDescriptor)
-						.AppendConstant(perDrawHandle.globalDescriptor)
+						.SetPrimaryCBV(perDrawHandle.buffer, perDrawHandle.bufferOffset)
 						.AppendConstant(perLightHandle.globalDescriptor)
-						.AppendConstant(wireframe ? 1 : 0);
+						.AppendConstant(wireframe ? 1 : 0)
+						.AppendConstant(smIdx);
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
@@ -679,35 +702,41 @@ namespace DOG::gfx
 				}
 			};
 
+
 			/*We collect all spotlights and then perform one shadow pass per such spotlight, rendering a shadow map for each, later used in the forward pass.*/
 			EntityManager::Get().Collect<ShadowCasterComponent, SpotLightComponent>().Do([&](entity spotlightEntity, ShadowCasterComponent&, SpotLightComponent&)
 				{
 					m_lightEntities.push_back(spotlightEntity);
 				});
 
-			for (size_t i{ 0u }; i < m_lightEntities.size(); i++)
-			{
-				rg.AddPass<ShadowPassData>("Shadow Pass",
-					[&](ShadowPassData& p, RenderGraph::PassBuilder& builder)
-					{
-						std::string resourceID = std::string("ShadowDepth") + std::to_string(m_lightEntities[i]);
+			static constexpr u32 MAX_SHADOWMAPS = 12;
 
-						builder.DeclareTexture(RGResourceID(resourceID), RGTextureDesc::DepthWrite2D(DepthFormat::D32, 1024, 1024));
-						builder.WriteDepthStencil(RGResourceID(resourceID), RenderPassAccessType::ClearPreserve,
-							TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
-						p.entityID = m_lightEntities[i];
-					},
-					[&](const ShadowPassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
-					{
-						rd->Cmd_SetViewports(cmdl, Viewports().Append(0.f, 0.f, 1024.f, 1024.f));
-						rd->Cmd_SetScissorRects(cmdl, ScissorRects().Append(0, 0, 1024, 1024));
+			rg.AddPass<ShadowPassData>("Shadow Pass",
+				[&](ShadowPassData&, RenderGraph::PassBuilder& builder)
+				{
+					builder.DeclareTexture(RG_RESOURCE(ShadowDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, 1024, 1024, MAX_SHADOWMAPS));
+					builder.WriteDepthStencil(RG_RESOURCE(ShadowDepth), RenderPassAccessType::ClearPreserve,
+						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D_Array, DXGI_FORMAT_D32_FLOAT)
+					.SetArrayRange(0, MAX_SHADOWMAPS));
+					
+				},
+				[&](const ShadowPassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
+				{
+					rd->Cmd_SetViewports(cmdl, Viewports().Append(0.f, 0.f, 1024.f, 1024.f).Append(0.f, 0.f, 1024.f, 1024.f));
+					rd->Cmd_SetScissorRects(cmdl, ScissorRects().Append(0, 0, 1024, 1024).Append(0, 0, 1024, 1024));
 
-						rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
+					rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
 
-						rd->Cmd_SetPipeline(cmdl, m_shadowPipe);
-						shadowDrawSubmissions(rd, cmdl, m_shadowSubmissions, p.entityID);
-					});
-			}
+					// Fills shadowmaps chronologically
+					rd->Cmd_SetPipeline(cmdl, m_shadowPipe);
+					for (u32 i = 0; i < m_lightEntities.size(); ++i)
+						shadowDrawSubmissions(rd, cmdl, m_shadowSubmissions, i, m_lightEntities[i]);
+
+					// Render the shady modular blocks..
+					rd->Cmd_SetPipeline(cmdl, m_shadowPipeNoCull);
+					for (u32 i = 0; i < m_lightEntities.size(); ++i)
+						shadowDrawSubmissions(rd, cmdl, m_shadowSubmissionsNoCull, i, m_lightEntities[i]);
+				});
 
 			rg.AddPass<PassData>("Forward Pass",
 				[&](PassData& p, RenderGraph::PassBuilder& builder)
@@ -715,17 +744,11 @@ namespace DOG::gfx
 					builder.DeclareTexture(RG_RESOURCE(MainDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_renderWidth, m_renderHeight));
 					builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight)
 						.AddFlag(D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
-					
 					builder.DeclareTexture(RG_RESOURCE(MainNormals), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight));
 
-					/*Here the "views are loaded" to be used in the pixel shader, one for every shadow map available.*/
-					for (size_t i{ 0u }; i < m_lightEntities.size(); ++i)
-					{
-						std::string resourceID = std::string("ShadowDepth") + std::to_string(m_lightEntities[i]);
-
-						p.shadowView[i] = builder.ReadResource(RGResourceID(resourceID), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-							TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R32_FLOAT));
-					}
+					p.shadowView = builder.ReadResource(RG_RESOURCE(ShadowDepth), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D_Array, DXGI_FORMAT_R32_FLOAT)
+						.SetArrayRange(0, MAX_SHADOWMAPS));
 				
 					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
@@ -765,7 +788,7 @@ namespace DOG::gfx
 						perLightData.perLightDatas[i].cutoffAngle = slc.cutoffAngle;
 						perLightData.perLightDatas[i].strength = slc.strength;
 
-						shadowMapArrayStruct.shadowMaps[i] = resources.GetView(p.shadowView[i]);
+						shadowMapArrayStruct.shadowMaps[i] = resources.GetView(p.shadowView);
 					}
 
 					perLightData.actualNrOfSpotlights = (u32)m_lightEntities.size();
@@ -799,8 +822,7 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("SSAO Pass",
 				[&](PassData& passData, RenderGraph::PassBuilder& builder)
 				{
-					builder.ImportTexture(RG_RESOURCE(NoiseSSAO), m_ssaoNoise, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COMMON);
-					builder.ImportBuffer(RG_RESOURCE(SamplesSSAO), m_ssaoSamples, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
+
 
 					// Compute read access
 					passData.depth = builder.ReadResource(RG_RESOURCE(MainDepth), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
@@ -1054,6 +1076,7 @@ namespace DOG::gfx
 		m_rd->Flush();
 
 		m_dynConstants->Tick();
+		m_dynConstantsTemp->Tick();
 		m_dynConstantsAnimated->Tick();
 		//m_rgResMan->ClearDeclaredResources();
 		m_bin->BeginFrame();
@@ -1071,6 +1094,7 @@ namespace DOG::gfx
 		m_wireframeDraws.clear();
 		m_noCullWireframeDraws.clear();
 		m_shadowSubmissions.clear();
+		m_shadowSubmissionsNoCull.clear();
 		m_lightEntities.clear();
 
 		m_sc->Present(vsync);
@@ -1108,8 +1132,15 @@ namespace DOG::gfx
 		{
 			if (ImGui::Begin("Effects Manager", &open))
 			{
+				bool ssaoState = m_ssaoOn;
 				ImGui::Checkbox("SSAO", &m_ssaoOn);
-	
+				if (m_ssaoOn != ssaoState)
+					s_donez = false;
+
+			}
+			ImGui::End();
+
+
 			if (ImGui::Begin("GPU Memory Statistics: Total"))
 			{
 				auto& info = m_rd->GetTotalMemoryInfo().heap[0];
@@ -1119,6 +1150,7 @@ namespace DOG::gfx
 				ImGui::Text("Largest allocation: %f (Mb)", info.largestAllocation / 1048576.f);
 			}
 			ImGui::End();
+
 
 			if (ImGui::Begin("GPU Memory Statistics: Render Graph"))
 			{
@@ -1134,8 +1166,6 @@ namespace DOG::gfx
 					s_donez = false;
 			}
 			ImGui::End();
-
-
 
 		}
 	}

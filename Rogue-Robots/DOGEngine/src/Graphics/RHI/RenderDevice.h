@@ -75,7 +75,7 @@ namespace DOG::gfx
 			u32 instanceCount,
 			u32 indexStart,
 			u32 vertStart,
-			u32 instanceStart) = 0;
+			u32 instanceStart) = 0;	
 
 		virtual void Cmd_SetPipeline(CommandList list,
 			Pipeline pipeline) = 0;

@@ -37,6 +37,7 @@ float4 main(VS_OUT input) : SV_TARGET
     hdr += bloom;
     
     float3 ldr = reinhard_jodie(hdr); // tone mapping
+    //float3 ldr = aces_fitted(hdr); // tone mapping
     ldr = pow(ldr, (1.f / 2.22f).rrr);  // gamma correction
     
    

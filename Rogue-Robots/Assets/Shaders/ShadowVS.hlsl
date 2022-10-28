@@ -47,18 +47,21 @@ struct PushConstantElement
     uint gdDescriptor;
     uint perFrameOffset;
     
-    uint perDrawCB;
-  
+ 
     uint perDrawLight;
     uint wireframe;
+    uint smIdx;
 };
 ConstantBuffer<PushConstantElement> constants : register(b0, space0);
+
+ConstantBuffer<PerDrawData> perDrawData : register(b1, space0);
+
 
 VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
 {
     VS_OUT output = (VS_OUT) 0;
     
-    ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[constants.perDrawCB];
+    //ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[constants.perDrawCB];
     ConstantBuffer<PerLightData> perLightData = ResourceDescriptorHeap[constants.perDrawLight];
     
     StructuredBuffer<ShaderInterop_GlobalData> gds = ResourceDescriptorHeap[constants.gdDescriptor];

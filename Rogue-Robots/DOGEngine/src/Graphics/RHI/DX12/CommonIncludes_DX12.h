@@ -11,6 +11,6 @@ using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 // Will leak if GPU Validation On (changed)
 // --> If on: Will crash in the GPU Validation Layer at some point for an unknown reason
-//#define GPU_VALIDATION_ON
+#define GPU_VALIDATION_ON
 
 

@@ -19,7 +19,7 @@ namespace DOG::gfx
 		m_numToPop = 0;
 	}
 
-	GPUDynamicConstant GPUDynamicConstants::Allocate(u32 count)
+	GPUDynamicConstant GPUDynamicConstants::Allocate(u32 count, bool generateDescriptor)
 	{
 		if (count == 0)
 			return {};
@@ -41,15 +41,19 @@ namespace DOG::gfx
 
 		// Yes it is a big performance hazard
 		// Create temporary view (potential performance hazard?)
-		auto view = m_rd->CreateView(m_buffer, BufferViewDesc(ViewType::Constant, (u32)offset, ELEMENTSIZE * count, 1));
-		ret.globalDescriptor = m_rd->GetGlobalDescriptor(view);
-
-		// Safely delete later
-		auto delFunc = [this, view, toPop = count]()
+		if (generateDescriptor)
 		{
-			m_rd->FreeView(view);
-		};
-		m_bin->PushDeferredDeletion(delFunc);
+			auto view = m_rd->CreateView(m_buffer, BufferViewDesc(ViewType::Constant, (u32)offset, ELEMENTSIZE * count, 1));
+			ret.globalDescriptor = m_rd->GetGlobalDescriptor(view);
+
+			// Safely delete later
+			auto delFunc = [this, view, toPop = count]()
+			{
+				m_rd->FreeView(view);
+			};
+			m_bin->PushDeferredDeletion(delFunc);
+		}
+
 
 		//auto delFunc = [this, toPop = count]()
 		//{

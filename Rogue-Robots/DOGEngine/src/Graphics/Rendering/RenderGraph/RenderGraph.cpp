@@ -639,14 +639,19 @@ namespace DOG::gfx
 		assert(desc.viewType == ViewType::ShaderResource || desc.viewType == ViewType::RaytracingAS);
 
 		// Assert that the RG has written to this resource before
-		assert(m_globalData.writes.contains(id));
+		// Imported doesnt have to be written to!
+		//assert(m_globalData.writes.contains(id));
 
 		PassIO input;
 		input.originalID = id;
 
 		// Automatically deduces the correct read if ID is an aliased resource
-		PushPassReader(id);
-		id = GetPrevious(id);
+		if (m_globalData.writes.contains(id))
+		{
+			PushPassReader(id);
+			id = GetPrevious(id);
+		}
+
 
 		input.id = id;
 		input.desiredState = state;

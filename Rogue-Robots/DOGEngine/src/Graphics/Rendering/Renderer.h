@@ -68,6 +68,7 @@ namespace DOG::gfx
 		void SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 
 		void SubmitShadowMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
+		void SubmitShadowMeshNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 
 
 
@@ -136,6 +137,7 @@ namespace DOG::gfx
 		std::vector<RenderSubmission> m_wireframeDraws;		// temp
 		std::vector<RenderSubmission> m_noCullWireframeDraws;		// temp
 		std::vector<RenderSubmission> m_shadowSubmissions;	// maybe temp, also? (Emil F)
+		std::vector<RenderSubmission> m_shadowSubmissionsNoCull;	// maybe temp, also? (Emil F)
 
 		std::vector<entity> m_lightEntities;
 		entity* currentEntityPointer = nullptr;
@@ -162,7 +164,7 @@ namespace DOG::gfx
 
 		// ================= RENDERING RESOURCES
 
-		Pipeline m_pipe, m_meshPipe, m_meshPipeNoCull, m_shadowPipe;;
+		Pipeline m_pipe, m_meshPipe, m_meshPipeNoCull, m_shadowPipe, m_shadowPipeNoCull;	// nocull are for the modular blocks (hack due to asset in shady state with negative scaling)
 		Pipeline m_meshPipeWireframe, m_meshPipeWireframeNoCull;
 		Pipeline m_ssaoPipe;
 
