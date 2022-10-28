@@ -71,7 +71,7 @@ public:
 		{
 			auto& ptc = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(slc.owningPlayer);
 			stc.worldMatrix = ptc.worldMatrix;
-			stc.SetPosition(stc.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.2f, 0.0f));
+			stc.SetPosition(stc.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.6f, 0.f));
 			slc.direction = ptc.GetForward();
 			slc.dirty = true;
 

@@ -72,7 +72,7 @@ function OnStart()
 
 	-- Initialize base components
 	miscComponent = MiscComponent.BasicShot()
-	barrelComponent = BarrelManager.BasicBarrel() 
+	barrelComponent = BarrelManager.BasicBarrel()
 	--barrelComponent = BarrelManager.Grenade()  --ObjectManager:CreateObject()
 	magazineComponent = MagazineManager.BasicEffect() --ObjectManager:CreateObject()
 end
@@ -87,7 +87,7 @@ function OnUpdate()
 	local playerRight = Vector3.FromTable(Entity:GetRight(EntityID))
 
 	-- Move gun down and to the right 
-	gunEntity.position = gunEntity.position + playerRight * 0.2 - playerUp * 0.2
+	gunEntity.position = gunEntity.position + playerRight * 0.2 + playerUp * 0.2
 
 	-- Rotate the weapon by 90 degrees pitch
 	local angle = -math.pi / 2 
