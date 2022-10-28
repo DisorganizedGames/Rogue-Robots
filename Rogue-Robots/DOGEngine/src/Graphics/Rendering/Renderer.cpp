@@ -783,16 +783,6 @@ namespace DOG::gfx
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframeNoCull);
 					drawSubmissions(rd, cmdl, m_noCullWireframeDraws, false, true);
-				},
-				[&](PassData& passData)
-				{
-					passData.somethingAllocated = 10;
-					//std::cout << "Pre! Allocating " << passData.somethingAllocated << "\n";
-				},
-				[&](PassData& passData)
-				{
-					passData.somethingAllocated = 10;
-					//std::cout << "Post! Deallocating " << passData.somethingAllocated << "\n\n";
 				});
 		}
 
@@ -967,12 +957,9 @@ namespace DOG::gfx
 
 					passData.litHDRView = builder.ReadResource(RG_RESOURCE(LitHDR), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
-					passData.bogusView = builder.ReadResource(RG_RESOURCE(LitHDR), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 
 					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-
 				},
 				[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
 				{
