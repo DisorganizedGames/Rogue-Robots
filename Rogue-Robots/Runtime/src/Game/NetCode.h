@@ -21,15 +21,17 @@ public:
 	~NetCode();
 	
 	void OnUpdate();
+	void OnStartup();
 	bool Host();
 	bool Join(char* input);
 	INT8 Play();
-
-
+	u8 GetNrOfPlayers();
+	std::string GetIpAdress();
+	bool IsLobbyAlive();
 private:
 	void Receive();
 	void ReceiveUdp();
-
+	
 
 	void AddMatrixUdp(DirectX::XMMATRIX input);
 
@@ -37,7 +39,7 @@ private:
 	Client::ClientsData m_inputTcp;
 	Client::PlayerNetworkComponent m_playerInputUdp;
 
-	Client::ClientsData* m_outputTcp;
+
 	Client::UdpReturnData m_outputUdp;
 	
 	std::atomic_bool m_active;
@@ -51,11 +53,12 @@ private:
 	std::string m_inputString;
 	Client m_client;
 	std::mutex m_mut;
-	int m_bufferSize;
+	u16 m_bufferSize;
 	int m_bufferReceiveSize;
 	char m_sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
 	char* m_receiveBuffer;
-	bool m_dataIsReadyToBeSentTcp;
 	bool m_dataIsReadyToBeReceivedTcp;
+	bool m_lobby;
 	Server m_serverHost;
+	int m_numberOfPackets;
 };

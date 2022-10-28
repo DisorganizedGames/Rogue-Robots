@@ -18,7 +18,6 @@
 		void ServerPollTCP();
 		void CloseSocketTCP(int socketIndex);
 		float TickTimeLeftTCP(LARGE_INTEGER t, LARGE_INTEGER frequency);
-
 	private:
 		void GameLoopUdp();
 		void ReciveLoopUdp();
@@ -30,7 +29,6 @@
 		std::thread m_loopTcp;
 		std::thread m_loopUdp;
 		std::thread m_reciveLoopUdp;
-		Client::ClientsData m_playersServer[MAX_PLAYER_COUNT];
 		Client::UdpData m_outputUdp;
 		std::vector<UINT8>		m_playerIds;
 		std::vector<UINT8>		m_holdPlayerIds;

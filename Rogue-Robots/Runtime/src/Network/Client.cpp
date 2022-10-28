@@ -88,6 +88,15 @@ INT8 Client::ConnectTcpServer(std::string ipAdress)
 		return -1;
 	}
 
+	//set socket to tcp_nodelay
+	DWORD ttl = 5020;
+	check = setsockopt(m_connectSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&ttl, sizeof(DWORD));
+	if (check == SOCKET_ERROR)
+	{
+		std::cout << "Client: Failed to set time to live to tcp_nodelay on client, ErrorCode: " << WSAGetLastError() << std::endl;
+		return -1;
+	}
+
 	//get player number
 	check = recv(m_connectSocket, inputSend, sizeof(int), 0);
 	returnValue = (INT8)atoi(inputSend);
@@ -105,11 +114,6 @@ INT8 Client::ConnectTcpServer(std::string ipAdress)
 	}
 }
 
-void Client::SendTcp(ClientsData input)
-{
-	send(m_connectSocket, (char*)&input, sizeof(ClientsData), 0);
-	return;
-}
 
 void Client::SendChararrayTcp(char* input, int size)
 {
@@ -117,34 +121,57 @@ void Client::SendChararrayTcp(char* input, int size)
 	return;
 }
 
-struct Client::ClientsData* Client::ReceiveTcp()
+
+u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 {
-	recv(m_connectSocket, (char*)&m_playersClient, sizeof(m_playersClient), 0);
-	return m_playersClient;
+	Client::TcpHeader packet;
+	int bytesRecived, processedBytes = 0;
+	bool isItFirstTime = true;
+	while (true)
+	{
+		bytesRecived = recv(m_connectSocket, reciveBuffer + processedBytes, SEND_AND_RECIVE_BUFFER_SIZE - processedBytes, 0);
+
+		if (bytesRecived > 0)
+		{
+			//read in header
+			if (isItFirstTime)
+			{
+				isItFirstTime = false;
+				memcpy(&packet, reciveBuffer, sizeof(Client::TcpHeader));
+			}
+			//if correct return the packet
+			if (bytesRecived + processedBytes == packet.sizeOfPayload)
+			{
+				return 1;
+			}
+			//multiple packets detected
+			else if ((bytesRecived - processedBytes) > packet.sizeOfPayload)
+			{
+				u8 nrOfPackets = 0;
+
+				while ( (bytesRecived - processedBytes) > 0)
+				{
+					processedBytes += packet.sizeOfPayload;
+					memcpy(&packet, reciveBuffer + processedBytes, sizeof(Client::TcpHeader));
+					nrOfPackets++;
+				}
+				return nrOfPackets;
+			}
+			// only part of  the packet arrived
+			else if ((bytesRecived - processedBytes) < packet.sizeOfPayload)
+			{
+				std::cout << "Client: Only part of the packet arrived: " << bytesRecived << "header payload: " << packet.sizeOfPayload << std::endl;
+				processedBytes += bytesRecived;
+			}
+		}
+		else if (bytesRecived == -1)
+		{
+			std::cout << "Client: Error reciving tcp packet: " << WSAGetLastError() << std::endl;
+			return 0;
+		}
+	}
 }
 
-char* Client::ReceiveCharArrayTcp(char* reciveBuffer)
-{
-	int j = recv(m_connectSocket, reciveBuffer, SEND_AND_RECIVE_BUFFER_SIZE, 0);
-	if (j == -1)
-	{
-		std::cout <<  "Client: Error reciving tcp packet: " << WSAGetLastError() << std::endl;
-		return nullptr;
-	}
-	if (j >= 1500)
-	{
-		std::cout << "Client recived too much data: " << j << std::endl;
-		return nullptr;
-	}
-	return reciveBuffer;
-}
-
-struct Client::ClientsData* Client::SendandReciveTcp(ClientsData input)
-{
-	send(m_connectSocket, (char*)&input, sizeof(ClientsData), 0);
-	recv(m_connectSocket, (char*)&m_playersClient, sizeof(m_playersClient), 0);
-	return m_playersClient;
-}
 
 void Client::SetUpUdp()
 {
