@@ -35,6 +35,14 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	CameraComponent& camera = EntityManager::Get().GetComponent<CameraComponent>(player.cameraEntity);
 	TransformComponent& cameraTransform = EntityManager::Get().GetComponent<TransformComponent>(player.cameraEntity);
 	
+	// Set the main camera to be ThisPlayer's camera
+	bool isThisPlayer = false;
+	if (EntityManager::Get().HasComponent<ThisPlayer>(e))
+	{
+		isThisPlayer = true;
+		camera.isMainCamera = true;
+	}
+
 	if (input.toggleDebug)
 	{
 		input.toggleDebug = false;
@@ -47,7 +55,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	// Rotate player
 	Vector3 forward = cameraTransform.GetForward();
 	Vector3 right(1, 0, 0);
-	if (player.moveView)
+	if (player.moveView && isThisPlayer)
 	{
 		forward = GetNewForward(player);
 	}
@@ -67,17 +75,10 @@ void PlayerMovementSystem::OnEarlyUpdate(
 		moveTowards.x * playerStats.speed,
 		rigidbody.linearVelocity.y,
 		moveTowards.z * playerStats.speed
-	);
-	
-	// Set the main camera to be ThisPlayer's camera
-	if (EntityManager::Get().HasComponent<ThisPlayer>(e))
-	{
-		camera.isMainCamera = true;
-	}
+	);	
 
 	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
 	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
-	
 	
 	// Place camera 0.4 units above the player transform
 	auto pos = transform.GetPosition() + Vector3(0, 0.4f, 0);
