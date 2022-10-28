@@ -30,26 +30,31 @@ namespace DOG
 		auto deltaTime = (f32)Time::DeltaTime();
 		//tmp wtf
 		static i32 count = 0;
-		if (count <4) {
+		if (count < 3) {
 			EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-					if (model && modelaC.rigID == MIXAMO_RIG_ID)
+					if (model && modelaC.rigID == MIXAMO_RIG_ID && modelaC.animatorID == -1)
 					{
-						m_bonesLoaded = true;
+						if(!m_rigs.size())
+							m_rigs.push_back(&model->animation);
+
+						modelaC.animatorID = GetNextAnimatorID();
 						count++;
-						m_rigs.push_back(&model->animation);
 						// tmp setting base states
-						auto& idle = m_rigs[modelaC.rigID]->animations[1];
-						auto& walk = m_rigs[modelaC.rigID]->animations[3];
+						auto a1 = 0;
+						auto a2 = 0;
+						auto lastIdx = m_rigs[modelaC.rigID]->animations.size()-1;
+						auto& idle = m_rigs[modelaC.rigID]->animations.rbegin()[a2];
+						auto& walk = m_rigs[modelaC.rigID]->animations.rbegin()[a1];
 						auto& a = m_playerAnimators[modelaC.animatorID];
-						a.AddAnimationClip(3, walk.duration, walk.ticks, 0, 0.f, 1.0f, 1.0f, true, 1.5f); // lower body walk
-						a.AddAnimationClip(1, idle.duration, idle.ticks, 2, 0.f, 1.0f, 1.0f, true); // full body idle
+						a.AddAnimationClip(lastIdx-modelaC.animatorID, walk.duration, walk.ticks, 0, 0.f, 1.0f, 1.0f, true, 1.5f); // lower body walk
+						a.AddAnimationClip(lastIdx-modelaC.animatorID, idle.duration, idle.ticks, 2, 0.f, 1.0f, 1.0f, true); // full body idle
 					}
 				});
 			return;
 		}
-
+		
 		// tmp
 		auto mixamoCount = 0;
 
@@ -118,102 +123,154 @@ namespace DOG
 			ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
 			if (ImGui::Begin("Animation Clip Setter", &open))
 			{
+				// for now only Mixamo rig
+				static u8 rigID = MIXAMO_RIG_ID;
+				static std::string groupA = rigID == MIXAMO_RIG_ID ? "LowerBody" : "DoNotKnowYet";
+				static std::string groupB = rigID == MIXAMO_RIG_ID ? "UpperBody" : "DoNotKnowYet";
+				static std::string groupC = rigID == MIXAMO_RIG_ID ? "FullBody"  : "DoNotKnowYet";
+				static auto& rig = m_rigs[rigID];
+				static auto& anims = rig->animations;
 				static AnimationComponent* imguiRAC;
-				static bool rigLoaded = m_rigs.size();
-				EntityManager::Get().Collect<ModelComponent, AnimationComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& animatorC, AnimationComponent& rAC)
+				EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& rAC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-					if (model && animatorC.offset == 0)
-					{
+					if (model && rAC.offset == 0)
 						imguiRAC = &rAC;
-						if (!rigLoaded)
-							m_rigs.push_back(&model->animation);
-					}
-					else
-						return ImGui::End(); // "Animator";
 				});
-				
-				static i32 imguiSelectedAnim = 0;
-				if (ImGui::BeginCombo("animations", m_rigs[0]->animations[imguiSelectedAnim].name.c_str()))
+
+				static bool rigLoaded = m_rigs.size();
+				if(!rigLoaded)
+					return ImGui::End();
+
+				static f32 animDuration = {};
+				static i32 currAnim = 0;
+				static bool displayDetails = false;
+
+				if (ImGui::BeginCombo("animations", anims[currAnim].name.c_str()))
 				{
-					for (i32 i = 0; i < std::size(m_rigs[0]->animations); i++)
-						if (ImGui::Selectable(m_rigs[0]->animations[i].name.c_str(), (i == imguiSelectedAnim)))
-							imguiSelectedAnim = i;
+					for (i32 i = 0; i < std::size(rig->animations); i++)
+						if (ImGui::Selectable(("ID: " + std::to_string(i) + " = " + rig->animations[i].name).c_str(), (i == currAnim)))
+							currAnim = i;
 					ImGui::EndCombo();
 				}
 
-				// Some tmp imgui implementation for testing purposes
-				static f32 playbackRate = 1.0f;
-				static i32 transitionDiv = 6;
-				static f32 animDuration = {};
-				static u32 animID = {};
-				static f32 cooldown = {};
-				cooldown -= static_cast<f32>(Time::DeltaTime());
-				static bool applyAnim = false;
-				ImGui::Checkbox("RootTranslation", &m_imguiApplyRootTranslation);
-				ImGui::SliderFloat("groupAWeight", &m_imguiGroupWeightA, 0.0f, 1.0f, "%.5f"); // tmp imgui controlling weight of groupA
-				ImGui::SliderInt("Transition Div", &transitionDiv, 2, 10, "%.5f");
-				ImGui::SliderFloat("playback rate", &playbackRate, 0.01f, 2.f, "%.5f");
-				
-				if (ImGui::Button("Grenade") && cooldown < 0.f)
+				if(displayDetails ^= ImGui::Button("DisplayDetails"))
 				{
-					applyAnim = true;
-					animDuration = 3.23f;
-					animID = 4;
+					static auto PrintTableRow = [](const std::string&& c1, const std::string&& c2){
+						ImGui::TableNextColumn(); ImGui::Text(c1.c_str());
+						ImGui::TableNextColumn(); ImGui::Text(c2.c_str());
+					};
+					if(ImGui::BeginTable(anims[currAnim].name.c_str(), 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV))
+					{
+						auto& a = anims[currAnim]; // Combo Selected animation
+						PrintTableRow("Name", a.name.c_str());
+						PrintTableRow("Animation ID", std::to_string(currAnim));
+						PrintTableRow("Duration", std::to_string(a.duration));
+						PrintTableRow("Looping", (a.name.at(0) == '0' || a.name.at(0) == '1') ? "true" : "false");
+						ImGui::EndTable();
+					}
 				}
-				if (ImGui::Button("Reload") && cooldown < 0.f)
+
+				static bool setAnimationChain = false;
+				if (setAnimationChain ^= ImGui::Button("SetAnimationChain"))
 				{
-					applyAnim = true;
-					animDuration = 3.33f;
-					animID = 5;
 				}
-				if (ImGui::Button("Shoot") && cooldown < 0.f)
-				{
-					applyAnim = true;
-					animDuration = 0.3f;
-					animID = 6;
-				}
-				
-				if (applyAnim)
-				{
-					const f32 duration = cooldown = animDuration / playbackRate;
-					const f32 tl = duration / static_cast<f32>(transitionDiv);
-					auto& setter = imguiRAC->animSetters[imguiRAC->addedSetters++];
-					setter.animationID = static_cast<u8>(animID);
-					setter.desired = true;
-					setter.group = groupB;
-					setter.loop = false;
-					setter.transitionLength = tl;
-					setter.playbackRate = playbackRate;
-					//m_playerAnimators[0].AddAnimationClip(static_cast<i8>(animID), anim.duration, anim.ticks, groupB, tl, 0.f, 1.0f, false, playbackRate);
-					//m_playerAnimators[0].AddBlendSpecification(0.0f, tl, groupB, 1.f, duration);
-					applyAnim = false;
-				}
-				// ImGui individual joint sliders
-				static i32 selectedBone = ROOT_NODE;
-				if (ImGui::BeginCombo("tfs", m_rigs[0]->nodes[selectedBone].name.c_str()))
-				{
-					for (i32 i = 1; i < std::size(m_rigs[0]->nodes); i++)
-						if (ImGui::Selectable((m_rigs[0]->nodes[i].name + "  " + std::to_string(i)).c_str(), (i == selectedBone)))
-							selectedBone = i;
-					ImGui::EndCombo();
-				}
-				
-				ImGui::Text("Orientation");
-				ImGui::SliderAngle("Roll", &m_imguiRot[selectedBone].z, m_imguiJointRotMin, m_imguiJointRotMax);
-				ImGui::SliderAngle("Pitch", &m_imguiRot[selectedBone].x, m_imguiJointRotMin, m_imguiJointRotMax);
-				ImGui::SliderAngle("Yaw", &m_imguiRot[selectedBone].y, m_imguiJointRotMin, m_imguiJointRotMax);
-				ImGui::Text("Translation");
-				ImGui::SliderFloat("pos X", &m_imguiPos[selectedBone].x, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
-				ImGui::SliderFloat("pos Y", &m_imguiPos[selectedBone].y, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
-				ImGui::SliderFloat("pos Z", &m_imguiPos[selectedBone].z, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
-				ImGui::Text("Scale");
-				ImGui::SliderFloat("X", &m_imguiSca[selectedBone].x, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
-				ImGui::SliderFloat("Y", &m_imguiSca[selectedBone].y, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
-				ImGui::SliderFloat("Z", &m_imguiSca[selectedBone].z, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
 			}
 			ImGui::End();
 		}
+			//	static AnimationComponent* imguiRAC;
+			//	static bool rigLoaded = m_rigs.size();
+			//	EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& rAC)
+			//	{
+			//		ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
+			//		if (model && rAC.offset == 0)
+			//		{
+			//			imguiRAC = &rAC;
+			//			if (!rigLoaded)
+			//				m_rigs.push_back(&model->animation);
+			//		}
+			//		else
+			//			return ImGui::End(); // "Animator";
+			//	});
+			//	return ImGui::End(); // "Animator";
+			//	static i32 currAnim = 0;
+			//	if (m_rigs[0]->animations.empty())
+			//		auto ost = 0;
+			
+			//	return ImGui::End();
+
+			//	// Some tmp imgui implementation for testing purposes
+			//	static f32 playbackRate = 1.0f;
+			//	static i32 transitionDiv = 6;
+			//	static f32 animDuration = {};
+			//	static u32 animID = {};
+			//	static f32 cooldown = {};
+			//	cooldown -= static_cast<f32>(Time::DeltaTime());
+			//	static bool applyAnim = false;
+			//	ImGui::Checkbox("RootTranslation", &m_imguiApplyRootTranslation);
+			//	ImGui::SliderFloat("groupAWeight", &m_imguiGroupWeightA, 0.0f, 1.0f, "%.5f"); // tmp imgui controlling weight of groupA
+			//	ImGui::SliderInt("Transition Div", &transitionDiv, 2, 10, "%.5f");
+			//	ImGui::SliderFloat("playback rate", &playbackRate, 0.01f, 2.f, "%.5f");
+			//	
+			//	if (ImGui::Button("Grenade") && cooldown < 0.f)
+			//	{
+			//		applyAnim = true;
+			//		animDuration = 3.23f;
+			//		animID = 4;
+			//	}
+			//	if (ImGui::Button("Reload") && cooldown < 0.f)
+			//	{
+			//		applyAnim = true;
+			//		animDuration = 3.33f;
+			//		animID = 5;
+			//	}
+			//	if (ImGui::Button("Shoot") && cooldown < 0.f)
+			//	{
+			//		applyAnim = true;
+			//		animDuration = 0.3f;
+			//		animID = 6;
+			//	}
+			//	
+			//	if (applyAnim)
+			//	{
+			//		const f32 duration = cooldown = animDuration / playbackRate;
+			//		const f32 tl = duration / static_cast<f32>(transitionDiv);
+			//		auto& setter = imguiRAC->animSetters[imguiRAC->addedSetters++];
+			//		setter.animationID = static_cast<u8>(animID);
+			//		setter.desired = true;
+			//		setter.group = groupB;
+			//		setter.loop = false;
+			//		setter.transitionLength = tl;
+			//		setter.playbackRate = playbackRate;
+			//		//m_playerAnimators[0].AddAnimationClip(static_cast<i8>(animID), anim.duration, anim.ticks, groupB, tl, 0.f, 1.0f, false, playbackRate);
+			//		//m_playerAnimators[0].AddBlendSpecification(0.0f, tl, groupB, 1.f, duration);
+			//		applyAnim = false;
+			//	}
+			//	// ImGui individual joint sliders
+			//	static i32 selectedBone = ROOT_NODE;
+			//	if (ImGui::BeginCombo("tfs", m_rigs[0]->nodes[selectedBone].name.c_str()))
+			//	{
+			//		for (i32 i = 1; i < std::size(m_rigs[0]->nodes); i++)
+			//			if (ImGui::Selectable((m_rigs[0]->nodes[i].name + "  " + std::to_string(i)).c_str(), (i == selectedBone)))
+			//				selectedBone = i;
+			//		ImGui::EndCombo();
+			//	}
+			//	
+			//	ImGui::Text("Orientation");
+			//	ImGui::SliderAngle("Roll", &m_imguiRot[selectedBone].z, m_imguiJointRotMin, m_imguiJointRotMax);
+			//	ImGui::SliderAngle("Pitch", &m_imguiRot[selectedBone].x, m_imguiJointRotMin, m_imguiJointRotMax);
+			//	ImGui::SliderAngle("Yaw", &m_imguiRot[selectedBone].y, m_imguiJointRotMin, m_imguiJointRotMax);
+			//	ImGui::Text("Translation");
+			//	ImGui::SliderFloat("pos X", &m_imguiPos[selectedBone].x, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
+			//	ImGui::SliderFloat("pos Y", &m_imguiPos[selectedBone].y, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
+			//	ImGui::SliderFloat("pos Z", &m_imguiPos[selectedBone].z, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
+			//	ImGui::Text("Scale");
+			//	ImGui::SliderFloat("X", &m_imguiSca[selectedBone].x, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
+			//	ImGui::SliderFloat("Y", &m_imguiSca[selectedBone].y, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
+			//	ImGui::SliderFloat("Z", &m_imguiSca[selectedBone].z, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
+			//}
+			//ImGui::End();
+		//}
 	}
 
 	DirectX::FXMMATRIX AnimationManager::ImguiTransform(i32 i)

@@ -937,10 +937,11 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 
 	auto& am = DOG::AssetManager::Get();
 	//m_playerModels[0] = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
-	m_playerModels[0] = am.LoadModelAsset("Assets/Models/Players/Red/Rigged/red_marine.gltf");
-	m_playerModels[1] = am.LoadModelAsset("Assets/Models/Players/Green/Rigged/green_marine.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
-	m_playerModels[2] = am.LoadModelAsset("Assets/Models/Players/Blue/Rigged/blue_marine.gltf");
-	m_playerModels[3] = am.LoadModelAsset("Assets/Models/Players/Yellow/Rigged/yellow_marine.gltf");
+	
+	m_playerModels[0] = am.LoadModelAsset("Assets/Models/Players/Test/Red/player_red.gltf");
+	m_playerModels[3] = am.LoadModelAsset("Assets/Models/Players/Test/Green/player_green.gltf");
+	m_playerModels[1] = am.LoadModelAsset("Assets/Models/Players/Test/Blue/player_blue.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
+	m_playerModels[2] = am.LoadModelAsset("Assets/Models/Players/Test/Yellow/player_yellow.gltf");
 	std::vector<entity> players;
 	for (auto i = 0; i < playerCount; ++i)
 	{
@@ -975,15 +976,11 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 			m_entityManager.AddComponent<AudioListenerComponent>(playerI);
 			auto& ac = m_entityManager.AddComponent<AnimationComponent>(playerI);
 			ac.rigID = 0;
-			ac.animatorID = 3;
-			tf.SetScale(Vector3(.01f, .01f, .01f));
 		}
 		else
 		{
 			auto& ac = m_entityManager.AddComponent<AnimationComponent>(playerI);
 			ac.rigID = 0;
-			ac.animatorID = i-1;
-			tf.SetScale(Vector3(.01f, .01f, .01f));
 			m_entityManager.AddComponent<OnlinePlayer>(playerI);
 		}
 	}
