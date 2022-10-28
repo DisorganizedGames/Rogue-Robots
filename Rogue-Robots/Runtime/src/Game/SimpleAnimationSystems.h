@@ -40,8 +40,41 @@ public:
 	}
 };
 
+class PickupLerpAnimationSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+public:
+	SYSTEM_CLASS(DOG::PickupLerpAnimateComponent, DOG::TransformComponent);
+	ON_UPDATE(DOG::PickupLerpAnimateComponent, DOG::TransformComponent);
+	void OnUpdate(DOG::PickupLerpAnimateComponent& animator, DOG::TransformComponent& transform)
+	{
+		animator.currentOrigin = Lerp(animator.currentOrigin, animator.baseTarget, DOG::Time::DeltaTime() * 0.25);
+		transform.SetPosition({ transform.GetPosition().x, animator.currentOrigin, transform.GetPosition().z });
 
+		if (abs(transform.GetPosition().y - animator.baseTarget) < 0.60f)
+		{
+			std::swap(animator.baseTarget,animator.baseOrigin);
+		}
 
+		transform.RotateW({(float)DOG::Time::DeltaTime(), (float)DOG::Time::DeltaTime(), 0.0f});
+	}
+
+	float Lerp(float a, float b, float t)
+	{
+		return (1.0f - t) * a + b * t;
+	}
+
+	float InverseLerp(float a, float b, float v)
+	{
+		return (v - a) / (b - a);
+	}
+
+	float Remap(float iMin, float iMax, float oMin, float oMax, float v)
+	{
+		float t = InverseLerp(iMin, iMax, v);
+		return Lerp(oMin, oMax, t);
+	}
+};
 
 class LerpColorSystem : public DOG::ISystem
 {

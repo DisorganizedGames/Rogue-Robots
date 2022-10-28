@@ -87,3 +87,112 @@ public:
 		}
 	}
 };
+
+class MVPPickupItemInteractionSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	#define REQUIRED_DISTANCE_DELTA 3.0f
+	#define REQUIRED_DOT_DELTA -0.25f
+public:
+	SYSTEM_CLASS(DOG::ThisPlayer, DOG::TransformComponent);
+	ON_UPDATE_ID(DOG::ThisPlayer, DOG::TransformComponent);
+
+	void OnUpdate(DOG::entity player, DOG::ThisPlayer&, DOG::TransformComponent& ptc)
+	{
+		auto& mgr = DOG::EntityManager::Get();
+		auto playerPosition = ptc.GetPosition();
+		DOG::entity closestPickup = DOG::NULL_ENTITY;
+		float closestDistance = FLT_MAX;
+		Vector3 pickUpToPlayerDirection;
+
+		mgr.Collect<PickupComponent, DOG::TransformComponent>().Do([&](DOG::entity entityID, PickupComponent&, DOG::TransformComponent& tc)
+			{
+				if (closestPickup == DOG::NULL_ENTITY)
+					closestPickup = entityID;
+
+				float distance = Vector3::Distance(playerPosition, tc.GetPosition());
+				if (distance < closestDistance)
+				{
+					closestDistance = distance; 
+					closestPickup = entityID; 
+				}
+			});
+		if (closestPickup == DOG::NULL_ENTITY)
+			return;
+
+		auto& tc = mgr.GetComponent<DOG::TransformComponent>(closestPickup);
+		pickUpToPlayerDirection = playerPosition - tc.GetPosition();
+		pickUpToPlayerDirection.Normalize();
+
+		float dot = ptc.GetForward().Dot(pickUpToPlayerDirection);
+		bool isLookingAtItem = dot < REQUIRED_DOT_DELTA;
+		bool isCloseEnoughToItem = closestDistance < REQUIRED_DISTANCE_DELTA;
+		if (isLookingAtItem && isCloseEnoughToItem)
+		{
+			if (mgr.HasComponent<ActiveItemComponent>(closestPickup))
+			{
+				//Pickup is an active item entity, so:
+				if (mgr.HasComponent<EligibleActiveItemComponent>(player))
+				{
+					mgr.RemoveComponent<EligibleActiveItemComponent>(player);
+				}
+				auto& eaic = mgr.AddComponent<EligibleActiveItemComponent>(player);
+				eaic.activeItemEntity = closestPickup;
+				eaic.type = mgr.GetComponent<ActiveItemComponent>(closestPickup).type;
+			}
+		}
+		else
+		{
+			if (mgr.HasComponent<EligibleActiveItemComponent>(player))
+			{
+				mgr.RemoveComponent<EligibleActiveItemComponent>(player);
+			}
+		}
+	}
+};
+
+class MVPRenderPickupItemUIText : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DOG::ThisPlayer);
+	ON_UPDATE_ID(DOG::ThisPlayer);
+
+	void OnUpdate(DOG::entity playerID, DOG::ThisPlayer&)
+	{
+		if (DOG::EntityManager::Get().HasComponent<EligibleActiveItemComponent>(playerID))
+		{
+			//ImVec2 size;
+			//size.x = 280;
+			//size.y = 300;
+			//
+			////auto r = Window::GetWindowRect();
+			//ImVec2 pos;
+			//pos.x = r.right - size.x - 20.0f;
+			//pos.y = r.top + 50.0f;
+			//
+			//ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+			//ImGui::SetNextWindowPos(pos);
+			//ImGui::SetNextWindowSize(size);
+			//if (ImGui::Begin("KeyBindings", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground))
+			//{
+			//	if (ImGui::BeginTable("KeyBindings", 2))
+			//	{
+			//		for (auto& [key, action] : m_kayBindingDescriptions)
+			//		{
+			//			ImGui::TableNextRow();
+			//			ImGui::TableSetColumnIndex(0);
+			//			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
+			//			ImGui::Text(action.c_str());
+			//			ImGui::TableSetColumnIndex(1);
+			//			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
+			//			ImGui::Text(key.c_str());
+			//			ImGui::PopStyleColor(2);
+			//		}
+			//		ImGui::EndTable();
+			//	}
+			//}
+			//ImGui::End();
+			//ImGui::PopStyleColor();
+		}
+	}
+};

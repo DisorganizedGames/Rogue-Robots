@@ -83,11 +83,24 @@ struct PassiveItemComponent {
 	Type type;
 };
 
+//The active item that currently resided in inventory
 struct ActiveItemComponent
 {
 	enum class Type{ Trampoline = 0 };
 
 	Type type;
+};
+
+//ID component for ALL pick ups
+struct PickupComponent
+{
+};
+
+//Active Item eligible for pickup (it fulfills all requirements for pickup)
+struct EligibleActiveItemComponent
+{
+	DOG::entity activeItemEntity;
+	ActiveItemComponent::Type type;
 };
 
 struct CreateAndDestroyEntityComponent
