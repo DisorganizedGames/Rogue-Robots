@@ -61,17 +61,14 @@ namespace DOG::gfx
 		{
 			const auto& mipData = spec.dataPerMip[mip];
 
-			// Get aligned row pitch for destination
 			const u32 rowPitchOriginal = mipData.width * bytesPerPixel;
-			const u32 rowPitchAligned = (1 + ((rowPitchOriginal - 1) / TEXALIGNMENT)) * TEXALIGNMENT;
-
 			m_texUploadCtx->PushUploadToTexture(
 				// Target
 				tex, mip, { 0, 0, 0 },
 				// Source
 				(void*)mipData.data.data(),
 				texFormat, mipData.width, mipData.height, 1,
-				rowPitchAligned
+				rowPitchOriginal
 			);
 		}
 

@@ -81,16 +81,17 @@ namespace DOG::gfx
 			version.copyCmdl = m_rd->AllocateCommandList(m_targetQueue);
 		}
 
-		const u32 totalSize = srcRowPitch * srcHeight;
-
 		static constexpr u32 TEXALIGNMENT = 512;
+		const u32 alignedSrcRowPitch = (1 + ((srcRowPitch - 1) / TEXALIGNMENT)) * TEXALIGNMENT;
+		const u32 totalSize = alignedSrcRowPitch * srcHeight;
+
 
 		// Allocate staging memory
 		auto [memory, offsetFromBase] = version.vator.AllocateWithOffset(totalSize, TEXALIGNMENT);
 
 		// Copy to staging
-		std::memcpy(memory, srcData, totalSize);
-		//std::memcpy(memory, srcData, srcWidth * srcHeight * 4);		// assuming 32bit per channel
+		for (u32 h = 0; h < srcHeight; ++h)
+			std::memcpy(memory + alignedSrcRowPitch * h, (u8*)srcData + srcRowPitch * h, srcRowPitch);
 
 		// Record GPU-GPU copy
 		m_rd->Cmd_CopyBufferToImage(version.copyCmdl,
@@ -99,7 +100,7 @@ namespace DOG::gfx
 			dstTopLeft, 
 			version.staging, 
 			(u32)offsetFromBase, 
-			srcFormat, srcWidth, srcHeight, srcDepth, srcRowPitch);
+			srcFormat, srcWidth, srcHeight, srcDepth, alignedSrcRowPitch);
 	}
 
 	std::optional<SyncReceipt> UploadContext::SubmitCopies()
