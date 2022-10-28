@@ -138,33 +138,12 @@ namespace DOG
 				});
 
 
-			CameraComponent cameraComponent;
-			EntityManager::Get().Collect<CameraComponent>().Do([&](CameraComponent& c)
-				{
-					if (c.isMainCamera)
-					{
-						cameraComponent = c;
-					}
-				});
-
-			TransformComponent camTransform;
-			camTransform.worldMatrix = cameraComponent.viewMatrix.Invert();
-
-			auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p) {
-				auto d = p - camPos;
-				if (d.LengthSquared() < 64) return false;
-				if (d.LengthSquared() > 80 * 80) return true;
-				d.Normalize();
-				return camForward.Dot(d) < 0.2f;
-			};
-
 			EntityManager::Get().Collect<TransformComponent, SubmeshRenderer>().Do([&](entity e, TransformComponent& tr, SubmeshRenderer& sr)
 				{
-					if (cull(tr.GetPosition())) return;
 					// We are assuming that this is a totally normal submesh with no weird branches (i.e on ModularBlock or whatever)
 					if (EntityManager::Get().HasComponent<ShadowReceiverComponent>(e))
 					{
-						m_renderer->SubmitShadowMesh(sr.mesh, 0, sr.material, tr);
+							m_renderer->SubmitShadowMesh(sr.mesh, 0, sr.material, tr);
 					}
 					if (sr.dirty)
 						CustomMaterialManager::Get().UpdateMaterial(sr.material, sr.materialDesc);
@@ -175,7 +154,6 @@ namespace DOG
 			EntityManager::Get().Collect<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
 				{
 					MINIPROFILE_NAMED("RenderSystem")
-					if (cull(transformC.GetPosition())) return;
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 					if (model && model->gfxModel)
 					{
@@ -193,7 +171,7 @@ namespace DOG
 								EntityManager::Get().GetComponent<MeshColliderComponent>(e).drawMeshColliderOverride)
 							{
 								u32 meshColliderModelID = EntityManager::Get().GetComponent<MeshColliderComponent>(e).meshColliderModelID;
-								ModelAsset* meshColliderModel = AssetManager::Get().GetAsset<ModelAsset>(meshColliderModelID);
+								ModelAsset * meshColliderModel = AssetManager::Get().GetAsset<ModelAsset>(meshColliderModelID);
 								if (meshColliderModel && meshColliderModel->gfxModel)
 								{
 									for (u32 i = 0; i < meshColliderModel->gfxModel->mesh.numSubmeshes; ++i)
@@ -210,7 +188,7 @@ namespace DOG
 						{
 							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
 								m_renderer->SubmitAnimatedMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
-						}
+						}	
 						else
 						{
 							if (EntityManager::Get().HasComponent<MeshColliderComponent>(e) &&
@@ -228,7 +206,14 @@ namespace DOG
 					}
 				});
 
-			
+			CameraComponent cameraComponent;
+			EntityManager::Get().Collect<CameraComponent>().Do([&](CameraComponent& c) 
+				{
+					if (c.isMainCamera)
+					{
+						cameraComponent = c;
+					}
+				});
 
 			auto& proj = (DirectX::XMMATRIX&)cameraComponent.projMatrix;
 			m_renderer->SetMainRenderCamera(cameraComponent.viewMatrix, &proj);
