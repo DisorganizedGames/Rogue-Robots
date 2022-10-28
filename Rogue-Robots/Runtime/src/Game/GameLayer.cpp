@@ -28,8 +28,9 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerMovementSystem>());
-	
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<PickupLerpAnimationSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<MVPPickupItemInteractionSystem>());
 	m_agentManager = new AgentManager();
 	m_nrOfPlayers = MAX_PLAYER_COUNT;
 	m_networkStatus = 0;
@@ -531,6 +532,38 @@ void GameLayer::OnImGuiRender()
 
 }
 
+void GameLayer::ToggleFlashlight()
+{
+	m_entityManager.Collect<DOG::SpotLightComponent>().Do([](DOG::SpotLightComponent& slc)
+		{
+			if (slc.isMainPlayerSpotlight)
+			{
+				if (slc.strength == 0.6f)
+					slc.strength = 0.0f;
+				else
+					slc.strength = 0.6f;
+			}
+		});
+}
+
+void GameLayer::PickUpItem()
+{
+	m_entityManager.Collect<EligibleActiveItemComponent>().Do([this](DOG::entity player, EligibleActiveItemComponent& eligiblePickUp)
+		{
+			if (m_entityManager.HasComponent<ActiveItemComponent>(player))
+			{
+				m_entityManager.RemoveComponent<ActiveItemComponent>(player);
+			}
+			m_entityManager.AddComponent<ActiveItemComponent>(player).type = eligiblePickUp.type;
+
+			m_entityManager.RemoveComponent<EligibleActiveItemComponent>(player);
+
+			std::string luaEventName = std::string("ItemPickup") + std::to_string(player);
+			LuaMain::GetEventSystem()->InvokeEvent(luaEventName, eligiblePickUp.activeItemEntity);
+			m_entityManager.DeferredEntityDestruction(eligiblePickUp.activeItemEntity);
+		});
+}
+
 void GameLayer::OnEvent(DOG::IEvent& event)
 {
 	using namespace DOG;
@@ -554,7 +587,21 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	}
 	case EventType::KeyPressedEvent:
 	{
-		Input(EVENT(KeyPressedEvent).key);	
+		if (EVENT(KeyPressedEvent).key == DOG::Key::C)
+			m_player->m_moveView = !m_player->m_moveView;
+		else if (EVENT(KeyPressedEvent).key == DOG::Key::F)
+		{
+			if (m_gameState == GameState::Playing)
+			{
+				ToggleFlashlight();
+			}
+		}
+		else if (EVENT(KeyPressedEvent).key == DOG::Key::E)
+		{
+			PickUpItem();
+		}
+		else
+			Input(EVENT(KeyPressedEvent).key);
 		break;
 	}
 	case EventType::KeyReleasedEvent:
@@ -882,7 +929,7 @@ void GameLayer::Input(DOG::Key key)
 				inputC.up = true;
 			if (key == DOG::Key::Q)
 				inputC.switchComp = true;
-			if (key == DOG::Key::E)
+			if (key == DOG::Key::T)
 				inputC.switchBarrelComp = true;
 			if (key == DOG::Key::M)
 				inputC.switchMagazineComp = true;
