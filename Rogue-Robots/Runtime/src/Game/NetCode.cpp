@@ -42,7 +42,6 @@ void NetCode::OnStartup()
 			{
 				m_entityManager.AddComponent<OnlinePlayer>(id);
 				m_entityManager.RemoveComponent<ThisPlayer>(id);
-				m_entityManager.RemoveComponent<CameraComponent>(id);
 				m_entityManager.RemoveComponent<AudioListenerComponent>(id);
 			}
 
@@ -52,7 +51,6 @@ void NetCode::OnStartup()
 			if (networkC.playerId == m_inputTcp.playerId)
 			{
 				m_entityManager.AddComponent<ThisPlayer>(id);
-				m_entityManager.AddComponent<CameraComponent>(id).isMainCamera = true;
 				m_entityManager.AddComponent<AudioListenerComponent>(id);
 				m_entityManager.RemoveComponent<OnlinePlayer>(id);
 			}

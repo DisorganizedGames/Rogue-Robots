@@ -189,6 +189,13 @@ void EntityInterface::GetRight(DOG::LuaContext* context)
 	context->ReturnTable(t);
 }
 
+void EntityInterface::GetPlayerControllerCamera(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	auto& player = EntityManager::Get().GetComponent<PlayerControllerComponent>(e);
+	context->ReturnInteger(player.cameraEntity);
+}
+
 static bool GetActionState(InputController& input, const std::string& action)
 {
 	std::unordered_map<std::string, bool> map = {

@@ -71,6 +71,8 @@ struct InputController
 	bool switchMagazineComp = false;
 	bool activateActiveItem = false;
 	bool reload = false;
+	bool toggleDebug = false;
+	bool toggleMoveView = false;
 };
 
 struct DoorComponent

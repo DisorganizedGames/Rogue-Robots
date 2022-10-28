@@ -258,7 +258,7 @@ void GameLayer::KillPlayer(DOG::entity e)
 void GameLayer::UpdateGame()
 {
 	//m_player->OnUpdate();
-	m_netCode.OnUpdate();
+	//m_netCode.OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
 
@@ -318,9 +318,9 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	}
 	case EventType::KeyPressedEvent:
 	{
-		if (EVENT(KeyPressedEvent).key == DOG::Key::C)
-			m_player->m_moveView = !m_player->m_moveView;
-		else if (EVENT(KeyPressedEvent).key == DOG::Key::F)
+		//if (EVENT(KeyPressedEvent).key == DOG::Key::C)
+		//	m_player->m_moveView = !m_player->m_moveView;
+		if (EVENT(KeyPressedEvent).key == DOG::Key::F)
 		{
 			if (m_gameState == GameState::Playing)
 			{
@@ -460,6 +460,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetUp>("GetUp");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetForward>("GetForward");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetRight>("GetRight");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPlayerControllerCamera>("GetPlayerControllerCamera");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAction>("GetAction");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetAction>("SetAction");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::HasComponent>("HasComponent");
@@ -659,6 +660,10 @@ void GameLayer::Input(DOG::Key key)
 				inputC.activateActiveItem = true;
 			if (key == DOG::Key::R)
 				inputC.reload = true;
+			if (key == DOG::Key::H)
+				inputC.toggleDebug = true;
+			if (key == DOG::Key::C)
+				inputC.toggleMoveView = true;
 	});
 }
 
@@ -688,6 +693,10 @@ void GameLayer::Release(DOG::Key key)
 				inputC.activateActiveItem = false;
 			if (key == DOG::Key::R)
 				inputC.reload = false;
+			if (key == DOG::Key::H)
+				inputC.toggleDebug = false;
+			if(key == DOG::Key::C)
+				inputC.toggleMoveView = false;
 		});
 }
 

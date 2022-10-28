@@ -100,11 +100,12 @@ class PlayerMovementSystem : public DOG::ISystem
 
 public:
 	SYSTEM_CLASS(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController);
-	ON_UPDATE_ID(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController);
+	ON_EARLY_UPDATE_ID(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController);
 
-	void OnUpdate(Entity, PlayerControllerComponent&, PlayerStatsComponent&, TransformComponent&, RigidbodyComponent&, InputController&);
+	void OnEarlyUpdate(Entity, PlayerControllerComponent&, PlayerStatsComponent&, TransformComponent&, RigidbodyComponent&, InputController&);
 
 private:
+	bool m_useDebug = false;
 	Entity m_debugCamera = 0;
 
 	inline static constexpr Vector3 s_globUp = Vector3(0, 1, 0);
@@ -115,4 +116,5 @@ private:
 
 	Vector3 GetMoveTowards(const InputController& input, Vector3 forward, Vector3 right) const noexcept;
 
+	void MoveDebugCamera(Vector3 moveTowards, Vector3 forward, Vector3 right, f32 speed, const InputController& input) noexcept;
 };
