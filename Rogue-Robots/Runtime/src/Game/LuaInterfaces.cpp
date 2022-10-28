@@ -203,6 +203,7 @@ static bool GetActionState(InputController& input, const std::string& action)
 		{"SwitchBarrelComponent", input.switchBarrelComp},
 		{"SwitchMagazineComponent", input.switchMagazineComp},
 		{"ActivateActiveItem", input.activateActiveItem},
+		{"Reload", input.reload},
 	};
 
 	return map.at(action);

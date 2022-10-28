@@ -593,6 +593,8 @@ void GameLayer::Input(DOG::Key key)
 				inputC.switchMagazineComp = true;
 			if (key == DOG::Key::G)
 				inputC.activateActiveItem = true;
+			if (key == DOG::Key::R)
+				inputC.reload = true;
 	});
 }
 
@@ -620,6 +622,8 @@ void GameLayer::Release(DOG::Key key)
 				inputC.switchMagazineComp = false;
 			if (key == DOG::Key::G)
 				inputC.activateActiveItem = false;
+			if (key == DOG::Key::R)
+				inputC.reload = false;
 		});
 }
 
