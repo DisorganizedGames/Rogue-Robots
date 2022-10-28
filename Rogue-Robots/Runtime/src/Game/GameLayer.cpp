@@ -159,7 +159,7 @@ void GameLayer::UpdateGame()
 	EvaluateLoseCondition();
 
 
-	EntityManager::Get().Collect<TransformComponent>().Do([](TransformComponent& transform)
+	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([](TransformComponent& transform, RigidbodyComponent&)
 		{
 			if (Vector3 pos = transform.GetPosition(); pos.y < -20.0f)
 			{
@@ -224,11 +224,6 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 		}
 		else
 			Input(EVENT(KeyPressedEvent).key);
-
-		if (EVENT(KeyPressedEvent).key == DOG::Key::M)
-		{
-			if (m_testScene) static_cast<TestScene*>(m_testScene.get())->SpawnMissile();
-		}
 		break;
 	}
 	case EventType::KeyReleasedEvent:

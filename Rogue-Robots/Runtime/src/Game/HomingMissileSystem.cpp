@@ -4,13 +4,36 @@ using namespace DOG;
 using namespace DirectX::SimpleMath;
 
 
+void HomingMissileSystem::OnUpdate(HomingMissileComponent& missile, DOG::TransformComponent& transform, DOG::RigidbodyComponent& rigidBody)
+{
+	if (missile.launched && missile.engineBurnTime > 0)
+	{
+		missile.engineBurnTime -= DOG::Time::DeltaTime<DOG::TimeType::Seconds, f32>();
 
-
-
-
-
-
-
+		Vector3 forward = -transform.worldMatrix.Forward();
+		if (DOG::EntityManager::Get().Exists(missile.homingTarget) && DOG::EntityManager::Get().HasComponent<DOG::TransformComponent>(missile.homingTarget))
+		{
+			Vector3 target = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(missile.homingTarget).GetPosition();
+			Vector3 targetDir = target - transform.GetPosition();
+			targetDir.Normalize();
+			Vector3 t = forward.Cross(targetDir);
+			rigidBody.angularVelocity = missile.turnSpeed * t;
+			rigidBody.linearVelocity = missile.speed * forward;
+		}
+		else if (missile.homeInOnPosition)
+		{
+			Vector3 targetDir = missile.targetPosition - transform.GetPosition();
+			targetDir.Normalize();
+			Vector3 t = forward.Cross(targetDir);
+			rigidBody.angularVelocity = missile.turnSpeed * t;
+			rigidBody.linearVelocity = missile.speed * forward;
+		}
+		else
+		{
+			rigidBody.linearVelocity = missile.speed * forward;
+		}
+	}
+}
 
 
 void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& missile, DOG::HasEnteredCollisionComponent& collision, DOG::TransformComponent& transform)
