@@ -112,10 +112,10 @@ namespace DOG
 
 			//Deferred deletions happen here!!!
 			LuaMain::GetScriptManager()->RemoveScriptsFromDeferredEntities();
+			m_frontRenderer->PerformDeferredDeletion();
 			PhysicsEngine::FreePhysicsFromDeferredEntities();
 			AudioManager::StopAudioOnDeferredEntities();
 			EntityManager::Get().DestroyDeferredEntities();
-			m_frontRenderer->PerformDeferredDeletion();
 
 			Time::End();
 		}
