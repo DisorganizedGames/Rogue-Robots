@@ -15,8 +15,8 @@ namespace DOG
 		A = 65, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
 		F1 = 112, F2, F3,
 		LShift = 160, RShift, LCtrl, RCtrl,
-		Ö = 192,
-		Å = 221, Ä
+		Period = 190//ï¿½ = 192,
+		// ï¿½ = 221,
 	};
 
 	constexpr const u16 KEY_COUNT{ 256 };

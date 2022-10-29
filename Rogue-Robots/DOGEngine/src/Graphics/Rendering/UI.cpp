@@ -1,8 +1,9 @@
 #include "UI.h"
 #include "../../Input/Mouse.h"
 #include "../../Input/Keyboard.h"
-#include "../../EventSystem/IEvent.h"
+//#include "../../EventSystem/IEvent.h"
 #include "../../EventSystem/KeyboardEvents.h"
+#include "../../EventSystem/MouseEvents.h"
 
 
 DOG::UI* DOG::UI::s_instance = nullptr;
@@ -167,6 +168,15 @@ void DOG::UI::RemoveScene(UINT sceneID)
       m_scenes.erase(m_scenes.begin() + index);
 }
 
+DOG::UIScene* DOG::UI::GetScene(UINT sceneID)
+{
+   for (auto&& s : m_scenes)
+   {
+      if (s->GetID() == sceneID)
+         return s.get();
+   }
+   return nullptr;
+}
 
 /// @brief Changes the current scene to a scene with a specific ID
 /// @param sceneID The ID of the scene to switch to
@@ -187,6 +197,13 @@ UINT DOG::UIScene::GetID()
    return m_ID;
 }
 
+void DOG::UIScene::OnEvent(IEvent& event)
+{
+   for (auto&& e : m_scene)
+      e->OnEvent(event);
+
+}
+
 std::vector<std::unique_ptr<DOG::UIElement>>& DOG::UIScene::GetScene()
 {
    return m_scene;
@@ -197,6 +214,8 @@ DOG::UIElement::UIElement(UINT id) : m_ID(id)
 
 }
 
+
+
 DOG::UIElement::~UIElement()
 {
 }
@@ -204,12 +223,17 @@ DOG::UIElement::~UIElement()
 void DOG::UIElement::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
    UNREFERENCED_PARAMETER(d2d);
-   return;
 }
 
 UINT DOG::UIElement::GetID()
 {
    return m_ID;
+}
+
+void DOG::UIElement::OnEvent(IEvent& event)
+{
+   UNREFERENCED_PARAMETER(event);
+   return;
 }
 
 DOG::UIButton::UIButton(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, std::wstring text, std::function<void(void)> callback) : pressed(false), m_callback(callback), UIElement(id)
@@ -329,12 +353,7 @@ DOG::UISplashScreen::~UISplashScreen()
 
 }
 
-float easeOutCubic(float x)
-{
-   return 1 - powf(1 - x, 3);
-}
-
-DOG::UIScene::UIScene(UINT id) : m_ID(id)
+DOG::UIScene::UIScene(UINT id) : m_ID(id), Layer("UIScene")
 {
 
 }
@@ -479,7 +498,7 @@ void DOG::UICrosshair::Draw(DOG::gfx::D2DBackend_DX12& d2d)
       m_brush.Get());
 }
 
-DOG::UITextField::UITextField(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height) : UIElement(id), Layer("UITextField")
+DOG::UITextField::UITextField(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height) : UIElement(id)
 {
    m_displayText = L"  IP";
    m_active = false;
@@ -513,27 +532,87 @@ DOG::UITextField::~UITextField()
 {
 
 }
-void DOG::UITextField::Update(DOG::gfx::D2DBackend_DX12& d2d)
-{
-   auto m = DOG::Mouse::GetCoordinates();
-   if (DOG::Mouse::IsButtonPressed(DOG::Button::Left) && m.first >= m_border.left && m.first <= m_border.right && m.second >= m_border.top && m.second <= m_border.bottom)
-      m_active = true;
-   if (DOG::Mouse::IsButtonPressed(DOG::Button::Left) && !(m.first >= m_border.left && m.first <= m_border.right && m.second >= m_border.top && m.second <= m_border.bottom))
-      m_active = false;
 
-   if (DOG::Keyboard::IsKeyPressed(DOG::Key::A))
-   {
-      m_text.append(L"a");
-      m_cursor.left += m_textFormat->GetFontSize() * 0.64f;
-      m_cursor.right += m_textFormat->GetFontSize() * 0.64f;
-   }
-   if (DOG::Keyboard::IsKeyPressed(DOG::Key::BackSpace) && m_text.length() != 0)
-   {
-      m_text.pop_back();
-      m_cursor.left -= m_textFormat->GetFontSize() * 0.64f;
-      m_cursor.right -= m_textFormat->GetFontSize() * 0.64f;
-   }
+void DOG::UITextField::IncrementCursor()
+{
+   m_cursor.left += m_textFormat->GetFontSize() * 0.64f;
+   m_cursor.right += m_textFormat->GetFontSize() * 0.64f;
 }
+// void DOG::UITextField::Update(DOG::gfx::D2DBackend_DX12& d2d)
+// {
+//    UNREFERENCED_PARAMETER(d2d);
+//    // auto m = DOG::Mouse::GetCoordinates();
+//    // if (DOG::Mouse::IsButtonPressed(DOG::Button::Left) && m.first >= m_border.left && m.first <= m_border.right && m.second >= m_border.top && m.second <= m_border.bottom)
+//    //    m_active = true;
+//    // if (DOG::Mouse::IsButtonPressed(DOG::Button::Left) && !(m.first >= m_border.left && m.first <= m_border.right && m.second >= m_border.top && m.second <= m_border.bottom))
+//    //    m_active = false;
+
+//    // if (m_active && m_cursor.left <= m_border.right)
+//    // {
+//    //    if (DOG::Keyboard::IsKeyPressed(DOG::Key::Zero))
+//    //    {
+//    //       m_text.append(L"0");
+//    //       IncrementCursor();
+//    //    }
+//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::One))
+//    //    {
+//    //       m_text.append(L"1");
+//    //       IncrementCursor();
+//    //    }
+//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Two))
+//    //    {
+//    //       m_text.append(L"2");
+//    //       IncrementCursor();
+//    //    }
+//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Three))
+//    //    {
+//    //       m_text.append(L"3");
+//    //       IncrementCursor();
+//    //    }
+//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Four))
+//    //    {
+//    //       m_text.append(L"4");
+//    //       IncrementCursor();
+//    //    }
+//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Five))
+//    //    {
+//    //       m_text.append(L"5");
+//    //       IncrementCursor();
+//    //    }
+//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Six))
+//    //    {
+//    //       m_text.append(L"6");
+//    //       IncrementCursor();
+//    //    }
+//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Seven))
+//    //    {
+//    //       m_text.append(L"7");
+//    //       IncrementCursor();
+//    //    }
+//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Eight))
+//    //    {
+//    //       m_text.append(L"8");
+//    //       IncrementCursor();
+//    //    }
+//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Nine))
+//    //    {
+//    //       m_text.append(L"9");
+//    //       IncrementCursor();
+//    //    }
+//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Period))
+//    //    {
+//    //       m_text.append(L".");
+//    //       IncrementCursor();
+//    //    }
+//    // }
+
+//    // if (DOG::Keyboard::IsKeyPressed(DOG::Key::BackSpace) && m_text.length() != 0)
+//    // {
+//    //    m_text.pop_back();
+//    //    m_cursor.left -= m_textFormat->GetFontSize() * 0.64f;
+//    //    m_cursor.right -= m_textFormat->GetFontSize() * 0.64f;
+//    // }
+// }
 
 void DOG::UITextField::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
@@ -542,7 +621,7 @@ void DOG::UITextField::Draw(DOG::gfx::D2DBackend_DX12& d2d)
    if (m_active)
    {
       m_textBrush->SetOpacity(0.7f);
-      d2d.Get2DDeviceContext()->FillRectangle(m_cursor, m_borderBrush.Get());
+      //d2d.Get2DDeviceContext()->FillRectangle(m_cursor, m_borderBrush.Get());
       d2d.Get2DDeviceContext()->DrawTextW(
          m_text.c_str(),
          (UINT32)m_text.length(),
@@ -576,29 +655,43 @@ void DOG::UITextField::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 void DOG::UITextField::OnEvent(DOG::IEvent& event)
 {
    using namespace DOG;
-   switch (event.GetEventType())
+   if (event.GetEventCategory() == EventCategory::KeyboardEventCategory || event.GetEventCategory() == EventCategory::MouseEventCategory)
    {
-   case EventType::KeyPressedEvent:
-      if (m_active)
+      switch (event.GetEventType())
       {
-         auto c = static_cast<int>(EVENT(KeyPressedEvent).key);
-         if (isgraph(c) != 0)
+      case EventType::KeyPressedEvent:
+         if (m_active)
          {
-            m_text.append(std::to_wstring(c));
-            m_cursor.left += m_textFormat->GetFontSize() * 0.64f;
-            m_cursor.right += m_textFormat->GetFontSize() * 0.64f;
+            int c = static_cast<int>(EVENT(KeyPressedEvent).key);
+            if (isgraph(c) != 0)
+            {
+               wchar_t character = c;
+               m_text += character;
+               m_cursor.left += m_textFormat->GetFontSize() * 0.64f;
+               m_cursor.right += m_textFormat->GetFontSize() * 0.64f;
+            }
+            else if (EVENT(KeyPressedEvent).key == DOG::Key::BackSpace && m_text.length() > 0)
+            {
+               m_text.pop_back();
+               m_cursor.left -= m_textFormat->GetFontSize() * 0.64f;
+               m_cursor.right -= m_textFormat->GetFontSize() * 0.64f;
+            }
          }
-         else if (EVENT(KeyPressedEvent).key == DOG::Key::BackSpace)
-         {
-            m_text.pop_back();
-            m_cursor.left -= m_textFormat->GetFontSize() * 0.64f;
-            m_cursor.right -= m_textFormat->GetFontSize() * 0.64f;
-         }
+         break;
+      case EventType::LeftMouseButtonPressedEvent:
+      {
+         auto mevent = EVENT(DOG::LeftMouseButtonPressedEvent);
+         auto mpos = mevent.coordinates;
+         if(mpos.x >= m_border.left && mpos.x <= m_border.right && mpos.y >= m_border.top && mpos.y <= m_border.bottom)
+            m_active = true;
+         break;
+
       }
-      break;
-   default:
-      break;
+      default:
+         break;
+      }
    }
+
 }
 
 std::wstring DOG::UITextField::GetText()

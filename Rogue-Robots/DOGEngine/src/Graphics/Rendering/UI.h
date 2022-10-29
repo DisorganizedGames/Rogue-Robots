@@ -21,6 +21,7 @@ namespace DOG
          virtual void Draw(DOG::gfx::D2DBackend_DX12& d2d) = 0;
          virtual void Update(DOG::gfx::D2DBackend_DX12& d2d);
          UINT GetID();
+         virtual void OnEvent(IEvent& event);
       private:
          UINT m_ID;
    };
@@ -36,6 +37,7 @@ namespace DOG
          UINT RemoveUIElement(UINT elementID);
          UINT AddScene();
          void RemoveScene(UINT sceneID);
+         UIScene* GetScene(UINT sceneID);
          void Resize(UINT clientWidth, UINT clientHeight);
          void FreeResize();
          static void Initialize(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight);
@@ -83,12 +85,13 @@ namespace DOG
          std::vector<UINT> m_generatedIDs;
    };
 
-   class UIScene
+   class UIScene : public Layer
    {
       public:
       UIScene(UINT id);
       ~UIScene() = default;
       UINT GetID();
+      void OnEvent(IEvent& event) override final;
       std::vector<std::unique_ptr<UIElement>>& GetScene();
       private:
       std::vector<std::unique_ptr<UIElement>> m_scene;
@@ -96,6 +99,9 @@ namespace DOG
 
    };
 
+   //UIScene ärver från Layuer
+   //UIscene tar emot events med onEvent
+   //UI scene sckickar eventet till alla ui elements som har en gemensam funktion som tar emot events.
    
 
    class UIButton : public UIElement
@@ -179,15 +185,14 @@ namespace DOG
 
    };
 
-   class UITextField : public UIElement, public DOG::Layer
+   class UITextField : public UIElement
    {
       public:
          UITextField(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height);
          ~UITextField();
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
-         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
-         void OnEvent(DOG::IEvent& event) override final;
-
+         //void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void OnEvent(IEvent& event) override final;
          std::wstring GetText();
       private:
          bool m_active;
@@ -196,6 +201,7 @@ namespace DOG
          ComPtr<ID2D1SolidColorBrush> m_backBrush, m_borderBrush, m_textBrush;
          std::wstring m_text;
          std::wstring m_displayText;
+         void IncrementCursor();
    };
 
 }

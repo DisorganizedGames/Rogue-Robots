@@ -1300,9 +1300,5 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
 void AddScenes()
 {
-	menuID = DOG::UI::Get().AddScene();
-	gameID = DOG::UI::Get().AddScene();
-	multiID = DOG::UI::Get().AddScene();
-	optionsID = DOG::UI::Get().AddScene();
-	DOG::UI::Get().ChangeUIscene(menuID);
+	
 }
