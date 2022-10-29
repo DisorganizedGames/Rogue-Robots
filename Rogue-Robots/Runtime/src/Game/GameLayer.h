@@ -51,6 +51,8 @@ private:
 	std::vector<DOG::entity> AddFlashlightsToPlayers(const std::vector<DOG::entity>& players);
 	std::vector<DOG::entity> SpawnAgents(const EntityTypes type, const DirectX::SimpleMath::Vector3& pos, u8 agentCount, f32 spread = 10.f);
 
+
+	void KeyBindingDisplayMenu();
 	void GameLayerDebugMenu(bool& open);
 private:
 	GameState m_gameState;
@@ -67,4 +69,9 @@ private:
 	INT8 m_nrOfPlayers;
 	AgentManager m_agentManager;
 	u8 m_networkStatus;
+	ImFont* m_imguiFont = nullptr;
+
+	// Temp container for keybindings, just strings to visualize them in the menu
+	std::vector<std::pair<std::string, std::string>> m_keyBindingDescriptions;
+	bool m_displayKeyBindings = true;
 };

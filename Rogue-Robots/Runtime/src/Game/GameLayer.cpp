@@ -30,6 +30,23 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
 	m_nrOfPlayers = MAX_PLAYER_COUNT;
 	m_networkStatus = 0;
+
+
+	m_keyBindingDescriptions.emplace_back("wasd", "walk");
+	m_keyBindingDescriptions.emplace_back("space", "jump");
+	m_keyBindingDescriptions.emplace_back("lmb", "shoot");
+	m_keyBindingDescriptions.emplace_back("g", "active item");
+	m_keyBindingDescriptions.emplace_back("f", "flash light");
+	m_keyBindingDescriptions.emplace_back("m", "gun effect");
+	m_keyBindingDescriptions.emplace_back("e", "interact");
+	m_keyBindingDescriptions.emplace_back("q", "full auto");
+	m_keyBindingDescriptions.emplace_back("alt + enter", "fullscreen");
+	m_keyBindingDescriptions.emplace_back("h", "debug camera");
+	m_keyBindingDescriptions.emplace_back("f1", "debug menu");
+
+	assert(std::filesystem::exists(("Assets/Fonts/Robot Radicals.ttf")));
+	ImGui::GetIO().Fonts->AddFontDefault();
+	m_imguiFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Assets/Fonts/Robot Radicals.ttf", 18.0f);
 }
 
 void GameLayer::OnAttach()
@@ -92,6 +109,8 @@ void GameLayer::OnUpdate()
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
 	global->SetNumber("ElapsedTime", Time::ElapsedTime());
+
+	KeyBindingDisplayMenu();
 }
 
 
@@ -698,6 +717,45 @@ std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3
 	return agents;
 }
 
+void GameLayer::KeyBindingDisplayMenu()
+{
+	if (!m_displayKeyBindings) return;
+	ImVec2 size;
+	size.x = 280;
+	size.y = 300;
+
+	auto r = Window::GetWindowRect();
+	ImVec2 pos;
+	pos.x = r.right - size.x - 20.0f;
+	pos.y = r.top + 50.0f;
+	
+	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+	ImGui::SetNextWindowPos(pos);
+	ImGui::SetNextWindowSize(size);
+	if (ImGui::Begin("KeyBindings", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground))
+	{
+		if (ImGui::BeginTable("KeyBindings", 2))
+		{
+			ImGui::PushFont(m_imguiFont);
+			for (auto& [key, action] : m_keyBindingDescriptions)
+			{
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
+				ImGui::Text(action.c_str());
+				ImGui::TableSetColumnIndex(1);
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
+				ImGui::Text(key.c_str());
+				ImGui::PopStyleColor(2);
+			}
+			ImGui::PopFont();
+			ImGui::EndTable();
+		}
+	}
+	ImGui::End();
+	ImGui::PopStyleColor();
+}
+
 void GameLayer::GameLayerDebugMenu(bool& open)
 {
 	if (ImGui::BeginMenu("View"))
@@ -793,6 +851,8 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 				}
 				ImGui::EndTable();
 			}
+
+			ImGui::Checkbox("View KeyBindings", &m_displayKeyBindings);
 		}
 		ImGui::End(); // "GameManager"
 	}
