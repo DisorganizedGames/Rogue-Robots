@@ -23,6 +23,8 @@ GameLayer::GameLayer() noexcept
 	LuaMain::GetScriptManager()->RunLuaFile("LuaStartUp.lua");
 	//Register Lua interfaces
 	RegisterLuaInterfaces();
+	
+	m_entityManager.RegisterSystem(std::make_unique<ScuffedSceneGraphSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());

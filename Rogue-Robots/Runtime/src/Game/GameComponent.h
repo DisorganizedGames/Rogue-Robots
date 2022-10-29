@@ -202,3 +202,9 @@ struct InteractionQueryComponent
 {
 	//ID
 };
+
+struct ParentComponent
+{
+	DOG::entity parent = DOG::NULL_ENTITY;
+	DOG::TransformComponent localTransform;
+};
