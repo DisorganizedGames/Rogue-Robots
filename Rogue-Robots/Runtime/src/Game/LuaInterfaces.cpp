@@ -707,9 +707,9 @@ void EntityInterface::AddHomingMissile(DOG::LuaContext* context, DOG::entity e)
 
 	assert(em.HasComponent<TransformComponent>(e));
 	auto& t = em.GetComponent<TransformComponent>(e);
-	t = em.GetComponent<TransformComponent>(owner);
+	t.worldMatrix = em.GetComponent<TransformComponent>(owner);
 	t.SetPosition(t.GetPosition() + 0.5f * t.GetForward());
-	em.AddComponent<BoxColliderComponent>(e, e, Vector3(0.2f, 0.2f, 1.0f), true, 12.0f);
+	em.AddComponent<BoxColliderComponent>(e, e, Vector3(0.18f, 0.18f, 0.8f), true, 12.0f);
 	auto& rb = em.AddComponent<RigidbodyComponent>(e, e);
 	rb.continuousCollisionDetection = true;
 
