@@ -4,7 +4,7 @@ using namespace DOG;
 using namespace DirectX::SimpleMath;
 
 
-void HomingMissileSystem::OnUpdate(HomingMissileComponent& missile, DOG::TransformComponent& transform, DOG::RigidbodyComponent& rigidBody)
+void HomingMissileSystem::OnUpdate(entity e, HomingMissileComponent& missile, DOG::TransformComponent& transform, DOG::RigidbodyComponent& rigidBody)
 {
 	if (missile.launched && missile.flightTime < missile.lifeTime)
 	{
@@ -22,6 +22,17 @@ void HomingMissileSystem::OnUpdate(HomingMissileComponent& missile, DOG::Transfo
 			}
 			else if (missile.flightTime < missile.attackFlightPhaseStartTime)
 			{
+				if (!missile.engineIsIgnited)
+				{
+					entity jet = EntityManager::Get().CreateEntity();
+					EntityManager::Get().AddComponent<TransformComponent>(jet);
+					auto& localTransform = EntityManager::Get().AddComponent<ParentComponent>(jet);
+					localTransform.parent = e;
+					localTransform.localTransform.SetPosition({ 0,0, -0.7f }).SetRotation({ -DirectX::XM_PIDIV2, 0, 0 }).SetScale({1.3f, 1.3f, 1.3f});
+					EntityManager::Get().AddComponent<ModelComponent>(jet).id = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/jet.glb");
+
+					missile.engineIsIgnited = true;
+				}
 				Vector3 targetDir = forward;
 				targetDir.y = 0;
 				targetDir.Normalize();
@@ -29,7 +40,7 @@ void HomingMissileSystem::OnUpdate(HomingMissileComponent& missile, DOG::Transfo
 				targetDir.Normalize();
 				Vector3 t = forward.Cross(targetDir);
 				rigidBody.angularVelocity = missile.turnSpeed * t;
-				rigidBody.linearVelocity = (missile.mainMotorSpeed / std::max(1.0f, 3 * missile.attackFlightPhaseStartTime)) * forward;
+				rigidBody.linearVelocity = (missile.mainMotorSpeed / std::max(1.0f, missile.attackFlightPhaseStartTime - missile.flightTime)) * forward;
 			}
 			else
 			{

@@ -62,17 +62,18 @@ struct BulletComponent
 struct HomingMissileComponent
 {
 	float startMotorSpeed = 5.0f;
-	float mainMotorSpeed = 30;
+	float mainMotorSpeed = 20;
 	float turnSpeed = 4.0f;
 	float flightTime = 0.0f;
-	float engineStartTime = 0.3f;
-	float attackFlightPhaseStartTime = 0.7f;
+	float engineStartTime = 0.4f;
+	float attackFlightPhaseStartTime = 0.9f;
 	float lifeTime = 2.5f;
 	float explosionRadius = 10.0f;
 	float dmg = 600.0f;
 	DOG::entity homingTarget = DOG::NULL_ENTITY;
 	DOG::entity playerEntityID = DOG::NULL_ENTITY;
 	bool launched = true;
+	bool engineIsIgnited = false;
 };
 
 struct InputController
