@@ -72,9 +72,10 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
     float3 bitan = normalize(cross(nor, tan));                  // Assuming RH space
     float3x3 tbn = float3x3(tan, bitan, nor);                   // Z is up in tangent space
                 
-    float radius = 0.5f;
+    //float radius = 0.4f;
+    float radius = 0.7;
     float occludedRatio = 0.f;
-    for (int i = 0; i < 64; ++i)
+    for (int i = 0; i < 16; ++i)
     {
         float3 vsSampleInHemi = vsPos + mul(tbn, samples[i].xyz) * radius;
         float4 ndc = mul(pfData.projMatrix, float4(vsSampleInHemi, 1.f));
@@ -92,18 +93,20 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
         ndc.xy = ndc.xy * 0.5f + 0.5f.rr; // --> Works as UV to sample depth with
         
         float sampleDepthCS = depths.Sample(g_point_samp, ndc.xy);
-        float3 sampleVsPos = VSPositionFromDepth(ndc.xy, sampleDepthCS, pfData.invProjMatrix);
-        float sampleDepth = sampleVsPos.z;
+        //float3 sampleVsPos = VSPositionFromDepth(ndc.xy, sampleDepthCS, pfData.invProjMatrix);
+        //float sampleDepth = sampleVsPos.z;
         
-        //float rangeCheck = abs(vsSampleInHemi.z - sampleDepth) < (radius * radius) ? 1.0 : 0.0;
-        float rangeCheck = smoothstep(0.0, 1.0, radius / abs(vsSampleInHemi.z - sampleDepth));
+        float rangeCheck = abs(ndc.z - sampleDepthCS) < (0.01) ? 1.0 : 0.0;
+        //float rangeCheck = smoothstep(0.0, 1.0, radius / abs(vsSampleInHemi.z - sampleDepth));
         
-        occludedRatio += (sampleDepth < vsSampleInHemi.z ? 1.0 : 0.0) * rangeCheck;
+        //occludedRatio += (sampleDepth < vsSampleInHemi.z ? 1.0 : 0.0) * rangeCheck;
+        occludedRatio += (sampleDepthCS >= ndc.z ? 1.0 : 0.0) * rangeCheck;
         
     }
-    occludedRatio /= 64.f;
+    occludedRatio /= 48.f;
     float contrib = 1.f - occludedRatio;
 
+    //float3 final = reinhard_jodie(contrib.rrr * 7.f).rrr;
     float3 final = uncharted2_filmic(contrib.rrr * 5.f).rrr;
     //float3 final = contrib.rrr;
     

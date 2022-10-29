@@ -30,8 +30,11 @@ float4 main(VS_OUT input) : SV_TARGET
     float4 bloom = bloomTex.Sample(g_aniso_samp, input.uv);
     
     // Darken the white halos with Reinhard Jodie
-    float ssaoContrib = reinhard_jodie(ssaoColor.rgb).r;
-    ssaoContrib = reinhard_jodie(ssaoContrib.rrr).r;
+    float ssaoContrib = ssaoColor.r;
+    //float ssaoContrib = aces_fitted(ssaoColor.rgb).r;
+    //ssaoContrib = aces_fitted(ssaoContrib.rrr).r;
+    
+    //return float4(ssaoContrib.rrr, 1.f);
     
     hdr *= ssaoContrib;
     hdr += bloom;
