@@ -881,15 +881,14 @@ namespace DOG::gfx
 				RGResourceView output;
 			};
 
-			rg.AddPass<PassData>("SSAO Blur",
+			rg.AddPass<PassData>("SSAO Blur Vertical",
 				[&](PassData& passData, RenderGraph::PassBuilder& builder)
 				{
-					builder.DeclareTexture(RG_RESOURCE(AOBlurred), RGTextureDesc::ReadWrite2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth / 2, m_renderHeight / 2));
-
+					builder.DeclareTexture(RG_RESOURCE(AOBlurredUnfinished), RGTextureDesc::ReadWrite2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth / 2, m_renderHeight / 2));
 
 					passData.input = builder.ReadResource(RG_RESOURCE(AmbientOcclusion), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
-					passData.output = builder.ReadWriteTarget(RG_RESOURCE(AOBlurred),
+					passData.output = builder.ReadWriteTarget(RG_RESOURCE(AOBlurredUnfinished),
 						TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 
 				},
@@ -911,66 +910,52 @@ namespace DOG::gfx
 								.AppendConstant(m_renderHeight / 2.f)
 								.AppendConstant(resources.GetView(passData.input))
 								.AppendConstant(resources.GetView(passData.output))
+								.AppendConstant(1)
+								.AppendConstant(2);		// Downscale factor
+							rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
+
+							// assuming 64 threads per group --> 64 threads per wavefrom, warp is 32 --> use 64
+							// we are using 8x8 thread groups
+							// Using gather method
+							auto xGroup = (u32)std::ceilf(m_renderWidth / 2.f / 8.f);
+							auto yGroup = (u32)std::ceilf(m_renderHeight / 2.f / 8.f);
+							rd->Cmd_Dispatch(cmdl, xGroup, yGroup, 1);
+						}
+
+
+					}
+				});
+
+			rg.AddPass<PassData>("SSAO Blur Horizontal",
+				[&](PassData& passData, RenderGraph::PassBuilder& builder)
+				{
+					builder.DeclareTexture(RG_RESOURCE(AOBlurred), RGTextureDesc::ReadWrite2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth / 2, m_renderHeight / 2));
+
+					passData.input = builder.ReadResource(RG_RESOURCE(AOBlurredUnfinished), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+					passData.output = builder.ReadWriteTarget(RG_RESOURCE(AOBlurred),
+						TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+				},
+				[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				{
+					// clear
+					rd->Cmd_ClearUnorderedAccessFLOAT(cmdl,
+						resources.GetTextureView(passData.output), { 1.f, 1.f, 1.f, 1.f }, ScissorRects().Append(0, 0, m_renderWidth / 2, m_renderHeight / 2));
+
+					if (m_ssaoOn)
+					{
+						rd->Cmd_SetPipeline(cmdl, m_boxBlurPipe);
+						{
+							auto args = ShaderArgs()
+								.AppendConstant(m_globalEffectData.globalDataDescriptor)
+								.AppendConstant(m_currPfDescriptor)
+								.AppendConstant(m_renderWidth / 2.f)
+								.AppendConstant(m_renderHeight / 2.f)
+								.AppendConstant(resources.GetView(passData.input))
+								.AppendConstant(resources.GetView(passData.output))
+								.AppendConstant(0)
 								.AppendConstant(1);
-							rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
-
-							// assuming 64 threads per group --> 64 threads per wavefrom, warp is 32 --> use 64
-							// we are using 8x8 thread groups
-							// Using gather method
-							auto xGroup = (u32)std::ceilf(m_renderWidth / 2.f / 8.f);
-							auto yGroup = (u32)std::ceilf(m_renderHeight / 2.f / 8.f);
-							rd->Cmd_Dispatch(cmdl, xGroup, yGroup, 1);
-						}
-
-						{
-							auto args = ShaderArgs()
-								.AppendConstant(m_globalEffectData.globalDataDescriptor)
-								.AppendConstant(m_currPfDescriptor)
-								.AppendConstant(m_renderWidth / 2.f)
-								.AppendConstant(m_renderHeight / 2.f)
-								.AppendConstant(resources.GetView(passData.input))
-								.AppendConstant(resources.GetView(passData.output))
-								.AppendConstant(0);
-							rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
-
-							// assuming 64 threads per group --> 64 threads per wavefrom, warp is 32 --> use 64
-							// we are using 8x8 thread groups
-							// Using gather method
-							auto xGroup = (u32)std::ceilf(m_renderWidth / 2.f / 8.f);
-							auto yGroup = (u32)std::ceilf(m_renderHeight / 2.f / 8.f);
-							rd->Cmd_Dispatch(cmdl, xGroup, yGroup, 1);
-						}
-
-						// Blur
-
-						{
-							auto args = ShaderArgs()
-								.AppendConstant(m_globalEffectData.globalDataDescriptor)
-								.AppendConstant(m_currPfDescriptor)
-								.AppendConstant(m_renderWidth / 2.f)
-								.AppendConstant(m_renderHeight / 2.f)
-								.AppendConstant(resources.GetView(passData.input))
-								.AppendConstant(resources.GetView(passData.output))
-								.AppendConstant(1);
-							rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
-
-							// assuming 64 threads per group --> 64 threads per wavefrom, warp is 32 --> use 64
-							// we are using 8x8 thread groups
-							// Using gather method
-							auto xGroup = (u32)std::ceilf(m_renderWidth / 2.f / 8.f);
-							auto yGroup = (u32)std::ceilf(m_renderHeight / 2.f / 8.f);
-							rd->Cmd_Dispatch(cmdl, xGroup, yGroup, 1);
-						}
-
-						{
-							auto args = ShaderArgs()
-								.AppendConstant(m_globalEffectData.globalDataDescriptor)
-								.AppendConstant(m_currPfDescriptor)
-								.AppendConstant(m_renderWidth / 2.f)
-								.AppendConstant(m_renderHeight / 2.f)
-								.AppendConstant(resources.GetView(passData.input))
-								.AppendConstant(resources.GetView(passData.output))
-								.AppendConstant(0);
 							rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
 
 							// assuming 64 threads per group --> 64 threads per wavefrom, warp is 32 --> use 64

@@ -12,6 +12,7 @@ struct PushConstantElement
     uint output;
     
     uint isHorizontal;
+    uint downscaleFactor;
 };
 CONSTANTS(g_constants, PushConstantElement)
 
@@ -60,14 +61,14 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
     {
         for (int i = -size; i <= size; ++i)
         {
-            accum += gFilter[i + size] * input.Load(uint3(globalId.xy * 2 + uint2(i, 0), 0));
+            accum += gFilter[i + size] * input.Load(uint3(globalId.xy * g_constants.downscaleFactor + uint2(i, 0), 0));
         }
     }
     else
     {
         for (int i = -size; i <= size; ++i)
         {
-            accum += gFilter[i + size] * input.Load(uint3(globalId.xy * 2 + uint2(0, i), 0));
+            accum += gFilter[i + size] * input.Load(uint3(globalId.xy * g_constants.downscaleFactor + uint2(0, i), 0));
         }
     }
     

@@ -103,7 +103,7 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
         occludedRatio += (sampleDepthCS >= ndc.z ? 1.0 : 0.0) * rangeCheck;
         
     }
-    occludedRatio /= 48.f;
+    occludedRatio /= 16.f;
     float contrib = 1.f - occludedRatio;
 
     //float3 final = reinhard_jodie(contrib.rrr * 7.f).rrr;
