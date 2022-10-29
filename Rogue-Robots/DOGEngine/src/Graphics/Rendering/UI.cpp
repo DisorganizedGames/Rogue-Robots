@@ -229,6 +229,13 @@ UINT DOG::UIScene::GetID()
    return m_ID;
 }
 
+void DOG::UIScene::OnEvent(IEvent& event)
+{
+   for (auto&& e : m_scene)
+      e->OnEvent(event);
+
+}
+
 std::vector<std::unique_ptr<DOG::UIElement>>& DOG::UIScene::GetScene()
 {
    return m_scene;

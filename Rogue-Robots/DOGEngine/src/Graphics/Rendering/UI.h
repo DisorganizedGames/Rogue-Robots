@@ -222,6 +222,7 @@ namespace DOG
          ComPtr<ID2D1SolidColorBrush> m_backBrush, m_borderBrush, m_textBrush;
          std::wstring m_text;
          std::wstring m_displayText;
+         void IncrementCursor();
    };
 
 }
