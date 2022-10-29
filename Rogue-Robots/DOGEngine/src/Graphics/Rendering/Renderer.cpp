@@ -598,7 +598,7 @@ namespace DOG::gfx
 					and during forward pass we simply read from it 
 			*/
 
-			auto drawSubmissions = [&](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false)
+			auto drawSubmissions = [&, dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false) mutable
 			{	
 				TransformComponent camTransform;
 				camTransform.worldMatrix = ((DirectX::SimpleMath::Matrix)m_viewMat).Invert();
@@ -612,7 +612,7 @@ namespace DOG::gfx
 				for (const auto& sub : submissions)
 				{
 					if (cull({ sub.world(3, 0), sub.world(3, 1), sub.world(3, 2) })) continue;
-					auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
+					auto perDrawHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
 					PerDrawData perDrawData{};
 					perDrawData.world = sub.world;
 					perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
@@ -623,7 +623,7 @@ namespace DOG::gfx
 					{
 						JointData jointsData{};
 						// Resolve joints
-						jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+						jointsHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
 						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); ++i)
 							jointsData.joints[i] = m_boneJourno->m_vsJoints[i];
 						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
@@ -646,11 +646,11 @@ namespace DOG::gfx
 				}
 			};
 		
-			auto shadowDrawSubmissions = [&](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 smIdx, entity entityID, bool animated = false, bool wireframe = false)
+			auto shadowDrawSubmissions = [&, dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 smIdx, entity entityID, bool animated = false, bool wireframe = false) mutable
 			{
 				/*entityID passed in is the equivalent spotlight, from which we collect the view and projection matrix to be used in the Vertex Shader.*/
 				auto& cc = EntityManager::Get().GetComponent<CameraComponent>(entityID);
-				auto perLightHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerLightData) / (float)256));
+				auto perLightHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerLightData) / (float)256));
 				PerLightData perLightData{};
 				perLightData.view = cc.viewMatrix;
 				perLightData.proj = cc.projMatrix;
@@ -668,7 +668,7 @@ namespace DOG::gfx
 				for (const auto& sub : submissions)
 				{
 					if (cull({ sub.world(3, 0), sub.world(3, 1), sub.world(3, 2) })) continue;
-					auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
+					auto perDrawHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
 					PerDrawData perDrawData{};
 					perDrawData.world = sub.world;
 					perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
@@ -678,7 +678,7 @@ namespace DOG::gfx
 					{
 						// Resolve joints
 						JointData jointsData{};
-						auto jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+						auto jointsHandle = dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
 						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); ++i)
 							jointsData.joints[i] = m_boneJourno->m_vsJoints[i];
 						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
@@ -720,7 +720,7 @@ namespace DOG::gfx
 					.SetArrayRange(0, MAX_SHADOWMAPS));
 					
 				},
-				[&](const ShadowPassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
+				[&, shadowDrawFunc = shadowDrawSubmissions](const ShadowPassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&) mutable
 				{
 					rd->Cmd_SetViewports(cmdl, Viewports().Append(0.f, 0.f, 1024.f, 1024.f));
 					rd->Cmd_SetScissorRects(cmdl, ScissorRects().Append(0, 0, 1024, 1024));
@@ -730,12 +730,12 @@ namespace DOG::gfx
 					// Fills shadowmaps chronologically
 					rd->Cmd_SetPipeline(cmdl, m_shadowPipe);
 					for (u32 i = 0; i < m_lightEntities.size(); ++i)
-						shadowDrawSubmissions(rd, cmdl, m_shadowSubmissions, i, m_lightEntities[i]);
+						shadowDrawFunc(rd, cmdl, m_shadowSubmissions, i, m_lightEntities[i]);
 
 					// Render the shady modular blocks..
 					rd->Cmd_SetPipeline(cmdl, m_shadowPipeNoCull);
 					for (u32 i = 0; i < m_lightEntities.size(); ++i)
-						shadowDrawSubmissions(rd, cmdl, m_shadowSubmissionsNoCull, i, m_lightEntities[i]);
+						shadowDrawFunc(rd, cmdl, m_shadowSubmissionsNoCull, i, m_lightEntities[i]);
 				});
 
 			rg.AddPass<PassData>("Forward Pass",
@@ -760,7 +760,7 @@ namespace DOG::gfx
 					builder.WriteDepthStencil(RG_RESOURCE(MainDepth), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
 				},
-				[&](const PassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				[&, dynConstants = m_dynConstants.get(), dynConstantsTemp = m_dynConstantsTemp.get(), drawFunc = drawSubmissions](const PassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) mutable
 				{
 					//std::cout << "Doing forward pass with: " << passData.somethingAllocated << "\n";
 
@@ -773,8 +773,8 @@ namespace DOG::gfx
 
 					PerLightDataForShadows perLightData{};
 					ShadowMapArrayStruct shadowMapArrayStruct{};
-					auto perLightHandle = m_dynConstantsTemp->Allocate((u32)std::ceilf(sizeof(PerLightDataForShadows) / (float)256));
-					auto shadowHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(ShadowMapArrayStruct) / float(256)));
+					auto perLightHandle = dynConstantsTemp->Allocate((u32)std::ceilf(sizeof(PerLightDataForShadows) / (float)256));
+					auto shadowHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(ShadowMapArrayStruct) / float(256)));
 					for (size_t i{ 0u }; i < m_lightEntities.size(); ++i)
 					{
 						auto& cc = EntityManager::Get().GetComponent<CameraComponent>(m_lightEntities[i]);
@@ -795,17 +795,17 @@ namespace DOG::gfx
 					std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
 					std::memcpy(shadowHandle.memory, &shadowMapArrayStruct, sizeof(shadowMapArrayStruct));
 
-					drawSubmissions(rd, cmdl, m_submissions, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
-					drawSubmissions(rd, cmdl, m_animatedDraws, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, true);
+					drawFunc(rd, cmdl, m_submissions, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
+					drawFunc(rd, cmdl, m_animatedDraws, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, true);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
-					drawSubmissions(rd, cmdl, m_noCullSubmissions, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
+					drawFunc(rd, cmdl, m_noCullSubmissions, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframe);
-					drawSubmissions(rd, cmdl, m_wireframeDraws, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, false, true);
+					drawFunc(rd, cmdl, m_wireframeDraws, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, false, true);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframeNoCull);
-					drawSubmissions(rd, cmdl, m_noCullWireframeDraws, false, true);
+					drawFunc(rd, cmdl, m_noCullWireframeDraws, false, true);
 				});
 		}
 

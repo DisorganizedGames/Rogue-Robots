@@ -42,14 +42,9 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
 	file(GLOB_RECURSE TempGraphics
     "src/Graphics/*.cpp")
 
-# Set TRACY_ENABLE=0 to make tracy not leak
-# Tracy leaks unless it has been hooked to their server 
+# Tracy leaks memory if on, use only when you want to profile
 #add_compile_definitions(TRACY_ENABLE)
 
-# Keep this commented this to fix memory leak
-# Profiler leaks memory if to be used properly
-# If you want to use tracy, uncomment this
-#add_compile_definitions(PROFILER_ON)
 
 set(LibraryName "DOGEngine")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/DOGEngine/vendor/includes/")
