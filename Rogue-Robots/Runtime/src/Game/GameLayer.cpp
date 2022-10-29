@@ -18,7 +18,6 @@ GameLayer::GameLayer() noexcept
 	LuaMain::GetScriptManager()->RunLuaFile("LuaStartUp.lua");
 	//Register Lua interfaces
 	RegisterLuaInterfaces();
-	
 	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
@@ -28,6 +27,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<HomingMissileImpacteSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
+	m_agentManager = new AgentManager();
 	m_nrOfPlayers = MAX_PLAYER_COUNT;
 	m_networkStatus = 0;
 
@@ -49,10 +49,14 @@ GameLayer::GameLayer() noexcept
 	m_imguiFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Assets/Fonts/Robot Radicals.ttf", 18.0f);
 }
 
+GameLayer::~GameLayer()
+{
+	delete m_agentManager;
+}
+
 void GameLayer::OnAttach()
 {
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameManager", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1), false, std::make_pair(DOG::Key::LCtrl, DOG::Key::G));
-	m_Agent = std::make_shared<Agent>();
 
 	//m_testScene = std::make_unique<TestScene>();
 	//m_testScene->SetUpScene();
@@ -129,10 +133,10 @@ void GameLayer::StartMainScene()
 			return players;
 		},
 		[this]() { return LoadLevel(); },
-		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(35, 25, 50), 25, 2.5f); }
+		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(20, 20, 50), 10, 3.0f); },
+		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(30, 20, 50), 10, 3.0f); },
+		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(40, 20, 50), 10, 3.0f); },
 		});
-
-
 
 	m_player = std::make_shared<MainPlayer>();
 
@@ -372,7 +376,6 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPassiveType>("GetPassiveType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::IsBulletLocal>("IsBulletLocal");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::Exists>("Exists");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::AgentHit>("AgentHit");
 	
 
 	global->SetLuaInterface(luaInterface);
@@ -709,7 +712,7 @@ std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3
 			0,
 			spread * (i / 2) - (spread / 2.f),
 		};
-		agents.emplace_back(m_agentManager.CreateAgent(type, pos - offset));
+		agents.emplace_back(m_agentManager->CreateAgent(type, pos - offset));
 	}
 	return agents;
 }

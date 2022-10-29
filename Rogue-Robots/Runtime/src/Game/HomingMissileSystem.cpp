@@ -40,12 +40,17 @@ void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& miss
 {
 	if (missile.launched && collision.entitiesCount > 0)
 	{
-		EntityManager::Get().Collect<AgentHitComponent, DOG::TransformComponent>().Do([&](AgentHitComponent& agentHit, DOG::TransformComponent& tr)
+		EntityManager::Get().Collect<AgentIdComponent, DOG::TransformComponent>().Do([&](entity e, AgentIdComponent&, DOG::TransformComponent& tr)
 			{
 				float distSquared = Vector3::DistanceSquared(transform.GetPosition(), tr.GetPosition());
 				if (distSquared < missile.explosionRadius * missile.explosionRadius)
 				{
-					agentHit.HitBy({e, missile.dmg / (1.0f + distSquared) , missile.playerNetworkID });
+					AgentHitComponent* hit;
+					if (EntityManager::Get().HasComponent<AgentHitComponent>(e))
+						hit = &EntityManager::Get().GetComponent<AgentHitComponent>(e);
+					else
+						hit = &EntityManager::Get().AddComponent<AgentHitComponent>(e);
+					(*hit).HitBy({ e, missile.playerEntityID , missile.dmg / (1.0f + distSquared) });
 				}
 			});
 

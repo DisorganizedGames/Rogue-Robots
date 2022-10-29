@@ -213,7 +213,7 @@ function NormalBulletSpawn(bullet)
 	Entity:AddComponent(bullet.entity, "Model", bulletModel)
 	Entity:AddComponent(bullet.entity, "BoxCollider", Vector3.New(.1, .1, .1), true)
 	Entity:AddComponent(bullet.entity, "Rigidbody", false)
-	Entity:AddComponent(bullet.entity, "Bullet", EntityID)
+	Entity:AddComponent(bullet.entity, "Bullet", EntityID)		-- Note: bullet damage is added in Lua interface
 
 	Entity:PlayAudio(gunEntity.entityID, gunShotSound, true)
 
