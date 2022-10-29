@@ -32,17 +32,17 @@ GameLayer::GameLayer() noexcept
 	m_networkStatus = 0;
 
 
-	m_kayBindingDescriptions.emplace_back("wasd", "walk");
-	m_kayBindingDescriptions.emplace_back("space", "jump");
-	m_kayBindingDescriptions.emplace_back("lmb", "shoot");
-	m_kayBindingDescriptions.emplace_back("g", "active item");
-	m_kayBindingDescriptions.emplace_back("f", "flash light");
-	m_kayBindingDescriptions.emplace_back("m", "gun effect");
-	m_kayBindingDescriptions.emplace_back("e", "interact");
-	m_kayBindingDescriptions.emplace_back("q", "full auto");
-	m_kayBindingDescriptions.emplace_back("alt + enter", "fullscreen");
-	m_kayBindingDescriptions.emplace_back("h", "debug camera");
-	m_kayBindingDescriptions.emplace_back("f1", "debug menu");
+	m_keyBindingDescriptions.emplace_back("wasd", "walk");
+	m_keyBindingDescriptions.emplace_back("space", "jump");
+	m_keyBindingDescriptions.emplace_back("lmb", "shoot");
+	m_keyBindingDescriptions.emplace_back("g", "active item");
+	m_keyBindingDescriptions.emplace_back("f", "flash light");
+	m_keyBindingDescriptions.emplace_back("m", "gun effect");
+	m_keyBindingDescriptions.emplace_back("e", "interact");
+	m_keyBindingDescriptions.emplace_back("q", "full auto");
+	m_keyBindingDescriptions.emplace_back("alt + enter", "fullscreen");
+	m_keyBindingDescriptions.emplace_back("h", "debug camera");
+	m_keyBindingDescriptions.emplace_back("f1", "debug menu");
 
 	assert(std::filesystem::exists(("Assets/Fonts/Robot Radicals.ttf")));
 	ImGui::GetIO().Fonts->AddFontDefault();
@@ -737,7 +737,7 @@ void GameLayer::KeyBindingDisplayMenu()
 		if (ImGui::BeginTable("KeyBindings", 2))
 		{
 			ImGui::PushFont(m_imguiFont);
-			for (auto& [key, action] : m_kayBindingDescriptions)
+			for (auto& [key, action] : m_keyBindingDescriptions)
 			{
 				ImGui::TableNextRow();
 				ImGui::TableSetColumnIndex(0);

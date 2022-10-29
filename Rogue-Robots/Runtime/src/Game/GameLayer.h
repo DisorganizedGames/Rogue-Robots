@@ -72,6 +72,6 @@ private:
 	ImFont* m_imguiFont = nullptr;
 
 	// Temp container for keybindings, just strings to visualize them in the menu
-	std::vector<std::pair<std::string, std::string>> m_kayBindingDescriptions;
+	std::vector<std::pair<std::string, std::string>> m_keyBindingDescriptions;
 	bool m_displayKeyBindings = true;
 };
