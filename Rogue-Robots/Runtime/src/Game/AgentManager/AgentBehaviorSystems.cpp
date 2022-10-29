@@ -213,7 +213,7 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 	EntityManager::Get().RemoveComponent<AgentHitComponent>(e);
 }
 
-void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, AgentIdComponent& agent, TransformComponent& trans)
+void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComponent& trans)
 {
 	if (hp.hp <= 0 || trans.GetPosition().y < -10.0f)
 	{
@@ -227,15 +227,7 @@ void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, AgentIdCompon
 		#endif
 		
 		// Send network signal to destroy agent
-		CreateAndDestroyEntityComponent& kill = eMan.AddComponent<CreateAndDestroyEntityComponent>(e);
-		kill.alive = false;
-		kill.entityTypeId = agent.type;
-		kill.id = agent.id;
-		eMan.Collect<ThisPlayer, NetworkPlayerComponent>().Do(
-			[&](ThisPlayer&, NetworkPlayerComponent& net) { kill.playerId = net.playerId; });	// what is the purpose of this?
-		kill.position = trans.GetPosition();
-
-		eMan.DeferredEntityDestruction(e);
+		AgentManager::DestroyLocalAgent(e);
 	}
 }
 

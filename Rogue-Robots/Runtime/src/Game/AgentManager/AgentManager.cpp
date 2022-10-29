@@ -11,26 +11,51 @@ using namespace DirectX::SimpleMath;
 
 entity AgentManager::CreateAgent(EntityTypes type, const Vector3& pos)
 {
-	u32 i = static_cast<u32>(type) - static_cast<u32>(EntityTypes::AgentsBegin);
-	entity e = CreateAgentCore(m_models[i], pos, type);
+	entity e = CreateAgentCore(GetModel(type), pos, type);
 
 	m_entityManager.AddComponent<AgentSeekPlayerComponent>(e);
 
 	// Add CreateAndDestroyEntityComponent to ECS
+	if (m_useNetworking)
+	{
+		AgentIdComponent& agent = m_entityManager.GetComponent<AgentIdComponent>(e);
+		TransformComponent& agentTrans = m_entityManager.GetComponent<TransformComponent>(e);
+		
+		CreateAndDestroyEntityComponent& create = m_entityManager.AddComponent<CreateAndDestroyEntityComponent>(e);
+		create.alive = true;
+		create.entityTypeId = agent.type;
+		create.id = agent.id;
+		create.position = agentTrans.GetPosition();
+		m_entityManager.Collect<ThisPlayer, NetworkPlayerComponent>().Do(
+			[&](ThisPlayer&, NetworkPlayerComponent& net) { create.playerId = net.playerId; });
+	}
 	return e;
 }
 
 
 void AgentManager::CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& entityDesc)
 {
-	u32 i = static_cast<u32>(entityDesc.entityTypeId) - static_cast<u32>(EntityTypes::AgentsBegin);
 	if (entityDesc.alive)
 	{
-		entity e = CreateAgentCore(m_models[i], entityDesc.position, entityDesc.entityTypeId);
+		entity e = CreateAgentCore(GetModel(entityDesc), entityDesc.position, entityDesc.entityTypeId);
 
 		m_entityManager.AddComponent<ShadowAgentSeekPlayerComponent>(e);
 	}
-	// else destroy
+	else
+	{
+		entity toDestroy = DOG::NULL_ENTITY;
+		m_entityManager.Collect<AgentIdComponent, TransformComponent>().Do(
+			[&](entity e, AgentIdComponent& agent, TransformComponent& trans)
+			{
+				if (agent.id == entityDesc.id)
+				{
+					toDestroy = e;
+					trans.SetPosition(entityDesc.position);
+				}
+			}
+		);
+		DestroyLocalAgent(toDestroy);
+	}
 }
 
 
@@ -102,6 +127,16 @@ entity AgentManager::CreateAgentCore(u32 model, const Vector3& pos, EntityTypes 
 	return e;
 }
 
+u32 AgentManager::GetModel(EntityTypes type)
+{
+	return m_models[static_cast<u32>(type) - static_cast<u32>(EntityTypes::AgentsBegin)];
+}
+
+u32 AgentManager::GetModel(CreateAndDestroyEntityComponent& entityDesc)
+{
+	return m_models[static_cast<u32>(entityDesc.entityTypeId) - static_cast<u32>(EntityTypes::AgentsBegin)];
+}
+
 Vector3 AgentManager::GenerateRandomVector3(u32 seed, f32 max, f32 min)
 {
 	//static std::random_device rdev;
@@ -109,5 +144,31 @@ Vector3 AgentManager::GenerateRandomVector3(u32 seed, f32 max, f32 min)
 	static std::mt19937 gen(seed);
 	static std::uniform_real_distribution<f32> udis(min, max);
 	return Vector3(udis(gen), udis(gen), udis(gen));
+}
+
+void AgentManager::DestroyLocalAgent(entity e)
+{
+	EntityManager& em = EntityManager::Get();
+
+	AgentIdComponent& agent = em.GetComponent<AgentIdComponent>(e);
+	TransformComponent& agentTrans = em.GetComponent<TransformComponent>(e);
+	ModelComponent& agentModel = em.GetComponent<ModelComponent>(e);
+
+	entity corpse = em.CreateEntity();
+	em.AddComponent<AgentCorpse>(corpse);
+	em.AddComponent<ModelComponent>(corpse, agentModel.id);
+	TransformComponent& corpseTrans = em.AddComponent<TransformComponent>(corpse);
+	corpseTrans = agentTrans;
+	corpseTrans.SetRotation(Vector3(-2, 0, -2));
+
+	CreateAndDestroyEntityComponent& kill = em.AddComponent<CreateAndDestroyEntityComponent>(corpse);
+	kill.alive = false;
+	kill.entityTypeId = agent.type;
+	kill.id = agent.id;
+	em.Collect<ThisPlayer, NetworkPlayerComponent>().Do(
+		[&](ThisPlayer&, NetworkPlayerComponent& net) { kill.playerId = net.playerId; });
+	kill.position = agentTrans.GetPosition();
+
+	em.DeferredEntityDestruction(e);
 }
 

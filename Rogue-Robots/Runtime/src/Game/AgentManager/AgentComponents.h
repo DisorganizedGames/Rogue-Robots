@@ -74,6 +74,11 @@ struct AgentHitComponent
 	void HitBy(Hit hit) { hits[count++ % hits.max_size()] = hit; }
 };
 
+struct AgentCorpse
+{
+
+};
+
 /*******************************************
 
 			Shadow Agent Components

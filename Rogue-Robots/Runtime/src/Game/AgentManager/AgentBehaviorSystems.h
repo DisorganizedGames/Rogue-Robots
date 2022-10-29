@@ -71,9 +71,9 @@ class AgentDestructSystem : public DOG::ISystem
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
 public:
-	SYSTEM_CLASS(AgentHPComponent, AgentIdComponent, DOG::TransformComponent);
-	ON_UPDATE_ID(AgentHPComponent, AgentIdComponent, DOG::TransformComponent);
-	void OnUpdate(DOG::entity e, AgentHPComponent& hp, AgentIdComponent& agent, DOG::TransformComponent& trans);
+	SYSTEM_CLASS(AgentHPComponent, DOG::TransformComponent);
+	ON_UPDATE_ID(AgentHPComponent, DOG::TransformComponent);
+	void OnUpdate(DOG::entity e, AgentHPComponent& hp, DOG::TransformComponent& trans);
 };
 
 class AgentFrostTimerSystem : public DOG::ISystem

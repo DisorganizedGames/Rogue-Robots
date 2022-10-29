@@ -11,6 +11,7 @@ public:
 	DOG::entity CreateAgent(EntityTypes type, const Vector3& pos);
 	void CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& entityDesc);
 	static Vector3 GenerateRandomVector3(u32 seed, f32 max = 1.0f, f32 min = 0.0f);
+	static void DestroyLocalAgent(DOG::entity e);
 
 	AgentManager();
 	~AgentManager() = default;
@@ -22,4 +23,6 @@ private:
 	u32 m_agentIdCounter;
 
 	DOG::entity CreateAgentCore(u32 model, const Vector3& pos, EntityTypes type);	// Setup common for all agents
+	u32 GetModel(EntityTypes type);
+	u32 GetModel(CreateAndDestroyEntityComponent& entityDesc);
 };
