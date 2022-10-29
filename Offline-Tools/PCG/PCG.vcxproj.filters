@@ -24,6 +24,9 @@
     <ClCompile Include="PQ.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="includes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WFC.h">

@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="includes.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PQ.cpp" />
     <ClCompile Include="WFC.cpp" />

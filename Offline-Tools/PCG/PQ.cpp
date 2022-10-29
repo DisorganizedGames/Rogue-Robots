@@ -146,6 +146,8 @@ bool PriorityQueue::Rearrange(uint32_t index, std::unordered_map<std::string, Bl
 
 float PriorityQueue::CalculateEntropy(std::vector<std::string>& currentPossibilities, std::unordered_map<std::string, Block>& blockPossibilities)
 {
+	//Shannon entropy.
+	
 	float sumWeights = 0.0f;
 	float sumWeightxLogWeight = 0.0f;
 
@@ -156,6 +158,11 @@ float PriorityQueue::CalculateEntropy(std::vector<std::string>& currentPossibili
 		sumWeights += f;
 		sumWeightxLogWeight += (f * log(f));
 	}
-
+	
 	return log(sumWeights) - (sumWeightxLogWeight / sumWeights);
+	
+	//Normal entropy
+	/*
+	return currentPossibilities.size();
+	*/
 }

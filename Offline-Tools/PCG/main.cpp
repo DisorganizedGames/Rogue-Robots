@@ -8,7 +8,12 @@ int main()
     uint32_t d = 50;
 
     //Number of levels to generate.
-    uint32_t nrOfRooms = 8;
+    uint32_t nrOfRooms = 2;
+
+    //The generated space converges around these sizes. Per room.
+    uint32_t maxWidth = 5;
+    uint32_t maxHeight = 4;
+    uint32_t maxDepth = 5;
 
     std::string input = "largerTest1Output";
 
@@ -20,7 +25,7 @@ int main()
 
     //The generation has a certain amount of chances to succeed.
     unsigned chances = 100;
-    while (!wfc->GenerateLevel(nrOfRooms) && chances > 0)
+    while (!wfc->GenerateLevel(nrOfRooms, maxWidth, maxHeight, maxDepth) && chances > 0)
     {
         chances--;
         std::cout << chances << std::endl;

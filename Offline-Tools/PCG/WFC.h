@@ -15,7 +15,7 @@ public:
 
 	//Generates a level from the read input in the constructor or SetInput.
 	//Can be called multiple times for different results each time.
-	bool GenerateLevel(uint32_t nrOfRooms);
+	bool GenerateLevel(uint32_t nrOfRooms, uint32_t maxWidth, uint32_t maxHeight, uint32_t maxDepth);
 	const std::vector<std::string>& GetGeneratedLevel() const
 	{
 		return m_generatedLevel;
@@ -43,15 +43,21 @@ private:
 
 	//The constrain functions are only used on startup for constraints, same code but uses m_entropy or m_currentEntropy.
 	//Propogates information to neighboring cells after a possibility is removed.
-	bool Propogate(uint32_t index, Room& room);
-	bool PropogateConstrain(uint32_t index, Room& room);
+	void Propogate(uint32_t index, Room& room);
+	void PropogateConstrain(uint32_t index, Room& room);
 
 	//Helper function
 	void CheckForPropogation(uint32_t currentIndex, uint32_t neighborIndex, unsigned dir);
 	void CheckForPropogationConstrain(uint32_t currentIndex, uint32_t neighborIndex, unsigned dir);
+
+	//Post processing functions.
+	std::string ReplaceBlock(std::string& prevBlock, std::string& currentBlock, std::string& nextBlock, int prevDir, int nextDir);
 private:
 	uint32_t m_totalCount = 0u; //Total number of blocks read during input.
 	std::unordered_map<std::string, Block> m_blockPossibilities; //The possibilities for each block-id.
+	std::vector<std::string> m_spawnBlocks;
+	std::vector<std::string> m_doorBlocks;
+	std::vector<std::string> m_connectorBlocks;
 
 	bool m_failed = false; //If the generation fails.
 
