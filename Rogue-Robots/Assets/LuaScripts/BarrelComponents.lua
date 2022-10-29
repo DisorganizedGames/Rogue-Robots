@@ -33,7 +33,15 @@ function BarrelComponents:BasicBarrel()
 
 		Destroy = function(self)
 			return
-		end
+		end,
+
+		GetMaxAmmo = function(self)
+			return 30
+		end,
+
+		GetReloadTime = function(self)
+			return 0.8
+		end,
 	}
 end
 
@@ -92,7 +100,15 @@ function BarrelComponents:Grenade()
 				return true
 			end
 			return false
-		end
+		end,
+
+		GetMaxAmmo = function(self)
+			return 10
+		end,
+
+		GetReloadTime = function(self)
+			return 1.9
+		end,
 	}
 end
 
@@ -117,7 +133,15 @@ function BarrelComponents:Missile()
 				return true
 			end
 			return false
-		end
+		end,
+
+		GetMaxAmmo = function(self)
+			return 3
+		end,
+
+		GetReloadTime = function(self)
+			return 3.0
+		end,
 	}
 end
 

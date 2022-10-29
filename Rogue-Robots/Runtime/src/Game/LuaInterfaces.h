@@ -206,4 +206,5 @@ public:
 	~GameInterface() noexcept {};
 
 	void ExplosionEffect(DOG::LuaContext* context);
+	void AmmoUI(DOG::LuaContext* context);
 };

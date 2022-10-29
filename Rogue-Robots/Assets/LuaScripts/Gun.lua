@@ -47,9 +47,9 @@ local gunEntity = {
 
 local maxAmmo = 30
 local currentAmmo = 30
-local timeToReload = 5.0
 local reloadTimer = 0.0
 local reloading = false
+local reloadAngle = 0.0
 
 function OnStart()
 	gunModel = Asset:LoadModel("Assets/Models/Rifle/scene.gltf")
@@ -198,14 +198,34 @@ function CreateBulletEntity(bullet)
 end
 
 function ReloadSystem()
-	if reloadTimer >= ElapsedTime then
-		print("Reloading")
-		return true
+	if (Entity:HasComponent(EntityID, "ThisPlayer")) then
+		Game:AmmoUI(currentAmmo)
 	end
 
-	if (EntityID == 0) then
-		print("Ammo:", currentAmmo)
+	local oldMaxAmmo = maxAmmo
+	maxAmmo = barrelComponent:GetMaxAmmo()
+	if (maxAmmo ~= oldMaxAmmo) then
+		currentAmmo = maxAmmo
 	end
+
+	--When reloading
+	if reloadTimer >= ElapsedTime then
+		--Reloading Animation 
+		reloadAngle = reloadAngle + 2.0 * math.pi * DeltaTime / barrelComponent:GetReloadTime()
+
+		local gunUp = Vector3.FromTable(Entity:GetUp(gunEntity.entityID))
+		local gunForward = Vector3.FromTable(Entity:GetForward(gunEntity.entityID))
+		local gunRight = Vector3.FromTable(Entity:GetRight(gunEntity.entityID))
+
+		local newGunForward = RotateAroundAxis(gunForward, gunRight, reloadAngle)
+		local newGunUp = RotateAroundAxis(gunUp, gunRight, reloadAngle)
+
+		Entity:SetRotationForwardUp(gunEntity.entityID, newGunForward, newGunUp)
+		Entity:ModifyComponent(gunEntity.entityID, "Transform", gunEntity.position, 1)
+
+		return true
+	end
+	reloadAngle = 0.0
 
 	if reloading then
 		reloading = false
@@ -213,7 +233,7 @@ function ReloadSystem()
 	end
 
 	if Entity:GetAction(EntityID, "Reload") and currentAmmo < maxAmmo then
-		reloadTimer = timeToReload + ElapsedTime
+		reloadTimer = barrelComponent:GetReloadTime() + ElapsedTime
 		reloading = true
 		return true
 	end

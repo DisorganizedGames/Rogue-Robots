@@ -297,6 +297,7 @@ const std::unordered_map<std::string, bool (*) (entity)> componentMap = {
 	{ "Bullet", HasComp<BulletComponent>},
 	{ "PlayerStats", HasComp<PlayerStatsComponent> },
 	{ "PassiveItem", HasComp<PassiveItemComponent> },
+	{ "ThisPlayer", HasComp<ThisPlayer> },
 };
 
 void EntityInterface::HasComponent(LuaContext* context)
@@ -788,4 +789,39 @@ void RenderInterface::CreateMaterial(DOG::LuaContext* context)
 void GameInterface::ExplosionEffect(DOG::LuaContext* context)
 {
 	context->ReturnInteger(ExplosionEffectSystem::CreateExplosionEffect(context->GetInteger(), (float)context->GetDouble()));
+}
+
+void GameInterface::AmmoUI(DOG::LuaContext* context)
+{
+	ImVec2 size;
+	size.x = 280;
+	size.y = 20;
+
+	auto r = Window::GetWindowRect();
+	ImVec2 pos;
+	pos.x = r.right - size.x - 20.0f;
+	pos.y = r.bottom - 50.0f;
+
+	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+	ImGui::SetNextWindowPos(pos);
+	ImGui::SetNextWindowSize(size);
+	if (ImGui::Begin("Ammo", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground))
+	{
+		if (ImGui::BeginTable("Ammo", 2))
+		{
+			//ImGui::PushFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Assets/Fonts/Robot Radicals.ttf", 18.0f));
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
+			ImGui::Text("Ammo:");
+			ImGui::TableSetColumnIndex(1);
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
+			ImGui::Text(std::to_string((long long)context->GetInteger()).c_str());
+			ImGui::PopStyleColor(2);
+			//ImGui::PopFont();
+			ImGui::EndTable();
+		}
+	}
+	ImGui::End();
+	ImGui::PopStyleColor();
 }
