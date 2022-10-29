@@ -153,10 +153,38 @@ void GameLayer::CloseMainScene()
 
 void GameLayer::EvaluateWinCondition()
 {
-	/*if (ImGui::Button("Win"))
-	{
+	bool agentsAlive = false;
+	EntityManager::Get().Collect<AgentIdComponent>().Do([&agentsAlive](AgentIdComponent&) { agentsAlive = true; });
+
+	static f64 freeRoamTimeAfterWin = 0;
+	if (agentsAlive)
+		freeRoamTimeAfterWin = 0;
+	else
+		freeRoamTimeAfterWin += Time::DeltaTime();
+
+	if (freeRoamTimeAfterWin > 8.0)
 		m_gameState = GameState::Won;
-	}*/
+
+
+	if (freeRoamTimeAfterWin)
+	{
+		auto r = Window::GetWindowRect();
+		ImVec2 pos(r.left + abs(r.left - r.right) / 2.0f, r.top + abs(r.top - r.bottom) / 2.8f);
+		ImGui::SetNextWindowPos(pos, 0, ImVec2(0.5f, 0.5f));
+		const char text[] = "victory";
+		if (ImGui::Begin("WinScreen", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground))
+		{
+			ImGui::SetWindowFontScale(3.5f);
+			ImGui::PushFont(m_imguiFont);
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 255));
+			ImGui::SetCursorPosX((ImGui::GetWindowSize().x - ImGui::CalcTextSize(text).x) / 2);
+			ImGui::SetCursorPosY((ImGui::GetWindowSize().y - ImGui::CalcTextSize(text).y) / 2);
+			ImGui::Text(text);
+			ImGui::PopStyleColor();
+			ImGui::PopFont();
+		}
+		ImGui::End();
+	}
 }
 
 void GameLayer::EvaluateLoseCondition()
