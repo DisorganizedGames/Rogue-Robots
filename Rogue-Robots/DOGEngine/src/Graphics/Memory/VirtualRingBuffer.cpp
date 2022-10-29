@@ -9,6 +9,10 @@ namespace DOG::gfx
 	{
 		assert(m_elementCount != 0);
 		assert(m_elementSize != 0);
+
+
+		std::cout << "entry elementSize: " << m_elementSize << "\n";
+		std::cout << "entry elementCount: " << m_elementCount << "\n";
 	}
 
 	u64 VirtualRingBuffer::Allocate()
@@ -18,10 +22,14 @@ namespace DOG::gfx
 		const u64 nextHead = (requestedStart + 1) % m_elementCount;
 
 		if (requestedStart == m_tail && IsFull())
-			return (u64)-1;
+			return std::numeric_limits<u64>::max();
 
 		m_head = nextHead;
 		m_full = nextHead == m_tail;
+
+		//std::cout << "offset: " << offset << "\n";
+		//std::cout << "elementSize: " << m_elementSize << "\n";
+		//std::cout << "requestedStart: " << requestedStart << "\n";
 
 		return offset;
 	}

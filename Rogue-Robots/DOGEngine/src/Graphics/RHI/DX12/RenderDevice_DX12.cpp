@@ -10,7 +10,7 @@
 #include "Utilities/DX12Queue.h"
 #include "Utilities/DX12Fence.h"
 
-#include "Tracy/Tracy.hpp"
+//#include "Tracy/Tracy.hpp"
 
 namespace DOG::gfx
 {
@@ -524,7 +524,7 @@ namespace DOG::gfx
 
 	void RenderDevice_DX12::FreeTexture(Texture handle)
 	{
-		ZoneScopedN("RD Texture Free");
+		//ZoneScopedN("RD Texture Free");
 		HandleAllocator::FreeStorage(m_rhp, m_textures, handle);
 	}
 

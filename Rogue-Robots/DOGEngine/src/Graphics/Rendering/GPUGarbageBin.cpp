@@ -1,6 +1,6 @@
 #include "GPUGarbageBin.h"
 
-#include "Tracy/Tracy.hpp"
+//#include "Tracy/Tracy.hpp"
 
 namespace DOG::gfx
 {
@@ -12,7 +12,7 @@ namespace DOG::gfx
 
 	void GPUGarbageBin::PushDeferredDeletion(std::function<void()>&& deletionFunc)
 	{
-		ZoneScopedN("GPU Garbage Bin: Add Deferred Deletion");
+		//ZoneScopedN("GPU Garbage Bin: Add Deferred Deletion");
 
 
 		//Deletion_Storage storage{};
@@ -29,7 +29,7 @@ namespace DOG::gfx
 		/*
 			This is REALLY SLOW!
 		*/
-		ZoneScopedN("GPU Garbage Bin: Clear");
+		//ZoneScopedN("GPU Garbage Bin: Clear");
 		/*
 			Assuming deletes are always grouped contiguously:
 			[ 0, 0, 0, 1, 1, 1, 2, 2, 2, 0, 0, 0, ...]
@@ -47,7 +47,7 @@ namespace DOG::gfx
 
 		for (const auto& f : m_deletes2[m_currFrameIdx])
 		{
-			ZoneNamedN(BinPerDelete, "GPU Garbage Bin: Per Deferred Deletion", true);
+			//ZoneNamedN(BinPerDelete, "GPU Garbage Bin: Per Deferred Deletion", true);
 			f();
 		}
 		m_deletes2[m_currFrameIdx].clear();

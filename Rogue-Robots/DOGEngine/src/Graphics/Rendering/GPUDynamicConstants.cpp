@@ -9,7 +9,7 @@ namespace DOG::gfx
 		m_bin(bin)
 	{
 		m_buffer = m_rd->CreateBuffer(BufferDesc(MemoryType::Upload, ELEMENTSIZE * maxTotalElements * bin->GetMaxVersions()));
-		m_ator = RingBuffer(ELEMENTSIZE, maxTotalElements, m_rd->Map(m_buffer));
+		m_ator = std::move(RingBuffer(ELEMENTSIZE, maxTotalElements, m_rd->Map(m_buffer)));
 	}
 
 	void GPUDynamicConstants::Tick()
@@ -33,11 +33,23 @@ namespace DOG::gfx
 
 
 		// Allocate rest
+		u8* valid{ nullptr };
 		for (u32 i = 0; i < count - 1; ++i)
 		{
-			m_ator.Allocate();
+			valid = m_ator.Allocate();
 			++m_numToPop;
 		}
+		if (count > 1 && !valid)
+		{
+			assert(false);
+			return {};
+		}
+
+
+		//std::cout << "count: " << count << "\n";
+		//std::cout << "Done allocaete passhehe " << offset << "\n";
+
+
 
 		// Yes it is a big performance hazard
 		// Create temporary view (potential performance hazard?)

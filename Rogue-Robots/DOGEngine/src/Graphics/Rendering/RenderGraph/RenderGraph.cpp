@@ -5,7 +5,7 @@
 #include <set>
 #include <fstream>
 
-#include "Tracy/Tracy.hpp"
+//#include "Tracy/Tracy.hpp"
 
 namespace DOG::gfx
 {
@@ -84,12 +84,12 @@ namespace DOG::gfx
 	void RenderGraph::Build()
 	{
 		{
-			ZoneNamedN(RGAddProxies, "RG Building: Add Proxies", true);
+			//ZoneNamedN(RGAddProxies, "RG Building: Add Proxies", true);
 			AddProxies();
 		}
 
 		{
-			ZoneNamedN(RGBuildAdjacencyMap, "RG Building: Build AdjacencyMap", true);
+			//ZoneNamedN(RGBuildAdjacencyMap, "RG Building: Build AdjacencyMap", true);
 			BuildAdjacencyMap();
 		}
 
@@ -100,45 +100,45 @@ namespace DOG::gfx
 #endif
 
 		{
-			ZoneNamedN(RGSortTopological, "RG Building: Topological Sort", true);
+			//ZoneNamedN(RGSortTopological, "RG Building: Topological Sort", true);
 			SortPassesTopologically();
 		}
 
 		{
-			ZoneNamedN(RGAssignDepLevels, "RG Building: Assign Dependency Levels", true);
+			//ZoneNamedN(RGAssignDepLevels, "RG Building: Assign Dependency Levels", true);
 			AssignDependencyLevels();
 		}
 
 		{
-			ZoneNamedN(RGBuildDepLevels, "RG Building: Build Dependency Levels", true);
+			//ZoneNamedN(RGBuildDepLevels, "RG Building: Build Dependency Levels", true);
 			BuildDependencyLevels();
 		}
 
 		// Walk graph topologically to obtain all data necessary for sanitizing
 		{
-			ZoneNamedN(RGTrackLifetimes, "RG Building: Track Lifetimes", true);
+			//ZoneNamedN(RGTrackLifetimes, "RG Building: Track Lifetimes", true);
 			TrackLifetimes();
 		}
 
 		{
-			ZoneNamedN(RGSanitizeAliasingLifetimes, "RG Building: Sanitize Aliasing Lifetimes", true);
+			//ZoneNamedN(RGSanitizeAliasingLifetimes, "RG Building: Sanitize Aliasing Lifetimes", true);
 			m_resMan->SanitizeAliasingLifetimes();
 		}
 
 		{
-			ZoneNamedN(RGRealizeResources, "RG Building: Realize Resources", true);
+			//ZoneNamedN(RGRealizeResources, "RG Building: Realize Resources", true);
 			m_resMan->RealizeResources();
 		}
 
 		// Resources NEED to be realized from this point forward!
 
 		{
-			ZoneNamedN(RGRealizeViews, "RG Building: Realize Views", true);
+			//ZoneNamedN(RGRealizeViews, "RG Building: Realize Views", true);
 			//RealizeViews();
 		}
 
 		{
-			ZoneNamedN(RGTrackTransitions, "RG Building: Track Transitions", true);
+			//ZoneNamedN(RGTrackTransitions, "RG Building: Track Transitions", true);
 			TrackTransitions();
 		}
 
@@ -150,7 +150,7 @@ namespace DOG::gfx
 		assert(!m_dirty);
 
 		{
-			ZoneNamedN(RGAddProxies, "RG Exec: Setup Metadata", true);
+			//ZoneNamedN(RGAddProxies, "RG Exec: Setup Metadata", true);
 
 			// Clean up views
 			for (const auto& pass : m_sortedPasses)
@@ -194,7 +194,6 @@ namespace DOG::gfx
 			// Recreate views for this new graph
 			RealizeViews();
 		}
-
 
 
 
@@ -1060,7 +1059,8 @@ namespace DOG::gfx
 
 		for (const auto& pass : m_passes)
 		{
-			ZoneTransientN(Zone1, pass->name.c_str(), true);
+			//std::cout << "Pass: " << pass->name << "\n";
+			//ZoneTransientN(Zone1, pass->name.c_str(), true);
 
 			if (pass->rp)
 			{
