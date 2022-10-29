@@ -36,6 +36,16 @@ public:
 	void OnUpdate(DOG::entity e, AgentAttackComponent& attack, AgentSeekPlayerComponent& seek);
 };
 
+class AgentAggroSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	using Matrix = DirectX::SimpleMath::Matrix;
+public:
+	SYSTEM_CLASS(AgentAggroComponent);
+	ON_UPDATE_ID(AgentAggroComponent);
+	void OnUpdate(DOG::entity e, AgentAggroComponent& aggro);
+};
+
 class AgentHitDetectionSystem : public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;

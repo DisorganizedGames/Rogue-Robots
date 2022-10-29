@@ -8,7 +8,7 @@ void AgentSeekPlayerSystem::OnUpdate(entity e, AgentSeekPlayerComponent& seek, A
 	EntityManager& eMan = EntityManager::Get();
 	constexpr float SEEK_RADIUS_SQUARED = 256.0f;
 	struct PlayerDist
-	{
+	{ 
 		entity entityID = NULL_ENTITY;
 		i8 id = 0;
 		f32 sqDist = 0.0f;
@@ -38,8 +38,13 @@ void AgentSeekPlayerSystem::OnUpdate(entity e, AgentSeekPlayerComponent& seek, A
 			}
 		});
 
-	if (seek.aggro || player.sqDist < SEEK_RADIUS_SQUARED)
+	bool aggro = eMan.HasComponent<AgentAggroComponent>(e);
+
+	if (aggro || player.sqDist < SEEK_RADIUS_SQUARED)
 	{
+		if (!aggro)
+			EntityManager::Get().AddComponent<AgentAggroComponent>(e);
+
 		// update target
 		bool newTarget = player.entityID != seek.entityID;
 
@@ -128,7 +133,6 @@ void AgentAttackSystem::OnUpdate(entity e, AgentAttackComponent& attack, AgentSe
 				PlayerStatsComponent& player = EntityManager::Get().GetComponent<PlayerStatsComponent>(seek.entityID);
 				player.health -= attack.damage;
 				attack.elapsedTime = 0.0f;
-				seek.aggro = false;
 			}
 		}
 		else
@@ -138,22 +142,23 @@ void AgentAttackSystem::OnUpdate(entity e, AgentAttackComponent& attack, AgentSe
 	}
 }
 
-void AgentHitDetectionSystem::OnUpdate(entity me, HasEnteredCollisionComponent& collision, AgentSeekPlayerComponent& seek)
+void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& collision, AgentSeekPlayerComponent& seek)
 {
 	EntityManager& eMan = EntityManager::Get();
 	AgentHitComponent* hit;
-	if (!eMan.HasComponent<AgentHitComponent>(me))
-		hit = &eMan.AddComponent<AgentHitComponent>(me);
+	if (!eMan.HasComponent<AgentHitComponent>(e))
+		hit = &eMan.AddComponent<AgentHitComponent>(e);
 	else
-		hit = &eMan.GetComponent<AgentHitComponent>(me);
+		hit = &eMan.GetComponent<AgentHitComponent>(e);
 	for (u32 i = 0; i < collision.entitiesCount; ++i)
 	{
 		if (eMan.HasComponent<BulletComponent>(collision.entities[i]))
 		{
 			BulletComponent& bullet = eMan.GetComponent<BulletComponent>(collision.entities[i]);
 			seek.entityID = bullet.playerEntityID;
-			seek.aggro = true;
 			(*hit).HitBy(collision.entities[i], bullet.playerEntityID, bullet.damage);
+			if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
+				EntityManager::Get().AddComponent<AgentAggroComponent>(e);
 		}
 	}
 }
@@ -166,6 +171,8 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 		{
 			hp.hp -= hit.hits[i].damage;
 			hp.damageThisFrame = true;
+			if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
+				EntityManager::Get().AddComponent<AgentAggroComponent>(e);
 		}
 	}
 	
@@ -241,6 +248,28 @@ void AgentFrostTimerSystem::OnUpdate(DOG::entity e, AgentMovementComponent& move
 		EntityManager::Get().RemoveComponent<FrostEffectComponent>(e);
 	}
 }
+
+void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro)
+{
+	constexpr int minutes = 4;
+	constexpr f64 maxAggroTime = minutes * 60.0;
+
+	EntityManager& em = EntityManager::Get();
+
+	if ((DOG::Time::ElapsedTime() - aggro.timeTriggered) > maxAggroTime)
+		em.RemoveComponent<AgentAggroComponent>(e);
+	else
+	{
+		em.Collect<AgentIdComponent>().Do(
+			[&](entity other, AgentIdComponent&)
+			{
+				if (!em.HasComponent<AgentAggroComponent>(other))
+					em.AddComponent<AgentAggroComponent>(other);
+			}
+		);
+	}
+}
+
 
 
 /***********************************************

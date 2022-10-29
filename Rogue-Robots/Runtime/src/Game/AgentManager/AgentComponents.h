@@ -50,9 +50,13 @@ struct AgentPathfinderComponent
 struct AgentSeekPlayerComponent
 {
 	DOG::entity entityID = DOG::NULL_ENTITY;
-	bool aggro = false;
 	DirectX::SimpleMath::Vector3 direction;
 	f32 squaredDistance = 0.0f;
+};
+
+struct AgentAggroComponent
+{
+	f64 timeTriggered = DOG::Time::ElapsedTime();
 };
 
 struct AgentHitComponent

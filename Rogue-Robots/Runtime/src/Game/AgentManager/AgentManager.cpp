@@ -45,6 +45,7 @@ AgentManager::AgentManager() : m_entityManager(EntityManager::Get()), m_agentIdC
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentAttackSystem>());
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentHitDetectionSystem>());
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentHitSystem>());
+	EntityManager::Get().RegisterSystem(std::make_unique<AgentAggroSystem>());
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentFrostTimerSystem>());
 	EntityManager::Get().RegisterSystem(std::make_unique<AgentDestructSystem>());
 
