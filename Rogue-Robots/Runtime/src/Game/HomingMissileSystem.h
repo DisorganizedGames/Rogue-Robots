@@ -9,6 +9,8 @@ public:
 	SYSTEM_CLASS(HomingMissileComponent, DOG::TransformComponent, DOG::RigidbodyComponent);
 	ON_UPDATE_ID(HomingMissileComponent, DOG::TransformComponent, DOG::RigidbodyComponent);
 	void OnUpdate(DOG::entity e, HomingMissileComponent& missile, DOG::TransformComponent& transform, DOG::RigidbodyComponent& rigidBody);
+private:
+	static void StartMissileEngine(DOG::entity e, HomingMissileComponent& missile);
 };
 
 class HomingMissileImpacteSystem : public DOG::ISystem

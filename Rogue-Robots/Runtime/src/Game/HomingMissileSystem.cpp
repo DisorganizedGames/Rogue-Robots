@@ -33,14 +33,7 @@ void HomingMissileSystem::OnUpdate(entity e, HomingMissileComponent& missile, DO
 			{
 				if (!missile.engineIsIgnited)
 				{
-					missile.jet = EntityManager::Get().CreateEntity();
-					EntityManager::Get().AddComponent<TransformComponent>(missile.jet);
-					auto& localTransform = EntityManager::Get().AddComponent<ParentComponent>(missile.jet);
-					localTransform.parent = e;
-					localTransform.localTransform.SetPosition({ 0,0, -0.7f }).SetRotation({ -DirectX::XM_PIDIV2, 0, 0 }).SetScale({1.3f, 1.3f, 1.3f});
-					EntityManager::Get().AddComponent<ModelComponent>(missile.jet).id = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/jet.glb");
-
-					missile.engineIsIgnited = true;
+					StartMissileEngine(e, missile);
 				}
 				Vector3 targetDir = forward;
 				targetDir.y = 0;
@@ -64,6 +57,11 @@ void HomingMissileSystem::OnUpdate(entity e, HomingMissileComponent& missile, DO
 		}
 		else
 		{
+			if (!missile.engineIsIgnited && missile.flightTime > 0.8f * missile.engineStartTime)
+			{
+				StartMissileEngine(e, missile);
+				missile.armed = true;
+			}
 			if (missile.engineIsIgnited)
 			{
 				rigidBody.linearVelocity = missile.mainMotorSpeed * forward;
@@ -79,6 +77,17 @@ void HomingMissileSystem::OnUpdate(entity e, HomingMissileComponent& missile, DO
 	}
 }
 
+void HomingMissileSystem::StartMissileEngine(entity e, HomingMissileComponent& missile)
+{
+	missile.jet = EntityManager::Get().CreateEntity();
+	EntityManager::Get().AddComponent<TransformComponent>(missile.jet);
+	auto& localTransform = EntityManager::Get().AddComponent<ParentComponent>(missile.jet);
+	localTransform.parent = e;
+	localTransform.localTransform.SetPosition({ 0,0, -0.7f }).SetRotation({ -DirectX::XM_PIDIV2, 0, 0 }).SetScale({ 1.3f, 1.3f, 1.3f });
+	EntityManager::Get().AddComponent<ModelComponent>(missile.jet).id = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/jet.glb");
+	missile.engineIsIgnited = true;
+}
+
 
 void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& missile, DOG::HasEnteredCollisionComponent& collision, DOG::TransformComponent& transform)
 {
@@ -87,17 +96,17 @@ void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& miss
 		
 		if (missile.armed || missile.hit > 3)
 		{
-			EntityManager::Get().Collect<AgentIdComponent, DOG::TransformComponent>().Do([&](AgentIdComponent&, DOG::TransformComponent& tr)
+			EntityManager::Get().Collect<AgentIdComponent, DOG::TransformComponent>().Do([&](entity agent, AgentIdComponent&, DOG::TransformComponent& tr)
 				{
 					float distSquared = Vector3::DistanceSquared(transform.GetPosition(), tr.GetPosition());
 					if (distSquared < missile.explosionRadius * missile.explosionRadius)
 					{
 						AgentHitComponent* hit;
-						if (EntityManager::Get().HasComponent<AgentHitComponent>(e))
-							hit = &EntityManager::Get().GetComponent<AgentHitComponent>(e);
+						if (EntityManager::Get().HasComponent<AgentHitComponent>(agent))
+							hit = &EntityManager::Get().GetComponent<AgentHitComponent>(agent);
 						else
-							hit = &EntityManager::Get().AddComponent<AgentHitComponent>(e);
-						(*hit).HitBy({ e, missile.playerEntityID , missile.dmg / (1.0f + distSquared) });
+							hit = &EntityManager::Get().AddComponent<AgentHitComponent>(agent);
+						hit->HitBy({ e, missile.playerEntityID , missile.dmg / (1.0f + distSquared) });
 					}
 				});
 			EntityManager::Get().AddComponent<ExplosionEffectComponent>(e, 0.8f * missile.explosionRadius);
