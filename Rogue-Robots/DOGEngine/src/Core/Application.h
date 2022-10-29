@@ -3,7 +3,7 @@
 #include "CoreUtils.h"
 namespace DOG
 {
-	namespace gfx { class Renderer; }
+	namespace gfx { class Renderer; class FrontRenderer; }
 
 	class ApplicationManager
 	{
@@ -41,7 +41,9 @@ namespace DOG
 		CursorMode m_cursorModeOnFocusLoss;
 		LayerStack& m_layerStack;
 		bool m_isRunning;
+
 		std::unique_ptr<gfx::Renderer> m_renderer;
+		std::unique_ptr<gfx::FrontRenderer> m_frontRenderer;
 	};
 }
 

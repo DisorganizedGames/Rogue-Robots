@@ -5,10 +5,7 @@
 #include "../Scripting//LuaMain.h"
 #include "AnimationManager.h"
 #include "AssetManager.h"
-#include "LightManager.h"
-#include "CustomMaterialManager.h"
-#include "CustomMeshManager.h"
-#include "../ECS/EntityManager.h"
+#include "../ECS/EntityManager.h"		// to remove
 #include "../Input/Mouse.h"
 #include "../Input/Keyboard.h"
 
@@ -17,6 +14,7 @@
 #include "../EventSystem/WindowEvents.h"
 
 #include "../Graphics/Rendering/Renderer.h"
+#include "../Graphics/Rendering/FrontRenderer.h"
 
 #include "ImGUI/imgui.h"
 
@@ -75,11 +73,10 @@ namespace DOG
 
 			PhysicsEngine::UpdatePhysics((f32)Time::DeltaTime());
 
-			// All ImGUI calls must happen after this call
-			m_renderer->BeginGUI();
 
 			AudioManager::AudioSystem();
 
+			m_frontRenderer->BeginFrameUICapture();
 			for (auto const layer : m_layerStack)
 			{
 				layer->OnUpdate();
@@ -97,136 +94,9 @@ namespace DOG
 			}
 			Mouse::Reset();
 
-			//// ====== GPU
-			m_renderer->BeginFrame_GPU();
-
-			// Update lights
-
-			EntityManager::Get().Collect<DirtyComponent, PointLightComponent>().Do([](entity, DirtyComponent& dirty, PointLightComponent& light) {
-				light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged); });
-
-			EntityManager::Get().Collect<DirtyComponent, SpotLightComponent>().Do([](entity, DirtyComponent& dirty, SpotLightComponent& light) {
-				light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged) || dirty.IsDirty(DirtyComponent::rotationChanged); });
-
-			EntityManager::Get().Collect<TransformComponent, SpotLightComponent>().Do([&](entity, TransformComponent tr, SpotLightComponent& light)
-				{
-					if (light.dirty)
-					{
-						SpotLightDesc d{};
-						d.position = tr.GetPosition();
-						d.color = light.color;
-						d.cutoffAngle = light.cutoffAngle;
-						d.direction = light.direction;
-						d.strength = light.strength;
-						d.id = light.id;
-						LightManager::Get().UpdateSpotLight(light.handle, d);
-						light.dirty = false;
-					}
-				});
-
-			EntityManager::Get().Collect<TransformComponent, PointLightComponent>().Do([&](entity, TransformComponent tr, PointLightComponent& light)
-				{
-					if (light.dirty)
-					{
-						PointLightDesc d{};
-						d.position = tr.GetPosition();
-						d.color = light.color;
-						d.strength = light.strength;
-						LightManager::Get().UpdatePointLight(light.handle, d);
-						light.dirty = false;
-					}
-				});
-
-
-			EntityManager::Get().Collect<TransformComponent, SubmeshRenderer>().Do([&](entity e, TransformComponent& tr, SubmeshRenderer& sr)
-				{
-					// We are assuming that this is a totally normal submesh with no weird branches (i.e on ModularBlock or whatever)
-					if (EntityManager::Get().HasComponent<ShadowReceiverComponent>(e))
-					{
-						m_renderer->SubmitShadowMesh(sr.mesh, 0, sr.material, tr);
-					}
-					if (sr.dirty)
-						CustomMaterialManager::Get().UpdateMaterial(sr.material, sr.materialDesc);
-					m_renderer->SubmitMesh(sr.mesh, 0, sr.material, tr);
-				});
-
-			// We need to bucket in a better way..
-			EntityManager::Get().Collect<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
-				{
-					MINIPROFILE_NAMED("RenderSystem")
-					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-					if (model && model->gfxModel)
-					{
-						// Shadow submission:
-						if (EntityManager::Get().HasComponent<ShadowReceiverComponent>(e))
-						{
-							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
-							{
-								if (EntityManager::Get().HasComponent<ModularBlockComponent>(e))
-									m_renderer->SubmitShadowMeshNoFaceCulling(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
-								else
-									m_renderer->SubmitShadowMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
-							}
-						}
-
-
-						if (EntityManager::Get().HasComponent<ModularBlockComponent>(e))
-						{
-							if (EntityManager::Get().HasComponent<MeshColliderComponent>(e) &&
-								EntityManager::Get().GetComponent<MeshColliderComponent>(e).drawMeshColliderOverride)
-							{
-								u32 meshColliderModelID = EntityManager::Get().GetComponent<MeshColliderComponent>(e).meshColliderModelID;
-								ModelAsset * meshColliderModel = AssetManager::Get().GetAsset<ModelAsset>(meshColliderModelID);
-								if (meshColliderModel && meshColliderModel->gfxModel)
-								{
-									for (u32 i = 0; i < meshColliderModel->gfxModel->mesh.numSubmeshes; ++i)
-										m_renderer->SubmitMeshWireframeNoFaceCulling(meshColliderModel->gfxModel->mesh.mesh, i, meshColliderModel->gfxModel->mats[i], transformC);
-								}
-							}
-							else
-							{
-								for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
-									m_renderer->SubmitMeshNoFaceCulling(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
-							}
-						}
-						else if (EntityManager::Get().HasComponent<AnimationComponent>(e))
-						{
-							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
-								m_renderer->SubmitAnimatedMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
-						}	
-						else
-						{
-							if (EntityManager::Get().HasComponent<MeshColliderComponent>(e) &&
-								EntityManager::Get().GetComponent<MeshColliderComponent>(e).drawMeshColliderOverride)
-							{
-								for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
-									m_renderer->SubmitMeshWireframe(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
-							}
-							else
-							{
-								for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
-									m_renderer->SubmitMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
-							}
-						}
-					}
-				});
-
-			CameraComponent cameraComponent;
-			EntityManager::Get().Collect<CameraComponent>().Do([&](CameraComponent& c) 
-				{
-					if (c.isMainCamera)
-					{
-						cameraComponent = c;
-					}
-				});
-
-			auto& proj = (DirectX::XMMATRIX&)cameraComponent.projMatrix;
-			m_renderer->SetMainRenderCamera(cameraComponent.viewMatrix, &proj);
-			
-			m_renderer->Update(0.0f);
-			m_renderer->Render(0.0f);
-
-			m_renderer->EndFrame_GPU(m_specification.graphicsSettings.vSync);
+			m_frontRenderer->BeginGPUFrame();
+			m_frontRenderer->Render(0.f);
+			m_frontRenderer->EndGPUFrame();
 
 			for (auto& system : EntityManager::Get())
 			{
@@ -244,14 +114,11 @@ namespace DOG
 			LuaMain::GetScriptManager()->RemoveScriptsFromDeferredEntities();
 			PhysicsEngine::FreePhysicsFromDeferredEntities();
 			AudioManager::StopAudioOnDeferredEntities();
-			LightManager::Get().DestroyDeferredEntities();
 			EntityManager::Get().DestroyDeferredEntities();
+			m_frontRenderer->PerformDeferredDeletion();
 
 			Time::End();
 		}
-
-		//rd->Flush();
-		//bin.ForceClear();
 
 		m_renderer->Flush();
 	}
@@ -356,15 +223,13 @@ namespace DOG
 #endif
 		ApplyGraphicsSettings();
 		Window::SetWMHook(m_renderer->GetWMCallback());
-		LightManager::Initialize(m_renderer.get());
-		CustomMeshManager::Initialize(m_renderer.get());
-		CustomMaterialManager::Initialize(m_renderer.get());
-
+		m_frontRenderer = std::make_unique<gfx::FrontRenderer>(m_renderer.get());
 
 		AssetManager::Initialize(m_renderer.get());
 		AudioManager::Initialize();
 		PhysicsEngine::Initialize();
 		LuaMain::Initialize();
+
 
 		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); });
 		ImGuiMenuLayer::RegisterDebugWindow("MiniProfiler", [](bool& open) { MiniProfiler::DrawResultWithImGui(open); }, true);
@@ -377,9 +242,6 @@ namespace DOG
 		AssetManager::Destroy();
 		AudioManager::Destroy();
 		
-		LightManager::Destroy();
-		CustomMeshManager::Destroy();
-		CustomMaterialManager::Destroy();
 		::DestroyWindow(Window::GetHandle());
 		//...
 	}

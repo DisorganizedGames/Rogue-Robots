@@ -485,7 +485,6 @@ namespace DOG::gfx
 			m_pfData.areaLightOffsets.infreqOffset = m_globalLightTable->GetChunkOffset(LightType::Area, LightUpdateFrequency::Sometimes);
 			m_pfData.areaLightOffsets.dynOffset = m_globalLightTable->GetChunkOffset(LightType::Area, LightUpdateFrequency::PerFrame);
 
-
 			// Get camera position
 			DirectX::XMVECTOR tmp;
 			auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
