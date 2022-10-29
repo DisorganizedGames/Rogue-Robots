@@ -1,5 +1,4 @@
 #include "ShaderInterop_Renderer.h"
-#include "ShaderInterop_Samplers.hlsli"
 
 struct PushConstantElement
 {
@@ -53,12 +52,13 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
     //return;
     
     
-    int size = 3;
+    const int size = 3;
     
     float4 accum = 0.f;
 
     if (g_constants.isHorizontal == 1)
     {
+        [unroll]
         for (int i = -size; i <= size; ++i)
         {
             accum += gFilter[i + size] * input.Load(uint3(globalId.xy * g_constants.downscaleFactor + uint2(i, 0), 0));
@@ -66,6 +66,7 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
     }
     else
     {
+        [unroll]
         for (int i = -size; i <= size; ++i)
         {
             accum += gFilter[i + size] * input.Load(uint3(globalId.xy * g_constants.downscaleFactor + uint2(0, i), 0));
@@ -76,6 +77,6 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
     
     //accum /= pow(size * 2 + 1, 2);
     
-    output[globalId.xy] *= accum;
+    output[globalId.xy] = float4(accum.rgb, 1.f);
   
 }

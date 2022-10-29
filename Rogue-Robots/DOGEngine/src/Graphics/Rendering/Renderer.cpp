@@ -339,7 +339,7 @@ namespace DOG::gfx
 			for (auto i = 0; i < hemiSamples; ++i)
 			{
 				float scale = float(i) / float(hemiSamples);
-				scale = std::lerp(0.1f, 0.8f, scale * scale);
+				scale = std::lerp(0.1f, 0.8f, scale * scale * scale);
 				randomSamples[i] *= scale;
 			}
 
@@ -1077,6 +1077,7 @@ namespace DOG::gfx
 
 		Flush();
 		s_donez = false;
+		std::cout << "changed gfx settings\n";
 
 		if (!requestedSettings.bloom)
 		{

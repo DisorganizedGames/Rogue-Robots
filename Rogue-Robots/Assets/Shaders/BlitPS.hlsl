@@ -32,7 +32,8 @@ float4 main(VS_OUT input) : SV_TARGET
     // Darken the white halos with Reinhard Jodie
     //float ssaoContrib = ssaoColor.r;
     //float ssaoContrib = aces_fitted(ssaoColor.rgb).r;
-    float ssaoContrib = reinhard_jodie(ssaoColor.rgb).r;
+    //float ssaoContrib = reinhard_jodie(ssaoColor.rgb).r;
+    float ssaoContrib = uncharted2_filmic(ssaoColor.rgb).r;
     //ssaoContrib = aces_fitted(ssaoContrib.rrr).r;
     
     //return float4(ssaoContrib.rrr, 1.f);

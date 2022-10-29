@@ -469,7 +469,8 @@ namespace DOG
 				if (ImGui::Checkbox("SSAO", &m_specification.graphicsSettings.ssao))
 					gfxChanged = true;
 
-				m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
+				if (gfxChanged)
+					m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
 
 				firstTime = false;
 
