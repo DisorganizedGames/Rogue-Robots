@@ -78,6 +78,8 @@ namespace DOG::gfx
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
 		ui = std::make_unique<DOG::UI>(m_rd, m_sc, S_NUM_BACKBUFFERS, clientWidth, clientHeight);
 
+		m_frameSyncs.resize(S_MAX_FIF);
+
 		AddScenes();
 		UIRebuild(clientHeight, clientWidth);
 
@@ -708,15 +710,13 @@ namespace DOG::gfx
 					m_lightEntities.push_back(spotlightEntity);
 				});
 
-			static constexpr u32 MAX_SHADOWMAPS = 12;
-
 			rg.AddPass<ShadowPassData>("Shadow Pass",
 				[&](ShadowPassData&, RenderGraph::PassBuilder& builder)
 				{
-					builder.DeclareTexture(RG_RESOURCE(ShadowDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, 1024, 1024, MAX_SHADOWMAPS));
+					builder.DeclareTexture(RG_RESOURCE(ShadowDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, 1024, 1024, m_shadowMapCapacity));
 					builder.WriteDepthStencil(RG_RESOURCE(ShadowDepth), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D_Array, DXGI_FORMAT_D32_FLOAT)
-					.SetArrayRange(0, MAX_SHADOWMAPS));
+					.SetArrayRange(0, m_shadowMapCapacity));
 					
 				},
 				[&, shadowDrawFunc = shadowDrawSubmissions](const ShadowPassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&) mutable
@@ -747,7 +747,7 @@ namespace DOG::gfx
 
 					p.shadowView = builder.ReadResource(RG_RESOURCE(ShadowDepth), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D_Array, DXGI_FORMAT_R32_FLOAT)
-						.SetArrayRange(0, MAX_SHADOWMAPS));
+						.SetArrayRange(0, m_shadowMapCapacity));
 				
 					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
@@ -861,8 +861,8 @@ namespace DOG::gfx
 
 						// assuming 64 threads per group --> 64 threads per wavefrom, warp is 32 --> use 64
 						// we are using 8x8 thread groups
-						auto xGroup = (u32)std::ceilf(m_renderWidth / 8.f);
-						auto yGroup = (u32)std::ceilf(m_renderHeight / 8.f);
+						auto xGroup = (u32)std::ceilf(m_renderWidth / 32.f);
+						auto yGroup = (u32)std::ceilf(m_renderHeight / 32.f);
 						rd->Cmd_Dispatch(cmdl, xGroup, yGroup, 1);
 					}
 					else
@@ -1017,7 +1017,7 @@ namespace DOG::gfx
 
 		{
 			ZoneNamedN(RGExecuteScope, "RG Execution", true);
-			rg.Execute();
+			m_frameSyncs[m_currFrameIdx] = rg.Execute({}, true);
 		}
 		ui->GetBackend()->BeginFrame();
 		ui->DrawUI();
@@ -1068,11 +1068,16 @@ namespace DOG::gfx
 		m_globalEffectData.defRenderScissors = ScissorRects().Append(0, 0, m_renderWidth, m_renderHeight);
 		m_globalEffectData.defRenderVPs = Viewports().Append(0.f, 0.f, (f32)m_renderWidth, (f32)m_renderHeight);
 		m_sc->SetFullscreenState(requestedSettings.windowMode == WindowMode::FullScreen, *requestedSettings.displayMode);
+
+		m_ssaoOn = requestedSettings.ssao;
+		m_shadowMapCapacity = requestedSettings.shadowMapCapacity;
 	}
 
 	void Renderer::BeginFrame_GPU()
 	{
-		m_rd->Flush();
+
+		WaitForPrevFrame();
+
 
 		m_dynConstants->Tick();
 		m_dynConstantsTemp->Tick();
@@ -1096,7 +1101,9 @@ namespace DOG::gfx
 		m_shadowSubmissionsNoCull.clear();
 		m_lightEntities.clear();
 
-		m_sc->Present(vsync);
+		m_sc->Present(false);
+
+		m_currFrameIdx = (m_currFrameIdx + 1) % S_MAX_FIF;
 	}
 
 	void Renderer::Flush()
@@ -1129,15 +1136,15 @@ namespace DOG::gfx
 
 		if (open)
 		{
-			if (ImGui::Begin("Effects Manager", &open))
-			{
-				bool ssaoState = m_ssaoOn;
-				ImGui::Checkbox("SSAO", &m_ssaoOn);
-				if (m_ssaoOn != ssaoState)
-					s_donez = false;
+			//if (ImGui::Begin("Effects Manager", &open))
+			//{
+			//	bool ssaoState = m_ssaoOn;
+			//	ImGui::Checkbox("SSAO", &m_ssaoOn);
+			//	if (m_ssaoOn != ssaoState)
+			//		s_donez = false;
 
-			}
-			ImGui::End();
+			//}
+			//ImGui::End();
 
 
 			if (ImGui::Begin("GPU Memory Statistics: Total"))
@@ -1176,6 +1183,13 @@ namespace DOG::gfx
 			return m_imgui->WinProc(hwnd, uMsg, wParam, lParam);
 		else
 			return false;
+	}
+
+	void DOG::gfx::Renderer::WaitForPrevFrame()
+	{
+		MINIPROFILE;
+		if (m_frameSyncs[m_currFrameIdx])
+			m_rd->WaitForGPU(m_frameSyncs[m_currFrameIdx].value());
 	}
 
 }

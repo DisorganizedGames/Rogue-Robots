@@ -43,7 +43,7 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Graphics/*.cpp")
 
 # Tracy leaks memory if on, use only when you want to profile
-#add_compile_definitions(TRACY_ENABLE)
+add_compile_definitions(TRACY_ENABLE)
 
 
 set(LibraryName "DOGEngine")

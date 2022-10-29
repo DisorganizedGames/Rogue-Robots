@@ -1,6 +1,5 @@
 #include "FrontRenderer.h"
 #include "Renderer.h"
-#include "../../ECS/EntityManager.h"			// Grab world state
 #include "../../Core/AssetManager.h"			// Asset translation
 #include "../../Physics/PhysicsEngine.h"		// Collider components
 
@@ -165,6 +164,28 @@ namespace DOG::gfx
 
 		auto& proj = (DirectX::XMMATRIX&)cameraComponent.projMatrix;
 		m_renderer->SetMainRenderCamera(cameraComponent.viewMatrix, &proj);
+
+
+		// Collect this frames spotlight shadow casters
+		m_activeSpotlightShadowCasters.clear();
+		m_prevSpotlightShadowCasters = std::move(m_currSpotlightShadowCasters);
+		m_currSpotlightShadowCasters = {};
+		EntityManager::Get().Collect<ShadowCasterComponent, SpotLightComponent>().Do([&](entity spotlightEntity, ShadowCasterComponent&, SpotLightComponent&)
+			{
+				m_currSpotlightShadowCasters.insert(spotlightEntity);
+			});
+		// Get active casters
+		std::set_intersection(
+			m_currSpotlightShadowCasters.cbegin(), m_currSpotlightShadowCasters.cend(),
+			m_prevSpotlightShadowCasters.cbegin(), m_prevSpotlightShadowCasters.cend(),
+			std::inserter(m_activeSpotlightShadowCasters, m_activeSpotlightShadowCasters.begin()));
+
+		if (m_activeSpotlightShadowCasters.size() > m_shadowMapCapacity)
+		{
+			std::cout << "dirty! went from " << m_shadowMapCapacity << " to " << m_activeSpotlightShadowCasters.size() << "\n";
+			m_shadowMapCapacity = (u32)m_activeSpotlightShadowCasters.size();
+			// set renderer to dirty
+		}
 
 		// Finalize updates
 		m_renderer->Update(0.f);

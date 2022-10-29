@@ -1,4 +1,5 @@
 #pragma once
+#include "../../ECS/EntityManager.h"			// Grab world state
 
 namespace DOG::gfx
 {
@@ -32,6 +33,13 @@ namespace DOG::gfx
 
 	private:
 		Renderer* m_renderer{ nullptr };
+		
+		u32 m_shadowMapCapacity{ 2 };
+		// spotlight cache, check intersection to find active
+		std::set<entity> m_prevSpotlightShadowCasters;
+		std::set<entity> m_currSpotlightShadowCasters;
+		std::set<entity> m_activeSpotlightShadowCasters;
+
 	};
 
 

@@ -112,6 +112,8 @@ namespace DOG::gfx
 			// bitflags for target passes? (i.e multipass)
 		};
 
+		void WaitForPrevFrame();
+
 	private:
 		std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> m_wmCallback;
 		std::unique_ptr<RenderBackend> m_backend;
@@ -252,6 +254,13 @@ namespace DOG::gfx
 		std::unique_ptr<RenderEffect> m_imGUIEffect;
 		std::unique_ptr<RenderEffect> m_testComputeEffect;
 		std::unique_ptr<RenderEffect> m_bloomEffect;
+
+
+		u32 m_shadowMapCapacity{ 1 };
+
+		
+		u32 m_currFrameIdx{ 0 };
+		std::vector<std::optional<SyncReceipt>> m_frameSyncs;
 
 	};
 }

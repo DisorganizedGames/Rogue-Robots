@@ -459,15 +459,17 @@ namespace DOG
 					ImGui::EndCombo();
 				}
 
+				bool gfxChanged{ false };
 				if (ImGui::Checkbox("Bloom", &m_specification.graphicsSettings.bloom))
-				{
-					m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
-				}
+					gfxChanged = true;
 
 				if (ImGui::SliderFloat("BloomThreshold", &m_specification.graphicsSettings.bloomThreshold, 0.1f, 3))
-				{
-					m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
-				}
+					gfxChanged = true;
+
+				if (ImGui::Checkbox("SSAO", &m_specification.graphicsSettings.ssao))
+					gfxChanged = true;
+
+				m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
 
 				firstTime = false;
 

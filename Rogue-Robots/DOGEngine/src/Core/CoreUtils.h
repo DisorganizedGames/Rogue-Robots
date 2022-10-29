@@ -11,6 +11,9 @@ namespace DOG
 		bool vSync = false;
 		bool bloom = true;
 		float bloomThreshold = 0.5f;
+
+		bool ssao{ true };
+		u32 shadowMapCapacity{ 4 };
 	};
 
 

@@ -227,7 +227,13 @@ namespace DOG::gfx
 		void Clear();
 		void TryBuild();
 		void Build();
-		void Execute();
+
+		/*
+			Optional:
+				- External sync before graph execution
+				- Generate sync on graph execution completion
+		*/
+		std::optional<SyncReceipt> Execute(std::optional<SyncReceipt> incomingSync = {}, bool generateSync = false);
 
 	private:
 

@@ -34,7 +34,7 @@ float3 VSPositionFromDepth(float2 vTexCoord, float z, matrix invProj)
     return vPositionVS.xyz / vPositionVS.w;
 }
 
-[numthreads(8, 8, 1)]
+[numthreads(32, 32, 1)]
 void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadID)
 {
     if (globalId.x > g_constants.renderWidth || globalId.y > g_constants.renderHeight)

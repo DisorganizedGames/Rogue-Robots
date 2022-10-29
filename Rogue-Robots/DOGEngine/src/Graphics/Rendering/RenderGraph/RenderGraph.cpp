@@ -145,7 +145,7 @@ namespace DOG::gfx
 		m_dirty = false;
 	}
 
-	void RenderGraph::Execute()
+	std::optional<SyncReceipt> RenderGraph::Execute(std::optional<SyncReceipt> incomingSync, bool generateSync)
 	{
 		assert(!m_dirty);
 
@@ -213,7 +213,7 @@ namespace DOG::gfx
 		m_resMan->ImportedResourceExitTransition(m_cmdl);
 		m_resMan->DeclaredResourceTransitionToInit(m_cmdl);
 
-		m_rd->SubmitCommandList(m_cmdl);
+		auto outgoingSync = m_rd->SubmitCommandList(m_cmdl, QueueType::Graphics, incomingSync, generateSync);
 
 
 		for (auto& pass : m_sortedPasses)
@@ -231,6 +231,7 @@ namespace DOG::gfx
 
 		m_passDataAllocator->Clear();
 
+		return outgoingSync;
 	}
 
 	void RenderGraph::AddProxies()
