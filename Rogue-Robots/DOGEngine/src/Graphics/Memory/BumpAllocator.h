@@ -37,14 +37,14 @@ namespace DOG::gfx
 				std::free(m_heapStart);
 		}
 
-		[[nodiscard]] u8* Allocate(u64 size, u16 alignment = 0)
+		[[nodiscard]] u8* Allocate(u64 size, u16 alignment = 1)
 		{
 			u64 offset = m_vator.Allocate(size, alignment);
 			return m_heapStart + offset;
 		}
 
 		// { memory, offset from base } 
-		[[nodiscard]] std::pair<u8*, u64> AllocateWithOffset(u64 size, u16 alignment = 0)
+		[[nodiscard]] std::pair<u8*, u64> AllocateWithOffset(u64 size, u16 alignment = 1)
 		{
 			u64 offset = m_vator.Allocate(size, alignment);
 			return { m_heapStart + offset, offset };

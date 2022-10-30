@@ -186,7 +186,6 @@ namespace DOG::gfx
 			std::optional<std::function<void(PassData&)>> preGraphExecuteFunc = {},								// Allocate any transient resources up-front
 			std::optional<std::function<void(PassData&)>> postGraphExecuteFunc = {})							// Free any transient resources used)	
 		{
-			static_assert(std::is_trivially_copyable<PassData>::value && "PassData must be trivially copyable");
 			// Allow adding passes only if Graph has been marked as dirty
 			// Graph has to be set to dirty before changing
 			//assert(m_dirty);
@@ -196,32 +195,38 @@ namespace DOG::gfx
 			Pass newPass(name, m_nextPassID++);
 			PassBuilder builder(m_passBuilderGlobalData, m_resMan, newPass);
 			
-			u8* passDataMemory = m_passDataAllocator->Allocate(sizeof(PassData));
-			buildFunc(*(PassData*)passDataMemory, builder);
+			u8* memory = m_passDataAllocator->Allocate(sizeof(PassData));
+			PassData* passData = new (memory) PassData();
+
+			buildFunc(*passData, builder);
 
 			auto pass = std::make_unique<Pass>(std::move(newPass));
-			pass->execFunc = [execFunc, memory = passDataMemory](RenderDevice* rd, CommandList cmdl, PassResources& resources)
+			pass->execFunc = [execFunc, memory = passData](RenderDevice* rd, CommandList cmdl, PassResources& resources)
 			{
-				execFunc(*(PassData*)memory, rd, cmdl, resources);
+				execFunc(*memory, rd, cmdl, resources);
 			};
 
 			if (preGraphExecuteFunc)
 			{
-				pass->preGraphExecute = [preGraphExecuteFunc, memory = passDataMemory]()
+				pass->preGraphExecute = [preGraphExecuteFunc, memory = passData]()
 				{
-					(*preGraphExecuteFunc)(*(PassData*)memory);
+					(*preGraphExecuteFunc)(*memory);
 				};
 			}
 			
 			if (postGraphExecuteFunc)
 			{
-				pass->postGraphExecute = [postGraphExecuteFunc, memory = passDataMemory]()
+				pass->postGraphExecute = [postGraphExecuteFunc, memory = passData]()
 				{
-					(*postGraphExecuteFunc)(*(PassData*)memory);
+					(*postGraphExecuteFunc)(*memory);
 				};
 			}
 
 			m_passes.push_back(std::move(pass));
+			m_passDataDestructors.push_back([data = passData]()
+				{
+					data->~PassData();
+				});
 		}
 
 		void Clear();
@@ -264,8 +269,9 @@ namespace DOG::gfx
 		u32 m_maxDepth{ 0 };
 		std::vector<DependencyLevel> m_dependencyLevels;
 
-		// Bump allocator which is reset after each graph execution
+		// Bump allocator which is reset after each graph build
 		std::unique_ptr<BumpAllocator> m_passDataAllocator;
+		std::vector<std::function<void()>> m_passDataDestructors;
 
 		CommandList m_cmdl;
 

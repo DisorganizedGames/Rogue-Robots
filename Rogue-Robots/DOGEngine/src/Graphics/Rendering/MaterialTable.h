@@ -27,6 +27,8 @@ namespace DOG::gfx
 			DirectX::SimpleMath::Vector4 emissiveFactor{ 0.f, 0.f, 0.f, 1.f };
 			f32 metallicFactor{ 0.f };
 			f32 roughnessFactor{ 1.f };
+
+			f32 alpha{ 1.f };
 		};
 
 	public:

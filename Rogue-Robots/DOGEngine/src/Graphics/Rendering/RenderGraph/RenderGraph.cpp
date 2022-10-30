@@ -26,6 +26,11 @@ namespace DOG::gfx
 	{
 		m_dirty = true;
 
+		// Clean up pass data
+		for (const auto& df : m_passDataDestructors)
+			df();
+		m_passDataAllocator->Clear();
+		m_passDataDestructors.clear();
 
 		// Clean up views
 		for (const auto& pass : m_sortedPasses)

@@ -817,13 +817,14 @@ namespace DOG::gfx
 				RGResourceView depth;
 				RGResourceView nor;
 				RGResourceView aoOut;
+
+				PassData() { std::cout << "Hello constructor Shadow\n"; }
+				~PassData() { std::cout << "Hello destructor Shadow\n"; }
 			};
 
 			rg.AddPass<PassData>("SSAO Pass",
 				[&](PassData& passData, RenderGraph::PassBuilder& builder)
 				{
-
-
 					// Compute read access
 					passData.depth = builder.ReadResource(RG_RESOURCE(MainDepth), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R32_FLOAT));
@@ -880,6 +881,7 @@ namespace DOG::gfx
 			{
 				RGResourceView input;
 				RGResourceView output;
+
 			};
 
 			rg.AddPass<PassData>("SSAO Blur Vertical",
@@ -922,9 +924,15 @@ namespace DOG::gfx
 							auto yGroup = (u32)std::ceilf(m_renderHeight / 2.f / 8.f);
 							rd->Cmd_Dispatch(cmdl, xGroup, yGroup, 1);
 						}
-
-
 					}
+				},
+				[&](PassData& data)	// Pre
+				{
+					//std::cout << "Pre\n";
+				},
+				[&](PassData& data)	// Post
+				{
+					//std::cout << "Post\n\n";
 				});
 
 			rg.AddPass<PassData>("SSAO Blur Horizontal",

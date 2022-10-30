@@ -8,7 +8,7 @@ namespace DOG::gfx
 		VirtualBumpAllocator() = default;
 		VirtualBumpAllocator(u64 size) : m_size(size) {}
 
-		[[nodiscard]] u64 Allocate(u64 size, u16 alignment = 0)
+		[[nodiscard]] u64 Allocate(u64 size, u16 alignment = 1)
 		{
 			// Bump to aligned address
 			const u64 toAlign = alignment == 0 ? 0 : alignment - (m_head % alignment);
