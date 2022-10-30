@@ -48,7 +48,7 @@ public:
 	ON_UPDATE(DOG::PickupLerpAnimateComponent, DOG::TransformComponent);
 	void OnUpdate(DOG::PickupLerpAnimateComponent& animator, DOG::TransformComponent& transform)
 	{
-		animator.currentOrigin = Lerp(animator.currentOrigin, animator.baseTarget, DOG::Time::DeltaTime() * 0.25);
+		animator.currentOrigin = Lerp(animator.currentOrigin, animator.baseTarget, (float)DOG::Time::DeltaTime() * 0.25f);
 		transform.SetPosition({ transform.GetPosition().x, animator.currentOrigin, transform.GetPosition().z });
 
 		if (abs(transform.GetPosition().y - animator.baseTarget) < 0.60f)
@@ -73,6 +73,35 @@ public:
 	{
 		float t = InverseLerp(iMin, iMax, v);
 		return Lerp(oMin, oMax, t);
+	}
+};
+
+class PickUpTranslateToPlayerSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	#define PICKUP_SPEED 17.0f
+	#define PICKUP_RADIUS 1.3f
+	#define PICKUP_Y_OFFSET 1.0f
+public:
+	SYSTEM_CLASS(PickedUpItemComponent, DOG::TransformComponent, DOG::PickupLerpAnimateComponent);
+	ON_UPDATE_ID(PickedUpItemComponent, DOG::TransformComponent, DOG::PickupLerpAnimateComponent);
+
+	void OnUpdate(DOG::entity itemEntity, PickedUpItemComponent&, DOG::TransformComponent& tc, DOG::PickupLerpAnimateComponent& plac)
+	{
+		auto& mgr = DOG::EntityManager::Get();
+		auto newPos = Vector3::Lerp(plac.origin, plac.target, (float)DOG::Time::DeltaTime() * PICKUP_SPEED);
+		tc.SetPosition(newPos);
+		mgr.Collect<DOG::ThisPlayer, DOG::TransformComponent>().Do([&](DOG::entity player, DOG::ThisPlayer&, DOG::TransformComponent& ptc)
+			{
+				plac.origin = tc.GetPosition();
+				plac.target = { ptc.GetPosition().x, ptc.GetPosition().y - PICKUP_Y_OFFSET, ptc.GetPosition().z };
+				if (Vector3::Distance(tc.GetPosition(), ptc.GetPosition()) < PICKUP_RADIUS)
+				{
+					std::string luaEventName = std::string("ItemPickup") + std::to_string(player);
+					DOG::LuaMain::GetEventSystem()->InvokeEvent(luaEventName, itemEntity);
+					mgr.DeferredEntityDestruction(itemEntity);
+				}
+			});
 	}
 };
 

@@ -148,12 +148,26 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	AddComponent<ShadowReceiverComponent>(passiveItemTest);
 	LuaMain::GetScriptManager()->AddScript(passiveItemTest, "Pickupable.lua");
 
-	CreateTrampolinePickup(Vector3(23, 6.0f, 30));
-	CreateTrampolinePickup(Vector3(20, 6.0f, 35));
-	CreateTrampolinePickup(Vector3(55, 6.0f, 35));
-	CreateTrampolinePickup(Vector3(60, 6.0f, 35));
-	CreateTrampolinePickup(Vector3(47, 6.0f, 35));
-	CreateTrampolinePickup(Vector3(18, 6.0f, 35));
+	CreateTrampolinePickup(Vector3(23.0f, 6.0f, 30.0f));
+	CreateTrampolinePickup(Vector3(20.0f, 6.0f, 35.0f));
+	CreateTrampolinePickup(Vector3(55.0f, 6.0f, 35.0f));
+	CreateTrampolinePickup(Vector3(60.0f, 6.0f, 35.0f));
+	CreateTrampolinePickup(Vector3(47.0f, 6.0f, 35.0f));
+	CreateTrampolinePickup(Vector3(18.0f, 6.0f, 35.0f));
+	CreateMissilePickup(Vector3(15.0f, 6.0f, 17.0f));
+	CreateMissilePickup(Vector3(18.0f, 6.0f, 17.0f));
+	CreateMissilePickup(Vector3(24.0f, 6.0f, 17.0f));
+
+	CreateMissilePickup(Vector3(26.0f, 6.0f, 17.0f));
+	CreateMissilePickup(Vector3(28.0f, 6.0f, 17.0f));
+	CreateMissilePickup(Vector3(30.0f, 6.0f, 17.0f));
+	CreateMissilePickup(Vector3(32.0f, 6.0f, 17.0f));
+	CreateMissilePickup(Vector3(34.0f, 6.0f, 17.0f));
+	CreateMissilePickup(Vector3(36.0f, 6.0f, 17.0f));
+	CreateMissilePickup(Vector3(38.0f, 6.0f, 17.0f));
+	CreateMissilePickup(Vector3(40.0f, 6.0f, 17.0f));
+
+	CreateGrenadePickup(Vector3(42.0f, 6.0f, 17.0f));
 
 	// Setup lights
 	// Default lights
@@ -269,6 +283,48 @@ void TestScene::CreateTrampolinePickup(DirectX::SimpleMath::Vector3 position)
 
 	auto& lerpAnimator = AddComponent<PickupLerpAnimateComponent>(trampolineEntity);
 	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(trampolineEntity).GetPosition().y;
+	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
+}
+
+void TestScene::CreateMissilePickup(DirectX::SimpleMath::Vector3 position)
+{
+	u32 missileID = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/missile.glb");
+
+	entity missileEntity = CreateEntity();
+	auto& bc = AddComponent<BarrelComponent>(missileEntity);
+	bc.type = BarrelComponent::Type::Missile;
+	bc.maximumAmmoCapacityForType = 5;
+	bc.ammoPerPickup = 1;
+	AddComponent<PickupComponent>(missileEntity);
+	AddComponent<ModelComponent>(missileEntity, missileID);
+	AddComponent<TransformComponent>(missileEntity, position).SetScale({ 0.8f, 0.8f, 0.8f });
+	AddComponent<ShadowReceiverComponent>(missileEntity);
+	LuaMain::GetScriptManager()->AddScript(missileEntity, "Pickupable.lua");
+
+	auto& lerpAnimator = AddComponent<PickupLerpAnimateComponent>(missileEntity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(missileEntity).GetPosition().y;
+	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
+}
+
+void TestScene::CreateGrenadePickup(DirectX::SimpleMath::Vector3 position)
+{
+	u32 grenadeID = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/Grenade/Grenade.fbx");
+
+	entity grenadeEntity = CreateEntity();
+	auto& bc = AddComponent<BarrelComponent>(grenadeEntity);
+	bc.type = BarrelComponent::Type::Grenade;
+	bc.maximumAmmoCapacityForType = 10;
+	bc.ammoPerPickup = 2;
+	AddComponent<PickupComponent>(grenadeEntity);
+	AddComponent<ModelComponent>(grenadeEntity, grenadeID);
+	AddComponent<TransformComponent>(grenadeEntity, position).SetScale({ 0.8f, 0.8f, 0.8f });
+	AddComponent<ShadowReceiverComponent>(grenadeEntity);
+	LuaMain::GetScriptManager()->AddScript(grenadeEntity, "Pickupable.lua");
+
+	auto& lerpAnimator = AddComponent<PickupLerpAnimateComponent>(grenadeEntity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(grenadeEntity).GetPosition().y;
 	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
 	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
 }
