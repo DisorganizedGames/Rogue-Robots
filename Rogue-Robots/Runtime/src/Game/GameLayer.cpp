@@ -134,16 +134,16 @@ void GameLayer::StartMainScene()
 			//std::vector<entity> players = SpawnPlayers(Vector3(25.0f, 15.0f, 25.0f), m_nrOfPlayers, 10.f);
 			
 			/************************** tunnel scene *********************************/
-			// room 0: small room - maybe nice entry point?
+			// small room - maybe nice entry point?
 			std::vector<entity> players = SpawnPlayers(Vector3(12.0f, 90.0f, 38.0f), m_nrOfPlayers, 10.f);
 
-			// room 1: a few rooms connected by tunnels
+			// a few rooms connected by tunnels
 			//std::vector<entity> players = SpawnPlayers(Vector3(2.0f, 80.0f, 13.0f), m_nrOfPlayers, 3.f);		// location 1
 
-			// room 2: a larger, more open room
+			// a larger, more open room
 			//std::vector<entity> players = SpawnPlayers(Vector3(106.0f, 80.0f, 31.0f), m_nrOfPlayers, 5.0f); // locaton 1
 			
-			// room 3: huge cave system
+			// huge cave system
 			//std::vector<entity> players = SpawnPlayers(Vector3(76.5f, 56.0f, 68.0f), m_nrOfPlayers, 2.8f); // locaton 1
 			
 			std::vector<entity> flashlights = AddFlashlightsToPlayers(players);
