@@ -49,7 +49,7 @@ local basicBarrelEquiped = true
 --Ammo and reloading 
 local maxAmmo = 30
 local currentAmmo = 30
-local ammoLeft = 90
+local ammoLeft = -1
 local reloadTimer = 0.0
 local reloading = false
 local reloadAngle = 0.0
@@ -123,7 +123,7 @@ function OnUpdate()
 		else
 			barrelComponent = BarrelManager.BasicBarrel()
 			barrelComponentIdx = 0
-			ammoLeft = 90
+			ammoLeft = -1
 			basicBarrelEquiped = true
 		end
 	elseif not Entity:GetAction(EntityID, "SwitchBarrelComponent") then
@@ -248,11 +248,11 @@ function ReloadSystem()
 
 		if basicBarrelEquiped then
 			currentAmmo = maxAmmo
-			ammoLeft = 90
+			ammoLeft = -1
 		end
 	end
 
-	if Entity:GetAction(EntityID, "Reload") and currentAmmo < maxAmmo and ammoLeft > 0 then
+	if Entity:GetAction(EntityID, "Reload") and currentAmmo < maxAmmo and (ammoLeft > 0 or ammoLeft == -1) then
 		reloadTimer = barrelComponent:GetReloadTime() + ElapsedTime
 		reloading = true
 		return true

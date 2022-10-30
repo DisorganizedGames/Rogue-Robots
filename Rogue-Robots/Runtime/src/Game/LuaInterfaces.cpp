@@ -1,4 +1,4 @@
-#include "LuaInterfaces.h"
+﻿#include "LuaInterfaces.h"
 #include "GameComponent.h"
 #include "ExplosionSystems.h"
 
@@ -816,10 +816,16 @@ void GameInterface::AmmoUI(DOG::LuaContext* context)
 			ImGui::Text("Ammo:");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
-			std::string currentAmmo = std::to_string((long long)context->GetInteger());
-			std::string ammoLeft = std::to_string((long long)context->GetInteger());
-			std::string ammoText = currentAmmo + " / " + ammoLeft;
+
+			//Set ammo text
+			std::string currentAmmoText = std::to_string((long long)context->GetInteger());
+			int ammoLeft = context->GetInteger();
+			std::string ammoLeftText = "INF";
+			if (ammoLeft > -1)
+				ammoLeftText = std::to_string((long long)ammoLeft);
+			std::string ammoText = currentAmmoText + " / " + ammoLeftText;
 			ImGui::Text(ammoText.c_str());
+
 			ImGui::PopStyleColor(2);
 			//ImGui::PopFont();
 			ImGui::EndTable();
