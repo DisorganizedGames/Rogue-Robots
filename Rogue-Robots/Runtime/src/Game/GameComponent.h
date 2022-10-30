@@ -117,7 +117,7 @@ struct PassiveItemComponent {
 	Type type;
 };
 
-//The active item that currently resided in inventory
+//The active item that currently resides in inventory
 struct ActiveItemComponent
 {
 	enum class Type{ Trampoline = 0 };
@@ -135,6 +135,28 @@ struct EligibleActiveItemComponent
 {
 	DOG::entity activeItemEntity;
 	ActiveItemComponent::Type type;
+};
+
+//An item that has been just clicked for being picked up will have this component!
+struct PickedUpItemComponent
+{
+	DOG::entity itemEntity{DOG::NULL_ENTITY};
+};
+
+struct BarrelComponent
+{
+	enum class Type { Grenade = 0, Missile };
+
+	Type type;
+	u32 maximumAmmoCapacityForType;
+	u32 ammoPerPickup;
+	u32 currentAmmoCount;
+};
+
+struct EligibleBarrelComponent
+{
+	DOG::entity barrelComponentEntity;
+	BarrelComponent::Type type;
 };
 
 struct CreateAndDestroyEntityComponent

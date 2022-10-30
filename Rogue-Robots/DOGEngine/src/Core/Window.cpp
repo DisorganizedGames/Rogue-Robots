@@ -15,6 +15,7 @@ namespace DOG
 		Vector2u dimensions;
 		WindowMode mode;
 		CursorMode cursorMode = CursorMode::Visible;
+		ImFont* imguiFont;
 	};
 	static WindowData s_windowData = {};
 	static std::optional<std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)>> s_wmHook;
@@ -336,6 +337,16 @@ namespace DOG
 		return s_windowData.cursorMode;
 	}
 
+	void Window::SetFont(ImFont* pFont) noexcept
+	{
+		s_windowData.imguiFont = pFont;
+	}
+
+	ImFont* Window::GetFont() noexcept
+	{
+		ASSERT(s_windowData.imguiFont, "Font pointer is not valid.");
+		return s_windowData.imguiFont;
+	}
 
 	void MapLeftRightShiftAndControl(WPARAM& wParam, LPARAM lParam)
 	{
