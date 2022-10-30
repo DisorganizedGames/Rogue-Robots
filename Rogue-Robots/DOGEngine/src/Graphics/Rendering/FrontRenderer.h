@@ -31,6 +31,10 @@ namespace DOG::gfx
 		// Gathers and updates any neccessary world state rendering this frame
 		void Update(f32);
 
+		void UpdateLights();
+		void SetRenderCamera();
+		void GatherShadowCasters();
+
 	private:
 		Renderer* m_renderer{ nullptr };
 		

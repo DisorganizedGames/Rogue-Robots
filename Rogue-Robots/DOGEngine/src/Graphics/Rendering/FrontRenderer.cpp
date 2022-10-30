@@ -43,42 +43,7 @@ namespace DOG::gfx
 
 	void FrontRenderer::Update(f32)
 	{
-		// Update lights
-		EntityManager::Get().Collect<DirtyComponent, PointLightComponent>().Do([](entity, DirtyComponent& dirty, PointLightComponent& light) {
-			light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged); });
-
-		EntityManager::Get().Collect<DirtyComponent, SpotLightComponent>().Do([](entity, DirtyComponent& dirty, SpotLightComponent& light) {
-			light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged) || dirty.IsDirty(DirtyComponent::rotationChanged); });
-
-		EntityManager::Get().Collect<TransformComponent, SpotLightComponent>().Do([&](entity, TransformComponent tr, SpotLightComponent& light)
-			{
-				if (light.dirty)
-				{
-					SpotLightDesc d{};
-					d.position = tr.GetPosition();
-					d.color = light.color;
-					d.cutoffAngle = light.cutoffAngle;
-					d.direction = light.direction;
-					d.strength = light.strength;
-					d.id = light.id;
-					LightManager::Get().UpdateSpotLight(light.handle, d);
-					light.dirty = false;
-				}
-			});
-
-		EntityManager::Get().Collect<TransformComponent, PointLightComponent>().Do([&](entity, TransformComponent tr, PointLightComponent& light)
-			{
-				if (light.dirty)
-				{
-					PointLightDesc d{};
-					d.position = tr.GetPosition();
-					d.color = light.color;
-					d.strength = light.strength;
-					LightManager::Get().UpdatePointLight(light.handle, d);
-					light.dirty = false;
-				}
-			});
-
+		UpdateLights();
 
 		EntityManager::Get().Collect<TransformComponent, SubmeshRenderer>().Do([&](entity e, TransformComponent& tr, SubmeshRenderer& sr)
 			{
@@ -153,6 +118,55 @@ namespace DOG::gfx
 				}
 			});
 
+
+		SetRenderCamera();
+		GatherShadowCasters();
+
+		// Update internal data structures
+		m_renderer->Update(0.f);
+	}
+
+	void FrontRenderer::UpdateLights()
+	{
+		// Update lights
+		EntityManager::Get().Collect<DirtyComponent, PointLightComponent>().Do([](entity, DirtyComponent& dirty, PointLightComponent& light) {
+			light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged); });
+
+		EntityManager::Get().Collect<DirtyComponent, SpotLightComponent>().Do([](entity, DirtyComponent& dirty, SpotLightComponent& light) {
+			light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged) || dirty.IsDirty(DirtyComponent::rotationChanged); });
+
+		EntityManager::Get().Collect<TransformComponent, SpotLightComponent>().Do([&](entity, TransformComponent tr, SpotLightComponent& light)
+			{
+				if (light.dirty)
+				{
+					SpotLightDesc d{};
+					d.position = tr.GetPosition();
+					d.color = light.color;
+					d.cutoffAngle = light.cutoffAngle;
+					d.direction = light.direction;
+					d.strength = light.strength;
+					d.id = light.id;
+					LightManager::Get().UpdateSpotLight(light.handle, d);
+					light.dirty = false;
+				}
+			});
+
+		EntityManager::Get().Collect<TransformComponent, PointLightComponent>().Do([&](entity, TransformComponent tr, PointLightComponent& light)
+			{
+				if (light.dirty)
+				{
+					PointLightDesc d{};
+					d.position = tr.GetPosition();
+					d.color = light.color;
+					d.strength = light.strength;
+					LightManager::Get().UpdatePointLight(light.handle, d);
+					light.dirty = false;
+				}
+			});
+	}
+
+	void FrontRenderer::SetRenderCamera()
+	{
 		CameraComponent cameraComponent;
 		EntityManager::Get().Collect<CameraComponent>().Do([&](CameraComponent& c)
 			{
@@ -165,7 +179,10 @@ namespace DOG::gfx
 		auto& proj = (DirectX::XMMATRIX&)cameraComponent.projMatrix;
 		m_renderer->SetMainRenderCamera(cameraComponent.viewMatrix, &proj);
 
+	}
 
+	void FrontRenderer::GatherShadowCasters()
+	{
 		// Collect this frames spotlight shadow casters
 		m_activeSpotlightShadowCasters.clear();
 		m_prevSpotlightShadowCasters = std::move(m_currSpotlightShadowCasters);
@@ -174,12 +191,14 @@ namespace DOG::gfx
 			{
 				m_currSpotlightShadowCasters.insert(spotlightEntity);
 			});
+
 		// Get active casters
 		std::set_intersection(
 			m_currSpotlightShadowCasters.cbegin(), m_currSpotlightShadowCasters.cend(),
 			m_prevSpotlightShadowCasters.cbegin(), m_prevSpotlightShadowCasters.cend(),
 			std::inserter(m_activeSpotlightShadowCasters, m_activeSpotlightShadowCasters.begin()));
 
+		// Update renderer shadow map capacity
 		if (m_activeSpotlightShadowCasters.size() > m_shadowMapCapacity)
 		{
 			std::cout << "dirty! went from " << m_shadowMapCapacity << " to " << m_activeSpotlightShadowCasters.size() << "\n";
@@ -187,8 +206,19 @@ namespace DOG::gfx
 			// set renderer to dirty
 		}
 
-		// Finalize updates
-		m_renderer->Update(0.f);
+		/*
+			Renderer->AddShadowTargetSingle(view, proj);		// Designed for single draw targets (i.e spotlight/area light)
+			Renderer->AddShadowTargetCube(array<view, proj>)	// Designed for omnidirectional shadows (i.e point light)
+		
+		*/
+		// Set active spotlight shadow casters
+		{
+			for (const auto& e : m_activeSpotlightShadowCasters)
+			{
+				auto& cc = EntityManager::Get().GetComponent<CameraComponent>(e);
+				// set cc to Renderer chronologically
+			}
+		}
 	}
 
 	void FrontRenderer::Render(f32)
