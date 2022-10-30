@@ -6,7 +6,8 @@ using namespace DOG;
 void AgentSeekPlayerSystem::OnUpdate(entity e, AgentSeekPlayerComponent& seek, AgentIdComponent& agent, TransformComponent& transform)
 {
 	EntityManager& eMan = EntityManager::Get();
-	constexpr float SEEK_RADIUS_SQUARED = 256.0f;
+	constexpr float SEEK_RADIUS_METERS = 10.0f;
+	constexpr float SEEK_RADIUS_SQUARED = SEEK_RADIUS_METERS * SEEK_RADIUS_METERS;
 	struct PlayerDist
 	{ 
 		entity entityID = NULL_ENTITY;
@@ -210,14 +211,14 @@ void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComp
 	
 	if (hp.hp <= 0 || trans.GetPosition().y < -10.0f)
 	{
-		#if defined _DEBUG
+		//#if defined _DEBUG
 		EntityManager& eMan = EntityManager::Get();
 		std::cout << "Agent " << eMan.GetComponent<AgentIdComponent>(e).id;
 		if (hp.hp <= 0)
 			std::cout << " killed! HP: " << hp.hp << std::endl;
 		else
 			std::cout << " hopelessly lost in void at position: (" << trans.GetPosition().x << ", " << trans.GetPosition().y << ", " << trans.GetPosition().z << ")" << std::endl;
-		#endif
+		//#endif
 		
 		// Send network signal to destroy agents
 		AgentManager::DestroyLocalAgent(e);
@@ -234,7 +235,7 @@ void AgentFrostTimerSystem::OnUpdate(DOG::entity e, AgentMovementComponent& move
 	}
 }
 
-void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro)
+void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, AgentIdComponent& aggroAgent)
 {
 	constexpr int minutes = 4;
 	constexpr f64 maxAggroTime = minutes * 60.0;
@@ -246,9 +247,9 @@ void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro)
 	else
 	{
 		em.Collect<AgentIdComponent>().Do(
-			[&](entity other, AgentIdComponent&)
+			[&](entity other, AgentIdComponent& passiveAgent)
 			{
-				if (!em.HasComponent<AgentAggroComponent>(other))
+				if (passiveAgent.type == aggroAgent.type && !em.HasComponent<AgentAggroComponent>(other))
 					em.AddComponent<AgentAggroComponent>(other);
 			}
 		);

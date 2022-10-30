@@ -136,3 +136,18 @@ struct ExplosionEffectComponent
 	float shrinkTime = -1.0f;
 	DirectX::SimpleMath::Vector3 color;
 };
+
+
+/**********************************************************
+
+			Temporary Components for MVP
+
+***********************************************************/
+
+struct PlayersRoom0Component {};
+
+struct PlayersRoom1Component {};
+
+struct PlayersRoom2Component {};
+
+struct PlayersRoom3Component {};
