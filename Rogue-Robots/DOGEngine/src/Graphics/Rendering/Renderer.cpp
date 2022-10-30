@@ -443,26 +443,6 @@ namespace DOG::gfx
 		m_animatedDraws.push_back(sub);
 	}
 
-	void DOG::gfx::Renderer::SubmitShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
-	{
-		RenderSubmission sub{};
-		sub.mesh = mesh;
-		sub.submesh = submesh;
-		sub.mat = material;
-		sub.world = world;
-		m_shadowSubmissions.push_back(sub);
-	}
-
-	void DOG::gfx::Renderer::SubmitShadowMeshNoFaceCulling(u32 shadowID, Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
-	{
-		RenderSubmission sub{};
-		sub.mesh = mesh;
-		sub.submesh = submesh;
-		sub.mat = material;
-		sub.world = world;
-		m_shadowSubmissionsNoCull.push_back(sub);
-	}
-
 	void DOG::gfx::Renderer::SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world)
 	{
 		RenderSubmission sub{};
@@ -473,6 +453,7 @@ namespace DOG::gfx
 		const auto& caster = m_activeShadowCasters[shadowID];
 		m_singleSidedShadowDraws[caster.singleSidedBucket].push_back(sub);
 	}
+
 	void DOG::gfx::Renderer::SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world)
 	{
 		RenderSubmission sub{};
@@ -682,20 +663,9 @@ namespace DOG::gfx
 				perLightData.view = caster.viewMat;
 				perLightData.proj = caster.projMat;
 				std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
-				TransformComponent camWorld;
-				camWorld.worldMatrix = caster.viewMat.Invert();
-				auto&& cull = [camForward = camWorld.GetForward(), camPos = camWorld.GetPosition()](DirectX::SimpleMath::Vector3 p) {
-					auto d = p - camPos;
-					if (d.LengthSquared() < 64) return false;
-					if (d.LengthSquared() > 80 * 80) return true;
-					d.Normalize();
-					return camForward.Dot(d) < 0.2f;
-				};
 
 				for (const auto& sub : submissions)
 				{
-					if (cull({ sub.world(3, 0), sub.world(3, 1), sub.world(3, 2) })) 
-						continue;
 					auto perDrawHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
 					PerDrawData perDrawData{};
 					perDrawData.world = sub.world;
@@ -1168,8 +1138,6 @@ namespace DOG::gfx
 		m_animatedDraws.clear();
 		m_wireframeDraws.clear();
 		m_noCullWireframeDraws.clear();
-		m_shadowSubmissions.clear();
-		m_shadowSubmissionsNoCull.clear();
 		m_activeSpotlights.clear();
 
 		m_activeShadowCasters.clear();

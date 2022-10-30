@@ -85,9 +85,6 @@ namespace DOG::gfx
 
 		void SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 
-		void SubmitShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
-		void SubmitShadowMeshNoFaceCulling(u32 shadowID, Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
-
 		void SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world);
 		void SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world);
 
@@ -157,13 +154,11 @@ namespace DOG::gfx
 		std::unique_ptr<LightTable> m_globalLightTable;
 
 
-		std::vector<RenderSubmission> m_submissions;		// temporary
-		std::vector<RenderSubmission> m_noCullSubmissions;	// temporary
-		std::vector<RenderSubmission> m_animatedDraws;		// temp
-		std::vector<RenderSubmission> m_wireframeDraws;		// temp
+		std::vector<RenderSubmission> m_submissions;				// temporary
+		std::vector<RenderSubmission> m_noCullSubmissions;			// temporary
+		std::vector<RenderSubmission> m_animatedDraws;				// temp
+		std::vector<RenderSubmission> m_wireframeDraws;				// temp
 		std::vector<RenderSubmission> m_noCullWireframeDraws;		// temp
-		std::vector<RenderSubmission> m_shadowSubmissions;	// maybe temp, also? (Emil F)
-		std::vector<RenderSubmission> m_shadowSubmissionsNoCull;	// maybe temp, also? (Emil F)
 
 		u32 m_nextSingleSidedShadowBucket{ 0 };
 		u32 m_nextDoubleSidedShadowBucket{ 0 };

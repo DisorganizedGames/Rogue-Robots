@@ -104,7 +104,6 @@ namespace DOG::gfx
 				if (EntityManager::Get().HasComponent<ShadowReceiverComponent>(e))
 				{
 					m_singleSidedShadowed.push_back({ sr.mesh, 0, tr });
-					m_renderer->SubmitShadowMesh(0, sr.mesh, 0, sr.material, tr);
 				}
 				if (sr.dirty)
 					CustomMaterialManager::Get().UpdateMaterial(sr.material, sr.materialDesc);
@@ -126,12 +125,9 @@ namespace DOG::gfx
 				};
 
 				if (cull({ transformC.worldMatrix(3, 0), transformC.worldMatrix(3, 1), transformC.worldMatrix(3, 2) }))
-				{
 					return;
-				}
-
 				
-				MINIPROFILE_NAMED("RenderSystem")
+				MINIPROFILE_NAMED("Collect Draw Calls")
 				ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 				if (model && model->gfxModel)
 				{
@@ -141,18 +137,11 @@ namespace DOG::gfx
 						for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
 						{
 							if (EntityManager::Get().HasComponent<ModularBlockComponent>(e))
-							{
 								m_doubleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC, false });
-								m_renderer->SubmitShadowMeshNoFaceCulling(0, model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
-							}
 							else
-							{
 								m_singleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC });
-								m_renderer->SubmitShadowMesh(0, model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
-							}
 						}
 					}
-
 
 					if (EntityManager::Get().HasComponent<ModularBlockComponent>(e))
 					{
@@ -219,14 +208,7 @@ namespace DOG::gfx
 		m_activeSpotlightShadowCasters.clear();
 		EntityManager::Get().Collect<ShadowCasterComponent, SpotLightComponent, CameraComponent, TransformComponent>().Do([&](
 			entity spotlightEntity, ShadowCasterComponent& sc, SpotLightComponent& slc, CameraComponent& cc, TransformComponent& tc)
-			{
-				/*
-					@todo:
-						Add ShadowID instead of entity here
-				
-				*/
-				//m_activeSpotlightShadowCasters.push_back(spotlightEntity);
-				
+			{				
 				// Register this frames spotlights
 				Renderer::ActiveSpotlight spotData{};
 				spotData.shadow = Renderer::ShadowCaster();
