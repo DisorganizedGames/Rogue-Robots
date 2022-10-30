@@ -343,15 +343,23 @@ PS_OUT main(VS_OUT input)
         float theta = dot(normalize(perSpotlightData.spotlightArray[k].direction), lightToPosDir);
     
         float contrib = 0.f;
-        if (acos(theta) > perSpotlightData.spotlightArray[k].cutoffAngle * 3.1415f / 180.f)
+        float cutoffAngleRad = perSpotlightData.spotlightArray[k].cutoffAngle * 3.1415f / 180.f;
+                
+        //contrib = lerp(0.0, 1.0, saturate(cutoffAngleRad / acos(theta)));
+        
+        
+        if (acos(theta) > cutoffAngleRad)
             contrib = 0.0f;
         else
-            contrib = 1.f;
+        {
+            contrib = smoothstep(0.0, 1.0, pow(saturate(abs(cutoffAngleRad - acos(theta))), 0.35));
+        }
         
         // Lighting falloff by distance
-        float SPOTLIGHT_DISTANCE = 100.f;
+        //float SPOTLIGHT_DISTANCE = 100.f;
+        float SPOTLIGHT_DISTANCE = 70.f;
         float distanceFallOffFactor = (1.f - clamp(length(lightToPos), 0.f, SPOTLIGHT_DISTANCE) / SPOTLIGHT_DISTANCE);
-        distanceFallOffFactor *= distanceFallOffFactor; // quadratic falloff
+        distanceFallOffFactor *= distanceFallOffFactor; // quadratic falloff ( just like real light :) )
         contrib *= distanceFallOffFactor;
             
         
