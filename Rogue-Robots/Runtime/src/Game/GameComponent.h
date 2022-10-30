@@ -116,3 +116,18 @@ struct ExplosionEffectComponent
 	float growTime = -1.0f; 
 	float shrinkTime = -1.0f;
 };
+
+
+/**********************************************************
+
+			Temporary Components for MVP
+
+***********************************************************/
+
+struct PlayersRoom0Component {};
+
+struct PlayersRoom1Component {};
+
+struct PlayersRoom2Component {};
+
+struct PlayersRoom3Component {};

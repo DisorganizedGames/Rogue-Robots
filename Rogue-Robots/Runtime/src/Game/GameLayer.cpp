@@ -126,16 +126,26 @@ void GameLayer::StartMainScene()
 	m_mainScene->SetUpScene({
 		[this]() 
 		{
-			// default scene
+			/************************** default scene *********************************/
 			//std::vector<entity> players = SpawnPlayers(Vector3(25.0f, 15.0f, 25.0f), m_nrOfPlayers, 10.f);
 			
-			// tunnel scene
-			// small room
-			//std::vector<entity> players = SpawnPlayers(Vector3(12.0f, 90.0f, 38.0f), m_nrOfPlayers, 10.f);
+			/************************** tunnel scene *********************************/
+			// small room - maybe nice entry point?
+			std::vector<entity> players = SpawnPlayers(Vector3(12.0f, 90.0f, 38.0f), m_nrOfPlayers, 10.f);
+			EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](entity e, PlayerStatsComponent&)
+				{
+					EntityManager::Get().AddComponent<PlayersRoom0Component>(e);
+				});
+
 			// a few rooms connected by tunnels
 			//std::vector<entity> players = SpawnPlayers(Vector3(2.0f, 80.0f, 13.0f), m_nrOfPlayers, 3.f);		// location 1
-			//std::vector<entity> players = SpawnPlayers(Vector3(58.0f, 80.0f, 40.0f), m_nrOfPlayers, 4.0f);	// location 2
-			std::vector<entity> players = SpawnPlayers(Vector3(68.0f, 78.0f, 27.0f), m_nrOfPlayers, 3.0f); // locaton 3
+
+			// a larger, more open room
+			//std::vector<entity> players = SpawnPlayers(Vector3(106.0f, 80.0f, 31.0f), m_nrOfPlayers, 5.0f); // locaton 1
+			
+			// huge cave system
+			//std::vector<entity> players = SpawnPlayers(Vector3(76.5f, 56.0f, 68.0f), m_nrOfPlayers, 2.8f); // locaton 1
+			
 			std::vector<entity> flashlights = AddFlashlightsToPlayers(players);
 
 			//For now, just combine them, using the player vector:
@@ -143,16 +153,31 @@ void GameLayer::StartMainScene()
 			return players;
 		},
 		[this]() { return LoadLevel(); },
-			// default scene
+			/************************** default scene *********************************/
 			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(20, 20, 50), 10, 3.0f); },
 			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(30, 20, 50), 10, 3.0f); },
 			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(40, 20, 50), 10, 3.0f); },
 
-			// tunnel scene
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(2.f, 80.f, 13.f), 3, 5.f); },			// location 1
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(58.f, 80.f, 40.f), 3, 2.5f); },		// location 2
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(68.f, 78.f, 27.f), 4, 5.f); },		// location 3
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(37.f, 80.f, 12).f, 7, 5.f); },		// location 4
+			/************************** tunnel scene *********************************/
+			// a few rooms connected by tunnels
+			[this]() { return SpawnAgents(EntityTypes::Scorpio1, Vector3(58.f, 80.f, 40.f), 3, 2.5f); },		// location 2
+			[this]() { return SpawnAgents(EntityTypes::Scorpio2, Vector3(68.f, 78.f, 27.f), 4, 5.f); },		// location 3
+			[this]() { return SpawnAgents(EntityTypes::Scorpio3, Vector3(37.f, 80.f, 8.f), 7, 3.f); },		// location 4
+
+			// a larger, more open room
+			[this]() { return SpawnAgents(EntityTypes::Scorpio4, Vector3(78.f, 80.f, 63.f), 4, 2.5f); },		// location 2
+			[this]() { return SpawnAgents(EntityTypes::Scorpio4, Vector3(104.f, 80.f, 65.f), 5, 4.f); },		// location 3
+			[this]() { return SpawnAgents(EntityTypes::Scorpio5, Vector3(124.f, 80.f, 65.f), 4, 1.5f); },		// location 4
+			[this]() { return SpawnAgents(EntityTypes::Scorpio5, Vector3(124.f, 80.f, 24.f), 2, 1.f); },		// location 5
+
+			// huge cave system
+			[this]() { return SpawnAgents(EntityTypes::Scorpio6, Vector3(90.f, 55.f, 41.f), 8, 5.f); },			// location 2
+			[this]() { return SpawnAgents(EntityTypes::Scorpio7, Vector3(135.f, 58.f, 48.f), 15, 7.5f); },		// location 3
+			[this]() { return SpawnAgents(EntityTypes::Scorpio9, Vector3(80.f, 55.f, 5.5f), 10, 2.5f); },		// location 4
+			[this]() { return SpawnAgents(EntityTypes::Scorpio10, Vector3(104.5f, 53.f, 5.f), 2, .5f); },		// location 5
+			[this]() { return SpawnAgents(EntityTypes::Scorpio10, Vector3(109.5f, 53.f, 5.f), 2, .5f); },		// location 6
+			[this]() { return SpawnAgents(EntityTypes::Scorpio10, Vector3(104.5f, 53.f, 5.f), 2, .5f); },		// location 7
+			[this]() { return SpawnAgents(EntityTypes::Scorpio10, Vector3(119.f, 53.f, 5.f), 2, .5f); },		// location 8
 		});
 
 	m_player = std::make_shared<MainPlayer>();
@@ -170,6 +195,53 @@ void GameLayer::CloseMainScene()
 
 void GameLayer::EvaluateWinCondition()
 {
+	/*if (ImGui::Button("Win"))
+	{
+		m_gameState = GameState::Won;
+	}*/
+	bool nextLevel = false;
+		EntityManager::Get().Collect<AgentIdComponent>().Do([&](AgentIdComponent& agent)
+		{
+			nextLevel = nextLevel ||
+				agent.type == EntityTypes::Scorpio1 ||
+				agent.type == EntityTypes::Scorpio2 ||
+				agent.type == EntityTypes::Scorpio3;
+		});
+	if (nextLevel)
+		EntityManager::Get().Collect<PlayersRoom1Component, NetworkPlayerComponent, DOG::TransformComponent>().Do(
+			[&](entity e, PlayersRoom1Component&, NetworkPlayerComponent& player, DOG::TransformComponent& trans)
+			{
+				constexpr f32 spread = 3.f;
+				Vector3 offset = {
+				spread * (player.playerId % 2) - (spread / 2.f),
+				0,
+				spread * (player.playerId / 2) - (spread / 2.f),
+				};
+				trans.SetPosition(Vector3(2.0f, 80.0f, 13.0f) - offset);
+				EntityManager::Get().RemoveComponent<PlayersRoom1Component>(e);
+				EntityManager::Get().AddComponent<PlayersRoom2Component>(e);
+			});
+
+	nextLevel = false;
+	EntityManager::Get().Collect<PlayersRoom0Component, DOG::TransformComponent>().Do([&](entity e, PlayersRoom0Component&, DOG::TransformComponent& trans)
+		{
+			nextLevel = nextLevel || trans.GetPosition().y < 78.f;
+		});
+	if (nextLevel)
+		EntityManager::Get().Collect<PlayersRoom0Component, NetworkPlayerComponent, DOG::TransformComponent>().Do(
+			[&](entity e, PlayersRoom0Component&, NetworkPlayerComponent& player, DOG::TransformComponent& trans)
+			{
+				constexpr f32 spread = 10.f;
+				Vector3 offset = {
+				spread * (player.playerId % 2) - (spread / 2.f),
+				0,
+				spread * (player.playerId / 2) - (spread / 2.f),
+				};
+				trans.SetPosition(Vector3(2.0f, 80.0f, 13.0f) - offset);
+				EntityManager::Get().RemoveComponent<PlayersRoom0Component>(e);
+				EntityManager::Get().AddComponent<PlayersRoom1Component>(e);
+			});
+
 	bool agentsAlive = false;
 	EntityManager::Get().Collect<AgentIdComponent>().Do([&agentsAlive](AgentIdComponent&) { agentsAlive = true; });
 
