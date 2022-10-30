@@ -128,7 +128,7 @@ void AgentAttackSystem::OnUpdate(entity e, AgentAttackComponent& attack, AgentSe
 		else if (attack.coolDown <= attack.elapsedTime)
 		{
 			// TODO: update a PlayerHitComponent instead and let a PlayerManager handle HP adjustments for players
-			if (attack.radiusSquared < seek.squaredDistance)
+			if (seek.squaredDistance < attack.radiusSquared)
 			{ 
 				PlayerStatsComponent& player = EntityManager::Get().GetComponent<PlayerStatsComponent>(seek.entityID);
 				player.health -= attack.damage;
