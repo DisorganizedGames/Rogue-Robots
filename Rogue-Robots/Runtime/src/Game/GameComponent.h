@@ -56,6 +56,7 @@ struct InputController
 	bool switchBarrelComp = false;
 	bool switchMagazineComp = false;
 	bool activateActiveItem = false;
+	bool reload = false;
 };
 
 struct DoorComponent

@@ -1,13 +1,6 @@
 require("VectorMath")
 require("MiscComponents")
 
---Tweakable values.
-local MaxAmmo = 10
-local InitialBulletSpeed = 75.0
-local ShootCooldown = 0.1
-local BulletDespawnDist = 50
-local BulletSize = Vector3.New(3, 3, 3)
-
 --Managers for objects & component functions.
 local ObjectManager = require("Object")
 local BarrelManager = require("BarrelComponents")
@@ -34,7 +27,7 @@ local bulletTemplate = {
 	entity = 0,					-- ID used by the ECS.
 	forward = {},				-- Vector3 that describes the direction of the bullet.
 	startPos = {},				-- Vector3 that describes the initial spawn position of the bullet.
-	speed = InitialBulletSpeed, -- Float that describes the current speed of the bullet. 
+	speed = 0, -- Float that describes the current speed of the bullet. 
 	lifetime = 0,				-- Counter to know when to kill the bullet entity.
 	size = {},					-- Vector3 that describes the scale of the bullet.
 }
@@ -51,6 +44,15 @@ local gunEntity = {
 	position = Vector3.Zero(),
 	rotation = Vector3.Zero(),
 }
+
+local basicBarrelEquiped = true
+--Ammo and reloading 
+local maxAmmo = 30
+local currentAmmo = 30
+local ammoLeft = -1
+local reloadTimer = 0.0
+local reloading = false
+local reloadAngle = 0.0
 
 function OnStart()
 	gunModel = Asset:LoadModel("Assets/Models/Rifle/scene.gltf")
@@ -111,12 +113,18 @@ function OnUpdate()
 		if barrelComponentIdx == 0 then
 			barrelComponent = BarrelManager.Grenade() 
 			barrelComponentIdx = 1
+			ammoLeft = 15
+			basicBarrelEquiped = false
 		elseif barrelComponentIdx == 1 then
 			barrelComponent = BarrelManager.Missile()
 			barrelComponentIdx = 2
+			ammoLeft = 6
+			basicBarrelEquiped = false
 		else
 			barrelComponent = BarrelManager.BasicBarrel()
 			barrelComponentIdx = 0
+			ammoLeft = -1
+			basicBarrelEquiped = true
 		end
 	elseif not Entity:GetAction(EntityID, "SwitchBarrelComponent") then
 		barrelSwitched = false
@@ -137,6 +145,10 @@ function OnUpdate()
 
 	NormalBulletUpdate()
 
+	if (ReloadSystem()) then
+		return
+	end
+
 	-- Gun firing logic
 	-- Returns a table of bullets
 	local newBullets = miscComponent:Update(EntityID)
@@ -149,7 +161,9 @@ function OnUpdate()
 		if barrelComponent.CreateBullet then
 			createBullet = barrelComponent:CreateBullet()
 		end
-		if createBullet then
+		if createBullet and currentAmmo > 0 then
+			currentAmmo = currentAmmo - 1
+
 			CreateBulletEntity(newBullets[i])
 			barrelComponent:Update(gunEntity, EntityID, newBullets[i])
 			--Keep track of which barrel created the bullet
@@ -190,6 +204,61 @@ function CreateBulletEntity(bullet)
 	Entity:SetRotationForwardUp(bullet.entity, newForward, up)
 
 	Entity:ModifyComponent(bullet.entity, "Transform", bullet.startPos, 1)
+end
+
+function ReloadSystem()
+	if (Entity:HasComponent(EntityID, "ThisPlayer")) then
+		Game:AmmoUI(currentAmmo, ammoLeft)
+	end
+
+	local oldMaxAmmo = maxAmmo
+	maxAmmo = barrelComponent:GetMaxAmmo()
+	if (maxAmmo ~= oldMaxAmmo) then
+		currentAmmo = maxAmmo
+	end
+
+	--When reloading
+	if reloadTimer >= ElapsedTime then
+		--Reloading Animation 
+		reloadAngle = reloadAngle + 2.0 * math.pi * DeltaTime / barrelComponent:GetReloadTime()
+
+		local gunUp = Vector3.FromTable(Entity:GetUp(gunEntity.entityID))
+		local gunForward = Vector3.FromTable(Entity:GetForward(gunEntity.entityID))
+		local gunRight = Vector3.FromTable(Entity:GetRight(gunEntity.entityID))
+
+		local newGunForward = RotateAroundAxis(gunForward, gunRight, reloadAngle)
+		local newGunUp = RotateAroundAxis(gunUp, gunRight, reloadAngle)
+
+		Entity:SetRotationForwardUp(gunEntity.entityID, newGunForward, newGunUp)
+		Entity:ModifyComponent(gunEntity.entityID, "Transform", gunEntity.position, 1)
+
+		return true
+	end
+	reloadAngle = 0.0
+
+	if reloading then
+		reloading = false
+		local reloadAmount = maxAmmo - currentAmmo
+		ammoLeft = ammoLeft - reloadAmount
+		if ammoLeft < 0 then
+			reloadAmount = ammoLeft + reloadAmount
+			ammoLeft = 0
+		end
+		currentAmmo = currentAmmo + reloadAmount
+
+		if basicBarrelEquiped then
+			currentAmmo = maxAmmo
+			ammoLeft = -1
+		end
+	end
+
+	if Entity:GetAction(EntityID, "Reload") and currentAmmo < maxAmmo and (ammoLeft > 0 or ammoLeft == -1) then
+		reloadTimer = barrelComponent:GetReloadTime() + ElapsedTime
+		reloading = true
+		return true
+	end
+
+	return false
 end
 
 --If there is not barrel component start.

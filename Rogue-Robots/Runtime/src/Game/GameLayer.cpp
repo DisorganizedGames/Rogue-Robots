@@ -35,6 +35,7 @@ GameLayer::GameLayer() noexcept
 	m_keyBindingDescriptions.emplace_back("wasd", "walk");
 	m_keyBindingDescriptions.emplace_back("space", "jump");
 	m_keyBindingDescriptions.emplace_back("lmb", "shoot");
+	m_keyBindingDescriptions.emplace_back("r", "reload");
 	m_keyBindingDescriptions.emplace_back("g", "active item");
 	m_keyBindingDescriptions.emplace_back("f", "flash light");
 	m_keyBindingDescriptions.emplace_back("m", "gun effect");
@@ -480,6 +481,7 @@ void GameLayer::RegisterLuaInterfaces()
 
 	luaInterface = global->CreateLuaInterface("GameInterface");
 	luaInterface.AddFunction<GameInterface, &GameInterface::ExplosionEffect>("ExplosionEffect");
+	luaInterface.AddFunction<GameInterface, &GameInterface::AmmoUI>("AmmoUI");
 
 	global->SetLuaInterface(luaInterface);
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Game", "GameInterface");
@@ -593,6 +595,8 @@ void GameLayer::Input(DOG::Key key)
 				inputC.switchMagazineComp = true;
 			if (key == DOG::Key::G)
 				inputC.activateActiveItem = true;
+			if (key == DOG::Key::R)
+				inputC.reload = true;
 	});
 }
 
@@ -620,6 +624,8 @@ void GameLayer::Release(DOG::Key key)
 				inputC.switchMagazineComp = false;
 			if (key == DOG::Key::G)
 				inputC.activateActiveItem = false;
+			if (key == DOG::Key::R)
+				inputC.reload = false;
 		});
 }
 
