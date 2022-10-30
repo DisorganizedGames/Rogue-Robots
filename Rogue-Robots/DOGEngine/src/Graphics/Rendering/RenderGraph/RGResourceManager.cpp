@@ -250,7 +250,9 @@ namespace DOG::gfx
 			const auto parentEnd = parentLifetime.second;
 			const auto aliasBegin = thisLifetime.first;
 			
-			if (parentEnd <= aliasBegin)
+
+			// assert(parentEnd <= aliasBegin);
+			if (parentEnd > aliasBegin)
 				assert(false);
 		}
 	}
