@@ -39,9 +39,6 @@ namespace DOG::gfx
 		Renderer* m_renderer{ nullptr };
 		
 		u32 m_shadowMapCapacity{ 2 };
-		// spotlight cache, check intersection to find active
-		std::set<entity> m_prevSpotlightShadowCasters;
-		std::set<entity> m_currSpotlightShadowCasters;
 		std::set<entity> m_activeSpotlightShadowCasters;
 
 	};

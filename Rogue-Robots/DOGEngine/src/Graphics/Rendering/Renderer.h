@@ -38,6 +38,24 @@ namespace DOG::gfx
 
 	class Renderer
 	{
+	public:
+		struct ShadowCaster
+		{
+			DirectX::SimpleMath::Matrix viewMat, projMat;
+		};
+
+		struct ActiveSpotlight
+		{
+			std::optional<ShadowCaster> shadow;
+
+			DirectX::SimpleMath::Vector4 position;
+			DirectX::SimpleMath::Vector3 color;
+			float cutoffAngle{ 0.f };
+			DirectX::SimpleMath::Vector3 direction;
+			float strength{ 0.f };
+		};
+
+
 	private:
 		static constexpr u8 S_NUM_BACKBUFFERS = 2;
 		static constexpr u8 S_MAX_FIF = 2;
@@ -71,6 +89,7 @@ namespace DOG::gfx
 		void SubmitShadowMeshNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 
 
+		void RegisterSpotlight(const ActiveSpotlight& data);
 
 		// Internal state updates
 		void Update(f32 dt);
@@ -141,8 +160,6 @@ namespace DOG::gfx
 		std::vector<RenderSubmission> m_shadowSubmissions;	// maybe temp, also? (Emil F)
 		std::vector<RenderSubmission> m_shadowSubmissionsNoCull;	// maybe temp, also? (Emil F)
 
-		std::vector<entity> m_lightEntities;
-		entity* currentEntityPointer = nullptr;
 
 		DirectX::XMMATRIX m_viewMat, m_projMat;
 
@@ -261,6 +278,8 @@ namespace DOG::gfx
 		
 		u32 m_currFrameIdx{ 0 };
 		std::vector<std::optional<SyncReceipt>> m_frameSyncs;
+
+		std::vector<ActiveSpotlight> m_activeSpotlights;
 
 	};
 }

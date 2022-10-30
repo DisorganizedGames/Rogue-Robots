@@ -185,18 +185,25 @@ namespace DOG::gfx
 	{
 		// Collect this frames spotlight shadow casters
 		m_activeSpotlightShadowCasters.clear();
-		m_prevSpotlightShadowCasters = std::move(m_currSpotlightShadowCasters);
-		m_currSpotlightShadowCasters = {};
-		EntityManager::Get().Collect<ShadowCasterComponent, SpotLightComponent>().Do([&](entity spotlightEntity, ShadowCasterComponent&, SpotLightComponent&)
+		EntityManager::Get().Collect<ShadowCasterComponent, SpotLightComponent, CameraComponent, TransformComponent>().Do([&](
+			entity spotlightEntity, ShadowCasterComponent& sc, SpotLightComponent& slc, CameraComponent& cc, TransformComponent& tc)
 			{
-				m_currSpotlightShadowCasters.insert(spotlightEntity);
-			});
+				m_activeSpotlightShadowCasters.insert(spotlightEntity);
+				
+				// Register this frames spotlights
+				Renderer::ActiveSpotlight spotData{};
+				spotData.shadow = Renderer::ShadowCaster();
 
-		// Get active casters
-		std::set_intersection(
-			m_currSpotlightShadowCasters.cbegin(), m_currSpotlightShadowCasters.cend(),
-			m_prevSpotlightShadowCasters.cbegin(), m_prevSpotlightShadowCasters.cend(),
-			std::inserter(m_activeSpotlightShadowCasters, m_activeSpotlightShadowCasters.begin()));
+				spotData.shadow->viewMat = cc.viewMatrix;
+				spotData.shadow->projMat = cc.projMatrix;
+				spotData.position = { tc.GetPosition().x, tc.GetPosition().y, tc.GetPosition().z, 1.0f };
+				spotData.color = { slc.color.x, slc.color.y, slc.color.z, };
+				spotData.direction = slc.direction;
+				spotData.cutoffAngle = slc.cutoffAngle;
+				spotData.strength = slc.strength;
+				
+				m_renderer->RegisterSpotlight(spotData);
+			});
 
 		// Update renderer shadow map capacity
 		if (m_activeSpotlightShadowCasters.size() > m_shadowMapCapacity)
@@ -204,20 +211,6 @@ namespace DOG::gfx
 			std::cout << "dirty! went from " << m_shadowMapCapacity << " to " << m_activeSpotlightShadowCasters.size() << "\n";
 			m_shadowMapCapacity = (u32)m_activeSpotlightShadowCasters.size();
 			// set renderer to dirty
-		}
-
-		/*
-			Renderer->AddShadowTargetSingle(view, proj);		// Designed for single draw targets (i.e spotlight/area light)
-			Renderer->AddShadowTargetCube(array<view, proj>)	// Designed for omnidirectional shadows (i.e point light)
-		
-		*/
-		// Set active spotlight shadow casters
-		{
-			for (const auto& e : m_activeSpotlightShadowCasters)
-			{
-				auto& cc = EntityManager::Get().GetComponent<CameraComponent>(e);
-				// set cc to Renderer chronologically
-			}
 		}
 	}
 

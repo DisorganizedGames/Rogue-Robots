@@ -460,6 +460,11 @@ namespace DOG::gfx
 		m_shadowSubmissionsNoCull.push_back(sub);
 	}
 
+	void DOG::gfx::Renderer::RegisterSpotlight(const ActiveSpotlight& data)
+	{
+		m_activeSpotlights.push_back(data);
+	}
+
 	void Renderer::Update(f32 dt)
 	{
 		m_boneJourno->UpdateJoints();
@@ -587,7 +592,6 @@ namespace DOG::gfx
 				RGResourceView shadowView;
 			};
 
-			/*Helper pass data to know the corresponding entity ID*/
 			struct ShadowPassData
 			{
 			};
@@ -648,17 +652,15 @@ namespace DOG::gfx
 			};
 		
 			auto shadowDrawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_boneJourno.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](
-				RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 smIdx, entity entityID, bool animated = false, bool wireframe = false) mutable
+				RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 smIdx, const ShadowCaster& caster, bool animated = false, bool wireframe = false) mutable
 			{
-				/*entityID passed in is the equivalent spotlight, from which we collect the view and projection matrix to be used in the Vertex Shader.*/
-				auto& cc = EntityManager::Get().GetComponent<CameraComponent>(entityID);
 				auto perLightHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerLightData) / (float)256));
 				PerLightData perLightData{};
-				perLightData.view = cc.viewMatrix;
-				perLightData.proj = cc.projMatrix;
+				perLightData.view = caster.viewMat;
+				perLightData.proj = caster.projMat;
 				std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
 				TransformComponent camWorld;
-				camWorld.worldMatrix = cc.viewMatrix.Invert();
+				camWorld.worldMatrix = caster.viewMat.Invert();
 				auto&& cull = [camForward = camWorld.GetForward(), camPos = camWorld.GetPosition()](DirectX::SimpleMath::Vector3 p) {
 					auto d = p - camPos;
 					if (d.LengthSquared() < 64) return false;
@@ -705,12 +707,6 @@ namespace DOG::gfx
 			};
 
 
-			/*We collect all spotlights and then perform one shadow pass per such spotlight, rendering a shadow map for each, later used in the forward pass.*/
-			EntityManager::Get().Collect<ShadowCasterComponent, SpotLightComponent>().Do([&](entity spotlightEntity, ShadowCasterComponent&, SpotLightComponent&)
-				{
-					m_lightEntities.push_back(spotlightEntity);
-				});
-
 			rg.AddPass<ShadowPassData>("Shadow Pass",
 				[&](ShadowPassData&, RenderGraph::PassBuilder& builder)
 				{
@@ -729,13 +725,17 @@ namespace DOG::gfx
 
 					// Fills shadowmaps chronologically
 					rd->Cmd_SetPipeline(cmdl, m_shadowPipe);
-					for (u32 i = 0; i < m_lightEntities.size(); ++i)
-						shadowDrawFunc(rd, cmdl, m_shadowSubmissions, i, m_lightEntities[i]);
+					u32 nextMap = 0;
+					for (u32 i = 0; i < m_activeSpotlights.size(); ++i)
+						if (m_activeSpotlights[i].shadow)
+							shadowDrawFunc(rd, cmdl, m_shadowSubmissions, nextMap++, m_activeSpotlights[i].shadow.value());
 
 					// Render the shady modular blocks..
 					rd->Cmd_SetPipeline(cmdl, m_shadowPipeNoCull);
-					for (u32 i = 0; i < m_lightEntities.size(); ++i)
-						shadowDrawFunc(rd, cmdl, m_shadowSubmissionsNoCull, i, m_lightEntities[i]);
+					nextMap = 0;
+					for (u32 i = 0; i < m_activeSpotlights.size(); ++i)
+						if (m_activeSpotlights[i].shadow)
+							shadowDrawFunc(rd, cmdl, m_shadowSubmissionsNoCull, nextMap++, m_activeSpotlights[i].shadow.value());
 				});
 
 			rg.AddPass<PassData>("Forward Pass",
@@ -775,23 +775,23 @@ namespace DOG::gfx
 					ShadowMapArrayStruct shadowMapArrayStruct{};
 					auto perLightHandle = dynConstantsTemp->Allocate((u32)std::ceilf(sizeof(PerLightDataForShadows) / (float)256));
 					auto shadowHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(ShadowMapArrayStruct) / float(256)));
-					for (size_t i{ 0u }; i < m_lightEntities.size(); ++i)
+					for (size_t i{ 0u }; i < m_activeSpotlights.size(); ++i)
 					{
-						auto& cc = EntityManager::Get().GetComponent<CameraComponent>(m_lightEntities[i]);
-						auto& slc = EntityManager::Get().GetComponent<SpotLightComponent>(m_lightEntities[i]);
-						auto& tc = EntityManager::Get().GetComponent<TransformComponent>(m_lightEntities[i]);
-						perLightData.perLightDatas[i].view = cc.viewMatrix;
-						perLightData.perLightDatas[i].proj = cc.projMatrix;
-						perLightData.perLightDatas[i].position = { tc.GetPosition().x, tc.GetPosition().y, tc.GetPosition().z, 1.0f };
-						perLightData.perLightDatas[i].color = { slc.color.x, slc.color.y, slc.color.z, };
-						perLightData.perLightDatas[i].direction = slc.direction;
-						perLightData.perLightDatas[i].cutoffAngle = slc.cutoffAngle;
-						perLightData.perLightDatas[i].strength = slc.strength;
+						const auto& data = m_activeSpotlights[i];
+
+						perLightData.perLightDatas[i].view = data.shadow->viewMat;
+						perLightData.perLightDatas[i].proj = data.shadow->projMat;
+						perLightData.perLightDatas[i].position = data.position;
+						perLightData.perLightDatas[i].color = { data.color.x, data.color.y, data.color.z, };
+						perLightData.perLightDatas[i].direction = data.direction;
+						perLightData.perLightDatas[i].cutoffAngle = data.cutoffAngle;
+						perLightData.perLightDatas[i].strength = data.strength;
 
 						shadowMapArrayStruct.shadowMaps[i] = resources.GetView(p.shadowView);
+
 					}
 
-					perLightData.actualNrOfSpotlights = (u32)m_lightEntities.size();
+					perLightData.actualNrOfSpotlights = (u32)m_activeSpotlights.size();
 					std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
 					std::memcpy(shadowHandle.memory, &shadowMapArrayStruct, sizeof(shadowMapArrayStruct));
 
@@ -1109,7 +1109,6 @@ namespace DOG::gfx
 		m_dynConstants->Tick();
 		m_dynConstantsTemp->Tick();
 		m_dynConstantsAnimated->Tick();
-		//m_rgResMan->ClearDeclaredResources();
 		m_bin->BeginFrame();
 		m_rd->RecycleCommandList(m_cmdl);
 		m_cmdl = m_rd->AllocateCommandList();
@@ -1126,7 +1125,7 @@ namespace DOG::gfx
 		m_noCullWireframeDraws.clear();
 		m_shadowSubmissions.clear();
 		m_shadowSubmissionsNoCull.clear();
-		m_lightEntities.clear();
+		m_activeSpotlights.clear();
 
 		m_sc->Present(false);
 
