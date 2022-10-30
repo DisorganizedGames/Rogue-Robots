@@ -9,6 +9,7 @@ namespace DOG
 {
     std::map<std::string, ImGuiMenuLayer::DebugMenu> ImGuiMenuLayer::s_debugWindows;
     bool ImGuiMenuLayer::s_forceFocusLoss = false;
+    bool ImGuiMenuLayer::s_isAttached = false;
 
     ImGuiMenuLayer::ImGuiMenuLayer() noexcept : Layer("ImGuiMenu layer")
     {
@@ -21,10 +22,12 @@ namespace DOG
 
     void ImGuiMenuLayer::OnAttach()
     {
+        s_isAttached = true;
     }
 
     void ImGuiMenuLayer::OnDetach()
     {
+        s_isAttached = false;
     }
 
     void ImGuiMenuLayer::OnUpdate()
@@ -102,6 +105,11 @@ namespace DOG
     {
         if(ImGui::GetIO().WantCaptureKeyboard || ImGui::GetIO().WantCaptureMouse)
             s_forceFocusLoss = true;
+    }
+
+    bool ImGuiMenuLayer::IsAttached()
+    {
+        return s_isAttached;
     }
 
     void ImGuiMenuLayer::RegisterDebugWindow(const std::string& name, std::function<void(bool&)> func, bool startOpen, std::optional<std::pair<DOG::Key, DOG::Key>> shortCut)
