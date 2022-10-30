@@ -19,8 +19,8 @@ namespace DOG::gfx
 		GPUPoolMemoryInfo info{};
 		info.blocksAllocated = stats.Stats.BlockCount;
 		info.numAllocations = stats.Stats.AllocationCount;
-		info.blockBytes = stats.Stats.BlockBytes;
-		info.allocationBytes = stats.Stats.AllocationBytes;
+		info.blockBytes = (u32)stats.Stats.BlockBytes;
+		info.allocationBytes = (u32)stats.Stats.AllocationBytes;
 		info.allocatedButUnusedBytes = info.blockBytes - info.allocationBytes;
 
 		info.numUnusedRange = stats.UnusedRangeCount;
@@ -491,7 +491,8 @@ namespace DOG::gfx
 		pd.HeapFlags = D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES;
 		pd.HeapProperties.Type = desc.heapType;
 		pd.BlockSize = desc.size;
-		HRESULT hr = m_dma->CreatePool(&pd, pool.GetAddressOf());
+		HRESULT hr{ S_OK };
+		hr = m_dma->CreatePool(&pd, pool.GetAddressOf());
 		HR_VFY(hr);
 
 		MemoryPool_Storage storage{};
@@ -502,8 +503,8 @@ namespace DOG::gfx
 		pool->CalculateStatistics(&stats);
 		storage.info.blocksAllocated = stats.Stats.BlockCount;
 		storage.info.numAllocations = stats.Stats.AllocationCount;
-		storage.info.blockBytes = stats.Stats.BlockBytes;
-		storage.info.allocationBytes = stats.Stats.AllocationBytes;
+		storage.info.blockBytes = (u32)stats.Stats.BlockBytes;
+		storage.info.allocationBytes = (u32)stats.Stats.AllocationBytes;
 
 		storage.info.numUnusedRange = stats.UnusedRangeCount;
 		storage.info.smallestAllocation = stats.AllocationSizeMin;

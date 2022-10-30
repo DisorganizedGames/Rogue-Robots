@@ -207,7 +207,7 @@ namespace DOG::gfx
 		// Collect this frames spotlight shadow casters
 		m_activeSpotlightShadowCasters.clear();
 		EntityManager::Get().Collect<ShadowCasterComponent, SpotLightComponent, CameraComponent, TransformComponent>().Do([&](
-			entity spotlightEntity, ShadowCasterComponent& sc, SpotLightComponent& slc, CameraComponent& cc, TransformComponent& tc)
+			entity spotlightEntity, ShadowCasterComponent&, SpotLightComponent& slc, CameraComponent& cc, TransformComponent& tc)
 			{				
 				// Register this frames spotlights
 				Renderer::ActiveSpotlight spotData{};

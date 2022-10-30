@@ -911,8 +911,8 @@ namespace DOG::gfx
 							auto args = ShaderArgs()
 								.AppendConstant(m_globalEffectData.globalDataDescriptor)
 								.AppendConstant(m_currPfDescriptor)
-								.AppendConstant(m_renderWidth / 2.f)
-								.AppendConstant(m_renderHeight / 2.f)
+								.AppendConstant((u32)(m_renderWidth / 2.f))
+								.AppendConstant((u32)(m_renderHeight / 2.f))
 								.AppendConstant(resources.GetView(passData.input))
 								.AppendConstant(resources.GetView(passData.output))
 								.AppendConstant(1)
@@ -953,8 +953,8 @@ namespace DOG::gfx
 							auto args = ShaderArgs()
 								.AppendConstant(m_globalEffectData.globalDataDescriptor)
 								.AppendConstant(m_currPfDescriptor)
-								.AppendConstant(m_renderWidth / 2.f)
-								.AppendConstant(m_renderHeight / 2.f)
+								.AppendConstant((u32)(m_renderWidth / 2.f))
+								.AppendConstant((u32)(m_renderHeight / 2.f))
 								.AppendConstant(resources.GetView(passData.input))
 								.AppendConstant(resources.GetView(passData.output))
 								.AppendConstant(0)
@@ -1126,7 +1126,7 @@ namespace DOG::gfx
 		m_cmdl = m_rd->AllocateCommandList();
 	}
 
-	void Renderer::EndFrame_GPU(bool vsync)
+	void Renderer::EndFrame_GPU(bool)
 	{
 		EndGUI();
 		m_bin->EndFrame();
