@@ -45,8 +45,11 @@ local gunEntity = {
 	rotation = Vector3.Zero(),
 }
 
+local basicBarrelEquiped = true
+--Ammo and reloading 
 local maxAmmo = 30
 local currentAmmo = 30
+local ammoLeft = 90
 local reloadTimer = 0.0
 local reloading = false
 local reloadAngle = 0.0
@@ -110,12 +113,18 @@ function OnUpdate()
 		if barrelComponentIdx == 0 then
 			barrelComponent = BarrelManager.Grenade() 
 			barrelComponentIdx = 1
+			ammoLeft = 15
+			basicBarrelEquiped = false
 		elseif barrelComponentIdx == 1 then
 			barrelComponent = BarrelManager.Missile()
 			barrelComponentIdx = 2
+			ammoLeft = 6
+			basicBarrelEquiped = false
 		else
 			barrelComponent = BarrelManager.BasicBarrel()
 			barrelComponentIdx = 0
+			ammoLeft = 90
+			basicBarrelEquiped = true
 		end
 	elseif not Entity:GetAction(EntityID, "SwitchBarrelComponent") then
 		barrelSwitched = false
@@ -199,7 +208,7 @@ end
 
 function ReloadSystem()
 	if (Entity:HasComponent(EntityID, "ThisPlayer")) then
-		Game:AmmoUI(currentAmmo)
+		Game:AmmoUI(currentAmmo, ammoLeft)
 	end
 
 	local oldMaxAmmo = maxAmmo
@@ -229,10 +238,21 @@ function ReloadSystem()
 
 	if reloading then
 		reloading = false
-		currentAmmo = maxAmmo
+		local reloadAmount = maxAmmo - currentAmmo
+		ammoLeft = ammoLeft - reloadAmount
+		if ammoLeft < 0 then
+			reloadAmount = ammoLeft + reloadAmount
+			ammoLeft = 0
+		end
+		currentAmmo = currentAmmo + reloadAmount
+
+		if basicBarrelEquiped then
+			currentAmmo = maxAmmo
+			ammoLeft = 90
+		end
 	end
 
-	if Entity:GetAction(EntityID, "Reload") and currentAmmo < maxAmmo then
+	if Entity:GetAction(EntityID, "Reload") and currentAmmo < maxAmmo and ammoLeft > 0 then
 		reloadTimer = barrelComponent:GetReloadTime() + ElapsedTime
 		reloading = true
 		return true
