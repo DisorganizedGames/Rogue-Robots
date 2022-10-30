@@ -35,12 +35,26 @@ namespace DOG::gfx
 		void GatherDrawCalls();
 		void SetRenderCamera();
 		void GatherShadowCasters();
+		void CullShadowDraws();
 
 	private:
 		Renderer* m_renderer{ nullptr };
+
+		DirectX::SimpleMath::Matrix m_viewMat;
 		
 		u32 m_shadowMapCapacity{ 2 };
-		std::set<entity> m_activeSpotlightShadowCasters;
+		std::vector<std::pair<entity, u32>> m_activeSpotlightShadowCasters;		// { entity, shadowID } 
+
+		struct ShadowSubmission
+		{
+			Mesh mesh;
+			u32 submesh{ 0 };
+			TransformComponent tc;
+			bool singleSided{ true };
+		};
+
+		std::vector<ShadowSubmission> m_singleSidedShadowed;
+		std::vector<ShadowSubmission> m_doubleSidedShadowed;
 
 	};
 

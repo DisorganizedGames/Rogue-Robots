@@ -80,6 +80,9 @@ namespace DOG::gfx
 
 		m_frameSyncs.resize(S_MAX_FIF);
 
+		m_singleSidedShadowDraws.resize(12);
+		m_doubleSidedShadowDraws.resize(12);
+
 		AddScenes();
 		UIRebuild(clientHeight, clientWidth);
 
@@ -440,7 +443,7 @@ namespace DOG::gfx
 		m_animatedDraws.push_back(sub);
 	}
 
-	void DOG::gfx::Renderer::SubmitShadowMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
+	void DOG::gfx::Renderer::SubmitShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
@@ -450,7 +453,7 @@ namespace DOG::gfx
 		m_shadowSubmissions.push_back(sub);
 	}
 
-	void DOG::gfx::Renderer::SubmitShadowMeshNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
+	void DOG::gfx::Renderer::SubmitShadowMeshNoFaceCulling(u32 shadowID, Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
@@ -460,9 +463,39 @@ namespace DOG::gfx
 		m_shadowSubmissionsNoCull.push_back(sub);
 	}
 
-	void DOG::gfx::Renderer::RegisterSpotlight(const ActiveSpotlight& data)
+	void DOG::gfx::Renderer::SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world)
 	{
+		RenderSubmission sub{};
+		sub.mesh = mesh;
+		sub.submesh = submesh;
+		sub.world = world;
+
+		const auto& caster = m_activeShadowCasters[shadowID];
+		m_singleSidedShadowDraws[caster.singleSidedBucket].push_back(sub);
+	}
+	void DOG::gfx::Renderer::SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world)
+	{
+		RenderSubmission sub{};
+		sub.mesh = mesh;
+		sub.submesh = submesh;
+		sub.world = world;
+
+		const auto& caster = m_activeShadowCasters[shadowID];
+		m_doubleSidedShadowDraws[caster.doubleSidedBucket].push_back(sub);
+	}
+
+	std::optional<u32> DOG::gfx::Renderer::RegisterSpotlight(const ActiveSpotlight& data)
+	{
+		std::optional<u32> id;
+
+		if (data.shadow)
+		{
+			id = (u32)m_activeShadowCasters.size();
+			// Reserve single sided and double sided buckets for this shadow caster
+			m_activeShadowCasters.push_back({ m_nextSingleSidedShadowBucket++, m_nextDoubleSidedShadowBucket++ });
+		}
 		m_activeSpotlights.push_back(data);
+		return id;
 	}
 
 	void Renderer::Update(f32 dt)
@@ -605,18 +638,8 @@ namespace DOG::gfx
 
 			auto drawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_boneJourno.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false) mutable
 			{	
-				TransformComponent camTransform;
-				camTransform.worldMatrix = ((DirectX::SimpleMath::Matrix)m_viewMat).Invert();
-				auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p) {
-					auto d = p - camPos;
-					if (d.LengthSquared() < 64) return false;
-					if (d.LengthSquared() > 80 * 80) return true;
-					d.Normalize();
-					return camForward.Dot(d) < 0.2f;
-				};
 				for (const auto& sub : submissions)
 				{
-					if (cull({ sub.world(3, 0), sub.world(3, 1), sub.world(3, 2) })) continue;
 					auto perDrawHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
 					PerDrawData perDrawData{};
 					perDrawData.world = sub.world;
@@ -671,12 +694,13 @@ namespace DOG::gfx
 
 				for (const auto& sub : submissions)
 				{
-					if (cull({ sub.world(3, 0), sub.world(3, 1), sub.world(3, 2) })) continue;
+					if (cull({ sub.world(3, 0), sub.world(3, 1), sub.world(3, 2) })) 
+						continue;
 					auto perDrawHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
 					PerDrawData perDrawData{};
 					perDrawData.world = sub.world;
 					perDrawData.globalSubmeshID = meshTab->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
-					perDrawData.globalMaterialID = matTab->GetMaterialIndex(sub.mat);
+					perDrawData.globalMaterialID = 0;
 
 					if (animated)
 					{
@@ -727,15 +751,26 @@ namespace DOG::gfx
 					rd->Cmd_SetPipeline(cmdl, m_shadowPipe);
 					u32 nextMap = 0;
 					for (u32 i = 0; i < m_activeSpotlights.size(); ++i)
+					{
 						if (m_activeSpotlights[i].shadow)
-							shadowDrawFunc(rd, cmdl, m_shadowSubmissions, nextMap++, m_activeSpotlights[i].shadow.value());
+						{
+							//shadowDrawFunc(rd, cmdl, m_shadowSubmissions, nextMap++, m_activeSpotlights[i].shadow.value());
+							shadowDrawFunc(rd, cmdl, m_singleSidedShadowDraws[m_activeShadowCasters[i].singleSidedBucket], nextMap++, m_activeSpotlights[i].shadow.value());
+						}
+					}
 
 					// Render the shady modular blocks..
 					rd->Cmd_SetPipeline(cmdl, m_shadowPipeNoCull);
 					nextMap = 0;
 					for (u32 i = 0; i < m_activeSpotlights.size(); ++i)
+					{
 						if (m_activeSpotlights[i].shadow)
-							shadowDrawFunc(rd, cmdl, m_shadowSubmissionsNoCull, nextMap++, m_activeSpotlights[i].shadow.value());
+						{
+							//shadowDrawFunc(rd, cmdl, m_shadowSubmissionsNoCull, nextMap++, m_activeSpotlights[i].shadow.value());
+							shadowDrawFunc(rd, cmdl, m_doubleSidedShadowDraws[m_activeShadowCasters[i].doubleSidedBucket], nextMap++, m_activeSpotlights[i].shadow.value());
+						}
+					}
+					
 				});
 
 			rg.AddPass<PassData>("Forward Pass",
@@ -1098,6 +1133,16 @@ namespace DOG::gfx
 
 		m_ssaoOn = requestedSettings.ssao;
 		m_shadowMapCapacity = requestedSettings.shadowMapCapacity;
+
+		m_singleSidedShadowDraws.resize(requestedSettings.shadowMapCapacity);
+		m_doubleSidedShadowDraws.resize(requestedSettings.shadowMapCapacity);
+
+		m_graphicsSettings = requestedSettings;
+	}
+
+	GraphicsSettings DOG::gfx::Renderer::GetGraphicsSettings()
+	{
+		return m_graphicsSettings;
 	}
 
 	void Renderer::BeginFrame_GPU()
@@ -1126,6 +1171,13 @@ namespace DOG::gfx
 		m_shadowSubmissions.clear();
 		m_shadowSubmissionsNoCull.clear();
 		m_activeSpotlights.clear();
+
+		m_activeShadowCasters.clear();
+		for (auto& v : m_singleSidedShadowDraws)
+			v.clear();
+		for (auto& v : m_doubleSidedShadowDraws)
+			v.clear();
+		m_nextSingleSidedShadowBucket = m_nextDoubleSidedShadowBucket = 0;
 
 		m_sc->Present(false);
 

@@ -85,11 +85,15 @@ namespace DOG::gfx
 
 		void SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 
-		void SubmitShadowMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
-		void SubmitShadowMeshNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
+		void SubmitShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
+		void SubmitShadowMeshNoFaceCulling(u32 shadowID, Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
+
+		void SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world);
+		void SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world);
 
 
-		void RegisterSpotlight(const ActiveSpotlight& data);
+		// Optionally returns shadow ID if light casts shadows
+		std::optional<u32> RegisterSpotlight(const ActiveSpotlight& data);
 
 		// Internal state updates
 		void Update(f32 dt);
@@ -100,6 +104,7 @@ namespace DOG::gfx
 
 		void OnResize(u32 clientWidth, u32 clientHeight);
 		void SetGraphicsSettings(GraphicsSettings requestedSettings);
+		GraphicsSettings GetGraphicsSettings();
 		WindowMode GetFullscreenState() const;
 
 
@@ -159,6 +164,11 @@ namespace DOG::gfx
 		std::vector<RenderSubmission> m_noCullWireframeDraws;		// temp
 		std::vector<RenderSubmission> m_shadowSubmissions;	// maybe temp, also? (Emil F)
 		std::vector<RenderSubmission> m_shadowSubmissionsNoCull;	// maybe temp, also? (Emil F)
+
+		u32 m_nextSingleSidedShadowBucket{ 0 };
+		u32 m_nextDoubleSidedShadowBucket{ 0 };
+		std::vector<std::vector<RenderSubmission>> m_singleSidedShadowDraws;
+		std::vector<std::vector<RenderSubmission>> m_doubleSidedShadowDraws;
 
 
 		DirectX::XMMATRIX m_viewMat, m_projMat;
@@ -280,6 +290,14 @@ namespace DOG::gfx
 		std::vector<std::optional<SyncReceipt>> m_frameSyncs;
 
 		std::vector<ActiveSpotlight> m_activeSpotlights;
+		struct ActiveShadowCaster
+		{
+			u32 singleSidedBucket{ UINT_MAX };
+			u32 doubleSidedBucket{ UINT_MAX };
+		};
+		std::vector<ActiveShadowCaster> m_activeShadowCasters;
+
+		GraphicsSettings m_graphicsSettings;
 
 	};
 }

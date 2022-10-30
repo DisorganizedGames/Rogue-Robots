@@ -47,9 +47,14 @@ namespace DOG::gfx
 		GatherShadowCasters();
 		SetRenderCamera();
 		GatherDrawCalls();
+		CullShadowDraws();
 
 		// Update internal data structures
 		m_renderer->Update(0.f);
+
+		// Clear state
+		m_singleSidedShadowed.clear();
+		m_doubleSidedShadowed.clear();
 	}
 
 	void FrontRenderer::UpdateLights()
@@ -98,7 +103,8 @@ namespace DOG::gfx
 				// We are assuming that this is a totally normal submesh with no weird branches (i.e on ModularBlock or whatever)
 				if (EntityManager::Get().HasComponent<ShadowReceiverComponent>(e))
 				{
-					m_renderer->SubmitShadowMesh(sr.mesh, 0, sr.material, tr);
+					m_singleSidedShadowed.push_back({ sr.mesh, 0, tr });
+					m_renderer->SubmitShadowMesh(0, sr.mesh, 0, sr.material, tr);
 				}
 				if (sr.dirty)
 					CustomMaterialManager::Get().UpdateMaterial(sr.material, sr.materialDesc);
@@ -109,8 +115,24 @@ namespace DOG::gfx
 		// We need to bucket in a better way..
 		EntityManager::Get().Collect<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
 			{
+				TransformComponent camTransform;
+				camTransform.worldMatrix = ((DirectX::SimpleMath::Matrix)m_viewMat).Invert();
+				auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p) {
+					auto d = p - camPos;
+					if (d.LengthSquared() < 64) return false;
+					if (d.LengthSquared() > 80 * 80) return true;
+					d.Normalize();
+					return camForward.Dot(d) < 0.2f;
+				};
+
+				if (cull({ transformC.worldMatrix(3, 0), transformC.worldMatrix(3, 1), transformC.worldMatrix(3, 2) }))
+				{
+					return;
+				}
+
+				
 				MINIPROFILE_NAMED("RenderSystem")
-					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
+				ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 				if (model && model->gfxModel)
 				{
 					// Shadow submission:
@@ -119,9 +141,15 @@ namespace DOG::gfx
 						for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
 						{
 							if (EntityManager::Get().HasComponent<ModularBlockComponent>(e))
-								m_renderer->SubmitShadowMeshNoFaceCulling(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+							{
+								m_doubleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC, false });
+								m_renderer->SubmitShadowMeshNoFaceCulling(0, model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+							}
 							else
-								m_renderer->SubmitShadowMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+							{
+								m_singleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC });
+								m_renderer->SubmitShadowMesh(0, model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+							}
 						}
 					}
 
@@ -182,6 +210,7 @@ namespace DOG::gfx
 		auto& proj = (DirectX::XMMATRIX&)cameraComponent.projMatrix;
 		m_renderer->SetMainRenderCamera(cameraComponent.viewMatrix, &proj);
 
+		m_viewMat = cameraComponent.viewMatrix;
 	}
 
 	void FrontRenderer::GatherShadowCasters()
@@ -191,7 +220,12 @@ namespace DOG::gfx
 		EntityManager::Get().Collect<ShadowCasterComponent, SpotLightComponent, CameraComponent, TransformComponent>().Do([&](
 			entity spotlightEntity, ShadowCasterComponent& sc, SpotLightComponent& slc, CameraComponent& cc, TransformComponent& tc)
 			{
-				m_activeSpotlightShadowCasters.insert(spotlightEntity);
+				/*
+					@todo:
+						Add ShadowID instead of entity here
+				
+				*/
+				//m_activeSpotlightShadowCasters.push_back(spotlightEntity);
 				
 				// Register this frames spotlights
 				Renderer::ActiveSpotlight spotData{};
@@ -205,7 +239,8 @@ namespace DOG::gfx
 				spotData.cutoffAngle = slc.cutoffAngle;
 				spotData.strength = slc.strength;
 				
-				m_renderer->RegisterSpotlight(spotData);
+				u32 shadowID = *m_renderer->RegisterSpotlight(spotData);
+				m_activeSpotlightShadowCasters.push_back({ spotlightEntity, shadowID });
 			});
 
 		// Update renderer shadow map capacity
@@ -213,8 +248,44 @@ namespace DOG::gfx
 		{
 			std::cout << "dirty! went from " << m_shadowMapCapacity << " to " << m_activeSpotlightShadowCasters.size() << "\n";
 			m_shadowMapCapacity = (u32)m_activeSpotlightShadowCasters.size();
-			// set renderer to dirty
+
+			auto settings = m_renderer->GetGraphicsSettings();
+			settings.shadowMapCapacity = m_shadowMapCapacity;
+			m_renderer->SetGraphicsSettings(settings);
 		}
+	}
+
+	void FrontRenderer::CullShadowDraws()
+	{
+		// Cull all shadowed submissions per caster
+		for (const auto& [caster, shadowID]: m_activeSpotlightShadowCasters)
+		{
+			auto& cc = EntityManager::Get().GetComponent<CameraComponent>(caster);
+			TransformComponent camTransform;
+			camTransform.worldMatrix = ((DirectX::SimpleMath::Matrix)cc.viewMatrix).Invert();
+			auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p) {
+				auto d = p - camPos;
+				if (d.LengthSquared() < 64) return false;
+				if (d.LengthSquared() > 80 * 80) return true;
+				d.Normalize();
+				return camForward.Dot(d) < 0.2f;
+			};
+
+			for (const auto& sub : m_singleSidedShadowed)
+			{
+				if (cull({ sub.tc.worldMatrix(3, 0), sub.tc.worldMatrix(3, 1), sub.tc.worldMatrix(3, 2) }))
+					continue;
+				m_renderer->SubmitSingleSidedShadowMesh(shadowID, sub.mesh, sub.submesh, sub.tc);
+			}
+
+			for (const auto& sub : m_doubleSidedShadowed)
+			{
+				if (cull({ sub.tc.worldMatrix(3, 0), sub.tc.worldMatrix(3, 1), sub.tc.worldMatrix(3, 2) }))
+					continue;
+				m_renderer->SubmitDoubleSidedShadowMesh(shadowID, sub.mesh, sub.submesh, sub.tc);
+			}
+		}
+
 	}
 
 	void FrontRenderer::Render(f32)
