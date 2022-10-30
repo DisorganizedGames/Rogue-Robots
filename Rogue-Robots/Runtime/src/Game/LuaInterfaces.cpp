@@ -113,6 +113,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddActiveItem(context, e);
 	}
+	else if (compType == "BarrelComponent")
+	{
+		AddBarrelComponent(context, e);
+	}
 	//Add more component types here.
 	else
 	{
@@ -127,6 +131,11 @@ void EntityInterface::RemoveComponent(DOG::LuaContext* context)
 	if (compType == "ActiveItem")
 	{
 		EntityManager::Get().RemoveComponent<ActiveItemComponent>(e);
+		return;
+	}
+	else if (compType == "BarrelComponent")
+	{
+		EntityManager::Get().RemoveComponent<BarrelComponent>(e);
 		return;
 	}
 
@@ -324,6 +333,7 @@ const std::unordered_map<std::string, bool (*) (entity)> componentMap = {
 	{ "ActiveItem", HasComp<ActiveItemComponent> },
 	{ "ThisPlayer", HasComp<ThisPlayer> },
 	{ "FrostEffect", HasComp<FrostEffectComponent> },
+	{ "BarrelComponent", HasComp<BarrelComponent> },
 };
 
 void EntityInterface::HasComponent(LuaContext* context)
@@ -358,6 +368,11 @@ const std::unordered_map<ActiveItemComponent::Type, std::string> activeTypeMap =
 	{ ActiveItemComponent::Type::Trampoline, "Trampoline" },
 };
 
+const std::unordered_map<BarrelComponent::Type, std::string> barrelTypeMap = {
+	{ BarrelComponent::Type::Missile, "Missile" },
+	{ BarrelComponent::Type::Grenade, "Grenade" },
+};
+
 void EntityInterface::GetPassiveType(LuaContext* context)
 {
 	entity e = context->GetInteger();
@@ -370,6 +385,27 @@ void EntityInterface::GetActiveType(DOG::LuaContext* context)
 	entity e = context->GetInteger();
 	auto type = EntityManager::Get().GetComponent<ActiveItemComponent>(e).type;
 	context->ReturnString(activeTypeMap.at(type));
+}
+
+void EntityInterface::GetBarrelType(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	auto type = EntityManager::Get().GetComponent<BarrelComponent>(e).type;
+	context->ReturnString(barrelTypeMap.at(type));
+}
+
+void EntityInterface::GetAmmoCapacityForBarrelType(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	auto capacity = EntityManager::Get().GetComponent<BarrelComponent>(e).maximumAmmoCapacityForType;
+	context->ReturnInteger(capacity);
+}
+
+void EntityInterface::GetAmmoCountPerPickup(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	auto ammoPerPickup = EntityManager::Get().GetComponent<BarrelComponent>(e).ammoPerPickup;
+	context->ReturnInteger(ammoPerPickup);
 }
 
 void EntityInterface::GetTransformScaleData(LuaContext* context)
@@ -697,6 +733,25 @@ void EntityInterface::AddActiveItem(DOG::LuaContext* context, DOG::entity e)
 {
 	ActiveItemComponent::Type type = (ActiveItemComponent::Type)context->GetInteger();
 	EntityManager::Get().AddComponent<ActiveItemComponent>(e).type = type;
+}
+
+void EntityInterface::AddBarrelComponent(DOG::LuaContext* context, DOG::entity e)
+{
+	BarrelComponent::Type type = (BarrelComponent::Type)context->GetInteger();
+	auto currentAmmo = context->GetInteger();
+	auto ammoCap = context->GetInteger();
+
+	auto& bc = EntityManager::Get().AddComponent<BarrelComponent>(e);
+	bc.type = type;
+	bc.maximumAmmoCapacityForType = ammoCap;
+	bc.currentAmmoCount = currentAmmo;
+}
+
+void EntityInterface::UpdateMagazine(DOG::LuaContext* context)
+{
+	entity player = context->GetInteger();
+	auto currentMagazineCount = context->GetInteger();
+	EntityManager::Get().GetComponent<BarrelComponent>(player).currentAmmoCount = currentMagazineCount;
 }
 
 //---------------------------------------------------------------------------------------------------------

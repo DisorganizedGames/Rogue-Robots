@@ -197,12 +197,27 @@ public:
 				eaic.activeItemEntity = closestPickup;
 				eaic.type = mgr.GetComponent<ActiveItemComponent>(closestPickup).type;
 			}
+			else if (mgr.HasComponent<BarrelComponent>(closestPickup))
+			{
+				//Pickup is an active item entity, so:
+				if (mgr.HasComponent<EligibleBarrelComponent>(player))
+				{
+					mgr.RemoveComponent<EligibleBarrelComponent>(player);
+				}
+				auto& egnc = mgr.AddComponent<EligibleBarrelComponent>(player);
+				egnc.barrelComponentEntity = closestPickup;
+				egnc.type = mgr.GetComponent<BarrelComponent>(closestPickup).type;
+			}
 		}
 		else
 		{
 			if (mgr.HasComponent<EligibleActiveItemComponent>(player))
 			{
 				mgr.RemoveComponent<EligibleActiveItemComponent>(player);
+			}
+			else if (mgr.HasComponent<EligibleBarrelComponent>(player))
+			{
+				mgr.RemoveComponent<EligibleBarrelComponent>(player);
 			}
 		}
 	}
@@ -216,40 +231,123 @@ public:
 
 	void OnUpdate(DOG::entity playerID, DOG::ThisPlayer&)
 	{
+		std::string itemText;
 		if (DOG::EntityManager::Get().HasComponent<EligibleActiveItemComponent>(playerID))
 		{
-			//ImVec2 size;
-			//size.x = 280;
-			//size.y = 300;
-			//
-			////auto r = Window::GetWindowRect();
-			//ImVec2 pos;
-			//pos.x = r.right - size.x - 20.0f;
-			//pos.y = r.top + 50.0f;
-			//
-			//ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-			//ImGui::SetNextWindowPos(pos);
-			//ImGui::SetNextWindowSize(size);
-			//if (ImGui::Begin("KeyBindings", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground))
-			//{
-			//	if (ImGui::BeginTable("KeyBindings", 2))
-			//	{
-			//		for (auto& [key, action] : m_kayBindingDescriptions)
-			//		{
-			//			ImGui::TableNextRow();
-			//			ImGui::TableSetColumnIndex(0);
-			//			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
-			//			ImGui::Text(action.c_str());
-			//			ImGui::TableSetColumnIndex(1);
-			//			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
-			//			ImGui::Text(key.c_str());
-			//			ImGui::PopStyleColor(2);
-			//		}
-			//		ImGui::EndTable();
-			//	}
-			//}
-			//ImGui::End();
-			//ImGui::PopStyleColor();
+			auto type = DOG::EntityManager::Get().GetComponent<EligibleActiveItemComponent>(playerID).type;
+			switch (type)
+			{
+			case ActiveItemComponent::Type::Trampoline:
+			{
+				itemText = "Trampoline";
+				break;
+			}
+			}
 		}
+		else if (DOG::EntityManager::Get().HasComponent<EligibleBarrelComponent>(playerID))
+		{
+			auto type = DOG::EntityManager::Get().GetComponent<EligibleBarrelComponent>(playerID).type;
+			switch (type)
+			{
+			case BarrelComponent::Type::Missile:
+			{
+				itemText = "Homing missile";
+				break;
+			}
+			case BarrelComponent::Type::Grenade:
+			{
+				itemText = "Grenade";
+				break;
+			}
+			}
+		}
+		if (itemText.empty())
+			return;
+
+		ImVec2 size;
+		size.x = 240;
+		size.y = 300;
+
+		auto r = DOG::Window::GetWindowRect();
+		ImVec2 pos;
+		pos.x = r.right - size.x - 500.0f;
+		pos.y = r.top + 400.0f;
+
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+		ImGui::SetNextWindowPos(pos);
+		ImGui::SetNextWindowSize(size);
+		if (ImGui::Begin("Pickup item text", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+		{
+			ImGui::PushFont(DOG::Window::GetFont());
+			ImGui::SetWindowFontScale(1.3f);
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
+			ImGui::Text("[E]");
+			ImGui::PopStyleColor(1);
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
+			ImGui::SameLine();
+			ImGui::Text("Pick up");
+			ImGui::Separator();
+			ImGui::SetWindowFontScale(1.7f);
+			ImGui::Text(itemText.c_str());
+			ImGui::PopStyleColor(1);
+			ImGui::PopFont();
+		}
+		ImGui::End();
+		ImGui::PopStyleColor();
+	}
+};
+
+class MVPRenderAmmunitionTextSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DOG::ThisPlayer, BarrelComponent);
+	ON_UPDATE(DOG::ThisPlayer, BarrelComponent);
+
+	void OnUpdate(DOG::ThisPlayer, BarrelComponent& bc)
+	{
+		std::string barrelType;
+		switch (bc.type)
+		{
+		case BarrelComponent::Type::Missile:
+		{
+			barrelType = "Missiles";
+			break;
+		}
+		case BarrelComponent::Type::Grenade:
+		{
+			barrelType = "Grenades";
+			break;
+		}
+		}
+		if (barrelType.empty())
+			return;
+
+		std::string ammoText = std::to_string(bc.currentAmmoCount) + std::string(" / ") + std::to_string(bc.maximumAmmoCapacityForType);
+
+		ImVec2 size;
+		size.x = 240;
+		size.y = 100;
+
+		auto r = DOG::Window::GetWindowRect();
+		ImVec2 pos;
+		pos.x = r.right - size.x - 60.0f;
+		pos.y = r.bottom - 170;
+
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+		ImGui::SetNextWindowPos(pos);
+		ImGui::SetNextWindowSize(size);
+		if (ImGui::Begin("Ammo text", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+		{
+			ImGui::PushFont(DOG::Window::GetFont());
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
+			ImGui::SetWindowFontScale(2.0f);
+			ImGui::Text(barrelType.c_str());
+			ImGui::Separator();
+			ImGui::Text(ammoText.c_str());
+			ImGui::PopStyleColor(1);
+			ImGui::PopFont();
+		}
+		ImGui::End();
+		ImGui::PopStyleColor();
 	}
 };

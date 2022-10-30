@@ -167,6 +167,9 @@ namespace DOG
 		float baseOrigin{ 5.0f };
 		float currentOrigin{ 5.0f };
 
+		DirectX::SimpleMath::Vector3 origin{ 0,0,0 };
+		DirectX::SimpleMath::Vector3 target{ 1,1,1 };
+
 		float baseTarget{ 8.0f };
 
 		float speed = 1.0f;
