@@ -11,23 +11,23 @@ void AgentSeekPlayerSystem::OnUpdate(entity e, AgentSeekPlayerComponent& seek, A
 	{ 
 		entity entityID = NULL_ENTITY;
 		i8 id = 0;
-		f32 sqDist = 0.0f;
+		f32 sqDist = std::numeric_limits<f32>::max();
 		Vector3 pos{ 0,0,0 };
 	};
 
 	PlayerDist player;
 	Vector3 agentPos(transform.GetPosition());
 
-	eMan.Collect<ThisPlayer, TransformComponent, NetworkPlayerComponent>().Do(
-		[&](entity id, ThisPlayer&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) {
+	eMan.Collect<ThisPlayer, PlayerAliveComponent, TransformComponent, NetworkPlayerComponent>().Do(
+		[&](entity id, ThisPlayer&, PlayerAliveComponent&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) {
 			player.entityID = id;
 			player.id = netPlayer.playerId;
 			player.pos = transC.GetPosition();
 			player.sqDist = Vector3::DistanceSquared(player.pos, agentPos);
 		});
 
-	eMan.Collect<OnlinePlayer, TransformComponent, NetworkPlayerComponent>().Do(
-		[&](entity id, OnlinePlayer&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) {
+	eMan.Collect<OnlinePlayer, PlayerAliveComponent, TransformComponent, NetworkPlayerComponent>().Do(
+		[&](entity id, OnlinePlayer&, PlayerAliveComponent&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) {
 			f32 sqDist = Vector3::DistanceSquared(transC.GetPosition(), agentPos);
 			if (sqDist < player.sqDist)
 			{
