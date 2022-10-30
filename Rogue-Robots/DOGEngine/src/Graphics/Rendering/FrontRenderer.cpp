@@ -44,7 +44,55 @@ namespace DOG::gfx
 	void FrontRenderer::Update(f32)
 	{
 		UpdateLights();
+		GatherShadowCasters();
+		SetRenderCamera();
+		GatherDrawCalls();
 
+		// Update internal data structures
+		m_renderer->Update(0.f);
+	}
+
+	void FrontRenderer::UpdateLights()
+	{
+		// Update lights
+		EntityManager::Get().Collect<DirtyComponent, PointLightComponent>().Do([](entity, DirtyComponent& dirty, PointLightComponent& light) {
+			light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged); });
+
+		EntityManager::Get().Collect<DirtyComponent, SpotLightComponent>().Do([](entity, DirtyComponent& dirty, SpotLightComponent& light) {
+			light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged) || dirty.IsDirty(DirtyComponent::rotationChanged); });
+
+		EntityManager::Get().Collect<TransformComponent, SpotLightComponent>().Do([&](entity, TransformComponent tr, SpotLightComponent& light)
+			{
+				if (light.dirty)
+				{
+					SpotLightDesc d{};
+					d.position = tr.GetPosition();
+					d.color = light.color;
+					d.cutoffAngle = light.cutoffAngle;
+					d.direction = light.direction;
+					d.strength = light.strength;
+					d.id = light.id;
+					LightManager::Get().UpdateSpotLight(light.handle, d);
+					light.dirty = false;
+				}
+			});
+
+		EntityManager::Get().Collect<TransformComponent, PointLightComponent>().Do([&](entity, TransformComponent tr, PointLightComponent& light)
+			{
+				if (light.dirty)
+				{
+					PointLightDesc d{};
+					d.position = tr.GetPosition();
+					d.color = light.color;
+					d.strength = light.strength;
+					LightManager::Get().UpdatePointLight(light.handle, d);
+					light.dirty = false;
+				}
+			});
+	}
+
+	void FrontRenderer::GatherDrawCalls()
+	{
 		EntityManager::Get().Collect<TransformComponent, SubmeshRenderer>().Do([&](entity e, TransformComponent& tr, SubmeshRenderer& sr)
 			{
 				// We are assuming that this is a totally normal submesh with no weird branches (i.e on ModularBlock or whatever)
@@ -56,6 +104,7 @@ namespace DOG::gfx
 					CustomMaterialManager::Get().UpdateMaterial(sr.material, sr.materialDesc);
 				m_renderer->SubmitMesh(sr.mesh, 0, sr.material, tr);
 			});
+
 
 		// We need to bucket in a better way..
 		EntityManager::Get().Collect<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
@@ -115,52 +164,6 @@ namespace DOG::gfx
 								m_renderer->SubmitMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
 						}
 					}
-				}
-			});
-
-
-		SetRenderCamera();
-		GatherShadowCasters();
-
-		// Update internal data structures
-		m_renderer->Update(0.f);
-	}
-
-	void FrontRenderer::UpdateLights()
-	{
-		// Update lights
-		EntityManager::Get().Collect<DirtyComponent, PointLightComponent>().Do([](entity, DirtyComponent& dirty, PointLightComponent& light) {
-			light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged); });
-
-		EntityManager::Get().Collect<DirtyComponent, SpotLightComponent>().Do([](entity, DirtyComponent& dirty, SpotLightComponent& light) {
-			light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged) || dirty.IsDirty(DirtyComponent::rotationChanged); });
-
-		EntityManager::Get().Collect<TransformComponent, SpotLightComponent>().Do([&](entity, TransformComponent tr, SpotLightComponent& light)
-			{
-				if (light.dirty)
-				{
-					SpotLightDesc d{};
-					d.position = tr.GetPosition();
-					d.color = light.color;
-					d.cutoffAngle = light.cutoffAngle;
-					d.direction = light.direction;
-					d.strength = light.strength;
-					d.id = light.id;
-					LightManager::Get().UpdateSpotLight(light.handle, d);
-					light.dirty = false;
-				}
-			});
-
-		EntityManager::Get().Collect<TransformComponent, PointLightComponent>().Do([&](entity, TransformComponent tr, PointLightComponent& light)
-			{
-				if (light.dirty)
-				{
-					PointLightDesc d{};
-					d.position = tr.GetPosition();
-					d.color = light.color;
-					d.strength = light.strength;
-					LightManager::Get().UpdatePointLight(light.handle, d);
-					light.dirty = false;
 				}
 			});
 	}

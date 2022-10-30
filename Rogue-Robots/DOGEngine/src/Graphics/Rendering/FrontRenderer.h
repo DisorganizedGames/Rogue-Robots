@@ -32,6 +32,7 @@ namespace DOG::gfx
 		void Update(f32);
 
 		void UpdateLights();
+		void GatherDrawCalls();
 		void SetRenderCamera();
 		void GatherShadowCasters();
 
