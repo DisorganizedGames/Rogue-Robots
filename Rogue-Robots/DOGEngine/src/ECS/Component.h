@@ -202,5 +202,36 @@ namespace DOG
 	{
 		//A.t.m. only an identifier
 	};
+
+	struct MeshFilter
+	{
+		Mesh mesh;
+		u32 numSubmeshes{ 0 };
+	};
+
+	struct MeshRenderer
+	{
+		// Modify MaterialDesc and call SetDirty() to dynamically change material arguments
+		struct MRMaterial
+		{
+			bool dirty{ false };
+			MaterialHandle handle;
+			MaterialDesc material;
+
+			void SetDirty() { dirty = true; };
+		};
+
+		// Size of materials must be >= accompanied MeshFilter num submeshes
+		std::vector<MRMaterial> materials;
+		
+		// Shadows
+		bool isShadowed{ false };
+		bool doubleSidedShadows{ false };
+	};
+
+	struct SkeletonMeshRenderer
+	{
+		
+	};
 }
 
