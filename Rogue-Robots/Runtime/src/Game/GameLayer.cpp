@@ -193,13 +193,63 @@ void GameLayer::EvaluateWinCondition()
 void GameLayer::EvaluateLoseCondition()
 {
 	bool playersAlive = false;
-	EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](PlayerStatsComponent& playerStats)
+	EntityManager::Get().Collect<PlayerAliveComponent>().Do([&playersAlive](PlayerAliveComponent&) { playersAlive = true; });
+	if (!playersAlive) m_gameState = GameState::Lost;
+}
+
+void GameLayer::CheckIfPlayersIAreDead()
+{
+	EntityManager::Get().Collect<PlayerStatsComponent, PlayerAliveComponent>().Do([&](entity e, PlayerStatsComponent& stats, PlayerAliveComponent&)
 		{
-			playersAlive |= playerStats.health > 0.0f;
+			if (stats.health <= 0.0f)
+			{
+				// Player died
+				KillPlayer(e);
+			}
 		});
-	if (!playersAlive)
+}
+
+void GameLayer::RespawnDeadPlayer(DOG::entity e)
+{
+	if (!m_entityManager.HasComponent<PlayerAliveComponent>(e))
 	{
-		m_gameState = GameState::Lost;
+		m_entityManager.AddComponent<PlayerAliveComponent>(e);
+	}
+
+	LuaMain::GetScriptManager()->AddScript(e, "Gun.lua");
+	auto gunScriptData = LuaMain::GetScriptManager()->GetScript(e, "Gun.lua");
+	LuaTable t0(gunScriptData.scriptTable, true);
+	t0.CallFunctionOnTable("OnStart");
+
+	LuaMain::GetScriptManager()->AddScript(e, "PassiveItemSystem.lua");
+	auto passiveItemScriptData = LuaMain::GetScriptManager()->GetScript(e, "PassiveItemSystem.lua");
+	LuaTable t1(passiveItemScriptData.scriptTable, true);
+	t1.CallFunctionOnTable("OnStart");
+
+	LuaMain::GetScriptManager()->AddScript(e, "ActiveItemSystem.lua");
+	auto activeItemScriptData = LuaMain::GetScriptManager()->GetScript(e, "ActiveItemSystem.lua");
+	LuaTable t2(activeItemScriptData.scriptTable, true);
+	t2.CallFunctionOnTable("OnStart");
+
+	if (m_entityManager.HasComponent<ThisPlayer>(e))
+	{
+		m_player->ForceDebugCamera(false);
+		auto& stats = EntityManager::Get().GetComponent<PlayerStatsComponent>(e);
+		stats.health = stats.maxHealth;
+	}
+}
+
+void GameLayer::KillPlayer(DOG::entity e)
+{
+	m_entityManager.RemoveComponent<PlayerAliveComponent>(e);
+	LuaMain::GetScriptManager()->RemoveScript(e, "Gun.lua");
+	LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
+	LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
+	m_entityManager.RemoveComponent<ScriptComponent>(e);
+
+	if (m_entityManager.HasComponent<ThisPlayer>(e))
+	{
+		m_player->ForceDebugCamera(true);
 	}
 }
 
@@ -213,6 +263,8 @@ void GameLayer::UpdateGame()
 	
 
 	HandleCheats();
+
+	CheckIfPlayersIAreDead();
 
 	EvaluateWinCondition();
 	EvaluateLoseCondition();
@@ -668,6 +720,7 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = static_cast<i8>(i);
 		m_entityManager.AddComponent<InputController>(playerI);
 		m_entityManager.AddComponent<ShadowReceiverComponent>(playerI);
+		m_entityManager.AddComponent<PlayerAliveComponent>(playerI);
 		scriptManager->AddScript(playerI, "Gun.lua");
 		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
 		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");
@@ -949,6 +1002,10 @@ void GameLayer::CheatSettingsImGuiMenu()
 	if (ImGui::Button("Win"))
 	{
 		m_gameState = GameState::Won;
+	}
+	if (ImGui::Button("Respawn"))
+	{
+		RespawnDeadPlayer(GetPlayer());
 	}
 }
 

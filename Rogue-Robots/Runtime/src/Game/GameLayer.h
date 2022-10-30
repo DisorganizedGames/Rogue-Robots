@@ -40,6 +40,9 @@ private:
 
 	void EvaluateWinCondition();
 	void EvaluateLoseCondition();
+	void CheckIfPlayersIAreDead();
+	void RespawnDeadPlayer(DOG::entity e);
+	void KillPlayer(DOG::entity e);
 
 	void RegisterLuaInterfaces();
 	std::vector<DOG::entity> LoadLevel(); //Loads a PCG generated level.
