@@ -1,6 +1,7 @@
 #pragma once
 #include "../EventSystem/EventPublisher.h"
 #include "CoreUtils.h"
+struct ImFont;
 namespace DOG
 {
 	class Application;
@@ -19,6 +20,8 @@ namespace DOG
 		static const HWND GetHandle() noexcept;
 		static void SetCursorMode(CursorMode mode) noexcept;
 		static CursorMode GetCursorMode() noexcept;
+		static ImFont* GetFont() noexcept;
+		static void SetFont(ImFont* pFont) noexcept;
 
 		// Reserved for renderer until further notice (no functionality for WM callbacks is implemented for Window otherwise)
 		static void SetWMHook(const std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> func);

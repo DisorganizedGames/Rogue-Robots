@@ -29,6 +29,9 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PickupLerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPPickupItemInteractionSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<MVPRenderPickupItemUIText>());
+	m_entityManager.RegisterSystem(std::make_unique<PickUpTranslateToPlayerSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<MVPRenderAmmunitionTextSystem>());
 	m_agentManager = new AgentManager();
 	m_nrOfPlayers = MAX_PLAYER_COUNT;
 	m_networkStatus = 0;
@@ -50,6 +53,7 @@ GameLayer::GameLayer() noexcept
 	assert(std::filesystem::exists(("Assets/Fonts/Robot Radicals.ttf")));
 	ImGui::GetIO().Fonts->AddFontDefault();
 	m_imguiFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Assets/Fonts/Robot Radicals.ttf", 18.0f);
+	Window::SetFont(m_imguiFont);
 }
 
 GameLayer::~GameLayer()
@@ -121,7 +125,6 @@ void GameLayer::OnUpdate()
 
 	KeyBindingDisplayMenu();
 }
-
 
 void GameLayer::StartMainScene()
 {
@@ -287,7 +290,6 @@ void GameLayer::OnRender()
 	//...
 }
 
-
 void GameLayer::OnImGuiRender()
 {
 
@@ -320,9 +322,28 @@ void GameLayer::PickUpItem()
 
 			m_entityManager.RemoveComponent<EligibleActiveItemComponent>(player);
 
-			std::string luaEventName = std::string("ItemPickup") + std::to_string(player);
-			LuaMain::GetEventSystem()->InvokeEvent(luaEventName, eligiblePickUp.activeItemEntity);
-			m_entityManager.DeferredEntityDestruction(eligiblePickUp.activeItemEntity);
+			if (!m_entityManager.HasComponent<PickedUpItemComponent>(eligiblePickUp.activeItemEntity))
+			{
+				m_entityManager.AddComponent<PickedUpItemComponent>(eligiblePickUp.activeItemEntity);
+				auto& ac = m_entityManager.GetComponent<DOG::PickupLerpAnimateComponent>(eligiblePickUp.activeItemEntity);
+				ac.origin = m_entityManager.GetComponent<DOG::TransformComponent>(eligiblePickUp.activeItemEntity).GetPosition();
+				ac.target = m_entityManager.GetComponent<DOG::TransformComponent>(player).GetPosition();
+				ac.target.y -= 1.0f;
+			}
+		});
+
+	m_entityManager.Collect<EligibleBarrelComponent>().Do([this](DOG::entity player, EligibleBarrelComponent& eligiblePickUp)
+		{
+			m_entityManager.RemoveComponent<EligibleBarrelComponent>(player);
+
+			if (!m_entityManager.HasComponent<PickedUpItemComponent>(eligiblePickUp.barrelComponentEntity))
+			{
+				m_entityManager.AddComponent<PickedUpItemComponent>(eligiblePickUp.barrelComponentEntity);
+				auto& ac = m_entityManager.GetComponent<DOG::PickupLerpAnimateComponent>(eligiblePickUp.barrelComponentEntity);
+				ac.origin = m_entityManager.GetComponent<DOG::TransformComponent>(eligiblePickUp.barrelComponentEntity).GetPosition();
+				ac.target = m_entityManager.GetComponent<DOG::TransformComponent>(player).GetPosition();
+				ac.target.y -= 1.0f;
+			}
 		});
 }
 
@@ -443,7 +464,6 @@ void GameLayer::UpdateLobby()
 		m_gameState = GameState::StartPlaying;
 }
 
-
 void GameLayer::RegisterLuaInterfaces()
 {
 	LuaGlobal* global = LuaMain::GetGlobal();
@@ -493,6 +513,10 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::PlayAudio>("PlayAudio");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPassiveType>("GetPassiveType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetActiveType>("GetActiveType");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetBarrelType>("GetBarrelType");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAmmoCapacityForBarrelType>("GetAmmoCapacityForBarrelType");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAmmoCountPerPickup>("GetAmmoCountPerPickup");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::UpdateMagazine>("UpdateMagazine");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::IsBulletLocal>("IsBulletLocal");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::Exists>("Exists");
 	
@@ -708,7 +732,7 @@ void GameLayer::Release(DOG::Key key)
 				inputC.up = false;
 			if (key == DOG::Key::Q)
 				inputC.switchComp = false;
-			if (key == DOG::Key::E)
+			if (key == DOG::Key::T)
 				inputC.switchBarrelComp = false;
 			if (key == DOG::Key::M)
 				inputC.switchMagazineComp = false;
@@ -766,6 +790,7 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		scriptManager->AddScript(playerI, "Gun.lua");
 		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
 		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");
+		//scriptManager->AddScript(playerI, "BarrelComponentSystem.lua");
 
 		if (i == 0) // Only for this player
 		{

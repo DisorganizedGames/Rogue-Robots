@@ -102,6 +102,12 @@ public:
 	void GetPassiveType(DOG::LuaContext* context);
 
 	void GetActiveType(DOG::LuaContext* context);
+
+	void GetBarrelType(DOG::LuaContext* context);
+
+	void GetAmmoCapacityForBarrelType(DOG::LuaContext* context);
+
+	void GetAmmoCountPerPickup(DOG::LuaContext* context);
 	
 	void IsBulletLocal(DOG::LuaContext* context);
 
@@ -109,6 +115,7 @@ public:
 
 	//void AgentHit(DOG::LuaContext* context);
 
+	void UpdateMagazine(DOG::LuaContext* context);
 
 private:
 	void AddModel(DOG::LuaContext* context, DOG::entity e);
@@ -147,6 +154,8 @@ private:
 	void ModifyPointLightStrength(DOG::LuaContext* context, DOG::entity e);
 
 	void AddActiveItem(DOG::LuaContext* context, DOG::entity e);
+
+	void AddBarrelComponent(DOG::LuaContext* context, DOG::entity e);
 };
 
 class AssetInterface : public LuaInterface
