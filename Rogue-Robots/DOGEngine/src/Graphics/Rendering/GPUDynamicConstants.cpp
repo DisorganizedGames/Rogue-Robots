@@ -33,11 +33,14 @@ namespace DOG::gfx
 
 
 		// Allocate rest
+		u8* valid{ nullptr };
 		for (u32 i = 0; i < count - 1; ++i)
 		{
-			m_ator.Allocate();
+			valid = m_ator.Allocate();
 			++m_numToPop;
 		}
+		if (count > 1)
+			assert(valid);
 
 		// Yes it is a big performance hazard
 		// Create temporary view (potential performance hazard?)

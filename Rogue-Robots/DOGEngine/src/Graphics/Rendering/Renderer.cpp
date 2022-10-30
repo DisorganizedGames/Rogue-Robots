@@ -599,7 +599,7 @@ namespace DOG::gfx
 					and during forward pass we simply read from it 
 			*/
 
-			auto drawSubmissions = [&, dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false) mutable
+			auto drawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_boneJourno.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false) mutable
 			{	
 				TransformComponent camTransform;
 				camTransform.worldMatrix = ((DirectX::SimpleMath::Matrix)m_viewMat).Invert();
@@ -616,17 +616,17 @@ namespace DOG::gfx
 					auto perDrawHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
 					PerDrawData perDrawData{};
 					perDrawData.world = sub.world;
-					perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
-					perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
+					perDrawData.globalSubmeshID = meshTab->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
+					perDrawData.globalMaterialID = matTab->GetMaterialIndex(sub.mat);
 
 					GPUDynamicConstant jointsHandle;
 					if (animated)
 					{
 						JointData jointsData{};
 						// Resolve joints
-						jointsHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
-						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); ++i)
-							jointsData.joints[i] = m_boneJourno->m_vsJoints[i];
+						jointsHandle = dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+						for (size_t i = 0; i < bonezy->m_vsJoints.size(); ++i)
+							jointsData.joints[i] = bonezy->m_vsJoints[i];
 						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
 					}
 
@@ -642,12 +642,12 @@ namespace DOG::gfx
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
-					auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+					auto sm = meshTab->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
 					rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
 				}
 			};
 		
-			auto shadowDrawSubmissions = [&, dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 smIdx, entity entityID, bool animated = false, bool wireframe = false) mutable
+			auto shadowDrawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_boneJourno.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 smIdx, entity entityID, bool animated = false, bool wireframe = false) mutable
 			{
 				/*entityID passed in is the equivalent spotlight, from which we collect the view and projection matrix to be used in the Vertex Shader.*/
 				auto& cc = EntityManager::Get().GetComponent<CameraComponent>(entityID);
@@ -672,16 +672,16 @@ namespace DOG::gfx
 					auto perDrawHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
 					PerDrawData perDrawData{};
 					perDrawData.world = sub.world;
-					perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
-					perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
+					perDrawData.globalSubmeshID = meshTab->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
+					perDrawData.globalMaterialID = matTab->GetMaterialIndex(sub.mat);
 
 					if (animated)
 					{
 						// Resolve joints
 						JointData jointsData{};
 						auto jointsHandle = dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
-						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); ++i)
-							jointsData.joints[i] = m_boneJourno->m_vsJoints[i];
+						for (size_t i = 0; i < bonezy->m_vsJoints.size(); ++i)
+							jointsData.joints[i] = bonezy->m_vsJoints[i];
 						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
 						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
 					}
@@ -698,7 +698,7 @@ namespace DOG::gfx
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
-					auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+					auto sm = meshTab->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
 					rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
 				}
 			};

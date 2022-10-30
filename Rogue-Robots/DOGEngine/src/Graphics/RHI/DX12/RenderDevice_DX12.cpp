@@ -342,7 +342,7 @@ namespace DOG::gfx
 		auto& buffer_storage = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(buffer.handle));
 		auto view_desc = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		assert((desc.offset + desc.stride * desc.count - 1) < buffer_storage.desc.size);
+		assert((desc.offset + desc.stride * desc.count) <= buffer_storage.desc.size);
 
 		std::optional<DX12DescriptorChunk> uavClear;
 		if (desc.viewType == ViewType::Constant)

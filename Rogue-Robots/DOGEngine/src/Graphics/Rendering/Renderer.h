@@ -40,7 +40,7 @@ namespace DOG::gfx
 	{
 	private:
 		static constexpr u8 S_NUM_BACKBUFFERS = 2;
-		static constexpr u8 S_MAX_FIF = 1;
+		static constexpr u8 S_MAX_FIF = 2;
 
 		static_assert(S_MAX_FIF <= S_NUM_BACKBUFFERS);
 	public:
