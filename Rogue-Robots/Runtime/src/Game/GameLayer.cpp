@@ -35,6 +35,7 @@ GameLayer::GameLayer() noexcept
 	m_keyBindingDescriptions.emplace_back("wasd", "walk");
 	m_keyBindingDescriptions.emplace_back("space", "jump");
 	m_keyBindingDescriptions.emplace_back("lmb", "shoot");
+	m_keyBindingDescriptions.emplace_back("r", "reload");
 	m_keyBindingDescriptions.emplace_back("g", "active item");
 	m_keyBindingDescriptions.emplace_back("f", "flash light");
 	m_keyBindingDescriptions.emplace_back("m", "gun effect");
