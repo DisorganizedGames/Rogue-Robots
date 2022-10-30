@@ -93,7 +93,7 @@ entity AgentManager::CreateAgentCore(u32 model, const Vector3& pos, EntityTypes 
 
 	m_entityManager.AddComponent<ModelComponent>(e, model);
 
-	m_entityManager.AddComponent<CapsuleColliderComponent>(e, e, 0.5f, 0.5f, true, 50.0f);
+	m_entityManager.AddComponent<CapsuleColliderComponent>(e, e, 1.f, 1.f, true, 50.0f);
 	
 	RigidbodyComponent& rb = m_entityManager.AddComponent<RigidbodyComponent>(e, e);
 	rb.ConstrainRotation(true, true, true);
@@ -129,12 +129,14 @@ entity AgentManager::CreateAgentCore(u32 model, const Vector3& pos, EntityTypes 
 
 u32 AgentManager::GetModel(EntityTypes type)
 {
-	return m_models[static_cast<u32>(type) - static_cast<u32>(EntityTypes::AgentsBegin)];
+	return m_models[0];	// temporary hack
+	//return m_models[static_cast<u32>(type) - static_cast<u32>(EntityTypes::AgentsBegin)];
 }
 
 u32 AgentManager::GetModel(CreateAndDestroyEntityComponent& entityDesc)
 {
-	return m_models[static_cast<u32>(entityDesc.entityTypeId) - static_cast<u32>(EntityTypes::AgentsBegin)];
+	return m_models[0];	// temporary hack
+	//return m_models[static_cast<u32>(entityDesc.entityTypeId) - static_cast<u32>(EntityTypes::AgentsBegin)];
 }
 
 Vector3 AgentManager::GenerateRandomVector3(u32 seed, f32 max, f32 min)
