@@ -925,14 +925,6 @@ namespace DOG::gfx
 							rd->Cmd_Dispatch(cmdl, xGroup, yGroup, 1);
 						}
 					}
-				},
-				[&](PassData& data)	// Pre
-				{
-					//std::cout << "Pre\n";
-				},
-				[&](PassData& data)	// Post
-				{
-					//std::cout << "Post\n\n";
 				});
 
 			rg.AddPass<PassData>("SSAO Blur Horizontal",
