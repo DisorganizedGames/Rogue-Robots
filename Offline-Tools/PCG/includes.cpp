@@ -131,7 +131,7 @@ std::vector<std::pair<uint32_t, int>> AStar(Room& room, uint32_t* start, uint32_
 				uint32_t neighborZ = std::floor(tempIndex / (room.width * room.height));
 				tempIndex = tempIndex - (neighborZ * room.width * room.height);
 				uint32_t neighborY = std::floor(tempIndex / room.width);
-				tempIndex = tempIndex - (neighborY * room.width * room.height);
+				tempIndex = tempIndex - (neighborY * room.width);
 				uint32_t neighborX = tempIndex;
 				uint32_t neighborPos[3] = { neighborX, neighborY, neighborZ };
 				fScore[neighborIndex] = tentativeScore + Heuristic(neighborPos, goal);

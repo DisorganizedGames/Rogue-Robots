@@ -608,7 +608,7 @@ bool WFC::GenerateRoom(Room& room)
 							}
 							else
 							{
-								replacement1 = "CornerFloor1Replacer3_r0_f";
+								replacement1 = "CornerFloor1Replacer6_r0_f";
 							}
 							if (room.generatedRoom[i + 1u].find("Replacer") == std::string::npos)
 							{
@@ -616,7 +616,7 @@ bool WFC::GenerateRoom(Room& room)
 							}
 							else
 							{
-							replacement2 = "CornerFloor1Replacer3_r1_f";
+							replacement2 = "CornerFloor1Replacer6_r1_f";
 							}
 							room.generatedRoom[i] = replacement1;
 							room.generatedRoom[i + 1u] = replacement2;
@@ -630,7 +630,7 @@ bool WFC::GenerateRoom(Room& room)
 							}
 							else
 							{
-								replacement1 = "CornerFloor1Replacer3_r3_f";
+								replacement1 = "CornerFloor1Replacer6_r3_f";
 							}
 							if (room.generatedRoom[i + 1u].find("Replacer") == std::string::npos)
 							{
@@ -638,7 +638,7 @@ bool WFC::GenerateRoom(Room& room)
 							}
 							else
 							{
-								replacement2 = "CornerFloor1Replacer3_r2_f";
+								replacement2 = "CornerFloor1Replacer6_r2_f";
 							}
 							room.generatedRoom[i] = replacement1;
 							room.generatedRoom[i + 1u] = replacement2;
@@ -664,7 +664,7 @@ bool WFC::GenerateRoom(Room& room)
 							}
 							else
 							{
-								replacement1 = "CornerFloor1Replacer3_r3_f";
+								replacement1 = "CornerFloor1Replacer6_r3_f";
 							}
 							if (room.generatedRoom[i + (room.width * room.height)].find("Replacer") == std::string::npos)
 							{
@@ -672,7 +672,7 @@ bool WFC::GenerateRoom(Room& room)
 							}
 							else
 							{
-								replacement2 = "CornerFloor1Replacer3_r0_f";
+								replacement2 = "CornerFloor1Replacer6_r0_f";
 							}
 							room.generatedRoom[i] = replacement1;
 							room.generatedRoom[i + (room.width * room.height)] = replacement2;
@@ -686,7 +686,7 @@ bool WFC::GenerateRoom(Room& room)
 							}
 							else
 							{
-								replacement1 = "CornerFloor1Replacer3_r2_f";
+								replacement1 = "CornerFloor1Replacer6_r2_f";
 							}
 							if (room.generatedRoom[i + (room.width * room.height)].find("Replacer") == std::string::npos)
 							{
@@ -694,7 +694,7 @@ bool WFC::GenerateRoom(Room& room)
 							}
 							else
 							{
-								replacement2 = "CornerFloor1Replacer3_r1_f";
+								replacement2 = "CornerFloor1Replacer6_r1_f";
 							}
 							room.generatedRoom[i] = replacement1;
 							room.generatedRoom[i + (room.width * room.height)] = replacement2;
@@ -761,6 +761,7 @@ bool WFC::GenerateRoom(Room& room)
 							//Go through the path and see if something has to be replaced.
 							int prevDir = -1;
 							int nextDir = -1;
+							bool prevWasVoid = false;
 							for (uint32_t i{ 0u }; i < path.size(); ++i)
 							{
 								std::string previous = "None";
@@ -780,11 +781,16 @@ bool WFC::GenerateRoom(Room& room)
 									next = room.generatedRoom[path[i + 1].first];
 								}
 
-								std::string replacer = ReplaceBlock(previous, current, next, prevDir, nextDir);
-								if (replacer != "")
+								std::string replacer = ReplaceBlock(previous, current, next, prevDir, nextDir, prevWasVoid);
+								if (room.generatedRoom[path[i].first] == "Void")
 								{
-									room.generatedRoom[path[i].first] = replacer;
+									prevWasVoid = true;
 								}
+								else
+								{
+									prevWasVoid = false;
+								}
+								room.generatedRoom[path[i].first] = replacer;
 								prevDir = nextDir;
 							}
 						}
@@ -797,26 +803,83 @@ bool WFC::GenerateRoom(Room& room)
 	return true;
 }
 
-std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock, std::string& nextBlock, int prevDir, int nextDir)
+std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock, std::string& nextBlock, int prevDir, int nextDir, bool prevWasVoid)
 {
 	std::string replacer = currentBlock;
-	if (currentBlock == "Void" || nextBlock == "Void" || prevBlock.find("Connector") != std::string::npos)
+	if (currentBlock == "Void" || nextBlock == "Void" || prevWasVoid)
 	{
 		if (currentBlock == "Void")
 		{
-
+			//Straight tunnels.
+			if (prevDir == nextDir)
+			{
+				if (prevDir == 0 || prevDir == 1) //Across, side to side
+				{
+					replacer = "SideTwoConnector_r0_f";
+				}
+				else if (prevDir == 2 || prevDir == 3) //Up to down
+				{
+					replacer = "DownUpConnector_r0_f";
+				}
+				else if (prevDir == 4 || prevDir == 5) //Across, side to side.
+				{
+					replacer = "SideTwoConnector_r1_f";
+				}
+			}
+			//L-tunnels
+			else
+			{
+				if ((prevDir == 1 && nextDir == 5) || (prevDir == 5 && nextDir == 1))
+				{
+					replacer = "LConnector_r0_f";
+				}
+				else if ((prevDir == 0 && nextDir == 4) || (prevDir == 4 && nextDir == 0))
+				{
+					replacer = "LConnector_r1_f";
+				}
+				else if ((prevDir == 1 && nextDir == 4) || (prevDir == 4 && nextDir == 1))
+				{
+					replacer = "LConnector_r2_f";
+				}
+				else if ((prevDir == 0 && nextDir == 5) || (prevDir == 5 && nextDir == 0))
+				{
+					replacer = "LConnector_r3_f";
+				}
+			}
 		}
 		else //This is the block before or after the void.
 		{
+			int dirToUse;
+			if (prevWasVoid)
+			{
+				dirToUse = prevDir;
+				
+				if (dirToUse % 2 == 0)
+				{
+					++dirToUse;
+				}
+				else
+				{
+					--dirToUse;
+				}
+			}
+			else
+			{
+				dirToUse = nextDir;
+			}
 			size_t firstUnderscore = currentBlock.find('_');
 			size_t secondUnderscore = currentBlock.find('_', firstUnderscore + 1);
 			std::string name = currentBlock.substr(0, firstUnderscore);
 			std::string rotation = currentBlock.substr(firstUnderscore + 1, 2);
 
 			std::string flip = currentBlock.substr(secondUnderscore + 1, currentBlock.size() - secondUnderscore);
-			if (name == "WallFloor1")
+			if (name == "Wall1")
 			{
-				if (nextDir == 3) //If the next block is downwards.
+				replacer = "WallTunnelEntrance1";
+			}
+			else if (name == "WallFloor1")
+			{
+				if (dirToUse == 3) //If the next block is downwards.
 				{
 					replacer = "WallFloorTunnelEntrance2";
 				}
@@ -825,90 +888,290 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 					replacer = "WallFloorTunnelEntrance1";
 				}
 			}
-			else if (name == "Wall1")
+			else if (name == "WallFloorTunnelEntrance1" || name == "WallFloorTunnelEntrance2")
 			{
-				replacer = "WallTunnelEntrance1";
+				name = "WallFloorTunnelEntrance3";
 			}
-			else if (name == "CornerFloor1")
+			else if (name == "WallRoof1")
 			{
-				int rot = static_cast<int>(rotation[1]);
-				if (rot == 2)
+				if (dirToUse == 2) //If the next block is upwards.
 				{
-					rot = 4;
+					replacer = "WallRoof1Replacer1";
 				}
-				else if (rot == 3)
+				else
 				{
-					rot = 5;
+					replacer = "WallRoof1Replacer2";
 				}
+			}
+			else if (name == "WallRoof1Replacer1" || name == "WallRoof1REplacer2")
+			{
+				replacer = "WallRoof1Replacer3";
+			}
+			else if (name == "CornerWall1")
+			{
+				int rot = std::stoi(rotation.substr(1, 1));
+				if (rot == 0 && dirToUse == 0)
+				{
+					replacer = "CornerWall1Replacer1";
+				}
+				else if (rot == 0 && dirToUse == 5)
+				{
+					replacer = "CornerWall1Replacer2";
+				}
+				else if (rot == 1 && dirToUse == 5)
+				{
+					replacer = "CornerWall1Replacer1";
+				}
+				else if (rot == 1 && dirToUse == 1)
+				{
+					replacer = "CornerWall1Replacer2";
+				}
+				else if (rot == 2 && dirToUse == 1)
+				{
+					replacer = "CornerWall1Replacer1";
+				}
+				else if (rot == 2 && dirToUse == 4)
+				{
+					replacer = "CornerWall1Replacer2";
+				}
+				else if (rot == 3 && dirToUse == 4)
+				{
+					replacer = "CornerWall1Replacer1";
+				}
+				else if (rot == 3 && dirToUse == 0)
+				{
+					replacer = "CornerWall1Replacer2";
+				}
+			}
+			else if (name == "CornerWall1Replacer1" || name == "CornerWall1Replacer2")
+			{
+				replacer = "CornerWall1Replacer3";
+			}
+			else if (name.find("CornerFloor1") != std::string::npos)
+			{
+				if (name == "CornerFloor1")
+				{
+					int rot = std::stoi(rotation.substr(1, 1));
+					if (dirToUse == 3)
+					{
+						replacer = "CornerFloor1Replacer3"; //Only tunnel down
+					}
+					else if (rot == 0 && dirToUse == 0)
+					{
+						replacer = "CornerFloor1Replacer1";
+					}
+					else if (rot == 0 && dirToUse == 5)
+					{
+						replacer = "CornerFloor1Replacer2";
+					}
+					else if (rot == 1 && dirToUse == 5)
+					{
+						replacer = "CornerFloor1Replacer1";
+					}
+					else if (rot == 1 && dirToUse == 1)
+					{
+						replacer = "CornerFloor1Replacer2";
+					}
+					else if (rot == 2 && dirToUse == 1)
+					{
+						replacer = "CornerFloor1Replacer1";
+					}
+					else if (rot == 2 && dirToUse == 4)
+					{
+						replacer = "CornerFloor1Replacer2";
+					}
+					else if (rot == 3 && dirToUse == 4)
+					{
+						replacer = "CornerFloor1Replacer1";
+					}
+					else if (rot == 3 && dirToUse == 0)
+					{
+						replacer = "CornerFloor1Replacer2";
+					}
+				}
+				else if (name == "CornerFloor1Replacer1") //If only left or right, replace with connection to both or connection to down.
+				{
+					if (dirToUse == 3)
+					{
+						replacer = "CornerFloor1Replacer4"; //Only tunnel left/right and down
+					}
+					else
+					{
+						replacer = "CornerFloor1Replacer6"; //Only tunnel to the sides
 
-				if (nextDir == 3)
-				{
-					replacer = "CornerFloorReplacer3"; //Only tunnel down
+					}
 				}
-				else if (rot == nextDir)
+				else if (name == "CornerFloor1Replacer2") //If only left or right, replace with connection to both or connection to down.
 				{
-					replacer = "CornerFloor1Replacer2"; //Only tunnel left/right
+					if (dirToUse == 3)
+					{
+						replacer = "CornerFloor1Replacer5"; //Only tunnel left/right and down.
+					}
+					else
+					{
+						replacer = "CornerFloor1Replacer6"; //Only tunnel to the sides.
+					}
 				}
-				else
+				else if (name == "CornerFloor1Replacer3") // If only tunnel down, replace with tunnel down and left or right.
 				{
-					replacer = "CornerFloor1Replacer1"; //Only tunnel left/right
-				}
-			}
-			else if (name == "CornerFloor1Replacer1") //If only left or right, replace with connection to both or connection to down.
-			{
-				if (nextDir == 3)
-				{
-					replacer = "CornerFloor1Replacer4"; //Only tunnel left/right and down
-				}
-				else
-				{
-					replacer = "CornerFloorReplacer6"; //Only tunnel to the sides
-					
-				}
-			}
-			else if (name == "CornerFloor1Replacer2") //If only left or right, replace with connection to both or connection to down.
-			{
-				if (nextDir == 3)
-				{
-					replacer = "CornerFloor1Replacer5"; //Only tunnel left/right and down.
-				}
-				else
-				{
-					replacer = "CornerFloorReplacer6"; //Only tunnel to the sides.
-				}
-			}
-			else if (name == "CornerFloor1Replacer3") // If only tunnel down, replace with tunnel down and left or right.
-			{
-				int rot = static_cast<int>(rotation[1]);
-				if (rot == 2)
-				{
-					rot = 4;
-				}
-				else if (rot == 3)
-				{
-					rot = 5;
-				}
+					int rot = static_cast<int>(rotation[1]);
 
-				if (rot == nextDir)
-				{
-					replacer = "CornerFloor1Replacer5"; //Tunnel down + tunnel left/right
+					if (rot == 0 && dirToUse == 0)
+					{
+						replacer = "CornerFloor1Replacer4";
+					}
+					else if (rot == 0 && dirToUse == 5)
+					{
+						replacer = "CornerFloor1Replacer5";
+					}
+					else if (rot == 1 && dirToUse == 5)
+					{
+						replacer = "CornerFloor1Replacer4";
+					}
+					else if (rot == 1 && dirToUse == 1)
+					{
+						replacer = "CornerFloor1Replacer5";
+					}
+					else if (rot == 2 && dirToUse == 1)
+					{
+						replacer = "CornerFloor1Replacer4";
+					}
+					else if (rot == 2 && dirToUse == 4)
+					{
+						replacer = "CornerFloor1Replacer5";
+					}
+					else if (rot == 3 && dirToUse == 4)
+					{
+						replacer = "CornerFloor1Replacer4";
+					}
+					else if (rot == 3 && dirToUse == 0)
+					{
+						replacer = "CornerFloor1Replacer5";
+					}
 				}
-				else
+				else if (name == "CornerFloor1Replacer4" || name == "CornerFloor1Replacer5" || name == "CornerFloor1Replacer6") //If tunnels left and right or left and down or right and down, change to all directions.
 				{
-					replacer = "CornerFloor1Replacer4"; //Tunnel down + tunnel left/right
+					replacer = "CornerFloor1Replacer7"; //All directions.
 				}
 			}
-			else if (name == "CornerFloor1Replacer4" || name == "CornerFloor1Replacer5" || name == "CornerFloor1Replacer6") //If tunnels left and right or left and down or right and down, change to all directions.
+			else if (name.find("CornerRoof1") != std::string::npos)
 			{
-				replacer = "CornerFloor1Replacer7"; //All directions.
-			}
+				if (name == "CornerRoof1")
+				{
+					int rot = std::stoi(rotation.substr(1, 1));
+					if (dirToUse == 2)
+					{
+						replacer = "CornerRoof1Replacer3"; //Only tunnel up
+					}
+					else if (rot == 0 && dirToUse == 0)
+					{
+						replacer = "CornerRoof1Replacer1";
+					}
+					else if (rot == 0 && dirToUse == 5)
+					{
+						replacer = "CornerRoof1Replacer2";
+					}
+					else if (rot == 1 && dirToUse == 5)
+					{
+						replacer = "CornerRoof1Replacer1";
+					}
+					else if (rot == 1 && dirToUse == 1)
+					{
+						replacer = "CornerRoof1Replacer2";
+					}
+					else if (rot == 2 && dirToUse == 1)
+					{
+						replacer = "CornerRoof1Replacer1";
+					}
+					else if (rot == 2 && dirToUse == 4)
+					{
+						replacer = "CornerRoof1Replacer2";
+					}
+					else if (rot == 3 && dirToUse == 4)
+					{
+						replacer = "CornerRoof1Replacer1";
+					}
+					else if (rot == 3 && dirToUse == 0)
+					{
+						replacer = "CornerRoof1Replacer2";
+					}
+				}
+				else if (name == "CornerRoof1Replacer1") //If only left or right, replace with connection to both or connection to up.
+				{
+					if (dirToUse == 2)
+					{
+						replacer = "CornerRoof1Replacer4"; //Only tunnel left/right and up
+					}
+					else
+					{
+						replacer = "CornerRoof1Replacer6"; //Only tunnel to the sides
 
+					}
+				}
+				else if (name == "CornerRoof1Replacer2") //If only left or right, replace with connection to both or connection to up.
+				{
+					if (dirToUse == 2)
+					{
+						replacer = "CornerRoof1Replacer5"; //Only tunnel left/right and up
+					}
+					else
+					{
+						replacer = "CornerRoof1Replacer6"; //Only tunnel to the sides.
+					}
+				}
+				else if (name == "CornerRoof1Replacer3") // If only tunnel up, replace with tunnel down and left or right.
+				{
+					int rot = static_cast<int>(rotation[1]);
+
+					if (rot == 0 && dirToUse == 0)
+					{
+						replacer = "CornerRoof1Replacer4";
+					}
+					else if (rot == 0 && dirToUse == 5)
+					{
+						replacer = "CornerRoof1Replacer5";
+					}
+					else if (rot == 1 && dirToUse == 5)
+					{
+						replacer = "CornerRoof1Replacer4";
+					}
+					else if (rot == 1 && dirToUse == 1)
+					{
+						replacer = "CornerRoof1Replacer5";
+					}
+					else if (rot == 2 && dirToUse == 1)
+					{
+						replacer = "CornerRoof1Replacer4";
+					}
+					else if (rot == 2 && dirToUse == 4)
+					{
+						replacer = "CornerRoof1Replacer5";
+					}
+					else if (rot == 3 && dirToUse == 4)
+					{
+						replacer = "CornerRoof1Replacer4";
+					}
+					else if (rot == 3 && dirToUse == 0)
+					{
+						replacer = "CornerRoof1Replacer5";
+					}
+				}
+				else if (name == "CornerRoof1Replacer4" || name == "CornerRoof1Replacer5" || name == "CornerRoof1Replacer6") //If tunnels left and right or left and down or right and down, change to all directions.
+				{
+					replacer = "CornerRoof1Replacer7"; //All directions.
+				}
+			}
+			//add T-tunnel, if straight tunnel or L tunnel
+
+			//add 2D-+-tunnel, if T-tunnel
+
+			//add 3D-+-tunnel, if 2D-+-tunnel
 			replacer += "_" + rotation + "_" + flip;
 		}
 	}
 	if (replacer == "Void") //Temporary
 	{
-		replacer = "SideTwoConnector_r0_f";
+		replacer = "Cube_r0_f";
 	}
 	return replacer;
 }

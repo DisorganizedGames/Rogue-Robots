@@ -11,9 +11,9 @@ int main()
     uint32_t nrOfRooms = 2;
 
     //The generated space converges around these sizes. Per room.
-    uint32_t maxWidth = 5;
+    uint32_t maxWidth = 11;
     uint32_t maxHeight = 4;
-    uint32_t maxDepth = 5;
+    uint32_t maxDepth = 11;
 
     std::string input = "largerTest1Output";
 
