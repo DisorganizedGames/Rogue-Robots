@@ -822,9 +822,6 @@ namespace DOG::gfx
 				RGResourceView depth;
 				RGResourceView nor;
 				RGResourceView aoOut;
-
-				PassData() { std::cout << "Hello constructor Shadow\n"; }
-				~PassData() { std::cout << "Hello destructor Shadow\n"; }
 			};
 
 			rg.AddPass<PassData>("SSAO Pass",
@@ -1147,7 +1144,7 @@ namespace DOG::gfx
 			v.clear();
 		m_nextSingleSidedShadowBucket = m_nextDoubleSidedShadowBucket = 0;
 
-		m_sc->Present(false);
+		m_sc->Present(m_graphicsSettings.vSync);
 
 		m_currFrameIdx = (m_currFrameIdx + 1) % S_MAX_FIF;
 	}
