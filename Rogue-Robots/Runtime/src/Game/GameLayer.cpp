@@ -130,7 +130,16 @@ void GameLayer::StartMainScene()
 	m_mainScene->SetUpScene({
 		[this]() 
 		{
-			std::vector<entity> players = SpawnPlayers(Vector3(25.0f, 25.0f, 15.0f), m_nrOfPlayers, 10.f); 
+			// default scene
+			//std::vector<entity> players = SpawnPlayers(Vector3(25.0f, 15.0f, 25.0f), m_nrOfPlayers, 10.f);
+			
+			// tunnel scene
+			// small room
+			//std::vector<entity> players = SpawnPlayers(Vector3(12.0f, 90.0f, 38.0f), m_nrOfPlayers, 10.f);
+			// a few rooms connected by tunnels
+			//std::vector<entity> players = SpawnPlayers(Vector3(2.0f, 80.0f, 13.0f), m_nrOfPlayers, 3.f);		// location 1
+			//std::vector<entity> players = SpawnPlayers(Vector3(58.0f, 80.0f, 40.0f), m_nrOfPlayers, 4.0f);	// location 2
+			std::vector<entity> players = SpawnPlayers(Vector3(68.0f, 78.0f, 27.0f), m_nrOfPlayers, 3.0f); // locaton 3
 			std::vector<entity> flashlights = AddFlashlightsToPlayers(players);
 
 			//For now, just combine them, using the player vector:
@@ -138,9 +147,16 @@ void GameLayer::StartMainScene()
 			return players;
 		},
 		[this]() { return LoadLevel(); },
-		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(20, 20, 50), 10, 3.0f); },
-		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(30, 20, 50), 10, 3.0f); },
-		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(40, 20, 50), 10, 3.0f); },
+			// default scene
+			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(20, 20, 50), 10, 3.0f); },
+			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(30, 20, 50), 10, 3.0f); },
+			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(40, 20, 50), 10, 3.0f); },
+
+			// tunnel scene
+			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(2.f, 80.f, 13.f), 3, 5.f); },			// location 1
+			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(58.f, 80.f, 40.f), 3, 2.5f); },		// location 2
+			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(68.f, 78.f, 27.f), 4, 5.f); },		// location 3
+			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(37.f, 80.f, 12).f, 7, 5.f); },		// location 4
 		});
 
 	LuaMain::GetScriptManager()->StartScripts();
@@ -535,8 +551,8 @@ std::vector<entity> GameLayer::LoadLevel()
 	//testRooms
 	//Tunnels
 	//showOff
-	std::ifstream inputFile("..\\Offline-Tools\\PCG\\showOff_generatedLevel.txt");
-	//std::ifstream inputFile("..\\Offline-Tools\\PCG\\Tunnels_generatedLevel.txt");
+	//std::ifstream inputFile("..\\Offline-Tools\\PCG\\showOff_generatedLevel.txt");
+	std::ifstream inputFile("..\\Offline-Tools\\PCG\\Tunnels_generatedLevel.txt");
 
 	AssetManager& aManager = AssetManager::Get();
 
@@ -987,6 +1003,8 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 			{
 				auto& stats = EntityManager::Get().GetComponent<PlayerStatsComponent>(e);
 				std::string str2 = "hp: " + std::to_string(stats.health);
+				auto pos = EntityManager::Get().GetComponent<DOG::TransformComponent>(e).GetPosition();
+				str2 += "   pos: (" + std::to_string(static_cast<int>(std::round(pos.x))) + ", " + std::to_string(static_cast<int>(std::round(pos.y))) + ", " + std::to_string(static_cast<int>(std::round(pos.z))) + ")";
 				std::string str1;
 				if (EntityManager::Get().HasComponent<NetworkPlayerComponent>(e))
 					str1 = "Player: " + std::to_string(EntityManager::Get().GetComponent<NetworkPlayerComponent>(e).playerId);
