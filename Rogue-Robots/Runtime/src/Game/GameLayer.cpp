@@ -58,6 +58,7 @@ GameLayer::~GameLayer()
 void GameLayer::OnAttach()
 {
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameManager", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1), false, std::make_pair(DOG::Key::LCtrl, DOG::Key::G));
+	DOG::ImGuiMenuLayer::RegisterDebugWindow("Cheats", std::bind(&GameLayer::CheatDebugMenu, this, std::placeholders::_1));
 
 	//m_testScene = std::make_unique<TestScene>();
 	//m_testScene->SetUpScene();
@@ -66,6 +67,7 @@ void GameLayer::OnAttach()
 void GameLayer::OnDetach()
 {
 	DOG::ImGuiMenuLayer::UnRegisterDebugWindow("GameManager");
+	DOG::ImGuiMenuLayer::UnRegisterDebugWindow("Cheats");
 	m_testScene.reset();
 	m_testScene = nullptr;
 
@@ -206,6 +208,11 @@ void GameLayer::UpdateGame()
 	m_player->OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
+
+
+	
+
+	HandleCheats();
 
 	EvaluateWinCondition();
 	EvaluateLoseCondition();
@@ -751,6 +758,52 @@ std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3
 	return agents;
 }
 
+void GameLayer::HandleCheats()
+{
+	m_isCheating = m_godModeCheat || m_unlimitedAmmoCheat || m_noClipCheat;
+
+	static bool cheatWindowOpen = false;
+	cheatWindowOpen |= m_isCheating;
+	if (cheatWindowOpen && !ImGuiMenuLayer::IsAttached())
+	{
+		if (m_isCheating)
+		{
+			ImGui::PushStyleColor(ImGuiCol_TitleBg, IM_COL32(80, 0, 0, 255));
+			ImGui::PushStyleColor(ImGuiCol_TitleBgActive, IM_COL32(255, 0, 0, 255));
+			ImGui::PushStyleColor(ImGuiCol_CheckMark, IM_COL32(255, 0, 0, 255));
+			ImGui::PushStyleColor(ImGuiCol_TitleBgCollapsed, IM_COL32(170, 0, 0, 255));
+		}
+		if (ImGui::Begin("Cheats", &cheatWindowOpen, ImGuiWindowFlags_NoFocusOnAppearing))
+		{
+			CheatSettingsImGuiMenu();
+		}
+		ImGui::End();
+		if (m_isCheating)
+		{
+			ImGui::PopStyleColor(4);
+		}
+	}
+
+	entity player = GetPlayer();
+	assert(player != NULL_ENTITY && EntityManager::Get().Exists(player));
+	
+	if (m_godModeCheat)
+	{
+		assert(EntityManager::Get().HasComponent<PlayerStatsComponent>(player));
+		auto& stats = m_entityManager.GetComponent<PlayerStatsComponent>(player);
+		stats.health = stats.maxHealth;
+	}
+
+	static bool noClipLastFrame = false;
+	if (noClipLastFrame != m_noClipCheat || m_noClipCheat)
+	{
+		noClipLastFrame = m_noClipCheat;
+		assert(EntityManager::Get().HasComponent<RigidbodyComponent>(player));
+		auto& rigidbody = m_entityManager.GetComponent<RigidbodyComponent>(player);
+		PhysicsEngine::SetContactResponse(rigidbody.rigidbodyHandle, !m_noClipCheat);
+	}
+}
+
 void GameLayer::KeyBindingDisplayMenu()
 {
 	if (!m_displayKeyBindings) return;
@@ -805,10 +858,6 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 	{
 		if (ImGui::Begin("GameManager", &open))
 		{
-			if (ImGui::Button("Win"))
-			{
-				m_gameState = GameState::Won;
-			}
 			if (ImGui::Button("Lobby"))
 			{
 				CloseMainScene();
@@ -892,4 +941,34 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 	}
 }
 
+void GameLayer::CheatSettingsImGuiMenu()
+{
+	ImGui::Checkbox("God mode", &m_godModeCheat);
+	ImGui::Checkbox("Unlimited ammo", &m_unlimitedAmmoCheat);
+	ImGui::Checkbox("No clip", &m_noClipCheat);
+	if (ImGui::Button("Win"))
+	{
+		m_gameState = GameState::Won;
+	}
+}
 
+void GameLayer::CheatDebugMenu(bool&)
+{
+	bool beginMenuCheats;
+	if (m_isCheating)
+	{
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
+		beginMenuCheats = ImGui::BeginMenu("Cheats");
+		ImGui::PopStyleColor();
+	}
+	else
+	{
+		beginMenuCheats = ImGui::BeginMenu("Cheats");
+	}
+
+	if (beginMenuCheats)
+	{
+		CheatSettingsImGuiMenu();
+		ImGui::EndMenu(); // "Cheats"
+	}
+}

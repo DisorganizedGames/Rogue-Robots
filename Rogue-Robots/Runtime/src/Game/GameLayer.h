@@ -50,9 +50,12 @@ private:
 	std::vector<DOG::entity> AddFlashlightsToPlayers(const std::vector<DOG::entity>& players);
 	std::vector<DOG::entity> SpawnAgents(const EntityTypes type, const DirectX::SimpleMath::Vector3& pos, u8 agentCount, f32 spread = 10.f);
 
+	void HandleCheats();
 
 	void KeyBindingDisplayMenu();
 	void GameLayerDebugMenu(bool& open);
+	void CheatSettingsImGuiMenu();
+	void CheatDebugMenu(bool& open);
 private:
 	GameState m_gameState;
 	std::unique_ptr<DOG::Scene> m_testScene;
@@ -72,4 +75,12 @@ private:
 	// Temp container for keybindings, just strings to visualize them in the menu
 	std::vector<std::pair<std::string, std::string>> m_keyBindingDescriptions;
 	bool m_displayKeyBindings = true;
+
+
+	// Cheats
+	bool m_isCheating = false;
+	bool m_godModeCheat = false;
+	bool m_unlimitedAmmoCheat = false;
+	bool m_noClipCheat = false;
+
 };
