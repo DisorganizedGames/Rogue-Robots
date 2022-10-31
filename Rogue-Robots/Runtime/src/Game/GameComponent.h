@@ -76,6 +76,7 @@ struct InputController
 	bool toggleDebug = false;
 	bool toggleMoveView = false;
 	bool flashlight = true;
+	bool pickup = false;
 };
 
 struct DoorComponent
@@ -128,6 +129,7 @@ struct EligibleActiveItemComponent
 struct PickedUpItemComponent
 {
 	DOG::entity itemEntity{DOG::NULL_ENTITY};
+	DOG::entity player;
 };
 
 struct BarrelComponent
