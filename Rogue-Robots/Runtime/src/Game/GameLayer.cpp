@@ -648,9 +648,7 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	}
 	case EventType::KeyPressedEvent:
 	{
-		if (EVENT(KeyPressedEvent).key == DOG::Key::C)
-			m_player->m_moveView = !m_player->m_moveView;
-		else if (EVENT(KeyPressedEvent).key == DOG::Key::F)
+		if (EVENT(KeyPressedEvent).key == DOG::Key::F)
 		{
 			if (m_gameState == GameState::Playing)
 			{
