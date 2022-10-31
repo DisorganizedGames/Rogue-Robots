@@ -149,8 +149,8 @@ void MainScene::CreateFrostModificationPickup(DirectX::SimpleMath::Vector3 posit
 
 void MainScene::CreateLight(DirectX::SimpleMath::Vector3 position, DirectX::SimpleMath::Vector3 color, float strength)
 {
-	LightHandle pointLight = LightManager::Get().AddPointLight(PointLightDesc(), LightUpdateFrequency::Never);
+	//LightHandle pointLight = LightManager::Get().AddPointLight(PointLightDesc(), LightUpdateFrequency::Never);
 	entity movingPointLight = CreateEntity();
 	AddComponent<TransformComponent>(movingPointLight, position, DirectX::SimpleMath::Vector3(0, 0, 0), DirectX::SimpleMath::Vector3(1.f));
-	AddComponent<PointLightComponent>(movingPointLight, pointLight, color, strength);
+	//AddComponent<PointLightComponent>(movingPointLight, pointLight, color, strength);
 }
