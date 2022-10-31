@@ -648,14 +648,7 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	}
 	case EventType::KeyPressedEvent:
 	{
-		if (EVENT(KeyPressedEvent).key == DOG::Key::F)
-		{
-			if (m_gameState == GameState::Playing)
-			{
-				ToggleFlashlight();
-			}
-		}
-		else if (EVENT(KeyPressedEvent).key == DOG::Key::E)
+		if (EVENT(KeyPressedEvent).key == DOG::Key::E)
 		{
 			PickUpItem();
 		}
