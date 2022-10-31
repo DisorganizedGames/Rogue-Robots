@@ -848,7 +848,7 @@ void GameLayer::HandleCheats()
 	}
 
 	assert(EntityManager::Get().HasComponent<RigidbodyComponent>(player));
-	m_entityManager.GetComponent<RigidbodyComponent>(player).noCollisionResponse = !m_noClipCheat;
+	m_entityManager.GetComponent<RigidbodyComponent>(player).noCollisionResponse = m_noClipCheat;
 }
 
 void GameLayer::KeyBindingDisplayMenu()
