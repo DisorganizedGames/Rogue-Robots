@@ -38,7 +38,7 @@ struct HomingMissileComponent
 	float turnSpeed = 5;
 	float engineBurnTime = 1.8f;
 	float explosionRadius = 10.0f;
-	float dmg = 300.0f;
+	float dmg = 600.0f;
 	DOG::entity homingTarget = DOG::NULL_ENTITY;
 	DOG::entity playerEntityID = DOG::NULL_ENTITY;
 	bool homeInOnPosition = false;
