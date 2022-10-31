@@ -180,6 +180,19 @@ void GameLayer::StartMainScene()
 			[this]() { return SpawnAgents(EntityTypes::Scorpio10, Vector3(109.5f, 53.f, 5.f), 2, .5f); },		// location 6
 			[this]() { return SpawnAgents(EntityTypes::Scorpio10, Vector3(104.5f, 53.f, 5.f), 2, .5f); },		// location 7
 			[this]() { return SpawnAgents(EntityTypes::Scorpio10, Vector3(119.f, 53.f, 5.f), 2, .5f); },		// location 8
+		
+		[this]() {
+			m_musicPlayer = m_entityManager.CreateEntity();
+			
+			m_entityManager.AddComponent<AudioComponent>(m_musicPlayer) = {
+				.assetID = AssetManager::Get().LoadAudio("Assets/Audio/RogueRobotsAmbience.wav", AssetLoadFlag::CPUMemory),
+				.loopStart = 2.f,
+				.loopEnd = 173.f,
+				.shouldPlay = true,
+				.loop = true,
+			};
+			return std::vector({ m_musicPlayer });
+		},
 		});
 
 	m_player = std::make_shared<MainPlayer>();
@@ -292,6 +305,7 @@ void GameLayer::EvaluateWinCondition()
 			nextLevel = nextLevel || trans.GetPosition().y < 79.f;
 		});
 	if (nextLevel)
+	{
 		EntityManager::Get().Collect<PlayersRoom0Component, NetworkPlayerComponent, DOG::TransformComponent>().Do(
 			[&](entity e, PlayersRoom0Component&, NetworkPlayerComponent& player, DOG::TransformComponent& trans)
 			{
@@ -305,6 +319,13 @@ void GameLayer::EvaluateWinCondition()
 				EntityManager::Get().RemoveComponent<PlayersRoom0Component>(e);
 				EntityManager::Get().AddComponent<PlayersRoom1Component>(e);
 			});
+
+		auto& audioComp = m_entityManager.GetComponent<AudioComponent>(m_musicPlayer);
+		audioComp.assetID = AssetManager::Get().LoadAudio("Assets/Audio/RogueRobotsAction.wav", AssetLoadFlag::CPUMemory);
+		audioComp.shouldPlay = true;
+		audioComp.loopEnd = 306.f;
+		audioComp.loopStart = 0.f;
+	}
 
 	// ImGui report
 	EntityManager::Get().Collect<PlayersRoom0Component, ThisPlayer>().Do([&](PlayersRoom0Component&, ThisPlayer&)
