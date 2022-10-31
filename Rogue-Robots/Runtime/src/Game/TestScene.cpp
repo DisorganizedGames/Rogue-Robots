@@ -26,7 +26,6 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	u32 blueCubeID = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
 	//u32 mixamoID = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/walkmix.fbx");
 	u32 isoSphereID = am.LoadModelAsset("Assets/Models/Temporary_Assets/iso_sphere.glb");
-	u32 medkitID = am.LoadModelAsset("Assets/Models/Temporary_Assets/medkit.glb");
 
 	u32 sphereID = am.LoadShapeAsset(Shape::sphere, 8, 8);
 	entity sphereEntity = CreateEntity();
@@ -159,22 +158,21 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	CreateMissilePickup(Vector3(24.0f, 6.0f, 17.0f));
 
 	CreateMissilePickup(Vector3(26.0f, 6.0f, 17.0f));
-	CreateMissilePickup(Vector3(28.0f, 6.0f, 17.0f));
-	CreateMissilePickup(Vector3(30.0f, 6.0f, 17.0f));
+	CreateMissilePickup(Vector3(29.0f, 6.0f, 17.0f));
 	CreateMissilePickup(Vector3(32.0f, 6.0f, 17.0f));
-	CreateMissilePickup(Vector3(34.0f, 6.0f, 17.0f));
-	CreateMissilePickup(Vector3(36.0f, 6.0f, 17.0f));
+	CreateMissilePickup(Vector3(35.0f, 6.0f, 17.0f));
 	CreateMissilePickup(Vector3(38.0f, 6.0f, 17.0f));
-	CreateMissilePickup(Vector3(40.0f, 6.0f, 17.0f));
+	CreateMissilePickup(Vector3(41.0f, 6.0f, 17.0f));
+	CreateMissilePickup(Vector3(44.0f, 6.0f, 17.0f));
+	CreateMissilePickup(Vector3(47.0f, 6.0f, 17.0f));
 
-	CreateGrenadePickup(Vector3(42.0f, 6.0f, 17.0f));
+	CreateGrenadePickup(Vector3(50.0f, 6.0f, 17.0f));
 
-	CreateMaxHealthBoostPickup(Vector3(44.0f, 6.0f, 17.0f));
-	CreateMaxHealthBoostPickup(Vector3(47.0f, 6.0f, 17.0f));
+	CreateMaxHealthBoostPickup(Vector3(53.0f, 6.0f, 17.0f));
+	CreateMaxHealthBoostPickup(Vector3(56.0f, 6.0f, 17.0f));
 
-	CreateFrostModificationPickup(Vector3(50.0f, 6.0f, 17.0f));
-
-	CreateFrostModificationPickup(Vector3(53.0f, 6.0f, 17.0f));
+	CreateFrostModificationPickup(Vector3(59.0f, 6.0f, 17.0f));
+	CreateFrostModificationPickup(Vector3(59.0f, 6.0f, 14.0f));
 
 	// Setup lights
 	// Default lights
@@ -341,7 +339,7 @@ void TestScene::CreateMaxHealthBoostPickup(DirectX::SimpleMath::Vector3 position
 	u32 healthBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Medkit.glb");
 
 	entity healthBoostEntity = CreateEntity();
-	auto& bc = AddComponent<PassiveItemComponent>(healthBoostEntity).type = PassiveItemComponent::Type::MaxHealthBoost;
+	AddComponent<PassiveItemComponent>(healthBoostEntity).type = PassiveItemComponent::Type::MaxHealthBoost;
 	AddComponent<PickupComponent>(healthBoostEntity);
 	AddComponent<ModelComponent>(healthBoostEntity, healthBoostID);
 	AddComponent<TransformComponent>(healthBoostEntity, position).SetScale({ 0.5f, 0.5f, 0.5f });
@@ -359,7 +357,7 @@ void TestScene::CreateFrostModificationPickup(DirectX::SimpleMath::Vector3 posit
 	u32 frostModID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
 
 	entity frostModEntity = CreateEntity();
-	auto& bc = AddComponent<MagazineModificationComponent>(frostModEntity).type = MagazineModificationComponent::Type::Frost;
+	AddComponent<MagazineModificationComponent>(frostModEntity).type = MagazineModificationComponent::Type::Frost;
 	AddComponent<PickupComponent>(frostModEntity);
 	AddComponent<ModelComponent>(frostModEntity, frostModID);
 	AddComponent<TransformComponent>(frostModEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
