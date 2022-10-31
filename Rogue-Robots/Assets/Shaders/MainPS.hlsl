@@ -182,7 +182,7 @@ PS_OUT main(VS_OUT input)
         emissiveInput *= emissive.Sample(g_aniso_samp, input.uv).rgb;
     }
     
-    float3 amb = 0.001f * albedoInput + emissiveInput;
+    float3 amb = 0.03f * albedoInput + emissiveInput;
     
 
     

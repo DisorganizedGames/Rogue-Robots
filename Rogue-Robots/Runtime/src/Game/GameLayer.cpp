@@ -167,8 +167,8 @@ void GameLayer::StartMainScene()
 			/************************** tunnel scene *********************************/
 			// a few rooms connected by tunnels
 			[this]() { return SpawnAgents(EntityTypes::Scorpio1, Vector3(58.f, 80.f, 40.f), 3, 2.5f); },		// location 2
-			[this]() { return SpawnAgents(EntityTypes::Scorpio2, Vector3(68.f, 78.f, 27.f), 4, 5.f); },		// location 3
-			[this]() { return SpawnAgents(EntityTypes::Scorpio3, Vector3(37.f, 80.f, 8.f), 7, 3.f); },		// location 4
+			[this]() { return SpawnAgents(EntityTypes::Scorpio2, Vector3(68.f, 78.f, 27.f), 4, 5.f); },			// location 3
+			[this]() { return SpawnAgents(EntityTypes::Scorpio3, Vector3(37.f, 80.f, 8.f), 7, 3.f); },			// location 4
 
 			// a larger, more open room
 			[this]() { return SpawnAgents(EntityTypes::Scorpio4, Vector3(78.f, 80.f, 63.f), 4, 2.5f); },		// location 2
@@ -248,7 +248,19 @@ void GameLayer::EvaluateWinCondition()
 				0,
 				spread * (player.playerId / 2) - (spread / 2.f),
 				};
+
+				PhysicsEngine::FreePhysicsFromEntity(e);
+				EntityManager::Get().RemoveComponent<CapsuleColliderComponent>(e);
+				EntityManager::Get().RemoveComponent<RigidbodyComponent>(e);
+
 				trans.SetPosition(Vector3(76.5f, 56.0f, 68.0f) - offset);
+
+				m_entityManager.AddComponent<CapsuleColliderComponent>(e, e, 0.25f, 0.8f, true, 75.f);
+				auto& rb = m_entityManager.AddComponent<RigidbodyComponent>(e, e);
+				rb.ConstrainRotation(true, true, true);
+				rb.disableDeactivation = true;
+				rb.getControlOfTransform = true;
+
 				EntityManager::Get().RemoveComponent<PlayersRoom2Component>(e);
 				EntityManager::Get().AddComponent<PlayersRoom3Component>(e);
 			});
@@ -281,7 +293,18 @@ void GameLayer::EvaluateWinCondition()
 				0,
 				spread * (player.playerId / 2) - (spread / 2.f),
 				};
+				PhysicsEngine::FreePhysicsFromEntity(e);
+				EntityManager::Get().RemoveComponent<CapsuleColliderComponent>(e);
+				EntityManager::Get().RemoveComponent<RigidbodyComponent>(e);
+
 				trans.SetPosition(Vector3(106.0f, 80.0f, 31.0f) - offset);
+
+				m_entityManager.AddComponent<CapsuleColliderComponent>(e, e, 0.25f, 0.8f, true, 75.f);
+				auto& rb = m_entityManager.AddComponent<RigidbodyComponent>(e, e);
+				rb.ConstrainRotation(true, true, true);
+				rb.disableDeactivation = true;
+				rb.getControlOfTransform = true;
+
 				EntityManager::Get().RemoveComponent<PlayersRoom1Component>(e);
 				EntityManager::Get().AddComponent<PlayersRoom2Component>(e);
 			});
@@ -302,7 +325,18 @@ void GameLayer::EvaluateWinCondition()
 				0,
 				spread * (player.playerId / 2) - (spread / 2.f),
 				};
+				PhysicsEngine::FreePhysicsFromEntity(e);
+				EntityManager::Get().RemoveComponent<CapsuleColliderComponent>(e);
+				EntityManager::Get().RemoveComponent<RigidbodyComponent>(e);
+
 				trans.SetPosition(Vector3(2.0f, 80.0f, 13.0f) - offset);
+
+				m_entityManager.AddComponent<CapsuleColliderComponent>(e, e, 0.25f, 0.8f, true, 75.f);
+				auto& rb = m_entityManager.AddComponent<RigidbodyComponent>(e, e);
+				rb.ConstrainRotation(true, true, true);
+				rb.disableDeactivation = true;
+				rb.getControlOfTransform = true;
+
 				EntityManager::Get().RemoveComponent<PlayersRoom0Component>(e);
 				EntityManager::Get().AddComponent<PlayersRoom1Component>(e);
 			});
