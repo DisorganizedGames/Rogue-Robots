@@ -73,6 +73,8 @@ private:
 	AgentManager* m_agentManager;
 	u8 m_networkStatus;
 	ImFont* m_imguiFont = nullptr;
+	
+	DOG::entity m_musicPlayer = DOG::NULL_ENTITY;
 
 	// Temp container for keybindings, just strings to visualize them in the menu
 	std::vector<std::pair<std::string, std::string>> m_keyBindingDescriptions;
