@@ -143,8 +143,6 @@ void GameLayer::StartMainScene()
 		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(40, 20, 50), 10, 3.0f); },
 		});
 
-	m_player = std::make_shared<MainPlayer>();
-
 	LuaMain::GetScriptManager()->StartScripts();
 	m_netCode.OnStartup();
 	m_gameState = GameState::Playing;
@@ -152,7 +150,6 @@ void GameLayer::StartMainScene()
 
 void GameLayer::CloseMainScene()
 {
-	m_player.reset();
 	m_mainScene.reset();
 }
 
@@ -257,7 +254,6 @@ void GameLayer::KillPlayer(DOG::entity e)
 
 void GameLayer::UpdateGame()
 {
-	//m_player->OnUpdate();
 	m_netCode.OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();

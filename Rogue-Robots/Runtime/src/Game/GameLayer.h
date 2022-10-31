@@ -1,5 +1,4 @@
 #pragma once
-#include "MainPlayer.h"
 #include "LuaInterfaces.h"
 #include "NetCode.h"
 #include "Pathfinder/Pathfinder.h"
@@ -67,7 +66,6 @@ private:
 	std::vector<u32> m_shapes;
 	DOG::EntityManager& m_entityManager;
 	std::vector<std::shared_ptr<LuaInterface>> m_luaInterfaces;
-	std::shared_ptr<MainPlayer> m_player;
 	std::array<u32, 4> m_playerModels;
 	NetCode m_netCode;
 	//Pathfinder m_pathfinder;		// uncomment to activate pathfinder
