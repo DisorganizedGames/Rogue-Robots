@@ -18,6 +18,8 @@ struct PlayerNetworkComponentUdp
 	InputController actions;
 	PlayerStatsComponent playerStat;
 	DirectX::XMMATRIX cameraTransform = {};
+	MagazineModificationComponent magazin;
+	BarrelComponent barrel;
 };
 
 struct UdpData
