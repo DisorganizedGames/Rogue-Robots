@@ -55,6 +55,7 @@ private:
 
 	void HandleCheats();
 
+	void HpBarMVP();
 	void KeyBindingDisplayMenu();
 	void GameLayerDebugMenu(bool& open);
 	void CheatSettingsImGuiMenu();
