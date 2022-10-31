@@ -1,5 +1,6 @@
 #include "ExplosionSystems.h"
-#include "ExplosionSystems.h"
+
+#include "../DOGEngine/src/Core/CustomMaterialManager.h"
 
 using Vector3 = DirectX::SimpleMath::Vector3;
 using namespace DOG;
@@ -31,7 +32,7 @@ void ExplosionSystem::OnUpdate(entity e, TransformComponent& explosionTransform,
 }
 
 u32 ExplosionEffectSystem::explosionEffectModelID = 0; 
-entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float radius, float growTime, float shrinkTime)
+entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float radius, const DirectX::SimpleMath::Vector3& color, float growTime, float shrinkTime)
 {
 	if (explosionEffectModelID == 0)
 	{
@@ -50,7 +51,7 @@ entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float r
 
 	// Add dynamic point light
 	auto pdesc = PointLightDesc();
-	pdesc.color = { 0.8f, 0.f, 0.f };
+	pdesc.color = color;
 	pdesc.strength = 100.f;
 	auto& plc = EntityManager::Get().AddComponent<PointLightComponent>(newEntity);
 	plc.handle = LightManager::Get().AddPointLight(pdesc, LightUpdateFrequency::PerFrame);
@@ -76,7 +77,7 @@ entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float r
 
 void ExplosionEffectSystem::OnUpdate(DOG::entity e, ExplosionEffectComponent& explosionInfo)
 {
-	CreateExplosionEffect(e, explosionInfo.radius, explosionInfo.growTime, explosionInfo.shrinkTime);
+	CreateExplosionEffect(e, explosionInfo.radius, explosionInfo.color, explosionInfo.growTime, explosionInfo.shrinkTime);
 
 	EntityManager::Get().RemoveComponent<ExplosionEffectComponent>(e);
 }

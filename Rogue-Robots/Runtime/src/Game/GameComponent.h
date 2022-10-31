@@ -119,4 +119,5 @@ struct ExplosionEffectComponent
 	float radius;
 	float growTime = -1.0f; 
 	float shrinkTime = -1.0f;
+	DirectX::SimpleMath::Vector3 color;
 };
