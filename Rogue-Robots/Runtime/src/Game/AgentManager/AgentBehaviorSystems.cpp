@@ -18,16 +18,8 @@ void AgentSeekPlayerSystem::OnUpdate(entity e, AgentSeekPlayerComponent& seek, A
 	PlayerDist player;
 	Vector3 agentPos(transform.GetPosition());
 
-	eMan.Collect<ThisPlayer, PlayerAliveComponent, TransformComponent, NetworkPlayerComponent>().Do(
-		[&](entity id, ThisPlayer&, PlayerAliveComponent&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) {
-			player.entityID = id;
-			player.id = netPlayer.playerId;
-			player.pos = transC.GetPosition();
-			player.sqDist = Vector3::DistanceSquared(player.pos, agentPos);
-		});
-
-	eMan.Collect<OnlinePlayer, PlayerAliveComponent, TransformComponent, NetworkPlayerComponent>().Do(
-		[&](entity id, OnlinePlayer&, PlayerAliveComponent&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) {
+	eMan.Collect<PlayerAliveComponent, TransformComponent, NetworkPlayerComponent>().Do(
+		[&](entity id,PlayerAliveComponent&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) {
 			f32 sqDist = Vector3::DistanceSquared(transC.GetPosition(), agentPos);
 			if (sqDist < player.sqDist)
 			{
@@ -171,9 +163,9 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 		{
 			hp.hp -= hit.hits[i].damage;
 			hp.damageThisFrame = true;
+		}
 			if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
 				EntityManager::Get().AddComponent<AgentAggroComponent>(e);
-		}
 	}
 	
 	/*Frost status*/
