@@ -95,8 +95,8 @@ public:
 class MVPPickupItemInteractionSystem : public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
-	#define REQUIRED_DISTANCE_DELTA 3.0f
-	#define REQUIRED_DOT_DELTA -0.25f
+	#define REQUIRED_DISTANCE_DELTA 2.0f
+	#define REQUIRED_DOT_DELTA -0.20f
 public:
 	SYSTEM_CLASS(DOG::ThisPlayer, DOG::TransformComponent);
 	ON_UPDATE_ID(DOG::ThisPlayer, DOG::TransformComponent);
@@ -107,7 +107,7 @@ public:
 		auto playerPosition = ptc.GetPosition();
 		DOG::entity closestPickup = DOG::NULL_ENTITY;
 		float closestDistance = FLT_MAX;
-		Vector3 pickUpToPlayerDirection;
+		Vector3 pickUpToPlayerDirection{};
 
 		mgr.Collect<PickupComponent, DOG::TransformComponent>().Do([&](DOG::entity entityID, PickupComponent&, DOG::TransformComponent& tc)
 			{
@@ -269,8 +269,10 @@ public:
 
 		auto r = DOG::Window::GetWindowRect();
 		ImVec2 pos;
-		pos.x = r.right - size.x - 500.0f;
-		pos.y = r.top + 400.0f;
+		constexpr float xOffset = -500.0f;
+		constexpr float yOffset = 400.0f;
+		pos.x = r.right - size.x + xOffset;
+		pos.y = r.top + yOffset;
 
 		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 		ImGui::SetNextWindowPos(pos);
@@ -298,6 +300,7 @@ public:
 
 class MVPRenderAmmunitionTextSystem : public DOG::ISystem
 {
+#define INFINITY_EQUIVALENT 999999
 public:
 	SYSTEM_CLASS(DOG::ThisPlayer, BarrelComponent);
 	ON_UPDATE_ID(DOG::ThisPlayer, BarrelComponent);
@@ -340,16 +343,19 @@ public:
 		if (barrelType.empty())
 			return;
 
-		std::string ammoText = std::to_string(bc.currentAmmoCount) + std::string(" / ") + std::to_string(bc.maximumAmmoCapacityForType);
+		std::string ammoText = std::to_string(bc.currentAmmoCount) + std::string(" / "); 
+		bc.maximumAmmoCapacityForType == INFINITY_EQUIVALENT ? ammoText += "INF." : ammoText += std::to_string(bc.maximumAmmoCapacityForType);
 
 		ImVec2 size;
-		size.x = 240;
+		size.x = 280;
 		size.y = 100;
 
 		auto r = DOG::Window::GetWindowRect();
 		ImVec2 pos;
-		pos.x = r.right - size.x - 60.0f;
-		pos.y = r.bottom - 170;
+		constexpr float xOffset = -60.0f;
+		constexpr float yOffset = -170.0f;
+		pos.x = r.right - size.x + xOffset;
+		pos.y = r.bottom + yOffset;
 
 		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 		ImGui::SetNextWindowPos(pos);
@@ -469,8 +475,11 @@ public:
 
 		auto r = DOG::Window::GetWindowRect();
 		ImVec2 pos;
-		pos.x = (r.right - r.left) * 0.5f + 50.0f;
-		pos.y = (r.bottom - r.top) * 0.5f;
+		constexpr const float xOffset = 50.0f;
+		const float centerXOfScreen = (float)(r.right - r.left) * 0.5f;
+		const float centerYOfScreen = (float)(r.bottom - r.top) * 0.5f;
+		pos.x = centerXOfScreen + xOffset;
+		pos.y = centerYOfScreen;
 
 		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 		ImGui::SetNextWindowPos(pos);
