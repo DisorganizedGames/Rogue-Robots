@@ -8,9 +8,26 @@ namespace DOG::gfx
 		m_rd(rd),
 		m_bin(bin)
 	{
-		MemoryPoolDesc d{};
-		d.size = 100'000'000;
-		m_memoryPool = m_rd->CreateMemoryPool(d);
+		{
+			MemoryPoolDesc d{};
+			d.size = 100'000'000;
+			d.heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
+			m_rtDsTextureMemPool = m_rd->CreateMemoryPool(d);
+		}
+
+		{
+			MemoryPoolDesc d{};
+			d.size = 50'000'000;
+			d.heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES;
+			m_nonRtDsTextureMemPool = m_rd->CreateMemoryPool(d);
+		}
+
+		{
+			MemoryPoolDesc d{};
+			d.size = 25'000'000;
+			d.heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
+			m_bufferMemPool = m_rd->CreateMemoryPool(d);
+		}
 	}
 
 	RGResourceManager::~RGResourceManager()
@@ -18,9 +35,13 @@ namespace DOG::gfx
 
 	}
 
-	const GPUPoolMemoryInfo& RGResourceManager::GetMemoryInfo() const
+	const GPUPoolMemoryInfo& RGResourceManager::GetMemoryInfo()
 	{
-		return m_rd->GetPoolMemoryInfo(m_memoryPool);
+		auto rtDsUsage = m_rd->GetPoolMemoryInfo(m_rtDsTextureMemPool);
+		auto nonRtDsUsage = m_rd->GetPoolMemoryInfo(m_nonRtDsTextureMemPool);
+		auto bufferUsage = m_rd->GetPoolMemoryInfo(m_bufferMemPool);
+		m_totalMemUsage = (rtDsUsage + nonRtDsUsage + bufferUsage);
+		return m_totalMemUsage;
 	}
 
 	void RGResourceManager::DeclareTexture(RGResourceID id, RGTextureDesc desc)
@@ -209,14 +230,26 @@ namespace DOG::gfx
 					rgDesc.width, rgDesc.height, rgDesc.depth,
 					rgDesc.flags, rgDesc.initState)
 					.SetMipLevels(rgDesc.mipLevels);
-				resource.resource = m_rd->CreateTexture(desc, m_memoryPool).handle;
+
+				MemoryPool chosenPool;
+				if ((rgDesc.flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) == D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET ||
+					(rgDesc.flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
+				{
+					chosenPool = m_rtDsTextureMemPool;
+				}
+				else
+				{
+					chosenPool = m_nonRtDsTextureMemPool;
+				}
+
+				resource.resource = m_rd->CreateTexture(desc, chosenPool).handle;
 			}
 			else
 			{
 				const auto& rgDesc = std::get<RGBufferDesc>(decl.desc);
 
 				BufferDesc desc(MemoryType::Default, rgDesc.size, rgDesc.flags, rgDesc.initState);
-				resource.resource = m_rd->CreateBuffer(desc, m_memoryPool).handle;
+				resource.resource = m_rd->CreateBuffer(desc, m_bufferMemPool).handle;
 			}
 		}
 

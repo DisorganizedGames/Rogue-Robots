@@ -14,7 +14,7 @@ namespace DOG::gfx
 		RGResourceManager(RenderDevice* rd, GPUGarbageBin* bin);
 		~RGResourceManager();
 
-		const GPUPoolMemoryInfo& GetMemoryInfo() const;
+		const GPUPoolMemoryInfo& GetMemoryInfo();
 
 		// Discards the resources stored safely and clears map for re-use.
 		void ClearDeclaredResources();
@@ -108,6 +108,12 @@ namespace DOG::gfx
 		// Structure for transfering imported resources on resource clear
 		std::vector<std::pair<RGResourceID, RGResource>> m_importedTransfer;
 
-		MemoryPool m_memoryPool;
+		//MemoryPool m_memoryPool;
+
+		MemoryPool m_rtDsTextureMemPool;
+		MemoryPool m_nonRtDsTextureMemPool;
+		MemoryPool m_bufferMemPool;
+
+		GPUPoolMemoryInfo m_totalMemUsage;
 	};
 }
