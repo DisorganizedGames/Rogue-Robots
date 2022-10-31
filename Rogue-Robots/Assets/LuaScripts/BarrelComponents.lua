@@ -48,7 +48,7 @@ end
 function BarrelComponents:Grenade()
 	return 
 	{
-		bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Grenade/Grenade.fbx"),
+		bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Grenade/Grenade.glb"),
 		explosionModel = Asset:LoadModel("Assets/Models/Temporary_Assets/Explosion.glb"),
 		gunShotSound = Asset:LoadAudio("Assets/Audio/TestShoot.wav"),
 		grenadeSpeed = 9.2,
@@ -64,15 +64,6 @@ function BarrelComponents:Grenade()
 			Entity:ModifyComponent(bullet.entity, "Transform", newGrenadeSize, 3)
 
 			local up = Vector3.FromTable(Entity:GetUp(parentEntityID))
-			local right = Vector3.FromTable(Entity:GetRight(parentEntityID))
-
-			local angle = -math.pi / 2
-
-			local newForward = RotateAroundAxis(Entity:GetForward(parentEntityID), right, angle)
-			local newUp = RotateAroundAxis(up, right, angle)
-			Entity:SetRotationForwardUp(bullet.entity, newForward, newUp)
-
-			Entity:ModifyComponent(bullet.entity, "Transform", bullet.startPos, 1)
 
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
 			Entity:AddComponent(bullet.entity, "SphereCollider", spherColliderRadius, true)
