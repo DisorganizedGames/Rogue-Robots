@@ -305,8 +305,8 @@ bool WFC::GenerateLevel(uint32_t nrOfRooms, uint32_t maxWidth, uint32_t maxHeigh
 	m_generatedLevel.assign(m_width * m_height * m_depth, "Void");
 
 	//First we construct a virtual space containing blocks that represents the rooms.
-	std::vector<uint32_t> min = {0u, 0u, 0u};
-	std::vector<uint32_t> max = { m_width, m_height, m_depth };
+	std::vector<uint32_t> min = {1u, 1u, 1u};
+	std::vector<uint32_t> max = { m_width - 2, m_height - 2, m_depth - 2 };
 	std::shared_ptr<Box> base = std::make_shared<Box>(min, max);
 
 	std::default_random_engine gen;
@@ -410,12 +410,7 @@ bool WFC::GenerateRoom(Room& room)
 	{
 		m_recursiveStack.pop();
 	}
-	/*
-	for (auto& blockPoss : m_blockPossibilities)
-	{
-		blockPoss.second.frequency = blockPoss.second.originalFrequency;
-	}
-	*/
+
 	//The priority queue is not needed for the constraints. As they do not use a priority.
 	//All the entropy blocks should now be placed in a priority queue based on their Shannon entropy.
 	m_priorityQueue = new PriorityQueue(m_currentEntropy, m_blockPossibilities, room.width, room.height, room.depth);
@@ -829,21 +824,127 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 			//L-tunnels
 			else
 			{
+				//Horizontal
 				if ((prevDir == 1 && nextDir == 5) || (prevDir == 5 && nextDir == 1))
 				{
-					replacer = "LConnector_r0_f";
+					replacer = "LHorizontalConnector_r0_f";
 				}
 				else if ((prevDir == 0 && nextDir == 4) || (prevDir == 4 && nextDir == 0))
 				{
-					replacer = "LConnector_r1_f";
+					replacer = "LHorizontalConnector_r1_f";
 				}
 				else if ((prevDir == 1 && nextDir == 4) || (prevDir == 4 && nextDir == 1))
 				{
-					replacer = "LConnector_r2_f";
+					replacer = "LHorizontalConnector_r2_f";
 				}
 				else if ((prevDir == 0 && nextDir == 5) || (prevDir == 5 && nextDir == 0))
 				{
-					replacer = "LConnector_r3_f";
+					replacer = "LHorizontalConnector_r3_f";
+				}
+				//Vertical
+				else if (prevDir == 3) //Upwards L
+				{
+					switch (nextDir)
+					{
+					case 0:
+					{
+						replacer = "LVertical1Connector_r0_f";
+						break;
+					}
+					case 1:
+					{
+						replacer = "LVertical1Connector_r2_f";
+						break;
+					}
+					case 4:
+					{
+						replacer = "LVertical1Connector_r3_f";
+						break;
+					}
+					case 5:
+					{
+						replacer = "LVertical1Connector_r1_f";
+						break;
+					}
+					}
+				}
+				else if (nextDir == 2) //Upwards L
+				{
+					switch (prevDir)
+					{
+					case 0:
+					{
+						replacer = "LVertical1Connector_r2_f";
+						break;
+					}
+					case 1:
+					{
+						replacer = "LVertical1Connector_r0_f";
+						break;
+					}
+					case 4:
+					{
+						replacer = "LVertical1Connector_r1_f";
+						break;
+					}
+					case 5:
+					{
+						replacer = "LVertical1Connector_r3_f";
+						break;
+					}
+					}
+				}
+				else if (prevDir == 2) //Downwards L
+				{
+					switch (nextDir)
+					{
+					case 0:
+					{
+						replacer = "LVertical2Connector_r2_f";
+						break;
+					}
+					case 1:
+					{
+						replacer = "LVertical2Connector_r0_f";
+						break;
+					}
+					case 4:
+					{
+						replacer = "LVertical2Connector_r1_f";
+						break;
+					}
+					case 5:
+					{
+						replacer = "LVertical2Connector_r3_f";
+						break;
+					}
+					}
+				}
+				else if (nextDir == 3) //Downwards L
+				{
+					switch (prevDir)
+					{
+					case 0:
+					{
+						replacer = "LVertical2Connector_r0_f";
+						break;
+					}
+					case 1:
+					{
+						replacer = "LVertical2Connector_r2_f";
+						break;
+					}
+					case 4:
+					{
+						replacer = "LVertical2Connector_r3_f";
+						break;
+					}
+					case 5:
+					{
+						replacer = "LVertical2Connector_r1_f";
+						break;
+					}
+					}
 				}
 			}
 		}
@@ -873,9 +974,11 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 			std::string rotation = currentBlock.substr(firstUnderscore + 1, 2);
 
 			std::string flip = currentBlock.substr(secondUnderscore + 1, currentBlock.size() - secondUnderscore);
+			//Replacement of blocks that make up the room, before it goes out to void.
 			if (name == "Wall1")
 			{
 				replacer = "WallTunnelEntrance1";
+				replacer += "_" + rotation + "_" + flip;
 			}
 			else if (name == "WallFloor1")
 			{
@@ -887,10 +990,12 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 				{
 					replacer = "WallFloorTunnelEntrance1";
 				}
+				replacer += "_" + rotation + "_" + flip;
 			}
 			else if (name == "WallFloorTunnelEntrance1" || name == "WallFloorTunnelEntrance2")
 			{
 				name = "WallFloorTunnelEntrance3";
+				replacer += "_" + rotation + "_" + flip;
 			}
 			else if (name == "WallRoof1")
 			{
@@ -902,10 +1007,12 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 				{
 					replacer = "WallRoof1Replacer2";
 				}
+				replacer += "_" + rotation + "_" + flip;
 			}
-			else if (name == "WallRoof1Replacer1" || name == "WallRoof1REplacer2")
+			else if (name == "WallRoof1Replacer1" || name == "WallRoof1Replacer2")
 			{
 				replacer = "WallRoof1Replacer3";
+				replacer += "_" + rotation + "_" + flip;
 			}
 			else if (name == "CornerWall1")
 			{
@@ -942,10 +1049,12 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 				{
 					replacer = "CornerWall1Replacer2";
 				}
+				replacer += "_" + rotation + "_" + flip;
 			}
 			else if (name == "CornerWall1Replacer1" || name == "CornerWall1Replacer2")
 			{
 				replacer = "CornerWall1Replacer3";
+				replacer += "_" + rotation + "_" + flip;
 			}
 			else if (name.find("CornerFloor1") != std::string::npos)
 			{
@@ -1053,6 +1162,8 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 				{
 					replacer = "CornerFloor1Replacer7"; //All directions.
 				}
+
+				replacer += "_" + rotation + "_" + flip;
 			}
 			else if (name.find("CornerRoof1") != std::string::npos)
 			{
@@ -1160,13 +1271,672 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 				{
 					replacer = "CornerRoof1Replacer7"; //All directions.
 				}
+
+				replacer += "_" + rotation + "_" + flip;
 			}
-			//add T-tunnel, if straight tunnel or L tunnel
+			//Replacement of blocks that used to be voids but have been replaced with connectors.
+			//add T-tunnel, if straight tunnel
+			else if (name == "TunnelStraight1" || name == "SideTwoConnector")
+			{
+				int rot = std::stoi(rotation.substr(1, 1));
+				if (dirToUse == 3) //Tunnel downwards
+				{
+					replacer = "TVertical2Connector_" + rotation + "_f";
+				}
+				else if (dirToUse == 2) //Tunnel upwards
+				{
+					replacer = "TVertical1Connector_" + rotation + "_f";
+				}
+				//Horizontal connections.
+				else if (dirToUse == 5 && (rot == 0 || rot == 2))
+				{
+					replacer = "THorizontal1Connector_r0_f";
+				}
+				else if (dirToUse == 4 && (rot == 0 || rot == 2))
+				{
+					replacer = "THorizontal1Connector_r2_f";
+				}
+				else if (dirToUse == 1 && (rot == 1 || rot == 3))
+				{
+					replacer = "THorizontal1Connector_r1_f";
+				}
+				else if (dirToUse == 0 && (rot == 1 || rot == 3))
+				{
+					replacer = "THorizontal1Connector_r3_f";
+				}
+			}
+			//Add T-tunnel, if horizontal L tunnel
+			else if (name == "LHorizontalConnector")
+			{
+				int rot = std::stoi(rotation.substr(1, 1));
+				if (dirToUse == 2)
+				{
+					replacer = "LUpConnector_" + rotation + "_f";
+				}
+				else if (dirToUse == 3)
+				{
+					replacer = "LDownConnector_" + rotation + "_f";
+				}
+				else
+				{
+					switch (rot)
+					{
+					case 0:
+					{
+						if (dirToUse == 0)
+						{
+							replacer = "THorizontal1Connector_r0_f";
+						}
+						else if (dirToUse == 4)
+						{
+							replacer = "THorizontal1Connector_r1_f";
+						}
+						break;
+					}
+					case 1:
+					{
+						if (dirToUse == 0)
+						{
+							replacer = "THorizontal1Connector_r2_f";
+						}
+						else if (dirToUse == 5)
+						{
+							replacer = "THorizontal1Connector_r1_f";
+						}
+						break;
+					}
+					case 2:
+					{
+						if (dirToUse == 1)
+						{
+							replacer = "THorizontal1Connector_r2_f";
+						}
+						else if (dirToUse == 5)
+						{
+							replacer = "THorizontal1Connector_r3_f";
+						}
+						break;
+					}
+					case 3:
+					{
+						if (dirToUse == 1)
+						{
+							replacer = "THorizontal1Connector_r0_f";
+						}
+						else if (dirToUse == 4)
+						{
+							replacer = "THorizontal1Connector_r3_f";
+						}
+						break;
+					}
+					}
+				}
+				
+			}
+			//Add T-tunnel, if vertical L tunnel
+			else if (name == "LVertical1Connector") //Up
+			{
+				int rot = std::stoi(rotation.substr(1, 1));
+				if (dirToUse == 3)
+				{
+					replacer = "TVertical3Connector_" + rotation + "_f";
+				}
+				else
+				{
+					switch (rot)
+					{
+					case 0:
+					{
+						if (dirToUse == 1)
+						{
+							replacer = "TVertical1Connector_r0_f";
+						}
+						else if (dirToUse == 4)
+						{
+							replacer = "LUpConnector_r2_f";
+						}
+						else if (dirToUse == 5)
+						{
+							replacer = "LUpConnector_r3_f";
+						}
+						break;
+					}
+					case 1:
+					{
+						if (dirToUse == 0)
+						{
+							replacer = "LUpConnector_r3_f";
+						}
+						else if (dirToUse == 1)
+						{
+							replacer = "LUpConnector_r0_f";
+						}
+						else if (dirToUse == 4)
+						{
+							replacer = "TVertical1Connector_r1_f";
+						}
+						break;
+					}
+					case 2:
+					{
+						if (dirToUse == 0)
+						{
+							replacer = "TVertical1Connector_r2_f";
+						}
+						else if (dirToUse == 4)
+						{
+							replacer = "LUpConnector_r1_f";
+						}
+						else if (dirToUse == 5)
+						{
+							replacer = "LUpConnector_r0_f";
+						}
+						break;
+					}
+					case 3:
+					{
+						if (dirToUse == 5)
+						{
+							replacer = "TVertical1Connector_r3_f";
+						}
+						else if (dirToUse == 0)
+						{
+							replacer = "LUpConnector_r2_f";
+						}
+						else if (dirToUse == 1)
+						{
+							replacer = "LUpConnector_r1_f";
+						}
+						break;
+					}
+					}
+				}
+			}
+			else if (name == "LVertical2Connector") //Down
+			{
+				int rot = std::stoi(rotation.substr(1, 1));
+				if (dirToUse == 2)
+				{
+					rot = (rot + 2) % 4;
+					
+					replacer = "TVertical3Connector_r" + std::to_string(rot) + "_f";
+				}
+				else
+				{
+					switch (rot)
+					{
+					case 0:
+					{
+						if (dirToUse == 0)
+						{
+							replacer = "TVertical2Connector_r0_f";
+						}
+						else if (dirToUse == 5)
+						{
+							replacer = "LDownConnector_r0_f";
+						}
+						else if (dirToUse == 4)
+						{
+							replacer = "LDownConnector_r1_f";
+						}
+						break;
+					}
+					case 1:
+					{
+						if (dirToUse == 5)
+						{
+							replacer = "TVertical2Connector_r1_f";
+						}
+						else if (dirToUse == 0)
+						{
+							replacer = "LDownConnector_r2_f";
+						}
+						else if (dirToUse == 1)
+						{
+							replacer = "LDownConnector_r1_f";
+						}
+						break;
+					}
+					case 2:
+					{
+						if (dirToUse == 1)
+						{
+							replacer = "TVertical2Connector_r2_f";
+						}
+						else if (dirToUse == 4)
+						{
+							replacer = "LDownConnector_r2_f";
+						}
+						else if (dirToUse == 5)
+						{
+							replacer = "LDownConnector_r3_f";
+						}
+						break;
+					}
+					case 3:
+					{
+						if (dirToUse == 4)
+						{
+							replacer = "TVertical2Connector_r3_f";
+						}
+						else if (dirToUse == 0)
+						{
+							replacer = "LDownConnector_r3_f";
+						}
+						else if (dirToUse == 1)
+						{
+							replacer = "LDownConnector_r0_f";
+						}
+						break;
+					}
+					}
+				}
+			}
+			//add 4-connection-tunnel, if T-tunnel
+			else if (name == "TVertical1Connector")
+			{
+				if (dirToUse == 3)
+				{
+					replacer = "PlusVerticalConnector_" + rotation + "_f";
+				}
+				else
+				{
+					int rot = std::stoi(rotation.substr(1, 1));
+					if (rot == 0 || rot == 2)
+					{
+						if (dirToUse == 4)
+						{
+							replacer = "4UpConnector_r0_f";
+						}
+						else if (dirToUse == 5)
+						{
+							replacer = "4UpConnector_r2_f";
+						}
+					}
+					else if (rot == 1 || rot == 3)
+					{
+						if (dirToUse == 0)
+						{
+							replacer = "4UpConnector_r1_f";
+						}
+						else if (dirToUse == 1)
+						{
+							replacer = "4UpConnector_r3_f";
+						}
+					}
+				}
+			}
+			else if (name == "TVertical2Connector")
+			{
+				if (dirToUse == 2)
+				{
+					replacer = "PlusVerticalConnector_" + rotation + "_f";
+				}
+				else
+				{
+					int rot = std::stoi(rotation.substr(1, 1));
+					if (rot == 0 || rot == 2)
+					{
+						if (dirToUse == 4)
+						{
+							replacer = "4DownConnector_r2_f";
+						}
+						else if (dirToUse == 5)
+						{
+							replacer = "4DownConnector_r0_f";
+						}
+					}
+					else if (rot == 1 || rot == 3)
+					{
+						if (dirToUse == 0)
+						{
+							replacer = "4DownConnector_r3_f";
+						}
+						else if (dirToUse == 1)
+						{
+							replacer = "4DownConnector_r1_f";
+						}
+					}
+				}
+			}
+			else if (name == "TVertical3Connector")
+			{
+				int rot = std::stoi(rotation.substr(1, 1));
+				switch (rot)
+				{
+				case 0:
+				{
+					if (dirToUse == 1)
+					{
+						replacer = "PlusVerticalConnector_r0_f";
+					}
+					else if (dirToUse == 4)
+					{
+						replacer = "4UpDownConnector_r3_f";
+					}
+					else if (dirToUse == 5)
+					{
+						replacer = "4UpDownConnector_r0_f";
+					}
+					break;
+				}
+				case 1:
+				{
+					if (dirToUse == 4)
+					{
+						replacer = "PlusVerticalConnector_r1_f";
+					}
+					else if (dirToUse == 0)
+					{
+						replacer = "4UpDownConnector_r0_f";
+					}
+					else if (dirToUse == 1)
+					{
+						replacer = "4UpDownConnector_r1_f";
+					}
+					break;
+				}
+				case 2:
+				{
+					if (dirToUse == 0)
+					{
+						replacer = "PlusVerticalConnector_r2_f";
+					}
+					else if (dirToUse == 4)
+					{
+						replacer = "4UpDownConnector_r2_f";
+					}
+					else if (dirToUse == 5)
+					{
+						replacer = "4UpDownConnector_r1_f";
+					}
+					break;
+				}
+				case 3:
+				{
+					if (dirToUse == 5)
+					{
+						replacer = "PlusVerticalConnector_r3_f";
+					}
+					else if (dirToUse == 0)
+					{
+						replacer = "4UpDownConnector_r3_f";
+					}
+					else if (dirToUse == 1)
+					{
+						replacer = "4UpDownConnector_r2_f";
+					}
+					break;
+				}
+				}
+			}
+			else if (name == "THorizontal1Connector")
+			{
+				if (dirToUse != 2 && dirToUse != 3)
+				{
+					replacer = "PlusHorizontalConnector_" + rotation + "_f";
+				}
+				else if (dirToUse == 2)
+				{
+					int rot = std::stoi(rotation.substr(1, 1));
+					rot = (rot + 2) % 4;
 
-			//add 2D-+-tunnel, if T-tunnel
-
-			//add 3D-+-tunnel, if 2D-+-tunnel
-			replacer += "_" + rotation + "_" + flip;
+					replacer = "4UpConnector_r" + std::to_string(rot) + "_f";
+				}
+				else if (dirToUse == 3)
+				{
+					replacer = "4DownConnector_" + rotation + "_f";
+				}
+			}
+			else if (name == "LUpConnector")
+			{
+				int rot = std::stoi(rotation.substr(1, 1));
+				if (dirToUse == 3)
+				{
+					rot = rot + 1;
+					replacer = "4UpDownConnector_r" + std::to_string(rot) + "_f";
+				}
+				else
+				{
+					switch (rot)
+					{
+					case 0:
+					{
+						if (dirToUse == 0)
+						{
+							replacer = "4UpConnector_r2_f";
+						}
+						else if (dirToUse == 4)
+						{
+							replacer = "4UpConnector_r3_f";
+						}
+						break;
+					}
+					case 1:
+					{
+						if (dirToUse == 0)
+						{
+							replacer = "4UpConnector_r0_f";
+						}
+						else if (dirToUse == 5)
+						{
+							replacer = "4UpConnector_r3_f";
+						}
+						break;
+					}
+					case 2:
+					{
+						if (dirToUse == 1)
+						{
+							replacer = "4UpConnector_r0_f";
+						}
+						else if (dirToUse == 5)
+						{
+							replacer = "4UpConnector_r1_f";
+						}
+						break;
+					}
+					case 3:
+					{
+						if (dirToUse == 1)
+						{
+							replacer = "4UpConnector_r2_f";
+						}
+						else if (dirToUse == 4)
+						{
+							replacer = "4UpConnector_r1_f";
+						}
+						break;
+					}
+					}
+				}
+			}
+			else if (name == "LDownConnector")
+			{
+				int rot = std::stoi(rotation.substr(1, 1));
+				if (dirToUse == 2)
+				{
+					rot = rot + 1;
+					replacer = "4UpDownConnector_r" + std::to_string(rot) + "_f";
+				}
+				else
+				{
+					switch (rot)
+					{
+					case 0:
+					{
+						if (dirToUse == 0)
+						{
+							replacer = "4DownConnector_r0_f";
+						}
+						else if (dirToUse == 4)
+						{
+							replacer = "4DownConnector_r1_f";
+						}
+						break;
+					}
+					case 1:
+					{
+						if (dirToUse == 0)
+						{
+							replacer = "4DownConnector_r2_f";
+						}
+						else if (dirToUse == 5)
+						{
+							replacer = "4DownConnector_r1_f";
+						}
+						break;
+					}
+					case 2:
+					{
+						if (dirToUse == 1)
+						{
+							replacer = "4DownConnector_r2_f";
+						}
+						else if (dirToUse == 5)
+						{
+							replacer = "4DownConnector_r3_f";
+						}
+						break;
+					}
+					case 3:
+					{
+						if (dirToUse == 1)
+						{
+							replacer = "4DownConnector_r0_f";
+						}
+						else if (dirToUse == 4)
+						{
+							replacer = "4DownConnector_r3_f";
+						}
+						break;
+					}
+					}
+				}
+			}
+			//add 5-connection tunnel, if 4-connection tunnel.
+			else if (name == "PlusVerticalConnector")
+			{
+				int rot = std::stoi(rotation.substr(1, 1));
+				if (rot == 0 || rot == 2)
+				{
+					if (dirToUse == 4)
+					{
+						replacer = "5NoSideConnector_r2_f";
+					}
+					else if (dirToUse == 5)
+					{
+						replacer = "5NoSideConnector_r0_f";
+					}
+				}
+				else if (rot == 1 || rot == 3)
+				{
+					if (dirToUse == 0)
+					{
+						replacer = "5NoSideConnector_r3_f";
+					}
+					else if (dirToUse == 1)
+					{
+						replacer = "5NoSideConnector_r1_f";
+					}
+				}
+			}
+			else if (name == "4UpConnector")
+			{
+				if (dirToUse != 3)
+				{
+					replacer = "5NoDownConnector_r0_f";
+				}
+				else if (dirToUse == 3)
+				{
+					int rot = std::stoi(rotation.substr(1, 1));
+					rot = (rot + 2) % 4;
+					replacer = "5NoSideConnector_r" + std::to_string(rot) + "_f";
+				}
+			}
+			else if (name == "4DownConnector")
+			{
+				if (dirToUse != 2)
+				{
+					replacer = "5NoUpConnector_r0_f";
+				}
+				else if (dirToUse == 2)
+				{
+					int rot = std::stoi(rotation.substr(1, 1));
+					replacer = "5NoSideConnector_r" + std::to_string(rot) + "_f";
+				}
+			}
+			else if (name == "4UpDownConnector")
+			{
+				int rot = std::stoi(rotation.substr(1, 1));
+				switch (rot)
+				{
+				case 0:
+				{
+					if (dirToUse == 1)
+					{
+						replacer = "5NoSideConnector_r0_f";
+					}
+					else if (dirToUse == 4)
+					{
+						replacer = "5NoSideConnector_r3_f";
+					}
+					break;
+				}
+				case 1:
+				{
+					if (dirToUse == 0)
+					{
+						replacer = "5NoSideConnector_r0_f";
+					}
+					else if (dirToUse == 4)
+					{
+						replacer = "5NoSideConnector_r1_f";
+					}
+					break;
+				}
+				case 2:
+				{
+					if (dirToUse == 0)
+					{
+						replacer = "5NoSideConnector_r2_f";
+					}
+					else if (dirToUse == 5)
+					{
+						replacer = "5NoSideConnector_r1_f";
+					}
+					break;
+				}
+				case 3:
+				{
+					if (dirToUse == 1)
+					{
+						replacer = "5NoSideConnector_r2_f";
+					}
+					else if (dirToUse == 5)
+					{
+						replacer = "5NoSideConnector_r3_f";
+					}
+					break;
+				}
+				}
+			}
+			else if (name == "PlusHorizontalConnector")
+			{
+				if (dirToUse == 2)
+				{
+					replacer = "5NoUpConnector_" + rotation + "_f";
+				}
+				else if (dirToUse == 3)
+				{
+					replacer = "5NoDownConnector_" + rotation + "_f";
+				}
+			}
+			//add 6-connection tunnel, if 5-connection tunnel.
+			else if (name == "5NoSideConnector" || name == "5NoDownConnector" || name == "5NoUpConnector")
+			{
+				replacer = "3DCrossConnector_" + rotation + "_f";
+			}
 		}
 	}
 	if (replacer == "Void") //Temporary
