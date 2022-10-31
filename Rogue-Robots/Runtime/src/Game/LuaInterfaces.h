@@ -105,6 +105,8 @@ public:
 
 	void GetBarrelType(DOG::LuaContext* context);
 
+	void GetModificationType(DOG::LuaContext* context);
+
 	void GetAmmoCapacityForBarrelType(DOG::LuaContext* context);
 
 	void GetAmmoCountPerPickup(DOG::LuaContext* context);
@@ -156,6 +158,8 @@ private:
 	void AddActiveItem(DOG::LuaContext* context, DOG::entity e);
 
 	void AddBarrelComponent(DOG::LuaContext* context, DOG::entity e);
+
+	void AddMagazineModificationComponent(DOG::LuaContext* context, DOG::entity e);
 };
 
 class AssetInterface : public LuaInterface

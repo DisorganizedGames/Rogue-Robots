@@ -142,7 +142,7 @@ public:
 			}
 			else if (mgr.HasComponent<BarrelComponent>(closestPickup))
 			{
-				//Pickup is an active item entity, so:
+				//Pickup is a barrelcomponent entity, so:
 				if (mgr.HasComponent<EligibleBarrelComponent>(player))
 				{
 					mgr.RemoveComponent<EligibleBarrelComponent>(player);
@@ -151,6 +151,26 @@ public:
 				egnc.barrelComponentEntity = closestPickup;
 				egnc.type = mgr.GetComponent<BarrelComponent>(closestPickup).type;
 			}
+			else if (mgr.HasComponent<PassiveItemComponent>(closestPickup))
+			{
+				if (mgr.HasComponent<EligiblePassiveItemComponent>(player))
+				{
+					mgr.RemoveComponent<EligiblePassiveItemComponent>(player);
+				}
+				auto& ebic = mgr.AddComponent<EligiblePassiveItemComponent>(player);
+				ebic.passiveItemEntity = closestPickup;
+				ebic.type = mgr.GetComponent<PassiveItemComponent>(closestPickup).type;
+			}
+			else if (mgr.HasComponent<MagazineModificationComponent>(closestPickup))
+			{
+				if (mgr.HasComponent<EligibleMagazineModificationComponent>(player))
+				{
+					mgr.RemoveComponent<EligibleMagazineModificationComponent>(player);
+				}
+				auto& emmc = mgr.AddComponent<EligibleMagazineModificationComponent>(player);
+				emmc.magazineModificationEntity = closestPickup;
+				emmc.type = mgr.GetComponent<MagazineModificationComponent>(closestPickup).type;
+			}
 		}
 		else
 		{
@@ -158,9 +178,17 @@ public:
 			{
 				mgr.RemoveComponent<EligibleActiveItemComponent>(player);
 			}
-			else if (mgr.HasComponent<EligibleBarrelComponent>(player))
+			if (mgr.HasComponent<EligibleBarrelComponent>(player))
 			{
 				mgr.RemoveComponent<EligibleBarrelComponent>(player);
+			}
+			if (mgr.HasComponent<EligiblePassiveItemComponent>(player))
+			{
+				mgr.RemoveComponent<EligiblePassiveItemComponent>(player);
+			}
+			if (mgr.HasComponent<EligibleMagazineModificationComponent>(player))
+			{
+				mgr.RemoveComponent<EligibleMagazineModificationComponent>(player);
 			}
 		}
 	}
@@ -204,11 +232,35 @@ public:
 			}
 			}
 		}
+		else if (DOG::EntityManager::Get().HasComponent<EligiblePassiveItemComponent>(playerID))
+		{
+			auto type = DOG::EntityManager::Get().GetComponent<EligiblePassiveItemComponent>(playerID).type;
+			switch (type)
+			{
+			case PassiveItemComponent::Type::MaxHealthBoost:
+			{
+				itemText = "Max HP Boost";
+				break;
+			}
+			}
+		}
+		else if (DOG::EntityManager::Get().HasComponent<EligibleMagazineModificationComponent>(playerID))
+		{
+			auto type = DOG::EntityManager::Get().GetComponent<EligibleMagazineModificationComponent>(playerID).type;
+			switch (type)
+			{
+			case MagazineModificationComponent::Type::Frost :
+			{
+				itemText = "Frost modification";
+				break;
+			}
+			}
+		}
 		if (itemText.empty())
 			return;
 
 		ImVec2 size;
-		size.x = 240;
+		size.x = 285;
 		size.y = 300;
 
 		auto r = DOG::Window::GetWindowRect();
@@ -244,21 +296,40 @@ class MVPRenderAmmunitionTextSystem : public DOG::ISystem
 {
 public:
 	SYSTEM_CLASS(DOG::ThisPlayer, BarrelComponent);
-	ON_UPDATE(DOG::ThisPlayer, BarrelComponent);
+	ON_UPDATE_ID(DOG::ThisPlayer, BarrelComponent);
 
-	void OnUpdate(DOG::ThisPlayer, BarrelComponent& bc)
+	void OnUpdate(DOG::entity player, DOG::ThisPlayer, BarrelComponent& bc)
 	{
 		std::string barrelType;
+
+		if (DOG::EntityManager::Get().HasComponent<MagazineModificationComponent>(player))
+		{
+			auto type = DOG::EntityManager::Get().GetComponent<MagazineModificationComponent>(player).type;
+			switch (type)
+			{
+			case MagazineModificationComponent::Type::Frost:
+			{
+				barrelType = "Frost ";
+				break;
+			}
+			}
+		}
+
 		switch (bc.type)
 		{
 		case BarrelComponent::Type::Missile:
 		{
-			barrelType = "Missiles";
+			barrelType += "Missiles";
 			break;
 		}
 		case BarrelComponent::Type::Grenade:
 		{
-			barrelType = "Grenades";
+			barrelType += "Grenades";
+			break;
+		}
+		case BarrelComponent::Type::Bullet:
+		{
+			barrelType += "Bullets";
 			break;
 		}
 		}
@@ -287,6 +358,46 @@ public:
 			ImGui::Text(barrelType.c_str());
 			ImGui::Separator();
 			ImGui::Text(ammoText.c_str());
+			ImGui::PopStyleColor(1);
+			ImGui::PopFont();
+		}
+		ImGui::End();
+		ImGui::PopStyleColor();
+	}
+};
+
+class MVPRenderReloadHintTextSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DOG::ThisPlayer, BarrelComponent);
+	ON_UPDATE(DOG::ThisPlayer, BarrelComponent);
+
+	void OnUpdate(DOG::ThisPlayer, BarrelComponent& bc)
+	{
+		if (bc.type != BarrelComponent::Type::Bullet)
+			return;
+
+		if (bc.currentAmmoCount != 0)
+			return;
+
+		ImVec2 size;
+		size.x = 240;
+		size.y = 100;
+
+		auto r = DOG::Window::GetWindowRect();
+		ImVec2 pos;
+		pos.x = (r.right - r.left) * 0.5f + 50.0f;
+		pos.y = (r.bottom - r.top) * 0.5f;
+
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+		ImGui::SetNextWindowPos(pos);
+		ImGui::SetNextWindowSize(size);
+		if (ImGui::Begin("Reload text", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+		{
+			ImGui::PushFont(DOG::Window::GetFont());
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
+			ImGui::SetWindowFontScale(1.4f);
+			ImGui::Text("[R] Reload");
 			ImGui::PopStyleColor(1);
 			ImGui::PopFont();
 		}
