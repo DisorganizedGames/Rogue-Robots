@@ -403,7 +403,11 @@ namespace DOG
 					m_specification.graphicsSettings.windowMode = static_cast<WindowMode>(selectedFullscreenStateIndex);
 					m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
 				}
-				ImGui::Checkbox("Vsync", &m_specification.graphicsSettings.vSync);
+
+				bool gfxChanged{ false };
+				if (ImGui::Checkbox("Vsync", &m_specification.graphicsSettings.vSync))
+					gfxChanged = true;
+
 				ImGui::Separator();
 
 				ImGui::Text("Graphics settings");
@@ -460,7 +464,6 @@ namespace DOG
 					ImGui::EndCombo();
 				}
 
-				bool gfxChanged{ false };
 				if (ImGui::Checkbox("Bloom", &m_specification.graphicsSettings.bloom))
 					gfxChanged = true;
 
