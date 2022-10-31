@@ -28,7 +28,7 @@ namespace DOG::gfx
 		GPVirtualAllocator() = default;
 		GPVirtualAllocator(u64 maxSize, bool usesLinearAlgorithm);
 
-		GPVirtualAllocation Allocate(u64 size, u32 alignment = 0);
+		GPVirtualAllocation Allocate(u64 size, u32 alignment = 1);
 		void Free(GPVirtualAllocation&& alloc);
 
 	private:

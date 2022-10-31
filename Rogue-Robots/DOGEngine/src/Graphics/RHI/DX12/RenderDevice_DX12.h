@@ -23,15 +23,19 @@ namespace DOG::gfx
 		RenderDevice_DX12(ComPtr<ID3D12Device5> device, IDXGIAdapter* adapter, bool debug, UINT numBackBuffers);
 		~RenderDevice_DX12();
 
-		Swapchain* CreateSwapchain(void* hwnd, u8 numBuffers);
 		Monitor GetMonitor() override;
-		Buffer CreateBuffer(const BufferDesc& desc);
-		Texture CreateTexture(const TextureDesc& desc);
+		const GPUPoolMemoryInfo& GetPoolMemoryInfo(MemoryPool pool);
+		const GPUTotalMemoryInfo& GetTotalMemoryInfo();
+
+		Swapchain* CreateSwapchain(void* hwnd, u8 numBuffers);
+		Buffer CreateBuffer(const BufferDesc& desc, MemoryPool = {});
+		Texture CreateTexture(const TextureDesc& desc, MemoryPool = {});
 		Pipeline CreateGraphicsPipeline(const GraphicsPipelineDesc& desc);
 		Pipeline CreateComputePipeline(const ComputePipelineDesc& desc);
 		RenderPass CreateRenderPass(const RenderPassDesc& desc);
 		BufferView CreateView(Buffer buffer, const BufferViewDesc& desc);
 		TextureView CreateView(Texture texture, const TextureViewDesc& desc);
+		MemoryPool CreateMemoryPool(const MemoryPoolDesc& desc);
 
 		// Free/recycle when appropriate! Sensitive resources that may be in-flight
 		void FreeBuffer(Buffer handle);
@@ -40,6 +44,7 @@ namespace DOG::gfx
 		void FreeRenderPass(RenderPass handle);
 		void FreeView(BufferView handle);
 		void FreeView(TextureView handle);
+		void FreeMemoryPool(MemoryPool handle);
 		void RecycleSync(SyncReceipt receipt);
 		void RecycleCommandList(CommandList handle);
 
@@ -229,6 +234,13 @@ namespace DOG::gfx
 			TextureDesc desc;
 		};
 
+		struct MemoryPool_Storage
+		{
+			MemoryPoolDesc desc;
+			ComPtr<D3D12MA::Pool> pool;
+			GPUPoolMemoryInfo info;
+		};
+
 		struct BufferView_Storage
 		{
 			Buffer buf;
@@ -302,6 +314,7 @@ namespace DOG::gfx
 
 		HandleAllocator m_rhp;
 
+		std::vector<std::optional<MemoryPool_Storage>> m_memoryPools;
 		std::vector<std::optional<Buffer_Storage>> m_buffers;
 		std::vector<std::optional<Texture_Storage>> m_textures;
 		std::vector<std::optional<BufferView_Storage>> m_bufferViews;
@@ -322,6 +335,7 @@ namespace DOG::gfx
 
 		//Ui
 		std::optional<DX12DescriptorChunk> m_d2dReservedDescriptor;
+		GPUTotalMemoryInfo m_totalMemoryInfo;
 	};
 }
 

@@ -10,8 +10,27 @@
 #include "Utilities/DX12Queue.h"
 #include "Utilities/DX12Fence.h"
 
+#include "Tracy/Tracy.hpp"
+
 namespace DOG::gfx
 {
+	GPUPoolMemoryInfo ToMemoryInfo(const D3D12MA::DetailedStatistics& stats)
+	{
+		GPUPoolMemoryInfo info{};
+		info.blocksAllocated = stats.Stats.BlockCount;
+		info.numAllocations = stats.Stats.AllocationCount;
+		info.blockBytes = (u32)stats.Stats.BlockBytes;
+		info.allocationBytes = (u32)stats.Stats.AllocationBytes;
+		info.allocatedButUnusedBytes = info.blockBytes - info.allocationBytes;
+
+		info.numUnusedRange = stats.UnusedRangeCount;
+		info.smallestAllocation = stats.AllocationSizeMin;
+		info.largestAllocation = stats.AllocationSizeMax;
+		info.smallestUnusedRange = stats.UnusedRangeSizeMin;
+		info.largestUnusedRange = stats.UnusedRangeSizeMax;
+		return info;
+	};
+
 
 	RenderDevice_DX12::RenderDevice_DX12(ComPtr<ID3D12Device5> device, IDXGIAdapter* adapter, bool debug, UINT numBackBuffers) :
 		m_device(device),
@@ -26,6 +45,7 @@ namespace DOG::gfx
 		m_cmdls.resize(1);
 		m_bufferViews.resize(1);
 		m_textureViews.resize(1);
+		m_memoryPools.resize(1);
 
 		CreateQueues();
 		InitDMA(adapter);
@@ -40,8 +60,9 @@ namespace DOG::gfx
 
 	RenderDevice_DX12::~RenderDevice_DX12()
 	{
-		// Destroy any leftover views automatically
-		for (auto view : m_bufferViews)
+		RenderDevice_DX12::Flush();
+
+		for (auto& view : m_bufferViews)
 		{
 			if (view.has_value())
 			{
@@ -49,13 +70,16 @@ namespace DOG::gfx
 			}
 		}
 
-		for (auto view : m_textureViews)
+		for (auto& view : m_textureViews)
 		{
 			if (view.has_value())
 			{
 				m_descriptorMgr->free(&(*view).view);
+				if (view->uavClear)
+					m_descriptorMgr->free_cbv_srv_uav_cpu(&(*view->uavClear));
 			}
 		}
+
 
 		if (m_reservedDescriptor)
 			m_descriptorMgr->free(&(*m_reservedDescriptor));
@@ -78,12 +102,42 @@ namespace DOG::gfx
 		return monitor;
 	}
 
-	Buffer RenderDevice_DX12::CreateBuffer(const BufferDesc& desc)
+	const GPUPoolMemoryInfo& RenderDevice_DX12::GetPoolMemoryInfo(MemoryPool pool)
+	{
+		auto& storage = HandleAllocator::TryGet(m_memoryPools, HandleAllocator::GetSlot(pool.handle));
+
+		D3D12MA::DetailedStatistics stats{};
+		storage.pool->CalculateStatistics(&stats);
+		storage.info = ToMemoryInfo(stats);
+	
+		return storage.info;
+	}
+
+	const GPUTotalMemoryInfo& RenderDevice_DX12::GetTotalMemoryInfo()
+	{	
+		D3D12MA::TotalStatistics stats;
+		m_dma->CalculateStatistics(&stats);
+		
+		for (u32 i = 0; i < 4; ++i)
+			m_totalMemoryInfo.heap[i] = ToMemoryInfo(stats.HeapType[i]);
+		m_totalMemoryInfo.total = ToMemoryInfo(stats.Total);
+
+		return m_totalMemoryInfo;
+	}
+
+	Buffer RenderDevice_DX12::CreateBuffer(const BufferDesc& desc, MemoryPool pool)
 	{
 		HRESULT hr{ S_OK };
 
 		D3D12MA::ALLOCATION_DESC ad{};
 		ad.HeapType = to_internal(desc.memType);
+		if (pool.handle != 0)
+		{
+			auto poolStorage = HandleAllocator::TryGet(m_memoryPools, HandleAllocator::GetSlot(pool.handle));
+			ad.CustomPool = poolStorage.pool.Get();
+			ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT;
+			assert(ad.HeapType == poolStorage.desc.heapType);
+		}
 
 		D3D12_RESOURCE_DESC rd{};
 		rd.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
@@ -113,7 +167,7 @@ namespace DOG::gfx
 		return handle;
 	}
 
-	Texture RenderDevice_DX12::CreateTexture(const TextureDesc& desc)
+	Texture RenderDevice_DX12::CreateTexture(const TextureDesc& desc, MemoryPool pool)
 	{
 		HRESULT hr{ S_OK };
 
@@ -121,7 +175,13 @@ namespace DOG::gfx
 		ad.HeapType = to_internal(desc.memType);
 		//ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT | D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET;
 		//ad.CustomPool = m_pool.Get();
-		ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT;
+		if (pool.handle != 0)
+		{
+			auto poolStorage = HandleAllocator::TryGet(m_memoryPools, HandleAllocator::GetSlot(pool.handle));
+			ad.CustomPool = poolStorage.pool.Get();
+			ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT;
+			assert(ad.HeapType == poolStorage.desc.heapType);
+		}
 
 		D3D12_RESOURCE_DESC rd{};
 		rd.Dimension = to_internal(desc.type);
@@ -282,7 +342,7 @@ namespace DOG::gfx
 		auto& buffer_storage = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(buffer.handle));
 		auto view_desc = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		assert((desc.offset + desc.stride * desc.count - 1) < buffer_storage.desc.size);
+		assert((desc.offset + desc.stride * desc.count) <= buffer_storage.desc.size);
 
 		std::optional<DX12DescriptorChunk> uavClear;
 		if (desc.viewType == ViewType::Constant)
@@ -424,6 +484,40 @@ namespace DOG::gfx
 		return handle;
 	}
 
+	MemoryPool RenderDevice_DX12::CreateMemoryPool(const MemoryPoolDesc& desc)
+	{
+		ComPtr<D3D12MA::Pool> pool;
+		D3D12MA::POOL_DESC pd{};
+		pd.HeapFlags = D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES;
+		pd.HeapProperties.Type = desc.heapType;
+		pd.BlockSize = desc.size;
+		HRESULT hr{ S_OK };
+		hr = m_dma->CreatePool(&pd, pool.GetAddressOf());
+		HR_VFY(hr);
+
+		MemoryPool_Storage storage{};
+		storage.desc = desc;
+		storage.pool = pool;
+
+		D3D12MA::DetailedStatistics stats{};
+		pool->CalculateStatistics(&stats);
+		storage.info.blocksAllocated = stats.Stats.BlockCount;
+		storage.info.numAllocations = stats.Stats.AllocationCount;
+		storage.info.blockBytes = (u32)stats.Stats.BlockBytes;
+		storage.info.allocationBytes = (u32)stats.Stats.AllocationBytes;
+
+		storage.info.numUnusedRange = stats.UnusedRangeCount;
+		storage.info.smallestAllocation = stats.AllocationSizeMin;
+		storage.info.largestAllocation = stats.AllocationSizeMax;
+		storage.info.smallestUnusedRange = stats.UnusedRangeSizeMin;
+		storage.info.largestUnusedRange = stats.UnusedRangeSizeMax;
+
+		auto handle = m_rhp.Allocate<MemoryPool>();
+		HandleAllocator::TryInsertMove(m_memoryPools, std::move(storage), HandleAllocator::GetSlot(handle.handle));
+
+		return handle;
+	}
+
 	void RenderDevice_DX12::FreeBuffer(Buffer handle)
 	{
 		HandleAllocator::FreeStorage(m_rhp, m_buffers, handle);
@@ -431,6 +525,7 @@ namespace DOG::gfx
 
 	void RenderDevice_DX12::FreeTexture(Texture handle)
 	{
+		ZoneScopedN("RD Texture Free");
 		HandleAllocator::FreeStorage(m_rhp, m_textures, handle);
 	}
 
@@ -462,6 +557,12 @@ namespace DOG::gfx
 		HandleAllocator::FreeStorage(m_rhp, m_textureViews, handle);
 	}
 
+	void RenderDevice_DX12::FreeMemoryPool(MemoryPool handle)
+	{
+		HandleAllocator::FreeStorage(m_rhp, m_memoryPools, handle);
+		assert(false);		// cleanup to D3D12MA?
+	}
+
 	void RenderDevice_DX12::RecycleSync(SyncReceipt receipt)
 	{
 		auto sync = std::move(HandleAllocator::TryGet(m_syncs, HandleAllocator::GetSlot(receipt.handle)));
@@ -486,16 +587,16 @@ namespace DOG::gfx
 	{
 		CommandList_Storage storage{};
 
-		auto resetState = [this](ID3D12GraphicsCommandList4* list, QueueType queueType)
+		auto resetState = [&, rootsig = m_gfxRsig.Get(), dheap = m_descriptorMgr->get_gpu_dh_resource()](ID3D12GraphicsCommandList4* list, QueueType queueType) mutable
 		{
 			if (queueType == QueueType::Graphics || queueType == QueueType::Compute)
 			{
-				ID3D12DescriptorHeap* dheaps[] = { m_descriptorMgr->get_gpu_dh_resource() };
+				ID3D12DescriptorHeap* dheaps[] = { dheap };
 				list->SetDescriptorHeaps(_countof(dheaps), dheaps);
 
 				// Set both..
-				list->SetGraphicsRootSignature(m_gfxRsig.Get());
-				list->SetComputeRootSignature(m_gfxRsig.Get());
+				list->SetGraphicsRootSignature(rootsig);
+				list->SetComputeRootSignature(rootsig);
 			}
 		};
 
@@ -535,6 +636,7 @@ namespace DOG::gfx
 			storage.pair.list = cmdl;
 		}
 
+		storage.pair.queueType = queue;
 
 		auto handle = m_rhp.Allocate<CommandList>();
 		HandleAllocator::TryInsertMove(m_cmdls, std::move(storage), HandleAllocator::GetSlot(handle.handle));
@@ -553,7 +655,10 @@ namespace DOG::gfx
 			auto cmdl = storage.pair.list;
 			cmdl->Close();
 			cmdls[i] = cmdl.Get();
+
+			assert(queue == storage.pair.queueType);
 		}
+
 
 		DX12Queue* curr_queue = GetQueue(queue);
 
@@ -606,6 +711,7 @@ namespace DOG::gfx
 		cmdl->Close();
 		cmdls[0] = cmdl.Get();
 
+		assert(queue == storage.pair.queueType);
 
 		DX12Queue* curr_queue = GetQueue(queue);
 
@@ -828,9 +934,34 @@ namespace DOG::gfx
 		auto& cmdlRes = HandleAllocator::TryGet(m_cmdls, HandleAllocator::GetSlot(list.handle));
 
 		if (targetQueue == QueueType::Graphics)
+		{
 			cmdlRes.pair.list->SetGraphicsRoot32BitConstants(0, args.numConstants, args.constants.data(), 0);
+			if (args.mainCBV.handle != 0)
+			{
+				auto& storage = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(args.mainCBV.handle));
+				cmdlRes.pair.list->SetGraphicsRootConstantBufferView(1, storage.resource->GetGPUVirtualAddress() + args.mainCBVOffset);
+			}
+			if (args.secondaryCBV.handle != 0)
+			{
+				auto& storage = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(args.secondaryCBV.handle));
+				cmdlRes.pair.list->SetGraphicsRootConstantBufferView(2, storage.resource->GetGPUVirtualAddress() + args.secondaryCBVOffset);
+			}
+		}
 		else if (targetQueue == QueueType::Compute)
+		{
 			cmdlRes.pair.list->SetComputeRoot32BitConstants(0, args.numConstants, args.constants.data(), 0);
+			if (args.mainCBV.handle != 0)
+			{
+				auto& storage = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(args.mainCBV.handle));
+				cmdlRes.pair.list->SetComputeRootConstantBufferView(1, storage.resource->GetGPUVirtualAddress() + args.mainCBVOffset);
+			}
+			if (args.secondaryCBV.handle != 0)
+			{
+				auto& storage = HandleAllocator::TryGet(m_buffers, HandleAllocator::GetSlot(args.secondaryCBV.handle));
+				cmdlRes.pair.list->SetComputeRootConstantBufferView(2, storage.resource->GetGPUVirtualAddress() + args.secondaryCBVOffset);
+			}
+		}
+
 	}
 
 	void RenderDevice_DX12::Cmd_CopyBuffer(CommandList list, Buffer dst, u32 dstOffset, Buffer src, u32 srcOffset, u32 size)
@@ -1025,6 +1156,16 @@ namespace DOG::gfx
 		param.Constants.ShaderRegister = 0;
 		param.Constants.Num32BitValues = num_constants + 1;		// Indirect Set Constant requires 2 for some reason to start working with Debug Validation Layer is on
 		params.push_back(param);
+
+		D3D12_ROOT_PARAMETER cbvParam{};
+		cbvParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+		cbvParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+		cbvParam.Descriptor.RegisterSpace = 0;
+		cbvParam.Descriptor.ShaderRegister = 1;
+		params.push_back(cbvParam);
+		cbvParam.Descriptor.ShaderRegister = 2;
+		params.push_back(cbvParam);
+
 
 		D3D12_ROOT_SIGNATURE_DESC rsd{};
 		rsd.NumParameters = (UINT)params.size();

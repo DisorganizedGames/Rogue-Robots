@@ -38,9 +38,27 @@ namespace DOG::gfx
 
 	class Renderer
 	{
+	public:
+		struct ShadowCaster
+		{
+			DirectX::SimpleMath::Matrix viewMat, projMat;
+		};
+
+		struct ActiveSpotlight
+		{
+			std::optional<ShadowCaster> shadow;
+
+			DirectX::SimpleMath::Vector4 position;
+			DirectX::SimpleMath::Vector3 color;
+			float cutoffAngle{ 0.f };
+			DirectX::SimpleMath::Vector3 direction;
+			float strength{ 0.f };
+		};
+
+
 	private:
 		static constexpr u8 S_NUM_BACKBUFFERS = 2;
-		static constexpr u8 S_MAX_FIF = 1;
+		static constexpr u8 S_MAX_FIF = 2;
 
 		static_assert(S_MAX_FIF <= S_NUM_BACKBUFFERS);
 	public:
@@ -67,9 +85,12 @@ namespace DOG::gfx
 
 		void SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 
-		void SubmitShadowMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
+		void SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world);
+		void SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world);
 
 
+		// Optionally returns shadow ID if light casts shadows
+		std::optional<u32> RegisterSpotlight(const ActiveSpotlight& data);
 
 		// Internal state updates
 		void Update(f32 dt);
@@ -80,6 +101,7 @@ namespace DOG::gfx
 
 		void OnResize(u32 clientWidth, u32 clientHeight);
 		void SetGraphicsSettings(GraphicsSettings requestedSettings);
+		GraphicsSettings GetGraphicsSettings();
 		WindowMode GetFullscreenState() const;
 
 
@@ -111,6 +133,8 @@ namespace DOG::gfx
 			// bitflags for target passes? (i.e multipass)
 		};
 
+		void WaitForPrevFrame();
+
 	private:
 		std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> m_wmCallback;
 		std::unique_ptr<RenderBackend> m_backend;
@@ -130,15 +154,17 @@ namespace DOG::gfx
 		std::unique_ptr<LightTable> m_globalLightTable;
 
 
-		std::vector<RenderSubmission> m_submissions;		// temporary
-		std::vector<RenderSubmission> m_noCullSubmissions;	// temporary
-		std::vector<RenderSubmission> m_animatedDraws;		// temp
-		std::vector<RenderSubmission> m_wireframeDraws;		// temp
+		std::vector<RenderSubmission> m_submissions;				// temporary
+		std::vector<RenderSubmission> m_noCullSubmissions;			// temporary
+		std::vector<RenderSubmission> m_animatedDraws;				// temp
+		std::vector<RenderSubmission> m_wireframeDraws;				// temp
 		std::vector<RenderSubmission> m_noCullWireframeDraws;		// temp
-		std::vector<RenderSubmission> m_shadowSubmissions;	// maybe temp, also? (Emil F)
 
-		std::vector<entity> m_lightEntities;
-		entity* currentEntityPointer = nullptr;
+		u32 m_nextSingleSidedShadowBucket{ 0 };
+		u32 m_nextDoubleSidedShadowBucket{ 0 };
+		std::vector<std::vector<RenderSubmission>> m_singleSidedShadowDraws;
+		std::vector<std::vector<RenderSubmission>> m_doubleSidedShadowDraws;
+
 
 		DirectX::XMMATRIX m_viewMat, m_projMat;
 
@@ -162,7 +188,7 @@ namespace DOG::gfx
 
 		// ================= RENDERING RESOURCES
 
-		Pipeline m_pipe, m_meshPipe, m_meshPipeNoCull, m_shadowPipe;;
+		Pipeline m_pipe, m_meshPipe, m_meshPipeNoCull, m_shadowPipe, m_shadowPipeNoCull;	// nocull are for the modular blocks (hack due to asset in shady state with negative scaling)
 		Pipeline m_meshPipeWireframe, m_meshPipeWireframeNoCull;
 		Pipeline m_ssaoPipe;
 
@@ -176,10 +202,11 @@ namespace DOG::gfx
 		// Reusing a single command list for now
 		CommandList m_cmdl;
 
-		std::unique_ptr<RenderGraph> m_rg;
 		std::unique_ptr<RGResourceManager> m_rgResMan;
 		std::unique_ptr<RGBlackboard> m_rgBlackboard;
+		std::unique_ptr<RenderGraph> m_rg;
 
+		std::optional<SyncReceipt> m_frameCopyReceipt;
 
 
 
@@ -250,6 +277,23 @@ namespace DOG::gfx
 		std::unique_ptr<RenderEffect> m_imGUIEffect;
 		std::unique_ptr<RenderEffect> m_testComputeEffect;
 		std::unique_ptr<RenderEffect> m_bloomEffect;
+
+
+		u32 m_shadowMapCapacity{ 1 };
+
+		
+		u32 m_currFrameIdx{ 0 };
+		std::vector<std::optional<SyncReceipt>> m_frameSyncs;
+
+		std::vector<ActiveSpotlight> m_activeSpotlights;
+		struct ActiveShadowCaster
+		{
+			u32 singleSidedBucket{ UINT_MAX };
+			u32 doubleSidedBucket{ UINT_MAX };
+		};
+		std::vector<ActiveShadowCaster> m_activeShadowCasters;
+
+		GraphicsSettings m_graphicsSettings;
 
 	};
 }

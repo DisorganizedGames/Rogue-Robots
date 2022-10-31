@@ -3,6 +3,7 @@
 #include "../../RHI/Types/ResourceDescs.h"
 #include "../../RHI/Types/BarrierDesc.h"
 #include "../../RHI/Types/RenderPassDesc.h"
+#include "../../Memory/BumpAllocator.h"
 #include "RGTypes.h"
 #include <unordered_set>
 
@@ -13,55 +14,52 @@ namespace DOG::gfx
 	class RenderDevice;
 	class RGResourceManager;
 	class GPUGarbageBin;
+	class BumpAllocator;
 
 	class RenderGraph
 	{
 	public:
-		/*
-			Specialized interface to return usable GPU elements in the execution logic in each pass.
-			Views that are retrieved here local to the declared resources! 
-		*/
+		// Specialized interface to return usable GPU primitives in the execution logic in each pass.
+		// Only pass local resources are obtainable
 		class PassResources
 		{
 		public:
 			PassResources() = default;
 
-			// Pass local
 			u32 GetView(RGResourceView id) const;			// SRV/UAVs
 
-			// Unsafe
 			TextureView GetTextureView(RGResourceView id) const;
 			BufferView GetBufferView(RGResourceView id) const;
 
-			// Graph global
 			Texture GetTexture(RGResourceID id);
 			Buffer GetBuffer(RGResourceID id);
 
 		private:
 			friend class RenderGraph;
-			//std::unordered_map<RGResourceID, u32> m_views;			// Views already converted to global indices for immediate use
-			std::unordered_map<RGResourceView, u32> m_views;			// Views already converted to global indices for immediate use
-			std::unordered_map<RGResourceID, Buffer> m_buffers;		// Underlying buffer resources
-			std::unordered_map<RGResourceID, Texture> m_textures;	// Underlying texture resources
+			std::unordered_map<RGResourceView, u32> m_views;						// Views already converted to global indices for immediate use
+			std::unordered_map<RGResourceID, Buffer> m_buffers;						// Underlying buffer resources
+			std::unordered_map<RGResourceID, Texture> m_textures;					// Underlying texture resources
+			std::unordered_map<RGResourceView, TextureView> m_textureViewsLookup;	// Underlying texture view
+			std::unordered_map<RGResourceView, BufferView> m_bufferViewsLookup;		// Underlying buffer view
 
-			// @todo should replace vectors below
-			std::unordered_map<RGResourceView, TextureView> m_textureViewsLookup;
-			std::unordered_map<RGResourceView, BufferView> m_bufferViewsLookup;
-
-			// Held for cleanup
+			// Stores all views associated with this PassResources, held for cleanup
 			std::vector<TextureView> m_textureViews;
 			std::vector<BufferView> m_bufferViews;
+
 		};
 
 	private:
 		struct PassIO
 		{
-			std::optional<RGResourceID> originalID;			// if aliased --> holds original resource name
+			// I/O data
+			std::optional<RGResourceID> originalID;	// If aliased, holds original resource
 			RGResourceID id;
 			RGResourceType type{ RGResourceType::Texture };
 			RGResourceView viewID;
 			std::optional<std::variant<TextureViewDesc, BufferViewDesc>> viewDesc;
 			D3D12_RESOURCE_STATES desiredState{ D3D12_RESOURCE_STATE_COMMON };
+
+			// Output specific data
 			std::optional<RenderPassAccessType> rpAccessType;			// Render Target & Depth
 			std::optional<RenderPassAccessType> rpStencilAccessType;	// Stencil
 			bool aliasWrite{ false };
@@ -69,6 +67,11 @@ namespace DOG::gfx
 
 		struct Pass
 		{
+			Pass(const std::string& name, u32 id) :
+				name(name),
+				id(id)
+			{}
+
 			// Declared by user
 			std::vector<PassIO> inputs;
 			std::vector<PassIO> outputs;
@@ -79,37 +82,33 @@ namespace DOG::gfx
 			// Filled by implementation
 			std::string name;
 			u32 id{ 0 };
-			std::function<void(RenderDevice*, CommandList, PassResources&)> execFunc;
 			u32 depth{ 0 };
+			std::optional<std::function<void()>> preGraphExecute, postGraphExecute;
+			std::function<void(RenderDevice*, CommandList, PassResources&)> execFunc;
 			PassResources passResources;
-
+			
+			// If pass writes to render target, render pass is sued
 			std::optional<RenderPass> rp;
 		};
 
 		class DependencyLevel
 		{
 		public:
-			DependencyLevel(RGResourceManager* resMan);
+			DependencyLevel(RGResourceManager* resMan) : m_resMan(resMan) {}
 
 			void Execute(RenderDevice* rd, CommandList cmdl);
 	
-			void AddPass(Pass* pass);
-			void AddEntryBarrier(GPUBarrier barrier);
-			bool BarrierExists(u64 resource, D3D12_RESOURCE_BARRIER_TYPE type);
-			/*
-				Called after all barriers have been inserted.
-				This checks for any simultaneous read/write on the same resource (forbidden)
-				and combines multiple reads on the same resource if possible.
-			*/
-			void Finalize();
+			void AddPass(Pass* pass) { m_passes.push_back(pass); }
+			void AddEntryBarrier(GPUBarrier barrier, RGResourceID id) { m_entryBarriers.push_back(barrier); m_barrierResourceIDs.push_back(id); }
+			void ClearBarriers() { m_entryBarriers.clear(); }
+
+			const std::vector<Pass*>& GetPasses() const { return m_passes; }
 
 		private:
 			RGResourceManager* m_resMan{ nullptr };
-
 			std::vector<Pass*> m_passes;
-
-			// Barriers for all resources upon entry into this dependency level
-			std::vector<GPUBarrier> m_batchedEntryBarriers;
+			std::vector<GPUBarrier> m_entryBarriers;
+			std::vector<RGResourceID> m_barrierResourceIDs;
 		};
 
 		struct PassBuilderGlobalData
@@ -135,13 +134,15 @@ namespace DOG::gfx
 		struct PassBuilder
 		{
 		public:
-			PassBuilder(PassBuilderGlobalData& globalData, RGResourceManager* resMan);
+			PassBuilder(PassBuilderGlobalData& globalData, RGResourceManager* resMan, Pass& pass) : 
+				m_globalData(globalData), 
+				m_resMan(resMan),
+				m_pass(pass)
+			{};
 
 			// ResourceManager interface
 			void DeclareTexture(RGResourceID id, RGTextureDesc desc);
-			void ImportTexture(RGResourceID id, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
 			void DeclareBuffer(RGResourceID id, RGBufferDesc desc);
-			void ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
 
 			// Texture read views
 			[[nodiscard]] RGResourceView ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc);
@@ -157,7 +158,6 @@ namespace DOG::gfx
 			void CopyFromResource(RGResourceID id, RGResourceType type);
 
 
-
 		private:
 			// Auto-proxy and auto-alias helpers
 			std::pair<RGResourceID, RGResourceID> ResolveAliasingIDs(RGResourceID input);
@@ -166,47 +166,82 @@ namespace DOG::gfx
 			RGResourceID GetNextID(RGResourceID id);
 			void FlushReadsAndConnectProxy(RGResourceID id);
 
-		
-
 			// Proxy now handled internally
 			void ProxyWrite(RGResourceID id);
 			void ProxyRead(RGResourceID id);
 
-			friend class RenderGraph;
 			PassBuilderGlobalData& m_globalData;
 			RGResourceManager* m_resMan{ nullptr };
-			Pass m_pass;
+			Pass& m_pass;
 		};
 
 	public:
 		RenderGraph(RenderDevice* rd, RGResourceManager* resMan, GPUGarbageBin* bin);
+		~RenderGraph() { Clear(); }
 
 		template <typename PassData>
 		void AddPass(const std::string& name,
-			const std::function<void(PassData&, PassBuilder&)>& buildFunc,
-			const std::function<void(const PassData&, RenderDevice*, CommandList, PassResources&)>& execFunc)
+			const std::function<void(PassData&, PassBuilder&)>& buildFunc,										// Declare resources and populate persistent PassData
+			const std::function<void(const PassData&, RenderDevice*, CommandList, PassResources&)>& execFunc,	// Render work (potentially asynchronously)
+			std::optional<std::function<void(PassData&)>> preGraphExecuteFunc = {},								// Allocate any transient resources up-front
+			std::optional<std::function<void(PassData&)>> postGraphExecuteFunc = {})							// Free any transient resources used)	
 		{
-			PassBuilder builder(m_passBuilderGlobalData, m_resMan);
-			builder.m_pass.id = m_nextPassID++;
-			builder.m_pass.name = name;
+			// Allow adding passes only if Graph has been marked as dirty
+			// Graph has to be set to dirty before changing
+			//assert(m_dirty);
+			if (!m_dirty)
+				return;
 
-			PassData passData{};
-			buildFunc(passData, builder);
+			Pass newPass(name, m_nextPassID++);
+			PassBuilder builder(m_passBuilderGlobalData, m_resMan, newPass);
+			
+			u8* memory = m_passDataAllocator->Allocate(sizeof(PassData));
+			PassData* passData = new (memory) PassData();
 
-			// Construct pass data
-			auto pass = std::make_unique<Pass>(std::move(builder.m_pass));
-			pass->execFunc = [execFunc, passData](RenderDevice* rd, CommandList cmdl, PassResources& resources)
+			buildFunc(*passData, builder);
+
+			auto pass = std::make_unique<Pass>(std::move(newPass));
+			pass->execFunc = [execFunc, memory = passData](RenderDevice* rd, CommandList cmdl, PassResources& resources)
 			{
-				execFunc(passData, rd, cmdl, resources);
+				execFunc(*memory, rd, cmdl, resources);
 			};
 
+			if (preGraphExecuteFunc)
+			{
+				pass->preGraphExecute = [preGraphExecuteFunc, memory = passData]()
+				{
+					(*preGraphExecuteFunc)(*memory);
+				};
+			}
+			
+			if (postGraphExecuteFunc)
+			{
+				pass->postGraphExecute = [postGraphExecuteFunc, memory = passData]()
+				{
+					(*postGraphExecuteFunc)(*memory);
+				};
+			}
+
 			m_passes.push_back(std::move(pass));
+			m_passDataDestructors.push_back([data = passData]()
+				{
+					data->~PassData();
+				});
 		}
 
+		void Clear();
+		void TryBuild();
 		void Build();
-		void Execute();
+
+		/*
+			Optional:
+				- External sync before graph execution
+				- Generate sync on graph execution completion
+		*/
+		std::optional<SyncReceipt> Execute(std::optional<SyncReceipt> incomingSync = {}, bool generateSync = false);
 
 	private:
+
 		void AddProxies();
 		void BuildAdjacencyMap();
 		void SortPassesTopologically();
@@ -234,9 +269,12 @@ namespace DOG::gfx
 		u32 m_maxDepth{ 0 };
 		std::vector<DependencyLevel> m_dependencyLevels;
 
+		// Bump allocator which is reset after each graph build
+		std::unique_ptr<BumpAllocator> m_passDataAllocator;
+		std::vector<std::function<void()>> m_passDataDestructors;
+
 		CommandList m_cmdl;
-		
 
-
+		bool m_dirty{ false };
 	};
 }

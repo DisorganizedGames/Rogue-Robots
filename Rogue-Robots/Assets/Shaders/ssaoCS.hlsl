@@ -34,7 +34,7 @@ float3 VSPositionFromDepth(float2 vTexCoord, float z, matrix invProj)
     return vPositionVS.xyz / vPositionVS.w;
 }
 
-[numthreads(8, 8, 1)]
+[numthreads(32, 32, 1)]
 void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadID)
 {
     if (globalId.x > g_constants.renderWidth || globalId.y > g_constants.renderHeight)
@@ -67,48 +67,64 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
     randVec = normalize(randVec * 2.f - 1.f.rrr); // Unpack [0, 1] --> [-1, 1]
         
     // Construct TBN matrix
-    float3 nor = normalize(vsNormal);
+    float3 nor = normalize(wsNormal);
     float3 tan = normalize(randVec - nor * dot(nor, randVec));  // Gram-Schmidt process
     float3 bitan = normalize(cross(nor, tan));                  // Assuming RH space
     float3x3 tbn = float3x3(tan, bitan, nor);                   // Z is up in tangent space
+    
+    //float rangeOffset = 0.05;     // prev
+    float rangeOffset = 0.035;
+    float bias = saturate(distance(wsPos, pfData.camPos.xyz) / 500.f);
+    bias *= 0.7;     // [0, 1] --> [0, 0.N]
+    bias += 0.3f;   //  --> [0.1, 1.0]
                 
-    float radius = 0.5f;
+    static const uint NUM_SAMPLES = 16;
+    
+    //float radius = 0.4f;
+    float radius = 0.7;
     float occludedRatio = 0.f;
-    for (int i = 0; i < 64; ++i)
+    [unroll]
+    for (int i = 0; i < NUM_SAMPLES; ++i)
     {
-        float3 vsSampleInHemi = vsPos + mul(tbn, samples[i].xyz) * radius;
-        float4 ndc = mul(pfData.projMatrix, float4(vsSampleInHemi, 1.f));
+        float3 wsSampleInHemi = wsPos + mul(tbn, samples[i].xyz) * radius;
+        float4 ndc = mul(pfData.projMatrix, mul(pfData.viewMatrix, float4(wsSampleInHemi, 1.f)));
         ndc.xyz /= ndc.w; // now in [-1, 1] in xy with (0,0) as screen origin
         
         // Not inside NDC --> No contrib
-        //if (!(ndc.x > -1.f && ndc.x < 1.f || ndc.y < 1.f || ndc.y > -1.f))
-        //{
-        //    occludedRatio += 1.f;
-        //    continue;
-        //}
+        // Helps remove halo at screen border
+        if (!(ndc.x > -1.f && ndc.x < 1.f || ndc.y < 1.f || ndc.y > -1.f))
+        {
+            occludedRatio += 1.f;
+            continue;
+        }
         
         // Scale so that [0, 0] is top-left and stretches [0, 1] in xy
         ndc.y *= -1.f;
         ndc.xy = ndc.xy * 0.5f + 0.5f.rr; // --> Works as UV to sample depth with
         
         float sampleDepthCS = depths.Sample(g_point_samp, ndc.xy);
-        float3 sampleVsPos = VSPositionFromDepth(ndc.xy, sampleDepthCS, pfData.invProjMatrix);
-        float sampleDepth = sampleVsPos.z;
+        //float3 sampleVsPos = VSPositionFromDepth(ndc.xy, sampleDepthCS, pfData.invProjMatrix);
+        //float sampleDepth = sampleVsPos.z;
         
-        //float rangeCheck = abs(vsSampleInHemi.z - sampleDepth) < (radius * radius) ? 1.0 : 0.0;
-        float rangeCheck = smoothstep(0.0, 1.0, radius / abs(vsSampleInHemi.z - sampleDepth));
         
-        occludedRatio += (sampleDepth < vsSampleInHemi.z ? 1.0 : 0.0) * rangeCheck;
+        float rangeCheck = abs(ndc.z - sampleDepthCS) < (0.01 + rangeOffset * bias) ? 1.0 : 0.0;
+        //float rangeCheck = smoothstep(0.0, 1.0, radius / abs(vsSampleInHemi.z - sampleDepth));
+        
+        
+        //occludedRatio += (sampleDepth < vsSampleInHemi.z ? 1.0 : 0.0) * rangeCheck;
+        occludedRatio += (sampleDepthCS >= ndc.z ? 1.0 : 0.0) * rangeCheck;
         
     }
-    occludedRatio /= 64.f;
+    occludedRatio /= NUM_SAMPLES;
     float contrib = 1.f - occludedRatio;
 
-    float3 final = uncharted2_filmic(contrib.rrr * 5.f).rrr;
+    //float3 final = reinhard_jodie(contrib.rrr * 7.f).rrr;
+    //float3 final = aces_fitted(contrib.rrr * 5.f).rrr;
+    float3 final = uncharted2_filmic(contrib.rrr * 3.f).rrr;
     //float3 final = contrib.rrr;
     
     // TEMP?
-    final *= final;
+    //final *= final;
     
     
     aoOut[globalId.xy] = float4(final, 1.f);

@@ -98,6 +98,12 @@ namespace DOG::gfx
 
 	};
 
+	struct MemoryPoolDesc
+	{
+		D3D12_HEAP_TYPE heapType{ D3D12_HEAP_TYPE_DEFAULT };
+		u32 size{ 0 };
+	};
+
 	struct BufferViewDesc
 	{
 		ViewType viewType{ ViewType::None };
@@ -155,7 +161,15 @@ namespace DOG::gfx
 		std::array<u32, 15> constants{};
 		u8 numConstants{ 0 };
 
+		Buffer mainCBV;
+		u32 mainCBVOffset{ 0 };
+
+		Buffer secondaryCBV;
+		u32 secondaryCBVOffset{ 0 };
+
 		ShaderArgs& AppendConstant(u32 constant) { assert(numConstants < 15); constants[numConstants++] = constant; return *this; }
+		ShaderArgs& SetPrimaryCBV(Buffer buf, u32 offset) { mainCBV = buf; mainCBVOffset = offset; return *this; };
+		ShaderArgs& SetSecondaryCBV(Buffer buf, u32 offset) { secondaryCBV = buf; secondaryCBVOffset = offset; return *this; };
 	};
 
 	struct Viewports

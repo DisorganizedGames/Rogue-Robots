@@ -54,7 +54,6 @@ struct PushConstantElement
     uint gdDescriptor;
     uint perFrameOffset;
     
-    uint perDrawCB;
     uint spotlightArrayStructureIndex;
     uint shadowMapDepthIndex;
     uint wireframe;
@@ -62,12 +61,15 @@ struct PushConstantElement
 
 CONSTANTS(g_constants, PushConstantElement)
 
+ConstantBuffer<PerDrawData> perDrawData : register(b1, space0);
+
+
 static const uint NO_TEXTURE = 0xffffffff;
 
 #define SHADOWMAP_CONSTANT_BIAS 0.000015f
 #define PCF_SAMPLE_COUNT 2
 
-float CalculateShadowFactor(Texture2D shadowMap, float3 worldPosition, float3 worldNormal, float3 surfaceToLightDirection, matrix viewMatrix, matrix projectionMatrix)
+float CalculateShadowFactor(Texture2DArray shadowMaps, uint idx, float3 worldPosition, float3 worldNormal, float3 surfaceToLightDirection, matrix viewMatrix, matrix projectionMatrix)
 {
     float shadowmapTexelSize = 2.0f / 1024.0f; //Adjusted from (1 / 1024) -> (2 / 1024)
     float4 plv = mul(viewMatrix, float4(worldPosition, 1.0f));
@@ -99,7 +101,7 @@ float CalculateShadowFactor(Texture2D shadowMap, float3 worldPosition, float3 wo
             [unroll]
             for (int y = -PCF_SAMPLE_COUNT; y <= PCF_SAMPLE_COUNT; y++)
             {
-                shadowFactor += shadowMap.SampleCmpLevelZero(g_linear_PCF_sampler, shadowMapTextureCoords, actualDepth + SHADOWMAP_CONSTANT_BIAS, int2(x, y));
+                shadowFactor += shadowMaps.SampleCmpLevelZero(g_linear_PCF_sampler, float3(shadowMapTextureCoords, idx), actualDepth + SHADOWMAP_CONSTANT_BIAS, int2(x, y));
             }
         }
         shadowFactor /= ((PCF_SAMPLE_COUNT * 2 + 1) * (PCF_SAMPLE_COUNT * 2 + 1));
@@ -115,12 +117,12 @@ struct PS_OUT
 };
 
 PS_OUT main(VS_OUT input)
-{    
+{
     PS_OUT output = (PS_OUT) 0;
     output.normals = float4(normalize(input.nor), 0.f);
     
     // Get per draw dat
-    ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[g_constants.perDrawCB];
+    //ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[g_constants.perDrawCB];
     
     if (g_constants.wireframe == 1)
     {
@@ -341,15 +343,23 @@ PS_OUT main(VS_OUT input)
         float theta = dot(normalize(perSpotlightData.spotlightArray[k].direction), lightToPosDir);
     
         float contrib = 0.f;
-        if (acos(theta) > perSpotlightData.spotlightArray[k].cutoffAngle * 3.1415f / 180.f)
+        float cutoffAngleRad = perSpotlightData.spotlightArray[k].cutoffAngle * 3.1415f / 180.f;
+                
+        //contrib = lerp(0.0, 1.0, saturate(cutoffAngleRad / acos(theta)));
+        
+        
+        if (acos(theta) > cutoffAngleRad)
             contrib = 0.0f;
         else
-            contrib = 1.f;
+        {
+            contrib = smoothstep(0.0, 1.0, pow(saturate(abs(cutoffAngleRad - acos(theta))), 0.35));
+        }
         
         // Lighting falloff by distance
-        float SPOTLIGHT_DISTANCE = 100.f;
+        //float SPOTLIGHT_DISTANCE = 100.f;
+        float SPOTLIGHT_DISTANCE = 70.f;
         float distanceFallOffFactor = (1.f - clamp(length(lightToPos), 0.f, SPOTLIGHT_DISTANCE) / SPOTLIGHT_DISTANCE);
-        distanceFallOffFactor *= distanceFallOffFactor;     // quadratic falloff
+        distanceFallOffFactor *= distanceFallOffFactor; // quadratic falloff ( just like real light :) )
         contrib *= distanceFallOffFactor;
             
         
@@ -378,8 +388,12 @@ PS_OUT main(VS_OUT input)
         const uint groupIndex = k / 4;
         const uint offsetInGroup = k;
         
-        Texture2D shadowMap = ResourceDescriptorHeap[shadowMapArrayStruct.shadowMapArray[groupIndex][offsetInGroup]];
-        float shadowFactor = CalculateShadowFactor(shadowMap, input.wsPos, N, -lightToPosDir, perSpotlightData.spotlightArray[k].viewMatrix, perSpotlightData.spotlightArray[k].projectionMatrix);
+        //Texture2D shadowMap = ResourceDescriptorHeap[shadowMapArrayStruct.shadowMapArray[groupIndex][offsetInGroup]];
+        
+        // Always 0
+        Texture2DArray shadowMaps = ResourceDescriptorHeap[shadowMapArrayStruct.shadowMapArray[0][0]];
+        
+        float shadowFactor = CalculateShadowFactor(shadowMaps, k, input.wsPos, N, -lightToPosDir, perSpotlightData.spotlightArray[k].viewMatrix, perSpotlightData.spotlightArray[k].projectionMatrix);
         Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL * contrib * shadowFactor;
     }
     

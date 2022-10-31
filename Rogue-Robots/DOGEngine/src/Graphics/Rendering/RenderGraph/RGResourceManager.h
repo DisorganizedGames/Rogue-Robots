@@ -1,5 +1,6 @@
 #pragma once
 #include "RGTypes.h"
+#include "../../RHI/Types/GPUInfo.h"
 
 namespace DOG::gfx
 {
@@ -11,22 +12,28 @@ namespace DOG::gfx
 		friend class RenderGraph;
 	public:
 		RGResourceManager(RenderDevice* rd, GPUGarbageBin* bin);
+		~RGResourceManager();
 
-		/*
-			Discards the resources stored safely and clears map for re-use.
-			Assuming that the render graph is rebuilt every frame
-		*/
-		void Tick();
+		const GPUPoolMemoryInfo& GetMemoryInfo() const;
+
+		// Discards the resources stored safely and clears map for re-use.
+		void ClearDeclaredResources();
+
+		void ImportTexture(RGResourceID id, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
+		void ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
+
+		void FreeImported(RGResourceID id);
+
+		void ChangeImportedTexture(RGResourceID id, Texture texture);
+		void ChangeImportedBuffer(RGResourceID id, Buffer buffer);
 
 	private:
 		friend class RenderGraph;
 		
 		// These interfaces are exposed through PassBuilder
 		void DeclareTexture(RGResourceID id, RGTextureDesc desc);
-		void ImportTexture(RGResourceID id, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
 
 		void DeclareBuffer(RGResourceID id, RGBufferDesc desc);
-		void ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
 
 		void AliasResource(RGResourceID newID, RGResourceID oldID, RGResourceType type);
 		void DeclareProxy(RGResourceID id);
@@ -75,8 +82,11 @@ namespace DOG::gfx
 		void RealizeResources();
 		void SanitizeAliasingLifetimes();
 		void ImportedResourceExitTransition(CommandList cmdl);
+		void DeclaredResourceTransitionToInit(CommandList cmdl);
 
-		u64 GetResource(RGResourceID id) const;
+		void ResolveLifetime(RGResourceID id, u32 depth);
+
+		u64 GetResource(RGResourceID id);
 		RGResourceType GetResourceType(RGResourceID id) const;
 		RGResourceVariant GetResourceVariant(RGResourceID id) const;
 		D3D12_RESOURCE_STATES GetCurrentState(RGResourceID id) const;
@@ -94,5 +104,10 @@ namespace DOG::gfx
 		RenderDevice* m_rd{ nullptr };
 		GPUGarbageBin* m_bin{ nullptr };
 		std::unordered_map<RGResourceID, RGResource> m_resources;
+
+		// Structure for transfering imported resources on resource clear
+		std::vector<std::pair<RGResourceID, RGResource>> m_importedTransfer;
+
+		MemoryPool m_memoryPool;
 	};
 }

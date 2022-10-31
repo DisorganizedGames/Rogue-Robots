@@ -78,6 +78,11 @@ namespace DOG::gfx
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
 		ui = std::make_unique<DOG::UI>(m_rd, m_sc, S_NUM_BACKBUFFERS, clientWidth, clientHeight);
 
+		m_frameSyncs.resize(S_MAX_FIF);
+
+		m_singleSidedShadowDraws.resize(12);
+		m_doubleSidedShadowDraws.resize(12);
+
 		AddScenes();
 		UIRebuild(clientHeight, clientWidth);
 
@@ -100,13 +105,13 @@ namespace DOG::gfx
 
 		// For internal per frame management
 		const u32 maxUploadPerFrame = 512'000;
-		m_perFrameUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadPerFrame, S_MAX_FIF);
+		m_perFrameUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadPerFrame, S_MAX_FIF, QueueType::Copy);
 
 
 
 		const u32 maxConstantsPerFrame = 150'000;
 		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), maxConstantsPerFrame);
-		m_dynConstantsTemp = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 3 * 4 * 12);
+		m_dynConstantsTemp = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 3 * 4 * 24);
 
 
 		// multiple of curr loaded mixamo skeleton
@@ -162,8 +167,6 @@ namespace DOG::gfx
 			.Build());
 
 		auto meshVS = m_sclr->CompileFromFile("MainVS.hlsl", ShaderType::Vertex);
-		auto shadowVS = m_sclr->CompileFromFile("ShadowVS.hlsl", ShaderType::Vertex);
-		auto shadowPS = m_sclr->CompileFromFile("ShadowPS.hlsl", ShaderType::Pixel);
 		auto meshPS = m_sclr->CompileFromFile("MainPS.hlsl", ShaderType::Pixel);
 		m_meshPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
 			.SetShader(meshVS.get())
@@ -174,11 +177,24 @@ namespace DOG::gfx
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
 
+		auto shadowVS = m_sclr->CompileFromFile("ShadowVS.hlsl", ShaderType::Vertex);
+		auto shadowGS = m_sclr->CompileFromFile("ShadowGS.hlsl", ShaderType::Geometry);
+		auto shadowPS = m_sclr->CompileFromFile("ShadowPS.hlsl", ShaderType::Pixel);
 		m_shadowPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
 			.SetShader(shadowVS.get())
+			.SetShader(shadowGS.get())
 			.SetShader(shadowPS.get())
 			.SetDepthFormat(DepthFormat::D32)
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.Build());
+
+		m_shadowPipeNoCull = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
+			.SetShader(shadowVS.get())
+			.SetShader(shadowGS.get())
+			.SetShader(shadowPS.get())
+			.SetDepthFormat(DepthFormat::D32)
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.SetRasterizer(RasterizerBuilder().SetCullMode(D3D12_CULL_MODE_NONE))
 			.Build());
 
 		m_meshPipeNoCull = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
@@ -284,7 +300,7 @@ namespace DOG::gfx
 		*/
 		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
 		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
-		m_bloomEffect = std::make_unique<Bloom>(m_globalEffectData, m_dynConstants.get(), m_renderWidth, m_renderHeight);
+		m_bloomEffect = std::make_unique<Bloom>(m_rgResMan.get(), m_globalEffectData, m_dynConstants.get(), m_renderWidth, m_renderHeight);
 	
 		{
 			// Create 4x4 SSAO noise
@@ -326,7 +342,7 @@ namespace DOG::gfx
 			for (auto i = 0; i < hemiSamples; ++i)
 			{
 				float scale = float(i) / float(hemiSamples);
-				scale = std::lerp(0.1f, 1.f, scale * scale);
+				scale = std::lerp(0.1f, 0.8f, scale * scale * scale);
 				randomSamples[i] *= scale;
 			}
 
@@ -337,11 +353,15 @@ namespace DOG::gfx
 
 		}
 
-
-
-
-
 		ImGuiMenuLayer::RegisterDebugWindow("Renderer Debug", [this](bool& open) { SpawnRenderDebugWindow(open); }, false, std::make_pair(DOG::Key::LCtrl, DOG::Key::N));
+
+		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
+
+		// Import long-lived resources
+		m_rgResMan->ImportTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+		m_rgResMan->ImportTexture(RG_RESOURCE(NoiseSSAO), m_ssaoNoise, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
+		m_rgResMan->ImportBuffer(RG_RESOURCE(SamplesSSAO), m_ssaoSamples, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
 	}
 
 	Renderer::~Renderer()
@@ -371,10 +391,7 @@ namespace DOG::gfx
 		//m_projMat = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_renderWidth / m_renderHeight, 0.1f, 800.f);
 	}
 
-	void Renderer::BeginGUI()
-	{
-		m_imgui->BeginFrame();
-	}
+
 
 	void Renderer::SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
 	{
@@ -426,14 +443,40 @@ namespace DOG::gfx
 		m_animatedDraws.push_back(sub);
 	}
 
-	void DOG::gfx::Renderer::SubmitShadowMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
+	void DOG::gfx::Renderer::SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
 		sub.submesh = submesh;
-		sub.mat = material;
 		sub.world = world;
-		m_shadowSubmissions.push_back(sub);
+
+		const auto& caster = m_activeShadowCasters[shadowID];
+		m_singleSidedShadowDraws[caster.singleSidedBucket].push_back(sub);
+	}
+
+	void DOG::gfx::Renderer::SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world)
+	{
+		RenderSubmission sub{};
+		sub.mesh = mesh;
+		sub.submesh = submesh;
+		sub.world = world;
+
+		const auto& caster = m_activeShadowCasters[shadowID];
+		m_doubleSidedShadowDraws[caster.doubleSidedBucket].push_back(sub);
+	}
+
+	std::optional<u32> DOG::gfx::Renderer::RegisterSpotlight(const ActiveSpotlight& data)
+	{
+		std::optional<u32> id;
+
+		if (data.shadow)
+		{
+			id = (u32)m_activeShadowCasters.size();
+			// Reserve single sided and double sided buckets for this shadow caster
+			m_activeShadowCasters.push_back({ m_nextSingleSidedShadowBucket++, m_nextDoubleSidedShadowBucket++ });
+		}
+		m_activeSpotlights.push_back(data);
+		return id;
 	}
 
 	void Renderer::Update(f32 dt)
@@ -463,7 +506,6 @@ namespace DOG::gfx
 			m_pfData.areaLightOffsets.infreqOffset = m_globalLightTable->GetChunkOffset(LightType::Area, LightUpdateFrequency::Sometimes);
 			m_pfData.areaLightOffsets.dynOffset = m_globalLightTable->GetChunkOffset(LightType::Area, LightUpdateFrequency::PerFrame);
 
-
 			// Get camera position
 			DirectX::XMVECTOR tmp;
 			auto invVm = DirectX::XMMatrixInverse(&tmp, m_viewMat);
@@ -489,26 +531,29 @@ namespace DOG::gfx
 		m_pfDataTable->SendCopyRequests(*m_perFrameUploadCtx);
 
 
-
+		// Resolve any per frame copies from CPU
+		{
+			ZoneNamedN(FrameCopyResolve, "Frame Copies", true);
+			m_frameCopyReceipt = m_perFrameUploadCtx->SubmitCopies();
+		}
 	}
 
+	static bool s_donez = false;
 	void Renderer::Render(f32)
 	{
 		ZoneNamedN(RenderScope, "Render", true);
-		MINIPROFILE
+		MINIPROFILE;
 
-
-			// Resolve any per frame copies from CPU
-		{
-			ZoneNamedN(FrameCopyResolve, "Frame Copies", true);
-			m_perFrameUploadCtx->SubmitCopies();
-		}
-
-
-		m_rg = std::move(std::make_unique<RenderGraph>(m_rd, m_rgResMan.get(), m_bin.get()));
 		auto& rg = *m_rg;
 
-		// Depth prepass
+		if (!s_donez)
+		{
+			rg.Clear();
+			s_donez = true;
+		}
+
+		// Change backbuffer resource for this frame
+		m_rgResMan->ChangeImportedTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface());
 
 
 		// Forward pass to HDR
@@ -554,13 +599,11 @@ namespace DOG::gfx
 			/*The views on the shadow maps (maximum of 12 currently)*/
 			struct PassData
 			{
-				RGResourceView shadowView[12];
+				RGResourceView shadowView;
 			};
 
-			/*Helper pass data to know the corresponding entity ID*/
 			struct ShadowPassData
 			{
-				entity entityID;
 			};
 
 			/*
@@ -570,35 +613,25 @@ namespace DOG::gfx
 					and during forward pass we simply read from it 
 			*/
 
-			auto drawSubmissions = [&](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false)
+			auto drawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_boneJourno.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false) mutable
 			{	
-				TransformComponent camTransform;
-				camTransform.worldMatrix = ((DirectX::SimpleMath::Matrix)m_viewMat).Invert();
-				auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p) {
-					auto d = p - camPos;
-					if (d.LengthSquared() < 64) return false;
-					if (d.LengthSquared() > 80 * 80) return true;
-					d.Normalize();
-					return camForward.Dot(d) < 0.2f;
-				};
 				for (const auto& sub : submissions)
 				{
-					if (cull({ sub.world(3, 0), sub.world(3, 1), sub.world(3, 2) })) continue;
-					auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
+					auto perDrawHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
 					PerDrawData perDrawData{};
 					perDrawData.world = sub.world;
-					perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
-					perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
+					perDrawData.globalSubmeshID = meshTab->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
+					perDrawData.globalMaterialID = matTab->GetMaterialIndex(sub.mat);
 
+					GPUDynamicConstant jointsHandle;
 					if (animated)
 					{
-						// Resolve joints
 						JointData jointsData{};
-						auto jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
-						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); ++i)
-							jointsData.joints[i] = m_boneJourno->m_vsJoints[i];
+						// Resolve joints
+						jointsHandle = dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+						for (size_t i = 0; i < bonezy->m_vsJoints.size(); ++i)
+							jointsData.joints[i] = bonezy->m_vsJoints[i];
 						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
-						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
 					}
 
 					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
@@ -606,54 +639,42 @@ namespace DOG::gfx
 					auto args = ShaderArgs()
 						.AppendConstant(m_globalEffectData.globalDataDescriptor)
 						.AppendConstant(m_currPfDescriptor)
-						.AppendConstant(perDrawHandle.globalDescriptor)
+						.SetPrimaryCBV(perDrawHandle.buffer, perDrawHandle.bufferOffset)
 						.AppendConstant(perLightHandle)
 						.AppendConstant(shadowHandle)
 						.AppendConstant(wireframe ? 1 : 0);
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
-					auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+					auto sm = meshTab->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
 					rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
 				}
 			};
-
-			
-			auto shadowDrawSubmissions = [&](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, entity entityID, bool animated = false, bool wireframe = false)
+		
+			auto shadowDrawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_boneJourno.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](
+				RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 smIdx, const ShadowCaster& caster, bool animated = false, bool wireframe = false) mutable
 			{
-				/*entityID passed in is the equivalent spotlight, from which we collect the view and projection matrix to be used in the Vertex Shader.*/
-				auto& cc = EntityManager::Get().GetComponent<CameraComponent>(entityID);
-				auto perLightHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerLightData) / (float)256));
+				auto perLightHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerLightData) / (float)256));
 				PerLightData perLightData{};
-				perLightData.view = cc.viewMatrix;
-				perLightData.proj = cc.projMatrix;
+				perLightData.view = caster.viewMat;
+				perLightData.proj = caster.projMat;
 				std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
-				TransformComponent camWorld;
-				camWorld.worldMatrix = cc.viewMatrix.Invert();
-				auto&& cull = [camForward = camWorld.GetForward(), camPos = camWorld.GetPosition()](DirectX::SimpleMath::Vector3 p) {
-					auto d = p - camPos;
-					if (d.LengthSquared() < 64) return false;
-					if (d.LengthSquared() > 80 * 80) return true;
-					d.Normalize();
-					return camForward.Dot(d) < 0.2f;
-				};
 
 				for (const auto& sub : submissions)
 				{
-					if (cull({ sub.world(3, 0), sub.world(3, 1), sub.world(3, 2) })) continue;
-					auto perDrawHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256));
+					auto perDrawHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
 					PerDrawData perDrawData{};
 					perDrawData.world = sub.world;
-					perDrawData.globalSubmeshID = m_globalMeshTable->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
-					perDrawData.globalMaterialID = m_globalMaterialTable->GetMaterialIndex(sub.mat);
+					perDrawData.globalSubmeshID = meshTab->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
+					perDrawData.globalMaterialID = 0;
 
 					if (animated)
 					{
 						// Resolve joints
 						JointData jointsData{};
-						auto jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
-						for (size_t i = 0; i < m_boneJourno->m_vsJoints.size(); ++i)
-							jointsData.joints[i] = m_boneJourno->m_vsJoints[i];
+						auto jointsHandle = dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+						for (size_t i = 0; i < bonezy->m_vsJoints.size(); ++i)
+							jointsData.joints[i] = bonezy->m_vsJoints[i];
 						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
 						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
 					}
@@ -663,46 +684,60 @@ namespace DOG::gfx
 					auto args = ShaderArgs()
 						.AppendConstant(m_globalEffectData.globalDataDescriptor)
 						.AppendConstant(m_currPfDescriptor)
-						.AppendConstant(perDrawHandle.globalDescriptor)
+						.SetPrimaryCBV(perDrawHandle.buffer, perDrawHandle.bufferOffset)
 						.AppendConstant(perLightHandle.globalDescriptor)
-						.AppendConstant(wireframe ? 1 : 0);
+						.AppendConstant(wireframe ? 1 : 0)
+						.AppendConstant(smIdx);
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
-					auto sm = m_globalMeshTable->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+					auto sm = meshTab->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
 					rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
 				}
 			};
 
-			/*We collect all spotlights and then perform one shadow pass per such spotlight, rendering a shadow map for each, later used in the forward pass.*/
-			EntityManager::Get().Collect<ShadowCasterComponent, SpotLightComponent>().Do([&](entity spotlightEntity, ShadowCasterComponent&, SpotLightComponent&)
+
+			rg.AddPass<ShadowPassData>("Shadow Pass",
+				[&](ShadowPassData&, RenderGraph::PassBuilder& builder)
 				{
-					m_lightEntities.push_back(spotlightEntity);
+					builder.DeclareTexture(RG_RESOURCE(ShadowDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, 1024, 1024, m_shadowMapCapacity));
+					builder.WriteDepthStencil(RG_RESOURCE(ShadowDepth), RenderPassAccessType::ClearPreserve,
+						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D_Array, DXGI_FORMAT_D32_FLOAT)
+					.SetArrayRange(0, m_shadowMapCapacity));
+					
+				},
+				[&, shadowDrawFunc = shadowDrawSubmissions](const ShadowPassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&) mutable
+				{
+					rd->Cmd_SetViewports(cmdl, Viewports().Append(0.f, 0.f, 1024.f, 1024.f));
+					rd->Cmd_SetScissorRects(cmdl, ScissorRects().Append(0, 0, 1024, 1024));
+
+					rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
+
+					// Fills shadowmaps chronologically
+					rd->Cmd_SetPipeline(cmdl, m_shadowPipe);
+					u32 nextMap = 0;
+					for (u32 i = 0; i < m_activeSpotlights.size(); ++i)
+					{
+						if (m_activeSpotlights[i].shadow)
+						{
+							//shadowDrawFunc(rd, cmdl, m_shadowSubmissions, nextMap++, m_activeSpotlights[i].shadow.value());
+							shadowDrawFunc(rd, cmdl, m_singleSidedShadowDraws[m_activeShadowCasters[i].singleSidedBucket], nextMap++, m_activeSpotlights[i].shadow.value());
+						}
+					}
+
+					// Render the shady modular blocks..
+					rd->Cmd_SetPipeline(cmdl, m_shadowPipeNoCull);
+					nextMap = 0;
+					for (u32 i = 0; i < m_activeSpotlights.size(); ++i)
+					{
+						if (m_activeSpotlights[i].shadow)
+						{
+							//shadowDrawFunc(rd, cmdl, m_shadowSubmissionsNoCull, nextMap++, m_activeSpotlights[i].shadow.value());
+							shadowDrawFunc(rd, cmdl, m_doubleSidedShadowDraws[m_activeShadowCasters[i].doubleSidedBucket], nextMap++, m_activeSpotlights[i].shadow.value());
+						}
+					}
+					
 				});
-
-			for (size_t i{ 0u }; i < m_lightEntities.size(); i++)
-			{
-				rg.AddPass<ShadowPassData>("Shadow Pass",
-					[&](ShadowPassData& p, RenderGraph::PassBuilder& builder)
-					{
-						std::string resourceID = std::string("ShadowDepth") + std::to_string(m_lightEntities[i]);
-
-						builder.DeclareTexture(RGResourceID(resourceID), RGTextureDesc::DepthWrite2D(DepthFormat::D32, 1024, 1024));
-						builder.WriteDepthStencil(RGResourceID(resourceID), RenderPassAccessType::ClearPreserve,
-							TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
-						p.entityID = m_lightEntities[i];
-					},
-					[&](const ShadowPassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
-					{
-						rd->Cmd_SetViewports(cmdl, Viewports().Append(0.f, 0.f, 1024.f, 1024.f));
-						rd->Cmd_SetScissorRects(cmdl, ScissorRects().Append(0, 0, 1024, 1024));
-
-						rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
-
-						rd->Cmd_SetPipeline(cmdl, m_shadowPipe);
-						shadowDrawSubmissions(rd, cmdl, m_shadowSubmissions, p.entityID);
-					});
-			}
 
 			rg.AddPass<PassData>("Forward Pass",
 				[&](PassData& p, RenderGraph::PassBuilder& builder)
@@ -710,17 +745,11 @@ namespace DOG::gfx
 					builder.DeclareTexture(RG_RESOURCE(MainDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_renderWidth, m_renderHeight));
 					builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight)
 						.AddFlag(D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
-					
 					builder.DeclareTexture(RG_RESOURCE(MainNormals), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight));
 
-					/*Here the "views are loaded" to be used in the pixel shader, one for every shadow map available.*/
-					for (size_t i{ 0u }; i < m_lightEntities.size(); ++i)
-					{
-						std::string resourceID = std::string("ShadowDepth") + std::to_string(m_lightEntities[i]);
-
-						p.shadowView[i] = builder.ReadResource(RGResourceID(resourceID), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-							TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R32_FLOAT));
-					}
+					p.shadowView = builder.ReadResource(RG_RESOURCE(ShadowDepth), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D_Array, DXGI_FORMAT_R32_FLOAT)
+						.SetArrayRange(0, m_shadowMapCapacity));
 				
 					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
@@ -732,8 +761,10 @@ namespace DOG::gfx
 					builder.WriteDepthStencil(RG_RESOURCE(MainDepth), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
 				},
-				[&](const PassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				[&, dynConstants = m_dynConstants.get(), dynConstantsTemp = m_dynConstantsTemp.get(), drawFunc = drawSubmissions](const PassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) mutable
 				{
+					//std::cout << "Doing forward pass with: " << passData.somethingAllocated << "\n";
+
 					rd->Cmd_SetViewports(cmdl, m_globalEffectData.defRenderVPs);
 					rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.defRenderScissors);
 
@@ -743,39 +774,39 @@ namespace DOG::gfx
 
 					PerLightDataForShadows perLightData{};
 					ShadowMapArrayStruct shadowMapArrayStruct{};
-					auto perLightHandle = m_dynConstantsTemp->Allocate((u32)std::ceilf(sizeof(PerLightDataForShadows) / (float)256));
-					auto shadowHandle = m_dynConstants->Allocate((u32)std::ceilf(sizeof(ShadowMapArrayStruct) / float(256)));
-					for (size_t i{ 0u }; i < m_lightEntities.size(); ++i)
+					auto perLightHandle = dynConstantsTemp->Allocate((u32)std::ceilf(sizeof(PerLightDataForShadows) / (float)256));
+					auto shadowHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(ShadowMapArrayStruct) / float(256)));
+					for (size_t i{ 0u }; i < m_activeSpotlights.size(); ++i)
 					{
-						auto& cc = EntityManager::Get().GetComponent<CameraComponent>(m_lightEntities[i]);
-						auto& slc = EntityManager::Get().GetComponent<SpotLightComponent>(m_lightEntities[i]);
-						auto& tc = EntityManager::Get().GetComponent<TransformComponent>(m_lightEntities[i]);
-						perLightData.perLightDatas[i].view = cc.viewMatrix;
-						perLightData.perLightDatas[i].proj = cc.projMatrix;
-						perLightData.perLightDatas[i].position = { tc.GetPosition().x, tc.GetPosition().y, tc.GetPosition().z, 1.0f };
-						perLightData.perLightDatas[i].color = { slc.color.x, slc.color.y, slc.color.z, };
-						perLightData.perLightDatas[i].direction = slc.direction;
-						perLightData.perLightDatas[i].cutoffAngle = slc.cutoffAngle;
-						perLightData.perLightDatas[i].strength = slc.strength;
+						const auto& data = m_activeSpotlights[i];
 
-						shadowMapArrayStruct.shadowMaps[i] = resources.GetView(p.shadowView[i]);
+						perLightData.perLightDatas[i].view = data.shadow->viewMat;
+						perLightData.perLightDatas[i].proj = data.shadow->projMat;
+						perLightData.perLightDatas[i].position = data.position;
+						perLightData.perLightDatas[i].color = { data.color.x, data.color.y, data.color.z, };
+						perLightData.perLightDatas[i].direction = data.direction;
+						perLightData.perLightDatas[i].cutoffAngle = data.cutoffAngle;
+						perLightData.perLightDatas[i].strength = data.strength;
+
+						shadowMapArrayStruct.shadowMaps[i] = resources.GetView(p.shadowView);
+
 					}
 
-					perLightData.actualNrOfSpotlights = (u32)m_lightEntities.size();
+					perLightData.actualNrOfSpotlights = (u32)m_activeSpotlights.size();
 					std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
 					std::memcpy(shadowHandle.memory, &shadowMapArrayStruct, sizeof(shadowMapArrayStruct));
 
-					drawSubmissions(rd, cmdl, m_submissions, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
-					drawSubmissions(rd, cmdl, m_animatedDraws, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, true);
+					drawFunc(rd, cmdl, m_submissions, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
+					drawFunc(rd, cmdl, m_animatedDraws, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, true);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
-					drawSubmissions(rd, cmdl, m_noCullSubmissions, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
+					drawFunc(rd, cmdl, m_noCullSubmissions, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframe);
-					drawSubmissions(rd, cmdl, m_wireframeDraws, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, false, true);
+					drawFunc(rd, cmdl, m_wireframeDraws, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, false, true);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframeNoCull);
-					drawSubmissions(rd, cmdl, m_noCullWireframeDraws, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, false, true);
+					drawFunc(rd, cmdl, m_noCullWireframeDraws, false, true);
 				});
 		}
 
@@ -792,9 +823,6 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("SSAO Pass",
 				[&](PassData& passData, RenderGraph::PassBuilder& builder)
 				{
-					builder.ImportTexture(RG_RESOURCE(NoiseSSAO), m_ssaoNoise, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COMMON);
-					builder.ImportBuffer(RG_RESOURCE(SamplesSSAO), m_ssaoSamples, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
-
 					// Compute read access
 					passData.depth = builder.ReadResource(RG_RESOURCE(MainDepth), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R32_FLOAT));
@@ -833,8 +861,8 @@ namespace DOG::gfx
 
 						// assuming 64 threads per group --> 64 threads per wavefrom, warp is 32 --> use 64
 						// we are using 8x8 thread groups
-						auto xGroup = (u32)std::ceilf(m_renderWidth / 8.f);
-						auto yGroup = (u32)std::ceilf(m_renderHeight / 8.f);
+						auto xGroup = (u32)std::ceilf(m_renderWidth / 32.f);
+						auto yGroup = (u32)std::ceilf(m_renderHeight / 32.f);
 						rd->Cmd_Dispatch(cmdl, xGroup, yGroup, 1);
 					}
 					else
@@ -851,17 +879,17 @@ namespace DOG::gfx
 			{
 				RGResourceView input;
 				RGResourceView output;
+
 			};
 
-			rg.AddPass<PassData>("SSAO Blur",
+			rg.AddPass<PassData>("SSAO Blur Vertical",
 				[&](PassData& passData, RenderGraph::PassBuilder& builder)
 				{
-					builder.DeclareTexture(RG_RESOURCE(AOBlurred), RGTextureDesc::ReadWrite2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight));
-
+					builder.DeclareTexture(RG_RESOURCE(AOBlurredUnfinished), RGTextureDesc::ReadWrite2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth / 2, m_renderHeight / 2));
 
 					passData.input = builder.ReadResource(RG_RESOURCE(AmbientOcclusion), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
-					passData.output = builder.ReadWriteTarget(RG_RESOURCE(AOBlurred),
+					passData.output = builder.ReadWriteTarget(RG_RESOURCE(AOBlurredUnfinished),
 						TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 
 				},
@@ -869,7 +897,7 @@ namespace DOG::gfx
 				{
 					// clear
 					rd->Cmd_ClearUnorderedAccessFLOAT(cmdl,
-						resources.GetTextureView(passData.output), { 1.f, 1.f, 1.f, 1.f }, ScissorRects().Append(0, 0, m_renderWidth, m_renderHeight));
+						resources.GetTextureView(passData.output), { 1.f, 1.f, 1.f, 1.f }, ScissorRects().Append(0, 0, m_renderWidth / 2, m_renderHeight / 2));
 
 					if (m_ssaoOn)
 					{
@@ -879,37 +907,61 @@ namespace DOG::gfx
 							auto args = ShaderArgs()
 								.AppendConstant(m_globalEffectData.globalDataDescriptor)
 								.AppendConstant(m_currPfDescriptor)
-								.AppendConstant(m_renderWidth)
-								.AppendConstant(m_renderHeight)
+								.AppendConstant((u32)(m_renderWidth / 2.f))
+								.AppendConstant((u32)(m_renderHeight / 2.f))
 								.AppendConstant(resources.GetView(passData.input))
 								.AppendConstant(resources.GetView(passData.output))
-								.AppendConstant(1);
+								.AppendConstant(1)
+								.AppendConstant(2);		// Downscale factor
 							rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
 
 							// assuming 64 threads per group --> 64 threads per wavefrom, warp is 32 --> use 64
 							// we are using 8x8 thread groups
 							// Using gather method
-							auto xGroup = (u32)std::ceilf(m_renderWidth / 8.f);
-							auto yGroup = (u32)std::ceilf(m_renderHeight / 8.f);
+							auto xGroup = (u32)std::ceilf(m_renderWidth / 2.f / 8.f);
+							auto yGroup = (u32)std::ceilf(m_renderHeight / 2.f / 8.f);
 							rd->Cmd_Dispatch(cmdl, xGroup, yGroup, 1);
 						}
+					}
+				});
 
+			rg.AddPass<PassData>("SSAO Blur Horizontal",
+				[&](PassData& passData, RenderGraph::PassBuilder& builder)
+				{
+					builder.DeclareTexture(RG_RESOURCE(AOBlurred), RGTextureDesc::ReadWrite2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth / 2, m_renderHeight / 2));
+
+					passData.input = builder.ReadResource(RG_RESOURCE(AOBlurredUnfinished), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+					passData.output = builder.ReadWriteTarget(RG_RESOURCE(AOBlurred),
+						TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+				},
+				[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				{
+					// clear
+					rd->Cmd_ClearUnorderedAccessFLOAT(cmdl,
+						resources.GetTextureView(passData.output), { 1.f, 1.f, 1.f, 1.f }, ScissorRects().Append(0, 0, m_renderWidth / 2, m_renderHeight / 2));
+
+					if (m_ssaoOn)
+					{
+						rd->Cmd_SetPipeline(cmdl, m_boxBlurPipe);
 						{
 							auto args = ShaderArgs()
 								.AppendConstant(m_globalEffectData.globalDataDescriptor)
 								.AppendConstant(m_currPfDescriptor)
-								.AppendConstant(m_renderWidth)
-								.AppendConstant(m_renderHeight)
+								.AppendConstant((u32)(m_renderWidth / 2.f))
+								.AppendConstant((u32)(m_renderHeight / 2.f))
 								.AppendConstant(resources.GetView(passData.input))
 								.AppendConstant(resources.GetView(passData.output))
+								.AppendConstant(0)
 								.AppendConstant(1);
 							rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
 
 							// assuming 64 threads per group --> 64 threads per wavefrom, warp is 32 --> use 64
 							// we are using 8x8 thread groups
 							// Using gather method
-							auto xGroup = (u32)std::ceilf(m_renderWidth / 8.f);
-							auto yGroup = (u32)std::ceilf(m_renderHeight / 8.f);
+							auto xGroup = (u32)std::ceilf(m_renderWidth / 2.f / 8.f);
+							auto yGroup = (u32)std::ceilf(m_renderHeight / 2.f / 8.f);
 							rd->Cmd_Dispatch(cmdl, xGroup, yGroup, 1);
 						}
 
@@ -937,7 +989,6 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("Blit to HDR Pass",
 				[&](PassData& passData, RenderGraph::PassBuilder& builder)
 				{
-					builder.ImportTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 					passData.ao = builder.ReadResource(RG_RESOURCE(AOBlurred), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
@@ -951,9 +1002,9 @@ namespace DOG::gfx
 
 					passData.litHDRView = builder.ReadResource(RG_RESOURCE(LitHDR), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
 					builder.WriteRenderTarget(RG_RESOURCE(Backbuffer), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
-
 				},
 				[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
 				{
@@ -984,12 +1035,13 @@ namespace DOG::gfx
 
 		{
 			ZoneNamedN(RGBuildScope, "RG Building", true);
-			rg.Build();
+			//rg.Build();
+			rg.TryBuild();
 		}
 
 		{
 			ZoneNamedN(RGExecuteScope, "RG Execution", true);
-			rg.Execute();
+			m_frameSyncs[m_currFrameIdx] = rg.Execute(m_frameCopyReceipt, true);
 		}
 		ui->GetBackend()->BeginFrame();
 		ui->DrawUI();
@@ -1023,6 +1075,9 @@ namespace DOG::gfx
 		assert(requestedSettings.displayMode);
 
 		Flush();
+		s_donez = false;
+		std::cout << "changed gfx settings\n";
+
 		if (!requestedSettings.bloom)
 		{
 			m_bloomEffect = nullptr;
@@ -1030,7 +1085,7 @@ namespace DOG::gfx
 		else if (!m_bloomEffect || m_renderWidth != requestedSettings.renderResolution.x || m_renderHeight != requestedSettings.renderResolution.y)
 		{
 			m_bloomEffect.reset();
-			m_bloomEffect = std::make_unique<Bloom>(m_globalEffectData, m_dynConstants.get(), requestedSettings.renderResolution.x, requestedSettings.renderResolution.y);
+			m_bloomEffect = std::make_unique<Bloom>(m_rgResMan.get(), m_globalEffectData, m_dynConstants.get(), requestedSettings.renderResolution.x, requestedSettings.renderResolution.y);
 		}
 		if (m_bloomEffect) m_bloomEffect->SetGraphicsSettings(requestedSettings);
 		m_renderWidth = requestedSettings.renderResolution.x;
@@ -1038,19 +1093,36 @@ namespace DOG::gfx
 		m_globalEffectData.defRenderScissors = ScissorRects().Append(0, 0, m_renderWidth, m_renderHeight);
 		m_globalEffectData.defRenderVPs = Viewports().Append(0.f, 0.f, (f32)m_renderWidth, (f32)m_renderHeight);
 		m_sc->SetFullscreenState(requestedSettings.windowMode == WindowMode::FullScreen, *requestedSettings.displayMode);
+
+		m_ssaoOn = requestedSettings.ssao;
+		m_shadowMapCapacity = requestedSettings.shadowMapCapacity;
+
+		m_singleSidedShadowDraws.resize(requestedSettings.shadowMapCapacity);
+		m_doubleSidedShadowDraws.resize(requestedSettings.shadowMapCapacity);
+
+		m_graphicsSettings = requestedSettings;
+	}
+
+	GraphicsSettings DOG::gfx::Renderer::GetGraphicsSettings()
+	{
+		return m_graphicsSettings;
 	}
 
 	void Renderer::BeginFrame_GPU()
 	{
-		m_rd->Flush();
 
-		m_rgResMan->Tick();
+		WaitForPrevFrame();
+
+
+		m_dynConstants->Tick();
+		m_dynConstantsTemp->Tick();
+		m_dynConstantsAnimated->Tick();
 		m_bin->BeginFrame();
 		m_rd->RecycleCommandList(m_cmdl);
 		m_cmdl = m_rd->AllocateCommandList();
 	}
 
-	void Renderer::EndFrame_GPU(bool vsync)
+	void Renderer::EndFrame_GPU(bool)
 	{
 		EndGUI();
 		m_bin->EndFrame();
@@ -1059,16 +1131,29 @@ namespace DOG::gfx
 		m_animatedDraws.clear();
 		m_wireframeDraws.clear();
 		m_noCullWireframeDraws.clear();
-		m_shadowSubmissions.clear();
-		m_lightEntities.clear();
+		m_activeSpotlights.clear();
 
-		m_sc->Present(vsync);
+		m_activeShadowCasters.clear();
+		for (auto& v : m_singleSidedShadowDraws)
+			v.clear();
+		for (auto& v : m_doubleSidedShadowDraws)
+			v.clear();
+		m_nextSingleSidedShadowBucket = m_nextDoubleSidedShadowBucket = 0;
+
+		m_sc->Present(m_graphicsSettings.vSync);
+
+		m_currFrameIdx = (m_currFrameIdx + 1) % S_MAX_FIF;
 	}
 
 	void Renderer::Flush()
 	{
 		m_rd->Flush();
 		m_bin->ForceClear();
+	}
+
+	void Renderer::BeginGUI()
+	{
+		m_imgui->BeginFrame();
 	}
 
 	void Renderer::EndGUI()
@@ -1090,11 +1175,43 @@ namespace DOG::gfx
 
 		if (open)
 		{
-			if (ImGui::Begin("Effects Manager", &open))
+			//if (ImGui::Begin("Effects Manager", &open))
+			//{
+			//	bool ssaoState = m_ssaoOn;
+			//	ImGui::Checkbox("SSAO", &m_ssaoOn);
+			//	if (m_ssaoOn != ssaoState)
+			//		s_donez = false;
+
+			//}
+			//ImGui::End();
+
+
+			if (ImGui::Begin("GPU Memory Statistics: Total", &open))
 			{
-				ImGui::Checkbox("SSAO", &m_ssaoOn);
+				auto& info = m_rd->GetTotalMemoryInfo().heap[0];
+				ImGui::Text("Used allocations: %f (Mb)", info.allocationBytes / 1048576.f);
+				ImGui::Text("Memory allocated: %f (Mb)", info.blockBytes / 1048576.f);
+				ImGui::Text("Smallest allocation: %f (Mb)", info.smallestAllocation / 1048576.f);
+				ImGui::Text("Largest allocation: %f (Mb)", info.largestAllocation / 1048576.f);
 			}
 			ImGui::End();
+
+
+			if (ImGui::Begin("GPU Memory Statistics: Render Graph", &open))
+			{
+				auto& info = m_rgResMan->GetMemoryInfo();
+				//auto& info = m_rd->GetTotalMemoryInfo().heap[0];
+				ImGui::Text("Used allocations: %f (Mb)", info.allocationBytes / 1048576.f);
+				ImGui::Text("Memory allocated: %f (Mb)", info.blockBytes / 1048576.f);
+				ImGui::Text("Smallest allocation: %f (Mb)", info.smallestAllocation / 1048576.f);
+				ImGui::Text("Largest allocation: %f (Mb)", info.largestAllocation / 1048576.f);
+
+
+				if (ImGui::Button("Render Graph Rebuild"))
+					s_donez = false;
+			}
+			ImGui::End();
+
 		}
 	}
 
@@ -1105,6 +1222,13 @@ namespace DOG::gfx
 			return m_imgui->WinProc(hwnd, uMsg, wParam, lParam);
 		else
 			return false;
+	}
+
+	void DOG::gfx::Renderer::WaitForPrevFrame()
+	{
+		MINIPROFILE;
+		if (m_frameSyncs[m_currFrameIdx])
+			m_rd->WaitForGPU(m_frameSyncs[m_currFrameIdx].value());
 	}
 
 }

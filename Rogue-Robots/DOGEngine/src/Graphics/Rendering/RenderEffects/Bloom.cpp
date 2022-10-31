@@ -7,10 +7,11 @@
 #include "../GPUDynamicConstants.h"
 
 
+
 namespace DOG::gfx
 {
-	Bloom::Bloom(GlobalEffectData& globalEffectData, GPUDynamicConstants* dynConsts, u32 renderResX, u32 renderResY)
-		: RenderEffect(globalEffectData), m_dynamicConstants(dynConsts), m_hdrRenderTargerResX(renderResX), m_hdrRenderTargerResY(renderResY)
+	Bloom::Bloom(RGResourceManager* resMan, GlobalEffectData& globalEffectData, GPUDynamicConstants* dynConsts, u32 renderResX, u32 renderResY)
+		: RenderEffect(globalEffectData), m_resMan(resMan), m_dynamicConstants(dynConsts), m_hdrRenderTargerResX(renderResX), m_hdrRenderTargerResY(renderResY)
 	{
 		m_width = m_hdrRenderTargerResX / 2;
 		m_height = m_hdrRenderTargerResY / 2;
@@ -51,6 +52,12 @@ namespace DOG::gfx
 			desc.height /= 2;
 			n++;
 		}
+
+		resMan->ImportTexture(RG_RESOURCE(BloomTexture0), m_bloomTexture[0].first, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COMMON);
+
+		for (int i = 1; i < m_bloomTexture.size(); i++)
+			resMan->ImportTexture(RGResourceID("BloomTexture" + std::to_string(i)), m_bloomTexture[i].first, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COMMON);
+
 	}
 
 	Bloom::~Bloom()
@@ -65,6 +72,10 @@ namespace DOG::gfx
 		device->FreePipeline(m_compPipeBloomSelect);
 		device->FreePipeline(m_compPipeDownSample);
 		device->FreePipeline(m_compPipeUpSample);
+
+		m_resMan->FreeImported(RG_RESOURCE(BloomTexture0));
+		for (int i = 1; i < m_bloomTexture.size(); i++)
+			m_resMan->FreeImported(RGResourceID("BloomTexture" + std::to_string(i)));
 	}
 
 	void Bloom::Add(RenderGraph& rg)
@@ -78,25 +89,17 @@ namespace DOG::gfx
 			u32 width;
 			u32 height;
 		};
-		auto cb = m_dynamicConstants->Allocate(1);
 
 		// Copy the colors that exceeds the threshold from our hdr render targer to our bloomTexture. This should also scale to a lower resolution, but for now the bloomTexture has a hard coded size. 
 
 		rg.AddPass<PassData>("Bloom Pass threshold check",
 			[&](PassData& passData, RenderGraph::PassBuilder& builder)		// Build
 			{
-				passData.constantBufferHandle = cb;
-
 				passData.srcTextureHandle = builder.ReadWriteTarget(RG_RESOURCE(LitHDR),
 					TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 
-				builder.ImportTexture(RG_RESOURCE(BloomTexture0), m_bloomTexture[0].first, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COMMON);
+				//builder.ImportTexture(RG_RESOURCE(BloomTexture0), m_bloomTexture[0].first, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COMMON);
 				passData.dstTextureHandle = builder.ReadWriteTarget(RG_RESOURCE(BloomTexture0), TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
-
-				BloomConstantBuffer perDrawData{};
-				perDrawData.threshold = m_threshold;
-
-				*reinterpret_cast<BloomConstantBuffer*>(passData.constantBufferHandle.memory) = perDrawData;
 			},
 			[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)		// Execute
 			{
@@ -119,6 +122,17 @@ namespace DOG::gfx
 					resources.GetTextureView(passData.dstTextureHandle), { 0.f, 0.f, 0.f, 0.f }, ScissorRects().Append(0, 0, m_width, m_height));
 
 				rd->Cmd_Dispatch(cmdl, tgx, tgy, 1);
+			},
+			[&](PassData& passData)		// Pre-graph work
+			{
+				auto cb = m_dynamicConstants->Allocate(1);
+
+				passData.constantBufferHandle = cb;
+
+				BloomConstantBuffer perDrawData{};
+				perDrawData.threshold = m_threshold;
+
+				*reinterpret_cast<BloomConstantBuffer*>(passData.constantBufferHandle.memory) = perDrawData;
 			});
 
 
@@ -132,7 +146,7 @@ namespace DOG::gfx
 					passData.level = i;
 					passData.width = m_bloomTexture[passData.level].second.width;
 					passData.height = m_bloomTexture[passData.level].second.height;
-					builder.ImportTexture(RGResourceID("BloomTexture" + std::to_string(i)), m_bloomTexture[i].first, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COMMON);
+					//builder.ImportTexture(RGResourceID("BloomTexture" + std::to_string(i)), m_bloomTexture[i].first, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COMMON);
 
 					passData.srcTextureHandle = builder.ReadWriteTarget(RGResourceID("BloomTexture" + std::to_string(i-1)), TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 

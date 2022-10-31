@@ -8,3 +8,4 @@
 #include "Types/RenderPassDesc.h"
 #include "Types/QueueTypes.h"
 #include "Types/HardwareTypes.h"
+#include "Types/GPUInfo.h"
