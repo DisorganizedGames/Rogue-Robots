@@ -42,14 +42,20 @@ namespace DOG
 						modelaC.animatorID = GetNextAnimatorID();
 						count++;
 						// tmp setting base states
-						auto a1 = 0;
-						auto a2 = 0;
-						auto lastIdx = m_rigs[modelaC.rigID]->animations.size()-1;
-						auto& idle = m_rigs[modelaC.rigID]->animations.rbegin()[a2];
-						auto& walk = m_rigs[modelaC.rigID]->animations.rbegin()[a1];
+						auto idleIdx = 2;
+						auto walkIdx = 13;
+
+						auto danceIdx = m_rigs[modelaC.rigID]->animations.size()-1 - modelaC.animatorID;
+						auto& dance = m_rigs[modelaC.rigID]->animations[danceIdx];
+						auto& idle = m_rigs[modelaC.rigID]->animations.rbegin()[idleIdx];
+						auto& walk = m_rigs[modelaC.rigID]->animations.rbegin()[walkIdx];
+
 						auto& a = m_playerAnimators[modelaC.animatorID];
-						a.AddAnimationClip(lastIdx-modelaC.animatorID, walk.duration, walk.ticks, 0, 0.f, 1.0f, 1.0f, true, 1.5f); // lower body walk
-						a.AddAnimationClip(lastIdx-modelaC.animatorID, idle.duration, idle.ticks, 2, 0.f, 1.0f, 1.0f, true); // full body idle
+						//a.AddAnimationClip(danceIdx, dance.duration, dance.ticks, 0, 0.f, 1.0f, 1.0f, true, 1.5f); // lower body walk
+						//a.AddAnimationClip(danceIdx, dance.duration, dance.ticks, 2, 0.f, 1.0f, 1.0f, true); // full body idle
+
+						a.AddAnimationClip(walkIdx, walk.duration, walk.ticks, 0, 0.f, 1.0f, 1.0f, true, 1.5f); // lower body walk
+						a.AddAnimationClip(idleIdx, idle.duration, idle.ticks, 2, 0.f, 1.0f, 1.0f, true); // full body idle
 					}
 				});
 			return;
