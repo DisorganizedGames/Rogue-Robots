@@ -252,11 +252,10 @@ void GameLayer::KillPlayer(DOG::entity e)
 	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
 	controller.debugCamera = m_mainScene->CreateEntity();
 
-	m_entityManager.AddComponent<TransformComponent>(controller.debugCamera);
-	m_entityManager.AddComponent<CameraComponent>(controller.debugCamera);
+	m_entityManager.AddComponent<TransformComponent>(controller.debugCamera)
+		.worldMatrix = m_entityManager.GetComponent<TransformComponent>(controller.cameraEntity);
 
-	m_entityManager.GetComponent<TransformComponent>(controller.debugCamera).worldMatrix = m_entityManager.GetComponent<TransformComponent>(controller.cameraEntity);
-	m_entityManager.GetComponent<CameraComponent>(controller.debugCamera).isMainCamera = true;
+	m_entityManager.AddComponent<CameraComponent>(controller.debugCamera).isMainCamera = true;
 }
 
 void GameLayer::UpdateGame()
