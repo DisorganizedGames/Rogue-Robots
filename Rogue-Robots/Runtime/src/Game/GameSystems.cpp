@@ -73,11 +73,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 		return;
 	}
 
-	rigidbody.linearVelocity = Vector3(
-		moveTowards.x * playerStats.speed,
-		rigidbody.linearVelocity.y,
-		moveTowards.z * playerStats.speed
-	);	
+	MovePlayer(e, player, moveTowards, forward, rigidbody, playerStats.speed, input);
 
 	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
 	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
@@ -180,6 +176,42 @@ void PlayerMovementSystem::MoveDebugCamera(Entity e, Vector3 moveTowards, Vector
 
 	auto pos = transform.GetPosition();
 	camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
+}
+
+void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& player, Vector3 moveTowards, Vector3 forward,
+	RigidbodyComponent& rb, f32 speed, InputController& input)
+{	
+	auto forwardDisparity = moveTowards.Dot(forward);
+	speed = forwardDisparity < -0.01f ? speed / 2.5f : speed;
+
+	rb.linearVelocity = Vector3(
+		moveTowards.x * speed,
+		rb.linearVelocity.y,
+		moveTowards.z * speed
+	);
+
+	if (input.up)
+	{
+		if (!player.jumping)
+		{
+			player.jumping = true;
+			rb.linearVelocity.y = 6.f;
+		}
+	}
+
+	if (!EntityManager::Get().HasComponent<HasEnteredCollisionComponent>(e))
+		return;
+
+	auto& colComp = EntityManager::Get().GetComponent<HasEnteredCollisionComponent>(e);
+	for (auto idx = 0; auto colEntity: colComp.entities)
+	{
+		if (idx++ == colComp.entitiesCount) break;
+		
+		if (EntityManager::Get().HasComponent<ModularBlockComponent>(colEntity))
+		{
+			player.jumping = false;
+		}
+	}
 }
 
 #pragma endregion

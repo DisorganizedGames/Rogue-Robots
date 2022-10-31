@@ -14,6 +14,7 @@ struct PlayerControllerComponent
 	DOG::entity debugCamera = 0;
 
 	bool moveView = true;
+	bool jumping = false;
 };
 
 struct GunComponent

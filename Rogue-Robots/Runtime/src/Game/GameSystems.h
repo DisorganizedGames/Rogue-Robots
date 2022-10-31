@@ -120,4 +120,7 @@ private:
 	Vector3 GetMoveTowards(const InputController& input, Vector3 forward, Vector3 right) const noexcept;
 
 	void MoveDebugCamera(Entity e, Vector3 moveTowards, Vector3 forward, Vector3 right, f32 speed, const InputController& input) noexcept;
+
+	void MovePlayer(Entity e, PlayerControllerComponent& player, Vector3 moveTowards, Vector3 forward,
+		RigidbodyComponent& rb, f32 speed, InputController& input);
 };
