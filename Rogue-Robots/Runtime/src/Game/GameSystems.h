@@ -71,19 +71,56 @@ public:
 		{
 			auto& ptc = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(slc.owningPlayer);
 			stc.worldMatrix = ptc.worldMatrix;
-			stc.SetPosition(stc.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.2f, 0.0f));
-			slc.direction = ptc.GetForward();
+			stc.SetPosition(stc.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.6f, 0.f));
 			slc.dirty = true;
 
 			auto up = ptc.worldMatrix.Up();
 			up.Normalize();
+			
+			auto& pcc = DOG::EntityManager::Get().GetComponent<PlayerControllerComponent>(slc.owningPlayer);
+			if (!pcc.cameraEntity) 
+				return;
 
-			cc.viewMatrix = DirectX::XMMatrixLookAtLH
-			(
-				{ stc.GetPosition().x, stc.GetPosition().y, stc.GetPosition().z },
-				{ stc.GetPosition().x + stc.GetForward().x, stc.GetPosition().y + stc.GetForward().y, stc.GetPosition().z + stc.GetForward().z },
-				{ up.x, up.y, up.z }
-			);
+			auto& playerCameraTransform = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(pcc.cameraEntity);
+			
+			auto pos = stc.GetPosition();
+			auto forward = playerCameraTransform.GetForward();
+			
+			slc.direction = forward;
+			cc.viewMatrix = DirectX::XMMatrixLookToLH(pos, forward, up);
 		}
 	}
+};
+
+class PlayerMovementSystem : public DOG::ISystem
+{
+	using TransformComponent = DOG::TransformComponent;
+	using CameraComponent = DOG::CameraComponent;
+	using RigidbodyComponent = DOG::RigidbodyComponent;
+	using Entity = DOG::entity;
+
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	using Matrix = DirectX::SimpleMath::Matrix;
+
+public:
+	SYSTEM_CLASS(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController);
+	ON_EARLY_UPDATE_ID(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController);
+
+	void OnEarlyUpdate(Entity, PlayerControllerComponent&, PlayerStatsComponent&, TransformComponent&, RigidbodyComponent&, InputController&);
+
+private:
+	inline static constexpr Vector3 s_globUp = Vector3(0, 1, 0);
+
+private:
+	Entity CreateDebugCamera(Entity e) noexcept;
+	Entity CreatePlayerCameraEntity(Entity player) noexcept;
+
+	Vector3 GetNewForward(PlayerControllerComponent& player)  const noexcept;
+
+	Vector3 GetMoveTowards(const InputController& input, Vector3 forward, Vector3 right) const noexcept;
+
+	void MoveDebugCamera(Entity e, Vector3 moveTowards, Vector3 forward, Vector3 right, f32 speed, const InputController& input) noexcept;
+
+	void MovePlayer(Entity e, PlayerControllerComponent& player, Vector3 moveTowards, Vector3 forward,
+		RigidbodyComponent& rb, f32 speed, InputController& input);
 };

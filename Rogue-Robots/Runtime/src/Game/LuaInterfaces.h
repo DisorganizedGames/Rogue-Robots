@@ -89,6 +89,8 @@ public:
 	
 	void GetRight(DOG::LuaContext* context);
 
+	void GetPlayerControllerCamera(DOG::LuaContext* context);
+
 	void GetAction(DOG::LuaContext* context);
 	
 	void SetAction(DOG::LuaContext* context);

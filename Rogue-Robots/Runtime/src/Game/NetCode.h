@@ -3,7 +3,6 @@
 #include "..\Game\EntitesTypes.h"
 #include  "..\Network\Client.h"
 #include  "..\Network\Server.h"
-#include "..\Game\MainPlayer.h"
 #include "AgentManager/AgentManager.h"
 
 enum PlayerActions

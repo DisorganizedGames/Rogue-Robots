@@ -7,7 +7,7 @@ function MiscComponent:BasicShot()
 	{
 		pressed = false,
 
-		Update = function(self, parentEntity)
+		Update = function(self, parentEntity, transformEntity)
 			spawnBullet = false
 			if Entity:GetAction(parentEntity, "Shoot") then
 				if not self.pressed then
@@ -22,10 +22,10 @@ function MiscComponent:BasicShot()
 				return nil
 			end
 
-			local pos = Vector3.FromTable(Entity:GetTransformPosData(parentEntity))
-			local forward = Vector3.FromTable(Entity:GetForward(parentEntity))
-			local up = Vector3.FromTable(Entity:GetUp(parentEntity))
-			local right = Vector3.FromTable(Entity:GetRight(parentEntity))
+			local pos = Vector3.FromTable(Entity:GetTransformPosData(transformEntity))
+			local forward = Vector3.FromTable(Entity:GetForward(transformEntity))
+			local up = Vector3.FromTable(Entity:GetUp(transformEntity))
+			local right = Vector3.FromTable(Entity:GetRight(transformEntity))
 
 			pos = pos + up * -0.14 + right * 0.2 + forward * 0.6
 
@@ -50,15 +50,15 @@ function MiscComponent:FullAuto()
 	{
 		cooldown = 0,
 
-		Update = function(self, parentEntity) 
+		Update = function(self, parentEntity, transformEntity) 
 			self.cooldown = self.cooldown - DeltaTime
 			if self.cooldown <= 0.0 and Entity:GetAction(parentEntity, "Shoot") then
 				self.cooldown = 0.1
 				
-				local pos = Vector3.FromTable(Entity:GetTransformPosData(parentEntity))
-				local forward = Vector3.FromTable(Entity:GetForward(parentEntity))
-				local up = Vector3.FromTable(Entity:GetUp(parentEntity))
-				local right = Vector3.FromTable(Entity:GetRight(parentEntity))
+				local pos = Vector3.FromTable(Entity:GetTransformPosData(transformEntity))
+				local forward = Vector3.FromTable(Entity:GetForward(transformEntity))
+				local up = Vector3.FromTable(Entity:GetUp(transformEntity))
+				local right = Vector3.FromTable(Entity:GetRight(transformEntity))
 
 				pos = pos + up * -0.14 + right * 0.2 + forward * 0.6
 
@@ -88,7 +88,7 @@ function MiscComponent:ChargeShot()
 		chargeSpeed = 10.0,
 		pressing = false,
 
-		Update = function(self, parentEntity)
+		Update = function(self, parentEntity, transformEntity)
 			
 			if Entity:GetAction(parentEntity, "Shoot") then
 				self.pressing = true
@@ -97,10 +97,10 @@ function MiscComponent:ChargeShot()
 			elseif self.pressing then
 				self.pressing = false
 				
-				local pos = Vector3.FromTable(Entity:GetTransformPosData(parentEntity))
-				local forward = Vector3.FromTable(Entity:GetForward(parentEntity))
-				local up = Vector3.FromTable(Entity:GetUp(parentEntity))
-				local right = Vector3.FromTable(Entity:GetRight(parentEntity))
+				local pos = Vector3.FromTable(Entity:GetTransformPosData(transformEntity))
+				local forward = Vector3.FromTable(Entity:GetForward(transformEntity))
+				local up = Vector3.FromTable(Entity:GetUp(transformEntity))
+				local right = Vector3.FromTable(Entity:GetRight(transformEntity))
 
 				pos = pos + up * -0.14 + right * 0.2 + forward * 0.6
 

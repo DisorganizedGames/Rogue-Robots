@@ -3,7 +3,19 @@
 #include "AgentManager/AgentComponents.h"
 #include "EntitesTypes.h"
 
+struct PlayerControllerComponent
+{
+	f32 azimuthal = DirectX::XM_PIDIV2;
+	f32 polar = DirectX::XM_PIDIV2;
 
+	f32 mouseSensitivity = 1 / 2000.f;
+
+	DOG::entity cameraEntity = 0;
+	DOG::entity debugCamera = 0;
+
+	bool moveView = true;
+	bool jumping = false;
+};
 
 struct GunComponent
 {
@@ -15,7 +27,7 @@ struct PlayerStatsComponent
 {
 	f32 maxHealth = 100.f;
 	f32 health = 100.f;//maxHealth;
-	f32 speed = 10.f;
+	f32 speed = 7.5f;
 	f32 lifeSteal = 0.f;
 	//...
 };
@@ -61,6 +73,8 @@ struct InputController
 	bool switchMagazineComp = false;
 	bool activateActiveItem = false;
 	bool reload = false;
+	bool toggleDebug = false;
+	bool toggleMoveView = false;
 };
 
 struct DoorComponent

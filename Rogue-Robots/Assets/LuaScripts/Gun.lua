@@ -72,7 +72,7 @@ function OnStart()
 
 	-- Initialize base components
 	miscComponent = MiscComponent.BasicShot()
-	barrelComponent = BarrelManager.BasicBarrel() 
+	barrelComponent = BarrelManager.BasicBarrel()
 	--barrelComponent = BarrelManager.Grenade()  --ObjectManager:CreateObject()
 	magazineComponent = MagazineManager.BasicEffect() --ObjectManager:CreateObject()
 end
@@ -81,10 +81,12 @@ local tempMode = 0
 local tempTimer = 0.0
 function OnUpdate()
 	-- Update gun model position
-	gunEntity.position = Vector3.FromTable(Entity:GetTransformPosData(EntityID))
-	local playerUp = Vector3.FromTable(Entity:GetUp(EntityID))
-	local playerForward = Vector3.FromTable(Entity:GetForward(EntityID))
-	local playerRight = Vector3.FromTable(Entity:GetRight(EntityID))
+	local cameraEntity = Entity:GetPlayerControllerCamera(EntityID)
+
+	gunEntity.position = Vector3.FromTable(Entity:GetTransformPosData(cameraEntity))
+	local playerUp = Vector3.FromTable(Entity:GetUp(cameraEntity))
+	local playerForward = Vector3.FromTable(Entity:GetForward(cameraEntity))
+	local playerRight = Vector3.FromTable(Entity:GetRight(cameraEntity))
 
 	-- Move gun down and to the right 
 	gunEntity.position = gunEntity.position + playerRight * 0.2 - playerUp * 0.2
@@ -155,7 +157,7 @@ function OnUpdate()
 
 	-- Gun firing logic
 	-- Returns a table of bullets
-	local newBullets = miscComponent:Update(EntityID)
+	local newBullets = miscComponent:Update(EntityID, cameraEntity)
 	if not newBullets then
 		return
 	end
@@ -168,7 +170,7 @@ function OnUpdate()
 		if createBullet and currentAmmo > 0 then
 			currentAmmo = currentAmmo - 1
 
-			CreateBulletEntity(newBullets[i])
+			CreateBulletEntity(newBullets[i], cameraEntity)
 			barrelComponent:Update(gunEntity, EntityID, newBullets[i])
 			--Keep track of which barrel created the bullet
 			newBullets[i].barrel = barrelComponent
@@ -187,7 +189,7 @@ function OnUpdate()
 	--MagazineComponent:Update(magazineComponent)
 end
 
-function CreateBulletEntity(bullet)
+function CreateBulletEntity(bullet, transformEntity)
 	bullet.entity = Scene:CreateEntity(EntityID)
 	table.insert(bullets, bullet)
 
@@ -201,10 +203,10 @@ function CreateBulletEntity(bullet)
 		Vector3.Zero(),
 		size--bullet.size
 	)
-	local up = Vector3.FromTable(Entity:GetUp(EntityID))
+	local up = Vector3.FromTable(Entity:GetUp(transformEntity))
 	local angle = -math.pi / 2
 
-	local newForward = RotateAroundAxis(Entity:GetForward(EntityID), up, angle)
+	local newForward = RotateAroundAxis(Entity:GetForward(transformEntity), up, angle)
 	Entity:SetRotationForwardUp(bullet.entity, newForward, up)
 
 	Entity:ModifyComponent(bullet.entity, "Transform", bullet.startPos, 1)
@@ -266,7 +268,7 @@ function ReloadSystem()
 end
 
 --If there is not barrel component start.
-function NormalBulletSpawn(bullet)
+function NormalBulletSpawn(bullet, transformEntity)
 	bullet.entity = Scene:CreateEntity(EntityID)
 	table.insert(bullets, bullet)
 
@@ -276,10 +278,10 @@ function NormalBulletSpawn(bullet)
 		bullet.size
 	)
 	
-	local up = Vector3.FromTable(Entity:GetUp(EntityID))
+	local up = Vector3.FromTable(Entity:GetUp(transformEntity))
 	local angle = -math.pi / 2
 
-	local newForward = RotateAroundAxis(Entity:GetForward(EntityID), up, angle)
+	local newForward = RotateAroundAxis(Entity:GetForward(transformEntity), up, angle)
 	Entity:SetRotationForwardUp(bullet.entity, newForward, up)
 	Entity:ModifyComponent(bullet.entity, "Transform", bullet.startPos, 1)
 

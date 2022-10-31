@@ -27,6 +27,8 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<HomingMissileImpacteSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<PlayerMovementSystem>());
+	
 	m_agentManager = new AgentManager();
 	m_nrOfPlayers = MAX_PLAYER_COUNT;
 	m_networkStatus = 0;
@@ -141,8 +143,6 @@ void GameLayer::StartMainScene()
 		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(40, 20, 50), 10, 3.0f); },
 		});
 
-	m_player = std::make_shared<MainPlayer>();
-
 	LuaMain::GetScriptManager()->StartScripts();
 	m_netCode.OnStartup();
 	m_gameState = GameState::Playing;
@@ -150,7 +150,6 @@ void GameLayer::StartMainScene()
 
 void GameLayer::CloseMainScene()
 {
-	m_player.reset();
 	m_mainScene.reset();
 }
 
@@ -233,10 +232,13 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e)
 
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
-		m_player->ForceDebugCamera(false);
-		auto& stats = EntityManager::Get().GetComponent<PlayerStatsComponent>(e);
+		auto& stats = m_entityManager.GetComponent<PlayerStatsComponent>(e);
 		stats.health = stats.maxHealth;
 	}
+	
+	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
+	m_entityManager.DeferredEntityDestruction(controller.debugCamera);
+	controller.debugCamera = 0;
 }
 
 void GameLayer::KillPlayer(DOG::entity e)
@@ -247,20 +249,19 @@ void GameLayer::KillPlayer(DOG::entity e)
 	LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
 	m_entityManager.RemoveComponent<ScriptComponent>(e);
 
-	if (m_entityManager.HasComponent<ThisPlayer>(e))
-	{
-		m_player->ForceDebugCamera(true);
-	}
+	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
+	controller.debugCamera = m_mainScene->CreateEntity();
+
+	m_entityManager.AddComponent<TransformComponent>(controller.debugCamera)
+		.worldMatrix = m_entityManager.GetComponent<TransformComponent>(controller.cameraEntity);
+
+	m_entityManager.AddComponent<CameraComponent>(controller.debugCamera).isMainCamera = true;
 }
 
 void GameLayer::UpdateGame()
 {
-	m_player->OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
-
-
-	
 
 	HandleCheats();
 	HpBarMVP();
@@ -315,9 +316,9 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	}
 	case EventType::KeyPressedEvent:
 	{
-		if (EVENT(KeyPressedEvent).key == DOG::Key::C)
-			m_player->m_moveView = !m_player->m_moveView;
-		else if (EVENT(KeyPressedEvent).key == DOG::Key::F)
+		//if (EVENT(KeyPressedEvent).key == DOG::Key::C)
+		//	m_player->m_moveView = !m_player->m_moveView;
+		if (EVENT(KeyPressedEvent).key == DOG::Key::F)
 		{
 			if (m_gameState == GameState::Playing)
 			{
@@ -457,6 +458,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetUp>("GetUp");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetForward>("GetForward");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetRight>("GetRight");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPlayerControllerCamera>("GetPlayerControllerCamera");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAction>("GetAction");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetAction>("SetAction");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::HasComponent>("HasComponent");
@@ -656,6 +658,10 @@ void GameLayer::Input(DOG::Key key)
 				inputC.activateActiveItem = true;
 			if (key == DOG::Key::R)
 				inputC.reload = true;
+			if (key == DOG::Key::H)
+				inputC.toggleDebug = true;
+			if (key == DOG::Key::C)
+				inputC.toggleMoveView = true;
 	});
 }
 
@@ -685,6 +691,10 @@ void GameLayer::Release(DOG::Key key)
 				inputC.activateActiveItem = false;
 			if (key == DOG::Key::R)
 				inputC.reload = false;
+			if (key == DOG::Key::H)
+				inputC.toggleDebug = false;
+			if(key == DOG::Key::C)
+				inputC.toggleMoveView = false;
 		});
 }
 
@@ -728,6 +738,7 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		rb.getControlOfTransform = true;
 
 		m_entityManager.AddComponent<PlayerStatsComponent>(playerI);
+		m_entityManager.AddComponent<PlayerControllerComponent>(playerI);
 		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = static_cast<i8>(i);
 		m_entityManager.AddComponent<InputController>(playerI);
 		m_entityManager.AddComponent<ShadowReceiverComponent>(playerI);
@@ -739,8 +750,6 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		if (i == 0) // Only for this player
 		{
 			m_entityManager.AddComponent<ThisPlayer>(playerI);
-			auto& cc = m_entityManager.AddComponent<CameraComponent>(playerI);
-			cc.isMainCamera = true;
 			m_entityManager.AddComponent<AudioListenerComponent>(playerI);
 		}
 		else
