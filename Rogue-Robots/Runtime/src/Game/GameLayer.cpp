@@ -130,23 +130,25 @@ void GameLayer::StartMainScene()
 			//std::vector<entity> players = SpawnPlayers(Vector3(25.0f, 15.0f, 25.0f), m_nrOfPlayers, 10.f);
 			
 			/************************** tunnel scene *********************************/
-			// small room - maybe nice entry point?
+			// room 0: small room - maybe nice entry point?
 			std::vector<entity> players = SpawnPlayers(Vector3(12.0f, 90.0f, 38.0f), m_nrOfPlayers, 10.f);
+
+			// room 1: a few rooms connected by tunnels
+			//std::vector<entity> players = SpawnPlayers(Vector3(2.0f, 80.0f, 13.0f), m_nrOfPlayers, 3.f);		// location 1
+
+			// room 2: a larger, more open room
+			//std::vector<entity> players = SpawnPlayers(Vector3(106.0f, 80.0f, 31.0f), m_nrOfPlayers, 5.0f); // locaton 1
+			
+			// room 3: huge cave system
+			//std::vector<entity> players = SpawnPlayers(Vector3(76.5f, 56.0f, 68.0f), m_nrOfPlayers, 2.8f); // locaton 1
+			
+			std::vector<entity> flashlights = AddFlashlightsToPlayers(players);
+
+			// Add room 0 component to players
 			EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](entity e, PlayerStatsComponent&)
 				{
 					EntityManager::Get().AddComponent<PlayersRoom0Component>(e);
 				});
-
-			// a few rooms connected by tunnels
-			//std::vector<entity> players = SpawnPlayers(Vector3(2.0f, 80.0f, 13.0f), m_nrOfPlayers, 3.f);		// location 1
-
-			// a larger, more open room
-			//std::vector<entity> players = SpawnPlayers(Vector3(106.0f, 80.0f, 31.0f), m_nrOfPlayers, 5.0f); // locaton 1
-			
-			// huge cave system
-			//std::vector<entity> players = SpawnPlayers(Vector3(76.5f, 56.0f, 68.0f), m_nrOfPlayers, 2.8f); // locaton 1
-			
-			std::vector<entity> flashlights = AddFlashlightsToPlayers(players);
 
 			//For now, just combine them, using the player vector:
 			players.insert(players.end(), flashlights.begin(), flashlights.end());
@@ -199,31 +201,93 @@ void GameLayer::EvaluateWinCondition()
 	{
 		m_gameState = GameState::Won;
 	}*/
-	bool nextLevel = false;
-		EntityManager::Get().Collect<AgentIdComponent>().Do([&](AgentIdComponent& agent)
+
+	// room 3
+	int s6 = 0;
+	int s7 = 0;
+	int s9 = 0;
+	int s10 = 0;
+	EntityManager::Get().Collect<AgentIdComponent, TransformComponent>().Do([&](AgentIdComponent& agent, TransformComponent& trans)
 		{
-			nextLevel = nextLevel ||
-				agent.type == EntityTypes::Scorpio1 ||
-				agent.type == EntityTypes::Scorpio2 ||
-				agent.type == EntityTypes::Scorpio3;
-		});
-	if (nextLevel)
-		EntityManager::Get().Collect<PlayersRoom1Component, NetworkPlayerComponent, DOG::TransformComponent>().Do(
-			[&](entity e, PlayersRoom1Component&, NetworkPlayerComponent& player, DOG::TransformComponent& trans)
+			if (agent.type == EntityTypes::Scorpio6) ++s6;
+			if (agent.type == EntityTypes::Scorpio7) ++s7;
+			if (agent.type == EntityTypes::Scorpio9) ++s9;
+			if (agent.type == EntityTypes::Scorpio10) ++s10;
+			Vector3 pos = trans.GetPosition();
+			if (pos.y < 50.f)
 			{
-				constexpr f32 spread = 3.f;
+				pos.y = -50.f;
+				trans.SetPosition(pos);
+			}
+		});
+
+	// room 2
+	bool nextLevel = false;
+	int s4 = 0;
+	int s5 = 0;
+	EntityManager::Get().Collect<AgentIdComponent, TransformComponent>().Do([&](AgentIdComponent& agent, TransformComponent& trans)
+	{
+		if (agent.type == EntityTypes::Scorpio4) ++s4;
+		if (agent.type == EntityTypes::Scorpio5) ++s5;
+		nextLevel = (s4 == 0) && (s5 == 0);
+		Vector3 pos = trans.GetPosition();
+		if (pos.y < 75.f)
+		{
+			pos.y = -50.f;
+			trans.SetPosition(pos);
+		}
+	});
+	if (nextLevel)
+		EntityManager::Get().Collect<PlayersRoom2Component, NetworkPlayerComponent, DOG::TransformComponent>().Do(
+			[&](entity e, PlayersRoom2Component&, NetworkPlayerComponent& player, DOG::TransformComponent& trans)
+			{
+				constexpr f32 spread = 2.8f;
 				Vector3 offset = {
 				spread * (player.playerId % 2) - (spread / 2.f),
 				0,
 				spread * (player.playerId / 2) - (spread / 2.f),
 				};
-				trans.SetPosition(Vector3(2.0f, 80.0f, 13.0f) - offset);
+				trans.SetPosition(Vector3(76.5f, 56.0f, 68.0f) - offset);
+				EntityManager::Get().RemoveComponent<PlayersRoom2Component>(e);
+				EntityManager::Get().AddComponent<PlayersRoom3Component>(e);
+			});
+
+	// room 1
+	nextLevel = false;
+	int s1 = 0;
+	int s2 = 0;
+	int s3 = 0;
+	EntityManager::Get().Collect<AgentIdComponent, TransformComponent>().Do([&](AgentIdComponent& agent, TransformComponent& trans)
+	{
+		if (agent.type == EntityTypes::Scorpio1) ++s1;
+		if (agent.type == EntityTypes::Scorpio2) ++s2;
+		if (agent.type == EntityTypes::Scorpio3) ++s3;
+		nextLevel = (s1 == 0) && (s2 == 0) && (s3 == 0);
+		Vector3 pos = trans.GetPosition();
+		if (pos.y < 70.f)
+		{
+			pos.y = -50.f;
+			trans.SetPosition(pos);
+		}
+		});
+	if (nextLevel)
+		EntityManager::Get().Collect<PlayersRoom1Component, NetworkPlayerComponent, DOG::TransformComponent>().Do(
+			[&](entity e, PlayersRoom1Component&, NetworkPlayerComponent& player, DOG::TransformComponent& trans)
+			{
+				constexpr f32 spread = 5.f;
+				Vector3 offset = {
+				spread * (player.playerId % 2) - (spread / 2.f),
+				0,
+				spread * (player.playerId / 2) - (spread / 2.f),
+				};
+				trans.SetPosition(Vector3(106.0f, 80.0f, 31.0f) - offset);
 				EntityManager::Get().RemoveComponent<PlayersRoom1Component>(e);
 				EntityManager::Get().AddComponent<PlayersRoom2Component>(e);
 			});
 
+	// room 0
 	nextLevel = false;
-	EntityManager::Get().Collect<PlayersRoom0Component, DOG::TransformComponent>().Do([&](entity e, PlayersRoom0Component&, DOG::TransformComponent& trans)
+	EntityManager::Get().Collect<PlayersRoom0Component, DOG::TransformComponent>().Do([&](PlayersRoom0Component&, DOG::TransformComponent& trans)
 		{
 			nextLevel = nextLevel || trans.GetPosition().y < 78.f;
 		});
@@ -231,7 +295,7 @@ void GameLayer::EvaluateWinCondition()
 		EntityManager::Get().Collect<PlayersRoom0Component, NetworkPlayerComponent, DOG::TransformComponent>().Do(
 			[&](entity e, PlayersRoom0Component&, NetworkPlayerComponent& player, DOG::TransformComponent& trans)
 			{
-				constexpr f32 spread = 10.f;
+				constexpr f32 spread = 3.f;
 				Vector3 offset = {
 				spread * (player.playerId % 2) - (spread / 2.f),
 				0,
@@ -241,6 +305,33 @@ void GameLayer::EvaluateWinCondition()
 				EntityManager::Get().RemoveComponent<PlayersRoom0Component>(e);
 				EntityManager::Get().AddComponent<PlayersRoom1Component>(e);
 			});
+
+	// ImGui report
+	EntityManager::Get().Collect<PlayersRoom0Component, ThisPlayer>().Do([&](PlayersRoom0Component&, ThisPlayer&)
+		{
+			ImGui::Text("Room 0");
+		});
+	EntityManager::Get().Collect<PlayersRoom1Component, ThisPlayer>().Do([&](PlayersRoom1Component&, ThisPlayer&)
+		{
+			ImGui::Text("Room 1");
+			ImGui::Text(("Scorpio1: " + std::to_string(s1)).c_str());
+			ImGui::Text(("Scorpio2: " + std::to_string(s2)).c_str());
+			ImGui::Text(("Scorpio3: " + std::to_string(s3)).c_str());
+		});
+	EntityManager::Get().Collect<PlayersRoom2Component, ThisPlayer>().Do([&](PlayersRoom2Component&, ThisPlayer&)
+		{
+			ImGui::Text("Room 2");
+			ImGui::Text(("Scorpio4: " + std::to_string(s4)).c_str());
+			ImGui::Text(("Scorpio5: " + std::to_string(s5)).c_str());
+		});
+	EntityManager::Get().Collect<PlayersRoom3Component, ThisPlayer>().Do([&](PlayersRoom3Component&, ThisPlayer&)
+		{
+			ImGui::Text("Room 3");
+			ImGui::Text(("Scorpio1: " + std::to_string(s1)).c_str());
+			ImGui::Text(("Scorpio2: " + std::to_string(s2)).c_str());
+			ImGui::Text(("Scorpio3: " + std::to_string(s3)).c_str());
+			ImGui::Text(("Scorpio3: " + std::to_string(s3)).c_str());
+		});
 
 	bool agentsAlive = false;
 	EntityManager::Get().Collect<AgentIdComponent>().Do([&agentsAlive](AgentIdComponent&) { agentsAlive = true; });
@@ -795,7 +886,7 @@ std::vector<entity> GameLayer::AddFlashlightsToPlayers(const std::vector<entity>
 		dd.color = { 1.0f, 1.0f, 1.0f };
 		dd.direction = tc.GetForward();
 		dd.strength = 0.6f;
-		dd.cutoffAngle = 20.0f;
+		dd.cutoffAngle = 30.0f;
 
 		auto lh = DOG::LightManager::Get().AddSpotLight(dd, DOG::LightUpdateFrequency::PerFrame);
 
