@@ -50,8 +50,9 @@ struct PushConstantElement
 {
     uint gdDescriptor;
     uint perFrameOffset;
-        
+    
     uint spotlightArrayStructureIndex;
+    uint shadowMapDepthIndex;
     uint wireframe;
 };
 ConstantBuffer<PushConstantElement> constants : register(b0, space0);
