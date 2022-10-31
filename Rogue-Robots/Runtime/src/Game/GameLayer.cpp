@@ -508,12 +508,14 @@ void GameLayer::UpdateGame()
 	EvaluateLoseCondition();
 
 
-	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([](TransformComponent& transform, RigidbodyComponent&)
+	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([](entity id, TransformComponent& transform, RigidbodyComponent&)
 		{
 			if (Vector3 pos = transform.GetPosition(); pos.y < -20.0f)
 			{
-				pos.y = 10;
-				transform.SetPosition(pos);
+				if (EntityManager::Get().HasComponent<PlayerStatsComponent>(id))
+					EntityManager::Get().GetComponent<PlayerStatsComponent>(id).health = 0;
+				if (EntityManager::Get().HasComponent<AgentHPComponent>(id))
+					EntityManager::Get().GetComponent<AgentHPComponent>(id).hp = 0;
 			}
 		});
 }
