@@ -315,7 +315,7 @@ void TestScene::CreateMissilePickup(DirectX::SimpleMath::Vector3 position)
 
 void TestScene::CreateGrenadePickup(DirectX::SimpleMath::Vector3 position)
 {
-	u32 grenadeID = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/Grenade/Grenade.fbx");
+	u32 grenadeID = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/Grenade/Grenade.glb");
 
 	entity grenadeEntity = CreateEntity();
 	auto& bc = AddComponent<BarrelComponent>(grenadeEntity);
