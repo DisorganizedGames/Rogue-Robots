@@ -18,3 +18,7 @@ function EventSystem:InvokeEvent(eventName, ...)
 		self.events[eventName][i](...)
 	end
 end
+
+function EventSystem:RemoveEvent(eventName)
+	self.events[eventName] = {}
+end
