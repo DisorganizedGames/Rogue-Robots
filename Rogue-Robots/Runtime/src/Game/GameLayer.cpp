@@ -288,7 +288,6 @@ void GameLayer::KillPlayer(DOG::entity e)
 	m_entityManager.RemoveComponent<ScriptComponent>(e);
 	m_entityManager.RemoveComponent<BarrelComponent>(e);
 	if (m_entityManager.HasComponent<MagazineModificationComponent>(e)) m_entityManager.RemoveComponent<MagazineModificationComponent>(e);
-
 	{
 		auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
 		controller.debugCamera = m_mainScene->CreateEntity();
