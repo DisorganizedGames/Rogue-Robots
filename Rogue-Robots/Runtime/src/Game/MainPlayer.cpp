@@ -88,7 +88,7 @@ void MainPlayer::OnUpdate()
 			moveTowards = XMVector3Normalize(moveTowards);
 			TransformComponent* useTransform = &transformC;
 
-			if (m_useDebugView)
+			if (m_useDebugView || m_forceDebugCamera)
 			{
 				useTransform = &m_entityManager.GetComponent<TransformComponent>(m_debugCamera);
 
@@ -116,4 +116,15 @@ void MainPlayer::OnUpdate()
 			
 			useTransform->worldMatrix = cameraC.viewMatrix.Invert();
 		});
+}
+
+void MainPlayer::ForceDebugCamera(bool value)
+{
+	if (value != m_forceDebugCamera)
+	{
+		auto& debugCamTransform = m_entityManager.GetComponent<TransformComponent>(m_debugCamera);
+		debugCamTransform = m_entityManager.GetComponent<TransformComponent>(GetPlayer());
+		debugCamTransform.SetPosition(debugCamTransform.GetPosition() + Vector3(0, 1, 0));
+		m_forceDebugCamera = value;
+	}
 }

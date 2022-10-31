@@ -112,6 +112,11 @@ namespace DOG
 					bulletRigidbody->setCcdMotionThreshold(rigidbody.continuousCollisionDetectionMotionThreshold);
 					bulletRigidbody->setCcdSweptSphereRadius(rigidbody.continuousCollisionDetectionSweptSphereRadius);
 				}
+
+				if (rigidbody.noCollisionResponse)
+					bulletRigidbody->setCollisionFlags(bulletRigidbody->getCollisionFlags() & ~btCollisionObject::CF_NO_CONTACT_RESPONSE);
+				else
+					bulletRigidbody->setCollisionFlags(bulletRigidbody->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
 			});
 	}
 
@@ -136,6 +141,8 @@ namespace DOG
 
 				rigidbody.centralImpulse = DirectX::SimpleMath::Vector3::Zero;
 				rigidbody.torque = DirectX::SimpleMath::Vector3::Zero;
+
+				rigidbody.noCollisionResponse = bulletRigidbody->getCollisionFlags() & btCollisionObject::CF_NO_CONTACT_RESPONSE;
 			});
 	}
 }

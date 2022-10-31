@@ -11,6 +11,7 @@ public:
 
 public:
 	void OnUpdate();
+	void ForceDebugCamera(bool value);
 private:
 	DOG::EntityManager& m_entityManager;
 
@@ -23,4 +24,5 @@ private:
 	inline const static Vector3 s_globalUp = Vector3(0, 1, 0);
 public:
 	bool m_moveView = true;
+	bool m_forceDebugCamera = false;
 };

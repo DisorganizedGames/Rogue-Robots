@@ -58,6 +58,7 @@ GameLayer::~GameLayer()
 void GameLayer::OnAttach()
 {
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameManager", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1), false, std::make_pair(DOG::Key::LCtrl, DOG::Key::G));
+	DOG::ImGuiMenuLayer::RegisterDebugWindow("Cheats", std::bind(&GameLayer::CheatDebugMenu, this, std::placeholders::_1));
 
 	//m_testScene = std::make_unique<TestScene>();
 	//m_testScene->SetUpScene();
@@ -66,6 +67,7 @@ void GameLayer::OnAttach()
 void GameLayer::OnDetach()
 {
 	DOG::ImGuiMenuLayer::UnRegisterDebugWindow("GameManager");
+	DOG::ImGuiMenuLayer::UnRegisterDebugWindow("Cheats");
 	m_testScene.reset();
 	m_testScene = nullptr;
 
@@ -191,13 +193,63 @@ void GameLayer::EvaluateWinCondition()
 void GameLayer::EvaluateLoseCondition()
 {
 	bool playersAlive = false;
-	EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](PlayerStatsComponent& playerStats)
+	EntityManager::Get().Collect<PlayerAliveComponent>().Do([&playersAlive](PlayerAliveComponent&) { playersAlive = true; });
+	if (!playersAlive) m_gameState = GameState::Lost;
+}
+
+void GameLayer::CheckIfPlayersIAreDead()
+{
+	EntityManager::Get().Collect<PlayerStatsComponent, PlayerAliveComponent>().Do([&](entity e, PlayerStatsComponent& stats, PlayerAliveComponent&)
 		{
-			playersAlive |= playerStats.health > 0.0f;
+			if (stats.health <= 0.0f)
+			{
+				// Player died
+				KillPlayer(e);
+			}
 		});
-	if (!playersAlive)
+}
+
+void GameLayer::RespawnDeadPlayer(DOG::entity e)
+{
+	if (!m_entityManager.HasComponent<PlayerAliveComponent>(e))
 	{
-		m_gameState = GameState::Lost;
+		m_entityManager.AddComponent<PlayerAliveComponent>(e);
+	}
+
+	LuaMain::GetScriptManager()->AddScript(e, "Gun.lua");
+	auto gunScriptData = LuaMain::GetScriptManager()->GetScript(e, "Gun.lua");
+	LuaTable t0(gunScriptData.scriptTable, true);
+	t0.CallFunctionOnTable("OnStart");
+
+	LuaMain::GetScriptManager()->AddScript(e, "PassiveItemSystem.lua");
+	auto passiveItemScriptData = LuaMain::GetScriptManager()->GetScript(e, "PassiveItemSystem.lua");
+	LuaTable t1(passiveItemScriptData.scriptTable, true);
+	t1.CallFunctionOnTable("OnStart");
+
+	LuaMain::GetScriptManager()->AddScript(e, "ActiveItemSystem.lua");
+	auto activeItemScriptData = LuaMain::GetScriptManager()->GetScript(e, "ActiveItemSystem.lua");
+	LuaTable t2(activeItemScriptData.scriptTable, true);
+	t2.CallFunctionOnTable("OnStart");
+
+	if (m_entityManager.HasComponent<ThisPlayer>(e))
+	{
+		m_player->ForceDebugCamera(false);
+		auto& stats = EntityManager::Get().GetComponent<PlayerStatsComponent>(e);
+		stats.health = stats.maxHealth;
+	}
+}
+
+void GameLayer::KillPlayer(DOG::entity e)
+{
+	m_entityManager.RemoveComponent<PlayerAliveComponent>(e);
+	LuaMain::GetScriptManager()->RemoveScript(e, "Gun.lua");
+	LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
+	LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
+	m_entityManager.RemoveComponent<ScriptComponent>(e);
+
+	if (m_entityManager.HasComponent<ThisPlayer>(e))
+	{
+		m_player->ForceDebugCamera(true);
 	}
 }
 
@@ -206,6 +258,13 @@ void GameLayer::UpdateGame()
 	m_player->OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
+
+
+	
+
+	HandleCheats();
+
+	CheckIfPlayersIAreDead();
 
 	EvaluateWinCondition();
 	EvaluateLoseCondition();
@@ -661,6 +720,7 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = static_cast<i8>(i);
 		m_entityManager.AddComponent<InputController>(playerI);
 		m_entityManager.AddComponent<ShadowReceiverComponent>(playerI);
+		m_entityManager.AddComponent<PlayerAliveComponent>(playerI);
 		scriptManager->AddScript(playerI, "Gun.lua");
 		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
 		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");
@@ -751,6 +811,46 @@ std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3
 	return agents;
 }
 
+void GameLayer::HandleCheats()
+{
+	m_isCheating = m_godModeCheat || m_unlimitedAmmoCheat || m_noClipCheat;
+
+	static bool cheatWindowOpen = false;
+	cheatWindowOpen |= m_isCheating;
+	if (cheatWindowOpen && !ImGuiMenuLayer::IsAttached())
+	{
+		if (m_isCheating)
+		{
+			ImGui::PushStyleColor(ImGuiCol_TitleBg, IM_COL32(80, 0, 0, 255));
+			ImGui::PushStyleColor(ImGuiCol_TitleBgActive, IM_COL32(255, 0, 0, 255));
+			ImGui::PushStyleColor(ImGuiCol_CheckMark, IM_COL32(255, 0, 0, 255));
+			ImGui::PushStyleColor(ImGuiCol_TitleBgCollapsed, IM_COL32(170, 0, 0, 255));
+		}
+		if (ImGui::Begin("Cheats", &cheatWindowOpen, ImGuiWindowFlags_NoFocusOnAppearing))
+		{
+			CheatSettingsImGuiMenu();
+		}
+		ImGui::End();
+		if (m_isCheating)
+		{
+			ImGui::PopStyleColor(4);
+		}
+	}
+
+	entity player = GetPlayer();
+	assert(player != NULL_ENTITY && EntityManager::Get().Exists(player));
+	
+	if (m_godModeCheat)
+	{
+		assert(EntityManager::Get().HasComponent<PlayerStatsComponent>(player));
+		auto& stats = m_entityManager.GetComponent<PlayerStatsComponent>(player);
+		stats.health = stats.maxHealth;
+	}
+
+	assert(EntityManager::Get().HasComponent<RigidbodyComponent>(player));
+	m_entityManager.GetComponent<RigidbodyComponent>(player).noCollisionResponse = !m_noClipCheat;
+}
+
 void GameLayer::KeyBindingDisplayMenu()
 {
 	if (!m_displayKeyBindings) return;
@@ -805,10 +905,6 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 	{
 		if (ImGui::Begin("GameManager", &open))
 		{
-			if (ImGui::Button("Win"))
-			{
-				m_gameState = GameState::Won;
-			}
 			if (ImGui::Button("Lobby"))
 			{
 				CloseMainScene();
@@ -892,4 +988,38 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 	}
 }
 
+void GameLayer::CheatSettingsImGuiMenu()
+{
+	ImGui::Checkbox("God mode", &m_godModeCheat);
+	ImGui::Checkbox("Unlimited ammo", &m_unlimitedAmmoCheat);
+	ImGui::Checkbox("No clip", &m_noClipCheat);
+	if (ImGui::Button("Win"))
+	{
+		m_gameState = GameState::Won;
+	}
+	if (ImGui::Button("Respawn"))
+	{
+		RespawnDeadPlayer(GetPlayer());
+	}
+}
 
+void GameLayer::CheatDebugMenu(bool&)
+{
+	bool beginMenuCheats;
+	if (m_isCheating)
+	{
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
+		beginMenuCheats = ImGui::BeginMenu("Cheats");
+		ImGui::PopStyleColor();
+	}
+	else
+	{
+		beginMenuCheats = ImGui::BeginMenu("Cheats");
+	}
+
+	if (beginMenuCheats)
+	{
+		CheatSettingsImGuiMenu();
+		ImGui::EndMenu(); // "Cheats"
+	}
+}

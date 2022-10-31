@@ -25,6 +25,7 @@
 
 #include "src/ECS/EntityManager.h"
 #include "src/ECS/Component.h"
+#include "src/ECS/QueryHelpers.h"
 
 #include "src/Audio/AudioManager.h"
 

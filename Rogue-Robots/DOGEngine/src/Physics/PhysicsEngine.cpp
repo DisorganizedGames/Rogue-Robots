@@ -412,6 +412,13 @@ namespace DOG
 			});
 	}
 
+	void PhysicsEngine::SetIgnoreCollisionCheck(RigidbodyHandle handleA, RigidbodyHandle handleB, bool value)
+	{
+		btRigidBody* rbA = GetRigidbodyColliderData(handleA)->rigidBody;
+		btRigidBody* rbB = GetRigidbodyColliderData(handleB)->rigidBody;
+		rbA->setIgnoreCollisionCheck(rbB, value);
+	}
+
 	RigidbodyHandle PhysicsEngine::AddRigidbodyColliderData(RigidbodyColliderData rigidbodyColliderData)
 	{
 		RigidbodyHandle rigidbodyHandle = s_physicsEngine.m_handleAllocator.Allocate<RigidbodyHandle>();
