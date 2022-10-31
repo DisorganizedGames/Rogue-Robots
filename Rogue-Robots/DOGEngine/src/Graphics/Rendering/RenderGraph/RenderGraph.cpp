@@ -155,41 +155,46 @@ namespace DOG::gfx
 		assert(!m_dirty);
 
 		{
-			ZoneNamedN(RGAddProxies, "RG Exec: Setup Metadata", true);
+			ZoneNamedN(RGSetupMetadata, "RG Exec: Setup Metadata", true);
 
-			// Clean up views
-			for (const auto& pass : m_sortedPasses)
 			{
-				{
-					auto df = [rd = m_rd, views = std::move(pass->passResources.m_bufferViews)]() mutable
-					{
-						for (const auto& view : views)
-							rd->FreeView(view);
-					};
-					m_bin->PushDeferredDeletion(df);
-				}
+				ZoneNamedN(RGMDCleanup, "RG Exec: Setup Metadata (1. Cleanup)", true);
 
+				// Clean up views
+				for (const auto& pass : m_sortedPasses)
 				{
-					auto df = [rd = m_rd, views = std::move(pass->passResources.m_textureViews)]() mutable
 					{
-						for (const auto& view : views)
-							rd->FreeView(view);
-					};
-					m_bin->PushDeferredDeletion(df);
-				}
+						auto df = [rd = m_rd, views = std::move(pass->passResources.m_bufferViews)]() mutable
+						{
+							for (const auto& view : views)
+								rd->FreeView(view);
+						};
+						m_bin->PushDeferredDeletion(df);
+					}
 
-				if (pass->rp)
-				{
-					auto df = [rd = m_rd, rp = *pass->rp]()
 					{
-						rd->FreeRenderPass(rp);
-					};
-					m_bin->PushDeferredDeletion(df);
-				}
+						auto df = [rd = m_rd, views = std::move(pass->passResources.m_textureViews)]() mutable
+						{
+							for (const auto& view : views)
+								rd->FreeView(view);
+						};
+						m_bin->PushDeferredDeletion(df);
+					}
 
-				pass->passResources = {};
-				pass->rp = std::nullopt;
+					if (pass->rp)
+					{
+						auto df = [rd = m_rd, rp = *pass->rp]()
+						{
+							rd->FreeRenderPass(rp);
+						};
+						m_bin->PushDeferredDeletion(df);
+					}
+
+					pass->passResources = {};
+					pass->rp = std::nullopt;
+				}
 			}
+
 
 			// @todo: Track new transitions (for each transition --> Just keep track of ResourceID and update the underlying resource using GetResourceState()
 			//for (auto& dep : m_dependencyLevels)
@@ -197,7 +202,10 @@ namespace DOG::gfx
 			//TrackTransitions();
 
 			// Recreate views for this new graph
-			RealizeViews();
+			{
+				ZoneNamedN(RGMDSetupNew, "RG Exec: Setup Metadata (2. Realize Views)", true);
+				RealizeViews();
+			}
 		}
 
 
@@ -492,7 +500,7 @@ namespace DOG::gfx
 			bool rpActive{ false };
 			for (const auto& output : pass->outputs)
 			{
-				const auto lookupID = output.originalID ? *output.originalID : output.id;
+				const auto& lookupID = output.originalID ? *output.originalID : output.id;
 
 				if (output.type == RGResourceType::Texture)
 				{
@@ -551,7 +559,7 @@ namespace DOG::gfx
 				if (!input.viewDesc)
 					continue;
 
-				const auto lookupID = input.originalID ? *input.originalID : input.id;
+				const auto& lookupID = input.originalID ? *input.originalID : input.id;
 
 				if (input.type == RGResourceType::Texture)
 				{
@@ -566,8 +574,8 @@ namespace DOG::gfx
 					{
 						rpActive = true;
 
-						auto depthAccesses = GetAccessTypes(*input.rpAccessType);
-						auto stencilAccesses = GetAccessTypes(*input.rpStencilAccessType);
+						const auto depthAccesses = GetAccessTypes(*input.rpAccessType);
+						const auto stencilAccesses = GetAccessTypes(*input.rpStencilAccessType);
 						builder.AddDepthStencil(view,
 							depthAccesses.first, depthAccesses.second,
 							stencilAccesses.first, stencilAccesses.second);
