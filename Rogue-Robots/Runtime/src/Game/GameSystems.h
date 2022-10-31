@@ -71,7 +71,7 @@ public:
 		{
 			auto& ptc = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(slc.owningPlayer);
 			stc.worldMatrix = ptc.worldMatrix;
-			stc.SetPosition(stc.GetPosition() + DirectX::SimpleMath::Vector3(-0.2f, 0.6f, 0.f));
+			stc.SetPosition(stc.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.9f, 1.2f));
 			slc.dirty = true;
 
 			auto up = ptc.worldMatrix.Up();

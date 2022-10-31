@@ -43,6 +43,9 @@ void NetCode::OnStartup()
 				m_entityManager.AddComponent<OnlinePlayer>(id);
 				m_entityManager.RemoveComponent<ThisPlayer>(id);
 				m_entityManager.RemoveComponent<AudioListenerComponent>(id);
+				auto& ac = m_entityManager.AddComponent<AnimationComponent>(id);
+				ac.animatorID = m_inputTcp.playerId;
+				ac.rigID = 0;
 			}
 
 		});
@@ -53,6 +56,8 @@ void NetCode::OnStartup()
 				m_entityManager.AddComponent<ThisPlayer>(id);
 				m_entityManager.AddComponent<AudioListenerComponent>(id);
 				m_entityManager.RemoveComponent<OnlinePlayer>(id);
+				m_entityManager.RemoveComponent<AnimationComponent>(id);
+
 			}
 		});
 
