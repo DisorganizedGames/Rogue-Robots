@@ -29,6 +29,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerMovementSystem>());
 	
+	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
 	m_agentManager = new AgentManager();
 	m_nrOfPlayers = MAX_PLAYER_COUNT;
 	m_networkStatus = 0;
@@ -121,7 +122,6 @@ void GameLayer::OnUpdate()
 
 	KeyBindingDisplayMenu();
 }
-
 
 void GameLayer::StartMainScene()
 {
@@ -286,7 +286,6 @@ void GameLayer::OnRender()
 	//...
 }
 
-
 void GameLayer::OnImGuiRender()
 {
 
@@ -316,26 +315,7 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	}
 	case EventType::KeyPressedEvent:
 	{
-		//if (EVENT(KeyPressedEvent).key == DOG::Key::C)
-		//	m_player->m_moveView = !m_player->m_moveView;
-		if (EVENT(KeyPressedEvent).key == DOG::Key::F)
-		{
-			if (m_gameState == GameState::Playing)
-			{
-				m_entityManager.Collect<DOG::SpotLightComponent>().Do([](DOG::SpotLightComponent& slc)
-					{
-						if (slc.isMainPlayerSpotlight)
-						{
-							if (slc.strength == 0.6f)
-								slc.strength = 0.0f;
-							else
-								slc.strength = 0.6f;
-						}
-					});
-			}
-		}
-		else
-			Input(EVENT(KeyPressedEvent).key);
+		Input(EVENT(KeyPressedEvent).key);	
 		break;
 	}
 	case EventType::KeyReleasedEvent:
@@ -414,7 +394,6 @@ void GameLayer::UpdateLobby()
 	if(!inLobby)
 		m_gameState = GameState::StartPlaying;
 }
-
 
 void GameLayer::RegisterLuaInterfaces()
 {
@@ -662,6 +641,8 @@ void GameLayer::Input(DOG::Key key)
 				inputC.toggleDebug = true;
 			if (key == DOG::Key::C)
 				inputC.toggleMoveView = true;
+			if (key == DOG::Key::F)
+				inputC.flashlight = !inputC.flashlight;
 	});
 }
 

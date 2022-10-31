@@ -124,3 +124,24 @@ private:
 	void MovePlayer(Entity e, PlayerControllerComponent& player, Vector3 moveTowards, Vector3 forward,
 		RigidbodyComponent& rb, f32 speed, InputController& input);
 };
+//Quick and dirty flashlight toggle system for MVP
+class MVPFlashlightStateSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DOG::SpotLightComponent);
+	ON_UPDATE(DOG::SpotLightComponent);
+
+	void OnUpdate(DOG::SpotLightComponent& slc)
+	{
+		auto player = slc.owningPlayer;
+		if (player == DOG::NULL_ENTITY)
+			return;
+
+		auto flashlightIsTurnedOn = DOG::EntityManager::Get().GetComponent<InputController>(player).flashlight;
+
+		if (flashlightIsTurnedOn)
+			slc.strength = 0.6f;
+		else
+			slc.strength = 0.0f;
+	}
+};
