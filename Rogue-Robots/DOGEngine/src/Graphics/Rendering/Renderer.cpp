@@ -178,11 +178,15 @@ namespace DOG::gfx
 			.Build());
 
 		auto shadowVS = m_sclr->CompileFromFile("ShadowVS.hlsl", ShaderType::Vertex);
-		auto shadowGS = m_sclr->CompileFromFile("ShadowGS.hlsl", ShaderType::Geometry);
+		//auto shadowGS = m_sclr->CompileFromFile("ShadowGS.hlsl", ShaderType::Geometry);
 		auto shadowPS = m_sclr->CompileFromFile("ShadowPS.hlsl", ShaderType::Pixel);
+		/* 
+			Remove GS usage
+			reroute ShadowVS --> ShadowGS.hlsl if you want to enable it again (better to avoid)
+		*/
 		m_shadowPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
 			.SetShader(shadowVS.get())
-			.SetShader(shadowGS.get())
+			//.SetShader(shadowGS.get())			
 			.SetShader(shadowPS.get())
 			.SetDepthFormat(DepthFormat::D32)
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
@@ -190,7 +194,7 @@ namespace DOG::gfx
 
 		m_shadowPipeNoCull = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
 			.SetShader(shadowVS.get())
-			.SetShader(shadowGS.get())
+			//.SetShader(shadowGS.get())
 			.SetShader(shadowPS.get())
 			.SetDepthFormat(DepthFormat::D32)
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
