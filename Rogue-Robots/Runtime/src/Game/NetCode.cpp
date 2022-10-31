@@ -91,9 +91,9 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 				//sync all transforms Host only
 				if (m_inputTcp.playerId == 0)
 				{
-					EntityManager::Get().Collect<NetworkTransform, TransformComponent>().Do([&](entity id, NetworkTransform& netC, TransformComponent& transC)
+					EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent>().Do([&](NetworkTransform& netC, TransformComponent& transC, AgentIdComponent agentId)
 					{
-						netC.objectId = id;
+						netC.objectId = agentId.id;
 						netC.transform = transC.worldMatrix;
 						memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkTransform));
 						m_inputTcp.nrOfNetTransform++;

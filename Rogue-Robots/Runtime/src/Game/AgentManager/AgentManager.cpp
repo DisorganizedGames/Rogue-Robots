@@ -103,11 +103,17 @@ entity AgentManager::CreateAgentCore(u32 model, const Vector3& pos, EntityTypes 
 	agent.id = m_agentIdCounter++;
 	agent.type = type;
 
-	AgentMovementComponent& move = m_entityManager.AddComponent<AgentMovementComponent>(e);
-	move.station = pos + GenerateRandomVector3(agent.id);
-	move.forward = move.station - pos;
-	move.forward.Normalize();
-	
+	m_entityManager.Collect<ThisPlayer, NetworkPlayerComponent>().Do(
+		[&](ThisPlayer&, NetworkPlayerComponent& player)
+		{
+			if (player.playerId == 0)
+			{
+				AgentMovementComponent& move = m_entityManager.AddComponent<AgentMovementComponent>(e);
+				move.station = pos + GenerateRandomVector3(agent.id);
+				move.forward = move.station - pos;
+				move.forward.Normalize();
+			}
+		});
 	m_entityManager.AddComponent<AgentPathfinderComponent>(e);
 
 	m_entityManager.AddComponent<AgentHPComponent>(e);
