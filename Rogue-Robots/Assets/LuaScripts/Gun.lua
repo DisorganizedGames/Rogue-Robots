@@ -124,10 +124,8 @@ function OnUpdate()
 	elseif not Entity:GetAction(EntityID, "SwitchComponent") then
 		switched = false
 	end
-	
-	if hasBasicBarrelEquipped then
-		NormalBulletUpdate()
-	end
+
+	NormalBulletUpdate() -- Should be called something else, but necessary for bullet despawn
 
 	if hasBasicBarrelEquipped then
 		if (ReloadSystem()) then

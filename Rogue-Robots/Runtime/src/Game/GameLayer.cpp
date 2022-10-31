@@ -216,11 +216,17 @@ void GameLayer::CheckIfPlayersIAreDead()
 
 void GameLayer::RespawnDeadPlayer(DOG::entity e)
 {
-	if (!m_entityManager.HasComponent<PlayerAliveComponent>(e))
+	if (m_entityManager.HasComponent<PlayerAliveComponent>(e))
 	{
-		m_entityManager.AddComponent<PlayerAliveComponent>(e);
+		KillPlayer(e);
 	}
 
+	auto& bc = m_entityManager.AddComponent<BarrelComponent>(e);
+	bc.type = BarrelComponent::Type::Bullet;
+	bc.currentAmmoCount = 30;
+	bc.maximumAmmoCapacityForType = 999999; // Representing infinity...?? (Emil F)
+
+	m_entityManager.AddComponent<PlayerAliveComponent>(e);
 	LuaMain::GetScriptManager()->AddScript(e, "Gun.lua");
 	auto gunScriptData = LuaMain::GetScriptManager()->GetScript(e, "Gun.lua");
 	LuaTable t0(gunScriptData.scriptTable, true);
@@ -253,6 +259,8 @@ void GameLayer::KillPlayer(DOG::entity e)
 	std::string luaEventName = std::string("ItemPickup") + std::to_string(e);
 	LuaMain::GetEventSystem()->RemoveEvent(luaEventName);
 	m_entityManager.RemoveComponent<ScriptComponent>(e);
+	m_entityManager.RemoveComponent<BarrelComponent>(e);
+	if (m_entityManager.HasComponent<MagazineModificationComponent>(e)) m_entityManager.RemoveComponent<MagazineModificationComponent>(e);
 
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
