@@ -263,7 +263,7 @@ void GameLayer::UpdateGame()
 	
 
 	HandleCheats();
-
+	HpBarMVP();
 	CheckIfPlayersIAreDead();
 
 	EvaluateWinCondition();
@@ -849,6 +849,39 @@ void GameLayer::HandleCheats()
 
 	assert(EntityManager::Get().HasComponent<RigidbodyComponent>(player));
 	m_entityManager.GetComponent<RigidbodyComponent>(player).noCollisionResponse = m_noClipCheat;
+}
+
+void GameLayer::HpBarMVP()
+{
+	ImVec2 size;
+	size.x = 300;
+	size.y = 50;
+
+	auto r = Window::GetWindowRect();
+	ImVec2 pos;
+	pos.x = r.left + 50.0f;
+	pos.y = r.bottom - 100.0f;
+
+	ImGui::SetNextWindowPos(pos);
+	ImGui::SetNextWindowSize(size);
+	if (ImGui::Begin("HpBar", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground))
+	{
+		auto& playerStats = m_entityManager.GetComponent<PlayerStatsComponent>(GetPlayer());
+		float hp = playerStats.health / playerStats.maxHealth;
+		ImVec2 bottomLeft = ImGui::GetCursorScreenPos();
+		ImVec2 hpTopRight;
+		ImVec2 borderTopRight;
+		borderTopRight.x = bottomLeft.x + Window::GetWidth() * 0.2f;
+		borderTopRight.y = bottomLeft.y + Window::GetHeight() * 0.03f;
+		hpTopRight.x = borderTopRight.x * hp;
+		hpTopRight.y = borderTopRight.y;
+		if (hp > 0.0f)
+		{
+			ImGui::GetWindowDrawList()->AddRectFilled(bottomLeft, hpTopRight, IM_COL32(255, 30, 0, 255));
+		}
+		ImGui::GetWindowDrawList()->AddRect(bottomLeft, borderTopRight, IM_COL32(30, 30, 30, 200)); // border
+	}
+	ImGui::End();
 }
 
 void GameLayer::KeyBindingDisplayMenu()
