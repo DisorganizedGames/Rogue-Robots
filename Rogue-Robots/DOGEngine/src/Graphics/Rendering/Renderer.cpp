@@ -115,7 +115,7 @@ namespace DOG::gfx
 
 
 		// multiple of curr loaded mixamo skeleton
-		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * S_MAX_FIF);		
+		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * S_MAX_FIF * 2);	// Level change somehow requires more versions???	
 		m_cmdl = m_rd->AllocateCommandList();
 
 		// Startup
@@ -642,11 +642,6 @@ namespace DOG::gfx
 
 					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
 
-					if (sub.tempAnimNum != 0 &&
-						sub.tempAnimNum != 65 &&
-						sub.tempAnimNum != 130 &&
-						sub.tempAnimNum != 195)
-						assert(false);
 
 					auto args = ShaderArgs()
 						.AppendConstant(m_globalEffectData.globalDataDescriptor)
