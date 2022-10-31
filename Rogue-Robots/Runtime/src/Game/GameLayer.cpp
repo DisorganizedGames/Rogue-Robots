@@ -489,6 +489,8 @@ void GameLayer::KillPlayer(DOG::entity e)
 	LuaMain::GetScriptManager()->RemoveScript(e, "Gun.lua");
 	LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
 	LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
+	std::string luaEventName = std::string("ItemPickup") + std::to_string(e);
+	LuaMain::GetEventSystem()->RemoveEvent(luaEventName);
 	m_entityManager.RemoveComponent<ScriptComponent>(e);
 
 	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
