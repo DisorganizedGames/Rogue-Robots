@@ -22,6 +22,7 @@ namespace DOG
 		void InvokeEvent(const std::string& eventName);
 		template<class ...Args>
 		void InvokeEvent(const std::string& eventName, Args&&... args);
+		void RemoveEvent(const std::string& eventName);
 	};
 
 	template<void(*func)(LuaContext*)>
