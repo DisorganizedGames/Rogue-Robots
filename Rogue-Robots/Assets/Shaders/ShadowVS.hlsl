@@ -4,6 +4,8 @@
 struct VS_OUT
 {
     float4 pos  : SV_POSITION;
+    uint targetSlice : SV_RenderTargetArrayIndex;
+    
 };
 
 struct PerLightData
@@ -93,6 +95,7 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     
     float3 wsPos = mul(perDrawData.world, float4(pos, 1.f)).xyz;
     output.pos = mul(perLightData.proj, mul(perLightData.view, float4(wsPos, 1.f)));
+    output.targetSlice = constants.smIdx;
     
     return output;
 }
