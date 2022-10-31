@@ -80,7 +80,22 @@ function BarrelComponents:Grenade()
 			local radius = 5.0 + change
 			Physics:Explosion(bullet.entity, power, radius)
 			
-			explosionTrigger = Game:ExplosionEffect(bullet.entity, radius)
+			if Entity:HasComponent(bullet.entity, "FrostEffect") then
+				explosionTrigger = Game:ExplosionEffect(bullet.entity, radius, { 0.2, 0.6, 0.8 })
+				Entity:AddComponent(explosionTrigger, "SubMeshRender", MaterialPrefabs:GetMaterial("FrostExplosionMaterial"))
+
+			else
+				explosionTrigger = Game:ExplosionEffect(bullet.entity, radius, { 0.8, 0.0, 0.0 })
+			end
+
+
+
+
+			--Create Mat
+			--Create Submesh Renderer
+			--Remove Model Component
+
+
 			Entity:AddComponent(explosionTrigger, "SphereTrigger", radius)
 			Entity:AddComponent(explosionTrigger, "Bullet", parentEntityID)		-- Note: bullet damage is added in Lua interface
 		end,

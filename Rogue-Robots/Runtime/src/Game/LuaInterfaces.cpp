@@ -298,6 +298,7 @@ const std::unordered_map<std::string, bool (*) (entity)> componentMap = {
 	{ "PlayerStats", HasComp<PlayerStatsComponent> },
 	{ "PassiveItem", HasComp<PassiveItemComponent> },
 	{ "ThisPlayer", HasComp<ThisPlayer> },
+	{ "FrostEffect", HasComp<FrostEffectComponent> },
 };
 
 void EntityInterface::HasComponent(LuaContext* context)
@@ -763,12 +764,14 @@ void RenderInterface::CreateMaterial(DOG::LuaContext* context)
 	float roughnessFactor = (float)context->GetDouble();
 	float metallicFactor = (float)context->GetDouble();
 
-	LuaVector3 albedoFactor(table);
+	LuaTable tab = context->GetTable();
+	DirectX::SimpleMath::Vector4 emissiveFactor = { (float)tab.GetDoubleFromTable(0), (float)tab.GetDoubleFromTable(1), (float)tab.GetDoubleFromTable(2), 1.f };
 
 	MaterialDesc d{};
-	d.albedoFactor = { albedoFactor.x, albedoFactor.y, albedoFactor.z };
+	d.albedoFactor = { (float)table.GetDoubleFromTable(0), (float)table.GetDoubleFromTable(1), (float)table.GetDoubleFromTable(2) };
 	d.roughnessFactor = roughnessFactor;
 	d.metallicFactor = metallicFactor;
+	d.emissiveFactor = emissiveFactor;
 	auto mat = CustomMaterialManager::Get().AddMaterial(d);
 
 	LuaTable material;
@@ -788,7 +791,12 @@ void RenderInterface::CreateMaterial(DOG::LuaContext* context)
 
 void GameInterface::ExplosionEffect(DOG::LuaContext* context)
 {
-	context->ReturnInteger(ExplosionEffectSystem::CreateExplosionEffect(context->GetInteger(), (float)context->GetDouble()));
+	auto entity = context->GetInteger();
+	f32 radius = (f32)context->GetDouble();
+	LuaTable tab = context->GetTable();
+	DirectX::SimpleMath::Vector3 color = { (f32)tab.GetDoubleFromTable(0), (f32)tab.GetDoubleFromTable(1), (f32)tab.GetDoubleFromTable(2) };
+
+	context->ReturnInteger(ExplosionEffectSystem::CreateExplosionEffect(entity, radius, color));
 }
 
 void GameInterface::AmmoUI(DOG::LuaContext* context)

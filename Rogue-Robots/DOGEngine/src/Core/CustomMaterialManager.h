@@ -18,9 +18,12 @@ namespace DOG
 
 		MaterialHandle AddMaterial(const MaterialDesc& desc);
 		void UpdateMaterial(MaterialHandle handle, const MaterialDesc& desc);
-		void RemoveMaterial(MaterialHandle handle);
+
+		void AddRef(MaterialHandle handle);
+		void DecrRef(MaterialHandle handle);
 
 	private:
+		void RemoveMaterial(MaterialHandle handle);
 		CustomMaterialManager(gfx::Renderer* renderer);
 		~CustomMaterialManager() = default;
 
@@ -28,6 +31,8 @@ namespace DOG
 		static CustomMaterialManager* s_instance;
 		gfx::MaterialTable* m_materialTable;
 
+		// { handle, count }
+		std::unordered_map<u64, u32> m_refs;
 
 	};
 }

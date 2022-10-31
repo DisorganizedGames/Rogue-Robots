@@ -48,6 +48,8 @@ namespace DOG
 		spec.metallicFactor = desc.metallicFactor;
 
 		auto ret = m_materialTable->LoadMaterial(spec);
+
+		m_refs[ret.handle] = 1;
 		return ret;
 	}
 
@@ -70,6 +72,21 @@ namespace DOG
 	void CustomMaterialManager::RemoveMaterial(MaterialHandle handle)
 	{
 		m_materialTable->FreeMaterial(handle);
+	}
+
+	void CustomMaterialManager::AddRef(MaterialHandle handle)
+	{
+		m_refs[handle.handle]++;
+	}
+
+	void CustomMaterialManager::DecrRef(MaterialHandle handle)
+	{
+		auto& ref = m_refs[handle.handle];
+		assert(ref > 0);
+
+		--ref;
+		if (ref == 0)	// automatically remove material if no refs left
+			RemoveMaterial(handle);
 	}
 
 
