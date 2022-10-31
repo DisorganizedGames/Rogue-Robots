@@ -8,6 +8,8 @@
 #include "../../Core/CustomMeshManager.h"
 #include "../../Core/LightManager.h"		
 
+#include "../../common/MiniProfiler.h"
+
 namespace DOG::gfx
 {
 	FrontRenderer::FrontRenderer(Renderer* renderer) :
@@ -43,6 +45,8 @@ namespace DOG::gfx
 
 	void FrontRenderer::Update(f32)
 	{
+		MINIPROFILE;
+
 		UpdateLights();
 		GatherShadowCasters();
 		SetRenderCamera();

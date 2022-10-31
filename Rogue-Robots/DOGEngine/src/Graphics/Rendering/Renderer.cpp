@@ -1186,7 +1186,7 @@ namespace DOG::gfx
 			//ImGui::End();
 
 
-			if (ImGui::Begin("GPU Memory Statistics: Total"))
+			if (ImGui::Begin("GPU Memory Statistics: Total", &open))
 			{
 				auto& info = m_rd->GetTotalMemoryInfo().heap[0];
 				ImGui::Text("Used allocations: %f (Mb)", info.allocationBytes / 1048576.f);
@@ -1197,7 +1197,7 @@ namespace DOG::gfx
 			ImGui::End();
 
 
-			if (ImGui::Begin("GPU Memory Statistics: Render Graph"))
+			if (ImGui::Begin("GPU Memory Statistics: Render Graph", &open))
 			{
 				auto& info = m_rgResMan->GetMemoryInfo();
 				//auto& info = m_rd->GetTotalMemoryInfo().heap[0];
