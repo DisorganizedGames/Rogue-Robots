@@ -51,7 +51,6 @@ struct PushConstantElement
     uint gdDescriptor;
     uint perFrameOffset;
 
-    uint perDrawCB;
     uint spotlightArrayStructureIndex;
     uint shadowMapDepthIndex;
     uint wireframe;
@@ -85,7 +84,7 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
 
     ShaderInterop_SubmeshMetadata md = mds[perDrawData.submeshID];
     int offset = constants.tempAnimVal;
-    //int offset = 65;
+
     Blend bw = blendData[vertexID + md.blendStart];
     vertexID += md.vertStart;
 

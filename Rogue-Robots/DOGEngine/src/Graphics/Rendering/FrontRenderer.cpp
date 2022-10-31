@@ -168,8 +168,9 @@ namespace DOG::gfx
 					}
 					else if (EntityManager::Get().HasComponent<AnimationComponent>(e))
 					{
+						auto num = EntityManager::Get().GetComponent<AnimationComponent>(e).offset;
 						for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
-							m_renderer->SubmitAnimatedMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+							m_renderer->SubmitAnimatedMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC, num);
 					}
 					else
 					{

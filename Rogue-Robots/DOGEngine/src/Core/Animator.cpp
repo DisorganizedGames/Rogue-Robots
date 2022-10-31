@@ -42,6 +42,7 @@ namespace DOG
 		const auto transitionTime = globalTime - clips[0].transitionStart;
 		clipData[0].tick = clips[0].UpdateClipTick(dt);
 		clipData[0].weight = 1.f;
+		auto idx = offset == 0 ? 0 : offset / 65;
  		clipData[0].aID = clips[0].animationID;
 		hackNclips = 0;
 		for (u32 i = 0; i < 5; i++)

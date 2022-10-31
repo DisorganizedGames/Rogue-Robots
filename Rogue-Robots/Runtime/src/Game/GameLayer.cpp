@@ -856,7 +856,7 @@ void GameLayer::Input(DOG::Key key)
 	EntityManager::Get().Collect<InputController, AnimationComponent, ThisPlayer>().Do([&](InputController& inputC, AnimationComponent& ac, ThisPlayer&)
 	{
 			if (key == DOG::Key::W)
-				inputC.forward = true, ac.input[0] = 1, ac.ost = true;
+				inputC.forward = true, ac.input[0] = 1;
 			if (key == DOG::Key::A)
 				inputC.left = true, ac.input[1] = 1;
 			if (key == DOG::Key::S)

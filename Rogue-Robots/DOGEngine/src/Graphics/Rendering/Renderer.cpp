@@ -614,7 +614,7 @@ namespace DOG::gfx
 					and during forward pass we simply read from it 
 			*/
 
-			auto drawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_boneJourno.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false) mutable
+			auto drawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_jointMan.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false) mutable
 			{	
 				for (const auto& sub : submissions)
 				{
@@ -628,13 +628,20 @@ namespace DOG::gfx
 					if (animated)
 					{
 						JointData jointsData{};
-						auto jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
-						for (size_t i = 0; i < m_jointMan->m_vsJoints.size(); ++i)
-							jointsData.joints[i] = m_jointMan->m_vsJoints[i];
+						auto jointsHandle = dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+						for (size_t i = 0; i < bonezy->m_vsJoints.size(); ++i)
+							jointsData.joints[i] = bonezy->m_vsJoints[i];
 						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
+						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
 					}
 
 					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
+
+					if (sub.tempAnimNum != 0 &&
+						sub.tempAnimNum != 65 &&
+						sub.tempAnimNum != 130 &&
+						sub.tempAnimNum != 195)
+						assert(false);
 
 					auto args = ShaderArgs()
 						.AppendConstant(m_globalEffectData.globalDataDescriptor)
@@ -653,7 +660,7 @@ namespace DOG::gfx
 				}
 			};
 		
-			auto shadowDrawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_boneJourno.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](
+			auto shadowDrawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_jointMan.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](
 				RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 smIdx, const ShadowCaster& caster, bool animated = false, bool wireframe = false) mutable
 			{
 				auto perLightHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerLightData) / (float)256));
@@ -674,9 +681,9 @@ namespace DOG::gfx
 					{
 						// Resolve joints
 						JointData jointsData{};
-						auto jointsHandle = m_dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
-						for (size_t i = 0; i < m_jointMan->m_vsJoints.size(); ++i)
-							jointsData.joints[i] = m_jointMan->m_vsJoints[i];
+						auto jointsHandle = dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+						for (size_t i = 0; i < bonezy->m_vsJoints.size(); ++i)
+							jointsData.joints[i] = bonezy->m_vsJoints[i];
 						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
 						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
 					}
@@ -684,9 +691,9 @@ namespace DOG::gfx
 					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
 
 					auto args = ShaderArgs()
+						.SetPrimaryCBV(perDrawHandle.buffer, perDrawHandle.bufferOffset)
 						.AppendConstant(m_globalEffectData.globalDataDescriptor)
 						.AppendConstant(m_currPfDescriptor)
-						.SetPrimaryCBV(perDrawHandle.buffer, perDrawHandle.bufferOffset)
 						.AppendConstant(perLightHandle.globalDescriptor)
 						.AppendConstant(wireframe ? 1 : 0)
 						.AppendConstant(smIdx);

@@ -39,6 +39,7 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Core/Scene.h" "src/Core/Scene.cpp" "src/Graphics/RHI/Types/GPUInfo.h"
      "src/Graphics/Rendering/FrontRenderer.h" "src/Graphics/Rendering/FrontRenderer.cpp"
     "src/ECS/QueryHelpers.h" "src/ECS/QueryHelpers.cpp"
+    "src/Core/Animator.h" "src/Core/Animator.cpp"
     )
 
 	file(GLOB_RECURSE TempGraphics
