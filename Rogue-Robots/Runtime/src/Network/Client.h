@@ -17,7 +17,6 @@
 		void SetUpUdp();
 		void SendUdp(PlayerNetworkComponentUdp input);
 		UdpReturnData ReceiveUdp();
-		UdpReturnData SendandReciveUdp(PlayerNetworkComponentUdp input);
 
 	private:
 		u64 m_udpId;

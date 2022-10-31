@@ -43,18 +43,17 @@ void AgentManager::CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& e
 	}
 	else
 	{
-		entity toDestroy = DOG::NULL_ENTITY;
 		m_entityManager.Collect<AgentIdComponent, TransformComponent>().Do(
 			[&](entity e, AgentIdComponent& agent, TransformComponent& trans)
 			{
 				if (agent.id == entityDesc.id)
 				{
-					toDestroy = e;
+					DestroyLocalAgent(e);
 					trans.SetPosition(entityDesc.position);
 				}
 			}
 		);
-		DestroyLocalAgent(toDestroy);
+		
 	}
 }
 

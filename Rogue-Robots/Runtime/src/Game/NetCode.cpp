@@ -108,14 +108,14 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 					});
 				}
 
-				EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](NetworkAgentStats& netC, AgentHPComponent& AgentS, AgentIdComponent& idC)
+				EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](NetworkAgentStats& netC, AgentHPComponent& agentS, AgentIdComponent& idC)
 					{
-						if (AgentS.damageThisFrame)
+						if (agentS.damageThisFrame)
 						{
-							AgentS.damageThisFrame = false;
+							agentS.damageThisFrame = false;
 							netC.playerId = m_inputTcp.playerId;
 							netC.objectId = idC.id;
-							netC.hp = AgentS;
+							netC.hp = agentS;
 							memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkAgentStats));
 							m_inputTcp.nrOfChangedAgentsHp++;
 							m_bufferSize += sizeof(NetworkAgentStats);
@@ -211,15 +211,13 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 								memcpy(tempCreate, m_receiveBuffer + m_bufferReceiveSize + sizeof(CreateAndDestroyEntityComponent) * i, sizeof(CreateAndDestroyEntityComponent));
 								if (tempCreate->playerId != m_inputTcp.playerId)
 								{
-									if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Agents && !tempCreate->alive)
-									{
-										agentManager->CreateOrDestroyShadowAgent(*tempCreate);
-									}
-									else if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Pickups)
-									{
-										std::cout << "Destroyed entity of type: " << static_cast<u32>(tempCreate->entityTypeId) << " With id: " << tempCreate->id << "From player: " << tempCreate->playerId
-											<< std::endl;
-									}
+									EntityManager::Get().Collect<AgentIdComponent>().Do([&](AgentIdComponent&)
+										{
+											if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Agents && !tempCreate->alive)
+											{
+												agentManager->CreateOrDestroyShadowAgent(*tempCreate);
+											}
+										});
 								}
 							}
 							m_bufferReceiveSize += sizeof(CreateAndDestroyEntityComponent) * header.nrOfCreateAndDestroy;

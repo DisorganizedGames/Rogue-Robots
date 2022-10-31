@@ -235,29 +235,6 @@ void Client::SetUpUdp()
 	}
 }
 
-struct UdpReturnData Client::SendandReciveUdp(PlayerNetworkComponentUdp input)
-{
-	input.udpId = m_sendUdpId++;
-	sendto(m_udpSendSocket, (char*)&input, sizeof(input), 0, (struct sockaddr*)&m_hostAddressUdp, sizeof(m_hostAddressUdp));
-
-	int bytesRecived = 0, hostAddressLength = sizeof(m_reciveAddressUdp);
-	UdpData holdAll;
-	UdpReturnData returnData;
-
-	bytesRecived = recvfrom(m_udpReciveSocket, (char*)m_reciveUdpBuffer, 1024, 0, (struct sockaddr*)&m_reciveAddressUdp, &hostAddressLength);
-	if (bytesRecived > 0)
-	{
-		memcpy(&holdAll, m_reciveUdpBuffer, sizeof(holdAll));
-		if (holdAll.udpId > m_udpId)
-		{
-			m_udpId = holdAll.udpId;
-			memcpy(&returnData.m_holdplayersUdp, m_reciveUdpBuffer + sizeof(holdAll), sizeof(returnData.m_holdplayersUdp));
-		}
-
-	}
-	return returnData;
-}
-
 void Client::SendUdp(PlayerNetworkComponentUdp input)
 {
 	input.udpId = ++m_sendUdpId;

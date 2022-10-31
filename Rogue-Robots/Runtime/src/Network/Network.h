@@ -2,7 +2,7 @@
 #include <DOGEngine.h>
 #include "..\Game\GameComponent.h"
 
-constexpr int SEND_AND_RECIVE_BUFFER_SIZE = 8192;
+constexpr int SEND_AND_RECIVE_BUFFER_SIZE = 16384;
 constexpr int MAX_PLAYER_COUNT = 4;
 constexpr const char* PORTNUMBER_OUT = "50005";
 constexpr const char* PORTNUMBER_IN = "50004";
