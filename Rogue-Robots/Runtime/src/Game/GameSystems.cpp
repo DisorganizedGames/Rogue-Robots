@@ -182,7 +182,7 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 	RigidbodyComponent& rb, f32 speed, InputController& input)
 {	
 	auto forwardDisparity = moveTowards.Dot(forward);
-	speed = forwardDisparity < -0.01f ? speed / 2.5f : speed;
+	speed = forwardDisparity < -0.01f ? speed / 2.f : speed;
 
 	rb.linearVelocity = Vector3(
 		moveTowards.x * speed,
@@ -203,7 +203,7 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 		return;
 
 	auto& colComp = EntityManager::Get().GetComponent<HasEnteredCollisionComponent>(e);
-	for (auto idx = 0; auto colEntity: colComp.entities)
+	for (auto idx = 0u; auto colEntity: colComp.entities)
 	{
 		if (idx++ == colComp.entitiesCount) break;
 		

@@ -27,7 +27,7 @@ struct PlayerStatsComponent
 {
 	f32 maxHealth = 100.f;
 	f32 health = 100.f;//maxHealth;
-	f32 speed = 10.f;
+	f32 speed = 7.5f;
 	f32 lifeSteal = 0.f;
 	//...
 };
