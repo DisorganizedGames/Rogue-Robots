@@ -229,13 +229,6 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e)
 	auto activeItemScriptData = LuaMain::GetScriptManager()->GetScript(e, "ActiveItemSystem.lua");
 	LuaTable t2(activeItemScriptData.scriptTable, true);
 	t2.CallFunctionOnTable("OnStart");
-
-	if (m_entityManager.HasComponent<ThisPlayer>(e))
-	{
-		m_player->ForceDebugCamera(false);
-		auto& stats = EntityManager::Get().GetComponent<PlayerStatsComponent>(e);
-		stats.health = stats.maxHealth;
-	}
 }
 
 void GameLayer::KillPlayer(DOG::entity e)
@@ -245,11 +238,6 @@ void GameLayer::KillPlayer(DOG::entity e)
 	LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
 	LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
 	m_entityManager.RemoveComponent<ScriptComponent>(e);
-
-	if (m_entityManager.HasComponent<ThisPlayer>(e))
-	{
-		m_player->ForceDebugCamera(true);
-	}
 }
 
 void GameLayer::UpdateGame()
@@ -257,9 +245,6 @@ void GameLayer::UpdateGame()
 	m_netCode.OnUpdate();
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
-
-
-	
 
 	HandleCheats();
 	HpBarMVP();
