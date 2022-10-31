@@ -11,8 +11,6 @@ namespace DOG
 		std::pair<u8, u8> groupMasks[2];
 	};
 
-	
-
 	static constexpr u8 groupA = 0;
 	static constexpr u8 groupB = 1;
 
@@ -84,10 +82,12 @@ namespace DOG
 			// Update state of clip
 			void UpdateState(const f32 gt);
 			bool operator <(const AnimationClip& o) const {
-				return activeAnimation && !o.activeAnimation ||
+				return group < o.group ||
+					group == o.group && animationID < o.animationID;
+				/*return activeAnimation && !o.activeAnimation ||
 					activeAnimation == o.activeAnimation && group < o.group ||
 					activeAnimation == o.activeAnimation && group == o.group && currentWeight > o.currentWeight ||
-					activeAnimation == o.activeAnimation && group == o.group && currentWeight == o.currentWeight && targetWeight > o.targetWeight;
+					activeAnimation == o.activeAnimation && group == o.group && currentWeight == o.currentWeight && targetWeight > o.targetWeight;*/
 			}
 			bool operator ==(const AnimationClip& o) const {
 				return animationID == o.animationID && group == o.group;
@@ -97,8 +97,13 @@ namespace DOG
 		// Number of new clips added to component this frame
 		u32 nAddedClips = 0;
 		// Active clips per group
+		u32 hackNclips = 1;
+		u32 swapped[4] = { 0 };
 		u8 clipsInGroup[nGroups] = { 0 };
-	
+		bool firstTime = true;
+		bool loaded = false;
+		void HackUpdate(u32 input[4], const f32 dt);
+		std::unordered_map<u32, AnimationClip> mapHack;
 		ClipRigData clipData[maxClips];
 		// weight between 
 		std::array<GroupBlendSpec, 4> groups;
@@ -111,7 +116,7 @@ namespace DOG
 		// Overwrites an active clip with values from newly activated clip if applicable
 		bool ReplacedClip(AnimationClip& clip, u32 idx);
 		// Add a new animation clip to components timeline
-		void AddAnimationClip(i8 id, f32 duration, f32 ticks, u8 group, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop = false, f32 timeScale = 1.f, f32 startDelay = 0.f);
+		void AddAnimationClip(i8 id, f32 duration, f32 ticks, u8 group, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop = false, f32 timeScale = 1.f, f32 startDelay = 0.f, bool override = false);
 		void AddBlendSpecification(f32 startDelay, f32 transitionLength, u32 group, f32 targetWeight, f32 duration = -1.f);
 		// Returns number of currently active clips contributing to current pose
 		i32 ActiveClipCount() const;

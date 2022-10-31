@@ -14,7 +14,6 @@ namespace DOG
 		m_imguiPos.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_imguiRot.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_vsJoints.assign(300, {});
-
 		ImGuiMenuLayer::RegisterDebugWindow("Animation Clip Setter", [this](bool& open) {SpawnControlWindow(open); });
 	};
 
@@ -28,40 +27,52 @@ namespace DOG
 		ZoneScopedN("updateJoints_ppp");
 		using namespace DirectX;
 		auto deltaTime = (f32)Time::DeltaTime();
-		//tmp wtf
+		//tmp setting base animaton
+		static bool doEt = true;
 		static i32 count = 0;
-		if (count < 3) {
+		if (count < 4) {
 			EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-					if (model && modelaC.rigID == MIXAMO_RIG_ID && modelaC.animatorID == -1)
+					if (model && modelaC.rigID == MIXAMO_RIG_ID && !m_playerAnimators[modelaC.animatorID].loaded)
 					{
 						if(!m_rigs.size())
 							m_rigs.push_back(&model->animation);
 
-						modelaC.animatorID = GetNextAnimatorID();
 						count++;
-						// tmp setting base states
-						auto idleIdx = 2;
-						auto walkIdx = 13;
+						// tmp setting base states cheat
+						auto idleIdx = 2, walkIdx = 13, strafeLidx = 7, strafeRidx = 9, runIdx = 5, runBackIdx = 6;
 
 						auto danceIdx = m_rigs[modelaC.rigID]->animations.size()-1 - modelaC.animatorID;
 						auto& dance = m_rigs[modelaC.rigID]->animations[danceIdx];
-						auto& idle = m_rigs[modelaC.rigID]->animations.rbegin()[idleIdx];
-						auto& walk = m_rigs[modelaC.rigID]->animations.rbegin()[walkIdx];
+						auto& idle = m_rigs[modelaC.rigID]->animations[idleIdx];
+						auto& walk = m_rigs[modelaC.rigID]->animations[walkIdx];
+						auto& strafeL = m_rigs[modelaC.rigID]->animations[strafeLidx];
+						auto& strafeR = m_rigs[modelaC.rigID]->animations[strafeRidx];
+						auto& runBack = m_rigs[modelaC.rigID]->animations[runBackIdx];
 
 						auto& a = m_playerAnimators[modelaC.animatorID];
 						//a.AddAnimationClip(danceIdx, dance.duration, dance.ticks, 0, 0.f, 1.0f, 1.0f, true, 1.5f); // lower body walk
 						//a.AddAnimationClip(danceIdx, dance.duration, dance.ticks, 2, 0.f, 1.0f, 1.0f, true); // full body idle
 
-						a.AddAnimationClip(walkIdx, walk.duration, walk.ticks, 0, 0.f, 1.0f, 1.0f, true, 1.5f); // lower body walk
+						a.AddAnimationClip(walkIdx, walk.duration, walk.ticks, 2, 0.f, 1.0f, 1.0f, true, 1.5f); // lower body walk
+						a.AddAnimationClip(strafeLidx, strafeL.duration, strafeL.ticks, 2, 0.f, 1.0f, 1.0f, true, 1.5f); // lower body strafe
+						a.AddAnimationClip(strafeRidx, strafeR.duration, strafeR.ticks, 2, 0.f, 1.0f, 1.0f, true, 1.5f); // lower body strafe
+						a.AddAnimationClip(runBackIdx, runBack.duration, runBack.ticks, 2, 0.f, 1.0f, 1.0f, true, 1.0f); // lower body walk
 						a.AddAnimationClip(idleIdx, idle.duration, idle.ticks, 2, 0.f, 1.0f, 1.0f, true); // full body idle
+						auto& animator = m_playerAnimators[modelaC.animatorID];
+						animator.loaded = true;
 					}
 				});
 			return;
 		}
-		
-		// tmp
+		if (!m_rigs.size())
+			return;
+
+		// tmps
+		static f32 timer = 0.0f;
+		timer += deltaTime;
+		static bool firstTime = true;
 		auto mixamoCount = 0;
 
 		EntityManager::Get().Collect<ModelComponent, AnimationComponent, TransformComponent>().Do([&](ModelComponent& modelC, AnimationComponent& rAC, TransformComponent& tfC)
@@ -71,37 +82,15 @@ namespace DOG
 				{
 					auto& rig = m_rigs[rAC.rigID];
 					auto& animator = m_playerAnimators[rAC.animatorID];
+					if (!animator.loaded)
+						return;
 					animator.offset = mixamoCount * MIXAMO_RIG.nJoints;
 					rAC.offset = MIXAMO_RIG.nJoints * mixamoCount++;
-					auto& addedAnimations = rAC.addedSetters;
-					// Add animation clips for animations added this frame
-					auto idx = 0;
-					while(addedAnimations)
-					{
-						auto& s = rAC.animSetters[idx++];
-						if (s.desired)
-						{
-							s.desired = false;
-							animator.AddAnimationClip(
-								s.animationID,
-								rig->animations[s.animationID].duration,
-								rig->animations[s.animationID].ticks,
-								s.group,
-								s.transitionLength,
-								0.0f, // start weight
-								1.0f, // target weight
-								s.loop,
-								s.playbackRate
-							);
-							f32 duration = rig->animations[s.animationID].duration / s.playbackRate;
-							//f32 tl = duration / 6.f;
-							animator.AddBlendSpecification(0.0f, s.transitionLength, s.group, 1.f, duration);
-							--addedAnimations;
-						}
-					}
-
-					animator.Update(deltaTime);
 					
+					animator.HackUpdate(&rAC.input[0], deltaTime);
+					auto& ost = animator.clipData;
+					if (ost[0].aID > 10)
+  						auto asdafa = 0;
 					UpdateSkeleton(model->animation, animator);
 				}
 			});
@@ -384,20 +373,25 @@ namespace DOG
 		std::fill(m_fullbodySRT.begin(), m_fullbodySRT.begin() + nSRT, XMVECTOR{});
 
 		//const auto weightGroupA = ac.groupWeights[ac.groupA];
-		const auto weightGroupA = m_imguiGroupWeightA; // tmp
-		const auto weightGroupB = ac.groupWeights[ac.groupB];
+		auto weightGroupA = ac.groupWeights[ac.groupA];
+		auto weightGroupB = ac.groupWeights[ac.groupB];
+		weightGroupA = 0.f;
+		weightGroupB = 0.f;
 
 		auto HasInfluence = [ac, rigID](const u8 group) {
 			bool ret = ac.clipsInGroup[group];
 			return ret && group == RIG_SPECIFICS[rigID].fullbodyGroup ? true : ac.groupWeights[group] > 0.f;
 		};
 
+		auto why = ac.clipsInGroup;
+		auto wh = ac.groupWeights[2];
 		// Go through clip groups
 		for (u8 group = 0; group < ac.nGroups; group++)
 		{
-			if (HasInfluence(group) || (ac.clipsInGroup[group] && group == groupA && weightGroupA>0.f))
+			if (group == 2)
 			{
-				const auto gClipIdx = ac.GetGroupIndex(group);
+				//const auto gClipIdx = ac.GetGroupIndex(group);
+				auto gClipIdx = 0;
 				ExtractClipNodeInfluences(&ac.clipData[gClipIdx], animations, KeyType::Scale, ac.clipsInGroup[group], rigID, group);
 				ExtractClipNodeInfluences(&ac.clipData[gClipIdx], animations, KeyType::Rotation, ac.clipsInGroup[group], rigID, group);
 				ExtractClipNodeInfluences(&ac.clipData[gClipIdx], animations, KeyType::Translation, ac.clipsInGroup[group], rigID, group);
@@ -414,12 +408,9 @@ namespace DOG
 				weight = weightGroupB;
 
 			const u32 sIdx = i * 3, rIdx = i * 3 + 1, tIdx = i * 3 + 2;
-			const XMVECTOR scaling1 = m_fullbodySRT[sIdx], scaling2 = m_partialSRT[sIdx];
-			const XMVECTOR rotation1 = m_fullbodySRT[rIdx], rotation2 = m_partialSRT[rIdx];
-			const XMVECTOR translation1 = m_fullbodySRT[tIdx], translation2 = m_partialSRT[tIdx];
-			m_fullbodySRT[sIdx] = XMVectorLerp(scaling1, scaling2, weight);
-			m_fullbodySRT[rIdx] = XMQuaternionSlerp(rotation1, rotation2, weight);
-			m_fullbodySRT[tIdx] = XMVectorLerp(translation1, translation2, weight);
+			const XMVECTOR scaling1 = m_fullbodySRT[sIdx];
+			const XMVECTOR rotation1 = m_fullbodySRT[rIdx];
+			const XMVECTOR translation1 = m_fullbodySRT[tIdx];
 		}
 	}
 

@@ -83,6 +83,9 @@ namespace DOG
 			f32 playbackRate;
 			bool loop;
 		};
+		// hack
+		bool ost = false;
+		u32 input[4] = { 0, 0, 0, 0 };
 		std::array<Setter, MAX_SETTERS> animSetters;
 	};
 	static_assert(std::is_trivially_copyable_v<AnimationComponent>);

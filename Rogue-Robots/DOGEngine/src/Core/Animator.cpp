@@ -26,7 +26,58 @@ namespace DOG
 		clip.normalizedTime = 0.f;
 		clip.activeAnimation = false;
 	}
-	
+
+	void Animator::HackUpdate(u32* input, const f32 dt)
+	{
+		if (firstTime)
+		{
+			std::sort(clips.begin(), clips.end());
+			mapHack.insert({ 0, clips[4] });
+			mapHack.insert({ 1, clips[2] });
+			mapHack.insert({ 2, clips[3] });
+			mapHack.insert({ 3, clips[1] });
+			mapHack.insert({ 4, clips[0] });
+			firstTime = false;
+		}
+		const auto transitionTime = globalTime - clips[0].transitionStart;
+		clipData[0].tick = clips[0].UpdateClipTick(dt);
+		clipData[0].weight = 1.f;
+ 		clipData[0].aID = clips[0].animationID;
+		hackNclips = 0;
+		for (u32 i = 0; i < 5; i++)
+		{
+			mapHack.at(i).currentTick = mapHack.at(i).UpdateClipTick(dt);
+			mapHack.at(i).currentWeight = 1.f;
+		}
+		for (u32 i = 0; i < 4; i++)
+		{
+			hackNclips += input[i];
+		}
+		bool click = false;
+		if (hackNclips != 0)
+		{
+			auto count = hackNclips > 2 ? 2 : hackNclips;
+			for (u32 i = 0, j = 0; j < count; i++)
+			{
+				if (input[i] == 1)
+				{
+					click = true;
+					clipData[j].aID = mapHack.at(i).animationID;
+					clipData[j].weight = mapHack.at(i).currentWeight;
+					clipData[j].tick = mapHack.at(i).currentTick;
+					j++;
+				}
+				if (j == 2)
+					break;
+			}
+		}
+		clipsInGroup[groupC] = hackNclips > 2 ? 2 : hackNclips;
+		if (hackNclips == 0)
+		{
+			clipsInGroup[groupC] = 1;
+		}
+	}
+
 	void Animator::Update(const f32 dt)
 	{
 		ZoneScopedN("animatorUpdate");
@@ -65,6 +116,7 @@ namespace DOG
 	
 		u32 activeClips = ActiveClipCount();
 		// Update weights / tick of active clips
+		f32 hackN = {};
 		for (u32 i = 0; i < activeClips; i++)
 		{
 			auto& c = clips[i];
@@ -75,11 +127,15 @@ namespace DOG
 			clipData[i].weight = LinearBlend(transitionTime, c.transitionLength, c.startWeight, c.targetWeight, c.currentWeight);
 			
 			groupWeightSum[c.group] += clipData[i].weight;
+
+			if (i < 4)
+				clips[0].normalizedTime = hackN;
 		}
-	
+		
 		// Normalize group weights
 		for (u8 i = 0; i < activeClips; i++)
 		{
+			auto hackN = clips[i].normalizedTime;
 			if (i < clipsInGroup[groupA])
 				clipData[i].weight /= groupWeightSum[groupA];
 			else if (i < clipsInGroup[groupA] + clipsInGroup[groupB])
@@ -148,20 +204,26 @@ namespace DOG
 		return false;
 	}
 
-	void Animator::AddAnimationClip(i8 id, f32 duration, f32 ticks, u8 group, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop, f32 timeScale, f32 startDelay)
+	void Animator::AddAnimationClip(i8 id, f32 duration, f32 ticks, u8 group, f32 transitionLength, f32 startWeight, f32 targetWeight, bool loop, f32 timeScale, f32 startDelay, bool override)
 	{
 		i32 clipIdx = ClipIdx(group, id);
-		ResetClip(clips[clipIdx]);
+		if (!(loop && clips[clipIdx].loop))
+			ResetClip(clips[clipIdx]);
 
 		// set new clip
 		auto& addedClip = clips[clipIdx];
 	
 		addedClip.animationID = id;
 		addedClip.group = group;
-		addedClip.transitionStart = globalTime + startDelay;
+		if (!(loop && clips[clipIdx].loop))
+			addedClip.transitionStart = globalTime + startDelay;
 		addedClip.transitionLength = transitionLength;
 		//addedClip.blendMode = WeightBlendMode::bezier;
-		addedClip.startWeight = addedClip.currentWeight = startWeight;
+		if (loop && clips[clipIdx].loop)
+			addedClip.startWeight = addedClip.currentWeight = clips[clipIdx].currentWeight;
+		else
+			addedClip.startWeight = addedClip.currentWeight = 0.f;
+
 		addedClip.targetWeight = targetWeight;
 		addedClip.timeScale = timeScale;
 		addedClip.loop = loop;

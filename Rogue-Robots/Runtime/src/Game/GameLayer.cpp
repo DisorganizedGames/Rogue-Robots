@@ -684,7 +684,8 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPassiveType>("GetPassiveType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::IsBulletLocal>("IsBulletLocal");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::Exists>("Exists");
-	
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::ModifyAnimationComponent>("ModifyAnimationComponent");
+
 
 	global->SetLuaInterface(luaInterface);
 
@@ -852,16 +853,16 @@ std::vector<entity> GameLayer::LoadLevel()
 
 void GameLayer::Input(DOG::Key key)
 {
-	EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
+	EntityManager::Get().Collect<InputController, AnimationComponent, ThisPlayer>().Do([&](InputController& inputC, AnimationComponent& ac, ThisPlayer&)
 	{
 			if (key == DOG::Key::W)
-				inputC.forward = true;
+				inputC.forward = true, ac.input[0] = 1, ac.ost = true;
 			if (key == DOG::Key::A)
-				inputC.left = true;
+				inputC.left = true, ac.input[1] = 1;
 			if (key == DOG::Key::S)
-				inputC.backwards = true;
+				inputC.backwards = true, ac.input[3] = 1;
 			if (key == DOG::Key::D)
-				inputC.right = true;
+				inputC.right = true, ac.input[2] = 1;
 			if (key == DOG::Key::LShift)
 				inputC.down = true;
 			if (key == DOG::Key::Spacebar)
@@ -887,16 +888,16 @@ void GameLayer::Input(DOG::Key key)
 
 void GameLayer::Release(DOG::Key key)
 {
-	EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
+	EntityManager::Get().Collect<InputController, AnimationComponent, ThisPlayer>().Do([&](InputController& inputC, AnimationComponent& ac, ThisPlayer&)
 		{
 			if (key == DOG::Key::W)
-				inputC.forward = false;
+				inputC.forward = false, ac.input[0] = 0;
 			if (key == DOG::Key::A)
-				inputC.left = false;
+				inputC.left = false, ac.input[1] = 0;
 			if (key == DOG::Key::S)
-				inputC.backwards = false;
+				inputC.backwards = false, ac.input[3] = 0;
 			if (key == DOG::Key::D)
-				inputC.right = false;
+				inputC.right = false, ac.input[2] = 0;
 			if (key == DOG::Key::LShift)
 				inputC.down = false;
 			if (key == DOG::Key::Spacebar)
@@ -953,7 +954,7 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		};
 		auto& tf = m_entityManager.AddComponent<TransformComponent>(playerI, pos - offset);
 		m_entityManager.AddComponent<ModelComponent>(playerI, m_playerModels[i]);
-		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 0.8f, true, 75.f);
+		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 5.8f, true, 75.f);
 		auto& rb = m_entityManager.AddComponent<RigidbodyComponent>(playerI, playerI);
 		rb.ConstrainRotation(true, true, true);
 		rb.disableDeactivation = true;
@@ -975,12 +976,14 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 			m_entityManager.AddComponent<ThisPlayer>(playerI);
 			m_entityManager.AddComponent<AudioListenerComponent>(playerI);
 			auto& ac = m_entityManager.AddComponent<AnimationComponent>(playerI);
+			ac.animatorID = i;
 			ac.rigID = 0;
 		}
 		else
 		{
 			auto& ac = m_entityManager.AddComponent<AnimationComponent>(playerI);
 			ac.rigID = 0;
+			ac.animatorID = i;
 			m_entityManager.AddComponent<OnlinePlayer>(playerI);
 		}
 	}
