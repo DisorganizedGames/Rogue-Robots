@@ -138,15 +138,15 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	AddComponent<ShadowReceiverComponent>(doorTest);
 
 
-	entity passiveItemTest = CreateEntity();
-	AddComponent<PassiveItemComponent>(passiveItemTest).type = PassiveItemComponent::Type::Template;
-	AddComponent<PickupComponent>(passiveItemTest);
-	AddComponent<ModelComponent>(passiveItemTest, medkitID);
-	AddComponent<TransformComponent>(passiveItemTest, Vector3(25, 15, 30));
-	AddComponent<BoxColliderComponent>(passiveItemTest, passiveItemTest, Vector3(0.2f, 0.2f, 0.2f), true);
-	AddComponent<RigidbodyComponent>(passiveItemTest, passiveItemTest, false);
-	AddComponent<ShadowReceiverComponent>(passiveItemTest);
-	LuaMain::GetScriptManager()->AddScript(passiveItemTest, "Pickupable.lua");
+	//entity passiveItemTest = CreateEntity();
+	//AddComponent<PassiveItemComponent>(passiveItemTest).type = PassiveItemComponent::Type::MaxHealthBoost;
+	//AddComponent<PickupComponent>(passiveItemTest);
+	//AddComponent<ModelComponent>(passiveItemTest, medkitID);
+	//AddComponent<TransformComponent>(passiveItemTest, Vector3(25, 15, 30));
+	//AddComponent<BoxColliderComponent>(passiveItemTest, passiveItemTest, Vector3(0.2f, 0.2f, 0.2f), true);
+	//AddComponent<RigidbodyComponent>(passiveItemTest, passiveItemTest, false);
+	//AddComponent<ShadowReceiverComponent>(passiveItemTest);
+	//LuaMain::GetScriptManager()->AddScript(passiveItemTest, "Pickupable.lua");
 
 	CreateTrampolinePickup(Vector3(23.0f, 6.0f, 30.0f));
 	CreateTrampolinePickup(Vector3(20.0f, 6.0f, 35.0f));
@@ -168,6 +168,13 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	CreateMissilePickup(Vector3(40.0f, 6.0f, 17.0f));
 
 	CreateGrenadePickup(Vector3(42.0f, 6.0f, 17.0f));
+
+	CreateMaxHealthBoostPickup(Vector3(44.0f, 6.0f, 17.0f));
+	CreateMaxHealthBoostPickup(Vector3(47.0f, 6.0f, 17.0f));
+
+	CreateFrostModificationPickup(Vector3(50.0f, 6.0f, 17.0f));
+
+	CreateFrostModificationPickup(Vector3(53.0f, 6.0f, 17.0f));
 
 	// Setup lights
 	// Default lights
@@ -319,12 +326,48 @@ void TestScene::CreateGrenadePickup(DirectX::SimpleMath::Vector3 position)
 	bc.ammoPerPickup = 2;
 	AddComponent<PickupComponent>(grenadeEntity);
 	AddComponent<ModelComponent>(grenadeEntity, grenadeID);
-	AddComponent<TransformComponent>(grenadeEntity, position).SetScale({ 0.8f, 0.8f, 0.8f });
+	AddComponent<TransformComponent>(grenadeEntity, position).SetScale({ 0.5f, 0.5f, 0.5f });
 	AddComponent<ShadowReceiverComponent>(grenadeEntity);
 	LuaMain::GetScriptManager()->AddScript(grenadeEntity, "Pickupable.lua");
 
 	auto& lerpAnimator = AddComponent<PickupLerpAnimateComponent>(grenadeEntity);
 	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(grenadeEntity).GetPosition().y;
+	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
+}
+
+void TestScene::CreateMaxHealthBoostPickup(DirectX::SimpleMath::Vector3 position)
+{
+	u32 healthBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Medkit.glb");
+
+	entity healthBoostEntity = CreateEntity();
+	auto& bc = AddComponent<PassiveItemComponent>(healthBoostEntity).type = PassiveItemComponent::Type::MaxHealthBoost;
+	AddComponent<PickupComponent>(healthBoostEntity);
+	AddComponent<ModelComponent>(healthBoostEntity, healthBoostID);
+	AddComponent<TransformComponent>(healthBoostEntity, position).SetScale({ 0.5f, 0.5f, 0.5f });
+	AddComponent<ShadowReceiverComponent>(healthBoostEntity);
+	LuaMain::GetScriptManager()->AddScript(healthBoostEntity, "Pickupable.lua");
+
+	auto& lerpAnimator = AddComponent<PickupLerpAnimateComponent>(healthBoostEntity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(healthBoostEntity).GetPosition().y;
+	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
+}
+
+void TestScene::CreateFrostModificationPickup(DirectX::SimpleMath::Vector3 position)
+{
+	u32 frostModID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
+
+	entity frostModEntity = CreateEntity();
+	auto& bc = AddComponent<MagazineModificationComponent>(frostModEntity).type = MagazineModificationComponent::Type::Frost;
+	AddComponent<PickupComponent>(frostModEntity);
+	AddComponent<ModelComponent>(frostModEntity, frostModID);
+	AddComponent<TransformComponent>(frostModEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
+	AddComponent<ShadowReceiverComponent>(frostModEntity);
+	LuaMain::GetScriptManager()->AddScript(frostModEntity, "Pickupable.lua");
+
+	auto& lerpAnimator = AddComponent<PickupLerpAnimateComponent>(frostModEntity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(frostModEntity).GetPosition().y;
 	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
 	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
 }

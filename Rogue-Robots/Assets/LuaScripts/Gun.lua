@@ -13,7 +13,8 @@ local maxMissiles = 10
 
 local maxBasicAmmo = 999999
 
-local currentAmmoCount = maxBasicAmmo
+local bulletMagazineCapacity = 30
+local currentAmmoCount = bulletMagazineCapacity 
 local hasBasicBarrelEquipped = true
 
 --Managers for objects & component functions.
@@ -88,7 +89,6 @@ function OnStart()
 	-- Initialize base components
 	miscComponent = MiscComponent.BasicShot()
 	barrelComponent = BarrelManager.BasicBarrel()
-	--barrelComponent = BarrelManager.Grenade()  --ObjectManager:CreateObject()
 	magazineComponent = MagazineManager.BasicEffect() --ObjectManager:CreateObject()
 
 	EventSystem:Register("ItemPickup" .. EntityID, OnPickup)
@@ -147,18 +147,18 @@ function OnUpdate()
 	--	barrelSwitched = false
 	--end
 	--Magazine temp switch
-	if Entity:GetAction(EntityID, "SwitchMagazineComponent") and not magazineSwitched then
-		magazineSwitched = true
-		if magazineComponentIdx == 0 then
-			magazineComponent = MagazineManager.FrostEffect() 
-			magazineComponentIdx = 1
-		else
-			magazineComponent = MagazineManager.BasicEffect()
-			magazineComponentIdx = 0
-		end
-	elseif not Entity:GetAction(EntityID, "SwitchMagazineComponent") then
-		magazineSwitched = false
-	end
+	--if Entity:GetAction(EntityID, "SwitchMagazineComponent") and not magazineSwitched then
+	--	magazineSwitched = true
+	--	if magazineComponentIdx == 0 then
+	--		magazineComponent = MagazineManager.FrostEffect() 
+	--		magazineComponentIdx = 1
+	--	else
+	--		magazineComponent = MagazineManager.BasicEffect()
+	--		magazineComponentIdx = 0
+	--	end
+	--elseif not Entity:GetAction(EntityID, "SwitchMagazineComponent") then
+	--	magazineSwitched = false
+	--end
 
 	NormalBulletUpdate()
 
@@ -186,15 +186,15 @@ function OnUpdate()
 			--Keep track of which barrel created the bullet
 			newBullets[i].barrel = barrelComponent
 			magazineComponent:Update(newBullets[i])
-			if not hasBasicBarrelEquipped then
-				currentAmmoCount = currentAmmoCount - 1
-				Entity:UpdateMagazine(EntityID, currentAmmoCount)
-				if currentAmmoCount == 0 then
-					barrelComponent = BarrelManager.BasicBarrel()
-					Entity:RemoveComponent(EntityID, "BarrelComponent")
-					currentAmmoCount = maxBasicAmmo
-					hasBasicBarrelEquipped = true
-				end
+			
+			currentAmmoCount = currentAmmoCount - 1
+			Entity:UpdateMagazine(EntityID, currentAmmoCount)
+			if currentAmmoCount == 0 and not hasBasicBarrelEquipped then
+				barrelComponent = BarrelManager.BasicBarrel()
+				Entity:RemoveComponent(EntityID, "BarrelComponent")
+				Entity:AddComponent(EntityID, "BarrelComponent", 0, 30, 999999)
+				currentAmmoCount = maxBasicAmmo
+				hasBasicBarrelEquipped = true
 			end
 		end
 	end
@@ -248,7 +248,7 @@ end
 
 function ReloadSystem()
 	if (Entity:HasComponent(EntityID, "ThisPlayer")) then
-		Game:AmmoUI(currentAmmo, ammoLeft)
+		--Game:AmmoUI(currentAmmo, ammoLeft)
 	end
 
 	local oldMaxAmmo = maxAmmo
@@ -289,6 +289,8 @@ function ReloadSystem()
 		if basicBarrelEquiped then
 			currentAmmo = maxAmmo
 			ammoLeft = -1
+			Entity:UpdateMagazine(EntityID, bulletMagazineCapacity)
+			currentAmmoCount = bulletMagazineCapacity
 		end
 	end
 
@@ -347,42 +349,50 @@ function OnPickup(pickup)
 		local ammoCapForType = Entity:GetAmmoCapacityForBarrelType(pickup)
 		local ammoPerPickup = Entity:GetAmmoCountPerPickup(pickup)
 
-		if Entity:HasComponent(EntityID, "BarrelComponent") then
-			local typeOfEquipped = Entity:GetBarrelType(EntityID)
-			if typeOfPickedUpBarrel == typeOfEquipped then
-					if currentAmmoCount + ammoPerPickup > ammoCapForType then
-						currentAmmoCount = ammoCapForType
-						print("Set maximum ammo count")
-					else
-						currentAmmoCount = currentAmmoCount + ammoPerPickup
-						print("Added some ammo amount")
-					end
-					Entity:UpdateMagazine(EntityID, currentAmmoCount)
-			else
-				--Type must be switched and things must be ''reset'', which we AS OF NOW simply do by replacing the component:
-				Entity:RemoveComponent(EntityID, "BarrelComponent")
-				if typeOfPickedUpBarrel == "Missile" then
-					Entity:AddComponent(EntityID, "BarrelComponent", 1, ammoPerPickup, ammoCapForType)
-					barrelComponent = BarrelManager.Missile()
+		local typeOfEquipped = Entity:GetBarrelType(EntityID)
+		if typeOfPickedUpBarrel == typeOfEquipped then
+				if currentAmmoCount + ammoPerPickup > ammoCapForType then
+					currentAmmoCount = ammoCapForType
 				else
-					Entity:AddComponent(EntityID, "BarrelComponent", 0, ammoPerPickup, ammoCapForType)
-					barrelComponent = BarrelManager.Grenade()
+					currentAmmoCount = currentAmmoCount + ammoPerPickup
 				end
-				hasBasicBarrelEquipped = false
-				currentAmmoCount = ammoPerPickup
-			end
+				Entity:UpdateMagazine(EntityID, currentAmmoCount)
 		else
-			if typeOfPickedUpBarrel == "Missile" then
-				Entity:AddComponent(EntityID, "BarrelComponent", 1, ammoPerPickup, ammoCapForType) -- '1' is the missile enum!
-				print("Added missile barrel component!")
-				barrelComponent = BarrelManager.Missile()
+			--Type must be switched and things must be ''reset'', which we AS OF NOW simply do by replacing the component:
+			Entity:RemoveComponent(EntityID, "BarrelComponent")
+			if typeOfPickedUpBarrel == "Bullet" then --We can't pick it up in the world, but this makes it possible so we could.
+				Entity:AddComponent(EntityID, "BarrelComponent", 0, 999999, ammoCapForType)
+				barrelComponent = BarrelManager.BasicBarrel()
+				hasBasicBarrelEquipped = true
 			elseif typeOfPickedUpBarrel == "Grenade" then
-				Entity:AddComponent(EntityID, "BarrelComponent", 0, ammoPerPickup, ammoCapForType) -- '0' is the grenade enum!
-				print("Added grenade barrel component!")
+				Entity:AddComponent(EntityID, "BarrelComponent", 1, ammoPerPickup, ammoCapForType)
 				barrelComponent = BarrelManager.Grenade()
+				hasBasicBarrelEquipped = false
+			else
+				Entity:AddComponent(EntityID, "BarrelComponent", 2, ammoPerPickup, ammoCapForType)
+				barrelComponent = BarrelManager.Missile()
+				hasBasicBarrelEquipped = false
 			end
-			hasBasicBarrelEquipped = false
 			currentAmmoCount = ammoPerPickup
+		end
+	elseif Entity:HasComponent(pickup, "MagazineModificationComponent") then
+		local modificationType = Entity:GetModificationType(pickup)
+		local activeModificationType = "None"
+		if Entity:HasComponent(EntityID, "MagazineModificationComponent") then
+			activeModificationType = Entity:GetModificationType(EntityID)
+		end
+
+		if activeModificationType == "None" then -- Add New
+			if (modificationType == "Frost") then
+				Entity:AddComponent(EntityID, "MagazineModificationComponent", 0) -- 0 is frost!
+				magazineComponent = MagazineManager.FrostEffect()
+			end
+		elseif activeModificationType ~= modificationType then -- Let's dirty swap!
+			Entity:RemoveComponent(EntityID, "MagazineModificationComponent")
+			if modificationType == "Frost" then
+				Entity:AddComponent(entityID, "MagazineModificationComponent", 0) -- 0 is frost!
+				magazineComponent = MagazineManager.FrostEffect()
+			end
 		end
 	end
 end

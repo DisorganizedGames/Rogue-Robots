@@ -34,8 +34,8 @@ function OnUpdate()
 	end
 	
 	stats.health = hp
-
 	Entity:SetPlayerStats(EntityID, stats)
+	print(Entity:GetPlayerStat(EntityID, "maxHealth"))
 
 	itemsDirty = false
 end
