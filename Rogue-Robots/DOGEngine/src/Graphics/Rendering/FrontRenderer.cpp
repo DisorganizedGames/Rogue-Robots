@@ -142,8 +142,13 @@ namespace DOG::gfx
 						{
 							if (EntityManager::Get().HasComponent<ModularBlockComponent>(e))
 								m_doubleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC, false });
+							else if (EntityManager::Get().HasComponent<AnimationComponent>(e))
+								m_doubleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC, false, true, EntityManager::Get().GetComponent<AnimationComponent>(e).offset });
 							else
 								m_singleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC });
+
+
+
 						}
 					}
 
@@ -262,14 +267,22 @@ namespace DOG::gfx
 			{
 				if (cull({ sub.tc.worldMatrix(3, 0), sub.tc.worldMatrix(3, 1), sub.tc.worldMatrix(3, 2) }))
 					continue;
-				m_renderer->SubmitSingleSidedShadowMesh(shadowID, sub.mesh, sub.submesh, sub.tc);
+				if (sub.animated)
+					m_renderer->SubmitSingleSidedShadowMesh(shadowID, sub.mesh, sub.submesh, sub.tc, true, sub.animNum);
+				else
+					m_renderer->SubmitSingleSidedShadowMesh(shadowID, sub.mesh, sub.submesh, sub.tc);
+
 			}
 
 			for (const auto& sub : m_doubleSidedShadowed)
 			{
 				if (cull({ sub.tc.worldMatrix(3, 0), sub.tc.worldMatrix(3, 1), sub.tc.worldMatrix(3, 2) }))
 					continue;
-				m_renderer->SubmitDoubleSidedShadowMesh(shadowID, sub.mesh, sub.submesh, sub.tc);
+
+				if (sub.animated)
+					m_renderer->SubmitDoubleSidedShadowMesh(shadowID, sub.mesh, sub.submesh, sub.tc, true, sub.animNum);
+				else
+					m_renderer->SubmitDoubleSidedShadowMesh(shadowID, sub.mesh, sub.submesh, sub.tc);
 			}
 		}
 

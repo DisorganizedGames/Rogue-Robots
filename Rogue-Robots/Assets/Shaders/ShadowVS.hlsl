@@ -47,10 +47,10 @@ struct PushConstantElement
     uint gdDescriptor;
     uint perFrameOffset;
     
- 
     uint perDrawLight;
     uint wireframe;
     uint smIdx;
+    uint animOffset;
 };
 ConstantBuffer<PushConstantElement> constants : register(b0, space0);
 
@@ -84,10 +84,10 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     {
         ConstantBuffer<JointsData> jointsData = ResourceDescriptorHeap[perDrawData.jointsDescriptor];
         
-        matrix mat = jointsData.joints[bw.iw[0].idx] * bw.iw[0].weight;
-        mat += jointsData.joints[bw.iw[1].idx] * bw.iw[1].weight;
-        mat += jointsData.joints[bw.iw[2].idx] * bw.iw[2].weight;
-        mat += jointsData.joints[bw.iw[3].idx] * bw.iw[3].weight;
+        matrix mat = jointsData.joints[bw.iw[0].idx + constants.animOffset] * bw.iw[0].weight;
+        mat += jointsData.joints[bw.iw[1].idx + constants.animOffset] * bw.iw[1].weight;
+        mat += jointsData.joints[bw.iw[2].idx + constants.animOffset] * bw.iw[2].weight;
+        mat += jointsData.joints[bw.iw[3].idx + constants.animOffset] * bw.iw[3].weight;
         pos = (float3) mul(float4(pos, 1.0f), mat);
     }
     

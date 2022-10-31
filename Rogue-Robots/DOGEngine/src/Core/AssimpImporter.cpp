@@ -283,7 +283,7 @@ namespace DOG
 						auto value = XMLoadFloat4(&posKeys.rbegin()[k].value);
 						auto prev = XMLoadFloat4(&posKeys.rbegin()[k +1].value);
 						auto toStore = value - prev;
-						posKeys.rbegin()[k].value = {0.f, XMVectorGetY(toStore), 0.f, 0.f};
+						posKeys.rbegin()[k].value = {0.f, -XMVectorGetY(toStore), 0.f, 0.f};
 						//posKeys.rbegin()[k].value = { 0.f, XMVectorGetY(value) / 2.f, 0.f, 0.f };
 					}
 					if(posKeys.size() > 1)posKeys[0].value = posKeys[1].value;

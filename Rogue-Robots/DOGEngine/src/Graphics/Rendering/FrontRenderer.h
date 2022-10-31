@@ -54,6 +54,9 @@ namespace DOG::gfx
 			u32 submesh{ 0 };
 			TransformComponent tc;
 			bool singleSided{ true };
+
+			bool animated{ false };
+			u32 animNum{ 0 };
 		};
 
 		std::vector<ShadowSubmission> m_singleSidedShadowed;

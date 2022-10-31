@@ -29,7 +29,7 @@ namespace DOG
 		auto deltaTime = (f32)Time::DeltaTime();
 		//tmp setting base animaton
 		static i32 count = 0;
-		if (count < 4) {
+		if (count < 3) {
 			EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
@@ -41,7 +41,7 @@ namespace DOG
 						count++;
 						// tmp setting base states cheat
 						auto idleIdx = 2, walkIdx = 13, strafeLidx = 7, strafeRidx = 9, runIdx = 5, runBackIdx = 6;
-
+						// state anims hack
 						auto danceIdx = m_rigs[modelaC.rigID]->animations.size()-1 - modelaC.animatorID;
 						auto& dance = m_rigs[modelaC.rigID]->animations[danceIdx];
 						auto& idle = m_rigs[modelaC.rigID]->animations[idleIdx];
@@ -84,8 +84,8 @@ namespace DOG
 					auto& animator = m_playerAnimators[rAC.animatorID];
 					if (!animator.loaded)
 						return;
-					animator.offset = mixamoCount * MIXAMO_RIG.nJoints;
-					rAC.offset = MIXAMO_RIG.nJoints * mixamoCount++;
+
+					rAC.offset = animator.offset = rAC.animatorID *MIXAMO_RIG.nJoints;
 
 					animator.HackUpdate(&rAC.input[0], deltaTime);
 					UpdateSkeleton(model->animation, animator);

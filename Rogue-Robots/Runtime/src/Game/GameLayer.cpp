@@ -854,15 +854,26 @@ std::vector<entity> GameLayer::LoadLevel()
 void GameLayer::Input(DOG::Key key)
 {
 	EntityManager::Get().Collect<InputController, AnimationComponent, ThisPlayer>().Do([&](InputController& inputC, AnimationComponent& ac, ThisPlayer&)
+		{
+			if (key == DOG::Key::W)
+				ac.input[0] = 1;
+			if (key == DOG::Key::A)
+				ac.input[1] = 1;
+			if (key == DOG::Key::S)
+				ac.input[3] = 1;
+			if (key == DOG::Key::D)
+				ac.input[2] = 1;
+		});
+	EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
 	{
 			if (key == DOG::Key::W)
-				inputC.forward = true, ac.input[0] = 1;
+				inputC.forward = true;
 			if (key == DOG::Key::A)
-				inputC.left = true, ac.input[1] = 1;
+				inputC.left = true;
 			if (key == DOG::Key::S)
-				inputC.backwards = true, ac.input[3] = 1;
+				inputC.backwards = true;
 			if (key == DOG::Key::D)
-				inputC.right = true, ac.input[2] = 1;
+				inputC.right = true;
 			if (key == DOG::Key::LShift)
 				inputC.down = true;
 			if (key == DOG::Key::Spacebar)
@@ -891,13 +902,24 @@ void GameLayer::Release(DOG::Key key)
 	EntityManager::Get().Collect<InputController, AnimationComponent, ThisPlayer>().Do([&](InputController& inputC, AnimationComponent& ac, ThisPlayer&)
 		{
 			if (key == DOG::Key::W)
-				inputC.forward = false, ac.input[0] = 0;
+				ac.input[0] = 0;
 			if (key == DOG::Key::A)
-				inputC.left = false, ac.input[1] = 0;
+				ac.input[1] = 0;
 			if (key == DOG::Key::S)
-				inputC.backwards = false, ac.input[3] = 0;
+				ac.input[3] = 0;
 			if (key == DOG::Key::D)
-				inputC.right = false, ac.input[2] = 0;
+				ac.input[2] = 0;
+		});
+	EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
+		{
+			if (key == DOG::Key::W)
+				inputC.forward = false;
+			if (key == DOG::Key::A)
+				inputC.left = false;
+			if (key == DOG::Key::S)
+				inputC.backwards = false;
+			if (key == DOG::Key::D)
+				inputC.right = false;
 			if (key == DOG::Key::LShift)
 				inputC.down = false;
 			if (key == DOG::Key::Spacebar)
@@ -954,7 +976,7 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		};
 		auto& tf = m_entityManager.AddComponent<TransformComponent>(playerI, pos - offset);
 		m_entityManager.AddComponent<ModelComponent>(playerI, m_playerModels[i]);
-		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 5.8f, true, 75.f);
+		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 2.75f, true, 75.f);
 		auto& rb = m_entityManager.AddComponent<RigidbodyComponent>(playerI, playerI);
 		rb.ConstrainRotation(true, true, true);
 		rb.disableDeactivation = true;
@@ -975,9 +997,9 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		{
 			m_entityManager.AddComponent<ThisPlayer>(playerI);
 			m_entityManager.AddComponent<AudioListenerComponent>(playerI);
-			auto& ac = m_entityManager.AddComponent<AnimationComponent>(playerI);
+			/*auto& ac = m_entityManager.AddComponent<AnimationComponent>(playerI);
 			ac.animatorID = i;
-			ac.rigID = 0;
+			ac.rigID = 0;*/
 		}
 		else
 		{

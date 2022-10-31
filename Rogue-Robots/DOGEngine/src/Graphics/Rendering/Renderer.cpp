@@ -115,7 +115,7 @@ namespace DOG::gfx
 
 
 		// multiple of curr loaded mixamo skeleton
-		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100);		
+		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * S_MAX_FIF);		
 		m_cmdl = m_rd->AllocateCommandList();
 
 		// Startup
@@ -441,26 +441,31 @@ namespace DOG::gfx
 		sub.mat = material;
 		sub.world = world;
 		sub.tempAnimNum = num;
+		sub.animated = true;
 		m_animatedDraws.push_back(sub);
 	}
 
-	void DOG::gfx::Renderer::SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world)
+	void DOG::gfx::Renderer::SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world, bool animated, u32 animOffset)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
 		sub.submesh = submesh;
 		sub.world = world;
+		sub.animated = animated;
+		sub.tempAnimNum = animOffset;
 
 		const auto& caster = m_activeShadowCasters[shadowID];
 		m_singleSidedShadowDraws[caster.singleSidedBucket].push_back(sub);
 	}
 
-	void DOG::gfx::Renderer::SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world)
+	void DOG::gfx::Renderer::SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world, bool animated, u32 animOffset)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
 		sub.submesh = submesh;
 		sub.world = world;
+		sub.animated = animated;
+		sub.tempAnimNum = animOffset;
 
 		const auto& caster = m_activeShadowCasters[shadowID];
 		m_doubleSidedShadowDraws[caster.doubleSidedBucket].push_back(sub);
@@ -677,7 +682,7 @@ namespace DOG::gfx
 					perDrawData.globalSubmeshID = meshTab->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
 					perDrawData.globalMaterialID = 0;
 
-					if (animated)
+					if (sub.animated || animated)
 					{
 						// Resolve joints
 						JointData jointsData{};
@@ -686,6 +691,7 @@ namespace DOG::gfx
 							jointsData.joints[i] = bonezy->m_vsJoints[i];
 						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
 						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
+
 					}
 
 					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
@@ -696,7 +702,8 @@ namespace DOG::gfx
 						.AppendConstant(m_currPfDescriptor)
 						.AppendConstant(perLightHandle.globalDescriptor)
 						.AppendConstant(wireframe ? 1 : 0)
-						.AppendConstant(smIdx);
+						.AppendConstant(smIdx)
+						.AppendConstant(sub.tempAnimNum);
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
