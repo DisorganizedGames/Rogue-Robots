@@ -39,11 +39,11 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderPickupItemUIText>());
 	m_entityManager.RegisterSystem(std::make_unique<PickUpTranslateToPlayerSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderAmmunitionTextSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<MVPRenderReloadHintTextSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_agentManager = new AgentManager();
 	m_nrOfPlayers = MAX_PLAYER_COUNT;
 	m_networkStatus = 0;
-
 
 	m_keyBindingDescriptions.emplace_back("wasd", "walk");
 	m_keyBindingDescriptions.emplace_back("space", "jump");
@@ -368,6 +368,34 @@ void GameLayer::PickUpItem()
 				ac.target.y -= 1.0f;
 			}
 		});
+
+	m_entityManager.Collect<EligiblePassiveItemComponent>().Do([this](DOG::entity player, EligiblePassiveItemComponent& eligiblePickUp)
+		{
+			m_entityManager.RemoveComponent<EligiblePassiveItemComponent>(player);
+
+			if (!m_entityManager.HasComponent<PickedUpItemComponent>(eligiblePickUp.passiveItemEntity))
+			{
+				m_entityManager.AddComponent<PickedUpItemComponent>(eligiblePickUp.passiveItemEntity);
+				auto& ac = m_entityManager.GetComponent<DOG::PickupLerpAnimateComponent>(eligiblePickUp.passiveItemEntity);
+				ac.origin = m_entityManager.GetComponent<DOG::TransformComponent>(eligiblePickUp.passiveItemEntity).GetPosition();
+				ac.target = m_entityManager.GetComponent<DOG::TransformComponent>(player).GetPosition();
+				ac.target.y -= 1.0f;
+			}
+		});
+
+	m_entityManager.Collect<EligibleMagazineModificationComponent>().Do([this](DOG::entity player, EligibleMagazineModificationComponent& eligiblePickUp)
+		{
+			m_entityManager.RemoveComponent<EligibleMagazineModificationComponent>(player);
+
+			if (!m_entityManager.HasComponent<PickedUpItemComponent>(eligiblePickUp.magazineModificationEntity))
+			{
+				m_entityManager.AddComponent<PickedUpItemComponent>(eligiblePickUp.magazineModificationEntity);
+				auto& ac = m_entityManager.GetComponent<DOG::PickupLerpAnimateComponent>(eligiblePickUp.magazineModificationEntity);
+				ac.origin = m_entityManager.GetComponent<DOG::TransformComponent>(eligiblePickUp.magazineModificationEntity).GetPosition();
+				ac.target = m_entityManager.GetComponent<DOG::TransformComponent>(player).GetPosition();
+				ac.target.y -= 1.0f;
+			}
+		});
 }
 
 void GameLayer::OnEvent(DOG::IEvent& event)
@@ -688,6 +716,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPassiveType>("GetPassiveType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetActiveType>("GetActiveType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetBarrelType>("GetBarrelType");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetModificationType>("GetModificationType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAmmoCapacityForBarrelType>("GetAmmoCapacityForBarrelType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAmmoCountPerPickup>("GetAmmoCountPerPickup");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::UpdateMagazine>("UpdateMagazine");

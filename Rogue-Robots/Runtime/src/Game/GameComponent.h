@@ -117,6 +117,12 @@ struct PassiveItemComponent {
 	Type type;
 };
 
+struct EligiblePassiveItemComponent
+{
+	DOG::entity passiveItemEntity;
+	PassiveItemComponent::Type type;
+};
+
 //The active item that currently resides in inventory
 struct ActiveItemComponent
 {
@@ -145,7 +151,7 @@ struct PickedUpItemComponent
 
 struct BarrelComponent
 {
-	enum class Type { Grenade = 0, Missile };
+	enum class Type { Bullet = 0, Grenade, Missile };
 
 	Type type;
 	u32 maximumAmmoCapacityForType;
@@ -157,6 +163,19 @@ struct EligibleBarrelComponent
 {
 	DOG::entity barrelComponentEntity;
 	BarrelComponent::Type type;
+};
+
+struct MagazineModificationComponent
+{
+	enum class Type { Frost = 0 };
+
+	Type type;
+};
+
+struct EligibleMagazineModificationComponent
+{
+	DOG::entity magazineModificationEntity;
+	MagazineModificationComponent::Type type;
 };
 
 struct CreateAndDestroyEntityComponent
