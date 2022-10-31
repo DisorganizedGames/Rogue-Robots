@@ -272,8 +272,6 @@ namespace DOG::gfx
 
 	void FrontRenderer::Render(f32)
 	{
-		Update(0.f);
-
 		m_renderer->Render(0.f);
 	}
 

@@ -105,7 +105,7 @@ namespace DOG::gfx
 
 		// For internal per frame management
 		const u32 maxUploadPerFrame = 512'000;
-		m_perFrameUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadPerFrame, S_MAX_FIF);
+		m_perFrameUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadPerFrame, S_MAX_FIF, QueueType::Copy);
 
 
 
@@ -531,23 +531,19 @@ namespace DOG::gfx
 		m_pfDataTable->SendCopyRequests(*m_perFrameUploadCtx);
 
 
-
+		// Resolve any per frame copies from CPU
+		{
+			ZoneNamedN(FrameCopyResolve, "Frame Copies", true);
+			m_frameCopyReceipt = m_perFrameUploadCtx->SubmitCopies();
+		}
 	}
 
 	static bool s_donez = false;
 	void Renderer::Render(f32)
 	{
 		ZoneNamedN(RenderScope, "Render", true);
-		MINIPROFILE
+		MINIPROFILE;
 
-
-		// Resolve any per frame copies from CPU
-		{
-			ZoneNamedN(FrameCopyResolve, "Frame Copies", true);
-			m_perFrameUploadCtx->SubmitCopies();
-		}
-
-		
 		auto& rg = *m_rg;
 
 		if (!s_donez)
@@ -1045,7 +1041,7 @@ namespace DOG::gfx
 
 		{
 			ZoneNamedN(RGExecuteScope, "RG Execution", true);
-			m_frameSyncs[m_currFrameIdx] = rg.Execute({}, true);
+			m_frameSyncs[m_currFrameIdx] = rg.Execute(m_frameCopyReceipt, true);
 		}
 		ui->GetBackend()->BeginFrame();
 		ui->DrawUI();

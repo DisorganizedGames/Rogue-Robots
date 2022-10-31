@@ -206,6 +206,7 @@ namespace DOG::gfx
 		std::unique_ptr<RGBlackboard> m_rgBlackboard;
 		std::unique_ptr<RenderGraph> m_rg;
 
+		std::optional<SyncReceipt> m_frameCopyReceipt;
 
 
 

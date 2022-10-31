@@ -17,8 +17,12 @@ namespace DOG::gfx
 		// Mark when to start capturing GUI (ImGUI)
 		void BeginFrameUICapture();
 
+		// Gathers and updates any necessary world state for rendering this frame
+		// Should be called prior to BeginGPUFrame()
+		void Update(f32);
+
 		// Set GPU frame span: EndFrame finalizes GUI as well
-		void BeginGPUFrame();
+		void BeginGPUFrame();		// Waits for any previous GPU frames in flight!
 		void EndGPUFrame();
 
 		// Draw!
@@ -28,8 +32,7 @@ namespace DOG::gfx
 		void PerformDeferredDeletion();
 
 	private:
-		// Gathers and updates any neccessary world state rendering this frame
-		void Update(f32);
+
 
 		void UpdateLights();
 		void GatherDrawCalls();

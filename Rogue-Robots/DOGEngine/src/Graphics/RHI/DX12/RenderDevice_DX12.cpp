@@ -587,16 +587,16 @@ namespace DOG::gfx
 	{
 		CommandList_Storage storage{};
 
-		auto resetState = [this](ID3D12GraphicsCommandList4* list, QueueType queueType)
+		auto resetState = [&, rootsig = m_gfxRsig.Get(), dheap = m_descriptorMgr->get_gpu_dh_resource()](ID3D12GraphicsCommandList4* list, QueueType queueType) mutable
 		{
 			if (queueType == QueueType::Graphics || queueType == QueueType::Compute)
 			{
-				ID3D12DescriptorHeap* dheaps[] = { m_descriptorMgr->get_gpu_dh_resource() };
+				ID3D12DescriptorHeap* dheaps[] = { dheap };
 				list->SetDescriptorHeaps(_countof(dheaps), dheaps);
 
 				// Set both..
-				list->SetGraphicsRootSignature(m_gfxRsig.Get());
-				list->SetComputeRootSignature(m_gfxRsig.Get());
+				list->SetGraphicsRootSignature(rootsig);
+				list->SetComputeRootSignature(rootsig);
 			}
 		};
 
@@ -636,6 +636,7 @@ namespace DOG::gfx
 			storage.pair.list = cmdl;
 		}
 
+		storage.pair.queueType = queue;
 
 		auto handle = m_rhp.Allocate<CommandList>();
 		HandleAllocator::TryInsertMove(m_cmdls, std::move(storage), HandleAllocator::GetSlot(handle.handle));
@@ -654,7 +655,10 @@ namespace DOG::gfx
 			auto cmdl = storage.pair.list;
 			cmdl->Close();
 			cmdls[i] = cmdl.Get();
+
+			assert(queue == storage.pair.queueType);
 		}
+
 
 		DX12Queue* curr_queue = GetQueue(queue);
 
@@ -707,6 +711,7 @@ namespace DOG::gfx
 		cmdl->Close();
 		cmdls[0] = cmdl.Get();
 
+		assert(queue == storage.pair.queueType);
 
 		DX12Queue* curr_queue = GetQueue(queue);
 

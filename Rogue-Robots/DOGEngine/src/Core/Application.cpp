@@ -94,6 +94,7 @@ namespace DOG
 			}
 			Mouse::Reset();
 
+			m_frontRenderer->Update(0.f);
 			m_frontRenderer->BeginGPUFrame();
 			m_frontRenderer->Render(0.f);
 			m_frontRenderer->EndGPUFrame();
