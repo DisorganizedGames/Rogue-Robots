@@ -197,11 +197,11 @@ void GameLayer::CloseMainScene()
 
 void GameLayer::EvaluateWinCondition()
 {
-	/*if (ImGui::Button("Win"))
-	{
-		m_gameState = GameState::Won;
-	}*/
-
+	/*****************************************************************************
+	* 
+	*				Room Teleport for MVP / internal test
+	* 
+	******************************************************************************/
 	// room 3
 	int s6 = 0;
 	int s7 = 0;
@@ -289,7 +289,7 @@ void GameLayer::EvaluateWinCondition()
 	nextLevel = false;
 	EntityManager::Get().Collect<PlayersRoom0Component, DOG::TransformComponent>().Do([&](PlayersRoom0Component&, DOG::TransformComponent& trans)
 		{
-			nextLevel = nextLevel || trans.GetPosition().y < 78.f;
+			nextLevel = nextLevel || trans.GetPosition().y < 79.f;
 		});
 	if (nextLevel)
 		EntityManager::Get().Collect<PlayersRoom0Component, NetworkPlayerComponent, DOG::TransformComponent>().Do(
@@ -332,6 +332,9 @@ void GameLayer::EvaluateWinCondition()
 			ImGui::Text(("Scorpio3: " + std::to_string(s3)).c_str());
 			ImGui::Text(("Scorpio3: " + std::to_string(s3)).c_str());
 		});
+
+	/*******************************  END MVP ************************************/
+
 
 	bool agentsAlive = false;
 	EntityManager::Get().Collect<AgentIdComponent>().Do([&agentsAlive](AgentIdComponent&) { agentsAlive = true; });
@@ -886,7 +889,7 @@ std::vector<entity> GameLayer::AddFlashlightsToPlayers(const std::vector<entity>
 		dd.color = { 1.0f, 1.0f, 1.0f };
 		dd.direction = tc.GetForward();
 		dd.strength = 0.6f;
-		dd.cutoffAngle = 30.0f;
+		dd.cutoffAngle = 35.0f;
 
 		auto lh = DOG::LightManager::Get().AddSpotLight(dd, DOG::LightUpdateFrequency::PerFrame);
 
