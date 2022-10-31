@@ -50760,9 +50760,9 @@
         {
             "doubleSided" : true,
             "emissiveFactor" : [
-                1,
-                1,
-                1
+                4,
+                4,
+                4
             ],
             "emissiveTexture" : {
                 "index" : 0
@@ -50780,9 +50780,9 @@
         {
             "doubleSided" : true,
             "emissiveFactor" : [
-                1,
-                1,
-                1
+                4,
+                4,
+                4
             ],
             "emissiveTexture" : {
                 "index" : 3
@@ -50800,9 +50800,9 @@
         {
             "doubleSided" : true,
             "emissiveFactor" : [
-                1,
-                1,
-                1
+                4,
+                4,
+                4
             ],
             "emissiveTexture" : {
                 "index" : 6
