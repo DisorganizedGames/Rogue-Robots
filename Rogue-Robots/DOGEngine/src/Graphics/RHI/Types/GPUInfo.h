@@ -23,7 +23,28 @@ namespace DOG::gfx
 
 		// Memory unused by D3D12MA::Allocations are calculated by: (blockBytes - allocationBytes)
 		u32 allocatedButUnusedBytes{ 0 };
+
+		GPUPoolMemoryInfo() = default;
+		GPUPoolMemoryInfo(const GPUPoolMemoryInfo& other) = default;
+		GPUPoolMemoryInfo& operator=(const GPUPoolMemoryInfo& other) = default;
+		GPUPoolMemoryInfo operator+(const GPUPoolMemoryInfo& other) const
+		{
+			GPUPoolMemoryInfo res;
+			res.numUnusedRange = numUnusedRange + other.numUnusedRange;
+			res.smallestAllocation = smallestAllocation + other.smallestAllocation;
+			res.largestAllocation = largestAllocation + other.largestAllocation;
+			res.smallestUnusedRange = smallestUnusedRange + other.smallestUnusedRange;
+			res.largestUnusedRange = largestUnusedRange + other.largestUnusedRange;
+			res.blocksAllocated = blocksAllocated + other.blocksAllocated;
+			res.numAllocations = numAllocations + other.numAllocations;
+			res.blockBytes = blockBytes + other.blockBytes;
+			res.allocationBytes = allocationBytes + other.allocationBytes;
+			res.allocatedButUnusedBytes = allocatedButUnusedBytes + other.allocatedButUnusedBytes;
+			return res;
+		}
 	};
+
+
 
 	// GPU information for the whole device
 	struct GPUTotalMemoryInfo

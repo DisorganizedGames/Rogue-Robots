@@ -101,6 +101,7 @@ namespace DOG::gfx
 	struct MemoryPoolDesc
 	{
 		D3D12_HEAP_TYPE heapType{ D3D12_HEAP_TYPE_DEFAULT };
+		D3D12_HEAP_FLAGS heapFlags{ D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES };
 		u32 size{ 0 };
 	};
 
