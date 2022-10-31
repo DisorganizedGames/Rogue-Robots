@@ -27,6 +27,7 @@ namespace DOG
 		DirectX::SimpleMath::Vector3 angularVelocity;
 		float mass = 1.0f;
 		bool disableDeactivation = false;
+		bool noCollisionResponse = false;
 
 		//Continuous Collision Detection (used for fast moving objects like bullets)
 		bool continuousCollisionDetection = false;

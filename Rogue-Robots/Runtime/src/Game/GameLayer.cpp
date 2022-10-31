@@ -847,14 +847,8 @@ void GameLayer::HandleCheats()
 		stats.health = stats.maxHealth;
 	}
 
-	static bool noClipLastFrame = false;
-	if (noClipLastFrame != m_noClipCheat || m_noClipCheat)
-	{
-		noClipLastFrame = m_noClipCheat;
-		assert(EntityManager::Get().HasComponent<RigidbodyComponent>(player));
-		auto& rigidbody = m_entityManager.GetComponent<RigidbodyComponent>(player);
-		PhysicsEngine::SetContactResponse(rigidbody.rigidbodyHandle, !m_noClipCheat);
-	}
+	assert(EntityManager::Get().HasComponent<RigidbodyComponent>(player));
+	m_entityManager.GetComponent<RigidbodyComponent>(player).noCollisionResponse = !m_noClipCheat;
 }
 
 void GameLayer::KeyBindingDisplayMenu()
