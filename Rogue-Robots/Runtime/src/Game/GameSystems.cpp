@@ -10,14 +10,10 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	Entity e,
 	PlayerControllerComponent& player,
 	PlayerStatsComponent& playerStats,
-	TransformComponent& transform, 
+	TransformComponent& transform,
 	RigidbodyComponent& rigidbody,
 	InputController& input)
 {
-	// The debug camera is local to the client
-	if (!m_debugCamera)
-		CreateDebugCamera();
-
 	if (input.toggleMoveView)
 	{
 		input.toggleMoveView = false;
@@ -27,14 +23,12 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	// Create a new camera entity for this player
 	if (!player.cameraEntity)
 	{
-		player.cameraEntity = EntityManager::Get().CreateEntity();
-		EntityManager::Get().AddComponent<TransformComponent>(player.cameraEntity).SetScale(Vector3(1, 1, 1));
-		EntityManager::Get().AddComponent<CameraComponent>(player.cameraEntity);
+		player.cameraEntity = CreatePlayerCameraEntity(e);
 	}
 
 	CameraComponent& camera = EntityManager::Get().GetComponent<CameraComponent>(player.cameraEntity);
 	TransformComponent& cameraTransform = EntityManager::Get().GetComponent<TransformComponent>(player.cameraEntity);
-	
+
 	// Set the main camera to be ThisPlayer's camera
 	bool isThisPlayer = false;
 	if (EntityManager::Get().HasComponent<ThisPlayer>(e))
@@ -46,12 +40,20 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	if (input.toggleDebug)
 	{
 		input.toggleDebug = false;
-		m_useDebug = !m_useDebug;
-		EntityManager::Get().GetComponent<TransformComponent>(m_debugCamera).worldMatrix = cameraTransform;
+		if (!player.debugCamera)
+		{
+			player.debugCamera = CreateDebugCamera(e);
+			EntityManager::Get().GetComponent<TransformComponent>(player.debugCamera).worldMatrix = cameraTransform;
+			auto& debugCamera = EntityManager::Get().GetComponent<CameraComponent>(player.debugCamera);
+			debugCamera.isMainCamera = (player.debugCamera != 0);
+		}
+		else
+		{
+			EntityManager::Get().DeferredEntityDestruction(player.debugCamera);
+			player.debugCamera = 0;
+		}
 	}
-	auto& debugCamera = EntityManager::Get().GetComponent<CameraComponent>(m_debugCamera);
-	debugCamera.isMainCamera = m_useDebug;
-	
+
 	// Rotate player
 	Vector3 forward = cameraTransform.GetForward();
 	Vector3 right(1, 0, 0);
@@ -63,11 +65,11 @@ void PlayerMovementSystem::OnEarlyUpdate(
 
 	// Move player
 	auto moveTowards = GetMoveTowards(input, forward, right);
-	
-	if (m_useDebug)
+
+	if (player.debugCamera)
 	{
 		camera.isMainCamera = false;
-		MoveDebugCamera(moveTowards, forward, right, 10.f, input);
+		MoveDebugCamera(player.debugCamera, moveTowards, forward, right, 10.f, input);
 		return;
 	}
 
@@ -79,7 +81,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 
 	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
 	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
-	
+
 	// Place camera 0.4 units above the player transform
 	auto pos = transform.GetPosition() + Vector3(0, 0.4f, 0);
 	camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
@@ -93,12 +95,34 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	transform.worldMatrix = transform.worldMatrix.Invert();
 }
 
-void PlayerMovementSystem::CreateDebugCamera() noexcept
+PlayerMovementSystem::Entity PlayerMovementSystem::CreateDebugCamera(Entity e) noexcept
 {
-	auto& entityManager = EntityManager::Get();
-	m_debugCamera = entityManager.CreateEntity();
-	entityManager.AddComponent<TransformComponent>(m_debugCamera);
-	entityManager.AddComponent<CameraComponent>(m_debugCamera);
+	Entity debugCamera = EntityManager::Get().CreateEntity();
+	if (EntityManager::Get().HasComponent<SceneComponent>(e))
+	{
+		EntityManager::Get().AddComponent<SceneComponent>(debugCamera,
+			EntityManager::Get().GetComponent<SceneComponent>(e).scene);
+	}
+
+	EntityManager::Get().AddComponent<TransformComponent>(debugCamera);
+	EntityManager::Get().AddComponent<CameraComponent>(debugCamera);
+
+	return debugCamera;
+}
+
+PlayerMovementSystem::Entity PlayerMovementSystem::CreatePlayerCameraEntity(Entity player) noexcept
+{
+	Entity playerCamera = EntityManager::Get().CreateEntity();
+	if (EntityManager::Get().HasComponent<SceneComponent>(player))
+	{
+		EntityManager::Get().AddComponent<SceneComponent>(playerCamera,
+			EntityManager::Get().GetComponent<SceneComponent>(player).scene);
+	}
+
+	EntityManager::Get().AddComponent<TransformComponent>(playerCamera).SetScale(Vector3(1, 1, 1));
+	EntityManager::Get().AddComponent<CameraComponent>(playerCamera);
+
+	return playerCamera;
 }
 
 Vector3 PlayerMovementSystem::GetNewForward(PlayerControllerComponent& player) const noexcept
@@ -137,10 +161,10 @@ Vector3 PlayerMovementSystem::GetMoveTowards(const InputController& input, Vecto
 	return moveTowards;
 }
 
-void PlayerMovementSystem::MoveDebugCamera(Vector3 moveTowards, Vector3 forward, Vector3 right, f32 speed, const InputController& input) noexcept
+void PlayerMovementSystem::MoveDebugCamera(Entity e, Vector3 moveTowards, Vector3 forward, Vector3 right, f32 speed, const InputController& input) noexcept
 {
-	auto& transform = EntityManager::Get().GetComponent<TransformComponent>(m_debugCamera);
-	auto& camera = EntityManager::Get().GetComponent<CameraComponent>(m_debugCamera);
+	auto& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
+	auto& camera = EntityManager::Get().GetComponent<CameraComponent>(e);
 	camera.isMainCamera = true;
 
 	transform.SetPosition((transform.GetPosition() += moveTowards * speed * (f32)Time::DeltaTime()));
@@ -150,7 +174,7 @@ void PlayerMovementSystem::MoveDebugCamera(Vector3 moveTowards, Vector3 forward,
 
 	if (input.down)
 		transform.SetPosition(transform.GetPosition() -= s_globUp * speed * (f32)Time::DeltaTime());
-	
+
 	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
 	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
 

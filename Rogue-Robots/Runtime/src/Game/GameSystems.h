@@ -78,6 +78,9 @@ public:
 			up.Normalize();
 			
 			auto& pcc = DOG::EntityManager::Get().GetComponent<PlayerControllerComponent>(slc.owningPlayer);
+			if (!pcc.cameraEntity) 
+				return;
+
 			auto& playerCameraTransform = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(pcc.cameraEntity);
 			
 			auto pos = stc.GetPosition();
@@ -106,16 +109,15 @@ public:
 	void OnEarlyUpdate(Entity, PlayerControllerComponent&, PlayerStatsComponent&, TransformComponent&, RigidbodyComponent&, InputController&);
 
 private:
-	bool m_useDebug = false;
-	Entity m_debugCamera = 0;
-
 	inline static constexpr Vector3 s_globUp = Vector3(0, 1, 0);
 
 private:
-	void CreateDebugCamera() noexcept;
+	Entity CreateDebugCamera(Entity e) noexcept;
+	Entity CreatePlayerCameraEntity(Entity player) noexcept;
+
 	Vector3 GetNewForward(PlayerControllerComponent& player)  const noexcept;
 
 	Vector3 GetMoveTowards(const InputController& input, Vector3 forward, Vector3 right) const noexcept;
 
-	void MoveDebugCamera(Vector3 moveTowards, Vector3 forward, Vector3 right, f32 speed, const InputController& input) noexcept;
+	void MoveDebugCamera(Entity e, Vector3 moveTowards, Vector3 forward, Vector3 right, f32 speed, const InputController& input) noexcept;
 };
