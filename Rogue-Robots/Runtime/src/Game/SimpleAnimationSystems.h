@@ -77,22 +77,24 @@ public:
 	SYSTEM_CLASS(PickedUpItemComponent, DOG::TransformComponent, DOG::PickupLerpAnimateComponent);
 	ON_UPDATE_ID(PickedUpItemComponent, DOG::TransformComponent, DOG::PickupLerpAnimateComponent);
 
-	void OnUpdate(DOG::entity itemEntity, PickedUpItemComponent&, DOG::TransformComponent& tc, DOG::PickupLerpAnimateComponent& plac)
+	void OnUpdate(DOG::entity itemEntity, PickedUpItemComponent& puic, DOG::TransformComponent& tc, DOG::PickupLerpAnimateComponent& plac)
 	{
 		auto& mgr = DOG::EntityManager::Get();
 		auto newPos = Vector3::Lerp(plac.origin, plac.target, (float)DOG::Time::DeltaTime() * PICKUP_SPEED);
 		tc.SetPosition(newPos);
-		mgr.Collect<DOG::ThisPlayer, DOG::TransformComponent>().Do([&](DOG::entity player, DOG::ThisPlayer&, DOG::TransformComponent& ptc)
-			{
-				plac.origin = tc.GetPosition();
-				plac.target = { ptc.GetPosition().x, ptc.GetPosition().y - PICKUP_Y_OFFSET, ptc.GetPosition().z };
-				if (Vector3::Distance(tc.GetPosition(), ptc.GetPosition()) < PICKUP_RADIUS)
-				{
-					std::string luaEventName = std::string("ItemPickup") + std::to_string(player);
-					DOG::LuaMain::GetEventSystem()->InvokeEvent(luaEventName, itemEntity);
-					mgr.DeferredEntityDestruction(itemEntity);
-				}
-			});
+		
+		auto player = puic.player;
+		auto& ptc = mgr.GetComponent<DOG::TransformComponent>(player);
+
+		plac.origin = tc.GetPosition();
+		plac.target = { ptc.GetPosition().x, ptc.GetPosition().y - PICKUP_Y_OFFSET, ptc.GetPosition().z };
+		if (Vector3::Distance(tc.GetPosition(), ptc.GetPosition()) < PICKUP_RADIUS)
+		{
+			std::string luaEventName = std::string("ItemPickup") + std::to_string(player);
+			DOG::LuaMain::GetEventSystem()->InvokeEvent(luaEventName, itemEntity);
+			mgr.DeferredEntityDestruction(itemEntity);
+		}
+
 	}
 };
 

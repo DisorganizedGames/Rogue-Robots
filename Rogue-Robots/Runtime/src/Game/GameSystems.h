@@ -151,10 +151,10 @@ class MVPPickupItemInteractionSystem : public DOG::ISystem
 	#define REQUIRED_DISTANCE_DELTA 2.0f
 	#define REQUIRED_DOT_DELTA -0.20f
 public:
-	SYSTEM_CLASS(DOG::ThisPlayer, DOG::TransformComponent);
-	ON_UPDATE_ID(DOG::ThisPlayer, DOG::TransformComponent);
+	SYSTEM_CLASS(DOG::NetworkPlayerComponent, DOG::TransformComponent);
+	ON_UPDATE_ID(DOG::NetworkPlayerComponent, DOG::TransformComponent);
 
-	void OnUpdate(DOG::entity player, DOG::ThisPlayer&, DOG::TransformComponent& ptc)
+	void OnUpdate(DOG::entity player, DOG::NetworkPlayerComponent&, DOG::TransformComponent& ptc)
 	{
 		auto& mgr = DOG::EntityManager::Get();
 		auto playerPosition = ptc.GetPosition();

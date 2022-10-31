@@ -118,7 +118,14 @@ void GameLayer::OnUpdate()
 	default:
 		break;
 	}
-
+	bool test = false;
+	EntityManager::Get().Collect<InputController>().Do([&](InputController& inputC)
+		{
+			if (inputC.pickup)
+				test = true;		
+		});
+	if(test)
+		PickUpItem();
 	if (m_networkStatus > 0)
 		m_netCode.OnUpdate(m_agentManager);
 	LuaGlobal* global = LuaMain::GetGlobal();
@@ -523,14 +530,12 @@ void GameLayer::UpdateGame()
 	EvaluateLoseCondition();
 
 
-	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([](entity id, TransformComponent& transform, RigidbodyComponent&)
+	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([](TransformComponent& transform, RigidbodyComponent&)
 		{
 			if (Vector3 pos = transform.GetPosition(); pos.y < -20.0f)
 			{
-				if (EntityManager::Get().HasComponent<PlayerStatsComponent>(id))
-					EntityManager::Get().GetComponent<PlayerStatsComponent>(id).health = 0;
-				if (EntityManager::Get().HasComponent<AgentHPComponent>(id))
-					EntityManager::Get().GetComponent<AgentHPComponent>(id).hp = 0;
+				pos.y = 10;
+				transform.SetPosition(pos);
 			}
 		});
 }
@@ -574,7 +579,8 @@ void GameLayer::PickUpItem()
 
 			if (!m_entityManager.HasComponent<PickedUpItemComponent>(eligiblePickUp.activeItemEntity))
 			{
-				m_entityManager.AddComponent<PickedUpItemComponent>(eligiblePickUp.activeItemEntity);
+				auto& puic = m_entityManager.AddComponent<PickedUpItemComponent>(eligiblePickUp.activeItemEntity);
+				puic.player = player;
 				auto& ac = m_entityManager.GetComponent<DOG::PickupLerpAnimateComponent>(eligiblePickUp.activeItemEntity);
 				ac.origin = m_entityManager.GetComponent<DOG::TransformComponent>(eligiblePickUp.activeItemEntity).GetPosition();
 				ac.target = m_entityManager.GetComponent<DOG::TransformComponent>(player).GetPosition();
@@ -588,7 +594,8 @@ void GameLayer::PickUpItem()
 
 			if (!m_entityManager.HasComponent<PickedUpItemComponent>(eligiblePickUp.barrelComponentEntity))
 			{
-				m_entityManager.AddComponent<PickedUpItemComponent>(eligiblePickUp.barrelComponentEntity);
+				auto& puic = m_entityManager.AddComponent<PickedUpItemComponent>(eligiblePickUp.barrelComponentEntity);
+				puic.player = player;
 				auto& ac = m_entityManager.GetComponent<DOG::PickupLerpAnimateComponent>(eligiblePickUp.barrelComponentEntity);
 				ac.origin = m_entityManager.GetComponent<DOG::TransformComponent>(eligiblePickUp.barrelComponentEntity).GetPosition();
 				ac.target = m_entityManager.GetComponent<DOG::TransformComponent>(player).GetPosition();
@@ -602,7 +609,8 @@ void GameLayer::PickUpItem()
 
 			if (!m_entityManager.HasComponent<PickedUpItemComponent>(eligiblePickUp.passiveItemEntity))
 			{
-				m_entityManager.AddComponent<PickedUpItemComponent>(eligiblePickUp.passiveItemEntity);
+				auto& puic = m_entityManager.AddComponent<PickedUpItemComponent>(eligiblePickUp.passiveItemEntity);
+				puic.player = player;
 				auto& ac = m_entityManager.GetComponent<DOG::PickupLerpAnimateComponent>(eligiblePickUp.passiveItemEntity);
 				ac.origin = m_entityManager.GetComponent<DOG::TransformComponent>(eligiblePickUp.passiveItemEntity).GetPosition();
 				ac.target = m_entityManager.GetComponent<DOG::TransformComponent>(player).GetPosition();
@@ -616,7 +624,8 @@ void GameLayer::PickUpItem()
 
 			if (!m_entityManager.HasComponent<PickedUpItemComponent>(eligiblePickUp.magazineModificationEntity))
 			{
-				m_entityManager.AddComponent<PickedUpItemComponent>(eligiblePickUp.magazineModificationEntity);
+				auto& puic = m_entityManager.AddComponent<PickedUpItemComponent>(eligiblePickUp.magazineModificationEntity);
+				puic.player = player;
 				auto& ac = m_entityManager.GetComponent<DOG::PickupLerpAnimateComponent>(eligiblePickUp.magazineModificationEntity);
 				ac.origin = m_entityManager.GetComponent<DOG::TransformComponent>(eligiblePickUp.magazineModificationEntity).GetPosition();
 				ac.target = m_entityManager.GetComponent<DOG::TransformComponent>(player).GetPosition();
@@ -648,12 +657,7 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	}
 	case EventType::KeyPressedEvent:
 	{
-		if (EVENT(KeyPressedEvent).key == DOG::Key::E)
-		{
-			PickUpItem();
-		}
-		else
-			Input(EVENT(KeyPressedEvent).key);
+		Input(EVENT(KeyPressedEvent).key);
 		break;
 	}
 	case EventType::KeyReleasedEvent:
@@ -1000,6 +1004,8 @@ void GameLayer::Input(DOG::Key key)
 				inputC.toggleMoveView = true;
 			if (key == DOG::Key::F)
 				inputC.flashlight = !inputC.flashlight;
+			if (key == DOG::Key::E)
+				inputC.pickup = true;
 	});
 }
 
@@ -1044,6 +1050,8 @@ void GameLayer::Release(DOG::Key key)
 				inputC.toggleDebug = false;
 			if(key == DOG::Key::C)
 				inputC.toggleMoveView = false;
+			if (key == DOG::Key::E)
+				inputC.pickup = false;
 		});
 }
 
