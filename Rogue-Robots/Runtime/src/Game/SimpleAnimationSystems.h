@@ -43,15 +43,17 @@ public:
 class PickupLerpAnimationSystem : public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
+	#define SPEED_MULTIPLER 0.25f
+	#define DISTANCE_THRESHOLD 0.60f
 public:
 	SYSTEM_CLASS(DOG::PickupLerpAnimateComponent, DOG::TransformComponent);
 	ON_UPDATE(DOG::PickupLerpAnimateComponent, DOG::TransformComponent);
 	void OnUpdate(DOG::PickupLerpAnimateComponent& animator, DOG::TransformComponent& transform)
 	{
-		animator.currentOrigin = Lerp(animator.currentOrigin, animator.baseTarget, (float)DOG::Time::DeltaTime() * 0.25f);
+		animator.currentOrigin = Lerp(animator.currentOrigin, animator.baseTarget, (float)DOG::Time::DeltaTime() * SPEED_MULTIPLER);
 		transform.SetPosition({ transform.GetPosition().x, animator.currentOrigin, transform.GetPosition().z });
 
-		if (abs(transform.GetPosition().y - animator.baseTarget) < 0.60f)
+		if (abs(transform.GetPosition().y - animator.baseTarget) < DISTANCE_THRESHOLD)
 		{
 			std::swap(animator.baseTarget,animator.baseOrigin);
 		}
@@ -62,17 +64,6 @@ public:
 	float Lerp(float a, float b, float t)
 	{
 		return (1.0f - t) * a + b * t;
-	}
-
-	float InverseLerp(float a, float b, float v)
-	{
-		return (v - a) / (b - a);
-	}
-
-	float Remap(float iMin, float iMax, float oMin, float oMax, float v)
-	{
-		float t = InverseLerp(iMin, iMax, v);
-		return Lerp(oMin, oMax, t);
 	}
 };
 
