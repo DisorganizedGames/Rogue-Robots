@@ -87,8 +87,11 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	auto camForward = cameraTransform.GetForward();
 	camForward.y = 0;
 	camForward.Normalize();
+
+	auto prevScale = transform.GetScale();
 	transform.worldMatrix = XMMatrixLookToLH(transform.GetPosition(), camForward, s_globUp);
 	transform.worldMatrix = transform.worldMatrix.Invert();
+	transform.SetScale(prevScale);
 }
 
 PlayerMovementSystem::Entity PlayerMovementSystem::CreateDebugCamera(Entity e) noexcept

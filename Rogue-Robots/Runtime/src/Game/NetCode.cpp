@@ -272,7 +272,6 @@ void NetCode::ReceiveUdp()
 
 void NetCode::UpdateSendUdp()
 {
-	entity camera;
 	EntityManager::Get().Collect<ThisPlayer, TransformComponent, PlayerStatsComponent, InputController, PlayerControllerComponent>().Do([&](
 		ThisPlayer&, TransformComponent& transC, PlayerStatsComponent& statsC, InputController& inputC, PlayerControllerComponent& pC)
 		{
