@@ -67,8 +67,8 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 		DOG::EntityManager& m_entityManager = DOG::EntityManager::Get();
 		//UDP /////////////////////////////////////////////////////////////////////
 		//Update the others players
-		EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent, InputController, OnlinePlayer, PlayerStatsComponent, PlayerControllerComponent
-		>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&, PlayerStatsComponent& statsC, PlayerControllerComponent& pC)
+		EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent, InputController, OnlinePlayer, PlayerStatsComponent, PlayerControllerComponent, BarrelComponent
+		>().Do([&](entity id, TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&, PlayerStatsComponent& statsC, PlayerControllerComponent& pC, BarrelComponent& barrel)
 			{
 				transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerTransform;
 				transformC.SetScale(DirectX::SimpleMath::Vector3(1.0f, 1.0f, 1.0f));
@@ -76,6 +76,11 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 				statsC = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat;
 				if (pC.cameraEntity && DirectX::XMVectorGetX(DirectX::XMMatrixDeterminant(m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform)) != 0) {
 					m_entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform;
+				}
+				barrel = m_outputUdp.m_holdplayersUdp[networkC.playerId].barrel;
+				if (m_entityManager.HasComponent<MagazineModificationComponent>(id))
+				{
+					m_entityManager.GetComponent<MagazineModificationComponent>(id) = m_outputUdp.m_holdplayersUdp[networkC.playerId].magazin;
 				}
 				});
 		//Tcp////////////////////////////////////////////////////////////////////////
@@ -272,17 +277,24 @@ void NetCode::ReceiveUdp()
 
 void NetCode::UpdateSendUdp()
 {
-	EntityManager::Get().Collect<ThisPlayer, TransformComponent, PlayerStatsComponent, InputController, PlayerControllerComponent>().Do([&](
-		ThisPlayer&, TransformComponent& transC, PlayerStatsComponent& statsC, InputController& inputC, PlayerControllerComponent& pC)
+	EntityManager::Get().Collect<ThisPlayer, TransformComponent, PlayerStatsComponent, InputController, PlayerControllerComponent, BarrelComponent>().Do([&](entity id,
+		ThisPlayer&, TransformComponent& transC, PlayerStatsComponent& statsC, InputController& inputC, PlayerControllerComponent& pC, BarrelComponent& barrel)
 		{
+			DOG::EntityManager& entityManager = DOG::EntityManager::Get();
 			m_playerInputUdp.playerTransform = transC.worldMatrix;
 			m_playerInputUdp.playerStat = statsC;
 			m_playerInputUdp.actions = inputC;
+			m_playerInputUdp.barrel = barrel;
+			if (entityManager.HasComponent<MagazineModificationComponent>(id))
+			{
+				m_playerInputUdp.magazin = entityManager.GetComponent<MagazineModificationComponent>(id);
+			}
 			if (pC.cameraEntity > 0)
 			{
-				DOG::EntityManager& entityManager = DOG::EntityManager::Get();
+				
 				m_playerInputUdp.cameraTransform = entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix;
 			}
+
 		});
 
 
