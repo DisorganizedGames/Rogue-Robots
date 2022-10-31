@@ -219,7 +219,7 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 
 void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComponent& trans)
 {
-	if (hp.hp <= 0 || trans.GetPosition().y < 50.0f)
+	if (hp.hp <= 0 || trans.GetPosition().y < -10.0f)
 	{
 		//#if defined _DEBUG
 		EntityManager& eMan = EntityManager::Get();
