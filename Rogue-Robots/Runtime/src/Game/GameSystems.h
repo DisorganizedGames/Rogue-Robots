@@ -450,15 +450,15 @@ public:
 		auto r = DOG::Window::GetWindowRect();
 		ImVec2 pos;
 		constexpr const float xOffset = 50.0f;
-		const float centerXOfScreen = (float)(r.right - r.left) * 0.5f;
-		const float centerYOfScreen = (float)(r.bottom - r.top) * 0.5f;
-		pos.x = centerXOfScreen + xOffset;
-		pos.y = centerYOfScreen;
+		const float centerXOfScreen = (float)(abs(r.right - r.left)) * 0.5f;
+		const float centerYOfScreen = (float)(abs(r.bottom - r.top)) * 0.5f;
+		pos.x = r.left + centerXOfScreen + xOffset;
+		pos.y = r.top + centerYOfScreen;
 
 		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 		ImGui::SetNextWindowPos(pos);
 		ImGui::SetNextWindowSize(size);
-		if (ImGui::Begin("Reload text", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+		if (ImGui::Begin("Reload text", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
 		{
 			ImGui::PushFont(DOG::Window::GetFont());
 			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
