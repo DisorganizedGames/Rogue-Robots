@@ -103,7 +103,10 @@ void AgentMovementSystem::OnUpdate(entity e, AgentMovementComponent& movement,
 		trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pathfinder.targetPos, Vector3(0, 1, 0)).Invert();
 		movement.forward = seek.direction;
 		// TODO: transfer actual movement responsibility to Pathfinder
-		trans.SetPosition(trans.GetPosition() + movement.forward * static_cast<f32>(movement.currentSpeed * Time::DeltaTime()));
+		//trans.SetPosition(trans.GetPosition() + movement.forward * static_cast<f32>(movement.currentSpeed * Time::DeltaTime()));
+		RigidbodyComponent& rb = EntityManager::Get().GetComponent<RigidbodyComponent>(e);
+		rb.linearVelocity.x = movement.forward.x * movement.currentSpeed;
+		rb.linearVelocity.z = movement.forward.z * movement.currentSpeed;
 		
 		if (!EntityManager::Get().HasComponent<AgentAttackComponent>(e))
 			EntityManager::Get().AddComponent<AgentAttackComponent>(e);
