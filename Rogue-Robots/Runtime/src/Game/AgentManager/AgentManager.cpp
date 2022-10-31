@@ -48,12 +48,11 @@ void AgentManager::CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& e
 			{
 				if (agent.id == entityDesc.id)
 				{
-					DestroyLocalAgent(e);
 					trans.SetPosition(entityDesc.position);
+					DestroyLocalAgent(e);
 				}
 			}
 		);
-		
 	}
 }
 
@@ -92,7 +91,7 @@ entity AgentManager::CreateAgentCore(u32 model, const Vector3& pos, EntityTypes 
 
 	m_entityManager.AddComponent<ModelComponent>(e, model);
 
-	m_entityManager.AddComponent<CapsuleColliderComponent>(e, e, 1.f, 1.f, true, 50.0f);
+	m_entityManager.AddComponent<CapsuleColliderComponent>(e, e, .25f, .25f, true, 50.0f);
 	
 	RigidbodyComponent& rb = m_entityManager.AddComponent<RigidbodyComponent>(e, e);
 	rb.ConstrainRotation(true, true, true);
