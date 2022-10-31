@@ -147,7 +147,7 @@ function OnUpdate()
 		if barrelComponent.CreateBullet then
 			createBullet = barrelComponent:CreateBullet()
 		end
-		if createBullet and currentAmmo > 0 then
+		if createBullet and currentAmmoCount > 0 then
 
 			if hasBasicBarrelEquipped then
 				currentAmmo = currentAmmo - 1
