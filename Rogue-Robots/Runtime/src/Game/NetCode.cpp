@@ -66,22 +66,18 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 	{
 		DOG::EntityManager& m_entityManager = DOG::EntityManager::Get();
 		//UDP /////////////////////////////////////////////////////////////////////
-		// Update this players actions
-		EntityManager::Get().Collect<NetworkPlayerComponent, ThisPlayer, InputController>().Do([&](NetworkPlayerComponent&, ThisPlayer&, InputController& inputC)
-			{
-
-				m_playerInputUdp.actions = inputC;
-			});
 		//Update the others players
-		EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent, InputController, OnlinePlayer, PlayerStatsComponent
-		>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&, PlayerStatsComponent& statsC)
+		EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent, InputController, OnlinePlayer, PlayerStatsComponent, PlayerControllerComponent
+		>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&, PlayerStatsComponent& statsC, PlayerControllerComponent& pC)
 			{
 				transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerTransform;
 				transformC.SetScale(DirectX::SimpleMath::Vector3(1.0f, 1.0f, 1.0f));
 				inputC = m_outputUdp.m_holdplayersUdp[networkC.playerId].actions;
 				statsC = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat;
-
-			});
+				if (pC.cameraEntity && DirectX::XMVectorGetX(DirectX::XMMatrixDeterminant(m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform)) != 0) {
+					m_entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform;
+				}
+				});
 		//Tcp////////////////////////////////////////////////////////////////////////
 			// Collect data to send
 			m_inputTcp.nrOfNetTransform = 0;
@@ -276,13 +272,21 @@ void NetCode::ReceiveUdp()
 
 void NetCode::UpdateSendUdp()
 {
-	EntityManager::Get().Collect<ThisPlayer, TransformComponent, PlayerStatsComponent, InputController>().Do([&](
-		ThisPlayer&, TransformComponent& transC, PlayerStatsComponent& statsC, InputController& inputC)
+	entity camera;
+	EntityManager::Get().Collect<ThisPlayer, TransformComponent, PlayerStatsComponent, InputController, PlayerControllerComponent>().Do([&](
+		ThisPlayer&, TransformComponent& transC, PlayerStatsComponent& statsC, InputController& inputC, PlayerControllerComponent& pC)
 		{
 			m_playerInputUdp.playerTransform = transC.worldMatrix;
 			m_playerInputUdp.playerStat = statsC;
 			m_playerInputUdp.actions = inputC;
+			if (pC.cameraEntity > 0)
+			{
+				DOG::EntityManager& entityManager = DOG::EntityManager::Get();
+				m_playerInputUdp.cameraTransform = entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix;
+			}
 		});
+
+
 }
 
 void NetCode::AddMatrixUdp(DirectX::XMMATRIX input)
