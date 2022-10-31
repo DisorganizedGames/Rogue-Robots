@@ -693,13 +693,24 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
 	ASSERT(playerCount <= MAX_PLAYER_COUNT, "No more than 4 players can be spawned. I.e. playerCount can't exceed 4");
 
+	auto* scriptManager = LuaMain::GetScriptManager();
+	//// Add persistent material prefab lua
+	//{
+	//	entity e = m_entityManager.CreateEntity();
+	//	m_entityManager.AddComponent<TransformComponent>(e);
+	//	scriptManager->AddScript(e, "MaterialPrefabs.lua");
+	//}
+
+	//LuaMain::GetGlobal().
+	scriptManager->RunLuaFile("MaterialPrefabs.lua");
+	LuaMain::GetGlobal()->GetTable("MaterialPrefabs").CallFunctionOnTable("OnStart");
+
 	auto& am = DOG::AssetManager::Get();
 	m_playerModels[0] = am.LoadModelAsset("Assets/Models/Temporary_Assets/red_cube.glb");
 	m_playerModels[1] = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
 	m_playerModels[2] = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
 	m_playerModels[3] = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
 	std::vector<entity> players;
-	auto* scriptManager = LuaMain::GetScriptManager();
 	for (auto i = 0; i < playerCount; ++i)
 	{
 		entity playerI = players.emplace_back(m_entityManager.CreateEntity());

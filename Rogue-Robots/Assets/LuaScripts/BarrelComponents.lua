@@ -82,9 +82,7 @@ function BarrelComponents:Grenade()
 			
 			if Entity:HasComponent(bullet.entity, "FrostEffect") then
 				explosionTrigger = Game:ExplosionEffect(bullet.entity, radius, { 0.2, 0.6, 0.8 })
-				local newMat = Render:CreateMaterial({x=0.2, 0.6, 0.8}, 0.0, 0.0, { 2.0, 6.0, 8.0 })
-
-				Entity:AddComponent(explosionTrigger, "SubMeshRender", newMat)
+				Entity:AddComponent(explosionTrigger, "SubMeshRender", MaterialPrefabs:GetMaterial("FrostExplosionMaterial"))
 
 			else
 				explosionTrigger = Game:ExplosionEffect(bullet.entity, radius, { 0.8, 0.0, 0.0 })

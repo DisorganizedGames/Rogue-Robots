@@ -767,10 +767,8 @@ void RenderInterface::CreateMaterial(DOG::LuaContext* context)
 	LuaTable tab = context->GetTable();
 	DirectX::SimpleMath::Vector4 emissiveFactor = { (float)tab.GetDoubleFromTable(0), (float)tab.GetDoubleFromTable(1), (float)tab.GetDoubleFromTable(2), 1.f };
 
-	LuaVector3 albedoFactor(table);
-
 	MaterialDesc d{};
-	d.albedoFactor = { albedoFactor.x, albedoFactor.y, albedoFactor.z };
+	d.albedoFactor = { (float)table.GetDoubleFromTable(0), (float)table.GetDoubleFromTable(1), (float)table.GetDoubleFromTable(2) };
 	d.roughnessFactor = roughnessFactor;
 	d.metallicFactor = metallicFactor;
 	d.emissiveFactor = emissiveFactor;
@@ -794,7 +792,7 @@ void RenderInterface::CreateMaterial(DOG::LuaContext* context)
 void GameInterface::ExplosionEffect(DOG::LuaContext* context)
 {
 	auto entity = context->GetInteger();
-	auto radius = context->GetDouble();
+	f32 radius = (f32)context->GetDouble();
 	LuaTable tab = context->GetTable();
 	DirectX::SimpleMath::Vector3 color = { (f32)tab.GetDoubleFromTable(0), (f32)tab.GetDoubleFromTable(1), (f32)tab.GetDoubleFromTable(2) };
 
