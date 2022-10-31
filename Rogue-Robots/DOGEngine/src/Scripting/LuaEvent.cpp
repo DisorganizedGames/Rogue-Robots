@@ -24,4 +24,9 @@ namespace DOG
 		//Calls the EventSystem on Lua
 		m_eventSystemTable->CallFunctionOnTable(m_eventSystemTableInvokeFunction, eventName);
 	}
+
+	void LuaEvent::RemoveEvent(const std::string& eventName)
+	{
+		m_eventSystemTable->CallFunctionOnTable("RemoveEvent", eventName);
+	}
 }
