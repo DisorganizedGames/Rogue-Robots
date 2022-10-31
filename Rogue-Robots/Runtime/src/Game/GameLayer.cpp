@@ -229,6 +229,16 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e)
 	auto activeItemScriptData = LuaMain::GetScriptManager()->GetScript(e, "ActiveItemSystem.lua");
 	LuaTable t2(activeItemScriptData.scriptTable, true);
 	t2.CallFunctionOnTable("OnStart");
+
+	if (m_entityManager.HasComponent<ThisPlayer>(e))
+	{
+		auto& stats = m_entityManager.GetComponent<PlayerStatsComponent>(e);
+		stats.health = stats.maxHealth;
+	}
+	
+	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
+	m_entityManager.DeferredEntityDestruction(controller.debugCamera);
+	controller.debugCamera = 0;
 }
 
 void GameLayer::KillPlayer(DOG::entity e)
@@ -238,6 +248,15 @@ void GameLayer::KillPlayer(DOG::entity e)
 	LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
 	LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
 	m_entityManager.RemoveComponent<ScriptComponent>(e);
+
+	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
+	controller.debugCamera = m_mainScene->CreateEntity();
+
+	m_entityManager.AddComponent<TransformComponent>(controller.debugCamera);
+	m_entityManager.AddComponent<CameraComponent>(controller.debugCamera);
+
+	m_entityManager.GetComponent<TransformComponent>(controller.debugCamera).worldMatrix = m_entityManager.GetComponent<TransformComponent>(controller.cameraEntity);
+	m_entityManager.GetComponent<CameraComponent>(controller.debugCamera).isMainCamera = true;
 }
 
 void GameLayer::UpdateGame()

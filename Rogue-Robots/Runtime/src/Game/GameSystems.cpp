@@ -37,7 +37,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 		camera.isMainCamera = true;
 	}
 
-	if (input.toggleDebug)
+	if (input.toggleDebug && EntityManager::Get().HasComponent<PlayerAliveComponent>(e))
 	{
 		input.toggleDebug = false;
 		if (!player.debugCamera)
@@ -45,7 +45,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 			player.debugCamera = CreateDebugCamera(e);
 			EntityManager::Get().GetComponent<TransformComponent>(player.debugCamera).worldMatrix = cameraTransform;
 			auto& debugCamera = EntityManager::Get().GetComponent<CameraComponent>(player.debugCamera);
-			debugCamera.isMainCamera = (player.debugCamera != 0);
+			debugCamera.isMainCamera = true;
 		}
 		else
 		{
