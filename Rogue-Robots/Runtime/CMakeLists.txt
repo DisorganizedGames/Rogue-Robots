@@ -15,7 +15,7 @@ set(SourceFiles
 		"src/Game/AgentManager/AgentComponents.h"
 		"src/Game/AgentManager/AgentManager.h" "src/Game/AgentManager/AgentManager.cpp"
 		"src/Game/AgentManager/AgentBehaviorSystems.h" "src/Game/AgentManager/AgentBehaviorSystems.cpp"
-		 "src/Game/ExplosionSystems.h" "src/Game/ExplosionSystems.cpp"
+		 "src/Game/ExplosionSystems.h" "src/Game/ExplosionSystems.cpp" "src/Network/Network.h"
 		"src/Game/HomingMissileSystem.h" "src/Game/HomingMissileSystem.cpp"
 		)
 		

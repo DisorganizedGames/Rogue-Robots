@@ -4,6 +4,7 @@
 #include  "..\Network\Client.h"
 #include  "..\Network\Server.h"
 #include "..\Game\MainPlayer.h"
+#include "AgentManager/AgentManager.h"
 
 enum PlayerActions
 {
@@ -20,7 +21,7 @@ public:
 	NetCode();
 	~NetCode();
 	
-	void OnUpdate();
+	void OnUpdate(AgentManager* agentManager);
 	void OnStartup();
 	bool Host();
 	bool Join(char* input);
@@ -32,15 +33,15 @@ private:
 	void Receive();
 	void ReceiveUdp();
 	
-
+	void UpdateSendUdp();
 	void AddMatrixUdp(DirectX::XMMATRIX input);
 
 	
-	Client::ClientsData m_inputTcp;
-	Client::PlayerNetworkComponent m_playerInputUdp;
+	ClientsData m_inputTcp;
+	PlayerNetworkComponentUdp m_playerInputUdp;
 
 
-	Client::UdpReturnData m_outputUdp;
+	UdpReturnData m_outputUdp;
 	
 	std::atomic_bool m_active;
 	std::atomic_bool m_startUp;

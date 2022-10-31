@@ -112,7 +112,7 @@ void GameLayer::OnUpdate()
 	}
 
 	if (m_networkStatus > 0)
-		m_netCode.OnUpdate();
+		m_netCode.OnUpdate(m_agentManager);
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
 	global->SetNumber("ElapsedTime", Time::ElapsedTime());

@@ -215,6 +215,7 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 
 void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComponent& trans)
 {
+	
 	if (hp.hp <= 0 || trans.GetPosition().y < -10.0f)
 	{
 		#if defined _DEBUG
@@ -226,7 +227,7 @@ void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComp
 			std::cout << " hopelessly lost in void at position: (" << trans.GetPosition().x << ", " << trans.GetPosition().y << ", " << trans.GetPosition().z << ")" << std::endl;
 		#endif
 		
-		// Send network signal to destroy agent
+		// Send network signal to destroy agents
 		AgentManager::DestroyLocalAgent(e);
 	}
 }

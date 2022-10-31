@@ -99,9 +99,9 @@ struct ShadowAgentSeekPlayerComponent
 
 struct NetworkAgentStats
 {
-	i32 playerId;
-	u32 objectId;
-	AgentStatsComponent stats;
+	i32 playerId = 0;
+	u32 objectId = 0;
+	AgentHPComponent hp;
 };
 
 struct NetworkAgentSeekPlayer

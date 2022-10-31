@@ -14,7 +14,7 @@ entity AgentManager::CreateAgent(EntityTypes type, const Vector3& pos)
 	entity e = CreateAgentCore(GetModel(type), pos, type);
 
 	m_entityManager.AddComponent<AgentSeekPlayerComponent>(e);
-
+	m_entityManager.AddComponent<NetworkAgentStats>(e);
 	// Add CreateAndDestroyEntityComponent to ECS
 	if (m_useNetworking)
 	{
@@ -43,18 +43,17 @@ void AgentManager::CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& e
 	}
 	else
 	{
-		entity toDestroy = DOG::NULL_ENTITY;
 		m_entityManager.Collect<AgentIdComponent, TransformComponent>().Do(
 			[&](entity e, AgentIdComponent& agent, TransformComponent& trans)
 			{
 				if (agent.id == entityDesc.id)
 				{
-					toDestroy = e;
+					DestroyLocalAgent(e);
 					trans.SetPosition(entityDesc.position);
 				}
 			}
 		);
-		DestroyLocalAgent(toDestroy);
+		
 	}
 }
 
