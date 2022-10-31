@@ -537,7 +537,7 @@ void EntityInterface::AddBullet(LuaContext* context, entity e)
 	int playerEntity = context->GetInteger();
 	BulletComponent& bullet = EntityManager::Get().AddComponent<BulletComponent>(e);
 	bullet.playerEntityID = playerEntity;
-	bullet.damage = 25;
+	bullet.damage = 35;
 	if (EntityManager::Get().HasComponent<RigidbodyComponent>(e))
 		EntityManager::Get().GetComponent<RigidbodyComponent>(e).continuousCollisionDetection = true;
 }
