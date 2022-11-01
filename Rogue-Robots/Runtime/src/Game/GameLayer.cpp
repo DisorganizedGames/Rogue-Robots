@@ -42,7 +42,7 @@ GameLayer::GameLayer() noexcept
 	m_keyBindingDescriptions.emplace_back("g", "active item");
 	m_keyBindingDescriptions.emplace_back("f", "flash light");
 	m_keyBindingDescriptions.emplace_back("m", "gun effect");
-	m_keyBindingDescriptions.emplace_back("e", "interact");
+	m_keyBindingDescriptions.emplace_back("e", "switch projectile");
 	m_keyBindingDescriptions.emplace_back("q", "full auto");
 	m_keyBindingDescriptions.emplace_back("alt + enter", "fullscreen");
 	m_keyBindingDescriptions.emplace_back("h", "debug camera");
