@@ -210,13 +210,14 @@ void GameLayer::CheckIfPlayersIAreDead()
 		});
 }
 
-void GameLayer::RespawnDeadPlayer(DOG::entity e)
+void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will not be called for online players, this needs to be fixed later on.
 {
-	if (!m_entityManager.HasComponent<PlayerAliveComponent>(e))
+	if (m_entityManager.HasComponent<PlayerAliveComponent>(e))
 	{
-		m_entityManager.AddComponent<PlayerAliveComponent>(e);
+		KillPlayer(e);
 	}
 
+	m_entityManager.AddComponent<PlayerAliveComponent>(e);
 	LuaMain::GetScriptManager()->AddScript(e, "Gun.lua");
 	auto gunScriptData = LuaMain::GetScriptManager()->GetScript(e, "Gun.lua");
 	LuaTable t0(gunScriptData.scriptTable, true);
