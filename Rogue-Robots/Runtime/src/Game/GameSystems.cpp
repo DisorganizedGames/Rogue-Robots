@@ -79,7 +79,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
 
 	// Place camera 0.4 units above the player transform
-	auto pos = transform.GetPosition() + Vector3(0.3f, 1.0f, 0.4f);
+	auto pos = transform.GetPosition() + Vector3(0.15f, .5f, 0.4f);
 	camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
 	cameraTransform.worldMatrix = camera.viewMatrix.Invert();
 

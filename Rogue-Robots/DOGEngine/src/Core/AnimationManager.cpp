@@ -189,8 +189,8 @@ namespace DOG
 		
 		CalculateSRT(rig.animations, animator, MIXAMO_RIG_ID);
 		// Set node animation transformations
+		
 		std::vector<XMMATRIX> hereditaryTFs;
-
 		hereditaryTFs.reserve(rig.nodes.size());
 		hereditaryTFs.push_back(XMLoadFloat4x4(&rig.nodes[0].transformation));
 		for (i32 i = 1; i < rig.nodes.size(); ++i)

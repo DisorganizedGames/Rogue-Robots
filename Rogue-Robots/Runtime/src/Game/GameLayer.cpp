@@ -976,7 +976,7 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 		};
 		auto& tf = m_entityManager.AddComponent<TransformComponent>(playerI, pos - offset);
 		m_entityManager.AddComponent<ModelComponent>(playerI, m_playerModels[i]);
-		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 2.45f, true, 75.f);
+		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 2.4f, true, 75.f);
 		auto& rb = m_entityManager.AddComponent<RigidbodyComponent>(playerI, playerI);
 		rb.ConstrainRotation(true, true, true);
 		rb.disableDeactivation = true;
@@ -1021,7 +1021,7 @@ std::vector<entity> GameLayer::AddFlashlightsToPlayers(const std::vector<entity>
 
 		entity flashLightEntity = m_entityManager.CreateEntity();
 		auto& tc = m_entityManager.AddComponent<DOG::TransformComponent>(flashLightEntity);
-		tc.SetPosition(playerTransformComponent.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.2f, 0.0f));
+		tc.SetPosition(DirectX::SimpleMath::Vector3(0.2f, 0.2f, 0.0f));
 
 		auto up = tc.worldMatrix.Up();
 		up.Normalize();

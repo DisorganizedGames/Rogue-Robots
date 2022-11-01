@@ -82,7 +82,7 @@ namespace DOG
 		std::pair<i32, i32> hackerman{ 0 , 0 };
 		u8 hack[4] = { 0, 0, 0, 0 };
 		f32 m_imguiGroupWeightA = 0.0f;
-		bool m_imguiApplyRootTranslation = false;
+		bool m_imguiApplyRootTranslation = true;
 		DirectX::FXMMATRIX ImguiTransform(i32 joint);
 		std::vector<DirectX::XMFLOAT3> m_imguiSca;
 		std::vector<DirectX::XMFLOAT3> m_imguiRot;
