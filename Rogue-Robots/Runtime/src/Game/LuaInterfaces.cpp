@@ -852,6 +852,7 @@ void GameInterface::AmmoUI(DOG::LuaContext* context)
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
 			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
+			ImGui::SetWindowFontScale(2.0f);
 			ImGui::Text("Ammo:");
 			ImGui::TableSetColumnIndex(1);
 			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));

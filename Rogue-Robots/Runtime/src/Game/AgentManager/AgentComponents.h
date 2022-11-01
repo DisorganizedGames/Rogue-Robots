@@ -29,8 +29,8 @@ struct AgentMovementComponent
 
 struct AgentHPComponent
 {
-	f32 hp = 250.0f;
-	f32 maxHP = 250.0f;
+	f32 hp = 100.0f;
+	f32 maxHP = 100.0f;
 	bool damageThisFrame = false;
 };
 
