@@ -181,7 +181,7 @@ void PlayerMovementSystem::MoveDebugCamera(Entity e, Vector3 moveTowards, Vector
 	camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
 }
 
-void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& player, Vector3 moveTowards, Vector3 forward,
+void PlayerMovementSystem::MovePlayer(Entity, PlayerControllerComponent& player, Vector3 moveTowards, Vector3 forward,
 	RigidbodyComponent& rb, f32 speed, InputController& input)
 {	
 	auto forwardDisparity = moveTowards.Dot(forward);
