@@ -78,7 +78,7 @@ public:
 			up.Normalize();
 			
 			auto& pcc = DOG::EntityManager::Get().GetComponent<PlayerControllerComponent>(slc.owningPlayer);
-			if (!pcc.cameraEntity) 
+			if (pcc.cameraEntity == DOG::NULL_ENTITY) 
 				return;
 
 			auto& playerCameraTransform = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(pcc.cameraEntity);
@@ -124,6 +124,31 @@ private:
 	void MovePlayer(Entity e, PlayerControllerComponent& player, Vector3 moveTowards, Vector3 forward,
 		RigidbodyComponent& rb, f32 speed, InputController& input);
 };
+
+class PlayerJumpRefreshSystem : public DOG::ISystem
+{
+	using HasEnteredCollisionComponent = DOG::HasEnteredCollisionComponent;
+	using EntityManager = DOG::EntityManager;
+	using Entity = DOG::entity;
+
+public:
+	SYSTEM_CLASS(PlayerControllerComponent, HasEnteredCollisionComponent);
+	ON_UPDATE(PlayerControllerComponent, HasEnteredCollisionComponent);
+
+	void OnUpdate(PlayerControllerComponent& playerController, HasEnteredCollisionComponent& colComp)
+	{
+		for (auto idx = 0u; auto colEntity: colComp.entities)
+		{
+			if (idx++ == colComp.entitiesCount) break;
+
+			if (EntityManager::Get().HasComponent<DOG::ModularBlockComponent>(colEntity))
+			{
+				playerController.jumping = false;
+			}
+		}
+	}
+};
+
 //Quick and dirty flashlight toggle system for MVP
 class MVPFlashlightStateSystem : public DOG::ISystem
 {

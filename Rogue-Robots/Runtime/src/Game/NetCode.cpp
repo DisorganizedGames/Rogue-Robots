@@ -74,7 +74,7 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 				transformC.SetScale(DirectX::SimpleMath::Vector3(1.0f, 1.0f, 1.0f));
 				inputC = m_outputUdp.m_holdplayersUdp[networkC.playerId].actions;
 				statsC = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat;
-				if (pC.cameraEntity && DirectX::XMVectorGetX(DirectX::XMMatrixDeterminant(m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform)) != 0) {
+				if ((pC.cameraEntity != DOG::NULL_ENTITY) && DirectX::XMVectorGetX(DirectX::XMMatrixDeterminant(m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform)) != 0) {
 					m_entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform;
 				}
 				});
@@ -278,7 +278,7 @@ void NetCode::UpdateSendUdp()
 			m_playerInputUdp.playerTransform = transC.worldMatrix;
 			m_playerInputUdp.playerStat = statsC;
 			m_playerInputUdp.actions = inputC;
-			if (pC.cameraEntity > 0)
+			if (pC.cameraEntity != DOG::NULL_ENTITY)
 			{
 				DOG::EntityManager& entityManager = DOG::EntityManager::Get();
 				m_playerInputUdp.cameraTransform = entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix;

@@ -21,7 +21,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	}
 
 	// Create a new camera entity for this player
-	if (!player.cameraEntity)
+	if (player.cameraEntity == DOG::NULL_ENTITY)
 	{
 		player.cameraEntity = CreatePlayerCameraEntity(e);
 	}
@@ -40,7 +40,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	if (input.toggleDebug && EntityManager::Get().HasComponent<PlayerAliveComponent>(e))
 	{
 		input.toggleDebug = false;
-		if (!player.debugCamera)
+		if (player.debugCamera == DOG::NULL_ENTITY)
 		{
 			player.debugCamera = CreateDebugCamera(e);
 			EntityManager::Get().GetComponent<TransformComponent>(player.debugCamera).worldMatrix = cameraTransform;
@@ -50,7 +50,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 		else
 		{
 			EntityManager::Get().DeferredEntityDestruction(player.debugCamera);
-			player.debugCamera = 0;
+			player.debugCamera = DOG::NULL_ENTITY;
 		}
 	}
 
@@ -66,7 +66,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	// Move player
 	auto moveTowards = GetMoveTowards(input, forward, right);
 
-	if (player.debugCamera)
+	if (player.debugCamera != DOG::NULL_ENTITY)
 	{
 		camera.isMainCamera = false;
 		MoveDebugCamera(player.debugCamera, moveTowards, forward, right, 10.f, input);
@@ -199,20 +199,6 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 		{
 			player.jumping = true;
 			rb.linearVelocity.y = 6.f;
-		}
-	}
-
-	if (!EntityManager::Get().HasComponent<HasEnteredCollisionComponent>(e))
-		return;
-
-	auto& colComp = EntityManager::Get().GetComponent<HasEnteredCollisionComponent>(e);
-	for (auto idx = 0u; auto colEntity: colComp.entities)
-	{
-		if (idx++ == colComp.entitiesCount) break;
-		
-		if (EntityManager::Get().HasComponent<ModularBlockComponent>(colEntity))
-		{
-			player.jumping = false;
 		}
 	}
 }

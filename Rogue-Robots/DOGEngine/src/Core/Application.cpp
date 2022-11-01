@@ -71,11 +71,7 @@ namespace DOG
 				system->EarlyUpdate();
 			}
 
-			EntityManager::Get().Collect<HasEnteredCollisionComponent>().Do([](entity e, HasEnteredCollisionComponent& c)
-				{
-					if (c.entitiesCount > HasEnteredCollisionComponent::maxCount) std::cout << "HasCollidedComponent collided with more then" << HasEnteredCollisionComponent::maxCount << " other entities" << std::endl;
-					EntityManager::Get().RemoveComponent<HasEnteredCollisionComponent>(e);
-				});
+
 			PhysicsEngine::UpdatePhysics((f32)Time::DeltaTime());
 
 
@@ -110,6 +106,13 @@ namespace DOG
 			}
 
 			EntityManager::Get().Collect<DirtyComponent>().Do([](entity, DirtyComponent& dirty) { dirty.dirtyBitSet &= 0; });	
+
+			// Remove collision components from entities before next frame's collisions
+			EntityManager::Get().Collect<HasEnteredCollisionComponent>().Do([](entity e, HasEnteredCollisionComponent& c)
+				{
+					if (c.entitiesCount > HasEnteredCollisionComponent::maxCount) std::cout << "HasCollidedComponent collided with more then" << HasEnteredCollisionComponent::maxCount << " other entities" << std::endl;
+					EntityManager::Get().RemoveComponent<HasEnteredCollisionComponent>(e);
+				});
 
 			//Deferred deletions happen here!!!
 			LuaMain::GetScriptManager()->RemoveScriptsFromDeferredEntities();
