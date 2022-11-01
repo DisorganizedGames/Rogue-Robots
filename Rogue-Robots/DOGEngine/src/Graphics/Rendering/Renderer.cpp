@@ -1016,19 +1016,21 @@ namespace DOG::gfx
 					rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.bbScissor);
 
 					rd->Cmd_SetPipeline(cmdl, m_pipe);
-
+					u32 gammaCast = *((u32*)&m_graphicsSettings.gamma);
 					if (m_bloomEffect)
 					{
 						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, ShaderArgs()
 							.AppendConstant(resources.GetView(passData.ao))
 							.AppendConstant(resources.GetView(passData.litHDRView))
+							.AppendConstant(gammaCast)
 							.AppendConstant(resources.GetView(passData.bloom)));
 					}
 					else
 					{
 						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, ShaderArgs()
 							.AppendConstant(resources.GetView(passData.ao))
-							.AppendConstant(resources.GetView(passData.litHDRView)));
+							.AppendConstant(resources.GetView(passData.litHDRView))
+							.AppendConstant(gammaCast));
 					}
 					rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
 				});
