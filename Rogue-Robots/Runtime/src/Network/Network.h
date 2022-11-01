@@ -54,3 +54,10 @@ struct ClientsData
 	u16 nrOfCreateAndDestroy = 0;
 	bool lobbyAlive = false;
 };
+
+struct NetworkId
+{
+	EntityTypes entityTypeId = EntityTypes::Default;
+	u32 id = u32(-1);
+};
+

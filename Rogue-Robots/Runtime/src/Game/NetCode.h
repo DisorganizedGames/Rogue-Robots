@@ -62,3 +62,11 @@ private:
 	Server m_serverHost;
 	int m_numberOfPackets;
 };
+
+class DeleteNetworkSync : public DOG::ISystem
+{
+public:		
+	SYSTEM_CLASS(DeferredDeletionComponent);
+	ON_LATE_UPDATE_ID(DeferredDeletionComponent);
+	void LateUpdate(DOG::entity e, DeferredDeletionComponent& deleteC, NetworkId& netId, TransformComponent& transC);
+};

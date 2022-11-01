@@ -2,19 +2,15 @@
 using namespace DOG;
 NetCode::NetCode()
 {
-
-
 	m_netCodeAlive = TRUE;
 	m_inputTcp.lobbyAlive = true;
 	m_playerInputUdp.playerId = 0;
 	m_playerInputUdp.playerTransform = {};
 
-
 	m_hardSyncTcp = FALSE;
 	m_active = FALSE;
 	m_startUp = FALSE;
 	
-
 	m_bufferSize = 0;
 	m_bufferReceiveSize = 0;
 	m_receiveBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
@@ -122,6 +118,8 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 						memcpy(m_sendBuffer + m_bufferSize, &cdC, sizeof(CreateAndDestroyEntityComponent));
 						m_bufferSize += sizeof(CreateAndDestroyEntityComponent);
 						m_entityManager.RemoveComponent<CreateAndDestroyEntityComponent>(id);
+						if (!cdC.alive && (u32)cdC.entityTypeId < (u32)EntityTypes::Agents) //Destroy empty entitey
+							m_entityManager.DestroyEntity(id);
 						m_inputTcp.nrOfCreateAndDestroy++;
 					});
 
@@ -351,6 +349,7 @@ u8 NetCode::GetNrOfPlayers()
 	return m_inputTcp.nrOfPlayersConnected;
 }
 
+
 //host only
 std::string NetCode::GetIpAdress()
 {
@@ -360,4 +359,16 @@ std::string NetCode::GetIpAdress()
 bool NetCode::IsLobbyAlive()
 {
 	return m_inputTcp.lobbyAlive;
+}
+
+void DeleteNetworkSync::LateUpdate(DOG::entity e, DeferredDeletionComponent& deleteC, NetworkId& netId, TransformComponent& transC)
+{
+	DOG::EntityManager& m_entityManager = DOG::EntityManager::Get();
+	entity newE = m_entityManager.CreateEntity();
+	auto t = m_entityManager.AddComponent<CreateAndDestroyEntityComponent>(newE);
+	t.alive = false;
+	t.entityTypeId = netId.entityTypeId;
+	t.id = netId.id;
+	t.position = transC.GetPosition();
+	m_entityManager.RemoveComponent<NetworkId>(e);
 }
