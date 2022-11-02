@@ -31,6 +31,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<PlayerJumpRefreshSystem>());
 	
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_agentManager = new AgentManager();
 	m_nrOfPlayers = MAX_PLAYER_COUNT;
 	m_networkStatus = 0;
@@ -245,18 +246,22 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e)
 void GameLayer::KillPlayer(DOG::entity e)
 {
 	m_entityManager.RemoveComponent<PlayerAliveComponent>(e);
+	
 	LuaMain::GetScriptManager()->RemoveScript(e, "Gun.lua");
 	LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
 	LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
 	m_entityManager.RemoveComponent<ScriptComponent>(e);
+	
+	if (m_entityManager.HasComponent<ThisPlayer>(e))
+	{
+		auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
+		controller.debugCamera = m_mainScene->CreateEntity();
 
-	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
-	controller.debugCamera = m_mainScene->CreateEntity();
+		m_entityManager.AddComponent<TransformComponent>(controller.debugCamera)
+			.worldMatrix = m_entityManager.GetComponent<TransformComponent>(controller.cameraEntity);
 
-	m_entityManager.AddComponent<TransformComponent>(controller.debugCamera)
-		.worldMatrix = m_entityManager.GetComponent<TransformComponent>(controller.cameraEntity);
-
-	m_entityManager.AddComponent<CameraComponent>(controller.debugCamera).isMainCamera = true;
+		m_entityManager.AddComponent<CameraComponent>(controller.debugCamera).isMainCamera = true;
+	}
 }
 
 void GameLayer::UpdateGame()

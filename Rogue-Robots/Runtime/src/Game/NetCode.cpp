@@ -2,19 +2,15 @@
 using namespace DOG;
 NetCode::NetCode()
 {
-
-
 	m_netCodeAlive = TRUE;
 	m_inputTcp.lobbyAlive = true;
 	m_playerInputUdp.playerId = 0;
 	m_playerInputUdp.playerTransform = {};
 
-
 	m_hardSyncTcp = FALSE;
 	m_active = FALSE;
 	m_startUp = FALSE;
 	
-
 	m_bufferSize = 0;
 	m_bufferReceiveSize = 0;
 	m_receiveBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
@@ -71,10 +67,9 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 		>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&, PlayerStatsComponent& statsC, PlayerControllerComponent& pC)
 			{
 				transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerTransform;
-				transformC.SetScale(DirectX::SimpleMath::Vector3(1.0f, 1.0f, 1.0f));
 				inputC = m_outputUdp.m_holdplayersUdp[networkC.playerId].actions;
 				statsC = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat;
-				if ((pC.cameraEntity != DOG::NULL_ENTITY) && DirectX::XMVectorGetX(DirectX::XMMatrixDeterminant(m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform)) != 0) {
+				if ((pC.cameraEntity != DOG::NULL_ENTITY) && (m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform.Determinant() != 0)) {
 					m_entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform;
 				}
 				});
@@ -122,6 +117,8 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 						memcpy(m_sendBuffer + m_bufferSize, &cdC, sizeof(CreateAndDestroyEntityComponent));
 						m_bufferSize += sizeof(CreateAndDestroyEntityComponent);
 						m_entityManager.RemoveComponent<CreateAndDestroyEntityComponent>(id);
+						if (!cdC.alive && (u32)cdC.entityTypeId < (u32)EntityTypes::Agents) //Destroy empty entitey
+							m_entityManager.DestroyEntity(id);
 						m_inputTcp.nrOfCreateAndDestroy++;
 					});
 
@@ -231,8 +228,9 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 
 void NetCode::Receive()
 {
+	bool firstTime = false;
 	//Game loop
-	m_threadUdp = std::thread(&NetCode::ReceiveUdp, this);
+	
 	if (m_netCodeAlive)
 	{
 		//tcp
@@ -242,16 +240,20 @@ void NetCode::Receive()
 		{
 			while (m_dataIsReadyToBeReceivedTcp && m_netCodeAlive)
 				continue;
-			
+			if (!firstTime && !m_inputTcp.lobbyAlive)
+			{
+				firstTime = true;
+				m_threadUdp = std::thread(&NetCode::ReceiveUdp, this);
+			}
 			m_numberOfPackets = m_client.ReceiveCharArrayTcp(m_receiveBuffer);
-		if (m_receiveBuffer == nullptr)
-		{
-			std::cout << "Bad tcp packet \n";
-		}
-		else
-		{
+			if (m_receiveBuffer == nullptr)
+			{
+				std::cout << "Bad tcp packet \n";
+			}
+			else
+			{
 			m_dataIsReadyToBeReceivedTcp = true;
-		}
+			}
 		}
 			
 	}
@@ -272,6 +274,7 @@ void NetCode::ReceiveUdp()
 
 void NetCode::UpdateSendUdp()
 {
+	m_mut.lock();
 	EntityManager::Get().Collect<ThisPlayer, TransformComponent, PlayerStatsComponent, InputController, PlayerControllerComponent>().Do([&](
 		ThisPlayer&, TransformComponent& transC, PlayerStatsComponent& statsC, InputController& inputC, PlayerControllerComponent& pC)
 		{
@@ -281,23 +284,17 @@ void NetCode::UpdateSendUdp()
 			if (pC.cameraEntity != DOG::NULL_ENTITY)
 			{
 				DOG::EntityManager& entityManager = DOG::EntityManager::Get();
-				m_playerInputUdp.cameraTransform = entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix;
+				if(entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix.Determinant() != 0)
+					m_playerInputUdp.cameraTransform = entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix;
 			}
 		});
-
-
-}
-
-void NetCode::AddMatrixUdp(DirectX::XMMATRIX input)
-{
-	m_mut.lock();
-	m_playerInputUdp.playerTransform = input;
 	m_mut.unlock();
+
 }
+
 
 bool NetCode::Host()
 {
-	
 	bool server = m_serverHost.StartTcpServer();
 	if (server)
 	{
@@ -360,4 +357,16 @@ std::string NetCode::GetIpAdress()
 bool NetCode::IsLobbyAlive()
 {
 	return m_inputTcp.lobbyAlive;
+}
+
+void DeleteNetworkSync::OnLateUpdate(DOG::entity e, DeferredDeletionComponent& deleteC, NetworkId& netId, TransformComponent& transC)
+{
+	DOG::EntityManager& m_entityManager = DOG::EntityManager::Get();
+	entity newE = m_entityManager.CreateEntity();
+	auto t = m_entityManager.AddComponent<CreateAndDestroyEntityComponent>(newE);
+	t.alive = false;
+	t.entityTypeId = netId.entityTypeId;
+	t.id = netId.id;
+	t.position = transC.GetPosition();
+	m_entityManager.RemoveComponent<NetworkId>(e);
 }

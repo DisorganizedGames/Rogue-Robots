@@ -14,10 +14,10 @@ struct PlayerNetworkComponentUdp
 {
 	i8 playerId = 0;
 	u64 udpId = 0;
-	DirectX::XMMATRIX playerTransform = {};
+	DirectX::SimpleMath::Matrix playerTransform = {};
 	InputController actions;
 	PlayerStatsComponent playerStat;
-	DirectX::XMMATRIX cameraTransform = {};
+	DirectX::SimpleMath::Matrix cameraTransform = {};
 };
 
 struct UdpData
@@ -54,3 +54,10 @@ struct ClientsData
 	u16 nrOfCreateAndDestroy = 0;
 	bool lobbyAlive = false;
 };
+
+struct NetworkId
+{
+	EntityTypes entityTypeId = EntityTypes::Default;
+	u32 id = u32(-1);
+};
+
