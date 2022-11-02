@@ -36,7 +36,14 @@ namespace DOG
 	public:
 		SourceVoice() = delete;
 		SourceVoice(IXAudio2* audioDevice, WAVEFORMATEX wfx);
-		~SourceVoice() { if (m_source) m_source->DestroyVoice(); }
+		~SourceVoice() {
+			std::scoped_lock<std::mutex> lock(m_loopMutex);
+			if (m_source)
+			{
+				m_source->DestroyVoice();
+				m_source = nullptr;
+			}
+		}
 
 	public:
 		void Play(std::span<u8> data);
