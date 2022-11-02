@@ -130,6 +130,8 @@ void GameLayer::StartMainScene()
 	/************************** SET SCENE *********************************/
 	enum class Scene { old_default, room_0, room_1, room_2, room_3	};
 	constexpr Scene ACTIVE_SCENE = Scene::room_2;
+	constexpr const char* oldDefault = "..\\Offline-Tools\\PCG\\showOff_generatedLevel.txt";
+	constexpr const char* tunnels = "..\\Offline-Tools\\PCG\\Tunnels_generatedLevel.txt";
 	/***************************** END ************************************/
 
 
@@ -151,7 +153,7 @@ void GameLayer::StartMainScene()
 					players.insert(players.end(), flashlights.begin(), flashlights.end());
 					return players;
 				},
-				[this]() { return LoadLevel("..\\Offline-Tools\\PCG\\Tunnels_generatedLevel.txt"); },
+				[this]() { return LoadLevel(tunnels); },
 					// room 1: a few rooms connected by tunnels
 					[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(58.f, 80.f, 40.f), 3, 2.5f); },			// location 2
 					[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(68.f, 78.f, 27.f), 4, 5.f); },			// location 3
@@ -186,7 +188,7 @@ void GameLayer::StartMainScene()
 				players.insert(players.end(), flashlights.begin(), flashlights.end());
 				return players;
 			},
-			[this]() { return LoadLevel("..\\Offline-Tools\\PCG\\Tunnels_generatedLevel.txt"); },
+			[this]() { return LoadLevel(tunnels); },
 			// room 1: a few rooms connected by tunnels
 			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(58.f, 80.f, 40.f), 3, 2.5f); },			// location 2
 			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(68.f, 78.f, 27.f), 4, 5.f); },			// location 3
@@ -221,7 +223,7 @@ void GameLayer::StartMainScene()
 				players.insert(players.end(), flashlights.begin(), flashlights.end());
 				return players;
 			},
-			[this]() { return LoadLevel("..\\Offline-Tools\\PCG\\Tunnels_generatedLevel.txt"); },
+			[this]() { return LoadLevel(tunnels); },
 			// room 1: a few rooms connected by tunnels
 			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(58.f, 80.f, 40.f), 3, 2.5f); },			// location 2
 			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(68.f, 78.f, 27.f), 4, 5.f); },			// location 3
@@ -256,7 +258,7 @@ void GameLayer::StartMainScene()
 				players.insert(players.end(), flashlights.begin(), flashlights.end());
 				return players;
 			},
-			[this]() { return LoadLevel("..\\Offline-Tools\\PCG\\Tunnels_generatedLevel.txt"); },
+			[this]() { return LoadLevel(tunnels); },
 			// room 1: a few rooms connected by tunnels
 			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(58.f, 80.f, 40.f), 3, 2.5f); },			// location 2
 			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(68.f, 78.f, 27.f), 4, 5.f); },			// location 3
@@ -290,7 +292,7 @@ void GameLayer::StartMainScene()
 				players.insert(players.end(), flashlights.begin(), flashlights.end());
 				return players;
 			},
-			[this]() { return LoadLevel("..\\Offline-Tools\\PCG\\showOff_generatedLevel.txt"); },
+			[this]() { return LoadLevel(oldDefault); },
 			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(20, 20, 50), 10, 3.0f); },
 			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(30, 20, 50), 10, 3.0f); },
 			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(40, 20, 50), 10, 3.0f); },
@@ -694,9 +696,7 @@ std::vector<entity> GameLayer::LoadLevel(std::string file)
 	float blockDim = 5.0f;
 
 	std::string line;
-	//testRooms
-	//Tunnels
-	//showOff
+
 	std::ifstream inputFile(file);
 
 	AssetManager& aManager = AssetManager::Get();
