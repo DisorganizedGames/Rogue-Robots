@@ -92,7 +92,7 @@ entity AgentManager::CreateAgentCore(u32 model, const Vector3& pos, EntityTypes 
 
 	m_entityManager.AddComponent<ModelComponent>(e, model);
 
-	m_entityManager.AddComponent<CapsuleColliderComponent>(e, e, 0.5f, 0.5f, true, 50.0f);
+	m_entityManager.AddComponent<CapsuleColliderComponent>(e, e, 0.25f, 0.25f, true, 50.0f);
 	
 	RigidbodyComponent& rb = m_entityManager.AddComponent<RigidbodyComponent>(e, e);
 	rb.ConstrainRotation(true, true, true);
