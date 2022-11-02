@@ -28,6 +28,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerMovementSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<PlayerJumpRefreshSystem>());
 	
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
 	m_agentManager = new AgentManager();
@@ -238,7 +239,7 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e)
 	
 	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
 	m_entityManager.DeferredEntityDestruction(controller.debugCamera);
-	controller.debugCamera = 0;
+	controller.debugCamera = DOG::NULL_ENTITY;
 }
 
 void GameLayer::KillPlayer(DOG::entity e)

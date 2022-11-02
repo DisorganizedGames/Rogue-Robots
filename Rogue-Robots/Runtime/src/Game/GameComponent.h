@@ -10,8 +10,8 @@ struct PlayerControllerComponent
 
 	f32 mouseSensitivity = 1 / 2000.f;
 
-	DOG::entity cameraEntity = 0;
-	DOG::entity debugCamera = 0;
+	DOG::entity cameraEntity = DOG::NULL_ENTITY;
+	DOG::entity debugCamera = DOG::NULL_ENTITY;
 
 	bool moveView = true;
 	bool jumping = false;

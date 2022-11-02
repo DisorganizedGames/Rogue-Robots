@@ -212,7 +212,7 @@ void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComp
 	{
 		#if defined _DEBUG
 		EntityManager& eMan = EntityManager::Get();
-		std::cout << "Agent " << eMan.GetComponent<AgentIdComponent>(e).id;
+		std::cout << "Agent " << eMan.GetComponent<AgentIdComponent>(e).id << "(" << e << ")";
 		if (hp.hp <= 0)
 			std::cout << " killed! HP: " << hp.hp << std::endl;
 		else
