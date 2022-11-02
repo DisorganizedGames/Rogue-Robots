@@ -212,7 +212,7 @@ namespace DOG
 						ghostObjectData->ghostObject->setWorldTransform(trans);
 					}
 				});
-		} 
+		}
 
 		s_physicsEngine.GetDynamicsWorld()->stepSimulation(deltaTime, 10);
 
