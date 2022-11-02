@@ -25,7 +25,7 @@ namespace DOG
 
 		std::lock_guard<std::mutex> lock(m_mutex);
 
-		CMP_MipSet mipSetIn{};
+		CMP_MipSet mipSetIn;
 		memset(&mipSetIn, 0, sizeof(CMP_MipSet));
 		auto cmpStatus = CMP_LoadTexture(path.string().c_str(), &mipSetIn);
 		if (cmpStatus != CMP_OK)
