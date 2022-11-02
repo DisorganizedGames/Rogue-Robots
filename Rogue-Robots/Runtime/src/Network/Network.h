@@ -14,10 +14,10 @@ struct PlayerNetworkComponentUdp
 {
 	i8 playerId = 0;
 	u64 udpId = 0;
-	DirectX::XMMATRIX playerTransform = {};
+	DirectX::SimpleMath::Matrix playerTransform = {};
 	InputController actions;
 	PlayerStatsComponent playerStat;
-	DirectX::XMMATRIX cameraTransform = {};
+	DirectX::SimpleMath::Matrix cameraTransform = {};
 };
 
 struct UdpData

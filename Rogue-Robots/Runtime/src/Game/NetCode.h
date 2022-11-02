@@ -4,6 +4,7 @@
 #include  "..\Network\Client.h"
 #include  "..\Network\Server.h"
 #include "AgentManager/AgentManager.h"
+#include "GameComponent.h"
 
 enum PlayerActions
 {
@@ -66,7 +67,7 @@ private:
 class DeleteNetworkSync : public DOG::ISystem
 {
 public:		
-	SYSTEM_CLASS(DeferredDeletionComponent);
-	ON_LATE_UPDATE_ID(DeferredDeletionComponent);
-	void LateUpdate(DOG::entity e, DeferredDeletionComponent& deleteC, NetworkId& netId, TransformComponent& transC);
+	SYSTEM_CLASS(DOG::DeferredDeletionComponent, NetworkId, DOG::TransformComponent);
+	ON_LATE_UPDATE_ID(DOG::DeferredDeletionComponent, NetworkId, DOG::TransformComponent);
+	void OnLateUpdate(DOG::entity e, DOG::DeferredDeletionComponent& deleteC, NetworkId& netId, DOG::TransformComponent& transC);
 };

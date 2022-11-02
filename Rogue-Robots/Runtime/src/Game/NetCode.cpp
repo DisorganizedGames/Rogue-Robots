@@ -67,10 +67,9 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 		>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&, PlayerStatsComponent& statsC, PlayerControllerComponent& pC)
 			{
 				transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerTransform;
-				transformC.SetScale(DirectX::SimpleMath::Vector3(1.0f, 1.0f, 1.0f));
 				inputC = m_outputUdp.m_holdplayersUdp[networkC.playerId].actions;
 				statsC = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat;
-				if ((pC.cameraEntity != DOG::NULL_ENTITY) && DirectX::XMVectorGetX(DirectX::XMMatrixDeterminant(m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform)) != 0) {
+				if ((pC.cameraEntity != DOG::NULL_ENTITY) && (m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform.Determinant() != 0)) {
 					m_entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform;
 				}
 				});
@@ -229,8 +228,9 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 
 void NetCode::Receive()
 {
+	bool firstTime = false;
 	//Game loop
-	m_threadUdp = std::thread(&NetCode::ReceiveUdp, this);
+	
 	if (m_netCodeAlive)
 	{
 		//tcp
@@ -240,16 +240,20 @@ void NetCode::Receive()
 		{
 			while (m_dataIsReadyToBeReceivedTcp && m_netCodeAlive)
 				continue;
-			
+			if (!firstTime && !m_inputTcp.lobbyAlive)
+			{
+				firstTime = true;
+				m_threadUdp = std::thread(&NetCode::ReceiveUdp, this);
+			}
 			m_numberOfPackets = m_client.ReceiveCharArrayTcp(m_receiveBuffer);
-		if (m_receiveBuffer == nullptr)
-		{
-			std::cout << "Bad tcp packet \n";
-		}
-		else
-		{
+			if (m_receiveBuffer == nullptr)
+			{
+				std::cout << "Bad tcp packet \n";
+			}
+			else
+			{
 			m_dataIsReadyToBeReceivedTcp = true;
-		}
+			}
 		}
 			
 	}
@@ -270,6 +274,7 @@ void NetCode::ReceiveUdp()
 
 void NetCode::UpdateSendUdp()
 {
+	m_mut.lock();
 	EntityManager::Get().Collect<ThisPlayer, TransformComponent, PlayerStatsComponent, InputController, PlayerControllerComponent>().Do([&](
 		ThisPlayer&, TransformComponent& transC, PlayerStatsComponent& statsC, InputController& inputC, PlayerControllerComponent& pC)
 		{
@@ -279,23 +284,17 @@ void NetCode::UpdateSendUdp()
 			if (pC.cameraEntity != DOG::NULL_ENTITY)
 			{
 				DOG::EntityManager& entityManager = DOG::EntityManager::Get();
-				m_playerInputUdp.cameraTransform = entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix;
+				if(entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix.Determinant() != 0)
+					m_playerInputUdp.cameraTransform = entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix;
 			}
 		});
-
-
-}
-
-void NetCode::AddMatrixUdp(DirectX::XMMATRIX input)
-{
-	m_mut.lock();
-	m_playerInputUdp.playerTransform = input;
 	m_mut.unlock();
+
 }
+
 
 bool NetCode::Host()
 {
-	
 	bool server = m_serverHost.StartTcpServer();
 	if (server)
 	{
@@ -349,7 +348,6 @@ u8 NetCode::GetNrOfPlayers()
 	return m_inputTcp.nrOfPlayersConnected;
 }
 
-
 //host only
 std::string NetCode::GetIpAdress()
 {
@@ -361,7 +359,7 @@ bool NetCode::IsLobbyAlive()
 	return m_inputTcp.lobbyAlive;
 }
 
-void DeleteNetworkSync::LateUpdate(DOG::entity e, DeferredDeletionComponent& deleteC, NetworkId& netId, TransformComponent& transC)
+void DeleteNetworkSync::OnLateUpdate(DOG::entity e, DeferredDeletionComponent& deleteC, NetworkId& netId, TransformComponent& transC)
 {
 	DOG::EntityManager& m_entityManager = DOG::EntityManager::Get();
 	entity newE = m_entityManager.CreateEntity();
