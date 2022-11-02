@@ -193,13 +193,10 @@ void PlayerMovementSystem::MovePlayer(Entity, PlayerControllerComponent& player,
 		moveTowards.z * speed
 	);
 
-	if (input.up)
+	if (input.up && !player.jumping)
 	{
-		if (!player.jumping)
-		{
-			player.jumping = true;
-			rb.linearVelocity.y = 6.f;
-		}
+		player.jumping = true;
+		rb.linearVelocity.y = 6.f;
 	}
 }
 
