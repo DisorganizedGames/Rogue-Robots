@@ -12,8 +12,8 @@ function BarrelComponents:BasicBarrel()
 	{
 		bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Bullet/556x45_bullet.fbx"),
 		gunShotSound = Asset:LoadAudio("Assets/Audio/TestShoot.wav"),
-		speed = 75.0,
-		size = Vector3.New(15.0, 15.0, 15.0),
+		speed = 35.0,
+		size = Vector3.New(5.0, 5.0, 5.0),
 
 		Update = function(self, gunEntity, parentEntityID, bullet)
 			

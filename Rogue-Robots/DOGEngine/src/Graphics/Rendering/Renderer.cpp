@@ -640,6 +640,9 @@ namespace DOG::gfx
 
 					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
 
+					if (animated)
+						std::cout << "Bro/n";
+
 					auto args = ShaderArgs()
 						.AppendConstant(m_globalEffectData.globalDataDescriptor)
 						.AppendConstant(m_currPfDescriptor)
@@ -647,6 +650,7 @@ namespace DOG::gfx
 						.AppendConstant(perLightHandle)
 						.AppendConstant(shadowHandle)
 						.AppendConstant(wireframe ? 1 : 0);
+
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
@@ -810,7 +814,7 @@ namespace DOG::gfx
 					drawFunc(rd, cmdl, m_wireframeDraws, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, false, true);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframeNoCull);
-					drawFunc(rd, cmdl, m_noCullWireframeDraws, false, true);
+					drawFunc(rd, cmdl, m_noCullWireframeDraws, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, false, true);
 				});
 		}
 

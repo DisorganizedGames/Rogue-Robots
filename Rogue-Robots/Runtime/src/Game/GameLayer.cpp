@@ -139,9 +139,9 @@ void GameLayer::StartMainScene()
 			return players;
 		},
 		[this]() { return LoadLevel(); },
-		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(20, 20, 50), 10, 3.0f); },
-		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(30, 20, 50), 10, 3.0f); },
-		[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(40, 20, 50), 10, 3.0f); },
+		//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(20, 20, 50), 10, 3.0f); },
+		//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(30, 20, 50), 10, 3.0f); },
+		//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(40, 20, 50), 10, 3.0f); },
 		});
 
 	LuaMain::GetScriptManager()->StartScripts();
@@ -156,7 +156,7 @@ void GameLayer::CloseMainScene()
 
 void GameLayer::EvaluateWinCondition()
 {
-	bool agentsAlive = false;
+	bool agentsAlive = true;
 	EntityManager::Get().Collect<AgentIdComponent>().Do([&agentsAlive](AgentIdComponent&) { agentsAlive = true; });
 
 	static f64 freeRoamTimeAfterWin = 0;
@@ -536,8 +536,8 @@ std::vector<entity> GameLayer::LoadLevel()
 	//testRooms
 	//Tunnels
 	//showOff
-	std::ifstream inputFile("..\\Offline-Tools\\PCG\\showOff_generatedLevel.txt");
-	//std::ifstream inputFile("..\\Offline-Tools\\PCG\\Tunnels_generatedLevel.txt");
+	//std::ifstream inputFile("..\\Offline-Tools\\PCG\\showOff_generatedLevel.txt");
+	std::ifstream inputFile("..\\Offline-Tools\\PCG\\Tunnels_generatedLevel.txt");
 
 	AssetManager& aManager = AssetManager::Get();
 
@@ -578,14 +578,14 @@ std::vector<entity> GameLayer::LoadLevel()
 						}
 
 						//Correct scaling for the mesh colliders (I think)
-						Vector3 localMeshColliderScale = Vector3(-xFlip, yFlip, 1.0f);
+						Vector3 localMeshColliderScale = Vector3(1.0f, 1.0f, 1.0f);
 
 						entity blockEntity = levelBlocks.emplace_back(m_entityManager.CreateEntity());
 						m_entityManager.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".fbx"));
 						m_entityManager.AddComponent<TransformComponent>(blockEntity,
 							Vector3(x * blockDim, y * blockDim, z * blockDim),
 							Vector3(piDiv2, blockRot * piDiv2 - piDiv2, 0.0f),
-							Vector3(xFlip, -yFlip, 1.0f));
+							Vector3(1.0f, 1.0f, 1.0f));
 
 						m_entityManager.AddComponent<ModularBlockComponent>(blockEntity);
 						m_entityManager.AddComponent<MeshColliderComponent>(blockEntity,

@@ -48,7 +48,7 @@ local gunEntity = {
 local basicBarrelEquiped = true
 --Ammo and reloading 
 local maxAmmo = 30
-local currentAmmo = 30
+local currentAmmo = 100000
 local ammoLeft = -1
 local reloadTimer = 0.0
 local reloading = false
