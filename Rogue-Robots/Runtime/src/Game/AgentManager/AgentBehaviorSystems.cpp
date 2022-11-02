@@ -5,8 +5,9 @@ using namespace DOG;
 
 void AgentSeekPlayerSystem::OnUpdate(entity e, AgentSeekPlayerComponent& seek, AgentIdComponent& agent, TransformComponent& transform)
 {
+	constexpr f32 SEEK_RADIUS_METERS = 5.0f;
+	constexpr f32 SEEK_RADIUS_SQUARED = SEEK_RADIUS_METERS;
 	EntityManager& eMan = EntityManager::Get();
-	constexpr float SEEK_RADIUS_SQUARED = 256.0f;
 	struct PlayerDist
 	{ 
 		entity entityID = NULL_ENTITY;
@@ -76,7 +77,7 @@ void AgentSeekPlayerSystem::OnUpdate(entity e, AgentSeekPlayerComponent& seek, A
 
 
 void AgentMovementSystem::OnUpdate(entity e, AgentMovementComponent& movement, 
-	AgentPathfinderComponent& pathfinder, AgentSeekPlayerComponent& seek, TransformComponent& trans)
+	AgentPathfinderComponent& pathfinder, AgentSeekPlayerComponent& seek, RigidbodyComponent& rb, TransformComponent& trans)
 {
 	if (seek.entityID == DOG::NULL_ENTITY)
 	{
@@ -101,8 +102,16 @@ void AgentMovementSystem::OnUpdate(entity e, AgentMovementComponent& movement,
 		pathfinder.targetPos += (-seek.direction * 2);
 		trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pathfinder.targetPos, Vector3(0, 1, 0)).Invert();
 		movement.forward = seek.direction;
+
 		// TODO: transfer actual movement responsibility to Pathfinder
-		trans.SetPosition(trans.GetPosition() + movement.forward * static_cast<f32>(movement.currentSpeed * Time::DeltaTime()));
+		constexpr f32 SKID_FACTOR = 0.1f;
+		movement.forward.x += rb.linearVelocity.x * SKID_FACTOR;
+		movement.forward.y = 0.0f;
+		movement.forward.z += rb.linearVelocity.z * SKID_FACTOR;
+		movement.forward.Normalize();
+		movement.forward *= movement.currentSpeed;
+		rb.linearVelocity.x = movement.forward.x;
+		rb.linearVelocity.z = movement.forward.z;
 		
 		if (!EntityManager::Get().HasComponent<AgentAttackComponent>(e))
 			EntityManager::Get().AddComponent<AgentAttackComponent>(e);
