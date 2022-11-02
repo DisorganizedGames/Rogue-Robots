@@ -1106,6 +1106,19 @@ void GameLayer::CheatSettingsImGuiMenu()
 	{
 		RespawnDeadPlayer(GetPlayer());
 	}
+	if (ImGui::Button("Legacy weapon system"))
+	{
+		////Let's start with the main player:
+		//auto player = GetPlayer();
+		//LuaMain::GetScriptManager()->RemoveScript(player, "Gun.lua");
+		//LuaMain::GetScriptManager()->AddScript(player, "GunLegacy.lua");
+		//auto gunScriptData = LuaMain::GetScriptManager()->GetScript(player, "GunLegacy.lua");
+		//LuaTable t0(gunScriptData.scriptTable, true);
+		//t0.CallFunctionOnTable("OnStart");
+		//
+		////Followed by the network players (might not be necessary):
+
+	}
 }
 
 void GameLayer::CheatDebugMenu(bool&)
