@@ -13,6 +13,7 @@
 		bool StartTcpServer();
 		std::string GetIpAddress();
 		INT8 GetNrOfConnectedPlayers();
+		void SetMulticastAdress(const char* adress);
 	private:
 		void ServerReciveConnectionsTCP(SOCKET listenSocket);
 		void ServerPollTCP();
@@ -38,6 +39,6 @@
 		float m_tickrateUdp;
 		std::mutex m_mut;
 		PlayerNetworkComponentUdp m_holdPlayersUdp[MAX_PLAYER_COUNT];
-
+		char m_multicastAdress[16];
 
 	};
