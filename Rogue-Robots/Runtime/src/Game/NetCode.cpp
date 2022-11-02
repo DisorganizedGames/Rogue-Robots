@@ -240,6 +240,10 @@ void NetCode::Receive()
 		{
 			while (m_dataIsReadyToBeReceivedTcp && m_netCodeAlive)
 				continue;
+
+			if (!m_netCodeAlive)
+				break;
+
 			if (!firstTime && !m_inputTcp.lobbyAlive)
 			{
 				firstTime = true;
@@ -252,8 +256,9 @@ void NetCode::Receive()
 			}
 			else
 			{
-			m_dataIsReadyToBeReceivedTcp = true;
+				m_dataIsReadyToBeReceivedTcp = true;
 			}
+
 		}
 			
 	}
