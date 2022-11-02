@@ -246,13 +246,14 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e)
 void GameLayer::KillPlayer(DOG::entity e)
 {
 	m_entityManager.RemoveComponent<PlayerAliveComponent>(e);
+	
+	LuaMain::GetScriptManager()->RemoveScript(e, "Gun.lua");
+	LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
+	LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
+	m_entityManager.RemoveComponent<ScriptComponent>(e);
+	
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
-		LuaMain::GetScriptManager()->RemoveScript(e, "Gun.lua");
-		LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
-		LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
-		m_entityManager.RemoveComponent<ScriptComponent>(e);
-
 		auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
 		controller.debugCamera = m_mainScene->CreateEntity();
 
