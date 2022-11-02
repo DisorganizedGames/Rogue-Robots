@@ -54,6 +54,7 @@ struct PushConstantElement
     uint spotlightArrayStructureIndex;
     uint shadowMapDepthIndex;
     uint wireframe;
+    uint isLit;
 };
 ConstantBuffer<PushConstantElement> constants : register(b0, space0);
 

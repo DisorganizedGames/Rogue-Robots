@@ -485,6 +485,9 @@ namespace DOG
 					gfxChanged = true;
 				}
 
+				if (ImGui::Checkbox("Lit", &m_specification.graphicsSettings.lit))
+					gfxChanged = true;
+
 				if (gfxChanged)
 					m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
 
