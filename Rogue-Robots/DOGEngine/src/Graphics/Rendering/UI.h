@@ -5,6 +5,8 @@
 #include "../RHI/RenderDevice.h"
 #include "../../EventSystem/IEvent.h"
 #include "../../EventSystem/Layer.h"
+#include "../../EventSystem/EventPublisher.h"
+
 
 namespace DOG
 {
@@ -35,7 +37,7 @@ namespace DOG
          void ChangeUIscene(UINT sceneID);
          UINT AddUIElementToScene(UINT sceneID, std::unique_ptr<UIElement> element);
          UINT RemoveUIElement(UINT elementID);
-         UINT AddScene();
+         UINT AddScene(std::string layerName);
          void RemoveScene(UINT sceneID);
          UIScene* GetScene(UINT sceneID);
          void Resize(UINT clientWidth, UINT clientHeight);
@@ -88,7 +90,7 @@ namespace DOG
    class UIScene : public Layer
    {
       public:
-      UIScene(UINT id);
+      UIScene(UINT id, std::string layerName);
       ~UIScene() = default;
       UINT GetID();
       void OnEvent(IEvent& event) override final;
@@ -110,7 +112,8 @@ namespace DOG
          bool pressed;
          UIButton(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, std::wstring text, std::function<void(void)> callback);
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
-         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         //void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void OnEvent(IEvent& event) override final;
          ~UIButton();
       private:
          D2D_POINT_2F m_pos;
@@ -120,8 +123,20 @@ namespace DOG
          std::function<void(void)> m_callback;
          ComPtr<IDWriteTextFormat> m_format;
          ComPtr<ID2D1SolidColorBrush> m_brush;
+
+         class UIButtonPressedEvent : public IEvent
+	      {
+	      public:
+		      explicit UIButtonPressedEvent(const UINT& Uid) noexcept : id{ Uid } {}
+		      virtual ~UIButtonPressedEvent() noexcept override final = default;
+		      [[nodiscard]] virtual constexpr const EventType GetEventType() const { return EventType::UIButtonPressedEvent; }
+		      [[nodiscard]] virtual constexpr const EventCategory GetEventCategory() const { return EventCategory::UIEventCategory; }
+	      public:
+		      UINT id;
+	      };
    };
 
+   
 
    class UISplashScreen : public UIElement
    {
@@ -196,12 +211,11 @@ namespace DOG
          std::wstring GetText();
       private:
          bool m_active;
-         D2D1_RECT_F m_border, m_background, m_cursor;
+         D2D1_RECT_F m_border, m_background;
          ComPtr<IDWriteTextFormat> m_textFormat;
          ComPtr<ID2D1SolidColorBrush> m_backBrush, m_borderBrush, m_textBrush;
          std::wstring m_text;
          std::wstring m_displayText;
-         void IncrementCursor();
    };
 
 }

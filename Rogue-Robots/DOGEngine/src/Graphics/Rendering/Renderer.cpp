@@ -35,35 +35,6 @@
 #include "../../common/MiniProfiler.h"
 
 
-UINT menuID, gameID, optionsID, multiID;
-
-void UIRebuild(UINT clientHeight, UINT clientWidth);
-void AddScenes();
-
-void PlayButtonFunc(void)
-{
-	DOG::UI::Get().ChangeUIscene(gameID);
-}
-
-void OptionsButtonFunc(void)
-{
-	DOG::UI::Get().ChangeUIscene(optionsID);
-}
-
-void MultiplayerButtonFunc(void)
-{
-	DOG::UI::Get().ChangeUIscene(multiID);
-}
-
-void ToMenuButtonFunc(void)
-{
-	DOG::UI::Get().ChangeUIscene(menuID);
-}
-
-void ExitButtonFunc(void)
-{
-	//Exit game
-}
 
 namespace DOG::gfx
 {
@@ -1072,7 +1043,7 @@ namespace DOG::gfx
 		m_sc->OnResize(clientWidth, clientHeight);
 		DOG::UI::Get().Resize(clientWidth, clientHeight);
 
-		UIRebuild(clientHeight, clientWidth);
+		//UIRebuild(clientHeight, clientWidth);
 
 
 	}

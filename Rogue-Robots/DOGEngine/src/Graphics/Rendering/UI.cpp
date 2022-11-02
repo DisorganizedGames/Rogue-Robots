@@ -38,8 +38,6 @@ void DOG::UI::DrawUI()
    }
 }
 
-
-
 void DOG::UI::Resize(UINT clientWidth, UINT clientHeight)
 {
    m_width = clientWidth;
@@ -149,9 +147,9 @@ UINT DOG::UI::RemoveUIElement(UINT elementID)
 
 /// @brief Adds a scene to the UI manager
 /// @return A unique ID for the newly created scene
-UINT DOG::UI::AddScene()
+UINT DOG::UI::AddScene(std::string layerName)
 {
-   auto scene = std::make_unique<UIScene>(GenerateUID());
+   auto scene = std::make_unique<UIScene>(GenerateUID(), layerName);
    UINT id = scene->GetID();
    m_scenes.push_back(std::move(scene));
    return id;
@@ -200,7 +198,9 @@ UINT DOG::UIScene::GetID()
 void DOG::UIScene::OnEvent(IEvent& event)
 {
    for (auto&& e : m_scene)
+   {
       e->OnEvent(event);
+   }
 
 }
 
@@ -277,20 +277,52 @@ void DOG::UIButton::Draw(DOG::gfx::D2DBackend_DX12& d2d)
    );
 }
 
-void DOG::UIButton::Update(DOG::gfx::D2DBackend_DX12& d2d)
+void DOG::UIButton::OnEvent(IEvent& event)
 {
-   UNREFERENCED_PARAMETER(d2d);
-   auto m = DOG::Mouse::GetCoordinates();
-   if (m.first >= m_textRect.left && m.first <= m_textRect.right && m.second >= m_textRect.top && m.second <= m_textRect.bottom)
+   using namespace DOG;
+   if (event.GetEventCategory() == EventCategory::MouseEventCategory)
    {
-      m_brush.Get()->SetOpacity(1.0f);
-      if (DOG::Mouse::IsButtonPressed(DOG::Button::Left))
-         m_callback();
+      if (event.GetEventType() == EventType::LeftMouseButtonPressedEvent)
+      {
+         auto mevent = EVENT(DOG::LeftMouseButtonPressedEvent);
+         auto mpos = mevent.coordinates;
+         if (mpos.x >= m_textRect.left && mpos.x <= m_textRect.right && mpos.y >= m_textRect.top && mpos.y <= m_textRect.bottom)
+         {
+            m_callback();
+         }
+      }
+      else if (event.GetEventType() == EventType::MouseMovedEvent)
+      {
+         auto mevent = EVENT(DOG::MouseMovedEvent);
+         auto mpos = mevent.coordinates;
+         if (!(mpos.x >= m_textRect.left && mpos.x <= m_textRect.right && mpos.y >= m_textRect.top && mpos.y <= m_textRect.bottom))
+            m_brush.Get()->SetOpacity(0.5f);
+         else
+            m_brush.Get()->SetOpacity(1.0f);
+      }
    }
-   else
-      m_brush.Get()->SetOpacity(0.5f);
+}
+
+// void DOG::UIButton::Update(DOG::gfx::D2DBackend_DX12& d2d)
+// {
+//    UNREFERENCED_PARAMETER(d2d);
+//    auto m = DOG::Mouse::GetCoordinates();
+//    if (m.first >= m_textRect.left && m.first <= m_textRect.right && m.second >= m_textRect.top && m.second <= m_textRect.bottom)
+//    {
+//       m_brush.Get()->SetOpacity(1.0f);
+//       if (DOG::Mouse::IsButtonPressed(DOG::Button::Left))
+//          m_callback();
+//    }
+//    else
+//       m_brush.Get()->SetOpacity(0.5f);
+
+// }
+
+DOG::UIScene::UIScene(UINT id, std::string layerName) : m_ID(id), Layer(layerName)
+{
 
 }
+
 
 DOG::UISplashScreen::UISplashScreen(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float height) : UIElement(id)
 {
@@ -353,10 +385,6 @@ DOG::UISplashScreen::~UISplashScreen()
 
 }
 
-DOG::UIScene::UIScene(UINT id) : m_ID(id), Layer("UIScene")
-{
-
-}
 
 DOG::UIHealthBar::UIHealthBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height) : UIElement(id)
 {
@@ -503,7 +531,6 @@ DOG::UITextField::UITextField(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, 
    m_displayText = L"  IP";
    m_active = false;
    m_border = m_background = D2D1::RectF(x, y, x + width, y + height);
-   m_cursor = D2D1::RectF(x + 5.0f, y + 3.0f, x + 2.0f, y + height - 3.0f);
    //m_bar = D2D1::RectF(x + 2.0f, y + 2.0f, x + width - 2.f, y + height - 2.f);
    HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &m_borderBrush);
    HR_VFY(hr);
@@ -522,8 +549,6 @@ DOG::UITextField::UITextField(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, 
       &m_textFormat
    );
    HR_VFY(hr);
-   // hr = m_textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-   // HR_VFY(hr);
    hr = m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
    HR_VFY(hr);
 }
@@ -533,11 +558,6 @@ DOG::UITextField::~UITextField()
 
 }
 
-void DOG::UITextField::IncrementCursor()
-{
-   m_cursor.left += m_textFormat->GetFontSize() * 0.64f;
-   m_cursor.right += m_textFormat->GetFontSize() * 0.64f;
-}
 // void DOG::UITextField::Update(DOG::gfx::D2DBackend_DX12& d2d)
 // {
 //    UNREFERENCED_PARAMETER(d2d);
@@ -621,7 +641,6 @@ void DOG::UITextField::Draw(DOG::gfx::D2DBackend_DX12& d2d)
    if (m_active)
    {
       m_textBrush->SetOpacity(0.7f);
-      //d2d.Get2DDeviceContext()->FillRectangle(m_cursor, m_borderBrush.Get());
       d2d.Get2DDeviceContext()->DrawTextW(
          m_text.c_str(),
          (UINT32)m_text.length(),
@@ -663,30 +682,28 @@ void DOG::UITextField::OnEvent(DOG::IEvent& event)
          if (m_active)
          {
             int c = static_cast<int>(EVENT(KeyPressedEvent).key);
-            if (isgraph(c) != 0)
+            if (c == 190)
+               m_text += L'.';
+            else if (isgraph(c) != 0)
             {
-               wchar_t character = c;
+               wchar_t character = static_cast<wchar_t>(c);
                m_text += character;
-               m_cursor.left += m_textFormat->GetFontSize() * 0.64f;
-               m_cursor.right += m_textFormat->GetFontSize() * 0.64f;
             }
             else if (EVENT(KeyPressedEvent).key == DOG::Key::BackSpace && m_text.length() > 0)
-            {
                m_text.pop_back();
-               m_cursor.left -= m_textFormat->GetFontSize() * 0.64f;
-               m_cursor.right -= m_textFormat->GetFontSize() * 0.64f;
-            }
          }
          break;
       case EventType::LeftMouseButtonPressedEvent:
-      {
-         auto mevent = EVENT(DOG::LeftMouseButtonPressedEvent);
-         auto mpos = mevent.coordinates;
-         if(mpos.x >= m_border.left && mpos.x <= m_border.right && mpos.y >= m_border.top && mpos.y <= m_border.bottom)
-            m_active = true;
-         break;
+         {
+            auto mevent = EVENT(DOG::LeftMouseButtonPressedEvent);
+            auto mpos = mevent.coordinates;
+            if (mpos.x >= m_border.left && mpos.x <= m_border.right && mpos.y >= m_border.top && mpos.y <= m_border.bottom)
+               m_active = true;
+            if (!(mpos.x >= m_border.left && mpos.x <= m_border.right && mpos.y >= m_border.top && mpos.y <= m_border.bottom) && m_active)
+               m_active = false;
+            break;
 
-      }
+         }
       default:
          break;
       }
