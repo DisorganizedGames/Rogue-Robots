@@ -25,6 +25,7 @@ namespace DOG
 		assert(!s_instance);
 		s_instance = std::unique_ptr<AssetManager>(new AssetManager());
 		s_instance->m_renderer = renderer;
+		TextureFileImporter::Initialize();
 	}
 
 	void AssetManager::Destroy()

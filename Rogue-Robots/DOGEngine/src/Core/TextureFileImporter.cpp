@@ -5,19 +5,27 @@ namespace DOG
 {
 	bool TextureFileImporter::s_initialized = false;
 
-	TextureFileImporter::TextureFileImporter(const std::filesystem::path& path, bool genMips)
+	void TextureFileImporter::Initialize()
 	{
-		// Result is empty if path is empty
-		if (path.empty())
-			return;
-
 		if (!s_initialized)
 		{
 			CMP_InitFramework();
 			s_initialized = true;
 		}
+	}
 
-		CMP_MipSet mipSetIn;
+
+	TextureFileImporter::TextureFileImporter(const std::filesystem::path& path, bool genMips)
+	{
+		assert(s_initialized);
+
+		// Result is empty if path is empty
+		if (path.empty())
+			return;
+
+		std::lock_guard<std::mutex> lock(m_mutex);
+
+		CMP_MipSet mipSetIn{};
 		memset(&mipSetIn, 0, sizeof(CMP_MipSet));
 		auto cmpStatus = CMP_LoadTexture(path.string().c_str(), &mipSetIn);
 		if (cmpStatus != CMP_OK)
