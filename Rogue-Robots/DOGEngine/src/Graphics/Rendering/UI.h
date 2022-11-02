@@ -123,17 +123,6 @@ namespace DOG
          std::function<void(void)> m_callback;
          ComPtr<IDWriteTextFormat> m_format;
          ComPtr<ID2D1SolidColorBrush> m_brush;
-
-         class UIButtonPressedEvent : public IEvent
-	      {
-	      public:
-		      explicit UIButtonPressedEvent(const UINT& Uid) noexcept : id{ Uid } {}
-		      virtual ~UIButtonPressedEvent() noexcept override final = default;
-		      [[nodiscard]] virtual constexpr const EventType GetEventType() const { return EventType::UIButtonPressedEvent; }
-		      [[nodiscard]] virtual constexpr const EventCategory GetEventCategory() const { return EventCategory::UIEventCategory; }
-	      public:
-		      UINT id;
-	      };
    };
 
    

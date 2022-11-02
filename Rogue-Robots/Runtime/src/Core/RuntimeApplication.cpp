@@ -90,7 +90,7 @@ void RuntimeApplication::OnStartUp() noexcept
 
 	//Menu buttons
 	UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID;
-	auto bp = DOG::UI::Get().Create<DOG::UIButton, float, float, float, float, float, std::wstring>(bpID, (FLOAT)1280.f / 2.f - 150.f / 2, (FLOAT)720.f / 2.f, 150.f, 60.f, 20.f, std::wstring(L"Play"), [&](){ UI::Get().RemoveScene(menuID);  });
+	auto bp = DOG::UI::Get().Create<DOG::UIButton, float, float, float, float, float, std::wstring>(bpID, (FLOAT)1280.f / 2.f - 150.f / 2, (FLOAT)720.f / 2.f, 150.f, 60.f, 20.f, std::wstring(L"Play"), [&](){ DOG::UI::Get().ChangeUIscene(gameID);PushLayer(&m_gameLayer);  });
 	auto bm = DOG::UI::Get().Create<DOG::UIButton, float, float, float, float, float, std::wstring>(bmID, (FLOAT)1280.f / 2.f - 150.f / 2, (FLOAT)720.f / 2.f + 70.f, 150.f, 60.f, 20.f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
 	auto bo = DOG::UI::Get().Create<DOG::UIButton, float, float, float, float, float, std::wstring>(boID, (FLOAT)1280.f / 2.f - 150.f / 2, (FLOAT)720.f / 2.f + 140.f, 150.f, 60.f, 20.f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
 	auto be = DOG::UI::Get().Create<DOG::UIButton, float, float, float, float, float, std::wstring>(beID, (FLOAT)1280.f / 2.f - 150.f / 2, (FLOAT)720.f / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
