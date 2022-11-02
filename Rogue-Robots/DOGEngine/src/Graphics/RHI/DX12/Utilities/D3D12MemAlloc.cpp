@@ -22,6 +22,8 @@
 
 #include "D3D12MemAlloc.h"
 
+#pragma warning( disable : 4324 4100 4030 4189 )
+
 #include <combaseapi.h>
 #include <mutex>
 #include <algorithm>
