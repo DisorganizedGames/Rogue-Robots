@@ -54,11 +54,8 @@ void DOG::UI::Resize(UINT clientWidth, UINT clientHeight)
 
 void DOG::UI::FreeResize()
 {
-
    for (auto&& e : m_scenes)
-   {
       e->GetScene().clear();
-   }
 
    m_d2d->FreeResize();
 }
@@ -586,7 +583,7 @@ void DOG::UITextField::OnEvent(DOG::IEvent& event)
       switch (event.GetEventType())
       {
       case EventType::KeyPressedEvent:
-         if (m_active)
+         if (m_active && m_text.length() < 20)
          {
             int c = static_cast<int>(EVENT(KeyPressedEvent).key);
             if (c == 190)
@@ -618,6 +615,8 @@ void DOG::UITextField::OnEvent(DOG::IEvent& event)
 
 }
 
+/// @brief Getter for UITextfield.
+/// @return The text currently in the text field.
 std::wstring DOG::UITextField::GetText()
 {
    return m_text;

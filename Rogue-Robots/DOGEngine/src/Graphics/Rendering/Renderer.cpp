@@ -36,17 +36,38 @@
 #include "../../Core/ImGuiMenuLayer.h"
 #include "../../common/MiniProfiler.h"
 
-extern UINT menuID, gameID, optionsID, multiID;
-extern UINT menuBackID, optionsBackID, multiBackID;
-extern UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID;
-extern UINT cID, tID, hID;
+UINT menuID, gameID, optionsID, multiID;
+UINT menuBackID, optionsBackID, multiBackID;
+UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID;
+UINT cID, tID, hID;
 
-void ExitButtonFunc(void);
-void ToMenuButtonFunc(void);
-void MultiplayerButtonFunc(void);
-void OptionsButtonFunc(void);
-void PlayButtonFunc(void);
+void PlayButtonFunc(void)
+{
+	DOG::UI::Get().ChangeUIscene(gameID);
+}
+
+void OptionsButtonFunc(void)
+{
+	DOG::UI::Get().ChangeUIscene(optionsID);
+}
+
+void MultiplayerButtonFunc(void)
+{
+	DOG::UI::Get().ChangeUIscene(multiID);
+}
+
+void ToMenuButtonFunc(void)
+{
+	DOG::UI::Get().ChangeUIscene(menuID);
+}
+
+void ExitButtonFunc(void)
+{
+	//Exit game
+}
+
 void UIRebuild(UINT clientHeight, UINT clientWidth);
+void AddScenes();
 
 namespace DOG::gfx
 {
@@ -65,8 +86,8 @@ namespace DOG::gfx
 		m_singleSidedShadowDraws.resize(12);
 		m_doubleSidedShadowDraws.resize(12);
 
-		// AddScenes();
-		// UIRebuild(clientHeight, clientWidth);
+		AddScenes();
+		UIRebuild(clientHeight, clientWidth);
 
 
 		m_imgui = std::make_unique<gfx::ImGUIBackend_DX12>(m_rd, m_sc, S_MAX_FIF);
@@ -1278,5 +1299,9 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
 void AddScenes()
 {
-	
+	menuID = DOG::UI::Get().AddScene();
+	gameID = DOG::UI::Get().AddScene();
+	multiID = DOG::UI::Get().AddScene();
+	optionsID = DOG::UI::Get().AddScene();
+	DOG::UI::Get().ChangeUIscene(menuID);
 }

@@ -28,6 +28,14 @@ namespace DOG
          UINT m_ID;
    };
 
+
+
+   /** @brief This is a singleton. To use this interface call the Get() function to obtain the global instance. 
+    * To create UI elements call create<UIelement>() and pass the UIelement derived class as a template parameter.
+    * To create a scene and switch bewtween scenes use AddScene() and ChangeUIscene() accordingly. 
+    * To register a UIelement to a scene call AddUIElementToScene().
+    * To add new elements create a class, inherit the UIElement class and implement its pure virtual funtions.
+   **/
    class UI : public Layer
    {
       public:

@@ -5,41 +5,6 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 std::string GetWorkingDirectory();
 
 
-UINT menuID, gameID, optionsID, multiID;
-UINT menuBackID, optionsBackID, multiBackID;
-UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID;
-UINT cID, tID, hID;
-
-void AddScenes();
-void BuildUI();
-
-void PlayButtonFunc(void)
-{
-	DOG::UI::Get().ChangeUIscene(gameID);
-}
-
-void OptionsButtonFunc(void)
-{
-	DOG::UI::Get().ChangeUIscene(optionsID);
-}
-
-void MultiplayerButtonFunc(void)
-{
-	DOG::UI::Get().ChangeUIscene(multiID);
-}
-
-void ToMenuButtonFunc(void)
-{
-	DOG::UI::Get().ChangeUIscene(menuID);
-}
-
-void ExitButtonFunc(void)
-{
-	//Exit game
-}
-
-
-
 RuntimeApplication::RuntimeApplication(const DOG::ApplicationSpecification& spec) noexcept
 	: DOG::Application{ spec }
 {
@@ -54,7 +19,6 @@ RuntimeApplication::~RuntimeApplication()
 void RuntimeApplication::OnStartUp() noexcept
 {
 	PushLayer(&m_gameLayer);
-	BuildUI();
 	PushOverlay(&DOG::UI::Get());
 	//PushLayer(&m_EmilFDebugLayer);
 
@@ -247,58 +211,4 @@ std::unique_ptr<DOG::Application> CreateApplication() noexcept
 	spec.name = "Rogue Robots";
 	spec.workingDir = GetWorkingDirectory();
 	return std::make_unique<RuntimeApplication>(spec);
-}
-
-void BuildUI()
-{
-	menuID = DOG::UI::Get().AddScene();
-	gameID = DOG::UI::Get().AddScene();
-	multiID = DOG::UI::Get().AddScene();
-	optionsID = DOG::UI::Get().AddScene();
-	DOG::UI::Get().ChangeUIscene(menuID);
-
-
-	//HealthBar
-	auto h = DOG::UI::Get().Create<DOG::UIHealthBar, float, float, float, float>(hID, 40.f, 1280.f - 60.f, 250.f, 30.f);
-	DOG::UI::Get().AddUIElementToScene(gameID, std::move(h));
-
-
-	auto hp = DOG::UI::Get().GetUI<DOG::UIHealthBar>(hID);
-	hp->SetBarValue(0.5f);
-
-	//Crosshair
-	auto c = DOG::UI::Get().Create<DOG::UICrosshair>(cID);
-	DOG::UI::Get().AddUIElementToScene(gameID, std::move(c));
-
-
-	//Menu backgrounds
-	auto menuBack = DOG::UI::Get().Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)1280.f, (FLOAT)720.f, std::wstring(L"Rogue Robots"));
-	DOG::UI::Get().AddUIElementToScene(menuID, std::move(menuBack));
-	auto optionsBack = DOG::UI::Get().Create<DOG::UIBackground, float, float, std::wstring>(optionsBackID, (FLOAT)1280.f, (FLOAT)720.f, std::wstring(L"Options"));
-	DOG::UI::Get().AddUIElementToScene(optionsID, std::move(optionsBack));
-	auto multiBack = DOG::UI::Get().Create<DOG::UIBackground, float, float, std::wstring>(multiBackID, (FLOAT)1280.f, (FLOAT)720.f, std::wstring(L"Multiplayer"));
-	DOG::UI::Get().AddUIElementToScene(multiID, std::move(multiBack));
-
-
-	auto t = DOG::UI::Get().Create<DOG::UITextField, float, float, float, float>(tID, (FLOAT)1280.f / 2.f - 250.f / 2, (FLOAT)720.f / 2.f, 250.f, 30.f);
-	DOG::UI::Get().AddUIElementToScene(multiID, std::move(t));
-
-	//Menu buttons
-	auto bp = DOG::UI::Get().Create<DOG::UIButton, float, float, float, float, float, std::wstring>(bpID, (FLOAT)1280.f / 2.f - 150.f / 2, (FLOAT)720.f / 2.f, 150.f, 60.f, 20.f, std::wstring(L"Play"), PlayButtonFunc);
-	auto bm = DOG::UI::Get().Create<DOG::UIButton, float, float, float, float, float, std::wstring>(bmID, (FLOAT)1280.f / 2.f - 150.f / 2, (FLOAT)720.f / 2.f + 70.f, 150.f, 60.f, 20.f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
-	auto bo = DOG::UI::Get().Create<DOG::UIButton, float, float, float, float, float, std::wstring>(boID, (FLOAT)1280.f / 2.f - 150.f / 2, (FLOAT)720.f / 2.f + 140.f, 150.f, 60.f, 20.f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
-	auto be = DOG::UI::Get().Create<DOG::UIButton, float, float, float, float, float, std::wstring>(beID, (FLOAT)1280.f / 2.f - 150.f / 2, (FLOAT)720.f / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
-	auto optback = DOG::UI::Get().Create<DOG::UIButton, float, float, float, float, float, std::wstring>(optbackID, (FLOAT)1280.f / 2.f - 150.f / 2, (FLOAT)720.f / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
-	auto mulback = DOG::UI::Get().Create<DOG::UIButton, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)1280.f / 2.f - 150.f / 2, (FLOAT)720.f / 2.f + 250.f, 150.f, 60.f, 20.f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
-
-	auto bh = DOG::UI::Get().Create<DOG::UIButton, float, float, float, float, float, std::wstring>(bhID, (FLOAT)1280.f / 2.f - 75.f - 100.f, (FLOAT)720.f / 2.f + 140.f, 150.f, 60.f, 20.f, std::wstring(L"Host"), std::function<void()>(ToMenuButtonFunc));
-	auto bj = DOG::UI::Get().Create<DOG::UIButton, float, float, float, float, float, std::wstring>(bjID, (FLOAT)1280.f / 2.f - 75.f + 100.f, (FLOAT)720.f / 2.f + 140.f, 150.f, 60.f, 20.f, std::wstring(L"Join"), std::function<void()>(ToMenuButtonFunc));
-	DOG::UI::Get().AddUIElementToScene(menuID, std::move(bp));
-	DOG::UI::Get().AddUIElementToScene(menuID, std::move(bm));
-	DOG::UI::Get().AddUIElementToScene(menuID, std::move(bo));
-	DOG::UI::Get().AddUIElementToScene(menuID, std::move(be));
-	DOG::UI::Get().AddUIElementToScene(optionsID, std::move(optback));
-	DOG::UI::Get().AddUIElementToScene(multiID, std::move(mulback));
-	DOG::UI::Get().AddUIElementToScene(multiID, std::move(bh));
-	DOG::UI::Get().AddUIElementToScene(multiID, std::move(bj));
 }
