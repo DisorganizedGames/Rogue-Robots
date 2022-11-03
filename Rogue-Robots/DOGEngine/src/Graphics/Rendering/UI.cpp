@@ -8,7 +8,7 @@
 
 DOG::UI* DOG::UI::s_instance = nullptr;
 
-DOG::UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight) : m_visible(true)
+DOG::UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight) : m_visible(true), Layer("UILayer")
 {
    srand((UINT)time(NULL));
    m_width = clientWidth;
@@ -36,6 +36,13 @@ void DOG::UI::DrawUI()
          e->Draw(*m_d2d);
       }
    }
+}
+
+void DOG::UI::OnEvent(IEvent& event)
+{
+      for (auto&& e : m_scenes[m_currsceneIndex]->GetScene())
+         e->OnEvent(event);
+
 }
 
 void DOG::UI::Resize(UINT clientWidth, UINT clientHeight)
@@ -147,9 +154,9 @@ UINT DOG::UI::RemoveUIElement(UINT elementID)
 
 /// @brief Adds a scene to the UI manager
 /// @return A unique ID for the newly created scene
-UINT DOG::UI::AddScene(std::string layerName)
+UINT DOG::UI::AddScene()
 {
-   auto scene = std::make_unique<UIScene>(GenerateUID(), layerName);
+   auto scene = std::make_unique<UIScene>(GenerateUID());
    UINT id = scene->GetID();
    m_scenes.push_back(std::move(scene));
    return id;
@@ -193,15 +200,6 @@ void DOG::UI::ChangeUIscene(UINT sceneID)
 UINT DOG::UIScene::GetID()
 {
    return m_ID;
-}
-
-void DOG::UIScene::OnEvent(IEvent& event)
-{
-   for (auto&& e : m_scene)
-   {
-      e->OnEvent(event);
-   }
-
 }
 
 std::vector<std::unique_ptr<DOG::UIElement>>& DOG::UIScene::GetScene()
@@ -303,22 +301,7 @@ void DOG::UIButton::OnEvent(IEvent& event)
    }
 }
 
-// void DOG::UIButton::Update(DOG::gfx::D2DBackend_DX12& d2d)
-// {
-//    UNREFERENCED_PARAMETER(d2d);
-//    auto m = DOG::Mouse::GetCoordinates();
-//    if (m.first >= m_textRect.left && m.first <= m_textRect.right && m.second >= m_textRect.top && m.second <= m_textRect.bottom)
-//    {
-//       m_brush.Get()->SetOpacity(1.0f);
-//       if (DOG::Mouse::IsButtonPressed(DOG::Button::Left))
-//          m_callback();
-//    }
-//    else
-//       m_brush.Get()->SetOpacity(0.5f);
-
-// }
-
-DOG::UIScene::UIScene(UINT id, std::string layerName) : m_ID(id), Layer(layerName)
+DOG::UIScene::UIScene(UINT id) : m_ID(id)
 {
 
 }
@@ -557,82 +540,6 @@ DOG::UITextField::~UITextField()
 {
 
 }
-
-// void DOG::UITextField::Update(DOG::gfx::D2DBackend_DX12& d2d)
-// {
-//    UNREFERENCED_PARAMETER(d2d);
-//    // auto m = DOG::Mouse::GetCoordinates();
-//    // if (DOG::Mouse::IsButtonPressed(DOG::Button::Left) && m.first >= m_border.left && m.first <= m_border.right && m.second >= m_border.top && m.second <= m_border.bottom)
-//    //    m_active = true;
-//    // if (DOG::Mouse::IsButtonPressed(DOG::Button::Left) && !(m.first >= m_border.left && m.first <= m_border.right && m.second >= m_border.top && m.second <= m_border.bottom))
-//    //    m_active = false;
-
-//    // if (m_active && m_cursor.left <= m_border.right)
-//    // {
-//    //    if (DOG::Keyboard::IsKeyPressed(DOG::Key::Zero))
-//    //    {
-//    //       m_text.append(L"0");
-//    //       IncrementCursor();
-//    //    }
-//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::One))
-//    //    {
-//    //       m_text.append(L"1");
-//    //       IncrementCursor();
-//    //    }
-//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Two))
-//    //    {
-//    //       m_text.append(L"2");
-//    //       IncrementCursor();
-//    //    }
-//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Three))
-//    //    {
-//    //       m_text.append(L"3");
-//    //       IncrementCursor();
-//    //    }
-//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Four))
-//    //    {
-//    //       m_text.append(L"4");
-//    //       IncrementCursor();
-//    //    }
-//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Five))
-//    //    {
-//    //       m_text.append(L"5");
-//    //       IncrementCursor();
-//    //    }
-//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Six))
-//    //    {
-//    //       m_text.append(L"6");
-//    //       IncrementCursor();
-//    //    }
-//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Seven))
-//    //    {
-//    //       m_text.append(L"7");
-//    //       IncrementCursor();
-//    //    }
-//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Eight))
-//    //    {
-//    //       m_text.append(L"8");
-//    //       IncrementCursor();
-//    //    }
-//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Nine))
-//    //    {
-//    //       m_text.append(L"9");
-//    //       IncrementCursor();
-//    //    }
-//    //    else if (DOG::Keyboard::IsKeyPressed(DOG::Key::Period))
-//    //    {
-//    //       m_text.append(L".");
-//    //       IncrementCursor();
-//    //    }
-//    // }
-
-//    // if (DOG::Keyboard::IsKeyPressed(DOG::Key::BackSpace) && m_text.length() != 0)
-//    // {
-//    //    m_text.pop_back();
-//    //    m_cursor.left -= m_textFormat->GetFontSize() * 0.64f;
-//    //    m_cursor.right -= m_textFormat->GetFontSize() * 0.64f;
-//    // }
-// }
 
 void DOG::UITextField::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {

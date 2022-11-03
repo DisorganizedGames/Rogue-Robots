@@ -23,6 +23,8 @@
 #include "RenderGraph/RGResourceManager.h"
 #include "RenderGraph/RGBlackboard.h"
 
+//#include "../../Runtime/src/Core/RuntimeApplication.h"
+
 #include "Tracy/Tracy.hpp"
 
 // Passes
@@ -34,7 +36,17 @@
 #include "../../Core/ImGuiMenuLayer.h"
 #include "../../common/MiniProfiler.h"
 
+extern UINT menuID, gameID, optionsID, multiID;
+extern UINT menuBackID, optionsBackID, multiBackID;
+extern UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID;
+extern UINT cID, tID, hID;
 
+void ExitButtonFunc(void);
+void ToMenuButtonFunc(void);
+void MultiplayerButtonFunc(void);
+void OptionsButtonFunc(void);
+void PlayButtonFunc(void);
+void UIRebuild(UINT clientHeight, UINT clientWidth);
 
 namespace DOG::gfx
 {
@@ -53,8 +65,8 @@ namespace DOG::gfx
 		m_singleSidedShadowDraws.resize(12);
 		m_doubleSidedShadowDraws.resize(12);
 
-		AddScenes();
-		UIRebuild(clientHeight, clientWidth);
+		// AddScenes();
+		// UIRebuild(clientHeight, clientWidth);
 
 
 		m_imgui = std::make_unique<gfx::ImGUIBackend_DX12>(m_rd, m_sc, S_MAX_FIF);
@@ -1043,7 +1055,7 @@ namespace DOG::gfx
 		m_sc->OnResize(clientWidth, clientHeight);
 		DOG::UI::Get().Resize(clientWidth, clientHeight);
 
-		//UIRebuild(clientHeight, clientWidth);
+		UIRebuild(clientHeight, clientWidth);
 
 
 	}
@@ -1216,20 +1228,17 @@ namespace DOG::gfx
 
 void UIRebuild(UINT clientHeight, UINT clientWidth)
 {
-	UNREFERENCED_PARAMETER(clientWidth);
 	//HealthBar
-	//auto hID = ui->GenerateUID();
-	//auto h = std::make_unique<DOG::UIHealthBar>(40.f, clientHeight - 60.f, 250.f, 30.f, *ui->GetBackend(), hID);
-	//ui->AddUIElementToScene(gameID, std::move(h));
+	auto h = DOG::UI::Get().Create<DOG::UIHealthBar, float, float, float, float>( hID, 40.f, clientHeight - 60.f, 250.f, 30.f);
+	DOG::UI::Get().AddUIElementToScene(gameID, std::move(h));
 
 	//Crosshair
-	UINT cID;
 	auto c = DOG::UI::Get().Create<DOG::UICrosshair>(cID);
 	DOG::UI::Get().AddUIElementToScene(gameID, std::move(c));
 
 
 	//Menu backgrounds
-	UINT menuBackID, optionsBackID, multiBackID;
+	
 	auto menuBack = DOG::UI::Get().Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Rogue Robots"));
 	DOG::UI::Get().AddUIElementToScene(menuID, std::move(menuBack));
 	auto optionsBack =DOG::UI::Get().Create<DOG::UIBackground, float, float, std::wstring>(optionsBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Options"));
@@ -1237,12 +1246,10 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 	auto multiBack = DOG::UI::Get().Create<DOG::UIBackground, float, float, std::wstring>(multiBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Multiplayer"));
 	DOG::UI::Get().AddUIElementToScene(multiID, std::move(multiBack));
 
-	UINT tID;
 	auto t = DOG::UI::Get().Create<DOG::UITextField, float, float, float, float>(tID, (FLOAT)clientWidth / 2.f - 250.f / 2, (FLOAT)clientHeight / 2.f, 250.f, 30.f);
 	DOG::UI::Get().AddUIElementToScene(multiID, std::move(t));
 
 	//Menu buttons
-	UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID;
 	auto bp = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, std::wstring(L"Play"), std::function<void()>(PlayButtonFunc));
 	auto bm = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(bmID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 150.f, 60.f, 20.f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
 	auto bo = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));

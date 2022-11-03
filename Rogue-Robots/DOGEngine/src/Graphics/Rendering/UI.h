@@ -28,7 +28,7 @@ namespace DOG
          UINT m_ID;
    };
 
-   class UI
+   class UI : public Layer
    {
       public:
          UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight);
@@ -37,7 +37,7 @@ namespace DOG
          void ChangeUIscene(UINT sceneID);
          UINT AddUIElementToScene(UINT sceneID, std::unique_ptr<UIElement> element);
          UINT RemoveUIElement(UINT elementID);
-         UINT AddScene(std::string layerName);
+         UINT AddScene();
          void RemoveScene(UINT sceneID);
          UIScene* GetScene(UINT sceneID);
          void Resize(UINT clientWidth, UINT clientHeight);
@@ -45,6 +45,7 @@ namespace DOG
          static void Initialize(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight);
          static UI& Get();
          static void Destroy();
+         void OnEvent(IEvent& event) override final;
          DOG::gfx::D2DBackend_DX12* GetBackend();
 
 
@@ -87,13 +88,13 @@ namespace DOG
          std::vector<UINT> m_generatedIDs;
    };
 
-   class UIScene : public Layer
+   class UIScene 
    {
       public:
-      UIScene(UINT id, std::string layerName);
+      UIScene(UINT id);
       ~UIScene() = default;
       UINT GetID();
-      void OnEvent(IEvent& event) override final;
+      
       std::vector<std::unique_ptr<UIElement>>& GetScene();
       private:
       std::vector<std::unique_ptr<UIElement>> m_scene;
