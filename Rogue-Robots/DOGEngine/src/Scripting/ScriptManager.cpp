@@ -24,19 +24,23 @@ namespace DOG
 		//Removes the old environment and creates a new one
 		//Copy the old entity
 		entity entityID = m_luaW->GetIntegerFromTable(scriptData.scriptTable, "EntityID");
-		m_luaW->RemoveReferenceToTable(scriptData.scriptTable);
+		
+		//Call OnDestroy for clean up in the lua script
+		CallOnDestroy(scriptData);
+
+		//Remove references
+		RemoveReferences(scriptData);
+
+		//Reload file
 		scriptData.scriptTable = m_luaW->CreateTable();
 		m_luaW->AddNumberToTable(scriptData.scriptTable, "EntityID", (int)entityID);
 		m_luaW->CreateEnvironment(scriptData.scriptTable, c_pathToScripts + fileName);
-
-		//Remove the old function references
-		m_luaW->RemoveReferenceToFunction(scriptData.onStartFunction);
-		m_luaW->RemoveReferenceToFunction(scriptData.onUpdateFunction);
 
 		//Get the new functions from the table
 		LuaTable table(scriptData.scriptTable, true);
 		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
 		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
+		scriptData.onDestroyFunction = table.TryGetFunctionFromTable("OnDestroy");
 
 		//Call start on the reloaded script (if it exists)!
 		if (m_luaW->CheckIfFunctionExist(scriptData.onStartFunction))
@@ -69,6 +73,7 @@ namespace DOG
 		m_luaW->RemoveReferenceToTable(scriptData.scriptTable);
 		m_luaW->RemoveReferenceToFunction(scriptData.onStartFunction);
 		m_luaW->RemoveReferenceToFunction(scriptData.onUpdateFunction);
+		m_luaW->RemoveReferenceToFunction(scriptData.onDestroyFunction);
 	}
 
 	void ScriptManager::RemoveScriptData(entity entity, bool removeAllEntityScripts, u32 vectorIndex)
@@ -84,9 +89,15 @@ namespace DOG
 				if (removeAllEntityScripts || vectorIndex == storedScriptData.getScriptData.vectorIndex)
 				{
 					if (storedScriptData.getScriptData.sorted)
+					{
+						CallOnDestroy(m_sortedScripts[storedScriptData.getScriptData.vectorIndex][storedScriptData.scriptIndex]);
 						RemoveReferences(m_sortedScripts[storedScriptData.getScriptData.vectorIndex][storedScriptData.scriptIndex]);
+					}
 					else
+					{
+						CallOnDestroy(m_unsortedScripts[storedScriptData.getScriptData.vectorIndex][storedScriptData.scriptIndex]);
 						RemoveReferences(m_unsortedScripts[storedScriptData.getScriptData.vectorIndex][storedScriptData.scriptIndex]);
+					}
 
 					//Could be changed for performance if needed
 					m_freeScriptPositions.push_back(storedScriptData);
@@ -114,6 +125,7 @@ namespace DOG
 		table.CreateEnvironment(c_pathToScripts + luaFileName);
 		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
 		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
+		scriptData.onDestroyFunction = table.TryGetFunctionFromTable("OnDestroy");
 
 		StoredScriptData storedScriptData = {};
 
@@ -195,6 +207,14 @@ namespace DOG
 		{
 			//Could be changed for performance if needed
 			entityToScripts->second.push_back(storedScriptData);
+		}
+	}
+
+	void ScriptManager::CallOnDestroy(ScriptData& scriptData)
+	{
+		if (m_luaW->CheckIfFunctionExist(scriptData.onDestroyFunction))
+		{
+			m_luaW->CallTableLuaFunction(scriptData.scriptTable, scriptData.onDestroyFunction);
 		}
 	}
 

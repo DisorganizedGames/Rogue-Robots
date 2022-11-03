@@ -14,6 +14,7 @@ namespace DOG
 		Table scriptTable;
 		Function onStartFunction;
 		Function onUpdateFunction;
+		Function onDestroyFunction;
 	};
 
 	struct GetScriptData
@@ -72,6 +73,7 @@ namespace DOG
 		void RemoveReferences(ScriptData& scriptData);
 		void RemoveScriptData(entity entity, bool removeAllEntityScripts, u32 vectorIndex = 0);
 		void CreateScript(entity entity, const std::string& luaFileName);
+		void CallOnDestroy(ScriptData& scriptData);
 
 	public:
 		ScriptManager(LuaW* luaW);
