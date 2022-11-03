@@ -21,15 +21,13 @@ namespace DOG
 	//Reloades the script
 	void ScriptManager::ReloadFile(const std::string& fileName, ScriptData& scriptData)
 	{
-		/*RemoveScript(scriptData.entity, fileName);*/
-
 		//Removes the old environment and creates a new one
 		//Copy the old entity
 		entity entityID = m_luaW->GetIntegerFromTable(scriptData.scriptTable, "EntityID");
 		m_luaW->RemoveReferenceToTable(scriptData.scriptTable);
 		scriptData.scriptTable = m_luaW->CreateTable();
-		m_luaW->CreateEnvironment(scriptData.scriptTable, c_pathToScripts + fileName);
 		m_luaW->AddNumberToTable(scriptData.scriptTable, "EntityID", (int)entityID);
+		m_luaW->CreateEnvironment(scriptData.scriptTable, c_pathToScripts + fileName);
 
 		//Remove the old function references
 		m_luaW->RemoveReferenceToFunction(scriptData.onStartFunction);
@@ -40,8 +38,9 @@ namespace DOG
 		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
 		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
 
-		//Call start on the reloaded script!
-		table.CallFunctionOnTable(scriptData.onStartFunction);
+		//Call start on the reloaded script (if it exists)!
+		if (m_luaW->CheckIfFunctionExist(scriptData.onStartFunction))
+			table.CallFunctionOnTable(scriptData.onStartFunction);
 	}
 
 	//Test if we can reload the file and return true/false
@@ -312,7 +311,7 @@ namespace DOG
 				{
 					std::cout << "File being reloaded but there exist no script of that file\n";
 					s_filesToBeReloaded.clear();
-					return;
+					continue;
 				}
 
 				bool fileIsReloadedable = TestReloadFile(s_filesToBeReloaded[i]);
@@ -338,6 +337,8 @@ namespace DOG
 				}
 				std::cout << s_filesToBeReloaded[i] << "\n";
 			}
+			std::cout << "Reloaded above files\n";
+
 			s_filesToBeReloaded.clear();
 		}
 	}
