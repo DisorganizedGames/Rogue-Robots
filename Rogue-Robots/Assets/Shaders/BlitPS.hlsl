@@ -13,6 +13,7 @@ struct PushConstantElement
 {
     uint ao;
     uint finalTexID;
+    float gamma;
     uint bloom;
 };
 CONSTANTS(g_constants, PushConstantElement)
@@ -43,7 +44,7 @@ float4 main(VS_OUT input) : SV_TARGET
     
     float3 ldr = reinhard_jodie(hdr); // tone mapping
     //float3 ldr = aces_fitted(hdr); // tone mapping
-    ldr = pow(ldr, (1.f / 2.22f).rrr);  // gamma correction
+    ldr = pow(ldr, (1.f / g_constants.gamma).rrr); // gamma correction
     
    
     return float4(ldr, 1.f);

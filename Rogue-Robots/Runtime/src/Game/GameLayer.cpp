@@ -157,6 +157,7 @@ void GameLayer::CloseMainScene()
 
 void GameLayer::EvaluateWinCondition()
 {
+	if (m_noWinLose) return;
 	bool agentsAlive = false;
 	EntityManager::Get().Collect<AgentIdComponent>().Do([&agentsAlive](AgentIdComponent&) { agentsAlive = true; });
 
@@ -193,6 +194,7 @@ void GameLayer::EvaluateWinCondition()
 
 void GameLayer::EvaluateLoseCondition()
 {
+	if (m_noWinLose) return;
 	bool playersAlive = false;
 	EntityManager::Get().Collect<PlayerAliveComponent>().Do([&playersAlive](PlayerAliveComponent&) { playersAlive = true; });
 	if (!playersAlive) m_gameState = GameState::Lost;
@@ -210,13 +212,14 @@ void GameLayer::CheckIfPlayersIAreDead()
 		});
 }
 
-void GameLayer::RespawnDeadPlayer(DOG::entity e)
+void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will not be called for online players, this needs to be fixed later on.
 {
-	if (!m_entityManager.HasComponent<PlayerAliveComponent>(e))
+	if (m_entityManager.HasComponent<PlayerAliveComponent>(e))
 	{
-		m_entityManager.AddComponent<PlayerAliveComponent>(e);
+		KillPlayer(e);
 	}
 
+	m_entityManager.AddComponent<PlayerAliveComponent>(e);
 	LuaMain::GetScriptManager()->AddScript(e, "Gun.lua");
 	auto gunScriptData = LuaMain::GetScriptManager()->GetScript(e, "Gun.lua");
 	LuaTable t0(gunScriptData.scriptTable, true);
@@ -820,7 +823,10 @@ std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3
 
 void GameLayer::HandleCheats()
 {
-	m_isCheating = m_godModeCheat || m_unlimitedAmmoCheat || m_noClipCheat;
+	entity player = GetPlayer();
+	if (player == NULL_ENTITY || !EntityManager::Get().Exists(player)) return;
+
+	m_isCheating = m_godModeCheat || m_unlimitedAmmoCheat || m_noClipCheat || m_noWinLose;
 
 	static bool cheatWindowOpen = false;
 	cheatWindowOpen |= m_isCheating;
@@ -843,9 +849,6 @@ void GameLayer::HandleCheats()
 			ImGui::PopStyleColor(4);
 		}
 	}
-
-	entity player = GetPlayer();
-	assert(player != NULL_ENTITY && EntityManager::Get().Exists(player));
 	
 	if (m_godModeCheat)
 	{
@@ -1033,6 +1036,7 @@ void GameLayer::CheatSettingsImGuiMenu()
 	ImGui::Checkbox("God mode", &m_godModeCheat);
 	ImGui::Checkbox("Unlimited ammo", &m_unlimitedAmmoCheat);
 	ImGui::Checkbox("No clip", &m_noClipCheat);
+	ImGui::Checkbox("No win or lose", &m_noWinLose);
 	if (ImGui::Button("Win"))
 	{
 		m_gameState = GameState::Won;

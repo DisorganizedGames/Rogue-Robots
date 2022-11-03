@@ -84,5 +84,5 @@ private:
 	bool m_godModeCheat = false;
 	bool m_unlimitedAmmoCheat = false;
 	bool m_noClipCheat = false;
-
+	bool m_noWinLose = false;
 };

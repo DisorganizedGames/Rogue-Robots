@@ -359,7 +359,7 @@ bool NetCode::IsLobbyAlive()
 	return m_inputTcp.lobbyAlive;
 }
 
-void DeleteNetworkSync::OnLateUpdate(DOG::entity e, DeferredDeletionComponent& deleteC, NetworkId& netId, TransformComponent& transC)
+void DeleteNetworkSync::OnLateUpdate(DOG::entity e, DeferredDeletionComponent&, NetworkId& netId, TransformComponent& transC)
 {
 	DOG::EntityManager& m_entityManager = DOG::EntityManager::Get();
 	entity newE = m_entityManager.CreateEntity();

@@ -476,6 +476,15 @@ namespace DOG
 				if (ImGui::Checkbox("SSAO", &m_specification.graphicsSettings.ssao))
 					gfxChanged = true;
 
+				if (ImGui::SliderFloat("Gamma", &m_specification.graphicsSettings.gamma, 1.0f, 5.0f))
+					gfxChanged = true;
+				ImGui::SameLine();
+				if (ImGui::Button("Default"))
+				{
+					m_specification.graphicsSettings.gamma = 2.22f;
+					gfxChanged = true;
+				}
+
 				if (gfxChanged)
 					m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
 
