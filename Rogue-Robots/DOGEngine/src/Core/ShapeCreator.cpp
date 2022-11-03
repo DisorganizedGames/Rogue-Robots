@@ -480,7 +480,7 @@ namespace DOG
 		std::vector<u32>& indices = m_loadedModel->mesh.indices;
 		std::vector<SubmeshMetadata>& submeshes = m_loadedModel->submeshes;
 
-		static const auto base = XMVectorSet(0.0f, 0.0f, radius, 0.0f);
+		const auto base = XMVectorSet(0.0f, 0.0f, radius, 0.0f);
 		const f32 lattitudeAngle = XM_PI / latDiv;
 		const f32 longitudeAngle = XM_2PI / longDiv;
 
