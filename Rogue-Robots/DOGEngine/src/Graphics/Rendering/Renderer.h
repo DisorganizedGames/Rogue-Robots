@@ -104,7 +104,6 @@ namespace DOG::gfx
 		GraphicsSettings GetGraphicsSettings();
 		WindowMode GetFullscreenState() const;
 
-
 		void BeginFrame_GPU();
 		void EndFrame_GPU(bool vsync);
 

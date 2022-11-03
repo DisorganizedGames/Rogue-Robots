@@ -31,6 +31,8 @@ namespace DOG::gfx
 		// ECS specifics
 		void PerformDeferredDeletion();
 
+		void ToggleShadowMapping(bool turnOn);
+
 	private:
 
 

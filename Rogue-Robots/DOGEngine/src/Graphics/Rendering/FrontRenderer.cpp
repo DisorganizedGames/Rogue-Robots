@@ -102,10 +102,12 @@ namespace DOG::gfx
 
 	void FrontRenderer::GatherDrawCalls()
 	{
-		EntityManager::Get().Collect<TransformComponent, SubmeshRenderer>().Do([&](entity e, TransformComponent& tr, SubmeshRenderer& sr)
+		auto& mgr = EntityManager::Get();
+
+		mgr.Collect<TransformComponent, SubmeshRenderer>().Do([&](entity e, TransformComponent& tr, SubmeshRenderer& sr)
 			{
 				// We are assuming that this is a totally normal submesh with no weird branches (i.e on ModularBlock or whatever)
-				if (EntityManager::Get().HasComponent<ShadowReceiverComponent>(e))
+				if (mgr.HasComponent<ShadowReceiverComponent>(e))
 				{
 					m_singleSidedShadowed.push_back({ sr.mesh, 0, tr });
 				}
@@ -114,45 +116,44 @@ namespace DOG::gfx
 				m_renderer->SubmitMesh(sr.mesh, 0, sr.material, tr);
 			});
 
-
 		// We need to bucket in a better way..
-		EntityManager::Get().Collect<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
+		mgr.Bundle<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
 			{
 				TransformComponent camTransform;
 				camTransform.worldMatrix = ((DirectX::SimpleMath::Matrix)m_viewMat).Invert();
 				auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p) {
 					auto d = p - camPos;
-					if (d.LengthSquared() < 64) return false;
-					if (d.LengthSquared() > 80 * 80) return true;
+					auto lenSq = d.LengthSquared();
+					if (lenSq < 64) return false;
+					if (lenSq > 80 * 80) return true;
 					d.Normalize();
 					return camForward.Dot(d) < 0.2f;
 				};
-
+				
 				if (cull({ transformC.worldMatrix(3, 0), transformC.worldMatrix(3, 1), transformC.worldMatrix(3, 2) }))
 					return;
 				
-				MINIPROFILE_NAMED("Collect Draw Calls")
 				ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 				if (model && model->gfxModel)
 				{
 					// Shadow submission:
-					if (EntityManager::Get().HasComponent<ShadowReceiverComponent>(e))
+					if (mgr.HasComponent<ShadowReceiverComponent>(e))
 					{
 						for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
 						{
-							if (EntityManager::Get().HasComponent<ModularBlockComponent>(e))
+							if (mgr.HasComponent<ModularBlockComponent>(e))
 								m_doubleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC, false });
 							else
 								m_singleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC });
 						}
 					}
-
-					if (EntityManager::Get().HasComponent<ModularBlockComponent>(e))
+				
+					if (mgr.HasComponent<ModularBlockComponent>(e))
 					{
-						if (EntityManager::Get().HasComponent<MeshColliderComponent>(e) &&
-							EntityManager::Get().GetComponent<MeshColliderComponent>(e).drawMeshColliderOverride)
+						if (mgr.HasComponent<MeshColliderComponent>(e) &&
+							mgr.GetComponent<MeshColliderComponent>(e).drawMeshColliderOverride)
 						{
-							u32 meshColliderModelID = EntityManager::Get().GetComponent<MeshColliderComponent>(e).meshColliderModelID;
+							u32 meshColliderModelID = mgr.GetComponent<MeshColliderComponent>(e).meshColliderModelID;
 							ModelAsset* meshColliderModel = AssetManager::Get().GetAsset<ModelAsset>(meshColliderModelID);
 							if (meshColliderModel && meshColliderModel->gfxModel)
 							{
@@ -166,15 +167,15 @@ namespace DOG::gfx
 								m_renderer->SubmitMeshNoFaceCulling(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
 						}
 					}
-					else if (EntityManager::Get().HasComponent<AnimationComponent>(e))
+					else if (mgr.HasComponent<AnimationComponent>(e))
 					{
 						for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
 							m_renderer->SubmitAnimatedMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
 					}
 					else
 					{
-						if (EntityManager::Get().HasComponent<MeshColliderComponent>(e) &&
-							EntityManager::Get().GetComponent<MeshColliderComponent>(e).drawMeshColliderOverride)
+						if (mgr.HasComponent<MeshColliderComponent>(e) &&
+							mgr.GetComponent<MeshColliderComponent>(e).drawMeshColliderOverride)
 						{
 							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
 								m_renderer->SubmitMeshWireframe(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
@@ -187,6 +188,8 @@ namespace DOG::gfx
 					}
 				}
 			});
+	
+	
 	}
 
 	void FrontRenderer::SetRenderCamera()
@@ -210,23 +213,36 @@ namespace DOG::gfx
 	{
 		// Collect this frames spotlight shadow casters
 		m_activeSpotlightShadowCasters.clear();
-		EntityManager::Get().Collect<ShadowCasterComponent, SpotLightComponent, CameraComponent, TransformComponent>().Do([&](
-			entity spotlightEntity, ShadowCasterComponent&, SpotLightComponent& slc, CameraComponent& cc, TransformComponent& tc)
+		EntityManager::Get().Collect</*ShadowCasterComponent, */SpotLightComponent, CameraComponent, TransformComponent>().Do([&](
+			entity spotlightEntity, /*ShadowCasterComponent&, */ SpotLightComponent & slc, CameraComponent& cc, TransformComponent& tc)
 			{				
 				// Register this frames spotlights
 				Renderer::ActiveSpotlight spotData{};
-				spotData.shadow = Renderer::ShadowCaster();
 
-				spotData.shadow->viewMat = cc.viewMatrix;
-				spotData.shadow->projMat = cc.projMatrix;
 				spotData.position = { tc.GetPosition().x, tc.GetPosition().y, tc.GetPosition().z, 1.0f };
 				spotData.color = { slc.color.x, slc.color.y, slc.color.z, };
 				spotData.direction = slc.direction;
 				spotData.cutoffAngle = slc.cutoffAngle;
 				spotData.strength = slc.strength;
+
+				if (EntityManager::Get().HasComponent<ShadowCasterComponent>(spotlightEntity))
+				{
+					spotData.shadow = Renderer::ShadowCaster();
+					spotData.shadow->viewMat = cc.viewMatrix;
+					spotData.shadow->projMat = cc.projMatrix;
+					u32 shadowID = *m_renderer->RegisterSpotlight(spotData);
+					m_activeSpotlightShadowCasters.push_back({ spotlightEntity, shadowID });
+				}
+				else
+				{
+					spotData.shadow = std::nullopt;
+					m_renderer->RegisterSpotlight(spotData);
+				}
 				
-				u32 shadowID = *m_renderer->RegisterSpotlight(spotData);
-				m_activeSpotlightShadowCasters.push_back({ spotlightEntity, shadowID });
+				//u32 shadowID = *m_renderer->RegisterSpotlight(spotData);
+				//std::optional<u32> shadowID = m_renderer->RegisterSpotlight(spotData);
+				//if (shadowID != std::nullopt)
+				//	m_activeSpotlightShadowCasters.push_back({ spotlightEntity, *shadowID });
 			});
 
 		// Update renderer shadow map capacity
@@ -285,5 +301,21 @@ namespace DOG::gfx
 
 	}
 
-
+	void FrontRenderer::ToggleShadowMapping(bool turnOn)
+	{
+		if (turnOn)
+		{
+			EntityManager::Get().Collect<SpotLightComponent>().Do([](entity spotlight, SpotLightComponent&)
+				{
+					EntityManager::Get().AddComponent<ShadowCasterComponent>(spotlight);
+				});
+		}
+		else
+		{
+			EntityManager::Get().Collect<ShadowCasterComponent>().Do([](entity spotlight, ShadowCasterComponent&)
+				{
+					EntityManager::Get().RemoveComponent<ShadowCasterComponent>(spotlight);
+				});
+		}
+	}
 }

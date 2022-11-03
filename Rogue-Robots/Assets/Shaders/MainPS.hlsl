@@ -33,6 +33,8 @@ struct SpotlightData
     float cutoffAngle;
     float3 direction;
     float strength;
+    bool isShadowCaster;
+    float3 padding;
 };
 
 struct SpotlightMetaData
@@ -340,7 +342,8 @@ PS_OUT main(VS_OUT input)
     //calculate dynamic spot lights
     ConstantBuffer<SpotlightMetaData> perSpotlightData = ResourceDescriptorHeap[g_constants.spotlightArrayStructureIndex];
     ConstantBuffer<Shadow> shadowMapArrayStruct = ResourceDescriptorHeap[g_constants.shadowMapDepthIndex];
-    
+    // Always 0
+    Texture2DArray shadowMaps = ResourceDescriptorHeap[shadowMapArrayStruct.shadowMapArray[0][0]];
     for (int k = 0; k < perSpotlightData.currentNrOfSpotlights; ++k)
     {
         if (perSpotlightData.spotlightArray[k].strength == 0)
@@ -398,10 +401,9 @@ PS_OUT main(VS_OUT input)
         
         //Texture2D shadowMap = ResourceDescriptorHeap[shadowMapArrayStruct.shadowMapArray[groupIndex][offsetInGroup]];
         
-        // Always 0
-        Texture2DArray shadowMaps = ResourceDescriptorHeap[shadowMapArrayStruct.shadowMapArray[0][0]];
         
-        float shadowFactor = CalculateShadowFactor(shadowMaps, k, input.wsPos, N, -lightToPosDir, perSpotlightData.spotlightArray[k].viewMatrix, perSpotlightData.spotlightArray[k].projectionMatrix);
+        float shadowFactor = perSpotlightData.spotlightArray[k].isShadowCaster ? CalculateShadowFactor(shadowMaps, k, input.wsPos, N, -lightToPosDir, perSpotlightData.spotlightArray[k].viewMatrix, perSpotlightData.spotlightArray[k].projectionMatrix) : 1.0f;
+        
         Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL * contrib * shadowFactor;
     }
     

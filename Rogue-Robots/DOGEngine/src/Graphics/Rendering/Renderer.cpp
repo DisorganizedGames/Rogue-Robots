@@ -585,6 +585,8 @@ namespace DOG::gfx
 				float cutoffAngle{ 0.f };
 				DirectX::SimpleMath::Vector3 direction;
 				float strength{ 0.f };
+				bool isShadowCaster { false };
+				float padding[3];
 			};
 
 			/*Encompasses all the light datas for spotlights, which we currently limit to 12*/
@@ -785,16 +787,19 @@ namespace DOG::gfx
 					{
 						const auto& data = m_activeSpotlights[i];
 
-						perLightData.perLightDatas[i].view = data.shadow->viewMat;
-						perLightData.perLightDatas[i].proj = data.shadow->projMat;
 						perLightData.perLightDatas[i].position = data.position;
 						perLightData.perLightDatas[i].color = { data.color.x, data.color.y, data.color.z, };
 						perLightData.perLightDatas[i].direction = data.direction;
 						perLightData.perLightDatas[i].cutoffAngle = data.cutoffAngle;
 						perLightData.perLightDatas[i].strength = data.strength;
 
-						shadowMapArrayStruct.shadowMaps[i] = resources.GetView(p.shadowView);
-
+						if (data.shadow != std::nullopt)
+						{
+							perLightData.perLightDatas[i].isShadowCaster = true;
+							perLightData.perLightDatas[i].view = data.shadow->viewMat;
+							perLightData.perLightDatas[i].proj = data.shadow->projMat;
+							shadowMapArrayStruct.shadowMaps[i] = resources.GetView(p.shadowView);
+						}
 					}
 
 					perLightData.actualNrOfSpotlights = (u32)m_activeSpotlights.size();
@@ -1220,7 +1225,6 @@ namespace DOG::gfx
 
 		}
 	}
-
 
 	LRESULT Renderer::WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{

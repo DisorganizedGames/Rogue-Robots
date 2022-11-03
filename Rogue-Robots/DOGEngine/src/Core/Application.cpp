@@ -476,8 +476,15 @@ namespace DOG
 				if (ImGui::Checkbox("SSAO", &m_specification.graphicsSettings.ssao))
 					gfxChanged = true;
 
+				if (ImGui::Checkbox("Shadow Mapping", &m_specification.graphicsSettings.shadowMapping))
+				{
+					m_frontRenderer->ToggleShadowMapping(m_specification.graphicsSettings.shadowMapping);
+					gfxChanged = true;
+				}
+
 				if (ImGui::SliderFloat("Gamma", &m_specification.graphicsSettings.gamma, 1.0f, 5.0f))
 					gfxChanged = true;
+
 				ImGui::SameLine();
 				if (ImGui::Button("Default"))
 				{
