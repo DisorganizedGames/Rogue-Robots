@@ -16,6 +16,7 @@ namespace DOG
 
 		m_eventSystemTableRegisterFunction = m_eventSystemTable->GetFunctionFromTable("Register");
 		m_eventSystemTableInvokeFunction = m_eventSystemTable->GetFunctionFromTable("InvokeEvent");
+		m_eventSystemTableUnRegisterFunction = m_eventSystemTable->GetFunctionFromTable("UnRegister");
 	}
 
 	void LuaEvent::InvokeEvent(const std::string& eventName)

@@ -14,6 +14,7 @@ namespace DOG
 		std::unique_ptr<LuaTable> m_eventSystemTable;
 		Function m_eventSystemTableRegisterFunction;
 		Function m_eventSystemTableInvokeFunction;
+		Function m_eventSystemTableUnRegisterFunction;
 
 	public:
 		LuaEvent(LuaW* luaW, ScriptManager* scriptManager);
@@ -22,6 +23,8 @@ namespace DOG
 		void InvokeEvent(const std::string& eventName);
 		template<class ...Args>
 		void InvokeEvent(const std::string& eventName, Args&&... args);
+		template <void(*func)(LuaContext*)>
+		void UnRegister(const std::string& eventName);
 	};
 
 	template<void(*func)(LuaContext*)>
@@ -37,5 +40,13 @@ namespace DOG
 	{
 		//Calls the EventSystem on Lua
 		m_eventSystemTable->CallFunctionOnTable(m_eventSystemTableInvokeFunction, eventName, std::forward<Args>(args)...);
+	}
+
+	template<void(*func)(LuaContext*)>
+	inline void LuaEvent::UnRegister(const std::string& eventName)
+	{
+		Function callBack = m_luaW->HookFunctionAndGetFunction<func>();
+		//Removes the event from lua
+		m_eventSystemTable->CallFunctionOnTable(m_eventSystemTableUnRegisterFunction, eventName, callBack);
 	}
 }
