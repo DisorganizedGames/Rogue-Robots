@@ -14,6 +14,7 @@ namespace DOG
 		float gamma = 2.22f;
 
 		bool ssao{ true };
+		bool lit{ true };
 		u32 shadowMapCapacity{ 4 };
 	};
 

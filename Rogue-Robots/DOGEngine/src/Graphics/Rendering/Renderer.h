@@ -196,7 +196,6 @@ namespace DOG::gfx
 
 		Texture m_ssaoNoise;
 		Buffer m_ssaoSamples;
-		bool m_ssaoOn{ true };
 
 
 		// Reusing a single command list for now

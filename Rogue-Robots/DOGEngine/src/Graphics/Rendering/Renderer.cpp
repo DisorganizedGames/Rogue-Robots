@@ -646,7 +646,8 @@ namespace DOG::gfx
 						.SetPrimaryCBV(perDrawHandle.buffer, perDrawHandle.bufferOffset)
 						.AppendConstant(perLightHandle)
 						.AppendConstant(shadowHandle)
-						.AppendConstant(wireframe ? 1 : 0);
+						.AppendConstant(wireframe ? 1 : 0)
+						.AppendConstant(m_graphicsSettings.lit ? 1 : 0);
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
@@ -844,7 +845,7 @@ namespace DOG::gfx
 				},
 				[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
 				{
-					if (m_ssaoOn)
+					if (m_graphicsSettings.ssao)
 					{
 
 						rd->Cmd_SetPipeline(cmdl, m_ssaoPipe);
@@ -903,7 +904,7 @@ namespace DOG::gfx
 					rd->Cmd_ClearUnorderedAccessFLOAT(cmdl,
 						resources.GetTextureView(passData.output), { 1.f, 1.f, 1.f, 1.f }, ScissorRects().Append(0, 0, m_renderWidth / 2, m_renderHeight / 2));
 
-					if (m_ssaoOn)
+					if (m_graphicsSettings.ssao)
 					{
 						rd->Cmd_SetPipeline(cmdl, m_boxBlurPipe);
 
@@ -946,7 +947,7 @@ namespace DOG::gfx
 					rd->Cmd_ClearUnorderedAccessFLOAT(cmdl,
 						resources.GetTextureView(passData.output), { 1.f, 1.f, 1.f, 1.f }, ScissorRects().Append(0, 0, m_renderWidth / 2, m_renderHeight / 2));
 
-					if (m_ssaoOn)
+					if (m_graphicsSettings.ssao)
 					{
 						rd->Cmd_SetPipeline(cmdl, m_boxBlurPipe);
 						{
@@ -1100,7 +1101,6 @@ namespace DOG::gfx
 		m_globalEffectData.defRenderVPs = Viewports().Append(0.f, 0.f, (f32)m_renderWidth, (f32)m_renderHeight);
 		m_sc->SetFullscreenState(requestedSettings.windowMode == WindowMode::FullScreen, *requestedSettings.displayMode);
 
-		m_ssaoOn = requestedSettings.ssao;
 		m_shadowMapCapacity = requestedSettings.shadowMapCapacity;
 
 		m_singleSidedShadowDraws.resize(requestedSettings.shadowMapCapacity);

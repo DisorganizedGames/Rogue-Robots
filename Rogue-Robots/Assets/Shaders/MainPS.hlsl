@@ -5,6 +5,7 @@
 #include "ShaderInterop_Lights.hlsli"
 #include "PBRHelpers.hlsli"
 
+
 struct VS_OUT
 {
     float4 pos : SV_POSITION;
@@ -57,6 +58,7 @@ struct PushConstantElement
     uint spotlightArrayStructureIndex;
     uint shadowMapDepthIndex;
     uint wireframe;
+    uint isLit;
 };
 
 CONSTANTS(g_constants, PushConstantElement)
@@ -155,6 +157,12 @@ PS_OUT main(VS_OUT input)
         albedoInput4 = albedo.Sample(g_aniso_samp, input.uv) * mat.albedoFactor;
         albedoInput = albedoInput4.xyz;
         albedoAlpha = albedoInput4.w;
+    }
+    
+    if (!g_constants.isLit)
+    {
+        output.color = float4(albedoInput, 1.f);
+        return output;
     }
 
     float metallicInput = mat.metallicFactor;
