@@ -6,7 +6,7 @@ using namespace DOG;
 void AgentSeekPlayerSystem::OnUpdate(entity e, AgentSeekPlayerComponent& seek, AgentIdComponent& agent, TransformComponent& transform)
 {
 	constexpr f32 SEEK_RADIUS_METERS = 5.0f;
-	constexpr f32 SEEK_RADIUS_SQUARED = SEEK_RADIUS_METERS;
+	constexpr f32 SEEK_RADIUS_SQUARED = SEEK_RADIUS_METERS * SEEK_RADIUS_METERS;
 	EntityManager& eMan = EntityManager::Get();
 	struct PlayerDist
 	{ 
