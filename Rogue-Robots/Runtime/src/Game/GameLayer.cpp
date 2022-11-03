@@ -3,6 +3,7 @@
 #include "TestScene.h"
 #include "OldDefaultScene.h"
 #include "TunnelScenes.h"
+#include "LightScene.h"
 #include "SimpleAnimationSystems.h"
 #include "ExplosionSystems.h"
 #include "TurretSystems.h"
@@ -92,6 +93,9 @@ void GameLayer::OnDetach()
 	DOG::ImGuiMenuLayer::UnRegisterDebugWindow("Cheats");
 	m_testScene.reset();
 	m_testScene = nullptr;
+
+	m_lightScene.reset();
+	m_lightScene = nullptr;
 
 	m_mainScene.reset();
 	m_mainScene = nullptr;
@@ -969,6 +973,21 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 				{
 					m_testScene.reset();
 					m_testScene = nullptr;
+				}
+			}
+
+			bool checkboxLightScene = m_lightScene != nullptr;
+			if (ImGui::Checkbox("LightScene", &checkboxLightScene))
+			{
+				if (checkboxLightScene)
+				{
+					m_lightScene = std::make_unique<LightScene>();
+					m_lightScene->SetUpScene();
+				}
+				else
+				{
+					m_lightScene.reset();
+					m_lightScene = nullptr;
 				}
 			}
 
