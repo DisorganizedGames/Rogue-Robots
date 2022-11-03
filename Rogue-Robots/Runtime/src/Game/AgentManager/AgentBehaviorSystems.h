@@ -20,10 +20,10 @@ class AgentMovementSystem : public DOG::ISystem
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
 public:
-	SYSTEM_CLASS(AgentMovementComponent, AgentPathfinderComponent, AgentSeekPlayerComponent, DOG::TransformComponent);
-	ON_UPDATE_ID(AgentMovementComponent, AgentPathfinderComponent, AgentSeekPlayerComponent, DOG::TransformComponent);
+	SYSTEM_CLASS(AgentMovementComponent, AgentPathfinderComponent, AgentSeekPlayerComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
+	ON_UPDATE_ID(AgentMovementComponent, AgentPathfinderComponent, AgentSeekPlayerComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
 	void OnUpdate(DOG::entity e, AgentMovementComponent& movement, AgentPathfinderComponent& pathfinder,
-		AgentSeekPlayerComponent& seek, DOG::TransformComponent& trans);
+		AgentSeekPlayerComponent& seek, DOG::RigidbodyComponent& rb, DOG::TransformComponent& trans);
 };
 
 class AgentAttackSystem : public DOG::ISystem

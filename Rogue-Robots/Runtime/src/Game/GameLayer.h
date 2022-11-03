@@ -44,7 +44,7 @@ private:
 	void KillPlayer(DOG::entity e);
 
 	void RegisterLuaInterfaces();
-	std::vector<DOG::entity> LoadLevel(); //Loads a PCG generated level.
+	std::vector<DOG::entity> LoadLevel(std::string file); //Loads a PCG generated level.
 	void Input(DOG::Key key);
 	void Release(DOG::Key key);
 	void CameraUpdate();

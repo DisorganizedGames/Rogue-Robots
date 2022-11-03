@@ -33,7 +33,8 @@ struct AgentHPComponent
 	f32 maxHP = 150.0f;
 	bool damageThisFrame = false;
 };
-          struct AgentAttackComponent
+
+struct AgentAttackComponent
 {
 	f32 radiusSquared = 1.5f;
 	f32 damage = 10.0f;
