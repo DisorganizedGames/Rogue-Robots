@@ -1,5 +1,4 @@
 #pragma once
-
 #ifndef STATIC_TYPE_INFO_USE_MEMBER_POINTER
 // enable the new implementation using member pointers on tested compilers
 // gcc currently fails as member pointers are not considered constexpr

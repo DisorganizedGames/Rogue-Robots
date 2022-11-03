@@ -15,6 +15,11 @@ namespace DOG
 
 		bool ssao{ true };
 		bool lit{ true };
+#if defined _DEBUG
+		bool shadowMapping{ false };
+#else
+		bool shadowMapping{ true };
+#endif
 		u32 shadowMapCapacity{ 4 };
 	};
 

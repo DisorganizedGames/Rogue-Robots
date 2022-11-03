@@ -944,8 +944,9 @@ std::vector<entity> GameLayer::AddFlashlightsToPlayers(const std::vector<entity>
 		float fov = ((slc.cutoffAngle + 0.1f) * 2.0f) * DirectX::XM_PI / 180.f;
 		cc.projMatrix = DirectX::XMMatrixPerspectiveFovLH(fov, 1, 800.f, 0.1f);
 
+		#if defined NDEBUG
 		m_entityManager.AddComponent<DOG::ShadowCasterComponent>(flashLightEntity);
-
+		#endif
 		if (i == 0) // Only for this/main player
 			slc.isMainPlayerSpotlight = true;
 		else

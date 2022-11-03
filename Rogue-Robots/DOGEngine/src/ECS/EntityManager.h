@@ -166,7 +166,7 @@ namespace DOG
 	template<typename ComponentType>
 	SparseSet<ComponentType>* EntityManager::ExpandAsTupleArguments() noexcept
 	{
-		constexpr auto componentID = sti::getTypeIndex<ComponentType>();
+		static constexpr auto componentID = sti::getTypeIndex<ComponentType>();
 		ValidateComponentPool<ComponentType>();
 		
 		return static_cast<SparseSet<ComponentType>*>(m_components.at(componentID).get());
@@ -175,7 +175,7 @@ namespace DOG
 	template<typename... ComponentType>
 	BundleImpl<ComponentType...>& EntityManager::Bundle() noexcept
 	{
-		constexpr std::array<sti::TypeIndex, sizeof... (ComponentType)> componentIDs{ sti::getTypeIndex<ComponentType>()... };
+		static constexpr std::array<sti::TypeIndex, sizeof... (ComponentType)> componentIDs{ sti::getTypeIndex<ComponentType>()... };
 		constexpr sti::TypeIndex minComponentID = *std::min_element(std::begin(componentIDs), std::end(componentIDs));
 
 		if (m_bundles[minComponentID] == nullptr)
@@ -183,7 +183,7 @@ namespace DOG
 			std::tuple<SparseSet<ComponentType>*...> pools = { (ExpandAsTupleArguments<ComponentType>()) ...};
 
 			ECS_DEBUG_EXPR(std::apply([](const auto&... pool) {(ASSERT((pool != nullptr) && pool->bundle == nullptr, "Bundle creation failed."), ...); }, pools););
-			std::apply([&minComponentID](const auto... pool) {((pool->bundle = minComponentID), ...); }, pools);
+			std::apply([&minComponentID](const auto... pool) {((pool->bundle = (sti::TypeIndex)minComponentID), ...); }, pools);
 			
 			m_bundles[minComponentID] = (std::unique_ptr<BundleImpl<ComponentType...>>(new BundleImpl<ComponentType...>(this, std::move(pools))));
 		}
@@ -193,7 +193,7 @@ namespace DOG
 	template<typename ComponentType, typename ...Args>
 	ComponentType& EntityManager::AddComponent(const entity entityID, Args&& ...args) noexcept
 	{
-		constexpr auto ComponentID = sti::getTypeIndex<ComponentType>();
+		static constexpr auto ComponentID = sti::getTypeIndex<ComponentType>();
 
 		ASSERT(Exists(entityID), "Entity is invalid");
 		ASSERT(!HasComponent<ComponentType>(entityID), "Entity already has component!");
@@ -219,7 +219,7 @@ namespace DOG
 	template<typename ComponentType>
 	void EntityManager::RemoveComponent(const entity entityID) noexcept
 	{
-		auto constexpr componentID = sti::getTypeIndex<ComponentType>();
+		static auto constexpr componentID = sti::getTypeIndex<ComponentType>();
 
 		ASSERT(Exists(entityID), "Entity is invalid");
 		ASSERT(HasComponent<ComponentType>(entityID), "Entity does not have that component.");
@@ -241,8 +241,7 @@ namespace DOG
 	template<typename ComponentType>
 	ComponentType& EntityManager::GetComponent(const entity entityID) const noexcept
 	{
-		MINIPROFILE
-		auto constexpr componentID = sti::getTypeIndex<ComponentType>();
+		static auto constexpr componentID = sti::getTypeIndex<ComponentType>();
 		ASSERT(Exists(entityID), "Entity is invalid");
 		ASSERT(HasComponent<ComponentType>(entityID), "Entity does not have that component.");
 
@@ -258,7 +257,7 @@ namespace DOG
 	template<typename ComponentType> 
 	bool EntityManager::HasComponent(const entity entityID) const noexcept
 	{
-		auto constexpr componentID = sti::getTypeIndex<ComponentType>();
+		static auto constexpr componentID = sti::getTypeIndex<ComponentType>();
 		ASSERT(Exists(entityID), "Entity is invalid");
 
 		return 
@@ -289,7 +288,7 @@ namespace DOG
 	template<typename ComponentType>
 	void EntityManager::ValidateComponentPool() noexcept
 	{
-		constexpr auto ComponentID = sti::getTypeIndex<ComponentType>();
+		static constexpr auto ComponentID = sti::getTypeIndex<ComponentType>();
 		if (!m_components.contains(ComponentID))
 		{
 			AddSparseSet<ComponentType>();
@@ -299,7 +298,7 @@ namespace DOG
 	template<typename ComponentType> 
 	void EntityManager::AddSparseSet() noexcept
 	{
-		constexpr auto ComponentID = sti::getTypeIndex<ComponentType>();
+		static constexpr auto ComponentID = sti::getTypeIndex<ComponentType>();
 		m_components[ComponentID] = std::move(std::make_unique<SparseSet<ComponentType>>());
 
 		set(ComponentID)->sparseArray.reserve(MAX_ENTITIES);

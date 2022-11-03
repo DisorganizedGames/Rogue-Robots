@@ -11,7 +11,8 @@ public:
 	virtual void OnShutDown() noexcept override final;
 	virtual void OnRestart() noexcept override final;
 	virtual void OnEvent(DOG::IEvent& event) noexcept final;
-
+private:
+	void IssueDebugFunctionality() noexcept;
 private:
 	bool m_showImGuiMenu = false;
 	GameLayer m_gameLayer;

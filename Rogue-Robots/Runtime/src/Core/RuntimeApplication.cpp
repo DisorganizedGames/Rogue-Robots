@@ -20,6 +20,10 @@ void RuntimeApplication::OnStartUp() noexcept
 {
 	PushLayer(&m_gameLayer);
 	//PushLayer(&m_EmilFDebugLayer);
+
+	#if defined _DEBUG
+	IssueDebugFunctionality();
+	#endif
 }
 
 void RuntimeApplication::OnShutDown() noexcept
@@ -79,6 +83,15 @@ void RuntimeApplication::OnEvent(IEvent& event) noexcept
 
 	}
 	Application::OnEvent(event);
+}
+
+void RuntimeApplication::IssueDebugFunctionality() noexcept
+{
+	//Have no spotlight casts shadows by default in debug:
+	EntityManager::Get().Collect<DOG::SpotLightComponent, DOG::ShadowCasterComponent>().Do([](entity spotlight, DOG::SpotLightComponent&, DOG::ShadowCasterComponent&) 
+		{
+			EntityManager::Get().RemoveComponent<DOG::ShadowCasterComponent>(spotlight);
+		});
 }
 
 std::string GetWorkingDirectory()
