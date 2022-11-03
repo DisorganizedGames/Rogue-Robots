@@ -222,3 +222,9 @@ struct DespawnComponent
 	};
 	f64 despawnTimer = 0.0f;
 };
+
+struct SphereComponent
+{
+	float radius;
+	bool culled;
+};

@@ -1,5 +1,8 @@
 #include "LightScene.h"
 
+#include "GameComponent.h"
+#include "FakeComputeLightCulling.h"
+
 using namespace DOG;
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
@@ -26,14 +29,13 @@ Vector3 PlaneIntersectPlanes(XMVECTOR p1, XMVECTOR p2, XMVECTOR p3)
 {
 	XMVECTOR l1, l2;
 	DirectX::XMPlaneIntersectPlane(&l1, &l2, p1, p2);
-
 	return DirectX::XMPlaneIntersectLine(p3, l1, l2);
 }
 
 
 LightScene::LightScene() : Scene(SceneType::LightScene)
 {
-	DOG::ImGuiMenuLayer::RegisterDebugWindow("Tiled Shading", std::bind(&LightScene::TiledShadingDebugMenu, this, std::placeholders::_1), false, std::make_pair(Key::LCtrl, Key::L));
+	DOG::ImGuiMenuLayer::RegisterDebugWindow("Tiled Shading", std::bind(&LightScene::TiledShadingDebugMenu, this, std::placeholders::_1), true, std::make_pair(Key::LCtrl, Key::L));
 }
 
 LightScene::~LightScene()
@@ -44,20 +46,17 @@ LightScene::~LightScene()
 void LightScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>> entityCreators)
 {
 	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
-	auto p = XMMatrixPerspectiveFovLH(40.f * XM_PI / 180.f, aspectRatio, 10.f, 1.0f);
-
-	//AddFrustumDXTK(p, SimpleMath::Matrix::Identity);
-	
-	AddFrustum(p, DirectX::XMMatrixIdentity());
+	auto p = XMMatrixPerspectiveFovLH(40.f * XM_PI / 180.f, aspectRatio, 1.0f, 10.0f);
+	//AddFrustum(p, DirectX::XMMatrixIdentity());
 }
 
 void LightScene::Update()
 {
+	
 }
 
 DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Matrix projetion, DirectX::SimpleMath::Matrix view)
 {
-	
 	Matrix m = view * projetion;
 
 	Vector4 leftP = { m._14 + m._11, m._24 + m._21, m._34 + m._31, m._44 + m._41 };
@@ -82,7 +81,6 @@ DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Matrix projetion, Direct
 	vec[2] = PlaneIntersectPlanes(farP, rightP, topP);
 	vec[3] = PlaneIntersectPlanes(farP, leftP, topP);
 	AddFace(vec, { 0.5f, 0, 0 });
-	AddSphere(vec[0], 0.1f, { 0.8f, 0, 0 });
 
 	vec[0] = PlaneIntersectPlanes(nearP, leftP, topP);
 	vec[1] = PlaneIntersectPlanes(nearP, rightP, topP);
@@ -95,7 +93,6 @@ DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Matrix projetion, Direct
 	vec[2] = PlaneIntersectPlanes(farP, rightP, botP);
 	vec[3] = PlaneIntersectPlanes(farP, rightP, topP);
 	AddFace(vec, { 0, 0.5f, 0 });
-	AddSphere(vec[0], 0.1f, { 0, 0.8f, 0 });
 
 	vec[0] = PlaneIntersectPlanes(nearP, leftP, topP);
 	vec[1] = PlaneIntersectPlanes(nearP, leftP, botP);
@@ -118,68 +115,56 @@ DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Matrix projetion, Direct
 	return e;
 }
 
-//DOG::entity LightScene::AddFrustumDXTK(DirectX::SimpleMath::Matrix projetion, DirectX::SimpleMath::Matrix view)
-//{
-//	auto f = DirectX::BoundingFrustum(projetion);
-//	XMFLOAT3 corners[8];
-//	f.GetCorners(corners);
-//
-//	std::vector<Vector3> vec;
-//	vec.resize(4);
-//
-//	XMVECTOR topP, botP, leftP, rightP, farP, nearP;
-//
-//	f.GetPlanes(&nearP, &farP, &rightP, &leftP, &topP, &botP);
-//
-//	vec[0] = PlaneIntersectPlanes(farP, leftP, botP);
-//	vec[1] = PlaneIntersectPlanes(farP, rightP, botP);
-//	vec[2] = PlaneIntersectPlanes(farP, rightP, topP);
-//	vec[3] = PlaneIntersectPlanes(farP, leftP, topP);
-//	AddFace(vec, { 0.5f, 0, 0 });
-//
-//
-//	Plane p1 = Plane(Vector3(0, -1, 0), Vector3(0, 1, 0));
-//	Plane p2 = Plane(Vector3(-1, 0, 0), Vector3(1, 0, 0));
-//	Plane p3 = Plane(Vector3(0, 0, 1), Vector3(0, 0, -1));
-//	Vector3 intP = PlaneIntersectPlanes(p1, p2, p3);
-//	auto wp1 = DirectX::XMPlaneFromPointNormal(Vector3(0, -1, 0), Vector3(0, 1, 0));
-//	auto wp2 = DirectX::XMPlaneFromPointNormal(Vector3(-1, 0, 0), Vector3(1, 0, 0));
-//	auto wp3 = DirectX::XMPlaneFromPointNormal(Vector3(0, 0, 1), Vector3(0, 0, -1));
-//	Vector3 wintP = PlaneIntersectPlanes(wp1, wp2, wp3);
-//
-//	vec[0] = PlaneIntersectPlanes(nearP, leftP, topP);
-//	vec[1] = PlaneIntersectPlanes(nearP, rightP, topP);
-//	vec[2] = PlaneIntersectPlanes(nearP, rightP, botP);
-//	vec[3] = PlaneIntersectPlanes(nearP, leftP, botP);
-//	AddFace(vec, { 0.5f, 0, 0 });
-//
-//	vec[0] = PlaneIntersectPlanes(nearP, rightP, topP);
-//	vec[1] = PlaneIntersectPlanes(nearP, rightP, botP);
-//	vec[2] = PlaneIntersectPlanes(farP, rightP, botP);
-//	vec[3] = PlaneIntersectPlanes(farP, rightP, topP);
-//	AddFace(vec, { 0, 0.5f, 0 });
-//
-//	vec[0] = PlaneIntersectPlanes(nearP, leftP, topP);
-//	vec[1] = PlaneIntersectPlanes(nearP, leftP, botP);
-//	vec[2] = PlaneIntersectPlanes(farP, leftP, botP);
-//	vec[3] = PlaneIntersectPlanes(farP, leftP, topP);
-//	AddSphere(vec[2], 0.1f, { 0.8f, 0, 0 });
-//	AddSphere(vec[0], 0.1f, { 0, 0.8f, 0 });
-//	AddFace(vec, { 0, 0.5f, 0 });
-//
-//	/*vec[0] = corners[4];
-//	vec[1] = corners[0];
-//	vec[2] = corners[1];
-//	vec[3] = corners[5];
-//	AddFace(vec, { 0, 0, 0.5f });
-//
-//	vec[0] = corners[6];
-//	vec[1] = corners[2];
-//	vec[2] = corners[3];
-//	vec[3] = corners[7];
-//	AddFace(vec, { 0, 0, 0.5f });*/
-//	return NULL_ENTITY;
-//}
+DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Vector4 leftPlane, DirectX::SimpleMath::Vector4 rightPlane, DirectX::SimpleMath::Vector4 bottomPlane, DirectX::SimpleMath::Vector4 topPlane, DirectX::SimpleMath::Vector4 nearPlane, DirectX::SimpleMath::Vector4 farPlane)
+{
+	leftPlane = DirectX::XMPlaneNormalize(leftPlane);
+	rightPlane = DirectX::XMPlaneNormalize(rightPlane);
+	bottomPlane = DirectX::XMPlaneNormalize(bottomPlane);
+	topPlane = DirectX::XMPlaneNormalize(topPlane);
+	nearPlane = DirectX::XMPlaneNormalize(nearPlane);
+	farPlane = DirectX::XMPlaneNormalize(farPlane);
+
+	std::vector<Vector3> vec;
+	vec.resize(4);
+
+	vec[0] = PlaneIntersectPlanes(farPlane, leftPlane, bottomPlane);
+	vec[1] = PlaneIntersectPlanes(farPlane, rightPlane, bottomPlane);
+	vec[2] = PlaneIntersectPlanes(farPlane, rightPlane, topPlane);
+	vec[3] = PlaneIntersectPlanes(farPlane, leftPlane, topPlane);
+	AddFace(vec, { 0.5f, 0, 0 });
+
+	vec[0] = PlaneIntersectPlanes(nearPlane, leftPlane, topPlane);
+	vec[1] = PlaneIntersectPlanes(nearPlane, rightPlane, topPlane);
+	vec[2] = PlaneIntersectPlanes(nearPlane, rightPlane, bottomPlane);
+	vec[3] = PlaneIntersectPlanes(nearPlane, leftPlane, bottomPlane);
+	AddFace(vec, { 0.5f, 0, 0 });
+
+	vec[0] = PlaneIntersectPlanes(nearPlane, rightPlane, topPlane);
+	vec[1] = PlaneIntersectPlanes(nearPlane, rightPlane, bottomPlane);
+	vec[2] = PlaneIntersectPlanes(farPlane, rightPlane, bottomPlane);
+	vec[3] = PlaneIntersectPlanes(farPlane, rightPlane, topPlane);
+	AddFace(vec, { 0, 0.5f, 0 });
+
+	vec[0] = PlaneIntersectPlanes(nearPlane, leftPlane, topPlane);
+	vec[1] = PlaneIntersectPlanes(nearPlane, leftPlane, bottomPlane);
+	vec[2] = PlaneIntersectPlanes(farPlane, leftPlane, bottomPlane);
+	vec[3] = PlaneIntersectPlanes(farPlane, leftPlane, topPlane);
+	AddFace(vec, { 0, 0.5f, 0 });
+
+	vec[0] = PlaneIntersectPlanes(nearPlane, leftPlane, topPlane);
+	vec[1] = PlaneIntersectPlanes(farPlane, leftPlane, topPlane);
+	vec[2] = PlaneIntersectPlanes(farPlane, rightPlane, topPlane);
+	vec[3] = PlaneIntersectPlanes(nearPlane, rightPlane, topPlane);
+	AddFace(vec, { 0, 0, 0.5f });
+
+	vec[0] = PlaneIntersectPlanes(nearPlane, leftPlane, bottomPlane);
+	vec[1] = PlaneIntersectPlanes(nearPlane, rightPlane, bottomPlane);
+	vec[2] = PlaneIntersectPlanes(farPlane, rightPlane, bottomPlane);
+	vec[3] = PlaneIntersectPlanes(farPlane, leftPlane, bottomPlane);
+	AddFace(vec, { 0, 0, 0.5f });
+	entity e = CreateEntity();
+	return e;
+}
 
 DOG::entity LightScene::AddFace(const std::vector<DirectX::SimpleMath::Vector3>& vertexPoints, Vector3 color)
 {
@@ -192,6 +177,8 @@ DOG::entity LightScene::AddFace(const std::vector<DirectX::SimpleMath::Vector3>&
 	{
 		mesh.vertexDataPerAttribute[attr] = vert;
 	}
+
+
 
 	entity e = CreateEntity();
 	AddComponent<TransformComponent>(e);
@@ -207,7 +194,7 @@ DOG::entity LightScene::AddFace(const std::vector<DirectX::SimpleMath::Vector3>&
 
 DOG::entity LightScene::AddSphere(DirectX::SimpleMath::Vector3 center, float radius, DirectX::SimpleMath::Vector3 color)
 {
-	std::cout << "sphere, x: " << center.x << ", y: " << center.y << ", z: " << center.z << " color:" << color.x << " " << color.y << " " << color.z << std::endl;
+	std::cout << "sphere, x: " << center.x << ", y: " << center.y << ", z: " << center.z << " color:" << color.x << " " << color.y << " " << color.z << "radius: " << radius << std::endl;
 	auto shapeCreator = ShapeCreator(Shape::sphere, 16, 16, radius);
 	auto shape = shapeCreator.GetResult();
 	MeshDesc mesh;
@@ -218,8 +205,18 @@ DOG::entity LightScene::AddSphere(DirectX::SimpleMath::Vector3 center, float rad
 		mesh.vertexDataPerAttribute[attr] = vert;
 	}
 
+	std::vector<Vector3> vec;
+	vec.resize(mesh.vertexDataPerAttribute[VertexAttribute::Position].size_bytes() / sizeof(Vector3));
+	memcpy(vec.data(), mesh.vertexDataPerAttribute[VertexAttribute::Position].data(), mesh.vertexDataPerAttribute[VertexAttribute::Position].size_bytes());
+	for (int i = 0; i < 4; i++)
+	{
+		std::cout << "sphere, x: " << vec[i].x << ", y: " << vec[i].y << ", z: " << vec[i].z << std::endl;
+	}
+
+
 	entity e = CreateEntity();
 	AddComponent<TransformComponent>(e, center);
+	AddComponent<SphereComponent>(e, radius);
 	auto& renderComp = AddComponent<SubmeshRenderer>(e);
 	renderComp.mesh = CustomMeshManager::Get().AddMesh(mesh).first;
 	renderComp.materialDesc.emissiveFactor.x = color.x;
@@ -245,6 +242,27 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 	{
 		if (ImGui::Begin("TiledShading", &open))
 		{
+			static bool dragWindowOpen = false;
+			if (ImGui::Button("Move"))
+			{
+				dragWindowOpen = !dragWindowOpen;
+			}
+			LightCullingDebugMenu(dragWindowOpen);
+
+
+			if (ImGui::Button("Compute"))
+			{
+				auto p = XMMatrixPerspectiveFovLH(40.f * XM_PI / 180.f, 1.0f, 1.0f, 10.0f);
+				auto& controller = EntityManager::Get().GetComponent<PlayerControllerComponent>(GetPlayer());
+				auto& camera = EntityManager::Get().GetComponent<CameraComponent>(controller.cameraEntity);
+
+				FakeCompute::s_data.proj = p;
+				FakeCompute::s_data.view = camera.viewMatrix;
+
+				FakeCompute::Dispatch(2, 2, 1);
+			}
+
+
 			if(ImGui::Button("Place face"))
 			{
 				AddFace({ Vector3(-1, 1, 0), Vector3(1, 1, 0), Vector3(1, -1, 0), Vector3(-1, -1, 0) }, {0.5f, 0, 0});
@@ -266,13 +284,122 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 			if (ImGui::Button("Place frustum"))
 			{
 				f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
-				auto p = XMMatrixPerspectiveFovLH(40.f * XM_PI / 180.f, aspectRatio, 10.f, 1.0f);
-				//AddFrustumDXTK(p, SimpleMath::Matrix::Identity);
-				auto& t = EntityManager::Get().GetComponent<TransformComponent>(GetPlayer());
-				AddFrustum(p, t.worldMatrix.Invert());
+				auto p = XMMatrixPerspectiveFovLH(40.f * XM_PI / 180.f, aspectRatio, 1.0f, 10.0f);
+				auto& controller = EntityManager::Get().GetComponent<PlayerControllerComponent>(GetPlayer());
+				auto& camera = EntityManager::Get().GetComponent<CameraComponent>(controller.cameraEntity);
+				AddFrustum(p, camera.viewMatrix);
 			}
+
+			
 
 		}
 		ImGui::End(); // "TiledShading"
+	}
+}
+
+void LightScene::LightCullingDebugMenu(bool& open)
+{
+	static entity selectedEntity = NULL_ENTITY;
+	auto& em = EntityManager::Get();
+
+	if (open)
+	{
+		if (ImGui::Begin("SphereTable", &open))
+		{
+			if (ImGui::BeginPopup("AddSphereTable"))
+			{
+				static float posAsFloat[3] = { 20.0f, 10.0f, 20.0f };
+				static float radius = 0.2f;
+				ImGui::DragFloat3("Position", posAsFloat, 0.1f);
+				ImGui::DragFloat("radius", &radius, 0.05f);
+				if (ImGui::Button("Create sphere"))
+				{
+					std::random_device rdev;
+					std::mt19937 gen(rdev());
+					std::uniform_real_distribution<float> dist(0.05f, 0.7f);
+
+					AddSphere({ posAsFloat[0], posAsFloat[1], posAsFloat[2] }, radius, { dist(gen), dist(gen), dist(gen) });
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndPopup();
+			}
+
+			if (selectedEntity != NULL_ENTITY)
+				ImGui::Text("move entity: %u", selectedEntity);
+			else
+				ImGui::Text("no selected entity");
+
+			ImGui::SameLine(ImGui::GetWindowWidth() - ImGui::CalcTextSize("Add Sphere").x - 20);
+			if (ImGui::Button("Add Sphere"))
+			{
+				ImGui::OpenPopup("AddSphereTable");
+			}
+
+			if (selectedEntity != NULL_ENTITY)
+			{
+				auto& tc = em.GetComponent<DOG::TransformComponent>(selectedEntity);
+				Vector3 pos = tc.GetPosition();
+				float posAsFloat[3] = { pos.x, pos.y, pos.z };
+				if (ImGui::DragFloat3("Position", posAsFloat, 0.1f))
+					tc.SetPosition({ posAsFloat[0], posAsFloat[1], posAsFloat[2] });
+			}
+			else
+			{
+				float posAsFloat[3] = {};
+				ImGui::DragFloat3("Position", posAsFloat, 0.1f);
+			}
+
+			
+
+
+			std::vector<entity> spheres;
+			em.Collect<SphereComponent, TransformComponent>().Do([&spheres](entity e, SphereComponent&, TransformComponent&) { spheres.push_back(e); });
+
+			auto&& sphereToString = [&](entity e) -> std::tuple<std::string, std::string, std::string>
+			{
+				auto& s = EntityManager::Get().GetComponent<SphereComponent>(e);
+				std::string str1 = "entity: " + std::to_string(e);
+				Vector3 p = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
+				std::string str2 = "";
+				str2 += std::format("{:.1f}", p.x) + ", ";
+				str2 += std::format("{:.1f}", p.y) + ", ";
+				str2 += std::format("{:.1f}", p.z);
+				std::string str3 = "culled: " + s.culled ? "true" : "false";
+				return { str1, str2, str3 };
+			};
+
+			if (ImGui::BeginTable("Spheres", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV))
+			{
+				ImGui::TableSetupColumn("Entity", ImGuiTableColumnFlags_NoHide);
+				ImGui::TableSetupColumn("Pos", ImGuiTableColumnFlags_NoHide);
+				ImGui::TableSetupColumn("Culled", ImGuiTableColumnFlags_NoHide);
+				ImGui::TableHeadersRow();
+				for (int i = 0; i < spheres.size(); i++)
+				{
+					auto row = sphereToString(spheres[i]);
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					if (ImGui::Selectable((std::get<0>(row) + "##" + std::to_string(i)).c_str(), selectedEntity == spheres[i], ImGuiSelectableFlags_SpanAllColumns))
+					{
+						selectedEntity = spheres[i];
+					}
+					if (ImGui::BeginPopupContextItem())
+					{
+						if (ImGui::Button("remove"))
+						{
+							em.DeferredEntityDestruction(spheres[i]);
+							ImGui::CloseCurrentPopup();
+						}
+						ImGui::EndPopup();
+					}
+					ImGui::TableSetColumnIndex(1);
+					ImGui::Text(std::get<1>(row).c_str());
+					ImGui::TableSetColumnIndex(2);
+					ImGui::Text(std::get<2>(row).c_str());
+				}
+				ImGui::EndTable();
+			}
+		}
+		ImGui::End();
 	}
 }

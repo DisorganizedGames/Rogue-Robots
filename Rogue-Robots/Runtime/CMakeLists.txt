@@ -25,6 +25,7 @@ set(SourceFiles
 	"src/Game/LoadSplitModels.h" "src/Game/LoadSplitModels.cpp"
 	"src/Game/ItemManager/ItemManager.h" "src/Game/ItemManager/ItemManager.cpp"
 	"src/Game/LightScene.h" "src/Game/LightScene.cpp"
+	"src/Game/FakeComputeLightCulling.h" "src/Game/FakeComputeLightCulling.cpp"
 	)
 
 set(ExecutableName "Runtime")
