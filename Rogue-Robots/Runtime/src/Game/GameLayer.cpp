@@ -376,19 +376,10 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 
 	m_entityManager.AddComponent<PlayerAliveComponent>(e);
 	LuaMain::GetScriptManager()->AddScript(e, "Gun.lua");
-	auto gunScriptData = LuaMain::GetScriptManager()->GetScript(e, "Gun.lua");
-	LuaTable t0(gunScriptData.scriptTable, true);
-	t0.CallFunctionOnTable("OnStart");
 
 	LuaMain::GetScriptManager()->AddScript(e, "PassiveItemSystem.lua");
-	auto passiveItemScriptData = LuaMain::GetScriptManager()->GetScript(e, "PassiveItemSystem.lua");
-	LuaTable t1(passiveItemScriptData.scriptTable, true);
-	t1.CallFunctionOnTable("OnStart");
 
 	LuaMain::GetScriptManager()->AddScript(e, "ActiveItemSystem.lua");
-	auto activeItemScriptData = LuaMain::GetScriptManager()->GetScript(e, "ActiveItemSystem.lua");
-	LuaTable t2(activeItemScriptData.scriptTable, true);
-	t2.CallFunctionOnTable("OnStart");
 
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{

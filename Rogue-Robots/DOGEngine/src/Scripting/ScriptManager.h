@@ -44,7 +44,6 @@ namespace DOG
 	class ScriptManager
 	{
 	private:
-		u32 m_idCounter;
 		std::unordered_map<std::string, GetScriptData> m_scriptToVector;
 		std::vector<std::vector<ScriptData>> m_unsortedScripts;
 		std::vector<std::vector<ScriptData>> m_sortedScripts;
@@ -65,6 +64,9 @@ namespace DOG
 		static std::mutex s_reloadMutex;
 		const std::string c_pathToScripts = "Assets/LuaScripts/";
 		DOG::EntityManager& m_entityManager;
+
+		//After the function StartScripts have been called we still want to be able to call the start function on new scripts
+		bool m_callStartOnCreationOfScripts = false;
 
 	private:
 		static void ScriptFileWatcher(const std::filesystem::path& path, const filewatch::Event changeType);

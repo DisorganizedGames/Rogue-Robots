@@ -127,6 +127,12 @@ namespace DOG
 		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
 		scriptData.onDestroyFunction = table.TryGetFunctionFromTable("OnDestroy");
 
+		//Check if StartScripts have been called
+		if (m_callStartOnCreationOfScripts && m_luaW->CheckIfFunctionExist(scriptData.onStartFunction))
+		{
+			m_luaW->CallTableLuaFunction(scriptData.scriptTable, scriptData.onStartFunction);
+		}
+
 		StoredScriptData storedScriptData = {};
 
 		//Find if there already exist a vector for that script type
@@ -230,7 +236,6 @@ namespace DOG
 		);
 #endif // _DEBUG
 
-		m_idCounter = 0;
 		m_sortedScriptsHalfwayIndex = 0;
 	}
 
@@ -365,6 +370,9 @@ namespace DOG
 
 	void ScriptManager::StartScripts()
 	{
+		//Set that StartScripts function have been called
+		m_callStartOnCreationOfScripts = true;
+
 		//Run the scripts which should happen first!
 		for (u32 index = 0; index < m_sortedScriptsHalfwayIndex; ++index)
 		{
