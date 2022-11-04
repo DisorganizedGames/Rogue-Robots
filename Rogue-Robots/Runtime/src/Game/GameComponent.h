@@ -202,3 +202,8 @@ struct InteractionQueryComponent
 {
 	//ID
 };
+
+struct InteractionQueryComponent
+{
+	//ID
+};
