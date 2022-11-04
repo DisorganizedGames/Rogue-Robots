@@ -231,7 +231,7 @@ void DOG::UIElement::OnEvent(IEvent& event)
    return;
 }
 
-DOG::UIButton::UIButton(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, std::wstring text, std::function<void(void)> callback) : pressed(false), m_callback(callback), UIElement(id)
+DOG::UIButton::UIButton(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, const std::wstring& text, std::function<void(void)> callback) : pressed(false), m_callback(callback), UIElement(id)
 {
    this->m_size = D2D1::Vector2F(width, height);
    m_textRect = D2D1::RectF(x, y, x + width, y + height);
@@ -423,7 +423,7 @@ void DOG::UIHealthBar::SetBarValue(float value)
    m_value = value;
 }
 
-DOG::UIBackground::UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float heigt, std::wstring title) : UIElement(id)
+DOG::UIBackground::UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float heigt, const std::wstring& title) : UIElement(id)
 {
    m_title = title;
    m_background = D2D1::RectF(0.0f, 0.0f, width, heigt);
@@ -583,7 +583,7 @@ void DOG::UITextField::OnEvent(DOG::IEvent& event)
       switch (event.GetEventType())
       {
       case EventType::KeyPressedEvent:
-         if (m_active && m_text.length() < 20)
+         if (m_active)
          {
             int c = static_cast<int>(EVENT(KeyPressedEvent).key);
             if (c == 190)

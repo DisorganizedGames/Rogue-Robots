@@ -23,8 +23,6 @@
 #include "RenderGraph/RGResourceManager.h"
 #include "RenderGraph/RGBlackboard.h"
 
-//#include "../../Runtime/src/Core/RuntimeApplication.h"
-
 #include "Tracy/Tracy.hpp"
 
 // Passes

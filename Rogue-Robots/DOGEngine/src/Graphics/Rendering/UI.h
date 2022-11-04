@@ -119,7 +119,7 @@ namespace DOG
    {
       public:
          bool pressed;
-         UIButton(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, std::wstring text, std::function<void(void)> callback);
+         UIButton(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, const std::wstring& text, std::function<void(void)> callback);
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
          //void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void OnEvent(IEvent& event) override final;
@@ -174,7 +174,7 @@ namespace DOG
    class UIBackground : public UIElement
    {
       public:
-         UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float heigt, std::wstring title);
+         UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float heigt, const std::wstring& title);
          ~UIBackground();
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
