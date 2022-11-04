@@ -45,12 +45,9 @@ private:
 	void KillPlayer(DOG::entity e);
 
 	void RegisterLuaInterfaces();
-	std::vector<DOG::entity> LoadLevel(std::string file); //Loads a PCG generated level.
 	void Input(DOG::Key key);
 	void Release(DOG::Key key);
 	void CameraUpdate();
-	std::vector<DOG::entity> SpawnPlayers(const DirectX::SimpleMath::Vector3& pos, u8 playerCount, f32 spread = 10.f);
-	std::vector<DOG::entity> AddFlashlightsToPlayers(const std::vector<DOG::entity>& players);
 	std::vector<DOG::entity> SpawnAgents(const EntityTypes type, const DirectX::SimpleMath::Vector3& pos, u8 agentCount, f32 spread = 10.f);
 
 	void HandleCheats();

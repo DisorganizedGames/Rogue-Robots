@@ -17,7 +17,8 @@ set(SourceFiles
 		 "src/Game/ExplosionSystems.h" "src/Game/ExplosionSystems.cpp" "src/Network/Network.h"
 		"src/Game/HomingMissileSystem.h" "src/Game/HomingMissileSystem.cpp"
 		"src/Game/GameSystems.h" "src/Game/GameSystems.cpp"
-		"src/Game/Scene.h" "src/Game/Scene.cpp"
+		"src/Game/Scene.h" "src/Game/Scene.cpp" "src/Game/PcgLevelLoader.h" "src/Game/PcgLevelLoader.cpp"
+		"src/Game/PrefabInstantiatorFunctions.h" "src/Game/PrefabInstantiatorFunctions.cpp"
 )
 		
 set(ExecutableName "Runtime")

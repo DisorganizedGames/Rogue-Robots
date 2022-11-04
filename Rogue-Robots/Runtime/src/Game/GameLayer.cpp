@@ -5,6 +5,8 @@
 #include "SimpleAnimationSystems.h"
 #include "ExplosionSystems.h"
 #include "HomingMissileSystem.h"
+#include "PcgLevelLoader.h"
+#include "PrefabInstantiatorFunctions.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -682,87 +684,6 @@ void GameLayer::RegisterLuaInterfaces()
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Game", "GameInterface");
 }
 
-std::vector<entity> GameLayer::LoadLevel(std::string file)
-{
-	float blockDim = 5.0f;
-
-	std::string line;
-
-	std::ifstream inputFile(file);
-
-	AssetManager& aManager = AssetManager::Get();
-
-	std::vector<entity> levelBlocks;
-
-	unsigned x = 0;
-	unsigned y = 0;
-	unsigned z = 0;
-	float piDiv2 = DirectX::XM_PIDIV2;
-	if (inputFile.is_open())
-	{
-		while (std::getline(inputFile, line))
-		{
-			if (line[0] != '-')
-			{
-				while (line.find(' ') != std::string::npos)
-				{
-					size_t delimPos = line.find(' ');	
-					std::string block = line.substr(0, delimPos);
-					line.erase(0, delimPos + 1);
-					if (block != "Empty" && block != "Void" && block != "q")
-					{
-						size_t firstUnderscore = block.find('_');
-						size_t secondUnderscore = block.find('_', firstUnderscore + 1);
-						std::string blockName = block.substr(0, firstUnderscore);
-						int blockRot = std::stoi(block.substr(firstUnderscore + 2, secondUnderscore - firstUnderscore - 2));
-						std::string blockFlip = block.substr(secondUnderscore + 1, block.size() - secondUnderscore - 1);
-
-						float xFlip = 1.0f;
-						float yFlip = 1.0f; 
-						if (blockFlip.find('x') != std::string::npos)
-						{
-							xFlip = -1.0f;
-						}
-						if (blockFlip.find('y') != std::string::npos)
-						{
-							yFlip = -1.0f;
-						}
-
-						//Correct scaling for the mesh colliders (I think)
-						Vector3 localMeshColliderScale = Vector3(-xFlip, yFlip, 1.0f);
-
-						entity blockEntity = levelBlocks.emplace_back(m_entityManager.CreateEntity());
-						m_entityManager.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".fbx"));
-						m_entityManager.AddComponent<TransformComponent>(blockEntity,
-							Vector3(x * blockDim, y * blockDim, z * blockDim),
-							Vector3(piDiv2, blockRot * piDiv2 - piDiv2, 0.0f),
-							Vector3(xFlip, -yFlip, 1.0f));
-
-						m_entityManager.AddComponent<ModularBlockComponent>(blockEntity);
-						m_entityManager.AddComponent<MeshColliderComponent>(blockEntity,
-							blockEntity, 
-							aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + "_Col.fbx", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::CPUMemory | DOG::AssetLoadFlag::GPUMemory))),
-							localMeshColliderScale,
-							false);		// Set this to true if you want to see colliders only in wireframe
-						m_entityManager.AddComponent<ShadowReceiverComponent>(blockEntity);
-					}
-
-					++x;
-				}
-				x = 0;
-				++y;
-			}
-			else
-			{
-				x = 0;
-				y = 0;
-				++z;
-			}
-		}
-	}
-	return levelBlocks;
-}
-
 void GameLayer::Input(DOG::Key key)
 {
 	EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
@@ -829,123 +750,6 @@ void GameLayer::Release(DOG::Key key)
 			if(key == DOG::Key::C)
 				inputC.toggleMoveView = false;
 		});
-}
-
-std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
-{
-	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
-	ASSERT(playerCount <= MAX_PLAYER_COUNT, "No more than 4 players can be spawned. I.e. playerCount can't exceed 4");
-
-	auto* scriptManager = LuaMain::GetScriptManager();
-	//// Add persistent material prefab lua
-	//{
-	//	entity e = m_entityManager.CreateEntity();
-	//	m_entityManager.AddComponent<TransformComponent>(e);
-	//	scriptManager->AddScript(e, "MaterialPrefabs.lua");
-	//}
-
-	//LuaMain::GetGlobal().
-	scriptManager->RunLuaFile("MaterialPrefabs.lua");
-	LuaMain::GetGlobal()->GetTable("MaterialPrefabs").CallFunctionOnTable("OnStart");
-
-	auto& am = DOG::AssetManager::Get();
-	m_playerModels[0] = am.LoadModelAsset("Assets/Models/Temporary_Assets/red_cube.glb");
-	m_playerModels[1] = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
-	m_playerModels[2] = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
-	m_playerModels[3] = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
-	std::vector<entity> players;
-	for (auto i = 0; i < playerCount; ++i)
-	{
-		entity playerI = players.emplace_back(m_entityManager.CreateEntity());
-		Vector3 offset = {
-			spread * (i % 2) - (spread / 2.f),
-			0,
-			spread * (i / 2) - (spread / 2.f),
-		};
-		m_entityManager.AddComponent<TransformComponent>(playerI, pos - offset);
-		m_entityManager.AddComponent<ModelComponent>(playerI, m_playerModels[i]);
-		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 0.8f, true, 75.f);
-		auto& rb = m_entityManager.AddComponent<RigidbodyComponent>(playerI, playerI);
-		rb.ConstrainRotation(true, true, true);
-		rb.disableDeactivation = true;
-		rb.getControlOfTransform = true;
-
-		m_entityManager.AddComponent<PlayerStatsComponent>(playerI);
-		m_entityManager.AddComponent<PlayerControllerComponent>(playerI);
-		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = static_cast<i8>(i);
-		m_entityManager.AddComponent<InputController>(playerI);
-		m_entityManager.AddComponent<ShadowReceiverComponent>(playerI);
-		m_entityManager.AddComponent<PlayerAliveComponent>(playerI);
-		scriptManager->AddScript(playerI, "Gun.lua");
-		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
-		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");
-
-		if (i == 0) // Only for this player
-		{
-			m_entityManager.AddComponent<ThisPlayer>(playerI);
-			m_entityManager.AddComponent<AudioListenerComponent>(playerI);
-		}
-		else
-		{
-			m_entityManager.AddComponent<OnlinePlayer>(playerI);
-		}
-	}
-	return players;
-}
-
-std::vector<entity> GameLayer::AddFlashlightsToPlayers(const std::vector<entity>& players)
-{
-	std::vector<entity> flashlights;
-	for (auto i = 0; i < players.size(); ++i)
-	{
-		auto& playerTransformComponent = m_entityManager.GetComponent<TransformComponent>(players[i]);
-
-		entity flashLightEntity = m_entityManager.CreateEntity();
-		auto& tc = m_entityManager.AddComponent<DOG::TransformComponent>(flashLightEntity);
-		tc.SetPosition(playerTransformComponent.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.2f, 0.0f));
-
-		auto up = tc.worldMatrix.Up();
-		up.Normalize();
-
-		auto& cc = m_entityManager.AddComponent<DOG::CameraComponent>(flashLightEntity);
-		cc.isMainCamera = false;
-		cc.viewMatrix = DirectX::XMMatrixLookAtLH
-		(
-			{ tc.GetPosition().x, tc.GetPosition().y, tc.GetPosition().z },
-			{ tc.GetPosition().x + tc.GetForward().x, tc.GetPosition().y + tc.GetForward().y, tc.GetPosition().z + tc.GetForward().z },
-			{ up.x, up.y, up.z }
-		);
-
-		auto dd = DOG::SpotLightDesc();
-		dd.color = { 1.0f, 1.0f, 1.0f };
-		dd.direction = tc.GetForward();
-		dd.strength = 0.6f;
-		dd.cutoffAngle = 20.0f;
-
-		auto lh = DOG::LightManager::Get().AddSpotLight(dd, DOG::LightUpdateFrequency::PerFrame);
-
-		auto& slc = m_entityManager.AddComponent<DOG::SpotLightComponent>(flashLightEntity);
-		slc.color = dd.color;
-		slc.direction = tc.GetForward();
-		slc.strength = dd.strength;
-		slc.cutoffAngle = dd.cutoffAngle;
-		slc.handle = lh;
-		slc.owningPlayer = players[i];
-
-		float fov = ((slc.cutoffAngle + 0.1f) * 2.0f) * DirectX::XM_PI / 180.f;
-		cc.projMatrix = DirectX::XMMatrixPerspectiveFovLH(fov, 1, 800.f, 0.1f);
-
-		#if defined NDEBUG
-		m_entityManager.AddComponent<DOG::ShadowCasterComponent>(flashLightEntity);
-		#endif
-		if (i == 0) // Only for this/main player
-			slc.isMainPlayerSpotlight = true;
-		else
-			slc.isMainPlayerSpotlight = false;
-
-		flashlights.push_back(flashLightEntity);
-	}
-	return flashlights;
 }
 
 std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3& pos, u8 agentCount, f32 spread)
