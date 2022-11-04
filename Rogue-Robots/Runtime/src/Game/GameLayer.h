@@ -17,7 +17,8 @@ enum class GameState
 	Playing,
 	Won,
 	Lost,
-	Exiting
+	Exiting,
+	Restart,
 };
 
 class GameLayer : public DOG::Layer
@@ -59,6 +60,7 @@ private:
 	void CheatDebugMenu(bool& open);
 private:
 	GameState m_gameState;
+	SceneComponent::Type m_selectedScene = SceneComponent::Type::TunnelRoom0Scene;
 	std::unique_ptr<Scene> m_testScene;
 	std::unique_ptr<Scene> m_mainScene;
 	std::vector<u32> m_shapes;

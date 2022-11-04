@@ -115,7 +115,10 @@ void GameLayer::OnUpdate()
 		CloseMainScene();
 		m_gameState = GameState::None;
 		break;
-
+	case GameState::Restart:
+		CloseMainScene();
+		m_gameState = GameState::StartPlaying;
+		break;
 	default:
 		break;
 	}
@@ -138,29 +141,29 @@ void GameLayer::StartMainScene()
 
 	assert(m_mainScene == nullptr);
 	
-	switch (ACTIVE_SCENE)
+	switch (m_selectedScene)
 	{
-	case Scene::room_0:
+	case SceneComponent::Type::TunnelRoom0Scene:
 		/************************** tunnel scene *********************************/
 		m_mainScene = std::make_unique<TunnelRoom0Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
 		m_mainScene->SetUpScene();
 		break;
-	case Scene::room_1:
+	case SceneComponent::Type::TunnelRoom1Scene:
 		/************************** tunnel scene *********************************/
 		m_mainScene = std::make_unique<TunnelRoom1Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
 		m_mainScene->SetUpScene();
 		break;
-	case Scene::room_2:
+	case SceneComponent::Type::TunnelRoom2Scene:
 		/************************** tunnel scene *********************************/
 		m_mainScene = std::make_unique<TunnelRoom2Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
 		m_mainScene->SetUpScene();
 		break;
-	case Scene::room_3:
+	case SceneComponent::Type::TunnelRoom3Scene:
 		/************************** tunnel scene *********************************/
 		m_mainScene = std::make_unique<TunnelRoom3Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
 		m_mainScene->SetUpScene();
 		break;
-	case Scene::old_default:
+	case SceneComponent::Type::OldDefaultScene:
 		/************************** old default scene *********************************/
 		m_mainScene = std::make_unique<OldDefaultScene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
 		m_mainScene->SetUpScene();
@@ -785,21 +788,11 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 				}
 			}
 
-			// Commented out until a propper debug camera is implemented.
-			/*bool checkboxMainScene = m_mainScene != nullptr;
-			if (ImGui::Checkbox("MainScene", &checkboxMainScene))
-			{
-				if (checkboxMainScene)
-				{
-					m_mainScene = std::make_unique<MainScene>();
-					m_mainScene->SetUpScene();
-				}
-				else
-				{
-					m_mainScene.reset();
-					m_mainScene = nullptr;
-				}
-			}*/
+			if (ImGui::RadioButton("Room0", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom0Scene)) m_gameState = GameState::Restart;
+			if (ImGui::RadioButton("Room1", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom1Scene)) m_gameState = GameState::Restart;
+			if (ImGui::RadioButton("Room2", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom2Scene)) m_gameState = GameState::Restart;
+			if (ImGui::RadioButton("Room3", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom3Scene)) m_gameState = GameState::Restart;
+			if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;
 
 			std::vector<entity> players;
 			EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](entity e, PlayerStatsComponent&)
