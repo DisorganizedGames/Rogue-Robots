@@ -20,6 +20,7 @@ set(SourceFiles
 		"src/Game/Scene.h" "src/Game/Scene.cpp" "src/Game/PcgLevelLoader.h" "src/Game/PcgLevelLoader.cpp"
 		"src/Game/PrefabInstantiatorFunctions.h" "src/Game/PrefabInstantiatorFunctions.cpp"
 		"src/Game/OldDefaultScene.h" "src/Game/OldDefaultScene.cpp"
+		"src/Game/TunnelScenes.h" "src/Game/TunnelScenes.cpp"
 		)
 		
 set(ExecutableName "Runtime")
