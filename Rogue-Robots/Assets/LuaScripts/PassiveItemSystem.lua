@@ -64,3 +64,9 @@ function OnBulletHit(enemy)
 	itemsDirty = true
 end
 
+function OnDestroy()
+	EventSystem:UnRegister("ItemPickup" .. EntityID, OnPickup)
+
+	-- Temporary until we have a more central place to keep it
+	EventSystem:UnRegister("BulletEnemyHit" .. EntityID, OnBulletHit)
+end

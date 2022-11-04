@@ -30,6 +30,10 @@ function EventSystem:UnRegister(eventName, callBack)
 	for i=1, #self.events[eventName] do
 		if self.events[eventName][i] == callBack then
 			table.remove(self.events[eventName], i)
+			--If we have zero events left then we set the event type to nil, for warning checks
+			if #self.events[eventName] == 0 then
+				self.events[eventName] = nil
+			end
 			break
 		end
 	end
