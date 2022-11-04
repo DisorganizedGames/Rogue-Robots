@@ -71,9 +71,7 @@ namespace DOG
 				system->EarlyUpdate();
 			}
 
-
 			PhysicsEngine::UpdatePhysics((f32)Time::DeltaTime());
-
 
 			AudioManager::AudioSystem();
 

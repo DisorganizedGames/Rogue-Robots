@@ -1,5 +1,6 @@
 #include "TestScene.h"
 #include "GameComponent.h"
+#include "../Network/Network.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -136,17 +137,6 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	AddComponent<ModelComponent>(doorTest, doorModelID);
 	AddComponent<ShadowReceiverComponent>(doorTest);
 
-
-	//entity passiveItemTest = CreateEntity();
-	//AddComponent<PassiveItemComponent>(passiveItemTest).type = PassiveItemComponent::Type::MaxHealthBoost;
-	//AddComponent<PickupComponent>(passiveItemTest);
-	//AddComponent<ModelComponent>(passiveItemTest, medkitID);
-	//AddComponent<TransformComponent>(passiveItemTest, Vector3(25, 15, 30));
-	//AddComponent<BoxColliderComponent>(passiveItemTest, passiveItemTest, Vector3(0.2f, 0.2f, 0.2f), true);
-	//AddComponent<RigidbodyComponent>(passiveItemTest, passiveItemTest, false);
-	//AddComponent<ShadowReceiverComponent>(passiveItemTest);
-	//LuaMain::GetScriptManager()->AddScript(passiveItemTest, "Pickupable.lua");
-
 	CreateTrampolinePickup(Vector3(23.0f, 6.0f, 30.0f));
 	CreateTrampolinePickup(Vector3(20.0f, 6.0f, 35.0f));
 	CreateTrampolinePickup(Vector3(55.0f, 6.0f, 35.0f));
@@ -276,14 +266,19 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 
 void TestScene::CreateTrampolinePickup(DirectX::SimpleMath::Vector3 position)
 {
+	static u32 trampolineNetworkID = 0u;
 	u32 trampolineID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Trampoline.glb");
 
 	entity trampolineEntity = CreateEntity();
 	AddComponent<ActiveItemComponent>(trampolineEntity).type = ActiveItemComponent::Type::Trampoline;
-	AddComponent<PickupComponent>(trampolineEntity);
+	AddComponent<PickupComponent>(trampolineEntity).itemName = "Trampoline";
 	AddComponent<ModelComponent>(trampolineEntity, trampolineID);
 	AddComponent<TransformComponent>(trampolineEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
 	AddComponent<ShadowReceiverComponent>(trampolineEntity);
+	auto& ni = AddComponent<NetworkId>(trampolineEntity);
+	ni.entityTypeId = EntityTypes::Trampoline;
+	ni.id = trampolineNetworkID++;
+
 	LuaMain::GetScriptManager()->AddScript(trampolineEntity, "Pickupable.lua");
 
 	auto& lerpAnimator = AddComponent<PickupLerpAnimateComponent>(trampolineEntity);
@@ -294,6 +289,7 @@ void TestScene::CreateTrampolinePickup(DirectX::SimpleMath::Vector3 position)
 
 void TestScene::CreateMissilePickup(DirectX::SimpleMath::Vector3 position)
 {
+	static u32 missileNetworkID = 0u;
 	u32 missileID = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/missile.glb");
 
 	entity missileEntity = CreateEntity();
@@ -301,10 +297,14 @@ void TestScene::CreateMissilePickup(DirectX::SimpleMath::Vector3 position)
 	bc.type = BarrelComponent::Type::Missile;
 	bc.maximumAmmoCapacityForType = 5;
 	bc.ammoPerPickup = 1;
-	AddComponent<PickupComponent>(missileEntity);
+	AddComponent<PickupComponent>(missileEntity).itemName = "Homing missile";
 	AddComponent<ModelComponent>(missileEntity, missileID);
 	AddComponent<TransformComponent>(missileEntity, position).SetScale({ 0.8f, 0.8f, 0.8f });
 	AddComponent<ShadowReceiverComponent>(missileEntity);
+	auto& ni = AddComponent<NetworkId>(missileEntity);
+	ni.entityTypeId = EntityTypes::MissileBarrel;
+	ni.id = missileNetworkID++;
+
 	LuaMain::GetScriptManager()->AddScript(missileEntity, "Pickupable.lua");
 
 	auto& lerpAnimator = AddComponent<PickupLerpAnimateComponent>(missileEntity);
@@ -315,6 +315,8 @@ void TestScene::CreateMissilePickup(DirectX::SimpleMath::Vector3 position)
 
 void TestScene::CreateGrenadePickup(DirectX::SimpleMath::Vector3 position)
 {
+	static u32 grenadeNetworkID = 0u;
+
 	u32 grenadeID = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/Grenade/Grenade.glb");
 
 	entity grenadeEntity = CreateEntity();
@@ -322,10 +324,14 @@ void TestScene::CreateGrenadePickup(DirectX::SimpleMath::Vector3 position)
 	bc.type = BarrelComponent::Type::Grenade;
 	bc.maximumAmmoCapacityForType = 10;
 	bc.ammoPerPickup = 2;
-	AddComponent<PickupComponent>(grenadeEntity);
+	AddComponent<PickupComponent>(grenadeEntity).itemName = "Grenade";
 	AddComponent<ModelComponent>(grenadeEntity, grenadeID);
 	AddComponent<TransformComponent>(grenadeEntity, position).SetScale({ 0.5f, 0.5f, 0.5f });
 	AddComponent<ShadowReceiverComponent>(grenadeEntity);
+	auto& ni = AddComponent<NetworkId>(grenadeEntity);
+	ni.entityTypeId = EntityTypes::GrenadeBarrel;
+	ni.id = grenadeNetworkID++;
+
 	LuaMain::GetScriptManager()->AddScript(grenadeEntity, "Pickupable.lua");
 
 	auto& lerpAnimator = AddComponent<PickupLerpAnimateComponent>(grenadeEntity);
@@ -336,14 +342,20 @@ void TestScene::CreateGrenadePickup(DirectX::SimpleMath::Vector3 position)
 
 void TestScene::CreateMaxHealthBoostPickup(DirectX::SimpleMath::Vector3 position)
 {
+	static u32 healtBoostNetworkdID = 0u;
+
 	u32 healthBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Medkit.glb");
 
 	entity healthBoostEntity = CreateEntity();
 	AddComponent<PassiveItemComponent>(healthBoostEntity).type = PassiveItemComponent::Type::MaxHealthBoost;
-	AddComponent<PickupComponent>(healthBoostEntity);
+	AddComponent<PickupComponent>(healthBoostEntity).itemName = "Max HP boost";
 	AddComponent<ModelComponent>(healthBoostEntity, healthBoostID);
 	AddComponent<TransformComponent>(healthBoostEntity, position).SetScale({ 0.5f, 0.5f, 0.5f });
 	AddComponent<ShadowReceiverComponent>(healthBoostEntity);
+	auto& ni = AddComponent<NetworkId>(healthBoostEntity);
+	ni.entityTypeId = EntityTypes::IncreaseMaxHp;
+	ni.id = healtBoostNetworkdID++;
+
 	LuaMain::GetScriptManager()->AddScript(healthBoostEntity, "Pickupable.lua");
 
 	auto& lerpAnimator = AddComponent<PickupLerpAnimateComponent>(healthBoostEntity);
@@ -354,14 +366,20 @@ void TestScene::CreateMaxHealthBoostPickup(DirectX::SimpleMath::Vector3 position
 
 void TestScene::CreateFrostModificationPickup(DirectX::SimpleMath::Vector3 position)
 {
+	static u32 frostModNetworkID = 0u;
+
 	u32 frostModID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
 
 	entity frostModEntity = CreateEntity();
 	AddComponent<MagazineModificationComponent>(frostModEntity).type = MagazineModificationComponent::Type::Frost;
-	AddComponent<PickupComponent>(frostModEntity);
+	AddComponent<PickupComponent>(frostModEntity).itemName = "Frost modification";
 	AddComponent<ModelComponent>(frostModEntity, frostModID);
 	AddComponent<TransformComponent>(frostModEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
 	AddComponent<ShadowReceiverComponent>(frostModEntity);
+	auto& ni = AddComponent<NetworkId>(frostModEntity);
+	ni.entityTypeId = EntityTypes::FrostMagazineModification;
+	ni.id = frostModNetworkID++;
+
 	LuaMain::GetScriptManager()->AddScript(frostModEntity, "Pickupable.lua");
 
 	auto& lerpAnimator = AddComponent<PickupLerpAnimateComponent>(frostModEntity);

@@ -51,6 +51,13 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		em.AddComponent<InputController>(playerI);
 		em.AddComponent<ShadowReceiverComponent>(playerI);
 		em.AddComponent<PlayerAliveComponent>(playerI);
+		auto& bc = em.AddComponent<BarrelComponent>(playerI);
+		bc.type = BarrelComponent::Type::Bullet;
+		bc.maximumAmmoCapacityForType = 999'999;
+		bc.ammoPerPickup = 30;
+		bc.currentAmmoCount = 30;
+		em.AddComponent<MagazineModificationComponent>(playerI).type = MagazineModificationComponent::Type::None;
+
 		scriptManager->AddScript(playerI, "Gun.lua");
 		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
 		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");

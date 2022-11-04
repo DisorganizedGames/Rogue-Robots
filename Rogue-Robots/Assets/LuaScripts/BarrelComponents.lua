@@ -112,6 +112,14 @@ function BarrelComponents:Grenade()
 			return 10
 		end,
 
+		GetAmmoPerPickup = function(self)
+			return 2
+		end,
+
+		GetECSType = function(self)
+			return 1
+		end,
+
 		GetReloadTime = function(self)
 			return 1.9
 		end,
@@ -143,6 +151,14 @@ function BarrelComponents:Missile()
 
 		GetMaxAmmo = function(self)
 			return 3
+		end,
+
+		GetAmmoPerPickup = function(self)
+			return 1
+		end,
+
+		GetECSType = function(self)
+			return 2
 		end,
 
 		GetReloadTime = function(self)

@@ -61,7 +61,6 @@ private:
 	void CameraUpdate();
 	std::vector<DOG::entity> SpawnAgents(const EntityTypes type, const DirectX::SimpleMath::Vector3& pos, u8 agentCount, f32 spread = 10.f);
 	void ToggleFlashlight();
-	void PickUpItem();
 
 	void HandleCheats();
 
@@ -70,10 +69,11 @@ private:
 	void GameLayerDebugMenu(bool& open);
 	void CheatSettingsImGuiMenu();
 	void CheatDebugMenu(bool& open);
+	void Interact();
 private:
 	GameState m_gameState;
 	NetworkStatus m_networkStatus;
-	SceneComponent::Type m_selectedScene = SceneComponent::Type::TunnelRoom2Scene;
+	SceneComponent::Type m_selectedScene = SceneComponent::Type::OldDefaultScene;
 	std::unique_ptr<Scene> m_testScene;
 	std::unique_ptr<Scene> m_mainScene;
 	std::vector<u32> m_shapes;

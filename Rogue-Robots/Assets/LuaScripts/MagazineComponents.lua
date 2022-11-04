@@ -9,7 +9,11 @@ function MagazineComponents:BasicEffect()
 	return
 	{
 		Update = function(self)
-		end
+		end,
+
+		GetECSType = function(self)
+			return 0
+		end,
 	}
 end
 
@@ -28,7 +32,11 @@ function MagazineComponents:FrostEffect()
 		Update = function(self, bullet)
 			Entity:AddComponent(bullet.entity, "FrostEffect", 4.0)
 			Entity:AddComponent(bullet.entity, "SubMeshRender", MaterialPrefabs:GetMaterial("FrostMaterial"))
-		end
+		end,
+
+		GetECSType = function(self)
+			return 1
+		end,
 	}
 end
 

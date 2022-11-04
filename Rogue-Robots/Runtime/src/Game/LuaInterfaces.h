@@ -117,6 +117,8 @@ public:
 
 	void Exists(DOG::LuaContext* context);
 
+	void GetEntityTypeAsString(DOG::LuaContext* context);
+
 	//void AgentHit(DOG::LuaContext* context);
 
 	void UpdateMagazine(DOG::LuaContext* context);
