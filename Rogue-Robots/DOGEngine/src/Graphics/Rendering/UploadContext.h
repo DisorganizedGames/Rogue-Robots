@@ -17,7 +17,7 @@ namespace DOG::gfx
 			Initializes a dedicated thread which consumes WaitForEvents pushed by ExecuteCopies to notify
 			when a part of the staging buffer is free to be cleared.
 		*/
-		UploadContext(RenderDevice* rd, u32 stagingSizePerVersion, u8 maxVersions, QueueType targetQueue = QueueType::Graphics);
+		UploadContext(RenderDevice* rd, u32 stagingSizePerVersion, u8 maxVersions = 1, QueueType targetQueue = QueueType::Graphics);
 
 		// Copies data to local staging and enqueues GPU-GPU (buffer-to-buffer) copy for later execution
 		void PushUpload(Buffer dst, u32 dstOffset, void* data, u32 dataSize);

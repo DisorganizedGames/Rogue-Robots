@@ -95,13 +95,13 @@ namespace DOG::gfx
 			return WinProc(hwnd, uMsg, wParam, lParam);
 		};
 
-		const u32 maxUploadSizeDefault = 40'000'000;
-		const u32 maxUploadSizeTextures = 400'000'000;
+		const u32 maxUploadSizeDefault = 5'000'000;
+		const u32 maxUploadSizeTextures = 70'000'000;		// largest texture is 68mb --> 4096x4096
 
 		m_bin = std::make_unique<GPUGarbageBin>(S_MAX_FIF);
-		m_uploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, S_MAX_FIF);
-		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeTextures, S_MAX_FIF);
-		m_meshUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, S_MAX_FIF);
+		m_uploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault);
+		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeTextures);
+		m_meshUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault);
 
 		// For internal per frame management
 		const u32 maxUploadPerFrame = 512'000;
