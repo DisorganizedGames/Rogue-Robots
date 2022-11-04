@@ -24,6 +24,20 @@ entity Scene::CreateEntity() const noexcept
 	return e;
 }
 
+
+
+void Scene::AddEntity(DOG::entity e) const noexcept
+{
+	assert(!s_entityManager.HasComponent<SceneComponent>(e));
+	s_entityManager.AddComponent<SceneComponent>(e, m_sceneType);
+}
+
+void Scene::AddEntities(const std::vector<DOG::entity>& entities) const noexcept
+{
+	for (auto& e : entities)
+		AddEntity(e);
+}
+
 SceneComponent::Type Scene::GetSceneType() const noexcept
 {
 	return m_sceneType;

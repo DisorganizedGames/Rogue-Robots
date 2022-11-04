@@ -2,6 +2,7 @@
 #include "GameLayer.h"
 #include "MainScene.h"
 #include "TestScene.h"
+#include "OldDefaultScene.h"
 #include "SimpleAnimationSystems.h"
 #include "ExplosionSystems.h"
 #include "HomingMissileSystem.h"
@@ -138,12 +139,12 @@ void GameLayer::StartMainScene()
 
 
 	assert(m_mainScene == nullptr);
-	m_mainScene = std::make_unique<MainScene>();
 	
 	switch (ACTIVE_SCENE)
 	{
 	case Scene::room_0:
 	/************************** tunnel scene *********************************/
+			m_mainScene = std::make_unique<MainScene>();
 			m_mainScene->SetUpScene({
 				[this]() {
 					// room 0: small room - maybe nice entry point?
@@ -179,6 +180,7 @@ void GameLayer::StartMainScene()
 			break;
 	case Scene::room_1:
 		/************************** tunnel scene *********************************/
+		m_mainScene = std::make_unique<MainScene>();
 		m_mainScene->SetUpScene({
 			[this]() {
 				// room 1: a few rooms connected by tunnels
@@ -214,6 +216,7 @@ void GameLayer::StartMainScene()
 		break;
 	case Scene::room_2:
 		/************************** tunnel scene *********************************/
+		m_mainScene = std::make_unique<MainScene>();
 		m_mainScene->SetUpScene({
 			[this]() {
 				// room 2: a larger, more open room
@@ -249,6 +252,7 @@ void GameLayer::StartMainScene()
 		break;
 	case Scene::room_3:
 		/************************** tunnel scene *********************************/
+		m_mainScene = std::make_unique<MainScene>();
 		m_mainScene->SetUpScene({
 			[this]() {
 				// room 3: huge cave system
@@ -285,20 +289,8 @@ void GameLayer::StartMainScene()
 
 	default:
 	/************************** old default scene *********************************/
-		m_mainScene->SetUpScene({
-			[this]() { 
-				std::vector<entity> players = SpawnPlayers(Vector3(25.0f, 15.0f, 25.0f), m_nrOfPlayers, 10.f);
-				std::vector<entity> flashlights = AddFlashlightsToPlayers(players);
-
-				//For now, just combine them, using the player vector:
-				players.insert(players.end(), flashlights.begin(), flashlights.end());
-				return players;
-			},
-			[this]() { return LoadLevel(oldDefault); },
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(20, 20, 50), 10, 3.0f); },
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(30, 20, 50), 10, 3.0f); },
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(40, 20, 50), 10, 3.0f); },
-			});
+		m_mainScene = std::make_unique<OldDefaultScene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+		m_mainScene->SetUpScene();
 		break;
 	}
 

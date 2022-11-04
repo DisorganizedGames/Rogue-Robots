@@ -20,6 +20,9 @@ public:
 		return s_entityManager.AddComponent<ComponentType, Args...>(entityID, std::forward<Args>(args)...);
 	}
 
+	void AddEntity(DOG::entity e) const noexcept;
+	void AddEntities(const std::vector<DOG::entity>& entities) const noexcept;
+
 	SceneComponent::Type GetSceneType() const noexcept;
 protected:
 	SceneComponent::Type m_sceneType;

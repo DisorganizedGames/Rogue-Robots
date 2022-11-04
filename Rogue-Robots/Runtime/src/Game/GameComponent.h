@@ -45,6 +45,7 @@ struct SceneComponent
 		Global = 0,
 		MainScene,
 		TestScene,
+		OldDefaultScene,
 	};
 	SceneComponent(Type scene) : scene(scene) {}
 	Type scene;

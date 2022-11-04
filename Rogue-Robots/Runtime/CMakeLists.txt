@@ -19,7 +19,8 @@ set(SourceFiles
 		"src/Game/GameSystems.h" "src/Game/GameSystems.cpp"
 		"src/Game/Scene.h" "src/Game/Scene.cpp" "src/Game/PcgLevelLoader.h" "src/Game/PcgLevelLoader.cpp"
 		"src/Game/PrefabInstantiatorFunctions.h" "src/Game/PrefabInstantiatorFunctions.cpp"
-)
+		"src/Game/OldDefaultScene.h" "src/Game/OldDefaultScene.cpp"
+		)
 		
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")
