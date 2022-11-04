@@ -96,104 +96,60 @@ class MVPPickupItemInteractionSystem : public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	#define REQUIRED_DISTANCE_DELTA 2.0f
-	#define REQUIRED_DOT_DELTA -0.20f
+	#define REQUIRED_DOT_DELTA -0.80f
 public:
-	SYSTEM_CLASS(DOG::ThisPlayer, DOG::TransformComponent);
-	ON_UPDATE_ID(DOG::ThisPlayer, DOG::TransformComponent);
+	SYSTEM_CLASS(DOG::ThisPlayer, DOG::TransformComponent, PlayerControllerComponent);
+	ON_EARLY_UPDATE_ID(DOG::ThisPlayer, DOG::TransformComponent, PlayerControllerComponent);
 
-	void OnUpdate(DOG::entity player, DOG::ThisPlayer&, DOG::TransformComponent& ptc)
+	void OnEarlyUpdate(DOG::entity player, DOG::ThisPlayer&, DOG::TransformComponent& ptc, PlayerControllerComponent& pcc)
 	{
 		auto& mgr = DOG::EntityManager::Get();
 		auto playerPosition = ptc.GetPosition();
 		DOG::entity closestPickup = DOG::NULL_ENTITY;
 		float closestDistance = FLT_MAX;
-		Vector3 pickUpToPlayerDirection{};
 
-		mgr.Collect<PickupComponent, DOG::TransformComponent>().Do([&](DOG::entity entityID, PickupComponent&, DOG::TransformComponent& tc)
+		mgr.Collect<PickupComponent, DOG::TransformComponent>().Do([&closestDistance, &closestPickup, &playerPosition](DOG::entity pickUp, PickupComponent&, DOG::TransformComponent& tc)
 			{
-				if (closestPickup == DOG::NULL_ENTITY)
-					closestPickup = entityID;
-
-				float distance = Vector3::Distance(playerPosition, tc.GetPosition());
-				if (distance < closestDistance)
+				float distanceToPickup = Vector3::Distance(playerPosition, tc.GetPosition());
+				if (distanceToPickup < closestDistance)
 				{
-					closestDistance = distance; 
-					closestPickup = entityID; 
+					closestDistance = distanceToPickup;
+					if (closestDistance < REQUIRED_DISTANCE_DELTA)
+					{
+						closestPickup = pickUp;
+					}
 				}
 			});
+		//If we are not near enough or no items exist:
 		if (closestPickup == DOG::NULL_ENTITY)
 			return;
 
 		auto& tc = mgr.GetComponent<DOG::TransformComponent>(closestPickup);
-		pickUpToPlayerDirection = playerPosition - tc.GetPosition();
+		auto cameraForward = mgr.GetComponent<DOG::TransformComponent>(pcc.cameraEntity).GetForward();
+
+		Vector3 pickUpToPlayerDirection = playerPosition - tc.GetPosition();
 		pickUpToPlayerDirection.Normalize();
 
-		float dot = ptc.GetForward().Dot(pickUpToPlayerDirection);
+		float dot = cameraForward.Dot(pickUpToPlayerDirection);
 		bool isLookingAtItem = dot < REQUIRED_DOT_DELTA;
-		bool isCloseEnoughToItem = closestDistance < REQUIRED_DISTANCE_DELTA;
-		if (isLookingAtItem && isCloseEnoughToItem)
+
+		if (!isLookingAtItem)
+			return;
+
+		//Checks are done, and this pickup is now considered eligible for being picked up by the player:
+		
+		//Add the component that highlights it as an eligible item, e.g. for rendering the item name text:
+		mgr.AddComponent<EligibleForPickupComponent>(closestPickup).player = player;
+		
+		//Check if the player has performed an interaction query:
+		if (mgr.HasComponent<InteractionQueryComponent>(player))
 		{
-			if (mgr.HasComponent<ActiveItemComponent>(closestPickup))
-			{
-				//Pickup is an active item entity, so:
-				if (mgr.HasComponent<EligibleActiveItemComponent>(player))
-				{
-					mgr.RemoveComponent<EligibleActiveItemComponent>(player);
-				}
-				auto& eaic = mgr.AddComponent<EligibleActiveItemComponent>(player);
-				eaic.activeItemEntity = closestPickup;
-				eaic.type = mgr.GetComponent<ActiveItemComponent>(closestPickup).type;
-			}
-			else if (mgr.HasComponent<BarrelComponent>(closestPickup))
-			{
-				//Pickup is a barrelcomponent entity, so:
-				if (mgr.HasComponent<EligibleBarrelComponent>(player))
-				{
-					mgr.RemoveComponent<EligibleBarrelComponent>(player);
-				}
-				auto& egnc = mgr.AddComponent<EligibleBarrelComponent>(player);
-				egnc.barrelComponentEntity = closestPickup;
-				egnc.type = mgr.GetComponent<BarrelComponent>(closestPickup).type;
-			}
-			else if (mgr.HasComponent<PassiveItemComponent>(closestPickup))
-			{
-				if (mgr.HasComponent<EligiblePassiveItemComponent>(player))
-				{
-					mgr.RemoveComponent<EligiblePassiveItemComponent>(player);
-				}
-				auto& ebic = mgr.AddComponent<EligiblePassiveItemComponent>(player);
-				ebic.passiveItemEntity = closestPickup;
-				ebic.type = mgr.GetComponent<PassiveItemComponent>(closestPickup).type;
-			}
-			else if (mgr.HasComponent<MagazineModificationComponent>(closestPickup))
-			{
-				if (mgr.HasComponent<EligibleMagazineModificationComponent>(player))
-				{
-					mgr.RemoveComponent<EligibleMagazineModificationComponent>(player);
-				}
-				auto& emmc = mgr.AddComponent<EligibleMagazineModificationComponent>(player);
-				emmc.magazineModificationEntity = closestPickup;
-				emmc.type = mgr.GetComponent<MagazineModificationComponent>(closestPickup).type;
-			}
-		}
-		else
-		{
-			if (mgr.HasComponent<EligibleActiveItemComponent>(player))
-			{
-				mgr.RemoveComponent<EligibleActiveItemComponent>(player);
-			}
-			if (mgr.HasComponent<EligibleBarrelComponent>(player))
-			{
-				mgr.RemoveComponent<EligibleBarrelComponent>(player);
-			}
-			if (mgr.HasComponent<EligiblePassiveItemComponent>(player))
-			{
-				mgr.RemoveComponent<EligiblePassiveItemComponent>(player);
-			}
-			if (mgr.HasComponent<EligibleMagazineModificationComponent>(player))
-			{
-				mgr.RemoveComponent<EligibleMagazineModificationComponent>(player);
-			}
+			//If so we now need to remove the interaction query and have the item lerp to the player:
+			mgr.RemoveComponent<InteractionQueryComponent>(player);
+			mgr.AddComponent<LerpToPlayerComponent>(closestPickup).player = player;
+			auto& plac = mgr.GetComponent<DOG::PickupLerpAnimateComponent>(closestPickup);
+			plac.origin = tc.GetPosition();
+			plac.target =  playerPosition;
 		}
 	}
 };
@@ -201,66 +157,13 @@ public:
 class MVPRenderPickupItemUIText : public DOG::ISystem
 {
 public:
-	SYSTEM_CLASS(DOG::ThisPlayer);
-	ON_UPDATE_ID(DOG::ThisPlayer);
+	SYSTEM_CLASS(PickupComponent, EligibleForPickupComponent);
+	ON_UPDATE(PickupComponent, EligibleForPickupComponent);
 
-	void OnUpdate(DOG::entity playerID, DOG::ThisPlayer&)
+	void OnUpdate(PickupComponent& pc, EligibleForPickupComponent& efpg)
 	{
-		std::string itemText;
-		if (DOG::EntityManager::Get().HasComponent<EligibleActiveItemComponent>(playerID))
-		{
-			auto type = DOG::EntityManager::Get().GetComponent<EligibleActiveItemComponent>(playerID).type;
-			switch (type)
-			{
-			case ActiveItemComponent::Type::Trampoline:
-			{
-				itemText = "Trampoline";
-				break;
-			}
-			}
-		}
-		else if (DOG::EntityManager::Get().HasComponent<EligibleBarrelComponent>(playerID))
-		{
-			auto type = DOG::EntityManager::Get().GetComponent<EligibleBarrelComponent>(playerID).type;
-			switch (type)
-			{
-			case BarrelComponent::Type::Missile:
-			{
-				itemText = "Homing missile";
-				break;
-			}
-			case BarrelComponent::Type::Grenade:
-			{
-				itemText = "Grenade";
-				break;
-			}
-			}
-		}
-		else if (DOG::EntityManager::Get().HasComponent<EligiblePassiveItemComponent>(playerID))
-		{
-			auto type = DOG::EntityManager::Get().GetComponent<EligiblePassiveItemComponent>(playerID).type;
-			switch (type)
-			{
-			case PassiveItemComponent::Type::MaxHealthBoost:
-			{
-				itemText = "Max HP Boost";
-				break;
-			}
-			}
-		}
-		else if (DOG::EntityManager::Get().HasComponent<EligibleMagazineModificationComponent>(playerID))
-		{
-			auto type = DOG::EntityManager::Get().GetComponent<EligibleMagazineModificationComponent>(playerID).type;
-			switch (type)
-			{
-			case MagazineModificationComponent::Type::Frost :
-			{
-				itemText = "Frost modification";
-				break;
-			}
-			}
-		}
-		if (itemText.empty())
+		//Do not render other players' eligible pickup item names.
+		if (efpg.player != DOG::GetPlayer())
 			return;
 
 		ImVec2 size;
@@ -289,7 +192,7 @@ public:
 			ImGui::Text("Pick up");
 			ImGui::Separator();
 			ImGui::SetWindowFontScale(1.7f);
-			ImGui::Text(itemText.c_str());
+			ImGui::Text(pc.itemName);
 			ImGui::PopStyleColor(1);
 			ImGui::PopFont();
 		}
@@ -298,9 +201,36 @@ public:
 	}
 };
 
+class CleanupItemInteractionSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(EligibleForPickupComponent);
+	ON_LATE_UPDATE_ID(EligibleForPickupComponent);
+
+	void OnLateUpdate(DOG::entity pickup, EligibleForPickupComponent&)
+	{
+		//For now, we simply remove any such item components:
+		DOG::EntityManager::Get().RemoveComponent<EligibleForPickupComponent>(pickup);
+	}
+};
+
+class CleanupPlayerStateSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DOG::ThisPlayer);
+	ON_LATE_UPDATE_ID(DOG::ThisPlayer);
+
+	void OnLateUpdate(DOG::entity player, DOG::ThisPlayer&)
+	{
+		//System for checking various player states, removing them, etc...
+		if (DOG::EntityManager::Get().HasComponent<InteractionQueryComponent>(player))
+			DOG::EntityManager::Get().RemoveComponent<InteractionQueryComponent>(player);
+	}
+};
+
 class MVPRenderAmmunitionTextSystem : public DOG::ISystem
 {
-#define INFINITY_EQUIVALENT 999999
+#define INFINITY_EQUIVALENT 999'999
 public:
 	SYSTEM_CLASS(DOG::ThisPlayer, BarrelComponent);
 	ON_UPDATE_ID(DOG::ThisPlayer, BarrelComponent);
@@ -466,7 +396,7 @@ public:
 		if (bc.type != BarrelComponent::Type::Bullet)
 			return;
 
-		if (bc.currentAmmoCount != 0)
+		if (!(bc.currentAmmoCount <= 3))
 			return;
 
 		ImVec2 size;
