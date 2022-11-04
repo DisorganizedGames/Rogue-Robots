@@ -43,7 +43,6 @@ struct SceneComponent
 	enum class Type
 	{
 		Global = 0,
-		MainScene,
 		TestScene,
 		OldDefaultScene,
 		TunnelRoom0Scene,

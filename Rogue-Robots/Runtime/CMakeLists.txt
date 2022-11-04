@@ -8,7 +8,7 @@ set(SourceFiles
 		"src/Pathfinder/Pathfinder.h" "src/Pathfinder/Pathfinder.cpp"
 		"src/Game/LuaInterfaces.h" "src/Game/LuaInterfaces.cpp"
 		"src/Game/EntitesTypes.h"
-		"src/Game/TestScene.h" "src/Game/TestScene.cpp" "src/Game/MainScene.h" "src/Game/MainScene.cpp"
+		"src/Game/TestScene.h" "src/Game/TestScene.cpp"  
 		"src/Network/Server.h" "src/Network/Server.cpp" "src/Network/Client.h" "src/Network/Client.cpp"
 		 
 		"src/Game/AgentManager/AgentComponents.h"

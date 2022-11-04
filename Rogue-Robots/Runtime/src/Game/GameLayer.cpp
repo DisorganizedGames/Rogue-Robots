@@ -1,6 +1,5 @@
 #include <DOGEngine.h>
 #include "GameLayer.h"
-#include "MainScene.h"
 #include "TestScene.h"
 #include "OldDefaultScene.h"
 #include "TunnelScenes.h"
@@ -134,11 +133,6 @@ void GameLayer::OnUpdate()
 
 void GameLayer::StartMainScene()
 {
-	/************************** SET SCENE *********************************/
-	enum class Scene { old_default, room_0, room_1, room_2, room_3	};
-	constexpr Scene ACTIVE_SCENE = Scene::room_2;
-	/***************************** END ************************************/
-
 	assert(m_mainScene == nullptr);
 	
 	switch (m_selectedScene)
