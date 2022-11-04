@@ -36,6 +36,21 @@ struct PlayerAliveComponent
 {
 };
 
+
+
+struct SceneComponent
+{
+	enum class Type
+	{
+		Global = 0,
+		MainScene,
+		TestScene,
+	};
+	SceneComponent(Type scene) : scene(scene) {}
+	Type scene;
+};
+
+
 struct BulletComponent
 {
 	DOG::entity playerEntityID;

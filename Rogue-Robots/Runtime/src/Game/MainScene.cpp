@@ -5,7 +5,7 @@ using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
 
-MainScene::MainScene() : Scene(SceneType::MainScene)
+MainScene::MainScene() : Scene(SceneComponent::Type::MainScene)
 {
 
 }

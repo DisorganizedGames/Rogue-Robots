@@ -17,6 +17,7 @@ set(SourceFiles
 		 "src/Game/ExplosionSystems.h" "src/Game/ExplosionSystems.cpp" "src/Network/Network.h"
 		"src/Game/HomingMissileSystem.h" "src/Game/HomingMissileSystem.cpp"
 		"src/Game/GameSystems.h" "src/Game/GameSystems.cpp"
+		"src/Game/Scene.h" "src/Game/Scene.cpp"
 )
 		
 set(ExecutableName "Runtime")

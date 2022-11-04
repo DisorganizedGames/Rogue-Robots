@@ -5,6 +5,7 @@
 #include "AgentManager/AgentManager.h"
 #include "GameComponent.h"
 #include "GameSystems.h"
+#include "Scene.h"
 
 
 enum class GameState
@@ -61,8 +62,8 @@ private:
 	void CheatDebugMenu(bool& open);
 private:
 	GameState m_gameState;
-	std::unique_ptr<DOG::Scene> m_testScene;
-	std::unique_ptr<DOG::Scene> m_mainScene;
+	std::unique_ptr<Scene> m_testScene;
+	std::unique_ptr<Scene> m_mainScene;
 	std::vector<u32> m_shapes;
 	DOG::EntityManager& m_entityManager;
 	std::vector<std::shared_ptr<LuaInterface>> m_luaInterfaces;

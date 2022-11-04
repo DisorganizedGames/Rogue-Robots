@@ -36,7 +36,7 @@ set(SourceFiles "EntryPoint.h" "DOGEngine.h" "src/pch.h" "src/Core/Application.h
     "src/Core/LightManager.h" "src/Core/LightManager.cpp" "src/common/MiniProfiler.h" "src/common/MiniProfiler.cpp"
     "src/Graphics/Rendering/RenderEffects/Bloom.h" "src/Graphics/Rendering/RenderEffects/Bloom.cpp"
     "src/Core/CustomMaterialManager.h" "src/Core/CustomMaterialManager.cpp" "src/Core/CustomMeshManager.h" "src/Core/CustomMeshManager.cpp"
-    "src/Core/Scene.h" "src/Core/Scene.cpp" "src/Graphics/RHI/Types/GPUInfo.h"
+    "src/Graphics/RHI/Types/GPUInfo.h"
      "src/Graphics/Rendering/FrontRenderer.h" "src/Graphics/Rendering/FrontRenderer.cpp"
     "src/ECS/QueryHelpers.h" "src/ECS/QueryHelpers.cpp"
     )
