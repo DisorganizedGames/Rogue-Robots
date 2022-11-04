@@ -297,6 +297,25 @@ void EntityInterface::Exists(DOG::LuaContext* context)
 	context->ReturnBoolean(EntityManager::Get().Exists(e));
 }
 
+void EntityInterface::GetEntityTypeAsString(DOG::LuaContext* context)
+{
+	EntityTypes type = (EntityTypes)context->GetInteger();
+	switch (type)
+	{
+	case EntityTypes::Trampoline:
+		context->ReturnString("Trampoline");
+			break;
+	case EntityTypes::FrostMagazineModification:
+		context->ReturnString("FrostMagazineModification");
+		break;
+	case EntityTypes::GrenadeBarrel :
+		context->ReturnString("GrenadeBarrel");
+		break;
+	case EntityTypes::MissileBarrel:
+		context->ReturnString("MissileBarrel");
+		break;
+	}
+}
 
 //void EntityInterface::AgentHit(DOG::LuaContext* context)
 //{
@@ -379,13 +398,14 @@ const std::unordered_map<ActiveItemComponent::Type, std::string> activeTypeMap =
 };
 
 const std::unordered_map<BarrelComponent::Type, std::string> barrelTypeMap = {
-	{ BarrelComponent::Type::Bullet, "Bullet"},
-	{ BarrelComponent::Type::Missile, "Missile" },
-	{ BarrelComponent::Type::Grenade, "Grenade" },
+	{ BarrelComponent::Type::Bullet, "BulletBarrel"},
+	{ BarrelComponent::Type::Missile, "MissileBarrel" },
+	{ BarrelComponent::Type::Grenade, "GrenadeBarrel" },
 };
 
 const std::unordered_map<MagazineModificationComponent::Type, std::string> modificationTypeMap = {
-	{ MagazineModificationComponent::Type::Frost, "Frost"},
+	{ MagazineModificationComponent::Type::None, "None" },
+	{ MagazineModificationComponent::Type::Frost, "FrostMagazineModification"},
 };
 
 void EntityInterface::GetPassiveType(LuaContext* context)

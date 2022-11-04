@@ -18,5 +18,21 @@ enum class EntityTypes
 	PassiveItemsBegin,
 	IncreaseMaxHp = PassiveItemsBegin,
 	PassiveItems,
+
+	//ActiveItem
+	ActiveItemsBegin,
+	Trampoline = ActiveItemsBegin,
+
+	//Barrel
+	BarrelItemsBegin,
+	BulletBarrel = BarrelItemsBegin,
+	GrenadeBarrel,
+	MissileBarrel,
+
+	//MagazineModification
+	MagazineModificationItemsBegin,
+	DefaultMagazineModification = MagazineModificationItemsBegin,
+	FrostMagazineModification,
+
 	Default,
 };

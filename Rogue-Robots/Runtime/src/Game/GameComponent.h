@@ -36,8 +36,6 @@ struct PlayerAliveComponent
 {
 };
 
-
-
 struct SceneComponent
 {
 	enum class Type
@@ -117,12 +115,6 @@ struct PassiveItemComponent {
 	Type type;
 };
 
-struct EligiblePassiveItemComponent
-{
-	DOG::entity passiveItemEntity;
-	PassiveItemComponent::Type type;
-};
-
 //The active item that currently resides in inventory
 struct ActiveItemComponent
 {
@@ -134,19 +126,16 @@ struct ActiveItemComponent
 //ID component for ALL pick ups
 struct PickupComponent
 {
+	const char* itemName;
+
+	enum class Type{ ActiveItem = 0, PassiveItem, BarrelItem, MagazineModificationItem };
+
+	Type type;
 };
 
-//Active Item eligible for pickup (it fulfills all requirements for pickup)
-struct EligibleActiveItemComponent
+struct EligibleForPickupComponent
 {
-	DOG::entity activeItemEntity;
-	ActiveItemComponent::Type type;
-};
-
-//An item that has been just clicked for being picked up will have this component!
-struct PickedUpItemComponent
-{
-	DOG::entity itemEntity{DOG::NULL_ENTITY};
+	DOG::entity player;
 };
 
 struct BarrelComponent
@@ -159,23 +148,16 @@ struct BarrelComponent
 	u32 currentAmmoCount;
 };
 
-struct EligibleBarrelComponent
-{
-	DOG::entity barrelComponentEntity;
-	BarrelComponent::Type type;
-};
-
 struct MagazineModificationComponent
 {
-	enum class Type { Frost = 0 };
+	enum class Type { None = 0, Frost = 1 };
 
 	Type type;
 };
 
-struct EligibleMagazineModificationComponent
+struct LerpToPlayerComponent
 {
-	DOG::entity magazineModificationEntity;
-	MagazineModificationComponent::Type type;
+	DOG::entity player;
 };
 
 struct CreateAndDestroyEntityComponent
@@ -214,4 +196,9 @@ struct ExplosionEffectComponent
 	float radius;
 	float growTime = -1.0f; 
 	float shrinkTime = -1.0f;
+};
+
+struct InteractionQueryComponent
+{
+	//ID
 };

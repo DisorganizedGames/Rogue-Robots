@@ -40,6 +40,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<PickUpTranslateToPlayerSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderAmmunitionTextSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderReloadHintTextSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<CleanupItemInteractionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
 	m_networkStatus = NetworkStatus::Offline;
@@ -74,6 +75,8 @@ void GameLayer::OnAttach()
 
 	//m_testScene = std::make_unique<TestScene>();
 	//m_testScene->SetUpScene();
+	m_testScene = std::make_unique<TestScene>();
+	m_testScene->SetUpScene();
 }
 
 void GameLayer::OnDetach()
@@ -247,7 +250,7 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 	auto& bc = m_entityManager.AddComponent<BarrelComponent>(e);
 	bc.type = BarrelComponent::Type::Bullet;
 	bc.currentAmmoCount = 30;
-	bc.maximumAmmoCapacityForType = 999999; // Representing infinity...?? (Emil F)
+	bc.maximumAmmoCapacityForType = 999'999; // Representing infinity...?? (Emil F)
 
 	m_entityManager.AddComponent<PlayerAliveComponent>(e);
 	LuaMain::GetScriptManager()->AddScript(e, "Gun.lua");
@@ -275,7 +278,6 @@ void GameLayer::KillPlayer(DOG::entity e)
 	LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
 	LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
 	std::string luaEventName = std::string("ItemPickup") + std::to_string(e);
-	LuaMain::GetEventSystem()->RemoveEvent(luaEventName);
 	m_entityManager.RemoveComponent<ScriptComponent>(e);
 	m_entityManager.RemoveComponent<BarrelComponent>(e);
 	if (m_entityManager.HasComponent<MagazineModificationComponent>(e)) m_entityManager.RemoveComponent<MagazineModificationComponent>(e);
@@ -343,71 +345,6 @@ void GameLayer::ToggleFlashlight()
 		});
 }
 
-void GameLayer::PickUpItem()
-{
-	m_entityManager.Collect<EligibleActiveItemComponent>().Do([this](DOG::entity player, EligibleActiveItemComponent& eligiblePickUp)
-		{
-			if (m_entityManager.HasComponent<ActiveItemComponent>(player))
-			{
-				m_entityManager.RemoveComponent<ActiveItemComponent>(player);
-			}
-			m_entityManager.AddComponent<ActiveItemComponent>(player).type = eligiblePickUp.type;
-
-			m_entityManager.RemoveComponent<EligibleActiveItemComponent>(player);
-
-			if (!m_entityManager.HasComponent<PickedUpItemComponent>(eligiblePickUp.activeItemEntity))
-			{
-				m_entityManager.AddComponent<PickedUpItemComponent>(eligiblePickUp.activeItemEntity);
-				auto& ac = m_entityManager.GetComponent<DOG::PickupLerpAnimateComponent>(eligiblePickUp.activeItemEntity);
-				ac.origin = m_entityManager.GetComponent<DOG::TransformComponent>(eligiblePickUp.activeItemEntity).GetPosition();
-				ac.target = m_entityManager.GetComponent<DOG::TransformComponent>(player).GetPosition();
-				ac.target.y -= 1.0f;
-			}
-		});
-
-	m_entityManager.Collect<EligibleBarrelComponent>().Do([this](DOG::entity player, EligibleBarrelComponent& eligiblePickUp)
-		{
-			m_entityManager.RemoveComponent<EligibleBarrelComponent>(player);
-
-			if (!m_entityManager.HasComponent<PickedUpItemComponent>(eligiblePickUp.barrelComponentEntity))
-			{
-				m_entityManager.AddComponent<PickedUpItemComponent>(eligiblePickUp.barrelComponentEntity);
-				auto& ac = m_entityManager.GetComponent<DOG::PickupLerpAnimateComponent>(eligiblePickUp.barrelComponentEntity);
-				ac.origin = m_entityManager.GetComponent<DOG::TransformComponent>(eligiblePickUp.barrelComponentEntity).GetPosition();
-				ac.target = m_entityManager.GetComponent<DOG::TransformComponent>(player).GetPosition();
-				ac.target.y -= 1.0f;
-			}
-		});
-
-	m_entityManager.Collect<EligiblePassiveItemComponent>().Do([this](DOG::entity player, EligiblePassiveItemComponent& eligiblePickUp)
-		{
-			m_entityManager.RemoveComponent<EligiblePassiveItemComponent>(player);
-
-			if (!m_entityManager.HasComponent<PickedUpItemComponent>(eligiblePickUp.passiveItemEntity))
-			{
-				m_entityManager.AddComponent<PickedUpItemComponent>(eligiblePickUp.passiveItemEntity);
-				auto& ac = m_entityManager.GetComponent<DOG::PickupLerpAnimateComponent>(eligiblePickUp.passiveItemEntity);
-				ac.origin = m_entityManager.GetComponent<DOG::TransformComponent>(eligiblePickUp.passiveItemEntity).GetPosition();
-				ac.target = m_entityManager.GetComponent<DOG::TransformComponent>(player).GetPosition();
-				ac.target.y -= 1.0f;
-			}
-		});
-
-	m_entityManager.Collect<EligibleMagazineModificationComponent>().Do([this](DOG::entity player, EligibleMagazineModificationComponent& eligiblePickUp)
-		{
-			m_entityManager.RemoveComponent<EligibleMagazineModificationComponent>(player);
-
-			if (!m_entityManager.HasComponent<PickedUpItemComponent>(eligiblePickUp.magazineModificationEntity))
-			{
-				m_entityManager.AddComponent<PickedUpItemComponent>(eligiblePickUp.magazineModificationEntity);
-				auto& ac = m_entityManager.GetComponent<DOG::PickupLerpAnimateComponent>(eligiblePickUp.magazineModificationEntity);
-				ac.origin = m_entityManager.GetComponent<DOG::TransformComponent>(eligiblePickUp.magazineModificationEntity).GetPosition();
-				ac.target = m_entityManager.GetComponent<DOG::TransformComponent>(player).GetPosition();
-				ac.target.y -= 1.0f;
-			}
-		});
-}
-
 void GameLayer::OnEvent(DOG::IEvent& event)
 {
 	using namespace DOG;
@@ -433,7 +370,7 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	{
 		if (EVENT(KeyPressedEvent).key == DOG::Key::E)
 		{
-			PickUpItem();
+			Interact();
 		}
 		else
 			Input(EVENT(KeyPressedEvent).key);
@@ -723,7 +660,8 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::UpdateMagazine>("UpdateMagazine");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::IsBulletLocal>("IsBulletLocal");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::Exists>("Exists");
-
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetEntityTypeAsString>("GetEntityTypeAsString");
+	
 
 	global->SetLuaInterface(luaInterface);
 
@@ -1122,4 +1060,11 @@ void GameLayer::CheatDebugMenu(bool&)
 		CheatSettingsImGuiMenu();
 		ImGui::EndMenu(); // "Cheats"
 	}
+}
+
+void GameLayer::Interact()
+{
+	auto player = GetPlayer();
+	if (!m_entityManager.HasComponent<InteractionQueryComponent>(player))
+		m_entityManager.AddComponent<InteractionQueryComponent>(player);
 }
