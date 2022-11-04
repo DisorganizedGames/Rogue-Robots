@@ -286,57 +286,48 @@ function NormalBulletUpdate()
 end
 
 function OnPickup(pickup)
-	if Entity:HasComponent(pickup, "BarrelComponent") then
-		local typeOfPickedUpBarrel = Entity:GetBarrelType(pickup)
-		local ammoCapForType = Entity:GetAmmoCapacityForBarrelType(pickup)
-		local ammoPerPickup = Entity:GetAmmoCountPerPickup(pickup)
 
-		local typeOfEquippedBarrel = Entity:GetBarrelType(EntityID)
+	--In order to adhere to network demands this is how it must behave:
+	--pickup is an EntityType, NOT an ecs-entity.
+	local pickupTypeString = Entity:GetEntityTypeAsString(pickup)
+	local playerID = EntityID
 
-		if typeOfPickedUpBarrel == typeOfEquippedBarrel then
-				if currentAmmoCount + ammoPerPickup > ammoCapForType then
-					currentAmmoCount = ammoCapForType
-				else
-					currentAmmoCount = currentAmmoCount + ammoPerPickup
-				end
-				Entity:UpdateMagazine(EntityID, currentAmmoCount)
-		else
-			--Type must be switched and things must be ''reset'', which we AS OF NOW simply do by replacing the component:
-			Entity:RemoveComponent(EntityID, "BarrelComponent")
-			if typeOfPickedUpBarrel == "Bullet" then --We can't pick it up in the world, but this makes it possible so we could.
-				Entity:AddComponent(EntityID, "BarrelComponent", 0, 999999, ammoCapForType)
-				barrelComponent = BarrelManager.BasicBarrel()
-				hasBasicBarrelEquipped = true
-			elseif typeOfPickedUpBarrel == "Grenade" then
-				Entity:AddComponent(EntityID, "BarrelComponent", 1, ammoPerPickup, ammoCapForType)
-				barrelComponent = BarrelManager.Grenade()
-				hasBasicBarrelEquipped = false
+	if pickupTypeString == "GrenadeBarrel" or pickupTypeString == "MissileBarrel" then
+		--It is a barrel component:
+		local typeOfEquippedBarrel = Entity:GetBarrelType(playerID)
+		if pickupTypeString == typeOfEquippedBarrel then
+			--Player essentially picked up ammo for already equipped barrel:
+			if currentAmmoCount + barrelComponent:GetAmmoPerPickup() > barrelComponent:GetMaxAmmo() then
+				currentAmmoCount = barrelComponent:GetMaxAmmo()
 			else
-				Entity:AddComponent(EntityID, "BarrelComponent", 2, ammoPerPickup, ammoCapForType)
+				currentAmmoCount = currentAmmoCount + barrelComponent:GetAmmoPerPickup()
+			end
+			Entity:UpdateMagazine(playerID, currentAmmoCount)
+		else
+			--Player picked up a new barrel type:
+			if pickupTypeString == "GrenadeBarrel" then
+				barrelComponent = BarrelManager.Grenade()
+			elseif pickupTypeString == "MissileBarrel" then
 				barrelComponent = BarrelManager.Missile()
-				hasBasicBarrelEquipped = false
 			end
-			savedBulletCount = currentAmmoCount
-			currentAmmoCount = ammoPerPickup
-		end
-	elseif Entity:HasComponent(pickup, "MagazineModificationComponent") then
-		local modificationType = Entity:GetModificationType(pickup)
-		local activeModificationType = "None"
-		if Entity:HasComponent(EntityID, "MagazineModificationComponent") then
-			activeModificationType = Entity:GetModificationType(EntityID)
-		end
+			Entity:RemoveComponent(playerID, "BarrelComponent")
+			Entity:AddComponent(playerID, "BarrelComponent", barrelComponent:GetECSType(), barrelComponent:GetAmmoPerPickup(), barrelComponent:GetMaxAmmo())
+			hasBasicBarrelEquipped = false
 
-		if activeModificationType == "None" then -- Add New
-			if (modificationType == "Frost") then
-				Entity:AddComponent(EntityID, "MagazineModificationComponent", 0) -- 0 is frost!
-				magazineComponent = MagazineManager.FrostEffect()
-			end
-		elseif activeModificationType ~= modificationType then -- Let's dirty swap!
-			Entity:RemoveComponent(EntityID, "MagazineModificationComponent")
-			if modificationType == "Frost" then
-				Entity:AddComponent(entityID, "MagazineModificationComponent", 0) -- 0 is frost!
-				magazineComponent = MagazineManager.FrostEffect()
-			end
+			savedBulletCount = currentAmmoCount
+			currentAmmoCount = barrelComponent:GetAmmoPerPickup()
 		end
+	else if pickupTypeString == "FrostMagazineModification" then
+		--Magazine modification component
+		local currentModificationType = Entity:GetModificationType(playerID)
+		if pickupTypeString ~= currentModificationType then
+			--A new magazine modification was picked up:
+			Entity:RemoveComponent(playerID, "MagazineModificationComponent")
+			if pickupTypeString == "FrostMagazineModification" then
+				magazineComponent = MagazineManager.FrostEffect()
+			end
+			Entity:AddComponent(playerID, "MagazineModificationComponent", magazineComponent:GetECSType())
+		end	
 	end
+end
 end
