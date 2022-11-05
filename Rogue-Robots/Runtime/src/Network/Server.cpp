@@ -441,7 +441,7 @@ void Server::GameLoopUdp()
 	ZeroMemory(&clientAddressUdp, sizeof(clientAddressUdp));
 	clientAddressUdp.sin_family = AF_INET;
 
-	inet_pton(AF_INET, (PCSTR)m_multicastAdress, &clientAddressUdp.sin_addr.s_addr);
+	inet_pton(AF_INET, m_multicastAdress, &clientAddressUdp.sin_addr.s_addr);
 	std::cout << WSAGetLastError() << std::endl;
 	clientAddressUdp.sin_port = htons(PORTNUMBER_OUT_INT);
 
@@ -527,7 +527,7 @@ void Server::ReciveLoopUdp()
 		return;
 	}
 
-	inet_pton(AF_INET, (PCSTR)m_multicastAdress, &setMulticast.imr_multiaddr.S_un.S_addr);
+	inet_pton(AF_INET, m_multicastAdress, &setMulticast.imr_multiaddr.S_un.S_addr);
 	setMulticast.imr_interface.S_un.S_addr = htonl(INADDR_ANY);
 	check = setsockopt(udpSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&setMulticast, sizeof(setMulticast));
 	if (check == SOCKET_ERROR)

@@ -90,8 +90,6 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 					{
 						netC.objectId = agentId.id;
 						netC.transform = transC.worldMatrix;
-						if (transC.GetScale().z == INFINITY)
-							std::cout << "Oh no infinity On host" << std::endl;
 						memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkTransform));
 						m_inputTcp.nrOfNetTransform++;
 						m_bufferSize += sizeof(NetworkTransform);

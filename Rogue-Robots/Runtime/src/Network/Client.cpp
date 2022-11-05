@@ -12,8 +12,8 @@ Client::Client()
 	m_sendUdpId = 0;
 	ZeroMemory(&m_hostAddressUdp, sizeof(m_hostAddressUdp));
 	ZeroMemory(&m_reciveAddressUdp, sizeof(m_reciveAddressUdp));
-	const char* adress = "239.255.255.0";
-	memcpy(m_multicastAdress, adress, 16);
+	const char adress[] = "239.255.255.0";
+	memcpy(m_multicastAdress, adress, sizeof(adress));
 }
 
 Client::~Client()
