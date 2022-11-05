@@ -356,7 +356,7 @@ bool NetCode::Join(char* inputString)
 INT8 NetCode::Play()
 {
 	m_inputTcp.lobbyAlive = false;
-	return MAX_PLAYER_COUNT;
+	return GetNrOfPlayers();
 }
 
 u8 NetCode::GetNrOfPlayers()
@@ -373,6 +373,11 @@ std::string NetCode::GetIpAdress()
 bool NetCode::IsLobbyAlive()
 {
 	return m_inputTcp.lobbyAlive;
+}
+
+void NetCode::SetLobbyStatus(bool lobbyStatus)
+{
+	m_inputTcp.lobbyAlive = lobbyStatus;
 }
 
 void NetCode::SetMulticastAdress(const char* adress)

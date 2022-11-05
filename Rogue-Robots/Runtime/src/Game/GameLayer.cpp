@@ -36,7 +36,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_agentManager = new AgentManager();
-	m_nrOfPlayers = MAX_PLAYER_COUNT;
+	m_nrOfPlayers = 1;
 	m_networkStatus = 0;
 
 
@@ -104,11 +104,11 @@ void GameLayer::OnUpdate()
 		break;
 	case GameState::Won:
 		CloseMainScene();
-		m_gameState = GameState::Lobby;
+		m_gameState = GameState::StartPlaying;
 		break;
 	case GameState::Lost:
 		CloseMainScene();
-		m_gameState = GameState::Lobby;
+		m_gameState = GameState::StartPlaying;
 		break;
 	case GameState::Exiting:
 		CloseMainScene();
@@ -365,39 +365,20 @@ void GameLayer::UpdateLobby()
 			}
 			if (ImGui::Button("Play"))
 			{
-				if (m_networkStatus == 1)
-				{
-					m_netCode.Play();
-					inLobby = false;
-				}
-				else
-				{
-					m_nrOfPlayers = m_netCode.Play();
-					inLobby = false;
-				}
-
+				inLobby = false;
 			}
 		}
 		else if (m_networkStatus == 1)
 		{
+			//m_netCode.SetLobbyStatus(true);
 			char ip[64];
 			strcpy_s(ip, m_netCode.GetIpAdress().c_str());
 			ImGui::Text("Nr of players connected: %d", m_netCode.GetNrOfPlayers());
 			ImGui::Text("Youre ip adress: %s", ip);
 			if (ImGui::Button("Play"))
 			{
-				if (m_networkStatus == 1)
-				{
-					m_netCode.Play();
-					inLobby = false;
-				}
-				else
-				{
-
-					m_nrOfPlayers = m_netCode.Play();
-					inLobby = false;
-				}
-
+				m_nrOfPlayers = m_netCode.Play();
+				inLobby = false;
 			}
 		}
 		else if (m_networkStatus == 2)
@@ -489,8 +470,10 @@ void GameLayer::UpdateLobby()
 		}
 		else if (m_networkStatus == 3)
 		{
+			m_nrOfPlayers = m_netCode.GetNrOfPlayers();
 			ImGui::Text("Nr of players connected: %d", m_netCode.GetNrOfPlayers());
 			ImGui::Text("Waiting for Host to press Play...");
+			inLobby = m_netCode.IsLobbyAlive();
 		}
 		else if (m_networkStatus == 4)
 		{
@@ -568,7 +551,7 @@ void GameLayer::UpdateLobby()
 				}
 			}
 		}
-		inLobby = m_netCode.IsLobbyAlive();
+	
 		if (!inLobby)
 			m_gameState = GameState::StartPlaying;
 	}

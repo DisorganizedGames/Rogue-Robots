@@ -30,6 +30,7 @@ public:
 	std::string GetIpAdress();
 	bool IsLobbyAlive();
 	void SetMulticastAdress(const char* adress);
+	void SetLobbyStatus(bool lobbyStatus);
 private:
 	void Receive();
 	void ReceiveUdp();

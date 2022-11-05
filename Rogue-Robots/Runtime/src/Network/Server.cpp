@@ -22,6 +22,7 @@ Server::Server()
 	m_clientsSocketsTcp.clear();
 	const char* adress = "239.255.255.0";
 	memcpy(m_multicastAdress, adress, 16);
+	m_lobbyStatus = true;
 }
 
 Server::~Server()
@@ -239,6 +240,10 @@ void Server::ServerPollTCP()
 							{
 								isItFirstTime = false;
 								memcpy(&holdClientsData, reciveBuffer, sizeof(ClientsData));
+								if (holdClientsData.playerId == 0)
+								{
+									m_lobbyStatus = holdClientsData.lobbyAlive;
+								}
 							}
 
 							//if correct stop
@@ -282,11 +287,6 @@ void Server::ServerPollTCP()
 							bufferSendSize += sizeof(TcpHeader);
 						memcpy(&holdClientsData, reciveBuffer + bufferReciveSize, sizeof(ClientsData));
 						bufferReciveSize += sizeof(ClientsData);
-						//check if lobby is still going
-						if (holdClientsData.playerId == 0)
-						{
-							sendHeader.lobbyAlive = holdClientsData.lobbyAlive;
-						}
 
 						//add transforms Host only
 						sendHeader.nrOfNetTransform += holdClientsData.nrOfNetTransform;
@@ -355,6 +355,7 @@ void Server::ServerPollTCP()
 			}
 			sendHeader.nrOfPlayersConnected = (i8)m_holdPlayerIds.size();
 			sendHeader.sizeOfPayload = bufferSendSize;
+			sendHeader.lobbyAlive = m_lobbyStatus;
 			if (sendHeader.playerId > 1)
 				std::cout << "Server wrong player id" << std::endl;
 			memcpy(sendBuffer, (char*)&sendHeader, sizeof(TcpHeader));
