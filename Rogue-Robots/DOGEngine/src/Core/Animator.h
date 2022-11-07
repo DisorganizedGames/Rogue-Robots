@@ -5,23 +5,43 @@ namespace DOG
 	struct RigSpecifics
 	{
 		u8 nJoints;
-		u8 nNodes;
 		u8 rootJoint;
-		u8 fullbodyGroup;
-		std::pair<u8, u8> groupMasks[2];
+		std::pair<u8, u8> groupMasks[3];
 	};
 
-	
-
-	static constexpr u8 groupA = 0;
-	static constexpr u8 groupB = 1;
+	static constexpr u8 fullBodyGroup = 0;
+	static constexpr u8 groupA = 1;
+	static constexpr u8 groupB = 2;
 
 	static constexpr u8 N_RIGS = 1;
 	static constexpr u8 MIXAMO_RIG_ID = 0;
 	static constexpr u8 SCRPIO_RIG_ID = 1;
 
-	static constexpr RigSpecifics RIG_SPECIFICS[N_RIGS]{ { 65, 67, 4, 2, {std::make_pair<u8, u8>(57, 10), std::make_pair<u8, u8>(5u, 52u) }} };
+	static constexpr RigSpecifics RIG_SPECIFICS[N_RIGS]{ { 65, 4, {std::make_pair<u8, u8>(0, 67), std::make_pair<u8, u8>(57, 10), std::make_pair<u8, u8>(5, 52) }} };
 	static constexpr RigSpecifics MIXAMO_RIG = RIG_SPECIFICS[MIXAMO_RIG_ID];
+
+	// true if idx within group joint span
+	static constexpr bool InGroup(const u8 group, const u8 rigID, const u8 jointIdx) {
+		return jointIdx >= RIG_SPECIFICS[rigID].groupMasks[group].first &&
+			jointIdx < RIG_SPECIFICS[rigID].groupMasks[group].first + RIG_SPECIFICS[rigID].groupMasks[group].second;
+	}
+	// return group index of join
+	static constexpr u8 GetGroup(const u8 rigID, const u8 idx) {
+		return groupA * InGroup(rigID, idx, groupA) + groupB * InGroup(rigID, idx, groupA);
+	};
+	// return startJoint and number of joints that group influences
+	static constexpr std::pair<u8, u8> GetNodeStartAndCount(const u8 rigID, const u8 group) {
+		return RIG_SPECIFICS[rigID].groupMasks[group];
+	};
+	// return startJoint and number of joints that group influences
+	static constexpr u8 NodeCount(const u8 rigID) {
+		return RIG_SPECIFICS[rigID].groupMasks[fullBodyGroup].second;
+	};
+	// start and stop index of group
+	static constexpr std::pair<u8, u8> GetNodeSpan(const u8 rigID, const u8 group) {
+		return std::pair<u8, u8>{RIG_SPECIFICS[rigID].groupMasks[group].first,
+				static_cast<u8>(RIG_SPECIFICS[rigID].groupMasks[group].first + RIG_SPECIFICS[rigID].groupMasks[group].second)};
+	};
 	//static constexpr RigSpecifics SCRPIO_RIG = RIG_SPECIFICS[SCRPIO_RIG_ID];
 
 	struct Animator
