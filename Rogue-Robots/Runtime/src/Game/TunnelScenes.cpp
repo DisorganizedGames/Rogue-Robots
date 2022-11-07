@@ -87,7 +87,7 @@ void TunnelRoom2Scene::SetUpScene(std::vector<std::function<std::vector<DOG::ent
 	for (auto& func : entityCreators)
 		AddEntities(func());
 
-
+	
 	// room 2: a larger, more open room
 	std::vector<entity> players = SpawnPlayers(Vector3(106.0f, 80.0f, 31.0f), m_nrOfPlayers, 5.0f);	// location 1
 	AddEntities(players);
@@ -99,6 +99,16 @@ void TunnelRoom2Scene::SetUpScene(std::vector<std::function<std::vector<DOG::ent
 	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(104.f, 80.f, 65.f), 5, 4.f));	// location 3
 	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(124.f, 80.f, 65.f), 4, 1.5f));	// location 4
 	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(124.f, 80.f, 24.f), 2, 1.f));	// location 5
+	m_test.CreateGrenadePickup(Vector3(116.0f, 76.0f, 31.0f));
+	m_test.CreateFrostModificationPickup(Vector3(126.0f, 76.0f, 31.0f));
+	m_test.CreateMissilePickup(Vector3(136.0f, 76.0f, 31.0f));
+	m_test.CreateTrampolinePickup(Vector3(146.0f, 76.0f, 31.0f));
+
+	m_test.CreateGrenadePickup(Vector3(120.0f, 76.0f, 41.0f));
+	m_test.CreateFrostModificationPickup(Vector3(120.0f, 76.0f, 35.0f));
+	m_test.CreateMissilePickup(Vector3(120.0f, 76.0f, 51.0f));
+	m_test.CreateTrampolinePickup(Vector3(120.0f, 76.0f, 46.0f));
+
 }
 
 
