@@ -343,6 +343,8 @@ namespace DOG::gfx
 	{
 		DOG::UI::Destroy();	
 		Flush();
+		m_rg->Clear();
+		m_bin->ForceClear();
 		m_sc->SetFullscreenState(false, {}); // safeguard to prevent crash if game has not exited fullscreen before exit
 	}
 
