@@ -148,6 +148,9 @@ void AudioDevice::AudioThreadRoutine()
 
 			std::scoped_lock<std::mutex> lock(source->m_loopMutex);
 
+			if (!source || !source->m_source) 
+				continue;
+
 			if (source->m_async)
 				source->QueueNextAsync();
 			else
@@ -188,6 +191,7 @@ u64 AudioDevice::GetFreeVoice(const WAVEFORMATEX& m_wfx)
 	// Find unused voice
 	for (int i = 0; i < m_sources.size(); ++i)
 	{
+		std::cout << "Finding unused voice\n";
 		if (m_sources[i]->HasFinished())
 		{
 			m_sources[i].reset();
