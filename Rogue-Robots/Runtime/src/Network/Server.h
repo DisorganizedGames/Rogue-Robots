@@ -40,5 +40,5 @@
 		std::mutex m_mut;
 		PlayerNetworkComponentUdp m_holdPlayersUdp[MAX_PLAYER_COUNT];
 		char m_multicastAdress[16];
-
+		bool m_lobbyStatus;
 	};

@@ -21,6 +21,16 @@ enum class GameState
 	Restart,
 };
 
+enum class NetworkStatus
+{
+	Offline = 0,
+	HostLobby,
+	Hosting,
+	JoinLobby,
+	Joining
+
+};
+
 class GameLayer : public DOG::Layer
 {
 public:
@@ -60,6 +70,7 @@ private:
 	void CheatDebugMenu(bool& open);
 private:
 	GameState m_gameState;
+	NetworkStatus m_networkStatus;
 	SceneComponent::Type m_selectedScene = SceneComponent::Type::TunnelRoom2Scene;
 	std::unique_ptr<Scene> m_testScene;
 	std::unique_ptr<Scene> m_mainScene;
@@ -71,7 +82,6 @@ private:
 	//Pathfinder m_pathfinder;		// uncomment to activate pathfinder
 	INT8 m_nrOfPlayers;
 	AgentManager* m_agentManager;
-	u8 m_networkStatus;
 	ImFont* m_imguiFont = nullptr;
 
 	// Temp container for keybindings, just strings to visualize them in the menu
