@@ -14,7 +14,6 @@ namespace DOG
 		m_imguiPos.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_imguiRot.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_vsJoints.assign(300, {});
-
 		ImGuiMenuLayer::RegisterDebugWindow("Animation Clip Setter", [this](bool& open) {SpawnControlWindow(open); });
 	};
 
@@ -23,11 +22,78 @@ namespace DOG
 		ImGuiMenuLayer::UnRegisterDebugWindow("Animation Clip Setter");
 	};
 
+	void AnimationManager::Test(f32 dt)
+	{
+		static f32 deltaTime = 0.05f;
+		static f32 timer = 0.f;
+		static bool firstTime = true;
+		static AnimationComponent testAc;
+		if (!m_rigs.size())
+			return;
+		if (firstTime)
+		{
+			firstTime = false;
+			mRigAnimator.rigData = m_rigs[MIXAMO_RIG_ID];
+			static bool t1 = false, t2 = false, t3 = false;
+			static AnimationComponent::Setter2 test1 = { true, 0, 0.0f, 1.0f, { 0, -1, -1}, { 1.f, 0.f, 0.f} };
+			static AnimationComponent::Setter2 test2 = { true, 2, 0.0f, 1.0f, { 2, -1, -1}, { 1.f, 0.f, 0.f} };
+			static AnimationComponent::Setter2 test3 = { false, 0, 0.5f, 1.0f, { 5, -1, -1},{ 1.f, 0.f, 0.f} };
+			static AnimationComponent::Setter2 test4 = { false, 0, 0.5f, 1.0f, { 6, -1, -1},{ 1.f, 0.f, 0.f} };
+
+			testAc.addedSetters = 4;
+			testAc.animSetters2[0] = test1;
+			testAc.animSetters2[1] = test2;
+			//testAc.animSetters2[2] = test3;
+			//testAc.animSetters2[3] = test4;
+			auto sz = sizeof(mRigAnimator);
+			for (size_t i = 0; i < 4; i++)
+			{
+				static i8 bindIdx = 0, idleIdx = 2, walkIdx = 4;
+				auto danceIdx = m_rigs[MIXAMO_RIG_ID]->animations.size() - i - 1;
+				static AnimationComponent::Setter2 setter1 = { true, 0, 0.0f, 1.0f, { idleIdx, bindIdx, -1}, { 0.5f, 0.5f, 0.f} };
+				static AnimationComponent::Setter2 setter2 = { true, 2, 0.0f, 1.0f, { 2, -1, -1}, { 1.f, 0.f, 0.f} };
+				m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
+				testAc.addedSetters = 2;
+				testAc.animSetters2[0] = setter1;
+				testAc.animSetters2[1] = setter2;
+				m_playerRigAnimators[i].HandleAnimationComponent(testAc);
+			}
+			mRigAnimator.HandleAnimationComponent(testAc);
+		}
+		timer += deltaTime;
+		mRigAnimator.Update(deltaTime);
+		auto stop = mRigAnimator.clipData[0];
+
+		static bool secondTest = false;
+		if (timer >= 0.6f && !secondTest)
+		{
+			AnimationComponent::Setter2 test = { false, 0, 0.0f, 1.0f, { 8, 9, -1}, { 0.35f, 0.15f, 0.f} };
+			testAc.addedSetters = 1;
+			testAc.animSetters2[0] = test;
+			mRigAnimator.HandleAnimationComponent(testAc);
+			secondTest = true;
+		}
+		static bool thirdTest = false;
+		if (timer >= 1.3f && !thirdTest)
+		{
+			AnimationComponent::Setter2 test = { true, 1, 0.25f, 1.0f, { 3, 1, -1}, { 0.35f, 0.35f, 0.f} };
+			testAc.addedSetters = 1;
+			testAc.animSetters2[0] = test;
+			mRigAnimator.HandleAnimationComponent(testAc);
+			thirdTest = true;
+		}
+		/*if (timer >= 1.4f)
+		{
+			ExtractClipNodeInfluences(mRigAnimator, KeyType::Rotation, 0, MIXAMO_RIG_ID);
+		}*/
+	}
+
 	void AnimationManager::UpdateJoints()
 	{
 		ZoneScopedN("updateJoints_ppp");
 		using namespace DirectX;
 		auto deltaTime = (f32)Time::DeltaTime();
+		Test(0.1f);
 		//tmp wtf
 		static i32 count = 0;
 		if (count < 3) {
@@ -42,14 +108,14 @@ namespace DOG
 						modelaC.animatorID = GetNextAnimatorID();
 						count++;
 						// tmp setting base states
-						auto a1 = 0;
-						auto a2 = 0;
-						auto lastIdx = m_rigs[modelaC.rigID]->animations.size()-1;
-						auto& idle = m_rigs[modelaC.rigID]->animations.rbegin()[a2];
-						auto& walk = m_rigs[modelaC.rigID]->animations.rbegin()[a1];
+						auto idleIdx = 2, walkIdx = 0;
+						auto danceIdx = m_rigs[modelaC.rigID]->animations.size() - modelaC.animatorID - 1;
+						auto& dance = m_rigs[modelaC.rigID]->animations.rbegin()[modelaC.animatorID];
+						auto& idle = m_rigs[modelaC.rigID]->animations[idleIdx];
+						auto& walk = m_rigs[modelaC.rigID]->animations[walkIdx];
 						auto& a = m_playerAnimators[modelaC.animatorID];
-						a.AddAnimationClip(lastIdx-modelaC.animatorID, walk.duration, walk.ticks, 0, 0.f, 1.0f, 1.0f, true, 1.5f); // lower body walk
-						a.AddAnimationClip(lastIdx-modelaC.animatorID, idle.duration, idle.ticks, 2, 0.f, 1.0f, 1.0f, true); // full body idle
+						a.AddAnimationClip(walkIdx, walk.duration, walk.ticks, 0, 0.f, 1.0f, 1.0f, true, 1.5f); // lower body walk
+						a.AddAnimationClip(danceIdx, dance.duration, dance.ticks, 2, 0.f, 1.0f, 1.0f, true); // full body idle
 					}
 				});
 			return;
@@ -95,8 +161,10 @@ namespace DOG
 					}
 
 					animator.Update(deltaTime);
-					
-					UpdateSkeleton(model->animation, animator);
+					auto& a = m_playerRigAnimators[rAC.animatorID];
+					a.Update(deltaTime);
+					//UpdateSkeleton(model->animation, animator);
+					UpdateSkeleton(a, rAC.offset);
 				}
 			});
 	}
@@ -282,6 +350,7 @@ namespace DOG
 	constexpr bool HasBone(const u32 v) {
 		return v != -1;
 	};
+
 	void AnimationManager::UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::Animator& animator)
 	{
 		ZoneScopedN("skeletonUpdate");
@@ -372,7 +441,7 @@ namespace DOG
 		ZoneScopedN("SRT calculation");
 		using namespace DirectX;
 		const auto rigSpec = RIG_SPECIFICS[rigID];
-		const auto nSRT = N_KEYS * rigSpec.nNodes;
+		const auto nSRT = N_KEYS * NodeCount(rigID);
 		// Store scaling, translation, rotation extracted from anim keyframes
 		std::fill(m_partialSRT.begin(), m_partialSRT.begin() + nSRT, XMVECTOR{});
 		std::fill(m_fullbodySRT.begin(), m_fullbodySRT.begin() + nSRT, XMVECTOR{});
@@ -383,7 +452,7 @@ namespace DOG
 
 		auto HasInfluence = [ac, rigID](const u8 group) {
 			bool ret = ac.clipsInGroup[group];
-			return ret && group == RIG_SPECIFICS[rigID].fullbodyGroup ? true : ac.groupWeights[group] > 0.f;
+			return ret && group == fullBodyGroup ? true : ac.groupWeights[group] > 0.f;
 		};
 
 		// Go through clip groups
@@ -399,7 +468,7 @@ namespace DOG
 		}
 
 		// Blend between the partial body group and the full body animation group
-		for (u8 i = 1; i < rigSpec.nNodes; ++i)
+		for (u8 i = 1; i < NodeCount(rigID); ++i)
 		{
 			f32 weight = 0.0f;
 			if (i < rigSpec.rootJoint || InGroup(groupA, rigID, i)) // lower body
@@ -474,8 +543,8 @@ namespace DOG
 			}
 		}
 
-		auto& storeSRT = group == RIG_SPECIFICS[rigID].fullbodyGroup ? 
-													m_fullbodySRT : m_partialSRT;
+		auto& storeSRT = (group == fullBodyGroup) ? m_fullbodySRT :
+													m_partialSRT;
 
 		// Sum clip influences on each node for Weighted avg.
 		for (u8 i = 0; i < nNodes; i++)
@@ -528,5 +597,237 @@ namespace DOG
 					storeSRT[rigKeyIdx] = XMLoadFloat4(&m_baseRotation);
 			}
 		}
+	}
+
+	// ---------- NEW RIG ---------
+	// ---------- NEW RIG ---------
+	// ---------- NEW RIG ---------
+	// ---------- NEW RIG ---------
+	// ---------- NEW RIG ---------
+	// ---------- NEW RIG ---------
+	// ---------- NEW RIG ---------
+	// ---------- NEW RIG ---------
+	// ---------- NEW RIG ---------
+	// ---------- NEW RIG ---------
+
+	void AnimationManager::UpdateSkeleton(DOG::RigAnimator& animator, const u32 offset)
+	{
+		ZoneScopedN("skeletonUpdate");
+		using namespace DirectX;
+
+		CalculateSRT(animator, MIXAMO_RIG_ID);
+		// Set node animation transformations
+		std::vector<XMMATRIX> hereditaryTFs;
+		const auto& rig = animator.rigData;
+		hereditaryTFs.reserve(rig->nodes.size());
+		hereditaryTFs.push_back(XMLoadFloat4x4(&rig->nodes[0].transformation));
+		for (i32 i = 1; i < rig->nodes.size(); ++i)
+		{
+			// Compose pose matrix from keyframe values scale, rot, and transl
+			const auto sIdx = i * N_KEYS, rIdx = sIdx + 1, tIdx = sIdx + 2;
+			auto ntf = XMMatrixTranspose(
+				XMMatrixScalingFromVector(m_fullbodySRT[sIdx]) *
+				XMMatrixRotationQuaternion(m_fullbodySRT[rIdx]) *
+				XMMatrixTranslationFromVector(m_fullbodySRT[tIdx])
+			);
+
+#if defined _DEBUG
+			// apply addition imgui bone influence
+			ntf *= ImguiTransform(i);
+#endif
+			hereditaryTFs.push_back(ntf);
+		}
+
+		// Apply parent Transformation
+		for (size_t i = 1; i < hereditaryTFs.size(); ++i)
+			hereditaryTFs[i] = hereditaryTFs[rig->nodes[i].parentIdx] * hereditaryTFs[i];
+		// Finalize vertex shader joint matrix
+		const auto rootTF = XMLoadFloat4x4(&rig->nodes[0].transformation);
+		for (size_t n = 0; n < rig->nodes.size(); ++n)
+		{
+			auto joint = rig->nodes[n].jointIdx;
+			if (HasBone(joint))
+			{
+				XMStoreFloat4x4(&m_vsJoints[offset + joint],
+					rootTF * hereditaryTFs[n] * XMLoadFloat4x4(&rig->jointOffsets[joint]));
+			}
+		}
+	}
+
+	void AnimationManager::CalculateSRT(RigAnimator& ac, const u8 rigID)
+	{
+		ZoneScopedN("SRT calculation");
+		using namespace DirectX;
+		const auto rigSpec = RIG_SPECIFICS[rigID];
+		const auto nSRT = N_KEYS * NodeCount(rigID);
+		// Store scaling, translation, rotation extracted from anim keyframes
+		std::fill(m_partialSRT.begin(), m_partialSRT.begin() + nSRT, XMVECTOR{});
+		std::fill(m_fullbodySRT.begin(), m_fullbodySRT.begin() + nSRT, XMVECTOR{});
+
+		//const auto weightGroupA = ac.groupWeights[ac.groupA];
+		const auto weightGroupA = 0.f; // tmp
+		const auto weightGroupB = 0.f;
+
+		auto HasInfluence = [ac](const u32 group) {
+			bool ret = ac.groupClipCount[group] > 0;
+			return ret;
+		};
+
+		std::unordered_map<u32, std::vector<XMVECTOR>> groupS;
+		std::unordered_map<u32, std::vector<XMVECTOR>> groupR;
+		std::unordered_map<u32, std::vector<XMVECTOR>> groupT;
+
+		// Go through clip groups
+		for (u32 group = 0; group < N_GROUPS; group++)
+		{
+			if (HasInfluence(group))
+			{
+				groupS.insert({ group, ExtractClipNodeInfluences(ac, KeyType::Scale, group, rigID) });
+				groupR.insert({ group, ExtractClipNodeInfluences(ac, KeyType::Rotation, group, rigID) });
+				groupT.insert({ group, ExtractClipNodeInfluences(ac, KeyType::Translation, group, rigID) });
+			}
+		}
+
+		// TEEETST
+		const auto& gsv = groupS[0];
+		const auto& grv = groupR[0];
+		const auto& gtv = groupT[0];
+		for (u32 i = 0; i < groupS[0].size(); ++i)
+		{
+			const u32 sIdx = i * N_KEYS + static_cast<u32>(KeyType::Scale);
+			const u32 rIdx = i * N_KEYS + static_cast<u32>(KeyType::Rotation);
+			const u32 tIdx = i * N_KEYS + static_cast<u32>(KeyType::Translation);
+			m_fullbodySRT[sIdx] = gsv[i];
+			m_fullbodySRT[rIdx] = grv[i];
+			m_fullbodySRT[tIdx] = gtv[i];
+		}
+
+		// Blend between the partial body group and the full body animation group
+		for (u8 i = 1; i < NodeCount(rigID); ++i)
+		{
+			f32 weight = 0.0f;
+			if (InGroup(groupA, rigID, i)) // lower body
+				weight = weightGroupA;
+			else if (InGroup(groupB, rigID, i)) // upper body
+				weight = weightGroupB;
+
+			const u32 sIdx = i * 3, rIdx = i * 3 + 1, tIdx = i * 3 + 2;
+			const XMVECTOR scaling1 = m_fullbodySRT[sIdx], scaling2 = m_partialSRT[sIdx];
+			const XMVECTOR rotation1 = m_fullbodySRT[rIdx], rotation2 = m_partialSRT[rIdx];
+			const XMVECTOR translation1 = m_fullbodySRT[tIdx], translation2 = m_partialSRT[tIdx];
+			m_fullbodySRT[sIdx] = XMVectorLerp(scaling1, scaling2, weight);
+			m_fullbodySRT[rIdx] = XMQuaternionSlerp(rotation1, rotation2, weight);
+			m_fullbodySRT[tIdx] = XMVectorLerp(translation1, translation2, weight);
+		}
+	}
+
+	std::vector<DirectX::XMVECTOR> AnimationManager::ExtractClipNodeInfluences(RigAnimator& a, const KeyType key, const u32 group, const u32 rigID)
+	{
+		ZoneScopedN("Extract");
+		using namespace DirectX;
+		using PoseData = DOG::ClipData;
+		using AnimationKeys = std::unordered_map<i32, std::vector<AnimationKey>>;
+
+		auto [startNode, nNodes] = GetNodeStartAndCount(rigID, group);
+		const auto rootIdx = RIG_SPECIFICS[rigID].rootJoint;
+		const auto nClips = a.groupClipCount[group];
+		const PoseData* clips = &a.clipData[a.GetGroupStartIdx(group)];
+		const std::vector<AnimationData>& anims = a.rigData->animations;
+
+		std::vector<XMVECTOR> keyValues(nClips * nNodes, XMVECTOR{});
+
+		// For every clip in clip group
+		for (u32 i = 0; i < nClips; i++)
+		{
+			// Pose data
+			const auto aID = clips[i].aID;
+			const auto weight = clips[i].weight;
+			const auto tick = clips[i].tick;
+			const auto& animation = anims[aID];
+			// Store influence that the clip animation has on each node
+			for (u32 node = 0; node < nNodes; node++)
+			{
+				// Storage value
+				const auto storeIdx = node * nClips + i;
+				// Rig index
+				auto rigNodeIdx = startNode + node;
+
+				const AnimationKeys* keys = {};
+				switch (key)
+				{
+				case KeyType::Scale:
+					keys = &animation.scaKeys;
+					break;
+				case KeyType::Rotation:
+					keys = &animation.rotKeys;
+					break;
+				case KeyType::Translation:
+					keys = &animation.posKeys;
+					break;
+				}
+				// Keyframe influence exist, store it
+				if (keys->find(rigNodeIdx) != keys->end())
+				{
+					auto keyVal = GetKeyValue(keys->at(rigNodeIdx), key, tick);
+					keyValues[storeIdx] = key != KeyType::Rotation ? weight * keyVal : keyVal;
+				}
+			}
+		}
+
+		/*auto& storeSRT = group == RIG_SPECIFICS[rigID].fullbodyGroup ?
+			m_fullbodySRT : m_partialSRT;*/
+		std::vector<XMVECTOR> storeSRT(nNodes, XMVECTOR{});
+		// Sum clip influences on each node for Weighted avg.
+		for (u32 i = 0; i < nNodes; i++)
+		{
+			// index to first clip influencing bone
+			const auto frstClipIdx = i * nClips;
+			// rig node index
+			auto nodeIdx = i;
+
+			// First group controls root joint chain (tmp solution)
+			if (group == groupA)
+				nodeIdx = i < rootIdx ? i + 1 : nodeIdx - rootIdx;
+
+			//const auto rigKeyIdx = N_KEYS * nodeIdx + static_cast<u32>(key);
+			const auto rigKeyIdx = nodeIdx;
+			
+			if (key != KeyType::Rotation)
+			{	// Sum clip key values for weighted average
+				for (u32 j = 0; j < nClips; ++j)
+				{
+					const auto clipIdx = frstClipIdx + j;
+					storeSRT[rigKeyIdx] += keyValues[clipIdx];
+				}
+				const bool rootDefault = key == KeyType::Translation && nodeIdx == ROOT_JOINT && !m_imguiApplyRootTranslation;
+				// if no keyframe scaling/translation influence set base value
+				if (XMComparisonAllTrue(XMVector3EqualR(storeSRT[rigKeyIdx], {})) || rootDefault)
+				{
+					const auto defaultValue = key == KeyType::Scale ? XMLoadFloat3(&m_baseScale) : XMLoadFloat3(&m_baseTranslation);
+					storeSRT[rigKeyIdx] = defaultValue;
+				}
+			}
+			else if (keyValues.size())
+			{	// weighted avg. for rot Quaternions
+				XMVECTOR q0 = keyValues[frstClipIdx];
+				for (u32 j = 0; j < nClips; ++j)
+				{
+					const auto clipIdx = frstClipIdx + j;
+					auto w = clips[j].weight;
+					XMVECTOR& q = keyValues[clipIdx];
+					auto dot = XMVector4Dot(q0, q);
+					if (j > 0 && dot.m128_f32[0] < 0.0)
+						w = -w;
+
+					storeSRT[rigKeyIdx] += w * q;
+				}
+				storeSRT[rigKeyIdx] = XMVector4Normalize(storeSRT[rigKeyIdx]);
+
+				// if no keyframe rotation influence set base rotation
+				if (XMComparisonAllTrue(XMVector4EqualR(storeSRT[rigKeyIdx], {})))
+					storeSRT[rigKeyIdx] = XMLoadFloat4(&m_baseRotation);
+			}
+		}
+		return storeSRT;
 	}
 }
