@@ -22,17 +22,20 @@ enum class EntityTypes
 	//ActiveItem
 	ActiveItemsBegin,
 	Trampoline = ActiveItemsBegin,
+	ActiveItems,
 
 	//Barrel
 	BarrelItemsBegin,
 	BulletBarrel = BarrelItemsBegin,
 	GrenadeBarrel,
 	MissileBarrel,
+	Barrels,
 
 	//MagazineModification
 	MagazineModificationItemsBegin,
 	DefaultMagazineModification = MagazineModificationItemsBegin,
 	FrostMagazineModification,
+	Magazines,
 
 	Default,
 };

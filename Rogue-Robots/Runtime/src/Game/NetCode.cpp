@@ -208,6 +208,30 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 												agentManager->CreateOrDestroyShadowAgent(*tempCreate);
 											}
 										});
+
+											if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Magazines && !tempCreate->alive && (u32)tempCreate->entityTypeId > (u32)EntityTypes::Agents )
+											{
+												EntityManager::Get().Collect<NetworkPlayerComponent>().Do([&](entity id, NetworkPlayerComponent& playerC)
+													{
+														if (playerC.playerId == tempCreate->playerId)
+														{
+															std::string luaEventName = std::string("ItemPickup") + std::to_string(id);
+															DOG::LuaMain::GetEventSystem()->InvokeEvent(luaEventName, (u32)tempCreate->entityTypeId);
+															EntityManager::Get().Collect<NetworkId>().Do([&](entity e, NetworkId& nIdC)
+																{
+																	
+																	if (nIdC.entityTypeId == tempCreate->entityTypeId && nIdC.id == tempCreate->id)
+																	{
+																		m_entityManager.RemoveComponent<NetworkId>(e);
+																		m_entityManager.DeferredEntityDestruction(e);
+																	}
+																});
+															
+														}
+													});
+
+											}
+											
 								}
 							}
 							m_bufferReceiveSize += sizeof(CreateAndDestroyEntityComponent) * header.nrOfCreateAndDestroy;
@@ -244,18 +268,21 @@ void NetCode::Receive()
 				firstTime = true;
 				m_threadUdp = std::thread(&NetCode::ReceiveUdp, this);
 			}
+			
 			m_numberOfPackets = m_client.ReceiveCharArrayTcp(m_receiveBuffer);
-			if (m_receiveBuffer == nullptr)
+			
+			if (m_receiveBuffer == nullptr || m_numberOfPackets == 0)
 			{
 				std::cout << "Bad tcp packet \n";
 			}
 			else
 			{
-			m_dataIsReadyToBeReceivedTcp = true;
+				m_dataIsReadyToBeReceivedTcp = true;
 			}
 		}
 			
 	}
+	std::cout << "Client: stopped reciving packets \n";
 }
 	
 void NetCode::ReceiveUdp()
@@ -390,7 +417,7 @@ void DeleteNetworkSync::OnLateUpdate(DOG::entity e, DeferredDeletionComponent&, 
 {
 	DOG::EntityManager& m_entityManager = DOG::EntityManager::Get();
 	entity newE = m_entityManager.CreateEntity();
-	auto t = m_entityManager.AddComponent<CreateAndDestroyEntityComponent>(newE);
+	auto& t = m_entityManager.AddComponent<CreateAndDestroyEntityComponent>(newE);
 	t.alive = false;
 	t.entityTypeId = netId.entityTypeId;
 	t.id = netId.id;
