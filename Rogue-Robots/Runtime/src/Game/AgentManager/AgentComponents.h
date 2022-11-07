@@ -21,7 +21,7 @@ struct AgentIdComponent
 
 struct AgentMovementComponent
 {
-	f32 baseSpeed = 10.0f;
+	f32 baseSpeed = 10.0f;		// TODO: make "global" based on type
 	f32 currentSpeed = baseSpeed;
 	DirectX::SimpleMath::Vector3 forward{1, 0, 0};
 	DirectX::SimpleMath::Vector3 station{0, 0, 0};

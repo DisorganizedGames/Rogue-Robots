@@ -60,21 +60,44 @@ void AgentManager::CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& e
 
 AgentManager::AgentManager() : m_entityManager(EntityManager::Get()), m_agentIdCounter(0)
 {
+#ifdef _DEBUG
+	// Some unit tests
+	u32 agentID_1 = GenAgentID(0);
+	bool test_1 = agentID_1 == 1;
+	
+	u32 agentID_2 = GenAgentID(1);
+	bool test_2 = agentID_2 == (1 << GROUP_BITS);
+	bool test_3 = m_agentIdCounter == GROUP_SIZE + 1;
+	
+	u32 agentID_3 = GenAgentID(4);
+	bool test_4 = agentID_3 == (1 << (GROUP_BITS * 4));
+	bool test_5 = m_agentIdCounter == GROUP_SIZE * 4 + GROUP_SIZE + 1;
+
+	u32 agentID_1 = GenAgentID(0);
+	bool test_6 = agentID_1 == 2;
+	bool test_7 = m_agentIdCounter == GROUP_SIZE * 4 + GROUP_SIZE + 3;
+
+	bool all_tests = test_1 && test_2 && test_3 && test_4 && test_5 && test_6 && test_7;
+	assert(all_tests);
+	m_agentIdCounter = 0;
+#endif // _DEBUG
+
+
 	// Load (all) agent model asset(s)
 	m_models.push_back(AssetManager::Get().LoadModelAsset("Assets/Models/Enemies/enemy1.gltf"));
 
 	// Register agent systems
-	EntityManager::Get().RegisterSystem(std::make_unique<AgentSeekPlayerSystem>());
-	EntityManager::Get().RegisterSystem(std::make_unique<AgentMovementSystem>());
-	EntityManager::Get().RegisterSystem(std::make_unique<AgentAttackSystem>());
-	EntityManager::Get().RegisterSystem(std::make_unique<AgentHitDetectionSystem>());
-	EntityManager::Get().RegisterSystem(std::make_unique<AgentHitSystem>());
-	EntityManager::Get().RegisterSystem(std::make_unique<AgentAggroSystem>());
-	EntityManager::Get().RegisterSystem(std::make_unique<AgentFrostTimerSystem>());
-	EntityManager::Get().RegisterSystem(std::make_unique<AgentDestructSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<AgentSeekPlayerSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<AgentMovementSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<AgentAttackSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<AgentHitDetectionSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<AgentHitSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<AgentAggroSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<AgentFrostTimerSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<AgentDestructSystem>());
 
 	// Register shadow agent systems
-	EntityManager::Get().RegisterSystem(std::make_unique<ShadowAgentSeekPlayerSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<ShadowAgentSeekPlayerSystem>());
 }
 
 
@@ -117,8 +140,6 @@ entity AgentManager::CreateAgentCore(u32 model, const Vector3& pos, EntityTypes 
 	m_entityManager.AddComponent<AgentPathfinderComponent>(e);
 
 	m_entityManager.AddComponent<AgentHPComponent>(e);
-
-	//LuaMain::GetScriptManager()->AddScript(e, "AgentHit.lua");
 
 	// Add networking components
 	if (m_useNetworking)
@@ -177,3 +198,63 @@ void AgentManager::DestroyLocalAgent(entity e)
 	em.DeferredEntityDestruction(e);
 }
 
+u32 AgentManager::GenAgentID(u32 groupID)
+{
+	u32 shift = groupID * GROUP_BITS;
+	u32 mask = MASK << shift;
+	u32 agentID = m_agentIdCounter & mask;
+	if (agentID == 0)	// special case
+		++agentID;
+	u32 groupCount = (agentID >> shift) + 1;
+
+#ifdef _DEBUG
+	if (GROUP_SIZE <= groupCount)
+	{
+		std::cout << "Agent group " << groupID << " overflow error" << std::endl;
+		assert(false);
+	}
+#endif // _DEBUG
+	
+	m_agentIdCounter = ((m_agentIdCounter & (~mask)) & (groupCount << shift));
+	return agentID;
+}
+
+void AgentManager::CountAgentKilled(u32 agentID)
+{
+	u32 shift = GroupID(agentID) * GROUP_BITS;					// bit shift for group
+	u32 mask = MASK << shift;
+	u32 groupCount = m_agentIdCounter & mask;
+	u32 killCount = m_agentKillCounter & mask;
+	killCount = ((killCount >> shift) + 1) << shift;			// increment kill count
+	m_agentKillCounter = m_agentKillCounter & (~mask);			// set kill counter to 0
+	if (groupCount == killCount)
+		m_agentIdCounter = m_agentIdCounter & (~mask);			// set group counter to 0
+	else
+		m_agentKillCounter = m_agentKillCounter & killCount;	// add kill count to group
+}
+
+u32 AgentManager::GroupID(u32 agentID)
+{
+	constexpr u32 GROUPS = sizeof(m_agentIdCounter) / GROUP_BITS;
+	u32 mask = MASK;
+	u32 i = 0;
+	if (agentID == 0)
+		// find first empty group
+		for (; i < GROUPS; ++i)
+		{
+			if ((m_agentIdCounter & mask) == 0)
+				break;
+			else
+				mask = mask << GROUP_BITS;
+		}
+	else
+		// find group of agentID
+		for (; i < GROUPS; ++i)
+		{
+			if ((m_agentIdCounter & mask) == 0)
+				mask = mask << GROUP_BITS;
+			else
+				break;
+		}
+	return i;
+}
