@@ -29,6 +29,7 @@
 #include "RenderEffects/ImGUIEffect.h"
 #include "RenderEffects/TestComputeEffect.h"
 #include "RenderEffects/Bloom.h"
+#include "RenderEffects/ParticleEffect.h"
 
 #include "ImGUI/imgui.h"
 #include "../../Core/ImGuiMenuLayer.h"
@@ -276,6 +277,7 @@ namespace DOG::gfx
 		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
 		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
 		m_bloomEffect = std::make_unique<Bloom>(m_rgResMan.get(), m_globalEffectData, m_dynConstants.get(), m_renderWidth, m_renderHeight);
+		m_particleRenderEffect = std::make_unique<ParticleEffect>(m_globalEffectData, m_rgResMan.get(), m_perFrameUploadCtx.get());
 	
 		{
 			// Create 4x4 SSAO noise
@@ -962,8 +964,7 @@ namespace DOG::gfx
 				});
 		}
 
-
-
+		
 		// Test compute on Lit HDR
 		// Uncomment to enable the test compute effect!
 		//m_testComputeEffect->Add(rg);
@@ -1024,6 +1025,8 @@ namespace DOG::gfx
 					rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
 				});
 		}
+
+		m_particleRenderEffect->Add(*m_rg);
 
 		// Final ImGUI pass
 		m_imGUIEffect->Add(rg);

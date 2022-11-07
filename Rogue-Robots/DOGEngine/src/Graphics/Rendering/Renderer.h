@@ -278,7 +278,7 @@ namespace DOG::gfx
 		std::unique_ptr<RenderEffect> m_imGUIEffect;
 		std::unique_ptr<RenderEffect> m_testComputeEffect;
 		std::unique_ptr<RenderEffect> m_bloomEffect;
-
+		std::unique_ptr<RenderEffect> m_particleRenderEffect;
 
 		u32 m_shadowMapCapacity{ 1 };
 

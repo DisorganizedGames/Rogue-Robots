@@ -62,7 +62,9 @@ set(SourceFiles
 	"src/Graphics/RHI/Types/GPUInfo.h"
 	"src/Graphics/Rendering/FrontRenderer.h" "src/Graphics/Rendering/FrontRenderer.cpp"
 	"src/ECS/QueryHelpers.h" "src/ECS/QueryHelpers.cpp"
-	 "src/Graphics/RHI/DX12/D11Device.h" "src/Graphics/RHI/DX12/D11Device.cpp")
+	"src/Graphics/RHI/DX12/D11Device.h" "src/Graphics/RHI/DX12/D11Device.cpp"
+	"src/Graphics/Rendering/RenderEffects/ParticleEffect.h" "src/Graphics/Rendering/RenderEffects/ParticleEffect.cpp"
+)
 
 file(GLOB_RECURSE TempGraphics "src/Graphics/*.cpp")
 
