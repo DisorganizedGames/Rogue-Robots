@@ -139,6 +139,8 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 			{
 				isItFirstTime = false;
 				memcpy(&packet, reciveBuffer, sizeof(TcpHeader));
+				if (packet.sizeOfPayload == 0)
+					return 0;
 			}
 			//if correct return the packet
 			if (bytesRecived + processedBytes == packet.sizeOfPayload)
@@ -153,8 +155,10 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 				while ((bytesRecived - processedBytes) > 0 && (bytesRecived - processedBytes) >= packet.sizeOfPayload)
 				{
 					processedBytes += packet.sizeOfPayload;
-					memcpy(&packet, reciveBuffer + processedBytes, sizeof(TcpHeader));
 					nrOfPackets++;
+					memcpy(&packet, reciveBuffer + processedBytes, sizeof(TcpHeader));
+					if (packet.sizeOfPayload == 0)
+						return nrOfPackets;
 				}
 				if((bytesRecived - processedBytes) == 0)
 					return nrOfPackets;
@@ -165,15 +169,15 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 				std::cout << "Client: Only part of the packet arrived: " << bytesRecived << "header payload: " << packet.sizeOfPayload << std::endl;
 				processedBytes += bytesRecived;
 			}
-			else
-			{
-				std::cout << "Client: Faulty packet" << std::endl;
-				return 0;
-			}
 		}
 		else if (bytesRecived == -1)
 		{
 			std::cout << "Client: Error reciving tcp packet: " << WSAGetLastError() << std::endl;
+			return 0;
+		}
+		else
+		{
+			std::cout << "Client: Empty packet" << std::endl;
 			return 0;
 		}
 	}
