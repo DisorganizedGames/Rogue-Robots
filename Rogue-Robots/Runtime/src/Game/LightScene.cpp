@@ -33,7 +33,7 @@ Vector3 PlaneIntersectPlanes(XMVECTOR p1, XMVECTOR p2, XMVECTOR p3)
 }
 
 
-LightScene::LightScene() : Scene(SceneType::LightScene)
+LightScene::LightScene() : Scene(SceneComponent::Type::LightScene)
 {
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("Tiled Shading", std::bind(&LightScene::TiledShadingDebugMenu, this, std::placeholders::_1), true, std::make_pair(Key::LCtrl, Key::L));
 }

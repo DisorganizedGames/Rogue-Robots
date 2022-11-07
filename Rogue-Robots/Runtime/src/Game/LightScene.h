@@ -1,7 +1,8 @@
 #pragma once
 #include <DOGEngine.h>
+#include "Scene.h"
 
-class LightScene : public DOG::Scene
+class LightScene : public Scene
 {
 public:
 	LightScene();

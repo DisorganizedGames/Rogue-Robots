@@ -47,6 +47,7 @@ struct SceneComponent
 		TunnelRoom1Scene,
 		TunnelRoom2Scene,
 		TunnelRoom3Scene,
+		LightScene,
 	};
 	SceneComponent(Type scene) : scene(scene) {}
 	Type scene;
