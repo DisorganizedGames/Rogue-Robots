@@ -9,7 +9,6 @@
 #include "src/Core/Types/GraphicsTypes.h"
 #include "src/Core/AnimationManager.h"
 #include "src/Core/ImGuiMenuLayer.h"
-#include "src/Core/Scene.h"
 
 #include "src/Input/Keyboard.h"
 #include "src/Input/Mouse.h"

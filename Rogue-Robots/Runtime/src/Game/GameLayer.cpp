@@ -1,10 +1,13 @@
 #include <DOGEngine.h>
 #include "GameLayer.h"
-#include "MainScene.h"
 #include "TestScene.h"
+#include "OldDefaultScene.h"
+#include "TunnelScenes.h"
 #include "SimpleAnimationSystems.h"
 #include "ExplosionSystems.h"
 #include "HomingMissileSystem.h"
+#include "PcgLevelLoader.h"
+#include "PrefabInstantiatorFunctions.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -111,7 +114,10 @@ void GameLayer::OnUpdate()
 		CloseMainScene();
 		m_gameState = GameState::None;
 		break;
-
+	case GameState::Restart:
+		CloseMainScene();
+		m_gameState = GameState::StartPlaying;
+		break;
 	default:
 		break;
 	}
@@ -127,176 +133,36 @@ void GameLayer::OnUpdate()
 
 void GameLayer::StartMainScene()
 {
-	/************************** SET SCENE *********************************/
-	enum class Scene { old_default, room_0, room_1, room_2, room_3	};
-	constexpr Scene ACTIVE_SCENE = Scene::room_2;
-	constexpr const char* oldDefault = "..\\Offline-Tools\\PCG\\showOff_generatedLevel.txt";
-	constexpr const char* tunnels = "..\\Offline-Tools\\PCG\\Tunnels_generatedLevel.txt";
-	/***************************** END ************************************/
-
-
 	assert(m_mainScene == nullptr);
-	m_mainScene = std::make_unique<MainScene>();
 	
-	switch (ACTIVE_SCENE)
+	switch (m_selectedScene)
 	{
-	case Scene::room_0:
-	/************************** tunnel scene *********************************/
-			m_mainScene->SetUpScene({
-				[this]() {
-					// room 0: small room - maybe nice entry point?
-					std::vector<entity> players = SpawnPlayers(Vector3(12.0f, 90.0f, 38.0f), m_nrOfPlayers, 10.f);
-
-					std::vector<entity> flashlights = AddFlashlightsToPlayers(players);
-
-					//For now, just combine them, using the player vector:
-					players.insert(players.end(), flashlights.begin(), flashlights.end());
-					return players;
-				},
-				[this]() { return LoadLevel(tunnels); },
-					// room 1: a few rooms connected by tunnels
-					[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(58.f, 80.f, 40.f), 3, 2.5f); },			// location 2
-					[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(68.f, 78.f, 27.f), 4, 5.f); },			// location 3
-					[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(37.f, 80.f, 8.f), 7, 3.f); },			// location 4
-
-					// room 2: a larger, more open room
-					[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(78.f, 80.f, 63.f), 4, 2.5f); },			// location 2
-					[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(104.f, 80.f, 65.f), 5, 4.f); },			// location 3
-					[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(124.f, 80.f, 65.f), 4, 1.5f); },		// location 4
-					[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(124.f, 80.f, 24.f), 2, 1.f); },			// location 5
-
-					// room 3: huge cave system
-					[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(90.f, 55.f, 41.f), 8, 5.f); },			// location 2
-					[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(135.f, 58.f, 48.f), 15, 7.5f); },		// location 3
-					[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(80.f, 55.f, 5.5f), 10, 2.5f); },		// location 4
-					[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(104.5f, 53.f, 5.f), 2, .5f); },			// location 5
-					[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(109.5f, 53.f, 5.f), 2, .5f); },			// location 6
-					[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(104.5f, 53.f, 5.f), 2, .5f); },			// location 7
-					[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(119.f, 53.f, 5.f), 2, .5f); },			// location 8
-				});
-			break;
-	case Scene::room_1:
+	case SceneComponent::Type::TunnelRoom0Scene:
 		/************************** tunnel scene *********************************/
-		m_mainScene->SetUpScene({
-			[this]() {
-				// room 1: a few rooms connected by tunnels
-				std::vector<entity> players = SpawnPlayers(Vector3(2.0f, 80.0f, 13.0f), m_nrOfPlayers, 3.f);		// location 1
-
-				std::vector<entity> flashlights = AddFlashlightsToPlayers(players);
-
-				//For now, just combine them, using the player vector:
-				players.insert(players.end(), flashlights.begin(), flashlights.end());
-				return players;
-			},
-			[this]() { return LoadLevel(tunnels); },
-			// room 1: a few rooms connected by tunnels
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(58.f, 80.f, 40.f), 3, 2.5f); },			// location 2
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(68.f, 78.f, 27.f), 4, 5.f); },			// location 3
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(37.f, 80.f, 8.f), 7, 3.f); },			// location 4
-
-			// room 2: a larger, more open room
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(78.f, 80.f, 63.f), 4, 2.5f); },			// location 2
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(104.f, 80.f, 65.f), 5, 4.f); },			// location 3
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(124.f, 80.f, 65.f), 4, 1.5f); },			// location 4
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(124.f, 80.f, 24.f), 2, 1.f); },			// location 5
-
-			// room 3: huge cave system
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(90.f, 55.f, 41.f), 8, 5.f); },			// location 2
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(135.f, 58.f, 48.f), 15, 7.5f); },			// location 3
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(80.f, 55.f, 5.5f), 10, 2.5f); },			// location 4
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(104.5f, 53.f, 5.f), 2, .5f); },			// location 5
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(109.5f, 53.f, 5.f), 2, .5f); },			// location 6
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(104.5f, 53.f, 5.f), 2, .5f); },			// location 7
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(119.f, 53.f, 5.f), 2, .5f); },			// location 8
-			});
+		m_mainScene = std::make_unique<TunnelRoom0Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+		m_mainScene->SetUpScene();
 		break;
-	case Scene::room_2:
+	case SceneComponent::Type::TunnelRoom1Scene:
 		/************************** tunnel scene *********************************/
-		m_mainScene->SetUpScene({
-			[this]() {
-				// room 2: a larger, more open room
-				std::vector<entity> players = SpawnPlayers(Vector3(106.0f, 80.0f, 31.0f), m_nrOfPlayers, 5.0f); // locaton 1
-
-				std::vector<entity> flashlights = AddFlashlightsToPlayers(players);
-
-				//For now, just combine them, using the player vector:
-				players.insert(players.end(), flashlights.begin(), flashlights.end());
-				return players;
-			},
-			[this]() { return LoadLevel(tunnels); },
-			// room 1: a few rooms connected by tunnels
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(58.f, 80.f, 40.f), 3, 2.5f); },			// location 2
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(68.f, 78.f, 27.f), 4, 5.f); },			// location 3
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(37.f, 80.f, 8.f), 7, 3.f); },				// location 4
-
-			// room 2: a larger, more open room
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(78.f, 80.f, 63.f), 4, 2.5f); },			// location 2
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(104.f, 80.f, 65.f), 5, 4.f); },			// location 3
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(124.f, 80.f, 65.f), 4, 1.5f); },		// location 4
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(124.f, 80.f, 24.f), 2, 1.f); },			// location 5
-
-			// room 3: huge cave system
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(90.f, 55.f, 41.f), 8, 5.f); },			// location 2
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(135.f, 58.f, 48.f), 15, 7.5f); },			// location 3
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(80.f, 55.f, 5.5f), 10, 2.5f); },			// location 4
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(104.5f, 53.f, 5.f), 2, .5f); },			// location 5
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(109.5f, 53.f, 5.f), 2, .5f); },			// location 6
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(104.5f, 53.f, 5.f), 2, .5f); },			// location 7
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(119.f, 53.f, 5.f), 2, .5f); },			// location 8
-			});
+		m_mainScene = std::make_unique<TunnelRoom1Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+		m_mainScene->SetUpScene();
 		break;
-	case Scene::room_3:
+	case SceneComponent::Type::TunnelRoom2Scene:
 		/************************** tunnel scene *********************************/
-		m_mainScene->SetUpScene({
-			[this]() {
-				// room 3: huge cave system
-				std::vector<entity> players = SpawnPlayers(Vector3(76.5f, 56.0f, 68.0f), m_nrOfPlayers, 2.8f); // locaton 1
-
-				std::vector<entity> flashlights = AddFlashlightsToPlayers(players);
-
-				//For now, just combine them, using the player vector:
-				players.insert(players.end(), flashlights.begin(), flashlights.end());
-				return players;
-			},
-			[this]() { return LoadLevel(tunnels); },
-			// room 1: a few rooms connected by tunnels
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(58.f, 80.f, 40.f), 3, 2.5f); },			// location 2
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(68.f, 78.f, 27.f), 4, 5.f); },			// location 3
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(37.f, 80.f, 8.f), 7, 3.f); },				// location 4
-
-			// room 2: a larger, more open room
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(78.f, 80.f, 63.f), 4, 2.5f); },			// location 2
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(104.f, 80.f, 65.f), 5, 4.f); },			// location 3
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(124.f, 80.f, 65.f), 4, 1.5f); },			// location 4
-			//[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(124.f, 80.f, 24.f), 2, 1.f); },			// location 5
-
-			// room 3: huge cave system
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(90.f, 55.f, 41.f), 8, 5.f); },				// location 2
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(135.f, 58.f, 48.f), 15, 7.5f); },			// location 3
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(80.f, 55.f, 5.5f), 10, 2.5f); },		// location 4
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(104.5f, 53.f, 5.f), 2, .5f); },			// location 5
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(109.5f, 53.f, 5.f), 2, .5f); },			// location 6
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(104.5f, 53.f, 5.f), 2, .5f); },			// location 7
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(119.f, 53.f, 5.f), 2, .5f); },			// location 8
-			});
+		m_mainScene = std::make_unique<TunnelRoom2Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+		m_mainScene->SetUpScene();
 		break;
-
+	case SceneComponent::Type::TunnelRoom3Scene:
+		/************************** tunnel scene *********************************/
+		m_mainScene = std::make_unique<TunnelRoom3Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+		m_mainScene->SetUpScene();
+		break;
+	case SceneComponent::Type::OldDefaultScene:
+		/************************** old default scene *********************************/
+		m_mainScene = std::make_unique<OldDefaultScene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+		m_mainScene->SetUpScene();
+		break;
 	default:
-	/************************** old default scene *********************************/
-		m_mainScene->SetUpScene({
-			[this]() { 
-				std::vector<entity> players = SpawnPlayers(Vector3(25.0f, 15.0f, 25.0f), m_nrOfPlayers, 10.f);
-				std::vector<entity> flashlights = AddFlashlightsToPlayers(players);
-
-				//For now, just combine them, using the player vector:
-				players.insert(players.end(), flashlights.begin(), flashlights.end());
-				return players;
-			},
-			[this]() { return LoadLevel(oldDefault); },
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(20, 20, 50), 10, 3.0f); },
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(30, 20, 50), 10, 3.0f); },
-			[this]() { return SpawnAgents(EntityTypes::Scorpio, Vector3(40, 20, 50), 10, 3.0f); },
-			});
 		break;
 	}
 
@@ -682,87 +548,6 @@ void GameLayer::RegisterLuaInterfaces()
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Game", "GameInterface");
 }
 
-std::vector<entity> GameLayer::LoadLevel(std::string file)
-{
-	float blockDim = 5.0f;
-
-	std::string line;
-
-	std::ifstream inputFile(file);
-
-	AssetManager& aManager = AssetManager::Get();
-
-	std::vector<entity> levelBlocks;
-
-	unsigned x = 0;
-	unsigned y = 0;
-	unsigned z = 0;
-	float piDiv2 = DirectX::XM_PIDIV2;
-	if (inputFile.is_open())
-	{
-		while (std::getline(inputFile, line))
-		{
-			if (line[0] != '-')
-			{
-				while (line.find(' ') != std::string::npos)
-				{
-					size_t delimPos = line.find(' ');	
-					std::string block = line.substr(0, delimPos);
-					line.erase(0, delimPos + 1);
-					if (block != "Empty" && block != "Void" && block != "q")
-					{
-						size_t firstUnderscore = block.find('_');
-						size_t secondUnderscore = block.find('_', firstUnderscore + 1);
-						std::string blockName = block.substr(0, firstUnderscore);
-						int blockRot = std::stoi(block.substr(firstUnderscore + 2, secondUnderscore - firstUnderscore - 2));
-						std::string blockFlip = block.substr(secondUnderscore + 1, block.size() - secondUnderscore - 1);
-
-						float xFlip = 1.0f;
-						float yFlip = 1.0f; 
-						if (blockFlip.find('x') != std::string::npos)
-						{
-							xFlip = -1.0f;
-						}
-						if (blockFlip.find('y') != std::string::npos)
-						{
-							yFlip = -1.0f;
-						}
-
-						//Correct scaling for the mesh colliders (I think)
-						Vector3 localMeshColliderScale = Vector3(-xFlip, yFlip, 1.0f);
-
-						entity blockEntity = levelBlocks.emplace_back(m_entityManager.CreateEntity());
-						m_entityManager.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".fbx"));
-						m_entityManager.AddComponent<TransformComponent>(blockEntity,
-							Vector3(x * blockDim, y * blockDim, z * blockDim),
-							Vector3(piDiv2, blockRot * piDiv2 - piDiv2, 0.0f),
-							Vector3(xFlip, -yFlip, 1.0f));
-
-						m_entityManager.AddComponent<ModularBlockComponent>(blockEntity);
-						m_entityManager.AddComponent<MeshColliderComponent>(blockEntity,
-							blockEntity, 
-							aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + "_Col.fbx", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::CPUMemory | DOG::AssetLoadFlag::GPUMemory))),
-							localMeshColliderScale,
-							false);		// Set this to true if you want to see colliders only in wireframe
-						m_entityManager.AddComponent<ShadowReceiverComponent>(blockEntity);
-					}
-
-					++x;
-				}
-				x = 0;
-				++y;
-			}
-			else
-			{
-				x = 0;
-				y = 0;
-				++z;
-			}
-		}
-	}
-	return levelBlocks;
-}
-
 void GameLayer::Input(DOG::Key key)
 {
 	EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
@@ -829,123 +614,6 @@ void GameLayer::Release(DOG::Key key)
 			if(key == DOG::Key::C)
 				inputC.toggleMoveView = false;
 		});
-}
-
-std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
-{
-	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
-	ASSERT(playerCount <= MAX_PLAYER_COUNT, "No more than 4 players can be spawned. I.e. playerCount can't exceed 4");
-
-	auto* scriptManager = LuaMain::GetScriptManager();
-	//// Add persistent material prefab lua
-	//{
-	//	entity e = m_entityManager.CreateEntity();
-	//	m_entityManager.AddComponent<TransformComponent>(e);
-	//	scriptManager->AddScript(e, "MaterialPrefabs.lua");
-	//}
-
-	//LuaMain::GetGlobal().
-	scriptManager->RunLuaFile("MaterialPrefabs.lua");
-	LuaMain::GetGlobal()->GetTable("MaterialPrefabs").CallFunctionOnTable("OnStart");
-
-	auto& am = DOG::AssetManager::Get();
-	m_playerModels[0] = am.LoadModelAsset("Assets/Models/Temporary_Assets/red_cube.glb");
-	m_playerModels[1] = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
-	m_playerModels[2] = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
-	m_playerModels[3] = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
-	std::vector<entity> players;
-	for (auto i = 0; i < playerCount; ++i)
-	{
-		entity playerI = players.emplace_back(m_entityManager.CreateEntity());
-		Vector3 offset = {
-			spread * (i % 2) - (spread / 2.f),
-			0,
-			spread * (i / 2) - (spread / 2.f),
-		};
-		m_entityManager.AddComponent<TransformComponent>(playerI, pos - offset);
-		m_entityManager.AddComponent<ModelComponent>(playerI, m_playerModels[i]);
-		m_entityManager.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 0.8f, true, 75.f);
-		auto& rb = m_entityManager.AddComponent<RigidbodyComponent>(playerI, playerI);
-		rb.ConstrainRotation(true, true, true);
-		rb.disableDeactivation = true;
-		rb.getControlOfTransform = true;
-
-		m_entityManager.AddComponent<PlayerStatsComponent>(playerI);
-		m_entityManager.AddComponent<PlayerControllerComponent>(playerI);
-		m_entityManager.AddComponent<NetworkPlayerComponent>(playerI).playerId = static_cast<i8>(i);
-		m_entityManager.AddComponent<InputController>(playerI);
-		m_entityManager.AddComponent<ShadowReceiverComponent>(playerI);
-		m_entityManager.AddComponent<PlayerAliveComponent>(playerI);
-		scriptManager->AddScript(playerI, "Gun.lua");
-		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
-		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");
-
-		if (i == 0) // Only for this player
-		{
-			m_entityManager.AddComponent<ThisPlayer>(playerI);
-			m_entityManager.AddComponent<AudioListenerComponent>(playerI);
-		}
-		else
-		{
-			m_entityManager.AddComponent<OnlinePlayer>(playerI);
-		}
-	}
-	return players;
-}
-
-std::vector<entity> GameLayer::AddFlashlightsToPlayers(const std::vector<entity>& players)
-{
-	std::vector<entity> flashlights;
-	for (auto i = 0; i < players.size(); ++i)
-	{
-		auto& playerTransformComponent = m_entityManager.GetComponent<TransformComponent>(players[i]);
-
-		entity flashLightEntity = m_entityManager.CreateEntity();
-		auto& tc = m_entityManager.AddComponent<DOG::TransformComponent>(flashLightEntity);
-		tc.SetPosition(playerTransformComponent.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.2f, 0.0f));
-
-		auto up = tc.worldMatrix.Up();
-		up.Normalize();
-
-		auto& cc = m_entityManager.AddComponent<DOG::CameraComponent>(flashLightEntity);
-		cc.isMainCamera = false;
-		cc.viewMatrix = DirectX::XMMatrixLookAtLH
-		(
-			{ tc.GetPosition().x, tc.GetPosition().y, tc.GetPosition().z },
-			{ tc.GetPosition().x + tc.GetForward().x, tc.GetPosition().y + tc.GetForward().y, tc.GetPosition().z + tc.GetForward().z },
-			{ up.x, up.y, up.z }
-		);
-
-		auto dd = DOG::SpotLightDesc();
-		dd.color = { 1.0f, 1.0f, 1.0f };
-		dd.direction = tc.GetForward();
-		dd.strength = 0.6f;
-		dd.cutoffAngle = 20.0f;
-
-		auto lh = DOG::LightManager::Get().AddSpotLight(dd, DOG::LightUpdateFrequency::PerFrame);
-
-		auto& slc = m_entityManager.AddComponent<DOG::SpotLightComponent>(flashLightEntity);
-		slc.color = dd.color;
-		slc.direction = tc.GetForward();
-		slc.strength = dd.strength;
-		slc.cutoffAngle = dd.cutoffAngle;
-		slc.handle = lh;
-		slc.owningPlayer = players[i];
-
-		float fov = ((slc.cutoffAngle + 0.1f) * 2.0f) * DirectX::XM_PI / 180.f;
-		cc.projMatrix = DirectX::XMMatrixPerspectiveFovLH(fov, 1, 800.f, 0.1f);
-
-		#if defined NDEBUG
-		m_entityManager.AddComponent<DOG::ShadowCasterComponent>(flashLightEntity);
-		#endif
-		if (i == 0) // Only for this/main player
-			slc.isMainPlayerSpotlight = true;
-		else
-			slc.isMainPlayerSpotlight = false;
-
-		flashlights.push_back(flashLightEntity);
-	}
-	return flashlights;
 }
 
 std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3& pos, u8 agentCount, f32 spread)
@@ -1114,21 +782,11 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 				}
 			}
 
-			// Commented out until a propper debug camera is implemented.
-			/*bool checkboxMainScene = m_mainScene != nullptr;
-			if (ImGui::Checkbox("MainScene", &checkboxMainScene))
-			{
-				if (checkboxMainScene)
-				{
-					m_mainScene = std::make_unique<MainScene>();
-					m_mainScene->SetUpScene();
-				}
-				else
-				{
-					m_mainScene.reset();
-					m_mainScene = nullptr;
-				}
-			}*/
+			if (ImGui::RadioButton("Room0", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom0Scene)) m_gameState = GameState::Restart;
+			if (ImGui::RadioButton("Room1", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom1Scene)) m_gameState = GameState::Restart;
+			if (ImGui::RadioButton("Room2", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom2Scene)) m_gameState = GameState::Restart;
+			if (ImGui::RadioButton("Room3", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom3Scene)) m_gameState = GameState::Restart;
+			if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;
 
 			std::vector<entity> players;
 			EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](entity e, PlayerStatsComponent&)

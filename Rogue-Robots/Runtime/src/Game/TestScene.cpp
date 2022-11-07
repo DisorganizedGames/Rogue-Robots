@@ -5,7 +5,7 @@ using namespace DOG;
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
-TestScene::TestScene() : Scene(SceneType::TestScene)
+TestScene::TestScene() : Scene(SceneComponent::Type::TestScene)
 {
 
 }

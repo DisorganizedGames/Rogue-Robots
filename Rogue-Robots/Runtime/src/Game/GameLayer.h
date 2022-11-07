@@ -5,6 +5,7 @@
 #include "AgentManager/AgentManager.h"
 #include "GameComponent.h"
 #include "GameSystems.h"
+#include "Scene.h"
 
 
 enum class GameState
@@ -16,7 +17,8 @@ enum class GameState
 	Playing,
 	Won,
 	Lost,
-	Exiting
+	Exiting,
+	Restart,
 };
 
 class GameLayer : public DOG::Layer
@@ -44,12 +46,9 @@ private:
 	void KillPlayer(DOG::entity e);
 
 	void RegisterLuaInterfaces();
-	std::vector<DOG::entity> LoadLevel(std::string file); //Loads a PCG generated level.
 	void Input(DOG::Key key);
 	void Release(DOG::Key key);
 	void CameraUpdate();
-	std::vector<DOG::entity> SpawnPlayers(const DirectX::SimpleMath::Vector3& pos, u8 playerCount, f32 spread = 10.f);
-	std::vector<DOG::entity> AddFlashlightsToPlayers(const std::vector<DOG::entity>& players);
 	std::vector<DOG::entity> SpawnAgents(const EntityTypes type, const DirectX::SimpleMath::Vector3& pos, u8 agentCount, f32 spread = 10.f);
 
 	void HandleCheats();
@@ -61,8 +60,9 @@ private:
 	void CheatDebugMenu(bool& open);
 private:
 	GameState m_gameState;
-	std::unique_ptr<DOG::Scene> m_testScene;
-	std::unique_ptr<DOG::Scene> m_mainScene;
+	SceneComponent::Type m_selectedScene = SceneComponent::Type::TunnelRoom2Scene;
+	std::unique_ptr<Scene> m_testScene;
+	std::unique_ptr<Scene> m_mainScene;
 	std::vector<u32> m_shapes;
 	DOG::EntityManager& m_entityManager;
 	std::vector<std::shared_ptr<LuaInterface>> m_luaInterfaces;

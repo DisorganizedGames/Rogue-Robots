@@ -8,7 +8,7 @@ set(SourceFiles
 		"src/Pathfinder/Pathfinder.h" "src/Pathfinder/Pathfinder.cpp"
 		"src/Game/LuaInterfaces.h" "src/Game/LuaInterfaces.cpp"
 		"src/Game/EntitesTypes.h"
-		"src/Game/TestScene.h" "src/Game/TestScene.cpp" "src/Game/MainScene.h" "src/Game/MainScene.cpp"
+		"src/Game/TestScene.h" "src/Game/TestScene.cpp"  
 		"src/Network/Server.h" "src/Network/Server.cpp" "src/Network/Client.h" "src/Network/Client.cpp"
 		 
 		"src/Game/AgentManager/AgentComponents.h"
@@ -17,7 +17,11 @@ set(SourceFiles
 		 "src/Game/ExplosionSystems.h" "src/Game/ExplosionSystems.cpp" "src/Network/Network.h"
 		"src/Game/HomingMissileSystem.h" "src/Game/HomingMissileSystem.cpp"
 		"src/Game/GameSystems.h" "src/Game/GameSystems.cpp"
-)
+		"src/Game/Scene.h" "src/Game/Scene.cpp" "src/Game/PcgLevelLoader.h" "src/Game/PcgLevelLoader.cpp"
+		"src/Game/PrefabInstantiatorFunctions.h" "src/Game/PrefabInstantiatorFunctions.cpp"
+		"src/Game/OldDefaultScene.h" "src/Game/OldDefaultScene.cpp"
+		"src/Game/TunnelScenes.h" "src/Game/TunnelScenes.cpp"
+		)
 		
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")
