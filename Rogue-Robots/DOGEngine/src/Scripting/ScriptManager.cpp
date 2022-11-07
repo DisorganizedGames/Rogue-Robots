@@ -21,27 +21,30 @@ namespace DOG
 	//Reloades the script
 	void ScriptManager::ReloadFile(const std::string& fileName, ScriptData& scriptData)
 	{
-		/*RemoveScript(scriptData.entity, fileName);*/
-
 		//Removes the old environment and creates a new one
 		//Copy the old entity
 		entity entityID = m_luaW->GetIntegerFromTable(scriptData.scriptTable, "EntityID");
-		m_luaW->RemoveReferenceToTable(scriptData.scriptTable);
-		scriptData.scriptTable = m_luaW->CreateTable();
-		m_luaW->CreateEnvironment(scriptData.scriptTable, c_pathToScripts + fileName);
-		m_luaW->AddNumberToTable(scriptData.scriptTable, "EntityID", (int)entityID);
+		
+		//Call OnDestroy for clean up in the lua script
+		CallOnDestroy(scriptData);
 
-		//Remove the old function references
-		m_luaW->RemoveReferenceToFunction(scriptData.onStartFunction);
-		m_luaW->RemoveReferenceToFunction(scriptData.onUpdateFunction);
+		//Remove references
+		RemoveReferences(scriptData);
+
+		//Reload file
+		scriptData.scriptTable = m_luaW->CreateTable();
+		m_luaW->AddNumberToTable(scriptData.scriptTable, "EntityID", (int)entityID);
+		m_luaW->CreateEnvironment(scriptData.scriptTable, c_pathToScripts + fileName);
 
 		//Get the new functions from the table
 		LuaTable table(scriptData.scriptTable, true);
 		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
 		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
+		scriptData.onDestroyFunction = table.TryGetFunctionFromTable("OnDestroy");
 
-		//Call start on the reloaded script!
-		table.CallFunctionOnTable(scriptData.onStartFunction);
+		//Call start on the reloaded script (if it exists)!
+		if (m_luaW->CheckIfFunctionExist(scriptData.onStartFunction))
+			table.CallFunctionOnTable(scriptData.onStartFunction);
 	}
 
 	//Test if we can reload the file and return true/false
@@ -70,6 +73,7 @@ namespace DOG
 		m_luaW->RemoveReferenceToTable(scriptData.scriptTable);
 		m_luaW->RemoveReferenceToFunction(scriptData.onStartFunction);
 		m_luaW->RemoveReferenceToFunction(scriptData.onUpdateFunction);
+		m_luaW->RemoveReferenceToFunction(scriptData.onDestroyFunction);
 	}
 
 	void ScriptManager::RemoveScriptData(entity entity, bool removeAllEntityScripts, u32 vectorIndex)
@@ -85,9 +89,15 @@ namespace DOG
 				if (removeAllEntityScripts || vectorIndex == storedScriptData.getScriptData.vectorIndex)
 				{
 					if (storedScriptData.getScriptData.sorted)
+					{
+						CallOnDestroy(m_sortedScripts[storedScriptData.getScriptData.vectorIndex][storedScriptData.scriptIndex]);
 						RemoveReferences(m_sortedScripts[storedScriptData.getScriptData.vectorIndex][storedScriptData.scriptIndex]);
+					}
 					else
+					{
+						CallOnDestroy(m_unsortedScripts[storedScriptData.getScriptData.vectorIndex][storedScriptData.scriptIndex]);
 						RemoveReferences(m_unsortedScripts[storedScriptData.getScriptData.vectorIndex][storedScriptData.scriptIndex]);
+					}
 
 					//Could be changed for performance if needed
 					m_freeScriptPositions.push_back(storedScriptData);
@@ -115,6 +125,13 @@ namespace DOG
 		table.CreateEnvironment(c_pathToScripts + luaFileName);
 		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
 		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
+		scriptData.onDestroyFunction = table.TryGetFunctionFromTable("OnDestroy");
+
+		//Check if StartScripts have been called
+		if (m_callStartOnCreationOfScripts && m_luaW->CheckIfFunctionExist(scriptData.onStartFunction))
+		{
+			m_luaW->CallTableLuaFunction(scriptData.scriptTable, scriptData.onStartFunction);
+		}
 
 		StoredScriptData storedScriptData = {};
 
@@ -199,6 +216,14 @@ namespace DOG
 		}
 	}
 
+	void ScriptManager::CallOnDestroy(ScriptData& scriptData)
+	{
+		if (m_luaW->CheckIfFunctionExist(scriptData.onDestroyFunction))
+		{
+			m_luaW->CallTableLuaFunction(scriptData.scriptTable, scriptData.onDestroyFunction);
+		}
+	}
+
 	ScriptManager::ScriptManager(LuaW* luaW) : m_luaW(luaW), m_entityManager(DOG::EntityManager::Get())
 	{
 #ifdef _DEBUG
@@ -211,7 +236,6 @@ namespace DOG
 		);
 #endif // _DEBUG
 
-		m_idCounter = 0;
 		m_sortedScriptsHalfwayIndex = 0;
 	}
 
@@ -312,7 +336,7 @@ namespace DOG
 				{
 					std::cout << "File being reloaded but there exist no script of that file\n";
 					s_filesToBeReloaded.clear();
-					return;
+					continue;
 				}
 
 				bool fileIsReloadedable = TestReloadFile(s_filesToBeReloaded[i]);
@@ -338,12 +362,17 @@ namespace DOG
 				}
 				std::cout << s_filesToBeReloaded[i] << "\n";
 			}
+			std::cout << "Reloaded above files\n";
+
 			s_filesToBeReloaded.clear();
 		}
 	}
 
 	void ScriptManager::StartScripts()
 	{
+		//Set that StartScripts function have been called
+		m_callStartOnCreationOfScripts = true;
+
 		//Run the scripts which should happen first!
 		for (u32 index = 0; index < m_sortedScriptsHalfwayIndex; ++index)
 		{

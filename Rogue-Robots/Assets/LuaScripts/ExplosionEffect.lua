@@ -1,3 +1,5 @@
+require("VectorMath")
+
 local shrinkTime = 0.7
 local explosionSize = Vector3.FromTable(Entity:GetTransformScaleData(EntityID))
 local growTime = 0.13
