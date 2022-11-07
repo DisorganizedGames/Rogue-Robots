@@ -630,7 +630,6 @@ namespace DOG
 				XMMatrixRotationQuaternion(m_fullbodySRT[rIdx]) *
 				XMMatrixTranslationFromVector(m_fullbodySRT[tIdx])
 			);
-
 #if defined _DEBUG
 			// apply addition imgui bone influence
 			ntf *= ImguiTransform(i);
@@ -669,66 +668,68 @@ namespace DOG
 		const auto weightGroupB = 0.f;
 
 		auto HasInfluence = [ac](const u32 group) {
-			bool ret = ac.groupClipCount[group] > 0;
-			return ret;
+			return group == fullBodyGroup || (ac.groupClipCount[group] > 0 || ac.gWeights[group]);
 		};
 
-		std::unordered_map<u32, std::vector<XMVECTOR>> groupS;
-		std::unordered_map<u32, std::vector<XMVECTOR>> groupR;
-		std::unordered_map<u32, std::vector<XMVECTOR>> groupT;
-
 		// Go through clip groups
-		for (u32 group = 0; group < N_GROUPS; group++)
+		for (u32 i = 0; i < N_KEYS; i++)
 		{
-			if (HasInfluence(group))
+			const auto key = static_cast<KeyType>(i);
+			for (u32 group = 0; group < N_GROUPS; group++)
 			{
-				groupS.insert({ group, ExtractClipNodeInfluences(ac, KeyType::Scale, group, rigID) });
-				groupR.insert({ group, ExtractClipNodeInfluences(ac, KeyType::Rotation, group, rigID) });
-				groupT.insert({ group, ExtractClipNodeInfluences(ac, KeyType::Translation, group, rigID) });
+				if (HasInfluence(group))
+					ExtractClipNodeInfluences(ac, key, group, rigID);
 			}
 		}
 
-		// TEEETST
-		const auto& gsv = groupS[0];
-		const auto& grv = groupR[0];
-		const auto& gtv = groupT[0];
-		for (u32 i = 0; i < groupS[0].size(); ++i)
-		{
-			const u32 sIdx = i * N_KEYS + static_cast<u32>(KeyType::Scale);
-			const u32 rIdx = i * N_KEYS + static_cast<u32>(KeyType::Rotation);
-			const u32 tIdx = i * N_KEYS + static_cast<u32>(KeyType::Translation);
-			m_fullbodySRT[sIdx] = gsv[i];
-			m_fullbodySRT[rIdx] = grv[i];
-			m_fullbodySRT[tIdx] = gtv[i];
-		}
+		// test
+		//const i8 parentGroup[N_GROUPS] = { -1, 0, 0 };
+
+		//XMVECTOR intermediarySRT[NodeCount(MIXAMO_RIG_ID)] = { {} };
+		//std::unordered_map<u32, std::vector<XMVECTOR>> groupS;
+		//std::unordered_map<u32, std::vector<XMVECTOR>> groupR;
+		//std::unordered_map<u32, std::vector<XMVECTOR>> groupT;
+		//// TEEETST
+		//const auto& gsv = groupS[0];
+		//const auto& grv = groupR[0];
+		//const auto& gtv = groupT[0];
+		//for (u32 i = 0; i < groupS[0].size(); ++i)
+		//{
+		//	const u32 sIdx = i * N_KEYS + static_cast<u32>(KeyType::Scale);
+		//	const u32 rIdx = i * N_KEYS + static_cast<u32>(KeyType::Rotation);
+		//	const u32 tIdx = i * N_KEYS + static_cast<u32>(KeyType::Translation);
+		//	m_fullbodySRT[sIdx] = gsv[i];
+		//	m_fullbodySRT[rIdx] = grv[i];
+		//	m_fullbodySRT[tIdx] = gtv[i];
+		//}
 
 		// Blend between the partial body group and the full body animation group
-		for (u8 i = 1; i < NodeCount(rigID); ++i)
-		{
-			f32 weight = 0.0f;
-			if (InGroup(groupA, rigID, i)) // lower body
-				weight = weightGroupA;
-			else if (InGroup(groupB, rigID, i)) // upper body
-				weight = weightGroupB;
+		//for (u8 i = 1; i < NodeCount(rigID); ++i)
+		//{
+		//	f32 weight = 0.0f;
+		//	if (InGroup(groupA, rigID, i)) // lower body
+		//		weight = weightGroupA;
+		//	else if (InGroup(groupB, rigID, i)) // upper body
+		//		weight = weightGroupB;
 
-			const u32 sIdx = i * 3, rIdx = i * 3 + 1, tIdx = i * 3 + 2;
-			const XMVECTOR scaling1 = m_fullbodySRT[sIdx], scaling2 = m_partialSRT[sIdx];
-			const XMVECTOR rotation1 = m_fullbodySRT[rIdx], rotation2 = m_partialSRT[rIdx];
-			const XMVECTOR translation1 = m_fullbodySRT[tIdx], translation2 = m_partialSRT[tIdx];
-			m_fullbodySRT[sIdx] = XMVectorLerp(scaling1, scaling2, weight);
-			m_fullbodySRT[rIdx] = XMQuaternionSlerp(rotation1, rotation2, weight);
-			m_fullbodySRT[tIdx] = XMVectorLerp(translation1, translation2, weight);
-		}
+		//	const u32 sIdx = i * 3, rIdx = i * 3 + 1, tIdx = i * 3 + 2;
+		//	const XMVECTOR scaling1 = m_fullbodySRT[sIdx], scaling2 = m_partialSRT[sIdx];
+		//	const XMVECTOR rotation1 = m_fullbodySRT[rIdx], rotation2 = m_partialSRT[rIdx];
+		//	const XMVECTOR translation1 = m_fullbodySRT[tIdx], translation2 = m_partialSRT[tIdx];
+		//	m_fullbodySRT[sIdx] = XMVectorLerp(scaling1, scaling2, weight);
+		//	m_fullbodySRT[rIdx] = XMQuaternionSlerp(rotation1, rotation2, weight);
+		//	m_fullbodySRT[tIdx] = XMVectorLerp(translation1, translation2, weight);
+		//}
 	}
 
-	std::vector<DirectX::XMVECTOR> AnimationManager::ExtractClipNodeInfluences(RigAnimator& a, const KeyType key, const u32 group, const u32 rigID)
+	void AnimationManager::ExtractClipNodeInfluences(RigAnimator& a, const KeyType key, const u32 group, const u32 rigID)
 	{
 		ZoneScopedN("Extract");
 		using namespace DirectX;
 		using PoseData = DOG::ClipData;
 		using AnimationKeys = std::unordered_map<i32, std::vector<AnimationKey>>;
 
-		auto [startNode, nNodes] = GetNodeStartAndCount(rigID, group);
+		const auto [startNode, nNodes] = GetNodeStartAndCount(rigID, group);
 		const auto rootIdx = RIG_SPECIFICS[rigID].rootJoint;
 		const auto nClips = a.groupClipCount[group];
 		const PoseData* clips = &a.clipData[a.GetGroupStartIdx(group)];
@@ -739,18 +740,17 @@ namespace DOG
 		// For every clip in clip group
 		for (u32 i = 0; i < nClips; i++)
 		{
-			// Pose data
-			const auto aID = clips[i].aID;
+			// Clip Pose data
 			const auto weight = clips[i].weight;
 			const auto tick = clips[i].tick;
-			const auto& animation = anims[aID];
-			// Store influence that the clip animation has on each node
-			for (u32 node = 0; node < nNodes; node++)
+			const auto& animation = anims[clips[i].aID];
+			// Store influence that the animation clip has on each node
+			for (u32 node = 0; node < nNodes; ++node)
 			{
-				// Storage value
-				const auto storeIdx = node * nClips + i;
+				// Key value index
+				const auto keyIdx = node * nClips + i;
 				// Rig index
-				auto rigNodeIdx = startNode + node;
+				auto rigNode = startNode + node;
 
 				const AnimationKeys* keys = {};
 				switch (key)
@@ -766,68 +766,64 @@ namespace DOG
 					break;
 				}
 				// Keyframe influence exist, store it
-				if (keys->find(rigNodeIdx) != keys->end())
+				if (keys->find(rigNode) != keys->end())
 				{
-					auto keyVal = GetKeyValue(keys->at(rigNodeIdx), key, tick);
-					keyValues[storeIdx] = key != KeyType::Rotation ? weight * keyVal : keyVal;
+					auto keyVal = GetKeyValue(keys->at(rigNode), key, tick);
+					keyValues[keyIdx] = key != KeyType::Rotation ? weight * keyVal : keyVal;
 				}
 			}
 		}
 
-		/*auto& storeSRT = group == RIG_SPECIFICS[rigID].fullbodyGroup ?
-			m_fullbodySRT : m_partialSRT;*/
-		std::vector<XMVECTOR> storeSRT(nNodes, XMVECTOR{});
+		std::array<XMVECTOR, NodeCount(MIXAMO_RIG_ID)> storeSRT = { XMVECTOR{} };
 		// Sum clip influences on each node for Weighted avg.
-		for (u32 i = 0; i < nNodes; i++)
+		for (u32 i = 0; i < nNodes; ++i)
 		{
 			// index to first clip influencing bone
-			const auto frstClipIdx = i * nClips;
-			// rig node index
-			auto nodeIdx = i;
-
-			// First group controls root joint chain (tmp solution)
-			if (group == groupA)
-				nodeIdx = i < rootIdx ? i + 1 : nodeIdx - rootIdx;
-
-			//const auto rigKeyIdx = N_KEYS * nodeIdx + static_cast<u32>(key);
-			const auto rigKeyIdx = nodeIdx;
+			auto clipIdx = i * nClips;
 			
 			if (key != KeyType::Rotation)
 			{	// Sum clip key values for weighted average
-				for (u32 j = 0; j < nClips; ++j)
-				{
-					const auto clipIdx = frstClipIdx + j;
-					storeSRT[rigKeyIdx] += keyValues[clipIdx];
-				}
-				const bool rootDefault = key == KeyType::Translation && nodeIdx == ROOT_JOINT && !m_imguiApplyRootTranslation;
+				for (u32 j = 0; j < nClips; ++j, ++clipIdx)
+					storeSRT[i] += keyValues[clipIdx];
+				
+				const bool rootDefault = key == KeyType::Translation && i == ROOT_JOINT && !m_imguiApplyRootTranslation;
 				// if no keyframe scaling/translation influence set base value
-				if (XMComparisonAllTrue(XMVector3EqualR(storeSRT[rigKeyIdx], {})) || rootDefault)
-				{
-					const auto defaultValue = key == KeyType::Scale ? XMLoadFloat3(&m_baseScale) : XMLoadFloat3(&m_baseTranslation);
-					storeSRT[rigKeyIdx] = defaultValue;
-				}
+				if (XMComparisonAllTrue(XMVector3EqualR(storeSRT[i], {})) || rootDefault)
+					storeSRT[i] = key == KeyType::Scale ? XMLoadFloat3(&m_baseScale) : XMLoadFloat3(&m_baseTranslation);
 			}
 			else if (keyValues.size())
 			{	// weighted avg. for rot Quaternions
-				XMVECTOR q0 = keyValues[frstClipIdx];
-				for (u32 j = 0; j < nClips; ++j)
+				XMVECTOR q0 = keyValues[clipIdx];
+				for (u32 j = 0; j < nClips; ++j, ++clipIdx)
 				{
-					const auto clipIdx = frstClipIdx + j;
 					auto w = clips[j].weight;
 					XMVECTOR& q = keyValues[clipIdx];
 					auto dot = XMVector4Dot(q0, q);
 					if (j > 0 && dot.m128_f32[0] < 0.0)
 						w = -w;
 
-					storeSRT[rigKeyIdx] += w * q;
+					storeSRT[i] += w * q;
 				}
-				storeSRT[rigKeyIdx] = XMVector4Normalize(storeSRT[rigKeyIdx]);
+				storeSRT[i] = XMVector4Normalize(storeSRT[i]);
 
 				// if no keyframe rotation influence set base rotation
-				if (XMComparisonAllTrue(XMVector4EqualR(storeSRT[rigKeyIdx], {})))
-					storeSRT[rigKeyIdx] = XMLoadFloat4(&m_baseRotation);
+				if (XMComparisonAllTrue(XMVector4EqualR(storeSRT[i], {})))
+					storeSRT[i] = XMLoadFloat4(&m_baseRotation);
 			}
 		}
-		return storeSRT;
+		
+		// Lerp/Slerp group weight influences and previous sum
+		for (u32 i = 0; i < nNodes; i++)
+		{
+			const auto idx = N_KEYS * (startNode + i) + static_cast<u32>(key);
+			// Store in full body array, full body group is always run first
+			// The Following groups lerps/slerps their results with the previous results
+			if (group == fullBodyGroup)
+				m_fullbodySRT[idx] = storeSRT[i];
+			else
+				m_fullbodySRT[idx] = key == KeyType::Rotation ?
+					XMQuaternionSlerp(m_fullbodySRT[idx], storeSRT[i], a.gWeights[group]) :
+					XMVectorLerp(m_fullbodySRT[idx], storeSRT[i], a.gWeights[group]);
+		}
 	}
 }

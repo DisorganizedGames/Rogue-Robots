@@ -50,7 +50,7 @@ namespace DOG
 
 		// RIG ANIMATOR
 		void CalculateSRT(RigAnimator& ac, const u8 rigID);
-		std::vector<DirectX::XMVECTOR> ExtractClipNodeInfluences(RigAnimator& animator, const KeyType key, const u32 group, const u32 rigID);
+		void ExtractClipNodeInfluences(RigAnimator& animator, const KeyType key, const u32 group, const u32 rigID);
 
 		i8 GetNextAnimatorID()
 		{

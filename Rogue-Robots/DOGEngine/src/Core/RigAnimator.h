@@ -10,6 +10,7 @@ namespace DOG
 	static constexpr u8 LOOPING = 0;
 	static constexpr u8 ACTION = 1;
 
+	// Animation clip, contains data for updating tick/weight of tick
 	struct Clip
 	{
 		i32 aID = -1;
@@ -26,12 +27,14 @@ namespace DOG
 		f32 targetWeight = 1.0f;	// Weight
 		f32 currentWeight = 0.0f;	// Weight
 	};
+	// Data needed from Animation Clip for calculating pose influence, maybe add this as a secondary component on the entity for network syncing
 	struct ClipData
 	{
 		i32 aID = -1;
 		f32 weight = 0.f;
 		f32 tick = 0.f;
 	};
+	// Data for blending between groups as well as action vs. looping clips in same group
 	struct BlendSpecification
 	{
 		f32 scale = 0.f;
@@ -40,15 +43,16 @@ namespace DOG
 		f32 transitionLength = 0.f;
 		f32 startWeight = 1.f;
 	};
+	// Set of active clips,
 	struct ClipSet
 	{
-		using Setter = AnimationComponent::Setter2;
 		f32 weight = 0.f;
 		f32 playbackRate = 0.f;
 		u32 startClip = 0;
 		u32 nTargetClips = 0;
 		u32 nTotalClips = 0;
 	};
+	// Group of clips influencing rig, contains a 'looping' clipset and a 'action' clipset, and a blendspecification between them
 	struct AnimationGroup
 	{
 		u32 primary = 0;
@@ -56,6 +60,7 @@ namespace DOG
 		BlendSpecification blend;
 		std::array<ClipSet, 2> sets;
 	};
+	// Animator of a rigged entity, handles adding clips via RigAnimationComponent and updating/removing active clips
 	struct RigAnimator
 	{
 		using Setter = AnimationComponent::Setter2;
@@ -64,87 +69,71 @@ namespace DOG
 		ImportedRig* rigData = {};
 
 		std::array<Clip, 50> clips = {};
-		// index for First clip of corresponding group
+		// Weights per group, fullbody 
+		f32 gWeights[N_GROUPS - 1] = { 0.5f, 0.f };
+		// Number of Clips influencing group
 		std::array<u32, N_GROUPS> groupClipCount = { 0 };
+		// Data needed to update rig
 		std::array<ClipData, 50> clipData = {};
+		// Animation groups
 		std::array<AnimationGroup, N_GROUPS> groups = {};
 
 		RigAnimator();
 
+		// Update active clips
 		void Update(const f32 dt);
 
+		// Get index of clip
 		i32 GetClipIndex(const ClipSet& set, const i32 animationID);
+
+		// Add a new clip
 		void AddClip(ClipSet& set, Setter& setter, u32 setIdx, f32 startTime);
+
+		// Modifies an active clip
 		void ModifyClip(Clip& clip, Setter& setter, u32 setIdx);
+
 		// Set new target animation set
 		void AddTargetSet(ClipSet& set, Setter& setter, u32 clipCount);
 
+		// Get index of first clip from group
 		u32 GetGroupStartIdx(u32 group);
 
+		// Updates the blend spec and clips in group
 		u32 UpdateGroup(AnimationGroup& group, const u32 clipIdx, const f32 dt);
 
+		// Updates clips in set
 		u32 UpdateClipSet(ClipSet& set, const u32 clipIdx, const f32 dt, bool looping = false);
 
+		// Update and return normalized time of a clip
 		f32 ClipNormalizedTime(Clip& c, const f32 delta, bool loop);
+
+		// Get current tick of a clip
 		f32 ClipTick(const Clip& c, const f32 nt);
 
+		// Blend functions
 		f32 BezierWeight(const f32 currentTime, const f32 transitionLength, const f32 startValue, const f32 targetValue);
-
 		f32 LinearWeight(const f32 currentTime, const f32 transitionLength, const f32 startValue, const f32 targetValue);
 
+		// Process the AnimationComponent and the Setters within, adding/modifying active clips that influences the entity
 		void HandleAnimationComponent(AnimationComponent& ac);
-
 		void HandleSetter(Setter& setter, AnimationGroup& group);
 
-		std::pair<f32, f32> ClipTickWeight(Clip& c, f32 dt);
-
+		// Set clip data based on setter
 		void SetClip(Setter& setter, u32 setIdx, Clip& clip);
 
+		// Set blendSpec based on setter
 		void SetBlendSpec(AnimationGroup& group, const Setter& setter);
 
+		// Update group blendSpec and setting corresponding weights
 		void UpdateBlendSpec(AnimationGroup& group, const f32 dt);
 
-		void NormalizeWeights(ClipSet& set);
-
+		// Transition out old target set
 		void TransitionOutClips(ClipSet& set, const f32 transitionStart, const f32 transitionLen);
 
+		// Assert that setter is valid input
 		u32 ValidateSetter(Setter& setter);
 
+		// Reset a setter
 		void ResetSetter(Setter& setter);
 	};
 }
-
-//
-//struct AnimationComponent
-//{
-//	static constexpr u8 MAX_SETTERS = 10;
-//	static constexpr u8 MAX_TARGET_ANIMS = 3;
-//	u32 offset;
-//	i8 rigID = 0;
-//	i8 animatorID = -1;
-//	i8 addedSetters = 0;
-//	struct Setter
-//	{
-//		bool loop;
-//		bool desired;
-//
-//		u8 animationID;
-//		u8 group;
-//		f32 transitionLength;
-//		f32 playbackRate;
-//	};
-//	struct TargetAnimations
-//	{
-//		f32 transitionLength;
-//		BlendMode blendMode;
-//		u8 group;
-//		u8 flags;
-//		u8 priority;
-//		bool loop;
-//		u8 animationIDs[MAX_TARGET_ANIMS];
-//		f32 targetWeights[MAX_TARGET_ANIMS];
-//		f32 playbackRates[MAX_TARGET_ANIMS];
-//	};
-//	std::array<TargetAnimations, MAX_SETTERS> groupSetters;
-//	std::array<Setter, MAX_SETTERS> animSetters;
-//};
