@@ -59,7 +59,7 @@ set(SourceFiles
 	"src/Core/CustomMaterialManager.h" "src/Core/CustomMaterialManager.cpp"
 	"src/Core/CustomMeshManager.h" "src/Core/CustomMeshManager.cpp"
 	"src/Graphics/RHI/Types/GPUInfo.h"
-	 "src/Graphics/Rendering/FrontRenderer.h" "src/Graphics/Rendering/FrontRenderer.cpp"
+	"src/Graphics/Rendering/FrontRenderer.h" "src/Graphics/Rendering/FrontRenderer.cpp"
 	"src/ECS/QueryHelpers.h" "src/ECS/QueryHelpers.cpp"
 	)
 
