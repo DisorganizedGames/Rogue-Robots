@@ -71,7 +71,7 @@ namespace DOG
 			clipData[i].aID = c.animationID;
 			const auto transitionTime = globalTime - c.transitionStart;
 	
-			clipData[i].tick = c.UpdateClipTick(transitionTime < dt ? globalTime - c.transitionStart : dt);
+			clipData[i].tick = c.UpdateClipTick(transitionTime < dt ? transitionTime : dt);
 			clipData[i].weight = LinearBlend(transitionTime, c.transitionLength, c.startWeight, c.targetWeight, c.currentWeight);
 			
 			groupWeightSum[c.group] += clipData[i].weight;
