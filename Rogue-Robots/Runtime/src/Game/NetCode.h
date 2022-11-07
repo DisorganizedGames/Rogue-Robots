@@ -29,6 +29,7 @@ public:
 	u8 GetNrOfPlayers();
 	std::string GetIpAdress();
 	bool IsLobbyAlive();
+	void SetMulticastAdress(const char* adress);
 private:
 	void Receive();
 	void ReceiveUdp();
@@ -62,6 +63,8 @@ private:
 	bool m_lobby;
 	Server m_serverHost;
 	int m_numberOfPackets;
+	char m_multicastAdress[16];
+
 };
 
 class DeleteNetworkSync : public DOG::ISystem

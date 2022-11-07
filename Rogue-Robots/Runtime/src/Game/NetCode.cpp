@@ -174,7 +174,6 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 							m_bufferReceiveSize += header.nrOfNetTransform * sizeof(NetworkTransform);
 						}
  
-
 						if (header.nrOfChangedAgentsHp > 0)
 						{
 							NetworkAgentStats* tempStats = new NetworkAgentStats;
@@ -295,6 +294,7 @@ void NetCode::UpdateSendUdp()
 
 bool NetCode::Host()
 {
+	
 	bool server = m_serverHost.StartTcpServer();
 	if (server)
 	{
@@ -319,9 +319,25 @@ bool NetCode::Host()
 
 bool NetCode::Join(char* inputString)
 {
-	if (inputString[0] == 'd')
+	if (inputString[0] == 'a')
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.55"); //sam
+	else if(inputString[0] == 'b')
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.72"); // filip
+	else if (inputString[0] == 'c')
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.73"); // nad
+	else if (inputString[0] == 'd')
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.67"); // axel
+	else if (inputString[0] == 'e')
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.26"); //ove
+	else if (inputString[0] == 'f')
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.254"); //gunnar
+	else if (inputString[0] == 'g')
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.70"); // Emil
+	else if (inputString[0] == 'h')
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.76"); // Jonatan
+	else if (inputString[0] == 'u')
 	{
-		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.74"); //192.168.1.55 || 192.168.50.214
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.55"); //192.168.1.55 || 192.168.50.214
 	}
 	else
 	{
@@ -359,6 +375,12 @@ bool NetCode::IsLobbyAlive()
 	return m_inputTcp.lobbyAlive;
 }
 
+void NetCode::SetMulticastAdress(const char* adress)
+{
+	m_client.SetMulticastAdress(adress);
+	m_serverHost.SetMulticastAdress(adress);
+}
+
 void DeleteNetworkSync::OnLateUpdate(DOG::entity e, DeferredDeletionComponent&, NetworkId& netId, TransformComponent& transC)
 {
 	DOG::EntityManager& m_entityManager = DOG::EntityManager::Get();
@@ -370,3 +392,4 @@ void DeleteNetworkSync::OnLateUpdate(DOG::entity e, DeferredDeletionComponent&, 
 	t.position = transC.GetPosition();
 	m_entityManager.RemoveComponent<NetworkId>(e);
 }
+

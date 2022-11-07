@@ -12,6 +12,8 @@ Client::Client()
 	m_sendUdpId = 0;
 	ZeroMemory(&m_hostAddressUdp, sizeof(m_hostAddressUdp));
 	ZeroMemory(&m_reciveAddressUdp, sizeof(m_reciveAddressUdp));
+	const char adress[] = "239.255.255.0";
+	memcpy(m_multicastAdress, adress, sizeof(adress));
 }
 
 Client::~Client()
@@ -121,7 +123,6 @@ void Client::SendChararrayTcp(char* input, int size)
 	return;
 }
 
-
 u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 {
 	TcpHeader packet;
@@ -149,19 +150,25 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 			{
 				u8 nrOfPackets = 0;
 
-				while ( (bytesRecived - processedBytes) > 0)
+				while ((bytesRecived - processedBytes) > 0 && (bytesRecived - processedBytes) >= packet.sizeOfPayload)
 				{
 					processedBytes += packet.sizeOfPayload;
 					memcpy(&packet, reciveBuffer + processedBytes, sizeof(TcpHeader));
 					nrOfPackets++;
 				}
-				return nrOfPackets;
+				if((bytesRecived - processedBytes) == 0)
+					return nrOfPackets;
 			}
 			// only part of  the packet arrived
 			else if ((bytesRecived - processedBytes) < packet.sizeOfPayload)
 			{
 				std::cout << "Client: Only part of the packet arrived: " << bytesRecived << "header payload: " << packet.sizeOfPayload << std::endl;
 				processedBytes += bytesRecived;
+			}
+			else
+			{
+				std::cout << "Client: Faulty packet" << std::endl;
+				return 0;
 			}
 		}
 		else if (bytesRecived == -1)
@@ -171,7 +178,6 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 		}
 	}
 }
-
 
 void Client::SetUpUdp()
 {
@@ -186,7 +192,7 @@ void Client::SetUpUdp()
 
 
 	m_hostAddressUdp.sin_family = AF_INET;
-	inet_pton(AF_INET, MULTICAST_ADRESS, &m_hostAddressUdp.sin_addr.s_addr); //inet_addr("239.255.255.0");
+	inet_pton(AF_INET, m_multicastAdress, &m_hostAddressUdp.sin_addr.s_addr); //inet_addr("239.255.255.0");
 	m_hostAddressUdp.sin_port = htons(PORTNUMBER_IN_INT);
 
 	//recive
@@ -214,23 +220,23 @@ void Client::SetUpUdp()
 	check = bind(m_udpReciveSocket, (struct sockaddr*)&m_reciveAddressUdp, sizeof(m_reciveAddressUdp));
 	if (check == SOCKET_ERROR)
 	{
-		std::cout << "Server: Failed to bind udpsocket on server, ErrorCode: " << WSAGetLastError() << std::endl;
+		std::cout << "Client: Failed to bind udpsocket on server, ErrorCode: " << WSAGetLastError() << std::endl;
 		return;
 	}
 
-	inet_pton(AF_INET, MULTICAST_ADRESS, &setMulticast.imr_multiaddr.S_un.S_addr);
+	inet_pton(AF_INET, m_multicastAdress, &setMulticast.imr_multiaddr.S_un.S_addr);
 	setMulticast.imr_interface.S_un.S_addr = htonl(INADDR_ANY);
 	check = setsockopt(m_udpReciveSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&setMulticast, sizeof(setMulticast));
 	if (check == SOCKET_ERROR)
 	{
-		std::cout << "Server: Failed to set assign multicast on udp on server, ErrorCode: " << WSAGetLastError() << std::endl;
+		std::cout << "Client: Failed to set assign multicast on udp on server, ErrorCode: " << WSAGetLastError() << std::endl;
 		return;
 	}
 
 	check = setsockopt(m_udpReciveSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&ttl, sizeof(ttl));
 	if (check == SOCKET_ERROR)
 	{
-		std::cout << "Server: Failed to set ttl on udp on server, ErrorCode: " << WSAGetLastError() << std::endl;
+		std::cout << "Client: Failed to set ttl on udp on server, ErrorCode: " << WSAGetLastError() << std::endl;
 		return;
 	}
 }
@@ -259,4 +265,9 @@ struct UdpReturnData Client::ReceiveUdp()
 
 	}
 	return returnData;
+}
+
+void Client::SetMulticastAdress(const char* adress)
+{
+	memcpy(m_multicastAdress, adress, 16);
 }

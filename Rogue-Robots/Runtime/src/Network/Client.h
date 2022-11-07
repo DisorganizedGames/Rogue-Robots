@@ -13,6 +13,7 @@
 		INT8 ConnectTcpServer(std::string ipAdress);
 		void SendChararrayTcp(char* input, int size);
 		u8 ReceiveCharArrayTcp(char* recivebuffer);
+		void SetMulticastAdress(const char* adress);
 	public:
 		void SetUpUdp();
 		void SendUdp(PlayerNetworkComponentUdp input);
@@ -32,4 +33,5 @@
 		char* m_sendUdpBuffer;
 		char* m_reciveUdpBuffer;
 		PlayerNetworkComponentUdp m_holdplayersUdp[MAX_PLAYER_COUNT];
+		char m_multicastAdress[16];
 	};
