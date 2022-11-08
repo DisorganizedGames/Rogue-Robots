@@ -6,6 +6,17 @@ int main(int argc, char** argv)
 
 	WriteAssetFiles("../../assets", "../../asset_output");
 
+	/*
+		Settings:
+		{
+			TextureEncoding: BC7		// Dx settings
+			CompressionRate: ...		// zlib settings
+		}
+		
+		CompressTexture(input, output.dog, settings)
+	*/
+
+
 	return 0;
 }
 
