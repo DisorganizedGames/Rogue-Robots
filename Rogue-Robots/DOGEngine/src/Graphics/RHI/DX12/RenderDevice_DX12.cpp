@@ -432,8 +432,10 @@ namespace DOG::gfx
 
 	}
 
-	TextureView RenderDevice_DX12::CreateView(Texture texture, const TextureViewDesc& desc)
+	TextureView RenderDevice_DX12::CreateView(Texture texture, const TextureViewDesc& desc2)
 	{
+		auto desc = desc2;
+
 		assert(desc.viewType != ViewType::None);
 		assert(desc.viewType != ViewType::Constant);
 		assert(desc.viewType != ViewType::RaytracingAS);
@@ -448,6 +450,9 @@ namespace DOG::gfx
 			view_desc = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 		else
 			view_desc = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		if (tex_storage.desc.format == DXGI_FORMAT_BC7_UNORM_SRGB)
+			desc.format = tex_storage.desc.format;
 
 		std::optional<DX12DescriptorChunk> uavClear;
 		std::set<u32> subresources;
@@ -998,8 +1003,9 @@ namespace DOG::gfx
 
 		src_loc.PlacedFootprint.Footprint.RowPitch = srcRowPitch;
 		src_loc.PlacedFootprint.Footprint.Depth = srcDepth;
-		src_loc.PlacedFootprint.Footprint.Width = srcWidth;
-		src_loc.PlacedFootprint.Footprint.Height = srcHeight;
+		// reinterpret if Block Compressed :)
+		src_loc.PlacedFootprint.Footprint.Width = srcFormat == DXGI_FORMAT_BC7_UNORM_SRGB ? srcWidth * 4 : srcWidth;			
+		src_loc.PlacedFootprint.Footprint.Height = srcFormat == DXGI_FORMAT_BC7_UNORM_SRGB ? srcHeight * 4 : srcHeight;
 		src_loc.PlacedFootprint.Footprint.Format = srcFormat;
 
 		cmdlRes.pair.list->CopyTextureRegion(&dst_loc, std::get<0>(dstTopLeft), std::get<1>(dstTopLeft), std::get<2>(dstTopLeft), &src_loc, nullptr);
