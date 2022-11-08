@@ -319,30 +319,30 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	switch (event.GetEventType())
 	{
 	case EventType::LeftMouseButtonPressedEvent:
-		{
-			EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
-				{
-					inputC.shoot = true;
-				});
-			break;
-		}
+	{
+		EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
+			{
+				inputC.shoot = true;
+			});
+		break;
+	}
 	case EventType::LeftMouseButtonReleasedEvent:
-		{
-			EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
-				{
-					inputC.shoot = false;
-				});
-			break;
-		}
+	{
+		EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
+			{
+				inputC.shoot = false;
+			});
+		break;
+	}
 	case EventType::KeyPressedEvent:
-		{
-			Input(EVENT(KeyPressedEvent).key);
-			break;
-		}
+	{
+		Input(EVENT(KeyPressedEvent).key);
+		break;
+	}
 	case EventType::KeyReleasedEvent:
-		{
-			Release(EVENT(KeyReleasedEvent).key);
-		}
+	{
+		Release(EVENT(KeyReleasedEvent).key);
+	}
 	}
 }
 
@@ -354,209 +354,209 @@ void GameLayer::UpdateLobby()
 		switch (m_networkStatus)
 		{
 		case NetworkStatus::Offline:
+		{
+			ImGui::Text("Host to host, join to join, play to play offline");
+			if (ImGui::Button("Host"))
 			{
-				ImGui::Text("Host to host, join to join, play to play offline");
-				if (ImGui::Button("Host"))
-				{
-					m_networkStatus = NetworkStatus::HostLobby;
+				m_networkStatus = NetworkStatus::HostLobby;
 
-				}
-				if (ImGui::Button("Join"))
-				{
-					m_networkStatus = NetworkStatus::JoinLobby;
-				}
-				if (ImGui::Button("Play"))
-				{
-					inLobby = false;
-				}
-				break;
 			}
+			if (ImGui::Button("Join"))
+			{
+				m_networkStatus = NetworkStatus::JoinLobby;
+			}
+			if (ImGui::Button("Play"))
+			{
+				inLobby = false;
+			}
+			break;
+		}
 		case NetworkStatus::HostLobby:
+		{
+			ImGui::Text("Press host to host on any other computer then thoose defined");
+			if (ImGui::Button("Host"))
 			{
-				ImGui::Text("Press host to host on any other computer then thoose defined");
-				if (ImGui::Button("Host"))
+				m_netCode.SetMulticastAdress("239.255.255.0");
+				if (m_netCode.Host())
 				{
-					m_netCode.SetMulticastAdress("239.255.255.0");
-					if (m_netCode.Host())
-					{
-						m_networkStatus = NetworkStatus::Hosting;
-					}
+					m_networkStatus = NetworkStatus::Hosting;
 				}
-				if (ImGui::Button("Host Sam"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.1");
-					if (m_netCode.Host())
-					{
-						m_networkStatus = NetworkStatus::Hosting;
-					}
-				}
-				if (ImGui::Button("Host Filip"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.2");
-					if (m_netCode.Host())
-					{
-						m_networkStatus = NetworkStatus::Hosting;
-					}
-				}
-				if (ImGui::Button("Host Nad"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.3");
-					if (m_netCode.Host())
-					{
-						m_networkStatus = NetworkStatus::Hosting;
-					}
-				}
-				if (ImGui::Button("Host Axel"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.4");
-					if (m_netCode.Host())
-					{
-						m_networkStatus = NetworkStatus::Hosting;
-					}
-				}
-				if (ImGui::Button("Host Ove"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.5");
-					if (m_netCode.Host())
-					{
-						m_networkStatus = NetworkStatus::Hosting;
-					}
-				}
-				if (ImGui::Button("Host Gunnar"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.6");
-					if (m_netCode.Host())
-					{
-						m_networkStatus = NetworkStatus::Hosting;
-					}
-				}
-				if (ImGui::Button("Host Emil F"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.7");
-					if (m_netCode.Host())
-					{
-						m_networkStatus = NetworkStatus::Hosting;
-					}
-				}
-				if (ImGui::Button("Host Jonatan"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.8");
-					if (m_netCode.Host())
-					{
-						m_networkStatus = NetworkStatus::Hosting;
-					}
-				}
-				break;
 			}
+			if (ImGui::Button("Host Sam"))
+			{
+				m_netCode.SetMulticastAdress("239.255.255.1");
+				if (m_netCode.Host())
+				{
+					m_networkStatus = NetworkStatus::Hosting;
+				}
+			}
+			if (ImGui::Button("Host Filip"))
+			{
+				m_netCode.SetMulticastAdress("239.255.255.2");
+				if (m_netCode.Host())
+				{
+					m_networkStatus = NetworkStatus::Hosting;
+				}
+			}
+			if (ImGui::Button("Host Nad"))
+			{
+				m_netCode.SetMulticastAdress("239.255.255.3");
+				if (m_netCode.Host())
+				{
+					m_networkStatus = NetworkStatus::Hosting;
+				}
+			}
+			if (ImGui::Button("Host Axel"))
+			{
+				m_netCode.SetMulticastAdress("239.255.255.4");
+				if (m_netCode.Host())
+				{
+					m_networkStatus = NetworkStatus::Hosting;
+				}
+			}
+			if (ImGui::Button("Host Ove"))
+			{
+				m_netCode.SetMulticastAdress("239.255.255.5");
+				if (m_netCode.Host())
+				{
+					m_networkStatus = NetworkStatus::Hosting;
+				}
+			}
+			if (ImGui::Button("Host Gunnar"))
+			{
+				m_netCode.SetMulticastAdress("239.255.255.6");
+				if (m_netCode.Host())
+				{
+					m_networkStatus = NetworkStatus::Hosting;
+				}
+			}
+			if (ImGui::Button("Host Emil F"))
+			{
+				m_netCode.SetMulticastAdress("239.255.255.7");
+				if (m_netCode.Host())
+				{
+					m_networkStatus = NetworkStatus::Hosting;
+				}
+			}
+			if (ImGui::Button("Host Jonatan"))
+			{
+				m_netCode.SetMulticastAdress("239.255.255.8");
+				if (m_netCode.Host())
+				{
+					m_networkStatus = NetworkStatus::Hosting;
+				}
+			}
+			break;
+		}
 		case NetworkStatus::Hosting:
+		{
+			char ip[64];
+			strcpy_s(ip, m_netCode.GetIpAdress().c_str());
+			ImGui::Text("Nr of players connected: %d", m_netCode.GetNrOfPlayers());
+			ImGui::Text("Youre ip adress: %s", ip);
+			if (ImGui::Button("Play"))
 			{
-				char ip[64];
-				strcpy_s(ip, m_netCode.GetIpAdress().c_str());
-				ImGui::Text("Nr of players connected: %d", m_netCode.GetNrOfPlayers());
-				ImGui::Text("Youre ip adress: %s", ip);
-				if (ImGui::Button("Play"))
-				{
-					m_nrOfPlayers = m_netCode.Play();
-					inLobby = false;
-				}
-				break;
+				m_nrOfPlayers = m_netCode.Play();
+				inLobby = false;
 			}
+			break;
+		}
 		case NetworkStatus::JoinLobby:
-			{
-				static char input[64]{};
-				ImGui::Text("Write ip address and then join or select premade lobby");
-				ImGui::InputText("Ip", input, 64);
+		{
+			static char input[64]{};
+			ImGui::Text("Write ip address and then join or select premade lobby");
+			ImGui::InputText("Ip", input, 64);
 
-				if (ImGui::Button("Join"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.0");
-					if (m_netCode.Join(input))
-					{
-						m_networkStatus = NetworkStatus::Joining;
-					}
-				}
-				if (ImGui::Button("Join Sam"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.1");
-					input[0] = 'a';
-					if (m_netCode.Join(input))
-					{
-						m_networkStatus = NetworkStatus::Joining;
-					}
-				}
-				if (ImGui::Button("Join Filip"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.2");
-					input[0] = 'b';
-					if (m_netCode.Join(input))
-					{
-						m_networkStatus = NetworkStatus::Joining;
-					}
-				}
-				if (ImGui::Button("Join Nad"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.3");
-					input[0] = 'c';
-					if (m_netCode.Join(input))
-					{
-						m_networkStatus = NetworkStatus::Joining;
-					}
-				}
-				if (ImGui::Button("Join Axel"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.4");
-					input[0] = 'd';
-					if (m_netCode.Join(input))
-					{
-						m_networkStatus = NetworkStatus::Joining;
-					}
-				}
-				if (ImGui::Button("Join Ove"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.5");
-					input[0] = 'e';
-					if (m_netCode.Join(input))
-					{
-						m_networkStatus = NetworkStatus::Joining;
-					}
-				}
-				if (ImGui::Button("Join Gunnar"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.6");
-					input[0] = 'f';
-					if (m_netCode.Join(input))
-					{
-						m_networkStatus = NetworkStatus::Joining;
-					}
-				}
-				if (ImGui::Button("Join Emil F"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.7");
-					input[0] = 'g';
-					if (m_netCode.Join(input))
-					{
-						m_networkStatus = NetworkStatus::Joining;
-					}
-				}
-				if (ImGui::Button("Join Jonatan"))
-				{
-					m_netCode.SetMulticastAdress("239.255.255.8");
-					input[0] = 'h';
-					if (m_netCode.Join(input))
-					{
-						m_networkStatus = NetworkStatus::Joining;
-					}
-				}
-				break;
-			}
-		case NetworkStatus::Joining:
+			if (ImGui::Button("Join"))
 			{
-				m_nrOfPlayers = m_netCode.GetNrOfPlayers();
-				ImGui::Text("Nr of players connected: %d", m_netCode.GetNrOfPlayers());
-				ImGui::Text("Waiting for Host to press Play...");
-				inLobby = m_netCode.IsLobbyAlive();
-				break;
+				m_netCode.SetMulticastAdress("239.255.255.0");
+				if (m_netCode.Join(input))
+				{
+					m_networkStatus = NetworkStatus::Joining;
+				}
 			}
+			if (ImGui::Button("Join Sam"))
+			{
+				m_netCode.SetMulticastAdress("239.255.255.1");
+				input[0] = 'a';
+				if (m_netCode.Join(input))
+				{
+					m_networkStatus = NetworkStatus::Joining;
+				}
+			}
+			if (ImGui::Button("Join Filip"))
+			{
+				m_netCode.SetMulticastAdress("239.255.255.2");
+				input[0] = 'b';
+				if (m_netCode.Join(input))
+				{
+					m_networkStatus = NetworkStatus::Joining;
+				}
+			}
+			if (ImGui::Button("Join Nad"))
+			{
+				m_netCode.SetMulticastAdress("239.255.255.3");
+				input[0] = 'c';
+				if (m_netCode.Join(input))
+				{
+					m_networkStatus = NetworkStatus::Joining;
+				}
+			}
+			if (ImGui::Button("Join Axel"))
+			{
+				m_netCode.SetMulticastAdress("239.255.255.4");
+				input[0] = 'd';
+				if (m_netCode.Join(input))
+				{
+					m_networkStatus = NetworkStatus::Joining;
+				}
+			}
+			if (ImGui::Button("Join Ove"))
+			{
+				m_netCode.SetMulticastAdress("239.255.255.5");
+				input[0] = 'e';
+				if (m_netCode.Join(input))
+				{
+					m_networkStatus = NetworkStatus::Joining;
+				}
+			}
+			if (ImGui::Button("Join Gunnar"))
+			{
+				m_netCode.SetMulticastAdress("239.255.255.6");
+				input[0] = 'f';
+				if (m_netCode.Join(input))
+				{
+					m_networkStatus = NetworkStatus::Joining;
+				}
+			}
+			if (ImGui::Button("Join Emil F"))
+			{
+				m_netCode.SetMulticastAdress("239.255.255.7");
+				input[0] = 'g';
+				if (m_netCode.Join(input))
+				{
+					m_networkStatus = NetworkStatus::Joining;
+				}
+			}
+			if (ImGui::Button("Join Jonatan"))
+			{
+				m_netCode.SetMulticastAdress("239.255.255.8");
+				input[0] = 'h';
+				if (m_netCode.Join(input))
+				{
+					m_networkStatus = NetworkStatus::Joining;
+				}
+			}
+			break;
+		}
+		case NetworkStatus::Joining:
+		{
+			m_nrOfPlayers = m_netCode.GetNrOfPlayers();
+			ImGui::Text("Nr of players connected: %d", m_netCode.GetNrOfPlayers());
+			ImGui::Text("Waiting for Host to press Play...");
+			inLobby = m_netCode.IsLobbyAlive();
+			break;
+		}
 		default:
 			break;
 		}
