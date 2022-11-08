@@ -4,7 +4,8 @@ namespace DOG
 {
 	std::bitset<BUTTON_COUNT> Mouse::s_buttons;
 	Vector2u Mouse::s_currentMouseCoords;
-	Vector2i Mouse::s_deltaMouseCoords;
+	Vector2i Mouse::s_deltaMouseCoords[2];
+	u8 Mouse::s_deltaMouseCoordsIndex = 0;
 
 	void Mouse::OnButtonPressed(const Button button) noexcept
 	{
@@ -36,13 +37,20 @@ namespace DOG
 
 	void Mouse::OnRawDelta(Vector2i deltaCoords) noexcept
 	{
-		s_deltaMouseCoords.x += deltaCoords.x;
-		s_deltaMouseCoords.y += deltaCoords.y;
+		s_deltaMouseCoords[s_deltaMouseCoordsIndex].x += deltaCoords.x;
+		s_deltaMouseCoords[s_deltaMouseCoordsIndex].y += deltaCoords.y;
 	}
 
 	void Mouse::Reset() noexcept
 	{
-		s_deltaMouseCoords = { 0,0 };
+		s_deltaMouseCoords[s_deltaMouseCoordsIndex] = {0,0};
+	}
+
+	void Mouse::Switch() noexcept
+	{
+		u8 oldIndex = s_deltaMouseCoordsIndex;
+		s_deltaMouseCoordsIndex = (s_deltaMouseCoordsIndex + 1) % 2;
+		s_deltaMouseCoords[s_deltaMouseCoordsIndex] = s_deltaMouseCoords[oldIndex];
 	}
 
 	const bool Mouse::IsButtonPressed(const Button button) noexcept
@@ -57,6 +65,6 @@ namespace DOG
 
 	const std::pair<i32, i32> Mouse::GetDeltaCoordinates() noexcept
 	{
-		return { s_deltaMouseCoords.x, s_deltaMouseCoords.y };
+		return { s_deltaMouseCoords[(s_deltaMouseCoordsIndex + 1) % 2].x, s_deltaMouseCoords[(s_deltaMouseCoordsIndex + 1) % 2].y};
 	}
 }

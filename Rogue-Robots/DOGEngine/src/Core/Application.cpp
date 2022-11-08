@@ -59,6 +59,7 @@ namespace DOG
 			MiniProfiler::Update();
 			MINIPROFILE
 			Window::OnUpdate();
+			
 
 			// Early break if WM tells us to
 			if (!m_isRunning)
