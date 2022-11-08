@@ -34,6 +34,13 @@ namespace DOG
 			m_luaW->AddReferenceToTable(table);
 	}
 
+	LuaTable::LuaTable(const Table& table, bool addReference) : m_table(table)
+	{
+		m_luaW = &LuaW::GetLuaW();
+		if (addReference)
+			m_luaW->AddReferenceToTable(m_table);
+	}
+
 	LuaTable::~LuaTable()
 	{
 		m_luaW->RemoveReferenceToTable(m_table);

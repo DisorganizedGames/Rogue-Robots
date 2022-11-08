@@ -800,10 +800,8 @@ void GameInterface::ExplosionEffect(DOG::LuaContext* context)
 {
 	auto entity = context->GetInteger();
 	f32 radius = (f32)context->GetDouble();
-	LuaTable tab = context->GetTable();
-	DirectX::SimpleMath::Vector3 color = { (f32)tab.GetDoubleFromTable(0), (f32)tab.GetDoubleFromTable(1), (f32)tab.GetDoubleFromTable(2) };
 
-	context->ReturnInteger(ExplosionEffectSystem::CreateExplosionEffect(entity, radius, color));
+	context->ReturnInteger(ExplosionEffectSystem::CreateExplosionEffect(entity, radius));
 }
 
 void GameInterface::AmmoUI(DOG::LuaContext* context)

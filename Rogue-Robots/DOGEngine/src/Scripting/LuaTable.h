@@ -22,6 +22,7 @@ namespace DOG
 	public:
 		LuaTable();
 		LuaTable(Table& table, bool addReference = false);
+		LuaTable(const Table& table, bool addReference = false);
 		~LuaTable();
 		LuaTable(const LuaTable& table);
 		LuaTable& operator=(const LuaTable& table);
