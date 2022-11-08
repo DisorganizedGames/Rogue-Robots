@@ -7,14 +7,13 @@ foreach($line in Get-Content .\pngs_to_process.txt) {
     {
         # Remove whitspace
         $line = $line -replace '\s',''
-        $dir = [IO.Path]::GetDirectoryName($line)
+        $dir = [IO.Path]::GetDirectoryName($line) 
 
         $ext = [IO.Path]::GetExtension($line)
         if ($ext -eq ".png")
         {
-            Write-Output $dir
-            Write-Output $line
-            #$&.\texconv -pow2 -f BC7_UNORM $line -m 1  
+            #Write-Output $dir
+            &.\texconv -pow2 -f BC7_UNORM_SRGB $line -m 1 -o $dir
         }
     }
 }
@@ -29,7 +28,7 @@ foreach($line in Get-Content .\jpgs_to_process.txt) {
         if ($ext -eq ".jpg")
         {
             #Write-Output $line
-            #$&.\texconv -pow2 -f BC7_UNORM $line -m 1
+            &.\texconv -pow2 -f BC7_UNORM_SRGB $line -m 1 -o $dir
         }
     }
 }
