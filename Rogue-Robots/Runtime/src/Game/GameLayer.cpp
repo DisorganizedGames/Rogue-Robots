@@ -32,7 +32,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerMovementSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerJumpRefreshSystem>());
-	
+
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_agentManager = new AgentManager();
@@ -86,41 +86,41 @@ void GameLayer::OnDetach()
 void GameLayer::OnUpdate()
 {
 	MINIPROFILE
-	switch (m_gameState)
-	{
-	case GameState::None:
-		break;
-	case GameState::Initializing:
-		m_gameState = GameState::StartPlaying;
-		break;
-	case GameState::Lobby:
-		UpdateLobby();
-		break;
-	case GameState::StartPlaying:
-		StartMainScene();
-		break;
-	case GameState::Playing:
-		UpdateGame();
-		break;
-	case GameState::Won:
-		CloseMainScene();
-		m_gameState = GameState::StartPlaying;
-		break;
-	case GameState::Lost:
-		CloseMainScene();
-		m_gameState = GameState::StartPlaying;
-		break;
-	case GameState::Exiting:
-		CloseMainScene();
-		m_gameState = GameState::None;
-		break;
-	case GameState::Restart:
-		CloseMainScene();
-		m_gameState = GameState::StartPlaying;
-		break;
-	default:
-		break;
-	}
+		switch (m_gameState)
+		{
+		case GameState::None:
+			break;
+		case GameState::Initializing:
+			m_gameState = GameState::StartPlaying;
+			break;
+		case GameState::Lobby:
+			UpdateLobby();
+			break;
+		case GameState::StartPlaying:
+			StartMainScene();
+			break;
+		case GameState::Playing:
+			UpdateGame();
+			break;
+		case GameState::Won:
+			CloseMainScene();
+			m_gameState = GameState::StartPlaying;
+			break;
+		case GameState::Lost:
+			CloseMainScene();
+			m_gameState = GameState::StartPlaying;
+			break;
+		case GameState::Exiting:
+			CloseMainScene();
+			m_gameState = GameState::None;
+			break;
+		case GameState::Restart:
+			CloseMainScene();
+			m_gameState = GameState::StartPlaying;
+			break;
+		default:
+			break;
+		}
 
 	if (m_networkStatus != NetworkStatus::Offline)
 		m_netCode.OnUpdate(m_agentManager);
@@ -134,7 +134,7 @@ void GameLayer::OnUpdate()
 void GameLayer::StartMainScene()
 {
 	assert(m_mainScene == nullptr);
-	
+
 	switch (m_selectedScene)
 	{
 	case SceneComponent::Type::TunnelRoom0Scene:
@@ -252,7 +252,7 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 		auto& stats = m_entityManager.GetComponent<PlayerStatsComponent>(e);
 		stats.health = stats.maxHealth;
 	}
-	
+
 	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
 	m_entityManager.DeferredEntityDestruction(controller.debugCamera);
 	controller.debugCamera = DOG::NULL_ENTITY;
@@ -261,12 +261,12 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 void GameLayer::KillPlayer(DOG::entity e)
 {
 	m_entityManager.RemoveComponent<PlayerAliveComponent>(e);
-	
+
 	LuaMain::GetScriptManager()->RemoveScript(e, "Gun.lua");
 	LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
 	LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
 	m_entityManager.RemoveComponent<ScriptComponent>(e);
-	
+
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
 		auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
@@ -320,7 +320,7 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	{
 	case EventType::LeftMouseButtonPressedEvent:
 	{
-		EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer& )
+		EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
 			{
 				inputC.shoot = true;
 			});
@@ -336,7 +336,7 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	}
 	case EventType::KeyPressedEvent:
 	{
-		Input(EVENT(KeyPressedEvent).key);	
+		Input(EVENT(KeyPressedEvent).key);
 		break;
 	}
 	case EventType::KeyReleasedEvent:
@@ -559,7 +559,7 @@ void GameLayer::UpdateLobby()
 		}
 		default:
 			break;
-		}	
+		}
 		if (!inLobby)
 			m_gameState = GameState::StartPlaying;
 	}
@@ -577,7 +577,7 @@ void GameLayer::RegisterLuaInterfaces()
 	//Create a luaInterface variable that holds the interface object (is reused for all interfaces)
 	std::shared_ptr<LuaInterface> luaInterfaceObject = std::make_shared<InputInterface>();
 	m_luaInterfaces.push_back(luaInterfaceObject); //Add it to the gamelayer's interfaces.
-	
+
 	auto luaInterface = global->CreateLuaInterface("InputInterface"); //Register a new interface in lua.
 	//Add all functions that are needed from the interface class.
 	luaInterface.AddFunction<InputInterface, &InputInterface::IsLeftPressed>("IsLeftPressed");
@@ -616,7 +616,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPassiveType>("GetPassiveType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::IsBulletLocal>("IsBulletLocal");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::Exists>("Exists");
-	
+
 
 	global->SetLuaInterface(luaInterface);
 
@@ -650,7 +650,7 @@ void GameLayer::RegisterLuaInterfaces()
 
 	//-----------------------------------------------------------------------------------------------
 	//Host
-	
+
 	luaInterfaceObject = std::make_shared<HostInterface>();
 	m_luaInterfaces.push_back(luaInterfaceObject);
 
@@ -670,7 +670,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::Explosion>("Explosion");
 	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBConstrainRotation>("RBConstrainRotation");
 	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBConstrainPosition>("RBConstrainPosition");
-	
+
 	global->SetLuaInterface(luaInterface);
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Physics", "PhysicsInterface");
 
@@ -701,7 +701,7 @@ void GameLayer::RegisterLuaInterfaces()
 void GameLayer::Input(DOG::Key key)
 {
 	EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
-	{
+		{
 			if (key == DOG::Key::W)
 				inputC.forward = true;
 			if (key == DOG::Key::A)
@@ -730,7 +730,7 @@ void GameLayer::Input(DOG::Key key)
 				inputC.toggleMoveView = true;
 			if (key == DOG::Key::F)
 				inputC.flashlight = !inputC.flashlight;
-	});
+		});
 }
 
 void GameLayer::Release(DOG::Key key)
@@ -761,7 +761,7 @@ void GameLayer::Release(DOG::Key key)
 				inputC.reload = false;
 			if (key == DOG::Key::H)
 				inputC.toggleDebug = false;
-			if(key == DOG::Key::C)
+			if (key == DOG::Key::C)
 				inputC.toggleMoveView = false;
 		});
 }
@@ -811,7 +811,7 @@ void GameLayer::HandleCheats()
 			ImGui::PopStyleColor(4);
 		}
 	}
-	
+
 	if (m_godModeCheat)
 	{
 		assert(EntityManager::Get().HasComponent<PlayerStatsComponent>(player));
@@ -825,35 +825,13 @@ void GameLayer::HandleCheats()
 
 void GameLayer::HpBarMVP()
 {
-	ImVec2 size;
-	size.x = 300;
-	size.y = 50;
-
-	auto r = Window::GetWindowRect();
-	ImVec2 pos;
-	pos.x = r.left + 50.0f;
-	pos.y = r.bottom - 100.0f;
-
-	ImGui::SetNextWindowPos(pos);
-	ImGui::SetNextWindowSize(size);
-	if (ImGui::Begin("HpBar", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground))
-	{
-		auto& playerStats = m_entityManager.GetComponent<PlayerStatsComponent>(GetPlayer());
-		float hp = playerStats.health / playerStats.maxHealth;
-		ImVec2 bottomLeft = ImGui::GetCursorScreenPos();
-		ImVec2 hpTopRight;
-		ImVec2 borderTopRight;
-		borderTopRight.x = bottomLeft.x + Window::GetWidth() * 0.2f;
-		borderTopRight.y = bottomLeft.y + Window::GetHeight() * 0.03f;
-		hpTopRight.x = borderTopRight.x * hp;
-		hpTopRight.y = borderTopRight.y;
-		if (hp > 0.0f)
+	auto ui = UI::Get();
+	auto hbar = ui->GetUI<UIHealthBar>(hID);
+	EntityManager& em = EntityManager::Get();
+	em.Collect<PlayerStatsComponent, ThisPlayer>().Do([&](PlayerStatsComponent& stats, ThisPlayer&)
 		{
-			ImGui::GetWindowDrawList()->AddRectFilled(bottomLeft, hpTopRight, IM_COL32(255, 30, 0, 255));
-		}
-		ImGui::GetWindowDrawList()->AddRect(bottomLeft, borderTopRight, IM_COL32(30, 30, 30, 200)); // border
-	}
-	ImGui::End();
+			hbar->SetBarValue(stats.health / stats.maxHealth);
+		});
 }
 
 void GameLayer::KeyBindingDisplayMenu()
@@ -867,7 +845,7 @@ void GameLayer::KeyBindingDisplayMenu()
 	ImVec2 pos;
 	pos.x = r.right - size.x - 20.0f;
 	pos.y = r.top + 50.0f;
-	
+
 	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 	ImGui::SetNextWindowPos(pos);
 	ImGui::SetNextWindowSize(size);

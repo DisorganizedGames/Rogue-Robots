@@ -30,5 +30,6 @@
 
 #include "src/Scripting/LuaMain.h"
 
+#include "src/Graphics/Rendering/UI.h"
 
 #include "vendor/includes/ImGUI/imgui.h"

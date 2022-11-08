@@ -42,6 +42,7 @@ public:
 	virtual void OnRender() override final;
 	virtual void OnImGuiRender() override final;
 	virtual void OnEvent(DOG::IEvent& event) override final;
+	void ChangeGameState(GameState state);
 
 private:
 	void UpdateLobby();

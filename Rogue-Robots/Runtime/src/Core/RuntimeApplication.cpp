@@ -19,6 +19,7 @@ RuntimeApplication::~RuntimeApplication()
 void RuntimeApplication::OnStartUp() noexcept
 {
 	PushLayer(&m_gameLayer);
+	PushOverlay(DOG::UI::Get());
 	//PushLayer(&m_EmilFDebugLayer);
 
 	#if defined _DEBUG
@@ -45,40 +46,40 @@ void RuntimeApplication::OnEvent(IEvent& event) noexcept
 		switch (event.GetEventType())
 		{
 		case EventType::KeyPressedEvent:
-		{
-			if (EVENT(KeyPressedEvent).key == Key::F1)
 			{
-				m_showImGuiMenu = !m_showImGuiMenu;
-				if (m_showImGuiMenu)
+				if (EVENT(KeyPressedEvent).key == Key::F1)
 				{
-					PushOverlay(&m_imGuiMenuLayer);
+					m_showImGuiMenu = !m_showImGuiMenu;
+					if (m_showImGuiMenu)
+					{
+						PushOverlay(&m_imGuiMenuLayer);
 
+					}
+					else
+					{
+						PopOverlay(&m_imGuiMenuLayer);
+					}
+				}
+				break;
+
+			}
+		case EventType::RightMouseButtonPressedEvent:
+			{
+				static bool lockMouse = false;
+				if (lockMouse)
+				{
+					Window::SetCursorMode(CursorMode::Confined);
+					if (m_showImGuiMenu) m_imGuiMenuLayer.RemoveFocus();
 				}
 				else
 				{
-					PopOverlay(&m_imGuiMenuLayer);
+					Window::SetCursorMode(CursorMode::Visible);
 				}
-			}
-			break;
 
-		}
-		case EventType::RightMouseButtonPressedEvent:
-		{
-			static bool lockMouse = false;
-			if (lockMouse)
-			{
-				Window::SetCursorMode(CursorMode::Confined);
-				if (m_showImGuiMenu) m_imGuiMenuLayer.RemoveFocus();
+				lockMouse = !lockMouse;
+				event.StopPropagation();
+				break;
 			}
-			else
-			{
-				Window::SetCursorMode(CursorMode::Visible);
-			}
-
-			lockMouse = !lockMouse;
-			event.StopPropagation();
-			break;
-		}
 		}
 
 	}
@@ -132,14 +133,14 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 	if (spec.graphicsSettings.displayMode)
 	{
 		const auto& mode = *spec.graphicsSettings.displayMode;
-		outFile  << ",\n\n\t--DXGI_MODE_DESC";
-		outFile  << ",\n\t" << "displayWidth = " << mode.Width;
-		outFile  << ",\n\t" << "displayHeight = " << mode.Height;
-		outFile  << ",\n\t" << "refreshRateNumerator = " << mode.RefreshRate.Numerator;
-		outFile  << ",\n\t" << "refreshRateDenominator = " << mode.RefreshRate.Denominator;
-		outFile  << ",\n\t" << "format = " << mode.Format;
-		outFile  << ",\n\t" << "scanLine = " << mode.ScanlineOrdering;
-		outFile  << ",\n\t" << "scaling = " << mode.Scaling;
+		outFile << ",\n\n\t--DXGI_MODE_DESC";
+		outFile << ",\n\t" << "displayWidth = " << mode.Width;
+		outFile << ",\n\t" << "displayHeight = " << mode.Height;
+		outFile << ",\n\t" << "refreshRateNumerator = " << mode.RefreshRate.Numerator;
+		outFile << ",\n\t" << "refreshRateDenominator = " << mode.RefreshRate.Denominator;
+		outFile << ",\n\t" << "format = " << mode.Format;
+		outFile << ",\n\t" << "scanLine = " << mode.ScanlineOrdering;
+		outFile << ",\n\t" << "scaling = " << mode.Scaling;
 	}
 
 	outFile << "\n}\n";
@@ -158,9 +159,10 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 	{
 		LuaTable spec = table.GetTableFromTable("Settings");
 
-		auto&& tryGetSpec = [&](const auto& key, auto& value) {
+		auto&& tryGetSpec = [&](const auto& key, auto& value)
+		{
 			bool succeeded = spec.TryGetValueFromTable(key, value);
-			if(!succeeded) std::cout << key << " is missing value" << std::endl;
+			if (!succeeded) std::cout << key << " is missing value" << std::endl;
 			return succeeded;
 		};
 
