@@ -169,6 +169,9 @@ namespace DOG
 			});
 	}
 
+	bool HandleLegend(const ImVec2& canvasPos, const ImVec2& canvasSize, const ImVec2& legendSize, f32* legendWidth);
+	void TimeLine();
+
 	void AnimationManager::SpawnControlWindow(bool& open)
 	{
 		ZoneScopedN("animImgui3");
@@ -239,106 +242,102 @@ namespace DOG
 					}
 				}
 
+				TimeLine();
 				static bool setAnimationChain = false;
 				if (setAnimationChain ^= ImGui::Button("SetAnimationChain"))
 				{
 				}
+			
+				// ImGui individual joint sliders
+				static i32 selectedBone = ROOT_NODE;
+				if (ImGui::BeginCombo("tfs", m_rigs[0]->nodes[selectedBone].name.c_str()))
+				{
+					for (i32 i = 1; i < std::size(m_rigs[0]->nodes); i++)
+						if (ImGui::Selectable((m_rigs[0]->nodes[i].name + "  " + std::to_string(i)).c_str(), (i == selectedBone)))
+							selectedBone = i;
+					ImGui::EndCombo();
+				}
+				
+				ImGui::Text("Orientation");
+				ImGui::SliderAngle("Roll", &m_imguiRot[selectedBone].z, m_imguiJointRotMin, m_imguiJointRotMax);
+				ImGui::SliderAngle("Pitch", &m_imguiRot[selectedBone].x, m_imguiJointRotMin, m_imguiJointRotMax);
+				ImGui::SliderAngle("Yaw", &m_imguiRot[selectedBone].y, m_imguiJointRotMin, m_imguiJointRotMax);
+				ImGui::Text("Translation");
+				ImGui::SliderFloat("pos X", &m_imguiPos[selectedBone].x, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
+				ImGui::SliderFloat("pos Y", &m_imguiPos[selectedBone].y, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
+				ImGui::SliderFloat("pos Z", &m_imguiPos[selectedBone].z, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
+				ImGui::Text("Scale");
+				ImGui::SliderFloat("X", &m_imguiSca[selectedBone].x, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
+				ImGui::SliderFloat("Y", &m_imguiSca[selectedBone].y, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
+				ImGui::SliderFloat("Z", &m_imguiSca[selectedBone].z, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
 			}
 			ImGui::End();
 		}
-			//	static AnimationComponent* imguiRAC;
-			//	static bool rigLoaded = m_rigs.size();
-			//	EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& rAC)
-			//	{
-			//		ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-			//		if (model && rAC.offset == 0)
-			//		{
-			//			imguiRAC = &rAC;
-			//			if (!rigLoaded)
-			//				m_rigs.push_back(&model->animation);
-			//		}
-			//		else
-			//			return ImGui::End(); // "Animator";
-			//	});
-			//	return ImGui::End(); // "Animator";
-			//	static i32 currAnim = 0;
-			//	if (m_rigs[0]->animations.empty())
-			//		auto ost = 0;
-			
-			//	return ImGui::End();
+	}
 
-			//	// Some tmp imgui implementation for testing purposes
-			//	static f32 playbackRate = 1.0f;
-			//	static i32 transitionDiv = 6;
-			//	static f32 animDuration = {};
-			//	static u32 animID = {};
-			//	static f32 cooldown = {};
-			//	cooldown -= static_cast<f32>(Time::DeltaTime());
-			//	static bool applyAnim = false;
-			//	ImGui::Checkbox("RootTranslation", &m_imguiApplyRootTranslation);
-			//	ImGui::SliderFloat("groupAWeight", &m_imguiGroupWeightA, 0.0f, 1.0f, "%.5f"); // tmp imgui controlling weight of groupA
-			//	ImGui::SliderInt("Transition Div", &transitionDiv, 2, 10, "%.5f");
-			//	ImGui::SliderFloat("playback rate", &playbackRate, 0.01f, 2.f, "%.5f");
-			//	
-			//	if (ImGui::Button("Grenade") && cooldown < 0.f)
-			//	{
-			//		applyAnim = true;
-			//		animDuration = 3.23f;
-			//		animID = 4;
-			//	}
-			//	if (ImGui::Button("Reload") && cooldown < 0.f)
-			//	{
-			//		applyAnim = true;
-			//		animDuration = 3.33f;
-			//		animID = 5;
-			//	}
-			//	if (ImGui::Button("Shoot") && cooldown < 0.f)
-			//	{
-			//		applyAnim = true;
-			//		animDuration = 0.3f;
-			//		animID = 6;
-			//	}
-			//	
-			//	if (applyAnim)
-			//	{
-			//		const f32 duration = cooldown = animDuration / playbackRate;
-			//		const f32 tl = duration / static_cast<f32>(transitionDiv);
-			//		auto& setter = imguiRAC->animSetters[imguiRAC->addedSetters++];
-			//		setter.animationID = static_cast<u8>(animID);
-			//		setter.desired = true;
-			//		setter.group = groupB;
-			//		setter.loop = false;
-			//		setter.transitionLength = tl;
-			//		setter.playbackRate = playbackRate;
-			//		//m_playerAnimators[0].AddAnimationClip(static_cast<i8>(animID), anim.duration, anim.ticks, groupB, tl, 0.f, 1.0f, false, playbackRate);
-			//		//m_playerAnimators[0].AddBlendSpecification(0.0f, tl, groupB, 1.f, duration);
-			//		applyAnim = false;
-			//	}
-			//	// ImGui individual joint sliders
-			//	static i32 selectedBone = ROOT_NODE;
-			//	if (ImGui::BeginCombo("tfs", m_rigs[0]->nodes[selectedBone].name.c_str()))
-			//	{
-			//		for (i32 i = 1; i < std::size(m_rigs[0]->nodes); i++)
-			//			if (ImGui::Selectable((m_rigs[0]->nodes[i].name + "  " + std::to_string(i)).c_str(), (i == selectedBone)))
-			//				selectedBone = i;
-			//		ImGui::EndCombo();
-			//	}
-			//	
-			//	ImGui::Text("Orientation");
-			//	ImGui::SliderAngle("Roll", &m_imguiRot[selectedBone].z, m_imguiJointRotMin, m_imguiJointRotMax);
-			//	ImGui::SliderAngle("Pitch", &m_imguiRot[selectedBone].x, m_imguiJointRotMin, m_imguiJointRotMax);
-			//	ImGui::SliderAngle("Yaw", &m_imguiRot[selectedBone].y, m_imguiJointRotMin, m_imguiJointRotMax);
-			//	ImGui::Text("Translation");
-			//	ImGui::SliderFloat("pos X", &m_imguiPos[selectedBone].x, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
-			//	ImGui::SliderFloat("pos Y", &m_imguiPos[selectedBone].y, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
-			//	ImGui::SliderFloat("pos Z", &m_imguiPos[selectedBone].z, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
-			//	ImGui::Text("Scale");
-			//	ImGui::SliderFloat("X", &m_imguiSca[selectedBone].x, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
-			//	ImGui::SliderFloat("Y", &m_imguiSca[selectedBone].y, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
-			//	ImGui::SliderFloat("Z", &m_imguiSca[selectedBone].z, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
-			//}
-			//ImGui::End();
-		//}
+	void TimeLine()
+	{
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		ImVec2 canvasPos = ImGui::GetCursorScreenPos();
+		ImVec2 canvasSize = ImGui::GetContentRegionAvail();
+
+		ImGuiIO& io = ImGui::GetIO();
+		ImGuiStyle& style = ImGui::GetStyle();
+
+		static float legendWidth = 0.5f;
+		ImVec4& legendBackground = style.Colors[ImGuiCol_FrameBg];
+		ImVec2 legendSize = ImVec2{ canvasSize.x + legendWidth, canvasSize.y };
+		drawList->AddRectFilled(canvasPos,
+			{ canvasPos.x + legendSize.x, canvasPos.y + legendSize.y },
+			ImColor(legendBackground)
+		);
+
+		HandleLegend(canvasPos, canvasSize, legendSize, &legendWidth);
+	}
+
+	bool HandleLegend(const ImVec2& canvasPos, const ImVec2& canvasSize, const ImVec2& legendSize, f32* legendWidth)
+	{
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		ImGuiStyle& style = ImGui::GetStyle();
+
+		static bool hovering = false;
+		static bool active = false;
+
+		constexpr f32 splitterWidth = 16.f;
+		const f32 swDiv2 = splitterWidth / 2.f;
+		ImVec2 splitterBegin = { canvasPos.x + legendSize.x - swDiv2, canvasPos.y };
+		if (ImGui::IsMouseHoveringRect(splitterBegin, ImVec2(splitterBegin.x + splitterWidth, splitterBegin.y + canvasSize.y)))
+		{
+			constexpr f32 splitterRenderWidth = 4.f;
+			const ImVec4& splitterBgColor = style.Colors[ImGuiCol_FrameBgHovered];
+			drawList->AddRectFilled(splitterBegin,
+				ImVec2(splitterBegin.x + splitterRenderWidth, splitterBegin.y + canvasSize.y),
+				ImColor(splitterBgColor)
+			);
+			ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+			hovering = true;
+
+			if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left] && !active)
+			{
+				active = true;
+			}
+		}
+		else
+		{
+			hovering = false;
+		}
+		if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left] && active)
+		{
+			ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
+			const f32 dragDist = ImGui::GetIO().MouseDelta.x;
+			*legendWidth += dragDist;
+		}
+		else if (!ImGui::GetIO().MouseDown[ImGuiMouseButton_Left] && active)
+		{
+			ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = false;
+			active = false;
+		}
+		return active;
 	}
 
 	DirectX::FXMMATRIX AnimationManager::ImguiTransform(i32 i)
@@ -545,7 +544,6 @@ namespace DOG
 
 		auto& storeSRT = (group == fullBodyGroup) ? m_fullbodySRT :
 													m_partialSRT;
-
 		// Sum clip influences on each node for Weighted avg.
 		for (u8 i = 0; i < nNodes; i++)
 		{
@@ -657,69 +655,28 @@ namespace DOG
 	{
 		ZoneScopedN("SRT calculation");
 		using namespace DirectX;
-		const auto rigSpec = RIG_SPECIFICS[rigID];
+
+		// Number of srt key values
 		const auto nSRT = N_KEYS * NodeCount(rigID);
-		// Store scaling, translation, rotation extracted from anim keyframes
-		std::fill(m_partialSRT.begin(), m_partialSRT.begin() + nSRT, XMVECTOR{});
+
+		// Clear previous SRT data, to prep for storing new transformations
 		std::fill(m_fullbodySRT.begin(), m_fullbodySRT.begin() + nSRT, XMVECTOR{});
 
-		//const auto weightGroupA = ac.groupWeights[ac.groupA];
-		const auto weightGroupA = 0.f; // tmp
-		const auto weightGroupB = 0.f;
-
+		// Check if group influences final pose or not
 		auto HasInfluence = [ac](const u32 group) {
-			return group == fullBodyGroup || (ac.groupClipCount[group] > 0 || ac.gWeights[group]);
-		};
+			return group == fullBodyGroup || (ac.groupClipCount[group] > 0 || ac.gWeights[group]);};
 
-		// Go through clip groups
+		// Go through clip groups and update joint scale/rot/translation
 		for (u32 i = 0; i < N_KEYS; i++)
 		{
 			const auto key = static_cast<KeyType>(i);
 			for (u32 group = 0; group < N_GROUPS; group++)
 			{
+				// Update joint transformations of rig if applicable
 				if (HasInfluence(group))
 					ExtractClipNodeInfluences(ac, key, group, rigID);
 			}
 		}
-
-		// test
-		//const i8 parentGroup[N_GROUPS] = { -1, 0, 0 };
-
-		//XMVECTOR intermediarySRT[NodeCount(MIXAMO_RIG_ID)] = { {} };
-		//std::unordered_map<u32, std::vector<XMVECTOR>> groupS;
-		//std::unordered_map<u32, std::vector<XMVECTOR>> groupR;
-		//std::unordered_map<u32, std::vector<XMVECTOR>> groupT;
-		//// TEEETST
-		//const auto& gsv = groupS[0];
-		//const auto& grv = groupR[0];
-		//const auto& gtv = groupT[0];
-		//for (u32 i = 0; i < groupS[0].size(); ++i)
-		//{
-		//	const u32 sIdx = i * N_KEYS + static_cast<u32>(KeyType::Scale);
-		//	const u32 rIdx = i * N_KEYS + static_cast<u32>(KeyType::Rotation);
-		//	const u32 tIdx = i * N_KEYS + static_cast<u32>(KeyType::Translation);
-		//	m_fullbodySRT[sIdx] = gsv[i];
-		//	m_fullbodySRT[rIdx] = grv[i];
-		//	m_fullbodySRT[tIdx] = gtv[i];
-		//}
-
-		// Blend between the partial body group and the full body animation group
-		//for (u8 i = 1; i < NodeCount(rigID); ++i)
-		//{
-		//	f32 weight = 0.0f;
-		//	if (InGroup(groupA, rigID, i)) // lower body
-		//		weight = weightGroupA;
-		//	else if (InGroup(groupB, rigID, i)) // upper body
-		//		weight = weightGroupB;
-
-		//	const u32 sIdx = i * 3, rIdx = i * 3 + 1, tIdx = i * 3 + 2;
-		//	const XMVECTOR scaling1 = m_fullbodySRT[sIdx], scaling2 = m_partialSRT[sIdx];
-		//	const XMVECTOR rotation1 = m_fullbodySRT[rIdx], rotation2 = m_partialSRT[rIdx];
-		//	const XMVECTOR translation1 = m_fullbodySRT[tIdx], translation2 = m_partialSRT[tIdx];
-		//	m_fullbodySRT[sIdx] = XMVectorLerp(scaling1, scaling2, weight);
-		//	m_fullbodySRT[rIdx] = XMQuaternionSlerp(rotation1, rotation2, weight);
-		//	m_fullbodySRT[tIdx] = XMVectorLerp(translation1, translation2, weight);
-		//}
 	}
 
 	void AnimationManager::ExtractClipNodeInfluences(RigAnimator& a, const KeyType key, const u32 group, const u32 rigID)
@@ -728,13 +685,18 @@ namespace DOG
 		using namespace DirectX;
 		using PoseData = DOG::ClipData;
 		using AnimationKeys = std::unordered_map<i32, std::vector<AnimationKey>>;
-
+		
+		// Start and number of jointNodes that group influences
 		const auto [startNode, nNodes] = GetNodeStartAndCount(rigID, group);
 		const auto rootIdx = RIG_SPECIFICS[rigID].rootJoint;
+		// Number of clips acting within group
 		const auto nClips = a.groupClipCount[group];
+		// Pointer to first clip in clip array that group influences
 		const PoseData* clips = &a.clipData[a.GetGroupStartIdx(group)];
+		// Animation data corresponding to rig
 		const std::vector<AnimationData>& anims = a.rigData->animations;
 
+		// Intermediary storage of extracted Keyvalues
 		std::vector<XMVECTOR> keyValues(nClips * nNodes, XMVECTOR{});
 
 		// For every clip in clip group
@@ -752,6 +714,7 @@ namespace DOG
 				// Rig index
 				auto rigNode = startNode + node;
 
+				// Get corresponding key values
 				const AnimationKeys* keys = {};
 				switch (key)
 				{
@@ -773,8 +736,9 @@ namespace DOG
 				}
 			}
 		}
-
+		// Store finalized transformation data (Could change this to be done 'in place' in keyValues Vector)
 		std::array<XMVECTOR, NodeCount(MIXAMO_RIG_ID)> storeSRT = { XMVECTOR{} };
+
 		// Sum clip influences on each node for Weighted avg.
 		for (u32 i = 0; i < nNodes; ++i)
 		{
@@ -792,16 +756,15 @@ namespace DOG
 					storeSRT[i] = key == KeyType::Scale ? XMLoadFloat3(&m_baseScale) : XMLoadFloat3(&m_baseTranslation);
 			}
 			else if (keyValues.size())
-			{	// weighted avg. for rot Quaternions
+			{	// Different formula for rotation quaternions
 				XMVECTOR q0 = keyValues[clipIdx];
 				for (u32 j = 0; j < nClips; ++j, ++clipIdx)
-				{
+				{	// Approx. weighted average of rotation quaternions
 					auto w = clips[j].weight;
 					XMVECTOR& q = keyValues[clipIdx];
 					auto dot = XMVector4Dot(q0, q);
 					if (j > 0 && dot.m128_f32[0] < 0.0)
 						w = -w;
-
 					storeSRT[i] += w * q;
 				}
 				storeSRT[i] = XMVector4Normalize(storeSRT[i]);
@@ -812,9 +775,10 @@ namespace DOG
 			}
 		}
 		
-		// Lerp/Slerp group weight influences and previous sum
+		// Unload transformation keys to final rig array
 		for (u32 i = 0; i < nNodes; i++)
 		{
+			// Index to rig array
 			const auto idx = N_KEYS * (startNode + i) + static_cast<u32>(key);
 			// Store in full body array, full body group is always run first
 			// The Following groups lerps/slerps their results with the previous results
