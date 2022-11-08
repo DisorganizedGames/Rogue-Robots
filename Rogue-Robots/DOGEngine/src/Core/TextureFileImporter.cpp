@@ -23,6 +23,8 @@ namespace DOG
 
 	TextureFileImporter::TextureFileImporter(const std::filesystem::path& path, bool genMips)
 	{
+		UNREFERENCED_PARAMETER(genMips);
+
 		HRESULT hr{ S_OK };
 		assert(s_initialized);
 
@@ -58,8 +60,8 @@ namespace DOG
 			ImportedTextureFileMip mipFinal{};
 			mipFinal.data = std::move(data);
 
-			mipFinal.width = mipData->width;
-			mipFinal.height = mipData->height;
+			mipFinal.width = (u32)mipData->width;
+			mipFinal.height = (u32)mipData->height;
 
 			m_result->dataPerMip.push_back(std::move(mipFinal));
 		}
