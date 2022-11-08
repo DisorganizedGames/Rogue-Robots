@@ -9,7 +9,14 @@ namespace DOG
 		{
 			groups[i].sets[LOOPING].startClip = i * nSets * MAX_CLIPS;
 			groups[i].sets[ACTION].startClip = (i * nSets + 1) * MAX_CLIPS;
+			// tmp
+			groups[i].parent = i == 0 ? -1 : 0;
 		}
+	}
+
+	bool BlendFinished(const BlendSpecification& bs, const f32 dt)
+	{
+		return (bs.durationLeft > 0.f && bs.durationLeft < dt);
 	}
 	std::pair<u32, u32>	GetStartStop(const ClipSet& set, bool target)
 	{
@@ -17,11 +24,15 @@ namespace DOG
 	}
 	void RigAnimator::Update(const f32 dt)
 	{
+		constexpr u16 basePrio = 0;
 		globalTime += dt;
 		u32 idx = 0;
 		for (u32 g = 0; g < N_GROUPS; ++g)
 		{ 
-			groupClipCount[g] = UpdateGroup(groups[g], idx, dt);
+			if (BlendFinished(groups[g].blend, dt))
+				groups[g].priority = basePrio; // Reset priority
+
+			groupClipCount[g] = UpdateGroup(g, idx, dt);
 			idx += groupClipCount[g];
 		}
 	}
@@ -34,20 +45,38 @@ namespace DOG
 		return idx;
 	}
 
-	u32 RigAnimator::UpdateGroup(AnimationGroup& group, const u32 clipIdx, const f32 dt)
+	u32 RigAnimator::UpdateGroup(u32 groupIdx, const u32 clipIdx, const f32 dt)
 	{
+		auto& group = groups[groupIdx];
 		auto& looping = group.sets[LOOPING];
 		auto& action = group.sets[ACTION];
 		
-		UpdateBlendSpec(group, dt);
+		if (BlendFinished(group.blend, dt))
+		{
+			const auto tlen = group.blend.transitionLength;
+			TransitionOutClips(action, globalTime, tlen);
 
-		u32 count = 0;
+			if (!looping.nTargetClips)
+			{ // If no looping state to return to also transition out group
+				groupBlends[groupIdx].transitionLength = tlen;
+				ResetBlendSpecification(groupBlends[groupIdx], 0.f, group.weight, 0.f);
+			}
+		}
+		
+		// Update group weight
+		group.weight = UpdateBlendSpecification(groupBlends[groupIdx], dt, group.weight);
+
+		u32 clipCount = 0;
+		// Update sets and set Weights
+		looping.weight = UpdateBlendSpecification(group.blend, dt, looping.weight);
 		if(looping.weight > 0.f)
-			count += UpdateClipSet(looping, clipIdx, dt, true);
+			clipCount += UpdateClipSet(looping, clipIdx, dt, true);
+
+		action.weight = 1.f - looping.weight;
 		if(action.weight > 0.f)
-			count += UpdateClipSet(action, clipIdx+count, dt);
-	
-		return count;
+			clipCount += UpdateClipSet(action, clipIdx+clipCount, dt);
+
+		return clipCount;
 	}
 
 	u32 RigAnimator::UpdateClipSet(ClipSet& set, const u32 clipIdx, const f32 dt, bool matching)
@@ -106,7 +135,24 @@ namespace DOG
 		return count;
 	}
 
-	void RigAnimator::HandleAnimationComponent(AnimationComponent& ac)
+	f32 RigAnimator::GetGroupWeight(u32 group)
+	{
+		auto parent = groups[group].parent;
+		const auto prio = groups[group].priority;
+		const auto weight = groups[group].weight;
+		
+		static constexpr i16 origin = -1;
+		// Travel group tree, if a parent group has higher prio group has no influence
+		while (parent != origin)
+			if (prio < groups[parent].priority)
+				return 0.f;
+			else
+				parent = groups[parent].parent;
+
+		return weight;
+	}
+
+	void RigAnimator::ProcessAnimationComponent(AnimationComponent& ac)
 	{
 		// sort added setters by group and loop status
 		std::sort(ac.animSetters2.begin(), ac.animSetters2.begin() + ac.addedSetters,
@@ -118,18 +164,20 @@ namespace DOG
 		for (u32 i = 0; i < ac.addedSetters; i++)
 		{
 			auto& setter = ac.animSetters2[i];
-			auto& group = groups[setter.group];
 
-			HandleSetter(setter, group);
+			ProcessSetter(setter, i);
+			ResetSetter(setter);
 		}
+		ac.addedSetters = 0;
 	}
-	u32 RigAnimator::ValidateSetter(Setter& setter)
+
+	u32 RigAnimator::PreProcessSetter(Setter& setter)
 	{
 		static constexpr i32 INVALID = -1;
 		u32 clipCount = 0;
 		f32 wSum = 0.f;
 		// Get clip count and target weight sum
-		for (u32 i = 0; i < MAX_TARGETS; i++)
+		for (u32 i = 0; i < MAX_TARGETS; ++i)
 		{
 			if (setter.animationIDs[i] == INVALID)
 				break;
@@ -145,37 +193,39 @@ namespace DOG
 
 		return clipCount;
 	}
-	void RigAnimator::HandleSetter(Setter& setter, AnimationGroup& group)
+
+	void RigAnimator::ProcessSetter(Setter& setter, u32 groupIdx)
 	{
-		// Normalize weights
-		u32 clipCount = ValidateSetter(setter);
+		auto& group = groups[groupIdx];
+		// Normalize weights and get number of clips in setter
+		u32 clipCount = PreProcessSetter(setter);
+
+		if (!clipCount || setter.priority < group.priority)
+			return;
+
+		// Update priority
+		group.priority = static_cast<u32>(setter.priority);
+
 		// Get corresponding set
 		auto& set = setter.loop ?
 			group.sets[LOOPING] : group.sets[ACTION];
+
+		// Set group blend if previously empty group
+		if (!groupClipCount[groupIdx])
+			ResetBlendSpecification(groupBlends[groupIdx], 0.f, 0.f, 1.f);
 
 		// Add/modify the target
 		AddTargetSet(set, setter, clipCount);
 		
 		// ChangeBlendSpec if Action set was added as target
-		if (group.primary == LOOPING && !setter.loop)
-			SetBlendSpec(group, setter);
-
-		ResetSetter(setter);
-	}
-
-	void RigAnimator::SetBlendSpec(AnimationGroup& group, const Setter& setter)
-	{
-		group.primary = ACTION;
-		const auto clipIdx = group.sets[ACTION].startClip;
-		group.blend.duration = clips[clipIdx].duration;
-		group.blend.scale = setter.playbackRate;
-		group.blend.transitionStart = globalTime;
-		group.blend.transitionLength = setter.transitionLength;
+		if (!setter.loop)
+			SetReturningBlendSpec(group.blend, setter.transitionLength, 0.f, clips[group.sets[ACTION].startClip].duration);
 	}
 
 	void RigAnimator::AddTargetSet(ClipSet& set, Setter& setter, u32 clipCount)
 	{
-		f32 startTime = 0.f; // an after thought
+		// starting normalized time of added clips
+		f32 startTime = 0.f;
 		// Transition out old target clips
 		u32 idx = set.startClip;
 		for (u32 i = 0; i < set.nTargetClips; ++i, ++idx)
@@ -287,9 +337,8 @@ namespace DOG
 		return nt * c.totalTicks;
 	}
 
-	f32 RigAnimator::LinearWeight(const f32 currentTime, const f32 transitionLength, const f32 startValue, const f32 targetValue)
+	f32 RigAnimator::LinearWeight(const f32 currentTime, const f32 transitionLength, const f32 startValue, const f32 targetValue, f32 currentValue)
 	{
-		f32 currentValue = 0.f;
 		if (currentTime >= transitionLength) // Transition is done
 			currentValue = targetValue;
 		else if (currentTime > 0.0f) // Linear
@@ -313,29 +362,35 @@ namespace DOG
 		return currentValue;
 	}
 
-	void RigAnimator::UpdateBlendSpec(AnimationGroup& group, const f32 dt)
+	void RigAnimator::SetReturningBlendSpec(BlendSpecification& bs, const f32 transitionLen, const f32 target, const f32 duration)
 	{
-		auto& bs = group.blend;
-		if (group.primary == ACTION)
-		{ // Action clipSets have a duration
-			const f32 delta = dt * bs.scale;
-			bs.duration -= delta;
-			if (bs.duration <= bs.transitionLength)
-			{ // Start transition back to looping clips
-				const f32 diff = delta < fabsf(bs.duration) ? delta : fabsf(bs.duration);
-				bs.transitionStart = globalTime-diff;
-				bs.startWeight = group.sets[LOOPING].weight;
-				group.primary = LOOPING;
-				TransitionOutClips(group.sets[ACTION], bs.transitionStart, bs.transitionLength);
+		bs.durationLeft = duration - transitionLen;
+		bs.transitionStart = globalTime;
+		bs.transitionLength = transitionLen;
+		bs.targetValue = target;
+	}
+
+	void RigAnimator::ResetBlendSpecification(BlendSpecification& bs, const f32 timeDelta, const f32 startValue, const f32 targetValue)
+	{
+		bs.durationLeft = 0.f;
+		bs.transitionStart = globalTime + timeDelta;
+		bs.startWeight = startValue;
+		bs.targetValue = targetValue;
+	}
+
+	f32 RigAnimator::UpdateBlendSpecification(BlendSpecification& bs, const f32 dt, const f32 currentValue)
+	{
+		if (bs.durationLeft > 0.f)
+		{
+			bs.durationLeft -= dt;
+			if (bs.durationLeft <= 0.f)
+			{ // Start return transition
+				ResetBlendSpecification(bs, bs.durationLeft, currentValue);
 			}
 		}
-		// Time since transition started
-		const f32 currentTime = globalTime - bs.transitionStart;
-		// Update weight of the target set
-		f32& primaryWeight = group.sets[group.primary].weight;
-		primaryWeight = LinearWeight(currentTime, bs.transitionLength, bs.startWeight, 1.0f);
-		// Update weight of the secondary set
-		group.sets[group.primary ^ 1].weight = 1.0f - primaryWeight;
+
+		const auto currentTime = globalTime - bs.transitionStart;
+		return LinearWeight(currentTime, bs.transitionLength, bs.startWeight, bs.targetValue, currentValue);
 	}
 
 	void RigAnimator::TransitionOutClips(ClipSet& set, const f32 transitionStart, const f32 transitionLen)
