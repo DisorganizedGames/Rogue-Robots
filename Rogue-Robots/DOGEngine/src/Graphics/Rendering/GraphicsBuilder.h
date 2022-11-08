@@ -24,6 +24,7 @@ namespace DOG::gfx
 		{
 			std::vector<TextureSubresource> dataPerMip;
 			bool srgb{ false };
+			DXGI_FORMAT format{ DXGI_FORMAT_UNKNOWN };
 		};
 
 	public:	

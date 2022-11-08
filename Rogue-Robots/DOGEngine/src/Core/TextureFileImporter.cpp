@@ -1,6 +1,8 @@
 #include "TextureFileImporter.h"
 #include "Compressonator/compressonator.h"
 
+#include <DirectXTex/DirectXTex.h>
+
 namespace DOG
 {
 	bool TextureFileImporter::s_initialized = false;
@@ -10,6 +12,10 @@ namespace DOG
 		if (!s_initialized)
 		{
 			CMP_InitFramework();
+
+			//HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+			//assert(SUCCEEDED(hr));
+
 			s_initialized = true;
 		}
 	}
@@ -17,70 +23,116 @@ namespace DOG
 
 	TextureFileImporter::TextureFileImporter(const std::filesystem::path& path, bool genMips)
 	{
+		HRESULT hr{ S_OK };
 		assert(s_initialized);
+
+		std::lock_guard<std::mutex> lock(m_mutex);
+
 
 		// Result is empty if path is empty
 		if (path.empty())
 			return;
 
-		std::lock_guard<std::mutex> lock(m_mutex);
+		auto newPath = path;
+		newPath.replace_extension("dds");
 
-		CMP_MipSet mipSetIn;
-		memset(&mipSetIn, 0, sizeof(CMP_MipSet));
-		auto cmpStatus = CMP_LoadTexture(path.string().c_str(), &mipSetIn);
-		if (cmpStatus != CMP_OK)
-		{
-			std::printf("Error %d: Loading source file!\n", cmpStatus);
-			assert(false);
-		}
+		// Load new
+		DirectX::TexMetadata md;
+		auto image = std::make_unique<DirectX::ScratchImage>();
+		hr = DirectX::LoadFromDDSFile(newPath.c_str(), DirectX::DDS_FLAGS_NONE, &md, *image);
+		assert(SUCCEEDED(hr));
 
 		m_result = std::make_shared<ImportedTextureFile>();
+		m_result->format = md.format;
 
-
-		CMP_INT mipRequests = 1;
-		if (genMips)
+		// Grab mips (2D texture support only right now)
+		for (i32 i = 0; i < md.mipLevels; ++i)
 		{
-			// Arbitrarily request 3 mips for now
-			mipRequests = 3;
-
-			mipRequests = (std::min)(mipRequests, mipSetIn.m_nMaxMipLevels);
-			if (mipSetIn.m_nMipLevels <= 1)
-			{
-				//------------------------------------------------------------------------
-				// Checks what the minimum image size will be for the requested mip levels
-				// if the request is too large, a adjusted minimum size will be returns
-				//------------------------------------------------------------------------
-				CMP_INT n_min_size = CMP_CalcMinMipSize(mipSetIn.m_nHeight, mipSetIn.m_nWidth, mipRequests);
-
-				//--------------------------------------------------------------
-				// now that the minimum size is known, generate the miplevels
-				// users can set any requested minumum size to use. The correct
-				// miplevels will be set acordingly.
-				//--------------------------------------------------------------
-				CMP_GenerateMIPLevels(&mipSetIn, n_min_size);
-			}
-
-
-		}
-
-		// Grab mips
-		for (i32 i = 0; i < mipRequests; ++i)
-		{
-			CMP_MipLevel* mip{ nullptr };
-			CMP_GetMipLevel(&mip, &mipSetIn, i, 0);
+			auto mipData = image->GetImage(i, 0, 0);
+			auto mipSize = mipData->slicePitch;
 
 			std::vector<u8> data;
-			data.resize(mip->m_dwLinearSize);
-			std::memcpy(data.data(), mip->m_pbData, mip->m_dwLinearSize);
+			data.resize(mipSize);
+			std::memcpy(data.data(), mipData->pixels, mipSize);
 
-			ImportedTextureFileMip mipData{};
-			mipData.data = std::move(data);
-			mipData.width = mip->m_nWidth;
-			mipData.height = mip->m_nHeight;
+			ImportedTextureFileMip mipFinal{};
+			mipFinal.data = std::move(data);
 
-			m_result->dataPerMip.push_back(std::move(mipData));
+			mipFinal.width = mipData->width;
+			mipFinal.height = mipData->height;
+
+			m_result->dataPerMip.push_back(std::move(mipFinal));
 		}
 
-		CMP_FreeMipSet(&mipSetIn);
+		return;
+
+
+
+		//// Load normal textures
+
+		//std::lock_guard<std::mutex> lock(m_mutex);
+
+		//CMP_MipSet mipSetIn;
+		//memset(&mipSetIn, 0, sizeof(CMP_MipSet));
+		//auto cmpStatus = CMP_LoadTexture(path.string().c_str(), &mipSetIn);
+		//if (cmpStatus != CMP_OK)
+		//{
+		//	std::printf("Error %d: Loading source file!\n", cmpStatus);
+		//	assert(false);
+		//}
+
+		//m_result = std::make_shared<ImportedTextureFile>();
+
+		//bool isDDS = path.extension() == ".dds";
+		//if (isDDS)
+		//	genMips = false;
+
+		//CMP_INT mipRequests = 1;
+		//if (genMips)
+		//{
+		//	// Arbitrarily request 3 mips for now
+		//	mipRequests = 3;
+
+		//	mipRequests = (std::min)(mipRequests, mipSetIn.m_nMaxMipLevels);
+		//	if (mipSetIn.m_nMipLevels <= 1)
+		//	{
+		//		//------------------------------------------------------------------------
+		//		// Checks what the minimum image size will be for the requested mip levels
+		//		// if the request is too large, a adjusted minimum size will be returns
+		//		//------------------------------------------------------------------------
+		//		CMP_INT n_min_size = CMP_CalcMinMipSize(mipSetIn.m_nHeight, mipSetIn.m_nWidth, mipRequests);
+
+		//		//--------------------------------------------------------------
+		//		// now that the minimum size is known, generate the miplevels
+		//		// users can set any requested minumum size to use. The correct
+		//		// miplevels will be set acordingly.
+		//		//--------------------------------------------------------------
+		//		CMP_GenerateMIPLevels(&mipSetIn, n_min_size);
+		//	}
+
+
+		//}
+
+
+
+		//mipRequests = isDDS ? mipSetIn.m_nMaxMipLevels : mipRequests;
+		//for (i32 i = 0; i < mipRequests; ++i)
+		//{
+		//	CMP_MipLevel* mip{ nullptr };
+		//	CMP_GetMipLevel(&mip, &mipSetIn, i, 0);
+
+		//	std::vector<u8> data;
+		//	data.resize(mip->m_dwLinearSize);
+		//	std::memcpy(data.data(), mip->m_pbData, mip->m_dwLinearSize);
+
+		//	ImportedTextureFileMip mipData{};
+		//	mipData.data = std::move(data);
+		//	mipData.width = mip->m_nWidth;
+		//	mipData.height = mip->m_nHeight;
+
+		//	m_result->dataPerMip.push_back(std::move(mipData));
+		//}
+
+		//CMP_FreeMipSet(&mipSetIn);
 	}
 }
