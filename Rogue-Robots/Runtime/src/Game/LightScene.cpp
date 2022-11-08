@@ -240,10 +240,10 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 
 	if (open)
 	{
-		if (ImGui::Begin("TiledShading", &open))
+		if (ImGui::Begin("TiledShading", &open, ImGuiWindowFlags_NoFocusOnAppearing))
 		{
 			static bool dragWindowOpen = false;
-			if (ImGui::Button("Move"))
+			if (ImGui::Button("SphereWindow"))
 			{
 				dragWindowOpen = !dragWindowOpen;
 			}
@@ -252,14 +252,40 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 
 			if (ImGui::Button("Compute"))
 			{
-				auto p = XMMatrixPerspectiveFovLH(40.f * XM_PI / 180.f, 1.0f, 1.0f, 10.0f);
+				/*auto p = XMMatrixPerspectiveFovLH(40.f * XM_PI / 180.f, 1.0f, 1.0f, 10.0f);
 				auto& controller = EntityManager::Get().GetComponent<PlayerControllerComponent>(GetPlayer());
-				auto& camera = EntityManager::Get().GetComponent<CameraComponent>(controller.cameraEntity);
+				auto& camera = EntityManager::Get().GetComponent<CameraComponent>(controller.cameraEntity);*/
 
-				FakeCompute::s_data.proj = p;
-				FakeCompute::s_data.view = camera.viewMatrix;
+				FakeCompute::s_data.spheres.clear();
+				EntityManager::Get().Collect<TransformComponent, SphereComponent>().Do([](entity e, TransformComponent& transform, SphereComponent& sp)
+					{
+						FakeCompute::Sphere sphere;
+						Vector3 p = transform.GetPosition();
+						sphere.center.x = p.x;
+						sphere.center.y = p.y;
+						sphere.center.z = p.z;
+						sphere.center.w = 1;
+						sphere.radius = sp.radius;
+						sphere.culled = false;
+						sphere.e = e;
+						FakeCompute::s_data.spheres.push_back(sphere);
+					});
 
-				FakeCompute::Dispatch(2, 2, 1);
+				FakeCompute::Dispatch(1, 1, 1);
+
+				for (auto& s : FakeCompute::s_data.spheres)
+				{
+					EntityManager::Get().GetComponent<SphereComponent>(s.e).culled = s.culled;
+					if (s.culled)
+					{
+						std::cout << "cull true " << s.e << std::endl;
+					}
+					else
+					{
+						std::cout << "cull false " << s.e << std::endl;
+					}
+				}
+
 			}
 
 
@@ -287,6 +313,10 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 				auto p = XMMatrixPerspectiveFovLH(40.f * XM_PI / 180.f, aspectRatio, 1.0f, 10.0f);
 				auto& controller = EntityManager::Get().GetComponent<PlayerControllerComponent>(GetPlayer());
 				auto& camera = EntityManager::Get().GetComponent<CameraComponent>(controller.cameraEntity);
+
+				FakeCompute::s_data.proj = p;
+				FakeCompute::s_data.view = camera.viewMatrix;
+
 				AddFrustum(p, camera.viewMatrix);
 			}
 
@@ -304,7 +334,7 @@ void LightScene::LightCullingDebugMenu(bool& open)
 
 	if (open)
 	{
-		if (ImGui::Begin("SphereTable", &open))
+		if (ImGui::Begin("SphereTable", &open, ImGuiWindowFlags_NoFocusOnAppearing))
 		{
 			if (ImGui::BeginPopup("AddSphereTable"))
 			{
@@ -364,7 +394,8 @@ void LightScene::LightCullingDebugMenu(bool& open)
 				str2 += std::format("{:.1f}", p.x) + ", ";
 				str2 += std::format("{:.1f}", p.y) + ", ";
 				str2 += std::format("{:.1f}", p.z);
-				std::string str3 = "culled: " + s.culled ? "true" : "false";
+				std::string str3 = "culled: ";
+				str3 += (s.culled ? "true" : "false");
 				return { str1, str2, str3 };
 			};
 

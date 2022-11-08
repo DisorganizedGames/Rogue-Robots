@@ -11,7 +11,8 @@ public:
 
 	struct Sphere
 	{
-		DirectX::SimpleMath::Vector3 center;
+		DOG::entity e;
+		DirectX::SimpleMath::Vector4 center;
 		float radius;
 		bool culled = false;
 	};
