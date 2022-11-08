@@ -13,8 +13,8 @@
 //Used to save data read from the input.
 struct Block
 {
-	std::string id;
-	uint32_t count;
+	std::string id = "";
+	uint32_t count = 0u;
 	float frequency = 0.0;
 	std::vector<std::string> dirPossibilities[6];
 };
@@ -162,6 +162,7 @@ struct Door
 	bool placed = false;
 	uint32_t pos[3] = { 0u, 0u, 0u };
 	uint32_t rot = 0u;
+	bool connected = false;
 };
 
 struct Room
@@ -196,4 +197,5 @@ public:
 
 std::vector<uint32_t> ReconstructPath(std::unordered_map<uint32_t, uint32_t>& cameFrom, uint32_t current);
 uint32_t Heuristic(uint32_t* start, uint32_t* goal);
-std::vector<std::pair<uint32_t, int>> AStar(Room& room, uint32_t* start, uint32_t* goal);
+std::vector<std::pair<uint32_t, int>> AStarRoom(Room& room, uint32_t* start, uint32_t* goal);
+std::vector<std::pair<uint32_t, int>> AStarLevel(uint32_t& width, uint32_t& height, uint32_t& depth, std::vector<std::string>& level, uint32_t* start, uint32_t* goal);

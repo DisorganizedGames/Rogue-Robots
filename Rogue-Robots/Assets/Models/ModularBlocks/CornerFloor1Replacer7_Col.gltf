@@ -1,0 +1,112 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "CornerFloor1Replacer7_Col"
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Scene.025",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2,
+                        "TEXCOORD_1" : 3
+                    },
+                    "indices" : 4
+                }
+            ]
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 460,
+            "max" : [
+                2.5000340938568115,
+                5.000003814697266,
+                2.500000238418579
+            ],
+            "min" : [
+                -2.499999761581421,
+                -1.2703360425803112e-06,
+                -2.499999523162842
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 460,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 460,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5126,
+            "count" : 460,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 4,
+            "componentType" : 5123,
+            "count" : 936,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 5520,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 5520,
+            "byteOffset" : 5520
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 3680,
+            "byteOffset" : 11040
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 3680,
+            "byteOffset" : 14720
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1872,
+            "byteOffset" : 18400
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 20272,
+            "uri" : "CornerFloor1Replacer7_Col.bin"
+        }
+    ]
+}

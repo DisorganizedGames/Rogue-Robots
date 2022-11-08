@@ -93,7 +93,7 @@ void TunnelRoom2Scene::SetUpScene(std::vector<std::function<std::vector<DOG::ent
 	AddEntities(players);
 	AddEntities(AddFlashlightsToPlayers(players));
 
-	AddEntities(LoadLevel(pcgLevelNames::tunnels));
+	AddEntities(LoadLevel(pcgLevelNames::tunnels)); //Change this to testRooms to try the room connections.
 
 	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(57.f, 75.f, 78.f), 4, 2.f));	// location 2
 	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(60.f, 75.f, 98.f), 5, 3.f));	// location 3

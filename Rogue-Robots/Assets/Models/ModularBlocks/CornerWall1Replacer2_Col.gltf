@@ -1,0 +1,112 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "CornerWall1Replacer2_Col"
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Scene.016",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2,
+                        "TEXCOORD_1" : 3
+                    },
+                    "indices" : 4
+                }
+            ]
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 445,
+            "max" : [
+                2.5,
+                5,
+                2.5000040531158447
+            ],
+            "min" : [
+                -2.5000014305114746,
+                0,
+                -1.9405986070632935
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 445,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 445,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5126,
+            "count" : 445,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 4,
+            "componentType" : 5123,
+            "count" : 657,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 5340,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 5340,
+            "byteOffset" : 5340
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 3560,
+            "byteOffset" : 10680
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 3560,
+            "byteOffset" : 14240
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1314,
+            "byteOffset" : 17800
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 19116,
+            "uri" : "CornerWall1Replacer2_Col.bin"
+        }
+    ]
+}

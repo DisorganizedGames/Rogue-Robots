@@ -81,7 +81,35 @@ bool WFC::IntroduceConstraints(Room& room)
 			//Place a spawnblock if its the first block.
 			if (m_generatedRooms.size() == 0)
 			{
+				std::default_random_engine gen;
+				gen.seed(static_cast<unsigned int>(time(NULL)));
+				std::uniform_int_distribution<uint32_t> distWidth(2u, room.width - 3u);
+				std::uniform_int_distribution<uint32_t> distDepth(2u, room.depth - 3u);
 
+				std::uniform_int_distribution<size_t> distSpawn(0u, m_spawnBlocks.size() - 1u);
+
+				uint32_t x = distWidth(gen);
+				uint32_t y = 1u;
+				uint32_t z = distDepth(gen);
+
+				m_spawnCoords[0] = x;
+				m_spawnCoords[1] = y;
+				m_spawnCoords[2] = z;
+
+				uint32_t index = x + y * room.width + z * room.width * room.height;
+				m_entropy[index].possibilities.clear();
+				std::string spawnBlock = m_spawnBlocks[distSpawn(gen)];
+				m_entropy[index].possibilities.push_back(spawnBlock);
+
+				//Push the index onto the stack and then loop through the stack until it is empty.
+				//(A call to Propogate can put more information on the stack.)
+				m_recursiveStack.push(index);
+				while (!m_recursiveStack.empty())
+				{
+					uint32_t data = m_recursiveStack.front();
+					PropogateConstrain(data, room);
+					m_recursiveStack.pop();
+				}
 			}
 		}
 
@@ -137,10 +165,14 @@ bool WFC::IntroduceConstraints(Room& room)
 			}
 			y = 1u;
 
+			room.doors[chosenDoor].pos[0] = x;
+			room.doors[chosenDoor].pos[1] = y;
+			room.doors[chosenDoor].pos[2] = z;
+
 			uint32_t index = x + y * room.width + z * room.width * room.height;
 			m_entropy[index].possibilities.clear();
 			//Randomize a door block to use.
-			std::uniform_int_distribution<uint32_t> distDoorBlocks(0, m_doorBlocks.size() - 1);
+			std::uniform_int_distribution<size_t> distDoorBlocks(0u, m_doorBlocks.size() - 1u);
 			std::string doorBlock = m_doorBlocks[distDoorBlocks(gen)];
 			std::string name = doorBlock.substr(0u, doorBlock.find("_"));
 			size_t startFlip = doorBlock.find("_", doorBlock.find("_") + 1);
@@ -160,6 +192,7 @@ bool WFC::IntroduceConstraints(Room& room)
 
 			
 			//If its not the first room we might want more than 1 door.
+			uint32_t placedCount = 1u;
 			if (m_generatedRooms.size() != 0)
 			{
 				std::uniform_int_distribution<uint32_t> distDoorDecider(0u, 1u);
@@ -171,8 +204,11 @@ bool WFC::IntroduceConstraints(Room& room)
 						chosenDoor = 0;
 					}
 
-					if (distDoorDecider(gen) == 1u)
+					//If we roll that the door should be generated, OR we get to the last direction and still only have 1 door.
+					//This guarantees that we will have atleast 2 doors per room.
+					if (distDoorDecider(gen) == 1u || (placedCount == 1u && i == 3))
 					{
+						++placedCount;
 						room.doors[chosenDoor].placed = true;
 
 						x = -1;
@@ -211,10 +247,14 @@ bool WFC::IntroduceConstraints(Room& room)
 						}
 						y = 1u;
 
+						room.doors[chosenDoor].pos[0] = x;
+						room.doors[chosenDoor].pos[1] = y;
+						room.doors[chosenDoor].pos[2] = z;
+
 						uint32_t index = x + y * room.width + z * room.width * room.height;
 						m_entropy[index].possibilities.clear();
 						//Randomize a door block to use.
-						std::uniform_int_distribution<uint32_t> distDoorBlocks(0, m_doorBlocks.size() - 1);
+						std::uniform_int_distribution<size_t> distDoorBlocks(0u, m_doorBlocks.size() - 1u);
 						std::string doorBlock = m_doorBlocks[distDoorBlocks(gen)];
 						std::string name = doorBlock.substr(0u, doorBlock.find("_"));
 						size_t startFlip = doorBlock.find("_", doorBlock.find("_") + 1);
@@ -324,6 +364,10 @@ bool WFC::GenerateLevel(uint32_t nrOfRooms, uint32_t maxWidth, uint32_t maxHeigh
 	}
 
 	nrOfRooms = std::min(static_cast<uint32_t>(viableOptions.size()), nrOfRooms);
+	if (nrOfRooms < 2)
+	{
+		return false;
+	}
 
 	//For each room to generate.
 	for (uint32_t i{ 0u }; i < nrOfRooms; i++)
@@ -394,6 +438,137 @@ bool WFC::GenerateLevel(uint32_t nrOfRooms, uint32_t maxWidth, uint32_t maxHeigh
 				for (uint32_t x{ 0u }; x < room.width; ++x)
 				{
 					m_generatedLevel[idStart + x + (y * m_width) + (z * m_width * m_height)] = room.generatedRoom[x + (y * room.width) + (z * room.width * room.height)];
+				}
+			}
+		}
+	}
+
+	//Here post processing for the whole level starts.
+	{
+		//Go through all doors and see which is furthest away from the spawn point.
+		{
+			float longestDist = 0.0f;
+			uint32_t roomIndex = 0;
+			uint32_t doorIndex = 0;
+			//SKIP FIRST ROOM! Do not want exit to be in the first room.
+			for (uint32_t i{ 1u }; i < m_generatedRooms.size(); ++i) //Go through all rooms to go through all doors.
+			{
+				for (uint32_t j{ 0u }; j < 4; ++j) //Go through all doors in a room and calculate their distance to the spawn.
+				{
+					Room& r = m_generatedRooms[i];
+					Door& d = r.doors[j];
+					if (!d.placed)
+					{
+						continue;
+					}
+
+					uint32_t globalX = d.pos[0] + r.globalPos[0];
+					uint32_t globalY = d.pos[1] + r.globalPos[1];
+					uint32_t globalZ = d.pos[2] + r.globalPos[2];
+
+					float dist = static_cast<float>(sqrt(pow(abs(static_cast<int>(m_spawnCoords[0]) - static_cast<int>(globalX)), 2) + pow(abs(static_cast<int>(m_spawnCoords[1]) - static_cast<int>(globalY)), 2) + pow(abs(static_cast<int>(m_spawnCoords[2]) - static_cast<int>(globalZ)), 2)));
+					if (dist > longestDist)
+					{
+						longestDist = dist;
+						roomIndex = i;
+						doorIndex = j;
+					}
+				}
+			}
+			Room& roomToUse = m_generatedRooms[roomIndex];
+			Door& doorToUse = roomToUse.doors[doorIndex];
+			doorToUse.placed = false; //Mark as not placed so that it does not get connected later on.
+			uint32_t idStart = (roomToUse.globalPos[0]) + (roomToUse.globalPos[1] * m_width) + (roomToUse.globalPos[2] * m_width * m_height);
+			m_generatedLevel[idStart + doorToUse.pos[0] + (doorToUse.pos[1] * m_width) + (doorToUse.pos[2] * m_width * m_height)] = "Exit1_r0_f";
+		}
+		//Connect all the doors.
+		{
+			for (uint32_t i{ 0u }; i < m_generatedRooms.size(); ++i) //Go through all rooms to go through all doors.
+			{
+				for (uint32_t j{ 0u }; j < 4; ++j) //Go through all doors in a room and see if they are connected.
+				{
+					Door& doorToConnect = m_generatedRooms[i].doors[j];
+					//If its not placed or is already connected we skip it.
+					if (!doorToConnect.placed || doorToConnect.connected)
+					{
+						continue;
+					}
+
+					float closestDist = 999999999999999999.f;
+					uint32_t roomIndex = 0;
+					uint32_t doorIndex = 0;
+					//We need to find the closest door that is not in this room.
+					for (uint32_t k{ 0u }; k < m_generatedRooms.size(); ++k)
+					{
+						if (k == i) //If its the same room that the door to connect is in then we skip.
+						{
+							continue;
+						}
+						for (uint32_t l{ 0u }; l < 4; ++l)
+						{
+							Door& d = m_generatedRooms[k].doors[l];
+							if (!d.placed)
+							{
+								continue;
+							}
+
+							uint32_t globalX = d.pos[0] + m_generatedRooms[k].globalPos[0];
+							uint32_t globalY = d.pos[1] + m_generatedRooms[k].globalPos[1];
+							uint32_t globalZ = d.pos[2] + m_generatedRooms[k].globalPos[2];
+
+							float dist = static_cast<float>(sqrt(pow(abs(static_cast<int>(m_spawnCoords[0]) - static_cast<int>(globalX)), 2) + pow(abs(static_cast<int>(m_spawnCoords[1]) - static_cast<int>(globalY)), 2) + pow(abs(static_cast<int>(m_spawnCoords[2]) - static_cast<int>(globalZ)), 2)));
+							if (dist < closestDist)
+							{
+								closestDist = dist;
+								roomIndex = k;
+								doorIndex = l;
+							}
+						}
+					}
+
+					//Now we know which door is closest that is not in the same room.
+					//We run A* to find a path.
+					uint32_t start[3] = { m_generatedRooms[i].globalPos[0] + doorToConnect.pos[0], m_generatedRooms[i].globalPos[1] + doorToConnect.pos[1], m_generatedRooms[i].globalPos[2] + doorToConnect.pos[2] };
+					uint32_t goal[3] = { m_generatedRooms[roomIndex].globalPos[0] + m_generatedRooms[roomIndex].doors[doorIndex].pos[0], m_generatedRooms[roomIndex].globalPos[1] + m_generatedRooms[roomIndex].doors[doorIndex].pos[1], m_generatedRooms[roomIndex].globalPos[2] + m_generatedRooms[roomIndex].doors[doorIndex].pos[2] };
+					std::vector<std::pair<uint32_t, int>> path = AStarLevel(m_width, m_height, m_depth, m_generatedLevel, start, goal);
+
+					int prevDir = -1;
+					int nextDir = -1;
+					bool prevWasVoid = false;
+					for (uint32_t i{ 0u }; i < path.size(); ++i)
+					{
+						std::string previous = "None";
+						std::string current = m_generatedLevel[path[i].first];
+						std::string next = "None";
+
+						nextDir = path[i].second;
+
+						//Directions go from earlier block in the path forward.
+						//Meaning: prev -> current && current -> next.
+						if (i != 0)
+						{
+							previous = m_generatedLevel[path[i - 1].first];
+						}
+						if (i != path.size() - 1)
+						{
+							next = m_generatedLevel[path[i + 1].first];
+						}
+
+						std::string replacer = ReplaceBlock(previous, current, next, prevDir, nextDir, prevWasVoid);
+						if (m_generatedLevel[path[i].first] == "Void")
+						{
+							prevWasVoid = true;
+						}
+						else
+						{
+							prevWasVoid = false;
+						}
+						m_generatedLevel[path[i].first] = replacer;
+						prevDir = nextDir;
+					}
+
+					doorToConnect.connected = true;
+					m_generatedRooms[roomIndex].doors[doorIndex].connected = true;
 				}
 			}
 		}
@@ -488,20 +663,6 @@ bool WFC::GenerateRoom(Room& room)
 				break;
 			}
 		}
-		/*
-		if (chosenBlock == "")
-		{
-			std::uniform_int_distribution<uint32_t> distT(0u, m_currentEntropy[index].possibilities.size() - 1);
-			chosenBlock = m_currentEntropy[index].possibilities[distT(gen)];
-		}
-		else
-		{
-			m_blockPossibilities[chosenBlock].frequency = m_blockPossibilities[chosenBlock].frequency - (1.0f / room.width * room.height * room.depth);
-			while (m_priorityQueue->Pop() != -1);
-			delete m_priorityQueue;
-			m_priorityQueue = new PriorityQueue(m_currentEntropy, m_blockPossibilities, room.width, room.height, room.depth);
-		}
-		*/
 
 		//Now that a single possibility is chosen the rest of the possibilities have to be removed.
 		bool removed = false;
@@ -721,9 +882,9 @@ bool WFC::GenerateRoom(Room& room)
 				return false;
 			}
 			//Get the coordiantes for the start index.
-			uint32_t startZ = std::floor(cellIndex / (room.width * room.height));
+			uint32_t startZ = static_cast<uint32_t>(std::floor(cellIndex / (room.width * room.height)));
 			cellIndex = cellIndex - (startZ * room.width * room.height);
-			uint32_t startY = std::floor(cellIndex / room.width);
+			uint32_t startY = static_cast<uint32_t>(std::floor(cellIndex / room.width));
 			cellIndex = cellIndex - (startY * room.width);
 			uint32_t startX = cellIndex;
 			uint32_t start[3] = { startX, startY, startZ };
@@ -737,7 +898,7 @@ bool WFC::GenerateRoom(Room& room)
 						if (room.generatedRoom[x + y * room.width + z * room.width * room.height] != "Void")
 						{
 							uint32_t goal[3] = { x, y, z };
-							std::vector<std::pair<uint32_t, int>> path = AStar(room, start, goal);
+							std::vector<std::pair<uint32_t, int>> path = AStarRoom(room, start, goal);
 							bool goOn = false;
 							for (auto& p : path)
 							{
@@ -798,6 +959,7 @@ bool WFC::GenerateRoom(Room& room)
 	return true;
 }
 
+//Here be hardcoded dragons and madness
 std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock, std::string& nextBlock, int prevDir, int nextDir, bool prevWasVoid)
 {
 	std::string replacer = currentBlock;
@@ -825,21 +987,21 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 			else
 			{
 				//Horizontal
-				if ((prevDir == 1 && nextDir == 5) || (prevDir == 5 && nextDir == 1))
+				if ((prevDir == 1 && nextDir == 5) || (prevDir == 0 && nextDir == 4))
 				{
-					replacer = "LHorizontalConnector_r0_f";
+					replacer = "LHorizontalConnector_r3_f";
 				}
-				else if ((prevDir == 0 && nextDir == 4) || (prevDir == 4 && nextDir == 0))
+				else if ((prevDir == 5 && nextDir == 1) || (prevDir == 4 && nextDir == 0))
 				{
 					replacer = "LHorizontalConnector_r1_f";
 				}
-				else if ((prevDir == 1 && nextDir == 4) || (prevDir == 4 && nextDir == 1))
+				else if ((prevDir == 1 && nextDir == 4) || (prevDir == 5 && nextDir == 0))
 				{
 					replacer = "LHorizontalConnector_r2_f";
 				}
-				else if ((prevDir == 0 && nextDir == 5) || (prevDir == 5 && nextDir == 0))
+				else if ((prevDir == 4 && nextDir == 1) || (prevDir == 0 && nextDir == 5))
 				{
-					replacer = "LHorizontalConnector_r3_f";
+					replacer = "LHorizontalConnector_r0_f";
 				}
 				//Vertical
 				else if (prevDir == 3) //Upwards L
@@ -1670,7 +1832,7 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 				}
 				}
 			}
-			else if (name == "THorizontal1Connector")
+			else if (name == "THorizontal1Connector" || name == "TunnelT1")
 			{
 				if (dirToUse != 2 && dirToUse != 3)
 				{
@@ -1681,6 +1843,25 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 					int rot = std::stoi(rotation.substr(1, 1));
 					rot = (rot + 2) % 4;
 
+					replacer = "4UpConnector_r" + std::to_string(rot) + "_f";
+				}
+				else if (dirToUse == 3)
+				{
+					replacer = "4DownConnector_" + rotation + "_f";
+				}
+			}
+			else if (name == "TunnelT2")
+			{
+				int rot = std::stoi(rotation.substr(1, 1));
+				rot = (rot + 2) % 4;
+
+				if (dirToUse != 2 && dirToUse != 3)
+				{
+					replacer = "PlusHorizontalConnector_r" + std::to_string(rot) + "_f";
+				}
+				else if (dirToUse == 2)
+				{
+					rot = (rot + 2) % 4;
 					replacer = "4UpConnector_r" + std::to_string(rot) + "_f";
 				}
 				else if (dirToUse == 3)
@@ -1921,7 +2102,7 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 				}
 				}
 			}
-			else if (name == "PlusHorizontalConnector")
+			else if (name == "PlusHorizontalConnector" || name == "TunnelCross1")
 			{
 				if (dirToUse == 2)
 				{
@@ -1985,11 +2166,14 @@ bool WFC::ReadInput(std::string input)
 			{
 				m_doorBlocks.push_back(id);
 			}
+			else if (id.find("Spawn") != std::string::npos)
+			{
+				m_spawnBlocks.push_back(id);
+			}
 
 			m_blockPossibilities[id].id = id;
 			//Put the count in the frequency and increment the totalcount.
-			m_blockPossibilities[id].count = static_cast<float>(std::stoi(line.substr(delim + 1, line.size())));
-			//m_blockPossibilities[id].frequency = static_cast<float>(std::stoi(line.substr(delim + 1, line.size())));
+			m_blockPossibilities[id].count = std::stoi(line.substr(delim + 1, line.size()));
 			m_totalCount += m_blockPossibilities[id].count;
 
 			//For each direction.
@@ -2015,45 +2199,9 @@ bool WFC::ReadInput(std::string input)
 	//Go through each block and change from count to frequency.
 	for (auto& block : m_blockPossibilities)
 	{
-		block.second.count = static_cast<uint32_t>(std::ceil(block.second.count * 0.25f)); //Since all blocks except void & empty are added 4 times each because of rotations.
+		block.second.count = static_cast<uint32_t>(std::ceil(block.second.count * 0.25f)); //Since all blocks are added 4 times each because of rotations.
 		
 		block.second.frequency = 1.0f;
-		//block.second.frequency = static_cast<float>(block.second.count) / static_cast<float>(m_totalCount);
-		//block.second.originalFrequency = block.second.frequency;
-		//Here we can tweak the frequencies.
-		//float squishValue = 0.9f;
-		//block.second.frequency += squishValue * (1.0f - block.second.frequency);
-		/*
-		if (block.first == "Void")
-		{
-			block.second.frequency *= 1.0f; //Started as 0.2f
-		}
-		else if (block.first == "Empty")
-		{
-			block.second.frequency *= 1.0f;
-		}*/
-		/*
-		else if (block.first.substr(0, block.first.find('_')) == "Floor1")
-		{
-			block.second.frequency *= 0.7f;
-		}
-		else if (block.first.find("Tunnel") != std::string::npos)
-		{
-			block.second.frequency *= 7.0f;
-		}
-		else if (block.first.find("Bridge") != std::string::npos)
-		{
-			block.second.frequency *= 4.0f;
-		}
-		else if (block.first.find("Cliff") != std::string::npos)
-		{
-			block.second.frequency *= 2.0f;
-		}
-		else if (block.first.find("Riverbed") != std::string::npos)
-		{
-			block.second.frequency *= 2.0f;
-		}
-		*/
 	}
 
 	return true;

@@ -21,6 +21,11 @@ public:
 		return m_generatedLevel;
 	}
 
+	const std::vector<Room>& GetGeneratedRoomsData() const
+	{
+		return m_generatedRooms;
+	}
+
 	//Changes the input so that the algorithm uses a different level to generate levels from.
 	bool SetInput(std::string input);
 
@@ -66,6 +71,7 @@ private:
 	uint32_t m_height = 0;
 	uint32_t m_depth = 0;
 
+	uint32_t m_spawnCoords[3] = {0u, 0u, 0u};
 	std::vector<Room> m_generatedRooms; //The generated rooms. Rooms are placed here before the level is generated 
 	std::vector<std::string> m_generatedLevel; //The final level that is being generated.
 	std::vector<EntropyBlock> m_entropy; //The initial entropy. After the constraints.
