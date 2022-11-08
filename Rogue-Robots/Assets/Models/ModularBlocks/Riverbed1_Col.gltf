@@ -1,0 +1,112 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "Riverbed1_Col"
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Scene.022",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2,
+                        "TEXCOORD_1" : 3
+                    },
+                    "indices" : 4
+                }
+            ]
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 182,
+            "max" : [
+                2.5,
+                1.4930627346038818,
+                2.5
+            ],
+            "min" : [
+                -2.5,
+                0.9369878768920898,
+                -2.5
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 182,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 182,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5126,
+            "count" : 182,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 4,
+            "componentType" : 5123,
+            "count" : 255,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 2184,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 2184,
+            "byteOffset" : 2184
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1456,
+            "byteOffset" : 4368
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1456,
+            "byteOffset" : 5824
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 510,
+            "byteOffset" : 7280
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 7792,
+            "uri" : "Riverbed1_Col.bin"
+        }
+    ]
+}

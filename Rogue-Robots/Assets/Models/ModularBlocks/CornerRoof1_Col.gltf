@@ -1,0 +1,112 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "CornerRoof1_Col"
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Scene.010",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2,
+                        "TEXCOORD_1" : 3
+                    },
+                    "indices" : 4
+                }
+            ]
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 301,
+            "max" : [
+                2.500000476837158,
+                4.699991226196289,
+                2.500009298324585
+            ],
+            "min" : [
+                -2.0190951824188232,
+                -4.772197144120582e-07,
+                -2.2578232288360596
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 301,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 301,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5126,
+            "count" : 301,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 4,
+            "componentType" : 5123,
+            "count" : 339,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 3612,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 3612,
+            "byteOffset" : 3612
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 2408,
+            "byteOffset" : 7224
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 2408,
+            "byteOffset" : 9632
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 678,
+            "byteOffset" : 12040
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 12720,
+            "uri" : "CornerRoof1_Col.bin"
+        }
+    ]
+}

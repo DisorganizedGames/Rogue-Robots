@@ -7,7 +7,7 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 {
 	auto& em = EntityManager::Get();
 
-	float blockDim = 5.0f;
+	float blockDim = 4.6f;
 
 	std::string line;
 
@@ -32,7 +32,7 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 					size_t delimPos = line.find(' ');
 					std::string block = line.substr(0, delimPos);
 					line.erase(0, delimPos + 1);
-					if (block != "Empty" && block != "Void" && block != "q")
+					if (false/*block != "Empty" && block != "Void" && block != "q"*/)
 					{
 						size_t firstUnderscore = block.find('_');
 						size_t secondUnderscore = block.find('_', firstUnderscore + 1);
@@ -69,17 +69,40 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 							false);		// Set this to true if you want to see colliders only in wireframe
 						em.AddComponent<ShadowReceiverComponent>(blockEntity);
 					}
+					else if (block != "Empty" && block != "Void")
+					{
+						size_t firstUnderscore = block.find('_');
+						size_t secondUnderscore = block.find('_', firstUnderscore + 1);
+						std::string blockName = block.substr(0, firstUnderscore);
+						int blockRot = std::stoi(block.substr(firstUnderscore + 2, secondUnderscore - firstUnderscore - 2));
+						Vector3 scale = Vector3(1.0f, 1.0f, 1.0f);
 
-					++x;
+						entity blockEntity = levelBlocks.emplace_back(em.CreateEntity());
+						em.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".gltf"));
+						em.AddComponent<TransformComponent>(blockEntity,
+							Vector3(x * blockDim, y * blockDim, z * blockDim),
+							Vector3(0.0f, -blockRot * piDiv2, 0.0f),
+							scale);
+
+						em.AddComponent<ModularBlockComponent>(blockEntity);
+						em.AddComponent<MeshColliderComponent>(blockEntity,
+							blockEntity,
+							aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + "_Col.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::CPUMemory | DOG::AssetLoadFlag::GPUMemory))),
+							scale,
+							false);		// Set this to true if you want to see colliders only in wireframe
+						em.AddComponent<ShadowReceiverComponent>(blockEntity);
+					}
+
+					++z;
 				}
-				x = 0;
+				z = 0;
 				++y;
 			}
 			else
 			{
-				x = 0;
+				z = 0;
 				y = 0;
-				++z;
+				++x;
 			}
 		}
 	}

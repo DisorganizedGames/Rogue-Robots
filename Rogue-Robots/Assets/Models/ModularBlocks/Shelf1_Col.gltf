@@ -1,0 +1,112 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "Shelf1_Col"
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Scene.037",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2,
+                        "TEXCOORD_1" : 3
+                    },
+                    "indices" : 4
+                }
+            ]
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 200,
+            "max" : [
+                2.5,
+                0.7471796274185181,
+                2.5
+            ],
+            "min" : [
+                -2.5,
+                0.1708800494670868,
+                -2.5
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 200,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 200,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5126,
+            "count" : 200,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 4,
+            "componentType" : 5123,
+            "count" : 348,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 2400,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 2400,
+            "byteOffset" : 2400
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1600,
+            "byteOffset" : 4800
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1600,
+            "byteOffset" : 6400
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 696,
+            "byteOffset" : 8000
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 8696,
+            "uri" : "Shelf1_Col.bin"
+        }
+    ]
+}

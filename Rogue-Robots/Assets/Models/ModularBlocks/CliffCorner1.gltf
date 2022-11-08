@@ -1,0 +1,235 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "CliffCorner1"
+        }
+    ],
+    "materials" : [
+        {
+            "doubleSided" : true,
+            "name" : "PP_Standard_Material.007",
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 0
+                },
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.5527864098548889
+            }
+        },
+        {
+            "doubleSided" : true,
+            "name" : "PP_Standard_Material.008",
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 1
+                },
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.5527864098548889
+            }
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Scene.001",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2,
+                        "TEXCOORD_1" : 3
+                    },
+                    "indices" : 4,
+                    "material" : 0
+                },
+                {
+                    "attributes" : {
+                        "POSITION" : 5,
+                        "NORMAL" : 6,
+                        "TEXCOORD_0" : 7,
+                        "TEXCOORD_1" : 8
+                    },
+                    "indices" : 9,
+                    "material" : 1
+                }
+            ]
+        }
+    ],
+    "textures" : [
+        {
+            "sampler" : 0,
+            "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 0
+        }
+    ],
+    "images" : [
+        {
+            "mimeType" : "image/png",
+            "name" : "PP_Color_Palette",
+            "uri" : "Textures/PP_Color_Palette.png"
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 790,
+            "max" : [
+                2.4999825954437256,
+                5.000000476837158,
+                -0.20655518770217896
+            ],
+            "min" : [
+                -0.4088466465473175,
+                1.2558103799819946,
+                -2.499999761581421
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 790,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 790,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5126,
+            "count" : 790,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 4,
+            "componentType" : 5123,
+            "count" : 795,
+            "type" : "SCALAR"
+        },
+        {
+            "bufferView" : 5,
+            "componentType" : 5126,
+            "count" : 530,
+            "max" : [
+                2.5,
+                5,
+                0.46408089995384216
+            ],
+            "min" : [
+                0.24405768513679504,
+                1.2558103799819946,
+                -2.4999868869781494
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 6,
+            "componentType" : 5126,
+            "count" : 530,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 7,
+            "componentType" : 5126,
+            "count" : 530,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 8,
+            "componentType" : 5126,
+            "count" : 530,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 9,
+            "componentType" : 5123,
+            "count" : 534,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 9480,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 9480,
+            "byteOffset" : 9480
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 6320,
+            "byteOffset" : 18960
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 6320,
+            "byteOffset" : 25280
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1590,
+            "byteOffset" : 31600
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 6360,
+            "byteOffset" : 33192
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 6360,
+            "byteOffset" : 39552
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 4240,
+            "byteOffset" : 45912
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 4240,
+            "byteOffset" : 50152
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1068,
+            "byteOffset" : 54392
+        }
+    ],
+    "samplers" : [
+        {
+            "magFilter" : 9729,
+            "minFilter" : 9987
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 55460,
+            "uri" : "CliffCorner1.bin"
+        }
+    ]
+}

@@ -1,0 +1,112 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "TunnelStraight1_Col"
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Scene.056",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2,
+                        "TEXCOORD_1" : 3
+                    },
+                    "indices" : 4
+                }
+            ]
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 342,
+            "max" : [
+                1.9405993223190308,
+                4.406264781951904,
+                2.500000476837158
+            ],
+            "min" : [
+                -1.7901688814163208,
+                0.7980737090110779,
+                -2.500002145767212
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 342,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 342,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5126,
+            "count" : 342,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 4,
+            "componentType" : 5123,
+            "count" : 414,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 4104,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 4104,
+            "byteOffset" : 4104
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 2736,
+            "byteOffset" : 8208
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 2736,
+            "byteOffset" : 10944
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 828,
+            "byteOffset" : 13680
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 14508,
+            "uri" : "TunnelStraight1_Col.bin"
+        }
+    ]
+}

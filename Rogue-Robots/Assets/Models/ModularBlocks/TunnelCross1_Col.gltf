@@ -1,0 +1,112 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "TunnelCross1_Col"
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Scene.054",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2,
+                        "TEXCOORD_1" : 3
+                    },
+                    "indices" : 4
+                }
+            ]
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 690,
+            "max" : [
+                2.500000476837158,
+                4.406264781951904,
+                2.500000476837158
+            ],
+            "min" : [
+                -2.500002145767212,
+                0.7270100712776184,
+                -2.500002145767212
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 690,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 690,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5126,
+            "count" : 690,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 4,
+            "componentType" : 5123,
+            "count" : 690,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 8280,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 8280,
+            "byteOffset" : 8280
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 5520,
+            "byteOffset" : 16560
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 5520,
+            "byteOffset" : 22080
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1380,
+            "byteOffset" : 27600
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 28980,
+            "uri" : "TunnelCross1_Col.bin"
+        }
+    ]
+}

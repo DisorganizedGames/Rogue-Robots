@@ -1,0 +1,235 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "Wall1"
+        }
+    ],
+    "materials" : [
+        {
+            "doubleSided" : true,
+            "name" : "PP_Standard_Material.037",
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 0
+                },
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.5527864098548889
+            }
+        },
+        {
+            "doubleSided" : true,
+            "name" : "PP_Standard_Material.038",
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 1
+                },
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.5527864098548889
+            }
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Scene.064",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2,
+                        "TEXCOORD_1" : 3
+                    },
+                    "indices" : 4,
+                    "material" : 0
+                },
+                {
+                    "attributes" : {
+                        "POSITION" : 5,
+                        "NORMAL" : 6,
+                        "TEXCOORD_0" : 7,
+                        "TEXCOORD_1" : 8
+                    },
+                    "indices" : 9,
+                    "material" : 1
+                }
+            ]
+        }
+    ],
+    "textures" : [
+        {
+            "sampler" : 0,
+            "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 0
+        }
+    ],
+    "images" : [
+        {
+            "mimeType" : "image/png",
+            "name" : "PP_Color_Palette",
+            "uri" : "Textures/PP_Color_Palette.png"
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 222,
+            "max" : [
+                2.5,
+                4.1365275382995605,
+                -1.305408000946045
+            ],
+            "min" : [
+                -2.5,
+                -0.0023530907928943634,
+                -1.7256702184677124
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 222,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 222,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5126,
+            "count" : 222,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 4,
+            "componentType" : 5123,
+            "count" : 321,
+            "type" : "SCALAR"
+        },
+        {
+            "bufferView" : 5,
+            "componentType" : 5126,
+            "count" : 83,
+            "max" : [
+                2.5000059604644775,
+                5,
+                -1.2127857208251953
+            ],
+            "min" : [
+                -2.5,
+                2.5387706756591797,
+                -1.7256702184677124
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 6,
+            "componentType" : 5126,
+            "count" : 83,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 7,
+            "componentType" : 5126,
+            "count" : 83,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 8,
+            "componentType" : 5126,
+            "count" : 83,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 9,
+            "componentType" : 5123,
+            "count" : 132,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 2664,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 2664,
+            "byteOffset" : 2664
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1776,
+            "byteOffset" : 5328
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1776,
+            "byteOffset" : 7104
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 642,
+            "byteOffset" : 8880
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 996,
+            "byteOffset" : 9524
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 996,
+            "byteOffset" : 10520
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 664,
+            "byteOffset" : 11516
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 664,
+            "byteOffset" : 12180
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 264,
+            "byteOffset" : 12844
+        }
+    ],
+    "samplers" : [
+        {
+            "magFilter" : 9729,
+            "minFilter" : 9987
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 13108,
+            "uri" : "Wall1.bin"
+        }
+    ]
+}

@@ -1,0 +1,235 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "FloorBridge1"
+        }
+    ],
+    "materials" : [
+        {
+            "doubleSided" : true,
+            "name" : "PP_Standard_Material.016",
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 0
+                },
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.5527864098548889
+            }
+        },
+        {
+            "doubleSided" : true,
+            "name" : "PP_Standard_Material.110",
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 1
+                },
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.5527864098548889
+            }
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Scene.006",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2,
+                        "TEXCOORD_1" : 3
+                    },
+                    "indices" : 4,
+                    "material" : 0
+                },
+                {
+                    "attributes" : {
+                        "POSITION" : 5,
+                        "NORMAL" : 6,
+                        "TEXCOORD_0" : 7,
+                        "TEXCOORD_1" : 8
+                    },
+                    "indices" : 9,
+                    "material" : 1
+                }
+            ]
+        }
+    ],
+    "textures" : [
+        {
+            "sampler" : 0,
+            "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 0
+        }
+    ],
+    "images" : [
+        {
+            "mimeType" : "image/png",
+            "name" : "PP_Color_Palette",
+            "uri" : "Textures/PP_Color_Palette.png"
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 825,
+            "max" : [
+                2.5,
+                2.265723705291748,
+                2.5
+            ],
+            "min" : [
+                -2.5181829929351807,
+                0.30606284737586975,
+                -2.5
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 825,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 825,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5126,
+            "count" : 825,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 4,
+            "componentType" : 5123,
+            "count" : 1446,
+            "type" : "SCALAR"
+        },
+        {
+            "bufferView" : 5,
+            "componentType" : 5126,
+            "count" : 1460,
+            "max" : [
+                -0.9166663885116577,
+                1.8061013221740723,
+                2.11484956741333
+            ],
+            "min" : [
+                -1.7114747762680054,
+                0.5685747265815735,
+                -1.943835973739624
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 6,
+            "componentType" : 5126,
+            "count" : 1460,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 7,
+            "componentType" : 5126,
+            "count" : 1460,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 8,
+            "componentType" : 5126,
+            "count" : 1460,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 9,
+            "componentType" : 5123,
+            "count" : 2676,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 9900,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 9900,
+            "byteOffset" : 9900
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 6600,
+            "byteOffset" : 19800
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 6600,
+            "byteOffset" : 26400
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 2892,
+            "byteOffset" : 33000
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 17520,
+            "byteOffset" : 35892
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 17520,
+            "byteOffset" : 53412
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 11680,
+            "byteOffset" : 70932
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 11680,
+            "byteOffset" : 82612
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 5352,
+            "byteOffset" : 94292
+        }
+    ],
+    "samplers" : [
+        {
+            "magFilter" : 9729,
+            "minFilter" : 9987
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 99644,
+            "uri" : "FloorBridge1.bin"
+        }
+    ]
+}

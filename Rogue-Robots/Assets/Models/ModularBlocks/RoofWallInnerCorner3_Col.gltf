@@ -1,0 +1,112 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "RoofWallInnerCorner3_Col"
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Scene.036",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2,
+                        "TEXCOORD_1" : 3
+                    },
+                    "indices" : 4
+                }
+            ]
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 217,
+            "max" : [
+                2.5000009536743164,
+                4.70001220703125,
+                2.500000238418579
+            ],
+            "min" : [
+                -2.5000009536743164,
+                -4.474064212445228e-07,
+                -2.500000476837158
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 217,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 217,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5126,
+            "count" : 217,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 4,
+            "componentType" : 5123,
+            "count" : 366,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 2604,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 2604,
+            "byteOffset" : 2604
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1736,
+            "byteOffset" : 5208
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1736,
+            "byteOffset" : 6944
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 732,
+            "byteOffset" : 8680
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 9412,
+            "uri" : "RoofWallInnerCorner3_Col.bin"
+        }
+    ]
+}
