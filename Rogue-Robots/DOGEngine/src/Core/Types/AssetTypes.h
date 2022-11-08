@@ -50,11 +50,13 @@ namespace DOG
 		std::vector<u8> data;
 		u32 width{ 0 };
 		u32 height{ 0 };
+		DXGI_FORMAT format{ DXGI_FORMAT_UNKNOWN };
 	};
 
 	struct ImportedTextureFile
 	{
 		std::vector<ImportedTextureFileMip> dataPerMip;
+		DXGI_FORMAT format{ DXGI_FORMAT_UNKNOWN };
 	};
 
 	struct AnimationData
