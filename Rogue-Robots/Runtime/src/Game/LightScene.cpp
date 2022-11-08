@@ -53,10 +53,10 @@ void LightScene::Update()
 	
 }
 
-DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Matrix projetion, DirectX::SimpleMath::Matrix)
+DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Matrix projetion, DirectX::SimpleMath::Matrix view)
 {
-	//Matrix m = view * projetion;
-	Matrix m = projetion;
+	Matrix m = view * projetion;
+	//Matrix m = projetion;
 
 	Vector4 leftP = { m._14 + m._11, m._24 + m._21, m._34 + m._31, m._44 + m._41 };
 	Vector4 rightP = { m._14 - m._11, m._24 - m._21, m._34 - m._31, m._44 - m._41 };
@@ -114,7 +114,7 @@ DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Matrix projetion, Direct
 	return e;
 }
 
-std::vector<DirectX::SimpleMath::Vector4> LightScene::ExtractPlanes(DirectX::SimpleMath::Matrix projetion, DirectX::SimpleMath::Matrix, int resX, int resY, int tileSize, Vector2i tile)
+std::vector<DirectX::SimpleMath::Vector4> LightScene::ExtractPlanes(DirectX::SimpleMath::Matrix projetion, DirectX::SimpleMath::Matrix view, int resX, int resY, int tileSize, Vector2i tile)
 {
 	//Matrix m = view * projetion;
 	Matrix m = projetion;
@@ -136,24 +136,13 @@ std::vector<DirectX::SimpleMath::Vector4> LightScene::ExtractPlanes(DirectX::Sim
 	float tileBiasX = tileScaleX - (float)tile.x;
 	float tileBiasY = tileScaleY - (float)tile.y;
 
-	//Vector4 col1 = { m._11, m._21, m._31, m._41 };
-	//Vector4 col2 = { m._12, m._22, m._32, m._42 };
-	//Vector4 col3 = { m._13, m._23, m._33, m._43 };
-	//Vector4 col4 = { m._14, m._24, m._34, m._44 };
-	
-
-	/*Vector4 leftP = col4 + col1;
-	Vector4 rightP = col4 - col1;
-	Vector4 botP = col4 + col2;
-	Vector4 topP = col4 - col2;
-	Vector4 nearP = col3;
-	Vector4 farP = col4 - col3;*/
-
 
 	Vector4 col1 = { m._11 * tileScaleX * 2, 0, -1 + tileBiasX * 2, 0 };
 	Vector4 col2 = { 0 , -m._22 * tileScaleY * 2, -1 + tileBiasY * 2, 0 };
 	Vector4 col4 = { 0, 0, 1, 0 };
 
+
+	// This will give the frustum in view space
 	Vector4 leftP = col4 + col1;
 	Vector4 rightP = col4 - col1;
 	Vector4 botP = col4 + col2;
@@ -161,25 +150,37 @@ std::vector<DirectX::SimpleMath::Vector4> LightScene::ExtractPlanes(DirectX::Sim
 	Vector4 nearP = { 0, 0, 1, -1 };
 	Vector4 farP = { 0, 0, -1.0f, 10 };
 
+
+
 	leftP = DirectX::XMPlaneNormalize(leftP);
 	rightP = DirectX::XMPlaneNormalize(rightP);
 	botP = DirectX::XMPlaneNormalize(botP);
 	topP = DirectX::XMPlaneNormalize(topP);
 	nearP = DirectX::XMPlaneNormalize(nearP);
 	farP = DirectX::XMPlaneNormalize(farP);
+	
 
+	// This will give the frustum in world space
+	Matrix viewI = view;
+	viewI = viewI.Transpose(); // For a plane a matirx should be inverted and then transposed before transforming the plane; we want to transform with the inverse of view => only need to transpose
+	leftP = Vector4::Transform(leftP, viewI);
+	rightP = Vector4::Transform(rightP, viewI);
+	botP = Vector4::Transform(botP, viewI);
+	topP = Vector4::Transform(topP, viewI);
+	nearP = Vector4::Transform(nearP, viewI);
+	farP = Vector4::Transform(farP, viewI);
 
 	return { leftP , rightP, botP, topP, nearP, farP };
 }
 
 DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Vector4 leftPlane, DirectX::SimpleMath::Vector4 rightPlane, DirectX::SimpleMath::Vector4 bottomPlane, DirectX::SimpleMath::Vector4 topPlane, DirectX::SimpleMath::Vector4 nearPlane, DirectX::SimpleMath::Vector4 farPlane)
 {
-	leftPlane = DirectX::XMPlaneNormalize(leftPlane);
+	/*leftPlane = DirectX::XMPlaneNormalize(leftPlane);
 	rightPlane = DirectX::XMPlaneNormalize(rightPlane);
 	bottomPlane = DirectX::XMPlaneNormalize(bottomPlane);
 	topPlane = DirectX::XMPlaneNormalize(topPlane);
 	nearPlane = DirectX::XMPlaneNormalize(nearPlane);
-	farPlane = DirectX::XMPlaneNormalize(farPlane);
+	farPlane = DirectX::XMPlaneNormalize(farPlane);*/
 
 	std::vector<Vector3> vec;
 	vec.resize(4);
