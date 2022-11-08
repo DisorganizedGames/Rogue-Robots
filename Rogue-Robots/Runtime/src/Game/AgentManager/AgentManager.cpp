@@ -195,6 +195,8 @@ void AgentManager::DestroyLocalAgent(entity e)
 		[&](ThisPlayer&, NetworkPlayerComponent& net) { kill.playerId = net.playerId; });
 	kill.position = agentTrans.GetPosition();
 
+	CountAgentKilled(agent.id);
+
 	em.DeferredEntityDestruction(e);
 }
 
