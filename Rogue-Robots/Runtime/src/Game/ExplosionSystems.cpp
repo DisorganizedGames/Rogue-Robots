@@ -32,7 +32,7 @@ void ExplosionSystem::OnUpdate(entity e, TransformComponent& explosionTransform,
 }
 
 u32 ExplosionEffectSystem::explosionEffectModelID = 0; 
-entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float radius, const DirectX::SimpleMath::Vector3& color, float growTime, float shrinkTime)
+entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float radius, float growTime, float shrinkTime)
 {
 	if (explosionEffectModelID == 0)
 	{
@@ -49,15 +49,6 @@ entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float r
 	EntityManager::Get().AddComponent<TransformComponent>(newEntity, parentPosition, Vector3(.0f, .0f, .0f), Vector3(radius, radius, radius));
 	EntityManager::Get().AddComponent<ModelComponent>(newEntity, explosionEffectModelID);
 
-	// Add dynamic point light
-	auto pdesc = PointLightDesc();
-	pdesc.color = color;
-	pdesc.strength = 100.f;
-	auto& plc = EntityManager::Get().AddComponent<PointLightComponent>(newEntity);
-	plc.handle = LightManager::Get().AddPointLight(pdesc, LightUpdateFrequency::PerFrame);
-	plc.color = pdesc.color;
-	plc.strength = pdesc.strength;
-
 	//Set values for explosions on the script
 	LuaMain::GetScriptManager()->AddScript(newEntity, "ExplosionEffect.lua");
 	if (growTime != -1.0f || shrinkTime != -1.0f)
@@ -65,19 +56,71 @@ entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float r
 		ScriptData scriptData = LuaMain::GetScriptManager()->GetScript(newEntity, "ExplosionEffect.lua");
 		LuaTable scriptTable(scriptData.scriptTable, true);
 
-
 		if (growTime != -1.0f)
 			scriptTable.AddFloatToTable("growTime", growTime);
 		if (shrinkTime != -1.0f)
 			scriptTable.AddFloatToTable("shrinkTime", shrinkTime);
 	}
 
+	AddEffectsToExplosion(parentEntity, newEntity);
+
 	return newEntity;
+}
+
+void ExplosionEffectSystem::AddEffectsToExplosion(DOG::entity parentEntity, DOG::entity explosionEntity)
+{
+	std::string materialName = "";
+	//Base explosion color
+	Vector3 color = { 0.8f, 0.0f, 0.0f };
+
+	if (EntityManager::Get().HasComponent<FrostEffectComponent>(parentEntity))
+	{	
+		materialName = "FrostExplosionMaterial";
+		color = { 0.2f, 0.6f, 0.8f };
+	}
+
+	if (!materialName.empty() && EntityManager::Get().HasComponent<ModelComponent>(explosionEntity))
+	{
+		LuaTable materialPrefabsTable = LuaMain::GetGlobal()->GetTable("MaterialPrefabs");
+		LuaTable materialTable(materialPrefabsTable.CallFunctionOnTable("GetMaterial", materialName).table);
+
+		ModelComponent& model = EntityManager::Get().GetComponent<ModelComponent>(explosionEntity);
+
+		ModelAsset* modelAsset = AssetManager::Get().GetAsset<ModelAsset>(model.id);
+
+		if (!modelAsset)
+		{
+			std::cout << "Model has not been loaded in yet! Model ID: " << model.id << "\n";
+			return;
+		}
+
+		MaterialHandle materialHandle;
+		materialHandle.handle = static_cast<u64>(materialTable.GetIntFromTable("materialHandle"));
+
+		LuaTable albedoFactor = materialTable.GetTableFromTable("albedoFactor");
+
+		MaterialDesc materialDesc{};
+		materialDesc.albedoFactor = { albedoFactor.GetFloatFromTable("x"), albedoFactor.GetFloatFromTable("y"), albedoFactor.GetFloatFromTable("z") };
+		materialDesc.roughnessFactor = (float)materialTable.GetDoubleFromTable("roughnessFactor");
+		materialDesc.metallicFactor = (float)materialTable.GetDoubleFromTable("metallicFactor");
+
+		EntityManager::Get().AddComponent<SubmeshRenderer>(explosionEntity, modelAsset->gfxModel->mesh.mesh, materialHandle, materialDesc);
+		EntityManager::Get().RemoveComponent<ModelComponent>(explosionEntity);
+	}
+
+	// Add dynamic point light
+	auto pdesc = PointLightDesc();
+	pdesc.color = color;
+	pdesc.strength = 100.f;
+	auto& plc = EntityManager::Get().AddComponent<PointLightComponent>(explosionEntity);
+	plc.handle = LightManager::Get().AddPointLight(pdesc, LightUpdateFrequency::PerFrame);
+	plc.color = pdesc.color;
+	plc.strength = pdesc.strength;
 }
 
 void ExplosionEffectSystem::OnUpdate(DOG::entity e, ExplosionEffectComponent& explosionInfo)
 {
-	CreateExplosionEffect(e, explosionInfo.radius, explosionInfo.color, explosionInfo.growTime, explosionInfo.shrinkTime);
+	CreateExplosionEffect(e, explosionInfo.radius, explosionInfo.growTime, explosionInfo.shrinkTime);
 
 	EntityManager::Get().RemoveComponent<ExplosionEffectComponent>(e);
 }

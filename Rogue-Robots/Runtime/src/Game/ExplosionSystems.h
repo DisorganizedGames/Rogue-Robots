@@ -16,7 +16,8 @@ private:
 	static u32 explosionEffectModelID;
 public:
 	//You do not have control over the entity! The system does!
-	static DOG::entity CreateExplosionEffect(DOG::entity parentEntity, float radius, const DirectX::SimpleMath::Vector3& color = { 0.8f, 0.f, 0.f }, float growTime = -1.0f, float shrinkTime = -1.0f);
+	static DOG::entity CreateExplosionEffect(DOG::entity parentEntity, float radius, float growTime = -1.0f, float shrinkTime = -1.0f);
+	static void AddEffectsToExplosion(DOG::entity parentEntity, DOG::entity explosionEntity);
 
 	SYSTEM_CLASS(ExplosionEffectComponent);
 	ON_UPDATE_ID(ExplosionEffectComponent);
