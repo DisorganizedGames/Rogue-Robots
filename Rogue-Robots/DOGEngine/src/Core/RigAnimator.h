@@ -68,13 +68,18 @@ namespace DOG
 		f32 globalTime = 0.0f;
 		ImportedRig* rigData = {};
 
+		// Snipp, Snipp here be Clips 
 		std::array<Clip, 50> clips = {};
+
+		// Clip data needed to update rig
+		std::array<ClipData, 50> clipData = {};
+
 		// Weights per group, fullbody 
 		f32 gWeights[N_GROUPS - 1] = { 0.5f, 0.f };
+
 		// Number of Clips influencing group
 		std::array<u32, N_GROUPS> groupClipCount = { 0 };
-		// Data needed to update rig
-		std::array<ClipData, 50> clipData = {};
+
 		// Animation groups
 		std::array<AnimationGroup, N_GROUPS> groups = {};
 
