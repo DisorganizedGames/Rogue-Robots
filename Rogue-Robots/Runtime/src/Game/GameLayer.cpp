@@ -32,7 +32,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerMovementSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerJumpRefreshSystem>());
-	
+
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_agentManager = new AgentManager();
@@ -86,41 +86,41 @@ void GameLayer::OnDetach()
 void GameLayer::OnUpdate()
 {
 	MINIPROFILE
-	switch (m_gameState)
-	{
-	case GameState::None:
-		break;
-	case GameState::Initializing:
-		m_gameState = GameState::StartPlaying;
-		break;
-	case GameState::Lobby:
-		UpdateLobby();
-		break;
-	case GameState::StartPlaying:
-		StartMainScene();
-		break;
-	case GameState::Playing:
-		UpdateGame();
-		break;
-	case GameState::Won:
-		CloseMainScene();
-		m_gameState = GameState::StartPlaying;
-		break;
-	case GameState::Lost:
-		CloseMainScene();
-		m_gameState = GameState::StartPlaying;
-		break;
-	case GameState::Exiting:
-		CloseMainScene();
-		m_gameState = GameState::None;
-		break;
-	case GameState::Restart:
-		CloseMainScene();
-		m_gameState = GameState::StartPlaying;
-		break;
-	default:
-		break;
-	}
+		switch (m_gameState)
+		{
+		case GameState::None:
+			break;
+		case GameState::Initializing:
+			m_gameState = GameState::StartPlaying;
+			break;
+		case GameState::Lobby:
+			UpdateLobby();
+			break;
+		case GameState::StartPlaying:
+			StartMainScene();
+			break;
+		case GameState::Playing:
+			UpdateGame();
+			break;
+		case GameState::Won:
+			CloseMainScene();
+			m_gameState = GameState::StartPlaying;
+			break;
+		case GameState::Lost:
+			CloseMainScene();
+			m_gameState = GameState::StartPlaying;
+			break;
+		case GameState::Exiting:
+			CloseMainScene();
+			m_gameState = GameState::None;
+			break;
+		case GameState::Restart:
+			CloseMainScene();
+			m_gameState = GameState::StartPlaying;
+			break;
+		default:
+			break;
+		}
 
 	if (m_networkStatus != NetworkStatus::Offline)
 		m_netCode.OnUpdate(m_agentManager);
@@ -134,7 +134,7 @@ void GameLayer::OnUpdate()
 void GameLayer::StartMainScene()
 {
 	assert(m_mainScene == nullptr);
-	
+
 	switch (m_selectedScene)
 	{
 	case SceneComponent::Type::TunnelRoom0Scene:
@@ -252,7 +252,7 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 		auto& stats = m_entityManager.GetComponent<PlayerStatsComponent>(e);
 		stats.health = stats.maxHealth;
 	}
-	
+
 	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
 	m_entityManager.DeferredEntityDestruction(controller.debugCamera);
 	controller.debugCamera = DOG::NULL_ENTITY;
@@ -261,12 +261,12 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 void GameLayer::KillPlayer(DOG::entity e)
 {
 	m_entityManager.RemoveComponent<PlayerAliveComponent>(e);
-	
+
 	LuaMain::GetScriptManager()->RemoveScript(e, "Gun.lua");
 	LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
 	LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
 	m_entityManager.RemoveComponent<ScriptComponent>(e);
-	
+
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
 		auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
@@ -319,30 +319,30 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	switch (event.GetEventType())
 	{
 	case EventType::LeftMouseButtonPressedEvent:
-	{
-		EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer& )
-			{
-				inputC.shoot = true;
-			});
-		break;
-	}
+		{
+			EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
+				{
+					inputC.shoot = true;
+				});
+			break;
+		}
 	case EventType::LeftMouseButtonReleasedEvent:
-	{
-		EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
-			{
-				inputC.shoot = false;
-			});
-		break;
-	}
+		{
+			EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
+				{
+					inputC.shoot = false;
+				});
+			break;
+		}
 	case EventType::KeyPressedEvent:
-	{
-		Input(EVENT(KeyPressedEvent).key);	
-		break;
-	}
+		{
+			Input(EVENT(KeyPressedEvent).key);
+			break;
+		}
 	case EventType::KeyReleasedEvent:
-	{
-		Release(EVENT(KeyReleasedEvent).key);
-	}
+		{
+			Release(EVENT(KeyReleasedEvent).key);
+		}
 	}
 }
 
@@ -354,212 +354,212 @@ void GameLayer::UpdateLobby()
 		switch (m_networkStatus)
 		{
 		case NetworkStatus::Offline:
-		{
-			ImGui::Text("Host to host, join to join, play to play offline");
-			if (ImGui::Button("Host"))
 			{
-				m_networkStatus = NetworkStatus::HostLobby;
+				ImGui::Text("Host to host, join to join, play to play offline");
+				if (ImGui::Button("Host"))
+				{
+					m_networkStatus = NetworkStatus::HostLobby;
 
+				}
+				if (ImGui::Button("Join"))
+				{
+					m_networkStatus = NetworkStatus::JoinLobby;
+				}
+				if (ImGui::Button("Play"))
+				{
+					inLobby = false;
+				}
+				break;
 			}
-			if (ImGui::Button("Join"))
-			{
-				m_networkStatus = NetworkStatus::JoinLobby;
-			}
-			if (ImGui::Button("Play"))
-			{
-				inLobby = false;
-			}
-			break;
-		}
 		case NetworkStatus::HostLobby:
-		{
-			ImGui::Text("Press host to host on any other computer then thoose defined");
-			if (ImGui::Button("Host"))
 			{
-				m_netCode.SetMulticastAdress("239.255.255.0");
-				if (m_netCode.Host())
+				ImGui::Text("Press host to host on any other computer then thoose defined");
+				if (ImGui::Button("Host"))
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					m_netCode.SetMulticastAdress("239.255.255.0");
+					if (m_netCode.Host())
+					{
+						m_networkStatus = NetworkStatus::Hosting;
+					}
 				}
-			}
-			if (ImGui::Button("Host Sam"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.1");
-				if (m_netCode.Host())
+				if (ImGui::Button("Host Sam"))
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					m_netCode.SetMulticastAdress("239.255.255.1");
+					if (m_netCode.Host())
+					{
+						m_networkStatus = NetworkStatus::Hosting;
+					}
 				}
-			}
-			if (ImGui::Button("Host Filip"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.2");
-				if (m_netCode.Host())
+				if (ImGui::Button("Host Filip"))
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					m_netCode.SetMulticastAdress("239.255.255.2");
+					if (m_netCode.Host())
+					{
+						m_networkStatus = NetworkStatus::Hosting;
+					}
 				}
-			}
-			if (ImGui::Button("Host Nad"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.3");
-				if (m_netCode.Host())
+				if (ImGui::Button("Host Nad"))
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					m_netCode.SetMulticastAdress("239.255.255.3");
+					if (m_netCode.Host())
+					{
+						m_networkStatus = NetworkStatus::Hosting;
+					}
 				}
-			}
-			if (ImGui::Button("Host Axel"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.4");
-				if (m_netCode.Host())
+				if (ImGui::Button("Host Axel"))
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					m_netCode.SetMulticastAdress("239.255.255.4");
+					if (m_netCode.Host())
+					{
+						m_networkStatus = NetworkStatus::Hosting;
+					}
 				}
-			}
-			if (ImGui::Button("Host Ove"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.5");
-				if (m_netCode.Host())
+				if (ImGui::Button("Host Ove"))
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					m_netCode.SetMulticastAdress("239.255.255.5");
+					if (m_netCode.Host())
+					{
+						m_networkStatus = NetworkStatus::Hosting;
+					}
 				}
-			}
-			if (ImGui::Button("Host Gunnar"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.6");
-				if (m_netCode.Host())
+				if (ImGui::Button("Host Gunnar"))
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					m_netCode.SetMulticastAdress("239.255.255.6");
+					if (m_netCode.Host())
+					{
+						m_networkStatus = NetworkStatus::Hosting;
+					}
 				}
-			}
-			if (ImGui::Button("Host Emil F"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.7");
-				if (m_netCode.Host())
+				if (ImGui::Button("Host Emil F"))
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					m_netCode.SetMulticastAdress("239.255.255.7");
+					if (m_netCode.Host())
+					{
+						m_networkStatus = NetworkStatus::Hosting;
+					}
 				}
-			}
-			if (ImGui::Button("Host Jonatan"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.8");
-				if (m_netCode.Host())
+				if (ImGui::Button("Host Jonatan"))
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					m_netCode.SetMulticastAdress("239.255.255.8");
+					if (m_netCode.Host())
+					{
+						m_networkStatus = NetworkStatus::Hosting;
+					}
 				}
+				break;
 			}
-			break;
-		}
 		case NetworkStatus::Hosting:
-		{
-			char ip[64];
-			strcpy_s(ip, m_netCode.GetIpAdress().c_str());
-			ImGui::Text("Nr of players connected: %d", m_netCode.GetNrOfPlayers());
-			ImGui::Text("Youre ip adress: %s", ip);
-			if (ImGui::Button("Play"))
 			{
-				m_nrOfPlayers = m_netCode.Play();
-				inLobby = false;
+				char ip[64];
+				strcpy_s(ip, m_netCode.GetIpAdress().c_str());
+				ImGui::Text("Nr of players connected: %d", m_netCode.GetNrOfPlayers());
+				ImGui::Text("Youre ip adress: %s", ip);
+				if (ImGui::Button("Play"))
+				{
+					m_nrOfPlayers = m_netCode.Play();
+					inLobby = false;
+				}
+				break;
 			}
-			break;
-		}
 		case NetworkStatus::JoinLobby:
-		{
-			static char input[64]{};
-			ImGui::Text("Write ip address and then join or select premade lobby");
-			ImGui::InputText("Ip", input, 64);
+			{
+				static char input[64]{};
+				ImGui::Text("Write ip address and then join or select premade lobby");
+				ImGui::InputText("Ip", input, 64);
 
-			if (ImGui::Button("Join"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.0");
-				if (m_netCode.Join(input))
+				if (ImGui::Button("Join"))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					m_netCode.SetMulticastAdress("239.255.255.0");
+					if (m_netCode.Join(input))
+					{
+						m_networkStatus = NetworkStatus::Joining;
+					}
 				}
-			}
-			if (ImGui::Button("Join Sam"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.1");
-				input[0] = 'a';
-				if (m_netCode.Join(input))
+				if (ImGui::Button("Join Sam"))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					m_netCode.SetMulticastAdress("239.255.255.1");
+					input[0] = 'a';
+					if (m_netCode.Join(input))
+					{
+						m_networkStatus = NetworkStatus::Joining;
+					}
 				}
-			}
-			if (ImGui::Button("Join Filip"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.2");
-				input[0] = 'b';
-				if (m_netCode.Join(input))
+				if (ImGui::Button("Join Filip"))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					m_netCode.SetMulticastAdress("239.255.255.2");
+					input[0] = 'b';
+					if (m_netCode.Join(input))
+					{
+						m_networkStatus = NetworkStatus::Joining;
+					}
 				}
-			}
-			if (ImGui::Button("Join Nad"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.3");
-				input[0] = 'c';
-				if (m_netCode.Join(input))
+				if (ImGui::Button("Join Nad"))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					m_netCode.SetMulticastAdress("239.255.255.3");
+					input[0] = 'c';
+					if (m_netCode.Join(input))
+					{
+						m_networkStatus = NetworkStatus::Joining;
+					}
 				}
-			}
-			if (ImGui::Button("Join Axel"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.4");
-				input[0] = 'd';
-				if (m_netCode.Join(input))
+				if (ImGui::Button("Join Axel"))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					m_netCode.SetMulticastAdress("239.255.255.4");
+					input[0] = 'd';
+					if (m_netCode.Join(input))
+					{
+						m_networkStatus = NetworkStatus::Joining;
+					}
 				}
-			}
-			if (ImGui::Button("Join Ove"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.5");
-				input[0] = 'e';
-				if (m_netCode.Join(input))
+				if (ImGui::Button("Join Ove"))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					m_netCode.SetMulticastAdress("239.255.255.5");
+					input[0] = 'e';
+					if (m_netCode.Join(input))
+					{
+						m_networkStatus = NetworkStatus::Joining;
+					}
 				}
-			}
-			if (ImGui::Button("Join Gunnar"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.6");
-				input[0] = 'f';
-				if (m_netCode.Join(input))
+				if (ImGui::Button("Join Gunnar"))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					m_netCode.SetMulticastAdress("239.255.255.6");
+					input[0] = 'f';
+					if (m_netCode.Join(input))
+					{
+						m_networkStatus = NetworkStatus::Joining;
+					}
 				}
-			}
-			if (ImGui::Button("Join Emil F"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.7");
-				input[0] = 'g';
-				if (m_netCode.Join(input))
+				if (ImGui::Button("Join Emil F"))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					m_netCode.SetMulticastAdress("239.255.255.7");
+					input[0] = 'g';
+					if (m_netCode.Join(input))
+					{
+						m_networkStatus = NetworkStatus::Joining;
+					}
 				}
-			}
-			if (ImGui::Button("Join Jonatan"))
-			{
-				m_netCode.SetMulticastAdress("239.255.255.8");
-				input[0] = 'h';
-				if (m_netCode.Join(input))
+				if (ImGui::Button("Join Jonatan"))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					m_netCode.SetMulticastAdress("239.255.255.8");
+					input[0] = 'h';
+					if (m_netCode.Join(input))
+					{
+						m_networkStatus = NetworkStatus::Joining;
+					}
 				}
+				break;
 			}
-			break;
-		}
 		case NetworkStatus::Joining:
-		{
-			m_nrOfPlayers = m_netCode.GetNrOfPlayers();
-			ImGui::Text("Nr of players connected: %d", m_netCode.GetNrOfPlayers());
-			ImGui::Text("Waiting for Host to press Play...");
-			inLobby = m_netCode.IsLobbyAlive();
-			break;
-		}
+			{
+				m_nrOfPlayers = m_netCode.GetNrOfPlayers();
+				ImGui::Text("Nr of players connected: %d", m_netCode.GetNrOfPlayers());
+				ImGui::Text("Waiting for Host to press Play...");
+				inLobby = m_netCode.IsLobbyAlive();
+				break;
+			}
 		default:
 			break;
-		}	
+		}
 		if (!inLobby)
 			m_gameState = GameState::StartPlaying;
 	}
@@ -577,7 +577,7 @@ void GameLayer::RegisterLuaInterfaces()
 	//Create a luaInterface variable that holds the interface object (is reused for all interfaces)
 	std::shared_ptr<LuaInterface> luaInterfaceObject = std::make_shared<InputInterface>();
 	m_luaInterfaces.push_back(luaInterfaceObject); //Add it to the gamelayer's interfaces.
-	
+
 	auto luaInterface = global->CreateLuaInterface("InputInterface"); //Register a new interface in lua.
 	//Add all functions that are needed from the interface class.
 	luaInterface.AddFunction<InputInterface, &InputInterface::IsLeftPressed>("IsLeftPressed");
@@ -616,7 +616,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPassiveType>("GetPassiveType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::IsBulletLocal>("IsBulletLocal");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::Exists>("Exists");
-	
+
 
 	global->SetLuaInterface(luaInterface);
 
@@ -650,7 +650,7 @@ void GameLayer::RegisterLuaInterfaces()
 
 	//-----------------------------------------------------------------------------------------------
 	//Host
-	
+
 	luaInterfaceObject = std::make_shared<HostInterface>();
 	m_luaInterfaces.push_back(luaInterfaceObject);
 
@@ -670,7 +670,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::Explosion>("Explosion");
 	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBConstrainRotation>("RBConstrainRotation");
 	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBConstrainPosition>("RBConstrainPosition");
-	
+
 	global->SetLuaInterface(luaInterface);
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Physics", "PhysicsInterface");
 
@@ -701,7 +701,7 @@ void GameLayer::RegisterLuaInterfaces()
 void GameLayer::Input(DOG::Key key)
 {
 	EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
-	{
+		{
 			if (key == DOG::Key::W)
 				inputC.forward = true;
 			if (key == DOG::Key::A)
@@ -730,7 +730,7 @@ void GameLayer::Input(DOG::Key key)
 				inputC.toggleMoveView = true;
 			if (key == DOG::Key::F)
 				inputC.flashlight = !inputC.flashlight;
-	});
+		});
 }
 
 void GameLayer::Release(DOG::Key key)
@@ -761,7 +761,7 @@ void GameLayer::Release(DOG::Key key)
 				inputC.reload = false;
 			if (key == DOG::Key::H)
 				inputC.toggleDebug = false;
-			if(key == DOG::Key::C)
+			if (key == DOG::Key::C)
 				inputC.toggleMoveView = false;
 		});
 }
@@ -811,7 +811,7 @@ void GameLayer::HandleCheats()
 			ImGui::PopStyleColor(4);
 		}
 	}
-	
+
 	if (m_godModeCheat)
 	{
 		assert(EntityManager::Get().HasComponent<PlayerStatsComponent>(player));
@@ -825,35 +825,13 @@ void GameLayer::HandleCheats()
 
 void GameLayer::HpBarMVP()
 {
-	ImVec2 size;
-	size.x = 300;
-	size.y = 50;
-
-	auto r = Window::GetWindowRect();
-	ImVec2 pos;
-	pos.x = r.left + 50.0f;
-	pos.y = r.bottom - 100.0f;
-
-	ImGui::SetNextWindowPos(pos);
-	ImGui::SetNextWindowSize(size);
-	if (ImGui::Begin("HpBar", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground))
-	{
-		auto& playerStats = m_entityManager.GetComponent<PlayerStatsComponent>(GetPlayer());
-		float hp = playerStats.health / playerStats.maxHealth;
-		ImVec2 bottomLeft = ImGui::GetCursorScreenPos();
-		ImVec2 hpTopRight;
-		ImVec2 borderTopRight;
-		borderTopRight.x = bottomLeft.x + Window::GetWidth() * 0.2f;
-		borderTopRight.y = bottomLeft.y + Window::GetHeight() * 0.03f;
-		hpTopRight.x = borderTopRight.x * hp;
-		hpTopRight.y = borderTopRight.y;
-		if (hp > 0.0f)
+	auto ui = UI::Get();
+	auto hbar = ui->GetUI<UIHealthBar>(hID);
+	EntityManager& em = EntityManager::Get();
+	em.Collect<PlayerStatsComponent, ThisPlayer>().Do([&](PlayerStatsComponent& stats, ThisPlayer&)
 		{
-			ImGui::GetWindowDrawList()->AddRectFilled(bottomLeft, hpTopRight, IM_COL32(255, 30, 0, 255));
-		}
-		ImGui::GetWindowDrawList()->AddRect(bottomLeft, borderTopRight, IM_COL32(30, 30, 30, 200)); // border
-	}
-	ImGui::End();
+			hbar->SetBarValue(stats.health / stats.maxHealth);
+		});
 }
 
 void GameLayer::KeyBindingDisplayMenu()
@@ -867,7 +845,7 @@ void GameLayer::KeyBindingDisplayMenu()
 	ImVec2 pos;
 	pos.x = r.right - size.x - 20.0f;
 	pos.y = r.top + 50.0f;
-	
+
 	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 	ImGui::SetNextWindowPos(pos);
 	ImGui::SetNextWindowSize(size);

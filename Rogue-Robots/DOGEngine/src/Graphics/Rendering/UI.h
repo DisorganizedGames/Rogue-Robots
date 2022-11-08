@@ -8,6 +8,14 @@
 #include "../../EventSystem/EventPublisher.h"
 
 
+void UIRebuild(UINT clientHeight, UINT clientWidth);
+void AddScenes();
+
+extern UINT menuID, gameID, optionsID, multiID;
+extern UINT menuBackID, optionsBackID, multiBackID;
+extern UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID;
+extern UINT cID, tID, hID;
+
 namespace DOG
 {
    class UIElement;
@@ -51,7 +59,7 @@ namespace DOG
          void Resize(UINT clientWidth, UINT clientHeight);
          void FreeResize();
          static void Initialize(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight);
-         static UI& Get();
+         static UI* Get();
          static void Destroy();
          void OnEvent(IEvent& event) override final;
          DOG::gfx::D2DBackend_DX12* GetBackend();

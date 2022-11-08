@@ -34,38 +34,6 @@
 #include "../../Core/ImGuiMenuLayer.h"
 #include "../../common/MiniProfiler.h"
 
-UINT menuID, gameID, optionsID, multiID;
-UINT menuBackID, optionsBackID, multiBackID;
-UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID;
-UINT cID, tID, hID;
-
-void PlayButtonFunc(void)
-{
-	DOG::UI::Get().ChangeUIscene(gameID);
-}
-
-void OptionsButtonFunc(void)
-{
-	DOG::UI::Get().ChangeUIscene(optionsID);
-}
-
-void MultiplayerButtonFunc(void)
-{
-	DOG::UI::Get().ChangeUIscene(multiID);
-}
-
-void ToMenuButtonFunc(void)
-{
-	DOG::UI::Get().ChangeUIscene(menuID);
-}
-
-void ExitButtonFunc(void)
-{
-	//Exit game
-}
-
-void UIRebuild(UINT clientHeight, UINT clientWidth);
-void AddScenes();
 
 namespace DOG::gfx
 {
@@ -1057,14 +1025,16 @@ namespace DOG::gfx
 			ZoneNamedN(RGExecuteScope, "RG Execution", true);
 			m_frameSyncs[m_currFrameIdx] = rg.Execute(m_frameCopyReceipt, true);
 		}
-		DOG::UI::Get().GetBackend()->BeginFrame();
-		DOG::UI::Get().DrawUI();
-		DOG::UI::Get().GetBackend()->EndFrame();
+		auto instance = DOG::UI::Get();
+		instance->GetBackend()->BeginFrame();
+		instance->DrawUI();
+		instance->GetBackend()->EndFrame();
 	}
 
 	void Renderer::OnResize(u32 clientWidth, u32 clientHeight)
 	{
-		DOG::UI::Get().FreeResize();
+		auto instance = DOG::UI::Get();
+		instance->FreeResize();
 		if (clientWidth != 0 && clientHeight != 0)
 		{
 			m_globalEffectData.bbScissor = ScissorRects().Append(0, 0, clientWidth, clientHeight);
@@ -1072,7 +1042,7 @@ namespace DOG::gfx
 		}
 
 		m_sc->OnResize(clientWidth, clientHeight);
-		DOG::UI::Get().Resize(clientWidth, clientHeight);
+		instance->Resize(clientWidth, clientHeight);
 
 		UIRebuild(clientHeight, clientWidth);
 
@@ -1245,61 +1215,5 @@ namespace DOG::gfx
 
 }
 
-void UIRebuild(UINT clientHeight, UINT clientWidth)
-{
-	//HealthBar
-	auto h = DOG::UI::Get().Create<DOG::UIHealthBar, float, float, float, float>( hID, 40.f, clientHeight - 60.f, 250.f, 30.f);
-	DOG::UI::Get().AddUIElementToScene(gameID, std::move(h));
-
-	//Crosshair
-	auto c = DOG::UI::Get().Create<DOG::UICrosshair>(cID);
-	DOG::UI::Get().AddUIElementToScene(gameID, std::move(c));
 
 
-	//Menu backgrounds
-	
-	auto menuBack = DOG::UI::Get().Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Rogue Robots"));
-	DOG::UI::Get().AddUIElementToScene(menuID, std::move(menuBack));
-	auto optionsBack =DOG::UI::Get().Create<DOG::UIBackground, float, float, std::wstring>(optionsBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Options"));
-	DOG::UI::Get().AddUIElementToScene(optionsID, std::move(optionsBack));
-	auto multiBack = DOG::UI::Get().Create<DOG::UIBackground, float, float, std::wstring>(multiBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Multiplayer"));
-	DOG::UI::Get().AddUIElementToScene(multiID, std::move(multiBack));
-
-	auto t = DOG::UI::Get().Create<DOG::UITextField, float, float, float, float>(tID, (FLOAT)clientWidth / 2.f - 250.f / 2, (FLOAT)clientHeight / 2.f, 250.f, 30.f);
-	DOG::UI::Get().AddUIElementToScene(multiID, std::move(t));
-
-	//Menu buttons
-	auto bp = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, std::wstring(L"Play"), std::function<void()>(PlayButtonFunc));
-	auto bm = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(bmID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 150.f, 60.f, 20.f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
-	auto bo = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
-	auto be = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(beID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
-	auto optback = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(optbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
-	auto mulback = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
-
-	auto bh = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(bhID, (FLOAT)clientWidth / 2.f - 75.f - 100.f, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, std::wstring(L"Host"), std::function<void()>(ToMenuButtonFunc));
-	auto bj = DOG::UI::Get().Create<DOG::UIButton,float, float, float, float, float, std::wstring>(bjID, (FLOAT)clientWidth / 2.f - 75.f + 100.f, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, std::wstring(L"Join"), std::function<void()>(ToMenuButtonFunc));
-	DOG::UI::Get().AddUIElementToScene(menuID, std::move(bp));
-	DOG::UI::Get().AddUIElementToScene(menuID, std::move(bm));
-	DOG::UI::Get().AddUIElementToScene(menuID, std::move(bo));
-	DOG::UI::Get().AddUIElementToScene(menuID, std::move(be));
-	DOG::UI::Get().AddUIElementToScene(optionsID, std::move(optback));
-	DOG::UI::Get().AddUIElementToScene(multiID, std::move(mulback));
-	DOG::UI::Get().AddUIElementToScene(multiID, std::move(bh));
-	DOG::UI::Get().AddUIElementToScene(multiID, std::move(bj));
-
-
-	//Splash screen
-	// UINT sID;
-	// auto s = DOG::UI::Get().Create<DOG::UISplashScreen, float, float>(sID, (float)clientWidth, (float)clientHeight);
-	// DOG::UI::Get().AddUIElementToScene(menuID, std::move(s));
-
-}
-
-void AddScenes()
-{
-	menuID = DOG::UI::Get().AddScene();
-	gameID = DOG::UI::Get().AddScene();
-	multiID = DOG::UI::Get().AddScene();
-	optionsID = DOG::UI::Get().AddScene();
-	DOG::UI::Get().ChangeUIscene(menuID);
-}

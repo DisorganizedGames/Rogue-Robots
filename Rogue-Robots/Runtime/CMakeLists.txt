@@ -21,6 +21,7 @@ set(SourceFiles
 	"src/Game/PrefabInstantiatorFunctions.h" "src/Game/PrefabInstantiatorFunctions.cpp"
 	"src/Game/OldDefaultScene.h" "src/Game/OldDefaultScene.cpp"
 	"src/Game/TunnelScenes.h" "src/Game/TunnelScenes.cpp"
+	"src/Game/UISystems.h" "src/Game/UISystems.cpp"
 )
 
 set(ExecutableName "Runtime")
