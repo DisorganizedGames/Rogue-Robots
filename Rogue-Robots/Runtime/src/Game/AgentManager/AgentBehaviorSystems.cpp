@@ -229,7 +229,7 @@ void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComp
 		#endif
 		
 		// Send network signal to destroy agents
-		AgentManager::DestroyLocalAgent(e);
+		AgentManager::Get().DestroyLocalAgent(e);
 	}
 }
 

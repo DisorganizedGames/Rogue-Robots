@@ -82,7 +82,6 @@ private:
 	NetCode m_netCode;
 	//Pathfinder m_pathfinder;		// uncomment to activate pathfinder
 	INT8 m_nrOfPlayers;
-	AgentManager* m_agentManager;
 	ImFont* m_imguiFont = nullptr;
 
 	// Temp container for keybindings, just strings to visualize them in the menu

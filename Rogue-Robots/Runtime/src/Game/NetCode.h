@@ -21,7 +21,7 @@ public:
 	NetCode();
 	~NetCode();
 	
-	void OnUpdate(AgentManager* agentManager);
+	void OnUpdate();
 	void OnStartup();
 	bool Host();
 	bool Join(char* input);
