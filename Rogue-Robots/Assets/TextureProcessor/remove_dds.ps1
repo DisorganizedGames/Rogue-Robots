@@ -1,0 +1,1 @@
+Get-ChildItem -Path ".." -r *.dds | foreach { Remove-Item -Path $_.FullName }
