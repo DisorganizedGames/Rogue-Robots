@@ -544,12 +544,14 @@ std::vector<entity> GameLayer::SpawnPlayers(const Vector3& pos, u8 playerCount, 
 			m_entityManager.AddComponent<AudioListenerComponent>(playerI);
 			auto& ac = m_entityManager.AddComponent<AnimationComponent>(playerI);
 			ac.rigID = 0;
+			ac.animatorID = i;
 		}
 		else
 		{
 			auto& ac = m_entityManager.AddComponent<AnimationComponent>(playerI);
 			ac.rigID = 0;
 			m_entityManager.AddComponent<OnlinePlayer>(playerI);
+			ac.animatorID = i;
 		}
 	}
 	return players;

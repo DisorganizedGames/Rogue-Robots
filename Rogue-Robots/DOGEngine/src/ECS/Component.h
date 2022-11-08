@@ -88,6 +88,7 @@ namespace DOG
 		{
 			bool loop;
 			u8 group;
+			u8 priority;
 			f32 transitionLength;
 			f32 playbackRate;
 			i8 animationIDs[MAX_TARGET_ANIMS];
