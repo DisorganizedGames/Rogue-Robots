@@ -36,6 +36,7 @@ Vector3 PlaneIntersectPlanes(XMVECTOR p1, XMVECTOR p2, XMVECTOR p3)
 LightScene::LightScene() : Scene(SceneComponent::Type::LightScene)
 {
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("Tiled Shading", std::bind(&LightScene::TiledShadingDebugMenu, this, std::placeholders::_1), true, std::make_pair(Key::LCtrl, Key::L));
+	m_compute.m_lightScene = this;
 }
 
 LightScene::~LightScene()
@@ -45,9 +46,6 @@ LightScene::~LightScene()
 
 void LightScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>> entityCreators)
 {
-	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
-	auto p = XMMatrixPerspectiveFovLH(40.f * XM_PI / 180.f, aspectRatio, 1.0f, 10.0f);
-	//AddFrustum(p, DirectX::XMMatrixIdentity());
 }
 
 void LightScene::Update()
@@ -55,9 +53,10 @@ void LightScene::Update()
 	
 }
 
-DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Matrix projetion, DirectX::SimpleMath::Matrix view)
+DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Matrix projetion, DirectX::SimpleMath::Matrix)
 {
-	Matrix m = view * projetion;
+	//Matrix m = view * projetion;
+	Matrix m = projetion;
 
 	Vector4 leftP = { m._14 + m._11, m._24 + m._21, m._34 + m._31, m._44 + m._41 };
 	Vector4 rightP = { m._14 - m._11, m._24 - m._21, m._34 - m._31, m._44 - m._41 };
@@ -113,6 +112,64 @@ DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Matrix projetion, Direct
 	AddFace(vec, { 0, 0, 0.5f });
 	entity e = CreateEntity();
 	return e;
+}
+
+std::vector<DirectX::SimpleMath::Vector4> LightScene::ExtractPlanes(DirectX::SimpleMath::Matrix projetion, DirectX::SimpleMath::Matrix, int resX, int resY, int tileSize, Vector2i tile)
+{
+	//Matrix m = view * projetion;
+	Matrix m = projetion;
+	float tileScaleX = resX * (1.0f / (2.0f * tileSize));
+	float tileScaleY = resY * (1.0f / (2.0f * tileSize));
+
+	if (tile.x < 0 || tile.y < 0)
+	{
+		std::cout << "tile can't be less then 0 in any dimension" << std::endl;
+		return {};
+	}
+
+	if (tile.x >= (float)resX / tileSize || tile.y >= (float)resY / tileSize)
+	{
+		std::cout << "tile can't be >= res / tileSize" << std::endl;
+		return {};
+	}
+
+	float tileBiasX = tileScaleX - (float)tile.x;
+	float tileBiasY = tileScaleY - (float)tile.y;
+
+	//Vector4 col1 = { m._11, m._21, m._31, m._41 };
+	//Vector4 col2 = { m._12, m._22, m._32, m._42 };
+	//Vector4 col3 = { m._13, m._23, m._33, m._43 };
+	//Vector4 col4 = { m._14, m._24, m._34, m._44 };
+	
+
+	/*Vector4 leftP = col4 + col1;
+	Vector4 rightP = col4 - col1;
+	Vector4 botP = col4 + col2;
+	Vector4 topP = col4 - col2;
+	Vector4 nearP = col3;
+	Vector4 farP = col4 - col3;*/
+
+
+	Vector4 col1 = { m._11 * tileScaleX * 2, 0, -1 + tileBiasX * 2, 0 };
+	Vector4 col2 = { 0 , -m._22 * tileScaleY * 2, -1 + tileBiasY * 2, 0 };
+	Vector4 col4 = { 0, 0, 1, 0 };
+
+	Vector4 leftP = col4 + col1;
+	Vector4 rightP = col4 - col1;
+	Vector4 botP = col4 + col2;
+	Vector4 topP = col4 - col2;
+	Vector4 nearP = { 0, 0, 1, -1 };
+	Vector4 farP = { 0, 0, -1.0f, 10 };
+
+	leftP = DirectX::XMPlaneNormalize(leftP);
+	rightP = DirectX::XMPlaneNormalize(rightP);
+	botP = DirectX::XMPlaneNormalize(botP);
+	topP = DirectX::XMPlaneNormalize(topP);
+	nearP = DirectX::XMPlaneNormalize(nearP);
+	farP = DirectX::XMPlaneNormalize(farP);
+
+
+	return { leftP , rightP, botP, topP, nearP, farP };
 }
 
 DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Vector4 leftPlane, DirectX::SimpleMath::Vector4 rightPlane, DirectX::SimpleMath::Vector4 bottomPlane, DirectX::SimpleMath::Vector4 topPlane, DirectX::SimpleMath::Vector4 nearPlane, DirectX::SimpleMath::Vector4 farPlane)
@@ -249,15 +306,14 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 			}
 			LightCullingDebugMenu(dragWindowOpen);
 
-
+			static int res[2] = { 8, 8 };
+			static int threadGroups[3] = { 0, 0, 0 };
+			ImGui::InputInt2("res", res);
+			ImGui::InputInt3("Dispatch", threadGroups);
 			if (ImGui::Button("Compute"))
 			{
-				/*auto p = XMMatrixPerspectiveFovLH(40.f * XM_PI / 180.f, 1.0f, 1.0f, 10.0f);
-				auto& controller = EntityManager::Get().GetComponent<PlayerControllerComponent>(GetPlayer());
-				auto& camera = EntityManager::Get().GetComponent<CameraComponent>(controller.cameraEntity);*/
-
-				FakeCompute::s_data.spheres.clear();
-				EntityManager::Get().Collect<TransformComponent, SphereComponent>().Do([](entity e, TransformComponent& transform, SphereComponent& sp)
+				m_compute.m_data.spheres.clear();
+				EntityManager::Get().Collect<TransformComponent, SphereComponent>().Do([&](entity e, TransformComponent& transform, SphereComponent& sp)
 					{
 						FakeCompute::Sphere sphere;
 						Vector3 p = transform.GetPosition();
@@ -268,12 +324,25 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 						sphere.radius = sp.radius;
 						sphere.culled = false;
 						sphere.e = e;
-						FakeCompute::s_data.spheres.push_back(sphere);
+						m_compute.m_data.spheres.push_back(sphere);
 					});
 
-				FakeCompute::Dispatch(1, 1, 1);
+				m_compute.m_data.res.x = (float)res[0];
+				m_compute.m_data.res.y = (float)res[1];
 
-				for (auto& s : FakeCompute::s_data.spheres)
+
+				if (threadGroups[0] == 0 && threadGroups[1] == 0 && threadGroups[2] == 0)
+				{
+					u32 tgx = (int)m_compute.m_data.res.x / m_compute.m_groupSizeX + 1 * static_cast<bool>((int)m_compute.m_data.res.x % m_compute.m_groupSizeX);
+					u32 tgy = (int)m_compute.m_data.res.y / m_compute.m_groupSizeY + 1 * static_cast<bool>((int)m_compute.m_data.res.y % m_compute.m_groupSizeY);
+					m_compute.Dispatch(tgx, tgy, 1);
+				}
+				else
+				{
+					m_compute.Dispatch(threadGroups[0], threadGroups[1], threadGroups[2]);
+				}
+
+				for (auto& s : m_compute.m_data.spheres)
 				{
 					EntityManager::Get().GetComponent<SphereComponent>(s.e).culled = s.culled;
 					if (s.culled)
@@ -287,7 +356,18 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 				}
 
 			}
+			if (ImGui::Button("Set proj, view and res"))
+			{
+				f32 aspectRatio = static_cast<f32>(res[0]) / res[1];
+				auto p = XMMatrixPerspectiveFovLH(40.f * XM_PI / 180.f, aspectRatio, 1.0f, 10.0f);
+				auto& controller = EntityManager::Get().GetComponent<PlayerControllerComponent>(GetPlayer());
+				auto& camera = EntityManager::Get().GetComponent<CameraComponent>(controller.cameraEntity);
 
+				m_compute.m_data.proj = p;
+				m_compute.m_data.view = camera.viewMatrix;
+				m_compute.m_data.res.x = (float)res[0];
+				m_compute.m_data.res.y = (float)res[1];
+			}
 
 			if(ImGui::Button("Place face"))
 			{
@@ -309,19 +389,19 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 			}
 			if (ImGui::Button("Place frustum"))
 			{
-				f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
-				auto p = XMMatrixPerspectiveFovLH(40.f * XM_PI / 180.f, aspectRatio, 1.0f, 10.0f);
-				auto& controller = EntityManager::Get().GetComponent<PlayerControllerComponent>(GetPlayer());
-				auto& camera = EntityManager::Get().GetComponent<CameraComponent>(controller.cameraEntity);
-
-				FakeCompute::s_data.proj = p;
-				FakeCompute::s_data.view = camera.viewMatrix;
-
-				AddFrustum(p, camera.viewMatrix);
+				AddFrustum(m_compute.m_data.proj, m_compute.m_data.view);
 			}
 
-			
-
+			static int tile[2] = { 0, 0 };
+			ImGui::InputInt2("tile", tile);
+			static int tileSize = 4;
+			ImGui::InputInt("tileSize", &tileSize);
+			if (ImGui::Button("Place tiled frustum"))
+			{
+				auto frustumPlanes = ExtractPlanes(m_compute.m_data.proj, m_compute.m_data.view, (int)m_compute.m_data.res.x, (int)m_compute.m_data.res.y, tileSize, {tile[0], tile[1]});
+				if(frustumPlanes.size() == 6)
+					AddFrustum(frustumPlanes[0], frustumPlanes[1], frustumPlanes[2], frustumPlanes[3], frustumPlanes[4], frustumPlanes[5]);
+			}
 		}
 		ImGui::End(); // "TiledShading"
 	}
@@ -378,9 +458,6 @@ void LightScene::LightCullingDebugMenu(bool& open)
 				float posAsFloat[3] = {};
 				ImGui::DragFloat3("Position", posAsFloat, 0.1f);
 			}
-
-			
-
 
 			std::vector<entity> spheres;
 			em.Collect<SphereComponent, TransformComponent>().Do([&spheres](entity e, SphereComponent&, TransformComponent&) { spheres.push_back(e); });
