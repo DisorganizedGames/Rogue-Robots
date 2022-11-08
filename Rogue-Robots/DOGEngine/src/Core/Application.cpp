@@ -55,11 +55,13 @@ namespace DOG
 
 		while (m_isRunning)
 		{
+			Mouse::Switch();
+			Mouse::Reset();
+
 			Time::Start();
 			MiniProfiler::Update();
 			MINIPROFILE
 			Window::OnUpdate();
-			
 
 			// Early break if WM tells us to
 			if (!m_isRunning)
@@ -94,7 +96,6 @@ namespace DOG
 			{
 				system->Update();
 			}
-			Mouse::Reset();
 
 			m_frontRenderer->Update(0.f);
 			m_frontRenderer->BeginGPUFrame();

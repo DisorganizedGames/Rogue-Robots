@@ -48,9 +48,7 @@ namespace DOG
 
 	void Mouse::Switch() noexcept
 	{
-		u8 oldIndex = s_deltaMouseCoordsIndex;
 		s_deltaMouseCoordsIndex = (s_deltaMouseCoordsIndex + 1) % 2;
-		s_deltaMouseCoords[s_deltaMouseCoordsIndex] = s_deltaMouseCoords[oldIndex];
 	}
 
 	const bool Mouse::IsButtonPressed(const Button button) noexcept
@@ -65,6 +63,7 @@ namespace DOG
 
 	const std::pair<i32, i32> Mouse::GetDeltaCoordinates() noexcept
 	{
-		return { s_deltaMouseCoords[(s_deltaMouseCoordsIndex + 1) % 2].x, s_deltaMouseCoords[(s_deltaMouseCoordsIndex + 1) % 2].y};
+		u8 index = (s_deltaMouseCoordsIndex + 1) % 2;
+		return { s_deltaMouseCoords[index].x, s_deltaMouseCoords[index].y};
 	}
 }
