@@ -1,0 +1,2 @@
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Bypass -Force			// Allow running scripts
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Restricted -Force		// Set back to default
