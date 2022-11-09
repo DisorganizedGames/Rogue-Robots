@@ -43,6 +43,7 @@ namespace DOG
 
 	void Mouse::Reset() noexcept
 	{
+		Mouse::Switch();
 		s_deltaMouseCoords[s_deltaMouseCoordsIndex] = {0,0};
 	}
 
