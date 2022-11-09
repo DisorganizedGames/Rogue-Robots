@@ -16,10 +16,13 @@ public:
 		DirectX::SimpleMath::Vector4 bottomPlane, DirectX::SimpleMath::Vector4 topPlane,
 		DirectX::SimpleMath::Vector4 nearPlane, DirectX::SimpleMath::Vector4 farPlane);
 	//DOG::entity AddFrustumDXTK(DirectX::SimpleMath::Matrix projetion, DirectX::SimpleMath::Matrix view);
-	DOG::entity AddFace(const std::vector<DirectX::SimpleMath::Vector3>& vertexPoints, DirectX::SimpleMath::Vector3 color);
+	DOG::entity AddFace(const std::vector<DirectX::SimpleMath::Vector3>& vertexPoints, const std::pair<DOG::MaterialHandle, DOG::MaterialDesc>& mat);
 	DOG::entity AddSphere(DirectX::SimpleMath::Vector3 center, float radius, DirectX::SimpleMath::Vector3 color);
 	
 private:
+	std::pair<DOG::MaterialHandle, DOG::MaterialDesc> m_rgbMats[3];
+
+
 	void TiledShadingDebugMenu(bool& open);
 
 	void LightCullingDebugMenu(bool& open);

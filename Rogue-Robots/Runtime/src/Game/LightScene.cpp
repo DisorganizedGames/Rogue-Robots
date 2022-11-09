@@ -37,6 +37,18 @@ LightScene::LightScene() : Scene(SceneComponent::Type::LightScene)
 {
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("Tiled Shading", std::bind(&LightScene::TiledShadingDebugMenu, this, std::placeholders::_1), true, std::make_pair(Key::LCtrl, Key::L));
 	m_compute.m_lightScene = this;
+
+	m_rgbMats[0].second.emissiveFactor = { 0.6f, 0, 0, 1 };
+	m_rgbMats[0].second.albedoFactor = { 0, 0, 0, 1 };
+	m_rgbMats[0].first = CustomMaterialManager::Get().AddMaterial(m_rgbMats[0].second);
+
+	m_rgbMats[1].second.emissiveFactor = { 0, 0.6f, 0, 1 };
+	m_rgbMats[1].second.albedoFactor = { 0, 0, 0, 1 };
+	m_rgbMats[1].first = CustomMaterialManager::Get().AddMaterial(m_rgbMats[1].second);
+
+	m_rgbMats[2].second.emissiveFactor = { 0, 0, 0.6f, 1 };
+	m_rgbMats[2].second.albedoFactor = { 0, 0, 0, 1 };
+	m_rgbMats[2].first = CustomMaterialManager::Get().AddMaterial(m_rgbMats[2].second);
 }
 
 LightScene::~LightScene()
@@ -56,7 +68,6 @@ void LightScene::Update()
 DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Matrix projetion, DirectX::SimpleMath::Matrix view)
 {
 	Matrix m = view * projetion;
-	//Matrix m = projetion;
 
 	Vector4 leftP = { m._14 + m._11, m._24 + m._21, m._34 + m._31, m._44 + m._41 };
 	Vector4 rightP = { m._14 - m._11, m._24 - m._21, m._34 - m._31, m._44 - m._41 };
@@ -79,37 +90,37 @@ DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Matrix projetion, Direct
 	vec[1] = PlaneIntersectPlanes(farP, rightP, botP);
 	vec[2] = PlaneIntersectPlanes(farP, rightP, topP);
 	vec[3] = PlaneIntersectPlanes(farP, leftP, topP);
-	AddFace(vec, { 0.5f, 0, 0 });
+	AddFace(vec, m_rgbMats[0]);
 
 	vec[0] = PlaneIntersectPlanes(nearP, leftP, topP);
 	vec[1] = PlaneIntersectPlanes(nearP, rightP, topP);
 	vec[2] = PlaneIntersectPlanes(nearP, rightP, botP);
 	vec[3] = PlaneIntersectPlanes(nearP, leftP, botP);
-	AddFace(vec, { 0.5f, 0, 0 });
+	AddFace(vec, m_rgbMats[0]);
 
 	vec[0] = PlaneIntersectPlanes(nearP, rightP, topP);
 	vec[1] = PlaneIntersectPlanes(nearP, rightP, botP);
 	vec[2] = PlaneIntersectPlanes(farP, rightP, botP);
 	vec[3] = PlaneIntersectPlanes(farP, rightP, topP);
-	AddFace(vec, { 0, 0.5f, 0 });
+	AddFace(vec, m_rgbMats[1]);
 
 	vec[0] = PlaneIntersectPlanes(nearP, leftP, topP);
 	vec[1] = PlaneIntersectPlanes(nearP, leftP, botP);
 	vec[2] = PlaneIntersectPlanes(farP, leftP, botP);
 	vec[3] = PlaneIntersectPlanes(farP, leftP, topP);
-	AddFace(vec, { 0, 0.5f, 0 });
+	AddFace(vec, m_rgbMats[1]);
 
 	vec[0] = PlaneIntersectPlanes(nearP, leftP, topP);
 	vec[1] = PlaneIntersectPlanes(farP, leftP, topP);
 	vec[2] = PlaneIntersectPlanes(farP, rightP, topP);
 	vec[3] = PlaneIntersectPlanes(nearP, rightP, topP);
-	AddFace(vec, { 0, 0, 0.5f });
+	AddFace(vec, m_rgbMats[2]);
 
 	vec[0] = PlaneIntersectPlanes(nearP, leftP, botP);
 	vec[1] = PlaneIntersectPlanes(nearP, rightP, botP);
 	vec[2] = PlaneIntersectPlanes(farP, rightP, botP);
 	vec[3] = PlaneIntersectPlanes(farP, leftP, botP);
-	AddFace(vec, { 0, 0, 0.5f });
+	AddFace(vec, m_rgbMats[2]);
 	entity e = CreateEntity();
 	return e;
 }
@@ -181,50 +192,57 @@ DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Vector4 leftPlane, Direc
 	topPlane = DirectX::XMPlaneNormalize(topPlane);
 	nearPlane = DirectX::XMPlaneNormalize(nearPlane);
 	farPlane = DirectX::XMPlaneNormalize(farPlane);*/
-
+	static int matIndex = 0;
+	int index = 0;
 	std::vector<Vector3> vec;
 	vec.resize(4);
 
+	index = matIndex % 3;
 	vec[0] = PlaneIntersectPlanes(farPlane, leftPlane, bottomPlane);
 	vec[1] = PlaneIntersectPlanes(farPlane, rightPlane, bottomPlane);
 	vec[2] = PlaneIntersectPlanes(farPlane, rightPlane, topPlane);
 	vec[3] = PlaneIntersectPlanes(farPlane, leftPlane, topPlane);
-	AddFace(vec, { 0.5f, 0, 0 });
+	AddFace(vec, m_rgbMats[index]);
 
 	vec[0] = PlaneIntersectPlanes(nearPlane, leftPlane, topPlane);
 	vec[1] = PlaneIntersectPlanes(nearPlane, rightPlane, topPlane);
 	vec[2] = PlaneIntersectPlanes(nearPlane, rightPlane, bottomPlane);
 	vec[3] = PlaneIntersectPlanes(nearPlane, leftPlane, bottomPlane);
-	AddFace(vec, { 0.5f, 0, 0 });
+	AddFace(vec, m_rgbMats[index]);
 
-	vec[0] = PlaneIntersectPlanes(nearPlane, rightPlane, topPlane);
-	vec[1] = PlaneIntersectPlanes(nearPlane, rightPlane, bottomPlane);
-	vec[2] = PlaneIntersectPlanes(farPlane, rightPlane, bottomPlane);
-	vec[3] = PlaneIntersectPlanes(farPlane, rightPlane, topPlane);
-	AddFace(vec, { 0, 0.5f, 0 });
+	index = (matIndex + 1) % 3;
+	vec[0] = PlaneIntersectPlanes(farPlane, rightPlane, topPlane);
+	vec[1] = PlaneIntersectPlanes(farPlane, rightPlane, bottomPlane);
+	vec[2] = PlaneIntersectPlanes(nearPlane, rightPlane, bottomPlane);
+	vec[3] = PlaneIntersectPlanes(nearPlane, rightPlane, topPlane);
+	AddFace(vec, m_rgbMats[index]);
 
 	vec[0] = PlaneIntersectPlanes(nearPlane, leftPlane, topPlane);
 	vec[1] = PlaneIntersectPlanes(nearPlane, leftPlane, bottomPlane);
 	vec[2] = PlaneIntersectPlanes(farPlane, leftPlane, bottomPlane);
 	vec[3] = PlaneIntersectPlanes(farPlane, leftPlane, topPlane);
-	AddFace(vec, { 0, 0.5f, 0 });
+	AddFace(vec, m_rgbMats[index]);
 
+	index = (matIndex + 2) % 3;
 	vec[0] = PlaneIntersectPlanes(nearPlane, leftPlane, topPlane);
 	vec[1] = PlaneIntersectPlanes(farPlane, leftPlane, topPlane);
 	vec[2] = PlaneIntersectPlanes(farPlane, rightPlane, topPlane);
 	vec[3] = PlaneIntersectPlanes(nearPlane, rightPlane, topPlane);
-	AddFace(vec, { 0, 0, 0.5f });
+	AddFace(vec, m_rgbMats[index]);
 
 	vec[0] = PlaneIntersectPlanes(nearPlane, leftPlane, bottomPlane);
 	vec[1] = PlaneIntersectPlanes(nearPlane, rightPlane, bottomPlane);
 	vec[2] = PlaneIntersectPlanes(farPlane, rightPlane, bottomPlane);
 	vec[3] = PlaneIntersectPlanes(farPlane, leftPlane, bottomPlane);
-	AddFace(vec, { 0, 0, 0.5f });
+	AddFace(vec, m_rgbMats[index]);
+
+	matIndex++;
+
 	entity e = CreateEntity();
 	return e;
 }
 
-DOG::entity LightScene::AddFace(const std::vector<DirectX::SimpleMath::Vector3>& vertexPoints, Vector3 color)
+DOG::entity LightScene::AddFace(const std::vector<DirectX::SimpleMath::Vector3>& vertexPoints, const std::pair<DOG::MaterialHandle, DOG::MaterialDesc>& mat)
 {
 	auto shapeCreator = ShapeCreator(Shape::quadrilateral, vertexPoints);
 	auto shape = shapeCreator.GetResult();
@@ -242,11 +260,8 @@ DOG::entity LightScene::AddFace(const std::vector<DirectX::SimpleMath::Vector3>&
 	AddComponent<TransformComponent>(e);
 	auto& renderComp = AddComponent<SubmeshRenderer>(e);
 	renderComp.mesh = CustomMeshManager::Get().AddMesh(mesh).first;
-	renderComp.materialDesc.emissiveFactor.x = color.x;
-	renderComp.materialDesc.emissiveFactor.y = color.y;
-	renderComp.materialDesc.emissiveFactor.z = color.z;
-	renderComp.materialDesc.albedoFactor = { 0, 0, 0, 1 };
-	renderComp.material = CustomMaterialManager::Get().AddMaterial(renderComp.materialDesc);
+	renderComp.materialDesc = mat.second;
+	renderComp.material = mat.first;
 	return e;
 }
 
@@ -370,9 +385,9 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 				m_compute.m_data.res.y = (float)res[1];
 			}
 
-			if(ImGui::Button("Place face"))
+			/*if(ImGui::Button("Place face"))
 			{
-				AddFace({ Vector3(-1, 1, 0), Vector3(1, 1, 0), Vector3(1, -1, 0), Vector3(-1, -1, 0) }, {0.5f, 0, 0});
+				AddFace({ Vector3(-1, 1, 0), Vector3(1, 1, 0), Vector3(1, -1, 0), Vector3(-1, -1, 0) }, m_rgbMats[0]);
 
 				auto f = DirectX::BoundingFrustum();
 				XMFLOAT3 corners[8];
@@ -386,14 +401,14 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 				vec[3] = corners[3];
 
 
-				AddFace(vec, { 0, 1, 0 });
-			}
+				AddFace(vec, m_rgbMats[1]);
+			}*/
 			if (ImGui::Button("Place frustum"))
 			{
 				AddFrustum(m_compute.m_data.proj, m_compute.m_data.view);
 			}
 
-			static int tile[2] = { 0, 0 };
+			/*static int tile[2] = { 0, 0 };
 			ImGui::InputInt2("tile", tile);
 			static int tileSize = 4;
 			ImGui::InputInt("tileSize", &tileSize);
@@ -402,7 +417,7 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 				auto frustumPlanes = ExtractPlanes(m_compute.m_data.proj, m_compute.m_data.view, (int)m_compute.m_data.res.x, (int)m_compute.m_data.res.y, tileSize, {tile[0], tile[1]});
 				if(frustumPlanes.size() == 6)
 					AddFrustum(frustumPlanes[0], frustumPlanes[1], frustumPlanes[2], frustumPlanes[3], frustumPlanes[4], frustumPlanes[5]);
-			}
+			}*/
 		}
 		ImGui::End(); // "TiledShading"
 	}
