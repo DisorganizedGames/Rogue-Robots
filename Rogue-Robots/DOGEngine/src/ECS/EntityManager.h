@@ -99,11 +99,23 @@ namespace DOG
 		template<typename ComponentType, typename ...Args>
 		ComponentType& AddComponent(const entity entityID, Args&& ...args) noexcept;
 
+		template<typename ComponentType, typename ...Args>
+		ComponentType& AddOrGetComponent(const entity entityID, Args&& ...args) noexcept;
+
+		template<typename ComponentType, typename ...Args>
+		ComponentType& AddOrReplaceComponent(const entity entityID, Args&& ...args) noexcept;
+
 		template<typename ComponentType>
 		void RemoveComponent(const entity entityID) noexcept;
 
 		template<typename ComponentType>
+		void RemoveComponentIfExists(const entity entityID) noexcept;
+
+		template<typename ComponentType>
 		[[nodiscard]] ComponentType& GetComponent(const entity entityID) const noexcept;
+
+		template<typename ComponentType>
+		[[nodiscard]] std::optional<std::reference_wrapper<ComponentType>> TryGetComponent(const entity entityID) const noexcept;
 
 		template<typename... ComponentType>
 		[[nodiscard]] Collection<ComponentType...> Collect() noexcept;
@@ -216,6 +228,65 @@ namespace DOG
 		return set(ComponentID)->components.back();
 	}
 
+	template<typename ComponentType, typename ...Args>
+	ComponentType& EntityManager::AddOrGetComponent(const entity entityID, Args&& ...args) noexcept
+	{
+		static constexpr auto ComponentID = sti::getTypeIndex<ComponentType>();
+
+		ASSERT(Exists(entityID), "Entity is invalid");
+		if (HasComponent<ComponentType>(entityID))
+		{
+			return set(ComponentID)->components[set(ComponentID)->sparseArray[entityID]];
+		}
+
+		ValidateComponentPool<ComponentType>();
+
+		const size_t position = set(ComponentID)->denseArray.size();
+		set(ComponentID)->denseArray.emplace_back(entityID);
+		set(ComponentID)->components.emplace_back(ComponentType(std::forward<Args>(args)...));
+		set(ComponentID)->sparseArray[entityID] = static_cast<entity>(position);
+
+		if (set(ComponentID)->bundle != nullptr)
+		{
+			auto componentIdx = m_bundles[set(ComponentID)->bundle]->UpdateOnAdd(entityID);
+			if (componentIdx)
+			{
+				return set(ComponentID)->components[*componentIdx];
+			}
+		}
+		return set(ComponentID)->components.back();
+	}
+
+	template<typename ComponentType, typename ...Args>
+	ComponentType& EntityManager::AddOrReplaceComponent(const entity entityID, Args&& ...args) noexcept
+	{
+		static constexpr auto ComponentID = sti::getTypeIndex<ComponentType>();
+
+		ASSERT(Exists(entityID), "Entity is invalid");
+		if (HasComponent<ComponentType>(entityID))
+		{
+			set(ComponentID)->components[set(ComponentID)->sparseArray[entityID]] = ComponentType(std::forward<Args>(args)...);
+			return set(ComponentID)->components[set(ComponentID)->sparseArray[entityID]];
+		}
+
+		ValidateComponentPool<ComponentType>();
+
+		const size_t position = set(ComponentID)->denseArray.size();
+		set(ComponentID)->denseArray.emplace_back(entityID);
+		set(ComponentID)->components.emplace_back(ComponentType(std::forward<Args>(args)...));
+		set(ComponentID)->sparseArray[entityID] = static_cast<entity>(position);
+
+		if (set(ComponentID)->bundle != nullptr)
+		{
+			auto componentIdx = m_bundles[set(ComponentID)->bundle]->UpdateOnAdd(entityID);
+			if (componentIdx)
+			{
+				return set(ComponentID)->components[*componentIdx];
+			}
+		}
+		return set(ComponentID)->components.back();
+	}
+
 	template<typename ComponentType>
 	void EntityManager::RemoveComponent(const entity entityID) noexcept
 	{
@@ -239,6 +310,30 @@ namespace DOG
 	}
 
 	template<typename ComponentType>
+	void EntityManager::RemoveComponentIfExists(const entity entityID) noexcept
+	{
+		static auto constexpr componentID = sti::getTypeIndex<ComponentType>();
+
+		ASSERT(Exists(entityID), "Entity is invalid");
+
+		if (HasComponent<ComponentType>(entityID))
+		{
+			if (set(componentID)->bundle != nullptr)
+			{
+				m_bundles[set(componentID)->bundle]->UpdateOnRemove(entityID);
+			}
+
+			const auto last = set(componentID)->denseArray.back();
+			std::swap(set(componentID)->denseArray.back(), set(componentID)->denseArray[set(componentID)->sparseArray[entityID]]);
+			std::swap(set(componentID)->components.back(), set(componentID)->components[set(componentID)->sparseArray[entityID]]);
+			std::swap(set(componentID)->sparseArray[last], set(componentID)->sparseArray[entityID]);
+			set(componentID)->denseArray.pop_back();
+			set(componentID)->components.pop_back();
+			set(componentID)->sparseArray[entityID] = NULL_ENTITY;
+		}
+	}
+
+	template<typename ComponentType>
 	ComponentType& EntityManager::GetComponent(const entity entityID) const noexcept
 	{
 		static auto constexpr componentID = sti::getTypeIndex<ComponentType>();
@@ -246,6 +341,22 @@ namespace DOG
 		ASSERT(HasComponent<ComponentType>(entityID), "Entity does not have that component.");
 
 		return set(componentID)->components[set(componentID)->sparseArray[entityID]];
+	}
+
+	template<typename ComponentType>
+	[[nodiscard]] std::optional<std::reference_wrapper<ComponentType>> EntityManager::TryGetComponent(const entity entityID) const noexcept
+	{
+		static auto constexpr componentID = sti::getTypeIndex<ComponentType>();
+		ASSERT(Exists(entityID), "Entity is invalid");
+
+		if (HasComponent<ComponentType>(entityID))
+		{
+			return set(componentID)->components[set(componentID)->sparseArray[entityID]];
+		}
+		else
+		{
+			return std::nullopt;
+		}
 	}
 
 	template<typename... ComponentType>
