@@ -13,6 +13,8 @@ namespace DOG
 		{
 			CMP_InitFramework();
 
+			// Code kept here in case initialize order is changed
+			// There is another CoInitializeEx which happens earlier
 			//HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 			//assert(SUCCEEDED(hr));
 
