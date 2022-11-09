@@ -102,9 +102,7 @@ foreach(var ${dlls})
 	)
 endforeach()
 
-
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/Runtime/D3D12")
-
 
 add_custom_command(
 	TARGET ${LibraryName} POST_BUILD 
@@ -119,4 +117,26 @@ add_custom_command(
 	"${CMAKE_BINARY_DIR}/Runtime/d3d12SDKLayers.dll"
 	"${CMAKE_BINARY_DIR}/Runtime/D3D12/"
 )
+
+# Find Powershell executable
+find_program(POWERSHELL_PATH NAMES powershell)
+
+# Give script run authority
+add_custom_command(
+    TARGET ${LibraryName} PRE_BUILD
+    COMMAND ${POWERSHELL_PATH} "powershell.exe Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Bypass -Force"
+)
+
+# Transform .png/.jpg to .dds
+add_custom_command(
+    TARGET ${LibraryName} POST_BUILD
+    COMMAND ${POWERSHELL_PATH} "powershell.exe -File ${CMAKE_SOURCE_DIR}/Assets/TextureProcessor/grab_texture_list.ps1"
+)
+
+# Set back default execution policy
+add_custom_command(
+    TARGET ${LibraryName} POST_BUILD
+    COMMAND ${POWERSHELL_PATH} "powershell.exe Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Default -Force"
+)
+
 

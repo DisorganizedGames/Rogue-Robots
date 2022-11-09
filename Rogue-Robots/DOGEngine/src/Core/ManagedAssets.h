@@ -144,6 +144,7 @@ namespace DOG
 		uint32_t width{ 0 };
 		uint32_t height{ 0 };
 		uint32_t mipLevels{ 0 };
+		DXGI_FORMAT format{ DXGI_FORMAT_UNKNOWN };
 		std::vector<u8> textureData;
 		bool srgb = true;
 		gfx::Texture textureGPU;

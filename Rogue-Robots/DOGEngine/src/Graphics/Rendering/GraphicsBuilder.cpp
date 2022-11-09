@@ -39,8 +39,17 @@ namespace DOG::gfx
 	Texture GraphicsBuilder::LoadTexture(const MippedTexture2DSpecification& spec)
 	{
 		// Assuming 32-bit per pixel and SRGB for now (needs to be changed when using Block Compressed textures)
-		const DXGI_FORMAT texFormat = spec.srgb ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM;
-		const u8 bytesPerPixel = sizeof(u32);
+		DXGI_FORMAT texFormat = spec.srgb ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM;
+		u8 bytesPerPixel = sizeof(u32);
+
+		u32 denum = 1;
+		if (spec.format == DXGI_FORMAT_BC7_UNORM_SRGB)
+		{
+			texFormat = spec.format;
+			bytesPerPixel = 16;
+			denum = 4;
+		}
+
 		// D3D12 alignment requirement for textures
 		static constexpr u32 TEXALIGNMENT = 512;
 
@@ -61,13 +70,13 @@ namespace DOG::gfx
 		{
 			const auto& mipData = spec.dataPerMip[mip];
 
-			const u32 rowPitchOriginal = mipData.width * bytesPerPixel;
+			const u32 rowPitchOriginal = (mipData.width / denum) * bytesPerPixel;
 			m_texUploadCtx->PushUploadToTexture(
 				// Target
 				tex, mip, { 0, 0, 0 },
 				// Source
 				(void*)mipData.data.data(),
-				texFormat, mipData.width, mipData.height, 1,
+				texFormat, mipData.width / denum, mipData.height / denum, 1,
 				rowPitchOriginal
 			);
 		}
