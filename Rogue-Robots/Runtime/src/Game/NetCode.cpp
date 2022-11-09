@@ -203,7 +203,6 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 									{
 										if (playerC.playerId == tempCreate->playerId)
 										{
-											EntityManager::Get().Exists();
 											std::string luaEventName = std::string("ItemPickup") + std::to_string(id);
 											DOG::LuaMain::GetEventSystem()->InvokeEvent(luaEventName, (u32)tempCreate->entityTypeId);
 											EntityManager::Get().Collect<NetworkId>().Do([&](entity e, NetworkId& nIdC)
