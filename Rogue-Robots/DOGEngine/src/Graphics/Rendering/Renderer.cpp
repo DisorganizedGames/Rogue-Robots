@@ -242,7 +242,7 @@ namespace DOG::gfx
 
 		m_globalDataTable = std::make_unique<GPUTableDeviceLocal<GlobalDataHandle>>(m_rd, m_bin.get(), (u32)sizeof(GlobalData), 1, false);
 		m_gdHandle = m_globalDataTable->Allocate(1, &m_globalData);
-		m_globalDataTable->SendCopyRequests(*m_uploadCtx);
+		m_globalDataTable->SendCopyRequests(*m_perFrameUploadCtx);
 
 
 		// Set default pass data
@@ -477,6 +477,7 @@ namespace DOG::gfx
 			m_pfData.projMatrix = m_projMat;
 			m_pfData.projMatrix.Invert(m_pfData.invProjMatrix);
 			m_pfData.time += dt;
+			m_pfData.deltaTime = dt;
 
 			// Set light data
 			m_pfData.pointLightOffsets.staticOffset = m_globalLightTable->GetChunkOffset(LightType::Point, LightUpdateFrequency::Never);

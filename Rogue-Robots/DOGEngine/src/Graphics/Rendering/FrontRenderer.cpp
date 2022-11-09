@@ -43,7 +43,7 @@ namespace DOG::gfx
 		m_renderer->EndFrame_GPU(true);
 	}
 
-	void FrontRenderer::Update(f32)
+	void FrontRenderer::Update(f32 dt)
 	{
 		MINIPROFILE;
 
@@ -54,7 +54,7 @@ namespace DOG::gfx
 		CullShadowDraws();
 
 		// Update internal data structures
-		m_renderer->Update(0.f);
+		m_renderer->Update(dt);
 
 		// Clear state
 		m_singleSidedShadowed.clear();

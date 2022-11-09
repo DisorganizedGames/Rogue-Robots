@@ -242,6 +242,9 @@ namespace DOG::gfx
 			LightOffsets spotLightOffsets;
 			LightOffsets areaLightOffsets;
 
+			f32 deltaTime{ 0.f };
+			f32 pad[3];
+
 		} m_pfData{};
 		struct PfDataHandle { friend class TypedHandlePool; u64 handle{ 0 }; };
 		std::unique_ptr<GPUTableDeviceLocal<PfDataHandle>> m_pfDataTable;

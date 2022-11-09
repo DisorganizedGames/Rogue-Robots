@@ -19,7 +19,7 @@ namespace DOG::gfx
 
 		// Gathers and updates any necessary world state for rendering this frame
 		// Should be called prior to BeginGPUFrame()
-		void Update(f32);
+		void Update(f32 dt);
 
 		// Set GPU frame span: EndFrame finalizes GUI as well
 		void BeginGPUFrame();		// Waits for any previous GPU frames in flight!
