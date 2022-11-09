@@ -57,7 +57,6 @@ void AgentManager::CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& e
 				{
 					trans.SetPosition(entityDesc.position);
 					DestroyLocalAgent(e);
-					trans.SetPosition(entityDesc.position);
 				}
 			}
 		);
@@ -216,15 +215,16 @@ void AgentManager::DestroyLocalAgent(entity e)
 	LoadEnemySplitModel(e);
 
 	entity corpse = em.CreateEntity();
-	em.AddComponent<SceneComponent>(corpse, em.GetComponent<SceneComponent>(e).scene);
 	em.AddComponent<AgentCorpse>(corpse);
 	//Leaving this here for safety reasons
+
 	//em.AddComponent<ModelComponent>(corpse, agentModel.id);
 	//TransformComponent& corpseTrans = em.AddComponent<TransformComponent>(corpse);
 	//corpseTrans = agentTrans;
 	//corpseTrans.SetRotation(Vector3(-2, 0, -2));
+	//em.AddComponent<SceneComponent>(corpse, em.GetComponent<SceneComponent>(e).scene);
 
-	CreateAndDestroyEntityComponent& kill = em.AddComponent<CreateAndDestroyEntityComponent>(corpse);
+	CreateAndDestroyEntityComponent& kill = em.AddComponent<CreateAndDestroyEntityComponent>(e);
 	kill.alive = false;
 	kill.entityTypeId = agent.type;
 	kill.id = agent.id;
