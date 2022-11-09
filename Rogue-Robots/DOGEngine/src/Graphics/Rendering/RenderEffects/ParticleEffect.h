@@ -8,7 +8,9 @@ namespace DOG::gfx
 	struct Buffer;
 
 	class ParticleEffect final : public RenderEffect
-	{	
+	{
+		using Matrix = DirectX::SimpleMath::Matrix;
+
 	public:
 		ParticleEffect(GlobalEffectData& globalEffectData, RGResourceManager* resourceManager, UploadContext* uploadCtx);
 		~ParticleEffect();
@@ -17,33 +19,36 @@ namespace DOG::gfx
 	private:
 		Buffer m_emitterBuffer;
 		Buffer m_particleBuffer;
+		Buffer m_particlesAlive;
 
 		RGResourceManager* m_resourceManager;
 
 		Pipeline m_emitPipeline;
 		Pipeline m_updatePipeline;
+		Pipeline m_drawPipeline;
 
-		static constexpr u32 S_MAX_EMITTERS = 512;
-		static constexpr u32 S_MAX_PARTICLES = 100'000;
+		static constexpr u32 S_MAX_EMITTERS = 128;
+		static constexpr u32 S_MAX_PARTICLES = 4096;
 	
 	private:
 		struct Particle
 		{
-			u32 emitterHandle = 0; // A particle is alive if its emitter handle is non-zero
+			u32 emitterHandle = 0;
 			f32 pos[3] = {0, 0, 0};
+			f32 age = 0;
 			f32 vel[3] = {0, 0, 0};
 			f32 size = 0;
-			f32 color[3] = {0, 0, 0};
-			f32 age = 0;
+			f32 pad[3] = {0, 0, 0};
 		};
 
 		struct Emitter
 		{
-			f32 pos[3];
-			f32 lifetime;
-			u32 particlesAlive;
-			u32 padding[3];
+			f32 pos[3] = {0, 0, 0};
+			u32 rate = 0;
+			f32 lifetime = 0;
+			f32 pad[3] = { 0, 0, 0 };
 		};
+
 	};
 	
 }

@@ -970,6 +970,8 @@ namespace DOG::gfx
 		// Uncomment to enable the test compute effect!
 		//m_testComputeEffect->Add(rg);
 
+		m_particleRenderEffect->Add(*m_rg);
+
 		if(m_bloomEffect) 
 			m_bloomEffect->Add(rg);
 
@@ -1027,7 +1029,6 @@ namespace DOG::gfx
 				});
 		}
 
-		m_particleRenderEffect->Add(*m_rg);
 
 		// Final ImGUI pass
 		m_imGUIEffect->Add(rg);

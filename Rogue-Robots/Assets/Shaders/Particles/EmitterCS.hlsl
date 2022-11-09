@@ -1,57 +1,62 @@
+#include "Particles.hlsli"
 #include "../ShaderInterop_Renderer.h"
 
-#define MAX_PARTICLES_PER_EMITTER 1024
+#define GROUP_SIZE 64
 
 struct PushConstantElement
 {
-    uint emitterBufferHandle;
-    uint particleBufferHandle;
+	uint emitterBufferHandle;
+	uint particleBufferHandle;
+	uint aliveBufferHandle;
 };
 CONSTANTS(g_constants, PushConstantElement)
 
-struct Particle
-{
-	uint emitterHandle; // A particle is alive if its emitter handle is non-zero
-	float3 pos;
-	float3 vel;
-	float size;
-	float3 color;
-	float age;
-};
+void SpawnParticle(in uint emitterHandle, inout Particle p, in int idx);
 
-struct Emitter
-{
-	float3 pos;
-	float lifetime;
-	uint particlesAlive;
-	uint3 padding;
-};
+groupshared Emitter g_emitter;
 
-void SpawnParticle(inout Emitter e, inout Particle p);
-
-[numthreads(64, 1, 1)]
+[numthreads(GROUP_SIZE, 1, 1)]
 void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 {
 	RWStructuredBuffer<Particle> particleBuffer = ResourceDescriptorHeap[g_constants.particleBufferHandle];
 	RWStructuredBuffer<Emitter> emitterBuffer = ResourceDescriptorHeap[g_constants.emitterBufferHandle];
+	RWStructuredBuffer<uint> aliveCounter = ResourceDescriptorHeap[g_constants.aliveBufferHandle];
 
 	uint emitterIdx = groupID.x;
-	uint startParticle = threadID.x + (MAX_PARTICLES_PER_EMITTER * emitterIdx);
+	g_emitter = emitterBuffer[emitterIdx];
 
-	for (uint i = startParticle; i < MAX_PARTICLES_PER_EMITTER; i += 64)
+	for (uint i = threadID.x; i < 8; i += GROUP_SIZE)
 	{
-		SpawnParticle(emitterBuffer[emitterIdx], particleBuffer[i]);
-		particleBuffer[i].emitterHandle = emitterIdx;
+		uint lastAlive;
+		InterlockedAdd(aliveCounter[0], 1, lastAlive);
+
+		uint idx = lastAlive % MAX_PARTICLES_ALIVE;
+		SpawnParticle(emitterIdx, particleBuffer[idx], (int)idx);
+	}
+
+	AllMemoryBarrierWithGroupSync();
+
+	if (threadID.x == 0)
+	{
+		//if (aliveCounter[0] > MAX_PARTICLES_ALIVE)
+		//{
+		//	aliveCounter[0] = MAX_PARTICLES_ALIVE;
+		//}
+		
+		// Might not be needed
+		//emitterBuffer[emitterIdx] = g_emitter;
+		
 	}
 }
 
-void SpawnParticle(inout Emitter e, inout Particle p)
+void SpawnParticle(in uint emitterHandle, inout Particle p, in int idx)
 {
-	p.pos = e.pos;
-	p.vel = float3(0, 0.1, 0);
-	p.size = 0.1;
+	p.emitterHandle = emitterHandle;
+	p.pos = g_emitter.pos;
+	float xVel = cos((idx%360) * 3.14/180) * 7;
+	float zVel = sin((idx%360) * 3.14/180) * 7;
+	p.vel = float3(xVel, 20, zVel);
+	p.size = 5;
 	p.age = 0;
-
-	float r = 244, g = 68, b = 78;
-	p.color = float3(r, g, b) / 255.0;
 }
+
