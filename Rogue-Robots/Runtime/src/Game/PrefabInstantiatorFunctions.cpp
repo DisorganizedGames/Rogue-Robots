@@ -62,7 +62,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 			em.AddComponent<AudioListenerComponent>(playerI);
 			em.AddComponent<AnimationComponent>(playerI);
 			auto& ac = em.GetComponent<AnimationComponent>(playerI);
-			ac.animatorID = i;
+			ac.animatorID = static_cast<i8>(i);
 		}
 		else
 		{

@@ -490,8 +490,8 @@ void EntityInterface::ModifyAnimationComponent(DOG::LuaContext* context)
 
 	int animID = context->GetInteger();
 	int group = context->GetInteger();
-	float transitionLength = context->GetDouble();
-	float playbackRate = context->GetDouble();
+	float transitionLength = static_cast<f32>(context->GetDouble());
+	float playbackRate = static_cast<f32>(context->GetDouble());
 	bool loop = context->GetBoolean();
 
 	if (!EntityManager::Get().HasComponent<AnimationComponent>(e))
@@ -501,8 +501,8 @@ void EntityInterface::ModifyAnimationComponent(DOG::LuaContext* context)
 
 	auto& setter = aComp.animSetters[aComp.addedSetters++];
 	setter.loop = false;
-	setter.animationIDs[0] = animID;
-	setter.group = group;
+	setter.animationIDs[0] = static_cast<i8>(animID);
+	setter.group = static_cast<u8>(group);
 	setter.transitionLength = transitionLength;
 	setter.playbackRate = playbackRate;
 	setter.loop = loop;

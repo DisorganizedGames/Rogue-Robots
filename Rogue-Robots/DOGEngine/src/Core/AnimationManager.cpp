@@ -83,9 +83,6 @@ namespace DOG
 			{
 				// for now only Mixamo rig
 				static u8 rigID = MIXAMO_RIG_ID;
-				static std::string groupA = rigID == MIXAMO_RIG_ID ? "LowerBody" : "DoNotKnowYet";
-				static std::string groupB = rigID == MIXAMO_RIG_ID ? "UpperBody" : "DoNotKnowYet";
-				static std::string groupC = rigID == MIXAMO_RIG_ID ? "FullBody"  : "DoNotKnowYet";
 				static auto& rig = m_rigs[rigID];
 				static auto& anims = rig->animations;
 				static AnimationComponent* imguiRAC;
@@ -111,8 +108,9 @@ namespace DOG
 							currAnim = i;
 					ImGui::EndCombo();
 				}
-
-				if(displayDetails ^= ImGui::Button("DisplayDetails"))
+				if (ImGui::Button("DisplayDetails"))
+					displayDetails ^= 1;
+				if(displayDetails)
 				{
 					static auto PrintTableRow = [](const std::string&& c1, const std::string&& c2){
 						ImGui::TableNextColumn(); ImGui::Text(c1.c_str());
@@ -131,10 +129,10 @@ namespace DOG
 
 				// attempting to create timeline WIP
 				ImGuiTimeLine();
-				static bool setAnimationChain = false;
+				/*static bool setAnimationChain = false;
 				if (setAnimationChain ^= ImGui::Button("SetAnimationChain"))
 				{
-				}
+				}*/
 			
 				// ImGui individual joint sliders
 				static i32 selectedBone = ROOT_NODE;
@@ -169,7 +167,7 @@ namespace DOG
 		ImVec2 canvasPos = ImGui::GetCursorScreenPos();
 		ImVec2 canvasSize = ImGui::GetContentRegionAvail();
 
-		ImGuiIO& io = ImGui::GetIO();
+		//ImGuiIO& io = ImGui::GetIO();
 		ImGuiStyle& style = ImGui::GetStyle();
 
 		static float legendWidth = 0.5f;
@@ -357,7 +355,7 @@ namespace DOG
 		using AnimationKeys = std::unordered_map<i32, std::vector<AnimationKey>>;
 		
 		// Start and number of jointNodes that group influences
-		const auto [startNode, nNodes] = GetNodeStartAndCount(rigID, group);
+		const auto [startNode, nNodes] = GetNodeStartAndCount(static_cast<u8>(rigID), static_cast<u8>(group));
 		// Number of clips acting within group
 		const auto nClips = a.groupClipCount[group];
 		// Pointer to first clip in clip array that group influences
@@ -369,7 +367,7 @@ namespace DOG
 		std::vector<XMVECTOR> keyValues(nClips * nNodes, XMVECTOR{});
 
 		// For every clip in clip group
-		for (u32 i = 0; i < nClips; i++)
+		for (u32 i = 0; i < static_cast<u32>(nClips); i++)
 		{
 			// Clip Pose data
 			const auto weight = clips[i].weight;
@@ -466,9 +464,9 @@ namespace DOG
 	// Temporary but still useful debug code, magic variables galore
 	void AnimationManager::Test(f32 dt)
 	{
-		static f32 deltaTime = 0.05f;
 		static f32 timer = 0.f;
 		static bool firstTime = true;
+
 		static AnimationComponent testAc;
 		if (!m_rigs.size())
 			return;
@@ -478,7 +476,7 @@ namespace DOG
 			mRigAnimator.rigData = m_rigs[MIXAMO_RIG_ID];
 			static bool t1 = false, t2 = false, t3 = false;
 			static i8 bindIdx = 0, idleIdx = 2, walkIdx = 4;
-			const auto danceIdx = m_rigs[MIXAMO_RIG_ID]->animations.size() - 1;
+			//const auto danceIdx = m_rigs[MIXAMO_RIG_ID]->animations.size() - 1;
 			static AnimationComponent::Setter test1 = { true, 0, 0, 0.0f, 1.0f, { idleIdx, bindIdx, -1}, { 0.5f, 0.5f, 0.f} };
 			static AnimationComponent::Setter test2 = { true, 0, 2, 0.0f, 1.0f, { 2, -1, -1}, { 1.f, 0.f, 0.f} };
 			static AnimationComponent::Setter test3 = { false, 0, 0, 0.5f, 1.0f, { 5, -1, -1},{ 1.f, 0.f, 0.f} };
@@ -489,10 +487,10 @@ namespace DOG
 			testAc.animSetters[1] = test2;
 			//testAc.animSetters[2] = test3;
 			//testAc.animSetters[3] = test4;
-			auto sz = sizeof(mRigAnimator);
+			//auto sz = sizeof(mRigAnimator);
 			for (size_t i = 0; i < 4; i++)
 			{
-				auto uniqueDanceIdx = danceIdx - i;
+				//auto uniqueDanceIdx = danceIdx - i;
 				m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
 				testAc.addedSetters = 2;
 				testAc.animSetters[0] = test1;
@@ -504,8 +502,8 @@ namespace DOG
 			testAc.animSetters[1] = test2;
 			mRigAnimator.ProcessAnimationComponent(testAc);
 		}
-		timer += deltaTime;
-		mRigAnimator.Update(deltaTime);
+		timer += dt;
+		mRigAnimator.Update(dt);
 		auto stop = mRigAnimator.clipData[0];
 
 		static bool secondTest = false;
@@ -547,7 +545,6 @@ namespace DOG
 		using Setter = DOG::AnimationComponent::Setter;
 		// base state setter
 		static constexpr bool loop = true;
-		static constexpr u8 fullBodyGroup = 0;
 		static constexpr u8 priority = 0;
 		static constexpr f32 transitionLength = 0.f;
 		static constexpr f32 playbackRate = 1.f;
