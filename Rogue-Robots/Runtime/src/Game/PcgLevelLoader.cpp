@@ -7,7 +7,7 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 {
 	auto& em = EntityManager::Get();
 
-	float blockDim = 4.6f;
+	float blockDim = 5.0f;
 
 	std::string line;
 
@@ -48,7 +48,20 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 						Vector3 scale = Vector3(1.0f, 1.0f, 1.0f);
 
 						entity blockEntity = levelBlocks.emplace_back(em.CreateEntity());
-						em.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".gltf"));
+
+						if (blockName != "Wall1" && blockName != "CornerWall1" && blockName != "WallFloor1" && blockName != "WallFloorTunnelEntrance1"
+							&& blockName != "WallInnerCorner" && blockName != "WallFloorInnerCorner" && blockName != "WallRoof1" && blockName != "WallRoofHanging1"
+							&& blockName != "WallToRoofCorner1" && blockName != "CornerFloor1" && blockName != "CornerRoof1" && blockName != "CornerRoofHanging1"
+							&& blockName != "Floor1" && blockName != "Roof1" && blockName != "RoofWallInnerCorner" && blockName != "TunnelStraight1"
+							&& blockName != "TunnelCross1" && blockName != "TunnelT1" && blockName != "TunnelT2" && blockName != "InnerCornerFlat1"
+							&& blockName != "InnerCornerHanging")
+						{
+							std::cout << "BlockName: " << blockName << "\n";
+							em.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".gltf"));
+						}
+						else
+							em.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/BunkerModularBlocks/" + blockName + ".gltf"));
+
 						em.AddComponent<TransformComponent>(blockEntity,
 							Vector3(x * blockDim, y * blockDim, z * blockDim),
 							Vector3(0.0f, -blockRot * piDiv2, 0.0f),
