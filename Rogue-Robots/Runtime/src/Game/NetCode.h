@@ -36,6 +36,7 @@ private:
 	void ReceiveUdp();
 	
 	void UpdateSendUdp();
+	void UpdateReceiveUdp();
 	void AddMatrixUdp(DirectX::XMMATRIX input);
 
 	
@@ -57,13 +58,12 @@ private:
 	Client m_client;
 	std::mutex m_mut;
 	u16 m_bufferSize;
-	int m_bufferReceiveSize;
 	char m_sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
 	char* m_receiveBuffer;
-	bool m_dataIsReadyToBeReceivedTcp;
 	bool m_lobby;
 	Server m_serverHost;
-	int m_numberOfPackets;
+	int m_startReciveBuffer;
+	int m_endReciveBuffer;
 	char m_multicastAdress[16];
 
 };

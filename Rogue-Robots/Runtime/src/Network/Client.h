@@ -12,7 +12,7 @@
 		~Client();
 		INT8 ConnectTcpServer(std::string ipAdress);
 		void SendChararrayTcp(char* input, int size);
-		u8 ReceiveCharArrayTcp(char* recivebuffer);
+		int ReceiveCharArrayTcp(char* recivebuffer);
 		void SetMulticastAdress(const char* adress);
 	public:
 		void SetUpUdp();
