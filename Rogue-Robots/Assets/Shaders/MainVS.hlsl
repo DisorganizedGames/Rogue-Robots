@@ -55,6 +55,7 @@ struct PushConstantElement
     uint shadowMapDepthIndex;
     uint wireframe;
     uint isLit;
+    uint tempAnimVal;
 };
 ConstantBuffer<PushConstantElement> constants : register(b0, space0);
 

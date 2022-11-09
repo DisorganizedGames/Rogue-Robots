@@ -129,10 +129,10 @@ namespace DOG::gfx
 					d.Normalize();
 					return camForward.Dot(d) < 0.2f;
 				};
-				
+
 				if (cull({ transformC.worldMatrix(3, 0), transformC.worldMatrix(3, 1), transformC.worldMatrix(3, 2) }))
 					return;
-				
+
 				ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 				if (model && model->gfxModel)
 				{
@@ -147,7 +147,7 @@ namespace DOG::gfx
 								m_singleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC });
 						}
 					}
-				
+
 					if (mgr.HasComponent<ModularBlockComponent>(e))
 					{
 						if (mgr.HasComponent<MeshColliderComponent>(e) &&
@@ -169,8 +169,9 @@ namespace DOG::gfx
 					}
 					else if (mgr.HasComponent<AnimationComponent>(e))
 					{
+						auto offset = mgr.GetComponent<AnimationComponent>(e).offset;
 						for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
-							m_renderer->SubmitAnimatedMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+							m_renderer->SubmitAnimatedMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC, offset);
 					}
 					else
 					{

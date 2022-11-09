@@ -44,6 +44,7 @@ set(SourceFiles
 	"src/Graphics/Rendering/RenderGraph/RGTypes.h"
 	"src/Graphics/Rendering/RenderGraph/RGResourceManager.h" "src/Graphics/Rendering/RenderGraph/RGResourceManager.cpp"
 	"src/Core/AnimationManager.h" "src/Core/AnimationManager.cpp" "src/Core/ImGuiMenuLayer.h" "src/Core/ImGuiMenuLayer.cpp"
+	"src/Core/RigAnimator.h" "src/Core/RigAnimator.cpp"
 	"src/Physics/PhysicsEngine.h" "src/Physics/PhysicsEngine.cpp"
 	"src/Core/ShapeCreator.h" "src/Core/ShapeCreator.cpp"
 	"src/Graphics/Rendering/RenderGraph/RGBlackboard.h"
