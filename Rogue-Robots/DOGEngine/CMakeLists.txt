@@ -102,9 +102,7 @@ foreach(var ${dlls})
 	)
 endforeach()
 
-
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/Runtime/D3D12")
-
 
 add_custom_command(
 	TARGET ${LibraryName} POST_BUILD 
