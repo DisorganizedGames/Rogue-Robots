@@ -6,7 +6,6 @@
 
 #include "Types/AssetTypes.h"
 #include "DOGEngineTypes.h"
-#include "Animator.h"
 #include "RigAnimator.h"
 
 namespace DOG
@@ -19,7 +18,6 @@ namespace DOG
 		static constexpr u8 N_KEYS = 3;
 		static constexpr u8 MAX_CLIPS = 10;
 	private:
-		using ClipData = DOG::Animator::ClipRigData;
 		enum class KeyType
 		{
 			Scale = 0,
@@ -36,16 +34,10 @@ namespace DOG
 		void Test(f32 dt);
 		void UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
 		void UpdateSkeleton(DOG::RigAnimator& animator, const u32 offset);
-		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::Animator& animator);
 		void SetPlayerBaseStates();
 
 		DirectX::FXMVECTOR GetKeyValue(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick);
-		DirectX::FXMVECTOR ExtractScaling(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::Animator& ac);
-		DirectX::FXMVECTOR ExtractRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::Animator& ac);
-		DirectX::FXMVECTOR ExtractWeightedAvgRotation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::Animator& ac);
-		DirectX::FXMVECTOR ExtractRootTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::Animator& ac);
 
-		void CalculateSRT(const std::vector<AnimationData>& anims, const Animator& ac, const u8 rigID);
 		// Gets the S/R/T keyframe data from active animation clips in animation component
 		void ExtractClipNodeInfluences(const ClipData* pcData, const std::vector<AnimationData>& anims, const KeyType key, const u8 nClips, const u8 rigID, const u8 group);
 
@@ -54,7 +46,6 @@ namespace DOG
 		void ExtractClipNodeInfluences(RigAnimator& animator, const KeyType key, const u32 group, const u32 rigID);
 	private:
 		std::vector<ImportedRig*> m_rigs;
-		std::array<Animator, 4> m_playerAnimators;
 		std::array<RigAnimator, 4> m_playerRigAnimators;
 		std::array<DirectX::XMVECTOR, MAX_CLIPS * NodeCount(MIXAMO_RIG_ID)> m_partialSRT{DirectX::XMVECTOR{}};
 		std::array<DirectX::XMVECTOR, MAX_CLIPS * NodeCount(MIXAMO_RIG_ID)> m_fullbodySRT{DirectX::XMVECTOR{} };

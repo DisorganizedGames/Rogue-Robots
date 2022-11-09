@@ -24,13 +24,12 @@ namespace DOG
 	}
 	void RigAnimator::Update(const f32 dt)
 	{
-		constexpr u16 basePrio = 0;
 		globalTime += dt;
 		u32 idx = 0;
 		for (u32 g = 0; g < N_GROUPS; ++g)
-		{ 
+		{
 			if (BlendFinished(groups[g].blend, dt))
-				groups[g].priority = basePrio; // Reset priority
+				groups[g].priority = BASE_PRIORITY; // Reset priority
 
 			groupClipCount[g] = UpdateGroup(g, idx, dt);
 			idx += groupClipCount[g];

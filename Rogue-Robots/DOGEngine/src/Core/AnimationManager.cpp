@@ -262,19 +262,20 @@ namespace DOG
 			XMVectorLerp(XMLoadFloat4(&key1.value), XMLoadFloat4(&key2.value), blendFactor);
 	}
 
-	DirectX::FXMVECTOR AnimationManager::ExtractRootTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::Animator& ac)
-	{
-		using namespace DirectX;
-		// Translation Weighted Average
-		XMVECTOR translationVec = XMVECTOR{};
-		for (auto& c : ac.clips)
-		{
-			const auto& anim = rig.animations[c.animationID];
-			if (anim.posKeys.find(nodeID) != anim.posKeys.end())
-				translationVec += c.currentWeight * GetKeyValue(anim.posKeys.at(nodeID), KeyType::Translation, c.currentTick);
-		}
-		return translationVec;
-	}
+	// !! Need this for future reference !!
+	//DirectX::FXMVECTOR AnimationManager::ExtractRootTranslation(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::Animator& ac)
+	//{
+	//	using namespace DirectX;
+	//	// Translation Weighted Average
+	//	XMVECTOR translationVec = XMVECTOR{};
+	//	for (auto& c : ac.clips)
+	//	{
+	//		const auto& anim = rig.animations[c.animationID];
+	//		if (anim.posKeys.find(nodeID) != anim.posKeys.end())
+	//			translationVec += c.currentWeight * GetKeyValue(anim.posKeys.at(nodeID), KeyType::Translation, c.currentTick);
+	//	}
+	//	return translationVec;
+	//}
 
 	void AnimationManager::UpdateSkeleton(DOG::RigAnimator& animator, const u32 offset)
 	{
@@ -338,7 +339,7 @@ namespace DOG
 		for (u32 i = 0; i < N_KEYS; i++)
 		{
 			const auto key = static_cast<KeyType>(i);
-			for (u32 group = 0; group < N_GROUPS; group++)
+			for (u32 group = 0; group < N_GROUPS; ++group)
 			{
 				// Update joint transformations of rig if applicable
 				if (HasInfluence(group))
@@ -367,7 +368,7 @@ namespace DOG
 		std::vector<XMVECTOR> keyValues(nClips * nNodes, XMVECTOR{});
 
 		// For every clip in clip group
-		for (u32 i = 0; i < static_cast<u32>(nClips); i++)
+		for (u32 i = 0; i < static_cast<u32>(nClips); ++i)
 		{
 			// Clip Pose data
 			const auto weight = clips[i].weight;
@@ -461,6 +462,33 @@ namespace DOG
 		}
 	}
 
+	// Set Base state of the player animators
+	void AnimationManager::SetPlayerBaseStates()
+	{
+		AnimationComponent baseAc;
+		using Setter = DOG::AnimationComponent::Setter;
+		// base state setter
+		static constexpr bool loop = true;
+		static constexpr u8 priority = 0;
+		static constexpr f32 transitionLength = 0.f;
+		static constexpr f32 playbackRate = 1.f;
+		static constexpr i8 idleIdx = 2;
+		static constexpr f32 weight = 1.f;
+		Setter baseState = { loop, fullBodyGroup, priority, transitionLength, playbackRate,
+			{ idleIdx, NO_ANIMATION, NO_ANIMATION },
+			{ weight, 0.f, 0.f } };
+
+		baseAc.addedSetters = 1;
+		baseAc.animSetters[0] = baseState;
+
+		for (size_t i = 0; i < m_playerRigAnimators.size(); ++i)
+		{
+			m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
+			m_playerRigAnimators[i].ProcessAnimationComponent(baseAc);
+		}
+		m_playerAnimatorsLoaded = true;
+	}
+
 	// Temporary but still useful debug code, magic variables galore
 	void AnimationManager::Test(f32 dt)
 	{
@@ -536,32 +564,5 @@ namespace DOG
 			}
 			fourthTest = true;
 		}
-	}
-
-	// Set Base state of the player animators
-	void AnimationManager::SetPlayerBaseStates()
-	{
-		AnimationComponent baseAc;
-		using Setter = DOG::AnimationComponent::Setter;
-		// base state setter
-		static constexpr bool loop = true;
-		static constexpr u8 priority = 0;
-		static constexpr f32 transitionLength = 0.f;
-		static constexpr f32 playbackRate = 1.f;
-		static constexpr i8 idleIdx = 2;
-		static constexpr f32 weight = 1.f;
-		Setter baseState = { loop, fullBodyGroup, priority, transitionLength, playbackRate,
-			{ idleIdx, NO_ANIMATION, NO_ANIMATION },
-			{ weight, 0.f, 0.f } };
-
-		baseAc.addedSetters = 1;
-		baseAc.animSetters[0] = baseState;
-
-		for (size_t i = 0; i < m_playerRigAnimators.size(); i++)
-		{
-			m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
-			m_playerRigAnimators[i].ProcessAnimationComponent(baseAc);
-		}
-		m_playerAnimatorsLoaded = true;
 	}
 }
