@@ -115,7 +115,7 @@ namespace DOG::gfx
 
 
 		// multiple of curr loaded mixamo skeleton
-		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100);		
+		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * S_MAX_FIF);
 		m_cmdl = m_rd->AllocateCommandList();
 
 		// Startup
@@ -437,34 +437,39 @@ namespace DOG::gfx
 		m_noCullWireframeDraws.push_back(sub);
 	}
 
-	void Renderer::SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world, u32 num)
+	void Renderer::SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world, u32 jointOffset)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
 		sub.submesh = submesh;
 		sub.mat = material;
 		sub.world = world;
-		sub.tempAnimNum = num;
+		sub.jointOffset = jointOffset;
+		sub.animated = true;
 		m_animatedDraws.push_back(sub);
 	}
 
-	void DOG::gfx::Renderer::SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world)
+	void DOG::gfx::Renderer::SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world, bool animated, u32 jointOffset)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
 		sub.submesh = submesh;
 		sub.world = world;
+		sub.animated = animated;
+		sub.jointOffset = jointOffset;
 
 		const auto& caster = m_activeShadowCasters[shadowID];
 		m_singleSidedShadowDraws[caster.singleSidedBucket].push_back(sub);
 	}
 
-	void DOG::gfx::Renderer::SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world)
+	void DOG::gfx::Renderer::SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world, bool animated, u32 jointOffset)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
 		sub.submesh = submesh;
 		sub.world = world;
+		sub.animated = animated;
+		sub.jointOffset = jointOffset;
 
 		const auto& caster = m_activeShadowCasters[shadowID];
 		m_doubleSidedShadowDraws[caster.doubleSidedBucket].push_back(sub);
@@ -651,7 +656,7 @@ namespace DOG::gfx
 						.AppendConstant(shadowHandle)
 						.AppendConstant(wireframe ? 1 : 0)
 						.AppendConstant(m_graphicsSettings.lit ? 1 : 0)
-						.AppendConstant(sub.tempAnimNum);
+						.AppendConstant(sub.jointOffset);
 
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
@@ -678,7 +683,7 @@ namespace DOG::gfx
 					perDrawData.globalSubmeshID = meshTab->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
 					perDrawData.globalMaterialID = 0;
 
-					if (animated)
+					if (sub.animated || animated)
 					{
 						// Resolve joints
 						JointData jointsData{};
@@ -697,7 +702,8 @@ namespace DOG::gfx
 						.SetPrimaryCBV(perDrawHandle.buffer, perDrawHandle.bufferOffset)
 						.AppendConstant(perLightHandle.globalDescriptor)
 						.AppendConstant(wireframe ? 1 : 0)
-						.AppendConstant(smIdx);
+						.AppendConstant(smIdx)
+						.AppendConstant(sub.jointOffset);
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
