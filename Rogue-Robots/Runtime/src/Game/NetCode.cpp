@@ -54,7 +54,7 @@ void NetCode::OnStartup()
 
 }
 
-void NetCode::OnUpdate(AgentManager* agentManager)
+void NetCode::OnUpdate()
 {
 	UpdateSendUdp();
 
@@ -205,7 +205,7 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 										{
 											if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Agents && !tempCreate->alive)
 											{
-												agentManager->CreateOrDestroyShadowAgent(*tempCreate);
+												AgentManager::Get().CreateOrDestroyShadowAgent(*tempCreate);
 											}
 										});
 								}

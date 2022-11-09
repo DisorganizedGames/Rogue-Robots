@@ -1,6 +1,7 @@
 #pragma once
 #include <DOGEngine.h>
 #include "../GameComponent.h"
+#include "AgentManager.h"
 
 #include "DirectXMath.h"
 #include <DirectXTK/SimpleMath.h>
@@ -99,5 +100,23 @@ public:
 	SYSTEM_CLASS(ShadowAgentSeekPlayerComponent);
 	ON_UPDATE(ShadowAgentSeekPlayerComponent);
 	void OnUpdate(ShadowAgentSeekPlayerComponent& seek);
+};
+
+
+/***********************************************
+
+			Late Update Agent Systems
+
+***********************************************/
+
+class LateAgentDestructCleanupSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	using Matrix = DirectX::SimpleMath::Matrix;
+	using DeferredDeletionComponent = DOG::DeferredDeletionComponent;
+public:
+	SYSTEM_CLASS(AgentIdComponent, DeferredDeletionComponent);
+	ON_LATE_UPDATE(AgentIdComponent, DeferredDeletionComponent);
+	void OnLateUpdate(AgentIdComponent& agent, DeferredDeletionComponent&);
 };
 

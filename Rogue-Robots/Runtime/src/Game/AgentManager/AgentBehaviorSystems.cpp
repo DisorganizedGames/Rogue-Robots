@@ -229,7 +229,7 @@ void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComp
 		#endif
 		
 		// Send network signal to destroy agents
-		AgentManager::DestroyLocalAgent(e);
+		AgentManager::Get().DestroyLocalAgent(e);
 	}
 }
 
@@ -285,3 +285,15 @@ void ShadowAgentSeekPlayerSystem::OnUpdate(ShadowAgentSeekPlayerComponent& seek)
 					seek.entityID = e;
 			});
 }
+
+/***********************************************
+
+			Late Update Agent Systems
+
+***********************************************/
+
+void LateAgentDestructCleanupSystem::OnLateUpdate(AgentIdComponent& agent, DeferredDeletionComponent&)
+{
+	AgentManager::Get().CountAgentKilled(agent.id);
+};
+

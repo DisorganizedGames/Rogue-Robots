@@ -35,7 +35,6 @@ GameLayer::GameLayer() noexcept
 
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
-	m_agentManager = new AgentManager();
 	m_nrOfPlayers = 1;
 	m_networkStatus = NetworkStatus::Offline;
 
@@ -60,7 +59,6 @@ GameLayer::GameLayer() noexcept
 
 GameLayer::~GameLayer()
 {
-	delete m_agentManager;
 }
 
 void GameLayer::OnAttach()
@@ -123,7 +121,7 @@ void GameLayer::OnUpdate()
 		}
 
 	if (m_networkStatus != NetworkStatus::Offline)
-		m_netCode.OnUpdate(m_agentManager);
+		m_netCode.OnUpdate();
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
 	global->SetNumber("ElapsedTime", Time::ElapsedTime());
@@ -769,6 +767,9 @@ void GameLayer::Release(DOG::Key key)
 std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3& pos, u8 agentCount, f32 spread)
 {
 	ASSERT(EntityTypes::AgentsBegin <= type && type < EntityTypes::Agents, "type must be of in range EntityTypes::AgentBegin - EntityTypes::Agents");
+	ASSERT(agentCount < AgentManager::GROUP_SIZE, "number of agents in group may not exceed AgentManager::GROUP_SIZE");
+
+	u32 groupID = AgentManager::Get().GroupID();
 
 	std::vector<entity> agents;
 	for (auto i = 0; i < agentCount; ++i)
@@ -778,7 +779,7 @@ std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3
 			0,
 			spread * (i / 2) - (spread / 2.f),
 		};
-		agents.emplace_back(m_agentManager->CreateAgent(type, pos - offset));
+		agents.emplace_back(AgentManager::Get().CreateAgent(type, groupID, pos - offset));
 	}
 	return agents;
 }
