@@ -14,10 +14,11 @@ namespace DOG
 		float gamma = 2.22f;
 
 		bool ssao{ true };
-		bool lit{ true };
 #if defined _DEBUG
+		bool lit{ false };
 		bool shadowMapping{ false };
 #else
+		bool lit{ true };
 		bool shadowMapping{ true };
 #endif
 		u32 shadowMapCapacity{ 4 };

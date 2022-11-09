@@ -951,6 +951,9 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 					}
 					ImGui::TableSetColumnIndex(1);
 					ImGui::Text(row.second.c_str());
+					Vector3 v = EntityManager::Get().GetComponent<TransformComponent>(players[i]).GetPosition();
+					std::string s = "x:" + std::to_string(v.x) + " y:" + std::to_string(v.y) + " z:" + std::to_string(v.z);
+					ImGui::Text(s.c_str());
 				}
 				ImGui::EndTable();
 			}
