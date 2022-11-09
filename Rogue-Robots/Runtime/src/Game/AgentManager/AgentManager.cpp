@@ -97,10 +97,11 @@ void AgentManager::CountAgentKilled(u32 agentID)
 
 u32 AgentManager::GroupID(u32 agentID)
 {
-	constexpr u32 GROUPS = sizeof(m_agentIdCounter) / GROUP_BITS;
+	constexpr u32 GROUPS = (sizeof(m_agentIdCounter) * 8) / GROUP_BITS;
 	u32 mask = MASK;
 	u32 i = 0;
 	if (agentID == 0)
+	{
 		// find first empty group
 		for (; i < GROUPS; ++i)
 		{
@@ -109,7 +110,9 @@ u32 AgentManager::GroupID(u32 agentID)
 			else
 				mask = mask << GROUP_BITS;
 		}
+	}
 	else
+	{
 		// find group of agentID
 		for (; i < GROUPS; ++i)
 		{
@@ -118,6 +121,7 @@ u32 AgentManager::GroupID(u32 agentID)
 			else
 				break;
 		}
+	}
 	ASSERT(i < GROUPS, "found no empty group (agentID == 0)");
 	return i;
 }
@@ -154,8 +158,8 @@ AgentManager::AgentManager() noexcept
 	u32 count_3 = m_agentIdCounter;
 	bool test_7 = count_3 == group_4 + group_1 + group_0 * 2;
 
-	bool all_tests = test_1 && test_2 && test_3 && test_4 && test_5 && test_6 && test_7;
-	assert(all_tests);
+	bool allTests = test_1 && test_2 && test_3 && test_4 && test_5 && test_6 && test_7;
+	assert(allTests);
 	m_agentIdCounter = 0;
 #endif // _DEBUG
 }
