@@ -136,7 +136,7 @@ void GameLayer::OnUpdate()
 			break;
 		}
 
-	if (m_networkStatus != NetworkStatus::Offline && m_gameState == GameState::Won && m_gameState == GameState::Lost)
+	if (m_networkStatus != NetworkStatus::Offline && m_gameState != GameState::Won && m_gameState != GameState::Lost)
 		m_netCode.OnUpdate(m_agentManager);
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
