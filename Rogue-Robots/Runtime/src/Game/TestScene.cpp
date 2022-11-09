@@ -161,8 +161,8 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	CreateMaxHealthBoostPickup(Vector3(53.0f, 6.0f, 17.0f));
 	CreateMaxHealthBoostPickup(Vector3(56.0f, 6.0f, 17.0f));
 
-	CreateFrostModificationPickup(Vector3(59.0f, 6.0f, 17.0f));
-	CreateFrostModificationPickup(Vector3(59.0f, 6.0f, 14.0f));
+	CreateFrostModificationPickup(Vector3(50.0f, 6.0f, 14.0f));
+	CreateFrostModificationPickup(Vector3(47.0f, 6.0f, 14.0f));
 
 	// Setup lights
 	// Default lights
