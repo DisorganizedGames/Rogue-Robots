@@ -646,7 +646,6 @@ namespace DOG::gfx
 
 
 
-
 	RGResourceView RenderGraph::PassBuilder::ReadResource(RGResourceID id, D3D12_RESOURCE_STATES state, TextureViewDesc desc)
 	{
 		assert(IsReadState(state));
@@ -684,6 +683,13 @@ namespace DOG::gfx
 		// Verify that the user hasn't forgotten the read only flags on views
 		assert(desc.depthReadOnly && (desc.depthReadOnly || desc.stencilReadOnly));
 		
+		// Automatically deduces the correct read if ID is an aliased resource
+		if (m_globalData.writes.contains(id))
+		{
+			PushPassReader(id);
+			id = GetPrevious(id);
+		}
+
 		PassIO input{};
 		input.id = id;
 		input.type = RGResourceType::Texture;
@@ -699,19 +705,60 @@ namespace DOG::gfx
 		assert(desc.viewType == ViewType::DepthStencil);
 		assert(!desc.depthReadOnly);
 		assert(!desc.stencilReadOnly);
-		assert(!m_globalData.writes.contains(id));		// No aliasing support for depth stencil
 
-		PassIO output{};
-		output.id = id;
-		output.type = RGResourceType::Texture;
-		output.viewDesc = desc;
-		output.desiredState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-		output.rpAccessType = depthAccess;
-		output.rpStencilAccessType = stencilAccess;
-		m_pass.outputs.push_back(output);
+		// No aliasing support for depth stencil
+		if (m_globalData.writes.contains(id))
+		{
+			//assert(false);
+			
+			// Explicitly connects previous reads on ID to newID
+			// The previous reads that are connect are the previous reads SINCE a write.
+			const auto ids = ResolveAliasingIDs(id);
 
-		m_globalData.writeCount[id] = 1;
-		m_globalData.writes.insert(id);
+			// Explicitly connects prevID to newID
+			const auto& prevID = ids.first;
+			const auto& newID = ids.second;
+
+			assert(!m_globalData.writes.contains(newID));
+			m_globalData.writes.insert(newID);
+
+			m_resMan->AliasResource(newID, prevID, RGResourceType::Texture);
+
+			PassIO input;
+			input.originalID = id;
+			input.id = prevID;
+			input.type = RGResourceType::Texture;
+			input.aliasWrite = true;
+			m_pass.inputs.push_back(input);
+
+			PassIO output;
+			output.originalID = id;
+			output.id = newID;
+			output.type = RGResourceType::Texture;
+			output.desiredState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+			output.viewDesc = desc;
+			output.aliasWrite = true;
+			output.rpAccessType = depthAccess;
+			output.rpStencilAccessType = stencilAccess;
+			m_pass.outputs.push_back(output);
+
+
+
+		}
+		else
+		{ 
+			PassIO output{};
+			output.id = id;
+			output.type = RGResourceType::Texture;
+			output.viewDesc = desc;
+			output.desiredState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+			output.rpAccessType = depthAccess;
+			output.rpStencilAccessType = stencilAccess;
+			m_pass.outputs.push_back(output);
+
+			m_globalData.writeCount[id] = 1;
+			m_globalData.writes.insert(id);
+		}
 	}
 
 	void RenderGraph::PassBuilder::WriteRenderTarget(RGResourceID id, RenderPassAccessType access, TextureViewDesc desc)
