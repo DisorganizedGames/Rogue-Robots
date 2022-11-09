@@ -120,3 +120,11 @@ add_custom_command(
 	"${CMAKE_BINARY_DIR}/Runtime/D3D12/"
 )
 
+# Find Powershell executable
+find_program(POWERSHELL_PATH NAMES powershell)
+
+# Transform .png/.jpg to .dds
+add_custom_command(
+    TARGET ${LibraryName} POST_BUILD
+    COMMAND ${POWERSHELL_PATH} "powershell.exe -File ${CMAKE_SOURCE_DIR}/Assets/TextureProcessor/grab_texture_list.ps1 Set-ExecutionPolicy Bypass"
+)
