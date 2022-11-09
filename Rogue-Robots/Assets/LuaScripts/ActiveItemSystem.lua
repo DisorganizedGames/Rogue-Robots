@@ -30,14 +30,16 @@ function OnUpdate()
 end
 
 function OnPickup(pickup)
-	if Entity:HasComponent(pickup, "ActiveItem") then
-		local type = Entity:GetActiveType(pickup)
-		if Entity:HasComponent(EntityID, "ActiveItem") then
-			Entity:RemoveComponent(EntityID, "ActiveItem")
+	local pickupTypeString = Entity:GetEntityTypeAsString(pickup)
+	local playerID = EntityID
+
+	if pickupTypeString == "Trampoline" then
+		if Entity:HasComponent(playerID, "ActiveItem") then
+			Entity:RemoveComponent(playerID, "ActiveItem")
 		end
-		if type == "Trampoline" then
-			Entity:AddComponent(EntityID, "ActiveItem", 0) -- '0' is the trampoline enum!
+		if pickupTypeString == "Trampoline" then
 			activeItem = ActiveItems.trampoline
+			Entity:AddComponent(playerID, "ActiveItem", activeItem:GetECSType())
 		end
 	end
 end

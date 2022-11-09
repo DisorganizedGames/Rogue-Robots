@@ -35,21 +35,21 @@ function OnUpdate()
 	
 	stats.health = hp
 	Entity:SetPlayerStats(EntityID, stats)
-	print(Entity:GetPlayerStat(EntityID, "maxHealth"))
 
 	itemsDirty = false
 end
 
 function OnPickup(pickup)
-	if Entity:HasComponent(pickup, "PassiveItem") then
-		local type = Entity:GetPassiveType(pickup)
-		if passiveItems[type] then
-			passiveItems[type][2] = passiveItems[type][2] + 1
+	local pickupTypeString = Entity:GetEntityTypeAsString(pickup)
+
+	if pickupTypeString == "MaxHealthBoost" then
+		if passiveItems[pickupTypeString] then
+			passiveItems[pickupTypeString][2] = passiveItems[pickupTypeString][2] + 1
 		else
-			passiveItems[type] = { passiveItemsMap[type], 1 }
+			passiveItems[pickupTypeString] = { passiveItemsMap[pickupTypeString], 1 }
 		end
 		itemsDirty = true
-		end
+	end
 end
 
 function OnBulletHit(enemy)

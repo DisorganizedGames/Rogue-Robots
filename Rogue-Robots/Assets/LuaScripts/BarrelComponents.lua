@@ -42,6 +42,10 @@ function BarrelComponents:BasicBarrel()
 		GetReloadTime = function(self)
 			return 0.8
 		end,
+
+		GetECSType = function(self)
+			return 0
+		end,
 	}
 end
 
