@@ -49,15 +49,12 @@ namespace DOG
 	using namespace DOG::gfx;
 	void Application::Run() noexcept
 	{
-		//BulletPhysics::Initialize();
-		//BulletPhysics::BulletTest();
-
-
 		while (m_isRunning)
 		{
 			Time::Start();
 			MiniProfiler::Update();
 			MINIPROFILE
+			Mouse::Reset();
 			Window::OnUpdate();
 
 			// Early break if WM tells us to
@@ -93,7 +90,6 @@ namespace DOG
 			{
 				system->Update();
 			}
-			Mouse::Reset();
 
 			m_frontRenderer->Update(0.f);
 			m_frontRenderer->BeginGPUFrame();
