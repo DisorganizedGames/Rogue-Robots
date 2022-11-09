@@ -123,64 +123,9 @@ void Client::SendChararrayTcp(char* input, int size)
 	return;
 }
 
-u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
+int Client::ReceiveCharArrayTcp(char* reciveBuffer)
 {
-	TcpHeader packet;
-	int bytesRecived, processedBytes = 0;
-	bool isItFirstTime = true;
-	while (true)
-	{
-		bytesRecived = recv(m_connectSocket, reciveBuffer + processedBytes, SEND_AND_RECIVE_BUFFER_SIZE - processedBytes, 0);
-
-		if (bytesRecived > 0)
-		{
-			//read in header
-			if (isItFirstTime)
-			{
-				isItFirstTime = false;
-				memcpy(&packet, reciveBuffer, sizeof(TcpHeader));
-				if (packet.sizeOfPayload == 0)
-					return 0;
-			}
-			//if correct return the packet
-			if (bytesRecived + processedBytes == packet.sizeOfPayload)
-			{
-				return 1;
-			}
-			//multiple packets detected
-			else if ((bytesRecived - processedBytes) > packet.sizeOfPayload)
-			{
-				u8 nrOfPackets = 0;
-
-				while ((bytesRecived - processedBytes) > 0 && (bytesRecived - processedBytes) >= packet.sizeOfPayload)
-				{
-					processedBytes += packet.sizeOfPayload;
-					nrOfPackets++;
-					memcpy(&packet, reciveBuffer + processedBytes, sizeof(TcpHeader));
-					if (packet.sizeOfPayload == 0)
-						return nrOfPackets;
-				}
-				if((bytesRecived - processedBytes) == 0)
-					return nrOfPackets;
-			}
-			// only part of  the packet arrived
-			else if ((bytesRecived - processedBytes) < packet.sizeOfPayload)
-			{
-				std::cout << "Client: Only part of the packet arrived: " << bytesRecived << "header payload: " << packet.sizeOfPayload << std::endl;
-				processedBytes += bytesRecived;
-			}
-		}
-		else if (bytesRecived == -1)
-		{
-			std::cout << "Client: Error reciving tcp packet: " << WSAGetLastError() << std::endl;
-			return 0;
-		}
-		else
-		{
-			std::cout << "Client: Empty packet" << std::endl;
-			return 0;
-		}
-	}
+	return recv(m_connectSocket, reciveBuffer, SEND_AND_RECIVE_BUFFER_SIZE, 0);
 }
 
 void Client::SetUpUdp()
