@@ -72,7 +72,7 @@ private:
 private:
 	GameState m_gameState;
 	NetworkStatus m_networkStatus;
-	SceneComponent::Type m_selectedScene = SceneComponent::Type::TunnelRoom2Scene;
+	SceneComponent::Type m_selectedScene = SceneComponent::Type::OldDefaultScene;
 	std::unique_ptr<Scene> m_testScene;
 	std::unique_ptr<Scene> m_mainScene;
 	std::vector<u32> m_shapes;

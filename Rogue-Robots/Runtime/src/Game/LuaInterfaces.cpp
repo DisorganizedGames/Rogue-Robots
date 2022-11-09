@@ -500,8 +500,8 @@ void EntityInterface::ModifyAnimationComponent(DOG::LuaContext* context)
 	auto& aComp = EntityManager::Get().GetComponent<AnimationComponent>(e);
 
 	auto& setter = aComp.animSetters[aComp.addedSetters++];
-	setter.desired = true;
-	setter.animationID = animID;
+	setter.loop = false;
+	setter.animationIDs[0] = animID;
 	setter.group = group;
 	setter.transitionLength = transitionLength;
 	setter.playbackRate = playbackRate;

@@ -77,15 +77,6 @@ namespace DOG
 		i8 addedSetters = 0;
 		struct Setter
 		{
-			bool desired;
-			u8 animationID;
-			u8 group;
-			f32 transitionLength;
-			f32 playbackRate;
-			bool loop;
-		};
-		struct Setter2
-		{
 			bool loop;
 			u8 group;
 			u8 priority;
@@ -94,20 +85,7 @@ namespace DOG
 			i8 animationIDs[MAX_TARGET_ANIMS];
 			f32 targetWeights[MAX_TARGET_ANIMS];
 		};
-		struct TargetAnimations
-		{
-			f32 transitionLength;
-			BlendMode blendMode;
-			u8 group;
-			u8 flags;
-			u8 priority;
-			bool loop;
-			u8 animationIDs[MAX_TARGET_ANIMS];
-			f32 targetWeights[MAX_TARGET_ANIMS];
-			f32 playbackRates[MAX_TARGET_ANIMS];
-		};
 		std::array<Setter, MAX_SETTERS> animSetters;
-		std::array<Setter2, 5> animSetters2;
 	};
 	static_assert(std::is_trivially_copyable_v<AnimationComponent>);
 

@@ -7,8 +7,8 @@ namespace DOG
 		static constexpr u32 nSets = 2;
 		for (u32 i = 0; i < N_GROUPS; i++)
 		{
-			groups[i].sets[LOOPING].startClip = i * nSets * MAX_CLIPS;
-			groups[i].sets[ACTION].startClip = (i * nSets + 1) * MAX_CLIPS;
+			groups[i].sets[LOOPING].startClip = static_cast<u8>(i * nSets * MAX_CLIPS);
+			groups[i].sets[ACTION].startClip = static_cast<u8>((i * nSets + 1) * MAX_CLIPS);
 			// tmp
 			groups[i].parent = i == 0 ? -1 : 0;
 		}
@@ -155,15 +155,15 @@ namespace DOG
 	void RigAnimator::ProcessAnimationComponent(AnimationComponent& ac)
 	{
 		// sort added setters by group and loop status
-		std::sort(ac.animSetters2.begin(), ac.animSetters2.begin() + ac.addedSetters,
+		std::sort(ac.animSetters.begin(), ac.animSetters.begin() + ac.addedSetters,
 			[](const Setter& a, const Setter& b) -> bool
 			{
 				return a.group < b.group || (a.group == b.group && a.loop && !b.loop);
 			});
 
-		for (u32 i = 0; i < ac.addedSetters; i++)
+		for (i32 i = 0; i < ac.addedSetters; ++i)
 		{
-			auto& setter = ac.animSetters2[i];
+			auto& setter = ac.animSetters[i];
 
 			ProcessSetter(setter, i);
 			ResetSetter(setter);
@@ -241,7 +241,7 @@ namespace DOG
 		}
 
 		// Set new target clips
-		set.nTargetClips = clipCount;
+		set.nTargetClips = static_cast<u8>(clipCount);
 
 		static constexpr i32 NOT_FOUND = -1;
 		for (u32 i = 0; i < clipCount; ++i)

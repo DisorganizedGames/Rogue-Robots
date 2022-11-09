@@ -37,6 +37,7 @@ namespace DOG
 		void UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
 		void UpdateSkeleton(DOG::RigAnimator& animator, const u32 offset);
 		void UpdateSkeleton(const DOG::ImportedRig& rig, const DOG::Animator& animator);
+		void SetPlayerBaseStates();
 
 		DirectX::FXMVECTOR GetKeyValue(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick);
 		DirectX::FXMVECTOR ExtractScaling(const i32 nodeID, const DOG::ImportedRig& rig, const DOG::Animator& ac);
@@ -51,12 +52,6 @@ namespace DOG
 		// RIG ANIMATOR
 		void CalculateSRT(RigAnimator& ac, const u8 rigID);
 		void ExtractClipNodeInfluences(RigAnimator& animator, const KeyType key, const u32 group, const u32 rigID);
-
-		i8 GetNextAnimatorID()
-		{
-			static i8 id = 0;
-			return id++;
-		}
 	private:
 		std::vector<ImportedRig*> m_rigs;
 		std::array<Animator, 4> m_playerAnimators;
@@ -65,6 +60,7 @@ namespace DOG
 		std::array<DirectX::XMVECTOR, MAX_CLIPS * NodeCount(MIXAMO_RIG_ID)> m_fullbodySRT{DirectX::XMVECTOR{} };
 	private:
 		bool m_bonesLoaded = false;
+		bool m_playerAnimatorsLoaded = false;
 		static constexpr i32 ROOT_NODE = 0;
 		static constexpr i32 ROOT_JOINT = 2;
 		static constexpr DirectX::XMFLOAT3 m_baseScale = { 1.f, 1.f, 1.f };
@@ -75,7 +71,7 @@ namespace DOG
 	private:
 		RigAnimator mRigAnimator;
 		f32 m_imguiGroupWeightA = 0.0f;
-		bool m_imguiApplyRootTranslation = false;
+		bool m_imguiApplyRootTranslation = true;
 		DirectX::FXMMATRIX ImguiTransform(i32 joint);
 		std::vector<DirectX::XMFLOAT3> m_imguiSca;
 		std::vector<DirectX::XMFLOAT3> m_imguiRot;

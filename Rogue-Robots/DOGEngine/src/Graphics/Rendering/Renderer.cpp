@@ -614,6 +614,7 @@ namespace DOG::gfx
 						for (size_t i = 0; i < bonezy->m_vsJoints.size(); ++i)
 							jointsData.joints[i] = bonezy->m_vsJoints[i];
 						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
+						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
 					}
 
 					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));

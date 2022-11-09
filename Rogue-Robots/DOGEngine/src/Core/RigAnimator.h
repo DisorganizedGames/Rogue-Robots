@@ -9,7 +9,8 @@ namespace DOG
 	static constexpr u32 MAX_TARGETS = 3;
 	static constexpr u8 LOOPING = 0;
 	static constexpr u8 ACTION = 1;
-	
+	static constexpr i8 NO_ANIMATION = -1;
+
 	// Animation clip, contains data for updating tick/weight of tick
 	struct Clip
 	{
@@ -64,8 +65,10 @@ namespace DOG
 	// Animator of a rigged entity, handles adding clips via RigAnimationComponent and updating/removing active clips
 	struct RigAnimator
 	{
-		using Setter = AnimationComponent::Setter2;
+		using Setter = AnimationComponent::Setter;
 		
+		bool baseStateSet = false;
+
 		f32 globalTime = 0.0f;
 		// Playback rate affecting all clips
 		f32 playBackRate = 1.f;
@@ -91,6 +94,9 @@ namespace DOG
 
 		// Update active clips
 		void Update(const f32 dt);
+
+		// Set basestate of animatior
+		void SetBaseState(ImportedRig* rigData);
 
 		// Get index of clip
 		i32 GetClipIndex(const ClipSet& set, const i32 animationID);

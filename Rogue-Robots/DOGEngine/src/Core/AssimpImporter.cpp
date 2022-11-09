@@ -278,15 +278,13 @@ namespace DOG
 				{
 					auto rootV = XMLoadFloat4(&posKeys[0].value);
 					auto lastV = XMLoadFloat4(&posKeys.rbegin()[0].value);
-					for (i32 k = 0; k < posKeys.size()-1; ++k)
+					for (i32 k = 0; k < posKeys.size(); ++k)
 					{
 						auto value = XMLoadFloat4(&posKeys.rbegin()[k].value);
-						auto prev = XMLoadFloat4(&posKeys.rbegin()[k +1].value);
-						auto toStore = value - prev;
-						posKeys.rbegin()[k].value = {0.f, XMVectorGetY(toStore), 0.f, 0.f};
-						//posKeys.rbegin()[k].value = { 0.f, XMVectorGetY(value) / 2.f, 0.f, 0.f };
+						// (hacky fix for grounding model)
+						posKeys.rbegin()[k].value = {0.f, XMVectorGetY(value)-250.f, 0.f, 0.f};
 					}
-					if(posKeys.size() > 1)posKeys[0].value = posKeys[1].value;
+					//if(posKeys.size() > 1)posKeys[0].value = posKeys[1].value;
 				}
 				
 				i32 nodeID = nameToNodeIdx.at(nodeName);

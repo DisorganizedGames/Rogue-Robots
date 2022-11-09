@@ -25,6 +25,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 	auto& em = EntityManager::Get();
 	std::array<u32, 4> playerModels;
 	playerModels[0] = am.LoadModelAsset("Assets/Models/Players/Test/Red/player_red.gltf");
+	//playerModels[0] = am.LoadModelAsset("Assets/Models/Temporary_Assets/red_cube.glb");
 	playerModels[1] = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
 	playerModels[2] = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
 	playerModels[3] = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
@@ -39,7 +40,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		};
 		em.AddComponent<TransformComponent>(playerI, pos - offset);
 		em.AddComponent<ModelComponent>(playerI, playerModels[i]);
-		em.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 0.8f, true, 75.f);
+		em.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 0.7f, true, 75.f);
 		auto& rb = em.AddComponent<RigidbodyComponent>(playerI, playerI);
 		rb.ConstrainRotation(true, true, true);
 		rb.disableDeactivation = true;
