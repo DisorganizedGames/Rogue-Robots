@@ -26,6 +26,8 @@ private:
 	void TiledShadingDebugMenu(bool& open);
 
 	void LightCullingDebugMenu(bool& open);
+	bool m_cullingResultWindowOpen = false;
+	void CullingResultWindow();
 	FakeCompute m_compute;
 	bool m_testWindowOpen = false;
 

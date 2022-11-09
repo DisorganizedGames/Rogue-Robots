@@ -33,6 +33,11 @@ Vector3 PlaneIntersectPlanes(XMVECTOR p1, XMVECTOR p2, XMVECTOR p3)
 }
 
 
+struct TiledShadingFrustumVisDebugComponent
+{
+
+};
+
 LightScene::LightScene() : Scene(SceneComponent::Type::LightScene)
 {
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("Tiled Shading", std::bind(&LightScene::TiledShadingDebugMenu, this, std::placeholders::_1), true, std::make_pair(Key::LCtrl, Key::L));
@@ -202,44 +207,49 @@ DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Vector4 leftPlane, Direc
 	vec[1] = PlaneIntersectPlanes(farPlane, rightPlane, bottomPlane);
 	vec[2] = PlaneIntersectPlanes(farPlane, rightPlane, topPlane);
 	vec[3] = PlaneIntersectPlanes(farPlane, leftPlane, topPlane);
-	AddFace(vec, m_rgbMats[index]);
+	entity f = AddFace(vec, m_rgbMats[index]);
+	AddComponent<TiledShadingFrustumVisDebugComponent>(f);
 
 	vec[0] = PlaneIntersectPlanes(nearPlane, leftPlane, topPlane);
 	vec[1] = PlaneIntersectPlanes(nearPlane, rightPlane, topPlane);
 	vec[2] = PlaneIntersectPlanes(nearPlane, rightPlane, bottomPlane);
 	vec[3] = PlaneIntersectPlanes(nearPlane, leftPlane, bottomPlane);
-	AddFace(vec, m_rgbMats[index]);
+	entity n = AddFace(vec, m_rgbMats[index]);
+	AddComponent<TiledShadingFrustumVisDebugComponent>(n);
 
 	index = (matIndex + 1) % 3;
 	vec[0] = PlaneIntersectPlanes(farPlane, rightPlane, topPlane);
 	vec[1] = PlaneIntersectPlanes(farPlane, rightPlane, bottomPlane);
 	vec[2] = PlaneIntersectPlanes(nearPlane, rightPlane, bottomPlane);
 	vec[3] = PlaneIntersectPlanes(nearPlane, rightPlane, topPlane);
-	AddFace(vec, m_rgbMats[index]);
+	entity r = AddFace(vec, m_rgbMats[index]);
+	AddComponent<TiledShadingFrustumVisDebugComponent>(r);
 
 	vec[0] = PlaneIntersectPlanes(nearPlane, leftPlane, topPlane);
 	vec[1] = PlaneIntersectPlanes(nearPlane, leftPlane, bottomPlane);
 	vec[2] = PlaneIntersectPlanes(farPlane, leftPlane, bottomPlane);
 	vec[3] = PlaneIntersectPlanes(farPlane, leftPlane, topPlane);
-	AddFace(vec, m_rgbMats[index]);
+	entity l = AddFace(vec, m_rgbMats[index]);
+	AddComponent<TiledShadingFrustumVisDebugComponent>(l);
 
 	index = (matIndex + 2) % 3;
 	vec[0] = PlaneIntersectPlanes(nearPlane, leftPlane, topPlane);
 	vec[1] = PlaneIntersectPlanes(farPlane, leftPlane, topPlane);
 	vec[2] = PlaneIntersectPlanes(farPlane, rightPlane, topPlane);
 	vec[3] = PlaneIntersectPlanes(nearPlane, rightPlane, topPlane);
-	AddFace(vec, m_rgbMats[index]);
+	entity t = AddFace(vec, m_rgbMats[index]);
+	AddComponent<TiledShadingFrustumVisDebugComponent>(t);
 
 	vec[0] = PlaneIntersectPlanes(nearPlane, leftPlane, bottomPlane);
 	vec[1] = PlaneIntersectPlanes(nearPlane, rightPlane, bottomPlane);
 	vec[2] = PlaneIntersectPlanes(farPlane, rightPlane, bottomPlane);
 	vec[3] = PlaneIntersectPlanes(farPlane, leftPlane, bottomPlane);
-	AddFace(vec, m_rgbMats[index]);
+	entity b = AddFace(vec, m_rgbMats[index]);
+	AddComponent<TiledShadingFrustumVisDebugComponent>(b);
 
 	matIndex++;
 
-	entity e = CreateEntity();
-	return e;
+	return NULL_ENTITY;
 }
 
 DOG::entity LightScene::AddFace(const std::vector<DirectX::SimpleMath::Vector3>& vertexPoints, const std::pair<DOG::MaterialHandle, DOG::MaterialDesc>& mat)
@@ -255,7 +265,6 @@ DOG::entity LightScene::AddFace(const std::vector<DirectX::SimpleMath::Vector3>&
 	}
 
 
-
 	entity e = CreateEntity();
 	AddComponent<TransformComponent>(e);
 	auto& renderComp = AddComponent<SubmeshRenderer>(e);
@@ -267,7 +276,6 @@ DOG::entity LightScene::AddFace(const std::vector<DirectX::SimpleMath::Vector3>&
 
 DOG::entity LightScene::AddSphere(DirectX::SimpleMath::Vector3 center, float radius, DirectX::SimpleMath::Vector3 color)
 {
-	std::cout << "sphere, x: " << center.x << ", y: " << center.y << ", z: " << center.z << " color:" << color.x << " " << color.y << " " << color.z << "radius: " << radius << std::endl;
 	auto shapeCreator = ShapeCreator(Shape::sphere, 16, 16, radius);
 	auto shape = shapeCreator.GetResult();
 	MeshDesc mesh;
@@ -277,15 +285,6 @@ DOG::entity LightScene::AddSphere(DirectX::SimpleMath::Vector3 center, float rad
 	{
 		mesh.vertexDataPerAttribute[attr] = vert;
 	}
-
-	std::vector<Vector3> vec;
-	vec.resize(mesh.vertexDataPerAttribute[VertexAttribute::Position].size_bytes() / sizeof(Vector3));
-	memcpy(vec.data(), mesh.vertexDataPerAttribute[VertexAttribute::Position].data(), mesh.vertexDataPerAttribute[VertexAttribute::Position].size_bytes());
-	for (int i = 0; i < 4; i++)
-	{
-		std::cout << "sphere, x: " << vec[i].x << ", y: " << vec[i].y << ", z: " << vec[i].z << std::endl;
-	}
-
 
 	entity e = CreateEntity();
 	AddComponent<TransformComponent>(e, center);
@@ -316,6 +315,7 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 		if (ImGui::Begin("TiledShading", &open, ImGuiWindowFlags_NoFocusOnAppearing))
 		{
 			static bool dragWindowOpen = false;
+			static bool resultWindowOpen = false;
 			if (ImGui::Button("SphereWindow"))
 			{
 				dragWindowOpen = !dragWindowOpen;
@@ -323,13 +323,16 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 			LightCullingDebugMenu(dragWindowOpen);
 
 			static int res[2] = { 8, 8 };
-			static int threadGroups[3] = { 0, 0, 0 };
 			ImGui::InputInt2("res", res);
-			ImGui::InputInt3("Dispatch", threadGroups);
 			if (ImGui::Button("Compute"))
 			{
+				EntityManager::Get().Collect<TiledShadingFrustumVisDebugComponent>().Do([](entity e, TiledShadingFrustumVisDebugComponent&)
+					{
+						EntityManager::Get().DeferredEntityDestruction(e);
+					});
+
 				m_compute.m_data.spheres.clear();
-				EntityManager::Get().Collect<TransformComponent, SphereComponent>().Do([&](entity e, TransformComponent& transform, SphereComponent& sp)
+				EntityManager::Get().Collect<TransformComponent, SphereComponent>().Do([&](TransformComponent& transform, SphereComponent& sp)
 					{
 						FakeCompute::Sphere sphere;
 						Vector3 p = transform.GetPosition();
@@ -338,40 +341,24 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 						sphere.center.z = p.z;
 						sphere.center.w = 1;
 						sphere.radius = sp.radius;
-						sphere.culled = false;
-						sphere.e = e;
 						m_compute.m_data.spheres.push_back(sphere);
 					});
 
 				m_compute.m_data.res.x = (float)res[0];
 				m_compute.m_data.res.y = (float)res[1];
+				
 
+				u32 tgx = (int)m_compute.m_data.res.x / m_compute.m_groupSizeX + 1 * static_cast<bool>((int)m_compute.m_data.res.x % m_compute.m_groupSizeX);
+				u32 tgy = (int)m_compute.m_data.res.y / m_compute.m_groupSizeY + 1 * static_cast<bool>((int)m_compute.m_data.res.y % m_compute.m_groupSizeY);
+				m_compute.m_data.groupCountX = tgx;
+				m_compute.m_data.groupCountY = tgy;
+				m_compute.m_data.groupCountZ = 1;
+				m_compute.Dispatch(tgx, tgy, 1);
 
-				if (threadGroups[0] == 0 && threadGroups[1] == 0 && threadGroups[2] == 0)
-				{
-					u32 tgx = (int)m_compute.m_data.res.x / m_compute.m_groupSizeX + 1 * static_cast<bool>((int)m_compute.m_data.res.x % m_compute.m_groupSizeX);
-					u32 tgy = (int)m_compute.m_data.res.y / m_compute.m_groupSizeY + 1 * static_cast<bool>((int)m_compute.m_data.res.y % m_compute.m_groupSizeY);
-					m_compute.Dispatch(tgx, tgy, 1);
-				}
-				else
-				{
-					m_compute.Dispatch(threadGroups[0], threadGroups[1], threadGroups[2]);
-				}
-
-				for (auto& s : m_compute.m_data.spheres)
-				{
-					EntityManager::Get().GetComponent<SphereComponent>(s.e).culled = s.culled;
-					if (s.culled)
-					{
-						std::cout << "cull true " << s.e << std::endl;
-					}
-					else
-					{
-						std::cout << "cull false " << s.e << std::endl;
-					}
-				}
-
+				m_cullingResultWindowOpen = true;
 			}
+			CullingResultWindow();
+
 			if (ImGui::Button("Set proj, view and res"))
 			{
 				f32 aspectRatio = static_cast<f32>(res[0]) / res[1];
@@ -385,39 +372,10 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 				m_compute.m_data.res.y = (float)res[1];
 			}
 
-			/*if(ImGui::Button("Place face"))
-			{
-				AddFace({ Vector3(-1, 1, 0), Vector3(1, 1, 0), Vector3(1, -1, 0), Vector3(-1, -1, 0) }, m_rgbMats[0]);
-
-				auto f = DirectX::BoundingFrustum();
-				XMFLOAT3 corners[8];
-				f.GetCorners(corners);
-
-				std::vector<Vector3> vec;
-				vec.resize(4);
-				vec[0] = corners[0];
-				vec[1] = corners[1];
-				vec[2] = corners[2];
-				vec[3] = corners[3];
-
-
-				AddFace(vec, m_rgbMats[1]);
-			}*/
 			if (ImGui::Button("Place frustum"))
 			{
 				AddFrustum(m_compute.m_data.proj, m_compute.m_data.view);
 			}
-
-			/*static int tile[2] = { 0, 0 };
-			ImGui::InputInt2("tile", tile);
-			static int tileSize = 4;
-			ImGui::InputInt("tileSize", &tileSize);
-			if (ImGui::Button("Place tiled frustum"))
-			{
-				auto frustumPlanes = ExtractPlanes(m_compute.m_data.proj, m_compute.m_data.view, (int)m_compute.m_data.res.x, (int)m_compute.m_data.res.y, tileSize, {tile[0], tile[1]});
-				if(frustumPlanes.size() == 6)
-					AddFrustum(frustumPlanes[0], frustumPlanes[1], frustumPlanes[2], frustumPlanes[3], frustumPlanes[4], frustumPlanes[5]);
-			}*/
 		}
 		ImGui::End(); // "TiledShading"
 	}
@@ -427,6 +385,7 @@ void LightScene::LightCullingDebugMenu(bool& open)
 {
 	static entity selectedEntity = NULL_ENTITY;
 	auto& em = EntityManager::Get();
+	if (!em.Exists(selectedEntity)) selectedEntity = NULL_ENTITY;
 
 	if (open)
 	{
@@ -478,25 +437,21 @@ void LightScene::LightCullingDebugMenu(bool& open)
 			std::vector<entity> spheres;
 			em.Collect<SphereComponent, TransformComponent>().Do([&spheres](entity e, SphereComponent&, TransformComponent&) { spheres.push_back(e); });
 
-			auto&& sphereToString = [&](entity e) -> std::tuple<std::string, std::string, std::string>
+			auto&& sphereToString = [&](entity e) -> std::tuple<std::string, std::string>
 			{
-				auto& s = EntityManager::Get().GetComponent<SphereComponent>(e);
 				std::string str1 = "entity: " + std::to_string(e);
 				Vector3 p = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
 				std::string str2 = "";
 				str2 += std::format("{:.1f}", p.x) + ", ";
 				str2 += std::format("{:.1f}", p.y) + ", ";
 				str2 += std::format("{:.1f}", p.z);
-				std::string str3 = "culled: ";
-				str3 += (s.culled ? "true" : "false");
-				return { str1, str2, str3 };
+				return { str1, str2 };
 			};
 
-			if (ImGui::BeginTable("Spheres", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV))
+			if (ImGui::BeginTable("Spheres", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV))
 			{
 				ImGui::TableSetupColumn("Entity", ImGuiTableColumnFlags_NoHide);
 				ImGui::TableSetupColumn("Pos", ImGuiTableColumnFlags_NoHide);
-				ImGui::TableSetupColumn("Culled", ImGuiTableColumnFlags_NoHide);
 				ImGui::TableHeadersRow();
 				for (int i = 0; i < spheres.size(); i++)
 				{
@@ -518,8 +473,32 @@ void LightScene::LightCullingDebugMenu(bool& open)
 					}
 					ImGui::TableSetColumnIndex(1);
 					ImGui::Text(std::get<1>(row).c_str());
-					ImGui::TableSetColumnIndex(2);
-					ImGui::Text(std::get<2>(row).c_str());
+				}
+				ImGui::EndTable();
+			}
+		}
+		ImGui::End();
+	}
+}
+
+void LightScene::CullingResultWindow()
+{
+	if (m_cullingResultWindowOpen)
+	{
+		if (ImGui::Begin("CullingResult", &m_cullingResultWindowOpen, ImGuiWindowFlags_NoFocusOnAppearing))
+		{
+			if (ImGui::BeginTable("Results", m_compute.m_data.groupCountX, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV))
+			{
+				for (int y = 0; y < m_compute.m_data.groupCountY; y++)
+				{
+					ImGui::TableNextRow();
+					for (int x = 0; x < m_compute.m_data.groupCountX; x++)
+					{
+						ImGui::TableSetColumnIndex(x);
+						int index = x + m_compute.m_data.groupCountX * y;
+						assert(index < m_compute.m_data.localLightBuffers.size());
+						ImGui::Text("%d", m_compute.m_data.localLightBuffers[index].size());
+					}
 				}
 				ImGui::EndTable();
 			}

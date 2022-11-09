@@ -10,10 +10,8 @@ class FakeCompute
 public:
 	struct Sphere
 	{
-		DOG::entity e;
 		DirectX::SimpleMath::Vector4 center;
 		float radius;
-		bool culled = false;
 	};
 
 	struct Data
@@ -21,8 +19,12 @@ public:
 		DirectX::SimpleMath::Matrix proj;
 		DirectX::SimpleMath::Matrix view;
 		DirectX::SimpleMath::Vector2 res;
+		int groupCountX = 0;
+		int groupCountY = 0;
+		int groupCountZ = 0;
 
 		std::vector<Sphere> spheres;
+		std::vector<std::vector<u64>> localLightBuffers;
 	};
 
 	void Dispatch(int groupCountX, int groupCountY, int groupCountZ);

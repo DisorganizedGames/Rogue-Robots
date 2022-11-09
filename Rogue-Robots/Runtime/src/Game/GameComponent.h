@@ -227,5 +227,4 @@ struct DespawnComponent
 struct SphereComponent
 {
 	float radius;
-	bool culled;
 };

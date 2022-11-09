@@ -8,6 +8,8 @@ using namespace DirectX::SimpleMath;
 
 void FakeCompute::Dispatch(int groupCountX, int groupCountY, int groupCountZ)
 {
+	m_data.localLightBuffers.clear();
+	m_data.localLightBuffers.resize(groupCountX * groupCountY * groupCountZ);
 	for (int groupX = 0; groupX < groupCountX; groupX++)
 	{
 		for (int groupY = 0; groupY < groupCountY; groupY++)
@@ -33,98 +35,33 @@ void FakeCompute::Dispatch(int groupCountX, int groupCountY, int groupCountZ)
 void FakeCompute::MainCS(int tidX, int tidY, int tidZ, int gidX, int gidY, int gidZ)
 {
 	Vector2i tile{ gidX, gidY };
-
-	//int tid = tidX + m_groupSizeX * tidY + m_groupSizeX * m_groupSizeZ * tidZ;
-
-	std::cout << "tidX: " << tidX << ", tidY: " << tidY << ", tidZ: " << tidZ << ", gidX: " << gidX << ", gidY: " << gidY << ", gidZ: " << gidZ << std::endl;
-
 	auto frustumPlanes = m_lightScene->ExtractPlanes(m_data.proj, m_data.view, (int)m_data.res.x, (int)m_data.res.y, m_groupSizeX, tile);
 	if (tidX == 0 && tidY == 0)
 	{
 		if (frustumPlanes.size() == 6)
 		{
-			std::cout << "AddFrustum: " << std::endl;
 			m_lightScene->AddFrustum(frustumPlanes[0], frustumPlanes[1], frustumPlanes[2], frustumPlanes[3], frustumPlanes[4], frustumPlanes[5]);
 		}
 	}
+
+
+	int tid = tidX + m_groupSizeX * tidY + m_groupSizeX * m_groupSizeZ * tidZ;
+	if (tid >= m_data.spheres.size()) return;
+
+	int gid = gidX + m_data.groupCountX * gidY + m_data.groupCountX * m_data.groupCountY * gidZ;
+	int threadCount = m_groupSizeX * m_groupSizeY * m_groupSizeZ;
+	for (int i = tid; i < m_data.spheres.size(); i += threadCount)
+	{
+		auto& sphere = m_data.spheres[i];
+		bool culled = false;
+		for (int j = 0; j < 6; j++)
+		{
+			float d = sphere.center.Dot(frustumPlanes[j]);
+			culled |= d < -sphere.radius;
+		}
+		if (!culled)
+		{
+			m_data.localLightBuffers[gid].push_back(i);
+		}
+	}
 }
-
-
-
-//void FakeCompute::MainCS(int tidX, int tidY, int tidZ, int gidX, int gidY, int gidZ)
-//{
-//	Vector2i tile{ gidX, gidY };
-//
-//	int tid = tidX + s_groupSizeX * tidY + s_groupSizeX * s_groupSizeZ * tidZ;
-//	if (tid >= s_data.spheres.size()) return;
-//
-//	//for(int i = 0; i < s_data.spheres.size(); i+= )
-//	std::cout << "tidX: " << tidX << ", tidY: " << tidY << ", tidZ: " << tidZ << ", gidX: " << gidX << ", gidY: " << gidY << ", gidZ: " << gidZ << std::endl;
-//
-//
-//	Matrix m = s_data.view * s_data.proj;
-//
-//	Vector4 leftP = { m._14 + m._11, m._24 + m._21, m._34 + m._31, m._44 + m._41 };
-//	Vector4 rightP = { m._14 - m._11, m._24 - m._21, m._34 - m._31, m._44 - m._41 };
-//	Vector4 botP = { m._14 + m._12, m._24 + m._22, m._34 + m._32, m._44 + m._42 };
-//	Vector4 topP = { m._14 - m._12, m._24 - m._22, m._34 - m._32, m._44 - m._42 };
-//	Vector4 nearP = { m._13, m._23, m._33, m._43 };
-//	Vector4 farP = { m._14 - m._13, m._24 - m._23, m._34 - m._33, m._44 - m._43 };
-//
-//	leftP = DirectX::XMPlaneNormalize(leftP);
-//	rightP = DirectX::XMPlaneNormalize(rightP);
-//	botP = DirectX::XMPlaneNormalize(botP);
-//	topP = DirectX::XMPlaneNormalize(topP);
-//	nearP = DirectX::XMPlaneNormalize(nearP);
-//	farP = DirectX::XMPlaneNormalize(farP);
-//	if (tid == 0)
-//	{
-//		// for one thread only
-//		for (int i = 0; i < s_data.spheres.size(); i++)
-//		{
-//			float d;
-//			auto& sphere = s_data.spheres[i];
-//			d = sphere.center.Dot(leftP);
-//			if (d < -sphere.radius)
-//			{
-//				std::cout << "culled left" << d <<  std::endl;
-//				sphere.culled = true;
-//			}
-//
-//			d = sphere.center.Dot(rightP);
-//			if (d < -sphere.radius)
-//			{
-//				std::cout << "culled right" << d << std::endl;
-//				sphere.culled = true;
-//			}
-//
-//			d = sphere.center.Dot(nearP);
-//			if (d < -sphere.radius)
-//			{
-//				std::cout << "culled near" << d << std::endl;
-//				sphere.culled = true;
-//			}
-//
-//			d = sphere.center.Dot(farP);
-//			if (d < -sphere.radius)
-//			{
-//				std::cout << "culled far" << d << std::endl;
-//				sphere.culled = true;
-//			}
-//
-//			d = sphere.center.Dot(topP);
-//			if (d < -sphere.radius)
-//			{
-//				std::cout << "culled top" << d << std::endl;
-//				sphere.culled = true;
-//			}
-//
-//			d = sphere.center.Dot(botP);
-//			if (d < -sphere.radius)
-//			{
-//				std::cout << "culled bot" << d << std::endl;
-//				sphere.culled = true;
-//			}
-//		}
-//	}
-//}
