@@ -85,8 +85,8 @@ namespace DOG::gfx
 
 		void SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world, u32 num);
 
-		void SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world);
-		void SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world);
+		void SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world, bool animated = false, u32 jointOffset = 0);
+		void SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world, bool animated = false, u32 jointOffset = 0);
 
 
 		// Optionally returns shadow ID if light casts shadows
@@ -129,8 +129,9 @@ namespace DOG::gfx
 			MaterialHandle mat;			// mat args 
 			DirectX::SimpleMath::Matrix world;
 
+			bool animated{ false };
 			// bitflags for target passes? (i.e multipass)
-			u32 tempAnimNum{ 0 };
+			u32 jointOffset{ 0 };
 		};
 
 		void WaitForPrevFrame();

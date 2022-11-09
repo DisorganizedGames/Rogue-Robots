@@ -55,7 +55,7 @@ struct PushConstantElement
     uint shadowMapDepthIndex;
     uint wireframe;
     uint isLit;
-    uint tempAnimVal;
+    uint jointOffset;
 };
 ConstantBuffer<PushConstantElement> constants : register(b0, space0);
 
@@ -83,7 +83,6 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     StructuredBuffer<Blend> blendData = ResourceDescriptorHeap[gd.meshTableBlend];
 
     ShaderInterop_SubmeshMetadata md = mds[perDrawData.submeshID];
-    int offset = constants.tempAnimVal;
     //int offset = 65;
     Blend bw = blendData[vertexID + md.blendStart];
     vertexID += md.vertStart;
@@ -93,6 +92,7 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     float3 nor = normals[vertexID];
     float3 tan = tangents[vertexID];
     
+    int offset = constants.jointOffset;
     if (md.blendCount > 0)
     {
         ConstantBuffer<JointsData> jointsData = ResourceDescriptorHeap[perDrawData.jointsDescriptor];
