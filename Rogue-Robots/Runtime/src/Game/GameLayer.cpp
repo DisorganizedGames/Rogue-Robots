@@ -136,8 +136,7 @@ void GameLayer::OnUpdate()
 			break;
 		}
 
-	if (m_networkStatus != NetworkStatus::Offline && m_gameState != GameState::Won && m_gameState != GameState::Lost)
-		m_netCode.OnUpdate(m_agentManager);
+
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
 	global->SetNumber("ElapsedTime", Time::ElapsedTime());
@@ -232,7 +231,8 @@ void GameLayer::EvaluateLoseCondition()
 	if (m_noWinLose) return;
 	bool playersAlive = false;
 	EntityManager::Get().Collect<PlayerAliveComponent>().Do([&playersAlive](PlayerAliveComponent&) { playersAlive = true; });
-	if (!playersAlive) m_gameState = GameState::Lost;
+	if (!playersAlive) 
+		m_gameState = GameState::Lost;
 }
 
 void GameLayer::CheckIfPlayersIAreDead()
@@ -310,15 +310,18 @@ void GameLayer::UpdateGame()
 {
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
+	
+	if (m_networkStatus != NetworkStatus::Offline)
+		m_netCode.OnUpdate(m_agentManager);
 
 	HandleCheats();
 	HpBarMVP();
 	CheckIfPlayersIAreDead();
 
-	EvaluateWinCondition();
-	EvaluateLoseCondition();
+	//EvaluateWinCondition();
+	//EvaluateLoseCondition();
 
-
+	
 	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([](TransformComponent& transform, RigidbodyComponent&)
 		{
 			if (Vector3 pos = transform.GetPosition(); pos.y < -20.0f)
@@ -394,6 +397,8 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 
 void GameLayer::UpdateLobby()
 {
+	if (m_networkStatus != NetworkStatus::Offline)
+		m_netCode.OnUpdate(m_agentManager);
 	bool inLobby = m_gameState == GameState::Lobby;
 	if (ImGui::Begin("Lobby", &inLobby))
 	{

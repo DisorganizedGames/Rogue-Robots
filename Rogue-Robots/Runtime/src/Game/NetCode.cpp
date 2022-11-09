@@ -12,7 +12,7 @@ NetCode::NetCode()
 	m_startUp = FALSE;
 
 	m_bufferSize = 0;
-	m_receiveBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
+	m_receiveBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE+1];
 	m_lobby = false;
 	m_startReciveBuffer = 0;
 	m_endReciveBuffer = 0;
@@ -108,8 +108,6 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 					memcpy(m_sendBuffer + m_bufferSize, &cdC, sizeof(CreateAndDestroyEntityComponent));
 					m_bufferSize += sizeof(CreateAndDestroyEntityComponent);
 					m_entityManager.RemoveComponent<CreateAndDestroyEntityComponent>(id);
-					if (!cdC.alive && (u32)cdC.entityTypeId < (u32)EntityTypes::Agents) //Destroy empty entitey
-						m_entityManager.DestroyEntity(id);
 					m_inputTcp.nrOfCreateAndDestroy++;
 				});
 
@@ -119,7 +117,7 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 			m_bufferSize = 0;
 		}
 		// Recived data
-		if (m_endReciveBuffer != m_startReciveBuffer)
+		if (m_startReciveBuffer  != m_endReciveBuffer)
 		{
 			//Get the header
 			TcpHeader header;
