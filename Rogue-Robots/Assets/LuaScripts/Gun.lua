@@ -170,9 +170,6 @@ function OnUpdate()
 			Entity:UpdateMagazine(EntityID, currentAmmoCount)
 		end
 	end
-	print("CurrentAmmoCount " .. currentAmmoCount)
-	print("AmmoCount " .. currentAmmo)
-
 end
 
 function CreateBulletEntity(bullet, transformEntity)

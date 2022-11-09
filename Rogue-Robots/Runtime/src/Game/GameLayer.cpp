@@ -282,8 +282,10 @@ void GameLayer::KillPlayer(DOG::entity e)
 	m_entityManager.RemoveComponent<BarrelComponent>(e);
 	if (m_entityManager.HasComponent<MagazineModificationComponent>(e)) m_entityManager.RemoveComponent<MagazineModificationComponent>(e);
 
-	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
-	controller.debugCamera = m_mainScene->CreateEntity();
+	{
+		auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
+		controller.debugCamera = m_mainScene->CreateEntity();
+	}
 	
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
@@ -1026,18 +1028,26 @@ void GameLayer::CheatSettingsImGuiMenu()
 	{
 		RespawnDeadPlayer(GetPlayer());
 	}
-	if (ImGui::Button("Legacy weapon system"))
+	static bool isLegacy = false;
+	if (!isLegacy)
 	{
-		////Let's start with the main player:
-		//auto player = GetPlayer();
-		//LuaMain::GetScriptManager()->RemoveScript(player, "Gun.lua");
-		//LuaMain::GetScriptManager()->AddScript(player, "GunLegacy.lua");
-		//auto gunScriptData = LuaMain::GetScriptManager()->GetScript(player, "GunLegacy.lua");
-		//LuaTable t0(gunScriptData.scriptTable, true);
-		//t0.CallFunctionOnTable("OnStart");
-		//
-		////Followed by the network players (might not be necessary):
-
+		if (ImGui::Button("Legacy weapon system"))
+		{
+			auto player = GetPlayer();
+			LuaMain::GetScriptManager()->RemoveScript(player, "Gun.lua");
+			LuaMain::GetScriptManager()->AddScript(player, "GunLegacy.lua");
+			isLegacy = !isLegacy;
+		}
+	}
+	else
+	{
+		if (ImGui::Button("Normal weapon system"))
+		{
+			auto player = GetPlayer();
+			LuaMain::GetScriptManager()->RemoveScript(player, "GunLegacy.lua");
+			LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
+			isLegacy = !isLegacy;
+		}
 	}
 }
 
