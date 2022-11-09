@@ -589,6 +589,7 @@ namespace DOG
 		assetOut->mipLevels = 1; // Mip maps will be handled later on when the assetTool is implemented.
 		assetOut->width = importedTex->dataPerMip.front().width;
 		assetOut->height = importedTex->dataPerMip.front().height;
+		// Constraint no longer true, we are using BC7 textures and per pixel size is no longer 4 bytes
 		//assert(static_cast<size_t>(assetOut->width) * assetOut->height * 4 == importedTex->dataPerMip.front().data.size());
 		assetOut->textureData.resize(importedTex->dataPerMip.front().data.size());
 		assetOut->format = importedTex->format;
