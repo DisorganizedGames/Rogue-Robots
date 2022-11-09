@@ -312,10 +312,13 @@ function OnPickup(pickup)
 			end
 			Entity:RemoveComponent(playerID, "BarrelComponent")
 			Entity:AddComponent(playerID, "BarrelComponent", barrelComponent:GetECSType(), barrelComponent:GetAmmoPerPickup(), barrelComponent:GetMaxAmmo())
-			hasBasicBarrelEquipped = false
 
-			savedBulletCount = currentAmmoCount
+			if hasBasicBarrelEquipped == true then
+				savedBulletCount = currentAmmoCount
+			end
 			currentAmmoCount = barrelComponent:GetAmmoPerPickup()
+			
+			hasBasicBarrelEquipped = false
 		end
 	else if pickupTypeString == "FrostMagazineModification" then
 		--Magazine modification component

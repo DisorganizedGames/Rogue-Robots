@@ -314,6 +314,9 @@ void EntityInterface::GetEntityTypeAsString(DOG::LuaContext* context)
 	case EntityTypes::MissileBarrel:
 		context->ReturnString("MissileBarrel");
 		break;
+	case EntityTypes::IncreaseMaxHp:
+		context->ReturnString("MaxHealthBoost");
+		break;
 	}
 }
 
