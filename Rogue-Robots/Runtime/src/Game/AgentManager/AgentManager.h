@@ -26,6 +26,9 @@ public:
 	void CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& entityDesc);
 	static Vector3 GenerateRandomVector3(u32 seed, f32 max = 1.0f, f32 min = 0.0f);
 	void DestroyLocalAgent(DOG::entity e);
+
+	u32 GenAgentID(u32 groupID);
+	void CountAgentKilled(u32 agentID);
 	u32 GroupID(u32 agentID = 0);
 
 private:
@@ -46,6 +49,4 @@ private:
 	DOG::entity CreateAgentCore(u32 model, u32 groupID, const Vector3& pos, EntityTypes type);	// Setup common for all agents
 	u32 GetModel(EntityTypes type);
 	u32 GetModel(CreateAndDestroyEntityComponent& entityDesc);
-	u32 GenAgentID(u32 groupID);
-	void CountAgentKilled(u32 agentID);
 };

@@ -147,6 +147,9 @@ void AgentManager::Initialize()
 	// Register shadow agent systems
 	em.RegisterSystem(std::make_unique<ShadowAgentSeekPlayerSystem>());
 
+	// Register late update agent systems
+	em.RegisterSystem(std::make_unique<LateAgentDestructCleanupSystem>());
+
 	// Set status to initialized
 	m_notInitialized = false;
 }
@@ -242,8 +245,6 @@ void AgentManager::DestroyLocalAgent(entity e)
 		[&](ThisPlayer&, NetworkPlayerComponent& net) { kill.playerId = net.playerId; });
 	kill.position = agentTrans.GetPosition();
 
-	CountAgentKilled(agent.id);
-
 	em.DeferredEntityDestruction(e);
 }
 
@@ -255,7 +256,7 @@ u32 AgentManager::GenAgentID(u32 groupID)
 	u32 agentID = groupCount << shift;
 
 #ifdef _DEBUG
-	if (GROUP_SIZE <= groupCount)
+	if (GROUP_SIZE < groupCount)
 	{
 		std::cout << "Agent group " << groupID << " overflow error" << std::endl;
 		assert(false);

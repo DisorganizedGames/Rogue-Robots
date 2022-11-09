@@ -285,3 +285,15 @@ void ShadowAgentSeekPlayerSystem::OnUpdate(ShadowAgentSeekPlayerComponent& seek)
 					seek.entityID = e;
 			});
 }
+
+/***********************************************
+
+			Late Update Agent Systems
+
+***********************************************/
+
+void LateAgentDestructCleanupSystem::OnLateUpdate(AgentIdComponent& agent, DeferredDeletionComponent&)
+{
+	AgentManager::Get().CountAgentKilled(agent.id);
+};
+
