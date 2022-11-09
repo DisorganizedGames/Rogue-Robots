@@ -114,6 +114,13 @@ float CalculateShadowFactor(Texture2DArray shadowMaps, uint idx, float3 worldPos
     return shadowFactor;
 }
 
+float CalculateVolumetricScattering(float lightDotView, float G)
+{
+    float toReturn = 1.0f - (G * G);
+    toReturn /= (4.0f * 3.1415f * pow(1.0f + G * G - (2.0f * G) * lightDotView, 1.5f));
+    return toReturn;
+}
+
 struct PS_OUT
 {
     float4 color : SV_TARGET0;
@@ -348,6 +355,18 @@ PS_OUT main(VS_OUT input)
     ConstantBuffer<Shadow> shadowMapArrayStruct = ResourceDescriptorHeap[g_constants.shadowMapDepthIndex];
     // Always 0
     Texture2DArray shadowMaps = ResourceDescriptorHeap[shadowMapArrayStruct.shadowMapArray[0][0]];
+    
+    /* VARIABLES NEEDED FOR VOLUMETRIC SCATTERING */
+    uint nrOfSteps = 100;
+    float3 worldPosition = input.wsPos;
+    float3 startPosition = pfData.camPos.xyz;
+    float3 rayVector = worldPosition - startPosition;
+    float rayLength = length(rayVector);
+    float3 rayDirection = rayVector / rayLength;
+    float stepLength = rayLength / nrOfSteps;
+    float step = rayDirection * stepLength;
+    /* ------------------------------------------ */
+    
     for (int k = 0; k < perSpotlightData.currentNrOfSpotlights; ++k)
     {
         if (perSpotlightData.spotlightArray[k].strength == 0)
