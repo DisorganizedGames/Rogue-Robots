@@ -71,6 +71,12 @@ namespace DOG
 		return;
 
 
+		/*
+			
+			Compressonator code below kept to have a fallback ready in case Block Compression solution breaks
+			for any reason.
+		
+		*/
 
 		//// Load normal textures
 
