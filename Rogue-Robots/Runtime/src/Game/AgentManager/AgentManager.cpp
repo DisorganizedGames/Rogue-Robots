@@ -62,6 +62,38 @@ void AgentManager::CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& e
 	}
 }
 
+u32 AgentManager::GenAgentID(u32 groupID)
+{
+	u32 shift = groupID * GROUP_BITS;
+	u32 mask = MASK << shift;
+	u32 groupCount = ((m_agentIdCounter & mask) >> shift) + 1;
+	u32 agentID = groupCount << shift;
+
+#ifdef _DEBUG
+	if (GROUP_SIZE < groupCount)
+	{
+		std::cout << "Agent group " << groupID << " overflow error" << std::endl;
+		assert(false);
+	}
+#endif // _DEBUG
+
+	m_agentIdCounter = ((m_agentIdCounter & (~mask)) | (groupCount << shift));
+	return agentID;
+}
+
+void AgentManager::CountAgentKilled(u32 agentID)
+{
+	u32 shift = GroupID(agentID) * GROUP_BITS;					// bit shift for group
+	u32 mask = MASK << shift;
+	u32 groupCount = m_agentIdCounter & mask;
+	u32 killCount = m_agentKillCounter & mask;
+	killCount = ((killCount >> shift) + 1) << shift;			// increment kill count
+	m_agentKillCounter = m_agentKillCounter & (~mask);			// set kill counter to 0
+	if (groupCount == killCount)
+		m_agentIdCounter = m_agentIdCounter & (~mask);			// set group counter to 0
+	else
+		m_agentKillCounter = m_agentKillCounter | killCount;	// add kill count to group
+}
 
 u32 AgentManager::GroupID(u32 agentID)
 {
@@ -86,6 +118,7 @@ u32 AgentManager::GroupID(u32 agentID)
 			else
 				break;
 		}
+	ASSERT(i < GROUPS, "found no empty group (agentID == 0)");
 	return i;
 }
 
@@ -246,37 +279,4 @@ void AgentManager::DestroyLocalAgent(entity e)
 	kill.position = agentTrans.GetPosition();
 
 	em.DeferredEntityDestruction(e);
-}
-
-u32 AgentManager::GenAgentID(u32 groupID)
-{
-	u32 shift = groupID * GROUP_BITS;
-	u32 mask = MASK << shift;
-	u32 groupCount = ((m_agentIdCounter & mask) >> shift) + 1;
-	u32 agentID = groupCount << shift;
-
-#ifdef _DEBUG
-	if (GROUP_SIZE < groupCount)
-	{
-		std::cout << "Agent group " << groupID << " overflow error" << std::endl;
-		assert(false);
-	}
-#endif // _DEBUG
-	
-	m_agentIdCounter = ((m_agentIdCounter & (~mask)) | (groupCount << shift));
-	return agentID;
-}
-
-void AgentManager::CountAgentKilled(u32 agentID)
-{
-	u32 shift = GroupID(agentID) * GROUP_BITS;					// bit shift for group
-	u32 mask = MASK << shift;
-	u32 groupCount = m_agentIdCounter & mask;
-	u32 killCount = m_agentKillCounter & mask;
-	killCount = ((killCount >> shift) + 1) << shift;			// increment kill count
-	m_agentKillCounter = m_agentKillCounter & (~mask);			// set kill counter to 0
-	if (groupCount == killCount)
-		m_agentIdCounter = m_agentIdCounter & (~mask);			// set group counter to 0
-	else
-		m_agentKillCounter = m_agentKillCounter | killCount;	// add kill count to group
 }
