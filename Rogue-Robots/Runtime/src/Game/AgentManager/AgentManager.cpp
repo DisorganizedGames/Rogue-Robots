@@ -6,7 +6,7 @@ using namespace DirectX::SimpleMath;
 
 
 AgentManager AgentManager::s_amInstance;
-bool AgentManager::m_notInitialized = true;
+bool AgentManager::s_notInitialized = true;
 
 /*******************************
 		Public Methods
@@ -64,66 +64,37 @@ void AgentManager::CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& e
 
 u32 AgentManager::GenAgentID(u32 groupID)
 {
-	u32 shift = groupID * GROUP_BITS;
-	u32 mask = MASK << shift;
-	u32 groupCount = ((m_agentIdCounter & mask) >> shift) + 1;
-	u32 agentID = groupCount << shift;
-
-#ifdef _DEBUG
-	if (GROUP_SIZE < groupCount)
-	{
-		std::cout << "Agent group " << groupID << " overflow error" << std::endl;
-		assert(false);
-	}
-#endif // _DEBUG
-
-	m_agentIdCounter = ((m_agentIdCounter & (~mask)) | (groupCount << shift));
+	u32 agentID = (m_agentIdCounter[groupID] << GROUP_BITS) | groupID;
+	++m_agentIdCounter[groupID];
 	return agentID;
 }
 
 void AgentManager::CountAgentKilled(u32 agentID)
 {
-	u32 shift = GroupID(agentID) * GROUP_BITS;					// bit shift for group
-	u32 mask = MASK << shift;
-	u32 groupCount = m_agentIdCounter & mask;
-	u32 killCount = m_agentKillCounter & mask;
-	killCount = ((killCount >> shift) + 1) << shift;			// increment kill count
-	m_agentKillCounter = m_agentKillCounter & (~mask);			// set kill counter to 0
-	if (groupCount == killCount)
-		m_agentIdCounter = m_agentIdCounter & (~mask);			// set group counter to 0
-	else
-		m_agentKillCounter = m_agentKillCounter | killCount;	// add kill count to group
+	u32 i = GroupID(agentID);
+	++m_agentKillCounter[i];
+
+	if (m_agentKillCounter[i] == m_agentIdCounter[i])
+		m_agentKillCounter[i] = m_agentIdCounter[i] = 0;	// reset both counters
 }
 
 u32 AgentManager::GroupID(u32 agentID)
 {
-	constexpr u32 GROUPS = (sizeof(m_agentIdCounter) * 8) / GROUP_BITS;
-	u32 mask = MASK;
-	u32 i = 0;
-	if (agentID == 0)
+	if (agentID == NULL_AGENT)
 	{
 		// find first empty group
-		for (; i < GROUPS; ++i)
+		for (u32 i = 0; i < m_agentIdCounter.size(); ++i)
 		{
-			if ((m_agentIdCounter & mask) == 0)
-				break;
-			else
-				mask = mask << GROUP_BITS;
+			if (m_agentIdCounter[i] == 0)
+			{
+				ASSERT(i < m_agentIdCounter.size(), "found no empty agent group");
+				return i;
+			}
 		}
 	}
-	else
-	{
-		// find group of agentID
-		for (; i < GROUPS; ++i)
-		{
-			if ((m_agentIdCounter & mask) == 0)
-				mask = mask << GROUP_BITS;
-			else
-				break;
-		}
-	}
-	ASSERT(i < GROUPS, "found no empty group (agentID == 0)");
-	return i;
+
+	// return embedded groupID
+	return agentID & MASK;
 }
 
 /*******************************
@@ -132,36 +103,7 @@ u32 AgentManager::GroupID(u32 agentID)
 
 AgentManager::AgentManager() noexcept
 {
-#ifdef _DEBUG
-	// Some unit tests
-	constexpr u32 group_0 = 1;
-	constexpr u32 group_1 = group_0 << GROUP_BITS;
-	constexpr u32 group_2 = group_1 << GROUP_BITS;
-	constexpr u32 group_3 = group_2 << GROUP_BITS;
-	constexpr u32 group_4 = group_3 << GROUP_BITS;
 
-	u32 agentID_1 = GenAgentID(0);
-	bool test_1 = agentID_1 == group_0;
-
-	u32 agentID_2 = GenAgentID(1);
-	bool test_2 = agentID_2 == group_1;
-	u32 count_1 = m_agentIdCounter;
-	bool test_3 = count_1 == group_1 + group_0;
-
-	u32 agentID_3 = GenAgentID(4);
-	bool test_4 = agentID_3 == group_4;
-	u32 count_2 = m_agentIdCounter;
-	bool test_5 = count_2 == group_4 + group_1 + group_0;
-
-	u32 agentID_4 = GenAgentID(0);
-	bool test_6 = agentID_4 == group_0 * 2;
-	u32 count_3 = m_agentIdCounter;
-	bool test_7 = count_3 == group_4 + group_1 + group_0 * 2;
-
-	bool allTests = test_1 && test_2 && test_3 && test_4 && test_5 && test_6 && test_7;
-	assert(allTests);
-	m_agentIdCounter = 0;
-#endif // _DEBUG
 }
 
 
@@ -188,7 +130,7 @@ void AgentManager::Initialize()
 	em.RegisterSystem(std::make_unique<LateAgentDestructCleanupSystem>());
 
 	// Set status to initialized
-	m_notInitialized = false;
+	s_notInitialized = false;
 }
 
 entity AgentManager::CreateAgentCore(u32 model, u32 groupID, const Vector3& pos, EntityTypes type)
