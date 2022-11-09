@@ -26,9 +26,9 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 	std::array<u32, 4> playerModels;
 	playerModels[0] = am.LoadModelAsset("Assets/Models/Players/Test/Red/player_red.gltf");
 	//playerModels[0] = am.LoadModelAsset("Assets/Models/Temporary_Assets/red_cube.glb");
-	playerModels[1] = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
-	playerModels[2] = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
-	playerModels[3] = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
+	playerModels[1] = am.LoadModelAsset("Assets/Models/Players/Test/Blue/player_Blue.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
+	playerModels[2] = am.LoadModelAsset("Assets/Models/Players/Test/Green/player_Green.gltf");
+	playerModels[3] = am.LoadModelAsset("Assets/Models/Players/Test/Yellow/player_yellow.gltf");
 	std::vector<entity> players;
 	for (auto i = 0; i < playerCount; ++i)
 	{
@@ -56,13 +56,14 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
 		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");
 
+		em.AddComponent<AnimationComponent>(playerI);
+		auto& ac = em.GetComponent<AnimationComponent>(playerI);
+		ac.animatorID = static_cast<i8>(i);
+
 		if (i == 0) // Only for this player
 		{
 			em.AddComponent<ThisPlayer>(playerI);
 			em.AddComponent<AudioListenerComponent>(playerI);
-			em.AddComponent<AnimationComponent>(playerI);
-			auto& ac = em.GetComponent<AnimationComponent>(playerI);
-			ac.animatorID = static_cast<i8>(i);
 		}
 		else
 		{
