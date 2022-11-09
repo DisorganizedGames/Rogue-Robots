@@ -123,8 +123,22 @@ add_custom_command(
 # Find Powershell executable
 find_program(POWERSHELL_PATH NAMES powershell)
 
+# Give script run authority
+add_custom_command(
+    TARGET ${LibraryName} PRE_BUILD
+    COMMAND ${POWERSHELL_PATH} "powershell.exe Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Bypass -Force"
+)
+
 # Transform .png/.jpg to .dds
 add_custom_command(
     TARGET ${LibraryName} POST_BUILD
-    COMMAND ${POWERSHELL_PATH} "powershell.exe -File ${CMAKE_SOURCE_DIR}/Assets/TextureProcessor/grab_texture_list.ps1 Set-ExecutionPolicy Bypass"
+    COMMAND ${POWERSHELL_PATH} "powershell.exe -File ${CMAKE_SOURCE_DIR}/Assets/TextureProcessor/grab_texture_list.ps1"
 )
+
+# Set back default execution policy
+add_custom_command(
+    TARGET ${LibraryName} POST_BUILD
+    COMMAND ${POWERSHELL_PATH} "powershell.exe Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Default -Force"
+)
+
+
