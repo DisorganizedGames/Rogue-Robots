@@ -15,10 +15,15 @@ public:
 
 	//Generates a level from the read input in the constructor or SetInput.
 	//Can be called multiple times for different results each time.
-	bool GenerateLevel(uint32_t nrOfRooms);
+	bool GenerateLevel(uint32_t nrOfRooms, uint32_t maxWidth, uint32_t maxHeight, uint32_t maxDepth);
 	const std::vector<std::string>& GetGeneratedLevel() const
 	{
 		return m_generatedLevel;
+	}
+
+	const std::vector<Room>& GetGeneratedRoomsData() const
+	{
+		return m_generatedRooms;
 	}
 
 	//Changes the input so that the algorithm uses a different level to generate levels from.
@@ -43,15 +48,21 @@ private:
 
 	//The constrain functions are only used on startup for constraints, same code but uses m_entropy or m_currentEntropy.
 	//Propogates information to neighboring cells after a possibility is removed.
-	bool Propogate(uint32_t index, Room& room);
-	bool PropogateConstrain(uint32_t index, Room& room);
+	void Propogate(uint32_t index, Room& room);
+	void PropogateConstrain(uint32_t index, Room& room);
 
 	//Helper function
 	void CheckForPropogation(uint32_t currentIndex, uint32_t neighborIndex, unsigned dir);
 	void CheckForPropogationConstrain(uint32_t currentIndex, uint32_t neighborIndex, unsigned dir);
+
+	//Post processing functions.
+	std::string ReplaceBlock(std::string& prevBlock, std::string& currentBlock, std::string& nextBlock, int prevDir, int nextDir, bool prevWasVoid);
 private:
 	uint32_t m_totalCount = 0u; //Total number of blocks read during input.
 	std::unordered_map<std::string, Block> m_blockPossibilities; //The possibilities for each block-id.
+	std::vector<std::string> m_spawnBlocks;
+	std::vector<std::string> m_doorBlocks;
+	std::vector<std::string> m_connectorBlocks;
 
 	bool m_failed = false; //If the generation fails.
 
@@ -60,6 +71,7 @@ private:
 	uint32_t m_height = 0;
 	uint32_t m_depth = 0;
 
+	uint32_t m_spawnCoords[3] = {0u, 0u, 0u};
 	std::vector<Room> m_generatedRooms; //The generated rooms. Rooms are placed here before the level is generated 
 	std::vector<std::string> m_generatedLevel; //The final level that is being generated.
 	std::vector<EntropyBlock> m_entropy; //The initial entropy. After the constraints.

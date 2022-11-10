@@ -23,6 +23,13 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 	float piDiv2 = DirectX::XM_PIDIV2;
 	if (inputFile.is_open())
 	{
+		//Read the room data
+		do
+		{
+			std::getline(inputFile, line);
+			//Do stuff with room data here.
+		} while (line != "");
+		//Read the level
 		while (std::getline(inputFile, line))
 		{
 			if (line[0] != '-')
