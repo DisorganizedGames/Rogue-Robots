@@ -409,7 +409,13 @@ namespace DOG::gfx
 		}
 
 
+		/*
+			How should we track Before/After resources?
+			We need some pair-wise tracking from the lifetimes..
+			We know that each parent-aliases pair have NO overlapping lifetimes
+			--> Sort chronological by lifetime.first sufficient?
 
+		*/
 
 		for (const auto& [parent, aliases] : rtDsPool)
 		{
