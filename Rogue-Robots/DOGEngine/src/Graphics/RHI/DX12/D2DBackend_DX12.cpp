@@ -4,6 +4,8 @@
 #include "RenderDevice_DX12.h"
 #include "Swapchain_DX12.h"
 
+#include "D11Device.h"
+
 
 DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_int numBuffers) : m_rd(rd), m_sc(sc), m_numBuffers(numBuffers)
 {
@@ -17,21 +19,26 @@ DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
 
     // Create an 11 device wrapped around the 12 device and share
     // 12's command queue.
-    auto queue = rd12->GetQueue();
-    HRESULT hr = D3D11On12CreateDevice(
-        rd12->GetDevice(),
-        D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-        NULL,
-        1u,
-        reinterpret_cast<IUnknown**>(&queue),
-        1,
-        0,
-        &m_d,
-        &m_dc,
-        nullptr
-    );
-    HR_VFY(hr);
-    hr = m_d->QueryInterface(IID_PPV_ARGS(&m_11on12d));
+    //auto queue = rd12->GetQueue();
+    //HRESULT hr = D3D11On12CreateDevice(
+    //    rd12->GetDevice(),
+    //    D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+    //    NULL,
+    //    1u,
+    //    reinterpret_cast<IUnknown**>(&queue),
+    //    1,
+    //    0,
+    //    &m_d,
+    //    &m_dc,
+    //    nullptr
+    //);
+    //HR_VFY(hr);
+    m_d = GetD11Device();
+    m_d->GetImmediateContext(m_dc.GetAddressOf());
+
+    HRESULT hr = m_d->QueryInterface(IID_PPV_ARGS(&m_11on12d));
+
+
 
     // Query the 11On12 device from the 11 device.
     HR_VFY(hr);

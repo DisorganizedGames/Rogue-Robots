@@ -258,33 +258,37 @@ namespace DOG
 			m_assets[id]->loadFlag &= ~AssetLoadFlag::Async;
 		}
 
-		if (m_assets[id]->loadFlag & AssetLoadFlag::Async)
-		{
-			m_assets[id]->m_isLoadingConcurrent = 1;
-			CallAsync([=, lock = &m_assets[id]->m_isLoadingConcurrent]()
-				{
-					AssetManager::LoadTextureCommpresonator(path, assetOut);
-					AssetManager::AddCommand([idToMove = id]()
-						{
-							AssetManager::Get().m_assets[idToMove]->stateFlag |= AssetStateFlag::ExistOnCPU;
-							if (AssetManager::Get().m_assets[idToMove]->loadFlag & AssetLoadFlag::CPUMemory)
-								AssetManager::Get().m_assets[idToMove]->loadFlag &= ~AssetLoadFlag::CPUMemory;
-							else
-								AssetManager::Get().m_assets[idToMove]->unLoadFlag |= AssetUnLoadFlag::TextureCPU;
+		//if (m_assets[id]->loadFlag & AssetLoadFlag::Async)
+		//{
+		//	m_assets[id]->m_isLoadingConcurrent = 1;
+		//	CallAsync([=, lock = &m_assets[id]->m_isLoadingConcurrent]()
+		//		{
+		//			bool srgb = (AssetLoadFlag)(m_assets[id]->loadFlag & AssetLoadFlag::Srgb) == AssetLoadFlag::Srgb;
+		//			LoadTextureCommpresonator(path, assetOut, srgb);
 
-							if (AssetManager::Get().m_assets[idToMove]->loadFlag & AssetLoadFlag::GPUMemory && !(AssetManager::Get().m_assets[idToMove]->stateFlag & AssetStateFlag::ExistOnGPU))
-							{
-								AssetManager::Get().MoveTextureToGPU(idToMove);
-							}
-						});
-					*lock = 0;
-				});
-		}
-		else
+		//			AssetManager::LoadTextureCommpresonator(path, assetOut);
+		//			AssetManager::AddCommand([idToMove = id]()
+		//				{
+		//					AssetManager::Get().m_assets[idToMove]->stateFlag |= AssetStateFlag::ExistOnCPU;
+		//					if (AssetManager::Get().m_assets[idToMove]->loadFlag & AssetLoadFlag::CPUMemory)
+		//						AssetManager::Get().m_assets[idToMove]->loadFlag &= ~AssetLoadFlag::CPUMemory;
+		//					else
+		//						AssetManager::Get().m_assets[idToMove]->unLoadFlag |= AssetUnLoadFlag::TextureCPU;
+
+		//					if (AssetManager::Get().m_assets[idToMove]->loadFlag & AssetLoadFlag::GPUMemory && !(AssetManager::Get().m_assets[idToMove]->stateFlag & AssetStateFlag::ExistOnGPU))
+		//					{
+		//						AssetManager::Get().MoveTextureToGPU(idToMove);
+		//					}
+		//				});
+		//			*lock = 0;
+		//		});
+		//}
+		//else
 		{
 			if (!(m_assets[id]->stateFlag & AssetStateFlag::ExistOnCPU))
 			{
-				LoadTextureCommpresonator(path, assetOut);
+				bool srgb = (AssetLoadFlag)(m_assets[id]->loadFlag & AssetLoadFlag::Srgb) == AssetLoadFlag::Srgb;
+				LoadTextureCommpresonator(path, assetOut, srgb);
 				m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
 			}
 
@@ -583,9 +587,9 @@ namespace DOG
 		stbi_image_free(imageData);
 	}
 
-	void AssetManager::LoadTextureCommpresonator(const std::string& path, TextureAsset* assetOut)
+	void AssetManager::LoadTextureCommpresonator(const std::string& path, TextureAsset* assetOut, bool srgb)
 	{
-		auto importedTex = TextureFileImporter(path, false).GetResult();
+		auto importedTex = TextureFileImporter(path, false, srgb).GetResult();
 		assetOut->mipLevels = 1; // Mip maps will be handled later on when the assetTool is implemented.
 		assetOut->width = importedTex->dataPerMip.front().width;
 		assetOut->height = importedTex->dataPerMip.front().height;
@@ -709,7 +713,6 @@ namespace DOG
 
 		TextureViewDesc desc = TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D,
 			textureSpec.srgb ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM);
-		
 
 		asset->textureViewGPU = builder->CreateTextureView(asset->textureGPU, desc);
 

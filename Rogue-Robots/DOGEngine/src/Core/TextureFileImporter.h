@@ -2,6 +2,8 @@
 #include "Types/AssetTypes.h"
 #include <mutex>
 
+#include <d3d11on12.h>
+
 namespace DOG
 {
 	class TextureFileImporter
@@ -11,7 +13,7 @@ namespace DOG
 	public:
 		static void Initialize();
 
-		TextureFileImporter(const std::filesystem::path& path, bool genMips);
+		TextureFileImporter(const std::filesystem::path& path, bool genMips, bool srgb = false);
 
 		std::shared_ptr<ImportedTextureFile> GetResult() const { return m_result; }
 

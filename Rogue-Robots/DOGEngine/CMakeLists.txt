@@ -61,7 +61,7 @@ set(SourceFiles
 	"src/Graphics/RHI/Types/GPUInfo.h"
 	"src/Graphics/Rendering/FrontRenderer.h" "src/Graphics/Rendering/FrontRenderer.cpp"
 	"src/ECS/QueryHelpers.h" "src/ECS/QueryHelpers.cpp"
-	)
+	 "src/Graphics/RHI/DX12/D11Device.h" "src/Graphics/RHI/DX12/D11Device.cpp")
 
 file(GLOB_RECURSE TempGraphics "src/Graphics/*.cpp")
 
@@ -128,10 +128,10 @@ add_custom_command(
 )
 
 # Transform .png/.jpg to .dds
-add_custom_command(
-    TARGET ${LibraryName} POST_BUILD
-    COMMAND ${POWERSHELL_PATH} "powershell.exe -File '${CMAKE_SOURCE_DIR}/Assets/TextureProcessor/grab_texture_list.ps1'"
-)
+#add_custom_command(
+#    TARGET ${LibraryName} POST_BUILD
+#    COMMAND ${POWERSHELL_PATH} "powershell.exe -File '${CMAKE_SOURCE_DIR}/Assets/TextureProcessor/grab_texture_list.ps1'"
+#)
 
 # Set back default execution policy
 add_custom_command(
