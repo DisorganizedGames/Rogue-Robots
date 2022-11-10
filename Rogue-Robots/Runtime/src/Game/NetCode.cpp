@@ -262,7 +262,7 @@ void NetCode::Receive()
 		m_startUp = true;
 		while (m_netCodeAlive)
 		{
-			while (m_dataIsReadyToBeReceivedTcp && m_netCodeAlive)
+			while (m_dataIsReadyToBeReceivedTcp)
 				continue;
 			if (!firstTime && !m_inputTcp.lobbyAlive)
 			{
@@ -270,6 +270,9 @@ void NetCode::Receive()
 				m_threadUdp = std::thread(&NetCode::ReceiveUdp, this);
 			}
 			
+			if (!m_netCodeAlive)
+				break;
+
 			m_numberOfPackets = m_client.ReceiveCharArrayTcp(m_receiveBuffer);
 			
 			if (m_receiveBuffer == nullptr || m_numberOfPackets == 0)

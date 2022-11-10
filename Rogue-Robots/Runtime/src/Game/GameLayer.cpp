@@ -130,8 +130,7 @@ void GameLayer::OnUpdate()
 			break;
 		}
 
-	if (m_networkStatus != NetworkStatus::Offline)
-		m_netCode.OnUpdate();
+	
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
 	global->SetNumber("ElapsedTime", Time::ElapsedTime());
@@ -175,7 +174,8 @@ void GameLayer::StartMainScene()
 	}
 
 	LuaMain::GetScriptManager()->StartScripts();
-	m_netCode.OnStartup();
+	if (m_networkStatus != NetworkStatus::Offline)
+		m_netCode.OnStartup();
 	m_gameState = GameState::Playing;
 }
 
@@ -301,6 +301,9 @@ void GameLayer::UpdateGame()
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
 
+	if (m_networkStatus != NetworkStatus::Offline)
+		m_netCode.OnUpdate();
+
 	HandleCheats();
 	HpBarMVP();
 	CheckIfPlayersIAreDead();
@@ -384,6 +387,8 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 
 void GameLayer::UpdateLobby()
 {
+	if (m_networkStatus != NetworkStatus::Offline)
+		m_netCode.OnUpdate();
 	bool inLobby = m_gameState == GameState::Lobby;
 	if (ImGui::Begin("Lobby", &inLobby))
 	{
