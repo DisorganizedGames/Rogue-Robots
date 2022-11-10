@@ -552,6 +552,9 @@ namespace DOG::gfx
 
 	std::vector<Texture> RenderDevice_DX12::CreateAliasedTextures(const std::vector<TextureDesc>& descs, MemoryPool pool)
 	{
+		if (descs.size() == 1)
+			return { CreateTexture(descs[0], pool) };
+
 		assert(descs.size() > 0);
 		auto memType = descs[0].memType;
 
@@ -597,6 +600,7 @@ namespace DOG::gfx
 		ComPtr<D3D12MA::Allocation> alloc;
 		HRESULT hr{ S_OK };
 		hr = m_dma->AllocateMemory(&allocDesc, &finalAllocInfo, &alloc);
+		assert(SUCCEEDED(hr));
 		assert(alloc != NULL && alloc->GetHeap() != NULL);
 
 		/*
@@ -1012,7 +1016,19 @@ namespace DOG::gfx
 			}
 			case D3D12_RESOURCE_BARRIER_TYPE_ALIASING:
 			{
-				assert(false);		// @todo
+				if (barr.isBuffer)
+				{
+					assert(false);
+				}
+				else
+				{
+					const auto& res1 = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(barr.resource));
+					const auto& res2 = HandleAllocator::TryGet(m_textures, HandleAllocator::GetSlot(barr.aliasResourceAfter));
+
+					barrs[i].Aliasing.pResourceBefore = res1.resource.Get();
+					barrs[i].Aliasing.pResourceAfter = res2.resource.Get();
+				}
+
 				break;
 			}
 			case D3D12_RESOURCE_BARRIER_TYPE_UAV:

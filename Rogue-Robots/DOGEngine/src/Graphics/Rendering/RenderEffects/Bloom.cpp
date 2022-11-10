@@ -148,6 +148,8 @@ namespace DOG::gfx
 					passData.height = m_bloomTexture[passData.level].second.height;
 					//builder.ImportTexture(RGResourceID("BloomTexture" + std::to_string(i)), m_bloomTexture[i].first, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COMMON);
 
+					// Nad: builder.DeclareTexture("BloomTexture" + std::to_string(i - 1), bloomDescs[i]);
+
 					passData.srcTextureHandle = builder.ReadWriteTarget(RGResourceID("BloomTexture" + std::to_string(i-1)), TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 
 					passData.dstTextureHandle = builder.ReadWriteTarget(RGResourceID("BloomTexture" + std::to_string(i)), TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));

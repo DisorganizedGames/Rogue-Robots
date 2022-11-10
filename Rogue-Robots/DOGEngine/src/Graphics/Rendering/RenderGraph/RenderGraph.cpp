@@ -220,11 +220,20 @@ namespace DOG::gfx
 				(*pass->preGraphExecute)();
 		}
 
+		u32 currDep = 0;
 		for (auto& depLevel : m_dependencyLevels)
+		{
+			m_resMan->ResolveMemoryAliases(m_cmdl, currDep);
 			depLevel.Execute(m_rd, m_cmdl);
+
+			++currDep;
+		}
+
 
 		m_resMan->ImportedResourceExitTransition(m_cmdl);
 		m_resMan->DeclaredResourceTransitionToInit(m_cmdl);
+
+		m_resMan->ResolveMemoryAliasesWrap(m_cmdl);
 
 		auto outgoingSync = m_rd->SubmitCommandList(m_cmdl, QueueType::Graphics, incomingSync, generateSync);
 

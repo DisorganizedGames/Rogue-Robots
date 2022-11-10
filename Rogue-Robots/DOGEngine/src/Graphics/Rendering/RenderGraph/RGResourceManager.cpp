@@ -162,6 +162,21 @@ namespace DOG::gfx
 		res.variantType = RGResourceVariant::Proxy;
 	}
 
+	void RGResourceManager::ResolveMemoryAliases(CommandList list, u32 depLevel)
+	{
+		auto it = m_aliasingBarrierPerDepLevel.find(depLevel);
+		if (it != m_aliasingBarrierPerDepLevel.cend())
+		{
+			m_rd->Cmd_Barrier(list, it->second);
+		}
+	}
+
+	void RGResourceManager::ResolveMemoryAliasesWrap(CommandList list)
+	{
+		if (!m_aliasingBarrierWrap.empty())
+			m_rd->Cmd_Barrier(list, m_aliasingBarrierWrap);
+	}
+
 
 
 
@@ -409,63 +424,142 @@ namespace DOG::gfx
 		}
 
 
-		/*
-			How should we track Before/After resources?
-			We need some pair-wise tracking from the lifetimes..
-			We know that each parent-aliases pair have NO overlapping lifetimes
-			--> Sort chronological by lifetime.first sufficient?
 
-		*/
+
 
 		for (const auto& [parent, aliases] : rtDsPool)
 		{
 			// Grab all descs, including parent
 			std::vector<TextureDesc> totalDescs;
+			std::vector<RGResourceID> totalIDs;
 			totalDescs.reserve(aliases.size());
+			totalIDs.reserve(aliases.size());
 
 			totalDescs.push_back(parent.desc);
+			totalIDs.push_back(parent.id);
 			for (const auto& aliasData : aliases)
+			{
 				totalDescs.push_back(aliasData.desc);
+				totalIDs.push_back(aliasData.id);
+			}
 
 			auto textures = m_rd->CreateAliasedTextures(totalDescs, m_rtDsTextureMemPool);
+			// Identical ordering of totalDescs/totalIDs
+			u32 x = 0;
+			std::unordered_map<RGResourceID, Texture> textureMapped;
 			for (const auto& tex : textures)
-				SetTexture(parent.id, tex);
+			{
+				auto id = totalIDs[x++];
+				textureMapped[id] = tex;
+				SetTexture(id, tex);
+			}
 
 			// Add to barrier tracking
 			if (aliases.size() > 0)
 			{
-				assert(false); // todo
+				// Get chronological lifetime order
+				std::vector<std::pair<u32, RGResourceID>> lifetimeOrder;
+				lifetimeOrder.push_back({ parent.lifetime.first, parent.id });
+				for (const auto& aliasData : aliases)
+					lifetimeOrder.push_back({ aliasData.lifetime.first, aliasData.id });
+				std::sort(lifetimeOrder.begin(), lifetimeOrder.end(), [](const std::pair<u32, RGResourceID>& lh, const std::pair<u32, RGResourceID>& rh)
+					{
+						return lh.first < rh.first;
+					});
+
+				// Track pairwise transition
+				RGResourceID firstResource, lastResource;
+				for (u32 i = 0; i < lifetimeOrder.size(); i += 2)
+				{
+					if (i + 1 >= lifetimeOrder.size())
+						break;
+
+					auto oldResource = lifetimeOrder[i].second;
+					auto newResource = lifetimeOrder[i + 1].second;
+					auto depLevelToInsertAt = lifetimeOrder[i + 1].first;		// Right before newResource is used
+
+					if (i == 0)
+						firstResource = oldResource;
+
+					// Get the last newResource
+					lastResource = newResource;
+
+					auto& barrs = m_aliasingBarrierPerDepLevel[depLevelToInsertAt];
+					barrs.push_back(GPUBarrier::Aliasing(textureMapped[oldResource], textureMapped[newResource]));
+				}
+
+				// Track end-to-start
+				m_aliasingBarrierWrap.push_back(GPUBarrier::Aliasing(textureMapped[lastResource], textureMapped[firstResource]));
 			}
 		}
+
+
 
 		for (const auto& [parent, aliases] : nonRtDsPool)
 		{
 			// Grab all descs, including parent
 			std::vector<TextureDesc> totalDescs;
+			std::vector<RGResourceID> totalIDs;
 			totalDescs.reserve(aliases.size());
+			totalIDs.reserve(aliases.size());
 
 			totalDescs.push_back(parent.desc);
+			totalIDs.push_back(parent.id);
 			for (const auto& aliasData : aliases)
+			{
 				totalDescs.push_back(aliasData.desc);
+				totalIDs.push_back(aliasData.id);
+			}
 
-			auto textures = m_rd->CreateAliasedTextures(totalDescs, m_rtDsTextureMemPool);
+			auto textures = m_rd->CreateAliasedTextures(totalDescs, m_nonRtDsTextureMemPool);
+			// Identical ordering of totalDescs/totalIDs
+			u32 x = 0;
+			std::unordered_map<RGResourceID, Texture> textureMapped;
 			for (const auto& tex : textures)
-				SetTexture(parent.id, tex);
+			{
+				auto id = totalIDs[x++];
+				textureMapped[id] = tex;
+				SetTexture(id, tex);
+			}
 
 			// Add to barrier tracking
 			if (aliases.size() > 0)
 			{
-				assert(false); // todo
+				// Get chronological lifetime order
+				std::vector<std::pair<u32, RGResourceID>> lifetimeOrder;
+				lifetimeOrder.push_back({ parent.lifetime.first, parent.id });
+				for (const auto& aliasData : aliases)
+					lifetimeOrder.push_back({ aliasData.lifetime.first, aliasData.id });
+				std::sort(lifetimeOrder.begin(), lifetimeOrder.end(), [](const std::pair<u32, RGResourceID>& lh, const std::pair<u32, RGResourceID>& rh)
+					{
+						return lh.first < rh.first;
+					});
+
+				// Track pairwise transition
+				RGResourceID firstResource, lastResource;
+				for (u32 i = 0; i < lifetimeOrder.size(); i += 2)
+				{
+					if (i + 1 >= lifetimeOrder.size())
+						break;
+
+					auto oldResource = lifetimeOrder[i].second;
+					auto newResource = lifetimeOrder[i + 1].second;
+					auto depLevelToInsertAt = lifetimeOrder[i + 1].first;		// Right before newResource is used
+
+					if (i == 0)
+						firstResource = oldResource;
+
+					// Get the last newResource
+					lastResource = newResource;
+
+					auto& barrs = m_aliasingBarrierPerDepLevel[depLevelToInsertAt];
+					barrs.push_back(GPUBarrier::Aliasing(textureMapped[oldResource], textureMapped[newResource]));
+				}
+
+				// Track end-to-start
+				m_aliasingBarrierWrap.push_back(GPUBarrier::Aliasing(textureMapped[lastResource], textureMapped[firstResource]));
 			}
 		}
-
-		std::cout << "Wow\n";
-
-
-
-
-
-
 
 
 
