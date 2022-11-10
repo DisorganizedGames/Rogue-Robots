@@ -174,6 +174,7 @@ end
 
 function OnDestroy()
 	EventSystem:UnRegister("ItemPickup" .. EntityID, OnPickup)
+	Entity:DestroyEntity(gunEntity.entityID)
 end
 
 function CreateBulletEntity(bullet, transformEntity)
