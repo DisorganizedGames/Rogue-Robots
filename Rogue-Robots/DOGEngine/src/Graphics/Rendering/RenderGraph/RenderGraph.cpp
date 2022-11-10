@@ -708,9 +708,7 @@ namespace DOG::gfx
 
 		// No aliasing support for depth stencil
 		if (m_globalData.writes.contains(id))
-		{
-			//assert(false);
-			
+		{			
 			// Explicitly connects previous reads on ID to newID
 			// The previous reads that are connect are the previous reads SINCE a write.
 			const auto ids = ResolveAliasingIDs(id);
