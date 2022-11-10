@@ -69,8 +69,13 @@ namespace DOG
 
 	struct AnimationComponent
 	{
-		static constexpr u8 MAX_SETTERS = 10;
+		static constexpr i8 NO_ANIMATION = -1;
+		static constexpr u8 FULL_BODY = 0;
+		static constexpr u8 MIXAMO_LOWER_BODY = 1;
+		static constexpr u8 MIXAMO_UPPER_BODY = 2;
+		static constexpr u8 MAX_SETTERS = 5;
 		static constexpr u8 MAX_TARGET_ANIMS = 3;
+		static constexpr u8 BASE_PRIORITY = 0;
 		u32 offset;
 		i8 rigID = 0;
 		i8 animatorID = -1;
@@ -82,8 +87,8 @@ namespace DOG
 			u8 priority;
 			f32 transitionLength;
 			f32 playbackRate;
-			i8 animationIDs[MAX_TARGET_ANIMS];
-			f32 targetWeights[MAX_TARGET_ANIMS];
+			i8 animationIDs[MAX_TARGET_ANIMS] = { NO_ANIMATION, NO_ANIMATION, NO_ANIMATION };
+			f32 targetWeights[MAX_TARGET_ANIMS] = { 0.f };
 		};
 		std::array<Setter, MAX_SETTERS> animSetters;
 	};

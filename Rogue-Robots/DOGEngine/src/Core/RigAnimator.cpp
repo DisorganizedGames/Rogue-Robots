@@ -95,7 +95,7 @@ namespace DOG
 			const auto id = c.aID;
 			const f32 tick = ClipTick(c, nt);
 			const f32 weight = c.currentWeight = LinearWeight(transitionTime, c.transitionLength, c.startWeight, c.targetWeight);
-			if (i < set.nTargetClips || weight > 0.f)
+			if (id != NO_ANIMATION && ( i < set.nTargetClips || weight > 0.f ))
 			{ // Clip contributes to pose, store pose data
 				const auto cIdx = clipIdx + count;
 				clipData[cIdx].aID = id;
@@ -164,7 +164,7 @@ namespace DOG
 		{
 			auto& setter = ac.animSetters[i];
 
-			ProcessSetter(setter, i);
+			ProcessSetter(setter);
 			ResetSetter(setter);
 		}
 		ac.addedSetters = 0;
@@ -193,8 +193,9 @@ namespace DOG
 		return clipCount;
 	}
 
-	void RigAnimator::ProcessSetter(Setter& setter, u32 groupIdx)
+	void RigAnimator::ProcessSetter(Setter& setter)
 	{
+		const auto groupIdx = setter.group;
 		auto& group = groups[groupIdx];
 		// Normalize weights and get number of clips in setter
 		u32 clipCount = PreProcessSetter(setter);
@@ -229,14 +230,21 @@ namespace DOG
 		u32 idx = set.startClip;
 		for (u32 i = 0; i < set.nTargetClips; ++i, ++idx)
 		{
+			if (i == set.nTotalClips)
+				break;
 			auto& c = clips[idx];
-			c.startWeight = c.currentWeight * set.weight; // this is poop
-			c.targetWeight = 0.f;
-			c.transitionStart = globalTime;
-			c.transitionLength = setter.transitionLength;
+			if (!setter.loop && c.currentWeight == c.targetWeight) // clip finished
+				c.aID = -1;
+			else
+			{
+				c.startWeight = c.currentWeight * set.weight; // this is poop
+				c.targetWeight = 0.f;
+				c.transitionStart = globalTime;
+				c.transitionLength = setter.transitionLength;
 
-			if (i == 0 && setter.loop) // should make flag 'matching' instead
-				startTime = c.normalizedTime;
+				if (i == 0 && setter.loop) // should make flag 'matching' instead
+					startTime = c.normalizedTime;
+			}
 		}
 
 		// Set new target clips

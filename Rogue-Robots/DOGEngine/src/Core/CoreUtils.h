@@ -15,7 +15,7 @@ namespace DOG
 
 		bool ssao{ true };
 #if defined _DEBUG
-		bool lit{ true };
+		bool lit{ false };
 		bool shadowMapping{ false };
 #else
 		bool lit{ true };

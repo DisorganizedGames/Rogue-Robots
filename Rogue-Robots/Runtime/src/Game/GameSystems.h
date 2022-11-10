@@ -97,6 +97,7 @@ class PlayerMovementSystem : public DOG::ISystem
 	using TransformComponent = DOG::TransformComponent;
 	using CameraComponent = DOG::CameraComponent;
 	using RigidbodyComponent = DOG::RigidbodyComponent;
+	using AnimationComponent = DOG::AnimationComponent;
 	using Entity = DOG::entity;
 
 	using Vector3 = DirectX::SimpleMath::Vector3;
@@ -104,9 +105,9 @@ class PlayerMovementSystem : public DOG::ISystem
 
 public:
 	SYSTEM_CLASS(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController);
-	ON_EARLY_UPDATE_ID(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController);
+	ON_EARLY_UPDATE_ID(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController, AnimationComponent);
 
-	void OnEarlyUpdate(Entity, PlayerControllerComponent&, PlayerStatsComponent&, TransformComponent&, RigidbodyComponent&, InputController&);
+	void OnEarlyUpdate(Entity, PlayerControllerComponent&, PlayerStatsComponent&, TransformComponent&, RigidbodyComponent&, InputController&, AnimationComponent&);
 
 private:
 	inline static constexpr Vector3 s_globUp = Vector3(0, 1, 0);
@@ -118,6 +119,8 @@ private:
 	Vector3 GetNewForward(PlayerControllerComponent& player)  const noexcept;
 
 	Vector3 GetMoveTowards(const InputController& input, Vector3 forward, Vector3 right) const noexcept;
+
+	void ApplyAnimations(const InputController& input, AnimationComponent& ac);
 
 	void MoveDebugCamera(Entity e, Vector3 moveTowards, Vector3 forward, Vector3 right, f32 speed, const InputController& input) noexcept;
 

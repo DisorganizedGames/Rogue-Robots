@@ -5,7 +5,7 @@
 namespace DOG
 {
 	static constexpr u32 N_GROUPS = 3;
-	static constexpr u32 MAX_CLIPS = 10;
+	static constexpr u32 MAX_CLIPS = 6;
 	static constexpr u32 MAX_TARGETS = 3;
 	static constexpr u8 LOOPING = 0;
 	static constexpr u8 ACTION = 1;
@@ -119,7 +119,7 @@ namespace DOG
 		ImportedRig* rigData = {};
 
 		// Snipp, Snipp here be Clips 
-		std::array<Clip, 50> clips = {};
+		std::array<Clip, N_GROUPS * MAX_CLIPS * 2> clips = {};
 
 		// Clip data needed to update rig
 		std::array<ClipData, 50> clipData = {};
@@ -177,7 +177,7 @@ namespace DOG
 
 		// Process the AnimationComponent and the Setters within, adding/modifying active clips that influences the entity
 		void ProcessAnimationComponent(AnimationComponent& ac);
-		void ProcessSetter(Setter& setter, u32 group);
+		void ProcessSetter(Setter& setter);
 
 		// Set clip data based on setter
 		void SetClip(Setter& setter, u32 setIdx, Clip& clip);
