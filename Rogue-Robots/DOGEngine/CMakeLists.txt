@@ -130,7 +130,7 @@ add_custom_command(
 # Transform .png/.jpg to .dds
 add_custom_command(
     TARGET ${LibraryName} POST_BUILD
-    COMMAND ${POWERSHELL_PATH} "powershell.exe -File ${CMAKE_SOURCE_DIR}/Assets/TextureProcessor/grab_texture_list.ps1"
+    COMMAND ${POWERSHELL_PATH} "powershell.exe -File '${CMAKE_SOURCE_DIR}/Assets/TextureProcessor/grab_texture_list.ps1'"
 )
 
 # Set back default execution policy
