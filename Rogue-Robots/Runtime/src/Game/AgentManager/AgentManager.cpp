@@ -1,5 +1,6 @@
 #include "AgentManager.h"
 #include "AgentBehaviorSystems.h"
+#include "Game/GameLayer.h"
 
 using namespace DOG;
 using namespace DirectX::SimpleMath;
@@ -21,7 +22,7 @@ entity AgentManager::CreateAgent(EntityTypes type, u32 groupID, const Vector3& p
 	em.AddComponent<AgentSeekPlayerComponent>(e);
 	em.AddComponent<NetworkAgentStats>(e);
 	// Add CreateAndDestroyEntityComponent to ECS
-	if (m_useNetworking)
+	if (GameLayer::GetNetworkStatus() == NetworkStatus::Hosting)
 	{
 		AgentIdComponent& agent = em.GetComponent<AgentIdComponent>(e);
 		TransformComponent& agentTrans = em.GetComponent<TransformComponent>(e);
@@ -53,6 +54,7 @@ void AgentManager::CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& e
 			{
 				if (agent.id == entityDesc.id)
 				{
+					trans.SetPosition(entityDesc.position);
 					DestroyLocalAgent(e);
 					trans.SetPosition(entityDesc.position);
 				}
@@ -171,11 +173,12 @@ entity AgentManager::CreateAgentCore(u32 model, u32 groupID, const Vector3& pos,
 	em.AddComponent<AgentHPComponent>(e);
 
 	// Add networking components
-	if (m_useNetworking)
+	if (GameLayer::GetNetworkStatus() != NetworkStatus::Offline)
 	{
 		em.AddComponent<NetworkTransform>(e).objectId = agent.id;
 	}
 
+	// Should this component exist on ALL agents or is it only related to networking?
 	if (!em.HasComponent<ShadowReceiverComponent>(e))
 		em.AddComponent<ShadowReceiverComponent>(e);
 

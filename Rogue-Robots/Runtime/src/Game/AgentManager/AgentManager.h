@@ -36,7 +36,6 @@ private:
 	static AgentManager s_amInstance;
 	static bool s_notInitialized;
 
-	bool m_useNetworking = true;
 	std::vector<u32> m_models;
 	std::array<u32, GROUP_RANGE> m_agentIdCounter{ 0 };
 	std::array<u32, GROUP_RANGE> m_agentKillCounter{ 0 };
