@@ -24,29 +24,32 @@ namespace DOG::gfx
 		RGResourceManager* m_resourceManager;
 
 		Pipeline m_emitPipeline;
+		Pipeline m_compactPipeline;
 		Pipeline m_updatePipeline;
 		Pipeline m_drawPipeline;
 
 		static constexpr u32 S_MAX_EMITTERS = 128;
-		static constexpr u32 S_MAX_PARTICLES = 16*1024;
+		static constexpr u32 S_MAX_PARTICLES = 16 * 1024;
+		static constexpr u32 S_COUNTERS = 2;
 	
 	private:
 		struct Particle
 		{
 			u32 emitterHandle = 0;
-			f32 pos[3] = {0, 0, 0};
+			f32 pos[3] = { 0, 0, 0 };
 			f32 age = 0;
-			f32 vel[3] = {0, 0, 0};
+			f32 vel[3] = { 0, 0, 0 };
 			f32 size = 0;
-			f32 pad[3] = {0, 0, 0};
+			f32 pad[3] = { 0, 0, 0 };
 		};
 
 		struct Emitter
 		{
-			f32 pos[3] = {0, 0, 0};
+			f32 pos[3] = { 0, 0, 0 };
 			f32 rate = 0;
 			f32 lifetime = 0;
-			f32 pad[3] = { 0, 0, 0 };
+			f32 age = 0;
+			f32 pad[2] = { 0, 0 };
 		};
 
 	};

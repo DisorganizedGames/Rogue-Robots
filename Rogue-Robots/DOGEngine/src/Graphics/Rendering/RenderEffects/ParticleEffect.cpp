@@ -19,6 +19,9 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 	auto emitterShader = shaderCompiler->CompileFromFile("Particles/EmitterCS.hlsl", ShaderType::Compute);
 	m_emitPipeline = device->CreateComputePipeline(ComputePipelineDesc(emitterShader.get()));
 
+	auto compactShader = shaderCompiler->CompileFromFile("Particles/CompactionCS.hlsl", ShaderType::Compute);
+	m_compactPipeline = device->CreateComputePipeline(ComputePipelineDesc(compactShader.get()));
+
 	auto updateShader = shaderCompiler->CompileFromFile("Particles/BasicUpdateCS.hlsl", ShaderType::Compute);
 	m_updatePipeline = device->CreateComputePipeline(ComputePipelineDesc(updateShader.get()));
 	
@@ -50,7 +53,7 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 	}
 
 	{
-		BufferDesc aliveBufferDesc(MemoryType::Default, sizeof(u32),
+		BufferDesc aliveBufferDesc(MemoryType::Default, S_COUNTERS * sizeof(u32),
 			D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		m_particlesAlive = device->CreateBuffer(aliveBufferDesc);
 
@@ -91,7 +94,7 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Particle), S_MAX_PARTICLES));
 
 			passData.particlesAliveHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticlesAliveBuffer),
-				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), 1));
+				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), S_COUNTERS));
 
 		},
 		[this](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) // Execute
@@ -100,6 +103,8 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 
 			ShaderArgs shaderArgs;
 			shaderArgs
+				.AppendConstant(m_globalEffectData.globalDataDescriptor)
+				.AppendConstant(*m_globalEffectData.perFrameTableOffset)
 				.AppendConstant(resources.GetView(passData.emitterBufferHandle))
 				.AppendConstant(resources.GetView(passData.particleBufferHandle))
 				.AppendConstant(resources.GetView(passData.particlesAliveHandle));
@@ -117,6 +122,36 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 
 		});
 
+	renderGraph.AddPass<PassData>("Particle Compaction Pass",
+		[this](PassData& passData, RenderGraph::PassBuilder& builder) // Build
+		{
+			passData.emitterBufferHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticleEmitterBuffer),
+				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Emitter), S_MAX_EMITTERS));
+		passData.particleBufferHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticleBuffer),
+				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Particle), S_MAX_PARTICLES));
+		passData.particlesAliveHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticlesAliveBuffer),
+				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), S_COUNTERS));
+	},
+		[this](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) // Execute
+		{
+			rd->Cmd_SetPipeline(cmdl, m_compactPipeline);
+		ShaderArgs shaderArgs;
+			shaderArgs
+				.AppendConstant(m_globalEffectData.globalDataDescriptor)
+				.AppendConstant(*m_globalEffectData.perFrameTableOffset)
+				.AppendConstant(resources.GetView(passData.emitterBufferHandle))
+				.AppendConstant(resources.GetView(passData.particleBufferHandle))
+				.AppendConstant(resources.GetView(passData.particlesAliveHandle));
+		rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
+		rd->Cmd_Dispatch(cmdl, S_MAX_PARTICLES / 256, 1, 1);
+		},
+			[](PassData&) // Pre-graph execution
+		{
+	},
+			[](PassData&) // Post-graph execution
+		{
+	});
+
 	renderGraph.AddPass<PassData>("Particle Update Pass",
 		[this](PassData& passData, RenderGraph::PassBuilder& builder) // Build
 		{
@@ -127,7 +162,7 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Particle), S_MAX_PARTICLES));
 
 			passData.particlesAliveHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticlesAliveBuffer),
-				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), 1));
+				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), S_COUNTERS));
 
 		},
 		[this](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) // Execute
@@ -165,7 +200,7 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Particle), S_MAX_PARTICLES));
 
 			passData.particlesAliveHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticlesAliveBuffer),
-				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), 1));
+				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), S_COUNTERS));
 
 			builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::PreservePreserve,
 				TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));

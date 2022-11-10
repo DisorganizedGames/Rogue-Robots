@@ -17,7 +17,8 @@ struct Emitter
 	float3 pos;
 	float rate;
 	float lifetime;
-	float3 pad;
+	float age;
+	float2 pad;
 };
 
 struct PS_IN

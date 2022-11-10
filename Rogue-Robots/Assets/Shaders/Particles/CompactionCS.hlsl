@@ -1,7 +1,7 @@
 #include "Particles.hlsli"
 #include "../ShaderInterop_Renderer.h"
 
-#define GROUP_SIZE 128
+#define GROUP_SIZE 256
 
 struct PushConstantElement
 {
@@ -13,8 +13,6 @@ struct PushConstantElement
 	uint aliveBufferHandle;
 };
 CONSTANTS(g_constants, PushConstantElement)
-
-void SpawnParticle(in uint emitterHandle, inout Particle p);
 
 groupshared Emitter g_emitter;
 
@@ -30,18 +28,26 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 
 	StructuredBuffer<ShaderInterop_PerFrameData> perFrameTable = ResourceDescriptorHeap[globalData.perFrameTable];
 	ShaderInterop_PerFrameData perFrame = perFrameTable[g_constants.perFrameOffset];
+
+	uint prevAlive = aliveCounter[1];	
+
+	Particle p = particleBuffer[globalID];
+	Emitter e = emitterBuffer[p.emitterHandle];
 	
-	uint alive = aliveCounter[0];
-	for (int i = threadID.x; i < alive; i += GROUP_SIZE)
+    bool particleAlive = p.age < e.lifetime && globalID < prevAlive;
+	uint waveParticlesAlive = WaveActiveCountBits(particleAlive);
+	uint laneIdx = WavePrefixCountBits(particleAlive);
+	uint waveStartIdx;
+    if (WaveGetLaneIndex() == 0)
 	{
-		Particle p = particleBuffer[i];
-		Emitter e = emitterBuffer[p.emitterHandle];
-
-		p.age += perFrame.deltaTime;
-
-		p.pos += p.vel * perFrame.deltaTime;
-		p.vel -= float3(0, 9.82 * perFrame.deltaTime, 0);
-		particleBuffer[i] = p;
+        InterlockedAdd(aliveCounter[0], waveParticlesAlive, waveStartIdx);
+    }
+	waveStartIdx = WaveReadLaneAt(waveStartIdx, 0);
+	
+	if (particleAlive)
+	{
+		particleBuffer[waveStartIdx + laneIdx] = p;
 	}
 }
+
 
