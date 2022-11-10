@@ -180,7 +180,8 @@ void GameLayer::StartMainScene()
 	}
 
 	LuaMain::GetScriptManager()->StartScripts();
-	m_netCode.OnStartup();
+	if(m_networkStatus != NetworkStatus::Offline)
+		m_netCode.OnStartup();
 	m_gameState = GameState::Playing;
 }
 
