@@ -65,11 +65,11 @@ struct HomingMissileComponent
 	float mainMotorSpeed = 20;
 	float turnSpeed = 4.0f;
 	float flightTime = 0.0f;
-	float engineStartTime = 0.22f;
-	float attackFlightPhaseStartTime = engineStartTime + 0.6f;
+	float engineStartTime = 0.2f;
+	float attackFlightPhaseStartTime = engineStartTime + 0.3f;
 	float lifeTime = attackFlightPhaseStartTime + 2.0f;
 	float explosionRadius = 10.0f;
-	float dmg = 300.0f;
+	float dmg = 500.0f;
 	bool armed = false;
 	int hit = 0;
 	DOG::entity homingTarget = DOG::NULL_ENTITY;

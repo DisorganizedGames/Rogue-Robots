@@ -38,7 +38,7 @@ void HomingMissileSystem::OnUpdate(entity e, HomingMissileComponent& missile, DO
 				Vector3 targetDir = forward;
 				targetDir.y = 0;
 				targetDir.Normalize();
-				targetDir.y = 2;
+				targetDir.y = 1;
 				targetDir.Normalize();
 				Vector3 t = forward.Cross(targetDir);
 				rigidBody.angularVelocity = missile.turnSpeed * t;
@@ -93,7 +93,17 @@ void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& miss
 {
 	if (missile.launched && collision.entitiesCount > 0)
 	{
-		
+		// Instantly arm the missile if directly hit an enemy
+		for (u32 i = 0; i < collision.entitiesCount; i++)
+		{
+			if (EntityManager::Get().Exists(collision.entities[i]) && EntityManager::Get().HasComponent<AgentIdComponent>(collision.entities[i]))
+			{
+				missile.armed = true;
+				break;
+			}
+		}
+
+
 		if (missile.armed || missile.hit > 3)
 		{
 			EntityManager::Get().Collect<AgentIdComponent, DOG::TransformComponent>().Do([&](entity agent, AgentIdComponent&, DOG::TransformComponent& tr)
