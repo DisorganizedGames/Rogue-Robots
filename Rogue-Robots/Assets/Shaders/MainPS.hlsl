@@ -185,8 +185,9 @@ PS_OUT main(VS_OUT input)
     
     output.normals = float4(N, 0.f);
     
-    output.color = float4(N, 1.f);
-    return output;
+    // Sanity check BC textures - KEEP THIS!!
+    //output.color = float4(N, 1.f);
+    //return output;
     
     float3 emissiveInput = mat.emissiveFactor.rgb;
     if (mat.emissive != NO_TEXTURE)
