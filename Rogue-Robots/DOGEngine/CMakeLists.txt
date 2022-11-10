@@ -66,6 +66,7 @@ set(SourceFiles
 	"src/Graphics/Rendering/RenderEffects/ParticleEffect.h" "src/Graphics/Rendering/RenderEffects/ParticleEffect.cpp"
 	"src/Graphics/Rendering/VFX/ParticleManager.h" "src/Graphics/Rendering/VFX/ParticleManager.cpp"
 	"src/Graphics/Rendering/VFX/ParticleBackend.h" "src/Graphics/Rendering/VFX/ParticleBackend.cpp"
+	"src/Graphics/Rendering/RenderEffects/TiledLightCullingEffect.h" "src/Graphics/Rendering/RenderEffects/TiledLightCullingEffect.cpp"
 )
 
 file(GLOB_RECURSE TempGraphics "src/Graphics/*.cpp")

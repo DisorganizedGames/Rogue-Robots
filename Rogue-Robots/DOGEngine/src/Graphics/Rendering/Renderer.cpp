@@ -30,6 +30,7 @@
 #include "RenderEffects/TestComputeEffect.h"
 #include "RenderEffects/Bloom.h"
 #include "VFX/ParticleBackend.h"
+#include "RenderEffects/TiledLightCullingEffect.h"
 
 #include "ImGUI/imgui.h"
 #include "../../Core/ImGuiMenuLayer.h"
@@ -279,7 +280,9 @@ namespace DOG::gfx
 		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
 		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
 		m_bloomEffect = std::make_unique<Bloom>(m_rgResMan.get(), m_globalEffectData, m_dynConstants.get(), m_renderWidth, m_renderHeight);
+		m_tiledLightCuller = std::make_unique<TiledLightCullingEffect>(m_rgResMan.get(), m_globalEffectData, m_dynConstants.get(), m_renderWidth, m_renderHeight);
 
+	
 		{
 			// Create 4x4 SSAO noise
 			std::random_device rd;  // Will be used to obtain a seed for the random number engine
@@ -979,6 +982,8 @@ namespace DOG::gfx
 
 		if (m_bloomEffect)
 			m_bloomEffect->Add(rg);
+
+		m_tiledLightCuller->Add(rg);
 
 		// Blit HDR to LDR
 		{
