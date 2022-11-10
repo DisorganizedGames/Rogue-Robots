@@ -39,4 +39,21 @@ void D11Flush()
 	s_gfxQueue->flush();
 }
 
+void D11ReInit(ID3D12Device* dev)
+{
+	HRESULT hr = D3D11On12CreateDevice(
+		dev,
+		D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+		NULL,
+		1u,
+		reinterpret_cast<IUnknown**>(&(*s_gfxQueue)),
+		1,
+		0,
+		&s_d11dev,
+		nullptr,
+		nullptr
+	);
+	assert(SUCCEEDED(hr));
+}
+
 

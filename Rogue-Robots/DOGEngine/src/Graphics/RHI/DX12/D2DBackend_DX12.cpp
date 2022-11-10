@@ -113,19 +113,24 @@ void DOG::gfx::D2DBackend_DX12::OnResize()
     auto rd12 = (RenderDevice_DX12*)m_rd;
     auto sc12 = (Swapchain_DX12*)m_sc;
 
+    HRESULT hr{ S_OK };
     auto queue = rd12->GetQueue();
-    HRESULT hr = D3D11On12CreateDevice(
-        rd12->GetDevice(),
-        D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-        NULL,
-        1u,
-        reinterpret_cast<IUnknown**>(&queue),
-        1,
-        0,
-        &m_d,
-        &m_dc,
-        nullptr
-    );
+    //HRESULT hr = D3D11On12CreateDevice(
+    //    rd12->GetDevice(),
+    //    D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+    //    NULL,
+    //    1u,
+    //    reinterpret_cast<IUnknown**>(&queue),
+    //    1,
+    //    0,
+    //    &m_d,
+    //    &m_dc,
+    //    nullptr
+    //);
+    D11ReInit(rd12->GetDevice());
+    m_d = GetD11Device();
+    m_d->GetImmediateContext(m_dc.GetAddressOf());
+
     HR_VFY(hr);
     hr = m_d->QueryInterface(IID_PPV_ARGS(&m_11on12d));
 
@@ -187,6 +192,7 @@ void DOG::gfx::D2DBackend_DX12::FreeResize()
         m_d2dRenderTargets[i].Reset();
         m_wrappedBackBuffers[i].Reset();
     }
+    DestroyD11();
     m_d.Reset();
     m_2dd.Reset();
     m_11on12d.Reset();
