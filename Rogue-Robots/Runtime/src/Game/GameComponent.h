@@ -36,8 +36,6 @@ struct PlayerAliveComponent
 {
 };
 
-
-
 struct SceneComponent
 {
 	enum class Type
@@ -117,6 +115,51 @@ struct PassiveItemComponent {
 	Type type;
 };
 
+//The active item that currently resides in inventory
+struct ActiveItemComponent
+{
+	enum class Type{ Trampoline = 0 };
+
+	Type type;
+};
+
+//ID component for ALL pick ups
+struct PickupComponent
+{
+	const char* itemName;
+
+	enum class Type{ ActiveItem = 0, PassiveItem, BarrelItem, MagazineModificationItem };
+
+	Type type;
+};
+
+struct EligibleForPickupComponent
+{
+	DOG::entity player;
+};
+
+struct BarrelComponent
+{
+	enum class Type { Bullet = 0, Grenade, Missile };
+
+	Type type;
+	u32 maximumAmmoCapacityForType;
+	u32 ammoPerPickup;
+	u32 currentAmmoCount;
+};
+
+struct MagazineModificationComponent
+{
+	enum class Type { None = 0, Frost = 1 };
+
+	Type type;
+};
+
+struct LerpToPlayerComponent
+{
+	DOG::entity player;
+};
+
 struct CreateAndDestroyEntityComponent
 {
 	EntityTypes entityTypeId = EntityTypes::Default;
@@ -153,4 +196,9 @@ struct ExplosionEffectComponent
 	float radius;
 	float growTime = -1.0f; 
 	float shrinkTime = -1.0f;
+};
+
+struct InteractionQueryComponent
+{
+	//ID
 };

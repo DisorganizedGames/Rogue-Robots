@@ -6,16 +6,6 @@ local ObjectManager = require("Object")
 local BarrelManager = require("BarrelComponents")
 local MagazineManager = require("MagazineComponents")
 
---Tweakable values.
-local InitialBulletSpeed = 75.0
-local ShootCooldown = 0.1
-local BulletDespawnDist = 50
-local BulletSize = Vector3.New(3, 3, 3)
-
-local savedBulletCount = 30
-local currentAmmoCount = nil
-local hasBasicBarrelEquipped = true
-
 --The 3 different components.
 --The pipeline is: misc -> barrel -> magazine.
 local barrelComponent = nil
@@ -82,12 +72,9 @@ function OnStart()
 
 	-- Initialize base components
 	miscComponent = MiscComponent.BasicShot()
-	barrelComponent = BarrelManager.BasicBarrel() 
+	barrelComponent = BarrelManager.BasicBarrel()
+	--barrelComponent = BarrelManager.Grenade()  --ObjectManager:CreateObject()
 	magazineComponent = MagazineManager.BasicEffect() --ObjectManager:CreateObject()
-
-	currentAmmoCount = barrelComponent:GetMaxAmmo()
-
-	EventSystem:Register("ItemPickup" .. EntityID, OnPickup)
 end
 
 local tempMode = 0
@@ -126,13 +113,46 @@ function OnUpdate()
 	elseif not Entity:GetAction(EntityID, "SwitchComponent") then
 		switched = false
 	end
-
-	NormalBulletUpdate() -- Should be called something else, but necessary for bullet despawn
-
-	if hasBasicBarrelEquipped then
-		if (ReloadSystem()) then
-			return
+	--Barrel temp switch
+	if Entity:GetAction(EntityID, "SwitchBarrelComponent") and not barrelSwitched then
+		barrelSwitched = true
+		if barrelComponentIdx == 0 then
+			barrelComponent = BarrelManager.Grenade() 
+			barrelComponentIdx = 1
+			ammoLeft = 15
+			basicBarrelEquiped = false
+		elseif barrelComponentIdx == 1 then
+			barrelComponent = BarrelManager.Missile()
+			barrelComponentIdx = 2
+			ammoLeft = 6
+			basicBarrelEquiped = false
+		else
+			barrelComponent = BarrelManager.BasicBarrel()
+			barrelComponentIdx = 0
+			ammoLeft = -1
+			basicBarrelEquiped = true
 		end
+	elseif not Entity:GetAction(EntityID, "SwitchBarrelComponent") then
+		barrelSwitched = false
+	end
+	--Magazine temp switch
+	if Entity:GetAction(EntityID, "SwitchMagazineComponent") and not magazineSwitched then
+		magazineSwitched = true
+		if magazineComponentIdx == 0 then
+			magazineComponent = MagazineManager.FrostEffect() 
+			magazineComponentIdx = 1
+		else
+			magazineComponent = MagazineManager.BasicEffect()
+			magazineComponentIdx = 0
+		end
+	elseif not Entity:GetAction(EntityID, "SwitchMagazineComponent") then
+		magazineSwitched = false
+	end
+
+	NormalBulletUpdate()
+
+	if (ReloadSystem()) then
+		return
 	end
 
 	-- Gun firing logic
@@ -147,33 +167,26 @@ function OnUpdate()
 		if barrelComponent.CreateBullet then
 			createBullet = barrelComponent:CreateBullet()
 		end
-		if createBullet and currentAmmoCount > 0 then
-
-			if hasBasicBarrelEquipped then
-				currentAmmo = currentAmmo - 1
-			end
+		if createBullet and currentAmmo > 0 then
+			currentAmmo = currentAmmo - 1
 
 			CreateBulletEntity(newBullets[i], cameraEntity)
 			barrelComponent:Update(gunEntity, EntityID, newBullets[i])
 			--Keep track of which barrel created the bullet
 			newBullets[i].barrel = barrelComponent
 			magazineComponent:Update(newBullets[i])
-			
-			currentAmmoCount = currentAmmoCount - 1
-			if currentAmmoCount == 0 and not hasBasicBarrelEquipped then
-				barrelComponent = BarrelManager.BasicBarrel()
-				Entity:RemoveComponent(EntityID, "BarrelComponent")
-				Entity:AddComponent(EntityID, "BarrelComponent", 0, 30, 999999)
-				currentAmmoCount = savedBulletCount
-				hasBasicBarrelEquipped = true
-			end
-			Entity:UpdateMagazine(EntityID, currentAmmoCount)
 		end
 	end
-end
+	--NormalBulletUpdate()
 
-function OnDestroy()
-	EventSystem:UnRegister("ItemPickup" .. EntityID, OnPickup)
+	--if not bullet then
+	--	return
+	--end
+
+	--NormalBulletSpawn(bullet)
+
+	--BarrelComponent:Update(barrelComponent)
+	--MagazineComponent:Update(magazineComponent)
 end
 
 function CreateBulletEntity(bullet, transformEntity)
@@ -200,6 +213,16 @@ function CreateBulletEntity(bullet, transformEntity)
 end
 
 function ReloadSystem()
+	if (Entity:HasComponent(EntityID, "ThisPlayer")) then
+		Game:AmmoUI(currentAmmo, ammoLeft)
+	end
+
+	local oldMaxAmmo = maxAmmo
+	maxAmmo = barrelComponent:GetMaxAmmo()
+	if (maxAmmo ~= oldMaxAmmo) then
+		currentAmmo = maxAmmo
+	end
+
 	--When reloading
 	if reloadTimer >= ElapsedTime then
 		--Reloading Animation 
@@ -229,11 +252,9 @@ function ReloadSystem()
 		end
 		currentAmmo = currentAmmo + reloadAmount
 
-		if hasBasicBarrelEquipped then
+		if basicBarrelEquiped then
 			currentAmmo = maxAmmo
 			ammoLeft = -1
-			Entity:UpdateMagazine(EntityID, maxAmmo)
-			currentAmmoCount = maxAmmo
 		end
 	end
 
@@ -284,53 +305,4 @@ function NormalBulletUpdate()
 			table.remove(bullets, i)
 		end
 	end
-end
-
-function OnPickup(pickup)
-
-	--In order to adhere to network demands this is how it must behave:
-	--pickup is an EntityType, NOT an ecs-entity.
-	local pickupTypeString = Entity:GetEntityTypeAsString(pickup)
-	local playerID = EntityID
-	if pickupTypeString == "GrenadeBarrel" or pickupTypeString == "MissileBarrel" then
-		--It is a barrel component:
-		local typeOfEquippedBarrel = Entity:GetBarrelType(playerID)
-		if pickupTypeString == typeOfEquippedBarrel then
-			--Player essentially picked up ammo for already equipped barrel:
-			if currentAmmoCount + barrelComponent:GetAmmoPerPickup() > barrelComponent:GetMaxAmmo() then
-				currentAmmoCount = barrelComponent:GetMaxAmmo()
-			else
-				currentAmmoCount = currentAmmoCount + barrelComponent:GetAmmoPerPickup()
-			end
-			Entity:UpdateMagazine(playerID, currentAmmoCount)
-		else
-			--Player picked up a new barrel type:
-			if pickupTypeString == "GrenadeBarrel" then
-				barrelComponent = BarrelManager.Grenade()
-			elseif pickupTypeString == "MissileBarrel" then
-				barrelComponent = BarrelManager.Missile()
-			end
-			Entity:RemoveComponent(playerID, "BarrelComponent")
-			Entity:AddComponent(playerID, "BarrelComponent", barrelComponent:GetECSType(), barrelComponent:GetAmmoPerPickup(), barrelComponent:GetMaxAmmo())
-
-			if hasBasicBarrelEquipped == true then
-				savedBulletCount = currentAmmoCount
-			end
-			currentAmmoCount = barrelComponent:GetAmmoPerPickup()
-			
-			hasBasicBarrelEquipped = false
-		end
-	else if pickupTypeString == "FrostMagazineModification" then
-		--Magazine modification component
-		local currentModificationType = Entity:GetModificationType(playerID)
-		if pickupTypeString ~= currentModificationType then
-			--A new magazine modification was picked up:
-			Entity:RemoveComponent(playerID, "MagazineModificationComponent")
-			if pickupTypeString == "FrostMagazineModification" then
-				magazineComponent = MagazineManager.FrostEffect()
-			end
-			Entity:AddComponent(playerID, "MagazineModificationComponent", magazineComponent:GetECSType())
-		end	
-	end
-end
 end

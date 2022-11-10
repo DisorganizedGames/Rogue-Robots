@@ -20,7 +20,13 @@ ActiveItems.trampoline = {
 		Entity:AddComponent(trampolineEntity, "Script", "Trampoline.lua")
 
 		return trampolineEntity
-	end
+	end,
+
+	GetECSType = function(self)
+			return 0
+		end,
+
+
 }
 
 return ActiveItems

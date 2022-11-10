@@ -30,14 +30,21 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<HomingMissileImpacteSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<PickupLerpAnimationSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<PickupItemInteractionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerMovementSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerJumpRefreshSystem>());
 
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<MVPRenderPickupItemUIText>());
+	m_entityManager.RegisterSystem(std::make_unique<PickUpTranslateToPlayerSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<MVPRenderAmmunitionTextSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<MVPRenderReloadHintTextSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<CleanupItemInteractionSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<CleanupPlayerStateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
 	m_networkStatus = NetworkStatus::Offline;
-
 
 	m_keyBindingDescriptions.emplace_back("wasd", "walk");
 	m_keyBindingDescriptions.emplace_back("space", "jump");
@@ -55,6 +62,7 @@ GameLayer::GameLayer() noexcept
 	assert(std::filesystem::exists(("Assets/Fonts/Robot Radicals.ttf")));
 	ImGui::GetIO().Fonts->AddFontDefault();
 	m_imguiFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Assets/Fonts/Robot Radicals.ttf", 18.0f);
+	Window::SetFont(m_imguiFont);
 }
 
 GameLayer::~GameLayer()
@@ -68,6 +76,8 @@ void GameLayer::OnAttach()
 
 	//m_testScene = std::make_unique<TestScene>();
 	//m_testScene->SetUpScene();
+	m_testScene = std::make_unique<TestScene>();
+	m_testScene->SetUpScene();
 }
 
 void GameLayer::OnDetach()
@@ -238,6 +248,11 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 		KillPlayer(e);
 	}
 
+	auto& bc = m_entityManager.AddComponent<BarrelComponent>(e);
+	bc.type = BarrelComponent::Type::Bullet;
+	bc.currentAmmoCount = 30;
+	bc.maximumAmmoCapacityForType = 999'999; // Representing infinity...?? (Emil F)
+
 	m_entityManager.AddComponent<PlayerAliveComponent>(e);
 	LuaMain::GetScriptManager()->AddScript(e, "Gun.lua");
 
@@ -263,8 +278,12 @@ void GameLayer::KillPlayer(DOG::entity e)
 	LuaMain::GetScriptManager()->RemoveScript(e, "Gun.lua");
 	LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
 	LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
+	std::string luaEventName = std::string("ItemPickup") + std::to_string(e);
 	m_entityManager.RemoveComponent<ScriptComponent>(e);
+	m_entityManager.RemoveComponent<BarrelComponent>(e);
 
+	if (m_entityManager.HasComponent<MagazineModificationComponent>(e)) m_entityManager.RemoveComponent<MagazineModificationComponent>(e);
+	
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
 		auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
@@ -311,6 +330,20 @@ void GameLayer::OnImGuiRender()
 
 }
 
+void GameLayer::ToggleFlashlight()
+{
+	m_entityManager.Collect<DOG::SpotLightComponent>().Do([](DOG::SpotLightComponent& slc)
+		{
+			if (slc.isMainPlayerSpotlight)
+			{
+				if (slc.strength == 0.6f)
+					slc.strength = 0.0f;
+				else
+					slc.strength = 0.6f;
+			}
+		});
+}
+
 void GameLayer::OnEvent(DOG::IEvent& event)
 {
 	using namespace DOG;
@@ -334,7 +367,12 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	}
 	case EventType::KeyPressedEvent:
 	{
-		Input(EVENT(KeyPressedEvent).key);
+		if (EVENT(KeyPressedEvent).key == DOG::Key::E)
+		{
+			Interact();
+		}
+		else
+			Input(EVENT(KeyPressedEvent).key);
 		break;
 	}
 	case EventType::KeyReleasedEvent:
@@ -595,6 +633,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::CreateEntity>("CreateEntity");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::DestroyEntity>("DestroyEntity");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::AddComponent>("AddComponent");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::RemoveComponent>("RemoveComponent");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::ModifyComponent>("ModifyComponent");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetTransformPosData>("GetTransformPosData");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetTransformScaleData>("GetTransformScaleData");
@@ -612,9 +651,16 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::HasComponent>("HasComponent");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::PlayAudio>("PlayAudio");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPassiveType>("GetPassiveType");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetActiveType>("GetActiveType");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetBarrelType>("GetBarrelType");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetModificationType>("GetModificationType");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAmmoCapacityForBarrelType>("GetAmmoCapacityForBarrelType");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAmmoCountPerPickup>("GetAmmoCountPerPickup");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::UpdateMagazine>("UpdateMagazine");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::IsBulletLocal>("IsBulletLocal");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::Exists>("Exists");
-
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetEntityTypeAsString>("GetEntityTypeAsString");
+	
 
 	global->SetLuaInterface(luaInterface);
 
@@ -714,7 +760,7 @@ void GameLayer::Input(DOG::Key key)
 				inputC.up = true;
 			if (key == DOG::Key::Q)
 				inputC.switchComp = true;
-			if (key == DOG::Key::E)
+			if (key == DOG::Key::T)
 				inputC.switchBarrelComp = true;
 			if (key == DOG::Key::M)
 				inputC.switchMagazineComp = true;
@@ -749,7 +795,7 @@ void GameLayer::Release(DOG::Key key)
 				inputC.up = false;
 			if (key == DOG::Key::Q)
 				inputC.switchComp = false;
-			if (key == DOG::Key::E)
+			if (key == DOG::Key::T)
 				inputC.switchBarrelComp = false;
 			if (key == DOG::Key::M)
 				inputC.switchMagazineComp = false;
@@ -979,6 +1025,27 @@ void GameLayer::CheatSettingsImGuiMenu()
 	{
 		RespawnDeadPlayer(GetPlayer());
 	}
+	static bool isLegacy = false;
+	if (!isLegacy)
+	{
+		if (ImGui::Button("Legacy weapon system"))
+		{
+			auto player = GetPlayer();
+			LuaMain::GetScriptManager()->RemoveScript(player, "Gun.lua");
+			LuaMain::GetScriptManager()->AddScript(player, "GunLegacy.lua");
+			isLegacy = !isLegacy;
+		}
+	}
+	else
+	{
+		if (ImGui::Button("Normal weapon system"))
+		{
+			auto player = GetPlayer();
+			LuaMain::GetScriptManager()->RemoveScript(player, "GunLegacy.lua");
+			LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
+			isLegacy = !isLegacy;
+		}
+	}
 }
 
 void GameLayer::CheatDebugMenu(bool&)
@@ -1000,4 +1067,11 @@ void GameLayer::CheatDebugMenu(bool&)
 		CheatSettingsImGuiMenu();
 		ImGui::EndMenu(); // "Cheats"
 	}
+}
+
+void GameLayer::Interact()
+{
+	auto player = GetPlayer();
+	if (!m_entityManager.HasComponent<InteractionQueryComponent>(player))
+		m_entityManager.AddComponent<InteractionQueryComponent>(player);
 }

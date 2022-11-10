@@ -40,8 +40,62 @@ public:
 	}
 };
 
+class PickupLerpAnimationSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	#define SPEED_MULTIPLER 0.25f
+	#define DISTANCE_THRESHOLD 0.60f
+public:
+	SYSTEM_CLASS(DOG::PickupLerpAnimateComponent, DOG::TransformComponent);
+	ON_UPDATE(DOG::PickupLerpAnimateComponent, DOG::TransformComponent);
+	void OnUpdate(DOG::PickupLerpAnimateComponent& animator, DOG::TransformComponent& transform)
+	{
+		animator.currentOrigin = Lerp(animator.currentOrigin, animator.baseTarget, (float)DOG::Time::DeltaTime() * SPEED_MULTIPLER);
+		transform.SetPosition({ transform.GetPosition().x, animator.currentOrigin, transform.GetPosition().z });
 
+		if (abs(transform.GetPosition().y - animator.baseTarget) < DISTANCE_THRESHOLD)
+		{
+			std::swap(animator.baseTarget,animator.baseOrigin);
+		}
 
+		transform.RotateW({(float)DOG::Time::DeltaTime(), (float)DOG::Time::DeltaTime(), 0.0f});
+	}
+
+	float Lerp(float a, float b, float t)
+	{
+		return (1.0f - t) * a + b * t;
+	}
+};
+
+class PickUpTranslateToPlayerSystem : public DOG::ISystem
+{
+using Vector3 = DirectX::SimpleMath::Vector3;
+#define PICKUP_SPEED 17.0f
+#define PICKUP_RADIUS 0.5f
+#define PICKUP_Y_OFFSET 0.0f
+public:
+	SYSTEM_CLASS(LerpToPlayerComponent, DOG::TransformComponent, DOG::PickupLerpAnimateComponent);
+	ON_UPDATE_ID(LerpToPlayerComponent, DOG::TransformComponent, DOG::PickupLerpAnimateComponent);
+
+	void OnUpdate(DOG::entity pickup, LerpToPlayerComponent& ltpc, DOG::TransformComponent& tc, DOG::PickupLerpAnimateComponent& plac)
+	{
+		auto& mgr = DOG::EntityManager::Get();
+		auto newPos = Vector3::Lerp(plac.origin, plac.target, (float)DOG::Time::DeltaTime() * PICKUP_SPEED);
+		tc.SetPosition(newPos);
+
+		auto& ptc = mgr.GetComponent<DOG::TransformComponent>(ltpc.player);
+		
+		plac.origin = tc.GetPosition();
+		plac.target = { ptc.GetPosition().x, ptc.GetPosition().y - PICKUP_Y_OFFSET, ptc.GetPosition().z };
+		if (Vector3::Distance(tc.GetPosition(), ptc.GetPosition()) < PICKUP_RADIUS)
+		{
+			std::string luaEventName = std::string("ItemPickup") + std::to_string(ltpc.player);
+			EntityTypes entityType = mgr.GetComponent<NetworkId>(pickup).entityTypeId;
+			DOG::LuaMain::GetEventSystem()->InvokeEvent(luaEventName, (u32)entityType);
+			mgr.DeferredEntityDestruction(pickup);
+		}
+	}
+};
 
 class LerpColorSystem : public DOG::ISystem
 {

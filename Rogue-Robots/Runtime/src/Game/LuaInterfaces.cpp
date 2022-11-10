@@ -109,11 +109,46 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddHomingMissile(context, e);
 	}
+	else if (compType == "ActiveItem")
+	{
+		AddActiveItem(context, e);
+	}
+	else if (compType == "BarrelComponent")
+	{
+		AddBarrelComponent(context, e);
+	}
+	else if (compType == "MagazineModificationComponent")
+	{
+		AddMagazineModificationComponent(context, e);
+	}
 	//Add more component types here.
 	else
 	{
 		assert(false && "Lua can't create component");
 	}
+}
+
+void EntityInterface::RemoveComponent(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	std::string compType = context->GetString();
+	if (compType == "ActiveItem")
+	{
+		EntityManager::Get().RemoveComponent<ActiveItemComponent>(e);
+		return;
+	}
+	else if (compType == "BarrelComponent")
+	{
+		EntityManager::Get().RemoveComponent<BarrelComponent>(e);
+		return;
+	}
+	else if (compType == "MagazineModificationComponent")
+	{
+		EntityManager::Get().RemoveComponent<MagazineModificationComponent>(e);
+		return;
+	}
+
+	ASSERT(false, "Lua can't remove component");
 }
 
 void EntityInterface::ModifyComponent(LuaContext* context)
@@ -262,6 +297,28 @@ void EntityInterface::Exists(DOG::LuaContext* context)
 	context->ReturnBoolean(EntityManager::Get().Exists(e));
 }
 
+void EntityInterface::GetEntityTypeAsString(DOG::LuaContext* context)
+{
+	EntityTypes type = (EntityTypes)context->GetInteger();
+	switch (type)
+	{
+	case EntityTypes::Trampoline:
+		context->ReturnString("Trampoline");
+			break;
+	case EntityTypes::FrostMagazineModification:
+		context->ReturnString("FrostMagazineModification");
+		break;
+	case EntityTypes::GrenadeBarrel :
+		context->ReturnString("GrenadeBarrel");
+		break;
+	case EntityTypes::MissileBarrel:
+		context->ReturnString("MissileBarrel");
+		break;
+	case EntityTypes::IncreaseMaxHp:
+		context->ReturnString("MaxHealthBoost");
+		break;
+	}
+}
 
 //void EntityInterface::AgentHit(DOG::LuaContext* context)
 //{
@@ -304,8 +361,11 @@ const std::unordered_map<std::string, bool (*) (entity)> componentMap = {
 	{ "Bullet", HasComp<BulletComponent>},
 	{ "PlayerStats", HasComp<PlayerStatsComponent> },
 	{ "PassiveItem", HasComp<PassiveItemComponent> },
+	{ "ActiveItem", HasComp<ActiveItemComponent> },
 	{ "ThisPlayer", HasComp<ThisPlayer> },
 	{ "FrostEffect", HasComp<FrostEffectComponent> },
+	{ "BarrelComponent", HasComp<BarrelComponent> },
+	{ "MagazineModificationComponent", HasComp<MagazineModificationComponent> },
 };
 
 void EntityInterface::HasComponent(LuaContext* context)
@@ -336,11 +396,61 @@ const std::unordered_map<PassiveItemComponent::Type, std::string> passiveTypeMap
 	{ PassiveItemComponent::Type::LifeSteal, "LifeSteal" },
 };
 
+const std::unordered_map<ActiveItemComponent::Type, std::string> activeTypeMap = {
+	{ ActiveItemComponent::Type::Trampoline, "Trampoline" },
+};
+
+const std::unordered_map<BarrelComponent::Type, std::string> barrelTypeMap = {
+	{ BarrelComponent::Type::Bullet, "BulletBarrel"},
+	{ BarrelComponent::Type::Missile, "MissileBarrel" },
+	{ BarrelComponent::Type::Grenade, "GrenadeBarrel" },
+};
+
+const std::unordered_map<MagazineModificationComponent::Type, std::string> modificationTypeMap = {
+	{ MagazineModificationComponent::Type::None, "None" },
+	{ MagazineModificationComponent::Type::Frost, "FrostMagazineModification"},
+};
+
 void EntityInterface::GetPassiveType(LuaContext* context)
 {
 	entity e = context->GetInteger();
 	auto type = EntityManager::Get().GetComponent<PassiveItemComponent>(e).type;
 	context->ReturnString(passiveTypeMap.at(type));
+}
+
+void EntityInterface::GetActiveType(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	auto type = EntityManager::Get().GetComponent<ActiveItemComponent>(e).type;
+	context->ReturnString(activeTypeMap.at(type));
+}
+
+void EntityInterface::GetBarrelType(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+ 	auto type = EntityManager::Get().GetComponent<BarrelComponent>(e).type;
+	context->ReturnString(barrelTypeMap.at(type));
+}
+
+void EntityInterface::GetModificationType(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	auto type = EntityManager::Get().GetComponent<MagazineModificationComponent>(e).type;
+	context->ReturnString(modificationTypeMap.at(type));
+}
+
+void EntityInterface::GetAmmoCapacityForBarrelType(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	auto capacity = EntityManager::Get().GetComponent<BarrelComponent>(e).maximumAmmoCapacityForType;
+	context->ReturnInteger(capacity);
+}
+
+void EntityInterface::GetAmmoCountPerPickup(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	auto ammoPerPickup = EntityManager::Get().GetComponent<BarrelComponent>(e).ammoPerPickup;
+	context->ReturnInteger(ammoPerPickup);
 }
 
 void EntityInterface::GetTransformScaleData(LuaContext* context)
@@ -638,6 +748,39 @@ void EntityInterface::ModifyPointLightStrength(DOG::LuaContext* context, DOG::en
 	auto& c = EntityManager::Get().GetComponent<PointLightComponent>(e);
 	c.dirty = true;
 	c.strength = (f32)context->GetDouble();
+}
+
+void EntityInterface::AddActiveItem(DOG::LuaContext* context, DOG::entity e)
+{
+	ActiveItemComponent::Type type = (ActiveItemComponent::Type)context->GetInteger();
+	EntityManager::Get().AddComponent<ActiveItemComponent>(e).type = type;
+}
+
+void EntityInterface::AddBarrelComponent(DOG::LuaContext* context, DOG::entity e)
+{
+	BarrelComponent::Type type = (BarrelComponent::Type)context->GetInteger();
+	auto currentAmmo = context->GetInteger();
+	auto ammoCap = context->GetInteger();
+
+	auto& bc = EntityManager::Get().AddComponent<BarrelComponent>(e);
+	bc.type = type;
+	bc.maximumAmmoCapacityForType = ammoCap;
+	bc.currentAmmoCount = currentAmmo;
+}
+
+void EntityInterface::AddMagazineModificationComponent(DOG::LuaContext* context, DOG::entity e)
+{
+	MagazineModificationComponent::Type type = (MagazineModificationComponent::Type)context->GetInteger();
+
+	auto& mmc = EntityManager::Get().AddComponent<MagazineModificationComponent>(e);
+	mmc.type = type;
+}
+
+void EntityInterface::UpdateMagazine(DOG::LuaContext* context)
+{
+	entity player = context->GetInteger();
+	auto currentMagazineCount = context->GetInteger();
+	EntityManager::Get().GetComponent<BarrelComponent>(player).currentAmmoCount = currentMagazineCount;
 }
 
 //---------------------------------------------------------------------------------------------------------

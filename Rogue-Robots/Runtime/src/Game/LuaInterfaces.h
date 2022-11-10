@@ -66,6 +66,8 @@ public:
 	//The user also has to send the appropriate input for that component.
 	void AddComponent(DOG::LuaContext* context);
 
+	void RemoveComponent(DOG::LuaContext* context);
+
 	//Takes an entity-ID as input.
 	//Also takes a string that tells what component to change.
 	//The user also has to send the appropriate input for that component.
@@ -100,13 +102,26 @@ public:
 	void PlayAudio(DOG::LuaContext* context);
 
 	void GetPassiveType(DOG::LuaContext* context);
+
+	void GetActiveType(DOG::LuaContext* context);
+
+	void GetBarrelType(DOG::LuaContext* context);
+
+	void GetModificationType(DOG::LuaContext* context);
+
+	void GetAmmoCapacityForBarrelType(DOG::LuaContext* context);
+
+	void GetAmmoCountPerPickup(DOG::LuaContext* context);
 	
 	void IsBulletLocal(DOG::LuaContext* context);
 
 	void Exists(DOG::LuaContext* context);
 
+	void GetEntityTypeAsString(DOG::LuaContext* context);
+
 	//void AgentHit(DOG::LuaContext* context);
 
+	void UpdateMagazine(DOG::LuaContext* context);
 
 private:
 	void AddModel(DOG::LuaContext* context, DOG::entity e);
@@ -143,6 +158,12 @@ private:
 	void ModifyPlayerStats(DOG::LuaContext* context, DOG::entity e);
 
 	void ModifyPointLightStrength(DOG::LuaContext* context, DOG::entity e);
+
+	void AddActiveItem(DOG::LuaContext* context, DOG::entity e);
+
+	void AddBarrelComponent(DOG::LuaContext* context, DOG::entity e);
+
+	void AddMagazineModificationComponent(DOG::LuaContext* context, DOG::entity e);
 };
 
 class AssetInterface : public LuaInterface

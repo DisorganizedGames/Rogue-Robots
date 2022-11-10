@@ -92,6 +92,224 @@ public:
 	}
 };
 
+class PickupItemInteractionSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	#define REQUIRED_DISTANCE_DELTA 2.0f
+	#define REQUIRED_DOT_DELTA -0.80f
+public:
+	SYSTEM_CLASS(DOG::ThisPlayer, DOG::TransformComponent, PlayerControllerComponent);
+	ON_EARLY_UPDATE_ID(DOG::ThisPlayer, DOG::TransformComponent, PlayerControllerComponent);
+
+	void OnEarlyUpdate(DOG::entity player, DOG::ThisPlayer&, DOG::TransformComponent& ptc, PlayerControllerComponent& pcc)
+	{
+		auto& mgr = DOG::EntityManager::Get();
+		auto playerPosition = ptc.GetPosition();
+		DOG::entity closestPickup = DOG::NULL_ENTITY;
+		float closestDistance = FLT_MAX;
+
+		mgr.Collect<PickupComponent, DOG::TransformComponent>().Do([&closestDistance, &closestPickup, &playerPosition](DOG::entity pickUp, PickupComponent&, DOG::TransformComponent& tc)
+			{
+				float distanceToPickup = Vector3::Distance(playerPosition, tc.GetPosition());
+				if (distanceToPickup < closestDistance)
+				{
+					closestDistance = distanceToPickup;
+					if (closestDistance < REQUIRED_DISTANCE_DELTA)
+					{
+						closestPickup = pickUp;
+					}
+				}
+			});
+		//If we are not near enough or no items exist:
+		if (closestPickup == DOG::NULL_ENTITY)
+			return;
+
+		auto& tc = mgr.GetComponent<DOG::TransformComponent>(closestPickup);
+		auto cameraForward = mgr.GetComponent<DOG::TransformComponent>(pcc.cameraEntity).GetForward();
+
+		Vector3 pickUpToPlayerDirection = playerPosition - tc.GetPosition();
+		pickUpToPlayerDirection.Normalize();
+
+		float dot = cameraForward.Dot(pickUpToPlayerDirection);
+		bool isLookingAtItem = dot < REQUIRED_DOT_DELTA;
+
+		if (!isLookingAtItem)
+			return;
+
+		//Checks are done, and this pickup is now considered eligible for being picked up by the player:
+		
+		//Add the component that highlights it as an eligible item, e.g. for rendering the item name text:
+		mgr.AddComponent<EligibleForPickupComponent>(closestPickup).player = player;
+		
+		//Check if the player has performed an interaction query:
+		if (mgr.HasComponent<InteractionQueryComponent>(player))
+		{
+			//If so we now need to remove the interaction query and have the item lerp to the player:
+			mgr.RemoveComponent<InteractionQueryComponent>(player);
+			//But only if it is not currently lerping towards the player:
+			if (!mgr.HasComponent<LerpToPlayerComponent>(closestPickup))
+			{
+				mgr.AddComponent<LerpToPlayerComponent>(closestPickup).player = player;
+				auto& plac = mgr.GetComponent<DOG::PickupLerpAnimateComponent>(closestPickup);
+				plac.origin = tc.GetPosition();
+				plac.target = playerPosition;
+			}
+		}
+	}
+};
+
+class MVPRenderPickupItemUIText : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(PickupComponent, EligibleForPickupComponent);
+	ON_UPDATE(PickupComponent, EligibleForPickupComponent);
+
+	void OnUpdate(PickupComponent& pc, EligibleForPickupComponent& efpg)
+	{
+		//Do not render other players' eligible pickup item names.
+		if (efpg.player != DOG::GetPlayer())
+			return;
+
+		ImVec2 size;
+		size.x = 285;
+		size.y = 300;
+
+		auto r = DOG::Window::GetWindowRect();
+		ImVec2 pos;
+		constexpr float xOffset = -500.0f;
+		constexpr float yOffset = 400.0f;
+		pos.x = r.right - size.x + xOffset;
+		pos.y = r.top + yOffset;
+
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+		ImGui::SetNextWindowPos(pos);
+		ImGui::SetNextWindowSize(size);
+		if (ImGui::Begin("Pickup item text", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+		{
+			ImGui::PushFont(DOG::Window::GetFont());
+			ImGui::SetWindowFontScale(1.3f);
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
+			ImGui::Text("[E]");
+			ImGui::PopStyleColor(1);
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
+			ImGui::SameLine();
+			ImGui::Text("Pick up");
+			ImGui::Separator();
+			ImGui::SetWindowFontScale(1.7f);
+			ImGui::Text(pc.itemName);
+			ImGui::PopStyleColor(1);
+			ImGui::PopFont();
+		}
+		ImGui::End();
+		ImGui::PopStyleColor();
+	}
+};
+
+class CleanupItemInteractionSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(EligibleForPickupComponent);
+	ON_LATE_UPDATE_ID(EligibleForPickupComponent);
+
+	void OnLateUpdate(DOG::entity pickup, EligibleForPickupComponent&)
+	{
+		//For now, we simply remove any such item components:
+		DOG::EntityManager::Get().RemoveComponent<EligibleForPickupComponent>(pickup);
+	}
+};
+
+class CleanupPlayerStateSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DOG::ThisPlayer);
+	ON_LATE_UPDATE_ID(DOG::ThisPlayer);
+
+	void OnLateUpdate(DOG::entity player, DOG::ThisPlayer&)
+	{
+		//System for checking various player states, removing them, etc...
+		if (DOG::EntityManager::Get().HasComponent<InteractionQueryComponent>(player))
+			DOG::EntityManager::Get().RemoveComponent<InteractionQueryComponent>(player);
+	}
+};
+
+class MVPRenderAmmunitionTextSystem : public DOG::ISystem
+{
+#define INFINITY_EQUIVALENT 999'999
+public:
+	SYSTEM_CLASS(DOG::ThisPlayer, BarrelComponent);
+	ON_UPDATE_ID(DOG::ThisPlayer, BarrelComponent);
+
+	void OnUpdate(DOG::entity player, DOG::ThisPlayer, BarrelComponent& bc)
+	{
+		std::string barrelType;
+
+		if (DOG::EntityManager::Get().HasComponent<MagazineModificationComponent>(player))
+		{
+			auto type = DOG::EntityManager::Get().GetComponent<MagazineModificationComponent>(player).type;
+			switch (type)
+			{
+			case MagazineModificationComponent::Type::Frost:
+			{
+				barrelType = "Frost ";
+				break;
+			}
+			}
+		}
+
+		switch (bc.type)
+		{
+		case BarrelComponent::Type::Missile:
+		{
+			barrelType += "Missiles";
+			break;
+		}
+		case BarrelComponent::Type::Grenade:
+		{
+			barrelType += "Grenades";
+			break;
+		}
+		case BarrelComponent::Type::Bullet:
+		{
+			barrelType += "Bullets";
+			break;
+		}
+		}
+		if (barrelType.empty())
+			return;
+
+		std::string ammoText = std::to_string(bc.currentAmmoCount) + std::string(" / "); 
+		bc.maximumAmmoCapacityForType == INFINITY_EQUIVALENT ? ammoText += "INF." : ammoText += std::to_string(bc.maximumAmmoCapacityForType);
+
+		ImVec2 size;
+		size.x = 280;
+		size.y = 100;
+
+		auto r = DOG::Window::GetWindowRect();
+		ImVec2 pos;
+		constexpr float xOffset = -60.0f;
+		constexpr float yOffset = -170.0f;
+		pos.x = r.right - size.x + xOffset;
+		pos.y = r.bottom + yOffset;
+
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+		ImGui::SetNextWindowPos(pos);
+		ImGui::SetNextWindowSize(size);
+		if (ImGui::Begin("Ammo text", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+		{
+			ImGui::PushFont(DOG::Window::GetFont());
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
+			ImGui::SetWindowFontScale(2.0f);
+			ImGui::Text(barrelType.c_str());
+			ImGui::Separator();
+			ImGui::Text(ammoText.c_str());
+			ImGui::PopStyleColor(1);
+			ImGui::PopFont();
+		}
+		ImGui::End();
+		ImGui::PopStyleColor();
+	}
+};
+
 class PlayerMovementSystem : public DOG::ISystem
 {
 	using TransformComponent = DOG::TransformComponent;
@@ -168,5 +386,48 @@ public:
 			slc.strength = 0.6f;
 		else
 			slc.strength = 0.0f;
+	}
+};
+
+class MVPRenderReloadHintTextSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DOG::ThisPlayer, BarrelComponent);
+	ON_UPDATE(DOG::ThisPlayer, BarrelComponent);
+
+	void OnUpdate(DOG::ThisPlayer, BarrelComponent& bc)
+	{
+		if (bc.type != BarrelComponent::Type::Bullet)
+			return;
+
+		if (!(bc.currentAmmoCount <= 3))
+			return;
+
+		ImVec2 size;
+		size.x = 240;
+		size.y = 100;
+
+		auto r = DOG::Window::GetWindowRect();
+		ImVec2 pos;
+		constexpr const float xOffset = 50.0f;
+		const float centerXOfScreen = (float)(abs(r.right - r.left)) * 0.5f;
+		const float centerYOfScreen = (float)(abs(r.bottom - r.top)) * 0.5f;
+		pos.x = r.left + centerXOfScreen + xOffset;
+		pos.y = r.top + centerYOfScreen;
+
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+		ImGui::SetNextWindowPos(pos);
+		ImGui::SetNextWindowSize(size);
+		if (ImGui::Begin("Reload text", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+		{
+			ImGui::PushFont(DOG::Window::GetFont());
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
+			ImGui::SetWindowFontScale(1.4f);
+			ImGui::Text("[R] Reload");
+			ImGui::PopStyleColor(1);
+			ImGui::PopFont();
+		}
+		ImGui::End();
+		ImGui::PopStyleColor();
 	}
 };
