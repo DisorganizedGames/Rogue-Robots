@@ -494,7 +494,8 @@ bool WFC::GenerateLevel(uint32_t nrOfRooms, uint32_t maxWidth, uint32_t maxHeigh
 						continue;
 					}
 
-					float closestDist = 999999999999999999.f;
+					float closestDist = std::numeric_limits<float>::max();
+
 					uint32_t roomIndex = 0;
 					uint32_t doorIndex = 0;
 					//We need to find the closest door that is not in this room.

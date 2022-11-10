@@ -127,13 +127,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="includes.cpp" />
+    <ClCompile Include="Helper.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PQ.cpp" />
     <ClCompile Include="WFC.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="includes.h" />
+    <ClInclude Include="Helper.h" />
     <ClInclude Include="PQ.h" />
     <ClInclude Include="WFC.h" />
   </ItemGroup>

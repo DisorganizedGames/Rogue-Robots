@@ -9,6 +9,7 @@
 #include <queue>
 #include <memory>
 #include <cstdlib>
+#include <limits>
 
 //Used to save data read from the input.
 struct Block
