@@ -370,6 +370,9 @@ namespace DOG
 
 	void ScriptManager::StartScripts()
 	{
+		if (m_callStartOnCreationOfScripts)
+			return;
+
 		//Set that StartScripts function have been called
 		m_callStartOnCreationOfScripts = true;
 

@@ -178,7 +178,6 @@ void GameLayer::StartMainScene()
 	default:
 		break;
 	}
-
 	LuaMain::GetScriptManager()->StartScripts();
 	if(m_networkStatus != NetworkStatus::Offline)
 		m_netCode.OnStartup();
