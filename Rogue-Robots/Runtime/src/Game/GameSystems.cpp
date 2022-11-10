@@ -66,7 +66,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	// Move player
 	auto moveTowards = GetMoveTowards(input, forward, right);
 
-	if (player.debugCamera != DOG::NULL_ENTITY)
+	if (player.debugCamera != DOG::NULL_ENTITY && isThisPlayer)
 	{
 		camera.isMainCamera = false;
 		MoveDebugCamera(player.debugCamera, moveTowards, forward, right, 10.f, input);

@@ -172,6 +172,10 @@ function OnUpdate()
 	end
 end
 
+function OnDestroy()
+	EventSystem:UnRegister("ItemPickup" .. EntityID, OnPickup)
+end
+
 function CreateBulletEntity(bullet, transformEntity)
 	bullet.entity = Scene:CreateEntity(EntityID)
 	table.insert(bullets, bullet)

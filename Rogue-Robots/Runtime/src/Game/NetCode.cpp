@@ -211,17 +211,18 @@ void NetCode::OnUpdate()
 
 											if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Magazines && !tempCreate->alive && (u32)tempCreate->entityTypeId > (u32)EntityTypes::Agents )
 											{
-												EntityManager::Get().Collect<NetworkPlayerComponent>().Do([&](entity id, NetworkPlayerComponent& playerC)
+												EntityManager::Get().Collect<NetworkPlayerComponent, PlayerAliveComponent>().Do([&](entity id, NetworkPlayerComponent& playerC, PlayerAliveComponent&)
 													{
 														if (playerC.playerId == tempCreate->playerId)
 														{
-															std::string luaEventName = std::string("ItemPickup") + std::to_string(id);
-															DOG::LuaMain::GetEventSystem()->InvokeEvent(luaEventName, (u32)tempCreate->entityTypeId);
+														
 															EntityManager::Get().Collect<NetworkId>().Do([&](entity e, NetworkId& nIdC)
 																{
 																	
 																	if (nIdC.entityTypeId == tempCreate->entityTypeId && nIdC.id == tempCreate->id)
 																	{
+																		std::string luaEventName = std::string("ItemPickup") + std::to_string(id);
+																		DOG::LuaMain::GetEventSystem()->InvokeEvent(luaEventName, (u32)tempCreate->entityTypeId);
 																		m_entityManager.RemoveComponent<NetworkId>(e);
 																		m_entityManager.DeferredEntityDestruction(e);
 																	}

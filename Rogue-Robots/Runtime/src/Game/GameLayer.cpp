@@ -31,7 +31,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PickupLerpAnimationSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<MVPPickupItemInteractionSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<PickupItemInteractionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerMovementSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerJumpRefreshSystem>());
 
@@ -280,12 +280,8 @@ void GameLayer::KillPlayer(DOG::entity e)
 	std::string luaEventName = std::string("ItemPickup") + std::to_string(e);
 	m_entityManager.RemoveComponent<ScriptComponent>(e);
 	m_entityManager.RemoveComponent<BarrelComponent>(e);
-	if (m_entityManager.HasComponent<MagazineModificationComponent>(e)) m_entityManager.RemoveComponent<MagazineModificationComponent>(e);
 
-	{
-		auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
-		controller.debugCamera = m_mainScene->CreateEntity();
-	}
+	if (m_entityManager.HasComponent<MagazineModificationComponent>(e)) m_entityManager.RemoveComponent<MagazineModificationComponent>(e);
 	
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{

@@ -1,7 +1,6 @@
 #pragma once
 #include <DOGEngine.h>
 #include "Scene.h"
-#include "TestScene.h"
 
 
 class TunnelRoom0Scene : public Scene
@@ -35,7 +34,6 @@ public:
 	void SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>> entityCreators = {}) override;
 
 private:
-	TestScene m_test;
 	std::function<std::vector<DOG::entity>(const EntityTypes, const DirectX::SimpleMath::Vector3&, u8, f32)> m_spawnAgents;
 	u8 m_nrOfPlayers;
 };

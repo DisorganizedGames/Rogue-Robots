@@ -92,7 +92,7 @@ public:
 	}
 };
 
-class MVPPickupItemInteractionSystem : public DOG::ISystem
+class PickupItemInteractionSystem : public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	#define REQUIRED_DISTANCE_DELTA 2.0f

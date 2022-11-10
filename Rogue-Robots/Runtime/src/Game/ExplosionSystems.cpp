@@ -91,21 +91,22 @@ void ExplosionEffectSystem::AddEffectsToExplosion(DOG::entity parentEntity, DOG:
 		if (!modelAsset)
 		{
 			std::cout << "Model has not been loaded in yet! Model ID: " << model.id << "\n";
-			return;
 		}
+		else
+		{
+			MaterialHandle materialHandle;
+			materialHandle.handle = static_cast<u64>(materialTable.GetIntFromTable("materialHandle"));
 
-		MaterialHandle materialHandle;
-		materialHandle.handle = static_cast<u64>(materialTable.GetIntFromTable("materialHandle"));
+			LuaTable albedoFactor = materialTable.GetTableFromTable("albedoFactor");
 
-		LuaTable albedoFactor = materialTable.GetTableFromTable("albedoFactor");
+			MaterialDesc materialDesc{};
+			materialDesc.albedoFactor = { albedoFactor.GetFloatFromTable("x"), albedoFactor.GetFloatFromTable("y"), albedoFactor.GetFloatFromTable("z") };
+			materialDesc.roughnessFactor = (float)materialTable.GetDoubleFromTable("roughnessFactor");
+			materialDesc.metallicFactor = (float)materialTable.GetDoubleFromTable("metallicFactor");
 
-		MaterialDesc materialDesc{};
-		materialDesc.albedoFactor = { albedoFactor.GetFloatFromTable("x"), albedoFactor.GetFloatFromTable("y"), albedoFactor.GetFloatFromTable("z") };
-		materialDesc.roughnessFactor = (float)materialTable.GetDoubleFromTable("roughnessFactor");
-		materialDesc.metallicFactor = (float)materialTable.GetDoubleFromTable("metallicFactor");
-
-		EntityManager::Get().AddComponent<SubmeshRenderer>(explosionEntity, modelAsset->gfxModel->mesh.mesh, materialHandle, materialDesc);
-		EntityManager::Get().RemoveComponent<ModelComponent>(explosionEntity);
+			EntityManager::Get().AddComponent<SubmeshRenderer>(explosionEntity, modelAsset->gfxModel->mesh.mesh, materialHandle, materialDesc);
+			EntityManager::Get().RemoveComponent<ModelComponent>(explosionEntity);
+		}
 	}
 
 	// Add dynamic point light

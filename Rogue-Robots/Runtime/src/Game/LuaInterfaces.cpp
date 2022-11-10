@@ -428,7 +428,7 @@ void EntityInterface::GetActiveType(DOG::LuaContext* context)
 void EntityInterface::GetBarrelType(DOG::LuaContext* context)
 {
 	entity e = context->GetInteger();
-	auto type = EntityManager::Get().GetComponent<BarrelComponent>(e).type;
+ 	auto type = EntityManager::Get().GetComponent<BarrelComponent>(e).type;
 	context->ReturnString(barrelTypeMap.at(type));
 }
 

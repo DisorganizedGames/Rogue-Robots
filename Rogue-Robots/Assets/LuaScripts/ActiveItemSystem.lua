@@ -43,3 +43,7 @@ function OnPickup(pickup)
 		end
 	end
 end
+
+function OnDestroy()
+	EventSystem:UnRegister("ItemPickup" .. EntityID, OnPickup)
+end
