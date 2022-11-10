@@ -41,8 +41,7 @@
                         ]
                     }
                 },
-                "index" : 0,
-                "scale" : 2.1999998092651367
+                "index" : 0
             },
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
@@ -164,7 +163,11 @@
         },
         {
             "sampler" : 0,
-            "source" : 0
+            "source" : 1
+        },
+        {
+            "sampler" : 0,
+            "source" : 2
         },
         {
             "sampler" : 0,
@@ -172,18 +175,19 @@
         },
         {
             "sampler" : 0,
-            "source" : 0
+            "source" : 1
         },
         {
             "sampler" : 0,
-            "source" : 0
-        },
-        {
-            "sampler" : 0,
-            "source" : 2
+            "source" : 3
         }
     ],
     "images" : [
+        {
+            "mimeType" : "image/png",
+            "name" : "brushed_concrete_nor_gl_4k_t",
+            "uri" : "Textures/brushed_concrete_nor_gl_4k_t.png"
+        },
         {
             "mimeType" : "image/jpeg",
             "name" : "brushed_concrete_diff_4k",

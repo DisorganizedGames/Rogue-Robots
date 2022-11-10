@@ -101,14 +101,19 @@
         },
         {
             "sampler" : 0,
-            "source" : 0
+            "source" : 1
         },
         {
             "sampler" : 0,
-            "source" : 1
+            "source" : 2
         }
     ],
     "images" : [
+        {
+            "mimeType" : "image/png",
+            "name" : "brushed_concrete_nor_gl_4k_t",
+            "uri" : "Textures/brushed_concrete_nor_gl_4k_t.png"
+        },
         {
             "mimeType" : "image/jpeg",
             "name" : "brushed_concrete_diff_4k",

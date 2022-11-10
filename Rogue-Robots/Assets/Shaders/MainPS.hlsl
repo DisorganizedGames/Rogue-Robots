@@ -184,6 +184,8 @@ PS_OUT main(VS_OUT input)
         N = normalize(GetFinalNormal(g_aniso_samp, ResourceDescriptorHeap[mat.normal], normalize(input.tan), normalize(input.bitan), normalize(input.nor), input.uv));
     
     output.normals = float4(N, 0.f);
+    output.color = float4(N, 1.0f);
+    return output;
     
     float3 emissiveInput = mat.emissiveFactor.rgb;
     if (mat.emissive != NO_TEXTURE)
