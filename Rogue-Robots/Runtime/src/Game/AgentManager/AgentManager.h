@@ -8,7 +8,7 @@ class AgentManager
 	using Vector3 = DirectX::SimpleMath::Vector3;
 
 private:
-	static constexpr u32 GROUP_BITS = 6;
+	static constexpr u32 GROUP_BITS = 7;
 	static constexpr u32 GROUP_RANGE = 1 << GROUP_BITS;
 	static constexpr u32 MASK = GROUP_RANGE - 1;
 	static constexpr u32 NULL_AGENT = u32(-1);
