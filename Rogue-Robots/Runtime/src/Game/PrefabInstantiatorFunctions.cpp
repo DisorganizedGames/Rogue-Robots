@@ -104,7 +104,7 @@ std::vector<entity> AddFlashlightsToPlayers(const std::vector<entity>& players)
 		dd.color = { 1.0f, 1.0f, 1.0f };
 		dd.direction = tc.GetForward();
 		dd.strength = 0.6f;
-		dd.cutoffAngle = 20.0f;
+		dd.cutoffAngle = 33.0f;
 
 		auto lh = DOG::LightManager::Get().AddSpotLight(dd, DOG::LightUpdateFrequency::PerFrame);
 
