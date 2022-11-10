@@ -131,6 +131,25 @@ namespace DOG::gfx
 		return m_totalMemoryInfo;
 	}
 
+	u64 RenderDevice_DX12::GetTotalTextureSize(const TextureDesc& desc)
+	{
+		D3D12_RESOURCE_DESC rd{};
+		rd.Dimension = to_internal(desc.type);
+		rd.Alignment = desc.alignment;
+		rd.Width = desc.width;
+		rd.Height = desc.height;
+		rd.DepthOrArraySize = (u16)desc.depth;
+		rd.MipLevels = (u16)desc.mipLevels;
+		rd.Format = desc.format;
+		rd.SampleDesc.Count = desc.sampleCount;
+		rd.SampleDesc.Quality = desc.sampleQuality;
+		rd.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+		rd.Flags = desc.flags;
+
+		auto allocInfo = m_device->GetResourceAllocationInfo(0, 1, &rd);
+		return allocInfo.SizeInBytes;
+	}
+
 	Buffer RenderDevice_DX12::CreateBuffer(const BufferDesc& desc, MemoryPool pool)
 	{
 		HRESULT hr{ S_OK };
@@ -529,6 +548,99 @@ namespace DOG::gfx
 		HandleAllocator::TryInsertMove(m_memoryPools, std::move(storage), HandleAllocator::GetSlot(handle.handle));
 
 		return handle;
+	}
+
+	std::vector<Texture> RenderDevice_DX12::CreateAliasedTextures(const std::vector<TextureDesc>& descs, MemoryPool pool)
+	{
+		assert(descs.size() > 0);
+		auto memType = descs[0].memType;
+
+		std::vector<D3D12_RESOURCE_DESC> internalDescs;
+		internalDescs.reserve(descs.size());
+
+		D3D12_RESOURCE_ALLOCATION_INFO finalAllocInfo{};
+		for (const auto& desc : descs)
+		{
+			assert(desc.memType == memType);	// All resources passed must have the same memory type
+
+			D3D12_RESOURCE_DESC rd{};
+			rd.Dimension = to_internal(desc.type);
+			rd.Alignment = desc.alignment;
+			rd.Width = desc.width;
+			rd.Height = desc.height;
+			rd.DepthOrArraySize = (u16)desc.depth;
+			rd.MipLevels = (u16)desc.mipLevels;
+			rd.Format = desc.format;
+			rd.SampleDesc.Count = desc.sampleCount;
+			rd.SampleDesc.Quality = desc.sampleQuality;
+			rd.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+			rd.Flags = desc.flags;
+			internalDescs.push_back(rd);
+
+			auto allocInfo = m_device->GetResourceAllocationInfo(0, 1, &rd);
+
+			finalAllocInfo.Alignment = std::max(finalAllocInfo.Alignment, allocInfo.Alignment);
+			finalAllocInfo.SizeInBytes = std::max(finalAllocInfo.SizeInBytes, allocInfo.SizeInBytes);
+		}
+
+		D3D12MA::ALLOCATION_DESC allocDesc{};
+		allocDesc.HeapType = to_internal(descs[0].memType);
+		if (pool.handle != 0)
+		{
+			auto poolStorage = HandleAllocator::TryGet(m_memoryPools, HandleAllocator::GetSlot(pool.handle));
+			allocDesc.CustomPool = poolStorage.pool.Get();
+			allocDesc.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT;
+			//ad.Flags |= D3D12MA::ALLOCATION_FLAG_NEVER_ALLOCATE;		// If we want tighter constraints, we can enable this
+			assert(allocDesc.HeapType == poolStorage.desc.heapType);
+		}
+
+		ComPtr<D3D12MA::Allocation> alloc;
+		HRESULT hr{ S_OK };
+		hr = m_dma->AllocateMemory(&allocDesc, &finalAllocInfo, &alloc);
+		assert(alloc != NULL && alloc->GetHeap() != NULL);
+
+		/*
+			Create N resources using this alloc
+			Store the same alloc to all Texture_Storage
+		*/
+		std::vector<Texture> texturesToRet;
+		texturesToRet.reserve(internalDescs.size());
+		u32 i = 0;
+		for (const auto& desc : internalDescs)
+		{
+			Texture_Storage storage{};
+			storage.desc = descs[i];
+
+			std::optional<D3D12_CLEAR_VALUE> clearVal;
+			if ((desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
+			{
+				clearVal = D3D12_CLEAR_VALUE();
+				clearVal->Format = descs[i].format;
+				clearVal->DepthStencil.Depth = descs[i].depthClear;
+				clearVal->DepthStencil.Stencil = descs[i].stencilClear;
+			}
+			else if ((desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) == D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET)
+			{
+				clearVal = D3D12_CLEAR_VALUE();
+				clearVal->Format = descs[i].format;
+				clearVal->Color[0] = descs[i].clearColor[0];
+				clearVal->Color[1] = descs[i].clearColor[1];
+				clearVal->Color[2] = descs[i].clearColor[2];
+				clearVal->Color[3] = descs[i].clearColor[3];
+			}
+
+			storage.alloc = alloc;
+			hr = m_dma->CreateAliasingResource(alloc.Get(), 0, &desc, descs[i].initState, clearVal ? &clearVal.value() : nullptr, IID_PPV_ARGS(storage.resource.GetAddressOf()));
+			HR_VFY(hr);
+
+			auto handle = m_rhp.Allocate<Texture>();
+			HandleAllocator::TryInsertMove(m_textures, std::move(storage), HandleAllocator::GetSlot(handle.handle));
+			texturesToRet.push_back(handle);
+
+			++i;
+		}
+
+		return texturesToRet;
 	}
 
 	void RenderDevice_DX12::FreeBuffer(Buffer handle)

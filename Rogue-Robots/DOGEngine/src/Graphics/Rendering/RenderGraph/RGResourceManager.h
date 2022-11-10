@@ -100,6 +100,9 @@ namespace DOG::gfx
 		// Helper for JIT state transitions
 		void SetCurrentState(RGResourceID id, D3D12_RESOURCE_STATES state);
 
+		// Aliasing helper
+		void SetTexture(RGResourceID id, Texture texture);
+
 	private:
 		RenderDevice* m_rd{ nullptr };
 		GPUGarbageBin* m_bin{ nullptr };

@@ -212,46 +212,257 @@ namespace DOG::gfx
 
 	void RGResourceManager::RealizeResources()
 	{
-		for (auto& [_, resource] : m_resources)
+		//for (auto& [_, resource] : m_resources)
+		//{
+		//	// We are only interested in creating resources for Declared resources
+		//	if (resource.variantType != RGResourceVariant::Declared)
+		//		continue;
+
+		//	/*
+		//		@todo: We eventually want add memory aliasing to Textures
+		//	*/
+		//	const RGResourceDeclared& decl = std::get<RGResourceDeclared>(resource.variants);
+		//	if (resource.resourceType == RGResourceType::Texture)
+		//	{
+		//		const auto& rgDesc = std::get<RGTextureDesc>(decl.desc);
+
+		//		auto desc = TextureDesc(MemoryType::Default, rgDesc.format,
+		//			rgDesc.width, rgDesc.height, rgDesc.depth,
+		//			rgDesc.flags, rgDesc.initState)
+		//			.SetMipLevels(rgDesc.mipLevels);
+
+		//		MemoryPool chosenPool;
+		//		if ((rgDesc.flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) == D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET ||
+		//			(rgDesc.flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
+		//		{
+		//			chosenPool = m_rtDsTextureMemPool;
+		//		}
+		//		else
+		//		{
+		//			chosenPool = m_nonRtDsTextureMemPool;
+		//		}
+
+		//		resource.resource = m_rd->CreateTexture(desc, chosenPool).handle;
+		//	}
+		//	else
+		//	{
+		//		const auto& rgDesc = std::get<RGBufferDesc>(decl.desc);
+
+		//		BufferDesc desc(MemoryType::Default, rgDesc.size, rgDesc.flags, rgDesc.initState);
+		//		resource.resource = m_rd->CreateBuffer(desc, m_bufferMemPool).handle;
+		//	}
+		//}
+
+		struct MemoryAliasingData
+		{
+			RGResourceID id;
+			u64 size{ 0 };
+			std::pair<u32, u32> lifetime;
+			TextureDesc desc;
+		};
+
+		std::vector<MemoryAliasingData> rtDsResources, nonRtDsResources;
+
+		for (auto& [id, resource] : m_resources)
 		{
 			// We are only interested in creating resources for Declared resources
 			if (resource.variantType != RGResourceVariant::Declared)
 				continue;
 
-			/*
-				@todo: We eventually want add memory aliasing to Textures
-			*/
 			const RGResourceDeclared& decl = std::get<RGResourceDeclared>(resource.variants);
 			if (resource.resourceType == RGResourceType::Texture)
 			{
 				const auto& rgDesc = std::get<RGTextureDesc>(decl.desc);
-
 				auto desc = TextureDesc(MemoryType::Default, rgDesc.format,
 					rgDesc.width, rgDesc.height, rgDesc.depth,
 					rgDesc.flags, rgDesc.initState)
 					.SetMipLevels(rgDesc.mipLevels);
 
+				MemoryAliasingData data{};
+				data.desc = desc;
+				data.id = id;
+				data.size = m_rd->GetTotalTextureSize(desc);
+				data.lifetime = GetMutableUsageLifetime(id);
+				
 				MemoryPool chosenPool;
 				if ((rgDesc.flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) == D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET ||
 					(rgDesc.flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
 				{
-					chosenPool = m_rtDsTextureMemPool;
+					rtDsResources.push_back(data);
 				}
 				else
 				{
-					chosenPool = m_nonRtDsTextureMemPool;
+					nonRtDsResources.push_back(data);
 				}
 
-				resource.resource = m_rd->CreateTexture(desc, chosenPool).handle;
+				//resource.resource = m_rd->CreateTexture(desc, chosenPool).handle;
 			}
 			else
 			{
 				const auto& rgDesc = std::get<RGBufferDesc>(decl.desc);
 
 				BufferDesc desc(MemoryType::Default, rgDesc.size, rgDesc.flags, rgDesc.initState);
+
 				resource.resource = m_rd->CreateBuffer(desc, m_bufferMemPool).handle;
 			}
 		}
+
+
+		// Sort from largest to smallest
+		std::sort(rtDsResources.begin(), rtDsResources.end(), [](const MemoryAliasingData& lh, const MemoryAliasingData& rh)
+			{
+				return lh.size > rh.size;
+			});
+		std::sort(nonRtDsResources.begin(), nonRtDsResources.end(), [](const MemoryAliasingData& lh, const MemoryAliasingData& rh)
+			{
+				return lh.size > rh.size;
+			});
+
+
+
+		std::set<std::string> handledRtDs, handledNonRtDs;
+		std::vector<std::pair<MemoryAliasingData, std::vector<MemoryAliasingData>>> rtDsPool, nonRtDsPool;
+		for (const auto& parent : rtDsResources)
+		{
+			// Skip already handled
+			if (handledRtDs.contains(parent.id.name))
+				continue;
+
+			rtDsPool.push_back({ parent, {} });
+
+			std::vector<std::pair<u32, u32>> lifetimes;
+			lifetimes.push_back(parent.lifetime);
+
+			for (const auto& potential : rtDsResources)
+			{
+				// Skip self and resources already handled
+				if (potential.id == parent.id || handledRtDs.contains(potential.id.name))
+					continue;
+
+				// If lifetime does not overlap with any recorded lifetimes for parent resource.. we can alias!
+				auto it = std::find_if(lifetimes.begin(), lifetimes.end(), [&](const std::pair<u32, u32>& existingLifetime)
+					{
+						if (existingLifetime.second >= potential.lifetime.first ||
+							existingLifetime.first <= potential.lifetime.second)
+							return true;
+						else
+							return false;
+					});
+
+				// If overlap, continue
+				if (it != lifetimes.cend())
+					continue;
+
+
+				// If it doesn't overlap, track..
+				lifetimes.push_back(potential.lifetime);
+				rtDsPool.back().second.push_back(potential);
+
+				// .. and mark as handled
+				handledRtDs.insert(potential.id.name);
+			}
+
+			handledRtDs.insert(parent.id.name);
+		}
+
+		for (const auto& parent : nonRtDsResources)
+		{
+			// Skip already handled
+			if (handledNonRtDs.contains(parent.id.name))
+				continue;
+
+			nonRtDsPool.push_back({ parent, {} });
+
+			std::vector<std::pair<u32, u32>> lifetimes;
+			lifetimes.push_back(parent.lifetime);
+
+			for (const auto& potential : nonRtDsResources)
+			{
+				// Skip self and resources already handled
+				if (potential.id == parent.id || handledNonRtDs.contains(potential.id.name))
+					continue;
+
+				// If lifetime does not overlap with any recorded lifetimes for parent resource.. we can alias!
+				auto it = std::find_if(lifetimes.begin(), lifetimes.end(), [&](const std::pair<u32, u32>& existingLifetime)
+					{
+						if (existingLifetime.second >= potential.lifetime.first &&
+							existingLifetime.first <= potential.lifetime.second)
+							return true;
+						else
+							return false;
+					});
+
+				// If overlap, continue
+				if (it != lifetimes.cend())
+					continue;
+
+
+				// If it doesn't overlap, track..
+				lifetimes.push_back(potential.lifetime);
+				nonRtDsPool.back().second.push_back(potential);
+
+				// .. and mark as handled
+				handledNonRtDs.insert(potential.id.name);
+			}
+
+			handledNonRtDs.insert(parent.id.name);
+		}
+
+
+
+
+		for (const auto& [parent, aliases] : rtDsPool)
+		{
+			// Grab all descs, including parent
+			std::vector<TextureDesc> totalDescs;
+			totalDescs.reserve(aliases.size());
+
+			totalDescs.push_back(parent.desc);
+			for (const auto& aliasData : aliases)
+				totalDescs.push_back(aliasData.desc);
+
+			auto textures = m_rd->CreateAliasedTextures(totalDescs, m_rtDsTextureMemPool);
+			for (const auto& tex : textures)
+				SetTexture(parent.id, tex);
+
+			// Add to barrier tracking
+			if (aliases.size() > 0)
+			{
+				assert(false); // todo
+			}
+		}
+
+		for (const auto& [parent, aliases] : nonRtDsPool)
+		{
+			// Grab all descs, including parent
+			std::vector<TextureDesc> totalDescs;
+			totalDescs.reserve(aliases.size());
+
+			totalDescs.push_back(parent.desc);
+			for (const auto& aliasData : aliases)
+				totalDescs.push_back(aliasData.desc);
+
+			auto textures = m_rd->CreateAliasedTextures(totalDescs, m_rtDsTextureMemPool);
+			for (const auto& tex : textures)
+				SetTexture(parent.id, tex);
+
+			// Add to barrier tracking
+			if (aliases.size() > 0)
+			{
+				assert(false); // todo
+			}
+		}
+
+		std::cout << "Wow\n";
+
+
+
+
+
+
+
+
+
 
 		// Assign underlying resource to aliased resources
 		for (auto& [_, resource] : m_resources)
@@ -473,5 +684,14 @@ namespace DOG::gfx
 			std::get<RGResourceDeclared>(resource->variants).currState = state;
 		else
 			std::get<RGResourceImported>(resource->variants).currState = state;
+	}
+	void RGResourceManager::SetTexture(RGResourceID id, Texture texture)
+	{
+		auto& res = m_resources.find(id)->second;
+
+		assert(res.resourceType == RGResourceType::Texture);
+		assert(res.variantType == RGResourceVariant::Declared);
+
+		res.resource = texture.handle;
 	}
 }
