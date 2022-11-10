@@ -31,12 +31,13 @@ PS_IN main(uint vID: SV_VertexID, uint iID: SV_InstanceID)
 
 	StructuredBuffer<ShaderInterop_PerFrameData> perFrameTable = ResourceDescriptorHeap[globalData.perFrameTable];
 	ShaderInterop_PerFrameData perFrame = perFrameTable[g_constants.perFrameOffset];
+	
+	output.particleID = iID;
 
 	if (iID >= aliveCounter[0])
 	{
 		output.pos = float4(0, 0, 0, 1);
 		output.tex = float2(0, 0);
-		output.particleID = iID;
 		return output;
 	}
 
@@ -46,7 +47,6 @@ PS_IN main(uint vID: SV_VertexID, uint iID: SV_InstanceID)
 
 	Particle p = particleBuffer[iID];
 	output.pos = float4(p.pos, 1);
-	output.particleID = iID;
 
 	float4 rightOffset = float4(camRight, 0);
 	float4 upOffset = float4(camUp, 0);

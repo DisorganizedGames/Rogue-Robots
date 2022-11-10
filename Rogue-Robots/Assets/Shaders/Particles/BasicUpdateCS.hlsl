@@ -30,18 +30,21 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 
 	StructuredBuffer<ShaderInterop_PerFrameData> perFrameTable = ResourceDescriptorHeap[globalData.perFrameTable];
 	ShaderInterop_PerFrameData perFrame = perFrameTable[g_constants.perFrameOffset];
-
+	
 	uint alive = aliveCounter[0];
-	for (int i = threadID.x; i < alive && i < MAX_PARTICLES_ALIVE; i += GROUP_SIZE)
+	for (int i = threadID.x; i < alive; i += GROUP_SIZE)
 	{
 		Particle p = particleBuffer[i];
+		Emitter e = emitterBuffer[p.emitterHandle];
+		
 		p.age += perFrame.deltaTime;
-		p.pos += p.vel * perFrame.deltaTime;
-		p.vel -= float3(0, 9.82 * perFrame.deltaTime, 0);
-
+		
+		if (p.age < e.lifetime)
+		{
+			p.pos += p.vel * perFrame.deltaTime;
+			p.vel -= float3(0, 9.82 * perFrame.deltaTime, 0);
+		}
 		particleBuffer[i] = p;
 	}
-
-	// Run some compaction algorithm on the particle buffer to remove dead particles
 }
 

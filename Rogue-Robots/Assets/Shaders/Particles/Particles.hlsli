@@ -1,6 +1,6 @@
 #pragma once
 
-#define MAX_PARTICLES_ALIVE 4096
+#define MAX_PARTICLES_ALIVE (16*1024)
 
 struct Particle
 {
@@ -15,7 +15,7 @@ struct Particle
 struct Emitter
 {
 	float3 pos;
-	uint rate;
+	float rate;
 	float lifetime;
 	float3 pad;
 };

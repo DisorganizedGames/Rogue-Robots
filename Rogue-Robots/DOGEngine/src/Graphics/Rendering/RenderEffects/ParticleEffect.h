@@ -28,7 +28,7 @@ namespace DOG::gfx
 		Pipeline m_drawPipeline;
 
 		static constexpr u32 S_MAX_EMITTERS = 128;
-		static constexpr u32 S_MAX_PARTICLES = 4096;
+		static constexpr u32 S_MAX_PARTICLES = 16*1024;
 	
 	private:
 		struct Particle
@@ -44,7 +44,7 @@ namespace DOG::gfx
 		struct Emitter
 		{
 			f32 pos[3] = {0, 0, 0};
-			u32 rate = 0;
+			f32 rate = 0;
 			f32 lifetime = 0;
 			f32 pad[3] = { 0, 0, 0 };
 		};

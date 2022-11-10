@@ -43,8 +43,10 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 		//	aliveCounter[0] = MAX_PARTICLES_ALIVE;
 		//}
 		
-		// Might not be needed
-		//emitterBuffer[emitterIdx] = g_emitter;
+		// Temp Code while this all remains on the GPU
+		g_emitter.pos = float3(106.0f, 80.0f, 31.0f);
+		g_emitter.lifetime = 5.f;
+		emitterBuffer[emitterIdx] = g_emitter;
 		
 	}
 }
