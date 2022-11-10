@@ -41,6 +41,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderAmmunitionTextSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderReloadHintTextSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<CleanupItemInteractionSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<CleanupPlayerStateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
 	m_networkStatus = NetworkStatus::Offline;

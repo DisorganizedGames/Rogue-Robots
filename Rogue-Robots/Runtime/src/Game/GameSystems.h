@@ -146,10 +146,14 @@ public:
 		{
 			//If so we now need to remove the interaction query and have the item lerp to the player:
 			mgr.RemoveComponent<InteractionQueryComponent>(player);
-			mgr.AddComponent<LerpToPlayerComponent>(closestPickup).player = player;
-			auto& plac = mgr.GetComponent<DOG::PickupLerpAnimateComponent>(closestPickup);
-			plac.origin = tc.GetPosition();
-			plac.target =  playerPosition;
+			//But only if it is not currently lerping towards the player:
+			if (!mgr.HasComponent<LerpToPlayerComponent>(closestPickup))
+			{
+				mgr.AddComponent<LerpToPlayerComponent>(closestPickup).player = player;
+				auto& plac = mgr.GetComponent<DOG::PickupLerpAnimateComponent>(closestPickup);
+				plac.origin = tc.GetPosition();
+				plac.target = playerPosition;
+			}
 		}
 	}
 };

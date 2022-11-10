@@ -292,7 +292,6 @@ function OnPickup(pickup)
 	--pickup is an EntityType, NOT an ecs-entity.
 	local pickupTypeString = Entity:GetEntityTypeAsString(pickup)
 	local playerID = EntityID
-
 	if pickupTypeString == "GrenadeBarrel" or pickupTypeString == "MissileBarrel" then
 		--It is a barrel component:
 		local typeOfEquippedBarrel = Entity:GetBarrelType(playerID)
