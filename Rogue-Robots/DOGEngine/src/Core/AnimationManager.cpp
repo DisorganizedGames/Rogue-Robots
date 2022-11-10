@@ -62,12 +62,12 @@ namespace DOG
 	void AnimationManager::SpawnControlWindow(bool& open)
 	{
 		ZoneScopedN("animImgui3");
-		static constexpr f32 m_imguiJointRotMin = -180.0f;
-		static constexpr f32 m_imguiJointRotMax = 180.0f;
-		static constexpr f32 m_imguiJointScaMin = -10.0f;
-		static constexpr f32 m_imguiJointScaMax = 10.0f;
-		static constexpr f32 m_imguiJointPosMin = -1.0f;
-		static constexpr f32 m_imguiJointPosMax = 1.0f;
+		static constexpr f32 imguiJointRotMin = -180.0f;
+		static constexpr f32 imguiJointRotMax = 180.0f;
+		static constexpr f32 imguiJointScaMin = -10.0f;
+		static constexpr f32 imguiJointScaMax = 10.0f;
+		static constexpr f32 imguiJointPosMin = -1.0f;
+		static constexpr f32 imguiJointPosMax = 1.0f;
 
 		if (ImGui::BeginMenu("View"))
 		{
@@ -93,8 +93,7 @@ namespace DOG
 						imguiRAC = &rAC;
 				});
 
-				static bool rigLoaded = m_rigs.size();
-				if(!rigLoaded)
+				if(!m_rigs.size())
 					return ImGui::End();
 
 				static f32 animDuration = {};
@@ -145,17 +144,17 @@ namespace DOG
 				}
 				
 				ImGui::Text("Orientation");
-				ImGui::SliderAngle("Roll", &m_imguiRot[selectedBone].z, m_imguiJointRotMin, m_imguiJointRotMax);
-				ImGui::SliderAngle("Pitch", &m_imguiRot[selectedBone].x, m_imguiJointRotMin, m_imguiJointRotMax);
-				ImGui::SliderAngle("Yaw", &m_imguiRot[selectedBone].y, m_imguiJointRotMin, m_imguiJointRotMax);
+				ImGui::SliderAngle("Roll", &m_imguiRot[selectedBone].z, imguiJointRotMin, imguiJointRotMax);
+				ImGui::SliderAngle("Pitch", &m_imguiRot[selectedBone].x, imguiJointRotMin, imguiJointRotMax);
+				ImGui::SliderAngle("Yaw", &m_imguiRot[selectedBone].y, imguiJointRotMin, imguiJointRotMax);
 				ImGui::Text("Translation");
-				ImGui::SliderFloat("pos X", &m_imguiPos[selectedBone].x, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
-				ImGui::SliderFloat("pos Y", &m_imguiPos[selectedBone].y, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
-				ImGui::SliderFloat("pos Z", &m_imguiPos[selectedBone].z, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
+				ImGui::SliderFloat("pos X", &m_imguiPos[selectedBone].x, imguiJointPosMin, imguiJointPosMax, "%.3f");
+				ImGui::SliderFloat("pos Y", &m_imguiPos[selectedBone].y, imguiJointPosMin, imguiJointPosMax, "%.3f");
+				ImGui::SliderFloat("pos Z", &m_imguiPos[selectedBone].z, imguiJointPosMin, imguiJointPosMax, "%.3f");
 				ImGui::Text("Scale");
-				ImGui::SliderFloat("X", &m_imguiSca[selectedBone].x, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
-				ImGui::SliderFloat("Y", &m_imguiSca[selectedBone].y, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
-				ImGui::SliderFloat("Z", &m_imguiSca[selectedBone].z, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
+				ImGui::SliderFloat("X", &m_imguiSca[selectedBone].x, imguiJointScaMin, imguiJointScaMax, "%.1f");
+				ImGui::SliderFloat("Y", &m_imguiSca[selectedBone].y, imguiJointScaMin, imguiJointScaMax, "%.1f");
+				ImGui::SliderFloat("Z", &m_imguiSca[selectedBone].z, imguiJointScaMin, imguiJointScaMax, "%.1f");
 			}
 			ImGui::End();
 		}
@@ -479,11 +478,11 @@ namespace DOG
 			{ idleIdx, NO_ANIMATION, NO_ANIMATION },
 			{ weight, 0.f, 0.f } };
 
-		baseAc.addedSetters = 1;
-		baseAc.animSetters[0] = baseState;
 
 		for (size_t i = 0; i < m_playerRigAnimators.size(); ++i)
 		{
+			baseAc.addedSetters = 1;
+			baseAc.animSetters[0] = baseState;
 			m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
 			m_playerRigAnimators[i].ProcessAnimationComponent(baseAc);
 		}

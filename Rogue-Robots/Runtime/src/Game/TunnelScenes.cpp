@@ -100,15 +100,15 @@ void TunnelRoom2Scene::SetUpScene(std::vector<std::function<std::vector<DOG::ent
 	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(34.f, 75.f, 85.f), 4, 1.5f));	// location 4
 	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(27.f, 75.f, 130.f), 2, 1.f));	// location 5
 
-	CreateGrenadePickup(Vector3(46.0f, 70.0f, 114.0f));
-	CreateFrostModificationPickup(Vector3(43.0f, 70.0f, 114.0f));
-	CreateMissilePickup(Vector3(40.0f, 70.0f, 114.0f));
-	CreateTrampolinePickup(Vector3(37.0f, 70.0f, 114.0f));
+	CreateGrenadePickup(Vector3(46.0f, 69.7f, 114.0f));
+	CreateFrostModificationPickup(Vector3(43.0f, 69.7f, 114.0f));
+	CreateMissilePickup(Vector3(40.0f, 69.7f, 114.0f));
+	CreateTrampolinePickup(Vector3(37.0f, 69.7f, 114.0f));
 
-	CreateGrenadePickup(Vector3(34.0f, 70.0f, 114.0f));
-	CreateFrostModificationPickup(Vector3(31.0f, 70.0f, 114.0f));
-	CreateMissilePickup(Vector3(28.0f, 70.0f, 114.0f));
-	CreateTrampolinePickup(Vector3(49.0f, 70.0f, 114.0f));
+	CreateGrenadePickup(Vector3(34.0f, 69.7f, 114.0f));
+	CreateFrostModificationPickup(Vector3(31.0f, 69.7f, 114.0f));
+	CreateMissilePickup(Vector3(28.0f, 69.7f, 114.0f));
+	CreateTrampolinePickup(Vector3(49.0f, 69.7f, 114.0f));
 }
 
 
