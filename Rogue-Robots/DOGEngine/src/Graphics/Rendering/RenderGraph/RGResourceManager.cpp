@@ -2,6 +2,8 @@
 #include "../../RHI/RenderDevice.h"
 #include "../GPUGarbageBin.h"
 
+#define USE_MEMORY_ALIASING
+
 namespace DOG::gfx
 {
 	RGResourceManager::RGResourceManager(RenderDevice* rd, GPUGarbageBin* bin) :
@@ -227,47 +229,48 @@ namespace DOG::gfx
 
 	void RGResourceManager::RealizeResources()
 	{
-		//for (auto& [_, resource] : m_resources)
-		//{
-		//	// We are only interested in creating resources for Declared resources
-		//	if (resource.variantType != RGResourceVariant::Declared)
-		//		continue;
+#ifndef USE_MEMORY_ALIASING
+		for (auto& [_, resource] : m_resources)
+		{
+			// We are only interested in creating resources for Declared resources
+			if (resource.variantType != RGResourceVariant::Declared)
+				continue;
 
-		//	/*
-		//		@todo: We eventually want add memory aliasing to Textures
-		//	*/
-		//	const RGResourceDeclared& decl = std::get<RGResourceDeclared>(resource.variants);
-		//	if (resource.resourceType == RGResourceType::Texture)
-		//	{
-		//		const auto& rgDesc = std::get<RGTextureDesc>(decl.desc);
+			/*
+				@todo: We eventually want add memory aliasing to Textures
+			*/
+			const RGResourceDeclared& decl = std::get<RGResourceDeclared>(resource.variants);
+			if (resource.resourceType == RGResourceType::Texture)
+			{
+				const auto& rgDesc = std::get<RGTextureDesc>(decl.desc);
 
-		//		auto desc = TextureDesc(MemoryType::Default, rgDesc.format,
-		//			rgDesc.width, rgDesc.height, rgDesc.depth,
-		//			rgDesc.flags, rgDesc.initState)
-		//			.SetMipLevels(rgDesc.mipLevels);
+				auto desc = TextureDesc(MemoryType::Default, rgDesc.format,
+					rgDesc.width, rgDesc.height, rgDesc.depth,
+					rgDesc.flags, rgDesc.initState)
+					.SetMipLevels(rgDesc.mipLevels);
 
-		//		MemoryPool chosenPool;
-		//		if ((rgDesc.flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) == D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET ||
-		//			(rgDesc.flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
-		//		{
-		//			chosenPool = m_rtDsTextureMemPool;
-		//		}
-		//		else
-		//		{
-		//			chosenPool = m_nonRtDsTextureMemPool;
-		//		}
+				MemoryPool chosenPool;
+				if ((rgDesc.flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) == D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET ||
+					(rgDesc.flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
+				{
+					chosenPool = m_rtDsTextureMemPool;
+				}
+				else
+				{
+					chosenPool = m_nonRtDsTextureMemPool;
+				}
 
-		//		resource.resource = m_rd->CreateTexture(desc, chosenPool).handle;
-		//	}
-		//	else
-		//	{
-		//		const auto& rgDesc = std::get<RGBufferDesc>(decl.desc);
+				resource.resource = m_rd->CreateTexture(desc, chosenPool).handle;
+			}
+			else
+			{
+				const auto& rgDesc = std::get<RGBufferDesc>(decl.desc);
 
-		//		BufferDesc desc(MemoryType::Default, rgDesc.size, rgDesc.flags, rgDesc.initState);
-		//		resource.resource = m_rd->CreateBuffer(desc, m_bufferMemPool).handle;
-		//	}
-		//}
-
+				BufferDesc desc(MemoryType::Default, rgDesc.size, rgDesc.flags, rgDesc.initState);
+				resource.resource = m_rd->CreateBuffer(desc, m_bufferMemPool).handle;
+			}
+		}
+#else
 		struct MemoryAliasingData
 		{
 			RGResourceID id;
@@ -560,8 +563,7 @@ namespace DOG::gfx
 				m_aliasingBarrierWrap.push_back(GPUBarrier::Aliasing(textureMapped[lastResource], textureMapped[firstResource]));
 			}
 		}
-
-
+#endif
 
 
 		// Assign underlying resource to aliased resources
