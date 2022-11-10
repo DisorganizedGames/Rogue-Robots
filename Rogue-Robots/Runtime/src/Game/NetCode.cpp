@@ -215,13 +215,14 @@ void NetCode::OnUpdate(AgentManager* agentManager)
 													{
 														if (playerC.playerId == tempCreate->playerId)
 														{
-															std::string luaEventName = std::string("ItemPickup") + std::to_string(id);
-															DOG::LuaMain::GetEventSystem()->InvokeEvent(luaEventName, (u32)tempCreate->entityTypeId);
+															
 															EntityManager::Get().Collect<NetworkId>().Do([&](entity e, NetworkId& nIdC)
 																{
 																	
 																	if (nIdC.entityTypeId == tempCreate->entityTypeId && nIdC.id == tempCreate->id)
 																	{
+																		std::string luaEventName = std::string("ItemPickup") + std::to_string(id);
+																		DOG::LuaMain::GetEventSystem()->InvokeEvent(luaEventName, (u32)tempCreate->entityTypeId);
 																		m_entityManager.RemoveComponent<NetworkId>(e);
 																		m_entityManager.DeferredEntityDestruction(e);
 																	}
@@ -261,14 +262,17 @@ void NetCode::Receive()
 		m_startUp = true;
 		while (m_netCodeAlive)
 		{
-			while (m_dataIsReadyToBeReceivedTcp && m_netCodeAlive)
+			while (m_dataIsReadyToBeReceivedTcp)
 				continue;
+
 			if (!firstTime && !m_inputTcp.lobbyAlive)
 			{
 				firstTime = true;
 				m_threadUdp = std::thread(&NetCode::ReceiveUdp, this);
 			}
-			
+			if (!m_netCodeAlive)
+				break;
+
 			m_numberOfPackets = m_client.ReceiveCharArrayTcp(m_receiveBuffer);
 			
 			if (m_receiveBuffer == nullptr || m_numberOfPackets == 0)
