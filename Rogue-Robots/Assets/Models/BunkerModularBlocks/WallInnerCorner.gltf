@@ -27,7 +27,7 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "brushed_concrete.001",
+            "name" : "brushed_concrete",
             "normalTexture" : {
                 "extensions" : {
                     "KHR_texture_transform" : {
@@ -41,8 +41,7 @@
                         ]
                     }
                 },
-                "index" : 0,
-                "scale" : 2.1999998092651367
+                "index" : 0
             },
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
@@ -102,14 +101,19 @@
         },
         {
             "sampler" : 0,
-            "source" : 0
+            "source" : 1
         },
         {
             "sampler" : 0,
-            "source" : 1
+            "source" : 2
         }
     ],
     "images" : [
+        {
+            "mimeType" : "image/png",
+            "name" : "brushed_concrete_nor_gl_4k_t",
+            "uri" : "Textures/brushed_concrete_nor_gl_4k_t.png"
+        },
         {
             "mimeType" : "image/jpeg",
             "name" : "brushed_concrete_diff_4k",
@@ -117,8 +121,8 @@
         },
         {
             "mimeType" : "image/png",
-            "name" : "brushed_concrete_rough_4k.exr",
-            "uri" : "Textures/brushed_concrete_rough_4k_exr.png"
+            "name" : "brushed_concrete_rough_4k",
+            "uri" : "Textures/brushed_concrete_rough_4k.png"
         }
     ],
     "accessors" : [

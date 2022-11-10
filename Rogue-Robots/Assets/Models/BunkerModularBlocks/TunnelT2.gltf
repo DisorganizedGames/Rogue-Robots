@@ -76,59 +76,6 @@
                     "index" : 2
                 }
             }
-        },
-        {
-            "doubleSided" : true,
-            "name" : "brushed_concrete.001",
-            "normalTexture" : {
-                "extensions" : {
-                    "KHR_texture_transform" : {
-                        "offset" : [
-                            0,
-                            -4
-                        ],
-                        "scale" : [
-                            5,
-                            5
-                        ]
-                    }
-                },
-                "index" : 3,
-                "scale" : 2.1999998092651367
-            },
-            "pbrMetallicRoughness" : {
-                "baseColorTexture" : {
-                    "extensions" : {
-                        "KHR_texture_transform" : {
-                            "offset" : [
-                                0,
-                                -4
-                            ],
-                            "scale" : [
-                                5,
-                                5
-                            ]
-                        }
-                    },
-                    "index" : 4
-                },
-                "metallicFactor" : 0,
-                "metallicRoughnessTexture" : {
-                    "extensions" : {
-                        "KHR_texture_transform" : {
-                            "offset" : [
-                                0,
-                                -4
-                            ],
-                            "scale" : [
-                                5,
-                                5
-                            ]
-                        }
-                    },
-                    "index" : 5
-                }
-            }
         }
     ],
     "meshes" : [
@@ -143,15 +90,6 @@
                     },
                     "indices" : 3,
                     "material" : 0
-                },
-                {
-                    "attributes" : {
-                        "POSITION" : 4,
-                        "NORMAL" : 5,
-                        "TEXCOORD_0" : 6
-                    },
-                    "indices" : 7,
-                    "material" : 1
                 }
             ]
         }
@@ -168,18 +106,6 @@
         {
             "sampler" : 0,
             "source" : 2
-        },
-        {
-            "sampler" : 0,
-            "source" : 1
-        },
-        {
-            "sampler" : 0,
-            "source" : 1
-        },
-        {
-            "sampler" : 0,
-            "source" : 3
         }
     ],
     "images" : [
@@ -197,18 +123,13 @@
             "mimeType" : "image/png",
             "name" : "brushed_concrete_rough_4k",
             "uri" : "Textures/brushed_concrete_rough_4k.png"
-        },
-        {
-            "mimeType" : "image/png",
-            "name" : "brushed_concrete_rough_4k.exr",
-            "uri" : "Textures/brushed_concrete_rough_4k_exr.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 74,
+            "count" : 122,
             "max" : [
                 2.500000238418579,
                 5,
@@ -217,110 +138,52 @@
             "min" : [
                 -2.5,
                 0,
-                -2.5
+                -2.500000238418579
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 74,
+            "count" : 122,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 74,
+            "count" : 122,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5123,
-            "count" : 114,
-            "type" : "SCALAR"
-        },
-        {
-            "bufferView" : 4,
-            "componentType" : 5126,
-            "count" : 48,
-            "max" : [
-                2.5,
-                5,
-                2.5
-            ],
-            "min" : [
-                2.25,
-                0,
-                -2.500000238418579
-            ],
-            "type" : "VEC3"
-        },
-        {
-            "bufferView" : 5,
-            "componentType" : 5126,
-            "count" : 48,
-            "type" : "VEC3"
-        },
-        {
-            "bufferView" : 6,
-            "componentType" : 5126,
-            "count" : 48,
-            "type" : "VEC2"
-        },
-        {
-            "bufferView" : 7,
-            "componentType" : 5123,
-            "count" : 72,
+            "count" : 186,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 888,
+            "byteLength" : 1464,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 888,
-            "byteOffset" : 888,
+            "byteLength" : 1464,
+            "byteOffset" : 1464,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 592,
-            "byteOffset" : 1776,
+            "byteLength" : 976,
+            "byteOffset" : 2928,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 228,
-            "byteOffset" : 2368,
-            "target" : 34963
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 576,
-            "byteOffset" : 2596,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 576,
-            "byteOffset" : 3172,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 384,
-            "byteOffset" : 3748,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 144,
-            "byteOffset" : 4132,
+            "byteLength" : 372,
+            "byteOffset" : 3904,
             "target" : 34963
         }
     ],

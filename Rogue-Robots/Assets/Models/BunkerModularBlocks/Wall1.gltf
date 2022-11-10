@@ -41,7 +41,8 @@
                         ]
                     }
                 },
-                "index" : 0
+                "index" : 0,
+                "scale" : 10
             },
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
