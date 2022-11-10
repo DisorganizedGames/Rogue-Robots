@@ -271,6 +271,9 @@ namespace DOG::gfx
 			}
 		}
 #else
+		m_aliasingBarrierPerDepLevel.clear();
+		m_aliasingBarrierWrap.clear();
+
 		struct MemoryAliasingData
 		{
 			RGResourceID id;
