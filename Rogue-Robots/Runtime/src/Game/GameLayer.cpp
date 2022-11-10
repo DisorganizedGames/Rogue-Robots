@@ -669,6 +669,8 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::Exists>("Exists");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetEntityTypeAsString>("GetEntityTypeAsString");
 	
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::AgentHit>("AgentHit");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::ModifyAnimationComponent>("ModifyAnimationComponent");
 
 	global->SetLuaInterface(luaInterface);
 

@@ -169,6 +169,11 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 				std::cout << "Client: Only part of the packet arrived: " << bytesRecived << "header payload: " << packet.sizeOfPayload << std::endl;
 				processedBytes += bytesRecived;
 			}
+			else
+			{
+				std::cout << "Client: Faulty packet" << std::endl;
+				return 0;
+			}
 		}
 		else if (bytesRecived == -1)
 		{

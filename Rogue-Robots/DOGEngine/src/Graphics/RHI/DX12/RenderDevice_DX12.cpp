@@ -334,7 +334,7 @@ namespace DOG::gfx
 
 			// not supporting resolves for now
 			descs.push_back(api);
-		}
+		} 
 
 		// Translate depth stencil 
 		if (desc.depthStencilDesc.has_value())

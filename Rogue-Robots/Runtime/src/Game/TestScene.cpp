@@ -25,7 +25,7 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	u32 greenCubeID = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
 	u32 magentaCubeID = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
 	u32 blueCubeID = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
-	u32 mixamoID = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/walkmix.fbx");
+	//u32 mixamoID = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/walkmix.fbx");
 	u32 isoSphereID = am.LoadModelAsset("Assets/Models/Temporary_Assets/iso_sphere.glb");
 
 	u32 sphereID = am.LoadShapeAsset(Shape::sphere, 8, 8);
@@ -64,12 +64,12 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	AddComponent<RigidbodyComponent>(entity81, entity81);
 	AddComponent<ShadowReceiverComponent>(entity81);
 
-	entity entity5 = CreateEntity();
+	/*entity entity5 = CreateEntity();
 	AddComponent<ModelComponent>(entity5, mixamoID);
 	AddComponent<TransformComponent>(entity5, Vector3(0, -2, 5), Vector3(0, 0, 0), Vector3(0.02f, 0.02f, 0.02f));
 	AddComponent<AnimationComponent>(entity5).offset = 0;
 	AddComponent<CapsuleColliderComponent>(entity5, entity5, 1.0f, 1.0f, false);
-	AddComponent<ShadowReceiverComponent>(entity5);
+	AddComponent<ShadowReceiverComponent>(entity5);*/
 
 
 	// Create some shapes

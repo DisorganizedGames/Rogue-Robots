@@ -129,10 +129,10 @@ namespace DOG::gfx
 					d.Normalize();
 					return camForward.Dot(d) < 0.2f;
 				};
-				
+
 				if (cull({ transformC.worldMatrix(3, 0), transformC.worldMatrix(3, 1), transformC.worldMatrix(3, 2) }))
 					return;
-				
+
 				ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 				if (model && model->gfxModel)
 				{
@@ -143,11 +143,13 @@ namespace DOG::gfx
 						{
 							if (mgr.HasComponent<ModularBlockComponent>(e))
 								m_doubleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC, false });
+							else if (EntityManager::Get().HasComponent<AnimationComponent>(e))
+								m_doubleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC, false, true, EntityManager::Get().GetComponent<AnimationComponent>(e).offset });
 							else
 								m_singleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC });
 						}
 					}
-				
+
 					if (mgr.HasComponent<ModularBlockComponent>(e))
 					{
 						if (mgr.HasComponent<MeshColliderComponent>(e) &&
@@ -169,8 +171,9 @@ namespace DOG::gfx
 					}
 					else if (mgr.HasComponent<AnimationComponent>(e))
 					{
+						auto offset = mgr.GetComponent<AnimationComponent>(e).offset;
 						for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
-							m_renderer->SubmitAnimatedMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+							m_renderer->SubmitAnimatedMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC, offset);
 					}
 					else
 					{
@@ -277,14 +280,20 @@ namespace DOG::gfx
 			{
 				if (cull({ sub.tc.worldMatrix(3, 0), sub.tc.worldMatrix(3, 1), sub.tc.worldMatrix(3, 2) }))
 					continue;
-				m_renderer->SubmitSingleSidedShadowMesh(shadowID, sub.mesh, sub.submesh, sub.tc);
+				if (sub.animated)
+					m_renderer->SubmitSingleSidedShadowMesh(shadowID, sub.mesh, sub.submesh, sub.tc, true, sub.jointOffset);
+				else
+					m_renderer->SubmitSingleSidedShadowMesh(shadowID, sub.mesh, sub.submesh, sub.tc);
 			}
 
 			for (const auto& sub : m_doubleSidedShadowed)
 			{
 				if (cull({ sub.tc.worldMatrix(3, 0), sub.tc.worldMatrix(3, 1), sub.tc.worldMatrix(3, 2) }))
 					continue;
-				m_renderer->SubmitDoubleSidedShadowMesh(shadowID, sub.mesh, sub.submesh, sub.tc);
+				if (sub.animated)
+					m_renderer->SubmitDoubleSidedShadowMesh(shadowID, sub.mesh, sub.submesh, sub.tc, true, sub.jointOffset);
+				else
+					m_renderer->SubmitDoubleSidedShadowMesh(shadowID, sub.mesh, sub.submesh, sub.tc);
 			}
 		}
 

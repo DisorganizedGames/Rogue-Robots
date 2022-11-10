@@ -23,7 +23,6 @@ namespace DOG::gfx
 	{
 		if (count == 0)
 			return {};
-
 		// Grab memory (base)
 		auto [mem, offset] = m_ator.AllocateWithOffset();
 		assert(mem);

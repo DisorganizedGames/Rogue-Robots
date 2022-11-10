@@ -41,7 +41,7 @@ namespace DOG::gfx
 		m_renderWidth(1920),
 		m_renderHeight(1080)
 	{
-		m_boneJourno = std::make_unique<AnimationManager>();
+		m_jointMan = std::make_unique<AnimationManager>();
 		m_backend = std::make_unique<gfx::RenderBackend_DX12>(debug);
 		m_rd = m_backend->CreateDevice(S_NUM_BACKBUFFERS);
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
@@ -85,7 +85,7 @@ namespace DOG::gfx
 
 
 		// multiple of curr loaded mixamo skeleton
-		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 33 * 5);
+		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * S_MAX_FIF);
 		m_cmdl = m_rd->AllocateCommandList();
 
 		// Startup
@@ -407,33 +407,39 @@ namespace DOG::gfx
 		m_noCullWireframeDraws.push_back(sub);
 	}
 
-	void Renderer::SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
+	void Renderer::SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world, u32 jointOffset)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
 		sub.submesh = submesh;
 		sub.mat = material;
 		sub.world = world;
+		sub.jointOffset = jointOffset;
+		sub.animated = true;
 		m_animatedDraws.push_back(sub);
 	}
 
-	void DOG::gfx::Renderer::SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world)
+	void DOG::gfx::Renderer::SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world, bool animated, u32 jointOffset)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
 		sub.submesh = submesh;
 		sub.world = world;
+		sub.animated = animated;
+		sub.jointOffset = jointOffset;
 
 		const auto& caster = m_activeShadowCasters[shadowID];
 		m_singleSidedShadowDraws[caster.singleSidedBucket].push_back(sub);
 	}
 
-	void DOG::gfx::Renderer::SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world)
+	void DOG::gfx::Renderer::SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world, bool animated, u32 jointOffset)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
 		sub.submesh = submesh;
 		sub.world = world;
+		sub.animated = animated;
+		sub.jointOffset = jointOffset;
 
 		const auto& caster = m_activeShadowCasters[shadowID];
 		m_doubleSidedShadowDraws[caster.doubleSidedBucket].push_back(sub);
@@ -455,7 +461,7 @@ namespace DOG::gfx
 
 	void Renderer::Update(f32 dt)
 	{
-		m_boneJourno->UpdateJoints();
+		m_jointMan->UpdateJoints();
 		m_globalLightTable->FinalizeUpdates();
 
 
@@ -534,7 +540,7 @@ namespace DOG::gfx
 		{
 			struct JointData
 			{
-				DirectX::XMFLOAT4X4 joints[130];
+				DirectX::XMFLOAT4X4 joints[300];
 			};
 
 			struct PerDrawData
@@ -589,7 +595,7 @@ namespace DOG::gfx
 					and during forward pass we simply read from it 
 			*/
 
-			auto drawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_boneJourno.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false) mutable
+			auto drawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_jointMan.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false) mutable
 			{	
 				for (const auto& sub : submissions)
 				{
@@ -608,6 +614,7 @@ namespace DOG::gfx
 						for (size_t i = 0; i < bonezy->m_vsJoints.size(); ++i)
 							jointsData.joints[i] = bonezy->m_vsJoints[i];
 						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
+						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
 					}
 
 					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
@@ -619,7 +626,9 @@ namespace DOG::gfx
 						.AppendConstant(perLightHandle)
 						.AppendConstant(shadowHandle)
 						.AppendConstant(wireframe ? 1 : 0)
-						.AppendConstant(m_graphicsSettings.lit ? 1 : 0);
+						.AppendConstant(m_graphicsSettings.lit ? 1 : 0)
+						.AppendConstant(sub.jointOffset);
+
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
@@ -628,7 +637,7 @@ namespace DOG::gfx
 				}
 			};
 		
-			auto shadowDrawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_boneJourno.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](
+			auto shadowDrawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_jointMan.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](
 				RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 smIdx, const ShadowCaster& caster, bool animated = false, bool wireframe = false) mutable
 			{
 				auto perLightHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerLightData) / (float)256));
@@ -645,7 +654,7 @@ namespace DOG::gfx
 					perDrawData.globalSubmeshID = meshTab->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
 					perDrawData.globalMaterialID = 0;
 
-					if (animated)
+					if (sub.animated || animated)
 					{
 						// Resolve joints
 						JointData jointsData{};
@@ -664,7 +673,8 @@ namespace DOG::gfx
 						.SetPrimaryCBV(perDrawHandle.buffer, perDrawHandle.bufferOffset)
 						.AppendConstant(perLightHandle.globalDescriptor)
 						.AppendConstant(wireframe ? 1 : 0)
-						.AppendConstant(smIdx);
+						.AppendConstant(smIdx)
+						.AppendConstant(sub.jointOffset);
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
