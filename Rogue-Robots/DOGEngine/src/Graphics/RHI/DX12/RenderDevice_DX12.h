@@ -27,6 +27,8 @@ namespace DOG::gfx
 		const GPUPoolMemoryInfo& GetPoolMemoryInfo(MemoryPool pool);
 		const GPUTotalMemoryInfo& GetTotalMemoryInfo();
 
+		u64 GetTotalTextureSize(const TextureDesc& desc);
+
 		Swapchain* CreateSwapchain(void* hwnd, u8 numBuffers);
 		Buffer CreateBuffer(const BufferDesc& desc, MemoryPool = {});
 		Texture CreateTexture(const TextureDesc& desc, MemoryPool = {});
@@ -36,6 +38,9 @@ namespace DOG::gfx
 		BufferView CreateView(Buffer buffer, const BufferViewDesc& desc);
 		TextureView CreateView(Texture texture, const TextureViewDesc& desc);
 		MemoryPool CreateMemoryPool(const MemoryPoolDesc& desc);
+
+		// Aliased
+		std::vector<Texture> CreateAliasedTextures(const std::vector<TextureDesc>& descs, MemoryPool pool = {});
 
 		// Free/recycle when appropriate! Sensitive resources that may be in-flight
 		void FreeBuffer(Buffer handle);

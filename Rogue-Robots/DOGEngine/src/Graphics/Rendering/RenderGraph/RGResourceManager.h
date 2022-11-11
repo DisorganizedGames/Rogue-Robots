@@ -1,6 +1,8 @@
 #pragma once
 #include "RGTypes.h"
 #include "../../RHI/Types/GPUInfo.h"
+#include "../../RHI/Types/BarrierDesc.h"
+#include "../../RHI/RenderResourceHandles.h"
 
 namespace DOG::gfx
 {
@@ -27,6 +29,7 @@ namespace DOG::gfx
 		void ChangeImportedTexture(RGResourceID id, Texture texture);
 		void ChangeImportedBuffer(RGResourceID id, Buffer buffer);
 
+
 	private:
 		friend class RenderGraph;
 		
@@ -37,6 +40,13 @@ namespace DOG::gfx
 
 		void AliasResource(RGResourceID newID, RGResourceID oldID, RGResourceType type);
 		void DeclareProxy(RGResourceID id);
+
+
+		// Interface for render graph
+		void ResolveMemoryAliases(CommandList list, u32 depLevel);
+		void ResolveMemoryAliasesWrap(CommandList list);
+
+
 	private:
 
 		struct RGResourceDeclared
@@ -100,6 +110,9 @@ namespace DOG::gfx
 		// Helper for JIT state transitions
 		void SetCurrentState(RGResourceID id, D3D12_RESOURCE_STATES state);
 
+		// Aliasing helper
+		void SetTexture(RGResourceID id, Texture texture);
+
 	private:
 		RenderDevice* m_rd{ nullptr };
 		GPUGarbageBin* m_bin{ nullptr };
@@ -115,5 +128,9 @@ namespace DOG::gfx
 		MemoryPool m_bufferMemPool;
 
 		GPUPoolMemoryInfo m_totalMemUsage;
+
+		std::unordered_map<u32, std::vector<GPUBarrier>> m_aliasingBarrierPerDepLevel;
+		std::vector<GPUBarrier> m_aliasingBarrierWrap;
+
 	};
 }

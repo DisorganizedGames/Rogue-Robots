@@ -2,6 +2,8 @@
 #include "../../RHI/RenderDevice.h"
 #include "../GPUGarbageBin.h"
 
+#define USE_MEMORY_ALIASING
+
 namespace DOG::gfx
 {
 	RGResourceManager::RGResourceManager(RenderDevice* rd, GPUGarbageBin* bin) :
@@ -162,6 +164,21 @@ namespace DOG::gfx
 		res.variantType = RGResourceVariant::Proxy;
 	}
 
+	void RGResourceManager::ResolveMemoryAliases(CommandList list, u32 depLevel)
+	{
+		auto it = m_aliasingBarrierPerDepLevel.find(depLevel);
+		if (it != m_aliasingBarrierPerDepLevel.cend())
+		{
+			m_rd->Cmd_Barrier(list, it->second);
+		}
+	}
+
+	void RGResourceManager::ResolveMemoryAliasesWrap(CommandList list)
+	{
+		if (!m_aliasingBarrierWrap.empty())
+			m_rd->Cmd_Barrier(list, m_aliasingBarrierWrap);
+	}
+
 
 
 
@@ -212,6 +229,7 @@ namespace DOG::gfx
 
 	void RGResourceManager::RealizeResources()
 	{
+#ifndef USE_MEMORY_ALIASING
 		for (auto& [_, resource] : m_resources)
 		{
 			// We are only interested in creating resources for Declared resources
@@ -252,6 +270,302 @@ namespace DOG::gfx
 				resource.resource = m_rd->CreateBuffer(desc, m_bufferMemPool).handle;
 			}
 		}
+#else
+		m_aliasingBarrierPerDepLevel.clear();
+		m_aliasingBarrierWrap.clear();
+
+		struct MemoryAliasingData
+		{
+			RGResourceID id;
+			u64 size{ 0 };
+			std::pair<u32, u32> lifetime;
+			TextureDesc desc;
+		};
+
+		std::vector<MemoryAliasingData> rtDsResources, nonRtDsResources;
+
+		for (auto& [id, resource] : m_resources)
+		{
+			// We are only interested in creating resources for Declared resources
+			if (resource.variantType != RGResourceVariant::Declared)
+				continue;
+
+			const RGResourceDeclared& decl = std::get<RGResourceDeclared>(resource.variants);
+			if (resource.resourceType == RGResourceType::Texture)
+			{
+				const auto& rgDesc = std::get<RGTextureDesc>(decl.desc);
+				auto desc = TextureDesc(MemoryType::Default, rgDesc.format,
+					rgDesc.width, rgDesc.height, rgDesc.depth,
+					rgDesc.flags, rgDesc.initState)
+					.SetMipLevels(rgDesc.mipLevels);
+
+				MemoryAliasingData data{};
+				data.desc = desc;
+				data.id = id;
+				data.size = m_rd->GetTotalTextureSize(desc);
+				data.lifetime = GetMutableUsageLifetime(id);
+				
+				MemoryPool chosenPool;
+				if ((rgDesc.flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) == D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET ||
+					(rgDesc.flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
+				{
+					rtDsResources.push_back(data);
+				}
+				else
+				{
+					nonRtDsResources.push_back(data);
+				}
+			}
+			else
+			{
+				const auto& rgDesc = std::get<RGBufferDesc>(decl.desc);
+
+				BufferDesc desc(MemoryType::Default, rgDesc.size, rgDesc.flags, rgDesc.initState);
+
+				resource.resource = m_rd->CreateBuffer(desc, m_bufferMemPool).handle;
+			}
+		}
+
+
+		// Sort from largest to smallest
+		std::sort(rtDsResources.begin(), rtDsResources.end(), [](const MemoryAliasingData& lh, const MemoryAliasingData& rh)
+			{
+				return lh.size > rh.size;
+			});
+		std::sort(nonRtDsResources.begin(), nonRtDsResources.end(), [](const MemoryAliasingData& lh, const MemoryAliasingData& rh)
+			{
+				return lh.size > rh.size;
+			});
+
+
+
+		std::set<std::string> handledRtDs, handledNonRtDs;
+		std::vector<std::pair<MemoryAliasingData, std::vector<MemoryAliasingData>>> rtDsPool, nonRtDsPool;
+		for (const auto& parent : rtDsResources)
+		{
+			// Skip already handled
+			if (handledRtDs.contains(parent.id.name))
+				continue;
+
+			rtDsPool.push_back({ parent, {} });
+
+			std::vector<std::pair<u32, u32>> lifetimes;
+			lifetimes.push_back(parent.lifetime);
+
+			for (const auto& potential : rtDsResources)
+			{
+				// Skip self and resources already handled
+				if (potential.id == parent.id || handledRtDs.contains(potential.id.name))
+					continue;
+
+				// If lifetime does not overlap with any recorded lifetimes for parent resource.. we can alias!
+				auto it = std::find_if(lifetimes.begin(), lifetimes.end(), [&](const std::pair<u32, u32>& existingLifetime)
+					{
+						if (existingLifetime.second >= potential.lifetime.first ||
+							existingLifetime.first <= potential.lifetime.second)
+							return true;
+						else
+							return false;
+					});
+
+				// If overlap, continue
+				if (it != lifetimes.cend())
+					continue;
+
+
+				// If it doesn't overlap, track..
+				lifetimes.push_back(potential.lifetime);
+				rtDsPool.back().second.push_back(potential);
+
+				// .. and mark as handled
+				handledRtDs.insert(potential.id.name);
+			}
+
+			handledRtDs.insert(parent.id.name);
+		}
+
+		for (const auto& parent : nonRtDsResources)
+		{
+			// Skip already handled
+			if (handledNonRtDs.contains(parent.id.name))
+				continue;
+
+			nonRtDsPool.push_back({ parent, {} });
+
+			std::vector<std::pair<u32, u32>> lifetimes;
+			lifetimes.push_back(parent.lifetime);
+
+			for (const auto& potential : nonRtDsResources)
+			{
+				// Skip self and resources already handled
+				if (potential.id == parent.id || handledNonRtDs.contains(potential.id.name))
+					continue;
+
+				// If lifetime does not overlap with any recorded lifetimes for parent resource.. we can alias!
+				auto it = std::find_if(lifetimes.begin(), lifetimes.end(), [&](const std::pair<u32, u32>& existingLifetime)
+					{
+						if (existingLifetime.second >= potential.lifetime.first &&
+							existingLifetime.first <= potential.lifetime.second)
+							return true;
+						else
+							return false;
+					});
+
+				// If overlap, continue
+				if (it != lifetimes.cend())
+					continue;
+
+
+				// If it doesn't overlap, track..
+				lifetimes.push_back(potential.lifetime);
+				nonRtDsPool.back().second.push_back(potential);
+
+				// .. and mark as handled
+				handledNonRtDs.insert(potential.id.name);
+			}
+
+			handledNonRtDs.insert(parent.id.name);
+		}
+
+
+
+
+
+		for (const auto& [parent, aliases] : rtDsPool)
+		{
+			// Grab all descs, including parent
+			std::vector<TextureDesc> totalDescs;
+			std::vector<RGResourceID> totalIDs;
+			totalDescs.reserve(aliases.size());
+			totalIDs.reserve(aliases.size());
+
+			totalDescs.push_back(parent.desc);
+			totalIDs.push_back(parent.id);
+			for (const auto& aliasData : aliases)
+			{
+				totalDescs.push_back(aliasData.desc);
+				totalIDs.push_back(aliasData.id);
+			}
+
+			auto textures = m_rd->CreateAliasedTextures(totalDescs, m_rtDsTextureMemPool);
+			// Identical ordering of totalDescs/totalIDs
+			u32 x = 0;
+			std::unordered_map<RGResourceID, Texture> textureMapped;
+			for (const auto& tex : textures)
+			{
+				auto id = totalIDs[x++];
+				textureMapped[id] = tex;
+				SetTexture(id, tex);
+			}
+
+			// Add to barrier tracking
+			if (aliases.size() > 0)
+			{
+				// Get chronological lifetime order
+				std::vector<std::pair<u32, RGResourceID>> lifetimeOrder;
+				lifetimeOrder.push_back({ parent.lifetime.first, parent.id });
+				for (const auto& aliasData : aliases)
+					lifetimeOrder.push_back({ aliasData.lifetime.first, aliasData.id });
+				std::sort(lifetimeOrder.begin(), lifetimeOrder.end(), [](const std::pair<u32, RGResourceID>& lh, const std::pair<u32, RGResourceID>& rh)
+					{
+						return lh.first < rh.first;
+					});
+
+				// Track pairwise transition
+				RGResourceID firstResource, lastResource;
+				for (u32 i = 0; i < lifetimeOrder.size(); i += 2)
+				{
+					if (i + 1 >= lifetimeOrder.size())
+						break;
+
+					auto oldResource = lifetimeOrder[i].second;
+					auto newResource = lifetimeOrder[i + 1].second;
+					auto depLevelToInsertAt = lifetimeOrder[i + 1].first;		// Right before newResource is used
+
+					if (i == 0)
+						firstResource = oldResource;
+
+					// Get the last newResource
+					lastResource = newResource;
+
+					auto& barrs = m_aliasingBarrierPerDepLevel[depLevelToInsertAt];
+					barrs.push_back(GPUBarrier::Aliasing(textureMapped[oldResource], textureMapped[newResource]));
+				}
+
+				// Track end-to-start
+				m_aliasingBarrierWrap.push_back(GPUBarrier::Aliasing(textureMapped[lastResource], textureMapped[firstResource]));
+			}
+		}
+
+
+
+		for (const auto& [parent, aliases] : nonRtDsPool)
+		{
+			// Grab all descs, including parent
+			std::vector<TextureDesc> totalDescs;
+			std::vector<RGResourceID> totalIDs;
+			totalDescs.reserve(aliases.size());
+			totalIDs.reserve(aliases.size());
+
+			totalDescs.push_back(parent.desc);
+			totalIDs.push_back(parent.id);
+			for (const auto& aliasData : aliases)
+			{
+				totalDescs.push_back(aliasData.desc);
+				totalIDs.push_back(aliasData.id);
+			}
+
+			auto textures = m_rd->CreateAliasedTextures(totalDescs, m_nonRtDsTextureMemPool);
+			// Identical ordering of totalDescs/totalIDs
+			u32 x = 0;
+			std::unordered_map<RGResourceID, Texture> textureMapped;
+			for (const auto& tex : textures)
+			{
+				auto id = totalIDs[x++];
+				textureMapped[id] = tex;
+				SetTexture(id, tex);
+			}
+
+			// Add to barrier tracking
+			if (aliases.size() > 0)
+			{
+				// Get chronological lifetime order
+				std::vector<std::pair<u32, RGResourceID>> lifetimeOrder;
+				lifetimeOrder.push_back({ parent.lifetime.first, parent.id });
+				for (const auto& aliasData : aliases)
+					lifetimeOrder.push_back({ aliasData.lifetime.first, aliasData.id });
+				std::sort(lifetimeOrder.begin(), lifetimeOrder.end(), [](const std::pair<u32, RGResourceID>& lh, const std::pair<u32, RGResourceID>& rh)
+					{
+						return lh.first < rh.first;
+					});
+
+				// Track pairwise transition
+				RGResourceID firstResource, lastResource;
+				for (u32 i = 0; i < lifetimeOrder.size(); i += 2)
+				{
+					if (i + 1 >= lifetimeOrder.size())
+						break;
+
+					auto oldResource = lifetimeOrder[i].second;
+					auto newResource = lifetimeOrder[i + 1].second;
+					auto depLevelToInsertAt = lifetimeOrder[i + 1].first;		// Right before newResource is used
+
+					if (i == 0)
+						firstResource = oldResource;
+
+					// Get the last newResource
+					lastResource = newResource;
+
+					auto& barrs = m_aliasingBarrierPerDepLevel[depLevelToInsertAt];
+					barrs.push_back(GPUBarrier::Aliasing(textureMapped[oldResource], textureMapped[newResource]));
+				}
+
+				// Track end-to-start
+				m_aliasingBarrierWrap.push_back(GPUBarrier::Aliasing(textureMapped[lastResource], textureMapped[firstResource]));
+			}
+		}
+#endif
+
 
 		// Assign underlying resource to aliased resources
 		for (auto& [_, resource] : m_resources)
@@ -473,5 +787,14 @@ namespace DOG::gfx
 			std::get<RGResourceDeclared>(resource->variants).currState = state;
 		else
 			std::get<RGResourceImported>(resource->variants).currState = state;
+	}
+	void RGResourceManager::SetTexture(RGResourceID id, Texture texture)
+	{
+		auto& res = m_resources.find(id)->second;
+
+		assert(res.resourceType == RGResourceType::Texture);
+		assert(res.variantType == RGResourceVariant::Declared);
+
+		res.resource = texture.handle;
 	}
 }

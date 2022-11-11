@@ -22,10 +22,15 @@ namespace DOG::gfx
 		virtual TextureView CreateView(Texture texture, const TextureViewDesc& desc) = 0;
 		virtual MemoryPool CreateMemoryPool(const MemoryPoolDesc& desc) = 0;
 
+		virtual std::vector<Texture> CreateAliasedTextures(const std::vector<TextureDesc>& descs, MemoryPool = {}) = 0;
+
 
 		virtual Monitor GetMonitor() = 0;
 		virtual const GPUPoolMemoryInfo& GetPoolMemoryInfo(MemoryPool pool) = 0;
 		virtual const GPUTotalMemoryInfo& GetTotalMemoryInfo() = 0;
+
+		virtual u64 GetTotalTextureSize(const TextureDesc& desc) = 0;
+
 
 		// Free/recycle when appropriate! Sensitive resources that may be in-flight
 		virtual void FreeBuffer(Buffer handle) = 0;
