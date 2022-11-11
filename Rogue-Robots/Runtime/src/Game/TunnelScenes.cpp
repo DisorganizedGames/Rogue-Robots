@@ -105,10 +105,21 @@ void TunnelRoom2Scene::SetUpScene(std::vector<std::function<std::vector<DOG::ent
 	CreateMissilePickup(Vector3(40.0f, 69.7f, 114.0f));
 	CreateTrampolinePickup(Vector3(37.0f, 69.7f, 114.0f));
 
-	CreateGrenadePickup(Vector3(34.0f, 69.7f, 114.0f));
-	CreateFrostModificationPickup(Vector3(31.0f, 69.7f, 114.0f));
-	CreateMissilePickup(Vector3(28.0f, 69.7f, 114.0f));
-	CreateTrampolinePickup(Vector3(49.0f, 69.7f, 114.0f));
+	CreateGrenadePickup(Vector3(34.0f, 70.0f, 114.0f));
+	CreateFrostModificationPickup(Vector3(31.0f, 70.0f, 114.0f));
+	CreateMissilePickup(Vector3(28.0f, 70.0f, 114.0f));
+	CreateTrampolinePickup(Vector3(49.0f, 70.0f, 114.0f));
+
+
+	CreateGrenadePickup(Vector3(46.0f, 70.0f, 110.0f));
+	CreateFrostModificationPickup(Vector3(43.0f, 70.0f, 110.0f));
+	CreateMissilePickup(Vector3(40.0f, 70.0f, 110.0f));
+	CreateTrampolinePickup(Vector3(37.0f, 70.0f, 110.0f));
+
+	CreateGrenadePickup(Vector3(34.0f, 70.0f, 110.0f));
+	CreateFrostModificationPickup(Vector3(31.0f, 70.0f, 110.0f));
+	CreateMissilePickup(Vector3(28.0f, 70.0f, 110.0f));
+	CreateTrampolinePickup(Vector3(49.0f, 70.0f, 110.0f));
 }
 
 

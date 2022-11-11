@@ -38,7 +38,6 @@ private:
 	void UpdateSendUdp();
 	void AddMatrixUdp(DirectX::XMMATRIX input);
 
-	
 	ClientsData m_inputTcp;
 	PlayerNetworkComponentUdp m_playerInputUdp;
 

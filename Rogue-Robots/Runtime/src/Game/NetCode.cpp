@@ -2,14 +2,16 @@
 using namespace DOG;
 NetCode::NetCode()
 {
-	m_netCodeAlive = TRUE;
+	m_netCodeAlive = true;
 	m_inputTcp.lobbyAlive = true;
 	m_playerInputUdp.playerId = 0;
 	m_playerInputUdp.playerTransform = {};
-
-	m_hardSyncTcp = FALSE;
-	m_active = FALSE;
-	m_startUp = FALSE;
+	m_inputTcp.nrOfChangedAgentsHp = 0;
+	m_inputTcp.nrOfCreateAndDestroy = 0;
+	m_inputTcp.nrOfNetTransform = 0;
+	m_hardSyncTcp = false;
+	m_active = false;
+	m_startUp = false;
 	
 	m_bufferSize = sizeof(ClientsData);;
 	m_bufferReceiveSize = 0;
@@ -24,7 +26,7 @@ NetCode::NetCode()
 
 NetCode::~NetCode()
 {
-	m_netCodeAlive = FALSE;
+	m_netCodeAlive = false;
 	if(m_thread.joinable())
 		m_thread.join();
 	if (m_threadUdp.joinable())
@@ -82,11 +84,13 @@ void NetCode::OnUpdate()
 		//UDP /////////////////////////////////////////////////////////////////////
 		//Update the others players
 		EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent, InputController, OnlinePlayer, PlayerStatsComponent, PlayerControllerComponent
-		>().Do([&](TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&, PlayerStatsComponent& statsC, PlayerControllerComponent& pC)
+		>().Do([&](entity id, TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&, PlayerStatsComponent& statsC, PlayerControllerComponent& pC)
 			{
 				transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerTransform;
 				inputC = m_outputUdp.m_holdplayersUdp[networkC.playerId].actions;
 				statsC = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat;
+				if (statsC.health > 0 && !m_entityManager.HasComponent<PlayerAliveComponent>(id))
+					m_entityManager.AddComponent<PlayerAliveComponent>(id);
 				if ((pC.cameraEntity != DOG::NULL_ENTITY) && (m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform.Determinant() != 0)) {
 					m_entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform;
 				}
@@ -101,7 +105,7 @@ void NetCode::OnUpdate()
 			{
 				
 				//sync all transforms Host only
-				if (m_inputTcp.playerId == 0)
+		/*		if (m_inputTcp.playerId == 0)
 				{
 					EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent>().Do([&](NetworkTransform& netC, TransformComponent& transC, AgentIdComponent agentId)
 						{
@@ -112,7 +116,7 @@ void NetCode::OnUpdate()
 							m_bufferSize += sizeof(NetworkTransform);
 
 						});
-				}
+				}*/
 
 				EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](NetworkAgentStats& netC, AgentHPComponent& agentS, AgentIdComponent& idC)
 					{
@@ -134,24 +138,21 @@ void NetCode::OnUpdate()
 						memcpy(m_sendBuffer + m_bufferSize, &cdC, sizeof(CreateAndDestroyEntityComponent));
 						m_bufferSize += sizeof(CreateAndDestroyEntityComponent);
 						m_entityManager.RemoveComponent<CreateAndDestroyEntityComponent>(id);
-						if (!cdC.alive && (u32)cdC.entityTypeId < (u32)EntityTypes::Agents) //Destroy empty entitey
-							m_entityManager.DestroyEntity(id);
 						m_inputTcp.nrOfCreateAndDestroy++;
 					});
-
-				float timeTakenS = Server::TickTimeLeftTCP(m_tickStartTime, m_clockFrequency);
-				if (timeTakenS > (1 / 30))
+				if (Server::TickTimeLeftTCP(m_tickStartTime, m_clockFrequency) > (1.0f / 30.0f))
 				{
 					m_inputTcp.sizeOfPayload = m_bufferSize;
-					memcpy(m_sendBuffer, (char*)&m_inputTcp, sizeof(m_inputTcp));
-					m_client.SendChararrayTcp(m_sendBuffer, m_bufferSize);
-					QueryPerformanceCounter(&m_tickStartTime);
-					m_bufferSize = sizeof(ClientsData);;
+					memcpy(m_sendBuffer, (char*)&m_inputTcp, sizeof(ClientsData));
+					m_client.SendChararrayTcp(m_sendBuffer, m_inputTcp.sizeOfPayload);
+					m_bufferSize = sizeof(ClientsData);
 					m_inputTcp.nrOfNetTransform = 0;
 					m_inputTcp.nrOfChangedAgentsHp = 0;
 					m_inputTcp.nrOfCreateAndDestroy = 0;
+					QueryPerformanceCounter(&m_tickStartTime);
 				}
 		}
+
 		// Recived data
 		while(m_numberOfPackets > 0 && m_dataIsReadyToBeReceivedTcp)
 			{
@@ -256,7 +257,6 @@ void NetCode::OnUpdate()
 										});
 
 								}
-											
 							}
 						}
 						m_bufferReceiveSize += sizeof(CreateAndDestroyEntityComponent) * header.nrOfCreateAndDestroy;
@@ -286,22 +286,25 @@ void NetCode::Receive()
 		m_startUp = true;
 		while (m_netCodeAlive)
 		{
-			while (m_dataIsReadyToBeReceivedTcp)
+			while (m_dataIsReadyToBeReceivedTcp && m_netCodeAlive)
 				continue;
+
+			if (!m_netCodeAlive)
+				break;
 			if (!firstTime && !m_inputTcp.lobbyAlive)
 			{
 				firstTime = true;
 				m_threadUdp = std::thread(&NetCode::ReceiveUdp, this);
+				m_threadUdp.detach();
 			}
 			
-			if (!m_netCodeAlive)
-				break;
+
 
 			m_numberOfPackets = m_client.ReceiveCharArrayTcp(m_receiveBuffer);
 			
 			if (m_receiveBuffer == nullptr || m_numberOfPackets == 0)
 			{
-				std::cout << "Bad tcp packet \n";
+				std::cout << "NetCode:: Bad tcp packet, Number of packets: " << m_numberOfPackets << std::endl;
 			}
 			else
 			{
@@ -365,6 +368,7 @@ bool NetCode::Host()
 				m_inputTcp.lobbyAlive = true;
 				//m_client.SendTcp(m_inputTcp); // check if client needs to
 				m_thread = std::thread(&NetCode::Receive, this);
+				m_thread.detach();
 				return server;
 			}
 		}
@@ -403,6 +407,7 @@ bool NetCode::Join(char* inputString)
 	{
 		m_inputTcp.lobbyAlive = true;
 		m_thread = std::thread(&NetCode::Receive, this);
+		m_thread.detach();
 		return true;
 	}
 	return false;

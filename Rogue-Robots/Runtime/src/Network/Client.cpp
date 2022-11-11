@@ -128,6 +128,7 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 	TcpHeader packet;
 	int bytesRecived, processedBytes = 0;
 	bool isItFirstTime = true;
+	u8 nrOfPackets = 0;
 	while (true)
 	{
 		bytesRecived = recv(m_connectSocket, reciveBuffer + processedBytes, SEND_AND_RECIVE_BUFFER_SIZE - processedBytes, 0);
@@ -150,7 +151,7 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 			//multiple packets detected
 			else if ((bytesRecived - processedBytes) > packet.sizeOfPayload)
 			{
-				u8 nrOfPackets = 0;
+				
 
 				while ((bytesRecived - processedBytes) > 0 && (bytesRecived - processedBytes) >= packet.sizeOfPayload)
 				{
@@ -166,7 +167,7 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 			// only part of  the packet arrived
 			else if ((bytesRecived - processedBytes) < packet.sizeOfPayload)
 			{
-				std::cout << "Client: Only part of the packet arrived: " << bytesRecived << "header payload: " << packet.sizeOfPayload << std::endl;
+				std::cout << "Client: Only part of the packet arrived: " << bytesRecived << " header payload: " << packet.sizeOfPayload << std::endl;
 				processedBytes += bytesRecived;
 			}
 			else

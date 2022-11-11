@@ -30,10 +30,14 @@ Server::~Server()
 	if (m_gameAlive)
 	{
 		m_gameAlive = FALSE;
-		m_loopTcp.join();
-		m_reciveConnectionsTcp.join();
-		m_loopUdp.join();
-		m_reciveLoopUdp.join();
+		if(m_loopTcp.joinable())
+			m_loopTcp.join();
+		if(m_reciveConnectionsTcp.joinable())
+			m_reciveConnectionsTcp.join();
+		if(m_loopUdp.joinable())
+			m_loopUdp.join();
+		if(m_reciveLoopUdp.joinable())
+			m_reciveLoopUdp.join();
 	}
 	for (UINT8 socketIndex = 0; socketIndex < m_holdPlayerIds.size(); socketIndex++)
 	{
@@ -108,15 +112,19 @@ bool Server::StartTcpServer()
 	m_gameAlive = TRUE;
 	//Thread to handle new connections
 	m_reciveConnectionsTcp = std::thread(&Server::ServerReciveConnectionsTCP, this, listenSocket);
+	m_reciveConnectionsTcp.detach();
 
 	//Thread that runs Game Tcp
 	m_loopTcp = std::thread(&Server::ServerPollTCP, this);
+	m_loopTcp.detach();
 
 	//Thread that runs Game Udp
 	m_loopUdp = std::thread(&Server::GameLoopUdp, this);
+	m_loopUdp.detach();
 
 	//Tread that parses udp packets
 	m_reciveLoopUdp = std::thread(&Server::ReciveLoopUdp, this);
+	m_reciveLoopUdp.detach();
 
 	std::cout << "Server: Server started" << std::endl;
 
@@ -204,6 +212,9 @@ void Server::ServerPollTCP()
 		int bufferReciveSize = 0;
 
 		TcpHeader sendHeader;
+		sendHeader.nrOfChangedAgentsHp = 0;
+		sendHeader.nrOfCreateAndDestroy = 0;
+		sendHeader.nrOfNetTransform = 0;
 		m_holdSocketsTcp = m_clientsSocketsTcp;
 
 
@@ -232,7 +243,7 @@ void Server::ServerPollTCP()
 
 					if (bytesRecived > 0)
 					{
-						while (bytesRecived != bufferReciveSize)
+						while (bytesRecived > bufferReciveSize)
 						{
 							memcpy(&holdClientsData, reciveBuffer + bufferReciveSize, sizeof(ClientsData));
 							bufferReciveSize += sizeof(ClientsData);
@@ -282,7 +293,7 @@ void Server::ServerPollTCP()
 							for (u32 j = 0; j < holdClientsData.nrOfCreateAndDestroy; ++j)
 							{
 								CreateAndDestroyEntityComponent test;
-								memcpy(&test, reciveBuffer + bufferReciveSize, sizeof(CreateAndDestroyEntityComponent));
+								memcpy(&test, reciveBuffer + bufferReciveSize, sizeof(CreateAndDestroyEntityComponent));	
 								createAndDestroy.push_back(test);
 								bufferReciveSize += sizeof(CreateAndDestroyEntityComponent);
 							}
