@@ -315,8 +315,6 @@ namespace DOG::gfx
 				{
 					nonRtDsResources.push_back(data);
 				}
-
-				//resource.resource = m_rd->CreateTexture(desc, chosenPool).handle;
 			}
 			else
 			{
