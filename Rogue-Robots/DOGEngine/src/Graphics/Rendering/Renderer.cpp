@@ -695,34 +695,34 @@ namespace DOG::gfx
 				},
 				[&, shadowDrawFunc = shadowDrawSubmissions](const ShadowPassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&) mutable
 				{
-					rd->Cmd_SetViewports(cmdl, Viewports().Append(0.f, 0.f, 1024.f, 1024.f));
-					rd->Cmd_SetScissorRects(cmdl, ScissorRects().Append(0, 0, 1024, 1024));
+					//rd->Cmd_SetViewports(cmdl, Viewports().Append(0.f, 0.f, 1024.f, 1024.f));
+					//rd->Cmd_SetScissorRects(cmdl, ScissorRects().Append(0, 0, 1024, 1024));
 
-					rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
+					//rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
 
-					// Fills shadowmaps chronologically
-					rd->Cmd_SetPipeline(cmdl, m_shadowPipe);
-					u32 nextMap = 0;
-					for (u32 i = 0; i < m_activeSpotlights.size(); ++i)
-					{
-						if (m_activeSpotlights[i].shadow)
-						{
-							//shadowDrawFunc(rd, cmdl, m_shadowSubmissions, nextMap++, m_activeSpotlights[i].shadow.value());
-							shadowDrawFunc(rd, cmdl, m_singleSidedShadowDraws[m_activeShadowCasters[i].singleSidedBucket], nextMap++, m_activeSpotlights[i].shadow.value());
-						}
-					}
+					//// Fills shadowmaps chronologically
+					//rd->Cmd_SetPipeline(cmdl, m_shadowPipe);
+					//u32 nextMap = 0;
+					//for (u32 i = 0; i < m_activeSpotlights.size(); ++i)
+					//{
+					//	if (m_activeSpotlights[i].shadow)
+					//	{
+					//		//shadowDrawFunc(rd, cmdl, m_shadowSubmissions, nextMap++, m_activeSpotlights[i].shadow.value());
+					//		shadowDrawFunc(rd, cmdl, m_singleSidedShadowDraws[m_activeShadowCasters[i].singleSidedBucket], nextMap++, m_activeSpotlights[i].shadow.value());
+					//	}
+					//}
 
-					// Render the shady modular blocks..
-					rd->Cmd_SetPipeline(cmdl, m_shadowPipeNoCull);
-					nextMap = 0;
-					for (u32 i = 0; i < m_activeSpotlights.size(); ++i)
-					{
-						if (m_activeSpotlights[i].shadow)
-						{
-							//shadowDrawFunc(rd, cmdl, m_shadowSubmissionsNoCull, nextMap++, m_activeSpotlights[i].shadow.value());
-							shadowDrawFunc(rd, cmdl, m_doubleSidedShadowDraws[m_activeShadowCasters[i].doubleSidedBucket], nextMap++, m_activeSpotlights[i].shadow.value());
-						}
-					}
+					//// Render the shady modular blocks..
+					//rd->Cmd_SetPipeline(cmdl, m_shadowPipeNoCull);
+					//nextMap = 0;
+					//for (u32 i = 0; i < m_activeSpotlights.size(); ++i)
+					//{
+					//	if (m_activeSpotlights[i].shadow)
+					//	{
+					//		//shadowDrawFunc(rd, cmdl, m_shadowSubmissionsNoCull, nextMap++, m_activeSpotlights[i].shadow.value());
+					//		shadowDrawFunc(rd, cmdl, m_doubleSidedShadowDraws[m_activeShadowCasters[i].doubleSidedBucket], nextMap++, m_activeSpotlights[i].shadow.value());
+					//	}
+					//}
 					
 				});
 
