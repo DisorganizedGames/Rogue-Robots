@@ -988,19 +988,29 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 			else
 			{
 				//Horizontal
-				if ((prevDir == 1 && nextDir == 5) || (prevDir == 0 && nextDir == 4))
+				if ((prevDir == 1 && nextDir == 5))
 				{
 					replacer = "LHorizontalConnector_r3_f";
 				}
-				else if ((prevDir == 5 && nextDir == 1) || (prevDir == 4 && nextDir == 0))
+				else if ((prevDir == 0 && nextDir == 4))
 				{
 					replacer = "LHorizontalConnector_r1_f";
+					//replacer = "Cube_r0_f";
 				}
-				else if ((prevDir == 1 && nextDir == 4) || (prevDir == 5 && nextDir == 0))
+				else if ((prevDir == 5 && nextDir == 1))
+				{
+					replacer = "LHorizontalConnector_r1_f"; //Should work?
+				}
+				else if ((prevDir == 4 && nextDir == 0))
+				{
+					replacer = "LHorizontalConnector_r3_f";
+					//replacer = "Cube_r0_f";
+				}
+				else if ((prevDir == 1 && nextDir == 4) || (prevDir == 5 && nextDir == 0)) //Works
 				{
 					replacer = "LHorizontalConnector_r2_f";
 				}
-				else if ((prevDir == 4 && nextDir == 1) || (prevDir == 0 && nextDir == 5))
+				else if ((prevDir == 4 && nextDir == 1) || (prevDir == 0 && nextDir == 5)) //Works
 				{
 					replacer = "LHorizontalConnector_r0_f";
 				}

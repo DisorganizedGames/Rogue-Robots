@@ -21,7 +21,7 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.024",
+            "name" : "PP_Standard_Material.102",
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 0
@@ -32,7 +32,7 @@
         },
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.032",
+            "name" : "PP_Standard_Material.105",
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 1
@@ -44,7 +44,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.056",
+            "name" : "Scene.037",
             "primitives" : [
                 {
                     "attributes" : {
@@ -90,54 +90,54 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 158,
+            "count" : 519,
             "max" : [
-                1.9405925273895264,
-                4.406264781951904,
-                2.188401222229004
+                2.4315199851989746,
+                4.753533363342285,
+                2.9197733402252197
             ],
             "min" : [
-                -1.926858901977539,
-                -2.537086629672558e-06,
-                -2.500002145767212
+                -2.634713649749756,
+                -3.0976425478002056e-06,
+                -2.500002384185791
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 158,
+            "count" : 519,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 158,
+            "count" : 519,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 158,
+            "count" : 519,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 255,
+            "count" : 519,
             "type" : "SCALAR"
         },
         {
             "bufferView" : 5,
             "componentType" : 5126,
-            "count" : 335,
+            "count" : 689,
             "max" : [
-                1.9405993223190308,
-                4.406264781951904,
-                2.500000476837158
+                2.3561582565307617,
+                4.653802871704102,
+                2.5022237300872803
             ],
             "min" : [
-                -1.7901688814163208,
+                -1.9851632118225098,
                 -2.2452236407843884e-06,
                 -2.500001907348633
             ],
@@ -146,78 +146,78 @@
         {
             "bufferView" : 6,
             "componentType" : 5126,
-            "count" : 335,
+            "count" : 689,
             "type" : "VEC3"
         },
         {
             "bufferView" : 7,
             "componentType" : 5126,
-            "count" : 335,
+            "count" : 689,
             "type" : "VEC2"
         },
         {
             "bufferView" : 8,
             "componentType" : 5126,
-            "count" : 335,
+            "count" : 689,
             "type" : "VEC2"
         },
         {
             "bufferView" : 9,
             "componentType" : 5123,
-            "count" : 543,
+            "count" : 693,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 1896,
+            "byteLength" : 6228,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 1896,
-            "byteOffset" : 1896
+            "byteLength" : 6228,
+            "byteOffset" : 6228
         },
         {
             "buffer" : 0,
-            "byteLength" : 1264,
-            "byteOffset" : 3792
+            "byteLength" : 4152,
+            "byteOffset" : 12456
         },
         {
             "buffer" : 0,
-            "byteLength" : 1264,
-            "byteOffset" : 5056
+            "byteLength" : 4152,
+            "byteOffset" : 16608
         },
         {
             "buffer" : 0,
-            "byteLength" : 510,
-            "byteOffset" : 6320
+            "byteLength" : 1038,
+            "byteOffset" : 20760
         },
         {
             "buffer" : 0,
-            "byteLength" : 4020,
-            "byteOffset" : 6832
+            "byteLength" : 8268,
+            "byteOffset" : 21800
         },
         {
             "buffer" : 0,
-            "byteLength" : 4020,
-            "byteOffset" : 10852
+            "byteLength" : 8268,
+            "byteOffset" : 30068
         },
         {
             "buffer" : 0,
-            "byteLength" : 2680,
-            "byteOffset" : 14872
+            "byteLength" : 5512,
+            "byteOffset" : 38336
         },
         {
             "buffer" : 0,
-            "byteLength" : 2680,
-            "byteOffset" : 17552
+            "byteLength" : 5512,
+            "byteOffset" : 43848
         },
         {
             "buffer" : 0,
-            "byteLength" : 1086,
-            "byteOffset" : 20232
+            "byteLength" : 1386,
+            "byteOffset" : 49360
         }
     ],
     "samplers" : [
@@ -228,7 +228,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 21320,
+            "byteLength" : 50748,
             "uri" : "TVertical2Connector.bin"
         }
     ]

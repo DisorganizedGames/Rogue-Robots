@@ -90,15 +90,15 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 477,
+            "count" : 768,
             "max" : [
                 2.500013828277588,
                 4.999999523162842,
-                2.250093936920166
+                2.4791717529296875
             ],
             "min" : [
-                -2.500000238418579,
-                -1.1920928955078125e-06,
+                -2.5,
+                -1.2885084288427606e-06,
                 -1.8363749980926514
             ],
             "type" : "VEC3"
@@ -106,31 +106,31 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 477,
+            "count" : 768,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 477,
+            "count" : 768,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 477,
+            "count" : 768,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 639,
+            "count" : 768,
             "type" : "SCALAR"
         },
         {
             "bufferView" : 5,
             "componentType" : 5126,
-            "count" : 133,
+            "count" : 352,
             "max" : [
                 2.5,
                 1.2542659044265747,
@@ -138,7 +138,7 @@
             ],
             "min" : [
                 -2.5,
-                0.3060626983642578,
+                -0.31550467014312744,
                 -1.5035665035247803
             ],
             "type" : "VEC3"
@@ -146,78 +146,78 @@
         {
             "bufferView" : 6,
             "componentType" : 5126,
-            "count" : 133,
+            "count" : 352,
             "type" : "VEC3"
         },
         {
             "bufferView" : 7,
             "componentType" : 5126,
-            "count" : 133,
+            "count" : 352,
             "type" : "VEC2"
         },
         {
             "bufferView" : 8,
             "componentType" : 5126,
-            "count" : 133,
+            "count" : 352,
             "type" : "VEC2"
         },
         {
             "bufferView" : 9,
             "componentType" : 5123,
-            "count" : 225,
+            "count" : 414,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 5724,
+            "byteLength" : 9216,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 5724,
-            "byteOffset" : 5724
+            "byteLength" : 9216,
+            "byteOffset" : 9216
         },
         {
             "buffer" : 0,
-            "byteLength" : 3816,
-            "byteOffset" : 11448
+            "byteLength" : 6144,
+            "byteOffset" : 18432
         },
         {
             "buffer" : 0,
-            "byteLength" : 3816,
-            "byteOffset" : 15264
+            "byteLength" : 6144,
+            "byteOffset" : 24576
         },
         {
             "buffer" : 0,
-            "byteLength" : 1278,
-            "byteOffset" : 19080
+            "byteLength" : 1536,
+            "byteOffset" : 30720
         },
         {
             "buffer" : 0,
-            "byteLength" : 1596,
-            "byteOffset" : 20360
+            "byteLength" : 4224,
+            "byteOffset" : 32256
         },
         {
             "buffer" : 0,
-            "byteLength" : 1596,
-            "byteOffset" : 21956
+            "byteLength" : 4224,
+            "byteOffset" : 36480
         },
         {
             "buffer" : 0,
-            "byteLength" : 1064,
-            "byteOffset" : 23552
+            "byteLength" : 2816,
+            "byteOffset" : 40704
         },
         {
             "buffer" : 0,
-            "byteLength" : 1064,
-            "byteOffset" : 24616
+            "byteLength" : 2816,
+            "byteOffset" : 43520
         },
         {
             "buffer" : 0,
-            "byteLength" : 450,
-            "byteOffset" : 25680
+            "byteLength" : 828,
+            "byteOffset" : 46336
         }
     ],
     "samplers" : [
@@ -228,7 +228,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 26132,
+            "byteLength" : 47164,
             "uri" : "WallFloorTunnelEntrance2.bin"
         }
     ]

@@ -65,15 +65,15 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 112,
+            "count" : 820,
             "max" : [
-                2.5,
+                2.5082507133483887,
                 0.9787488579750061,
-                2.5
+                2.5072803497314453
             ],
             "min" : [
                 -2.5,
-                0.30606284737586975,
+                -0.3426874279975891,
                 -2.5
             ],
             "type" : "VEC3"
@@ -81,53 +81,53 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 112,
+            "count" : 820,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 112,
+            "count" : 820,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 112,
+            "count" : 820,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 186,
+            "count" : 1044,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 1344,
+            "byteLength" : 9840,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 1344,
-            "byteOffset" : 1344
+            "byteLength" : 9840,
+            "byteOffset" : 9840
         },
         {
             "buffer" : 0,
-            "byteLength" : 896,
-            "byteOffset" : 2688
+            "byteLength" : 6560,
+            "byteOffset" : 19680
         },
         {
             "buffer" : 0,
-            "byteLength" : 896,
-            "byteOffset" : 3584
+            "byteLength" : 6560,
+            "byteOffset" : 26240
         },
         {
             "buffer" : 0,
-            "byteLength" : 372,
-            "byteOffset" : 4480
+            "byteLength" : 2088,
+            "byteOffset" : 32800
         }
     ],
     "samplers" : [
@@ -138,7 +138,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 4852,
+            "byteLength" : 34888,
             "uri" : "Floor1.bin"
         }
     ]

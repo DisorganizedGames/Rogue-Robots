@@ -83,22 +83,22 @@
         {
             "mimeType" : "image/png",
             "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
+            "uri" : "PP_Color_Palette.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 545,
+            "count" : 2731,
             "max" : [
                 2.500000476837158,
                 4.999999523162842,
-                0.748399555683136
+                2.5
             ],
             "min" : [
                 -2.5,
-                0.6875497102737427,
+                -0.5332996845245361,
                 -2.5000007152557373
             ],
             "type" : "VEC3"
@@ -106,31 +106,31 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 545,
+            "count" : 2731,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 545,
+            "count" : 2731,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 545,
+            "count" : 2731,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 648,
+            "count" : 3489,
             "type" : "SCALAR"
         },
         {
             "bufferView" : 5,
             "componentType" : 5126,
-            "count" : 154,
+            "count" : 826,
             "max" : [
                 2.5,
                 1.2542654275894165,
@@ -138,7 +138,7 @@
             ],
             "min" : [
                 -2.5,
-                0.30606335401535034,
+                -0.5332996845245361,
                 -1.5035667419433594
             ],
             "type" : "VEC3"
@@ -146,78 +146,78 @@
         {
             "bufferView" : 6,
             "componentType" : 5126,
-            "count" : 154,
+            "count" : 826,
             "type" : "VEC3"
         },
         {
             "bufferView" : 7,
             "componentType" : 5126,
-            "count" : 154,
+            "count" : 826,
             "type" : "VEC2"
         },
         {
             "bufferView" : 8,
             "componentType" : 5126,
-            "count" : 154,
+            "count" : 826,
             "type" : "VEC2"
         },
         {
             "bufferView" : 9,
             "componentType" : 5123,
-            "count" : 174,
+            "count" : 1158,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 6540,
+            "byteLength" : 32772,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 6540,
-            "byteOffset" : 6540
+            "byteLength" : 32772,
+            "byteOffset" : 32772
         },
         {
             "buffer" : 0,
-            "byteLength" : 4360,
-            "byteOffset" : 13080
+            "byteLength" : 21848,
+            "byteOffset" : 65544
         },
         {
             "buffer" : 0,
-            "byteLength" : 4360,
-            "byteOffset" : 17440
+            "byteLength" : 21848,
+            "byteOffset" : 87392
         },
         {
             "buffer" : 0,
-            "byteLength" : 1296,
-            "byteOffset" : 21800
+            "byteLength" : 6978,
+            "byteOffset" : 109240
         },
         {
             "buffer" : 0,
-            "byteLength" : 1848,
-            "byteOffset" : 23096
+            "byteLength" : 9912,
+            "byteOffset" : 116220
         },
         {
             "buffer" : 0,
-            "byteLength" : 1848,
-            "byteOffset" : 24944
+            "byteLength" : 9912,
+            "byteOffset" : 126132
         },
         {
             "buffer" : 0,
-            "byteLength" : 1232,
-            "byteOffset" : 26792
+            "byteLength" : 6608,
+            "byteOffset" : 136044
         },
         {
             "buffer" : 0,
-            "byteLength" : 1232,
-            "byteOffset" : 28024
+            "byteLength" : 6608,
+            "byteOffset" : 142652
         },
         {
             "buffer" : 0,
-            "byteLength" : 348,
-            "byteOffset" : 29256
+            "byteLength" : 2316,
+            "byteOffset" : 149260
         }
     ],
     "samplers" : [
@@ -228,7 +228,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 29604,
+            "byteLength" : 151576,
             "uri" : "WallFloorTunnelEntrance1.bin"
         }
     ]

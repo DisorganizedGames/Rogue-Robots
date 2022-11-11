@@ -21,7 +21,7 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.099",
+            "name" : "PP_Standard_Material.236",
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 0
@@ -33,7 +33,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.088",
+            "name" : "Scene.108",
             "primitives" : [
                 {
                     "attributes" : {
@@ -65,69 +65,69 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 276,
+            "count" : 691,
             "max" : [
-                1.7263236045837402,
+                2.290006399154663,
                 5.000000953674316,
-                2.500000476837158
+                2.610856056213379
             ],
             "min" : [
                 -2.4999988079071045,
                 -0.002353495452553034,
-                -2.5000009536743164
+                -2.626753091812134
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 276,
+            "count" : 691,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 276,
+            "count" : 691,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 276,
+            "count" : 691,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 462,
+            "count" : 723,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 3312,
+            "byteLength" : 8292,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 3312,
-            "byteOffset" : 3312
+            "byteLength" : 8292,
+            "byteOffset" : 8292
         },
         {
             "buffer" : 0,
-            "byteLength" : 2208,
-            "byteOffset" : 6624
+            "byteLength" : 5528,
+            "byteOffset" : 16584
         },
         {
             "buffer" : 0,
-            "byteLength" : 2208,
-            "byteOffset" : 8832
+            "byteLength" : 5528,
+            "byteOffset" : 22112
         },
         {
             "buffer" : 0,
-            "byteLength" : 924,
-            "byteOffset" : 11040
+            "byteLength" : 1446,
+            "byteOffset" : 27640
         }
     ],
     "samplers" : [
@@ -138,7 +138,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 11964,
+            "byteLength" : 29088,
             "uri" : "WallToRoofCorner1.bin"
         }
     ]

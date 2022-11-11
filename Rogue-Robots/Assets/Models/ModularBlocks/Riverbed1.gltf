@@ -29,7 +29,7 @@
             "emissiveTexture" : {
                 "index" : 0
             },
-            "name" : "PP_Standard_Material.003",
+            "name" : "PP_Standard_Material.009",
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 1
@@ -82,7 +82,7 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 657,
+            "count" : 1325,
             "max" : [
                 2.5,
                 1.4930627346038818,
@@ -90,7 +90,7 @@
             ],
             "min" : [
                 -2.5,
-                0.9369878768920898,
+                -0.3513922095298767,
                 -2.5
             ],
             "type" : "VEC3"
@@ -98,53 +98,53 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 657,
+            "count" : 1325,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 657,
+            "count" : 1325,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 657,
+            "count" : 1325,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 816,
+            "count" : 1392,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 7884,
+            "byteLength" : 15900,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 7884,
-            "byteOffset" : 7884
+            "byteLength" : 15900,
+            "byteOffset" : 15900
         },
         {
             "buffer" : 0,
-            "byteLength" : 5256,
-            "byteOffset" : 15768
+            "byteLength" : 10600,
+            "byteOffset" : 31800
         },
         {
             "buffer" : 0,
-            "byteLength" : 5256,
-            "byteOffset" : 21024
+            "byteLength" : 10600,
+            "byteOffset" : 42400
         },
         {
             "buffer" : 0,
-            "byteLength" : 1632,
-            "byteOffset" : 26280
+            "byteLength" : 2784,
+            "byteOffset" : 53000
         }
     ],
     "samplers" : [
@@ -155,7 +155,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 27912,
+            "byteLength" : 55784,
             "uri" : "Riverbed1.bin"
         }
     ]

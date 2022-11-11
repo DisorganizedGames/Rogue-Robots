@@ -29,7 +29,7 @@
             "emissiveTexture" : {
                 "index" : 0
             },
-            "name" : "PP_Standard_Material.028",
+            "name" : "PP_Standard_Material.010",
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 1
@@ -41,7 +41,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.047",
+            "name" : "Scene.007",
             "primitives" : [
                 {
                     "attributes" : {
@@ -82,69 +82,69 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 2244,
+            "count" : 2826,
             "max" : [
-                2.5,
-                5,
-                2.500000238418579
+                2.5459020137786865,
+                5.025716781616211,
+                2.7130963802337646
             ],
             "min" : [
-                -0.4694071412086487,
-                1.2481119632720947,
-                -2.5
+                -0.895950973033905,
+                0.9417095184326172,
+                -2.7295072078704834
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 2244,
+            "count" : 2826,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 2244,
+            "count" : 2826,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 2244,
+            "count" : 2826,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 2244,
+            "count" : 2826,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 26928,
+            "byteLength" : 33912,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 26928,
-            "byteOffset" : 26928
+            "byteLength" : 33912,
+            "byteOffset" : 33912
         },
         {
             "buffer" : 0,
-            "byteLength" : 17952,
-            "byteOffset" : 53856
+            "byteLength" : 22608,
+            "byteOffset" : 67824
         },
         {
             "buffer" : 0,
-            "byteLength" : 17952,
-            "byteOffset" : 71808
+            "byteLength" : 22608,
+            "byteOffset" : 90432
         },
         {
             "buffer" : 0,
-            "byteLength" : 4488,
-            "byteOffset" : 89760
+            "byteLength" : 5652,
+            "byteOffset" : 113040
         }
     ],
     "samplers" : [
@@ -155,7 +155,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 94248,
+            "byteLength" : 118692,
             "uri" : "Cliff1.bin"
         }
     ]

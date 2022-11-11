@@ -65,11 +65,11 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 86,
+            "count" : 644,
             "max" : [
-                2.5,
-                4.731199741363525,
-                2.5000014305114746
+                2.5014727115631104,
+                5.215345859527588,
+                2.501694917678833
             ],
             "min" : [
                 -2.5,
@@ -81,53 +81,53 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 86,
+            "count" : 644,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 86,
+            "count" : 644,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 86,
+            "count" : 644,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 150,
+            "count" : 816,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 1032,
+            "byteLength" : 7728,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 1032,
-            "byteOffset" : 1032
+            "byteLength" : 7728,
+            "byteOffset" : 7728
         },
         {
             "buffer" : 0,
-            "byteLength" : 688,
-            "byteOffset" : 2064
+            "byteLength" : 5152,
+            "byteOffset" : 15456
         },
         {
             "buffer" : 0,
-            "byteLength" : 688,
-            "byteOffset" : 2752
+            "byteLength" : 5152,
+            "byteOffset" : 20608
         },
         {
             "buffer" : 0,
-            "byteLength" : 300,
-            "byteOffset" : 3440
+            "byteLength" : 1632,
+            "byteOffset" : 25760
         }
     ],
     "samplers" : [
@@ -138,7 +138,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 3740,
+            "byteLength" : 27392,
             "uri" : "Roof1.bin"
         }
     ]

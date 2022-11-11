@@ -21,7 +21,7 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.065",
+            "name" : "PP_Standard_Material.170",
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 0
@@ -32,7 +32,7 @@
         },
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.066",
+            "name" : "PP_Standard_Material.171",
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 1
@@ -90,134 +90,134 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 46,
+            "count" : 303,
             "max" : [
-                2.5000059604644775,
-                5,
+                2.5140926837921143,
+                5.15425968170166,
                 -1.4351125955581665
             ],
             "min" : [
-                -2.5000009536743164,
+                -2.515519618988037,
                 4.394087791442871,
-                -2.4999988079071045
+                -2.503290891647339
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 46,
+            "count" : 303,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 46,
+            "count" : 303,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 46,
+            "count" : 303,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 66,
+            "count" : 303,
             "type" : "SCALAR"
         },
         {
             "bufferView" : 5,
             "componentType" : 5126,
-            "count" : 13,
+            "count" : 111,
             "max" : [
                 0.0077711292542517185,
-                5,
+                5.15425968170166,
                 -1.3490968942642212
             ],
             "min" : [
-                -2.500000476837158,
+                -2.515519142150879,
                 4.447351932525635,
-                -1.727649211883545
+                -1.7610939741134644
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 6,
             "componentType" : 5126,
-            "count" : 13,
+            "count" : 111,
             "type" : "VEC3"
         },
         {
             "bufferView" : 7,
             "componentType" : 5126,
-            "count" : 13,
+            "count" : 111,
             "type" : "VEC2"
         },
         {
             "bufferView" : 8,
             "componentType" : 5126,
-            "count" : 13,
+            "count" : 111,
             "type" : "VEC2"
         },
         {
             "bufferView" : 9,
             "componentType" : 5123,
-            "count" : 24,
+            "count" : 111,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 552,
+            "byteLength" : 3636,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 552,
-            "byteOffset" : 552
+            "byteLength" : 3636,
+            "byteOffset" : 3636
         },
         {
             "buffer" : 0,
-            "byteLength" : 368,
-            "byteOffset" : 1104
+            "byteLength" : 2424,
+            "byteOffset" : 7272
         },
         {
             "buffer" : 0,
-            "byteLength" : 368,
-            "byteOffset" : 1472
+            "byteLength" : 2424,
+            "byteOffset" : 9696
         },
         {
             "buffer" : 0,
-            "byteLength" : 132,
-            "byteOffset" : 1840
+            "byteLength" : 606,
+            "byteOffset" : 12120
         },
         {
             "buffer" : 0,
-            "byteLength" : 156,
-            "byteOffset" : 1972
+            "byteLength" : 1332,
+            "byteOffset" : 12728
         },
         {
             "buffer" : 0,
-            "byteLength" : 156,
-            "byteOffset" : 2128
+            "byteLength" : 1332,
+            "byteOffset" : 14060
         },
         {
             "buffer" : 0,
-            "byteLength" : 104,
-            "byteOffset" : 2284
+            "byteLength" : 888,
+            "byteOffset" : 15392
         },
         {
             "buffer" : 0,
-            "byteLength" : 104,
-            "byteOffset" : 2388
+            "byteLength" : 888,
+            "byteOffset" : 16280
         },
         {
             "buffer" : 0,
-            "byteLength" : 48,
-            "byteOffset" : 2492
+            "byteLength" : 222,
+            "byteOffset" : 17168
         }
     ],
     "samplers" : [
@@ -228,7 +228,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 2540,
+            "byteLength" : 17392,
             "uri" : "WallRoofHanging1.bin"
         }
     ]

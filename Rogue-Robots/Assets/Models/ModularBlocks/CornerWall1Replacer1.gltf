@@ -90,47 +90,47 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 402,
+            "count" : 711,
             "max" : [
                 2.5,
                 5,
                 2.5000040531158447
             ],
             "min" : [
-                -1.9720444679260254,
+                -2.1772823333740234,
                 0,
-                -2.5000007152557373
+                -2.5000009536743164
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 402,
+            "count" : 711,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 402,
+            "count" : 711,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 402,
+            "count" : 711,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 582,
+            "count" : 717,
             "type" : "SCALAR"
         },
         {
             "bufferView" : 5,
             "componentType" : 5126,
-            "count" : 132,
+            "count" : 144,
             "max" : [
                 2.5,
                 5,
@@ -146,78 +146,78 @@
         {
             "bufferView" : 6,
             "componentType" : 5126,
-            "count" : 132,
+            "count" : 144,
             "type" : "VEC3"
         },
         {
             "bufferView" : 7,
             "componentType" : 5126,
-            "count" : 132,
+            "count" : 144,
             "type" : "VEC2"
         },
         {
             "bufferView" : 8,
             "componentType" : 5126,
-            "count" : 132,
+            "count" : 144,
             "type" : "VEC2"
         },
         {
             "bufferView" : 9,
             "componentType" : 5123,
-            "count" : 171,
+            "count" : 144,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 4824,
+            "byteLength" : 8532,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 4824,
-            "byteOffset" : 4824
+            "byteLength" : 8532,
+            "byteOffset" : 8532
         },
         {
             "buffer" : 0,
-            "byteLength" : 3216,
-            "byteOffset" : 9648
+            "byteLength" : 5688,
+            "byteOffset" : 17064
         },
         {
             "buffer" : 0,
-            "byteLength" : 3216,
-            "byteOffset" : 12864
+            "byteLength" : 5688,
+            "byteOffset" : 22752
         },
         {
             "buffer" : 0,
-            "byteLength" : 1164,
-            "byteOffset" : 16080
+            "byteLength" : 1434,
+            "byteOffset" : 28440
         },
         {
             "buffer" : 0,
-            "byteLength" : 1584,
-            "byteOffset" : 17244
+            "byteLength" : 1728,
+            "byteOffset" : 29876
         },
         {
             "buffer" : 0,
-            "byteLength" : 1584,
-            "byteOffset" : 18828
+            "byteLength" : 1728,
+            "byteOffset" : 31604
         },
         {
             "buffer" : 0,
-            "byteLength" : 1056,
-            "byteOffset" : 20412
+            "byteLength" : 1152,
+            "byteOffset" : 33332
         },
         {
             "buffer" : 0,
-            "byteLength" : 1056,
-            "byteOffset" : 21468
+            "byteLength" : 1152,
+            "byteOffset" : 34484
         },
         {
             "buffer" : 0,
-            "byteLength" : 342,
-            "byteOffset" : 22524
+            "byteLength" : 288,
+            "byteOffset" : 35636
         }
     ],
     "samplers" : [
@@ -228,7 +228,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 22868,
+            "byteLength" : 35924,
             "uri" : "CornerWall1Replacer1.bin"
         }
     ]

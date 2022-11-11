@@ -7,7 +7,7 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 {
 	auto& em = EntityManager::Get();
 
-	float blockDim = 4.6f;
+	float blockDim = 5.0f;
 
 	std::string line;
 

@@ -4,7 +4,7 @@ int main()
 {
     //Dimensions for the whole level.
     uint32_t w = 30;
-    uint32_t h = 15;
+    uint32_t h = 10;
     uint32_t d = 30;
 
     //Number of levels to generate.
