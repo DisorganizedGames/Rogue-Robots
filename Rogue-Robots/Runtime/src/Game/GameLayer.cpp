@@ -82,8 +82,6 @@ void GameLayer::OnAttach()
 
 	//m_testScene = std::make_unique<TestScene>();
 	//m_testScene->SetUpScene();
-	m_testScene = std::make_unique<TestScene>();
-	m_testScene->SetUpScene();
 }
 
 void GameLayer::OnDetach()
