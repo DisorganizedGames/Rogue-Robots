@@ -42,22 +42,32 @@ namespace DOG
 						m_rigs.push_back(&model->animation);
 						SetPlayerBaseStates();
 					}
+					if (modelaC.animatorID != -1)
+					{
+						auto& a = m_playerRigAnimators[modelaC.animatorID];
+						for (u32 i = 0; i < modelaC.addedSetters; i++)
+							a.ResetSetter(modelaC.animSetters[i]);
+					}
 				});
 			return;
 		}
-
 		auto mixamoCount = 0;
 		EntityManager::Get().Collect<AnimationComponent>().Do([&](AnimationComponent& rAC)
 			{
+				auto& a = m_playerRigAnimators[rAC.animatorID];
 				if (rAC.animatorID != -1)
 				{
-					auto& a = m_playerRigAnimators[rAC.animatorID];
 					rAC.offset = MIXAMO_RIG.nJoints * mixamoCount++;
 					if (rAC.animSetters.at(0).animationIDs[0] == 0 || rAC.animSetters.at(0).animationIDs[2] == 0 || rAC.animSetters.at(0).animationIDs[1] == 0)
 						auto why = 889;
 					a.Update(deltaTime);
 					a.ProcessAnimationComponent(rAC);
 					UpdateSkeleton(a, rAC.offset);
+				}
+				else
+				{
+					for (u32 i = 0; i < rAC.addedSetters; i++)
+						a.ResetSetter(rAC.animSetters[i]);
 				}
 			});
 	}
@@ -520,6 +530,18 @@ namespace DOG
 			else
 			{
 				const auto weight = a.GetGroupWeight(group);
+				auto res = XMVectorLerp(m_fullbodySRT[idx], storeSRT[i], weight); /// TGGAUIYUYGAIUFAF
+				if (key == KeyType::Scale)
+				{
+					if (XMVectorGetX(res) < 0.95f || XMVectorGetY(res) < 0.95f || XMVectorGetZ(res) < 0.95f)
+					{
+						auto why = 9;
+					}
+					if (XMVectorGetX(res) > 1.05f || XMVectorGetY(res) > 1.05f || XMVectorGetZ(res) > 1.05f)
+					{
+						auto why = 9;
+					}
+				}
 				m_fullbodySRT[idx] = key == KeyType::Rotation ?
 					XMQuaternionSlerp(m_fullbodySRT[idx], storeSRT[i], weight) :
 					XMVectorLerp(m_fullbodySRT[idx], storeSRT[i], weight);

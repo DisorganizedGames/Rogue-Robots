@@ -62,7 +62,7 @@ namespace DOG
 	private:
 		RigAnimator mRigAnimator;
 		f32 m_imguiGroupWeightA = 0.0f;
-		bool m_imguiApplyRootTranslation = true;
+		bool m_imguiApplyRootTranslation = false;
 		DirectX::FXMMATRIX ImguiTransform(i32 joint);
 		std::vector<DirectX::XMFLOAT3> m_imguiSca;
 		std::vector<DirectX::XMFLOAT3> m_imguiRot;

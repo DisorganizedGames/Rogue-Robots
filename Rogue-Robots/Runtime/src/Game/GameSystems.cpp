@@ -204,7 +204,12 @@ void PlayerMovementSystem::MovePlayer(Entity, PlayerControllerComponent& player,
 
 void PlayerMovementSystem::ApplyAnimations(const InputController& input, AnimationComponent& ac)
 {
+	if (ac.addedSetters > 4)
+	{
+		ac.addedSetters = 0;
+	}
 	// Animation IDs
+	static constexpr i8 IDLE = 2;
 	static constexpr i8 RUN = 5;
 	static constexpr i8 RUN_BACKWARDS = 6;
 	static constexpr i8 WALK = 13;
@@ -237,6 +242,16 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 
 	if (addedAnims)
 	{
+		setter.loop = true;
+		setter.transitionLength = 0.1f;
+		setter.playbackRate = 1.0f;
+		setter.group = ac.MIXAMO_LOWER_BODY;
+		++ac.addedSetters;
+	}
+	else
+	{
+		setter.animationIDs[addedAnims] = IDLE;
+		setter.targetWeights[addedAnims++] = 1.0f;
 		setter.loop = true;
 		setter.transitionLength = 0.1f;
 		setter.playbackRate = 1.0f;
