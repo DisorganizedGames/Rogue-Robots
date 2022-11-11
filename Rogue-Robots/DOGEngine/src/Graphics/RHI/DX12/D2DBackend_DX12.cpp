@@ -114,7 +114,7 @@ void DOG::gfx::D2DBackend_DX12::OnResize()
     auto sc12 = (Swapchain_DX12*)m_sc;
 
     HRESULT hr{ S_OK };
-    auto queue = rd12->GetQueue();
+    //auto queue = rd12->GetQueue();
     //HRESULT hr = D3D11On12CreateDevice(
     //    rd12->GetDevice(),
     //    D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT,

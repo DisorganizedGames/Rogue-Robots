@@ -41,7 +41,8 @@ void D11Flush()
 
 void D11ReInit(ID3D12Device* dev)
 {
-	HRESULT hr = D3D11On12CreateDevice(
+	HRESULT hr{ S_OK };
+	hr = D3D11On12CreateDevice(
 		dev,
 		D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT,
 		NULL,
