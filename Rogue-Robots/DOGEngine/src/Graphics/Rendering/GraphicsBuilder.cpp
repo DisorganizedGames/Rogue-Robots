@@ -43,7 +43,7 @@ namespace DOG::gfx
 		u8 bytesPerPixel = sizeof(u32);
 
 		u32 denum = 1;
-		if (spec.format == DXGI_FORMAT_BC7_UNORM_SRGB)
+		if (spec.format == DXGI_FORMAT_BC7_UNORM_SRGB || spec.format == DXGI_FORMAT_BC7_UNORM)
 		{
 			texFormat = spec.format;
 			bytesPerPixel = 16;

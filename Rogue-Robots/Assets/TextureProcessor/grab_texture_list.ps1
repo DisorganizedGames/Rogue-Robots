@@ -42,7 +42,7 @@ foreach($line in $pngContent)
             }
 
             $dir = [IO.Path]::GetDirectoryName($line) 
-            &.\texconv -pow2 -f BC7_UNORM_SRGB $line -srgb -y -m 1 -o $dir
+            &.\texconv -pow2 -f BC7_UNORM_SRGB $line -srgbo -y -m 1 -o $dir
         }
     }
 }

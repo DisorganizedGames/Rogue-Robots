@@ -12,6 +12,8 @@
 
 #include "Tracy/Tracy.hpp"
 
+#include "D11Device.h"
+
 namespace DOG::gfx
 {
 	GPUPoolMemoryInfo ToMemoryInfo(const D3D12MA::DetailedStatistics& stats)
@@ -56,6 +58,8 @@ namespace DOG::gfx
 		m_reservedDescriptor = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_d2dReservedDescriptor = m_descriptorMgr->allocate(numBackBuffers, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		InitRootsig();
+
+		InitializeD11(m_device.Get(), GetQueue(QueueType::Graphics));
 	}
 
 	RenderDevice_DX12::~RenderDevice_DX12()
@@ -86,6 +90,8 @@ namespace DOG::gfx
 		
 		if (m_d2dReservedDescriptor)
 			m_descriptorMgr->free(&(*m_d2dReservedDescriptor));
+
+		DestroyD11();
 	}
 
 	Swapchain* RenderDevice_DX12::CreateSwapchain(void* hwnd, u8 numBuffers)
@@ -451,7 +457,7 @@ namespace DOG::gfx
 		else
 			view_desc = m_descriptorMgr->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		if (tex_storage.desc.format == DXGI_FORMAT_BC7_UNORM_SRGB)
+		if (tex_storage.desc.format == DXGI_FORMAT_BC7_UNORM_SRGB || tex_storage.desc.format == DXGI_FORMAT_BC7_UNORM)
 			desc.format = tex_storage.desc.format;
 
 		std::optional<DX12DescriptorChunk> uavClear;
@@ -1004,8 +1010,8 @@ namespace DOG::gfx
 		src_loc.PlacedFootprint.Footprint.RowPitch = srcRowPitch;
 		src_loc.PlacedFootprint.Footprint.Depth = srcDepth;
 		// reinterpret if Block Compressed :)
-		src_loc.PlacedFootprint.Footprint.Width = srcFormat == DXGI_FORMAT_BC7_UNORM_SRGB ? srcWidth * 4 : srcWidth;			
-		src_loc.PlacedFootprint.Footprint.Height = srcFormat == DXGI_FORMAT_BC7_UNORM_SRGB ? srcHeight * 4 : srcHeight;
+		src_loc.PlacedFootprint.Footprint.Width = srcFormat == DXGI_FORMAT_BC7_UNORM_SRGB || srcFormat == DXGI_FORMAT_BC7_UNORM ? srcWidth * 4 : srcWidth;			
+		src_loc.PlacedFootprint.Footprint.Height = srcFormat == DXGI_FORMAT_BC7_UNORM_SRGB || srcFormat == DXGI_FORMAT_BC7_UNORM ? srcHeight * 4 : srcHeight;
 		src_loc.PlacedFootprint.Footprint.Format = srcFormat;
 
 		cmdlRes.pair.list->CopyTextureRegion(&dst_loc, std::get<0>(dstTopLeft), std::get<1>(dstTopLeft), std::get<2>(dstTopLeft), &src_loc, nullptr);

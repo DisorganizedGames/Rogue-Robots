@@ -2,6 +2,7 @@
 #include "Compressonator/compressonator.h"
 
 #include <DirectXTex/DirectXTex.h>
+#include "../Graphics/RHI/DX12/D11Device.h"
 
 namespace DOG
 {
@@ -19,11 +20,12 @@ namespace DOG
 			//assert(SUCCEEDED(hr));
 
 			s_initialized = true;
+
 		}
 	}
 
 
-	TextureFileImporter::TextureFileImporter(const std::filesystem::path& path, bool genMips)
+	TextureFileImporter::TextureFileImporter(const std::filesystem::path& path, bool genMips, bool srgb)
 	{
 		UNREFERENCED_PARAMETER(genMips);
 
@@ -32,13 +34,51 @@ namespace DOG
 
 		std::lock_guard<std::mutex> lock(m_mutex);
 
-
 		// Result is empty if path is empty
 		if (path.empty())
 			return;
 
 		auto newPath = path;
 		newPath.replace_extension("dds");
+		
+		// Sanity check, KEEP THIS
+		//if (srgb)
+		//	std::cout << "Is SRGB!\n";
+		//else
+		//	std::cout << "Is not SRGB!\n";
+
+		// Generate DDS if it doesnt exist
+		if (!std::filesystem::exists(newPath))
+		{
+			DirectX::TexMetadata md;
+			DirectX::ScratchImage img;
+			hr = DirectX::LoadFromWICFile(path.c_str(), DirectX::WIC_FLAGS_FORCE_RGB, &md, img);
+			assert(SUCCEEDED(hr));
+
+			//DirectX::ScratchImage mipChain;
+			//hr = DirectX::GenerateMipMaps(img.GetImages(), img.GetImageCount(), md, DirectX::TEX_FILTER_DEFAULT, md.mipLevels, mipChain);
+			//assert(SUCCEEDED(hr));
+
+			DirectX::TEX_COMPRESS_FLAGS compressFlags = DirectX::TEX_COMPRESS_BC7_QUICK;
+
+			DXGI_FORMAT format = DXGI_FORMAT_BC7_UNORM;
+			if (srgb)
+			{
+				compressFlags |= DirectX::TEX_COMPRESS_SRGB_IN;
+				compressFlags |= DirectX::TEX_COMPRESS_SRGB_OUT;
+				format = DXGI_FORMAT_BC7_UNORM_SRGB;
+			}
+
+			DirectX::ScratchImage bcImg;
+			hr = DirectX::Compress(GetD11Device(), *img.GetImages(), format, compressFlags, DirectX::TEX_THRESHOLD_DEFAULT, bcImg);
+			assert(SUCCEEDED(hr));
+
+			D11Flush();
+
+			hr = DirectX::SaveToDDSFile(bcImg.GetImages(), bcImg.GetImageCount(), bcImg.GetMetadata(), DirectX::DDS_FLAGS_NONE, newPath.c_str());
+			assert(SUCCEEDED(hr));
+		}
+
 
 		// Load new
 		DirectX::TexMetadata md;
