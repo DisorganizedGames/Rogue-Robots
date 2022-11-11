@@ -364,7 +364,7 @@ PS_OUT main(VS_OUT input)
     float rayLength = length(rayVector);
     float3 rayDirection = rayVector / rayLength;
     float stepLength = rayLength / nrOfSteps;
-    float step = rayDirection * stepLength;
+    float3 step = rayDirection * stepLength;
     /* ------------------------------------------ */
     
     for (int k = 0; k < perSpotlightData.currentNrOfSpotlights; ++k)
@@ -424,10 +424,30 @@ PS_OUT main(VS_OUT input)
         
         //Texture2D shadowMap = ResourceDescriptorHeap[shadowMapArrayStruct.shadowMapArray[groupIndex][offsetInGroup]];
         
+        float4x4 viewMatrix = perSpotlightData.spotlightArray[k].viewMatrix;
+        float4x4 projectionMatrix = perSpotlightData.spotlightArray[k].projectionMatrix;
         
-        float shadowFactor = perSpotlightData.spotlightArray[k].isShadowCaster ? CalculateShadowFactor(shadowMaps, k, input.wsPos, N, -lightToPosDir, perSpotlightData.spotlightArray[k].viewMatrix, perSpotlightData.spotlightArray[k].projectionMatrix) : 1.0f;
+        float shadowFactor = perSpotlightData.spotlightArray[k].isShadowCaster ? CalculateShadowFactor(shadowMaps, k, input.wsPos, N, -lightToPosDir, viewMatrix, projectionMatrix) : 1.0f;
         
-        Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL * contrib * shadowFactor;
+        float3 currentposition = startPosition;
+        float3 accumulatedMedia = 0.0f.xxx;
+      //Ray march from pixel pos from the POV of the LIGHT CAMERA, NOT MAIN CAM!
+        for (uint j = 0u; j < nrOfSteps; j++)
+        {
+            float4 worldInShadowSpace = mul(projectionMatrix, mul(viewMatrix, float4(currentposition, 1.f)));
+            float3 positionLightSS = worldInShadowSpace.xyz / worldInShadowSpace.w;
+            float2 shadowMapTextureCoords = float2(0.5f * positionLightSS.x + 0.5f, -0.5f * positionLightSS.y + 0.5f);
+            float shadowMapValue = shadowMaps.Sample(g_point_samp ,float3(shadowMapTextureCoords, k)).r;
+            if (shadowMapValue < positionLightSS.z)
+            {
+                accumulatedMedia += CalculateVolumetricScattering(dot(rayDirection, -lightToPosDir), 0.0f).xxx * perSpotlightData.spotlightArray[k].color;
+            }
+            currentposition += step;
+        }
+        accumulatedMedia /= nrOfSteps;
+        
+        Lo += ((kD * albedoInput / 3.1415 + specular) * radiance * NdotL * contrib * shadowFactor);
+        Lo += (accumulatedMedia);
     }
     
     // add temp directional light
