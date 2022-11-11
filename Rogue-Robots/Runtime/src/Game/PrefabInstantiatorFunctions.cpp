@@ -25,10 +25,10 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 	auto& am = AssetManager::Get();
 	auto& em = EntityManager::Get();
 	std::array<u32, 4> playerModels;
-	playerModels[0] = am.LoadModelAsset("Assets/Models/Players/Test/Red/player_red.gltf");
-	playerModels[1] = am.LoadModelAsset("Assets/Models/Players/Test/Blue/player_Blue.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
-	playerModels[2] = am.LoadModelAsset("Assets/Models/Players/Test/Green/player_Green.gltf");
-	playerModels[3] = am.LoadModelAsset("Assets/Models/Players/Test/Yellow/player_yellow.gltf");
+	playerModels[0] = am.LoadModelAsset("Assets/Models/P2/Red/player_red.gltf");
+	playerModels[1] = am.LoadModelAsset("Assets/Models/P2/Blue/player_Blue.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
+	playerModels[2] = am.LoadModelAsset("Assets/Models/P2/Green/player_Green.gltf");
+	playerModels[3] = am.LoadModelAsset("Assets/Models/P2/Yellow/player_yellow.gltf");
 	std::vector<entity> players;
 	for (auto i = 0; i < playerCount; ++i)
 	{

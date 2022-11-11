@@ -78,7 +78,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
 	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
 
-	// Place camera 0.4 units above the player transform
+	// Place camera 1.2 units above the player transform
 	auto pos = transform.GetPosition() + Vector3(0, 1.2f, 0);
 	camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
 	cameraTransform.worldMatrix = camera.viewMatrix.Invert();

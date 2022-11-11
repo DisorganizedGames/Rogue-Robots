@@ -286,8 +286,7 @@ namespace DOG
 		std::vector<XMMATRIX> hereditaryTFs;
 		const auto& rig = animator.rigData;
 		hereditaryTFs.reserve(rig->nodes.size());
-		const auto tmpScale = XMMatrixScaling( 0.5f, 0.5f, 0.5f );
-		hereditaryTFs.push_back(tmpScale * XMLoadFloat4x4(&rig->nodes[0].transformation));
+		hereditaryTFs.push_back(XMLoadFloat4x4(&rig->nodes[0].transformation));
 		for (i32 i = 1; i < rig->nodes.size(); ++i)
 		{
 			// Compose pose matrix from keyframe values scale, rot, and transl
