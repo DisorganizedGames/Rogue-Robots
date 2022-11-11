@@ -67,7 +67,10 @@ namespace DOG
 		u32 objectId  = 0;
 		DirectX::SimpleMath::Matrix transform;
 	};
+	struct DontDraw
+	{
 
+	};
 	struct AnimationComponent
 	{
 		static constexpr u8 MAX_SETTERS = 10;

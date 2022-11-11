@@ -9,7 +9,6 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 {
 	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
 
-	playerCount = 4;
 	auto* scriptManager = LuaMain::GetScriptManager();
 	//// Add persistent material prefab lua
 	//{
@@ -39,8 +38,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 			spread * (i / 2) - (spread / 2.f),
 		};
 		em.AddComponent<TransformComponent>(playerI, pos - offset);
-		em.AddComponent<ModelComponent>(playerI, playerModels[i]);
-		em.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 0.8f, true, 75.f);
+		em.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 1.8f, true, 75.f);
 		auto& rb = em.AddComponent<RigidbodyComponent>(playerI, playerI);
 		rb.ConstrainRotation(true, true, true);
 		rb.disableDeactivation = true;
@@ -63,12 +61,21 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
 		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");
 
-		em.AddComponent<AnimationComponent>(playerI);
-		auto& ac = em.GetComponent<AnimationComponent>(playerI);
+		entity modelEntity = em.CreateEntity();
+
+		auto& transform = em.AddComponent<TransformComponent>(modelEntity);
+		em.AddComponent<ModelComponent>(modelEntity, playerModels[i]);
+		em.AddComponent<AnimationComponent>(modelEntity);
+		auto& ac = em.GetComponent<AnimationComponent>(modelEntity);
 		ac.animatorID = static_cast<i8>(i);
+
+		auto& t = em.AddComponent<ParentComponent>(modelEntity);
+		t.parent = playerI;
+		t.localTransform.SetPosition({0.0f, -0.9f, 0.0f});
 
 		if (i == 0) // Only for this player
 		{
+			em.AddComponent<DontDraw>(modelEntity);
 			em.AddComponent<ThisPlayer>(playerI);
 			em.AddComponent<AudioListenerComponent>(playerI);
 		}
