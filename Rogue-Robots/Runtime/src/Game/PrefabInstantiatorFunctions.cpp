@@ -63,7 +63,6 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 
 		entity modelEntity = em.CreateEntity();
 
-		auto& transform = em.AddComponent<TransformComponent>(modelEntity);
 		em.AddComponent<ModelComponent>(modelEntity, playerModels[i]);
 		em.AddComponent<AnimationComponent>(modelEntity);
 		auto& ac = em.GetComponent<AnimationComponent>(modelEntity);
