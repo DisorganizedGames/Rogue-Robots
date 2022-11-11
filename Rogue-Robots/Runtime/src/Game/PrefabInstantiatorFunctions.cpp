@@ -48,7 +48,6 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		em.AddComponent<PlayerControllerComponent>(playerI);
 		em.AddComponent<NetworkPlayerComponent>(playerI).playerId = static_cast<i8>(i);
 		em.AddComponent<InputController>(playerI);
-		em.AddComponent<ShadowReceiverComponent>(playerI);
 		em.AddComponent<PlayerAliveComponent>(playerI);
 		auto& bc = em.AddComponent<BarrelComponent>(playerI);
 		bc.type = BarrelComponent::Type::Bullet;
@@ -63,8 +62,11 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 
 		entity modelEntity = em.CreateEntity();
 
+		em.AddComponent<TransformComponent>(modelEntity);
 		em.AddComponent<ModelComponent>(modelEntity, playerModels[i]);
 		em.AddComponent<AnimationComponent>(modelEntity);
+		em.AddComponent<ShadowReceiverComponent>(modelEntity);
+
 		auto& ac = em.GetComponent<AnimationComponent>(modelEntity);
 		ac.animatorID = static_cast<i8>(i);
 
