@@ -152,7 +152,7 @@ namespace DOG::gfx
 		auto shadowVS = m_sclr->CompileFromFile("ShadowVS.hlsl", ShaderType::Vertex);
 		//auto shadowGS = m_sclr->CompileFromFile("ShadowGS.hlsl", ShaderType::Geometry);
 		auto shadowPS = m_sclr->CompileFromFile("ShadowPS.hlsl", ShaderType::Pixel);
-		/* 
+		/*
 			Remove GS usage
 			reroute ShadowVS --> ShadowGS.hlsl if you want to enable it again (better to avoid)
 		*/
@@ -277,8 +277,8 @@ namespace DOG::gfx
 		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
 		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
 		m_bloomEffect = std::make_unique<Bloom>(m_rgResMan.get(), m_globalEffectData, m_dynConstants.get(), m_renderWidth, m_renderHeight);
-		m_particleRenderEffect = std::make_unique<ParticleEffect>(m_globalEffectData, m_rgResMan.get(), m_perFrameUploadCtx.get());
-	
+		m_particleRenderEffect = std::make_unique<ParticleEffect>(m_globalEffectData, m_rgResMan.get(), m_perFrameUploadCtx.get(), m_bin.get());
+
 		{
 			// Create 4x4 SSAO noise
 			std::random_device rd;  // Will be used to obtain a seed for the random number engine
@@ -343,7 +343,7 @@ namespace DOG::gfx
 
 	Renderer::~Renderer()
 	{
-		DOG::UI::Destroy();	
+		DOG::UI::Destroy();
 		Flush();
 		m_rg->Clear();
 		m_bin->ForceClear();
@@ -567,8 +567,8 @@ namespace DOG::gfx
 				float cutoffAngle{ 0.f };
 				DirectX::SimpleMath::Vector3 direction;
 				float strength{ 0.f };
-				bool isShadowCaster { false };
-				float padding[3];
+				bool isShadowCaster{ false };
+				float padding[3]{ 0,0,0 };
 			};
 
 			/*Encompasses all the light datas for spotlights, which we currently limit to 12*/
@@ -591,14 +591,13 @@ namespace DOG::gfx
 			};
 
 			struct ShadowPassData
-			{
-			};
+			{};
 
 			/*
 				@todo:
 					Still need some way to pre-allocate per draw data prior to render pass.
 					Perhaps go through the submissions and collect data --> Upload to GPU (maybe instance it as well?)
-					and during forward pass we simply read from it 
+					and during forward pass we simply read from it
 			*/
 
 			auto drawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_jointMan.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false) mutable
@@ -696,8 +695,8 @@ namespace DOG::gfx
 					builder.DeclareTexture(RG_RESOURCE(ShadowDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, 1024, 1024, m_shadowMapCapacity));
 					builder.WriteDepthStencil(RG_RESOURCE(ShadowDepth), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D_Array, DXGI_FORMAT_D32_FLOAT)
-					.SetArrayRange(0, m_shadowMapCapacity));
-					
+						.SetArrayRange(0, m_shadowMapCapacity));
+
 				},
 				[&, shadowDrawFunc = shadowDrawSubmissions](const ShadowPassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&) mutable
 				{
@@ -729,7 +728,7 @@ namespace DOG::gfx
 							shadowDrawFunc(rd, cmdl, m_doubleSidedShadowDraws[m_activeShadowCasters[i].doubleSidedBucket], nextMap++, m_activeSpotlights[i].shadow.value());
 						}
 					}
-					
+
 				});
 
 			rg.AddPass<PassData>("Forward Pass",
@@ -743,7 +742,7 @@ namespace DOG::gfx
 					p.shadowView = builder.ReadResource(RG_RESOURCE(ShadowDepth), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D_Array, DXGI_FORMAT_R32_FLOAT)
 						.SetArrayRange(0, m_shadowMapCapacity));
-				
+
 					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 
@@ -965,14 +964,14 @@ namespace DOG::gfx
 				});
 		}
 
-		
+
 		// Test compute on Lit HDR
 		// Uncomment to enable the test compute effect!
 		//m_testComputeEffect->Add(rg);
 
 		m_particleRenderEffect->Add(*m_rg);
 
-		if(m_bloomEffect) 
+		if (m_bloomEffect)
 			m_bloomEffect->Add(rg);
 
 		// Blit HDR to LDR
