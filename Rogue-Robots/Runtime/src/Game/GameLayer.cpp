@@ -13,6 +13,8 @@ using namespace DOG;
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
+NetworkStatus GameLayer::s_networkStatus = NetworkStatus::Offline;
+
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }, m_gameState(GameState::Initializing)
 {
@@ -44,7 +46,6 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<CleanupPlayerStateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
-	m_networkStatus = NetworkStatus::Offline;
 
 	m_keyBindingDescriptions.emplace_back("wasd", "walk");
 	m_keyBindingDescriptions.emplace_back("space", "jump");
@@ -174,7 +175,7 @@ void GameLayer::StartMainScene()
 	}
 
 	LuaMain::GetScriptManager()->StartScripts();
-	if (m_networkStatus != NetworkStatus::Offline)
+	if (s_networkStatus != NetworkStatus::Offline)
 		m_netCode.OnStartup();
 	m_gameState = GameState::Playing;
 }
@@ -301,7 +302,7 @@ void GameLayer::UpdateGame()
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
 
-	if (m_networkStatus != NetworkStatus::Offline)
+	if (s_networkStatus != NetworkStatus::Offline)
 		m_netCode.OnUpdate();
 
 	HandleCheats();
@@ -387,24 +388,24 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 
 void GameLayer::UpdateLobby()
 {
-	if (m_networkStatus != NetworkStatus::Offline)
+	if (s_networkStatus != NetworkStatus::Offline)
 		m_netCode.OnUpdate();
 	bool inLobby = m_gameState == GameState::Lobby;
 	if (ImGui::Begin("Lobby", &inLobby))
 	{
-		switch (m_networkStatus)
+		switch (s_networkStatus)
 		{
 		case NetworkStatus::Offline:
 		{
 			ImGui::Text("Host to host, join to join, play to play offline");
 			if (ImGui::Button("Host"))
 			{
-				m_networkStatus = NetworkStatus::HostLobby;
+				s_networkStatus = NetworkStatus::HostLobby;
 
 			}
 			if (ImGui::Button("Join"))
 			{
-				m_networkStatus = NetworkStatus::JoinLobby;
+				s_networkStatus = NetworkStatus::JoinLobby;
 			}
 			if (ImGui::Button("Play"))
 			{
@@ -420,7 +421,7 @@ void GameLayer::UpdateLobby()
 				m_netCode.SetMulticastAdress("239.255.255.0");
 				if (m_netCode.Host())
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					s_networkStatus = NetworkStatus::Hosting;
 				}
 			}
 			if (ImGui::Button("Host Sam"))
@@ -428,7 +429,7 @@ void GameLayer::UpdateLobby()
 				m_netCode.SetMulticastAdress("239.255.255.1");
 				if (m_netCode.Host())
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					s_networkStatus = NetworkStatus::Hosting;
 				}
 			}
 			if (ImGui::Button("Host Filip"))
@@ -436,7 +437,7 @@ void GameLayer::UpdateLobby()
 				m_netCode.SetMulticastAdress("239.255.255.2");
 				if (m_netCode.Host())
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					s_networkStatus = NetworkStatus::Hosting;
 				}
 			}
 			if (ImGui::Button("Host Nad"))
@@ -444,7 +445,7 @@ void GameLayer::UpdateLobby()
 				m_netCode.SetMulticastAdress("239.255.255.3");
 				if (m_netCode.Host())
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					s_networkStatus = NetworkStatus::Hosting;
 				}
 			}
 			if (ImGui::Button("Host Axel"))
@@ -452,7 +453,7 @@ void GameLayer::UpdateLobby()
 				m_netCode.SetMulticastAdress("239.255.255.4");
 				if (m_netCode.Host())
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					s_networkStatus = NetworkStatus::Hosting;
 				}
 			}
 			if (ImGui::Button("Host Ove"))
@@ -460,7 +461,7 @@ void GameLayer::UpdateLobby()
 				m_netCode.SetMulticastAdress("239.255.255.5");
 				if (m_netCode.Host())
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					s_networkStatus = NetworkStatus::Hosting;
 				}
 			}
 			if (ImGui::Button("Host Gunnar"))
@@ -468,7 +469,7 @@ void GameLayer::UpdateLobby()
 				m_netCode.SetMulticastAdress("239.255.255.6");
 				if (m_netCode.Host())
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					s_networkStatus = NetworkStatus::Hosting;
 				}
 			}
 			if (ImGui::Button("Host Emil F"))
@@ -476,7 +477,7 @@ void GameLayer::UpdateLobby()
 				m_netCode.SetMulticastAdress("239.255.255.7");
 				if (m_netCode.Host())
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					s_networkStatus = NetworkStatus::Hosting;
 				}
 			}
 			if (ImGui::Button("Host Jonatan"))
@@ -484,7 +485,7 @@ void GameLayer::UpdateLobby()
 				m_netCode.SetMulticastAdress("239.255.255.8");
 				if (m_netCode.Host())
 				{
-					m_networkStatus = NetworkStatus::Hosting;
+					s_networkStatus = NetworkStatus::Hosting;
 				}
 			}
 			break;
@@ -513,7 +514,7 @@ void GameLayer::UpdateLobby()
 				m_netCode.SetMulticastAdress("239.255.255.0");
 				if (m_netCode.Join(input))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					s_networkStatus = NetworkStatus::Joining;
 				}
 			}
 			if (ImGui::Button("Join Sam"))
@@ -522,7 +523,7 @@ void GameLayer::UpdateLobby()
 				input[0] = 'a';
 				if (m_netCode.Join(input))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					s_networkStatus = NetworkStatus::Joining;
 				}
 			}
 			if (ImGui::Button("Join Filip"))
@@ -531,7 +532,7 @@ void GameLayer::UpdateLobby()
 				input[0] = 'b';
 				if (m_netCode.Join(input))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					s_networkStatus = NetworkStatus::Joining;
 				}
 			}
 			if (ImGui::Button("Join Nad"))
@@ -540,7 +541,7 @@ void GameLayer::UpdateLobby()
 				input[0] = 'c';
 				if (m_netCode.Join(input))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					s_networkStatus = NetworkStatus::Joining;
 				}
 			}
 			if (ImGui::Button("Join Axel"))
@@ -549,7 +550,7 @@ void GameLayer::UpdateLobby()
 				input[0] = 'd';
 				if (m_netCode.Join(input))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					s_networkStatus = NetworkStatus::Joining;
 				}
 			}
 			if (ImGui::Button("Join Ove"))
@@ -558,7 +559,7 @@ void GameLayer::UpdateLobby()
 				input[0] = 'e';
 				if (m_netCode.Join(input))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					s_networkStatus = NetworkStatus::Joining;
 				}
 			}
 			if (ImGui::Button("Join Gunnar"))
@@ -567,7 +568,7 @@ void GameLayer::UpdateLobby()
 				input[0] = 'f';
 				if (m_netCode.Join(input))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					s_networkStatus = NetworkStatus::Joining;
 				}
 			}
 			if (ImGui::Button("Join Emil F"))
@@ -576,7 +577,7 @@ void GameLayer::UpdateLobby()
 				input[0] = 'g';
 				if (m_netCode.Join(input))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					s_networkStatus = NetworkStatus::Joining;
 				}
 			}
 			if (ImGui::Button("Join Jonatan"))
@@ -585,7 +586,7 @@ void GameLayer::UpdateLobby()
 				input[0] = 'h';
 				if (m_netCode.Join(input))
 				{
-					m_networkStatus = NetworkStatus::Joining;
+					s_networkStatus = NetworkStatus::Joining;
 				}
 			}
 			break;

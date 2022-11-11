@@ -8,17 +8,17 @@ class AgentManager
 	using Vector3 = DirectX::SimpleMath::Vector3;
 
 private:
-	// GROUP_BITS must be a factor of 32
-	static constexpr u32 GROUP_BITS = 4;
+	static constexpr u32 GROUP_BITS = 7;
 	static constexpr u32 GROUP_RANGE = 1 << GROUP_BITS;
 	static constexpr u32 MASK = GROUP_RANGE - 1;
+	static constexpr u32 NULL_AGENT = u32(-1);
 
 public:
-	static constexpr u32 GROUP_SIZE = GROUP_RANGE - 1;	// because agentID = 0 is not unique to group
+	static constexpr u32 GROUP_SIZE = NULL_AGENT >> GROUP_BITS;	// max agents in a group
 
 	[[nodiscard]] static constexpr AgentManager& Get() noexcept
 	{
-		if (m_notInitialized)
+		if (s_notInitialized)
 			Initialize();
 		return s_amInstance;
 	}
@@ -29,17 +29,16 @@ public:
 
 	u32 GenAgentID(u32 groupID);
 	void CountAgentKilled(u32 agentID);
-	u32 GroupID(u32 agentID = 0);
+	u32 GroupID(u32 agentID = NULL_AGENT);
 
 private:
 	// singelton instance
 	static AgentManager s_amInstance;
-	static bool m_notInitialized;
+	static bool s_notInitialized;
 
-	bool m_useNetworking = true;
 	std::vector<u32> m_models;
-	u32 m_agentIdCounter = 0;
-	u32 m_agentKillCounter = 0;
+	std::array<u32, GROUP_RANGE> m_agentIdCounter{ 0 };
+	std::array<u32, GROUP_RANGE> m_agentKillCounter{ 0 };
 
 	AgentManager() noexcept;
 	~AgentManager() noexcept = default;

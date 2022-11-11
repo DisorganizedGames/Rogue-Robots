@@ -44,6 +44,8 @@ public:
 	virtual void OnEvent(DOG::IEvent& event) override final;
 	void ChangeGameState(GameState state);
 
+	static NetworkStatus GetNetworkStatus() { return s_networkStatus; }
+
 private:
 	void UpdateLobby();
 	void UpdateGame();
@@ -73,7 +75,7 @@ private:
 	void Interact();
 private:
 	GameState m_gameState;
-	NetworkStatus m_networkStatus;
+	static NetworkStatus s_networkStatus;
 	SceneComponent::Type m_selectedScene = SceneComponent::Type::TunnelRoom2Scene;
 	std::unique_ptr<Scene> m_testScene;
 	std::unique_ptr<Scene> m_mainScene;

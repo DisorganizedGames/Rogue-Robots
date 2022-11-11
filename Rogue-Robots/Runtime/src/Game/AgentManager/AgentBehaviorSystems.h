@@ -42,9 +42,9 @@ class AgentAggroSystem : public DOG::ISystem
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
 public:
-	SYSTEM_CLASS(AgentAggroComponent);
-	ON_UPDATE_ID(AgentAggroComponent);
-	void OnUpdate(DOG::entity e, AgentAggroComponent& aggro);
+	SYSTEM_CLASS(AgentAggroComponent, AgentIdComponent);
+	ON_UPDATE_ID(AgentAggroComponent, AgentIdComponent);
+	void OnUpdate(DOG::entity e, AgentAggroComponent& aggro, AgentIdComponent& agent);
 };
 
 class AgentHitDetectionSystem : public DOG::ISystem

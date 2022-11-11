@@ -243,22 +243,32 @@ void AgentFrostTimerSystem::OnUpdate(DOG::entity e, AgentMovementComponent& move
 	}
 }
 
-void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro)
+void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, AgentIdComponent& agent)
 {
 	constexpr int minutes = 4;
 	constexpr f64 maxAggroTime = minutes * 60.0;
 
 	EntityManager& em = EntityManager::Get();
+	AgentManager& am = AgentManager::Get();
+
+	u32 myGroup = am.GroupID(agent.id);
 
 	if ((DOG::Time::ElapsedTime() - aggro.timeTriggered) > maxAggroTime)
 		em.RemoveComponent<AgentAggroComponent>(e);
 	else
 	{
 		em.Collect<AgentIdComponent>().Do(
-			[&](entity other, AgentIdComponent&)
+			[&](entity o, AgentIdComponent& other)
 			{
-				if (!em.HasComponent<AgentAggroComponent>(other))
-					em.AddComponent<AgentAggroComponent>(other);
+				u32 otherGroup = am.GroupID(other.id);
+				if (myGroup == otherGroup && !em.HasComponent<AgentAggroComponent>(o))
+				{
+					em.AddComponent<AgentAggroComponent>(o);
+					
+					#ifdef _DEBUG
+					std::cout << "Agent " << agent.id << " of group " << myGroup << " signaled aggro to agent " << other.id << " of group " << otherGroup << std::endl;
+					#endif // _DEBUG
+				}
 			}
 		);
 	}
