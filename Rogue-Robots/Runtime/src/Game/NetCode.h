@@ -66,6 +66,12 @@ private:
 	int m_numberOfPackets;
 	char m_multicastAdress[16];
 
+	//Tick
+	LARGE_INTEGER m_tickStartTime;
+	LARGE_INTEGER m_clockFrequency;
+	UINT m_sleepGranularityMs;
+	
+	
 };
 
 class DeleteNetworkSync : public DOG::ISystem
