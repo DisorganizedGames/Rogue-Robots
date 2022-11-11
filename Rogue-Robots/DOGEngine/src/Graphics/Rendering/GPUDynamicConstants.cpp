@@ -12,6 +12,15 @@ namespace DOG::gfx
 		m_ator = RingBuffer(ELEMENTSIZE, maxTotalElements, m_rd->Map(m_buffer));
 	}
 
+	GPUDynamicConstants::~GPUDynamicConstants()
+	{
+		m_bin->PushDeferredDeletion([rd = m_rd, buf = m_buffer]()
+			{
+				rd->FreeBuffer(buf);
+			});
+	}
+
+
 	void GPUDynamicConstants::Tick()
 	{
 		for (u32 i = 0; i < m_numToPop; ++i)

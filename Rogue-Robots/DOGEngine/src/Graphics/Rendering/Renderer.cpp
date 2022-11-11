@@ -86,6 +86,7 @@ namespace DOG::gfx
 
 		// multiple of curr loaded mixamo skeleton
 		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * S_MAX_FIF);
+		m_dynConstantsAnimatedShadows = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * m_shadowMapCapacity * S_MAX_FIF);
 		m_cmdl = m_rd->AllocateCommandList();
 
 		// Startup
@@ -637,7 +638,7 @@ namespace DOG::gfx
 				}
 			};
 		
-			auto shadowDrawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_jointMan.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](
+			auto shadowDrawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_jointMan.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimatedShadows.get()](
 				RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 smIdx, const ShadowCaster& caster, bool animated = false, bool wireframe = false) mutable
 			{
 				auto perLightHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerLightData) / (float)256));
@@ -695,34 +696,34 @@ namespace DOG::gfx
 				},
 				[&, shadowDrawFunc = shadowDrawSubmissions](const ShadowPassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&) mutable
 				{
-					//rd->Cmd_SetViewports(cmdl, Viewports().Append(0.f, 0.f, 1024.f, 1024.f));
-					//rd->Cmd_SetScissorRects(cmdl, ScissorRects().Append(0, 0, 1024, 1024));
+					rd->Cmd_SetViewports(cmdl, Viewports().Append(0.f, 0.f, 1024.f, 1024.f));
+					rd->Cmd_SetScissorRects(cmdl, ScissorRects().Append(0, 0, 1024, 1024));
 
-					//rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
+					rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
 
-					//// Fills shadowmaps chronologically
-					//rd->Cmd_SetPipeline(cmdl, m_shadowPipe);
-					//u32 nextMap = 0;
-					//for (u32 i = 0; i < m_activeSpotlights.size(); ++i)
-					//{
-					//	if (m_activeSpotlights[i].shadow)
-					//	{
-					//		//shadowDrawFunc(rd, cmdl, m_shadowSubmissions, nextMap++, m_activeSpotlights[i].shadow.value());
-					//		shadowDrawFunc(rd, cmdl, m_singleSidedShadowDraws[m_activeShadowCasters[i].singleSidedBucket], nextMap++, m_activeSpotlights[i].shadow.value());
-					//	}
-					//}
+					// Fills shadowmaps chronologically
+					rd->Cmd_SetPipeline(cmdl, m_shadowPipe);
+					u32 nextMap = 0;
+					for (u32 i = 0; i < m_activeSpotlights.size(); ++i)
+					{
+						if (m_activeSpotlights[i].shadow)
+						{
+							//shadowDrawFunc(rd, cmdl, m_shadowSubmissions, nextMap++, m_activeSpotlights[i].shadow.value());
+							shadowDrawFunc(rd, cmdl, m_singleSidedShadowDraws[m_activeShadowCasters[i].singleSidedBucket], nextMap++, m_activeSpotlights[i].shadow.value());
+						}
+					}
 
-					//// Render the shady modular blocks..
-					//rd->Cmd_SetPipeline(cmdl, m_shadowPipeNoCull);
-					//nextMap = 0;
-					//for (u32 i = 0; i < m_activeSpotlights.size(); ++i)
-					//{
-					//	if (m_activeSpotlights[i].shadow)
-					//	{
-					//		//shadowDrawFunc(rd, cmdl, m_shadowSubmissionsNoCull, nextMap++, m_activeSpotlights[i].shadow.value());
-					//		shadowDrawFunc(rd, cmdl, m_doubleSidedShadowDraws[m_activeShadowCasters[i].doubleSidedBucket], nextMap++, m_activeSpotlights[i].shadow.value());
-					//	}
-					//}
+					// Render the shady modular blocks..
+					rd->Cmd_SetPipeline(cmdl, m_shadowPipeNoCull);
+					nextMap = 0;
+					for (u32 i = 0; i < m_activeSpotlights.size(); ++i)
+					{
+						if (m_activeSpotlights[i].shadow)
+						{
+							//shadowDrawFunc(rd, cmdl, m_shadowSubmissionsNoCull, nextMap++, m_activeSpotlights[i].shadow.value());
+							shadowDrawFunc(rd, cmdl, m_doubleSidedShadowDraws[m_activeShadowCasters[i].doubleSidedBucket], nextMap++, m_activeSpotlights[i].shadow.value());
+						}
+					}
 					
 				});
 
@@ -1093,6 +1094,9 @@ namespace DOG::gfx
 		m_singleSidedShadowDraws.resize(requestedSettings.shadowMapCapacity);
 		m_doubleSidedShadowDraws.resize(requestedSettings.shadowMapCapacity);
 
+		m_dynConstantsAnimatedShadows = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * m_shadowMapCapacity * S_MAX_FIF);
+
+
 		m_graphicsSettings = requestedSettings;
 	}
 
@@ -1110,6 +1114,7 @@ namespace DOG::gfx
 		m_dynConstants->Tick();
 		m_dynConstantsTemp->Tick();
 		m_dynConstantsAnimated->Tick();
+		m_dynConstantsAnimatedShadows->Tick();
 		m_bin->BeginFrame();
 		m_rd->RecycleCommandList(m_cmdl);
 		m_cmdl = m_rd->AllocateCommandList();

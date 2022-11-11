@@ -180,6 +180,7 @@ namespace DOG::gfx
 		std::unique_ptr<GPUDynamicConstants> m_dynConstants;
 		std::unique_ptr<GPUDynamicConstants> m_dynConstantsTemp;
 		std::unique_ptr<GPUDynamicConstants> m_dynConstantsAnimated;		// temp storage for per draw joints
+		std::unique_ptr<GPUDynamicConstants> m_dynConstantsAnimatedShadows;		// temp storage for per draw joints for SHADOWS only
 
 		
 	
