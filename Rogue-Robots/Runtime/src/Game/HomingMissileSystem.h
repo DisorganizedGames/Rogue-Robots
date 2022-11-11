@@ -7,8 +7,10 @@ class HomingMissileSystem : public DOG::ISystem
 	using Vector3 = DirectX::SimpleMath::Vector3;
 public:
 	SYSTEM_CLASS(HomingMissileComponent, DOG::TransformComponent, DOG::RigidbodyComponent);
-	ON_UPDATE(HomingMissileComponent, DOG::TransformComponent, DOG::RigidbodyComponent);
-	void OnUpdate(HomingMissileComponent& missile, DOG::TransformComponent& transform, DOG::RigidbodyComponent& rigidBody);
+	ON_UPDATE_ID(HomingMissileComponent, DOG::TransformComponent, DOG::RigidbodyComponent);
+	void OnUpdate(DOG::entity e, HomingMissileComponent& missile, DOG::TransformComponent& transform, DOG::RigidbodyComponent& rigidBody);
+private:
+	static void StartMissileEngine(DOG::entity e, HomingMissileComponent& missile);
 };
 
 class HomingMissileImpacteSystem : public DOG::ISystem

@@ -61,18 +61,22 @@ struct BulletComponent
 
 struct HomingMissileComponent
 {
-	HomingMissileComponent() = default;
-	HomingMissileComponent(DOG::entity target) : homingTarget(target) {}
-	float speed = 30;
-	float turnSpeed = 5;
-	float engineBurnTime = 1.8f;
+	float startMotorSpeed = 5.0f;
+	float mainMotorSpeed = 20;
+	float turnSpeed = 4.0f;
+	float flightTime = 0.0f;
+	float engineStartTime = 0.1f;
+	float attackFlightPhaseStartTime = engineStartTime + 0.1f;
+	float lifeTime = attackFlightPhaseStartTime + 2.0f;
 	float explosionRadius = 10.0f;
-	float dmg = 600.0f;
+	float dmg = 500.0f;
+	bool armed = false;
+	int hit = 0;
 	DOG::entity homingTarget = DOG::NULL_ENTITY;
 	DOG::entity playerEntityID = DOG::NULL_ENTITY;
-	bool homeInOnPosition = false;
-	DirectX::SimpleMath::Vector3 targetPosition;
+	DOG::entity jet = DOG::NULL_ENTITY;
 	bool launched = true;
+	bool engineIsIgnited = false;
 };
 
 struct InputController
@@ -201,4 +205,10 @@ struct ExplosionEffectComponent
 struct InteractionQueryComponent
 {
 	//ID
+};
+
+struct ParentComponent
+{
+	DOG::entity parent = DOG::NULL_ENTITY;
+	DOG::TransformComponent localTransform;
 };
