@@ -556,7 +556,6 @@ namespace DOG::gfx
 			return { CreateTexture(descs[0], pool) };
 
 		assert(descs.size() > 0);
-		auto memType = descs[0].memType;
 
 		std::vector<D3D12_RESOURCE_DESC> internalDescs;
 		internalDescs.reserve(descs.size());
@@ -564,7 +563,7 @@ namespace DOG::gfx
 		D3D12_RESOURCE_ALLOCATION_INFO finalAllocInfo{};
 		for (const auto& desc : descs)
 		{
-			assert(desc.memType == memType);	// All resources passed must have the same memory type
+			assert(descs[0].memType == desc.memType);	// All resources passed must have the same memory type
 
 			D3D12_RESOURCE_DESC rd{};
 			rd.Dimension = to_internal(desc.type);
