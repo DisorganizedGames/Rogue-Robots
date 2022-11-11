@@ -53,9 +53,9 @@ void NetCode::OnStartup()
 		{
 			if (networkC.playerId == m_inputTcp.playerId)
 			{
-				EntityManager::Get().Collect<ParentComponent>().Do([&](entity subEntity, ParentComponent& parentCompany)
+				EntityManager::Get().Collect<ParentComponent>().Do([&](entity subEntity, ParentComponent& parentC)
 					{
-						if (parentCompany.parent == id)
+						if (parentC.parent == id)
 						{
 							m_entityManager.AddComponent<DontDraw>(subEntity);
 						}
