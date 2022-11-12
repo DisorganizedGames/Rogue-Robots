@@ -81,7 +81,7 @@ void HomingMissileSystem::StartMissileEngine(entity e, HomingMissileComponent& m
 {
 	missile.jet = EntityManager::Get().CreateEntity();
 	EntityManager::Get().AddComponent<TransformComponent>(missile.jet);
-	auto& localTransform = EntityManager::Get().AddComponent<ParentComponent>(missile.jet);
+	auto& localTransform = EntityManager::Get().AddComponent<ChildComponent>(missile.jet);
 	localTransform.parent = e;
 	localTransform.localTransform.SetPosition({ 0,0, -0.7f }).SetRotation({ -DirectX::XM_PIDIV2, 0, 0 }).SetScale({ 1.3f, 1.3f, 1.3f });
 	EntityManager::Get().AddComponent<ModelComponent>(missile.jet).id = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/jet.glb");

@@ -438,19 +438,11 @@ public:
 class ScuffedSceneGraphSystem : public DOG::ISystem
 {
 public:
-	SYSTEM_CLASS(ParentComponent, DOG::TransformComponent);
-	ON_UPDATE_ID(ParentComponent, DOG::TransformComponent);
+	SYSTEM_CLASS(ChildComponent, DOG::TransformComponent);
 
-	void OnUpdate(DOG::entity e, ParentComponent& local, DOG::TransformComponent& world)
-	{
-		if (DOG::EntityManager::Get().Exists(local.parent) && DOG::EntityManager::Get().HasComponent<DOG::TransformComponent>(local.parent))
-		{
-			auto& parentWorld = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(local.parent);
-			world.worldMatrix = local.localTransform * parentWorld.worldMatrix;
-		}
-		else
-		{
-			DOG::EntityManager::Get().DeferredEntityDestruction(e);
-		}
-	}
+	ON_UPDATE_ID(ChildComponent, DOG::TransformComponent);
+	void OnUpdate(DOG::entity e, ChildComponent& child, DOG::TransformComponent& world);
+
+	ON_LATE_UPDATE(ChildComponent);
+	void OnLateUpdate(ChildComponent& child);
 };
