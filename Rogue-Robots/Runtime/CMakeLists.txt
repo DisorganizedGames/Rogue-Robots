@@ -21,7 +21,8 @@ set(SourceFiles
 	"src/Game/PrefabInstantiatorFunctions.h" "src/Game/PrefabInstantiatorFunctions.cpp"
 	"src/Game/OldDefaultScene.h" "src/Game/OldDefaultScene.cpp"
 	"src/Game/TunnelScenes.h" "src/Game/TunnelScenes.cpp"
-)
+	"src/Game/TurretSystems.h" "src/Game/TurretSystems.cpp"
+	)
 
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")
