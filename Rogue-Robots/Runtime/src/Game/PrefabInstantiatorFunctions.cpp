@@ -70,7 +70,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		auto& ac = em.GetComponent<AnimationComponent>(modelEntity);
 		ac.animatorID = static_cast<i8>(i);
 
-		auto& t = em.AddComponent<ParentComponent>(modelEntity);
+		auto& t = em.AddComponent<ChildComponent>(modelEntity);
 		t.parent = playerI;
 		t.localTransform.SetPosition({0.0f, -0.5f, 0.0f});
 
