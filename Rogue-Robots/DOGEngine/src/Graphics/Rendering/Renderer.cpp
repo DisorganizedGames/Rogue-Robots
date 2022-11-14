@@ -280,7 +280,8 @@ namespace DOG::gfx
 		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
 		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
 		m_bloomEffect = std::make_unique<Bloom>(m_rgResMan.get(), m_globalEffectData, m_dynConstants.get(), m_renderWidth, m_renderHeight);
-		m_tiledLightCuller = std::make_unique<TiledLightCullingEffect>(m_rgResMan.get(), m_globalEffectData, m_dynConstants.get(), m_renderWidth, m_renderHeight);
+		m_tiledLightCuller = std::make_unique<TiledLightCullingEffect>(m_rgResMan.get(), m_globalEffectData, m_renderWidth, m_renderHeight);
+		m_tiledLightCullerVisualization = std::make_unique<TiledLightCullingVisualizationEffect>(m_rgResMan.get(), m_globalEffectData, m_renderWidth, m_renderHeight);
 
 	
 		{
@@ -597,6 +598,7 @@ namespace DOG::gfx
 			struct PassData
 			{
 				RGResourceView shadowView;
+				RGResourceView localLightBuffer;
 			};
 
 			struct ShadowPassData
@@ -609,7 +611,7 @@ namespace DOG::gfx
 					and during forward pass we simply read from it
 			*/
 
-			auto drawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_jointMan.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false) mutable
+			auto drawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_jointMan.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 localLightBuffers, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false) mutable
 			{	
 				for (const auto& sub : submissions)
 				{
@@ -632,7 +634,10 @@ namespace DOG::gfx
 					}
 
 					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
-
+					u32 renderSettingsFlag = 0;
+					if (m_graphicsSettings.lit) renderSettingsFlag |= 1;
+					if (m_graphicsSettings.lightCulling) renderSettingsFlag |= 2;
+					if (m_graphicsSettings.visualizeLightCulling) renderSettingsFlag |= 4;
 					auto args = ShaderArgs()
 						.AppendConstant(m_globalEffectData.globalDataDescriptor)
 						.AppendConstant(m_currPfDescriptor)
@@ -640,9 +645,11 @@ namespace DOG::gfx
 						.AppendConstant(perLightHandle)
 						.AppendConstant(shadowHandle)
 						.AppendConstant(wireframe ? 1 : 0)
-						.AppendConstant(m_graphicsSettings.lit ? 1 : 0)
-						.AppendConstant(sub.jointOffset);
-
+						.AppendConstant(renderSettingsFlag)
+						.AppendConstant(sub.jointOffset)
+						.AppendConstant(m_renderWidth)
+						.AppendConstant(m_renderHeight)
+						.AppendConstant(localLightBuffers);
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
@@ -740,6 +747,8 @@ namespace DOG::gfx
 
 				});
 
+			m_tiledLightCuller->Add(rg);
+
 			rg.AddPass<PassData>("Forward Pass",
 				[&](PassData& p, RenderGraph::PassBuilder& builder)
 				{
@@ -761,6 +770,9 @@ namespace DOG::gfx
 
 					builder.WriteDepthStencil(RG_RESOURCE(MainDepth), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
+
+					auto groupCount = static_cast<TiledLightCullingEffect*>(m_tiledLightCuller.get())->GetGroupCount();
+					p.localLightBuffer = builder.ReadResource(RG_RESOURCE(LocalLightBuf), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, BufferViewDesc(ViewType::ShaderResource, 0, sizeof(TiledLightCullingEffect::LocalLightBufferLayout), groupCount.x * groupCount.y));
 				},
 				[&, dynConstants = m_dynConstants.get(), dynConstantsTemp = m_dynConstantsTemp.get(), drawFunc = drawSubmissions](const PassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) mutable
 				{
@@ -800,17 +812,18 @@ namespace DOG::gfx
 					std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
 					std::memcpy(shadowHandle.memory, &shadowMapArrayStruct, sizeof(shadowMapArrayStruct));
 
-					drawFunc(rd, cmdl, m_submissions, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
-					drawFunc(rd, cmdl, m_animatedDraws, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, true);
+					u32 localLightBufferIndex = resources.GetView(p.localLightBuffer);
+					drawFunc(rd, cmdl, m_submissions, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
+					drawFunc(rd, cmdl, m_animatedDraws, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, true);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
-					drawFunc(rd, cmdl, m_noCullSubmissions, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
+					drawFunc(rd, cmdl, m_noCullSubmissions, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframe);
-					drawFunc(rd, cmdl, m_wireframeDraws, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, false, true);
+					drawFunc(rd, cmdl, m_wireframeDraws, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, false, true);
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframeNoCull);
-					drawFunc(rd, cmdl, m_noCullWireframeDraws, false, true);
+					drawFunc(rd, cmdl, m_noCullWireframeDraws, localLightBufferIndex, false, true);
 				});
 		}
 
@@ -983,7 +996,7 @@ namespace DOG::gfx
 		if (m_bloomEffect)
 			m_bloomEffect->Add(rg);
 
-		m_tiledLightCuller->Add(rg);
+		//m_tiledLightCullerVisualization->Add(rg);
 
 		// Blit HDR to LDR
 		{

@@ -12,7 +12,8 @@ namespace DOG
 		bool bloom = true;
 		float bloomThreshold = 0.5f;
 		float gamma = 2.22f;
-
+		bool lightCulling = true;
+		bool visualizeLightCulling = false;
 		bool ssao{ true };
 #if defined _DEBUG
 		bool lit{ false };

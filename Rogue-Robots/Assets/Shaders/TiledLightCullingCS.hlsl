@@ -4,24 +4,19 @@ struct PushConstantElement
 {
     uint gdDescriptor;
     uint perFrameOffset;
-    uint hdrTexture;
-    uint constantBufferIndex;
+    uint localLightBuffersIndex;
     uint width;
     uint height;
 };
 ConstantBuffer<PushConstantElement> g_constants : register(b0, space0);
 
 
-#define LOCAL_LIGHT_MAX_SIZE 32
 groupshared uint sLightCounter;
-groupshared uint sLocalLightList[LOCAL_LIGHT_MAX_SIZE];
 
-
-#define groupSize 16
-[numthreads(groupSize, groupSize, 1)]
-void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
+[numthreads(TILED_GRPUP_SIZE, TILED_GRPUP_SIZE, 1)]
+void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadID, uint3 groupID : SV_GroupID, uint groupIndex : SV_GroupIndex)
 {
-    uint tid = threadId.x + 16 * threadId.y;
+    uint tid = threadId.x + TILED_GRPUP_SIZE * threadId.y;
     if (tid == 0)
     {
         sLightCounter = 0;
@@ -41,7 +36,7 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
         ShaderInterop_PerFrameData pfData = pfDatas[g_constants.perFrameOffset];
         
         
-        float2 scale = float2(g_constants.width, g_constants.height) * rcp(2.0f * groupSize);
+        float2 scale = float2(g_constants.width, g_constants.height) * rcp(2.0f * TILED_GRPUP_SIZE);
         float2 bias = scale - float2(groupID.xy);
         
         float p11 = pfData.projMatrix._11;
@@ -78,9 +73,12 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
         frustum[4] = mul(viewT, frustum[4]);
         frustum[5] = mul(viewT, frustum[5]);
 
-
+        RWStructuredBuffer<ShaderInterop_LocalLightBuffer> localLightBuffers = ResourceDescriptorHeap[g_constants.localLightBuffersIndex];
         StructuredBuffer<ShaderInterop_PointLight> pointLights = ResourceDescriptorHeap[gd.pointLightTable];
-        for (int i = tid; i < lightsMD.dynPointLightRange.count; i += groupSize * groupSize)
+        
+        uint tileIndex = groupID.x + (g_constants.width + TILED_GRPUP_SIZE - 1) / TILED_GRPUP_SIZE * groupID.y;
+        
+        for (int i = tid; i < lightsMD.dynPointLightRange.count; i += TILED_GRPUP_SIZE * TILED_GRPUP_SIZE)
         {
             uint globalIndex = pfData.pointLightOffsets.dynOffset + i;
             ShaderInterop_PointLight pointLight = pointLights[globalIndex];
@@ -89,32 +87,43 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
             for (int j = 0; j < 6; j++)
             {
                 float d = dot(float4(pointLight.position.xyz, 1), frustum[j]);
-                culled |= d * abs(d) < -3.0f * pointLight.strength;
+                culled |= d * abs(d) < -50.0f * pointLight.strength;
             }
 
             if (!culled && pointLight.strength)
             {
                 uint locallIndex;
-                
                 InterlockedAdd(sLightCounter, 1, locallIndex);
-                sLocalLightList[locallIndex] = globalIndex;
+                localLightBuffers[tileIndex].lightIndices[locallIndex] = globalIndex;
             }
         }
-        //GroupMemoryBarrierWithGroupSync();
         
-        //RWTexture2D<float4> dst = ResourceDescriptorHeap[g_constants.hdrTexture];
-    
-        //if (sLightCounter == 1)
-        //{
-        //    dst[globalId.xy].rgb = float3(0, 0 ,1);
-        //}
-        //else if (sLightCounter == 2)
-        //{
-        //    dst[globalId.xy].rgb = float3(1, 1, 0);
-        //}
-        //else if (sLightCounter > 2)
-        //{
-        //    dst[globalId.xy].rgb = float3(1,0,0);
-        //}
+        
+        for (int i = tid; i < lightsMD.staticPointLightRange.count; i += TILED_GRPUP_SIZE * TILED_GRPUP_SIZE)
+        {
+            uint globalIndex = pfData.pointLightOffsets.staticOffset + i;
+            ShaderInterop_PointLight pointLight = pointLights[globalIndex];
+            bool culled = false;
+
+            for (int j = 0; j < 6; j++)
+            {
+                float d = dot(float4(pointLight.position.xyz, 1), frustum[j]);
+                culled |= d * abs(d) < -50.0f * pointLight.strength;
+            }
+
+            if (!culled && pointLight.strength)
+            {
+                uint locallIndex;
+                InterlockedAdd(sLightCounter, 1, locallIndex);
+                localLightBuffers[tileIndex].lightIndices[locallIndex] = globalIndex;
+            }
+        }
+        
+        GroupMemoryBarrierWithGroupSync();
+
+        if (tid == 0)
+        {
+            localLightBuffers[tileIndex].count = sLightCounter;
+        }
     }
 }

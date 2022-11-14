@@ -1,6 +1,8 @@
 #pragma once
 #include "ShaderInterop_Base.h"
 
+#define TILED_GRPUP_SIZE 16
+
 /*
     For non-changing structures derived on renderer startup
 */

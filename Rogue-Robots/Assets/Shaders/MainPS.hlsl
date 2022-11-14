@@ -60,7 +60,11 @@ struct PushConstantElement
     uint spotlightArrayStructureIndex;
     uint shadowMapDepthIndex;
     uint wireframe;
-    uint isLit;
+    uint debugSettingsFlag;
+    uint jointOffset;
+    uint width;
+    uint height;
+    uint localLightBuffersIndex;
 };
 
 CONSTANTS(g_constants, PushConstantElement)
@@ -190,11 +194,12 @@ PS_OUT main(VS_OUT input)
         albedoAlpha = albedoInput4.w;
     }
     
-    if (!g_constants.isLit)
+    if (!(g_constants.debugSettingsFlag & 1))
     {
         output.color = float4(albedoInput, 1.f);
         return output;
     }
+    
 
     float metallicInput = mat.metallicFactor;
     float roughnessInput = mat.roughnessFactor;
@@ -262,25 +267,62 @@ PS_OUT main(VS_OUT input)
     
     float3 Lo = float3(0.f, 0.f, 0.f);
     
-    // calculate static point lights
     StructuredBuffer<ShaderInterop_PointLight> pointLights = ResourceDescriptorHeap[gd.pointLightTable];
     
-    for (int i = 0; i < lightsMD.staticPointLightRange.count; ++i)
+    float3 lightHeatMapValue = float3(0, 0, 0);
+    
+    if (g_constants.debugSettingsFlag & 2)
     {
-        ShaderInterop_PointLight pointLight = pointLights[pfData.pointLightOffsets.staticOffset + i];
-        if (pointLight.strength == 0)
-            continue;
-        Lo += CalculatePointLightContribution(N, V, input.wsPos, F0, metallicInput, roughnessInput, albedoInput, pointLight);
-    }
+        uint2 tileCoord = input.pos.xy / TILED_GRPUP_SIZE;
+        uint tileIndex = tileCoord.x + (g_constants.width + TILED_GRPUP_SIZE - 1) / TILED_GRPUP_SIZE * tileCoord.y;
+        StructuredBuffer<ShaderInterop_LocalLightBuffer> localLightBuffers = ResourceDescriptorHeap[g_constants.localLightBuffersIndex];
+        if (localLightBuffers[tileIndex].count == 1)
+        {
+            lightHeatMapValue = float3(0, 0, 1);
 
-    // calculate dyn point lights
-    for (int i = 0; i < lightsMD.dynPointLightRange.count; ++i)
-    {
-        ShaderInterop_PointLight pointLight = pointLights[pfData.pointLightOffsets.dynOffset + i];
-        if (pointLight.strength == 0)
-            continue;
-        Lo += CalculatePointLightContribution(N, V, input.wsPos, F0, metallicInput, roughnessInput, albedoInput, pointLight);
+        }
+        else if (localLightBuffers[tileIndex].count == 2)
+        {
+            lightHeatMapValue = float3(1, 1, 0);
+        }
+        else if (localLightBuffers[tileIndex].count > 2)
+        {
+            lightHeatMapValue = float3(1, 0, 0);
+        }
+    
+        // calculate static and dynamic point lights
+        for (int i = 0; i < localLightBuffers[tileIndex].count; ++i)
+        {
+            ShaderInterop_PointLight pointLight = pointLights[localLightBuffers[tileIndex].lightIndices[i]];
+            Lo += CalculatePointLightContribution(N, V, input.wsPos, F0, metallicInput, roughnessInput, albedoInput, pointLight);
+        }
+        
+        if (g_constants.debugSettingsFlag & 4 && localLightBuffers[tileIndex].count >= LOCAL_LIGHT_MAX_SIZE)
+        {
+            lightHeatMapValue = float3(1, 0, 1);
+        }
     }
+    else
+    {
+        // calculate static point lights
+        for (int i = 0; i < lightsMD.staticPointLightRange.count; ++i)
+        {
+            ShaderInterop_PointLight pointLight = pointLights[pfData.pointLightOffsets.staticOffset + i];
+            if (pointLight.strength == 0)
+                continue;
+            Lo += CalculatePointLightContribution(N, V, input.wsPos, F0, metallicInput, roughnessInput, albedoInput, pointLight);
+        }
+
+        // calculate dyn point lights
+        for (int i = 0; i < lightsMD.dynPointLightRange.count; ++i)
+        {
+            ShaderInterop_PointLight pointLight = pointLights[pfData.pointLightOffsets.dynOffset + i];
+            if (pointLight.strength == 0)
+                continue;
+            Lo += CalculatePointLightContribution(N, V, input.wsPos, F0, metallicInput, roughnessInput, albedoInput, pointLight);
+        }
+    }
+    
     
     
     
@@ -425,6 +467,10 @@ PS_OUT main(VS_OUT input)
     float3 hdr = amb + Lo;
     
     output.color = float4(hdr, albedoAlpha);
+    if (g_constants.debugSettingsFlag & 4 && g_constants.debugSettingsFlag & 2)
+    {
+        output.color.xyz = lerp(output.color.xyz, lightHeatMapValue, 0.5f);
+    }
     return output;
 }
 

@@ -8,11 +8,11 @@
 
 namespace DOG::gfx
 {
-	TiledLightCullingEffect::TiledLightCullingEffect(RGResourceManager* resMan, GlobalEffectData& globalEffectData, GPUDynamicConstants* dynConsts, u32 renderResX, u32 renderResY)
-		: RenderEffect(globalEffectData), m_resMan(resMan), m_dynamicConstants(dynConsts), m_hdrRenderTargerResX(renderResX), m_hdrRenderTargerResY(renderResY)
+	TiledLightCullingEffect::TiledLightCullingEffect(RGResourceManager* resMan, GlobalEffectData& globalEffectData, u32 renderResX, u32 renderResY)
+		: RenderEffect(globalEffectData), m_resMan(resMan), m_width(renderResX), m_height(renderResY)
 	{
-		m_width = m_hdrRenderTargerResX;
-		m_height = m_hdrRenderTargerResY;
+		m_threadGroupCountX = m_width / computeGroupSize + 1 * static_cast<bool>(m_width % computeGroupSize);
+		m_threadGroupCountY = m_height / computeGroupSize + 1 * static_cast<bool>(m_height % computeGroupSize);
 
 		auto& device = globalEffectData.rd;
 
@@ -20,16 +20,22 @@ namespace DOG::gfx
 		m_compPipeline = device->CreateComputePipeline(ComputePipelineDesc(cullShader.get()));
 
 	}
+
 	TiledLightCullingEffect::~TiledLightCullingEffect()
 	{
 		m_globalEffectData.rd->FreePipeline(m_compPipeline);
 	}
+
+	Vector2u TiledLightCullingEffect::GetGroupCount() const
+	{
+		return Vector2u(m_threadGroupCountX, m_threadGroupCountY);
+	}
+
 	void TiledLightCullingEffect::Add(RenderGraph& rg)
 	{
 		struct PassData
 		{
-			GPUDynamicConstant constantBufferHandle;
-			RGResourceView litHDRView;
+			RGResourceView localLightBuffer;
 		};
 
 		// Copy the colors that exceeds the threshold from our hdr render targer to our bloomTexture. This should also scale to a lower resolution, but for now the bloomTexture has a hard coded size. 
@@ -37,8 +43,11 @@ namespace DOG::gfx
 		rg.AddPass<PassData>("Tiled light culling",
 			[&](PassData& passData, RenderGraph::PassBuilder& builder)		// Build
 			{
-				passData.litHDRView = builder.ReadWriteTarget(RG_RESOURCE(LitHDR),
-					TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+				
+				builder.DeclareBuffer(RG_RESOURCE(LocalLightBuf), RGBufferDesc(sizeof(LocalLightBufferLayout) * m_threadGroupCountX * m_threadGroupCountY, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
+
+				passData.localLightBuffer = builder.ReadWriteTarget(RG_RESOURCE(LocalLightBuf), BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(LocalLightBufferLayout), m_threadGroupCountX * m_threadGroupCountY));
+
 			},
 			[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)		// Execute
 			{
@@ -47,30 +56,89 @@ namespace DOG::gfx
 				auto args = ShaderArgs()
 					.AppendConstant(m_globalEffectData.globalDataDescriptor)
 					.AppendConstant(*m_globalEffectData.perFrameTableOffset)
-					.AppendConstant(resources.GetView(passData.litHDRView))
-					.AppendConstant(passData.constantBufferHandle.globalDescriptor)
+					.AppendConstant(resources.GetView(passData.localLightBuffer))
 					.AppendConstant(m_width)
 					.AppendConstant(m_height);
 				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
 
-				u32 tgx = m_width / computeGroupSize + 1 * static_cast<bool>(m_width % computeGroupSize);
-				u32 tgy = m_height / computeGroupSize + 1 * static_cast<bool>(m_height % computeGroupSize);
 
-				rd->Cmd_Dispatch(cmdl, tgx, tgy, 1);
+				rd->Cmd_Dispatch(cmdl, m_threadGroupCountX, m_threadGroupCountY, 1);
 			},
-				[&](PassData& passData)		// Pre-graph work
+			[&](PassData&)		// Pre-graph work
 			{
-				auto cb = m_dynamicConstants->Allocate(1);
 
-				passData.constantBufferHandle = cb;
-
-				TiledLightCullingEffectBuffer perDrawData{};
-				perDrawData.threshold = 1;
-
-				*reinterpret_cast<TiledLightCullingEffectBuffer*>(passData.constantBufferHandle.memory) = perDrawData;
 			});
 	}
-	void TiledLightCullingEffect::SetGraphicsSettings(const GraphicsSettings& settings)
+
+	void TiledLightCullingEffect::SetGraphicsSettings(const GraphicsSettings&)
+	{
+
+	}
+
+
+
+
+
+
+	//----------------------------------------------------
+
+
+	TiledLightCullingVisualizationEffect::TiledLightCullingVisualizationEffect(RGResourceManager* resMan, GlobalEffectData& globalEffectData, u32 renderResX, u32 renderResY)
+		: RenderEffect(globalEffectData), m_resMan(resMan), m_width(renderResX), m_height(renderResY)
+	{
+		m_threadGroupCountX = m_width / computeGroupSize + 1 * static_cast<bool>(m_width % computeGroupSize);
+		m_threadGroupCountY = m_height / computeGroupSize + 1 * static_cast<bool>(m_height % computeGroupSize);
+
+		auto& device = globalEffectData.rd;
+
+		auto cullShader = globalEffectData.sclr->CompileFromFile("TiledLightCullingVisualizationCS.hlsl", ShaderType::Compute);
+		m_compPipeline = device->CreateComputePipeline(ComputePipelineDesc(cullShader.get()));
+
+	}
+
+	TiledLightCullingVisualizationEffect::~TiledLightCullingVisualizationEffect()
+	{
+		m_globalEffectData.rd->FreePipeline(m_compPipeline);
+	}
+
+	void TiledLightCullingVisualizationEffect::Add(RenderGraph& rg)
+	{
+		struct PassData
+		{
+			RGResourceView litHDRView;
+			RGResourceView localLightBuffer;
+		};
+
+		rg.AddPass<PassData>("Tiled light culling vis",
+			[&](PassData& passData, RenderGraph::PassBuilder& builder)		// Build
+			{
+				passData.litHDRView = builder.ReadWriteTarget(RG_RESOURCE(LitHDR),
+					TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+				passData.localLightBuffer = builder.ReadResource(RG_RESOURCE(LocalLightBuf), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, BufferViewDesc(ViewType::ShaderResource, 0, sizeof(TiledLightCullingEffect::LocalLightBufferLayout), m_threadGroupCountX * m_threadGroupCountY));
+
+			},
+			[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)		// Execute
+			{
+
+				rd->Cmd_SetPipeline(cmdl, m_compPipeline);
+				auto args = ShaderArgs()
+					.AppendConstant(resources.GetView(passData.litHDRView))
+					.AppendConstant(resources.GetView(passData.localLightBuffer))
+					.AppendConstant(m_width)
+					.AppendConstant(m_height);
+				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
+
+
+				rd->Cmd_Dispatch(cmdl, m_threadGroupCountX, m_threadGroupCountY, 1);
+			},
+			[&](PassData&)		// Pre-graph work
+			{
+
+			});
+	}
+
+	void TiledLightCullingVisualizationEffect::SetGraphicsSettings(const GraphicsSettings&)
 	{
 
 	}

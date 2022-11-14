@@ -285,6 +285,7 @@ namespace DOG::gfx
 		std::unique_ptr<RenderEffect> m_testComputeEffect;
 		std::unique_ptr<RenderEffect> m_bloomEffect;
 		std::unique_ptr<RenderEffect> m_tiledLightCuller;
+		std::unique_ptr<RenderEffect> m_tiledLightCullerVisualization;
 
 		u32 m_shadowMapCapacity{ 1 };
 

@@ -489,6 +489,12 @@ namespace DOG
 				if (ImGui::Checkbox("Lit", &m_specification.graphicsSettings.lit))
 					gfxChanged = true;
 
+				if (ImGui::Checkbox("Light culling", &m_specification.graphicsSettings.lightCulling))
+					gfxChanged = true;
+
+				if (ImGui::Checkbox("Visualize light culling", &m_specification.graphicsSettings.visualizeLightCulling))
+					gfxChanged = true;
+
 				if (gfxChanged)
 					m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
 
