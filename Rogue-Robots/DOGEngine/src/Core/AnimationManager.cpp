@@ -43,13 +43,12 @@ namespace DOG
 			return;
 		}
 
-		auto mixamoCount = 0;
 		EntityManager::Get().Collect<AnimationComponent>().Do([&](AnimationComponent& rAC)
 			{
 				if (rAC.animatorID != -1)
 				{
 					auto& a = m_playerRigAnimators[rAC.animatorID];
-					rAC.offset = MIXAMO_RIG.nJoints * mixamoCount++;
+					rAC.offset = MIXAMO_RIG.nJoints * rAC.animatorID;
 					a.Update(deltaTime);
 					UpdateSkeleton(a, rAC.offset);
 				}
