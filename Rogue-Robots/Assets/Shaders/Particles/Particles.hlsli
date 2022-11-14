@@ -14,11 +14,12 @@ struct Particle
 
 struct Emitter
 {
+    uint alive;
 	float3 pos;
 	float rate;
 	float lifetime;
 	float age;
-	float2 pad;
+	float pad;
 };
 
 struct PS_IN

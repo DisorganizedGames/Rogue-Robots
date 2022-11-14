@@ -64,6 +64,33 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	AddComponent<ShadowReceiverComponent>(entity81);
 
 
+	// Create a test particle system 
+	{
+		entity particleEntity = CreateEntity();
+		AddComponent<TransformComponent>(particleEntity, Vector3(31.0f, 70.0f, 106.0f));
+		auto& system = AddComponent<ParticleEmitterComponent>(particleEntity);
+		system = {
+			.spawnRate = 128.f,
+			.particleLifetime = .5f,
+		};
+
+		entity particleEntity2 = CreateEntity();
+		AddComponent<TransformComponent>(particleEntity2, Vector3(28.0f, 70.0f, 106.0f));
+		auto& system2 = AddComponent<ParticleEmitterComponent>(particleEntity2);
+		system2 = {
+			.spawnRate = 128.f,
+			.particleLifetime = .5f,
+		};
+
+		entity particleEntity3 = CreateEntity();
+		AddComponent<TransformComponent>(particleEntity3, Vector3(34.0f, 70.0f, 106.0f));
+		auto& system3 = AddComponent<ParticleEmitterComponent>(particleEntity3);
+		system3 = {
+			.spawnRate = 128.f,
+			.particleLifetime = .5f,
+		};
+	}
+
 	// Create some shapes
 	{
 		std::vector<u32> shapes;

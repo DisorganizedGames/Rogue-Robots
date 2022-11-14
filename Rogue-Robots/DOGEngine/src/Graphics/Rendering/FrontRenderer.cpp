@@ -6,7 +6,8 @@
 // Exposed graphics managers
 #include "../../Core/CustomMaterialManager.h"
 #include "../../Core/CustomMeshManager.h"
-#include "../../Core/LightManager.h"		
+#include "../../Core/LightManager.h"
+#include "VFX/ParticleManager.h"
 
 #include "../../common/MiniProfiler.h"
 
@@ -18,7 +19,7 @@ namespace DOG::gfx
 		LightManager::Initialize(m_renderer);
 		CustomMeshManager::Initialize(m_renderer);
 		CustomMaterialManager::Initialize(m_renderer);
-
+		m_particleManager = new ParticleManager();
 	}
 
 	FrontRenderer::~FrontRenderer()
@@ -26,6 +27,7 @@ namespace DOG::gfx
 		LightManager::Destroy();
 		CustomMeshManager::Destroy();
 		CustomMaterialManager::Destroy();
+		delete m_particleManager;
 	}
 
 	void FrontRenderer::BeginFrameUICapture()
@@ -52,6 +54,9 @@ namespace DOG::gfx
 		SetRenderCamera();
 		GatherDrawCalls();
 		CullShadowDraws();
+
+		auto& emitterData = m_particleManager->GatherEmitters();
+		m_renderer->SubmitEmitters(emitterData);
 
 		// Update internal data structures
 		m_renderer->Update(dt);
@@ -308,7 +313,7 @@ namespace DOG::gfx
 	void FrontRenderer::PerformDeferredDeletion()
 	{
 		LightManager::Get().DestroyDeferredEntities();
-
+		m_particleManager->DeferredDeletion();
 	}
 
 	void FrontRenderer::ToggleShadowMapping(bool turnOn)

@@ -6,7 +6,9 @@ struct PushConstantElement
 	uint globalData;
 	uint perFrameOffset;
 
-	uint emitterBufferHandle;
+	uint globalEmitterTableHandle;
+	uint localEmitterTableOffset;
+
 	uint particleBufferHandle;
 	uint particlesAliveHandle;
 };
@@ -48,8 +50,8 @@ PS_IN main(uint vID: SV_VertexID, uint iID: SV_InstanceID)
 	Particle p = particleBuffer[iID];
 	output.pos = float4(p.pos, 1);
 
-	float4 rightOffset = float4(camRight, 0);
-	float4 upOffset = float4(camUp, 0);
+	float4 rightOffset = float4(camRight, 0) * p.size;
+	float4 upOffset = float4(camUp, 0) * p.size;
 
 	switch (vID)
 	{

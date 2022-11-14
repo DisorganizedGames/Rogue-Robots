@@ -6,7 +6,9 @@ struct PushConstantElement
 	uint globalData;
 	uint perFrameOffset;
 
-	uint emitterBufferHandle;
+	uint globalEmitterTableHandle;
+	uint localEmitterTableOffset;
+
 	uint particleBufferHandle;
 };
 CONSTANTS(g_constants, PushConstantElement);
@@ -20,11 +22,11 @@ ConstantBuffer<PerDrawData> perDrawData : register(b1, space0);
 
 float4 main(PS_IN input) : SV_Target0
 {
-	StructuredBuffer<Emitter> emitterBuffer = ResourceDescriptorHeap[g_constants.emitterBufferHandle];
+	StructuredBuffer<Emitter> emitterBuffer = ResourceDescriptorHeap[g_constants.globalEmitterTableHandle];
 	StructuredBuffer<Particle> particleBuffer = ResourceDescriptorHeap[g_constants.particleBufferHandle];
 	
 	Particle p = particleBuffer[input.particleID];
-	Emitter e = emitterBuffer[p.emitterHandle];
+	Emitter e = emitterBuffer[p.emitterHandle + g_constants.localEmitterTableOffset];
 	float age = clamp(p.age, 0, e.lifetime) / e.lifetime;
 
 	float4 start = float4(1, 0, 0, 1);

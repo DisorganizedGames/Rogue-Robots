@@ -29,7 +29,7 @@
 #include "RenderEffects/ImGUIEffect.h"
 #include "RenderEffects/TestComputeEffect.h"
 #include "RenderEffects/Bloom.h"
-#include "RenderEffects/ParticleEffect.h"
+#include "VFX/ParticleBackend.h"
 
 #include "ImGUI/imgui.h"
 #include "../../Core/ImGuiMenuLayer.h"
@@ -54,8 +54,7 @@ namespace DOG::gfx
 		m_doubleSidedShadowDraws.resize(12);
 
 		AddScenes();
-		UIRebuild(clientHeight, clientWidth);
-
+		UIRebuild(clientHeight, clientWidth);	
 
 		m_imgui = std::make_unique<gfx::ImGUIBackend_DX12>(m_rd, m_sc, S_MAX_FIF);
 
@@ -259,6 +258,9 @@ namespace DOG::gfx
 		// Setup blackboard for potential Effect-intercom
 		m_rgBlackboard = std::make_unique<RGBlackboard>();
 
+		
+		m_particleBackend = std::make_unique<ParticleBackend>(m_rd, m_bin.get(), S_MAX_FIF, m_globalEffectData, m_rgResMan.get());
+
 
 		// Define Passes
 		/*
@@ -277,7 +279,6 @@ namespace DOG::gfx
 		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
 		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
 		m_bloomEffect = std::make_unique<Bloom>(m_rgResMan.get(), m_globalEffectData, m_dynConstants.get(), m_renderWidth, m_renderHeight);
-		m_particleRenderEffect = std::make_unique<ParticleEffect>(m_globalEffectData, m_rgResMan.get(), m_perFrameUploadCtx.get(), m_bin.get());
 
 		{
 			// Create 4x4 SSAO noise
@@ -448,6 +449,11 @@ namespace DOG::gfx
 
 		const auto& caster = m_activeShadowCasters[shadowID];
 		m_doubleSidedShadowDraws[caster.doubleSidedBucket].push_back(sub);
+	}
+
+	void DOG::gfx::Renderer::SubmitEmitters(const std::vector<ParticleEmitter>& emitters)
+	{
+		m_particleBackend->UploadEmitters(emitters);
 	}
 
 	std::optional<u32> DOG::gfx::Renderer::RegisterSpotlight(const ActiveSpotlight& data)
@@ -969,7 +975,7 @@ namespace DOG::gfx
 		// Uncomment to enable the test compute effect!
 		//m_testComputeEffect->Add(rg);
 
-		m_particleRenderEffect->Add(*m_rg);
+		m_particleBackend->AddEffect(*m_rg);
 
 		if (m_bloomEffect)
 			m_bloomEffect->Add(rg);

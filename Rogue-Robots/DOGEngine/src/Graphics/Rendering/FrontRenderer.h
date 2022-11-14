@@ -4,6 +4,7 @@
 namespace DOG::gfx
 {
 	class Renderer;
+	class ParticleManager;
 
 	/*
 		Bridge between the Renderer and the outside architecture
@@ -44,6 +45,7 @@ namespace DOG::gfx
 
 	private:
 		Renderer* m_renderer{ nullptr };
+		ParticleManager* m_particleManager{ nullptr };
 
 		DirectX::SimpleMath::Matrix m_viewMat;
 		

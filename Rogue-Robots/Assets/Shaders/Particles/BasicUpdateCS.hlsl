@@ -8,7 +8,9 @@ struct PushConstantElement
 	uint globalData;
 	uint perFrameOffset;
 
-	uint emitterBufferHandle;
+	uint globalEmitterTableHandle;
+	uint localEmitterTableOffset;
+
 	uint particleBufferHandle;
 	uint aliveBufferHandle;
 };
@@ -22,7 +24,7 @@ groupshared Emitter g_emitter;
 void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID)
 {
 	RWStructuredBuffer<Particle> particleBuffer = ResourceDescriptorHeap[g_constants.particleBufferHandle];
-	RWStructuredBuffer<Emitter> emitterBuffer = ResourceDescriptorHeap[g_constants.emitterBufferHandle];
+	RWStructuredBuffer<Emitter> emitterBuffer = ResourceDescriptorHeap[g_constants.globalEmitterTableHandle];
 	RWStructuredBuffer<uint> aliveCounter = ResourceDescriptorHeap[g_constants.aliveBufferHandle];
 
 	StructuredBuffer<ShaderInterop_GlobalData> globalDataTable = ResourceDescriptorHeap[g_constants.globalData];
@@ -35,7 +37,7 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 	for (int i = threadID.x; i < alive; i += GROUP_SIZE)
 	{
 		Particle p = particleBuffer[i];
-		Emitter e = emitterBuffer[p.emitterHandle];
+		Emitter e = emitterBuffer[p.emitterHandle + g_constants.localEmitterTableOffset];
 
 		p.age += perFrame.deltaTime;
 

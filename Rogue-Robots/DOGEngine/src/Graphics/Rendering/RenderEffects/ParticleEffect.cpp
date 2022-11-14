@@ -6,10 +6,11 @@
 #include "../../RHI/RenderDevice.h"
 #include "../../RHI/ShaderCompilerDXC.h"
 #include "../../RHI/PipelineBuilder.h"
+#include "../GPUTable.h"
 
 using namespace DOG::gfx;
 
-ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceManager* resourceManager, UploadContext*) :
+ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceManager* resourceManager) :
 	RenderEffect(globalEffectData)
 {
 	auto shaderCompiler = m_globalEffectData.sclr;
@@ -35,15 +36,6 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 	);
 
 	{
-		BufferDesc emitterBufferDesc(MemoryType::Default, S_MAX_EMITTERS * sizeof(Emitter),
-			D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST);
-		m_emitterBuffer = device->CreateBuffer(emitterBufferDesc);
-
-		m_resourceManager->ImportBuffer(RG_RESOURCE(ParticleEmitterBuffer), m_emitterBuffer,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	}
-
-	{
 		BufferDesc particleBufferDesc(MemoryType::Default, S_MAX_PARTICLES * sizeof(Particle),
 			D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		m_particleBuffer = device->CreateBuffer(particleBufferDesc);
@@ -66,11 +58,9 @@ ParticleEffect::~ParticleEffect()
 {
 	auto device = m_globalEffectData.rd;
 
-	device->FreeBuffer(m_emitterBuffer);
 	device->FreeBuffer(m_particleBuffer);
 	device->FreeBuffer(m_particlesAlive);
 	
-	m_resourceManager->FreeImported(RG_RESOURCE(ParticleEmitterBuffer));
 	m_resourceManager->FreeImported(RG_RESOURCE(ParticleBuffer));
 	m_resourceManager->FreeImported(RG_RESOURCE(ParticlesAliveBuffer));
 }
@@ -79,7 +69,6 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 {
 	struct PassData
 	{
-		RGResourceView emitterBufferHandle;
 		RGResourceView particleBufferHandle;
 		RGResourceView particlesAliveHandle;
 	};
@@ -87,9 +76,6 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 	renderGraph.AddPass<PassData>("Particle Emitter Pass",
 		[this](PassData& passData, RenderGraph::PassBuilder& builder) // Build
 		{
-			passData.emitterBufferHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticleEmitterBuffer),
-				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Emitter), S_MAX_EMITTERS));
-
 			passData.particleBufferHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticleBuffer),
 				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Particle), S_MAX_PARTICLES));
 
@@ -105,13 +91,14 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 			shaderArgs
 				.AppendConstant(m_globalEffectData.globalDataDescriptor)
 				.AppendConstant(*m_globalEffectData.perFrameTableOffset)
-				.AppendConstant(resources.GetView(passData.emitterBufferHandle))
+				.AppendConstant(m_emitterGlobalDescriptor)
+				.AppendConstant(m_emitterLocalOffset)
 				.AppendConstant(resources.GetView(passData.particleBufferHandle))
 				.AppendConstant(resources.GetView(passData.particlesAliveHandle));
 
 			rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
 
-			rd->Cmd_Dispatch(cmdl, 1, 1, 1);
+			rd->Cmd_Dispatch(cmdl, 128, 1, 1);
 		},
 		[](PassData&) // Pre-graph execution
 		{
@@ -125,13 +112,11 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 	renderGraph.AddPass<PassData>("Particle Compaction Pass",
 		[this](PassData& passData, RenderGraph::PassBuilder& builder) // Build
 		{
-			passData.emitterBufferHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticleEmitterBuffer),
-				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Emitter), S_MAX_EMITTERS));
-		passData.particleBufferHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticleBuffer),
+			passData.particleBufferHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticleBuffer),
 				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Particle), S_MAX_PARTICLES));
-		passData.particlesAliveHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticlesAliveBuffer),
+			passData.particlesAliveHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticlesAliveBuffer),
 				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), S_COUNTERS));
-	},
+		},
 		[this](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) // Execute
 		{
 			rd->Cmd_SetPipeline(cmdl, m_compactPipeline);
@@ -139,7 +124,8 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 			shaderArgs
 				.AppendConstant(m_globalEffectData.globalDataDescriptor)
 				.AppendConstant(*m_globalEffectData.perFrameTableOffset)
-				.AppendConstant(resources.GetView(passData.emitterBufferHandle))
+				.AppendConstant(m_emitterGlobalDescriptor)
+				.AppendConstant(m_emitterLocalOffset)
 				.AppendConstant(resources.GetView(passData.particleBufferHandle))
 				.AppendConstant(resources.GetView(passData.particlesAliveHandle));
 		rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
@@ -155,9 +141,6 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 	renderGraph.AddPass<PassData>("Particle Update Pass",
 		[this](PassData& passData, RenderGraph::PassBuilder& builder) // Build
 		{
-			passData.emitterBufferHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticleEmitterBuffer),
-				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Emitter), S_MAX_EMITTERS));
-
 			passData.particleBufferHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticleBuffer),
 				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Particle), S_MAX_PARTICLES));
 
@@ -173,7 +156,8 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 			shaderArgs
 				.AppendConstant(m_globalEffectData.globalDataDescriptor)
 				.AppendConstant(*m_globalEffectData.perFrameTableOffset)
-				.AppendConstant(resources.GetView(passData.emitterBufferHandle))
+				.AppendConstant(m_emitterGlobalDescriptor)
+				.AppendConstant(m_emitterLocalOffset)
 				.AppendConstant(resources.GetView(passData.particleBufferHandle))
 				.AppendConstant(resources.GetView(passData.particlesAliveHandle));
 
@@ -193,9 +177,6 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 	renderGraph.AddPass<PassData>("Particle Draw Pass",
 		[this](PassData& passData, RenderGraph::PassBuilder& builder) // Build
 		{
-			passData.emitterBufferHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticleEmitterBuffer),
-				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Emitter), S_MAX_EMITTERS));
-
 			passData.particleBufferHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticleBuffer),
 				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Particle), S_MAX_PARTICLES));
 
@@ -214,7 +195,8 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 			shaderArgs
 				.AppendConstant(m_globalEffectData.globalDataDescriptor)
 				.AppendConstant(*m_globalEffectData.perFrameTableOffset)
-				.AppendConstant(resources.GetView(passData.emitterBufferHandle))
+				.AppendConstant(m_emitterGlobalDescriptor)
+				.AppendConstant(m_emitterLocalOffset)
 				.AppendConstant(resources.GetView(passData.particleBufferHandle))
 				.AppendConstant(resources.GetView(passData.particlesAliveHandle));
 

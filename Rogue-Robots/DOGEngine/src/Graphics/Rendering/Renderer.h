@@ -10,6 +10,7 @@
 #include "RenderEffects/RenderEffect.h"
 #include "RenderEffects/EffectData/GlobalEffectData.h"
 
+#include "VFX/ParticleBackend.h"
 
 namespace DOG::gfx
 {
@@ -34,7 +35,8 @@ namespace DOG::gfx
 	class RGResourceManager;
 	class RGBlackboard;
 
-	
+	class ParticleBackend;
+	struct ParticleEmitter;
 
 	class Renderer
 	{
@@ -88,6 +90,7 @@ namespace DOG::gfx
 		void SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world, bool animated = false, u32 jointOffset = 0);
 		void SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world, bool animated = false, u32 jointOffset = 0);
 
+		void SubmitEmitters(const std::vector<ParticleEmitter>& emitters);
 
 		// Optionally returns shadow ID if light casts shadows
 		std::optional<u32> RegisterSpotlight(const ActiveSpotlight& data);
@@ -275,13 +278,12 @@ namespace DOG::gfx
 		std::unique_ptr<GPUTableDeviceLocal<GlobalDataHandle>> m_globalDataTable;
 		GlobalDataHandle m_gdHandle;
 
-		
+		std::unique_ptr<ParticleBackend> m_particleBackend;
 
 		// Passes
 		std::unique_ptr<RenderEffect> m_imGUIEffect;
 		std::unique_ptr<RenderEffect> m_testComputeEffect;
 		std::unique_ptr<RenderEffect> m_bloomEffect;
-		std::unique_ptr<RenderEffect> m_particleRenderEffect;
 
 		u32 m_shadowMapCapacity{ 1 };
 
