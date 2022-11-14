@@ -83,10 +83,10 @@ namespace DOG::gfx
 		void SubmitMeshWireframe(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 		void SubmitMeshWireframeNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 
-		void SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
+		void SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world, u32 num);
 
-		void SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world);
-		void SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world);
+		void SubmitSingleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world, bool animated = false, u32 jointOffset = 0);
+		void SubmitDoubleSidedShadowMesh(u32 shadowID, Mesh mesh, u32 submesh, const DirectX::SimpleMath::Matrix& world, bool animated = false, u32 jointOffset = 0);
 
 
 		// Optionally returns shadow ID if light casts shadows
@@ -129,7 +129,9 @@ namespace DOG::gfx
 			MaterialHandle mat;			// mat args 
 			DirectX::SimpleMath::Matrix world;
 
+			bool animated{ false };
 			// bitflags for target passes? (i.e multipass)
+			u32 jointOffset{ 0 };
 		};
 
 		void WaitForPrevFrame();
@@ -178,6 +180,7 @@ namespace DOG::gfx
 		std::unique_ptr<GPUDynamicConstants> m_dynConstants;
 		std::unique_ptr<GPUDynamicConstants> m_dynConstantsTemp;
 		std::unique_ptr<GPUDynamicConstants> m_dynConstantsAnimated;		// temp storage for per draw joints
+		std::unique_ptr<GPUDynamicConstants> m_dynConstantsAnimatedShadows;		// temp storage for per draw joints for SHADOWS only
 
 		
 	
@@ -210,7 +213,7 @@ namespace DOG::gfx
 
 
 		//TMP
-		std::unique_ptr<AnimationManager> m_boneJourno;
+		std::unique_ptr<AnimationManager> m_jointMan;
 
 
 

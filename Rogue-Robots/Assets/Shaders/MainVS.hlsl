@@ -21,7 +21,7 @@ struct PerDrawData
 
 struct JointsData
 {
-    matrix joints[130];
+    matrix joints[300];
 };
 
 struct BlendWeight
@@ -55,6 +55,7 @@ struct PushConstantElement
     uint shadowMapDepthIndex;
     uint wireframe;
     uint isLit;
+    uint jointOffset;
 };
 ConstantBuffer<PushConstantElement> constants : register(b0, space0);
 
@@ -82,6 +83,7 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     StructuredBuffer<Blend> blendData = ResourceDescriptorHeap[gd.meshTableBlend];
 
     ShaderInterop_SubmeshMetadata md = mds[perDrawData.submeshID];
+    //int offset = 65;
     Blend bw = blendData[vertexID + md.blendStart];
     vertexID += md.vertStart;
 
@@ -90,14 +92,14 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     float3 nor = normals[vertexID];
     float3 tan = tangents[vertexID];
     
+    int offset = constants.jointOffset;
     if (md.blendCount > 0)
     {
         ConstantBuffer<JointsData> jointsData = ResourceDescriptorHeap[perDrawData.jointsDescriptor];
-        
-        matrix mat = jointsData.joints[bw.iw[0].idx] * bw.iw[0].weight;
-        mat += jointsData.joints[bw.iw[1].idx] * bw.iw[1].weight;
-        mat += jointsData.joints[bw.iw[2].idx] * bw.iw[2].weight;
-        mat += jointsData.joints[bw.iw[3].idx] * bw.iw[3].weight;
+        matrix mat = jointsData.joints[bw.iw[0].idx + offset] * bw.iw[0].weight;
+        mat += jointsData.joints[bw.iw[1].idx + offset] * bw.iw[1].weight;
+        mat += jointsData.joints[bw.iw[2].idx + offset] * bw.iw[2].weight;
+        mat += jointsData.joints[bw.iw[3].idx + offset] * bw.iw[3].weight;
         pos = (float3) mul(float4(pos, 1.0f), mat);
     }
     

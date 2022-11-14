@@ -7,6 +7,14 @@ namespace DOG
 	constexpr const u32 NULL_ENTITY = MAX_ENTITIES;
 	typedef u32 entity;
 
+	enum class BlendMode
+	{
+		normal,
+		linear,
+		bezier,
+		interrupt,
+	};
+
 	struct TransformComponent
 	{
 		TransformComponent(const DirectX::SimpleMath::Vector3& position = { 0.0f, 0.0f, 0.0f },
@@ -59,19 +67,31 @@ namespace DOG
 		u32 objectId  = 0;
 		DirectX::SimpleMath::Matrix transform;
 	};
+	struct DontDraw
+	{
 
+	};
 	struct AnimationComponent
 	{
-		// initial animation component, liable to changge
-		i32 offset = 0;
-		i32 animationID[2] = { 0, -1 };
-		f32 tick[2] = { 0.f, 0.f };
-		f32 normalizedTime[2] = { 0.f, 0.f };
-		f32 timeScale[2] = { 1.0f, 1.0f };
-		f32 transition = 0.0f;
-		i32 mode = 0;
-		f32 bf = 0.0f;
+		static constexpr u8 MAX_SETTERS = 10;
+		static constexpr u8 MAX_TARGET_ANIMS = 3;
+		u32 offset;
+		i8 rigID = 0;
+		i8 animatorID = -1;
+		i8 addedSetters = 0;
+		struct Setter
+		{
+			bool loop;
+			u8 group;
+			u8 priority;
+			f32 transitionLength;
+			f32 playbackRate;
+			i8 animationIDs[MAX_TARGET_ANIMS];
+			f32 targetWeights[MAX_TARGET_ANIMS];
+		};
+		std::array<Setter, MAX_SETTERS> animSetters;
 	};
+	static_assert(std::is_trivially_copyable_v<AnimationComponent>);
 
 	struct AudioComponent
 	{

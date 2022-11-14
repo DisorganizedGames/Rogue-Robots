@@ -116,7 +116,7 @@ namespace DOG
 			EntityManager::Get().DestroyDeferredEntities();
 
 			Time::End();
-		}
+ 		}
 
 		m_renderer->Flush();
 	}

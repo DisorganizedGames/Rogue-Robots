@@ -84,6 +84,7 @@ namespace DOG
 	void AddNode(std::unordered_map<std::string, i32>& nameToJointIdx, const std::unordered_map<std::string, aiBone*>& nameToJoint,
 		std::vector<JointNode>& nodeArray, const aiNode* node, i32 parentIdx)
 	{
+		using namespace DirectX;
 		JointNode n = {};
 		std::string nodeName = node->mName.C_Str();
 
@@ -97,7 +98,7 @@ namespace DOG
 		// Store Node if it is associated with bone or is root of bone hierarchy
 		if (hasJoint || parentIdx == 0)
 		{
-			n.transformation = DirectX::XMFLOAT4X4(&node->mTransformation.a1);
+			n.transformation = XMFLOAT4X4(&node->mTransformation.a1);
 			n.parentIdx = parentIdx;
 			n.name = node->mName.C_Str();
 			parentIdx = (i32)nodeArray.size();
@@ -110,6 +111,7 @@ namespace DOG
 
 	ImportedRig ImportAnimation(const aiScene* scene, std::shared_ptr<ImportedModel>& m_model)
 	{
+		using namespace DirectX;
 		std::unordered_map<std::string, aiBone*> nameToJoint;
 		std::unordered_map<std::string, i32> nameToJointIdx;
 		std::vector<aiNode*> allNodes;
@@ -129,14 +131,14 @@ namespace DOG
 		// Store model Root Node
 		nodeArray.push_back(JointNode{});
 		nodeArray.back().name = allNodes[0]->mName.C_Str();
-		DirectX::XMStoreFloat4x4(&nodeArray.back().transformation, DirectX::XMMATRIX(&allNodes[0]->mTransformation.a1));
+		XMStoreFloat4x4(&nodeArray.back().transformation, XMMATRIX(&allNodes[0]->mTransformation.a1));
 
 		// Find and store Root of bone Hierarchy (Parent of first node associated with a bone)
 		u32 boneRootIdx = {};
 		for (boneRootIdx = 0; boneRootIdx < allNodes.size(); boneRootIdx++)
 			if (nameToJoint.find(allNodes[boneRootIdx]->mName.C_Str()) != nameToJoint.end())
 				break;
-		const aiNode* boneRootNode = allNodes[boneRootIdx]->mParent;
+		aiNode* boneRootNode = allNodes[boneRootIdx]->mParent;
 		// Add bone hierarchy
 		AddNode(nameToJointIdx, nameToJoint, nodeArray, boneRootNode, 0);
 
@@ -145,9 +147,8 @@ namespace DOG
 		for (auto& n : allNodes)
 			if (nameToJoint.find(n->mName.C_Str()) != nameToJoint.end())
 			{
-				DirectX::XMStoreFloat4x4(&boneArray[nameToJointIdx.at(n->mName.C_Str())],
-					DirectX::XMMATRIX(&nameToJoint.at(n->mName.C_Str())->mOffsetMatrix.a1));
-
+				XMStoreFloat4x4(&boneArray[nameToJointIdx.at(n->mName.C_Str())],
+					XMMATRIX(&nameToJoint.at(n->mName.C_Str())->mOffsetMatrix.a1));
 			}
 
 		// Store vertices BoneWeight and Indices
@@ -158,6 +159,14 @@ namespace DOG
 		};
 		struct BoneWeights{
 			f32 weights[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+			i32 MinIdx()
+			{
+				i32 minIdx = 0;
+				for (i32 i = 1; i < 4; i++)
+					minIdx = weights[i] < weights[minIdx] ? i : minIdx;
+				return minIdx;
+			}
+
 		};
 		std::vector<BoneIndices> boneIndices;
 		std::vector<BoneWeights> boneWeights;
@@ -187,9 +196,10 @@ namespace DOG
 				{
 					auto vWeight = bone->mWeights[weight_idx];
 					u32 vertex = submesh_start + vWeight.mVertexId;
+					auto vertexBoneIdx = boneWeights[vertex].MinIdx();
 
-					boneIndices[vertex].indices[boneWeightIdx[vertex]] = nameToJointIdx[bone->mName.C_Str()];
-					boneWeights[vertex].weights[boneWeightIdx[vertex]] = vWeight.mWeight;
+					boneIndices[vertex].indices[vertexBoneIdx] = nameToJointIdx[bone->mName.C_Str()];
+					boneWeights[vertex].weights[vertexBoneIdx] = vWeight.mWeight;
 
 					boneWeightIdx[vertex]++;
 				}
@@ -231,10 +241,10 @@ namespace DOG
 			importedAnim.animations.back().ticksPerSec = (f32)animation->mTicksPerSecond;
 			importedAnim.animations.back().ticks = (f32)animation->mDuration;
 			importedAnim.animations.back().name = animation->mName.C_Str();
-
-			for (u32 ch_i = 0; ch_i < scene->mAnimations[i]->mNumChannels; ch_i++)
+			// extract animation SRT keyframes
+			for (u32 ch_i = 0; ch_i < animation->mNumChannels; ch_i++)
 			{
-				const auto channel = scene->mAnimations[i]->mChannels[ch_i];
+				const auto channel = animation->mChannels[ch_i];
 
 				std::vector<AnimationKey> posKeys;
 				std::vector<AnimationKey> rotKeys;
@@ -262,7 +272,21 @@ namespace DOG
 				std::string nodeName = channel->mNodeName.C_Str();
 				if (nameToNodeIdx.find(nodeName) == nameToNodeIdx.end())
 					nameToNodeIdx.insert({ nodeName, -1 });
-
+				// temporary code for modifying root translation
+				constexpr u32 gltf_rootIdx = 2;
+				if (nameToNodeIdx.find(nodeName) != nameToNodeIdx.end() && nameToNodeIdx.at(nodeName) == gltf_rootIdx)
+				{
+					auto rootV = XMLoadFloat4(&posKeys[0].value);
+					auto lastV = XMLoadFloat4(&posKeys.rbegin()[0].value);
+					for (i32 k = 0; k < posKeys.size(); ++k)
+					{
+						auto value = XMLoadFloat4(&posKeys.rbegin()[k].value);
+						// (hacky fix for grounding model)
+						posKeys.rbegin()[k].value = {0.f, XMVectorGetY(value)-250.f, 0.f, 0.f};
+					}
+					//if(posKeys.size() > 1)posKeys[0].value = posKeys[1].value;
+				}
+				
 				i32 nodeID = nameToNodeIdx.at(nodeName);
 				importedAnim.animations.back().scaKeys.insert({nodeID, scaKeys});
 				importedAnim.animations.back().rotKeys.insert({nodeID, rotKeys});

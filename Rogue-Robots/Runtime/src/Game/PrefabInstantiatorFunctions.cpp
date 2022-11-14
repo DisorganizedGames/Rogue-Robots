@@ -8,7 +8,7 @@ using namespace DirectX::SimpleMath;
 std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 {
 	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
-
+	
 	auto* scriptManager = LuaMain::GetScriptManager();
 	//// Add persistent material prefab lua
 	//{
@@ -24,10 +24,10 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 	auto& am = AssetManager::Get();
 	auto& em = EntityManager::Get();
 	std::array<u32, 4> playerModels;
-	playerModels[0] = am.LoadModelAsset("Assets/Models/Temporary_Assets/red_cube.glb");
-	playerModels[1] = am.LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
-	playerModels[2] = am.LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
-	playerModels[3] = am.LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
+	playerModels[0] = am.LoadModelAsset("Assets/Models/P2/Red/player_red.gltf");
+	playerModels[1] = am.LoadModelAsset("Assets/Models/P2/Blue/player_Blue.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
+	playerModels[2] = am.LoadModelAsset("Assets/Models/P2/Green/player_Green.gltf");
+	playerModels[3] = am.LoadModelAsset("Assets/Models/P2/Yellow/player_yellow.gltf");
 	std::vector<entity> players;
 	for (auto i = 0; i < playerCount; ++i)
 	{
@@ -38,8 +38,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 			spread * (i / 2) - (spread / 2.f),
 		};
 		em.AddComponent<TransformComponent>(playerI, pos - offset);
-		em.AddComponent<ModelComponent>(playerI, playerModels[i]);
-		em.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 0.8f, true, 75.f);
+		em.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 1.25f, true, 75.f);
 		auto& rb = em.AddComponent<RigidbodyComponent>(playerI, playerI);
 		rb.ConstrainRotation(true, true, true);
 		rb.disableDeactivation = true;
@@ -49,7 +48,6 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		em.AddComponent<PlayerControllerComponent>(playerI);
 		em.AddComponent<NetworkPlayerComponent>(playerI).playerId = static_cast<i8>(i);
 		em.AddComponent<InputController>(playerI);
-		em.AddComponent<ShadowReceiverComponent>(playerI);
 		em.AddComponent<PlayerAliveComponent>(playerI);
 		auto& bc = em.AddComponent<BarrelComponent>(playerI);
 		bc.type = BarrelComponent::Type::Bullet;
@@ -62,8 +60,23 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
 		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");
 
+		entity modelEntity = em.CreateEntity();
+
+		em.AddComponent<TransformComponent>(modelEntity);
+		em.AddComponent<ModelComponent>(modelEntity, playerModels[i]);
+		em.AddComponent<AnimationComponent>(modelEntity);
+		em.AddComponent<ShadowReceiverComponent>(modelEntity);
+
+		auto& ac = em.GetComponent<AnimationComponent>(modelEntity);
+		ac.animatorID = static_cast<i8>(i);
+
+		auto& t = em.AddComponent<ParentComponent>(modelEntity);
+		t.parent = playerI;
+		t.localTransform.SetPosition({0.0f, -0.5f, 0.0f});
+
 		if (i == 0) // Only for this player
 		{
+			em.AddComponent<DontDraw>(modelEntity);
 			em.AddComponent<ThisPlayer>(playerI);
 			em.AddComponent<AudioListenerComponent>(playerI);
 		}

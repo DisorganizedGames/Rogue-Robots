@@ -179,6 +179,7 @@ end
 
 function CreateBulletEntity(bullet, transformEntity)
 	bullet.entity = Scene:CreateEntity(EntityID)
+
 	table.insert(bullets, bullet)
 
 	size = Vector3.New(1.0, 1.0, 1.0)

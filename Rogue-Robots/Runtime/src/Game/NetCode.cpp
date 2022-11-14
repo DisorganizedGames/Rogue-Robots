@@ -38,6 +38,13 @@ void NetCode::OnStartup()
 			{
 				m_entityManager.AddComponent<OnlinePlayer>(id);
 				m_entityManager.RemoveComponent<ThisPlayer>(id);
+				EntityManager::Get().Collect<DontDraw, ParentComponent>().Do([&](entity subEntity, DontDraw&, ParentComponent& parentCompany)
+					{
+						if (parentCompany.parent == id)
+						{
+							m_entityManager.RemoveComponent<DontDraw>(subEntity);
+						}
+					});
 				m_entityManager.RemoveComponent<AudioListenerComponent>(id);
 			}
 
@@ -46,6 +53,13 @@ void NetCode::OnStartup()
 		{
 			if (networkC.playerId == m_inputTcp.playerId)
 			{
+				EntityManager::Get().Collect<ParentComponent>().Do([&](entity subEntity, ParentComponent& parentC)
+					{
+						if (parentC.parent == id)
+						{
+							m_entityManager.AddComponent<DontDraw>(subEntity);
+						}
+					});
 				m_entityManager.AddComponent<ThisPlayer>(id);
 				m_entityManager.AddComponent<AudioListenerComponent>(id);
 				m_entityManager.RemoveComponent<OnlinePlayer>(id);

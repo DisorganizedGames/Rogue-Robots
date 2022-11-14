@@ -71,7 +71,7 @@ public:
 		{
 			auto& ptc = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(slc.owningPlayer);
 			stc.worldMatrix = ptc.worldMatrix;
-			stc.SetPosition(stc.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.6f, 0.f));
+			stc.SetPosition(stc.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 1.6f, 0.f));
 			slc.dirty = true;
 
 			auto up = ptc.worldMatrix.Up();
@@ -96,7 +96,7 @@ class PickupItemInteractionSystem : public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	#define REQUIRED_DISTANCE_DELTA 2.0f
-	#define REQUIRED_DOT_DELTA -0.80f
+	#define REQUIRED_DOT_DELTA -0.90f
 public:
 	SYSTEM_CLASS(DOG::ThisPlayer, DOG::TransformComponent, PlayerControllerComponent);
 	ON_EARLY_UPDATE_ID(DOG::ThisPlayer, DOG::TransformComponent, PlayerControllerComponent);
@@ -127,7 +127,10 @@ public:
 		auto& tc = mgr.GetComponent<DOG::TransformComponent>(closestPickup);
 		auto cameraForward = mgr.GetComponent<DOG::TransformComponent>(pcc.cameraEntity).GetForward();
 
-		Vector3 pickUpToPlayerDirection = playerPosition - tc.GetPosition();
+		// Camera offset
+		const auto cOffset = Vector3(0, 0.4f, 0);
+
+		Vector3 pickUpToPlayerDirection = (playerPosition+cOffset) - tc.GetPosition();
 		pickUpToPlayerDirection.Normalize();
 
 		float dot = cameraForward.Dot(pickUpToPlayerDirection);
