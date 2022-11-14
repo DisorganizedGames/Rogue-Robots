@@ -9,6 +9,9 @@ struct TurretTargetingComponent
 
 	float yawSpeed = 1.0f;
 	float pitchSpeed = 0.6f;
+
+	float yawLimit = DirectX::XM_PI / 2;
+	float pitchLimit = DirectX::XM_PI / 12;
 };
 
 class TurretTargetingSystem : public DOG::ISystem

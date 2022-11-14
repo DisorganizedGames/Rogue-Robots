@@ -1,6 +1,7 @@
 #include "OldDefaultScene.h"
 #include "PrefabInstantiatorFunctions.h"
 #include "PcgLevelLoader.h"
+#include "TurretSystems.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -27,4 +28,17 @@ void OldDefaultScene::SetUpScene(std::vector<std::function<std::vector<DOG::enti
 	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(20, 20, 50), 10, 3.0f));
 	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(30, 20, 50), 10, 3.0f));
 	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(40, 20, 50), 10, 3.0f));
+
+	entity turretBase = CreateEntity();
+	AddComponent<TransformComponent>(turretBase, Vector3(45, 5.5f, 20));
+	AddComponent<ModelComponent>(turretBase).id = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/turretBase.glb");
+
+
+	entity turretHead = CreateEntity();
+	AddComponent<TransformComponent>(turretHead);
+	auto& tr = AddComponent<ChildComponent>(turretHead);
+	tr.parent = turretBase;
+	tr.localTransform.SetPosition({ 0, 1, 0 });
+	AddComponent<ModelComponent>(turretHead).id = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/turret.glb");
+	AddComponent<TurretTargetingComponent>(turretHead);
 }
