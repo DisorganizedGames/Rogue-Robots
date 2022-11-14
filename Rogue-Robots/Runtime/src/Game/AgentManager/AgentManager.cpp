@@ -1,7 +1,7 @@
 #include "AgentManager.h"
 #include "AgentBehaviorSystems.h"
 #include "Game/GameLayer.h"
-#include "LoadSplitModels.h"
+#include "../LoadSplitModels.h"
 
 using namespace DOG;
 using namespace DirectX::SimpleMath;

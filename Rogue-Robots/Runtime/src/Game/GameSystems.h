@@ -446,3 +446,12 @@ public:
 	ON_LATE_UPDATE(ChildComponent);
 	void OnLateUpdate(ChildComponent& child);
 };
+
+class DespawnSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DespawnComponent);
+	ON_UPDATE_ID(DespawnComponent);
+
+	void OnUpdate(DOG::entity e, DespawnComponent& despawn);
+};
