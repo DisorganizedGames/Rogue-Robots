@@ -15,7 +15,12 @@
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "Tail"
+            "name" : "Tail",
+            "translation" : [
+                0,
+                0.8018569946289062,
+                -0.627901017665863
+            ]
         }
     ],
     "materials" : [
@@ -91,29 +96,29 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 1042,
+            "count" : 1059,
             "max" : [
-                0.2204241156578064,
-                1.1286321878433228,
-                -0.24368567764759064
+                0.22042454779148102,
+                0.3267756700515747,
+                0.3842155337333679
             ],
             "min" : [
-                -0.2204241156578064,
-                0.506946325302124,
-                -0.9308883547782898
+                -0.22042368352413177,
+                -0.294910192489624,
+                -0.30298715829849243
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 1042,
+            "count" : 1059,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 1042,
+            "count" : 1059,
             "type" : "VEC2"
         },
         {
@@ -126,26 +131,26 @@
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 12504,
+            "byteLength" : 12708,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 12504,
-            "byteOffset" : 12504,
+            "byteLength" : 12708,
+            "byteOffset" : 12708,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 8336,
-            "byteOffset" : 25008,
+            "byteLength" : 8472,
+            "byteOffset" : 25416,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 2490,
-            "byteOffset" : 33344,
+            "byteOffset" : 33888,
             "target" : 34963
         }
     ],
@@ -157,7 +162,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 35836,
+            "byteLength" : 36380,
             "uri" : "Tail.bin"
         }
     ]

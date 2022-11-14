@@ -15,7 +15,12 @@
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "Body"
+            "name" : "Body",
+            "translation" : [
+                -6.374362419592217e-05,
+                0.5113428831100464,
+                -0.1357232928276062
+            ]
         }
     ],
     "materials" : [
@@ -91,29 +96,29 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 765,
+            "count" : 787,
             "max" : [
-                0.16078752279281616,
-                0.711861789226532,
-                0.13924969732761383
+                0.16085126996040344,
+                0.2005189061164856,
+                0.27497297525405884
             ],
             "min" : [
-                -0.16078752279281616,
-                0.33498096466064453,
-                -0.4405321478843689
+                -0.16072377562522888,
+                -0.17636191844940186,
+                -0.3048088550567627
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 765,
+            "count" : 787,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 765,
+            "count" : 787,
             "type" : "VEC2"
         },
         {
@@ -126,26 +131,26 @@
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 9180,
+            "byteLength" : 9444,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 9180,
-            "byteOffset" : 9180,
+            "byteLength" : 9444,
+            "byteOffset" : 9444,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 6120,
-            "byteOffset" : 18360,
+            "byteLength" : 6296,
+            "byteOffset" : 18888,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 1932,
-            "byteOffset" : 24480,
+            "byteOffset" : 25184,
             "target" : 34963
         }
     ],
@@ -157,8 +162,8 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 26412,
-            "uri" : "Enemy1_Body.bin"
+            "byteLength" : 27116,
+            "uri" : "Body.bin"
         }
     ]
 }

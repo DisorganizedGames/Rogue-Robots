@@ -22,6 +22,7 @@ set(SourceFiles
 	"src/Game/OldDefaultScene.h" "src/Game/OldDefaultScene.cpp"
 	"src/Game/TunnelScenes.h" "src/Game/TunnelScenes.cpp"
 	"src/Game/TurretSystems.h" "src/Game/TurretSystems.cpp"
+	"src/Game/LoadSplitModels.h" "src/Game/LoadSplitModels.cpp")
 	)
 
 set(ExecutableName "Runtime")
