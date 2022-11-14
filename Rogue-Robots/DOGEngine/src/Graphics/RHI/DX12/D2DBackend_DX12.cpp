@@ -103,9 +103,13 @@ DOG::gfx::D2DBackend_DX12::D2DBackend_DX12(RenderDevice* rd, Swapchain* sc, u_in
             HR_VFY(hr);
         }
 
-            hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)this->m_dwritwf.GetAddressOf());
-            HR_VFY(hr);
+        hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)this->m_dwritwf.GetAddressOf());
+        HR_VFY(hr);
     }
+
+    
+
+
 }
 
 void DOG::gfx::D2DBackend_DX12::OnResize()
@@ -161,7 +165,7 @@ void DOG::gfx::D2DBackend_DX12::OnResize()
     {
         D3D12_CPU_DESCRIPTOR_HANDLE rtv = rd12->GetReservedRTV(n);
         m_renderTargets[n] = sc12->GetD12Buffer((u8)n);
-        
+
         rd12->GetDevice()->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtv);
         D3D11_RESOURCE_FLAGS d3d11Flags = { D3D11_BIND_RENDER_TARGET };
         hr = m_11on12d->CreateWrappedResource(
@@ -179,8 +183,10 @@ void DOG::gfx::D2DBackend_DX12::OnResize()
             m_d2dRenderTargets[n].GetAddressOf()
         );
         HR_VFY(hr);
-        
     }
+
+
+
 }
 
 void DOG::gfx::D2DBackend_DX12::FreeResize()

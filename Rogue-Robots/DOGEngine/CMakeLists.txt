@@ -85,7 +85,7 @@ add_library("${LibraryName}" STATIC "${SourceFiles}" "${TempGraphics}"   )
 target_include_directories("${LibraryName}" PRIVATE "${CMAKE_SOURCE_DIR}/Core/src/" "${ExternalIncludePath}")
 target_compile_options("${LibraryName}" PRIVATE "/W4")
 set_target_properties("${LibraryName}" PROPERTIES LINKER_LANGUAGE "CXX")
-target_link_libraries("${LibraryName}" PRIVATE "xaudio2" "ole32" "d3d12" "d3d11" "D2d1" "Dwrite" "dxgi" "dxguid" "dxcompiler" "Ws2_32" "winmm.lib")
+target_link_libraries("${LibraryName}" PRIVATE "xaudio2" "ole32" "d3d12" "d3d11" "D2d1" "Dwrite" "dxgi" "dxguid" "dxcompiler" "Ws2_32" "winmm" "Windowscodecs")
 
 target_precompile_headers("${LibraryName}" PUBLIC "src/pch.h")
 

@@ -42,6 +42,7 @@ namespace DOG::gfx
 		std::vector<ComPtr<ID3D11Resource>> m_wrappedBackBuffers;
 		ComPtr<IDXGISurface> surface;
 		std::vector<ComPtr<ID2D1Bitmap1>> m_d2dRenderTargets;
+
       
 	private:
       u_int m_numBuffers;

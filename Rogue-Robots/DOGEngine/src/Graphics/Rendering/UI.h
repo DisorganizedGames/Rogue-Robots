@@ -1,6 +1,8 @@
 #pragma once
 #include <time.h>
 #include <functional>
+#include <string>
+#include <wincodec.h>
 #include "../RHI/DX12/D2DBackend_DX12.h"
 #include "../RHI/RenderDevice.h"
 #include "../../EventSystem/IEvent.h"
@@ -110,7 +112,7 @@ namespace DOG
       UIScene(UINT id);
       ~UIScene() = default;
       UINT GetID();
-      
+      void OnEvent(IEvent& event);
       std::vector<std::unique_ptr<UIElement>>& GetScene();
       private:
       std::vector<std::unique_ptr<UIElement>> m_scene;
@@ -223,6 +225,22 @@ namespace DOG
          std::wstring m_text;
          std::wstring m_displayText;
          void IncrementCursor();
+   };
+
+   class UIBuffTracker : public UIElement
+   {
+      public:
+         UIBuffTracker(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector<std::wstring> filePaths);
+         ~UIBuffTracker();
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+      private:  
+		   ComPtr<IWICBitmapDecoder> m_decoder;
+		   ComPtr<IWICImagingFactory> m_imagingFactory;
+         ComPtr<IWICBitmapFrameDecode> m_frame;
+         ComPtr<IWICFormatConverter> m_converter;
+         ComPtr<ID2D1Bitmap> m_bitmap;
+         D2D1_RECT_F m_rect;
    };
 
 }
