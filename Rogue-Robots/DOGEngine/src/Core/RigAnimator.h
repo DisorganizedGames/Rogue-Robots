@@ -186,7 +186,7 @@ namespace DOG
 		f32 UpdateBlendSpecification(BlendSpecification& bs, const f32 dt, const f32 currentValue = 0.f);
 
 		// Set blendSpec that will return to previous state
-		void SetReturningBlendSpec(BlendSpecification& bs, const f32 transitionLen, const f32 target, const f32 duration);
+		void SetReturningBlendSpec(BlendSpecification& bs, const f32 transitionLen, const f32 target, const f32 duration, const f32 startWeight);
 
 		// Set blendSpec
 		void ResetBlendSpecification(BlendSpecification& bs, const f32 timeDelta, const f32 currentValue, const f32 targetValue = 1.f);

@@ -78,12 +78,12 @@ namespace DOG
 	void AnimationManager::SpawnControlWindow(bool& open)
 	{
 		ZoneScopedN("animImgui3");
-		static constexpr f32 m_imguiJointRotMin = -180.0f;
-		static constexpr f32 m_imguiJointRotMax = 180.0f;
-		static constexpr f32 m_imguiJointScaMin = -10.0f;
-		static constexpr f32 m_imguiJointScaMax = 10.0f;
-		static constexpr f32 m_imguiJointPosMin = -1.0f;
-		static constexpr f32 m_imguiJointPosMax = 1.0f;
+		static constexpr f32 imguiJointRotMin = -180.0f;
+		static constexpr f32 imguiJointRotMax = 180.0f;
+		static constexpr f32 imguiJointScaMin = -10.0f;
+		static constexpr f32 imguiJointScaMax = 10.0f;
+		static constexpr f32 imguiJointPosMin = -1.0f;
+		static constexpr f32 imguiJointPosMax = 1.0f;
 
 		if (ImGui::BeginMenu("View"))
 		{
@@ -164,7 +164,7 @@ namespace DOG
 					ImGui::Combo("target group", &group, grpNames, IM_ARRAYSIZE(grpNames));
 
 					static auto clipSet = 0;
-					static const char* setNames[]{ "Looping", "Action"};
+					static const char* setNames[]{ "Action", "Looping" };
 					ImGui::Combo("Clip set", &clipSet, setNames, IM_ARRAYSIZE(setNames));
 
 					static auto playbackRate = 1.f, transitionLen = 0.f;
@@ -218,17 +218,17 @@ namespace DOG
 					}
 
 					ImGui::Text("Orientation");
-					ImGui::SliderAngle("Roll", &m_imguiRot[selectedBone].z, m_imguiJointRotMin, m_imguiJointRotMax);
-					ImGui::SliderAngle("Pitch", &m_imguiRot[selectedBone].x, m_imguiJointRotMin, m_imguiJointRotMax);
-					ImGui::SliderAngle("Yaw", &m_imguiRot[selectedBone].y, m_imguiJointRotMin, m_imguiJointRotMax);
+					ImGui::SliderAngle("Roll", &m_imguiRot[selectedBone].z, imguiJointRotMin, imguiJointRotMax);
+					ImGui::SliderAngle("Pitch", &m_imguiRot[selectedBone].x, imguiJointRotMin, imguiJointRotMax);
+					ImGui::SliderAngle("Yaw", &m_imguiRot[selectedBone].y, imguiJointRotMin, imguiJointRotMax);
 					ImGui::Text("Translation");
-					ImGui::SliderFloat("pos X", &m_imguiPos[selectedBone].x, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
-					ImGui::SliderFloat("pos Y", &m_imguiPos[selectedBone].y, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
-					ImGui::SliderFloat("pos Z", &m_imguiPos[selectedBone].z, m_imguiJointPosMin, m_imguiJointPosMax, "%.3f");
+					ImGui::SliderFloat("pos X", &m_imguiPos[selectedBone].x, imguiJointPosMin, imguiJointPosMax, "%.3f");
+					ImGui::SliderFloat("pos Y", &m_imguiPos[selectedBone].y, imguiJointPosMin, imguiJointPosMax, "%.3f");
+					ImGui::SliderFloat("pos Z", &m_imguiPos[selectedBone].z, imguiJointPosMin, imguiJointPosMax, "%.3f");
 					ImGui::Text("Scale");
-					ImGui::SliderFloat("X", &m_imguiSca[selectedBone].x, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
-					ImGui::SliderFloat("Y", &m_imguiSca[selectedBone].y, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
-					ImGui::SliderFloat("Z", &m_imguiSca[selectedBone].z, m_imguiJointScaMin, m_imguiJointScaMax, "%.1f");
+					ImGui::SliderFloat("X", &m_imguiSca[selectedBone].x, imguiJointScaMin, imguiJointScaMax, "%.1f");
+					ImGui::SliderFloat("Y", &m_imguiSca[selectedBone].y, imguiJointScaMin, imguiJointScaMax, "%.1f");
+					ImGui::SliderFloat("Z", &m_imguiSca[selectedBone].z, imguiJointScaMin, imguiJointScaMax, "%.1f");
 				}
 			}
 			ImGui::End();
@@ -319,11 +319,13 @@ namespace DOG
 			return XMLoadFloat4(&keys[0].value);
 
 		// tmp, will supply last key used in the future when key SRT values have been concatenated, for now this will have to do
-		i32 key2Idx = 1;
+		i32 key2Idx = 1, key1Idx = 0;
 		while (key2Idx < keys.size() - 1 && keys[key2Idx].time <= tick)
 			key2Idx++;
+		
 		key2Idx = std::clamp(key2Idx, 1, i32(keys.size() - 1));
-		i32 key1Idx = (key2Idx == 1) ? (i32)keys.size() - 1 : key2Idx - 1;
+		key1Idx = key2Idx - 1;
+		//i32 key1Idx = (key2Idx == 1) ? (i32)keys.size() - 1 : key2Idx - 1;
 		
 		const auto& key1 = keys[key1Idx];
 		const auto& key2 = keys[key2Idx];

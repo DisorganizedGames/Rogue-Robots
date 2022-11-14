@@ -219,7 +219,7 @@ namespace DOG
 		
 		// ChangeBlendSpec if Action set was added as target
 		if (!setter.loop)
-			SetReturningBlendSpec(group.blend, setter.transitionLength, 0.f, clips[group.sets[ACTION].startClip].duration);
+			SetReturningBlendSpec(group.blend, setter.transitionLength, 0.f, clips[group.sets[ACTION].startClip].duration, group.sets[ACTION].weight);
 	}
 
 	void RigAnimator::AddTargetSet(ClipSet& set, Setter& setter, u32 clipCount)
@@ -369,10 +369,11 @@ namespace DOG
 		return currentValue;
 	}
 
-	void RigAnimator::SetReturningBlendSpec(BlendSpecification& bs, const f32 transitionLen, const f32 target, const f32 duration)
+	void RigAnimator::SetReturningBlendSpec(BlendSpecification& bs, const f32 transitionLen, const f32 target, const f32 duration, const f32 startWeight)
 	{
 		bs.durationLeft = duration - transitionLen;
 		bs.transitionStart = globalTime;
+		bs.startWeight = startWeight;
 		bs.transitionLength = transitionLen;
 		bs.targetValue = target;
 	}

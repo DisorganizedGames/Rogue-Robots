@@ -245,7 +245,7 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 		setter.loop = true;
 		setter.transitionLength = 0.1f;
 		setter.playbackRate = 1.0f;
-		setter.group = ac.MIXAMO_LOWER_BODY;
+		setter.group = ac.FULL_BODY;
 		++ac.addedSetters;
 	}
 	else
@@ -255,7 +255,7 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 		setter.loop = true;
 		setter.transitionLength = 0.1f;
 		setter.playbackRate = 1.0f;
-		setter.group = ac.MIXAMO_LOWER_BODY;
+		setter.group = ac.FULL_BODY;
 		++ac.addedSetters;
 	}
 }
