@@ -210,14 +210,49 @@ void AgentManager::DestroyLocalAgent(entity e)
 
 	AgentIdComponent& agent = em.GetComponent<AgentIdComponent>(e);
 	TransformComponent& agentTrans = em.GetComponent<TransformComponent>(e);
-	ModelComponent& agentModel = em.GetComponent<ModelComponent>(e);
+	//ModelComponent& agentModel = em.GetComponent<ModelComponent>(e);
+
+	u32 bodyID = AssetManager::Get().LoadModelAsset("Assets/Models/Enemies/SplitUpEnemy/Body.gltf", DOG::AssetLoadFlag::GPUMemory);
+	entity corpseBody = em.CreateEntity();
+	em.AddComponent<TransformComponent>(corpseBody).worldMatrix = agentTrans.worldMatrix;
+	em.AddComponent<ModelComponent>(corpseBody, bodyID);
+	em.AddComponent<SphereColliderComponent>(corpseBody, corpseBody, 0.5f, true);
+	em.AddComponent<RigidbodyComponent>(corpseBody, corpseBody);
+
+	u32 tailID = AssetManager::Get().LoadModelAsset("Assets/Models/Enemies/SplitUpEnemy/Tail.gltf", DOG::AssetLoadFlag::GPUMemory);
+	entity corpseTail = em.CreateEntity();
+	em.AddComponent<TransformComponent>(corpseTail).worldMatrix = agentTrans.worldMatrix;
+	em.AddComponent<ModelComponent>(corpseTail, tailID);
+	em.AddComponent<SphereColliderComponent>(corpseTail, corpseTail, 0.5f, true);
+	em.AddComponent<RigidbodyComponent>(corpseTail, corpseTail);
+
+	u32 legID = AssetManager::Get().LoadModelAsset("Assets/Models/Enemies/SplitUpEnemy/Leg1.gltf", DOG::AssetLoadFlag::GPUMemory);
+	const u32 legsAmount = 6;
+	const u32 legsOnEachSide = 3;
+	const f32 legsDistanceFromEachOther = 0.20168f;
+
+	for (int i = 0; i < legsAmount; ++i)
+	{
+		entity corpseLeg = em.CreateEntity();
+		TransformComponent& legTrans = em.AddComponent<TransformComponent>(corpseLeg);
+		legTrans.worldMatrix = agentTrans.worldMatrix;
+
+		legTrans.SetPosition(legTrans.GetPosition() + legTrans.GetForward() * float(i % legsOnEachSide) * legsDistanceFromEachOther);
+		if (i >= legsOnEachSide)
+			legTrans.RotateL(Vector3(0.0f, DirectX::XM_PI, 0.0f));
+
+		em.AddComponent<ModelComponent>(corpseLeg, legID);
+		em.AddComponent<SphereColliderComponent>(corpseLeg, corpseLeg, 0.5f, true);
+		em.AddComponent<RigidbodyComponent>(corpseLeg, corpseLeg);
+	}
 
 	entity corpse = em.CreateEntity();
 	em.AddComponent<AgentCorpse>(corpse);
-	em.AddComponent<ModelComponent>(corpse, agentModel.id);
-	TransformComponent& corpseTrans = em.AddComponent<TransformComponent>(corpse);
-	corpseTrans = agentTrans;
-	corpseTrans.SetRotation(Vector3(-2, 0, -2));
+	//Leaving this here for safety reasons
+	//em.AddComponent<ModelComponent>(corpse, agentModel.id);
+	//TransformComponent& corpseTrans = em.AddComponent<TransformComponent>(corpse);
+	//corpseTrans = agentTrans;
+	//corpseTrans.SetRotation(Vector3(-2, 0, -2));
 
 	CreateAndDestroyEntityComponent& kill = em.AddComponent<CreateAndDestroyEntityComponent>(corpse);
 	kill.alive = false;
