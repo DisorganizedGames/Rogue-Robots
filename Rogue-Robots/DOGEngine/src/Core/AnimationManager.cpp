@@ -14,12 +14,12 @@ namespace DOG
 		m_imguiPos.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_imguiRot.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_vsJoints.assign(300, {});
-		ImGuiMenuLayer::RegisterDebugWindow("Animation Clip Setter", [this](bool& open) {SpawnControlWindow(open); });
+		DOG::ImGuiMenuLayer::RegisterDebugWindow("RigJourno", std::bind(&AnimationManager::SpawnControlWindow, this, std::placeholders::_1), true, std::make_pair(DOG::Key::LCtrl, DOG::Key::A));
 	};
 
 	AnimationManager::~AnimationManager()
 	{
-		ImGuiMenuLayer::UnRegisterDebugWindow("Animation Clip Setter");
+		ImGuiMenuLayer::UnRegisterDebugWindow("RigJourno");
 	};
 
 	void AnimationManager::UpdateJoints()
@@ -30,6 +30,7 @@ namespace DOG
 		//tmp debug stuff
 		//deltaTime = 0.1f;
 		//Test(deltaTime);
+
 		if (!m_rigs.size()) {
 			EntityManager::Get().Collect<ModelComponent, RigDataComponent>().Do([&](ModelComponent& modelC, RigDataComponent& rC)
 				{
@@ -71,7 +72,7 @@ namespace DOG
 
 		if (ImGui::BeginMenu("View"))
 		{
-			if (ImGui::MenuItem("Animation Clip Setter"))
+			if (ImGui::MenuItem("RigJourno", "Ctrl+A"))
 				open = true;
 			ImGui::EndMenu(); // "View"
 		}
@@ -79,7 +80,7 @@ namespace DOG
 		if (open)
 		{
 			ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
-			if (ImGui::Begin("Animation Clip Setter", &open))
+			if (ImGui::Begin("RigJourno", &open))
 			{
 				// for now only Mixamo rig
 				static u8 rigID = MIXAMO_RIG_ID;

@@ -208,7 +208,7 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 	{
 		ac.addedSetters = 0;
 	}
-	// Animation IDs
+	// Relevant Animation IDs
 	static constexpr i8 IDLE = 2;
 	static constexpr i8 RUN = 5;
 	static constexpr i8 RUN_BACKWARDS = 6;
@@ -219,11 +219,13 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 
 	auto addedAnims = 0;
 	auto& setter = ac.animSetters[ac.addedSetters];
+	setter.group = ac.FULL_BODY;
+
 	auto forwardBack = input.forward - input.backwards;
 	auto leftRight = input.right - input.left;
 	if (forwardBack)
 	{
-		const auto animation = input.forward ? RUN : RUN_BACKWARDS;
+		const auto animation = input.forward ? RUN : WALK_BACKWARDS;
 		const auto weight = 0.5f;
 
 		setter.animationIDs[addedAnims] = animation;
@@ -232,34 +234,26 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 	if (leftRight)
 	{
 		const auto animation = input.left ? STRAFE_LEFT : STRAFE_RIGHT;
-		const auto weight = input.left ? 0.25f : 0.5f;
+
+		// Backwards + strafing right makes leg clip through each other if equal weights
+		auto weight = (forwardBack && input.backwards && input.right) ? 0.7f : 0.5f;
 
 		setter.animationIDs[addedAnims] = animation;
 		setter.targetWeights[addedAnims++] = weight;
 	}
 
-	if (addedAnims)
-	{
-		setter.loop = true;
-		setter.transitionLength = 0.1f;
-		setter.playbackRate = 1.0f;
-		setter.group = ac.FULL_BODY;
-		++ac.addedSetters;
-	}
-	else
+	// if no schmovement apply idle animation
+	if (!addedAnims)
 	{
 		setter.animationIDs[addedAnims] = IDLE;
 		setter.targetWeights[addedAnims++] = 1.0f;
-		setter.loop = true;
-		setter.transitionLength = 0.1f;
-		setter.playbackRate = 1.0f;
-		setter.group = ac.FULL_BODY;
-		++ac.addedSetters;
 	}
-	if (setter.group == 3)
-	{
-		auto asd = 9;
-	}
+
+	// misc variables
+	setter.playbackRate = 1.5f;
+	setter.transitionLength = 0.1f;
+	setter.loop = true;
+	++ac.addedSetters;
 }
 
 #pragma endregion
