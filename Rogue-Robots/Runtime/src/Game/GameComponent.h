@@ -263,3 +263,15 @@ struct TurretProjectileComponent
 	float maxLifeTime = 3.0f;
 	float lifeTime = 0;
 };
+
+struct DeathUITimerComponent
+{
+	float duration;
+	float timeLeft;
+};
+
+struct SpectatorComponent
+{
+	DOG::entity playerBeingSpectated;
+	const char* playerName;
+};

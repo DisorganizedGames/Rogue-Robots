@@ -57,6 +57,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<CleanupItemInteractionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<CleanupPlayerStateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerHit>());
+	m_entityManager.RegisterSystem(std::make_unique<PlaceHolderDeathUISystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
 
@@ -296,6 +297,8 @@ void GameLayer::KillPlayer(DOG::entity e)
 {
 	m_entityManager.RemoveComponent<PlayerAliveComponent>(e);
 
+	if (m_entityManager.HasComponent<MagazineModificationComponent>(e)) m_entityManager.RemoveComponent<MagazineModificationComponent>(e);
+	
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
 		LuaMain::GetScriptManager()->RemoveScript(e, "Gun.lua");
@@ -305,15 +308,38 @@ void GameLayer::KillPlayer(DOG::entity e)
 		m_entityManager.RemoveComponent<ScriptComponent>(e);
 		m_entityManager.RemoveComponent<BarrelComponent>(e);
 
-		if (m_entityManager.HasComponent<MagazineModificationComponent>(e)) m_entityManager.RemoveComponent<MagazineModificationComponent>(e);
+		DOG::entity playerToSpectate = DOG::NULL_ENTITY;
+		const char* playerName{ nullptr };
+		
+		//Get hold of another living player entity:
+		m_entityManager.Collect<NetworkPlayerComponent, PlayerAliveComponent>().Do([&](DOG::entity otherPlayer, NetworkPlayerComponent& npc, PlayerAliveComponent&)
+			{
+					//We do not care what player to spectate, just give one option and let this player then swap freely in another system.
+					playerToSpectate = otherPlayer;
+					playerName = npc.playerName;
+					return;
+			});
+		if (playerToSpectate != NULL_ENTITY) //So, if not all players are dead
+		{
+			auto& pcc = m_entityManager.GetComponent<PlayerControllerComponent>(e);
+			auto& otherPcc = m_entityManager.GetComponent<PlayerControllerComponent>(playerToSpectate);
+			pcc.debugCamera = otherPcc.cameraEntity;
 
-		auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
-		controller.debugCamera = m_mainScene->CreateEntity();
+			auto& sc = m_entityManager.AddComponent<SpectatorComponent>(e);
+			sc.playerBeingSpectated = playerToSpectate;
+			sc.playerName = playerName;
+			std::cout << sc.playerName << "\n";
+		}
+		else
+		{
+			auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
+			controller.debugCamera = m_mainScene->CreateEntity();
 
-		m_entityManager.AddComponent<TransformComponent>(controller.debugCamera)
-			.worldMatrix = m_entityManager.GetComponent<TransformComponent>(controller.cameraEntity);
+			m_entityManager.AddComponent<TransformComponent>(controller.debugCamera)
+				.worldMatrix = m_entityManager.GetComponent<TransformComponent>(controller.cameraEntity);
 
-		m_entityManager.AddComponent<CameraComponent>(controller.debugCamera).isMainCamera = true;
+			m_entityManager.AddComponent<CameraComponent>(controller.debugCamera).isMainCamera = true;
+		}
 	}
 }
 

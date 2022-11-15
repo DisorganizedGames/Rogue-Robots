@@ -459,6 +459,85 @@ public:
 	void OnLateUpdate(ChildComponent& child);
 };
 
+class PlaceHolderDeathUISystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DOG::ThisPlayer, DeathUITimerComponent, SpectatorComponent);
+	ON_UPDATE_ID(DOG::ThisPlayer, DeathUITimerComponent, SpectatorComponent);
+
+	void OnUpdate(DOG::entity player, DOG::ThisPlayer&, DeathUITimerComponent& timer, SpectatorComponent& sc)
+	{
+		//TODO: Also query for "being revived component", since that UI will otherwise probably overlap and destroy this one.
+		auto& mgr = DOG::EntityManager::Get();
+
+		if (mgr.HasComponent<PlayerAliveComponent>(player))
+			return;
+
+		if (timer.timeLeft <= 0.0f)
+		{
+			mgr.RemoveComponent<DeathUITimerComponent>(player);
+			return;
+		}
+
+		float alpha = Remap(0.0f, timer.duration, 0.0f, 200.0f, timer.timeLeft);
+		timer.timeLeft -= DOG::Time::DeltaTime();
+
+		ImVec2 size;
+		size.x = 700;
+		size.y = 450;
+
+		auto r = DOG::Window::GetWindowRect();
+		ImVec2 pos;
+		const float centerXOfScreen = (float)(abs(r.right - r.left)) * 0.5f;
+		const float centerYOfScreen = (float)(abs(r.bottom - r.top)) * 0.5f;
+
+		pos.x = r.left + centerXOfScreen;
+		pos.y = r.top + centerYOfScreen;
+		pos.x -= (size.x / 2);
+		pos.y -= (size.y / 4);
+
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+		ImGui::SetNextWindowPos(pos);
+		ImGui::SetNextWindowSize(size);
+		if (ImGui::Begin("Death text", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+		{
+			ImGui::PushFont(DOG::Window::GetFont());
+			ImGui::SetWindowFontScale(5.0f);
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, alpha));
+			auto windowWidth = ImGui::GetWindowSize().x;
+			auto textWidth = ImGui::CalcTextSize("You Died").x;
+
+			ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+			ImGui::Text("You Died");
+
+			std::string specText = "Spectating " + std::string(sc.playerName);
+			textWidth = ImGui::CalcTextSize(specText.c_str()).x;
+			ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+			ImGui::Text(specText.c_str());
+			ImGui::PopFont();
+			ImGui::PopStyleColor(1);
+		}
+		ImGui::End();
+		ImGui::PopStyleColor();
+	}
+
+	float Lerp(float a, float b, float t)
+	{
+		return (1.0f - t) * a + b * t;
+	}
+
+	float InverseLerp(float a, float b, float v)
+	{
+		return (v - a) / (b - a);
+	}
+
+	float Remap(float iMin, float iMax, float oMin, float oMax, float v)
+	{
+		float t = InverseLerp(iMin, iMax, v);
+		return Lerp(oMin, oMax, t);
+	}
+};
+
 class DespawnSystem : public DOG::ISystem
 {
 public:
