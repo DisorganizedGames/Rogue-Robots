@@ -328,7 +328,7 @@ namespace DOG
 		for (size_t n = 0; n < rig->nodes.size(); ++n)
 		{
 			auto joint = rig->nodes[n].jointIdx;
-			if (HasBone(joint))
+			if (HasBone(joint) && joint < 67)
 			{
 				XMStoreFloat4x4(&m_vsJoints[offset + joint],
 					rootTF * hereditaryTFs[n] * XMLoadFloat4x4(&rig->jointOffsets[joint]));

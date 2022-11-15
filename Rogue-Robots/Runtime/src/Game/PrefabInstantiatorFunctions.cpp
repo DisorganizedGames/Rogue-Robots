@@ -8,7 +8,7 @@ using namespace DirectX::SimpleMath;
 std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 {
 	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
-	
+	playerCount = 4;
 	auto* scriptManager = LuaMain::GetScriptManager();
 	//// Add persistent material prefab lua
 	//{
@@ -24,10 +24,10 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 	auto& am = AssetManager::Get();
 	auto& em = EntityManager::Get();
 	std::array<u32, 4> playerModels;
-	playerModels[0] = am.LoadModelAsset("Assets/Models/P2/Red/player_red.gltf");
-	playerModels[1] = am.LoadModelAsset("Assets/Models/P2/Blue/player_Blue.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
-	playerModels[2] = am.LoadModelAsset("Assets/Models/P2/Green/player_Green.gltf");
-	playerModels[3] = am.LoadModelAsset("Assets/Models/P2/Yellow/player_yellow.gltf");
+	playerModels[0] = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/RedRifle/rifleTestRed.gltf");
+	playerModels[1] = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/BlueRifle/rifleTestBlue.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
+	playerModels[2] = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/GreenRifle/rifleTestGreen.gltf");
+	playerModels[3] = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/YellowRifle/rifleTestYellow.gltf");
 	std::vector<entity> players;
 	for (auto i = 0; i < playerCount; ++i)
 	{
