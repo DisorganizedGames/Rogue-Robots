@@ -11,7 +11,7 @@ using Matrix = DirectX::SimpleMath::Matrix;
 
 void LoadEnemySplitModel(entity agentID)
 {
-	const f64 aliveTime = 5.0f;;
+	const f64 aliveTime = 120.0f;
 
 	EntityManager& em = EntityManager::Get();
 
