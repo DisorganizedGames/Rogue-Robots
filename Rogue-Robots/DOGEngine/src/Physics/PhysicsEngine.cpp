@@ -691,7 +691,9 @@ namespace DOG
 			//The world array index should never be below zero, so we can check that one!
 			if (obj0->getWorldArrayIndex() < 0 || obj1->getWorldArrayIndex() < 0)
 			{
+#ifdef _DEBUG
 				std::cout << "Physics Error: CollisionObject is destroyed but tries to access it anyways (bullets fault)!\n";
+#endif // _DEBUG
 				continue;
 			}
 
