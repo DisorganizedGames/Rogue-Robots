@@ -3,6 +3,10 @@ namespace DOG
 {
 	enum class WindowMode : uint8_t { Windowed = 0, FullScreen };
 
+	#define DEBUG_SETTING_LIT 1
+	#define DEBUG_SETTING_LIGHT_CULLING 2
+	#define DEBUG_SETTING_LIGHT_CULLING_VISUALIZATION 4
+
 	struct GraphicsSettings
 	{
 		WindowMode windowMode = WindowMode::Windowed;

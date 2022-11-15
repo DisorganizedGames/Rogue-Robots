@@ -194,7 +194,7 @@ PS_OUT main(VS_OUT input)
         albedoAlpha = albedoInput4.w;
     }
     
-    if (!(g_constants.debugSettingsFlag & 1))
+    if (!(g_constants.debugSettingsFlag & DEBUG_SETTING_LIT))
     {
         output.color = float4(albedoInput, 1.f);
         return output;
@@ -271,10 +271,10 @@ PS_OUT main(VS_OUT input)
     
     float3 lightHeatMapValue = float3(0, 0, 0);
     
-    if (g_constants.debugSettingsFlag & 2)
+    if (g_constants.debugSettingsFlag & DEBUG_SETTING_LIGHT_CULLING)
     {
-        uint2 tileCoord = input.pos.xy / TILED_GRPUP_SIZE;
-        uint tileIndex = tileCoord.x + (g_constants.width + TILED_GRPUP_SIZE - 1) / TILED_GRPUP_SIZE * tileCoord.y;
+        uint2 tileCoord = input.pos.xy / TILED_GROUP_SIZE;
+        uint tileIndex = tileCoord.x + (g_constants.width + TILED_GROUP_SIZE - 1) / TILED_GROUP_SIZE * tileCoord.y;
         StructuredBuffer<ShaderInterop_LocalLightBuffer> localLightBuffers = ResourceDescriptorHeap[g_constants.localLightBuffersIndex];
         if (localLightBuffers[tileIndex].count == 1)
         {
@@ -297,7 +297,7 @@ PS_OUT main(VS_OUT input)
             Lo += CalculatePointLightContribution(N, V, input.wsPos, F0, metallicInput, roughnessInput, albedoInput, pointLight);
         }
         
-        if (g_constants.debugSettingsFlag & 4 && localLightBuffers[tileIndex].count >= LOCAL_LIGHT_MAX_SIZE)
+        if (g_constants.debugSettingsFlag & DEBUG_SETTING_LIGHT_CULLING_VISUALIZATION && localLightBuffers[tileIndex].count >= LOCAL_LIGHT_MAX_SIZE)
         {
             lightHeatMapValue = float3(1, 0, 1);
         }
@@ -467,7 +467,7 @@ PS_OUT main(VS_OUT input)
     float3 hdr = amb + Lo;
     
     output.color = float4(hdr, albedoAlpha);
-    if (g_constants.debugSettingsFlag & 4 && g_constants.debugSettingsFlag & 2)
+    if (g_constants.debugSettingsFlag & DEBUG_SETTING_LIGHT_CULLING_VISUALIZATION && g_constants.debugSettingsFlag & DEBUG_SETTING_LIGHT_CULLING)
     {
         output.color.xyz = lerp(output.color.xyz, lightHeatMapValue, 0.5f);
     }

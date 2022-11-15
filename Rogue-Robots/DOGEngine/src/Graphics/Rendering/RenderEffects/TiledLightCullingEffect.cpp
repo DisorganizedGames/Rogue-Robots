@@ -38,16 +38,12 @@ namespace DOG::gfx
 			RGResourceView localLightBuffer;
 		};
 
-		// Copy the colors that exceeds the threshold from our hdr render targer to our bloomTexture. This should also scale to a lower resolution, but for now the bloomTexture has a hard coded size. 
-
 		rg.AddPass<PassData>("Tiled light culling",
 			[&](PassData& passData, RenderGraph::PassBuilder& builder)		// Build
 			{
-				
-				builder.DeclareBuffer(RG_RESOURCE(LocalLightBuf), RGBufferDesc(sizeof(LocalLightBufferLayout) * m_threadGroupCountX * m_threadGroupCountY, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
+				builder.DeclareBuffer(RG_RESOURCE(LocalLightBuf), RGBufferDesc(sizeof(LocalLightBufferLayout) * m_threadGroupCountX * m_threadGroupCountY, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
 
 				passData.localLightBuffer = builder.ReadWriteTarget(RG_RESOURCE(LocalLightBuf), BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(LocalLightBufferLayout), m_threadGroupCountX * m_threadGroupCountY));
-
 			},
 			[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)		// Execute
 			{
@@ -65,10 +61,6 @@ namespace DOG::gfx
 
 
 				rd->Cmd_Dispatch(cmdl, m_threadGroupCountX, m_threadGroupCountY, 1);
-			},
-			[&](PassData&)		// Pre-graph work
-			{
-
 			});
 	}
 

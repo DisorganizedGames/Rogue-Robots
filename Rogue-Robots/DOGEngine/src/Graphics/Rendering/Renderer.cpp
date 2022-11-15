@@ -635,9 +635,9 @@ namespace DOG::gfx
 
 					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
 					u32 renderSettingsFlag = 0;
-					if (m_graphicsSettings.lit) renderSettingsFlag |= 1;
-					if (m_graphicsSettings.lightCulling) renderSettingsFlag |= 2;
-					if (m_graphicsSettings.visualizeLightCulling) renderSettingsFlag |= 4;
+					if (m_graphicsSettings.lit) renderSettingsFlag |= DEBUG_SETTING_LIT;
+					if (m_graphicsSettings.lightCulling) renderSettingsFlag |= DEBUG_SETTING_LIGHT_CULLING;
+					if (m_graphicsSettings.visualizeLightCulling) renderSettingsFlag |= DEBUG_SETTING_LIGHT_CULLING_VISUALIZATION;
 					auto args = ShaderArgs()
 						.AppendConstant(m_globalEffectData.globalDataDescriptor)
 						.AppendConstant(m_currPfDescriptor)

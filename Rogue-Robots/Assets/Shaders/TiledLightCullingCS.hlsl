@@ -14,10 +14,10 @@ ConstantBuffer<PushConstantElement> g_constants : register(b0, space0);
 
 groupshared uint sLightCounter;
 
-[numthreads(TILED_GRPUP_SIZE, TILED_GRPUP_SIZE, 1)]
+[numthreads(TILED_GROUP_SIZE, TILED_GROUP_SIZE, 1)]
 void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadID, uint3 groupID : SV_GroupID, uint groupIndex : SV_GroupIndex)
 {
-    uint tid = threadId.x + TILED_GRPUP_SIZE * threadId.y;
+    uint tid = threadId.x + TILED_GROUP_SIZE * threadId.y;
     if (tid == 0)
     {
         sLightCounter = 0;
@@ -37,7 +37,7 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
         ShaderInterop_PerFrameData pfData = pfDatas[g_constants.perFrameOffset];
         
         
-        float2 scale = float2(g_constants.width, g_constants.height) * rcp(2.0f * TILED_GRPUP_SIZE);
+        float2 scale = float2(g_constants.width, g_constants.height) * rcp(2.0f * TILED_GROUP_SIZE);
         float2 bias = scale - float2(groupID.xy);
         
         float p11 = pfData.projMatrix._11;
@@ -77,9 +77,9 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
         RWStructuredBuffer<ShaderInterop_LocalLightBuffer> localLightBuffers = ResourceDescriptorHeap[g_constants.localLightBuffersIndex];
         StructuredBuffer<ShaderInterop_PointLight> pointLights = ResourceDescriptorHeap[gd.pointLightTable];
         float plCullFactor = g_constants.pointLightCullFactor;
-        uint tileIndex = groupID.x + (g_constants.width + TILED_GRPUP_SIZE - 1) / TILED_GRPUP_SIZE * groupID.y;
+        uint tileIndex = groupID.x + (g_constants.width + TILED_GROUP_SIZE - 1) / TILED_GROUP_SIZE * groupID.y;
         
-        for (int i = tid; i < lightsMD.dynPointLightRange.count; i += TILED_GRPUP_SIZE * TILED_GRPUP_SIZE)
+        for (int i = tid; i < lightsMD.dynPointLightRange.count; i += TILED_GROUP_SIZE * TILED_GROUP_SIZE)
         {
             uint globalIndex = pfData.pointLightOffsets.dynOffset + i;
             ShaderInterop_PointLight pointLight = pointLights[globalIndex];
@@ -100,7 +100,7 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
         }
         
         
-        for (int i = tid; i < lightsMD.staticPointLightRange.count; i += TILED_GRPUP_SIZE * TILED_GRPUP_SIZE)
+        for (int i = tid; i < lightsMD.staticPointLightRange.count; i += TILED_GROUP_SIZE * TILED_GROUP_SIZE)
         {
             uint globalIndex = pfData.pointLightOffsets.staticOffset + i;
             ShaderInterop_PointLight pointLight = pointLights[globalIndex];

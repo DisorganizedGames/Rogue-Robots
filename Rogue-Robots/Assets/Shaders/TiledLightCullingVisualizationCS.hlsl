@@ -18,11 +18,11 @@ ConstantBuffer<PushConstantElement> g_constants : register(b0, space0);
 //    uint lightIndices[LOCAL_LIGHT_MAX_SIZE];
 //};
 
-[numthreads(TILED_GRPUP_SIZE, TILED_GRPUP_SIZE, 1)]
+[numthreads(TILED_GROUP_SIZE, TILED_GROUP_SIZE, 1)]
 void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 {
-    uint tid = threadId.x + TILED_GRPUP_SIZE * threadId.y;
-    uint tileIndex = groupID.x + (g_constants.width + TILED_GRPUP_SIZE - 1) / TILED_GRPUP_SIZE * groupID.y;
+    uint tid = threadId.x + TILED_GROUP_SIZE * threadId.y;
+    uint tileIndex = groupID.x + (g_constants.width + TILED_GROUP_SIZE - 1) / TILED_GROUP_SIZE * groupID.y;
     if (globalId.x < g_constants.width && globalId.y < g_constants.height)
     {   
         StructuredBuffer<ShaderInterop_LocalLightBuffer> localLightBuffers = ResourceDescriptorHeap[g_constants.localLightBuffersIndex];

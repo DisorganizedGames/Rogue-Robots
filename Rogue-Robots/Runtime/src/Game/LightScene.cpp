@@ -70,9 +70,9 @@ void LightScene::Update()
 	
 }
 
-DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Matrix projetion, DirectX::SimpleMath::Matrix view)
+DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Matrix projection, DirectX::SimpleMath::Matrix view)
 {
-	Matrix m = view * projetion;
+	Matrix m = view * projection;
 
 	Vector4 leftP = { m._14 + m._11, m._24 + m._21, m._34 + m._31, m._44 + m._41 };
 	Vector4 rightP = { m._14 - m._11, m._24 - m._21, m._34 - m._31, m._44 - m._41 };
@@ -130,10 +130,9 @@ DOG::entity LightScene::AddFrustum(DirectX::SimpleMath::Matrix projetion, Direct
 	return e;
 }
 
-std::vector<DirectX::SimpleMath::Vector4> LightScene::ExtractPlanes(DirectX::SimpleMath::Matrix projetion, DirectX::SimpleMath::Matrix view, int resX, int resY, int tileSize, Vector2i tile)
+std::vector<DirectX::SimpleMath::Vector4> LightScene::ExtractPlanes(DirectX::SimpleMath::Matrix projection, DirectX::SimpleMath::Matrix view, int resX, int resY, int tileSize, Vector2i tile)
 {
-	//Matrix m = view * projetion;
-	Matrix m = projetion;
+	Matrix m = projection;
 	float tileScaleX = resX * (1.0f / (2.0f * tileSize));
 	float tileScaleY = resY * (1.0f / (2.0f * tileSize));
 
