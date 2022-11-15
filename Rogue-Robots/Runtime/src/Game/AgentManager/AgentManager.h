@@ -32,7 +32,7 @@ public:
 	u32 GroupID(u32 agentID = NULL_AGENT);
 
 private:
-	// singelton instance
+	// singleton instance
 	static AgentManager s_amInstance;
 	static bool s_notInitialized;
 

@@ -9,6 +9,7 @@
 #include "HomingMissileSystem.h"
 #include "PcgLevelLoader.h"
 #include "PrefabInstantiatorFunctions.h"
+#include "ItemManager/ItemManager.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -186,6 +187,7 @@ void GameLayer::StartMainScene()
 
 void GameLayer::CloseMainScene()
 {
+	ItemManager::Get().DestroyAllItems();
 	m_mainScene.reset();
 }
 

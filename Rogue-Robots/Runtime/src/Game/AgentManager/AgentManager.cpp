@@ -2,7 +2,7 @@
 #include "AgentBehaviorSystems.h"
 #include "Game/GameLayer.h"
 #include "../LoadSplitModels.h"
-
+#include "../ItemManager/ItemManager.h"
 using namespace DOG;
 using namespace DirectX::SimpleMath;
 
@@ -230,6 +230,10 @@ void AgentManager::DestroyLocalAgent(entity e)
 	em.Collect<ThisPlayer, NetworkPlayerComponent>().Do(
 		[&](ThisPlayer&, NetworkPlayerComponent& net) { kill.playerId = net.playerId; });
 	kill.position = agentTrans.GetPosition();
+	
+	//Only host can spawn in items
+	if (kill.playerId == 0)
+		ItemManager::Get().CreateItemHost( EntityTypes(((u32)Time::ElapsedTime()+agent.id) % u32(EntityTypes::Default)), agentTrans.GetPosition());
 
 	em.DeferredEntityDestruction(e);
 }

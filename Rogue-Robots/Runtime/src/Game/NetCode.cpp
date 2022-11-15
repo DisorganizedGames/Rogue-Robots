@@ -1,4 +1,6 @@
 #include "NetCode.h"
+#include "ItemManager/ItemManager.h"
+
 using namespace DOG;
 NetCode::NetCode()
 {
@@ -13,7 +15,7 @@ NetCode::NetCode()
 	m_active = false;
 	m_startUp = false;
 	
-	m_bufferSize = sizeof(ClientsData);;
+	m_bufferSize = sizeof(ClientsData);
 	m_bufferReceiveSize = 0;
 	m_receiveBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
 	m_dataIsReadyToBeReceivedTcp = false;
@@ -232,7 +234,7 @@ void NetCode::OnUpdate()
 									AgentManager::Get().CreateOrDestroyShadowAgent(*tempCreate);
 								}
 					
-
+								//Destroy pickups
 								if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Magazines && !tempCreate->alive && (u32)tempCreate->entityTypeId > (u32)EntityTypes::Agents )
 								{
 									EntityManager::Get().Collect<NetworkPlayerComponent, PlayerAliveComponent>().Do([&](entity id, NetworkPlayerComponent& playerC, PlayerAliveComponent&)
@@ -255,6 +257,12 @@ void NetCode::OnUpdate()
 											}
 										});
 
+								}
+								
+								//Create pickups
+								if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Magazines && tempCreate->alive && (u32)tempCreate->entityTypeId >(u32)EntityTypes::Agents)
+								{
+									ItemManager::Get().CreateItemClient(*tempCreate);
 								}
 							}
 						}
