@@ -82,8 +82,6 @@ void GameLayer::OnAttach()
 
 	//m_testScene = std::make_unique<TestScene>();
 	//m_testScene->SetUpScene();
-	m_testScene = std::make_unique<TestScene>();
-	m_testScene->SetUpScene();
 }
 
 void GameLayer::OnDetach()
@@ -260,6 +258,7 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 	bc.maximumAmmoCapacityForType = 999'999; // Representing infinity...?? (Emil F)
 
 	m_entityManager.AddComponent<PlayerAliveComponent>(e);
+
 	LuaMain::GetScriptManager()->AddScript(e, "Gun.lua");
 
 	LuaMain::GetScriptManager()->AddScript(e, "PassiveItemSystem.lua");
@@ -281,17 +280,17 @@ void GameLayer::KillPlayer(DOG::entity e)
 {
 	m_entityManager.RemoveComponent<PlayerAliveComponent>(e);
 
-	LuaMain::GetScriptManager()->RemoveScript(e, "Gun.lua");
-	LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
-	LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
-	std::string luaEventName = std::string("ItemPickup") + std::to_string(e);
-	m_entityManager.RemoveComponent<ScriptComponent>(e);
-	m_entityManager.RemoveComponent<BarrelComponent>(e);
-
-	if (m_entityManager.HasComponent<MagazineModificationComponent>(e)) m_entityManager.RemoveComponent<MagazineModificationComponent>(e);
-	
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
+		LuaMain::GetScriptManager()->RemoveScript(e, "Gun.lua");
+		LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
+		LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
+		std::string luaEventName = std::string("ItemPickup") + std::to_string(e);
+		m_entityManager.RemoveComponent<ScriptComponent>(e);
+		m_entityManager.RemoveComponent<BarrelComponent>(e);
+
+		if (m_entityManager.HasComponent<MagazineModificationComponent>(e)) m_entityManager.RemoveComponent<MagazineModificationComponent>(e);
+
 		auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
 		controller.debugCamera = m_mainScene->CreateEntity();
 

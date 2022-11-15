@@ -14,11 +14,12 @@
 		std::string GetIpAddress();
 		INT8 GetNrOfConnectedPlayers();
 		void SetMulticastAdress(const char* adress);
+		static float TickTimeLeftTCP(LARGE_INTEGER t, LARGE_INTEGER frequency);
 	private:
 		void ServerReciveConnectionsTCP(SOCKET listenSocket);
 		void ServerPollTCP();
 		void CloseSocketTCP(int socketIndex);
-		float TickTimeLeftTCP(LARGE_INTEGER t, LARGE_INTEGER frequency);
+
 	private:
 		void GameLoopUdp();
 		void ReciveLoopUdp();
