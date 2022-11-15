@@ -21,7 +21,7 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.082",
+            "name" : "PP_Standard_Material.167",
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 0
@@ -33,7 +33,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.053",
+            "name" : "Scene.069",
             "primitives" : [
                 {
                     "attributes" : {
@@ -65,10 +65,10 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 82,
+            "count" : 456,
             "max" : [
                 2.499999761581421,
-                5.000000476837158,
+                5.340916633605957,
                 2.5000016689300537
             ],
             "min" : [
@@ -81,53 +81,53 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 82,
+            "count" : 456,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 82,
+            "count" : 456,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 82,
+            "count" : 456,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 120,
+            "count" : 564,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 984,
+            "byteLength" : 5472,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 984,
-            "byteOffset" : 984
+            "byteLength" : 5472,
+            "byteOffset" : 5472
         },
         {
             "buffer" : 0,
-            "byteLength" : 656,
-            "byteOffset" : 1968
+            "byteLength" : 3648,
+            "byteOffset" : 10944
         },
         {
             "buffer" : 0,
-            "byteLength" : 656,
-            "byteOffset" : 2624
+            "byteLength" : 3648,
+            "byteOffset" : 14592
         },
         {
             "buffer" : 0,
-            "byteLength" : 240,
-            "byteOffset" : 3280
+            "byteLength" : 1128,
+            "byteOffset" : 18240
         }
     ],
     "samplers" : [
@@ -138,7 +138,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 3520,
+            "byteLength" : 19368,
             "uri" : "CornerRoofHanging1.bin"
         }
     ]

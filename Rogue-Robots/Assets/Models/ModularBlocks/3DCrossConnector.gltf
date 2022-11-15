@@ -21,7 +21,7 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.001",
+            "name" : "PP_Standard_Material.082",
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 0
@@ -65,69 +65,69 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 949,
+            "count" : 2003,
             "max" : [
                 2.500000476837158,
                 5.000000476837158,
-                2.500000476837158
+                2.7586896419525146
             ],
             "min" : [
-                -2.500002145767212,
-                -2.537086629672558e-06,
-                -2.500002145767212
+                -2.500002384185791,
+                -2.942931132565718e-06,
+                -2.500002384185791
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 949,
+            "count" : 2003,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 949,
+            "count" : 2003,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 949,
+            "count" : 2003,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 1233,
+            "count" : 2058,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 11388,
+            "byteLength" : 24036,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 11388,
-            "byteOffset" : 11388
+            "byteLength" : 24036,
+            "byteOffset" : 24036
         },
         {
             "buffer" : 0,
-            "byteLength" : 7592,
-            "byteOffset" : 22776
+            "byteLength" : 16024,
+            "byteOffset" : 48072
         },
         {
             "buffer" : 0,
-            "byteLength" : 7592,
-            "byteOffset" : 30368
+            "byteLength" : 16024,
+            "byteOffset" : 64096
         },
         {
             "buffer" : 0,
-            "byteLength" : 2466,
-            "byteOffset" : 37960
+            "byteLength" : 4116,
+            "byteOffset" : 80120
         }
     ],
     "samplers" : [
@@ -138,7 +138,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 40428,
+            "byteLength" : 84236,
             "uri" : "3DCrossConnector.bin"
         }
     ]

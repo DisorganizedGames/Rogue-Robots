@@ -21,7 +21,7 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.076",
+            "name" : "PP_Standard_Material.151",
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 0
@@ -32,7 +32,7 @@
         },
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.047",
+            "name" : "PP_Standard_Material.152",
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 1
@@ -44,7 +44,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.055",
+            "name" : "Scene.061",
             "primitives" : [
                 {
                     "attributes" : {
@@ -90,15 +90,15 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 91,
+            "count" : 639,
             "max" : [
-                1.9405925273895264,
-                4.406264781951904,
+                3.020551919937134,
+                5.321342468261719,
                 -1.342714548110962
             ],
             "min" : [
-                -1.7901688814163208,
-                0.7655623555183411,
+                -2.584954261779785,
+                -0.0899801254272461,
                 -2.500002145767212
             ],
             "type" : "VEC3"
@@ -106,39 +106,39 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 91,
+            "count" : 639,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 91,
+            "count" : 639,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 91,
+            "count" : 639,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 123,
+            "count" : 648,
             "type" : "SCALAR"
         },
         {
             "bufferView" : 5,
             "componentType" : 5126,
-            "count" : 370,
+            "count" : 2180,
             "max" : [
-                1.9405993223190308,
-                4.406264781951904,
+                3.0053718090057373,
+                5.3111138343811035,
                 2.500000476837158
             ],
             "min" : [
-                -1.7901688814163208,
-                0.7270100712776184,
+                -2.59090518951416,
+                -0.09134221076965332,
                 -2.500001907348633
             ],
             "type" : "VEC3"
@@ -146,78 +146,78 @@
         {
             "bufferView" : 6,
             "componentType" : 5126,
-            "count" : 370,
+            "count" : 2180,
             "type" : "VEC3"
         },
         {
             "bufferView" : 7,
             "componentType" : 5126,
-            "count" : 370,
+            "count" : 2180,
             "type" : "VEC2"
         },
         {
             "bufferView" : 8,
             "componentType" : 5126,
-            "count" : 370,
+            "count" : 2180,
             "type" : "VEC2"
         },
         {
             "bufferView" : 9,
             "componentType" : 5123,
-            "count" : 459,
+            "count" : 2190,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 1092,
+            "byteLength" : 7668,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 1092,
-            "byteOffset" : 1092
+            "byteLength" : 7668,
+            "byteOffset" : 7668
         },
         {
             "buffer" : 0,
-            "byteLength" : 728,
-            "byteOffset" : 2184
+            "byteLength" : 5112,
+            "byteOffset" : 15336
         },
         {
             "buffer" : 0,
-            "byteLength" : 728,
-            "byteOffset" : 2912
+            "byteLength" : 5112,
+            "byteOffset" : 20448
         },
         {
             "buffer" : 0,
-            "byteLength" : 246,
-            "byteOffset" : 3640
+            "byteLength" : 1296,
+            "byteOffset" : 25560
         },
         {
             "buffer" : 0,
-            "byteLength" : 4440,
-            "byteOffset" : 3888
+            "byteLength" : 26160,
+            "byteOffset" : 26856
         },
         {
             "buffer" : 0,
-            "byteLength" : 4440,
-            "byteOffset" : 8328
+            "byteLength" : 26160,
+            "byteOffset" : 53016
         },
         {
             "buffer" : 0,
-            "byteLength" : 2960,
-            "byteOffset" : 12768
+            "byteLength" : 17440,
+            "byteOffset" : 79176
         },
         {
             "buffer" : 0,
-            "byteLength" : 2960,
-            "byteOffset" : 15728
+            "byteLength" : 17440,
+            "byteOffset" : 96616
         },
         {
             "buffer" : 0,
-            "byteLength" : 918,
-            "byteOffset" : 18688
+            "byteLength" : 4380,
+            "byteOffset" : 114056
         }
     ],
     "samplers" : [
@@ -228,7 +228,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 19608,
+            "byteLength" : 118436,
             "uri" : "TunnelStraight1.bin"
         }
     ]

@@ -58,17 +58,17 @@
         {
             "mimeType" : "image/png",
             "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
+            "uri" : "PP_Color_Palette.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 160,
+            "count" : 1022,
             "max" : [
                 2.500000476837158,
-                4.731200218200684,
+                5.445002555847168,
                 2.5000007152557373
             ],
             "min" : [
@@ -81,53 +81,53 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 160,
+            "count" : 1022,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 160,
+            "count" : 1022,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 160,
+            "count" : 1022,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 246,
+            "count" : 1323,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 1920,
+            "byteLength" : 12264,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 1920,
-            "byteOffset" : 1920
+            "byteLength" : 12264,
+            "byteOffset" : 12264
         },
         {
             "buffer" : 0,
-            "byteLength" : 1280,
-            "byteOffset" : 3840
+            "byteLength" : 8176,
+            "byteOffset" : 24528
         },
         {
             "buffer" : 0,
-            "byteLength" : 1280,
-            "byteOffset" : 5120
+            "byteLength" : 8176,
+            "byteOffset" : 32704
         },
         {
             "buffer" : 0,
-            "byteLength" : 492,
-            "byteOffset" : 6400
+            "byteLength" : 2646,
+            "byteOffset" : 40880
         }
     ],
     "samplers" : [
@@ -138,7 +138,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 6892,
+            "byteLength" : 43528,
             "uri" : "RoofWallInnerCorner.bin"
         }
     ]

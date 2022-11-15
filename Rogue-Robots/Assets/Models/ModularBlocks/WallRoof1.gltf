@@ -58,76 +58,76 @@
         {
             "mimeType" : "image/png",
             "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
+            "uri" : "PP_Color_Palette.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 266,
+            "count" : 1712,
             "max" : [
-                2.5000007152557373,
-                4.700010299682617,
-                2.5
+                2.9970476627349854,
+                5.406274795532227,
+                2.5629289150238037
             ],
             "min" : [
-                -2.5,
-                0,
-                -1.7325481176376343
+                -2.9984652996063232,
+                -0.22951889038085938,
+                -2.5123300552368164
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 266,
+            "count" : 1712,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 266,
+            "count" : 1712,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 266,
+            "count" : 1712,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 324,
+            "count" : 2244,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 3192,
+            "byteLength" : 20544,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 3192,
-            "byteOffset" : 3192
+            "byteLength" : 20544,
+            "byteOffset" : 20544
         },
         {
             "buffer" : 0,
-            "byteLength" : 2128,
-            "byteOffset" : 6384
+            "byteLength" : 13696,
+            "byteOffset" : 41088
         },
         {
             "buffer" : 0,
-            "byteLength" : 2128,
-            "byteOffset" : 8512
+            "byteLength" : 13696,
+            "byteOffset" : 54784
         },
         {
             "buffer" : 0,
-            "byteLength" : 648,
-            "byteOffset" : 10640
+            "byteLength" : 4488,
+            "byteOffset" : 68480
         }
     ],
     "samplers" : [
@@ -138,7 +138,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 11288,
+            "byteLength" : 72968,
             "uri" : "WallRoof1.bin"
         }
     ]

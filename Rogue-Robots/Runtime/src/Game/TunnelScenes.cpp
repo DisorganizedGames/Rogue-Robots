@@ -95,16 +95,16 @@ void TunnelRoom2Scene::SetUpScene(std::vector<std::function<std::vector<DOG::ent
 
 	AddEntities(LoadLevel(pcgLevelNames::tunnels)); //Change this to testRooms to try the room connections.
 
-	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(57.f, 75.f, 78.f), 4, 2.f));	// location 2
-	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(60.f, 75.f, 98.f), 5, 3.f));	// location 3
-	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(34.f, 75.f, 85.f), 4, 1.5f));	// location 4
-	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(27.f, 75.f, 130.f), 2, 1.f));	// location 5
+	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(57.f + 2.8f, 75.f + 6.1f, 78.f + 10.1f), 4, 2.f));	// location 2
+	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(60.f + 2.8f, 75.f + 6.1f, 98.f + 10.1f), 5, 3.f));	// location 3
+	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(34.f + 2.8f, 75.f + 6.1f, 85.f + 10.1f), 4, 1.5f));	// location 4
+	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(27.f + 2.8f, 75.f + 6.1f, 130.f + 10.1f), 2, 1.f));	// location 5
 
 	ItemManager& iM = ItemManager::Get();
-	iM.CreateItem(EntityTypes::GrenadeBarrel, Vector3(46.0f, 69.7f, 114.0f));
-	iM.CreateItem(EntityTypes::FrostMagazineModification, Vector3(43.0f, 69.7f, 114.0f));
-	iM.CreateItem(EntityTypes::MissileBarrel, Vector3(40.0f, 70.0f, 110.0f));
-	iM.CreateItem(EntityTypes::Trampoline, Vector3(49.0f, 70.0f, 110.0f));
+	iM.CreateItem(EntityTypes::GrenadeBarrel, Vector3(46.0f + 2.8f, 69.7f + 6.1f, 114.0f + 10.1f));
+	iM.CreateItem(EntityTypes::FrostMagazineModification, Vector3(43.0f + 2.8f, 69.7f + 6.1f, 114.0f + 10.1f));
+	iM.CreateItem(EntityTypes::MissileBarrel, Vector3(40.0f + 2.8f, 70.0f + 6.1f, 110.0f + 10.1f));
+	iM.CreateItem(EntityTypes::Trampoline, Vector3(49.0f + 2.8f, 70.0f + 6.1f, 110.0f + 10.1f));
 }
 
 

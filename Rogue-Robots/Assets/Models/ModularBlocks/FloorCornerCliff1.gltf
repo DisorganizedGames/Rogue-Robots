@@ -21,7 +21,7 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.021",
+            "name" : "PP_Standard_Material.006",
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 0
@@ -33,7 +33,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.015",
+            "name" : "Scene.006",
             "primitives" : [
                 {
                     "attributes" : {
@@ -65,7 +65,7 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 163,
+            "count" : 915,
             "max" : [
                 2.5,
                 0.7507538199424744,
@@ -73,7 +73,7 @@
             ],
             "min" : [
                 -2.5,
-                1.7118543382821372e-07,
+                -0.6233499646186829,
                 -2.5
             ],
             "type" : "VEC3"
@@ -81,53 +81,53 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 163,
+            "count" : 915,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 163,
+            "count" : 915,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 163,
+            "count" : 915,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 174,
+            "count" : 954,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 1956,
+            "byteLength" : 10980,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 1956,
-            "byteOffset" : 1956
+            "byteLength" : 10980,
+            "byteOffset" : 10980
         },
         {
             "buffer" : 0,
-            "byteLength" : 1304,
-            "byteOffset" : 3912
+            "byteLength" : 7320,
+            "byteOffset" : 21960
         },
         {
             "buffer" : 0,
-            "byteLength" : 1304,
-            "byteOffset" : 5216
+            "byteLength" : 7320,
+            "byteOffset" : 29280
         },
         {
             "buffer" : 0,
-            "byteLength" : 348,
-            "byteOffset" : 6520
+            "byteLength" : 1908,
+            "byteOffset" : 36600
         }
     ],
     "samplers" : [
@@ -138,7 +138,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 6868,
+            "byteLength" : 38508,
             "uri" : "FloorCornerCliff1.bin"
         }
     ]

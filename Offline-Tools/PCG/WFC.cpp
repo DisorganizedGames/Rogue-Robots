@@ -988,11 +988,11 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 			else
 			{
 				//Horizontal
-				if ((prevDir == 1 && nextDir == 5) || (prevDir == 0 && nextDir == 4))
+				if ((prevDir == 1 && nextDir == 5) || (prevDir == 4 && nextDir == 0))
 				{
 					replacer = "LHorizontalConnector_r3_f";
 				}
-				else if ((prevDir == 5 && nextDir == 1) || (prevDir == 4 && nextDir == 0))
+				else if ((prevDir == 0 && nextDir == 4) || (prevDir == 5 && nextDir == 1))
 				{
 					replacer = "LHorizontalConnector_r1_f";
 				}

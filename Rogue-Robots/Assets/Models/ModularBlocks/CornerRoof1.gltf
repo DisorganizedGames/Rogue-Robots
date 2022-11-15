@@ -21,7 +21,7 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.014",
+            "name" : "PP_Standard_Material.232",
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 0
@@ -33,7 +33,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.009",
+            "name" : "Scene.104",
             "primitives" : [
                 {
                     "attributes" : {
@@ -65,69 +65,69 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 301,
+            "count" : 1620,
             "max" : [
-                2.500000476837158,
-                4.699991226196289,
-                2.500009298324585
+                2.5421385765075684,
+                5.220639228820801,
+                2.653320550918579
             ],
             "min" : [
-                -2.0190951824188232,
-                -4.772197144120582e-07,
-                -2.2578232288360596
+                -2.656342029571533,
+                -0.06317782402038574,
+                -2.8028244972229004
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 301,
+            "count" : 1620,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 301,
+            "count" : 1620,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 301,
+            "count" : 1620,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 339,
+            "count" : 1686,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 3612,
+            "byteLength" : 19440,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 3612,
-            "byteOffset" : 3612
+            "byteLength" : 19440,
+            "byteOffset" : 19440
         },
         {
             "buffer" : 0,
-            "byteLength" : 2408,
-            "byteOffset" : 7224
+            "byteLength" : 12960,
+            "byteOffset" : 38880
         },
         {
             "buffer" : 0,
-            "byteLength" : 2408,
-            "byteOffset" : 9632
+            "byteLength" : 12960,
+            "byteOffset" : 51840
         },
         {
             "buffer" : 0,
-            "byteLength" : 678,
-            "byteOffset" : 12040
+            "byteLength" : 3372,
+            "byteOffset" : 64800
         }
     ],
     "samplers" : [
@@ -138,7 +138,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 12720,
+            "byteLength" : 68172,
             "uri" : "CornerRoof1.bin"
         }
     ]
