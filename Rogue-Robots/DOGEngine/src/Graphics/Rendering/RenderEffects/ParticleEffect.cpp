@@ -32,6 +32,8 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 		.SetShader(drawVS.get())
 		.SetShader(drawPS.get())
 		.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+		.SetDepthFormat(DepthFormat::D32)
+		.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 		.Build()
 	);
 
@@ -185,6 +187,9 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 
 			builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::PreservePreserve,
 				TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+			builder.WriteDepthStencil(RG_RESOURCE(MainDepth), RenderPassAccessType::PreservePreserve,
+				TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
 
 		},
 		[this](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) // Execute
