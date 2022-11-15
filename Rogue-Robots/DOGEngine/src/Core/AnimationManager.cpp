@@ -50,6 +50,7 @@ namespace DOG
 					auto& a = m_playerRigAnimators[aC.animatorID];
 					auto offset = MIXAMO_RIG.nJoints * aC.animatorID;
 					a.Update(deltaTime);
+					a.ProcessAnimationComponent(aC);
 					UpdateSkeleton(a, offset);
 				}
 			});

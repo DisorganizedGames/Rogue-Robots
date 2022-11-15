@@ -75,6 +75,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	}
 
 	MovePlayer(e, player, moveTowards, forward, rigidbody, playerStats.speed, input);
+	ApplyAnimations(input, ac);
 
 	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
 	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
@@ -254,6 +255,10 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 		setter.playbackRate = 1.0f;
 		setter.group = ac.FULL_BODY;
 		++ac.addedSetters;
+	}
+	if (setter.group == 3)
+	{
+		auto asd = 9;
 	}
 }
 
