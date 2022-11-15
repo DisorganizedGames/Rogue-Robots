@@ -149,7 +149,7 @@ namespace DOG::gfx
 			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
 			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
 			.SetDepthFormat(DepthFormat::D32)
-			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true).SetDepthWriteMask(D3D12_DEPTH_WRITE_MASK_ZERO).SetDepthFunc(D3D12_COMPARISON_FUNC_EQUAL))
 			.Build());
 
 		auto shadowVS = m_sclr->CompileFromFile("ShadowVS.hlsl", ShaderType::Vertex);
@@ -183,7 +183,7 @@ namespace DOG::gfx
 			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
 
 			.SetDepthFormat(DepthFormat::D32)
-			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true).SetDepthWriteMask(D3D12_DEPTH_WRITE_MASK_ZERO).SetDepthFunc(D3D12_COMPARISON_FUNC_EQUAL))
 			.SetRasterizer(RasterizerBuilder().SetCullMode(D3D12_CULL_MODE_NONE))
 			.Build());
 
@@ -194,7 +194,7 @@ namespace DOG::gfx
 			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
 
 			.SetDepthFormat(DepthFormat::D32)
-			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true).SetDepthWriteMask(D3D12_DEPTH_WRITE_MASK_ZERO).SetDepthFunc(D3D12_COMPARISON_FUNC_EQUAL))
 			.SetRasterizer(RasterizerBuilder().SetFillMode(D3D12_FILL_MODE_WIREFRAME))
 			.Build());
 
@@ -205,7 +205,7 @@ namespace DOG::gfx
 			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
 
 			.SetDepthFormat(DepthFormat::D32)
-			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true).SetDepthWriteMask(D3D12_DEPTH_WRITE_MASK_ZERO).SetDepthFunc(D3D12_COMPARISON_FUNC_EQUAL))
 			.SetRasterizer(RasterizerBuilder().SetFillMode(D3D12_FILL_MODE_WIREFRAME).SetCullMode(D3D12_CULL_MODE_NONE))
 			.Build());
 
@@ -788,9 +788,9 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("Z PrePass",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
-					builder.DeclareTexture(RG_RESOURCE(ZPrePassDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_renderWidth, m_renderHeight));
+					builder.DeclareTexture(RG_RESOURCE(MainDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_renderWidth, m_renderHeight));
 
-					builder.WriteDepthStencil(RG_RESOURCE(ZPrePassDepth), RenderPassAccessType::ClearPreserve,
+					builder.WriteDepthStencil(RG_RESOURCE(MainDepth), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
 				},
 				[&, dynConstants = m_dynConstants.get(), dynConstantsTemp = m_dynConstantsTemp.get(), drawFunc = drawZPassSubmissions](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&) mutable
@@ -863,10 +863,6 @@ namespace DOG::gfx
 			rg.AddPass<PassData>("Forward Pass",
 				[&](PassData& p, RenderGraph::PassBuilder& builder)
 				{
-					/*builder.ReadDepthStencil(RG_RESOURCE(ZPrePassDepth), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R32_FLOAT));*/
-
-					builder.DeclareTexture(RG_RESOURCE(MainDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_renderWidth, m_renderHeight));
 					builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight)
 						.AddFlag(D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
 					builder.DeclareTexture(RG_RESOURCE(MainNormals), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight));
@@ -882,8 +878,7 @@ namespace DOG::gfx
 					builder.WriteRenderTarget(RG_RESOURCE(MainNormals), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 
-					builder.WriteDepthStencil(RG_RESOURCE(MainDepth), RenderPassAccessType::ClearPreserve,
-						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
+					builder.ReadDepthStencil(RG_RESOURCE(MainDepth), TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT).SetDepthReadOnly());
 
 					if (m_graphicsSettings.lightCulling)
 					{

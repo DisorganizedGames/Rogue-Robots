@@ -73,8 +73,8 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
         pos = (float3) mul(float4(pos, 1.0f), mat);
     }
     
-    float4 worldPos = mul(perDrawData.world, float4(pos, 1.f));
-    output.pos = mul(pfData.projMatrix, mul(pfData.viewMatrix, worldPos));
+    float3 worldPos = mul(perDrawData.world, float4(pos, 1.f)).xyz;
+    output.pos = mul(pfData.projMatrix, mul(pfData.viewMatrix, float4(worldPos, 1.f)));
  
     return output;
 }
