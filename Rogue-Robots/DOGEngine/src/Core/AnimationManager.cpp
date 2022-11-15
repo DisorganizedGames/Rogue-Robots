@@ -14,7 +14,7 @@ namespace DOG
 		m_imguiPos.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_imguiRot.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_vsJoints.assign(300, {});
-		DOG::ImGuiMenuLayer::RegisterDebugWindow("RigJourno", std::bind(&AnimationManager::SpawnControlWindow, this, std::placeholders::_1), true, std::make_pair(DOG::Key::LCtrl, DOG::Key::A));
+		DOG::ImGuiMenuLayer::RegisterDebugWindow("RigJourno", std::bind(&AnimationManager::SpawnControlWindow, this, std::placeholders::_1), false, std::make_pair(DOG::Key::LCtrl, DOG::Key::A));
 	};
 
 	AnimationManager::~AnimationManager()
@@ -27,9 +27,11 @@ namespace DOG
 		ZoneScopedN("updateJoints_ppp");
 		using namespace DirectX;
 		auto deltaTime = (f32)Time::DeltaTime();
-		//tmp debug stuff
-		//deltaTime = 0.1f;
-		//Test(deltaTime);
+
+#ifdef DEBUG
+		deltaTime = 0.05f;
+		test(deltaTime);
+#endif
 
 		if (!m_rigs.size()) {
 			EntityManager::Get().Collect<ModelComponent, RigDataComponent>().Do([&](ModelComponent& modelC, RigDataComponent& rC)
@@ -73,7 +75,7 @@ namespace DOG
 		if (ImGui::BeginMenu("View"))
 		{
 			if (ImGui::MenuItem("RigJourno", "Ctrl+A"))
-				open = true;
+				open ^= true;
 			ImGui::EndMenu(); // "View"
 		}
 
