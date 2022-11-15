@@ -19,7 +19,7 @@ void TurretTargetingSystem::OnUpdate(TurretTargetingComponent& targeter, ChildCo
 	Vector3 turretPosW = globalTransform.GetPosition();
 	Vector3 targetDirL; // In turrets local space
 	float maxDistSquared = targeter.maxRange * targeter.maxRange;
-	auto&& findBetterTarger = [&](entity target, Vector3 targetPosW) {
+	auto&& findBetterTarget = [&](entity target, Vector3 targetPosW) {
 
 		float d2 = SimpleMath::Vector3::DistanceSquared(turretPosW, targetPosW);
 		if (d2 < maxDistSquared)
@@ -45,7 +45,7 @@ void TurretTargetingSystem::OnUpdate(TurretTargetingComponent& targeter, ChildCo
 	// Finds closest agent
 	em.Collect<AgentAggroComponent, TransformComponent>().Do([&](entity agent, AgentAggroComponent&, TransformComponent& agentTransform)
 		{
-			findBetterTarger(agent, agentTransform.GetPosition());
+			findBetterTarget(agent, agentTransform.GetPosition());
 		});
 
 	// Turn turret against the target 
