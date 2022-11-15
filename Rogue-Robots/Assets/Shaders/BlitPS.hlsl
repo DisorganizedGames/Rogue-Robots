@@ -21,20 +21,29 @@ CONSTANTS(g_constants, PushConstantElement)
 
 float4 main(VS_OUT input) : SV_TARGET
 {
-    Texture2D<float4> ssao = ResourceDescriptorHeap[g_constants.ao];
-    float4 ssaoColor = ssao.Sample(g_point_samp, input.uv);
-    
     Texture2D finalTex = ResourceDescriptorHeap[g_constants.finalTexID];
     float3 hdr = finalTex.Sample(g_aniso_samp, input.uv);
     
-    Texture2D<float4> bloomTex = ResourceDescriptorHeap[g_constants.bloom];
-    float4 bloom = bloomTex.Sample(g_aniso_samp, input.uv);
-    
+    float4 ssaoColor = 1.f.rrrr;
+    float ssaoContrib = 1.f;
+    if (!(g_constants.ao == 0xffffffff))
+    {
+        Texture2D<float4> ssao = ResourceDescriptorHeap[g_constants.ao];
+        ssaoColor = ssao.Sample(g_point_samp, input.uv);
+        ssaoContrib = uncharted2_filmic(ssaoColor.rgb).r;
+    }
+   
+    float4 bloom = 0.f.rrrr;
+    if (!(g_constants.bloom == 0xffffffff))
+    {
+        Texture2D<float4> bloomTex = ResourceDescriptorHeap[g_constants.bloom];
+        bloom = bloomTex.Sample(g_aniso_samp, input.uv);
+    }
+
     // Darken the white halos with Reinhard Jodie
     //float ssaoContrib = ssaoColor.r;
     //float ssaoContrib = aces_fitted(ssaoColor.rgb).r;
     //float ssaoContrib = reinhard_jodie(ssaoColor.rgb).r;
-    float ssaoContrib = uncharted2_filmic(ssaoColor.rgb).r;
     //ssaoContrib = aces_fitted(ssaoContrib.rrr).r;
     
     //return float4(ssaoContrib.rrr, 1.f);
