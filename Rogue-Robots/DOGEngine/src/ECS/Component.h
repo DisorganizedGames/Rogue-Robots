@@ -43,13 +43,13 @@ namespace DOG
 	struct ModelComponent
 	{
 		ModelComponent(u32 id = 0) noexcept : id{ id } {}
-		operator const u32 () const { return id; }
+		operator const u32() const { return id; }
 		u32 id;
 	};
 
 	struct CameraComponent
 	{
-		using Matrix = DirectX::SimpleMath::Matrix;	
+		using Matrix = DirectX::SimpleMath::Matrix;
 
 		Matrix viewMatrix = DirectX::XMMatrixIdentity();
 		Matrix projMatrix = DirectX::XMMatrixIdentity();
@@ -65,12 +65,20 @@ namespace DOG
 
 	struct NetworkTransform
 	{
-		u32 objectId  = 0;
+		u32 objectId = 0;
 		DirectX::SimpleMath::Matrix transform;
 	};
 	struct DontDraw
 	{
 
+	};
+	struct TestComponent
+	{
+		
+	};
+	struct RigBoneTransformation
+	{
+		DirectX::SimpleMath::Matrix transform = DirectX::SimpleMath::Matrix::Identity;;
 	};
 	struct RigDataComponent
 	{
@@ -96,7 +104,7 @@ namespace DOG
 			u8 priority;
 			f32 transitionLength;
 			f32 playbackRate;
-			i8 animationIDs[MAX_TARGET_ANIMS];
+			i8 animationIDs[MAX_TARGET_ANIMS] = { -1, -1, -1 };
 			f32 targetWeights[MAX_TARGET_ANIMS];
 		};
 		std::array<Setter, MAX_SETTERS> animSetters;

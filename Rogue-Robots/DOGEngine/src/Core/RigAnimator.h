@@ -28,7 +28,7 @@ namespace DOG
 	static constexpr u8 MIXAMO_RIG_ID = 0;
 	//static constexpr u8 SCRPIO_RIG_ID = 1;
 
-	static constexpr RigSpecifics RIG_SPECIFICS[N_RIGS]{ { 65, 4, {std::make_pair<u8, u8>(0, 67), std::make_pair<u8, u8>(57, 10), std::make_pair<u8, u8>(5, 52) }, { 0, 0, 0 }} };
+	static constexpr RigSpecifics RIG_SPECIFICS[N_RIGS]{ { 66, 4, {std::make_pair<u8, u8>(0, 67), std::make_pair<u8, u8>(57, 11), std::make_pair<u8, u8>(5, 52) }, { 0, 0, 0 }} };
 	static constexpr RigSpecifics MIXAMO_RIG = RIG_SPECIFICS[MIXAMO_RIG_ID];
 
 	// true if idx within group joint span
@@ -86,6 +86,7 @@ namespace DOG
 		f32 transitionStart = 0.f;
 		f32 transitionLength = 0.f;
 		f32 startWeight = 1.f;
+		f32 currentWeight = 1.f;
 		f32 targetValue = 1.f;
 	};
 	// Set of active clips,
@@ -133,6 +134,19 @@ namespace DOG
 		// Animation groups
 		std::array<AnimationGroup, N_GROUPS> groups = {};
 		std::array<BlendSpecification, N_GROUPS> groupBlends = {};
+
+		// TEST
+		void NewActionSet(BlendSpecification& bs, Setter& setter);
+
+
+
+
+
+
+
+
+
+
 
 		RigAnimator();
 

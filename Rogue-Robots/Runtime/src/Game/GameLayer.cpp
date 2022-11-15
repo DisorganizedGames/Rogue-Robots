@@ -431,7 +431,28 @@ void GameLayer::UpdateGame()
 
 	EvaluateWinCondition();
 	EvaluateLoseCondition();
-
+	using namespace DirectX;
+	Matrix objTf = XMMatrixTranslation(m_imguiX, m_imguiY, m_imguiZ);
+	Matrix boneTf = {};
+	Matrix playerW = {};
+	Vector3 playerP = {};
+	Vector3 objP = { m_imguiX, m_imguiY, m_imguiZ };
+	Vector3 printPos = {};
+	EntityManager::Get().Collect<TransformComponent, RigBoneTransformation, ThisPlayer>().Do([&](TransformComponent& transform, RigBoneTransformation& btf, ThisPlayer&)
+		{
+			playerW = transform.worldMatrix;
+			playerP = transform.GetPosition();
+			boneTf = btf.transform;
+		});
+	EntityManager::Get().Collect<TransformComponent, TestComponent>().Do([&](TransformComponent& transform, TestComponent&)
+		{
+			
+			transform.worldMatrix = objTf * boneTf;
+			auto pos = transform.GetPosition();
+			pos.y += m_imguiposY;
+			transform.SetPosition(pos);
+			transform.SetScale({ m_imguiS, m_imguiS, m_imguiS });
+		});
 
 	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([](TransformComponent& transform, RigidbodyComponent&)
 		{
@@ -1152,6 +1173,17 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 			}
 			
 			if (ImGui::RadioButton("PCGLevel", (int*)&m_selectedScene, (int)SceneComponent::Type::PCGLevelScene)) m_gameState = GameState::Restart;
+
+			ImGui::SliderFloat("pX", &m_imguiX, -0.5f, 50.5f, "%.5f");
+			ImGui::SliderFloat("pY", &m_imguiY, -0.5f, 50.5f, "%.5f");
+			ImGui::SliderFloat("pZ", &m_imguiZ, -25.f, 25.5f, "%.5f");
+			ImGui::SliderFloat("poffsetY", &m_imguiposY, -0.5f, +1.5f, "%.5f");
+			ImGui::SliderFloat("Scal", &m_imguiS, 0.01f, 2.0f, "%.1f");
+
+			if (ImGui::RadioButton("Room0", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom0Scene)) m_gameState = GameState::Restart;
+			if (ImGui::RadioButton("Room1", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom1Scene)) m_gameState = GameState::Restart;
+			if (ImGui::RadioButton("Room2", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom2Scene)) m_gameState = GameState::Restart;
+			if (ImGui::RadioButton("Room3", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom3Scene)) m_gameState = GameState::Restart;
 			if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;
 			if (ImGui::RadioButton("Particle", (int*)&m_selectedScene, (int)SceneComponent::Type::ParticleScene)) m_gameState = GameState::Restart;
 			

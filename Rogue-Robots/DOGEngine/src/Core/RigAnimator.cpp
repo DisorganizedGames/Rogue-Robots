@@ -194,6 +194,18 @@ namespace DOG
 		return clipCount;
 	}
 
+	void RigAnimator::NewActionSet(BlendSpecification& bs, Setter& setter)
+	{
+		// Get animation data of first clip
+		const auto animationDuration = rigData->animations[setter.animationIDs[0]].duration;
+		// bs.durationLeft = animationDuration - setter.transitionLength;
+		// if (hasFlagFrozenTransition)
+		//		bs.durationLeft += setter.transitionLength;
+		// if (hasFlagRelativeTransition)
+		//		bs.durationLeft *= setter.playbackRate;
+		bs.durationLeft = animationDuration - setter.transitionLength;
+	}
+
 	void RigAnimator::ProcessSetter(Setter& setter)
 	{
 		const auto groupIdx = setter.group;

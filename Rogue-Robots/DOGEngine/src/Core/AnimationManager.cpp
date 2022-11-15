@@ -16,6 +16,7 @@ namespace DOG
 		m_vsJoints.assign(300, {});
 
 		DOG::ImGuiMenuLayer::RegisterDebugWindow("RigJourno", std::bind(&AnimationManager::SpawnControlWindow, this, std::placeholders::_1), false, std::make_pair(DOG::Key::LCtrl, DOG::Key::A));
+		m_ta.Update(0.4f);
 	};
 
 	AnimationManager::~AnimationManager()
@@ -36,7 +37,7 @@ namespace DOG
 		ZoneScopedN("updateJoints_ppp");
 		using namespace DirectX;
 		auto deltaTime = (f32)Time::DeltaTime();
-
+		//deltaTime = 0.05f;
 #ifdef DEBUG
 		deltaTime = 0.05f;
 		test(deltaTime);
@@ -60,15 +61,17 @@ namespace DOG
 			return;
 		}
 
-		EntityManager::Get().Collect<AnimationComponent>().Do([&](AnimationComponent& aC)
+		EntityManager::Get().Collect<TransformComponent, RigBoneTransformation, AnimationComponent>().Do([&](TransformComponent& tf, RigBoneTransformation& btf, AnimationComponent& aC)
 			{
 				if (aC.animatorID != -1)
 				{
-					auto& a = m_playerRigAnimators[aC.animatorID];
+					auto& a = m_playertestAnimators[aC.animatorID];
 					auto offset = MIXAMO_RIG.nJoints * aC.animatorID;
 					a.Update(deltaTime);
 					a.ProcessAnimationComponent(aC);
 					UpdateSkeleton(a, offset);
+
+					btf.transform = SimpleMath::Matrix(XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[m_imguiJoint]))) * tf.worldMatrix;
 				}
 			});
 	}
@@ -149,29 +152,35 @@ namespace DOG
 				if (setAnimationChain ^= ImGui::Button("SetAnimationChain"))
 				{
 				}*/
-			
+
 				// ImGui individual joint sliders
-				static i32 selectedBone = ROOT_NODE;
-				if (ImGui::BeginCombo("tfs", m_rigs[0]->nodes[selectedBone].name.c_str()))
+				if (ImGui::BeginCombo("joint", m_rigs[0]->nodes[m_imguiJoint].name.c_str()))
 				{
 					for (i32 i = 1; i < std::size(m_rigs[0]->nodes); i++)
-						if (ImGui::Selectable((m_rigs[0]->nodes[i].name + "  " + std::to_string(i)).c_str(), (i == selectedBone)))
-							selectedBone = i;
+						if (ImGui::Selectable((m_rigs[0]->nodes[i].name).c_str(), (i == m_imguiJoint)))
+							m_imguiJoint = i;
+					ImGui::EndCombo();
+				}
+				if (ImGui::BeginCombo("tfs", m_rigs[0]->nodes[m_imguiSelectedJoint].name.c_str()))
+				{
+					for (i32 i = 1; i < std::size(m_rigs[0]->nodes); i++)
+						if (ImGui::Selectable((m_rigs[0]->nodes[i].name + "  " + std::to_string(i)).c_str(), (i == m_imguiSelectedJoint)))
+							m_imguiSelectedJoint = i;
 					ImGui::EndCombo();
 				}
 				
 				ImGui::Text("Orientation");
-				ImGui::SliderAngle("Roll", &m_imguiRot[selectedBone].z, imguiJointRotMin, imguiJointRotMax);
-				ImGui::SliderAngle("Pitch", &m_imguiRot[selectedBone].x, imguiJointRotMin, imguiJointRotMax);
-				ImGui::SliderAngle("Yaw", &m_imguiRot[selectedBone].y, imguiJointRotMin, imguiJointRotMax);
+				ImGui::SliderAngle("Roll", &m_imguiRot[m_imguiSelectedJoint].z, imguiJointRotMin, imguiJointRotMax);
+				ImGui::SliderAngle("Pitch", &m_imguiRot[m_imguiSelectedJoint].x, imguiJointRotMin, imguiJointRotMax);
+				ImGui::SliderAngle("Yaw", &m_imguiRot[m_imguiSelectedJoint].y, imguiJointRotMin, imguiJointRotMax);
 				ImGui::Text("Translation");
-				ImGui::SliderFloat("pos X", &m_imguiPos[selectedBone].x, imguiJointPosMin, imguiJointPosMax, "%.3f");
-				ImGui::SliderFloat("pos Y", &m_imguiPos[selectedBone].y, imguiJointPosMin, imguiJointPosMax, "%.3f");
-				ImGui::SliderFloat("pos Z", &m_imguiPos[selectedBone].z, imguiJointPosMin, imguiJointPosMax, "%.3f");
+				ImGui::SliderFloat("pos X", &m_imguiPos[m_imguiSelectedJoint].x, imguiJointPosMin, imguiJointPosMax, "%.3f");
+				ImGui::SliderFloat("pos Y", &m_imguiPos[m_imguiSelectedJoint].y, imguiJointPosMin, imguiJointPosMax, "%.3f");
+				ImGui::SliderFloat("pos Z", &m_imguiPos[m_imguiSelectedJoint].z, imguiJointPosMin, imguiJointPosMax, "%.3f");
 				ImGui::Text("Scale");
-				ImGui::SliderFloat("X", &m_imguiSca[selectedBone].x, imguiJointScaMin, imguiJointScaMax, "%.1f");
-				ImGui::SliderFloat("Y", &m_imguiSca[selectedBone].y, imguiJointScaMin, imguiJointScaMax, "%.1f");
-				ImGui::SliderFloat("Z", &m_imguiSca[selectedBone].z, imguiJointScaMin, imguiJointScaMax, "%.1f");
+				ImGui::SliderFloat("X", &m_imguiSca[m_imguiSelectedJoint].x, imguiJointScaMin, imguiJointScaMax, "%.1f");
+				ImGui::SliderFloat("Y", &m_imguiSca[m_imguiSelectedJoint].y, imguiJointScaMin, imguiJointScaMax, "%.1f");
+				ImGui::SliderFloat("Z", &m_imguiSca[m_imguiSelectedJoint].z, imguiJointScaMin, imguiJointScaMax, "%.1f");
 			}
 			ImGui::End();
 		}
@@ -293,7 +302,7 @@ namespace DOG
 	//	return translationVec;
 	//}
 
-	void AnimationManager::UpdateSkeleton(DOG::RigAnimator& animator, const u32 offset)
+	void AnimationManager::UpdateSkeleton(DOG::testAnimator& animator, const u32 offset)
 	{
 		ZoneScopedN("skeletonUpdate");
 		using namespace DirectX;
@@ -313,10 +322,10 @@ namespace DOG
 				XMMatrixRotationQuaternion(m_fullbodySRT[rIdx]) *
 				XMMatrixTranslationFromVector(m_fullbodySRT[tIdx])
 			);
-#if defined _DEBUG
+
 			// apply addition imgui bone influence
 			ntf *= ImguiTransform(i);
-#endif
+
 			hereditaryTFs.push_back(ntf);
 		}
 
@@ -336,7 +345,7 @@ namespace DOG
 		}
 	}
 
-	void AnimationManager::CalculateSRT(RigAnimator& ac, const u8 rigID)
+	void AnimationManager::CalculateSRT(testAnimator& ac, const u8 rigID)
 	{
 		ZoneScopedN("SRT calculation");
 		using namespace DirectX;
@@ -364,13 +373,17 @@ namespace DOG
 		}
 	}
 
-	void AnimationManager::ExtractClipNodeInfluences(RigAnimator& a, const KeyType key, const u32 group, const u32 rigID)
+	void AnimationManager::ExtractClipNodeInfluences(testAnimator& a, const KeyType key, const u32 group, const u32 rigID)
 	{
 		ZoneScopedN("Extract");
 		using namespace DirectX;
 		using PoseData = DOG::ClipData;
 		using AnimationKeys = std::unordered_map<i32, std::vector<AnimationKey>>;
 		
+		// Check if group has influence before performing calculations
+		if (group != fullBodyGroup && a.GetGroupWeight(group) == 0.0f)
+			return;
+
 		// Start and number of jointNodes that group influences
 		const auto [startNode, nNodes] = GetNodeStartAndCount(static_cast<u8>(rigID), static_cast<u8>(group));
 		// Number of clips acting within group
@@ -488,19 +501,19 @@ namespace DOG
 		static constexpr u8 priority = 0;
 		static constexpr f32 transitionLength = 0.f;
 		static constexpr f32 playbackRate = 1.f;
-		static constexpr i8 idleIdx = 2;
+		static constexpr i8 idleIdx = 0;
 		static constexpr f32 weight = 1.f;
 		Setter baseState = { loop, fullBodyGroup, priority, transitionLength, playbackRate,
 			{ idleIdx, NO_ANIMATION, NO_ANIMATION },
 			{ weight, 0.f, 0.f } };
 
 
-		for (size_t i = 0; i < m_playerRigAnimators.size(); ++i)
+		for (size_t i = 0; i < m_playertestAnimators.size(); ++i)
 		{
 			baseAc.addedSetters = 1;
 			baseAc.animSetters[0] = baseState;
-			m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
-			m_playerRigAnimators[i].ProcessAnimationComponent(baseAc);
+			m_playertestAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
+			m_playertestAnimators[i].ProcessAnimationComponent(baseAc);
 		}
 	}
 
@@ -516,7 +529,7 @@ namespace DOG
 		if (firstTime)
 		{
 			firstTime = false;
-			mRigAnimator.rigData = m_rigs[MIXAMO_RIG_ID];
+			mtestAnimator.rigData = m_rigs[MIXAMO_RIG_ID];
 			static bool t1 = false, t2 = false, t3 = false;
 			static i8 bindIdx = 0, idleIdx = 2, walkIdx = 4;
 			//const auto danceIdx = m_rigs[MIXAMO_RIG_ID]->animations.size() - 1;
@@ -530,24 +543,24 @@ namespace DOG
 			testAc.animSetters[1] = test2;
 			//testAc.animSetters[2] = test3;
 			//testAc.animSetters[3] = test4;
-			//auto sz = sizeof(mRigAnimator);
+			//auto sz = sizeof(mtestAnimator);
 			for (size_t i = 0; i < 4; i++)
 			{
 				//auto uniqueDanceIdx = danceIdx - i;
-				m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
+				m_playertestAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
 				testAc.addedSetters = 2;
 				testAc.animSetters[0] = test1;
 				testAc.animSetters[1] = test2;
-				m_playerRigAnimators[i].ProcessAnimationComponent(testAc);
+				m_playertestAnimators[i].ProcessAnimationComponent(testAc);
 			}
 			testAc.addedSetters = 2;
 			testAc.animSetters[0] = test1;
 			testAc.animSetters[1] = test2;
-			mRigAnimator.ProcessAnimationComponent(testAc);
+			mtestAnimator.ProcessAnimationComponent(testAc);
 		}
 		timer += dt;
-		mRigAnimator.Update(dt);
-		auto stop = mRigAnimator.clipData[0];
+		mtestAnimator.Update(dt);
+		auto stop = mtestAnimator.clipData[0];
 
 		static bool secondTest = false;
 		if (timer >= 0.6f && !secondTest)
@@ -555,7 +568,7 @@ namespace DOG
 			AnimationComponent::Setter test = { false, 0, 0, 0.10f, 1.0f, { 8, 9, -1}, { 0.35f, 0.15f, 0.f} };
 			testAc.addedSetters = 1;
 			testAc.animSetters[0] = test;
-			mRigAnimator.ProcessAnimationComponent(testAc);
+			mtestAnimator.ProcessAnimationComponent(testAc);
 			secondTest = true;
 		}
 		static bool thirdTest = false;
@@ -564,7 +577,7 @@ namespace DOG
 			AnimationComponent::Setter test = { true, 1, 0, 0.25f, 1.0f, { 3, 1, -1}, { 0.35f, 0.35f, 0.f} };
 			testAc.addedSetters = 1;
 			testAc.animSetters[0] = test;
-			mRigAnimator.ProcessAnimationComponent(testAc);
+			mtestAnimator.ProcessAnimationComponent(testAc);
 			thirdTest = true;
 		}
 		static bool fourthTest = false;
@@ -575,7 +588,7 @@ namespace DOG
 				AnimationComponent::Setter test = { false, 0, 5, 0.25f, 1.0f, { 1, -1, -1}, { 0.35f, 0.35f, 0.f} };
 				testAc.addedSetters = 1;
 				testAc.animSetters[0] = test;
-				m_playerRigAnimators[i].ProcessAnimationComponent(testAc);
+				m_playertestAnimators[i].ProcessAnimationComponent(testAc);
 			}
 			fourthTest = true;
 		}

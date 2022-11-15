@@ -332,13 +332,14 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 void PlayerMovementSystem::ApplyAnimations(const InputController& input, AnimationComponent& ac)
 {
 	// Relevant Animation IDs
-	static constexpr i8 IDLE = 2;
+	static constexpr i8 IDLE = 0;
 	static constexpr i8 RUN = 5;
 	static constexpr i8 RUN_BACKWARDS = 6;
 	static constexpr i8 WALK = 13;
 	static constexpr i8 WALK_BACKWARDS = 14;
 	static constexpr i8 STRAFE_LEFT = 8;
-	static constexpr i8 STRAFE_RIGHT = 10;
+	static constexpr i8 STRAFE_RIGHT = 2;
+	//static constexpr i8 STRAFE_RIGHT = 10;
 
 	auto addedAnims = 0;
 	auto& setter = ac.animSetters[ac.addedSetters];

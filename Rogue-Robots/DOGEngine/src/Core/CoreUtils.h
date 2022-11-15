@@ -23,7 +23,7 @@ namespace DOG
 		bool lit{ false };
 		bool shadowMapping{ false };
 #else
-		bool lit{ true };
+		bool lit{ false };
 		bool shadowMapping{ true };
 #endif
 		u32 shadowMapCapacity{ 4 };
