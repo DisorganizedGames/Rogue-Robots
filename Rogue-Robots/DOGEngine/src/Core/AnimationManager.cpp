@@ -31,10 +31,10 @@ namespace DOG
 		//deltaTime = 0.1f;
 		//Test(deltaTime);
 		if (!m_rigs.size()) {
-			EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
+			EntityManager::Get().Collect<ModelComponent, RigDataComponent>().Do([&](ModelComponent& modelC, RigDataComponent& rC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-					if (!m_rigs.size() && model && modelaC.rigID == MIXAMO_RIG_ID)
+					if (!m_rigs.size() && model && rC.rigID == MIXAMO_RIG_ID)
 					{
 						m_rigs.push_back(&model->animation);
 						SetPlayerBaseStates();
@@ -43,14 +43,14 @@ namespace DOG
 			return;
 		}
 
-		EntityManager::Get().Collect<AnimationComponent>().Do([&](AnimationComponent& rAC)
+		EntityManager::Get().Collect<AnimationComponent>().Do([&](AnimationComponent& aC)
 			{
-				if (rAC.animatorID != -1)
+				if (aC.animatorID != -1)
 				{
-					auto& a = m_playerRigAnimators[rAC.animatorID];
-					rAC.offset = MIXAMO_RIG.nJoints * rAC.animatorID;
+					auto& a = m_playerRigAnimators[aC.animatorID];
+					auto offset = MIXAMO_RIG.nJoints * aC.animatorID;
 					a.Update(deltaTime);
-					UpdateSkeleton(a, rAC.offset);
+					UpdateSkeleton(a, offset);
 				}
 			});
 	}

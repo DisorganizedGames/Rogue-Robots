@@ -12,7 +12,8 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	PlayerStatsComponent& playerStats,
 	TransformComponent& transform,
 	RigidbodyComponent& rigidbody,
-	InputController& input)
+	InputController& input,
+	AnimationComponent& ac)
 {
 	if (input.toggleMoveView)
 	{
@@ -199,6 +200,66 @@ void PlayerMovementSystem::MovePlayer(Entity, PlayerControllerComponent& player,
 		rb.linearVelocity.y = 6.f;
 	}
 }
+
+void PlayerMovementSystem::ApplyAnimations(const InputController& input, AnimationComponent& ac)
+{
+	if (ac.addedSetters > 4)
+	{
+		ac.addedSetters = 0;
+	}
+	// Animation IDs
+	static constexpr i8 IDLE = 2;
+	static constexpr i8 RUN = 5;
+	static constexpr i8 RUN_BACKWARDS = 6;
+	static constexpr i8 WALK = 13;
+	static constexpr i8 WALK_BACKWARDS = 14;
+	static constexpr i8 STRAFE_LEFT = 8;
+	static constexpr i8 STRAFE_RIGHT = 10;
+
+	auto addedAnims = 0;
+	auto& setter = ac.animSetters[ac.addedSetters];
+	auto forwardBack = input.forward - input.backwards;
+	auto leftRight = input.right - input.left;
+	if (forwardBack)
+	{
+		const auto animation = input.forward ? RUN : RUN_BACKWARDS;
+		const auto weight = 0.5f;
+
+		setter.animationIDs[addedAnims] = animation;
+		setter.targetWeights[addedAnims++] = weight;
+	}
+	if (leftRight)
+	{
+		const auto animation = input.left ? STRAFE_LEFT : STRAFE_RIGHT;
+		const auto weight = input.left ? 0.25f : 0.5f;
+
+		setter.animationIDs[addedAnims] = animation;
+		setter.targetWeights[addedAnims++] = weight;
+	}
+
+	if (addedAnims)
+	{
+		setter.loop = true;
+		setter.transitionLength = 0.1f;
+		setter.playbackRate = 1.0f;
+		setter.group = ac.FULL_BODY;
+		++ac.addedSetters;
+	}
+	else
+	{
+		setter.animationIDs[addedAnims] = IDLE;
+		setter.targetWeights[addedAnims++] = 1.0f;
+		setter.loop = true;
+		setter.transitionLength = 0.1f;
+		setter.playbackRate = 1.0f;
+		setter.group = ac.FULL_BODY;
+		++ac.addedSetters;
+	}
+}
+
+#pragma endregion
+
+
 
 void UpdateParentNode(entity parent)
 {

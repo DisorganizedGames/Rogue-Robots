@@ -71,10 +71,19 @@ namespace DOG
 	{
 
 	};
+	struct RigDataComponent
+	{
+		u32 offset;
+		i8 rigID = 0;
+		i8 animatorID = -1;
+	};
 	struct AnimationComponent
 	{
 		static constexpr u8 MAX_SETTERS = 10;
 		static constexpr u8 MAX_TARGET_ANIMS = 3;
+		static constexpr u8 FULL_BODY = 0;
+		static constexpr u8 LOWER_BODY = 1;
+		static constexpr u8 UPPER_BODY = 2;
 		u32 offset;
 		i8 rigID = 0;
 		i8 animatorID = -1;

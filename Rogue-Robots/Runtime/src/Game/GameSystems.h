@@ -319,15 +319,16 @@ class PlayerMovementSystem : public DOG::ISystem
 	using CameraComponent = DOG::CameraComponent;
 	using RigidbodyComponent = DOG::RigidbodyComponent;
 	using Entity = DOG::entity;
+	using AnimationComponent = DOG::AnimationComponent;
 
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
 
 public:
-	SYSTEM_CLASS(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController);
-	ON_EARLY_UPDATE_ID(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController);
+	SYSTEM_CLASS(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController, AnimationComponent);
+	ON_EARLY_UPDATE_ID(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController, AnimationComponent);
 
-	void OnEarlyUpdate(Entity, PlayerControllerComponent&, PlayerStatsComponent&, TransformComponent&, RigidbodyComponent&, InputController&);
+	void OnEarlyUpdate(Entity, PlayerControllerComponent&, PlayerStatsComponent&, TransformComponent&, RigidbodyComponent&, InputController&, AnimationComponent&);
 
 private:
 	inline static constexpr Vector3 s_globUp = Vector3(0, 1, 0);
@@ -341,6 +342,8 @@ private:
 	Vector3 GetMoveTowards(const InputController& input, Vector3 forward, Vector3 right) const noexcept;
 
 	void MoveDebugCamera(Entity e, Vector3 moveTowards, Vector3 forward, Vector3 right, f32 speed, const InputController& input) noexcept;
+	
+	void ApplyAnimations(const InputController& input, AnimationComponent& ac);
 
 	void MovePlayer(Entity e, PlayerControllerComponent& player, Vector3 moveTowards, Vector3 forward,
 		RigidbodyComponent& rb, f32 speed, InputController& input);
