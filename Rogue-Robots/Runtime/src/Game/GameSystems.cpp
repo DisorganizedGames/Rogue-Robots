@@ -74,13 +74,13 @@ void PlayerMovementSystem::OnEarlyUpdate(
 		return;
 	}
 
-	MovePlayer(e, player, moveTowards, forward, rigidbody, playerStats.speed, input);
+	MovePlayer(e, player, moveTowards, forward, rigidbody, playerStats.speed, input, ac);
 	ApplyAnimations(input, ac);
 
 	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
 	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
 
-	// Place camera 0.4 units above the player transform
+	// Place camera 0.8 units above the player transform
 	auto pos = transform.GetPosition() + Vector3(0, 0.7f, 0);
 	camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
 	cameraTransform.worldMatrix = camera.viewMatrix.Invert();
@@ -184,7 +184,7 @@ void PlayerMovementSystem::MoveDebugCamera(Entity e, Vector3 moveTowards, Vector
 }
 
 void PlayerMovementSystem::MovePlayer(Entity, PlayerControllerComponent& player, Vector3 moveTowards, Vector3 forward,
-	RigidbodyComponent& rb, f32 speed, InputController& input)
+	RigidbodyComponent& rb, f32 speed, InputController& input, AnimationComponent& ac)
 {	
 	auto forwardDisparity = moveTowards.Dot(forward);
 	speed = forwardDisparity < -0.01f ? speed / 2.f : speed;
@@ -199,6 +199,17 @@ void PlayerMovementSystem::MovePlayer(Entity, PlayerControllerComponent& player,
 	{
 		player.jumping = true;
 		rb.linearVelocity.y = 6.f;
+		// Simple jump animation, not really fitting with current jump movement
+		{
+			static constexpr i8 JUMP_ANIMATION_ID = 4;
+			auto& setter = ac.animSetters[ac.addedSetters];
+			setter.animationIDs[0] = JUMP_ANIMATION_ID;
+			setter.targetWeights[0] = 1.f;
+			setter.playbackRate = 0.5f; // we jump high. lower playbackrate fits better
+			setter.transitionLength = 0.1f;
+			setter.loop = false;
+			++ac.addedSetters;
+		}
 	}
 }
 

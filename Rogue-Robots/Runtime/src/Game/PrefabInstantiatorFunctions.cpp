@@ -8,7 +8,7 @@ using namespace DirectX::SimpleMath;
 std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 {
 	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
-	playerCount = 4;
+	
 	auto* scriptManager = LuaMain::GetScriptManager();
 	//// Add persistent material prefab lua
 	//{
