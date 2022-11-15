@@ -218,8 +218,6 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 	static constexpr i8 STRAFE_RIGHT = 10;
 
 	auto addedAnims = 0; 
-	if (ac.animSetters.at(0).animationIDs[0] == 0 || ac.animSetters.at(0).animationIDs[2] == 0 || ac.animSetters.at(0).animationIDs[1] == 0)
-		auto why = 889;
 	auto& setter = ac.animSetters[ac.addedSetters];
 	auto forwardBack = input.forward - input.backwards;
 	auto leftRight = input.right - input.left;

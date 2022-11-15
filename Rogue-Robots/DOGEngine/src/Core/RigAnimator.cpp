@@ -50,9 +50,9 @@ namespace DOG
 		auto& looping = group.sets[LOOPING];
 		auto& action = group.sets[ACTION];
 		
-		if (BlendFinished(group.blend, dt))
+		if (BlendFinished(groupBlends[groupIdx], dt))
 		{
-			const auto tlen = group.blend.transitionLength;
+			const auto tlen = groupBlends[groupIdx].transitionLength;
 			TransitionOutClips(action, globalTime, tlen);
 
 			if (!looping.nTargetClips)
@@ -64,16 +64,17 @@ namespace DOG
 		
 		// Update group weight
 		group.weight = UpdateBlendSpecification(groupBlends[groupIdx], dt, group.weight);
-
+		
 		u32 clipCount = 0;
 		// Update sets and set Weights
 		looping.weight = UpdateBlendSpecification(group.blend, dt, looping.weight);
-		if(looping.weight > 0.f)
-			clipCount += UpdateClipSet(looping, clipIdx, dt, true);
+		clipCount += UpdateClipSet(looping, clipIdx, dt, true);
+
+		if (clipCount == 0)
+			looping.weight = 0.01f;
 
 		action.weight = 1.f - looping.weight;
-		if(action.weight > 0.f)
-			clipCount += UpdateClipSet(action, clipIdx+clipCount, dt);
+		clipCount += UpdateClipSet(action, clipIdx+clipCount, dt);
 
 		return clipCount;
 	}
@@ -100,15 +101,15 @@ namespace DOG
 				const auto cIdx = clipIdx + count;
 				clipData[cIdx].aID = id;
 				clipData[cIdx].tick = tick;
-				clipData[cIdx].weight = weight * set.weight;
+				clipData[cIdx].weight = weight;
 				i < set.nTargetClips ?
-					targetWeightSum += weight * set.weight :
-					othersWeightSum += weight * set.weight;
+					targetWeightSum += weight :
+					othersWeightSum += weight;
 				++count, ++idx;
 			}
 			else
 			{ // Clip is deprecated, remove it
-				std::swap(clips[idx], clips[--set.nTotalClips]);
+				std::swap(clips[idx], clips[set.startClip + --set.nTotalClips]);
 			}
 		}
 
@@ -373,7 +374,6 @@ namespace DOG
 	{
 		bs.durationLeft = duration - transitionLen;
 		bs.transitionStart = globalTime;
-		bs.startWeight = startWeight;
 		bs.transitionLength = transitionLen;
 		bs.targetValue = target;
 	}
