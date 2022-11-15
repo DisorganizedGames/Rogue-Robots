@@ -35,11 +35,14 @@ namespace DOG
 		void UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
 		void UpdateSkeleton(DOG::RigAnimator& animator, const u32 offset);
 		void SetPlayerBaseStates();
+		void ResetAnimationComponent(DOG::AnimationComponent& ac);
 
 		DirectX::FXMVECTOR GetKeyValue(const std::vector<DOG::AnimationKey>& keys, const KeyType& component, f32 tick);
 
 		// Gets the S/R/T keyframe data from active animation clips in animation component
 		void ExtractClipNodeInfluences(const ClipData* pcData, const std::vector<AnimationData>& anims, const KeyType key, const u8 nClips, const u8 rigID, const u8 group);
+
+
 
 		// RIG ANIMATOR
 		void CalculateSRT(RigAnimator& ac, const u8 rigID);
@@ -50,8 +53,6 @@ namespace DOG
 		std::array<DirectX::XMVECTOR, MAX_CLIPS* NodeCount(MIXAMO_RIG_ID)> m_partialSRT{ DirectX::XMVECTOR{} };
 		std::array<DirectX::XMVECTOR, MAX_CLIPS* NodeCount(MIXAMO_RIG_ID)> m_fullbodySRT{ DirectX::XMVECTOR{} };
 	private:
-		bool m_bonesLoaded = false;
-		bool m_playerAnimatorsLoaded = false;
 		static constexpr i32 ROOT_NODE = 0;
 		static constexpr i32 ROOT_JOINT = 2;
 		static constexpr DirectX::XMFLOAT3 m_baseScale = { 1.f, 1.f, 1.f };

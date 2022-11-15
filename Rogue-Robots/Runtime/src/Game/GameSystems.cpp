@@ -204,10 +204,6 @@ void PlayerMovementSystem::MovePlayer(Entity, PlayerControllerComponent& player,
 
 void PlayerMovementSystem::ApplyAnimations(const InputController& input, AnimationComponent& ac)
 {
-	if (ac.addedSetters > 4)
-	{
-		ac.addedSetters = 0;
-	}
 	// Relevant Animation IDs
 	static constexpr i8 IDLE = 2;
 	static constexpr i8 RUN = 5;
@@ -235,7 +231,7 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 	{
 		const auto animation = input.left ? STRAFE_LEFT : STRAFE_RIGHT;
 
-		// Backwards + strafing right makes leg clip through each other if equal weights
+		// Backwards + strafe_right makes leg clip through each other if equal weights
 		auto weight = (forwardBack && input.backwards && input.right) ? 0.7f : 0.5f;
 
 		setter.animationIDs[addedAnims] = animation;

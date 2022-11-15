@@ -14,6 +14,7 @@ namespace DOG
 		m_imguiPos.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_imguiRot.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_vsJoints.assign(300, {});
+
 		DOG::ImGuiMenuLayer::RegisterDebugWindow("RigJourno", std::bind(&AnimationManager::SpawnControlWindow, this, std::placeholders::_1), false, std::make_pair(DOG::Key::LCtrl, DOG::Key::A));
 	};
 
@@ -21,6 +22,14 @@ namespace DOG
 	{
 		ImGuiMenuLayer::UnRegisterDebugWindow("RigJourno");
 	};
+
+	void AnimationManager::ResetAnimationComponent(DOG::AnimationComponent& ac)
+	{
+		for (i32 i = 0; i < ac.addedSetters; ++i)
+			for (i32 j = 0; j < ac.MAX_SETTERS; ++j)
+				ac.animSetters[i].animationIDs[j] = NO_ANIMATION;
+		ac.addedSetters = 0;
+	}
 
 	void AnimationManager::UpdateJoints()
 	{
@@ -42,6 +51,11 @@ namespace DOG
 						m_rigs.push_back(&model->animation);
 						SetPlayerBaseStates();
 					}
+				});
+			// Need to reset animationComponents that were set from other systems before rigs were loaded 
+			EntityManager::Get().Collect<AnimationComponent>().Do([&](AnimationComponent& aC)
+				{
+					ResetAnimationComponent(aC);
 				});
 			return;
 		}
@@ -488,7 +502,6 @@ namespace DOG
 			m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
 			m_playerRigAnimators[i].ProcessAnimationComponent(baseAc);
 		}
-		m_playerAnimatorsLoaded = true;
 	}
 
 	// Temporary but still useful debug code, magic variables galore
