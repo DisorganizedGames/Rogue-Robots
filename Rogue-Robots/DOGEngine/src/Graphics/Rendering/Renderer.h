@@ -287,6 +287,12 @@ namespace DOG::gfx
 		std::unique_ptr<RenderEffect> m_tiledLightCuller;
 		std::unique_ptr<RenderEffect> m_tiledLightCullerVisualization;
 
+		// Game related post process passes
+		std::unique_ptr<RenderEffect> m_damageDiskEffect;
+		std::unique_ptr<RenderEffect> m_bloodViewEffect;
+
+
+
 		u32 m_shadowMapCapacity{ 1 };
 
 		

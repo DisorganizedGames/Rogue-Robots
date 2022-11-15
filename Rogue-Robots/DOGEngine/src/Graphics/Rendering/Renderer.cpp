@@ -31,6 +31,7 @@
 #include "RenderEffects/Bloom.h"
 #include "VFX/ParticleBackend.h"
 #include "RenderEffects/TiledLightCullingEffect.h"
+#include "RenderEffects/DamageDiskEffect.h"
 
 #include "ImGUI/imgui.h"
 #include "../../Core/ImGuiMenuLayer.h"
@@ -283,6 +284,7 @@ namespace DOG::gfx
 		m_tiledLightCuller = std::make_unique<TiledLightCullingEffect>(m_rgResMan.get(), m_globalEffectData, m_renderWidth, m_renderHeight, 60.0f);
 		m_tiledLightCullerVisualization = std::make_unique<TiledLightCullingVisualizationEffect>(m_rgResMan.get(), m_globalEffectData, m_renderWidth, m_renderHeight);
 
+		m_damageDiskEffect = std::make_unique<DamageDiskEffect>(m_globalEffectData);
 	
 		{
 			// Create 4x4 SSAO noise
@@ -829,6 +831,8 @@ namespace DOG::gfx
 					drawFunc(rd, cmdl, m_noCullWireframeDraws, localLightBufferIndex, false, true);
 				});
 		}
+
+		m_damageDiskEffect->Add(rg);
 
 		// Generate SSAO
 		{
