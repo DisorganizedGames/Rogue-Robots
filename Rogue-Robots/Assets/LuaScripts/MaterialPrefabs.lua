@@ -15,5 +15,6 @@ function MaterialPrefabs:OnStart()
 	-- Frost Effect
 	materials["FrostMaterial"] = Render:CreateMaterial({ 0.188, 0.835, 0.784}, 0.0, 0.0, { 0.0, 0.0, 0.0 })
 	materials["FrostExplosionMaterial"] = Render:CreateMaterial({ 0.2, 0.6, 0.8 }, 0.0, 0.0, { 2.0, 6.0, 8.0 })
+	materials["BulletMaterial"] = Render:CreateMaterial({ 0.2, 0.6, 0.8 }, 0.0, 0.0, { 2.0, 6.0, 8.0 })
 
 end
