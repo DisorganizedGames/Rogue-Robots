@@ -232,9 +232,8 @@ void AgentManager::DestroyLocalAgent(entity e)
 	kill.position = agentTrans.GetPosition();
 	
 	//Only host can spawn in items
-	srand(time(NULL));
 	if (kill.playerId == 0)
-		ItemManager::Get().CreateItemHost( EntityTypes((u32)Time::ElapsedTime() % u32(EntityTypes::Default)), agentTrans.GetPosition());
+		ItemManager::Get().CreateItemHost( EntityTypes(((u32)Time::ElapsedTime()+agent.id) % u32(EntityTypes::Default)), agentTrans.GetPosition());
 
 	em.DeferredEntityDestruction(e);
 }

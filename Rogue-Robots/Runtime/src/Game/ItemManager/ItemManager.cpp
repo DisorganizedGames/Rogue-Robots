@@ -67,7 +67,7 @@ void ItemManager::CreateItemClient(CreateAndDestroyEntityComponent cad)
 
 void ItemManager::DestroyAllItems()
 {
-	EntityManager::Get().Collect<NetworkId>().Do([&](entity id, NetworkId& items)
+	EntityManager::Get().Collect<NetworkId>().Do([&](entity id, NetworkId&)
 		{
 			s_entityManager.RemoveComponent<NetworkId>(id);
 			s_entityManager.DeferredEntityDestruction(id);
@@ -168,7 +168,7 @@ u32 ItemManager::CreateGrenadePickup(DirectX::SimpleMath::Vector3 position, u32 
 	if (id == 0)
 		ni.id = ++grenadeNetworkID;
 	else
-		ni.id = id;;
+		ni.id = id;
 
 	LuaMain::GetScriptManager()->AddScript(grenadeEntity, "Pickupable.lua");
 

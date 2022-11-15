@@ -15,7 +15,7 @@ NetCode::NetCode()
 	m_active = false;
 	m_startUp = false;
 	
-	m_bufferSize = sizeof(ClientsData);;
+	m_bufferSize = sizeof(ClientsData);
 	m_bufferReceiveSize = 0;
 	m_receiveBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
 	m_dataIsReadyToBeReceivedTcp = false;
