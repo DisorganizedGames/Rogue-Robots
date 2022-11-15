@@ -148,8 +148,8 @@ namespace DOG::gfx
 						{
 							if (mgr.HasComponent<ModularBlockComponent>(e))
 								m_doubleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC, false });
-							else if (EntityManager::Get().HasComponent<AnimationComponent>(e))
-								m_doubleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC, false, true, EntityManager::Get().GetComponent<AnimationComponent>(e).offset });
+							else if (EntityManager::Get().HasComponent<RigDataComponent>(e))
+								m_doubleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC, false, true, EntityManager::Get().GetComponent<RigDataComponent>(e).offset });
 							else
 								m_singleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC });
 						}
@@ -174,9 +174,9 @@ namespace DOG::gfx
 								m_renderer->SubmitMeshNoFaceCulling(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
 						}
 					}
-					else if (mgr.HasComponent<AnimationComponent>(e))
+					else if (mgr.HasComponent<RigDataComponent>(e))
 					{
-						auto offset = mgr.GetComponent<AnimationComponent>(e).offset;
+						auto offset = mgr.GetComponent<RigDataComponent>(e).offset;
 						if (!mgr.HasComponent<DontDraw>(e))
 							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
 								m_renderer->SubmitAnimatedMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC, offset);

@@ -49,6 +49,11 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		em.AddComponent<NetworkPlayerComponent>(playerI).playerId = static_cast<i8>(i);
 		em.AddComponent<InputController>(playerI);
 		em.AddComponent<PlayerAliveComponent>(playerI);
+		em.AddComponent<AnimationComponent>(playerI);
+
+		auto& ac = em.GetComponent<AnimationComponent>(playerI);
+		ac.animatorID = static_cast<i8>(i);
+
 		auto& bc = em.AddComponent<BarrelComponent>(playerI);
 		bc.type = BarrelComponent::Type::Bullet;
 		bc.maximumAmmoCapacityForType = 999'999;
@@ -64,11 +69,11 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 
 		em.AddComponent<TransformComponent>(modelEntity);
 		em.AddComponent<ModelComponent>(modelEntity, playerModels[i]);
-		em.AddComponent<AnimationComponent>(modelEntity);
+		em.AddComponent<RigDataComponent>(modelEntity);
 		em.AddComponent<ShadowReceiverComponent>(modelEntity);
 
-		auto& ac = em.GetComponent<AnimationComponent>(modelEntity);
-		ac.animatorID = static_cast<i8>(i);
+		auto& rc = em.GetComponent<RigDataComponent>(modelEntity);
+		rc.offset = i * MIXAMO_RIG.nJoints;
 
 		auto& t = em.AddComponent<ChildComponent>(modelEntity);
 		t.parent = playerI;

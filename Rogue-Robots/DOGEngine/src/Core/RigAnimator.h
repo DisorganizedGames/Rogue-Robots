@@ -177,7 +177,7 @@ namespace DOG
 
 		// Process the AnimationComponent and the Setters within, adding/modifying active clips that influences the entity
 		void ProcessAnimationComponent(AnimationComponent& ac);
-		void ProcessSetter(Setter& setter, u32 group);
+		void ProcessSetter(Setter& setter);
 
 		// Set clip data based on setter
 		void SetClip(Setter& setter, u32 setIdx, Clip& clip);

@@ -14,43 +14,61 @@ namespace DOG
 		m_imguiPos.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_imguiRot.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_vsJoints.assign(300, {});
-		ImGuiMenuLayer::RegisterDebugWindow("Animation Clip Setter", [this](bool& open) {SpawnControlWindow(open); });
+
+		DOG::ImGuiMenuLayer::RegisterDebugWindow("RigJourno", std::bind(&AnimationManager::SpawnControlWindow, this, std::placeholders::_1), false, std::make_pair(DOG::Key::LCtrl, DOG::Key::A));
 	};
 
 	AnimationManager::~AnimationManager()
 	{
-		ImGuiMenuLayer::UnRegisterDebugWindow("Animation Clip Setter");
+		ImGuiMenuLayer::UnRegisterDebugWindow("RigJourno");
 	};
+
+	void AnimationManager::ResetAnimationComponent(DOG::AnimationComponent& ac)
+	{
+		for (i32 i = 0; i < ac.addedSetters; ++i)
+			for (i32 j = 0; j < ac.MAX_SETTERS; ++j)
+				ac.animSetters[i].animationIDs[j] = NO_ANIMATION;
+		ac.addedSetters = 0;
+	}
 
 	void AnimationManager::UpdateJoints()
 	{
 		ZoneScopedN("updateJoints_ppp");
 		using namespace DirectX;
 		auto deltaTime = (f32)Time::DeltaTime();
-		//tmp debug stuff
-		//deltaTime = 0.1f;
-		//Test(deltaTime);
+
+#ifdef DEBUG
+		deltaTime = 0.05f;
+		test(deltaTime);
+#endif
+
 		if (!m_rigs.size()) {
-			EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& modelaC)
+			EntityManager::Get().Collect<ModelComponent, RigDataComponent>().Do([&](ModelComponent& modelC, RigDataComponent& rC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-					if (!m_rigs.size() && model && modelaC.rigID == MIXAMO_RIG_ID)
+					if (!m_rigs.size() && model && rC.rigID == MIXAMO_RIG_ID)
 					{
 						m_rigs.push_back(&model->animation);
 						SetPlayerBaseStates();
 					}
 				});
+			// Need to reset animationComponents that were set from other systems before rigs were loaded 
+			EntityManager::Get().Collect<AnimationComponent>().Do([&](AnimationComponent& aC)
+				{
+					ResetAnimationComponent(aC);
+				});
 			return;
 		}
 
-		EntityManager::Get().Collect<AnimationComponent>().Do([&](AnimationComponent& rAC)
+		EntityManager::Get().Collect<AnimationComponent>().Do([&](AnimationComponent& aC)
 			{
-				if (rAC.animatorID != -1)
+				if (aC.animatorID != -1)
 				{
-					auto& a = m_playerRigAnimators[rAC.animatorID];
-					rAC.offset = MIXAMO_RIG.nJoints * rAC.animatorID;
+					auto& a = m_playerRigAnimators[aC.animatorID];
+					auto offset = MIXAMO_RIG.nJoints * aC.animatorID;
 					a.Update(deltaTime);
-					UpdateSkeleton(a, rAC.offset);
+					a.ProcessAnimationComponent(aC);
+					UpdateSkeleton(a, offset);
 				}
 			});
 	}
@@ -70,15 +88,15 @@ namespace DOG
 
 		if (ImGui::BeginMenu("View"))
 		{
-			if (ImGui::MenuItem("Animation Clip Setter"))
-				open = true;
+			if (ImGui::MenuItem("RigJourno", "Ctrl+A"))
+				open ^= true;
 			ImGui::EndMenu(); // "View"
 		}
 
 		if (open)
 		{
 			ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
-			if (ImGui::Begin("Animation Clip Setter", &open))
+			if (ImGui::Begin("RigJourno", &open))
 			{
 				// for now only Mixamo rig
 				static u8 rigID = MIXAMO_RIG_ID;
@@ -484,7 +502,6 @@ namespace DOG
 			m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
 			m_playerRigAnimators[i].ProcessAnimationComponent(baseAc);
 		}
-		m_playerAnimatorsLoaded = true;
 	}
 
 	// Temporary but still useful debug code, magic variables galore

@@ -78,7 +78,7 @@ namespace DOG
                     {
                         if (DOG::Keyboard::IsKeyPressed(m.shortCut->first))
                         {
-                            m.open = true;
+                            m.open ^= true;
                             event.StopPropagation();
                             break;
                         }

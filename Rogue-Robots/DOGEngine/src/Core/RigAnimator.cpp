@@ -49,10 +49,10 @@ namespace DOG
 		auto& group = groups[groupIdx];
 		auto& looping = group.sets[LOOPING];
 		auto& action = group.sets[ACTION];
-		
-		if (BlendFinished(group.blend, dt))
+
+		if (BlendFinished(groupBlends[groupIdx], dt))
 		{
-			const auto tlen = group.blend.transitionLength;
+			const auto tlen = groupBlends[groupIdx].transitionLength;
 			TransitionOutClips(action, globalTime, tlen);
 
 			if (!looping.nTargetClips)
@@ -61,19 +61,20 @@ namespace DOG
 				ResetBlendSpecification(groupBlends[groupIdx], 0.f, group.weight, 0.f);
 			}
 		}
-		
+
 		// Update group weight
 		group.weight = UpdateBlendSpecification(groupBlends[groupIdx], dt, group.weight);
 
 		u32 clipCount = 0;
 		// Update sets and set Weights
 		looping.weight = UpdateBlendSpecification(group.blend, dt, looping.weight);
-		if(looping.weight > 0.f)
-			clipCount += UpdateClipSet(looping, clipIdx, dt, true);
+		clipCount += UpdateClipSet(looping, clipIdx, dt, true);
+
+		if (clipCount == 0)
+			looping.weight = 0.01f;
 
 		action.weight = 1.f - looping.weight;
-		if(action.weight > 0.f)
-			clipCount += UpdateClipSet(action, clipIdx+clipCount, dt);
+		clipCount += UpdateClipSet(action, clipIdx + clipCount, dt);
 
 		return clipCount;
 	}
@@ -82,7 +83,7 @@ namespace DOG
 	{
 		f32 targetWeightSum = 0.f, othersWeightSum = 0.f;
 		u32 nClips = set.nTotalClips, idx = set.startClip, count = 0;
-		
+
 		for (u32 i = 0; i < nClips; ++i)
 		{
 			auto& c = clips[idx];
@@ -95,20 +96,20 @@ namespace DOG
 			const auto id = c.aID;
 			const f32 tick = ClipTick(c, nt);
 			const f32 weight = c.currentWeight = LinearWeight(transitionTime, c.transitionLength, c.startWeight, c.targetWeight);
-			if (i < set.nTargetClips || weight > 0.f)
+			if (id != NO_ANIMATION && (i < set.nTargetClips || weight > 0.f))
 			{ // Clip contributes to pose, store pose data
 				const auto cIdx = clipIdx + count;
 				clipData[cIdx].aID = id;
 				clipData[cIdx].tick = tick;
-				clipData[cIdx].weight = weight * set.weight;
+				clipData[cIdx].weight = weight;
 				i < set.nTargetClips ?
-					targetWeightSum += weight * set.weight :
-					othersWeightSum += weight * set.weight;
+					targetWeightSum += weight :
+					othersWeightSum += weight;
 				++count, ++idx;
 			}
 			else
 			{ // Clip is deprecated, remove it
-				std::swap(clips[idx], clips[--set.nTotalClips]);
+				std::swap(clips[idx], clips[set.startClip + --set.nTotalClips]);
 			}
 		}
 
@@ -120,7 +121,7 @@ namespace DOG
 			for (u32 i = set.nTargetClips; i < set.nTotalClips; ++i, ++idx)
 				clipData[idx].weight *= factor;
 		}
-		else if(targetWeightSum < 1.f && targetWeightSum > 0.f)
+		else if (targetWeightSum < 1.f && targetWeightSum > 0.f)
 		{
 			idx = clipIdx;
 			for (u32 i = 0; i < set.nTargetClips; ++i, ++idx)
@@ -130,7 +131,7 @@ namespace DOG
 		idx = clipIdx;
 		for (u32 i = 0; i < set.nTotalClips; ++i, ++idx)
 			clipData[idx].weight *= set.weight;
-		
+
 		return count;
 	}
 
@@ -139,7 +140,7 @@ namespace DOG
 		auto parent = groups[group].parent;
 		const auto prio = groups[group].priority;
 		const auto weight = groups[group].weight;
-		
+
 		static constexpr i16 origin = -1;
 		// Travel group tree, if a parent group has higher prio group has no influence
 		while (parent != origin)
@@ -164,7 +165,7 @@ namespace DOG
 		{
 			auto& setter = ac.animSetters[i];
 
-			ProcessSetter(setter, i);
+			ProcessSetter(setter);
 			ResetSetter(setter);
 		}
 		ac.addedSetters = 0;
@@ -193,8 +194,9 @@ namespace DOG
 		return clipCount;
 	}
 
-	void RigAnimator::ProcessSetter(Setter& setter, u32 groupIdx)
+	void RigAnimator::ProcessSetter(Setter& setter)
 	{
+		const auto groupIdx = setter.group;
 		auto& group = groups[groupIdx];
 		// Normalize weights and get number of clips in setter
 		u32 clipCount = PreProcessSetter(setter);
@@ -215,7 +217,7 @@ namespace DOG
 
 		// Add/modify the target
 		AddTargetSet(set, setter, clipCount);
-		
+
 		// ChangeBlendSpec if Action set was added as target
 		if (!setter.loop)
 			SetReturningBlendSpec(group.blend, setter.transitionLength, 0.f, clips[group.sets[ACTION].startClip].duration);
@@ -229,14 +231,21 @@ namespace DOG
 		u32 idx = set.startClip;
 		for (u32 i = 0; i < set.nTargetClips; ++i, ++idx)
 		{
+			if (i == set.nTotalClips)
+				break;
 			auto& c = clips[idx];
-			c.startWeight = c.currentWeight * set.weight; // this is poop
-			c.targetWeight = 0.f;
-			c.transitionStart = globalTime;
-			c.transitionLength = setter.transitionLength;
+			if (!setter.loop && c.currentWeight == c.targetWeight) // clip finished
+				c.aID = -1;
+			else
+			{
+				c.startWeight = c.currentWeight * set.weight; // this is poop
+				c.targetWeight = 0.f;
+				c.transitionStart = globalTime;
+				c.transitionLength = setter.transitionLength;
 
-			if (i == 0 && setter.loop) // should make flag 'matching' instead
-				startTime = c.normalizedTime;
+				if (i == 0 && setter.loop) // should make flag 'matching' instead
+					startTime = c.normalizedTime;
+			}
 		}
 
 		// Set new target clips
@@ -254,7 +263,7 @@ namespace DOG
 			else
 			{ // Clip exists, modify it
 				ModifyClip(clips[clip], setter, i);
-				std::swap(clips[set.startClip+i], clips[clip]);
+				std::swap(clips[set.startClip + i], clips[clip]);
 			}
 		}
 	}
