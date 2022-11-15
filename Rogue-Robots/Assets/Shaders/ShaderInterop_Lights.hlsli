@@ -7,6 +7,13 @@ struct ShaderInterop_Range
     uint count;
 };
 
+#define LOCAL_LIGHT_MAX_SIZE 31
+struct ShaderInterop_LocalLightBuffer
+{
+    uint count;
+    uint lightIndices[LOCAL_LIGHT_MAX_SIZE];
+};
+
 struct ShaderInterop_LightsMetadata
 {
     // Point lights (statics, infreqs, dynamics)

@@ -8,7 +8,9 @@ namespace DOG
 		cone,
 		prism,
 		sphere,
-		sheet
+		sheet,
+		triangle,
+		quadrilateral,
 	};
 
 	struct ImportedMaterial

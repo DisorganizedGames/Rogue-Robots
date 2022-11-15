@@ -60,7 +60,11 @@ struct PushConstantElement
     uint spotlightArrayStructureIndex;
     uint shadowMapDepthIndex;
     uint wireframe;
-    uint isLit;
+    uint debugSettingsFlag;
+    uint jointOffset;
+    uint width;
+    uint height;
+    uint localLightBuffersIndex;
 };
 
 CONSTANTS(g_constants, PushConstantElement)
@@ -114,6 +118,35 @@ float CalculateShadowFactor(Texture2DArray shadowMaps, uint idx, float3 worldPos
     return shadowFactor;
 }
 
+
+float3 CalculatePointLightContribution(float3 N, float3 V, float3 Pos, float3 F0, float metallicInput, float roughnessInput, float3 albedoInput, ShaderInterop_PointLight pointLight)
+{
+    // calculate per-light radiance
+    float3 L = normalize(pointLight.position.xyz - Pos);
+    float3 H = normalize(V + L);
+    float distance = length(pointLight.position.xyz - Pos);
+    float attenuation = 1.0 / (distance * distance);
+    float3 radiance = pointLight.color.xyz * attenuation * pointLight.strength;
+
+    // cook-torrance brdf
+    float NDF = DistributionGGX(N, H, roughnessInput);
+    float G = GeometrySmith(N, V, L, roughnessInput);
+    float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
+
+    // energy conservation (diff/spec)
+    float3 kS = F;
+    float3 kD = float3(1.f, 1.f, 1.f) - kS;
+    kD *= 1.0 - metallicInput;
+
+    float3 numerator = NDF * G * F;
+    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+    float3 specular = numerator / max(denominator, 0.001);
+
+    // add to outgoing radiance Lo
+    float NdotL = max(dot(N, L), 0.0);
+    return (kD * albedoInput / 3.1415f + specular) * radiance * NdotL;
+}
+
 struct PS_OUT
 {
     float4 color : SV_TARGET0;
@@ -161,11 +194,12 @@ PS_OUT main(VS_OUT input)
         albedoAlpha = albedoInput4.w;
     }
     
-    if (!g_constants.isLit)
+    if (!(g_constants.debugSettingsFlag & DEBUG_SETTING_LIT))
     {
         output.color = float4(albedoInput, 1.f);
         return output;
     }
+    
 
     float metallicInput = mat.metallicFactor;
     float roughnessInput = mat.roughnessFactor;
@@ -233,73 +267,64 @@ PS_OUT main(VS_OUT input)
     
     float3 Lo = float3(0.f, 0.f, 0.f);
     
-    // calculate static point lights
     StructuredBuffer<ShaderInterop_PointLight> pointLights = ResourceDescriptorHeap[gd.pointLightTable];
-    for (int i = 0; i < lightsMD.staticPointLightRange.count; ++i)
+    
+    float3 lightHeatMapValue = float3(0, 0, 0);
+    
+    if (g_constants.debugSettingsFlag & DEBUG_SETTING_LIGHT_CULLING)
     {
-        ShaderInterop_PointLight pointLight = pointLights[pfData.pointLightOffsets.staticOffset + i];
-        if (pointLight.strength == 0)
-            continue;
+        uint2 tileCoord = input.pos.xy / TILED_GROUP_SIZE;
+        uint tileIndex = tileCoord.x + (g_constants.width + TILED_GROUP_SIZE - 1) / TILED_GROUP_SIZE * tileCoord.y;
+        StructuredBuffer<ShaderInterop_LocalLightBuffer> localLightBuffers = ResourceDescriptorHeap[g_constants.localLightBuffersIndex];
+        if (localLightBuffers[tileIndex].count == 1)
+        {
+            lightHeatMapValue = float3(0, 0, 1);
 
-        // calculate per-light radiance
-        float3 L = normalize(pointLight.position.xyz - input.wsPos);
-        float3 H = normalize(V + L);
-        float distance = length(pointLight.position.xyz - input.wsPos);
-        float attenuation = 1.0 / (distance * distance);
-        float3 radiance = pointLight.color.xyz * attenuation * pointLight.strength;
+        }
+        else if (localLightBuffers[tileIndex].count == 2)
+        {
+            lightHeatMapValue = float3(1, 1, 0);
+        }
+        else if (localLightBuffers[tileIndex].count > 2)
+        {
+            lightHeatMapValue = float3(1, 0, 0);
+        }
+    
+        // calculate static and dynamic point lights
+        for (int i = 0; i < localLightBuffers[tileIndex].count; ++i)
+        {
+            ShaderInterop_PointLight pointLight = pointLights[localLightBuffers[tileIndex].lightIndices[i]];
+            Lo += CalculatePointLightContribution(N, V, input.wsPos, F0, metallicInput, roughnessInput, albedoInput, pointLight);
+        }
         
-        // cook-torrance brdf
-        float NDF = DistributionGGX(N, H, roughnessInput);
-        float G = GeometrySmith(N, V, L, roughnessInput);
-        float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
-        
-        // energy conservation (diff/spec)
-        float3 kS = F;
-        float3 kD = float3(1.f, 1.f, 1.f) - kS;
-        kD *= 1.0 - metallicInput;
-        
-        float3 numerator = NDF * G * F;
-        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-        float3 specular = numerator / max(denominator, 0.001);
-            
-        // add to outgoing radiance Lo
-        float NdotL = max(dot(N, L), 0.0);
-        Lo += (kD * albedoInput / 3.1415f + specular) * radiance * NdotL;
-        
+        if (g_constants.debugSettingsFlag & DEBUG_SETTING_LIGHT_CULLING_VISUALIZATION && localLightBuffers[tileIndex].count >= LOCAL_LIGHT_MAX_SIZE)
+        {
+            lightHeatMapValue = float3(1, 0, 1);
+        }
     }
-
-    // calculate dyn point lights
-    for (int i = 0; i < lightsMD.dynPointLightRange.count; ++i)
+    else
     {
-        ShaderInterop_PointLight pointLight = pointLights[pfData.pointLightOffsets.dynOffset + i];
-        if (pointLight.strength == 0)
-            continue;
+        // calculate static point lights
+        for (int i = 0; i < lightsMD.staticPointLightRange.count; ++i)
+        {
+            ShaderInterop_PointLight pointLight = pointLights[pfData.pointLightOffsets.staticOffset + i];
+            if (pointLight.strength == 0)
+                continue;
+            Lo += CalculatePointLightContribution(N, V, input.wsPos, F0, metallicInput, roughnessInput, albedoInput, pointLight);
+        }
 
-        // calculate per-light radiance
-        float3 L = normalize(pointLight.position.xyz - input.wsPos);
-        float3 H = normalize(V + L);
-        float distance = length(pointLight.position.xyz - input.wsPos);
-        float attenuation = 1.0 / (distance * distance);
-        float3 radiance = pointLight.color.xyz * attenuation * pointLight.strength;
-        
-        // cook-torrance brdf
-        float NDF = DistributionGGX(N, H, roughnessInput);
-        float G = GeometrySmith(N, V, L, roughnessInput);
-        float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
-        
-        // energy conservation (diff/spec)
-        float3 kS = F;
-        float3 kD = float3(1.f, 1.f, 1.f) - kS;
-        kD *= 1.0 - metallicInput;
-        
-        float3 numerator = NDF * G * F;
-        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-        float3 specular = numerator / max(denominator, 0.001);
-            
-        // add to outgoing radiance Lo
-        float NdotL = max(dot(N, L), 0.0);
-        Lo += (kD * albedoInput / 3.1415f + specular) * radiance * NdotL;
+        // calculate dyn point lights
+        for (int i = 0; i < lightsMD.dynPointLightRange.count; ++i)
+        {
+            ShaderInterop_PointLight pointLight = pointLights[pfData.pointLightOffsets.dynOffset + i];
+            if (pointLight.strength == 0)
+                continue;
+            Lo += CalculatePointLightContribution(N, V, input.wsPos, F0, metallicInput, roughnessInput, albedoInput, pointLight);
+        }
     }
+    
+    
+    
     
     // calculate static spot lights
     //StructuredBuffer<ShaderInterop_SpotLight> spotLights = ResourceDescriptorHeap[gd.spotLightTable];
@@ -442,6 +467,10 @@ PS_OUT main(VS_OUT input)
     float3 hdr = amb + Lo;
     
     output.color = float4(hdr, albedoAlpha);
+    if (g_constants.debugSettingsFlag & DEBUG_SETTING_LIGHT_CULLING_VISUALIZATION && g_constants.debugSettingsFlag & DEBUG_SETTING_LIGHT_CULLING)
+    {
+        output.color.xyz = lerp(output.color.xyz, lightHeatMapValue, 0.5f);
+    }
     return output;
 }
 

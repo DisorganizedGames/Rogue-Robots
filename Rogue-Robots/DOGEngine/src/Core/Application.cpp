@@ -486,7 +486,16 @@ namespace DOG
 					gfxChanged = true;
 				}
 
+				if (ImGui::SliderFloat("Pointlight cutoff factor", &m_specification.graphicsSettings.pointLightCullFactor, 0.0f, 100.0f))
+					gfxChanged = true;
+
 				if (ImGui::Checkbox("Lit", &m_specification.graphicsSettings.lit))
+					gfxChanged = true;
+
+				if (ImGui::Checkbox("Light culling", &m_specification.graphicsSettings.lightCulling))
+					gfxChanged = true;
+
+				if (ImGui::Checkbox("Visualize light culling", &m_specification.graphicsSettings.visualizeLightCulling))
 					gfxChanged = true;
 
 				if (gfxChanged)

@@ -3,6 +3,10 @@ namespace DOG
 {
 	enum class WindowMode : uint8_t { Windowed = 0, FullScreen };
 
+	#define DEBUG_SETTING_LIT 1
+	#define DEBUG_SETTING_LIGHT_CULLING 2
+	#define DEBUG_SETTING_LIGHT_CULLING_VISUALIZATION 4
+
 	struct GraphicsSettings
 	{
 		WindowMode windowMode = WindowMode::Windowed;
@@ -12,7 +16,9 @@ namespace DOG
 		bool bloom = true;
 		float bloomThreshold = 0.5f;
 		float gamma = 2.22f;
-
+		float pointLightCullFactor = 60.0f; // Find a nice value or a better solution
+		bool lightCulling = true;
+		bool visualizeLightCulling = false;
 		bool ssao{ true };
 #if defined _DEBUG
 		bool lit{ false };

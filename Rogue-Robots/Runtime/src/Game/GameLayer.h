@@ -79,6 +79,7 @@ private:
 	SceneComponent::Type m_selectedScene = SceneComponent::Type::TunnelRoom2Scene;
 	std::unique_ptr<Scene> m_testScene;
 	std::unique_ptr<Scene> m_mainScene;
+	std::unique_ptr<Scene> m_lightScene;
 	std::vector<u32> m_shapes;
 	DOG::EntityManager& m_entityManager;
 	std::vector<std::shared_ptr<LuaInterface>> m_luaInterfaces;

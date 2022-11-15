@@ -47,6 +47,7 @@ struct SceneComponent
 		TunnelRoom1Scene,
 		TunnelRoom2Scene,
 		TunnelRoom3Scene,
+		LightScene,
 	};
 	SceneComponent(Type scene) : scene(scene) {}
 	Type scene;
@@ -221,4 +222,9 @@ struct DespawnComponent
 		despawnTimer = despawnTime + DOG::Time::ElapsedTime();
 	};
 	f64 despawnTimer = 0.0f;
+};
+
+struct SphereComponent
+{
+	float radius;
 };

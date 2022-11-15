@@ -1,6 +1,12 @@
 #pragma once
 #include "ShaderInterop_Base.h"
 
+#define TILED_GROUP_SIZE 16
+
+#define DEBUG_SETTING_LIT 1
+#define DEBUG_SETTING_LIGHT_CULLING 2
+#define DEBUG_SETTING_LIGHT_CULLING_VISUALIZATION 4
+
 /*
     For non-changing structures derived on renderer startup
 */

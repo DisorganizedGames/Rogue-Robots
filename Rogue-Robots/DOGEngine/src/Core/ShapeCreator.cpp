@@ -5,7 +5,7 @@
 
 namespace DOG
 {
-	ShapeCreator::ShapeCreator(const Shape shape, u32 longDiv, u32 latDiv)
+	ShapeCreator::ShapeCreator(const Shape shape, u32 longDiv, u32 latDiv, float radius)
 	{
 		m_loadedModel = std::make_shared<ImportedModel>();
 
@@ -15,7 +15,7 @@ namespace DOG
 			MakeCone(longDiv);
 			break;
 		case Shape::sphere:
-			MakeSphere(latDiv, longDiv);
+			MakeSphere(latDiv, longDiv, radius);
 			break;
 		case Shape::prism:
 			MakePrism(longDiv);
@@ -24,6 +24,25 @@ namespace DOG
 			MakeSheet(latDiv, longDiv);
 			break;
 		default:
+			assert(false);
+			break;
+		}
+	}
+
+	ShapeCreator::ShapeCreator(const Shape shape, const std::vector<DirectX::SimpleMath::Vector3>& vertexPoints)
+	{
+		m_loadedModel = std::make_shared<ImportedModel>();
+
+		switch (shape)
+		{
+		case Shape::triangle:
+			MakeTriangle(vertexPoints);
+			break;
+		case Shape::quadrilateral:
+			MakeQuadrilateral(vertexPoints);
+			break;
+		default:
+			assert(false);
 			break;
 		}
 	}
@@ -233,6 +252,128 @@ namespace DOG
 		m_loadedModel->materials.push_back({});
 	}
 
+	void ShapeCreator::MakeTriangle(const std::vector<DirectX::SimpleMath::Vector3>& vertexPoints)
+	{
+		using namespace DirectX;
+		assert(vertexPoints.size() == 3);
+		m_loadedModel->mesh.vertexData[VertexAttribute::Position] = {};
+		m_loadedModel->mesh.vertexData[VertexAttribute::Normal] = {};
+		m_loadedModel->mesh.vertexData[VertexAttribute::UV] = {};
+		m_loadedModel->mesh.vertexData[VertexAttribute::Tangent] = {};
+
+		std::vector<aiVector3D> positions, normals, tangents;
+		std::vector<aiVector2D> uvs;
+		std::vector<u32>& indices = m_loadedModel->mesh.indices;
+		std::vector<SubmeshMetadata>& submeshes = m_loadedModel->submeshes;
+
+		aiVector3D pos;
+		pos.x = vertexPoints[0].x; pos.y = vertexPoints[0].y; pos.z = vertexPoints[0].z;
+		positions.push_back(pos);
+		pos.x = vertexPoints[1].x; pos.y = vertexPoints[1].y; pos.z = vertexPoints[1].z;
+		positions.push_back(pos);
+		pos.x = vertexPoints[2].x; pos.y = vertexPoints[2].y; pos.z = vertexPoints[2].z;
+		positions.push_back(pos);
+
+		uvs.emplace_back(0.0f, 0.0f);
+		uvs.emplace_back(1.0f, 0.0f);
+		uvs.emplace_back(1.0f, 1.0f);
+
+		indices.push_back(0);
+		indices.push_back(1);
+		indices.push_back(2);
+
+
+		// Set Normals
+		SetNormals(positions, indices, normals);
+
+		// Set Tangents
+		for (size_t i = 0; i < positions.size(); ++i)
+			tangents.push_back({ 1.0f, 1.0f, 1.0f });
+
+		SubmeshMetadata submesh_md{};
+		submesh_md.vertexStart = 0;
+		submesh_md.vertexCount = (u32)positions.size();
+		submesh_md.indexStart = 0;
+		submesh_md.indexCount = (u32)indices.size();
+		submeshes.push_back(submesh_md);
+
+		m_loadedModel->mesh.vertexData[VertexAttribute::Position].resize(positions.size() * sizeof(positions[0]));
+		m_loadedModel->mesh.vertexData[VertexAttribute::UV].resize(uvs.size() * sizeof(uvs[0]));
+		m_loadedModel->mesh.vertexData[VertexAttribute::Normal].resize(normals.size() * sizeof(normals[0]));
+		m_loadedModel->mesh.vertexData[VertexAttribute::Tangent].resize(tangents.size() * sizeof(tangents[0]));
+
+		// Copy to standardized buffers
+		std::memcpy(m_loadedModel->mesh.vertexData[VertexAttribute::Position].data(), positions.data(), positions.size() * sizeof(positions[0]));
+		std::memcpy(m_loadedModel->mesh.vertexData[VertexAttribute::UV].data(), uvs.data(), uvs.size() * sizeof(uvs[0]));
+		std::memcpy(m_loadedModel->mesh.vertexData[VertexAttribute::Normal].data(), normals.data(), normals.size() * sizeof(normals[0]));
+		std::memcpy(m_loadedModel->mesh.vertexData[VertexAttribute::Tangent].data(), tangents.data(), tangents.size() * sizeof(tangents[0]));
+		m_loadedModel->materials.push_back({});
+	}
+
+	void ShapeCreator::MakeQuadrilateral(const std::vector<DirectX::SimpleMath::Vector3>& vertexPoints)
+	{
+		using namespace DirectX;
+		assert(vertexPoints.size() == 4);
+		m_loadedModel->mesh.vertexData[VertexAttribute::Position] = {};
+		m_loadedModel->mesh.vertexData[VertexAttribute::Normal] = {};
+		m_loadedModel->mesh.vertexData[VertexAttribute::UV] = {};
+		m_loadedModel->mesh.vertexData[VertexAttribute::Tangent] = {};
+
+		std::vector<aiVector3D> positions, normals, tangents;
+		std::vector<aiVector2D> uvs;
+		std::vector<u32>& indices = m_loadedModel->mesh.indices;
+		std::vector<SubmeshMetadata>& submeshes = m_loadedModel->submeshes;
+
+		aiVector3D pos;
+		pos.x = vertexPoints[0].x; pos.y = vertexPoints[0].y; pos.z = vertexPoints[0].z;
+		positions.push_back(pos);
+		pos.x = vertexPoints[1].x; pos.y = vertexPoints[1].y; pos.z = vertexPoints[1].z;
+		positions.push_back(pos);
+		pos.x = vertexPoints[2].x; pos.y = vertexPoints[2].y; pos.z = vertexPoints[2].z;
+		positions.push_back(pos);
+		pos.x = vertexPoints[3].x; pos.y = vertexPoints[3].y; pos.z = vertexPoints[3].z;
+		positions.push_back(pos);
+
+		uvs.emplace_back(0.0f, 0.0f);
+		uvs.emplace_back(1.0f, 0.0f);
+		uvs.emplace_back(1.0f, 1.0f);
+		uvs.emplace_back(0.0f, 1.0f);
+
+		indices.push_back(0);
+		indices.push_back(1);
+		indices.push_back(2);
+		indices.push_back(0);
+		indices.push_back(2);
+		indices.push_back(3);
+
+
+		// Set Normals
+		SetNormals(positions, indices, normals);
+
+		// Set Tangents
+		for (size_t i = 0; i < positions.size(); ++i)
+			tangents.push_back({ 1.0f, 1.0f, 1.0f });
+
+		SubmeshMetadata submesh_md{};
+		submesh_md.vertexStart = 0;
+		submesh_md.vertexCount = (u32)positions.size();
+		submesh_md.indexStart = 0;
+		submesh_md.indexCount = (u32)indices.size();
+		submeshes.push_back(submesh_md);
+
+		m_loadedModel->mesh.vertexData[VertexAttribute::Position].resize(positions.size() * sizeof(positions[0]));
+		m_loadedModel->mesh.vertexData[VertexAttribute::UV].resize(uvs.size() * sizeof(uvs[0]));
+		m_loadedModel->mesh.vertexData[VertexAttribute::Normal].resize(normals.size() * sizeof(normals[0]));
+		m_loadedModel->mesh.vertexData[VertexAttribute::Tangent].resize(tangents.size() * sizeof(tangents[0]));
+
+		// Copy to standardized buffers
+		std::memcpy(m_loadedModel->mesh.vertexData[VertexAttribute::Position].data(), positions.data(), positions.size() * sizeof(positions[0]));
+		std::memcpy(m_loadedModel->mesh.vertexData[VertexAttribute::UV].data(), uvs.data(), uvs.size() * sizeof(uvs[0]));
+		std::memcpy(m_loadedModel->mesh.vertexData[VertexAttribute::Normal].data(), normals.data(), normals.size() * sizeof(normals[0]));
+		std::memcpy(m_loadedModel->mesh.vertexData[VertexAttribute::Tangent].data(), tangents.data(), tangents.size() * sizeof(tangents[0]));
+		m_loadedModel->materials.push_back({});
+	}
+
 	void ShapeCreator::MakeSheet(u32 xDiv, u32 zDiv)
 	{
 		using namespace DirectX;
@@ -326,7 +467,7 @@ namespace DOG
 		m_loadedModel->materials.push_back({});
 	}
 
-	void ShapeCreator::MakeSphere(u32 latDiv, u32 longDiv)
+	void ShapeCreator::MakeSphere(u32 latDiv, u32 longDiv, float radius)
 	{
 		using namespace DirectX;
 		m_loadedModel->mesh.vertexData[VertexAttribute::Position] = {};
@@ -339,8 +480,7 @@ namespace DOG
 		std::vector<u32>& indices = m_loadedModel->mesh.indices;
 		std::vector<SubmeshMetadata>& submeshes = m_loadedModel->submeshes;
 
-		static constexpr f32 radius = 1.0f;
-		static const auto base = XMVectorSet(0.0f, 0.0f, radius, 0.0f);
+		const auto base = XMVectorSet(0.0f, 0.0f, radius, 0.0f);
 		const f32 lattitudeAngle = XM_PI / latDiv;
 		const f32 longitudeAngle = XM_2PI / longDiv;
 

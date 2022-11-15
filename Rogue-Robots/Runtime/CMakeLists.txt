@@ -23,7 +23,10 @@ set(SourceFiles
 	"src/Game/TunnelScenes.h" "src/Game/TunnelScenes.cpp"
 	"src/Game/TurretSystems.h" "src/Game/TurretSystems.cpp"
 	"src/Game/LoadSplitModels.h" "src/Game/LoadSplitModels.cpp"
-	 "src/Game/ItemManager/ItemManager.h" "src/Game/ItemManager/ItemManager.cpp")
+	"src/Game/ItemManager/ItemManager.h" "src/Game/ItemManager/ItemManager.cpp"
+	"src/Game/LightScene.h" "src/Game/LightScene.cpp"
+	"src/Game/FakeComputeLightCulling.h" "src/Game/FakeComputeLightCulling.cpp"
+	)
 
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")
