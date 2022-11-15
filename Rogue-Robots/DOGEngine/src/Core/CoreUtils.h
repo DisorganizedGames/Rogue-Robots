@@ -12,6 +12,7 @@ namespace DOG
 		bool bloom = true;
 		float bloomThreshold = 0.5f;
 		float gamma = 2.22f;
+		float pointLightCullFactor = 60.0f; // Find a nice value or a better solution
 		bool lightCulling = true;
 		bool visualizeLightCulling = false;
 		bool ssao{ true };

@@ -8,8 +8,8 @@
 
 namespace DOG::gfx
 {
-	TiledLightCullingEffect::TiledLightCullingEffect(RGResourceManager* resMan, GlobalEffectData& globalEffectData, u32 renderResX, u32 renderResY)
-		: RenderEffect(globalEffectData), m_resMan(resMan), m_width(renderResX), m_height(renderResY)
+	TiledLightCullingEffect::TiledLightCullingEffect(RGResourceManager* resMan, GlobalEffectData& globalEffectData, u32 renderResX, u32 renderResY, float pointLightCullFactor)
+		: RenderEffect(globalEffectData), m_resMan(resMan), m_width(renderResX), m_height(renderResY), m_pointLightCullFactor(pointLightCullFactor)
 	{
 		m_threadGroupCountX = m_width / computeGroupSize + 1 * static_cast<bool>(m_width % computeGroupSize);
 		m_threadGroupCountY = m_height / computeGroupSize + 1 * static_cast<bool>(m_height % computeGroupSize);
@@ -51,14 +51,16 @@ namespace DOG::gfx
 			},
 			[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)		// Execute
 			{
-
+				u32 plCullFactor = *((u32*)&m_pointLightCullFactor);
 				rd->Cmd_SetPipeline(cmdl, m_compPipeline);
 				auto args = ShaderArgs()
 					.AppendConstant(m_globalEffectData.globalDataDescriptor)
 					.AppendConstant(*m_globalEffectData.perFrameTableOffset)
 					.AppendConstant(resources.GetView(passData.localLightBuffer))
 					.AppendConstant(m_width)
-					.AppendConstant(m_height);
+					.AppendConstant(m_height)
+					.AppendConstant(plCullFactor);
+
 				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
 
 
@@ -70,9 +72,13 @@ namespace DOG::gfx
 			});
 	}
 
-	void TiledLightCullingEffect::SetGraphicsSettings(const GraphicsSettings&)
+	void TiledLightCullingEffect::SetGraphicsSettings(const GraphicsSettings& settings)
 	{
-
+		m_width = settings.renderResolution.x;
+		m_height = settings.renderResolution.y;
+		m_threadGroupCountX = m_width / computeGroupSize + 1 * static_cast<bool>(m_width % computeGroupSize);
+		m_threadGroupCountY = m_height / computeGroupSize + 1 * static_cast<bool>(m_height % computeGroupSize);
+		m_pointLightCullFactor = settings.pointLightCullFactor;
 	}
 
 

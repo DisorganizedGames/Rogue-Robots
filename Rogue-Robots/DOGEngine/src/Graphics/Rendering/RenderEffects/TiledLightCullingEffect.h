@@ -12,7 +12,7 @@ namespace DOG::gfx
 	class TiledLightCullingEffect : public RenderEffect
 	{
 	public:
-		TiledLightCullingEffect(RGResourceManager* resMan, GlobalEffectData& globalEffectData, u32 renderResX, u32 renderResY);
+		TiledLightCullingEffect(RGResourceManager* resMan, GlobalEffectData& globalEffectData, u32 renderResX, u32 renderResY, float pointLightCullFactor);
 		~TiledLightCullingEffect();
 		void Add(RenderGraph& rg) override;
 		void SetGraphicsSettings(const GraphicsSettings& settings) override;
@@ -34,6 +34,7 @@ namespace DOG::gfx
 
 		u32 m_width;
 		u32 m_height;
+		float m_pointLightCullFactor; // This is a temporary solution to control light culling.
 
 		Pipeline m_compPipeline;
 

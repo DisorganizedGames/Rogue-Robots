@@ -280,7 +280,7 @@ namespace DOG::gfx
 		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
 		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
 		m_bloomEffect = std::make_unique<Bloom>(m_rgResMan.get(), m_globalEffectData, m_dynConstants.get(), m_renderWidth, m_renderHeight);
-		m_tiledLightCuller = std::make_unique<TiledLightCullingEffect>(m_rgResMan.get(), m_globalEffectData, m_renderWidth, m_renderHeight);
+		m_tiledLightCuller = std::make_unique<TiledLightCullingEffect>(m_rgResMan.get(), m_globalEffectData, m_renderWidth, m_renderHeight, 60.0f);
 		m_tiledLightCullerVisualization = std::make_unique<TiledLightCullingVisualizationEffect>(m_rgResMan.get(), m_globalEffectData, m_renderWidth, m_renderHeight);
 
 	
@@ -746,8 +746,8 @@ namespace DOG::gfx
 					}
 
 				});
-
-			m_tiledLightCuller->Add(rg);
+			if(m_graphicsSettings.lightCulling)
+				m_tiledLightCuller->Add(rg);
 
 			rg.AddPass<PassData>("Forward Pass",
 				[&](PassData& p, RenderGraph::PassBuilder& builder)
@@ -771,8 +771,11 @@ namespace DOG::gfx
 					builder.WriteDepthStencil(RG_RESOURCE(MainDepth), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
 
-					auto groupCount = static_cast<TiledLightCullingEffect*>(m_tiledLightCuller.get())->GetGroupCount();
-					p.localLightBuffer = builder.ReadResource(RG_RESOURCE(LocalLightBuf), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, BufferViewDesc(ViewType::ShaderResource, 0, sizeof(TiledLightCullingEffect::LocalLightBufferLayout), groupCount.x * groupCount.y));
+					if (m_graphicsSettings.lightCulling)
+					{
+						auto groupCount = static_cast<TiledLightCullingEffect*>(m_tiledLightCuller.get())->GetGroupCount();
+						p.localLightBuffer = builder.ReadResource(RG_RESOURCE(LocalLightBuf), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, BufferViewDesc(ViewType::ShaderResource, 0, sizeof(TiledLightCullingEffect::LocalLightBufferLayout), groupCount.x * groupCount.y));
+					}
 				},
 				[&, dynConstants = m_dynConstants.get(), dynConstantsTemp = m_dynConstantsTemp.get(), drawFunc = drawSubmissions](const PassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) mutable
 				{
@@ -812,7 +815,7 @@ namespace DOG::gfx
 					std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
 					std::memcpy(shadowHandle.memory, &shadowMapArrayStruct, sizeof(shadowMapArrayStruct));
 
-					u32 localLightBufferIndex = resources.GetView(p.localLightBuffer);
+					u32 localLightBufferIndex = m_graphicsSettings.lightCulling ? resources.GetView(p.localLightBuffer) : -1;
 					drawFunc(rd, cmdl, m_submissions, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
 					drawFunc(rd, cmdl, m_animatedDraws, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, true);
 
@@ -1106,6 +1109,7 @@ namespace DOG::gfx
 			m_bloomEffect = std::make_unique<Bloom>(m_rgResMan.get(), m_globalEffectData, m_dynConstants.get(), requestedSettings.renderResolution.x, requestedSettings.renderResolution.y);
 		}
 		if (m_bloomEffect) m_bloomEffect->SetGraphicsSettings(requestedSettings);
+		if (m_tiledLightCuller) m_tiledLightCuller->SetGraphicsSettings(requestedSettings);
 		m_renderWidth = requestedSettings.renderResolution.x;
 		m_renderHeight = requestedSettings.renderResolution.y;
 		m_globalEffectData.defRenderScissors = ScissorRects().Append(0, 0, m_renderWidth, m_renderHeight);

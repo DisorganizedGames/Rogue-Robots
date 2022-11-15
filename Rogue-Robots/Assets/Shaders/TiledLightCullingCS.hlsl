@@ -7,6 +7,7 @@ struct PushConstantElement
     uint localLightBuffersIndex;
     uint width;
     uint height;
+    float pointLightCullFactor;
 };
 ConstantBuffer<PushConstantElement> g_constants : register(b0, space0);
 
@@ -42,11 +43,11 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
         float p11 = pfData.projMatrix._11;
         float p22 = pfData.projMatrix._22;
         
-        //float4 col1 = float4(p11 * scale.x * 2, 0, 2 * bias.x - 1, 0);
-        //float4 col2 = float4(0, -p22 * scale.y * 2, 2 * bias.y - 1, 0);
+        float4 col1 = float4(p11 * scale.x * 2, 0, 2 * bias.x - 1, 0);
+        float4 col2 = float4(0, -p22 * scale.y * 2, 2 * bias.y - 1, 0);
         
-        float4 col1 = float4(p11 * scale.x, 0, bias.x, 0);
-        float4 col2 = float4(0, -p22 * scale.y, bias.y, 0);
+        //float4 col1 = float4(p11 * scale.x, 0, bias.x, 0);
+        //float4 col2 = float4(0, -p22 * scale.y, bias.y, 0);
         
         float4 col4 = float4(0, 0, 1, 0);
         float4 frustum[6];
@@ -75,7 +76,7 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
 
         RWStructuredBuffer<ShaderInterop_LocalLightBuffer> localLightBuffers = ResourceDescriptorHeap[g_constants.localLightBuffersIndex];
         StructuredBuffer<ShaderInterop_PointLight> pointLights = ResourceDescriptorHeap[gd.pointLightTable];
-        
+        float plCullFactor = g_constants.pointLightCullFactor;
         uint tileIndex = groupID.x + (g_constants.width + TILED_GRPUP_SIZE - 1) / TILED_GRPUP_SIZE * groupID.y;
         
         for (int i = tid; i < lightsMD.dynPointLightRange.count; i += TILED_GRPUP_SIZE * TILED_GRPUP_SIZE)
@@ -87,7 +88,7 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
             for (int j = 0; j < 6; j++)
             {
                 float d = dot(float4(pointLight.position.xyz, 1), frustum[j]);
-                culled |= d * abs(d) < -50.0f * pointLight.strength;
+                culled |= d * abs(d) < -plCullFactor * pointLight.strength;
             }
 
             if (!culled && pointLight.strength)
@@ -108,7 +109,7 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
             for (int j = 0; j < 6; j++)
             {
                 float d = dot(float4(pointLight.position.xyz, 1), frustum[j]);
-                culled |= d * abs(d) < -50.0f * pointLight.strength;
+                culled |= d * abs(d) < -plCullFactor * pointLight.strength;
             }
 
             if (!culled && pointLight.strength)
