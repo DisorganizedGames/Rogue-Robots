@@ -11,6 +11,7 @@
 #include "PcgLevelLoader.h"
 #include "PrefabInstantiatorFunctions.h"
 #include "ItemManager/ItemManager.h"
+#include "TestScenes/ParticleScene.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -179,6 +180,10 @@ void GameLayer::StartMainScene()
 	case SceneComponent::Type::OldDefaultScene:
 		/************************** old default scene *********************************/
 		m_mainScene = std::make_unique<OldDefaultScene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+		m_mainScene->SetUpScene();
+		break;
+	case SceneComponent::Type::ParticleScene:
+		m_mainScene = std::make_unique<ParticleScene>();
 		m_mainScene->SetUpScene();
 		break;
 	default:
@@ -1000,6 +1005,7 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 			if (ImGui::RadioButton("Room2", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom2Scene)) m_gameState = GameState::Restart;
 			if (ImGui::RadioButton("Room3", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom3Scene)) m_gameState = GameState::Restart;
 			if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;
+			if (ImGui::RadioButton("Particle", (int*)&m_selectedScene, (int)SceneComponent::Type::ParticleScene)) m_gameState = GameState::Restart;
 
 			std::vector<entity> players;
 			EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](entity e, PlayerStatsComponent&)
