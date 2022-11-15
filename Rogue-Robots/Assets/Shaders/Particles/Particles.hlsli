@@ -14,7 +14,7 @@ struct Particle
 
 struct Emitter
 {
-    uint alive;
+	uint alive;
 	float3 pos;
 	float rate;
 	float lifetime;
