@@ -38,7 +38,7 @@ void NetCode::OnStartup()
 			{
 				m_entityManager.AddComponent<OnlinePlayer>(id);
 				m_entityManager.RemoveComponent<ThisPlayer>(id);
-				EntityManager::Get().Collect<DontDraw, ParentComponent>().Do([&](entity subEntity, DontDraw&, ParentComponent& parentCompany)
+				EntityManager::Get().Collect<DontDraw, ChildComponent>().Do([&](entity subEntity, DontDraw&, ChildComponent& parentCompany)
 					{
 						if (parentCompany.parent == id)
 						{
@@ -53,7 +53,7 @@ void NetCode::OnStartup()
 		{
 			if (networkC.playerId == m_inputTcp.playerId)
 			{
-				EntityManager::Get().Collect<ParentComponent>().Do([&](entity subEntity, ParentComponent& parentC)
+				EntityManager::Get().Collect<ChildComponent>().Do([&](entity subEntity, ChildComponent& parentC)
 					{
 						if (parentC.parent == id)
 						{

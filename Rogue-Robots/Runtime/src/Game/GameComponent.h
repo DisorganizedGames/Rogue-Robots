@@ -207,8 +207,9 @@ struct InteractionQueryComponent
 	//ID
 };
 
-struct ParentComponent
+struct ChildComponent
 {
 	DOG::entity parent = DOG::NULL_ENTITY;
 	DOG::TransformComponent localTransform;
+	bool nodeHasBeenUpdated = false;
 };

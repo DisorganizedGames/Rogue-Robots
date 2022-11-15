@@ -201,3 +201,48 @@ void PlayerMovementSystem::MovePlayer(Entity, PlayerControllerComponent& player,
 }
 
 #pragma endregion
+
+
+
+void UpdateParentNode(entity parent)
+{
+	auto& em = EntityManager::Get();
+	assert(em.HasComponent<TransformComponent>(parent));
+	if (auto parentAsChild = em.TryGetComponent<ChildComponent>(parent); parentAsChild && !parentAsChild->get().nodeHasBeenUpdated)
+	{
+		entity grandParent = parentAsChild->get().parent;
+		if (em.Exists(grandParent)) // Grand parent might have been removed. In this case we ignore it.
+		{
+			UpdateParentNode(grandParent);
+			auto& grandParentWorld = em.GetComponent<TransformComponent>(grandParent);
+			auto& parentWorld = em.GetComponent<TransformComponent>(parent);
+			parentWorld.worldMatrix = parentAsChild->get().localTransform * grandParentWorld.worldMatrix;
+			parentAsChild->get().nodeHasBeenUpdated = true;
+		}
+	}
+}
+
+void ScuffedSceneGraphSystem::OnUpdate(entity e, ChildComponent& child, TransformComponent& world)
+{
+	auto& em = EntityManager::Get();
+	if (em.Exists(child.parent))
+	{
+		if (!child.nodeHasBeenUpdated)
+		{
+			UpdateParentNode(child.parent);
+			auto& parentWorld = em.GetComponent<TransformComponent>(child.parent);
+			world.worldMatrix = child.localTransform * parentWorld.worldMatrix;
+			child.nodeHasBeenUpdated = true;
+		}
+	}
+	else
+	{
+		em.DeferredEntityDestruction(e);
+	}
+}
+
+
+void ScuffedSceneGraphSystem::OnLateUpdate(ChildComponent& child)
+{
+	child.nodeHasBeenUpdated = false;
+}

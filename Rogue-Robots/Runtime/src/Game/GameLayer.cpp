@@ -5,6 +5,7 @@
 #include "TunnelScenes.h"
 #include "SimpleAnimationSystems.h"
 #include "ExplosionSystems.h"
+#include "TurretSystems.h"
 #include "HomingMissileSystem.h"
 #include "PcgLevelLoader.h"
 #include "PrefabInstantiatorFunctions.h"
@@ -32,6 +33,8 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<HomingMissileTargetingSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<HomingMissileSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<HomingMissileImpacteSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<TurretTargetingSystem>());
+
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PickupLerpAnimationSystem>());
