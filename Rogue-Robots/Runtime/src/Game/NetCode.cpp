@@ -226,13 +226,12 @@ void NetCode::OnUpdate()
 							memcpy(tempCreate, m_receiveBuffer + m_bufferReceiveSize + sizeof(CreateAndDestroyEntityComponent) * i, sizeof(CreateAndDestroyEntityComponent));
 							if (tempCreate->playerId != m_inputTcp.playerId)
 							{
-								EntityManager::Get().Collect<AgentIdComponent>().Do([&](AgentIdComponent&)
-									{
-										if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Agents && !tempCreate->alive)
-										{
-											AgentManager::Get().CreateOrDestroyShadowAgent(*tempCreate);
-										}
-									});
+								
+								if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Agents && !tempCreate->alive)
+								{
+									AgentManager::Get().CreateOrDestroyShadowAgent(*tempCreate);
+								}
+					
 
 								if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Magazines && !tempCreate->alive && (u32)tempCreate->entityTypeId > (u32)EntityTypes::Agents )
 								{

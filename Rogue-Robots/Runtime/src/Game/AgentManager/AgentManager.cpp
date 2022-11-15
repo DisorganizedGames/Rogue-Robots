@@ -1,6 +1,7 @@
 #include "AgentManager.h"
 #include "AgentBehaviorSystems.h"
 #include "Game/GameLayer.h"
+#include "../LoadSplitModels.h"
 
 using namespace DOG;
 using namespace DirectX::SimpleMath;
@@ -210,14 +211,17 @@ void AgentManager::DestroyLocalAgent(entity e)
 
 	AgentIdComponent& agent = em.GetComponent<AgentIdComponent>(e);
 	TransformComponent& agentTrans = em.GetComponent<TransformComponent>(e);
-	ModelComponent& agentModel = em.GetComponent<ModelComponent>(e);
+	//ModelComponent& agentModel = em.GetComponent<ModelComponent>(e);
+
+	LoadEnemySplitModel(e);
 
 	entity corpse = em.CreateEntity();
 	em.AddComponent<AgentCorpse>(corpse);
-	em.AddComponent<ModelComponent>(corpse, agentModel.id);
-	TransformComponent& corpseTrans = em.AddComponent<TransformComponent>(corpse);
-	corpseTrans = agentTrans;
-	corpseTrans.SetRotation(Vector3(-2, 0, -2));
+	//Leaving this here for safety reasons
+	//em.AddComponent<ModelComponent>(corpse, agentModel.id);
+	//TransformComponent& corpseTrans = em.AddComponent<TransformComponent>(corpse);
+	//corpseTrans = agentTrans;
+	//corpseTrans.SetRotation(Vector3(-2, 0, -2));
 
 	CreateAndDestroyEntityComponent& kill = em.AddComponent<CreateAndDestroyEntityComponent>(corpse);
 	kill.alive = false;

@@ -200,10 +200,6 @@ void PlayerMovementSystem::MovePlayer(Entity, PlayerControllerComponent& player,
 	}
 }
 
-#pragma endregion
-
-
-
 void UpdateParentNode(entity parent)
 {
 	auto& em = EntityManager::Get();
@@ -246,3 +242,13 @@ void ScuffedSceneGraphSystem::OnLateUpdate(ChildComponent& child)
 {
 	child.nodeHasBeenUpdated = false;
 }
+void DespawnSystem::OnUpdate(DOG::entity e, DespawnComponent& despawn)
+{
+	if (despawn.despawnTimer < Time::ElapsedTime())
+	{
+		EntityManager::Get().DeferredEntityDestruction(e);
+		EntityManager::Get().RemoveComponent<DespawnComponent>(e);
+	}
+}
+
+#pragma endregion

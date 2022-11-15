@@ -213,3 +213,12 @@ struct ChildComponent
 	DOG::TransformComponent localTransform;
 	bool nodeHasBeenUpdated = false;
 };
+
+struct DespawnComponent
+{
+	DespawnComponent(f64 despawnTime)
+	{
+		despawnTimer = despawnTime + DOG::Time::ElapsedTime();
+	};
+	f64 despawnTimer = 0.0f;
+};
