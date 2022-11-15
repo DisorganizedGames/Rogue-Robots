@@ -89,9 +89,9 @@ namespace DOG
 				system->Update();
 			}
 
-			m_frontRenderer->Update(0.f);
+			m_frontRenderer->Update(Time::DeltaTime<TimeType::Seconds, f32>());
 			m_frontRenderer->BeginGPUFrame();
-			m_frontRenderer->Render(0.f);
+			m_frontRenderer->Render(Time::DeltaTime<TimeType::Seconds, f32>());
 			m_frontRenderer->EndGPUFrame();
 
 			for (auto& system : EntityManager::Get())
@@ -116,7 +116,7 @@ namespace DOG
 			EntityManager::Get().DestroyDeferredEntities();
 
 			Time::End();
- 		}
+		}
 
 		m_renderer->Flush();
 	}

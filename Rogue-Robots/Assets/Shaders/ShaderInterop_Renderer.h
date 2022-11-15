@@ -43,6 +43,9 @@ struct ShaderInterop_PerFrameData
     ShaderInterop_LightOffsets pointLightOffsets;
     ShaderInterop_LightOffsets spotLightOffsets;
     ShaderInterop_LightOffsets areaLightOffsets;
+
+    float deltaTime;
+    float3 pad;
 };
 
 
