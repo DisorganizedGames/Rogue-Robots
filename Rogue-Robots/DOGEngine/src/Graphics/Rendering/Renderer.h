@@ -11,6 +11,8 @@
 #include "RenderEffects/EffectData/GlobalEffectData.h"
 
 #include "VFX/ParticleBackend.h"
+#include "PostProcess.h"
+
 
 namespace DOG::gfx
 {

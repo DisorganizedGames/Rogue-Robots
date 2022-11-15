@@ -14,7 +14,6 @@ namespace DOG::gfx
 
 	private:
 		Pipeline m_pipe;
-		
 
 	};
 }

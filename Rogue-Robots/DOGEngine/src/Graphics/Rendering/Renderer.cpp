@@ -37,6 +37,7 @@
 #include "../../Core/ImGuiMenuLayer.h"
 #include "../../common/MiniProfiler.h"
 
+#include "PostProcess.h"
 
 namespace DOG::gfx
 {
@@ -49,6 +50,7 @@ namespace DOG::gfx
 		m_rd = m_backend->CreateDevice(S_NUM_BACKBUFFERS);
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
 		UI::Initialize(m_rd, m_sc, S_NUM_BACKBUFFERS, clientWidth, clientHeight);
+		PostProcess::Initialize();
 
 		m_frameSyncs.resize(S_MAX_FIF);
 
@@ -346,6 +348,7 @@ namespace DOG::gfx
 
 		m_rgResMan->ImportTexture(RG_RESOURCE(NoiseSSAO), m_ssaoNoise, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
 		m_rgResMan->ImportBuffer(RG_RESOURCE(SamplesSSAO), m_ssaoSamples, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
+
 	}
 
 	Renderer::~Renderer()
@@ -480,6 +483,8 @@ namespace DOG::gfx
 	{
 		m_jointMan->UpdateJoints();
 		m_globalLightTable->FinalizeUpdates();
+
+		PostProcess::Get().Update(dt);
 
 
 		// Update per frame data
@@ -1190,6 +1195,11 @@ namespace DOG::gfx
 		m_imgui->EndFrame();
 	}
 
+
+	static float s_dir[2] = { 0.f, 1.f };
+	static float s_intensity = 2.f;
+	static float s_time = 2.f;
+
 	void Renderer::SpawnRenderDebugWindow(bool& open)
 	{
 		if (ImGui::BeginMenu("View"))
@@ -1238,6 +1248,22 @@ namespace DOG::gfx
 
 				if (ImGui::Button("Render Graph Rebuild"))
 					s_donez = false;
+			}
+			ImGui::End();
+
+
+			if (ImGui::Begin("Damage Disk Settings"))
+			{
+				ImGui::SliderFloat2("Direction", s_dir, -1.f, 1.f);
+				ImGui::SliderFloat("Intensity", &s_intensity, 0.f, 3.f);
+				ImGui::SliderFloat("Time", &s_time, 0.f, 5.f);
+
+				if (ImGui::Button("Instantiate damage disk"))
+				{
+					PostProcess::Get().InstantiateDamageDisk({ s_dir[0], s_dir[1] }, s_intensity, s_time);
+
+				}
+
 			}
 			ImGui::End();
 

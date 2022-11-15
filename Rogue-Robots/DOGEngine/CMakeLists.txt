@@ -68,6 +68,7 @@ set(SourceFiles
 	"src/Graphics/Rendering/VFX/ParticleBackend.h" "src/Graphics/Rendering/VFX/ParticleBackend.cpp"
 	"src/Graphics/Rendering/RenderEffects/TiledLightCullingEffect.h" "src/Graphics/Rendering/RenderEffects/TiledLightCullingEffect.cpp"
 	"src/Graphics/Rendering/RenderEffects/DamageDiskEffect.h" "src/Graphics/Rendering/RenderEffects/DamageDiskEffect.cpp"
+	"src/Graphics/Rendering/PostProcess.h" "src/Graphics/Rendering/PostProcess.cpp"
 )
 
 file(GLOB_RECURSE TempGraphics "src/Graphics/*.cpp")

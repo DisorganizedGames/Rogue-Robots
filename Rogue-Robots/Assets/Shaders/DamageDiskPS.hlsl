@@ -8,6 +8,7 @@ struct PushConstantElement
 {
     float directionX;        // Reinterpret this as float
     float directionY;        // Reinterpret this as float
+    float intensity;
     float visibility;        // Reinterpret this as float
 };
 
@@ -36,7 +37,7 @@ float4 main(PS_IN input) : SV_TARGET0
     
     // Direction of the effect in 2D cartesian space
     //float2 effectDirection = float2(0.f, 1.f);
-    float2 effectDirection = direction;
+    float2 effectDirection = normalize(direction);
     
     // Setup new space (X)..
     float2 xAxis = -effectDirection;
@@ -45,9 +46,9 @@ float4 main(PS_IN input) : SV_TARGET0
     float lenToEllipse = length(pOnEllipse); 
     
     // Bow angle
-    const float b = 7.f;
+    const float b = 11.f;
     const float bowOffset = 0.85f;
-    const float bowThickness = 0.007f;
+    const float bowThickness = 0.015f;
     const float aoa = 180.0;        // Static in space
     
     // Angle to point
@@ -59,11 +60,22 @@ float4 main(PS_IN input) : SV_TARGET0
     float rightDeg = aoa + b;
     bool onBow = aDeg > leftDeg && aDeg < rightDeg;
     
-    bool onEllipse = lenToEllipse > bowOffset - bowThickness &&
-                     lenToEllipse < bowOffset + bowThickness;
+    // Circular length from center outwards
+    float lenFromCenter = saturate(length(effectDirection * bowOffset - pOnEllipse)) * 5.f;
+    //return float4(lenFromCenter.rrr, 1.f);
     
+    bool onEllipse = lenToEllipse > bowOffset - bowThickness * lenFromCenter &&
+                     lenToEllipse < bowOffset + bowThickness * lenFromCenter;
+    
+    bool onMidEllipse = lenToEllipse > bowOffset - bowThickness &&
+                        lenToEllipse < bowOffset + bowThickness;
+    
+    
+    // Opacity below 0.5 seems to just make it disappear, so we disappear early at 0.6
     if (onEllipse && onBow)
-        return float4(1.5f, 0.f, 0.f, 1.f) * visibility;
+        return float4(1.f * g_constants.intensity, 0.f, 0.f, visibility <= 0.6f ? 0.f : visibility);
+    else if (onMidEllipse && onBow && lenFromCenter < 0.1f)
+        return float4(1.f * g_constants.intensity, 0.f, 0.f, visibility <= 0.6f ? 0.f : visibility);
     else
         return float4(0.f.rrr, 0.f);
 }
