@@ -301,9 +301,7 @@ namespace DOG
 							else
 								obj1Entity = PhysicsEngine::GetGhostObjectData((GhostObjectHandle)(it->second.collisionBodyHandle.handle))->ghostObjectEntity;
 
-							//Fix later
-							//if (it->second.activeCollision && rigidbody.onCollisionEnter != nullptr)
-							//	rigidbody.onCollisionEnter(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
+							//On enter collision
 							if (it->second.activeCollision)
 							{
 								if (!EntityManager::Get().HasComponent<HasEnteredCollisionComponent>(obj0Entity)) EntityManager::Get().AddComponent<HasEnteredCollisionComponent>(obj0Entity);
@@ -327,12 +325,9 @@ namespace DOG
 							//Set collisionCheck false for next collision check
 							it->second.collisionCheck = false;
 
+							//On exit collision
 							if (!it->second.activeCollision)
 							{
-								//Fix later
-								//if (rigidbody.onCollisionExit != nullptr)
-								//	rigidbody.onCollisionExit(obj0RigidbodyColliderData->rigidbodyEntity, obj1RigidbodyColliderData->rigidbodyEntity);
-								//else
 								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0Entity, "OnCollisionExit", obj1Entity);
 
 								//Call OnCollisionExit for both entities if it has an rigidbody and a script
@@ -640,6 +635,7 @@ namespace DOG
 			delete rigidbodyColliderData->motionState;
 			rigidbodyColliderData->motionState = nullptr;
 		}
+
 		m_dynamicsWorld->removeRigidBody(rigidbodyColliderData->rigidBody);
 		delete rigidbodyColliderData->rigidBody;
 		rigidbodyColliderData->rigidBody = nullptr;
@@ -691,6 +687,14 @@ namespace DOG
 			btCollisionObject* obj0 = (btCollisionObject*)(contactManifold->getBody0());
 			btCollisionObject* obj1 = (btCollisionObject*)(contactManifold->getBody1());
 
+			//This is way around the problem that bullet sometimes include a deleted rigidbody in the collision check
+			//The world array index should never be below zero, so we can check that one!
+			if (obj0->getWorldArrayIndex() < 0 || obj1->getWorldArrayIndex() < 0)
+			{
+				std::cout << "Physics Error: CollisionObject is destroyed but tries to access it anyways (bullets fault)!\n";
+				continue;
+			}
+
 			for (int j = 0; j < contactManifold->getNumContacts(); j++)
 			{
 				//btManifoldPoint& pt = contactManifold->getContactPoint(j);
@@ -727,9 +731,11 @@ namespace DOG
 						RigidbodyCollisionData collisionData;
 						collisionData.activeCollision = false;
 						collisionData.collisionCheck = true;
+
 						//Ghost objects can also enter here!
 						collisionData.ghost = !obj1->getUserIndex3();
 						//This is little bit sus but RigidbodyHandle and GhostObjectHandle only have u64 in them
+
 						RigidbodyHandle handle;
 						handle.handle = obj1CollisionHandle;
 						collisionData.collisionBodyHandle = handle;
@@ -763,8 +769,6 @@ namespace DOG
 	{
 		RigidbodyColliderData rCD; 
 		rCD.collisionShapeHandle = PhysicsEngine::AddCollisionShape(new btBoxShape(btVector3(boxColliderSize.x, boxColliderSize.y, boxColliderSize.z)));
-		//btBoxShape* boxShape = (btBoxShape*)PhysicsEngine::s_physicsEngine.GetCollisionShape(rCD.collisionShapeHandle);
-		//auto b = boxShape->getHalfExtentsWithMargin() * boxShape->getLocalScaling();
 
 		rigidbodyHandle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
 	}
@@ -773,10 +777,6 @@ namespace DOG
 	{
 		RigidbodyColliderData rCD;
 		rCD.collisionShapeHandle = PhysicsEngine::AddCollisionShape(new btSphereShape(radius));
-		//btSphereShape* boxShape = (btSphereShape*)PhysicsEngine::s_physicsEngine.GetCollisionShape(rCD.collisionShapeHandle);
-		//auto r = boxShape->getRadius();
-		//auto ls = boxShape->getLocalScaling();
-		//auto b = r * ls;
 
 		rigidbodyHandle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
 	}
@@ -785,11 +785,6 @@ namespace DOG
 	{
 		RigidbodyColliderData rCD;
 		rCD.collisionShapeHandle = PhysicsEngine::AddCollisionShape(new btCapsuleShape(radius, height));
-		//btCapsuleShape* boxShape = (btCapsuleShape*)PhysicsEngine::s_physicsEngine.GetCollisionShape(rCD.collisionShapeHandle);
-		//auto r = boxShape->getRadius();
-		//auto ls = boxShape->getLocalScaling();
-		//auto b = r * ls;
-		//auto h = 2.0f * boxShape->getHalfHeight() * ls.getY();
 
 		rigidbodyHandle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
 	}
