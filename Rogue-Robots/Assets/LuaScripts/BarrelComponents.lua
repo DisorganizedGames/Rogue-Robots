@@ -99,7 +99,7 @@ function BarrelComponents:Grenade()
 		end,
 
 		GetMaxAmmo = function(self)
-			return 10
+			return 20
 		end,
 
 		GetAmmoPerPickup = function(self)
@@ -140,7 +140,7 @@ function BarrelComponents:Missile()
 		end,
 
 		GetMaxAmmo = function(self)
-			return 3
+			return 10
 		end,
 
 		GetAmmoPerPickup = function(self)
