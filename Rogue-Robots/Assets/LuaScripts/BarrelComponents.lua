@@ -10,10 +10,10 @@ ARGUMENTS
 function BarrelComponents:BasicBarrel()	
 	return 
 	{
-		bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Bullet/556x45_bullet.fbx"),
+		bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Bullet/556x45_bullet.gltf"),
 		gunShotSound = Asset:LoadAudio("Assets/Audio/TestShoot.wav"),
-		speed = 75.0,
-		size = Vector3.New(15.0, 15.0, 15.0),
+		speed = 340.0,
+		size = Vector3.New(5.0, 5.0, 5.0),
 
 		Update = function(self, gunEntity, parentEntityID, bullet)
 			
@@ -22,9 +22,10 @@ function BarrelComponents:BasicBarrel()
 			Entity:ModifyComponent(bullet.entity, "Transform", bullet.size + self.size, 3)
 
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
-			Entity:AddComponent(bullet.entity, "BoxCollider", boxColliderSize, true)
+			Entity:AddComponent(bullet.entity, "BoxColliderMass", boxColliderSize, true, 0.075)
 			Entity:AddComponent(bullet.entity, "Rigidbody", false)
 			Entity:AddComponent(bullet.entity, "Bullet", parentEntityID)		-- Note: bullet damage is added in Lua interface
+			--Entity:AddComponent(bullet.entity, "SubMeshRender", MaterialPrefabs:GetMaterial("BulletMaterial"))
 
 			Entity:PlayAudio(gunEntity.entityID, self.gunShotSound, true)
 
