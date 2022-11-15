@@ -36,6 +36,7 @@ namespace DOG::gfx
 		struct PassData
 		{
 			RGResourceView localLightBuffer;
+			RGResourceView depthBuffer;
 		};
 
 		rg.AddPass<PassData>("Tiled light culling",
@@ -44,6 +45,9 @@ namespace DOG::gfx
 				builder.DeclareBuffer(RG_RESOURCE(LocalLightBuf), RGBufferDesc(sizeof(LocalLightBufferLayout) * m_threadGroupCountX * m_threadGroupCountY, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
 
 				passData.localLightBuffer = builder.ReadWriteTarget(RG_RESOURCE(LocalLightBuf), BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(LocalLightBufferLayout), m_threadGroupCountX * m_threadGroupCountY));
+
+				passData.depthBuffer = builder.ReadResource(RG_RESOURCE(ZPrePassDepth), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+					TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R32_FLOAT));
 			},
 			[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)		// Execute
 			{

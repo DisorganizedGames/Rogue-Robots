@@ -198,6 +198,7 @@ namespace DOG::gfx
 		Pipeline m_pipe, m_meshPipe, m_meshPipeNoCull, m_shadowPipe, m_shadowPipeNoCull;	// nocull are for the modular blocks (hack due to asset in shady state with negative scaling)
 		Pipeline m_meshPipeWireframe, m_meshPipeWireframeNoCull;
 		Pipeline m_ssaoPipe;
+		Pipeline m_zPrePassPipe, m_zPrePassPipeNoCull, m_zPrePassPipeWirefram, m_zPrePassPipeWireframNoCull;
 
 		Pipeline m_boxBlurPipe;
 
