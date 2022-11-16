@@ -5,6 +5,8 @@ MiscComponent = {}
 function MiscComponent:BasicShot()
 	return 
 	{
+		miscName = "BasicShot",
+
 		pressed = false,
 
 		Update = function(self, parentEntity, transformEntity)
@@ -48,6 +50,8 @@ end
 function MiscComponent:FullAuto()
 	return 
 	{
+		miscName = "FullAuto",
+
 		cooldown = 0,
 
 		Update = function(self, parentEntity, transformEntity) 
@@ -84,7 +88,10 @@ end
 function MiscComponent:ChargeShot()
 	return 
 	{
+		miscName = "ChargeShot",
+
 		shotPower = 0.0,
+		maxShotPower = 30.0,
 		chargeSpeed = 10.0,
 		pressing = false,
 
@@ -93,6 +100,9 @@ function MiscComponent:ChargeShot()
 			if Entity:GetAction(parentEntity, "Shoot") then
 				self.pressing = true
 				self.shotPower = self.shotPower + self.chargeSpeed * DeltaTime
+				if self.maxShotPower < self.shotPower then
+					self.shotPower = self.maxShotPower
+				end
 
 			elseif self.pressing then
 				self.pressing = false

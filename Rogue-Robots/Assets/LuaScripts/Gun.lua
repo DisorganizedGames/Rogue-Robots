@@ -145,7 +145,7 @@ function OnUpdate()
 		
 		local createBullet = true
 		if barrelComponent.CreateBullet then
-			createBullet = barrelComponent:CreateBullet()
+			createBullet = barrelComponent:CreateBullet(miscComponent)
 		end
 		if createBullet and currentAmmoCount > 0 then
 
