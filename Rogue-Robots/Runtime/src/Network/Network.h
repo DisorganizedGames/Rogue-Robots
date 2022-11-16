@@ -22,8 +22,8 @@ struct PlayerNetworkComponentUdp
 
 struct UdpData
 {
-	int nrOfEntites;
-	u64 udpId;
+	int nrOfEntites  = 0;
+	u64 udpId = 0;
 
 };
 

@@ -32,8 +32,8 @@
 		std::thread m_loopUdp;
 		std::thread m_reciveLoopUdp;
 		UdpData m_outputUdp;
-		std::vector<UINT8>		m_playerIds;
-		std::vector<UINT8>		m_holdPlayerIds;
+		std::vector<u8>		m_playerIds;
+		std::vector<u8>		m_holdPlayerIds;
 		std::vector<WSAPOLLFD>	m_clientsSocketsTcp;
 		std::vector<WSAPOLLFD>	m_holdSocketsTcp;
 		float m_tickrateTcp;

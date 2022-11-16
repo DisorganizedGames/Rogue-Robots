@@ -10,7 +10,7 @@
 
 		Client();
 		~Client();
-		INT8 ConnectTcpServer(std::string ipAdress);
+		i8 ConnectTcpServer(std::string ipAdress);
 		void SendChararrayTcp(char* input, int size);
 		u8 ReceiveCharArrayTcp(char* recivebuffer);
 		void SetMulticastAdress(const char* adress);

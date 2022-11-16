@@ -54,6 +54,7 @@ void PlayerManager::Initialize()
 	s_notInitialized = false;
 }
 
+#pragma warning( disable : 4100 )
 void PlayerHit::OnUpdate(entity e, HasEnteredCollisionComponent& collision, ThisPlayer&)
 {
 	EntityManager& eMan = EntityManager::Get();
@@ -61,7 +62,8 @@ void PlayerHit::OnUpdate(entity e, HasEnteredCollisionComponent& collision, This
 	{
 		if (eMan.HasComponent<BulletComponent>(collision.entities[i]))
 		{
-			PlayerManager::Get().HurtThisPlayer(eMan.GetComponent<BulletComponent>( collision.entities[i]).damage/15.0f);
+			if(eMan.GetComponent<BulletComponent>(collision.entities[i]).playerEntityID != PlayerManager::Get().GetThisPlayer())
+				PlayerManager::Get().HurtThisPlayer(eMan.GetComponent<BulletComponent>( collision.entities[i]).damage/15.0f);
 		}
 	}
 }
