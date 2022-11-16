@@ -44,13 +44,13 @@ namespace DOG::gfx
 		// Expose fundamentals
 		Texture LoadTexture(const MippedTexture2DSpecification& spec);
 		TextureView CreateTextureView(Texture tex, std::optional<TextureViewDesc> desc);
+		u32 GetRawDescriptor(TextureView view) { return m_rd->GetGlobalDescriptor(view); };
 
 		void FreeResource(Texture handle);
 		void FreeResource(TextureView handle);
 
 	private:
 		RenderDevice* m_rd{ nullptr };
-
 		MeshTable* m_meshTable{ nullptr };
 		MaterialTable* m_matTable{ nullptr };
 		GPUGarbageBin* m_garbageBin{ nullptr };

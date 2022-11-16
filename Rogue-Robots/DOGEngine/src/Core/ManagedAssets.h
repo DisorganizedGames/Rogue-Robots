@@ -149,6 +149,7 @@ namespace DOG
 		bool srgb = true;
 		gfx::Texture textureGPU;
 		gfx::TextureView textureViewGPU;
+		u32 textureViewRawHandle;
 	};
 
 	struct MeshAsset : public Asset
