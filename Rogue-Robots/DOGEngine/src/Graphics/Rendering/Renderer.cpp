@@ -116,7 +116,7 @@ namespace DOG::gfx
 		// Default storage
 		auto lightStorageSpec = LightTable::StorageSpecification();
 		lightStorageSpec.pointLightSpec.maxStatics = 25;
-		lightStorageSpec.pointLightSpec.maxDynamic = 50;
+		lightStorageSpec.pointLightSpec.maxDynamic = 512;
 		m_globalLightTable = std::make_unique<LightTable>(m_rd, m_bin.get(), lightStorageSpec, false);
 
 
