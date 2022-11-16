@@ -12,6 +12,7 @@
 #include "PrefabInstantiatorFunctions.h"
 #include "ItemManager/ItemManager.h"
 #include "TestScenes/ParticleScene.h"
+#include "PlayerManager/PlayerManager.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -55,6 +56,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderReloadHintTextSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<CleanupItemInteractionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<CleanupPlayerStateSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<PlayerHit>());
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
 

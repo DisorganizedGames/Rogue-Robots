@@ -35,7 +35,7 @@ struct UdpReturnData
 struct TcpHeader
 {
 	i8 playerId = 0;
-	i8 nrOfPlayersConnected = 0;
+	u8 nrOfPlayersConnected = 0;
 	u16 sizeOfPayload = 0;
 	u16 nrOfNetTransform = 0;
 	u16 nrOfChangedAgentsHp = 0;
