@@ -165,7 +165,7 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 
 			rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
 
-			rd->Cmd_Dispatch(cmdl, 1, 1, 1);
+			rd->Cmd_Dispatch(cmdl, S_MAX_PARTICLES / 128, 1, 1);
 		},
 		[](PassData&) // Pre-graph execution
 		{

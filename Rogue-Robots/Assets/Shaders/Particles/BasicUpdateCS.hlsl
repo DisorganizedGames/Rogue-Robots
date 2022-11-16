@@ -34,16 +34,17 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 	ShaderInterop_PerFrameData perFrame = perFrameTable[g_constants.perFrameOffset];
 	
 	uint alive = aliveCounter[0];
-	for (int i = threadID.x; i < alive; i += GROUP_SIZE)
-	{
-		Particle p = particleBuffer[i];
-		Emitter e = emitterBuffer[p.emitterHandle + g_constants.localEmitterTableOffset];
+	
+    if (globalID >= alive)
+        return;
+	
+	Particle p = particleBuffer[globalID];
+	Emitter e = emitterBuffer[p.emitterHandle + g_constants.localEmitterTableOffset];
+	
+	p.age += perFrame.deltaTime;
 
-		p.age += perFrame.deltaTime;
-
-		p.pos += p.vel * perFrame.deltaTime;
-		p.vel -= float3(0, 9.82 * perFrame.deltaTime, 0);
-		particleBuffer[i] = p;
-	}
+	p.pos += p.vel * perFrame.deltaTime;
+	p.vel -= float3(0, 9.82 * perFrame.deltaTime, 0);
+	particleBuffer[globalID] = p;
 }
 
