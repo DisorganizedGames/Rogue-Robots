@@ -10,8 +10,8 @@
 
 using namespace DOG::gfx;
 
-ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceManager* resourceManager) :
-	RenderEffect(globalEffectData)
+ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceManager* resourceManager, u32 maxEmitters) :
+	RenderEffect(globalEffectData), m_maxEmitters(maxEmitters)
 {
 	auto shaderCompiler = m_globalEffectData.sclr;
 	auto device = m_globalEffectData.rd;
@@ -54,6 +54,15 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 		m_resourceManager->ImportBuffer(RG_RESOURCE(ParticlesAliveBuffer), m_particlesAlive,
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	}
+
+	{
+		BufferDesc toSpawnDesc(MemoryType::Default, m_maxEmitters * sizeof(f32),
+			D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		m_emitterToSpawn = device->CreateBuffer(toSpawnDesc);
+
+		m_resourceManager->ImportBuffer(RG_RESOURCE(EmitterToSpawnBuffer), m_emitterToSpawn,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	}
 }
 
 ParticleEffect::~ParticleEffect()
@@ -62,9 +71,11 @@ ParticleEffect::~ParticleEffect()
 
 	device->FreeBuffer(m_particleBuffer);
 	device->FreeBuffer(m_particlesAlive);
+	device->FreeBuffer(m_emitterToSpawn);
 	
 	m_resourceManager->FreeImported(RG_RESOURCE(ParticleBuffer));
 	m_resourceManager->FreeImported(RG_RESOURCE(ParticlesAliveBuffer));
+	m_resourceManager->FreeImported(RG_RESOURCE(EmitterToSpawnBuffer));
 }
 
 void ParticleEffect::Add(RenderGraph& renderGraph)
@@ -73,6 +84,7 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 	{
 		RGResourceView particleBufferHandle;
 		RGResourceView particlesAliveHandle;
+		RGResourceView emitterToSpawnHandle;
 	};
 
 	renderGraph.AddPass<PassData>("Particle Emitter Pass",
@@ -84,6 +96,8 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 			passData.particlesAliveHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticlesAliveBuffer),
 				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), S_COUNTERS));
 
+			passData.emitterToSpawnHandle = builder.ReadWriteTarget(RG_RESOURCE(EmitterToSpawnBuffer),
+				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), m_maxEmitters));
 		},
 		[this](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) // Execute
 		{
@@ -96,11 +110,12 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 				.AppendConstant(m_emitterGlobalDescriptor)
 				.AppendConstant(m_emitterLocalOffset)
 				.AppendConstant(resources.GetView(passData.particleBufferHandle))
-				.AppendConstant(resources.GetView(passData.particlesAliveHandle));
+				.AppendConstant(resources.GetView(passData.particlesAliveHandle))
+				.AppendConstant(resources.GetView(passData.emitterToSpawnHandle));
 
 			rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
 
-			rd->Cmd_Dispatch(cmdl, 128, 1, 1);
+			rd->Cmd_Dispatch(cmdl, m_maxEmitters, 1, 1);
 		},
 		[](PassData&) // Pre-graph execution
 		{

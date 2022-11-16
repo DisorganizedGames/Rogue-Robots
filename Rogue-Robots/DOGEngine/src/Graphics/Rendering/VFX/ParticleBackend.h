@@ -24,7 +24,7 @@ namespace DOG::gfx
 		~ParticleBackend() = default;
 
 		void AddEffect(RenderGraph& rg) { 
-			m_particleEffect->Add(rg); 
+			m_particleEffect->Add(rg);
 			FreeCurrentFrameTable();
 		};
 

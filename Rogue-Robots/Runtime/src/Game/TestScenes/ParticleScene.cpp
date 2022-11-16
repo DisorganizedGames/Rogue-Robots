@@ -37,7 +37,7 @@ void ParticleScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 		AddComponent<TransformComponent>(m_particleSystem, Vector3(0, -1.f, 0));
 		auto& em = AddComponent<ParticleEmitterComponent>(m_particleSystem);
 		em = {
-			.spawnRate = 1.f,
+			.spawnRate = 64.f,
 			.particleLifetime = 0.5f,
 		};
 	}
@@ -68,7 +68,7 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 		if (ImGui::Begin("Particle System", &open))
 		{
 			static float rate = emitter.spawnRate;
-			ImGui::SliderFloat("Rate", &rate, 0.f, 10.f);
+			ImGui::SliderFloat("Rate", &rate, 0.f, 1024.f);
 			emitter.spawnRate = rate;
 
 			static float lifetime = emitter.particleLifetime;
