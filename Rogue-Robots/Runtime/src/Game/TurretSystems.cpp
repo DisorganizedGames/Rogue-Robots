@@ -92,3 +92,24 @@ void TurretShootingSystem::OnUpdate(entity e, TurretTargetingComponent& targeter
 	}
 	targeter.shoot = false;
 }
+
+// Thanks unity src code
+float MoveTowards(float current, float target, float maxDelta)
+{
+	return abs(target - current) <= maxDelta ? target : current + std::copysignf(maxDelta, target - current);
+}
+
+void TurretProjectileSystem::OnUpdate(DOG::entity e, TurretProjectileComponent& projectile, DOG::PointLightComponent& pointLight)
+{
+	f32 dt = static_cast<f32>(Time::DeltaTime());
+	projectile.lifeTime += dt;
+	if (projectile.lifeTime < projectile.maxLifeTime)
+	{
+		pointLight.strength = MoveTowards(pointLight.strength, 0, dt);
+		pointLight.dirty = true;
+	}
+	else
+	{
+		EntityManager::Get().DeferredEntityDestruction(e);
+	}
+}

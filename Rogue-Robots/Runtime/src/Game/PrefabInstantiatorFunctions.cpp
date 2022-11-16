@@ -187,5 +187,14 @@ entity SpawnTurretProjectile(const DirectX::SimpleMath::Matrix& transform, float
 	rb.continuousCollisionDetection = true;
 	rb.linearVelocity = speed * pTransform.GetForward();
 
+
+
+
+	LightHandle pointLight = LightManager::Get().AddPointLight(PointLightDesc(), LightUpdateFrequency::PerFrame);
+	em.AddComponent<PointLightComponent>(p, pointLight, Vector3(1, 0.5f, 0.001f), 5.f);
+
+
+	em.AddComponent<TurretProjectileComponent>(p);
+
 	return p;
 }

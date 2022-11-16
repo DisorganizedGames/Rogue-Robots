@@ -37,6 +37,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<HomingMissileImpacteSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<TurretTargetingSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<TurretShootingSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<TurretProjectileSystem>());
 
 	m_entityManager.RegisterSystem(std::make_unique<DespawnSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
