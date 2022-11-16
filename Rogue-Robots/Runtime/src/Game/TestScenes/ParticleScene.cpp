@@ -12,11 +12,13 @@ ParticleScene::ParticleScene() : Scene(SceneComponent::Type::ParticleScene)
 
 void ParticleScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>> entityCreators)
 {
+
+
 	// Necessary set up :(
 	{
 		u32 blueCubeID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
 
-		std::vector<entity> players = SpawnPlayers(Vector3(0.0f, 0.0f, 0.0f), 1, 0.f);
+		std::vector<entity> players = SpawnPlayers(Vector3(0.0f, 0.0f, -3.f), 1, 0.f);
 		AddEntities(players);
 
 		entity ground = CreateEntity();
@@ -31,13 +33,51 @@ void ParticleScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 
 	//Particle system
 	{
-		entity ps = CreateEntity();
-		AddComponent<TransformComponent>(ps, Vector3(0, -1.f, 0));
-		auto& em = AddComponent<ParticleEmitterComponent>(ps);
+		m_particleSystem = CreateEntity();
+		AddComponent<TransformComponent>(m_particleSystem, Vector3(0, -1.f, 0));
+		auto& em = AddComponent<ParticleEmitterComponent>(m_particleSystem);
 		em = {
-			.spawnRate = 8.f,
+			.spawnRate = 1.f,
 			.particleLifetime = 0.5f,
 		};
 	}
+
+	DOG::ImGuiMenuLayer::RegisterDebugWindow("ParticleSystemMenu", [this](bool& open) { ParticleSystemMenu(open); });
+}
+
+ParticleScene::~ParticleScene()
+{
+	DOG::ImGuiMenuLayer::UnRegisterDebugWindow("ParticleSystemMenu");
+}
+
+void ParticleScene::ParticleSystemMenu(bool& open)
+{
+	auto& emitter = EntityManager::Get().GetComponent<ParticleEmitterComponent>(m_particleSystem);
+
+	if (ImGui::BeginMenu("View"))
+	{
+		if (ImGui::MenuItem("Particle System"))
+		{
+			open = true;
+		}
+		ImGui::EndMenu(); // "View"
+	}
+
+	if (open)
+	{
+		if (ImGui::Begin("Particle System", &open))
+		{
+			static float rate = emitter.spawnRate;
+			ImGui::SliderFloat("Rate", &rate, 0.f, 10.f);
+			emitter.spawnRate = rate;
+
+			static float lifetime = emitter.particleLifetime;
+			ImGui::SliderFloat("Particle Lifetime", &lifetime, 0.f, 5.f);
+			emitter.particleLifetime = lifetime;
+		}
+
+		ImGui::End();
+	}
+
 }
 
