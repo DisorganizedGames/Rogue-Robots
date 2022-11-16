@@ -50,7 +50,7 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 		InterlockedAdd(aliveCounter[0], 1, lastAlive);
 		
 		if (lastAlive < MAX_PARTICLES_ALIVE)
-			SpawnParticle(emitterIdx, particleBuffer[lastAlive]);
+			SpawnParticle(groupID.x, particleBuffer[lastAlive]);
 	}
 
 	AllMemoryBarrierWithGroupSync();
