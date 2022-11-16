@@ -23,7 +23,7 @@
 		u64 m_udpId;
 		int m_sendUdpId;
 		char* m_hostIp;
-		ClientsData m_playersClient[MAX_PLAYER_COUNT];
+		TcpHeader m_playersClient[MAX_PLAYER_COUNT];
 		SOCKET m_connectSocket;
 		char* m_inputSend;
 		SOCKET m_udpSendSocket;

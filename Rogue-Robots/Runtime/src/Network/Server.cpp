@@ -152,7 +152,7 @@ void Server::ServerReciveConnectionsTCP(SOCKET listenSocket)
 					std::cout << "Server: Connection Accepted" << std::endl;
 					setsockopt(clientSocket, SOL_SOCKET, TCP_NODELAY, (char*)&turn, sizeof(bool));
 					WSAPOLLFD m_clientPoll;
-					ClientsData input;
+					TcpHeader input;
 					std::cout << "\nServer: Accept a connection from clientSocket: " << clientSocket << ", From player: " << m_playerIds.front() + 1 << std::endl;
 					//give connections a player id
 					UINT8 playerId = m_playerIds.front();
@@ -190,7 +190,7 @@ void Server::ServerPollTCP()
 	std::cout << "Server: Started to tick" << std::endl;
 
 	LARGE_INTEGER tickStartTime;
-	ClientsData holdClientsData;
+	TcpHeader holdClientsData;
 	LARGE_INTEGER clockFrequency;
 	QueryPerformanceFrequency(&clockFrequency);
 
@@ -203,9 +203,7 @@ void Server::ServerPollTCP()
 	std::vector<DOG::NetworkTransform> transforms;
 	do {
 		QueryPerformanceCounter(&tickStartTime);
-		transforms.clear();
-		statsChanged.clear();
-		createAndDestroy.clear();
+
 		char sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
 		char reciveBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
 		u16 bufferSendSize = sizeof(TcpHeader);
@@ -245,8 +243,8 @@ void Server::ServerPollTCP()
 					{
 						while (bytesRecived > bufferReciveSize)
 						{
-							memcpy(&holdClientsData, reciveBuffer + bufferReciveSize, sizeof(ClientsData));
-							bufferReciveSize += sizeof(ClientsData);
+							memcpy(&holdClientsData, reciveBuffer + bufferReciveSize, sizeof(TcpHeader));
+							bufferReciveSize += sizeof(TcpHeader);
 							if (holdClientsData.playerId == 0)
 							{
 								m_lobbyStatus = holdClientsData.lobbyAlive;
@@ -331,6 +329,11 @@ void Server::ServerPollTCP()
 			}
 
 		}
+
+		//clear the vectors
+		transforms.clear();
+		statsChanged.clear();
+		createAndDestroy.clear();
 
 		//wait untill tick is done 
 		float timeTakenS = TickTimeLeftTCP(tickStartTime, clockFrequency);

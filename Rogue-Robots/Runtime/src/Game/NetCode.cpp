@@ -15,7 +15,7 @@ NetCode::NetCode()
 	m_active = false;
 	m_startUp = false;
 	
-	m_bufferSize = sizeof(ClientsData);
+	m_bufferSize = sizeof(TcpHeader);
 	m_bufferReceiveSize = 0;
 	m_receiveBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
 	m_dataIsReadyToBeReceivedTcp = false;
@@ -166,9 +166,9 @@ void NetCode::OnUpdate()
 				if (Server::TickTimeLeftTCP(m_tickStartTime, m_clockFrequency) > (1.0f / 30.0f))
 				{
 					m_inputTcp.sizeOfPayload = m_bufferSize;
-					memcpy(m_sendBuffer, (char*)&m_inputTcp, sizeof(ClientsData));
+					memcpy(m_sendBuffer, (char*)&m_inputTcp, sizeof(TcpHeader));
 					m_client.SendChararrayTcp(m_sendBuffer, m_inputTcp.sizeOfPayload);
-					m_bufferSize = sizeof(ClientsData);
+					m_bufferSize = sizeof(TcpHeader);
 					m_inputTcp.nrOfNetTransform = 0;
 					m_inputTcp.nrOfChangedAgentsHp = 0;
 					m_inputTcp.nrOfCreateAndDestroy = 0;
