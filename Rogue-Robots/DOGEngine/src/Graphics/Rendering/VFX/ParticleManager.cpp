@@ -25,12 +25,12 @@ const std::vector<ParticleEmitter>& ParticleManager::GatherEmitters()
 				else
 				{
 					em = m_emitters[emitter.emitterIndex];
-					em.age += Time::DeltaTime<TimeType::Seconds, f32>();
 				}
 
 				em.pos = transform.GetPosition();
 				em.rate = emitter.spawnRate;
 				em.lifetime = emitter.particleLifetime;
+				em.textureHandle = emitter.textureHandle;
 				em.alive = 1; // true
 			});
 

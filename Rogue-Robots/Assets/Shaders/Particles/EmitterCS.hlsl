@@ -17,7 +17,7 @@ struct PushConstantElement
 };
 CONSTANTS(g_constants, PushConstantElement)
 
-void SpawnParticle(in uint emitterHandle, inout Particle p);
+void SpawnParticle(in uint emitterHandle, inout Particle p, in float totTime);
 
 groupshared Emitter g_emitter;
 groupshared uint g_spawned;
@@ -62,7 +62,7 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 		
 			if (lastAlive < MAX_PARTICLES_ALIVE)
 			{
-				SpawnParticle(groupID.x, particleBuffer[lastAlive]);
+				SpawnParticle(groupID.x, particleBuffer[lastAlive], perFrame.time);
 				InterlockedAdd(g_spawned, 1);
 
 			}
@@ -87,12 +87,12 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 	}
 }
 
-void SpawnParticle(in uint emitterHandle, inout Particle p)
+void SpawnParticle(in uint emitterHandle, inout Particle p, in float totTime)
 {
 	p.emitterHandle = emitterHandle;
 	p.pos = g_emitter.pos;
-	float xVel = cos(g_emitter.age*30) * 5.f/4.f;
-	float zVel = sin(g_emitter.age*30) * 5.f/4.f;
+	float xVel = cos(totTime * 30) * 5.f / 4.f;
+	float zVel = sin(totTime * 30) * 5.f / 4.f;
 	p.vel = float3(xVel, 5, zVel);
 	p.size = 0.1;
 	p.age = 0;
