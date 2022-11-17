@@ -137,9 +137,12 @@ function BarrelComponents:Missile()
 		timeBetweenShots = 2.0,
 		
 		Update = function(self, gunEntity, parentEntityID, bullet)
-			Vector3.FromTable(Entity:GetForward(parentEntityID))
+
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
-			Entity:AddComponent(bullet.entity, "HomingMissileComponent", parentEntityID)
+
+			local change = 1.0 + Length(bullet.size) * 0.03
+			local newMissileSize = bullet.size * 0.1
+			Entity:AddComponent(bullet.entity, "HomingMissileComponent", parentEntityID, change, change, newMissileSize)
 		end,
 		Destroy = function(self, bullet)
 		end,
@@ -156,7 +159,7 @@ function BarrelComponents:Missile()
 		end,
 
 		GetAmmoPerPickup = function(self)
-			return 1
+			return 10
 		end,
 
 		GetECSType = function(self)

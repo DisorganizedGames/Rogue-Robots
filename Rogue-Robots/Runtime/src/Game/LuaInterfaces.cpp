@@ -728,9 +728,16 @@ void EntityInterface::AddHomingMissile(DOG::LuaContext* context, DOG::entity e)
 	entity owner = context->GetInteger();
 	assert(em.Exists(owner) && em.Exists(e));
 
+	float explosionRadiusChange = (float)context->GetDouble();
+	float dmgChange = (float)context->GetDouble();
+	LuaTable sizeChangeTable = context->GetTable();
+	LuaVector3 sizeChange(sizeChangeTable);
+
 	assert(!EntityManager::Get().HasComponent<HomingMissileComponent>(e));
 	auto& missile = em.AddComponent<HomingMissileComponent>(e);
 	missile.playerEntityID = owner;
+	missile.explosionRadius *= explosionRadiusChange;
+	missile.dmg *= dmgChange;
 
 	assert(em.HasComponent<TransformComponent>(e));
 	auto& t = em.GetComponent<TransformComponent>(e);
@@ -738,7 +745,11 @@ void EntityInterface::AddHomingMissile(DOG::LuaContext* context, DOG::entity e)
 	t.worldMatrix = em.GetComponent<TransformComponent>(owner);
 	t.SetPosition(oldPosition + 0.5f * t.GetForward());
 
-	em.AddComponent<BoxColliderComponent>(e, e, Vector3(0.18f, 0.18f, 0.8f), true, 12.0f);
+	Vector3 currentSize = t.GetScale();
+	Vector3 newSize(sizeChange.x, sizeChange.y, sizeChange.z);
+	t.SetScale(currentSize + newSize);
+
+	em.AddComponent<BoxColliderComponent>(e, e, Vector3(0.18f, 0.18f, 0.8f) + newSize * 0.2f, true, 12.0f);
 	auto& rb = em.AddComponent<RigidbodyComponent>(e, e);
 	rb.continuousCollisionDetection = true;
 
