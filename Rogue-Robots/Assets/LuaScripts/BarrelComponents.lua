@@ -92,6 +92,8 @@ function BarrelComponents:Grenade()
 
 			Entity:AddComponent(explosionTrigger, "SphereTrigger", radius)
 			Game:AddDamageToEntity(explosionTrigger, parentEntityID, 100.0 * power / basePower)
+			Game:AddMagazineEffectsFromBullet(bullet.entity, explosionTrigger)
+
 		end,
 
 		CreateBullet = function(self, miscComponent)
