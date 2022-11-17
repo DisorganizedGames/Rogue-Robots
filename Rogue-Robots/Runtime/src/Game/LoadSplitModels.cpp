@@ -3,13 +3,12 @@
 #include "DirectXMath.h"
 #include <DirectXTK/SimpleMath.h>
 
-#include "GameComponent.h"
 
 using namespace DOG;
 using Vector3 = DirectX::SimpleMath::Vector3;
 using Matrix = DirectX::SimpleMath::Matrix;
 
-void LoadEnemySplitModel(entity agentID)
+void LoadEnemySplitModel(entity agentID, SceneComponent::Type scene)
 {
 	const f64 aliveTime = 120.0f;
 
@@ -31,6 +30,7 @@ void LoadEnemySplitModel(entity agentID)
 	em.AddComponent<BoxColliderComponent>(corpseBody, corpseBody, Vector3(0.3f, 0.2f, 0.5f), true);
 	em.AddComponent<RigidbodyComponent>(corpseBody, corpseBody);
 	em.AddComponent<DespawnComponent>(corpseBody, aliveTime);
+	em.AddComponent<SceneComponent>(corpseBody, scene);
 
 	//Set up the tail of the enemy
 	u32 tailID = AssetManager::Get().LoadModelAsset("Assets/Models/Enemies/SplitUpEnemy/Tail.gltf", DOG::AssetLoadFlag::GPUMemory);
@@ -46,6 +46,7 @@ void LoadEnemySplitModel(entity agentID)
 	em.AddComponent<BoxColliderComponent>(corpseTail, corpseTail, Vector3(0.07f, 0.3f, 0.3f), true);
 	em.AddComponent<RigidbodyComponent>(corpseTail, corpseTail);
 	em.AddComponent<DespawnComponent>(corpseTail, aliveTime);
+	em.AddComponent<SceneComponent>(corpseTail, scene);
 
 	//Set up the legs of the enemy
 	u32 legID = AssetManager::Get().LoadModelAsset("Assets/Models/Enemies/SplitUpEnemy/Leg1.gltf", DOG::AssetLoadFlag::GPUMemory);
@@ -78,5 +79,6 @@ void LoadEnemySplitModel(entity agentID)
 		em.AddComponent<BoxColliderComponent>(corpseLeg, corpseLeg, Vector3(0.35f, 0.3f, 0.05f), true);
 		em.AddComponent<RigidbodyComponent>(corpseLeg, corpseLeg);
 		em.AddComponent<DespawnComponent>(corpseLeg, aliveTime);
+		em.AddComponent<SceneComponent>(corpseLeg, scene);
 	}
 }
