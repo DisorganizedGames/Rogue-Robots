@@ -416,13 +416,14 @@ namespace DOG::gfx
 
 
 
-	void Renderer::SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
+	void Renderer::SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world, bool isWeapon)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
 		sub.submesh = submesh;
 		sub.mat = material;
 		sub.world = world;
+		sub.isWeapon = isWeapon;
 		m_submissions.push_back(sub);
 	}
 
@@ -619,7 +620,8 @@ namespace DOG::gfx
 				DirectX::SimpleMath::Vector3 direction;
 				float strength{ 0.f };
 				bool isShadowCaster{ false };
-				float padding[3]{ 0,0,0 };
+				u32 isPlayer{ 0 };
+				float padding[2]{ 0,0 };
 			};
 
 			/*Encompasses all the light datas for spotlights, which we currently limit to 12*/
@@ -729,7 +731,8 @@ namespace DOG::gfx
 						.AppendConstant(sub.jointOffset)
 						.AppendConstant(m_renderWidth)
 						.AppendConstant(m_renderHeight)
-						.AppendConstant(localLightBuffers);
+						.AppendConstant(localLightBuffers)
+						.AppendConstant(sub.isWeapon ? 1 : 0);
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
@@ -910,6 +913,7 @@ namespace DOG::gfx
 						perLightData.perLightDatas[i].direction = data.direction;
 						perLightData.perLightDatas[i].cutoffAngle = data.cutoffAngle;
 						perLightData.perLightDatas[i].strength = data.strength;
+						perLightData.perLightDatas[i].isPlayer = data.isPlayerLight ? 1 : 0;
 
 						if (data.shadow != std::nullopt)
 						{

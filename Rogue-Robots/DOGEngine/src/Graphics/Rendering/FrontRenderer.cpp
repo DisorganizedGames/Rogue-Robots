@@ -193,6 +193,12 @@ namespace DOG::gfx
 							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
 								m_renderer->SubmitMeshWireframe(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
 						}
+						// Special case for weaoon draws
+						else if (mgr.HasComponent<ThisPlayerWeapon>(e))
+						{
+							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
+								m_renderer->SubmitMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC, true);
+						}
 						else
 						{
 							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
@@ -237,6 +243,7 @@ namespace DOG::gfx
 				spotData.direction = slc.direction;
 				spotData.cutoffAngle = slc.cutoffAngle;
 				spotData.strength = slc.strength;
+				spotData.isPlayerLight = slc.isMainPlayerSpotlight;
 
 				if (EntityManager::Get().HasComponent<ShadowCasterComponent>(spotlightEntity))
 				{

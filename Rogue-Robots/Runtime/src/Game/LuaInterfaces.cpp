@@ -121,6 +121,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddMagazineModificationComponent(context, e);
 	}
+	else if (compType == "ThisPlayerWeapon")
+	{
+		AddThisPlayerWeapon(context, e);
+	}
 	//Add more component types here.
 	else
 	{
@@ -804,6 +808,13 @@ void EntityInterface::AddMagazineModificationComponent(DOG::LuaContext* context,
 	auto& mmc = EntityManager::Get().AddComponent<MagazineModificationComponent>(e);
 	mmc.type = type;
 }
+
+void EntityInterface::AddThisPlayerWeapon(DOG::LuaContext* context, DOG::entity e)
+{
+	// Simply add tag
+	EntityManager::Get().AddComponent<ThisPlayerWeapon>(e);
+}
+
 
 void EntityInterface::UpdateMagazine(DOG::LuaContext* context)
 {

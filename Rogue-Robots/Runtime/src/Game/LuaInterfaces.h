@@ -165,6 +165,9 @@ private:
 	void AddBarrelComponent(DOG::LuaContext* context, DOG::entity e);
 
 	void AddMagazineModificationComponent(DOG::LuaContext* context, DOG::entity e);
+
+	void AddThisPlayerWeapon(DOG::LuaContext* context, DOG::entity e);
+
 };
 
 class AssetInterface : public LuaInterface

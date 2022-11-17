@@ -53,3 +53,17 @@ struct ShaderInterop_AreaLight
 {
     
 };
+
+struct SpotlightData
+{
+    matrix viewMatrix;
+    matrix projectionMatrix;
+    float4 worldPosition;
+    float3 color;
+    float cutoffAngle;
+    float3 direction;
+    float strength;
+    bool isShadowCaster;
+    uint isPlayer; 
+    float2 padding;
+};
