@@ -6,11 +6,45 @@ using namespace DOG;
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
+PCGLevelScene::PCGLevelScene(u8 numPlayers, std::function<std::vector<DOG::entity>(const EntityTypes, const DirectX::SimpleMath::Vector3&, u8, f32)> spawnAgents, std::string levelName)
+	: Scene(SceneComponent::Type::PCGLevelScene), m_spawnAgents(spawnAgents), m_nrOfPlayers(numPlayers), m_levelName(levelName)
+{
+
+}
+
+void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>> entityCreators)
+{
+	for (auto& func : entityCreators)
+		AddEntities(func());
+
+	AddEntities(LoadLevel(m_levelName));
+
+	//Identify spawnblock.
+	Vector3 spawnblockPos = Vector3(20.0f, 20.0f, 20.0f);
+	EntityManager::Get().Collect<SpawnBlockComponent>().Do([&](entity e, SpawnBlockComponent&)
+		{
+			spawnblockPos = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
+		});
+	spawnblockPos.x += 2.5f;
+	spawnblockPos.y += 5.0f;
+	spawnblockPos.z += 2.5f;
+
+	//Spawn players
+	std::vector<entity> players = SpawnPlayers(spawnblockPos, m_nrOfPlayers, 5.f);
+	AddEntities(players);
+	AddEntities(AddFlashlightsToPlayers(players));
+
+	//Spawn enemies and items
+	//TEMP
+	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(40.f, 80.f, 58.f), 3, 2.5f));
+}
+
+/*
 // Room 0
 TunnelRoom0Scene::TunnelRoom0Scene(u8 numPlayers, std::function<std::vector<DOG::entity>(const EntityTypes, const DirectX::SimpleMath::Vector3&, u8, f32)> spawnAgents)
 	: Scene(SceneComponent::Type::TunnelRoom0Scene), m_spawnAgents(spawnAgents), m_nrOfPlayers(numPlayers)
 {
-
+	
 }
 
 void TunnelRoom0Scene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>> entityCreators)
@@ -145,3 +179,4 @@ void TunnelRoom3Scene::SetUpScene(std::vector<std::function<std::vector<DOG::ent
 }
 
 
+*/

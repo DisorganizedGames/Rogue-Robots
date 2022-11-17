@@ -90,10 +90,10 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 789,
+            "count" : 797,
             "max" : [
                 2.528604507446289,
-                4.859708786010742,
+                4.913024425506592,
                 2.6864538192749023
             ],
             "min" : [
@@ -106,31 +106,31 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 789,
+            "count" : 797,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 789,
+            "count" : 797,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 789,
+            "count" : 797,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 789,
+            "count" : 801,
             "type" : "SCALAR"
         },
         {
             "bufferView" : 5,
             "componentType" : 5126,
-            "count" : 1002,
+            "count" : 1468,
             "max" : [
                 2.4914989471435547,
                 5.000000476837158,
@@ -146,78 +146,78 @@
         {
             "bufferView" : 6,
             "componentType" : 5126,
-            "count" : 1002,
+            "count" : 1468,
             "type" : "VEC3"
         },
         {
             "bufferView" : 7,
             "componentType" : 5126,
-            "count" : 1002,
+            "count" : 1468,
             "type" : "VEC2"
         },
         {
             "bufferView" : 8,
             "componentType" : 5126,
-            "count" : 1002,
+            "count" : 1468,
             "type" : "VEC2"
         },
         {
             "bufferView" : 9,
             "componentType" : 5123,
-            "count" : 1032,
+            "count" : 1524,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 9468,
+            "byteLength" : 9564,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 9468,
-            "byteOffset" : 9468
+            "byteLength" : 9564,
+            "byteOffset" : 9564
         },
         {
             "buffer" : 0,
-            "byteLength" : 6312,
-            "byteOffset" : 18936
+            "byteLength" : 6376,
+            "byteOffset" : 19128
         },
         {
             "buffer" : 0,
-            "byteLength" : 6312,
-            "byteOffset" : 25248
+            "byteLength" : 6376,
+            "byteOffset" : 25504
         },
         {
             "buffer" : 0,
-            "byteLength" : 1578,
-            "byteOffset" : 31560
+            "byteLength" : 1602,
+            "byteOffset" : 31880
         },
         {
             "buffer" : 0,
-            "byteLength" : 12024,
-            "byteOffset" : 33140
+            "byteLength" : 17616,
+            "byteOffset" : 33484
         },
         {
             "buffer" : 0,
-            "byteLength" : 12024,
-            "byteOffset" : 45164
+            "byteLength" : 17616,
+            "byteOffset" : 51100
         },
         {
             "buffer" : 0,
-            "byteLength" : 8016,
-            "byteOffset" : 57188
+            "byteLength" : 11744,
+            "byteOffset" : 68716
         },
         {
             "buffer" : 0,
-            "byteLength" : 8016,
-            "byteOffset" : 65204
+            "byteLength" : 11744,
+            "byteOffset" : 80460
         },
         {
             "buffer" : 0,
-            "byteLength" : 2064,
-            "byteOffset" : 73220
+            "byteLength" : 3048,
+            "byteOffset" : 92204
         }
     ],
     "samplers" : [
@@ -228,7 +228,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 75284,
+            "byteLength" : 95252,
             "uri" : "5NoSideConnector.bin"
         }
     ]

@@ -51,6 +51,7 @@ struct SceneComponent
 		TunnelRoom3Scene,
 		LightScene,
 		ParticleScene,
+		PCGLevelScene,
 	};
 	SceneComponent(Type scene) : scene(scene) {}
 	Type scene;
@@ -276,4 +277,14 @@ struct SpectatorComponent
 	DOG::entity playerBeingSpectated;
 	const char* playerName;
 	std::vector<DOG::entity> playerSpectatorQueue;
+};
+
+//ModularBlocks
+
+struct SpawnBlockComponent
+{
+};
+
+struct ExitBlockComponent
+{
 };

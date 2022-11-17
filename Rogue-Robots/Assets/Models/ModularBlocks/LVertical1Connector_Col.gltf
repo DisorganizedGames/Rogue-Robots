@@ -20,7 +20,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.030",
+            "name" : "Scene.007",
             "primitives" : [
                 {
                     "attributes" : {
@@ -38,74 +38,74 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 489,
+            "count" : 3551,
             "max" : [
-                1.9405925273895264,
-                5.000000476837158,
-                2.161686658859253
+                2.4279561042785645,
+                5.202034950256348,
+                3.1055092811584473
             ],
             "min" : [
-                -1.9268652200698853,
-                0.7655623555183411,
-                -2.500002145767212
+                -2.7928712368011475,
+                0.4032561779022217,
+                -2.5959136486053467
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 489,
+            "count" : 3551,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 489,
+            "count" : 3551,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 489,
+            "count" : 3551,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 846,
+            "count" : 3567,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 5868,
+            "byteLength" : 42612,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 5868,
-            "byteOffset" : 5868
+            "byteLength" : 42612,
+            "byteOffset" : 42612
         },
         {
             "buffer" : 0,
-            "byteLength" : 3912,
-            "byteOffset" : 11736
+            "byteLength" : 28408,
+            "byteOffset" : 85224
         },
         {
             "buffer" : 0,
-            "byteLength" : 3912,
-            "byteOffset" : 15648
+            "byteLength" : 28408,
+            "byteOffset" : 113632
         },
         {
             "buffer" : 0,
-            "byteLength" : 1692,
-            "byteOffset" : 19560
+            "byteLength" : 7134,
+            "byteOffset" : 142040
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 21252,
+            "byteLength" : 149176,
             "uri" : "LVertical1Connector_Col.bin"
         }
     ]

@@ -20,7 +20,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.004",
+            "name" : "Scene.075",
             "primitives" : [
                 {
                     "attributes" : {
@@ -38,74 +38,74 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 577,
+            "count" : 1803,
             "max" : [
-                1.9405993223190308,
+                2.528604507446289,
                 5.000000476837158,
-                2.500000476837158
+                2.961874485015869
             ],
             "min" : [
-                -2.500002861022949,
-                -2.537086629672558e-06,
-                -2.500002145767212
+                -2.6606760025024414,
+                -2.92869412987784e-06,
+                -2.500002384185791
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 577,
+            "count" : 1803,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 577,
+            "count" : 1803,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 577,
+            "count" : 1803,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 1137,
+            "count" : 1839,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 6924,
+            "byteLength" : 21636,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 6924,
-            "byteOffset" : 6924
+            "byteLength" : 21636,
+            "byteOffset" : 21636
         },
         {
             "buffer" : 0,
-            "byteLength" : 4616,
-            "byteOffset" : 13848
+            "byteLength" : 14424,
+            "byteOffset" : 43272
         },
         {
             "buffer" : 0,
-            "byteLength" : 4616,
-            "byteOffset" : 18464
+            "byteLength" : 14424,
+            "byteOffset" : 57696
         },
         {
             "buffer" : 0,
-            "byteLength" : 2274,
-            "byteOffset" : 23080
+            "byteLength" : 3678,
+            "byteOffset" : 72120
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 25356,
+            "byteLength" : 75800,
             "uri" : "5NoSideConnector_Col.bin"
         }
     ]
