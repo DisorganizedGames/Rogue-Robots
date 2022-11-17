@@ -972,7 +972,7 @@ namespace DOG
 		return coroutine;
 	}
 
-	void LuaW::CreateCoroutine(Coroutine& coroutine, Function& function)
+	LuaFunctionReturn LuaW::CreateCoroutine(Coroutine& coroutine, Function& function)
 	{
 		PushThreadToStack(coroutine);
 		lua_State* thread = GetThreadPointerFromStack();
@@ -988,6 +988,15 @@ namespace DOG
 			Error(lua_tostring(m_luaState, -1));
 			assert(false);
 		}
+
+		LuaFunctionReturn returns;
+		if (returnValue > 0)
+		{
+			MoveStackItemsBetweenThreads(thread, m_luaState, returnValue);
+			GetReturnsFromFunction(returns);
+		}
+
+		return std::move(returns);
 	}
 
 	bool LuaW::CoroutineIsDead(Coroutine& coroutine)
@@ -997,7 +1006,7 @@ namespace DOG
 		return lua_status(thread) == LUA_OK;
 	}
 
-	void LuaW::ResumeCoroutine(Coroutine& coroutine)
+	LuaFunctionReturn LuaW::ResumeCoroutine(Coroutine& coroutine)
 	{
 		PushThreadToStack(coroutine);
 		lua_State* thread = GetThreadPointerFromStack();
@@ -1010,5 +1019,14 @@ namespace DOG
 			Error(lua_tostring(m_luaState, -1));
 			assert(false);
 		}
+
+		LuaFunctionReturn returns;
+		if (returnValue > 0)
+		{
+			MoveStackItemsBetweenThreads(thread, m_luaState, returnValue);
+			GetReturnsFromFunction(returns);
+		}
+
+		return std::move(returns);
 	}
 }

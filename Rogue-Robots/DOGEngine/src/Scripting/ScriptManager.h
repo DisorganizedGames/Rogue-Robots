@@ -16,6 +16,7 @@ namespace DOG
 		Function onUpdateFunction;
 		Function onDestroyFunction;
 		Coroutine onUpdateCoroutine;
+		double onUpdateYieldTime = 0.0f;
 	};
 
 	struct GetScriptData

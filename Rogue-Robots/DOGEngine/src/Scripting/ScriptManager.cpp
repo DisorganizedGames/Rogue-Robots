@@ -1,4 +1,5 @@
 #include "ScriptManager.h"
+#include "../Core/Time.h"
 
 namespace DOG
 {
@@ -235,10 +236,16 @@ namespace DOG
 
 	void ScriptManager::CallOnUpdateCoroutine(ScriptData& scriptData)
 	{
+		if (scriptData.onUpdateYieldTime >= Time::ElapsedTime())
+			return;
+
+		LuaFunctionReturn returns;
 		if (m_luaW->CoroutineIsDead(scriptData.onUpdateCoroutine))
-			m_luaW->CreateCoroutine(scriptData.onUpdateCoroutine, scriptData.onUpdateFunction);
+			returns = m_luaW->CreateCoroutine(scriptData.onUpdateCoroutine, scriptData.onUpdateFunction);
 		else
-			m_luaW->ResumeCoroutine(scriptData.onUpdateCoroutine);
+			returns = m_luaW->ResumeCoroutine(scriptData.onUpdateCoroutine);
+
+		scriptData.onUpdateYieldTime = returns.number + Time::ElapsedTime();
 	}
 
 	ScriptManager::ScriptManager(LuaW* luaW) : m_luaW(luaW), m_entityManager(DOG::EntityManager::Get())

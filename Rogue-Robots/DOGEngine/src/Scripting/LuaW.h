@@ -264,9 +264,9 @@ namespace DOG
 		bool CheckIfFunctionExist(Function& function);
 
 		Coroutine CreateThread();
-		void CreateCoroutine(Coroutine& coroutine, Function& function);
+		LuaFunctionReturn CreateCoroutine(Coroutine& coroutine, Function& function);
 		bool CoroutineIsDead(Coroutine& coroutine);
-		void ResumeCoroutine(Coroutine& coroutine);
+		LuaFunctionReturn ResumeCoroutine(Coroutine& coroutine);
 
 		void RunScript(const std::string& luaFileName);
 		void CreateEnvironment(Table& table, const std::string& luaFileName);
