@@ -34,6 +34,17 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 		.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
 		.SetDepthFormat(DepthFormat::D32)
 		.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+		.SetBlend(BlendBuilder().AppendRTBlend(D3D12_RENDER_TARGET_BLEND_DESC{
+				.BlendEnable = true,
+				.LogicOpEnable = false,
+				.SrcBlend = D3D12_BLEND_SRC_ALPHA,
+				.DestBlend = D3D12_BLEND_INV_SRC_ALPHA,
+				.BlendOp = D3D12_BLEND_OP_ADD,
+				.SrcBlendAlpha = D3D12_BLEND_SRC_ALPHA,
+				.DestBlendAlpha = D3D12_BLEND_DEST_ALPHA,
+				.BlendOpAlpha = D3D12_BLEND_OP_MAX,
+				.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL,
+			}).SetAlphaToCoverageEnabled(true))
 		.Build()
 	);
 

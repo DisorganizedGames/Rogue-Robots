@@ -32,7 +32,7 @@ void ParticleScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 	}
 
 	//Particle system
-	{
+	{ 
 		m_particleSystem = CreateEntity();
 		AddComponent<TransformComponent>(m_particleSystem, Vector3(0, -1.f, 0));
 		auto& em = AddComponent<ParticleEmitterComponent>(m_particleSystem);
@@ -74,6 +74,34 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 			static float lifetime = emitter.particleLifetime;
 			ImGui::SliderFloat("Particle Lifetime", &lifetime, 0.f, 5.f);
 			emitter.particleLifetime = lifetime;
+
+			static bool enableTexture = false;
+
+			static char buf[256] = "Assets/Models/Rifle/textures/Base_baseColor.png";
+			static std::string currentTexture(buf);
+
+			ImGui::Checkbox("Use texture", &enableTexture);
+			if (!enableTexture)
+			{
+				emitter.textureHandle = 0;
+				currentTexture = "";
+			}
+			else
+			{
+				ImGui::InputText("Texture path", buf, 256);
+				std::string newTexture = "";
+				newTexture += buf;
+				auto test = std::filesystem::absolute(newTexture);
+				if (std::filesystem::is_regular_file(newTexture))
+				{
+					if (newTexture != currentTexture)
+					{
+						auto textureAsset = AssetManager::Get().LoadTexture(newTexture, AssetLoadFlag::GPUMemory);
+						emitter.textureHandle = AssetManager::Get().GetAsset<TextureAsset>(textureAsset)->textureViewRawHandle;
+						currentTexture = newTexture;
+					}
+				}
+			}
 		}
 
 		ImGui::End();

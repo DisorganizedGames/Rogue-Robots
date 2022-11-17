@@ -18,7 +18,10 @@ struct Emitter
 	float3 pos;
 	float rate;
 	float lifetime;
-	float2 pad;
+	
+	uint textureHandle;
+	
+	uint pad;
 };
 
 struct PS_IN

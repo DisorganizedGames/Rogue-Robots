@@ -10,7 +10,9 @@ namespace DOG::gfx
 		DirectX::SimpleMath::Vector3 pos = { 0, 0, 0 };
 		f32 rate = 0;
 		f32 lifetime = 0;
-		f32 pad[2] = { 0, 0 };
+
+		u32 textureHandle = 0;
+		u32 pad = 0;
 	};
 	
 	class ParticleBackend
