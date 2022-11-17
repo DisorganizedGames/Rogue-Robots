@@ -169,6 +169,7 @@ namespace DOG::gfx
 		std::vector<RenderSubmission> m_animatedDraws;				// temp
 		std::vector<RenderSubmission> m_wireframeDraws;				// temp
 		std::vector<RenderSubmission> m_noCullWireframeDraws;		// temp
+		std::vector<RenderSubmission> m_weaponSubmission;			// submission for weapons only
 
 		u32 m_nextSingleSidedShadowBucket{ 0 };
 		u32 m_nextDoubleSidedShadowBucket{ 0 };

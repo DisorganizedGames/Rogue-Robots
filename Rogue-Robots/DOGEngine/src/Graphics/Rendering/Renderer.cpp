@@ -424,7 +424,11 @@ namespace DOG::gfx
 		sub.mat = material;
 		sub.world = world;
 		sub.isWeapon = isWeapon;
-		m_submissions.push_back(sub);
+
+		if (isWeapon)
+			m_weaponSubmission.push_back(sub);
+		else
+			m_submissions.push_back(sub);
 	}
 
 	void Renderer::SubmitMeshNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
@@ -930,7 +934,9 @@ namespace DOG::gfx
 
 					u32 localLightBufferIndex = m_graphicsSettings.lightCulling ? resources.GetView(p.localLightBuffer) : -1;
 					drawFunc(rd, cmdl, m_submissions, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
+					drawFunc(rd, cmdl, m_weaponSubmission, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
 					drawFunc(rd, cmdl, m_animatedDraws, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, true);
+					
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
 					drawFunc(rd, cmdl, m_noCullSubmissions, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
@@ -1271,6 +1277,7 @@ namespace DOG::gfx
 		m_animatedDraws.clear();
 		m_wireframeDraws.clear();
 		m_noCullWireframeDraws.clear();
+		m_weaponSubmission.clear();
 		m_activeSpotlights.clear();
 
 		m_activeShadowCasters.clear();
