@@ -10,8 +10,8 @@
 
 using namespace DOG::gfx;
 
-ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceManager* resourceManager) :
-	RenderEffect(globalEffectData)
+ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceManager* resourceManager, u32 maxEmitters) :
+	RenderEffect(globalEffectData), m_maxEmitters(maxEmitters)
 {
 	auto shaderCompiler = m_globalEffectData.sclr;
 	auto device = m_globalEffectData.rd;
@@ -34,6 +34,17 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 		.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
 		.SetDepthFormat(DepthFormat::D32)
 		.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+		.SetBlend(BlendBuilder().AppendRTBlend(D3D12_RENDER_TARGET_BLEND_DESC{
+				.BlendEnable = true,
+				.LogicOpEnable = false,
+				.SrcBlend = D3D12_BLEND_SRC_ALPHA,
+				.DestBlend = D3D12_BLEND_INV_SRC_ALPHA,
+				.BlendOp = D3D12_BLEND_OP_ADD,
+				.SrcBlendAlpha = D3D12_BLEND_SRC_ALPHA,
+				.DestBlendAlpha = D3D12_BLEND_DEST_ALPHA,
+				.BlendOpAlpha = D3D12_BLEND_OP_MAX,
+				.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL,
+			}).SetAlphaToCoverageEnabled(true))
 		.Build()
 	);
 
@@ -54,6 +65,15 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 		m_resourceManager->ImportBuffer(RG_RESOURCE(ParticlesAliveBuffer), m_particlesAlive,
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	}
+
+	{
+		BufferDesc toSpawnDesc(MemoryType::Default, m_maxEmitters * sizeof(f32),
+			D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		m_emitterToSpawn = device->CreateBuffer(toSpawnDesc);
+
+		m_resourceManager->ImportBuffer(RG_RESOURCE(EmitterToSpawnBuffer), m_emitterToSpawn,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	}
 }
 
 ParticleEffect::~ParticleEffect()
@@ -62,9 +82,11 @@ ParticleEffect::~ParticleEffect()
 
 	device->FreeBuffer(m_particleBuffer);
 	device->FreeBuffer(m_particlesAlive);
+	device->FreeBuffer(m_emitterToSpawn);
 	
 	m_resourceManager->FreeImported(RG_RESOURCE(ParticleBuffer));
 	m_resourceManager->FreeImported(RG_RESOURCE(ParticlesAliveBuffer));
+	m_resourceManager->FreeImported(RG_RESOURCE(EmitterToSpawnBuffer));
 }
 
 void ParticleEffect::Add(RenderGraph& renderGraph)
@@ -73,6 +95,7 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 	{
 		RGResourceView particleBufferHandle;
 		RGResourceView particlesAliveHandle;
+		RGResourceView emitterToSpawnHandle;
 	};
 
 	renderGraph.AddPass<PassData>("Particle Emitter Pass",
@@ -84,6 +107,8 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 			passData.particlesAliveHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticlesAliveBuffer),
 				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), S_COUNTERS));
 
+			passData.emitterToSpawnHandle = builder.ReadWriteTarget(RG_RESOURCE(EmitterToSpawnBuffer),
+				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), m_maxEmitters));
 		},
 		[this](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) // Execute
 		{
@@ -96,11 +121,12 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 				.AppendConstant(m_emitterGlobalDescriptor)
 				.AppendConstant(m_emitterLocalOffset)
 				.AppendConstant(resources.GetView(passData.particleBufferHandle))
-				.AppendConstant(resources.GetView(passData.particlesAliveHandle));
+				.AppendConstant(resources.GetView(passData.particlesAliveHandle))
+				.AppendConstant(resources.GetView(passData.emitterToSpawnHandle));
 
 			rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
 
-			rd->Cmd_Dispatch(cmdl, 128, 1, 1);
+			rd->Cmd_Dispatch(cmdl, m_maxEmitters, 1, 1);
 		},
 		[](PassData&) // Pre-graph execution
 		{
@@ -165,7 +191,7 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 
 			rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
 
-			rd->Cmd_Dispatch(cmdl, 1, 1, 1);
+			rd->Cmd_Dispatch(cmdl, S_MAX_PARTICLES / 128, 1, 1);
 		},
 		[](PassData&) // Pre-graph execution
 		{

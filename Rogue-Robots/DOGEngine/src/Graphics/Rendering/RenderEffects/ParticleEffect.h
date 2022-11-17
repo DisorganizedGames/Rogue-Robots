@@ -10,7 +10,7 @@ namespace DOG::gfx
 	class ParticleEffect final : public RenderEffect
 	{
 	public:
-		ParticleEffect(GlobalEffectData& globalEffectData, RGResourceManager* resourceManager);
+		ParticleEffect(GlobalEffectData& globalEffectData, RGResourceManager* resourceManager, u32 maxEmitters);
 		~ParticleEffect();
 		void Add(RenderGraph& renderGraph) override;
 
@@ -24,8 +24,12 @@ namespace DOG::gfx
 		Buffer m_particleBuffer;
 		Buffer m_particlesAlive;
 
+		Buffer m_emitterToSpawn;
+
 		u32 m_emitterGlobalDescriptor = 0;
 		u32 m_emitterLocalOffset = 0;
+
+		u32 m_maxEmitters = 0;
 
 		RGResourceManager* m_resourceManager;
 

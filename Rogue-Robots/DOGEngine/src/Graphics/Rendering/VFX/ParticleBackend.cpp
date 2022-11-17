@@ -5,7 +5,7 @@ using namespace DOG::gfx;
 ParticleBackend::ParticleBackend(RenderDevice* rd, GPUGarbageBin* bin, u32 framesInFlight, GlobalEffectData& globEffectData, RGResourceManager* resourceManager)
 {
 	m_emitterTable = std::make_unique<GPUTableHostVisible<EmitterTableHandle>>(rd, bin, (u32)sizeof(ParticleEmitter), S_MAX_EMITTERS * (framesInFlight + 1));
-	m_particleEffect = std::make_unique<ParticleEffect>(globEffectData, resourceManager);
+	m_particleEffect = std::make_unique<ParticleEffect>(globEffectData, resourceManager, S_MAX_EMITTERS);
 }
 
 void ParticleBackend::UploadEmitters(const std::vector<ParticleEmitter>& emitters)

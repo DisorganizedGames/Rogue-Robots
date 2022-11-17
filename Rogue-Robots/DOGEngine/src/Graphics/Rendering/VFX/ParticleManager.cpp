@@ -14,24 +14,28 @@ const std::vector<ParticleEmitter>& ParticleManager::GatherEmitters()
 {
 	EntityManager::Get().Collect<TransformComponent, ParticleEmitterComponent>()
 		.Do([this](TransformComponent& transform, ParticleEmitterComponent& emitter)
-		{
-			if (emitter.emitterIndex == static_cast<u32>(-1))
 			{
-				u32 idx = GetFreeEmitter();
-				emitter.emitterIndex = idx;
-				auto& em = m_emitters[idx];
+				ParticleEmitter& em = m_emitters[0];
+				if (emitter.emitterIndex == static_cast<u32>(-1))
+				{
+					u32 idx = GetFreeEmitter();
+					emitter.emitterIndex = idx;
+					em = m_emitters[idx];
+				}
+				else
+				{
+					em = m_emitters[emitter.emitterIndex];
+				}
+
 				em.pos = transform.GetPosition();
 				em.rate = emitter.spawnRate;
 				em.lifetime = emitter.particleLifetime;
+				em.textureHandle = emitter.textureHandle;
+				em.texSegX = emitter.textureSegmentsX;
+				em.texSegY = emitter.textureSegmentsY;
 				em.alive = 1; // true
-			}
-			else
-			{
-				auto& em = m_emitters[emitter.emitterIndex];
-				em.age += Time::DeltaTime<TimeType::Seconds, f32>();
-			}
-		});
-	
+			});
+
 	return m_emitters;
 }
 

@@ -283,6 +283,10 @@ namespace DOG
 		f32 particleSize{ 0.f }; // Size of the particle in world space
 		f32 particleLifetime{ 0.f };
 
+		u32 textureHandle{ 0 };
+		u32 textureSegmentsX{ 1 };
+		u32 textureSegmentsY{ 1 };
+
 		u32 emitterIndex{ static_cast<u32>(-1) };
 	};
 }

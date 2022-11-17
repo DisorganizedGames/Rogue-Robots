@@ -299,7 +299,18 @@ namespace DOG
 			}
 			m_assets[id]->loadFlag &= ~AssetLoadFlag::CPUMemory;
 
-			TextureMoveToGpuCallHelper(id);
+			//TextureMoveToGpuCallHelper(id);
+
+			assert(m_assets.contains(id));
+
+			if (m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory && !(m_assets[id]->stateFlag & AssetStateFlag::ExistOnGPU))
+			{
+				AssetManager::Get().MoveTextureToGPU(id);
+			}
+			else if (m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory)
+			{
+				m_assets[id]->loadFlag &= ~AssetLoadFlag::GPUMemory;
+			}
 		}
 	}
 
@@ -715,6 +726,7 @@ namespace DOG
 			textureSpec.srgb ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM);
 
 		asset->textureViewGPU = builder->CreateTextureView(asset->textureGPU, desc);
+		asset->textureViewRawHandle = builder->GetRawDescriptor(asset->textureViewGPU);
 
 		m_assets[textureID]->stateFlag |= AssetStateFlag::ExistOnGPU;
 		m_assets[textureID]->loadFlag &= ~AssetLoadFlag::GPUMemory;
