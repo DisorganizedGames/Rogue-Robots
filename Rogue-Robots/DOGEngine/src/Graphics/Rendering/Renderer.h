@@ -204,6 +204,7 @@ namespace DOG::gfx
 		Pipeline m_meshPipeWireframe, m_meshPipeWireframeNoCull;
 		Pipeline m_ssaoPipe;
 		Pipeline m_zPrePassPipe, m_zPrePassPipeNoCull, m_zPrePassPipeWirefram, m_zPrePassPipeWireframNoCull;
+		Pipeline m_weaponMeshPipe;
 
 		Pipeline m_boxBlurPipe;
 

@@ -219,7 +219,13 @@ PS_OUT main(VS_OUT input)
         emissiveInput *= emissive.Sample(g_aniso_samp, input.uv).rgb;
     }
     
-    float3 amb = 0.001f * albedoInput + emissiveInput;
+    float ambFac = 0.001f;
+    if (g_constants.isWeapon == 1)
+    {
+        ambFac = 0.005f;
+    }
+    
+    float3 amb = ambFac * albedoInput + emissiveInput;
     
 
     
@@ -365,8 +371,7 @@ PS_OUT main(VS_OUT input)
     for (int k = 0; k < perSpotlightData.currentNrOfSpotlights; ++k)
     {    
         if (perSpotlightData.spotlightArray[k].strength == 0)
-            continue;
-        
+            continue;        
 
         
         // check contribution from based on spotlight angle
@@ -422,13 +427,10 @@ PS_OUT main(VS_OUT input)
         
         //Texture2D shadowMap = ResourceDescriptorHeap[shadowMapArrayStruct.shadowMapArray[groupIndex][offsetInGroup]];
         
-        
         float shadowFactor = perSpotlightData.spotlightArray[k].isShadowCaster ? CalculateShadowFactor(shadowMaps, k, input.wsPos, N, -lightToPosDir, perSpotlightData.spotlightArray[k].viewMatrix, perSpotlightData.spotlightArray[k].projectionMatrix) : 1.0f;
         
         
-        //if (perSpotlightData.spotlightArray[k].isPlayer && g_constants.isWeapon == 1)
-        //    shadowFactor = 1.f;
-        if (perSpotlightData.spotlightArray[k].isPlayer == 1 && g_constants.isWeapon == 1)
+        if (perSpotlightData.spotlightArray[k].isPlayer && g_constants.isWeapon == 1)
             shadowFactor = 1.f;
         
         Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL * contrib * shadowFactor;
@@ -472,8 +474,10 @@ PS_OUT main(VS_OUT input)
     
     //if (g_constants.isWeapon == 1)
     //{
-    //    output.color.rgb = float4(1.f, 0.f, 0.f, 1.f);
+    //    output.color = float4(10.f, 0.f, 0.f, 1.f);
+
     //}
+
     
     return output;
 }

@@ -811,6 +811,7 @@ void EntityInterface::AddMagazineModificationComponent(DOG::LuaContext* context,
 
 void EntityInterface::AddThisPlayerWeapon(DOG::LuaContext* context, DOG::entity e)
 {
+	UNREFERENCED_PARAMETER(context);
 	// Simply add tag
 	EntityManager::Get().AddComponent<ThisPlayerWeapon>(e);
 }
