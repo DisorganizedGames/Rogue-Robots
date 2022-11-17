@@ -1019,3 +1019,27 @@ void GameInterface::AmmoUI(DOG::LuaContext* context)
 	ImGui::End();
 	ImGui::PopStyleColor();
 }
+
+void GameInterface::AddDamageToEntity(DOG::LuaContext* context)
+{
+	entity e = (entity)context->GetInteger();
+	int playerEntity = context->GetInteger();
+	f32 damage = (f32)context->GetDouble();
+
+	BulletComponent& bullet = EntityManager::Get().AddComponent<BulletComponent>(e);
+	bullet.playerEntityID = playerEntity;
+	bullet.damage = damage;
+
+
+}
+
+void GameInterface::AddMagazineEffectsFromBullet(DOG::LuaContext* context)
+{
+	entity bullet = context->GetInteger();
+	entity newEntity = context->GetInteger();
+
+	if (EntityManager::Get().HasComponent<FrostEffectComponent>(bullet))
+	{
+		EntityManager::Get().AddComponent<FrostEffectComponent>(newEntity) = EntityManager::Get().GetComponent<FrostEffectComponent>(bullet);
+	}
+}

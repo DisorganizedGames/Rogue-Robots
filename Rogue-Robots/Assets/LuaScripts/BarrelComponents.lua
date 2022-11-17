@@ -1,4 +1,5 @@
 require("VectorMath")
+require("MiscComponents")
 
 local BarrelComponents = {}
 
@@ -80,20 +81,30 @@ function BarrelComponents:Grenade()
 		end,
 
 		Destroy = function(self, bullet, parentEntityID)
+			local basePower = 20.0
+
 			local change = Length(bullet.size) * 0.1
-			local power = 20.0 + change
+			local power = basePower + change
 			local radius = 5.0 + change
 			Physics:Explosion(bullet.entity, power, radius)
 			
 			explosionTrigger = Game:ExplosionEffect(bullet.entity, radius)
 
 			Entity:AddComponent(explosionTrigger, "SphereTrigger", radius)
-			Entity:AddComponent(explosionTrigger, "Bullet", parentEntityID)		-- Note: bullet damage is added in Lua interface
+			Game:AddDamageToEntity(explosionTrigger, parentEntityID, 100.0 * power / basePower)
+			Game:AddMagazineEffectsFromBullet(bullet.entity, explosionTrigger)
+
 		end,
 
-		CreateBullet = function(self)
+		CreateBullet = function(self, miscComponent)
+			shotTime = self.timeBetweenShots
+
+			if miscComponent.miscName == "FullAuto" then
+				shotTime = shotTime / 2.0
+			end
+
 			if self.waitForFire < ElapsedTime then
-				self.waitForFire = self.timeBetweenShots + ElapsedTime
+				self.waitForFire = shotTime + ElapsedTime
 				return true
 			end
 			return false

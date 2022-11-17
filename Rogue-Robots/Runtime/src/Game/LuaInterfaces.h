@@ -231,4 +231,6 @@ public:
 
 	void ExplosionEffect(DOG::LuaContext* context);
 	void AmmoUI(DOG::LuaContext* context);
+	void AddDamageToEntity(DOG::LuaContext* context);
+	void AddMagazineEffectsFromBullet(DOG::LuaContext* context);
 };

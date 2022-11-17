@@ -756,6 +756,8 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface = global->CreateLuaInterface("GameInterface");
 	luaInterface.AddFunction<GameInterface, &GameInterface::ExplosionEffect>("ExplosionEffect");
 	luaInterface.AddFunction<GameInterface, &GameInterface::AmmoUI>("AmmoUI");
+	luaInterface.AddFunction<GameInterface, &GameInterface::AddDamageToEntity>("AddDamageToEntity");
+	luaInterface.AddFunction<GameInterface, &GameInterface::AddMagazineEffectsFromBullet>("AddMagazineEffectsFromBullet");
 
 	global->SetLuaInterface(luaInterface);
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Game", "GameInterface");
