@@ -663,51 +663,142 @@ std::wstring DOG::UITextField::GetText()
 DOG::UIBuffTracker::UIBuffTracker(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector<std::wstring> filePaths) : UIElement(id)
 {
    UNREFERENCED_PARAMETER(d2d);
-   //Bitmap Decoder
+   ComPtr<IWICBitmapDecoder> m_decoder;
+   ComPtr<IWICImagingFactory> m_imagingFactory;
+   ComPtr<IWICBitmapFrameDecode> m_frame;
+   ComPtr<IWICFormatConverter> m_converter;
+   m_buffs = 0;
    HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (LPVOID*)m_imagingFactory.GetAddressOf());
    HR_VFY(hr);
-   hr = m_imagingFactory->CreateDecoderFromFilename(
-       filePaths[0].c_str(),                      // Image to be decoded
-       NULL,                            // Do not prefer a particular vendor
-       GENERIC_READ,                    // Desired read access to the file
-       WICDecodeMetadataCacheOnDemand,  // Cache metadata when needed
-       m_decoder.GetAddressOf()                        // Pointer to the decoder
-       );
-   HR_VFY(hr);
-   if (SUCCEEDED(hr))
+   auto rect = D2D1::RectF(50.f, 50.f, 100.f, 100.f);
+   for (auto&& path : filePaths)
    {
+      hr = m_imagingFactory->CreateDecoderFromFilename(
+         path.c_str(),                            // Image to be decoded
+         NULL,                            // Do not prefer a particular vendor
+         GENERIC_READ,                    // Desired read access to the file
+         WICDecodeMetadataCacheOnDemand,  // Cache metadata when needed
+         m_decoder.GetAddressOf()                        // Pointer to the decoder
+      );
+      HR_VFY(hr);
       hr = m_decoder->GetFrame(0, m_frame.GetAddressOf());
-   }
-   if (SUCCEEDED(hr))
-   {
+      HR_VFY(hr);
       hr = m_imagingFactory->CreateFormatConverter(m_converter.GetAddressOf());
+      HR_VFY(hr);
+      hr = m_converter->Initialize(
+         m_frame.Get(),                   // Input bitmap to convert
+         GUID_WICPixelFormat32bppPBGRA,   // Destination pixel format
+         WICBitmapDitherTypeNone,         // Specified dither pattern
+         NULL,                            // Specify a particular palette
+         0.f,                             // Alpha threshold
+         WICBitmapPaletteTypeCustom       // Palette translation type
+      );
+      HR_VFY(hr);
+      ComPtr<ID2D1Bitmap> bitmap;
+      hr = d2d.Get2DDeviceContext()->CreateBitmapFromWicBitmap(m_converter.Get(), NULL, bitmap.GetAddressOf());
+      HR_VFY(hr);
+      m_bitmaps.push_back(bitmap);
+      m_rects.push_back(rect);
+      rect.left += 60.f;
+      rect.right += 60.f;
+      m_visible.push_back(false);
+      m_animate.push_back(false);
+      m_opacity.push_back(1.0f);
+      m_buffs++;
    }
-   if (SUCCEEDED(hr))
-   {
-       hr = m_converter->Initialize(
-           m_frame.Get(),                   // Input bitmap to convert
-           GUID_WICPixelFormat32bppPBGRA,   // Destination pixel format
-           WICBitmapDitherTypeNone,         // Specified dither pattern
-           NULL,                            // Specify a particular palette 
-           0.f,                             // Alpha threshold
-           WICBitmapPaletteTypeCustom       // Palette translation type
-           );
-   }
-   d2d.Get2DDeviceContext()->CreateBitmapFromWicBitmap(m_converter.Get(), NULL, m_bitmap.GetAddressOf());
-   m_rect = D2D1::RectF(100.f, 100.f, 200.f, 200.f);
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), m_borderBrush.GetAddressOf());
+   HR_VFY(hr);
+   m_delta = (float)(clock() / CLOCKS_PER_SEC);
+}
+
+float easeOutCirc(float x)
+{
+   return sqrt(1 - pow(x - 1, 2));
 }
 
 void DOG::UIBuffTracker::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   d2d.Get2DDeviceContext()->DrawBitmap(m_bitmap.Get(), m_rect);
+   for (size_t i = 0; i < m_buffs; i++)
+   {
+      if (m_visible[i])
+      {
+         d2d.Get2DDeviceContext()->DrawBitmap(m_bitmaps[i].Get(), m_rects[i], m_opacity[i]);
+         d2d.Get2DDeviceContext()->DrawRectangle(m_rects[i], m_borderBrush.Get());
+      }
+   }
+
 }
 void DOG::UIBuffTracker::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
+   UNREFERENCED_PARAMETER(d2d);
+   m_delta = (float)((clock() - m_delta) / CLOCKS_PER_SEC);
+   if (DOG::Keyboard::IsKeyPressed(DOG::Key::G))
+      ActivateIcon(0u);
+   if (DOG::Keyboard::IsKeyPressed(DOG::Key::H))
+      ActivateIcon(1u);
+
+   if(DOG::Keyboard::IsKeyPressed(DOG::Key::J))
+      DeactivateIcon(0u);
+   if(DOG::Keyboard::IsKeyPressed(DOG::Key::K))
+      DeactivateIcon(1u);
+
+
+   for (size_t i = 0; i < m_buffs; i++)
+   {
+      if (m_animate[i])
+      {
+         AnimateUp(i);
+      }
+   }
+
+
 
 }
 
 DOG::UIBuffTracker::~UIBuffTracker()
 {
+
+}
+
+void DOG::UIBuffTracker::AnimateUp(UINT index)
+{
+   float ease = easeOutCirc(1 / (m_rects[index].top - 50.f));
+   if (m_rects[index].top >= 50.f)
+   {
+      m_rects[index].top -= 0.1f * m_delta * ease;
+      m_rects[index].bottom -= 0.1f * m_delta * ease;
+   }
+   if (m_opacity[index] <= 1.f)
+      m_opacity[index] += 0.1f * m_delta * ease;
+
+   if (m_rects[index].top == 50.f and m_opacity[index] == 1.0f)
+      m_animate[index] = false;
+}
+
+void DOG::UIBuffTracker::ActivateIcon(UINT index)
+{
+   m_visible[index] = true;
+   size_t activeBuffs = std::count(m_visible.begin(), m_visible.end(), true);
+   float x = 50.f + 60.f * activeBuffs;
+   float y = 50.f + 30.f;
+   m_rects[index] = D2D1::RectF(x, y, x + 50.f, y + 50.f);
+   m_opacity[index] = 0.1f;
+   m_animate[index] = true;
+}
+
+void DOG::UIBuffTracker::DeactivateIcon(UINT index)
+{
+   m_visible[index] = false;
+   for (size_t i = 0; i < m_buffs; i++)
+   {
+      if(m_rects[i].left > m_rects[index].left)
+      {
+         //Animate here later
+         m_rects[i].left -= 60.f;
+         m_rects[i].right -= 60.f;
+      }
+   }
+   
 
 }
 
@@ -725,7 +816,6 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
 
    //Menu backgrounds
-
    auto menuBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Rogue Robots"));
    instance->AddUIElementToScene(menuID, std::move(menuBack));
    auto optionsBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(optionsBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Options"));
@@ -749,9 +839,10 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
    std::vector<std::wstring> vec;
    vec.push_back(L"Assets/Sprites/test.bmp");
+   vec.push_back(L"Assets/Sprites/test2.bmp");
    UINT picID;
    auto pic = instance->Create<DOG::UIBuffTracker, std::vector<std::wstring>>(picID, vec);
-   instance->AddUIElementToScene(menuID, std::move(pic));
+   instance->AddUIElementToScene(gameID, std::move(pic));
 
    instance->AddUIElementToScene(menuID, std::move(bp));
    instance->AddUIElementToScene(menuID, std::move(bm));

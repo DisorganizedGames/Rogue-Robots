@@ -234,13 +234,19 @@ namespace DOG
          ~UIBuffTracker();
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
-      private:  
-		   ComPtr<IWICBitmapDecoder> m_decoder;
-		   ComPtr<IWICImagingFactory> m_imagingFactory;
-         ComPtr<IWICBitmapFrameDecode> m_frame;
-         ComPtr<IWICFormatConverter> m_converter;
-         ComPtr<ID2D1Bitmap> m_bitmap;
-         D2D1_RECT_F m_rect;
+         void ActivateIcon(UINT index);
+         void DeactivateIcon(UINT index);
+      private:
+         void AnimateUp(UINT index);
+         float m_delta;
+         UINT m_buffs;
+         std::vector<clock_t> m_animTimers;
+		   std::vector<bool> m_visible;
+         std::vector<bool> m_animate;
+         std::vector<float> m_opacity;
+         std::vector<ComPtr<ID2D1Bitmap>> m_bitmaps;
+         std::vector<D2D1_RECT_F> m_rects;
+         ComPtr<ID2D1SolidColorBrush> m_borderBrush;
    };
 
 }
