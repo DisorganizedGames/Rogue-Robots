@@ -149,3 +149,55 @@ std::vector<entity> AddFlashlightsToPlayers(const std::vector<entity>& players)
 	}
 	return flashlights;
 }
+
+entity SpawnTurretProjectile(const DirectX::SimpleMath::Matrix& transform, float speed, DOG::entity turret)
+{
+	constexpr float radius = 0.1f;
+	static bool init = true;
+	static SubmeshRenderer projectileModel;
+	if (init)
+	{
+		auto shapeCreator = ShapeCreator(Shape::sphere, 16, 16, radius);
+		auto shape = shapeCreator.GetResult();
+		MeshDesc mesh;
+		mesh.indices = shape->mesh.indices;
+		mesh.submeshData = shape->submeshes;
+		for (auto& [attr, vert] : shape->mesh.vertexData)
+		{
+			mesh.vertexDataPerAttribute[attr] = vert;
+		}
+		projectileModel.mesh = CustomMeshManager::Get().AddMesh(mesh).first;
+		projectileModel.materialDesc.emissiveFactor = { 1, 0.5f, 0.001f, 1 };
+		projectileModel.materialDesc.albedoFactor = { 0.2f, 0.2f, 0.2f, 1 };
+		projectileModel.material = CustomMaterialManager::Get().AddMaterial(projectileModel.materialDesc);
+		init = false;
+	}
+
+	auto& em = EntityManager::Get();
+
+	entity p = em.CreateEntity();
+	if (auto scene = em.TryGetComponent<SceneComponent>(turret); scene) em.AddComponent<SceneComponent>(p, scene->get().scene);
+
+	auto& pTransform = em.AddComponent<TransformComponent>(p);
+	pTransform.worldMatrix = transform;
+	em.AddComponent<SubmeshRenderer>(p) = projectileModel;
+
+	em.AddComponent<SphereColliderComponent>(p, p, radius, true, 0.1f);
+	auto& rb = em.AddComponent<RigidbodyComponent>(p, p);
+	rb.continuousCollisionDetection = true;
+	rb.linearVelocity = speed * pTransform.GetForward();
+
+
+
+
+	LightHandle pointLight = LightManager::Get().AddPointLight(PointLightDesc(), LightUpdateFrequency::PerFrame);
+	em.AddComponent<PointLightComponent>(p, pointLight, Vector3(1, 0.5f, 0.001f), 5.f);
+
+
+	em.AddComponent<TurretProjectileComponent>(p);
+	auto& bullet = em.AddComponent<BulletComponent>(p);
+	bullet.damage = 50;
+	bullet.playerEntityID = GetPlayer();
+
+	return p;
+}

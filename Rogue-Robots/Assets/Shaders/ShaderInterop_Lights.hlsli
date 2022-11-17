@@ -7,7 +7,7 @@ struct ShaderInterop_Range
     uint count;
 };
 
-#define LOCAL_LIGHT_MAX_SIZE 31
+#define LOCAL_LIGHT_MAX_SIZE 255
 struct ShaderInterop_LocalLightBuffer
 {
     uint count;

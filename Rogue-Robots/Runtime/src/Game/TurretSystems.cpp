@@ -1,5 +1,6 @@
 #include "TurretSystems.h"
 #include "AgentManager/AgentComponents.h"
+#include "PrefabInstantiatorFunctions.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -10,11 +11,11 @@ void TurretTargetingSystem::OnUpdate(TurretTargetingComponent& targeter, ChildCo
 	auto& em = EntityManager::Get();
 	targeter.trackedTarget = NULL_ENTITY;
 
-	Vector3 fwd = localTransform.localTransform.GetForward();
-	fwd.y = 0;
-	fwd.Normalize();
-	float yaw = acosf(fwd.z);
-	if (fwd.x > 0) yaw = -yaw;
+	Vector3 xzFwdL = localTransform.localTransform.GetForward();
+	xzFwdL.y = 0;
+	xzFwdL.Normalize();
+	float yaw = acosf(xzFwdL.z);
+	if (xzFwdL.x > 0) yaw = -yaw;
 
 	Vector3 turretPosW = globalTransform.GetPosition();
 	Vector3 targetDirL; // In turrets local space
@@ -61,5 +62,49 @@ void TurretTargetingSystem::OnUpdate(TurretTargetingComponent& targeter, ChildCo
 		float pitch = asinf(localTransform.localTransform.GetForward().y);
 		float deltaPitch = targetDirL.y > 0 ? std::max(pitch - targeter.pitchLimit, dt * -targeter.pitchSpeed) : std::min(pitch + targeter.pitchLimit, dt * targeter.pitchSpeed);
 		localTransform.localTransform.RotateL({ deltaPitch, 0, 0 });
+
+		// If turret aims roughly at the target then set shoot to true.
+		targeter.shoot = targetDirL.z > 0.95f;
+	}
+}
+
+
+
+
+void TurretShootingSystem::OnUpdate(entity e, TurretTargetingComponent& targeter, TurretAmmoComponent& ammo, DOG::TransformComponent& transform)
+{
+	f64 dt = Time::DeltaTime();
+	if (targeter.shoot && ammo.ammoCount > 0)
+	{
+		while (ammo.lastDischargeTimer > ammo.timeStep)
+		{
+
+			SpawnTurretProjectile(transform, ammo.projectileSpeed, e);
+			ammo.lastDischargeTimer -= ammo.timeStep;
+			if (--ammo.ammoCount <= 0) break;
+		}
+		ammo.lastDischargeTimer += dt;
+	}
+	targeter.shoot = false;
+}
+
+// Thanks unity src code
+float MoveTowards(float current, float target, float maxDelta)
+{
+	return abs(target - current) <= maxDelta ? target : current + std::copysignf(maxDelta, target - current);
+}
+
+void TurretProjectileSystem::OnUpdate(DOG::entity e, TurretProjectileComponent& projectile, DOG::PointLightComponent& pointLight)
+{
+	f32 dt = static_cast<f32>(Time::DeltaTime());
+	projectile.lifeTime += dt;
+	if (projectile.lifeTime < projectile.maxLifeTime)
+	{
+		pointLight.strength = MoveTowards(pointLight.strength, 0, dt);
+		pointLight.dirty = true;
+	}
+	else
+	{
+		EntityManager::Get().DeferredEntityDestruction(e);
 	}
 }

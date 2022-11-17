@@ -75,7 +75,7 @@ namespace DOG::gfx
 		EntityManager::Get().Collect<DirtyComponent, SpotLightComponent>().Do([](entity, DirtyComponent& dirty, SpotLightComponent& light) {
 			light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged) || dirty.IsDirty(DirtyComponent::rotationChanged); });
 
-		EntityManager::Get().Collect<TransformComponent, SpotLightComponent>().Do([&](entity, TransformComponent tr, SpotLightComponent& light)
+		EntityManager::Get().Collect<TransformComponent, SpotLightComponent>().Do([&](entity, TransformComponent& tr, SpotLightComponent& light)
 			{
 				if (light.dirty)
 				{
@@ -91,7 +91,7 @@ namespace DOG::gfx
 				}
 			});
 
-		EntityManager::Get().Collect<TransformComponent, PointLightComponent>().Do([&](entity, TransformComponent tr, PointLightComponent& light)
+		EntityManager::Get().Collect<TransformComponent, PointLightComponent>().Do([&](entity, TransformComponent& tr, PointLightComponent& light)
 			{
 				if (light.dirty)
 				{
