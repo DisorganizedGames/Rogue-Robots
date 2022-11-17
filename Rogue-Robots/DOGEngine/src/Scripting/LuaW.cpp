@@ -146,6 +146,11 @@ namespace DOG
 		s_luaW.PushThreadToStack(coroutine);
 		lua_State* thread = s_luaW.GetThreadPointerFromStack();
 
+		PrintStack(thread);
+	}
+
+	void LuaW::PrintStack(lua_State* thread)
+	{
 		std::cout << "Thread Stack:\n";
 		int top = lua_gettop(thread);
 		for (int i = 1; i <= top; i++)
@@ -565,12 +570,22 @@ namespace DOG
 		return lua_gettop(m_luaState);
 	}
 
+	int LuaW::GetNumberOfStackItems(lua_State* thread) const
+	{
+		return lua_gettop(thread);
+	}
+
 	void LuaW::ClearStack()
 	{
 		const int popAmount = -1;
 		//const int popAmount = -1;
 		//When popAmount is -1 then it will clear the entire stack
 		lua_pop(m_luaState, popAmount);
+	}
+
+	void LuaW::MoveStackItemsBetweenThreads(lua_State* source, lua_State* destination, int amount)
+	{
+		lua_xmove(source, destination, amount);
 	}
 
 	LuaW& LuaW::GetLuaW()
@@ -655,10 +670,6 @@ namespace DOG
 		{
 			Error(lua_tostring(m_luaState, getErrorMessage));
 		}
-
-		PrintStack();
-
-		//lua_thread
 	}
 
 	LuaFunctionReturn LuaW::CallTableLuaFunctionReturn(Table& table, Function& function, int arguments)
@@ -942,6 +953,11 @@ namespace DOG
 		RemoveReference(userData);
 	}
 
+	void LuaW::RemoveReferenceToCoroutine(Coroutine& coroutine)
+	{
+		RemoveReference(coroutine);
+	}
+
 	Coroutine LuaW::CreateThread()
 	{
 		lua_newthread(m_luaState);
@@ -962,10 +978,16 @@ namespace DOG
 		lua_State* thread = GetThreadPointerFromStack();
 		PushFunctionToStack(function);
 		//Move function from one thread to another (from the main lua_State to the coroutine)
-		lua_xmove(m_luaState, thread, 1);
+		MoveStackItemsBetweenThreads(m_luaState, thread, 1);
 
 		int returnValue;
 		int error = lua_resume(thread, NULL, 0, &returnValue);
+
+		if (error && error != LUA_YIELD)
+		{
+			Error(lua_tostring(m_luaState, -1));
+			assert(false);
+		}
 	}
 
 	bool LuaW::CoroutineIsDead(Coroutine& coroutine)
@@ -980,6 +1002,13 @@ namespace DOG
 		PushThreadToStack(coroutine);
 		lua_State* thread = GetThreadPointerFromStack();
 
-		lua_resume(m_luaState, thread, 0, 0);
+		int returnValue;
+		int error = lua_resume(thread, NULL, 0, &returnValue);
+
+		if (error && error != LUA_YIELD)
+		{
+			Error(lua_tostring(m_luaState, -1));
+			assert(false);
+		}
 	}
 }

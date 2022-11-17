@@ -26,10 +26,6 @@ GameLayer::GameLayer() noexcept
 	LuaMain::GetScriptManager()->RunLuaFile("LuaStartUp.lua");
 	//Register Lua interfaces
 	RegisterLuaInterfaces();
-
-	entity e = m_entityManager.CreateEntity();
-	LuaMain::GetScriptManager()->AddScript(e, "ScriptTest.lua");
-	LuaMain::GetScriptManager()->UpdateScripts();
 	
 	m_entityManager.RegisterSystem(std::make_unique<ScuffedSceneGraphSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());

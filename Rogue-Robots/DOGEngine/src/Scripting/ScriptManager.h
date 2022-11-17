@@ -15,6 +15,7 @@ namespace DOG
 		Function onStartFunction;
 		Function onUpdateFunction;
 		Function onDestroyFunction;
+		Coroutine onUpdateCoroutine;
 	};
 
 	struct GetScriptData
@@ -76,6 +77,7 @@ namespace DOG
 		void RemoveScriptData(entity entity, bool removeAllEntityScripts, u32 vectorIndex = 0);
 		void CreateScript(entity entity, const std::string& luaFileName);
 		void CallOnDestroy(ScriptData& scriptData);
+		void CallOnUpdateCoroutine(ScriptData& scriptData);
 
 	public:
 		ScriptManager(LuaW* luaW);

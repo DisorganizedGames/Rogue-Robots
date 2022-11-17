@@ -165,8 +165,12 @@ namespace DOG
 		int AddEnvironmentToTable(Table& table, const std::string& luaFileName);
 
 		int GetNumberOfStackItems() const;
+		int GetNumberOfStackItems(lua_State* thread) const;
 
 		void ClearStack();
+
+		//Move function from one thread to another
+		static void MoveStackItemsBetweenThreads(lua_State* source, lua_State* destination, int amount);
 
 		static LuaW& GetLuaW();
 
@@ -188,6 +192,7 @@ namespace DOG
 
 		static void PrintStack();
 		static void PrintStack(Coroutine& coroutine);
+		static void PrintStack(lua_State* thread);
 
 		int GetGlobalInteger(const std::string& luaGlobalName);
 		float GetGlobalFloat(const std::string& luaGlobalName);
@@ -278,7 +283,7 @@ namespace DOG
 		void RemoveReferenceToTable(Table& table);
 		void RemoveReferenceToFunction(Function& function);
 		void RemoveReferenceToUserData(UserData& userData);
-
+		void RemoveReferenceToCoroutine(Coroutine& coroutine);
 	public:
 		LuaW();
 
@@ -326,28 +331,59 @@ namespace DOG
 
 	//Hooks the function from c++ to an static int function(lua_State* luaState) 
 	template<void (*func)(LuaContext*)>
-	static inline int LuaW::FunctionsHook(lua_State*)
+	static inline int LuaW::FunctionsHook(lua_State* thread)
 	{
 		LuaContext state(&s_luaW);
 
+		bool isACoroutine = thread != s_luaW.m_luaState;
+		//Move all the function call information to the main thread (m_luaState)
+		if (isACoroutine)
+		{
+			//Move function from one thread to another (from the coroutine to the main lua_State)
+			MoveStackItemsBetweenThreads(thread, s_luaW.m_luaState, s_luaW.GetNumberOfStackItems(thread));
+		}
+
 		func(&state);
+
+		//Move all the returns from the main lua state to the coroutine
+		if (isACoroutine)
+		{
+			//Move function from one thread to another (from the main lua_State to the coroutine)
+			MoveStackItemsBetweenThreads(s_luaW.m_luaState, thread, state.GetNumberOfReturns());
+		}
 
 		return state.GetNumberOfReturns();
 	}
 
 	//Hooks a member function from c++ to an static int function(lua_State* luaState) 
 	template <typename T, void (T::* func)(LuaContext*)>
-	static inline int LuaW::ClassFunctionsHook(lua_State*)
+	static inline int LuaW::ClassFunctionsHook(lua_State* thread)
 	{
 		LuaContext state(&s_luaW);
+
+		bool isACoroutine = thread != s_luaW.m_luaState;
+		//Move all the function call information to the main thread (m_luaState)
+		if (isACoroutine)
+		{
+			//Move function from one thread to another (from the coroutine to the main lua_State)
+			MoveStackItemsBetweenThreads(thread, s_luaW.m_luaState, s_luaW.GetNumberOfStackItems(thread));
+		}
 
 		if (!s_luaW.IsUserData())
 		{
 			s_luaW.Error("Tried to access userdata and no userdata was found! Call object function with either object:function() or object.function(object)!");
 			return 0;
 		}
+
 		T* object = s_luaW.GetUserDataPointerFromStack<T>();
 		(object->*func)(&state);
+
+		//Move all the returns from the main lua state to the coroutine
+		if (isACoroutine)
+		{
+			//Move function from one thread to another (from the main lua_State to the coroutine)
+			MoveStackItemsBetweenThreads(s_luaW.m_luaState, thread, state.GetNumberOfReturns());
+		}
 
 		return state.GetNumberOfReturns();
 	}

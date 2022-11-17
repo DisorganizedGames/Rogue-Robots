@@ -42,6 +42,10 @@ namespace DOG
 		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
 		scriptData.onDestroyFunction = table.TryGetFunctionFromTable("OnDestroy");
 
+		//Create thread that we use for coroutine
+		if (m_luaW->CheckIfFunctionExist(scriptData.onUpdateFunction))
+			scriptData.onUpdateCoroutine = m_luaW->CreateThread();
+
 		//Call start on the reloaded script (if it exists)!
 		if (m_luaW->CheckIfFunctionExist(scriptData.onStartFunction))
 			table.CallFunctionOnTable(scriptData.onStartFunction);
@@ -74,6 +78,7 @@ namespace DOG
 		m_luaW->RemoveReferenceToFunction(scriptData.onStartFunction);
 		m_luaW->RemoveReferenceToFunction(scriptData.onUpdateFunction);
 		m_luaW->RemoveReferenceToFunction(scriptData.onDestroyFunction);
+		m_luaW->RemoveReferenceToCoroutine(scriptData.onUpdateCoroutine);
 	}
 
 	void ScriptManager::RemoveScriptData(entity entity, bool removeAllEntityScripts, u32 vectorIndex)
@@ -126,6 +131,10 @@ namespace DOG
 		scriptData.onStartFunction = table.TryGetFunctionFromTable("OnStart");
 		scriptData.onUpdateFunction = table.TryGetFunctionFromTable("OnUpdate");
 		scriptData.onDestroyFunction = table.TryGetFunctionFromTable("OnDestroy");
+
+		//Create thread that we use for coroutine
+		if (m_luaW->CheckIfFunctionExist(scriptData.onUpdateFunction))
+			scriptData.onUpdateCoroutine = m_luaW->CreateThread();
 
 		//Check if StartScripts have been called
 		if (m_callStartOnCreationOfScripts && m_luaW->CheckIfFunctionExist(scriptData.onStartFunction))
@@ -222,6 +231,14 @@ namespace DOG
 		{
 			m_luaW->CallTableLuaFunction(scriptData.scriptTable, scriptData.onDestroyFunction);
 		}
+	}
+
+	void ScriptManager::CallOnUpdateCoroutine(ScriptData& scriptData)
+	{
+		if (m_luaW->CoroutineIsDead(scriptData.onUpdateCoroutine))
+			m_luaW->CreateCoroutine(scriptData.onUpdateCoroutine, scriptData.onUpdateFunction);
+		else
+			m_luaW->ResumeCoroutine(scriptData.onUpdateCoroutine);
 	}
 
 	ScriptManager::ScriptManager(LuaW* luaW) : m_luaW(luaW), m_entityManager(DOG::EntityManager::Get())
@@ -414,7 +431,7 @@ namespace DOG
 			for (auto& scriptData : m_sortedScripts[index])
 			{
 				if (scriptData.onUpdateFunction.ref != -1)
-					m_luaW->CallTableLuaFunction(scriptData.scriptTable, scriptData.onUpdateFunction);
+					CallOnUpdateCoroutine(scriptData);
 			}
 		}
 		//Run the scripts which does not have an order!
@@ -423,7 +440,7 @@ namespace DOG
 			for (auto& scriptData : m_unsortedScripts[index])
 			{
 				if (scriptData.onUpdateFunction.ref != -1)
-					m_luaW->CallTableLuaFunction(scriptData.scriptTable, scriptData.onUpdateFunction);
+					CallOnUpdateCoroutine(scriptData);
 			}
 		}
 		//Run the scripts which should happen last!
@@ -432,7 +449,7 @@ namespace DOG
 			for (auto& scriptData : m_sortedScripts[index])
 			{
 				if (scriptData.onUpdateFunction.ref != -1)
-					m_luaW->CallTableLuaFunction(scriptData.scriptTable, scriptData.onUpdateFunction);
+					CallOnUpdateCoroutine(scriptData);
 			}
 		}
 	}
