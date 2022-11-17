@@ -36,6 +36,13 @@ set(SourceFiles
 	"src/Game/PlayerManager/PlayerManager.h" "src/Game/PlayerManager/PlayerMangager.cpp"
 	"src/Game/HeartbeatTrackerSystem.h" "src/Game/HeartbeatTrackerSystem.cpp"
 	"src/Core/QueryHelpers.h" "src/Core/QueryHelpers.cpp"
+
+	"src/Pathfinder/NavMesh.h" "src/Pathfinder/NavMesh.cpp"
+	"src/Pathfinder/NavNode.h" "src/Pathfinder/NavNode.cpp"
+	"src/Pathfinder/Pathfinder.h" "src/Pathfinder/Pathfinder.cpp"
+	"src/Pathfinder/GridCoord.h" "src/Pathfinder/GridCoord.cpp"
+	"src/Pathfinder/Box.h" "src/Pathfinder/Box.cpp"
+
 	"src/Game/AnimationIDs.h"
 	"src/Game/PlayerEquipmentFunctions.h" "src/Game/PlayerEquipmentFunctions.cpp"
 	)
