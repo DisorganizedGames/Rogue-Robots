@@ -39,6 +39,7 @@ namespace DOG
 
 	typedef Table Function;
 	typedef Table UserData;
+	typedef Table Coroutine;
 
 	struct LuaFunctionReturn
 	{
@@ -118,6 +119,7 @@ namespace DOG
 		bool IsFunction(int index = 1) const;
 		bool IsTable(int index = 1) const;
 		bool IsUserData(int index = 1) const;
+		bool IsThread(int index = 1) const;
 
 		template<typename T>
 		bool TryGetValueFromStack(T& valueOut)
@@ -135,6 +137,7 @@ namespace DOG
 		UserData GetUserDataFromStack(int index = 1, bool noError = false);
 		template<typename T>
 		T* GetUserDataPointerFromStack(int index = 1);
+		lua_State* GetThreadPointerFromStack(int index = 1);
 
 		void GetReturnsFromFunction(LuaFunctionReturn& luaFunctionReturn);
 
@@ -149,6 +152,7 @@ namespace DOG
 		template<typename T>
 		void PushUserDataPointerToStack(T* object, const std::string& interfaceName);
 		void PushUserDataToStack(UserData& userData);
+		void PushThreadToStack(Coroutine& coroutine);
 
 		void SetGlobal(const std::string& luaGlobalName);
 		void GetGlobal(const std::string& luaGlobalName);
@@ -183,6 +187,7 @@ namespace DOG
 		void PushLuaInterface(RegisterClassFunctions& registerInterface);
 
 		static void PrintStack();
+		static void PrintStack(Coroutine& coroutine);
 
 		int GetGlobalInteger(const std::string& luaGlobalName);
 		float GetGlobalFloat(const std::string& luaGlobalName);
@@ -252,6 +257,11 @@ namespace DOG
 
 		Function TryGetFunctionFromTable(Table& table, const std::string& tableFunctionName);
 		bool CheckIfFunctionExist(Function& function);
+
+		Coroutine CreateThread();
+		void CreateCoroutine(Coroutine& coroutine, Function& function);
+		bool CoroutineIsDead(Coroutine& coroutine);
+		void ResumeCoroutine(Coroutine& coroutine);
 
 		void RunScript(const std::string& luaFileName);
 		void CreateEnvironment(Table& table, const std::string& luaFileName);

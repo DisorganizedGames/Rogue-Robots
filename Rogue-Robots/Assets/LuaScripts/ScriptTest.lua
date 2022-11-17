@@ -6,6 +6,12 @@ function OnStart()
 	--LuaTest:SetNumber(20)
 end
 
+function OnUpdate()
+	print("Hello")
+	coroutine.yield()
+	print("Y")
+end
+
 function OnCollisionEnter(self, entity1, entity2)
 	print("OnCollisionEnter POGGERS")
 	print("OnEntity1", entity1)

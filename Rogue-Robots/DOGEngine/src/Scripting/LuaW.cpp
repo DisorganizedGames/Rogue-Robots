@@ -141,6 +141,37 @@ namespace DOG
 		}
 	}
 
+	void LuaW::PrintStack(Coroutine& coroutine)
+	{
+		s_luaW.PushThreadToStack(coroutine);
+		lua_State* thread = s_luaW.GetThreadPointerFromStack();
+
+		std::cout << "Thread Stack:\n";
+		int top = lua_gettop(thread);
+		for (int i = 1; i <= top; i++)
+		{
+			printf("%d\t%s\t", i, luaL_typename(thread, i));
+			switch (lua_type(thread, i))
+			{
+			case LUA_TNUMBER:
+				std::cout << lua_tonumber(thread, i) << std::endl;
+				break;
+			case LUA_TSTRING:
+				std::cout << lua_tostring(thread, i) << std::endl;
+				break;
+			case LUA_TBOOLEAN:
+				std::cout << (lua_toboolean(thread, i) ? "true" : "false") << std::endl;
+				break;
+			case LUA_TNIL:
+				std::cout << "nil" << std::endl;
+				break;
+			default:
+				std::cout << lua_topointer(thread, i) << std::endl;
+				break;
+			}
+		}
+	}
+
 	//Pushes the global variable to the stack and then return it to the user
 	int LuaW::GetGlobalInteger(const std::string& luaGlobalName)
 	{
@@ -332,6 +363,20 @@ namespace DOG
 		return UserData(c_unValid);
 	}
 
+	lua_State* LuaW::GetThreadPointerFromStack(int index)
+	{
+		if (IsThread(index))
+		{
+			lua_State* thread = lua_tothread(m_luaState, index);
+			lua_remove(m_luaState, index);
+			return thread;
+		}
+
+		Error("The value on the stack is not an thread");
+		assert(false);
+		return nullptr;
+	}
+
 	void LuaW::GetReturnsFromFunction(LuaFunctionReturn& luaFunctionReturn)
 	{
 		while (GetNumberOfStackItems() > 0)
@@ -407,6 +452,11 @@ namespace DOG
 	void LuaW::PushUserDataToStack(UserData& userData)
 	{
 		lua_rawgeti(m_luaState, LUA_REGISTRYINDEX, userData.ref);
+	}
+
+	void LuaW::PushThreadToStack(Coroutine& coroutine)
+	{
+		lua_rawgeti(m_luaState, LUA_REGISTRYINDEX, coroutine.ref);
 	}
 
 	//Takes the top of the stack and pushes it to lua with the name
@@ -597,7 +647,7 @@ namespace DOG
 
 		}
 
-		//+1 because we need to return the table aswell
+		//+1 because we need to include the table aswell
 		int argumentSize = 1 + arguments;
 
 		int error = lua_pcall(m_luaState, argumentSize, LUA_MULTRET, 0);
@@ -605,6 +655,10 @@ namespace DOG
 		{
 			Error(lua_tostring(m_luaState, getErrorMessage));
 		}
+
+		PrintStack();
+
+		//lua_thread
 	}
 
 	LuaFunctionReturn LuaW::CallTableLuaFunctionReturn(Table& table, Function& function, int arguments)
@@ -804,6 +858,11 @@ namespace DOG
 		return lua_isuserdata(m_luaState, index);
 	}
 
+	bool LuaW::IsThread(int index) const
+	{
+		return lua_isthread(m_luaState, index);
+	}
+
 	void LuaW::CreateEnvironment(Table& table, const std::string& luaFileName)
 	{
 		const int popAmount = 1;
@@ -881,5 +940,46 @@ namespace DOG
 	void LuaW::RemoveReferenceToUserData(UserData& userData)
 	{
 		RemoveReference(userData);
+	}
+
+	Coroutine LuaW::CreateThread()
+	{
+		lua_newthread(m_luaState);
+
+		//Creates a reference to the thread on the stack
+		int index = luaL_ref(m_luaState, LUA_REGISTRYINDEX);
+
+		Coroutine coroutine = { index };
+
+		AddReference(coroutine);
+
+		return coroutine;
+	}
+
+	void LuaW::CreateCoroutine(Coroutine& coroutine, Function& function)
+	{
+		PushThreadToStack(coroutine);
+		lua_State* thread = GetThreadPointerFromStack();
+		PushFunctionToStack(function);
+		//Move function from one thread to another (from the main lua_State to the coroutine)
+		lua_xmove(m_luaState, thread, 1);
+
+		int returnValue;
+		int error = lua_resume(thread, NULL, 0, &returnValue);
+	}
+
+	bool LuaW::CoroutineIsDead(Coroutine& coroutine)
+	{
+		PushThreadToStack(coroutine);
+		lua_State* thread = GetThreadPointerFromStack();
+		return lua_status(thread) == LUA_OK;
+	}
+
+	void LuaW::ResumeCoroutine(Coroutine& coroutine)
+	{
+		PushThreadToStack(coroutine);
+		lua_State* thread = GetThreadPointerFromStack();
+
+		lua_resume(m_luaState, thread, 0, 0);
 	}
 }
