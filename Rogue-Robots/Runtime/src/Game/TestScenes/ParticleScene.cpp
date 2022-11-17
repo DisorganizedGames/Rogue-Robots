@@ -68,7 +68,7 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 		if (ImGui::Begin("Particle System", &open))
 		{
 			static float rate = emitter.spawnRate;
-			ImGui::SliderFloat("Rate", &rate, 0.f, 1024.f);
+			ImGui::InputFloat("Rate", &rate);
 			emitter.spawnRate = rate;
 
 			static float lifetime = emitter.particleLifetime;
@@ -101,6 +101,19 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 						currentTexture = newTexture;
 					}
 				}
+
+				static int x = 1, y = 1;
+				ImGui::SetNextItemWidth(80.f);
+				ImGui::InputInt("x", &x);
+				ImGui::SameLine();
+				ImGui::SetNextItemWidth(80.f);
+				ImGui::InputInt("y", &y);
+
+				x = std::max(1, x);
+				y = std::max(1, y);
+
+				emitter.textureSegmentsX = x;
+				emitter.textureSegmentsY = y;
 			}
 		}
 

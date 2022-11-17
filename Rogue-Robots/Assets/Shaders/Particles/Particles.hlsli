@@ -20,8 +20,10 @@ struct Emitter
 	float lifetime;
 	
 	uint textureHandle;
+	uint texSegX;
+	uint texSegY;
 	
-	uint pad;
+	uint3 pad;
 };
 
 struct PS_IN

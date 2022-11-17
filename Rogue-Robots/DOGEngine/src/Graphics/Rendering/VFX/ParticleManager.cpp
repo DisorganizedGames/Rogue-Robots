@@ -31,6 +31,8 @@ const std::vector<ParticleEmitter>& ParticleManager::GatherEmitters()
 				em.rate = emitter.spawnRate;
 				em.lifetime = emitter.particleLifetime;
 				em.textureHandle = emitter.textureHandle;
+				em.texSegX = emitter.textureSegmentsX;
+				em.texSegY = emitter.textureSegmentsY;
 				em.alive = 1; // true
 			});
 

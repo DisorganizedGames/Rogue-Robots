@@ -12,7 +12,10 @@ namespace DOG::gfx
 		f32 lifetime = 0;
 
 		u32 textureHandle = 0;
-		u32 pad = 0;
+		u32 texSegX = 1;
+		u32 texSegY = 1;
+
+		u32 pad[3] = {0, 0, 0};
 	};
 	
 	class ParticleBackend
