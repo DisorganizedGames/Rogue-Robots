@@ -24,18 +24,6 @@ struct PerDrawData
     uint jointsDescriptor;
 };
 
-struct SpotlightData
-{
-    matrix viewMatrix;
-    matrix projectionMatrix;
-    float4 worldPosition;
-    float3 color;
-    float cutoffAngle;
-    float3 direction;
-    float strength;
-    bool isShadowCaster;
-    float3 padding;
-};
 
 struct SpotlightMetaData
 {
@@ -65,6 +53,7 @@ struct PushConstantElement
     uint width;
     uint height;
     uint localLightBuffersIndex;
+    uint isWeapon;
 };
 
 CONSTANTS(g_constants, PushConstantElement)
@@ -374,9 +363,12 @@ PS_OUT main(VS_OUT input)
     // Always 0
     Texture2DArray shadowMaps = ResourceDescriptorHeap[shadowMapArrayStruct.shadowMapArray[0][0]];
     for (int k = 0; k < perSpotlightData.currentNrOfSpotlights; ++k)
-    {
+    {    
         if (perSpotlightData.spotlightArray[k].strength == 0)
             continue;
+        
+
+        
         // check contribution from based on spotlight angle
         float3 lightToPos = input.wsPos - perSpotlightData.spotlightArray[k].worldPosition.xyz;
         float3 lightToPosDir = normalize(lightToPos);
@@ -433,6 +425,12 @@ PS_OUT main(VS_OUT input)
         
         float shadowFactor = perSpotlightData.spotlightArray[k].isShadowCaster ? CalculateShadowFactor(shadowMaps, k, input.wsPos, N, -lightToPosDir, perSpotlightData.spotlightArray[k].viewMatrix, perSpotlightData.spotlightArray[k].projectionMatrix) : 1.0f;
         
+        
+        //if (perSpotlightData.spotlightArray[k].isPlayer && g_constants.isWeapon == 1)
+        //    shadowFactor = 1.f;
+        if (perSpotlightData.spotlightArray[k].isPlayer == 1 && g_constants.isWeapon == 1)
+            shadowFactor = 1.f;
+        
         Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL * contrib * shadowFactor;
     }
     
@@ -471,6 +469,12 @@ PS_OUT main(VS_OUT input)
     {
         output.color.xyz = lerp(output.color.xyz, lightHeatMapValue, 0.5f);
     }
+    
+    //if (g_constants.isWeapon == 1)
+    //{
+    //    output.color.rgb = float4(1.f, 0.f, 0.f, 1.f);
+    //}
+    
     return output;
 }
 

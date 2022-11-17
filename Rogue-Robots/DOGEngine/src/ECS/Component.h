@@ -137,6 +137,9 @@ namespace DOG
 	struct OnlinePlayer
 	{
 	};
+	struct ThisPlayerWeapon
+	{
+	};
 
 	struct SpotLightComponent
 	{
