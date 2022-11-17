@@ -801,6 +801,12 @@ namespace DOG::gfx
 				}
 			};
 
+			/*
+			
+				To-do:
+					Skip weapon and self model rendering to Main Players Lights Shadow map!
+			*/
+
 
 			rg.AddPass<PassData>("Z PrePass",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
