@@ -195,6 +195,9 @@ entity SpawnTurretProjectile(const DirectX::SimpleMath::Matrix& transform, float
 
 
 	em.AddComponent<TurretProjectileComponent>(p);
+	auto& bullet = em.AddComponent<BulletComponent>(p);
+	bullet.damage = 50;
+	bullet.playerEntityID = GetPlayer();
 
 	return p;
 }

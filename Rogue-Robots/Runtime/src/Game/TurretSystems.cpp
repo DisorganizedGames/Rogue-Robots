@@ -44,12 +44,7 @@ void TurretTargetingSystem::OnUpdate(TurretTargetingComponent& targeter, ChildCo
 
 
 	// Finds closest agent
-	/*em.Collect<AgentAggroComponent, TransformComponent>().Do([&](entity agent, AgentAggroComponent&, TransformComponent& agentTransform)
-		{
-			findBetterTarget(agent, agentTransform.GetPosition());
-		});*/
-
-	em.Collect<ThisPlayer, TransformComponent>().Do([&](entity agent, ThisPlayer&, TransformComponent& agentTransform)
+	em.Collect<AgentAggroComponent, TransformComponent>().Do([&](entity agent, AgentAggroComponent&, TransformComponent& agentTransform)
 		{
 			findBetterTarget(agent, agentTransform.GetPosition());
 		});

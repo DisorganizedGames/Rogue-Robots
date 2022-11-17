@@ -231,10 +231,10 @@ struct SphereComponent
 
 struct TurretTargetingComponent
 {
-	float maxRange = 100.0;
+	float maxRange = 50.0;
 	DOG::entity trackedTarget = DOG::NULL_ENTITY;
 
-	float yawSpeed = 1.0f;
+	float yawSpeed = 1.5f;
 	float pitchSpeed = 0.6f;
 
 	float yawLimit = DirectX::XM_PI / 2;
@@ -245,7 +245,7 @@ struct TurretTargetingComponent
 
 struct TurretAmmoComponent
 {
-	u32 ammoCount = 400;
+	u32 ammoCount = 200;
 	f32 projectileSpeed = 100;
 	f64 timeStep = 0.2f;
 	f64 lastDischargeTimer = timeStep;
