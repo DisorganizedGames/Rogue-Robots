@@ -89,9 +89,7 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 			else
 			{
 				ImGui::InputText("Texture path", buf, 256);
-				std::string newTexture = "";
-				newTexture += buf;
-				auto test = std::filesystem::absolute(newTexture);
+				std::string newTexture(buf);
 				if (std::filesystem::is_regular_file(newTexture))
 				{
 					if (newTexture != currentTexture)

@@ -305,7 +305,7 @@ namespace DOG
 
 			if (m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory && !(m_assets[id]->stateFlag & AssetStateFlag::ExistOnGPU))
 			{
-				[idToMove = id]() { AssetManager::Get().MoveTextureToGPU(idToMove); }();
+				AssetManager::Get().MoveTextureToGPU(id);
 			}
 			else if (m_assets[id]->loadFlag & AssetLoadFlag::GPUMemory)
 			{
