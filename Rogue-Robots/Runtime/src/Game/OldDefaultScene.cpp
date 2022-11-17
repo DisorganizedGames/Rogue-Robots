@@ -39,7 +39,7 @@ void OldDefaultScene::SetUpScene(std::vector<std::function<std::vector<DOG::enti
 	auto& tr = AddComponent<ChildComponent>(turretHead);
 	tr.parent = turretBase;
 	tr.localTransform.SetPosition({ 0, 1, 0 });
-	AddComponent<ModelComponent>(turretHead).id = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/turret.glb");
+	AddComponent<ModelComponent>(turretHead).id = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/turret2.glb");
 	AddComponent<TurretTargetingComponent>(turretHead);
 	AddComponent<TurretAmmoComponent>(turretHead);
 }
