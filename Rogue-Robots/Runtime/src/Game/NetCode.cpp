@@ -46,6 +46,7 @@ void NetCode::OnStartup()
 			{
 				m_entityManager.AddComponent<OnlinePlayer>(id);
 				m_entityManager.RemoveComponent<ThisPlayer>(id);
+				LuaMain::GetScriptManager()->RemoveScript(id, "Gun.lua");
 				EntityManager::Get().Collect<DontDraw, ChildComponent>().Do([&](entity subEntity, DontDraw&, ChildComponent& parentCompany)
 					{
 						if (parentCompany.parent == id)
@@ -69,6 +70,7 @@ void NetCode::OnStartup()
 						}
 					});
 				m_entityManager.AddComponent<ThisPlayer>(id);
+				LuaMain::GetScriptManager()->AddScript(id, "Gun.lua");
 				m_entityManager.AddComponent<AudioListenerComponent>(id);
 				m_entityManager.RemoveComponent<OnlinePlayer>(id);
 			}

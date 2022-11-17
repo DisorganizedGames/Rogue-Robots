@@ -152,6 +152,16 @@ namespace DOG::gfx
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true).SetDepthWriteMask(D3D12_DEPTH_WRITE_MASK_ZERO).SetDepthFunc(D3D12_COMPARISON_FUNC_EQUAL))
 			.Build());
 
+		auto weaponMeshVS = m_sclr->CompileFromFile("WeaponVS.hlsl", ShaderType::Vertex);
+		m_weaponMeshPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
+			.SetShader(weaponMeshVS.get())
+			.SetShader(meshPS.get())
+			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+			.SetDepthFormat(DepthFormat::D32)
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.Build());
+
 		auto shadowVS = m_sclr->CompileFromFile("ShadowVS.hlsl", ShaderType::Vertex);
 		//auto shadowGS = m_sclr->CompileFromFile("ShadowGS.hlsl", ShaderType::Geometry);
 		auto shadowPS = m_sclr->CompileFromFile("ShadowPS.hlsl", ShaderType::Pixel);
@@ -934,8 +944,8 @@ namespace DOG::gfx
 
 					u32 localLightBufferIndex = m_graphicsSettings.lightCulling ? resources.GetView(p.localLightBuffer) : -1;
 					drawFunc(rd, cmdl, m_submissions, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
-					drawFunc(rd, cmdl, m_weaponSubmission, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
 					drawFunc(rd, cmdl, m_animatedDraws, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, true);
+					//drawFunc(rd, cmdl, m_weaponSubmission, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
 					
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
@@ -946,6 +956,9 @@ namespace DOG::gfx
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframeNoCull);
 					drawFunc(rd, cmdl, m_noCullWireframeDraws, localLightBufferIndex, false, true);
+
+					rd->Cmd_SetPipeline(cmdl, m_weaponMeshPipe);
+					drawFunc(rd, cmdl, m_weaponSubmission, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
 				});
 		}
 
@@ -1168,7 +1181,6 @@ namespace DOG::gfx
 					rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
 				});
 		}
-
 
 		// Final ImGUI pass
 		m_imGUIEffect->Add(rg);

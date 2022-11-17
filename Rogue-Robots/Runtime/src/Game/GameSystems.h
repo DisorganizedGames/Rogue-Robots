@@ -81,6 +81,15 @@ public:
 			if (pcc.cameraEntity == DOG::NULL_ENTITY) 
 				return;
 
+			if (!DOG::EntityManager::Get().HasComponent<DOG::ThisPlayer>(slc.owningPlayer))
+			{
+				slc.isMainPlayerSpotlight = false;
+			}
+			else
+			{
+				slc.isMainPlayerSpotlight = true;
+			}
+
 			auto& playerCameraTransform = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(pcc.cameraEntity);
 			
 			auto pos = stc.GetPosition();

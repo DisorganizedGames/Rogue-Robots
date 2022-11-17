@@ -61,10 +61,6 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		bc.currentAmmoCount = 30;
 		em.AddComponent<MagazineModificationComponent>(playerI).type = MagazineModificationComponent::Type::None;
 
-		scriptManager->AddScript(playerI, "Gun.lua");
-		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
-		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");
-
 		entity modelEntity = em.CreateEntity();
 
 		em.AddComponent<TransformComponent>(modelEntity);
@@ -89,6 +85,10 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		{
 			em.AddComponent<OnlinePlayer>(playerI);
 		}
+
+		scriptManager->AddScript(playerI, "Gun.lua");
+		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
+		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");
 	}
 	return players;
 }
