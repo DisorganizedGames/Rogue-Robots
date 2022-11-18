@@ -210,11 +210,13 @@ void AgentManager::DestroyLocalAgent(entity e)
 
 	AgentIdComponent& agent = em.GetComponent<AgentIdComponent>(e);
 	TransformComponent& agentTrans = em.GetComponent<TransformComponent>(e);
+	SceneComponent::Type scene = em.GetComponent<SceneComponent>(e).scene;
 
-	LoadEnemySplitModel(e, em.GetComponent<SceneComponent>(e).scene);
+	LoadEnemySplitModel(e, scene);
 
 	entity corpse = em.CreateEntity();
 	em.AddComponent<AgentCorpse>(corpse);
+	em.AddComponent<SceneComponent>(corpse, scene);
 
 	CreateAndDestroyEntityComponent& kill = em.AddComponent<CreateAndDestroyEntityComponent>(corpse);
 	kill.alive = false;
