@@ -128,7 +128,6 @@ namespace DOG::gfx
 		// We need to bucket in a better way..
 		mgr.Bundle<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
 			{
-				OutputDebugString(L"Print!");
 				TransformComponent camTransform;
 				camTransform.worldMatrix = ((DirectX::SimpleMath::Matrix)m_viewMat).Invert();
 				auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p)
