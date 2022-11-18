@@ -238,15 +238,7 @@ namespace DOG
          void DeactivateIcon(UINT index);
       private:
          void AnimateUp(UINT index);
-         float m_delta;
-         UINT m_buffs;
-         std::vector<clock_t> m_animTimers;
-		   std::vector<bool> m_visible;
-         std::vector<bool> m_animate;
-         std::vector<float> m_opacity;
-         std::vector<ComPtr<ID2D1Bitmap>> m_bitmaps;
-         std::vector<D2D1_RECT_F> m_rects;
-         ComPtr<ID2D1SolidColorBrush> m_borderBrush;
+         
    };
 
 }

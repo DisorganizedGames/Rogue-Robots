@@ -13,6 +13,15 @@ UINT menuBackID, optionsBackID, multiBackID;
 UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID;
 UINT cID, tID, hID;
 
+UINT m_buffs;
+std::vector<clock_t> m_animTimers;
+std::vector<bool> m_visible;
+std::vector<bool> m_animate;
+std::vector<float> m_opacity;
+std::vector<ComPtr<ID2D1Bitmap>> m_bitmaps;
+std::vector<D2D1_RECT_F> m_rects;
+ComPtr<ID2D1SolidColorBrush> m_borderBrush;
+
 void PlayButtonFunc(void)
 {
    DOG::UI::Get()->ChangeUIscene(gameID);
@@ -708,7 +717,6 @@ DOG::UIBuffTracker::UIBuffTracker(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::
    }
    hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), m_borderBrush.GetAddressOf());
    HR_VFY(hr);
-   m_delta = (float)(clock() / CLOCKS_PER_SEC);
 }
 
 float easeOutCirc(float x)
@@ -731,15 +739,15 @@ void DOG::UIBuffTracker::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 void DOG::UIBuffTracker::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
    UNREFERENCED_PARAMETER(d2d);
-   m_delta = (float)((clock() - m_delta) / CLOCKS_PER_SEC);
+
    if (DOG::Keyboard::IsKeyPressed(DOG::Key::G))
       ActivateIcon(0u);
    if (DOG::Keyboard::IsKeyPressed(DOG::Key::H))
       ActivateIcon(1u);
 
-   if(DOG::Keyboard::IsKeyPressed(DOG::Key::J))
+   if (DOG::Keyboard::IsKeyPressed(DOG::Key::J))
       DeactivateIcon(0u);
-   if(DOG::Keyboard::IsKeyPressed(DOG::Key::K))
+   if (DOG::Keyboard::IsKeyPressed(DOG::Key::K))
       DeactivateIcon(1u);
 
 
@@ -751,8 +759,6 @@ void DOG::UIBuffTracker::Update(DOG::gfx::D2DBackend_DX12& d2d)
       }
    }
 
-
-
 }
 
 DOG::UIBuffTracker::~UIBuffTracker()
@@ -762,16 +768,15 @@ DOG::UIBuffTracker::~UIBuffTracker()
 
 void DOG::UIBuffTracker::AnimateUp(UINT index)
 {
-   float ease = easeOutCirc(1 / (m_rects[index].top - 50.f));
    if (m_rects[index].top >= 50.f)
    {
-      m_rects[index].top -= 0.1f * m_delta * ease;
-      m_rects[index].bottom -= 0.1f * m_delta * ease;
+      m_rects[index].top -= 0.7f;
+      m_rects[index].bottom -= 0.7f;
    }
    if (m_opacity[index] <= 1.f)
-      m_opacity[index] += 0.1f * m_delta * ease;
+      m_opacity[index] += 0.01f;
 
-   if (m_rects[index].top == 50.f and m_opacity[index] == 1.0f)
+   if (m_rects[index].top <= 50.f and m_opacity[index] >= 1.0f)
       m_animate[index] = false;
 }
 
@@ -782,7 +787,7 @@ void DOG::UIBuffTracker::ActivateIcon(UINT index)
    float x = 50.f + 60.f * activeBuffs;
    float y = 50.f + 30.f;
    m_rects[index] = D2D1::RectF(x, y, x + 50.f, y + 50.f);
-   m_opacity[index] = 0.1f;
+   m_opacity[index] = 0.01f;
    m_animate[index] = true;
 }
 
@@ -791,14 +796,14 @@ void DOG::UIBuffTracker::DeactivateIcon(UINT index)
    m_visible[index] = false;
    for (size_t i = 0; i < m_buffs; i++)
    {
-      if(m_rects[i].left > m_rects[index].left)
+      if (m_rects[i].left > m_rects[index].left)
       {
          //Animate here later
          m_rects[i].left -= 60.f;
          m_rects[i].right -= 60.f;
       }
    }
-   
+
 
 }
 
