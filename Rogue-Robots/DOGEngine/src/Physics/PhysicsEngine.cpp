@@ -407,6 +407,21 @@ namespace DOG
 			});
 	}
 
+
+	std::optional<RayCastResult> PhysicsEngine::RayCast(const DirectX::SimpleMath::Vector3& origin, const DirectX::SimpleMath::Vector3& target)
+	{
+		btVector3 o(origin.x, origin.y, origin.z);
+		btVector3 t(target.x, target.y, target.z);
+		btCollisionWorld::ClosestRayResultCallback callback(o, t);
+		s_physicsEngine.m_dynamicsWorld->rayTest(o, t, callback);
+		if (callback.hasHit())
+		{
+			return std::make_optional<RayCastResult>({ Vector3(callback.m_hitPointWorld.x(), callback.m_hitPointWorld.y(), callback.m_hitPointWorld.z()),
+				Vector3(callback.m_hitNormalWorld.x(), callback.m_hitNormalWorld.y(), callback.m_hitNormalWorld.z()) });
+		}
+		return std::nullopt;
+	}
+
 	void PhysicsEngine::SetIgnoreCollisionCheck(RigidbodyHandle handleA, RigidbodyHandle handleB, bool value)
 	{
 		btRigidBody* rbA = GetRigidbodyColliderData(handleA)->rigidBody;
