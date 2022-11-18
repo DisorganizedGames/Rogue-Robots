@@ -728,14 +728,52 @@ void EntityInterface::AddHomingMissile(DOG::LuaContext* context, DOG::entity e)
 	entity owner = context->GetInteger();
 	assert(em.Exists(owner) && em.Exists(e));
 
+	entity gun = context->GetInteger();
+	assert(em.Exists(gun));
+
+	LuaTable homingMissileInfo = context->GetTable();
+
+	float explosionRadiusChange = 0.0f;
+	float dmgChange = 0.0f;
+	float startMotorSpeed = 0.0f;
+	float mainMotorSpeed = 0.0f;
+	float turnSpeed = 0.0f;
+	float engineStartTime = 0.0f;
+	float attackFlightPhaseStartTime = 0.0f;
+	bool homing = false;
+
+	homingMissileInfo.TryGetValueFromTable("explosionRadius", explosionRadiusChange);
+	homingMissileInfo.TryGetValueFromTable("dmg", dmgChange);
+
 	assert(!EntityManager::Get().HasComponent<HomingMissileComponent>(e));
 	auto& missile = em.AddComponent<HomingMissileComponent>(e);
 	missile.playerEntityID = owner;
+	missile.explosionRadius *= explosionRadiusChange;
+	missile.dmg *= dmgChange;
+
+	if (homingMissileInfo.TryGetValueFromTable("startMotorSpeed", startMotorSpeed))
+		missile.startMotorSpeed = startMotorSpeed;
+
+	if (homingMissileInfo.TryGetValueFromTable("mainMotorSpeed", mainMotorSpeed))
+		missile.mainMotorSpeed = mainMotorSpeed;
+
+	if (homingMissileInfo.TryGetValueFromTable("turnSpeed", turnSpeed))
+		missile.turnSpeed = turnSpeed;
+
+	if (homingMissileInfo.TryGetValueFromTable("engineStartTime", engineStartTime))
+		missile.engineStartTime = engineStartTime;
+
+	if (homingMissileInfo.TryGetValueFromTable("attackFlightPhaseStartTime", attackFlightPhaseStartTime))
+		missile.attackFlightPhaseStartTime = attackFlightPhaseStartTime;
+
+	if (homingMissileInfo.TryGetValueFromTable("homing", homing))
+		missile.homing = homing;
 
 	assert(em.HasComponent<TransformComponent>(e));
 	auto& t = em.GetComponent<TransformComponent>(e);
+	auto& gunT = em.GetComponent<TransformComponent>(gun);
 	Vector3 oldPosition = t.GetPosition();
-	t.worldMatrix = em.GetComponent<TransformComponent>(owner);
+	t.SetRotation(gunT.GetRotation() * Matrix::CreateFromAxisAngle(gunT.GetRight(), DirectX::XM_PI / 2.0f));
 	t.SetPosition(oldPosition + 0.5f * t.GetForward());
 
 	em.AddComponent<BoxColliderComponent>(e, e, Vector3(0.18f, 0.18f, 0.8f), true, 12.0f);

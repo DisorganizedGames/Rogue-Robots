@@ -28,6 +28,7 @@ namespace DOG
 		DirectX::SimpleMath::Matrix GetRotation() const noexcept;
 		DirectX::SimpleMath::Vector3 GetForward() const noexcept { return DirectX::SimpleMath::Vector3(worldMatrix._31, worldMatrix._32, worldMatrix._33); }
 		DirectX::SimpleMath::Vector3 GetUp() const noexcept { return DirectX::SimpleMath::Vector3(worldMatrix._21, worldMatrix._22, worldMatrix._23); }
+		DirectX::SimpleMath::Vector3 GetRight() const noexcept { return -worldMatrix.Right(); }
 		DirectX::SimpleMath::Vector3 GetScale() const noexcept;
 
 		TransformComponent& RotateW(const DirectX::SimpleMath::Vector3& rotation) noexcept;

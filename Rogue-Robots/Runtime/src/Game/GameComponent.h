@@ -73,6 +73,7 @@ struct HomingMissileComponent
 	float explosionRadius = 10.0f;
 	float dmg = 500.0f;
 	bool armed = false;
+	bool homing = true;
 	int hit = 0;
 	DOG::entity homingTarget = DOG::NULL_ENTITY;
 	DOG::entity playerEntityID = DOG::NULL_ENTITY;

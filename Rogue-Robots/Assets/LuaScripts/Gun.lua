@@ -158,7 +158,7 @@ function OnUpdate()
 			end
 
 			CreateBulletEntity(newBullets[i], cameraEntity)
-			barrelComponent:Update(gunEntity, EntityID, newBullets[i])
+			barrelComponent:Update(gunEntity, EntityID, newBullets[i], miscComponent)
 			--Keep track of which barrel created the bullet
 			newBullets[i].barrel = barrelComponent
 			magazineComponent:Update(newBullets[i])

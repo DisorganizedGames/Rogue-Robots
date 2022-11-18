@@ -134,6 +134,9 @@ void HomingMissileTargetingSystem::OnUpdate(HomingMissileComponent& missile, DOG
 {
 	float minDistSquared = 1000000;
 	entity target = NULL_ENTITY;
+	if (!missile.homing)
+		return;
+
 	if (missile.homingTarget == NULL_ENTITY)
 	{
 		EntityManager::Get().Collect<AgentHPComponent, DOG::TransformComponent>().Do([&](entity e, AgentHPComponent&, DOG::TransformComponent& tr)
