@@ -136,13 +136,26 @@ function BarrelComponents:Missile()
 		waitForFire = 0.0,
 		timeBetweenShots = 2.0,
 		
-		Update = function(self, gunEntity, parentEntityID, bullet)
+		Update = function(self, gunEntity, parentEntityID, bullet, miscComponent)
 
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
 
-			local change = 1.0 + Length(bullet.size) * 0.03
-			local newMissileSize = bullet.size * 0.1
-			Entity:AddComponent(bullet.entity, "HomingMissileComponent", parentEntityID, change, change, newMissileSize)
+			local change = 1.0 + Length(bullet.size) * 0.04
+
+			local homingMissileInfo = {}
+			homingMissileInfo["explosionRadius"] = change
+			homingMissileInfo["dmg"] = change
+			
+			if miscComponent.miscName == "FullAuto" then
+				homingMissileInfo["startMotorSpeed"] = 90.0
+				homingMissileInfo["mainMotorSpeed"] = 60.0
+				homingMissileInfo["turnSpeed"] = 20.0
+				homingMissileInfo["engineStartTime"] = 0.0
+				homingMissileInfo["attackFlightPhaseStartTime"] = 0.0
+				homingMissileInfo["homing"] = false
+			end
+
+			Entity:AddComponent(bullet.entity, "HomingMissileComponent", parentEntityID, gunEntity.entityID, homingMissileInfo)
 		end,
 		Destroy = function(self, bullet)
 		end,
