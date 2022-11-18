@@ -2,6 +2,19 @@
 
 #define MAX_PARTICLES_ALIVE (16*1024)
 
+/*
+enum class ParticleSpawnType
+{
+	Cone = 0,
+	Cylinder = 1,
+	AABB = 2,
+};
+*/
+#define PARTICLE_SPAWN_CONE 0
+#define PARTICLE_SPAWN_CYLINDER 1
+#define PARTICLE_SPAWN_AABB 2
+#define PARTICLE_SPAWN_DEFAULT 255
+
 struct Particle
 {
 	uint emitterHandle;
@@ -18,6 +31,11 @@ struct Emitter
 	float3 pos;
 	float rate;
 	float lifetime;
+	
+	uint spawnType;
+	float opt1;
+	float opt2;
+	float opt3;
 	
 	uint textureHandle;
 	uint texSegX;

@@ -1,11 +1,17 @@
 #pragma once
 #include "../GPUTable.h"
 
+namespace DOG
+{
+	using entity = u32;
+}
+
 namespace DOG::gfx
 {
 	class RenderDevice;
 	class GPUGarbageBin;
 	struct ParticleEmitter;
+	enum class ParticleSpawnType : u8;
 
 	class ParticleManager
 	{
@@ -27,6 +33,9 @@ namespace DOG::gfx
 	private:
 		[[nodiscard]]
 		u32 GetFreeEmitter() const noexcept;
+
+		
+		void SetSpawnProperties(DOG::entity e, ParticleEmitter& emitter);
 
 	};
 

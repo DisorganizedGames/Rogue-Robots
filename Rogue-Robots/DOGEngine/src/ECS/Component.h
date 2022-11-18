@@ -296,17 +296,43 @@ namespace DOG
 		
 	};
 
+#pragma region Particle System
+
 	struct ParticleEmitterComponent
 	{
 		f32 spawnRate{ 0.f }; // How many particles to spawn on average per second
 		f32 particleSize{ 0.f }; // Size of the particle in world space
-		f32 particleLifetime{ 0.f };
+		f32 particleLifetime{ 0.f }; // How long particles should live
 
-		u32 textureHandle{ 0 };
-		u32 textureSegmentsX{ 1 };
-		u32 textureSegmentsY{ 1 };
+		u32 textureHandle{ 0 }; // Handle to a raw texture view on the GPU
+		u32 textureSegmentsX{ 1 }; // Tiles in X-axis
+		u32 textureSegmentsY{ 1 }; // Tiles in Y-axis
 
-		u32 emitterIndex{ static_cast<u32>(-1) };
+		u32 emitterIndex{ static_cast<u32>(-1) }; // DO NOT TOUCH (used internally)
 	};
+
+	// Tells particles to spawn in a Cone with its tip on the entity's transform
+	struct ConeSpawnComponent
+	{
+		f32 angle = DirectX::XM_PIDIV4;
+		f32 speed = 1.f;
+	};
+
+	// Tells particles to spawn in a cylinder centered on the entity's transform
+	struct CylinderSpawnComponent
+	{
+		f32 radius = 1.f;
+		f32 height = 0.f;
+	};
+	
+	// Tells particles to spawn in an AABB centered on the entity's transform
+	struct BoxSpawnComponent
+	{
+		f32 x = 1.f;
+		f32 y = 1.f;
+		f32 z = 1.f;
+	};
+
+#pragma endregion
 }
 
