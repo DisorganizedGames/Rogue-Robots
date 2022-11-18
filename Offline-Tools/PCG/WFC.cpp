@@ -206,7 +206,7 @@ bool WFC::IntroduceConstraints(Room& room)
 
 					//If we roll that the door should be generated, OR we get to the last direction and still only have 1 door.
 					//This guarantees that we will have atleast 2 doors per room.
-					if (distDoorDecider(gen) == 1u || (placedCount == 1u && i == 3))
+					if (distDoorDecider(gen) == 1u || (placedCount == 1u && i == 2))
 					{
 						++placedCount;
 						room.doors[chosenDoor].placed = true;
@@ -366,8 +366,11 @@ bool WFC::GenerateLevel(uint32_t nrOfRooms, uint32_t maxWidth, uint32_t maxHeigh
 	nrOfRooms = std::min(static_cast<uint32_t>(viableOptions.size()), nrOfRooms);
 	if (nrOfRooms < 2)
 	{
+		std::cout << "Too few viable rooms." << std::endl;
 		return false;
 	}
+	std::cout << "Possible options for room generation was " << viableOptions.size() << "." << std::endl;
+	std::cout << "Will generate " << nrOfRooms << " rooms." << std::endl;
 
 	//For each room to generate.
 	for (uint32_t i{ 0u }; i < nrOfRooms; i++)
@@ -402,6 +405,7 @@ bool WFC::GenerateLevel(uint32_t nrOfRooms, uint32_t maxWidth, uint32_t maxHeigh
 		//Introduce the constraints.
 		if (!IntroduceConstraints(newRoom))
 		{
+			std::cout << "Failed to introduce constraints." << std::endl;
 			return false;
 		}
 
@@ -964,7 +968,14 @@ bool WFC::GenerateRoom(Room& room)
 std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock, std::string& nextBlock, int prevDir, int nextDir, bool prevWasVoid)
 {
 	std::string replacer = currentBlock;
-	if (currentBlock == "Void" || nextBlock == "Void" || prevWasVoid)
+	/*
+	if (currentBlock != "Void" && (prevWasVoid || prevBlock.find("Replacer") != std::string::npos) && nextBlock == "Void")
+	{
+		std::string none = "None";
+		ReplaceBlock(prevBlock, currentBlock, none, prevDir, -1, false);
+	}
+	*/
+	if (currentBlock == "Void" || nextBlock == "Void" || prevWasVoid || nextBlock.find("Door") != std::string::npos)
 	{
 		if (currentBlock == "Void")
 		{
@@ -1135,7 +1146,6 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 			size_t secondUnderscore = currentBlock.find('_', firstUnderscore + 1);
 			std::string name = currentBlock.substr(0, firstUnderscore);
 			std::string rotation = currentBlock.substr(firstUnderscore + 1, 2);
-
 			std::string flip = currentBlock.substr(secondUnderscore + 1, currentBlock.size() - secondUnderscore);
 			//Replacement of blocks that make up the room, before it goes out to void.
 			if (name == "Wall1")
@@ -1695,6 +1705,33 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 					}
 				}
 			}
+			//Add T-tunnel, if vertical tunnel
+			else if (name == "DownUpConnector")
+			{
+				switch (dirToUse)
+				{
+				case 0:
+				{
+					replacer = "TVertical3Connector_r0_f";
+					break;
+				}
+				case 1:
+				{
+					replacer = "TVertical3Connector_r2_f";
+					break;
+				}
+				case 4:
+				{
+					replacer = "TVertical3Connector_r3_f";
+					break;
+				}
+				case 5:
+				{
+					replacer = "TVertical3Connector_r1_f";
+					break;
+				}
+				}
+			}
 			//add 4-connection-tunnel, if T-tunnel
 			else if (name == "TVertical1Connector")
 			{
@@ -2120,11 +2157,22 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 				replacer = "3DCrossConnector_" + rotation + "_f";
 			}
 		}
+
+		if (replacer == currentBlock && nextBlock.find("Door") == std::string::npos && currentBlock.find("Door") == std::string::npos)
+		{
+			std::cout << "Should not happen: " << replacer << std::endl;;
+		}
 	}
 	if (replacer == "Void") //Temporary
 	{
 		replacer = "Cube_r0_f";
 	}
+
+	if (prevWasVoid && nextBlock != "None")
+	{
+		replacer = ReplaceBlock(prevBlock, replacer, nextBlock, prevDir, nextDir, false);
+	}
+
 	return replacer;
 }
 
