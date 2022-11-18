@@ -474,13 +474,6 @@ PS_OUT main(VS_OUT input)
         output.color.xyz = lerp(output.color.xyz, lightHeatMapValue, 0.5f);
     }
     
-    //if (g_constants.isWeapon == IS_ON)
-    //{
-    //    output.color = float4(10.f, 0.f, 0.f, 1.f);
-
-    //}
-
-    
     return output;
 }
 

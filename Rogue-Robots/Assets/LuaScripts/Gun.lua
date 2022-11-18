@@ -78,7 +78,6 @@ function OnStart()
 
 	if (Entity:HasComponent(EntityID, "ThisPlayer")) then
 		Entity:AddComponent(gunID, "ThisPlayerWeapon")
-		print("Added Weapon Tag ", EntityID)
 	end
 
 	-- Initialize effect prefabs

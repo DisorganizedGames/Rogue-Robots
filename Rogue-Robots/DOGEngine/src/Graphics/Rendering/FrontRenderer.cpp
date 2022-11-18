@@ -193,7 +193,7 @@ namespace DOG::gfx
 							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
 								m_renderer->SubmitMeshWireframe(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
 						}
-						// Special case for weaoon draws
+						// Special case for weapon draws
 						else if (mgr.HasComponent<ThisPlayerWeapon>(e))
 						{
 							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
