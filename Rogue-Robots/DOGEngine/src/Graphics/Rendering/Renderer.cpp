@@ -545,6 +545,11 @@ namespace DOG::gfx
 			m_pfData.time += dt;
 			m_pfData.deltaTime = dt;
 
+			DirectX::SimpleMath::Vector4 nearP = { m_pfData.projMatrix._13, m_pfData.projMatrix._23, m_pfData.projMatrix._33, m_pfData.projMatrix._43 };
+			DirectX::SimpleMath::Vector4 farP = { m_pfData.projMatrix._14 - m_pfData.projMatrix._13, m_pfData.projMatrix._24 - m_pfData.projMatrix._23, m_pfData.projMatrix._34 - m_pfData.projMatrix._33, m_pfData.projMatrix._44 - m_pfData.projMatrix._43 };
+			m_pfData.nearClip = -nearP.w / nearP.z;
+			m_pfData.farClip  = -farP.w / farP.z;
+
 			// Set light data
 			m_pfData.pointLightOffsets.staticOffset = m_globalLightTable->GetChunkOffset(LightType::Point, LightUpdateFrequency::Never);
 			m_pfData.pointLightOffsets.infreqOffset = m_globalLightTable->GetChunkOffset(LightType::Point, LightUpdateFrequency::Sometimes);
