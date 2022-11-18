@@ -119,6 +119,12 @@ namespace DOG
 		CollisionShapeHandle collisionShapeHandle;
 	};
 
+	struct RayCastResult
+	{
+		DirectX::SimpleMath::Vector3 hitPosition;
+		DirectX::SimpleMath::Vector3 hitNormal;
+	};
+
 	class PhysicsEngine
 	{
 		friend BoxColliderComponent;
@@ -191,7 +197,7 @@ namespace DOG
 		static void UpdatePhysics(float deltaTime);
 		static void FreePhysicsFromEntity(entity entity);
 		static void FreePhysicsFromDeferredEntities();
-		
+		static std::optional<RayCastResult> RayCast(const DirectX::SimpleMath::Vector3& origin, const DirectX::SimpleMath::Vector3& target);
 		static void SetIgnoreCollisionCheck(RigidbodyHandle handleA, RigidbodyHandle handleB, bool value);
 	};
 }
