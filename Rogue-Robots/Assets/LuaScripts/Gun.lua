@@ -76,6 +76,10 @@ function OnStart()
 	Entity:AddComponent(gunID, "Model", gunModel)
 	Entity:AddComponent(gunID, "Audio", gunShotSound, false, true)
 
+	if (Entity:HasComponent(EntityID, "ThisPlayer")) then
+		Entity:AddComponent(gunID, "ThisPlayerWeapon")
+	end
+
 	-- Initialize effect prefabs
 	--MagazineManager:AddMaterial("FrostMaterial", Render:CreateMaterial({x=0.188, y=0.835, z=0.784}, 0.0, 0.0, { 0.0, 0.0, 0.0 }))
 

@@ -57,6 +57,8 @@ namespace DOG::gfx
 			float cutoffAngle{ 0.f };
 			DirectX::SimpleMath::Vector3 direction;
 			float strength{ 0.f };
+
+			bool isPlayerLight{ false };
 		};
 
 
@@ -82,7 +84,8 @@ namespace DOG::gfx
 
 		void SetMainRenderCamera(const DirectX::XMMATRIX& view, DirectX::XMMATRIX* proj = nullptr);
 
-		void SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
+		// Weapon is special case..
+		void SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world, bool isWeapon = false);
 		void SubmitMeshNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 		void SubmitMeshWireframe(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 		void SubmitMeshWireframeNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
@@ -137,6 +140,7 @@ namespace DOG::gfx
 			bool animated{ false };
 			// bitflags for target passes? (i.e multipass)
 			u32 jointOffset{ 0 };
+			bool isWeapon{ false };
 		};
 
 		void WaitForPrevFrame();
@@ -165,6 +169,7 @@ namespace DOG::gfx
 		std::vector<RenderSubmission> m_animatedDraws;				// temp
 		std::vector<RenderSubmission> m_wireframeDraws;				// temp
 		std::vector<RenderSubmission> m_noCullWireframeDraws;		// temp
+		std::vector<RenderSubmission> m_weaponSubmission;			// submission for weapons only
 
 		u32 m_nextSingleSidedShadowBucket{ 0 };
 		u32 m_nextDoubleSidedShadowBucket{ 0 };
@@ -199,6 +204,7 @@ namespace DOG::gfx
 		Pipeline m_meshPipeWireframe, m_meshPipeWireframeNoCull;
 		Pipeline m_ssaoPipe;
 		Pipeline m_zPrePassPipe, m_zPrePassPipeNoCull, m_zPrePassPipeWirefram, m_zPrePassPipeWireframNoCull;
+		Pipeline m_weaponMeshPipe;
 
 		Pipeline m_boxBlurPipe;
 

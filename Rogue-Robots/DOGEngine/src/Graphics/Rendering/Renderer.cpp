@@ -152,6 +152,16 @@ namespace DOG::gfx
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true).SetDepthWriteMask(D3D12_DEPTH_WRITE_MASK_ZERO).SetDepthFunc(D3D12_COMPARISON_FUNC_EQUAL))
 			.Build());
 
+		auto weaponMeshVS = m_sclr->CompileFromFile("WeaponVS.hlsl", ShaderType::Vertex);
+		m_weaponMeshPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
+			.SetShader(weaponMeshVS.get())
+			.SetShader(meshPS.get())
+			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+			.SetDepthFormat(DepthFormat::D32)
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.Build());
+
 		auto shadowVS = m_sclr->CompileFromFile("ShadowVS.hlsl", ShaderType::Vertex);
 		//auto shadowGS = m_sclr->CompileFromFile("ShadowGS.hlsl", ShaderType::Geometry);
 		auto shadowPS = m_sclr->CompileFromFile("ShadowPS.hlsl", ShaderType::Pixel);
@@ -416,14 +426,19 @@ namespace DOG::gfx
 
 
 
-	void Renderer::SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
+	void Renderer::SubmitMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world, bool isWeapon)
 	{
 		RenderSubmission sub{};
 		sub.mesh = mesh;
 		sub.submesh = submesh;
 		sub.mat = material;
 		sub.world = world;
-		m_submissions.push_back(sub);
+		sub.isWeapon = isWeapon;
+
+		if (isWeapon)
+			m_weaponSubmission.push_back(sub);
+		else
+			m_submissions.push_back(sub);
 	}
 
 	void Renderer::SubmitMeshNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world)
@@ -619,7 +634,8 @@ namespace DOG::gfx
 				DirectX::SimpleMath::Vector3 direction;
 				float strength{ 0.f };
 				bool isShadowCaster{ false };
-				float padding[3]{ 0,0,0 };
+				u32 isPlayer{ 0 };
+				float padding[2]{ 0,0 };
 			};
 
 			/*Encompasses all the light datas for spotlights, which we currently limit to 12*/
@@ -729,7 +745,8 @@ namespace DOG::gfx
 						.AppendConstant(sub.jointOffset)
 						.AppendConstant(m_renderWidth)
 						.AppendConstant(m_renderHeight)
-						.AppendConstant(localLightBuffers);
+						.AppendConstant(localLightBuffers)
+						.AppendConstant(sub.isWeapon ? 1 : 0);
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
 
@@ -783,6 +800,12 @@ namespace DOG::gfx
 					rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
 				}
 			};
+
+			/*
+			
+				To-do:
+					Skip weapon and self model rendering to Main Players Lights Shadow map!
+			*/
 
 
 			rg.AddPass<PassData>("Z PrePass",
@@ -910,6 +933,7 @@ namespace DOG::gfx
 						perLightData.perLightDatas[i].direction = data.direction;
 						perLightData.perLightDatas[i].cutoffAngle = data.cutoffAngle;
 						perLightData.perLightDatas[i].strength = data.strength;
+						perLightData.perLightDatas[i].isPlayer = data.isPlayerLight ? 1 : 0;
 
 						if (data.shadow != std::nullopt)
 						{
@@ -927,6 +951,8 @@ namespace DOG::gfx
 					u32 localLightBufferIndex = m_graphicsSettings.lightCulling ? resources.GetView(p.localLightBuffer) : -1;
 					drawFunc(rd, cmdl, m_submissions, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
 					drawFunc(rd, cmdl, m_animatedDraws, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, true);
+					//drawFunc(rd, cmdl, m_weaponSubmission, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
+					
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
 					drawFunc(rd, cmdl, m_noCullSubmissions, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
@@ -936,6 +962,9 @@ namespace DOG::gfx
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframeNoCull);
 					drawFunc(rd, cmdl, m_noCullWireframeDraws, localLightBufferIndex, false, true);
+
+					rd->Cmd_SetPipeline(cmdl, m_weaponMeshPipe);
+					drawFunc(rd, cmdl, m_weaponSubmission, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
 				});
 		}
 
@@ -1159,7 +1188,6 @@ namespace DOG::gfx
 				});
 		}
 
-
 		// Final ImGUI pass
 		m_imGUIEffect->Add(rg);
 
@@ -1267,6 +1295,7 @@ namespace DOG::gfx
 		m_animatedDraws.clear();
 		m_wireframeDraws.clear();
 		m_noCullWireframeDraws.clear();
+		m_weaponSubmission.clear();
 		m_activeSpotlights.clear();
 
 		m_activeShadowCasters.clear();

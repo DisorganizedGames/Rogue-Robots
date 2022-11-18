@@ -24,18 +24,6 @@ struct PerDrawData
     uint jointsDescriptor;
 };
 
-struct SpotlightData
-{
-    matrix viewMatrix;
-    matrix projectionMatrix;
-    float4 worldPosition;
-    float3 color;
-    float cutoffAngle;
-    float3 direction;
-    float strength;
-    bool isShadowCaster;
-    float3 padding;
-};
 
 struct SpotlightMetaData
 {
@@ -65,6 +53,7 @@ struct PushConstantElement
     uint width;
     uint height;
     uint localLightBuffersIndex;
+    uint isWeapon;
 };
 
 CONSTANTS(g_constants, PushConstantElement)
@@ -76,6 +65,8 @@ static const uint NO_TEXTURE = 0xffffffff;
 
 #define SHADOWMAP_CONSTANT_BIAS 0.000015f
 #define PCF_SAMPLE_COUNT 2
+
+#define IS_ON 1
 
 float CalculateShadowFactor(Texture2DArray shadowMaps, uint idx, float3 worldPosition, float3 worldNormal, float3 surfaceToLightDirection, matrix viewMatrix, matrix projectionMatrix)
 {
@@ -161,7 +152,7 @@ PS_OUT main(VS_OUT input)
     // Get per draw dat
     //ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[g_constants.perDrawCB];
     
-    if (g_constants.wireframe == 1)
+    if (g_constants.wireframe == IS_ON)
     {
         output.color = float4(0.f, 1.f, 0.f, 1.f);
         return output;
@@ -230,7 +221,13 @@ PS_OUT main(VS_OUT input)
         emissiveInput *= emissive.Sample(g_aniso_samp, input.uv).rgb;
     }
     
-    float3 amb = 0.001f * albedoInput + emissiveInput;
+    float ambFac = 0.001f;
+    if (g_constants.isWeapon == IS_ON)
+    {
+        ambFac = 0.005f;
+    }
+    
+    float3 amb = ambFac * albedoInput + emissiveInput;
     
 
     
@@ -374,9 +371,11 @@ PS_OUT main(VS_OUT input)
     // Always 0
     Texture2DArray shadowMaps = ResourceDescriptorHeap[shadowMapArrayStruct.shadowMapArray[0][0]];
     for (int k = 0; k < perSpotlightData.currentNrOfSpotlights; ++k)
-    {
+    {    
         if (perSpotlightData.spotlightArray[k].strength == 0)
-            continue;
+            continue;        
+
+        
         // check contribution from based on spotlight angle
         float3 lightToPos = input.wsPos - perSpotlightData.spotlightArray[k].worldPosition.xyz;
         float3 lightToPosDir = normalize(lightToPos);
@@ -430,8 +429,11 @@ PS_OUT main(VS_OUT input)
         
         //Texture2D shadowMap = ResourceDescriptorHeap[shadowMapArrayStruct.shadowMapArray[groupIndex][offsetInGroup]];
         
-        
         float shadowFactor = perSpotlightData.spotlightArray[k].isShadowCaster ? CalculateShadowFactor(shadowMaps, k, input.wsPos, N, -lightToPosDir, perSpotlightData.spotlightArray[k].viewMatrix, perSpotlightData.spotlightArray[k].projectionMatrix) : 1.0f;
+        
+        
+        if (perSpotlightData.spotlightArray[k].isPlayer && g_constants.isWeapon == 1)
+            shadowFactor = 1.f;
         
         Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL * contrib * shadowFactor;
     }
@@ -471,6 +473,7 @@ PS_OUT main(VS_OUT input)
     {
         output.color.xyz = lerp(output.color.xyz, lightHeatMapValue, 0.5f);
     }
+    
     return output;
 }
 
