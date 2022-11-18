@@ -12,6 +12,7 @@ struct PlayerControllerComponent
 
 	DOG::entity cameraEntity = DOG::NULL_ENTITY;
 	DOG::entity debugCamera = DOG::NULL_ENTITY;
+	DOG::entity spectatorCamera = DOG::NULL_ENTITY;
 
 	bool moveView = true;
 	bool jumping = false;
@@ -274,4 +275,5 @@ struct SpectatorComponent
 {
 	DOG::entity playerBeingSpectated;
 	const char* playerName;
+	std::vector<DOG::entity> playerSpectatorQueue;
 };
