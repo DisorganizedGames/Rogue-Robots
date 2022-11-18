@@ -125,6 +125,22 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddThisPlayerWeapon(context, e);
 	}
+	else if (compType == "TurretTargeting")
+	{
+		AddTurretTargeting(context, e);
+	}
+	else if (compType == "TurretBasicShooting")
+	{
+		AddTurretBasicShooting(context, e);
+	}
+	else if (compType == "Child")
+	{
+		AddChildComponent(context, e);
+	}
+	else if (compType == "ShadowReciever")
+	{
+		AddShadowReciever(e);
+	}
 	//Add more component types here.
 	else
 	{
@@ -308,7 +324,10 @@ void EntityInterface::GetEntityTypeAsString(DOG::LuaContext* context)
 	{
 	case EntityTypes::Trampoline:
 		context->ReturnString("Trampoline");
-			break;
+		break;
+	case EntityTypes::Turret:
+		context->ReturnString("Turret");
+		break;
 	case EntityTypes::FrostMagazineModification:
 		context->ReturnString("FrostMagazineModification");
 		break;
@@ -486,7 +505,9 @@ void EntityInterface::SetRotationForwardUp(DOG::LuaContext* context)
 	Vector3 up = ::XMVectorSet(upLua.x, upLua.y, upLua.z, 0);
 	Vector3 right = ::XMVector3Cross(up, forward);
 
-	Matrix rotMat = DirectX::XMMatrixLookToLH((DirectX::XMVECTOR)transform.GetPosition(), forward, up);
+	/*Matrix rotMat = DirectX::XMMatrixLookToLH((DirectX::XMVECTOR)transform.GetPosition(), forward, up);
+	rotMat = rotMat.Invert();*/
+	Matrix rotMat = DirectX::XMMatrixLookToLH(Vector3::Zero, forward, up);
 	rotMat = rotMat.Invert();
 
 	transform.SetRotation(rotMat);
@@ -856,6 +877,61 @@ void EntityInterface::AddThisPlayerWeapon(DOG::LuaContext* context, DOG::entity 
 	EntityManager::Get().AddComponent<ThisPlayerWeapon>(e);
 }
 
+void EntityInterface::AddTurretTargeting(DOG::LuaContext* context, DOG::entity e)
+{
+	auto& em = EntityManager::Get();
+	assert(em.Exists(e));
+
+	auto& targeter = em.AddComponent<TurretTargetingComponent>(e);
+	targeter.maxRange = static_cast<float>(context->GetDouble());
+	targeter.yawSpeed = static_cast<float>(context->GetDouble());
+	targeter.pitchSpeed = static_cast<float>(context->GetDouble());
+	targeter.yawLimit = static_cast<float>(context->GetDouble());
+	targeter.pitchLimit = static_cast<float>(context->GetDouble());
+}
+
+void EntityInterface::AddTurretBasicShooting(DOG::LuaContext* context, DOG::entity e)
+{
+	auto& em = EntityManager::Get();
+
+	entity owner = context->GetInteger(); // The player who spawned the turret.
+	assert(em.Exists(owner) && em.Exists(e));
+
+	auto& shooting = em.AddComponent<TurretBasicShootingComponent>(e);
+	shooting.owningPlayer = owner;
+	shooting.ammoCount = context->GetInteger();
+	shooting.projectileSpeed = static_cast<float>(context->GetDouble());
+	shooting.timeStep = context->GetDouble();
+	shooting.damage = static_cast<float>(context->GetDouble());
+	shooting.projectileLifeTime = static_cast<float>(context->GetDouble());
+}
+
+void EntityInterface::AddChildComponent(DOG::LuaContext* context, DOG::entity e)
+{
+	auto& em = EntityManager::Get();
+	assert(em.Exists(e));
+
+	entity parent = context->GetInteger();
+	assert(em.Exists(parent) && em.HasComponent<TransformComponent>(parent));
+
+	LuaTable pos = context->GetTable();
+	LuaTable rot = context->GetTable();
+	LuaTable scale = context->GetTable();
+
+	auto& node = em.AddOrReplaceComponent<ChildComponent>(e);
+	node.parent = parent;
+	node.localTransform.SetPosition({ pos.GetFloatFromTable("x"), pos.GetFloatFromTable("y") , pos.GetFloatFromTable("z") })
+		.SetRotation({ rot.GetFloatFromTable("x"), rot.GetFloatFromTable("y") , rot.GetFloatFromTable("z") })
+		.SetScale({ scale.GetFloatFromTable("x"), scale.GetFloatFromTable("y"), scale.GetFloatFromTable("z") });
+}
+
+void EntityInterface::AddShadowReciever(DOG::entity e)
+{
+	auto& em = EntityManager::Get();
+	assert(em.Exists(e));
+	em.AddComponent<ShadowReceiverComponent>(e);
+}
+
 
 void EntityInterface::UpdateMagazine(DOG::LuaContext* context)
 {
@@ -960,6 +1036,21 @@ void PhysicsInterface::RBConstrainPosition(DOG::LuaContext* context)
 	entity e = context->GetInteger();
 
 	EntityManager::Get().GetComponent<RigidbodyComponent>(e).ConstrainPosition(context->GetBoolean(), context->GetBoolean(), context->GetBoolean());
+}
+
+void PhysicsInterface::RayCast(DOG::LuaContext* context)
+{
+	LuaTable originTable = context->GetTable();
+	LuaTable targetTable = context->GetTable();
+
+	LuaVector3 origin = LuaVector3(originTable);
+	LuaVector3 target = LuaVector3(targetTable);
+
+	auto result = PhysicsEngine::RayCast({ origin.x, origin.y, origin.z }, { target.x, target.y, target.z });
+
+	context->ReturnBoolean(result.operator bool());
+	LuaTable r = LuaVector3::Create(result ? result->hitPosition : Vector3::Zero);
+	context->ReturnTable(r);
 }
 
 LuaVector3::LuaVector3(LuaTable& table)

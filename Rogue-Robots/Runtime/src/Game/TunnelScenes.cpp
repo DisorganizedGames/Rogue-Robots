@@ -100,11 +100,13 @@ void TunnelRoom2Scene::SetUpScene(std::vector<std::function<std::vector<DOG::ent
 	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(34.f, 75.f, 85.f) * 5.f / 4.6f, 4, 1.5f));	// location 4
 	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(27.f, 75.f, 130.f) * 5.f / 4.6f, 2, 1.f));	// location 5
 
+	std::cout << "ItemManager does not add entities to scene." << std::endl;
 	ItemManager& iM = ItemManager::Get();
 	iM.CreateItem(EntityTypes::GrenadeBarrel, Vector3(46.0f, 69.7f, 114.0f) * 5.f / 4.6f);
 	iM.CreateItem(EntityTypes::FrostMagazineModification, Vector3(43.0f, 69.7f, 114.0f) * 5.f / 4.6f);
 	iM.CreateItem(EntityTypes::MissileBarrel, Vector3(40.0f, 70.0f, 110.0f) * 5.f / 4.6f);
 	iM.CreateItem(EntityTypes::Trampoline, Vector3(49.0f, 70.0f, 110.0f) * 5.f / 4.6f);
+	iM.CreateItem(EntityTypes::Turret, Vector3(45.0f, 70.0f, 110.0f) * 5.f / 4.6f);
 }
 
 

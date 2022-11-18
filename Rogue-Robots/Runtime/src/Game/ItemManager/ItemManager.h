@@ -37,4 +37,5 @@ private:
 	u32 CreateGrenadePickup(Vector3 position, u32 id = 0);
 	u32 CreateMaxHealthBoostPickup(Vector3 position, u32 id = 0);
 	u32 CreateFrostModificationPickup(Vector3 position, u32 id = 0);
+	u32 CreateTurretPickup(Vector3 position, u32 id = 0);
 };

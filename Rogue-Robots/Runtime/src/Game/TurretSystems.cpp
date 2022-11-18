@@ -71,19 +71,19 @@ void TurretTargetingSystem::OnUpdate(TurretTargetingComponent& targeter, ChildCo
 
 
 
-void TurretShootingSystem::OnUpdate(entity e, TurretTargetingComponent& targeter, TurretAmmoComponent& ammo, DOG::TransformComponent& transform)
+void TurretShootingSystem::OnUpdate(entity e, TurretTargetingComponent& targeter, TurretBasicShootingComponent& turretShooter, DOG::TransformComponent& transform)
 {
 	f64 dt = Time::DeltaTime();
-	if (targeter.shoot && ammo.ammoCount > 0)
+	if (targeter.shoot && turretShooter.ammoCount > 0)
 	{
-		while (ammo.lastDischargeTimer > ammo.timeStep)
+		while (turretShooter.lastDischargeTimer > turretShooter.timeStep)
 		{
 
-			SpawnTurretProjectile(transform, ammo.projectileSpeed, e);
-			ammo.lastDischargeTimer -= ammo.timeStep;
-			if (--ammo.ammoCount <= 0) break;
+			SpawnTurretProjectile(transform, turretShooter.projectileSpeed, turretShooter.damage, turretShooter.projectileLifeTime, e, turretShooter.owningPlayer);
+			turretShooter.lastDischargeTimer -= turretShooter.timeStep;
+			if (--turretShooter.ammoCount <= 0) break;
 		}
-		ammo.lastDischargeTimer += dt;
+		turretShooter.lastDischargeTimer += dt;
 	}
 	targeter.shoot = false;
 }

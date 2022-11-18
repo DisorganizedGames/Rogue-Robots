@@ -150,7 +150,7 @@ std::vector<entity> AddFlashlightsToPlayers(const std::vector<entity>& players)
 	return flashlights;
 }
 
-entity SpawnTurretProjectile(const DirectX::SimpleMath::Matrix& transform, float speed, DOG::entity turret)
+entity SpawnTurretProjectile(const DirectX::SimpleMath::Matrix& transform, float speed, float dmg, float lifeTime, DOG::entity turret, DOG::entity owner)
 {
 	constexpr float radius = 0.1f;
 	static bool init = true;
@@ -194,10 +194,10 @@ entity SpawnTurretProjectile(const DirectX::SimpleMath::Matrix& transform, float
 	em.AddComponent<PointLightComponent>(p, pointLight, Vector3(1, 0.5f, 0.001f), 5.f);
 
 
-	em.AddComponent<TurretProjectileComponent>(p);
+	em.AddComponent<TurretProjectileComponent>(p).maxLifeTime = lifeTime;
 	auto& bullet = em.AddComponent<BulletComponent>(p);
-	bullet.damage = 50;
-	bullet.playerEntityID = GetPlayer();
+	bullet.damage = dmg;
+	bullet.playerEntityID = owner;
 
 	return p;
 }

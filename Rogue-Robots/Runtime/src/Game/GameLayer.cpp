@@ -742,6 +742,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::Explosion>("Explosion");
 	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBConstrainRotation>("RBConstrainRotation");
 	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBConstrainPosition>("RBConstrainPosition");
+	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RayCast>("RayCast");
 
 	global->SetLuaInterface(luaInterface);
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Physics", "PhysicsInterface");
