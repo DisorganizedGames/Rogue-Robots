@@ -46,7 +46,17 @@ void NetCode::OnStartup()
 			{
 				m_entityManager.AddComponent<OnlinePlayer>(id);
 				m_entityManager.RemoveComponent<ThisPlayer>(id);
-				LuaMain::GetScriptManager()->RemoveScript(id, "Gun.lua");
+
+
+				//LuaMain::GetScriptManager()->RemoveScript(id, "Gun.lua");
+				auto scriptData = LuaMain::GetScriptManager()->GetScript(id, "Gun.lua");
+				LuaTable tab(scriptData.scriptTable, true);
+			
+				auto ge = tab.GetTableFromTable("gunEntity");
+				int gunID = ge.GetIntFromTable("entityID");
+				m_entityManager.RemoveComponent<ThisPlayerWeapon>(gunID);
+
+
 				EntityManager::Get().Collect<DontDraw, ChildComponent>().Do([&](entity subEntity, DontDraw&, ChildComponent& parentCompany)
 					{
 						if (parentCompany.parent == id)
@@ -70,7 +80,16 @@ void NetCode::OnStartup()
 						}
 					});
 				m_entityManager.AddComponent<ThisPlayer>(id);
-				LuaMain::GetScriptManager()->AddScript(id, "Gun.lua");
+
+
+				//LuaMain::GetScriptManager()->AddScript(id, "Gun.lua");
+				auto scriptData = LuaMain::GetScriptManager()->GetScript(id, "Gun.lua");
+				LuaTable tab(scriptData.scriptTable, true);
+				auto ge = tab.GetTableFromTable("gunEntity");
+				int gunID = ge.GetIntFromTable("entityID");
+				m_entityManager.AddComponent<ThisPlayerWeapon>(gunID);
+
+
 				m_entityManager.AddComponent<AudioListenerComponent>(id);
 				m_entityManager.RemoveComponent<OnlinePlayer>(id);
 			}

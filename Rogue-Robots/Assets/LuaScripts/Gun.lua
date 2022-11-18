@@ -49,7 +49,7 @@ local gunShotSound = nil
 local bullets = {}
 local shootTimer = 0.0
 
-local gunEntity = {
+gunEntity = {
 	entityID = nil,
 	position = Vector3.Zero(),
 	rotation = Vector3.Zero(),
