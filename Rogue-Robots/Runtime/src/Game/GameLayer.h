@@ -86,7 +86,6 @@ private:
 	std::vector<std::shared_ptr<LuaInterface>> m_luaInterfaces;
 	std::array<u32, 4> m_playerModels;
 	NetCode m_netCode;
-	//Pathfinder m_pathfinder;		// uncomment to activate pathfinder
 	INT8 m_nrOfPlayers;
 	ImFont* m_imguiFont = nullptr;
 

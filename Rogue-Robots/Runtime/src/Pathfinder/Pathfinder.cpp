@@ -4,112 +4,113 @@
 
 using namespace DirectX::SimpleMath;
 
+Pathfinder Pathfinder::s_instance;
 
 Pathfinder::Pathfinder() noexcept
 {
-	// For testing purposes
-	std::vector<std::string> map1 = {
-		"***********************************************",
-		"*                         *                   *",
-		"*               ***********                   *",
-		"*      *        *                *****        *",
-		"*      *        *                *****        *",
-		"*      *                 *****      **        *",
-		"*      ******               **       **********",
-		"*           *               **********        *",
-		"*           *                                 *",
-		"*           ********            ******        *",
-		"*               *               *    *        *",
-		"*               *               *    *        *",
-		"*               *                    *        *",
-		"***********************************************",
-	};
-	size_t gridSizeX = map1[0].size();
-	size_t gridSizeY = map1.size();
-	size_t startX = gridSizeX / 2;
-	size_t startY = gridSizeY / 2;
-	while (map1[startY][startX] != ' ')
-		++startY; ++startX;
-	char symbol = 'A';
-	GenerateNavMeshes(map1, GridCoord(startX, startY), symbol);
-	std::vector<bool> visited;
-	visited.resize(m_navMeshes.size(), false);
+	//// For testing purposes
+	//std::vector<std::string> map1 = {
+	//	"***********************************************",
+	//	"*                         *                   *",
+	//	"*               ***********                   *",
+	//	"*      *        *                *****        *",
+	//	"*      *        *                *****        *",
+	//	"*      *                 *****      **        *",
+	//	"*      ******               **       **********",
+	//	"*           *               **********        *",
+	//	"*           *                                 *",
+	//	"*           ********            ******        *",
+	//	"*               *               *    *        *",
+	//	"*               *               *    *        *",
+	//	"*               *                    *        *",
+	//	"***********************************************",
+	//};
+	//size_t gridSizeX = map1[0].size();
+	//size_t gridSizeY = map1.size();
+	//size_t startX = gridSizeX / 2;
+	//size_t startY = gridSizeY / 2;
+	//while (map1[startY][startX] != ' ')
+	//	++startY; ++startX;
+	//char symbol = 'A';
+	//GenerateNavMeshes(map1, GridCoord(startX, startY), symbol);
+	//std::vector<bool> visited;
+	//visited.resize(m_navMeshes.size(), false);
 
-	//for (NavMesh& mesh : m_navMeshes)
-	//	print(mesh);
-	print(0, visited, map1);
+	////for (NavMesh& mesh : m_navMeshes)
+	////	print(mesh);
+	//print(0, visited, map1);
 }
 
-void Pathfinder::print(NavMeshID mesh, std::vector<bool>& visited, std::vector<std::string>& map)
-{
-	if (visited[mesh])
-		return;
-	size_t gridSizeX = map[0].size();
-	size_t gridSizeY = map.size();
-	visited[mesh] = true;
-	std::cout << "====================================================" << std::endl;
-	constexpr size_t interval = 2;
-	std::cout << " ";
-	for (size_t x = 0; x < gridSizeX; ++x)
-		if (x % interval == 0)
-			std::cout << x % 10;
-		else
-			std::cout << " ";
-	std::cout << std::endl;
-	for (size_t y = 0; y < gridSizeY; ++y)
-	{
-		if (y % interval == 0)
-			std::cout << y % 10;
-		else
-			std::cout << " ";
-		// print map elements
-		for (size_t x = 0; x < gridSizeX; ++x)
-		{
-			//if (x == origin.x && y == origin.y)
-			//	std::cout << "@";
-			//else
-			{
-				GridCoord pt(x, y);
-				char tile = map[y][x];
-				if (m_navMeshes[mesh].Contains(pt))
-				{
-					tile = '~';
-					//tile = char(mesh + 'A');
-					for (NavNodeID i : m_navMeshes[mesh].navNodes)
-						if (m_navNodes[i].Contains(pt))
-						{
-							tile = '+';
-							//tile = char((m_navNodes[i].iMesh1 + m_navNodes[i].iMesh2) / 2 + 'a');
-							//tile = char(mesh + 'A');
-							break;
-						}
-				}
-				std::cout << tile;
-			}
-		}
-		// elements printed
-		if (y % interval == 0)
-			std::cout << y % 10;
-		else
-			std::cout << " ";
-		std::cout << std::endl;
-	}
-	std::cout << " ";
-	for (size_t x = 0; x < gridSizeX; ++x)
-		if (x % interval == 0)
-			std::cout << x % 10;
-		else
-			std::cout << " ";
-	std::cout << std::endl;
-	std::cout << "====================================================" << std::endl;
-	for (NavNodeID nxt : m_navMeshes[mesh].navNodes)
-	{
-		print(m_navNodes[nxt].iMesh1, visited, map);
-		print(m_navNodes[nxt].iMesh1, visited, map);
-	}
-};
+//void Pathfinder::print(NavMeshID mesh, std::vector<bool>& visited, std::vector<std::string>& map)
+//{
+//	if (visited[mesh])
+//		return;
+//	size_t gridSizeX = map[0].size();
+//	size_t gridSizeY = map.size();
+//	visited[mesh] = true;
+//	std::cout << "====================================================" << std::endl;
+//	constexpr size_t interval = 2;
+//	std::cout << " ";
+//	for (size_t x = 0; x < gridSizeX; ++x)
+//		if (x % interval == 0)
+//			std::cout << x % 10;
+//		else
+//			std::cout << " ";
+//	std::cout << std::endl;
+//	for (size_t y = 0; y < gridSizeY; ++y)
+//	{
+//		if (y % interval == 0)
+//			std::cout << y % 10;
+//		else
+//			std::cout << " ";
+//		// print map elements
+//		for (size_t x = 0; x < gridSizeX; ++x)
+//		{
+//			//if (x == origin.x && y == origin.y)
+//			//	std::cout << "@";
+//			//else
+//			{
+//				GridCoord pt(x, y);
+//				char tile = map[y][x];
+//				if (m_navMeshes[mesh].Contains(pt))
+//				{
+//					tile = '~';
+//					//tile = char(mesh + 'A');
+//					for (PortalID i : m_navMeshes[mesh].navNodes)
+//						if (m_navNodes[i].Contains(pt))
+//						{
+//							tile = '+';
+//							//tile = char((m_navNodes[i].iMesh1 + m_navNodes[i].iMesh2) / 2 + 'a');
+//							//tile = char(mesh + 'A');
+//							break;
+//						}
+//				}
+//				std::cout << tile;
+//			}
+//		}
+//		// elements printed
+//		if (y % interval == 0)
+//			std::cout << y % 10;
+//		else
+//			std::cout << " ";
+//		std::cout << std::endl;
+//	}
+//	std::cout << " ";
+//	for (size_t x = 0; x < gridSizeX; ++x)
+//		if (x % interval == 0)
+//			std::cout << x % 10;
+//		else
+//			std::cout << " ";
+//	std::cout << std::endl;
+//	std::cout << "====================================================" << std::endl;
+//	for (PortalID nxt : m_navMeshes[mesh].navNodes)
+//	{
+//		print(m_navNodes[nxt].iMesh1, visited, map);
+//		print(m_navNodes[nxt].iMesh1, visited, map);
+//	}
+//};
 
-void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord origin, char symbol, NavNodeID currentNode)
+void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord origin, char symbol, PortalID currentNode)
 {
 	constexpr char printif = 'e';
 	size_t gridSizeX = map[0].size();
@@ -282,7 +283,7 @@ void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord orig
 						{
 							tile = mesh % 2 == 0 ? '.' : '`';
 							//tile = char(mesh + 'A');
-							for (NavNodeID i : m_navMeshes[mesh].navNodes)
+							for (PortalID i : m_navMeshes[mesh].navNodes)
 								if (m_navNodes[i].Contains(pt))
 								{
 									//tile = '+';
@@ -319,7 +320,7 @@ void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord orig
 		//std::cout << "Starting point: " << origin.str() << std::endl;
 		//std::cout << "Starting point: " << origin.str() << "\t" << "Total navmeshes: " << m_navMeshes.size() << "\t" << "Largest navmesh: " << largest.str() << std::endl;
 		//print();
-		if (currentNode != NavNodeID(-1))
+		if (currentNode != PortalID(-1))
 			ConnectMeshAndNode(thisMesh, currentNode);
 		//std::cout << "border: " << outside.str() << std::endl;
 		// expand left
@@ -336,13 +337,13 @@ void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord orig
 				// connect any part of the border inside an existing NavMesh
 				// and generate new mesh(es) on remaining open border(s)
 				for (Box& open : ConnectToNeighborsAndReturnOpen(thisMesh, Box(nxt1, nxt2)))
-					//GenerateNavMeshes(map, open.Midpoint(), ++symbol, NewNode(thisMesh, open));
+					//GenerateNavMeshes(map, open.Midpoint(), ++symbol, NewPortal(thisMesh, open));
 				{
 					GridCoord inside = open.high;
 					inside.x += 1;
 					//std::cout << "[" << symbol << "] Open left: " << Box(open.low, inside).str() << std::endl;
-					GenerateNavMeshes(map, open.Midpoint(), symbol + 1, NewNode(thisMesh, Box(open.low, inside)));
-					//GenerateNavMeshes(map, GridCoord(nxt2.x, nxt1.y + (nxt2.y - nxt1.y) / 2, 0), ++symbol, NewNode(thisMesh, Box(inside, nxt2)));
+					GenerateNavMeshes(map, open.Midpoint(), symbol + 1, NewPortal(thisMesh, Box(open.low, inside)));
+					//GenerateNavMeshes(map, GridCoord(nxt2.x, nxt1.y + (nxt2.y - nxt1.y) / 2, 0), ++symbol, NewPortal(thisMesh, Box(inside, nxt2)));
 				}
 				nxt1.y = nxt2.y + 1;
 			}
@@ -360,13 +361,13 @@ void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord orig
 				// connect any part of the border inside an existing NavMesh
 				// and generate new mesh(es) on remaining open border(s)
 				for (Box& open : ConnectToNeighborsAndReturnOpen(thisMesh, Box(nxt1, nxt2)))
-					//GenerateNavMeshes(map, open.Midpoint(), ++symbol, NewNode(thisMesh, open));
+					//GenerateNavMeshes(map, open.Midpoint(), ++symbol, NewPortal(thisMesh, open));
 				{
 					GridCoord inside = open.low;
 					inside.y -= 1;
 					//std::cout << "[" << symbol << "] Open down: " << Box(open.low, inside).str() << std::endl;
-					GenerateNavMeshes(map, open.Midpoint(), symbol + 1, NewNode(thisMesh, Box(inside, open.high)));
-					//GenerateNavMeshes(map, GridCoord(nxt2.x, nxt1.y + (nxt2.y - nxt1.y) / 2, 0), ++symbol, NewNode(thisMesh, Box(inside, nxt2)));
+					GenerateNavMeshes(map, open.Midpoint(), symbol + 1, NewPortal(thisMesh, Box(inside, open.high)));
+					//GenerateNavMeshes(map, GridCoord(nxt2.x, nxt1.y + (nxt2.y - nxt1.y) / 2, 0), ++symbol, NewPortal(thisMesh, Box(inside, nxt2)));
 				}
 				nxt1.x = nxt2.x + 1;
 			}
@@ -384,13 +385,13 @@ void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord orig
 				// connect any part of the border inside an existing NavMesh
 				// and generate new mesh(es) on remaining open border(s)
 				for (Box& open : ConnectToNeighborsAndReturnOpen(thisMesh, Box(nxt2, nxt1)))
-					//GenerateNavMeshes(map, open.Midpoint(), ++symbol, NewNode(thisMesh, open));
+					//GenerateNavMeshes(map, open.Midpoint(), ++symbol, NewPortal(thisMesh, open));
 				{
 					GridCoord inside = open.low;
 					inside.x -= 1;
 					//std::cout << "[" << symbol << "] Open right: " << Box(inside, open.high).str() << std::endl;
-					GenerateNavMeshes(map, open.Midpoint(), symbol + 1, NewNode(thisMesh, Box(inside, open.high)));
-					//GenerateNavMeshes(map, GridCoord(nxt2.x, nxt1.y + (nxt2.y - nxt1.y) / 2, 0), ++symbol, NewNode(thisMesh, Box(inside, nxt2)));
+					GenerateNavMeshes(map, open.Midpoint(), symbol + 1, NewPortal(thisMesh, Box(inside, open.high)));
+					//GenerateNavMeshes(map, GridCoord(nxt2.x, nxt1.y + (nxt2.y - nxt1.y) / 2, 0), ++symbol, NewPortal(thisMesh, Box(inside, nxt2)));
 					//std::cout << "return to " << symbol << " | " << nxt1.str() << nxt2.str() << " | " << outside.str() << " | " << largest.str() << std::endl;
 				}
 				nxt1.y = nxt2.y - 1;
@@ -409,13 +410,13 @@ void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord orig
 				// connect any part of the border inside an existing NavMesh
 				// and generate new mesh(es) on remaining open border(s)
 				for (Box& open : ConnectToNeighborsAndReturnOpen(thisMesh, Box(nxt2, nxt1)))
-					//GenerateNavMeshes(map, open.Midpoint(), ++symbol, NewNode(thisMesh, open));
+					//GenerateNavMeshes(map, open.Midpoint(), ++symbol, NewPortal(thisMesh, open));
 				{
 					GridCoord inside = open.high;
 					inside.y += 1;
 					//std::cout << "[" << symbol << "] Open up: " << Box(open.low, inside).str() << std::endl;
-					GenerateNavMeshes(map, open.Midpoint(), symbol + 1, NewNode(thisMesh, Box(open.low, inside)));
-					//GenerateNavMeshes(map, GridCoord(nxt2.x, nxt1.y + (nxt2.y - nxt1.y) / 2, 0), ++symbol, NewNode(thisMesh, Box(inside, nxt2)));
+					GenerateNavMeshes(map, open.Midpoint(), symbol + 1, NewPortal(thisMesh, Box(open.low, inside)));
+					//GenerateNavMeshes(map, GridCoord(nxt2.x, nxt1.y + (nxt2.y - nxt1.y) / 2, 0), ++symbol, NewPortal(thisMesh, Box(inside, nxt2)));
 				}
 				nxt1.x = nxt2.x - 1;
 			}
@@ -445,7 +446,7 @@ float Pathfinder::heuristicStraightLine(Vector3 start, Vector3 goal)
 	return (goal - start).Length();
 }
 
-std::vector<NavNode*> Pathfinder::Astar(const Vector3 start, const Vector3 goal, float(*h)(Vector3, Vector3))
+std::vector<Portal*> Pathfinder::Astar(const Vector3 start, const Vector3 goal, float(*h)(Vector3, Vector3))
 {
 	struct MaxFloat
 	{	// float wrapper that has default value infinity
@@ -462,21 +463,21 @@ std::vector<NavNode*> Pathfinder::Astar(const Vector3 start, const Vector3 goal,
 	// Define the entry and terminal nodes
 	// Opportunity to optimize:
 	// if FindNavMeshContaining(start) == FindNavMeshContaining(goal) return empty path
-	NavNode entry = NavNode(start, FindNavMeshContaining(start));
-	constexpr NavNodeID startPoint = NavNodeID(-1);
+	Portal entry = Portal(start, FindNavMeshContaining(start));
+	constexpr PortalID startPoint = MAX_ID;
 	NavMeshID terminalNavMesh = FindNavMeshContaining(goal);
 
-	std::vector<NavNodeID> openSet = { startPoint };
-	std::unordered_map<NavNodeID, NavNodeID> cameFrom;
-	std::unordered_map<NavNodeID, MaxFloat> fScore;
+	std::vector<PortalID> openSet = { startPoint };
+	std::unordered_map<PortalID, PortalID> cameFrom;
+	std::unordered_map<PortalID, MaxFloat> fScore;
 	fScore[startPoint] = h(start, goal);
-	std::unordered_map<NavNodeID, MaxFloat> gScore;
+	std::unordered_map<PortalID, MaxFloat> gScore;
 	gScore[startPoint] = 0;
 
 	// lambda: pop element with lowest fScore from minheap
 	auto popOpenSet = [&]()
 	{
-		NavNodeID get = openSet[0];
+		PortalID get = openSet[0];
 		openSet[0] = openSet.back();
 		openSet.pop_back();
 		// percolate down
@@ -490,7 +491,7 @@ std::vector<NavNode*> Pathfinder::Astar(const Vector3 start, const Vector3 goal,
 					comp = right;
 			if (fScore[comp] < fScore[i])
 			{
-				//NavNodeID toSwap = openSet[i];
+				//PortalID toSwap = openSet[i];
 				//openSet[i] = openSet[comp];
 				//openSet[comp] = toSwap;
 				std::swap(openSet[i], openSet[comp]);
@@ -503,7 +504,7 @@ std::vector<NavNode*> Pathfinder::Astar(const Vector3 start, const Vector3 goal,
 		return get;
 	};
 	// lambda: push new element onto minheap
-	auto pushOpenSet = [&](NavNodeID iNode)
+	auto pushOpenSet = [&](PortalID iNode)
 	{
 		openSet.push_back(iNode);
 		// percolate up
@@ -511,7 +512,7 @@ std::vector<NavNode*> Pathfinder::Astar(const Vector3 start, const Vector3 goal,
 		size_t p = (i + (i % 2)) / 2 - 1;
 		while (p >= 0 && fScore[p] > fScore[i])
 		{
-			//NavNodeID toSwap = openSet[p];
+			//PortalID toSwap = openSet[p];
 			//openSet[p] = openSet[i];
 			//openSet[i] = toSwap;
 			std::swap(openSet[p], openSet[i]);
@@ -520,33 +521,33 @@ std::vector<NavNode*> Pathfinder::Astar(const Vector3 start, const Vector3 goal,
 		}
 	};
 	// returns true if current node is connected to the NavMesh containing the goal
-	auto leadsToGoal = [&](NavNodeID current)
+	auto leadsToGoal = [&](PortalID current)
 	{
 		if (current == startPoint)
 			return entry.iMesh1 == terminalNavMesh;
 		return m_navNodes[current].iMesh1 == terminalNavMesh || m_navNodes[current].iMesh2 == terminalNavMesh;
 	};
 	// returns true if openSet does not contain neighbor
-	auto notInOpenSet = [&](NavNodeID neighbor)
+	auto notInOpenSet = [&](PortalID neighbor)
 	{
-		for (NavNodeID node : openSet)
+		for (PortalID node : openSet)
 			if (node == neighbor)
 				return false;
 		return true;
 	};
-	auto getNeighbors = [&](NavNodeID current)
+	auto getNeighbors = [&](PortalID current)
 	{
 		if (current == startPoint)
 			return m_navMeshes[entry.iMesh1].navNodes;
-		std::vector<NavNodeID> neighbors;
+		std::vector<PortalID> neighbors;
 		for (NavMeshID i : { m_navNodes[current].iMesh1, m_navNodes[current].iMesh2 })
-			for (NavNodeID iNode : m_navMeshes[i].navNodes)
+			for (PortalID iNode : m_navMeshes[i].navNodes)
 				if (iNode != current)
 					neighbors.push_back(iNode);
 		return neighbors;
 	};
 	// lambda: d - distance between nodes
-	auto d = [&](NavNodeID current, NavNodeID neighbor)
+	auto d = [&](PortalID current, PortalID neighbor)
 	{
 		NavMeshID iNavMesh;
 		// get the first NavMesh of current
@@ -566,9 +567,9 @@ std::vector<NavNode*> Pathfinder::Astar(const Vector3 start, const Vector3 goal,
 		// since the first two NavMeshes are different iNavMesh must now contain the righ reference
 		return m_navMeshes[iNavMesh].CostWalk(m_navNodes[current].Midpoint(), m_navNodes[neighbor].Midpoint());
 	};
-	auto reconstructPath = [&](NavNodeID iNode)
+	auto reconstructPath = [&](PortalID iNode)
 	{
-		std::vector<NavNode*> path;
+		std::vector<Portal*> path;
 		while (cameFrom.contains(iNode))
 		{
 			if (iNode != startPoint)
@@ -584,11 +585,11 @@ std::vector<NavNode*> Pathfinder::Astar(const Vector3 start, const Vector3 goal,
 	// A* implementation
 	while (!openSet.empty())
 	{
-		NavNodeID current = popOpenSet();
+		PortalID current = popOpenSet();
 		if (leadsToGoal(current))
 			return reconstructPath(current);
 
-		for (NavNodeID neighbor : getNeighbors(current))
+		for (PortalID neighbor : getNeighbors(current))
 		{
 			float tentativeGScore = gScore[current] + d(current, neighbor);
 			if (gScore[neighbor] > tentativeGScore)
@@ -602,7 +603,7 @@ std::vector<NavNode*> Pathfinder::Astar(const Vector3 start, const Vector3 goal,
 		}
 	}
 	// no path found, returning empty vector
-	return std::vector<NavNode*>();
+	return std::vector<Portal*>();
 }
 
 
@@ -613,14 +614,14 @@ Pathfinder::NavMeshID Pathfinder::NewMesh(Box extents)
 	return id;
 }
 
-Pathfinder::NavNodeID Pathfinder::NewNode(NavMeshID mesh, Box node)
+Pathfinder::PortalID Pathfinder::NewPortal(NavMeshID mesh, Box node)
 {
-	NavNodeID id = m_navNodes.size();
-	m_navNodes.emplace_back(NavNode(node, mesh));
+	PortalID id = m_navNodes.size();
+	m_navNodes.emplace_back(Portal(node, mesh));
 	return id;
 }
 
-void Pathfinder::ConnectMeshAndNode(NavMeshID mesh, NavNodeID node)
+void Pathfinder::ConnectMeshAndNode(NavMeshID mesh, PortalID node)
 {
 	m_navNodes[node].AddNavMesh(mesh);
 	m_navMeshes[mesh].AddNavNode(node);
@@ -634,7 +635,7 @@ std::vector<Box> Pathfinder::ConnectToNeighborsAndReturnOpen(NavMeshID mesh, Box
 		Box intersection = m_navMeshes[existing].corners.Intersection(border);
 		if (intersection.Area() > 0)
 		{
-			ConnectMeshAndNode(existing, NewNode(mesh, intersection));
+			ConnectMeshAndNode(existing, NewPortal(mesh, intersection));
 			std::vector<Box> newOpen;
 			for (Box& segment : open)
 			{

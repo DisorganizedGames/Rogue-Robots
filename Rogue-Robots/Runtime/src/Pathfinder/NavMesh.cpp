@@ -36,7 +36,7 @@ NavMesh::NavMesh(Box extents) : corners(extents)
 	hiCorner = Vector3(static_cast<float>(corners.high.x), static_cast<float>(corners.high.y), static_cast<float>(corners.high.z));
 }
 
-bool NavMesh::AddNavNode(NavNodeID nodeID)
+bool NavMesh::AddNavNode(PortalID nodeID)
 {
 	//auto it = std::find(navNodes.begin(), navNodes.end(), nodeID);
 	//if (it == navNodes.end())
