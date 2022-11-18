@@ -255,7 +255,9 @@ namespace DOG::gfx
 			LightOffsets areaLightOffsets;
 
 			f32 deltaTime{ 0.f };
-			f32 pad[3];
+			f32 farClip; // We have reverse z so farClip will hold the smaller value
+			f32 nearClip;
+			f32 pad[1];
 
 		} m_pfData{};
 		struct PfDataHandle { friend class TypedHandlePool; u64 handle{ 0 }; };

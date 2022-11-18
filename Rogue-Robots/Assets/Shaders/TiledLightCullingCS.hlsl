@@ -5,6 +5,7 @@ struct PushConstantElement
     uint gdDescriptor;
     uint perFrameOffset;
     uint localLightBuffersIndex;
+    uint depthBufferIndex;
     uint width;
     uint height;
     float pointLightCullFactor;
@@ -13,6 +14,16 @@ ConstantBuffer<PushConstantElement> g_constants : register(b0, space0);
 
 
 groupshared uint sLightCounter;
+groupshared uint sharedUintMinZ;
+groupshared uint sharedUintMaxZ;
+
+float ConvertDepthToViewSpace(matrix projInv, float depth)
+{
+    float4 viewMin = float4(0, 0, depth, 1.0f);
+    viewMin = mul(projInv, viewMin);
+    depth = viewMin.z / viewMin.w;
+    return depth;
+}
 
 [numthreads(TILED_GROUP_SIZE, TILED_GROUP_SIZE, 1)]
 void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadID, uint3 groupID : SV_GroupID, uint groupIndex : SV_GroupIndex)
@@ -21,22 +32,35 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
     if (tid == 0)
     {
         sLightCounter = 0;
+        sharedUintMaxZ = 0;
+        sharedUintMinZ = 0x7f7fffff;
     }
     GroupMemoryBarrierWithGroupSync();
+    
+    StructuredBuffer<ShaderInterop_GlobalData> gds = ResourceDescriptorHeap[g_constants.gdDescriptor];
+    ShaderInterop_GlobalData gd = gds[0];
+    
+    StructuredBuffer<ShaderInterop_PerFrameData> pfDatas = ResourceDescriptorHeap[gd.perFrameTable];
+    ShaderInterop_PerFrameData pfData = pfDatas[g_constants.perFrameOffset];
+    
+    Texture2D depthBuffer = ResourceDescriptorHeap[g_constants.depthBufferIndex];
+    float depth = depthBuffer[globalId.xy].r;
+    if (depth != 0)
+    {
+        depth = ConvertDepthToViewSpace(pfData.projMatrix, depth);
+        uint depthUint = asuint(depth);
 
+        InterlockedMin(sharedUintMinZ, depthUint);
+        InterlockedMax(sharedUintMaxZ, depthUint);
+    }
+
+    GroupMemoryBarrierWithGroupSync();
 
     if (globalId.x < g_constants.width && globalId.y < g_constants.height)
     {
-        StructuredBuffer<ShaderInterop_GlobalData> gds = ResourceDescriptorHeap[g_constants.gdDescriptor];
-        ShaderInterop_GlobalData gd = gds[0];
-        
         StructuredBuffer<ShaderInterop_LightsMetadata> lightsMDs = ResourceDescriptorHeap[gd.lightTableMD];
         ShaderInterop_LightsMetadata lightsMD = lightsMDs[0];
-        
-        StructuredBuffer<ShaderInterop_PerFrameData> pfDatas = ResourceDescriptorHeap[gd.perFrameTable];
-        ShaderInterop_PerFrameData pfData = pfDatas[g_constants.perFrameOffset];
-        
-        
+
         float2 scale = float2(g_constants.width, g_constants.height) * rcp(2.0f * TILED_GROUP_SIZE);
         float2 bias = scale - float2(groupID.xy);
         
@@ -56,9 +80,23 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
         frustum[1] = col4 - col1;
         frustum[2] = col4 + col2;
         frustum[3] = col4 - col2;
-        frustum[4] = float4(0, 0, 1, -0.1f);
-        frustum[5] = float4(0, 0, -1, 100.0f);
-        
+
+        bool useDepth = true; // Add option to toggle later
+        if (useDepth)
+        {
+            float near = asfloat(sharedUintMinZ);
+            float far = asfloat(sharedUintMaxZ);
+            
+            frustum[4] = float4(0, 0, 1, -near);
+            frustum[5] = float4(0, 0, -1, far);
+        }
+        else
+        {
+            frustum[4] = float4(0, 0, 1, -pfData.nearClip);
+            frustum[5] = float4(0, 0, -1, pfData.farClip);
+        }
+
+
         frustum[0] *= rcp(length(frustum[0].xyz));
         frustum[1] *= rcp(length(frustum[1].xyz));
         frustum[2] *= rcp(length(frustum[2].xyz));

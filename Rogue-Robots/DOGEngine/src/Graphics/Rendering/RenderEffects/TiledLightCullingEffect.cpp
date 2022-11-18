@@ -57,6 +57,7 @@ namespace DOG::gfx
 					.AppendConstant(m_globalEffectData.globalDataDescriptor)
 					.AppendConstant(*m_globalEffectData.perFrameTableOffset)
 					.AppendConstant(resources.GetView(passData.localLightBuffer))
+					.AppendConstant(resources.GetView(passData.depthBuffer))
 					.AppendConstant(m_width)
 					.AppendConstant(m_height)
 					.AppendConstant(plCullFactor);

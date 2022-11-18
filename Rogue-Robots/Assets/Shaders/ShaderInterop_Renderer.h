@@ -51,7 +51,9 @@ struct ShaderInterop_PerFrameData
     ShaderInterop_LightOffsets areaLightOffsets;
 
     float deltaTime;
-    float3 pad;
+    float nearClip;
+    float farClip;
+    float pad;
 };
 
 
