@@ -408,7 +408,7 @@ namespace DOG
 	}
 
 
-	std::optional<RayCastResult> PhysicsEngine::RayCast(DirectX::SimpleMath::Vector3 origin, DirectX::SimpleMath::Vector3 target)
+	std::optional<RayCastResult> PhysicsEngine::RayCast(const DirectX::SimpleMath::Vector3& origin, const DirectX::SimpleMath::Vector3& target)
 	{
 		btVector3 o(origin.x, origin.y, origin.z);
 		btVector3 t(target.x, target.y, target.z);

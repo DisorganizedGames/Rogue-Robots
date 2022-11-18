@@ -197,7 +197,7 @@ namespace DOG
 		static void UpdatePhysics(float deltaTime);
 		static void FreePhysicsFromEntity(entity entity);
 		static void FreePhysicsFromDeferredEntities();
-		static std::optional<RayCastResult> RayCast(DirectX::SimpleMath::Vector3 origin, DirectX::SimpleMath::Vector3 target);
+		static std::optional<RayCastResult> RayCast(const DirectX::SimpleMath::Vector3& origin, const DirectX::SimpleMath::Vector3& target);
 		static void SetIgnoreCollisionCheck(RigidbodyHandle handleA, RigidbodyHandle handleB, bool value);
 	};
 }
