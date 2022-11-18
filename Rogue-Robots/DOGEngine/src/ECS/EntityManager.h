@@ -188,7 +188,7 @@ namespace DOG
 	BundleImpl<ComponentType...>& EntityManager::Bundle() noexcept
 	{
 		static constexpr std::array<sti::TypeIndex, sizeof... (ComponentType)> componentIDs{ sti::getTypeIndex<ComponentType>()... };
-		constexpr sti::TypeIndex minComponentID = *std::min_element(std::begin(componentIDs), std::end(componentIDs));
+		sti::TypeIndex minComponentID = *std::min_element(std::begin(componentIDs), std::end(componentIDs));
 
 		if (m_bundles[minComponentID] == nullptr)
 		{

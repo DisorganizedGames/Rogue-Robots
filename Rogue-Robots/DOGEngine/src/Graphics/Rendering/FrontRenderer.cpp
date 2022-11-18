@@ -69,11 +69,15 @@ namespace DOG::gfx
 	void FrontRenderer::UpdateLights()
 	{
 		// Update lights
-		EntityManager::Get().Collect<DirtyComponent, PointLightComponent>().Do([](entity, DirtyComponent& dirty, PointLightComponent& light) {
-			light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged); });
+		EntityManager::Get().Collect<DirtyComponent, PointLightComponent>().Do([](entity, DirtyComponent& dirty, PointLightComponent& light)
+			{
+				light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged);
+			});
 
-		EntityManager::Get().Collect<DirtyComponent, SpotLightComponent>().Do([](entity, DirtyComponent& dirty, SpotLightComponent& light) {
-			light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged) || dirty.IsDirty(DirtyComponent::rotationChanged); });
+		EntityManager::Get().Collect<DirtyComponent, SpotLightComponent>().Do([](entity, DirtyComponent& dirty, SpotLightComponent& light)
+			{
+				light.dirty |= dirty.IsDirty(DirtyComponent::positionChanged) || dirty.IsDirty(DirtyComponent::rotationChanged);
+			});
 
 		EntityManager::Get().Collect<TransformComponent, SpotLightComponent>().Do([&](entity, TransformComponent& tr, SpotLightComponent& light)
 			{
@@ -124,9 +128,11 @@ namespace DOG::gfx
 		// We need to bucket in a better way..
 		mgr.Bundle<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
 			{
+				OutputDebugString(L"Print!");
 				TransformComponent camTransform;
 				camTransform.worldMatrix = ((DirectX::SimpleMath::Matrix)m_viewMat).Invert();
-				auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p) {
+				auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p)
+				{
 					auto d = p - camPos;
 					auto lenSq = d.LengthSquared();
 					if (lenSq < 64) return false;
@@ -137,7 +143,6 @@ namespace DOG::gfx
 
 				if (cull({ transformC.worldMatrix(3, 0), transformC.worldMatrix(3, 1), transformC.worldMatrix(3, 2) }))
 					return;
-
 				ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 				if (model && model->gfxModel)
 				{
@@ -197,8 +202,8 @@ namespace DOG::gfx
 					}
 				}
 			});
-	
-	
+
+
 	}
 
 	void FrontRenderer::SetRenderCamera()
@@ -223,8 +228,8 @@ namespace DOG::gfx
 		// Collect this frames spotlight shadow casters
 		m_activeSpotlightShadowCasters.clear();
 		EntityManager::Get().Collect</*ShadowCasterComponent, */SpotLightComponent, CameraComponent, TransformComponent>().Do([&](
-			entity spotlightEntity, /*ShadowCasterComponent&, */ SpotLightComponent & slc, CameraComponent& cc, TransformComponent& tc)
-			{				
+			entity spotlightEntity, /*ShadowCasterComponent&, */ SpotLightComponent& slc, CameraComponent& cc, TransformComponent& tc)
+			{
 				// Register this frames spotlights
 				Renderer::ActiveSpotlight spotData{};
 
@@ -247,7 +252,7 @@ namespace DOG::gfx
 					spotData.shadow = std::nullopt;
 					m_renderer->RegisterSpotlight(spotData);
 				}
-				
+
 				//u32 shadowID = *m_renderer->RegisterSpotlight(spotData);
 				//std::optional<u32> shadowID = m_renderer->RegisterSpotlight(spotData);
 				//if (shadowID != std::nullopt)
@@ -269,12 +274,13 @@ namespace DOG::gfx
 	void FrontRenderer::CullShadowDraws()
 	{
 		// Cull all shadowed submissions per caster
-		for (const auto& [caster, shadowID]: m_activeSpotlightShadowCasters)
+		for (const auto& [caster, shadowID] : m_activeSpotlightShadowCasters)
 		{
 			auto& cc = EntityManager::Get().GetComponent<CameraComponent>(caster);
 			TransformComponent camTransform;
 			camTransform.worldMatrix = ((DirectX::SimpleMath::Matrix)cc.viewMatrix).Invert();
-			auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p) {
+			auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p)
+			{
 				auto d = p - camPos;
 				if (d.LengthSquared() < 64) return false;
 				if (d.LengthSquared() > 80 * 80) return true;
