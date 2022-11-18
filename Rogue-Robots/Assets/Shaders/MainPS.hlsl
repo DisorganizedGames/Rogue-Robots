@@ -66,6 +66,8 @@ static const uint NO_TEXTURE = 0xffffffff;
 #define SHADOWMAP_CONSTANT_BIAS 0.000015f
 #define PCF_SAMPLE_COUNT 2
 
+#define IS_ON 1
+
 float CalculateShadowFactor(Texture2DArray shadowMaps, uint idx, float3 worldPosition, float3 worldNormal, float3 surfaceToLightDirection, matrix viewMatrix, matrix projectionMatrix)
 {
     float shadowmapTexelSize = 2.0f / 1024.0f; //Adjusted from (1 / 1024) -> (2 / 1024)
@@ -150,7 +152,7 @@ PS_OUT main(VS_OUT input)
     // Get per draw dat
     //ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[g_constants.perDrawCB];
     
-    if (g_constants.wireframe == 1)
+    if (g_constants.wireframe == IS_ON)
     {
         output.color = float4(0.f, 1.f, 0.f, 1.f);
         return output;
@@ -220,7 +222,7 @@ PS_OUT main(VS_OUT input)
     }
     
     float ambFac = 0.001f;
-    if (g_constants.isWeapon == 1)
+    if (g_constants.isWeapon == IS_ON)
     {
         ambFac = 0.005f;
     }
@@ -472,7 +474,7 @@ PS_OUT main(VS_OUT input)
         output.color.xyz = lerp(output.color.xyz, lightHeatMapValue, 0.5f);
     }
     
-    //if (g_constants.isWeapon == 1)
+    //if (g_constants.isWeapon == IS_ON)
     //{
     //    output.color = float4(10.f, 0.f, 0.f, 1.f);
 
