@@ -229,7 +229,7 @@ namespace DOG
 		LuaMain::Initialize();
 
 
-		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); });
+		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); }, true);
 		ImGuiMenuLayer::RegisterDebugWindow("MiniProfiler", [](bool& open) { MiniProfiler::DrawResultWithImGui(open); }, true);
 	}
 

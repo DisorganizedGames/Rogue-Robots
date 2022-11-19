@@ -134,10 +134,12 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	auto& isoSphereLight = AddComponent<PointLightComponent>(isoSphereEntity);
 	isoSphereLight.color = Vector3(0.1f, 1.0f, 0.2f);
 	isoSphereLight.strength = 30;
+	isoSphereLight.radius = 20;
 	isoSphereLight.handle = LightManager::Get().AddPointLight(
 		PointLightDesc
 		{
 			.position = s_entityManager.GetComponent<TransformComponent>(isoSphereEntity).GetPosition(),
+			.radius = isoSphereLight.radius,
 			.color = isoSphereLight.color,
 			.strength = isoSphereLight.strength
 		},
@@ -200,10 +202,12 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 			pdesc.position = { xOffset + (f32)i * 15.f, 12.f, zOffset + (f32)x * 15.f };
 			pdesc.color = { 0.f, 0.3f, 0.7f };
 			pdesc.strength = 35.f;
+			pdesc.radius = 15.f;
 			auto& plc = AddComponent<PointLightComponent>(e);
 			plc.handle = LightManager::Get().AddPointLight(pdesc, LightUpdateFrequency::Never);
 			plc.color = pdesc.color;
 			plc.strength = pdesc.strength;
+			plc.radius = pdesc.radius;
 
 
 
@@ -226,7 +230,7 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	LightHandle pointLight = LightManager::Get().AddPointLight(PointLightDesc(), LightUpdateFrequency::PerFrame);
 	entity movingPointLight = CreateEntity();
 	AddComponent<TransformComponent>(movingPointLight, Vector3(12, 10, 10), Vector3(0, 0, 0), Vector3(1.f));
-	AddComponent<PointLightComponent>(movingPointLight, pointLight, Vector3(1.f, 1.f, 0.f), 5.f);
+	AddComponent<PointLightComponent>(movingPointLight, pointLight, Vector3(1.f, 1.f, 0.f), 5.0f, 12.0f);
 	auto& lightAnimation = AddComponent<LerpAnimateComponent>(movingPointLight);
 	lightAnimation.origin = s_entityManager.GetComponent<TransformComponent>(movingPointLight).GetPosition();
 	lightAnimation.target = lightAnimation.origin + Vector3(0, 0, 30);

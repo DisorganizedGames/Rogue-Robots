@@ -2,6 +2,7 @@
 
 #include "GameComponent.h"
 #include "FakeComputeLightCulling.h"
+#include "PrefabInstantiatorFunctions.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -25,6 +26,16 @@ using namespace DirectX::SimpleMath;
 //	return p;
 //}
 
+constexpr inline float InvLerp(float a, float b, float t)
+{
+	return a != b ? (t - a) / (b - a) : a;
+}
+
+constexpr inline float Remap(float x, float in_min, float in_max, float out_min, float out_max)
+{
+	return std::lerp(out_min, out_max, InvLerp(in_min, in_max, x));
+}
+
 Vector3 PlaneIntersectPlanes(XMVECTOR p1, XMVECTOR p2, XMVECTOR p3)
 {
 	XMVECTOR l1, l2;
@@ -40,7 +51,8 @@ struct TiledShadingFrustumVisDebugComponent
 
 LightScene::LightScene() : Scene(SceneComponent::Type::LightScene)
 {
-	DOG::ImGuiMenuLayer::RegisterDebugWindow("Tiled Shading", std::bind(&LightScene::TiledShadingDebugMenu, this, std::placeholders::_1), true, std::make_pair(Key::LCtrl, Key::L));
+	DOG::ImGuiMenuLayer::RegisterDebugWindow("FrustumIntersectVis", std::bind(&LightScene::TiledShadingDebugMenu, this, std::placeholders::_1), false, std::make_pair(Key::LCtrl, Key::L));
+	DOG::ImGuiMenuLayer::RegisterDebugWindow("LightSpawningWindow", std::bind(&LightScene::LightSpawningDebugWindow, this, std::placeholders::_1), true, std::make_pair(Key::LShift, Key::L));
 	m_compute.m_lightScene = this;
 
 	m_rgbMats[0].second.emissiveFactor = { 0.6f, 0, 0, 1 };
@@ -58,11 +70,14 @@ LightScene::LightScene() : Scene(SceneComponent::Type::LightScene)
 
 LightScene::~LightScene()
 {
-	DOG::ImGuiMenuLayer::UnRegisterDebugWindow("Tiled Shading");
+	DOG::ImGuiMenuLayer::UnRegisterDebugWindow("FrustumIntersectVis");
+	DOG::ImGuiMenuLayer::UnRegisterDebugWindow("LightSpawningWindow");
 }
 
 void LightScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>> entityCreators)
 {
+	
+
 }
 
 void LightScene::Update()
@@ -298,20 +313,63 @@ DOG::entity LightScene::AddSphere(DirectX::SimpleMath::Vector3 center, float rad
 	return e;
 }
 
+std::vector<DOG::entity> LightScene::SpawnStaticLights(DirectX::SimpleMath::Vector3 minAABB, DirectX::SimpleMath::Vector3 maxAABB, int xCount, int yCount, int zCount, float strength, float radius)
+{
+	
+
+	for (int x = 0; x < xCount; x++)
+	{
+		for (int y = 0; y < yCount; y++)
+		{
+			for (int z = 0; z < zCount; z++)
+			{
+				Vector3 pos(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z));
+				pos.x = Remap(pos.x, 0, xCount, minAABB.x, maxAABB.x);
+				pos.y = Remap(pos.y, 0, yCount, minAABB.y, maxAABB.y);
+				pos.z = Remap(pos.z, 0, zCount, minAABB.z, maxAABB.z);
+
+				AddEntity(CreateStaticPointLight(pos, { 0.5f, 0.5f, 0.8f }, strength, radius, false));
+			}
+		}
+	}
+
+
+
+	/*for (int y = 8; y < 9; y += 5)
+	{
+		for (int x = 5; x < 60; x += 5)
+		{
+			for (int z = 10; z < 56; z += 5)
+			{
+				if (maxCount-- > 0)
+				{
+					Vector3 pos(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z));
+					AddEntity(CreateStaticPointLight(pos, { 0.5f, 0.5f, 0.8f }, strength, true));
+				}
+			}
+		}
+	}*/
+	return std::vector<DOG::entity>();
+}
+
 void LightScene::TiledShadingDebugMenu(bool& open)
 {
 	if (ImGui::BeginMenu("View"))
 	{
-		if (ImGui::MenuItem("TiledShading", "Ctrl+L"))
+		if (ImGui::BeginMenu("TiledShading"))
 		{
-			open = true;
+			if (ImGui::MenuItem("FrustumIntersectVis", "Ctrl+L"))
+			{
+				open = true;
+			}
+			ImGui::EndMenu(); // "TiledShading"
 		}
 		ImGui::EndMenu(); // "View"
 	}
 
 	if (open)
 	{
-		if (ImGui::Begin("TiledShading", &open, ImGuiWindowFlags_NoFocusOnAppearing))
+		if (ImGui::Begin("FrustumIntersectVis", &open, ImGuiWindowFlags_NoFocusOnAppearing))
 		{
 			static bool dragWindowOpen = false;
 			static bool resultWindowOpen = false;
@@ -376,7 +434,50 @@ void LightScene::TiledShadingDebugMenu(bool& open)
 				AddFrustum(m_compute.m_data.proj, m_compute.m_data.view);
 			}
 		}
-		ImGui::End(); // "TiledShading"
+		ImGui::End(); // "FrustumIntersectVis"
+	}
+}
+
+void LightScene::LightSpawningDebugWindow(bool& open)
+{
+	if (ImGui::BeginMenu("View"))
+	{
+		if (ImGui::BeginMenu("TiledShading"))
+		{
+			if (ImGui::MenuItem("LightSpawningWindow", "Shift+L"))
+			{
+				open = true;
+			}
+			ImGui::EndMenu(); // "LightSpawningWindow"
+		}
+		ImGui::EndMenu(); // "View"
+	}
+	if (open)
+	{
+		if (ImGui::Begin("LightSpawningWindow", &open, ImGuiWindowFlags_NoFocusOnAppearing))
+		{
+			static float minAABB[3] = { 6.0f, 6.5f, 9.0f };
+			static float maxAABB[3] = { 60.0f, 33.0f, 56.0f };
+			static float strength = 4.0f;
+			static float radius = 7.0f;
+			ImGui::DragFloat3("minLimit", minAABB, 0.5f);
+			ImGui::DragFloat3("maxLimit", maxAABB, 0.5f);
+			ImGui::DragFloat("strength", &strength, 0.05f);
+			ImGui::DragFloat("radius", &radius, 0.05f);
+
+			static int countXYZ[3] = { 20, 1, 20 };
+			ImGui::DragInt3("countXYZ", countXYZ, 1, 0, 50);
+			if (countXYZ[0] * countXYZ[1] * countXYZ[2] >= 2048)
+			{
+				ImGui::Text("to hight light count");
+			}
+
+			if (ImGui::Button("apply"))
+			{
+				AddEntities(SpawnStaticLights(Vector3(minAABB), Vector3(maxAABB), countXYZ[0], countXYZ[1], countXYZ[2], strength, radius));
+			}
+		}
+		ImGui::End();
 	}
 }
 

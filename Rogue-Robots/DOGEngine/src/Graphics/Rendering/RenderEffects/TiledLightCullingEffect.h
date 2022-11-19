@@ -17,7 +17,8 @@ namespace DOG::gfx
 		void Add(RenderGraph& rg) override;
 		void SetGraphicsSettings(const GraphicsSettings& settings) override;
 
-		static constexpr u32 maxLightsPerTile = 255; // 256 - 1 leave room for the count
+		//static constexpr u32 maxLightsPerTile = 255; // 256 - 1 leave room for the count
+		static constexpr u32 maxLightsPerTile = 511; // 256 - 1 leave room for the count
 		struct LocalLightBufferLayout
 		{
 			u32 count;

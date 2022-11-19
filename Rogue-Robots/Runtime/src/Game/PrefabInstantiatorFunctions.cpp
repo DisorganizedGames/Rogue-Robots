@@ -201,3 +201,30 @@ entity SpawnTurretProjectile(const DirectX::SimpleMath::Matrix& transform, float
 
 	return p;
 }
+
+DOG::entity CreateStaticPointLight(DirectX::SimpleMath::Vector3 pos, DirectX::SimpleMath::Vector3 color, float strength, float radius, bool debugSphereVisualizer)
+{
+	auto& em = EntityManager::Get();
+	entity e = em.CreateEntity();
+
+	auto pdesc = PointLightDesc();
+	pdesc.position = pos;
+	pdesc.color = color;
+	pdesc.strength = strength;
+	pdesc.radius = radius;
+	auto& plc = em.AddComponent<PointLightComponent>(e);
+	plc.handle = LightManager::Get().AddPointLight(pdesc, LightUpdateFrequency::Never);
+	plc.color = pdesc.color;
+	plc.strength = pdesc.strength;
+	plc.radius = pdesc.radius;
+	plc.dirty = false;
+
+
+	if (debugSphereVisualizer)
+	{
+		em.AddComponent<ModelComponent>(e, AssetManager::Get().LoadShapeAsset(Shape::sphere, 8, 8));
+		em.AddComponent<TransformComponent>(e, pos, Vector3::Zero, Vector3(0.1f, 0.1f, 0.1f));
+	}
+
+	return e;
+}

@@ -115,7 +115,7 @@ namespace DOG::gfx
 
 		// Default storage
 		auto lightStorageSpec = LightTable::StorageSpecification();
-		lightStorageSpec.pointLightSpec.maxStatics = 25;
+		lightStorageSpec.pointLightSpec.maxStatics = 2048;
 		lightStorageSpec.pointLightSpec.maxDynamic = 512;
 		m_globalLightTable = std::make_unique<LightTable>(m_rd, m_bin.get(), lightStorageSpec, false);
 
@@ -538,6 +538,7 @@ namespace DOG::gfx
 
 		// Update per frame data
 		{
+			m_projMat = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_renderWidth / m_renderHeight, 10000.0f, 0.1f);
 			m_pfData.viewMatrix = m_viewMat;
 			m_pfData.viewMatrix.Invert(m_pfData.invViewMatrix);
 			m_pfData.projMatrix = m_projMat;
@@ -1279,7 +1280,6 @@ namespace DOG::gfx
 
 	void Renderer::BeginFrame_GPU()
 	{
-
 		WaitForPrevFrame();
 
 
@@ -1294,6 +1294,7 @@ namespace DOG::gfx
 
 	void Renderer::EndFrame_GPU(bool)
 	{
+		MINIPROFILE
 		EndGUI();
 		m_bin->EndFrame();
 		m_submissions.clear();

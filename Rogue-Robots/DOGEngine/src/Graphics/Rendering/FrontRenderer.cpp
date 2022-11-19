@@ -101,6 +101,7 @@ namespace DOG::gfx
 				{
 					PointLightDesc d{};
 					d.position = tr.GetPosition();
+					d.radius = light.radius;
 					d.color = light.color;
 					d.strength = light.strength;
 					LightManager::Get().UpdatePointLight(light.handle, d);

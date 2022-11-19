@@ -25,9 +25,9 @@ void OldDefaultScene::SetUpScene(std::vector<std::function<std::vector<DOG::enti
 
 	AddEntities(LoadLevel(pcgLevelNames::oldDefault));
 
-	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(20, 20, 50), 10, 3.0f));
+	/*AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(20, 20, 50), 10, 3.0f));
 	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(30, 20, 50), 10, 3.0f));
-	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(40, 20, 50), 10, 3.0f));
+	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(40, 20, 50), 10, 3.0f));*/
 
 	entity turretBase = CreateEntity();
 	AddComponent<TransformComponent>(turretBase, Vector3(45, 5.5f, 20));

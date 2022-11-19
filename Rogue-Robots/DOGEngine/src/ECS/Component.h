@@ -165,6 +165,7 @@ namespace DOG
 		// Light properties
 		DirectX::SimpleMath::Vector3 color{ 1.f, 1.f, 1.f };
 		float strength{ 1.f };
+		float radius = 5.0f;
 
 		bool dirty{ true };		// If static handle, dirty bool is ignored
 	};

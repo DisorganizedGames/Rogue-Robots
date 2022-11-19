@@ -109,14 +109,25 @@ float CalculateShadowFactor(Texture2DArray shadowMaps, uint idx, float3 worldPos
     return shadowFactor;
 }
 
+float Attenuate(float distanceSquard, float invSquaredAtRadius)
+{
+    float factor = distanceSquard * invSquaredAtRadius;
+    float smoothFactor = saturate(1.0f - factor * factor);
+    smoothFactor *= smoothFactor;
+
+    float attenuation = rcp(max(distanceSquard, 0.01f * 0.01f));
+    attenuation *= smoothFactor;
+    return attenuation;
+}
+
 
 float3 CalculatePointLightContribution(float3 N, float3 V, float3 Pos, float3 F0, float metallicInput, float roughnessInput, float3 albedoInput, ShaderInterop_PointLight pointLight)
 {
     // calculate per-light radiance
     float3 L = normalize(pointLight.position.xyz - Pos);
     float3 H = normalize(V + L);
-    float distance = length(pointLight.position.xyz - Pos);
-    float attenuation = 1.0 / (distance * distance);
+    float3 distance = pointLight.position.xyz - Pos;
+    float attenuation = Attenuate(dot(distance, distance), rcp(pointLight.radius * pointLight.radius));
     float3 radiance = pointLight.color.xyz * attenuation * pointLight.strength;
 
     // cook-torrance brdf
@@ -273,18 +284,21 @@ PS_OUT main(VS_OUT input)
         uint2 tileCoord = input.pos.xy / TILED_GROUP_SIZE;
         uint tileIndex = tileCoord.x + (g_constants.width + TILED_GROUP_SIZE - 1) / TILED_GROUP_SIZE * tileCoord.y;
         StructuredBuffer<ShaderInterop_LocalLightBuffer> localLightBuffers = ResourceDescriptorHeap[g_constants.localLightBuffersIndex];
-        if (localLightBuffers[tileIndex].count == 1)
+        if (localLightBuffers[tileIndex].count > 100)
         {
-            lightHeatMapValue = float3(0, 0, 1);
-
+            lightHeatMapValue = float3(1, 0, 0);
         }
-        else if (localLightBuffers[tileIndex].count == 2)
+        else if (localLightBuffers[tileIndex].count > 50)
         {
             lightHeatMapValue = float3(1, 1, 0);
         }
-        else if (localLightBuffers[tileIndex].count > 2)
+        else if (localLightBuffers[tileIndex].count > 10)
         {
-            lightHeatMapValue = float3(1, 0, 0);
+            lightHeatMapValue = float3(0, 1, 0);
+        }
+        else if (localLightBuffers[tileIndex].count > 0)
+        {
+            lightHeatMapValue = float3(0, 0, 1);
         }
     
         // calculate static and dynamic point lights
@@ -296,7 +310,7 @@ PS_OUT main(VS_OUT input)
         
         if (g_constants.debugSettingsFlag & DEBUG_SETTING_LIGHT_CULLING_VISUALIZATION && localLightBuffers[tileIndex].count >= LOCAL_LIGHT_MAX_SIZE)
         {
-            lightHeatMapValue = float3(1, 0, 1);
+            lightHeatMapValue = float3(20, 0, 20);
         }
     }
     else
@@ -471,7 +485,7 @@ PS_OUT main(VS_OUT input)
     output.color = float4(hdr, albedoAlpha);
     if (g_constants.debugSettingsFlag & DEBUG_SETTING_LIGHT_CULLING_VISUALIZATION && g_constants.debugSettingsFlag & DEBUG_SETTING_LIGHT_CULLING)
     {
-        output.color.xyz = lerp(output.color.xyz, lightHeatMapValue, 0.5f);
+        output.color.xyz = lerp(output.color.xyz, lightHeatMapValue, 0.2f);
     }
     
     return output;

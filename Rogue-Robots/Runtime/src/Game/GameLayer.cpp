@@ -86,8 +86,11 @@ void GameLayer::OnAttach()
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameManager", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1), true, std::make_pair(DOG::Key::LCtrl, DOG::Key::G));
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("Cheats", std::bind(&GameLayer::CheatDebugMenu, this, std::placeholders::_1));
 
-	//m_testScene = std::make_unique<TestScene>();
-	//m_testScene->SetUpScene();
+	m_testScene = std::make_unique<TestScene>();
+	m_testScene->SetUpScene();
+
+	m_lightScene = std::make_unique<LightScene>();
+	m_lightScene->SetUpScene();
 }
 
 void GameLayer::OnDetach()

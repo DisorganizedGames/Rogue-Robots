@@ -7,7 +7,8 @@ struct ShaderInterop_Range
     uint count;
 };
 
-#define LOCAL_LIGHT_MAX_SIZE 255
+//#define LOCAL_LIGHT_MAX_SIZE 255
+#define LOCAL_LIGHT_MAX_SIZE 511
 struct ShaderInterop_LocalLightBuffer
 {
     uint count;
@@ -34,8 +35,9 @@ struct ShaderInterop_LightsMetadata
 
 struct ShaderInterop_PointLight
 {
-    float4 position;
-    float4 color;
+    float3 position;
+    float radius;
+    float3 color;
     float strength;
 };
 

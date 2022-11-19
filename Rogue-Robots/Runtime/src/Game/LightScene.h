@@ -21,9 +21,9 @@ public:
 private:
 	std::pair<DOG::MaterialHandle, DOG::MaterialDesc> m_rgbMats[3];
 
-
+	std::vector<DOG::entity> SpawnStaticLights(DirectX::SimpleMath::Vector3 minAABB, DirectX::SimpleMath::Vector3 maxAABB, int xCount, int yCount, int zCount, float strength, float radius);
 	void TiledShadingDebugMenu(bool& open);
-
+	void LightSpawningDebugWindow(bool& open);
 	void LightCullingDebugMenu(bool& open);
 	bool m_cullingResultWindowOpen = false;
 	void CullingResultWindow();
