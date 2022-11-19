@@ -159,7 +159,7 @@ namespace DOG::gfx
 			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
 			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
 			.SetDepthFormat(DepthFormat::D32)
-			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true).SetDepthWriteMask(D3D12_DEPTH_WRITE_MASK_ZERO).SetDepthFunc(D3D12_COMPARISON_FUNC_GREATER_EQUAL))
 			.Build());
 
 		auto shadowVS = m_sclr->CompileFromFile("ShadowVS.hlsl", ShaderType::Vertex);
@@ -825,6 +825,7 @@ namespace DOG::gfx
 
 					rd->Cmd_SetPipeline(cmdl, m_zPrePassPipe);
 					drawFunc(rd, cmdl, m_submissions);
+					drawFunc(rd, cmdl, m_weaponSubmission);
 					drawFunc(rd, cmdl, m_animatedDraws, true);
 
 					rd->Cmd_SetPipeline(cmdl, m_zPrePassPipeNoCull);
