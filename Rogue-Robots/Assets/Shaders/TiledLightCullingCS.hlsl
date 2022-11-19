@@ -8,7 +8,6 @@ struct PushConstantElement
     uint depthBufferIndex;
     uint width;
     uint height;
-    float pointLightCullFactor;
 };
 ConstantBuffer<PushConstantElement> g_constants : register(b0, space0);
 
@@ -114,7 +113,6 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
 
         RWStructuredBuffer<ShaderInterop_LocalLightBuffer> localLightBuffers = ResourceDescriptorHeap[g_constants.localLightBuffersIndex];
         StructuredBuffer<ShaderInterop_PointLight> pointLights = ResourceDescriptorHeap[gd.pointLightTable];
-        float plCullFactor = g_constants.pointLightCullFactor;
         uint tileIndex = groupID.x + (g_constants.width + TILED_GROUP_SIZE - 1) / TILED_GROUP_SIZE * groupID.y;
         
         for (int i = tid; i < lightsMD.dynPointLightRange.count; i += TILED_GROUP_SIZE * TILED_GROUP_SIZE)
@@ -125,8 +123,8 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
 
             for (int j = 0; j < 6; j++)
             {
-                float d = dot(float4(pointLight.position.xyz, 1), frustum[j]);
-                culled |= d * abs(d) < -plCullFactor * pointLight.strength;
+                float d = dot(float4(pointLight.position, 1), frustum[j]);
+                culled |= d < -pointLight.radius;
             }
 
             if (!culled && pointLight.strength)
@@ -146,8 +144,8 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
 
             for (int j = 0; j < 6; j++)
             {
-                float d = dot(float4(pointLight.position.xyz, 1), frustum[j]);
-                culled |= d * abs(d) < -plCullFactor * pointLight.strength;
+                float d = dot(float4(pointLight.position, 1), frustum[j]);
+                culled |= d < -pointLight.radius;
             }
 
             if (!culled && pointLight.strength)

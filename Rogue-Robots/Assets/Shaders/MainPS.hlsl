@@ -110,14 +110,25 @@ float CalculateShadowFactor(Texture2DArray shadowMaps, uint idx, float3 worldPos
 }
 
 
-float3 CalculatePointLightContribution(float3 N, float3 V, float3 Pos, float3 F0, float metallicInput, float roughnessInput, float3 albedoInput, ShaderInterop_PointLight pointLight)
+float Attenuate(float distanceSquard, float attInvSquaredAtRadius)
+{
+    float factor = distanceSquard * attInvSquaredAtRadius;
+    float smoothFactor = saturate(1.0f - factor * factor);
+    smoothFactor *= smoothFactor;
+
+    float attenuation = rcp(max(distanceSquard, 0.01f * 0.01f));
+    return attenuation * smoothFactor;
+}
+
+
+float3 CalculatePointLightContribution(float3 N, float3 V, float3 pos, float3 F0, float metallicInput, float roughnessInput, float3 albedoInput, ShaderInterop_PointLight pointLight)
 {
     // calculate per-light radiance
-    float3 L = normalize(pointLight.position.xyz - Pos);
+    float3 unnormalizedL = pointLight.position - pos;
+    float3 L = normalize(unnormalizedL);
     float3 H = normalize(V + L);
-    float distance = length(pointLight.position.xyz - Pos);
-    float attenuation = 1.0 / (distance * distance);
-    float3 radiance = pointLight.color.xyz * attenuation * pointLight.strength;
+    float attenuation = Attenuate(dot(unnormalizedL, unnormalizedL), rcp(pointLight.radius * pointLight.radius));
+    float3 radiance = pointLight.color * attenuation * pointLight.strength;
 
     // cook-torrance brdf
     float NDF = DistributionGGX(N, H, roughnessInput);
