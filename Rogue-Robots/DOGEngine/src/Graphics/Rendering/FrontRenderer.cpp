@@ -103,6 +103,7 @@ namespace DOG::gfx
 					d.position = tr.GetPosition();
 					d.color = light.color;
 					d.strength = light.strength;
+					d.radius = light.radius;
 					LightManager::Get().UpdatePointLight(light.handle, d);
 					light.dirty = false;
 				}

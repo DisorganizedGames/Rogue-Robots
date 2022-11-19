@@ -65,8 +65,9 @@ namespace DOG::gfx
 
 		struct PointLight_GPUElement
 		{
-			DirectX::SimpleMath::Vector4 position{ 0.f, 0.f, 0.f, 1.f };
-			DirectX::SimpleMath::Vector4 color{ 0.f, 0.f, 0.f, 1.f };
+			DirectX::SimpleMath::Vector3 position{ 0.f, 0.f, 0.f };
+			float radius{ 0.f };
+			DirectX::SimpleMath::Vector3 color{ 0.f, 0.f, 0.f };
 			float strength{ 0.f };
 		};
 

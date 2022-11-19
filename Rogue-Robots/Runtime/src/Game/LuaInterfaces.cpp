@@ -818,7 +818,9 @@ void EntityInterface::ModifyPointLightStrength(DOG::LuaContext* context, DOG::en
 {
 	auto& c = EntityManager::Get().GetComponent<PointLightComponent>(e);
 	c.dirty = true;
-	c.strength = (f32)context->GetDouble();
+	float newStrength = (f32)context->GetDouble();
+	c.radius *= newStrength / c.strength;
+	c.strength = newStrength;
 }
 
 void EntityInterface::AddActiveItem(DOG::LuaContext* context, DOG::entity e)

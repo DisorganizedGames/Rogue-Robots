@@ -113,10 +113,12 @@ void ExplosionEffectSystem::AddEffectsToExplosion(DOG::entity parentEntity, DOG:
 	auto pdesc = PointLightDesc();
 	pdesc.color = color;
 	pdesc.strength = 100.f;
+	pdesc.radius = 50.f;
 	auto& plc = EntityManager::Get().AddComponent<PointLightComponent>(explosionEntity);
 	plc.handle = LightManager::Get().AddPointLight(pdesc, LightUpdateFrequency::PerFrame);
 	plc.color = pdesc.color;
 	plc.strength = pdesc.strength;
+	plc.radius = pdesc.radius;
 }
 
 void ExplosionEffectSystem::OnUpdate(DOG::entity e, ExplosionEffectComponent& explosionInfo)
