@@ -246,21 +246,27 @@ void Server::ServerPollTCP()
 						while (bytesRecived > bufferReciveSize)
 						{
 							memcpy(&holdClientsData, reciveBuffer + bufferReciveSize, sizeof(ClientsData));
+							if(holdClientsData.nrOfChangedAgentsHp > 10)
+								std::cout << "Server: recived header: " << holdClientsData.nrOfChangedAgentsHp << " " << holdClientsData.nrOfCreateAndDestroy << " " << holdClientsData.nrOfNetTransform << std::endl;
 							bufferReciveSize += sizeof(ClientsData);
 							if (holdClientsData.playerId == 0)
 							{
 								m_lobbyStatus = holdClientsData.lobbyAlive;
 							}
 							//add transforms Host only
-							sendHeader.nrOfNetTransform += holdClientsData.nrOfNetTransform;
-							for (u32 j = 0; j < holdClientsData.nrOfNetTransform; ++j)
-							{
-								DOG::NetworkTransform temp;
-								memcpy(&temp, reciveBuffer + bufferReciveSize, sizeof(DOG::NetworkTransform));
-								transforms.push_back(temp);
-								bufferReciveSize += sizeof(DOG::NetworkTransform);
-							}
-
+							/*if (holdClientsData.playerId == 0 && sendHeader.nrOfNetTransform != 0)
+							{*/
+								sendHeader.nrOfNetTransform += holdClientsData.nrOfNetTransform;
+								for (u32 j = 0; j < holdClientsData.nrOfNetTransform; ++j)
+								{
+									DOG::NetworkTransform temp;
+									memcpy(&temp, reciveBuffer + bufferReciveSize, sizeof(DOG::NetworkTransform));
+									transforms.push_back(temp);
+									bufferReciveSize += sizeof(DOG::NetworkTransform);
+								}
+							//}
+							//else if (sendHeader.nrOfNetTransform)
+							//	std::cout << "Server: Error NrOfNetTransform from non host, nr: " << sendHeader.nrOfNetTransform << std::endl;
 							//Sync the enemies stats
 							for (u32 j = 0; j < holdClientsData.nrOfChangedAgentsHp; ++j)
 							{

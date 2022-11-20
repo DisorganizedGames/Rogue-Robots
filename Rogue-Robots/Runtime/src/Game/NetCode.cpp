@@ -128,7 +128,7 @@ void NetCode::OnUpdate()
 			{
 				
 				//sync all transforms Host only
-		/*		if (m_inputTcp.playerId == 0)
+				if (m_inputTcp.playerId == 0)
 				{
 					EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent>().Do([&](NetworkTransform& netC, TransformComponent& transC, AgentIdComponent agentId)
 						{
@@ -137,9 +137,9 @@ void NetCode::OnUpdate()
 							memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkTransform));
 							m_inputTcp.nrOfNetTransform++;
 							m_bufferSize += sizeof(NetworkTransform);
-
 						});
-				}*/
+				}
+
 
 				EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](NetworkAgentStats& netC, AgentHPComponent& agentS, AgentIdComponent& idC)
 					{
@@ -165,8 +165,10 @@ void NetCode::OnUpdate()
 					});
 				if (Server::TickTimeLeftTCP(m_tickStartTime, m_clockFrequency) > (1.0f / 30.0f))
 				{
+					
 					m_inputTcp.sizeOfPayload = m_bufferSize;
 					memcpy(m_sendBuffer, (char*)&m_inputTcp, sizeof(ClientsData));
+					std::cout << "Client: sender header: " << m_inputTcp.nrOfChangedAgentsHp << " " << m_inputTcp.nrOfCreateAndDestroy << " " << m_inputTcp.nrOfNetTransform << std::endl;
 					m_client.SendChararrayTcp(m_sendBuffer, m_inputTcp.sizeOfPayload);
 					m_bufferSize = sizeof(ClientsData);
 					m_inputTcp.nrOfNetTransform = 0;
