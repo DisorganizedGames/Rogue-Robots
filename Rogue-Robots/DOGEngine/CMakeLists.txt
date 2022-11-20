@@ -70,7 +70,8 @@ set(SourceFiles
 	"src/Graphics/Rendering/RenderEffects/DamageDiskEffect.h" "src/Graphics/Rendering/RenderEffects/DamageDiskEffect.cpp"
 	"src/Graphics/Rendering/PostProcess.h" "src/Graphics/Rendering/PostProcess.cpp"
 	"src/Graphics/Rendering/RenderEffects/HeartbeatEffect.h" "src/Graphics/Rendering/RenderEffects/HeartbeatEffect.cpp"
-)
+	"src/Graphics/Rendering/RenderEffects/LaserEffect.h" "src/Graphics/Rendering/RenderEffects/LaserEffect.cpp"
+	)
 
 file(GLOB_RECURSE TempGraphics "src/Graphics/*.cpp")
 

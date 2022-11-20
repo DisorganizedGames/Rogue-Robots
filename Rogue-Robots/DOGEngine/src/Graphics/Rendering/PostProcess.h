@@ -24,6 +24,13 @@ namespace DOG::gfx
 			f32 visibility{ 0.f };
 		};
 
+		struct LaserBeamData
+		{
+			DirectX::SimpleMath::Matrix matrix;
+			DirectX::SimpleMath::Vector3 color;
+			f32 length;
+		};
+
 	private:
 		PostProcess();
 
@@ -31,6 +38,8 @@ namespace DOG::gfx
 		void Clear();
 		friend class Renderer;
 
+		// Accessible directly by Effects
+		std::vector<LaserBeamData> m_laserBeams;
 
 
 	public:
@@ -42,6 +51,7 @@ namespace DOG::gfx
 
 		// Damage bow
 		void InstantiateDamageDisk(const DirectX::SimpleMath::Vector2& dir, f32 startIntensity, f32 timeToDisappear);
+		void InstantiateLaserBeam(DirectX::SimpleMath::Vector3 startPos, DirectX::SimpleMath::Vector3 endPos, DirectX::SimpleMath::Vector3 up, DirectX::SimpleMath::Vector3 color);
 
 		// Heartbeat	
 		void SetHeartbeatFactor(f32 factor) { m_heartbeatFactor = factor; }
@@ -51,6 +61,7 @@ namespace DOG::gfx
 		const std::vector<DamageDiskData>& GetDamageDisks() const { return m_damageDiskDatas; }
 		f32 GetHeartbeatIntensity() const { return m_heartbeatIntensity; }
 		f32 GetHeartbeatTransitionFactor() const { return m_heartbeatTransitionFactor; }
+		std::vector<LaserBeamData>& GetLaserBeams() { return m_laserBeams; }
 
 	private:
 		f32 m_elapsedTime{ 0.f };

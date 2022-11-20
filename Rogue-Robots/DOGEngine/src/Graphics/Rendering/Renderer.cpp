@@ -31,8 +31,11 @@
 #include "RenderEffects/Bloom.h"
 #include "VFX/ParticleBackend.h"
 #include "RenderEffects/TiledLightCullingEffect.h"
+
+// Game effects passes
 #include "RenderEffects/DamageDiskEffect.h"
 #include "RenderEffects/HeartbeatEffect.h"
+#include "RenderEffects/LaserEffect.h"
 
 #include "ImGUI/imgui.h"
 #include "../../Core/ImGuiMenuLayer.h"
@@ -333,6 +336,7 @@ namespace DOG::gfx
 
 		m_heartbeatEffect = std::make_unique<HeartbeatEffect>(m_globalEffectData);
 		m_damageDiskEffect = std::make_unique<DamageDiskEffect>(m_globalEffectData);
+		m_laserBeamEffect = std::make_unique<LaserEffect>(m_globalEffectData, m_dynConstants.get());
 	
 		{
 			// Create 4x4 SSAO noise
@@ -975,6 +979,8 @@ namespace DOG::gfx
 				});
 		}
 
+		m_damageDiskEffect->Add(rg);
+		m_laserBeamEffect->Add(rg);
 
 		// Generate SSAO
 		{
