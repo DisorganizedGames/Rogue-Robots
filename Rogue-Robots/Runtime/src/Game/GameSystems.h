@@ -550,3 +550,14 @@ public:
 	DOG::entity GetQueueIndexForSpectatedPlayer(DOG::entity player, const std::vector<DOG::entity>& players);
 	void ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw);
 };
+
+class PlaceHolderReviveUISystem : public DOG::ISystem
+{
+#define MAXIMUM_DISTANCE_DELTA 1.3f
+#define MINIMUM_DOT_DELTA 0.85f
+public:
+	SYSTEM_CLASS(DOG::ThisPlayer, PlayerAliveComponent, DOG::TransformComponent);
+	ON_UPDATE_ID(DOG::ThisPlayer, PlayerAliveComponent, DOG::TransformComponent);
+
+	void OnUpdate(DOG::entity player, DOG::ThisPlayer&, PlayerAliveComponent&, DOG::TransformComponent&);
+};

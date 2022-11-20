@@ -649,4 +649,94 @@ void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity p
 	#endif
 }
 
+void PlaceHolderReviveUISystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, PlayerAliveComponent&, DOG::TransformComponent& tc)
+{
+	DOG::entity closestDeadPlayer{ NULL_ENTITY };
+	float distanceToClosestDeadPlayer{ FLT_MAX };
+
+	DOG::EntityManager::Get().Collect<NetworkPlayerComponent, DOG::TransformComponent>().Do([&](DOG::entity player, NetworkPlayerComponent&, DOG::TransformComponent& otc)
+		{
+			if (DOG::EntityManager::Get().HasComponent<PlayerAliveComponent>(player))
+				return;
+
+			//This player does not live, since it passed the guard clause:
+			float distanceToDeadPlayer = Vector3::Distance(tc.GetPosition(), otc.GetPosition());
+			if (distanceToDeadPlayer < distanceToClosestDeadPlayer)
+			{
+				distanceToClosestDeadPlayer = distanceToDeadPlayer;
+				closestDeadPlayer = player;
+			}
+		});
+	//If all players live, this system should early out:
+	const bool allPlayersLive = (closestDeadPlayer == NULL_ENTITY);
+	if (allPlayersLive)
+		return;
+
+	//Likewise, if we are not close enough to a dead player, then this system should not continue:
+	if (distanceToClosestDeadPlayer > MAXIMUM_DISTANCE_DELTA)
+		return;
+
+	//The last test is checking whether the player is also looking at the dead player. If not, return:
+	auto deadPlayerPos = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(closestDeadPlayer).GetPosition();
+	auto cam = DOG::EntityManager::Get().GetComponent<PlayerControllerComponent>(player).cameraEntity;
+	auto& playerCamera = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(cam);
+	auto playerCameraPosition = playerCamera.GetPosition();
+	auto playerCameraForward = playerCamera.GetForward();
+	auto directionFromDeadToLivePlayer = deadPlayerPos - playerCameraPosition;
+	directionFromDeadToLivePlayer.Normalize();
+	float dot = directionFromDeadToLivePlayer.Dot(playerCameraForward);
+	if (dot < MINIMUM_DOT_DELTA)
+		return;
+
+	constexpr ImVec2 size{ 700, 450 };
+	auto r = DOG::Window::GetWindowRect();
+	const float centerXOfScreen = (float)(abs(r.right - r.left)) * 0.5f;
+	const float centerYOfScreen = (float)(abs(r.bottom - r.top)) * 0.5f;
+
+	ImVec2 pos;
+	pos.x = r.left + centerXOfScreen;
+	pos.y = r.top + centerYOfScreen;
+	const float xOffset = size.x / 2;
+	const float yOffset = size.y / 4;
+
+	pos.x -= xOffset;
+	pos.y -= yOffset;
+	
+	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+	ImGui::SetNextWindowPos(pos);
+	ImGui::SetNextWindowSize(size);
+	if (ImGui::Begin("Revive text", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+	{
+		ImGui::PushFont(DOG::Window::GetFont());
+		ImGui::SetWindowFontScale(1.75f);
+		auto windowWidth = ImGui::GetWindowSize().x;
+		auto& npc = DOG::EntityManager::Get().GetComponent<NetworkPlayerComponent>(closestDeadPlayer);
+		std::string text = std::string("Revive ") + std::string(npc.playerName);
+		auto textWidth = ImGui::CalcTextSize((std::string("[E] ") + text).c_str()).x;
+
+		ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 175));
+		ImGui::Text("[E] ");
+		ImGui::PopStyleColor(1);
+		ImGui::SameLine();
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 175));
+		ImGui::Text(text.c_str());
+
+		ImGui::PopFont();
+		ImGui::PopStyleColor(1);
+
+
+		//Give a certain component that indicates ressing!
+		static float progress = 0.5f;
+
+		// Typically we would use ImVec2(-1.0f,0.0f) or ImVec2(-FLT_MIN,0.0f) to use all available width,
+		// or ImVec2(width,0.0f) for a specified width. ImVec2(0.0f,0.0f) uses ItemWidth.
+		ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f));
+	}
+	ImGui::End();
+	ImGui::PopStyleColor();
+
+
+}
+
 #pragma endregion

@@ -63,6 +63,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<SpectateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<HeartbeatTrackerSystem>());
 
+	m_entityManager.RegisterSystem(std::make_unique<PlaceHolderReviveUISystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
 
