@@ -318,3 +318,28 @@ struct FloorBlockComponent
 struct CheckForLightsComponent
 {
 };
+
+struct LaserBeamVFXComponent
+{
+	DirectX::SimpleMath::Vector3 startPos;
+	DirectX::SimpleMath::Vector3 endPos;
+	DirectX::SimpleMath::Vector3 color;
+};
+
+struct LaserBeamComponent
+{
+	DirectX::SimpleMath::Vector3 startPos;
+	DirectX::SimpleMath::Vector3 direction;
+	f32 maxRange = 100;
+	DirectX::SimpleMath::Vector3 color;
+	f32 damage;
+	DOG::entity owningPlayer = DOG::NULL_ENTITY;
+};
+
+struct LaserBarrelComponent
+{
+	bool shoot = false;
+	f32 ammo = 120; // This value is how time in seconds you can shoot.
+	f32 damagePerSecond;
+	LaserBeamComponent laserToShoot;
+};

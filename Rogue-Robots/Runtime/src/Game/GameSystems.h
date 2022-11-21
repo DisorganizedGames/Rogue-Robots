@@ -593,3 +593,43 @@ public:
 		age += DOG::Time::DeltaTime<DOG::TimeType::Seconds, f32>();
 	}
 };
+
+class PlayerLaserShootSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(LaserBarrelComponent, InputController);
+
+	ON_UPDATE_ID(LaserBarrelComponent, InputController);
+	void OnUpdate(DOG::entity e, LaserBarrelComponent& barrel, InputController& input);
+};
+
+class LaserShootSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(LaserBarrelComponent);
+
+	ON_UPDATE_ID(LaserBarrelComponent);
+	void OnUpdate(DOG::entity e, LaserBarrelComponent& barrel);
+	ON_LATE_UPDATE_ID(LaserBarrelComponent, DOG::DeferredDeletionComponent);
+	void OnLateUpdate(DOG::entity e, LaserBarrelComponent&, DOG::DeferredDeletionComponent&);
+};
+
+
+class LaserBeamSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(LaserBeamComponent, LaserBeamVFXComponent);
+	ON_UPDATE(LaserBeamComponent, LaserBeamVFXComponent);
+
+	void OnUpdate(LaserBeamComponent& laserBeam, LaserBeamVFXComponent& laserBeamVfx);
+};
+
+
+class LaserBeamVFXSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(LaserBeamVFXComponent);
+	ON_UPDATE(LaserBeamVFXComponent);
+
+	void OnUpdate(LaserBeamVFXComponent& laserBeam);
+};

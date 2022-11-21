@@ -949,4 +949,75 @@ void UpdateSpectatorQueueSystem::OnEarlyUpdate(DOG::ThisPlayer&, SpectatorCompon
 		});
 }
 
+void PlayerLaserShootSystem::OnUpdate(entity e, LaserBarrelComponent& barrel, InputController& input)
+{
+	if (EntityManager::Get().Exists(GetGun()))
+	{
+		assert(EntityManager::Get().HasComponent<TransformComponent>(GetGun()));
+		auto& tr = EntityManager::Get().GetComponent<TransformComponent>(GetGun());
+		Vector3 dir = tr.GetUp();
+		dir.Normalize();
+		Vector3 laserStart = tr.GetPosition() + 0.8f * dir;
+		barrel.shoot = input.shoot;
+		barrel.laserToShoot.direction = dir;
+		barrel.laserToShoot.startPos = laserStart;
+		barrel.laserToShoot.owningPlayer = e;
+		barrel.laserToShoot.color = 7 * Vector3(1.5f, 0.1f, 0.1f);
+	}
+}
+
+void LaserShootSystem::OnUpdate(entity e, LaserBarrelComponent& barrel)
+{
+	f32 dt = static_cast<f32>(Time::DeltaTime());
+
+	if (barrel.shoot && barrel.ammo > 0)
+	{
+		barrel.ammo -= dt;
+		f32 dmg = barrel.damagePerSecond * (dt + std::min(0.0f, barrel.ammo));
+		EntityManager::Get().AddOrReplaceComponent<LaserBeamComponent>(e, barrel.laserToShoot).damage = dmg;
+		EntityManager::Get().AddOrReplaceComponent<LaserBeamVFXComponent>(e);
+		barrel.shoot = false;
+	}
+	else
+	{
+		EntityManager::Get().RemoveComponentIfExists<LaserBeamComponent>(e);
+		EntityManager::Get().RemoveComponentIfExists<LaserBeamVFXComponent>(e);
+	}
+}
+
+void LaserShootSystem::OnLateUpdate(DOG::entity e, LaserBarrelComponent&, DOG::DeferredDeletionComponent&)
+{
+	EntityManager::Get().RemoveComponentIfExists<LaserBeamComponent>(e);
+	EntityManager::Get().RemoveComponentIfExists<LaserBeamVFXComponent>(e);
+}
+
+void LaserBeamSystem::OnUpdate(LaserBeamComponent& laserBeam, LaserBeamVFXComponent& laserBeamVfx)
+{
+	Vector3 target = laserBeam.startPos + laserBeam.maxRange * laserBeam.direction;
+	if (auto hit = PhysicsEngine::RayCast(laserBeam.startPos, target); hit)
+		target = hit->hitPosition;
+
+	laserBeamVfx.startPos = laserBeam.startPos;
+	laserBeamVfx.endPos = target;
+	laserBeamVfx.color = laserBeam.color;
+}
+
+void LaserBeamVFXSystem::OnUpdate(LaserBeamVFXComponent& laserBeam)
+{
+	entity camera = GetCamera();
+	assert(EntityManager::Get().HasComponent<TransformComponent>(camera));
+	Vector3 dirToCamera = EntityManager::Get().GetComponent<TransformComponent>(camera).GetPosition() - laserBeam.startPos;
+	dirToCamera.Normalize();
+
+	static std::random_device rdev;
+	static std::mt19937 gen(rdev());
+	static std::uniform_real_distribution<f32> udis(-1.0f, 1.0f);
+	Vector3 jitter(udis(gen), udis(gen), udis(gen));
+
+	f32 e = 3.0f * static_cast<f32>(sin(30.0 * Time::ElapsedTime()));
+	f32 f = 7.0f + e;
+
+	gfx::PostProcess::Get().InstantiateLaserBeam(laserBeam.startPos + 0.002f * jitter, laserBeam.endPos, dirToCamera, f * (laserBeam.color += 0.02f * jitter));
+}
+
 #pragma endregion
