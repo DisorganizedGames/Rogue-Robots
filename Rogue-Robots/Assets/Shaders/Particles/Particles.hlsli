@@ -45,6 +45,8 @@ struct Emitter
 	uint texSegX;
 	uint texSegY;
 	
+	float4x4 rotationMatrix;
+	
 	uint3 pad;
 };
 

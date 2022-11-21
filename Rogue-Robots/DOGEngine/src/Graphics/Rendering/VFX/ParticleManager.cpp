@@ -34,6 +34,8 @@ const std::vector<ParticleEmitter>& ParticleManager::GatherEmitters()
 
 				SetSpawnProperties(e, em);
 
+				em.rotationMatrix = transform.GetRotation();
+
 				em.textureHandle = emitter.textureHandle;
 				em.texSegX = emitter.textureSegmentsX;
 				em.texSegY = emitter.textureSegmentsY;

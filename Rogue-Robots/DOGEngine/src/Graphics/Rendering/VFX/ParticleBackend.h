@@ -29,6 +29,8 @@ namespace DOG::gfx
 		u32 texSegX = 1;
 		u32 texSegY = 1;
 
+		DirectX::SimpleMath::Matrix rotationMatrix;
+
 		u32 pad[3] = {0, 0, 0};
 	};
 	

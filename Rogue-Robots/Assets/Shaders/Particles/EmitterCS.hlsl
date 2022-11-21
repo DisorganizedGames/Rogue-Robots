@@ -142,6 +142,8 @@ void SpawnCone(inout Particle p, in Texture1D noiseTex, in float seed)
 	
 	p.pos = g_emitter.pos;
 	p.vel *= g_emitter.opt2;
+
+	p.vel = mul(float4(p.vel, 0), g_emitter.rotationMatrix).xyz;
 }
 
 void SpawnCylinder(inout Particle p, in Texture1D noiseTex, in float seed)
@@ -153,6 +155,7 @@ void SpawnCylinder(inout Particle p, in Texture1D noiseTex, in float seed)
 	float randHeight = height * noiseTex.Sample(g_bilinear_wrap_samp, seed * 5).r;
 	
 	float3 offset = float3(randPoint.x, randHeight - height /2.f, randPoint.y);
+	offset = mul(float4(offset, 0), g_emitter.rotationMatrix).xyz;
 	
 	p.pos = g_emitter.pos + offset;
 	p.vel = 0.f.xxx;
@@ -169,6 +172,8 @@ void SpawnBox(inout Particle p, in Texture1D noiseTex, in float seed)
 	);
 
 	float3 offset = size * rands - (size / 2.f);
+	offset = mul(float4(offset, 0), g_emitter.rotationMatrix).xyz;
+	
 	p.pos = g_emitter.pos + offset;
 	p.vel = 0.f.xxx;
 }
