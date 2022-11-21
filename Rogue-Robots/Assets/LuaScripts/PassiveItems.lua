@@ -34,7 +34,7 @@ passiveItemsMap:Register("MaxHealthBoost", maxHealthBoost)
 
 -- Passive item that boosts the movement speed of the player that picked it up by "boost"
 local speedBoost = {
-	boost = 2,
+	boost = 0.5,
 
 	affect = function(self, stackCount, stats)
 		local newStats = stats
@@ -44,10 +44,23 @@ local speedBoost = {
 }
 passiveItemsMap:Register("SpeedBoost", speedBoost)
 
+-- Passive item that boosts the movement speed of the player that picked it up by "boost"
+local speedBoost2 = {
+	boost = 1,
+
+	affect = function(self, stackCount, stats)
+		local newStats = stats
+		newStats.speed = newStats.speed + self.boost * stackCount
+		return newStats
+	end
+}
+passiveItemsMap:Register("SpeedBoost2", speedBoost2)
+
+
+
 -- Passive item that increases the lifesteal on bullet hit for the player that picked it up by "stealAmount"
 local lifeSteal = {
 	stealAmount = .2,
-
 	affect = function(self, stackCount, stats)
 		local newStats = stats
 		newStats.lifeSteal = newStats.lifeSteal + self.stealAmount * stackCount

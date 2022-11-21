@@ -340,6 +340,18 @@ void EntityInterface::GetEntityTypeAsString(DOG::LuaContext* context)
 	case EntityTypes::IncreaseMaxHp:
 		context->ReturnString("MaxHealthBoost");
 		break;
+	case EntityTypes::IncreaseSpeed:
+		context->ReturnString("SpeedBoost");
+		break;
+	case EntityTypes::IncreaseSpeed2:
+		context->ReturnString("SpeedBoost2");
+		break;
+	case EntityTypes::Health:
+		context->ReturnString("Health");
+		break;
+	default:
+		context->ReturnString("default");
+		break;
 	}
 }
 

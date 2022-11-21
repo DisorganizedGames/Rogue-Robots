@@ -118,6 +118,7 @@ struct PassiveItemComponent {
 		MaxHealthBoost,
 		SpeedBoost,
 		LifeSteal,
+		SpeedBoost2,
 	};
 
 	Type type;

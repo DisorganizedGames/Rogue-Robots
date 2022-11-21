@@ -17,6 +17,9 @@ enum class EntityTypes
 	//PassiveItem
 	PassiveItemsBegin,
 	IncreaseMaxHp = PassiveItemsBegin,
+	IncreaseSpeed,
+	IncreaseSpeed2,
+	Health,
 	PassiveItems,
 
 	//ActiveItem
