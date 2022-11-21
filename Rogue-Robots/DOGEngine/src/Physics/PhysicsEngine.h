@@ -80,6 +80,8 @@ namespace DOG
 		CapsuleColliderComponent(entity entity, float radius, float height, bool dynamic = false, float mass = 1.0f) noexcept;
 
 		RigidbodyHandle rigidbodyHandle;
+		float capsuleRadius;
+		float capsuleHeight;
 	};
 	struct MeshColliderComponent
 	{

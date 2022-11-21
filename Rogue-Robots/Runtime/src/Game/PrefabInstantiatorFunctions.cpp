@@ -43,6 +43,9 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		rb.ConstrainRotation(true, true, true);
 		rb.disableDeactivation = true;
 		rb.getControlOfTransform = true;
+		rb.setGravityForRigidbody = true;
+		//Set the gravity for the player to 2.5g
+		rb.gravityForRigidbody = Vector3(0.0f, -25.0f, 0.0f);
 
 		em.AddComponent<PlayerStatsComponent>(playerI);
 		em.AddComponent<PlayerControllerComponent>(playerI);

@@ -117,6 +117,9 @@ namespace DOG
 					bulletRigidbody->setCollisionFlags(bulletRigidbody->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
 				else
 					bulletRigidbody->setCollisionFlags(bulletRigidbody->getCollisionFlags() & ~btCollisionObject::CF_NO_CONTACT_RESPONSE);
+
+				if (rigidbody.setGravityForRigidbody)
+					bulletRigidbody->setGravity(btVector3(rigidbody.gravityForRigidbody.x, rigidbody.gravityForRigidbody.y, rigidbody.gravityForRigidbody.z));
 			});
 	}
 

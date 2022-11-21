@@ -355,7 +355,7 @@ private:
 	void ApplyAnimations(const InputController& input, AnimationComponent& ac);
 
 	void MovePlayer(Entity e, PlayerControllerComponent& player, Vector3 moveTowards, Vector3 forward,
-		RigidbodyComponent& rb, f32 speed, InputController& input);
+		RigidbodyComponent& rb, f32 speed, f32 jumpSpeed, InputController& input);
 };
 
 class PlayerJumpRefreshSystem : public DOG::ISystem

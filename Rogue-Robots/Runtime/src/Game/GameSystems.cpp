@@ -74,7 +74,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 		return;
 	}
 
-	MovePlayer(e, player, moveTowards, forward, rigidbody, playerStats.speed, input);
+	MovePlayer(e, player, moveTowards, forward, rigidbody, playerStats.speed, playerStats.jumpSpeed, input);
 	ApplyAnimations(input, ac);
 
 	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
@@ -183,8 +183,8 @@ void PlayerMovementSystem::MoveDebugCamera(Entity e, Vector3 moveTowards, Vector
 	camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
 }
 
-void PlayerMovementSystem::MovePlayer(Entity, PlayerControllerComponent& player, Vector3 moveTowards, Vector3 forward,
-	RigidbodyComponent& rb, f32 speed, InputController& input)
+void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& player, Vector3 moveTowards, Vector3 forward,
+	RigidbodyComponent& rb, f32 speed, f32 jumpSpeed, InputController& input)
 {	
 	auto forwardDisparity = moveTowards.Dot(forward);
 	speed = forwardDisparity < -0.01f ? speed / 2.f : speed;
@@ -195,10 +195,67 @@ void PlayerMovementSystem::MovePlayer(Entity, PlayerControllerComponent& player,
 		moveTowards.z * speed
 	);
 
+	TransformComponent& playerTransform = EntityManager::Get().GetComponent<TransformComponent>(e);
+	CapsuleColliderComponent& capsuleCollider = EntityManager::Get().GetComponent<CapsuleColliderComponent>(e);
+
+	Vector3 velocityDirection = rb.linearVelocity;
+	velocityDirection.y = 0.0f;
+	Vector3 oldVelocity = velocityDirection;
+	velocityDirection.Normalize();
+
+	//This check is here because otherwise bullet will crash in debug
+	if (velocityDirection != Vector3::Zero)
+	{
+		auto rayHit = PhysicsEngine::RayCast(playerTransform.GetPosition(), playerTransform.GetPosition() + velocityDirection * capsuleCollider.capsuleRadius * 2.5f);
+		if (rayHit != std::nullopt)
+		{
+			auto rayHitInfo = *rayHit;
+
+			Vector3 beforeChange = oldVelocity;
+			oldVelocity += rayHitInfo.hitNormal * oldVelocity.Length();
+
+			//This section is for checking if the velocity has flipped signed value, and if it has then we want to set the velocity to zero
+			const i32 getSign = 0x80000000;
+			//Float hacks
+			i32 beforeChangeX = std::bit_cast<i32>(beforeChange.x);
+			i32 beforeChangeZ = std::bit_cast<i32>(beforeChange.z);
+			i32 oldVX = std::bit_cast<i32>(oldVelocity.x);
+			i32 oldVZ = std::bit_cast<i32>(oldVelocity.z);
+
+			//Get the signed value from the floats
+			bool bX = (beforeChangeX & getSign);
+			bool oX = (oldVX & getSign);
+			bool bZ = (beforeChangeZ & getSign);
+			bool oZ = (oldVZ & getSign);
+
+			//Check if they differ, and if they do then we set to zero
+			if (bX ^ oX)
+				oldVelocity.x = 0.0f;
+			if (bZ ^ oZ)
+				oldVelocity.z = 0.0f;
+
+			rb.linearVelocity.x = oldVelocity.x;
+			rb.linearVelocity.z = oldVelocity.z;
+		}
+	}
+
 	if (input.up && !player.jumping)
 	{
-		player.jumping = true;
-		rb.linearVelocity.y = 6.f;
+		const f32 heightChange = 1.2f;
+		const f32 normalDirectionDifference = 0.5f;
+
+		//Shoot a ray cast down, will miss sometimes
+		auto rayHit = PhysicsEngine::RayCast(playerTransform.GetPosition(), playerTransform.GetPosition() - playerTransform.GetUp() * capsuleCollider.capsuleHeight / heightChange);
+
+		if (rayHit != std::nullopt)
+		{
+			auto rayHitInfo = *rayHit;
+			if (rayHitInfo.hitNormal.Dot(playerTransform.GetUp()) > normalDirectionDifference)
+			{
+				player.jumping = true;
+				rb.linearVelocity.y = jumpSpeed;
+			}
+		}
 	}
 }
 

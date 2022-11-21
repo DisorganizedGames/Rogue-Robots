@@ -804,6 +804,8 @@ namespace DOG
 		rCD.collisionShapeHandle = PhysicsEngine::AddCollisionShape(new btCapsuleShape(radius, height));
 
 		rigidbodyHandle = PhysicsEngine::AddRigidbody(entity, rCD, dynamic, mass);
+		capsuleRadius = radius;
+		capsuleHeight = height;
 	}
 
 	MeshColliderComponent::MeshColliderComponent(entity entity, u32 modelID, const Vector3& localMeshScale, bool drawOverride) noexcept
