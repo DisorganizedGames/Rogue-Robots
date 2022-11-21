@@ -2,9 +2,8 @@
 
 Client::Client()
 {
-	ClientsData test;
 	m_connectSocket = INVALID_SOCKET;
-	m_inputSend = new char[sizeof(ClientsData)];
+	m_inputSend = new char[sizeof(TcpHeader)];
 	m_hostIp = new char[64];
 	m_sendUdpBuffer = new char[sizeof(PlayerNetworkComponentUdp)];
 	m_reciveUdpBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];

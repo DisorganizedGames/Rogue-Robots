@@ -22,8 +22,8 @@ struct PlayerNetworkComponentUdp
 
 struct UdpData
 {
-	int nrOfEntites;
-	u64 udpId;
+	int nrOfEntites  = 0;
+	u64 udpId = 0;
 
 };
 
@@ -35,24 +35,13 @@ struct UdpReturnData
 struct TcpHeader
 {
 	i8 playerId = 0;
-	i8 nrOfPlayersConnected = 0;
+	u8 nrOfPlayersConnected = 0;
 	u16 sizeOfPayload = 0;
 	u16 nrOfNetTransform = 0;
 	u16 nrOfChangedAgentsHp = 0;
 	u16 nrOfCreateAndDestroy = 0;
 	bool lobbyAlive = true;
 
-};
-
-struct ClientsData
-{
-	i8 playerId = 0;
-	u8 nrOfPlayersConnected = 0;
-	u16 sizeOfPayload = 0;
-	u16 nrOfNetTransform = 0;
-	u16 nrOfChangedAgentsHp = 0;
-	u16 nrOfCreateAndDestroy = 0;
-	bool lobbyAlive = false;
 };
 
 struct NetworkId
