@@ -670,11 +670,17 @@ void PlaceHolderReviveUISystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, P
 	//If all players live, this system should early out:
 	const bool allPlayersLive = (closestDeadPlayer == NULL_ENTITY);
 	if (allPlayersLive)
+	{
+		DOG::EntityManager::Get().RemoveComponentIfExists<ReviveTimerComponent>(player);
 		return;
+	}
 
 	//Likewise, if we are not close enough to a dead player, then this system should not continue:
 	if (distanceToClosestDeadPlayer > MAXIMUM_DISTANCE_DELTA)
+	{
+		DOG::EntityManager::Get().RemoveComponentIfExists<ReviveTimerComponent>(player);
 		return;
+	}
 
 	//The last test is checking whether the player is also looking at the dead player. If not, return:
 	auto deadPlayerPos = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(closestDeadPlayer).GetPosition();
@@ -686,7 +692,10 @@ void PlaceHolderReviveUISystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, P
 	directionFromDeadToLivePlayer.Normalize();
 	float dot = directionFromDeadToLivePlayer.Dot(playerCameraForward);
 	if (dot < MINIMUM_DOT_DELTA)
+	{
+		DOG::EntityManager::Get().RemoveComponentIfExists<ReviveTimerComponent>(player);
 		return;
+	}
 
 	constexpr ImVec2 size{ 700, 450 };
 	auto r = DOG::Window::GetWindowRect();
@@ -725,18 +734,52 @@ void PlaceHolderReviveUISystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, P
 		ImGui::PopFont();
 		ImGui::PopStyleColor(1);
 
+		//Next up is the revival progress. Holding E adds to the progress bar.
 
-		//Give a certain component that indicates ressing!
-		static float progress = 0.5f;
+		//Perhaps the player is not trying to revive:
+		if (!DOG::Keyboard::IsKeyPressed(DOG::Key::E))
+		{
+			DOG::EntityManager::Get().RemoveComponentIfExists<ReviveTimerComponent>(player);
+			return;
+		}
 
-		// Typically we would use ImVec2(-1.0f,0.0f) or ImVec2(-FLT_MIN,0.0f) to use all available width,
-		// or ImVec2(width,0.0f) for a specified width. ImVec2(0.0f,0.0f) uses ItemWidth.
+		//From this point on we know a player is trying to revive:
+		auto& reviveComponent = DOG::EntityManager::Get().AddOrGetComponent<ReviveTimerComponent>(player);
+		
+		constexpr const float timerEnd = 0.0f;
+		constexpr const float progressBarStart = 0.0f;
+		constexpr const float progressBarEnd = 1.0f;
+
+		const float progress = 1.0f - Remap(timerEnd, reviveComponent.duration, progressBarStart, progressBarEnd, reviveComponent.timeLeft);
+		reviveComponent.timeLeft -= (float)DOG::Time::DeltaTime();;
+
 		ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f));
+		if (progress >= 1.0f)
+		{
+			auto& psc = DOG::EntityManager::Get().GetComponent<PlayerStatsComponent>(closestDeadPlayer);
+			psc.health = psc.maxHealth / 2.0f;
+			std::cout << psc.health << "\n";
+			DOG::EntityManager::Get().RemoveComponent<ReviveTimerComponent>(player);
+		}
 	}
 	ImGui::End();
 	ImGui::PopStyleColor();
+}
 
+float PlaceHolderReviveUISystem::Lerp(float a, float b, float t)
+{
+	return (1.0f - t) * a + b * t;
+}
 
+float PlaceHolderReviveUISystem::InverseLerp(float a, float b, float v)
+{
+	return (v - a) / (b - a);
+}
+
+float PlaceHolderReviveUISystem::Remap(float iMin, float iMax, float oMin, float oMax, float v)
+{
+	float t = InverseLerp(iMin, iMax, v);
+	return Lerp(oMin, oMax, t);
 }
 
 #pragma endregion
