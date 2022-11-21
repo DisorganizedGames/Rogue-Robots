@@ -34,7 +34,7 @@ void ParticleScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 	//Particle system
 	{ 
 		m_particleSystem = CreateEntity();
-		AddComponent<TransformComponent>(m_particleSystem, Vector3(0, -1.f, 0));
+		AddComponent<TransformComponent>(m_particleSystem, Vector3(0, 0, 0));
 		auto& em = AddComponent<ParticleEmitterComponent>(m_particleSystem);
 		em = {
 			.spawnRate = 64.f,

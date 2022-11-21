@@ -37,7 +37,7 @@ namespace DOG::gfx
 		struct EmitterTableHandle { u64 handle{ 0 }; };
 	public:
 		ParticleBackend() = delete;
-		ParticleBackend(RenderDevice* rd, GPUGarbageBin* bin, u32 framesInFlight, GlobalEffectData& globEffectData, RGResourceManager* resourceManager);
+		ParticleBackend(RenderDevice* rd, GPUGarbageBin* bin, u32 framesInFlight, GlobalEffectData& globEffectData, RGResourceManager* resourceManager, UploadContext* upCtx);
 
 		~ParticleBackend() = default;
 

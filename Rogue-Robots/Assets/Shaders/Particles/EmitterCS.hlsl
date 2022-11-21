@@ -1,5 +1,6 @@
 #include "Particles.hlsli"
 #include "../ShaderInterop_Renderer.h"
+#include "../ShaderInterop_Samplers.hlsli"
 
 #define GROUP_SIZE 64
 
@@ -14,10 +15,11 @@ struct PushConstantElement
 	uint particleBufferHandle;
 	uint aliveBufferHandle;
 	uint toSpawnHandle;
+	uint noiseTextureHandle;
 };
 CONSTANTS(g_constants, PushConstantElement)
 
-void SpawnParticle(in uint emitterHandle, inout Particle p, in float totTime);
+void SpawnParticle(in uint emitterHandle, inout Particle p, in float totTime, in Texture1D noiseTex);
 
 groupshared Emitter g_emitter;
 groupshared uint g_spawned;
@@ -29,6 +31,7 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 	RWStructuredBuffer<Emitter> emitterBuffer = ResourceDescriptorHeap[g_constants.globalEmitterTableHandle];
 	RWStructuredBuffer<uint> aliveCounter = ResourceDescriptorHeap[g_constants.aliveBufferHandle];
 	RWStructuredBuffer<float> toSpawnBuffer = ResourceDescriptorHeap[g_constants.toSpawnHandle];
+	Texture1D noiseTexture = ResourceDescriptorHeap[g_constants.noiseTextureHandle];
 	
 	StructuredBuffer<ShaderInterop_GlobalData> globalDataTable = ResourceDescriptorHeap[g_constants.globalData];
 	ShaderInterop_GlobalData globalData = globalDataTable[0];
@@ -62,7 +65,7 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 		
 			if (lastAlive < MAX_PARTICLES_ALIVE)
 			{
-				SpawnParticle(groupID.x, particleBuffer[lastAlive], perFrame.time);
+				SpawnParticle(groupID.x, particleBuffer[lastAlive], perFrame.time, noiseTexture);
 				InterlockedAdd(g_spawned, 1);
 
 			}
@@ -87,26 +90,26 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 	}
 }
 
-void SpawnCone(inout Particle p);
-void SpawnCylinder(inout Particle p);
-void SpawnBox(inout Particle p);
+void SpawnCone(inout Particle p, in Texture1D noiseTex, in float seed);
+void SpawnCylinder(inout Particle p, in Texture1D noiseTex, in float seed);
+void SpawnBox(inout Particle p, in Texture1D noiseTex, in float seed);
 void SpawnDefault(inout Particle p, in float totTime);
-float2 RandPointOnDisc(in float radius, in float seed);
+float2 RandPointOnDisc(in float radius, in Texture1D noiseTex, in float seed);
 
-void SpawnParticle(in uint emitterHandle, inout Particle p, in float totTime)
+void SpawnParticle(in uint emitterHandle, inout Particle p, in float totTime, in Texture1D noiseTex)
 {
 	p.emitterHandle = emitterHandle;
 	
 	switch (g_emitter.spawnType)
 	{
 	case PARTICLE_SPAWN_CONE:
-		SpawnCone(p);
+		SpawnCone(p, noiseTex, totTime);
 		break;
 	case PARTICLE_SPAWN_CYLINDER:
-		SpawnCylinder(p);
+		SpawnCylinder(p, noiseTex, totTime);
 		break;
 	case PARTICLE_SPAWN_AABB:
-		SpawnBox(p);
+		SpawnBox(p, noiseTex, totTime);
 		break;
 	case PARTICLE_SPAWN_DEFAULT:
 		SpawnDefault(p, totTime);
@@ -117,7 +120,7 @@ void SpawnParticle(in uint emitterHandle, inout Particle p, in float totTime)
 	p.age = 0;
 }
 
-void SpawnCone(inout Particle p)
+void SpawnCone(inout Particle p, in Texture1D noiseTex, in float seed)
 {
 	float angle = g_emitter.opt1;
 	float speed = g_emitter.opt2;
@@ -125,7 +128,7 @@ void SpawnCone(inout Particle p)
 	angle = clamp(angle, 0.f, PIDIV2 - 0.0001f);
 	float floatingRadius = sin(angle) / sin(PIDIV2 - angle); // See law of sines given a height of 1
 	
-	float2 randPoint = RandPointOnDisc(floatingRadius, 1.f);
+	float2 randPoint = RandPointOnDisc(floatingRadius, noiseTex, seed);
 	
 	// Use the random point to determine the particle's velocity
 	float randAngleX = atan(randPoint.x);
@@ -137,28 +140,28 @@ void SpawnCone(inout Particle p)
 	p.vel *= g_emitter.opt2;
 }
 
-void SpawnCylinder(inout Particle p)
+void SpawnCylinder(inout Particle p, in Texture1D noiseTex, in float seed)
 {
 	float radius = g_emitter.opt1;
 	float height = g_emitter.opt2;
 	
-	float2 randPoint = RandPointOnDisc(radius, 1.f);
-	float randHeight = height /* * Sample random 0-1 */;
+	float2 randPoint = RandPointOnDisc(radius, noiseTex, seed);
+	float randHeight = height * noiseTex.Sample(g_bilinear_wrap_samp, seed * 5).r;
 	
-	float3 offset = (randPoint.x, randHeight - height / 2.f, randPoint.y);
+	float3 offset = float3(randPoint.x, randHeight - height /2.f, randPoint.y);
 	
 	p.pos = g_emitter.pos + offset;
 	p.vel = 0.f.xxx;
 }
 
-void SpawnBox(inout Particle p)
+void SpawnBox(inout Particle p, in Texture1D noiseTex, in float seed)
 {
 	float3 size = float3(g_emitter.opt1, g_emitter.opt2, g_emitter.opt3);
 	
 	float3 rands = float3(
-		1,
-		1, 
-		1
+		noiseTex.Sample(g_bilinear_wrap_samp, seed).x,
+		noiseTex.Sample(g_bilinear_wrap_samp, seed * 2).x,
+		noiseTex.Sample(g_bilinear_wrap_samp, seed * 6).x
 	);
 
 	float3 offset = size * rands - (size / 2.f);
@@ -176,11 +179,10 @@ void SpawnDefault(inout Particle p, in float totTime)
 
 
 // Uniform sampling of a point on a disc
-float2 RandPointOnDisc(in float radius, in float seed)
+float2 RandPointOnDisc(in float radius, in Texture1D noiseTex, in float seed)
 {
-	// float rand = noiseTexture.Sample(seed, some_sampler);
-	float randRadius = radius * sqrt(1.f); // TODO: Change this to be our random percentage of area
-	float randPolar = PI;
+	float randRadius = radius * sqrt(noiseTex.Sample(g_bilinear_wrap_samp, seed).r);
+	float randPolar = noiseTex.Sample(g_bilinear_wrap_samp, seed * 2).r * TWOPI;
 	
 	float pointX = randRadius * cos(randPolar);
 	float pointZ = randRadius * sin(randPolar);

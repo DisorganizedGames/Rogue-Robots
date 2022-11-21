@@ -307,7 +307,7 @@ namespace DOG::gfx
 		m_rgBlackboard = std::make_unique<RGBlackboard>();
 
 		
-		m_particleBackend = std::make_unique<ParticleBackend>(m_rd, m_bin.get(), S_MAX_FIF, m_globalEffectData, m_rgResMan.get());
+		m_particleBackend = std::make_unique<ParticleBackend>(m_rd, m_bin.get(), S_MAX_FIF, m_globalEffectData, m_rgResMan.get(), m_perFrameUploadCtx.get());
 
 
 		// Define Passes
