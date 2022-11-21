@@ -33,12 +33,16 @@ function OnPickup(pickup)
 	local pickupTypeString = Entity:GetEntityTypeAsString(pickup)
 	local playerID = EntityID
 
-	if pickupTypeString == "Trampoline" then
+	if pickupTypeString == "Trampoline" or pickupTypeString == "Turret" then
 		if Entity:HasComponent(playerID, "ActiveItem") then
 			Entity:RemoveComponent(playerID, "ActiveItem")
 		end
 		if pickupTypeString == "Trampoline" then
 			activeItem = ActiveItems.trampoline
+			Entity:AddComponent(playerID, "ActiveItem", activeItem:GetECSType())
+		end
+		if pickupTypeString == "Turret" then
+			activeItem = ActiveItems.turret
 			Entity:AddComponent(playerID, "ActiveItem", activeItem:GetECSType())
 		end
 	end

@@ -23,6 +23,12 @@ Vector3 = {
 		return vec
 	end,
 
+	One = function() 
+		local vec = { x = 1, y = 1, z = 1 }
+		setmetatable(vec, Vector3)
+		return vec
+	end,
+
 	-- Vector addition
 	__add = function(first, second)
 		return Vector3.New(first.x + second.x, first.y + second.y, first.z + second.z)

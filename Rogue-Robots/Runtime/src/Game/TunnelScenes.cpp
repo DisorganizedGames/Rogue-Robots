@@ -105,6 +105,8 @@ void TunnelRoom2Scene::SetUpScene(std::vector<std::function<std::vector<DOG::ent
 	iM.CreateItem(EntityTypes::FrostMagazineModification, Vector3(43.0f, 69.7f, 114.0f) * 5.f / 4.6f);
 	iM.CreateItem(EntityTypes::MissileBarrel, Vector3(40.0f, 70.0f, 110.0f) * 5.f / 4.6f);
 	iM.CreateItem(EntityTypes::Trampoline, Vector3(49.0f, 70.0f, 110.0f) * 5.f / 4.6f);
+	iM.CreateItem(EntityTypes::Turret, Vector3(45.0f, 70.0f, 110.0f) * 5.f / 4.6f);
+	iM.CreateItem(EntityTypes::Turret, Vector3(45.0f, 70.0f, 107.0f) * 5.f / 4.6f);
 }
 
 

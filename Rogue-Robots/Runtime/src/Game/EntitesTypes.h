@@ -22,6 +22,7 @@ enum class EntityTypes
 	//ActiveItem
 	ActiveItemsBegin,
 	Trampoline = ActiveItemsBegin,
+	Turret,
 	ActiveItems,
 
 	//Barrel

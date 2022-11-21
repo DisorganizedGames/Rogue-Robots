@@ -168,6 +168,14 @@ private:
 
 	void AddThisPlayerWeapon(DOG::LuaContext* context, DOG::entity e);
 
+	void AddTurretTargeting(DOG::LuaContext* context, DOG::entity e);
+
+	void AddTurretBasicShooting(DOG::LuaContext* context, DOG::entity e);
+
+	void AddChildComponent(DOG::LuaContext* context, DOG::entity e);
+
+	void AddShadowReciever(DOG::entity e);
+
 };
 
 class AssetInterface : public LuaInterface
@@ -215,6 +223,7 @@ public:
 	void Explosion(DOG::LuaContext* context);
 	void RBConstrainRotation(DOG::LuaContext* context);
 	void RBConstrainPosition(DOG::LuaContext* context);
+	void RayCast(DOG::LuaContext* context);
 };
 
 class RenderInterface : public LuaInterface

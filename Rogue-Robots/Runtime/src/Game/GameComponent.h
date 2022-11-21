@@ -125,7 +125,7 @@ struct PassiveItemComponent {
 //The active item that currently resides in inventory
 struct ActiveItemComponent
 {
-	enum class Type{ Trampoline = 0 };
+	enum class Type{ Trampoline = 0, Turret };
 
 	Type type;
 };
@@ -245,17 +245,19 @@ struct TurretTargetingComponent
 	bool shoot = false;
 };
 
-struct TurretAmmoComponent
+struct TurretBasicShootingComponent
 {
+	DOG::entity owningPlayer = DOG::NULL_ENTITY;
 	u32 ammoCount = 200;
 	f32 projectileSpeed = 100;
 	f64 timeStep = 0.2f;
 	f64 lastDischargeTimer = timeStep;
+	f32 damage = 50;
+	f32 projectileLifeTime = 3;
 };
 
 struct TurretProjectileComponent
 {
-	DOG::entity turret = DOG::NULL_ENTITY;
-	float maxLifeTime = 5.0f;
+	float maxLifeTime = 3.0f;
 	float lifeTime = 0;
 };
