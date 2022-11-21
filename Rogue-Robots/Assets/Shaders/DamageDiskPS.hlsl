@@ -46,9 +46,9 @@ float4 main(PS_IN input) : SV_TARGET0
     float lenToEllipse = length(pOnEllipse); 
     
     // Bow angle
-    const float b = 11.f;
+    const float b = 7.f;
     const float bowOffset = 0.85f;
-    const float bowThickness = 0.015f;
+    const float bowThickness = 0.025f;
     const float aoa = 180.0;        // Static in space
     
     // Angle to point
