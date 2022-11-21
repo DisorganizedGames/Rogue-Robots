@@ -32,6 +32,7 @@
 #include "VFX/ParticleBackend.h"
 #include "RenderEffects/TiledLightCullingEffect.h"
 #include "RenderEffects/DamageDiskEffect.h"
+#include "RenderEffects/HeartbeatEffect.h"
 
 #include "ImGUI/imgui.h"
 #include "../../Core/ImGuiMenuLayer.h"
