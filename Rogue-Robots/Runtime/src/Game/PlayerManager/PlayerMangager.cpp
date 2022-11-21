@@ -70,7 +70,7 @@ void PlayerHit::OnUpdate(entity e, HasEnteredCollisionComponent& collision, This
 				// Add visual effect
 				const auto& pos1 = eMan.GetComponent<TransformComponent>(collision.entities[i]).GetPosition();
 				const auto& pos2 = eMan.GetComponent<TransformComponent>(e).GetPosition();
-				auto dir = pos2 - pos1;
+				auto dir = pos1 - pos2;
 				dir.Normalize();
 				
 				DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 2.f, 1.5f);
