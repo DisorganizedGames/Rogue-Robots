@@ -99,6 +99,7 @@ struct InputController
 	bool toggleDebug = false;
 	bool toggleMoveView = false;
 	bool flashlight = true;
+	bool revive = false;
 };
 
 struct DoorComponent

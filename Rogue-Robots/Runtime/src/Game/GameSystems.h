@@ -556,10 +556,10 @@ class PlaceHolderReviveUISystem : public DOG::ISystem
 #define MAXIMUM_DISTANCE_DELTA 1.3f
 #define MINIMUM_DOT_DELTA 0.85f
 public:
-	SYSTEM_CLASS(DOG::ThisPlayer, PlayerAliveComponent, DOG::TransformComponent);
-	ON_UPDATE_ID(DOG::ThisPlayer, PlayerAliveComponent, DOG::TransformComponent);
+	SYSTEM_CLASS(InputController, PlayerAliveComponent, DOG::TransformComponent);
+	ON_UPDATE_ID(InputController, PlayerAliveComponent, DOG::TransformComponent);
 
-	void OnUpdate(DOG::entity player, DOG::ThisPlayer&, PlayerAliveComponent&, DOG::TransformComponent&);
+	void OnUpdate(DOG::entity player, InputController&, PlayerAliveComponent&, DOG::TransformComponent&);
 	float Lerp(float a, float b, float t);
 	float InverseLerp(float a, float b, float v);
 	float Remap(float iMin, float iMax, float oMin, float oMax, float v);

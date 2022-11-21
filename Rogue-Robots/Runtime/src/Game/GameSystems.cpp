@@ -1,4 +1,5 @@
 #include "GameSystems.h"
+#include "PlayerManager/PlayerManager.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -649,7 +650,7 @@ void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity p
 	#endif
 }
 
-void PlaceHolderReviveUISystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, PlayerAliveComponent&, DOG::TransformComponent& tc)
+void PlaceHolderReviveUISystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerAliveComponent&, DOG::TransformComponent& tc)
 {
 	DOG::entity closestDeadPlayer{ NULL_ENTITY };
 	float distanceToClosestDeadPlayer{ FLT_MAX };
@@ -735,14 +736,14 @@ void PlaceHolderReviveUISystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, P
 		ImGui::PopStyleColor(1);
 
 		//Next up is the revival progress. Holding E adds to the progress bar.
-
+		std::cout << "Before Pressing e" << std::endl;
 		//Perhaps the player is not trying to revive:
-		if (!DOG::Keyboard::IsKeyPressed(DOG::Key::E))
+		if (!inputC.revive)
 		{
 			DOG::EntityManager::Get().RemoveComponentIfExists<ReviveTimerComponent>(player);
 			return;
 		}
-
+		std::cout << "Pressing e" << std::endl;
 		//From this point on we know a player is trying to revive:
 		auto& reviveComponent = DOG::EntityManager::Get().AddOrGetComponent<ReviveTimerComponent>(player);
 		

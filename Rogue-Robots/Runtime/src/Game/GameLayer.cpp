@@ -530,8 +530,8 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 		{
 			Interact();
 		}
-		else
-			Input(EVENT(KeyPressedEvent).key);
+		
+		Input(EVENT(KeyPressedEvent).key);
 		break;
 	}
 	case EventType::KeyReleasedEvent:
@@ -942,6 +942,8 @@ void GameLayer::Input(DOG::Key key)
 				inputC.toggleMoveView = true;
 			if (key == DOG::Key::F)
 				inputC.flashlight = !inputC.flashlight;
+			if (key == DOG::Key::E)
+				inputC.revive = true;
 		});
 }
 
@@ -975,6 +977,9 @@ void GameLayer::Release(DOG::Key key)
 				inputC.toggleDebug = false;
 			if (key == DOG::Key::C)
 				inputC.toggleMoveView = false;
+			if (key == DOG::Key::E)
+				inputC.revive = false;
+
 		});
 }
 
