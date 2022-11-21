@@ -486,9 +486,6 @@ namespace DOG
 					gfxChanged = true;
 				}
 
-				if (ImGui::SliderFloat("Pointlight cutoff factor", &m_specification.graphicsSettings.pointLightCullFactor, 0.0f, 100.0f))
-					gfxChanged = true;
-
 				if (ImGui::Checkbox("Lit", &m_specification.graphicsSettings.lit))
 					gfxChanged = true;
 

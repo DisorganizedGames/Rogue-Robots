@@ -101,6 +101,7 @@ void TurretProjectileSystem::OnUpdate(DOG::entity e, TurretProjectileComponent& 
 	if (projectile.lifeTime < projectile.maxLifeTime)
 	{
 		pointLight.strength = MoveTowards(pointLight.strength, 0, dt);
+		pointLight.radius = MoveTowards(pointLight.radius, 0, dt);
 		pointLight.dirty = true;
 	}
 	else

@@ -327,7 +327,7 @@ namespace DOG::gfx
 		m_imGUIEffect = std::make_unique<ImGUIEffect>(m_globalEffectData, m_imgui.get());
 		m_testComputeEffect = std::make_unique<TestComputeEffect>(m_globalEffectData);
 		m_bloomEffect = std::make_unique<Bloom>(m_rgResMan.get(), m_globalEffectData, m_dynConstants.get(), m_renderWidth, m_renderHeight);
-		m_tiledLightCuller = std::make_unique<TiledLightCullingEffect>(m_rgResMan.get(), m_globalEffectData, m_renderWidth, m_renderHeight, 60.0f);
+		m_tiledLightCuller = std::make_unique<TiledLightCullingEffect>(m_rgResMan.get(), m_globalEffectData, m_renderWidth, m_renderHeight);
 		m_tiledLightCullerVisualization = std::make_unique<TiledLightCullingVisualizationEffect>(m_rgResMan.get(), m_globalEffectData, m_renderWidth, m_renderHeight);
 
 		m_damageDiskEffect = std::make_unique<DamageDiskEffect>(m_globalEffectData);
@@ -420,8 +420,8 @@ namespace DOG::gfx
 	void Renderer::SetMainRenderCamera(const DirectX::XMMATRIX& view, DirectX::XMMATRIX* proj)
 	{
 		m_viewMat = view;
-		m_projMat = proj ? *proj : DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_renderWidth / m_renderHeight, 800.f, 0.1f);
-		//m_projMat = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_renderWidth / m_renderHeight, 0.1f, 800.f);
+		m_projMat = proj ? *proj : DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_renderWidth / m_renderHeight, 1600.f, 0.1f);
+		//m_projMat = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, (f32)m_renderWidth / m_renderHeight, 0.1f, 1600.f);
 	}
 
 
@@ -544,6 +544,11 @@ namespace DOG::gfx
 			m_pfData.projMatrix.Invert(m_pfData.invProjMatrix);
 			m_pfData.time += dt;
 			m_pfData.deltaTime = dt;
+
+			DirectX::SimpleMath::Vector4 nearP = { m_pfData.projMatrix._13, m_pfData.projMatrix._23, m_pfData.projMatrix._33, m_pfData.projMatrix._43 };
+			DirectX::SimpleMath::Vector4 farP = { m_pfData.projMatrix._14 - m_pfData.projMatrix._13, m_pfData.projMatrix._24 - m_pfData.projMatrix._23, m_pfData.projMatrix._34 - m_pfData.projMatrix._33, m_pfData.projMatrix._44 - m_pfData.projMatrix._43 };
+			m_pfData.nearClip = -nearP.w / nearP.z;
+			m_pfData.farClip  = -farP.w / farP.z;
 
 			// Set light data
 			m_pfData.pointLightOffsets.staticOffset = m_globalLightTable->GetChunkOffset(LightType::Point, LightUpdateFrequency::Never);

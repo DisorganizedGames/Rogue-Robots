@@ -34,8 +34,9 @@ struct ShaderInterop_LightsMetadata
 
 struct ShaderInterop_PointLight
 {
-    float4 position;
-    float4 color;
+    float3 position;
+    float radius;
+    float3 color;
     float strength;
 };
 

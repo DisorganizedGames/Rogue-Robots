@@ -95,6 +95,7 @@ namespace DOG
 	struct PointLightDesc
 	{
 		DirectX::SimpleMath::Vector3 position{ 0.f, 0.f, 0.f };
+		float radius{ 0.f };
 		DirectX::SimpleMath::Vector3 color{ 1.f, 1.f, 1.f };
 		float strength{ 0.f };
 	};

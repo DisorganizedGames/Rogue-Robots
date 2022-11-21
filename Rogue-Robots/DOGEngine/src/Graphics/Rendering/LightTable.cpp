@@ -171,8 +171,9 @@ namespace DOG::gfx
 		assert(storage.type == LightType::Point);
 
 		auto& gpu = m_pointLights[storage.localLightID];
-		gpu.position = DirectX::SimpleMath::Vector4(desc.position.x, desc.position.y, desc.position.z, 1.f);
-		gpu.color = DirectX::SimpleMath::Vector4(desc.color);
+		gpu.position = desc.position;
+		gpu.radius = desc.radius;
+		gpu.color = desc.color;
 		gpu.strength = desc.strength;
 
 		switch (storage.freq)
@@ -224,8 +225,9 @@ namespace DOG::gfx
 
 		// Copy data
 		auto& gpu = m_pointLights[nextIdx];
-		gpu.position = DirectX::SimpleMath::Vector4(desc.position);
-		gpu.color = DirectX::SimpleMath::Vector4(desc.color);
+		gpu.position = desc.position;
+		gpu.radius = desc.radius;
+		gpu.color = desc.color;
 		gpu.strength = desc.strength;
 
 		// Store

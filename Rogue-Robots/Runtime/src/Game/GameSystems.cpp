@@ -78,7 +78,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	ApplyAnimations(input, ac);
 
 	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
-	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
+	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 1600.f, 0.1f);
 
 	// Place camera 0.4 units above the player transform
 	auto pos = transform.GetPosition() + Vector3(0, 0.7f, 0);
@@ -177,7 +177,7 @@ void PlayerMovementSystem::MoveDebugCamera(Entity e, Vector3 moveTowards, Vector
 		transform.SetPosition(transform.GetPosition() -= s_globUp * speed * (f32)Time::DeltaTime());
 
 	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
-	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 800.f, 0.1f);
+	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 1600.f, 0.1f);
 
 	auto pos = transform.GetPosition();
 	camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
