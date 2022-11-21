@@ -65,7 +65,11 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 		
 			if (lastAlive < MAX_PARTICLES_ALIVE)
 			{
-				SpawnParticle(groupID.x, particleBuffer[lastAlive], perFrame.time, noiseTexture);
+				float lerpedTime = perFrame.time - perFrame.deltaTime;
+				float lerper = (toSpawnBuffer[groupID.x] - i) / (float)toSpawnBuffer[groupID.x];
+				lerpedTime = lerp(lerpedTime, perFrame.time, lerper);
+				
+				SpawnParticle(groupID.x, particleBuffer[lastAlive], lerpedTime, noiseTexture);
 				InterlockedAdd(g_spawned, 1);
 
 			}
