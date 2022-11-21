@@ -20,7 +20,7 @@ set(SourceFiles
 	"src/Game/Scene.h" "src/Game/Scene.cpp" "src/Game/PcgLevelLoader.h" "src/Game/PcgLevelLoader.cpp"
 	"src/Game/PrefabInstantiatorFunctions.h" "src/Game/PrefabInstantiatorFunctions.cpp"
 	"src/Game/OldDefaultScene.h" "src/Game/OldDefaultScene.cpp"
-	"src/Game/TunnelScenes.h" "src/Game/TunnelScenes.cpp"
+	"src/Game/PCGLevelScenes.h" "src/Game/PCGLevelScenes.cpp"
 	"src/Game/TurretSystems.h" "src/Game/TurretSystems.cpp"
 	"src/Game/LoadSplitModels.h" "src/Game/LoadSplitModels.cpp"
 	"src/Game/ItemManager/ItemManager.h" "src/Game/ItemManager/ItemManager.cpp"

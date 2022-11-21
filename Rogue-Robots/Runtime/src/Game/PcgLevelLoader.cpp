@@ -77,6 +77,10 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 						{
 							em.AddComponent<ExitBlockComponent>(blockEntity);
 						}
+						else if (blockName == "Floor1")
+						{
+							em.AddComponent<FloorBlockComponent>(blockEntity);
+						}
 					}
 					++z;
 				}

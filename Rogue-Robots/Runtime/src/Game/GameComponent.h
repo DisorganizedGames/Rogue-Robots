@@ -288,3 +288,7 @@ struct SpawnBlockComponent
 struct ExitBlockComponent
 {
 };
+
+struct FloorBlockComponent
+{
+};

@@ -1940,10 +1940,6 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 						{
 							replacer = "4UpConnector_r3_f";
 						}
-						else
-						{
-							std::cout << "What" << std::endl;
-						}
 						break;
 					}
 					case 1:
@@ -1955,10 +1951,6 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 						else if (dirToUse == 5)
 						{
 							replacer = "4UpConnector_r3_f";
-						}
-						else
-						{
-							std::cout << "What" << std::endl;
 						}
 						break;
 					}
@@ -1972,10 +1964,6 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 						{
 							replacer = "4UpConnector_r1_f";
 						}
-						else
-						{
-							std::cout << "What" << std::endl;
-						}
 						break;
 					}
 					case 3:
@@ -1987,10 +1975,6 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 						else if (dirToUse == 4)
 						{
 							replacer = "4UpConnector_r1_f";
-						}
-						else
-						{
-							std::cout << "What" << std::endl;
 						}
 						break;
 					}
@@ -2183,23 +2167,12 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 			{
 				replacer = "3DCrossConnector_" + rotation + "_f";
 			}
-
-			if (replacer == oldReplacer)
-			{
-				std::cout << "Did not get replaced:" << replacer << std::endl;
-			}
 		}
 	}
-	if (replacer == "Void") //Temporary
+	if (replacer == "Void") //Should never happen. Is here so we see cubes where something went very wrong.
 	{
 		replacer = "Cube_r0_f";
 	}
-	/*
-	if (prevWasVoid && nextBlock != "None")
-	{
-		replacer = ReplaceBlock(prevBlock, replacer, nextBlock, prevDir, nextDir, false, true);
-	}
-	*/
 	return replacer;
 }
 

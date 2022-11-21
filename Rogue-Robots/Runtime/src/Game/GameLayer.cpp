@@ -2,7 +2,7 @@
 #include "GameLayer.h"
 #include "TestScene.h"
 #include "OldDefaultScene.h"
-#include "TunnelScenes.h"
+#include "PCGLevelScenes.h"
 #include "LightScene.h"
 #include "SimpleAnimationSystems.h"
 #include "ExplosionSystems.h"
@@ -156,7 +156,14 @@ void GameLayer::StartMainScene()
 {
 	assert(m_mainScene == nullptr);
 
-	m_selectedScene = SceneComponent::Type::PCGLevelScene;
+	//Change the index to change level. 
+	uint32_t levelIndex = 4;
+	if (levelIndex >= pcgLevelNames::nrLevels)
+	{
+		levelIndex = 0;
+	}
+
+	std::string levelName = pcgLevelNames::pcgLevels[levelIndex];
 	/*
 	switch (m_selectedScene)
 	{
@@ -196,7 +203,7 @@ void GameLayer::StartMainScene()
 	m_mainScene = std::make_unique<PCGLevelScene>(
 		m_nrOfPlayers,
 		std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4),
-		pcgLevelNames::testRooms
+		"..\\Offline-Tools\\PCG\\" + levelName
 	);
 	m_mainScene->SetUpScene();
 
