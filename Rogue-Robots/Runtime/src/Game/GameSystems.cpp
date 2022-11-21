@@ -229,6 +229,7 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 
 	TransformComponent& playerTransform = EntityManager::Get().GetComponent<TransformComponent>(e);
 	CapsuleColliderComponent& capsuleCollider = EntityManager::Get().GetComponent<CapsuleColliderComponent>(e);
+	auto& comp = EntityManager::Get().GetComponent<AudioComponent>(e);
 
 	Vector3 velocityDirection = rb.linearVelocity;
 	velocityDirection.y = 0.0f;
@@ -284,8 +285,15 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 			auto rayHitInfo = *rayHit;
 			if (rayHitInfo.hitNormal.Dot(playerTransform.GetUp()) > normalDirectionDifference)
 			{
+				const f32 jumpVolume = 0.24f;
+
 				player.jumping = true;
 				rb.linearVelocity.y = jumpSpeed;
+
+				comp.volume = jumpVolume;
+				comp.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Jump/PlayerJumpSound.wav");
+				comp.is3D = true;
+				comp.shouldPlay = true;
 			}
 		}
 	}
@@ -301,7 +309,6 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 	else
 		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep09.wav");
 
-	auto& comp = EntityManager::Get().GetComponent<AudioComponent>(e);
 	if (!player.jumping && moveTowards != Vector3::Zero && !comp.playing && timeBeteenTimer < Time::ElapsedTime())
 	{
 		const f32 footstepVolume = 0.1f;
