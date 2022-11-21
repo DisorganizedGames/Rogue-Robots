@@ -1,5 +1,6 @@
 #include "PlayerManager.h"
 #include "Game/GameLayer.h"
+#include "../DOGEngine/src/Graphics/Rendering/PostProcess.h"
 
 using namespace DOG;
 using namespace DirectX::SimpleMath;
@@ -62,8 +63,18 @@ void PlayerHit::OnUpdate(entity e, HasEnteredCollisionComponent& collision, This
 	{
 		if (eMan.HasComponent<BulletComponent>(collision.entities[i]))
 		{
-			if(eMan.GetComponent<BulletComponent>(collision.entities[i]).playerEntityID != PlayerManager::Get().GetThisPlayer())
+			if (eMan.GetComponent<BulletComponent>(collision.entities[i]).playerEntityID != PlayerManager::Get().GetThisPlayer())
+			{
 				PlayerManager::Get().HurtThisPlayer(eMan.GetComponent<BulletComponent>( collision.entities[i]).damage/15.0f);
+
+				// Add visual effect
+				const auto& pos1 = eMan.GetComponent<TransformComponent>(collision.entities[i]).GetPosition();
+				const auto& pos2 = eMan.GetComponent<TransformComponent>(e).GetPosition();
+				auto dir = pos2 - pos1;
+				dir.Normalize();
+				
+				DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 1.8f, 0.7f);
+			}
 		}
 	}
 }

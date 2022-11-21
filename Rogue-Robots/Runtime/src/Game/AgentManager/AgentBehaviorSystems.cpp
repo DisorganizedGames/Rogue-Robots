@@ -1,5 +1,6 @@
 #include "AgentBehaviorSystems.h"
 #include "AgentManager.h"
+#include "../DOGEngine/src/Graphics/Rendering/PostProcess.h"
 
 using namespace DOG;
 
@@ -134,6 +135,16 @@ void AgentAttackSystem::OnUpdate(entity e, AgentAttackComponent& attack, AgentSe
 				PlayerStatsComponent& player = EntityManager::Get().GetComponent<PlayerStatsComponent>(seek.entityID);
 				player.health -= attack.damage;
 				attack.elapsedTime = 0.0f;
+
+				// Add visual effect
+
+				// Add visual effect
+				const auto& pos1 = EntityManager::Get().GetComponent<TransformComponent>(seek.entityID).GetPosition();
+				const auto& pos2 = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
+				auto dir = pos2 - pos1;
+				dir.Normalize();
+
+				DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 1.8f, 0.7f);
 			}
 		}
 		else
