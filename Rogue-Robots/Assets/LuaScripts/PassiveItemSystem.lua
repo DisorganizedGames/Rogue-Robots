@@ -28,7 +28,7 @@ function OnUpdate()
 	end
 	
 	local hp = Entity:GetPlayerStat(EntityID, "health")
-
+	
 	for key, item in pairs(passiveItems) do
 		stats = item[1]:affect(item[2], stats)
 	end
@@ -42,7 +42,7 @@ end
 function OnPickup(pickup)
 	local pickupTypeString = Entity:GetEntityTypeAsString(pickup)
 
-	if pickupTypeString == "MaxHealthBoost" then
+	if pickupTypeString == "MaxHealthBoost" or pickupTypeString == "SpeedBoost" or pickupTypeString == "SpeedBoost2" then
 		if passiveItems[pickupTypeString] then
 			passiveItems[pickupTypeString][2] = passiveItems[pickupTypeString][2] + 1
 		else
@@ -50,6 +50,8 @@ function OnPickup(pickup)
 		end
 		itemsDirty = true
 	end
+	
+
 end
 
 function OnBulletHit(enemy)

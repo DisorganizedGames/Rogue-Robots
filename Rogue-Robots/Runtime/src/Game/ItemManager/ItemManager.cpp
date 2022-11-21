@@ -21,6 +21,7 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 	case EntityTypes::Medkit:
 		break;
 	case EntityTypes::IncreaseMaxHp:
+		return CreateMaxHealthBoostPickup(position, id);
 		break;
 	case EntityTypes::Trampoline:
 		return CreateTrampolinePickup(position, id);
@@ -39,6 +40,15 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 		break;
 	case EntityTypes::FrostMagazineModification:
 		return CreateFrostModificationPickup(position, id);
+		break;
+	case EntityTypes::IncreaseSpeed:
+		return CreateSpeedBoostPickup(position, id);
+		break;
+	case EntityTypes::IncreaseSpeed2:
+		return CreateSpeedBoost2Pickup(position, id);
+		break;
+	case EntityTypes::Health:
+		//return CreateHealthPickup(position, id);
 		break;
 	default:
 		break;
@@ -191,7 +201,7 @@ u32 ItemManager::CreateMaxHealthBoostPickup(DirectX::SimpleMath::Vector3 positio
 	s_entityManager.AddComponent<PassiveItemComponent>(healthBoostEntity).type = PassiveItemComponent::Type::MaxHealthBoost;
 	s_entityManager.AddComponent<PickupComponent>(healthBoostEntity).itemName = "Max HP boost";
 	s_entityManager.AddComponent<ModelComponent>(healthBoostEntity, healthBoostID);
-	s_entityManager.AddComponent<TransformComponent>(healthBoostEntity, position).SetScale({ 0.5f, 0.5f, 0.5f });
+	s_entityManager.AddComponent<TransformComponent>(healthBoostEntity, position).SetScale({ 0.8f, 0.8f, 0.8f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(healthBoostEntity);
 	auto& ni = s_entityManager.AddComponent<NetworkId>(healthBoostEntity);
 	ni.entityTypeId = EntityTypes::IncreaseMaxHp;
@@ -271,5 +281,91 @@ u32 ItemManager::CreateTurretPickup(Vector3 position, u32 id)
 	auto& node = s_entityManager.AddComponent<ChildComponent>(turretHeadpEntity);
 	node.parent = turretPickUpEntity;
 	node.localTransform.SetPosition({ 0, 1, 0 });
+	return ni.id;
+}
+
+u32 ItemManager::CreateSpeedBoostPickup(DirectX::SimpleMath::Vector3 position, u32 id)
+{
+	static u32 speedBoostNetworkdID = 0u;
+
+	u32 speedBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/speedPassive.glb");
+
+	entity speedBoostEntity = s_entityManager.CreateEntity();
+	s_entityManager.AddComponent<PassiveItemComponent>(speedBoostEntity).type = PassiveItemComponent::Type::SpeedBoost;
+	s_entityManager.AddComponent<PickupComponent>(speedBoostEntity).itemName = "Speed Boost";
+	s_entityManager.AddComponent<ModelComponent>(speedBoostEntity, speedBoostID);
+	s_entityManager.AddComponent<TransformComponent>(speedBoostEntity, position).SetScale({ 0.5f, 0.5f, 0.5f });
+	s_entityManager.AddComponent<ShadowReceiverComponent>(speedBoostEntity);
+	auto& ni = s_entityManager.AddComponent<NetworkId>(speedBoostEntity);
+	ni.entityTypeId = EntityTypes::IncreaseSpeed;
+	if (id == 0)
+		ni.id = ++speedBoostNetworkdID;
+	else
+		ni.id = id;
+
+	LuaMain::GetScriptManager()->AddScript(speedBoostEntity, "Pickupable.lua");
+
+	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(speedBoostEntity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(speedBoostEntity).GetPosition().y;
+	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
+	return ni.id;
+}
+
+u32 ItemManager::CreateSpeedBoost2Pickup(DirectX::SimpleMath::Vector3 position, u32 id)
+{
+	static u32 speedBoostNetworkdID2 = 0u;
+
+	u32 speedBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/speedPassive2.glb");
+
+	entity speedBoostEntity = s_entityManager.CreateEntity();
+	s_entityManager.AddComponent<PassiveItemComponent>(speedBoostEntity).type = PassiveItemComponent::Type::SpeedBoost2;
+	s_entityManager.AddComponent<PickupComponent>(speedBoostEntity).itemName = "Speed Boost X2";
+	s_entityManager.AddComponent<ModelComponent>(speedBoostEntity, speedBoostID);
+	s_entityManager.AddComponent<TransformComponent>(speedBoostEntity, position).SetScale({ 0.5f, 0.5f, 0.5f });
+	s_entityManager.AddComponent<ShadowReceiverComponent>(speedBoostEntity);
+	auto& ni = s_entityManager.AddComponent<NetworkId>(speedBoostEntity);
+	ni.entityTypeId = EntityTypes::IncreaseSpeed2;
+	if (id == 0)
+		ni.id = ++speedBoostNetworkdID2;
+	else
+		ni.id = id;
+
+	LuaMain::GetScriptManager()->AddScript(speedBoostEntity, "Pickupable.lua");
+
+	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(speedBoostEntity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(speedBoostEntity).GetPosition().y;
+	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
+	return ni.id;
+}
+
+
+//Placeholder
+u32 ItemManager::CreateHealthPickup(DirectX::SimpleMath::Vector3 position, u32 id)
+{
+	static u32 healthNetworkdID = 0u;
+
+	u32 healthBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Health.glb");
+
+	entity healthBoostEntity = s_entityManager.CreateEntity();
+	s_entityManager.AddComponent<PassiveItemComponent>(healthBoostEntity).type = PassiveItemComponent::Type::Template;
+	s_entityManager.AddComponent<PickupComponent>(healthBoostEntity).itemName = "Heal";
+	s_entityManager.AddComponent<ModelComponent>(healthBoostEntity, healthBoostID);
+	s_entityManager.AddComponent<TransformComponent>(healthBoostEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
+	s_entityManager.AddComponent<ShadowReceiverComponent>(healthBoostEntity);
+	auto& ni = s_entityManager.AddComponent<NetworkId>(healthBoostEntity);
+	ni.entityTypeId = EntityTypes::Health;
+	if (id == 0)
+		ni.id = ++healthNetworkdID;
+	else
+		ni.id = id;
+
+	LuaMain::GetScriptManager()->AddScript(healthBoostEntity, "Pickupable.lua");
+
+	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(healthBoostEntity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(healthBoostEntity).GetPosition().y;
+	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
 	return ni.id;
 }
