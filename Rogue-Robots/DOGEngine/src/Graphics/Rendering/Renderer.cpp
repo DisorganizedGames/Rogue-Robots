@@ -975,8 +975,6 @@ namespace DOG::gfx
 				});
 		}
 
-		m_heartbeatEffect->Add(rg);
-		m_damageDiskEffect->Add(rg);
 
 		// Generate SSAO
 		{
@@ -1143,6 +1141,9 @@ namespace DOG::gfx
 		//m_testComputeEffect->Add(rg);
 
 		m_particleBackend->AddEffect(*m_rg);
+
+		m_heartbeatEffect->Add(rg);
+		m_damageDiskEffect->Add(rg);
 
 		if (m_bloomEffect)
 			m_bloomEffect->Add(rg);
