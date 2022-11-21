@@ -109,7 +109,12 @@ namespace DOG
 		u32 assetID = u32(-1);
 		//f32 beginLoop = 0.f; These are not yet implemented
 		//f32 endLoop = 0.f;
-		f32 volume = 2.0f;
+		
+		//Old volume stuff
+		//f32 volume = 2.0f;
+
+		//Range from 0.0f -> 1.0f
+		f32 volume = 1.0f;
 
 		u32 source = u32(-1);
 

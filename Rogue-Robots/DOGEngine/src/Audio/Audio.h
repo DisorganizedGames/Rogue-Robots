@@ -32,6 +32,7 @@ namespace DOG
 		std::mutex m_loopMutex;
 
 		static constexpr u64 CHUNK_SIZE = 1024;
+		static constexpr f32 BASE_VOLUME = 2.0f;
 
 	public:
 		SourceVoice() = delete;
@@ -50,6 +51,7 @@ namespace DOG
 		void PlayAsync();
 		void Stop();
 		void SetVolume(f32 volume);
+		f32 GetVolume();
 
 		void SetOutputMatrix(const std::vector<f32>& matrix, IXAudio2Voice* dest);
 		void SeekTo(f32 seconds);

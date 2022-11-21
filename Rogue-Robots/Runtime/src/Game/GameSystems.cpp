@@ -289,6 +289,38 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 			}
 		}
 	}
+
+	u32 footstepAudio = 0;
+
+	if (changeSound == 0)
+		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep04.wav");
+	else if (changeSound == 1)
+		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep05.wav");
+	else if (changeSound == 2)
+		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep06.wav");
+	else
+		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep09.wav");
+
+	auto& comp = EntityManager::Get().GetComponent<AudioComponent>(e);
+	if (!player.jumping && moveTowards != Vector3::Zero && !comp.playing && timeBeteenTimer < Time::ElapsedTime())
+	{
+		const f32 footstepVolume = 0.1f;
+		const u32 audioFiles = 4;
+
+		comp.volume = footstepVolume;
+		comp.assetID = footstepAudio;
+		comp.is3D = true;
+		comp.shouldPlay = true;
+
+		timeBeteenTimer = timeBetween + (f32)Time::ElapsedTime();
+		srand((unsigned)time(NULL));
+		u32 oldChangeSound = changeSound;
+		changeSound = rand() % audioFiles;
+		if (changeSound == oldChangeSound)
+		{
+			changeSound = ++oldChangeSound % audioFiles;
+		}
+	}
 }
 
 void PlayerMovementSystem::ApplyAnimations(const InputController& input, AnimationComponent& ac)

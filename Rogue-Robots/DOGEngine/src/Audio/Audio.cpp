@@ -72,7 +72,7 @@ void AudioDevice::HandleComponent(AudioComponent& comp, entity e)
 
 		comp.shouldPlay = false;
 		comp.playing = true;
-	}
+	}	
 
 	// Return early if the component has no voice assigned
 	if (comp.source == u32(-1))
@@ -81,6 +81,9 @@ void AudioDevice::HandleComponent(AudioComponent& comp, entity e)
 	}
 
 	auto& source = m_sources[comp.source];
+
+	source->SetVolume(SourceVoice::BASE_VOLUME);
+
 	if (source->Stopped())
 	{
 		comp.playing = false;
@@ -130,6 +133,8 @@ void AudioDevice::HandleComponent(AudioComponent& comp, entity e)
 	{
 		Handle3DComponent(source.get(), e);
 	}
+
+	source->SetVolume(source->GetVolume() * comp.volume);
 }
 
 void AudioDevice::Commit()
@@ -296,6 +301,13 @@ void SourceVoice::Stop()
 void SourceVoice::SetVolume(f32 volume)
 {
 	m_source->SetVolume(volume);
+}
+
+f32 DOG::SourceVoice::GetVolume()
+{
+	float volume;
+	m_source->GetVolume(&volume);
+	return volume;
 }
 
 void SourceVoice::SetOutputMatrix(const std::vector<f32>& matrix, IXAudio2Voice* dest)
