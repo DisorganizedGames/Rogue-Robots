@@ -23,6 +23,9 @@ namespace DOG
 		bool disableDeactivation = false;
 		bool noCollisionResponse = false;
 
+		bool setGravityForRigidbody = false;
+		DirectX::SimpleMath::Vector3 gravityForRigidbody = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 0.0f);
+
 		//Continuous Collision Detection (used for fast moving objects like bullets)
 		bool continuousCollisionDetection = false;
 		float continuousCollisionDetectionMotionThreshold = (float)1e-7;
