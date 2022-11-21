@@ -1,13 +1,16 @@
 #pragma once
 
 #define MAX_PARTICLES_ALIVE (16*1024)
+static const float PI = 3.14159265758979323846f;
+static const float PIDIV2 = PI / 2.f;
 
 /*
-enum class ParticleSpawnType
+enum class ParticleSpawnType : u8
 {
 	Cone = 0,
 	Cylinder = 1,
 	AABB = 2,
+	Default = 255,
 };
 */
 #define PARTICLE_SPAWN_CONE 0

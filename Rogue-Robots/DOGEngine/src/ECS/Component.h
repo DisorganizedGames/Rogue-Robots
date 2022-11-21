@@ -322,10 +322,10 @@ namespace DOG
 	struct CylinderSpawnComponent
 	{
 		f32 radius = 1.f;
-		f32 height = 0.f;
+		f32 height = 1.f;
 	};
 	
-	// Tells particles to spawn in an AABB centered on the entity's transform
+	// Tells particles to spawn in an Axis-aligned Box centered on the entity's transform
 	struct BoxSpawnComponent
 	{
 		f32 x = 1.f;
