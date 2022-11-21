@@ -56,7 +56,7 @@ private:
 	void CheckForPropogationConstrain(uint32_t currentIndex, uint32_t neighborIndex, unsigned dir);
 
 	//Post processing functions.
-	std::string ReplaceBlock(std::string& prevBlock, std::string& currentBlock, std::string& nextBlock, int prevDir, int nextDir, bool prevWasVoid);
+	std::string ReplaceBlock(std::string& prevBlock, std::string& currentBlock, std::string& nextBlock, int prevDir, int nextDir, bool prevWasVoid, bool doorConnected);
 private:
 	uint32_t m_totalCount = 0u; //Total number of blocks read during input.
 	std::unordered_map<std::string, Block> m_blockPossibilities; //The possibilities for each block-id.

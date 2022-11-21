@@ -109,7 +109,7 @@ std::vector<std::pair<uint32_t, int>> AStarRoom(Room& room, uint32_t* start, uin
 			{
 				weight = 10'000;
 			}
-			else if (room.generatedRoom[neighborIndex].find("Door") != std::string::npos)
+			else if (room.generatedRoom[current.index].find("Door") != std::string::npos && room.generatedRoom[neighborIndex] == "Void")
 			{
 				continue;
 			}

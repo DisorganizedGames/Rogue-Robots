@@ -485,6 +485,7 @@ bool WFC::GenerateLevel(uint32_t nrOfRooms, uint32_t maxWidth, uint32_t maxHeigh
 			uint32_t idStart = (roomToUse.globalPos[0]) + (roomToUse.globalPos[1] * m_width) + (roomToUse.globalPos[2] * m_width * m_height);
 			m_generatedLevel[idStart + doorToUse.pos[0] + (doorToUse.pos[1] * m_width) + (doorToUse.pos[2] * m_width * m_height)] = "Exit1_r0_f";
 		}
+		
 		//Connect all the doors.
 		{
 			for (uint32_t i{ 0u }; i < m_generatedRooms.size(); ++i) //Go through all rooms to go through all doors.
@@ -537,6 +538,13 @@ bool WFC::GenerateLevel(uint32_t nrOfRooms, uint32_t maxWidth, uint32_t maxHeigh
 					uint32_t goal[3] = { m_generatedRooms[roomIndex].globalPos[0] + m_generatedRooms[roomIndex].doors[doorIndex].pos[0], m_generatedRooms[roomIndex].globalPos[1] + m_generatedRooms[roomIndex].doors[doorIndex].pos[1], m_generatedRooms[roomIndex].globalPos[2] + m_generatedRooms[roomIndex].doors[doorIndex].pos[2] };
 					std::vector<std::pair<uint32_t, int>> path = AStarLevel(m_width, m_height, m_depth, m_generatedLevel, start, goal);
 
+					//Check if the door is already connected.
+					bool doorConnected = false;
+					if (m_generatedRooms[roomIndex].doors[doorIndex].connected)
+					{
+						doorConnected = true;
+					}
+
 					int prevDir = -1;
 					int nextDir = -1;
 					bool prevWasVoid = false;
@@ -559,7 +567,9 @@ bool WFC::GenerateLevel(uint32_t nrOfRooms, uint32_t maxWidth, uint32_t maxHeigh
 							next = m_generatedLevel[path[i + 1].first];
 						}
 
-						std::string replacer = ReplaceBlock(previous, current, next, prevDir, nextDir, prevWasVoid);
+						
+
+						std::string replacer = ReplaceBlock(previous, current, next, prevDir, nextDir, prevWasVoid, doorConnected);
 						if (m_generatedLevel[path[i].first] == "Void")
 						{
 							prevWasVoid = true;
@@ -942,7 +952,7 @@ bool WFC::GenerateRoom(Room& room)
 									next = room.generatedRoom[path[i + 1].first];
 								}
 
-								std::string replacer = ReplaceBlock(previous, current, next, prevDir, nextDir, prevWasVoid);
+								std::string replacer = ReplaceBlock(previous, current, next, prevDir, nextDir, prevWasVoid, true);
 								if (room.generatedRoom[path[i].first] == "Void")
 								{
 									prevWasVoid = true;
@@ -965,17 +975,17 @@ bool WFC::GenerateRoom(Room& room)
 }
 
 //Here be hardcoded dragons and madness
-std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock, std::string& nextBlock, int prevDir, int nextDir, bool prevWasVoid)
+std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock, std::string& nextBlock, int prevDir, int nextDir, bool prevWasVoid, bool doorConnected)
 {
 	std::string replacer = currentBlock;
-	/*
-	if (currentBlock != "Void" && (prevWasVoid || prevBlock.find("Replacer") != std::string::npos) && nextBlock == "Void")
+	
+	if (currentBlock != "Void" && prevWasVoid)
 	{
 		std::string none = "None";
-		ReplaceBlock(prevBlock, currentBlock, none, prevDir, -1, false);
+		currentBlock = ReplaceBlock(nextBlock, currentBlock, nextBlock, prevDir, nextDir, false, doorConnected);
 	}
-	*/
-	if (currentBlock == "Void" || nextBlock == "Void" || prevWasVoid || nextBlock.find("Door") != std::string::npos)
+	
+	if (currentBlock == "Void" || nextBlock == "Void" || prevWasVoid || (nextBlock.find("Door") != std::string::npos && !doorConnected))
 	{
 		if (currentBlock == "Void")
 		{
@@ -1124,6 +1134,7 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 		}
 		else //This is the block before or after the void.
 		{
+			std::string oldReplacer = replacer;
 			int dirToUse;
 			if (prevWasVoid)
 			{
@@ -1929,6 +1940,10 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 						{
 							replacer = "4UpConnector_r3_f";
 						}
+						else
+						{
+							std::cout << "What" << std::endl;
+						}
 						break;
 					}
 					case 1:
@@ -1940,6 +1955,10 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 						else if (dirToUse == 5)
 						{
 							replacer = "4UpConnector_r3_f";
+						}
+						else
+						{
+							std::cout << "What" << std::endl;
 						}
 						break;
 					}
@@ -1953,6 +1972,10 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 						{
 							replacer = "4UpConnector_r1_f";
 						}
+						else
+						{
+							std::cout << "What" << std::endl;
+						}
 						break;
 					}
 					case 3:
@@ -1964,6 +1987,10 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 						else if (dirToUse == 4)
 						{
 							replacer = "4UpConnector_r1_f";
+						}
+						else
+						{
+							std::cout << "What" << std::endl;
 						}
 						break;
 					}
@@ -2144,11 +2171,11 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 			{
 				if (dirToUse == 2)
 				{
-					replacer = "5NoUpConnector_" + rotation + "_f";
+					replacer = "5NoDownConnector_" + rotation + "_f";
 				}
 				else if (dirToUse == 3)
 				{
-					replacer = "5NoDownConnector_" + rotation + "_f";
+					replacer = "5NoUpConnector_" + rotation + "_f";
 				}
 			}
 			//add 6-connection tunnel, if 5-connection tunnel.
@@ -2156,23 +2183,23 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 			{
 				replacer = "3DCrossConnector_" + rotation + "_f";
 			}
-		}
 
-		if (replacer == currentBlock && nextBlock.find("Door") == std::string::npos && currentBlock.find("Door") == std::string::npos)
-		{
-			std::cout << "Should not happen: " << replacer << std::endl;;
+			if (replacer == oldReplacer)
+			{
+				std::cout << "Did not get replaced:" << replacer << std::endl;
+			}
 		}
 	}
 	if (replacer == "Void") //Temporary
 	{
 		replacer = "Cube_r0_f";
 	}
-
+	/*
 	if (prevWasVoid && nextBlock != "None")
 	{
-		replacer = ReplaceBlock(prevBlock, replacer, nextBlock, prevDir, nextDir, false);
+		replacer = ReplaceBlock(prevBlock, replacer, nextBlock, prevDir, nextDir, false, true);
 	}
-
+	*/
 	return replacer;
 }
 
