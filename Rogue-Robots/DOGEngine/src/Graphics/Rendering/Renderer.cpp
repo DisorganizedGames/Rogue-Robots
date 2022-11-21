@@ -578,7 +578,7 @@ namespace DOG::gfx
 			m_globalEffectData.perFrameTableOffset = &m_currPfDescriptor;
 		}
 
-
+		PostProcess::Get().SetViewMat(m_pfData.viewMatrix);
 
 
 

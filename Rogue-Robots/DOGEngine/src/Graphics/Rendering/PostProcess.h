@@ -12,7 +12,7 @@ namespace DOG::gfx
 	public:
 		struct DamageDiskData
 		{
-			DirectX::SimpleMath::Vector2 dir2D;
+			DirectX::SimpleMath::Vector2 dir2D, initDir2D;
 
 			// Interpolate from startIntensity --> 0 over 'timeToDisappear'
 			f32 startIntensity{ 0.f };
@@ -43,6 +43,8 @@ namespace DOG::gfx
 		static void Destroy();
 		static PostProcess& Get();
 
+		void SetViewMat(const DirectX::SimpleMath::Matrix& viewMat);
+
 		// Damage bow
 		void InstantiateDamageDisk(const DirectX::SimpleMath::Vector2& dir, f32 startIntensity, f32 timeToDisappear);
 
@@ -52,6 +54,7 @@ namespace DOG::gfx
 	private:
 		f32 m_elapsedTime{ 0.f };
 		static PostProcess* s_instance;
+		DirectX::SimpleMath::Matrix m_viewMat;
 
 	};
 }
