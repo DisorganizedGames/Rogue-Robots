@@ -179,7 +179,7 @@ public:
 	void OnUpdate(PickupComponent& pc, EligibleForPickupComponent& efpg)
 	{
 		//Do not render other players' eligible pickup item names.
-		if (efpg.player != DOG::GetPlayer())
+		if (efpg.player != GetPlayer())
 			return;
 
 		ImVec2 size;
