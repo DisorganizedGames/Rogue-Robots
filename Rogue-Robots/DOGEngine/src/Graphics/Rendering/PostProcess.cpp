@@ -51,8 +51,18 @@ namespace DOG::gfx
 			f32 targetIntensity = std::clamp(ddd.startIntensity - 0.5f, 0.f, 1.f);
 			ddd.currIntensity = ddd.startIntensity * (1.f - normalizedTime) + targetIntensity * normalizedTime;
 			ddd.visibility = 1.f - normalizedTime;
+
+			auto vec4 = DirectX::SimpleMath::Vector4(ddd.initDir2D.x, 0.f, ddd.initDir2D.y, 0.f);
+			auto rotated = vec4.Transform(vec4, m_viewMat);
+			ddd.dir2D = { rotated.x, rotated.z };
 		}
 	}
+
+	void PostProcess::SetViewMat(const DirectX::SimpleMath::Matrix& viewMat)
+	{
+		m_viewMat = viewMat;
+	}
+
 
 	void PostProcess::InstantiateDamageDisk(const DirectX::SimpleMath::Vector2& dir, f32 startIntensity, f32 timeToDisappear)
 	{
@@ -60,6 +70,7 @@ namespace DOG::gfx
 
 		ddd.currElapsed = m_elapsedTime;
 		ddd.dir2D = dir;
+		ddd.initDir2D = dir;
 		ddd.timeDelta = timeToDisappear;
 		ddd.startIntensity = startIntensity;
 		ddd.visibility = 1.f;
