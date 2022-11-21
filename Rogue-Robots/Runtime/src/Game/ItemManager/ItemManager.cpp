@@ -349,7 +349,7 @@ u32 ItemManager::CreateHealthPickup(DirectX::SimpleMath::Vector3 position, u32 i
 	u32 healthBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Health.glb");
 
 	entity healthBoostEntity = s_entityManager.CreateEntity();
-	s_entityManager.AddComponent<PassiveItemComponent>(healthBoostEntity).type = PassiveItemComponent::Type::Health;
+	s_entityManager.AddComponent<PassiveItemComponent>(healthBoostEntity).type = PassiveItemComponent::Type::Template;
 	s_entityManager.AddComponent<PickupComponent>(healthBoostEntity).itemName = "Heal";
 	s_entityManager.AddComponent<ModelComponent>(healthBoostEntity, healthBoostID);
 	s_entityManager.AddComponent<TransformComponent>(healthBoostEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
