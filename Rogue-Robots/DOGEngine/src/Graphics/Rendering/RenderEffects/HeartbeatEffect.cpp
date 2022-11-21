@@ -62,8 +62,12 @@ namespace DOG::gfx
 				rd->Cmd_SetViewports(cmdl, m_globalEffectData.defRenderVPs);
 				rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.defRenderScissors);
 
-				// SetPipeline
-				// Draw
+				f32 effect = PostProcess::Get().GetHeartbeatIntensity();
+				rd->Cmd_SetPipeline(cmdl, m_pipe);
+				UINT effect32Packed = *(UINT*)&effect;
+				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics,
+					ShaderArgs().AppendConstant(effect32Packed));
+				rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
 			});
 	}
 }

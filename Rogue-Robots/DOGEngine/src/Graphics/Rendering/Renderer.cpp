@@ -331,6 +331,7 @@ namespace DOG::gfx
 		m_tiledLightCuller = std::make_unique<TiledLightCullingEffect>(m_rgResMan.get(), m_globalEffectData, m_renderWidth, m_renderHeight);
 		m_tiledLightCullerVisualization = std::make_unique<TiledLightCullingVisualizationEffect>(m_rgResMan.get(), m_globalEffectData, m_renderWidth, m_renderHeight);
 
+		m_heartbeatEffect = std::make_unique<HeartbeatEffect>(m_globalEffectData);
 		m_damageDiskEffect = std::make_unique<DamageDiskEffect>(m_globalEffectData);
 	
 		{
@@ -393,7 +394,6 @@ namespace DOG::gfx
 
 		m_rgResMan->ImportTexture(RG_RESOURCE(NoiseSSAO), m_ssaoNoise, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
 		m_rgResMan->ImportBuffer(RG_RESOURCE(SamplesSSAO), m_ssaoSamples, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
-
 	}
 
 	Renderer::~Renderer()
@@ -975,6 +975,7 @@ namespace DOG::gfx
 				});
 		}
 
+		m_heartbeatEffect->Add(rg);
 		m_damageDiskEffect->Add(rg);
 
 		// Generate SSAO
