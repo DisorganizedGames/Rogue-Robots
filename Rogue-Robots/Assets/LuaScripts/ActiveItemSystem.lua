@@ -18,7 +18,7 @@ function OnUpdate()
 	end
 
 	if Entity:GetAction(EntityID, "ActivateActiveItem") and activeItem then
-		if clicked == false and not activeEntityCreated then
+		if clicked == false then
 			activeEntityCreated = activeItem:activate(EntityID)
 			activeItem = nil
 			Entity:RemoveComponent(EntityID, "ActiveItem")
