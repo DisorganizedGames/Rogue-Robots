@@ -339,7 +339,7 @@ struct LaserBeamComponent
 struct LaserBarrelComponent
 {
 	bool shoot = false;
-	f32 ammo = 120; // This value is how time in seconds you can shoot.
-	f32 damagePerSecond;
+	f32 ammo = 30.0f; // This value is time in seconds you can shoot.
+	f32 damagePerSecond = 240.0f;
 	LaserBeamComponent laserToShoot;
 };

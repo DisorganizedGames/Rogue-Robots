@@ -610,8 +610,8 @@ public:
 
 	ON_UPDATE_ID(LaserBarrelComponent);
 	void OnUpdate(DOG::entity e, LaserBarrelComponent& barrel);
-	ON_LATE_UPDATE_ID(LaserBarrelComponent, DOG::DeferredDeletionComponent);
-	void OnLateUpdate(DOG::entity e, LaserBarrelComponent&, DOG::DeferredDeletionComponent&);
+	ON_LATE_UPDATE_ID(LaserBarrelComponent);
+	void OnLateUpdate(DOG::entity e, LaserBarrelComponent&);
 };
 
 
@@ -619,9 +619,9 @@ class LaserBeamSystem : public DOG::ISystem
 {
 public:
 	SYSTEM_CLASS(LaserBeamComponent, LaserBeamVFXComponent);
-	ON_UPDATE(LaserBeamComponent, LaserBeamVFXComponent);
+	ON_UPDATE_ID(LaserBeamComponent, LaserBeamVFXComponent);
 
-	void OnUpdate(LaserBeamComponent& laserBeam, LaserBeamVFXComponent& laserBeamVfx);
+	void OnUpdate(DOG::entity e, LaserBeamComponent& laserBeam, LaserBeamVFXComponent& laserBeamVfx);
 };
 
 

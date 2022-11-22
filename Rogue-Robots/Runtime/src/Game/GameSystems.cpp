@@ -985,17 +985,27 @@ void LaserShootSystem::OnUpdate(entity e, LaserBarrelComponent& barrel)
 	}
 }
 
-void LaserShootSystem::OnLateUpdate(DOG::entity e, LaserBarrelComponent&, DOG::DeferredDeletionComponent&)
+void LaserShootSystem::OnLateUpdate(DOG::entity e, LaserBarrelComponent&)
 {
-	EntityManager::Get().RemoveComponentIfExists<LaserBeamComponent>(e);
-	EntityManager::Get().RemoveComponentIfExists<LaserBeamVFXComponent>(e);
+	if (EntityManager::Get().HasComponent<DOG::DeferredDeletionComponent>(e))
+	{
+		EntityManager::Get().RemoveComponentIfExists<LaserBeamComponent>(e);
+		EntityManager::Get().RemoveComponentIfExists<LaserBeamVFXComponent>(e);
+	}
 }
 
-void LaserBeamSystem::OnUpdate(LaserBeamComponent& laserBeam, LaserBeamVFXComponent& laserBeamVfx)
+void LaserBeamSystem::OnUpdate(entity e, LaserBeamComponent& laserBeam, LaserBeamVFXComponent& laserBeamVfx)
 {
 	Vector3 target = laserBeam.startPos + laserBeam.maxRange * laserBeam.direction;
 	if (auto hit = PhysicsEngine::RayCast(laserBeam.startPos, target); hit)
+	{
 		target = hit->hitPosition;
+
+		if (EntityManager::Get().Exists(hit->entityHit) && EntityManager::Get().HasComponent<AgentIdComponent>(hit->entityHit))
+		{
+			EntityManager::Get().AddOrGetComponent<AgentHitComponent>(hit->entityHit).HitBy(e, laserBeam.owningPlayer, laserBeam.damage);
+		}
+	}
 
 	laserBeamVfx.startPos = laserBeam.startPos;
 	laserBeamVfx.endPos = target;
