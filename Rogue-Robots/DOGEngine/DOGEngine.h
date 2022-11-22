@@ -10,6 +10,7 @@
 #include "src/Core/AnimationManager.h"
 #include "src/Core/ImGuiMenuLayer.h"
 #include "src/Core/CoreUtils.h"
+#include "src/Core/SimpleModelCreator.h"
 
 #include "src/Input/Keyboard.h"
 #include "src/Input/Mouse.h"

@@ -71,6 +71,7 @@ set(SourceFiles
 	"src/Graphics/Rendering/RenderEffects/HeartbeatEffect.h" "src/Graphics/Rendering/RenderEffects/HeartbeatEffect.cpp"
 	"src/Graphics/Rendering/RenderEffects/LaserEffect.h" "src/Graphics/Rendering/RenderEffects/LaserEffect.cpp"
 	"src/ECS/EntityTypedef.h"
+	"src/Core/SimpleModelCreator.h" "src/Core/SimpleModelCreator.cpp"
 	)
 
 file(GLOB_RECURSE TempGraphics "src/Graphics/*.cpp")
