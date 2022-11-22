@@ -209,3 +209,33 @@ entity SpawnTurretProjectile(const DirectX::SimpleMath::Matrix& transform, float
 
 	return p;
 }
+
+DOG::entity SpawnLaserBlob(const DOG::TransformComponent& transform, DOG::entity owner) noexcept
+{
+	auto& em = EntityManager::Get();
+	
+
+	static std::optional<SubmeshRenderer> laserModel = std::nullopt;
+	if (!laserModel)
+	{
+		MaterialDesc matDesc;
+		matDesc.emissiveFactor = 6 * Vector4(1.5f, 0.1f, 0.1f, 0);
+		matDesc.albedoFactor = { 0.5f, 0, 0, 1 };
+		TransformComponent matrix;
+		matrix.RotateW({ XM_PIDIV2, 0, 0 }).SetScale(Vector3(0.08f, 0.6f, 0.08f));
+		laserModel = CreateSimpleModel(matDesc, ShapeCreator(Shape::prism, 16, 8).GetResult()->mesh, matrix);
+	}
+
+	entity laser = em.CreateEntity();
+	em.AddComponent<TransformComponent>(laser) = transform;
+	em.AddComponent<SubmeshRenderer>(laser) = *laserModel;
+
+	if (em.Exists(owner))
+	{
+		if (auto scene = em.TryGetComponent<SceneComponent>(owner); scene) em.AddComponent<SceneComponent>(laser, scene->get().scene);
+	}
+
+
+
+	return laser;
+}
