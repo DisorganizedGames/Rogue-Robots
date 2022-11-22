@@ -296,7 +296,6 @@ void Server::ServerPollTCP()
 								
 								CreateAndDestroyEntityComponent test;
 								memcpy(&test, reciveBuffer + bufferReciveSize, sizeof(CreateAndDestroyEntityComponent));
-								std::cout << (int)holdClientsData.playerId;
 								createAndDestroy.push_back(test);
 								bufferReciveSize += sizeof(CreateAndDestroyEntityComponent);
 							}
