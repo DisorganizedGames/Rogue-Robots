@@ -2,6 +2,7 @@
 #include <DOGEngine.h>
 #include "../Game/GameLayer.h"
 #include "../Game/EmilFDebugLayer.h"
+#include "../Pathfinder/PathfinderDebugLayer.h"
 #include "../../../DOGEngine/src/Graphics/Rendering/UI.h"
 class RuntimeApplication : public DOG::Application
 {
@@ -19,4 +20,5 @@ private:
 	GameLayer m_gameLayer;
 	DOG::ImGuiMenuLayer m_imGuiMenuLayer;
 	//EmilFDebugLayer m_EmilFDebugLayer;
+	//PathfinderDebugLayer m_PathfinderDebugLayer;
 };

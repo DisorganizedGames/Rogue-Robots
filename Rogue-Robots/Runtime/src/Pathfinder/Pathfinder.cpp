@@ -1,7 +1,9 @@
 #include "Pathfinder.h"
 #include <limits>
 #include <unordered_map>
+#include "Game/PcgLevelLoader.h"
 
+using namespace DOG;
 using namespace DirectX::SimpleMath;
 
 Pathfinder Pathfinder::s_instance;
@@ -110,9 +112,73 @@ Pathfinder::Pathfinder() noexcept
 //	}
 //};
 
+void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
+{
+	constexpr unsigned char solidBlock = 178;
+	constexpr unsigned char emptySpace = 176;
+
+	constexpr float blockDim = pcgBlock::DIMENSION;
+
+	std::vector<std::vector<std::vector<char>>> map;
+	std::cout << "Scene type: " << (int)sceneType << std::endl;
+	EntityManager& em = EntityManager::Get();
+
+	em.Collect<ModularBlockComponent, TransformComponent>().Do(
+		[&](entity e, ModularBlockComponent&, TransformComponent& trans)
+		{		
+			// find x, y and z coordinates
+			Vector3 pos = trans.GetPosition();
+			size_t x = static_cast<size_t>(pos.x / blockDim);
+			size_t y = static_cast<size_t>(pos.y / blockDim);
+			size_t z = static_cast<size_t>(pos.z / blockDim);
+
+			// expand map if necessary
+			while (!(z < map.size()))
+				map.emplace_back(std::vector<std::vector<char>>());
+			while (!(y < map[z].size()))
+				map[z].emplace_back(std::vector<char>());
+			while (!(x < map[z][y].size()))
+				map[z][y].emplace_back(' ');
+
+			// draw block
+			map[z][y][x] = solidBlock;
+		});
+
+	em.Collect<EmptySpaceComponent>().Do(
+		[&](entity e, EmptySpaceComponent& empty)
+		{
+			// find x, y and z coordinates (empty spaces are always contained inside solid blocks)
+			size_t x = static_cast<size_t>(empty.pos.x / blockDim);
+			size_t y = static_cast<size_t>(empty.pos.y / blockDim);
+			size_t z = static_cast<size_t>(empty.pos.z / blockDim);
+
+			// draw empty space
+			map[z][y][x] = emptySpace;
+		}
+	);
+
+	// print map sliced in z-levels
+	for (size_t z = 0; z < map.size(); ++z)
+	{
+		std::cout << "==================================================" << std::endl;
+		std::cout << "                   Level " << z << std::endl;
+		std::cout << "==================================================" << std::endl << std::endl;
+		for (size_t y = 0; y < map[z].size(); ++y)
+		{
+			std::cout << "   ";
+			for (size_t x = 0; x < map[z][y].size(); ++x)
+			{
+				std::cout << map[z][y][x];
+			}
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+	}
+}
+
 void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord origin, char symbol, PortalID currentNode)
 {
-	constexpr char printif = 'e';
+	//constexpr char printif = 'e';
 	size_t gridSizeX = map[0].size();
 	size_t gridSizeY = map.size();
 	//std::cout << "***********************************************************" << std::endl;

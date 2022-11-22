@@ -3,6 +3,7 @@ set(SourceFiles
 	"src/Core/RuntimeApplication.cpp" "src/Core/RuntimeApplication.h"
 	"src/Game/GameLayer.h" "src/Game/GameLayer.cpp" 
 	"src/Game/EmilFDebugLayer.h" "src/Game/EmilFDebugLayer.cpp"
+	"src/Pathfinder/PathfinderDebugLayer.h" "src/Pathfinder/PathfinderDebugLayer.cpp"
 
 	"src/Game/LuaInterfaces.h" "src/Game/LuaInterfaces.cpp"
 	"src/Game/EntitesTypes.h"
@@ -35,6 +36,7 @@ set(SourceFiles
 	"src/Pathfinder/Portal.h" "src/Pathfinder/Portal.cpp"
 	"src/Pathfinder/GridCoord.h" "src/Pathfinder/GridCoord.cpp"
 	"src/Pathfinder/Box.h" "src/Pathfinder/Box.cpp"
+	"src/Pathfinder/PathfinderComponents.h"
 
 	"src/Game/AnimationIDs.h"
 	"src/Game/PlayerEquipmentFunctions.h" "src/Game/PlayerEquipmentFunctions.cpp"

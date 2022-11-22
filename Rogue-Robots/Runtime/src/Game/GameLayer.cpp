@@ -217,6 +217,9 @@ void GameLayer::StartMainScene()
 	if (s_networkStatus != NetworkStatus::Offline)
 		m_netCode.OnStartup();
 	m_gameState = GameState::Playing;
+
+	
+	Pathfinder::Get().BuildNavScene(m_mainScene->GetSceneType());
 }
 
 void GameLayer::CloseMainScene()

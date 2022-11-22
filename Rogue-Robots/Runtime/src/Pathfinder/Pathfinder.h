@@ -2,6 +2,7 @@
 #include <DOGEngine.h>
 #include "NavMesh.h"
 #include "Portal.h"
+#include "../Game/GameComponent.h"
 
 class Pathfinder
 {
@@ -12,8 +13,10 @@ public:
 
 	static constexpr size_t MAX_ID = size_t(-1);
 
-	// Methods
+	// public methods
 	[[nodiscard]] static constexpr Pathfinder& Get() noexcept { return s_instance; }
+
+	void BuildNavScene(SceneComponent::Type sceneType);
 
 private:
 	static Pathfinder s_instance;

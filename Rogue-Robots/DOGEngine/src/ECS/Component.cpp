@@ -138,6 +138,14 @@ namespace DOG
 
 		return *this;
 	}
+}
+}
+
+BoundingBoxComponent::BoundingBoxComponent(DirectX::SimpleMath::Vector3 center, DirectX::SimpleMath::Vector3 extents)
+{
+	aabb.Center = DirectX::XMFLOAT3{ center.x, center.y, center.z };
+	aabb.Extents = DirectX::XMFLOAT3{ extents.x, extents.y, extents.z };
+}
 	void AnimationComponent::SimpleAdd(i8 animationId, AnimationFlag flags)
 	{
 		auto& setter = animSetters[addedSetters++];
