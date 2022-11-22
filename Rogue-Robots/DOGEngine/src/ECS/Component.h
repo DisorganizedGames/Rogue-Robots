@@ -1,12 +1,9 @@
 #pragma once
 #include "../Core/Types/GraphicsTypes.h"
+#include "EntityTypedef.h"
 
 namespace DOG
 {
-	constexpr const u32 MAX_ENTITIES = 10'000u;
-	constexpr const u32 NULL_ENTITY = MAX_ENTITIES;
-	typedef u32 entity;
-
 	enum class BlendMode
 	{
 		normal,

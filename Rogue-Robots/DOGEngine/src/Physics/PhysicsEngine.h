@@ -1,5 +1,6 @@
 #pragma once
 #include "../Graphics/Handles/HandleAllocator.h"
+#include "../ECS/EntityTypedef.h"
 
 class btDefaultCollisionConfiguration;
 class btCollisionDispatcher;
@@ -16,8 +17,6 @@ namespace DOG
 {
 	struct RigidbodyComponent;
 	class PhysicsRigidbody;
-
-	typedef u32 entity;
 
 	struct RigidbodyHandle
 	{
@@ -125,6 +124,7 @@ namespace DOG
 	{
 		DirectX::SimpleMath::Vector3 hitPosition;
 		DirectX::SimpleMath::Vector3 hitNormal;
+		DOG::entity entityHit = DOG::NULL_ENTITY;
 	};
 
 	class PhysicsEngine

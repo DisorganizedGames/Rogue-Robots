@@ -416,8 +416,15 @@ namespace DOG
 		s_physicsEngine.m_dynamicsWorld->rayTest(o, t, callback);
 		if (callback.hasHit())
 		{
-			return std::make_optional<RayCastResult>({ Vector3(callback.m_hitPointWorld.x(), callback.m_hitPointWorld.y(), callback.m_hitPointWorld.z()),
+
+			auto result = std::make_optional<RayCastResult>({ Vector3(callback.m_hitPointWorld.x(), callback.m_hitPointWorld.y(), callback.m_hitPointWorld.z()),
 				Vector3(callback.m_hitNormalWorld.x(), callback.m_hitNormalWorld.y(), callback.m_hitNormalWorld.z()) });
+
+			const u32 byteShift = 4;
+			u64 obj0RigidbodyHandle = (callback.m_collisionObject->getUserIndex2() << byteShift) | callback.m_collisionObject->getUserIndex();
+			result->entityHit = PhysicsEngine::s_physicsEngine.GetRigidbodyColliderData((RigidbodyHandle)obj0RigidbodyHandle)->rigidbodyEntity;
+
+			return result;
 		}
 		return std::nullopt;
 	}
