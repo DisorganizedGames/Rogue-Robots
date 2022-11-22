@@ -1,6 +1,8 @@
 #pragma once
 #include <time.h>
 #include <functional>
+#include <string>
+#include <wincodec.h>
 #include "../RHI/DX12/D2DBackend_DX12.h"
 #include "../RHI/RenderDevice.h"
 #include "../../EventSystem/IEvent.h"
@@ -110,17 +112,13 @@ namespace DOG
       UIScene(UINT id);
       ~UIScene() = default;
       UINT GetID();
-      
+      void OnEvent(IEvent& event);
       std::vector<std::unique_ptr<UIElement>>& GetScene();
       private:
       std::vector<std::unique_ptr<UIElement>> m_scene;
       UINT m_ID;
 
    };
-
-   //UIScene ärver från Layuer
-   //UIscene tar emot events med onEvent
-   //UI scene sckickar eventet till alla ui elements som har en gemensam funktion som tar emot events.
    
 
    class UIButton : public UIElement
@@ -212,7 +210,6 @@ namespace DOG
          UITextField(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height);
          ~UITextField();
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
-         //void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void OnEvent(IEvent& event) override final;
          std::wstring GetText();
       private:
@@ -222,6 +219,25 @@ namespace DOG
          ComPtr<ID2D1SolidColorBrush> m_backBrush, m_borderBrush, m_textBrush;
          std::wstring m_text;
          std::wstring m_displayText;
+         void IncrementCursor();
+   };
+
+   class UIBuffTracker : public UIElement
+   {
+      public:
+         UIBuffTracker(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector<std::wstring> filePaths);
+         ~UIBuffTracker();
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void ActivateIcon(UINT index);
+         void DeactivateIcon(UINT index);
+      private:
+         void AnimateUp(UINT index);std::vector<bool> m_animate;
+         std::vector<float> m_opacity;
+         std::vector<ComPtr<ID2D1Bitmap>> m_bitmaps;
+         std::vector<D2D1_RECT_F> m_rects;
+         ComPtr<ID2D1SolidColorBrush> m_borderBrush;
+         UINT m_buffs;  
    };
 
 }

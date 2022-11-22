@@ -1,7 +1,7 @@
 #include "UI.h"
+#include "../../Core/Time.h"
 #include "../../Input/Mouse.h"
 #include "../../Input/Keyboard.h"
-//#include "../../EventSystem/IEvent.h"
 #include "../../EventSystem/KeyboardEvents.h"
 #include "../../EventSystem/MouseEvents.h"
 
@@ -12,6 +12,10 @@ UINT menuID, gameID, optionsID, multiID;
 UINT menuBackID, optionsBackID, multiBackID;
 UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID;
 UINT cID, tID, hID;
+
+
+std::vector<bool> buffsVisible;
+
 
 void PlayButtonFunc(void)
 {
@@ -229,6 +233,13 @@ UINT DOG::UIScene::GetID()
    return m_ID;
 }
 
+void DOG::UIScene::OnEvent(IEvent& event)
+{
+   for (auto&& e : m_scene)
+      e->OnEvent(event);
+
+}
+
 std::vector<std::unique_ptr<DOG::UIElement>>& DOG::UIScene::GetScene()
 {
    return m_scene;
@@ -266,7 +277,7 @@ DOG::UIButton::UIButton(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float 
    this->m_size = D2D1::Vector2F(width, height);
    m_textRect = D2D1::RectF(x, y, x + width, y + height);
    this->m_text = text;
-   HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(r,g,b, 1.0f), &m_brush);
+   HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(r, g, b, 1.0f), &m_brush);
    HR_VFY(hr);
    hr = d2d.GetDWriteFactory()->CreateTextFormat(
       L"Robot Radicals",
@@ -653,6 +664,134 @@ std::wstring DOG::UITextField::GetText()
    return m_text;
 }
 
+DOG::UIBuffTracker::UIBuffTracker(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector<std::wstring> filePaths) : UIElement(id)
+{
+   UNREFERENCED_PARAMETER(d2d);
+   ComPtr<IWICBitmapDecoder> m_decoder;
+   ComPtr<IWICImagingFactory> m_imagingFactory;
+   ComPtr<IWICBitmapFrameDecode> m_frame;
+   ComPtr<IWICFormatConverter> m_converter;
+   m_buffs = 0;
+   HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (LPVOID*)m_imagingFactory.GetAddressOf());
+   HR_VFY(hr);
+   auto rect = D2D1::RectF(50.f, 50.f, 100.f, 100.f);
+   for (auto&& path : filePaths)
+   {
+      hr = m_imagingFactory->CreateDecoderFromFilename(
+         path.c_str(),                            // Image to be decoded
+         NULL,                            // Do not prefer a particular vendor
+         GENERIC_READ,                    // Desired read access to the file
+         WICDecodeMetadataCacheOnDemand,  // Cache metadata when needed
+         m_decoder.GetAddressOf()                        // Pointer to the decoder
+      );
+      HR_VFY(hr);
+      hr = m_decoder->GetFrame(0, m_frame.GetAddressOf());
+      HR_VFY(hr);
+      hr = m_imagingFactory->CreateFormatConverter(m_converter.GetAddressOf());
+      HR_VFY(hr);
+      hr = m_converter->Initialize(
+         m_frame.Get(),                   // Input bitmap to convert
+         GUID_WICPixelFormat32bppPBGRA,   // Destination pixel format
+         WICBitmapDitherTypeNone,         // Specified dither pattern
+         NULL,                            // Specify a particular palette
+         0.f,                             // Alpha threshold
+         WICBitmapPaletteTypeCustom       // Palette translation type
+      );
+      HR_VFY(hr);
+      ComPtr<ID2D1Bitmap> bitmap;
+      hr = d2d.Get2DDeviceContext()->CreateBitmapFromWicBitmap(m_converter.Get(), NULL, bitmap.GetAddressOf());
+      HR_VFY(hr);
+      m_bitmaps.push_back(bitmap);
+      m_rects.push_back(rect);
+      rect.left += 60.f;
+      rect.right += 60.f;
+      buffsVisible.push_back(false);
+      m_animate.push_back(false);
+      m_opacity.push_back(1.0f);
+      m_buffs++;
+   }
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), m_borderBrush.GetAddressOf());
+   HR_VFY(hr);
+}
+
+void DOG::UIBuffTracker::Draw(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   for (size_t i = 0; i < m_buffs; i++)
+   {
+      if (buffsVisible[i])
+      {
+         d2d.Get2DDeviceContext()->DrawBitmap(m_bitmaps[i].Get(), m_rects[i], m_opacity[i]);
+         d2d.Get2DDeviceContext()->DrawRectangle(m_rects[i], m_borderBrush.Get());
+      }
+   }
+
+}
+void DOG::UIBuffTracker::Update(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   UNREFERENCED_PARAMETER(d2d);
+   if (DOG::Keyboard::IsKeyPressed(DOG::Key::G))
+      ActivateIcon(0u);
+   if (DOG::Keyboard::IsKeyPressed(DOG::Key::H))
+      ActivateIcon(1u);
+
+   if (DOG::Keyboard::IsKeyPressed(DOG::Key::J))
+      DeactivateIcon(0u);
+   if (DOG::Keyboard::IsKeyPressed(DOG::Key::K))
+      DeactivateIcon(1u);
+   for (UINT i = 0; i < m_buffs; i++)
+   {
+      if (m_animate[i])
+      {
+         AnimateUp(i);
+      }
+   }
+
+}
+
+DOG::UIBuffTracker::~UIBuffTracker()
+{
+   
+}
+
+void DOG::UIBuffTracker::AnimateUp(UINT index)
+{
+   if (m_rects[index].top >= 50.f)
+   {
+      m_rects[index].top -= 100.0f * (float)DOG::Time::DeltaTime();
+      m_rects[index].bottom -= 100.0f * (float)DOG::Time::DeltaTime();
+   }
+   if (m_opacity[index] <= 1.f)
+      m_opacity[index] += 6.0f * (float)DOG::Time::DeltaTime();
+
+   if (m_rects[index].top <= 50.f and m_opacity[index] >= 1.0f)
+      m_animate[index] = false;
+}
+
+void DOG::UIBuffTracker::ActivateIcon(UINT index)
+{
+   if(buffsVisible[index])
+      return;
+   buffsVisible[index] = true;
+   size_t activeBuffs = std::count(buffsVisible.begin(), buffsVisible.end(), true);
+   float x = 50.f + 60.f * activeBuffs;
+   float y = 50.f + 30.f;
+   m_rects[index] = D2D1::RectF(x, y, x + 50.f, y + 50.f);
+   m_opacity[index] = 0.01f;
+   m_animate[index] = true;
+}
+
+void DOG::UIBuffTracker::DeactivateIcon(UINT index)
+{
+   buffsVisible[index] = false;
+   for (size_t i = 0; i < m_buffs; i++)
+   {
+      if (m_rects[i].left > m_rects[index].left)
+      {
+         m_rects[i].left -= 60.f;
+         m_rects[i].right -= 60.f;
+      }
+   }
+}
 
 void UIRebuild(UINT clientHeight, UINT clientWidth)
 {
@@ -668,7 +807,6 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
 
    //Menu backgrounds
-
    auto menuBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Rogue Robots"));
    instance->AddUIElementToScene(menuID, std::move(menuBack));
    auto optionsBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(optionsBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Options"));
@@ -680,15 +818,23 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(multiID, std::move(t));
 
    //Menu buttons
-   auto bp = instance->Create<DOG::UIButton, float, float, float, float, float,float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f,0.0f,1.0f,0.0f, std::wstring(L"Play"), std::function<void()>(PlayButtonFunc));
-   auto bm = instance->Create<DOG::UIButton, float, float, float, float, float,float, float, float, std::wstring>(bmID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 150.f, 60.f, 20.f,1.0f,1.0f,1.0f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
-   auto bo = instance->Create<DOG::UIButton, float, float, float, float, float,float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f,1.0f,1.0f,1.0f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
-   auto be = instance->Create<DOG::UIButton, float, float, float, float, float,float, float, float, std::wstring>(beID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f,1.0f,1.0f,1.0f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
-   auto optback = instance->Create<DOG::UIButton, float, float, float, float, float,float, float, float, std::wstring>(optbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f,1.0f,1.0f,1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
-   auto mulback = instance->Create<DOG::UIButton, float, float, float, float, float,float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f,1.0f,1.0f,1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
+   auto bp = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Play"), std::function<void()>(PlayButtonFunc));
+   auto bm = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bmID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
+   auto bo = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
+   auto be = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(beID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
+   auto optback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(optbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
+   auto mulback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
 
-   auto bh = instance->Create<DOG::UIButton, float, float, float, float, float,float, float, float, std::wstring>(bhID, (FLOAT)clientWidth / 2.f - 75.f - 100.f, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f,1.0f,1.0f,1.0f, std::wstring(L"Host"), std::function<void()>(ToMenuButtonFunc));
-   auto bj = instance->Create<DOG::UIButton, float, float, float, float, float,float, float, float, std::wstring>(bjID, (FLOAT)clientWidth / 2.f - 75.f + 100.f, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f,1.0f,1.0f,1.0f, std::wstring(L"Join"), std::function<void()>(ToMenuButtonFunc));
+   auto bh = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bhID, (FLOAT)clientWidth / 2.f - 75.f - 100.f, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Host"), std::function<void()>(ToMenuButtonFunc));
+   auto bj = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bjID, (FLOAT)clientWidth / 2.f - 75.f + 100.f, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Join"), std::function<void()>(ToMenuButtonFunc));
+
+   std::vector<std::wstring> vec;
+   vec.push_back(L"Assets/Sprites/test.bmp");
+   vec.push_back(L"Assets/Sprites/test2.bmp");
+   UINT picID;
+   auto pic = instance->Create<DOG::UIBuffTracker, std::vector<std::wstring>>(picID, vec);
+   instance->AddUIElementToScene(gameID, std::move(pic));
+
    instance->AddUIElementToScene(menuID, std::move(bp));
    instance->AddUIElementToScene(menuID, std::move(bm));
    instance->AddUIElementToScene(menuID, std::move(bo));
