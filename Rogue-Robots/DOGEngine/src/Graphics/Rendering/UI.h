@@ -119,10 +119,6 @@ namespace DOG
       UINT m_ID;
 
    };
-
-   //UIScene ärver från Layuer
-   //UIscene tar emot events med onEvent
-   //UI scene sckickar eventet till alla ui elements som har en gemensam funktion som tar emot events.
    
 
    class UIButton : public UIElement
@@ -238,6 +234,7 @@ namespace DOG
          void DeactivateIcon(UINT index);
       private:
          void AnimateUp(UINT index);
+         
          
    };
 

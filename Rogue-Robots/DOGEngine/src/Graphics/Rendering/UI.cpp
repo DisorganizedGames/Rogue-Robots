@@ -1,4 +1,5 @@
 #include "UI.h"
+#include "../../Core/Time.h"
 #include "../../Input/Mouse.h"
 #include "../../Input/Keyboard.h"
 //#include "../../EventSystem/IEvent.h"
@@ -14,7 +15,6 @@ UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID;
 UINT cID, tID, hID;
 
 UINT m_buffs;
-std::vector<clock_t> m_animTimers;
 std::vector<bool> m_visible;
 std::vector<bool> m_animate;
 std::vector<float> m_opacity;
@@ -719,11 +719,6 @@ DOG::UIBuffTracker::UIBuffTracker(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::
    HR_VFY(hr);
 }
 
-float easeOutCirc(float x)
-{
-   return sqrt(1 - pow(x - 1, 2));
-}
-
 void DOG::UIBuffTracker::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
    for (size_t i = 0; i < m_buffs; i++)
@@ -739,7 +734,6 @@ void DOG::UIBuffTracker::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 void DOG::UIBuffTracker::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
    UNREFERENCED_PARAMETER(d2d);
-
    if (DOG::Keyboard::IsKeyPressed(DOG::Key::G))
       ActivateIcon(0u);
    if (DOG::Keyboard::IsKeyPressed(DOG::Key::H))
@@ -749,9 +743,7 @@ void DOG::UIBuffTracker::Update(DOG::gfx::D2DBackend_DX12& d2d)
       DeactivateIcon(0u);
    if (DOG::Keyboard::IsKeyPressed(DOG::Key::K))
       DeactivateIcon(1u);
-
-
-   for (size_t i = 0; i < m_buffs; i++)
+   for (UINT i = 0; i < m_buffs; i++)
    {
       if (m_animate[i])
       {
@@ -763,18 +755,23 @@ void DOG::UIBuffTracker::Update(DOG::gfx::D2DBackend_DX12& d2d)
 
 DOG::UIBuffTracker::~UIBuffTracker()
 {
-
+   m_animate.clear();
+   m_buffs = 0u;
+   m_opacity.clear();
+   m_bitmaps.clear();
+   m_rects.clear();
+   m_borderBrush.Reset();
 }
 
 void DOG::UIBuffTracker::AnimateUp(UINT index)
 {
    if (m_rects[index].top >= 50.f)
    {
-      m_rects[index].top -= 0.7f;
-      m_rects[index].bottom -= 0.7f;
+      m_rects[index].top -= 100.0f * (float)DOG::Time::DeltaTime();
+      m_rects[index].bottom -= 100.0f * (float)DOG::Time::DeltaTime();
    }
    if (m_opacity[index] <= 1.f)
-      m_opacity[index] += 0.01f;
+      m_opacity[index] += 6.0f * (float)DOG::Time::DeltaTime();
 
    if (m_rects[index].top <= 50.f and m_opacity[index] >= 1.0f)
       m_animate[index] = false;
@@ -782,6 +779,8 @@ void DOG::UIBuffTracker::AnimateUp(UINT index)
 
 void DOG::UIBuffTracker::ActivateIcon(UINT index)
 {
+   if(m_visible[index])
+      return;
    m_visible[index] = true;
    size_t activeBuffs = std::count(m_visible.begin(), m_visible.end(), true);
    float x = 50.f + 60.f * activeBuffs;
