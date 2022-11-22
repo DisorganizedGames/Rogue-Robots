@@ -15,12 +15,24 @@
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "TVertical3Connector"
+            "name" : "SM_Stairs_01"
+        }
+    ],
+    "materials" : [
+        {
+            "doubleSided" : true,
+            "name" : "T_Generic_Colors",
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 0
+                },
+                "roughnessFactor" : 0.858578622341156
+            }
         }
     ],
     "meshes" : [
         {
-            "name" : "Scene.058",
+            "name" : "Mesh.073",
             "primitives" : [
                 {
                     "attributes" : {
@@ -29,84 +41,104 @@
                         "TEXCOORD_0" : 2,
                         "TEXCOORD_1" : 3
                     },
-                    "indices" : 4
+                    "indices" : 4,
+                    "material" : 0
                 }
             ]
+        }
+    ],
+    "textures" : [
+        {
+            "sampler" : 0,
+            "source" : 0
+        }
+    ],
+    "images" : [
+        {
+            "mimeType" : "image/png",
+            "name" : "PP_Color_Palette",
+            "uri" : "Textures/PP_Color_Palette.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 1221,
+            "count" : 452,
             "max" : [
-                2.536268472671509,
-                5.000000476837158,
-                2.889352798461914
+                0.3967558443546295,
+                2.8041720390319824,
+                0.05397351086139679
             ],
             "min" : [
-                -2.606898069381714,
-                -3.0756150408706162e-06,
-                -2.500002384185791
+                -0.3973051607608795,
+                0.020886341109871864,
+                -0.5259901881217957
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 1221,
+            "count" : 452,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 1221,
+            "count" : 452,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 1221,
+            "count" : 452,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 1254,
+            "count" : 492,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 14652,
+            "byteLength" : 5424,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 14652,
-            "byteOffset" : 14652
+            "byteLength" : 5424,
+            "byteOffset" : 5424
         },
         {
             "buffer" : 0,
-            "byteLength" : 9768,
-            "byteOffset" : 29304
+            "byteLength" : 3616,
+            "byteOffset" : 10848
         },
         {
             "buffer" : 0,
-            "byteLength" : 9768,
-            "byteOffset" : 39072
+            "byteLength" : 3616,
+            "byteOffset" : 14464
         },
         {
             "buffer" : 0,
-            "byteLength" : 2508,
-            "byteOffset" : 48840
+            "byteLength" : 984,
+            "byteOffset" : 18080
+        }
+    ],
+    "samplers" : [
+        {
+            "magFilter" : 9729,
+            "minFilter" : 9987
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 51348,
-            "uri" : "TVertical3Connector_Col.bin"
+            "byteLength" : 19064,
+            "uri" : "Ladder.bin"
         }
     ]
 }

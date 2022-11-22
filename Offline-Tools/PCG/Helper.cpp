@@ -109,7 +109,22 @@ std::vector<std::pair<uint32_t, int>> AStarRoom(Room& room, uint32_t* start, uin
 			{
 				weight = 10'000;
 			}
-			else if (room.generatedRoom[neighborIndex].find("Door") != std::string::npos)
+			else if (room.generatedRoom[current.index].find("Door") != std::string::npos && room.generatedRoom[neighborIndex] == "Void")
+			{
+				continue;
+			}
+			else if (//All blocks it shouldnt be able to create a door through.
+				room.generatedRoom[neighborIndex].find("Roof") != std::string::npos ||
+				room.generatedRoom[neighborIndex].find("Wall1") != std::string::npos ||
+				room.generatedRoom[neighborIndex].find("Shelf") != std::string::npos ||
+				room.generatedRoom[neighborIndex].find("WallToRoofCorner") != std::string::npos ||
+				room.generatedRoom[neighborIndex].find("InnerCorner") != std::string::npos ||
+				room.generatedRoom[neighborIndex].find("Riverbed") != std::string::npos ||
+				room.generatedRoom[neighborIndex].find("Spawn") != std::string::npos ||
+				room.generatedRoom[neighborIndex].find("Exit") != std::string::npos ||
+				room.generatedRoom[neighborIndex].find("Cliff") != std::string::npos ||
+				(room.generatedRoom[neighborIndex].find("Floor1") != std::string::npos && room.generatedRoom[neighborIndex].find("WallFloor1") == std::string::npos && room.generatedRoom[neighborIndex].find("CornerFloor1") == std::string::npos)
+				)
 			{
 				continue;
 			}
@@ -235,13 +250,13 @@ std::vector<std::pair<uint32_t, int>> AStarLevel(uint32_t& width, uint32_t& heig
 			{
 				continue;
 			}
-			else if (level[neighborIndex].find("Connector") != std::string::npos)
-			{
-				weight = 1;
-			}
 			else if ((level[neighborIndex].find("Door") != std::string::npos || level[current.index].find("Door") != std::string::npos) && (i == 2 || i == 3))
 			{
 				continue; //Do not allow the A* to go into a door from a vertical angle.
+			}
+			else if (level[neighborIndex].find("Connector") != std::string::npos)
+			{
+				weight = 1;
 			}
 			else if (level[neighborIndex].find("Door") != std::string::npos)
 			{

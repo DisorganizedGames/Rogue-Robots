@@ -134,10 +134,18 @@ namespace DOG
 	{
 		// Maybe add options here like cone and such
 	};
-
+	
+	//Modular blocks
 	struct ModularBlockComponent
 	{
 	};	//
+
+	struct AABBComponent
+	{
+		DirectX::SimpleMath::Vector3 min{0.0f, 0.0f, 0.0f};
+		DirectX::SimpleMath::Vector3 max{0.0f, 0.0f, 0.0f};
+	};
+
 	struct ThisPlayer
 	{
 	};

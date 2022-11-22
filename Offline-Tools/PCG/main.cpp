@@ -3,12 +3,12 @@
 int main()
 {
     //Dimensions for the whole level.
-    uint32_t w = 30;
+    uint32_t w = 50;
     uint32_t h = 10;
-    uint32_t d = 30;
+    uint32_t d = 50;
 
     //Number of levels to generate.
-    uint32_t nrOfRooms = 8;
+    uint32_t nrOfRooms = 4;
 
     //The generated space converges around these sizes. Per room.
     uint32_t maxWidth = 11;

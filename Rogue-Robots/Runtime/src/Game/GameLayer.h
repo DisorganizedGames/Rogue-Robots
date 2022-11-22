@@ -76,7 +76,7 @@ private:
 private:
 	GameState m_gameState;
 	static NetworkStatus s_networkStatus;
-	SceneComponent::Type m_selectedScene = SceneComponent::Type::TunnelRoom2Scene;
+	SceneComponent::Type m_selectedScene = SceneComponent::Type::PCGLevelScene;
 	std::unique_ptr<Scene> m_testScene;
 	std::unique_ptr<Scene> m_mainScene;
 	std::unique_ptr<Scene> m_lightScene;
@@ -100,4 +100,7 @@ private:
 	bool m_unlimitedAmmoCheat = false;
 	bool m_noClipCheat = false;
 	bool m_noWinLose = false;
+
+	//Win condition
+	DirectX::SimpleMath::Vector3 m_exitPosition = DirectX::SimpleMath::Vector3(-1.0f, -1.0f, -1.0f);
 };

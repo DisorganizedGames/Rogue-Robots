@@ -2,7 +2,7 @@
 #include "GameLayer.h"
 #include "TestScene.h"
 #include "OldDefaultScene.h"
-#include "TunnelScenes.h"
+#include "PCGLevelScenes.h"
 #include "LightScene.h"
 #include "SimpleAnimationSystems.h"
 #include "ExplosionSystems.h"
@@ -89,9 +89,6 @@ void GameLayer::OnAttach()
 {
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameManager", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1), true, std::make_pair(DOG::Key::LCtrl, DOG::Key::G));
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("Cheats", std::bind(&GameLayer::CheatDebugMenu, this, std::placeholders::_1));
-
-	//m_testScene = std::make_unique<TestScene>();
-	//m_testScene->SetUpScene();
 }
 
 void GameLayer::OnDetach()
@@ -159,30 +156,29 @@ void GameLayer::StartMainScene()
 {
 	assert(m_mainScene == nullptr);
 
+	//Change the index to change level. 
+	uint32_t levelIndex = 4;
+	if (levelIndex >= pcgLevelNames::nrLevels)
+	{
+		levelIndex = 0;
+	}
+	
 	switch (m_selectedScene)
 	{
-	case SceneComponent::Type::TunnelRoom0Scene:
-		/************************** tunnel scene *********************************/
-		m_mainScene = std::make_unique<TunnelRoom0Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+	case SceneComponent::Type::PCGLevelScene:
+	{
+		std::string levelName = pcgLevelNames::pcgLevels[levelIndex];
+		m_mainScene = std::make_unique<PCGLevelScene>
+			(
+				m_nrOfPlayers,
+				std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4),
+				"..\\Offline-Tools\\PCG\\" + levelName
+				);
 		m_mainScene->SetUpScene();
 		break;
-	case SceneComponent::Type::TunnelRoom1Scene:
-		/************************** tunnel scene *********************************/
-		m_mainScene = std::make_unique<TunnelRoom1Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-		m_mainScene->SetUpScene();
-		break;
-	case SceneComponent::Type::TunnelRoom2Scene:
-		/************************** tunnel scene *********************************/
-		m_mainScene = std::make_unique<TunnelRoom2Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-		m_mainScene->SetUpScene();
-		break;
-	case SceneComponent::Type::TunnelRoom3Scene:
-		/************************** tunnel scene *********************************/
-		m_mainScene = std::make_unique<TunnelRoom3Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-		m_mainScene->SetUpScene();
-		break;
+	}
 	case SceneComponent::Type::OldDefaultScene:
-		/************************** old default scene *********************************/
+		// old default scene 
 		m_mainScene = std::make_unique<OldDefaultScene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
 		m_mainScene->SetUpScene();
 		break;
@@ -193,6 +189,12 @@ void GameLayer::StartMainScene()
 	default:
 		break;
 	}
+
+	//Get exit block coords.
+	EntityManager::Get().Collect<ExitBlockComponent>().Do([&](entity e, ExitBlockComponent&)
+		{
+			m_exitPosition = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
+		});
 
 	LuaMain::GetScriptManager()->StartScripts();
 	if (s_networkStatus != NetworkStatus::Offline)
@@ -206,20 +208,45 @@ void GameLayer::CloseMainScene()
 	m_mainScene.reset();
 }
 
+
+//Only host should do this
 void GameLayer::EvaluateWinCondition()
 {
 	if (m_noWinLose) return;
-	bool agentsAlive = false;
-	EntityManager::Get().Collect<AgentIdComponent>().Do([&agentsAlive](AgentIdComponent&) { agentsAlive = true; });
 
 	static f64 freeRoamTimeAfterWin = 0;
-	if (agentsAlive)
-		freeRoamTimeAfterWin = 0;
-	else
-		freeRoamTimeAfterWin += Time::DeltaTime();
+	//If the exit is below 0.
+	if (m_exitPosition.x < 0.0f)
+	{
+		bool agentsAlive = false;
+		EntityManager::Get().Collect<AgentIdComponent>().Do([&agentsAlive](AgentIdComponent&) { agentsAlive = true; });
 
-	if (freeRoamTimeAfterWin > 8.0)
-		m_gameState = GameState::Won;
+		if (agentsAlive)
+			freeRoamTimeAfterWin = 0;
+		else
+			freeRoamTimeAfterWin += Time::DeltaTime();
+
+		if (freeRoamTimeAfterWin > 8.0)
+			m_gameState = GameState::Won;
+	}
+	else
+	{
+		bool playerAtExit = false;
+		EntityManager::Get().Collect<PlayerAliveComponent>().Do([&](entity e, PlayerAliveComponent&)
+			{
+				Vector3 pos = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
+				if (pos.x > m_exitPosition.x && pos.y > m_exitPosition.y && pos.z > m_exitPosition.z &&
+					pos.x < m_exitPosition.x + 5.0f && pos.y < m_exitPosition.y + 5.0f && pos.z < m_exitPosition.z + 5.0f)
+				{
+					playerAtExit = true;
+				}
+			});
+		if (playerAtExit)
+		{
+			m_gameState = GameState::Won;
+		}
+	}
+	
 
 
 	if (freeRoamTimeAfterWin)
@@ -911,7 +938,7 @@ std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3
 		Vector3 offset = {
 			spread * (i % 2) - (spread / 2.f),
 			0,
-			spread * (i / 2) - (spread / 2.f),
+			spread * (i % 2) - (spread / 2.f),
 		};
 		agents.emplace_back(AgentManager::Get().CreateAgent(type, groupID, pos - offset));
 	}
@@ -1059,13 +1086,11 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 					m_lightScene = nullptr;
 				}
 			}
-
-			if (ImGui::RadioButton("Room0", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom0Scene)) m_gameState = GameState::Restart;
-			if (ImGui::RadioButton("Room1", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom1Scene)) m_gameState = GameState::Restart;
-			if (ImGui::RadioButton("Room2", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom2Scene)) m_gameState = GameState::Restart;
-			if (ImGui::RadioButton("Room3", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom3Scene)) m_gameState = GameState::Restart;
+			
+			if (ImGui::RadioButton("PCGLevel", (int*)&m_selectedScene, (int)SceneComponent::Type::PCGLevelScene)) m_gameState = GameState::Restart;
 			if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;
 			if (ImGui::RadioButton("Particle", (int*)&m_selectedScene, (int)SceneComponent::Type::ParticleScene)) m_gameState = GameState::Restart;
+			
 
 			std::vector<entity> players;
 			EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](entity e, PlayerStatsComponent&)

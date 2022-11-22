@@ -1,5 +1,6 @@
 #include "PcgLevelLoader.h"
 #include <DOGEngine.h>
+#include "GameComponent.h"
 using namespace DOG;
 using namespace DirectX::SimpleMath;
 
@@ -48,19 +49,38 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 						Vector3 scale = Vector3(1.0f, 1.0f, 1.0f);
 
 						entity blockEntity = levelBlocks.emplace_back(em.CreateEntity());
-						em.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".gltf"));
+						em.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::CPUMemory | DOG::AssetLoadFlag::GPUMemory))));
 						em.AddComponent<TransformComponent>(blockEntity,
 							Vector3(x * blockDim, y * blockDim, z * blockDim),
 							Vector3(0.0f, -blockRot * piDiv2, 0.0f),
 							scale);
 
 						em.AddComponent<ModularBlockComponent>(blockEntity);
+
+						
 						em.AddComponent<MeshColliderComponent>(blockEntity,
 							blockEntity,
 							aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + "_Col.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::CPUMemory | DOG::AssetLoadFlag::GPUMemory))),
 							scale,
 							false);		// Set this to true if you want to see colliders only in wireframe
+						
 						em.AddComponent<ShadowReceiverComponent>(blockEntity);
+						AABBComponent& aabb = em.AddComponent<AABBComponent>(blockEntity);
+						aabb.min = Vector3(x * blockDim, y * blockDim, z * blockDim);
+						aabb.max = Vector3(x * blockDim + blockDim, y * blockDim + blockDim, z * blockDim + blockDim);
+
+						if (blockName.find("Spawn") != std::string::npos)
+						{
+							em.AddComponent<SpawnBlockComponent>(blockEntity);
+						}
+						else if (blockName.find("Exit") != std::string::npos)
+						{
+							em.AddComponent<ExitBlockComponent>(blockEntity);
+						}
+						else if (blockName == "Floor1" || blockName == "Riverbed1" || blockName.find("Connector") != std::string::npos)
+						{
+							em.AddComponent<FloorBlockComponent>(blockEntity);
+						}
 					}
 					++z;
 				}
