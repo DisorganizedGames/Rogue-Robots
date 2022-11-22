@@ -77,7 +77,7 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 						{
 							em.AddComponent<ExitBlockComponent>(blockEntity);
 						}
-						else if (blockName == "Floor1" || blockName == "WallFloor1")
+						else if (blockName == "Floor1" || blockName == "Riverbed1" || blockName.find("Connector") != std::string::npos)
 						{
 							em.AddComponent<FloorBlockComponent>(blockEntity);
 						}

@@ -938,7 +938,7 @@ std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3
 		Vector3 offset = {
 			spread * (i % 2) - (spread / 2.f),
 			0,
-			spread * (i / 2) - (spread / 2.f),
+			spread * (i % 2) - (spread / 2.f),
 		};
 		agents.emplace_back(AgentManager::Get().CreateAgent(type, groupID, pos - offset));
 	}
