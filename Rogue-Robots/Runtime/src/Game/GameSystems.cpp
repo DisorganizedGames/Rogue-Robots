@@ -300,16 +300,16 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 
 	u32 footstepAudio = 0;
 
-	if (changeSound == 0)
+	if (m_changeSound == 0)
 		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep04.wav");
-	else if (changeSound == 1)
+	else if (m_changeSound == 1)
 		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep05.wav");
-	else if (changeSound == 2)
+	else if (m_changeSound == 2)
 		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep06.wav");
 	else
 		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep09.wav");
 
-	if (!player.jumping && moveTowards != Vector3::Zero && !comp.playing && timeBeteenTimer < Time::ElapsedTime())
+	if (!player.jumping && moveTowards != Vector3::Zero && !comp.playing && m_timeBeteenTimer < Time::ElapsedTime())
 	{
 		const f32 footstepVolume = 0.1f;
 		const u32 audioFiles = 4;
@@ -319,13 +319,13 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 		comp.is3D = true;
 		comp.shouldPlay = true;
 
-		timeBeteenTimer = timeBetween + (f32)Time::ElapsedTime();
+		m_timeBeteenTimer = m_timeBetween + (f32)Time::ElapsedTime();
 		srand((unsigned)time(NULL));
-		u32 oldChangeSound = changeSound;
-		changeSound = rand() % audioFiles;
-		if (changeSound == oldChangeSound)
+		u32 oldChangeSound = m_changeSound;
+		m_changeSound = rand() % audioFiles;
+		if (m_changeSound == oldChangeSound)
 		{
-			changeSound = ++oldChangeSound % audioFiles;
+			m_changeSound = ++oldChangeSound % audioFiles;
 		}
 	}
 }

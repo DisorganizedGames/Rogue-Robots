@@ -72,7 +72,7 @@ void AudioDevice::HandleComponent(AudioComponent& comp, entity e)
 
 		comp.shouldPlay = false;
 		comp.playing = true;
-	}	
+	}
 
 	// Return early if the component has no voice assigned
 	if (comp.source == u32(-1))
