@@ -414,7 +414,7 @@ void PlaceHolderDeathUISystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, De
 	constexpr const float alphaStart = 150.0f;
 	constexpr const float alphaEnd = 0.0f;
 
-	float alpha = Remap(timerEnd, timer.duration, alphaEnd, alphaStart, timer.timeLeft);
+	float alpha = DOG::Remap(timerEnd, timer.duration, alphaEnd, alphaStart, timer.timeLeft);
 	timer.timeLeft -= (float)DOG::Time::DeltaTime();
 
 	constexpr ImVec2 size {700, 450};
@@ -457,28 +457,12 @@ void PlaceHolderDeathUISystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, De
 	ImGui::PopStyleColor();
 }
 
-float PlaceHolderDeathUISystem::Lerp(float a, float b, float t)
-{
-	return (1.0f - t) * a + b * t;
-}
-
-float PlaceHolderDeathUISystem::InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
-float PlaceHolderDeathUISystem::Remap(float iMin, float iMax, float oMin, float oMax, float v)
-{
-	float t = InverseLerp(iMin, iMax, v);
-	return Lerp(oMin, oMax, t);
-}
-
 void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorComponent& sc)
 {
 	ASSERT(!DOG::EntityManager::Get().HasComponent<PlayerAliveComponent>(player), "System should only run for dead players.");
 
 	//Before anything we must verify that the spectator "queue" is updated according to the game state:
-	for (int i = (int)sc.playerSpectatorQueue.size() - 1; i >= 0; --i)
+	for (auto i = std::ssize(sc.playerSpectatorQueue) - 1; i >= 0; --i)
 	{
 		if (!DOG::EntityManager::Get().HasComponent<PlayerAliveComponent>(sc.playerSpectatorQueue[i]))
 		{
@@ -499,7 +483,7 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 			sc.playerSpectatorQueue.pop_back();
 		}
 	}
-	if (sc.playerSpectatorQueue.size() == 0)
+	if (sc.playerSpectatorQueue.empty())
 		return;
 
 	constexpr ImVec2 size{ 350, 100 };
@@ -557,6 +541,7 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 		ImGui::SetWindowFontScale(2.0f);
 		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 75));
 		ImGui::Text("Spectating ");
+		ImGui::PopStyleColor(1);
 		ImGui::SameLine();
 		ImGui::PushStyleColor(ImGuiCol_Text, playerColor);
 		ImGui::Text(sc.playerName);

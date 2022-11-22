@@ -466,9 +466,6 @@ public:
 	ON_UPDATE_ID(DOG::ThisPlayer, DeathUITimerComponent, SpectatorComponent);
 
 	void OnUpdate(DOG::entity player, DOG::ThisPlayer&, DeathUITimerComponent& timer, SpectatorComponent& sc);
-	float Lerp(float a, float b, float t);
-	float InverseLerp(float a, float b, float v);
-	float Remap(float iMin, float iMax, float oMin, float oMax, float v);
 };
 
 class DespawnSystem : public DOG::ISystem

@@ -58,4 +58,21 @@ namespace DOG
 	{
 		return (CursorMode)((int)l | (int)r);
 	}
+
+	static [[nodiscard]] float Lerp(float a, float b, float t) noexcept
+	{
+		return (1.0f - t) * a + b * t;
+	}
+
+	static [[nodiscard]] float InverseLerp(float a, float b, float v) noexcept
+	{
+		return (v - a) / (b - a);
+	}
+
+	static [[nodiscard]] float Remap(float iMin, float iMax, float oMin, float oMax, float v) noexcept
+	{
+		float t = InverseLerp(iMin, iMax, v);
+		return Lerp(oMin, oMax, t);
+	}
+
 }
