@@ -8,7 +8,7 @@ ActiveItems.trampoline = {
 
 		local pos = Vector3.FromTable(Entity:GetTransformPosData(playerEntity))
 		local rotation = Vector3.Zero()
-		local size = Vector3.New(1.0, 1.0, 1.0)
+		local size = Vector3.New(0.5, 0.5, 0.5)
 
 		local forward = Vector3.FromTable(Entity:GetForward(playerEntity))
 
