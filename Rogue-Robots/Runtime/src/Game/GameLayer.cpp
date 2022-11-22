@@ -162,31 +162,21 @@ void GameLayer::StartMainScene()
 	{
 		levelIndex = 0;
 	}
-
-	std::string levelName = pcgLevelNames::pcgLevels[levelIndex];
-	/*
+	
 	switch (m_selectedScene)
 	{
-	case SceneComponent::Type::TunnelRoom0Scene:
-		// tunnel scene 
-		m_mainScene = std::make_unique<TunnelRoom0Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+	case SceneComponent::Type::PCGLevelScene:
+	{
+		std::string levelName = pcgLevelNames::pcgLevels[levelIndex];
+		m_mainScene = std::make_unique<PCGLevelScene>
+			(
+				m_nrOfPlayers,
+				std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4),
+				"..\\Offline-Tools\\PCG\\" + levelName
+				);
 		m_mainScene->SetUpScene();
 		break;
-	case SceneComponent::Type::TunnelRoom1Scene:
-		// tunnel scene 
-		m_mainScene = std::make_unique<TunnelRoom1Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-		m_mainScene->SetUpScene();
-		break;
-	case SceneComponent::Type::TunnelRoom2Scene:
-		// tunnel scene 
-		m_mainScene = std::make_unique<TunnelRoom2Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-		m_mainScene->SetUpScene();
-		break;
-	case SceneComponent::Type::TunnelRoom3Scene:
-		// tunnel scene 
-		m_mainScene = std::make_unique<TunnelRoom3Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-		m_mainScene->SetUpScene();
-		break;
+	}
 	case SceneComponent::Type::OldDefaultScene:
 		// old default scene 
 		m_mainScene = std::make_unique<OldDefaultScene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
@@ -199,13 +189,6 @@ void GameLayer::StartMainScene()
 	default:
 		break;
 	}
-	*/
-	m_mainScene = std::make_unique<PCGLevelScene>(
-		m_nrOfPlayers,
-		std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4),
-		"..\\Offline-Tools\\PCG\\" + levelName
-	);
-	m_mainScene->SetUpScene();
 
 	//Get exit block coords.
 	EntityManager::Get().Collect<ExitBlockComponent>().Do([&](entity e, ExitBlockComponent&)
@@ -1103,14 +1086,11 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 					m_lightScene = nullptr;
 				}
 			}
-			/*
-			if (ImGui::RadioButton("Room0", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom0Scene)) m_gameState = GameState::Restart;
-			if (ImGui::RadioButton("Room1", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom1Scene)) m_gameState = GameState::Restart;
-			if (ImGui::RadioButton("Room2", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom2Scene)) m_gameState = GameState::Restart;
-			if (ImGui::RadioButton("Room3", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom3Scene)) m_gameState = GameState::Restart;
+			
+			if (ImGui::RadioButton("PCGLevel", (int*)&m_selectedScene, (int)SceneComponent::Type::PCGLevelScene)) m_gameState = GameState::Restart;
 			if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;
 			if (ImGui::RadioButton("Particle", (int*)&m_selectedScene, (int)SceneComponent::Type::ParticleScene)) m_gameState = GameState::Restart;
-			*/
+			
 
 			std::vector<entity> players;
 			EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](entity e, PlayerStatsComponent&)

@@ -62,7 +62,7 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 				}
 			}
 			//Spawn items
-			ItemManager::Get().CreateItemHost(EntityTypes(((u32)itemCounter) % (u32(EntityTypes::Default) * itemSpawnModifier)), Vector3(pos.x + 2.5f, pos.y + 1.0f, pos.z + 2.5f));
+			ItemManager::Get().CreateItem(EntityTypes(((u32)itemCounter) % (u32(EntityTypes::Default) * itemSpawnModifier)), Vector3(pos.x + 2.5f, pos.y + 1.0f, pos.z + 2.5f));
 			++enemyCounter;
 			++itemCounter;
 		});
