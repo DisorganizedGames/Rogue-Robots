@@ -5,7 +5,7 @@
 
 void HeartbeatTrackerSystem::OnUpdate(DOG::entity e, DOG::ThisPlayer& tp, PlayerStatsComponent& psc)
 {
-	if (psc.health <= 20.f)
+	if (psc.health <= 80.f)
 	{
 		if (!m_justImpact)
 		{
@@ -15,8 +15,10 @@ void HeartbeatTrackerSystem::OnUpdate(DOG::entity e, DOG::ThisPlayer& tp, Player
 
 		f32 localElapsedNormalized = std::clamp((f32)(DOG::Time::ElapsedTime() - m_impactTime) / m_timeToStabilize, 0.f, 1.f);
 		f32 intensity = m_impactIntensity * (1.f - localElapsedNormalized) + m_returnIntensity * (localElapsedNormalized);
-
 		DOG::gfx::PostProcess::Get().SetHeartbeatFactor(intensity);
+
+		f32 transitionFac = m_impactTransitionFactor * (1.f - localElapsedNormalized) + m_returnTransitionFactor * (localElapsedNormalized);
+		DOG::gfx::PostProcess::Get().SetHeartbeatTransitionFactor(transitionFac);
 	}
 	else 
 	{

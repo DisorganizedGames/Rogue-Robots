@@ -6,7 +6,10 @@ struct PS_IN
 
 struct PushConstantElement
 {
-    float effect; // normalized [0, n[    // expected smth like:  cos(iTime * 5.0) * 0.5 + 0.5
+    uint renderWidth;
+    uint renderHeight;
+    float effect;               // normalized [0, n]    // expected smth like:  cos(iTime * 5.0) * 0.5 + 0.5
+    float transitionFactor;
 };
 
 ConstantBuffer<PushConstantElement> g_constants : register(b0, space0);
@@ -19,23 +22,30 @@ float4 main(PS_IN input) : SV_TARGET0
     
     // Offset (0, 0) to center of screen
     uv -= 0.5.rr;
-    uv *= 2.f;
+    uv *= 1.f;
+    //uv.y *= ((float) g_constants.renderWidth / g_constants.renderHeight) * 0.6f;
     
     float2 o = float2(0.0, 0.0);
     float2 pOnEl = uv - o;
-    
-    float iTime = 10.f;
-    
+        
     float effect = g_constants.effect;
-    //float effect = cos(iTime * 5.0) * 0.5 + 0.5; // --> [0, 1]
-    //effect *= 0.20;
+    float transitionFactor = g_constants.transitionFactor;
     
-      
-    float intensity = length(float3(pOnEl, 0.0)) * effect;
+    const float ellipseStartOffset = 0.35f;
+    //const float transitionFactor = -0.38f;      // Rest stable
+    //const float transitionFactor = -0.36f;    // Impact
     
-    //vec3 color = vec3(rand, 0.0, 0.0);
+    float3 diff = float3(pOnEl, 0.0) - float3(pOnEl * ellipseStartOffset, 0.0);
+    float len = clamp(length(diff), 0.f, 1.f);
+    len *= (len + transitionFactor) / len;
+    
+    //return float4(len.rrr, 1.f);
+    
+    float intensity = len * effect;
+    
+    
     float3 color = float3(1.0, 0.0, 0.0);
-    color *= intensity;
+    color *= max(intensity, 0.f);
     
     return float4(color, 0.6);
 }

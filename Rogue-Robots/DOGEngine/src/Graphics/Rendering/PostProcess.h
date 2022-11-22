@@ -45,10 +45,12 @@ namespace DOG::gfx
 
 		// Heartbeat	
 		void SetHeartbeatFactor(f32 factor) { m_heartbeatFactor = factor; }
+		void SetHeartbeatTransitionFactor(f32 factor) { m_heartbeatTransitionFactor = factor; }
 
 		// For rendering
 		const std::vector<DamageDiskData>& GetDamageDisks() const { return m_damageDiskDatas; }
 		f32 GetHeartbeatIntensity() const { return m_heartbeatIntensity; }
+		f32 GetHeartbeatTransitionFactor() const { return m_heartbeatTransitionFactor; }
 
 	private:
 		f32 m_elapsedTime{ 0.f };
@@ -61,5 +63,7 @@ namespace DOG::gfx
 
 		f32 m_heartbeatIntensity{ 0.f };
 		f32 m_heartbeatFactor{ 0.f };
+
+		f32 m_heartbeatTransitionFactor{ 0.f };
 	};
 }

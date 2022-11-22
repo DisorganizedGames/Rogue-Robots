@@ -63,10 +63,15 @@ namespace DOG::gfx
 				rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.defRenderScissors);
 
 				f32 effect = PostProcess::Get().GetHeartbeatIntensity();
+				f32 factor = PostProcess::Get().GetHeartbeatTransitionFactor();
 				rd->Cmd_SetPipeline(cmdl, m_pipe);
 				UINT effect32Packed = *(UINT*)&effect;
-				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics,
-					ShaderArgs().AppendConstant(effect32Packed));
+				UINT factor32Packed = *(UINT*)&factor;
+				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, ShaderArgs()
+					.AppendConstant(m_globalEffectData.defRenderVPs.vps[0].Width)
+					.AppendConstant(m_globalEffectData.defRenderVPs.vps[0].Height)
+					.AppendConstant(effect32Packed)
+					.AppendConstant(factor32Packed));
 				rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
 			});
 	}
