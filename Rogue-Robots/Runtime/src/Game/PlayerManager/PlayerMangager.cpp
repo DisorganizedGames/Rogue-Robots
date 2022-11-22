@@ -38,6 +38,13 @@ void PlayerManager::HurtThisPlayer(f32 damage)
 	s_entityManager.GetComponent<PlayerStatsComponent>(GetThisPlayer()).health -= damage;
 }
 
+bool PlayerManager::IsThisPlayerHost()
+{
+	if (s_entityManager.GetComponent<NetworkPlayerComponent>(GetThisPlayer()).playerId == 0)
+		return true;
+	else
+		return false;
+}
 
 /*******************************
 		Private Methods

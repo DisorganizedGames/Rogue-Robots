@@ -69,7 +69,7 @@ ActiveItems.turret = {
 	end,
 
 	GetECSType = function(self)
-			return 0 -- What should be returned here???
+			return 1 -- What should be returned here???
 		end,
 
 

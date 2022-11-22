@@ -1,6 +1,10 @@
 ﻿#include "LuaInterfaces.h"
 #include "GameComponent.h"
 #include "ExplosionSystems.h"
+#include "ItemManager/ItemManager.h"
+#include "EntitesTypes.h"
+#include "PlayerManager/PlayerManager.h"
+
 
 using namespace DOG;
 using namespace DirectX;
@@ -652,6 +656,16 @@ void EntityInterface::ModifyAnimationComponent(DOG::LuaContext* context)
 	setter.transitionLength = transitionLength;
 	setter.playbackRate = playbackRate;
 	setter.loop = loop;
+}
+
+void EntityInterface::SpawnActiveItem(DOG::LuaContext* context)
+{
+	entity playerId = context->GetInteger();
+	std::cout << (u32)EntityManager::Get().GetComponent<ActiveItemComponent>(playerId).type << std::endl;
+	if(EntityManager::Get().GetComponent<ActiveItemComponent>(playerId).type == ActiveItemComponent::Type::Trampoline)
+		ItemManager::Get().CreateItem(EntityTypes::Trampoline, EntityManager::Get().GetComponent<TransformComponent>(playerId).GetPosition());
+	else if(EntityManager::Get().GetComponent<ActiveItemComponent>(playerId).type == ActiveItemComponent::Type::Turret)
+		ItemManager::Get().CreateItem(EntityTypes::Turret, EntityManager::Get().GetComponent<TransformComponent>(playerId).GetPosition());
 }
 
 void EntityInterface::AddAudio(LuaContext* context, entity e)
