@@ -2,7 +2,6 @@
 #include "../../Core/Time.h"
 #include "../../Input/Mouse.h"
 #include "../../Input/Keyboard.h"
-//#include "../../EventSystem/IEvent.h"
 #include "../../EventSystem/KeyboardEvents.h"
 #include "../../EventSystem/MouseEvents.h"
 
@@ -719,7 +718,7 @@ void DOG::UIBuffTracker::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
    for (size_t i = 0; i < m_buffs; i++)
    {
-      if (m_visible[i])
+      if (buffsVisible[i])
       {
          d2d.Get2DDeviceContext()->DrawBitmap(m_bitmaps[i].Get(), m_rects[i], m_opacity[i]);
          d2d.Get2DDeviceContext()->DrawRectangle(m_rects[i], m_borderBrush.Get());
@@ -773,7 +772,7 @@ void DOG::UIBuffTracker::ActivateIcon(UINT index)
    if(buffsVisible[index])
       return;
    buffsVisible[index] = true;
-   size_t activeBuffs = std::count(m_visible.begin(), m_visible.end(), true);
+   size_t activeBuffs = std::count(buffsVisible.begin(), buffsVisible.end(), true);
    float x = 50.f + 60.f * activeBuffs;
    float y = 50.f + 30.f;
    m_rects[index] = D2D1::RectF(x, y, x + 50.f, y + 50.f);
