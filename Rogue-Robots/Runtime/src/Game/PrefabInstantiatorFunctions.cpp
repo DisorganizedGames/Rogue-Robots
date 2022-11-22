@@ -49,7 +49,9 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 
 		em.AddComponent<PlayerStatsComponent>(playerI);
 		em.AddComponent<PlayerControllerComponent>(playerI);
-		em.AddComponent<NetworkPlayerComponent>(playerI).playerId = static_cast<i8>(i);
+		auto& npc = em.AddComponent<NetworkPlayerComponent>(playerI);
+		npc.playerId = static_cast<i8>(i);
+		npc.playerName = i == 0 ? "Red" : i == 1 ? "Blue" : i == 2 ? "Green" : "Yellow";
 		em.AddComponent<InputController>(playerI);
 		em.AddComponent<PlayerAliveComponent>(playerI);
 		em.AddComponent<AnimationComponent>(playerI);

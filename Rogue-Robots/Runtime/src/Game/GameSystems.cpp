@@ -15,6 +15,8 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	InputController& input,
 	AnimationComponent& ac)
 {
+	auto& mgr = EntityManager::Get();
+
 	if (input.toggleMoveView)
 	{
 		input.toggleMoveView = false;
@@ -27,73 +29,103 @@ void PlayerMovementSystem::OnEarlyUpdate(
 		player.cameraEntity = CreatePlayerCameraEntity(e);
 	}
 
-	CameraComponent& camera = EntityManager::Get().GetComponent<CameraComponent>(player.cameraEntity);
-	TransformComponent& cameraTransform = EntityManager::Get().GetComponent<TransformComponent>(player.cameraEntity);
+	CameraComponent& camera = mgr.GetComponent<CameraComponent>(player.cameraEntity);
+	TransformComponent& cameraTransform = mgr.GetComponent<TransformComponent>(player.cameraEntity);
 
 	// Set the main camera to be ThisPlayer's camera
 	bool isThisPlayer = false;
-	if (EntityManager::Get().HasComponent<ThisPlayer>(e))
+	if (mgr.HasComponent<ThisPlayer>(e))
 	{
 		isThisPlayer = true;
 		camera.isMainCamera = true;
 	}
 
-	if (input.toggleDebug && EntityManager::Get().HasComponent<PlayerAliveComponent>(e))
+	if (input.toggleDebug && mgr.HasComponent<PlayerAliveComponent>(e))
 	{
 		input.toggleDebug = false;
 		if (player.debugCamera == DOG::NULL_ENTITY)
 		{
 			player.debugCamera = CreateDebugCamera(e);
-			EntityManager::Get().GetComponent<TransformComponent>(player.debugCamera).worldMatrix = cameraTransform;
-			auto& debugCamera = EntityManager::Get().GetComponent<CameraComponent>(player.debugCamera);
+			mgr.GetComponent<TransformComponent>(player.debugCamera).worldMatrix = cameraTransform;
+			auto& debugCamera = mgr.GetComponent<CameraComponent>(player.debugCamera);
 			debugCamera.isMainCamera = true;
 		}
 		else
 		{
-			EntityManager::Get().DeferredEntityDestruction(player.debugCamera);
+			mgr.DeferredEntityDestruction(player.debugCamera);
 			player.debugCamera = DOG::NULL_ENTITY;
 		}
 	}
-
-	// Rotate player
-	Vector3 forward = cameraTransform.GetForward();
-	Vector3 right(1, 0, 0);
-	if (player.moveView && isThisPlayer)
+	if (mgr.HasComponent<PlayerAliveComponent>(e))
 	{
-		forward = GetNewForward(player);
-	}
-	right = s_globUp.Cross(forward);
+		// Rotate player
+		Vector3 forward = cameraTransform.GetForward();
+		Vector3 right(1, 0, 0);
+		if (player.moveView && isThisPlayer)
+		{
+			forward = GetNewForward(player);
+		}
+		right = s_globUp.Cross(forward);
 
-	// Move player
-	auto moveTowards = GetMoveTowards(input, forward, right);
+		// Move player
+		auto moveTowards = GetMoveTowards(input, forward, right);
 
-	if (player.debugCamera != DOG::NULL_ENTITY && isThisPlayer)
-	{
-		camera.isMainCamera = false;
-		MoveDebugCamera(player.debugCamera, moveTowards, forward, right, 10.f, input);
-		return;
-	}
+		if (player.debugCamera != DOG::NULL_ENTITY && isThisPlayer)
+		{
+			camera.isMainCamera = false;
+			MoveDebugCamera(player.debugCamera, moveTowards, forward, right, 10.f, input);
+			return;
+		}
 
 	MovePlayer(e, player, moveTowards, forward, rigidbody, playerStats.speed, playerStats.jumpSpeed, input);
 	ApplyAnimations(input, ac);
 
-	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
-	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 1600.f, 0.1f);
+		f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
+		camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 1600.f, 0.1f);
 
-	// Place camera 0.4 units above the player transform
-	auto pos = transform.GetPosition() + Vector3(0, 0.7f, 0);
-	camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
-	cameraTransform.worldMatrix = camera.viewMatrix.Invert();
+		// Place camera 0.4 units above the player transform
+		auto pos = transform.GetPosition() + Vector3(0, 0.7f, 0);
+		camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
+		cameraTransform.worldMatrix = camera.viewMatrix.Invert();
 
-	// Update the player transform rotation around the Y-axis to match the camera's
-	auto camForward = cameraTransform.GetForward();
-	camForward.y = 0;
-	camForward.Normalize();
+		// Update the player transform rotation around the Y-axis to match the camera's
+		auto camForward = cameraTransform.GetForward();
+		camForward.y = 0;
+		camForward.Normalize();
 
-	auto prevScale = transform.GetScale();
-	transform.worldMatrix = XMMatrixLookToLH(transform.GetPosition(), camForward, s_globUp);
-	transform.worldMatrix = transform.worldMatrix.Invert();
-	transform.SetScale(prevScale);
+		auto prevScale = transform.GetScale();
+		transform.worldMatrix = XMMatrixLookToLH(transform.GetPosition(), camForward, s_globUp);
+		transform.worldMatrix = transform.worldMatrix.Invert();
+		transform.SetScale(prevScale);
+	}
+	else 
+	{
+		// The player might be spectating, and if so the camera should be updated based on the spectated players' camera stats.
+		if (mgr.HasComponent<SpectatorComponent>(e))
+		{
+			entity playerBeingSpectated = mgr.GetComponent<SpectatorComponent>(e).playerBeingSpectated;
+			auto& spectatedPlayerControllerComponent = mgr.GetComponent<PlayerControllerComponent>(playerBeingSpectated);
+			auto& spectatedCameraComponent = mgr.GetComponent<CameraComponent>(spectatedPlayerControllerComponent.cameraEntity);
+			auto& spectatedCameraTransform = mgr.GetComponent<TransformComponent>(spectatedPlayerControllerComponent.cameraEntity);
+
+			//The player is dead and so MUST have a debug camera (should be spectator camera) assigned, so:
+			entity spectatorCamera = player.spectatorCamera;
+			auto& spectatorCameraComponent = mgr.GetComponent<CameraComponent>(spectatorCamera);
+			auto& spectatorCameraTransform = mgr.GetComponent<TransformComponent>(spectatorCamera);
+
+			//We now simply set them equal:
+			spectatorCameraComponent.viewMatrix = spectatedCameraComponent.viewMatrix;
+			spectatorCameraComponent.projMatrix = spectatedCameraComponent.projMatrix;
+			spectatorCameraTransform.worldMatrix = spectatedCameraTransform.worldMatrix;
+
+			spectatorCameraComponent.isMainCamera = true;
+			mgr.GetComponent<CameraComponent>(player.cameraEntity).isMainCamera = false;
+			if (mgr.Exists(player.debugCamera))
+			{
+				mgr.GetComponent<CameraComponent>(player.debugCamera).isMainCamera = false;
+			}
+		}
+	}
 }
 
 PlayerMovementSystem::Entity PlayerMovementSystem::CreateDebugCamera(Entity e) noexcept
@@ -362,6 +394,222 @@ void DespawnSystem::OnUpdate(DOG::entity e, DespawnComponent& despawn)
 		EntityManager::Get().DeferredEntityDestruction(e);
 		EntityManager::Get().RemoveComponent<DespawnComponent>(e);
 	}
+}
+
+void PlaceHolderDeathUISystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, DeathUITimerComponent& timer, SpectatorComponent& sc)
+{
+	//TODO: Also query for "being revived component" later, since that UI will otherwise probably overlap and mess up this one.
+	auto& mgr = DOG::EntityManager::Get();
+
+	if (mgr.HasComponent<PlayerAliveComponent>(player))
+		return;
+
+	if (timer.timeLeft <= 0.0f)
+	{
+		mgr.RemoveComponent<DeathUITimerComponent>(player);
+		return;
+	}
+
+	constexpr const float timerEnd = 0.0f;
+	constexpr const float alphaStart = 150.0f;
+	constexpr const float alphaEnd = 0.0f;
+
+	float alpha = DOG::Remap(timerEnd, timer.duration, alphaEnd, alphaStart, timer.timeLeft);
+	timer.timeLeft -= (float)DOG::Time::DeltaTime();
+
+	constexpr ImVec2 size {700, 450};
+
+	auto r = DOG::Window::GetWindowRect();
+	const float centerXOfScreen = (float)(abs(r.right - r.left)) * 0.5f;
+	const float centerYOfScreen = (float)(abs(r.bottom - r.top)) * 0.5f;
+
+	ImVec2 pos;
+	pos.x = r.left + centerXOfScreen;
+	pos.y = r.top + centerYOfScreen;
+	const float xOffset = size.x / 2;
+	const float yOffset = size.y / 4;
+
+	pos.x -= xOffset;
+	pos.y -= yOffset;
+
+	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+	ImGui::SetNextWindowPos(pos);
+	ImGui::SetNextWindowSize(size);
+	if (ImGui::Begin("Death text", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+	{
+		ImGui::PushFont(DOG::Window::GetFont());
+		ImGui::SetWindowFontScale(4.0f);
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, alpha));
+		auto windowWidth = ImGui::GetWindowSize().x;
+		auto textWidth = ImGui::CalcTextSize("You Died").x;
+
+		ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+		ImGui::Text("You Died");
+
+		std::string specText = "Spectating " + std::string(sc.playerName);
+		textWidth = ImGui::CalcTextSize(specText.c_str()).x;
+		ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+		ImGui::Text(specText.c_str());
+		ImGui::PopFont();
+		ImGui::PopStyleColor(1);
+	}
+	ImGui::End();
+	ImGui::PopStyleColor();
+}
+
+void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorComponent& sc)
+{
+	ASSERT(!DOG::EntityManager::Get().HasComponent<PlayerAliveComponent>(player), "System should only run for dead players.");
+
+	//Before anything we must verify that the spectator "queue" is updated according to the game state:
+	for (auto i = std::ssize(sc.playerSpectatorQueue) - 1; i >= 0; --i)
+	{
+		if (!DOG::EntityManager::Get().HasComponent<PlayerAliveComponent>(sc.playerSpectatorQueue[i]))
+		{
+			if (sc.playerBeingSpectated == sc.playerSpectatorQueue[i])
+			{
+				//Not eligible for spectating anymore, since that player has died:
+				const u32 index = GetQueueIndexForSpectatedPlayer(sc.playerBeingSpectated, sc.playerSpectatorQueue);
+				const u32 nextIndex = (index + 1) % sc.playerSpectatorQueue.size();
+				bool isSameEntity = index == nextIndex;
+				if (!isSameEntity)
+				{
+					ChangeSuitDrawLogic(sc.playerBeingSpectated, sc.playerSpectatorQueue[nextIndex]);
+				}
+				sc.playerBeingSpectated = sc.playerSpectatorQueue[nextIndex];
+				sc.playerName = DOG::EntityManager::Get().GetComponent<DOG::NetworkPlayerComponent>(sc.playerSpectatorQueue[nextIndex]).playerName;
+			}
+			std::swap(sc.playerSpectatorQueue[i], sc.playerSpectatorQueue[sc.playerSpectatorQueue.size() - 1]);
+			sc.playerSpectatorQueue.pop_back();
+		}
+	}
+	if (sc.playerSpectatorQueue.empty())
+		return;
+
+	constexpr ImVec2 size{ 350, 100 };
+
+	auto r = DOG::Window::GetWindowRect();
+	const float centerXOfScreen = (float)(abs(r.right - r.left)) * 0.5f;
+	constexpr const float yOffset = 50.0f;
+	constexpr const float xOffset = -(size.x / 2);
+
+	ImVec2 pos;
+	pos.x = r.left + centerXOfScreen;
+	pos.x += xOffset;
+	pos.y = r.top + yOffset;
+
+	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+	ImGui::SetNextWindowPos(pos);
+	ImGui::SetNextWindowSize(size);
+	if (ImGui::Begin("Spectate text", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+	{
+		ImGui::PushFont(DOG::Window::GetFont());
+		ImGui::SetWindowFontScale(2.0f);
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 75));
+		auto windowWidth = ImGui::GetWindowSize().x;
+		auto textWidth = ImGui::CalcTextSize("You Are Dead").x;
+		ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+		ImGui::Text("You Are Dead");
+		ImGui::PopFont();
+		ImGui::PopStyleColor(1);
+	}
+	ImGui::End();
+	ImGui::PopStyleColor();
+
+	ImVec4 playerColor;
+	if (strcmp(sc.playerName, "Blue") == 0)
+		playerColor = ImVec4(0, 0, 255, 75);
+	else if (strcmp(sc.playerName, "Red") == 0)
+		playerColor = ImVec4(255, 0, 0, 75);
+	else if (strcmp(sc.playerName, "Green") == 0)
+		playerColor = ImVec4(0, 255, 0, 75);
+	else
+		playerColor = ImVec4(255, 255, 0, 75);
+
+	const float additionalXOffset = (centerXOfScreen / 2);
+	const float additionalYOffset = -70.0f;
+
+	pos.x = r.left + centerXOfScreen + additionalXOffset;
+	pos.y = r.bottom - yOffset + additionalYOffset;
+
+	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+	ImGui::SetNextWindowPos(pos);
+	ImGui::SetNextWindowSize(size);
+	if (ImGui::Begin("Spectate text 2", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+	{
+		ImGui::PushFont(DOG::Window::GetFont());
+		ImGui::SetWindowFontScale(2.0f);
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 75));
+		ImGui::Text("Spectating ");
+		ImGui::PopStyleColor(1);
+		ImGui::SameLine();
+		ImGui::PushStyleColor(ImGuiCol_Text, playerColor);
+		ImGui::Text(sc.playerName);
+		ImGui::PopStyleColor(1);
+
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 75));
+		ImGui::Text("[E] ");
+		ImGui::PopStyleColor(1);
+		ImGui::SameLine();
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 75));
+		ImGui::Text("Toggle Player");
+		ImGui::PopStyleColor(1);
+		ImGui::PopFont();
+	}
+	ImGui::End();
+	ImGui::PopStyleColor();
+
+	//Let's check for player toggle query: 
+	if (!DOG::EntityManager::Get().HasComponent<InteractionQueryComponent>(player))
+		return;
+
+	const u32 index = GetQueueIndexForSpectatedPlayer(sc.playerBeingSpectated, sc.playerSpectatorQueue);
+	const u32 nextIndex = (index + 1) % sc.playerSpectatorQueue.size();
+	const bool isSamePlayer = (sc.playerBeingSpectated == sc.playerSpectatorQueue[nextIndex]);
+	if (!isSamePlayer)
+	{
+		ChangeSuitDrawLogic(sc.playerBeingSpectated, sc.playerSpectatorQueue[nextIndex]);
+		sc.playerName = DOG::EntityManager::Get().GetComponent<DOG::NetworkPlayerComponent>(sc.playerSpectatorQueue[nextIndex]).playerName;
+		sc.playerBeingSpectated = sc.playerSpectatorQueue[nextIndex];
+	}
+}
+
+u32 SpectateSystem::GetQueueIndexForSpectatedPlayer(DOG::entity player, const std::vector<DOG::entity>& players)
+{
+	auto it = std::find(players.begin(), players.end(), player);
+	ASSERT(it != players.end(), "Couldn't find player in spectator queue.");
+	return (u32)(it - players.begin());
+}
+
+void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw)
+{
+	#if defined _DEBUG
+	bool removedSuitFromRendering = false;
+	bool addedSuitToRendering = false;
+	#endif
+
+	DOG::EntityManager::Get().Collect<ChildComponent>().Do([&](DOG::entity playerModel, ChildComponent& cc)
+		{
+			if (cc.parent == playerToDraw)
+			{
+				//This means that playerModel is the mesh model (suit), and it should be rendered again:
+				DOG::EntityManager::Get().RemoveComponent<DOG::DontDraw>(playerModel);
+				#if defined _DEBUG
+				addedSuitToRendering = true;
+				#endif
+			}
+			else if (cc.parent == playerToNotDraw)
+			{
+				//This means that playerModel is the spectated players' armor/suit, and it should not be eligible for rendering anymore:
+				DOG::EntityManager::Get().AddComponent<DOG::DontDraw>(playerModel);
+				#if defined _DEBUG
+				removedSuitFromRendering = true;
+				#endif
+			}
+		});
+	#if defined _DEBUG
+	ASSERT(removedSuitFromRendering && addedSuitToRendering, "Suits were not updated correctly for rendering.");
+	#endif
 }
 
 #pragma endregion

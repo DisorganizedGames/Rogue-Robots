@@ -107,10 +107,10 @@ class PickupItemInteractionSystem : public DOG::ISystem
 	#define REQUIRED_DISTANCE_DELTA 2.0f
 	#define REQUIRED_DOT_DELTA -0.90f
 public:
-	SYSTEM_CLASS(DOG::ThisPlayer, DOG::TransformComponent, PlayerControllerComponent);
-	ON_EARLY_UPDATE_ID(DOG::ThisPlayer, DOG::TransformComponent, PlayerControllerComponent);
+	SYSTEM_CLASS(DOG::ThisPlayer, PlayerAliveComponent, DOG::TransformComponent, PlayerControllerComponent);
+	ON_EARLY_UPDATE_ID(DOG::ThisPlayer, PlayerAliveComponent, DOG::TransformComponent, PlayerControllerComponent);
 
-	void OnEarlyUpdate(DOG::entity player, DOG::ThisPlayer&, DOG::TransformComponent& ptc, PlayerControllerComponent& pcc)
+	void OnEarlyUpdate(DOG::entity player, DOG::ThisPlayer&, PlayerAliveComponent&, DOG::TransformComponent& ptc, PlayerControllerComponent& pcc)
 	{
 		auto& mgr = DOG::EntityManager::Get();
 		auto playerPosition = ptc.GetPosition();
@@ -459,6 +459,15 @@ public:
 	void OnLateUpdate(ChildComponent& child);
 };
 
+class PlaceHolderDeathUISystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DOG::ThisPlayer, DeathUITimerComponent, SpectatorComponent);
+	ON_UPDATE_ID(DOG::ThisPlayer, DeathUITimerComponent, SpectatorComponent);
+
+	void OnUpdate(DOG::entity player, DOG::ThisPlayer&, DeathUITimerComponent& timer, SpectatorComponent& sc);
+};
+
 class DespawnSystem : public DOG::ISystem
 {
 public:
@@ -466,4 +475,15 @@ public:
 	ON_UPDATE_ID(DespawnComponent);
 
 	void OnUpdate(DOG::entity e, DespawnComponent& despawn);
+};
+
+class SpectateSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DOG::ThisPlayer, SpectatorComponent);
+	ON_UPDATE_ID(DOG::ThisPlayer, SpectatorComponent);
+
+	void OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorComponent& sc);
+	DOG::entity GetQueueIndexForSpectatedPlayer(DOG::entity player, const std::vector<DOG::entity>& players);
+	void ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw);
 };

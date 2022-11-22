@@ -57,6 +57,8 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<CleanupItemInteractionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<CleanupPlayerStateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerHit>());
+	m_entityManager.RegisterSystem(std::make_unique<PlaceHolderDeathUISystem>());
+	m_entityManager.RegisterSystem(std::make_unique<SpectateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
 
@@ -296,24 +298,79 @@ void GameLayer::KillPlayer(DOG::entity e)
 {
 	m_entityManager.RemoveComponent<PlayerAliveComponent>(e);
 
+	if (m_entityManager.HasComponent<MagazineModificationComponent>(e)) m_entityManager.RemoveComponent<MagazineModificationComponent>(e);
+	
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
-		LuaMain::GetScriptManager()->RemoveScript(e, "Gun.lua");
-		LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
-		LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
-		std::string luaEventName = std::string("ItemPickup") + std::to_string(e);
-		m_entityManager.RemoveComponent<ScriptComponent>(e);
-		m_entityManager.RemoveComponent<BarrelComponent>(e);
+		entity localPlayer = e;
 
-		if (m_entityManager.HasComponent<MagazineModificationComponent>(e)) m_entityManager.RemoveComponent<MagazineModificationComponent>(e);
+		LuaMain::GetScriptManager()->RemoveScript(localPlayer, "Gun.lua");
+		LuaMain::GetScriptManager()->RemoveScript(localPlayer, "PassiveItemSystem.lua");
+		LuaMain::GetScriptManager()->RemoveScript(localPlayer, "ActiveItemSystem.lua");
+		std::string luaEventName = std::string("ItemPickup") + std::to_string(localPlayer);
+		m_entityManager.RemoveComponent<ScriptComponent>(localPlayer);
+		m_entityManager.RemoveComponent<BarrelComponent>(localPlayer);
 
-		auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
-		controller.debugCamera = m_mainScene->CreateEntity();
+		DOG::entity playerToSpectate = DOG::NULL_ENTITY;
+		const char* playerName{ nullptr };
+		std::vector<DOG::entity> spectatables;
+		
+		//Get hold of another living player entity:
+		m_entityManager.Collect<NetworkPlayerComponent, PlayerAliveComponent>().Do([&](DOG::entity otherPlayer, NetworkPlayerComponent, PlayerAliveComponent&)
+			{
+				spectatables.push_back(otherPlayer);
+			});
 
-		m_entityManager.AddComponent<TransformComponent>(controller.debugCamera)
-			.worldMatrix = m_entityManager.GetComponent<TransformComponent>(controller.cameraEntity);
+		if (!spectatables.empty())
+		{
+			playerToSpectate = spectatables[0];
+			playerName = m_entityManager.GetComponent<NetworkPlayerComponent>(spectatables[0]).playerName;
+		}
 
-		m_entityManager.AddComponent<CameraComponent>(controller.debugCamera).isMainCamera = true;
+		if (playerToSpectate != NULL_ENTITY) //So, if not all players are dead
+		{
+			auto& pcc = m_entityManager.GetComponent<PlayerControllerComponent>(localPlayer);
+			auto& otherPcc = m_entityManager.GetComponent<PlayerControllerComponent>(playerToSpectate);
+			pcc.spectatorCamera = m_mainScene->CreateEntity();
+
+			m_entityManager.AddComponent<TransformComponent>(pcc.spectatorCamera)
+				.worldMatrix = m_entityManager.GetComponent<TransformComponent>(otherPcc.cameraEntity).worldMatrix;
+			
+			m_entityManager.AddComponent<CameraComponent>(pcc.spectatorCamera).isMainCamera = true;
+			
+			m_entityManager.Collect<ChildComponent>().Do([&](DOG::entity playerModel, ChildComponent& cc)
+				{
+					if (cc.parent == localPlayer)
+					{
+						//This means that playerModel is the mesh model (suit), and it should be drawing for the main player again:
+						m_entityManager.RemoveComponent<DontDraw>(playerModel);
+					}
+					else if (cc.parent == playerToSpectate)
+					{
+						//This means that playerModel is the spectated players' armor/suit, and it should not be eligible for drawing anymore:
+						m_entityManager.AddComponent<DontDraw>(playerModel);
+					}
+				});
+
+			auto& sc = m_entityManager.AddComponent<SpectatorComponent>(localPlayer);
+			sc.playerBeingSpectated = playerToSpectate;
+			sc.playerName = playerName;
+			sc.playerSpectatorQueue = spectatables;
+
+			auto& timer = m_entityManager.AddComponent<DeathUITimerComponent>(localPlayer);
+			timer.duration = 4.0f;
+			timer.timeLeft = timer.duration;
+		}
+		else // Of course, if all players are dead, this else will fire, but then the game would restart, so probably unnecessary.
+		{
+			auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(localPlayer);
+			controller.debugCamera = m_mainScene->CreateEntity();
+
+			m_entityManager.AddComponent<TransformComponent>(controller.debugCamera)
+				.worldMatrix = m_entityManager.GetComponent<TransformComponent>(controller.cameraEntity);
+
+			m_entityManager.AddComponent<CameraComponent>(controller.debugCamera).isMainCamera = true;
+		}
 	}
 }
 

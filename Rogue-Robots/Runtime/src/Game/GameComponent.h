@@ -12,6 +12,7 @@ struct PlayerControllerComponent
 
 	DOG::entity cameraEntity = DOG::NULL_ENTITY;
 	DOG::entity debugCamera = DOG::NULL_ENTITY;
+	DOG::entity spectatorCamera = DOG::NULL_ENTITY;
 
 	bool moveView = true;
 	bool jumping = false;
@@ -262,4 +263,17 @@ struct TurretProjectileComponent
 {
 	float maxLifeTime = 3.0f;
 	float lifeTime = 0;
+};
+
+struct DeathUITimerComponent
+{
+	float duration;
+	float timeLeft;
+};
+
+struct SpectatorComponent
+{
+	DOG::entity playerBeingSpectated;
+	const char* playerName;
+	std::vector<DOG::entity> playerSpectatorQueue;
 };
