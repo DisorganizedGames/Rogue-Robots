@@ -5,7 +5,7 @@
 
 void HeartbeatTrackerSystem::OnUpdate(DOG::entity e, DOG::ThisPlayer& tp, PlayerStatsComponent& psc)
 {
-	if (psc.health <= 80.f)
+	if (psc.health <= m_healthThreshold)
 	{
 		if (!m_justImpact)
 		{
