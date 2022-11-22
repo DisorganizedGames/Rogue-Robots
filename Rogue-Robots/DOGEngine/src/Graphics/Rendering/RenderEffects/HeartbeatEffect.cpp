@@ -24,10 +24,13 @@ namespace DOG::gfx
 		//bd.SrcBlendAlpha = D3D12_BLEND_SRC_ALPHA;
 		//bd.DestBlendAlpha = D3D12_BLEND_DEST_ALPHA;
 		//bd.BlendOpAlpha = D3D12_BLEND_OP_MAX;
-		bd.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+		bd.RenderTargetWriteMask = 
+			D3D12_COLOR_WRITE_ENABLE_RED |
+			D3D12_COLOR_WRITE_ENABLE_BLUE |
+			D3D12_COLOR_WRITE_ENABLE_GREEN;
 
 		bd.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-		bd.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+		bd.DestBlend = D3D12_BLEND_DEST_ALPHA;
 		bd.BlendOp = D3D12_BLEND_OP_ADD;
 		bd.SrcBlendAlpha = D3D12_BLEND_SRC_ALPHA;
 		bd.DestBlendAlpha = D3D12_BLEND_DEST_ALPHA;
