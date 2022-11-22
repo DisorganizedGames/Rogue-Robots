@@ -341,6 +341,9 @@ public:
 
 private:
 	inline static constexpr Vector3 s_globUp = Vector3(0, 1, 0);
+	u32 m_changeSound = 0;
+	f32 m_timeBetween = 0.3f;
+	f32 m_timeBeteenTimer = 0.0f;
 
 private:
 	Entity CreateDebugCamera(Entity e) noexcept;

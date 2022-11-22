@@ -229,6 +229,7 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 
 	TransformComponent& playerTransform = EntityManager::Get().GetComponent<TransformComponent>(e);
 	CapsuleColliderComponent& capsuleCollider = EntityManager::Get().GetComponent<CapsuleColliderComponent>(e);
+	auto& comp = EntityManager::Get().GetComponent<AudioComponent>(e);
 
 	Vector3 velocityDirection = rb.linearVelocity;
 	velocityDirection.y = 0.0f;
@@ -284,9 +285,47 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 			auto rayHitInfo = *rayHit;
 			if (rayHitInfo.hitNormal.Dot(playerTransform.GetUp()) > normalDirectionDifference)
 			{
+				const f32 jumpVolume = 0.24f;
+
 				player.jumping = true;
 				rb.linearVelocity.y = jumpSpeed;
+
+				comp.volume = jumpVolume;
+				comp.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Jump/PlayerJumpSound.wav");
+				comp.is3D = true;
+				comp.shouldPlay = true;
 			}
+		}
+	}
+
+	u32 footstepAudio = 0;
+
+	if (m_changeSound == 0)
+		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep04.wav");
+	else if (m_changeSound == 1)
+		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep05.wav");
+	else if (m_changeSound == 2)
+		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep06.wav");
+	else
+		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep09.wav");
+
+	if (!player.jumping && moveTowards != Vector3::Zero && !comp.playing && m_timeBeteenTimer < Time::ElapsedTime())
+	{
+		const f32 footstepVolume = 0.1f;
+		const u32 audioFiles = 4;
+
+		comp.volume = footstepVolume;
+		comp.assetID = footstepAudio;
+		comp.is3D = true;
+		comp.shouldPlay = true;
+
+		m_timeBeteenTimer = m_timeBetween + (f32)Time::ElapsedTime();
+		srand((unsigned)time(NULL));
+		u32 oldChangeSound = m_changeSound;
+		m_changeSound = rand() % audioFiles;
+		if (m_changeSound == oldChangeSound)
+		{
+			m_changeSound = ++oldChangeSound % audioFiles;
 		}
 	}
 }
