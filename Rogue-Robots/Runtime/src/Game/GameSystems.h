@@ -551,7 +551,7 @@ public:
 	void ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw);
 };
 
-class PlaceHolderReviveUISystem : public DOG::ISystem
+class ReviveSystem : public DOG::ISystem
 {
 #define MAXIMUM_DISTANCE_DELTA 1.3f
 #define MINIMUM_DOT_DELTA 0.85f
@@ -560,7 +560,8 @@ public:
 	ON_UPDATE_ID(InputController, PlayerAliveComponent, DOG::TransformComponent);
 
 	void OnUpdate(DOG::entity player, InputController&, PlayerAliveComponent&, DOG::TransformComponent&);
-	float Lerp(float a, float b, float t);
-	float InverseLerp(float a, float b, float v);
-	float Remap(float iMin, float iMax, float oMin, float oMax, float v);
+	ImVec4 DeterminePlayerColor(const char* playerName);
+	void RevivePlayer(DOG::entity player);
+	void ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw);
+	void DrawProgressBar(const float progress);
 };
