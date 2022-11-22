@@ -15,7 +15,7 @@ Server::Server()
 	}
 
 	//Change denominator to set tick rate
-	m_tickrateTcp = 1.0f / 60.0f;
+	m_tickrateTcp = 1.0f / 80.0f;
 	m_tickrateUdp = 1.0f / 60.0f;
 	m_upid = 0;
 	m_reciveupid = 0;
