@@ -69,14 +69,14 @@ public:
 	{
 		if (slc.owningPlayer != DOG::NULL_ENTITY)
 		{
-			auto& ptc = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(slc.owningPlayer);
-			stc.worldMatrix = ptc.worldMatrix;
-			stc.SetPosition(stc.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 1.6f, 0.f));
+			//auto& ptc = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(slc.owningPlayer);
+			//stc.worldMatrix = stc.worldMatrix;
+			//stc.SetPosition(stc.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 1.6f, 0.f));
 			slc.dirty = true;
 
-			auto up = ptc.worldMatrix.Up();
+			auto up = stc.worldMatrix.Up();
 			up.Normalize();
-			
+
 			auto& pcc = DOG::EntityManager::Get().GetComponent<PlayerControllerComponent>(slc.owningPlayer);
 			if (pcc.cameraEntity == DOG::NULL_ENTITY) 
 				return;

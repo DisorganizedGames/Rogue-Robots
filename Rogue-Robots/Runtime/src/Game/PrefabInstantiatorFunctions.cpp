@@ -106,8 +106,17 @@ std::vector<entity> AddFlashlightsToPlayers(const std::vector<entity>& players)
 		auto& playerTransformComponent = em.GetComponent<TransformComponent>(players[i]);
 
 		entity flashLightEntity = em.CreateEntity();
-		auto& tc = em.AddComponent<DOG::TransformComponent>(flashLightEntity);
-		tc.SetPosition(playerTransformComponent.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.2f, 0.0f));
+
+		em.AddComponent<ModelComponent>(flashLightEntity, AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/Grenade/Grenade.glb"));
+
+		em.AddComponent<DOG::TransformComponent>(flashLightEntity);
+		//tc.SetPosition(playerTransformComponent.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.2f, 0.0f));
+
+		ChildComponent& childComponent = em.AddComponent<ChildComponent>(flashLightEntity);
+		childComponent.parent = players[i];
+		childComponent.localTransform.SetPosition(Vector3(0.05f, 0.8f, 0.18f));
+		childComponent.localTransform.SetScale(Vector3(0.01f, 0.01f, 0.01f));
+		auto& tc = childComponent.localTransform;
 
 		auto up = tc.worldMatrix.Up();
 		up.Normalize();
