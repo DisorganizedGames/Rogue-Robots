@@ -14,13 +14,9 @@ UINT menuBackID, optionsBackID, multiBackID;
 UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID;
 UINT cID, tID, hID;
 
-UINT m_buffs;
-std::vector<bool> m_visible;
-std::vector<bool> m_animate;
-std::vector<float> m_opacity;
-std::vector<ComPtr<ID2D1Bitmap>> m_bitmaps;
-std::vector<D2D1_RECT_F> m_rects;
-ComPtr<ID2D1SolidColorBrush> m_borderBrush;
+
+std::vector<bool> buffsVisible;
+
 
 void PlayButtonFunc(void)
 {
@@ -710,7 +706,7 @@ DOG::UIBuffTracker::UIBuffTracker(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::
       m_rects.push_back(rect);
       rect.left += 60.f;
       rect.right += 60.f;
-      m_visible.push_back(false);
+      buffsVisible.push_back(false);
       m_animate.push_back(false);
       m_opacity.push_back(1.0f);
       m_buffs++;
@@ -755,12 +751,7 @@ void DOG::UIBuffTracker::Update(DOG::gfx::D2DBackend_DX12& d2d)
 
 DOG::UIBuffTracker::~UIBuffTracker()
 {
-   m_animate.clear();
-   m_buffs = 0u;
-   m_opacity.clear();
-   m_bitmaps.clear();
-   m_rects.clear();
-   m_borderBrush.Reset();
+   
 }
 
 void DOG::UIBuffTracker::AnimateUp(UINT index)
@@ -779,9 +770,9 @@ void DOG::UIBuffTracker::AnimateUp(UINT index)
 
 void DOG::UIBuffTracker::ActivateIcon(UINT index)
 {
-   if(m_visible[index])
+   if(buffsVisible[index])
       return;
-   m_visible[index] = true;
+   buffsVisible[index] = true;
    size_t activeBuffs = std::count(m_visible.begin(), m_visible.end(), true);
    float x = 50.f + 60.f * activeBuffs;
    float y = 50.f + 30.f;
@@ -792,18 +783,15 @@ void DOG::UIBuffTracker::ActivateIcon(UINT index)
 
 void DOG::UIBuffTracker::DeactivateIcon(UINT index)
 {
-   m_visible[index] = false;
+   buffsVisible[index] = false;
    for (size_t i = 0; i < m_buffs; i++)
    {
       if (m_rects[i].left > m_rects[index].left)
       {
-         //Animate here later
          m_rects[i].left -= 60.f;
          m_rects[i].right -= 60.f;
       }
    }
-
-
 }
 
 void UIRebuild(UINT clientHeight, UINT clientWidth)

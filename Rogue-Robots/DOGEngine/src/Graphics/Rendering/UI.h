@@ -232,7 +232,12 @@ namespace DOG
          void ActivateIcon(UINT index);
          void DeactivateIcon(UINT index);
       private:
-         void AnimateUp(UINT index);    
+         void AnimateUp(UINT index);std::vector<bool> m_animate;
+         std::vector<float> m_opacity;
+         std::vector<ComPtr<ID2D1Bitmap>> m_bitmaps;
+         std::vector<D2D1_RECT_F> m_rects;
+         ComPtr<ID2D1SolidColorBrush> m_borderBrush;
+         UINT m_buffs;  
    };
 
 }
