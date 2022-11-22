@@ -210,7 +210,6 @@ namespace DOG
          UITextField(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height);
          ~UITextField();
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
-         //void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void OnEvent(IEvent& event) override final;
          std::wstring GetText();
       private:
@@ -233,9 +232,7 @@ namespace DOG
          void ActivateIcon(UINT index);
          void DeactivateIcon(UINT index);
       private:
-         void AnimateUp(UINT index);
-         
-         
+         void AnimateUp(UINT index);    
    };
 
 }
