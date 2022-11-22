@@ -30,7 +30,7 @@ struct PlayerStatsComponent
 	f32 health = maxHealth;
 	f32 speed = 5.5f;
 	f32 lifeSteal = 0.f;
-	f32 jumpSpeed = 9.5f;
+	f32 jumpSpeed = 11.0f;
 	//...
 };
 
@@ -117,6 +117,7 @@ struct PassiveItemComponent {
 		SpeedBoost,
 		LifeSteal,
 		SpeedBoost2,
+		JumpBoost,
 	};
 
 	Type type;

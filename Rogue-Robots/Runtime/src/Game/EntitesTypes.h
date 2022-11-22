@@ -20,6 +20,7 @@ enum class EntityTypes
 	IncreaseSpeed,
 	IncreaseSpeed2,
 	Health,
+	JumpBoost,
 	PassiveItems,
 
 	//ActiveItem

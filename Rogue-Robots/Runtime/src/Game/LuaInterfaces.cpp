@@ -353,6 +353,9 @@ void EntityInterface::GetEntityTypeAsString(DOG::LuaContext* context)
 	case EntityTypes::Health:
 		context->ReturnString("Health");
 		break;
+	case EntityTypes::JumpBoost:
+		context->ReturnString("JumpBoost");
+		break;
 	default:
 		context->ReturnString("default");
 		break;
@@ -540,7 +543,7 @@ void EntityInterface::GetPlayerStats(LuaContext* context)
 	t.AddDoubleToTable("maxHealth", psComp.maxHealth);
 	t.AddDoubleToTable("speed", psComp.speed);
 	t.AddDoubleToTable("lifeSteal", psComp.lifeSteal);
-
+	t.AddDoubleToTable("jumpSpeed", psComp.jumpSpeed);
 	context->ReturnTable(t);
 }
 
@@ -556,6 +559,7 @@ void EntityInterface::GetPlayerStat(LuaContext* context)
 		{ "maxHealth", psComp.maxHealth },
 		{ "speed", psComp.speed },
 		{ "lifeSteal", psComp.lifeSteal },
+		{ "jumpSpeed", psComp.jumpSpeed },
 	};
 	
 	auto& out = statMap.at(stat);
@@ -574,6 +578,7 @@ void EntityInterface::SetPlayerStats(LuaContext* context)
 		.health = stats.GetFloatFromTable("health"),
 		.speed = stats.GetFloatFromTable("speed"),
 		.lifeSteal = stats.GetFloatFromTable("lifeSteal"),
+		.jumpSpeed = stats.GetFloatFromTable("jumpSpeed"),
 	};
 }
 
@@ -589,6 +594,7 @@ void EntityInterface::SetPlayerStat(LuaContext* context)
 		{ "maxHealth", &psComp.maxHealth },
 		{ "speed", &psComp.speed },
 		{ "lifeSteal", &psComp.lifeSteal },
+		{ "jumpSpeed", &psComp.jumpSpeed },
 	};
 
 	auto& out = statMap.at(stat);

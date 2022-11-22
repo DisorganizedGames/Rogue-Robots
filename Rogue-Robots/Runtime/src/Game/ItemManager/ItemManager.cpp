@@ -50,6 +50,8 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 	case EntityTypes::Health:
 		//return CreateHealthPickup(position, id);
 		break;
+	case EntityTypes::JumpBoost:
+		return CreateJumpBoost(position, id);
 	default:
 		break;
 	}
@@ -365,6 +367,35 @@ u32 ItemManager::CreateHealthPickup(DirectX::SimpleMath::Vector3 position, u32 i
 
 	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(healthBoostEntity);
 	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(healthBoostEntity).GetPosition().y;
+	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
+	return ni.id;
+}
+
+
+u32 ItemManager::CreateJumpBoost(DirectX::SimpleMath::Vector3 position, u32 id)
+{
+	static u32 jumpBoostID = 0u;
+
+	u32 jumpBoostId = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/TempJumBoostglb.glb");
+
+	entity pEntity = s_entityManager.CreateEntity();
+	s_entityManager.AddComponent<PassiveItemComponent>(pEntity).type = PassiveItemComponent::Type::JumpBoost;
+	s_entityManager.AddComponent<PickupComponent>(pEntity).itemName = "JumpBoost";
+	s_entityManager.AddComponent<ModelComponent>(pEntity, jumpBoostId);
+	s_entityManager.AddComponent<TransformComponent>(pEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
+	s_entityManager.AddComponent<ShadowReceiverComponent>(pEntity);
+	auto& ni = s_entityManager.AddComponent<NetworkId>(pEntity);
+	ni.entityTypeId = EntityTypes::JumpBoost;
+	if (id == 0)
+		ni.id = ++jumpBoostID;
+	else
+		ni.id = id;
+
+	LuaMain::GetScriptManager()->AddScript(pEntity, "Pickupable.lua");
+
+	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(pEntity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(pEntity).GetPosition().y;
 	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
 	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
 	return ni.id;
