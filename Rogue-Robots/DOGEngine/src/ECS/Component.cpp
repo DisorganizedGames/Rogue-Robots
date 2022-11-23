@@ -146,6 +146,16 @@ BoundingBoxComponent::BoundingBoxComponent(DirectX::SimpleMath::Vector3 center, 
 	aabb.Center = DirectX::XMFLOAT3{ center.x, center.y, center.z };
 	aabb.Extents = DirectX::XMFLOAT3{ extents.x, extents.y, extents.z };
 }
+
+Vector3 BoundingBoxComponent::Center()
+{
+	return Vector3(aabb.Center);
+}
+
+Vector3 BoundingBoxComponent::Extents()
+{
+	return Vector3(aabb.Extents);
+}
 	void AnimationComponent::SimpleAdd(i8 animationId, AnimationFlag flags)
 	{
 		auto& setter = animSetters[addedSetters++];

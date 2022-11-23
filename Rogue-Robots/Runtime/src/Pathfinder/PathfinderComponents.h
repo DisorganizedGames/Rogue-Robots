@@ -1,56 +1,57 @@
+#pragma once
 #include <DOGEngine.h>
 
 struct NavSceneComponent
 {
 	std::vector<std::vector<std::vector<DOG::entity>>> map;
+	void AddIdAt(size_t x, size_t y, size_t z, DOG::entity e);
+	bool HasNavMesh(int x, int y, int z);
+	DOG::entity At(size_t x, size_t y, size_t z);
+	DOG::entity At(int x, int y, int z);
 };
 
 
 struct NavMeshComponent
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
-	using NavMeshID = size_t;
-	using PortalID = size_t;
+	using NavMeshID = DOG::entity;
+	using PortalID = DOG::entity;
 
-	// Extents
-	Vector3 lowCorner;
-	Vector3 hiCorner;
-	Box corners;
-	// Exit zones
-	std::vector<PortalID> navNodes;
+	// Portals to other NavMeshes
+	std::vector<PortalID> portals;
 
 	// Methods
-	NavMesh(Vector3 low, Vector3 hi);
-	NavMesh(Box extents);
-	bool Contains(const Vector3 pos) const;
-	bool Contains(const GridCoord pos) const;
-	float CostWalk(const Vector3 enter, const Vector3 exit);
-	float CostFly(const Vector3 enter, const Vector3 exit);
-	bool AddNavNode(PortalID nodeID);
+	bool Connected(NavMeshID mesh1, NavMeshID mesh2);
+	//bool Contains(const Vector3 pos) const;
+	//float CostWalk(const Vector3 enter, const Vector3 exit);
+	//float CostFly(const Vector3 enter, const Vector3 exit);
+	//bool AddPortal(PortalID nodeID);
 };
 
 
 struct PortalComponent
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
-	using NavMeshID = size_t;
-	using PortalID = size_t;
+	using NavMeshID = DOG::entity;
+	using PortalID = DOG::entity;
 
-	static constexpr size_t MAX_ID = size_t(-1);
+	// Portal - for now a single point in the middle of the intersecting surface
+	Vector3 portal;
 
-	Vector3	lowCorner;
-	Vector3	hiCorner;
-	Box corners;
-	NavMeshID iMesh1;
-	NavMeshID iMesh2;
-	Portal(Vector3 low, Vector3 hi, NavMeshID one, NavMeshID two);
-	Portal(Box area, NavMeshID meshIdx);
-	Portal(Vector3 pos, NavMeshID meshIdx);
-	Portal(Portal&& other) = default;
+	// Portal connects
+	NavMeshID navMesh1;
+	NavMeshID navMesh2;
+
+	PortalComponent(NavMeshID mesh1, NavMeshID mesh2);
+	//Portal(Vector3 low, Vector3 hi, NavMeshID one, NavMeshID two);
+	//Portal(Box area, NavMeshID meshIdx);
+	//Portal(Vector3 pos, NavMeshID meshIdx);
+	//Portal(Portal&& other) = default;
 
 	// Methods
-	bool Contains(GridCoord pt) const;
-	Vector3 Midpoint() const;
-	bool AddNavMesh(NavMeshID navMesh);
+	bool Connects(NavMeshID mesh1, NavMeshID mesh2);
+	//bool Contains(GridCoord pt) const;
+	//Vector3 Midpoint() const;
+	//bool AddNavMesh(NavMeshID navMesh);
 };
 

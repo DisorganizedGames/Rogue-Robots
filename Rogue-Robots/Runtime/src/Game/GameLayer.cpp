@@ -13,6 +13,7 @@
 #include "ItemManager/ItemManager.h"
 #include "TestScenes/ParticleScene.h"
 #include "PlayerManager/PlayerManager.h"
+#include "Pathfinder/Pathfinder.h"
 #include "HeartbeatTrackerSystem.h"
 
 using namespace DOG;

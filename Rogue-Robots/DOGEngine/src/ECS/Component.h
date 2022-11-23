@@ -361,6 +361,10 @@ namespace DOG
 
 struct BoundingBoxComponent
 {
+	using Vector3 = DirectX::SimpleMath::Vector3;
+
 	DirectX::BoundingBox aabb;
-	BoundingBoxComponent(DirectX::SimpleMath::Vector3 center, DirectX::SimpleMath::Vector3 extents);
+	BoundingBoxComponent(Vector3 center, Vector3 extents);
+	Vector3 Center();
+	Vector3 Extents();
 };

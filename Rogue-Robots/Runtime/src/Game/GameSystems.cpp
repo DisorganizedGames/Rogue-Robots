@@ -398,7 +398,7 @@ void UpdateParentNode(entity parent)
 void ScuffedSceneGraphSystem::OnUpdate(entity e, ChildComponent& child, TransformComponent& world)
 {
 	auto& em = EntityManager::Get();
-	if (em.Exists(child.parent))
+	if (em.Exists(child.parent) && !em.HasComponent<DOG::DeferredDeletionComponent>(child.parent))
 	{
 		if (!child.nodeHasBeenUpdated)
 		{

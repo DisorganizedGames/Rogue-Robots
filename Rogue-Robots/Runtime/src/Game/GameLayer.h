@@ -1,7 +1,6 @@
 #pragma once
 #include "LuaInterfaces.h"
 #include "NetCode.h"
-#include "Pathfinder/Pathfinder.h"
 #include "AgentManager/AgentManager.h"
 #include "GameComponent.h"
 #include "GameSystems.h"

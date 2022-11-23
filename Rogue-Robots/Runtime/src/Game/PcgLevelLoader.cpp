@@ -9,6 +9,8 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 	auto& em = EntityManager::Get();
 
 	constexpr float blockDim = pcgBlock::DIMENSION;
+	constexpr float half = blockDim / 2.0f;
+	constexpr Vector3 extents{ half, half, half };
 
 	std::string line;
 
@@ -46,8 +48,7 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 						em.AddComponent<EmptySpaceComponent>(blockEntity, Vector3(x * blockDim, y * blockDim, z * blockDim));
 						// Add BoundingBox to modular block
 						em.AddComponent<BoundingBoxComponent>(blockEntity,
-							Vector3{ x * blockDim, y * blockDim + blockDim / 2, z * blockDim },
-							Vector3{ blockDim / 2, blockDim / 2, blockDim / 2 });
+							Vector3{ x * blockDim, y * blockDim + blockDim / 2, z * blockDim }, extents);
 					}
 					else if (block != "Void")
 					{
@@ -67,8 +68,7 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 
 						// Add BoundingBox to modular block
 						em.AddComponent<BoundingBoxComponent>(blockEntity, 
-							Vector3{ x * blockDim, y * blockDim + blockDim / 2, z * blockDim }, 
-							Vector3{ blockDim / 2, blockDim / 2, blockDim / 2 });
+							Vector3{ x * blockDim, y * blockDim + blockDim / 2, z * blockDim }, extents);
 						
 						em.AddComponent<ModularBlockComponent>(blockEntity);
 
@@ -79,9 +79,6 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 							false);		// Set this to true if you want to see colliders only in wireframe
 						
 						em.AddComponent<ShadowReceiverComponent>(blockEntity);
-						AABBComponent& aabb = em.AddComponent<AABBComponent>(blockEntity);
-						aabb.min = Vector3(x * blockDim, y * blockDim, z * blockDim);
-						aabb.max = Vector3(x * blockDim + blockDim, y * blockDim + blockDim, z * blockDim + blockDim);
 
 						if (blockName.find("Spawn") != std::string::npos)
 						{
