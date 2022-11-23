@@ -50,7 +50,7 @@ class EntityInterface : public LuaInterface
 public:
 	EntityInterface() noexcept
 	{
-
+		DOG::LuaMain::GetEventSystem()->Register<LuaPickUpMoreLaserAmmoCallback>("PickUpMoreLaserCharge");
 	}
 	~EntityInterface() noexcept
 	{
@@ -130,6 +130,8 @@ public:
 	void SpawnActiveItem(DOG::LuaContext* context);
 
 private:
+	static void LuaPickUpMoreLaserAmmoCallback(DOG::LuaContext*);
+
 	void AddModel(DOG::LuaContext* context, DOG::entity e);
 
 	void AddTransform(DOG::LuaContext* context, DOG::entity e);

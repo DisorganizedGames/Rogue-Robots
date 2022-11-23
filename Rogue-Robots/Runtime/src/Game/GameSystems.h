@@ -285,6 +285,11 @@ public:
 			barrelType += "Bullets";
 			break;
 		}
+		case BarrelComponent::Type::Laser:
+		{
+			barrelType += "Laser";
+			break;
+		}
 		}
 		if (barrelType.empty())
 			return;

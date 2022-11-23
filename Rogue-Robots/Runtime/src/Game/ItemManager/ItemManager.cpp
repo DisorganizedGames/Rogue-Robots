@@ -180,7 +180,7 @@ u32 ItemManager::CreateLaserPickup(Vector3 position, u32 id)
 	auto& bc = s_entityManager.AddComponent<BarrelComponent>(laserEntity);
 	bc.type = BarrelComponent::Type::Laser;
 	bc.maximumAmmoCapacityForType = 100;
-	bc.ammoPerPickup = 25;
+	bc.ammoPerPickup = 20;
 	s_entityManager.AddComponent<PickupComponent>(laserEntity).itemName = "Laser";
 	auto& ni = s_entityManager.AddComponent<NetworkId>(laserEntity);
 	ni.entityTypeId = EntityTypes::LaserBarrel;

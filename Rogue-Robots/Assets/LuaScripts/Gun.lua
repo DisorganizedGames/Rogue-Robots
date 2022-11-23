@@ -124,7 +124,7 @@ function OnUpdate()
 		laserStart = laserStart + dir * 0.8
 		local color = Vector3.New(1.5, 0.1, 0.1) * 7
 
-		Entity:ModifyComponent(EntityID, "LaserBarrel", 100.0, 240.0, shoot, laserStart, dir, color)
+		Entity:ModifyComponent(EntityID, "LaserBarrel", EntityID, 100.0, 240.0, shoot, laserStart, dir, color)
 	else
 		-- Returns a table of bullets
 		local newBullets = miscComponent:Update(EntityID, cameraEntity)
@@ -295,7 +295,12 @@ function OnPickup(pickup)
 			else
 				currentAmmoCount = currentAmmoCount + barrelComponent:GetAmmoPerPickup()
 			end
-			Entity:UpdateMagazine(playerID, currentAmmoCount)
+
+			if pickupTypeString == "LaserBarrel" and miscComponent.miscName == "FullAuto" then -- LaserBeam ammo counting is handled on C++
+				EventSystem:InvokeEvent("PickUpMoreLaserCharge", playerID, currentAmmoCount, barrelComponent:GetAmmoPerPickup())
+			else
+				Entity:UpdateMagazine(playerID, currentAmmoCount)
+			end
 		else
 			--Player picked up a new barrel type:
 			if pickupTypeString == "GrenadeBarrel" then

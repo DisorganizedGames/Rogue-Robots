@@ -645,6 +645,22 @@ void EntityInterface::SetPlayerStat(LuaContext* context)
 	}
 }
 
+void EntityInterface::LuaPickUpMoreLaserAmmoCallback(DOG::LuaContext* context)
+{
+	std::cout << "LuaPickUpMoreLaserAmmoCallback " << std::endl;
+	auto& em = EntityManager::Get();
+	entity player = context->GetInteger();
+	int currentAmmo = context->GetInteger();
+	int pickupAmmo = context->GetInteger();
+	assert(em.Exists(player) && em.HasComponent<BarrelComponent>(player) && em.HasComponent<LaserBarrelComponent>(player));
+	auto& barrelInfo = em.GetComponent<BarrelComponent>(player);
+	assert(barrelInfo.type == BarrelComponent::Type::Laser);
+	auto& laserBarrel = em.GetComponent<LaserBarrelComponent>(player);
+	laserBarrel.ammo += barrelInfo.ammoPerPickup;
+	laserBarrel.ammo = std::min(laserBarrel.ammo, static_cast<f32>(barrelInfo.maximumAmmoCapacityForType));
+	barrelInfo.currentAmmoCount = laserBarrel.ammo;
+}
+
 void EntityInterface::AddModel(LuaContext* context, entity e)
 {
 	EntityManager::Get().AddComponent<ModelComponent>(e, static_cast<u32>(std::stoull(context->GetString())));
@@ -931,6 +947,7 @@ void EntityInterface::AddBarrelComponent(DOG::LuaContext* context, DOG::entity e
 	bc.type = type;
 	bc.maximumAmmoCapacityForType = ammoCap;
 	bc.currentAmmoCount = currentAmmo;
+	bc.ammoPerPickup = currentAmmo;
 
 	if (type == BarrelComponent::Type::Laser)
 	{
@@ -1023,6 +1040,7 @@ void EntityInterface::ModifyLaserBarrel(DOG::LuaContext* context, DOG::entity e)
 	assert(em.Exists(e) && em.HasComponent<LaserBarrelComponent>(e));
 
 	auto& barrel = em.GetComponent<LaserBarrelComponent>(e);
+	barrel.laserToShoot.owningPlayer = context->GetInteger();
 	barrel.shoot = context->GetBoolean();
 	barrel.laserToShoot.maxRange = static_cast<f32>(context->GetDouble());
 	barrel.damagePerSecond = static_cast<f32>(context->GetDouble());
@@ -1037,6 +1055,13 @@ void EntityInterface::ModifyLaserBarrel(DOG::LuaContext* context, DOG::entity e)
 	barrel.laserToShoot.startPos = { laserStart.x, laserStart.y, laserStart.z };
 	barrel.laserToShoot.direction = { laserDir.x, laserDir.y, laserDir.z };
 	barrel.laserToShoot.color = { laserColor.x, laserColor.y, laserColor.z };
+
+
+
+	if (auto mag = em.TryGetComponent<BarrelComponent>(e))
+	{
+		mag->get().currentAmmoCount = barrel.ammo;
+	}
 }
 
 

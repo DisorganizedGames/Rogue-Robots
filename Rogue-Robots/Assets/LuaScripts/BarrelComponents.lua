@@ -203,7 +203,7 @@ function BarrelComponents:Laser()
 		end,
 
 		GetAmmoPerPickup = function(self)
-			return 25
+			return 20
 		end,
 
 		GetECSType = function(self)
