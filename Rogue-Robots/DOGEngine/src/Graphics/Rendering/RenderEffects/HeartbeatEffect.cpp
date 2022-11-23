@@ -71,8 +71,8 @@ namespace DOG::gfx
 				UINT effect32Packed = *(UINT*)&effect;
 				UINT factor32Packed = *(UINT*)&factor;
 				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, ShaderArgs()
-					.AppendConstant(m_globalEffectData.defRenderVPs.vps[0].Width)
-					.AppendConstant(m_globalEffectData.defRenderVPs.vps[0].Height)
+					.AppendConstant((u32)m_globalEffectData.defRenderVPs.vps[0].Width)
+					.AppendConstant((u32)m_globalEffectData.defRenderVPs.vps[0].Height)
 					.AppendConstant(effect32Packed)
 					.AppendConstant(factor32Packed));
 				rd->Cmd_Draw(cmdl, 3, 1, 0, 0);

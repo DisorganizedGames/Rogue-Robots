@@ -5,6 +5,9 @@
 
 void HeartbeatTrackerSystem::OnUpdate(DOG::entity e, DOG::ThisPlayer& tp, PlayerStatsComponent& psc)
 {
+	UNREFERENCED_PARAMETER(e);
+	UNREFERENCED_PARAMETER(tp);
+
 	if (psc.health <= m_healthThreshold)
 	{
 		if (!m_justImpact)
