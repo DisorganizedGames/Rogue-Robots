@@ -30,6 +30,8 @@ float4 main(PS_IN input) : SV_Target0
 	Emitter e = emitterBuffer[p.emitterHandle + g_constants.localEmitterTableOffset];
 	float age = clamp(p.age, 0, e.lifetime) / e.lifetime;
 	
+	float4 outCol = 1.f.xxxx;
+	
 	if (e.textureHandle != 0)
 	{
 		// Texture tiling
@@ -47,16 +49,13 @@ float4 main(PS_IN input) : SV_Target0
 		
 		// Draw texture
 		Texture2D particleTexture = ResourceDescriptorHeap[e.textureHandle];
-		return particleTexture.Sample(g_bilinear_clamp_samp, actTex);
+		outCol = particleTexture.Sample(g_bilinear_clamp_samp, actTex);
 	}
-	else
-	{
-		// Temporary color over lifetime if no texture
-		float4 start = float4(1, 0, 0, 1);
-		float4 end = float4(0, 0, 1, 1);
-		
-		return (age * end) + ((1 - age) * start);
-	}
+	
+	float4 start = e.startColor;
+	float4 end = e.endColor;
+
+	return outCol * ((age * end) + ((1 - age) * start));
 	
 }
 

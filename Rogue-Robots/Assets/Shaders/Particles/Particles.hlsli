@@ -47,6 +47,9 @@ struct Emitter
 	
 	float4x4 rotationMatrix;
 	
+	float4 startColor;
+	float4 endColor;
+	
 	uint3 pad;
 };
 

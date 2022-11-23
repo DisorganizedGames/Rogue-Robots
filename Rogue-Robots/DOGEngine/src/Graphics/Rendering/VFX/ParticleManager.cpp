@@ -34,6 +34,10 @@ const std::vector<ParticleEmitter>& ParticleManager::GatherEmitters()
 				em.textureHandle = emitter.textureHandle;
 				em.texSegX = emitter.textureSegmentsX;
 				em.texSegY = emitter.textureSegmentsY;
+
+				em.startColor = emitter.startColor;
+				em.endColor = emitter.endColor;
+
 				em.alive = 1; // true
 			});
 

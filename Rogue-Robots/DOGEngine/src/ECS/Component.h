@@ -308,6 +308,9 @@ namespace DOG
 		u32 textureSegmentsX{ 1 }; // Tiles in X-axis
 		u32 textureSegmentsY{ 1 }; // Tiles in Y-axis
 
+		DirectX::SimpleMath::Vector4 startColor = { 1.f, 1.f, 1.f, 1.f };
+		DirectX::SimpleMath::Vector4 endColor = { 1.f, 1.f, 1.f, 1.f };
+
 		u32 emitterIndex{ static_cast<u32>(-1) }; // DO NOT TOUCH (used internally)
 	};
 

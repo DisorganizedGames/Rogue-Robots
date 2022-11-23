@@ -31,7 +31,10 @@ namespace DOG::gfx
 
 		DirectX::SimpleMath::Matrix rotationMatrix;
 
-		u32 pad[3] = {0, 0, 0};
+		DirectX::SimpleMath::Vector4 startColor;
+		DirectX::SimpleMath::Vector4 endColor;
+
+		u32 pad[3] = { 0 };
 	};
 	
 	class ParticleBackend
