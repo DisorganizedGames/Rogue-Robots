@@ -319,6 +319,8 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
 	m_entityManager.DeferredEntityDestruction(controller.debugCamera);
 	controller.debugCamera = DOG::NULL_ENTITY;
+
+	m_entityManager.GetComponent<RigidbodyComponent>(e).ConstrainPosition(false, false, false);
 }
 
 void GameLayer::KillPlayer(DOG::entity e)
@@ -335,6 +337,10 @@ void GameLayer::KillPlayer(DOG::entity e)
 		std::string luaEventName = std::string("ItemPickup") + std::to_string(localPlayer);
 		m_entityManager.RemoveComponent<ScriptComponent>(localPlayer);
 		m_entityManager.RemoveComponent<BarrelComponent>(localPlayer);
+
+		RigidbodyComponent& rb = m_entityManager.GetComponent<RigidbodyComponent>(e);
+		rb.ConstrainPosition(true, true, true);
+		rb.ClearPhysics();
 
 		DOG::entity playerToSpectate = DOG::NULL_ENTITY;
 		const char* playerName{ nullptr };

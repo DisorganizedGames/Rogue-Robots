@@ -34,6 +34,8 @@ namespace DOG
 		//With this you can rotate and change the position of the transform directly (do not change the transform every frame as this causes the physics to not work properly)
 		bool getControlOfTransform = false;
 		DirectX::SimpleMath::Vector3 lastFramePositionDifferance;
+
+		void ClearPhysics();
 	};
 
 	class PhysicsRigidbody

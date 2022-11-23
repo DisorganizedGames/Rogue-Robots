@@ -6,6 +6,8 @@
 
 namespace DOG
 {
+	using namespace DirectX::SimpleMath;
+
 	RigidbodyComponent::RigidbodyComponent(entity entity, bool kinematicBody)
 	{
 		//Can only create a rigidbody component for box, sphere, capsule
@@ -75,6 +77,15 @@ namespace DOG
 		constrainPositionX = constrainXPosition;
 		constrainPositionY = constrainYPosition;
 		constrainPositionZ = constrainZPosition;
+	}
+
+	void RigidbodyComponent::ClearPhysics()
+	{
+		linearVelocity = Vector3::Zero;
+		centralForce = Vector3::Zero;
+		centralImpulse = Vector3::Zero;
+		torque = Vector3::Zero;
+		angularVelocity = Vector3::Zero;
 	}
 
 	void PhysicsRigidbody::UpdateRigidbodies()
