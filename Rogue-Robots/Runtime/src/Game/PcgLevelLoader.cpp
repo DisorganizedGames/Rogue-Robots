@@ -54,10 +54,10 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 							Vector3(x * blockDim, y * blockDim, z * blockDim),
 							Vector3(0.0f, -blockRot * piDiv2, 0.0f),
 							scale);
+						em.AddComponent<CheckForLightsComponent>(blockEntity);
 
 						em.AddComponent<ModularBlockComponent>(blockEntity);
 
-						
 						em.AddComponent<MeshColliderComponent>(blockEntity,
 							blockEntity,
 							aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + "_Col.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::CPUMemory | DOG::AssetLoadFlag::GPUMemory))),

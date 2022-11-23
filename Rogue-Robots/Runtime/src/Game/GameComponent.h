@@ -289,3 +289,7 @@ struct ExitBlockComponent
 struct FloorBlockComponent
 {
 };
+
+struct CheckForLightsComponent
+{
+};

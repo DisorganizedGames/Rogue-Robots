@@ -429,6 +429,47 @@ void GameLayer::UpdateGame()
 				transform.SetPosition(pos);
 			}
 		});
+
+	//Check if assets should create lights
+	EntityManager::Get().Collect<CheckForLightsComponent>().Do([](entity e, CheckForLightsComponent&)
+		{
+			ModelAsset* asset = AssetManager::Get().GetAsset<ModelAsset>(EntityManager::Get().GetComponent<ModelComponent>(e).id);
+			if (asset)
+			{
+				Vector3 assetPosition = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
+				for (uint32_t i{ 0u }; i < asset->lights.size(); ++i)
+				{
+					ImportedLight& currentLight = asset->lights[i];
+
+					entity newLightEntity = EntityManager::Get().CreateEntity();
+					Vector3 globalPosition;
+					if (EntityManager::Get().HasComponent<TransformComponent>(e))
+					{
+						globalPosition = Vector3::Transform(Vector3(currentLight.translation), EntityManager::Get().GetComponent<TransformComponent>(e).worldMatrix);
+					}
+					EntityManager::Get().AddComponent<TransformComponent>(newLightEntity).SetPosition(globalPosition);
+
+					PointLightDesc desc;
+					desc.color = Vector3(currentLight.color[0], currentLight.color[1], currentLight.color[2]);
+					desc.position = globalPosition;
+					desc.radius = currentLight.radius;
+					desc.strength = 1.0f;
+
+					LightHandle handle = LightManager::Get().AddPointLight(desc, LightUpdateFrequency::Never);
+
+					PointLightComponent& pointLightComp = EntityManager::Get().AddComponent<PointLightComponent>(newLightEntity);
+					pointLightComp.handle = handle;
+					pointLightComp.dirty = false;
+
+					if (EntityManager::Get().HasComponent<SceneComponent>(e))
+					{
+						EntityManager::Get().AddComponent<SceneComponent>(newLightEntity, EntityManager::Get().GetComponent<SceneComponent>(e).scene);
+					}
+				}
+
+				EntityManager::Get().RemoveComponent<CheckForLightsComponent>(e);
+			}
+		});
 }
 
 void GameLayer::OnRender()

@@ -26,6 +26,13 @@ namespace DOG
 		float emissiveFactor[3] = { 0, 0, 0 };
 	};
 
+	struct ImportedLight
+	{
+		float translation[3] = { 0.0f, 0.0f, 0.0f };
+		float color[3] = { 0.0f, 0.0f, 0.0f };
+		float radius = 0.0f;
+	};
+
 	struct BlendData
 	{
 		i32 index = -1;
@@ -90,6 +97,7 @@ namespace DOG
 	{
 		std::vector<ImportedMaterial> materials;
 		std::vector<SubmeshMetadata> submeshes;
+		std::vector<ImportedLight> lights;
 		ImportedRig animation;
 		ImportedMesh mesh;
 	};

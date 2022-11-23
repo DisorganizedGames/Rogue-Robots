@@ -433,5 +433,48 @@ namespace DOG
 
 		if (scene->HasAnimations())
 			m_loadedModel->animation = ImportAnimation(scene, m_loadedModel);
+
+		//Load lights in the mesh
+		if (scene->HasLights())
+		{
+			for (uint32_t i{ 0u }; i < scene->mNumLights; ++i)
+			{
+				switch (scene->mLights[i]->mType)
+				{
+					case aiLightSourceType::aiLightSource_POINT:
+					{
+						ImportedLight newLight;
+
+						//Find the node in the scene corresponding to the light to be able to extract the translation.
+						DirectX::SimpleMath::Vector3 translation;
+						for (uint32_t j{ 0u }; j < scene->mRootNode->mNumChildren; ++j)
+						{
+							if (scene->mRootNode->mChildren[j]->mName == scene->mLights[i]->mName)
+							{
+								aiVector3D scaling;
+								aiVector3D rot;
+								aiVector3D translation;
+								scene->mRootNode->mChildren[j]->mTransformation.Decompose(scaling, rot, translation);
+								newLight.translation[0] = translation.x;
+								newLight.translation[1] = translation.y;
+								newLight.translation[2] = translation.z;
+								break;
+							}
+						}
+						newLight.color[0] = scene->mLights[i]->mColorDiffuse[0];
+						newLight.color[1] = scene->mLights[i]->mColorDiffuse[1];
+						newLight.color[2] = scene->mLights[i]->mColorDiffuse[2];
+
+						newLight.radius = 10.0f;
+						m_loadedModel->lights.push_back(newLight);
+						break;
+					}
+					default:
+					{
+						break;
+					}
+				}
+			}
+		}
 	}
 }

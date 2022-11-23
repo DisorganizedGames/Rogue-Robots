@@ -70,6 +70,7 @@ namespace DOG
 					model->meshAsset.vertexData = std::move(asset->mesh.vertexData);
 					model->animation = std::move(asset->animation);
 					model->submeshes = std::move(asset->submeshes);
+					model->lights = std::move(asset->lights);
 
 					// Add command that runs on the main thread
 					AssetManager::AddCommand([id = id, managedModel = managedModel, model = model, importedModel = asset](AssetLoadFlag textureLoadFlag)
@@ -102,6 +103,7 @@ namespace DOG
 				assetOut->meshAsset.vertexData = std::move(asset->mesh.vertexData);
 				assetOut->submeshes = std::move(asset->submeshes);
 				assetOut->animation = std::move(asset->animation);
+				assetOut->lights = std::move(asset->lights);
 				assetOut->materialIndices = LoadMaterials(asset->materials, m_assets[id]->loadFlag);
 				m_assets[id]->stateFlag |= AssetStateFlag::ExistOnCPU;
 

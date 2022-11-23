@@ -138,7 +138,7 @@ namespace DOG
 	//Modular blocks
 	struct ModularBlockComponent
 	{
-	};	//
+	};
 
 	struct AABBComponent
 	{
