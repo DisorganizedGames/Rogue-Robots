@@ -446,7 +446,6 @@ namespace DOG
 						ImportedLight newLight;
 
 						//Find the node in the scene corresponding to the light to be able to extract the translation.
-						DirectX::SimpleMath::Vector3 translation;
 						for (uint32_t j{ 0u }; j < scene->mRootNode->mNumChildren; ++j)
 						{
 							if (scene->mRootNode->mChildren[j]->mName == scene->mLights[i]->mName)
