@@ -102,7 +102,7 @@ private:
 	bool m_noWinLose = false;
 
 	i32 m_imguiOrder = 0;
-	f32 m_imguiX = 22.8f;
+	f32 m_imguiX = 0.f;
 	f32 m_imguiY = 42.0f;
 	f32 m_imguiZ = -1.0f;
 	f32 m_imguiS = 0.2f;

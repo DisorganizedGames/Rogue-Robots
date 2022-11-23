@@ -117,4 +117,17 @@ namespace DOG
 		worldMatrix = s * deltaR * r * t;
 		return *this;
 	}
+
+	void AnimationComponent::SimpleAdd(i8 animationId, AnimationFlag flags)
+	{
+		auto& setter = animSetters[addedSetters++];
+		setter.animationIDs[0] = animationId;
+		setter.group = 0;
+		setter.targetWeights[0] = 1.f;
+		setter.loop = static_cast<bool>(flags & AnimationFlag::Looping);
+		setter.playbackRate = 1.f;
+		setter.priority = BASE_PRIORITY;
+		setter.flag = flags | AnimationFlag::SimpleAdd;
+		setter.transitionLength = 0.1f;
+	}
 }

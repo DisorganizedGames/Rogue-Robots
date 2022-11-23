@@ -76,7 +76,7 @@ namespace DOG
 		action.weight = 1.f - looping.weight;
 		clipCount += UpdateClipSet(action, clipIdx + clipCount, dt);
 
-		return clipCount;
+		return clipIdx + clipCount;
 	}
 
 	u32 RigAnimator::UpdateClipSet(ClipSet& set, const u32 clipIdx, const f32 dt, bool matching)
