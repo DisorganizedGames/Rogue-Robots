@@ -16,17 +16,12 @@ const std::vector<ParticleEmitter>& ParticleManager::GatherEmitters()
 	EntityManager::Get().Collect<TransformComponent, ParticleEmitterComponent>()
 		.Do([this](entity e, TransformComponent& transform, ParticleEmitterComponent& emitter)
 			{
-				ParticleEmitter& em = m_emitters[0];
 				if (emitter.emitterIndex == static_cast<u32>(-1))
 				{
-					u32 idx = GetFreeEmitter();
-					emitter.emitterIndex = idx;
-					em = m_emitters[idx];
+					emitter.emitterIndex = GetFreeEmitter();
 				}
-				else
-				{
-					em = m_emitters[emitter.emitterIndex];
-				}
+
+				ParticleEmitter& em = m_emitters[emitter.emitterIndex];
 
 				em.pos = transform.GetPosition();
 				em.rate = emitter.spawnRate;

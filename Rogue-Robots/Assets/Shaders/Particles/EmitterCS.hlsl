@@ -80,7 +80,7 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 
 	if (threadID.x == 0)
 	{
-		toSpawnBuffer[0] -= g_spawned;
+		toSpawnBuffer[groupID.x] -= g_spawned;
 		if (aliveCounter[0] > MAX_PARTICLES_ALIVE)
 		{
 			aliveCounter[0] = MAX_PARTICLES_ALIVE;
