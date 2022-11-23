@@ -225,7 +225,7 @@ void NetCode::OnUpdate()
 					if (header.nrOfChangedAgentsHp > 0)
 					{
 						NetworkAgentStats* tempStats = new NetworkAgentStats;
-						EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](NetworkAgentStats&, AgentHPComponent& Agent, AgentIdComponent& idC)
+						EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](entity e, NetworkAgentStats&, AgentHPComponent& Agent, AgentIdComponent& idC)
 							{
 								for (u32 i = 0; i < header.nrOfChangedAgentsHp; ++i)
 								{
@@ -233,6 +233,8 @@ void NetCode::OnUpdate()
 									if (idC.id == tempStats->objectId && tempStats->hp.hp < Agent.hp)
 									{
 										Agent = tempStats->hp;
+										if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
+											EntityManager::Get().AddComponent<AgentAggroComponent>(e);
 									}
 
 								}
@@ -254,11 +256,9 @@ void NetCode::OnUpdate()
 								{
 									AgentManager::Get().CreateOrDestroyShadowAgent(*tempCreate);
 								}
-					
-								//Destroy pickups
-								if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Magazines && !tempCreate->alive && (u32)tempCreate->entityTypeId > (u32)EntityTypes::Agents )
+								else if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Default && (u32)tempCreate->entityTypeId > (u32)EntityTypes::Agents )
 								{
-									std::cout << "Netework Tries to destroye pickup of type " << (u32)tempCreate->entityTypeId << std::endl;
+									std::cout << "NetCode: entityType: " << (u32)tempCreate->entityTypeId << " id: " << tempCreate->id << std::endl;
 									EntityManager::Get().Collect<NetworkPlayerComponent, PlayerAliveComponent>().Do([&](entity id, NetworkPlayerComponent& playerC, PlayerAliveComponent&)
 										{
 											if (playerC.playerId == tempCreate->playerId)
@@ -269,22 +269,21 @@ void NetCode::OnUpdate()
 																	
 														if (nIdC.entityTypeId == tempCreate->entityTypeId && nIdC.id == tempCreate->id)
 														{
-															std::string luaEventName = std::string("ItemPickup") + std::to_string(id);
-															DOG::LuaMain::GetEventSystem()->InvokeEvent(luaEventName, (u32)tempCreate->entityTypeId);
-															m_entityManager.RemoveComponent<NetworkId>(e);
-															m_entityManager.DeferredEntityDestruction(e);
+															if(tempCreate->alive)
+																ItemManager::Get().CreateItemClient(*tempCreate);
+															else
+															{
+																std::string luaEventName = std::string("ItemPickup") + std::to_string(id);
+																DOG::LuaMain::GetEventSystem()->InvokeEvent(luaEventName, (u32)tempCreate->entityTypeId);
+																m_entityManager.RemoveComponent<NetworkId>(e);
+																m_entityManager.DeferredEntityDestruction(e);
+															}
 														}
 													});
 															
 											}
 										});
 
-								}
-								
-								//Create pickups
-								if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Magazines && tempCreate->alive && (u32)tempCreate->entityTypeId >(u32)EntityTypes::Agents)
-								{
-									ItemManager::Get().CreateItemClient(*tempCreate);
 								}
 							}
 						}
@@ -482,9 +481,9 @@ void DeleteNetworkSync::OnLateUpdate(DOG::entity e, DeferredDeletionComponent&, 
 	auto& t = m_entityManager.AddComponent<CreateAndDestroyEntityComponent>(newE);
 	t.alive = false;
 	t.entityTypeId = netId.entityTypeId;
-	std::cout << "Local Destroyed pickup of type " << (u32)t.entityTypeId << std::endl;
 	t.id = netId.id;
 	t.position = transC.GetPosition();
 	m_entityManager.RemoveComponent<NetworkId>(e);
+	std::cout << "DeleteNetworkSync: entityType: " << (u32)t.entityTypeId << " id: " << t.id << std::endl;
 }
 

@@ -46,6 +46,16 @@ bool PlayerManager::IsThisPlayerHost()
 		return false;
 }
 
+bool PlayerManager::IsThisMultiplayer()
+{
+	bool nStatus = false;
+	EntityManager::Get().Collect<OnlinePlayer>().Do([&](OnlinePlayer&)
+		{
+			nStatus = true;
+		});
+	return nStatus;
+}
+
 /*******************************
 		Private Methods
 *******************************/
