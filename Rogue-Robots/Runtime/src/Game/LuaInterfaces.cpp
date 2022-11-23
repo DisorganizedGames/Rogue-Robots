@@ -649,15 +649,13 @@ void EntityInterface::LuaPickUpMoreLaserAmmoCallback(DOG::LuaContext* context)
 {
 	auto& em = EntityManager::Get();
 	entity player = context->GetInteger();
-	int currentAmmo = context->GetInteger();
-	int pickupAmmo = context->GetInteger();
 	assert(em.Exists(player) && em.HasComponent<BarrelComponent>(player) && em.HasComponent<LaserBarrelComponent>(player));
 	auto& barrelInfo = em.GetComponent<BarrelComponent>(player);
 	assert(barrelInfo.type == BarrelComponent::Type::Laser);
 	auto& laserBarrel = em.GetComponent<LaserBarrelComponent>(player);
 	laserBarrel.ammo += barrelInfo.ammoPerPickup;
 	laserBarrel.ammo = std::min(laserBarrel.ammo, static_cast<f32>(barrelInfo.maximumAmmoCapacityForType));
-	barrelInfo.currentAmmoCount = laserBarrel.ammo;
+	barrelInfo.currentAmmoCount = static_cast<u32>(laserBarrel.ammo);
 }
 
 void EntityInterface::AddModel(LuaContext* context, entity e)
@@ -1069,7 +1067,7 @@ void EntityInterface::ModifyLaserBarrel(DOG::LuaContext* context, DOG::entity e)
 
 	if (auto mag = em.TryGetComponent<BarrelComponent>(e))
 	{
-		mag->get().currentAmmoCount = barrel.ammo;
+		mag->get().currentAmmoCount = static_cast<u32>(barrel.ammo);
 	}
 }
 

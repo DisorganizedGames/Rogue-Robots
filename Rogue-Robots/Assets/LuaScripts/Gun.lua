@@ -300,7 +300,7 @@ function OnPickup(pickup)
 			end
 
 			if pickupTypeString == "LaserBarrel" and miscComponent.miscName == "FullAuto" then -- LaserBeam ammo counting is handled on C++
-				EventSystem:InvokeEvent("PickUpMoreLaserCharge", playerID, currentAmmoCount, barrelComponent:GetAmmoPerPickup())
+				EventSystem:InvokeEvent("PickUpMoreLaserCharge", playerID)
 			else
 				Entity:UpdateMagazine(playerID, currentAmmoCount)
 			end
