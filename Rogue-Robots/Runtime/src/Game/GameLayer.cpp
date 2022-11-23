@@ -812,6 +812,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetActiveType>("GetActiveType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetBarrelType>("GetBarrelType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetModificationType>("GetModificationType");
+	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetMiscType>("GetMiscType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAmmoCapacityForBarrelType>("GetAmmoCapacityForBarrelType");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAmmoCountPerPickup>("GetAmmoCountPerPickup");
 	luaInterface.AddFunction<EntityInterface, &EntityInterface::UpdateMagazine>("UpdateMagazine");

@@ -125,6 +125,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddMagazineModificationComponent(context, e);
 	}
+	else if (compType == "MiscComponent")
+	{
+		AddMiscComponent(context, e);
+	}
 	else if (compType == "ThisPlayerWeapon")
 	{
 		AddThisPlayerWeapon(context, e);
@@ -169,6 +173,11 @@ void EntityInterface::RemoveComponent(DOG::LuaContext* context)
 	else if (compType == "MagazineModificationComponent")
 	{
 		EntityManager::Get().RemoveComponent<MagazineModificationComponent>(e);
+		return;
+	}
+	else if (compType == "MiscComponent")
+	{
+		EntityManager::Get().RemoveComponent<MiscComponent>(e);
 		return;
 	}
 
@@ -341,6 +350,12 @@ void EntityInterface::GetEntityTypeAsString(DOG::LuaContext* context)
 	case EntityTypes::MissileBarrel:
 		context->ReturnString("MissileBarrel");
 		break;
+	case EntityTypes::FullAutoMisc:
+		context->ReturnString("FullAutoMisc");
+		break;
+	case EntityTypes::ChargeShotMisc:
+		context->ReturnString("ChargeShotMisc");
+		break;
 	case EntityTypes::IncreaseMaxHp:
 		context->ReturnString("MaxHealthBoost");
 		break;
@@ -453,6 +468,12 @@ const std::unordered_map<MagazineModificationComponent::Type, std::string> modif
 	{ MagazineModificationComponent::Type::Frost, "FrostMagazineModification"},
 };
 
+const std::unordered_map<MiscComponent::Type, std::string> miscTypeMap = {
+	{ MiscComponent::Type::Basic, "BasicMisc" },
+	{ MiscComponent::Type::FullAuto, "FullAutoMisc"},
+	{ MiscComponent::Type::ChargeShot, "ChargeShotMisc"},
+};
+
 void EntityInterface::GetPassiveType(LuaContext* context)
 {
 	entity e = context->GetInteger();
@@ -479,6 +500,13 @@ void EntityInterface::GetModificationType(DOG::LuaContext* context)
 	entity e = context->GetInteger();
 	auto type = EntityManager::Get().GetComponent<MagazineModificationComponent>(e).type;
 	context->ReturnString(modificationTypeMap.at(type));
+}
+
+void EntityInterface::GetMiscType(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	auto type = EntityManager::Get().GetComponent<MiscComponent>(e).type;
+	context->ReturnString(miscTypeMap.at(type));
 }
 
 void EntityInterface::GetAmmoCapacityForBarrelType(DOG::LuaContext* context)
@@ -897,7 +925,15 @@ void EntityInterface::AddMagazineModificationComponent(DOG::LuaContext* context,
 {
 	MagazineModificationComponent::Type type = (MagazineModificationComponent::Type)context->GetInteger();
 
-	auto& mmc = EntityManager::Get().AddComponent<MagazineModificationComponent>(e);
+	auto& mc = EntityManager::Get().AddComponent<MagazineModificationComponent>(e);
+	mc.type = type;
+}
+
+void EntityInterface::AddMiscComponent(DOG::LuaContext* context, DOG::entity e)
+{
+	MiscComponent::Type type = (MiscComponent::Type)context->GetInteger();
+
+	auto& mmc = EntityManager::Get().AddComponent<MiscComponent>(e);
 	mmc.type = type;
 }
 

@@ -22,16 +22,6 @@ local barrelComponent = nil
 local magazineComponent = nil
 local miscComponent = nil
 
--- TEMPORARY to make sure we don't over-switch components
-local switched = false
-local componentIdx = 0
-
-local barrelSwitched = false
-local barrelComponentIdx = 0
-
-local magazineSwitched = false
-local magazineComponentIdx = 0
-
 --A template. Not supposed to be used, simply here to show what variables exist to be used.
 local bulletTemplate = {
 	entity = 0,					-- ID used by the ECS.
@@ -115,21 +105,6 @@ function OnUpdate()
 
 	Entity:SetRotationForwardUp(gunEntity.entityID, gunForward, gunUp)
 	Entity:ModifyComponent(gunEntity.entityID, "Transform", gunEntity.position, 1)
-
-	-- Switch misc component if we should
-	-- THIS IS TEMPORARY
-	if Entity:GetAction(EntityID, "SwitchComponent") and not switched then
-		switched = true
-		if componentIdx == 0 then
-			miscComponent = MiscComponent.FullAuto()
-			componentIdx = 1
-		else
-			miscComponent = MiscComponent.ChargeShot()
-			componentIdx = 0
-		end
-	elseif not Entity:GetAction(EntityID, "SwitchComponent") then
-		switched = false
-	end
 
 	NormalBulletUpdate() -- Should be called something else, but necessary for bullet despawn
 
@@ -326,7 +301,7 @@ function OnPickup(pickup)
 			
 			hasBasicBarrelEquipped = false
 		end
-	else if pickupTypeString == "FrostMagazineModification" then
+	elseif pickupTypeString == "FrostMagazineModification" then
 		--Magazine modification component
 		local currentModificationType = Entity:GetModificationType(playerID)
 		if pickupTypeString ~= currentModificationType then
@@ -337,6 +312,19 @@ function OnPickup(pickup)
 			end
 			Entity:AddComponent(playerID, "MagazineModificationComponent", magazineComponent:GetECSType())
 		end	
+
+	elseif pickupTypeString == "FullAutoMisc" or pickupTypeString == "ChargeShotMisc" then
+		--Misc component
+		local currentMiscType = Entity:GetMiscType(playerID)
+		if pickupTypeString ~= currentMiscType then
+			--A new misc component was picked up:
+			Entity:RemoveComponent(playerID, "MiscComponent")
+			if pickupTypeString == "FullAutoMisc" then
+				miscComponent = MiscComponent.FullAuto()
+			elseif pickupTypeString == "ChargeShotMisc" then
+				miscComponent = MiscComponent.ChargeShot()
+			end
+			Entity:AddComponent(playerID, "MiscComponent", miscComponent:GetECSType())
+		end	
 	end
-end
 end

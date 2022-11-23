@@ -41,6 +41,12 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 	case EntityTypes::FrostMagazineModification:
 		return CreateFrostModificationPickup(position, id);
 		break;
+	case EntityTypes::FullAutoMisc:
+		return CreateFullAutoPickup(position, id);
+		break;
+	case EntityTypes::ChargeShotMisc:
+		return CreateChargeShotPickup(position, id);
+		break;
 	case EntityTypes::IncreaseSpeed:
 		return CreateSpeedBoostPickup(position, id);
 		break;
@@ -372,7 +378,6 @@ u32 ItemManager::CreateHealthPickup(DirectX::SimpleMath::Vector3 position, u32 i
 	return ni.id;
 }
 
-
 u32 ItemManager::CreateJumpBoost(DirectX::SimpleMath::Vector3 position, u32 id)
 {
 	static u32 jumpBoostID = 0u;
@@ -396,6 +401,62 @@ u32 ItemManager::CreateJumpBoost(DirectX::SimpleMath::Vector3 position, u32 id)
 
 	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(pEntity);
 	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(pEntity).GetPosition().y;
+	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
+	return ni.id;
+}
+
+u32 ItemManager::CreateFullAutoPickup(Vector3 position, u32 id)
+{
+	static u32 fullAutoNetworkID = 0u;
+
+	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb");
+
+	entity fullAutoEntity = s_entityManager.CreateEntity();
+	s_entityManager.AddComponent<MiscComponent>(fullAutoEntity).type = MiscComponent::Type::FullAuto;
+	s_entityManager.AddComponent<PickupComponent>(fullAutoEntity).itemName = "Full Auto";
+	s_entityManager.AddComponent<ModelComponent>(fullAutoEntity, modelID);
+	s_entityManager.AddComponent<TransformComponent>(fullAutoEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
+	s_entityManager.AddComponent<ShadowReceiverComponent>(fullAutoEntity);
+	auto& ni = s_entityManager.AddComponent<NetworkId>(fullAutoEntity);
+	ni.entityTypeId = EntityTypes::FullAutoMisc;
+	if (id == 0)
+		ni.id = ++fullAutoNetworkID;
+	else
+		ni.id = id;
+
+	LuaMain::GetScriptManager()->AddScript(fullAutoEntity, "Pickupable.lua");
+
+	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(fullAutoEntity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(fullAutoEntity).GetPosition().y;
+	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
+	return ni.id;
+}
+
+u32 ItemManager::CreateChargeShotPickup(Vector3 position, u32 id)
+{
+	static u32 chargeShotNetworkID = 0u;
+
+	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/red_cube.glb");
+
+	entity chargeShotEntity = s_entityManager.CreateEntity();
+	s_entityManager.AddComponent<MiscComponent>(chargeShotEntity).type = MiscComponent::Type::ChargeShot;
+	s_entityManager.AddComponent<PickupComponent>(chargeShotEntity).itemName = "Charge Shot";
+	s_entityManager.AddComponent<ModelComponent>(chargeShotEntity, modelID);
+	s_entityManager.AddComponent<TransformComponent>(chargeShotEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
+	s_entityManager.AddComponent<ShadowReceiverComponent>(chargeShotEntity);
+	auto& ni = s_entityManager.AddComponent<NetworkId>(chargeShotEntity);
+	ni.entityTypeId = EntityTypes::ChargeShotMisc;
+	if (id == 0)
+		ni.id = ++chargeShotNetworkID;
+	else
+		ni.id = id;
+
+	LuaMain::GetScriptManager()->AddScript(chargeShotEntity, "Pickupable.lua");
+
+	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(chargeShotEntity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(chargeShotEntity).GetPosition().y;
 	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
 	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
 	return ni.id;

@@ -42,5 +42,12 @@ enum class EntityTypes
 	FrostMagazineModification,
 	Magazines,
 
+	//Misc
+	MiscItemsBegin,
+	BasicMisc = MiscItemsBegin,
+	FullAutoMisc,
+	ChargeShotMisc,
+	Miscs,
+
 	Default,
 };

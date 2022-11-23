@@ -136,7 +136,7 @@ struct PickupComponent
 {
 	const char* itemName;
 
-	enum class Type{ ActiveItem = 0, PassiveItem, BarrelItem, MagazineModificationItem };
+	enum class Type{ ActiveItem = 0, PassiveItem, BarrelItem, MagazineModificationItem, MiscItem };
 
 	Type type;
 };
@@ -159,6 +159,13 @@ struct BarrelComponent
 struct MagazineModificationComponent
 {
 	enum class Type { None = 0, Frost = 1 };
+
+	Type type;
+};
+
+struct MiscComponent
+{
+	enum class Type { Basic = 0, FullAuto, ChargeShot };
 
 	Type type;
 };
