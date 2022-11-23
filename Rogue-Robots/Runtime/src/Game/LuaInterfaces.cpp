@@ -169,6 +169,8 @@ void EntityInterface::RemoveComponent(DOG::LuaContext* context)
 	{
 		EntityManager::Get().RemoveComponent<BarrelComponent>(e);
 		EntityManager::Get().RemoveComponentIfExists<LaserBarrelComponent>(e);
+		EntityManager::Get().RemoveComponentIfExists<LaserBeamComponent>(e);
+		EntityManager::Get().RemoveComponentIfExists<LaserBeamVFXComponent>(e);
 		return;
 	}
 	else if (compType == "MagazineModificationComponent")
