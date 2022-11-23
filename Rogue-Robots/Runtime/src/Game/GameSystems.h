@@ -322,6 +322,61 @@ public:
 	}
 };
 
+class RenderMiscComponentText : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DOG::ThisPlayer, MiscComponent);
+	ON_UPDATE_ID(DOG::ThisPlayer, MiscComponent);
+
+	void OnUpdate(DOG::entity, DOG::ThisPlayer, MiscComponent& mc)
+	{
+		std::string miscType = "";
+		switch (mc.type)
+		{
+		case MiscComponent::Type::Basic:
+			miscType = "Basic";
+			break;
+		case MiscComponent::Type::FullAuto:
+			miscType = "Full Auto";
+			break;
+		case MiscComponent::Type::ChargeShot:
+			miscType = "Charge Shot";
+			break;
+		default:
+			miscType = "Faulty";
+			break;
+		}
+
+		ImVec2 size;
+		size.x = 280;
+		size.y = 100;
+
+		auto r = DOG::Window::GetWindowRect();
+		ImVec2 pos;
+		float xOffset = -60.0f - size.x;
+		constexpr float yOffset = -170.0f;
+		pos.x = r.right - size.x + xOffset;
+		pos.y = r.bottom + yOffset;
+
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+		ImGui::SetNextWindowPos(pos);
+		ImGui::SetNextWindowSize(size);
+		if (ImGui::Begin("MiscComponent", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+		{
+			ImGui::PushFont(DOG::Window::GetFont());
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
+			ImGui::SetWindowFontScale(2.0f);
+			ImGui::Text("Fire Mode");
+			ImGui::Separator();
+			ImGui::Text(miscType.c_str());
+			ImGui::PopStyleColor(1);
+			ImGui::PopFont();
+		}
+		ImGui::End();
+		ImGui::PopStyleColor();
+	}
+};
+
 class PlayerMovementSystem : public DOG::ISystem
 {
 	using TransformComponent = DOG::TransformComponent;
