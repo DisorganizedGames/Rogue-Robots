@@ -14,7 +14,7 @@ ActiveItems.trampoline = {
 
 		Entity:AddComponent(trampolineEntity, "Transform", pos + forward * 3.0, rotation, size)
 		Entity:AddComponent(trampolineEntity, "Model", self.trampolineModel)
-		Entity:AddComponent(trampolineEntity, "BoxColliderMass", Vector3.New(1, 0.5, 1), true, 100000.0)
+		Entity:AddComponent(trampolineEntity, "BoxColliderMass", Vector3.New(0.5, 0.25, 0.5), true, 100000.0)
 		Entity:AddComponent(trampolineEntity, "Rigidbody", false)
 		Physics:RBConstrainRotation(trampolineEntity, true, true, true)
 		Entity:AddComponent(trampolineEntity, "Script", "Trampoline.lua")
