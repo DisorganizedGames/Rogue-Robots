@@ -8,13 +8,13 @@ ActiveItems.trampoline = {
 
 		local pos = Vector3.FromTable(Entity:GetTransformPosData(playerEntity))
 		local rotation = Vector3.Zero()
-		local size = Vector3.New(1.0, 1.0, 1.0)
+		local size = Vector3.New(0.5, 0.5, 0.5)
 
 		local forward = Vector3.FromTable(Entity:GetForward(playerEntity))
 
 		Entity:AddComponent(trampolineEntity, "Transform", pos + forward * 3.0, rotation, size)
 		Entity:AddComponent(trampolineEntity, "Model", self.trampolineModel)
-		Entity:AddComponent(trampolineEntity, "BoxColliderMass", Vector3.New(1, 0.5, 1), true, 100000.0)
+		Entity:AddComponent(trampolineEntity, "BoxColliderMass", Vector3.New(0.5, 0.25, 0.5), true, 100000.0)
 		Entity:AddComponent(trampolineEntity, "Rigidbody", false)
 		Physics:RBConstrainRotation(trampolineEntity, true, true, true)
 		Entity:AddComponent(trampolineEntity, "Script", "Trampoline.lua")
