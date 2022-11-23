@@ -168,6 +168,7 @@ void EntityInterface::RemoveComponent(DOG::LuaContext* context)
 	else if (compType == "BarrelComponent")
 	{
 		EntityManager::Get().RemoveComponent<BarrelComponent>(e);
+		EntityManager::Get().RemoveComponentIfExists<LaserBarrelComponent>(e);
 		return;
 	}
 	else if (compType == "MagazineModificationComponent")
@@ -200,6 +201,10 @@ void EntityInterface::ModifyComponent(LuaContext* context)
 	else if (compType == "PointLightStrength")
 	{
 		ModifyPointLightStrength(context, e);
+	}
+	else if (compType == "LaserBarrel")
+	{
+		ModifyLaserBarrel(context, e);
 	}
 	//Add more component types here.
 }
@@ -344,11 +349,14 @@ void EntityInterface::GetEntityTypeAsString(DOG::LuaContext* context)
 	case EntityTypes::FrostMagazineModification:
 		context->ReturnString("FrostMagazineModification");
 		break;
-	case EntityTypes::GrenadeBarrel :
+	case EntityTypes::GrenadeBarrel:
 		context->ReturnString("GrenadeBarrel");
 		break;
 	case EntityTypes::MissileBarrel:
 		context->ReturnString("MissileBarrel");
+		break;
+	case EntityTypes::LaserBarrel:
+		context->ReturnString("LaserBarrel");
 		break;
 	case EntityTypes::FullAutoMisc:
 		context->ReturnString("FullAutoMisc");
@@ -455,12 +463,14 @@ const std::unordered_map<PassiveItemComponent::Type, std::string> passiveTypeMap
 
 const std::unordered_map<ActiveItemComponent::Type, std::string> activeTypeMap = {
 	{ ActiveItemComponent::Type::Trampoline, "Trampoline" },
+	{ ActiveItemComponent::Type::Turret, "Turret" },
 };
 
 const std::unordered_map<BarrelComponent::Type, std::string> barrelTypeMap = {
 	{ BarrelComponent::Type::Bullet, "BulletBarrel"},
 	{ BarrelComponent::Type::Missile, "MissileBarrel" },
 	{ BarrelComponent::Type::Grenade, "GrenadeBarrel" },
+	{ BarrelComponent::Type::Laser, "LaserBarrel" },
 };
 
 const std::unordered_map<MagazineModificationComponent::Type, std::string> modificationTypeMap = {
@@ -919,6 +929,12 @@ void EntityInterface::AddBarrelComponent(DOG::LuaContext* context, DOG::entity e
 	bc.type = type;
 	bc.maximumAmmoCapacityForType = ammoCap;
 	bc.currentAmmoCount = currentAmmo;
+
+	if (type == BarrelComponent::Type::Laser)
+	{
+		assert(!EntityManager::Get().HasComponent<LaserBarrelComponent>(e));
+		EntityManager::Get().AddComponent<LaserBarrelComponent>(e).ammo = static_cast<f32>(currentAmmo);
+	}
 }
 
 void EntityInterface::AddMagazineModificationComponent(DOG::LuaContext* context, DOG::entity e)
@@ -997,6 +1013,28 @@ void EntityInterface::AddShadowReciever(DOG::entity e)
 	auto& em = EntityManager::Get();
 	assert(em.Exists(e));
 	em.AddComponent<ShadowReceiverComponent>(e);
+}
+
+void EntityInterface::ModifyLaserBarrel(DOG::LuaContext* context, DOG::entity e)
+{
+	auto& em = EntityManager::Get();
+	assert(em.Exists(e) && em.HasComponent<LaserBarrelComponent>(e));
+
+	auto& barrel = em.GetComponent<LaserBarrelComponent>(e);
+	barrel.shoot = context->GetBoolean();
+	barrel.laserToShoot.maxRange = static_cast<f32>(context->GetDouble());
+	barrel.damagePerSecond = static_cast<f32>(context->GetDouble());
+
+	LuaTable laserStartTable = context->GetTable();
+	LuaTable laserDirTable = context->GetTable();
+	LuaTable laserColorTable = context->GetTable();
+	LuaVector3 laserStart = LuaVector3(laserStartTable);
+	LuaVector3 laserDir = LuaVector3(laserDirTable);
+	LuaVector3 laserColor = LuaVector3(laserColorTable);
+
+	barrel.laserToShoot.startPos = { laserStart.x, laserStart.y, laserStart.z };
+	barrel.laserToShoot.direction = { laserDir.x, laserDir.y, laserDir.z };
+	barrel.laserToShoot.color = { laserColor.x, laserColor.y, laserColor.z };
 }
 
 

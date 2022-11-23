@@ -115,38 +115,50 @@ function OnUpdate()
 	end
 
 	-- Gun firing logic
-	-- Returns a table of bullets
-	local newBullets = miscComponent:Update(EntityID, cameraEntity)
-	if not newBullets then
-		return
-	end
-	for i=1, #newBullets do
-		
-		local createBullet = true
-		if barrelComponent.CreateBullet then
-			createBullet = barrelComponent:CreateBullet(miscComponent)
+	if miscComponent.miscName == "FullAuto" and barrelComponent.GetECSType() == 3 then
+		-- Handle the laser barrel component in FullAuto outside MiscComponent.Update and BarrelComponent.Update.
+		local shoot = Entity:GetAction(EntityID, "Shoot")
+		local dir = Vector3.FromTable(Entity:GetUp(gunEntity.entityID))
+		dir = Norm(dir)
+		local laserStart = Vector3.FromTable(Entity:GetTransformPosData(gunEntity.entityID))
+		laserStart = laserStart + dir * 0.8
+		local color = Vector3.New(1.5, 0.1, 0.1) * 7
+
+		Entity:ModifyComponent(EntityID, "LaserBarrel", 100.0, 240.0, shoot, laserStart, dir, color)
+	else
+		-- Returns a table of bullets
+		local newBullets = miscComponent:Update(EntityID, cameraEntity)
+		if not newBullets then
+			return
 		end
-		if createBullet and currentAmmoCount > 0 then
-
-			if hasBasicBarrelEquipped then
-				currentAmmo = currentAmmo - 1
-			end
-
-			CreateBulletEntity(newBullets[i], cameraEntity)
-			barrelComponent:Update(gunEntity, EntityID, newBullets[i], miscComponent)
-			--Keep track of which barrel created the bullet
-			newBullets[i].barrel = barrelComponent
-			magazineComponent:Update(newBullets[i])
+		for i=1, #newBullets do
 			
-			currentAmmoCount = currentAmmoCount - 1
-			if currentAmmoCount == 0 and not hasBasicBarrelEquipped then
-				barrelComponent = BarrelManager.BasicBarrel()
-				Entity:RemoveComponent(EntityID, "BarrelComponent")
-				Entity:AddComponent(EntityID, "BarrelComponent", 0, 30, 999999)
-				currentAmmoCount = savedBulletCount
-				hasBasicBarrelEquipped = true
+			local createBullet = true
+			if barrelComponent.CreateBullet then
+				createBullet = barrelComponent:CreateBullet(miscComponent)
 			end
-			Entity:UpdateMagazine(EntityID, currentAmmoCount)
+			if createBullet and currentAmmoCount > 0 then
+
+				if hasBasicBarrelEquipped then
+					currentAmmo = currentAmmo - 1
+				end
+
+				CreateBulletEntity(newBullets[i], cameraEntity)
+				barrelComponent:Update(gunEntity, EntityID, newBullets[i], miscComponent)
+				--Keep track of which barrel created the bullet
+				newBullets[i].barrel = barrelComponent
+				magazineComponent:Update(newBullets[i])
+				
+				currentAmmoCount = currentAmmoCount - 1
+				if currentAmmoCount == 0 and not hasBasicBarrelEquipped then
+					barrelComponent = BarrelManager.BasicBarrel()
+					Entity:RemoveComponent(EntityID, "BarrelComponent")
+					Entity:AddComponent(EntityID, "BarrelComponent", 0, 30, 999999)
+					currentAmmoCount = savedBulletCount
+					hasBasicBarrelEquipped = true
+				end
+				Entity:UpdateMagazine(EntityID, currentAmmoCount)
+			end
 		end
 	end
 end
@@ -273,7 +285,7 @@ function OnPickup(pickup)
 	--pickup is an EntityType, NOT an ecs-entity.
 	local pickupTypeString = Entity:GetEntityTypeAsString(pickup)
 	local playerID = EntityID
-	if pickupTypeString == "GrenadeBarrel" or pickupTypeString == "MissileBarrel" then
+	if pickupTypeString == "GrenadeBarrel" or pickupTypeString == "MissileBarrel" or pickupTypeString == "LaserBarrel" then
 		--It is a barrel component:
 		local typeOfEquippedBarrel = Entity:GetBarrelType(playerID)
 		if pickupTypeString == typeOfEquippedBarrel then
@@ -290,6 +302,8 @@ function OnPickup(pickup)
 				barrelComponent = BarrelManager.Grenade()
 			elseif pickupTypeString == "MissileBarrel" then
 				barrelComponent = BarrelManager.Missile()
+			elseif pickupTypeString == "LaserBarrel" then
+				barrelComponent = BarrelManager.Laser()
 			end
 			Entity:RemoveComponent(playerID, "BarrelComponent")
 			Entity:AddComponent(playerID, "BarrelComponent", barrelComponent:GetECSType(), barrelComponent:GetAmmoPerPickup(), barrelComponent:GetMaxAmmo())

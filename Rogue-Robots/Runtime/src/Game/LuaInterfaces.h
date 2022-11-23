@@ -183,6 +183,8 @@ private:
 
 	void AddShadowReciever(DOG::entity e);
 
+	void ModifyLaserBarrel(DOG::LuaContext* context, DOG::entity e);
+
 };
 
 class AssetInterface : public LuaInterface
