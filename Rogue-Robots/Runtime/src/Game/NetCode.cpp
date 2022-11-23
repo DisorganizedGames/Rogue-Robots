@@ -258,6 +258,7 @@ void NetCode::OnUpdate()
 								//Destroy pickups
 								if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::SpawnAble && !tempCreate->alive && (u32)tempCreate->entityTypeId > (u32)EntityTypes::Agents )
 								{
+									std::cout << "Netework Tries to destroye pickup of type " << (u32)tempCreate->entityTypeId << std::endl;
 									EntityManager::Get().Collect<NetworkPlayerComponent, PlayerAliveComponent>().Do([&](entity id, NetworkPlayerComponent& playerC, PlayerAliveComponent&)
 										{
 											if (playerC.playerId == tempCreate->playerId)
@@ -481,6 +482,7 @@ void DeleteNetworkSync::OnLateUpdate(DOG::entity e, DeferredDeletionComponent&, 
 	auto& t = m_entityManager.AddComponent<CreateAndDestroyEntityComponent>(newE);
 	t.alive = false;
 	t.entityTypeId = netId.entityTypeId;
+	std::cout << "Local Destroyed pickup of type " << (u32)t.entityTypeId << std::endl;
 	t.id = netId.id;
 	t.position = transC.GetPosition();
 	m_entityManager.RemoveComponent<NetworkId>(e);

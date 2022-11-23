@@ -375,9 +375,9 @@ void EntityInterface::GetEntityTypeAsString(DOG::LuaContext* context)
 	case EntityTypes::IncreaseSpeed2:
 		context->ReturnString("SpeedBoost2");
 		break;
-	case EntityTypes::Health:
-		context->ReturnString("Health");
-		break;
+	//case EntityTypes::Health:
+	//	context->ReturnString("Health");
+	//	break;
 	case EntityTypes::JumpBoost:
 		context->ReturnString("JumpBoost");
 		break;

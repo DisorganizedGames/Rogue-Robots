@@ -61,7 +61,6 @@ local jumpBoost = {
 
 	affect = function(self, stackCount, stats)
 		local newStats = stats
-		print("Increased jump height")
 		newStats.jumpSpeed = newStats.jumpSpeed + self.boost * stackCount
 		return newStats
 	end

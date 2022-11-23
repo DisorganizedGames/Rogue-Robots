@@ -19,8 +19,6 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 {
 	switch (itemType)
 	{
-	case EntityTypes::Medkit:
-		break;
 	case EntityTypes::IncreaseMaxHp:
 		return CreateMaxHealthBoostPickup(position, id);
 		break;
@@ -29,8 +27,6 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 		break;
 	case EntityTypes::Turret:
 		return CreateTurretPickup(position, id);
-	case EntityTypes::BulletBarrel:
-		break;
 	case EntityTypes::GrenadeBarrel:
 		return CreateGrenadePickup(position, id);
 		break;
@@ -39,8 +35,6 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 		break;
 	case EntityTypes::LaserBarrel:
 		return CreateLaserPickup(position, id);
-		break;
-	case EntityTypes::DefaultMagazineModification:
 		break;
 	case EntityTypes::FrostMagazineModification:
 		return CreateFrostModificationPickup(position, id);
@@ -57,7 +51,7 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 	case EntityTypes::IncreaseSpeed2:
 		return CreateSpeedBoost2Pickup(position, id);
 		break;
-	case EntityTypes::Health:
+	//case EntityTypes::Health:
 		//return CreateHealthPickup(position, id);
 		break;
 	case EntityTypes::JumpBoost:
@@ -380,33 +374,33 @@ u32 ItemManager::CreateSpeedBoost2Pickup(DirectX::SimpleMath::Vector3 position, 
 
 
 //Placeholder
-u32 ItemManager::CreateHealthPickup(DirectX::SimpleMath::Vector3 position, u32 id)
-{
-	static u32 healthNetworkdID = 0u;
-
-	u32 healthBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Health.glb");
-
-	entity healthBoostEntity = s_entityManager.CreateEntity();
-	s_entityManager.AddComponent<PassiveItemComponent>(healthBoostEntity).type = PassiveItemComponent::Type::Template;
-	s_entityManager.AddComponent<PickupComponent>(healthBoostEntity).itemName = "Heal";
-	s_entityManager.AddComponent<ModelComponent>(healthBoostEntity, healthBoostID);
-	s_entityManager.AddComponent<TransformComponent>(healthBoostEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
-	s_entityManager.AddComponent<ShadowReceiverComponent>(healthBoostEntity);
-	auto& ni = s_entityManager.AddComponent<NetworkId>(healthBoostEntity);
-	ni.entityTypeId = EntityTypes::Health;
-	if (id == 0)
-		ni.id = ++healthNetworkdID;
-	else
-		ni.id = id;
-
-	LuaMain::GetScriptManager()->AddScript(healthBoostEntity, "Pickupable.lua");
-
-	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(healthBoostEntity);
-	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(healthBoostEntity).GetPosition().y;
-	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
-	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
-	return ni.id;
-}
+//u32 ItemManager::CreateHealthPickup(DirectX::SimpleMath::Vector3 position, u32 id)
+//{
+//	static u32 healthNetworkdID = 0u;
+//
+//	u32 healthBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Health.glb");
+//
+//	entity healthBoostEntity = s_entityManager.CreateEntity();
+//	s_entityManager.AddComponent<PassiveItemComponent>(healthBoostEntity).type = PassiveItemComponent::Type::Template;
+//	s_entityManager.AddComponent<PickupComponent>(healthBoostEntity).itemName = "Heal";
+//	s_entityManager.AddComponent<ModelComponent>(healthBoostEntity, healthBoostID);
+//	s_entityManager.AddComponent<TransformComponent>(healthBoostEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
+//	s_entityManager.AddComponent<ShadowReceiverComponent>(healthBoostEntity);
+//	auto& ni = s_entityManager.AddComponent<NetworkId>(healthBoostEntity);
+//	ni.entityTypeId = EntityTypes::Health;
+//	if (id == 0)
+//		ni.id = ++healthNetworkdID;
+//	else
+//		ni.id = id;
+//
+//	LuaMain::GetScriptManager()->AddScript(healthBoostEntity, "Pickupable.lua");
+//
+//	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(healthBoostEntity);
+//	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(healthBoostEntity).GetPosition().y;
+//	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+//	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
+//	return ni.id;
+//}
 
 u32 ItemManager::CreateJumpBoost(DirectX::SimpleMath::Vector3 position, u32 id)
 {

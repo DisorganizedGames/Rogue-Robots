@@ -16,22 +16,21 @@ enum class EntityTypes
 
 	//PassiveItem
 	PassiveItemsBegin,
-	IncreaseMaxHp = PassiveItemsBegin,
+	IncreaseMaxHp,
 	IncreaseSpeed,
 	IncreaseSpeed2,
-	Health,
 	JumpBoost,
 	PassiveItems,
-
+	//Health move to good spot when health is in
 	//ActiveItem
 	ActiveItemsBegin,
-	Trampoline = ActiveItemsBegin,
+	Trampoline,
 	Turret,
 	ActiveItems,
 
 	//Barrel
 	BarrelItemsBegin,
-	BulletBarrel = BarrelItemsBegin,
+	BulletBarrel,
 	GrenadeBarrel,
 	MissileBarrel,
 	LaserBarrel,
@@ -39,7 +38,7 @@ enum class EntityTypes
 
 	//MagazineModification
 	MagazineModificationItemsBegin,
-	DefaultMagazineModification = MagazineModificationItemsBegin,
+	DefaultMagazineModification,
 	FrostMagazineModification,
 	Magazines,
 
