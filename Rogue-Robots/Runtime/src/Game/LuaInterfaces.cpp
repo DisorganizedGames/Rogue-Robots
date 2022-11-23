@@ -1253,3 +1253,18 @@ void GameInterface::AddMagazineEffectsFromBullet(DOG::LuaContext* context)
 		EntityManager::Get().AddComponent<FrostEffectComponent>(newEntity) = EntityManager::Get().GetComponent<FrostEffectComponent>(bullet);
 	}
 }
+
+void GameInterface::SpawnPickupMiscComponent(DOG::LuaContext* context)
+{
+	entity playerId = context->GetInteger();
+	MiscComponent::Type type = EntityManager::Get().GetComponent<MiscComponent>(playerId).type;
+
+	if (type == MiscComponent::Type::ChargeShot)
+	{
+		ItemManager::Get().CreateItem(EntityTypes::ChargeShotMisc, EntityManager::Get().GetComponent<TransformComponent>(playerId).GetPosition());
+	}
+	else if (type == MiscComponent::Type::FullAuto)
+	{
+		ItemManager::Get().CreateItem(EntityTypes::FullAutoMisc, EntityManager::Get().GetComponent<TransformComponent>(playerId).GetPosition());
+	}
+}
