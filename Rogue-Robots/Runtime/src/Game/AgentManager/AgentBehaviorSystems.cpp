@@ -136,15 +136,17 @@ void AgentAttackSystem::OnUpdate(entity e, AgentAttackComponent& attack, AgentSe
 				player.health -= attack.damage;
 				attack.elapsedTime = 0.0f;
 
-				// Add visual effect
 
-				// Add visual effect
-				const auto& pos1 = EntityManager::Get().GetComponent<TransformComponent>(seek.entityID).GetPosition();
-				const auto& pos2 = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
-				auto dir = pos2 - pos1;
-				dir.Normalize();
+				if (EntityManager::Get().HasComponent<PlayerAliveComponent>(seek.entityID))
+				{
+					// Add visual effect
+					const auto& pos1 = EntityManager::Get().GetComponent<TransformComponent>(seek.entityID).GetPosition();
+					const auto& pos2 = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
+					auto dir = pos2 - pos1;
+					dir.Normalize();
 
-				DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 2.f, 1.5f);
+					DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 2.f, 1.5f);
+				}
 			}
 		}
 		else
