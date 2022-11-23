@@ -123,8 +123,11 @@ function OnUpdate()
 		local laserStart = Vector3.FromTable(Entity:GetTransformPosData(gunEntity.entityID))
 		laserStart = laserStart + dir * 0.8
 		local color = Vector3.New(1.5, 0.1, 0.1) * 7
+		if magazineComponent:GetECSType() == 1 then
+			color = Vector3.New(0.188, 0.835, 0.784) * 7 -- Blue color for FrostEffect
+		end
 
-		Entity:ModifyComponent(EntityID, "LaserBarrel", EntityID, 100.0, 240.0, shoot, laserStart, dir, color)
+		Entity:ModifyComponent(EntityID, "LaserBarrel", EntityID, 100.0, 700.0, shoot, laserStart, dir, color)
 	else
 		-- Returns a table of bullets
 		local newBullets = miscComponent:Update(EntityID, cameraEntity)

@@ -647,7 +647,6 @@ void EntityInterface::SetPlayerStat(LuaContext* context)
 
 void EntityInterface::LuaPickUpMoreLaserAmmoCallback(DOG::LuaContext* context)
 {
-	std::cout << "LuaPickUpMoreLaserAmmoCallback " << std::endl;
 	auto& em = EntityManager::Get();
 	entity player = context->GetInteger();
 	int currentAmmo = context->GetInteger();
@@ -1056,7 +1055,17 @@ void EntityInterface::ModifyLaserBarrel(DOG::LuaContext* context, DOG::entity e)
 	barrel.laserToShoot.direction = { laserDir.x, laserDir.y, laserDir.z };
 	barrel.laserToShoot.color = { laserColor.x, laserColor.y, laserColor.z };
 
-
+	if (auto mag = em.TryGetComponent<MagazineModificationComponent>(e))
+	{
+		if (mag->get().type == MagazineModificationComponent::Type::Frost)
+		{
+			em.AddOrReplaceComponent<FrostEffectComponent>(e).frostTimer = 3.5f;
+		}
+		else if (mag->get().type != MagazineModificationComponent::Type::Frost)
+		{
+			em.RemoveComponentIfExists<FrostEffectComponent>(e);
+		}
+	}
 
 	if (auto mag = em.TryGetComponent<BarrelComponent>(e))
 	{
