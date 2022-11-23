@@ -76,7 +76,7 @@ private:
 private:
 	GameState m_gameState;
 	static NetworkStatus s_networkStatus;
-	SceneComponent::Type m_selectedScene = SceneComponent::Type::TunnelRoom2Scene;
+	SceneComponent::Type m_selectedScene = SceneComponent::Type::OldDefaultScene;
 	std::unique_ptr<Scene> m_testScene;
 	std::unique_ptr<Scene> m_mainScene;
 	std::unique_ptr<Scene> m_lightScene;
@@ -100,4 +100,12 @@ private:
 	bool m_unlimitedAmmoCheat = false;
 	bool m_noClipCheat = false;
 	bool m_noWinLose = false;
+
+	i32 m_imguiOrder = 0;
+	f32 m_imguiX = 22.8f;
+	f32 m_imguiY = 42.0f;
+	f32 m_imguiZ = -1.0f;
+	f32 m_imguiS = 0.2f;
+	f32 m_imguiposY = 0.0f;
+
 };

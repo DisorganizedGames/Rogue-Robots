@@ -86,6 +86,7 @@ namespace DOG
 		f32 transitionStart = 0.f;
 		f32 transitionLength = 0.f;
 		f32 startWeight = 1.f;
+		f32 currentWeight = 1.f;
 		f32 targetValue = 1.f;
 	};
 	// Set of active clips,
@@ -133,6 +134,19 @@ namespace DOG
 		// Animation groups
 		std::array<AnimationGroup, N_GROUPS> groups = {};
 		std::array<BlendSpecification, N_GROUPS> groupBlends = {};
+
+		// TEST
+		void NewActionSet(BlendSpecification& bs, Setter& setter);
+
+
+
+
+
+
+
+
+
+
 
 		RigAnimator();
 

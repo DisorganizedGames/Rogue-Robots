@@ -7,6 +7,7 @@
 #include "Types/AssetTypes.h"
 #include "DOGEngineTypes.h"
 #include "RigAnimator.h"
+#include "Tmpra.h"
 
 namespace DOG
 {
@@ -14,8 +15,8 @@ namespace DOG
 	class AnimationManager
 	{
 	private:
-		// scale, rot, trans
-		static constexpr u8 N_KEYS = 3;
+		static constexpr u8 MIXAMO_VSHEAD_JOINT = 5;
+		static constexpr u8 N_KEYS = 3; // scale, rot, trans
 		static constexpr u8 MAX_CLIPS = 10;
 	private:
 		enum class KeyType
@@ -33,7 +34,7 @@ namespace DOG
 	private:
 		void Test(f32 dt);
 		void UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
-		void UpdateSkeleton(DOG::RigAnimator& animator, const u32 offset);
+		void UpdateSkeleton(DOG::testAnimator& animator, const u32 offset);
 		void SetPlayerBaseStates();
 		void ResetAnimationComponent(DOG::AnimationComponent& ac);
 
@@ -45,11 +46,12 @@ namespace DOG
 
 
 		// RIG ANIMATOR
-		void CalculateSRT(RigAnimator& ac, const u8 rigID);
-		void ExtractClipNodeInfluences(RigAnimator& animator, const KeyType key, const u32 group, const u32 rigID);
+		void CalculateSRT(testAnimator& ac, const u8 rigID);
+		void ExtractClipNodeInfluences(testAnimator& animator, const KeyType key, const u32 group, const u32 rigID);
 	private:
+		testAnimator m_ta;
 		std::vector<ImportedRig*> m_rigs;
-		std::array<RigAnimator, 4> m_playerRigAnimators;
+		std::array<testAnimator, 4> m_playertestAnimators;
 		std::array<DirectX::XMVECTOR, MAX_CLIPS* NodeCount(MIXAMO_RIG_ID)> m_partialSRT{ DirectX::XMVECTOR{} };
 		std::array<DirectX::XMVECTOR, MAX_CLIPS* NodeCount(MIXAMO_RIG_ID)> m_fullbodySRT{ DirectX::XMVECTOR{} };
 	private:
@@ -61,9 +63,11 @@ namespace DOG
 
 		// IMGUI RELATED
 	private:
-		RigAnimator mRigAnimator;
+		testAnimator mtestAnimator;
 		f32 m_imguiGroupWeightA = 0.0f;
 		bool m_imguiApplyRootTranslation = true;
+		i32 m_imguiJoint = 0;
+		i32 m_imguiSelectedJoint = 0;
 		DirectX::FXMMATRIX ImguiTransform(i32 joint);
 		std::vector<DirectX::XMFLOAT3> m_imguiSca;
 		std::vector<DirectX::XMFLOAT3> m_imguiRot;
