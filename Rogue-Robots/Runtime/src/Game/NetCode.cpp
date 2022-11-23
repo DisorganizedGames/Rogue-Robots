@@ -128,7 +128,7 @@ void NetCode::OnUpdate()
 			{
 				
 				//sync all transforms Host only
-				if (m_inputTcp.playerId == 0)
+				/*if (m_inputTcp.playerId == 0)
 				{
 					EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent>().Do([&](NetworkTransform& netC, TransformComponent& transC, AgentIdComponent agentId)
 						{
@@ -139,7 +139,7 @@ void NetCode::OnUpdate()
 							m_bufferSize += sizeof(NetworkTransform);
 
 						});
-				}
+				}*/
 
 				EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](NetworkAgentStats& netC, AgentHPComponent& agentS, AgentIdComponent& idC)
 					{
