@@ -1174,8 +1174,8 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 			
 			if (ImGui::RadioButton("PCGLevel", (int*)&m_selectedScene, (int)SceneComponent::Type::PCGLevelScene)) m_gameState = GameState::Restart;
 
-			ImGui::SliderFloat("pX", &m_imguiX, -0.5f, 50.5f, "%.5f");
-			ImGui::SliderFloat("pY", &m_imguiY, -0.5f, 50.5f, "%.5f");
+			ImGui::SliderFloat("pX", &m_imguiX, -25.f, 25.f, "%.5f");
+			ImGui::SliderFloat("pY", &m_imguiY, -1.f, 70.f, "%.5f");
 			ImGui::SliderFloat("pZ", &m_imguiZ, -25.f, 25.5f, "%.5f");
 			ImGui::SliderFloat("poffsetY", &m_imguiposY, -0.5f, +1.5f, "%.5f");
 			ImGui::SliderFloat("Scal", &m_imguiS, 0.01f, 2.0f, "%.1f");

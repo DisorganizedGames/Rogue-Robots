@@ -54,10 +54,10 @@ namespace DOG
 			ClipSet looping;
 			ClipSet action;
 		};
-		std::array<Group, 1> groups = {};
+		std::array<Group, N_GROUPS> groups = {};
 		std::array<Bs, N_GROUPS> groupBlends = {};
 		std::array<u32, N_GROUPS> groupClipCount = { 0 };
-		std::array<ClipData, 20> clipData = {};
+		std::array<ClipData, N_GROUPS*12> clipData = {};
 
 		Bs testBs = {};
 		testAnimator()
@@ -269,7 +269,7 @@ namespace DOG
 			//UpdateBS(blend, dt);
 
 			auto clipCount = 0u;
-			const f32 actionSetWeight = blend.currentWeight;
+			const f32 actionSetWeight = (group.looping.nTotalClips > 0) ? blend.currentWeight : 1.f;
 			const f32 looperSetWeight = 1.f - actionSetWeight;
 
 			const bool actionSetHasInfluence = actionSetWeight > 0.f;
@@ -296,7 +296,7 @@ namespace DOG
 				}
 			}
 			groupClipCount[groupIdx] = clipCount;
-			return clipCount;
+			return startClipIdx + clipCount;
 		}
 
 		void ResetGroup(Group& group)
@@ -380,7 +380,7 @@ namespace DOG
 
 				++clipCount;
 				// targetweights must be larger than 0
-				setter.targetWeights[i] = setter.targetWeights[i] < 0.f ? 0.1f : setter.targetWeights[i];
+				setter.targetWeights[i] = setter.targetWeights[i] <= 0.f ? 0.1f : setter.targetWeights[i];
 				wSum += setter.targetWeights[i];
 			}
 			// Normalize target weights
@@ -401,9 +401,6 @@ namespace DOG
 			if (invalidSetter)
 				return;
 
-
-			auto x = group.blend.targetWeight;
-
 			// Update priority
 			group.priority = static_cast<u32>(setter.priority);
 
@@ -415,11 +412,6 @@ namespace DOG
 			AddTargetSet(setter, set, clipCount);
 
 			SetBlendSpecifications(setter);
-			
-			if (x == 0.f && group.blend.targetWeight == 1.f)
-			{
-				auto asd = 3;
-			}
 		}
 		void SetBlendSpecifications(Setter& setter)
 		{
@@ -442,7 +434,10 @@ namespace DOG
 			if (!setter.loop) // more logic needed here
 			{
 				auto& bs = groups[setter.group].blend;
-				bs.durationLeft = groups[setter.group].action.clips[0].duration / setter.playbackRate;
+				if (!(bool)(setter.flag & AnimationFlag::Persist))
+				{
+					bs.durationLeft = groups[setter.group].action.clips[0].duration / setter.playbackRate;
+				}
 				bs.currentWeight = bs.startWeight = 0.f;
 				bs.targetWeight = 1.f;
 				bs.transitionStart = globalTime;
@@ -452,10 +447,11 @@ namespace DOG
 		void SetGroupBS(Setter& setter)
 		{
 			auto& bs = groupBlends[setter.group];
-			const bool updateBS = !ParentHigherPrio(setter.group) && (bs.targetWeight = 0.f || TransitionIsFaster(globalTime, setter.transitionLength, bs));
+			bool php = !ParentHigherPrio(setter.group);
+			const bool updateBS = php && (bs.targetWeight == 0.f || TransitionIsFaster(globalTime, setter.transitionLength, bs));
 			if (updateBS)
 			{
-				if (setter.loop)
+				if (!setter.loop && !(bool)(setter.flag & AnimationFlag::Persist))
 				{
 					bs.durationLeft = groups[setter.group].action.clips[0].duration / setter.playbackRate;
 				}
@@ -483,6 +479,7 @@ namespace DOG
 		{
 			for (u32 i = 0; i < MAX_TARGETS; i++)
 				setter.animationIDs[i] = -1;
+			setter.flag = AnimationFlag::None;
 		}
 
 		f32 GetGroupWeight(u32 group)

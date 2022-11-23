@@ -11,6 +11,15 @@ namespace DOG
 		bezier,
 		interrupt,
 	};
+	enum class AnimationFlag : u32
+	{
+		None = 0,
+		Looping = 1 << 1,
+		Persist = 1 << 2,
+		SimpleAdd = 1 << 3,
+	};
+	DEFINE_ENUM_FLAG_OPERATORS(AnimationFlag)
+	
 
 	struct TransformComponent
 	{
@@ -93,12 +102,14 @@ namespace DOG
 		static constexpr u8 FULL_BODY = 0;
 		static constexpr u8 LOWER_BODY = 1;
 		static constexpr u8 UPPER_BODY = 2;
+		static constexpr u8 BASE_PRIORITY = 0;
 		u32 offset;
 		i8 rigID = 0;
 		i8 animatorID = -1;
 		i8 addedSetters = 0;
 		struct Setter
 		{
+			AnimationFlag flag;
 			bool loop;
 			u8 group;
 			u8 priority;
@@ -108,6 +119,7 @@ namespace DOG
 			f32 targetWeights[MAX_TARGET_ANIMS];
 		};
 		std::array<Setter, MAX_SETTERS> animSetters;
+		void SimpleAdd(i8 animationId, AnimationFlag flags = AnimationFlag::None);
 	};
 	static_assert(std::is_trivially_copyable_v<AnimationComponent>);
 

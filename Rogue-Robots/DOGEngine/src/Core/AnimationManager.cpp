@@ -37,7 +37,7 @@ namespace DOG
 		ZoneScopedN("updateJoints_ppp");
 		using namespace DirectX;
 		auto deltaTime = (f32)Time::DeltaTime();
-		//deltaTime = 0.05f;
+		deltaTime = 0.05f;
 #ifdef DEBUG
 		deltaTime = 0.05f;
 		test(deltaTime);
@@ -96,7 +96,7 @@ namespace DOG
 			ImGui::EndMenu(); // "View"
 		}
 
-		if (open)
+		if (open && m_rigs.size())
 		{
 			ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
 			if (ImGui::Begin("RigJourno", &open))
@@ -105,13 +105,6 @@ namespace DOG
 				static u8 rigID = MIXAMO_RIG_ID;
 				static auto& rig = m_rigs[rigID];
 				static auto& anims = rig->animations;
-				static AnimationComponent* imguiRAC;
-				EntityManager::Get().Collect<ModelComponent, AnimationComponent>().Do([&](ModelComponent& modelC, AnimationComponent& rAC)
-				{
-					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-					if (model && rAC.offset == 0)
-						imguiRAC = &rAC;
-				});
 
 				if(!m_rigs.size())
 					return ImGui::End();
@@ -147,13 +140,9 @@ namespace DOG
 				}
 
 				// attempting to create timeline WIP
-				ImGuiTimeLine();
-				/*static bool setAnimationChain = false;
-				if (setAnimationChain ^= ImGui::Button("SetAnimationChain"))
-				{
-				}*/
-
-				// ImGui individual joint sliders
+				//ImGuiTimeLine();
+				
+				// joint Transform component
 				if (ImGui::BeginCombo("joint", m_rigs[0]->nodes[m_imguiJoint].name.c_str()))
 				{
 					for (i32 i = 1; i < std::size(m_rigs[0]->nodes); i++)
@@ -161,26 +150,100 @@ namespace DOG
 							m_imguiJoint = i;
 					ImGui::EndCombo();
 				}
-				if (ImGui::BeginCombo("tfs", m_rigs[0]->nodes[m_imguiSelectedJoint].name.c_str()))
+				static bool addClips = false;
+				// test animations
+				//if (ImGui::Button("Add Clips"))
+				addClips ^= ImGui::Button("Add Clips");
+				if (addClips)
 				{
-					for (i32 i = 1; i < std::size(m_rigs[0]->nodes); i++)
-						if (ImGui::Selectable((m_rigs[0]->nodes[i].name + "  " + std::to_string(i)).c_str(), (i == m_imguiSelectedJoint)))
-							m_imguiSelectedJoint = i;
-					ImGui::EndCombo();
+					static auto targets = 0;
+					static const char* nTargets[]{ "One", "Two", "Three" };
+					ImGui::Combo("n target clips", &targets, nTargets, IM_ARRAYSIZE(nTargets));
+
+					static auto group = 0;
+					static const char* grpNames[]{ "FullBody", "LowerBody", "UpperBody" };
+					ImGui::Combo("target group", &group, grpNames, IM_ARRAYSIZE(grpNames));
+
+					static auto clipSet = 0;
+					static const char* setNames[]{ "Action", "Looping" };
+					ImGui::Combo("Clip set", &clipSet, setNames, IM_ARRAYSIZE(setNames));
+
+					static auto playbackRate = 1.f, transitionLen = 0.f;
+					ImGui::SliderFloat("playbackRate", &playbackRate, -1.f, 1.f, "%.2f");
+					ImGui::SliderFloat("transitionLen", &transitionLen, 0.f, 1.f, "%.2f");
+
+					static bool persistFlag = false;
+					ImGui::Checkbox("PersistFlag", &persistFlag);
+
+
+					ImGui::Columns(targets + 1);
+					static i32 chosenAnims[MAX_TARGETS] = { 0 };
+					static f32 weights[MAX_TARGETS] = { 0.f };
+					for (i32 c = 0; c < targets + 1; ++c)
+					{
+						i32* a = &chosenAnims[c];
+						if (ImGui::BeginCombo(("Clip#" + std::to_string(c)).c_str(), anims[*a].name.c_str()))
+						{
+							for (i32 i = 0; i < std::size(rig->animations); ++i)
+								if (ImGui::Selectable(rig->animations[i].name.c_str(), (i == *a)))
+									*a = i;
+							ImGui::EndCombo();
+						}
+						ImGui::SliderFloat(("Weight#" + std::to_string(c)).c_str(), &weights[c], 0.f, 1.f, "%.2f");
+						ImGui::NextColumn();
+					}
+					ImGui::Columns(1);
+					if (ImGui::Button("Apply clip(s)"))
+					{
+						EntityManager::Get().Collect<ThisPlayer, AnimationComponent>().Do([&](ThisPlayer&, AnimationComponent& rAC)
+							{
+								if (rAC.animatorID == 0)
+								{
+									auto& s = rAC.animSetters[rAC.addedSetters++];
+									s.playbackRate = playbackRate;
+									if (persistFlag)
+										s.flag = s.flag | AnimationFlag::Persist;
+
+									s.group = static_cast<u8>(group);
+									s.loop = clipSet;
+									s.transitionLength = transitionLen;
+									for (i32 i = 0; i < targets + 1; ++i)
+									{
+										s.animationIDs[i] = static_cast<i8>(chosenAnims[i]);
+										s.targetWeights[i] = weights[i];
+									}
+								}
+									
+							});
+					}
 				}
-				
-				ImGui::Text("Orientation");
-				ImGui::SliderAngle("Roll", &m_imguiRot[m_imguiSelectedJoint].z, imguiJointRotMin, imguiJointRotMax);
-				ImGui::SliderAngle("Pitch", &m_imguiRot[m_imguiSelectedJoint].x, imguiJointRotMin, imguiJointRotMax);
-				ImGui::SliderAngle("Yaw", &m_imguiRot[m_imguiSelectedJoint].y, imguiJointRotMin, imguiJointRotMax);
-				ImGui::Text("Translation");
-				ImGui::SliderFloat("pos X", &m_imguiPos[m_imguiSelectedJoint].x, imguiJointPosMin, imguiJointPosMax, "%.3f");
-				ImGui::SliderFloat("pos Y", &m_imguiPos[m_imguiSelectedJoint].y, imguiJointPosMin, imguiJointPosMax, "%.3f");
-				ImGui::SliderFloat("pos Z", &m_imguiPos[m_imguiSelectedJoint].z, imguiJointPosMin, imguiJointPosMax, "%.3f");
-				ImGui::Text("Scale");
-				ImGui::SliderFloat("X", &m_imguiSca[m_imguiSelectedJoint].x, imguiJointScaMin, imguiJointScaMax, "%.1f");
-				ImGui::SliderFloat("Y", &m_imguiSca[m_imguiSelectedJoint].y, imguiJointScaMin, imguiJointScaMax, "%.1f");
-				ImGui::SliderFloat("Z", &m_imguiSca[m_imguiSelectedJoint].z, imguiJointScaMin, imguiJointScaMax, "%.1f");
+				// ImGui individual joint sliders
+				static bool individualJointSliders = false;
+				individualJointSliders ^= ImGui::Button("Joint sliders");
+				if (individualJointSliders)
+				{
+					static i32 selectedBone = ROOT_NODE;
+					if (ImGui::BeginCombo("tfs", m_rigs[0]->nodes[selectedBone].name.c_str()))
+					{
+						for (i32 i = 1; i < std::size(m_rigs[0]->nodes); i++)
+							if (ImGui::Selectable((m_rigs[0]->nodes[i].name + "  " + std::to_string(i)).c_str(), (i == selectedBone)))
+								selectedBone = i;
+						ImGui::EndCombo();
+					}
+
+					ImGui::Text("Orientation");
+					ImGui::SliderAngle("Roll", &m_imguiRot[selectedBone].z, imguiJointRotMin, imguiJointRotMax);
+					ImGui::SliderAngle("Pitch", &m_imguiRot[selectedBone].x, imguiJointRotMin, imguiJointRotMax);
+					ImGui::SliderAngle("Yaw", &m_imguiRot[selectedBone].y, imguiJointRotMin, imguiJointRotMax);
+					ImGui::Text("Translation");
+					ImGui::SliderFloat("pos X", &m_imguiPos[selectedBone].x, imguiJointPosMin, imguiJointPosMax, "%.3f");
+					ImGui::SliderFloat("pos Y", &m_imguiPos[selectedBone].y, imguiJointPosMin, imguiJointPosMax, "%.3f");
+					ImGui::SliderFloat("pos Z", &m_imguiPos[selectedBone].z, imguiJointPosMin, imguiJointPosMax, "%.3f");
+					ImGui::Text("Scale");
+					ImGui::SliderFloat("X", &m_imguiSca[selectedBone].x, imguiJointScaMin, imguiJointScaMax, "%.1f");
+					ImGui::SliderFloat("Y", &m_imguiSca[selectedBone].y, imguiJointScaMin, imguiJointScaMax, "%.1f");
+					ImGui::SliderFloat("Z", &m_imguiSca[selectedBone].z, imguiJointScaMin, imguiJointScaMax, "%.1f");
+				}
 			}
 			ImGui::End();
 		}
@@ -503,7 +566,7 @@ namespace DOG
 		static constexpr f32 playbackRate = 1.f;
 		static constexpr i8 idleIdx = 0;
 		static constexpr f32 weight = 1.f;
-		Setter baseState = { loop, fullBodyGroup, priority, transitionLength, playbackRate,
+		Setter baseState = { AnimationFlag::None, loop, fullBodyGroup, priority, transitionLength, playbackRate,
 			{ idleIdx, NO_ANIMATION, NO_ANIMATION },
 			{ weight, 0.f, 0.f } };
 
@@ -514,6 +577,8 @@ namespace DOG
 			baseAc.animSetters[0] = baseState;
 			m_playertestAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
 			m_playertestAnimators[i].ProcessAnimationComponent(baseAc);
+			for (u32 j = 0; j < N_GROUPS; j++)
+				m_playertestAnimators[i].groups[j].parent = j == 0 ? -1 : 0;
 		}
 	}
 
@@ -533,10 +598,10 @@ namespace DOG
 			static bool t1 = false, t2 = false, t3 = false;
 			static i8 bindIdx = 0, idleIdx = 2, walkIdx = 4;
 			//const auto danceIdx = m_rigs[MIXAMO_RIG_ID]->animations.size() - 1;
-			static AnimationComponent::Setter test1 = { true, 0, 0, 0.0f, 1.0f, { idleIdx, bindIdx, -1}, { 0.5f, 0.5f, 0.f} };
-			static AnimationComponent::Setter test2 = { true, 0, 2, 0.0f, 1.0f, { 2, -1, -1}, { 1.f, 0.f, 0.f} };
-			static AnimationComponent::Setter test3 = { false, 0, 0, 0.5f, 1.0f, { 5, -1, -1},{ 1.f, 0.f, 0.f} };
-			static AnimationComponent::Setter test4 = { false, 0, 0, 0.5f, 1.0f, { 6, -1, -1},{ 1.f, 0.f, 0.f} };
+			static AnimationComponent::Setter test1 = { AnimationFlag::None, true, 0, 0, 0.0f, 1.0f, { idleIdx, bindIdx, -1}, { 0.5f, 0.5f, 0.f} };
+			static AnimationComponent::Setter test2 = { AnimationFlag::None, true, 0, 2, 0.0f, 1.0f, { 2, -1, -1}, { 1.f, 0.f, 0.f} };
+			static AnimationComponent::Setter test3 = { AnimationFlag::None, false, 0, 0, 0.5f, 1.0f, { 5, -1, -1},{ 1.f, 0.f, 0.f} };
+			static AnimationComponent::Setter test4 = { AnimationFlag::None, false, 0, 0, 0.5f, 1.0f, { 6, -1, -1},{ 1.f, 0.f, 0.f} };
 
 			testAc.addedSetters = 2;
 			testAc.animSetters[0] = test1;
@@ -565,7 +630,7 @@ namespace DOG
 		static bool secondTest = false;
 		if (timer >= 0.6f && !secondTest)
 		{
-			AnimationComponent::Setter test = { false, 0, 0, 0.10f, 1.0f, { 8, 9, -1}, { 0.35f, 0.15f, 0.f} };
+			AnimationComponent::Setter test = { AnimationFlag::None, false, 0, 0, 0.10f, 1.0f, { 8, 9, -1}, { 0.35f, 0.15f, 0.f} };
 			testAc.addedSetters = 1;
 			testAc.animSetters[0] = test;
 			mtestAnimator.ProcessAnimationComponent(testAc);
@@ -574,7 +639,7 @@ namespace DOG
 		static bool thirdTest = false;
 		if (timer >= 1.3f && !thirdTest)
 		{
-			AnimationComponent::Setter test = { true, 1, 0, 0.25f, 1.0f, { 3, 1, -1}, { 0.35f, 0.35f, 0.f} };
+			AnimationComponent::Setter test = { AnimationFlag::None, true, 1, 0, 0.25f, 1.0f, { 3, 1, -1}, { 0.35f, 0.35f, 0.f} };
 			testAc.addedSetters = 1;
 			testAc.animSetters[0] = test;
 			mtestAnimator.ProcessAnimationComponent(testAc);
@@ -585,7 +650,7 @@ namespace DOG
 		{
 			for (size_t i = 0; i < 4; i++)
 			{
-				AnimationComponent::Setter test = { false, 0, 5, 0.25f, 1.0f, { 1, -1, -1}, { 0.35f, 0.35f, 0.f} };
+				AnimationComponent::Setter test = { AnimationFlag::None, false, 0, 5, 0.25f, 1.0f, { 1, -1, -1}, { 0.35f, 0.35f, 0.f} };
 				testAc.addedSetters = 1;
 				testAc.animSetters[0] = test;
 				m_playertestAnimators[i].ProcessAnimationComponent(testAc);

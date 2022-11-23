@@ -369,15 +369,19 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 	// if no schmovement apply idle animation
 	if (!addedAnims)
 	{
-		setter.animationIDs[addedAnims] = IDLE;
-		setter.targetWeights[addedAnims++] = 1.0f;
+		ac.SimpleAdd(2);
+		/*setter.animationIDs[addedAnims] = IDLE;
+		setter.targetWeights[addedAnims++] = 1.0f;*/
 	}
-
-	// misc variables
-	setter.playbackRate = 1.5f;
-	setter.transitionLength = 0.1f;
-	setter.loop = true;
-	++ac.addedSetters;
+	else
+	{
+		// misc variables
+		setter.playbackRate = 1.5f;
+		setter.transitionLength = 0.1f;
+		setter.loop = true;
+		++ac.addedSetters;
+	}
+	
 }
 
 #pragma endregion
