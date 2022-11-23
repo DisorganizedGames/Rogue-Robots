@@ -199,7 +199,7 @@ function BarrelComponents:Laser()
 		end,
 
 		GetMaxAmmo = function(self)
-			return 100
+			return 80
 		end,
 
 		GetAmmoPerPickup = function(self)

@@ -127,7 +127,15 @@ function OnUpdate()
 			color = Vector3.New(0.188, 0.835, 0.784) * 7 -- Blue color for FrostEffect
 		end
 
-		Entity:ModifyComponent(EntityID, "LaserBarrel", EntityID, 100.0, 700.0, shoot, laserStart, dir, color)
+		local isOutOfAmmo = Entity:ModifyComponent(EntityID, "LaserBarrel", EntityID, 80.0, 700.0, shoot, laserStart, dir, color)
+		if isOutOfAmmo then
+			barrelComponent = BarrelManager.BasicBarrel()
+			Entity:RemoveComponent(EntityID, "BarrelComponent")
+			Entity:AddComponent(EntityID, "BarrelComponent", 0, 30, 999999)
+			currentAmmoCount = savedBulletCount
+			hasBasicBarrelEquipped = true
+			Entity:UpdateMagazine(EntityID, currentAmmoCount)
+		end
 	else
 		-- Returns a table of bullets
 		local newBullets = miscComponent:Update(EntityID, cameraEntity)

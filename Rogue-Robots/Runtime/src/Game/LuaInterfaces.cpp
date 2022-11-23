@@ -1053,6 +1053,7 @@ void EntityInterface::ModifyLaserBarrel(DOG::LuaContext* context, DOG::entity e)
 	barrel.laserToShoot.direction = { laserDir.x, laserDir.y, laserDir.z };
 	barrel.laserToShoot.color = { laserColor.x, laserColor.y, laserColor.z };
 
+
 	if (auto mag = em.TryGetComponent<MagazineModificationComponent>(e))
 	{
 		if (mag->get().type == MagazineModificationComponent::Type::Frost)
@@ -1069,6 +1070,14 @@ void EntityInterface::ModifyLaserBarrel(DOG::LuaContext* context, DOG::entity e)
 	{
 		mag->get().currentAmmoCount = static_cast<u32>(barrel.ammo);
 	}
+
+	// Signal true to lua to remove the component if out of ammo.
+	bool outOfAmmo = barrel.ammo <= 0;
+	if (outOfAmmo)
+	{
+		em.RemoveComponentIfExists<FrostEffectComponent>(e);
+	}
+	context->ReturnBoolean(barrel.ammo <= 0);
 }
 
 
