@@ -291,6 +291,15 @@ struct ReviveTimerComponent
 	float timeLeft{ duration };
 	DOG::entity playerBeingRevived{DOG::NULL_ENTITY};
 };
+
+struct LifetimeComponent
+{
+	f32 lifetime = 0.f;
+	f32 age = 0.f;
+
+	LifetimeComponent(f32 lifetime) : lifetime(lifetime) {}
+};
+
 //ModularBlocks
 
 struct SpawnBlockComponent

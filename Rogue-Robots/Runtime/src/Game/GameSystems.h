@@ -575,3 +575,21 @@ public:
 
 	void OnEarlyUpdate(DOG::ThisPlayer&, SpectatorComponent& sc);
 };
+
+class TimedDestructionSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(LifetimeComponent);
+	ON_UPDATE_ID(LifetimeComponent);
+
+	void OnUpdate(DOG::entity e, LifetimeComponent& lifetimeComp)
+	{
+		auto& [lifetime, age] = lifetimeComp;
+
+		if (age >= lifetime)
+		{
+			DOG::EntityManager::Get().AddComponent<DOG::DeferredDeletionComponent>(e);
+		}
+		age += DOG::Time::DeltaTime<DOG::TimeType::Seconds, f32>();
+	}
+};
