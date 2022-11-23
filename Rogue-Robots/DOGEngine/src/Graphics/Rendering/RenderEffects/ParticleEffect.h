@@ -5,12 +5,11 @@ namespace DOG::gfx
 {
 	class RGResourceManager;
 	class UploadContext;
-	struct Buffer;
 
 	class ParticleEffect final : public RenderEffect
 	{
 	public:
-		ParticleEffect(GlobalEffectData& globalEffectData, RGResourceManager* resourceManager, u32 maxEmitters);
+		ParticleEffect(GlobalEffectData& globalEffectData, RGResourceManager* resourceManager, UploadContext* upCtx, u32 maxEmitters);
 		~ParticleEffect();
 		void Add(RenderGraph& renderGraph) override;
 
@@ -25,6 +24,8 @@ namespace DOG::gfx
 		Buffer m_particlesAlive;
 
 		Buffer m_emitterToSpawn;
+
+		Texture m_noiseTexture;
 
 		u32 m_emitterGlobalDescriptor = 0;
 		u32 m_emitterLocalOffset = 0;

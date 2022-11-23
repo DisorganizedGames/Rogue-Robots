@@ -10,7 +10,7 @@
 
 using namespace DOG::gfx;
 
-ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceManager* resourceManager, u32 maxEmitters) :
+ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceManager* resourceManager, UploadContext* upCtx, u32 maxEmitters) :
 	RenderEffect(globalEffectData), m_maxEmitters(maxEmitters)
 {
 	auto shaderCompiler = m_globalEffectData.sclr;
@@ -40,8 +40,8 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 				.SrcBlend = D3D12_BLEND_SRC_ALPHA,
 				.DestBlend = D3D12_BLEND_INV_SRC_ALPHA,
 				.BlendOp = D3D12_BLEND_OP_ADD,
-				.SrcBlendAlpha = D3D12_BLEND_SRC_ALPHA,
-				.DestBlendAlpha = D3D12_BLEND_DEST_ALPHA,
+				.SrcBlendAlpha = D3D12_BLEND_ONE,
+				.DestBlendAlpha = D3D12_BLEND_ONE,
 				.BlendOpAlpha = D3D12_BLEND_OP_MAX,
 				.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL,
 			}).SetAlphaToCoverageEnabled(true))
@@ -74,6 +74,25 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 		m_resourceManager->ImportBuffer(RG_RESOURCE(EmitterToSpawnBuffer), m_emitterToSpawn,
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	}
+
+	{
+		TextureDesc noiseDesc(MemoryType::Default, DXGI_FORMAT_R32_FLOAT, 8 * 1024, 1, 1, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_COPY_DEST);
+		noiseDesc.type = TextureType::Texture1D;
+		noiseDesc.SetMipLevels(1);
+		m_noiseTexture = device->CreateTexture(noiseDesc);
+
+		auto seed = Time::DeltaTime();
+		std::mt19937 eng(static_cast<u32>(seed * 1000.f));
+		std::uniform_real_distribution<f32> ureal(0, 1.f);
+		std::vector<f32> cpuNoise(8 * 1024);
+		for (auto& px: cpuNoise)
+		{
+			px = ureal(eng);
+		}
+		upCtx->PushUploadToTexture(m_noiseTexture, 0, { 0, 0, 0 }, cpuNoise.data(), DXGI_FORMAT_R32_FLOAT, (u32)cpuNoise.size(), 1, 1, (u32)cpuNoise.size() * sizeof(f32));
+
+		m_resourceManager->ImportTexture(RG_RESOURCE(ParticleNoiseTexture), m_noiseTexture, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+	}
 }
 
 ParticleEffect::~ParticleEffect()
@@ -83,10 +102,12 @@ ParticleEffect::~ParticleEffect()
 	device->FreeBuffer(m_particleBuffer);
 	device->FreeBuffer(m_particlesAlive);
 	device->FreeBuffer(m_emitterToSpawn);
+	device->FreeTexture(m_noiseTexture);
 	
 	m_resourceManager->FreeImported(RG_RESOURCE(ParticleBuffer));
 	m_resourceManager->FreeImported(RG_RESOURCE(ParticlesAliveBuffer));
 	m_resourceManager->FreeImported(RG_RESOURCE(EmitterToSpawnBuffer));
+	m_resourceManager->FreeImported(RG_RESOURCE(ParticleNoiseTexture));
 }
 
 void ParticleEffect::Add(RenderGraph& renderGraph)
@@ -96,6 +117,7 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 		RGResourceView particleBufferHandle;
 		RGResourceView particlesAliveHandle;
 		RGResourceView emitterToSpawnHandle;
+		RGResourceView noiseTextureHandle;
 	};
 
 	renderGraph.AddPass<PassData>("Particle Emitter Pass",
@@ -109,6 +131,9 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 
 			passData.emitterToSpawnHandle = builder.ReadWriteTarget(RG_RESOURCE(EmitterToSpawnBuffer),
 				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), m_maxEmitters));
+
+			passData.noiseTextureHandle = builder.ReadResource(RG_RESOURCE(ParticleNoiseTexture), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+				TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture1D, DXGI_FORMAT_R32_FLOAT));
 		},
 		[this](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) // Execute
 		{
@@ -122,7 +147,8 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 				.AppendConstant(m_emitterLocalOffset)
 				.AppendConstant(resources.GetView(passData.particleBufferHandle))
 				.AppendConstant(resources.GetView(passData.particlesAliveHandle))
-				.AppendConstant(resources.GetView(passData.emitterToSpawnHandle));
+				.AppendConstant(resources.GetView(passData.emitterToSpawnHandle))
+				.AppendConstant(resources.GetView(passData.noiseTextureHandle));
 
 			rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
 

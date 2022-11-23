@@ -4,6 +4,15 @@
 
 namespace DOG::gfx
 {
+	enum class ParticleSpawnType : u8
+	{
+		Cone = 0,
+		Cylinder = 1,
+		AABB = 2,
+
+		Default = 0xFF,
+	};
+
 	struct ParticleEmitter
 	{
 		u32 alive = 0;
@@ -11,9 +20,16 @@ namespace DOG::gfx
 		f32 rate = 0;
 		f32 lifetime = 0;
 
+		u32 spawnType = 0;
+		f32 opt1 = 0.f;
+		f32 opt2 = 0.f;
+		f32 opt3 = 0.f;
+
 		u32 textureHandle = 0;
 		u32 texSegX = 1;
 		u32 texSegY = 1;
+
+		DirectX::SimpleMath::Matrix rotationMatrix;
 
 		u32 pad[3] = {0, 0, 0};
 	};
@@ -23,11 +39,11 @@ namespace DOG::gfx
 		struct EmitterTableHandle { u64 handle{ 0 }; };
 	public:
 		ParticleBackend() = delete;
-		ParticleBackend(RenderDevice* rd, GPUGarbageBin* bin, u32 framesInFlight, GlobalEffectData& globEffectData, RGResourceManager* resourceManager);
+		ParticleBackend(RenderDevice* rd, GPUGarbageBin* bin, u32 framesInFlight, GlobalEffectData& globEffectData, RGResourceManager* resourceManager, UploadContext* upCtx);
 
 		~ParticleBackend() = default;
 
-		void AddEffect(RenderGraph& rg) { 
+		void AddEffect(RenderGraph& rg) {
 			m_particleEffect->Add(rg);
 			FreeCurrentFrameTable();
 		};

@@ -34,11 +34,16 @@ void ParticleScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 	//Particle system
 	{ 
 		m_particleSystem = CreateEntity();
-		AddComponent<TransformComponent>(m_particleSystem, Vector3(0, -1.f, 0));
+		AddComponent<TransformComponent>(m_particleSystem, Vector3(0, 0, 0));
 		auto& em = AddComponent<ParticleEmitterComponent>(m_particleSystem);
 		em = {
 			.spawnRate = 64.f,
 			.particleLifetime = 0.5f,
+		};
+
+		AddComponent<ConeSpawnComponent>(m_particleSystem) = { 
+			.angle = XM_PIDIV4,
+			.speed = 10.f,
 		};
 	}
 
@@ -67,14 +72,55 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 	{
 		if (ImGui::Begin("Particle System", &open))
 		{
+			// Spawn rate setting
 			static float rate = emitter.spawnRate;
 			ImGui::InputFloat("Rate", &rate);
 			emitter.spawnRate = rate;
 
+			// Particle lifetime slider
 			static float lifetime = emitter.particleLifetime;
 			ImGui::SliderFloat("Particle Lifetime", &lifetime, 0.f, 5.f);
 			emitter.particleLifetime = lifetime;
 
+			// Spawn type settings
+			static int spawnType = 0;
+			bool clicked = false;
+			clicked |= ImGui::RadioButton("Default", &spawnType, 0);
+			clicked |= ImGui::RadioButton("Cone", &spawnType, 1);
+			clicked |= ImGui::RadioButton("Cylinder", &spawnType, 2);
+			clicked |= ImGui::RadioButton("Box", &spawnType, 3);
+			if (clicked)
+			{
+				switch (spawnType)
+				{
+				case 0: 
+					SwitchToComponent<nullptr_t>();
+					break;
+				case 1: 
+					SwitchToComponent<ConeSpawnComponent>();
+					break;
+				case 2: 
+					SwitchToComponent<CylinderSpawnComponent>();
+					break;
+				case 3: 
+					SwitchToComponent<BoxSpawnComponent>();
+					break;
+				}
+			}
+			switch (spawnType)
+			{
+			case 1:
+				ConeSettings();
+				break;
+			case 2:
+				CylinderSettings();
+				break;
+			case 3:
+				BoxSettings();
+				break;
+			}
+
+			// Texture Settings
 			static bool enableTexture = false;
 
 			static char buf[256] = "Assets/Models/Rifle/textures/Base_baseColor.png";
@@ -118,5 +164,27 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 		ImGui::End();
 	}
 
+}
+
+void ParticleScene::ConeSettings()
+{
+	auto& cone = EntityManager::Get().GetComponent<ConeSpawnComponent>(m_particleSystem);
+	ImGui::SliderFloat("Angle", &cone.angle, 0.f, DirectX::XM_PIDIV2 - std::numeric_limits<float>::epsilon());
+	ImGui::InputFloat("Speed", &cone.speed);
+}
+
+void ParticleScene::CylinderSettings()
+{
+	auto& cylinder = EntityManager::Get().GetComponent<CylinderSpawnComponent>(m_particleSystem);
+	ImGui::InputFloat("Radius", &cylinder.radius);
+	ImGui::InputFloat("Height", &cylinder.height);
+}
+
+void ParticleScene::BoxSettings()
+{
+	auto& box = EntityManager::Get().GetComponent<BoxSpawnComponent>(m_particleSystem);
+	ImGui::InputFloat("X", &box.x);
+	ImGui::InputFloat("Y", &box.y);
+	ImGui::InputFloat("Z", &box.z);
 }
 
