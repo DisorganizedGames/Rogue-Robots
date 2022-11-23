@@ -40,8 +40,8 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 				.SrcBlend = D3D12_BLEND_SRC_ALPHA,
 				.DestBlend = D3D12_BLEND_INV_SRC_ALPHA,
 				.BlendOp = D3D12_BLEND_OP_ADD,
-				.SrcBlendAlpha = D3D12_BLEND_SRC_ALPHA,
-				.DestBlendAlpha = D3D12_BLEND_DEST_ALPHA,
+				.SrcBlendAlpha = D3D12_BLEND_ONE,
+				.DestBlendAlpha = D3D12_BLEND_ONE,
 				.BlendOpAlpha = D3D12_BLEND_OP_MAX,
 				.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL,
 			}).SetAlphaToCoverageEnabled(true))

@@ -29,8 +29,8 @@ namespace DOG::gfx
 		bd.SrcBlend = D3D12_BLEND_SRC_ALPHA;
 		bd.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
 		bd.BlendOp = D3D12_BLEND_OP_ADD;
-		bd.SrcBlendAlpha = D3D12_BLEND_SRC_ALPHA;
-		bd.DestBlendAlpha = D3D12_BLEND_DEST_ALPHA;
+		bd.SrcBlendAlpha = D3D12_BLEND_ONE;
+		bd.DestBlendAlpha = D3D12_BLEND_ONE;
 		bd.BlendOpAlpha = D3D12_BLEND_OP_MAX;
 
 		auto fullscreenTriVS = sclr->CompileFromFile("FullscreenTriVS.hlsl", ShaderType::Vertex);
