@@ -41,4 +41,5 @@ private:
 	u32 CreateSpeedBoostPickup(Vector3 position, u32 id = 0);
 	u32 CreateSpeedBoost2Pickup(Vector3 position, u32 id = 0);
 	u32 CreateHealthPickup(Vector3 position, u32 id = 0);
+	u32 CreateJumpBoost(Vector3 position, u32 id = 0);
 };

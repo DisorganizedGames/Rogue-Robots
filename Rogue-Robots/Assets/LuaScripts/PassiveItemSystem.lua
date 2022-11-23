@@ -42,7 +42,7 @@ end
 function OnPickup(pickup)
 	local pickupTypeString = Entity:GetEntityTypeAsString(pickup)
 
-	if pickupTypeString == "MaxHealthBoost" or pickupTypeString == "SpeedBoost" or pickupTypeString == "SpeedBoost2" then
+	if pickupTypeString == "MaxHealthBoost" or pickupTypeString == "SpeedBoost" or pickupTypeString == "SpeedBoost2" or pickupTypeString == "JumpBoost" then
 		if passiveItems[pickupTypeString] then
 			passiveItems[pickupTypeString][2] = passiveItems[pickupTypeString][2] + 1
 		else
