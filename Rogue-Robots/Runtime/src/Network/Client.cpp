@@ -131,7 +131,6 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 	while (true)
 	{
 		bytesRecived = recv(m_connectSocket, reciveBuffer + processedBytes, SEND_AND_RECIVE_BUFFER_SIZE - processedBytes, 0);
-
 		if (bytesRecived > 0)
 		{
 			//read in header
