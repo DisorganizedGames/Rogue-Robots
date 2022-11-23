@@ -168,11 +168,28 @@ void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& c
 	{
 		if (eMan.HasComponent<BulletComponent>(collision.entities[i]))
 		{
-			BulletComponent& bullet = eMan.GetComponent<BulletComponent>(collision.entities[i]);
+			entity bulletEntity = collision.entities[i];
+
+			BulletComponent& bullet = eMan.GetComponent<BulletComponent>(bulletEntity);
 			seek.entityID = bullet.playerEntityID;
-			(*hit).HitBy(collision.entities[i], bullet.playerEntityID, bullet.damage);
+			(*hit).HitBy(bulletEntity, bullet.playerEntityID, bullet.damage);
 			if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
 				EntityManager::Get().AddComponent<AgentAggroComponent>(e);
+
+			// Create a particle emitter for bullet hit effect
+			auto& bulletTransform = eMan.GetComponent<TransformComponent>(bulletEntity);
+			auto bulletPos = bulletTransform.GetPosition();
+			auto& bulletScene = eMan.GetComponent<SceneComponent>(bulletEntity);
+			
+			entity hitParticleEffect = eMan.CreateEntity();
+			eMan.AddComponent<SceneComponent>(hitParticleEffect, bulletScene.scene);
+			eMan.AddComponent<TransformComponent>(hitParticleEffect, bulletPos);
+			eMan.AddComponent<LifetimeComponent>(hitParticleEffect, 0.05f);
+			eMan.AddComponent<ParticleEmitterComponent>(hitParticleEffect) = {
+				.spawnRate = 32.f,
+				.particleLifetime = .5f,
+			};
+			eMan.AddComponent<ConeSpawnComponent>(hitParticleEffect) = { .angle = DirectX::XM_PIDIV4, .speed = 5.f };
 		}
 	}
 }
