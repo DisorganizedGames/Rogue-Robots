@@ -334,6 +334,8 @@ class PlayerMovementSystem : public DOG::ISystem
 	using Matrix = DirectX::SimpleMath::Matrix;
 
 public:
+	PlayerMovementSystem();
+
 	SYSTEM_CLASS(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController, AnimationComponent);
 	ON_EARLY_UPDATE_ID(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController, AnimationComponent);
 
@@ -344,8 +346,11 @@ private:
 	u32 m_changeSound = 0;
 	f32 m_timeBetween = 0.3f;
 	f32 m_timeBeteenTimer = 0.0f;
+	std::vector<u32> m_footstepSounds;
+	u32 m_jumpSound;
 
 private:
+
 	Entity CreateDebugCamera(Entity e) noexcept;
 	Entity CreatePlayerCameraEntity(Entity player) noexcept;
 

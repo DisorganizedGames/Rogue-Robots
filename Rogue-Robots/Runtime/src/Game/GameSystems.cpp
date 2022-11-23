@@ -6,6 +6,16 @@ using namespace SimpleMath;
 
 #pragma region PlayerMovementSystem
 
+PlayerMovementSystem::PlayerMovementSystem()
+{
+	m_jumpSound = AssetManager::Get().LoadAudio("Assets/Audio/Jump/PlayerJumpSound.wav");
+
+	m_footstepSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep04.wav"));
+	m_footstepSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep05.wav"));
+	m_footstepSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep06.wav"));
+	m_footstepSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep09.wav"));
+}
+
 void PlayerMovementSystem::OnEarlyUpdate(
 	Entity e,
 	PlayerControllerComponent& player,
@@ -291,41 +301,29 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 				rb.linearVelocity.y = jumpSpeed;
 
 				comp.volume = jumpVolume;
-				comp.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Jump/PlayerJumpSound.wav");
+				comp.assetID = m_jumpSound;
 				comp.is3D = true;
 				comp.shouldPlay = true;
 			}
 		}
 	}
 
-	u32 footstepAudio = 0;
-
-	if (m_changeSound == 0)
-		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep04.wav");
-	else if (m_changeSound == 1)
-		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep05.wav");
-	else if (m_changeSound == 2)
-		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep06.wav");
-	else
-		footstepAudio = AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep09.wav");
-
 	if (!player.jumping && moveTowards != Vector3::Zero && !comp.playing && m_timeBeteenTimer < Time::ElapsedTime())
 	{
 		const f32 footstepVolume = 0.1f;
-		const u32 audioFiles = 4;
 
 		comp.volume = footstepVolume;
-		comp.assetID = footstepAudio;
+		comp.assetID = m_footstepSounds[m_changeSound];
 		comp.is3D = true;
 		comp.shouldPlay = true;
 
 		m_timeBeteenTimer = m_timeBetween + (f32)Time::ElapsedTime();
 		srand((unsigned)time(NULL));
 		u32 oldChangeSound = m_changeSound;
-		m_changeSound = rand() % audioFiles;
+		m_changeSound = rand() % m_footstepSounds.size();
 		if (m_changeSound == oldChangeSound)
 		{
-			m_changeSound = ++oldChangeSound % audioFiles;
+			m_changeSound = ++oldChangeSound % m_footstepSounds.size();
 		}
 	}
 }
