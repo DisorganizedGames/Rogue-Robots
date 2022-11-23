@@ -125,8 +125,10 @@ u32 ItemManager::CreateTrampolinePickup(Vector3 position, u32 id)
 	if (id == 0)
 		ni.id = ++trampolineNetworkID;
 	else
+	{
 		ni.id = id;
-
+		trampolineNetworkID = id;
+	}
 	LuaMain::GetScriptManager()->AddScript(trampolineEntity, "Pickupable.lua");
 
 	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(trampolineEntity);
@@ -155,8 +157,10 @@ u32 ItemManager::CreateMissilePickup(DirectX::SimpleMath::Vector3 position,  u32
 	if (id == 0)
 		ni.id = ++missileNetworkID;
 	else
+	{
 		ni.id = id;
-
+		missileNetworkID = id;
+	}
 	LuaMain::GetScriptManager()->AddScript(missileEntity, "Pickupable.lua");
 
 	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(missileEntity);
@@ -212,8 +216,10 @@ u32 ItemManager::CreateGrenadePickup(DirectX::SimpleMath::Vector3 position, u32 
 	if (id == 0)
 		ni.id = ++grenadeNetworkID;
 	else
+	{
 		ni.id = id;
-
+		grenadeNetworkID = id;
+	}
 	LuaMain::GetScriptManager()->AddScript(grenadeEntity, "Pickupable.lua");
 
 	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(grenadeEntity);
@@ -240,7 +246,10 @@ u32 ItemManager::CreateMaxHealthBoostPickup(DirectX::SimpleMath::Vector3 positio
 	if (id == 0)
 		ni.id = ++healtBoostNetworkdID;
 	else
+	{
 		ni.id = id;
+		healtBoostNetworkdID = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(healthBoostEntity, "Pickupable.lua");
 
@@ -268,7 +277,10 @@ u32 ItemManager::CreateFrostModificationPickup(DirectX::SimpleMath::Vector3 posi
 	if (id == 0)
 		ni.id = ++frostModNetworkID;
 	else
+	{
 		ni.id = id;
+		frostModNetworkID = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(frostModEntity, "Pickupable.lua");
 
@@ -297,7 +309,10 @@ u32 ItemManager::CreateTurretPickup(Vector3 position, u32 id)
 	if (id == 0)
 		ni.id = ++turretNetworkID;
 	else
+	{
 		ni.id = id;
+		turretNetworkID = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(turretPickUpEntity, "Pickupable.lua");
 
@@ -333,7 +348,10 @@ u32 ItemManager::CreateSpeedBoostPickup(DirectX::SimpleMath::Vector3 position, u
 	if (id == 0)
 		ni.id = ++speedBoostNetworkdID;
 	else
+	{
 		ni.id = id;
+		speedBoostNetworkdID = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(speedBoostEntity, "Pickupable.lua");
 
@@ -361,7 +379,10 @@ u32 ItemManager::CreateSpeedBoost2Pickup(DirectX::SimpleMath::Vector3 position, 
 	if (id == 0)
 		ni.id = ++speedBoostNetworkdID2;
 	else
+	{
 		ni.id = id;
+		speedBoostNetworkdID2 = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(speedBoostEntity, "Pickupable.lua");
 
@@ -419,7 +440,10 @@ u32 ItemManager::CreateJumpBoost(DirectX::SimpleMath::Vector3 position, u32 id)
 	if (id == 0)
 		ni.id = ++jumpBoostID;
 	else
+	{
 		ni.id = id;
+		jumpBoostID = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(pEntity, "Pickupable.lua");
 

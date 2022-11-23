@@ -1,6 +1,7 @@
 #include "AgentBehaviorSystems.h"
 #include "AgentManager.h"
 #include "../DOGEngine/src/Graphics/Rendering/PostProcess.h"
+#include "Game/PlayerManager/PlayerManager.h"
 
 using namespace DOG;
 
@@ -209,13 +210,14 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 {
 	for (i8 i = 0; i < hit.count; ++i)
 	{
+
 		if (EntityManager::Get().HasComponent<ThisPlayer>(hit.hits[i].playerEntity))
 		{
 			hp.hp -= hit.hits[i].damage;
 			hp.damageThisFrame = true;
 		}
-			if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
-				EntityManager::Get().AddComponent<AgentAggroComponent>(e);
+		if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
+			EntityManager::Get().AddComponent<AgentAggroComponent>(e);
 	}
 	
 	/*Frost status*/
@@ -233,8 +235,8 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 			}
 			else
 			{
-				//Agent speed is set to 1/3 of original for now:
-				EntityManager::Get().GetComponent<AgentMovementComponent>(e).currentSpeed /= 3.0f; 
+				//Agent speed is set to 1/2 of original for now:
+				EntityManager::Get().GetComponent<AgentMovementComponent>(e).currentSpeed /= 2.0f; 
 				EntityManager::Get().AddComponent<FrostEffectComponent>(e, fecBullet.frostTimer);
 			}
 			break;
@@ -270,7 +272,11 @@ void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComp
 		#endif
 		
 		// Send network signal to destroy agents
-		AgentManager::Get().DestroyLocalAgent(e);
+		if(PlayerManager::Get().IsThisMultiplayer())
+			if(!hp.damageThisFrame)
+				AgentManager::Get().DestroyLocalAgent(e);
+		else
+			AgentManager::Get().DestroyLocalAgent(e);
 	}
 }
 

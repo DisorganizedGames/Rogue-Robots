@@ -707,9 +707,10 @@ void EntityInterface::ModifyAnimationComponent(DOG::LuaContext* context)
 void EntityInterface::SpawnActiveItem(DOG::LuaContext* context)
 {
 	entity playerId = context->GetInteger();
-	if(EntityManager::Get().GetComponent<ActiveItemComponent>(playerId).type == ActiveItemComponent::Type::Trampoline)
+
+	if (EntityManager::Get().GetComponent<ActiveItemComponent>(playerId).type == ActiveItemComponent::Type::Trampoline)
 		ItemManager::Get().CreateItem(EntityTypes::Trampoline, EntityManager::Get().GetComponent<TransformComponent>(playerId).GetPosition());
-	else if(EntityManager::Get().GetComponent<ActiveItemComponent>(playerId).type == ActiveItemComponent::Type::Turret)
+	else if (EntityManager::Get().GetComponent<ActiveItemComponent>(playerId).type == ActiveItemComponent::Type::Turret)
 		ItemManager::Get().CreateItem(EntityTypes::Turret, EntityManager::Get().GetComponent<TransformComponent>(playerId).GetPosition());
 }
 
