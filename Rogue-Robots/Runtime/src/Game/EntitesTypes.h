@@ -34,6 +34,7 @@ enum class EntityTypes
 	BulletBarrel = BarrelItemsBegin,
 	GrenadeBarrel,
 	MissileBarrel,
+	LaserBarrel,
 	Barrels,
 
 	//MagazineModification

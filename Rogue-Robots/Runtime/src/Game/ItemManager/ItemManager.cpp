@@ -1,6 +1,7 @@
 #include "ItemManager.h"
 #include "Game/GameLayer.h"
 #include "../LoadSplitModels.h"
+#include "../PrefabInstantiatorFunctions.h"
 
 using namespace DOG;
 using namespace DirectX::SimpleMath;
@@ -35,6 +36,9 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 		break;
 	case EntityTypes::MissileBarrel:
 		return CreateMissilePickup(position, id);
+		break;
+	case EntityTypes::LaserBarrel:
+		return CreateLaserPickup(position, id);
 		break;
 	case EntityTypes::DefaultMagazineModification:
 		break;
@@ -163,6 +167,32 @@ u32 ItemManager::CreateMissilePickup(DirectX::SimpleMath::Vector3 position,  u32
 
 	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(missileEntity);
 	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(missileEntity).GetPosition().y;
+	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
+	return ni.id;
+}
+
+u32 ItemManager::CreateLaserPickup(Vector3 position, u32 id)
+{
+	static u32 laserNetworkID = 0u;
+
+	entity laserEntity = SpawnLaserBlob(TransformComponent(position, Vector3::Zero, Vector3(0.5f, 0.5f, 0.5f)), NULL_ENTITY);
+	auto& bc = s_entityManager.AddComponent<BarrelComponent>(laserEntity);
+	bc.type = BarrelComponent::Type::Laser;
+	bc.maximumAmmoCapacityForType = 100;
+	bc.ammoPerPickup = 25;
+	s_entityManager.AddComponent<PickupComponent>(laserEntity).itemName = "Laser";
+	auto& ni = s_entityManager.AddComponent<NetworkId>(laserEntity);
+	ni.entityTypeId = EntityTypes::LaserBarrel;
+	if (id == 0)
+		ni.id = ++laserNetworkID;
+	else
+		ni.id = id;
+
+	LuaMain::GetScriptManager()->AddScript(laserEntity, "Pickupable.lua");
+
+	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(laserEntity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(laserEntity).GetPosition().y;
 	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
 	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
 	return ni.id;

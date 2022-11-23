@@ -150,7 +150,7 @@ struct EligibleForPickupComponent
 
 struct BarrelComponent
 {
-	enum class Type { Bullet = 0, Grenade, Missile };
+	enum class Type { Bullet = 0, Grenade, Missile, Laser };
 
 	Type type;
 	u32 maximumAmmoCapacityForType;
