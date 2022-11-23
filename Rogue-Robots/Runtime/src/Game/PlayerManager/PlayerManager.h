@@ -16,6 +16,7 @@ public:
 	void HurtThisPlayer(f32 damage);
 	DOG::entity GetThisPlayer();
 	u8 GetNrOfPlayers();
+	bool IsThisPlayerHost();
 private:
 	// singelton instance
 	static PlayerManager s_amInstance;

@@ -35,6 +35,7 @@ function OnPickup(pickup)
 
 	if pickupTypeString == "Trampoline" or pickupTypeString == "Turret" then
 		if Entity:HasComponent(playerID, "ActiveItem") then
+			Entity:SpawnActiveItem(playerID)
 			Entity:RemoveComponent(playerID, "ActiveItem")
 		end
 		if pickupTypeString == "Trampoline" then

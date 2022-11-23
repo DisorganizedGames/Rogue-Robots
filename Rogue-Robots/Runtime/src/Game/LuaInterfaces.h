@@ -122,7 +122,10 @@ public:
 	//void AgentHit(DOG::LuaContext* context);
 
 	void UpdateMagazine(DOG::LuaContext* context);
+
 	void ModifyAnimationComponent(DOG::LuaContext* context);
+
+	void SpawnActiveItem(DOG::LuaContext* context);
 
 private:
 	void AddModel(DOG::LuaContext* context, DOG::entity e);
