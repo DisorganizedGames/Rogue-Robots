@@ -7,7 +7,7 @@
 #include "Types/AssetTypes.h"
 #include "DOGEngineTypes.h"
 #include "RigAnimator.h"
-#include "Tmpra.h"
+//#include "Tmpra.h"
 
 namespace DOG
 {
@@ -17,7 +17,7 @@ namespace DOG
 	private:
 		static constexpr u8 MIXAMO_VSHEAD_JOINT = 5;
 		static constexpr u8 N_KEYS = 3; // scale, rot, trans
-		static constexpr u8 MAX_CLIPS = 10;
+		static constexpr u8 MAX_CLIPS = 6;
 	private:
 		enum class KeyType
 		{
@@ -64,7 +64,7 @@ namespace DOG
 		// IMGUI RELATED
 	private:
 		testAnimator mtestAnimator;
-		f32 m_imguiGroupWeightA = 0.0f;
+		f32 m_imguiDeltaTime = 0.05f;
 		bool m_imguiApplyRootTranslation = true;
 		i32 m_imguiJoint = 5;
 		i32 m_imguiSelectedJoint = 0;

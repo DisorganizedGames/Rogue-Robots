@@ -19,7 +19,8 @@ namespace DOG
 		None = 0,
 		Looping = 1 << 1,
 		Persist = 1 << 2,
-		SimpleAdd = 1 << 3,
+		ResetPrio = 1 << 3,
+		SimpleAdd = 1 << 4,
 	};
 	DEFINE_ENUM_FLAG_OPERATORS(AnimationFlag)
 	

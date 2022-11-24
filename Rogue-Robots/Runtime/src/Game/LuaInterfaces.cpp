@@ -602,7 +602,6 @@ void EntityInterface::ModifyAnimationComponent(DOG::LuaContext* context)
 	int group = context->GetInteger();
 	float transitionLength = static_cast<f32>(context->GetDouble());
 	float playbackRate = static_cast<f32>(context->GetDouble());
-	bool loop = context->GetBoolean();
 
 	if (!EntityManager::Get().HasComponent<AnimationComponent>(e))
 		return;

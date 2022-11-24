@@ -39,7 +39,7 @@ namespace DOG
 		auto deltaTime = (f32)Time::DeltaTime();
 
 #ifdef _DEBUG
-		deltaTime = 0.005f;
+		deltaTime = m_imguiDeltaTime;
 		//test(deltaTime);
 #endif
 
@@ -154,8 +154,9 @@ namespace DOG
 					ImGui::EndCombo();
 				}
 				static bool addClips = false;
-				// test animations
-				//if (ImGui::Button("Add Clips"))
+#ifdef _DEBUG
+				ImGui::SliderFloat("deltaT", &m_imguiDeltaTime, 0.001f, 0.1f, "%.3f");
+#endif
 				addClips ^= ImGui::Button("Add Clips");
 				if (addClips)
 				{
@@ -178,7 +179,8 @@ namespace DOG
 					ImGui::Checkbox("LoopingFlag", &loopingFlag);
 					static bool persistFlag = false;
 					ImGui::SameLine(); ImGui::Checkbox("PersistFlag", &persistFlag);
-					
+					static bool resetPrioFlag = false;
+					ImGui::SameLine(); ImGui::Checkbox("ResetPrioFlag", &resetPrioFlag);
 
 					ImGui::Columns(targets + 1);
 					static i32 chosenAnims[MAX_TARGETS] = { 0 };
@@ -209,7 +211,9 @@ namespace DOG
 										s.flag = s.flag | AnimationFlag::Persist;
 									if (loopingFlag)
 										s.flag = s.flag | AnimationFlag::Looping;
-									s.priority = priority;
+									if (resetPrioFlag)
+										s.flag = s.flag | AnimationFlag::ResetPrio;
+									s.priority = static_cast<u8>(priority);
 									s.group = static_cast<u8>(group);
 									s.transitionLength = transitionLen;
 									for (i32 i = 0; i < targets + 1; ++i)

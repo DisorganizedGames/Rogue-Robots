@@ -342,7 +342,7 @@ void GameLayer::UpdateGame()
 			auto pos = transform.GetPosition();
 			pos.y += m_imguiposY;
 			transform.SetPosition(pos);
-			transform.SetScale({ m_imguiS, m_imguiS, m_imguiS });
+			//transform.SetScale({ m_imguiS, m_imguiS, m_imguiS });
 		});
 
 	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([](TransformComponent& transform, RigidbodyComponent&)

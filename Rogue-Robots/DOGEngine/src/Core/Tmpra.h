@@ -32,12 +32,6 @@ namespace DOG
 			f32 targetWeight = 1.0f;
 			f32 currentWeight = 0.0f;
 		};
-		struct ClipAnimationData
-		{
-			i32 id = -1;
-			f32 weight = 0.f;
-			f32 tick = 0.f;
-		};
 		struct ClipSet
 		{
 			u32 nTargets = 0;
@@ -74,9 +68,9 @@ namespace DOG
 		{
 			return g.looping.nTotalClips;
 		}
-		bool TransitionIsFaster(const f32 start, const f32 tl, const Bs& bs)
+		bool TransitionIsFaster(const f32 start, const f32 tl, const f32 transitionStart, const f32 transitionLen)
 		{
-			return start + tl < bs.transitionStart + bs.transitionLength;
+			return start + tl < transitionStart + transitionLen;
 		}
 		bool HasLooping(AnimationFlag flags)
 		{
@@ -85,6 +79,10 @@ namespace DOG
 		bool HasPersist(AnimationFlag flags)
 		{
 			return static_cast<bool>(flags & AnimationFlag::Persist);
+		}
+		bool HasResetPrio(AnimationFlag flags)
+		{
+			return static_cast<bool>(flags & AnimationFlag::ResetPrio);
 		}
 		void AddClip(ClipSet& set, Setter& setter, u32 setIdx, f32 startTime = 0.f)
 		{
@@ -125,39 +123,6 @@ namespace DOG
 			auto& clip = set.clips[idx];
 			clip.currentWeight = weight * (clip.targetWeight - clip.currentWeight) + clip.currentWeight;
 		}
-		void PostAddFixUp(ClipSet& set, u32 idx)
-		{
-			const bool targetClipSwapped = idx < set.nTargets;
-			if (targetClipSwapped)
-			{
-				auto& lastClip = set.clips[set.nTotalClips - 1];
-				const auto weight = set.blend.currentWeight;
-				lastClip.targetWeight = weight * (lastClip.targetWeight - lastClip.currentWeight) + lastClip.currentWeight;
-				lastClip.currentWeight = 0.f;
-			}
-		}
-		void AddTargetSet(Setter& setter, ClipSet& set, u32 clipCount)
-		{
-			static constexpr i32 NOT_FOUND = -1;
-			for (u32 i = 0; i < clipCount; ++i)
-			{
-				const auto clipIdx = GetClipIndex(set, setter.animationIDs[i]);
-
-				if (NOT_FOUND == clipIdx)
-				{ // Clip not part of set, add it
-					AddClip(set, setter, i);
-					PostAddFixUp(set, i);
-				}
-				else
-				{ // Clip exists, modify it
-					UpdateClipCW(set, clipIdx);
-					ModifyClip(set.clips[clipIdx], setter, i);
-					std::swap(set.clips[i], set.clips[clipIdx]);
-				}
-			}
-			set.nTargets = clipCount;
-		}
-
 		std::array<f32, 6> GetWeights(ClipSet& set)
 		{
 			f32 bw = set.nTargets == set.nTotalClips ? 1.0f : set.blend.currentWeight;
@@ -180,6 +145,51 @@ namespace DOG
 
 			return tmp;
 		}
+		void PostAddFixUp(ClipSet& set, u32 idx)
+		{
+			auto& lastClip = set.clips[set.nTotalClips - 1];
+			const bool targetClipSwapped = idx < set.nTargets;
+			if (targetClipSwapped)
+			{
+				const auto weight = set.blend.currentWeight;
+				lastClip.targetWeight = weight * (lastClip.targetWeight - lastClip.currentWeight) + lastClip.currentWeight;
+				lastClip.currentWeight = 0.f;
+			}
+			for (u32 i = set.nTargets;  i < set.nTotalClips-1; ++i)
+			{
+				auto& c = set.clips[i];
+				if (c.id == lastClip.id)
+				{
+					//const auto weight = 1.f - set.blend.currentWeight;
+					//c.targetWeight = weight * (lastClip.targetWeight - lastClip.currentWeight) + lastClip.currentWeight;
+					c.targetWeight = c.currentWeight + lastClip.targetWeight;
+					set.nTotalClips--;
+				}
+			}
+		}
+		void AddTargetSet(Setter& setter, ClipSet& set, u32 clipCount, bool looping)
+		{
+			static constexpr i32 NOT_FOUND = -1;
+			f32 startingTime = set.nTotalClips && looping ? set.clips[0].normalizedTime : 0.f;
+			
+			for (u32 i = 0; i < clipCount; ++i)
+			{
+				const auto clipIdx = GetClipIndex(set, setter.animationIDs[i]);
+
+				if (NOT_FOUND == clipIdx || clipIdx < set.nTargets)
+				{ // Clip not part of set, add it
+					AddClip(set, setter, i, startingTime);
+					PostAddFixUp(set, i);
+				}
+				else
+				{ // Clip exists, modify it
+					UpdateClipCW(set, clipIdx);
+					ModifyClip(set.clips[clipIdx], setter, i);
+					std::swap(set.clips[i], set.clips[clipIdx]);
+				}
+			}
+			set.nTargets = clipCount;
+		}
 
 		i32 GetClipIndex(const ClipSet& set, const i32 animationID)
 		{	// Returns clip index if animation is present in the set
@@ -195,6 +205,19 @@ namespace DOG
 				currentValue = targetValue;
 			else if (currentTime > 0.0f) // Linear
 				currentValue = startValue + currentTime * (targetValue - startValue) / transitionLength;
+			return currentValue;
+		}
+		f32 BezierWeight(const f32 currentTime, const f32 transitionLength, const f32 startValue, const f32 targetValue, f32 currentValue)
+		{
+			if (currentTime >= transitionLength) // Transition is done
+				currentValue = targetValue;
+			else if (currentTime > 0.0f) // bezier curve
+			{
+				const f32 u = currentTime / transitionLength;
+				const f32 v = 1.0f - u;
+				currentValue = startValue * (powf(v, 3) + 3 * powf(v, 2) * u) +
+					targetValue * (3 * v * powf(u, 2) + powf(u, 3));
+			}
 			return currentValue;
 		}
 
@@ -226,7 +249,7 @@ namespace DOG
 
 				const bool transitionStarted = currentTime > 0.f;
 				if (transitionStarted)
-					bs.currentWeight = LinearWeight(currentTime, bs.transitionLength, bs.startWeight, bs.targetWeight, bs.currentWeight); // flag transtitonTyhpe : bezier()
+					bs.currentWeight = BezierWeight(currentTime, bs.transitionLength, bs.startWeight, bs.targetWeight, bs.currentWeight); // flag transtitonTyhpe : bezier()
 			}
 		}
 
@@ -401,7 +424,7 @@ namespace DOG
 			// Normalize weights and get number of clips in setter
 			u32 clipCount = PreProcessSetter(setter);
 
-			const bool lowerPrio = setter.priority < group.priority;
+			const bool lowerPrio = !HasResetPrio(setter.flag) && setter.priority < group.priority;
 			const bool invalidSetter = (!clipCount || lowerPrio);
 			if (invalidSetter)
 				return;
@@ -414,7 +437,7 @@ namespace DOG
 				group.looping : group.action;
 
 			// Add/modify the target
-			AddTargetSet(setter, set, clipCount);
+			AddTargetSet(setter, set, clipCount, HasLooping(setter.flag));
 
 			SetBlendSpecifications(setter);
 		}
@@ -443,12 +466,12 @@ namespace DOG
 				{
 					bs.durationLeft = groups[setter.group].action.clips[0].duration / setter.playbackRate;
 				}
-				bs.currentWeight = bs.startWeight = 0.f;
+				bs.startWeight = bs.currentWeight;
 				bs.targetWeight = 1.f;
 				bs.transitionStart = globalTime;
 				bs.transitionLength = setter.transitionLength;
 			}
-			else if (bs.currentWeight = bs.targetWeight = 1.f)
+			else if (bs.currentWeight == bs.targetWeight == 1.f)
 			{
 				bs.startWeight = bs.currentWeight;
 				bs.targetWeight = 0.f;
@@ -460,7 +483,7 @@ namespace DOG
 		{
 			auto& bs = groupBlends[setter.group];
 			bool php = !ParentHigherPrio(setter.group);
-			const bool updateBS = php && (bs.targetWeight == 0.f || TransitionIsFaster(globalTime, setter.transitionLength, bs));
+			const bool updateBS = php && (bs.targetWeight == 0.f || TransitionIsFaster(globalTime, setter.transitionLength, bs.transitionStart, bs.transitionLength));
 			if (updateBS)
 			{
 				if (!HasLooping(setter.flag) && !HasPersist(setter.flag))
