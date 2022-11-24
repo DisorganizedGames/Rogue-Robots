@@ -258,7 +258,6 @@ void NetCode::OnUpdate()
 								}
 								else if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Default && (u32)tempCreate->entityTypeId > (u32)EntityTypes::Agents && !tempCreate->alive)
 								{
-									std::cout << "NetCode: entityType: " << (u32)tempCreate->entityTypeId << " id: " << tempCreate->id << std::endl;
 									EntityManager::Get().Collect<NetworkPlayerComponent, PlayerAliveComponent>().Do([&](entity id, NetworkPlayerComponent& playerC, PlayerAliveComponent&)
 										{
 											if (playerC.playerId == tempCreate->playerId)
@@ -482,6 +481,5 @@ void DeleteNetworkSync::OnLateUpdate(DOG::entity e, DeferredDeletionComponent&, 
 	t.id = netId.id;
 	t.position = transC.GetPosition();
 	m_entityManager.RemoveComponent<NetworkId>(e);
-	std::cout << "DeleteNetworkSync: entityType: " << (u32)t.entityTypeId << " id: " << t.id << std::endl;
 }
 
