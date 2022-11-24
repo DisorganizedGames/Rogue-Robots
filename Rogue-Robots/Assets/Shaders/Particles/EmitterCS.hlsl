@@ -114,7 +114,7 @@ void SpawnParticle(in uint emitterHandle, inout Particle p, in float totTime, in
 		break;
 	}
 	
-	p.size = 0.1;
+	p.size = g_emitter.size;
 	p.age = 0;
 }
 

@@ -35,6 +35,7 @@ struct Emitter
 	float3 pos;
 	float rate;
 	float lifetime;
+	float size;
 	
 	uint spawnType;
 	float opt1;
@@ -50,7 +51,7 @@ struct Emitter
 	float4 startColor;
 	float4 endColor;
 	
-	uint3 pad;
+	uint2 pad;
 };
 
 struct PS_IN

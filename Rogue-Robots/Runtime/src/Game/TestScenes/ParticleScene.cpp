@@ -38,6 +38,7 @@ void ParticleScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 		auto& em = AddComponent<ParticleEmitterComponent>(m_particleSystem);
 		em = {
 			.spawnRate = 64.f,
+			.particleSize = 0.1f,
 			.particleLifetime = 0.5f,
 			.startColor = Vector4(1, 0, 0, 1),
 			.endColor = Vector4(0, 0, 1, 1),

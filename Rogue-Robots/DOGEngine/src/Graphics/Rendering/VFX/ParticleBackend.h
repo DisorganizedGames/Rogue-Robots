@@ -17,8 +17,9 @@ namespace DOG::gfx
 	{
 		u32 alive = 0;
 		DirectX::SimpleMath::Vector3 pos = { 0, 0, 0 };
-		f32 rate = 0;
-		f32 lifetime = 0;
+		f32 rate = 0.f;
+		f32 lifetime = 0.f;
+		f32 size = 0.f;
 
 		u32 spawnType = 0;
 		f32 opt1 = 0.f;
@@ -34,7 +35,7 @@ namespace DOG::gfx
 		DirectX::SimpleMath::Vector4 startColor;
 		DirectX::SimpleMath::Vector4 endColor;
 
-		u32 pad[3] = { 0 };
+		u32 pad[2] = { 0 };
 	};
 	
 	class ParticleBackend

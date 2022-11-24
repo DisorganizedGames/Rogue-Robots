@@ -26,6 +26,7 @@ const std::vector<ParticleEmitter>& ParticleManager::GatherEmitters()
 				em.pos = transform.GetPosition();
 				em.rate = emitter.spawnRate;
 				em.lifetime = emitter.particleLifetime;
+				em.size = emitter.particleSize;
 
 				SetSpawnProperties(e, em);
 
