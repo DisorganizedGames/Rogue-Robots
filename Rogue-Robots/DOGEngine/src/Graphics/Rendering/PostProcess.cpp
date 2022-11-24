@@ -1,5 +1,7 @@
 #include "PostProcess.h"
 
+using namespace DirectX::SimpleMath;
+
 namespace DOG::gfx
 {
 	PostProcess* PostProcess::s_instance = nullptr;
@@ -77,6 +79,11 @@ namespace DOG::gfx
 		m_damageDiskDatas[m_nextDisk] = ddd;
 	}
 
-
+	void PostProcess::InstantiateLaserBeam(Vector3 startPos, Vector3 endPos, Vector3 up, Vector3 color)
+	{
+		DirectX::SimpleMath::Matrix m = DirectX::SimpleMath::Matrix::CreateLookAt(startPos, endPos, up);
+		m.Invert(m);
+		m_laserBeams.emplace_back(m, color, DirectX::SimpleMath::Vector3::Distance(startPos, endPos));
+	}
 
 }

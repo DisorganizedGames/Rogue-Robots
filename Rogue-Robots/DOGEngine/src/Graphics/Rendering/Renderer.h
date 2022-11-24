@@ -301,6 +301,8 @@ namespace DOG::gfx
 		// Game related post process passes
 		std::unique_ptr<RenderEffect> m_damageDiskEffect;
 		std::unique_ptr<RenderEffect> m_heartbeatEffect;
+		std::unique_ptr<RenderEffect> m_bloodViewEffect;
+		std::unique_ptr<RenderEffect> m_laserBeamEffect;
 
 
 

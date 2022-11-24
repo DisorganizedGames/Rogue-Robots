@@ -10,6 +10,7 @@
 #include "src/Core/AnimationManager.h"
 #include "src/Core/ImGuiMenuLayer.h"
 #include "src/Core/CoreUtils.h"
+#include "src/Core/SimpleModelCreator.h"
 
 #include "src/Input/Keyboard.h"
 #include "src/Input/Mouse.h"
@@ -25,12 +26,12 @@
 
 #include "src/ECS/EntityManager.h"
 #include "src/ECS/Component.h"
-#include "src/ECS/QueryHelpers.h"
 
 #include "src/Audio/AudioManager.h"
 
 #include "src/Scripting/LuaMain.h"
 
 #include "src/Graphics/Rendering/UI.h"
+#include "src/Graphics/Rendering/PostProcess.h"
 
 #include "vendor/includes/ImGUI/imgui.h"

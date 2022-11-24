@@ -50,7 +50,7 @@ class EntityInterface : public LuaInterface
 public:
 	EntityInterface() noexcept
 	{
-
+		
 	}
 	~EntityInterface() noexcept
 	{
@@ -183,6 +183,8 @@ private:
 
 	void AddShadowReciever(DOG::entity e);
 
+	void ModifyLaserBarrel(DOG::LuaContext* context, DOG::entity e);
+
 };
 
 class AssetInterface : public LuaInterface
@@ -245,7 +247,10 @@ public:
 class GameInterface : public LuaInterface
 {
 public:
-	GameInterface() noexcept {};
+	GameInterface() noexcept 
+	{
+		DOG::LuaMain::GetEventSystem()->Register<LuaPickUpMoreLaserAmmoCallback>("PickUpMoreLaserCharge");
+	};
 	~GameInterface() noexcept {};
 
 	void ExplosionEffect(DOG::LuaContext* context);
@@ -253,4 +258,5 @@ public:
 	void AddDamageToEntity(DOG::LuaContext* context);
 	void AddMagazineEffectsFromBullet(DOG::LuaContext* context);
 	void SpawnPickupMiscComponent(DOG::LuaContext* context);
+	static void LuaPickUpMoreLaserAmmoCallback(DOG::LuaContext*);
 };

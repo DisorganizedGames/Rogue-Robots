@@ -34,6 +34,7 @@ private:
 
 	u32 CreateTrampolinePickup(Vector3 position, u32 id = 0);
 	u32 CreateMissilePickup(Vector3 position, u32 id = 0);
+	u32 CreateLaserPickup(Vector3 position, u32 id = 0);
 	u32 CreateGrenadePickup(Vector3 position, u32 id = 0);
 	u32 CreateMaxHealthBoostPickup(Vector3 position, u32 id = 0);
 	u32 CreateFrostModificationPickup(Vector3 position, u32 id = 0);

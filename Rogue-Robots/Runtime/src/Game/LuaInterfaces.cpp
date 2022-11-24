@@ -168,6 +168,9 @@ void EntityInterface::RemoveComponent(DOG::LuaContext* context)
 	else if (compType == "BarrelComponent")
 	{
 		EntityManager::Get().RemoveComponent<BarrelComponent>(e);
+		EntityManager::Get().RemoveComponentIfExists<LaserBarrelComponent>(e);
+		EntityManager::Get().RemoveComponentIfExists<LaserBeamComponent>(e);
+		EntityManager::Get().RemoveComponentIfExists<LaserBeamVFXComponent>(e);
 		return;
 	}
 	else if (compType == "MagazineModificationComponent")
@@ -200,6 +203,10 @@ void EntityInterface::ModifyComponent(LuaContext* context)
 	else if (compType == "PointLightStrength")
 	{
 		ModifyPointLightStrength(context, e);
+	}
+	else if (compType == "LaserBarrel")
+	{
+		ModifyLaserBarrel(context, e);
 	}
 	//Add more component types here.
 }
@@ -344,11 +351,14 @@ void EntityInterface::GetEntityTypeAsString(DOG::LuaContext* context)
 	case EntityTypes::FrostMagazineModification:
 		context->ReturnString("FrostMagazineModification");
 		break;
-	case EntityTypes::GrenadeBarrel :
+	case EntityTypes::GrenadeBarrel:
 		context->ReturnString("GrenadeBarrel");
 		break;
 	case EntityTypes::MissileBarrel:
 		context->ReturnString("MissileBarrel");
+		break;
+	case EntityTypes::LaserBarrel:
+		context->ReturnString("LaserBarrel");
 		break;
 	case EntityTypes::FullAutoMisc:
 		context->ReturnString("FullAutoMisc");
@@ -455,12 +465,14 @@ const std::unordered_map<PassiveItemComponent::Type, std::string> passiveTypeMap
 
 const std::unordered_map<ActiveItemComponent::Type, std::string> activeTypeMap = {
 	{ ActiveItemComponent::Type::Trampoline, "Trampoline" },
+	{ ActiveItemComponent::Type::Turret, "Turret" },
 };
 
 const std::unordered_map<BarrelComponent::Type, std::string> barrelTypeMap = {
 	{ BarrelComponent::Type::Bullet, "BulletBarrel"},
 	{ BarrelComponent::Type::Missile, "MissileBarrel" },
 	{ BarrelComponent::Type::Grenade, "GrenadeBarrel" },
+	{ BarrelComponent::Type::Laser, "LaserBarrel" },
 };
 
 const std::unordered_map<MagazineModificationComponent::Type, std::string> modificationTypeMap = {
@@ -769,32 +781,36 @@ void EntityInterface::AddBullet(LuaContext* context, entity e)
 
 void EntityInterface::AddSubmeshRender(LuaContext* context, entity e)
 {
-	//Get material information from table
-	LuaTable materialTable = context->GetTable();
-
-	ModelComponent& model = EntityManager::Get().GetComponent<ModelComponent>(e);
-
-	ModelAsset* modelAsset = AssetManager::Get().GetAsset<ModelAsset>(model.id);
-
-	if (!modelAsset)
+	if (EntityManager::Get().HasComponent<ModelComponent>(e))
 	{
-		std::cout << "Model has not been loaded in yet! Model ID: " << model.id << "\n";
-		return;
+
+		//Get material information from table
+		LuaTable materialTable = context->GetTable();
+
+		ModelComponent& model = EntityManager::Get().GetComponent<ModelComponent>(e);
+
+		ModelAsset* modelAsset = AssetManager::Get().GetAsset<ModelAsset>(model.id);
+
+		if (!modelAsset)
+		{
+			std::cout << "Model has not been loaded in yet! Model ID: " << model.id << "\n";
+			return;
+		}
+
+		MaterialHandle materialHandle;
+		materialHandle.handle = static_cast<u64>(materialTable.GetIntFromTable("materialHandle"));
+
+		LuaTable albedoFactor = materialTable.GetTableFromTable("albedoFactor");
+		LuaVector3 albedoFactorVector(albedoFactor);
+
+		MaterialDesc materialDesc{};
+		materialDesc.albedoFactor = { albedoFactorVector.x, albedoFactorVector.y, albedoFactorVector.z };
+		materialDesc.roughnessFactor = (float)materialTable.GetDoubleFromTable("roughnessFactor");
+		materialDesc.metallicFactor = (float)materialTable.GetDoubleFromTable("metallicFactor");
+
+		EntityManager::Get().AddComponent<SubmeshRenderer>(e, modelAsset->gfxModel->mesh.mesh, materialHandle, materialDesc);
+		EntityManager::Get().RemoveComponent<ModelComponent>(e);
 	}
-
-	MaterialHandle materialHandle;
-	materialHandle.handle = static_cast<u64>(materialTable.GetIntFromTable("materialHandle"));
-
-	LuaTable albedoFactor = materialTable.GetTableFromTable("albedoFactor");
-	LuaVector3 albedoFactorVector(albedoFactor);
-
-	MaterialDesc materialDesc{};
-	materialDesc.albedoFactor = { albedoFactorVector.x, albedoFactorVector.y, albedoFactorVector.z };
-	materialDesc.roughnessFactor = (float)materialTable.GetDoubleFromTable("roughnessFactor");
-	materialDesc.metallicFactor = (float)materialTable.GetDoubleFromTable("metallicFactor");
-
-	EntityManager::Get().AddComponent<SubmeshRenderer>(e, modelAsset->gfxModel->mesh.mesh, materialHandle, materialDesc);
-	EntityManager::Get().RemoveComponent<ModelComponent>(e);
 }
 
 void EntityInterface::AddScript(DOG::LuaContext* context, DOG::entity e)
@@ -919,6 +935,13 @@ void EntityInterface::AddBarrelComponent(DOG::LuaContext* context, DOG::entity e
 	bc.type = type;
 	bc.maximumAmmoCapacityForType = ammoCap;
 	bc.currentAmmoCount = currentAmmo;
+	bc.ammoPerPickup = currentAmmo;
+
+	if (type == BarrelComponent::Type::Laser)
+	{
+		assert(!EntityManager::Get().HasComponent<LaserBarrelComponent>(e));
+		EntityManager::Get().AddComponent<LaserBarrelComponent>(e).ammo = static_cast<f32>(currentAmmo);
+	}
 }
 
 void EntityInterface::AddMagazineModificationComponent(DOG::LuaContext* context, DOG::entity e)
@@ -997,6 +1020,55 @@ void EntityInterface::AddShadowReciever(DOG::entity e)
 	auto& em = EntityManager::Get();
 	assert(em.Exists(e));
 	em.AddComponent<ShadowReceiverComponent>(e);
+}
+
+void EntityInterface::ModifyLaserBarrel(DOG::LuaContext* context, DOG::entity e)
+{
+	auto& em = EntityManager::Get();
+	assert(em.Exists(e) && em.HasComponent<LaserBarrelComponent>(e));
+
+	auto& barrel = em.GetComponent<LaserBarrelComponent>(e);
+	barrel.laserToShoot.owningPlayer = context->GetInteger();
+	barrel.shoot = context->GetBoolean();
+	barrel.laserToShoot.maxRange = static_cast<f32>(context->GetDouble());
+	barrel.damagePerSecond = static_cast<f32>(context->GetDouble());
+
+	LuaTable laserStartTable = context->GetTable();
+	LuaTable laserDirTable = context->GetTable();
+	LuaTable laserColorTable = context->GetTable();
+	LuaVector3 laserStart = LuaVector3(laserStartTable);
+	LuaVector3 laserDir = LuaVector3(laserDirTable);
+	LuaVector3 laserColor = LuaVector3(laserColorTable);
+
+	barrel.laserToShoot.startPos = { laserStart.x, laserStart.y, laserStart.z };
+	barrel.laserToShoot.direction = { laserDir.x, laserDir.y, laserDir.z };
+	barrel.laserToShoot.color = { laserColor.x, laserColor.y, laserColor.z };
+
+
+	if (auto mag = em.TryGetComponent<MagazineModificationComponent>(e))
+	{
+		if (mag->get().type == MagazineModificationComponent::Type::Frost)
+		{
+			em.AddOrReplaceComponent<FrostEffectComponent>(e).frostTimer = 3.5f;
+		}
+		else if (mag->get().type != MagazineModificationComponent::Type::Frost)
+		{
+			em.RemoveComponentIfExists<FrostEffectComponent>(e);
+		}
+	}
+
+	if (auto mag = em.TryGetComponent<BarrelComponent>(e))
+	{
+		mag->get().currentAmmoCount = static_cast<u32>(barrel.ammo);
+	}
+
+	// Signal true to lua to remove the component if out of ammo.
+	bool outOfAmmo = barrel.ammo <= 0;
+	if (outOfAmmo)
+	{
+		em.RemoveComponentIfExists<FrostEffectComponent>(e);
+	}
+	context->ReturnBoolean(barrel.ammo <= 0);
 }
 
 
@@ -1267,4 +1339,17 @@ void GameInterface::SpawnPickupMiscComponent(DOG::LuaContext* context)
 	{
 		ItemManager::Get().CreateItem(EntityTypes::FullAutoMisc, EntityManager::Get().GetComponent<TransformComponent>(playerId).GetPosition());
 	}
+}
+
+void GameInterface::LuaPickUpMoreLaserAmmoCallback(DOG::LuaContext* context)
+{
+	auto& em = EntityManager::Get();
+	entity player = context->GetInteger();
+	assert(em.Exists(player) && em.HasComponent<BarrelComponent>(player) && em.HasComponent<LaserBarrelComponent>(player));
+	auto& barrelInfo = em.GetComponent<BarrelComponent>(player);
+	assert(barrelInfo.type == BarrelComponent::Type::Laser);
+	auto& laserBarrel = em.GetComponent<LaserBarrelComponent>(player);
+	laserBarrel.ammo += barrelInfo.ammoPerPickup;
+	laserBarrel.ammo = std::min(laserBarrel.ammo, static_cast<f32>(barrelInfo.maximumAmmoCapacityForType));
+	barrelInfo.currentAmmoCount = static_cast<u32>(laserBarrel.ammo);
 }

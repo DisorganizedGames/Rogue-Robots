@@ -1,6 +1,9 @@
 #include "TestScene.h"
 #include "GameComponent.h"
 #include "../Network/Network.h"
+#include "PrefabInstantiatorFunctions.h"
+#include "ItemManager/ItemManager.h"
+#include "EntitesTypes.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -285,6 +288,12 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 		.shouldPlay = false,
 		.loop = true,
 	};
+
+
+	AddEntity(SpawnLaserBlob(TransformComponent(Vector3(20, 7, 20)), NULL_ENTITY));
+
+
+	ItemManager::Get().CreateItem(EntityTypes::LaserBarrel, Vector3(30, 7, 20));
 }
 
 void TestScene::CreateTrampolinePickup(DirectX::SimpleMath::Vector3 position)

@@ -179,7 +179,7 @@ public:
 	void OnUpdate(PickupComponent& pc, EligibleForPickupComponent& efpg)
 	{
 		//Do not render other players' eligible pickup item names.
-		if (efpg.player != DOG::GetPlayer())
+		if (efpg.player != GetPlayer())
 			return;
 
 		ImVec2 size;
@@ -283,6 +283,11 @@ public:
 		case BarrelComponent::Type::Bullet:
 		{
 			barrelType += "Bullets";
+			break;
+		}
+		case BarrelComponent::Type::Laser:
+		{
+			barrelType += "Laser";
 			break;
 		}
 		}
@@ -592,4 +597,44 @@ public:
 		}
 		age += DOG::Time::DeltaTime<DOG::TimeType::Seconds, f32>();
 	}
+};
+
+class PlayerLaserShootSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(LaserBarrelComponent, InputController);
+
+	ON_UPDATE_ID(LaserBarrelComponent, InputController);
+	void OnUpdate(DOG::entity e, LaserBarrelComponent& barrel, InputController& input);
+};
+
+class LaserShootSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(LaserBarrelComponent);
+
+	ON_UPDATE_ID(LaserBarrelComponent);
+	void OnUpdate(DOG::entity e, LaserBarrelComponent& barrel);
+	ON_LATE_UPDATE_ID(LaserBarrelComponent);
+	void OnLateUpdate(DOG::entity e, LaserBarrelComponent&);
+};
+
+
+class LaserBeamSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(LaserBeamComponent, LaserBeamVFXComponent);
+	ON_UPDATE_ID(LaserBeamComponent, LaserBeamVFXComponent);
+
+	void OnUpdate(DOG::entity e, LaserBeamComponent& laserBeam, LaserBeamVFXComponent& laserBeamVfx);
+};
+
+
+class LaserBeamVFXSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(LaserBeamVFXComponent);
+	ON_UPDATE(LaserBeamVFXComponent);
+
+	void OnUpdate(LaserBeamVFXComponent& laserBeam);
 };

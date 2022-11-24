@@ -61,7 +61,6 @@ set(SourceFiles
 	"src/Core/CustomMeshManager.h" "src/Core/CustomMeshManager.cpp"
 	"src/Graphics/RHI/Types/GPUInfo.h"
 	"src/Graphics/Rendering/FrontRenderer.h" "src/Graphics/Rendering/FrontRenderer.cpp"
-	"src/ECS/QueryHelpers.h" "src/ECS/QueryHelpers.cpp"
 	"src/Graphics/RHI/DX12/D11Device.h" "src/Graphics/RHI/DX12/D11Device.cpp"
 	"src/Graphics/Rendering/RenderEffects/ParticleEffect.h" "src/Graphics/Rendering/RenderEffects/ParticleEffect.cpp"
 	"src/Graphics/Rendering/VFX/ParticleManager.h" "src/Graphics/Rendering/VFX/ParticleManager.cpp"
@@ -70,7 +69,10 @@ set(SourceFiles
 	"src/Graphics/Rendering/RenderEffects/DamageDiskEffect.h" "src/Graphics/Rendering/RenderEffects/DamageDiskEffect.cpp"
 	"src/Graphics/Rendering/PostProcess.h" "src/Graphics/Rendering/PostProcess.cpp"
 	"src/Graphics/Rendering/RenderEffects/HeartbeatEffect.h" "src/Graphics/Rendering/RenderEffects/HeartbeatEffect.cpp"
-)
+	"src/Graphics/Rendering/RenderEffects/LaserEffect.h" "src/Graphics/Rendering/RenderEffects/LaserEffect.cpp"
+	"src/ECS/EntityTypedef.h"
+	"src/Core/SimpleModelCreator.h" "src/Core/SimpleModelCreator.cpp"
+	)
 
 file(GLOB_RECURSE TempGraphics "src/Graphics/*.cpp")
 

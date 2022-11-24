@@ -2,6 +2,7 @@
 #include <DOGEngine.h>
 #include "AgentManager/AgentComponents.h"
 #include "EntitesTypes.h"
+#include "Core/QueryHelpers.h" // included here to leak it everywhere.
 
 struct PlayerControllerComponent
 {
@@ -149,7 +150,7 @@ struct EligibleForPickupComponent
 
 struct BarrelComponent
 {
-	enum class Type { Bullet = 0, Grenade, Missile };
+	enum class Type { Bullet = 0, Grenade, Missile, Laser };
 
 	Type type;
 	u32 maximumAmmoCapacityForType;
@@ -316,4 +317,29 @@ struct FloorBlockComponent
 
 struct CheckForLightsComponent
 {
+};
+
+struct LaserBeamVFXComponent
+{
+	DirectX::SimpleMath::Vector3 startPos;
+	DirectX::SimpleMath::Vector3 endPos;
+	DirectX::SimpleMath::Vector3 color;
+};
+
+struct LaserBeamComponent
+{
+	DirectX::SimpleMath::Vector3 startPos;
+	DirectX::SimpleMath::Vector3 direction;
+	f32 maxRange = 100;
+	DirectX::SimpleMath::Vector3 color;
+	f32 damage;
+	DOG::entity owningPlayer = DOG::NULL_ENTITY;
+};
+
+struct LaserBarrelComponent
+{
+	bool shoot = false;
+	f32 ammo = 30.0f; // This value is time in seconds you can shoot.
+	f32 damagePerSecond = 240.0f;
+	LaserBeamComponent laserToShoot;
 };

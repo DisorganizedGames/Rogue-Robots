@@ -185,6 +185,38 @@ function BarrelComponents:Missile()
 	}
 end
 
+
+
+function BarrelComponents:Laser()
+	return
+	{
+		Update = function(self, gunEntity, parentEntityID, bullet, miscComponent)
+		end,
+		Destroy = function(self, bullet)
+		end,
+		CreateBullet = function(self)
+			return true
+		end,
+
+		GetMaxAmmo = function(self)
+			return 80
+		end,
+
+		GetAmmoPerPickup = function(self)
+			return 20
+		end,
+
+		GetECSType = function(self)
+			return 3
+		end,
+
+		GetReloadTime = function(self)
+			return 1.0
+		end,
+	}
+end
+
+
 --Add more components here.
 
 return BarrelComponents
