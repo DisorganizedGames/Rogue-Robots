@@ -23,20 +23,19 @@ DOG::entity GetCamera() noexcept
 	entity camera = NULL_ENTITY;
 	if (auto controllerComp = em.TryGetComponent<PlayerControllerComponent>(GetPlayer()); controllerComp)
 	{
+		auto&& findCamera = [](entity potentialCamera) {
+			if (auto cameraComponent = EntityManager::Get().TryGetComponent<CameraComponent>(potentialCamera))
+				if (cameraComponent->get().isMainCamera) return potentialCamera;
+			return NULL_ENTITY;
+		};
 
-		camera = controllerComp->get().cameraEntity;
-		if (auto cameraComponent = em.TryGetComponent<CameraComponent>(camera); cameraComponent)
-		{
-			if (cameraComponent->get().isMainCamera)
-				return camera;
-		}
+		camera = findCamera(controllerComp->get().cameraEntity);
 
-		camera = controllerComp->get().debugCamera;
-		if (auto cameraComponent = em.TryGetComponent<CameraComponent>(camera); cameraComponent)
-		{
-			if (cameraComponent->get().isMainCamera)
-				return camera;
-		}
+		if (camera == NULL_ENTITY)
+			camera = findCamera(controllerComp->get().debugCamera);
+
+		if (camera == NULL_ENTITY)
+			camera = findCamera(controllerComp->get().spectatorCamera);
 	}
 	return camera;
 }
