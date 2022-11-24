@@ -78,6 +78,14 @@ namespace DOG
 		{
 			return start + tl < bs.transitionStart + bs.transitionLength;
 		}
+		bool HasLooping(AnimationFlag flags)
+		{
+			return static_cast<bool>(flags & AnimationFlag::Looping);
+		}
+		bool HasPersist(AnimationFlag flags)
+		{
+			return static_cast<bool>(flags & AnimationFlag::Persist);
+		}
 		void AddClip(ClipSet& set, Setter& setter, u32 setIdx, f32 startTime = 0.f)
 		{
 			// Add clip to back
@@ -224,7 +232,8 @@ namespace DOG
 
 		void UpdateBsDuration(Bs& bs, f32 dt)
 		{
-			if (bs.durationLeft > 0.f)
+			const bool durationLeft = bs.durationLeft > 0.f;
+			if (durationLeft)
 			{
 				bs.durationLeft -= dt;
 
@@ -334,7 +343,7 @@ namespace DOG
 
 		void ProcessAnimationComponent(AnimationComponent& ac)
 		{
-			// sort added setters by group and loop status
+			// Sort added setters by group and loop status
 			std::sort(ac.animSetters.begin(), ac.animSetters.begin() + ac.addedSetters,
 				[](const Setter& a, const Setter& b) -> bool
 				{
@@ -354,7 +363,7 @@ namespace DOG
 		u32 PreProcessSetter(Setter& setter)
 		{
 			static constexpr i32 INVALID = -1;
-			auto& set = setter.loop ? groups[setter.group].looping : groups[setter.group].action;
+			auto& set = HasLooping(setter.flag) ? groups[setter.group].looping : groups[setter.group].action;
 			u32 clipCount = 0;
 			f32 wSum = 0.f;
 			// Dont set if same as current target set
@@ -397,7 +406,8 @@ namespace DOG
 			// Normalize weights and get number of clips in setter
 			u32 clipCount = PreProcessSetter(setter);
 
-			const bool invalidSetter = (!clipCount || setter.priority < group.priority);
+			const bool lowerPrio = setter.priority < group.priority;
+			const bool invalidSetter = (!clipCount || lowerPrio);
 			if (invalidSetter)
 				return;
 
@@ -405,7 +415,7 @@ namespace DOG
 			group.priority = static_cast<u32>(setter.priority);
 
 			// Get corresponding set
-			auto& set = setter.loop ?
+			auto& set = HasLooping(setter.flag) ?
 				group.looping : group.action;
 
 			// Add/modify the target
@@ -423,7 +433,7 @@ namespace DOG
 		void SetClipsBS(Setter& setter)
 		{
 			auto& group = groups[setter.group];
-			auto& bs = setter.loop ? group.looping.blend : group.action.blend;
+			auto& bs = HasLooping(setter.flag) ? group.looping.blend : group.action.blend;
 			bs.currentWeight = 0.f;
 			bs.targetWeight = 1.f;
 			bs.transitionStart = globalTime;
@@ -431,10 +441,10 @@ namespace DOG
 		}
 		void SetSetBS(Setter& setter)
 		{
-			if (!setter.loop) // more logic needed here
+			if (!HasLooping(setter.flag)) // more logic needed here
 			{
 				auto& bs = groups[setter.group].blend;
-				if (!(bool)(setter.flag & AnimationFlag::Persist))
+				if (!HasPersist(setter.flag))
 				{
 					bs.durationLeft = groups[setter.group].action.clips[0].duration / setter.playbackRate;
 				}
@@ -451,7 +461,7 @@ namespace DOG
 			const bool updateBS = php && (bs.targetWeight == 0.f || TransitionIsFaster(globalTime, setter.transitionLength, bs));
 			if (updateBS)
 			{
-				if (!setter.loop && !(bool)(setter.flag & AnimationFlag::Persist))
+				if (!HasLooping(setter.flag) && !HasPersist(setter.flag))
 				{
 					bs.durationLeft = groups[setter.group].action.clips[0].duration / setter.playbackRate;
 				}
@@ -459,6 +469,10 @@ namespace DOG
 				bs.targetWeight = 1.f;
 				bs.transitionStart = globalTime;
 				bs.transitionLength = setter.transitionLength;
+			}
+			if (bs.currentWeight = 1.f)
+			{
+
 			}
 		}
 

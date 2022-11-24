@@ -60,13 +60,13 @@ namespace DOG
 		static constexpr DirectX::XMFLOAT3 m_baseScale = { 1.f, 1.f, 1.f };
 		static constexpr DirectX::XMFLOAT4 m_baseRotation = { 0.f, 0.f, 0.f, 0.f };
 		static constexpr DirectX::XMFLOAT3 m_baseTranslation = { 0.f, 0.f, 0.f };
-
+		static constexpr DirectX::XMFLOAT3 head_offset = { 0.f, 54.7f, 0.1f };
 		// IMGUI RELATED
 	private:
 		testAnimator mtestAnimator;
 		f32 m_imguiGroupWeightA = 0.0f;
 		bool m_imguiApplyRootTranslation = true;
-		i32 m_imguiJoint = 0;
+		i32 m_imguiJoint = 5;
 		i32 m_imguiSelectedJoint = 0;
 		DirectX::FXMMATRIX ImguiTransform(i32 joint);
 		std::vector<DirectX::XMFLOAT3> m_imguiSca;

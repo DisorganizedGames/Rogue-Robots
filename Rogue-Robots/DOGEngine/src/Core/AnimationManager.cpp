@@ -37,10 +37,10 @@ namespace DOG
 		ZoneScopedN("updateJoints_ppp");
 		using namespace DirectX;
 		auto deltaTime = (f32)Time::DeltaTime();
-		deltaTime = 0.05f;
-#ifdef DEBUG
-		deltaTime = 0.05f;
-		test(deltaTime);
+
+#ifdef _DEBUG
+		deltaTime = 0.005f;
+		//test(deltaTime);
 #endif
 
 		if (!m_rigs.size()) {
@@ -70,8 +70,20 @@ namespace DOG
 					a.Update(deltaTime);
 					a.ProcessAnimationComponent(aC);
 					UpdateSkeleton(a, offset);
-
-					btf.transform = SimpleMath::Matrix(XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[m_imguiJoint]))) * tf.worldMatrix;
+					f32 m_imguiX = 0.f;
+					f32 m_imguiY = 54.7f;
+					f32 m_imguiZ = .1f;
+					f32 m_imguiS = 0.2f;
+					f32 m_imguiposY = -.5f;
+					auto xm = XMMatrixTranslationFromVector(XMLoadFloat3(&head_offset));
+					for (size_t i = 0; i < m_rigs[0]->jointOffsets.size(); i++)
+					{
+						auto tmp = XMLoadFloat4x4(&m_rigs[0]->jointOffsets[i]);
+						XMVECTOR sca = {}, rot = {}, tra = {};
+						XMMatrixDecompose(&sca, &rot, &tra, tmp);
+						auto blyat = 0;
+					}
+					btf.transform = SimpleMath::Matrix(SimpleMath::Matrix(xm) * XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[m_imguiJoint]))) * tf.worldMatrix;
 				}
 			});
 	}
@@ -164,17 +176,18 @@ namespace DOG
 					static const char* grpNames[]{ "FullBody", "LowerBody", "UpperBody" };
 					ImGui::Combo("target group", &group, grpNames, IM_ARRAYSIZE(grpNames));
 
-					static auto clipSet = 0;
-					static const char* setNames[]{ "Action", "Looping" };
-					ImGui::Combo("Clip set", &clipSet, setNames, IM_ARRAYSIZE(setNames));
-
 					static auto playbackRate = 1.f, transitionLen = 0.f;
 					ImGui::SliderFloat("playbackRate", &playbackRate, -1.f, 1.f, "%.2f");
 					ImGui::SliderFloat("transitionLen", &transitionLen, 0.f, 1.f, "%.2f");
 
-					static bool persistFlag = false;
-					ImGui::Checkbox("PersistFlag", &persistFlag);
+					static auto priority = static_cast<i32>(BASE_PRIORITY);
+					ImGui::SliderInt("priority", &priority, 0, 5);
 
+					static bool loopingFlag = false;
+					ImGui::Checkbox("LoopingFlag", &loopingFlag);
+					static bool persistFlag = false;
+					ImGui::SameLine(); ImGui::Checkbox("PersistFlag", &persistFlag);
+					
 
 					ImGui::Columns(targets + 1);
 					static i32 chosenAnims[MAX_TARGETS] = { 0 };
@@ -201,11 +214,9 @@ namespace DOG
 								{
 									auto& s = rAC.animSetters[rAC.addedSetters++];
 									s.playbackRate = playbackRate;
-									if (persistFlag)
-										s.flag = s.flag | AnimationFlag::Persist;
-
+									if (persistFlag) s.flag = s.flag | AnimationFlag::Persist;
+									if (loopingFlag) s.flag = s.flag | AnimationFlag::Looping;
 									s.group = static_cast<u8>(group);
-									s.loop = clipSet;
 									s.transitionLength = transitionLen;
 									for (i32 i = 0; i < targets + 1; ++i)
 									{
