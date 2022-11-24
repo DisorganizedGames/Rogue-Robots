@@ -33,7 +33,7 @@ namespace DOG::gfx
 	{
 	}
 
-	std::shared_ptr<CompiledShader> ShaderCompilerDXC::CompileFromFile(std::filesystem::path relPath, ShaderType type, const std::string& entryPoint)
+	std::shared_ptr<CompiledShader> ShaderCompilerDXC::CompileFromFile(std::filesystem::path relPath, ShaderType type, const std::vector<std::wstring>& defines, const std::string& entryPoint)
 	{
 		std::wstring entry_wstr = std::filesystem::path(entryPoint).wstring();
 
@@ -61,6 +61,15 @@ namespace DOG::gfx
 		hr = m_library->CreateBlobFromFile(relPath.c_str(), &codePage, &sourceBlob);
 		assert(SUCCEEDED(hr));
 
+		// Gather compiler arguments
+		std::vector<DxcDefine> dxcDefines;
+		for (const auto& define : defines)
+		{
+			DxcDefine def{};
+			def.Name = define.c_str();
+			dxcDefines.push_back(def);
+		}
+
 		// Compile
 		ComPtr<IDxcOperationResult> result;
 		hr = m_compiler->Compile(
@@ -69,7 +78,7 @@ namespace DOG::gfx
 			entry_wstr.c_str(), // pEntryPoint
 			profile.c_str(), // pTargetProfile
 			NULL, 0, // pArguments, argCount
-			NULL, 0, // pDefines, defineCount
+			dxcDefines.data(), (u32)dxcDefines.size(), // pDefines, defineCount
 			m_defIncHandler.Get(),
 			result.GetAddressOf()); // ppResult
 

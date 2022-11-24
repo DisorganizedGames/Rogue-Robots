@@ -110,7 +110,7 @@ VS_OUT main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     
     // Closest
     // Remeber that we have reverse-z: Guaranteeing that the final NDC Z is == 1 is equal to putting it as close as possible
-    output.pos.z = output.pos.w;
+    //output.pos.z = output.pos.w;
     
     output.nor = mul(perDrawData.world, float4(nor, 0.f)).xyz;
     output.tan = mul(perDrawData.world, float4(tan, 0.f)).xyz;

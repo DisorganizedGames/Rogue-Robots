@@ -152,13 +152,19 @@ float3 CalculatePointLightContribution(float3 N, float3 V, float3 pos, float3 F0
 struct PS_OUT
 {
     float4 color : SV_TARGET0;
+    
+#ifdef OUTPUT_NORMALS
     float4 normals : SV_TARGET1;
+#endif
 };
 
 PS_OUT main(VS_OUT input)
 {
     PS_OUT output = (PS_OUT) 0;
+ 
+#ifdef OUTPUT_NORMALS
     output.normals = float4(normalize(input.nor), 0.f);
+#endif
     
     // Get per draw dat
     //ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[g_constants.perDrawCB];
@@ -168,7 +174,6 @@ PS_OUT main(VS_OUT input)
         output.color = float4(0.f, 1.f, 0.f, 1.f);
         return output;
     }
-        
     
     StructuredBuffer<ShaderInterop_GlobalData> gds = ResourceDescriptorHeap[g_constants.gdDescriptor];
     ShaderInterop_GlobalData gd = gds[0];
@@ -219,7 +224,9 @@ PS_OUT main(VS_OUT input)
     if (mat.normal != NO_TEXTURE)
         N = normalize(GetFinalNormal(g_aniso_samp, ResourceDescriptorHeap[mat.normal], normalize(input.tan), normalize(input.bitan), normalize(input.nor), input.uv));
     
+#ifdef OUTPUT_NORMALS
     output.normals = float4(N, 0.f);
+#endif
     
     // Sanity check BC textures - KEEP THIS!!
     //output.color = float4(N, 1.f);
@@ -475,8 +482,7 @@ PS_OUT main(VS_OUT input)
     //    float NdotL = max(dot(N, L), 0.0);
     //    Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL;
     //}
-    
-    
+        
     float3 hdr = amb + Lo;
     
     output.color = float4(hdr, albedoAlpha);

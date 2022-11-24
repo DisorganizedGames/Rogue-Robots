@@ -145,8 +145,10 @@ namespace DOG::gfx
 			.AppendRTFormat(m_sc->GetBufferFormat())
 			.Build());
 
+		auto meshPSDefines = std::vector<std::wstring>();
+		meshPSDefines.push_back(L"OUTPUT_NORMALS");
 		auto meshVS = m_sclr->CompileFromFile("MainVS.hlsl", ShaderType::Vertex);
-		auto meshPS = m_sclr->CompileFromFile("MainPS.hlsl", ShaderType::Pixel);
+		auto meshPS = m_sclr->CompileFromFile("MainPS.hlsl", ShaderType::Pixel, meshPSDefines);
 		m_meshPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
 			.SetShader(meshVS.get())
 			.SetShader(meshPS.get())
@@ -157,13 +159,13 @@ namespace DOG::gfx
 			.Build());
 
 		auto weaponMeshVS = m_sclr->CompileFromFile("WeaponVS.hlsl", ShaderType::Vertex);
+		auto weaponMeshPS = m_sclr->CompileFromFile("MainPS.hlsl", ShaderType::Pixel);		// Output normals disable by default
 		m_weaponMeshPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
 			.SetShader(weaponMeshVS.get())
-			.SetShader(meshPS.get())
-			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+			.SetShader(weaponMeshPS.get())
 			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
 			.SetDepthFormat(DepthFormat::D32)
-			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true).SetDepthWriteMask(D3D12_DEPTH_WRITE_MASK_ZERO).SetDepthFunc(D3D12_COMPARISON_FUNC_GREATER_EQUAL))
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
 
 		auto shadowVS = m_sclr->CompileFromFile("ShadowVS.hlsl", ShaderType::Vertex);
@@ -617,206 +619,200 @@ namespace DOG::gfx
 		// Change backbuffer resource for this frame
 		m_rgResMan->ChangeImportedTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface());
 
+		struct JointData
+		{
+			DirectX::XMFLOAT4X4 joints[300];
+		};
+
+		struct PerDrawData
+		{
+			DirectX::XMMATRIX world;
+			u32 globalSubmeshID{ UINT_MAX };
+			u32 globalMaterialID{ UINT_MAX };
+			u32 jointsDescriptor{ UINT_MAX };
+		};
+
+		/*Struct to be filled in and passed to shader per light*/
+		struct PerLightData
+		{
+			DirectX::XMFLOAT4X4 view{};
+			DirectX::XMFLOAT4X4 proj{};
+			DirectX::SimpleMath::Vector4 position;
+			DirectX::SimpleMath::Vector3 color;
+			float cutoffAngle{ 0.f };
+			DirectX::SimpleMath::Vector3 direction;
+			float strength{ 0.f };
+			bool isShadowCaster{ false };
+			u32 isPlayer{ 0 };
+			float padding[2]{ 0,0 };
+		};
+
+		/*Encompasses all the light datas for spotlights, which we currently limit to 12*/
+		struct PerLightDataForShadows
+		{
+			PerLightData perLightDatas[12];
+			u32 actualNrOfSpotlights = 0u;
+		};
+
+		/*We can have at most 12 shadow maps available on the GPU at any given time (meaning 12 shadowcasters!)*/
+		struct ShadowMapArrayStruct
+		{
+			u32 shadowMaps[12];
+		};
+
+		/*The views on the shadow maps (maximum of 12 currently)*/
+		struct PassData
+		{
+			RGResourceView shadowView;
+			RGResourceView localLightBuffer;
+		};
+
+		struct ShadowPassData
+		{};
+
+		/*
+			@todo:
+				Still need some way to pre-allocate per draw data prior to render pass.
+				Perhaps go through the submissions and collect data --> Upload to GPU (maybe instance it as well?)
+				and during forward pass we simply read from it
+		*/
+
+
+		auto drawZPassSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_jointMan.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, bool animated = false) mutable
+		{
+			for (const auto& sub : submissions)
+			{
+				auto perDrawHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
+				PerDrawData perDrawData{};
+				perDrawData.world = sub.world;
+				perDrawData.globalSubmeshID = meshTab->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
+
+				GPUDynamicConstant jointsHandle;
+				if (animated)
+				{
+					JointData jointsData{};
+					// Resolve joints
+					jointsHandle = dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+					for (size_t i = 0; i < bonezy->m_vsJoints.size(); ++i)
+						jointsData.joints[i] = bonezy->m_vsJoints[i];
+					std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
+					perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
+				}
+
+				std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
+
+				auto args = ShaderArgs()
+					.AppendConstant(m_globalEffectData.globalDataDescriptor)
+					.AppendConstant(m_currPfDescriptor)
+					.SetPrimaryCBV(perDrawHandle.buffer, perDrawHandle.bufferOffset)
+					.AppendConstant(sub.jointOffset);
+
+
+				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
+
+				auto sm = meshTab->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+				rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
+			}
+		};
+
+
+		auto drawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_jointMan.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 localLightBuffers, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false) mutable
+		{
+			for (const auto& sub : submissions)
+			{
+				auto perDrawHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
+				PerDrawData perDrawData{};
+				perDrawData.world = sub.world;
+				perDrawData.globalSubmeshID = meshTab->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
+				perDrawData.globalMaterialID = matTab->GetMaterialIndex(sub.mat);
+
+				GPUDynamicConstant jointsHandle;
+				if (animated)
+				{
+					JointData jointsData{};
+					// Resolve joints
+					jointsHandle = dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+					for (size_t i = 0; i < bonezy->m_vsJoints.size(); ++i)
+						jointsData.joints[i] = bonezy->m_vsJoints[i];
+					std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
+					perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
+				}
+
+				std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
+				u32 renderSettingsFlag = 0;
+				if (m_graphicsSettings.lit) renderSettingsFlag |= DEBUG_SETTING_LIT;
+				if (m_graphicsSettings.lightCulling) renderSettingsFlag |= DEBUG_SETTING_LIGHT_CULLING;
+				if (m_graphicsSettings.visualizeLightCulling) renderSettingsFlag |= DEBUG_SETTING_LIGHT_CULLING_VISUALIZATION;
+				auto args = ShaderArgs()
+					.AppendConstant(m_globalEffectData.globalDataDescriptor)
+					.AppendConstant(m_currPfDescriptor)
+					.SetPrimaryCBV(perDrawHandle.buffer, perDrawHandle.bufferOffset)
+					.AppendConstant(perLightHandle)
+					.AppendConstant(shadowHandle)
+					.AppendConstant(wireframe ? 1 : 0)
+					.AppendConstant(renderSettingsFlag)
+					.AppendConstant(sub.jointOffset)
+					.AppendConstant(m_renderWidth)
+					.AppendConstant(m_renderHeight)
+					.AppendConstant(localLightBuffers)
+					.AppendConstant(sub.isWeapon ? 1 : 0);
+
+				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
+
+				auto sm = meshTab->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+				rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
+			}
+		};
+
+		auto shadowDrawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_jointMan.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimatedShadows.get()](
+			RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 smIdx, const ShadowCaster& caster, bool animated = false, bool wireframe = false) mutable
+		{
+			auto perLightHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerLightData) / (float)256));
+			PerLightData perLightData{};
+			perLightData.view = caster.viewMat;
+			perLightData.proj = caster.projMat;
+			std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
+
+			for (const auto& sub : submissions)
+			{
+				auto perDrawHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
+				PerDrawData perDrawData{};
+				perDrawData.world = sub.world;
+				perDrawData.globalSubmeshID = meshTab->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
+				perDrawData.globalMaterialID = 0;
+
+				if (sub.animated || animated)
+				{
+					// Resolve joints
+					JointData jointsData{};
+					auto jointsHandle = dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+					for (size_t i = 0; i < bonezy->m_vsJoints.size(); ++i)
+						jointsData.joints[i] = bonezy->m_vsJoints[i];
+					std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
+					perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
+				}
+
+				std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
+
+				auto args = ShaderArgs()
+					.AppendConstant(m_globalEffectData.globalDataDescriptor)
+					.AppendConstant(m_currPfDescriptor)
+					.SetPrimaryCBV(perDrawHandle.buffer, perDrawHandle.bufferOffset)
+					.AppendConstant(perLightHandle.globalDescriptor)
+					.AppendConstant(wireframe ? 1 : 0)
+					.AppendConstant(smIdx)
+					.AppendConstant(sub.jointOffset);
+
+				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
+
+				auto sm = meshTab->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
+				rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
+			}
+		};
+
 
 		// Forward pass to HDR
 		{
-			struct JointData
-			{
-				DirectX::XMFLOAT4X4 joints[300];
-			};
-
-			struct PerDrawData
-			{
-				DirectX::XMMATRIX world;
-				u32 globalSubmeshID{ UINT_MAX };
-				u32 globalMaterialID{ UINT_MAX };
-				u32 jointsDescriptor{ UINT_MAX };
-			};
-
-			/*Struct to be filled in and passed to shader per light*/
-			struct PerLightData
-			{
-				DirectX::XMFLOAT4X4 view{};
-				DirectX::XMFLOAT4X4 proj{};
-				DirectX::SimpleMath::Vector4 position;
-				DirectX::SimpleMath::Vector3 color;
-				float cutoffAngle{ 0.f };
-				DirectX::SimpleMath::Vector3 direction;
-				float strength{ 0.f };
-				bool isShadowCaster{ false };
-				u32 isPlayer{ 0 };
-				float padding[2]{ 0,0 };
-			};
-
-			/*Encompasses all the light datas for spotlights, which we currently limit to 12*/
-			struct PerLightDataForShadows
-			{
-				PerLightData perLightDatas[12];
-				u32 actualNrOfSpotlights = 0u;
-			};
-
-			/*We can have at most 12 shadow maps available on the GPU at any given time (meaning 12 shadowcasters!)*/
-			struct ShadowMapArrayStruct
-			{
-				u32 shadowMaps[12];
-			};
-
-			/*The views on the shadow maps (maximum of 12 currently)*/
-			struct PassData
-			{
-				RGResourceView shadowView;
-				RGResourceView localLightBuffer;
-			};
-
-			struct ShadowPassData
-			{};
-
-			/*
-				@todo:
-					Still need some way to pre-allocate per draw data prior to render pass.
-					Perhaps go through the submissions and collect data --> Upload to GPU (maybe instance it as well?)
-					and during forward pass we simply read from it
-			*/
-
-
-			auto drawZPassSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_jointMan.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, bool animated = false) mutable
-			{
-				for (const auto& sub : submissions)
-				{
-					auto perDrawHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
-					PerDrawData perDrawData{};
-					perDrawData.world = sub.world;
-					perDrawData.globalSubmeshID = meshTab->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
-
-					GPUDynamicConstant jointsHandle;
-					if (animated)
-					{
-						JointData jointsData{};
-						// Resolve joints
-						jointsHandle = dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
-						for (size_t i = 0; i < bonezy->m_vsJoints.size(); ++i)
-							jointsData.joints[i] = bonezy->m_vsJoints[i];
-						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
-						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
-					}
-
-					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
-
-					auto args = ShaderArgs()
-						.AppendConstant(m_globalEffectData.globalDataDescriptor)
-						.AppendConstant(m_currPfDescriptor)
-						.SetPrimaryCBV(perDrawHandle.buffer, perDrawHandle.bufferOffset)
-						.AppendConstant(sub.jointOffset);
-
-
-					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
-
-					auto sm = meshTab->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
-					rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
-				}
-			};
-
-
-			auto drawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_jointMan.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get()](RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 localLightBuffers, u32 perLightHandle, u32 shadowHandle, bool animated = false, bool wireframe = false) mutable
-			{	
-				for (const auto& sub : submissions)
-				{
-					auto perDrawHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
-					PerDrawData perDrawData{};
-					perDrawData.world = sub.world;
-					perDrawData.globalSubmeshID = meshTab->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
-					perDrawData.globalMaterialID = matTab->GetMaterialIndex(sub.mat);
-
-					GPUDynamicConstant jointsHandle;
-					if (animated)
-					{
-						JointData jointsData{};
-						// Resolve joints
-						jointsHandle = dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
-						for (size_t i = 0; i < bonezy->m_vsJoints.size(); ++i)
-							jointsData.joints[i] = bonezy->m_vsJoints[i];
-						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
-						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
-					}
-
-					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
-					u32 renderSettingsFlag = 0;
-					if (m_graphicsSettings.lit) renderSettingsFlag |= DEBUG_SETTING_LIT;
-					if (m_graphicsSettings.lightCulling) renderSettingsFlag |= DEBUG_SETTING_LIGHT_CULLING;
-					if (m_graphicsSettings.visualizeLightCulling) renderSettingsFlag |= DEBUG_SETTING_LIGHT_CULLING_VISUALIZATION;
-					auto args = ShaderArgs()
-						.AppendConstant(m_globalEffectData.globalDataDescriptor)
-						.AppendConstant(m_currPfDescriptor)
-						.SetPrimaryCBV(perDrawHandle.buffer, perDrawHandle.bufferOffset)
-						.AppendConstant(perLightHandle)
-						.AppendConstant(shadowHandle)
-						.AppendConstant(wireframe ? 1 : 0)
-						.AppendConstant(renderSettingsFlag)
-						.AppendConstant(sub.jointOffset)
-						.AppendConstant(m_renderWidth)
-						.AppendConstant(m_renderHeight)
-						.AppendConstant(localLightBuffers)
-						.AppendConstant(sub.isWeapon ? 1 : 0);
-
-					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
-
-					auto sm = meshTab->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
-					rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
-				}
-			};
-		
-			auto shadowDrawSubmissions = [&, meshTab = m_globalMeshTable.get(), matTab = m_globalMaterialTable.get(), bonezy = m_jointMan.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimatedShadows.get()](
-				RenderDevice* rd, CommandList cmdl, const std::vector<RenderSubmission>& submissions, u32 smIdx, const ShadowCaster& caster, bool animated = false, bool wireframe = false) mutable
-			{
-				auto perLightHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerLightData) / (float)256));
-				PerLightData perLightData{};
-				perLightData.view = caster.viewMat;
-				perLightData.proj = caster.projMat;
-				std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
-
-				for (const auto& sub : submissions)
-				{
-					auto perDrawHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(PerDrawData) / (float)256), false);
-					PerDrawData perDrawData{};
-					perDrawData.world = sub.world;
-					perDrawData.globalSubmeshID = meshTab->GetSubmeshMD_GPU(sub.mesh, sub.submesh);
-					perDrawData.globalMaterialID = 0;
-
-					if (sub.animated || animated)
-					{
-						// Resolve joints
-						JointData jointsData{};
-						auto jointsHandle = dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
-						for (size_t i = 0; i < bonezy->m_vsJoints.size(); ++i)
-							jointsData.joints[i] = bonezy->m_vsJoints[i];
-						std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
-						perDrawData.jointsDescriptor = jointsHandle.globalDescriptor;
-					}
-
-					std::memcpy(perDrawHandle.memory, &perDrawData, sizeof(perDrawData));
-
-					auto args = ShaderArgs()
-						.AppendConstant(m_globalEffectData.globalDataDescriptor)
-						.AppendConstant(m_currPfDescriptor)
-						.SetPrimaryCBV(perDrawHandle.buffer, perDrawHandle.bufferOffset)
-						.AppendConstant(perLightHandle.globalDescriptor)
-						.AppendConstant(wireframe ? 1 : 0)
-						.AppendConstant(smIdx)
-						.AppendConstant(sub.jointOffset);
-
-					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
-
-					auto sm = meshTab->GetSubmeshMD_CPU(sub.mesh, sub.submesh);
-					rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
-				}
-			};
-
-			/*
-			
-				To-do:
-					Skip weapon and self model rendering to Main Players Lights Shadow map!
-			*/
-
 
 			rg.AddPass<PassData>("Z PrePass",
 				[&](PassData&, RenderGraph::PassBuilder& builder)
@@ -962,7 +958,7 @@ namespace DOG::gfx
 					u32 localLightBufferIndex = m_graphicsSettings.lightCulling ? resources.GetView(p.localLightBuffer) : -1;
 					drawFunc(rd, cmdl, m_submissions, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
 					drawFunc(rd, cmdl, m_animatedDraws, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor, true);
-					//drawFunc(rd, cmdl, m_weaponSubmission, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
+					drawFunc(rd, cmdl, m_weaponSubmission, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
 					
 
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeNoCull);
@@ -974,8 +970,8 @@ namespace DOG::gfx
 					rd->Cmd_SetPipeline(cmdl, m_meshPipeWireframeNoCull);
 					drawFunc(rd, cmdl, m_noCullWireframeDraws, localLightBufferIndex, false, true);
 
-					rd->Cmd_SetPipeline(cmdl, m_weaponMeshPipe);
-					drawFunc(rd, cmdl, m_weaponSubmission, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
+					//rd->Cmd_SetPipeline(cmdl, m_weaponMeshPipe);
+					//drawFunc(rd, cmdl, m_weaponSubmission, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
 				});
 		}
 
@@ -1141,6 +1137,75 @@ namespace DOG::gfx
 				});
 		}
 
+		/*
+			We need the old one for the normal output :/
+			Re-draw weapon with new low precision depth buffer for weapon locally to overwrite the wrong model
+		*/
+		{
+			rg.AddPass<PassData>("Weapon Pass Overlayed",
+				[&](PassData& p, RenderGraph::PassBuilder& builder)
+				{
+					//builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight)
+					builder.DeclareTexture(RG_RESOURCE(SecondaryDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_renderWidth, m_renderHeight));
+
+					p.shadowView = builder.ReadResource(RG_RESOURCE(ShadowDepth), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D_Array, DXGI_FORMAT_R32_FLOAT)
+						.SetArrayRange(0, m_shadowMapCapacity));
+
+					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::PreservePreserve,
+						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+					builder.WriteDepthStencil(RG_RESOURCE(SecondaryDepth), RenderPassAccessType::ClearDiscard, TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
+
+					if (m_graphicsSettings.lightCulling)
+					{
+						auto groupCount = static_cast<TiledLightCullingEffect*>(m_tiledLightCuller.get())->GetGroupCount();
+						p.localLightBuffer = builder.ReadResource(RG_RESOURCE(LocalLightBuf), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, BufferViewDesc(ViewType::ShaderResource, 0, sizeof(TiledLightCullingEffect::LocalLightBufferLayout), groupCount.x * groupCount.y));
+					}
+				},
+				[&, dynConstants = m_dynConstants.get(), dynConstantsTemp = m_dynConstantsTemp.get(), drawFunc = drawSubmissions](const PassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) mutable
+				{
+					rd->Cmd_SetViewports(cmdl, m_globalEffectData.defRenderVPs);
+					rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.defRenderScissors);
+
+					rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
+
+					rd->Cmd_SetPipeline(cmdl, m_meshPipe);
+
+					PerLightDataForShadows perLightData{};
+					ShadowMapArrayStruct shadowMapArrayStruct{};
+					auto perLightHandle = dynConstantsTemp->Allocate((u32)std::ceilf(sizeof(PerLightDataForShadows) / (float)256));
+					auto shadowHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(ShadowMapArrayStruct) / float(256)));
+					for (size_t i{ 0u }; i < m_activeSpotlights.size(); ++i)
+					{
+						const auto& data = m_activeSpotlights[i];
+
+						perLightData.perLightDatas[i].position = data.position;
+						perLightData.perLightDatas[i].color = { data.color.x, data.color.y, data.color.z, };
+						perLightData.perLightDatas[i].direction = data.direction;
+						perLightData.perLightDatas[i].cutoffAngle = data.cutoffAngle;
+						perLightData.perLightDatas[i].strength = data.strength;
+						perLightData.perLightDatas[i].isPlayer = data.isPlayerLight ? 1 : 0;
+
+						if (data.shadow != std::nullopt)
+						{
+							perLightData.perLightDatas[i].isShadowCaster = true;
+							perLightData.perLightDatas[i].view = data.shadow->viewMat;
+							perLightData.perLightDatas[i].proj = data.shadow->projMat;
+							shadowMapArrayStruct.shadowMaps[i] = resources.GetView(p.shadowView);
+						}
+					}
+
+					perLightData.actualNrOfSpotlights = (u32)m_activeSpotlights.size();
+					std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
+					std::memcpy(shadowHandle.memory, &shadowMapArrayStruct, sizeof(shadowMapArrayStruct));
+
+					u32 localLightBufferIndex = m_graphicsSettings.lightCulling ? resources.GetView(p.localLightBuffer) : -1;
+					rd->Cmd_SetPipeline(cmdl, m_weaponMeshPipe);
+					drawFunc(rd, cmdl, m_weaponSubmission, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
+				});
+
+		}
 
 		// Test compute on Lit HDR
 		// Uncomment to enable the test compute effect!
