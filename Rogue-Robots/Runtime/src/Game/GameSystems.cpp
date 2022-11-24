@@ -332,14 +332,13 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 void PlayerMovementSystem::ApplyAnimations(const InputController& input, AnimationComponent& ac)
 {
 	// Relevant Animation IDs
-	static constexpr i8 IDLE = 0;
+	static constexpr i8 IDLE = 2;
 	static constexpr i8 RUN = 5;
 	static constexpr i8 RUN_BACKWARDS = 6;
 	static constexpr i8 WALK = 13;
 	static constexpr i8 WALK_BACKWARDS = 14;
 	static constexpr i8 STRAFE_LEFT = 8;
-	static constexpr i8 STRAFE_RIGHT = 2;
-	//static constexpr i8 STRAFE_RIGHT = 10;
+	static constexpr i8 STRAFE_RIGHT = 10;
 
 	auto addedAnims = 0;
 	auto& setter = ac.animSetters[ac.addedSetters];
@@ -369,17 +368,14 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 	// if no schmovement apply idle animation
 	if (!addedAnims)
 	{
-		ac.SimpleAdd(2, AnimationFlag::Looping);
-		/*setter.animationIDs[addedAnims] = IDLE;
-		setter.targetWeights[addedAnims++] = 1.0f;*/
+		ac.SimpleAdd(IDLE, AnimationFlag::Looping);
 	}
 	else
 	{
 		setter.flag = AnimationFlag::Looping;
 		// misc variables
-		setter.playbackRate = 1.5f;
+		setter.playbackRate = 1.25f;
 		setter.transitionLength = 0.1f;
-		setter.loop = true;
 		++ac.addedSetters;
 	}
 	

@@ -143,10 +143,9 @@ namespace DOG
 		setter.animationIDs[0] = animationId;
 		setter.group = 0;
 		setter.targetWeights[0] = 1.f;
-		setter.loop = static_cast<bool>(flags & AnimationFlag::Looping);
 		setter.playbackRate = 1.f;
 		setter.priority = BASE_PRIORITY;
 		setter.flag = flags | AnimationFlag::SimpleAdd;
-		setter.transitionLength = 0.1f;
+		setter.transitionLength = 0.5f;
 	}
 }

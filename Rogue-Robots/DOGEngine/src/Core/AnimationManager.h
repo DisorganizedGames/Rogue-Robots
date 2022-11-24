@@ -7,7 +7,6 @@
 #include "Types/AssetTypes.h"
 #include "DOGEngineTypes.h"
 #include "RigAnimator.h"
-#include "Tmpra.h"
 
 namespace DOG
 {
@@ -17,7 +16,7 @@ namespace DOG
 	private:
 		static constexpr u8 MIXAMO_VSHEAD_JOINT = 5;
 		static constexpr u8 N_KEYS = 3; // scale, rot, trans
-		static constexpr u8 MAX_CLIPS = 10;
+		static constexpr u8 MAX_CLIPS = 6;
 	private:
 		enum class KeyType
 		{
@@ -34,7 +33,7 @@ namespace DOG
 	private:
 		void Test(f32 dt);
 		void UpdateAnimationComponent(const std::vector<DOG::AnimationData>& animations, DOG::AnimationComponent& ac, const f32 dt) const;
-		void UpdateSkeleton(DOG::testAnimator& animator, const u32 offset);
+		void UpdateSkeleton(DOG::RigAnimator& animator, const u32 offset);
 		void SetPlayerBaseStates();
 		void ResetAnimationComponent(DOG::AnimationComponent& ac);
 
@@ -46,12 +45,12 @@ namespace DOG
 
 
 		// RIG ANIMATOR
-		void CalculateSRT(testAnimator& ac, const u8 rigID);
-		void ExtractClipNodeInfluences(testAnimator& animator, const KeyType key, const u32 group, const u32 rigID);
+		void CalculateSRT(RigAnimator& ac, const u8 rigID);
+		void ExtractClipNodeInfluences(RigAnimator& animator, const KeyType key, const u32 group, const u32 rigID);
 	private:
-		testAnimator m_ta;
+		RigAnimator m_ta;
 		std::vector<ImportedRig*> m_rigs;
-		std::array<testAnimator, 4> m_playertestAnimators;
+		std::array<RigAnimator, 4> m_playerRigAnimators;
 		std::array<DirectX::XMVECTOR, MAX_CLIPS* NodeCount(MIXAMO_RIG_ID)> m_partialSRT{ DirectX::XMVECTOR{} };
 		std::array<DirectX::XMVECTOR, MAX_CLIPS* NodeCount(MIXAMO_RIG_ID)> m_fullbodySRT{ DirectX::XMVECTOR{} };
 	private:
@@ -60,11 +59,11 @@ namespace DOG
 		static constexpr DirectX::XMFLOAT3 m_baseScale = { 1.f, 1.f, 1.f };
 		static constexpr DirectX::XMFLOAT4 m_baseRotation = { 0.f, 0.f, 0.f, 0.f };
 		static constexpr DirectX::XMFLOAT3 m_baseTranslation = { 0.f, 0.f, 0.f };
-		static constexpr DirectX::XMFLOAT3 head_offset = { 0.f, 54.7f, 0.1f };
+		static constexpr DirectX::XMFLOAT3 m_headOffset = { 0.f, 54.7f, 0.1f };
 		// IMGUI RELATED
 	private:
-		testAnimator mtestAnimator;
-		f32 m_imguiGroupWeightA = 0.0f;
+		RigAnimator mRigAnimator;
+		f32 m_imguiDeltaTime = 0.05f;
 		bool m_imguiApplyRootTranslation = true;
 		i32 m_imguiJoint = 5;
 		i32 m_imguiSelectedJoint = 0;

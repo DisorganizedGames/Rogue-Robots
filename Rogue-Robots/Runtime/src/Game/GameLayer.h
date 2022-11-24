@@ -105,8 +105,8 @@ private:
 	DirectX::SimpleMath::Vector3 m_exitPosition = DirectX::SimpleMath::Vector3(-1.0f, -1.0f, -1.0f);
 
 	f32 m_imguiX = 0.f;
-	f32 m_imguiY = 54.7f;
-	f32 m_imguiZ = .1f;
+	f32 m_imguiY = 0.f;
+	f32 m_imguiZ = 0.f;
 	f32 m_imguiS = 0.2f;
 	f32 m_imguiposY = -.5f;
 };

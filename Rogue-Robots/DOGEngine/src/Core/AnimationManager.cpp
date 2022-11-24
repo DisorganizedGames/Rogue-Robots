@@ -39,7 +39,7 @@ namespace DOG
 		auto deltaTime = (f32)Time::DeltaTime();
 
 #ifdef _DEBUG
-		deltaTime = 0.005f;
+		deltaTime = m_imguiDeltaTime;
 		//test(deltaTime);
 #endif
 
@@ -65,25 +65,16 @@ namespace DOG
 			{
 				if (aC.animatorID != -1)
 				{
-					auto& a = m_playertestAnimators[aC.animatorID];
+					auto& a = m_playerRigAnimators[aC.animatorID];
 					auto offset = MIXAMO_RIG.nJoints * aC.animatorID;
 					a.Update(deltaTime);
 					a.ProcessAnimationComponent(aC);
 					UpdateSkeleton(a, offset);
-					f32 m_imguiX = 0.f;
-					f32 m_imguiY = 54.7f;
-					f32 m_imguiZ = .1f;
-					f32 m_imguiS = 0.2f;
-					f32 m_imguiposY = -.5f;
-					auto xm = XMMatrixTranslationFromVector(XMLoadFloat3(&head_offset));
-					for (size_t i = 0; i < m_rigs[0]->jointOffsets.size(); i++)
-					{
-						auto tmp = XMLoadFloat4x4(&m_rigs[0]->jointOffsets[i]);
-						XMVECTOR sca = {}, rot = {}, tra = {};
-						XMMatrixDecompose(&sca, &rot, &tra, tmp);
-						auto blyat = 0;
-					}
-					btf.transform = SimpleMath::Matrix(SimpleMath::Matrix(xm) * XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[m_imguiJoint]))) * tf.worldMatrix;
+					
+					//auto xm = XMMatrixTranslationFromVector(XMLoadFloat3(&head_offset));
+					btf.transform = SimpleMath::Matrix(XMMatrixTranslationFromVector(XMLoadFloat3(&m_headOffset)) *
+						XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[5]))) * tf.worldMatrix;
+					//btf.transform = SimpleMath::Matrix(SimpleMath::Matrix(xm) * XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[m_imguiJoint]))) * tf.worldMatrix;
 				}
 			});
 	}
@@ -163,8 +154,9 @@ namespace DOG
 					ImGui::EndCombo();
 				}
 				static bool addClips = false;
-				// test animations
-				//if (ImGui::Button("Add Clips"))
+#ifdef _DEBUG
+				ImGui::SliderFloat("deltaT", &m_imguiDeltaTime, 0.001f, 0.1f, "%.3f");
+#endif
 				addClips ^= ImGui::Button("Add Clips");
 				if (addClips)
 				{
@@ -187,7 +179,8 @@ namespace DOG
 					ImGui::Checkbox("LoopingFlag", &loopingFlag);
 					static bool persistFlag = false;
 					ImGui::SameLine(); ImGui::Checkbox("PersistFlag", &persistFlag);
-					
+					static bool resetPrioFlag = false;
+					ImGui::SameLine(); ImGui::Checkbox("ResetPrioFlag", &resetPrioFlag);
 
 					ImGui::Columns(targets + 1);
 					static i32 chosenAnims[MAX_TARGETS] = { 0 };
@@ -214,8 +207,13 @@ namespace DOG
 								{
 									auto& s = rAC.animSetters[rAC.addedSetters++];
 									s.playbackRate = playbackRate;
-									if (persistFlag) s.flag = s.flag | AnimationFlag::Persist;
-									if (loopingFlag) s.flag = s.flag | AnimationFlag::Looping;
+									if (persistFlag)
+										s.flag = s.flag | AnimationFlag::Persist;
+									if (loopingFlag)
+										s.flag = s.flag | AnimationFlag::Looping;
+									if (resetPrioFlag)
+										s.flag = s.flag | AnimationFlag::ResetPrio;
+									s.priority = static_cast<u8>(priority);
 									s.group = static_cast<u8>(group);
 									s.transitionLength = transitionLen;
 									for (i32 i = 0; i < targets + 1; ++i)
@@ -376,7 +374,7 @@ namespace DOG
 	//	return translationVec;
 	//}
 
-	void AnimationManager::UpdateSkeleton(DOG::testAnimator& animator, const u32 offset)
+	void AnimationManager::UpdateSkeleton(DOG::RigAnimator& animator, const u32 offset)
 	{
 		ZoneScopedN("skeletonUpdate");
 		using namespace DirectX;
@@ -419,7 +417,7 @@ namespace DOG
 		}
 	}
 
-	void AnimationManager::CalculateSRT(testAnimator& ac, const u8 rigID)
+	void AnimationManager::CalculateSRT(RigAnimator& ac, const u8 rigID)
 	{
 		ZoneScopedN("SRT calculation");
 		using namespace DirectX;
@@ -447,7 +445,7 @@ namespace DOG
 		}
 	}
 
-	void AnimationManager::ExtractClipNodeInfluences(testAnimator& a, const KeyType key, const u32 group, const u32 rigID)
+	void AnimationManager::ExtractClipNodeInfluences(RigAnimator& a, const KeyType key, const u32 group, const u32 rigID)
 	{
 		ZoneScopedN("Extract");
 		using namespace DirectX;
@@ -577,19 +575,20 @@ namespace DOG
 		static constexpr f32 playbackRate = 1.f;
 		static constexpr i8 idleIdx = 0;
 		static constexpr f32 weight = 1.f;
-		Setter baseState = { AnimationFlag::None, loop, fullBodyGroup, priority, transitionLength, playbackRate,
+		Setter baseState = { AnimationFlag::Looping, fullBodyGroup, priority, transitionLength, playbackRate,
 			{ idleIdx, NO_ANIMATION, NO_ANIMATION },
 			{ weight, 0.f, 0.f } };
 
-
-		for (size_t i = 0; i < m_playertestAnimators.size(); ++i)
+		//baseAc.SimpleAdd(idleIdx, AnimationFlag::Looping);
+		for (size_t i = 0; i < m_playerRigAnimators.size(); ++i)
 		{
-			baseAc.addedSetters = 1;
-			baseAc.animSetters[0] = baseState;
-			m_playertestAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
-			m_playertestAnimators[i].ProcessAnimationComponent(baseAc);
+			/*baseAc.addedSetters = 1;
+			baseAc.animSetters[0] = baseState;*/
+			baseAc.SimpleAdd(idleIdx, AnimationFlag::Looping);
+			m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
+			m_playerRigAnimators[i].ProcessAnimationComponent(baseAc);
 			for (u32 j = 0; j < N_GROUPS; j++)
-				m_playertestAnimators[i].groups[j].parent = j == 0 ? -1 : 0;
+				m_playerRigAnimators[i].groups[j].parent = j == 0 ? -1 : 0;
 		}
 	}
 
@@ -605,55 +604,55 @@ namespace DOG
 		if (firstTime)
 		{
 			firstTime = false;
-			mtestAnimator.rigData = m_rigs[MIXAMO_RIG_ID];
+			mRigAnimator.rigData = m_rigs[MIXAMO_RIG_ID];
 			static bool t1 = false, t2 = false, t3 = false;
 			static i8 bindIdx = 0, idleIdx = 2, walkIdx = 4;
 			//const auto danceIdx = m_rigs[MIXAMO_RIG_ID]->animations.size() - 1;
-			static AnimationComponent::Setter test1 = { AnimationFlag::None, true, 0, 0, 0.0f, 1.0f, { idleIdx, bindIdx, -1}, { 0.5f, 0.5f, 0.f} };
-			static AnimationComponent::Setter test2 = { AnimationFlag::None, true, 0, 2, 0.0f, 1.0f, { 2, -1, -1}, { 1.f, 0.f, 0.f} };
-			static AnimationComponent::Setter test3 = { AnimationFlag::None, false, 0, 0, 0.5f, 1.0f, { 5, -1, -1},{ 1.f, 0.f, 0.f} };
-			static AnimationComponent::Setter test4 = { AnimationFlag::None, false, 0, 0, 0.5f, 1.0f, { 6, -1, -1},{ 1.f, 0.f, 0.f} };
+			static AnimationComponent::Setter test1 = { AnimationFlag::Looping, 0, 0, 0.0f, 1.0f, { idleIdx, bindIdx, -1}, { 0.5f, 0.5f, 0.f} };
+			static AnimationComponent::Setter test2 = { AnimationFlag::Looping, 0, 2, 0.0f, 1.0f, { 2, -1, -1}, { 1.f, 0.f, 0.f} };
+			static AnimationComponent::Setter test3 = { AnimationFlag::None, 0, 0, 0.5f, 1.0f, { 5, -1, -1},{ 1.f, 0.f, 0.f} };
+			static AnimationComponent::Setter test4 = { AnimationFlag::None, 0, 0, 0.5f, 1.0f, { 6, -1, -1},{ 1.f, 0.f, 0.f} };
 
 			testAc.addedSetters = 2;
 			testAc.animSetters[0] = test1;
 			testAc.animSetters[1] = test2;
 			//testAc.animSetters[2] = test3;
 			//testAc.animSetters[3] = test4;
-			//auto sz = sizeof(mtestAnimator);
+			//auto sz = sizeof(mRigAnimator);
 			for (size_t i = 0; i < 4; i++)
 			{
 				//auto uniqueDanceIdx = danceIdx - i;
-				m_playertestAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
+				m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
 				testAc.addedSetters = 2;
 				testAc.animSetters[0] = test1;
 				testAc.animSetters[1] = test2;
-				m_playertestAnimators[i].ProcessAnimationComponent(testAc);
+				m_playerRigAnimators[i].ProcessAnimationComponent(testAc);
 			}
 			testAc.addedSetters = 2;
 			testAc.animSetters[0] = test1;
 			testAc.animSetters[1] = test2;
-			mtestAnimator.ProcessAnimationComponent(testAc);
+			mRigAnimator.ProcessAnimationComponent(testAc);
 		}
 		timer += dt;
-		mtestAnimator.Update(dt);
-		auto stop = mtestAnimator.clipData[0];
+		mRigAnimator.Update(dt);
+		auto stop = mRigAnimator.clipData[0];
 
 		static bool secondTest = false;
 		if (timer >= 0.6f && !secondTest)
 		{
-			AnimationComponent::Setter test = { AnimationFlag::None, false, 0, 0, 0.10f, 1.0f, { 8, 9, -1}, { 0.35f, 0.15f, 0.f} };
+			AnimationComponent::Setter test = { AnimationFlag::None, 0, 0, 0.10f, 1.0f, { 8, 9, -1}, { 0.35f, 0.15f, 0.f} };
 			testAc.addedSetters = 1;
 			testAc.animSetters[0] = test;
-			mtestAnimator.ProcessAnimationComponent(testAc);
+			mRigAnimator.ProcessAnimationComponent(testAc);
 			secondTest = true;
 		}
 		static bool thirdTest = false;
 		if (timer >= 1.3f && !thirdTest)
 		{
-			AnimationComponent::Setter test = { AnimationFlag::None, true, 1, 0, 0.25f, 1.0f, { 3, 1, -1}, { 0.35f, 0.35f, 0.f} };
+			AnimationComponent::Setter test = { AnimationFlag::None, 1, 0, 0.25f, 1.0f, { 3, 1, -1}, { 0.35f, 0.35f, 0.f} };
 			testAc.addedSetters = 1;
 			testAc.animSetters[0] = test;
-			mtestAnimator.ProcessAnimationComponent(testAc);
+			mRigAnimator.ProcessAnimationComponent(testAc);
 			thirdTest = true;
 		}
 		static bool fourthTest = false;
@@ -661,10 +660,10 @@ namespace DOG
 		{
 			for (size_t i = 0; i < 4; i++)
 			{
-				AnimationComponent::Setter test = { AnimationFlag::None, false, 0, 5, 0.25f, 1.0f, { 1, -1, -1}, { 0.35f, 0.35f, 0.f} };
+				AnimationComponent::Setter test = { AnimationFlag::None, 0, 5, 0.25f, 1.0f, { 1, -1, -1}, { 0.35f, 0.35f, 0.f} };
 				testAc.addedSetters = 1;
 				testAc.animSetters[0] = test;
-				m_playertestAnimators[i].ProcessAnimationComponent(testAc);
+				m_playerRigAnimators[i].ProcessAnimationComponent(testAc);
 			}
 			fourthTest = true;
 		}

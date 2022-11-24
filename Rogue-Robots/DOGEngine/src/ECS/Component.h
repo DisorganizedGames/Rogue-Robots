@@ -16,7 +16,8 @@ namespace DOG
 		None = 0,
 		Looping = 1 << 1,
 		Persist = 1 << 2,
-		SimpleAdd = 1 << 3,
+		ResetPrio = 1 << 3,
+		SimpleAdd = 1 << 4,
 	};
 	DEFINE_ENUM_FLAG_OPERATORS(AnimationFlag)
 	
@@ -109,14 +110,13 @@ namespace DOG
 		i8 addedSetters = 0;
 		struct Setter
 		{
-			AnimationFlag flag;
-			bool loop;
-			u8 group;
-			u8 priority;
-			f32 transitionLength;
-			f32 playbackRate;
+			AnimationFlag flag = AnimationFlag::None;
+			u8 group = 0;
+			u8 priority = BASE_PRIORITY;
+			f32 transitionLength = 0.f;
+			f32 playbackRate = 1.f;
 			i8 animationIDs[MAX_TARGET_ANIMS] = { -1, -1, -1 };
-			f32 targetWeights[MAX_TARGET_ANIMS];
+			f32 targetWeights[MAX_TARGET_ANIMS] = { 1.f, 1.f, 1.f };
 		};
 		std::array<Setter, MAX_SETTERS> animSetters;
 		void SimpleAdd(i8 animationId, AnimationFlag flags = AnimationFlag::None);
