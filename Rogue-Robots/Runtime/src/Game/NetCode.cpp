@@ -129,18 +129,18 @@ void NetCode::OnUpdate()
 				if (Server::TickTimeLeftTCP(m_tickStartTime, m_clockFrequency) > (1.0f / 30.0f))
 				{
 					//sync all transforms Host only
-					if (m_inputTcp.playerId == 0)
-					{
-						EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent>().Do([&](NetworkTransform& netC, TransformComponent& transC, AgentIdComponent agentId)
-							{
-								netC.objectId = agentId.id;
-								netC.transform = transC.worldMatrix;
-								memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkTransform));
-								m_inputTcp.nrOfNetTransform++;
-								m_bufferSize += sizeof(NetworkTransform);
+					//if (m_inputTcp.playerId == 0)
+					//{
+					//	EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent>().Do([&](NetworkTransform& netC, TransformComponent& transC, AgentIdComponent agentId)
+					//		{
+					//			netC.objectId = agentId.id;
+					//			netC.transform = transC.worldMatrix;
+					//			memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkTransform));
+					//			m_inputTcp.nrOfNetTransform++;
+					//			m_bufferSize += sizeof(NetworkTransform);
 
-							});
-					}
+					//		});
+					//}
 
 					EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](NetworkAgentStats& netC, AgentHPComponent& agentS, AgentIdComponent& idC)
 						{
