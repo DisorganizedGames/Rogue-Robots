@@ -56,6 +56,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		em.AddComponent<PlayerAliveComponent>(playerI);
 		em.AddComponent<AnimationComponent>(playerI);
 		em.AddComponent<AudioComponent>(playerI);
+		em.AddComponent<MixamoHeadJointTF>(playerI);
 
 		auto& ac = em.GetComponent<AnimationComponent>(playerI);
 		ac.animatorID = static_cast<i8>(i);
