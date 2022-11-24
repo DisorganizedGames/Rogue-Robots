@@ -70,11 +70,7 @@ namespace DOG
 					a.Update(deltaTime);
 					a.ProcessAnimationComponent(aC);
 					UpdateSkeleton(a, offset);
-					f32 m_imguiX = 0.f;
-					f32 m_imguiY = 54.7f;
-					f32 m_imguiZ = .1f;
-					f32 m_imguiS = 0.2f;
-					f32 m_imguiposY = -.5f;
+					
 					//auto xm = XMMatrixTranslationFromVector(XMLoadFloat3(&head_offset));
 					btf.transform = SimpleMath::Matrix(XMMatrixTranslationFromVector(XMLoadFloat3(&m_headOffset)) *
 						XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[5]))) * tf.worldMatrix;
@@ -209,8 +205,11 @@ namespace DOG
 								{
 									auto& s = rAC.animSetters[rAC.addedSetters++];
 									s.playbackRate = playbackRate;
-									if (persistFlag) s.flag = s.flag | AnimationFlag::Persist;
-									if (loopingFlag) s.flag = s.flag | AnimationFlag::Looping;
+									if (persistFlag)
+										s.flag = s.flag | AnimationFlag::Persist;
+									if (loopingFlag)
+										s.flag = s.flag | AnimationFlag::Looping;
+									s.priority = priority;
 									s.group = static_cast<u8>(group);
 									s.transitionLength = transitionLen;
 									for (i32 i = 0; i < targets + 1; ++i)
@@ -572,15 +571,16 @@ namespace DOG
 		static constexpr f32 playbackRate = 1.f;
 		static constexpr i8 idleIdx = 0;
 		static constexpr f32 weight = 1.f;
-		Setter baseState = { AnimationFlag::None, loop, fullBodyGroup, priority, transitionLength, playbackRate,
+		Setter baseState = { AnimationFlag::Looping, fullBodyGroup, priority, transitionLength, playbackRate,
 			{ idleIdx, NO_ANIMATION, NO_ANIMATION },
 			{ weight, 0.f, 0.f } };
 
-
+		//baseAc.SimpleAdd(idleIdx, AnimationFlag::Looping);
 		for (size_t i = 0; i < m_playertestAnimators.size(); ++i)
 		{
-			baseAc.addedSetters = 1;
-			baseAc.animSetters[0] = baseState;
+			/*baseAc.addedSetters = 1;
+			baseAc.animSetters[0] = baseState;*/
+			baseAc.SimpleAdd(idleIdx, AnimationFlag::Looping);
 			m_playertestAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
 			m_playertestAnimators[i].ProcessAnimationComponent(baseAc);
 			for (u32 j = 0; j < N_GROUPS; j++)
@@ -604,10 +604,10 @@ namespace DOG
 			static bool t1 = false, t2 = false, t3 = false;
 			static i8 bindIdx = 0, idleIdx = 2, walkIdx = 4;
 			//const auto danceIdx = m_rigs[MIXAMO_RIG_ID]->animations.size() - 1;
-			static AnimationComponent::Setter test1 = { AnimationFlag::None, true, 0, 0, 0.0f, 1.0f, { idleIdx, bindIdx, -1}, { 0.5f, 0.5f, 0.f} };
-			static AnimationComponent::Setter test2 = { AnimationFlag::None, true, 0, 2, 0.0f, 1.0f, { 2, -1, -1}, { 1.f, 0.f, 0.f} };
-			static AnimationComponent::Setter test3 = { AnimationFlag::None, false, 0, 0, 0.5f, 1.0f, { 5, -1, -1},{ 1.f, 0.f, 0.f} };
-			static AnimationComponent::Setter test4 = { AnimationFlag::None, false, 0, 0, 0.5f, 1.0f, { 6, -1, -1},{ 1.f, 0.f, 0.f} };
+			static AnimationComponent::Setter test1 = { AnimationFlag::Looping, 0, 0, 0.0f, 1.0f, { idleIdx, bindIdx, -1}, { 0.5f, 0.5f, 0.f} };
+			static AnimationComponent::Setter test2 = { AnimationFlag::Looping, 0, 2, 0.0f, 1.0f, { 2, -1, -1}, { 1.f, 0.f, 0.f} };
+			static AnimationComponent::Setter test3 = { AnimationFlag::None, 0, 0, 0.5f, 1.0f, { 5, -1, -1},{ 1.f, 0.f, 0.f} };
+			static AnimationComponent::Setter test4 = { AnimationFlag::None, 0, 0, 0.5f, 1.0f, { 6, -1, -1},{ 1.f, 0.f, 0.f} };
 
 			testAc.addedSetters = 2;
 			testAc.animSetters[0] = test1;
@@ -636,7 +636,7 @@ namespace DOG
 		static bool secondTest = false;
 		if (timer >= 0.6f && !secondTest)
 		{
-			AnimationComponent::Setter test = { AnimationFlag::None, false, 0, 0, 0.10f, 1.0f, { 8, 9, -1}, { 0.35f, 0.15f, 0.f} };
+			AnimationComponent::Setter test = { AnimationFlag::None, 0, 0, 0.10f, 1.0f, { 8, 9, -1}, { 0.35f, 0.15f, 0.f} };
 			testAc.addedSetters = 1;
 			testAc.animSetters[0] = test;
 			mtestAnimator.ProcessAnimationComponent(testAc);
@@ -645,7 +645,7 @@ namespace DOG
 		static bool thirdTest = false;
 		if (timer >= 1.3f && !thirdTest)
 		{
-			AnimationComponent::Setter test = { AnimationFlag::None, true, 1, 0, 0.25f, 1.0f, { 3, 1, -1}, { 0.35f, 0.35f, 0.f} };
+			AnimationComponent::Setter test = { AnimationFlag::None, 1, 0, 0.25f, 1.0f, { 3, 1, -1}, { 0.35f, 0.35f, 0.f} };
 			testAc.addedSetters = 1;
 			testAc.animSetters[0] = test;
 			mtestAnimator.ProcessAnimationComponent(testAc);
@@ -656,7 +656,7 @@ namespace DOG
 		{
 			for (size_t i = 0; i < 4; i++)
 			{
-				AnimationComponent::Setter test = { AnimationFlag::None, false, 0, 5, 0.25f, 1.0f, { 1, -1, -1}, { 0.35f, 0.35f, 0.f} };
+				AnimationComponent::Setter test = { AnimationFlag::None, 0, 5, 0.25f, 1.0f, { 1, -1, -1}, { 0.35f, 0.35f, 0.f} };
 				testAc.addedSetters = 1;
 				testAc.animSetters[0] = test;
 				m_playertestAnimators[i].ProcessAnimationComponent(testAc);

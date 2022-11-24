@@ -297,13 +297,7 @@ namespace DOG
 			{
 				sum += clipData[i].weight;
 			}
-			if (clipCount)
-			{
-				if (dt < 0.f)
-				{
-					return 0;
-				}
-			}
+			
 			groupClipCount[groupIdx] = clipCount;
 			return startClipIdx + clipCount;
 		}
@@ -347,7 +341,8 @@ namespace DOG
 			std::sort(ac.animSetters.begin(), ac.animSetters.begin() + ac.addedSetters,
 				[](const Setter& a, const Setter& b) -> bool
 				{
-					return a.group < b.group || (a.group == b.group && a.loop && !b.loop);
+					return a.group < b.group || (a.group == b.group &&
+						static_cast<bool>(a.flag & AnimationFlag::Looping) && !static_cast<bool>(b.flag & AnimationFlag::Looping));
 				});
 
 			for (i32 i = 0; i < ac.addedSetters; ++i)
@@ -441,15 +436,22 @@ namespace DOG
 		}
 		void SetSetBS(Setter& setter)
 		{
+			auto& bs = groups[setter.group].blend;
 			if (!HasLooping(setter.flag)) // more logic needed here
 			{
-				auto& bs = groups[setter.group].blend;
 				if (!HasPersist(setter.flag))
 				{
 					bs.durationLeft = groups[setter.group].action.clips[0].duration / setter.playbackRate;
 				}
 				bs.currentWeight = bs.startWeight = 0.f;
 				bs.targetWeight = 1.f;
+				bs.transitionStart = globalTime;
+				bs.transitionLength = setter.transitionLength;
+			}
+			else if (bs.currentWeight = bs.targetWeight = 1.f)
+			{
+				bs.startWeight = bs.currentWeight;
+				bs.targetWeight = 0.f;
 				bs.transitionStart = globalTime;
 				bs.transitionLength = setter.transitionLength;
 			}
@@ -469,10 +471,6 @@ namespace DOG
 				bs.targetWeight = 1.f;
 				bs.transitionStart = globalTime;
 				bs.transitionLength = setter.transitionLength;
-			}
-			if (bs.currentWeight = 1.f)
-			{
-
 			}
 		}
 

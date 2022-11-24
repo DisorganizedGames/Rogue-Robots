@@ -614,7 +614,6 @@ void EntityInterface::ModifyAnimationComponent(DOG::LuaContext* context)
 	setter.group = static_cast<u8>(group);
 	setter.transitionLength = transitionLength;
 	setter.playbackRate = playbackRate;
-	setter.loop = loop;
 }
 
 void EntityInterface::AddAudio(LuaContext* context, entity e)
