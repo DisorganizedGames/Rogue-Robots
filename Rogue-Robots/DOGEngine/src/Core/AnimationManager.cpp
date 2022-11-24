@@ -75,15 +75,10 @@ namespace DOG
 					f32 m_imguiZ = .1f;
 					f32 m_imguiS = 0.2f;
 					f32 m_imguiposY = -.5f;
-					auto xm = XMMatrixTranslationFromVector(XMLoadFloat3(&head_offset));
-					for (size_t i = 0; i < m_rigs[0]->jointOffsets.size(); i++)
-					{
-						auto tmp = XMLoadFloat4x4(&m_rigs[0]->jointOffsets[i]);
-						XMVECTOR sca = {}, rot = {}, tra = {};
-						XMMatrixDecompose(&sca, &rot, &tra, tmp);
-						auto blyat = 0;
-					}
-					btf.transform = SimpleMath::Matrix(SimpleMath::Matrix(xm) * XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[m_imguiJoint]))) * tf.worldMatrix;
+					//auto xm = XMMatrixTranslationFromVector(XMLoadFloat3(&head_offset));
+					btf.transform = SimpleMath::Matrix(XMMatrixTranslationFromVector(XMLoadFloat3(&m_headOffset)) *
+						XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[5]))) * tf.worldMatrix;
+					//btf.transform = SimpleMath::Matrix(SimpleMath::Matrix(xm) * XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[m_imguiJoint]))) * tf.worldMatrix;
 				}
 			});
 	}
