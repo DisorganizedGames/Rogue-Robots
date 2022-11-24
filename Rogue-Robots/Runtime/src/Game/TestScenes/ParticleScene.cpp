@@ -82,8 +82,13 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 
 			// Particle lifetime slider
 			static float lifetime = emitter.particleLifetime;
-			ImGui::SliderFloat("Particle Lifetime", &lifetime, 0.f, 5.f);
+			ImGui::SliderFloat("Lifetime", &lifetime, 0.f, 5.f);
 			emitter.particleLifetime = lifetime;
+
+			// Particle size slider
+			static float size = emitter.particleSize;
+			ImGui::SliderFloat("Size", &size, 0.f, 1.f);
+			emitter.particleSize = size;
 
 			// Spawn type settings
 			static int spawnType = 0;
