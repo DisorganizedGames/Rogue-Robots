@@ -36,6 +36,8 @@ namespace DOG
 		TransformComponent& RotateL(const DirectX::SimpleMath::Vector3& rotation) noexcept;
 		TransformComponent& RotateL(const DirectX::SimpleMath::Matrix& rotation) noexcept;
 
+		TransformComponent& RotateForwardTo(const DirectX::SimpleMath::Vector3& target) noexcept;
+
 		operator const DirectX::SimpleMath::Matrix& () const { return worldMatrix; }
 		operator DirectX::SimpleMath::Matrix& () { return worldMatrix; }
 		DirectX::SimpleMath::Matrix worldMatrix = DirectX::SimpleMath::Matrix::Identity;
@@ -301,12 +303,15 @@ namespace DOG
 	struct ParticleEmitterComponent
 	{
 		f32 spawnRate{ 0.f }; // How many particles to spawn on average per second
-		f32 particleSize{ 0.f }; // Size of the particle in world space
+		f32 particleSize{ 1.f }; // Size of the particle in world space
 		f32 particleLifetime{ 0.f }; // How long particles should live
 
 		u32 textureHandle{ 0 }; // Handle to a raw texture view on the GPU
 		u32 textureSegmentsX{ 1 }; // Tiles in X-axis
 		u32 textureSegmentsY{ 1 }; // Tiles in Y-axis
+
+		DirectX::SimpleMath::Vector4 startColor = { 1.f, 1.f, 1.f, 1.f };
+		DirectX::SimpleMath::Vector4 endColor = { 1.f, 1.f, 1.f, 1.f };
 
 		u32 emitterIndex{ static_cast<u32>(-1) }; // DO NOT TOUCH (used internally)
 	};

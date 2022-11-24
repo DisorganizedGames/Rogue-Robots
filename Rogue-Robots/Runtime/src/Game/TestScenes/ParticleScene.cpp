@@ -38,7 +38,10 @@ void ParticleScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 		auto& em = AddComponent<ParticleEmitterComponent>(m_particleSystem);
 		em = {
 			.spawnRate = 64.f,
+			.particleSize = 0.1f,
 			.particleLifetime = 0.5f,
+			.startColor = Vector4(1, 0, 0, 1),
+			.endColor = Vector4(0, 0, 1, 1),
 		};
 
 		AddComponent<ConeSpawnComponent>(m_particleSystem) = { 
@@ -79,8 +82,13 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 
 			// Particle lifetime slider
 			static float lifetime = emitter.particleLifetime;
-			ImGui::SliderFloat("Particle Lifetime", &lifetime, 0.f, 5.f);
+			ImGui::SliderFloat("Lifetime", &lifetime, 0.f, 5.f);
 			emitter.particleLifetime = lifetime;
+
+			// Particle size slider
+			static float size = emitter.particleSize;
+			ImGui::SliderFloat("Size", &size, 0.f, 1.f);
+			emitter.particleSize = size;
 
 			// Spawn type settings
 			static int spawnType = 0;

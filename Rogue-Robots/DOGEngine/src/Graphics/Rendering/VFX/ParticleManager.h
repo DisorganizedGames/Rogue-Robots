@@ -28,11 +28,12 @@ namespace DOG::gfx
 	private:
 		constexpr static inline u32 S_MAX_EMITTERS = 128;
 
+		u32 m_lastEmitter = 0;
 		std::vector<ParticleEmitter> m_emitters;
 
 	private:
 		[[nodiscard]]
-		u32 GetFreeEmitter() const noexcept;
+		u32 GetFreeEmitter() noexcept;
 
 		
 		void SetSpawnProperties(DOG::entity e, ParticleEmitter& emitter);

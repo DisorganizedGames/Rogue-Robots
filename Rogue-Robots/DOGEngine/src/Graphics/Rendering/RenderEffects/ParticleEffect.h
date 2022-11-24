@@ -35,6 +35,7 @@ namespace DOG::gfx
 		RGResourceManager* m_resourceManager;
 
 		Pipeline m_emitPipeline;
+		Pipeline m_postEmitPipeline;
 		Pipeline m_compactPipeline;
 		Pipeline m_updatePipeline;
 		Pipeline m_drawPipeline;

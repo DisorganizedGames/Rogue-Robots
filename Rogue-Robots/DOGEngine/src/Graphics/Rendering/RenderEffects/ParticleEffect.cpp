@@ -20,6 +20,9 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 	auto emitterShader = shaderCompiler->CompileFromFile("Particles/EmitterCS.hlsl", ShaderType::Compute);
 	m_emitPipeline = device->CreateComputePipeline(ComputePipelineDesc(emitterShader.get()));
 
+	auto postEmitShader = shaderCompiler->CompileFromFile("Particles/PostEmitCS.hlsl", ShaderType::Compute);
+	m_postEmitPipeline = device->CreateComputePipeline(ComputePipelineDesc(postEmitShader.get()));
+
 	auto compactShader = shaderCompiler->CompileFromFile("Particles/CompactionCS.hlsl", ShaderType::Compute);
 	m_compactPipeline = device->CreateComputePipeline(ComputePipelineDesc(compactShader.get()));
 
@@ -38,13 +41,13 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 				.BlendEnable = true,
 				.LogicOpEnable = false,
 				.SrcBlend = D3D12_BLEND_SRC_ALPHA,
-				.DestBlend = D3D12_BLEND_INV_SRC_ALPHA,
+				.DestBlend = D3D12_BLEND_DEST_ALPHA,
 				.BlendOp = D3D12_BLEND_OP_ADD,
 				.SrcBlendAlpha = D3D12_BLEND_ONE,
 				.DestBlendAlpha = D3D12_BLEND_ONE,
 				.BlendOpAlpha = D3D12_BLEND_OP_MAX,
 				.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL,
-			}).SetAlphaToCoverageEnabled(true))
+			}))
 		.Build()
 	);
 
@@ -159,6 +162,33 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 			
 		},
 		[](PassData&) // Post-graph execution
+		{
+
+		});
+
+	renderGraph.AddPass<PassData>("Particle Post Emit Pass",
+		[this](PassData& passData, RenderGraph::PassBuilder& builder) // Build
+		{
+			passData.particlesAliveHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticlesAliveBuffer),
+				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), S_COUNTERS));
+		},
+		[this](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) // Execute
+		{
+			rd->Cmd_SetPipeline(cmdl, m_postEmitPipeline);
+
+			ShaderArgs shaderArgs;
+			shaderArgs
+				.AppendConstant(resources.GetView(passData.particlesAliveHandle));
+
+			rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
+
+			rd->Cmd_Dispatch(cmdl, 1, 1, 1);
+		},
+			[](PassData&) // Pre-graph execution
+		{
+
+		},
+			[](PassData&) // Post-graph execution
 		{
 
 		});
