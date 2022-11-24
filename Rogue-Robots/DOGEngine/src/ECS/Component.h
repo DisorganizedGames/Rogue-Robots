@@ -36,6 +36,8 @@ namespace DOG
 		TransformComponent& RotateL(const DirectX::SimpleMath::Vector3& rotation) noexcept;
 		TransformComponent& RotateL(const DirectX::SimpleMath::Matrix& rotation) noexcept;
 
+		TransformComponent& RotateForwardTo(const DirectX::SimpleMath::Vector3& target) noexcept;
+
 		operator const DirectX::SimpleMath::Matrix& () const { return worldMatrix; }
 		operator DirectX::SimpleMath::Matrix& () { return worldMatrix; }
 		DirectX::SimpleMath::Matrix worldMatrix = DirectX::SimpleMath::Matrix::Identity;

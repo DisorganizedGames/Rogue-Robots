@@ -117,4 +117,25 @@ namespace DOG
 		worldMatrix = s * deltaR * r * t;
 		return *this;
 	}
+
+	TransformComponent& TransformComponent::RotateForwardTo(const Vector3& target) noexcept
+	{
+		Vector3 normTarget = XMVector3Normalize(target);
+		Vector3 forward = GetForward();
+		auto angleBetween = acos(forward.Dot(normTarget));
+
+		XMVECTOR scaleVec, rotationQuat, translationVec;
+		XMMatrixDecompose(&scaleVec, &rotationQuat, &translationVec, worldMatrix);
+
+		auto rotation = Matrix::CreateFromAxisAngle(forward.Cross(normTarget), angleBetween);
+
+		XMMATRIX r = XMMatrixRotationQuaternion(rotationQuat);
+		XMMATRIX s = XMMatrixScalingFromVector(scaleVec);
+		XMMATRIX t = XMMatrixTranslationFromVector(translationVec);
+		XMMATRIX deltaR = rotation;
+
+		worldMatrix = s * deltaR * r * t;
+		
+		return *this;
+	}
 }

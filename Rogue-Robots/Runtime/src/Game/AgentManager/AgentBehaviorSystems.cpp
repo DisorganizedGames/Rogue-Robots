@@ -181,9 +181,16 @@ void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& c
 			auto bulletPos = bulletTransform.GetPosition();
 			auto& bulletScene = eMan.GetComponent<SceneComponent>(bulletEntity);
 			
+			auto playerPosition = eMan.GetComponent<TransformComponent>(bullet.playerEntityID).GetPosition();
+			auto towardPlayer = (bulletPos - playerPosition);
+			towardPlayer.Normalize();
+
 			entity hitParticleEffect = eMan.CreateEntity();
 			eMan.AddComponent<SceneComponent>(hitParticleEffect, bulletScene.scene);
-			eMan.AddComponent<TransformComponent>(hitParticleEffect, bulletPos);
+			eMan.AddComponent<TransformComponent>(hitParticleEffect, bulletPos)
+				.RotateForwardTo(towardPlayer)
+				.RotateL(Vector3(DirectX::XM_PIDIV2, 0, 0));
+
 			eMan.AddComponent<LifetimeComponent>(hitParticleEffect, 0.05f);
 			eMan.AddComponent<ParticleEmitterComponent>(hitParticleEffect) = {
 				.spawnRate = 32.f,
@@ -193,6 +200,7 @@ void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& c
 				.endColor = DirectX::SimpleMath::Vector4(0.5, 0.1, 0.1, 1.f),
 			};
 			eMan.AddComponent<ConeSpawnComponent>(hitParticleEffect) = { .angle = DirectX::XM_PI/3, .speed = 2.f };
+			
 		}
 	}
 }
