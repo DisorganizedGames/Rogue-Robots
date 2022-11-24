@@ -1,12 +1,21 @@
 #include "HeartbeatTrackerSystem.h"
 #include "../DOGEngine/src/Graphics/Rendering/PostProcess.h"
-#include "../DOGEngine/src/Core/Time.h"
-
+#include "../DOGEngine/src/Core/Time.h" 
+#include "GameComponent.h"
 
 void HeartbeatTrackerSystem::OnUpdate(DOG::entity e, DOG::ThisPlayer& tp, PlayerStatsComponent& psc)
 {
 	UNREFERENCED_PARAMETER(e);
 	UNREFERENCED_PARAMETER(tp);
+
+	
+	if (!DOG::EntityManager::Get().HasComponent<PlayerAliveComponent>(e))
+	{
+		m_justImpact = false;
+		DOG::gfx::PostProcess::Get().SetHeartbeatFactor(0.f);
+		DOG::gfx::PostProcess::Get().SetHeartbeatTransitionFactor(0.f);
+		return;
+	}
 
 	if (psc.health <= m_healthThreshold)
 	{
