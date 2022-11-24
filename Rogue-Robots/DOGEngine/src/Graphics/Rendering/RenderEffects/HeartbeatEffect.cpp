@@ -18,12 +18,6 @@ namespace DOG::gfx
 		D3D12_RENDER_TARGET_BLEND_DESC bd{};
 		bd.BlendEnable = true;
 		bd.LogicOpEnable = false;
-		//bd.SrcBlend = D3D12_BLEND_SRC_COLOR;
-		//bd.DestBlend = D3D12_BLEND_DEST_COLOR;
-		//bd.BlendOp = D3D12_BLEND_OP_ADD;
-		//bd.SrcBlendAlpha = D3D12_BLEND_SRC_ALPHA;
-		//bd.DestBlendAlpha = D3D12_BLEND_DEST_ALPHA;
-		//bd.BlendOpAlpha = D3D12_BLEND_OP_MAX;
 		bd.RenderTargetWriteMask = 
 			D3D12_COLOR_WRITE_ENABLE_RED |
 			D3D12_COLOR_WRITE_ENABLE_BLUE |

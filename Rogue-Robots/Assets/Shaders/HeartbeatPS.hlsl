@@ -23,7 +23,6 @@ float4 main(PS_IN input) : SV_TARGET0
     // Offset (0, 0) to center of screen
     uv -= 0.5.rr;
     uv *= 1.f;
-    //uv.y *= ((float) g_constants.renderWidth / g_constants.renderHeight) * 0.6f;
     
     float2 o = float2(0.0, 0.0);
     float2 pOnEl = uv - o;
@@ -32,14 +31,10 @@ float4 main(PS_IN input) : SV_TARGET0
     float transitionFactor = g_constants.transitionFactor;
     
     const float ellipseStartOffset = 0.35f;
-    //const float transitionFactor = -0.38f;      // Rest stable
-    //const float transitionFactor = -0.36f;    // Impact
     
     float3 diff = float3(pOnEl, 0.0) - float3(pOnEl * ellipseStartOffset, 0.0);
     float len = clamp(length(diff), 0.f, 1.f);
     len *= (len + transitionFactor) / len;
-    
-    //return float4(len.rrr, 1.f);
     
     float intensity = len * effect;
     
