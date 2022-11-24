@@ -65,6 +65,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		bc.maximumAmmoCapacityForType = 999'999;
 		bc.ammoPerPickup = 30;
 		bc.currentAmmoCount = 30;
+
 		em.AddComponent<MagazineModificationComponent>(playerI).type = MagazineModificationComponent::Type::None;
 		em.AddComponent<MiscComponent>(playerI).type = MiscComponent::Type::Basic;
 

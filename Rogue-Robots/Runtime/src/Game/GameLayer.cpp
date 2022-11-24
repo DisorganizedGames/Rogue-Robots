@@ -341,6 +341,7 @@ void GameLayer::KillPlayer(DOG::entity e)
 		std::string luaEventName = std::string("ItemPickup") + std::to_string(localPlayer);
 		m_entityManager.RemoveComponent<ScriptComponent>(localPlayer);
 		m_entityManager.RemoveComponent<BarrelComponent>(localPlayer);
+		m_entityManager.RemoveComponent<MiscComponent>(localPlayer);
 
 		RigidbodyComponent& rb = m_entityManager.GetComponent<RigidbodyComponent>(e);
 		rb.ConstrainPosition(true, true, true);
