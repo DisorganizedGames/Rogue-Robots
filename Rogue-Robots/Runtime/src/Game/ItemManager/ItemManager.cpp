@@ -53,7 +53,7 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 		break;
 	//case EntityTypes::Health:
 		//return CreateHealthPickup(position, id);
-		break;
+		//break;
 	case EntityTypes::JumpBoost:
 		return CreateJumpBoost(position, id);
 	default:
