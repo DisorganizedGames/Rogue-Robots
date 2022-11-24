@@ -564,4 +564,14 @@ public:
 	void RevivePlayer(DOG::entity player);
 	void ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw);
 	void DrawProgressBar(const float progress);
+	void UpdateSpectators();
+};
+
+class UpdateSpectatorQueueSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DOG::ThisPlayer, SpectatorComponent);
+	ON_EARLY_UPDATE(DOG::ThisPlayer, SpectatorComponent);
+
+	void OnEarlyUpdate(DOG::ThisPlayer&, SpectatorComponent& sc);
 };

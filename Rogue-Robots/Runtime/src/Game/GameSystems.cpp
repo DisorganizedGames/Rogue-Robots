@@ -832,7 +832,7 @@ ImVec4 ReviveSystem::DeterminePlayerColor(const char* playerName)
 	{
 		return ImVec4(0, 0, 255, 255);
 	}
-	else if (strcmp(playerName, "Yellow"))
+	else if (strcmp(playerName, "Yellow") == 0)
 	{
 		return ImVec4(255, 255, 0, 255);
 	}
@@ -936,6 +936,17 @@ void ReviveSystem::DrawProgressBar(const float progress)
 	}
 	ImGui::End();
 	ImGui::PopStyleColor();
+}
+
+void UpdateSpectatorQueueSystem::OnEarlyUpdate(DOG::ThisPlayer&, SpectatorComponent& sc)
+{
+	DOG::EntityManager::Get().Collect<PlayerAliveComponent>().Do([&](DOG::entity otherPlayer, PlayerAliveComponent&)
+		{
+			if (std::find(sc.playerSpectatorQueue.begin(), sc.playerSpectatorQueue.end(), otherPlayer) == sc.playerSpectatorQueue.end())
+			{
+				sc.playerSpectatorQueue.push_back(otherPlayer);
+			}
+		});
 }
 
 #pragma endregion
