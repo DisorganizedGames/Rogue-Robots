@@ -645,19 +645,6 @@ void EntityInterface::SetPlayerStat(LuaContext* context)
 	}
 }
 
-void EntityInterface::LuaPickUpMoreLaserAmmoCallback(DOG::LuaContext* context)
-{
-	auto& em = EntityManager::Get();
-	entity player = context->GetInteger();
-	assert(em.Exists(player) && em.HasComponent<BarrelComponent>(player) && em.HasComponent<LaserBarrelComponent>(player));
-	auto& barrelInfo = em.GetComponent<BarrelComponent>(player);
-	assert(barrelInfo.type == BarrelComponent::Type::Laser);
-	auto& laserBarrel = em.GetComponent<LaserBarrelComponent>(player);
-	laserBarrel.ammo += barrelInfo.ammoPerPickup;
-	laserBarrel.ammo = std::min(laserBarrel.ammo, static_cast<f32>(barrelInfo.maximumAmmoCapacityForType));
-	barrelInfo.currentAmmoCount = static_cast<u32>(laserBarrel.ammo);
-}
-
 void EntityInterface::AddModel(LuaContext* context, entity e)
 {
 	EntityManager::Get().AddComponent<ModelComponent>(e, static_cast<u32>(std::stoull(context->GetString())));
@@ -1352,4 +1339,17 @@ void GameInterface::SpawnPickupMiscComponent(DOG::LuaContext* context)
 	{
 		ItemManager::Get().CreateItem(EntityTypes::FullAutoMisc, EntityManager::Get().GetComponent<TransformComponent>(playerId).GetPosition());
 	}
+}
+
+void GameInterface::LuaPickUpMoreLaserAmmoCallback(DOG::LuaContext* context)
+{
+	auto& em = EntityManager::Get();
+	entity player = context->GetInteger();
+	assert(em.Exists(player) && em.HasComponent<BarrelComponent>(player) && em.HasComponent<LaserBarrelComponent>(player));
+	auto& barrelInfo = em.GetComponent<BarrelComponent>(player);
+	assert(barrelInfo.type == BarrelComponent::Type::Laser);
+	auto& laserBarrel = em.GetComponent<LaserBarrelComponent>(player);
+	laserBarrel.ammo += barrelInfo.ammoPerPickup;
+	laserBarrel.ammo = std::min(laserBarrel.ammo, static_cast<f32>(barrelInfo.maximumAmmoCapacityForType));
+	barrelInfo.currentAmmoCount = static_cast<u32>(laserBarrel.ammo);
 }
