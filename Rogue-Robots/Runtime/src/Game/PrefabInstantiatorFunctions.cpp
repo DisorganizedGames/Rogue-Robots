@@ -110,8 +110,6 @@ std::vector<entity> AddFlashlightsToPlayers(const std::vector<entity>& players)
 	std::vector<entity> flashlights;
 	for (auto i = 0; i < players.size(); ++i)
 	{
-		auto& playerTransformComponent = em.GetComponent<TransformComponent>(players[i]);
-
 		entity flashLightEntity = em.CreateEntity();
 
 		em.AddComponent<DOG::TransformComponent>(flashLightEntity);
