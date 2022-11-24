@@ -19,8 +19,6 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 {
 	switch (itemType)
 	{
-	case EntityTypes::Medkit:
-		break;
 	case EntityTypes::IncreaseMaxHp:
 		return CreateMaxHealthBoostPickup(position, id);
 		break;
@@ -29,8 +27,6 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 		break;
 	case EntityTypes::Turret:
 		return CreateTurretPickup(position, id);
-	case EntityTypes::BulletBarrel:
-		break;
 	case EntityTypes::GrenadeBarrel:
 		return CreateGrenadePickup(position, id);
 		break;
@@ -39,8 +35,6 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 		break;
 	case EntityTypes::LaserBarrel:
 		return CreateLaserPickup(position, id);
-		break;
-	case EntityTypes::DefaultMagazineModification:
 		break;
 	case EntityTypes::FrostMagazineModification:
 		return CreateFrostModificationPickup(position, id);
@@ -57,9 +51,9 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 	case EntityTypes::IncreaseSpeed2:
 		return CreateSpeedBoost2Pickup(position, id);
 		break;
-	case EntityTypes::Health:
+	//case EntityTypes::Health:
 		//return CreateHealthPickup(position, id);
-		break;
+		//break;
 	case EntityTypes::JumpBoost:
 		return CreateJumpBoost(position, id);
 	default:
@@ -131,8 +125,10 @@ u32 ItemManager::CreateTrampolinePickup(Vector3 position, u32 id)
 	if (id == 0)
 		ni.id = ++trampolineNetworkID;
 	else
+	{
 		ni.id = id;
-
+		trampolineNetworkID = id;
+	}
 	LuaMain::GetScriptManager()->AddScript(trampolineEntity, "Pickupable.lua");
 
 	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(trampolineEntity);
@@ -161,8 +157,10 @@ u32 ItemManager::CreateMissilePickup(DirectX::SimpleMath::Vector3 position,  u32
 	if (id == 0)
 		ni.id = ++missileNetworkID;
 	else
+	{
 		ni.id = id;
-
+		missileNetworkID = id;
+	}
 	LuaMain::GetScriptManager()->AddScript(missileEntity, "Pickupable.lua");
 
 	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(missileEntity);
@@ -187,7 +185,10 @@ u32 ItemManager::CreateLaserPickup(Vector3 position, u32 id)
 	if (id == 0)
 		ni.id = ++laserNetworkID;
 	else
+	{
 		ni.id = id;
+		laserNetworkID = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(laserEntity, "Pickupable.lua");
 
@@ -218,8 +219,10 @@ u32 ItemManager::CreateGrenadePickup(DirectX::SimpleMath::Vector3 position, u32 
 	if (id == 0)
 		ni.id = ++grenadeNetworkID;
 	else
+	{
 		ni.id = id;
-
+		grenadeNetworkID = id;
+	}
 	LuaMain::GetScriptManager()->AddScript(grenadeEntity, "Pickupable.lua");
 
 	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(grenadeEntity);
@@ -246,7 +249,10 @@ u32 ItemManager::CreateMaxHealthBoostPickup(DirectX::SimpleMath::Vector3 positio
 	if (id == 0)
 		ni.id = ++healtBoostNetworkdID;
 	else
+	{
 		ni.id = id;
+		healtBoostNetworkdID = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(healthBoostEntity, "Pickupable.lua");
 
@@ -274,7 +280,10 @@ u32 ItemManager::CreateFrostModificationPickup(DirectX::SimpleMath::Vector3 posi
 	if (id == 0)
 		ni.id = ++frostModNetworkID;
 	else
+	{
 		ni.id = id;
+		frostModNetworkID = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(frostModEntity, "Pickupable.lua");
 
@@ -303,7 +312,10 @@ u32 ItemManager::CreateTurretPickup(Vector3 position, u32 id)
 	if (id == 0)
 		ni.id = ++turretNetworkID;
 	else
+	{
 		ni.id = id;
+		turretNetworkID = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(turretPickUpEntity, "Pickupable.lua");
 
@@ -339,7 +351,10 @@ u32 ItemManager::CreateSpeedBoostPickup(DirectX::SimpleMath::Vector3 position, u
 	if (id == 0)
 		ni.id = ++speedBoostNetworkdID;
 	else
+	{
 		ni.id = id;
+		speedBoostNetworkdID = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(speedBoostEntity, "Pickupable.lua");
 
@@ -367,7 +382,10 @@ u32 ItemManager::CreateSpeedBoost2Pickup(DirectX::SimpleMath::Vector3 position, 
 	if (id == 0)
 		ni.id = ++speedBoostNetworkdID2;
 	else
+	{
 		ni.id = id;
+		speedBoostNetworkdID2 = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(speedBoostEntity, "Pickupable.lua");
 
@@ -380,33 +398,33 @@ u32 ItemManager::CreateSpeedBoost2Pickup(DirectX::SimpleMath::Vector3 position, 
 
 
 //Placeholder
-u32 ItemManager::CreateHealthPickup(DirectX::SimpleMath::Vector3 position, u32 id)
-{
-	static u32 healthNetworkdID = 0u;
-
-	u32 healthBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Health.glb");
-
-	entity healthBoostEntity = s_entityManager.CreateEntity();
-	s_entityManager.AddComponent<PassiveItemComponent>(healthBoostEntity).type = PassiveItemComponent::Type::Template;
-	s_entityManager.AddComponent<PickupComponent>(healthBoostEntity).itemName = "Heal";
-	s_entityManager.AddComponent<ModelComponent>(healthBoostEntity, healthBoostID);
-	s_entityManager.AddComponent<TransformComponent>(healthBoostEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
-	s_entityManager.AddComponent<ShadowReceiverComponent>(healthBoostEntity);
-	auto& ni = s_entityManager.AddComponent<NetworkId>(healthBoostEntity);
-	ni.entityTypeId = EntityTypes::Health;
-	if (id == 0)
-		ni.id = ++healthNetworkdID;
-	else
-		ni.id = id;
-
-	LuaMain::GetScriptManager()->AddScript(healthBoostEntity, "Pickupable.lua");
-
-	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(healthBoostEntity);
-	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(healthBoostEntity).GetPosition().y;
-	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
-	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
-	return ni.id;
-}
+//u32 ItemManager::CreateHealthPickup(DirectX::SimpleMath::Vector3 position, u32 id)
+//{
+//	static u32 healthNetworkdID = 0u;
+//
+//	u32 healthBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Health.glb");
+//
+//	entity healthBoostEntity = s_entityManager.CreateEntity();
+//	s_entityManager.AddComponent<PassiveItemComponent>(healthBoostEntity).type = PassiveItemComponent::Type::Template;
+//	s_entityManager.AddComponent<PickupComponent>(healthBoostEntity).itemName = "Heal";
+//	s_entityManager.AddComponent<ModelComponent>(healthBoostEntity, healthBoostID);
+//	s_entityManager.AddComponent<TransformComponent>(healthBoostEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
+//	s_entityManager.AddComponent<ShadowReceiverComponent>(healthBoostEntity);
+//	auto& ni = s_entityManager.AddComponent<NetworkId>(healthBoostEntity);
+//	ni.entityTypeId = EntityTypes::Health;
+//	if (id == 0)
+//		ni.id = ++healthNetworkdID;
+//	else
+//		ni.id = id;
+//
+//	LuaMain::GetScriptManager()->AddScript(healthBoostEntity, "Pickupable.lua");
+//
+//	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(healthBoostEntity);
+//	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(healthBoostEntity).GetPosition().y;
+//	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+//	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
+//	return ni.id;
+//}
 
 u32 ItemManager::CreateJumpBoost(DirectX::SimpleMath::Vector3 position, u32 id)
 {
@@ -425,7 +443,10 @@ u32 ItemManager::CreateJumpBoost(DirectX::SimpleMath::Vector3 position, u32 id)
 	if (id == 0)
 		ni.id = ++jumpBoostID;
 	else
+	{
 		ni.id = id;
+		jumpBoostID = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(pEntity, "Pickupable.lua");
 
@@ -453,7 +474,10 @@ u32 ItemManager::CreateFullAutoPickup(Vector3 position, u32 id)
 	if (id == 0)
 		ni.id = ++fullAutoNetworkID;
 	else
+	{
 		ni.id = id;
+		fullAutoNetworkID = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(fullAutoEntity, "Pickupable.lua");
 
@@ -481,7 +505,10 @@ u32 ItemManager::CreateChargeShotPickup(Vector3 position, u32 id)
 	if (id == 0)
 		ni.id = ++chargeShotNetworkID;
 	else
+	{
 		ni.id = id;
+		chargeShotNetworkID = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(chargeShotEntity, "Pickupable.lua");
 
