@@ -794,32 +794,36 @@ void EntityInterface::AddBullet(LuaContext* context, entity e)
 
 void EntityInterface::AddSubmeshRender(LuaContext* context, entity e)
 {
-	//Get material information from table
-	LuaTable materialTable = context->GetTable();
-
-	ModelComponent& model = EntityManager::Get().GetComponent<ModelComponent>(e);
-
-	ModelAsset* modelAsset = AssetManager::Get().GetAsset<ModelAsset>(model.id);
-
-	if (!modelAsset)
+	if (EntityManager::Get().HasComponent<ModelComponent>(e))
 	{
-		std::cout << "Model has not been loaded in yet! Model ID: " << model.id << "\n";
-		return;
+
+		//Get material information from table
+		LuaTable materialTable = context->GetTable();
+
+		ModelComponent& model = EntityManager::Get().GetComponent<ModelComponent>(e);
+
+		ModelAsset* modelAsset = AssetManager::Get().GetAsset<ModelAsset>(model.id);
+
+		if (!modelAsset)
+		{
+			std::cout << "Model has not been loaded in yet! Model ID: " << model.id << "\n";
+			return;
+		}
+
+		MaterialHandle materialHandle;
+		materialHandle.handle = static_cast<u64>(materialTable.GetIntFromTable("materialHandle"));
+
+		LuaTable albedoFactor = materialTable.GetTableFromTable("albedoFactor");
+		LuaVector3 albedoFactorVector(albedoFactor);
+
+		MaterialDesc materialDesc{};
+		materialDesc.albedoFactor = { albedoFactorVector.x, albedoFactorVector.y, albedoFactorVector.z };
+		materialDesc.roughnessFactor = (float)materialTable.GetDoubleFromTable("roughnessFactor");
+		materialDesc.metallicFactor = (float)materialTable.GetDoubleFromTable("metallicFactor");
+
+		EntityManager::Get().AddComponent<SubmeshRenderer>(e, modelAsset->gfxModel->mesh.mesh, materialHandle, materialDesc);
+		EntityManager::Get().RemoveComponent<ModelComponent>(e);
 	}
-
-	MaterialHandle materialHandle;
-	materialHandle.handle = static_cast<u64>(materialTable.GetIntFromTable("materialHandle"));
-
-	LuaTable albedoFactor = materialTable.GetTableFromTable("albedoFactor");
-	LuaVector3 albedoFactorVector(albedoFactor);
-
-	MaterialDesc materialDesc{};
-	materialDesc.albedoFactor = { albedoFactorVector.x, albedoFactorVector.y, albedoFactorVector.z };
-	materialDesc.roughnessFactor = (float)materialTable.GetDoubleFromTable("roughnessFactor");
-	materialDesc.metallicFactor = (float)materialTable.GetDoubleFromTable("metallicFactor");
-
-	EntityManager::Get().AddComponent<SubmeshRenderer>(e, modelAsset->gfxModel->mesh.mesh, materialHandle, materialDesc);
-	EntityManager::Get().RemoveComponent<ModelComponent>(e);
 }
 
 void EntityInterface::AddScript(DOG::LuaContext* context, DOG::entity e)
