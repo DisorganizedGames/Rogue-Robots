@@ -185,7 +185,10 @@ u32 ItemManager::CreateLaserPickup(Vector3 position, u32 id)
 	if (id == 0)
 		ni.id = ++laserNetworkID;
 	else
+	{
 		ni.id = id;
+		laserNetworkID = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(laserEntity, "Pickupable.lua");
 
