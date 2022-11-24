@@ -168,7 +168,6 @@ entity AgentManager::CreateAgentCore(u32 model, u32 groupID, const Vector3& pos,
 				move.forward.Normalize();
 			}
 		});
-	em.AddComponent<PathfinderWalkComponent>(e);
 
 	em.AddComponent<AgentHPComponent>(e);
 

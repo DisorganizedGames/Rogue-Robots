@@ -100,27 +100,17 @@ void AgentMovementSystem::OnUpdate(entity e, AgentMovementComponent& movement,
 	}
 	else
 	{
-		// Guaranteed only as long all agents have ground movement - rework if flying or other movement types are added
-		PathfinderWalkComponent& pathfinder = EntityManager::Get().GetComponent<PathfinderWalkComponent>(e);
+		EntityManager& em = EntityManager::Get();
 
-		pathfinder.goal = EntityManager::Get().GetComponent<TransformComponent>(seek.entityID).GetPosition();
-		pathfinder.goal -= (seek.direction * 2);
-		pathfinder.speed = movement.currentSpeed;
-		trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pathfinder.targetPos, Vector3::Up).Invert();
-		movement.forward = seek.direction;
-
-		// TODO: transfer actual movement responsibility to Pathfinder
-		constexpr f32 SKID_FACTOR = 0.1f;
-		movement.forward.x += rb.linearVelocity.x * SKID_FACTOR;
-		movement.forward.y = 0.0f;
-		movement.forward.z += rb.linearVelocity.z * SKID_FACTOR;
-		movement.forward.Normalize();
-		movement.forward *= movement.currentSpeed;
-		rb.linearVelocity.x = movement.forward.x;
-		rb.linearVelocity.z = movement.forward.z;
-		
-		if (!EntityManager::Get().HasComponent<AgentAttackComponent>(e))
+		// go to attack mode
+		if (EntityManager::Get().HasComponent<AgentAttackComponent>(e) == false)
 			EntityManager::Get().AddComponent<AgentAttackComponent>(e);
+		
+		Vector3 goal = em.GetComponent<TransformComponent>(seek.entityID).GetPosition();
+
+		// only move if outside attack radius
+		if (em.HasComponent<PathfinderWalkComponent>(e) == false && em.GetComponent<AgentAttackComponent>(e).radiusSquared < (goal - trans.GetPosition()).LengthSquared())
+			em.AddComponent<PathfinderWalkComponent>(e, goal, movement.currentSpeed);
 	}
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 #include <DOGEngine.h>
-#include "AgentManager.h"
+#include "Game/GameComponent.h"
 
 
 class AgentSeekPlayerSystem: public DOG::ISystem

@@ -2,6 +2,7 @@
 #include <limits>
 #include <unordered_map>
 #include "Game/PcgLevelLoader.h"
+#include "PathfinderSystems.h"
 
 using namespace DOG;
 using namespace DirectX::SimpleMath;
@@ -9,9 +10,19 @@ using namespace DirectX::SimpleMath;
 using PortalID = DOG::entity;
 
 Pathfinder Pathfinder::s_instance;
+bool Pathfinder::m_initialized = false;
 
 Pathfinder::Pathfinder() noexcept
 {
+}
+
+void Pathfinder::Init()
+{
+	// Register pathfinder systems
+	EntityManager& em = EntityManager::Get();
+	em.RegisterSystem(std::make_unique<PathfinderWalkAgentsSystem>());
+
+	m_initialized = true;
 }
 
 void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
@@ -21,6 +32,8 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 	constexpr unsigned char solidBlock = 219;
 
 	constexpr float blockDim = pcgBlock::DIMENSION;
+	constexpr Vector3 navMeshScale = Vector3(1.f, 1.f, 1.f);
+	constexpr Vector3 portalScale = Vector3(0.1f, 0.1f, 0.1f);
 
 	EntityManager& em = EntityManager::Get();
 
@@ -51,9 +64,16 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 			// draw block
 			map[y][z][x] = solidBlock;
 			
-			// add block to navScene and NavMesh to block
-			navScene.AddIdAt(x, y, z, e);
-			em.AddComponent<NavMeshComponent>(e);
+			// create NavMesh and add to navScene
+			entity newMesh = em.CreateEntity();
+			navScene.AddIdAt(x, y, z, newMesh);
+			em.AddComponent<NavMeshComponent>(newMesh);
+			em.AddComponent<SceneComponent>(newMesh, sceneType);
+			BoundingBoxComponent& bb = em.AddComponent <BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
+
+			// visualize NavMesh
+			em.AddComponent<TransformComponent>(newMesh).SetPosition(bb.Center()).SetScale(navMeshScale);
+			em.AddComponent<ModelComponent>(newMesh, AssetManager::Get().LoadShapeAsset(DOG::Shape::sphere, 16));
 		});
 
 	em.Collect<EmptySpaceComponent>().Do(
@@ -67,14 +87,20 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 			// draw empty space
 			map[y][z][x] = emptySpace;
 			
-			// add block to navScene and NavMesh to block
-			navScene.AddIdAt(x, y, z, e);
-			em.AddComponent<NavMeshComponent>(e);
-			em.AddComponent<SceneComponent>(e, sceneType);
+			// create NavMesh and add to navScene
+			entity newMesh = em.CreateEntity();
+			navScene.AddIdAt(x, y, z, newMesh);
+			em.AddComponent<NavMeshComponent>(newMesh);
+			em.AddComponent<SceneComponent>(newMesh, sceneType);
+			BoundingBoxComponent& bb = em.AddComponent <BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
+
+			// visualize NavMesh
+			em.AddComponent<TransformComponent>(newMesh).SetPosition(bb.Center()).SetScale(navMeshScale);
+			em.AddComponent<ModelComponent>(newMesh, AssetManager::Get().LoadShapeAsset(DOG::Shape::sphere, 16));
 		}
 	);
 
-	//// print map sliced in y-levels
+	// print map sliced in y-levels
 	//for (size_t y = 0; y < map.size(); ++y)
 	//{
 	//	std::cout << "==================================================" << std::endl;
@@ -122,8 +148,8 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 								em.AddComponent<SceneComponent>(id, sceneType);
 
 								// visualize portal
-								em.AddComponent<TransformComponent>(id).SetPosition(pos).SetScale(Vector3(0.2, 0.2, 0.2));
-								em.AddComponent<ModelComponent>(id, AssetManager::Get().LoadShapeAsset(DOG::Shape::prism, 8));
+								em.AddComponent<TransformComponent>(id).SetPosition(pos).SetScale(portalScale);
+								em.AddComponent<ModelComponent>(id, AssetManager::Get().LoadShapeAsset(DOG::Shape::prism, 4));
 							}
 						}
 					}
@@ -132,6 +158,22 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 		}
 	}
 }
+
+
+std::vector<Vector3> Pathfinder::Checkpoints(Vector3 start, Vector3 goal)
+{
+	EntityManager& em = EntityManager::Get();
+
+	std::vector<Vector3> checkpoints;
+
+	for (PortalID id : Astar(start, goal, heuristicStraightLine))
+		checkpoints.push_back(em.GetComponent<PortalComponent>(id).portal);
+
+	checkpoints.push_back(goal);
+
+	return checkpoints;
+}
+
 
 
 std::vector<PortalID> Pathfinder::Astar(const Vector3 start, const Vector3 goal, float(*h)(Vector3, Vector3))
@@ -321,60 +363,6 @@ float Pathfinder::heuristicStraightLine(Vector3 start, Vector3 goal)
 	return (goal - start).Length();
 }
 
-//Pathfinder::NavMeshID Pathfinder::NewMesh(Box extents)
-//{
-//	NavMeshID id = m_navMeshes.size();
-//	m_navMeshes.emplace_back(NavMesh(extents));
-//	return id;
-//}
-
-//Pathfinder::PortalID Pathfinder::NewPortal(NavMeshID mesh, Box node)
-//{
-//	PortalID id = m_navNodes.size();
-//	m_navNodes.emplace_back(Portal(node, mesh));
-//	return id;
-//}
-
-//void Pathfinder::ConnectMeshAndNode(NavMeshID mesh, PortalID node)
-//{
-//	m_navNodes[node].AddNavMesh(mesh);
-//	m_navMeshes[mesh].AddNavNode(node);
-//}
-
-//std::vector<Box> Pathfinder::ConnectToNeighborsAndReturnOpen(NavMeshID mesh, Box border)
-//{
-//	std::vector<Box> open{border};
-//	for (NavMeshID existing = 0; existing < m_navMeshes.size(); ++existing)
-//	{
-//		Box intersection = m_navMeshes[existing].corners.Intersection(border);
-//		if (intersection.Area() > 0)
-//		{
-//			ConnectMeshAndNode(existing, NewPortal(mesh, intersection));
-//			std::vector<Box> newOpen;
-//			for (Box& segment : open)
-//			{
-//				if (segment.Contains(intersection))
-//				{
-//					//std::cout << "Found intersection: " << intersection.str() << " on border " << border.str() << std::endl;
-//					Box lower(segment.low, GridCoord(std::min(intersection.low.x, segment.high.x), std::min(intersection.low.y, segment.high.y)));
-//					if (lower.RealArea() > 0)
-//						newOpen.push_back(lower);
-//					Box higher(GridCoord(std::max(intersection.high.x, segment.low.x), std::max(intersection.high.y, segment.low.y)), segment.high);
-//					if (higher.RealArea() > 0)
-//						newOpen.push_back(higher);
-//				}
-//				else
-//					newOpen.push_back(segment);
-//			}
-//			open = newOpen;
-//		}
-//	}
-//	//std::cout << "Open borders [" << open.size() << "]:\t";
-//	//for (Box& b : open)
-//	//	std::cout << b.str() << "\t";
-//	//std::cout << std::endl;
-//	return open;
-//}
 
 
 //void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord origin, char symbol, PortalID currentNode)

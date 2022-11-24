@@ -8,14 +8,24 @@
 class Pathfinder
 {
 using Vector3 = DirectX::SimpleMath::Vector3;
+private:
+	static void Init();
+
 public:
 	using NavMeshID = DOG::entity;
 	using PortalID = DOG::entity;
 
 	// public methods
-	[[nodiscard]] static constexpr Pathfinder& Get() noexcept { return s_instance; }
+	[[nodiscard]] static constexpr Pathfinder& Get() noexcept
+	{ 
+		if (m_initialized == false)
+			Init(); 
+		return s_instance;
+	}
 
 	void BuildNavScene(SceneComponent::Type sceneType);
+
+	std::vector<Vector3> Checkpoints(Vector3 start, Vector3 goal);
 
 private:
 	struct Step
@@ -34,10 +44,12 @@ private:
 	};
 
 	static Pathfinder s_instance;
+	static bool m_initialized;
 
 	Pathfinder() noexcept;
 	virtual ~Pathfinder() = default;
 	DELETE_COPY_MOVE_CONSTRUCTOR(Pathfinder);
+
 
 	// Methods
 	
@@ -50,5 +62,5 @@ private:
 	//// newPos Fly(currentPos, goal, speed)
 	//size_t FindNavMeshContaining(const Vector3 pos);
 	std::vector<PortalID> Astar(const Vector3 start, const Vector3 goal, float (*h)(Vector3, Vector3));
-	float heuristicStraightLine(Vector3 start, Vector3 goal);
+	static float heuristicStraightLine(Vector3 start, Vector3 goal);
 };

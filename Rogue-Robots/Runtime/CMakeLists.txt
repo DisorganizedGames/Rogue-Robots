@@ -43,6 +43,7 @@ set(SourceFiles
 	"src/Pathfinder/Box.h" "src/Pathfinder/Box.cpp"
 	"src/Pathfinder/PathfinderDebugLayer.h" "src/Pathfinder/PathfinderDebugLayer.cpp"
 	"src/Pathfinder/PathfinderComponents.h" "src/Pathfinder/PathfinderComponents.cpp"
+	"src/Pathfinder/PathfinderSystems.h" "src/Pathfinder/PathfinderSystems.cpp"
 
 	"src/Game/AnimationIDs.h"
 	"src/Game/PlayerEquipmentFunctions.h" "src/Game/PlayerEquipmentFunctions.cpp"
