@@ -43,7 +43,11 @@ function MiscComponent:BasicShot()
 			}
 
 			return {bullet} 
-		end
+		end,
+
+		GetECSType = function(self)
+			return 0
+		end,
 	}
 end
 
@@ -81,7 +85,11 @@ function MiscComponent:FullAuto()
 				return {bullet} 
 			end
 			return nil
-		end
+		end,
+
+		GetECSType = function(self)
+			return 1
+		end,
 	}
 end
 
@@ -132,7 +140,11 @@ function MiscComponent:ChargeShot()
 
 			end
 			return nil
-		end
+		end,
+
+		GetECSType = function(self)
+			return 2
+		end,
 	}
 end
 

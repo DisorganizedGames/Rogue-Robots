@@ -109,6 +109,8 @@ public:
 
 	void GetModificationType(DOG::LuaContext* context);
 
+	void GetMiscType(DOG::LuaContext* context);
+
 	void GetAmmoCapacityForBarrelType(DOG::LuaContext* context);
 
 	void GetAmmoCountPerPickup(DOG::LuaContext* context);
@@ -168,6 +170,8 @@ private:
 	void AddBarrelComponent(DOG::LuaContext* context, DOG::entity e);
 
 	void AddMagazineModificationComponent(DOG::LuaContext* context, DOG::entity e);
+
+	void AddMiscComponent(DOG::LuaContext* context, DOG::entity e);
 
 	void AddThisPlayerWeapon(DOG::LuaContext* context, DOG::entity e);
 
@@ -248,4 +252,5 @@ public:
 	void AmmoUI(DOG::LuaContext* context);
 	void AddDamageToEntity(DOG::LuaContext* context);
 	void AddMagazineEffectsFromBullet(DOG::LuaContext* context);
+	void SpawnPickupMiscComponent(DOG::LuaContext* context);
 };
