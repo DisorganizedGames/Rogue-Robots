@@ -44,6 +44,9 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 	uint32_t enemyNrCounter = 0u;
 	uint32_t itemCounter = 0u;
 
+	//Enemies can not spawn closer than this to the players.
+	float safeZone = 20.0f;
+
 	EntityManager::Get().Collect<FloorBlockComponent>().Do([&](entity e, FloorBlockComponent&)
 		{
 			Vector3 pos = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
@@ -51,12 +54,12 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 			{
 				Vector3 diff = pos - spawnblockPos;
 				float dist = sqrt(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z);
-				if (dist > 20.0f)
+				if (dist > safeZone)
 				{
 					//Spawn enemies
 					AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(pos.x, pos.y + 2.5f, pos.z), (u8)(enemyNrCounter), 0.5f));
 					++enemyNrCounter;
-					if (enemyNrCounter > 5)
+					if (enemyNrCounter > maxEnemiesPerSpawn)
 					{
 						enemyNrCounter = 1;
 					}

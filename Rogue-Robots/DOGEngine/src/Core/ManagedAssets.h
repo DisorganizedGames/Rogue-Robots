@@ -166,6 +166,7 @@ namespace DOG
 		MeshAsset meshAsset;
 		std::optional<gfx::StaticModel> gfxModel = std::nullopt;
 		ImportedRig animation;
+		std::vector<ImportedLight> lights;
 	};
 
 	struct AudioAsset : public Asset

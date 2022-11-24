@@ -15,42 +15,41 @@
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "Cliff1"
+            "name" : "EmergencyLight"
         }
     ],
     "materials" : [
         {
             "doubleSided" : true,
             "emissiveFactor" : [
-                2,
-                2,
-                2
+                10,
+                10,
+                10
             ],
             "emissiveTexture" : {
                 "index" : 0
             },
-            "name" : "PP_Standard_Material.010",
+            "name" : "EmergencyLight",
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 1
                 },
                 "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
+                "roughnessFactor" : 0.4000000059604645
             }
         }
     ],
     "meshes" : [
         {
-            "name" : "Scene.007",
+            "name" : "Cylinder.001",
             "primitives" : [
                 {
                     "attributes" : {
                         "POSITION" : 0,
                         "NORMAL" : 1,
-                        "TEXCOORD_0" : 2,
-                        "TEXCOORD_1" : 3
+                        "TEXCOORD_0" : 2
                     },
-                    "indices" : 4,
+                    "indices" : 3,
                     "material" : 0
                 }
             ]
@@ -69,82 +68,71 @@
     "images" : [
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette_Emmissive",
-            "uri" : "Textures/PP_Color_Palette_Emmissive.png"
+            "name" : "LampEmission",
+            "uri" : "Textures/LampEmission.png"
         },
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
+            "name" : "LampDiffuse",
+            "uri" : "Textures/LampDiffuse.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 2826,
+            "count" : 1128,
             "max" : [
-                2.5459020137786865,
-                5.025716781616211,
-                2.7130963802337646
+                0.15000000596046448,
+                0.21798370778560638,
+                0.15000000596046448
             ],
             "min" : [
-                -0.895950973033905,
-                0.9417095184326172,
-                -2.7295072078704834
+                -0.15000000596046448,
+                -0.003988230600953102,
+                -0.15000000596046448
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 2826,
+            "count" : 1128,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 2826,
+            "count" : 1128,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
-            "componentType" : 5126,
-            "count" : 2826,
-            "type" : "VEC2"
-        },
-        {
-            "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 2826,
+            "count" : 1140,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 33912,
+            "byteLength" : 13536,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 33912,
-            "byteOffset" : 33912
+            "byteLength" : 13536,
+            "byteOffset" : 13536
         },
         {
             "buffer" : 0,
-            "byteLength" : 22608,
-            "byteOffset" : 67824
+            "byteLength" : 9024,
+            "byteOffset" : 27072
         },
         {
             "buffer" : 0,
-            "byteLength" : 22608,
-            "byteOffset" : 90432
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 5652,
-            "byteOffset" : 113040
+            "byteLength" : 2280,
+            "byteOffset" : 36096
         }
     ],
     "samplers" : [
@@ -155,8 +143,8 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 118692,
-            "uri" : "Cliff1.bin"
+            "byteLength" : 38376,
+            "uri" : "EmergencyLight.bin"
         }
     ]
 }
