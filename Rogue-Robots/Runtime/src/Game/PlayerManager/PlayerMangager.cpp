@@ -74,13 +74,17 @@ void PlayerHit::OnUpdate(entity e, HasEnteredCollisionComponent& collision, This
 			{
 				PlayerManager::Get().HurtThisPlayer(eMan.GetComponent<BulletComponent>( collision.entities[i]).damage/15.0f);
 
-				// Add visual effect
-				const auto& pos1 = eMan.GetComponent<TransformComponent>(collision.entities[i]).GetPosition();
-				const auto& pos2 = eMan.GetComponent<TransformComponent>(e).GetPosition();
-				auto dir = pos1 - pos2;
-				dir.Normalize();
-				
-				DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 2.f, 1.5f);
+
+				if (EntityManager::Get().HasComponent<PlayerAliveComponent>(e))
+				{
+					// Add visual effect
+					const auto& pos1 = eMan.GetComponent<TransformComponent>(collision.entities[i]).GetPosition();
+					const auto& pos2 = eMan.GetComponent<TransformComponent>(e).GetPosition();
+					auto dir = pos1 - pos2;
+					dir.Normalize();
+
+					DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 2.f, 1.5f);
+				}
 			}
 		}
 	}
