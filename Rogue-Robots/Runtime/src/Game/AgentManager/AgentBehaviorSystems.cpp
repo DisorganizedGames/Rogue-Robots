@@ -196,8 +196,8 @@ void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& c
 				.spawnRate = 32.f,
 				.particleSize = 0.02f,
 				.particleLifetime = .5f,
-				.startColor = DirectX::SimpleMath::Vector4(0.5, 0.1, 0.1, 1.f),
-				.endColor = DirectX::SimpleMath::Vector4(0.5, 0.1, 0.1, 1.f),
+				.startColor = 3.0f * DirectX::SimpleMath::Vector4(0.5f, 0.1f, 0.1f, 1.f),
+				.endColor = 3.0f * DirectX::SimpleMath::Vector4(0.5f, 0.1f, 0.1f, 1.f),
 			};
 			eMan.AddComponent<ConeSpawnComponent>(hitParticleEffect) = { .angle = DirectX::XM_PI/3, .speed = 2.f };
 			
