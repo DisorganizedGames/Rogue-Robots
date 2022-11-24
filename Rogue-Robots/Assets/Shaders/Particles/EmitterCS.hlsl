@@ -86,12 +86,6 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 			aliveCounter[0] = MAX_PARTICLES_ALIVE;
 		}
 	}
-	
-	if (globalID == 0)
-	{
-		aliveCounter[1] = aliveCounter[0];
-		aliveCounter[0] = 0;
-	}
 }
 
 void SpawnCone(inout Particle p, in Texture1D noiseTex, in float seed);

@@ -30,8 +30,8 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 
 	StructuredBuffer<ShaderInterop_PerFrameData> perFrameTable = ResourceDescriptorHeap[globalData.perFrameTable];
 	ShaderInterop_PerFrameData perFrame = perFrameTable[g_constants.perFrameOffset];
-
-	uint prevAlive = aliveCounter[1];	
+	
+	uint prevAlive = aliveCounter[1];
 
 	Particle p = particleBuffer[globalID];
 	Emitter e = emitterBuffer[p.emitterHandle + g_constants.localEmitterTableOffset];
