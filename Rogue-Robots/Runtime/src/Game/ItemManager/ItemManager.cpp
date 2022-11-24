@@ -471,7 +471,10 @@ u32 ItemManager::CreateFullAutoPickup(Vector3 position, u32 id)
 	if (id == 0)
 		ni.id = ++fullAutoNetworkID;
 	else
+	{
 		ni.id = id;
+		fullAutoNetworkID = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(fullAutoEntity, "Pickupable.lua");
 
@@ -499,7 +502,10 @@ u32 ItemManager::CreateChargeShotPickup(Vector3 position, u32 id)
 	if (id == 0)
 		ni.id = ++chargeShotNetworkID;
 	else
+	{
 		ni.id = id;
+		chargeShotNetworkID = id;
+	}
 
 	LuaMain::GetScriptManager()->AddScript(chargeShotEntity, "Pickupable.lua");
 
