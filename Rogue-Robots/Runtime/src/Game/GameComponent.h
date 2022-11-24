@@ -1,6 +1,7 @@
 #pragma once
 #include <DOGEngine.h>
 #include "AgentManager/AgentComponents.h"
+#include "Pathfinder/PathfinderComponents.h"
 #include "EntitesTypes.h"
 #include "AnimationIDs.h"
 #include "Core/QueryHelpers.h" // included here to leak it everywhere.

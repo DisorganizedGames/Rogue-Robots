@@ -79,7 +79,7 @@ void AgentSeekPlayerSystem::OnUpdate(entity e, AgentSeekPlayerComponent& seek, A
 
 
 void AgentMovementSystem::OnUpdate(entity e, AgentMovementComponent& movement, 
-	AgentPathfinderComponent& pathfinder, AgentSeekPlayerComponent& seek, RigidbodyComponent& rb, TransformComponent& trans)
+	AgentSeekPlayerComponent& seek, RigidbodyComponent& rb, TransformComponent& trans)
 {
 	if (seek.entityID == DOG::NULL_ENTITY)
 	{
@@ -100,9 +100,13 @@ void AgentMovementSystem::OnUpdate(entity e, AgentMovementComponent& movement,
 	}
 	else
 	{
-		pathfinder.targetPos = EntityManager::Get().GetComponent<TransformComponent>(seek.entityID).GetPosition();
-		pathfinder.targetPos += (-seek.direction * 2);
-		trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pathfinder.targetPos, Vector3(0, 1, 0)).Invert();
+		// Guaranteed only as long all agents have ground movement - rework if flying or other movement types are added
+		PathfinderWalkComponent& pathfinder = EntityManager::Get().GetComponent<PathfinderWalkComponent>(e);
+
+		pathfinder.goal = EntityManager::Get().GetComponent<TransformComponent>(seek.entityID).GetPosition();
+		pathfinder.goal -= (seek.direction * 2);
+		pathfinder.speed = movement.currentSpeed;
+		trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pathfinder.targetPos, Vector3::Up).Invert();
 		movement.forward = seek.direction;
 
 		// TODO: transfer actual movement responsibility to Pathfinder

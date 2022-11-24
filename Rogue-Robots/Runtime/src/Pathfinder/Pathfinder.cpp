@@ -5,6 +5,8 @@
 
 using namespace DOG;
 using namespace DirectX::SimpleMath;
+//using NavMeshID = DOG::entity;
+using PortalID = DOG::entity;
 
 Pathfinder Pathfinder::s_instance;
 
@@ -90,9 +92,7 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 	//	std::cout << std::endl;
 	//}
 
-	//std::cout << "Start at (" << startX << ", " << startY << ", " << startZ << ")" << std::endl;
-	//ConnectNavMeshes(startX, startY, startZ, navScene);
-	size_t count = 0;
+	// Connect the NavMeshes
 	for (size_t y = 0; y < navScene.map.size(); ++y)
 	{
 		for (size_t z = 0; z < navScene.map[y].size(); ++z)
@@ -113,18 +113,17 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 							// if meshes not connected, create portal
 							if (myMesh.Connected(me, other) == false)
 							{
-								if (em.HasComponent<PortalComponent>(me))
-								{
-									//std::cout << "[" << x << ", " << y << ", " << z << "] " << (++count) << std::endl;
-									myMesh.portals.emplace_back(em.CreateEntity());
-									em.AddComponent<PortalComponent>(myMesh.portals.back(), me, other);
-									em.AddComponent<SceneComponent>(myMesh.portals.back(), sceneType);
-								}
-								else
-								{
-									myMesh.portals.emplace_back(me);
-									em.AddComponent<PortalComponent>(me, me, other);
-								}
+								// add new portal to me and other
+								PortalID id = myMesh.portals.emplace_back(em.CreateEntity());
+								em.GetComponent<NavMeshComponent>(other).portals.push_back(id);
+
+								// add necessary components to portal
+								Vector3 pos = em.AddComponent<PortalComponent>(id, me, other).portal;
+								em.AddComponent<SceneComponent>(id, sceneType);
+
+								// visualize portal
+								em.AddComponent<TransformComponent>(id).SetPosition(pos).SetScale(Vector3(0.2, 0.2, 0.2));
+								em.AddComponent<ModelComponent>(id, AssetManager::Get().LoadShapeAsset(DOG::Shape::prism, 8));
 							}
 						}
 					}
@@ -134,29 +133,249 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 	}
 }
 
-void Pathfinder::ConnectNavMeshes(int x, int y, int z, NavSceneComponent& navScene)
+
+std::vector<PortalID> Pathfinder::Astar(const Vector3 start, const Vector3 goal, float(*h)(Vector3, Vector3))
 {
-	// connect mesh to meshes
-	entity me = navScene.At(x, y, z);
-	NavMeshComponent& myMesh = EntityManager::Get().GetComponent<NavMeshComponent>(me);
-	
-	for (Step dir : {Dir::down, Dir::north, Dir::east, Dir::south, Dir::west, Dir::up})
-	{
-		if (navScene.HasNavMesh(x + dir.x, y + dir.y, z + dir.z))
+	struct MaxFloat
+	{	// float wrapper that has default value infinity
+		float score;
+		MaxFloat() : score(std::numeric_limits<float>::infinity()) {}
+		void	operator=(const float other)		{ score = other; }
+		float	operator=(const MaxFloat& other)	{ return other.score; }
+		float	operator+(const float other)		{ return this->score + other; }
+		bool	operator<(const float other)		{ return this->score < other; }
+		bool	operator<(const MaxFloat& other)	{ return this->score < other.score; }
+		bool	operator>(const MaxFloat& other)	{ return this->score > other.score; }
+		bool	operator>(const float other)		{ return this->score > other; }
+	};
+
+	EntityManager& em = EntityManager::Get();
+
+	std::vector<PortalID> result;
+
+	em.Collect<NavSceneComponent>().Do(
+		[&](entity ncID, NavSceneComponent& navScene)
 		{
-			entity other = navScene.At(x + dir.x, y + dir.y, z + dir.z);
-			// if meshes not connected, create portal
-			if (myMesh.Connected(me, other) == false)
+			if (NavMeshID startMesh = navScene.At(start) != NULL_ENTITY)
 			{
-				myMesh.portals.emplace_back(EntityManager::Get().CreateEntity());
-				EntityManager::Get().AddComponent<PortalComponent>(myMesh.portals.back(), me, other);
-				
-				// recursively connect navmeshes
-				ConnectNavMeshes(x + dir.x, y + dir.y, z + dir.z, navScene);
+				if (NavMeshID terminalNavMesh = navScene.At(goal) != NULL_ENTITY)
+				{
+					// Define the entry and terminal nodes
+					// Opportunity to optimize:
+					// if FindNavMeshContaining(start) == FindNavMeshContaining(goal) return empty path
+
+					PortalComponent entry = PortalComponent(startMesh, start);
+					constexpr PortalID startPoint = NULL_ENTITY;
+
+					std::vector<PortalID> openSet = { startPoint };
+					std::unordered_map<PortalID, PortalID> cameFrom;
+					std::unordered_map<PortalID, MaxFloat> fScore;
+					fScore[startPoint] = h(start, goal);
+					std::unordered_map<PortalID, MaxFloat> gScore;
+					gScore[startPoint] = 0;
+
+					// Lamdas used in A*
+					// ------------------------------------------------------------------------
+					// lambda: pop element with lowest fScore from minheap
+					auto popOpenSet = [&]()
+					{
+						PortalID get = openSet[0];
+						openSet[0] = openSet.back();
+						openSet.pop_back();
+						// percolate down
+						size_t i = 0;
+						size_t comp = i * 2 + 1;		// left child
+						while (comp < openSet.size())
+						{
+							size_t right = i * 2 + 2;	// right child
+							if (right < openSet.size())
+								if (fScore[right] < fScore[comp])
+									comp = right;
+							if (fScore[comp] < fScore[i])
+							{
+								std::swap(openSet[i], openSet[comp]);
+								i = comp;
+								comp = i * 2 + 1;
+							}
+							else
+								comp = openSet.size();
+						}
+						return get;
+					};
+					// lambda: push new element onto minheap
+					auto pushOpenSet = [&](PortalID iNode)
+					{
+						openSet.push_back(iNode);
+						// percolate up
+						size_t i = openSet.size() - 1;
+						size_t p = (i + (i % 2)) / 2 - 1;
+						while (p >= 0 && fScore[p] > fScore[i])
+						{
+							std::swap(openSet[p], openSet[i]);
+							i = p;
+							p = (i + (i % 2)) / 2 - 1;
+						}
+					};
+					// lambda: returns true if current node is connected to the NavMesh containing the goal
+					auto leadsToGoal = [&](PortalID current)
+					{
+						if (current == startPoint)
+							return entry.navMesh1 == terminalNavMesh;
+						PortalComponent& currentPortal = em.GetComponent<PortalComponent>(current);
+						return currentPortal.navMesh1 == terminalNavMesh || currentPortal.navMesh2 == terminalNavMesh;
+					};
+					// lambda: returns true if openSet does not contain neighbor
+					auto notInOpenSet = [&](PortalID neighbor)
+					{
+						for (PortalID node : openSet)
+							if (node == neighbor)
+								return false;
+						return true;
+					};
+					auto getNeighbors = [&](PortalID current)
+					{
+						if (current == startPoint)
+							return em.GetComponent<NavMeshComponent>(entry.navMesh1).portals;
+						std::vector<PortalID> neighbors;
+						PortalComponent& currentPortal = em.GetComponent<PortalComponent>(current);
+						for (NavMeshID id : { currentPortal.navMesh1, currentPortal.navMesh2 })
+							for (PortalID portalID : em.GetComponent<NavMeshComponent>(id).portals)
+								if (portalID != current)
+									neighbors.push_back(portalID);
+						return neighbors;
+					};
+					// lambda: d - distance between nodes
+					auto d = [&](PortalID current, PortalID neighbor)
+					{
+						NavMeshID meshID;
+						PortalComponent& currentPortal = em.GetComponent<PortalComponent>(current);
+						// get the first NavMesh of current
+						if (current == startPoint)
+							meshID = entry.navMesh1;
+						else
+							meshID = currentPortal.navMesh1;
+						// compare with first NavMesh of neigbor
+						PortalComponent& neighborPortal = em.GetComponent<PortalComponent>(neighbor);
+						if (neighbor == startPoint)
+							if (meshID != entry.navMesh1)
+								// only one can have a single connection thus current has two
+								meshID = currentPortal.navMesh2;
+							else
+								if (meshID != neighborPortal.navMesh1)
+									// only one can have a single connection thus neighbor has two
+									meshID = neighborPortal.navMesh2;
+						// since the first two NavMeshes are different meshID must now contain the righ reference
+						return em.GetComponent<NavMeshComponent>(meshID).CostWalk(currentPortal.portal, neighborPortal.portal);
+					};
+					// lambda: creates the shortest path found
+					auto reconstructPath = [&](PortalID portalID)
+					{
+						//std::vector<PortalID> path;
+						while (cameFrom.contains(portalID))
+						{
+							if (portalID != startPoint)
+								// exclude starting point from path
+								result.push_back(portalID);
+							portalID = cameFrom[portalID];
+						}
+						// reverse path
+						std::reverse(result.begin(), result.end());
+						//return path;
+					};
+
+					// ---------------------------------------------------------------------
+					// A* implementation
+					while (!openSet.empty())
+					{
+						PortalID current = popOpenSet();
+						if (leadsToGoal(current))
+						{
+							reconstructPath(current);	// fills result with PortalIDs
+							return;
+						}
+
+						for (PortalID neighbor : getNeighbors(current))
+						{
+							float tentativeGScore = gScore[current] + d(current, neighbor);
+							if (gScore[neighbor] > tentativeGScore)
+							{
+								cameFrom[neighbor] = current;
+								gScore[neighbor] = tentativeGScore;
+								fScore[neighbor] = tentativeGScore + h(em.GetComponent<PortalComponent>(neighbor).portal, goal);
+								if (notInOpenSet(neighbor))
+									pushOpenSet(neighbor);
+							}
+						}
+					}
+				}
+				// else trivial navigation within NavMesh
 			}
-		}
-	}
+			// else invalid starting position
+		});
+
+	return result;
 }
+
+float Pathfinder::heuristicStraightLine(Vector3 start, Vector3 goal)
+{
+	return (goal - start).Length();
+}
+
+//Pathfinder::NavMeshID Pathfinder::NewMesh(Box extents)
+//{
+//	NavMeshID id = m_navMeshes.size();
+//	m_navMeshes.emplace_back(NavMesh(extents));
+//	return id;
+//}
+
+//Pathfinder::PortalID Pathfinder::NewPortal(NavMeshID mesh, Box node)
+//{
+//	PortalID id = m_navNodes.size();
+//	m_navNodes.emplace_back(Portal(node, mesh));
+//	return id;
+//}
+
+//void Pathfinder::ConnectMeshAndNode(NavMeshID mesh, PortalID node)
+//{
+//	m_navNodes[node].AddNavMesh(mesh);
+//	m_navMeshes[mesh].AddNavNode(node);
+//}
+
+//std::vector<Box> Pathfinder::ConnectToNeighborsAndReturnOpen(NavMeshID mesh, Box border)
+//{
+//	std::vector<Box> open{border};
+//	for (NavMeshID existing = 0; existing < m_navMeshes.size(); ++existing)
+//	{
+//		Box intersection = m_navMeshes[existing].corners.Intersection(border);
+//		if (intersection.Area() > 0)
+//		{
+//			ConnectMeshAndNode(existing, NewPortal(mesh, intersection));
+//			std::vector<Box> newOpen;
+//			for (Box& segment : open)
+//			{
+//				if (segment.Contains(intersection))
+//				{
+//					//std::cout << "Found intersection: " << intersection.str() << " on border " << border.str() << std::endl;
+//					Box lower(segment.low, GridCoord(std::min(intersection.low.x, segment.high.x), std::min(intersection.low.y, segment.high.y)));
+//					if (lower.RealArea() > 0)
+//						newOpen.push_back(lower);
+//					Box higher(GridCoord(std::max(intersection.high.x, segment.low.x), std::max(intersection.high.y, segment.low.y)), segment.high);
+//					if (higher.RealArea() > 0)
+//						newOpen.push_back(higher);
+//				}
+//				else
+//					newOpen.push_back(segment);
+//			}
+//			open = newOpen;
+//		}
+//	}
+//	//std::cout << "Open borders [" << open.size() << "]:\t";
+//	//for (Box& b : open)
+//	//	std::cout << b.str() << "\t";
+//	//std::cout << std::endl;
+//	return open;
+//}
+
 
 //void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord origin, char symbol, PortalID currentNode)
 //{
@@ -488,226 +707,3 @@ void Pathfinder::ConnectNavMeshes(int x, int y, int z, NavSceneComponent& navSce
 //	ASSERT(false, "Pathfinder: pos does not exist in map");
 //	return size_t(-1);
 //}
-//
-//float Pathfinder::heuristicStraightLine(Vector3 start, Vector3 goal)
-//{
-//	return (goal - start).Length();
-//}
-//
-//std::vector<Portal*> Pathfinder::Astar(const Vector3 start, const Vector3 goal, float(*h)(Vector3, Vector3))
-//{
-//	struct MaxFloat
-//	{	// float wrapper that has default value infinity
-//		float score;
-//		MaxFloat() : score(std::numeric_limits<float>::infinity()) {}
-//		void operator=(const float other) { score = other; }
-//		float operator=(const MaxFloat& other) { return other.score; }
-//		float operator+(const float other) { return this->score + other; }
-//		bool operator<(const float other) { return this->score < other; }
-//		bool operator<(const MaxFloat& other) { return this->score < other.score; }
-//		bool operator>(const MaxFloat& other) { return this->score > other.score; }
-//		bool operator>(const float other) { return this->score > other; }
-//	};
-//	// Define the entry and terminal nodes
-//	// Opportunity to optimize:
-//	// if FindNavMeshContaining(start) == FindNavMeshContaining(goal) return empty path
-//	Portal entry = Portal(start, FindNavMeshContaining(start));
-//	constexpr PortalID startPoint = MAX_ID;
-//	NavMeshID terminalNavMesh = FindNavMeshContaining(goal);
-//
-//	std::vector<PortalID> openSet = { startPoint };
-//	std::unordered_map<PortalID, PortalID> cameFrom;
-//	std::unordered_map<PortalID, MaxFloat> fScore;
-//	fScore[startPoint] = h(start, goal);
-//	std::unordered_map<PortalID, MaxFloat> gScore;
-//	gScore[startPoint] = 0;
-//
-//	// lambda: pop element with lowest fScore from minheap
-//	auto popOpenSet = [&]()
-//	{
-//		PortalID get = openSet[0];
-//		openSet[0] = openSet.back();
-//		openSet.pop_back();
-//		// percolate down
-//		size_t i = 0;
-//		size_t comp = i * 2 + 1;		// left child
-//		while (comp < openSet.size())
-//		{
-//			size_t right = i * 2 + 2;	// right child
-//			if (right < openSet.size())
-//				if (fScore[right] < fScore[comp])
-//					comp = right;
-//			if (fScore[comp] < fScore[i])
-//			{
-//				//PortalID toSwap = openSet[i];
-//				//openSet[i] = openSet[comp];
-//				//openSet[comp] = toSwap;
-//				std::swap(openSet[i], openSet[comp]);
-//				i = comp;
-//				comp = i * 2 + 1;
-//			}
-//			else
-//				comp = openSet.size();
-//		}
-//		return get;
-//	};
-//	// lambda: push new element onto minheap
-//	auto pushOpenSet = [&](PortalID iNode)
-//	{
-//		openSet.push_back(iNode);
-//		// percolate up
-//		size_t i = openSet.size() - 1;
-//		size_t p = (i + (i % 2)) / 2 - 1;
-//		while (p >= 0 && fScore[p] > fScore[i])
-//		{
-//			//PortalID toSwap = openSet[p];
-//			//openSet[p] = openSet[i];
-//			//openSet[i] = toSwap;
-//			std::swap(openSet[p], openSet[i]);
-//			i = p;
-//			p = (i + (i % 2)) / 2 - 1;
-//		}
-//	};
-//	// returns true if current node is connected to the NavMesh containing the goal
-//	auto leadsToGoal = [&](PortalID current)
-//	{
-//		if (current == startPoint)
-//			return entry.iMesh1 == terminalNavMesh;
-//		return m_navNodes[current].iMesh1 == terminalNavMesh || m_navNodes[current].iMesh2 == terminalNavMesh;
-//	};
-//	// returns true if openSet does not contain neighbor
-//	auto notInOpenSet = [&](PortalID neighbor)
-//	{
-//		for (PortalID node : openSet)
-//			if (node == neighbor)
-//				return false;
-//		return true;
-//	};
-//	auto getNeighbors = [&](PortalID current)
-//	{
-//		if (current == startPoint)
-//			return m_navMeshes[entry.iMesh1].navNodes;
-//		std::vector<PortalID> neighbors;
-//		for (NavMeshID i : { m_navNodes[current].iMesh1, m_navNodes[current].iMesh2 })
-//			for (PortalID iNode : m_navMeshes[i].navNodes)
-//				if (iNode != current)
-//					neighbors.push_back(iNode);
-//		return neighbors;
-//	};
-//	// lambda: d - distance between nodes
-//	auto d = [&](PortalID current, PortalID neighbor)
-//	{
-//		NavMeshID iNavMesh;
-//		// get the first NavMesh of current
-//		if (current == startPoint)
-//			iNavMesh = entry.iMesh1;
-//		else
-//			iNavMesh = m_navNodes[current].iMesh1;
-//		// compare with first NavMesh of neigbor
-//		if (neighbor == startPoint)
-//			if (iNavMesh != entry.iMesh1)
-//				// only one can have a single connection thus current has two
-//				iNavMesh = m_navNodes[current].iMesh2;
-//		else
-//			if (iNavMesh != m_navNodes[neighbor].iMesh1)
-//				// only one can have a single connection thus neighbor has two
-//				iNavMesh = m_navNodes[neighbor].iMesh2;
-//		// since the first two NavMeshes are different iNavMesh must now contain the righ reference
-//		return m_navMeshes[iNavMesh].CostWalk(m_navNodes[current].Midpoint(), m_navNodes[neighbor].Midpoint());
-//	};
-//	auto reconstructPath = [&](PortalID iNode)
-//	{
-//		std::vector<Portal*> path;
-//		while (cameFrom.contains(iNode))
-//		{
-//			if (iNode != startPoint)
-//				// exclude starting point from path
-//				path.push_back(&m_navNodes[iNode]);
-//			iNode = cameFrom[iNode];
-//		}
-//		// reverse path
-//		std::reverse(path.begin(), path.end());
-//		return path;
-//	};
-//
-//	// A* implementation
-//	while (!openSet.empty())
-//	{
-//		PortalID current = popOpenSet();
-//		if (leadsToGoal(current))
-//			return reconstructPath(current);
-//
-//		for (PortalID neighbor : getNeighbors(current))
-//		{
-//			float tentativeGScore = gScore[current] + d(current, neighbor);
-//			if (gScore[neighbor] > tentativeGScore)
-//			{
-//				cameFrom[neighbor] = current;
-//				gScore[neighbor] = tentativeGScore;
-//				fScore[neighbor] = tentativeGScore + h(m_navNodes[neighbor].Midpoint(), goal);
-//				if (notInOpenSet(neighbor))
-//					pushOpenSet(neighbor);
-//			}
-//		}
-//	}
-//	// no path found, returning empty vector
-//	return std::vector<Portal*>();
-//}
-//
-//
-//Pathfinder::NavMeshID Pathfinder::NewMesh(Box extents)
-//{
-//	NavMeshID id = m_navMeshes.size();
-//	m_navMeshes.emplace_back(NavMesh(extents));
-//	return id;
-//}
-//
-//Pathfinder::PortalID Pathfinder::NewPortal(NavMeshID mesh, Box node)
-//{
-//	PortalID id = m_navNodes.size();
-//	m_navNodes.emplace_back(Portal(node, mesh));
-//	return id;
-//}
-//
-//void Pathfinder::ConnectMeshAndNode(NavMeshID mesh, PortalID node)
-//{
-//	m_navNodes[node].AddNavMesh(mesh);
-//	m_navMeshes[mesh].AddNavNode(node);
-//}
-//
-//std::vector<Box> Pathfinder::ConnectToNeighborsAndReturnOpen(NavMeshID mesh, Box border)
-//{
-//	std::vector<Box> open{border};
-//	for (NavMeshID existing = 0; existing < m_navMeshes.size(); ++existing)
-//	{
-//		Box intersection = m_navMeshes[existing].corners.Intersection(border);
-//		if (intersection.Area() > 0)
-//		{
-//			ConnectMeshAndNode(existing, NewPortal(mesh, intersection));
-//			std::vector<Box> newOpen;
-//			for (Box& segment : open)
-//			{
-//				if (segment.Contains(intersection))
-//				{
-//					//std::cout << "Found intersection: " << intersection.str() << " on border " << border.str() << std::endl;
-//					Box lower(segment.low, GridCoord(std::min(intersection.low.x, segment.high.x), std::min(intersection.low.y, segment.high.y)));
-//					if (lower.RealArea() > 0)
-//						newOpen.push_back(lower);
-//					Box higher(GridCoord(std::max(intersection.high.x, segment.low.x), std::max(intersection.high.y, segment.low.y)), segment.high);
-//					if (higher.RealArea() > 0)
-//						newOpen.push_back(higher);
-//				}
-//				else
-//					newOpen.push_back(segment);
-//			}
-//			open = newOpen;
-//		}
-//	}
-//	//std::cout << "Open borders [" << open.size() << "]:\t";
-//	//for (Box& b : open)
-//	//	std::cout << b.str() << "\t";
-//	//std::cout << std::endl;
-//	return open;
-//}
-
-

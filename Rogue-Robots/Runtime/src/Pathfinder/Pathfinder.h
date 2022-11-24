@@ -37,9 +37,9 @@ private:
 
 	Pathfinder() noexcept;
 	virtual ~Pathfinder() = default;
+	DELETE_COPY_MOVE_CONSTRUCTOR(Pathfinder);
 
 	// Methods
-	void ConnectNavMeshes(int x, int y, int z, NavSceneComponent& navScene);
 	
 	//NavMeshID NewMesh(Box extents);
 	//PortalID NewPortal(NavMeshID mesh, Box extents);
@@ -49,6 +49,6 @@ private:
 	//// newPos Walk(currentPos, goal, speed)
 	//// newPos Fly(currentPos, goal, speed)
 	//size_t FindNavMeshContaining(const Vector3 pos);
-	//std::vector<Portal*> Astar(const Vector3 start, const Vector3 goal, float (*h)(Vector3, Vector3));
-	//float heuristicStraightLine(Vector3 start, Vector3 goal);
+	std::vector<PortalID> Astar(const Vector3 start, const Vector3 goal, float (*h)(Vector3, Vector3));
+	float heuristicStraightLine(Vector3 start, Vector3 goal);
 };

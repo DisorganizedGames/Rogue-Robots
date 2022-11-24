@@ -1,10 +1,7 @@
 #pragma once
 #include <DOGEngine.h>
-#include "../GameComponent.h"
 #include "AgentManager.h"
 
-#include "DirectXMath.h"
-#include <DirectXTK/SimpleMath.h>
 
 class AgentSeekPlayerSystem: public DOG::ISystem
 {
@@ -21,9 +18,9 @@ class AgentMovementSystem : public DOG::ISystem
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
 public:
-	SYSTEM_CLASS(AgentMovementComponent, AgentPathfinderComponent, AgentSeekPlayerComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
-	ON_UPDATE_ID(AgentMovementComponent, AgentPathfinderComponent, AgentSeekPlayerComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
-	void OnUpdate(DOG::entity e, AgentMovementComponent& movement, AgentPathfinderComponent& pathfinder,
+	SYSTEM_CLASS(AgentMovementComponent, AgentSeekPlayerComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
+	ON_UPDATE_ID(AgentMovementComponent, AgentSeekPlayerComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
+	void OnUpdate(DOG::entity e, AgentMovementComponent& movement,
 		AgentSeekPlayerComponent& seek, DOG::RigidbodyComponent& rb, DOG::TransformComponent& trans);
 };
 

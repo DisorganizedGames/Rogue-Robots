@@ -3,11 +3,16 @@
 
 struct NavSceneComponent
 {
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	using NavMeshID = DOG::entity;
+
 	std::vector<std::vector<std::vector<DOG::entity>>> map;
+
 	void AddIdAt(size_t x, size_t y, size_t z, DOG::entity e);
 	bool HasNavMesh(int x, int y, int z);
-	DOG::entity At(size_t x, size_t y, size_t z);
-	DOG::entity At(int x, int y, int z);
+	NavMeshID At(size_t x, size_t y, size_t z);
+	NavMeshID At(int x, int y, int z);
+	NavMeshID At(Vector3 pos);
 };
 
 
@@ -23,7 +28,7 @@ struct NavMeshComponent
 	// Methods
 	bool Connected(NavMeshID mesh1, NavMeshID mesh2);
 	//bool Contains(const Vector3 pos) const;
-	//float CostWalk(const Vector3 enter, const Vector3 exit);
+	float CostWalk(const Vector3 enter, const Vector3 exit);
 	//float CostFly(const Vector3 enter, const Vector3 exit);
 	//bool AddPortal(PortalID nodeID);
 };
@@ -43,6 +48,7 @@ struct PortalComponent
 	NavMeshID navMesh2;
 
 	PortalComponent(NavMeshID mesh1, NavMeshID mesh2);
+	PortalComponent(NavMeshID mesh, Vector3 pos);
 	//Portal(Vector3 low, Vector3 hi, NavMeshID one, NavMeshID two);
 	//Portal(Box area, NavMeshID meshIdx);
 	//Portal(Vector3 pos, NavMeshID meshIdx);
@@ -55,3 +61,11 @@ struct PortalComponent
 	//bool AddNavMesh(NavMeshID navMesh);
 };
 
+
+struct PathfinderWalkComponent
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+
+	Vector3 goal;
+	float speed;
+};
