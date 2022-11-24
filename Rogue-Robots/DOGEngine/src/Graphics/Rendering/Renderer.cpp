@@ -32,6 +32,7 @@
 #include "VFX/ParticleBackend.h"
 #include "RenderEffects/TiledLightCullingEffect.h"
 #include "RenderEffects/DamageDiskEffect.h"
+#include "RenderEffects/HeartbeatEffect.h"
 
 #include "ImGUI/imgui.h"
 #include "../../Core/ImGuiMenuLayer.h"
@@ -330,6 +331,7 @@ namespace DOG::gfx
 		m_tiledLightCuller = std::make_unique<TiledLightCullingEffect>(m_rgResMan.get(), m_globalEffectData, m_renderWidth, m_renderHeight);
 		m_tiledLightCullerVisualization = std::make_unique<TiledLightCullingVisualizationEffect>(m_rgResMan.get(), m_globalEffectData, m_renderWidth, m_renderHeight);
 
+		m_heartbeatEffect = std::make_unique<HeartbeatEffect>(m_globalEffectData);
 		m_damageDiskEffect = std::make_unique<DamageDiskEffect>(m_globalEffectData);
 	
 		{
@@ -392,7 +394,6 @@ namespace DOG::gfx
 
 		m_rgResMan->ImportTexture(RG_RESOURCE(NoiseSSAO), m_ssaoNoise, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
 		m_rgResMan->ImportBuffer(RG_RESOURCE(SamplesSSAO), m_ssaoSamples, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
-
 	}
 
 	Renderer::~Renderer()
@@ -974,7 +975,6 @@ namespace DOG::gfx
 				});
 		}
 
-		m_damageDiskEffect->Add(rg);
 
 		// Generate SSAO
 		{
@@ -1141,6 +1141,9 @@ namespace DOG::gfx
 		//m_testComputeEffect->Add(rg);
 
 		m_particleBackend->AddEffect(*m_rg);
+
+		m_heartbeatEffect->Add(rg);
+		m_damageDiskEffect->Add(rg);
 
 		if (m_bloomEffect)
 			m_bloomEffect->Add(rg);

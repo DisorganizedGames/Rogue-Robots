@@ -27,7 +27,7 @@ set(SourceFiles
 	"src/Game/LightScene.h" "src/Game/LightScene.cpp"
 	"src/Game/FakeComputeLightCulling.h" "src/Game/FakeComputeLightCulling.cpp"
 	"src/Game/TestScenes/ParticleScene.h" "src/Game/TestScenes/ParticleScene.cpp"
-	"src/Game/PlayerManager/PlayerManager.h" "src/Game/PlayerManager/PlayerMangager.cpp")
+	"src/Game/PlayerManager/PlayerManager.h" "src/Game/PlayerManager/PlayerMangager.cpp" "src/Game/HeartbeatTrackerSystem.h" "src/Game/HeartbeatTrackerSystem.cpp")
 
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")

@@ -31,12 +31,7 @@ namespace DOG::gfx
 		void Clear();
 		friend class Renderer;
 
-		// Accessible directly by Effects
-		DamageDiskData m_damageDiskData;
 
-		// Naive ring
-		std::vector<DamageDiskData> m_damageDiskDatas;
-		u32 m_nextDisk{ 0 };
 
 	public:
 		static void Initialize();
@@ -48,13 +43,27 @@ namespace DOG::gfx
 		// Damage bow
 		void InstantiateDamageDisk(const DirectX::SimpleMath::Vector2& dir, f32 startIntensity, f32 timeToDisappear);
 
-		const DamageDiskData& GetDamageDiskData() const { return m_damageDiskData; }
+		// Heartbeat	
+		void SetHeartbeatFactor(f32 factor) { m_heartbeatFactor = factor; }
+		void SetHeartbeatTransitionFactor(f32 factor) { m_heartbeatTransitionFactor = factor; }
+
+		// For rendering
 		const std::vector<DamageDiskData>& GetDamageDisks() const { return m_damageDiskDatas; }
+		f32 GetHeartbeatIntensity() const { return m_heartbeatIntensity; }
+		f32 GetHeartbeatTransitionFactor() const { return m_heartbeatTransitionFactor; }
 
 	private:
 		f32 m_elapsedTime{ 0.f };
 		static PostProcess* s_instance;
 		DirectX::SimpleMath::Matrix m_viewMat;
 
+		// Naive ring
+		std::vector<DamageDiskData> m_damageDiskDatas;
+		u32 m_nextDisk{ 0 };
+
+		f32 m_heartbeatIntensity{ 0.f };
+		f32 m_heartbeatFactor{ 0.f };
+
+		f32 m_heartbeatTransitionFactor{ 0.f };
 	};
 }

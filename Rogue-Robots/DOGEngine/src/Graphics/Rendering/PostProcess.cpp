@@ -34,15 +34,6 @@ namespace DOG::gfx
 	{
 		m_elapsedTime += dt;
 		
-		// Simulate Disk data		
-		//{
-		//	f32 localElapsed = m_elapsedTime - m_damageDiskData.currElapsed;
-		//	f32 normalizedTime = std::clamp(localElapsed / m_damageDiskData.timeDelta, 0.f, 1.f);
-		//	f32 targetIntensity = std::clamp(m_damageDiskData.startIntensity - 0.5f, 0.f, 1.f);
-		//	m_damageDiskData.currIntensity = m_damageDiskData.startIntensity * (1.f - normalizedTime) + targetIntensity * normalizedTime;
-
-		//	m_damageDiskData.visibility = 1.f - normalizedTime;
-		//}
 	
 		for (auto& ddd : m_damageDiskDatas)
 		{
@@ -56,6 +47,11 @@ namespace DOG::gfx
 			auto rotated = vec4.Transform(vec4, m_viewMat);
 			ddd.dir2D = { rotated.x, rotated.z };
 		}
+
+		// heartbeat
+		f32 iTime = m_elapsedTime;
+		m_heartbeatIntensity = cos(iTime * 5.f) * 0.5f + 0.5f;
+		m_heartbeatIntensity *= m_heartbeatFactor;
 	}
 
 	void PostProcess::SetViewMat(const DirectX::SimpleMath::Matrix& viewMat)
@@ -74,8 +70,6 @@ namespace DOG::gfx
 		ddd.timeDelta = timeToDisappear;
 		ddd.startIntensity = startIntensity;
 		ddd.visibility = 1.f;
-
-		m_damageDiskData = ddd;
 
 		while (!(m_damageDiskDatas[m_nextDisk].visibility < 0.01f))
 			m_nextDisk = (m_nextDisk + 1) % 50;

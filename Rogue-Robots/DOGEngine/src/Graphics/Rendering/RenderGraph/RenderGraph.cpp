@@ -625,11 +625,17 @@ namespace DOG::gfx
 		file.open("Assets\\rendergraph.txt");
 		file << "digraph G {" << std::endl;
 
+		std::set<std::pair<std::string, std::string>> handledPairs;
+
 		for (const auto& [pass, adjacents] : m_adjacencyMap)
 		{
 			for (const auto& adj : adjacents)
 			{
+				// skip handled pairs
+				if (handledPairs.contains({ pass->name, adj->name }))
+					continue;
 				file << "\"" << pass->name << "\" -> \"" << adj->name << "\"" << std::endl;
+				handledPairs.insert({ pass->name, adj->name });
 			}
 		}
 
