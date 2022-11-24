@@ -316,9 +316,9 @@ function OnPickup(pickup)
 	elseif pickupTypeString == "FullAutoMisc" or pickupTypeString == "ChargeShotMisc" then
 		--Misc component
 		local currentMiscType = Entity:GetMiscType(playerID)
+		Game:SpawnPickupMiscComponent(playerID)
 		if pickupTypeString ~= currentMiscType then
 			--A new misc component was picked up:
-			Game:SpawnPickupMiscComponent(playerID)
 			Entity:RemoveComponent(playerID, "MiscComponent")
 			if pickupTypeString == "FullAutoMisc" then
 				miscComponent = MiscComponent.FullAuto()
