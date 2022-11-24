@@ -19,6 +19,7 @@ namespace DOG::gfx
 		std::shared_ptr<CompiledShader> CompileFromFile(
 			std::filesystem::path relPath,
 			ShaderType type,
+			const std::vector<std::wstring>& defines = {},
 			const std::string& entryPoint = "main");
 
 	private:
