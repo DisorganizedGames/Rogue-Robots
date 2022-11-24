@@ -21,6 +21,8 @@ namespace DOG::gfx
 			.SetShader(ps.get())
 			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
 			.SetRasterizer(RasterizerBuilder().SetCullMode(D3D12_CULL_MODE_NONE))
+			.SetDepthFormat(DepthFormat::D32)
+			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.Build());
 	}
 
@@ -41,6 +43,9 @@ namespace DOG::gfx
 			{
 				builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::PreservePreserve, 
 					TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+				builder.WriteDepthStencil(RG_RESOURCE(MainDepth), RenderPassAccessType::PreservePreserve,
+					TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
 			},
 			[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)		// Execute
 			{
