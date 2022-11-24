@@ -31,6 +31,7 @@ GameLayer::GameLayer() noexcept
 	RegisterLuaInterfaces();
 	
 	m_entityManager.RegisterSystem(std::make_unique<ScuffedSceneGraphSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<SetFlashLightToBoneSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());

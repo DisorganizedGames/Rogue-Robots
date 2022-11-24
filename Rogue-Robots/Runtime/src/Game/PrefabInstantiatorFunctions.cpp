@@ -113,8 +113,14 @@ std::vector<entity> AddFlashlightsToPlayers(const std::vector<entity>& players)
 		auto& playerTransformComponent = em.GetComponent<TransformComponent>(players[i]);
 
 		entity flashLightEntity = em.CreateEntity();
-		auto& tc = em.AddComponent<DOG::TransformComponent>(flashLightEntity);
-		tc.SetPosition(playerTransformComponent.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.2f, 0.0f));
+
+		em.AddComponent<DOG::TransformComponent>(flashLightEntity);
+
+		ChildToBoneComponent& childComponent = em.AddComponent<ChildToBoneComponent>(flashLightEntity);
+		childComponent.boneParent = players[i];
+		childComponent.localTransform.SetPosition(Vector3(-3.0f, -8.0f, 2.0f));
+
+		auto& tc = childComponent.localTransform;
 
 		auto up = tc.worldMatrix.Up();
 		up.Normalize();

@@ -1031,3 +1031,18 @@ void LaserBeamVFXSystem::OnUpdate(LaserBeamVFXComponent& laserBeam)
 }
 
 #pragma endregion
+
+void SetFlashLightToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& child, DOG::TransformComponent& world)
+{
+	auto& em = EntityManager::Get();
+	if (em.Exists(child.boneParent))
+	{
+		auto& boneHeadWorld = em.GetComponent<MixamoHeadJointTF>(child.boneParent);
+		world.worldMatrix = child.localTransform * boneHeadWorld.transform;
+		world.SetPosition(world.GetPosition() + Vector3(0.f, -0.5f, 0.f) + em.GetComponent<TransformComponent>(child.boneParent).GetForward() * 0.2f);
+	}
+	else
+	{
+		em.DeferredEntityDestruction(e);
+	}
+}
