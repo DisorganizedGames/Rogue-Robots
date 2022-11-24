@@ -44,7 +44,7 @@ ActiveItems.turret = {
 		local up = Vector3.FromTable(Entity:GetUp(playerEntity))
 
 		local spawnPos = pos + forward * 3.0
-		hit, target = Physics:RayCast(spawnPos, Vector3.New(0.0, -2.0, 0.0))
+		hit, target = Physics:RayCast(spawnPos, spawnPos + Vector3.New(0.0, -2.0, 0.0))
 		if(hit) then
 			spawnPos = target
 		end

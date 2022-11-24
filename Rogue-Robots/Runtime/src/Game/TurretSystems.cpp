@@ -35,6 +35,16 @@ void TurretTargetingSystem::OnUpdate(TurretTargetingComponent& targeter, ChildCo
 
 			if (abs(yaw + targetYawAngle) <= targeter.yawLimit)
 			{
+
+				// Detect if there is a wall or something in the way
+				if (auto hit = PhysicsEngine::RayCast(turretPosW, targetPosW); hit && em.Exists(hit->entityHit))
+				{
+					if (SimpleMath::Vector3::DistanceSquared(turretPosW, hit->hitPosition) < d2)
+					{
+						if (!em.HasComponent<AgentAggroComponent>(hit->entityHit)) return;
+					}
+				}
+
 				targetDirL.Normalize();
 				maxDistSquared = d2;
 				targeter.trackedTarget = target;
@@ -108,4 +118,32 @@ void TurretProjectileSystem::OnUpdate(DOG::entity e, TurretProjectileComponent& 
 	{
 		EntityManager::Get().DeferredEntityDestruction(e);
 	}
+}
+
+void TurretProjectileHitSystem::OnUpdate(DOG::entity e, TurretProjectileComponent&, BulletComponent& bullet, DOG::TransformComponent& transform, DOG::HasEnteredCollisionComponent&)
+{
+	auto& em = EntityManager::Get();
+	// Create a particle emitter for bullet hit effect
+	auto bulletPos = transform.GetPosition();
+	auto& bulletScene = em.GetComponent<SceneComponent>(e);
+
+	auto playerPosition = em.GetComponent<TransformComponent>(bullet.playerEntityID).GetPosition();
+	auto towardPlayer = (bulletPos - playerPosition);
+	towardPlayer.Normalize();
+
+	entity hitParticleEffect = em.CreateEntity();
+	em.AddComponent<SceneComponent>(hitParticleEffect, bulletScene.scene);
+	em.AddComponent<TransformComponent>(hitParticleEffect, bulletPos)
+		.RotateForwardTo(towardPlayer)
+		.RotateL(Vector3(DirectX::XM_PIDIV2, 0, 0));
+
+	em.AddComponent<LifetimeComponent>(hitParticleEffect, 0.01f);
+	em.AddComponent<ParticleEmitterComponent>(hitParticleEffect) = {
+		.spawnRate = 64.f,
+		.particleSize = 0.08f,
+		.particleLifetime = 0.5f,
+		.startColor = 4.0f * DirectX::SimpleMath::Vector4(0.8f, 0.5f, 0.001f, 1),
+		.endColor = 2.0f * DirectX::SimpleMath::Vector4(0.5f, 0.8f, 0.2f, 1),
+	};
+	em.AddComponent<ConeSpawnComponent>(hitParticleEffect) = { .angle = DirectX::XM_PI / 3, .speed = 4.f };
 }

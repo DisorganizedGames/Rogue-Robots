@@ -30,3 +30,13 @@ public:
 	void OnUpdate(DOG::entity e, TurretProjectileComponent& projectile, DOG::PointLightComponent& pointLight);
 private:
 };
+
+
+class TurretProjectileHitSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(TurretProjectileComponent, BulletComponent, DOG::TransformComponent, DOG::PointLightComponent);
+	ON_UPDATE_ID(TurretProjectileComponent, BulletComponent, DOG::TransformComponent, DOG::HasEnteredCollisionComponent);
+	void OnUpdate(DOG::entity e, TurretProjectileComponent& projectile, BulletComponent& bullet, DOG::TransformComponent& transform, DOG::HasEnteredCollisionComponent& collision);
+private:
+};
