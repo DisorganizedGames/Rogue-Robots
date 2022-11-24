@@ -338,7 +338,7 @@ void GameLayer::UpdateGame()
 	EntityManager::Get().Collect<TransformComponent, TestComponent>().Do([&](TransformComponent& transform, TestComponent&)
 		{
 			
-			transform.worldMatrix = objTf * boneTf;
+			transform.worldMatrix = boneTf;
 			auto pos = transform.GetPosition();
 			pos.y += m_imguiposY;
 			transform.SetPosition(pos);
