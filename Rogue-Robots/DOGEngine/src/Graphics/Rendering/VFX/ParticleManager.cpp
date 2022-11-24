@@ -55,19 +55,11 @@ void ParticleManager::DeferredDeletion()
 }
 
 [[nodiscard]]
-u32 ParticleManager::GetFreeEmitter() const noexcept
+u32 ParticleManager::GetFreeEmitter() noexcept
 {
-
-	for (u32 idx = 0; auto& e: m_emitters)
-	{
-		if (!e.alive)
-			return idx;
-
-		idx++;
-	}
-
-	ASSERT(false, "Failed to find a free space for new emitter");
-	return 0;
+	auto idx = m_lastEmitter++;
+	m_lastEmitter = m_lastEmitter % S_MAX_EMITTERS;
+	return idx;
 }
 
 void ParticleManager::SetSpawnProperties(entity e, ParticleEmitter& emitter)
