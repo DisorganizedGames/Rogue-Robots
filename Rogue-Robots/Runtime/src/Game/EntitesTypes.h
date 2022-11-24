@@ -49,5 +49,7 @@ enum class EntityTypes
 	ChargeShotMisc,
 	Miscs,
 
+	SpawnAble,
+
 	Default,
 };

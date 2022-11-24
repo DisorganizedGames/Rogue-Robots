@@ -254,7 +254,7 @@ void NetCode::OnUpdate()
 								}
 					
 								//Destroy pickups
-								if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Magazines && !tempCreate->alive && (u32)tempCreate->entityTypeId > (u32)EntityTypes::Agents )
+								if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::SpawnAble && !tempCreate->alive && (u32)tempCreate->entityTypeId > (u32)EntityTypes::Agents )
 								{
 									EntityManager::Get().Collect<NetworkPlayerComponent, PlayerAliveComponent>().Do([&](entity id, NetworkPlayerComponent& playerC, PlayerAliveComponent&)
 										{
@@ -279,7 +279,7 @@ void NetCode::OnUpdate()
 								}
 								
 								//Create pickups
-								if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Magazines && tempCreate->alive && (u32)tempCreate->entityTypeId >(u32)EntityTypes::Agents)
+								if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::SpawnAble && tempCreate->alive && (u32)tempCreate->entityTypeId >(u32)EntityTypes::Agents)
 								{
 									ItemManager::Get().CreateItemClient(*tempCreate);
 								}
