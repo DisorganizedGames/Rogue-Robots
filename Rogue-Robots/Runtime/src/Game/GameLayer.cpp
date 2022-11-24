@@ -1011,10 +1011,6 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 					m_lightScene = nullptr;
 				}
 			}
-
-			//ImGui::Checkbox("order p->b", &m_imguiPlaya);
-			ImGui::Text("0: o->p->b, 1: p->o->b, 2: o->b->p, 3: o=pp+xyz*b, 4: pp*b 5: b*pp");
-			ImGui::SliderInt("order", &m_imguiOrder, 0, 5);
 			
 			ImGui::SliderFloat("pX", &m_imguiX, -25.f, 25.f, "%.5f");
 			ImGui::SliderFloat("pY", &m_imguiY, -1.f, 70.f, "%.5f");

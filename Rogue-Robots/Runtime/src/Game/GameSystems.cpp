@@ -253,12 +253,13 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 	// if no schmovement apply idle animation
 	if (!addedAnims)
 	{
-		ac.SimpleAdd(2);
+		ac.SimpleAdd(2, AnimationFlag::Looping);
 		/*setter.animationIDs[addedAnims] = IDLE;
 		setter.targetWeights[addedAnims++] = 1.0f;*/
 	}
 	else
 	{
+		setter.flag = AnimationFlag::Looping;
 		// misc variables
 		setter.playbackRate = 1.5f;
 		setter.transitionLength = 0.1f;

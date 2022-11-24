@@ -101,11 +101,9 @@ private:
 	bool m_noClipCheat = false;
 	bool m_noWinLose = false;
 
-	i32 m_imguiOrder = 0;
 	f32 m_imguiX = 0.f;
-	f32 m_imguiY = 42.0f;
-	f32 m_imguiZ = -1.0f;
+	f32 m_imguiY = 54.7f;
+	f32 m_imguiZ = .1f;
 	f32 m_imguiS = 0.2f;
-	f32 m_imguiposY = 0.0f;
-
+	f32 m_imguiposY = -.5f;
 };
