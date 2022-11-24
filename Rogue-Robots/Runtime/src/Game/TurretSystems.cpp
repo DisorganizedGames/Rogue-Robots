@@ -35,6 +35,16 @@ void TurretTargetingSystem::OnUpdate(TurretTargetingComponent& targeter, ChildCo
 
 			if (abs(yaw + targetYawAngle) <= targeter.yawLimit)
 			{
+
+				// Detect if there is a wall or something in the way
+				if (auto hit = PhysicsEngine::RayCast(turretPosW, targetPosW); hit && em.Exists(hit->entityHit))
+				{
+					if (SimpleMath::Vector3::DistanceSquared(turretPosW, hit->hitPosition) < d2)
+					{
+						if (!em.HasComponent<AgentAggroComponent>(hit->entityHit)) return;
+					}
+				}
+
 				targetDirL.Normalize();
 				maxDistSquared = d2;
 				targeter.trackedTarget = target;
