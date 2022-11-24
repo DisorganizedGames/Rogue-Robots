@@ -65,7 +65,7 @@ namespace DOG
 			{
 				if (aC.animatorID != -1)
 				{
-					auto& a = m_playertestAnimators[aC.animatorID];
+					auto& a = m_playerRigAnimators[aC.animatorID];
 					auto offset = MIXAMO_RIG.nJoints * aC.animatorID;
 					a.Update(deltaTime);
 					a.ProcessAnimationComponent(aC);
@@ -374,7 +374,7 @@ namespace DOG
 	//	return translationVec;
 	//}
 
-	void AnimationManager::UpdateSkeleton(DOG::testAnimator& animator, const u32 offset)
+	void AnimationManager::UpdateSkeleton(DOG::RigAnimator& animator, const u32 offset)
 	{
 		ZoneScopedN("skeletonUpdate");
 		using namespace DirectX;
@@ -417,7 +417,7 @@ namespace DOG
 		}
 	}
 
-	void AnimationManager::CalculateSRT(testAnimator& ac, const u8 rigID)
+	void AnimationManager::CalculateSRT(RigAnimator& ac, const u8 rigID)
 	{
 		ZoneScopedN("SRT calculation");
 		using namespace DirectX;
@@ -445,7 +445,7 @@ namespace DOG
 		}
 	}
 
-	void AnimationManager::ExtractClipNodeInfluences(testAnimator& a, const KeyType key, const u32 group, const u32 rigID)
+	void AnimationManager::ExtractClipNodeInfluences(RigAnimator& a, const KeyType key, const u32 group, const u32 rigID)
 	{
 		ZoneScopedN("Extract");
 		using namespace DirectX;
@@ -580,15 +580,15 @@ namespace DOG
 			{ weight, 0.f, 0.f } };
 
 		//baseAc.SimpleAdd(idleIdx, AnimationFlag::Looping);
-		for (size_t i = 0; i < m_playertestAnimators.size(); ++i)
+		for (size_t i = 0; i < m_playerRigAnimators.size(); ++i)
 		{
 			/*baseAc.addedSetters = 1;
 			baseAc.animSetters[0] = baseState;*/
 			baseAc.SimpleAdd(idleIdx, AnimationFlag::Looping);
-			m_playertestAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
-			m_playertestAnimators[i].ProcessAnimationComponent(baseAc);
+			m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
+			m_playerRigAnimators[i].ProcessAnimationComponent(baseAc);
 			for (u32 j = 0; j < N_GROUPS; j++)
-				m_playertestAnimators[i].groups[j].parent = j == 0 ? -1 : 0;
+				m_playerRigAnimators[i].groups[j].parent = j == 0 ? -1 : 0;
 		}
 	}
 
@@ -604,7 +604,7 @@ namespace DOG
 		if (firstTime)
 		{
 			firstTime = false;
-			mtestAnimator.rigData = m_rigs[MIXAMO_RIG_ID];
+			mRigAnimator.rigData = m_rigs[MIXAMO_RIG_ID];
 			static bool t1 = false, t2 = false, t3 = false;
 			static i8 bindIdx = 0, idleIdx = 2, walkIdx = 4;
 			//const auto danceIdx = m_rigs[MIXAMO_RIG_ID]->animations.size() - 1;
@@ -618,24 +618,24 @@ namespace DOG
 			testAc.animSetters[1] = test2;
 			//testAc.animSetters[2] = test3;
 			//testAc.animSetters[3] = test4;
-			//auto sz = sizeof(mtestAnimator);
+			//auto sz = sizeof(mRigAnimator);
 			for (size_t i = 0; i < 4; i++)
 			{
 				//auto uniqueDanceIdx = danceIdx - i;
-				m_playertestAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
+				m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
 				testAc.addedSetters = 2;
 				testAc.animSetters[0] = test1;
 				testAc.animSetters[1] = test2;
-				m_playertestAnimators[i].ProcessAnimationComponent(testAc);
+				m_playerRigAnimators[i].ProcessAnimationComponent(testAc);
 			}
 			testAc.addedSetters = 2;
 			testAc.animSetters[0] = test1;
 			testAc.animSetters[1] = test2;
-			mtestAnimator.ProcessAnimationComponent(testAc);
+			mRigAnimator.ProcessAnimationComponent(testAc);
 		}
 		timer += dt;
-		mtestAnimator.Update(dt);
-		auto stop = mtestAnimator.clipData[0];
+		mRigAnimator.Update(dt);
+		auto stop = mRigAnimator.clipData[0];
 
 		static bool secondTest = false;
 		if (timer >= 0.6f && !secondTest)
@@ -643,7 +643,7 @@ namespace DOG
 			AnimationComponent::Setter test = { AnimationFlag::None, 0, 0, 0.10f, 1.0f, { 8, 9, -1}, { 0.35f, 0.15f, 0.f} };
 			testAc.addedSetters = 1;
 			testAc.animSetters[0] = test;
-			mtestAnimator.ProcessAnimationComponent(testAc);
+			mRigAnimator.ProcessAnimationComponent(testAc);
 			secondTest = true;
 		}
 		static bool thirdTest = false;
@@ -652,7 +652,7 @@ namespace DOG
 			AnimationComponent::Setter test = { AnimationFlag::None, 1, 0, 0.25f, 1.0f, { 3, 1, -1}, { 0.35f, 0.35f, 0.f} };
 			testAc.addedSetters = 1;
 			testAc.animSetters[0] = test;
-			mtestAnimator.ProcessAnimationComponent(testAc);
+			mRigAnimator.ProcessAnimationComponent(testAc);
 			thirdTest = true;
 		}
 		static bool fourthTest = false;
@@ -663,7 +663,7 @@ namespace DOG
 				AnimationComponent::Setter test = { AnimationFlag::None, 0, 5, 0.25f, 1.0f, { 1, -1, -1}, { 0.35f, 0.35f, 0.f} };
 				testAc.addedSetters = 1;
 				testAc.animSetters[0] = test;
-				m_playertestAnimators[i].ProcessAnimationComponent(testAc);
+				m_playerRigAnimators[i].ProcessAnimationComponent(testAc);
 			}
 			fourthTest = true;
 		}
