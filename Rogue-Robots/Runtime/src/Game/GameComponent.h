@@ -99,6 +99,7 @@ struct InputController
 	bool toggleDebug = false;
 	bool toggleMoveView = false;
 	bool flashlight = true;
+	bool revive = false;
 };
 
 struct DoorComponent
@@ -283,6 +284,13 @@ struct SpectatorComponent
 	std::vector<DOG::entity> playerSpectatorQueue;
 };
 
+struct ReviveTimerComponent
+{
+	//Acts as both ID and timer data holder.
+	float duration{5.0f};
+	float timeLeft{ duration };
+	DOG::entity playerBeingRevived{DOG::NULL_ENTITY};
+};
 //ModularBlocks
 
 struct SpawnBlockComponent

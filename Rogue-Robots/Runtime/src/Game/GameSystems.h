@@ -550,3 +550,28 @@ public:
 	DOG::entity GetQueueIndexForSpectatedPlayer(DOG::entity player, const std::vector<DOG::entity>& players);
 	void ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw);
 };
+
+class ReviveSystem : public DOG::ISystem
+{
+#define MAXIMUM_DISTANCE_DELTA 1.3f
+#define MINIMUM_DOT_DELTA 0.85f
+public:
+	SYSTEM_CLASS(InputController, PlayerAliveComponent, DOG::TransformComponent);
+	ON_UPDATE_ID(InputController, PlayerAliveComponent, DOG::TransformComponent);
+
+	void OnUpdate(DOG::entity player, InputController&, PlayerAliveComponent&, DOG::TransformComponent&);
+	ImVec4 DeterminePlayerColor(const char* playerName);
+	void RevivePlayer(DOG::entity player);
+	void ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw);
+	void DrawProgressBar(const float progress);
+	void UpdateSpectators();
+};
+
+class UpdateSpectatorQueueSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DOG::ThisPlayer, SpectatorComponent);
+	ON_EARLY_UPDATE(DOG::ThisPlayer, SpectatorComponent);
+
+	void OnEarlyUpdate(DOG::ThisPlayer&, SpectatorComponent& sc);
+};

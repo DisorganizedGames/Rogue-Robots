@@ -1,4 +1,5 @@
 #include "GameSystems.h"
+#include "PlayerManager/PlayerManager.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -647,6 +648,305 @@ void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity p
 	#if defined _DEBUG
 	ASSERT(removedSuitFromRendering && addedSuitToRendering, "Suits were not updated correctly for rendering.");
 	#endif
+}
+
+void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerAliveComponent&, DOG::TransformComponent& tc)
+{
+	DOG::EntityManager& mgr = DOG::EntityManager::Get();
+
+	DOG::entity closestDeadPlayer{ NULL_ENTITY };
+	float distanceToClosestDeadPlayer{ FLT_MAX };
+
+	mgr.Collect<NetworkPlayerComponent, DOG::TransformComponent>().Do([&](DOG::entity player, NetworkPlayerComponent&, DOG::TransformComponent& otc)
+		{
+			if (mgr.HasComponent<PlayerAliveComponent>(player))
+				return;
+
+			//This player does not live, since it passed the guard clause:
+			float distanceToDeadPlayer = Vector3::Distance(tc.GetPosition(), otc.GetPosition());
+			if (distanceToDeadPlayer < distanceToClosestDeadPlayer)
+			{
+				distanceToClosestDeadPlayer = distanceToDeadPlayer;
+				closestDeadPlayer = player;
+			}
+		});
+
+	//If all players live, this system should early out:
+	const bool allPlayersLive = (closestDeadPlayer == NULL_ENTITY);
+	if (allPlayersLive)
+	{
+		mgr.RemoveComponentIfExists<ReviveTimerComponent>(player);
+		return;
+	}
+
+	//Any player not part of the reviving/being revived "cooperation" should return:
+	const bool isNonParticipatingPlayer = (!mgr.HasComponent<ThisPlayer>(player) && !mgr.HasComponent<ThisPlayer>(closestDeadPlayer));
+	if (isNonParticipatingPlayer)
+		return;
+
+	//Likewise, if we are not close enough to a dead player, then this system should not continue:
+	if (distanceToClosestDeadPlayer > MAXIMUM_DISTANCE_DELTA)
+	{
+		mgr.RemoveComponentIfExists<ReviveTimerComponent>(player);
+		mgr.RemoveComponentIfExists<ReviveTimerComponent>(closestDeadPlayer);
+		return;
+	}
+
+	//The last test is checking whether the player is also looking at the dead player. If not, return:
+	auto deadPlayerPos = mgr.GetComponent<DOG::TransformComponent>(closestDeadPlayer).GetPosition();
+	auto cam = mgr.GetComponent<PlayerControllerComponent>(player).cameraEntity;
+	auto& playerCamera = mgr.GetComponent<DOG::TransformComponent>(cam);
+	auto playerCameraPosition = playerCamera.GetPosition();
+	auto playerCameraForward = playerCamera.GetForward();
+	auto directionFromDeadToLivePlayer = deadPlayerPos - playerCameraPosition;
+	directionFromDeadToLivePlayer.Normalize();
+	float dot = directionFromDeadToLivePlayer.Dot(playerCameraForward);
+	if (dot < MINIMUM_DOT_DELTA)
+	{
+		mgr.RemoveComponentIfExists<ReviveTimerComponent>(player);
+		mgr.RemoveComponentIfExists<ReviveTimerComponent>(closestDeadPlayer);
+		return;
+	}
+
+	constexpr ImVec2 size{ 700, 450 };
+	auto r = DOG::Window::GetWindowRect();
+	const float centerXOfScreen = (float)(abs(r.right - r.left)) * 0.5f;
+	const float centerYOfScreen = (float)(abs(r.bottom - r.top)) * 0.5f;
+
+	ImVec2 pos;
+	pos.x = r.left + centerXOfScreen;
+	pos.y = r.top + centerYOfScreen;
+	const float xOffset = size.x / 2;
+	const float yOffset = size.y / 4;
+
+	pos.x -= xOffset;
+	pos.y -= yOffset;
+
+	if (mgr.HasComponent<ThisPlayer>(player))
+	{
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+		ImGui::SetNextWindowSize(size);
+		ImGui::SetNextWindowPos(pos);
+		if (ImGui::Begin("Revive text 1", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+		{
+			ImGui::PushFont(DOG::Window::GetFont());
+			ImGui::SetWindowFontScale(1.75f);
+			auto windowWidth = ImGui::GetWindowSize().x;
+			auto& npc = mgr.GetComponent<NetworkPlayerComponent>(closestDeadPlayer);
+
+			std::string text0 = inputC.revive ? "" : "[E] ";
+			std::string text1 = inputC.revive ? std::string("Reviving ") : std::string("Revive ");
+			std::string text2 = std::string(npc.playerName);
+			auto textWidth = ImGui::CalcTextSize((text0 + text1 + text2).c_str()).x;
+
+			ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 175));
+			ImGui::Text(text0.c_str());
+			ImGui::PopStyleColor(1);
+
+			ImGui::SameLine();
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 175));
+			ImGui::Text(text1.c_str());
+			ImGui::PopStyleColor(1);
+
+			ImGui::PushStyleColor(ImGuiCol_Text, DeterminePlayerColor(npc.playerName));
+			ImGui::SameLine();
+			ImGui::Text(text2.c_str());
+
+			ImGui::PopStyleColor(1);
+			ImGui::PopFont();
+		}
+		ImGui::End();
+		ImGui::PopStyleColor();
+	}
+
+	//Next up is the revival progress. Holding E adds to the progress bar.
+	//Perhaps the player is not trying to revive:
+	if (!inputC.revive)
+	{
+		mgr.RemoveComponentIfExists<ReviveTimerComponent>(player);
+		mgr.RemoveComponentIfExists<ReviveTimerComponent>(closestDeadPlayer);
+		return;
+	}
+	
+	if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))
+	{
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+		ImGui::SetNextWindowPos(pos);
+		ImGui::SetNextWindowSize(size);
+		if (ImGui::Begin("Revive text 2", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+		{
+			ImGui::PushFont(DOG::Window::GetFont());
+			ImGui::SetWindowFontScale(1.75f);
+			auto windowWidth = ImGui::GetWindowSize().x;
+			auto textWidth = ImGui::CalcTextSize("You are being revived by ").x;
+			ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 175));
+			ImGui::Text("You are being revived by ");
+			ImGui::PopStyleColor(1);
+			const char* revivingPlayerName = mgr.GetComponent<NetworkPlayerComponent>(player).playerName;
+			ImGui::PushStyleColor(ImGuiCol_Text, DeterminePlayerColor(revivingPlayerName));
+			ImGui::SameLine();
+			ImGui::Text(revivingPlayerName);
+			ImGui::PopStyleColor(1);
+			ImGui::PopFont();
+		}
+		ImGui::End();
+		ImGui::PopStyleColor();
+	}
+
+	constexpr const float timerEnd = 0.0f;
+	constexpr const float progressBarStart = 0.0f;
+	constexpr const float progressBarEnd = 1.0f;
+
+	auto& reviveComponent = mgr.AddOrGetComponent<ReviveTimerComponent>(player);
+	float progress = 1.0f - DOG::Remap(timerEnd, reviveComponent.duration, progressBarStart, progressBarEnd, reviveComponent.timeLeft);
+	progress = std::clamp(progress, 0.0f, 1.0f);
+	reviveComponent.timeLeft -= (float)DOG::Time::DeltaTime();
+	reviveComponent.timeLeft = std::clamp(reviveComponent.timeLeft, 0.0f, reviveComponent.duration);
+
+	DrawProgressBar(progress);
+	const bool revivalCompleted = (progress >= 1.0f);
+	if (revivalCompleted)
+	{
+		if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))
+		{
+			auto spectatedPlayer = mgr.GetComponent<SpectatorComponent>(closestDeadPlayer).playerBeingSpectated;
+			ChangeSuitDrawLogic(spectatedPlayer, closestDeadPlayer);
+			RevivePlayer(closestDeadPlayer);
+		}
+	}
+}
+
+ImVec4 ReviveSystem::DeterminePlayerColor(const char* playerName)
+{
+	if (strcmp(playerName, "Red") == 0)
+	{
+		return ImVec4(255, 0, 0, 255);
+	}
+	else if (strcmp(playerName, "Green") == 0)
+	{
+		return ImVec4(0, 255, 0, 255);
+	}
+	else if (strcmp(playerName, "Blue") == 0)
+	{
+		return ImVec4(0, 0, 255, 255);
+	}
+	else if (strcmp(playerName, "Yellow") == 0)
+	{
+		return ImVec4(255, 255, 0, 255);
+	}
+	else
+	{
+		ASSERT(false, "Invalid player name");
+		return ImVec4(0, 0, 0, 255);
+	}
+}
+
+//For this function we simply revert all data to an "is-alive-state":
+void ReviveSystem::RevivePlayer(DOG::entity player)
+{
+	auto& mgr = DOG::EntityManager::Get();
+
+	auto& psc = mgr.GetComponent<PlayerStatsComponent>(player);
+	psc.health = psc.maxHealth / 2.0f;
+
+	mgr.RemoveComponent<SpectatorComponent>(player);
+
+	auto& pcc = mgr.GetComponent<PlayerControllerComponent>(player);
+	mgr.DestroyEntity(pcc.spectatorCamera);
+	pcc.spectatorCamera = NULL_ENTITY;
+	mgr.GetComponent<CameraComponent>(pcc.cameraEntity).isMainCamera = true;
+
+	mgr.AddComponent<PlayerAliveComponent>(player);
+	LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
+	LuaMain::GetScriptManager()->AddScript(player, "PassiveItemSystem.lua");
+	LuaMain::GetScriptManager()->AddScript(player, "ActiveItemSystem.lua");
+
+	auto& bc = mgr.AddComponent<BarrelComponent>(player);
+	bc.type = BarrelComponent::Type::Bullet;
+	bc.maximumAmmoCapacityForType = 999'999;
+	bc.ammoPerPickup = 30;
+	bc.currentAmmoCount = 30;
+
+	auto& rb = mgr.GetComponent<RigidbodyComponent>(player);
+	rb.ConstrainRotation(true, true, true);
+	rb.ConstrainPosition(false, false, false);
+	rb.disableDeactivation = true;
+	rb.getControlOfTransform = true;
+	rb.setGravityForRigidbody = true;
+	rb.gravityForRigidbody = Vector3(0.0f, -25.0f, 0.0f);
+}
+
+void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw)
+{
+	#if defined _DEBUG
+	bool removedSuitFromRendering = false;
+	bool addedSuitToRendering = false;
+	#endif
+
+	DOG::EntityManager::Get().Collect<ChildComponent>().Do([&](DOG::entity playerModel, ChildComponent& cc)
+		{
+			if (cc.parent == playerToDraw)
+			{
+				//This means that playerModel is the mesh model (suit), and it should be rendered again:
+				DOG::EntityManager::Get().RemoveComponent<DOG::DontDraw>(playerModel);
+				#if defined _DEBUG
+				addedSuitToRendering = true;
+				#endif
+			}
+			else if (cc.parent == playerToNotDraw)
+			{
+				//This means that playerModel is the spectated players' armor/suit, and it should not be eligible for rendering anymore:
+				DOG::EntityManager::Get().AddComponent<DOG::DontDraw>(playerModel);
+				#if defined _DEBUG
+				removedSuitFromRendering = true;
+				#endif
+			}
+		});
+		#if defined _DEBUG
+		ASSERT(removedSuitFromRendering && addedSuitToRendering, "Suits were not updated correctly for rendering.");
+		#endif
+}
+
+void ReviveSystem::DrawProgressBar(const float progress)
+{
+	constexpr ImVec2 size{ 700, 450 };
+	auto r = DOG::Window::GetWindowRect();
+	const float centerXOfScreen = (float)(abs(r.right - r.left)) * 0.5f;
+	const float centerYOfScreen = (float)(abs(r.bottom - r.top)) * 0.5f;
+
+	ImVec2 pos{ r.left + centerXOfScreen, r.top + centerYOfScreen };
+	constexpr const float xOffset = -150.0f;
+	constexpr const float yOffset = -50.0f;
+	const float finalWindowPosX = pos.x + xOffset;
+	const float finalWindowPosY = pos.y + yOffset;
+
+	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+	ImGui::SetNextWindowSize(ImVec2{ 300, 200 });
+	ImGui::SetNextWindowPos(ImVec2{ finalWindowPosX, finalWindowPosY });
+	if (ImGui::Begin("Progress Bar 1", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+	{
+		ImGui::PushItemWidth(300.0f);
+		ImGui::SetWindowFontScale(1.20f);
+		ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_FrameBg, IM_COL32(255, 255, 255, 255));
+		ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f));
+		ImGui::PopStyleColor(1);
+		ImGui::PopItemWidth();
+	}
+	ImGui::End();
+	ImGui::PopStyleColor();
+}
+
+void UpdateSpectatorQueueSystem::OnEarlyUpdate(DOG::ThisPlayer&, SpectatorComponent& sc)
+{
+	DOG::EntityManager::Get().Collect<PlayerAliveComponent>().Do([&](DOG::entity otherPlayer, PlayerAliveComponent&)
+		{
+			if (std::find(sc.playerSpectatorQueue.begin(), sc.playerSpectatorQueue.end(), otherPlayer) == sc.playerSpectatorQueue.end())
+			{
+				sc.playerSpectatorQueue.push_back(otherPlayer);
+			}
+		});
 }
 
 #pragma endregion

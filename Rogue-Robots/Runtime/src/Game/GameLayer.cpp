@@ -62,6 +62,8 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<PlaceHolderDeathUISystem>());
 	m_entityManager.RegisterSystem(std::make_unique<SpectateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<HeartbeatTrackerSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<ReviveSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<UpdateSpectatorQueueSystem>());
 
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
@@ -529,8 +531,8 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 		{
 			Interact();
 		}
-		else
-			Input(EVENT(KeyPressedEvent).key);
+		
+		Input(EVENT(KeyPressedEvent).key);
 		break;
 	}
 	case EventType::KeyReleasedEvent:
@@ -941,6 +943,8 @@ void GameLayer::Input(DOG::Key key)
 				inputC.toggleMoveView = true;
 			if (key == DOG::Key::F)
 				inputC.flashlight = !inputC.flashlight;
+			if (key == DOG::Key::E)
+				inputC.revive = true;
 		});
 }
 
@@ -974,6 +978,9 @@ void GameLayer::Release(DOG::Key key)
 				inputC.toggleDebug = false;
 			if (key == DOG::Key::C)
 				inputC.toggleMoveView = false;
+			if (key == DOG::Key::E)
+				inputC.revive = false;
+
 		});
 }
 
