@@ -175,7 +175,7 @@ entity SpawnTurretProjectile(const DirectX::SimpleMath::Matrix& transform, float
 			mesh.vertexDataPerAttribute[attr] = vert;
 		}
 		projectileModel.mesh = CustomMeshManager::Get().AddMesh(mesh).first;
-		projectileModel.materialDesc.emissiveFactor = { 1, 0.5f, 0.001f, 1 };
+		projectileModel.materialDesc.emissiveFactor = { 1.6f, 0.8f, 0.002f, 1 };
 		projectileModel.materialDesc.albedoFactor = { 0.2f, 0.2f, 0.2f, 1 };
 		projectileModel.material = CustomMaterialManager::Get().AddMaterial(projectileModel.materialDesc);
 		init = false;
