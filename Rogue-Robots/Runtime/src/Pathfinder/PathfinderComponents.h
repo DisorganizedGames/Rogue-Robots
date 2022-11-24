@@ -69,3 +69,6 @@ struct PathfinderWalkComponent
 	Vector3 goal;
 	float speed;
 };
+
+struct VisualizePathComponent
+{};

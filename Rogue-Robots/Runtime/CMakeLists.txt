@@ -23,6 +23,7 @@ set(SourceFiles
 	"src/Game/ExplosionSystems.h" "src/Game/ExplosionSystems.cpp" "src/Network/Network.h"
 	"src/Game/HomingMissileSystem.h" "src/Game/HomingMissileSystem.cpp"
 	"src/Game/TurretSystems.h" "src/Game/TurretSystems.cpp"
+	"src/Game/HeartbeatTrackerSystem.h" "src/Game/HeartbeatTrackerSystem.cpp"
 
 	"src/Game/Scene.h" "src/Game/Scene.cpp" "src/Game/PcgLevelLoader.h" "src/Game/PcgLevelLoader.cpp"
 	"src/Game/PCGLevelScenes.h" "src/Game/PCGLevelScenes.cpp"
@@ -33,7 +34,6 @@ set(SourceFiles
 
 	"src/Game/ItemManager/ItemManager.h" "src/Game/ItemManager/ItemManager.cpp"
 	"src/Game/PlayerManager/PlayerManager.h" "src/Game/PlayerManager/PlayerMangager.cpp"
-	"src/Game/HeartbeatTrackerSystem.h" "src/Game/HeartbeatTrackerSystem.cpp"
 	"src/Core/QueryHelpers.h" "src/Core/QueryHelpers.cpp"
 
 	"src/Pathfinder/Pathfinder.h" "src/Pathfinder/Pathfinder.cpp"

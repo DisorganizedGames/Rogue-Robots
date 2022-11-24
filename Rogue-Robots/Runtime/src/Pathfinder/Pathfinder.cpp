@@ -20,6 +20,7 @@ void Pathfinder::Init()
 {
 	// Register pathfinder systems
 	EntityManager& em = EntityManager::Get();
+	em.RegisterSystem(std::make_unique<VisualizePathCleanUpSystem>());
 	em.RegisterSystem(std::make_unique<PathfinderWalkAgentsSystem>());
 
 	m_initialized = true;
@@ -72,8 +73,8 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 			BoundingBoxComponent& bb = em.AddComponent <BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
 
 			// visualize NavMesh
-			em.AddComponent<TransformComponent>(newMesh).SetPosition(bb.Center()).SetScale(navMeshScale);
-			em.AddComponent<ModelComponent>(newMesh, AssetManager::Get().LoadShapeAsset(DOG::Shape::sphere, 16));
+			//em.AddComponent<TransformComponent>(newMesh).SetPosition(bb.Center()).SetScale(navMeshScale);
+			//em.AddComponent<ModelComponent>(newMesh, AssetManager::Get().LoadShapeAsset(DOG::Shape::sphere, 16));
 		});
 
 	em.Collect<EmptySpaceComponent>().Do(
@@ -95,8 +96,8 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 			BoundingBoxComponent& bb = em.AddComponent <BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
 
 			// visualize NavMesh
-			em.AddComponent<TransformComponent>(newMesh).SetPosition(bb.Center()).SetScale(navMeshScale);
-			em.AddComponent<ModelComponent>(newMesh, AssetManager::Get().LoadShapeAsset(DOG::Shape::sphere, 16));
+			//em.AddComponent<TransformComponent>(newMesh).SetPosition(bb.Center()).SetScale(navMeshScale);
+			//em.AddComponent<ModelComponent>(newMesh, AssetManager::Get().LoadShapeAsset(DOG::Shape::sphere, 16));
 		}
 	);
 
@@ -148,8 +149,8 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 								em.AddComponent<SceneComponent>(id, sceneType);
 
 								// visualize portal
-								em.AddComponent<TransformComponent>(id).SetPosition(pos).SetScale(portalScale);
-								em.AddComponent<ModelComponent>(id, AssetManager::Get().LoadShapeAsset(DOG::Shape::prism, 4));
+								//em.AddComponent<TransformComponent>(id).SetPosition(pos).SetScale(portalScale);
+								//em.AddComponent<ModelComponent>(id, AssetManager::Get().LoadShapeAsset(DOG::Shape::prism, 4));
 							}
 						}
 					}
@@ -167,7 +168,10 @@ std::vector<Vector3> Pathfinder::Checkpoints(Vector3 start, Vector3 goal)
 	std::vector<Vector3> checkpoints;
 
 	for (PortalID id : Astar(start, goal, heuristicStraightLine))
+	{
 		checkpoints.push_back(em.GetComponent<PortalComponent>(id).portal);
+		std::cout << checkpoints.size();
+	}
 
 	checkpoints.push_back(goal);
 
@@ -289,15 +293,22 @@ std::vector<PortalID> Pathfinder::Astar(const Vector3 start, const Vector3 goal,
 					// lambda: d - distance between nodes
 					auto d = [&](PortalID current, PortalID neighbor)
 					{
-						NavMeshID meshID;
-						PortalComponent& currentPortal = em.GetComponent<PortalComponent>(current);
-						// get the first NavMesh of current
+						// get the portals
+						PortalComponent* currentPortal = nullptr;
 						if (current == startPoint)
-							meshID = entry.navMesh1;
+							currentPortal = &entry;
 						else
-							meshID = currentPortal.navMesh1;
+							currentPortal = &em.GetComponent<PortalComponent>(current);
+						PortalComponent* neighborPortal = nullptr;
+						if (neighbor == startPoint)
+							neighborPortal = &entry;
+						else
+							neighborPortal = &em.GetComponent<PortalComponent>(neighbor);
+						// get the first NavMesh of current
+						NavMeshID meshID;
+						meshID = currentPortal->navMesh1;
 						// compare with first NavMesh of neigbor
-						PortalComponent& neighborPortal = em.GetComponent<PortalComponent>(neighbor);
+						// TODO...
 						if (neighbor == startPoint)
 							if (meshID != entry.navMesh1)
 								// only one can have a single connection thus current has two
@@ -333,8 +344,9 @@ std::vector<PortalID> Pathfinder::Astar(const Vector3 start, const Vector3 goal,
 						if (leadsToGoal(current))
 						{
 							reconstructPath(current);	// fills result with PortalIDs
-							return;
+							break;
 						}
+						std::cout << "A* openSet " << openSet.size() << std::endl;
 
 						for (PortalID neighbor : getNeighbors(current))
 						{

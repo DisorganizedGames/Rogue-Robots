@@ -139,7 +139,6 @@ namespace DOG
 		return *this;
 	}
 }
-}
 
 BoundingBoxComponent::BoundingBoxComponent(DirectX::SimpleMath::Vector3 center, DirectX::SimpleMath::Vector3 extents)
 {

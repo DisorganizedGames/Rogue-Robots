@@ -35,6 +35,7 @@ void AgentSeekPlayerSystem::OnUpdate(entity e, AgentSeekPlayerComponent& seek, A
 
 	bool aggro = eMan.HasComponent<AgentAggroComponent>(e);
 
+	//if (aggro || player.sqDist > 15000.f)
 	if (aggro || player.sqDist < SEEK_RADIUS_SQUARED)
 	{
 		if (!aggro)
@@ -57,8 +58,8 @@ void AgentSeekPlayerSystem::OnUpdate(entity e, AgentSeekPlayerComponent& seek, A
 			else
 				netSeek = &eMan.GetComponent<NetworkAgentSeekPlayer>(e);
 
-			(*netSeek).playerID = player.id;
-			(*netSeek).agentID = agent.id;
+			netSeek->playerID = player.id;
+			netSeek->agentID = agent.id;
 		}
 	}
 	else
@@ -72,14 +73,14 @@ void AgentSeekPlayerSystem::OnUpdate(entity e, AgentSeekPlayerComponent& seek, A
 		else
 			netSeek = &eMan.GetComponent<NetworkAgentSeekPlayer>(e);
 
-		(*netSeek).playerID = -1;
-		(*netSeek).agentID = agent.id;
+		netSeek->playerID = -1;
+		netSeek->agentID = agent.id;
 	}
 }
 
 
 void AgentMovementSystem::OnUpdate(entity e, AgentMovementComponent& movement, 
-	AgentSeekPlayerComponent& seek, RigidbodyComponent& rb, TransformComponent& trans)
+	AgentSeekPlayerComponent& seek, TransformComponent& trans)
 {
 	if (seek.entityID == DOG::NULL_ENTITY)
 	{
@@ -256,14 +257,14 @@ void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComp
 	
 	if (hp.hp <= 0 || trans.GetPosition().y < -10.0f)
 	{
-		#if defined _DEBUG
-		EntityManager& eMan = EntityManager::Get();
-		std::cout << "Agent " << eMan.GetComponent<AgentIdComponent>(e).id << "(" << e << ")";
-		if (hp.hp <= 0)
-			std::cout << " killed! HP: " << hp.hp << std::endl;
-		else
-			std::cout << " hopelessly lost in void at position: (" << trans.GetPosition().x << ", " << trans.GetPosition().y << ", " << trans.GetPosition().z << ")" << std::endl;
-		#endif
+		//#if defined _DEBUG
+		//EntityManager& eMan = EntityManager::Get();
+		//std::cout << "Agent " << eMan.GetComponent<AgentIdComponent>(e).id << "(" << e << ")";
+		//if (hp.hp <= 0)
+		//	std::cout << " killed! HP: " << hp.hp << std::endl;
+		//else
+		//	std::cout << " hopelessly lost in void at position: (" << trans.GetPosition().x << ", " << trans.GetPosition().y << ", " << trans.GetPosition().z << ")" << std::endl;
+		//#endif
 		
 		// Send network signal to destroy agents
 		if (PlayerManager::Get().IsThisMultiplayer())
@@ -288,7 +289,7 @@ void AgentFrostTimerSystem::OnUpdate(DOG::entity e, AgentMovementComponent& move
 
 void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, AgentIdComponent& agent)
 {
-	constexpr int minutes = 4;
+	constexpr float minutes = 0.3f;
 	constexpr f64 maxAggroTime = minutes * 60.0;
 
 	EntityManager& em = EntityManager::Get();
@@ -308,9 +309,9 @@ void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, Agent
 				{
 					em.AddComponent<AgentAggroComponent>(o);
 					
-					#ifdef _DEBUG
-					std::cout << "Agent " << agent.id << " of group " << myGroup << " signaled aggro to agent " << other.id << " of group " << otherGroup << std::endl;
-					#endif // _DEBUG
+					//#ifdef _DEBUG
+					//std::cout << "Agent " << agent.id << " of group " << myGroup << " signaled aggro to agent " << other.id << " of group " << otherGroup << std::endl;
+					//#endif // _DEBUG
 				}
 			}
 		);
