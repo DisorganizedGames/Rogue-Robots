@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -21,13 +21,16 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.232",
+            "name" : "Ground",
+            "normalTexture" : {
+                "index" : 0,
+                "scale" : 10
+            },
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
-                    "index" : 0
+                    "index" : 1
                 },
-                "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
+                "metallicFactor" : 0
             }
         }
     ],
@@ -52,20 +55,29 @@
         {
             "sampler" : 0,
             "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 1
         }
     ],
     "images" : [
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
+            "name" : "NormalGroundGroup1",
+            "uri" : "Textures/NormalGroundGroup1.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "DiffuseGroundGroup1",
+            "uri" : "Textures/DiffuseGroundGroup1.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 1620,
+            "count" : 888,
             "max" : [
                 2.5421385765075684,
                 5.220639228820801,
@@ -81,53 +93,58 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 1620,
+            "count" : 888,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 1620,
+            "count" : 888,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 1620,
+            "count" : 888,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 1686,
+            "count" : 888,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 19440,
-            "byteOffset" : 0
+            "byteLength" : 10656,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 19440,
-            "byteOffset" : 19440
+            "byteLength" : 10656,
+            "byteOffset" : 10656,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 12960,
-            "byteOffset" : 38880
+            "byteLength" : 7104,
+            "byteOffset" : 21312,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 12960,
-            "byteOffset" : 51840
+            "byteLength" : 7104,
+            "byteOffset" : 28416,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 3372,
-            "byteOffset" : 64800
+            "byteLength" : 1776,
+            "byteOffset" : 35520,
+            "target" : 34963
         }
     ],
     "samplers" : [
@@ -138,7 +155,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 68172,
+            "byteLength" : 37296,
             "uri" : "CornerRoof1.bin"
         }
     ]

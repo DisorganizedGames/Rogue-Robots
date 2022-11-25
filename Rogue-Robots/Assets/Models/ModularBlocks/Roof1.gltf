@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -21,19 +21,22 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.024",
+            "name" : "Ground",
+            "normalTexture" : {
+                "index" : 0,
+                "scale" : 10
+            },
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
-                    "index" : 0
+                    "index" : 1
                 },
-                "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
+                "metallicFactor" : 0
             }
         }
     ],
     "meshes" : [
         {
-            "name" : "Scene.024",
+            "name" : "Scene.027",
             "primitives" : [
                 {
                     "attributes" : {
@@ -52,24 +55,33 @@
         {
             "sampler" : 0,
             "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 1
         }
     ],
     "images" : [
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
+            "name" : "NormalGroundGroup3",
+            "uri" : "Textures/NormalGroundGroup3.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "DiffuseGroundGroup3",
+            "uri" : "Textures/DiffuseGroundGroup3.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 644,
+            "count" : 816,
             "max" : [
-                2.5014727115631104,
+                2.5014729499816895,
                 5.215345859527588,
-                2.501694917678833
+                2.501695156097412
             ],
             "min" : [
                 -2.5,
@@ -81,19 +93,19 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 644,
+            "count" : 816,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 644,
+            "count" : 816,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 644,
+            "count" : 816,
             "type" : "VEC2"
         },
         {
@@ -106,28 +118,33 @@
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 7728,
-            "byteOffset" : 0
+            "byteLength" : 9792,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 7728,
-            "byteOffset" : 7728
+            "byteLength" : 9792,
+            "byteOffset" : 9792,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 5152,
-            "byteOffset" : 15456
+            "byteLength" : 6528,
+            "byteOffset" : 19584,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 5152,
-            "byteOffset" : 20608
+            "byteLength" : 6528,
+            "byteOffset" : 26112,
+            "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 1632,
-            "byteOffset" : 25760
+            "byteOffset" : 32640,
+            "target" : 34963
         }
     ],
     "samplers" : [
@@ -138,7 +155,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 27392,
+            "byteLength" : 34272,
             "uri" : "Roof1.bin"
         }
     ]

@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -21,13 +21,16 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.050",
+            "name" : "Ground",
+            "normalTexture" : {
+                "index" : 0,
+                "scale" : 10
+            },
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
-                    "index" : 0
+                    "index" : 1
                 },
-                "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
+                "metallicFactor" : 0
             }
         }
     ],
@@ -52,23 +55,32 @@
         {
             "sampler" : 0,
             "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 1
         }
     ],
     "images" : [
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
+            "name" : "NormalGroundGroup7",
+            "uri" : "Textures/NormalGroundGroup7.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "DiffuseGroundGroup7",
+            "uri" : "Textures/DiffuseGroundGroup7.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 182,
+            "count" : 348,
             "max" : [
                 2.5,
-                0.7471796274185181,
+                0.7471796870231628,
                 2.5
             ],
             "min" : [
@@ -81,19 +93,19 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 182,
+            "count" : 348,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 182,
+            "count" : 348,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 182,
+            "count" : 348,
             "type" : "VEC2"
         },
         {
@@ -106,28 +118,33 @@
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 2184,
-            "byteOffset" : 0
+            "byteLength" : 4176,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2184,
-            "byteOffset" : 2184
+            "byteLength" : 4176,
+            "byteOffset" : 4176,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1456,
-            "byteOffset" : 4368
+            "byteLength" : 2784,
+            "byteOffset" : 8352,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1456,
-            "byteOffset" : 5824
+            "byteLength" : 2784,
+            "byteOffset" : 11136,
+            "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 696,
-            "byteOffset" : 7280
+            "byteOffset" : 13920,
+            "target" : 34963
         }
     ],
     "samplers" : [
@@ -138,7 +155,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 7976,
+            "byteLength" : 14616,
             "uri" : "Shelf1.bin"
         }
     ]

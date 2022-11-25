@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -21,19 +21,22 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.004",
+            "name" : "Ground",
+            "normalTexture" : {
+                "index" : 0,
+                "scale" : 10
+            },
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
-                    "index" : 0
+                    "index" : 1
                 },
-                "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
+                "metallicFactor" : 0
             }
         }
     ],
     "meshes" : [
         {
-            "name" : "Scene.029",
+            "name" : "Scene.031",
             "primitives" : [
                 {
                     "attributes" : {
@@ -52,82 +55,96 @@
         {
             "sampler" : 0,
             "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 1
         }
     ],
     "images" : [
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette",
-            "uri" : "PP_Color_Palette.png"
+            "name" : "NormalGroundGroup3",
+            "uri" : "Textures/NormalGroundGroup3.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "DiffuseGroundGroup3",
+            "uri" : "Textures/DiffuseGroundGroup3.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 1022,
+            "count" : 1275,
             "max" : [
                 2.500000476837158,
-                5.445002555847168,
-                2.5000007152557373
+                5.445003032684326,
+                2.5000009536743164
             ],
             "min" : [
-                -2.499999523162842,
-                -4.010462362202816e-08,
-                -2.5000007152557373
+                -2.499999761581421,
+                4.221541018978314e-07,
+                -2.500000476837158
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 1022,
+            "count" : 1275,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 1022,
+            "count" : 1275,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 1022,
+            "count" : 1275,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 1323,
+            "count" : 1299,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 12264,
-            "byteOffset" : 0
+            "byteLength" : 15300,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 12264,
-            "byteOffset" : 12264
+            "byteLength" : 15300,
+            "byteOffset" : 15300,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 8176,
-            "byteOffset" : 24528
+            "byteLength" : 10200,
+            "byteOffset" : 30600,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 8176,
-            "byteOffset" : 32704
+            "byteLength" : 10200,
+            "byteOffset" : 40800,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2646,
-            "byteOffset" : 40880
+            "byteLength" : 2598,
+            "byteOffset" : 51000,
+            "target" : 34963
         }
     ],
     "samplers" : [
@@ -138,7 +155,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 43528,
+            "byteLength" : 53600,
             "uri" : "RoofWallInnerCorner.bin"
         }
     ]

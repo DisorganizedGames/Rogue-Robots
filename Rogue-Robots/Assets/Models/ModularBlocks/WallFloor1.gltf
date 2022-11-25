@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -21,24 +21,16 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.042",
-            "pbrMetallicRoughness" : {
-                "baseColorTexture" : {
-                    "index" : 0
-                },
-                "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
-            }
-        },
-        {
-            "doubleSided" : true,
-            "name" : "PP_Standard_Material.043",
+            "name" : "Ground",
+            "normalTexture" : {
+                "index" : 0,
+                "scale" : 10
+            },
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 1
                 },
-                "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
+                "metallicFactor" : 0
             }
         }
     ],
@@ -55,16 +47,6 @@
                     },
                     "indices" : 4,
                     "material" : 0
-                },
-                {
-                    "attributes" : {
-                        "POSITION" : 5,
-                        "NORMAL" : 6,
-                        "TEXCOORD_0" : 7,
-                        "TEXCOORD_1" : 8
-                    },
-                    "indices" : 9,
-                    "material" : 1
                 }
             ]
         }
@@ -76,29 +58,34 @@
         },
         {
             "sampler" : 0,
-            "source" : 0
+            "source" : 1
         }
     ],
     "images" : [
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
+            "name" : "NormalGroundGroup4",
+            "uri" : "Textures/NormalGroundGroup4.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "DiffuseGroundGroup4",
+            "uri" : "Textures/DiffuseGroundGroup4.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 429,
+            "count" : 1124,
             "max" : [
                 2.500013828277588,
                 4.999999523162842,
-                0.7483997344970703
+                2.5
             ],
             "min" : [
                 -2.500000238418579,
-                0.024517327547073364,
+                -0.4666578471660614,
                 -1.8363749980926514
             ],
             "type" : "VEC3"
@@ -106,118 +93,58 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 429,
+            "count" : 1124,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 429,
+            "count" : 1124,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 429,
+            "count" : 1124,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 429,
-            "type" : "SCALAR"
-        },
-        {
-            "bufferView" : 5,
-            "componentType" : 5126,
-            "count" : 948,
-            "max" : [
-                2.5,
-                1.2542659044265747,
-                2.5
-            ],
-            "min" : [
-                -2.5,
-                -0.4666578471660614,
-                -1.5035665035247803
-            ],
-            "type" : "VEC3"
-        },
-        {
-            "bufferView" : 6,
-            "componentType" : 5126,
-            "count" : 948,
-            "type" : "VEC3"
-        },
-        {
-            "bufferView" : 7,
-            "componentType" : 5126,
-            "count" : 948,
-            "type" : "VEC2"
-        },
-        {
-            "bufferView" : 8,
-            "componentType" : 5126,
-            "count" : 948,
-            "type" : "VEC2"
-        },
-        {
-            "bufferView" : 9,
-            "componentType" : 5123,
-            "count" : 1008,
+            "count" : 1209,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 5148,
-            "byteOffset" : 0
+            "byteLength" : 13488,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 5148,
-            "byteOffset" : 5148
+            "byteLength" : 13488,
+            "byteOffset" : 13488,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 3432,
-            "byteOffset" : 10296
+            "byteLength" : 8992,
+            "byteOffset" : 26976,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 3432,
-            "byteOffset" : 13728
+            "byteLength" : 8992,
+            "byteOffset" : 35968,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 858,
-            "byteOffset" : 17160
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 11376,
-            "byteOffset" : 18020
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 11376,
-            "byteOffset" : 29396
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 7584,
-            "byteOffset" : 40772
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 7584,
-            "byteOffset" : 48356
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 2016,
-            "byteOffset" : 55940
+            "byteLength" : 2418,
+            "byteOffset" : 44960,
+            "target" : 34963
         }
     ],
     "samplers" : [
@@ -228,7 +155,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 57956,
+            "byteLength" : 47380,
             "uri" : "WallFloor1.bin"
         }
     ]

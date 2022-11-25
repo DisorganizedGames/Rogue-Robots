@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -21,13 +21,16 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.235",
+            "name" : "Ground",
+            "normalTexture" : {
+                "index" : 0,
+                "scale" : 10
+            },
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
-                    "index" : 0
+                    "index" : 1
                 },
-                "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
+                "metallicFactor" : 0
             }
         }
     ],
@@ -52,13 +55,22 @@
         {
             "sampler" : 0,
             "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 1
         }
     ],
     "images" : [
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
+            "name" : "NormalGroundGroup2",
+            "uri" : "Textures/NormalGroundGroup2.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "DiffuseGroundGroup2",
+            "uri" : "Textures/DiffuseGroundGroup2.png"
         }
     ],
     "accessors" : [
@@ -107,27 +119,32 @@
         {
             "buffer" : 0,
             "byteLength" : 8292,
-            "byteOffset" : 0
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 8292,
-            "byteOffset" : 8292
+            "byteOffset" : 8292,
+            "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 5528,
-            "byteOffset" : 16584
+            "byteOffset" : 16584,
+            "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 5528,
-            "byteOffset" : 22112
+            "byteOffset" : 22112,
+            "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 1446,
-            "byteOffset" : 27640
+            "byteOffset" : 27640,
+            "target" : 34963
         }
     ],
     "samplers" : [

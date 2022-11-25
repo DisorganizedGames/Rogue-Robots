@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -26,19 +26,22 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.006",
+            "name" : "Ground",
+            "normalTexture" : {
+                "index" : 0,
+                "scale" : 10
+            },
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
-                    "index" : 0
+                    "index" : 1
                 },
-                "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
+                "metallicFactor" : 0
             }
         }
     ],
     "meshes" : [
         {
-            "name" : "Scene.030",
+            "name" : "Scene.035",
             "primitives" : [
                 {
                     "attributes" : {
@@ -57,20 +60,29 @@
         {
             "sampler" : 0,
             "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 1
         }
     ],
     "images" : [
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
+            "name" : "NormalGroundGroup3",
+            "uri" : "Textures/NormalGroundGroup3.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "DiffuseGroundGroup3",
+            "uri" : "Textures/DiffuseGroundGroup3.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 172,
+            "count" : 213,
             "max" : [
                 2.5,
                 5.000000476837158,
@@ -78,7 +90,7 @@
             ],
             "min" : [
                 -2.5000009536743164,
-                -4.474064212445228e-07,
+                1.4852332697046222e-08,
                 -2.500000476837158
             ],
             "type" : "VEC3"
@@ -86,19 +98,19 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 172,
+            "count" : 213,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 172,
+            "count" : 213,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 172,
+            "count" : 213,
             "type" : "VEC2"
         },
         {
@@ -111,28 +123,33 @@
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 2064,
-            "byteOffset" : 0
+            "byteLength" : 2556,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2064,
-            "byteOffset" : 2064
+            "byteLength" : 2556,
+            "byteOffset" : 2556,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1376,
-            "byteOffset" : 4128
+            "byteLength" : 1704,
+            "byteOffset" : 5112,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1376,
-            "byteOffset" : 5504
+            "byteLength" : 1704,
+            "byteOffset" : 6816,
+            "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 426,
-            "byteOffset" : 6880
+            "byteOffset" : 8520,
+            "target" : 34963
         }
     ],
     "samplers" : [
@@ -143,7 +160,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 7308,
+            "byteLength" : 8948,
             "uri" : "RoofWallInnerCorner2.bin"
         }
     ]

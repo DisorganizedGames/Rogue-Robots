@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -21,24 +21,16 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.151",
-            "pbrMetallicRoughness" : {
-                "baseColorTexture" : {
-                    "index" : 0
-                },
-                "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
-            }
-        },
-        {
-            "doubleSided" : true,
-            "name" : "PP_Standard_Material.152",
+            "name" : "Ground",
+            "normalTexture" : {
+                "index" : 0,
+                "scale" : 10
+            },
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 1
                 },
-                "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
+                "metallicFactor" : 0
             }
         }
     ],
@@ -55,16 +47,6 @@
                     },
                     "indices" : 4,
                     "material" : 0
-                },
-                {
-                    "attributes" : {
-                        "POSITION" : 5,
-                        "NORMAL" : 6,
-                        "TEXCOORD_0" : 7,
-                        "TEXCOORD_1" : 8
-                    },
-                    "indices" : 9,
-                    "material" : 1
                 }
             ]
         }
@@ -76,148 +58,93 @@
         },
         {
             "sampler" : 0,
-            "source" : 0
+            "source" : 1
         }
     ],
     "images" : [
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
+            "name" : "NormalGroundGroup6",
+            "uri" : "Textures/NormalGroundGroup6.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "DiffuseGroundGroup6",
+            "uri" : "Textures/DiffuseGroundGroup6.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 639,
+            "count" : 2823,
             "max" : [
-                3.020551919937134,
+                3.020552158355713,
                 5.321342468261719,
-                -1.342714548110962
+                2.500000476837158
             ],
             "min" : [
-                -2.584954261779785,
-                -0.0899801254272461,
-                -2.500002145767212
+                -2.590904951095581,
+                -0.09134221076965332,
+                -2.500002384185791
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 639,
+            "count" : 2823,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 639,
+            "count" : 2823,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 639,
+            "count" : 2823,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 648,
-            "type" : "SCALAR"
-        },
-        {
-            "bufferView" : 5,
-            "componentType" : 5126,
-            "count" : 2180,
-            "max" : [
-                3.0053718090057373,
-                5.3111138343811035,
-                2.500000476837158
-            ],
-            "min" : [
-                -2.59090518951416,
-                -0.09134221076965332,
-                -2.500001907348633
-            ],
-            "type" : "VEC3"
-        },
-        {
-            "bufferView" : 6,
-            "componentType" : 5126,
-            "count" : 2180,
-            "type" : "VEC3"
-        },
-        {
-            "bufferView" : 7,
-            "componentType" : 5126,
-            "count" : 2180,
-            "type" : "VEC2"
-        },
-        {
-            "bufferView" : 8,
-            "componentType" : 5126,
-            "count" : 2180,
-            "type" : "VEC2"
-        },
-        {
-            "bufferView" : 9,
-            "componentType" : 5123,
-            "count" : 2190,
+            "count" : 2838,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 7668,
-            "byteOffset" : 0
+            "byteLength" : 33876,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 7668,
-            "byteOffset" : 7668
+            "byteLength" : 33876,
+            "byteOffset" : 33876,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 5112,
-            "byteOffset" : 15336
+            "byteLength" : 22584,
+            "byteOffset" : 67752,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 5112,
-            "byteOffset" : 20448
+            "byteLength" : 22584,
+            "byteOffset" : 90336,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1296,
-            "byteOffset" : 25560
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 26160,
-            "byteOffset" : 26856
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 26160,
-            "byteOffset" : 53016
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 17440,
-            "byteOffset" : 79176
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 17440,
-            "byteOffset" : 96616
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 4380,
-            "byteOffset" : 114056
+            "byteLength" : 5676,
+            "byteOffset" : 112920,
+            "target" : 34963
         }
     ],
     "samplers" : [
@@ -228,7 +155,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 118436,
+            "byteLength" : 118596,
             "uri" : "TunnelStraight1.bin"
         }
     ]
