@@ -185,6 +185,8 @@ private:
 
 	void ModifyLaserBarrel(DOG::LuaContext* context, DOG::entity e);
 
+	void AddLaserBullet(DOG::LuaContext* context, DOG::entity e);
+
 };
 
 class AssetInterface : public LuaInterface

@@ -149,6 +149,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddShadowReciever(e);
 	}
+	else if (compType == "LaserBullet")
+	{
+		AddLaserBullet(context, e);
+	}
 	//Add more component types here.
 	else
 	{
@@ -779,7 +783,7 @@ void EntityInterface::AddBullet(LuaContext* context, entity e)
 	int playerEntity = context->GetInteger();
 	BulletComponent& bullet = EntityManager::Get().AddComponent<BulletComponent>(e);
 	bullet.playerEntityID = playerEntity;
-	bullet.damage = 35;
+	bullet.damage = static_cast<f32>(context->GetDouble());
 	if (EntityManager::Get().HasComponent<RigidbodyComponent>(e))
 		EntityManager::Get().GetComponent<RigidbodyComponent>(e).continuousCollisionDetection = true;
 }
@@ -1074,6 +1078,60 @@ void EntityInterface::ModifyLaserBarrel(DOG::LuaContext* context, DOG::entity e)
 		em.RemoveComponentIfExists<FrostEffectComponent>(e);
 	}
 	context->ReturnBoolean(barrel.ammo <= 0);
+}
+
+void EntityInterface::AddLaserBullet(DOG::LuaContext* context, DOG::entity e)
+{
+	entity owningPlayer = context->GetInteger();
+
+	auto& em = EntityManager::Get();
+	assert(em.Exists(e) && em.Exists(owningPlayer));
+	MagazineModificationComponent::Type magType = MagazineModificationComponent::Type::None;
+	if (auto mag = em.TryGetComponent<MagazineModificationComponent>(owningPlayer)) magType = mag->get().type;
+
+	static std::optional<SubmeshRenderer> laserBulletModel = std::nullopt;
+	if (!laserBulletModel)
+	{
+		MaterialDesc frostMat;
+		frostMat.emissiveFactor = 6 * Vector4(1.5f, 0.1f, 0.1f, 0);
+		frostMat.albedoFactor = { 0.5f, 0, 0, 1 };
+		TransformComponent matrix;
+		matrix.RotateW({ 0, 0, XM_PIDIV2 }).SetScale(Vector3(0.08f, 0.6f, 0.08f));
+		laserBulletModel = CreateSimpleModel(frostMat, ShapeCreator(Shape::prism, 16, 8).GetResult()->mesh, matrix);
+	}
+
+
+	static std::optional<SubmeshRenderer> frostLaserBulletModel = std::nullopt;
+	if (!frostLaserBulletModel)
+	{
+		MaterialDesc frostMat;
+		frostMat.emissiveFactor = 6 * Vector4(0.2f, 0.8f, 0.8f, 1);
+		frostMat.albedoFactor = { 0, 0, 0.5f, 1 };
+		TransformComponent matrix;
+		matrix.RotateW({ 0, 0, XM_PIDIV2 }).SetScale(Vector3(0.08f, 0.6f, 0.08f));
+		frostLaserBulletModel = CreateSimpleModel(frostMat, ShapeCreator(Shape::prism, 16, 8).GetResult()->mesh, matrix);
+	}
+
+	Vector3 color;
+	switch (magType)
+	{
+	case MagazineModificationComponent::Type::None:
+		em.AddComponent<SubmeshRenderer>(e) = *laserBulletModel;
+		color.x = laserBulletModel->materialDesc.emissiveFactor.x;
+		color.y = laserBulletModel->materialDesc.emissiveFactor.y;
+		color.z = laserBulletModel->materialDesc.emissiveFactor.z;
+		break;
+	case MagazineModificationComponent::Type::Frost:
+		em.AddComponent<SubmeshRenderer>(e) = *frostLaserBulletModel;
+		color.x = frostLaserBulletModel->materialDesc.emissiveFactor.x;
+		color.y = frostLaserBulletModel->materialDesc.emissiveFactor.y;
+		color.z = frostLaserBulletModel->materialDesc.emissiveFactor.z;
+		break;
+	default:
+		break;
+	}
+
+	em.AddComponent<LaserBulletComponent>(e).color = color;
 }
 
 

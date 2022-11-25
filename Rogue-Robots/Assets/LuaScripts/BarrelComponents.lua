@@ -25,7 +25,7 @@ function BarrelComponents:BasicBarrel()
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
 			Entity:AddComponent(bullet.entity, "BoxColliderMass", boxColliderSize, true, 0.075)
 			Entity:AddComponent(bullet.entity, "Rigidbody", false)
-			Entity:AddComponent(bullet.entity, "Bullet", parentEntityID)		-- Note: bullet damage is added in Lua interface
+			Entity:AddComponent(bullet.entity, "Bullet", parentEntityID, 35.0)
 			--Entity:AddComponent(bullet.entity, "SubMeshRender", MaterialPrefabs:GetMaterial("BulletMaterial"))
 
 			Entity:PlayAudio(gunEntity.entityID, self.gunShotSound, true)
@@ -190,7 +190,19 @@ end
 function BarrelComponents:Laser()
 	return
 	{
-		Update = function(self, gunEntity, parentEntityID, bullet, miscComponent)
+		speed = 80.0,
+		size = Vector3.New(1.0, 1.0, 1.0),
+
+		Update = function(self, gunEntity, parentEntityID, bullet)
+			local boxColliderSize = bullet.size * 0.005 + Vector3.New(.1, .1, .1)
+			Entity:ModifyComponent(bullet.entity, "Transform", bullet.size + self.size, 3)
+
+			Entity:AddComponent(bullet.entity, "LaserBullet", parentEntityID)
+			Entity:AddComponent(bullet.entity, "BoxColliderMass", boxColliderSize, true, 0.075)
+			Entity:AddComponent(bullet.entity, "Rigidbody", false)
+			Entity:AddComponent(bullet.entity, "Bullet", parentEntityID, 100.0)
+
+			Physics:RBSetVelocity(bullet.entity, bullet.forward * (bullet.speed + self.speed))
 		end,
 		Destroy = function(self, bullet)
 		end,
