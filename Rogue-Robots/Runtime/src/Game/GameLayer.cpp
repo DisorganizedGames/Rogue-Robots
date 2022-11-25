@@ -670,6 +670,7 @@ void GameLayer::UpdateLobby()
 		}
 		case NetworkStatus::Hosting:
 		{
+			m_netCode.SetLobbyStatus(true);
 			char ip[64];
 			strcpy_s(ip, m_netCode.GetIpAdress().c_str());
 			ImGui::Text("Nr of players connected: %d", m_netCode.GetNrOfPlayers());
