@@ -9,6 +9,7 @@ constexpr const char* PORTNUMBER_IN = "50004";
 constexpr int PORTNUMBER_OUT_INT = 50006;
 constexpr int PORTNUMBER_IN_INT = 50004;
 constexpr const char* MULTICAST_ADRESS = "239.255.255.0";
+constexpr int AGGRO_BIT = 2147483648;
 
 struct PlayerNetworkComponentUdp
 {
@@ -40,6 +41,7 @@ struct TcpHeader
 	u16 nrOfNetTransform = 0;
 	u16 nrOfChangedAgentsHp = 0;
 	u16 nrOfCreateAndDestroy = 0;
+	u16 nrOfPathFindingSync = 0;
 	bool lobbyAlive = true;
 
 };
@@ -50,3 +52,7 @@ struct NetworkId
 	u32 id = u32(-1);
 };
 
+struct PathFindingSync
+{
+	AgentIdComponent id = { 0, EntityTypes::Default};
+};
