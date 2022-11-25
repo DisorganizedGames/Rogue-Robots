@@ -644,3 +644,12 @@ public:
 
 	void OnUpdate(LaserBeamVFXComponent& laserBeam);
 };
+
+class LaserBulletCollisionSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(LaserBulletComponent, DOG::HasEnteredCollisionComponent, DOG::TransformComponent);
+	ON_UPDATE_ID(LaserBulletComponent, DOG::HasEnteredCollisionComponent, DOG::TransformComponent);
+
+	void OnUpdate(DOG::entity e, LaserBulletComponent& laserBullet, DOG::HasEnteredCollisionComponent&, DOG::TransformComponent& transform);
+};

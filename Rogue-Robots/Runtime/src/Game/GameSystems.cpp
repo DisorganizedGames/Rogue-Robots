@@ -1039,6 +1039,43 @@ void LaserBeamVFXSystem::OnUpdate(LaserBeamVFXComponent& laserBeam)
 	gfx::PostProcess::Get().InstantiateLaserBeam(laserBeam.startPos + 0.002f * jitter, laserBeam.endPos, dirToCamera, f * (laserBeam.color += 0.02f * jitter));
 }
 
+void LaserBulletCollisionSystem::OnUpdate(DOG::entity e, LaserBulletComponent& laserBullet, DOG::HasEnteredCollisionComponent&, DOG::TransformComponent& transform)
+{
+	auto& em = EntityManager::Get();
+	em.DeferredEntityDestruction(e);
+
+
+	entity hitParticleEffect = em.CreateEntity();
+	if(auto scene = em.TryGetComponent<SceneComponent>(e)) 
+		em.AddComponent<SceneComponent>(hitParticleEffect, scene->get().scene);
+
+
+	auto& playerTr = em.GetComponent<TransformComponent>(GetCamera());
+
+	//auto& tr = em.AddComponent<TransformComponent>(hitParticleEffect) = playerTr;
+	auto& tr = em.AddComponent<TransformComponent>(hitParticleEffect) = transform;
+	tr.SetPosition(transform.GetPosition());
+	//auto& tr = em.AddComponent<TransformComponent>(hitParticleEffect).SetPosition(transform.GetPosition());
+	tr.RotateL({ 0, 0, DirectX::XM_PIDIV2 });
+	//tr.RotateL({ DirectX::XM_PIDIV2, 0, 0 });
+
+	em.AddComponent<LifetimeComponent>(hitParticleEffect, 0.04f);
+
+
+	Vector4 startColor = 2.5f * Vector4(laserBullet.color.x, 1.6f * laserBullet.color.y, laserBullet.color.z, 1);
+	Vector4 endColor = 0.3f * Vector4(0.3f * laserBullet.color.x, 0.8f * laserBullet.color.y, laserBullet.color.z, 1);
+
+
+	em.AddComponent<ParticleEmitterComponent>(hitParticleEffect) = {
+		.spawnRate = 512.f,
+		.particleSize = 0.08f,
+		.particleLifetime = 1.2f,
+		.startColor = startColor,
+		.endColor = endColor,
+	};
+	em.AddComponent<ConeSpawnComponent>(hitParticleEffect) = { .angle = DirectX::XM_PI / 4, .speed = 10.f };
+}
+
 #pragma endregion
 
 void SetFlashLightToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& child, DOG::TransformComponent& world)
