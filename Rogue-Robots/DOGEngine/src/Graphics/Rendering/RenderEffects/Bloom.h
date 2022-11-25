@@ -35,6 +35,7 @@ namespace DOG::gfx
 		GPUDynamicConstants* m_dynamicConstants{ nullptr };
 		Pipeline m_compPipeBloomSelect;
 		Pipeline m_compPipeDownSample;
+		Pipeline m_compPipeDownSample2;
 		Pipeline m_compPipeUpSample;
 		//Pipeline m_compPipDebug;
 
