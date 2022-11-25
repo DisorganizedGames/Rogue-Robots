@@ -51,6 +51,7 @@ namespace DOG
 		bool collisionCheck = false;
 		bool activeCollision = false;
 		bool ghost = false;
+		DirectX::SimpleMath::Vector3 normal;
 		//This can be a rigidbody and a ghost
 		RigidbodyHandle collisionBodyHandle;
 	};
