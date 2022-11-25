@@ -6,8 +6,6 @@
 #include "../../RHI/ShaderCompilerDXC.h"
 #include "../GPUDynamicConstants.h"
 
-#include "ImGUI/imgui.h"
-
 namespace DOG::gfx
 {
 	Bloom::Bloom(RGResourceManager* resMan, GlobalEffectData& globalEffectData, GPUDynamicConstants* dynConsts, u32 renderResX, u32 renderResY)
@@ -23,9 +21,6 @@ namespace DOG::gfx
 
 		auto downSampleShader = globalEffectData.sclr->CompileFromFile("BloomDownSample.hlsl", ShaderType::Compute);
 		m_compPipeDownSample = device->CreateComputePipeline(ComputePipelineDesc(downSampleShader.get()));
-
-		auto downSampleShader2 = globalEffectData.sclr->CompileFromFile("BloomDownSample2.hlsl", ShaderType::Compute);
-		m_compPipeDownSample2 = device->CreateComputePipeline(ComputePipelineDesc(downSampleShader2.get()));
 
 		auto upSampleShader = globalEffectData.sclr->CompileFromFile("BloomUpSample.hlsl", ShaderType::Compute);
 		m_compPipeUpSample = device->CreateComputePipeline(ComputePipelineDesc(upSampleShader.get()));
@@ -74,7 +69,6 @@ namespace DOG::gfx
 		//device->FreePipeline(m_compPipDebug);
 		device->FreePipeline(m_compPipeBloomSelect);
 		device->FreePipeline(m_compPipeDownSample);
-		device->FreePipeline(m_compPipeDownSample2);
 		device->FreePipeline(m_compPipeUpSample);
 
 		m_resMan->FreeImported(RG_RESOURCE(BloomTexture0));
@@ -84,18 +78,6 @@ namespace DOG::gfx
 
 	void Bloom::Add(RenderGraph& rg)
 	{
-		static bool old = true;
-		if (old)
-			ImGui::Text("old");
-		else
-			ImGui::Text("new");
-
-		if(ImGui::Button("swap"))
-		{
-			std::swap(m_compPipeDownSample, m_compPipeDownSample2);
-			old = !old;
-		}
-
 		struct PassData
 		{
 			GPUDynamicConstant constantBufferHandle;
