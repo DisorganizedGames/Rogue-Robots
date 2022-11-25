@@ -599,7 +599,7 @@ public:
 
 		if (age >= lifetime)
 		{
-			DOG::EntityManager::Get().AddComponent<DOG::DeferredDeletionComponent>(e);
+			DOG::EntityManager::Get().DeferredEntityDestruction(e);
 		}
 		age += DOG::Time::DeltaTime<DOG::TimeType::Seconds, f32>();
 	}
