@@ -19,6 +19,7 @@ enum class GameState
 	Lost,
 	Exiting,
 	Restart,
+	WaitingForHost
 };
 
 enum class NetworkStatus
