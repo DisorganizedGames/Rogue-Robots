@@ -327,6 +327,8 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 		stats.health = stats.maxHealth;
 	}
 
+	m_entityManager.GetComponent<AnimationComponent>(e).SimpleAdd(2);
+
 	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
 	m_entityManager.DeferredEntityDestruction(controller.debugCamera);
 	controller.debugCamera = DOG::NULL_ENTITY;
@@ -436,28 +438,6 @@ void GameLayer::UpdateGame()
 
 	EvaluateWinCondition();
 	EvaluateLoseCondition();
-	using namespace DirectX;
-	Matrix objTf = XMMatrixTranslation(m_imguiX, m_imguiY, m_imguiZ);
-	Matrix boneTf = {};
-	Matrix playerW = {};
-	Vector3 playerP = {};
-	Vector3 objP = { m_imguiX, m_imguiY, m_imguiZ };
-	Vector3 printPos = {};
-	EntityManager::Get().Collect<TransformComponent, RigBoneTransformation, ThisPlayer>().Do([&](TransformComponent& transform, RigBoneTransformation& btf, ThisPlayer&)
-		{
-			playerW = transform.worldMatrix;
-			playerP = transform.GetPosition();
-			boneTf = btf.transform;
-		});
-	EntityManager::Get().Collect<TransformComponent, TestComponent>().Do([&](TransformComponent& transform, TestComponent&)
-		{
-			
-			transform.worldMatrix = objTf * boneTf;
-			auto pos = transform.GetPosition();
-			pos.y += m_imguiposY;
-			transform.SetPosition(pos);
-			//transform.SetScale({ m_imguiS, m_imguiS, m_imguiS });
-		});
 
 	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([](TransformComponent& transform, RigidbodyComponent&)
 		{
@@ -1178,12 +1158,6 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 			}
 			
 			if (ImGui::RadioButton("PCGLevel", (int*)&m_selectedScene, (int)SceneComponent::Type::PCGLevelScene)) m_gameState = GameState::Restart;
-
-			ImGui::SliderFloat("pX", &m_imguiX, -25.f, 25.f, "%.5f");
-			ImGui::SliderFloat("pY", &m_imguiY, -25.f, 25.f, "%.5f");
-			ImGui::SliderFloat("pZ", &m_imguiZ, -25.f, 25.f, "%.5f");
-			ImGui::SliderFloat("poffsetY", &m_imguiposY, -0.5f, +1.5f, "%.5f");
-			ImGui::SliderFloat("Scal", &m_imguiS, 0.01f, 1.0f, "%.2f");
 
 			if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;
 			if (ImGui::RadioButton("Particle", (int*)&m_selectedScene, (int)SceneComponent::Type::ParticleScene)) m_gameState = GameState::Restart;

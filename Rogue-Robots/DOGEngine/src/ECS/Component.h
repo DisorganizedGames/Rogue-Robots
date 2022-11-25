@@ -82,14 +82,6 @@ namespace DOG
 	{
 
 	};
-	struct TestComponent
-	{
-		
-	};
-	struct RigBoneTransformation
-	{
-		DirectX::SimpleMath::Matrix transform = DirectX::SimpleMath::Matrix::Identity;;
-	};
 	struct RigDataComponent
 	{
 		u32 offset;

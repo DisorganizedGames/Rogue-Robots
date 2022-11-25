@@ -58,7 +58,7 @@ namespace DOG
 		// Add clip to back
 		const auto clipIdx = std::clamp(set.nTotalClips, 0u, MAX_CLIPS - 1);
 		auto& clip = set.clips[clipIdx];
-		clip.id = setter.animationIDs[setIdx]; // this is poop
+		clip.id = setter.animationIDs[setIdx];
 		clip.duration = rigData->animations[clip.id].duration;
 		clip.totalTicks = rigData->animations[clip.id].ticks;
 		clip.currentWeight = 0.f;
@@ -109,28 +109,28 @@ namespace DOG
 		const auto bw = set.blend.currentWeight;
 
 		auto weightSum = 0.f;
-		std::array<f32, 6> tmp = { -1.f };
+		std::array<f32, 6> weights = { -1.f };
 		for (u32 i = 0; i < set.nTotalClips; i++)
 		{
 			auto& clip = set.clips[i];
 			if (i < set.nTargets)
 			{
-				tmp[i] = bw * (clip.targetWeight - clip.currentWeight) + clip.currentWeight;
+				weights[i] = bw * (clip.targetWeight - clip.currentWeight) + clip.currentWeight;
 			}
 			else
 			{
-				tmp[i] = clip.currentWeight = (1.f - bw) * clip.targetWeight;
+				weights[i] = clip.currentWeight = (1.f - bw) * clip.targetWeight;
 			}
-			weightSum += tmp[i];
+			weightSum += weights[i];
 		}
 		for (size_t i = 0; i < set.nTotalClips; i++)
-			assert(tmp[i] >= 0.f);
+			assert(weights[i] >= 0.f);
 
 		if (weightSum != 1.f)
 			for (u32 i = 0; i < set.nTotalClips; i++)
-				tmp[i] /= weightSum;
+				weights[i] /= weightSum;
 
-		return tmp;
+		return weights;
 	}
 
 	i32 RigAnimator::GetClipIndex(const ClipSet& set, const i32 animationID)

@@ -35,7 +35,6 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	AddComponent<TransformComponent>(sphereEntity, Vector3(30, 20, 30));
 	AddComponent<ModelComponent>(sphereEntity, sphereID);
 	AddComponent<ShadowReceiverComponent>(sphereEntity);
-	AddComponent<TestComponent>(sphereEntity);
 
 	entity entity2 = CreateEntity();
 	AddComponent<ModelComponent>(entity2, greenCubeID);

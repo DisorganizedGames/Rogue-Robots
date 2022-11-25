@@ -88,8 +88,8 @@ void PlayerMovementSystem::OnEarlyUpdate(
 			return;
 		}
 
-	MovePlayer(e, player, moveTowards, forward, rigidbody, playerStats.speed, playerStats.jumpSpeed, input);
-	ApplyAnimations(input, ac);
+		MovePlayer(e, player, moveTowards, forward, rigidbody, playerStats.speed, playerStats.jumpSpeed, input);
+		ApplyAnimations(input, ac);
 
 		f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
 		camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 1600.f, 0.1f);
