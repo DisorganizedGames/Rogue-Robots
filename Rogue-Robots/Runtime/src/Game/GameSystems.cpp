@@ -95,7 +95,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 		camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 1600.f, 0.1f);
 
 		// Place camera 0.4 units above the player transform
-		auto pos = transform.GetPosition() + Vector3(0, 0.7f, 0);
+		auto pos = transform.GetPosition() + Vector3(0, 1.2f, 0);
 		camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
 		cameraTransform.worldMatrix = camera.viewMatrix.Invert();
 
@@ -811,6 +811,13 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 	const bool revivalCompleted = (progress >= 1.0f);
 	if (revivalCompleted)
 	{
+		// Apply Revive Animation
+		{
+			static constexpr u8 REVIVE_ANIMATION = 0; // No dedicated animation yet, transition to idle for now
+			auto& ac = mgr.GetComponent<AnimationComponent>(closestDeadPlayer);
+			ac.SimpleAdd(REVIVE_ANIMATION, AnimationFlag::Looping | AnimationFlag::ResetPrio);
+		}
+
 		if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))
 		{
 			auto spectatedPlayer = mgr.GetComponent<SpectatorComponent>(closestDeadPlayer).playerBeingSpectated;

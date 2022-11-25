@@ -135,8 +135,9 @@ namespace DOG
 		XMMATRIX deltaR = rotation;
 
 		worldMatrix = s * deltaR * r * t;
-		
+
 		return *this;
+	}
 	void AnimationComponent::SimpleAdd(i8 animationId, AnimationFlag flags)
 	{
 		auto& setter = animSetters[addedSetters++];

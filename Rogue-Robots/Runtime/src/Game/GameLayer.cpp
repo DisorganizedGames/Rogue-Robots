@@ -337,7 +337,12 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 void GameLayer::KillPlayer(DOG::entity e)
 {
 	m_entityManager.RemoveComponent<PlayerAliveComponent>(e);
-	
+	if (m_entityManager.HasComponent<AnimationComponent>(e))
+	{
+		static constexpr u8 DEATH_ANIMATION = 1;
+		auto& ac = m_entityManager.GetComponent<AnimationComponent>(e);
+		ac.SimpleAdd(DEATH_ANIMATION, AnimationFlag::Persist);
+	}
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
 		entity localPlayer = e;
@@ -1180,10 +1185,6 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 			ImGui::SliderFloat("poffsetY", &m_imguiposY, -0.5f, +1.5f, "%.5f");
 			ImGui::SliderFloat("Scal", &m_imguiS, 0.01f, 1.0f, "%.2f");
 
-			if (ImGui::RadioButton("Room0", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom0Scene)) m_gameState = GameState::Restart;
-			if (ImGui::RadioButton("Room1", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom1Scene)) m_gameState = GameState::Restart;
-			if (ImGui::RadioButton("Room2", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom2Scene)) m_gameState = GameState::Restart;
-			if (ImGui::RadioButton("Room3", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom3Scene)) m_gameState = GameState::Restart;
 			if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;
 			if (ImGui::RadioButton("Particle", (int*)&m_selectedScene, (int)SceneComponent::Type::ParticleScene)) m_gameState = GameState::Restart;
 			
