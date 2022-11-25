@@ -327,6 +327,8 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 		stats.health = stats.maxHealth;
 	}
 
+	m_entityManager.GetComponent<AnimationComponent>(e).SimpleAdd(static_cast<i8>(MixamoAnimations::Idle));
+
 	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
 	m_entityManager.DeferredEntityDestruction(controller.debugCamera);
 	controller.debugCamera = DOG::NULL_ENTITY;
@@ -337,7 +339,11 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 void GameLayer::KillPlayer(DOG::entity e)
 {
 	m_entityManager.RemoveComponent<PlayerAliveComponent>(e);
-	
+	if (m_entityManager.HasComponent<AnimationComponent>(e))
+	{
+		auto& ac = m_entityManager.GetComponent<AnimationComponent>(e);
+		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::DeathAnimation), AnimationFlag::Persist);
+	}
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
 		entity localPlayer = e;
@@ -431,7 +437,6 @@ void GameLayer::UpdateGame()
 
 	EvaluateWinCondition();
 	EvaluateLoseCondition();
-
 
 	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([](TransformComponent& transform, RigidbodyComponent&)
 		{
@@ -1152,6 +1157,7 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 			}
 			
 			if (ImGui::RadioButton("PCGLevel", (int*)&m_selectedScene, (int)SceneComponent::Type::PCGLevelScene)) m_gameState = GameState::Restart;
+
 			if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;
 			if (ImGui::RadioButton("Particle", (int*)&m_selectedScene, (int)SceneComponent::Type::ParticleScene)) m_gameState = GameState::Restart;
 			

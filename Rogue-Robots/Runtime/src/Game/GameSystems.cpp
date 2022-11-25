@@ -88,14 +88,14 @@ void PlayerMovementSystem::OnEarlyUpdate(
 			return;
 		}
 
-	MovePlayer(e, player, moveTowards, forward, rigidbody, playerStats.speed, playerStats.jumpSpeed, input);
-	ApplyAnimations(input, ac);
+		MovePlayer(e, player, moveTowards, forward, rigidbody, playerStats.speed, playerStats.jumpSpeed, input);
+		ApplyAnimations(input, ac);
 
 		f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
 		camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 1600.f, 0.1f);
 
 		// Place camera 0.4 units above the player transform
-		auto pos = transform.GetPosition() + Vector3(0, 0.7f, 0);
+		auto pos = transform.GetPosition() + Vector3(0, 1.2f, 0);
 		camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
 		cameraTransform.worldMatrix = camera.viewMatrix.Invert();
 
@@ -331,15 +331,6 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 
 void PlayerMovementSystem::ApplyAnimations(const InputController& input, AnimationComponent& ac)
 {
-	// Relevant Animation IDs
-	static constexpr i8 IDLE = 2;
-	static constexpr i8 RUN = 5;
-	static constexpr i8 RUN_BACKWARDS = 6;
-	static constexpr i8 WALK = 13;
-	static constexpr i8 WALK_BACKWARDS = 14;
-	static constexpr i8 STRAFE_LEFT = 8;
-	static constexpr i8 STRAFE_RIGHT = 10;
-
 	auto addedAnims = 0;
 	auto& setter = ac.animSetters[ac.addedSetters];
 	setter.group = ac.FULL_BODY;
@@ -348,35 +339,37 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 	auto leftRight = input.right - input.left;
 	if (forwardBack)
 	{
-		const auto animation = input.forward ? RUN : WALK_BACKWARDS;
+		const auto animation = input.forward ? MixamoAnimations::Run : MixamoAnimations::WalkBackwards;
 		const auto weight = 0.5f;
 
-		setter.animationIDs[addedAnims] = animation;
+		setter.animationIDs[addedAnims] = static_cast<i8>(animation);
 		setter.targetWeights[addedAnims++] = weight;
 	}
 	if (leftRight)
 	{
-		const auto animation = input.left ? STRAFE_LEFT : STRAFE_RIGHT;
+		const auto animation = input.left ? MixamoAnimations::StrafeLeft : MixamoAnimations::StrafeRight;
 
 		// Backwards + strafe_right makes leg clip through each other if equal weights
 		auto weight = (forwardBack && input.backwards && input.right) ? 0.7f : 0.5f;
 
-		setter.animationIDs[addedAnims] = animation;
+		setter.animationIDs[addedAnims] = static_cast<i8>(animation);
 		setter.targetWeights[addedAnims++] = weight;
 	}
 
 	// if no schmovement apply idle animation
 	if (!addedAnims)
 	{
-		setter.animationIDs[addedAnims] = IDLE;
-		setter.targetWeights[addedAnims++] = 1.0f;
+		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping);
 	}
-
-	// misc variables
-	setter.playbackRate = 1.5f;
-	setter.transitionLength = 0.1f;
-	setter.loop = true;
-	++ac.addedSetters;
+	else
+	{
+		setter.flag = AnimationFlag::Looping;
+		// misc variables
+		setter.playbackRate = 1.25f;
+		setter.transitionLength = 0.1f;
+		++ac.addedSetters;
+	}
+	
 }
 
 #pragma endregion
@@ -809,6 +802,13 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 	const bool revivalCompleted = (progress >= 1.0f);
 	if (revivalCompleted)
 	{
+		// Apply Revive Animation
+		{
+			static constexpr u8 REVIVE_ANIMATION = 0; // No dedicated animation yet, transition to idle for now
+			auto& ac = mgr.GetComponent<AnimationComponent>(closestDeadPlayer);
+			ac.SimpleAdd(REVIVE_ANIMATION, AnimationFlag::Looping | AnimationFlag::ResetPrio);
+		}
+
 		if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))
 		{
 			auto spectatedPlayer = mgr.GetComponent<SpectatorComponent>(closestDeadPlayer).playerBeingSpectated;

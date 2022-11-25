@@ -33,7 +33,6 @@ void OldDefaultScene::SetUpScene(std::vector<std::function<std::vector<DOG::enti
 	AddComponent<TransformComponent>(turretBase, Vector3(45, 5.5f, 20));
 	AddComponent<ModelComponent>(turretBase).id = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/turretBase.glb");
 
-
 	entity turretHead = CreateEntity();
 	AddComponent<TransformComponent>(turretHead);
 	auto& tr = AddComponent<ChildComponent>(turretHead);

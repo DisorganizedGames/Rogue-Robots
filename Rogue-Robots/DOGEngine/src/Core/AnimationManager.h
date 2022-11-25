@@ -14,9 +14,9 @@ namespace DOG
 	class AnimationManager
 	{
 	private:
-		// scale, rot, trans
-		static constexpr u8 N_KEYS = 3;
-		static constexpr u8 MAX_CLIPS = 10;
+		static constexpr u8 MIXAMO_VSHEAD_JOINT = 5;
+		static constexpr u8 N_KEYS = 3; // scale, rot, trans
+		static constexpr u8 MAX_CLIPS = 6;
 	private:
 		enum class KeyType
 		{
@@ -48,6 +48,7 @@ namespace DOG
 		void CalculateSRT(RigAnimator& ac, const u8 rigID);
 		void ExtractClipNodeInfluences(RigAnimator& animator, const KeyType key, const u32 group, const u32 rigID);
 	private:
+		RigAnimator m_ta;
 		std::vector<ImportedRig*> m_rigs;
 		std::array<RigAnimator, 4> m_playerRigAnimators;
 		std::array<DirectX::XMVECTOR, MAX_CLIPS* NodeCount(MIXAMO_RIG_ID)> m_partialSRT{ DirectX::XMVECTOR{} };
@@ -58,12 +59,14 @@ namespace DOG
 		static constexpr DirectX::XMFLOAT3 m_baseScale = { 1.f, 1.f, 1.f };
 		static constexpr DirectX::XMFLOAT4 m_baseRotation = { 0.f, 0.f, 0.f, 0.f };
 		static constexpr DirectX::XMFLOAT3 m_baseTranslation = { 0.f, 0.f, 0.f };
-
+		static constexpr DirectX::XMFLOAT3 m_headOffset = { 0.f, 54.7f, 0.1f };
 		// IMGUI RELATED
 	private:
 		RigAnimator mRigAnimator;
-		f32 m_imguiGroupWeightA = 0.0f;
+		f32 m_imguiDeltaTime = 0.05f;
 		bool m_imguiApplyRootTranslation = true;
+		i32 m_imguiJoint = 5;
+		i32 m_imguiSelectedJoint = 0;
 		DirectX::FXMMATRIX ImguiTransform(i32 joint);
 		std::vector<DirectX::XMFLOAT3> m_imguiSca;
 		std::vector<DirectX::XMFLOAT3> m_imguiRot;

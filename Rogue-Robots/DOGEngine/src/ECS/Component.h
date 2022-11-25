@@ -11,6 +11,16 @@ namespace DOG
 		bezier,
 		interrupt,
 	};
+	enum class AnimationFlag : u32
+	{
+		None = 0,
+		Looping = 1 << 1,
+		Persist = 1 << 2,
+		ResetPrio = 1 << 3,
+		SimpleAdd = 1 << 4,
+	};
+	DEFINE_ENUM_FLAG_OPERATORS(AnimationFlag)
+	
 
 	struct TransformComponent
 	{
@@ -43,13 +53,13 @@ namespace DOG
 	struct ModelComponent
 	{
 		ModelComponent(u32 id = 0) noexcept : id{ id } {}
-		operator const u32 () const { return id; }
+		operator const u32() const { return id; }
 		u32 id;
 	};
 
 	struct CameraComponent
 	{
-		using Matrix = DirectX::SimpleMath::Matrix;	
+		using Matrix = DirectX::SimpleMath::Matrix;
 
 		Matrix viewMatrix = DirectX::XMMatrixIdentity();
 		Matrix projMatrix = DirectX::XMMatrixIdentity();
@@ -65,7 +75,7 @@ namespace DOG
 
 	struct NetworkTransform
 	{
-		u32 objectId  = 0;
+		u32 objectId = 0;
 		DirectX::SimpleMath::Matrix transform;
 	};
 	struct DontDraw
@@ -85,21 +95,23 @@ namespace DOG
 		static constexpr u8 FULL_BODY = 0;
 		static constexpr u8 LOWER_BODY = 1;
 		static constexpr u8 UPPER_BODY = 2;
+		static constexpr u8 BASE_PRIORITY = 0;
 		u32 offset;
 		i8 rigID = 0;
 		i8 animatorID = -1;
 		i8 addedSetters = 0;
 		struct Setter
 		{
-			bool loop;
-			u8 group;
-			u8 priority;
-			f32 transitionLength;
-			f32 playbackRate;
-			i8 animationIDs[MAX_TARGET_ANIMS];
-			f32 targetWeights[MAX_TARGET_ANIMS];
+			AnimationFlag flag = AnimationFlag::None;
+			u8 group = 0;
+			u8 priority = BASE_PRIORITY;
+			f32 transitionLength = 0.f;
+			f32 playbackRate = 1.f;
+			i8 animationIDs[MAX_TARGET_ANIMS] = { -1, -1, -1 };
+			f32 targetWeights[MAX_TARGET_ANIMS] = { 1.f, 1.f, 1.f };
 		};
 		std::array<Setter, MAX_SETTERS> animSetters;
+		void SimpleAdd(i8 animationId, AnimationFlag flags = AnimationFlag::None);
 	};
 	static_assert(std::is_trivially_copyable_v<AnimationComponent>);
 
