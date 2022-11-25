@@ -3,6 +3,7 @@
 #include "Game/GameLayer.h"
 #include "../LoadSplitModels.h"
 #include "../ItemManager/ItemManager.h"
+
 using namespace DOG;
 using namespace DirectX::SimpleMath;
 
@@ -117,6 +118,7 @@ void AgentManager::Initialize()
 	// Register agent systems
 	EntityManager& em = EntityManager::Get();
 	em.RegisterSystem(std::make_unique<AgentSeekPlayerSystem>());
+	em.RegisterSystem(std::make_unique<AgentPlanningSystem>());
 	em.RegisterSystem(std::make_unique<AgentMovementSystem>());
 	em.RegisterSystem(std::make_unique<AgentAttackSystem>());
 	em.RegisterSystem(std::make_unique<AgentHitDetectionSystem>());
@@ -168,6 +170,8 @@ entity AgentManager::CreateAgentCore(u32 model, u32 groupID, const Vector3& pos,
 				move.forward.Normalize();
 			}
 		});
+
+	em.AddComponent<PathfinderWalkComponent>(e);
 
 	em.AddComponent<AgentHPComponent>(e);
 

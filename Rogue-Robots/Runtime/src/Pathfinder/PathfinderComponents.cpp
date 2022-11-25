@@ -19,21 +19,22 @@ void NavSceneComponent::AddIdAt(size_t x, size_t y, size_t z, entity e)
 	map[y][z][x] = e;
 }
 
+bool NavSceneComponent::HasNavMesh(size_t x, size_t y, size_t z)
+{
+	if (y < map.size())
+		if (z < map[y].size())
+			if (x < map[y][z].size())
+				return map[y][z][x] != NULL_ENTITY;
+
+	return false;
+}
+
 bool NavSceneComponent::HasNavMesh(int x, int y, int z)
 {
 	if (x < 0 || y < 0 || z < 0)
 		return false;
 
-	size_t ux = static_cast<size_t>(x);
-	size_t uy = static_cast<size_t>(y);
-	size_t uz = static_cast<size_t>(z);
-
-	if (uy < map.size())
-		if (uz < map[uy].size())
-			if (ux < map[uy][uz].size())
-				return map[uy][uz][ux] != NULL_ENTITY;
-
-	return false;
+	return HasNavMesh(static_cast<size_t>(x), static_cast<size_t>(y), static_cast<size_t>(z));
 }
 
 DOG::entity NavSceneComponent::At(size_t x, size_t y, size_t z)
@@ -59,8 +60,9 @@ DOG::entity NavSceneComponent::At(Vector3 pos)
 	int x = static_cast<int>(pos.x / pcgBlock::DIMENSION);
 	int y = static_cast<int>(pos.y / pcgBlock::DIMENSION);
 	int z = static_cast<int>(pos.z / pcgBlock::DIMENSION);
-
-	return At(x, y, z);
+	NavMeshID id = At(x, y, z);
+	//std::cout << "[" << id << "] (" << x << ", " << y << ", " << z << ")" << std::endl;
+	return id;
 }
 
 bool NavMeshComponent::Connected(NavMeshID mesh1, NavMeshID mesh2)

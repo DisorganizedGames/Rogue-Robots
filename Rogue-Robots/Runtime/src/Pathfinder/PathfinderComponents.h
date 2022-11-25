@@ -9,6 +9,7 @@ struct NavSceneComponent
 	std::vector<std::vector<std::vector<DOG::entity>>> map;
 
 	void AddIdAt(size_t x, size_t y, size_t z, DOG::entity e);
+	bool HasNavMesh(size_t x, size_t y, size_t z);
 	bool HasNavMesh(int x, int y, int z);
 	NavMeshID At(size_t x, size_t y, size_t z);
 	NavMeshID At(int x, int y, int z);
@@ -67,7 +68,7 @@ struct PathfinderWalkComponent
 	using Vector3 = DirectX::SimpleMath::Vector3;
 
 	Vector3 goal;
-	float speed;
+	std::vector<Vector3> path;
 };
 
 struct VisualizePathComponent

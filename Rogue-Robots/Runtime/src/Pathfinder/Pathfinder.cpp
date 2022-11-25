@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include "Game/PcgLevelLoader.h"
 #include "PathfinderSystems.h"
+#include "Game/AgentManager/AgentManager.h"
 
 using namespace DOG;
 using namespace DirectX::SimpleMath;
@@ -21,16 +22,20 @@ void Pathfinder::Init()
 	// Register pathfinder systems
 	EntityManager& em = EntityManager::Get();
 	em.RegisterSystem(std::make_unique<VisualizePathCleanUpSystem>());
-	em.RegisterSystem(std::make_unique<PathfinderWalkAgentsSystem>());
+	em.RegisterSystem(std::make_unique<PathfinderWalkSystem>());
 
 	m_initialized = true;
 }
 
 void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 {
-	constexpr unsigned char voidBlock = ' '; // 176;
-	constexpr unsigned char emptySpace = 178;
-	constexpr unsigned char solidBlock = 219;
+	// temporary aggro agent for pathfinding tests
+	entity e = AgentManager::Get().CreateAgent(EntityTypes::Scorpio, AgentManager::Get().GroupID(), Vector3(13.f, 12.f, 220.f));
+	EntityManager::Get().AddComponent<AgentAggroComponent>(e);
+
+	//constexpr unsigned char voidBlock = ' '; // 176;
+	//constexpr unsigned char emptySpace = 178;
+	//constexpr unsigned char solidBlock = 219;
 
 	constexpr float blockDim = pcgBlock::DIMENSION;
 	constexpr Vector3 navMeshScale = Vector3(1.f, 1.f, 1.f);
@@ -38,8 +43,7 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 
 	EntityManager& em = EntityManager::Get();
 
-	std::vector<std::vector<std::vector<char>>> map;
-	size_t startX{ 0 }, startY{ 0 }, startZ{ 0 };
+	//std::vector<std::vector<std::vector<char>>> map;
 
 	entity navSceneID = em.CreateEntity();
 	//em.AddComponent<SceneComponent>(navSceneID).scene = sceneType;
@@ -55,22 +59,23 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 			size_t z = static_cast<size_t>(pos.z / blockDim);
 
 			// expand map if necessary
-			while (!(y < map.size()))
-				map.emplace_back(std::vector<std::vector<char>>());
-			while (!(z < map[y].size()))
-				map[y].emplace_back(std::vector<char>());
-			while (!(x < map[y][z].size()))
-				map[y][z].emplace_back(voidBlock);
+			//while (!(y < map.size()))
+			//	map.emplace_back(std::vector<std::vector<char>>());
+			//while (!(z < map[y].size()))
+			//	map[y].emplace_back(std::vector<char>());
+			//while (!(x < map[y][z].size()))
+			//	map[y][z].emplace_back(voidBlock);
 
 			// draw block
-			map[y][z][x] = solidBlock;
+			//map[y][z][x] = solidBlock;
 			
 			// create NavMesh and add to navScene
 			entity newMesh = em.CreateEntity();
 			navScene.AddIdAt(x, y, z, newMesh);
 			em.AddComponent<NavMeshComponent>(newMesh);
 			em.AddComponent<SceneComponent>(newMesh, sceneType);
-			BoundingBoxComponent& bb = em.AddComponent <BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
+			em.AddComponent <BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
+			//BoundingBoxComponent& bb = em.AddComponent <BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
 
 			// visualize NavMesh
 			//em.AddComponent<TransformComponent>(newMesh).SetPosition(bb.Center()).SetScale(navMeshScale);
@@ -86,16 +91,17 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 			size_t z = static_cast<size_t>(empty.pos.z / blockDim);
 
 			// draw empty space
-			map[y][z][x] = emptySpace;
+			//map[y][z][x] = emptySpace;
 			
 			// create NavMesh and add to navScene
 			entity newMesh = em.CreateEntity();
 			navScene.AddIdAt(x, y, z, newMesh);
 			em.AddComponent<NavMeshComponent>(newMesh);
 			em.AddComponent<SceneComponent>(newMesh, sceneType);
-			BoundingBoxComponent& bb = em.AddComponent <BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
+			em.AddComponent <BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
+			//BoundingBoxComponent& bb = em.AddComponent <BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
 
-			// visualize NavMesh
+			//// visualize NavMesh
 			//em.AddComponent<TransformComponent>(newMesh).SetPosition(bb.Center()).SetScale(navMeshScale);
 			//em.AddComponent<ModelComponent>(newMesh, AssetManager::Get().LoadShapeAsset(DOG::Shape::sphere, 16));
 		}
@@ -126,6 +132,7 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 		{
 			for (size_t x = 0; x < navScene.map[y][z].size(); ++x)
 			{
+				//std::cout << navScene.At(x, y, z) << " (" << x << ", " << y << ", " << z << ")" << std::endl;
 				if (navScene.HasNavMesh(x, y, z))
 				{
 					// connect mesh to neighbors
@@ -168,14 +175,38 @@ std::vector<Vector3> Pathfinder::Checkpoints(Vector3 start, Vector3 goal)
 	std::vector<Vector3> checkpoints;
 
 	for (PortalID id : Astar(start, goal, heuristicStraightLine))
-	{
 		checkpoints.push_back(em.GetComponent<PortalComponent>(id).portal);
-		std::cout << checkpoints.size();
-	}
 
 	checkpoints.push_back(goal);
 
 	return checkpoints;
+}
+
+void Pathfinder::Checkpoints(Vector3 start, Vector3 goal, PathfinderWalkComponent& pfc)
+{
+	EntityManager::Get().Collect<NavSceneComponent>().Do(
+		[&](NavSceneComponent& navScene)
+		{
+			if (NavMeshID startMesh = navScene.At(start); startMesh != NULL_ENTITY)
+			{
+				if (NavMeshID terminalNavMesh = navScene.At(goal); terminalNavMesh != NULL_ENTITY)
+				{
+					if (pfc.path.size() == 0)
+						pfc.path.push_back(goal);
+
+					if (navScene.At(pfc.path.back()) != terminalNavMesh)
+					{
+						EntityManager& em = EntityManager::Get();
+						
+						pfc.path.clear();
+						for (PortalID id : Astar(start, goal, heuristicStraightLine))
+							pfc.path.push_back(em.GetComponent<PortalComponent>(id).portal);
+
+						pfc.path.push_back(goal);
+					}
+				}
+			}
+		});
 }
 
 
@@ -200,12 +231,14 @@ std::vector<PortalID> Pathfinder::Astar(const Vector3 start, const Vector3 goal,
 	std::vector<PortalID> result;
 
 	em.Collect<NavSceneComponent>().Do(
-		[&](entity ncID, NavSceneComponent& navScene)
+		[&](NavSceneComponent& navScene)
 		{
-			if (NavMeshID startMesh = navScene.At(start) != NULL_ENTITY)
+			if (NavMeshID startMesh = navScene.At(start); startMesh != NULL_ENTITY)
 			{
-				if (NavMeshID terminalNavMesh = navScene.At(goal) != NULL_ENTITY)
+				if (NavMeshID terminalNavMesh = navScene.At(goal); terminalNavMesh != NULL_ENTITY)
 				{
+					//std::cout << "A*  " << startMesh << " (" << start.x << ", " << start.y << ", " << start.z << ")" << " ~ " << terminalNavMesh << " (" << goal.x << ", " << goal.y << ", " << goal.z << ")" << std::endl;
+
 					// Define the entry and terminal nodes
 					// Opportunity to optimize:
 					// if FindNavMeshContaining(start) == FindNavMeshContaining(goal) return empty path
@@ -235,9 +268,9 @@ std::vector<PortalID> Pathfinder::Astar(const Vector3 start, const Vector3 goal,
 						{
 							size_t right = i * 2 + 2;	// right child
 							if (right < openSet.size())
-								if (fScore[right] < fScore[comp])
+								if (fScore[openSet[right]] < fScore[openSet[comp]])
 									comp = right;
-							if (fScore[comp] < fScore[i])
+							if (fScore[openSet[comp]] < fScore[openSet[i]])
 							{
 								std::swap(openSet[i], openSet[comp]);
 								i = comp;
@@ -249,13 +282,13 @@ std::vector<PortalID> Pathfinder::Astar(const Vector3 start, const Vector3 goal,
 						return get;
 					};
 					// lambda: push new element onto minheap
-					auto pushOpenSet = [&](PortalID iNode)
+					auto pushOpenSet = [&](PortalID id)
 					{
-						openSet.push_back(iNode);
+						openSet.push_back(id);
 						// percolate up
 						size_t i = openSet.size() - 1;
 						size_t p = (i + (i % 2)) / 2 - 1;
-						while (p >= 0 && fScore[p] > fScore[i])
+						while (i > 0 && p >= 0 && fScore[openSet[p]] > fScore[openSet[i]])
 						{
 							std::swap(openSet[p], openSet[i]);
 							i = p;
@@ -265,10 +298,15 @@ std::vector<PortalID> Pathfinder::Astar(const Vector3 start, const Vector3 goal,
 					// lambda: returns true if current node is connected to the NavMesh containing the goal
 					auto leadsToGoal = [&](PortalID current)
 					{
+						PortalComponent* currentPortal = nullptr;
 						if (current == startPoint)
-							return entry.navMesh1 == terminalNavMesh;
-						PortalComponent& currentPortal = em.GetComponent<PortalComponent>(current);
-						return currentPortal.navMesh1 == terminalNavMesh || currentPortal.navMesh2 == terminalNavMesh;
+							currentPortal = &entry;
+						else
+							currentPortal = &em.GetComponent<PortalComponent>(current);
+						
+						//std::cout << "A*  " << currentPortal->navMesh1 << " || " << currentPortal->navMesh2 << " == " << terminalNavMesh << std::endl;
+
+						return currentPortal->navMesh1 == terminalNavMesh || currentPortal->navMesh2 == terminalNavMesh;
 					};
 					// lambda: returns true if openSet does not contain neighbor
 					auto notInOpenSet = [&](PortalID neighbor)
@@ -304,21 +342,13 @@ std::vector<PortalID> Pathfinder::Astar(const Vector3 start, const Vector3 goal,
 							neighborPortal = &entry;
 						else
 							neighborPortal = &em.GetComponent<PortalComponent>(neighbor);
-						// get the first NavMesh of current
+						// find the common NavMesh
 						NavMeshID meshID;
 						meshID = currentPortal->navMesh1;
-						// compare with first NavMesh of neigbor
-						// TODO...
-						if (neighbor == startPoint)
-							if (meshID != entry.navMesh1)
-								// only one can have a single connection thus current has two
-								meshID = currentPortal.navMesh2;
-							else
-								if (meshID != neighborPortal.navMesh1)
-									// only one can have a single connection thus neighbor has two
-									meshID = neighborPortal.navMesh2;
-						// since the first two NavMeshes are different meshID must now contain the righ reference
-						return em.GetComponent<NavMeshComponent>(meshID).CostWalk(currentPortal.portal, neighborPortal.portal);
+						if (neighborPortal->navMesh1 != meshID || neighborPortal->navMesh2 != meshID)
+							meshID = currentPortal->navMesh2;
+						// meshID must now hold the common NavMesh
+						return em.GetComponent<NavMeshComponent>(meshID).CostWalk(currentPortal->portal, neighborPortal->portal);
 					};
 					// lambda: creates the shortest path found
 					auto reconstructPath = [&](PortalID portalID)
@@ -346,7 +376,6 @@ std::vector<PortalID> Pathfinder::Astar(const Vector3 start, const Vector3 goal,
 							reconstructPath(current);	// fills result with PortalIDs
 							break;
 						}
-						std::cout << "A* openSet " << openSet.size() << std::endl;
 
 						for (PortalID neighbor : getNeighbors(current))
 						{

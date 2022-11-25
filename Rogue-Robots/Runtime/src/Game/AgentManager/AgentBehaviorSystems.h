@@ -3,26 +3,37 @@
 #include "Game/GameComponent.h"
 
 
+/**************************************************
+*			Early Update Systems
+***************************************************/
+
+
 class AgentSeekPlayerSystem: public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
 public:
 	SYSTEM_CLASS(AgentSeekPlayerComponent, AgentIdComponent, DOG::TransformComponent);
-	ON_UPDATE_ID(AgentSeekPlayerComponent, AgentIdComponent, DOG::TransformComponent);
-	void OnUpdate(DOG::entity e, AgentSeekPlayerComponent& seek, AgentIdComponent& agent, DOG::TransformComponent& transform);
+	ON_EARLY_UPDATE_ID(AgentSeekPlayerComponent, AgentIdComponent, DOG::TransformComponent);
+	void OnEarlyUpdate(DOG::entity e, AgentSeekPlayerComponent& seek, AgentIdComponent& agent, DOG::TransformComponent& transform);
 };
 
-class AgentMovementSystem : public DOG::ISystem
+
+
+class AgentPlanningSystem : public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
 public:
-	SYSTEM_CLASS(AgentMovementComponent, AgentSeekPlayerComponent, DOG::TransformComponent);
-	ON_UPDATE_ID(AgentMovementComponent, AgentSeekPlayerComponent, DOG::TransformComponent);
-	void OnUpdate(DOG::entity e, AgentMovementComponent& movement,
-		AgentSeekPlayerComponent& seek, DOG::TransformComponent& trans);
+	SYSTEM_CLASS(PathfinderWalkComponent, AgentSeekPlayerComponent);
+	ON_EARLY_UPDATE(PathfinderWalkComponent, AgentSeekPlayerComponent);
+	void OnEarlyUpdate(PathfinderWalkComponent& pfc, AgentSeekPlayerComponent& seek);
 };
+
+
+/**************************************************
+*				Regular Systems
+***************************************************/
 
 class AgentAttackSystem : public DOG::ISystem
 {
@@ -81,6 +92,25 @@ public:
 	ON_UPDATE_ID(AgentMovementComponent, FrostEffectComponent);
 	void OnUpdate(DOG::entity e, AgentMovementComponent& movement, FrostEffectComponent& frostEffect);
 };
+
+
+/**************************************************
+*			Late Update Systems
+***************************************************/
+
+
+class AgentMovementSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	using Matrix = DirectX::SimpleMath::Matrix;
+public:
+	SYSTEM_CLASS(AgentMovementComponent, PathfinderWalkComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
+	ON_LATE_UPDATE(AgentMovementComponent, PathfinderWalkComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
+	void OnLateUpdate(AgentMovementComponent& movement, PathfinderWalkComponent& pfc,
+		DOG::RigidbodyComponent& rb, DOG::TransformComponent& trans);
+};
+
+
 
 /***********************************************
 

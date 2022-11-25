@@ -26,13 +26,14 @@ public:
 	void BuildNavScene(SceneComponent::Type sceneType);
 
 	std::vector<Vector3> Checkpoints(Vector3 start, Vector3 goal);
+	void Checkpoints(Vector3 start, Vector3 goal, PathfinderWalkComponent& pfc);
 
 private:
 	struct Step
 	{
 		char x, y, z;
 	};
-	static const struct Dir
+	const struct Dir
 	{
 		static inline const Step down{ 0, -1, 0 };
 		static inline const Step north{ 0, 0, -1 };
