@@ -30,7 +30,7 @@ set(SourceFiles
 	"src/Game/PlayerManager/PlayerManager.h" "src/Game/PlayerManager/PlayerMangager.cpp"
 	"src/Game/HeartbeatTrackerSystem.h" "src/Game/HeartbeatTrackerSystem.cpp"
 	"src/Core/QueryHelpers.h" "src/Core/QueryHelpers.cpp"
-	)
+	 "src/Game/AnimationIDs.h")
 
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")

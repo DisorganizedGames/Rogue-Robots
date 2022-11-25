@@ -125,7 +125,7 @@ namespace DOG
 
 		void SetReturnTransition(BlendSpecification& bs, f32 delta);
 
-		void UpdateBsWeight(BlendSpecification& bs, f32 dt);
+		void UpdateBsWeight(BlendSpecification& bs);
 
 		void UpdateBsDuration(BlendSpecification& bs, f32 dt);
 

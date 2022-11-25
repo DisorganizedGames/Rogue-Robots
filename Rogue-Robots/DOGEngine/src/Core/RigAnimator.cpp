@@ -123,8 +123,6 @@ namespace DOG
 			}
 			weightSum += weights[i];
 		}
-		for (size_t i = 0; i < set.nTotalClips; i++)
-			assert(weights[i] >= 0.f);
 
 		if (weightSum != 1.f)
 			for (u32 i = 0; i < set.nTotalClips; i++)
@@ -171,10 +169,8 @@ namespace DOG
 		bs.targetWeight = 0.f;
 	}
 
-	void RigAnimator::UpdateBsWeight(BlendSpecification& bs, f32 dt)
+	void RigAnimator::UpdateBsWeight(BlendSpecification& bs)
 	{
-		if (dt < 0.f)
-			return;
 		const bool targetReached = bs.currentWeight == bs.targetWeight;
 		if (!targetReached)
 		{
@@ -204,7 +200,7 @@ namespace DOG
 	void RigAnimator::UpdateBS(BlendSpecification& bs, f32 dt)
 	{
 		UpdateBsDuration(bs, dt);
-		UpdateBsWeight(bs, dt);
+		UpdateBsWeight(bs);
 	}
 
 	void RigAnimator::UpdateSet(ClipSet& set, u32 clipIdx, f32 blendWeight, f32 dt, bool looping)
@@ -245,13 +241,6 @@ namespace DOG
 
 		UpdateSet(group.looping, startClipIdx + clipCount, looperSetWeight, dt, true);
 		clipCount += group.looping.nTotalClips;
-
-		// Debug
-		f32 sum = 0.f;
-		for (u32 i = startClipIdx; i < clipCount; i++)
-		{
-			sum += clipData[i].weight;
-		}
 
 		groupClipCount[groupIdx] = clipCount;
 		return startClipIdx + clipCount;
@@ -330,7 +319,7 @@ namespace DOG
 			}
 			newTargetSet = (set.clips[i].targetWeight != setter.targetWeights[i]) || (set.clips[i].id != setter.animationIDs[i]);
 		}
-		// same target set already set
+		// Same target set already set
 		if (!newTargetSet)
 			return 0;
 

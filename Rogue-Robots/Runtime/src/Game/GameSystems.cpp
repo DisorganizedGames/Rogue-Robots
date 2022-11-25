@@ -331,15 +331,6 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 
 void PlayerMovementSystem::ApplyAnimations(const InputController& input, AnimationComponent& ac)
 {
-	// Relevant Animation IDs
-	static constexpr i8 IDLE = 2;
-	static constexpr i8 RUN = 5;
-	static constexpr i8 RUN_BACKWARDS = 6;
-	static constexpr i8 WALK = 13;
-	static constexpr i8 WALK_BACKWARDS = 14;
-	static constexpr i8 STRAFE_LEFT = 8;
-	static constexpr i8 STRAFE_RIGHT = 10;
-
 	auto addedAnims = 0;
 	auto& setter = ac.animSetters[ac.addedSetters];
 	setter.group = ac.FULL_BODY;
@@ -348,27 +339,27 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 	auto leftRight = input.right - input.left;
 	if (forwardBack)
 	{
-		const auto animation = input.forward ? RUN : WALK_BACKWARDS;
+		const auto animation = input.forward ? MixamoAnimations::Run : MixamoAnimations::WalkBackwards;
 		const auto weight = 0.5f;
 
-		setter.animationIDs[addedAnims] = animation;
+		setter.animationIDs[addedAnims] = static_cast<i8>(animation);
 		setter.targetWeights[addedAnims++] = weight;
 	}
 	if (leftRight)
 	{
-		const auto animation = input.left ? STRAFE_LEFT : STRAFE_RIGHT;
+		const auto animation = input.left ? MixamoAnimations::StrafeLeft : MixamoAnimations::StrafeRight;
 
 		// Backwards + strafe_right makes leg clip through each other if equal weights
 		auto weight = (forwardBack && input.backwards && input.right) ? 0.7f : 0.5f;
 
-		setter.animationIDs[addedAnims] = animation;
+		setter.animationIDs[addedAnims] = static_cast<i8>(animation);
 		setter.targetWeights[addedAnims++] = weight;
 	}
 
 	// if no schmovement apply idle animation
 	if (!addedAnims)
 	{
-		ac.SimpleAdd(IDLE, AnimationFlag::Looping);
+		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping);
 	}
 	else
 	{

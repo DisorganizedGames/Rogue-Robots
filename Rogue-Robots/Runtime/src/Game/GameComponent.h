@@ -2,6 +2,7 @@
 #include <DOGEngine.h>
 #include "AgentManager/AgentComponents.h"
 #include "EntitesTypes.h"
+#include "AnimationIDs.h"
 #include "Core/QueryHelpers.h" // included here to leak it everywhere.
 
 struct PlayerControllerComponent

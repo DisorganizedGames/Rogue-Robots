@@ -327,7 +327,7 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 		stats.health = stats.maxHealth;
 	}
 
-	m_entityManager.GetComponent<AnimationComponent>(e).SimpleAdd(2);
+	m_entityManager.GetComponent<AnimationComponent>(e).SimpleAdd(static_cast<i8>(MixamoAnimations::Idle));
 
 	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
 	m_entityManager.DeferredEntityDestruction(controller.debugCamera);
@@ -341,9 +341,8 @@ void GameLayer::KillPlayer(DOG::entity e)
 	m_entityManager.RemoveComponent<PlayerAliveComponent>(e);
 	if (m_entityManager.HasComponent<AnimationComponent>(e))
 	{
-		static constexpr u8 DEATH_ANIMATION = 1;
 		auto& ac = m_entityManager.GetComponent<AnimationComponent>(e);
-		ac.SimpleAdd(DEATH_ANIMATION, AnimationFlag::Persist);
+		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::DeathAnimation), AnimationFlag::Persist);
 	}
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
