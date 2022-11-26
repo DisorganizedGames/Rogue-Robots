@@ -45,7 +45,7 @@ void ThrowGlowStick(DOG::entity thrower, float speed) noexcept
 	rb.linearVelocity = speed * aimDir;
 
 	int counter = 0;
-	em.Collect<GlowStickComponent>().Do([&counter](entity e, GlowStickComponent&) { counter++; });
+	em.Collect<GlowStickComponent>().Do([&counter](GlowStickComponent&) { counter++; });
 
 
 	if (counter > GlowStickComponent::globalGlowStickLimit)
