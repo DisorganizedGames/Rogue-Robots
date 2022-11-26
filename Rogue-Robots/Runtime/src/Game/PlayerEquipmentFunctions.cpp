@@ -43,4 +43,18 @@ void ThrowGlowStick(DOG::entity thrower, float speed) noexcept
 
 	rb.angularVelocity = DirectX::XM_2PI * rotationAxis;
 	rb.linearVelocity = speed * aimDir;
+
+	int counter = 0;
+	em.Collect<GlowStickComponent>().Do([&counter](entity e, GlowStickComponent&) { counter++; });
+
+
+	if (counter > GlowStickComponent::globalGlowStickLimit)
+	{
+		std::vector<std::pair<entity, f32>> glowSticks;
+		glowSticks.reserve(GlowStickComponent::globalGlowStickLimit);
+		em.Collect<GlowStickComponent>().Do([&glowSticks](entity e, GlowStickComponent& g) { glowSticks.emplace_back(e, g.spawnTime); });
+
+		auto it = std::min_element(glowSticks.begin(), glowSticks.end(), [](const auto& a, const auto& b) { return a.second < b.second; });
+		em.DeferredEntityDestruction(it->first);
+	}
 }

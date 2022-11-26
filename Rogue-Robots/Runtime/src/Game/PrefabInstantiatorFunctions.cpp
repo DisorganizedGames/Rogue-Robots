@@ -290,7 +290,7 @@ DOG::entity SpawnGlowStick(DOG::entity spawner) noexcept
 	auto& rb = em.AddComponent<RigidbodyComponent>(glowStick, glowStick);
 	rb.continuousCollisionDetection = true;
 
-	em.AddComponent<GlowStickComponent>(glowStick);
+	em.AddComponent<GlowStickComponent>(glowStick).spawnTime = static_cast<f32>(Time::ElapsedTime());
 
 	LightHandle pointLight = LightManager::Get().AddPointLight(PointLightDesc(), LightUpdateFrequency::PerFrame);
 	auto& light = em.AddComponent<PointLightComponent>(glowStick, pointLight);
