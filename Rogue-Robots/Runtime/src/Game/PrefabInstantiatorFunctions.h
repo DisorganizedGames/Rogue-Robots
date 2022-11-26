@@ -8,3 +8,5 @@ std::vector<DOG::entity> AddFlashlightsToPlayers(const std::vector<DOG::entity>&
 DOG::entity SpawnTurretProjectile(const DirectX::SimpleMath::Matrix& transform, float speed, float dmg, float lifeTime, DOG::entity turret, DOG::entity owner);
 
 DOG::entity SpawnLaserBlob(const DOG::TransformComponent& transform, DOG::entity owner) noexcept;
+
+DOG::entity SpawnGlowStick(DOG::entity spawner) noexcept;

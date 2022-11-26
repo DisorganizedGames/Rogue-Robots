@@ -653,3 +653,32 @@ public:
 
 	void OnUpdate(DOG::entity e, LaserBulletComponent& laserBullet, DOG::HasEnteredCollisionComponent&, DOG::RigidbodyComponent& rigidBody, DOG::TransformComponent& transform);
 };
+
+class DeferredSetIgnoreCollisionCheckSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DeferredSetIgnoreCollisionCheckComponent);
+	ON_UPDATE_ID(DeferredSetIgnoreCollisionCheckComponent);
+
+	void OnUpdate(DOG::entity e, DeferredSetIgnoreCollisionCheckComponent& arguments);
+};
+
+class GlowStickSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(GlowStickComponent, DOG::RigidbodyComponent);
+	ON_UPDATE_ID(GlowStickComponent, DOG::RigidbodyComponent);
+
+	void OnUpdate(DOG::entity e, GlowStickComponent& glowStick, DOG::RigidbodyComponent& rigidBody);
+};
+
+
+class PlayerUseEquipmentSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(InputController, PlayerAliveComponent);
+	ON_UPDATE_ID(InputController, PlayerAliveComponent);
+
+	void OnUpdate(DOG::entity e, InputController& controller, PlayerAliveComponent&);
+};
+
