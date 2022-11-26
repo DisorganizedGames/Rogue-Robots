@@ -146,7 +146,7 @@ namespace DOG
 				rigidbody.linearVelocity.y = linearVelocity.getY();
 				rigidbody.linearVelocity.z = linearVelocity.getZ();
 
-				btVector3 turnVelocity = bulletRigidbody->getTurnVelocity();
+				btVector3 turnVelocity = bulletRigidbody->getAngularVelocity();
 				rigidbody.angularVelocity.x = turnVelocity.getX();
 				rigidbody.angularVelocity.y = turnVelocity.getY();
 				rigidbody.angularVelocity.z = turnVelocity.getZ();
