@@ -9,4 +9,4 @@ DOG::entity SpawnTurretProjectile(const DirectX::SimpleMath::Matrix& transform, 
 
 DOG::entity SpawnLaserBlob(const DOG::TransformComponent& transform, DOG::entity owner) noexcept;
 
-DOG::entity SpawnGlowStick(DOG::entity spawner) noexcept;
+DOG::entity SpawnGlowStick(const DOG::TransformComponent& transform, DOG::entity owner) noexcept;

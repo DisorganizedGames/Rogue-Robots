@@ -257,18 +257,16 @@ DOG::entity SpawnLaserBlob(const DOG::TransformComponent& transform, DOG::entity
 	return laser;
 }
 
-DOG::entity SpawnGlowStick(DOG::entity spawner) noexcept
+DOG::entity SpawnGlowStick(const TransformComponent& transform, DOG::entity owner) noexcept
 {
 	auto& em = EntityManager::Get();
 
 	entity glowStick = em.CreateEntity();
 	auto& tr = em.AddComponent<TransformComponent>(glowStick);
-
-	if (em.Exists(spawner))
+	tr = transform;
+	if (em.Exists(owner))
 	{
-		if (auto scene = em.TryGetComponent<SceneComponent>(spawner); scene) em.AddComponent<SceneComponent>(glowStick, scene->get().scene);
-
-		if (auto transform = em.TryGetComponent<TransformComponent>(spawner);  transform) tr.SetPosition(transform->get().GetPosition());
+		if (auto scene = em.TryGetComponent<SceneComponent>(owner); scene) em.AddComponent<SceneComponent>(glowStick, scene->get().scene);
 	}
 
 	Vector3 scale = 0.1f * Vector3(1, 4, 1);
@@ -284,9 +282,8 @@ DOG::entity SpawnGlowStick(DOG::entity spawner) noexcept
 	}
 
 	em.AddComponent<SubmeshRenderer>(glowStick) = *glowSticModel;
-	
 
-	em.AddComponent<BoxColliderComponent>(glowStick, glowStick, 1.2f * scale, true, 0.2f);
+	em.AddComponent<BoxColliderComponent>(glowStick, glowStick, 1.2f * scale, true, 0.1f);
 	auto& rb = em.AddComponent<RigidbodyComponent>(glowStick, glowStick);
 	rb.continuousCollisionDetection = true;
 

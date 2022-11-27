@@ -1127,7 +1127,7 @@ void PlayerUseEquipmentSystem::OnUpdate(DOG::entity e, InputController& controll
 {
 	if (controller.throwGlowStick)
 	{
-		ThrowGlowStick(e, 20);
+		ThrowGlowStick(e, 14);
 		controller.throwGlowStick = false;
 	}
 }

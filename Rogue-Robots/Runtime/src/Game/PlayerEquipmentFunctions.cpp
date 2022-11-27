@@ -13,14 +13,21 @@ using namespace DirectX::SimpleMath;
 void ThrowGlowStick(DOG::entity thrower, float speed) noexcept
 {
 	auto& em = EntityManager::Get();
-	assert(em.Exists(thrower) && em.Exists(GetCamera()));
-	assert(em.HasComponent<TransformComponent>(GetCamera()));
+	assert(em.Exists(thrower));
+	assert(em.Exists(GetPlayerFPSCamera(thrower)));
+	assert(em.HasComponent<TransformComponent>(GetPlayerFPSCamera(thrower)));
+
+	auto& cameraTransform = EntityManager::Get().GetComponent<TransformComponent>(GetPlayerFPSCamera(thrower));
 
 	entity player = thrower;
-	entity stick = SpawnGlowStick(player);
+
+	TransformComponent stickTransform = cameraTransform;
+
+	// Offset the glow stick spawnPos a bit forward and left
+	stickTransform.worldMatrix = Matrix::CreateTranslation(-0.5f * Vector3::Forward - 0.3f * Vector3::Right) * stickTransform.worldMatrix;
+	entity stick = SpawnGlowStick(stickTransform, player);
 
 	auto& rb = em.GetComponent<RigidbodyComponent>(stick);
-	auto& tr = em.GetComponent<TransformComponent>(stick);
 
 	if (auto playerRb = em.TryGetComponent<RigidbodyComponent>(player))
 	{
@@ -34,15 +41,8 @@ void ThrowGlowStick(DOG::entity thrower, float speed) noexcept
 		args.value = false;
 	}
 
-	auto& cameraTransform = EntityManager::Get().GetComponent<TransformComponent>(GetCamera());
-	Vector3 aimDir = cameraTransform.GetForward();
-	Vector3 rotationAxis = cameraTransform.GetRight();
-	Vector3 pos = tr.GetPosition();
-	pos += tr.GetForward() + tr.GetUp();
-	tr.SetPosition(pos);
-
-	rb.angularVelocity = DirectX::XM_2PI * rotationAxis;
-	rb.linearVelocity = speed * aimDir;
+	rb.angularVelocity = DirectX::XM_2PI * -cameraTransform.GetRight();
+	rb.linearVelocity = speed * cameraTransform.GetForward();
 
 	int counter = 0;
 	em.Collect<GlowStickComponent>().Do([&counter](GlowStickComponent&) { counter++; });

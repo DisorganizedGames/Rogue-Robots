@@ -19,15 +19,10 @@ DOG::entity GetGun() noexcept
 
 DOG::entity GetCamera() noexcept
 {
-	return GetPlayersCamera(GetPlayer());
-}
-
-DOG::entity GetPlayersCamera(DOG::entity player) noexcept
-{
 	auto& em = EntityManager::Get();
 	entity camera = NULL_ENTITY;
-	ASSERT(em.Exists(player), "Player don't exist.");
-	if (auto controllerComp = em.TryGetComponent<PlayerControllerComponent>(player); controllerComp)
+	ASSERT(em.Exists(GetPlayer()), "Player don't exist.");
+	if (auto controllerComp = em.TryGetComponent<PlayerControllerComponent>(GetPlayer()); controllerComp)
 	{
 		auto&& findCamera = [](entity potentialCamera) {
 			if (EntityManager::Get().Exists(potentialCamera))
@@ -47,4 +42,13 @@ DOG::entity GetPlayersCamera(DOG::entity player) noexcept
 			camera = findCamera(controllerComp->get().spectatorCamera);
 	}
 	return camera;
+}
+
+DOG::entity GetPlayerFPSCamera(DOG::entity player) noexcept
+{
+	auto& em = EntityManager::Get();
+	assert(em.Exists(player) && em.HasComponent<PlayerControllerComponent>(player));
+	auto& controllerComp = em.GetComponent<PlayerControllerComponent>(player);
+	assert(em.Exists(controllerComp.cameraEntity) && em.HasComponent<CameraComponent>(controllerComp.cameraEntity));
+	return controllerComp.cameraEntity;
 }
