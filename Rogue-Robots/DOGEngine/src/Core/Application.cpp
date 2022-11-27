@@ -215,11 +215,14 @@ namespace DOG
 		EventBus::Get().SetMainApplication(this);
 		Window::Initialize(m_specification);
 #ifdef _DEBUG
-		m_renderer = std::make_unique<gfx::Renderer>(Window::GetHandle(), Window::GetWidth(), Window::GetHeight(), true);
+		m_renderer = std::make_unique<gfx::Renderer>(Window::GetHandle(), Window::GetWidth(), Window::GetHeight(), true, m_specification.graphicsSettings);
 #else
-		m_renderer = std::make_unique<gfx::Renderer>(Window::GetHandle(), Window::GetWidth(), Window::GetHeight(), false);
+		m_renderer = std::make_unique<gfx::Renderer>(Window::GetHandle(), Window::GetWidth(), Window::GetHeight(), false, m_specification.graphicsSettings);
 #endif
-		ApplyGraphicsSettings();
+		// If SetGraphicsSettings is called from inside the Renderers constructor we get strange result.
+		m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
+		assert(m_specification.graphicsSettings.windowMode == m_renderer->GetFullscreenState());
+
 		Window::SetWMHook(m_renderer->GetWMCallback());
 		m_frontRenderer = std::make_unique<gfx::FrontRenderer>(m_renderer.get());
 
@@ -271,35 +274,7 @@ namespace DOG
 
 	void Application::ApplyGraphicsSettings() noexcept
 	{
-		m_specification.graphicsSettings.displayMode = m_renderer->GetMatchingDisplayMode(m_specification.graphicsSettings.displayMode);
-
-		// Guard against bad values
-		constexpr u32 maxTextureSize = 16384;
-		constexpr u32 minTextureSize = 8; // 1 would be allowed but use 8 as a min value for.
-
-		if (m_specification.graphicsSettings.renderResolution.x > maxTextureSize || m_specification.graphicsSettings.renderResolution.y > maxTextureSize
-			|| m_specification.graphicsSettings.renderResolution.x < minTextureSize || m_specification.graphicsSettings.renderResolution.y < minTextureSize)
-		{
-			m_specification.graphicsSettings.renderResolution.x = m_specification.graphicsSettings.displayMode->Width;
-			m_specification.graphicsSettings.renderResolution.y = m_specification.graphicsSettings.displayMode->Height;
-		}
-
-		Vector2u aspectRatio;
-		if (m_specification.graphicsSettings.windowMode == WindowMode::Windowed)
-		{
-			std::tie(aspectRatio.x, aspectRatio.y) = Window::GetDimensions();
-		}
-		else
-		{
-			aspectRatio.x = m_specification.graphicsSettings.displayMode->Width;
-			aspectRatio.y = m_specification.graphicsSettings.displayMode->Height;
-		}
-
-		u32 d = std::gcd(aspectRatio.x, aspectRatio.y);
-		aspectRatio.x /= d;
-		aspectRatio.y /= d;
-
-		m_specification.graphicsSettings.renderResolution.x = m_specification.graphicsSettings.renderResolution.y * aspectRatio.x / aspectRatio.y;
+		m_renderer->VerifyAndSanitizeGraphicsSettings(m_specification.graphicsSettings, Window::GetWidth(), Window::GetHeight());
 
 		m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
 

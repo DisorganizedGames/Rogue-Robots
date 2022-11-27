@@ -45,14 +45,19 @@
 
 namespace DOG::gfx
 {
-	Renderer::Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug) :
-		m_renderWidth(1920),
-		m_renderHeight(1080)
+	Renderer::Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug, GraphicsSettings& settings)
 	{
 		m_jointMan = std::make_unique<AnimationManager>();
 		m_backend = std::make_unique<gfx::RenderBackend_DX12>(debug);
 		m_rd = m_backend->CreateDevice(S_NUM_BACKBUFFERS);
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
+
+		// Swapchain is created -> we can check if settings verify settings against it.
+		VerifyAndSanitizeGraphicsSettings(settings, clientWidth, clientHeight);
+		m_graphicsSettings = settings;
+		m_renderWidth = m_graphicsSettings.renderResolution.x;
+		m_renderHeight = m_graphicsSettings.renderResolution.y;
+
 		UI::Initialize(m_rd, m_sc, S_NUM_BACKBUFFERS, clientWidth, clientHeight);
 		PostProcess::Initialize();
 
@@ -452,6 +457,40 @@ namespace DOG::gfx
 			return static_cast<Swapchain_DX12*>(m_sc)->GetClosestMatchingDisplayModeDesc(*mode);
 		else
 			return static_cast<Swapchain_DX12*>(m_sc)->GetDefaultDisplayModeDesc();
+	}
+
+	void Renderer::VerifyAndSanitizeGraphicsSettings(GraphicsSettings& settings, u32 clientWidth, u32 clientHeight) const
+	{
+		settings.displayMode = GetMatchingDisplayMode(settings.displayMode);
+
+		// Guard against bad values
+		constexpr u32 maxTextureSize = 16384;
+		constexpr u32 minTextureSize = 8; // 1 would be allowed but use 8 as a min value for.
+
+		if (settings.renderResolution.x > maxTextureSize || settings.renderResolution.y > maxTextureSize
+			|| settings.renderResolution.x < minTextureSize || settings.renderResolution.y < minTextureSize)
+		{
+			settings.renderResolution.x = settings.displayMode->Width;
+			settings.renderResolution.y = settings.displayMode->Height;
+		}
+
+		Vector2u aspectRatio;
+		if (settings.windowMode == WindowMode::Windowed)
+		{
+			aspectRatio.x = clientWidth;
+			aspectRatio.y = clientHeight;
+		}
+		else
+		{
+			aspectRatio.x = settings.displayMode->Width;
+			aspectRatio.y = settings.displayMode->Height;
+		}
+
+		u32 d = std::gcd(aspectRatio.x, aspectRatio.y);
+		aspectRatio.x /= d;
+		aspectRatio.y /= d;
+
+		settings.renderResolution.x = settings.renderResolution.y * aspectRatio.x / aspectRatio.y;
 	}
 
 	void Renderer::SetMainRenderCamera(const DirectX::XMMATRIX& view, DirectX::XMMATRIX* proj)
