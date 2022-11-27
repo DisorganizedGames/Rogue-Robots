@@ -19,14 +19,34 @@ namespace DOG
 		bool lightCulling = true;
 		bool visualizeLightCulling = false;
 		bool ssao{ true };
-#if defined _DEBUG
-		bool lit{ false };
-		bool shadowMapping{ false };
-#else
 		bool lit{ true };
 		bool shadowMapping{ true };
-#endif
 		u32 shadowMapCapacity{ 4 };
+
+
+
+		// Rendering limits, restart is required
+
+		// Limits for uploadHeaps
+		u32 maxHeapUploadSizeDefault = 40'000'000;
+		u32 maxHeapUploadSizeTextures = 400'000'000;
+
+		// Limits for MeshTable
+		u32 maxBytesPerAttribute = 4'000'000;
+		u32 maxNumberOfIndices = 1'000'000;
+		u32 maxTotalSubmeshes = 500;
+
+		// Limits for MaterialTable
+		u32 maxMaterialArgs = 1000;
+
+		// Limits for LightTable
+		u32 maxStaticPointLights = 25;
+		u32 maxDynamicPointLights = 512;
+		u32 maxSometimesPointLights = 12;
+		u32 maxStaticSpotLights = 12;
+		u32 maxDynamicSpotLights = 12;
+		u32 maxSometimesSpotLights = 12;
+
 	};
 
 

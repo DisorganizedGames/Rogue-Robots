@@ -232,7 +232,7 @@ namespace DOG
 		LuaMain::Initialize();
 
 
-		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); });
+		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); }, false, std::make_pair(Key::LCtrl, Key::D));
 		ImGuiMenuLayer::RegisterDebugWindow("MiniProfiler", [](bool& open) { MiniProfiler::DrawResultWithImGui(open); }, true);
 	}
 
@@ -285,7 +285,7 @@ namespace DOG
 	{
 		if (ImGui::BeginMenu("View"))
 		{
-			if (ImGui::MenuItem("Application settings"))
+			if (ImGui::MenuItem("Application settings", "Ctrl + D"))
 			{
 				open = true;
 			}

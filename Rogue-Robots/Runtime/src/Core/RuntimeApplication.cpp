@@ -120,7 +120,9 @@ std::string GetWorkingDirectory()
 void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string& path) noexcept
 {
 	std::ofstream outFile(path);
-	outFile << "Settings =\n{";
+	outFile << "--Delete file to reset all options to default (don't run with an empty file, it will not work)";
+	outFile << "\n--Delete rows to reset them to default";
+	outFile << "\nSettings =\n{";
 
 	outFile << "\n\t" << "fullscreen = " << static_cast<int>(spec.graphicsSettings.windowMode);
 	outFile << ",\n\t" << "clientWidth = " << spec.windowDimensions.x;
@@ -128,14 +130,19 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 	outFile << ",\n\t" << "renderResolutionWidth = " << spec.graphicsSettings.renderResolution.x;
 	outFile << ",\n\t" << "renderResolutionHeight = " << spec.graphicsSettings.renderResolution.y;
 	outFile << ",\n\t" << "vsync = " << (spec.graphicsSettings.vSync ? "true" : "false");
+	outFile << ",\n\t" << "ssao = " << (spec.graphicsSettings.ssao ? "true" : "false");
+	outFile << ",\n\t" << "shadowMapping = " << (spec.graphicsSettings.shadowMapping ? "true" : "false");
+	outFile << ",\n\t" << "shadowMapCapacity = " << spec.graphicsSettings.shadowMapCapacity;
 	outFile << ",\n\t" << "bloom = " << (spec.graphicsSettings.bloom ? "true" : "false");
 	outFile << ",\n\t" << "bloomTreshold = " << spec.graphicsSettings.bloomThreshold;
+	outFile << ",\n\t" << "lit = " << (spec.graphicsSettings.lit ? "true" : "false");
+	outFile << ",\n\t" << "gamma = " << spec.graphicsSettings.gamma;
 
 	if (spec.graphicsSettings.displayMode)
 	{
 		const auto& mode = *spec.graphicsSettings.displayMode;
 		outFile << ",\n\n\t--DXGI_MODE_DESC";
-		outFile << ",\n\t" << "displayWidth = " << mode.Width;
+		outFile << "\n\t" << "displayWidth = " << mode.Width;
 		outFile << ",\n\t" << "displayHeight = " << mode.Height;
 		outFile << ",\n\t" << "refreshRateNumerator = " << mode.RefreshRate.Numerator;
 		outFile << ",\n\t" << "refreshRateDenominator = " << mode.RefreshRate.Denominator;
@@ -143,6 +150,20 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 		outFile << ",\n\t" << "scanLine = " << mode.ScanlineOrdering;
 		outFile << ",\n\t" << "scaling = " << mode.Scaling;
 	}
+
+	outFile << ",\n\n\t--Rendering limits";
+	outFile << "\n\t" << "maxStaticPointLights = " << spec.graphicsSettings.maxStaticPointLights;
+	outFile << ",\n\t" << "maxDynamicPointLights = " << spec.graphicsSettings.maxDynamicPointLights;
+	outFile << ",\n\t" << "maxSometimesPointLights = " << spec.graphicsSettings.maxSometimesPointLights;
+	outFile << ",\n\t" << "maxStaticSpotLights = " << spec.graphicsSettings.maxStaticSpotLights;
+	outFile << ",\n\t" << "maxDynamicSpotLights = " << spec.graphicsSettings.maxDynamicSpotLights;
+	outFile << ",\n\t" << "maxSometimesSpotLights = " << spec.graphicsSettings.maxSometimesSpotLights;
+	outFile << ",\n\t" << "maxMaterialArgs = " << spec.graphicsSettings.maxMaterialArgs;
+	outFile << ",\n\t" << "maxTotalSubmeshes = " << spec.graphicsSettings.maxTotalSubmeshes;
+	outFile << ",\n\t" << "maxNumberOfIndices = " << spec.graphicsSettings.maxNumberOfIndices;
+	outFile << ",\n\t" << "maxBytesPerAttribute = " << spec.graphicsSettings.maxBytesPerAttribute;
+	outFile << ",\n\t" << "maxHeapUploadSizeDefault = " << spec.graphicsSettings.maxHeapUploadSizeDefault;
+	outFile << ",\n\t" << "maxHeapUploadSizeTextures = " << spec.graphicsSettings.maxHeapUploadSizeTextures;
 
 	outFile << "\n}\n";
 }
@@ -173,9 +194,27 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 		err |= !tryGetSpec("renderResolutionWidth", appSpec.graphicsSettings.renderResolution.x);
 		err |= !tryGetSpec("renderResolutionHeight", appSpec.graphicsSettings.renderResolution.y);
 		err |= !tryGetSpec("vsync", appSpec.graphicsSettings.vSync);
+		err |= !tryGetSpec("ssao", appSpec.graphicsSettings.ssao);
+		err |= !tryGetSpec("shadowMapping", appSpec.graphicsSettings.shadowMapping);
+		err |= !tryGetSpec("shadowMapCapacity", appSpec.graphicsSettings.shadowMapCapacity);
 		err |= !tryGetSpec("fullscreen", (int&)appSpec.graphicsSettings.windowMode);
 		err |= !tryGetSpec("bloom", appSpec.graphicsSettings.bloom);
 		err |= !tryGetSpec("bloomTreshold", appSpec.graphicsSettings.bloomThreshold);
+		err |= !tryGetSpec("lit", appSpec.graphicsSettings.lit);
+
+		// Rendering limits
+		err |= !tryGetSpec("maxStaticPointLights", appSpec.graphicsSettings.maxStaticPointLights);
+		err |= !tryGetSpec("maxDynamicPointLights", appSpec.graphicsSettings.maxDynamicPointLights);
+		err |= !tryGetSpec("maxSometimesPointLights", appSpec.graphicsSettings.maxSometimesPointLights);
+		err |= !tryGetSpec("maxStaticSpotLights", appSpec.graphicsSettings.maxStaticSpotLights);
+		err |= !tryGetSpec("maxDynamicSpotLights", appSpec.graphicsSettings.maxDynamicSpotLights);
+		err |= !tryGetSpec("maxSometimesSpotLights", appSpec.graphicsSettings.maxSometimesSpotLights);
+		err |= !tryGetSpec("maxMaterialArgs", appSpec.graphicsSettings.maxMaterialArgs);
+		err |= !tryGetSpec("maxTotalSubmeshes", appSpec.graphicsSettings.maxTotalSubmeshes);
+		err |= !tryGetSpec("maxNumberOfIndices", appSpec.graphicsSettings.maxNumberOfIndices);
+		err |= !tryGetSpec("maxBytesPerAttribute", appSpec.graphicsSettings.maxBytesPerAttribute);
+		err |= !tryGetSpec("maxHeapUploadSizeDefault", appSpec.graphicsSettings.maxHeapUploadSizeDefault);
+		err |= !tryGetSpec("maxHeapUploadSizeTextures", appSpec.graphicsSettings.maxHeapUploadSizeTextures);
 
 		bool modeErr = false;
 		appSpec.graphicsSettings.displayMode = DXGI_MODE_DESC{};

@@ -78,13 +78,10 @@ namespace DOG::gfx
 			return WinProc(hwnd, uMsg, wParam, lParam);
 		};
 
-		const u32 maxUploadSizeDefault = 40'000'000;
-		const u32 maxUploadSizeTextures = 400'000'000;
-
 		m_bin = std::make_unique<GPUGarbageBin>(S_MAX_FIF);
-		m_uploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, S_MAX_FIF);
-		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeTextures, S_MAX_FIF);
-		m_meshUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, S_MAX_FIF);
+		m_uploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeDefault, S_MAX_FIF);
+		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeTextures, S_MAX_FIF);
+		m_meshUploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeDefault, S_MAX_FIF);
 
 		// For internal per frame management
 		const u32 maxUploadPerFrame = 512'000;
@@ -104,28 +101,27 @@ namespace DOG::gfx
 
 		// Startup
 		MeshTable::MemorySpecification spec{};
-		const u32 maxBytesPerAttribute = 4'000'000;
-		const u32 maxNumberOfIndices = 1'000'000;
-		const u32 maxTotalSubmeshes = 500;
-		const u32 maxMaterialArgs = 1000;
-
-		spec.maxSizePerAttribute[VertexAttribute::Position] = maxBytesPerAttribute;
-		spec.maxSizePerAttribute[VertexAttribute::UV] = maxBytesPerAttribute;
-		spec.maxSizePerAttribute[VertexAttribute::Normal] = maxBytesPerAttribute;
-		spec.maxSizePerAttribute[VertexAttribute::Tangent] = maxBytesPerAttribute;
-		spec.maxSizePerAttribute[VertexAttribute::BlendData] = maxBytesPerAttribute;
-		spec.maxTotalSubmeshes = maxTotalSubmeshes;
-		spec.maxNumIndices = maxNumberOfIndices;
+		spec.maxSizePerAttribute[VertexAttribute::Position] = m_graphicsSettings.maxBytesPerAttribute;
+		spec.maxSizePerAttribute[VertexAttribute::UV] = m_graphicsSettings.maxBytesPerAttribute;
+		spec.maxSizePerAttribute[VertexAttribute::Normal] = m_graphicsSettings.maxBytesPerAttribute;
+		spec.maxSizePerAttribute[VertexAttribute::Tangent] = m_graphicsSettings.maxBytesPerAttribute;
+		spec.maxSizePerAttribute[VertexAttribute::BlendData] = m_graphicsSettings.maxBytesPerAttribute;
+		spec.maxTotalSubmeshes = m_graphicsSettings.maxTotalSubmeshes;
+		spec.maxNumIndices = m_graphicsSettings.maxNumberOfIndices;
 		m_globalMeshTable = std::make_unique<MeshTable>(m_rd, m_bin.get(), spec);
 
 		MaterialTable::MemorySpecification memSpec{};
-		memSpec.maxElements = maxMaterialArgs;
+		memSpec.maxElements = m_graphicsSettings.maxMaterialArgs;
 		m_globalMaterialTable = std::make_unique<MaterialTable>(m_rd, m_bin.get(), memSpec);
 
 		// Default storage
 		auto lightStorageSpec = LightTable::StorageSpecification();
-		lightStorageSpec.pointLightSpec.maxStatics = 25;
-		lightStorageSpec.pointLightSpec.maxDynamic = 512;
+		lightStorageSpec.pointLightSpec.maxStatics = m_graphicsSettings.maxStaticPointLights;
+		lightStorageSpec.pointLightSpec.maxDynamic = m_graphicsSettings.maxDynamicPointLights;
+		lightStorageSpec.pointLightSpec.maxSometimes = m_graphicsSettings.maxSometimesPointLights;
+		lightStorageSpec.spotLightSpec.maxStatics = m_graphicsSettings.maxStaticSpotLights;
+		lightStorageSpec.spotLightSpec.maxDynamic = m_graphicsSettings.maxDynamicSpotLights;
+		lightStorageSpec.spotLightSpec.maxSometimes = m_graphicsSettings.maxSometimesSpotLights;
 		m_globalLightTable = std::make_unique<LightTable>(m_rd, m_bin.get(), lightStorageSpec, false);
 
 
