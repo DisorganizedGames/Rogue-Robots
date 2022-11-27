@@ -131,7 +131,7 @@ end
 function BarrelComponents:Missile()
 	return 
 	{
-		bulletModel = Asset:LoadModel("Assets/Models/Ammunition/missile.glb"),
+		bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Missile/missile.glb"),
 		gunShotSound = Asset:LoadAudio("Assets/Audio/TestShoot.wav"),
 		waitForFire = 0.0,
 		timeBetweenShots = 2.0,

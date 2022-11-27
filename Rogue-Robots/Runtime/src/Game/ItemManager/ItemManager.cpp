@@ -141,7 +141,7 @@ u32 ItemManager::CreateTrampolinePickup(Vector3 position, u32 id)
 u32 ItemManager::CreateMissilePickup(DirectX::SimpleMath::Vector3 position,  u32 id)
 {
 	static u32 missileNetworkID = 0u;
-	u32 missileID = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/missile.glb");
+	u32 missileID = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/Missile/missile.glb");
 
 	entity missileEntity = s_entityManager.CreateEntity();
 	auto& bc = s_entityManager.AddComponent<BarrelComponent>(missileEntity);
