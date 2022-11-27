@@ -167,14 +167,14 @@ namespace DOG
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
 
-         void SetBarValue(float value);
+         void SetBarValue(float value, float maxValue);
 
       private:
          D2D1_RECT_F m_border, m_bar;
          std::wstring m_text;
          ComPtr<ID2D1SolidColorBrush> m_barBrush, m_borderBrush;
          ComPtr<IDWriteTextFormat> m_textFormat;
-         float m_value, m_barWidth, m_test;
+         float m_value, m_maxValue, m_barWidth, m_test;
    };
 
    class UIBackground : public UIElement
