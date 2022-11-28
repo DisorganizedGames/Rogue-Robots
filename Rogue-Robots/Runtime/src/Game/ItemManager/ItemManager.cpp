@@ -56,6 +56,8 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 		//break;
 	case EntityTypes::JumpBoost:
 		return CreateJumpBoost(position, id);
+	case EntityTypes::Reviver:
+		return CreateReviverPickup(position, id);
 	default:
 		break;
 	}
@@ -514,6 +516,37 @@ u32 ItemManager::CreateChargeShotPickup(Vector3 position, u32 id)
 
 	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(chargeShotEntity);
 	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(chargeShotEntity).GetPosition().y;
+	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
+	return ni.id;
+}
+
+u32 ItemManager::CreateReviverPickup(Vector3 position, u32 id)
+{
+	static u32 reviverNetworkID = 0u;
+
+	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
+
+	entity reviverEntity = s_entityManager.CreateEntity();
+	s_entityManager.AddComponent<ActiveItemComponent>(reviverEntity).type = ActiveItemComponent::Type::Reviver;
+	s_entityManager.AddComponent<PickupComponent>(reviverEntity).itemName = "Reviver";
+	s_entityManager.AddComponent<ModelComponent>(reviverEntity, modelID);
+	s_entityManager.AddComponent<TransformComponent>(reviverEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
+	s_entityManager.AddComponent<ShadowReceiverComponent>(reviverEntity);
+	auto& ni = s_entityManager.AddComponent<NetworkId>(reviverEntity);
+	ni.entityTypeId = EntityTypes::Reviver;
+	if (id == 0)
+		ni.id = ++reviverNetworkID;
+	else
+	{
+		ni.id = id;
+		reviverNetworkID = id;
+	}
+
+	LuaMain::GetScriptManager()->AddScript(reviverEntity, "Pickupable.lua");
+
+	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(reviverEntity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(reviverEntity).GetPosition().y;
 	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
 	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
 	return ni.id;

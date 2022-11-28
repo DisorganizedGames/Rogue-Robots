@@ -647,6 +647,13 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 {
 	DOG::EntityManager& mgr = DOG::EntityManager::Get();
 
+	//If the player that wants to perform a revive does not have a reviver active item, we ofc return:
+	auto optionalItem = mgr.TryGetComponent<ActiveItemComponent>(player);
+	if (!optionalItem)
+		return;
+	if ((*optionalItem).get().type != ActiveItemComponent::Type::Reviver)
+		return;
+
 	DOG::entity closestDeadPlayer{ NULL_ENTITY };
 	float distanceToClosestDeadPlayer{ FLT_MAX };
 
@@ -815,6 +822,8 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 			ChangeSuitDrawLogic(spectatedPlayer, closestDeadPlayer);
 			RevivePlayer(closestDeadPlayer);
 		}
+		if (mgr.HasComponent<ThisPlayer>(player))
+			mgr.RemoveComponent<ActiveItemComponent>(player);
 	}
 }
 

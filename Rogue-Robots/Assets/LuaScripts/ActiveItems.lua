@@ -75,4 +75,13 @@ ActiveItems.turret = {
 
 }
 
+ActiveItems.reviver = {
+
+	GetECSType = function(self)
+			return 2
+		end,
+
+
+}
+
 return ActiveItems

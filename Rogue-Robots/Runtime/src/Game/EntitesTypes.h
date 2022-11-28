@@ -26,6 +26,7 @@ enum class EntityTypes
 	ActiveItemsBegin,
 	Trampoline,
 	Turret,
+	Reviver,
 	ActiveItems,
 
 	//Barrel
