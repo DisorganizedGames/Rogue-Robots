@@ -45,8 +45,15 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 		g_emitter = emitterBuffer[emitterIdx];
 	}
 	
+	GroupMemoryBarrierWithGroupSync();
+	
 	if (g_emitter.alive == 0)
+	{
+		if (threadID.x == 0)
+			toSpawnBuffer[groupID.x] = 0.f;
+		
 		return;
+	}
 	
 	if (threadID.x == 0)
 	{
@@ -58,7 +65,7 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 	
 	if (toSpawnBuffer[groupID.x] >= 1.f)
 	{
-		for (uint i = threadID.x; i < toSpawnBuffer[groupID.x]; i += GROUP_SIZE)
+		for (uint i = threadID.x; i < toSpawnBuffer[groupID.x] - 1.f; i += GROUP_SIZE)
 		{
 			uint lastAlive;
 			InterlockedAdd(aliveCounter[0], 1, lastAlive);
