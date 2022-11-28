@@ -232,7 +232,7 @@ namespace DOG
 		LuaMain::Initialize();
 
 
-		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); }, false, std::make_pair(Key::LCtrl, Key::D));
+		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); }, false, std::make_pair(Key::LCtrl, Key::V));
 		ImGuiMenuLayer::RegisterDebugWindow("MiniProfiler", [](bool& open) { MiniProfiler::DrawResultWithImGui(open); }, true);
 	}
 
@@ -285,7 +285,7 @@ namespace DOG
 	{
 		if (ImGui::BeginMenu("View"))
 		{
-			if (ImGui::MenuItem("Application settings", "Ctrl + D"))
+			if (ImGui::MenuItem("Application settings", "Ctrl + V"))
 			{
 				open = true;
 			}
@@ -294,7 +294,7 @@ namespace DOG
 
 		if (open)
 		{
-			if (ImGui::Begin("Application settings", &open))
+			if (ImGui::Begin("Application settings", &open, ImGuiWindowFlags_NoFocusOnAppearing))
 			{
 				gfx::Monitor monitor = m_renderer->GetMonitor();
 
