@@ -55,14 +55,14 @@ local reloading = false
 local reloadAngle = 0.0
 
 function OnStart()
-	gunModel = Asset:LoadModel("Assets/Models/Rifle/scene.gltf")
+	gunModel = Asset:LoadModel("Assets/Models/ModularRifle/Maingun.gltf")
 	bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Bullet/556x45_bullet.fbx")
 	gunShotSound = Asset:LoadAudio("Assets/Audio/TestShoot.wav")
 
 	-- Initialize the gun view model entity
 	gunID = Scene:CreateEntity(EntityID)
 	gunEntity.entityID = gunID
-	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.15,y=.15,z=.15})
+	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.75,y=.75,z=.75})
 	Entity:AddComponent(gunID, "Model", gunModel)
 	Entity:AddComponent(gunID, "Audio", gunShotSound, false, true)
 
