@@ -461,7 +461,7 @@ u32 ItemManager::CreateFullAutoPickup(Vector3 position, u32 id)
 {
 	static u32 fullAutoNetworkID = 0u;
 
-	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/green_cube.glb");
+	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/ModularRifle/FullAuto.gltf");
 
 	entity fullAutoEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<MiscComponent>(fullAutoEntity).type = MiscComponent::Type::FullAuto;
@@ -492,7 +492,7 @@ u32 ItemManager::CreateChargeShotPickup(Vector3 position, u32 id)
 {
 	static u32 chargeShotNetworkID = 0u;
 
-	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/red_cube.glb");
+	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/ModularRifle/ChargeShot.gltf");
 
 	entity chargeShotEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<MiscComponent>(chargeShotEntity).type = MiscComponent::Type::ChargeShot;
