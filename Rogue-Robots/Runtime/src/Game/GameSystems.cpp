@@ -1039,6 +1039,65 @@ void LaserBeamVFXSystem::OnUpdate(LaserBeamVFXComponent& laserBeam)
 	gfx::PostProcess::Get().InstantiateLaserBeam(laserBeam.startPos + 0.002f * jitter, laserBeam.endPos, dirToCamera, f * (laserBeam.color += 0.02f * jitter));
 }
 
+void LaserBulletCollisionSystem::OnUpdate(DOG::entity e, LaserBulletComponent& laserBullet, DOG::HasEnteredCollisionComponent& collision, DOG::RigidbodyComponent& rigidBody, DOG::TransformComponent& transform)
+{
+	auto& em = EntityManager::Get();
+	em.DeferredEntityDestruction(e);
+
+	entity reflectedParticles = em.CreateEntity();
+	entity randomScatterParticles = em.CreateEntity();
+	if (auto scene = em.TryGetComponent<SceneComponent>(e))
+	{
+		em.AddComponent<SceneComponent>(reflectedParticles, scene->get().scene);
+		em.AddComponent<SceneComponent>(randomScatterParticles, scene->get().scene);
+	}
+
+	Vector3 n = collision.normal[0];
+	Vector3 i = rigidBody.linearVelocity;
+	i.Normalize();
+	Vector3 r = Vector3::Reflect(-i, n);
+
+	Vector3 pos = transform.GetPosition();
+	
+	auto& tr = em.AddComponent<TransformComponent>(reflectedParticles);
+	tr.worldMatrix= DirectX::SimpleMath::Matrix::CreateLookAt(pos, pos + r, Vector3::Up).Invert();
+	tr.RotateL({ DirectX::XM_PIDIV2, 0, 0 });
+
+	auto& tr2 = em.AddComponent<TransformComponent>(randomScatterParticles) = tr;
+	tr2.RotateL({ DirectX::XM_PI, 0, 0 });
+
+
+	em.AddComponent<LifetimeComponent>(reflectedParticles, 0.04f);
+	em.AddComponent<LifetimeComponent>(randomScatterParticles, 0.04f);
+
+
+	Vector4 startColor = 2.5f * Vector4(laserBullet.color.x, 1.6f * laserBullet.color.y, laserBullet.color.z, 1);
+	Vector4 endColor = 0.3f * Vector4(0.3f * laserBullet.color.x, 0.8f * laserBullet.color.y, laserBullet.color.z, 1);
+
+
+	em.AddComponent<ConeSpawnComponent>(reflectedParticles) = { .angle = DirectX::XM_PI / 5, .speed = 8.f };
+	em.AddComponent<ParticleEmitterComponent>(reflectedParticles) = {
+		.spawnRate = 600,
+		.particleSize = 0.05f,
+		.particleLifetime = 1.1f,
+		.startColor = startColor,
+		.endColor = endColor,
+	};
+
+	em.AddComponent<ConeSpawnComponent>(randomScatterParticles) = { .angle = DirectX::XM_PI / 1.5f, .speed = 4.f };
+	em.AddComponent<ParticleEmitterComponent>(randomScatterParticles) = {
+		.spawnRate = 200,
+		.particleSize = 0.08f,
+		.particleLifetime = 0.8f,
+		.startColor = Vector4::Lerp(startColor, 2 * Vector4(1, 1, 0.7f, 0.5f), 0.5f),
+		.endColor = Vector4::Lerp(startColor, 2 * Vector4(1, 1, 0.7f, 0.5f), 0.5f),
+	};
+
+
+
+
+}
+
 #pragma endregion
 
 void SetFlashLightToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& child, DOG::TransformComponent& world)

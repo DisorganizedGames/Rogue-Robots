@@ -304,13 +304,24 @@ namespace DOG
 							//On enter collision
 							if (it->second.activeCollision)
 							{
+								
+
 								if (!EntityManager::Get().HasComponent<HasEnteredCollisionComponent>(obj0Entity)) EntityManager::Get().AddComponent<HasEnteredCollisionComponent>(obj0Entity);
 								if (!EntityManager::Get().HasComponent<HasEnteredCollisionComponent>(obj1Entity)) EntityManager::Get().AddComponent<HasEnteredCollisionComponent>(obj1Entity);
 
 								auto& c0 = EntityManager::Get().GetComponent<HasEnteredCollisionComponent>(obj0Entity);
 								auto& c1 = EntityManager::Get().GetComponent<HasEnteredCollisionComponent>(obj1Entity);
-								if (c0.entitiesCount < HasEnteredCollisionComponent::maxCount) c0.entities[c0.entitiesCount++] = obj1Entity;
-								if (c1.entitiesCount < HasEnteredCollisionComponent::maxCount) c1.entities[c1.entitiesCount++] = obj0Entity;
+								if (c0.entitiesCount < HasEnteredCollisionComponent::maxCount)
+								{
+									c0.normal[c0.entitiesCount] = it->second.normal;
+									c0.entities[c0.entitiesCount++] = obj1Entity;
+								}
+								if (c1.entitiesCount < HasEnteredCollisionComponent::maxCount)
+								{
+									c1.normal[c1.entitiesCount] = -it->second.normal;
+									c1.entities[c1.entitiesCount++] = obj0Entity;
+								}
+
 
 								if (EntityManager::Get().HasComponent<ScriptComponent>(obj0Entity))
 									LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0Entity, "OnCollisionEnter", obj1Entity);
@@ -755,6 +766,8 @@ namespace DOG
 						RigidbodyCollisionData collisionData;
 						collisionData.activeCollision = false;
 						collisionData.collisionCheck = true;
+						btVector3 normal = contactManifold->getContactPoint(j).m_normalWorldOnB;
+						collisionData.normal = { normal.getX(), normal.getY(), normal.getZ() };
 
 						//Ghost objects can also enter here!
 						collisionData.ghost = !obj1->getUserIndex3();

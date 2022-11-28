@@ -12,7 +12,7 @@ function BarrelComponents:BasicBarrel()
 	return 
 	{
 		bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Bullet/556x45_bullet.gltf"),
-		gunShotSound = Asset:LoadAudio("Assets/Audio/TestShoot.wav"),
+		gunShotSound = Asset:LoadAudio("Assets/Audio/GunSounds/colt 45 si6025-2-1__R.wav"),
 		speed = 340.0,
 		size = Vector3.New(5.0, 5.0, 5.0),
 
@@ -25,7 +25,7 @@ function BarrelComponents:BasicBarrel()
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
 			Entity:AddComponent(bullet.entity, "BoxColliderMass", boxColliderSize, true, 0.075)
 			Entity:AddComponent(bullet.entity, "Rigidbody", false)
-			Entity:AddComponent(bullet.entity, "Bullet", parentEntityID)		-- Note: bullet damage is added in Lua interface
+			Entity:AddComponent(bullet.entity, "Bullet", parentEntityID, 35.0)
 			--Entity:AddComponent(bullet.entity, "SubMeshRender", MaterialPrefabs:GetMaterial("BulletMaterial"))
 
 			Entity:PlayAudio(gunEntity.entityID, self.gunShotSound, true)
@@ -56,7 +56,7 @@ function BarrelComponents:Grenade()
 	{
 		bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Grenade/Grenade.glb"),
 		explosionModel = Asset:LoadModel("Assets/Models/Temporary_Assets/Explosion.glb"),
-		gunShotSound = Asset:LoadAudio("Assets/Audio/TestShoot.wav"),
+		gunShotSound = Asset:LoadAudio("Assets/Audio/GunSounds/grenade launcher pe23-4__R.wav"),
 		grenadeSpeed = 9.2,
 		upSpeed = 5.0,
 		grenadeSize = Vector3.New(0.2, 0.2, 0.2),
@@ -132,7 +132,7 @@ function BarrelComponents:Missile()
 	return 
 	{
 		bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Missile/missile.glb"),
-		gunShotSound = Asset:LoadAudio("Assets/Audio/TestShoot.wav"),
+		gunShotMissileSound = Asset:LoadAudio("Assets/Audio/GunSounds/cannon pe24-2__R.wav"),
 		waitForFire = 0.0,
 		timeBetweenShots = 2.0,
 		
@@ -156,6 +156,7 @@ function BarrelComponents:Missile()
 			end
 
 			Entity:AddComponent(bullet.entity, "HomingMissileComponent", parentEntityID, gunEntity.entityID, homingMissileInfo)
+			Entity:PlayAudio(gunEntity.entityID, self.gunShotMissileSound, true)
 		end,
 		Destroy = function(self, bullet)
 		end,
@@ -190,7 +191,22 @@ end
 function BarrelComponents:Laser()
 	return
 	{
-		Update = function(self, gunEntity, parentEntityID, bullet, miscComponent)
+		gunShotLaserSound = Asset:LoadAudio("Assets/Audio/GunSounds/bazooka ss1-25__R.wav"),
+		speed = 80.0,
+		size = Vector3.New(1.0, 1.0, 1.0),
+
+		Update = function(self, gunEntity, parentEntityID, bullet)
+			local boxColliderSize = bullet.size * 0.005 + Vector3.New(.1, .1, .1)
+			Entity:ModifyComponent(bullet.entity, "Transform", bullet.size + self.size, 3)
+
+			Entity:AddComponent(bullet.entity, "LaserBullet", parentEntityID)
+			Entity:AddComponent(bullet.entity, "BoxColliderMass", boxColliderSize, true, 0.075)
+			Entity:AddComponent(bullet.entity, "Rigidbody", false)
+			Entity:AddComponent(bullet.entity, "Bullet", parentEntityID, 100.0)
+
+			Physics:RBSetVelocity(bullet.entity, bullet.forward * (bullet.speed + self.speed))
+
+			Entity:PlayAudio(gunEntity.entityID, self.gunShotLaserSound, true)
 		end,
 		Destroy = function(self, bullet)
 		end,

@@ -344,6 +344,12 @@ struct LaserBeamComponent
 	DOG::entity owningPlayer = DOG::NULL_ENTITY;
 };
 
+struct LaserBulletComponent
+{
+	DirectX::SimpleMath::Vector3 color;
+	int bounces = 0;
+};
+
 struct LaserBarrelComponent
 {
 	bool shoot = false;

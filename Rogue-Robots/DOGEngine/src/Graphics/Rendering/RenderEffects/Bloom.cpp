@@ -6,8 +6,6 @@
 #include "../../RHI/ShaderCompilerDXC.h"
 #include "../GPUDynamicConstants.h"
 
-
-
 namespace DOG::gfx
 {
 	Bloom::Bloom(RGResourceManager* resMan, GlobalEffectData& globalEffectData, GPUDynamicConstants* dynConsts, u32 renderResX, u32 renderResY)

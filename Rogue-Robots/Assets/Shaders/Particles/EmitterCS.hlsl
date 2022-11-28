@@ -144,7 +144,7 @@ void SpawnCone(inout Particle p, in Texture1D noiseTex, in float seed)
 	p.pos = g_emitter.pos;
 	p.vel *= g_emitter.opt2;
 
-	p.vel = mul(float4(p.vel, 0), g_emitter.rotationMatrix).xyz;
+    p.vel = mul(g_emitter.rotationMatrix, float4(p.vel, 0)).xyz;
 }
 
 void SpawnCylinder(inout Particle p, in Texture1D noiseTex, in float seed)

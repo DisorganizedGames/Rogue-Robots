@@ -599,7 +599,7 @@ public:
 
 		if (age >= lifetime)
 		{
-			DOG::EntityManager::Get().AddComponent<DOG::DeferredDeletionComponent>(e);
+			DOG::EntityManager::Get().DeferredEntityDestruction(e);
 		}
 		age += DOG::Time::DeltaTime<DOG::TimeType::Seconds, f32>();
 	}
@@ -643,4 +643,13 @@ public:
 	ON_UPDATE(LaserBeamVFXComponent);
 
 	void OnUpdate(LaserBeamVFXComponent& laserBeam);
+};
+
+class LaserBulletCollisionSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(LaserBulletComponent, DOG::HasEnteredCollisionComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
+	ON_UPDATE_ID(LaserBulletComponent, DOG::HasEnteredCollisionComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
+
+	void OnUpdate(DOG::entity e, LaserBulletComponent& laserBullet, DOG::HasEnteredCollisionComponent&, DOG::RigidbodyComponent& rigidBody, DOG::TransformComponent& transform);
 };
