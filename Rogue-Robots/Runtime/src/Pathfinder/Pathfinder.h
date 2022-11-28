@@ -10,6 +10,9 @@ class Pathfinder
 using Vector3 = DirectX::SimpleMath::Vector3;
 private:
 	static void Init();
+	bool m_visualizePaths;
+	bool m_vizNavMeshes;
+	bool m_vizPortals;
 
 public:
 	using NavMeshID = DOG::entity;
@@ -26,7 +29,9 @@ public:
 	void BuildNavScene(SceneComponent::Type sceneType);
 
 	std::vector<Vector3> Checkpoints(Vector3 start, Vector3 goal);
-	void Checkpoints(Vector3 start, Vector3 goal, PathfinderWalkComponent& pfc);
+	void Checkpoints(Vector3 start, PathfinderWalkComponent& pfc);
+
+	bool DrawPaths();
 
 private:
 	struct Step
@@ -48,20 +53,12 @@ private:
 	static bool m_initialized;
 
 	Pathfinder() noexcept;
-	virtual ~Pathfinder() = default;
+	~Pathfinder();
 	DELETE_COPY_MOVE_CONSTRUCTOR(Pathfinder);
 
+	void VisualizePathsMenu(bool& open);
 
 	// Methods
-	
-	//NavMeshID NewMesh(Box extents);
-	//PortalID NewPortal(NavMeshID mesh, Box extents);
-	//void ConnectMeshAndNode(NavMeshID mesh, PortalID node);
-	//std::vector<Box> ConnectToNeighborsAndReturnOpen(NavMeshID mesh, Box border);
-	//void GenerateNavMeshes(std::vector<std::string>& map, GridCoord origin, char symbol, PortalID currentNode = MAX_ID);
-	//// newPos Walk(currentPos, goal, speed)
-	//// newPos Fly(currentPos, goal, speed)
-	//size_t FindNavMeshContaining(const Vector3 pos);
 	std::vector<PortalID> Astar(const Vector3 start, const Vector3 goal, float (*h)(Vector3, Vector3));
 	static float heuristicStraightLine(Vector3 start, Vector3 goal);
 };

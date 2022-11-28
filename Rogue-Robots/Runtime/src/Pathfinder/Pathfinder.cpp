@@ -15,6 +15,13 @@ bool Pathfinder::m_initialized = false;
 
 Pathfinder::Pathfinder() noexcept
 {
+	m_visualizePaths = true;
+	m_vizNavMeshes = false;
+	m_vizPortals = false;
+}
+
+Pathfinder::~Pathfinder()
+{
 }
 
 void Pathfinder::Init()
@@ -25,25 +32,101 @@ void Pathfinder::Init()
 	em.RegisterSystem(std::make_unique<PathfinderWalkSystem>());
 
 	m_initialized = true;
+
+	ImGuiMenuLayer::RegisterDebugWindow("Pathfinder", [](bool& open)
+		{
+			Pathfinder::Get().VisualizePathsMenu(open);
+		}, false, std::make_pair(Key::LCtrl, Key::P));
+}
+
+void Pathfinder::VisualizePathsMenu(bool& open)
+{
+	if (ImGui::BeginMenu("View"))
+	{
+		if (ImGui::MenuItem("Pathfinder", "Ctrl+P"))
+		{
+			open = true;
+		}
+		ImGui::EndMenu(); // "View"
+	}
+
+	if (open)
+	{
+		if (ImGui::Begin("Pathfinder", &open, ImGuiWindowFlags_NoFocusOnAppearing))
+		{
+			ImGui::Checkbox("Visualize paths", &m_visualizePaths);
+
+			if (ImGui::Checkbox("Visualize NavMeshes", &m_vizNavMeshes))
+			{
+				if (m_vizNavMeshes)
+				{
+					constexpr Vector3 navMeshScale = Vector3(1.f, 1.f, 1.f);
+					EntityManager& em = EntityManager::Get();
+					em.Collect<NavMeshComponent, BoundingBoxComponent>().Do(
+						[&](entity e, NavMeshComponent&, BoundingBoxComponent& bb)
+						{
+							// visualize NavMesh
+							em.AddComponent<TransformComponent>(e).SetPosition(bb.Center()).SetScale(navMeshScale);
+							em.AddComponent<ModelComponent>(e, AssetManager::Get().LoadShapeAsset(DOG::Shape::sphere, 16));
+						}
+					);
+				}
+				else
+				{
+					EntityManager& em = EntityManager::Get();
+					em.Collect<NavMeshComponent, BoundingBoxComponent, TransformComponent, ModelComponent>().Do(
+						[&](entity e, NavMeshComponent&, BoundingBoxComponent& bb, TransformComponent&, ModelComponent&)
+						{
+							// visualize NavMesh
+							em.RemoveComponent<TransformComponent>(e);
+							em.RemoveComponent<ModelComponent>(e);
+						}
+					);
+				}
+			}
+			if (ImGui::Checkbox("Visualize Portals", &m_vizPortals))
+			{
+				if (m_vizPortals)
+				{
+					constexpr Vector3 portalScale = Vector3(0.1f, 0.1f, 0.1f);
+					EntityManager& em = EntityManager::Get();
+					em.Collect<PortalComponent>().Do(
+						[&](entity e, PortalComponent& pc)
+						{
+							// visualize portal
+							if (!em.HasComponent<TransformComponent>(e)) em.AddComponent<TransformComponent>(e).SetPosition(pc.portal).SetScale(portalScale);
+							em.AddComponent<ModelComponent>(e, AssetManager::Get().LoadShapeAsset(DOG::Shape::prism, 4));
+						}
+					);
+				}
+				else
+				{
+					EntityManager& em = EntityManager::Get();
+					em.Collect<PortalComponent, TransformComponent, ModelComponent>().Do(
+						[&](entity e, PortalComponent& pc, TransformComponent&, ModelComponent&)
+						{
+							// visualize portal
+							em.RemoveComponent<TransformComponent>(e);
+							em.RemoveComponent<ModelComponent>(e);
+						}
+					);
+				}
+			}
+		}
+		ImGui::End();
+	}
+}
+
+bool Pathfinder::DrawPaths()
+{
+	return m_visualizePaths;
 }
 
 void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 {
-	// temporary aggro agent for pathfinding tests
-	//entity e = AgentManager::Get().CreateAgent(EntityTypes::Scorpio, AgentManager::Get().GroupID(), Vector3(13.f, 12.f, 220.f), sceneType);
-	//EntityManager::Get().AddComponent<AgentAggroComponent>(e);
-
-	//constexpr unsigned char voidBlock = ' '; // 176;
-	//constexpr unsigned char emptySpace = 178;
-	//constexpr unsigned char solidBlock = 219;
-
 	constexpr float blockDim = pcgBlock::DIMENSION;
-	constexpr Vector3 navMeshScale = Vector3(1.f, 1.f, 1.f);
-	constexpr Vector3 portalScale = Vector3(0.1f, 0.1f, 0.1f);
 
 	EntityManager& em = EntityManager::Get();
-
-	//std::vector<std::vector<std::vector<char>>> map;
 
 	entity navSceneID = em.CreateEntity();
 	em.AddComponent<SceneComponent>(navSceneID, sceneType);
@@ -57,17 +140,6 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 			size_t x = static_cast<size_t>(pos.x / blockDim);
 			size_t y = static_cast<size_t>(pos.y / blockDim);
 			size_t z = static_cast<size_t>(pos.z / blockDim);
-
-			// expand map if necessary
-			//while (!(y < map.size()))
-			//	map.emplace_back(std::vector<std::vector<char>>());
-			//while (!(z < map[y].size()))
-			//	map[y].emplace_back(std::vector<char>());
-			//while (!(x < map[y][z].size()))
-			//	map[y][z].emplace_back(voidBlock);
-
-			// draw block
-			//map[y][z][x] = solidBlock;
 			
 			// create NavMesh and add to navScene
 			entity newMesh = em.CreateEntity();
@@ -75,11 +147,6 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 			em.AddComponent<NavMeshComponent>(newMesh);
 			em.AddComponent<SceneComponent>(newMesh, sceneType);
 			em.AddComponent <BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
-			//BoundingBoxComponent& bb = em.AddComponent <BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
-
-			// visualize NavMesh
-			//em.AddComponent<TransformComponent>(newMesh).SetPosition(bb.Center()).SetScale(navMeshScale);
-			//em.AddComponent<ModelComponent>(newMesh, AssetManager::Get().LoadShapeAsset(DOG::Shape::sphere, 16));
 		});
 
 	em.Collect<EmptySpaceComponent>().Do(
@@ -89,9 +156,6 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 			size_t x = static_cast<size_t>(empty.pos.x / blockDim);
 			size_t y = static_cast<size_t>(empty.pos.y / blockDim);
 			size_t z = static_cast<size_t>(empty.pos.z / blockDim);
-
-			// draw empty space
-			//map[y][z][x] = emptySpace;
 			
 			// create NavMesh and add to navScene
 			entity newMesh = em.CreateEntity();
@@ -99,31 +163,9 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 			em.AddComponent<NavMeshComponent>(newMesh);
 			em.AddComponent<SceneComponent>(newMesh, sceneType);
 			em.AddComponent <BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
-			//BoundingBoxComponent& bb = em.AddComponent <BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
-
-			//// visualize NavMesh
-			//em.AddComponent<TransformComponent>(newMesh).SetPosition(bb.Center()).SetScale(navMeshScale);
-			//em.AddComponent<ModelComponent>(newMesh, AssetManager::Get().LoadShapeAsset(DOG::Shape::sphere, 16));
 		}
 	);
 
-	// print map sliced in y-levels
-	//for (size_t y = 0; y < map.size(); ++y)
-	//{
-	//	std::cout << "==================================================" << std::endl;
-	//	std::cout << "                   Level " << y << std::endl;
-	//	std::cout << "==================================================" << std::endl << std::endl;
-	//	for (size_t z = 0; z < map[y].size(); ++z)
-	//	{
-	//		std::cout << "   ";
-	//		for (size_t x = 0; x < map[y][z].size(); ++x)
-	//		{
-	//			std::cout << map[y][z][x];
-	//		}
-	//		std::cout << std::endl;
-	//	}
-	//	std::cout << std::endl;
-	//}
 
 	// Connect the NavMeshes
 	for (size_t y = 0; y < navScene.map.size(); ++y)
@@ -154,10 +196,6 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 								// add necessary components to portal
 								Vector3 pos = em.AddComponent<PortalComponent>(id, me, other).portal;
 								em.AddComponent<SceneComponent>(id, sceneType);
-
-								// visualize portal
-								em.AddComponent<TransformComponent>(id).SetPosition(pos).SetScale(portalScale);
-								em.AddComponent<ModelComponent>(id, AssetManager::Get().LoadShapeAsset(DOG::Shape::prism, 4));
 							}
 						}
 					}
@@ -182,48 +220,38 @@ std::vector<Vector3> Pathfinder::Checkpoints(Vector3 start, Vector3 goal)
 	return checkpoints;
 }
 
-void Pathfinder::Checkpoints(Vector3 start, Vector3 goal, PathfinderWalkComponent& pfc)
+void Pathfinder::Checkpoints(Vector3 start, PathfinderWalkComponent& pfc)
 {
 	EntityManager::Get().Collect<NavSceneComponent>().Do(
 		[&](NavSceneComponent& navScene)
 		{
 			if (NavMeshID startMesh = navScene.At(start); startMesh != NULL_ENTITY)
 			{
-				if (NavMeshID terminalNavMesh = navScene.At(goal); terminalNavMesh != NULL_ENTITY)
+				if (NavMeshID terminalNavMesh = navScene.At(pfc.goal); terminalNavMesh != NULL_ENTITY)
 				{
 					if (pfc.path.size() == 0)
-						pfc.path.push_back(goal);
+						pfc.path.push_back(pfc.goal);
 
 					if (navScene.At(pfc.path.back()) != terminalNavMesh)
 					{
 						EntityManager& em = EntityManager::Get();
 						
 						pfc.path.clear();
-						bool first = true;
-						for (PortalID id : Astar(start, goal, heuristicStraightLine))
-						{
-							if (first)
-							{
-								constexpr float THRESHOLD = 1.f;
-								// Include portal in checkpoints only if distance is greath enough.
-								// using start.y since portal point is elevated
-								Vector3 p = em.GetComponent<PortalComponent>(id).portal;
-								p.y = start.y;
-								if (Vector3::DistanceSquared(start, p) > THRESHOLD)
-									pfc.path.push_back(p);
-								first = false;
-							}
-							else
+						for (PortalID id : Astar(start, pfc.goal, heuristicStraightLine))
 								pfc.path.push_back(em.GetComponent<PortalComponent>(id).portal);
-						}
 
-						pfc.path.push_back(goal);
+						pfc.path.push_back(pfc.goal);
 					}
 					else
 					{
 						// just update the goal point
-						pfc.path[pfc.path.size() - 1] = goal;
+						pfc.path[pfc.path.size() - 1] = pfc.goal;
 					}
+
+					// remove the first checkpoint if entity is close enough
+					constexpr float THRESHOLD = .05f;
+					if (pfc.path.size() > 1 && Vector3::DistanceSquared(start, pfc.path[0]) > THRESHOLD)
+						pfc.path.erase(pfc.path.begin());
 				}
 			}
 		});
