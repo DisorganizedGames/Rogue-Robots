@@ -237,7 +237,24 @@ namespace DOG
          std::vector<ComPtr<ID2D1Bitmap>> m_bitmaps;
          std::vector<D2D1_RECT_F> m_rects;
          ComPtr<ID2D1SolidColorBrush> m_borderBrush;
-         UINT m_buffs;  
+         UINT m_buffs;
+   };
+
+   class UIPlayerList : public UIElement
+   {
+      public:
+         UIPlayerList(DOG::gfx::D2DBackend_DX12& d2d, UINT id);
+         ~UIPlayerList();
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void AddPlayer(const float r, const float g, const float b, const std::wstring name);
+         void RemovePlayer(const std::wstring name);
+      private:
+         std::vector<std::wstring> m_players;
+         std::vector<D2D1::ColorF> m_playerColours;
+         D2D1_SIZE_U m_screensize;
+         ComPtr<ID2D1SolidColorBrush> m_rectBrush;
+         ComPtr<IDWriteTextFormat> m_textFormat;
    };
 
 }
