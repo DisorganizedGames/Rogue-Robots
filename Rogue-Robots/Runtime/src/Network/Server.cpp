@@ -15,7 +15,7 @@ Server::Server()
 	}
 
 	//Change denominator to set tick rate
-	m_tickrateTcp = 1.0f / 30.0f;
+	m_tickrateTcp = 1.0f / 60.0f;
 	m_tickrateUdp = 1.0f / 60.0f;
 	m_upid = 0;
 	m_reciveupid = 0;
@@ -202,6 +202,7 @@ void Server::ServerPollTCP()
 	std::vector<NetworkAgentStats> statsChanged;
 	std::vector<CreateAndDestroyEntityComponent> createAndDestroy;
 	std::vector<DOG::NetworkTransform> transforms;
+	std::vector<PathFindingSync> pathfinders;
 	u16 bufferSendSize = sizeof(TcpHeader);
 	u16 bufferReciveSize = 0;
 	char sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
@@ -213,9 +214,6 @@ void Server::ServerPollTCP()
 		bufferReciveSize = 0;
 
 		TcpHeader sendHeader;
-		sendHeader.nrOfChangedAgentsHp = 0;
-		sendHeader.nrOfCreateAndDestroy = 0;
-		sendHeader.nrOfNetTransform = 0;
 		m_holdSocketsTcp = m_clientsSocketsTcp;
 
 
@@ -299,6 +297,19 @@ void Server::ServerPollTCP()
 								createAndDestroy.push_back(test);
 								bufferReciveSize += sizeof(CreateAndDestroyEntityComponent);
 							}
+
+							//Add the pathfinders
+							sendHeader.nrOfPathFindingSync += holdClientsData.nrOfPathFindingSync;
+							for (u32 j = 0; j < holdClientsData.nrOfPathFindingSync; ++j)
+							{
+
+								PathFindingSync temp;
+								memcpy(&temp, reciveBuffer + bufferReciveSize, sizeof(PathFindingSync));
+								pathfinders.push_back(temp);
+								bufferReciveSize += sizeof(PathFindingSync);
+							}
+
+
 						}
 					}
 					else if (bytesRecived == -1)
@@ -320,6 +331,10 @@ void Server::ServerPollTCP()
 			if (createAndDestroy.size() > 0)
 				memcpy(sendBuffer + bufferSendSize, (char*)createAndDestroy.data(), createAndDestroy.size() * sizeof(CreateAndDestroyEntityComponent));
 			bufferSendSize += (u16)createAndDestroy.size() * sizeof(CreateAndDestroyEntityComponent);
+
+			if (pathfinders.size() > 0)
+				memcpy(sendBuffer + bufferSendSize, (char*)pathfinders.data(), pathfinders.size() * sizeof(PathFindingSync));
+			bufferSendSize += (u16)pathfinders.size() * sizeof(PathFindingSync);
 
 			sendHeader.nrOfPlayersConnected = (i8)m_holdPlayerIds.size();
 			sendHeader.sizeOfPayload = bufferSendSize;

@@ -76,7 +76,7 @@ namespace DOG
 	struct NetworkTransform
 	{
 		u32 objectId = 0;
-		DirectX::SimpleMath::Matrix transform;
+		DirectX::SimpleMath::Vector3 transform;
 	};
 	struct DontDraw
 	{
