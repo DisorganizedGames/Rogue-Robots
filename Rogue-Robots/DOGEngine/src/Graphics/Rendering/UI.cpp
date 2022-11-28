@@ -32,10 +32,7 @@ void MultiplayerButtonFunc(void)
    DOG::UI::Get()->ChangeUIscene(multiID);
 }
 
-void HostButtonFunc(void)
-{
-   DOG::UI::Get()->ChangeUIscene(lobbyID);
-}
+void HostButtonFunc(void);
 
 void ToMenuButtonFunc(void)
 {
