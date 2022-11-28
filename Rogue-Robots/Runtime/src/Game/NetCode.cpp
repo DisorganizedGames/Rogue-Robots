@@ -307,7 +307,7 @@ void NetCode::OnUpdate()
 								memcpy(tempCreate, m_receiveBuffer + m_bufferReceiveSize + sizeof(PathFindingSync) * i, sizeof(PathFindingSync));
 								bool aggro = (AGGRO_BIT & tempCreate->id.id); //bit mask 31st bit
 								if(aggro)
-									tempCreate->id.id -= AGGRO_BIT;
+									tempCreate->id.id = tempCreate->id.id & (~AGGRO_BIT);
 								EntityManager::Get().Collect<AgentIdComponent>().Do([&](entity e, AgentIdComponent& aIC)
 								{
 										if (aIC.id == tempCreate->id.id && aIC.type == tempCreate->id.type && aggro)
