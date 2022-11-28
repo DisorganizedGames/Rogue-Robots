@@ -104,15 +104,20 @@ class PickupItemInteractionSystem : public DOG::ISystem
 	#define REQUIRED_DISTANCE_DELTA 2.0f
 	#define REQUIRED_DOT_DELTA -0.90f
 public:
-	SYSTEM_CLASS(DOG::ThisPlayer, PlayerAliveComponent, PlayerControllerComponent);
-	ON_EARLY_UPDATE_ID(DOG::ThisPlayer, PlayerAliveComponent, PlayerControllerComponent);
+	SYSTEM_CLASS(DOG::ThisPlayer, PlayerAliveComponent, DOG::TransformComponent, PlayerControllerComponent);
+	ON_EARLY_UPDATE_ID(DOG::ThisPlayer, PlayerAliveComponent, DOG::TransformComponent, PlayerControllerComponent);
 
-	void OnEarlyUpdate(DOG::entity player, DOG::ThisPlayer&, PlayerAliveComponent&, PlayerControllerComponent& pcc)
+	void OnEarlyUpdate(DOG::entity player, DOG::ThisPlayer&, PlayerAliveComponent&, DOG::TransformComponent& ptc, PlayerControllerComponent& pcc)
 	{
 		auto& mgr = DOG::EntityManager::Get();
-		auto playerPosition = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(pcc.cameraEntity).GetPosition();
+		auto playerPosition = ptc.GetPosition();
 		DOG::entity closestPickup = DOG::NULL_ENTITY;
 		float closestDistance = FLT_MAX;
+
+		if (pcc.cameraEntity != DOG::NULL_ENTITY)
+		{
+			playerPosition = mgr.GetComponent<DOG::TransformComponent>(pcc.cameraEntity).GetPosition();
+		}
 
 		mgr.Collect<PickupComponent, DOG::TransformComponent>().Do([&closestDistance, &closestPickup, &playerPosition](DOG::entity pickUp, PickupComponent&, DOG::TransformComponent& tc)
 			{
