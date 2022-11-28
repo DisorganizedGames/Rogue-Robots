@@ -45,4 +45,5 @@ private:
 	u32 CreateJumpBoost(Vector3 position, u32 id = 0);
 	u32 CreateFullAutoPickup(Vector3 position, u32 id = 0);
 	u32 CreateChargeShotPickup(Vector3 position, u32 id = 0);
+	u32 CreateReviverPickup(Vector3 position, u32 id = 0);
 };

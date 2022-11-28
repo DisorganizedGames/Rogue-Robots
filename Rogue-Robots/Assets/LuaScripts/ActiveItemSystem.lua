@@ -19,10 +19,12 @@ function OnUpdate()
 
 	if Entity:GetAction(EntityID, "ActivateActiveItem") and activeItem then
 		if clicked == false then
-			activeEntityCreated = activeItem:activate(EntityID)
-			activeItem = nil
-			Entity:RemoveComponent(EntityID, "ActiveItem")
-			clicked = true
+			if activeItem:GetECSType() ~= 2 then -- Dont activate reviver this way, ECS handles it
+				activeEntityCreated = activeItem:activate(EntityID)
+				activeItem = nil
+				Entity:RemoveComponent(EntityID, "ActiveItem")
+				clicked = true
+			end
 		end
 	else
 		clicked = false
@@ -33,7 +35,7 @@ function OnPickup(pickup)
 	local pickupTypeString = Entity:GetEntityTypeAsString(pickup)
 	local playerID = EntityID
 
-	if pickupTypeString == "Trampoline" or pickupTypeString == "Turret" then
+	if pickupTypeString == "Trampoline" or pickupTypeString == "Turret" or pickupTypeString == "Reviver" then
 		if Entity:HasComponent(playerID, "ActiveItem") then
 			Entity:SpawnActiveItem(playerID)
 			Entity:RemoveComponent(playerID, "ActiveItem")
@@ -44,6 +46,10 @@ function OnPickup(pickup)
 		end
 		if pickupTypeString == "Turret" then
 			activeItem = ActiveItems.turret
+			Entity:AddComponent(playerID, "ActiveItem", activeItem:GetECSType())
+		end
+		if pickupTypeString == "Reviver" then
+			activeItem = ActiveItems.reviver
 			Entity:AddComponent(playerID, "ActiveItem", activeItem:GetECSType())
 		end
 	end
