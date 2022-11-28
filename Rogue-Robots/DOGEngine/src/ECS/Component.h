@@ -356,15 +356,15 @@ namespace DOG
 		f32 z = 1.f;
 	};
 
+	struct BoundingBoxComponent
+	{
+		using Vector3 = DirectX::SimpleMath::Vector3;
+
+		DirectX::BoundingBox aabb;
+		BoundingBoxComponent(Vector3 center, Vector3 extents);
+		Vector3 Center();
+		Vector3 Extents();
+	};
+
 #pragma endregion
 }
-
-struct BoundingBoxComponent
-{
-	using Vector3 = DirectX::SimpleMath::Vector3;
-
-	DirectX::BoundingBox aabb;
-	BoundingBoxComponent(Vector3 center, Vector3 extents);
-	Vector3 Center();
-	Vector3 Extents();
-};

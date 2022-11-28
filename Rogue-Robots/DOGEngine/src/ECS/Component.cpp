@@ -138,23 +138,6 @@ namespace DOG
 
 		return *this;
 	}
-}
-
-BoundingBoxComponent::BoundingBoxComponent(DirectX::SimpleMath::Vector3 center, DirectX::SimpleMath::Vector3 extents)
-{
-	aabb.Center = DirectX::XMFLOAT3{ center.x, center.y, center.z };
-	aabb.Extents = DirectX::XMFLOAT3{ extents.x, extents.y, extents.z };
-}
-
-Vector3 BoundingBoxComponent::Center()
-{
-	return Vector3(aabb.Center);
-}
-
-Vector3 BoundingBoxComponent::Extents()
-{
-	return Vector3(aabb.Extents);
-}
 	void AnimationComponent::SimpleAdd(i8 animationId, AnimationFlag flags)
 	{
 		auto& setter = animSetters[addedSetters++];
@@ -166,4 +149,21 @@ Vector3 BoundingBoxComponent::Extents()
 		setter.flag = flags | AnimationFlag::SimpleAdd;
 		setter.transitionLength = 0.5f;
 	}
+
+	BoundingBoxComponent::BoundingBoxComponent(DirectX::SimpleMath::Vector3 center, DirectX::SimpleMath::Vector3 extents)
+	{
+		aabb.Center = DirectX::XMFLOAT3{ center.x, center.y, center.z };
+		aabb.Extents = DirectX::XMFLOAT3{ extents.x, extents.y, extents.z };
+	}
+
+	Vector3 BoundingBoxComponent::Center()
+	{
+		return Vector3(aabb.Center);
+	}
+
+	Vector3 BoundingBoxComponent::Extents()
+	{
+		return Vector3(aabb.Extents);
+	}
 }
+
