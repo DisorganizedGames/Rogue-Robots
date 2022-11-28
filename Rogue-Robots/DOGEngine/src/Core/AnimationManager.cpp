@@ -580,24 +580,11 @@ namespace DOG
 	void AnimationManager::SetPlayerBaseStates()
 	{
 		AnimationComponent baseAc;
-		using Setter = DOG::AnimationComponent::Setter;
-		// base state setter
-		static constexpr bool loop = true;
-		static constexpr u8 priority = 0;
-		static constexpr f32 transitionLength = 0.f;
-		static constexpr f32 playbackRate = 1.f;
 		static constexpr i8 idleIdx = 0;
-		static constexpr f32 weight = 1.f;
-		Setter baseState = { AnimationFlag::Looping, fullBodyGroup, priority, transitionLength, playbackRate,
-			{ idleIdx, NO_ANIMATION, NO_ANIMATION },
-			{ weight, 0.f, 0.f } };
 
-		//baseAc.SimpleAdd(idleIdx, AnimationFlag::Looping);
 		for (size_t i = 0; i < m_playerRigAnimators.size(); ++i)
 		{
-			/*baseAc.addedSetters = 1;
-			baseAc.animSetters[0] = baseState;*/
-			baseAc.SimpleAdd(idleIdx, AnimationFlag::Looping);
+			baseAc.SimpleAdd(idleIdx, AnimationFlag::Looping | AnimationFlag::ResetPrio);
 			m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
 			m_playerRigAnimators[i].ProcessAnimationComponent(baseAc);
 			for (u32 j = 0; j < N_GROUPS; j++)
