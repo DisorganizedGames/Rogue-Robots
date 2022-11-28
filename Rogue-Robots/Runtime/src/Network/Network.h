@@ -9,7 +9,7 @@ constexpr const char* PORTNUMBER_IN = "50004";
 constexpr int PORTNUMBER_OUT_INT = 50006;
 constexpr int PORTNUMBER_IN_INT = 50004;
 constexpr const char* MULTICAST_ADRESS = "239.255.255.0";
-constexpr int AGGRO_BIT = 2147483648;
+constexpr u32 AGGRO_BIT = 2147483648;
 
 struct PlayerNetworkComponentUdp
 {
