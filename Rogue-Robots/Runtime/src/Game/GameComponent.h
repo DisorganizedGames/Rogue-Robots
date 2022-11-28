@@ -365,6 +365,11 @@ struct GlowStickComponent
 	f32 spawnTime = 0;
 };
 
+struct GlowStickThrowerComponent
+{
+	bool waitForNewKeyDown = false;
+};
+
 struct DeferredSetIgnoreCollisionCheckComponent
 {
 	bool value = false;

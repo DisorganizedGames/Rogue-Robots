@@ -1125,10 +1125,16 @@ void GlowStickSystem::OnUpdate(entity e, GlowStickComponent&, RigidbodyComponent
 
 void PlayerUseEquipmentSystem::OnUpdate(DOG::entity e, InputController& controller, PlayerAliveComponent&)
 {
-	if (controller.throwGlowStick)
+	auto& thrower = EntityManager::Get().AddOrGetComponent<GlowStickThrowerComponent>(e);
+
+	if (!thrower.waitForNewKeyDown && controller.throwGlowStick)
 	{
 		ThrowGlowStick(e, 14);
-		controller.throwGlowStick = false;
+		thrower.waitForNewKeyDown = true;
+	}
+	else if (thrower.waitForNewKeyDown && !controller.throwGlowStick)
+	{
+		thrower.waitForNewKeyDown = false;
 	}
 }
 
