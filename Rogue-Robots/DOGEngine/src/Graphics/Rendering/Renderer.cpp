@@ -145,6 +145,28 @@ namespace DOG::gfx
 			.AppendRTFormat(m_sc->GetBufferFormat())
 			.Build());
 
+
+		{
+			D3D12_RENDER_TARGET_BLEND_DESC bd{};
+			bd.BlendEnable = true;
+			bd.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+			bd.SrcBlend = D3D12_BLEND_DEST_ALPHA;
+			bd.DestBlend = D3D12_BLEND_DEST_ALPHA;
+			bd.BlendOp = D3D12_BLEND_OP_ADD;
+			bd.SrcBlendAlpha = D3D12_BLEND_ONE;
+			bd.DestBlendAlpha = D3D12_BLEND_ONE;
+			bd.BlendOpAlpha = D3D12_BLEND_OP_MAX;
+
+			auto outlineBlitPS = m_sclr->CompileFromFile("OutlineBlitPS.hlsl", ShaderType::Pixel);
+			m_outlineBlitPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
+				.SetShader(fullscreenTriVS.get())
+				.SetShader(outlineBlitPS.get())
+				.SetBlend(BlendBuilder().AppendRTBlend(bd))
+				.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
+				.Build());
+		}
+
+
 		auto meshPSDefines = std::vector<std::wstring>();
 		meshPSDefines.push_back(L"OUTPUT_NORMALS");
 		auto meshVS = m_sclr->CompileFromFile("MainVS.hlsl", ShaderType::Vertex);
@@ -257,6 +279,14 @@ namespace DOG::gfx
 			.SetDepthFormat(DepthFormat::D32)
 			.SetDepthStencil(DepthStencilBuilder().SetDepthEnabled(true))
 			.SetRasterizer(RasterizerBuilder().SetFillMode(D3D12_FILL_MODE_WIREFRAME).SetCullMode(D3D12_CULL_MODE_NONE))
+			.Build());
+
+		auto outlineVS = m_sclr->CompileFromFile("ColorOutlineVS.hlsl", ShaderType::Vertex);
+		auto outlinePS = m_sclr->CompileFromFile("ColorOutlinePS.hlsl", ShaderType::Pixel);
+		m_outlineMeshPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
+			.SetShader(outlineVS.get())
+			.SetShader(outlinePS.get())
+			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
 			.Build());
 
 		auto ssaoCS = m_sclr->CompileFromFile("ssaoCS.hlsl", ShaderType::Compute);
@@ -477,6 +507,19 @@ namespace DOG::gfx
 		sub.world = world;
 		m_noCullWireframeDraws.push_back(sub);
 	}
+
+	void DOG::gfx::Renderer::SubmitOutlinedMesh(Mesh mesh, u32 submesh, const DirectX::SimpleMath::Vector3& color, const DirectX::SimpleMath::Matrix& world, bool animated, u32 jointOffset)
+	{
+		RenderSubmission sub{};
+		sub.mesh = mesh;
+		sub.submesh = submesh;
+		sub.color = color;
+		sub.world = world;
+		sub.animated = animated;
+		sub.jointOffset = jointOffset;
+		m_outlineDraws.push_back(sub);
+	}
+
 
 	void Renderer::SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world, u32 jointOffset)
 	{
@@ -975,7 +1018,79 @@ namespace DOG::gfx
 				});
 		}
 
-		m_damageDiskEffect->Add(rg);
+		/*
+			Weapon pass overlay:
+
+			We need the old one for the normal output :/
+			Re-draw weapon with new low precision depth buffer for weapon locally to overwrite the wrong model
+		*/
+		{
+			rg.AddPass<PassData>("Weapon Pass Overlayed",
+				[&](PassData& p, RenderGraph::PassBuilder& builder)
+				{
+					//builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight)
+					builder.DeclareTexture(RG_RESOURCE(SecondaryDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_renderWidth, m_renderHeight));
+
+					p.shadowView = builder.ReadResource(RG_RESOURCE(ShadowDepth), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D_Array, DXGI_FORMAT_R32_FLOAT)
+						.SetArrayRange(0, m_shadowMapCapacity));
+
+					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::PreservePreserve,
+						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+					builder.WriteDepthStencil(RG_RESOURCE(SecondaryDepth), RenderPassAccessType::ClearDiscard, TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
+
+					if (m_graphicsSettings.lightCulling)
+					{
+						auto groupCount = static_cast<TiledLightCullingEffect*>(m_tiledLightCuller.get())->GetGroupCount();
+						p.localLightBuffer = builder.ReadResource(RG_RESOURCE(LocalLightBuf), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, BufferViewDesc(ViewType::ShaderResource, 0, sizeof(TiledLightCullingEffect::LocalLightBufferLayout), groupCount.x * groupCount.y));
+					}
+				},
+				[&, dynConstants = m_dynConstants.get(), dynConstantsTemp = m_dynConstantsTemp.get(), drawFunc = drawSubmissions](const PassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) mutable
+				{
+					rd->Cmd_SetViewports(cmdl, m_globalEffectData.defRenderVPs);
+					rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.defRenderScissors);
+
+					rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
+
+					rd->Cmd_SetPipeline(cmdl, m_meshPipe);
+
+					PerLightDataForShadows perLightData{};
+					ShadowMapArrayStruct shadowMapArrayStruct{};
+					auto perLightHandle = dynConstantsTemp->Allocate((u32)std::ceilf(sizeof(PerLightDataForShadows) / (float)256));
+					auto shadowHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(ShadowMapArrayStruct) / float(256)));
+					for (size_t i{ 0u }; i < m_activeSpotlights.size(); ++i)
+					{
+						const auto& data = m_activeSpotlights[i];
+
+						perLightData.perLightDatas[i].position = data.position;
+						perLightData.perLightDatas[i].color = { data.color.x, data.color.y, data.color.z, };
+						perLightData.perLightDatas[i].direction = data.direction;
+						perLightData.perLightDatas[i].cutoffAngle = data.cutoffAngle;
+						perLightData.perLightDatas[i].strength = data.strength;
+						perLightData.perLightDatas[i].isPlayer = data.isPlayerLight ? 1 : 0;
+
+						if (data.shadow != std::nullopt)
+						{
+							perLightData.perLightDatas[i].isShadowCaster = true;
+							perLightData.perLightDatas[i].view = data.shadow->viewMat;
+							perLightData.perLightDatas[i].proj = data.shadow->projMat;
+							shadowMapArrayStruct.shadowMaps[i] = resources.GetView(p.shadowView);
+						}
+					}
+
+					perLightData.actualNrOfSpotlights = (u32)m_activeSpotlights.size();
+					std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
+					std::memcpy(shadowHandle.memory, &shadowMapArrayStruct, sizeof(shadowMapArrayStruct));
+
+					u32 localLightBufferIndex = m_graphicsSettings.lightCulling ? resources.GetView(p.localLightBuffer) : -1;
+					rd->Cmd_SetPipeline(cmdl, m_weaponMeshPipe);
+					drawFunc(rd, cmdl, m_weaponSubmission, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
+				});
+
+		}
+
+
 		m_laserBeamEffect->Add(rg);
 
 		// Generate SSAO
@@ -1137,79 +1252,192 @@ namespace DOG::gfx
 				});
 		}
 
-		/*
-			We need the old one for the normal output :/
-			Re-draw weapon with new low precision depth buffer for weapon locally to overwrite the wrong model
-		*/
+
+
+
+
+		// Draw outlined meshes
 		{
-			rg.AddPass<PassData>("Weapon Pass Overlayed",
-				[&](PassData& p, RenderGraph::PassBuilder& builder)
+			struct PassData {};
+			rg.AddPass<PassData>("Draw Outlined Meshes",
+				[&](PassData&, RenderGraph::PassBuilder& builder)
 				{
-					//builder.DeclareTexture(RG_RESOURCE(LitHDR), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight)
-					builder.DeclareTexture(RG_RESOURCE(SecondaryDepth), RGTextureDesc::DepthWrite2D(DepthFormat::D32, m_renderWidth, m_renderHeight));
+					// Clear: alpha = 1 by default
+					builder.DeclareTexture(RG_RESOURCE(OutlinedMeshes), RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth, m_renderHeight)
+						.AddFlag(D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
 
-					p.shadowView = builder.ReadResource(RG_RESOURCE(ShadowDepth), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D_Array, DXGI_FORMAT_R32_FLOAT)
-						.SetArrayRange(0, m_shadowMapCapacity));
-
-					builder.WriteRenderTarget(RG_RESOURCE(LitHDR), RenderPassAccessType::PreservePreserve,
+					builder.WriteRenderTarget(RG_RESOURCE(OutlinedMeshes), RenderPassAccessType::ClearPreserve,
 						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
-
-					builder.WriteDepthStencil(RG_RESOURCE(SecondaryDepth), RenderPassAccessType::ClearDiscard, TextureViewDesc(ViewType::DepthStencil, TextureViewDimension::Texture2D, DXGI_FORMAT_D32_FLOAT));
-
-					if (m_graphicsSettings.lightCulling)
-					{
-						auto groupCount = static_cast<TiledLightCullingEffect*>(m_tiledLightCuller.get())->GetGroupCount();
-						p.localLightBuffer = builder.ReadResource(RG_RESOURCE(LocalLightBuf), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, BufferViewDesc(ViewType::ShaderResource, 0, sizeof(TiledLightCullingEffect::LocalLightBufferLayout), groupCount.x * groupCount.y));
-					}
 				},
-				[&, dynConstants = m_dynConstants.get(), dynConstantsTemp = m_dynConstantsTemp.get(), drawFunc = drawSubmissions](const PassData& p, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) mutable
+				[&, meshTab = m_globalMeshTable.get(), dynConstants = m_dynConstants.get(), dynConstantsAnimated = m_dynConstantsAnimated.get(), bonezy = m_jointMan.get()]
+				(const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
 				{
+					struct ColorPerDraw
+					{
+						DirectX::SimpleMath::Matrix world;
+						DirectX::SimpleMath::Vector3 color;
+						u32 submeshID;
+						u32 materialID;
+						u32 jointsDescriptor;
+					};
+
 					rd->Cmd_SetViewports(cmdl, m_globalEffectData.defRenderVPs);
 					rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.defRenderScissors);
 
 					rd->Cmd_SetIndexBuffer(cmdl, m_globalEffectData.meshTable->GetIndexBuffer());
-
-					rd->Cmd_SetPipeline(cmdl, m_meshPipe);
-
-					PerLightDataForShadows perLightData{};
-					ShadowMapArrayStruct shadowMapArrayStruct{};
-					auto perLightHandle = dynConstantsTemp->Allocate((u32)std::ceilf(sizeof(PerLightDataForShadows) / (float)256));
-					auto shadowHandle = dynConstants->Allocate((u32)std::ceilf(sizeof(ShadowMapArrayStruct) / float(256)));
-					for (size_t i{ 0u }; i < m_activeSpotlights.size(); ++i)
+					rd->Cmd_SetPipeline(cmdl, m_outlineMeshPipe);
+					for (const auto& draw : m_outlineDraws)
 					{
-						const auto& data = m_activeSpotlights[i];
+						auto alloc = dynConstants->Allocate(1);
+						ColorPerDraw* data = (ColorPerDraw*)alloc.memory;
+						data->world = DirectX::SimpleMath::Matrix::CreateScale(1.0) * draw.world;
+						data->color = draw.color;
+						data->submeshID = meshTab->GetSubmeshMD_GPU(draw.mesh, draw.submesh);
 
-						perLightData.perLightDatas[i].position = data.position;
-						perLightData.perLightDatas[i].color = { data.color.x, data.color.y, data.color.z, };
-						perLightData.perLightDatas[i].direction = data.direction;
-						perLightData.perLightDatas[i].cutoffAngle = data.cutoffAngle;
-						perLightData.perLightDatas[i].strength = data.strength;
-						perLightData.perLightDatas[i].isPlayer = data.isPlayerLight ? 1 : 0;
-
-						if (data.shadow != std::nullopt)
+						if (draw.animated)
 						{
-							perLightData.perLightDatas[i].isShadowCaster = true;
-							perLightData.perLightDatas[i].view = data.shadow->viewMat;
-							perLightData.perLightDatas[i].proj = data.shadow->projMat;
-							shadowMapArrayStruct.shadowMaps[i] = resources.GetView(p.shadowView);
+							// Resolve joints
+							JointData jointsData{};
+							auto jointsHandle = dynConstantsAnimated->Allocate((u32)std::ceilf(sizeof(JointData) / (float)256));
+							for (size_t i = 0; i < bonezy->m_vsJoints.size(); ++i)
+								jointsData.joints[i] = bonezy->m_vsJoints[i];
+							std::memcpy(jointsHandle.memory, &jointsData, sizeof(jointsData));
+							data->jointsDescriptor = jointsHandle.globalDescriptor;
 						}
+
+						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, ShaderArgs()
+							.AppendConstant(m_globalEffectData.globalDataDescriptor)
+							.AppendConstant(m_currPfDescriptor)
+							.AppendConstant(draw.jointOffset)
+							.SetPrimaryCBV(alloc.buffer, alloc.bufferOffset));
+
+						auto sm = meshTab->GetSubmeshMD_CPU(draw.mesh, draw.submesh);
+						rd->Cmd_DrawIndexed(cmdl, sm.indexCount, 1, sm.indexStart, 0, 0);
+
 					}
-
-					perLightData.actualNrOfSpotlights = (u32)m_activeSpotlights.size();
-					std::memcpy(perLightHandle.memory, &perLightData, sizeof(perLightData));
-					std::memcpy(shadowHandle.memory, &shadowMapArrayStruct, sizeof(shadowMapArrayStruct));
-
-					u32 localLightBufferIndex = m_graphicsSettings.lightCulling ? resources.GetView(p.localLightBuffer) : -1;
-					rd->Cmd_SetPipeline(cmdl, m_weaponMeshPipe);
-					drawFunc(rd, cmdl, m_weaponSubmission, localLightBufferIndex, perLightHandle.globalDescriptor, shadowHandle.globalDescriptor);
 				});
-
 		}
 
-		// Test compute on Lit HDR
-		// Uncomment to enable the test compute effect!
-		//m_testComputeEffect->Add(rg);
+		// Box blur
+		{
+			struct PassData
+			{
+				RGResourceView input;
+				RGResourceView output;
+
+			};
+
+			rg.AddPass<PassData>("Outline Blur Vertical",
+				[&](PassData& passData, RenderGraph::PassBuilder& builder)
+				{
+					builder.DeclareTexture(RG_RESOURCE(OutlineBlurredUnfinished), RGTextureDesc::ReadWrite2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth / 2, m_renderHeight / 2));
+
+					passData.input = builder.ReadResource(RG_RESOURCE(OutlinedMeshes), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+					passData.output = builder.ReadWriteTarget(RG_RESOURCE(OutlineBlurredUnfinished),
+						TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+				},
+				[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				{
+					// clear
+					rd->Cmd_ClearUnorderedAccessFLOAT(cmdl,
+						resources.GetTextureView(passData.output), { 0.f, 0.f, 0.f, 1.f }, ScissorRects().Append(0, 0, m_renderWidth / 2, m_renderHeight / 2));
+
+					rd->Cmd_SetPipeline(cmdl, m_boxBlurPipe);
+
+					{
+						auto args = ShaderArgs()
+							.AppendConstant(m_globalEffectData.globalDataDescriptor)
+							.AppendConstant(m_currPfDescriptor)
+							.AppendConstant((u32)(m_renderWidth / 2.f))
+							.AppendConstant((u32)(m_renderHeight / 2.f))
+							.AppendConstant(resources.GetView(passData.input))
+							.AppendConstant(resources.GetView(passData.output))
+							.AppendConstant(1)
+							.AppendConstant(2);		// Downscale factor
+						rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
+
+						// assuming 64 threads per group --> 64 threads per wavefrom, warp is 32 --> use 64
+						// we are using 8x8 thread groups
+						// Using gather method
+						auto xGroup = (u32)std::ceilf(m_renderWidth / 2.f / 8.f);
+						auto yGroup = (u32)std::ceilf(m_renderHeight / 2.f / 8.f);
+						rd->Cmd_Dispatch(cmdl, xGroup, yGroup, 1);
+					}
+				});
+
+			rg.AddPass<PassData>("Outline Blur Horizontal",
+				[&](PassData& passData, RenderGraph::PassBuilder& builder)
+				{
+					builder.DeclareTexture(RG_RESOURCE(OutlineBlurred), RGTextureDesc::ReadWrite2D(DXGI_FORMAT_R16G16B16A16_FLOAT, m_renderWidth / 2, m_renderHeight / 2));
+
+					passData.input = builder.ReadResource(RG_RESOURCE(OutlineBlurredUnfinished), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+					passData.output = builder.ReadWriteTarget(RG_RESOURCE(OutlineBlurred),
+						TextureViewDesc(ViewType::UnorderedAccess, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+				},
+				[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				{
+					// clear
+					rd->Cmd_ClearUnorderedAccessFLOAT(cmdl,
+						resources.GetTextureView(passData.output), {0.f, 0.f, 0.f, 1.f }, ScissorRects().Append(0, 0, m_renderWidth / 2, m_renderHeight / 2));
+
+					rd->Cmd_SetPipeline(cmdl, m_boxBlurPipe);
+					auto args = ShaderArgs()
+						.AppendConstant(m_globalEffectData.globalDataDescriptor)
+						.AppendConstant(m_currPfDescriptor)
+						.AppendConstant((u32)(m_renderWidth / 2.f))
+						.AppendConstant((u32)(m_renderHeight / 2.f))
+						.AppendConstant(resources.GetView(passData.input))
+						.AppendConstant(resources.GetView(passData.output))
+						.AppendConstant(0)
+						.AppendConstant(1);
+					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
+
+					// assuming 64 threads per group --> 64 threads per wavefrom, warp is 32 --> use 64
+					// we are using 8x8 thread groups
+					// Using gather method
+					auto xGroup = (u32)std::ceilf(m_renderWidth / 2.f / 8.f);
+					auto yGroup = (u32)std::ceilf(m_renderHeight / 2.f / 8.f);
+					rd->Cmd_Dispatch(cmdl, xGroup, yGroup, 1);
+					
+				});
+		}
+
+		// Combine outline
+		{
+			struct PassData 
+			{
+				RGResourceView input;
+			};
+			rg.AddPass<PassData>("Outline Combine",
+				[&](PassData& passData, RenderGraph::PassBuilder& builder)
+				{
+					passData.input = builder.ReadResource(RG_RESOURCE(OutlineBlurred), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+
+					builder.WriteRenderTarget(RG_RESOURCE(OutlinedMeshes), RenderPassAccessType::PreservePreserve,
+						TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
+				},
+				[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)
+				{
+					rd->Cmd_SetViewports(cmdl, m_globalEffectData.defRenderVPs);
+					rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.defRenderScissors);
+
+					auto args = ShaderArgs()
+						.AppendConstant(resources.GetView(passData.input));
+
+					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, args);
+
+					rd->Cmd_SetPipeline(cmdl, m_outlineBlitPipe);
+					rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
+				});
+		}
+
+
+
 
 		m_particleBackend->AddEffect(*m_rg);
 
@@ -1228,6 +1456,7 @@ namespace DOG::gfx
 				RGResourceView litHDRView;
 				RGResourceView ao;
 				RGResourceView bloom;
+				RGResourceView outline;
 			};
 			rg.AddPass<PassData>("Blit to HDR Pass",
 				[&](PassData& passData, RenderGraph::PassBuilder& builder)
@@ -1242,6 +1471,8 @@ namespace DOG::gfx
 							TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 					}
 
+					passData.outline = builder.ReadResource(RG_RESOURCE(OutlinedMeshes), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
 
 					passData.litHDRView = builder.ReadResource(RG_RESOURCE(LitHDR), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 						TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R16G16B16A16_FLOAT));
@@ -1257,12 +1488,12 @@ namespace DOG::gfx
 					rd->Cmd_SetPipeline(cmdl, m_pipe);
 					u32 gammaCast = *((u32*)&m_graphicsSettings.gamma);
 
-
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, ShaderArgs()
 						.AppendConstant(m_graphicsSettings.ssao ? resources.GetView(passData.ao) : UINT_MAX)
 						.AppendConstant(resources.GetView(passData.litHDRView))
 						.AppendConstant(gammaCast)
-						.AppendConstant(m_bloomEffect ? resources.GetView(passData.bloom) : UINT_MAX));
+						.AppendConstant(m_bloomEffect ? resources.GetView(passData.bloom) : UINT_MAX)
+						.AppendConstant(resources.GetView(passData.outline)));
 
 					rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
 				});
@@ -1377,6 +1608,7 @@ namespace DOG::gfx
 		m_noCullWireframeDraws.clear();
 		m_weaponSubmission.clear();
 		m_activeSpotlights.clear();
+		m_outlineDraws.clear();
 
 		m_activeShadowCasters.clear();
 		for (auto& v : m_singleSidedShadowDraws)
