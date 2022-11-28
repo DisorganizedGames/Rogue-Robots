@@ -149,7 +149,6 @@ void GameLayer::OnUpdate()
 			break;
 		case GameState::Restart:
 			CloseMainScene();
-			//m_gameState = GameState::StartPlaying;
 			m_gameState = GameState::Lobby;
 			break;
 		case GameState::WaitingForHost:
