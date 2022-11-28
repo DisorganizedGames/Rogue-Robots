@@ -113,17 +113,17 @@ namespace DOG
 				static i32 currAnim = 0;
 				static bool displayDetails = false;
 
-				if (ImGui::BeginCombo("animations", anims[currAnim].name.c_str()))
-				{
-					for (i32 i = 0; i < std::size(rig->animations); i++)
-						if (ImGui::Selectable(("ID: " + std::to_string(i) + " = " + rig->animations[i].name).c_str(), (i == currAnim)))
-							currAnim = i;
-					ImGui::EndCombo();
-				}
 				if (ImGui::Button("DisplayDetails"))
 					displayDetails ^= 1;
 				if (displayDetails)
 				{
+					if (ImGui::BeginCombo("Animations", anims[currAnim].name.c_str()))
+					{
+						for (i32 i = 0; i < std::size(rig->animations); i++)
+							if (ImGui::Selectable(("ID: " + std::to_string(i) + " = " + rig->animations[i].name).c_str(), (i == currAnim)))
+								currAnim = i;
+						ImGui::EndCombo();
+					}
 					static auto PrintTableRow = [](const std::string&& c1, const std::string&& c2) {
 						ImGui::TableNextColumn(); ImGui::Text(c1.c_str());
 						ImGui::TableNextColumn(); ImGui::Text(c2.c_str());
@@ -174,6 +174,8 @@ namespace DOG
 
 					static bool loopingFlag = false;
 					ImGui::Checkbox("LoopingFlag", &loopingFlag);
+					static bool interruptFlag = false;
+					ImGui::Checkbox("InterruptFlag", &interruptFlag);
 					static bool persistFlag = false;
 					ImGui::SameLine(); ImGui::Checkbox("PersistFlag", &persistFlag);
 					static bool resetPrioFlag = false;
@@ -210,6 +212,8 @@ namespace DOG
 										s.flag = s.flag | AnimationFlag::Looping;
 									if (resetPrioFlag)
 										s.flag = s.flag | AnimationFlag::ResetPrio;
+									if (interruptFlag)
+										s.flag = s.flag | AnimationFlag::Interrupt;
 									s.priority = static_cast<u8>(priority);
 									s.group = static_cast<u8>(group);
 									s.transitionLength = transitionLen;
@@ -233,9 +237,9 @@ namespace DOG
 									if (persistFlag) flg = flg | AnimationFlag::Persist;
 									if (loopingFlag) flg = flg | AnimationFlag::Looping;
 									if (resetPrioFlag) flg = flg | AnimationFlag::ResetPrio;
-									rAC.SimpleAdd(static_cast<i8>(chosenAnims[0]), flg);
+									if (interruptFlag) flg = flg | AnimationFlag::Interrupt;
+									rAC.SimpleAdd(static_cast<i8>(chosenAnims[0]), flg, priority);
 								}
-
 							});
 					}
 				}
@@ -584,7 +588,7 @@ namespace DOG
 
 		for (size_t i = 0; i < m_playerRigAnimators.size(); ++i)
 		{
-			baseAc.SimpleAdd(idleIdx, AnimationFlag::Looping | AnimationFlag::ResetPrio);
+			baseAc.SimpleAdd(idleIdx, AnimationFlag::Looping | AnimationFlag::ResetPrio | AnimationFlag::Interrupt);
 			m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
 			m_playerRigAnimators[i].ProcessAnimationComponent(baseAc);
 			for (u32 j = 0; j < N_GROUPS; j++)

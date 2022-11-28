@@ -96,7 +96,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 		camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 1600.f, 0.1f);
 
 		// Place camera 0.4 units above the player transform
-		auto pos = transform.GetPosition() + Vector3(0, 1.2f, 0);
+		auto pos = transform.GetPosition() + Vector3(0, 0.7f, 0);
 		camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
 		cameraTransform.worldMatrix = camera.viewMatrix.Invert();
 
@@ -357,7 +357,7 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 		setter.targetWeights[addedAnims++] = weight;
 	}
 
-	// if no schmovement apply idle animation
+	// if no movement apply idle animation
 	if (!addedAnims)
 	{
 		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping);
@@ -1145,9 +1145,10 @@ void SetFlashLightToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& ch
 	auto& em = EntityManager::Get();
 	if (em.Exists(child.boneParent))
 	{
+		auto offset = DirectX::XMMatrixTranslationFromVector({ -8.f, -7.5f, -0.1f });
 		auto& boneHeadWorld = em.GetComponent<MixamoHeadJointTF>(child.boneParent);
-		world.worldMatrix = child.localTransform * boneHeadWorld.transform;
-		world.SetPosition(world.GetPosition() + Vector3(0.f, -0.5f, 0.f) + em.GetComponent<TransformComponent>(child.boneParent).GetForward() * 0.2f);
+		world.worldMatrix = Matrix(offset) * boneHeadWorld.transform;
+		world.SetPosition(world.GetPosition() + Vector3(0.f, -0.5f, 0.f));
 	}
 	else
 	{

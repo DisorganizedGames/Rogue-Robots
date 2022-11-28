@@ -221,6 +221,7 @@ void GameLayer::StartMainScene()
 
 	
 	Pathfinder::Get().BuildNavScene(m_mainScene->GetSceneType());
+	m_syncFrame = true;
 }
 
 void GameLayer::CloseMainScene()
@@ -234,7 +235,7 @@ void GameLayer::CloseMainScene()
 void GameLayer::EvaluateWinCondition()
 {
 	if (m_noWinLose) return;
-
+	
 	static f64 freeRoamTimeAfterWin = 0;
 	//If the exit is below 0.
 	if (m_exitPosition.x < 0.0f)
@@ -347,7 +348,7 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 		stats.health = stats.maxHealth;
 	}
 
-	m_entityManager.GetComponent<AnimationComponent>(e).SimpleAdd(static_cast<i8>(MixamoAnimations::Idle));
+	m_entityManager.GetComponent<AnimationComponent>(e).SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping | AnimationFlag::ResetPrio);
 
 	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
 	m_entityManager.DeferredEntityDestruction(controller.debugCamera);
@@ -362,7 +363,7 @@ void GameLayer::KillPlayer(DOG::entity e)
 	if (m_entityManager.HasComponent<AnimationComponent>(e))
 	{
 		auto& ac = m_entityManager.GetComponent<AnimationComponent>(e);
-		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::DeathAnimation), AnimationFlag::Persist);
+		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::DeathAnimation), AnimationFlag::Persist, 1u);
 	}
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
@@ -461,15 +462,19 @@ void GameLayer::UpdateGame()
 	// Render this player or not
 	EntityManager::Get().Collect<DontDraw>().Do([&](DontDraw& dd)
 		{
-			if (m_imguiRenderPlayer)
-			{
-				dd.dontDraw = false;
-			}
-			else
-			{
-				dd.dontDraw = true;
-			}
+			dd.dontDraw = !m_imguiRenderPlayer;
 		});
+
+	if (m_syncFrame)
+	{
+		// Reset animations
+		EntityManager::Get().Collect<InputController, AnimationComponent>().Do([&](InputController&, AnimationComponent& ac)
+			{
+				ac.SimpleAdd(static_cast<i8>(MixamoAnimations::BindPose),  AnimationFlag::Interrupt | AnimationFlag::ResetPrio);
+				ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping);
+			});
+		m_syncFrame = false;
+	}
 
 	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([](TransformComponent& transform, RigidbodyComponent&)
 		{

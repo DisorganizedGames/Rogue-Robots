@@ -18,6 +18,7 @@ namespace DOG
 		Persist = 1 << 2,
 		ResetPrio = 1 << 3,
 		SimpleAdd = 1 << 4,
+		Interrupt = 1 << 5,
 	};
 	DEFINE_ENUM_FLAG_OPERATORS(AnimationFlag)
 	
@@ -115,7 +116,7 @@ namespace DOG
 			f32 targetWeights[MAX_TARGET_ANIMS] = { 1.f, 1.f, 1.f };
 		};
 		std::array<Setter, MAX_SETTERS> animSetters;
-		void SimpleAdd(i8 animationId, AnimationFlag flags = AnimationFlag::None);
+		void SimpleAdd(i8 animationId, AnimationFlag flags = AnimationFlag::None, u32 priority = BASE_PRIORITY);
 	};
 	static_assert(std::is_trivially_copyable_v<AnimationComponent>);
 
@@ -255,7 +256,6 @@ namespace DOG
 
 	};
 
-	
 	// Single submesh single material helper
 	struct SubmeshRenderer
 	{

@@ -24,10 +24,10 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 	auto& am = AssetManager::Get();
 	auto& em = EntityManager::Get();
 	std::array<u32, 4> playerModels;
-	playerModels[0] = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/RedRifle/rifleTestRed.gltf");
-	playerModels[1] = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/BlueRifle/rifleTestBlue.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
-	playerModels[2] = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/GreenRifle/rifleTestGreen.gltf");
-	playerModels[3] = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/YellowRifle/rifleTestYellow.gltf");
+	playerModels[0] = am.LoadModelAsset("Assets/Models/P2/Red/player_red.gltf");
+	playerModels[1] = am.LoadModelAsset("Assets/Models/P2/Blue/player_Blue.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
+	playerModels[2] = am.LoadModelAsset("Assets/Models/P2/Green/player_Green.gltf");
+	playerModels[3] = am.LoadModelAsset("Assets/Models/P2/Yellow/player_yellow.gltf");
 
 	std::array<DirectX::SimpleMath::Vector3, 4> playerOutlineColors
 	{
@@ -36,6 +36,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		DirectX::SimpleMath::Vector3{ 0.f, 1.f, 0.f},
 		DirectX::SimpleMath::Vector3{ 1.f, 1.f, 0.f},
 	};
+	
 	std::vector<entity> players;
 	for (auto i = 0; i < playerCount; ++i)
 	{
@@ -46,7 +47,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 			spread * (i / 2) - (spread / 2.f),
 		};
 		em.AddComponent<TransformComponent>(playerI, pos - offset);
-		em.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 1.25f, true, 75.f);
+		em.AddComponent<CapsuleColliderComponent>(playerI, playerI, 0.25f, 1.35f, true, 75.f);
 		auto& rb = em.AddComponent<RigidbodyComponent>(playerI, playerI);
 		rb.ConstrainRotation(true, true, true);
 		rb.disableDeactivation = true;
@@ -69,7 +70,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 
 		auto& ac = em.GetComponent<AnimationComponent>(playerI);
 		ac.animatorID = static_cast<i8>(i);
-		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle));
+		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping | AnimationFlag::ResetPrio);
 
 		auto& bc = em.AddComponent<BarrelComponent>(playerI);
 		bc.type = BarrelComponent::Type::Bullet;
@@ -127,7 +128,7 @@ std::vector<entity> AddFlashlightsToPlayers(const std::vector<entity>& players)
 
 		ChildToBoneComponent& childComponent = em.AddComponent<ChildToBoneComponent>(flashLightEntity);
 		childComponent.boneParent = players[i];
-		childComponent.localTransform.SetPosition(Vector3(-2.0f, -0.5f, -2.0f));
+		childComponent.localTransform.SetPosition(Vector3(0.0f, 0.0f, 0.0f));
 
 		auto& tc = childComponent.localTransform;
 

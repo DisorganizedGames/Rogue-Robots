@@ -138,16 +138,19 @@ namespace DOG
 
 		return *this;
 	}
-	void AnimationComponent::SimpleAdd(i8 animationId, AnimationFlag flags)
+	void AnimationComponent::SimpleAdd(i8 animationId, AnimationFlag flags, u32 priority)
 	{
-		auto& setter = animSetters[addedSetters++];
-		setter.animationIDs[0] = animationId;
-		setter.group = 0;
-		setter.targetWeights[0] = 1.f;
-		setter.playbackRate = 1.f;
-		setter.priority = BASE_PRIORITY;
-		setter.flag = flags | AnimationFlag::SimpleAdd;
-		setter.transitionLength = 0.5f;
+		if (addedSetters < MAX_SETTERS)
+		{
+			auto& setter = animSetters[addedSetters++];
+			setter.animationIDs[0] = animationId;
+			setter.group = 0;
+			setter.targetWeights[0] = 1.f;
+			setter.playbackRate = 1.f;
+			setter.priority = static_cast<u8>(priority);
+			setter.flag = flags | AnimationFlag::SimpleAdd;
+			setter.transitionLength = 0.5f;
+		}
 	}
 
 	BoundingBoxComponent::BoundingBoxComponent(DirectX::SimpleMath::Vector3 center, DirectX::SimpleMath::Vector3 extents)

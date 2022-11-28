@@ -28,8 +28,7 @@ namespace DOG
 	static constexpr u8 N_RIGS = 1;
 	static constexpr u8 MIXAMO_RIG_ID = 0;
 	//static constexpr u8 SCRPIO_RIG_ID = 1;
-
-	static constexpr RigSpecifics RIG_SPECIFICS[N_RIGS]{ { 66, 4, 5, {std::make_pair<u8, u8>(0, 67), std::make_pair<u8, u8>(57, 11), std::make_pair<u8, u8>(5, 53) }, { 0, 0, 0 }} };
+	static constexpr RigSpecifics RIG_SPECIFICS[N_RIGS]{ { 65, 4, 5, {std::make_pair<u8, u8>(0, 67), std::make_pair<u8, u8>(57, 10), std::make_pair<u8, u8>(5, 52) }, { 0, 0, 0 }} };
 	static constexpr RigSpecifics MIXAMO_RIG = RIG_SPECIFICS[MIXAMO_RIG_ID];
 
 	// true if idx within group joint span
@@ -64,6 +63,8 @@ namespace DOG
 	};
 	struct RigAnimator
 	{
+		static constexpr f32 TARGET_LOOPING = 0.f;
+		static constexpr f32 TARGET_ACTION = 1.f;
 		ImportedRig* rigData = {};
 
 		f32 globalTime = 0.f;
@@ -146,7 +147,7 @@ namespace DOG
 
 		void ProcessSetter(Setter& setter);
 		void SetBlendSpecifications(Setter& setter);
-		void TransitionOutBS(Setter& setter, BlendSpecification& bs);
+		void TransitionOutGroupBS(Setter& setter, BlendSpecification& bs);
 
 		void SetClipsBS(Setter& setter);
 		void SetSetBS(Setter& setter);
