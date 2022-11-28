@@ -96,12 +96,12 @@ function OnUpdate()
 	local playerRight = Vector3.FromTable(Entity:GetRight(cameraEntity))
 
 	-- Move gun down and to the right 
-	gunEntity.position = gunEntity.position + playerRight * 0.2 - playerUp * 0.2
+	gunEntity.position = gunEntity.position + playerRight * 0.3 - playerUp * 0.2 + playerForward * 0.4
 
 	-- Rotate the weapon by 90 degrees pitch
-	local angle = -math.pi / 2 
-	local gunForward = RotateAroundAxis(playerForward, playerRight, angle)
-	local gunUp = RotateAroundAxis(playerUp, playerRight, angle)
+	local angle = math.pi / 2 
+	local gunForward = RotateAroundAxis(playerForward, playerUp, angle)
+	local gunUp = playerUp--RotateAroundAxis(playerUp, playerRight, angle)
 
 	Entity:SetRotationForwardUp(gunEntity.entityID, gunForward, gunUp)
 	Entity:ModifyComponent(gunEntity.entityID, "Transform", gunEntity.position, 1)
