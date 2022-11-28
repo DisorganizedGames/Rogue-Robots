@@ -1,24 +1,29 @@
 #include "BehaviourTree.h"
 
-Node::Node(const std::string& name) noexcept
+Node::Node(const std::string& name, NodeType type) noexcept
 	: m_name{ name },
-	m_nodeType{ NodeType::Leaf }
+	m_nodeType{ type },
+	m_parent{ nullptr }
 {}
 
-Composite::Composite(const std::string& name) noexcept
-	: Node{ name }
-{}
-
-void Composite::AddChild(std::unique_ptr<Node>&& pNode) noexcept
+void Node::SetParent(Node* pNode) noexcept
 {
-	m_children.emplace_back(std::move(pNode));
+	m_parent = pNode;
+}
+
+Composite::Composite(const std::string& name, NodeType type) noexcept
+	: Node{ name, type }
+{}
+
+void Composite::AddChild(std::shared_ptr<Node>&& pNode) noexcept
+{
+	m_children.push_back(pNode);
+	m_children.back()->SetParent(this);
 }
 
 Sequence::Sequence(const std::string& name) noexcept
-	: Composite{ name }
-{
-	m_nodeType = NodeType::Sequence;
-}
+	: Composite{ name, NodeType::Sequence }
+{}
 
 bool Sequence::Process() noexcept
 {
@@ -31,10 +36,8 @@ bool Sequence::Process() noexcept
 }
 
 Selector::Selector(const std::string& name) noexcept
-	: Composite{ name }
-{
-	m_nodeType = NodeType::Selector;
-}
+	: Composite{ name, NodeType::Selector }
+{}
 
 bool Selector::Process() noexcept
 {
@@ -47,17 +50,16 @@ bool Selector::Process() noexcept
 }
 
 Decorator::Decorator(const std::string& name, const DecoratorType type) noexcept
-	: Node{ name },
+	: Node{ name, NodeType::Decorator },
 	m_decoratorType{ type },
 	m_child{ nullptr }
-{
-	m_nodeType = NodeType::Decorator;
-}
+{}
 
-void Decorator::AddChild(std::unique_ptr<Node>&& pNode) noexcept
+void Decorator::AddChild(std::shared_ptr<Node>&& pNode) noexcept
 {
 	ASSERT(!m_child, "Decorator already has child node assigned.");
-	m_child = std::move(pNode);
+	m_child = pNode;
+	m_child->SetParent(this);
 }
 
 Succeeder::Succeeder(const std::string& name) noexcept
@@ -87,4 +89,13 @@ Inverter::Inverter(const std::string& name) noexcept
 bool Inverter::Process() noexcept
 {
 	return (!GetChild()->Process());
+}
+
+Root::Root(const std::string& name) noexcept
+	: Decorator(name, DecoratorType::Root)
+{}
+
+bool Root::Process() noexcept
+{
+	return GetChild()->Process();
 }

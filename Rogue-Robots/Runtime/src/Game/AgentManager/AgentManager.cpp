@@ -3,7 +3,7 @@
 #include "Game/GameLayer.h"
 #include "../LoadSplitModels.h"
 #include "../ItemManager/ItemManager.h"
-
+#include "BehaviourTree.h"
 using namespace DOG;
 using namespace DirectX::SimpleMath;
 
@@ -133,6 +133,18 @@ void AgentManager::Initialize()
 
 	// Register late update agent systems
 	em.RegisterSystem(std::make_unique<LateAgentDestructCleanupSystem>());
+
+	//Temp BehaviourTree initializer.
+	std::shared_ptr<Node> root = std::make_shared<Root>("ScorpioBTRoot");
+	
+	std::shared_ptr<Selector> rootSelector = std::make_shared<Selector>("RootSelector");
+	static_cast<Root*>(root.get())->AddChild(rootSelector);
+
+	std::shared_ptr<Sequence> seekAndDestroySequence = std::make_shared<Sequence>("SeekAndDestroySequence");
+	rootSelector->AddChild(seekAndDestroySequence);
+	
+
+
 
 	// Set status to initialized
 	s_notInitialized = false;
