@@ -137,11 +137,11 @@ void GameLayer::OnUpdate()
 			break;
 		case GameState::Won:
 			CloseMainScene();
-			m_gameState = GameState::StartPlaying;
+			m_gameState = GameState::Lost;
 			break;
 		case GameState::Lost:
 			CloseMainScene();
-			m_gameState = GameState::StartPlaying;
+			m_gameState = GameState::Lobby;
 			break;
 		case GameState::Exiting:
 			CloseMainScene();
@@ -149,8 +149,9 @@ void GameLayer::OnUpdate()
 			break;
 		case GameState::Restart:
 			CloseMainScene();
-			m_gameState = GameState::StartPlaying;
+			m_gameState = GameState::Lobby;
 			break;
+		case GameState::WaitingForHost:
 		default:
 			break;
 		}
@@ -286,7 +287,17 @@ void GameLayer::EvaluateLoseCondition()
 	if (m_noWinLose) return;
 	bool playersAlive = false;
 	EntityManager::Get().Collect<PlayerAliveComponent>().Do([&playersAlive](PlayerAliveComponent&) { playersAlive = true; });
-	if (!playersAlive) m_gameState = GameState::Lost;
+
+	// Is a client
+	if (!playersAlive && s_networkStatus == NetworkStatus::Joining)
+	{
+		if (m_netCode.IsLobbyAlive())
+			m_gameState = GameState::Lost;
+	}
+	else if (!playersAlive)
+	{
+		m_gameState = GameState::Lost;
+	}
 }
 
 void GameLayer::CheckIfPlayersIAreDead()
@@ -658,6 +669,7 @@ void GameLayer::UpdateLobby()
 		}
 		case NetworkStatus::Hosting:
 		{
+			m_netCode.SetLobbyStatus(true);
 			char ip[64];
 			strcpy_s(ip, m_netCode.GetIpAdress().c_str());
 			ImGui::Text("Nr of players connected: %d", m_netCode.GetNrOfPlayers());
