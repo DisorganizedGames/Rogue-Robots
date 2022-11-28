@@ -14,7 +14,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth);
 void AddScenes();
 
 extern UINT menuID, gameID, optionsID, multiID;
-extern UINT menuBackID, optionsBackID, multiBackID;
+extern UINT menuBackID, optionsBackID, multiBackID, lobbyID;
 extern UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID;
 extern UINT cID, tID, hID;
 
