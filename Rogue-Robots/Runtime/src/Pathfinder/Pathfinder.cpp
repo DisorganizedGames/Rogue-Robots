@@ -204,7 +204,7 @@ void Pathfinder::Checkpoints(Vector3 start, Vector3 goal, PathfinderWalkComponen
 						{
 							if (first)
 							{
-								constexpr float THRESHOLD = 1.9f;
+								constexpr float THRESHOLD = 1.f;
 								// Include portal in checkpoints only if distance is greath enough.
 								// using start.y since portal point is elevated
 								Vector3 p = em.GetComponent<PortalComponent>(id).portal;

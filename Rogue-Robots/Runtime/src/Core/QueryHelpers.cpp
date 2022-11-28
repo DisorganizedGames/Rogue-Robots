@@ -21,7 +21,8 @@ DOG::entity GetCamera() noexcept
 {
 	auto& em = EntityManager::Get();
 	entity camera = NULL_ENTITY;
-	ASSERT(em.Exists(GetPlayer()), "Player don't exist.");
+	if (em.Exists(GetPlayer()) == false) return camera;
+	//ASSERT(em.Exists(GetPlayer()), "Player don't exist.");
 	if (auto controllerComp = em.TryGetComponent<PlayerControllerComponent>(GetPlayer()); controllerComp)
 	{
 		auto&& findCamera = [](entity potentialCamera) {
