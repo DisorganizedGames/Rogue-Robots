@@ -45,6 +45,7 @@ public:
 	void ChangeGameState(GameState state);
 
 	static NetworkStatus GetNetworkStatus() { return s_networkStatus; }
+	NetCode* GetNetCode();
 
 private:
 	void UpdateLobby();
