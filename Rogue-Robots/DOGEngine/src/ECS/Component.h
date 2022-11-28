@@ -80,7 +80,7 @@ namespace DOG
 	};
 	struct DontDraw
 	{
-
+		bool dontDraw = true;
 	};
 	struct MixamoHeadJointTF
 	{

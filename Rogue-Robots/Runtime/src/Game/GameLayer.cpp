@@ -458,6 +458,19 @@ void GameLayer::UpdateGame()
 	EvaluateWinCondition();
 	EvaluateLoseCondition();
 
+	// Render this player or not
+	EntityManager::Get().Collect<DontDraw>().Do([&](DontDraw& dd)
+		{
+			if (m_imguiRenderPlayer)
+			{
+				dd.dontDraw = false;
+			}
+			else
+			{
+				dd.dontDraw = true;
+			}
+		});
+
 	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([](TransformComponent& transform, RigidbodyComponent&)
 		{
 			if (Vector3 pos = transform.GetPosition(); pos.y < -20.0f)
@@ -1186,6 +1199,7 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 			if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;
 			if (ImGui::RadioButton("Particle", (int*)&m_selectedScene, (int)SceneComponent::Type::ParticleScene)) m_gameState = GameState::Restart;
 			
+			ImGui::Checkbox("RenderPlayer", &m_imguiRenderPlayer);
 
 			std::vector<entity> players;
 			EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](entity e, PlayerStatsComponent&)
