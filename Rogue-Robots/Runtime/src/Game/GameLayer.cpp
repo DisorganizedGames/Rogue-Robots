@@ -1061,7 +1061,7 @@ void GameLayer::HpBarMVP()
 	EntityManager& em = EntityManager::Get();
 	em.Collect<PlayerStatsComponent, ThisPlayer>().Do([&](PlayerStatsComponent& stats, ThisPlayer&)
 		{
-			hbar->SetBarValue(stats.health / stats.maxHealth);
+			hbar->SetBarValue(stats.health, stats.maxHealth);
 		});
 }
 

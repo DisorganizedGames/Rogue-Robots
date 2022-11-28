@@ -456,12 +456,16 @@ void DOG::UIHealthBar::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 void DOG::UIHealthBar::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
    UNREFERENCED_PARAMETER(d2d);
-   m_bar.right = m_value * m_barWidth + m_bar.left - 2.0f;
-   m_text = std::to_wstring((UINT)(m_value * 100.f)) + L'%';
+   m_bar.right = (m_value / m_maxValue) * m_barWidth + m_bar.left - 2.0f;
+   m_text = std::to_wstring((UINT)(m_value));
+   m_text += L"/";
+   m_text += std::to_wstring((UINT)(m_maxValue));
+   m_text += L" HP";
 }
-void DOG::UIHealthBar::SetBarValue(float value)
+void DOG::UIHealthBar::SetBarValue(float value, float maxValue)
 {
    m_value = value;
+   m_maxValue = maxValue;
 }
 
 DOG::UIBackground::UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float heigt, const std::wstring& title) : UIElement(id)
