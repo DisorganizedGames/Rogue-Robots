@@ -16,11 +16,12 @@ bool AgentManager::s_notInitialized = true;
 *******************************/
 
 
-entity AgentManager::CreateAgent(EntityTypes type, u32 groupID, const Vector3& pos)
+entity AgentManager::CreateAgent(EntityTypes type, u32 groupID, const Vector3& pos, SceneComponent::Type scene)
 {
 	entity e = CreateAgentCore(GetModel(type), groupID, pos, type);
 	EntityManager& em = EntityManager::Get();
 
+	em.AddComponent<SceneComponent>(e, scene);
 	em.AddComponent<AgentSeekPlayerComponent>(e);
 	em.AddComponent<NetworkAgentStats>(e);
 	// Add CreateAndDestroyEntityComponent to ECS
