@@ -60,8 +60,6 @@ ParticleScene::~ParticleScene()
 
 void ParticleScene::ParticleSystemMenu(bool& open)
 {
-	auto& emitter = EntityManager::Get().GetComponent<ParticleEmitterComponent>(m_particleSystem);
-
 	if (ImGui::BeginMenu("View"))
 	{
 		if (ImGui::MenuItem("Particle System"))
@@ -75,6 +73,43 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 	{
 		if (ImGui::Begin("Particle System", &open))
 		{
+			static bool toggled = true;
+			if (ImGui::Button("Toggle System"))
+			{
+				toggled = !toggled;
+				if (toggled)
+				{
+					m_particleSystem = CreateEntity();
+					AddComponent<TransformComponent>(m_particleSystem, Vector3(0, 0, 0));
+					auto& em = AddComponent<ParticleEmitterComponent>(m_particleSystem);
+					em = {
+						.spawnRate = 64.f,
+						.particleSize = 0.1f,
+						.particleLifetime = 0.5f,
+						.startColor = Vector4(1, 0, 0, 1),
+						.endColor = Vector4(0, 0, 1, 1),
+					};
+
+						AddComponent<ConeSpawnComponent>(m_particleSystem) = {
+						.angle = XM_PIDIV4,
+						.speed = 10.f,
+					};
+				}
+				else
+				{
+					AddComponent<DeferredDeletionComponent>(m_particleSystem);
+				}
+			}
+			ImGui::SameLine();
+			ImGui::Text(std::to_string(toggled).c_str());
+
+			if (!toggled) {
+				ImGui::End();
+				return;
+			}
+			auto& emitter = EntityManager::Get().GetComponent<ParticleEmitterComponent>(m_particleSystem);
+			
+
 			// Spawn rate setting
 			static float rate = emitter.spawnRate;
 			ImGui::InputFloat("Rate", &rate);
