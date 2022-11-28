@@ -70,6 +70,28 @@ function OnStart()
 		Entity:AddComponent(gunID, "ThisPlayerWeapon")
 	end
 
+	barrelID = Scene:CreateEntity(gunID)
+	Entity:AddComponent(barrelID, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
+	--Entity:AddComponent(barrelID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Grenade.gltf"))
+	--Entity:AddComponent(barrelID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Laser.gltf"))
+	--Entity:AddComponent(barrelID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Liquid.gltf"))
+	Entity:AddComponent(barrelID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Missile.gltf"))
+	Entity:AddComponent(barrelID, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
+	miscID = Scene:CreateEntity(gunID)
+	Entity:AddComponent(miscID, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
+	Entity:AddComponent(miscID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/ChargeShot.gltf"))
+	--Entity:AddComponent(miscID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/FullAuto.gltf"))
+	--Entity:AddComponent(miscID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Scatter.gltf"))
+	--Entity:AddComponent(miscID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Radar.gltf"))
+	Entity:AddComponent(miscID, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
+	magazineID = Scene:CreateEntity(gunID)
+	Entity:AddComponent(magazineID, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
+	Entity:AddComponent(magazineID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Frost.gltf"))
+	--Entity:AddComponent(magazineID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Fire.gltf"))
+	--Entity:AddComponent(magazineID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Tesla.gltf"))
+
+	Entity:AddComponent(magazineID, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
+
 	-- Initialize effect prefabs
 	--MagazineManager:AddMaterial("FrostMaterial", Render:CreateMaterial({x=0.188, y=0.835, z=0.784}, 0.0, 0.0, { 0.0, 0.0, 0.0 }))
 
@@ -96,7 +118,7 @@ function OnUpdate()
 	local playerRight = Vector3.FromTable(Entity:GetRight(cameraEntity))
 
 	-- Move gun down and to the right 
-	gunEntity.position = gunEntity.position + playerRight * 0.3 - playerUp * 0.2 + playerForward * 0.4
+	gunEntity.position = gunEntity.position + playerRight * 0.3 - playerUp * 0.2 + playerForward * 0.8
 
 	-- Rotate the weapon by 90 degrees pitch
 	local angle = math.pi / 2 
