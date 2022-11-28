@@ -61,7 +61,7 @@ namespace DOG
 			return;
 		}
 
-		EntityManager::Get().Collect<AnimationComponent>().Do([&](AnimationComponent& aC)
+		EntityManager::Get().Collect<AnimationComponent, MixamoHeadJointTF, TransformComponent>().Do([&](AnimationComponent& aC, MixamoHeadJointTF& jtf, TransformComponent& tf)
 			{
 				if (aC.animatorID != -1)
 				{
@@ -70,6 +70,8 @@ namespace DOG
 					a.Update(deltaTime);
 					a.ProcessAnimationComponent(aC);
 					UpdateSkeleton(a, offset);
+					jtf.transform = SimpleMath::Matrix(XMMatrixTranslationFromVector(XMLoadFloat3(&m_headOffset)) *
+						XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[MIXAMO_RIG.headJoint]))) * tf.worldMatrix;
 				}
 			});
 	}

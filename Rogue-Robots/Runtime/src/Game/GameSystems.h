@@ -69,12 +69,9 @@ public:
 	{
 		if (slc.owningPlayer != DOG::NULL_ENTITY)
 		{
-			auto& ptc = DOG::EntityManager::Get().GetComponent<DOG::TransformComponent>(slc.owningPlayer);
-			stc.worldMatrix = ptc.worldMatrix;
-			stc.SetPosition(stc.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 1.6f, 0.f));
 			slc.dirty = true;
 
-			auto up = ptc.worldMatrix.Up();
+			auto up = stc.worldMatrix.Up();
 			up.Normalize();
 			
 			auto& pcc = DOG::EntityManager::Get().GetComponent<PlayerControllerComponent>(slc.owningPlayer);
@@ -525,6 +522,15 @@ public:
 
 	ON_LATE_UPDATE(ChildComponent);
 	void OnLateUpdate(ChildComponent& child);
+};
+
+class SetFlashLightToBoneSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(ChildToBoneComponent, DOG::TransformComponent);
+
+	ON_UPDATE_ID(ChildToBoneComponent, DOG::TransformComponent);
+	void OnUpdate(DOG::entity e, ChildToBoneComponent& child, DOG::TransformComponent& world);
 };
 
 class PlaceHolderDeathUISystem : public DOG::ISystem

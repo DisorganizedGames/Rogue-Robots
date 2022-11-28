@@ -56,6 +56,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		em.AddComponent<PlayerAliveComponent>(playerI);
 		em.AddComponent<AnimationComponent>(playerI);
 		em.AddComponent<AudioComponent>(playerI);
+		em.AddComponent<MixamoHeadJointTF>(playerI);
 
 		auto& ac = em.GetComponent<AnimationComponent>(playerI);
 		ac.animatorID = static_cast<i8>(i);
@@ -109,11 +110,15 @@ std::vector<entity> AddFlashlightsToPlayers(const std::vector<entity>& players)
 	std::vector<entity> flashlights;
 	for (auto i = 0; i < players.size(); ++i)
 	{
-		auto& playerTransformComponent = em.GetComponent<TransformComponent>(players[i]);
-
 		entity flashLightEntity = em.CreateEntity();
-		auto& tc = em.AddComponent<DOG::TransformComponent>(flashLightEntity);
-		tc.SetPosition(playerTransformComponent.GetPosition() + DirectX::SimpleMath::Vector3(0.2f, 0.2f, 0.0f));
+
+		em.AddComponent<DOG::TransformComponent>(flashLightEntity);
+
+		ChildToBoneComponent& childComponent = em.AddComponent<ChildToBoneComponent>(flashLightEntity);
+		childComponent.boneParent = players[i];
+		childComponent.localTransform.SetPosition(Vector3(-2.0f, -0.5f, -2.0f));
+
+		auto& tc = childComponent.localTransform;
 
 		auto up = tc.worldMatrix.Up();
 		up.Normalize();

@@ -16,6 +16,7 @@ namespace DOG
 	{
 		u8 nJoints;
 		u8 rootJoint;
+		u8 headJoint;
 		std::pair<u8, u8> groupMasks[3];
 		u8 groupParent[3] = { 0 };
 	};
@@ -28,7 +29,7 @@ namespace DOG
 	static constexpr u8 MIXAMO_RIG_ID = 0;
 	//static constexpr u8 SCRPIO_RIG_ID = 1;
 
-	static constexpr RigSpecifics RIG_SPECIFICS[N_RIGS]{ { 66, 4, {std::make_pair<u8, u8>(0, 67), std::make_pair<u8, u8>(57, 11), std::make_pair<u8, u8>(5, 53) }, { 0, 0, 0 }} };
+	static constexpr RigSpecifics RIG_SPECIFICS[N_RIGS]{ { 66, 4, 5, {std::make_pair<u8, u8>(0, 67), std::make_pair<u8, u8>(57, 11), std::make_pair<u8, u8>(5, 53) }, { 0, 0, 0 }} };
 	static constexpr RigSpecifics MIXAMO_RIG = RIG_SPECIFICS[MIXAMO_RIG_ID];
 
 	// true if idx within group joint span

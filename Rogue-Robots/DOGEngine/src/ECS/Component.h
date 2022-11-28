@@ -82,6 +82,10 @@ namespace DOG
 	{
 
 	};
+	struct MixamoHeadJointTF
+	{
+		DirectX::SimpleMath::Matrix transform = DirectX::SimpleMath::Matrix::Identity;
+	};
 	struct RigDataComponent
 	{
 		u32 offset;

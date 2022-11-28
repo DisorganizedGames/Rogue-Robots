@@ -228,6 +228,13 @@ struct ChildComponent
 	bool nodeHasBeenUpdated = false;
 };
 
+struct ChildToBoneComponent
+{
+	DOG::entity boneParent = DOG::NULL_ENTITY;
+	DOG::TransformComponent localTransform;
+	bool nodeHasBeenUpdated = false;
+};
+
 struct DespawnComponent
 {
 	DespawnComponent(f64 despawnTime)
