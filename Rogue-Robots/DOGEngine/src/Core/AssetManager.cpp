@@ -198,8 +198,8 @@ namespace DOG
 		{
 			if (!(m_assets[id]->stateFlag & AssetStateFlag::ExistOnCPU))
 			{
-				DOG::AssimpImporter assimpImporter = DOG::AssimpImporter(path);
-				auto asset = assimpImporter.GetResult();
+				DOG::ShapeCreator shapeCreator = DOG::ShapeCreator(shape, tessFactor1, tessFactor2);
+				std::shared_ptr<ImportedModel> asset = shapeCreator.GetResult();
 
 				assetOut->meshAsset.indices = std::move(asset->mesh.indices);
 				assetOut->meshAsset.vertexData = std::move(asset->mesh.vertexData);
