@@ -23,6 +23,11 @@ using namespace DirectX::SimpleMath;
 
 NetworkStatus GameLayer::s_networkStatus = NetworkStatus::Offline;
 
+void HostButtonFunc(void)
+{
+   DOG::UI::Get()->ChangeUIscene(lobbyID);
+}
+
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }, m_gameState(GameState::Initializing)
 {
@@ -1364,4 +1369,9 @@ void GameLayer::Interact()
 	auto player = GetPlayer();
 	if (!m_entityManager.HasComponent<InteractionQueryComponent>(player))
 		m_entityManager.AddComponent<InteractionQueryComponent>(player);
+}
+
+NetCode* GameLayer::GetNetCode()
+{
+	return &m_netCode;
 }
