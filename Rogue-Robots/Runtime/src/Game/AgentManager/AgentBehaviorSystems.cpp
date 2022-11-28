@@ -338,8 +338,18 @@ void AgentMovementSystem::OnLateUpdate(AgentMovementComponent& movement, Pathfin
 	}
 	if (pfc.path.size() != 0)
 	{
-		trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pfc.path[0], Vector3::Up).Invert();
+		//auto it = pfc.path.begin();
 		movement.forward = pfc.path[0] - trans.GetPosition();
+		movement.forward.y = 0.0f;
+		//while (it != pfc.path.end() && movement.forward.LengthSquared() < 0.1f)
+		//{
+		//	++it;
+		//	movement.forward = *it - trans.GetPosition();
+		//	movement.forward.y = 0.0f;
+		//}
+		//if (it != pfc.path.begin())
+		//	pfc.path.erase(pfc.path.begin(), it);
+		trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pfc.path[0], Vector3::Up).Invert();
 		movement.forward.Normalize();
 		constexpr f32 SKID_FACTOR = 0.1f;
 		movement.forward.x += rb.linearVelocity.x * SKID_FACTOR;

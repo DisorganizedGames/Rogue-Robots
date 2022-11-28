@@ -7,11 +7,11 @@ void PathfinderWalkSystem::OnUpdate(PathfinderWalkComponent& pfc, DOG::Transform
 {
 	constexpr Vector3 LASER_COLOR = Vector3(0.1f, 2.f, 0.1f);
 
-	EntityManager& em = EntityManager::Get();
 
 	Pathfinder::Get().Checkpoints(trans.GetPosition(), pfc.goal, pfc);
 
 #ifdef _DEBUG
+	EntityManager& em = EntityManager::Get();
 	Vector3 start = trans.GetPosition();
 	for (Vector3 end : pfc.path)
 	{
@@ -22,13 +22,20 @@ void PathfinderWalkSystem::OnUpdate(PathfinderWalkComponent& pfc, DOG::Transform
 		laser.color = LASER_COLOR;
 		start = end;
 		em.AddComponent<VisualizePathComponent>(id);
+		em.Collect<ThisPlayer, SceneComponent>().Do(
+			[&](ThisPlayer&, SceneComponent& sc)
+			{
+				em.AddComponent<SceneComponent>(id, sc.scene);
+			});
 	}
 #endif
 }
 
 void VisualizePathCleanUpSystem::OnUpdate(DOG::entity e, LaserBeamVFXComponent&, VisualizePathComponent&)
 {
-	//EntityManager::Get().DestroyEntity(e);
-	EntityManager::Get().AddComponent<DeferredDeletionComponent>(e);
+	EntityManager::Get().DestroyEntity(e);
+	//EntityManager& em = EntityManager::Get();
+	//if (em.HasComponent<DeferredDeletionComponent>(e) == false)
+	//	em.AddComponent<DeferredDeletionComponent>(e);
 }
 

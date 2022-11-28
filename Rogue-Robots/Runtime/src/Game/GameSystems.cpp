@@ -1025,6 +1025,7 @@ void LaserBeamSystem::OnUpdate(entity e, LaserBeamComponent& laserBeam, LaserBea
 void LaserBeamVFXSystem::OnUpdate(LaserBeamVFXComponent& laserBeam)
 {
 	entity camera = GetCamera();
+	if (camera == NULL_ENTITY) return;
 	assert(EntityManager::Get().HasComponent<TransformComponent>(camera));
 	Vector3 dirToCamera = EntityManager::Get().GetComponent<TransformComponent>(camera).GetPosition() - laserBeam.startPos;
 	dirToCamera.Normalize();

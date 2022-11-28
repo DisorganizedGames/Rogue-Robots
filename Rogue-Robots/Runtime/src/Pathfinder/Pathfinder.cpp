@@ -30,8 +30,8 @@ void Pathfinder::Init()
 void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 {
 	// temporary aggro agent for pathfinding tests
-	entity e = AgentManager::Get().CreateAgent(EntityTypes::Scorpio, AgentManager::Get().GroupID(), Vector3(13.f, 12.f, 220.f));
-	EntityManager::Get().AddComponent<AgentAggroComponent>(e);
+	//entity e = AgentManager::Get().CreateAgent(EntityTypes::Scorpio, AgentManager::Get().GroupID(), Vector3(13.f, 12.f, 220.f), sceneType);
+	//EntityManager::Get().AddComponent<AgentAggroComponent>(e);
 
 	//constexpr unsigned char voidBlock = ' '; // 176;
 	//constexpr unsigned char emptySpace = 178;
@@ -46,7 +46,7 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 	//std::vector<std::vector<std::vector<char>>> map;
 
 	entity navSceneID = em.CreateEntity();
-	//em.AddComponent<SceneComponent>(navSceneID).scene = sceneType;
+	em.AddComponent<SceneComponent>(navSceneID, sceneType);
 	NavSceneComponent& navScene = em.AddComponent<NavSceneComponent>(navSceneID);
 
 	em.Collect<ModularBlockComponent, TransformComponent>().Do(
@@ -156,8 +156,8 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 								em.AddComponent<SceneComponent>(id, sceneType);
 
 								// visualize portal
-								//em.AddComponent<TransformComponent>(id).SetPosition(pos).SetScale(portalScale);
-								//em.AddComponent<ModelComponent>(id, AssetManager::Get().LoadShapeAsset(DOG::Shape::prism, 4));
+								em.AddComponent<TransformComponent>(id).SetPosition(pos).SetScale(portalScale);
+								em.AddComponent<ModelComponent>(id, AssetManager::Get().LoadShapeAsset(DOG::Shape::prism, 4));
 							}
 						}
 					}
@@ -199,10 +199,30 @@ void Pathfinder::Checkpoints(Vector3 start, Vector3 goal, PathfinderWalkComponen
 						EntityManager& em = EntityManager::Get();
 						
 						pfc.path.clear();
+						bool first = true;
 						for (PortalID id : Astar(start, goal, heuristicStraightLine))
-							pfc.path.push_back(em.GetComponent<PortalComponent>(id).portal);
+						{
+							if (first)
+							{
+								constexpr float THRESHOLD = 1.9f;
+								// Include portal in checkpoints only if distance is greath enough.
+								// using start.y since portal point is elevated
+								Vector3 p = em.GetComponent<PortalComponent>(id).portal;
+								p.y = start.y;
+								if (Vector3::DistanceSquared(start, p) > THRESHOLD)
+									pfc.path.push_back(p);
+								first = false;
+							}
+							else
+								pfc.path.push_back(em.GetComponent<PortalComponent>(id).portal);
+						}
 
 						pfc.path.push_back(goal);
+					}
+					else
+					{
+						// just update the goal point
+						pfc.path[pfc.path.size() - 1] = goal;
 					}
 				}
 			}
