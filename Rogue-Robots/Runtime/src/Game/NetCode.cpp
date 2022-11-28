@@ -40,6 +40,8 @@ NetCode::NetCode() noexcept
 	m_sleepGranularityMs = 1;
 	m_client = new Client;
 	m_serverHost = new Server;
+
+	m_syncCounter = 0;
 }
 
 NetCode::~NetCode() noexcept
@@ -167,15 +169,22 @@ void NetCode::OnUpdate()
 				//sync all transforms Host only
 				if (m_inputTcp.playerId == 0)
 				{
-					EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent>().Do([&](NetworkTransform& netC, TransformComponent& transC, AgentIdComponent agentId)
-						{
-							netC.objectId = agentId.id;
-							netC.transform = transC.GetPosition();
-							memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkTransform));
-							m_inputTcp.nrOfNetTransform++;
-							m_bufferSize += sizeof(NetworkTransform);
+					m_syncCounter++;
+					//sync all transforms Host only
+					if (m_inputTcp.playerId == 0 && m_syncCounter%HARD_SYNC_FRAME == 0)
+					{
+						EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent>().Do([&](NetworkTransform& netC, TransformComponent& transC, AgentIdComponent agentId)
+							{
+								netC.objectId = agentId.id;
+								netC.position = transC.GetPosition();
+								memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkTransform));
+								m_inputTcp.nrOfNetTransform++;
+								m_bufferSize += sizeof(NetworkTransform);
 
-						});
+							});
+					}
+
+		
 				}
 
 				EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](NetworkAgentStats& netC, AgentHPComponent& agentS, AgentIdComponent& idC)
@@ -219,7 +228,6 @@ void NetCode::OnUpdate()
 				m_inputTcp.nrOfPathFindingSync = 0;
 				QueryPerformanceCounter(&m_tickStartTime);
 			}
-
 			// Recived data
 			while (m_numberOfPackets > 0 && m_dataIsReadyToBeReceivedTcp)
 			{
@@ -229,7 +237,8 @@ void NetCode::OnUpdate()
 				m_bufferReceiveSize += sizeof(TcpHeader);
 				if (header.playerId > MAX_PLAYER_COUNT || header.playerId < 0)
 				{
-					std::cout << "Error: header is corrupt: " << std::endl;
+
+					std::cout << "Error: header is corrupt, Nr of packets left: "<< m_numberOfPackets << std::endl;
 					m_numberOfPackets = 0;
 					m_dataIsReadyToBeReceivedTcp = false;
 				}
@@ -247,7 +256,7 @@ void NetCode::OnUpdate()
 						if (m_inputTcp.playerId > 0)
 						{
 							NetworkTransform* tempTransfrom = new NetworkTransform;
-							EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent>().Do([&](NetworkTransform&, TransformComponent& transC, AgentIdComponent& idC)
+							EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent, CapsuleColliderComponent>().Do([&](NetworkTransform&, TransformComponent& transC, AgentIdComponent& idC, CapsuleColliderComponent& rC)
 								{
 									for (u32 i = 0; i < header.nrOfNetTransform; ++i)
 									{
@@ -255,7 +264,8 @@ void NetCode::OnUpdate()
 										memcpy(tempTransfrom, m_receiveBuffer + m_bufferReceiveSize + sizeof(NetworkTransform) * i, sizeof(NetworkTransform));
 										if (idC.id == tempTransfrom->objectId)
 										{
-											transC.SetPosition(tempTransfrom->transform);
+											if( DirectX::SimpleMath::Vector3(transC.GetPosition() - tempTransfrom->position).Length()/rC.capsuleRadius > rC.capsuleRadius)
+												transC.SetPosition(tempTransfrom->position);
 										}
 
 									}
@@ -277,8 +287,7 @@ void NetCode::OnUpdate()
 									if (idC.id == tempStats->objectId && tempStats->hp.hp < Agent.hp)
 									{
 										Agent = tempStats->hp;
-										if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
-											EntityManager::Get().AddComponent<AgentAggroComponent>(e);
+
 									}
 
 								}

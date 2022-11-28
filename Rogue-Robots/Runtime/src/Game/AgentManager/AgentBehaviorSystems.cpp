@@ -2,7 +2,7 @@
 #include "AgentManager.h"
 #include "../DOGEngine/src/Graphics/Rendering/PostProcess.h"
 #include "Game/PlayerManager/PlayerManager.h"
-
+#include "Network/Network.h"
 using namespace DOG;
 using namespace DirectX::SimpleMath;
 
@@ -45,9 +45,11 @@ void AgentSeekPlayerSystem::OnEarlyUpdate(entity e, AgentSeekPlayerComponent& se
 	if (aggro || player.sqDist < SEEK_RADIUS_SQUARED)
 	{
 		if (!aggro)
+		{
 			eMan.AddComponent<AgentAggroComponent>(e);
-
-
+ 			eMan.AddComponent<PathFindingSync>(e).id = EntityManager::Get().GetComponent<AgentIdComponent>(e);
+			eMan.GetComponent<PathFindingSync>(e).id.id = EntityManager::Get().GetComponent<PathFindingSync>(e).id.id | AGGRO_BIT;
+		}
 		// update target
 		bool newTarget = player.entityID != seek.entityID;
 
@@ -160,8 +162,11 @@ void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& c
 			seek.entityID = bullet.playerEntityID;
 			(*hit).HitBy(bulletEntity, bullet.playerEntityID, bullet.damage);
 			if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
+			{
 				EntityManager::Get().AddComponent<AgentAggroComponent>(e);
-
+				EntityManager::Get().AddComponent<PathFindingSync>(e).id = EntityManager::Get().GetComponent<AgentIdComponent>(e);
+				EntityManager::Get().GetComponent<PathFindingSync>(e).id.id = EntityManager::Get().GetComponent<PathFindingSync>(e).id.id | AGGRO_BIT;
+			}
 			// Create a particle emitter for bullet hit effect
 			auto& bulletTransform = eMan.GetComponent<TransformComponent>(bulletEntity);
 			auto bulletPos = bulletTransform.GetPosition();
@@ -207,7 +212,11 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 				});
 		}
 		if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
+		{
 			EntityManager::Get().AddComponent<AgentAggroComponent>(e);
+			EntityManager::Get().AddComponent<PathFindingSync>(e).id = EntityManager::Get().GetComponent<AgentIdComponent>(e);
+			EntityManager::Get().GetComponent<PathFindingSync>(e).id.id = EntityManager::Get().GetComponent<PathFindingSync>(e).id.id | AGGRO_BIT;
+		}
 	}
 	
 	/*Frost status*/
@@ -316,12 +325,20 @@ void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, Agent
 		if (!em.HasComponent<AgentAttackComponent>(e))
 			em.AddComponent<AgentAttackComponent>(e);
 
+		// Give aggro component to the group
 		em.Collect<AgentIdComponent>().Do(
 			[&](entity o, AgentIdComponent& other)
 			{
 				u32 otherGroup = am.GroupID(other.id);
 				if (myGroup == otherGroup && !em.HasComponent<AgentAggroComponent>(o))
+				{
 					em.AddComponent<AgentAggroComponent>(o);
+					if (!em.HasComponent<PathFindingSync>(o))
+					{
+						em.AddComponent<PathFindingSync>(o).id = EntityManager::Get().GetComponent<AgentIdComponent>(o);
+						em.GetComponent<PathFindingSync>(o).id.id = EntityManager::Get().GetComponent<PathFindingSync>(o).id.id | AGGRO_BIT;
+					}
+				}
 			}
 		);
 	}
