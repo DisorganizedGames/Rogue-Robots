@@ -792,6 +792,7 @@ void Room1Button()
 		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
 		text2->SetText(std::wstring(L"Room 1"));
 		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
+		GameLayer::ChangeGameState(GameState::Lobby);
 		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
 	}
 	else
@@ -811,6 +812,7 @@ void Room2Button()
 		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
 		text2->SetText(std::wstring(L"Room 2"));
 		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
+		GameLayer::ChangeGameState(GameState::Lobby);
 		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
 	}
 	else
@@ -829,6 +831,7 @@ void Room3Button()
 		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
 		text2->SetText(std::wstring(L"Room 3"));
 		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
+		GameLayer::ChangeGameState(GameState::Lobby);
 		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
 	}
 	else
@@ -846,6 +849,7 @@ void Room4Button()
 		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
 		text2->SetText(std::wstring(L"Room 4"));
 		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
+		GameLayer::ChangeGameState(GameState::Lobby);
 		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
 	}
 	else
@@ -863,6 +867,7 @@ void Room5Button()
 		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
 		text2->SetText(std::wstring(L"Room 5"));
 		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
+		GameLayer::ChangeGameState(GameState::Lobby);
 		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
 	}
 	else
@@ -880,6 +885,7 @@ void Room6Button()
 		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
 		text2->SetText(std::wstring(L"Room 6"));
 		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
+		GameLayer::ChangeGameState(GameState::Lobby);
 		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
 	}
 	else
@@ -897,6 +903,7 @@ void Room7Button()
 		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
 		text2->SetText(std::wstring(L"Room 7"));
 		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
+		GameLayer::ChangeGameState(GameState::Lobby);
 		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
 	}
 	else
@@ -914,6 +921,7 @@ void Room8Button()
 		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
 		text2->SetText(std::wstring(L"Room 8"));
 		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
+		GameLayer::ChangeGameState(GameState::Lobby);
 		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
 	}
 	else
@@ -932,6 +940,7 @@ void Room9Button()
 		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
 		text2->SetText(std::wstring(L"Room 9"));
 		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
+		GameLayer::ChangeGameState(GameState::Lobby);
 		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
 	}
 	else
@@ -948,6 +957,7 @@ void Room10Button()
 	if (GameLayer::GetNetCode()->Join(input))
 	{
 		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
+		GameLayer::ChangeGameState(GameState::Lobby);
 		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
 		text2->SetText(std::wstring(L"Room 10"));
 		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
@@ -1182,10 +1192,15 @@ void GameLayer::UpdateLobby()
 		default:
 			break;
 		}
-		if(!inLobby && s_networkStatus == NetworkStatus::Joining)
+		if (!inLobby && s_networkStatus == NetworkStatus::Joining)
+		{
 			DOG::UI::Get()->ChangeUIscene(gameID);
-		if (!inLobby)
 			m_gameState = GameState::StartPlaying;
+			m_nrOfPlayers = m_netCode.GetNrOfPlayers();
+		}
+		else if (!inLobby)
+			m_gameState = GameState::StartPlaying;
+		m_nrOfPlayers = m_netCode.GetNrOfPlayers();
 	}
 	ImGui::End();
 }
