@@ -287,6 +287,7 @@ namespace DOG::gfx
 		m_outlineMeshPipe = m_rd->CreateGraphicsPipeline(GraphicsPipelineBuilder()
 			.SetShader(outlineVS.get())
 			.SetShader(outlinePS.get())
+			.SetRasterizer(RasterizerBuilder().SetCullMode(D3D12_CULL_MODE_NONE))
 			.AppendRTFormat(DXGI_FORMAT_R16G16B16A16_FLOAT)
 			.Build());
 

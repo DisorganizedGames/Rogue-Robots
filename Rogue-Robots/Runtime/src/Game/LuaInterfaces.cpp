@@ -161,6 +161,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddWeaponLightComponent(context, e);
 	}
+	else if (compType == "GoalRadarComponent")
+	{
+		AddGoalRadarComponent(context, e);
+	}
 	//Add more component types here.
 	else
 	{
@@ -1177,6 +1181,12 @@ void EntityInterface::AddLaserBullet(DOG::LuaContext* context, DOG::entity e)
 	}
 
 	em.AddComponent<LaserBulletComponent>(e).color = color;
+}
+
+void EntityInterface::AddGoalRadarComponent(DOG::LuaContext* context, DOG::entity e)
+{
+	f32 goalRadarTime = (f32)context->GetDouble();
+	EntityManager::Get().AddComponent<GoalRadarComponent>(e, goalRadarTime);
 }
 
 

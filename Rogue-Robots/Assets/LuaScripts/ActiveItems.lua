@@ -1,5 +1,7 @@
 local ActiveItems = {}
 
+local goalRadarMaxTimeSeconds = 30.0
+
 ActiveItems.trampoline = {
 	trampolineModel = Asset:LoadModel("Assets/Models/Temporary_Assets/Trampoline.glb"),
 
@@ -87,7 +89,8 @@ ActiveItems.reviver = {
 ActiveItems.goalRadar = {
 
 	activate = function(self, playerEntity)
-		print("HI!")
+		local goalRadarEntity = Scene:CreateEntity(playerEntity)
+		Entity:AddComponent(goalRadarEntity, "GoalRadarComponent", goalRadarMaxTimeSeconds)
 
 		end,
 

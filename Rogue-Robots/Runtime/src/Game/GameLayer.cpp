@@ -16,6 +16,7 @@
 #include "Pathfinder/Pathfinder.h"
 #include "HeartbeatTrackerSystem.h"
 #include "InGameMenu.h"
+#include "GoalRadarSystem.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -93,6 +94,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<GlowStickSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DeferredSetIgnoreCollisionCheckSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerUseEquipmentSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<GoalRadarSystem>());
 
 	m_entityManager.RegisterSystem(std::make_unique<WeaponPointLightSystem>());
 

@@ -191,6 +191,9 @@ private:
 
 	void AddLaserBullet(DOG::LuaContext* context, DOG::entity e);
 
+	void AddGoalRadarComponent(DOG::LuaContext* context, DOG::entity e);
+
+
 };
 
 class AssetInterface : public LuaInterface

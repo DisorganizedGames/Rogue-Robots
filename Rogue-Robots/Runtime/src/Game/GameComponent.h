@@ -326,6 +326,11 @@ struct ExitBlockComponent
 {
 };
 
+struct GoalRadarComponent
+{
+	f32 timeVisible{ 0.f };
+};
+
 struct FloorBlockComponent
 {
 };
