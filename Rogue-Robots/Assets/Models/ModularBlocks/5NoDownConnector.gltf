@@ -19,7 +19,7 @@
                         0,
                         0
                     ],
-                    "intensity" : 100,
+                    "intensity" : 10,
                     "type" : "point",
                     "name" : "Point.011"
                 }
@@ -44,12 +44,7 @@
         },
         {
             "mesh" : 1,
-            "name" : "EmergencyLight.008",
-            "translation" : [
-                0.0029224902391433716,
-                2.373185396194458,
-                -0.00920337438583374
-            ]
+            "name" : "EmergencyLight.008"
         },
         {
             "extensions" : {
@@ -104,9 +99,9 @@
         {
             "doubleSided" : true,
             "emissiveFactor" : [
-                1,
-                1,
-                1
+                5,
+                5,
+                5
             ],
             "emissiveTexture" : {
                 "index" : 4
@@ -299,29 +294,29 @@
         {
             "bufferView" : 10,
             "componentType" : 5126,
-            "count" : 1137,
+            "count" : 1138,
             "max" : [
-                0.07500000298023224,
-                0.0019941218197345734,
-                0.07500000298023224
+                0.07792249321937561,
+                2.3751795291900635,
+                0.0657966285943985
             ],
             "min" : [
-                -0.07500000298023224,
-                -0.10899186134338379,
-                -0.07500000298023224
+                -0.07207751274108887,
+                2.264193534851074,
+                -0.08420337736606598
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 11,
             "componentType" : 5126,
-            "count" : 1137,
+            "count" : 1138,
             "type" : "VEC3"
         },
         {
             "bufferView" : 12,
             "componentType" : 5126,
-            "count" : 1137,
+            "count" : 1138,
             "type" : "VEC2"
         },
         {
@@ -394,26 +389,26 @@
         },
         {
             "buffer" : 0,
-            "byteLength" : 13644,
+            "byteLength" : 13656,
             "byteOffset" : 178308,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 13644,
-            "byteOffset" : 191952,
+            "byteLength" : 13656,
+            "byteOffset" : 191964,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 9096,
-            "byteOffset" : 205596,
+            "byteLength" : 9104,
+            "byteOffset" : 205620,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 2280,
-            "byteOffset" : 214692,
+            "byteOffset" : 214724,
             "target" : 34963
         }
     ],
@@ -425,7 +420,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 216972,
+            "byteLength" : 217004,
             "uri" : "5NoDownConnector.bin"
         }
     ]

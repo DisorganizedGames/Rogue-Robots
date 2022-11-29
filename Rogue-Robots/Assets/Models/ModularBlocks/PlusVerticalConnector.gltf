@@ -19,7 +19,7 @@
                         0,
                         0
                     ],
-                    "intensity" : 100,
+                    "intensity" : 10,
                     "type" : "point",
                     "name" : "Point.016"
                 }
@@ -44,12 +44,7 @@
         },
         {
             "mesh" : 1,
-            "name" : "EmergencyLight.013",
-            "translation" : [
-                -1.085679531097412,
-                4.851043224334717,
-                0.42585426568984985
-            ]
+            "name" : "EmergencyLight.013"
         },
         {
             "extensions" : {
@@ -104,9 +99,9 @@
         {
             "doubleSided" : true,
             "emissiveFactor" : [
-                1,
-                1,
-                1
+                5,
+                5,
+                5
             ],
             "emissiveTexture" : {
                 "index" : 4
@@ -196,13 +191,13 @@
     "images" : [
         {
             "mimeType" : "image/png",
-            "name" : "NormalGroup11",
-            "uri" : "Textures/NormalGroup11.png"
+            "name" : "NormalGroup12",
+            "uri" : "Textures/NormalGroup12.png"
         },
         {
             "mimeType" : "image/png",
-            "name" : "DiffuseGroup11",
-            "uri" : "Textures/DiffuseGroup11.png"
+            "name" : "DiffuseGroup12",
+            "uri" : "Textures/DiffuseGroup12.png"
         },
         {
             "mimeType" : "image/png",
@@ -301,14 +296,14 @@
             "componentType" : 5126,
             "count" : 1137,
             "max" : [
-                0.07500000298023224,
-                0.0019941218197345734,
-                0.07500000298023224
+                -1.0106794834136963,
+                4.853037357330322,
+                0.5008542537689209
             ],
             "min" : [
-                -0.07500000298023224,
-                -0.10899186134338379,
-                -0.07500000298023224
+                -1.160679578781128,
+                4.742051124572754,
+                0.3508542776107788
             ],
             "type" : "VEC3"
         },

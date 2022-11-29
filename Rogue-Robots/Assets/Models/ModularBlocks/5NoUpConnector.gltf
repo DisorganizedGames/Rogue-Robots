@@ -3,12 +3,48 @@
         "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
+    "extensionsUsed" : [
+        "KHR_lights_punctual"
+    ],
+    "extensionsRequired" : [
+        "KHR_lights_punctual"
+    ],
+    "extensions" : {
+        "KHR_lights_punctual" : {
+            "lights" : [
+                {
+                    "color" : [
+                        1,
+                        0.7634416222572327,
+                        0.16504213213920593
+                    ],
+                    "intensity" : 6,
+                    "type" : "point",
+                    "name" : "Point.028"
+                },
+                {
+                    "color" : [
+                        1,
+                        0.7634416222572327,
+                        0.16504213213920593
+                    ],
+                    "intensity" : 6,
+                    "type" : "point",
+                    "name" : "Point.029"
+                }
+            ]
+        }
+    },
     "scene" : 0,
     "scenes" : [
         {
             "name" : "Scene",
             "nodes" : [
-                0
+                0,
+                1,
+                2,
+                3,
+                4
             ]
         }
     ],
@@ -16,6 +52,52 @@
         {
             "mesh" : 0,
             "name" : "5NoUpConnector"
+        },
+        {
+            "extensions" : {
+                "KHR_lights_punctual" : {
+                    "light" : 0
+                }
+            },
+            "name" : "Point.028",
+            "rotation" : [
+                -0.7071068286895752,
+                0,
+                0,
+                0.7071068286895752
+            ],
+            "translation" : [
+                -1.390766978263855,
+                2.4065544605255127,
+                -1.7305670976638794
+            ]
+        },
+        {
+            "mesh" : 1,
+            "name" : "TunnelLight.002"
+        },
+        {
+            "extensions" : {
+                "KHR_lights_punctual" : {
+                    "light" : 1
+                }
+            },
+            "name" : "Point.029",
+            "rotation" : [
+                0,
+                -0.7071068286895752,
+                -0.7071068286895752,
+                1.9949604279645428e-07
+            ],
+            "translation" : [
+                1.54045832157135,
+                2.4065544605255127,
+                2.0136232376098633
+            ]
+        },
+        {
+            "mesh" : 2,
+            "name" : "TunnelLight.003"
         }
     ],
     "materials" : [
@@ -30,7 +112,27 @@
                 "baseColorTexture" : {
                     "index" : 1
                 },
-                "metallicFactor" : 0
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.6863636374473572
+            }
+        },
+        {
+            "doubleSided" : true,
+            "emissiveFactor" : [
+                2,
+                2,
+                2
+            ],
+            "emissiveTexture" : {
+                "index" : 2
+            },
+            "name" : "TunnelLight",
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 3
+                },
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.4000000059604645
             }
         }
     ],
@@ -49,6 +151,34 @@
                     "material" : 0
                 }
             ]
+        },
+        {
+            "name" : "Cylinder.019",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 5,
+                        "NORMAL" : 6,
+                        "TEXCOORD_0" : 7
+                    },
+                    "indices" : 8,
+                    "material" : 1
+                }
+            ]
+        },
+        {
+            "name" : "Cylinder.020",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 9,
+                        "NORMAL" : 10,
+                        "TEXCOORD_0" : 11
+                    },
+                    "indices" : 12,
+                    "material" : 1
+                }
+            ]
         }
     ],
     "textures" : [
@@ -59,6 +189,14 @@
         {
             "sampler" : 0,
             "source" : 1
+        },
+        {
+            "sampler" : 0,
+            "source" : 2
+        },
+        {
+            "sampler" : 0,
+            "source" : 3
         }
     ],
     "images" : [
@@ -71,6 +209,16 @@
             "mimeType" : "image/png",
             "name" : "DiffuseGroundGroup5",
             "uri" : "Textures/DiffuseGroundGroup5.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "TunnelLightEmission",
+            "uri" : "Textures/TunnelLightEmission.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "TunnelLightDiffuse",
+            "uri" : "Textures/TunnelLightDiffuse.png"
         }
     ],
     "accessors" : [
@@ -113,6 +261,74 @@
             "componentType" : 5123,
             "count" : 1746,
             "type" : "SCALAR"
+        },
+        {
+            "bufferView" : 5,
+            "componentType" : 5126,
+            "count" : 311,
+            "max" : [
+                -1.5410711765289307,
+                2.50655460357666,
+                -1.5805670022964478
+            ],
+            "min" : [
+                -1.641071081161499,
+                2.3065543174743652,
+                -1.880567193031311
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 6,
+            "componentType" : 5126,
+            "count" : 311,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 7,
+            "componentType" : 5126,
+            "count" : 311,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 8,
+            "componentType" : 5123,
+            "count" : 372,
+            "type" : "SCALAR"
+        },
+        {
+            "bufferView" : 9,
+            "componentType" : 5126,
+            "count" : 316,
+            "max" : [
+                1.7907627820968628,
+                2.50655460357666,
+                2.1636228561401367
+            ],
+            "min" : [
+                1.6907627582550049,
+                2.3065543174743652,
+                1.8636225461959839
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 10,
+            "componentType" : 5126,
+            "count" : 316,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 11,
+            "componentType" : 5126,
+            "count" : 316,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 12,
+            "componentType" : 5123,
+            "count" : 372,
+            "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
@@ -145,6 +361,54 @@
             "byteLength" : 3492,
             "byteOffset" : 68560,
             "target" : 34963
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 3732,
+            "byteOffset" : 72052,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 3732,
+            "byteOffset" : 75784,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 2488,
+            "byteOffset" : 79516,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 744,
+            "byteOffset" : 82004,
+            "target" : 34963
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 3792,
+            "byteOffset" : 82748,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 3792,
+            "byteOffset" : 86540,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 2528,
+            "byteOffset" : 90332,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 744,
+            "byteOffset" : 92860,
+            "target" : 34963
         }
     ],
     "samplers" : [
@@ -155,7 +419,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 72052,
+            "byteLength" : 93604,
             "uri" : "5NoUpConnector.bin"
         }
     ]
