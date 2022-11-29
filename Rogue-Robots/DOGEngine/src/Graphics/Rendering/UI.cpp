@@ -863,27 +863,75 @@ void DOG::UIPlayerList::Draw(DOG::gfx::D2DBackend_DX12& d2d)
       colourrect.bottom += 60.f;
    }
 }
-void  DOG::UIPlayerList::Update(DOG::gfx::D2DBackend_DX12& d2d)
+void DOG::UIPlayerList::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
    UNREFERENCED_PARAMETER(d2d);
 }
-void  DOG::UIPlayerList::AddPlayer(const float r, const float g, const float b, const std::wstring name)
+void DOG::UIPlayerList::AddPlayer(const float r, const float g, const float b, const std::wstring name)
 {
    m_players.push_back(name);
    m_playerColours.push_back(D2D1::ColorF(r, g, b, 0.3f));
    return;
 }
-void  DOG::UIPlayerList::RemovePlayer(const std::wstring name)
+void DOG::UIPlayerList::RemovePlayer(const std::wstring name)
 {
    for (size_t i = 0; i < m_players.size(); i++)
    {
-      if(m_players[i] == name)
+      if (m_players[i] == name)
       {
          m_players.erase(m_players.begin() + i);
          m_playerColours.erase(m_playerColours.begin() + i);
          return;
       }
    }
+}
+
+DOG::UILabel::UILabel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring text, float x, float y, float width, float height, float size) : UIElement(id)
+{
+   UNREFERENCED_PARAMETER(d2d);
+   m_text = text;
+   m_rect = D2D1::RectF(x, y, x + width, y + height);
+   HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.7f), &m_textBrush);
+   HR_VFY(hr);
+   hr = d2d.GetDWriteFactory()->CreateTextFormat(
+      L"Robot Radicals",
+      NULL,
+      DWRITE_FONT_WEIGHT_NORMAL,
+      DWRITE_FONT_STYLE_NORMAL,
+      DWRITE_FONT_STRETCH_NORMAL,
+      size,
+      L"en-us",
+      &m_textFormat
+   );
+   HR_VFY(hr);
+   hr = m_textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+   HR_VFY(hr);
+   hr = m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+
+}
+
+void DOG::UILabel::Update(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   UNREFERENCED_PARAMETER(d2d);
+   return;
+}
+
+void DOG::UILabel::Draw(DOG::gfx::D2DBackend_DX12& d2d)
+{
+    d2d.Get2DDeviceContext()->DrawTextW(
+         m_text.c_str(),
+         (UINT32)m_text.length(),
+         m_textFormat.Get(),
+         &m_rect,
+         m_textBrush.Get());
+}
+DOG::UILabel::~UILabel()
+{
+
+}
+void DOG::UILabel::SetText(std::wstring text)
+{
+   m_text = text;
 }
 
 void UIRebuild(UINT clientHeight, UINT clientWidth)
