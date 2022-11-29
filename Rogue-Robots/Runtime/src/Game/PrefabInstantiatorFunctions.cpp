@@ -256,3 +256,43 @@ DOG::entity SpawnLaserBlob(const DOG::TransformComponent& transform, DOG::entity
 
 	return laser;
 }
+
+DOG::entity SpawnGlowStick(const TransformComponent& transform, DOG::entity owner) noexcept
+{
+	auto& em = EntityManager::Get();
+
+	entity glowStick = em.CreateEntity();
+	auto& tr = em.AddComponent<TransformComponent>(glowStick);
+	tr = transform;
+	if (em.Exists(owner))
+	{
+		if (auto scene = em.TryGetComponent<SceneComponent>(owner); scene) em.AddComponent<SceneComponent>(glowStick, scene->get().scene);
+	}
+
+	Vector3 scale = 0.1f * Vector3(1, 4, 1);
+	static std::optional<SubmeshRenderer> glowSticModel = std::nullopt;
+	if (!glowSticModel)
+	{
+		MaterialDesc matDesc;
+		matDesc.emissiveFactor = 2 * Vector4(0.12f, 1.0f, 0.12f, 0.0f);
+		matDesc.albedoFactor = { 0, 0.5f, 0, 1 };
+		TransformComponent matrix;
+		matrix.SetScale(scale);
+		glowSticModel = CreateSimpleModel(matDesc, ShapeCreator(Shape::prism, 16, 8).GetResult()->mesh, matrix);
+	}
+
+	em.AddComponent<SubmeshRenderer>(glowStick) = *glowSticModel;
+
+	em.AddComponent<BoxColliderComponent>(glowStick, glowStick, 1.2f * scale, true, 0.1f);
+	auto& rb = em.AddComponent<RigidbodyComponent>(glowStick, glowStick);
+	rb.continuousCollisionDetection = true;
+
+	em.AddComponent<GlowStickComponent>(glowStick).spawnTime = static_cast<f32>(Time::ElapsedTime());
+
+	LightHandle pointLight = LightManager::Get().AddPointLight(PointLightDesc(), LightUpdateFrequency::PerFrame);
+	auto& light = em.AddComponent<PointLightComponent>(glowStick, pointLight);
+	light.color = { glowSticModel->materialDesc.emissiveFactor.x, 0.6f * glowSticModel->materialDesc.emissiveFactor.y, glowSticModel->materialDesc.emissiveFactor.z };
+	light.radius = 12.0f;
+	light.strength = 0.6f;
+	return glowStick;
+}

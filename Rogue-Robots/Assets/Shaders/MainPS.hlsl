@@ -116,7 +116,7 @@ float Attenuate(float distanceSquard, float attInvSquaredAtRadius)
     float smoothFactor = saturate(1.0f - factor * factor);
     smoothFactor *= smoothFactor;
 
-    float attenuation = rcp(max(distanceSquard, 0.01f * 0.01f));
+    float attenuation = rcp(max(distanceSquard, 0.3f * 0.3f));
     return attenuation * smoothFactor;
 }
 

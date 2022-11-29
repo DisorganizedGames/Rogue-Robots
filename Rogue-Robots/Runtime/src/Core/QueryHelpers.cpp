@@ -43,3 +43,12 @@ DOG::entity GetCamera() noexcept
 	}
 	return camera;
 }
+
+DOG::entity GetPlayerFPSCamera(DOG::entity player) noexcept
+{
+	auto& em = EntityManager::Get();
+	assert(em.Exists(player) && em.HasComponent<PlayerControllerComponent>(player));
+	auto& controllerComp = em.GetComponent<PlayerControllerComponent>(player);
+	assert(em.Exists(controllerComp.cameraEntity) && em.HasComponent<CameraComponent>(controllerComp.cameraEntity));
+	return controllerComp.cameraEntity;
+}

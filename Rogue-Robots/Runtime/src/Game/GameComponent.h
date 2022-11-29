@@ -102,6 +102,7 @@ struct InputController
 	bool toggleMoveView = false;
 	bool flashlight = true;
 	bool revive = false;
+	bool throwGlowStick = false;
 };
 
 struct DoorComponent
@@ -356,4 +357,22 @@ struct LaserBarrelComponent
 	f32 ammo = 30.0f; // This value is time in seconds you can shoot.
 	f32 damagePerSecond = 240.0f;
 	LaserBeamComponent laserToShoot;
+};
+
+struct GlowStickComponent
+{
+	static constexpr u32 globalGlowStickLimit = 100;
+	f32 spawnTime = 0;
+};
+
+struct GlowStickThrowerComponent
+{
+	bool waitForNewKeyDown = false;
+};
+
+struct DeferredSetIgnoreCollisionCheckComponent
+{
+	bool value = false;
+	f32 countDown = 3.0f;
+	DOG::entity other = DOG::NULL_ENTITY;
 };

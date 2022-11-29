@@ -1,5 +1,6 @@
 #include "GameSystems.h"
 #include "PlayerManager/PlayerManager.h"
+#include "PlayerEquipmentFunctions.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -1093,12 +1094,50 @@ void LaserBulletCollisionSystem::OnUpdate(DOG::entity e, LaserBulletComponent& l
 		.endColor = Vector4::Lerp(startColor, 2 * Vector4(1, 1, 0.7f, 0.5f), 0.5f),
 	};
 
-
-
-
 }
 
-#pragma endregion
+void DeferredSetIgnoreCollisionCheckSystem::OnUpdate(DOG::entity e, DeferredSetIgnoreCollisionCheckComponent& arguments)
+{
+	auto& em = EntityManager::Get();
+	arguments.countDown -= Time::DeltaTime<TimeType::Seconds, f32>();
+	if (arguments.countDown < 0)
+	{
+		if (auto rbA = em.TryGetComponent<RigidbodyComponent>(e); rbA && em.Exists(arguments.other))
+		{
+			if (auto rbB = em.TryGetComponent<RigidbodyComponent>(arguments.other))
+			{
+				PhysicsEngine::SetIgnoreCollisionCheck(rbA->get().rigidbodyHandle, rbB->get().rigidbodyHandle, arguments.value);
+			}
+		}
+		em.RemoveComponent<DeferredSetIgnoreCollisionCheckComponent>(e);
+	}
+}
+
+void GlowStickSystem::OnUpdate(entity e, GlowStickComponent&, RigidbodyComponent& rigidBody)
+{
+	auto& em = EntityManager::Get();
+	if (rigidBody.linearVelocity.LengthSquared() > 0.1f)
+	{
+		em.AddOrReplaceComponent<DirtyComponent>(e).SetDirty(DirtyComponent::positionChanged);
+	}
+}
+
+
+void PlayerUseEquipmentSystem::OnUpdate(DOG::entity e, InputController& controller, PlayerAliveComponent&)
+{
+	auto& thrower = EntityManager::Get().AddOrGetComponent<GlowStickThrowerComponent>(e);
+
+	if (!thrower.waitForNewKeyDown && controller.throwGlowStick)
+	{
+		ThrowGlowStick(e, 14);
+		thrower.waitForNewKeyDown = true;
+	}
+	else if (thrower.waitForNewKeyDown && !controller.throwGlowStick)
+	{
+		thrower.waitForNewKeyDown = false;
+	}
+}
+
 
 void SetFlashLightToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& child, DOG::TransformComponent& world)
 {
@@ -1114,3 +1153,5 @@ void SetFlashLightToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& ch
 		em.DeferredEntityDestruction(e);
 	}
 }
+
+#pragma endregion

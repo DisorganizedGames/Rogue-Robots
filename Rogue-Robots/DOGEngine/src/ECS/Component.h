@@ -243,6 +243,7 @@ namespace DOG
 		DirtyComponent& SetDirty(u8 index)
 		{
 			dirtyBitSet[index] = true;
+			return *this;
 		}
 		bool IsDirty(u8 index)
 		{

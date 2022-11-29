@@ -71,6 +71,9 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<HeartbeatTrackerSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<ReviveSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<UpdateSpectatorQueueSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<GlowStickSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<DeferredSetIgnoreCollisionCheckSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<PlayerUseEquipmentSystem>());
 
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
@@ -969,6 +972,8 @@ void GameLayer::Input(DOG::Key key)
 				inputC.flashlight = !inputC.flashlight;
 			if (key == DOG::Key::E)
 				inputC.revive = true;
+			if (key == DOG::Key::One)
+				inputC.throwGlowStick = true;
 		});
 }
 
@@ -1004,6 +1009,8 @@ void GameLayer::Release(DOG::Key key)
 				inputC.toggleMoveView = false;
 			if (key == DOG::Key::E)
 				inputC.revive = false;
+			if (key == DOG::Key::One)
+				inputC.throwGlowStick = false;
 
 		});
 }
