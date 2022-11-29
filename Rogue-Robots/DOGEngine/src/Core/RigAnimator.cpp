@@ -404,8 +404,7 @@ namespace DOG
 		}
 		else if ((bs.currentWeight == bs.targetWeight == TARGET_ACTION) || HasInterrupt(setter.flag))
 		{
-			//bs.durationLeft = 0.f;
-			bs.startWeight /*= bs.currentWeight*/ = HasInterrupt(setter.flag) ? TARGET_LOOPING : bs.currentWeight;
+			bs.startWeight = HasInterrupt(setter.flag) ? TARGET_LOOPING : bs.currentWeight;
 			bs.targetWeight = TARGET_LOOPING;
 			bs.transitionStart = globalTime;
 			bs.transitionLength = setter.transitionLength;
