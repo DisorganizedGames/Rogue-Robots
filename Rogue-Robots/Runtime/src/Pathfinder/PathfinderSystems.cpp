@@ -11,12 +11,11 @@ void PathfinderWalkSystem::OnUpdate(PathfinderWalkComponent& pfc, DOG::Transform
 
 	pf.Checkpoints(trans.GetPosition(), pfc);
 
-//#ifdef _DEBUG
 	if (pf.DrawPaths())
 	{
 		EntityManager& em = EntityManager::Get();
 		Vector3 start = trans.GetPosition();
-		for (Vector3 end : pfc.path)
+		for (Vector3& end : pfc.path)
 		{
 			entity id = em.CreateEntity();
 			auto& laser = em.AddComponent<LaserBeamVFXComponent>(id);
@@ -32,14 +31,10 @@ void PathfinderWalkSystem::OnUpdate(PathfinderWalkComponent& pfc, DOG::Transform
 				});
 		}
 	}
-//#endif
 }
 
 void VisualizePathCleanUpSystem::OnUpdate(DOG::entity e, LaserBeamVFXComponent&, VisualizePathComponent&)
 {
 	EntityManager::Get().DestroyEntity(e);
-	//EntityManager& em = EntityManager::Get();
-	//if (em.HasComponent<DeferredDeletionComponent>(e) == false)
-	//	em.AddComponent<DeferredDeletionComponent>(e);
 }
 

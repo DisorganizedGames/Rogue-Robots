@@ -1,7 +1,5 @@
 #pragma once
 #include <DOGEngine.h>
-//#include "NavMesh.h"
-//#include "Portal.h"
 #include "../Game/GameComponent.h"
 #include "PathfinderComponents.h"
 

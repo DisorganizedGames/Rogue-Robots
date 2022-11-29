@@ -42,7 +42,6 @@ void AgentSeekPlayerSystem::OnEarlyUpdate(entity e, AgentSeekPlayerComponent& se
 
 	bool aggro = eMan.HasComponent<AgentAggroComponent>(e);
 
-	//if (aggro || player.sqDist > 5000.f)
 	if (aggro || player.sqDist < SEEK_RADIUS_SQUARED)
 	{
 		if (!aggro)
@@ -243,15 +242,6 @@ void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComp
 	
 	if (hp.hp <= 0 || trans.GetPosition().y < -10.0f)
 	{
-		//#if defined _DEBUG
-		//EntityManager& eMan = EntityManager::Get();
-		//std::cout << "Agent " << eMan.GetComponent<AgentIdComponent>(e).id << "(" << e << ")";
-		//if (hp.hp <= 0)
-		//	std::cout << " killed! HP: " << hp.hp << std::endl;
-		//else
-		//	std::cout << " hopelessly lost in void at position: (" << trans.GetPosition().x << ", " << trans.GetPosition().y << ", " << trans.GetPosition().z << ")" << std::endl;
-		//#endif
-		
 		// Send network signal to destroy agents
 		if (PlayerManager::Get().IsThisMultiplayer())
 		{
@@ -291,7 +281,7 @@ void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, Agent
 	else
 	{
 		// go to attack mode
-		if (em.HasComponent<AgentAttackComponent>(e) == false)
+		if (!em.HasComponent<AgentAttackComponent>(e))
 			em.AddComponent<AgentAttackComponent>(e);
 
 		em.Collect<AgentIdComponent>().Do(
@@ -299,13 +289,7 @@ void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, Agent
 			{
 				u32 otherGroup = am.GroupID(other.id);
 				if (myGroup == otherGroup && !em.HasComponent<AgentAggroComponent>(o))
-				{
 					em.AddComponent<AgentAggroComponent>(o);
-					
-					//#ifdef _DEBUG
-					//std::cout << "Agent " << agent.id << " of group " << myGroup << " signaled aggro to agent " << other.id << " of group " << otherGroup << std::endl;
-					//#endif // _DEBUG
-				}
 			}
 		);
 	}

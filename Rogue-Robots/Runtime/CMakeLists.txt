@@ -37,10 +37,6 @@ set(SourceFiles
 	"src/Core/QueryHelpers.h" "src/Core/QueryHelpers.cpp"
 
 	"src/Pathfinder/Pathfinder.h" "src/Pathfinder/Pathfinder.cpp"
-	"src/Pathfinder/NavMesh.h" "src/Pathfinder/NavMesh.cpp"
-	"src/Pathfinder/Portal.h" "src/Pathfinder/Portal.cpp"
-	"src/Pathfinder/GridCoord.h" "src/Pathfinder/GridCoord.cpp"
-	"src/Pathfinder/Box.h" "src/Pathfinder/Box.cpp"
 	"src/Pathfinder/PathfinderDebugLayer.h" "src/Pathfinder/PathfinderDebugLayer.cpp"
 	"src/Pathfinder/PathfinderComponents.h" "src/Pathfinder/PathfinderComponents.cpp"
 	"src/Pathfinder/PathfinderSystems.h" "src/Pathfinder/PathfinderSystems.cpp"

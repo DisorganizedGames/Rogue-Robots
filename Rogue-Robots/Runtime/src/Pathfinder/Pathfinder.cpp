@@ -457,6 +457,12 @@ float Pathfinder::heuristicStraightLine(Vector3 start, Vector3 goal)
 }
 
 
+/***********************************************************************************************
+* 
+*		TODO: to be removed but kept for now in case it is needed to complete NavMeshes
+* 
+***********************************************************************************************/
+
 
 //void Pathfinder::GenerateNavMeshes(std::vector<std::string>& map, GridCoord origin, char symbol, PortalID currentNode)
 //{
