@@ -1,4 +1,5 @@
 #include "InGameMenu.h"
+#include "InGameMenu.h"
 #include <DOGEngine.h>
 using namespace DOG;
 
@@ -48,4 +49,14 @@ void InGameMenu::Initialize(std::function<void(void)> resumeGameMenuCallback, st
 void InGameMenu::Open()
 {
 	UI::Get()->ChangeUIscene(InGameMenu::s_sceneID);
+}
+
+void InGameMenu::Close()
+{
+	UI::Get()->ChangeUIscene(gameID);
+}
+
+bool InGameMenu::IsOpen()
+{
+	return UI::Get()->GetActiveUIScene() == s_sceneID;
 }

@@ -126,6 +126,11 @@ void DOG::UI::AddExternalUI(std::function<void(u32, u32)>&& createFunc)
 }
 
 
+UINT DOG::UI::GetActiveUIScene() const
+{
+    return m_currsceneID;
+}
+
 /// @brief Generates a unique ID
 /// @return Unique ID
 UINT DOG::UI::GenerateUID()

@@ -6,6 +6,8 @@ public:
 	static void Initialize(std::function<void(void)> resumeGameMenuCallback, std::function<void(void)> exitToMainMenuCallback, std::function<void(void)> exitToDesktopCallback);
 
 	static void Open();
+	static void Close();
+	static bool IsOpen();
 private:
 	static inline u32 s_sceneID;
 	static inline u32 s_backgroundID;

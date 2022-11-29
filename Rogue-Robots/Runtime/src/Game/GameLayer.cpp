@@ -34,8 +34,12 @@ GameLayer::GameLayer() noexcept
 	
 	InGameMenu::Initialize(
 		[]() {
-			UI::Get()->ChangeUIscene(gameID);
+			InGameMenu::Close();
 			Window::SetCursorMode(CursorMode::Confined);
+			EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
+				{
+					inputC.toggleMoveView = true;
+				});
 		},
 		[gameLayer = this]() {
 			gameLayer->m_gameState = GameState::ExitingToMainMenu;
@@ -601,12 +605,22 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 		{
 			if (m_gameState == GameState::Playing)
 			{
-				InGameMenu::Open();
-				Window::SetCursorMode(CursorMode::Visible);
+				if (InGameMenu::IsOpen())
+				{
+					Window::SetCursorMode(CursorMode::Confined);
+					InGameMenu::Close();
+				}
+				else
+				{
+					InGameMenu::Open();
+					
+					Window::SetCursorMode(CursorMode::Visible);
+				}
+				EntityManager::Get().Collect<InputController, ThisPlayer>().Do([](InputController& inputC, ThisPlayer&) { inputC.toggleMoveView = true; });
 				event.StopPropagation();
-				break;
 			}
 		}
+		if (InGameMenu::IsOpen()) break;
 
 		if (EVENT(KeyPressedEvent).key == DOG::Key::E)
 		{

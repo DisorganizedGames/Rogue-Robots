@@ -69,6 +69,7 @@ namespace DOG
          std::vector<std::function<void(u32, u32)>>& GetExternalUI();
          void AddExternalUI(std::function<void(u32, u32)>&& createFunc);
 
+         UINT GetActiveUIScene() const;
          template<typename T, typename... Params>
          std::unique_ptr<T> Create(UINT& uidOut, Params... args)
          {
