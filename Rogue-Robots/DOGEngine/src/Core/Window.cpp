@@ -342,6 +342,11 @@ namespace DOG
 		s_windowData.imguiFont = pFont;
 	}
 
+	void Window::CloseWindow() noexcept
+	{
+		PublishEvent<WindowClosedEvent>();
+	}
+
 	ImFont* Window::GetFont() noexcept
 	{
 		ASSERT(s_windowData.imguiFont, "Font pointer is not valid.");

@@ -10,6 +10,7 @@
 enum class GameState
 {
 	None = 0,
+	MainMenu,
 	Initializing,
 	Lobby,
 	StartPlaying,
@@ -17,6 +18,7 @@ enum class GameState
 	Won,
 	Lost,
 	Exiting,
+	ExitingToMainMenu,
 	Restart,
 	WaitingForHost
 };
