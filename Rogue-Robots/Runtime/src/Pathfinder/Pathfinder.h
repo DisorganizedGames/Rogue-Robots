@@ -11,16 +11,21 @@ private:
 	bool m_visualizePaths;
 	bool m_vizNavMeshes;
 	bool m_vizPortals;
+	bool m_vizOutlines;
 
 	static constexpr DOG::Shape NAVMESH_SHAPE = DOG::Shape::sphere;
 	static constexpr u32 NAVMESH_TESS = 16;
-	static constexpr Vector3 NAVMESH_SCALE = Vector3(1.f, 1.f, 1.f);
+	static constexpr Vector3 NAVMESH_SCALE = Vector3(.5f, .5f, .5f);
+	static constexpr Vector3 NAVMESH_COLOR = Vector3(0.f, 0.3f, 0.7f);
 
 	static constexpr DOG::Shape PORTAL_SHAPE = DOG::Shape::prism;
 	static constexpr u32 PORTAL_TESS = 4;
 	static constexpr Vector3 PORTAL_SCALE = Vector3(0.1f, 0.1f, 0.1f);
+	static constexpr Vector3 PORTAL_COLOR = Vector3(.3f, 0.6f, 0.3f);
 
 public:
+	enum class Viz { Paths, Outlines };
+
 	using NavMeshID = DOG::entity;
 	using PortalID = DOG::entity;
 
@@ -37,7 +42,7 @@ public:
 	std::vector<Vector3> Checkpoints(Vector3 start, Vector3 goal);
 	void Checkpoints(Vector3 start, PathfinderWalkComponent& pfc);
 
-	bool DrawPaths();
+	bool Visualize(Viz type);
 
 private:
 	struct Step

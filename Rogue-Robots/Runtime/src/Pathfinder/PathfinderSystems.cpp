@@ -11,7 +11,7 @@ void PathfinderWalkSystem::OnUpdate(PathfinderWalkComponent& pfc, DOG::Transform
 
 	pf.Checkpoints(trans.GetPosition(), pfc);
 
-	if (pf.DrawPaths())
+	if (pf.Visualize(Pathfinder::Viz::Paths))
 	{
 		EntityManager& em = EntityManager::Get();
 		Vector3 start = trans.GetPosition();
@@ -24,6 +24,8 @@ void PathfinderWalkSystem::OnUpdate(PathfinderWalkComponent& pfc, DOG::Transform
 			laser.color = LASER_COLOR;
 			start = end;
 			em.AddComponent<VisualizePathComponent>(id);
+			if (pf.Visualize(Pathfinder::Viz::Outlines))
+				em.AddComponent<OutlineComponent>(id).color = LASER_COLOR;
 			em.Collect<ThisPlayer, SceneComponent>().Do(
 				[&](ThisPlayer&, SceneComponent& sc)
 				{

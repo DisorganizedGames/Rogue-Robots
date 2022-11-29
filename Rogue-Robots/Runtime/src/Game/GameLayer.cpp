@@ -249,9 +249,6 @@ void GameLayer::StartMainScene()
 		m_netCode.OnStartup();
 	m_gameState = GameState::Playing;
 
-	
-	Pathfinder::Get().BuildNavScene(m_mainScene->GetSceneType());
-	m_syncFrame = true;
 }
 
 void GameLayer::CloseMainScene()

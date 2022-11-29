@@ -20,8 +20,10 @@ Pathfinder::Pathfinder() noexcept
 	m_vizPortals = true;
 #else
 	m_visualizePaths = false;
+	m_vizPortals = false;
 #endif
 	m_vizNavMeshes = false;
+	m_vizOutlines = true;
 }
 
 Pathfinder::~Pathfinder()
@@ -64,14 +66,15 @@ void Pathfinder::VisualizePathsMenu(bool& open)
 			{
 				if (m_vizNavMeshes)
 				{
-					constexpr Vector3 navMeshScale = Vector3(1.f, 1.f, 1.f);
 					EntityManager& em = EntityManager::Get();
 					em.Collect<NavMeshComponent, BoundingBoxComponent>().Do(
 						[&](entity e, NavMeshComponent&, BoundingBoxComponent& bb)
 						{
 							// visualize NavMesh
-							em.AddComponent<TransformComponent>(e).SetPosition(bb.Center()).SetScale(navMeshScale);
-							em.AddComponent<ModelComponent>(e, AssetManager::Get().LoadShapeAsset(DOG::Shape::sphere, 16));
+							em.AddComponent<TransformComponent>(e).SetPosition(bb.Center()).SetScale(NAVMESH_SCALE);
+							em.AddComponent<ModelComponent>(e, AssetManager::Get().LoadShapeAsset(NAVMESH_SHAPE, NAVMESH_TESS));
+							if (m_vizOutlines && !em.HasComponent<OutlineComponent>(e))
+								em.AddComponent<OutlineComponent>(e).color = NAVMESH_COLOR;
 						}
 					);
 				}
@@ -84,6 +87,8 @@ void Pathfinder::VisualizePathsMenu(bool& open)
 							// visualize NavMesh
 							em.RemoveComponent<TransformComponent>(e);
 							em.RemoveComponent<ModelComponent>(e);
+							if (m_vizOutlines && em.HasComponent<OutlineComponent>(e))
+								em.RemoveComponent<OutlineComponent>(e);
 						}
 					);
 				}
@@ -92,14 +97,15 @@ void Pathfinder::VisualizePathsMenu(bool& open)
 			{
 				if (m_vizPortals)
 				{
-					constexpr Vector3 portalScale = Vector3(0.1f, 0.1f, 0.1f);
 					EntityManager& em = EntityManager::Get();
 					em.Collect<PortalComponent>().Do(
 						[&](entity e, PortalComponent& pc)
 						{
 							// visualize portal
-							if (!em.HasComponent<TransformComponent>(e)) em.AddComponent<TransformComponent>(e).SetPosition(pc.portal).SetScale(portalScale);
-							em.AddComponent<ModelComponent>(e, AssetManager::Get().LoadShapeAsset(DOG::Shape::prism, 4));
+							if (!em.HasComponent<TransformComponent>(e)) em.AddComponent<TransformComponent>(e).SetPosition(pc.portal).SetScale(PORTAL_SCALE);
+							em.AddComponent<ModelComponent>(e, AssetManager::Get().LoadShapeAsset(PORTAL_SHAPE, PORTAL_TESS));
+							if (m_vizOutlines && !em.HasComponent<OutlineComponent>(e))
+								em.AddComponent<OutlineComponent>(e).color = PORTAL_COLOR;
 						}
 					);
 				}
@@ -112,6 +118,47 @@ void Pathfinder::VisualizePathsMenu(bool& open)
 							// visualize portal
 							em.RemoveComponent<TransformComponent>(e);
 							em.RemoveComponent<ModelComponent>(e);
+							if (m_vizOutlines && em.HasComponent<OutlineComponent>(e))
+								em.RemoveComponent<OutlineComponent>(e);
+						}
+					);
+				}
+			}
+			if (ImGui::Checkbox("Outlines", &m_vizOutlines))
+			{
+				if (m_vizOutlines)
+				{
+					EntityManager& em = EntityManager::Get();
+					// outline NavMeshes
+					em.Collect<NavMeshComponent, BoundingBoxComponent>().Do(
+						[&](entity e, NavMeshComponent&, BoundingBoxComponent& bb)
+						{
+							em.AddComponent<OutlineComponent>(e).color = NAVMESH_COLOR;
+						}
+					);
+					// outline Portals
+					em.Collect<PortalComponent, TransformComponent, ModelComponent>().Do(
+						[&](entity e, PortalComponent&, TransformComponent&, ModelComponent&)
+						{
+							em.AddComponent<OutlineComponent>(e).color = PORTAL_COLOR;
+						}
+					);
+				}
+				else
+				{
+					// remove NavMesh outlines
+					EntityManager& em = EntityManager::Get();
+					em.Collect<NavMeshComponent, TransformComponent, ModelComponent, OutlineComponent>().Do(
+						[&](entity e, NavMeshComponent&, TransformComponent&, ModelComponent&, OutlineComponent&)
+						{
+							em.RemoveComponent<OutlineComponent>(e);
+						}
+					);
+					// remove Portal outlines
+					em.Collect<PortalComponent, TransformComponent, ModelComponent, OutlineComponent>().Do(
+						[&](entity e, PortalComponent&, TransformComponent&, ModelComponent&, OutlineComponent&)
+						{
+							em.RemoveComponent<OutlineComponent>(e);
 						}
 					);
 				}
@@ -121,9 +168,14 @@ void Pathfinder::VisualizePathsMenu(bool& open)
 	}
 }
 
-bool Pathfinder::DrawPaths()
+bool Pathfinder::Visualize(Viz type)
 {
-	return m_visualizePaths;
+	if (type == Viz::Paths)
+		return m_visualizePaths;
+	if (type == Viz::Outlines)
+		return m_vizOutlines;
+	
+	return true;
 }
 
 void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
@@ -156,6 +208,8 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 				// visualize NavMesh
 				em.AddComponent<TransformComponent>(e).SetPosition(bb.Center()).SetScale(NAVMESH_SCALE);
 				em.AddComponent<ModelComponent>(e, AssetManager::Get().LoadShapeAsset(NAVMESH_SHAPE, NAVMESH_TESS));
+				if (m_vizOutlines)
+					em.AddComponent<OutlineComponent>(e).color = NAVMESH_COLOR;
 			}
 		});
 
@@ -178,6 +232,8 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 				// visualize NavMesh
 				em.AddComponent<TransformComponent>(e).SetPosition(bb.Center()).SetScale(NAVMESH_SCALE);
 				em.AddComponent<ModelComponent>(e, AssetManager::Get().LoadShapeAsset(NAVMESH_SHAPE, NAVMESH_TESS));
+				if (m_vizOutlines)
+					em.AddComponent<OutlineComponent>(e).color = NAVMESH_COLOR;
 			}
 		});
 
@@ -189,20 +245,28 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 		{
 			for (size_t x = 0; x < navScene.map[y][z].size(); ++x)
 			{
-				//std::cout << navScene.At(x, y, z) << " (" << x << ", " << y << ", " << z << ")" << std::endl;
 				if (navScene.HasNavMesh(x, y, z))
 				{
 					// connect mesh to neighbors
 					entity me = navScene.At(x, y, z);
 					NavMeshComponent& myMesh = em.GetComponent<NavMeshComponent>(me);
+					BoundingBoxComponent& bb = em.GetComponent<BoundingBoxComponent>(me);
 
 					for (Step dir : {Dir::down, Dir::north, Dir::east, Dir::south, Dir::west, Dir::up})
 					{
-						if (navScene.HasNavMesh(x + dir.x, y + dir.y, z + dir.z))
+						Vector3 extDir = Vector3(dir.x, dir.y, dir.z) * bb.Extents();
+						// shrink NavMesh if hit detected else connect if neighbor exists
+						if (auto hit = PhysicsEngine::RayCast(bb.Center(), bb.Center() + extDir); hit)
+						{
+							//auto str = [](Vector3 v) { return "(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ")"; };
+							//std::cout << "hit: " << str(hit->hitPosition) << ", origin: " << str(bb.Center()) << std::endl; // << ", neighbor: " << navScene.At(x + dir.x, y + dir.y, z + dir.z) << std::endl;
+						}
+						else if (navScene.HasNavMesh(x + dir.x, y + dir.y, z + dir.z))
 						{
 							entity other = navScene.At(x + dir.x, y + dir.y, z + dir.z);
+							//Vector3 c2c = em.GetComponent<BoundingBoxComponent>(other).Center() - bb.Center();
 							// if meshes not connected, create portal
-							if (myMesh.Connected(me, other) == false)
+							if (!myMesh.Connected(me, other))
 							{
 								// add new portal to me and other
 								PortalID id = myMesh.portals.emplace_back(em.CreateEntity());
@@ -217,6 +281,8 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 									// visualize Portals
 									em.AddComponent<TransformComponent>(id).SetPosition(pos).SetScale(PORTAL_SCALE);
 									em.AddComponent<ModelComponent>(id, AssetManager::Get().LoadShapeAsset(PORTAL_SHAPE, PORTAL_TESS));
+									if (m_vizOutlines)
+										em.AddComponent<OutlineComponent>(id).color = PORTAL_COLOR;
 								}
 							}
 						}
@@ -251,24 +317,31 @@ void Pathfinder::Checkpoints(Vector3 start, PathfinderWalkComponent& pfc)
 			{
 				if (NavMeshID terminalNavMesh = navScene.At(pfc.goal); terminalNavMesh != NULL_ENTITY)
 				{
-					if (pfc.path.size() == 0)
-						pfc.path.push_back(pfc.goal);
+					// Recalculate each frame...
+					EntityManager& em = EntityManager::Get();
+					pfc.path.clear();
+					for (PortalID id : Astar(start, pfc.goal, heuristicStraightLine))
+						pfc.path.push_back(em.GetComponent<PortalComponent>(id).portal);
 
-					if (navScene.At(pfc.path.back()) != terminalNavMesh)
-					{
-						EntityManager& em = EntityManager::Get();
-						
-						pfc.path.clear();
-						for (PortalID id : Astar(start, pfc.goal, heuristicStraightLine))
-								pfc.path.push_back(em.GetComponent<PortalComponent>(id).portal);
+					pfc.path.push_back(pfc.goal);
+					//if (pfc.path.size() == 0)
+					//	pfc.path.push_back(pfc.goal);
 
-						pfc.path.push_back(pfc.goal);
-					}
-					else
-					{
-						// just update the goal point
-						pfc.path[pfc.path.size() - 1] = pfc.goal;
-					}
+					//if (navScene.At(pfc.path.back()) != terminalNavMesh)
+					//{
+					//	EntityManager& em = EntityManager::Get();
+					//	
+					//	pfc.path.clear();
+					//	for (PortalID id : Astar(start, pfc.goal, heuristicStraightLine))
+					//			pfc.path.push_back(em.GetComponent<PortalComponent>(id).portal);
+
+					//	pfc.path.push_back(pfc.goal);
+					//}
+					//else
+					//{
+					//	// just update the goal point
+					//	pfc.path[pfc.path.size() - 1] = pfc.goal;
+					//}
 
 					// remove the first checkpoint if entity is close enough
 					constexpr float THRESHOLD = .05f;
