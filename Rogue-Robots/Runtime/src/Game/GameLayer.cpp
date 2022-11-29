@@ -150,10 +150,9 @@ void GameLayer::OnUpdate()
 		case GameState::None:
 			break;
 		case GameState::MainMenu:
-			m_gameState = GameState::StartPlaying; // Temporary until the main menu works.
 			break;
 		case GameState::Initializing:
-			m_gameState = GameState::StartPlaying;
+			m_gameState = GameState::MainMenu;
 			break;
 		case GameState::Lobby:
 			UpdateLobby();
@@ -165,16 +164,20 @@ void GameLayer::OnUpdate()
 			UpdateGame();
 			break;
 		case GameState::Won:
-			CloseMainScene();
-			m_gameState = GameState::Lost;
+			m_gameState = GameState::ExitingToMainMenu;
 			break;
 		case GameState::Lost:
-			CloseMainScene();
-			m_gameState = GameState::Lobby;
+			m_gameState = GameState::ExitingToMainMenu;
 			break;
 		case GameState::Exiting:
 			CloseMainScene();
-			m_gameState = GameState::None;
+			break;
+		case GameState::ExitingToMainMenu:
+			(&m_netCode)->~NetCode();
+			new (&m_netCode) NetCode();
+			m_gameState = GameState::MainMenu;
+			UI::Get()->ChangeUIscene(menuID);
+			CloseMainScene();
 			break;
 		case GameState::ExitingToMainMenu:
 			CloseMainScene();
@@ -185,7 +188,6 @@ void GameLayer::OnUpdate()
 			CloseMainScene();
 			m_gameState = GameState::Lobby;
 			break;
-		case GameState::WaitingForHost:
 		default:
 			break;
 		}

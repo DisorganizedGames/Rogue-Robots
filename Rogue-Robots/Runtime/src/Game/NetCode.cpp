@@ -123,7 +123,7 @@ void NetCode::OnUpdate()
 				transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerTransform;
 				inputC = m_outputUdp.m_holdplayersUdp[networkC.playerId].actions;
 				statsC = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat;
-				if (statsC.health > 0 && !m_entityManager.HasComponent<PlayerAliveComponent>(id))
+				if (statsC.health > 0 && !m_entityManager.HasComponent<PlayerAliveComponent>(id) )
 					m_entityManager.AddComponent<PlayerAliveComponent>(id);
 				if ((pC.cameraEntity != DOG::NULL_ENTITY) && (m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform.Determinant() != 0)) {
 					m_entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform;
