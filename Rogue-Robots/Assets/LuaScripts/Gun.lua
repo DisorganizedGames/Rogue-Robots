@@ -66,14 +66,9 @@ function OnStart()
 	-- Initialize the gun view model entity
 	gunID = Scene:CreateEntity(EntityID)
 	gunEntity.entityID = gunID
-	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.75,y=.75,z=.75})
+	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.35,y=.35,z=.35})
 	Entity:AddComponent(gunID, "Model", gunModel)
 	Entity:AddComponent(gunID, "Audio", gunShotSound, false, true)
-
-	if (Entity:HasComponent(EntityID, "ThisPlayer")) then
-		Entity:AddComponent(gunID, "ThisPlayerWeapon")
-		CreateWeaponLights()
-	end
 
 	barrelEntityID = Scene:CreateEntity(gunID)
 	Entity:AddComponent(barrelEntityID, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
@@ -84,6 +79,15 @@ function OnStart()
 	magazineEntityID = Scene:CreateEntity(gunID)
 	Entity:AddComponent(magazineEntityID, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
 	Entity:AddComponent(magazineEntityID, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
+
+	if (Entity:HasComponent(EntityID, "ThisPlayer")) then
+		Entity:AddComponent(gunID, "ThisPlayerWeapon")
+		--To be fixed later hopefully
+		Entity:AddComponent(barrelEntityID, "ThisPlayerWeapon")
+		Entity:AddComponent(miscEntityID, "ThisPlayerWeapon")
+		Entity:AddComponent(magazineEntityID, "ThisPlayerWeapon")
+		CreateWeaponLights()
+	end
 
 	-- Initialize base components
 	miscComponent = MiscComponent.BasicShot()
@@ -107,10 +111,10 @@ function OnUpdate()
 	local playerRight = Vector3.FromTable(Entity:GetRight(cameraEntity))
 
 	-- Move gun down and to the right 
-	gunEntity.position = gunEntity.position + playerRight * 0.3 - playerUp * 0.2 + playerForward * 0.8
+	gunEntity.position = gunEntity.position + playerRight * 0.3 - playerUp * 0.15 + playerForward * 0.4
 
 	-- Rotate the weapon by 90 degrees pitch
-	local angle = math.pi / 2 
+	local angle = math.pi / 2 + math.pi / 60.0 
 	local gunForward = RotateAroundAxis(playerForward, playerUp, angle)
 	local gunUp = playerUp--RotateAroundAxis(playerUp, playerRight, angle)
 
@@ -397,10 +401,22 @@ function OnPickup(pickup)
 end
 
 function CreateWeaponLights()
+	
+	color = Vector3.New(1.0, 0.1, 0.1)
+	playerColor = Game:GetPlayerName(EntityID)
+
+	if playerColor == "Green" then
+		color = Vector3.New(0.1, 1.0, 0.1)
+	elseif playerColor == "Yellow" then
+		color = Vector3.New(1.0, 1.0, 0.1)
+	elseif playerColor == "Blue" then
+		color = Vector3.New(0.1, 0.1, 1.0)
+	end
+
 	lightEntityID = Scene:CreateEntity(gunEntity.entityID)
 	Entity:AddComponent(lightEntityID, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
-	Entity:AddComponent(lightEntityID, "PointLight", Vector3.New(0.1, 1.0, 0.1), 20.0, 1.0)
-	Entity:AddComponent(lightEntityID, "Child", gunEntity.entityID, Vector3.New(0.4, 0.0, 0.0), Vector3.Zero(), Vector3.One())
+	Entity:AddComponent(lightEntityID, "PointLight", color, 10.0, 0.4)
+	Entity:AddComponent(lightEntityID, "Child", gunEntity.entityID, Vector3.New(0.0, 0.0, 0.2), Vector3.Zero(), Vector3.New(0.1, 0.1, 0.1))
 	Entity:AddComponent(lightEntityID, "WeaponLight")
 end
 

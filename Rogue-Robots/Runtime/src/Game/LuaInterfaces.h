@@ -265,4 +265,5 @@ public:
 	void AddMagazineEffectsFromBullet(DOG::LuaContext* context);
 	void SpawnPickupMiscComponent(DOG::LuaContext* context);
 	static void LuaPickUpMoreLaserAmmoCallback(DOG::LuaContext*);
+	void GetPlayerName(DOG::LuaContext* context);
 };

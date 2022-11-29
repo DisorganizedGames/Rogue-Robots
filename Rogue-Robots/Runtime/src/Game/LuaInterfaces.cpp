@@ -198,6 +198,7 @@ void EntityInterface::RemoveComponent(DOG::LuaContext* context)
 	else if (compType == "Model")
 	{
 		EntityManager::Get().RemoveComponent<ModelComponent>(e);
+		EntityManager::Get().RemoveComponent<ShadowReceiverComponent>(e);
 		return;
 	}
 
@@ -914,7 +915,7 @@ void EntityInterface::AddHomingMissile(DOG::LuaContext* context, DOG::entity e)
 	auto& t = em.GetComponent<TransformComponent>(e);
 	auto& gunT = em.GetComponent<TransformComponent>(gun);
 	Vector3 oldPosition = t.GetPosition();
-	t.SetRotation(gunT.GetRotation() * Matrix::CreateFromAxisAngle(gunT.GetRight(), DirectX::XM_PI / 2.0f));
+	t.SetRotation(gunT.GetRotation() * Matrix::CreateFromAxisAngle(gunT.GetUp(), DirectX::XM_PI / 2.0f));
 	t.SetPosition(oldPosition + 0.5f * t.GetForward());
 
 	em.AddComponent<BoxColliderComponent>(e, e, Vector3(0.18f, 0.18f, 0.8f), true, 12.0f);
@@ -1451,4 +1452,12 @@ void GameInterface::LuaPickUpMoreLaserAmmoCallback(DOG::LuaContext* context)
 	laserBarrel.ammo += barrelInfo.ammoPerPickup;
 	laserBarrel.ammo = std::min(laserBarrel.ammo, static_cast<f32>(barrelInfo.maximumAmmoCapacityForType));
 	barrelInfo.currentAmmoCount = static_cast<u32>(laserBarrel.ammo);
+}
+
+void GameInterface::GetPlayerName(DOG::LuaContext* context)
+{
+	auto& em = EntityManager::Get();
+	entity player = context->GetInteger();
+	assert(em.Exists(player) && em.HasComponent<NetworkPlayerComponent>(player));
+	context->ReturnString(em.GetComponent<NetworkPlayerComponent>(player).playerName);
 }

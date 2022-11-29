@@ -1004,6 +1004,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<GameInterface, &GameInterface::AddDamageToEntity>("AddDamageToEntity");
 	luaInterface.AddFunction<GameInterface, &GameInterface::AddMagazineEffectsFromBullet>("AddMagazineEffectsFromBullet");
 	luaInterface.AddFunction<GameInterface, &GameInterface::SpawnPickupMiscComponent>("SpawnPickupMiscComponent");
+	luaInterface.AddFunction<GameInterface, &GameInterface::GetPlayerName>("GetPlayerName");
 
 	global->SetLuaInterface(luaInterface);
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Game", "GameInterface");
