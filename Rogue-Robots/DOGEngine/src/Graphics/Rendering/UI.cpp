@@ -115,6 +115,17 @@ void DOG::UI::Destroy()
    }
 }
 
+std::vector<std::function<void(u32, u32)>>& DOG::UI::GetExternalUI()
+{
+    return m_externUI;
+}
+
+void DOG::UI::AddExternalUI(std::function<void(u32, u32)>&& createFunc)
+{
+    m_externUI.emplace_back(createFunc)(m_width, m_height);
+}
+
+
 /// @brief Generates a unique ID
 /// @return Unique ID
 UINT DOG::UI::GenerateUID()
@@ -854,6 +865,11 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    // auto s = DOG::UI::Get().Create<DOG::UISplashScreen, float, float>(sID, (float)clientWidth, (float)clientHeight);
    // DOG::UI::Get().AddUIElementToScene(menuID, std::move(s));
 
+   auto& externalUI = instance->GetExternalUI();
+   for (auto& e : externalUI)
+   {
+       e(clientWidth, clientHeight);
+   }
 }
 
 void AddScenes()

@@ -66,6 +66,8 @@ namespace DOG
          void OnEvent(IEvent& event) override final;
          DOG::gfx::D2DBackend_DX12* GetBackend();
 
+         std::vector<std::function<void(u32, u32)>>& GetExternalUI();
+         void AddExternalUI(std::function<void(u32, u32)>&& createFunc);
 
          template<typename T, typename... Params>
          std::unique_ptr<T> Create(UINT& uidOut, Params... args)
@@ -104,6 +106,7 @@ namespace DOG
          void BuildMenuUI();
          void BuildGameUI();
          std::vector<UINT> m_generatedIDs;
+         std::vector<std::function<void(u32, u32)>> m_externUI;
    };
 
    class UIScene 
