@@ -2,10 +2,10 @@
 #include <DOGEngine.h>
 using namespace DOG;
 
-void InGameMenu::Initialize(std::function<void(void)> exitToMainMenuCallback, std::function<void(void)> exitToDesktopCallback)
+void InGameMenu::Initialize(std::function<void(void)> resumeGameMenuCallback, std::function<void(void)> exitToMainMenuCallback, std::function<void(void)> exitToDesktopCallback)
 {
 	InGameMenu::s_sceneID = UI::Get()->AddScene();
-	auto&& inGameMenu = [exitToMainMenuCallback, exitToDesktopCallback](u32 clientWidth, u32 clientHeight) {
+	auto&& inGameMenu = [resumeGameMenuCallback, exitToMainMenuCallback, exitToDesktopCallback](u32 clientWidth, u32 clientHeight) {
 		auto instance = UI::Get();
 
 		float backWidth = 0.3f * clientWidth;
@@ -21,7 +21,7 @@ void InGameMenu::Initialize(std::function<void(void)> exitToMainMenuCallback, st
 
 		auto resumeButton = instance->Create<DOG::UIButton>(InGameMenu::s_resumeButtonID,
 			buttonX, buttonY, buttonWidth, buttonHeight, 20.f, 1.0f, 1.0f, 1.0f,
-			std::wstring(L"Resume"), []() { UI::Get()->ChangeUIscene(gameID); Window::SetCursorMode(CursorMode::Confined); });
+			std::wstring(L"Resume"), [&callback = resumeGameMenuCallback]() { callback(); });
 
 		buttonY += buttonHeight + buttonMarginY;
 		auto exitToMainMenuButton = instance->Create<DOG::UIButton>(InGameMenu::s_exitToMainMenuButtonID,

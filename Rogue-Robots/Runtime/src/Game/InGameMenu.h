@@ -3,7 +3,7 @@
 class InGameMenu
 {
 public:
-	static void Initialize(std::function<void(void)> exitToMainMenuCallback, std::function<void(void)> exitToDesktopCallback);
+	static void Initialize(std::function<void(void)> resumeGameMenuCallback, std::function<void(void)> exitToMainMenuCallback, std::function<void(void)> exitToDesktopCallback);
 
 	static void Open();
 private:

@@ -33,11 +33,15 @@ GameLayer::GameLayer() noexcept
 	RegisterLuaInterfaces();
 	
 	InGameMenu::Initialize(
+		[]() {
+			UI::Get()->ChangeUIscene(gameID);
+			Window::SetCursorMode(CursorMode::Confined);
+		},
 		[gameLayer = this]() {
 			gameLayer->m_gameState = GameState::ExitingToMainMenu;
 		},
-		[&]() {
-			// TODO
+		[]() {
+			Window::CloseWindow();
 		}
 	);
 
