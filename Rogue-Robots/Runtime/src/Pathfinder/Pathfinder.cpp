@@ -79,7 +79,7 @@ void Pathfinder::VisualizePathsMenu(bool& open)
 				{
 					EntityManager& em = EntityManager::Get();
 					em.Collect<NavMeshComponent, BoundingBoxComponent, TransformComponent, ModelComponent>().Do(
-						[&](entity e, NavMeshComponent&, BoundingBoxComponent& bb, TransformComponent&, ModelComponent&)
+						[&](entity e, NavMeshComponent&, BoundingBoxComponent&, TransformComponent&, ModelComponent&)
 						{
 							// visualize NavMesh
 							em.RemoveComponent<TransformComponent>(e);
@@ -107,7 +107,7 @@ void Pathfinder::VisualizePathsMenu(bool& open)
 				{
 					EntityManager& em = EntityManager::Get();
 					em.Collect<PortalComponent, TransformComponent, ModelComponent>().Do(
-						[&](entity e, PortalComponent& pc, TransformComponent&, ModelComponent&)
+						[&](entity e, PortalComponent&, TransformComponent&, ModelComponent&)
 						{
 							// visualize portal
 							em.RemoveComponent<TransformComponent>(e);
