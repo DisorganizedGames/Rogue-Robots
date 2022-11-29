@@ -27,6 +27,7 @@ enum class EntityTypes
 	Trampoline,
 	Turret,
 	Reviver,
+	GoalRadar,
 	ActiveItems,
 
 	//Barrel

@@ -69,7 +69,7 @@ ActiveItems.turret = {
 	end,
 
 	GetECSType = function(self)
-			return 1 -- What should be returned here???
+			return 1
 		end,
 
 
@@ -81,6 +81,19 @@ ActiveItems.reviver = {
 			return 2
 		end,
 
+
+}
+
+ActiveItems.goalRadar = {
+
+	activate = function(self, playerEntity)
+		print("HI!")
+
+		end,
+
+	GetECSType = function(self)
+			return 3
+		end,
 
 }
 

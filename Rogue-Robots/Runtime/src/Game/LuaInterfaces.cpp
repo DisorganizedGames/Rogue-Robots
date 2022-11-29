@@ -369,6 +369,9 @@ void EntityInterface::GetEntityTypeAsString(DOG::LuaContext* context)
 	case EntityTypes::Reviver:
 		context->ReturnString("Reviver");
 		break;
+	case EntityTypes::GoalRadar:
+		context->ReturnString("GoalRadar");
+		break;
 	case EntityTypes::FrostMagazineModification:
 		context->ReturnString("FrostMagazineModification");
 		break;
@@ -488,6 +491,7 @@ const std::unordered_map<ActiveItemComponent::Type, std::string> activeTypeMap =
 	{ ActiveItemComponent::Type::Trampoline, "Trampoline" },
 	{ ActiveItemComponent::Type::Turret, "Turret" },
 	{ ActiveItemComponent::Type::Reviver, "Reviver" },
+	{ ActiveItemComponent::Type::GoalRadar, "GoalRadar" },
 };
 
 const std::unordered_map<BarrelComponent::Type, std::string> barrelTypeMap = {
@@ -734,6 +738,8 @@ void EntityInterface::SpawnActiveItem(DOG::LuaContext* context)
 		ItemManager::Get().CreateItem(EntityTypes::Turret, EntityManager::Get().GetComponent<TransformComponent>(playerId).GetPosition());
 	else if (EntityManager::Get().GetComponent<ActiveItemComponent>(playerId).type == ActiveItemComponent::Type::Reviver)
 		ItemManager::Get().CreateItem(EntityTypes::Reviver, EntityManager::Get().GetComponent<TransformComponent>(playerId).GetPosition());
+	else if (EntityManager::Get().GetComponent<ActiveItemComponent>(playerId).type == ActiveItemComponent::Type::GoalRadar)
+		ItemManager::Get().CreateItem(EntityTypes::GoalRadar, EntityManager::Get().GetComponent<TransformComponent>(playerId).GetPosition());
 }
 
 void EntityInterface::AddAudio(LuaContext* context, entity e)

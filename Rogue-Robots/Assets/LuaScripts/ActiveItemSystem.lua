@@ -35,7 +35,7 @@ function OnPickup(pickup)
 	local pickupTypeString = Entity:GetEntityTypeAsString(pickup)
 	local playerID = EntityID
 
-	if pickupTypeString == "Trampoline" or pickupTypeString == "Turret" or pickupTypeString == "Reviver" then
+	if pickupTypeString == "Trampoline" or pickupTypeString == "Turret" or pickupTypeString == "Reviver" or pickupTypeString == "GoalRadar" then
 		if Entity:HasComponent(playerID, "ActiveItem") then
 			Entity:SpawnActiveItem(playerID)
 			Entity:RemoveComponent(playerID, "ActiveItem")
@@ -50,6 +50,10 @@ function OnPickup(pickup)
 		end
 		if pickupTypeString == "Reviver" then
 			activeItem = ActiveItems.reviver
+			Entity:AddComponent(playerID, "ActiveItem", activeItem:GetECSType())
+		end
+		if pickupTypeString == "GoalRadar" then
+			activeItem = ActiveItems.goalRadar
 			Entity:AddComponent(playerID, "ActiveItem", activeItem:GetECSType())
 		end
 	end

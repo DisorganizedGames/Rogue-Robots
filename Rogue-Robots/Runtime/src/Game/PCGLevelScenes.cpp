@@ -67,6 +67,7 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 			}
 			//Spawn items
 			ItemManager::Get().CreateItem(EntityTypes(((u32)itemCounter) % (u32(EntityTypes::Default) * itemSpawnModifier)), Vector3(pos.x, pos.y + 1.0f, pos.z));
+			ItemManager::Get().CreateItem(EntityTypes::GoalRadar, Vector3(pos.x, pos.y + 1.0f, pos.z));
 			++enemyCounter;
 			++itemCounter;
 		});
