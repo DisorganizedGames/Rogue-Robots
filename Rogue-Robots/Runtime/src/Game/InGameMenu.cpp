@@ -21,7 +21,7 @@ void InGameMenu::Initialize(std::function<void(void)> exitToMainMenuCallback, st
 
 		auto resumeButton = instance->Create<DOG::UIButton>(InGameMenu::s_resumeButtonID,
 			buttonX, buttonY, buttonWidth, buttonHeight, 20.f, 1.0f, 1.0f, 1.0f,
-			std::wstring(L"Resume"), []() { UI::Get()->ChangeUIscene(gameID); });
+			std::wstring(L"Resume"), []() { UI::Get()->ChangeUIscene(gameID); Window::SetCursorMode(CursorMode::Confined); });
 
 		buttonY += buttonHeight + buttonMarginY;
 		auto exitToMainMenuButton = instance->Create<DOG::UIButton>(InGameMenu::s_exitToMainMenuButtonID,

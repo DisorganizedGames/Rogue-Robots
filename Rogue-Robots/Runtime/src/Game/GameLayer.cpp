@@ -598,6 +598,7 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 			if (m_gameState == GameState::Playing)
 			{
 				InGameMenu::Open();
+				Window::SetCursorMode(CursorMode::Visible);
 				event.StopPropagation();
 				break;
 			}
