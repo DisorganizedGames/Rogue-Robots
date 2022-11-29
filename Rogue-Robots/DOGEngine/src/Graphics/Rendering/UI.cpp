@@ -34,10 +34,7 @@ void MultiplayerButtonFunc(void)
 
 void HostButtonFunc(void);
 
-void ToMenuButtonFunc(void)
-{
-   DOG::UI::Get()->ChangeUIscene(menuID);
-}
+void ToMenuButtonFunc(void);
 
 void ExitButtonFunc(void)
 {
