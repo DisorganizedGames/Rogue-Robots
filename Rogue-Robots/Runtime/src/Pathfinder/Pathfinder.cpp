@@ -291,6 +291,12 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 			}
 		}
 	}
+
+	// Add aggro agent for testing purposes -> TODO: remove
+	AgentManager& am = AgentManager::Get();
+	entity agent = am.CreateAgent(EntityTypes::Scorpio, am.GroupID(), Vector3(73.f, 24.f, 220.f), sceneType);
+	em.AddComponent<AgentAggroComponent>(agent);
+	em.AddComponent<OutlineComponent>(agent).color = Vector3(1.f, .0f, .7f);
 }
 
 
@@ -345,7 +351,8 @@ void Pathfinder::Checkpoints(Vector3 start, PathfinderWalkComponent& pfc)
 
 					// remove the first checkpoint if entity is close enough
 					constexpr float THRESHOLD = .05f;
-					if (pfc.path.size() > 1 && Vector3::DistanceSquared(start, pfc.path[0]) > THRESHOLD)
+					constexpr float THRESHOLD_SQ = THRESHOLD * THRESHOLD;
+					if (pfc.path.size() > 1 && Vector3::DistanceSquared(start, pfc.path[0]) > THRESHOLD_SQ)
 						pfc.path.erase(pfc.path.begin());
 				}
 			}
