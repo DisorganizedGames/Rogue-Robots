@@ -15,6 +15,7 @@
 #include "PlayerManager/PlayerManager.h"
 #include "Pathfinder/Pathfinder.h"
 #include "HeartbeatTrackerSystem.h"
+#include "InGameMenu.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -31,6 +32,15 @@ GameLayer::GameLayer() noexcept
 	//Register Lua interfaces
 	RegisterLuaInterfaces();
 	
+	InGameMenu::Initialize(
+		[gameLayer = this]() {
+			gameLayer->m_gameState = GameState::ExitingToMainMenu;
+		},
+		[&]() {
+			// TODO
+		}
+	);
+
 	m_entityManager.RegisterSystem(std::make_unique<ScuffedSceneGraphSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<SetFlashLightToBoneSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
@@ -129,6 +139,9 @@ void GameLayer::OnUpdate()
 		{
 		case GameState::None:
 			break;
+		case GameState::MainMenu:
+			m_gameState = GameState::StartPlaying; // Temporary until the main menu works.
+			break;
 		case GameState::Initializing:
 			m_gameState = GameState::StartPlaying;
 			break;
@@ -152,6 +165,11 @@ void GameLayer::OnUpdate()
 		case GameState::Exiting:
 			CloseMainScene();
 			m_gameState = GameState::None;
+			break;
+		case GameState::ExitingToMainMenu:
+			CloseMainScene();
+			m_gameState = GameState::MainMenu;
+			UI::Get()->ChangeUIscene(menuID);
 			break;
 		case GameState::Restart:
 			CloseMainScene();
@@ -575,6 +593,16 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	}
 	case EventType::KeyPressedEvent:
 	{
+		if (EVENT(KeyPressedEvent).key == DOG::Key::Esc)
+		{
+			if (m_gameState == GameState::Playing)
+			{
+				InGameMenu::Open();
+				event.StopPropagation();
+				break;
+			}
+		}
+
 		if (EVENT(KeyPressedEvent).key == DOG::Key::E)
 		{
 			Interact();
