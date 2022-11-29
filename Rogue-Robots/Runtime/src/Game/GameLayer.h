@@ -42,11 +42,12 @@ public:
 	virtual void OnRender() override final;
 	virtual void OnImGuiRender() override final;
 	virtual void OnEvent(DOG::IEvent& event) override final;
+	
 	void ChangeGameState(GameState state);
+	static void ChangeNetworkState(NetworkStatus);
 
 	static NetworkStatus GetNetworkStatus() { return s_networkStatus; }
-	NetCode* GetNetCode();
-
+	static NetCode* GetNetCode();
 private:
 	void UpdateLobby();
 	void UpdateGame();
