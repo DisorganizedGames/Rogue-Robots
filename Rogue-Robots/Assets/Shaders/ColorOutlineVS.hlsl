@@ -4,16 +4,19 @@
 struct VS_OUT
 {
     float4 pos : SV_POSITION;
-    float2 uv : TEXCOORD;
-    float3 nor : NORMAL;
-    float3 tan : TANGENT;
-    float3 bitan : BITANGENT;
-    float3 wsPos : WS_POSITION;
+};
+
+struct PushConstantElement
+{
+    uint gdDescriptor;
+    uint perFrameOffset;
+    uint jointOffset;
 };
 
 struct PerDrawData
 {
     matrix world;
+    float3 color;
     uint submeshID;
     uint materialID;
     uint jointsDescriptor;
@@ -35,30 +38,7 @@ struct Blend
     BlendWeight iw[4];
 };
 
-struct PerLightData
-{
-    matrix view;
-    matrix proj;
-    float4 position;
-    float3 color;
-    float cutoffAngle;
-    float3 direction;
-    float strength;
-};
-
-struct PushConstantElement
-{
-    uint gdDescriptor;
-    uint perFrameOffset;
-    
-    uint spotlightArrayStructureIndex;
-    uint shadowMapDepthIndex;
-    uint wireframe;
-    uint isLit;
-    uint jointOffset;
-};
 ConstantBuffer<PushConstantElement> constants : register(b0, space0);
-
 ConstantBuffer<PerDrawData> perDrawData : register(b1, space0);
 
 
@@ -66,9 +46,6 @@ ConstantBuffer<PerDrawData> perDrawData : register(b1, space0);
 VS_OUT main(uint vertexID : SV_VertexID)
 {
     VS_OUT output = (VS_OUT) 0;
-    
-    //ConstantBuffer<PerDrawData> perDrawData = ResourceDescriptorHeap[constants.perDrawCB];
-    
     StructuredBuffer<ShaderInterop_GlobalData> gds = ResourceDescriptorHeap[constants.gdDescriptor];
     ShaderInterop_GlobalData gd = gds[0];
     
@@ -77,9 +54,6 @@ VS_OUT main(uint vertexID : SV_VertexID)
     
     StructuredBuffer<ShaderInterop_SubmeshMetadata> mds = ResourceDescriptorHeap[gd.meshTableSubmeshMD];
     StructuredBuffer<float3> positions = ResourceDescriptorHeap[gd.meshTablePos];
-    StructuredBuffer<float2> uvs = ResourceDescriptorHeap[gd.meshTableUV];
-    StructuredBuffer<float3> normals = ResourceDescriptorHeap[gd.meshTableNor];
-    StructuredBuffer<float3> tangents = ResourceDescriptorHeap[gd.meshTableTan];
     StructuredBuffer<Blend> blendData = ResourceDescriptorHeap[gd.meshTableBlend];
 
     ShaderInterop_SubmeshMetadata md = mds[perDrawData.submeshID];
@@ -88,9 +62,6 @@ VS_OUT main(uint vertexID : SV_VertexID)
     vertexID += md.vertStart;
 
     float3 pos = positions[vertexID];
-    float2 uv = uvs[vertexID];
-    float3 nor = normals[vertexID];
-    float3 tan = tangents[vertexID];
     
     int offset = constants.jointOffset;
     if (md.blendCount > 0)
@@ -103,15 +74,10 @@ VS_OUT main(uint vertexID : SV_VertexID)
         pos = (float3) mul(float4(pos, 1.0f), mat);
     }
     
-    ConstantBuffer<PerLightData> perLightData = ResourceDescriptorHeap[constants.spotlightArrayStructureIndex];
     
-    output.wsPos = mul(perDrawData.world, float4(pos, 1.f)).xyz;
-    output.pos = mul(pfData.projMatrix, mul(pfData.viewMatrix, float4(output.wsPos, 1.f)));
-    
-    output.nor = mul(perDrawData.world, float4(nor, 0.f)).xyz;
-    output.tan = mul(perDrawData.world, float4(tan, 0.f)).xyz;
-    output.bitan = normalize(cross(output.tan, output.nor));
-    output.uv = uv;
+    float3 world = mul(perDrawData.world, float4(pos, 1.f)).rgb;
+    float3 view = mul(pfData.viewMatrix, float4(world, 1.f)).rgb;    
+    output.pos = mul(pfData.projMatrix, float4(view, 1.f));
  
     return output;
 }

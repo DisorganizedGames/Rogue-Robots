@@ -28,6 +28,14 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 	playerModels[1] = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/BlueRifle/rifleTestBlue.gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::GPUMemory | DOG::AssetLoadFlag::CPUMemory)));
 	playerModels[2] = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/GreenRifle/rifleTestGreen.gltf");
 	playerModels[3] = am.LoadModelAsset("Assets/Models/Temporary_Assets/mixamo/YellowRifle/rifleTestYellow.gltf");
+
+	std::array<DirectX::SimpleMath::Vector3, 4> playerOutlineColors
+	{
+		DirectX::SimpleMath::Vector3{ 1.f, 0.f, 0.f },
+		DirectX::SimpleMath::Vector3{ 0.f, 0.f, 1.f},
+		DirectX::SimpleMath::Vector3{ 0.f, 1.f, 0.f},
+		DirectX::SimpleMath::Vector3{ 1.f, 1.f, 0.f},
+	};
 	std::vector<entity> players;
 	for (auto i = 0; i < playerCount; ++i)
 	{
@@ -52,6 +60,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		auto& npc = em.AddComponent<NetworkPlayerComponent>(playerI);
 		npc.playerId = static_cast<i8>(i);
 		npc.playerName = i == 0 ? "Red" : i == 1 ? "Blue" : i == 2 ? "Green" : "Yellow";
+
 		em.AddComponent<InputController>(playerI);
 		em.AddComponent<PlayerAliveComponent>(playerI);
 		em.AddComponent<AnimationComponent>(playerI);
@@ -77,6 +86,8 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		em.AddComponent<ModelComponent>(modelEntity, playerModels[i]);
 		em.AddComponent<RigDataComponent>(modelEntity);
 		em.AddComponent<ShadowReceiverComponent>(modelEntity);
+		em.AddComponent<OutlineComponent>(modelEntity, playerOutlineColors[i]);
+
 
 		auto& rc = em.GetComponent<RigDataComponent>(modelEntity);
 		rc.offset = i * MIXAMO_RIG.nJoints;

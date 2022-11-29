@@ -187,6 +187,12 @@ namespace DOG
 		entity owningPlayer { NULL_ENTITY };
 	};
 
+	// Set component on meshes that should be outlined
+	struct OutlineComponent
+	{
+		DirectX::SimpleMath::Vector3 color;
+	};
+
 	struct PointLightComponent
 	{
 		LightHandle handle;

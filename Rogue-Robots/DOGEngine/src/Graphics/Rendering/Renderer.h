@@ -89,6 +89,7 @@ namespace DOG::gfx
 		void SubmitMeshNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 		void SubmitMeshWireframe(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
 		void SubmitMeshWireframeNoFaceCulling(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world);
+		void SubmitOutlinedMesh(Mesh mesh, u32 submesh, const DirectX::SimpleMath::Vector3& color, const DirectX::SimpleMath::Matrix& world, bool animated, u32 jointOffset);
 
 		void SubmitAnimatedMesh(Mesh mesh, u32 submesh, MaterialHandle material, const DirectX::SimpleMath::Matrix& world, u32 num);
 
@@ -137,6 +138,8 @@ namespace DOG::gfx
 			MaterialHandle mat;			// mat args 
 			DirectX::SimpleMath::Matrix world;
 
+			DirectX::SimpleMath::Vector3 color;		// for outline
+
 			bool animated{ false };
 			// bitflags for target passes? (i.e multipass)
 			u32 jointOffset{ 0 };
@@ -176,6 +179,8 @@ namespace DOG::gfx
 		std::vector<std::vector<RenderSubmission>> m_singleSidedShadowDraws;
 		std::vector<std::vector<RenderSubmission>> m_doubleSidedShadowDraws;
 
+		std::vector<RenderSubmission> m_outlineDraws;
+
 
 		DirectX::XMMATRIX m_viewMat, m_projMat;
 
@@ -205,8 +210,11 @@ namespace DOG::gfx
 		Pipeline m_ssaoPipe;
 		Pipeline m_zPrePassPipe, m_zPrePassPipeNoCull, m_zPrePassPipeWirefram, m_zPrePassPipeWireframNoCull;
 		Pipeline m_weaponMeshPipe;
+		Pipeline m_outlineMeshPipe;
+		Pipeline m_outlineBlitPipe;
 
 		Pipeline m_boxBlurPipe;
+		
 
 		Texture m_ssaoNoise;
 		Buffer m_ssaoSamples;

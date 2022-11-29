@@ -146,6 +146,26 @@ namespace DOG::gfx
 				ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 				if (model && model->gfxModel)
 				{
+					// Outline submission
+					if (mgr.HasComponent<OutlineComponent>(e))
+					{
+						if (!mgr.HasComponent<DontDraw>(e))
+						{
+							u32 jointOffset{ 0 };
+							bool animated{ false };
+							if (mgr.HasComponent<RigDataComponent>(e))
+							{
+								jointOffset = mgr.GetComponent<RigDataComponent>(e).offset;
+								animated = true;
+							}
+
+							const auto& oc = mgr.GetComponent<OutlineComponent>(e);
+							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
+								m_renderer->SubmitOutlinedMesh(model->gfxModel->mesh.mesh, i, oc.color, transformC, animated, jointOffset);
+						}
+
+					}
+
 					// Shadow submission:
 					if (mgr.HasComponent<ShadowReceiverComponent>(e))
 					{
