@@ -24,10 +24,7 @@ using namespace DirectX::SimpleMath;
 
 NetworkStatus GameLayer::s_networkStatus = NetworkStatus::Offline;
 
-void HostButtonFunc(void)
-{
-   DOG::UI::Get()->ChangeUIscene(lobbyID);
-}
+
 
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }, m_gameState(GameState::Initializing)
@@ -644,6 +641,97 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 		Release(EVENT(KeyReleasedEvent).key);
 	}
 	}
+}
+
+//Lobby
+void HostButtonFunc(void)
+{
+	
+	if (GameLayer::GetNetCode()->Host())
+	{
+		int roomId = 0;
+		DOG::UI::Get()->ChangeUIscene(lobbyID);
+		GameLayer::ChangeNetworkState(NetworkStatus::HostLobby);
+		std::string ip = GameLayer::GetNetCode()->GetIpAdress();
+		if (ip == "192.168.1.55") // Sam
+		{
+			roomId = 1;
+			GameLayer::GetNetCode()->SetMulticastAdress("239.255.255.1");
+			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
+		}
+		else if (ip == "192.168.1.72") //Filip
+		{
+			roomId = 2;
+			GameLayer::GetNetCode()->SetMulticastAdress("239.255.255.2");
+			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
+		}
+		else if (ip == "192.168.1.73") //Nad
+		{
+			roomId = 3;
+			GameLayer::GetNetCode()->SetMulticastAdress("239.255.255.3");
+			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
+		}
+		else if (ip == "192.168.1.67") //Axel
+		{
+			roomId = 4;
+			GameLayer::GetNetCode()->SetMulticastAdress("239.255.255.4");
+			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
+		}
+		else if (ip == "192.168.1.26") //Ove
+		{
+			roomId = 5;
+			GameLayer::GetNetCode()->SetMulticastAdress("239.255.255.5");
+			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
+		}
+		else if (ip == "192.168.1.254") //Gunnar
+		{
+			roomId = 6;
+			GameLayer::GetNetCode()->SetMulticastAdress("239.255.255.6");
+			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
+		}
+		else if (ip == "192.168.1.70") //Emil F
+		{
+			roomId = 7;
+			GameLayer::GetNetCode()->SetMulticastAdress("239.255.255.7");
+			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
+		}
+		else if (ip == "192.168.1.76") //Jonatan
+		{
+			roomId = 8;
+			GameLayer::GetNetCode()->SetMulticastAdress("239.255.255.8");
+			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
+		}
+		else if (ip == "192.168.1.8") //Emil H
+		{
+			roomId = 9;
+			GameLayer::GetNetCode()->SetMulticastAdress("239.255.255.9");
+			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
+		}
+		else
+		{
+			roomId = 0;
+			GameLayer::GetNetCode()->SetMulticastAdress("239.255.255.0");
+			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
+		}
+
+		auto text = DOG::UI::Get()->GetUI<UIPlayerList>(playerlistID);
+		text->AddPlayer(1.0f, 2.0f, 3.0f, L" test 2");
+
+		//Show ip adress
+		//Show Room id
+		//Back knapp
+		//Visa anatal spelare connectade
+	}
+}
+
+void ToMenuButtonFunc(void)
+{
+	DOG::UI::Get()->ChangeUIscene(joinID);
+	// show 10 join room buttons
+	// Efter att ha joinade ett rum
+		// visa antal spelare connectade
+		// Ett meddelande att man väntar på att hosten ska starta
+		// En disconect knapp
 }
 
 void GameLayer::UpdateLobby()
@@ -1378,5 +1466,15 @@ void GameLayer::Interact()
 
 NetCode* GameLayer::GetNetCode()
 {
-	return &m_netCode;
+	return NetCode::GetNetCode();
+}
+
+void GameLayer::ChangeGameState(GameState state)
+{
+	m_gameState = state;
+}
+
+void GameLayer::ChangeNetworkState(NetworkStatus state)
+{
+	s_networkStatus = state;
 }
