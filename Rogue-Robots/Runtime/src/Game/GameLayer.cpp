@@ -1409,10 +1409,10 @@ void GameLayer::Interact()
 		m_entityManager.AddComponent<InteractionQueryComponent>(player);
 }
 
-// NetCode* GameLayer::GetNetCode()
-// {
-// 	return &m_netCode;
-// }
+NetCode* GameLayer::GetNetCode()
+{
+	return NetCode::GetNetCode();
+}
 
 void GameLayer::ChangeGameState(GameState state)
 {
