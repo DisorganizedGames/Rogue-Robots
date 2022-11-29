@@ -1,35 +1,46 @@
 #Root/Runtime
 set(SourceFiles 
 	"src/Core/RuntimeApplication.cpp" "src/Core/RuntimeApplication.h"
-	"src/Game/GameLayer.h" "src/Game/GameLayer.cpp" 
+
 	"src/Game/EmilFDebugLayer.h" "src/Game/EmilFDebugLayer.cpp"
 
-	"src/Game/NetCode.h" "src/Game/NetCode.cpp"
-	"src/Pathfinder/Pathfinder.h" "src/Pathfinder/Pathfinder.cpp"
 	"src/Game/LuaInterfaces.h" "src/Game/LuaInterfaces.cpp"
 	"src/Game/EntitesTypes.h"
-	"src/Game/TestScene.h" "src/Game/TestScene.cpp"  
+
+	"src/Game/FakeComputeLightCulling.h" "src/Game/FakeComputeLightCulling.cpp"
+	"src/Game/PrefabInstantiatorFunctions.h" "src/Game/PrefabInstantiatorFunctions.cpp"
+	"src/Game/LoadSplitModels.h" "src/Game/LoadSplitModels.cpp"
+
+	"src/Game/NetCode.h" "src/Game/NetCode.cpp"
 	"src/Network/Server.h" "src/Network/Server.cpp" "src/Network/Client.h" "src/Network/Client.cpp"
 
 	"src/Game/AgentManager/AgentComponents.h"
 	"src/Game/AgentManager/AgentManager.h" "src/Game/AgentManager/AgentManager.cpp"
 	"src/Game/AgentManager/AgentBehaviorSystems.h" "src/Game/AgentManager/AgentBehaviorSystems.cpp"
+
+	"src/Game/GameLayer.h" "src/Game/GameLayer.cpp" 
+	"src/Game/GameSystems.h" "src/Game/GameSystems.cpp"
 	"src/Game/ExplosionSystems.h" "src/Game/ExplosionSystems.cpp" "src/Network/Network.h"
 	"src/Game/HomingMissileSystem.h" "src/Game/HomingMissileSystem.cpp"
-	"src/Game/GameSystems.h" "src/Game/GameSystems.cpp"
-	"src/Game/Scene.h" "src/Game/Scene.cpp" "src/Game/PcgLevelLoader.h" "src/Game/PcgLevelLoader.cpp"
-	"src/Game/PrefabInstantiatorFunctions.h" "src/Game/PrefabInstantiatorFunctions.cpp"
-	"src/Game/OldDefaultScene.h" "src/Game/OldDefaultScene.cpp"
-	"src/Game/PCGLevelScenes.h" "src/Game/PCGLevelScenes.cpp"
 	"src/Game/TurretSystems.h" "src/Game/TurretSystems.cpp"
-	"src/Game/LoadSplitModels.h" "src/Game/LoadSplitModels.cpp"
-	"src/Game/ItemManager/ItemManager.h" "src/Game/ItemManager/ItemManager.cpp"
-	"src/Game/LightScene.h" "src/Game/LightScene.cpp"
-	"src/Game/FakeComputeLightCulling.h" "src/Game/FakeComputeLightCulling.cpp"
-	"src/Game/TestScenes/ParticleScene.h" "src/Game/TestScenes/ParticleScene.cpp"
-	"src/Game/PlayerManager/PlayerManager.h" "src/Game/PlayerManager/PlayerMangager.cpp"
 	"src/Game/HeartbeatTrackerSystem.h" "src/Game/HeartbeatTrackerSystem.cpp"
+
+	"src/Game/Scene.h" "src/Game/Scene.cpp" "src/Game/PcgLevelLoader.h" "src/Game/PcgLevelLoader.cpp"
+	"src/Game/PCGLevelScenes.h" "src/Game/PCGLevelScenes.cpp"
+	"src/Game/LightScene.h" "src/Game/LightScene.cpp"
+	"src/Game/TestScene.h" "src/Game/TestScene.cpp"  
+	"src/Game/TestScenes/ParticleScene.h" "src/Game/TestScenes/ParticleScene.cpp"
+	"src/Game/OldDefaultScene.h" "src/Game/OldDefaultScene.cpp"
+
+	"src/Game/ItemManager/ItemManager.h" "src/Game/ItemManager/ItemManager.cpp"
+	"src/Game/PlayerManager/PlayerManager.h" "src/Game/PlayerManager/PlayerMangager.cpp"
 	"src/Core/QueryHelpers.h" "src/Core/QueryHelpers.cpp"
+
+	"src/Pathfinder/Pathfinder.h" "src/Pathfinder/Pathfinder.cpp"
+	"src/Pathfinder/PathfinderDebugLayer.h" "src/Pathfinder/PathfinderDebugLayer.cpp"
+	"src/Pathfinder/PathfinderComponents.h" "src/Pathfinder/PathfinderComponents.cpp"
+	"src/Pathfinder/PathfinderSystems.h" "src/Pathfinder/PathfinderSystems.cpp"
+
 	"src/Game/AnimationIDs.h"
 	"src/Game/PlayerEquipmentFunctions.h" "src/Game/PlayerEquipmentFunctions.cpp"
 	)

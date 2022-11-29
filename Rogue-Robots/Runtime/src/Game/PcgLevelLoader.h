@@ -1,5 +1,9 @@
 #pragma once
 #include <DOGEngine.h>
+namespace pcgBlock
+{
+	constexpr float DIMENSION = 5.0f;
+}
 namespace pcgLevelNames
 {
 	constexpr const char* oldDefault = "..\\Offline-Tools\\PCG\\showOff_generatedLevel.txt";

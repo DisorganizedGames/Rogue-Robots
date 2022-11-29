@@ -7,7 +7,7 @@ using namespace DOG;
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
-OldDefaultScene::OldDefaultScene(u8 numPlayers, std::function<std::vector<DOG::entity>(const EntityTypes, const DirectX::SimpleMath::Vector3&, u8, f32)> spawnAgents)
+OldDefaultScene::OldDefaultScene(u8 numPlayers, std::function<std::vector<DOG::entity>(const EntityTypes, SceneComponent::Type scene, const DirectX::SimpleMath::Vector3&, u8, f32)> spawnAgents)
 	: Scene(SceneComponent::Type::OldDefaultScene), m_spawnAgents(spawnAgents), m_nrOfPlayers(numPlayers)
 {
 	
@@ -25,9 +25,9 @@ void OldDefaultScene::SetUpScene(std::vector<std::function<std::vector<DOG::enti
 
 	AddEntities(LoadLevel(pcgLevelNames::oldDefault));
 
-	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(20, 20, 50), 10, 3.0f));
-	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(30, 20, 50), 10, 3.0f));
-	AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(40, 20, 50), 10, 3.0f));
+	m_spawnAgents(EntityTypes::Scorpio, m_sceneType, Vector3(20, 20, 50), 10, 3.0f);
+	m_spawnAgents(EntityTypes::Scorpio, m_sceneType, Vector3(30, 20, 50), 10, 3.0f);
+	m_spawnAgents(EntityTypes::Scorpio, m_sceneType, Vector3(40, 20, 50), 10, 3.0f);
 
 	entity turretBase = CreateEntity();
 	AddComponent<TransformComponent>(turretBase, Vector3(45, 5.5f, 20));

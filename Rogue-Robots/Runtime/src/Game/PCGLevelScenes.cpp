@@ -6,7 +6,7 @@ using namespace DOG;
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
-PCGLevelScene::PCGLevelScene(u8 numPlayers, std::function<std::vector<DOG::entity>(const EntityTypes, const DirectX::SimpleMath::Vector3&, u8, f32)> spawnAgents, std::string levelName)
+PCGLevelScene::PCGLevelScene(u8 numPlayers, std::function<std::vector<DOG::entity>(const EntityTypes, SceneComponent::Type scene, const DirectX::SimpleMath::Vector3&, u8, f32)> spawnAgents, std::string levelName)
 	: Scene(SceneComponent::Type::PCGLevelScene), m_spawnAgents(spawnAgents), m_nrOfPlayers(numPlayers), m_levelName(levelName)
 {
 
@@ -57,7 +57,7 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 				if (dist > safeZone)
 				{
 					//Spawn enemies
-					AddEntities(m_spawnAgents(EntityTypes::Scorpio, Vector3(pos.x, pos.y + 2.5f, pos.z), (u8)(enemyNrCounter), 0.5f));
+					m_spawnAgents(EntityTypes::Scorpio, m_sceneType, Vector3(pos.x, pos.y + 2.5f, pos.z), (u8)(enemyNrCounter), 0.5f);
 					++enemyNrCounter;
 					if (enemyNrCounter > maxEnemiesPerSpawn)
 					{

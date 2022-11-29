@@ -13,6 +13,7 @@
 #include "ItemManager/ItemManager.h"
 #include "TestScenes/ParticleScene.h"
 #include "PlayerManager/PlayerManager.h"
+#include "Pathfinder/Pathfinder.h"
 #include "HeartbeatTrackerSystem.h"
 
 using namespace DOG;
@@ -188,7 +189,7 @@ void GameLayer::StartMainScene()
 		m_mainScene = std::make_unique<PCGLevelScene>
 			(
 				m_nrOfPlayers,
-				std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4),
+				std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5),
 				"..\\Offline-Tools\\PCG\\" + levelName
 				);
 		m_mainScene->SetUpScene();
@@ -196,7 +197,7 @@ void GameLayer::StartMainScene()
 	}
 	case SceneComponent::Type::OldDefaultScene:
 		// old default scene 
-		m_mainScene = std::make_unique<OldDefaultScene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+		m_mainScene = std::make_unique<OldDefaultScene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
 		m_mainScene->SetUpScene();
 		break;
 	case SceneComponent::Type::ParticleScene:
@@ -217,6 +218,9 @@ void GameLayer::StartMainScene()
 	if (s_networkStatus != NetworkStatus::Offline)
 		m_netCode.OnStartup();
 	m_gameState = GameState::Playing;
+
+	
+	Pathfinder::Get().BuildNavScene(m_mainScene->GetSceneType());
 }
 
 void GameLayer::CloseMainScene()
@@ -1015,7 +1019,7 @@ void GameLayer::Release(DOG::Key key)
 		});
 }
 
-std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3& pos, u8 agentCount, f32 spread)
+std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, SceneComponent::Type scene, const Vector3& pos, u8 agentCount, f32 spread)
 {
 	ASSERT(EntityTypes::AgentsBegin <= type && type < EntityTypes::Agents, "type must be of in range EntityTypes::AgentBegin - EntityTypes::Agents");
 	ASSERT(agentCount < AgentManager::GROUP_SIZE, "number of agents in group may not exceed AgentManager::GROUP_SIZE");
@@ -1030,7 +1034,7 @@ std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3
 			0,
 			spread * (i % 2) - (spread / 2.f),
 		};
-		agents.emplace_back(AgentManager::Get().CreateAgent(type, groupID, pos - offset));
+		agents.emplace_back(AgentManager::Get().CreateAgent(type, groupID, pos - offset, scene));
 	}
 	return agents;
 }

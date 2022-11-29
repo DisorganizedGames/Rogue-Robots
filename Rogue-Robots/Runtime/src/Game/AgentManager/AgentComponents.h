@@ -42,12 +42,6 @@ struct AgentAttackComponent
 	f32 elapsedTime = coolDown;
 };
 
-struct AgentPathfinderComponent
-{
-	DirectX::SimpleMath::Vector3 targetPos;
-	// TODO: PlannedPath
-};
-
 struct AgentSeekPlayerComponent
 {
 	DOG::entity entityID = DOG::NULL_ENTITY;

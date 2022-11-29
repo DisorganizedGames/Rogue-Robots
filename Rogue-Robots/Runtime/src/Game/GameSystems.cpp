@@ -398,7 +398,7 @@ void UpdateParentNode(entity parent)
 void ScuffedSceneGraphSystem::OnUpdate(entity e, ChildComponent& child, TransformComponent& world)
 {
 	auto& em = EntityManager::Get();
-	if (em.Exists(child.parent))
+	if (em.Exists(child.parent) && !em.HasComponent<DOG::DeferredDeletionComponent>(child.parent))
 	{
 		if (!child.nodeHasBeenUpdated)
 		{
@@ -1025,6 +1025,7 @@ void LaserBeamSystem::OnUpdate(entity e, LaserBeamComponent& laserBeam, LaserBea
 void LaserBeamVFXSystem::OnUpdate(LaserBeamVFXComponent& laserBeam)
 {
 	entity camera = GetCamera();
+	if (camera == NULL_ENTITY) return;
 	assert(EntityManager::Get().HasComponent<TransformComponent>(camera));
 	Vector3 dirToCamera = EntityManager::Get().GetComponent<TransformComponent>(camera).GetPosition() - laserBeam.startPos;
 	dirToCamera.Normalize();

@@ -597,7 +597,7 @@ public:
 	{
 		auto& [lifetime, age] = lifetimeComp;
 
-		if (age >= lifetime)
+		if (age >= lifetime && !DOG::EntityManager::Get().HasComponent<DOG::DeferredDeletionComponent>(e))
 		{
 			DOG::EntityManager::Get().DeferredEntityDestruction(e);
 		}

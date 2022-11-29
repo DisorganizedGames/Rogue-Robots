@@ -8,7 +8,9 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 {
 	auto& em = EntityManager::Get();
 
-	float blockDim = 5.0f;
+	constexpr float blockDim = pcgBlock::DIMENSION;
+	constexpr float half = blockDim / 2.0f;
+	constexpr Vector3 extents{ half, half, half };
 
 	std::string line;
 
@@ -40,7 +42,15 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 					size_t delimPos = line.find(' ');
 					std::string block = line.substr(0, delimPos);
 					line.erase(0, delimPos + 1);
-					if (block != "Empty" && block != "Void")
+					if (block == "Empty")
+					{
+						entity blockEntity = em.CreateEntity();
+						em.AddComponent<EmptySpaceComponent>(blockEntity, Vector3(x * blockDim, y * blockDim, z * blockDim));
+						// Add BoundingBox to modular block
+						em.AddComponent<BoundingBoxComponent>(blockEntity,
+							Vector3{ x * blockDim, y * blockDim + blockDim / 2, z * blockDim }, extents);
+					}
+					else if (block != "Void")
 					{
 						size_t firstUnderscore = block.find('_');
 						size_t secondUnderscore = block.find('_', firstUnderscore + 1);
@@ -56,6 +66,10 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 							scale);
 						em.AddComponent<CheckForLightsComponent>(blockEntity);
 
+						// Add BoundingBox to modular block
+						em.AddComponent<BoundingBoxComponent>(blockEntity, 
+							Vector3{ x * blockDim, y * blockDim + blockDim / 2, z * blockDim }, extents);
+						
 						em.AddComponent<ModularBlockComponent>(blockEntity);
 
 						em.AddComponent<MeshColliderComponent>(blockEntity,
@@ -65,9 +79,6 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 							false);		// Set this to true if you want to see colliders only in wireframe
 						
 						em.AddComponent<ShadowReceiverComponent>(blockEntity);
-						AABBComponent& aabb = em.AddComponent<AABBComponent>(blockEntity);
-						aabb.min = Vector3(x * blockDim, y * blockDim, z * blockDim);
-						aabb.max = Vector3(x * blockDim + blockDim, y * blockDim + blockDim, z * blockDim + blockDim);
 
 						if (blockName.find("Spawn") != std::string::npos)
 						{

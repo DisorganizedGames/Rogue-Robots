@@ -5,7 +5,14 @@
 
 using namespace DOG;
 
-void AgentSeekPlayerSystem::OnUpdate(entity e, AgentSeekPlayerComponent& seek, AgentIdComponent& agent, TransformComponent& transform)
+
+/**************************************************
+*			Early Update Systems
+***************************************************/
+
+
+
+void AgentSeekPlayerSystem::OnEarlyUpdate(entity e, AgentSeekPlayerComponent& seek, AgentIdComponent& agent, TransformComponent& transform)
 {
 	constexpr f32 SEEK_RADIUS_METERS = 5.0f;
 	constexpr f32 SEEK_RADIUS_SQUARED = SEEK_RADIUS_METERS * SEEK_RADIUS_METERS;
@@ -57,8 +64,8 @@ void AgentSeekPlayerSystem::OnUpdate(entity e, AgentSeekPlayerComponent& seek, A
 			else
 				netSeek = &eMan.GetComponent<NetworkAgentSeekPlayer>(e);
 
-			(*netSeek).playerID = player.id;
-			(*netSeek).agentID = agent.id;
+			netSeek->playerID = player.id;
+			netSeek->agentID = agent.id;
 		}
 	}
 	else
@@ -72,53 +79,26 @@ void AgentSeekPlayerSystem::OnUpdate(entity e, AgentSeekPlayerComponent& seek, A
 		else
 			netSeek = &eMan.GetComponent<NetworkAgentSeekPlayer>(e);
 
-		(*netSeek).playerID = -1;
-		(*netSeek).agentID = agent.id;
+		netSeek->playerID = -1;
+		netSeek->agentID = agent.id;
 	}
 }
 
 
-void AgentMovementSystem::OnUpdate(entity e, AgentMovementComponent& movement, 
-	AgentPathfinderComponent& pathfinder, AgentSeekPlayerComponent& seek, RigidbodyComponent& rb, TransformComponent& trans)
+void AgentPlanningSystem::OnEarlyUpdate(PathfinderWalkComponent& pfc, AgentSeekPlayerComponent& seek)
 {
-	if (seek.entityID == DOG::NULL_ENTITY)
+	if (seek.entityID != DOG::NULL_ENTITY)
 	{
-		// what to do when no player in sight
-		//if (trans.GetPosition() != pathfinder.targetPos)
-		//{
-		//	trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pathfinder.targetPos, Vector3(0, 1, 0)).Invert();
-		//	trans.SetPosition(trans.GetPosition() + movement.forward * static_cast<f32>(movement.speed * Time::DeltaTime()));
-		//	std::cout << "(" << trans.GetPosition().x << ", " << trans.GetPosition().y << ", " << trans.GetPosition().z << ")" << std::endl;
-		//}
-		//else
-		//{
-		//	pathfinder.targetPos = movement.station + AgentManager::GenerateRandomVector3(agent.id);
-		//	movement.forward = pathfinder.targetPos - trans.GetPosition();
-		//	movement.forward.Normalize();
-		//	std::cout << "Setting position (" << pathfinder.targetPos.x << ", " << pathfinder.targetPos.y << ", " << pathfinder.targetPos.z << ")" << std::endl;
-		//}
-	}
-	else
-	{
-		pathfinder.targetPos = EntityManager::Get().GetComponent<TransformComponent>(seek.entityID).GetPosition();
-		pathfinder.targetPos += (-seek.direction * 2);
-		trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pathfinder.targetPos, Vector3(0, 1, 0)).Invert();
-		movement.forward = seek.direction;
+		EntityManager& em = EntityManager::Get();
 
-		// TODO: transfer actual movement responsibility to Pathfinder
-		constexpr f32 SKID_FACTOR = 0.1f;
-		movement.forward.x += rb.linearVelocity.x * SKID_FACTOR;
-		movement.forward.y = 0.0f;
-		movement.forward.z += rb.linearVelocity.z * SKID_FACTOR;
-		movement.forward.Normalize();
-		movement.forward *= movement.currentSpeed;
-		rb.linearVelocity.x = movement.forward.x;
-		rb.linearVelocity.z = movement.forward.z;
-		
-		if (!EntityManager::Get().HasComponent<AgentAttackComponent>(e))
-			EntityManager::Get().AddComponent<AgentAttackComponent>(e);
+		pfc.goal = em.GetComponent<TransformComponent>(seek.entityID).GetPosition();
 	}
 }
+
+/**************************************************
+*				Regular Systems
+***************************************************/
+
 
 void AgentAttackSystem::OnUpdate(entity e, AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
 {
@@ -262,15 +242,6 @@ void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComp
 	
 	if (hp.hp <= 0 || trans.GetPosition().y < -10.0f)
 	{
-		#if defined _DEBUG
-		EntityManager& eMan = EntityManager::Get();
-		std::cout << "Agent " << eMan.GetComponent<AgentIdComponent>(e).id << "(" << e << ")";
-		if (hp.hp <= 0)
-			std::cout << " killed! HP: " << hp.hp << std::endl;
-		else
-			std::cout << " hopelessly lost in void at position: (" << trans.GetPosition().x << ", " << trans.GetPosition().y << ", " << trans.GetPosition().z << ")" << std::endl;
-		#endif
-		
 		// Send network signal to destroy agents
 		if (PlayerManager::Get().IsThisMultiplayer())
 		{
@@ -294,7 +265,7 @@ void AgentFrostTimerSystem::OnUpdate(DOG::entity e, AgentMovementComponent& move
 
 void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, AgentIdComponent& agent)
 {
-	constexpr int minutes = 4;
+	constexpr float minutes = 1.3f;
 	constexpr f64 maxAggroTime = minutes * 60.0;
 
 	EntityManager& em = EntityManager::Get();
@@ -303,27 +274,93 @@ void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, Agent
 	u32 myGroup = am.GroupID(agent.id);
 
 	if ((DOG::Time::ElapsedTime() - aggro.timeTriggered) > maxAggroTime)
+	{
 		em.RemoveComponent<AgentAggroComponent>(e);
+		em.RemoveComponentIfExists<AgentAttackComponent>(e);
+	}
 	else
 	{
+		// go to attack mode
+		if (!em.HasComponent<AgentAttackComponent>(e))
+			em.AddComponent<AgentAttackComponent>(e);
+
 		em.Collect<AgentIdComponent>().Do(
 			[&](entity o, AgentIdComponent& other)
 			{
 				u32 otherGroup = am.GroupID(other.id);
 				if (myGroup == otherGroup && !em.HasComponent<AgentAggroComponent>(o))
-				{
 					em.AddComponent<AgentAggroComponent>(o);
-					
-					#ifdef _DEBUG
-					std::cout << "Agent " << agent.id << " of group " << myGroup << " signaled aggro to agent " << other.id << " of group " << otherGroup << std::endl;
-					#endif // _DEBUG
-				}
 			}
 		);
 	}
 }
 
 
+/**************************************************
+*			Late Update Systems
+***************************************************/
+
+
+void AgentMovementSystem::OnLateUpdate(AgentMovementComponent& movement, PathfinderWalkComponent& pfc, RigidbodyComponent& rb, TransformComponent& trans)
+{
+	//if (seek.entityID == DOG::NULL_ENTITY)
+	{
+		// what to do when no player in sight
+		//if (trans.GetPosition() != pathfinder.targetPos)
+		//{
+		//	trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pathfinder.targetPos, Vector3(0, 1, 0)).Invert();
+		//	trans.SetPosition(trans.GetPosition() + movement.forward * static_cast<f32>(movement.speed * Time::DeltaTime()));
+		//	std::cout << "(" << trans.GetPosition().x << ", " << trans.GetPosition().y << ", " << trans.GetPosition().z << ")" << std::endl;
+		//}
+		//else
+		//{
+		//	pathfinder.targetPos = movement.station + AgentManager::GenerateRandomVector3(agent.id);
+		//	movement.forward = pathfinder.targetPos - trans.GetPosition();
+		//	movement.forward.Normalize();
+		//	std::cout << "Setting position (" << pathfinder.targetPos.x << ", " << pathfinder.targetPos.y << ", " << pathfinder.targetPos.z << ")" << std::endl;
+		//}
+	}
+	if (pfc.path.size() != 0)
+	{
+		//auto it = pfc.path.begin();
+		movement.forward = pfc.path[0] - trans.GetPosition();
+		movement.forward.y = 0.0f;
+		//while (it != pfc.path.end() && movement.forward.LengthSquared() < 0.1f)
+		//{
+		//	++it;
+		//	movement.forward = *it - trans.GetPosition();
+		//	movement.forward.y = 0.0f;
+		//}
+		//if (it != pfc.path.begin())
+		//	pfc.path.erase(pfc.path.begin(), it);
+		trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pfc.path[0], Vector3::Up).Invert();
+		movement.forward.Normalize();
+		constexpr f32 SKID_FACTOR = 0.1f;
+		movement.forward.x += rb.linearVelocity.x * SKID_FACTOR;
+		movement.forward.y = 0.0f;
+		movement.forward.z += rb.linearVelocity.z * SKID_FACTOR;
+		movement.forward.Normalize();
+		movement.forward *= movement.currentSpeed;
+		rb.linearVelocity.x = movement.forward.x;
+		rb.linearVelocity.z = movement.forward.z;
+
+	//	EntityManager& em = EntityManager::Get();
+
+	//	// go to attack mode
+	//	if (EntityManager::Get().HasComponent<AgentAttackComponent>(e) == false)
+	//		EntityManager::Get().AddComponent<AgentAttackComponent>(e);
+
+	//	Vector3 goal = em.GetComponent<TransformComponent>(seek.entityID).GetPosition();
+
+	//	// only move if outside attack radius
+	//	if (em.HasComponent<PathfinderWalkComponent>(e) == false && em.GetComponent<AgentAttackComponent>(e).radiusSquared < (goal - trans.GetPosition()).LengthSquared())
+	//		em.AddComponent<PathfinderWalkComponent>(e, goal, movement.currentSpeed);
+	}
+
+	// only move if outside attack radius
+	//if (em.HasComponent<PathfinderWalkComponent>(e) == false && em.GetComponent<AgentAttackComponent>(e).radiusSquared < (goal - trans.GetPosition()).LengthSquared())
+	//	em.AddComponent<PathfinderWalkComponent>(e, goal, movement.currentSpeed);
+}
 
 /***********************************************
 

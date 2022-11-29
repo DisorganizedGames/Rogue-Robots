@@ -153,14 +153,11 @@ namespace DOG
 	//Modular blocks
 	struct ModularBlockComponent
 	{
-	};
-
-	struct AABBComponent
+	};	//
+	struct EmptySpaceComponent
 	{
-		DirectX::SimpleMath::Vector3 min{0.0f, 0.0f, 0.0f};
-		DirectX::SimpleMath::Vector3 max{0.0f, 0.0f, 0.0f};
-	};
-
+		DirectX::SimpleMath::Vector3 pos;
+	};	//
 	struct ThisPlayer
 	{
 	};
@@ -359,6 +356,15 @@ namespace DOG
 		f32 z = 1.f;
 	};
 
+	struct BoundingBoxComponent
+	{
+		using Vector3 = DirectX::SimpleMath::Vector3;
+
+		DirectX::BoundingBox aabb;
+		BoundingBoxComponent(Vector3 center, Vector3 extents);
+		Vector3 Center();
+		Vector3 Extents();
+	};
+
 #pragma endregion
 }
-

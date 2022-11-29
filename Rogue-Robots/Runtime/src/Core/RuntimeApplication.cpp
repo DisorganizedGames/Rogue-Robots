@@ -21,6 +21,7 @@ void RuntimeApplication::OnStartUp() noexcept
 	PushLayer(&m_gameLayer);
 	PushOverlay(DOG::UI::Get());
 	//PushLayer(&m_EmilFDebugLayer);
+	//PushLayer(&m_PathfinderDebugLayer);
 
 	#if defined _DEBUG
 	IssueDebugFunctionality();

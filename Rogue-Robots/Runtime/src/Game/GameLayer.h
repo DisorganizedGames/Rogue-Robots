@@ -1,7 +1,6 @@
 #pragma once
 #include "LuaInterfaces.h"
 #include "NetCode.h"
-#include "Pathfinder/Pathfinder.h"
 #include "AgentManager/AgentManager.h"
 #include "GameComponent.h"
 #include "GameSystems.h"
@@ -63,7 +62,7 @@ private:
 	void Input(DOG::Key key);
 	void Release(DOG::Key key);
 	void CameraUpdate();
-	std::vector<DOG::entity> SpawnAgents(const EntityTypes type, const DirectX::SimpleMath::Vector3& pos, u8 agentCount, f32 spread = 10.f);
+	std::vector<DOG::entity> SpawnAgents(const EntityTypes type, SceneComponent::Type scene, const DirectX::SimpleMath::Vector3& pos, u8 agentCount, f32 spread = 10.f);
 	void ToggleFlashlight();
 
 	void HandleCheats();
@@ -86,7 +85,6 @@ private:
 	std::vector<std::shared_ptr<LuaInterface>> m_luaInterfaces;
 	std::array<u32, 4> m_playerModels;
 	NetCode m_netCode;
-	//Pathfinder m_pathfinder;		// uncomment to activate pathfinder
 	INT8 m_nrOfPlayers;
 	ImFont* m_imguiFont = nullptr;
 
