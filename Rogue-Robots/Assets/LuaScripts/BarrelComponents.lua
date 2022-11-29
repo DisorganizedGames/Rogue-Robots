@@ -35,6 +35,7 @@ function BarrelComponents:BasicBarrel()
 
 			SetPosition(bullet, transformEntity, -0.06, 0.29, 0.9)
 			local gunForward = Vector3.FromTable(Entity:GetRight(gunEntity.entityID))
+			gunForward = Norm(gunForward)
 
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
 			Entity:AddComponent(bullet.entity, "BoxColliderMass", boxColliderSize, true, 0.075)
@@ -87,6 +88,7 @@ function BarrelComponents:Grenade()
 			SetPosition(bullet, transformEntity, -0.12, 0.29, 1.0)
 
 			local gunForward = Vector3.FromTable(Entity:GetRight(gunEntity.entityID))
+			gunForward = Norm(gunForward)
 
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
 			Entity:AddComponent(bullet.entity, "SphereCollider", spherColliderRadius, true)
@@ -221,6 +223,7 @@ function BarrelComponents:Laser()
 			SetPosition(bullet, transformEntity, -0.12, 0.29, 1.5)
 
 			local gunForward = Vector3.FromTable(Entity:GetRight(gunEntity.entityID))
+			gunForward = Norm(gunForward)
 
 			Entity:AddComponent(bullet.entity, "LaserBullet", parentEntityID)
 			Entity:AddComponent(bullet.entity, "BoxColliderMass", boxColliderSize, true, 0.075)

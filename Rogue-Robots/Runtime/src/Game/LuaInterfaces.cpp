@@ -916,7 +916,9 @@ void EntityInterface::AddHomingMissile(DOG::LuaContext* context, DOG::entity e)
 	auto& gunT = em.GetComponent<TransformComponent>(gun);
 	Vector3 oldPosition = t.GetPosition();
 	t.SetRotation(gunT.GetRotation() * Matrix::CreateFromAxisAngle(gunT.GetUp(), DirectX::XM_PI / 2.0f));
-	t.SetPosition(oldPosition + 0.5f * t.GetForward());
+	Vector3 forward = t.GetForward();
+	forward.Normalize();
+	t.SetPosition(oldPosition + 0.5f * forward);
 
 	em.AddComponent<BoxColliderComponent>(e, e, Vector3(0.18f, 0.18f, 0.8f), true, 12.0f);
 	auto& rb = em.AddComponent<RigidbodyComponent>(e, e);
