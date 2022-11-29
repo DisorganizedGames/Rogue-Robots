@@ -567,6 +567,9 @@ void HostButtonFunc(void)
 	// 		GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
 	// 	}
 
+		auto text = DOG::UI::Get()->GetUI<UIPlayerList>(playerlistID);
+		text->AddPlayer(1.0f, 2.0f, 3.0f, L" test 2");
+
 		//Show ip adress
 		//Show Room id
 		//Back knapp
@@ -576,7 +579,7 @@ void HostButtonFunc(void)
 
 void ToMenuButtonFunc(void)
 {
-	DOG::UI::Get()->ChangeUIscene(menuID);
+	DOG::UI::Get()->ChangeUIscene(joinID);
 	// show 10 join room buttons
 	// Efter att ha joinade ett rum
 		// visa antal spelare connectade
@@ -1299,10 +1302,10 @@ void GameLayer::Interact()
 		m_entityManager.AddComponent<InteractionQueryComponent>(player);
 }
 
-// NetCode* GameLayer::GetNetCode()
-// {
-// 	return &m_netCode;
-// }
+NetCode* GameLayer::GetNetCode()
+{
+	return NetCode::GetNetCode();
+}
 
 void GameLayer::ChangeGameState(GameState state)
 {

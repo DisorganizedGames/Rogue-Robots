@@ -8,9 +8,9 @@
 
 DOG::UI* DOG::UI::s_instance = nullptr;
 
-UINT menuID, gameID, optionsID, multiID, lobbyID;
+UINT menuID, gameID, optionsID, multiID, lobbyID, joinID;
 UINT menuBackID, optionsBackID, multiBackID;
-UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID;
+UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID;
 UINT cID, tID, hID, playerlistID;
 
 
@@ -794,13 +794,8 @@ void DOG::UIBuffTracker::DeactivateIcon(UINT index)
 DOG::UIPlayerList::UIPlayerList(DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
 {
    m_players.push_back(L"player 1");
-   m_players.push_back(L"player 2");
-   m_players.push_back(L"player 3");
-   m_players.push_back(L"player 4");
-   m_playerColours.push_back(D2D1::ColorF(D2D1::ColorF::Blue, 0.3f));
-   m_playerColours.push_back(D2D1::ColorF(D2D1::ColorF::Green, 0.3f));
+
    m_playerColours.push_back(D2D1::ColorF(D2D1::ColorF::Red, 0.3f));
-   m_playerColours.push_back(D2D1::ColorF(D2D1::ColorF::Yellow, 0.3f));
 
    m_screensize = d2d.GetRTPixelSize();
    HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.3f), &m_rectBrush);
@@ -951,6 +946,9 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto t = instance->Create<DOG::UITextField, float, float, float, float>(tID, (FLOAT)clientWidth / 2.f - 250.f / 2, (FLOAT)clientHeight / 2.f, 250.f, 30.f);
    instance->AddUIElementToScene(multiID, std::move(t));
 
+   auto joinback = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Join Room"));
+   instance->AddUIElementToScene(joinID, std::move(joinback));
+
    //Menu buttons
    auto bp = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Play"), std::function<void()>(PlayButtonFunc));
    auto bm = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bmID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
@@ -961,6 +959,9 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
    auto bh = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bhID, (FLOAT)clientWidth / 2.f - 75.f - 100.f, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Host"), std::function<void()>(HostButtonFunc));
    auto bj = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bjID, (FLOAT)clientWidth / 2.f - 75.f + 100.f, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Join"), std::function<void()>(ToMenuButtonFunc));
+
+   //Room Join buttons
+   auto r1 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r1ID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 1"), std::function<void()>(PlayButtonFunc));
 
    std::vector<std::wstring> vec;
    vec.push_back(L"Assets/Sprites/test.bmp");
@@ -977,6 +978,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(multiID, std::move(mulback));
    instance->AddUIElementToScene(multiID, std::move(bh));
    instance->AddUIElementToScene(multiID, std::move(bj));
+   instance->AddUIElementToScene(joinID, std::move(r1));
 
 
    //Splash screen
@@ -995,4 +997,5 @@ void AddScenes()
    optionsID = instance->AddScene();
    lobbyID = instance->AddScene();
    instance->ChangeUIscene(menuID);
+   joinID = instance->AddScene();
 }
