@@ -179,11 +179,6 @@ void GameLayer::OnUpdate()
 			UI::Get()->ChangeUIscene(menuID);
 			CloseMainScene();
 			break;
-		case GameState::ExitingToMainMenu:
-			CloseMainScene();
-			m_gameState = GameState::MainMenu;
-			UI::Get()->ChangeUIscene(menuID);
-			break;
 		case GameState::Restart:
 			CloseMainScene();
 			m_gameState = GameState::Lobby;
