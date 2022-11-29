@@ -2,6 +2,9 @@
 #include "ItemManager/ItemManager.h"
 
 using namespace DOG;
+
+NetCode* NetCode::s_thisNetCode = nullptr;
+
 NetCode::NetCode()
 {
 	m_netCodeAlive = true;
@@ -24,6 +27,7 @@ NetCode::NetCode()
 	QueryPerformanceFrequency(&m_clockFrequency);
 	QueryPerformanceCounter(&m_tickStartTime);
 	m_sleepGranularityMs = 1;
+	s_thisNetCode = this;
 }
 
 NetCode::~NetCode()
@@ -35,6 +39,13 @@ NetCode::~NetCode()
 		m_threadUdp.join();
 	
 	delete[] m_receiveBuffer;
+	s_thisNetCode = nullptr;
+}
+
+NetCode* NetCode::GetNetCode()
+{
+	assert(s_thisNetCode);
+	return s_thisNetCode;
 }
 
 void NetCode::OnStartup()
