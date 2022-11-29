@@ -68,7 +68,7 @@ namespace DOG::gfx
 
 		static_assert(S_MAX_FIF <= S_NUM_BACKBUFFERS);
 	public:
-		Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug);
+		Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug, GraphicsSettings& settings);
 		~Renderer();
 
 		UploadContext* GetMeshUploadContext() const { return m_meshUploadCtx.get(); }
@@ -78,6 +78,7 @@ namespace DOG::gfx
 		GraphicsBuilder* GetBuilder() const { return m_builder.get(); }
 		Monitor GetMonitor() const;
 		DXGI_MODE_DESC GetMatchingDisplayMode(std::optional<DXGI_MODE_DESC> mode = std::nullopt) const;
+		void VerifyAndSanitizeGraphicsSettings(GraphicsSettings& settings, u32 clientWidth, u32 clientHeight) const;
 
 		// Must be called at the start of any frame to pick up CPU side ImGUI code
 		void BeginGUI();

@@ -45,14 +45,19 @@
 
 namespace DOG::gfx
 {
-	Renderer::Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug) :
-		m_renderWidth(1920),
-		m_renderHeight(1080)
+	Renderer::Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug, GraphicsSettings& settings)
 	{
 		m_jointMan = std::make_unique<AnimationManager>();
 		m_backend = std::make_unique<gfx::RenderBackend_DX12>(debug);
 		m_rd = m_backend->CreateDevice(S_NUM_BACKBUFFERS);
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
+
+		// Swapchain is created -> we can check if settings verify settings against it.
+		VerifyAndSanitizeGraphicsSettings(settings, clientWidth, clientHeight);
+		m_graphicsSettings = settings;
+		m_renderWidth = m_graphicsSettings.renderResolution.x;
+		m_renderHeight = m_graphicsSettings.renderResolution.y;
+
 		UI::Initialize(m_rd, m_sc, S_NUM_BACKBUFFERS, clientWidth, clientHeight);
 		PostProcess::Initialize();
 
@@ -73,13 +78,10 @@ namespace DOG::gfx
 			return WinProc(hwnd, uMsg, wParam, lParam);
 		};
 
-		const u32 maxUploadSizeDefault = 40'000'000;
-		const u32 maxUploadSizeTextures = 400'000'000;
-
 		m_bin = std::make_unique<GPUGarbageBin>(S_MAX_FIF);
-		m_uploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, S_MAX_FIF);
-		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeTextures, S_MAX_FIF);
-		m_meshUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadSizeDefault, S_MAX_FIF);
+		m_uploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeDefault, S_MAX_FIF);
+		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeTextures, S_MAX_FIF);
+		m_meshUploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeDefault, S_MAX_FIF);
 
 		// For internal per frame management
 		const u32 maxUploadPerFrame = 512'000;
@@ -99,28 +101,27 @@ namespace DOG::gfx
 
 		// Startup
 		MeshTable::MemorySpecification spec{};
-		const u32 maxBytesPerAttribute = 4'000'000;
-		const u32 maxNumberOfIndices = 1'000'000;
-		const u32 maxTotalSubmeshes = 500;
-		const u32 maxMaterialArgs = 1000;
-
-		spec.maxSizePerAttribute[VertexAttribute::Position] = maxBytesPerAttribute;
-		spec.maxSizePerAttribute[VertexAttribute::UV] = maxBytesPerAttribute;
-		spec.maxSizePerAttribute[VertexAttribute::Normal] = maxBytesPerAttribute;
-		spec.maxSizePerAttribute[VertexAttribute::Tangent] = maxBytesPerAttribute;
-		spec.maxSizePerAttribute[VertexAttribute::BlendData] = maxBytesPerAttribute;
-		spec.maxTotalSubmeshes = maxTotalSubmeshes;
-		spec.maxNumIndices = maxNumberOfIndices;
+		spec.maxSizePerAttribute[VertexAttribute::Position] = m_graphicsSettings.maxBytesPerAttribute;
+		spec.maxSizePerAttribute[VertexAttribute::UV] = m_graphicsSettings.maxBytesPerAttribute;
+		spec.maxSizePerAttribute[VertexAttribute::Normal] = m_graphicsSettings.maxBytesPerAttribute;
+		spec.maxSizePerAttribute[VertexAttribute::Tangent] = m_graphicsSettings.maxBytesPerAttribute;
+		spec.maxSizePerAttribute[VertexAttribute::BlendData] = m_graphicsSettings.maxBytesPerAttribute;
+		spec.maxTotalSubmeshes = m_graphicsSettings.maxTotalSubmeshes;
+		spec.maxNumIndices = m_graphicsSettings.maxNumberOfIndices;
 		m_globalMeshTable = std::make_unique<MeshTable>(m_rd, m_bin.get(), spec);
 
 		MaterialTable::MemorySpecification memSpec{};
-		memSpec.maxElements = maxMaterialArgs;
+		memSpec.maxElements = m_graphicsSettings.maxMaterialArgs;
 		m_globalMaterialTable = std::make_unique<MaterialTable>(m_rd, m_bin.get(), memSpec);
 
 		// Default storage
 		auto lightStorageSpec = LightTable::StorageSpecification();
-		lightStorageSpec.pointLightSpec.maxStatics = 25;
-		lightStorageSpec.pointLightSpec.maxDynamic = 512;
+		lightStorageSpec.pointLightSpec.maxStatics = m_graphicsSettings.maxStaticPointLights;
+		lightStorageSpec.pointLightSpec.maxDynamic = m_graphicsSettings.maxDynamicPointLights;
+		lightStorageSpec.pointLightSpec.maxSometimes = m_graphicsSettings.maxSometimesPointLights;
+		lightStorageSpec.spotLightSpec.maxStatics = m_graphicsSettings.maxStaticSpotLights;
+		lightStorageSpec.spotLightSpec.maxDynamic = m_graphicsSettings.maxDynamicSpotLights;
+		lightStorageSpec.spotLightSpec.maxSometimes = m_graphicsSettings.maxSometimesSpotLights;
 		m_globalLightTable = std::make_unique<LightTable>(m_rd, m_bin.get(), lightStorageSpec, false);
 
 
@@ -452,6 +453,40 @@ namespace DOG::gfx
 			return static_cast<Swapchain_DX12*>(m_sc)->GetClosestMatchingDisplayModeDesc(*mode);
 		else
 			return static_cast<Swapchain_DX12*>(m_sc)->GetDefaultDisplayModeDesc();
+	}
+
+	void Renderer::VerifyAndSanitizeGraphicsSettings(GraphicsSettings& settings, u32 clientWidth, u32 clientHeight) const
+	{
+		settings.displayMode = GetMatchingDisplayMode(settings.displayMode);
+
+		// Guard against bad values
+		constexpr u32 maxTextureSize = 16384;
+		constexpr u32 minTextureSize = 8; // 1 would be allowed but use 8 as a min value for.
+
+		if (settings.renderResolution.x > maxTextureSize || settings.renderResolution.y > maxTextureSize
+			|| settings.renderResolution.x < minTextureSize || settings.renderResolution.y < minTextureSize)
+		{
+			settings.renderResolution.x = settings.displayMode->Width;
+			settings.renderResolution.y = settings.displayMode->Height;
+		}
+
+		Vector2u aspectRatio;
+		if (settings.windowMode == WindowMode::Windowed)
+		{
+			aspectRatio.x = clientWidth;
+			aspectRatio.y = clientHeight;
+		}
+		else
+		{
+			aspectRatio.x = settings.displayMode->Width;
+			aspectRatio.y = settings.displayMode->Height;
+		}
+
+		u32 d = std::gcd(aspectRatio.x, aspectRatio.y);
+		aspectRatio.x /= d;
+		aspectRatio.y /= d;
+
+		settings.renderResolution.x = settings.renderResolution.y * aspectRatio.x / aspectRatio.y;
 	}
 
 	void Renderer::SetMainRenderCamera(const DirectX::XMMATRIX& view, DirectX::XMMATRIX* proj)
