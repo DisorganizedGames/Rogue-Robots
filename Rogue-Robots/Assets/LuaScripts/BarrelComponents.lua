@@ -8,6 +8,17 @@ ARGUMENTS
 1:
 ]]
 
+function SetPosition(bullet, transformEntity, upFactor, rightFactor, forwardFactor)
+	local pos = Vector3.FromTable(Entity:GetTransformPosData(transformEntity))
+	local forward = Vector3.FromTable(Entity:GetForward(transformEntity))
+	local up = Vector3.FromTable(Entity:GetUp(transformEntity))
+	local right = Vector3.FromTable(Entity:GetRight(transformEntity))
+
+	pos = pos + up * upFactor + right * rightFactor + forward * forwardFactor
+
+	Entity:ModifyComponent(bullet.entity, "Transform", pos, 1)
+end
+
 function BarrelComponents:BasicBarrel()	
 	return 
 	{
@@ -16,21 +27,23 @@ function BarrelComponents:BasicBarrel()
 		speed = 340.0,
 		size = Vector3.New(5.0, 5.0, 5.0),
 
-		Update = function(self, gunEntity, parentEntityID, bullet)
+		Update = function(self, gunEntity, parentEntityID, bullet, miscComponent, transformEntity)
 			
 			--Do not think the bullet models center is correct
 			local boxColliderSize = bullet.size * 0.005 + Vector3.New(.1, .1, .1)
 			Entity:ModifyComponent(bullet.entity, "Transform", bullet.size + self.size, 3)
 
+			SetPosition(bullet, transformEntity, -0.04, 0.27, 0.9)
+			local gunForward = Vector3.FromTable(Entity:GetRight(gunEntity.entityID))
+
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
 			Entity:AddComponent(bullet.entity, "BoxColliderMass", boxColliderSize, true, 0.075)
 			Entity:AddComponent(bullet.entity, "Rigidbody", false)
 			Entity:AddComponent(bullet.entity, "Bullet", parentEntityID, 35.0)
-			--Entity:AddComponent(bullet.entity, "SubMeshRender", MaterialPrefabs:GetMaterial("BulletMaterial"))
 
 			Entity:PlayAudio(gunEntity.entityID, self.gunShotSound, true)
 
-			Physics:RBSetVelocity(bullet.entity, bullet.forward * (bullet.speed + self.speed))
+			Physics:RBSetVelocity(bullet.entity, gunForward * (bullet.speed + self.speed))
 		end,
 
 		Destroy = function(self)
@@ -63,13 +76,17 @@ function BarrelComponents:Grenade()
 		waitForFire = 0.0,
 		timeBetweenShots = 0.5,
 
-		Update = function(self, gunEntity, parentEntityID, bullet)
+		Update = function(self, gunEntity, parentEntityID, bullet, miscComponent, transformEntity)
 			
 			local newGrenadeSize = bullet.size * 0.02 + self.grenadeSize
 			local spherColliderRadius = bullet.size.x * 0.012 + self.grenadeSize.x
 			Entity:ModifyComponent(bullet.entity, "Transform", newGrenadeSize, 3)
 
-			local up = Vector3.FromTable(Entity:GetUp(parentEntityID))
+			local grenadeUp = Vector3.FromTable(Entity:GetUp(parentEntityID))
+
+			SetPosition(bullet, transformEntity, -0.1, 0.27, 1.0)
+
+			local gunForward = Vector3.FromTable(Entity:GetRight(gunEntity.entityID))
 
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
 			Entity:AddComponent(bullet.entity, "SphereCollider", spherColliderRadius, true)
@@ -77,7 +94,7 @@ function BarrelComponents:Grenade()
 
 			Entity:PlayAudio(gunEntity.entityID, self.gunShotSound, true)
 
-			Physics:RBSetVelocity(bullet.entity, bullet.forward * (bullet.speed + self.grenadeSpeed) + up * self.upSpeed)
+			Physics:RBSetVelocity(bullet.entity, bullet.forward * (bullet.speed + self.grenadeSpeed) + grenadeUp * self.upSpeed)
 		end,
 
 		Destroy = function(self, bullet, parentEntityID)
@@ -136,7 +153,7 @@ function BarrelComponents:Missile()
 		waitForFire = 0.0,
 		timeBetweenShots = 2.0,
 		
-		Update = function(self, gunEntity, parentEntityID, bullet, miscComponent)
+		Update = function(self, gunEntity, parentEntityID, bullet, miscComponent, transformEntity)
 
 			Entity:AddComponent(bullet.entity, "Model", self.bulletModel)
 
@@ -154,6 +171,8 @@ function BarrelComponents:Missile()
 				homingMissileInfo["attackFlightPhaseStartTime"] = 0.0
 				homingMissileInfo["homing"] = false
 			end
+
+			SetPosition(bullet, transformEntity, -0.1, 0.27, 1.0)
 
 			Entity:AddComponent(bullet.entity, "HomingMissileComponent", parentEntityID, gunEntity.entityID, homingMissileInfo)
 			Entity:PlayAudio(gunEntity.entityID, self.gunShotMissileSound, true)
@@ -195,16 +214,20 @@ function BarrelComponents:Laser()
 		speed = 80.0,
 		size = Vector3.New(1.0, 1.0, 1.0),
 
-		Update = function(self, gunEntity, parentEntityID, bullet)
+		Update = function(self, gunEntity, parentEntityID, bullet, miscComponent, transformEntity)
 			local boxColliderSize = bullet.size * 0.005 + Vector3.New(.1, .1, .1)
 			Entity:ModifyComponent(bullet.entity, "Transform", bullet.size + self.size, 3)
+
+			SetPosition(bullet, transformEntity, -0.1, 0.27, 1.0)
+
+			local gunForward = Vector3.FromTable(Entity:GetRight(gunEntity.entityID))
 
 			Entity:AddComponent(bullet.entity, "LaserBullet", parentEntityID)
 			Entity:AddComponent(bullet.entity, "BoxColliderMass", boxColliderSize, true, 0.075)
 			Entity:AddComponent(bullet.entity, "Rigidbody", false)
 			Entity:AddComponent(bullet.entity, "Bullet", parentEntityID, 100.0)
 
-			Physics:RBSetVelocity(bullet.entity, bullet.forward * (bullet.speed + self.speed))
+			Physics:RBSetVelocity(bullet.entity, gunForward * (bullet.speed + self.speed))
 
 			Entity:PlayAudio(gunEntity.entityID, self.gunShotLaserSound, true)
 		end,

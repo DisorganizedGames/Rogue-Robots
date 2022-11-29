@@ -171,7 +171,7 @@ function OnUpdate()
 				end
 
 				CreateBulletEntity(newBullets[i], cameraEntity)
-				barrelComponent:Update(gunEntity, EntityID, newBullets[i], miscComponent)
+				barrelComponent:Update(gunEntity, EntityID, newBullets[i], miscComponent, cameraEntity)
 				--Keep track of which barrel created the bullet
 				newBullets[i].barrel = barrelComponent
 				magazineComponent:Update(newBullets[i])
@@ -215,10 +215,10 @@ function CreateBulletEntity(bullet, transformEntity)
 		Vector3.Zero(),
 		size--bullet.size
 	)
-	local up = Vector3.FromTable(Entity:GetUp(transformEntity))
-	local angle = -math.pi / 2
+	local up = Vector3.FromTable(Entity:GetUp(gunEntity.entityID))
+	local angle = math.pi
 
-	local newForward = RotateAroundAxis(Entity:GetForward(transformEntity), up, angle)
+	local newForward = RotateAroundAxis(Entity:GetForward(gunEntity.entityID), up, angle)
 	Entity:SetRotationForwardUp(bullet.entity, newForward, up)
 
 	Entity:ModifyComponent(bullet.entity, "Transform", bullet.startPos, 1)
