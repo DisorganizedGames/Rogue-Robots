@@ -8,19 +8,17 @@
 
 DOG::UI* DOG::UI::s_instance = nullptr;
 
-UINT menuID, gameID, optionsID, multiID, lobbyID, joinID;
-UINT menuBackID, optionsBackID, multiBackID;
-UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID;
+UINT menuID, gameID, optionsID, multiID, lobbyID, joinID, WaitingForHostID;
+UINT menuBackID, optionsBackID, multiBackID, hostBackID;
+UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID;
 UINT cID, tID, hID, playerlistID;
 
 
 std::vector<bool> buffsVisible;
 
 
-void PlayButtonFunc(void)
-{
-   DOG::UI::Get()->ChangeUIscene(gameID);
-}
+void PlayButtonFunc(void);
+
 
 void OptionsButtonFunc(void)
 {
@@ -34,7 +32,26 @@ void MultiplayerButtonFunc(void)
 
 void HostButtonFunc(void);
 
-void ToMenuButtonFunc(void);
+void BackFromHost(void);
+
+void HostLaunch(void);
+
+void ToMenuButtonFunc(void)
+{
+    DOG::UI::Get()->ChangeUIscene(menuID);
+}
+
+void JoinButton(void);
+void Room1Button(void);
+void Room2Button(void);
+void Room3Button(void);
+void Room4Button(void);
+void Room5Button(void);
+void Room6Button(void);
+void Room7Button(void);
+void Room8Button(void);
+void Room9Button(void);
+void Room10Button(void);
 
 void ExitButtonFunc(void)
 {
@@ -942,9 +959,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto lobbyBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(multiBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Lobby"));
    instance->AddUIElementToScene(lobbyID, std::move(lobbyBack));
 
-   auto playerlist = instance->Create<DOG::UIPlayerList>(playerlistID);
-   instance->AddUIElementToScene(lobbyID, std::move(playerlist));
-   auto bplaylobby = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Play"), std::function<void()>(PlayButtonFunc));
+   auto bplaylobby = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Play"), std::function<void()>(HostLaunch));
    instance->AddUIElementToScene(lobbyID, std::move(bplaylobby));
 
    auto t = instance->Create<DOG::UITextField, float, float, float, float>(tID, (FLOAT)clientWidth / 2.f - 250.f / 2, (FLOAT)clientHeight / 2.f, 250.f, 30.f);
@@ -953,6 +968,9 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto joinback = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Join Room"));
    instance->AddUIElementToScene(joinID, std::move(joinback));
 
+   auto joining = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Joined Room"));
+   instance->AddUIElementToScene(WaitingForHostID, std::move(joining));
+
    //Menu buttons
    auto bp = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Play"), std::function<void()>(PlayButtonFunc));
    auto bm = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bmID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
@@ -960,12 +978,32 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto be = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(beID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
    auto optback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(optbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
    auto mulback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
-
+   auto hostBack = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 350.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Disconnect"), std::function<void()>(BackFromHost));
    auto bh = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bhID, (FLOAT)clientWidth / 2.f - 75.f - 100.f, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Host"), std::function<void()>(HostButtonFunc));
-   auto bj = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bjID, (FLOAT)clientWidth / 2.f - 75.f + 100.f, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Join"), std::function<void()>(ToMenuButtonFunc));
+   auto bj = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bjID, (FLOAT)clientWidth / 2.f - 75.f + 100.f, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Join"), std::function<void()>(JoinButton));
+   auto clientBack = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Disconnect"), std::function<void()>(BackFromHost));
 
    //Room Join buttons
-   auto r1 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r1ID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 1"), std::function<void()>(PlayButtonFunc));
+   auto r1 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r1ID, (FLOAT)clientWidth / 2.f - 1500.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 1"), std::function<void()>(Room1Button));
+   auto r2 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r2ID, (FLOAT)clientWidth / 2.f - 1000.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 2"), std::function<void()>(Room2Button));
+   auto r3 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r3ID, (FLOAT)clientWidth / 2.f - 500.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 3"), std::function<void()>(Room3Button));
+   auto r4 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r4ID, (FLOAT)clientWidth / 2.f , (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 4"), std::function<void()>(Room4Button));
+   auto r5 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r5ID, (FLOAT)clientWidth / 2.f + 500.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 5"), std::function<void()>(Room5Button));
+   auto r6 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r6ID, (FLOAT)clientWidth / 2.f + 1000.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 6"), std::function<void()>(Room6Button));
+   auto r7 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r7ID, (FLOAT)clientWidth / 2.f + 1500.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 7"), std::function<void()>(Room7Button));
+   auto r8 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r8ID, (FLOAT)clientWidth / 2.f - 500.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 8"), std::function<void()>(Room8Button));
+   auto r9 = instance->Create<DOG::UIButton>(r9ID, (FLOAT)clientWidth / 2.f , (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 9"), std::function<void()>(Room9Button));
+   auto r10 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r10ID, (FLOAT)clientWidth / 2.f + 500.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 10"), std::function<void()>(Room10Button));
+  
+   //Labels
+   auto l1 = instance->Create<DOG::UILabel>(l1ID, std::wstring(L"Room "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 450.f, 500.f, 60.f, 40.f);
+   auto l2 = instance->Create<DOG::UILabel>(l2ID, std::wstring(L"Ip: "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 350.f, 500.f, 60.f, 40.f);
+   auto l3 = instance->Create<DOG::UILabel>(l3ID, std::wstring(L"Nr of players: "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 250.f, 500.f, 60.f, 40.f);
+
+   //Client
+   auto l4 = instance->Create<DOG::UILabel>(l4ID, std::wstring(L"Room "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 450.f, 500.f, 60.f, 40.f);
+   auto l5 = instance->Create<DOG::UILabel>(l5ID, std::wstring(L" "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 350.f, 500.f, 60.f, 40.f);
+   auto l6 = instance->Create<DOG::UILabel>(l6ID, std::wstring(L"Nr of players: "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 250.f, 500.f, 60.f, 40.f);
 
    std::vector<std::wstring> vec;
    vec.push_back(L"Assets/Sprites/test.bmp");
@@ -983,7 +1021,23 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(multiID, std::move(bh));
    instance->AddUIElementToScene(multiID, std::move(bj));
    instance->AddUIElementToScene(joinID, std::move(r1));
-
+   instance->AddUIElementToScene(joinID, std::move(r2));
+   instance->AddUIElementToScene(joinID, std::move(r3));
+   instance->AddUIElementToScene(joinID, std::move(r4));
+   instance->AddUIElementToScene(joinID, std::move(r5));
+   instance->AddUIElementToScene(joinID, std::move(r6));
+   instance->AddUIElementToScene(joinID, std::move(r7));
+   instance->AddUIElementToScene(joinID, std::move(r8));
+   instance->AddUIElementToScene(joinID, std::move(r9));
+   instance->AddUIElementToScene(joinID, std::move(r10));
+   instance->AddUIElementToScene(lobbyID, std::move(l1));
+   instance->AddUIElementToScene(lobbyID, std::move(l2));
+   instance->AddUIElementToScene(lobbyID, std::move(l3));
+   instance->AddUIElementToScene(lobbyID, std::move(hostBack));
+   instance->AddUIElementToScene(WaitingForHostID, std::move(clientBack));
+   instance->AddUIElementToScene(WaitingForHostID, std::move(l4));
+   instance->AddUIElementToScene(WaitingForHostID, std::move(l5));
+   instance->AddUIElementToScene(WaitingForHostID, std::move(l6));
 
    //Splash screen
    // UINT sID;
@@ -1002,4 +1056,5 @@ void AddScenes()
    lobbyID = instance->AddScene();
    instance->ChangeUIscene(menuID);
    joinID = instance->AddScene();
+   WaitingForHostID = instance->AddScene();
 }

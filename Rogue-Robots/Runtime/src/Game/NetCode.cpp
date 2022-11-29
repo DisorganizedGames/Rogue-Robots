@@ -464,9 +464,11 @@ bool NetCode::Join(char* inputString)
 	else if (inputString[0] == 'f')
 		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.254"); //gunnar
 	else if (inputString[0] == 'g')
-		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.70"); // Emil
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.70"); // Emil F
 	else if (inputString[0] == 'h')
 		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.76"); // Jonatan
+	else if (inputString[0] == 'i')
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.8"); // Emil h
 	else if (inputString[0] == 'u')
 	{
 		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.55"); //192.168.1.55 || 192.168.50.214
@@ -517,6 +519,12 @@ void NetCode::SetMulticastAdress(const char* adress)
 {
 	m_client.SetMulticastAdress(adress);
 	m_serverHost.SetMulticastAdress(adress);
+}
+
+void NetCode::ResetServer()
+{
+	(&m_serverHost)->~Server();
+	new (&m_serverHost) Server();
 }
 
 void DeleteNetworkSync::OnLateUpdate(DOG::entity e, DeferredDeletionComponent&, NetworkId& netId, TransformComponent& transC)

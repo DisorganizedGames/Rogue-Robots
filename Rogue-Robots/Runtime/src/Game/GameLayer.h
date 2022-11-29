@@ -43,9 +43,10 @@ public:
 	virtual void OnImGuiRender() override final;
 	virtual void OnEvent(DOG::IEvent& event) override final;
 	
-	void ChangeGameState(GameState state);
+	static void ChangeGameState(GameState state);
 	static void ChangeNetworkState(NetworkStatus);
 
+	static GameState GetGameStatus() { return m_gameState; };
 	static NetworkStatus GetNetworkStatus() { return s_networkStatus; }
 	static NetCode* GetNetCode();
 private:
@@ -76,7 +77,7 @@ private:
 	void CheatDebugMenu(bool& open);
 	void Interact();
 private:
-	GameState m_gameState;
+	static GameState m_gameState;
 	static NetworkStatus s_networkStatus;
 	SceneComponent::Type m_selectedScene = SceneComponent::Type::PCGLevelScene;
 	std::unique_ptr<Scene> m_testScene;
