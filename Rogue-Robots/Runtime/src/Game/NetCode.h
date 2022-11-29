@@ -31,12 +31,16 @@ public:
 	bool IsLobbyAlive();
 	void SetMulticastAdress(const char* adress);
 	void SetLobbyStatus(bool lobbyStatus);
+	static NetCode* GetNetCode();
+
 private:
 	void Receive();
 	void ReceiveUdp();
 	
 	void UpdateSendUdp();
 	void AddMatrixUdp(DirectX::XMMATRIX input);
+
+	static NetCode* s_thisNetCode;
 
 	TcpHeader m_inputTcp;
 	PlayerNetworkComponentUdp m_playerInputUdp;
