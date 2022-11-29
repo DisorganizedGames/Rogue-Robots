@@ -32,6 +32,7 @@ public:
 	void SetMulticastAdress(const char* adress);
 	void SetLobbyStatus(bool lobbyStatus);
 	static NetCode* GetNetCode();
+	void ResetServer();
 
 private:
 	void Receive();
