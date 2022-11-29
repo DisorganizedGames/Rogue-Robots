@@ -29,6 +29,10 @@ namespace DOG
 	{
 		return static_cast<bool>(flags & AnimationFlag::Interrupt);
 	}
+	bool HasForceRestart(AnimationFlag flags)
+	{
+		return static_cast<bool>(flags & AnimationFlag::ForceRestart);
+	}
 	f32 ClipTick(RigAnimator::Clip& c)
 	{
 		return c.normalizedTime * c.totalTicks;
@@ -97,7 +101,11 @@ namespace DOG
 	{
 		clip.targetWeight = setter.targetWeights[setIdx];
 		clip.timeScale = setter.playbackRate;
-		clip.normalizedTime = clip.normalizedTime; // if (force_restart) nt = 0.f
+		clip.normalizedTime = clip.normalizedTime;
+		if (HasForceRestart(setter.flag))
+		{
+			clip.normalizedTime = 0.f;
+		}
 	}
 	void RigAnimator::UpdateClipCW(ClipSet& set, u32 idx)
 	{
@@ -312,6 +320,8 @@ namespace DOG
 			setter.targetWeights[i] /= wSum;
 
 		// Dont set if same as current target set
+		bool newTargets = false;
+		bool newWeights = false;
 		bool newTargetSet = set.nTargets == 0;
 		for (u32 i = 0; i < MAX_TARGETS; i++)
 		{
@@ -321,13 +331,16 @@ namespace DOG
 					newTargetSet = true;
 				break;
 			}
-			newTargetSet = (set.clips[i].targetWeight != setter.targetWeights[i]) || (set.clips[i].id != setter.animationIDs[i]);
-		}
-		// Same target set already set
-		if (!newTargetSet && (!HasInterrupt(setter.flag) || !clipCount))
-			return 0;
+			if (!newWeights)
+				newWeights = (set.clips[i].targetWeight != setter.targetWeights[i]);
+			if (!newTargets)
+				newTargets = (set.clips[i].id != setter.animationIDs[i]);
 
-		return clipCount;
+			newTargetSet = (newWeights) || (newTargets);
+		}
+
+		const bool newSetter = newTargetSet || (HasInterrupt(setter.flag) || HasForceRestart(setter.flag));
+		return newSetter * clipCount;
 	}
 
 	void RigAnimator::ProcessSetter(Setter& setter)
@@ -402,7 +415,7 @@ namespace DOG
 			bs.transitionStart = globalTime;
 			bs.transitionLength = setter.transitionLength;
 		}
-		else if ((bs.currentWeight == bs.targetWeight == TARGET_ACTION) || HasInterrupt(setter.flag))
+		else if (HasInterrupt(setter.flag))
 		{
 			bs.startWeight = HasInterrupt(setter.flag) ? TARGET_LOOPING : bs.currentWeight;
 			bs.targetWeight = TARGET_LOOPING;
@@ -431,6 +444,10 @@ namespace DOG
 	{
 		for (u32 i = 0; i < MAX_TARGETS; i++)
 			setter.animationIDs[i] = -1;
+		setter.group = fullBodyGroup;
+		setter.playbackRate = 1.f;
+		setter.priority = BASE_PRIORITY;
+		setter.transitionLength = 0.1f;
 		setter.flag = AnimationFlag::None;
 	}
 
