@@ -17,11 +17,11 @@ Pathfinder::Pathfinder() noexcept
 {
 #ifdef _DEBUG
 	m_visualizePaths = true;
+	m_vizPortals = true;
 #else
 	m_visualizePaths = false;
 #endif
 	m_vizNavMeshes = false;
-	m_vizPortals = false;
 }
 
 Pathfinder::~Pathfinder()
@@ -150,7 +150,13 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 			navScene.AddIdAt(x, y, z, newMesh);
 			em.AddComponent<NavMeshComponent>(newMesh);
 			em.AddComponent<SceneComponent>(newMesh, sceneType);
-			em.AddComponent <BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
+			BoundingBoxComponent& bb = em.AddComponent<BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
+			if (m_vizNavMeshes)
+			{
+				// visualize NavMesh
+				em.AddComponent<TransformComponent>(e).SetPosition(bb.Center()).SetScale(NAVMESH_SCALE);
+				em.AddComponent<ModelComponent>(e, AssetManager::Get().LoadShapeAsset(NAVMESH_SHAPE, NAVMESH_TESS));
+			}
 		});
 
 	em.Collect<EmptySpaceComponent>().Do(
@@ -166,9 +172,14 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 			navScene.AddIdAt(x, y, z, newMesh);
 			em.AddComponent<NavMeshComponent>(newMesh);
 			em.AddComponent<SceneComponent>(newMesh, sceneType);
-			em.AddComponent <BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
-		}
-	);
+			BoundingBoxComponent& bb = em.AddComponent<BoundingBoxComponent>(newMesh, em.GetComponent<BoundingBoxComponent>(e));
+			if (m_vizNavMeshes)
+			{
+				// visualize NavMesh
+				em.AddComponent<TransformComponent>(e).SetPosition(bb.Center()).SetScale(NAVMESH_SCALE);
+				em.AddComponent<ModelComponent>(e, AssetManager::Get().LoadShapeAsset(NAVMESH_SHAPE, NAVMESH_TESS));
+			}
+		});
 
 
 	// Connect the NavMeshes
@@ -200,6 +211,13 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 								// add necessary components to portal
 								Vector3 pos = em.AddComponent<PortalComponent>(id, me, other).portal;
 								em.AddComponent<SceneComponent>(id, sceneType);
+
+								if (m_vizPortals)
+								{
+									// visualize Portals
+									em.AddComponent<TransformComponent>(id).SetPosition(pos).SetScale(PORTAL_SCALE);
+									em.AddComponent<ModelComponent>(id, AssetManager::Get().LoadShapeAsset(PORTAL_SHAPE, PORTAL_TESS));
+								}
 							}
 						}
 					}
