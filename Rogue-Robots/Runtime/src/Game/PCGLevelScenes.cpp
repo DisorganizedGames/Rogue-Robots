@@ -31,7 +31,7 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 			spawnblockPos = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
 		});
 	spawnblockPos.x += 2.5f;
-	spawnblockPos.y += 5.0f;
+	spawnblockPos.y += 11.0f;
 	spawnblockPos.z += 2.5f;
 
 	//Spawn players

@@ -23,29 +23,38 @@ Server::Server()
 	const char* adress = "239.255.255.0";
 	memcpy(m_multicastAdress, adress, 16);
 	m_lobbyStatus = true;
+	WSADATA socketStart;
+	int check = WSAStartup(0x202, &socketStart);
+	if (check != 0)
+	{
+		std::cout << "Server: Failed to start WSA on server, ErrorCode: " << check << std::endl;
+	}
 }
 
 Server::~Server()
 {
 	if (m_gameAlive)
 	{
-		m_gameAlive = FALSE;
-		if(m_loopTcp.joinable())
+		m_gameAlive = false;
+		Sleep(1000);
+		if (m_loopTcp.joinable())
 			m_loopTcp.join();
-		if(m_reciveConnectionsTcp.joinable())
+		if (m_reciveConnectionsTcp.joinable())
 			m_reciveConnectionsTcp.join();
-		if(m_loopUdp.joinable())
+		if (m_loopUdp.joinable())
 			m_loopUdp.join();
-		if(m_reciveLoopUdp.joinable())
+		if (m_reciveLoopUdp.joinable())
 			m_reciveLoopUdp.join();
+
+		for (UINT8 socketIndex = 0; socketIndex < m_holdPlayerIds.size(); socketIndex++)
+		{
+			std::cout << "Server: Closes socket for player" << m_holdPlayerIds.at(socketIndex) + 1 << std::endl;
+			m_playerIds.push_back(m_holdPlayerIds.at(socketIndex));
+			m_holdPlayerIds.erase(m_holdPlayerIds.begin() + socketIndex);
+			m_clientsSocketsTcp.erase(m_clientsSocketsTcp.begin() + socketIndex);
+		}
 	}
-	for (UINT8 socketIndex = 0; socketIndex < m_holdPlayerIds.size(); socketIndex++)
-	{
-		std::cout << "Server: Closes socket for player" << m_holdPlayerIds.at(socketIndex) + 1 << std::endl;
-		m_playerIds.push_back(m_holdPlayerIds.at(socketIndex));
-		m_holdPlayerIds.erase(m_holdPlayerIds.begin() + socketIndex);
-		m_clientsSocketsTcp.erase(m_clientsSocketsTcp.begin() + socketIndex);
-	}
+	
 	WSACleanup();
 }
 
@@ -55,7 +64,7 @@ bool Server::StartTcpServer()
 
 	int check;
 	unsigned long setUnblocking = 1;
-	WSADATA socketStart;
+	
 	SOCKET listenSocket = INVALID_SOCKET;
 	addrinfo* addrOutput = NULL, addrInput;
 
@@ -65,12 +74,7 @@ bool Server::StartTcpServer()
 	addrInput.ai_protocol = IPPROTO_TCP;
 	addrInput.ai_flags = AI_PASSIVE;
 
-	check = WSAStartup(0x202, &socketStart);
-	if (check != 0)
-	{
-		std::cout << "Server: Failed to start WSA on server, ErrorCode: " << check << std::endl;
-		return FALSE;
-	}
+
 
 	check = getaddrinfo(NULL, PORTNUMBER_OUT, &addrInput, &addrOutput);
 	if (check != 0)
@@ -109,7 +113,7 @@ bool Server::StartTcpServer()
 		return FALSE;
 	}
 
-	m_gameAlive = TRUE;
+	m_gameAlive = true;
 	//Thread to handle new connections
 	m_reciveConnectionsTcp = std::thread(&Server::ServerReciveConnectionsTCP, this, listenSocket);
 	m_reciveConnectionsTcp.detach();
@@ -151,7 +155,7 @@ void Server::ServerReciveConnectionsTCP(SOCKET listenSocket)
 					bool turn = true;
 					std::cout << "Server: Connection Accepted" << std::endl;
 					setsockopt(clientSocket, SOL_SOCKET, TCP_NODELAY, (char*)&turn, sizeof(bool));
-					WSAPOLLFD m_clientPoll;
+					WSAPOLLFD clientPoll;
 					TcpHeader input;
 					std::cout << "\nServer: Accept a connection from clientSocket: " << clientSocket << ", From player: " << m_playerIds.front() + 1 << std::endl;
 					//give connections a player id
@@ -163,10 +167,10 @@ void Server::ServerReciveConnectionsTCP(SOCKET listenSocket)
 					m_playerIds.erase(m_playerIds.begin());
 
 					//store client socket
-					m_clientPoll.fd = clientSocket;
-					m_clientPoll.events = POLLRDNORM;
-					m_clientPoll.revents = 0;
-					m_clientsSocketsTcp.push_back(m_clientPoll);
+					clientPoll.fd = clientSocket;
+					clientPoll.events = POLLRDNORM;
+					clientPoll.revents = 0;
+					m_clientsSocketsTcp.push_back(clientPoll);
 				}
 			}
 		}
