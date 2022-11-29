@@ -1458,7 +1458,7 @@ void GameLayer::Interact()
 
 NetCode* GameLayer::GetNetCode()
 {
-	return &m_netCode;
+	return NetCode::GetNetCode();
 }
 
 void GameLayer::ChangeGameState(GameState state)
