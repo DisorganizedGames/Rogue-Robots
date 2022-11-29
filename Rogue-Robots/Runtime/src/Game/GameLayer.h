@@ -49,7 +49,7 @@ public:
 	static void ChangeNetworkState(NetworkStatus);
 
 	static NetworkStatus GetNetworkStatus() { return s_networkStatus; }
-	static NetCode* GetNetCode();
+	// static NetCode* GetNetCode();
 private:
 	void UpdateLobby();
 	void UpdateGame();
