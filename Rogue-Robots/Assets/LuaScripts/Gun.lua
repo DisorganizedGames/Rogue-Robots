@@ -114,7 +114,7 @@ function OnUpdate()
 	gunEntity.position = gunEntity.position + playerRight * 0.3 - playerUp * 0.15 + playerForward * 0.4
 
 	-- Rotate the weapon by 90 degrees pitch
-	local angle = math.pi / 2 + math.pi / 60.0 
+	local angle = math.pi / 2 + math.pi / 150.0 
 	local gunForward = RotateAroundAxis(playerForward, playerUp, angle)
 	local gunUp = playerUp--RotateAroundAxis(playerUp, playerRight, angle)
 
