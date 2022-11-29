@@ -71,7 +71,7 @@ namespace DOG
 					a.ProcessAnimationComponent(aC);
 					UpdateSkeleton(a, offset);
 					jtf.transform = SimpleMath::Matrix(XMMatrixTranslationFromVector(XMLoadFloat3(&m_headOffset)) *
-						XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[MIXAMO_RIG.headJoint]))) * tf.worldMatrix;
+						XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[offset + MIXAMO_RIG.headJoint]))) * tf.worldMatrix;
 				}
 			});
 	}
