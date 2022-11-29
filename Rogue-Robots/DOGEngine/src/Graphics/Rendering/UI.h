@@ -183,7 +183,7 @@ namespace DOG
    class UIBackground : public UIElement
    {
       public:
-         UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float heigt, const std::wstring& title);
+         UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float heigt, const std::wstring& title, float left = 0, float top = 0);
          ~UIBackground();
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;

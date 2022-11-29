@@ -479,10 +479,10 @@ void DOG::UIHealthBar::SetBarValue(float value, float maxValue)
    m_maxValue = maxValue;
 }
 
-DOG::UIBackground::UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float heigt, const std::wstring& title) : UIElement(id)
+DOG::UIBackground::UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float width, float heigt, const std::wstring& title, float left, float top) : UIElement(id)
 {
    m_title = title;
-   m_background = D2D1::RectF(0.0f, 0.0f, width, heigt);
+   m_background = D2D1::RectF(left, top, left + width, top + heigt);
    m_textRect = D2D1::RectF(width / 2 - 350.f / 2, heigt / 2 - 200.f, width / 2 + 300.f, heigt / 2 - 50.f);
    HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_textBrush);
    HR_VFY(hr);
