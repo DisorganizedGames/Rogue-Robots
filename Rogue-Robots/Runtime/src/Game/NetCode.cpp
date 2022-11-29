@@ -403,7 +403,7 @@ void NetCode::UpdateSendUdp()
 			if (pC.cameraEntity != DOG::NULL_ENTITY)
 			{
 				DOG::EntityManager& entityManager = DOG::EntityManager::Get();
-				if(entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix.Determinant() != 0)
+				if (entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix.Determinant() != 0)
 					m_playerInputUdp.cameraTransform = entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix;
 			}
 		});

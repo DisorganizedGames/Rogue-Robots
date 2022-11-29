@@ -25,6 +25,10 @@ namespace DOG
 	{
 		return static_cast<bool>(flags & AnimationFlag::ResetPrio);
 	}
+	bool HasInterrupt(AnimationFlag flags)
+	{
+		return static_cast<bool>(flags & AnimationFlag::Interrupt);
+	}
 	f32 ClipTick(RigAnimator::Clip& c)
 	{
 		return c.normalizedTime * c.totalTicks;
@@ -320,7 +324,7 @@ namespace DOG
 			newTargetSet = (set.clips[i].targetWeight != setter.targetWeights[i]) || (set.clips[i].id != setter.animationIDs[i]);
 		}
 		// Same target set already set
-		if (!newTargetSet)
+		if (!newTargetSet && (!HasInterrupt(setter.flag) || !clipCount))
 			return 0;
 
 		return clipCount;
@@ -362,12 +366,12 @@ namespace DOG
 			while (parent != origin)
 			{
 				if (parent == setter.group)
-					TransitionOutBS(setter, groupBlends[i]);
+					TransitionOutGroupBS(setter, groupBlends[i]);
 				parent = groups[parent].parent;
 			}
 		}
 	}
-	void RigAnimator::TransitionOutBS(Setter& setter, BlendSpecification& bs)
+	void RigAnimator::TransitionOutGroupBS(Setter& setter, BlendSpecification& bs)
 	{
 		bs.startWeight = bs.currentWeight;
 		bs.targetWeight = 0.f;
@@ -379,7 +383,7 @@ namespace DOG
 	{
 		auto& group = groups[setter.group];
 		auto& bs = HasLooping(setter.flag) ? group.looping.blend : group.action.blend;
-		bs.currentWeight = 0.f;
+		bs.currentWeight = HasInterrupt(setter.flag) ? 1.f : 0.f;
 		bs.targetWeight = 1.f;
 		bs.transitionStart = globalTime;
 		bs.transitionLength = setter.transitionLength;
@@ -394,14 +398,14 @@ namespace DOG
 				bs.durationLeft = groups[setter.group].action.clips[0].duration / setter.playbackRate;
 			}
 			bs.startWeight = bs.currentWeight;
-			bs.targetWeight = 1.f;
+			bs.targetWeight = TARGET_ACTION;
 			bs.transitionStart = globalTime;
 			bs.transitionLength = setter.transitionLength;
 		}
-		else if (bs.currentWeight == bs.targetWeight == 1.f)
+		else if ((bs.currentWeight == bs.targetWeight == TARGET_ACTION) || HasInterrupt(setter.flag))
 		{
-			bs.startWeight = bs.currentWeight;
-			bs.targetWeight = 0.f;
+			bs.startWeight = HasInterrupt(setter.flag) ? TARGET_LOOPING : bs.currentWeight;
+			bs.targetWeight = TARGET_LOOPING;
 			bs.transitionStart = globalTime;
 			bs.transitionLength = setter.transitionLength;
 		}

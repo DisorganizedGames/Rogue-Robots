@@ -106,29 +106,29 @@ namespace DOG
 				static auto& rig = m_rigs[rigID];
 				static auto& anims = rig->animations;
 
-				if(!m_rigs.size())
+				if (!m_rigs.size())
 					return ImGui::End();
 
 				static f32 animDuration = {};
 				static i32 currAnim = 0;
 				static bool displayDetails = false;
 
-				if (ImGui::BeginCombo("animations", anims[currAnim].name.c_str()))
-				{
-					for (i32 i = 0; i < std::size(rig->animations); i++)
-						if (ImGui::Selectable(("ID: " + std::to_string(i) + " = " + rig->animations[i].name).c_str(), (i == currAnim)))
-							currAnim = i;
-					ImGui::EndCombo();
-				}
 				if (ImGui::Button("DisplayDetails"))
 					displayDetails ^= 1;
-				if(displayDetails)
+				if (displayDetails)
 				{
-					static auto PrintTableRow = [](const std::string&& c1, const std::string&& c2){
+					if (ImGui::BeginCombo("Animations", anims[currAnim].name.c_str()))
+					{
+						for (i32 i = 0; i < std::size(rig->animations); i++)
+							if (ImGui::Selectable(("ID: " + std::to_string(i) + " = " + rig->animations[i].name).c_str(), (i == currAnim)))
+								currAnim = i;
+						ImGui::EndCombo();
+					}
+					static auto PrintTableRow = [](const std::string&& c1, const std::string&& c2) {
 						ImGui::TableNextColumn(); ImGui::Text(c1.c_str());
 						ImGui::TableNextColumn(); ImGui::Text(c2.c_str());
 					};
-					if(ImGui::BeginTable(anims[currAnim].name.c_str(), 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV))
+					if (ImGui::BeginTable(anims[currAnim].name.c_str(), 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV))
 					{
 						auto& a = anims[currAnim]; // Combo Selected animation
 						PrintTableRow("Name", a.name.c_str());
@@ -141,7 +141,7 @@ namespace DOG
 
 				// attempting to create timeline WIP
 				//ImGuiTimeLine();
-				
+
 				// joint Transform component
 				if (ImGui::BeginCombo("joint", m_rigs[0]->nodes[m_imguiJoint].name.c_str()))
 				{
@@ -174,6 +174,8 @@ namespace DOG
 
 					static bool loopingFlag = false;
 					ImGui::Checkbox("LoopingFlag", &loopingFlag);
+					static bool interruptFlag = false;
+					ImGui::Checkbox("InterruptFlag", &interruptFlag);
 					static bool persistFlag = false;
 					ImGui::SameLine(); ImGui::Checkbox("PersistFlag", &persistFlag);
 					static bool resetPrioFlag = false;
@@ -210,6 +212,8 @@ namespace DOG
 										s.flag = s.flag | AnimationFlag::Looping;
 									if (resetPrioFlag)
 										s.flag = s.flag | AnimationFlag::ResetPrio;
+									if (interruptFlag)
+										s.flag = s.flag | AnimationFlag::Interrupt;
 									s.priority = static_cast<u8>(priority);
 									s.group = static_cast<u8>(group);
 									s.transitionLength = transitionLen;
@@ -218,6 +222,23 @@ namespace DOG
 										s.animationIDs[i] = static_cast<i8>(chosenAnims[i]);
 										s.targetWeights[i] = weights[i];
 									}
+								}
+
+							});
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("SimpleAdd"))
+					{
+						EntityManager::Get().Collect<ThisPlayer, AnimationComponent>().Do([&](ThisPlayer&, AnimationComponent& rAC)
+							{
+								if (rAC.animatorID == 0)
+								{
+									AnimationFlag flg = AnimationFlag::None;
+									if (persistFlag) flg = flg | AnimationFlag::Persist;
+									if (loopingFlag) flg = flg | AnimationFlag::Looping;
+									if (resetPrioFlag) flg = flg | AnimationFlag::ResetPrio;
+									if (interruptFlag) flg = flg | AnimationFlag::Interrupt;
+									rAC.SimpleAdd(static_cast<i8>(chosenAnims[0]), flg, priority);
 								}
 							});
 					}
@@ -343,7 +364,7 @@ namespace DOG
 			key2Idx++;
 		key2Idx = std::clamp(key2Idx, 1, i32(keys.size() - 1));
 		i32 key1Idx = (key2Idx == 1) ? (i32)keys.size() - 1 : key2Idx - 1;
-		
+
 		const auto& key1 = keys[key1Idx];
 		const auto& key2 = keys[key2Idx];
 		const auto t1 = (key2Idx == 1) ? 0.f : key1.time;
@@ -426,7 +447,7 @@ namespace DOG
 
 		// Check if clip group influences final pose or not
 		auto HasInfluence = [ac](const u32 group) {
-			return group == fullBodyGroup || (ac.groupClipCount[group] > 0 && ac.groups[group].weight);};
+			return group == fullBodyGroup || (ac.groupClipCount[group] > 0 && ac.groups[group].weight); };
 
 		// Go through clip groups and update joint scale/rot/translation
 		for (u32 i = 0; i < N_KEYS; i++)
@@ -447,7 +468,7 @@ namespace DOG
 		using namespace DirectX;
 		using PoseData = DOG::ClipData;
 		using AnimationKeys = std::unordered_map<i32, std::vector<AnimationKey>>;
-		
+
 		// Check if group has influence before performing calculations
 		if (group != fullBodyGroup && a.GetGroupWeight(group) == 0.0f)
 			return;
@@ -509,12 +530,12 @@ namespace DOG
 		{
 			// index to first clip influencing bone
 			auto clipIdx = i * nClips;
-			
+
 			if (key != KeyType::Rotation)
 			{	// Sum clip key values for weighted average
 				for (u32 j = 0; j < nClips; ++j, ++clipIdx)
 					storeSRT[i] += keyValues[clipIdx];
-				
+
 				const bool rootDefault = key == KeyType::Translation && i == ROOT_JOINT && !m_imguiApplyRootTranslation;
 				// if no keyframe scaling/translation influence set base value
 				if (XMComparisonAllTrue(XMVector3EqualR(storeSRT[i], {})) || rootDefault)
@@ -539,7 +560,7 @@ namespace DOG
 					storeSRT[i] = XMLoadFloat4(&m_baseRotation);
 			}
 		}
-		
+
 		// Unload transformation keys to final rig array
 		for (u32 i = 0, node = startNode; i < nNodes; ++i, ++node)
 		{
@@ -567,7 +588,7 @@ namespace DOG
 
 		for (size_t i = 0; i < m_playerRigAnimators.size(); ++i)
 		{
-			baseAc.SimpleAdd(idleIdx, AnimationFlag::Looping | AnimationFlag::ResetPrio);
+			baseAc.SimpleAdd(idleIdx, AnimationFlag::Looping | AnimationFlag::ResetPrio | AnimationFlag::Interrupt);
 			m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
 			m_playerRigAnimators[i].ProcessAnimationComponent(baseAc);
 			for (u32 j = 0; j < N_GROUPS; j++)
