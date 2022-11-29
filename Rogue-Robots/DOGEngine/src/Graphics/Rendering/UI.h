@@ -257,4 +257,19 @@ namespace DOG
          ComPtr<IDWriteTextFormat> m_textFormat;
    };
 
+   class UILabel: public UIElement
+   {
+      public:
+         UILabel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring text, float x, float y, float width, float height, float size);
+         ~UILabel();
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void SetText(std::wstring text);
+      private:
+         D2D_RECT_F m_rect;
+         std::wstring m_text;
+         ComPtr<IDWriteTextFormat> m_textFormat;
+         ComPtr<ID2D1SolidColorBrush> m_textBrush;
+   };
+
 }
