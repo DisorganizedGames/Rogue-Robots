@@ -94,6 +94,8 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<DeferredSetIgnoreCollisionCheckSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerUseEquipmentSystem>());
 
+	m_entityManager.RegisterSystem(std::make_unique<WeaponPointLightSystem>());
+
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
 

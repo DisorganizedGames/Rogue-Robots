@@ -682,3 +682,12 @@ public:
 	void OnUpdate(DOG::entity e, InputController& controller, PlayerAliveComponent&);
 };
 
+class WeaponPointLightSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(WeaponLightComponent, DOG::PointLightComponent, ChildComponent);
+	ON_UPDATE(WeaponLightComponent, DOG::PointLightComponent, ChildComponent);
+
+	void OnUpdate(WeaponLightComponent&, DOG::PointLightComponent& pointLight, ChildComponent&);
+};
+

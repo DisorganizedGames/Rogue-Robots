@@ -1156,4 +1156,9 @@ void SetFlashLightToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& ch
 	}
 }
 
+void WeaponPointLightSystem::OnUpdate(WeaponLightComponent&, DOG::PointLightComponent& pointLight, ChildComponent&)
+{
+	pointLight.dirty = true;
+}
+
 #pragma endregion

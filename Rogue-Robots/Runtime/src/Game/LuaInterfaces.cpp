@@ -153,6 +153,14 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddLaserBullet(context, e);
 	}
+	else if (compType == "PointLight")
+	{
+		AddPointLight(context, e);
+	}
+	else if (compType == "WeaponLight")
+	{
+		AddWeaponLightComponent(context, e);
+	}
 	//Add more component types here.
 	else
 	{
@@ -185,6 +193,11 @@ void EntityInterface::RemoveComponent(DOG::LuaContext* context)
 	else if (compType == "MiscComponent")
 	{
 		EntityManager::Get().RemoveComponent<MiscComponent>(e);
+		return;
+	}
+	else if (compType == "Model")
+	{
+		EntityManager::Get().RemoveComponent<ModelComponent>(e);
 		return;
 	}
 
@@ -827,6 +840,29 @@ void EntityInterface::AddScript(DOG::LuaContext* context, DOG::entity e)
 	LuaMain::GetScriptManager()->AddScript(e, context->GetString());
 }
 
+void EntityInterface::AddPointLight(DOG::LuaContext* context, DOG::entity e)
+{
+	LuaTable color = context->GetTable();
+	float strength = (float)context->GetDouble();
+	float radius = (float)context->GetDouble();
+
+	// Add dynamic point light
+	auto pdesc = PointLightDesc();
+	pdesc.color = {color.GetFloatFromTable("x"), color.GetFloatFromTable("y"), color.GetFloatFromTable("z")};
+	pdesc.strength = strength;
+	pdesc.radius = radius;
+	auto& plc = EntityManager::Get().AddComponent<PointLightComponent>(e);
+	plc.handle = LightManager::Get().AddPointLight(pdesc, LightUpdateFrequency::PerFrame);
+	plc.color = pdesc.color;
+	plc.strength = pdesc.strength;
+	plc.radius = pdesc.radius;
+}
+
+void EntityInterface::AddWeaponLightComponent(DOG::LuaContext*, DOG::entity e)
+{
+	EntityManager::Get().AddComponent<WeaponLightComponent>(e);
+}
+
 void EntityInterface::AddHomingMissile(DOG::LuaContext* context, DOG::entity e)
 {
 	auto& em = EntityManager::Get();
@@ -1292,7 +1328,7 @@ void RenderInterface::CreateMaterial(DOG::LuaContext* context)
 	DirectX::SimpleMath::Vector4 emissiveFactor = { (float)tab.GetDoubleFromTable(0), (float)tab.GetDoubleFromTable(1), (float)tab.GetDoubleFromTable(2), 1.f };
 
 	MaterialDesc d{};
-	d.albedoFactor = { (float)table.GetDoubleFromTable(0), (float)table.GetDoubleFromTable(1), (float)table.GetDoubleFromTable(2) };
+	d.albedoFactor = { (float)table.GetDoubleFromTable(0), (float)table.GetDoubleFromTable(1), (float)table.GetDoubleFromTable(2), 1.f };
 	d.roughnessFactor = roughnessFactor;
 	d.metallicFactor = metallicFactor;
 	d.emissiveFactor = emissiveFactor;

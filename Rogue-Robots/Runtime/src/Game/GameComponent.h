@@ -237,6 +237,11 @@ struct ChildToBoneComponent
 	bool nodeHasBeenUpdated = false;
 };
 
+struct WeaponLightComponent
+{
+
+};
+
 struct DespawnComponent
 {
 	DespawnComponent(f64 despawnTime)

@@ -156,6 +156,10 @@ private:
 
 	void AddScript(DOG::LuaContext* context, DOG::entity e);
 
+	void AddPointLight(DOG::LuaContext* context, DOG::entity e);
+
+	void AddWeaponLightComponent(DOG::LuaContext* context, DOG::entity e);
+
 
 	void AddHomingMissile(DOG::LuaContext* context, DOG::entity e);
 

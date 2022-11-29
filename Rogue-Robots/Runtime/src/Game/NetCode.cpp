@@ -56,6 +56,7 @@ void NetCode::OnStartup()
 				int gunID = ge.GetIntFromTable("entityID");
 				m_entityManager.RemoveComponent<ThisPlayerWeapon>(gunID);
 
+				tab.CallFunctionOnTable("DestroyWeaponLights");
 
 				EntityManager::Get().Collect<DontDraw, ChildComponent>().Do([&](entity subEntity, DontDraw&, ChildComponent& parentCompany)
 					{
@@ -89,6 +90,7 @@ void NetCode::OnStartup()
 				int gunID = ge.GetIntFromTable("entityID");
 				m_entityManager.AddComponent<ThisPlayerWeapon>(gunID);
 
+				tab.CallFunctionOnTable("CreateWeaponLights");
 
 				m_entityManager.AddComponent<AudioListenerComponent>(id);
 				m_entityManager.RemoveComponent<OnlinePlayer>(id);
