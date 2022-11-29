@@ -2,7 +2,6 @@
 #include "ItemManager/ItemManager.h"
 
 using namespace DOG;
-
 NetCode* NetCode::s_thisNetCode = nullptr;
 
 NetCode::NetCode()
@@ -20,7 +19,6 @@ NetCode::NetCode()
 	
 	m_bufferSize = sizeof(TcpHeader);
 	m_bufferReceiveSize = 0;
-	m_receiveBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
 	m_dataIsReadyToBeReceivedTcp = false;
 	m_lobby = false;
 	//Tick
@@ -37,8 +35,7 @@ NetCode::~NetCode()
 		m_thread.join();
 	if (m_threadUdp.joinable())
 		m_threadUdp.join();
-	
-	delete[] m_receiveBuffer;
+	Sleep(1000);
 	s_thisNetCode = nullptr;
 }
 
@@ -125,7 +122,7 @@ void NetCode::OnUpdate()
 				transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerTransform;
 				inputC = m_outputUdp.m_holdplayersUdp[networkC.playerId].actions;
 				statsC = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat;
-				if (statsC.health > 0 && !m_entityManager.HasComponent<PlayerAliveComponent>(id))
+				if (statsC.health > 0 && !m_entityManager.HasComponent<PlayerAliveComponent>(id) )
 					m_entityManager.AddComponent<PlayerAliveComponent>(id);
 				if ((pC.cameraEntity != DOG::NULL_ENTITY) && (m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform.Determinant() != 0)) {
 					m_entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform;
@@ -348,6 +345,7 @@ void NetCode::OnUpdate()
 	}
 }
 
+extern void BackFromHost(void);
 
 void NetCode::Receive()
 {
@@ -380,6 +378,8 @@ void NetCode::Receive()
 			if (m_receiveBuffer == nullptr || m_numberOfPackets == 0)
 			{
 				std::cout << "NetCode:: Bad tcp packet, Number of packets: " << m_numberOfPackets << std::endl;
+				if (m_inputTcp.lobbyAlive)
+					m_netCodeAlive = false;
 			}
 			else
 			{
@@ -389,6 +389,8 @@ void NetCode::Receive()
 			
 	}
 	std::cout << "Client: stopped reciving packets \n";
+	if(m_inputTcp.playerId != 0)
+		BackFromHost();
 }
 	
 void NetCode::ReceiveUdp()
@@ -466,9 +468,11 @@ bool NetCode::Join(char* inputString)
 	else if (inputString[0] == 'f')
 		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.254"); //gunnar
 	else if (inputString[0] == 'g')
-		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.70"); // Emil
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.70"); // Emil F
 	else if (inputString[0] == 'h')
 		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.76"); // Jonatan
+	else if (inputString[0] == 'i')
+		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.8"); // Emil h
 	else if (inputString[0] == 'u')
 	{
 		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.55"); //192.168.1.55 || 192.168.50.214
@@ -519,6 +523,12 @@ void NetCode::SetMulticastAdress(const char* adress)
 {
 	m_client.SetMulticastAdress(adress);
 	m_serverHost.SetMulticastAdress(adress);
+}
+
+void NetCode::ResetServer()
+{
+	(&m_serverHost)->~Server();
+	new (&m_serverHost) Server();
 }
 
 void DeleteNetworkSync::OnLateUpdate(DOG::entity e, DeferredDeletionComponent&, NetworkId& netId, TransformComponent& transC)

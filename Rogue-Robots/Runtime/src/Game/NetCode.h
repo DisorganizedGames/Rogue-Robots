@@ -32,6 +32,7 @@ public:
 	void SetMulticastAdress(const char* adress);
 	void SetLobbyStatus(bool lobbyStatus);
 	static NetCode* GetNetCode();
+	void ResetServer();
 
 private:
 	void Receive();
@@ -62,7 +63,7 @@ private:
 	u16 m_bufferSize;
 	int m_bufferReceiveSize;
 	char m_sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
-	char* m_receiveBuffer;
+	char m_receiveBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
 	bool m_dataIsReadyToBeReceivedTcp;
 	bool m_lobby;
 	Server m_serverHost;

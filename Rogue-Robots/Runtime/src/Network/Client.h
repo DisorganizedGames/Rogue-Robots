@@ -34,4 +34,5 @@
 		char* m_reciveUdpBuffer;
 		PlayerNetworkComponentUdp m_holdplayersUdp[MAX_PLAYER_COUNT];
 		char m_multicastAdress[16];
+		bool m_reciveTrue;
 	};
