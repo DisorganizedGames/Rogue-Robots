@@ -23,6 +23,12 @@ Server::Server()
 	const char* adress = "239.255.255.0";
 	memcpy(m_multicastAdress, adress, 16);
 	m_lobbyStatus = true;
+	WSADATA socketStart;
+	int check = WSAStartup(0x202, &socketStart);
+	if (check != 0)
+	{
+		std::cout << "Server: Failed to start WSA on server, ErrorCode: " << check << std::endl;
+	}
 }
 
 Server::~Server()
@@ -55,7 +61,7 @@ bool Server::StartTcpServer()
 
 	int check;
 	unsigned long setUnblocking = 1;
-	WSADATA socketStart;
+	
 	SOCKET listenSocket = INVALID_SOCKET;
 	addrinfo* addrOutput = NULL, addrInput;
 
@@ -65,12 +71,7 @@ bool Server::StartTcpServer()
 	addrInput.ai_protocol = IPPROTO_TCP;
 	addrInput.ai_flags = AI_PASSIVE;
 
-	check = WSAStartup(0x202, &socketStart);
-	if (check != 0)
-	{
-		std::cout << "Server: Failed to start WSA on server, ErrorCode: " << check << std::endl;
-		return FALSE;
-	}
+
 
 	check = getaddrinfo(NULL, PORTNUMBER_OUT, &addrInput, &addrOutput);
 	if (check != 0)
