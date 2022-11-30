@@ -340,7 +340,7 @@ namespace DOG
 			newTargetSet = (newWeights) || (newTargets);
 		}
 
-		const bool newSetter = newTargetSet || (HasInterrupt(setter.flag) || HasForceRestart(setter.flag));
+		const bool newSetter = newTargetSet || (HasInterrupt(setter.flag) || HasForceRestart(setter.flag) || HasResetPrio(setter.flag));
 		return newSetter * clipCount;
 	}
 
@@ -417,7 +417,7 @@ namespace DOG
 			bs.transitionStart = globalTime;
 			bs.transitionLength = setter.transitionLength;
 		}
-		else if (HasInterrupt(setter.flag))
+		else if (HasInterrupt(setter.flag) || HasResetPrio(setter.flag))
 		{
 			bs.startWeight = HasInterrupt(setter.flag) ? TARGET_LOOPING : bs.currentWeight;
 			bs.targetWeight = TARGET_LOOPING;
@@ -455,19 +455,20 @@ namespace DOG
 
 	f32 RigAnimator::GetGroupWeight(u32 group)
 	{
-		auto parent = groups[group].parent;
-		const auto prio = groups[group].priority;
-		const auto weight = groups[group].weight;
-		return weight;
-		static constexpr i16 origin = -1;
-		// Travel group tree, if a parent group has higher prio group has no influence
-		while (parent != origin)
-			if (prio < groups[parent].priority)
-				return 0.f;
-			else
-				parent = groups[parent].parent;
+		return groups[group].weight;
+		// Keep this for reference
+		// auto parent = groups[group].parent;
+		//const auto prio = groups[group].priority;
+		//const auto weight = groups[group].weight;
+		//static constexpr i16 origin = -1;
+		//// Travel group tree, if a parent group has higher prio group has no influence
+		//while (parent != origin)
+		//	if (prio < groups[parent].priority)
+		//		return 0.f;
+		//	else
+		//		parent = groups[parent].parent;
 
-		return weight;
+		//return weight;
 	}
 	bool RigAnimator::ParentHigherPrio(u32 group)
 	{
