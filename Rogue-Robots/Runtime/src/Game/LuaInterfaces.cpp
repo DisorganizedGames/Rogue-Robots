@@ -1175,6 +1175,17 @@ void EntityInterface::AddLaserBullet(DOG::LuaContext* context, DOG::entity e)
 		frostLaserBulletModel = CreateSimpleModel(frostMat, ShapeCreator(Shape::prism, 16, 8).GetResult()->mesh, matrix);
 	}
 
+	static std::optional<SubmeshRenderer> fireLaserBulletModel = std::nullopt;
+	if (!fireLaserBulletModel)
+	{
+		MaterialDesc fireMat;
+		fireMat.emissiveFactor = 6 * Vector4(1.4f, 0.15f, 0.05f, 1);
+		fireMat.albedoFactor = { 1.0f, 0.4f, 0.0f, 1 };
+		TransformComponent matrix;
+		matrix.RotateW({ 0, 0, XM_PIDIV2 }).SetScale(Vector3(0.08f, 0.6f, 0.08f));
+		fireLaserBulletModel = CreateSimpleModel(fireMat, ShapeCreator(Shape::prism, 16, 8).GetResult()->mesh, matrix);
+	}
+
 	Vector3 color;
 	switch (magType)
 	{
@@ -1189,6 +1200,12 @@ void EntityInterface::AddLaserBullet(DOG::LuaContext* context, DOG::entity e)
 		color.x = frostLaserBulletModel->materialDesc.emissiveFactor.x;
 		color.y = frostLaserBulletModel->materialDesc.emissiveFactor.y;
 		color.z = frostLaserBulletModel->materialDesc.emissiveFactor.z;
+		break;
+	case MagazineModificationComponent::Type::Fire:
+		em.AddComponent<SubmeshRenderer>(e) = *fireLaserBulletModel;
+		color.x = fireLaserBulletModel->materialDesc.emissiveFactor.x;
+		color.y = fireLaserBulletModel->materialDesc.emissiveFactor.y;
+		color.z = fireLaserBulletModel->materialDesc.emissiveFactor.z;
 		break;
 	default:
 		break;
