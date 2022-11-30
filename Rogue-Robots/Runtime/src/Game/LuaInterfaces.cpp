@@ -105,6 +105,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		EntityManager::Get().AddComponent<FrostEffectComponent>(e).frostTimer = (float)context->GetDouble();
 	}
+	else if (compType == "FireEffect")
+	{
+		AddFireEffectComponent(context, e);
+	}
 	else if (compType == "SubMeshRender")
 	{
 		AddSubmeshRender(context, e);
@@ -382,6 +386,9 @@ void EntityInterface::GetEntityTypeAsString(DOG::LuaContext* context)
 	case EntityTypes::FrostMagazineModification:
 		context->ReturnString("FrostMagazineModification");
 		break;
+	case EntityTypes::FireMagazineModification:
+		context->ReturnString("FireMagazineModification");
+		break;
 	case EntityTypes::GrenadeBarrel:
 		context->ReturnString("GrenadeBarrel");
 		break;
@@ -512,6 +519,7 @@ const std::unordered_map<BarrelComponent::Type, std::string> barrelTypeMap = {
 const std::unordered_map<MagazineModificationComponent::Type, std::string> modificationTypeMap = {
 	{ MagazineModificationComponent::Type::None, "None" },
 	{ MagazineModificationComponent::Type::Frost, "FrostMagazineModification"},
+	{ MagazineModificationComponent::Type::Fire, "FireMagazineModification"},
 };
 
 const std::unordered_map<MiscComponent::Type, std::string> miscTypeMap = {
@@ -1195,6 +1203,13 @@ void EntityInterface::AddGoalRadarComponent(DOG::LuaContext* context, DOG::entit
 	EntityManager::Get().AddComponent<GoalRadarComponent>(e, goalRadarTime);
 }
 
+void EntityInterface::AddFireEffectComponent(DOG::LuaContext* context, DOG::entity e)
+{
+	f32 fireEffectTime = (f32)context->GetDouble();
+	f32 damagePerTick = (f32)context->GetDouble();
+	EntityManager::Get().AddComponent<FireEffectComponent>(e, fireEffectTime, damagePerTick);
+}
+
 
 void EntityInterface::UpdateMagazine(DOG::LuaContext* context)
 {
@@ -1447,6 +1462,10 @@ void GameInterface::AddMagazineEffectsFromBullet(DOG::LuaContext* context)
 	if (EntityManager::Get().HasComponent<FrostEffectComponent>(bullet))
 	{
 		EntityManager::Get().AddComponent<FrostEffectComponent>(newEntity) = EntityManager::Get().GetComponent<FrostEffectComponent>(bullet);
+	}
+	if (EntityManager::Get().HasComponent<FireEffectComponent>(bullet))
+	{
+		EntityManager::Get().AddComponent<FireEffectComponent>(newEntity) = EntityManager::Get().GetComponent<FireEffectComponent>(bullet);
 	}
 }
 

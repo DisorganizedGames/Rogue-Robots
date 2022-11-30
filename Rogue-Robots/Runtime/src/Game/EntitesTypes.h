@@ -43,6 +43,7 @@ enum class EntityTypes
 	MagazineModificationItemsBegin,
 	DefaultMagazineModification,
 	FrostMagazineModification,
+	FireMagazineModification,
 	Magazines,
 
 	//Misc

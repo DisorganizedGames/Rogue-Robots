@@ -226,6 +226,12 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 			}
 			break;
 		}
+		if (EntityManager::Get().HasComponent<FireEffectComponent>(hit.hits[i].hitByEntity))
+		{
+			auto& fecBullet = EntityManager::Get().GetComponent<FireEffectComponent>(hit.hits[i].hitByEntity);
+			EntityManager::Get().AddOrReplaceComponent<FireEffectComponent>(e, fecBullet.fireTimer, fecBullet.fireDamagePerSecond);
+			break;
+		}
 	}
 
 	/* Signal to player that their bullet hit an enemy */
@@ -359,3 +365,16 @@ void LateAgentDestructCleanupSystem::OnLateUpdate(AgentIdComponent& agent, Defer
 	AgentManager::Get().CountAgentKilled(agent.id);
 };
 
+void AgentFireTimerSystem::OnUpdate(DOG::entity e, AgentHPComponent& hpComponent, FireEffectComponent& fireEffect)
+{
+	f32 deltaTime = (f32)Time::DeltaTime();
+
+	fireEffect.fireTimer -= deltaTime;
+	if (fireEffect.fireTimer > 0.0f)
+	{
+		hpComponent.hp -= fireEffect.fireDamagePerSecond * deltaTime;
+		hpComponent.damageThisFrame = true;
+	}
+	else
+		EntityManager::Get().RemoveComponent<FireEffectComponent>(e);
+}

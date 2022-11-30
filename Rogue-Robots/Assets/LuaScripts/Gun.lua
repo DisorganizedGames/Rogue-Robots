@@ -359,7 +359,7 @@ function OnPickup(pickup)
 			
 			hasBasicBarrelEquipped = false
 		end
-	elseif pickupTypeString == "FrostMagazineModification" then
+	elseif pickupTypeString == "FrostMagazineModification" or pickupTypeString == "FireMagazineModification" then
 		--Magazine modification component
 		local currentModificationType = Entity:GetModificationType(playerID)
 		if pickupTypeString ~= currentModificationType then
@@ -373,6 +373,9 @@ function OnPickup(pickup)
 			if pickupTypeString == "FrostMagazineModification" then
 				magazineComponent = MagazineManager.FrostEffect()
 				Entity:AddComponent(magazineEntityID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Frost.gltf"))
+			elseif pickupTypeString == "FireMagazineModification" then
+				magazineComponent = MagazineManager.FireEffect()
+				Entity:AddComponent(magazineEntityID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Fire.gltf"))
 			end
 			Entity:AddComponent(playerID, "MagazineModificationComponent", magazineComponent:GetECSType())
 		end	

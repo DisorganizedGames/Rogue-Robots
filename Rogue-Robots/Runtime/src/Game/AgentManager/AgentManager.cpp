@@ -126,6 +126,7 @@ void AgentManager::Initialize()
 	em.RegisterSystem(std::make_unique<AgentHitSystem>());
 	em.RegisterSystem(std::make_unique<AgentAggroSystem>());
 	em.RegisterSystem(std::make_unique<AgentFrostTimerSystem>());
+	em.RegisterSystem(std::make_unique<AgentFireTimerSystem>());
 	em.RegisterSystem(std::make_unique<AgentDestructSystem>());
 
 	// Register shadow agent systems

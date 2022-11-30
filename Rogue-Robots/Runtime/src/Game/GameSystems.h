@@ -267,6 +267,11 @@ public:
 				barrelType = "Frost ";
 				break;
 			}
+			case MagazineModificationComponent::Type::Fire:
+			{
+				barrelType = "Fire ";
+				break;
+			}
 			}
 		}
 
