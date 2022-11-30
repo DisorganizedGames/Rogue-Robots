@@ -79,13 +79,46 @@ void HomingMissileSystem::OnUpdate(entity e, HomingMissileComponent& missile, DO
 
 void HomingMissileSystem::StartMissileEngine(entity e, HomingMissileComponent& missile)
 {
-	missile.jet = EntityManager::Get().CreateEntity();
-	EntityManager::Get().AddComponent<TransformComponent>(missile.jet);
-	auto& localTransform = EntityManager::Get().AddComponent<ChildComponent>(missile.jet);
+	auto& em = EntityManager::Get();
+
+	missile.jet = em.CreateEntity();
+	em.AddComponent<TransformComponent>(missile.jet);
+	auto& localTransform = em.AddComponent<ChildComponent>(missile.jet);
 	localTransform.parent = e;
 	localTransform.localTransform.SetPosition({ 0,0, -0.7f }).SetRotation({ -DirectX::XM_PIDIV2, 0, 0 }).SetScale({ 1.3f, 1.3f, 1.3f });
-	EntityManager::Get().AddComponent<ModelComponent>(missile.jet).id = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/Missile/jet.gltf");
+	em.AddComponent<ModelComponent>(missile.jet).id = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/Missile/jet.gltf");
 	missile.engineIsIgnited = true;
+
+
+	// Load the dds textur if it exists
+	u32 texID{};
+	if (std::filesystem::exists("Assets/Textures/Flipbook/smoke_4x4.dds"))
+		texID = AssetManager::Get().LoadTexture("Assets/Textures/Flipbook/smoke_4x4.dds", AssetLoadFlag::GPUMemory);
+	else
+		texID = AssetManager::Get().LoadTexture("Assets/Textures/Flipbook/smoke_4x4.png", AssetLoadFlag::GPUMemory);
+
+	entity jetParticleEmitter = em.CreateEntity();
+	if (auto scene = em.TryGetComponent<SceneComponent>(e))
+		em.AddComponent<SceneComponent>(jetParticleEmitter, scene->get().scene);
+
+	em.AddComponent<TransformComponent>(jetParticleEmitter);
+	auto& tr = em.AddComponent<ChildComponent>(jetParticleEmitter);
+	tr.parent = missile.jet;
+	tr.localTransform.SetPosition({ 0, 0, 0 });
+
+	auto texture = AssetManager::Get().GetAsset<TextureAsset>(texID);
+	if (texture == nullptr) return;
+	em.AddComponent<ConeSpawnComponent>(jetParticleEmitter) = { .angle = DirectX::XM_PI / 8, .speed = 1.f };
+	em.AddComponent<ParticleEmitterComponent>(jetParticleEmitter) = {
+		.spawnRate = 128,
+		.particleSize = 0.25f,
+		.particleLifetime = 1.2f,
+		.textureHandle = texture->textureViewRawHandle,
+		.textureSegmentsX = 4,
+		.textureSegmentsY = 4,
+		.startColor = {1,1,1,1},
+		.endColor = {1, 1, 1, 0}
+	};
 }
 
 
