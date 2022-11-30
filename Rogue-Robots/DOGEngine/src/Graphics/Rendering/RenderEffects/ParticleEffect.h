@@ -39,10 +39,12 @@ namespace DOG::gfx
 		Pipeline m_compactPipeline;
 		Pipeline m_aliveMarkerPipeline;
 		Pipeline m_updatePipeline;
+		Pipeline m_sortPipeline;
 		Pipeline m_drawPipeline;
 
-		static constexpr u32 S_MAX_PARTICLES = 16 * 1024;
+		static constexpr u32 S_MAX_PARTICLES = 512;
 		static constexpr u32 S_COUNTERS = 2;
+		static constexpr u32 S_SORT_COMPUTE_GROUP = 256;
 	
 	private:
 		struct Particle
@@ -56,6 +58,12 @@ namespace DOG::gfx
 			f32 pad[2] = { 0 };
 		};
 
+	private:
+		void AddSortPasses(RenderGraph& renderGraph);
+		void AddLocal(RenderGraph& renderGraph, u32 groupSize);
+		void AddGlobal(RenderGraph& renderGraph, u32 groupSize);
 	};
+
+		
 	
 }

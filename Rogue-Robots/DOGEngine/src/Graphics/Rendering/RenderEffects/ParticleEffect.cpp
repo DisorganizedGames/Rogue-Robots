@@ -30,7 +30,10 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 	m_aliveMarkerPipeline = device->CreateComputePipeline(ComputePipelineDesc(aliveMarkerShader.get()));
 
 	auto updateShader = shaderCompiler->CompileFromFile("Particles/BasicUpdateCS.hlsl", ShaderType::Compute);
-	m_updatePipeline = device->CreateComputePipeline(ComputePipelineDesc(updateShader.get()));
+	m_updatePipeline = device->CreateComputePipeline(ComputePipelineDesc(updateShader.get())); 
+	
+	auto sortShader = shaderCompiler->CompileFromFile("Particles/ParticleSortCS.hlsl", ShaderType::Compute);
+	m_sortPipeline = device->CreateComputePipeline(ComputePipelineDesc(sortShader.get()));
 	
 	auto drawVS = shaderCompiler->CompileFromFile("Particles/ParticleVS.hlsl", ShaderType::Vertex);
 	auto drawPS = shaderCompiler->CompileFromFile("Particles/ParticlePS.hlsl", ShaderType::Pixel);
@@ -44,11 +47,11 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 				.BlendEnable = true,
 				.LogicOpEnable = false,
 				.SrcBlend = D3D12_BLEND_SRC_ALPHA,
-				.DestBlend = D3D12_BLEND_DEST_ALPHA,
+				.DestBlend = D3D12_BLEND_INV_SRC_ALPHA,
 				.BlendOp = D3D12_BLEND_OP_ADD,
 				.SrcBlendAlpha = D3D12_BLEND_ONE,
 				.DestBlendAlpha = D3D12_BLEND_ONE,
-				.BlendOpAlpha = D3D12_BLEND_OP_MAX,
+				.BlendOpAlpha = D3D12_BLEND_OP_ADD,
 				.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL,
 			}))
 		.Build()
@@ -209,8 +212,6 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 			rd->Cmd_SetPipeline(cmdl, m_compactPipeline);
 		ShaderArgs shaderArgs;
 			shaderArgs
-				.AppendConstant(m_globalEffectData.globalDataDescriptor)
-				.AppendConstant(*m_globalEffectData.perFrameTableOffset)
 				.AppendConstant(m_emitterGlobalDescriptor)
 				.AppendConstant(m_emitterLocalOffset)
 				.AppendConstant(resources.GetView(passData.particleBufferHandle))
@@ -218,18 +219,22 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 		rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
 		rd->Cmd_Dispatch(cmdl, S_MAX_PARTICLES / 256, 1, 1);
 		},
-			[](PassData&) // Pre-graph execution
+		[](PassData&) // Pre-graph execution
 		{
-	},
-			[](PassData&) // Post-graph execution
+
+		},
+		[](PassData&) // Post-graph execution
 		{
-	});
+
+		});
 
 	renderGraph.AddPass<PassData>("Particle Alive Marker Pass",
 		[this](PassData& passData, RenderGraph::PassBuilder& builder) // Build
 		{
 			passData.particleBufferHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticleBuffer),
 				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Particle), S_MAX_PARTICLES));
+			passData.particlesAliveHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticlesAliveBuffer),
+				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), S_COUNTERS));
 		},
 		[this](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) // Execute
 		{
@@ -238,7 +243,8 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 			shaderArgs
 				.AppendConstant(m_emitterGlobalDescriptor)
 				.AppendConstant(m_emitterLocalOffset)
-				.AppendConstant(resources.GetView(passData.particleBufferHandle));
+				.AppendConstant(resources.GetView(passData.particleBufferHandle))
+				.AppendConstant(resources.GetView(passData.particlesAliveHandle));
 			rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
 			rd->Cmd_Dispatch(cmdl, S_MAX_PARTICLES / 256, 1, 1);
 		});
@@ -278,6 +284,9 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 		{
 
 		});	
+
+	// Add Z sorting passes for the particles
+	AddSortPasses(renderGraph);
 
 	renderGraph.AddPass<PassData>("Particle Draw Pass",
 		[this](PassData& passData, RenderGraph::PassBuilder& builder) // Build
@@ -321,5 +330,141 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 
 		});
 
+}
+
+void ParticleEffect::AddSortPasses(RenderGraph& renderGraph)
+{
+
+
+	struct PassData
+	{
+		RGResourceView particleBufferHandle;
+		RGResourceView particlesAliveHandle;
+	};
+
+	u32 groupSize = S_SORT_COMPUTE_GROUP * 2;
+	if constexpr (S_MAX_PARTICLES < S_SORT_COMPUTE_GROUP * 2)
+	{
+		groupSize = S_MAX_PARTICLES;
+	}
+
+	AddLocal(renderGraph, groupSize);
+	
+	for (groupSize *= 2; groupSize <= S_MAX_PARTICLES; groupSize *= 2)
+	{
+		AddGlobal(renderGraph, groupSize);
+	}
+}
+
+void ParticleEffect::AddLocal(RenderGraph& renderGraph, u32 groupSize)
+{
+	constexpr u32 LOCAL_SORT_PASS = 0;
+	struct PassData 
+	{
+		RGResourceView particleBufferHandle;
+		RGResourceView particlesAliveHandle;
+	};
+
+	renderGraph.AddPass<PassData>("Group Local Particle Sort: " + std::to_string(groupSize),
+		[this](PassData& passData, RenderGraph::PassBuilder& builder) // Build
+		{
+			passData.particleBufferHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticleBuffer),
+				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Particle), S_MAX_PARTICLES));
+
+			passData.particlesAliveHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticlesAliveBuffer),
+				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), S_COUNTERS));
+
+		},
+		[this, groupSize](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) // Execute
+		{
+			rd->Cmd_SetPipeline(cmdl, m_sortPipeline);
+
+			ShaderArgs shaderArgs;
+			shaderArgs
+				.AppendConstant(groupSize)
+				.AppendConstant(LOCAL_SORT_PASS)
+				.AppendConstant(groupSize / 2) //swap distance
+				.AppendConstant(resources.GetView(passData.particleBufferHandle))
+				.AppendConstant(resources.GetView(passData.particlesAliveHandle))
+				.AppendConstant(m_globalEffectData.globalDataDescriptor)
+				.AppendConstant(*m_globalEffectData.perFrameTableOffset);
+
+			rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
+
+			rd->Cmd_Dispatch(cmdl, std::max(1u, S_MAX_PARTICLES/groupSize/2), 1, 1);
+		});
+}
+
+void ParticleEffect::AddGlobal(RenderGraph& renderGraph, u32 groupSize)
+{
+	constexpr u32 GLOBAL_SORT_PASS = 1;
+	constexpr u32 LOCAL_DISPERSE = 2;
+
+	struct PassData
+	{
+		RGResourceView particleBufferHandle;
+		RGResourceView particlesAliveHandle;
+	};
+	
+	for (u32 swapDistance = groupSize / 2; swapDistance > S_SORT_COMPUTE_GROUP; swapDistance /= 2)
+	{
+		renderGraph.AddPass<PassData>("Group Global Particle Sort: " + std::to_string(groupSize) + "_" + std::to_string(swapDistance),
+			[this](PassData& passData, RenderGraph::PassBuilder& builder) // Build
+			{
+				passData.particleBufferHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticleBuffer),
+					BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Particle), S_MAX_PARTICLES));
+
+				passData.particlesAliveHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticlesAliveBuffer),
+					BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), S_COUNTERS));
+
+			},
+			[this, groupSize, swapDistance](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) // Execute
+			{
+				rd->Cmd_SetPipeline(cmdl, m_sortPipeline);
+
+				ShaderArgs shaderArgs;
+				shaderArgs
+					.AppendConstant(groupSize)
+					.AppendConstant(GLOBAL_SORT_PASS)
+					.AppendConstant(swapDistance)
+					.AppendConstant(resources.GetView(passData.particleBufferHandle))
+					.AppendConstant(resources.GetView(passData.particlesAliveHandle))
+					.AppendConstant(m_globalEffectData.globalDataDescriptor)
+					.AppendConstant(*m_globalEffectData.perFrameTableOffset);
+
+				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
+
+				rd->Cmd_Dispatch(cmdl, S_MAX_PARTICLES / S_SORT_COMPUTE_GROUP, 1, 1);
+			});
+	}
+
+	renderGraph.AddPass<PassData>("Group Local Particle Sort(Disperse): " + std::to_string(groupSize),
+		[this](PassData& passData, RenderGraph::PassBuilder& builder) // Build
+		{
+			passData.particleBufferHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticleBuffer),
+				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Particle), S_MAX_PARTICLES));
+
+			passData.particlesAliveHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticlesAliveBuffer),
+				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(u32), S_COUNTERS));
+
+		},
+		[this, groupSize](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) // Execute
+		{
+			rd->Cmd_SetPipeline(cmdl, m_sortPipeline);
+
+			ShaderArgs shaderArgs;
+			shaderArgs
+				.AppendConstant(groupSize)
+				.AppendConstant(LOCAL_DISPERSE)
+				.AppendConstant(groupSize)
+				.AppendConstant(resources.GetView(passData.particleBufferHandle))
+				.AppendConstant(resources.GetView(passData.particlesAliveHandle))
+				.AppendConstant(m_globalEffectData.globalDataDescriptor)
+				.AppendConstant(*m_globalEffectData.perFrameTableOffset);
+
+			rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
+
+			rd->Cmd_Dispatch(cmdl, S_MAX_PARTICLES / S_SORT_COMPUTE_GROUP, 1, 1);
+		});
 }
 
