@@ -13,30 +13,47 @@ function OnStart()
 	EventSystem:Register("BulletEnemyHit" .. EntityID, OnBulletHit)
 end
 
+local iter = 0
+
 function OnUpdate()
 	if not itemsDirty then
 		return
 	end
 
+	-- Happens first time to store Lua copy
 	if not originalPlayerStats then
 		originalPlayerStats = Entity:GetPlayerStats(EntityID)
 	end
-	
+
+	-- Keep grabbing latest stats
+	local currPlayerStats = Entity:GetPlayerStats(EntityID)
+	originalPlayerStats.health = currPlayerStats["health"]
+
+	-- Stores local copy to be updated
 	local stats = {}
 	for k, v in pairs(originalPlayerStats) do
 		stats[k] = v
+		print(k, v)
 	end
-	
-	local hp = Entity:GetPlayerStat(EntityID, "health")
-	
+
+	-- Use effects to affect stats
 	for key, item in pairs(passiveItems) do
 		stats = item[1]:affect(item[2], stats)
 	end
-	
-	stats.health = hp
+
+	print("-------")
+	print("Iteration: ", iter)
+	iter = iter + 1
+	for k, v in pairs(stats) do
+		print(k, v)
+	end
+	print("-------")
+
 	Entity:SetPlayerStats(EntityID, stats)
 
+
 	itemsDirty = false
+
 end
 
 function OnPickup(pickup)

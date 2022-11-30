@@ -19,14 +19,22 @@ local passiveItemTemplate = {
 passiveItemsMap:Register("Template", passiveItemTemplate)
 
 
+local lastHpBoostStack = 0
+
 -- Actually just a copy of the template item
 -- Passive item that increases the max health of the player that picked it up by "boost"
 local maxHealthBoost = {
 	boost = 10,	
 
 	affect = function(self, stackCount, stats)
+
 		local newStats = stats
+		local oldMaxHealth = stats.maxHealth
 		newStats.maxHealth = newStats.maxHealth + self.boost * stackCount
+
+		if (newStats.maxHealth > oldMaxHealth) then
+			newStats.health = newStats.maxHealth
+		end
 		return newStats
 	end
 }
