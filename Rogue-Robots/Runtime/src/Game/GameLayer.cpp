@@ -323,13 +323,7 @@ void GameLayer::EvaluateLoseCondition()
 	bool playersAlive = false;
 	EntityManager::Get().Collect<PlayerAliveComponent>().Do([&playersAlive](PlayerAliveComponent&) { playersAlive = true; });
 
-	// Is a client
-	if (!playersAlive && s_networkStatus == NetworkStatus::Joining)
-	{
-		if (m_netCode.IsLobbyAlive())
-			m_gameState = GameState::Lost;
-	}
-	else if (!playersAlive)
+	if (!playersAlive)
 	{
 		m_gameState = GameState::Lost;
 	}
@@ -802,11 +796,10 @@ void JoinButton(void)
 
 void BackFromHost(void)
 {
+	DOG::UI::Get()->ChangeUIscene(multiID);
 	NetCode* temp = GameLayer::GetNetCode();
 	(GameLayer::GetNetCode())->~NetCode();
 	new (temp) NetCode();
-	DOG::UI::Get()->ChangeUIscene(multiID);
-
 }
 
 void HostLaunch(void)

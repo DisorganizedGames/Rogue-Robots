@@ -37,7 +37,7 @@ NetCode::~NetCode()
 		m_thread.join();
 	if (m_threadUdp.joinable())
 		m_threadUdp.join();
-	
+	Sleep(1000);
 	delete[] m_receiveBuffer;
 	s_thisNetCode = nullptr;
 }

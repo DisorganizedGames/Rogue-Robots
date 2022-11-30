@@ -17,7 +17,7 @@ struct PlayerNetworkComponentUdp
 	u64 udpId = 0;
 	DirectX::SimpleMath::Matrix playerTransform = {};
 	InputController actions;
-	PlayerStatsComponent playerStat;
+	PlayerStatsComponent playerStat = {100.f, 0.0f, 5.5f, 0.f,11.0f };
 	DirectX::SimpleMath::Matrix cameraTransform = {};
 };
 

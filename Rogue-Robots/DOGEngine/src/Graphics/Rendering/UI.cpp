@@ -1,9 +1,11 @@
 #include "UI.h"
 #include "../../Core/Time.h"
+#include "../../Core/Window.h"
 #include "../../Input/Mouse.h"
 #include "../../Input/Keyboard.h"
 #include "../../EventSystem/KeyboardEvents.h"
 #include "../../EventSystem/MouseEvents.h"
+
 
 
 DOG::UI* DOG::UI::s_instance = nullptr;
@@ -55,7 +57,7 @@ void Room10Button(void);
 
 void ExitButtonFunc(void)
 {
-   //Exit game
+    DOG::Window::CloseWindow();
 }
 
 DOG::UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight) : m_visible(true), Layer("UILayer")
