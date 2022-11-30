@@ -569,11 +569,6 @@ u32 ItemManager::CreateGoalRadarPickup(Vector3 position, u32 id)
 	ni.entityTypeId = EntityTypes::GoalRadar;
 	if (id == 0)
 		ni.id = ++goalRadarNetworkID;
-	else
-	{
-		ni.id = id;
-		goalRadarNetworkID = id;
-	}
 	LuaMain::GetScriptManager()->AddScript(goalRadarEntity, "Pickupable.lua");
 
 	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(goalRadarEntity);
