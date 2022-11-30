@@ -1127,6 +1127,14 @@ void EntityInterface::ModifyLaserBarrel(DOG::LuaContext* context, DOG::entity e)
 		{
 			em.RemoveComponentIfExists<FrostEffectComponent>(e);
 		}
+		if (mag->get().type == MagazineModificationComponent::Type::Fire)
+		{
+			em.AddOrReplaceComponent<FireEffectComponent>(e, 4.0f, 50.0f);
+		}
+		else if (mag->get().type != MagazineModificationComponent::Type::Fire)
+		{
+			em.RemoveComponentIfExists<FireEffectComponent>(e);
+		}
 	}
 
 	if (auto mag = em.TryGetComponent<BarrelComponent>(e))
@@ -1402,6 +1410,12 @@ void RenderInterface::CreateMaterial(DOG::LuaContext* context)
 
 	material.AddFloatToTable("roughnessFactor", d.roughnessFactor);
 	material.AddFloatToTable("metallicFactor", d.metallicFactor);
+
+	LuaTable emissiveFactorTable;
+	emissiveFactorTable.AddFloatToTable("x", d.emissiveFactor.x);
+	emissiveFactorTable.AddFloatToTable("y", d.emissiveFactor.y);
+	emissiveFactorTable.AddFloatToTable("z", d.emissiveFactor.z);
+	material.AddTableToTable("emissiveFactor", emissiveFactorTable);
 
 	context->ReturnTable(material);
 }

@@ -191,6 +191,8 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 	ItemManager::Get().CreateItem(EntityTypes::FullAutoMisc, Vector3(15.0f, 6.0f, 17.0f));
 	ItemManager::Get().CreateItem(EntityTypes::ChargeShotMisc, Vector3(18.0f, 6.0f, 17.0f));
 
+	ItemManager::Get().CreateItem(EntityTypes::FireMagazineModification, Vector3(44.0f, 6.0f, 17.0f));
+
 	// Setup lights
 	// Default lights
 

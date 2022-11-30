@@ -140,6 +140,8 @@ function OnUpdate()
 		local color = Vector3.New(1.5, 0.1, 0.1) * 7
 		if magazineComponent:GetECSType() == 1 then
 			color = Vector3.New(0.188, 0.835, 0.784) * 7 -- Blue color for FrostEffect
+		elseif magazineComponent:GetECSType() == 2 then
+			color = MaterialPrefabs:GetMaterial("FireExplosionMaterial")["emissiveFactor"]
 		end
 
 		local isOutOfAmmo = Entity:ModifyComponent(EntityID, "LaserBarrel", EntityID, 80.0, 700.0, shoot, laserStart, dir, color)
