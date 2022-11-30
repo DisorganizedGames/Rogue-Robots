@@ -60,6 +60,8 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 		return CreateReviverPickup(position, id);
 	case EntityTypes::GoalRadar:
 		return CreateGoalRadarPickup(position, id);
+	case EntityTypes::Syringe:
+		return CreateSyringePickup(position, id);
 	default:
 		break;
 	}
@@ -576,8 +578,39 @@ u32 ItemManager::CreateGoalRadarPickup(Vector3 position, u32 id)
 	}
 	LuaMain::GetScriptManager()->AddScript(goalRadarEntity, "Pickupable.lua");
 
-	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(goalRadarEntity);
-	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(goalRadarEntity).GetPosition().y;
+	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(entity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(entity).GetPosition().y;
+	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
+	return ni.id;
+}
+
+u32 ItemManager::CreateSyringePickup(Vector3 position, u32 id)
+{
+	static u32 syringeNetworkID = 0u;
+
+	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/suzanne.glb");
+
+	entity entity = s_entityManager.CreateEntity();
+	s_entityManager.AddComponent<ActiveItemComponent>(entity).type = ActiveItemComponent::Type::Syringe;
+	s_entityManager.AddComponent<PickupComponent>(entity).itemName = "Syringe";
+	s_entityManager.AddComponent<ModelComponent>(entity, modelID);
+	s_entityManager.AddComponent<TransformComponent>(entity, position).SetScale({ 0.3f, 0.3f, 0.3f });
+	s_entityManager.AddComponent<ShadowReceiverComponent>(entity);
+	auto& ni = s_entityManager.AddComponent<NetworkId>(entity);
+	ni.entityTypeId = EntityTypes::Syringe;
+	if (id == 0)
+		ni.id = ++syringeNetworkID;
+	else
+	{
+		ni.id = id;
+		syringeNetworkID = id;
+	}
+
+	LuaMain::GetScriptManager()->AddScript(entity, "Pickupable.lua");
+
+	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(entity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(entity).GetPosition().y;
 	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
 	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
 	return ni.id;

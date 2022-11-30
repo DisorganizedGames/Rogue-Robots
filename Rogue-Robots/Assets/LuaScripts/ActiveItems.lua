@@ -97,7 +97,20 @@ ActiveItems.goalRadar = {
 	GetECSType = function(self)
 			return 3
 		end,
+}
 
+ActiveItems.syringe = {
+
+	activate = function(self, playerEntity)
+			print("AYO BRO")
+			return playerEntity
+	end,
+
+	GetECSType = function(self)
+
+
+			return 4
+		end,
 }
 
 return ActiveItems

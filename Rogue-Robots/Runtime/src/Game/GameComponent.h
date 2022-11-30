@@ -131,7 +131,7 @@ struct PassiveItemComponent {
 //The active item that currently resides in inventory
 struct ActiveItemComponent
 {
-	enum class Type{ Trampoline = 0, Turret, Reviver, GoalRadar };
+	enum class Type{ Trampoline = 0, Turret, Reviver, GoalRadar, Syringe };
 
 	Type type;
 };
