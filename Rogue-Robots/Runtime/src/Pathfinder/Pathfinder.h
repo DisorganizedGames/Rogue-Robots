@@ -14,8 +14,8 @@ private:
 	bool m_vizOutlines;
 
 	static constexpr DOG::Shape NAVMESH_SHAPE = DOG::Shape::sphere;
-	static constexpr u32 NAVMESH_TESS = 16;
-	static constexpr Vector3 NAVMESH_SCALE = Vector3(.5f, .5f, .5f);
+	static constexpr u32 NAVMESH_TESS = 8;
+	static constexpr Vector3 NAVMESH_SCALE = Vector3(1.5f, 1.5f, 1.5f);
 	static constexpr Vector3 NAVMESH_COLOR = Vector3(0.f, 0.3f, 0.7f);
 
 	static constexpr DOG::Shape PORTAL_SHAPE = DOG::Shape::prism;
@@ -48,6 +48,12 @@ private:
 	struct Step
 	{
 		char x, y, z;
+		Step Positive() { return Step{ static_cast<char>(x * x), static_cast<char>(y * y), static_cast<char>(z * z) }; }
+		Step operator-() { return Step{ static_cast<char>(-x), static_cast<char>(-y), static_cast<char>(-z) }; }
+		Step operator-(const Step o) { return Step{ static_cast<char>(x - o.x), static_cast<char>(y - o.y), static_cast<char>(z - o.z) }; }
+		Step operator+(const Step o) { return Step{ static_cast<char>(x + o.x), static_cast<char>(y + o.y), static_cast<char>(z + o.z) }; }
+		Step InversePositive() { return Step{ 1, 1, 1 } - Positive(); }
+		Vector3 Vec3() { return Vector3{ static_cast<float>(x), static_cast<float>(y), static_cast<float>(z) }; }
 	};
 	const struct Dir
 	{

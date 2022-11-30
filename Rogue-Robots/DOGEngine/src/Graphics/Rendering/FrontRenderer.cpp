@@ -134,6 +134,8 @@ namespace DOG::gfx
 				// Non culled
 				if (model && model->gfxModel)
 				{
+					bool skipNormalRendering = false;
+
 					// Outline submission
 					if (mgr.HasComponent<OutlineComponent>(e))
 					{
@@ -148,10 +150,12 @@ namespace DOG::gfx
 							}
 
 							const auto& oc = mgr.GetComponent<OutlineComponent>(e);
+							if (oc.onlyOutline)
+								skipNormalRendering = true;
+
 							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
 								m_renderer->SubmitOutlinedMesh(model->gfxModel->mesh.mesh, i, oc.color, transformC, animated, jointOffset);
 						}
-
 					}
 				}
 
@@ -175,6 +179,9 @@ namespace DOG::gfx
 				if (model && model->gfxModel)
 				{
 
+
+					if (skipNormalRendering)
+						return;
 
 					// Shadow submission:
 					if (mgr.HasComponent<ShadowReceiverComponent>(e))

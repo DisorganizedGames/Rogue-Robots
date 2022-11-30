@@ -15,14 +15,16 @@ bool Pathfinder::m_initialized = false;
 
 Pathfinder::Pathfinder() noexcept
 {
-#ifdef _DEBUG
+//#ifdef _DEBUG
+//	m_visualizePaths = true;
+//	m_vizPortals = true;
+//#else
+//	m_visualizePaths = false;
+//	m_vizPortals = false;
+//#endif
 	m_visualizePaths = true;
 	m_vizPortals = true;
-#else
-	m_visualizePaths = false;
-	m_vizPortals = false;
-#endif
-	m_vizNavMeshes = false;
+	m_vizNavMeshes = true;
 	m_vizOutlines = true;
 }
 
@@ -74,7 +76,11 @@ void Pathfinder::VisualizePathsMenu(bool& open)
 							em.AddComponent<TransformComponent>(e).SetPosition(bb.Center()).SetScale(NAVMESH_SCALE);
 							em.AddComponent<ModelComponent>(e, AssetManager::Get().LoadShapeAsset(NAVMESH_SHAPE, NAVMESH_TESS));
 							if (m_vizOutlines && !em.HasComponent<OutlineComponent>(e))
-								em.AddComponent<OutlineComponent>(e).color = NAVMESH_COLOR;
+							{
+								auto& comp = em.AddComponent<OutlineComponent>(e);
+								comp.color = NAVMESH_COLOR;
+								comp.onlyOutline = true;
+							}
 						}
 					);
 				}
@@ -87,8 +93,12 @@ void Pathfinder::VisualizePathsMenu(bool& open)
 							// visualize NavMesh
 							em.RemoveComponent<TransformComponent>(e);
 							em.RemoveComponent<ModelComponent>(e);
-							if (m_vizOutlines && em.HasComponent<OutlineComponent>(e))
-								em.RemoveComponent<OutlineComponent>(e);
+							if (m_vizOutlines && !em.HasComponent<OutlineComponent>(e))
+							{
+								auto& comp = em.AddComponent<OutlineComponent>(e);
+								comp.color = NAVMESH_COLOR;
+								comp.onlyOutline = true;
+							}
 						}
 					);
 				}
@@ -105,7 +115,11 @@ void Pathfinder::VisualizePathsMenu(bool& open)
 							if (!em.HasComponent<TransformComponent>(e)) em.AddComponent<TransformComponent>(e).SetPosition(pc.portal).SetScale(PORTAL_SCALE);
 							em.AddComponent<ModelComponent>(e, AssetManager::Get().LoadShapeAsset(PORTAL_SHAPE, PORTAL_TESS));
 							if (m_vizOutlines && !em.HasComponent<OutlineComponent>(e))
-								em.AddComponent<OutlineComponent>(e).color = PORTAL_COLOR;
+							{
+								auto& comp = em.AddComponent<OutlineComponent>(e);
+								comp.color = PORTAL_COLOR;
+								comp.onlyOutline = true;
+							}
 						}
 					);
 				}
@@ -118,8 +132,12 @@ void Pathfinder::VisualizePathsMenu(bool& open)
 							// visualize portal
 							em.RemoveComponent<TransformComponent>(e);
 							em.RemoveComponent<ModelComponent>(e);
-							if (m_vizOutlines && em.HasComponent<OutlineComponent>(e))
-								em.RemoveComponent<OutlineComponent>(e);
+							if (m_vizOutlines && !em.HasComponent<OutlineComponent>(e))
+							{
+								auto& comp = em.AddComponent<OutlineComponent>(e);
+								comp.color = PORTAL_COLOR;
+								comp.onlyOutline = true;
+							}
 						}
 					);
 				}
@@ -131,16 +149,20 @@ void Pathfinder::VisualizePathsMenu(bool& open)
 					EntityManager& em = EntityManager::Get();
 					// outline NavMeshes
 					em.Collect<NavMeshComponent, BoundingBoxComponent>().Do(
-						[&](entity e, NavMeshComponent&, BoundingBoxComponent& bb)
+						[&](entity e, NavMeshComponent&, BoundingBoxComponent&)
 						{
-							em.AddComponent<OutlineComponent>(e).color = NAVMESH_COLOR;
+							auto& comp = em.AddComponent<OutlineComponent>(e);
+							comp.color = NAVMESH_COLOR;
+							comp.onlyOutline = true;
 						}
 					);
 					// outline Portals
 					em.Collect<PortalComponent, TransformComponent, ModelComponent>().Do(
 						[&](entity e, PortalComponent&, TransformComponent&, ModelComponent&)
 						{
-							em.AddComponent<OutlineComponent>(e).color = PORTAL_COLOR;
+							auto& comp = em.AddComponent<OutlineComponent>(e);
+							comp.color = PORTAL_COLOR;
+							comp.onlyOutline = true;
 						}
 					);
 				}
@@ -206,10 +228,15 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 			if (m_vizNavMeshes)
 			{
 				// visualize NavMesh
-				em.AddComponent<TransformComponent>(e).SetPosition(bb.Center()).SetScale(NAVMESH_SCALE);
-				em.AddComponent<ModelComponent>(e, AssetManager::Get().LoadShapeAsset(NAVMESH_SHAPE, NAVMESH_TESS));
+				em.AddComponent<TransformComponent>(newMesh).SetPosition(bb.Center()).SetScale(NAVMESH_SCALE);
+				em.AddComponent<ModelComponent>(newMesh, AssetManager::Get().LoadShapeAsset(NAVMESH_SHAPE, NAVMESH_TESS));
 				if (m_vizOutlines)
-					em.AddComponent<OutlineComponent>(e).color = NAVMESH_COLOR;
+				{
+					auto& comp = em.AddComponent<OutlineComponent>(newMesh);
+					comp.color = NAVMESH_COLOR;
+					comp.onlyOutline = true;
+				}
+
 			}
 		});
 
@@ -230,10 +257,14 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 			if (m_vizNavMeshes)
 			{
 				// visualize NavMesh
-				em.AddComponent<TransformComponent>(e).SetPosition(bb.Center()).SetScale(NAVMESH_SCALE);
-				em.AddComponent<ModelComponent>(e, AssetManager::Get().LoadShapeAsset(NAVMESH_SHAPE, NAVMESH_TESS));
+				em.AddComponent<TransformComponent>(newMesh).SetPosition(bb.Center()).SetScale(NAVMESH_SCALE);
+				em.AddComponent<ModelComponent>(newMesh, AssetManager::Get().LoadShapeAsset(NAVMESH_SHAPE, NAVMESH_TESS));
 				if (m_vizOutlines)
-					em.AddComponent<OutlineComponent>(e).color = NAVMESH_COLOR;
+				{
+					auto& comp = em.AddComponent<OutlineComponent>(newMesh);
+					comp.color = NAVMESH_COLOR;
+					comp.onlyOutline = true;
+				}
 			}
 		});
 
@@ -254,19 +285,37 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 
 					for (Step dir : {Dir::down, Dir::north, Dir::east, Dir::south, Dir::west, Dir::up})
 					{
-						Vector3 extDir = Vector3(dir.x, dir.y, dir.z) * bb.Extents();
+						Vector3 extDir = dir.Vec3() * bb.Extents();
 						// shrink NavMesh if hit detected else connect if neighbor exists
 						if (auto hit = PhysicsEngine::RayCast(bb.Center(), bb.Center() + extDir); hit)
 						{
+							Vector3 juxtaPoint = bb.Center() - extDir;
+							bb.Center((hit->hitPosition + juxtaPoint) / 2);
+							Vector3 masked = dir.InversePositive().Vec3() * bb.Extents();
+							f32 halfDist = Vector3::Distance(hit->hitPosition, juxtaPoint) / 2;
+							Vector3 newExt = dir.Positive().Vec3() * halfDist;
+							bb.Extents(masked + newExt);
 							//auto str = [](Vector3 v) { return "(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ")"; };
 							//std::cout << "hit: " << str(hit->hitPosition) << ", origin: " << str(bb.Center()) << std::endl; // << ", neighbor: " << navScene.At(x + dir.x, y + dir.y, z + dir.z) << std::endl;
 						}
 						else if (navScene.HasNavMesh(x + dir.x, y + dir.y, z + dir.z))
 						{
 							entity other = navScene.At(x + dir.x, y + dir.y, z + dir.z);
-							//Vector3 c2c = em.GetComponent<BoundingBoxComponent>(other).Center() - bb.Center();
+							BoundingBoxComponent& obb = em.GetComponent<BoundingBoxComponent>(other);
+							extDir = (-dir).Vec3() * obb.Extents();
+							if (auto ohit = PhysicsEngine::RayCast(obb.Center(), obb.Center() + extDir); ohit)
+							{
+								Vector3 juxtaPoint = obb.Center() - extDir;
+								obb.Center((ohit->hitPosition + juxtaPoint) / 2);
+								Vector3 masked = dir.InversePositive().Vec3() * obb.Extents();
+								f32 halfDist = Vector3::Distance(ohit->hitPosition, juxtaPoint) / 2;
+								Vector3 newExt = dir.Positive().Vec3() * halfDist;
+								obb.Extents(masked + newExt);
+								//auto str = [](Vector3 v) { return "(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ")"; };
+								//std::cout << "hit: " << str(hit->hitPosition) << ", origin: " << str(bb.Center()) << std::endl; // << ", neighbor: " << navScene.At(x + dir.x, y + dir.y, z + dir.z) << std::endl;
+							}
 							// if meshes not connected, create portal
-							if (!myMesh.Connected(me, other))
+							else if (!myMesh.Connected(me, other))
 							{
 								// add new portal to me and other
 								PortalID id = myMesh.portals.emplace_back(em.CreateEntity());
@@ -282,7 +331,11 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 									em.AddComponent<TransformComponent>(id).SetPosition(pos).SetScale(PORTAL_SCALE);
 									em.AddComponent<ModelComponent>(id, AssetManager::Get().LoadShapeAsset(PORTAL_SHAPE, PORTAL_TESS));
 									if (m_vizOutlines)
-										em.AddComponent<OutlineComponent>(id).color = PORTAL_COLOR;
+									{
+										auto& comp = em.AddComponent<OutlineComponent>(id);
+										comp.color = PORTAL_COLOR;
+										comp.onlyOutline = true;
+									}
 								}
 							}
 						}
@@ -294,7 +347,7 @@ void Pathfinder::BuildNavScene(SceneComponent::Type sceneType)
 
 	// Add aggro agent for testing purposes -> TODO: remove
 	AgentManager& am = AgentManager::Get();
-	entity agent = am.CreateAgent(EntityTypes::Scorpio, am.GroupID(), Vector3(73.f, 24.f, 220.f), sceneType);
+	entity agent = am.CreateAgent(EntityTypes::Scorpio, am.GroupID(), Vector3(50.f, 13.f, 165.f), sceneType);
 	em.AddComponent<AgentAggroComponent>(agent);
 	em.AddComponent<OutlineComponent>(agent).color = Vector3(1.f, .0f, .7f);
 }
