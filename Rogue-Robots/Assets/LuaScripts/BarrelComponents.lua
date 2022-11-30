@@ -19,6 +19,17 @@ function SetPosition(bullet, transformEntity, upFactor, rightFactor, forwardFact
 	Entity:ModifyComponent(bullet.entity, "Transform", pos, 1)
 end
 
+function GetPositionToSpawn(transformEntity, upFactor, rightFactor, forwardFactor)
+	local pos = Vector3.FromTable(Entity:GetTransformPosData(transformEntity))
+	local forward = Vector3.FromTable(Entity:GetForward(transformEntity))
+	local up = Vector3.FromTable(Entity:GetUp(transformEntity))
+	local right = Vector3.FromTable(Entity:GetRight(transformEntity))
+
+	pos = pos + up * upFactor + right * rightFactor + forward * forwardFactor
+
+	return pos
+end
+
 function BarrelComponents:BasicBarrel()	
 	return 
 	{

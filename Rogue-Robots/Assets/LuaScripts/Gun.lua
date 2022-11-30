@@ -133,9 +133,9 @@ function OnUpdate()
 	if miscComponent.miscName == "FullAuto" and barrelComponent.GetECSType() == 3 then
 		-- Handle the laser barrel component in FullAuto outside MiscComponent.Update and BarrelComponent.Update.
 		local shoot = Entity:GetAction(EntityID, "Shoot")
-		local dir = Vector3.FromTable(Entity:GetUp(gunEntity.entityID))
+		local dir = Vector3.FromTable(Entity:GetRight(gunEntity.entityID))
 		dir = Norm(dir)
-		local laserStart = Vector3.FromTable(Entity:GetTransformPosData(gunEntity.entityID))
+		local laserStart = GetPositionToSpawn(cameraEntity, -0.175, 0.31, 0.05)
 		laserStart = laserStart + dir * 0.8
 		local color = Vector3.New(1.5, 0.1, 0.1) * 7
 		if magazineComponent:GetECSType() == 1 then
