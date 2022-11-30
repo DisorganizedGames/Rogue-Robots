@@ -375,6 +375,7 @@ void EntityInterface::GetEntityTypeAsString(DOG::LuaContext* context)
 		break;
 	case EntityTypes::GoalRadar:
 		context->ReturnString("GoalRadar");
+		break;
 	case EntityTypes::Syringe:
 		context->ReturnString("Syringe");
 		break;
