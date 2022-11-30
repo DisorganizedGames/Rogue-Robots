@@ -117,7 +117,7 @@ namespace DOG
 		void AddClip(ClipSet& set, Setter& setter, u32 setIdx, f32 startTime = 0.f);
 		void PostAddFixUp(ClipSet& set, u32 idx);
 		void ModifyClip(Clip& clip, Setter& setter, u32 setIdx);
-		void UpdateClipCW(ClipSet& set, u32 idx);
+		void UpdateClipCW(ClipSet& set, u32 idx, u32 newNrOfTargets);
 		
 		std::array<f32, 6> GetWeights(ClipSet& set);
 

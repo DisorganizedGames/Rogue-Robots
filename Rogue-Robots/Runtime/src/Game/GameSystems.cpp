@@ -84,7 +84,8 @@ void PlayerMovementSystem::OnEarlyUpdate(
 		if (player.debugCamera != DOG::NULL_ENTITY && isThisPlayer)
 		{
 			camera.isMainCamera = false;
-			MoveDebugCamera(player.debugCamera, moveTowards, forward, right, 10.f, input);
+			if(player.moveView)
+				MoveDebugCamera(player.debugCamera, moveTowards, forward, right, 10.f, input);
 			return;
 		}
 
@@ -378,7 +379,7 @@ void PlayerMovementSystem::ApplyAnimations(Entity e, const InputController& inpu
 		++ac.addedSetters;
 	}
 
-	auto& pcc = EntityManager::Get().GetComponent<PlayerControllerComponent>(e);
+	/*auto& pcc = EntityManager::Get().GetComponent<PlayerControllerComponent>(e);
 	auto& s = ac.animSetters[ac.addedSetters++];
 	auto aimAnimation = pcc.polar < DirectX::XM_PIDIV2 ? MixamoAnimations::IdleHigh : MixamoAnimations::IdleLow;
 	auto weight = abs(pcc.polar - DirectX::XM_PIDIV2) / DirectX::XM_PIDIV2;
@@ -389,7 +390,7 @@ void PlayerMovementSystem::ApplyAnimations(Entity e, const InputController& inpu
 	s.transitionLength = 0.f;
 	s.group = ac.UPPER_BODY;
 	s.playbackRate = 1.f;
-	s.flag = AnimationFlag::Looping;
+	s.flag = AnimationFlag::Looping;*/
 }
 
 #pragma endregion

@@ -42,6 +42,7 @@ namespace DOG
 	{
 		static constexpr i32 NOT_FOUND = -1;
 		f32 startingTime = set.nTotalClips && looping ? set.clips[0].normalizedTime : 0.f;
+		auto x = set.clips[0].id;
 
 		for (u32 i = 0; i < clipCount; ++i)
 		{
@@ -54,7 +55,7 @@ namespace DOG
 			}
 			else
 			{ // Clip exists, modify it
-				UpdateClipCW(set, clipIdx);
+				UpdateClipCW(set, clipIdx, clipCount);
 				ModifyClip(set.clips[clipIdx], setter, i);
 				std::swap(set.clips[i], set.clips[clipIdx]);
 			}
@@ -91,7 +92,8 @@ namespace DOG
 		const bool targetClipSwapped = idx < set.nTargets;
 		if (targetClipSwapped)
 		{
-			auto& lastClip = set.clips[set.nTotalClips - 1];
+			auto lastClipIdx = set.nTotalClips - 1;
+			auto& lastClip = set.clips[lastClipIdx];
 			const auto weight = set.blend.currentWeight;
 			lastClip.targetWeight = weight * (lastClip.targetWeight - lastClip.currentWeight) + lastClip.currentWeight;
 			lastClip.currentWeight = 0.f;
@@ -107,9 +109,9 @@ namespace DOG
 			clip.normalizedTime = 0.f;
 		}
 	}
-	void RigAnimator::UpdateClipCW(ClipSet& set, u32 idx)
+	void RigAnimator::UpdateClipCW(ClipSet& set, u32 idx, u32 newNrOfTargets)
 	{
-		const bool clipIsTarget = idx < set.nTargets;
+		const bool clipIsTarget = idx < newNrOfTargets;
 		const auto weight = clipIsTarget ? set.blend.currentWeight : 1.f - set.blend.currentWeight;
 
 		auto& clip = set.clips[idx];
