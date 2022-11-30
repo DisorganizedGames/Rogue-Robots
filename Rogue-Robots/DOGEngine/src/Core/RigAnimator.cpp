@@ -42,7 +42,6 @@ namespace DOG
 	{
 		static constexpr i32 NOT_FOUND = -1;
 		f32 startingTime = set.nTotalClips && looping ? set.clips[0].normalizedTime : 0.f;
-		auto x = set.clips[0].id;
 
 		for (u32 i = 0; i < clipCount; ++i)
 		{
@@ -375,12 +374,13 @@ namespace DOG
 		SetSetBS(setter);
 		SetGroupBS(setter);
 		static constexpr i32 origin = -1;
+		auto newPrio = setter.priority;
 		for (u32 i = setter.group + 1; i < N_GROUPS; ++i)
 		{
 			auto parent = groups[i].parent;
 			while (parent != origin)
 			{
-				if (parent == setter.group)
+				if (parent == setter.group && groups[i].priority < newPrio)
 					TransitionOutGroupBS(setter, groupBlends[i]);
 				parent = groups[parent].parent;
 			}
@@ -458,7 +458,7 @@ namespace DOG
 		auto parent = groups[group].parent;
 		const auto prio = groups[group].priority;
 		const auto weight = groups[group].weight;
-
+		return weight;
 		static constexpr i16 origin = -1;
 		// Travel group tree, if a parent group has higher prio group has no influence
 		while (parent != origin)

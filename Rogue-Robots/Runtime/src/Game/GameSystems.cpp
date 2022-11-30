@@ -75,6 +75,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 		if (player.moveView && isThisPlayer)
 		{
 			forward = GetNewForward(player);
+			input.polarAngle = player.polar;
 		}
 		right = s_globUp.Cross(forward);
 
@@ -379,18 +380,23 @@ void PlayerMovementSystem::ApplyAnimations(Entity e, const InputController& inpu
 		++ac.addedSetters;
 	}
 
-	/*auto& pcc = EntityManager::Get().GetComponent<PlayerControllerComponent>(e);
-	auto& s = ac.animSetters[ac.addedSetters++];
-	auto aimAnimation = pcc.polar < DirectX::XM_PIDIV2 ? MixamoAnimations::IdleHigh : MixamoAnimations::IdleLow;
-	auto weight = abs(pcc.polar - DirectX::XM_PIDIV2) / DirectX::XM_PIDIV2;
-	s.animationIDs[0] = static_cast<i8>(MixamoAnimations::Idle);
-	s.animationIDs[1] = static_cast<i8>(aimAnimation);
-	s.targetWeights[0] = 1.f - weight;
-	s.targetWeights[1] = weight;
-	s.transitionLength = 0.f;
-	s.group = ac.UPPER_BODY;
-	s.playbackRate = 1.f;
-	s.flag = AnimationFlag::Looping;*/
+	// Simple aiming animation, only using idle for now
+	{
+		auto& input = EntityManager::Get().GetComponent<InputController>(e);
+		auto& s = ac.animSetters[ac.addedSetters++];
+		auto aimAnimation = input.polarAngle < DirectX::XM_PIDIV2 ? MixamoAnimations::IdleHigh : MixamoAnimations::IdleLow;
+		
+		s.group = ac.UPPER_BODY;
+		s.flag = AnimationFlag::Looping;
+		s.animationIDs[0] = static_cast<i8>(MixamoAnimations::Idle);
+		s.animationIDs[1] = static_cast<i8>(aimAnimation);
+
+		auto weight = abs(input.polarAngle - DirectX::XM_PIDIV2) / DirectX::XM_PIDIV2;
+		s.targetWeights[0] = 1.f - weight;
+		s.targetWeights[1] = weight;
+		s.transitionLength = 0.f;
+		s.playbackRate = 1.f;
+	}
 }
 
 #pragma endregion
