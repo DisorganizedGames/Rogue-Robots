@@ -153,6 +153,14 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddLaserBullet(context, e);
 	}
+	else if (compType == "PointLight")
+	{
+		AddPointLight(context, e);
+	}
+	else if (compType == "WeaponLight")
+	{
+		AddWeaponLightComponent(context, e);
+	}
 	//Add more component types here.
 	else
 	{
@@ -185,6 +193,12 @@ void EntityInterface::RemoveComponent(DOG::LuaContext* context)
 	else if (compType == "MiscComponent")
 	{
 		EntityManager::Get().RemoveComponent<MiscComponent>(e);
+		return;
+	}
+	else if (compType == "Model")
+	{
+		EntityManager::Get().RemoveComponent<ModelComponent>(e);
+		EntityManager::Get().RemoveComponent<ShadowReceiverComponent>(e);
 		return;
 	}
 
@@ -827,6 +841,29 @@ void EntityInterface::AddScript(DOG::LuaContext* context, DOG::entity e)
 	LuaMain::GetScriptManager()->AddScript(e, context->GetString());
 }
 
+void EntityInterface::AddPointLight(DOG::LuaContext* context, DOG::entity e)
+{
+	LuaTable color = context->GetTable();
+	float strength = (float)context->GetDouble();
+	float radius = (float)context->GetDouble();
+
+	// Add dynamic point light
+	auto pdesc = PointLightDesc();
+	pdesc.color = {color.GetFloatFromTable("x"), color.GetFloatFromTable("y"), color.GetFloatFromTable("z")};
+	pdesc.strength = strength;
+	pdesc.radius = radius;
+	auto& plc = EntityManager::Get().AddComponent<PointLightComponent>(e);
+	plc.handle = LightManager::Get().AddPointLight(pdesc, LightUpdateFrequency::PerFrame);
+	plc.color = pdesc.color;
+	plc.strength = pdesc.strength;
+	plc.radius = pdesc.radius;
+}
+
+void EntityInterface::AddWeaponLightComponent(DOG::LuaContext*, DOG::entity e)
+{
+	EntityManager::Get().AddComponent<WeaponLightComponent>(e);
+}
+
 void EntityInterface::AddHomingMissile(DOG::LuaContext* context, DOG::entity e)
 {
 	auto& em = EntityManager::Get();
@@ -878,8 +915,10 @@ void EntityInterface::AddHomingMissile(DOG::LuaContext* context, DOG::entity e)
 	auto& t = em.GetComponent<TransformComponent>(e);
 	auto& gunT = em.GetComponent<TransformComponent>(gun);
 	Vector3 oldPosition = t.GetPosition();
-	t.SetRotation(gunT.GetRotation() * Matrix::CreateFromAxisAngle(gunT.GetRight(), DirectX::XM_PI / 2.0f));
-	t.SetPosition(oldPosition + 0.5f * t.GetForward());
+	t.SetRotation(gunT.GetRotation() * Matrix::CreateFromAxisAngle(gunT.GetUp(), DirectX::XM_PI / 2.0f));
+	Vector3 forward = t.GetForward();
+	forward.Normalize();
+	t.SetPosition(oldPosition + 0.5f * forward);
 
 	em.AddComponent<BoxColliderComponent>(e, e, Vector3(0.18f, 0.18f, 0.8f), true, 12.0f);
 	auto& rb = em.AddComponent<RigidbodyComponent>(e, e);
@@ -1292,7 +1331,7 @@ void RenderInterface::CreateMaterial(DOG::LuaContext* context)
 	DirectX::SimpleMath::Vector4 emissiveFactor = { (float)tab.GetDoubleFromTable(0), (float)tab.GetDoubleFromTable(1), (float)tab.GetDoubleFromTable(2), 1.f };
 
 	MaterialDesc d{};
-	d.albedoFactor = { (float)table.GetDoubleFromTable(0), (float)table.GetDoubleFromTable(1), (float)table.GetDoubleFromTable(2) };
+	d.albedoFactor = { (float)table.GetDoubleFromTable(0), (float)table.GetDoubleFromTable(1), (float)table.GetDoubleFromTable(2), 1.f };
 	d.roughnessFactor = roughnessFactor;
 	d.metallicFactor = metallicFactor;
 	d.emissiveFactor = emissiveFactor;
@@ -1415,4 +1454,12 @@ void GameInterface::LuaPickUpMoreLaserAmmoCallback(DOG::LuaContext* context)
 	laserBarrel.ammo += barrelInfo.ammoPerPickup;
 	laserBarrel.ammo = std::min(laserBarrel.ammo, static_cast<f32>(barrelInfo.maximumAmmoCapacityForType));
 	barrelInfo.currentAmmoCount = static_cast<u32>(laserBarrel.ammo);
+}
+
+void GameInterface::GetPlayerName(DOG::LuaContext* context)
+{
+	auto& em = EntityManager::Get();
+	entity player = context->GetInteger();
+	assert(em.Exists(player) && em.HasComponent<NetworkPlayerComponent>(player));
+	context->ReturnString(em.GetComponent<NetworkPlayerComponent>(player).playerName);
 }

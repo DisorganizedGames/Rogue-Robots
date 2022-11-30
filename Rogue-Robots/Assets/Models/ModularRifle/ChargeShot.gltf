@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.3.27",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -15,41 +15,31 @@
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "chargeshot",
-            "translation" : [
-                1.707098364830017,
-                1.468233585357666,
-                -1.638399226067122e-05
-            ]
+            "name" : "chargeshot"
         }
     ],
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "metalMaterial.002",
+            "emissiveFactor" : [
+                1,
+                1,
+                1
+            ],
+            "emissiveTexture" : {
+                "index" : 0
+            },
+            "name" : "CombinedMaterial",
+            "normalTexture" : {
+                "index" : 1
+            },
             "pbrMetallicRoughness" : {
-                "baseColorFactor" : [
-                    0.19017691910266876,
-                    0.19017691910266876,
-                    0.19017691910266876,
-                    1
-                ],
-                "metallicFactor" : 0,
-                "roughnessFactor" : 0.5
-            }
-        },
-        {
-            "doubleSided" : true,
-            "name" : "Material.003",
-            "pbrMetallicRoughness" : {
-                "baseColorFactor" : [
-                    0.017387324944138527,
-                    0.017387324944138527,
-                    0.017387324944138527,
-                    1
-                ],
-                "metallicFactor" : 0,
-                "roughnessFactor" : 0.5
+                "baseColorTexture" : {
+                    "index" : 2
+                },
+                "metallicRoughnessTexture" : {
+                    "index" : 3
+                }
             }
         }
     ],
@@ -65,32 +55,63 @@
                     },
                     "indices" : 3,
                     "material" : 0
-                },
-                {
-                    "attributes" : {
-                        "POSITION" : 4,
-                        "NORMAL" : 5,
-                        "TEXCOORD_0" : 6
-                    },
-                    "indices" : 7,
-                    "material" : 1
                 }
             ]
+        }
+    ],
+    "textures" : [
+        {
+            "sampler" : 0,
+            "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 1
+        },
+        {
+            "sampler" : 0,
+            "source" : 2
+        },
+        {
+            "sampler" : 0,
+            "source" : 3
+        }
+    ],
+    "images" : [
+        {
+            "mimeType" : "image/png",
+            "name" : "EmissionWeapon",
+            "uri" : "Textures/EmissionWeapon.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "NormalWeapon",
+            "uri" : "Textures/NormalWeapon.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "DiffuseWeapon",
+            "uri" : "Textures/DiffuseWeapon.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "RoughnessMetallicWeapon",
+            "uri" : "Textures/RoughnessMetallicWeapon.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 1202,
+            "count" : 2570,
             "max" : [
-                0.2564685642719269,
-                0.18213698267936707,
+                1.2295974493026733,
+                0.7246060371398926,
                 0.1521081179380417
             ],
             "min" : [
-                -0.25408679246902466,
-                -0.24530085921287537,
+                0.03613698482513428,
+                0.29716816544532776,
                 -0.15906059741973877
             ],
             "type" : "VEC3"
@@ -98,109 +119,57 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 1202,
+            "count" : 2570,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 1202,
+            "count" : 2570,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5123,
-            "count" : 3780,
-            "type" : "SCALAR"
-        },
-        {
-            "bufferView" : 4,
-            "componentType" : 5126,
-            "count" : 1372,
-            "max" : [
-                0.5967302322387695,
-                0.10440697520971298,
-                0.10440696775913239
-            ],
-            "min" : [
-                -0.5967302322387695,
-                -0.10440695285797119,
-                -0.10440697520971298
-            ],
-            "type" : "VEC3"
-        },
-        {
-            "bufferView" : 5,
-            "componentType" : 5126,
-            "count" : 1372,
-            "type" : "VEC3"
-        },
-        {
-            "bufferView" : 6,
-            "componentType" : 5126,
-            "count" : 1372,
-            "type" : "VEC2"
-        },
-        {
-            "bufferView" : 7,
-            "componentType" : 5123,
-            "count" : 4212,
+            "count" : 7992,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 14424,
+            "byteLength" : 30840,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 14424,
-            "byteOffset" : 14424,
+            "byteLength" : 30840,
+            "byteOffset" : 30840,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 9616,
-            "byteOffset" : 28848,
+            "byteLength" : 20560,
+            "byteOffset" : 61680,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 7560,
-            "byteOffset" : 38464,
+            "byteLength" : 15984,
+            "byteOffset" : 82240,
             "target" : 34963
-        },
+        }
+    ],
+    "samplers" : [
         {
-            "buffer" : 0,
-            "byteLength" : 16464,
-            "byteOffset" : 46024,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 16464,
-            "byteOffset" : 62488,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 10976,
-            "byteOffset" : 78952,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 8424,
-            "byteOffset" : 89928,
-            "target" : 34963
+            "magFilter" : 9729,
+            "minFilter" : 9987
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 98352,
+            "byteLength" : 98224,
             "uri" : "ChargeShot.bin"
         }
     ]

@@ -94,6 +94,8 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<DeferredSetIgnoreCollisionCheckSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerUseEquipmentSystem>());
 
+	m_entityManager.RegisterSystem(std::make_unique<WeaponPointLightSystem>());
+
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
 
@@ -1002,6 +1004,7 @@ void GameLayer::RegisterLuaInterfaces()
 	luaInterface.AddFunction<GameInterface, &GameInterface::AddDamageToEntity>("AddDamageToEntity");
 	luaInterface.AddFunction<GameInterface, &GameInterface::AddMagazineEffectsFromBullet>("AddMagazineEffectsFromBullet");
 	luaInterface.AddFunction<GameInterface, &GameInterface::SpawnPickupMiscComponent>("SpawnPickupMiscComponent");
+	luaInterface.AddFunction<GameInterface, &GameInterface::GetPlayerName>("GetPlayerName");
 
 	global->SetLuaInterface(luaInterface);
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Game", "GameInterface");

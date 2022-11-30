@@ -156,6 +156,10 @@ private:
 
 	void AddScript(DOG::LuaContext* context, DOG::entity e);
 
+	void AddPointLight(DOG::LuaContext* context, DOG::entity e);
+
+	void AddWeaponLightComponent(DOG::LuaContext* context, DOG::entity e);
+
 
 	void AddHomingMissile(DOG::LuaContext* context, DOG::entity e);
 
@@ -261,4 +265,5 @@ public:
 	void AddMagazineEffectsFromBullet(DOG::LuaContext* context);
 	void SpawnPickupMiscComponent(DOG::LuaContext* context);
 	static void LuaPickUpMoreLaserAmmoCallback(DOG::LuaContext*);
+	void GetPlayerName(DOG::LuaContext* context);
 };

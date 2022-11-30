@@ -44,6 +44,10 @@ gunEntity = {
 	position = Vector3.Zero(),
 	rotation = Vector3.Zero(),
 }
+barrelEntityID = 0
+miscEntityID = 0
+magazineEntityID = 0
+lightEntityID = 0
 
 local basicBarrelEquiped = true
 --Ammo and reloading 
@@ -55,24 +59,35 @@ local reloading = false
 local reloadAngle = 0.0
 
 function OnStart()
-	gunModel = Asset:LoadModel("Assets/Models/Rifle/scene.gltf")
+	gunModel = Asset:LoadModel("Assets/Models/ModularRifle/Maingun.gltf")
 	bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Bullet/556x45_bullet.fbx")
 	gunShotSound = Asset:LoadAudio("Assets/Audio/TestShoot.wav")
 
 	-- Initialize the gun view model entity
 	gunID = Scene:CreateEntity(EntityID)
 	gunEntity.entityID = gunID
-	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.15,y=.15,z=.15})
+	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.35,y=.35,z=.35})
 	Entity:AddComponent(gunID, "Model", gunModel)
 	Entity:AddComponent(gunID, "Audio", gunShotSound, false, true)
 
+	barrelEntityID = Scene:CreateEntity(gunID)
+	Entity:AddComponent(barrelEntityID, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
+	Entity:AddComponent(barrelEntityID, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
+	miscEntityID = Scene:CreateEntity(gunID)
+	Entity:AddComponent(miscEntityID, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
+	Entity:AddComponent(miscEntityID, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
+	magazineEntityID = Scene:CreateEntity(gunID)
+	Entity:AddComponent(magazineEntityID, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
+	Entity:AddComponent(magazineEntityID, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
+
 	if (Entity:HasComponent(EntityID, "ThisPlayer")) then
 		Entity:AddComponent(gunID, "ThisPlayerWeapon")
+		--To be fixed later hopefully
+		Entity:AddComponent(barrelEntityID, "ThisPlayerWeapon")
+		Entity:AddComponent(miscEntityID, "ThisPlayerWeapon")
+		Entity:AddComponent(magazineEntityID, "ThisPlayerWeapon")
+		CreateWeaponLights()
 	end
-
-	-- Initialize effect prefabs
-	--MagazineManager:AddMaterial("FrostMaterial", Render:CreateMaterial({x=0.188, y=0.835, z=0.784}, 0.0, 0.0, { 0.0, 0.0, 0.0 }))
-
 
 	-- Initialize base components
 	miscComponent = MiscComponent.BasicShot()
@@ -96,12 +111,12 @@ function OnUpdate()
 	local playerRight = Vector3.FromTable(Entity:GetRight(cameraEntity))
 
 	-- Move gun down and to the right 
-	gunEntity.position = gunEntity.position + playerRight * 0.2 - playerUp * 0.2
+	gunEntity.position = gunEntity.position + playerRight * 0.3 - playerUp * 0.15 + playerForward * 0.4
 
 	-- Rotate the weapon by 90 degrees pitch
-	local angle = -math.pi / 2 
-	local gunForward = RotateAroundAxis(playerForward, playerRight, angle)
-	local gunUp = RotateAroundAxis(playerUp, playerRight, angle)
+	local angle = math.pi / 2 + math.pi / 150.0 
+	local gunForward = RotateAroundAxis(playerForward, playerUp, angle)
+	local gunUp = playerUp--RotateAroundAxis(playerUp, playerRight, angle)
 
 	Entity:SetRotationForwardUp(gunEntity.entityID, gunForward, gunUp)
 	Entity:ModifyComponent(gunEntity.entityID, "Transform", gunEntity.position, 1)
@@ -118,9 +133,9 @@ function OnUpdate()
 	if miscComponent.miscName == "FullAuto" and barrelComponent.GetECSType() == 3 then
 		-- Handle the laser barrel component in FullAuto outside MiscComponent.Update and BarrelComponent.Update.
 		local shoot = Entity:GetAction(EntityID, "Shoot")
-		local dir = Vector3.FromTable(Entity:GetUp(gunEntity.entityID))
+		local dir = Vector3.FromTable(Entity:GetRight(gunEntity.entityID))
 		dir = Norm(dir)
-		local laserStart = Vector3.FromTable(Entity:GetTransformPosData(gunEntity.entityID))
+		local laserStart = GetPositionToSpawn(cameraEntity, -0.175, 0.31, 0.05)
 		laserStart = laserStart + dir * 0.8
 		local color = Vector3.New(1.5, 0.1, 0.1) * 7
 		if magazineComponent:GetECSType() == 1 then
@@ -130,6 +145,7 @@ function OnUpdate()
 		local isOutOfAmmo = Entity:ModifyComponent(EntityID, "LaserBarrel", EntityID, 80.0, 700.0, shoot, laserStart, dir, color)
 		if isOutOfAmmo then
 			barrelComponent = BarrelManager.BasicBarrel()
+			Entity:RemoveComponent(barrelEntityID, "Model")
 			Entity:RemoveComponent(EntityID, "BarrelComponent")
 			Entity:AddComponent(EntityID, "BarrelComponent", 0, 30, 999999)
 			currentAmmoCount = savedBulletCount
@@ -155,7 +171,7 @@ function OnUpdate()
 				end
 
 				CreateBulletEntity(newBullets[i], cameraEntity)
-				barrelComponent:Update(gunEntity, EntityID, newBullets[i], miscComponent)
+				barrelComponent:Update(gunEntity, EntityID, newBullets[i], miscComponent, cameraEntity)
 				--Keep track of which barrel created the bullet
 				newBullets[i].barrel = barrelComponent
 				magazineComponent:Update(newBullets[i])
@@ -163,6 +179,7 @@ function OnUpdate()
 				currentAmmoCount = currentAmmoCount - 1
 				if currentAmmoCount == 0 and not hasBasicBarrelEquipped then
 					barrelComponent = BarrelManager.BasicBarrel()
+					Entity:RemoveComponent(barrelEntityID, "Model")
 					Entity:RemoveComponent(EntityID, "BarrelComponent")
 					Entity:AddComponent(EntityID, "BarrelComponent", 0, 30, 999999)
 					currentAmmoCount = savedBulletCount
@@ -177,6 +194,10 @@ end
 function OnDestroy()
 	EventSystem:UnRegister("ItemPickup" .. EntityID, OnPickup)
 	Entity:DestroyEntity(gunEntity.entityID)
+	Entity:DestroyEntity(barrelEntityID)
+	Entity:DestroyEntity(miscEntityID)
+	Entity:DestroyEntity(magazineEntityID)
+	DestroyWeaponLights()
 end
 
 function CreateBulletEntity(bullet, transformEntity)
@@ -194,10 +215,10 @@ function CreateBulletEntity(bullet, transformEntity)
 		Vector3.Zero(),
 		size--bullet.size
 	)
-	local up = Vector3.FromTable(Entity:GetUp(transformEntity))
-	local angle = -math.pi / 2
+	local up = Vector3.FromTable(Entity:GetUp(gunEntity.entityID))
+	local angle = math.pi
 
-	local newForward = RotateAroundAxis(Entity:GetForward(transformEntity), up, angle)
+	local newForward = RotateAroundAxis(Entity:GetForward(gunEntity.entityID), up, angle)
 	Entity:SetRotationForwardUp(bullet.entity, newForward, up)
 
 	Entity:ModifyComponent(bullet.entity, "Transform", bullet.startPos, 1)
@@ -313,13 +334,20 @@ function OnPickup(pickup)
 				Entity:UpdateMagazine(playerID, currentAmmoCount)
 			end
 		else
+			if Entity:HasComponent(barrelEntityID, "Model") then
+				Entity:RemoveComponent(barrelEntityID, "Model")
+			end
+
 			--Player picked up a new barrel type:
 			if pickupTypeString == "GrenadeBarrel" then
 				barrelComponent = BarrelManager.Grenade()
+				Entity:AddComponent(barrelEntityID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Grenade.gltf"))
 			elseif pickupTypeString == "MissileBarrel" then
 				barrelComponent = BarrelManager.Missile()
+				Entity:AddComponent(barrelEntityID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Missile.gltf"))
 			elseif pickupTypeString == "LaserBarrel" then
 				barrelComponent = BarrelManager.Laser()
+				Entity:AddComponent(barrelEntityID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Laser.gltf"))
 			end
 			Entity:RemoveComponent(playerID, "BarrelComponent")
 			Entity:AddComponent(playerID, "BarrelComponent", barrelComponent:GetECSType(), barrelComponent:GetAmmoPerPickup(), barrelComponent:GetMaxAmmo())
@@ -337,8 +365,14 @@ function OnPickup(pickup)
 		if pickupTypeString ~= currentModificationType then
 			--A new magazine modification was picked up:
 			Entity:RemoveComponent(playerID, "MagazineModificationComponent")
+
+			if Entity:HasComponent(magazineEntityID, "Model") then
+				Entity:RemoveComponent(magazineEntityID, "Model")
+			end
+
 			if pickupTypeString == "FrostMagazineModification" then
 				magazineComponent = MagazineManager.FrostEffect()
+				Entity:AddComponent(magazineEntityID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Frost.gltf"))
 			end
 			Entity:AddComponent(playerID, "MagazineModificationComponent", magazineComponent:GetECSType())
 		end	
@@ -349,13 +383,45 @@ function OnPickup(pickup)
 		Game:SpawnPickupMiscComponent(playerID)
 		if pickupTypeString ~= currentMiscType then
 			--A new misc component was picked up:
+			if Entity:HasComponent(miscEntityID, "Model") then
+				Entity:RemoveComponent(miscEntityID, "Model")
+			end
+
 			Entity:RemoveComponent(playerID, "MiscComponent")
 			if pickupTypeString == "FullAutoMisc" then
 				miscComponent = MiscComponent.FullAuto()
+				Entity:AddComponent(miscEntityID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/FullAuto.gltf"))
 			elseif pickupTypeString == "ChargeShotMisc" then
 				miscComponent = MiscComponent.ChargeShot()
+				Entity:AddComponent(miscEntityID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/ChargeShot.gltf"))
 			end
 			Entity:AddComponent(playerID, "MiscComponent", miscComponent:GetECSType())
 		end	
+	end
+end
+
+function CreateWeaponLights()
+	
+	color = Vector3.New(1.0, 0.1, 0.1)
+	playerColor = Game:GetPlayerName(EntityID)
+
+	if playerColor == "Green" then
+		color = Vector3.New(0.1, 1.0, 0.1)
+	elseif playerColor == "Yellow" then
+		color = Vector3.New(1.0, 1.0, 0.1)
+	elseif playerColor == "Blue" then
+		color = Vector3.New(0.1, 0.1, 1.0)
+	end
+
+	lightEntityID = Scene:CreateEntity(gunEntity.entityID)
+	Entity:AddComponent(lightEntityID, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
+	Entity:AddComponent(lightEntityID, "PointLight", color, 2.0, 0.4)
+	Entity:AddComponent(lightEntityID, "Child", gunEntity.entityID, Vector3.New(0.0, 0.0, 0.2), Vector3.Zero(), Vector3.New(0.1, 0.1, 0.1))
+	Entity:AddComponent(lightEntityID, "WeaponLight")
+end
+
+function DestroyWeaponLights()
+	if Entity:Exists(lightEntityID) then
+		Entity:DestroyEntity(lightEntityID)
 	end
 end
