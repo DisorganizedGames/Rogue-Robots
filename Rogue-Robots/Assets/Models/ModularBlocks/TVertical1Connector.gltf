@@ -134,9 +134,9 @@
         {
             "doubleSided" : true,
             "emissiveFactor" : [
-                5,
-                5,
-                5
+                1,
+                1,
+                1
             ],
             "emissiveTexture" : {
                 "index" : 4
@@ -303,14 +303,14 @@
         {
             "bufferView" : 5,
             "componentType" : 5126,
-            "count" : 1190,
+            "count" : 1196,
             "max" : [
-                2.4236245155334473,
+                2.5086262226104736,
                 5.000000953674316,
                 2.7103872299194336
             ],
             "min" : [
-                -2.4345834255218506,
+                -2.5023508071899414,
                 0.3796243667602539,
                 -2.500002384185791
             ],
@@ -319,19 +319,19 @@
         {
             "bufferView" : 6,
             "componentType" : 5126,
-            "count" : 1190,
+            "count" : 1196,
             "type" : "VEC3"
         },
         {
             "bufferView" : 7,
             "componentType" : 5126,
-            "count" : 1190,
+            "count" : 1196,
             "type" : "VEC2"
         },
         {
             "bufferView" : 8,
             "componentType" : 5126,
-            "count" : 1190,
+            "count" : 1196,
             "type" : "VEC2"
         },
         {
@@ -442,80 +442,80 @@
         },
         {
             "buffer" : 0,
-            "byteLength" : 14280,
+            "byteLength" : 14352,
             "byteOffset" : 43552,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 14280,
-            "byteOffset" : 57832,
+            "byteLength" : 14352,
+            "byteOffset" : 57904,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 9520,
-            "byteOffset" : 72112,
+            "byteLength" : 9568,
+            "byteOffset" : 72256,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 9520,
-            "byteOffset" : 81632,
+            "byteLength" : 9568,
+            "byteOffset" : 81824,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 2472,
-            "byteOffset" : 91152,
+            "byteOffset" : 91392,
             "target" : 34963
         },
         {
             "buffer" : 0,
             "byteLength" : 13668,
-            "byteOffset" : 93624,
+            "byteOffset" : 93864,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 13668,
-            "byteOffset" : 107292,
+            "byteOffset" : 107532,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 9112,
-            "byteOffset" : 120960,
+            "byteOffset" : 121200,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 2280,
-            "byteOffset" : 130072,
+            "byteOffset" : 130312,
             "target" : 34963
         },
         {
             "buffer" : 0,
             "byteLength" : 13656,
-            "byteOffset" : 132352,
+            "byteOffset" : 132592,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 13656,
-            "byteOffset" : 146008,
+            "byteOffset" : 146248,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 9104,
-            "byteOffset" : 159664,
+            "byteOffset" : 159904,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 2280,
-            "byteOffset" : 168768,
+            "byteOffset" : 169008,
             "target" : 34963
         }
     ],
@@ -527,7 +527,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 171048,
+            "byteLength" : 171288,
             "uri" : "TVertical1Connector.bin"
         }
     ]

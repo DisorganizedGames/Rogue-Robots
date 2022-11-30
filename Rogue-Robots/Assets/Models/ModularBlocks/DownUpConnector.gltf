@@ -99,9 +99,9 @@
         {
             "doubleSided" : true,
             "emissiveFactor" : [
-                5,
-                5,
-                5
+                1,
+                1,
+                1
             ],
             "emissiveTexture" : {
                 "index" : 4
@@ -254,7 +254,7 @@
         {
             "bufferView" : 5,
             "componentType" : 5126,
-            "count" : 839,
+            "count" : 841,
             "max" : [
                 2.537905216217041,
                 5.000000953674316,
@@ -263,26 +263,26 @@
             "min" : [
                 -2.805222272872925,
                 -3.2362063393520657e-06,
-                -2.4778647422790527
+                -2.5346615314483643
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 6,
             "componentType" : 5126,
-            "count" : 839,
+            "count" : 841,
             "type" : "VEC3"
         },
         {
             "bufferView" : 7,
             "componentType" : 5126,
-            "count" : 839,
+            "count" : 841,
             "type" : "VEC2"
         },
         {
             "bufferView" : 8,
             "componentType" : 5126,
-            "count" : 839,
+            "count" : 841,
             "type" : "VEC2"
         },
         {
@@ -359,56 +359,56 @@
         },
         {
             "buffer" : 0,
-            "byteLength" : 10068,
+            "byteLength" : 10092,
             "byteOffset" : 42600,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 10068,
-            "byteOffset" : 52668,
+            "byteLength" : 10092,
+            "byteOffset" : 52692,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 6712,
-            "byteOffset" : 62736,
+            "byteLength" : 6728,
+            "byteOffset" : 62784,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 6712,
-            "byteOffset" : 69448,
+            "byteLength" : 6728,
+            "byteOffset" : 69512,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 1716,
-            "byteOffset" : 76160,
+            "byteOffset" : 76240,
             "target" : 34963
         },
         {
             "buffer" : 0,
             "byteLength" : 13644,
-            "byteOffset" : 77876,
+            "byteOffset" : 77956,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 13644,
-            "byteOffset" : 91520,
+            "byteOffset" : 91600,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 9096,
-            "byteOffset" : 105164,
+            "byteOffset" : 105244,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 2280,
-            "byteOffset" : 114260,
+            "byteOffset" : 114340,
             "target" : 34963
         }
     ],
@@ -420,7 +420,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 116540,
+            "byteLength" : 116620,
             "uri" : "DownUpConnector.bin"
         }
     ]

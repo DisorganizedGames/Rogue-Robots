@@ -111,7 +111,7 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 90,
+            "count" : 297,
             "max" : [
                 0.14228397607803345,
                 0.7507533431053162,
@@ -119,7 +119,7 @@
             ],
             "min" : [
                 -2.5,
-                0,
+                -0.5959891676902771,
                 -2.5
             ],
             "type" : "VEC3"
@@ -127,25 +127,25 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 90,
+            "count" : 297,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 90,
+            "count" : 297,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 90,
+            "count" : 297,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 90,
+            "count" : 420,
             "type" : "SCALAR"
         },
         {
@@ -192,62 +192,62 @@
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 1080,
+            "byteLength" : 3564,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1080,
-            "byteOffset" : 1080,
+            "byteLength" : 3564,
+            "byteOffset" : 3564,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 720,
-            "byteOffset" : 2160,
+            "byteLength" : 2376,
+            "byteOffset" : 7128,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 720,
-            "byteOffset" : 2880,
+            "byteLength" : 2376,
+            "byteOffset" : 9504,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 180,
-            "byteOffset" : 3600,
+            "byteLength" : 840,
+            "byteOffset" : 11880,
             "target" : 34963
         },
         {
             "buffer" : 0,
             "byteLength" : 38556,
-            "byteOffset" : 3780,
+            "byteOffset" : 12720,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 38556,
-            "byteOffset" : 42336,
+            "byteOffset" : 51276,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 25704,
-            "byteOffset" : 80892,
+            "byteOffset" : 89832,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 25704,
-            "byteOffset" : 106596,
+            "byteOffset" : 115536,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 6570,
-            "byteOffset" : 132300,
+            "byteOffset" : 141240,
             "target" : 34963
         }
     ],
@@ -259,7 +259,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 138872,
+            "byteLength" : 147812,
             "uri" : "FloorBridge2.bin"
         }
     ]

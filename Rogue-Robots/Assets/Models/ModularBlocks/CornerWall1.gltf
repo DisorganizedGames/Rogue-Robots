@@ -30,7 +30,8 @@
                 "baseColorTexture" : {
                     "index" : 1
                 },
-                "metallicFactor" : 0
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.6863636374473572
             }
         }
     ],
@@ -77,73 +78,73 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 330,
+            "count" : 798,
             "max" : [
                 2.5,
                 5,
-                2.5000040531158447
+                2.5706613063812256
             ],
             "min" : [
-                -1.9720505475997925,
-                0,
-                -1.8909188508987427
+                -3.077800750732422,
+                -0.02475166693329811,
+                -2.8979568481445312
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 330,
+            "count" : 798,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 330,
+            "count" : 798,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 330,
+            "count" : 798,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 330,
+            "count" : 864,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 3960,
+            "byteLength" : 9576,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 3960,
-            "byteOffset" : 3960,
+            "byteLength" : 9576,
+            "byteOffset" : 9576,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2640,
-            "byteOffset" : 7920,
+            "byteLength" : 6384,
+            "byteOffset" : 19152,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2640,
-            "byteOffset" : 10560,
+            "byteLength" : 6384,
+            "byteOffset" : 25536,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 660,
-            "byteOffset" : 13200,
+            "byteLength" : 1728,
+            "byteOffset" : 31920,
             "target" : 34963
         }
     ],
@@ -155,7 +156,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 13860,
+            "byteLength" : 33648,
             "uri" : "CornerWall1.bin"
         }
     ]

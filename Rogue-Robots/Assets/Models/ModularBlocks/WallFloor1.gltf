@@ -30,7 +30,8 @@
                 "baseColorTexture" : {
                     "index" : 1
                 },
-                "metallicFactor" : 0
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.6863636374473572
             }
         }
     ],
@@ -77,7 +78,7 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 1124,
+            "count" : 2430,
             "max" : [
                 2.500013828277588,
                 4.999999523162842,
@@ -86,64 +87,64 @@
             "min" : [
                 -2.500000238418579,
                 -0.4666578471660614,
-                -1.8363749980926514
+                -2.508253812789917
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 1124,
+            "count" : 2430,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 1124,
+            "count" : 2430,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 1124,
+            "count" : 2430,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 1209,
+            "count" : 2655,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 13488,
+            "byteLength" : 29160,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 13488,
-            "byteOffset" : 13488,
+            "byteLength" : 29160,
+            "byteOffset" : 29160,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 8992,
-            "byteOffset" : 26976,
+            "byteLength" : 19440,
+            "byteOffset" : 58320,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 8992,
-            "byteOffset" : 35968,
+            "byteLength" : 19440,
+            "byteOffset" : 77760,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2418,
-            "byteOffset" : 44960,
+            "byteLength" : 5310,
+            "byteOffset" : 97200,
             "target" : 34963
         }
     ],
@@ -155,7 +156,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 47380,
+            "byteLength" : 102512,
             "uri" : "WallFloor1.bin"
         }
     ]
