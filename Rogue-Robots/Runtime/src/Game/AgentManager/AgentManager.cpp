@@ -135,16 +135,47 @@ void AgentManager::Initialize()
 	// Register late update agent systems
 	em.RegisterSystem(std::make_unique<LateAgentDestructCleanupSystem>());
 
-	//Temp BehaviourTree initializer.
-	std::shared_ptr<Node> root = std::make_shared<Root>("ScorpioBTRoot");
+	entity hero = em.CreateEntity();
+	em.AddComponent<HeroComponent>(hero);
+	em.AddComponent<TransformComponent>(hero).SetPosition({ 10.0f, 0.0f, 0.0f });
 	
-	std::shared_ptr<Selector> rootSelector = std::make_shared<Selector>("RootSelector");
-	static_cast<Root*>(root.get())->AddChild(rootSelector);
+	CreateVillain({ 15.0f, 0.0f, 0.0f });
+	CreateVillain({ 17.0f, 0.0f, 0.0f });
+	CreateVillain({ 20.0f, 0.0f, 0.0f });
+	CreateVillain({ 24.0f, 0.0f, 0.0f });
 
-	std::shared_ptr<Sequence> seekAndDestroySequence = std::make_shared<Sequence>("SeekAndDestroySequence");
-	rootSelector->AddChild(seekAndDestroySequence);
-	
+	em.Collect<VillainComponent, BehaviourTreeComponent>().Do([](entity villain, VillainComponent&, BehaviourTreeComponent& btc)
+		{
+			btc.currentRunningNode->Process(villain);
+		});
 
+	em.Collect<VillainComponent, DetectPlayerComponent, TransformComponent>().Do([&](entity villain, VillainComponent&, DetectPlayerComponent&, TransformComponent& vtc)
+		{
+			em.Collect<HeroComponent, TransformComponent>().Do([&](HeroComponent&, TransformComponent& htc)
+				{
+					if (Vector3::Distance(htc.GetPosition(), vtc.GetPosition()) <= 10.0f)
+					{
+						auto& btc = em.GetComponent<BehaviourTreeComponent>(villain);
+						LEAF(btc.currentRunningNode)->Succeed(villain);
+					}
+				});
+		});
+
+	em.Collect<VillainComponent, SignalGroupComponent, TransformComponent>().Do([&](entity villain, VillainComponent&, SignalGroupComponent&, TransformComponent& tc)
+		{
+			em.Collect<VillainComponent, TransformComponent>().Do([&](entity otherVillain, VillainComponent&, TransformComponent& otc)
+				{
+					if (villain == otherVillain)
+						return;
+
+					if (Vector3::Distance(tc.GetPosition(), otc.GetPosition()) <= 10.0f)
+					{
+						//blabla
+					}
+				});
+			auto& btc = em.GetComponent<BehaviourTreeComponent>(villain);
+			LEAF(btc.currentRunningNode)->Succeed(villain);
+		});
 
 
 	// Set status to initialized
@@ -258,4 +289,31 @@ void AgentManager::DestroyLocalAgent(entity e, bool local)
 	{
 		EntityManager::Get().DeferredEntityDestruction(EntityManager::Get().GetComponent<FireEffectComponent>(e).particleEntity);
 	}
+}
+
+void AgentManager::CreateVillain(const Vector3& position)
+{
+	auto& em = DOG::EntityManager::Get();
+	DOG::entity villain = em.CreateEntity();
+	em.AddComponent<VillainComponent>(villain);
+	em.AddComponent<TransformComponent>(villain).SetPosition(position);
+	CreateScorpioBehaviourTree(villain);
+}
+
+void AgentManager::CreateScorpioBehaviourTree(DOG::entity agent) noexcept
+{
+	std::shared_ptr<Selector> rootSelector = std::make_shared<Selector>("RootSelector");
+	std::shared_ptr<Selector> attackOrMoveToPlayerSelector = std::make_shared<Selector>("attackOrMoveToPlayerSelector");
+	attackOrMoveToPlayerSelector->AddChild(std::make_shared<AttackNode>("AttackNode"));
+
+	std::shared_ptr<Sequence> seekAndDestroySequence = std::make_shared<Sequence>("SeekAndDestroySequence");
+	rootSelector->AddChild(seekAndDestroySequence);
+	seekAndDestroySequence->AddChild(std::make_shared<DetectPlayerNode>("DetectPlayerNode"));
+	seekAndDestroySequence->AddChild(std::make_shared<SignalGroupNode>("SignalGroupNode"));
+	seekAndDestroySequence->AddChild(attackOrMoveToPlayerSelector);
+
+	auto& btc = DOG::EntityManager::Get().AddComponent<BehaviourTreeComponent>(agent);
+	btc.rootNode = std::make_unique<Root>("ScorpioRootNode");
+	btc.rootNode->AddChild(rootSelector);
+	btc.currentRunningNode = btc.rootNode.get();
 }
