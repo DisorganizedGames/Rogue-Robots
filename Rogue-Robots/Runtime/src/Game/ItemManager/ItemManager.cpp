@@ -589,13 +589,13 @@ u32 ItemManager::CreateSyringePickup(Vector3 position, u32 id)
 {
 	static u32 syringeNetworkID = 0u;
 
-	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/suzanne.glb");
+	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/health.glb");
 
 	entity entity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<ActiveItemComponent>(entity).type = ActiveItemComponent::Type::Syringe;
 	s_entityManager.AddComponent<PickupComponent>(entity).itemName = "Syringe";
 	s_entityManager.AddComponent<ModelComponent>(entity, modelID);
-	s_entityManager.AddComponent<TransformComponent>(entity, position).SetScale({ 0.3f, 0.3f, 0.3f });
+	s_entityManager.AddComponent<TransformComponent>(entity, position).SetScale({ 0.2f, 0.2f, 0.2f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(entity);
 	auto& ni = s_entityManager.AddComponent<NetworkId>(entity);
 	ni.entityTypeId = EntityTypes::Syringe;

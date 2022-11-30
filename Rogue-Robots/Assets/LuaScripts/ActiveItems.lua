@@ -102,15 +102,30 @@ ActiveItems.goalRadar = {
 ActiveItems.syringe = {
 
 	activate = function(self, playerEntity)
-			print("AYO BRO")
-			return playerEntity
+		originalPlayerStats = Entity:GetPlayerStats(playerEntity)
+		
+		local stats = {}
+		for k, v in pairs(originalPlayerStats) do
+			stats[k] = v
+		end
+		
+		-- Names exists in LuaInterfaces.cpp
+		local hp = stats["health"]
+		local maxHp = stats["maxHealth"]
+		hp = hp + 20
+		if hp > maxHp then
+			hp = maxHp
+		end
+
+		stats.health = hp
+		Entity:SetPlayerStats(playerEntity, stats)
+
+		return playerEntity
 	end,
 
 	GetECSType = function(self)
-
-
-			return 4
-		end,
+		return 4
+	end,
 }
 
 return ActiveItems
