@@ -557,13 +557,13 @@ u32 ItemManager::CreateReviverPickup(Vector3 position, u32 id)
 u32 ItemManager::CreateGoalRadarPickup(Vector3 position, u32 id)
 {
 	static u32 goalRadarNetworkID = 0u;
-	u32 goalRadarID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/health.glb");
+	u32 goalRadarID = AssetManager::Get().LoadModelAsset("Assets/Models/ModularRifle/radar.gltf");
 
 	entity goalRadarEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<ActiveItemComponent>(goalRadarEntity).type = ActiveItemComponent::Type::GoalRadar;
 	s_entityManager.AddComponent<PickupComponent>(goalRadarEntity).itemName = "Goal Radar";
 	s_entityManager.AddComponent<ModelComponent>(goalRadarEntity, goalRadarID);
-	s_entityManager.AddComponent<TransformComponent>(goalRadarEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
+	s_entityManager.AddComponent<TransformComponent>(goalRadarEntity, position).SetScale({ 1.f, 1.f, 1.f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(goalRadarEntity);
 	auto& ni = s_entityManager.AddComponent<NetworkId>(goalRadarEntity);
 	ni.entityTypeId = EntityTypes::GoalRadar;

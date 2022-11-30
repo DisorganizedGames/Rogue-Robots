@@ -5,7 +5,7 @@
 void GoalRadarSystem::OnUpdate(DOG::entity e, GoalRadarComponent& grc)
 {
 	auto& em = DOG::EntityManager::Get();
-	m_radarElapsedTime += DOG::Time::DeltaTime();
+	m_radarElapsedTime += (f32)DOG::Time::DeltaTime();
 	m_radarMaxTime = grc.timeVisible;
 
 	// Turn off
