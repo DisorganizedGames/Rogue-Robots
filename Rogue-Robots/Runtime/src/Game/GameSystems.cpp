@@ -380,12 +380,11 @@ void PlayerMovementSystem::ApplyAnimations(Entity e, const InputController& inpu
 		++ac.addedSetters;
 	}
 
-	// Simple aiming animation, only using idle for now
+	// Simple aiming animation
 	{
-		auto& input = EntityManager::Get().GetComponent<InputController>(e);
-		auto& s = ac.animSetters[ac.addedSetters++];
 		auto aimAnimation = input.polarAngle < DirectX::XM_PIDIV2 ? MixamoAnimations::IdleHigh : MixamoAnimations::IdleLow;
 		
+		auto& s = ac.animSetters[ac.addedSetters++];
 		s.group = ac.UPPER_BODY;
 		s.flag = AnimationFlag::Looping;
 		s.animationIDs[0] = static_cast<i8>(MixamoAnimations::Idle);
