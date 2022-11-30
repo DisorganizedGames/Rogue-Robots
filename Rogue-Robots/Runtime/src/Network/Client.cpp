@@ -20,6 +20,7 @@ Client::~Client()
 {
 	m_reciveTrue = false;
 	closesocket(m_connectSocket);
+	Sleep(1000);
 	delete[] m_inputSend;
 	delete[] m_hostIp;
 	delete[] m_sendUdpBuffer;

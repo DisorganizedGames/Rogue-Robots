@@ -2,7 +2,6 @@
 #include "ItemManager/ItemManager.h"
 
 using namespace DOG;
-
 NetCode* NetCode::s_thisNetCode = nullptr;
 
 NetCode::NetCode()
@@ -346,6 +345,7 @@ void NetCode::OnUpdate()
 	}
 }
 
+extern void BackFromHost(void);
 
 void NetCode::Receive()
 {
@@ -378,6 +378,8 @@ void NetCode::Receive()
 			if (m_receiveBuffer == nullptr || m_numberOfPackets == 0)
 			{
 				std::cout << "NetCode:: Bad tcp packet, Number of packets: " << m_numberOfPackets << std::endl;
+				if (m_inputTcp.lobbyAlive)
+					m_netCodeAlive = false;
 			}
 			else
 			{
@@ -387,6 +389,8 @@ void NetCode::Receive()
 			
 	}
 	std::cout << "Client: stopped reciving packets \n";
+	if(m_inputTcp.playerId != 0)
+		BackFromHost();
 }
 	
 void NetCode::ReceiveUdp()

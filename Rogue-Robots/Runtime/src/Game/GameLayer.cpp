@@ -210,7 +210,8 @@ void GameLayer::StartMainScene()
 	{
 		levelIndex = 0;
 	}
-	
+	if (s_networkStatus == NetworkStatus::Offline)
+		m_nrOfPlayers = 1;
 	switch (m_selectedScene)
 	{
 	case SceneComponent::Type::PCGLevelScene:
