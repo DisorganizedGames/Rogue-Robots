@@ -578,8 +578,8 @@ u32 ItemManager::CreateGoalRadarPickup(Vector3 position, u32 id)
 	}
 	LuaMain::GetScriptManager()->AddScript(goalRadarEntity, "Pickupable.lua");
 
-	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(entity);
-	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(entity).GetPosition().y;
+	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(goalRadarEntity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(goalRadarEntity).GetPosition().y;
 	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
 	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
 	return ni.id;
