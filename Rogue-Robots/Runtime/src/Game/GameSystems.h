@@ -114,6 +114,11 @@ public:
 		DOG::entity closestPickup = DOG::NULL_ENTITY;
 		float closestDistance = FLT_MAX;
 
+		if (pcc.cameraEntity != DOG::NULL_ENTITY)
+		{
+			playerPosition = mgr.GetComponent<DOG::TransformComponent>(pcc.cameraEntity).GetPosition();
+		}
+
 		mgr.Collect<PickupComponent, DOG::TransformComponent>().Do([&closestDistance, &closestPickup, &playerPosition](DOG::entity pickUp, PickupComponent&, DOG::TransformComponent& tc)
 			{
 				float distanceToPickup = Vector3::Distance(playerPosition, tc.GetPosition());
