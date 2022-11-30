@@ -26,7 +26,8 @@ struct Particle
 	float age;
 	float3 vel;
 	float size;
-	float3 pad;
+	uint alive;
+	float2 pad;
 };
 
 struct Emitter

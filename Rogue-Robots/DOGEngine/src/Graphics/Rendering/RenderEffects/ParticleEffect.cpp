@@ -26,6 +26,9 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 	auto compactShader = shaderCompiler->CompileFromFile("Particles/CompactionCS.hlsl", ShaderType::Compute);
 	m_compactPipeline = device->CreateComputePipeline(ComputePipelineDesc(compactShader.get()));
 
+	auto aliveMarkerShader = shaderCompiler->CompileFromFile("Particles/AliveMarkerCS.hlsl", ShaderType::Compute);
+	m_aliveMarkerPipeline = device->CreateComputePipeline(ComputePipelineDesc(aliveMarkerShader.get()));
+
 	auto updateShader = shaderCompiler->CompileFromFile("Particles/BasicUpdateCS.hlsl", ShaderType::Compute);
 	m_updatePipeline = device->CreateComputePipeline(ComputePipelineDesc(updateShader.get()));
 	
@@ -222,6 +225,24 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 		{
 	});
 
+	renderGraph.AddPass<PassData>("Particle Alive Marker Pass",
+		[this](PassData& passData, RenderGraph::PassBuilder& builder) // Build
+		{
+			passData.particleBufferHandle = builder.ReadWriteTarget(RG_RESOURCE(ParticleBuffer),
+				BufferViewDesc(ViewType::UnorderedAccess, 0, sizeof(Particle), S_MAX_PARTICLES));
+		},
+		[this](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources) // Execute
+		{
+			rd->Cmd_SetPipeline(cmdl, m_aliveMarkerPipeline);
+			ShaderArgs shaderArgs;
+			shaderArgs
+				.AppendConstant(m_emitterGlobalDescriptor)
+				.AppendConstant(m_emitterLocalOffset)
+				.AppendConstant(resources.GetView(passData.particleBufferHandle));
+			rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
+			rd->Cmd_Dispatch(cmdl, S_MAX_PARTICLES / 256, 1, 1);
+		});
+
 	renderGraph.AddPass<PassData>("Particle Update Pass",
 		[this](PassData& passData, RenderGraph::PassBuilder& builder) // Build
 		{
@@ -256,7 +277,7 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 		[](PassData&) // Post-graph execution
 		{
 
-		});
+		});	
 
 	renderGraph.AddPass<PassData>("Particle Draw Pass",
 		[this](PassData& passData, RenderGraph::PassBuilder& builder) // Build

@@ -37,6 +37,7 @@ namespace DOG::gfx
 		Pipeline m_emitPipeline;
 		Pipeline m_postEmitPipeline;
 		Pipeline m_compactPipeline;
+		Pipeline m_aliveMarkerPipeline;
 		Pipeline m_updatePipeline;
 		Pipeline m_drawPipeline;
 
@@ -51,7 +52,8 @@ namespace DOG::gfx
 			f32 age = 0;
 			f32 vel[3] = { 0, 0, 0 };
 			f32 size = 0;
-			f32 pad[3] = { 0, 0, 0 };
+			u32 alive = 0;
+			f32 pad[2] = { 0 };
 		};
 
 	};
