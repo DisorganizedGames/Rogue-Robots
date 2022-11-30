@@ -164,15 +164,20 @@ void GameLayer::OnUpdate()
 			UpdateGame();
 			break;
 		case GameState::Won:
-			m_gameState = GameState::ExitingToMainMenu;
+			m_nrOfFramesToWait--;
+			if(m_nrOfFramesToWait <= 0)
+				m_gameState = GameState::ExitingToMainMenu;
 			break;
 		case GameState::Lost:
-			m_gameState = GameState::ExitingToMainMenu;
+			m_nrOfFramesToWait--;
+			if (m_nrOfFramesToWait <= 0)
+				m_gameState = GameState::ExitingToMainMenu;
 			break;
 		case GameState::Exiting:
 			CloseMainScene();
 			break;
 		case GameState::ExitingToMainMenu:
+			m_nrOfFramesToWait = 120;
 			(&m_netCode)->~NetCode();
 			new (&m_netCode) NetCode();
 			m_gameState = GameState::MainMenu;
