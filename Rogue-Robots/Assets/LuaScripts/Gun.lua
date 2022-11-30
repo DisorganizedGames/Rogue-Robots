@@ -415,7 +415,7 @@ function CreateWeaponLights()
 
 	lightEntityID = Scene:CreateEntity(gunEntity.entityID)
 	Entity:AddComponent(lightEntityID, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
-	Entity:AddComponent(lightEntityID, "PointLight", color, 10.0, 0.4)
+	Entity:AddComponent(lightEntityID, "PointLight", color, 2.0, 0.4)
 	Entity:AddComponent(lightEntityID, "Child", gunEntity.entityID, Vector3.New(0.0, 0.0, 0.2), Vector3.Zero(), Vector3.New(0.1, 0.1, 0.1))
 	Entity:AddComponent(lightEntityID, "WeaponLight")
 end
