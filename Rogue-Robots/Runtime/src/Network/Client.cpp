@@ -3,10 +3,6 @@
 Client::Client()
 {
 	m_connectSocket = INVALID_SOCKET;
-	m_inputSend = new char[sizeof(TcpHeader)];
-	m_hostIp = new char[64];
-	m_sendUdpBuffer = new char[sizeof(PlayerNetworkComponentUdp)];
-	m_reciveUdpBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
 	m_udpId = 0;
 	m_sendUdpId = 0;
 	ZeroMemory(&m_hostAddressUdp, sizeof(m_hostAddressUdp));
@@ -21,10 +17,6 @@ Client::~Client()
 	m_reciveTrue = false;
 	closesocket(m_connectSocket);
 	Sleep(1000);
-	delete[] m_inputSend;
-	delete[] m_hostIp;
-	delete[] m_sendUdpBuffer;
-	delete[] m_reciveUdpBuffer;
 }
 
 INT8 Client::ConnectTcpServer(std::string ipAdress)
