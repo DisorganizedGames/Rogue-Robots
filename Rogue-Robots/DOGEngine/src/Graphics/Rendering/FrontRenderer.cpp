@@ -131,11 +131,11 @@ namespace DOG::gfx
 			{
 				ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 
+				bool skipNormalRendering = false;
+
 				// Non culled
 				if (model && model->gfxModel)
 				{
-					bool skipNormalRendering = false;
-
 					// Outline submission
 					if (mgr.HasComponent<OutlineComponent>(e))
 					{
@@ -159,6 +159,8 @@ namespace DOG::gfx
 					}
 				}
 
+				if (skipNormalRendering)
+					return;
 
 				// Culled
 				TransformComponent camTransform;
@@ -178,11 +180,6 @@ namespace DOG::gfx
 
 				if (model && model->gfxModel)
 				{
-
-
-					if (skipNormalRendering)
-						return;
-
 					// Shadow submission:
 					if (mgr.HasComponent<ShadowReceiverComponent>(e))
 					{
