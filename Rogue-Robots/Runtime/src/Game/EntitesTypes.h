@@ -28,6 +28,7 @@ enum class EntityTypes
 	Turret,
 	Reviver,
 	GoalRadar,
+	Syringe,
 	ActiveItems,
 
 	//Barrel

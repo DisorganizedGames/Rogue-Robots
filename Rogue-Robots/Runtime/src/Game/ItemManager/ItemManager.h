@@ -47,4 +47,5 @@ private:
 	u32 CreateChargeShotPickup(Vector3 position, u32 id = 0);
 	u32 CreateReviverPickup(Vector3 position, u32 id = 0);
 	u32 CreateGoalRadarPickup(Vector3 position, u32 id = 0);
+	u32 CreateSyringePickup(Vector3 position, u32 id = 0);
 };
