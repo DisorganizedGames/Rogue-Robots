@@ -58,6 +58,8 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 		return CreateJumpBoost(position, id);
 	case EntityTypes::Reviver:
 		return CreateReviverPickup(position, id);
+	case EntityTypes::GoalRadar:
+		return CreateGoalRadarPickup(position, id);
 	default:
 		break;
 	}
@@ -551,3 +553,33 @@ u32 ItemManager::CreateReviverPickup(Vector3 position, u32 id)
 	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
 	return ni.id;
 }
+
+u32 ItemManager::CreateGoalRadarPickup(Vector3 position, u32 id)
+{
+	static u32 goalRadarNetworkID = 0u;
+	u32 goalRadarID = AssetManager::Get().LoadModelAsset("Assets/Models/ModularRifle/radar.gltf");
+
+	entity goalRadarEntity = s_entityManager.CreateEntity();
+	s_entityManager.AddComponent<ActiveItemComponent>(goalRadarEntity).type = ActiveItemComponent::Type::GoalRadar;
+	s_entityManager.AddComponent<PickupComponent>(goalRadarEntity).itemName = "Goal Radar";
+	s_entityManager.AddComponent<ModelComponent>(goalRadarEntity, goalRadarID);
+	s_entityManager.AddComponent<TransformComponent>(goalRadarEntity, position).SetScale({ 1.f, 1.f, 1.f });
+	s_entityManager.AddComponent<ShadowReceiverComponent>(goalRadarEntity);
+	auto& ni = s_entityManager.AddComponent<NetworkId>(goalRadarEntity);
+	ni.entityTypeId = EntityTypes::GoalRadar;
+	if (id == 0)
+		ni.id = ++goalRadarNetworkID;
+	else
+	{
+		ni.id = id;
+		goalRadarNetworkID = id;
+	}
+	LuaMain::GetScriptManager()->AddScript(goalRadarEntity, "Pickupable.lua");
+
+	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(goalRadarEntity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(goalRadarEntity).GetPosition().y;
+	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
+	return ni.id;
+}
+

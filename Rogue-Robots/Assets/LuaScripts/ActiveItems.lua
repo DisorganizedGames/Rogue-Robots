@@ -1,5 +1,7 @@
 local ActiveItems = {}
 
+local goalRadarMaxTimeSeconds = 30.0
+
 ActiveItems.trampoline = {
 	trampolineModel = Asset:LoadModel("Assets/Models/Temporary_Assets/Trampoline.glb"),
 
@@ -69,7 +71,7 @@ ActiveItems.turret = {
 	end,
 
 	GetECSType = function(self)
-			return 1 -- What should be returned here???
+			return 1
 		end,
 
 
@@ -81,6 +83,20 @@ ActiveItems.reviver = {
 			return 2
 		end,
 
+
+}
+
+ActiveItems.goalRadar = {
+
+	activate = function(self, playerEntity)
+		local goalRadarEntity = Scene:CreateEntity(playerEntity)
+		Entity:AddComponent(goalRadarEntity, "GoalRadarComponent", goalRadarMaxTimeSeconds)
+
+		end,
+
+	GetECSType = function(self)
+			return 3
+		end,
 
 }
 

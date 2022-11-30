@@ -43,6 +43,7 @@ set(SourceFiles
 
 	"src/Game/AnimationIDs.h"
 	"src/Game/PlayerEquipmentFunctions.h" "src/Game/PlayerEquipmentFunctions.cpp"
+	"src/Game/GoalRadarSystem.h" "src/Game/GoalRadarSystem.cpp"
 	"src/Game/InGameMenu.h" "src/Game/InGameMenu.cpp"
 	)
 

@@ -131,7 +131,7 @@ struct PassiveItemComponent {
 //The active item that currently resides in inventory
 struct ActiveItemComponent
 {
-	enum class Type{ Trampoline = 0, Turret, Reviver };
+	enum class Type{ Trampoline = 0, Turret, Reviver, GoalRadar };
 
 	Type type;
 };
@@ -324,6 +324,11 @@ struct SpawnBlockComponent
 
 struct ExitBlockComponent
 {
+};
+
+struct GoalRadarComponent
+{
+	f32 timeVisible{ 0.f };
 };
 
 struct FloorBlockComponent

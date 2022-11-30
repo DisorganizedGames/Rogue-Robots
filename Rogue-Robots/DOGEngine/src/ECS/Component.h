@@ -169,6 +169,8 @@ namespace DOG
 	{
 	};
 
+
+
 	struct SpotLightComponent
 	{
 		LightHandle handle;
