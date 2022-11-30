@@ -45,7 +45,8 @@ void AgentSeekPlayerSystem::OnEarlyUpdate(entity e, AgentSeekPlayerComponent& se
 	if (aggro || player.sqDist < SEEK_RADIUS_SQUARED)
 	{
 		if (!aggro)
-			EntityManager::Get().AddComponent<AgentAggroComponent>(e);
+			eMan.AddComponent<AgentAggroComponent>(e);
+
 
 		// update target
 		bool newTarget = player.entityID != seek.entityID;
@@ -54,6 +55,15 @@ void AgentSeekPlayerSystem::OnEarlyUpdate(entity e, AgentSeekPlayerComponent& se
 		seek.direction = player.pos - agentPos;
 		seek.direction.Normalize();
 		seek.squaredDistance = player.sqDist;
+
+		if (seek.entityID != NULL_ENTITY)
+		{
+			// add or update PathfinderWalkComponent
+			if (eMan.HasComponent<PathfinderWalkComponent>(e))
+				eMan.GetComponent<PathfinderWalkComponent>(e).goal = eMan.GetComponent<TransformComponent>(seek.entityID).GetPosition();
+			else
+				eMan.AddComponent<PathfinderWalkComponent>(e).goal = eMan.GetComponent<TransformComponent>(seek.entityID).GetPosition();
+		}
 
 		// add network signal
 		if (newTarget)
@@ -79,21 +89,16 @@ void AgentSeekPlayerSystem::OnEarlyUpdate(entity e, AgentSeekPlayerComponent& se
 		else
 			netSeek = &eMan.GetComponent<NetworkAgentSeekPlayer>(e);
 
+		// remove PathfinderWalkComponent
+		if (eMan.HasComponent<PathfinderWalkComponent>(e))
+			eMan.RemoveComponent<PathfinderWalkComponent>(e);
+
+
 		netSeek->playerID = -1;
 		netSeek->agentID = agent.id;
 	}
 }
 
-
-void AgentPlanningSystem::OnEarlyUpdate(PathfinderWalkComponent& pfc, AgentSeekPlayerComponent& seek)
-{
-	if (seek.entityID != DOG::NULL_ENTITY)
-	{
-		EntityManager& em = EntityManager::Get();
-
-		pfc.goal = em.GetComponent<TransformComponent>(seek.entityID).GetPosition();
-	}
-}
 
 /**************************************************
 *				Regular Systems
