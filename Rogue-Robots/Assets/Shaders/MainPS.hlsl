@@ -216,7 +216,6 @@ PS_OUT main(VS_OUT input)
         
         metallicInput = metallicRoughness.Sample(g_aniso_samp, input.uv).b * mat.metallicFactor;
         roughnessInput = metallicRoughness.Sample(g_aniso_samp, input.uv).g * mat.roughnessFactor;
-        
     }
     
     // Grab normal from normal map if available
