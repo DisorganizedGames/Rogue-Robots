@@ -4,7 +4,7 @@
 #include "Game/PlayerManager/PlayerManager.h"
 
 using namespace DOG;
-
+using namespace DirectX::SimpleMath;
 
 /**************************************************
 *			Early Update Systems
@@ -230,6 +230,16 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 		{
 			auto& fecBullet = EntityManager::Get().GetComponent<FireEffectComponent>(hit.hits[i].hitByEntity);
 			EntityManager::Get().AddOrReplaceComponent<FireEffectComponent>(e, fecBullet.fireTimer, fecBullet.fireDamagePerSecond);
+
+			EntityManager::Get().AddOrReplaceComponent<ConeSpawnComponent>(e) = { .angle = DirectX::XM_PI / 8.0f, .speed = 5.f };
+			EntityManager::Get().AddOrReplaceComponent<ParticleEmitterComponent>(e) = {
+				.spawnRate = 200,
+				.particleSize = 0.08f,
+				.particleLifetime = 0.6f,
+				.startColor = Vector4(1.0f, 0.0f, 0.0f, 0.8f),
+				.endColor = Vector4(1.0f, 69.f / 255.0f, 0.0f, 0.0f),
+			};
+
 			break;
 		}
 	}
@@ -376,5 +386,9 @@ void AgentFireTimerSystem::OnUpdate(DOG::entity e, AgentHPComponent& hpComponent
 		hpComponent.damageThisFrame = true;
 	}
 	else
+	{
 		EntityManager::Get().RemoveComponent<FireEffectComponent>(e);
+		EntityManager::Get().RemoveComponent<ConeSpawnComponent>(e);
+		EntityManager::Get().RemoveComponent<ParticleEmitterComponent>(e);
+	}
 }
