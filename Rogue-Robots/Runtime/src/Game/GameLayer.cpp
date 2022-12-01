@@ -1764,10 +1764,6 @@ NetCode* GameLayer::GetNetCode()
 {
 	return NetCode::GetNetCode();
 }
-// NetCode* GameLayer::GetNetCode()
-// {
-// 	return &m_netCode;
-// }
 
 void GameLayer::ChangeGameState(GameState state)
 {
