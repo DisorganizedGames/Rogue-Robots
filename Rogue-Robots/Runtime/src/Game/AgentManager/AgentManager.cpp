@@ -327,7 +327,7 @@ u32 AgentManager::GetModel(EntityTypes type)
 
 u32 AgentManager::GetModel(CreateAndDestroyEntityComponent& entityDesc)
 {
-	return m_models[static_cast<u32>(entityDesc.entityTypeId) - static_cast<u32>(EntityTypes::AgentsBegin)];
+	return GetModel(entityDesc.entityTypeId);
 }
 
 Vector3 AgentManager::GenerateRandomVector3(u32 seed, f32 max, f32 min)
