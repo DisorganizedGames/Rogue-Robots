@@ -56,6 +56,7 @@ namespace DOG
 		ModelComponent(u32 id = 0) noexcept : id{ id } {}
 		operator const u32() const { return id; }
 		u32 id;
+		bool culled = false;
 	};
 
 	struct CameraComponent

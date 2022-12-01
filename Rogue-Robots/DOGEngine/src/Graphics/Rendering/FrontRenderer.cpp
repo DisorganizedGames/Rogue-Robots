@@ -2,6 +2,7 @@
 #include "Renderer.h"
 #include "../../Core/AssetManager.h"			// Asset translation
 #include "../../Physics/PhysicsEngine.h"		// Collider components
+#include "../../Core/Window.h"
 
 // Exposed graphics managers
 #include "../../Core/CustomMaterialManager.h"
@@ -114,6 +115,38 @@ namespace DOG::gfx
 	{
 		auto& mgr = EntityManager::Get();
 
+		TransformComponent camTransform;
+		camTransform.worldMatrix = m_viewMat.Invert();
+
+		auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p)
+		{
+			auto d = p - camPos;
+			auto lenSq = d.DistanceSquared(p, camPos);
+			if (lenSq < 64) return false;
+			if (lenSq > 80 * 80) return true;
+			d.Normalize();
+			return camForward.Dot(d) < 0.2f;
+		};
+
+		auto p = DirectX::XMMatrixPerspectiveFovLH(80.f * 3.1415f / 180.f, static_cast<f32>(DOG::Window::GetWidth()) / static_cast<f32>(DOG::Window::GetHeight()), 0.1f, 80.f);
+		DirectX::BoundingFrustum frustum = DirectX::BoundingFrustum(p);
+		float f = frustum.Far;
+		frustum.Transform(frustum, camTransform.worldMatrix);
+
+		mgr.Bundle<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& tr, ModelComponent& modelC)
+			{
+				if (auto aabb = EntityManager::Get().TryGetComponent<BoundingBoxComponent>(e))
+				{
+					bool intersect = frustum.Intersects(aabb->get().aabb);
+					bool contains = frustum.Contains(aabb->get().aabb);
+					modelC.culled = !(intersect || contains);
+				}
+				else
+				{
+					modelC.culled = cull({ tr.worldMatrix(3, 0), tr.worldMatrix(3, 1), tr.worldMatrix(3, 2) });
+				}
+			});
+
 		mgr.Collect<TransformComponent, SubmeshRenderer>().Do([&](entity e, TransformComponent& tr, SubmeshRenderer& sr)
 			{
 				// We are assuming that this is a totally normal submesh with no weird branches (i.e on ModularBlock or whatever)
@@ -157,20 +190,7 @@ namespace DOG::gfx
 
 
 				// Culled
-				TransformComponent camTransform;
-				camTransform.worldMatrix = ((DirectX::SimpleMath::Matrix)m_viewMat).Invert();
-				auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p)
-				{
-					auto d = p - camPos;
-					auto lenSq = d.LengthSquared();
-					if (lenSq < 64) return false;
-					if (lenSq > 80 * 80) return true;
-					d.Normalize();
-					return camForward.Dot(d) < 0.2f;
-				};
-
-				if (cull({ transformC.worldMatrix(3, 0), transformC.worldMatrix(3, 1), transformC.worldMatrix(3, 2) }))
-					return;
+				if (modelC.culled) return;
 
 				if (model && model->gfxModel)
 				{
@@ -239,7 +259,7 @@ namespace DOG::gfx
 				}
 			});
 
-
+			mgr.Collect<ModelComponent>().Do([](ModelComponent& modelC) { modelC.culled = false; });
 	}
 
 	void FrontRenderer::SetRenderCamera()
