@@ -145,8 +145,6 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 			//multiple packets detected
 			else if ((bytesRecived - processedBytes) > packet.sizeOfPayload)
 			{
-				
-
 				while ((bytesRecived - processedBytes) > 0 && (bytesRecived - processedBytes) >= packet.sizeOfPayload)
 				{
 					processedBytes += packet.sizeOfPayload;
@@ -181,6 +179,7 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 			return 0;
 		}
 	}
+	return 0;
 }
 
 void Client::SetUpUdp()
