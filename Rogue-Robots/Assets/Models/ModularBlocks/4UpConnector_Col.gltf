@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -20,7 +20,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.002",
+            "name" : "Scene.138",
             "primitives" : [
                 {
                     "attributes" : {
@@ -38,74 +38,79 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 548,
+            "count" : 1656,
             "max" : [
                 2.500000238418579,
                 5.000000476837158,
-                2.500000476837158
+                2.733992576599121
             ],
             "min" : [
-                -1.9268652200698853,
-                0.7270100712776184,
-                -2.500002145767212
+                -2.6376991271972656,
+                0.07857757806777954,
+                -2.500002384185791
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 548,
+            "count" : 1656,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 548,
+            "count" : 1656,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 548,
+            "count" : 1656,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 1059,
+            "count" : 1710,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 6576,
-            "byteOffset" : 0
+            "byteLength" : 19872,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 6576,
-            "byteOffset" : 6576
+            "byteLength" : 19872,
+            "byteOffset" : 19872,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 4384,
-            "byteOffset" : 13152
+            "byteLength" : 13248,
+            "byteOffset" : 39744,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 4384,
-            "byteOffset" : 17536
+            "byteLength" : 13248,
+            "byteOffset" : 52992,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2118,
-            "byteOffset" : 21920
+            "byteLength" : 3420,
+            "byteOffset" : 66240,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 24040,
+            "byteLength" : 69660,
             "uri" : "4UpConnector_Col.bin"
         }
     ]

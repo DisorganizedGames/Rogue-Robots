@@ -30,7 +30,8 @@
                 "baseColorTexture" : {
                     "index" : 1
                 },
-                "metallicFactor" : 0
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.6863636374473572
             }
         }
     ],
@@ -77,73 +78,73 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 72,
+            "count" : 238,
             "max" : [
-                2.5000059604644775,
-                5,
-                2.5000014305114746
+                2.613285541534424,
+                5.125675678253174,
+                2.613280773162842
             ],
             "min" : [
-                -2.5000057220458984,
+                -2.6132853031158447,
                 4.59999942779541,
-                -2.499999761581421
+                -2.613279342651367
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 72,
+            "count" : 238,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 72,
+            "count" : 238,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 72,
+            "count" : 238,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 72,
+            "count" : 264,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 864,
+            "byteLength" : 2856,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 864,
-            "byteOffset" : 864,
+            "byteLength" : 2856,
+            "byteOffset" : 2856,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 576,
-            "byteOffset" : 1728,
+            "byteLength" : 1904,
+            "byteOffset" : 5712,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 576,
-            "byteOffset" : 2304,
+            "byteLength" : 1904,
+            "byteOffset" : 7616,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 144,
-            "byteOffset" : 2880,
+            "byteLength" : 528,
+            "byteOffset" : 9520,
             "target" : 34963
         }
     ],
@@ -155,7 +156,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 3024,
+            "byteLength" : 10048,
             "uri" : "InnerCornerHangingDouble.bin"
         }
     ]

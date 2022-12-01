@@ -18,7 +18,7 @@
                         0.7634416222572327,
                         0.16504213213920593
                     ],
-                    "intensity" : 0.1,
+                    "intensity" : 0.10000000149011612,
                     "type" : "point",
                     "name" : "Point.039"
                 },
@@ -28,7 +28,7 @@
                         0.7634416222572327,
                         0.16504213213920593
                     ],
-                    "intensity" : 0.1,
+                    "intensity" : 0.10000000149011612,
                     "type" : "point",
                     "name" : "Point.040"
                 }
@@ -225,41 +225,41 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 978,
+            "count" : 2231,
             "max" : [
-                2.500000476837158,
-                4.406264781951904,
-                2.500000476837158
+                3.131699323654175,
+                4.9314069747924805,
+                3.16910982131958
             ],
             "min" : [
-                -2.500002384185791,
-                0.7270101308822632,
-                -2.500002384185791
+                -3.2199113368988037,
+                0.2575712203979492,
+                -3.1825006008148193
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 978,
+            "count" : 2231,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 978,
+            "count" : 2231,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 978,
+            "count" : 2231,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 978,
+            "count" : 2415,
             "type" : "SCALAR"
         },
         {
@@ -334,80 +334,80 @@
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 11736,
+            "byteLength" : 26772,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 11736,
-            "byteOffset" : 11736,
+            "byteLength" : 26772,
+            "byteOffset" : 26772,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 7824,
-            "byteOffset" : 23472,
+            "byteLength" : 17848,
+            "byteOffset" : 53544,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 7824,
-            "byteOffset" : 31296,
+            "byteLength" : 17848,
+            "byteOffset" : 71392,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1956,
-            "byteOffset" : 39120,
+            "byteLength" : 4830,
+            "byteOffset" : 89240,
             "target" : 34963
         },
         {
             "buffer" : 0,
             "byteLength" : 3600,
-            "byteOffset" : 41076,
+            "byteOffset" : 94072,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 3600,
-            "byteOffset" : 44676,
+            "byteOffset" : 97672,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 2400,
-            "byteOffset" : 48276,
+            "byteOffset" : 101272,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 744,
-            "byteOffset" : 50676,
+            "byteOffset" : 103672,
             "target" : 34963
         },
         {
             "buffer" : 0,
             "byteLength" : 4464,
-            "byteOffset" : 51420,
+            "byteOffset" : 104416,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 4464,
-            "byteOffset" : 55884,
+            "byteOffset" : 108880,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 2976,
-            "byteOffset" : 60348,
+            "byteOffset" : 113344,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 744,
-            "byteOffset" : 63324,
+            "byteOffset" : 116320,
             "target" : 34963
         }
     ],
@@ -419,7 +419,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 64068,
+            "byteLength" : 117064,
             "uri" : "TunnelCross1.bin"
         }
     ]

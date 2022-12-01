@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -20,7 +20,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.006",
+            "name" : "Scene.137",
             "primitives" : [
                 {
                     "attributes" : {
@@ -38,74 +38,79 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 949,
+            "count" : 2353,
             "max" : [
                 2.500000476837158,
-                5.000000476837158,
-                2.500000476837158
+                5.000000953674316,
+                2.7586896419525146
             ],
             "min" : [
-                -2.500002145767212,
-                -2.537086629672558e-06,
-                -2.500002145767212
+                -2.500002384185791,
+                -2.942931132565718e-06,
+                -2.500002384185791
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 949,
+            "count" : 2353,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 949,
+            "count" : 2353,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 949,
+            "count" : 2353,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 1233,
+            "count" : 2412,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 11388,
-            "byteOffset" : 0
+            "byteLength" : 28236,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 11388,
-            "byteOffset" : 11388
+            "byteLength" : 28236,
+            "byteOffset" : 28236,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 7592,
-            "byteOffset" : 22776
+            "byteLength" : 18824,
+            "byteOffset" : 56472,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 7592,
-            "byteOffset" : 30368
+            "byteLength" : 18824,
+            "byteOffset" : 75296,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2466,
-            "byteOffset" : 37960
+            "byteLength" : 4824,
+            "byteOffset" : 94120,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 40428,
+            "byteLength" : 98944,
             "uri" : "3DCrossConnector_Col.bin"
         }
     ]

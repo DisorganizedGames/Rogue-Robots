@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -15,12 +15,12 @@
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "TVertical3Connector"
+            "name" : "TVertical3Connector_Col"
         }
     ],
     "meshes" : [
         {
-            "name" : "Scene.058",
+            "name" : "Scene.147",
             "primitives" : [
                 {
                     "attributes" : {
@@ -38,10 +38,10 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 1221,
+            "count" : 1409,
             "max" : [
-                2.536268472671509,
-                5.000000476837158,
+                2.536268711090088,
+                5.000000953674316,
                 2.889352798461914
             ],
             "min" : [
@@ -54,58 +54,63 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 1221,
+            "count" : 1409,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 1221,
+            "count" : 1409,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 1221,
+            "count" : 1409,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 1254,
+            "count" : 1464,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 14652,
-            "byteOffset" : 0
+            "byteLength" : 16908,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 14652,
-            "byteOffset" : 14652
+            "byteLength" : 16908,
+            "byteOffset" : 16908,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 9768,
-            "byteOffset" : 29304
+            "byteLength" : 11272,
+            "byteOffset" : 33816,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 9768,
-            "byteOffset" : 39072
+            "byteLength" : 11272,
+            "byteOffset" : 45088,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2508,
-            "byteOffset" : 48840
+            "byteLength" : 2928,
+            "byteOffset" : 56360,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 51348,
+            "byteLength" : 59288,
             "uri" : "TVertical3Connector_Col.bin"
         }
     ]

@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -20,7 +20,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.016",
+            "name" : "Scene.132",
             "primitives" : [
                 {
                     "attributes" : {
@@ -38,7 +38,7 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 400,
+            "count" : 1277,
             "max" : [
                 2.5,
                 2.1774113178253174,
@@ -46,7 +46,7 @@
             ],
             "min" : [
                 -2.5432136058807373,
-                0.30606284737586975,
+                -0.44237056374549866,
                 -2.5
             ],
             "type" : "VEC3"
@@ -54,58 +54,63 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 400,
+            "count" : 1277,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 400,
+            "count" : 1277,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 400,
+            "count" : 1277,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 852,
+            "count" : 1878,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 4800,
-            "byteOffset" : 0
+            "byteLength" : 15324,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 4800,
-            "byteOffset" : 4800
+            "byteLength" : 15324,
+            "byteOffset" : 15324,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 3200,
-            "byteOffset" : 9600
+            "byteLength" : 10216,
+            "byteOffset" : 30648,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 3200,
-            "byteOffset" : 12800
+            "byteLength" : 10216,
+            "byteOffset" : 40864,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1704,
-            "byteOffset" : 16000
+            "byteLength" : 3756,
+            "byteOffset" : 51080,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 17704,
+            "byteLength" : 54836,
             "uri" : "FloorBridge1_Col.bin"
         }
     ]

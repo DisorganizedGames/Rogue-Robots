@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -20,7 +20,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.002",
+            "name" : "Scene.007",
             "primitives" : [
                 {
                     "attributes" : {
@@ -38,14 +38,14 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 82,
+            "count" : 558,
             "max" : [
-                2.499999761581421,
-                5.000000476837158,
+                2.5,
+                5.340917110443115,
                 2.5000016689300537
             ],
             "min" : [
-                -2.499999523162842,
+                -2.499999761581421,
                 4.394087314605713,
                 -2.4999990463256836
             ],
@@ -54,58 +54,63 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 82,
+            "count" : 558,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 82,
+            "count" : 558,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 82,
+            "count" : 558,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 120,
+            "count" : 564,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 984,
-            "byteOffset" : 0
+            "byteLength" : 6696,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 984,
-            "byteOffset" : 984
+            "byteLength" : 6696,
+            "byteOffset" : 6696,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 656,
-            "byteOffset" : 1968
+            "byteLength" : 4464,
+            "byteOffset" : 13392,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 656,
-            "byteOffset" : 2624
+            "byteLength" : 4464,
+            "byteOffset" : 17856,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 240,
-            "byteOffset" : 3280
+            "byteLength" : 1128,
+            "byteOffset" : 22320,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 3520,
+            "byteLength" : 23448,
             "uri" : "CornerRoofHanging1_Col.bin"
         }
     ]

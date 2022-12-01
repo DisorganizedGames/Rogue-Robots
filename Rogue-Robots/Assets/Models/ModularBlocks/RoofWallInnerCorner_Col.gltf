@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -18,22 +18,9 @@
             "name" : "RoofWallInnerCorner_Col"
         }
     ],
-    "materials" : [
-        {
-            "doubleSided" : true,
-            "name" : "PP_Standard_Material.005",
-            "pbrMetallicRoughness" : {
-                "baseColorTexture" : {
-                    "index" : 0
-                },
-                "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
-            }
-        }
-    ],
     "meshes" : [
         {
-            "name" : "Scene.032",
+            "name" : "Scene.047",
             "primitives" : [
                 {
                     "attributes" : {
@@ -42,103 +29,88 @@
                         "TEXCOORD_0" : 2,
                         "TEXCOORD_1" : 3
                     },
-                    "indices" : 4,
-                    "material" : 0
+                    "indices" : 4
                 }
             ]
-        }
-    ],
-    "textures" : [
-        {
-            "sampler" : 0,
-            "source" : 0
-        }
-    ],
-    "images" : [
-        {
-            "mimeType" : "image/png",
-            "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 147,
+            "count" : 1275,
             "max" : [
                 2.500000476837158,
-                4.731200218200684,
-                2.5000007152557373
+                5.445003032684326,
+                2.5000009536743164
             ],
             "min" : [
-                -2.499999523162842,
-                -4.010462362202816e-08,
-                -2.5000007152557373
+                -2.499999761581421,
+                4.221541018978314e-07,
+                -2.500000476837158
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 147,
+            "count" : 1275,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 147,
+            "count" : 1275,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 147,
+            "count" : 1275,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 246,
+            "count" : 1299,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 1764,
-            "byteOffset" : 0
+            "byteLength" : 15300,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1764,
-            "byteOffset" : 1764
+            "byteLength" : 15300,
+            "byteOffset" : 15300,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1176,
-            "byteOffset" : 3528
+            "byteLength" : 10200,
+            "byteOffset" : 30600,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1176,
-            "byteOffset" : 4704
+            "byteLength" : 10200,
+            "byteOffset" : 40800,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 492,
-            "byteOffset" : 5880
-        }
-    ],
-    "samplers" : [
-        {
-            "magFilter" : 9729,
-            "minFilter" : 9987
+            "byteLength" : 2598,
+            "byteOffset" : 51000,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 6372,
+            "byteLength" : 53600,
             "uri" : "RoofWallInnerCorner_Col.bin"
         }
     ]

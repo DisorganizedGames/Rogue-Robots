@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -20,7 +20,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.066",
+            "name" : "Scene.131",
             "primitives" : [
                 {
                     "attributes" : {
@@ -38,74 +38,79 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 812,
+            "count" : 1444,
             "max" : [
-                2.500000476837158,
+                2.544839859008789,
                 4.999999523162842,
                 2.5
             ],
             "min" : [
                 -2.5,
-                -1.2703360425803112e-06,
-                -2.5000007152557373
+                -0.2531049847602844,
+                -2.5000009536743164
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 812,
+            "count" : 1444,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 812,
+            "count" : 1444,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 812,
+            "count" : 1444,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 1032,
+            "count" : 1518,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 9744,
-            "byteOffset" : 0
+            "byteLength" : 17328,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 9744,
-            "byteOffset" : 9744
+            "byteLength" : 17328,
+            "byteOffset" : 17328,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 6496,
-            "byteOffset" : 19488
+            "byteLength" : 11552,
+            "byteOffset" : 34656,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 6496,
-            "byteOffset" : 25984
+            "byteLength" : 11552,
+            "byteOffset" : 46208,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2064,
-            "byteOffset" : 32480
+            "byteLength" : 3036,
+            "byteOffset" : 57760,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 34544,
+            "byteLength" : 60796,
             "uri" : "WallFloorTunnelEntrance3_Col.bin"
         }
     ]

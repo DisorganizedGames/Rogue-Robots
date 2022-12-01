@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -20,7 +20,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.054",
+            "name" : "Scene.106",
             "primitives" : [
                 {
                     "attributes" : {
@@ -38,74 +38,79 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 690,
+            "count" : 2231,
             "max" : [
-                2.500000476837158,
-                4.406264781951904,
-                2.500000476837158
+                3.131699323654175,
+                4.9314069747924805,
+                3.16910982131958
             ],
             "min" : [
-                -2.500002145767212,
-                0.7270100712776184,
-                -2.500002145767212
+                -3.2199113368988037,
+                0.2575712203979492,
+                -3.1825006008148193
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 690,
+            "count" : 2231,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 690,
+            "count" : 2231,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 690,
+            "count" : 2231,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 690,
+            "count" : 2415,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 8280,
-            "byteOffset" : 0
+            "byteLength" : 26772,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 8280,
-            "byteOffset" : 8280
+            "byteLength" : 26772,
+            "byteOffset" : 26772,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 5520,
-            "byteOffset" : 16560
+            "byteLength" : 17848,
+            "byteOffset" : 53544,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 5520,
-            "byteOffset" : 22080
+            "byteLength" : 17848,
+            "byteOffset" : 71392,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1380,
-            "byteOffset" : 27600
+            "byteLength" : 4830,
+            "byteOffset" : 89240,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 28980,
+            "byteLength" : 94072,
             "uri" : "TunnelCross1_Col.bin"
         }
     ]

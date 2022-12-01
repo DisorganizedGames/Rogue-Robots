@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -20,7 +20,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.019",
+            "name" : "Scene.135",
             "primitives" : [
                 {
                     "attributes" : {
@@ -38,15 +38,15 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 285,
+            "count" : 1680,
             "max" : [
                 2.5,
-                5.000000476837158,
-                0.46408089995384216
+                5.077206134796143,
+                1.0207147598266602
             ],
             "min" : [
-                -0.32526808977127075,
-                1.2558103799819946,
+                -0.9412931799888611,
+                0.6535964012145996,
                 -2.499999761581421
             ],
             "type" : "VEC3"
@@ -54,58 +54,63 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 285,
+            "count" : 1680,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 285,
+            "count" : 1680,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 285,
+            "count" : 1680,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 285,
+            "count" : 1680,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 3420,
-            "byteOffset" : 0
+            "byteLength" : 20160,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 3420,
-            "byteOffset" : 3420
+            "byteLength" : 20160,
+            "byteOffset" : 20160,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2280,
-            "byteOffset" : 6840
+            "byteLength" : 13440,
+            "byteOffset" : 40320,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2280,
-            "byteOffset" : 9120
+            "byteLength" : 13440,
+            "byteOffset" : 53760,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 570,
-            "byteOffset" : 11400
+            "byteLength" : 3360,
+            "byteOffset" : 67200,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 11972,
+            "byteLength" : 70560,
             "uri" : "CliffCorner1_Col.bin"
         }
     ]

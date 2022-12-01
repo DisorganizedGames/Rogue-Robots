@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -20,7 +20,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.018",
+            "name" : "Scene.023",
             "primitives" : [
                 {
                     "attributes" : {
@@ -38,74 +38,79 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 100,
+            "count" : 518,
             "max" : [
-                2.5000059604644775,
-                5,
+                2.690530776977539,
+                5.041325092315674,
                 -1.3490968942642212
             ],
             "min" : [
                 -2.5000009536743164,
                 4.76456136766501e-07,
-                -2.500000476837158
+                -2.5925323963165283
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 100,
+            "count" : 518,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 100,
+            "count" : 518,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 100,
+            "count" : 518,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 189,
+            "count" : 600,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 1200,
-            "byteOffset" : 0
+            "byteLength" : 6216,
+            "byteOffset" : 0,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 6216,
+            "byteOffset" : 6216,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 4144,
+            "byteOffset" : 12432,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 4144,
+            "byteOffset" : 16576,
+            "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 1200,
-            "byteOffset" : 1200
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 800,
-            "byteOffset" : 2400
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 800,
-            "byteOffset" : 3200
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 378,
-            "byteOffset" : 4000
+            "byteOffset" : 20720,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 4380,
+            "byteLength" : 21920,
             "uri" : "InnerCornerFlat1_Col.bin"
         }
     ]

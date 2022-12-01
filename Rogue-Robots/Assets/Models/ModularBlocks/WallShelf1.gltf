@@ -30,7 +30,8 @@
                 "baseColorTexture" : {
                     "index" : 1
                 },
-                "metallicFactor" : 0
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.6863636374473572
             }
         }
     ],
@@ -77,7 +78,7 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 696,
+            "count" : 761,
             "max" : [
                 2.5000059604644775,
                 5,
@@ -93,57 +94,57 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 696,
+            "count" : 761,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 696,
+            "count" : 761,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 696,
+            "count" : 761,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 696,
+            "count" : 810,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 8352,
+            "byteLength" : 9132,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 8352,
-            "byteOffset" : 8352,
+            "byteLength" : 9132,
+            "byteOffset" : 9132,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 5568,
-            "byteOffset" : 16704,
+            "byteLength" : 6088,
+            "byteOffset" : 18264,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 5568,
-            "byteOffset" : 22272,
+            "byteLength" : 6088,
+            "byteOffset" : 24352,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1392,
-            "byteOffset" : 27840,
+            "byteLength" : 1620,
+            "byteOffset" : 30440,
             "target" : 34963
         }
     ],
@@ -155,7 +156,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 29232,
+            "byteLength" : 32060,
             "uri" : "WallShelf1.bin"
         }
     ]

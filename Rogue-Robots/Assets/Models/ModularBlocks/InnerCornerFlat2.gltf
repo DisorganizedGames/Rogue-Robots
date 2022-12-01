@@ -30,7 +30,8 @@
                 "baseColorTexture" : {
                     "index" : 1
                 },
-                "metallicFactor" : 0
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.6863636374473572
             }
         }
     ],
@@ -77,73 +78,73 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 189,
+            "count" : 536,
             "max" : [
                 2.5000009536743164,
-                5,
+                5.139082908630371,
                 -1.3490968942642212
             ],
             "min" : [
-                -2.5000059604644775,
-                4.76456136766501e-07,
-                -2.500000476837158
+                -2.6369802951812744,
+                -0.007515333592891693,
+                -2.748903751373291
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 189,
+            "count" : 536,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 189,
+            "count" : 536,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 189,
+            "count" : 536,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 189,
+            "count" : 612,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 2268,
+            "byteLength" : 6432,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2268,
-            "byteOffset" : 2268,
+            "byteLength" : 6432,
+            "byteOffset" : 6432,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1512,
-            "byteOffset" : 4536,
+            "byteLength" : 4288,
+            "byteOffset" : 12864,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1512,
-            "byteOffset" : 6048,
+            "byteLength" : 4288,
+            "byteOffset" : 17152,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 378,
-            "byteOffset" : 7560,
+            "byteLength" : 1224,
+            "byteOffset" : 21440,
             "target" : 34963
         }
     ],
@@ -155,7 +156,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 7940,
+            "byteLength" : 22664,
             "uri" : "InnerCornerFlat2.bin"
         }
     ]

@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -20,7 +20,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.040",
+            "name" : "Scene.113",
             "primitives" : [
                 {
                     "attributes" : {
@@ -38,7 +38,7 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 37,
+            "count" : 132,
             "max" : [
                 -1.824414610862732,
                 0.7050719261169434,
@@ -54,58 +54,63 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 37,
+            "count" : 132,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 37,
+            "count" : 132,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 37,
+            "count" : 132,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 120,
+            "count" : 150,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 444,
-            "byteOffset" : 0
+            "byteLength" : 1584,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 444,
-            "byteOffset" : 444
+            "byteLength" : 1584,
+            "byteOffset" : 1584,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 296,
-            "byteOffset" : 888
+            "byteLength" : 1056,
+            "byteOffset" : 3168,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 296,
-            "byteOffset" : 1184
+            "byteLength" : 1056,
+            "byteOffset" : 4224,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 240,
-            "byteOffset" : 1480
+            "byteLength" : 300,
+            "byteOffset" : 5280,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 1720,
+            "byteLength" : 5580,
             "uri" : "ShelfEnd2_Col.bin"
         }
     ]
