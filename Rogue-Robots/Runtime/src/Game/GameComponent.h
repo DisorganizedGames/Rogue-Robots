@@ -396,3 +396,8 @@ struct DeferredSetIgnoreCollisionCheckComponent
 	f32 countDown = 3.0f;
 	DOG::entity other = DOG::NULL_ENTITY;
 };
+
+struct MusicPlayer
+{
+
+};
