@@ -22,11 +22,14 @@ public:
 	void CreateItemHost(EntityTypes itemType, Vector3 position);
 	void CreateItemClient(CreateAndDestroyEntityComponent cad);
 	void DestroyAllItems();
+	
 private:
 	// singelton instance
 	static ItemManager s_amInstance;
 	static bool s_notInitialized;
 	static DOG::EntityManager& s_entityManager;
+	static u32 s_pickupId;
+
 	ItemManager() noexcept;
 	~ItemManager() noexcept = default;
 	DELETE_COPY_MOVE_CONSTRUCTOR(ItemManager);

@@ -3,24 +3,20 @@
 Client::Client()
 {
 	m_connectSocket = INVALID_SOCKET;
-	m_inputSend = new char[sizeof(TcpHeader)];
-	m_hostIp = new char[64];
-	m_sendUdpBuffer = new char[sizeof(PlayerNetworkComponentUdp)];
-	m_reciveUdpBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
 	m_udpId = 0;
 	m_sendUdpId = 0;
 	ZeroMemory(&m_hostAddressUdp, sizeof(m_hostAddressUdp));
 	ZeroMemory(&m_reciveAddressUdp, sizeof(m_reciveAddressUdp));
 	const char adress[] = "239.255.255.0";
 	memcpy(m_multicastAdress, adress, sizeof(adress));
+	m_reciveTrue = true;
 }
 
 Client::~Client()
 {
-	delete[] m_inputSend;
-	delete[] m_hostIp;
-	delete[] m_sendUdpBuffer;
-	delete[] m_reciveUdpBuffer;
+	m_reciveTrue = false;
+	closesocket(m_connectSocket);
+	WSACleanup();
 }
 
 INT8 Client::ConnectTcpServer(std::string ipAdress)
@@ -128,7 +124,7 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 	int bytesRecived, processedBytes = 0;
 	bool isItFirstTime = true;
 	u8 nrOfPackets = 0;
-	while (true)
+	while (m_reciveTrue)
 	{
 		bytesRecived = recv(m_connectSocket, reciveBuffer + processedBytes, SEND_AND_RECIVE_BUFFER_SIZE - processedBytes, 0);
 		if (bytesRecived > 0)
@@ -149,8 +145,6 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 			//multiple packets detected
 			else if ((bytesRecived - processedBytes) > packet.sizeOfPayload)
 			{
-				
-
 				while ((bytesRecived - processedBytes) > 0 && (bytesRecived - processedBytes) >= packet.sizeOfPayload)
 				{
 					processedBytes += packet.sizeOfPayload;
@@ -185,6 +179,7 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 			return 0;
 		}
 	}
+	return 0;
 }
 
 void Client::SetUpUdp()

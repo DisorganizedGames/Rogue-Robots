@@ -2,7 +2,21 @@
 #include "ItemManager/ItemManager.h"
 
 using namespace DOG;
-NetCode::NetCode()
+
+
+EntityManager& NetCode::s_entityManager = EntityManager::Get();
+NetCode* NetCode::s_amInstance = nullptr;
+bool NetCode::s_notInitialized = true;
+
+void NetCode::Initialize()
+{
+	// Set status to initialized
+	s_amInstance = new NetCode();
+	s_notInitialized = false;
+}
+
+
+NetCode::NetCode() noexcept
 {
 	m_netCodeAlive = true;
 	m_inputTcp.lobbyAlive = true;
@@ -17,25 +31,24 @@ NetCode::NetCode()
 	
 	m_bufferSize = sizeof(TcpHeader);
 	m_bufferReceiveSize = 0;
-	m_receiveBuffer = new char[SEND_AND_RECIVE_BUFFER_SIZE];
 	m_dataIsReadyToBeReceivedTcp = false;
 	m_lobby = false;
 	//Tick
 	QueryPerformanceFrequency(&m_clockFrequency);
 	QueryPerformanceCounter(&m_tickStartTime);
 	m_sleepGranularityMs = 1;
+	m_client = new Client;
+	m_serverHost = new Server;
 }
 
-NetCode::~NetCode()
+NetCode::~NetCode() noexcept
 {
 	m_netCodeAlive = false;
-	if(m_thread.joinable())
-		m_thread.join();
-	if (m_threadUdp.joinable())
-		m_threadUdp.join();
-	
-	delete[] m_receiveBuffer;
+	Sleep(6000);
+	delete m_client;
+	delete m_serverHost;
 }
+
 
 void NetCode::OnStartup()
 {
@@ -110,7 +123,8 @@ void NetCode::OnStartup()
 				m_entityManager.RemoveComponent<OnlinePlayer>(id);
 			}
 		});
-
+	if (m_inputTcp.playerId == 0)
+		m_serverHost->StopReceiving();
 }
 
 void NetCode::OnUpdate()
@@ -195,7 +209,7 @@ void NetCode::OnUpdate()
 
 				m_inputTcp.sizeOfPayload = m_bufferSize;
 				memcpy(m_sendBuffer, (char*)&m_inputTcp, sizeof(TcpHeader));
-				m_client.SendChararrayTcp(m_sendBuffer, m_inputTcp.sizeOfPayload);
+				m_client->SendChararrayTcp(m_sendBuffer, m_inputTcp.sizeOfPayload);
 				m_bufferSize = sizeof(TcpHeader);
 				m_inputTcp.nrOfNetTransform = 0;
 				m_inputTcp.nrOfChangedAgentsHp = 0;
@@ -355,6 +369,7 @@ void NetCode::OnUpdate()
 	}
 }
 
+extern void BackFromHost(void);
 
 void NetCode::Receive()
 {
@@ -382,11 +397,13 @@ void NetCode::Receive()
 			
 
 
-			m_numberOfPackets = m_client.ReceiveCharArrayTcp(m_receiveBuffer);
+			m_numberOfPackets = m_client->ReceiveCharArrayTcp(m_receiveBuffer);
 			
 			if (m_receiveBuffer == nullptr || m_numberOfPackets == 0)
 			{
 				std::cout << "NetCode:: Bad tcp packet, Number of packets: " << m_numberOfPackets << std::endl;
+				if (m_inputTcp.lobbyAlive)
+					m_netCodeAlive = false;
 			}
 			else
 			{
@@ -404,9 +421,9 @@ void NetCode::ReceiveUdp()
 	while (m_netCodeAlive)
 	{
 		m_mut.lock();
-		m_client.SendUdp(m_playerInputUdp);
+		m_client->SendUdp(m_playerInputUdp);
 		m_mut.unlock();
-		m_outputUdp = m_client.ReceiveUdp();
+		m_outputUdp = m_client->ReceiveUdp();
 	}
 
 }
@@ -435,20 +452,20 @@ void NetCode::UpdateSendUdp()
 bool NetCode::Host()
 {
 	
-	bool server = m_serverHost.StartTcpServer();
+	bool server = m_serverHost->StartTcpServer();
 	if (server)
 	{
 		// join server
-		std::string ip = m_serverHost.GetIpAddress();
+		std::string ip = m_serverHost->GetIpAddress();
 		if (ip != "")
 		{
 			std::cout << "Hosting at: " << ip << std::endl;
-			m_inputTcp.playerId = m_client.ConnectTcpServer(ip);
+			m_inputTcp.playerId = m_client->ConnectTcpServer(ip);
 			if (m_inputTcp.playerId > -1)
 			{
 				m_inputTcp.sizeOfPayload = sizeof(m_inputTcp);
 				m_inputTcp.lobbyAlive = true;
-				//m_client.SendTcp(m_inputTcp); // check if client needs to
+				//m_client->SendTcp(m_inputTcp); // check if client needs to
 				m_thread = std::thread(&NetCode::Receive, this);
 				m_thread.detach();
 				return server;
@@ -461,28 +478,30 @@ bool NetCode::Host()
 bool NetCode::Join(char* inputString)
 {
 	if (inputString[0] == 'a')
-		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.55"); //sam
+		m_inputTcp.playerId = m_client->ConnectTcpServer("192.168.1.55"); //sam
 	else if(inputString[0] == 'b')
-		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.72"); // filip
+		m_inputTcp.playerId = m_client->ConnectTcpServer("192.168.1.72"); // filip
 	else if (inputString[0] == 'c')
-		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.73"); // nad
+		m_inputTcp.playerId = m_client->ConnectTcpServer("192.168.1.73"); // nad
 	else if (inputString[0] == 'd')
-		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.67"); // axel
+		m_inputTcp.playerId = m_client->ConnectTcpServer("192.168.1.67"); // axel
 	else if (inputString[0] == 'e')
-		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.26"); //ove
+		m_inputTcp.playerId = m_client->ConnectTcpServer("192.168.1.26"); //ove
 	else if (inputString[0] == 'f')
-		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.254"); //gunnar
+		m_inputTcp.playerId = m_client->ConnectTcpServer("192.168.1.254"); //gunnar
 	else if (inputString[0] == 'g')
-		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.70"); // Emil
+		m_inputTcp.playerId = m_client->ConnectTcpServer("192.168.1.70"); // Emil F
 	else if (inputString[0] == 'h')
-		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.76"); // Jonatan
+		m_inputTcp.playerId = m_client->ConnectTcpServer("192.168.1.76"); // Jonatan
+	else if (inputString[0] == 'i')
+		m_inputTcp.playerId = m_client->ConnectTcpServer("192.168.1.8"); // Emil h
 	else if (inputString[0] == 'u')
 	{
-		m_inputTcp.playerId = m_client.ConnectTcpServer("192.168.1.55"); //192.168.1.55 || 192.168.50.214
+		m_inputTcp.playerId = m_client->ConnectTcpServer("192.168.1.55"); //192.168.1.55 || 192.168.50.214
 	}
 	else
 	{
-		m_inputTcp.playerId = m_client.ConnectTcpServer(inputString);
+		m_inputTcp.playerId = m_client->ConnectTcpServer(inputString);
 	}
 
 	if (m_inputTcp.playerId > -1)
@@ -509,7 +528,7 @@ u8 NetCode::GetNrOfPlayers()
 //host only
 std::string NetCode::GetIpAdress()
 {
-	return m_serverHost.GetIpAddress();
+	return m_serverHost->GetIpAddress();
 }
 
 bool NetCode::IsLobbyAlive()
@@ -524,8 +543,8 @@ void NetCode::SetLobbyStatus(bool lobbyStatus)
 
 void NetCode::SetMulticastAdress(const char* adress)
 {
-	m_client.SetMulticastAdress(adress);
-	m_serverHost.SetMulticastAdress(adress);
+	m_client->SetMulticastAdress(adress);
+	m_serverHost->SetMulticastAdress(adress);
 }
 
 void DeleteNetworkSync::OnLateUpdate(DOG::entity e, DeferredDeletionComponent&, NetworkId& netId, TransformComponent& transC)

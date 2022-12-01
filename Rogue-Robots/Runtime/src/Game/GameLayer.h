@@ -44,10 +44,12 @@ public:
 	virtual void OnRender() override final;
 	virtual void OnImGuiRender() override final;
 	virtual void OnEvent(DOG::IEvent& event) override final;
-	void ChangeGameState(GameState state);
+	
+	static void ChangeGameState(GameState state);
+	static void ChangeNetworkState(NetworkStatus);
 
+	static GameState GetGameStatus() { return m_gameState; };
 	static NetworkStatus GetNetworkStatus() { return s_networkStatus; }
-
 private:
 	void UpdateLobby();
 	void UpdateGame();
@@ -76,7 +78,7 @@ private:
 	void CheatDebugMenu(bool& open);
 	void Interact();
 private:
-	GameState m_gameState;
+	static GameState m_gameState;
 	static NetworkStatus s_networkStatus;
 	SceneComponent::Type m_selectedScene = SceneComponent::Type::PCGLevelScene;
 	std::unique_ptr<Scene> m_testScene;
@@ -86,7 +88,6 @@ private:
 	DOG::EntityManager& m_entityManager;
 	std::vector<std::shared_ptr<LuaInterface>> m_luaInterfaces;
 	std::array<u32, 4> m_playerModels;
-	NetCode m_netCode;
 	INT8 m_nrOfPlayers;
 	ImFont* m_imguiFont = nullptr;
 
@@ -107,5 +108,5 @@ private:
 
 	bool m_imguiRenderPlayer = false;
 	bool m_syncFrame = false;
-
+	int m_nrOfFramesToWait = 120;
 };

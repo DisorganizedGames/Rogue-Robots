@@ -9,6 +9,7 @@ using namespace DirectX::SimpleMath;
 EntityManager& ItemManager::s_entityManager = EntityManager::Get();
 ItemManager ItemManager::s_amInstance;
 bool ItemManager::s_notInitialized = true;
+u32 ItemManager::s_pickupId = 0u;
 
 /*******************************
 		Public Methods
@@ -99,6 +100,7 @@ void ItemManager::DestroyAllItems()
 			s_entityManager.RemoveComponent<NetworkId>(id);
 			s_entityManager.DeferredEntityDestruction(id);
 		});
+	s_pickupId = 0u;
 }
 
 /*******************************
@@ -115,12 +117,12 @@ void ItemManager::Initialize()
 {
 	// Set status to initialized
 	s_notInitialized = false;
+	s_pickupId = 0u;
 }
 
 
 u32 ItemManager::CreateTrampolinePickup(Vector3 position, u32 id)
 {
-	static u32 trampolineNetworkID = 0u;
 	u32 trampolineID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Trampoline.glb");
 
 	entity trampolineEntity = s_entityManager.CreateEntity();
@@ -132,11 +134,10 @@ u32 ItemManager::CreateTrampolinePickup(Vector3 position, u32 id)
 	auto& ni = s_entityManager.AddComponent<NetworkId>(trampolineEntity);
 	ni.entityTypeId = EntityTypes::Trampoline;
 	if (id == 0)
-		ni.id = ++trampolineNetworkID;
+		ni.id = ++s_pickupId;
 	else
 	{
 		ni.id = id;
-		trampolineNetworkID = id;
 	}
 	LuaMain::GetScriptManager()->AddScript(trampolineEntity, "Pickupable.lua");
 
@@ -149,7 +150,6 @@ u32 ItemManager::CreateTrampolinePickup(Vector3 position, u32 id)
 
 u32 ItemManager::CreateMissilePickup(DirectX::SimpleMath::Vector3 position,  u32 id)
 {
-	static u32 missileNetworkID = 0u;
 	u32 missileID = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/Missile/missile.glb");
 
 	entity missileEntity = s_entityManager.CreateEntity();
@@ -164,11 +164,10 @@ u32 ItemManager::CreateMissilePickup(DirectX::SimpleMath::Vector3 position,  u32
 	auto& ni = s_entityManager.AddComponent<NetworkId>(missileEntity);
 	ni.entityTypeId = EntityTypes::MissileBarrel;
 	if (id == 0)
-		ni.id = ++missileNetworkID;
+		ni.id = ++s_pickupId;
 	else
 	{
 		ni.id = id;
-		missileNetworkID = id;
 	}
 	LuaMain::GetScriptManager()->AddScript(missileEntity, "Pickupable.lua");
 
@@ -181,7 +180,6 @@ u32 ItemManager::CreateMissilePickup(DirectX::SimpleMath::Vector3 position,  u32
 
 u32 ItemManager::CreateLaserPickup(Vector3 position, u32 id)
 {
-	static u32 laserNetworkID = 0u;
 
 	entity laserEntity = SpawnLaserBlob(TransformComponent(position, Vector3::Zero, Vector3(0.5f, 0.5f, 0.5f)), NULL_ENTITY);
 	auto& bc = s_entityManager.AddComponent<BarrelComponent>(laserEntity);
@@ -192,11 +190,10 @@ u32 ItemManager::CreateLaserPickup(Vector3 position, u32 id)
 	auto& ni = s_entityManager.AddComponent<NetworkId>(laserEntity);
 	ni.entityTypeId = EntityTypes::LaserBarrel;
 	if (id == 0)
-		ni.id = ++laserNetworkID;
+		ni.id = ++s_pickupId;
 	else
 	{
 		ni.id = id;
-		laserNetworkID = id;
 	}
 
 	LuaMain::GetScriptManager()->AddScript(laserEntity, "Pickupable.lua");
@@ -210,7 +207,6 @@ u32 ItemManager::CreateLaserPickup(Vector3 position, u32 id)
 
 u32 ItemManager::CreateGrenadePickup(DirectX::SimpleMath::Vector3 position, u32 id)
 {
-	static u32 grenadeNetworkID = 0u;
 
 	u32 grenadeID = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/Grenade/Grenade.glb");
 
@@ -226,11 +222,10 @@ u32 ItemManager::CreateGrenadePickup(DirectX::SimpleMath::Vector3 position, u32 
 	auto& ni = s_entityManager.AddComponent<NetworkId>(grenadeEntity);
 	ni.entityTypeId = EntityTypes::GrenadeBarrel;
 	if (id == 0)
-		ni.id = ++grenadeNetworkID;
+		ni.id = ++s_pickupId;
 	else
 	{
 		ni.id = id;
-		grenadeNetworkID = id;
 	}
 	LuaMain::GetScriptManager()->AddScript(grenadeEntity, "Pickupable.lua");
 
@@ -243,8 +238,6 @@ u32 ItemManager::CreateGrenadePickup(DirectX::SimpleMath::Vector3 position, u32 
 
 u32 ItemManager::CreateMaxHealthBoostPickup(DirectX::SimpleMath::Vector3 position, u32 id )
 {
-	static u32 healtBoostNetworkdID = 0u;
-
 	u32 healthBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Medkit.glb");
 
 	entity healthBoostEntity = s_entityManager.CreateEntity();
@@ -256,11 +249,10 @@ u32 ItemManager::CreateMaxHealthBoostPickup(DirectX::SimpleMath::Vector3 positio
 	auto& ni = s_entityManager.AddComponent<NetworkId>(healthBoostEntity);
 	ni.entityTypeId = EntityTypes::IncreaseMaxHp;
 	if (id == 0)
-		ni.id = ++healtBoostNetworkdID;
+		ni.id = ++s_pickupId;
 	else
 	{
 		ni.id = id;
-		healtBoostNetworkdID = id;
 	}
 
 	LuaMain::GetScriptManager()->AddScript(healthBoostEntity, "Pickupable.lua");
@@ -274,8 +266,6 @@ u32 ItemManager::CreateMaxHealthBoostPickup(DirectX::SimpleMath::Vector3 positio
 
 u32 ItemManager::CreateFrostModificationPickup(DirectX::SimpleMath::Vector3 position, u32 id)
 {
-	static u32 frostModNetworkID = 0u;
-
 	u32 frostModID = AssetManager::Get().LoadModelAsset("Assets/Models/ModularRifle/Frost.gltf");
 
 	entity frostModEntity = s_entityManager.CreateEntity();
@@ -287,11 +277,10 @@ u32 ItemManager::CreateFrostModificationPickup(DirectX::SimpleMath::Vector3 posi
 	auto& ni = s_entityManager.AddComponent<NetworkId>(frostModEntity);
 	ni.entityTypeId = EntityTypes::FrostMagazineModification;
 	if (id == 0)
-		ni.id = ++frostModNetworkID;
+		ni.id = ++s_pickupId;
 	else
 	{
 		ni.id = id;
-		frostModNetworkID = id;
 	}
 
 	LuaMain::GetScriptManager()->AddScript(frostModEntity, "Pickupable.lua");
@@ -305,8 +294,6 @@ u32 ItemManager::CreateFrostModificationPickup(DirectX::SimpleMath::Vector3 posi
 
 u32 ItemManager::CreateFireModificationPickup(DirectX::SimpleMath::Vector3 position, u32 id)
 {
-	static u32 fireModNetworkID = 0u;
-
 	u32 fireModID = AssetManager::Get().LoadModelAsset("Assets/Models/ModularRifle/Fire.gltf");
 
 	entity fireModEntity = s_entityManager.CreateEntity();
@@ -318,11 +305,10 @@ u32 ItemManager::CreateFireModificationPickup(DirectX::SimpleMath::Vector3 posit
 	auto& ni = s_entityManager.AddComponent<NetworkId>(fireModEntity);
 	ni.entityTypeId = EntityTypes::FireMagazineModification;
 	if (id == 0)
-		ni.id = ++fireModNetworkID;
+		ni.id = ++s_pickupId;
 	else
 	{
 		ni.id = id;
-		fireModNetworkID = id;
 	}
 
 	LuaMain::GetScriptManager()->AddScript(fireModEntity, "Pickupable.lua");
@@ -336,8 +322,6 @@ u32 ItemManager::CreateFireModificationPickup(DirectX::SimpleMath::Vector3 posit
 
 u32 ItemManager::CreateTurretPickup(Vector3 position, u32 id)
 {
-
-	static u32 turretNetworkID = 0u;
 	u32 turretBaseModelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/turretBase.glb");
 	u32 turretHeadModelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/turret2.glb");
 
@@ -350,11 +334,10 @@ u32 ItemManager::CreateTurretPickup(Vector3 position, u32 id)
 	auto& ni = s_entityManager.AddComponent<NetworkId>(turretPickUpEntity);
 	ni.entityTypeId = EntityTypes::Turret;
 	if (id == 0)
-		ni.id = ++turretNetworkID;
+		ni.id = ++s_pickupId;
 	else
 	{
 		ni.id = id;
-		turretNetworkID = id;
 	}
 
 	LuaMain::GetScriptManager()->AddScript(turretPickUpEntity, "Pickupable.lua");
@@ -376,8 +359,6 @@ u32 ItemManager::CreateTurretPickup(Vector3 position, u32 id)
 
 u32 ItemManager::CreateSpeedBoostPickup(DirectX::SimpleMath::Vector3 position, u32 id)
 {
-	static u32 speedBoostNetworkdID = 0u;
-
 	u32 speedBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/speedPassive.glb");
 
 	entity speedBoostEntity = s_entityManager.CreateEntity();
@@ -389,11 +370,10 @@ u32 ItemManager::CreateSpeedBoostPickup(DirectX::SimpleMath::Vector3 position, u
 	auto& ni = s_entityManager.AddComponent<NetworkId>(speedBoostEntity);
 	ni.entityTypeId = EntityTypes::IncreaseSpeed;
 	if (id == 0)
-		ni.id = ++speedBoostNetworkdID;
+		ni.id = ++s_pickupId;
 	else
 	{
 		ni.id = id;
-		speedBoostNetworkdID = id;
 	}
 
 	LuaMain::GetScriptManager()->AddScript(speedBoostEntity, "Pickupable.lua");
@@ -407,7 +387,6 @@ u32 ItemManager::CreateSpeedBoostPickup(DirectX::SimpleMath::Vector3 position, u
 
 u32 ItemManager::CreateSpeedBoost2Pickup(DirectX::SimpleMath::Vector3 position, u32 id)
 {
-	static u32 speedBoostNetworkdID2 = 0u;
 
 	u32 speedBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/speedPassive2.glb");
 
@@ -420,11 +399,10 @@ u32 ItemManager::CreateSpeedBoost2Pickup(DirectX::SimpleMath::Vector3 position, 
 	auto& ni = s_entityManager.AddComponent<NetworkId>(speedBoostEntity);
 	ni.entityTypeId = EntityTypes::IncreaseSpeed2;
 	if (id == 0)
-		ni.id = ++speedBoostNetworkdID2;
+		ni.id = ++s_pickupId;
 	else
 	{
 		ni.id = id;
-		speedBoostNetworkdID2 = id;
 	}
 
 	LuaMain::GetScriptManager()->AddScript(speedBoostEntity, "Pickupable.lua");
@@ -468,8 +446,6 @@ u32 ItemManager::CreateSpeedBoost2Pickup(DirectX::SimpleMath::Vector3 position, 
 
 u32 ItemManager::CreateJumpBoost(DirectX::SimpleMath::Vector3 position, u32 id)
 {
-	static u32 jumpBoostID = 0u;
-
 	u32 jumpBoostId = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/TempJumBoostglb.glb");
 
 	entity pEntity = s_entityManager.CreateEntity();
@@ -481,11 +457,10 @@ u32 ItemManager::CreateJumpBoost(DirectX::SimpleMath::Vector3 position, u32 id)
 	auto& ni = s_entityManager.AddComponent<NetworkId>(pEntity);
 	ni.entityTypeId = EntityTypes::JumpBoost;
 	if (id == 0)
-		ni.id = ++jumpBoostID;
+		ni.id = ++s_pickupId;
 	else
 	{
 		ni.id = id;
-		jumpBoostID = id;
 	}
 
 	LuaMain::GetScriptManager()->AddScript(pEntity, "Pickupable.lua");
@@ -499,8 +474,6 @@ u32 ItemManager::CreateJumpBoost(DirectX::SimpleMath::Vector3 position, u32 id)
 
 u32 ItemManager::CreateFullAutoPickup(Vector3 position, u32 id)
 {
-	static u32 fullAutoNetworkID = 0u;
-
 	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/ModularRifle/FullAuto.gltf");
 
 	entity fullAutoEntity = s_entityManager.CreateEntity();
@@ -512,11 +485,10 @@ u32 ItemManager::CreateFullAutoPickup(Vector3 position, u32 id)
 	auto& ni = s_entityManager.AddComponent<NetworkId>(fullAutoEntity);
 	ni.entityTypeId = EntityTypes::FullAutoMisc;
 	if (id == 0)
-		ni.id = ++fullAutoNetworkID;
+		ni.id = ++s_pickupId;
 	else
 	{
 		ni.id = id;
-		fullAutoNetworkID = id;
 	}
 
 	LuaMain::GetScriptManager()->AddScript(fullAutoEntity, "Pickupable.lua");
@@ -530,8 +502,6 @@ u32 ItemManager::CreateFullAutoPickup(Vector3 position, u32 id)
 
 u32 ItemManager::CreateChargeShotPickup(Vector3 position, u32 id)
 {
-	static u32 chargeShotNetworkID = 0u;
-
 	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/ModularRifle/ChargeShot.gltf");
 
 	entity chargeShotEntity = s_entityManager.CreateEntity();
@@ -543,11 +513,10 @@ u32 ItemManager::CreateChargeShotPickup(Vector3 position, u32 id)
 	auto& ni = s_entityManager.AddComponent<NetworkId>(chargeShotEntity);
 	ni.entityTypeId = EntityTypes::ChargeShotMisc;
 	if (id == 0)
-		ni.id = ++chargeShotNetworkID;
+		ni.id = ++s_pickupId;
 	else
 	{
 		ni.id = id;
-		chargeShotNetworkID = id;
 	}
 
 	LuaMain::GetScriptManager()->AddScript(chargeShotEntity, "Pickupable.lua");
@@ -561,8 +530,6 @@ u32 ItemManager::CreateChargeShotPickup(Vector3 position, u32 id)
 
 u32 ItemManager::CreateReviverPickup(Vector3 position, u32 id)
 {
-	static u32 reviverNetworkID = 0u;
-
 	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
 
 	entity reviverEntity = s_entityManager.CreateEntity();
@@ -574,11 +541,10 @@ u32 ItemManager::CreateReviverPickup(Vector3 position, u32 id)
 	auto& ni = s_entityManager.AddComponent<NetworkId>(reviverEntity);
 	ni.entityTypeId = EntityTypes::Reviver;
 	if (id == 0)
-		ni.id = ++reviverNetworkID;
+		ni.id = ++s_pickupId;
 	else
 	{
 		ni.id = id;
-		reviverNetworkID = id;
 	}
 
 	LuaMain::GetScriptManager()->AddScript(reviverEntity, "Pickupable.lua");
@@ -592,7 +558,6 @@ u32 ItemManager::CreateReviverPickup(Vector3 position, u32 id)
 
 u32 ItemManager::CreateGoalRadarPickup(Vector3 position, u32 id)
 {
-	static u32 goalRadarNetworkID = 0u;
 	u32 goalRadarID = AssetManager::Get().LoadModelAsset("Assets/Models/ModularRifle/radar.gltf");
 
 	entity goalRadarEntity = s_entityManager.CreateEntity();
@@ -604,11 +569,10 @@ u32 ItemManager::CreateGoalRadarPickup(Vector3 position, u32 id)
 	auto& ni = s_entityManager.AddComponent<NetworkId>(goalRadarEntity);
 	ni.entityTypeId = EntityTypes::GoalRadar;
 	if (id == 0)
-		ni.id = ++goalRadarNetworkID;
+		ni.id = ++s_pickupId;
 	else
 	{
 		ni.id = id;
-		goalRadarNetworkID = id;
 	}
 	LuaMain::GetScriptManager()->AddScript(goalRadarEntity, "Pickupable.lua");
 
@@ -621,8 +585,6 @@ u32 ItemManager::CreateGoalRadarPickup(Vector3 position, u32 id)
 
 u32 ItemManager::CreateSyringePickup(Vector3 position, u32 id)
 {
-	static u32 syringeNetworkID = 0u;
-
 	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/health.glb");
 
 	entity entity = s_entityManager.CreateEntity();
@@ -634,11 +596,10 @@ u32 ItemManager::CreateSyringePickup(Vector3 position, u32 id)
 	auto& ni = s_entityManager.AddComponent<NetworkId>(entity);
 	ni.entityTypeId = EntityTypes::Syringe;
 	if (id == 0)
-		ni.id = ++syringeNetworkID;
+		ni.id = ++s_pickupId;
 	else
 	{
 		ni.id = id;
-		syringeNetworkID = id;
 	}
 
 	LuaMain::GetScriptManager()->AddScript(entity, "Pickupable.lua");
@@ -649,4 +610,3 @@ u32 ItemManager::CreateSyringePickup(Vector3 position, u32 id)
 	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
 	return ni.id;
 }
-

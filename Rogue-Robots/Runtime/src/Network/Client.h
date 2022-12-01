@@ -22,16 +22,17 @@
 	private:
 		u64 m_udpId;
 		int m_sendUdpId;
-		char* m_hostIp;
+		char m_hostIp[64];
 		TcpHeader m_playersClient[MAX_PLAYER_COUNT];
 		SOCKET m_connectSocket;
-		char* m_inputSend;
+		char m_inputSend[sizeof(TcpHeader)];
 		SOCKET m_udpSendSocket;
 		SOCKET m_udpReciveSocket;
 		struct sockaddr_in m_hostAddressUdp;
 		struct sockaddr_in m_reciveAddressUdp;
-		char* m_sendUdpBuffer;
-		char* m_reciveUdpBuffer;
+		char m_sendUdpBuffer[sizeof(PlayerNetworkComponentUdp)];
+		char m_reciveUdpBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
 		PlayerNetworkComponentUdp m_holdplayersUdp[MAX_PLAYER_COUNT];
 		char m_multicastAdress[16];
+		bool m_reciveTrue;
 	};

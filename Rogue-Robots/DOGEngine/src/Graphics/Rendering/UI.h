@@ -13,10 +13,10 @@
 void UIRebuild(UINT clientHeight, UINT clientWidth);
 void AddScenes();
 
-extern UINT menuID, gameID, optionsID, multiID;
-extern UINT menuBackID, optionsBackID, multiBackID;
-extern UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID;
-extern UINT cID, tID, hID;
+extern UINT menuID, gameID, optionsID, multiID, joinID, WaitingForHostID, GameOverID;
+extern UINT menuBackID, optionsBackID, multiBackID, lobbyID, hostBackID;
+extern UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID;
+extern UINT cID, tID, hID, playerlistID;
 
 namespace DOG
 {
@@ -241,7 +241,39 @@ namespace DOG
          std::vector<ComPtr<ID2D1Bitmap>> m_bitmaps;
          std::vector<D2D1_RECT_F> m_rects;
          ComPtr<ID2D1SolidColorBrush> m_borderBrush;
-         UINT m_buffs;  
+         UINT m_buffs;
+   };
+
+   class UIPlayerList : public UIElement
+   {
+      public:
+         UIPlayerList(DOG::gfx::D2DBackend_DX12& d2d, UINT id);
+         ~UIPlayerList();
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void AddPlayer(const float r, const float g, const float b, const std::wstring name);
+         void RemovePlayer(const std::wstring name);
+      private:
+         std::vector<std::wstring> m_players;
+         std::vector<D2D1::ColorF> m_playerColours;
+         D2D1_SIZE_U m_screensize;
+         ComPtr<ID2D1SolidColorBrush> m_rectBrush;
+         ComPtr<IDWriteTextFormat> m_textFormat;
+   };
+
+   class UILabel: public UIElement
+   {
+      public:
+         UILabel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring text, float x, float y, float width, float height, float size);
+         ~UILabel();
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void SetText(std::wstring text);
+      private:
+         D2D_RECT_F m_rect;
+         std::wstring m_text;
+         ComPtr<IDWriteTextFormat> m_textFormat;
+         ComPtr<ID2D1SolidColorBrush> m_textBrush;
    };
 
 }

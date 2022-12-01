@@ -15,6 +15,7 @@
 		INT8 GetNrOfConnectedPlayers();
 		void SetMulticastAdress(const char* adress);
 		static float TickTimeLeftTCP(LARGE_INTEGER t, LARGE_INTEGER frequency);
+		void StopReceiving();
 	private:
 		void ServerReciveConnectionsTCP(SOCKET listenSocket);
 		void ServerPollTCP();
@@ -42,4 +43,5 @@
 		PlayerNetworkComponentUdp m_holdPlayersUdp[MAX_PLAYER_COUNT];
 		char m_multicastAdress[16];
 		bool m_lobbyStatus;
+		bool m_reciveConnections;
 	};

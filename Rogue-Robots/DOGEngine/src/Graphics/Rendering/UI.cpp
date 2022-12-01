@@ -1,26 +1,26 @@
 #include "UI.h"
 #include "../../Core/Time.h"
+#include "../../Core/Window.h"
 #include "../../Input/Mouse.h"
 #include "../../Input/Keyboard.h"
 #include "../../EventSystem/KeyboardEvents.h"
 #include "../../EventSystem/MouseEvents.h"
 
 
+
 DOG::UI* DOG::UI::s_instance = nullptr;
 
-UINT menuID, gameID, optionsID, multiID;
-UINT menuBackID, optionsBackID, multiBackID;
-UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID;
-UINT cID, tID, hID;
+UINT menuID, gameID, optionsID, multiID, lobbyID, joinID, WaitingForHostID, GameOverID;
+UINT menuBackID, optionsBackID, multiBackID, hostBackID;
+UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID;
+UINT cID, tID, hID, playerlistID;
 
 
 std::vector<bool> buffsVisible;
 
 
-void PlayButtonFunc(void)
-{
-   DOG::UI::Get()->ChangeUIscene(gameID);
-}
+void PlayButtonFunc(void);
+
 
 void OptionsButtonFunc(void)
 {
@@ -32,14 +32,32 @@ void MultiplayerButtonFunc(void)
    DOG::UI::Get()->ChangeUIscene(multiID);
 }
 
+void HostButtonFunc(void);
+
+void BackFromHost(void);
+
+void HostLaunch(void);
+
 void ToMenuButtonFunc(void)
 {
-   DOG::UI::Get()->ChangeUIscene(menuID);
+    DOG::UI::Get()->ChangeUIscene(menuID);
 }
+
+void JoinButton(void);
+void Room1Button(void);
+void Room2Button(void);
+void Room3Button(void);
+void Room4Button(void);
+void Room5Button(void);
+void Room6Button(void);
+void Room7Button(void);
+void Room8Button(void);
+void Room9Button(void);
+void Room10Button(void);
 
 void ExitButtonFunc(void)
 {
-   //Exit game
+    DOG::Window::CloseWindow();
 }
 
 DOG::UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight) : m_visible(true), Layer("UILayer")
@@ -265,7 +283,6 @@ DOG::UIElement::UIElement(UINT id) : m_ID(id)
 {
 
 }
-
 
 
 DOG::UIElement::~UIElement()
@@ -770,7 +787,7 @@ void DOG::UIBuffTracker::Update(DOG::gfx::D2DBackend_DX12& d2d)
 
 DOG::UIBuffTracker::~UIBuffTracker()
 {
-   
+
 }
 
 void DOG::UIBuffTracker::AnimateUp(UINT index)
@@ -789,7 +806,7 @@ void DOG::UIBuffTracker::AnimateUp(UINT index)
 
 void DOG::UIBuffTracker::ActivateIcon(UINT index)
 {
-   if(buffsVisible[index])
+   if (buffsVisible[index])
       return;
    buffsVisible[index] = true;
    size_t activeBuffs = std::count(buffsVisible.begin(), buffsVisible.end(), true);
@@ -813,6 +830,129 @@ void DOG::UIBuffTracker::DeactivateIcon(UINT index)
    }
 }
 
+DOG::UIPlayerList::UIPlayerList(DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
+{
+   m_players.push_back(L"player 1");
+
+   m_playerColours.push_back(D2D1::ColorF(D2D1::ColorF::Red, 0.3f));
+
+   m_screensize = d2d.GetRTPixelSize();
+   HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.3f), &m_rectBrush);
+   HR_VFY(hr);
+   hr = d2d.GetDWriteFactory()->CreateTextFormat(
+      L"Robot Radicals",
+      NULL,
+      DWRITE_FONT_WEIGHT_NORMAL,
+      DWRITE_FONT_STYLE_NORMAL,
+      DWRITE_FONT_STRETCH_NORMAL,
+      20,
+      L"en-us",
+      &m_textFormat
+   );
+   HR_VFY(hr);
+   hr = m_textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+   HR_VFY(hr);
+   hr = m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+}
+
+DOG::UIPlayerList::~UIPlayerList()
+{
+
+}
+
+void DOG::UIPlayerList::Draw(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   auto rect = D2D1::RectF(m_screensize.width / 2 - 150.f, m_screensize.height / 2 - 20.f, m_screensize.width / 2 + 150.f, m_screensize.height / 2 + 20.f);
+   auto colourrect = D2D1::RectF(m_screensize.width / 2 - 200.f, m_screensize.height / 2 - 20.f, m_screensize.width / 2 - 160.f, m_screensize.height / 2 + 20.f);
+   for (size_t i = 0; i < m_players.size(); i++)
+   {
+      d2d.Get2DDeviceContext()->FillRectangle(rect, m_rectBrush.Get());
+      m_rectBrush->SetColor(m_playerColours[i]);
+      d2d.Get2DDeviceContext()->FillRectangle(colourrect, m_rectBrush.Get());
+      m_rectBrush->SetColor(D2D1::ColorF(D2D1::ColorF::White, 0.3f));
+      d2d.Get2DDeviceContext()->DrawTextW(
+         m_players[i].c_str(),
+         (UINT32)m_players[i].length(),
+         m_textFormat.Get(),
+         &rect,
+         m_rectBrush.Get());
+      rect.top += 60.f;
+      rect.bottom += 60.f;
+      colourrect.top += 60.f;
+      colourrect.bottom += 60.f;
+   }
+}
+void DOG::UIPlayerList::Update(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   UNREFERENCED_PARAMETER(d2d);
+}
+void DOG::UIPlayerList::AddPlayer(const float r, const float g, const float b, const std::wstring name)
+{
+   m_players.push_back(name);
+   m_playerColours.push_back(D2D1::ColorF(r, g, b, 0.3f));
+   return;
+}
+void DOG::UIPlayerList::RemovePlayer(const std::wstring name)
+{
+   for (size_t i = 0; i < m_players.size(); i++)
+   {
+      if (m_players[i] == name)
+      {
+         m_players.erase(m_players.begin() + i);
+         m_playerColours.erase(m_playerColours.begin() + i);
+         return;
+      }
+   }
+}
+
+DOG::UILabel::UILabel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring text, float x, float y, float width, float height, float size) : UIElement(id)
+{
+   UNREFERENCED_PARAMETER(d2d);
+   m_text = text;
+   m_rect = D2D1::RectF(x, y, x + width, y + height);
+   HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.7f), &m_textBrush);
+   HR_VFY(hr);
+   hr = d2d.GetDWriteFactory()->CreateTextFormat(
+      L"Robot Radicals",
+      NULL,
+      DWRITE_FONT_WEIGHT_NORMAL,
+      DWRITE_FONT_STYLE_NORMAL,
+      DWRITE_FONT_STRETCH_NORMAL,
+      size,
+      L"en-us",
+      &m_textFormat
+   );
+   HR_VFY(hr);
+   hr = m_textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+   HR_VFY(hr);
+   hr = m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+
+}
+
+void DOG::UILabel::Update(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   UNREFERENCED_PARAMETER(d2d);
+   return;
+}
+
+void DOG::UILabel::Draw(DOG::gfx::D2DBackend_DX12& d2d)
+{
+    d2d.Get2DDeviceContext()->DrawTextW(
+         m_text.c_str(),
+         (UINT32)m_text.length(),
+         m_textFormat.Get(),
+         &m_rect,
+         m_textBrush.Get());
+}
+DOG::UILabel::~UILabel()
+{
+
+}
+void DOG::UILabel::SetText(std::wstring text)
+{
+   m_text = text;
+}
+
 void UIRebuild(UINT clientHeight, UINT clientWidth)
 {
    auto instance = DOG::UI::Get();
@@ -834,8 +974,20 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto multiBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(multiBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Multiplayer"));
    instance->AddUIElementToScene(multiID, std::move(multiBack));
 
-   auto t = instance->Create<DOG::UITextField, float, float, float, float>(tID, (FLOAT)clientWidth / 2.f - 250.f / 2, (FLOAT)clientHeight / 2.f, 250.f, 30.f);
-   instance->AddUIElementToScene(multiID, std::move(t));
+   auto lobbyBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(multiBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Lobby"));
+   instance->AddUIElementToScene(lobbyID, std::move(lobbyBack));
+
+   auto bplaylobby = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 150.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Play"), std::function<void()>(HostLaunch));
+   instance->AddUIElementToScene(lobbyID, std::move(bplaylobby));
+
+   auto joinback = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Join Room"));
+   instance->AddUIElementToScene(joinID, std::move(joinback));
+
+   auto joining = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Joined Room"));
+   instance->AddUIElementToScene(WaitingForHostID, std::move(joining));
+
+   auto gameOver = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Game Over"));
+   instance->AddUIElementToScene(GameOverID, std::move(gameOver));
 
    //Menu buttons
    auto bp = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Play"), std::function<void()>(PlayButtonFunc));
@@ -843,10 +995,33 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto bo = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
    auto be = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(beID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
    auto optback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(optbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
-   auto mulback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
+   auto mulback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 200.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
+   auto hostBack = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Disconnect"), std::function<void()>(BackFromHost));
+   auto bh = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bhID, (FLOAT)clientWidth / 2.f - 75.f - 100.f, (FLOAT)clientHeight / 2.f + 120.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Host"), std::function<void()>(HostButtonFunc));
+   auto bj = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bjID, (FLOAT)clientWidth / 2.f - 75.f + 100.f, (FLOAT)clientHeight / 2.f + 120.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Join"), std::function<void()>(JoinButton));
+   auto clientBack = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Disconnect"), std::function<void()>(BackFromHost));
+   auto bjj = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bjjID, (FLOAT)clientWidth / 2.f - 75.f + 100.f, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(MultiplayerButtonFunc));
+   //Room Join buttons
+   auto r1 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r1ID, (FLOAT)clientWidth / 2.f - 1000.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 1"), std::function<void()>(Room1Button));
+   auto r2 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r2ID, (FLOAT)clientWidth / 2.f - 1000.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 2"), std::function<void()>(Room2Button));
+   auto r3 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r3ID, (FLOAT)clientWidth / 2.f - 500.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 3"), std::function<void()>(Room3Button));
+   auto r4 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r4ID, (FLOAT)clientWidth / 2.f , (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 4"), std::function<void()>(Room4Button));
+   auto r5 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r5ID, (FLOAT)clientWidth / 2.f + 500.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 5"), std::function<void()>(Room5Button));
+   auto r6 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r6ID, (FLOAT)clientWidth / 2.f + 980.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 6"), std::function<void()>(Room6Button));
+   auto r7 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r7ID, (FLOAT)clientWidth / 2.f + 980.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 7"), std::function<void()>(Room7Button));
+   auto r8 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r8ID, (FLOAT)clientWidth / 2.f - 500.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 8"), std::function<void()>(Room8Button));
+   auto r9 = instance->Create<DOG::UIButton>(r9ID, (FLOAT)clientWidth / 2.f , (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 9"), std::function<void()>(Room9Button));
+   auto r10 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r10ID, (FLOAT)clientWidth / 2.f + 500.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 10"), std::function<void()>(Room10Button));
+  
+   //Labels
+   auto l1 = instance->Create<DOG::UILabel>(l1ID, std::wstring(L"Room "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 450.f, 500.f, 60.f, 40.f);
+   auto l2 = instance->Create<DOG::UILabel>(l2ID, std::wstring(L"Ip: "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 350.f, 500.f, 60.f, 40.f);
+   auto l3 = instance->Create<DOG::UILabel>(l3ID, std::wstring(L"Nr of players: "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 250.f, 500.f, 60.f, 40.f);
 
-   auto bh = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bhID, (FLOAT)clientWidth / 2.f - 75.f - 100.f, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Host"), std::function<void()>(ToMenuButtonFunc));
-   auto bj = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bjID, (FLOAT)clientWidth / 2.f - 75.f + 100.f, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Join"), std::function<void()>(ToMenuButtonFunc));
+   //Client
+   auto l4 = instance->Create<DOG::UILabel>(l4ID, std::wstring(L"Room "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 450.f, 500.f, 60.f, 40.f);
+   auto l5 = instance->Create<DOG::UILabel>(l5ID, std::wstring(L" "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 350.f, 500.f, 60.f, 40.f);
+   auto l6 = instance->Create<DOG::UILabel>(l6ID, std::wstring(L"Nr of players: "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 250.f, 500.f, 60.f, 40.f);
 
    std::vector<std::wstring> vec;
    vec.push_back(L"Assets/Sprites/test.bmp");
@@ -863,7 +1038,25 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(multiID, std::move(mulback));
    instance->AddUIElementToScene(multiID, std::move(bh));
    instance->AddUIElementToScene(multiID, std::move(bj));
-
+   instance->AddUIElementToScene(joinID, std::move(r1));
+   instance->AddUIElementToScene(joinID, std::move(r2));
+   instance->AddUIElementToScene(joinID, std::move(r3));
+   instance->AddUIElementToScene(joinID, std::move(r4));
+   instance->AddUIElementToScene(joinID, std::move(r5));
+   instance->AddUIElementToScene(joinID, std::move(r6));
+   instance->AddUIElementToScene(joinID, std::move(r7));
+   instance->AddUIElementToScene(joinID, std::move(r8));
+   instance->AddUIElementToScene(joinID, std::move(r9));
+   instance->AddUIElementToScene(joinID, std::move(r10));
+   instance->AddUIElementToScene(joinID, std::move(bjj));
+   instance->AddUIElementToScene(lobbyID, std::move(l1));
+   instance->AddUIElementToScene(lobbyID, std::move(l2));
+   instance->AddUIElementToScene(lobbyID, std::move(l3));
+   instance->AddUIElementToScene(lobbyID, std::move(hostBack));
+   instance->AddUIElementToScene(WaitingForHostID, std::move(clientBack));
+   instance->AddUIElementToScene(WaitingForHostID, std::move(l4));
+   instance->AddUIElementToScene(WaitingForHostID, std::move(l5));
+   instance->AddUIElementToScene(WaitingForHostID, std::move(l6));
 
    //Splash screen
    // UINT sID;
@@ -884,5 +1077,9 @@ void AddScenes()
    gameID = instance->AddScene();
    multiID = instance->AddScene();
    optionsID = instance->AddScene();
+   lobbyID = instance->AddScene();
    instance->ChangeUIscene(menuID);
+   joinID = instance->AddScene();
+   WaitingForHostID = instance->AddScene();
+   GameOverID = instance->AddScene();
 }

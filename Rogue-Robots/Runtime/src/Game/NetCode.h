@@ -18,9 +18,28 @@ enum PlayerActions
 class NetCode
 {
 public:
-	NetCode();
-	~NetCode();
-	
+	[[nodiscard]] static constexpr NetCode& Get() noexcept
+	{
+		if (s_notInitialized)
+			Initialize();
+		return *s_amInstance;
+	}
+
+	static void Reset()
+	{
+		delete s_amInstance;
+		s_amInstance = new NetCode();
+	}
+	DELETE_COPY_MOVE_CONSTRUCTOR(NetCode);
+private:
+	static NetCode* s_amInstance;
+	static bool s_notInitialized;
+	static DOG::EntityManager& s_entityManager;
+
+	NetCode() noexcept;
+	~NetCode() noexcept;
+
+public:
 	void OnUpdate();
 	void OnStartup();
 	bool Host();
@@ -31,7 +50,10 @@ public:
 	bool IsLobbyAlive();
 	void SetMulticastAdress(const char* adress);
 	void SetLobbyStatus(bool lobbyStatus);
+
 private:
+	static void Initialize();
+
 	void Receive();
 	void ReceiveUdp();
 	
@@ -53,15 +75,15 @@ private:
 	std::thread m_threadUdp;
 	std::vector<DOG::entity> m_playersId;
 	std::string m_inputString;
-	Client m_client;
+	Client* m_client;
 	std::mutex m_mut;
 	u16 m_bufferSize;
 	int m_bufferReceiveSize;
 	char m_sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
-	char* m_receiveBuffer;
+	char m_receiveBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
 	bool m_dataIsReadyToBeReceivedTcp;
 	bool m_lobby;
-	Server m_serverHost;
+	Server* m_serverHost;
 	int m_numberOfPackets;
 	char m_multicastAdress[16];
 
