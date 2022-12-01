@@ -229,12 +229,21 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 		if (EntityManager::Get().HasComponent<FireEffectComponent>(hit.hits[i].hitByEntity))
 		{
 			auto& fecBullet = EntityManager::Get().GetComponent<FireEffectComponent>(hit.hits[i].hitByEntity);
-			EntityManager::Get().AddOrReplaceComponent<FireEffectComponent>(e, fecBullet.fireTimer, fecBullet.fireDamagePerSecond);
 
-			if (!EntityManager::Get().HasComponent<ParticleEmitterComponent>(e))
+			if (EntityManager::Get().HasComponent<FireEffectComponent>(e))
 			{
-				EntityManager::Get().AddComponent<ConeSpawnComponent>(e) = { .angle = DirectX::XM_PI / 8.0f, .speed = 5.f };
-				EntityManager::Get().AddComponent<ParticleEmitterComponent>(e) = {
+				EntityManager::Get().GetComponent<FireEffectComponent>(e).fireTimer = fecBullet.fireTimer;
+			}
+			else
+			{
+				FireEffectComponent& fire = EntityManager::Get().AddComponent<FireEffectComponent>(e, fecBullet.fireTimer, fecBullet.fireDamagePerSecond);
+
+				fire.particleEntity = EntityManager::Get().CreateEntity();
+
+				EntityManager::Get().AddComponent<TransformComponent>(fire.particleEntity);
+				EntityManager::Get().AddComponent<ChildComponent>(fire.particleEntity).parent = e;
+				EntityManager::Get().AddComponent<ConeSpawnComponent>(fire.particleEntity) = { .angle = DirectX::XM_PI / 8.0f, .speed = 5.f };
+				EntityManager::Get().AddComponent<ParticleEmitterComponent>(fire.particleEntity) = {
 					.spawnRate = 200,
 					.particleSize = 0.08f,
 					.particleLifetime = 0.6f,
@@ -390,8 +399,7 @@ void AgentFireTimerSystem::OnUpdate(DOG::entity e, AgentHPComponent& hpComponent
 	}
 	else
 	{
+		EntityManager::Get().DeferredEntityDestruction(fireEffect.particleEntity);
 		EntityManager::Get().RemoveComponent<FireEffectComponent>(e);
-		EntityManager::Get().RemoveComponent<ConeSpawnComponent>(e);
-		EntityManager::Get().RemoveComponent<ParticleEmitterComponent>(e);
 	}
 }

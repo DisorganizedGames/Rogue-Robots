@@ -232,4 +232,9 @@ void AgentManager::DestroyLocalAgent(entity e)
 		ItemManager::Get().CreateItemHost( EntityTypes(((u32)Time::ElapsedTime()+agent.id) % u32(EntityTypes::Default)), agentTrans.GetPosition());
 
 	em.DeferredEntityDestruction(e);
+
+	if (EntityManager::Get().HasComponent<FireEffectComponent>(e))
+	{
+		EntityManager::Get().DeferredEntityDestruction(EntityManager::Get().GetComponent<FireEffectComponent>(e).particleEntity);
+	}
 }

@@ -56,6 +56,13 @@ void NetCode::OnStartup()
 				int gunID = ge.GetIntFromTable("entityID");
 				m_entityManager.RemoveComponent<ThisPlayerWeapon>(gunID);
 
+				int barrelID = tab.GetIntFromTable("barrelEntityID");
+				m_entityManager.RemoveComponent<ThisPlayerWeapon>(barrelID);
+				int miscID = tab.GetIntFromTable("miscEntityID");
+				m_entityManager.RemoveComponent<ThisPlayerWeapon>(miscID);
+				int magazineID = tab.GetIntFromTable("magazineEntityID");
+				m_entityManager.RemoveComponent<ThisPlayerWeapon>(magazineID);
+
 				tab.CallFunctionOnTable("DestroyWeaponLights");
 
 				EntityManager::Get().Collect<DontDraw, ChildComponent>().Do([&](entity subEntity, DontDraw&, ChildComponent& parentCompany)
@@ -89,6 +96,13 @@ void NetCode::OnStartup()
 				auto ge = tab.GetTableFromTable("gunEntity");
 				int gunID = ge.GetIntFromTable("entityID");
 				m_entityManager.AddComponent<ThisPlayerWeapon>(gunID);
+
+				int barrelID = tab.GetIntFromTable("barrelEntityID");
+				m_entityManager.AddComponent<ThisPlayerWeapon>(barrelID);
+				int miscID = tab.GetIntFromTable("miscEntityID");
+				m_entityManager.AddComponent<ThisPlayerWeapon>(miscID);
+				int magazineID = tab.GetIntFromTable("magazineEntityID");
+				m_entityManager.AddComponent<ThisPlayerWeapon>(magazineID);
 
 				tab.CallFunctionOnTable("CreateWeaponLights");
 
