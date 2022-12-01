@@ -38,6 +38,7 @@ void Sequence::Process(DOG::entity agent) noexcept
 	{
 		auto& pCurrentChild = GetChildren()[m_currentChildIndex];
 		//We are, so we should just process it:
+		m_currentChildIndex++;
 		pCurrentChild->Process(agent);
 	}
 	else
@@ -49,6 +50,7 @@ void Sequence::Process(DOG::entity agent) noexcept
 		{
 			Reset();
 			SetSucceededAs(false);
+			GetParent()->Process(agent);
 			return;
 		}
 
@@ -59,14 +61,15 @@ void Sequence::Process(DOG::entity agent) noexcept
 		{
 			Reset();
 			SetSucceededAs(true);
+			GetParent()->Process(agent);
 			return;
 		}
 
 		//At this point we know that we should just continue going:
 		auto& pCurrentChild = GetChildren()[m_currentChildIndex];
+		m_currentChildIndex++;
 		pCurrentChild->Process(agent);
 	}
-	m_currentChildIndex++;
 }
 
 Selector::Selector(const std::string& name) noexcept
@@ -81,6 +84,7 @@ void Selector::Process(DOG::entity agent) noexcept
 	{
 		auto& pCurrentChild = GetChildren()[m_currentChildIndex];
 		//We are, so we should just process it:
+		m_currentChildIndex++;
 		pCurrentChild->Process(agent);
 	}
 	else
@@ -92,6 +96,7 @@ void Selector::Process(DOG::entity agent) noexcept
 		{
 			Reset();
 			SetSucceededAs(true);
+			GetParent()->Process(agent);
 			return;
 		}
 
@@ -102,14 +107,15 @@ void Selector::Process(DOG::entity agent) noexcept
 		{
 			Reset();
 			SetSucceededAs(false);
+			GetParent()->Process(agent);
 			return;
 		}
 
 		//At this point we know that we should just continue going:
 		auto& pCurrentChild = GetChildren()[m_currentChildIndex];
+		m_currentChildIndex++;
 		pCurrentChild->Process(agent);
 	}
-	m_currentChildIndex++;
 }
 
 Decorator::Decorator(const std::string& name, const DecoratorType type) noexcept
@@ -131,7 +137,17 @@ Succeeder::Succeeder(const std::string& name) noexcept
 
 void Succeeder::Process(DOG::entity agent) noexcept
 {
-	GetChild()->Process(agent);
+	if (!processed)
+	{
+		processed = true;
+		GetChild()->Process(agent);
+	}
+	else
+	{
+		SetSucceededAs(true);
+		processed = false;
+		GetParent()->Process(agent);
+	}
 }
 
 Failer::Failer(const std::string& name) noexcept
@@ -140,8 +156,17 @@ Failer::Failer(const std::string& name) noexcept
 
 void Failer::Process(DOG::entity agent) noexcept
 {
-	GetChild()->Process(agent);
-	SetSucceededAs(false);
+	if (!processed)
+	{
+		processed = true;
+		GetChild()->Process(agent);
+	}
+	else
+	{
+		processed = false;
+		SetSucceededAs(false);
+		GetParent()->Process(agent);
+	}
 }
 
 Inverter::Inverter(const std::string& name) noexcept
@@ -150,7 +175,24 @@ Inverter::Inverter(const std::string& name) noexcept
 
 void Inverter::Process(DOG::entity agent) noexcept
 {
-	GetChild()->Process(agent);
+	if (!processed)
+	{
+		processed = true;
+		GetChild()->Process(agent);
+	}
+	else
+	{
+		if (GetChild()->Succeeded())
+		{
+			SetSucceededAs(false);
+		}
+		else
+		{
+			SetSucceededAs(true);
+		}
+		processed = false;
+		GetParent()->Process(agent);
+	}
 }
 
 Root::Root(const std::string& name) noexcept
@@ -166,27 +208,46 @@ Leaf::Leaf(const std::string& name) noexcept
 	: Node{ name, NodeType::Leaf }
 {}
 
+void Leaf::ForceSucceed(DOG::entity agent) noexcept
+{
+	SetSucceededAs(true);
+	GetParent()->Process(agent);
+}
+
+void Leaf::ForceFail(DOG::entity agent) noexcept
+{
+	SetSucceededAs(false);
+	GetParent()->Process(agent);
+}
+
 DetectPlayerNode::DetectPlayerNode(const std::string& name) noexcept
 	: Leaf{ name }
 {}
 
 void DetectPlayerNode::Process(DOG::entity agent) noexcept
 {
-	DOG::EntityManager::Get().AddComponent<DetectPlayerComponent>(agent);
-	DOG::EntityManager::Get().GetComponent<BehaviourTreeComponent>(agent).currentRunningNode = this;
+	if (!DOG::EntityManager::Get().HasComponent<BTAttackComponent>(agent))
+	{
+		DOG::EntityManager::Get().AddComponent<BTDetectPlayerComponent>(agent);
+		DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
+	}
+	else
+	{
+		ForceSucceed(agent);
+	}
 }
 
 void DetectPlayerNode::Succeed(DOG::entity agent) noexcept
 {
 	SetSucceededAs(true);
-	DOG::EntityManager::Get().RemoveComponent<DetectPlayerComponent>(agent);
+	DOG::EntityManager::Get().RemoveComponent<BTDetectPlayerComponent>(agent);
 	GetParent()->Process(agent);
 }
 
 void DetectPlayerNode::Fail(DOG::entity agent) noexcept
 {
 	SetSucceededAs(false);
-	DOG::EntityManager::Get().RemoveComponent<DetectPlayerComponent>(agent);
+	DOG::EntityManager::Get().RemoveComponent<BTDetectPlayerComponent>(agent);
 	GetParent()->Process(agent);
 }
 
@@ -196,20 +257,99 @@ SignalGroupNode::SignalGroupNode(const std::string& name) noexcept
 
 void SignalGroupNode::Process(DOG::entity agent) noexcept
 {
-	DOG::EntityManager::Get().AddComponent<SignalGroupComponent>(agent);
-	DOG::EntityManager::Get().GetComponent<BehaviourTreeComponent>(agent).currentRunningNode = this;
+	if (!DOG::EntityManager::Get().HasComponent<BTAttackComponent>(agent))
+	{
+		DOG::EntityManager::Get().AddComponent<BTSignalGroupComponent>(agent);
+		DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
+	}
+	else
+	{
+		ForceSucceed(agent);
+	}
 }
 
 void SignalGroupNode::Succeed(DOG::entity agent) noexcept
 {
 	SetSucceededAs(true);
-	DOG::EntityManager::Get().RemoveComponent<SignalGroupComponent>(agent);
+	DOG::EntityManager::Get().RemoveComponent<BTSignalGroupComponent>(agent);
 	GetParent()->Process(agent);
 }
 
 void SignalGroupNode::Fail(DOG::entity agent) noexcept
 {
 	SetSucceededAs(false);
-	DOG::EntityManager::Get().RemoveComponent<SignalGroupComponent>(agent);
+	DOG::EntityManager::Get().RemoveComponent<BTSignalGroupComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+AttackNode::AttackNode(const std::string& name) noexcept
+	: Leaf{ name }
+{}
+
+void AttackNode::Process(DOG::entity agent) noexcept
+{
+	DOG::EntityManager::Get().AddOrReplaceComponent<BTAttackComponent>(agent);
+	DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
+}
+
+void AttackNode::Succeed(DOG::entity agent) noexcept
+{
+	SetSucceededAs(true);
+	DOG::EntityManager::Get().RemoveComponent<BTAttackComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+void AttackNode::Fail(DOG::entity agent) noexcept
+{
+	SetSucceededAs(false);
+	DOG::EntityManager::Get().RemoveComponent<BTAttackComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+MoveToPlayerNode::MoveToPlayerNode(const std::string& name) noexcept
+	: Leaf{ name }
+{}
+
+void MoveToPlayerNode::Process(DOG::entity agent) noexcept
+{
+	DOG::EntityManager::Get().AddComponent<BTMoveToPlayerComponent>(agent);
+	DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
+}
+
+void MoveToPlayerNode::Succeed(DOG::entity agent) noexcept
+{
+	SetSucceededAs(true);
+	DOG::EntityManager::Get().RemoveComponent<BTMoveToPlayerComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+void MoveToPlayerNode::Fail(DOG::entity agent) noexcept
+{
+	SetSucceededAs(false);
+	DOG::EntityManager::Get().RemoveComponent<BTMoveToPlayerComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+PatrolNode::PatrolNode(const std::string& name) noexcept
+	: Leaf{ name }
+{}
+
+void PatrolNode::Process(DOG::entity agent) noexcept
+{
+	DOG::EntityManager::Get().AddComponent<BTPatrolComponent>(agent);
+	DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
+}
+
+void PatrolNode::Succeed(DOG::entity agent) noexcept
+{
+	SetSucceededAs(true);
+	DOG::EntityManager::Get().RemoveComponent<BTPatrolComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+void PatrolNode::Fail(DOG::entity agent) noexcept
+{
+	SetSucceededAs(false);
+	DOG::EntityManager::Get().RemoveComponent<BTPatrolComponent>(agent);
 	GetParent()->Process(agent);
 }
