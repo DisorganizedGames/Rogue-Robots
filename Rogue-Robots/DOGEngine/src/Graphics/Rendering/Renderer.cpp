@@ -1522,14 +1522,14 @@ namespace DOG::gfx
 					rd->Cmd_SetScissorRects(cmdl, m_globalEffectData.bbScissor);
 
 					rd->Cmd_SetPipeline(cmdl, m_pipe);
-					u32 gammaCast = *((u32*)&m_graphicsSettings.gamma);
 
 					rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Graphics, ShaderArgs()
 						.AppendConstant(m_graphicsSettings.ssao ? resources.GetView(passData.ao) : UINT_MAX)
 						.AppendConstant(resources.GetView(passData.litHDRView))
-						.AppendConstant(gammaCast)
+						.AppendConstant(std::bit_cast<u32>(m_graphicsSettings.gamma))
 						.AppendConstant(m_bloomEffect ? resources.GetView(passData.bloom) : UINT_MAX)
-						.AppendConstant(resources.GetView(passData.outline)));
+						.AppendConstant(resources.GetView(passData.outline))
+						.AppendConstant(std::bit_cast<u32>(m_graphicsSettings.bloomStrength)));
 
 					rd->Cmd_Draw(cmdl, 3, 1, 0, 0);
 				});

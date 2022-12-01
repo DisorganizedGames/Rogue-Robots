@@ -135,6 +135,7 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 	outFile << ",\n\t" << "shadowMapCapacity = " << spec.graphicsSettings.shadowMapCapacity;
 	outFile << ",\n\t" << "bloom = " << (spec.graphicsSettings.bloom ? "true" : "false");
 	outFile << ",\n\t" << "bloomTreshold = " << spec.graphicsSettings.bloomThreshold;
+	outFile << ",\n\t" << "bloomStrength = " << spec.graphicsSettings.bloomStrength;
 	outFile << ",\n\t" << "lit = " << (spec.graphicsSettings.lit ? "true" : "false");
 	outFile << ",\n\t" << "gamma = " << spec.graphicsSettings.gamma;
 
@@ -200,6 +201,7 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 		err |= !tryGetSpec("fullscreen", (int&)appSpec.graphicsSettings.windowMode);
 		err |= !tryGetSpec("bloom", appSpec.graphicsSettings.bloom);
 		err |= !tryGetSpec("bloomTreshold", appSpec.graphicsSettings.bloomThreshold);
+		err |= !tryGetSpec("bloomStrength", appSpec.graphicsSettings.bloomStrength);
 		err |= !tryGetSpec("lit", appSpec.graphicsSettings.lit);
 
 		// Rendering limits

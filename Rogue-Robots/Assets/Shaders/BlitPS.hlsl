@@ -16,6 +16,7 @@ struct PushConstantElement
     float gamma;
     uint bloom;
     uint outline;
+    float bloomStrength;
 };
 CONSTANTS(g_constants, PushConstantElement)
 
@@ -55,7 +56,7 @@ float4 main(VS_OUT input) : SV_TARGET
     //return float4(ssaoContrib.rrr, 1.f);
     
     hdr *= ssaoContrib;
-    hdr += bloom;
+    hdr += g_constants.bloomStrength * bloom.rgb;
     
     
     hdr += outline;
