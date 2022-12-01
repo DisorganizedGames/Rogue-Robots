@@ -36,21 +36,12 @@ function OnUpdate()
 		print(k, v)
 	end
 
-	-- Use effects to affect stats
+	-- Use effects to affect stats (this happens every frame!)
 	for key, item in pairs(passiveItems) do
 		stats = item[1]:affect(item[2], stats)
 	end
 
-	print("-------")
-	print("Iteration: ", iter)
-	iter = iter + 1
-	for k, v in pairs(stats) do
-		print(k, v)
-	end
-	print("-------")
-
 	Entity:SetPlayerStats(EntityID, stats)
-
 
 	itemsDirty = false
 
