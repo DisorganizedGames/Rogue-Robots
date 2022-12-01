@@ -25,7 +25,8 @@ function OnUpdate()
 		originalPlayerStats = Entity:GetPlayerStats(EntityID)
 	end
 
-	-- Keep grabbing latest stats
+	-- Keep grabbing latest stats, for health, since that is dynamic
+	-- The rest of the stats can use the old system --> Using OriginalPlayerStats and stacking it every frame..
 	local currPlayerStats = Entity:GetPlayerStats(EntityID)
 	originalPlayerStats.health = currPlayerStats["health"]
 
