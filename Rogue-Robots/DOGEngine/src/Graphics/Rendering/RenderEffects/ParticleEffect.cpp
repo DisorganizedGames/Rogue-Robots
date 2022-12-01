@@ -391,7 +391,7 @@ void ParticleEffect::AddLocal(RenderGraph& renderGraph, u32 groupSize)
 
 			rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
 
-			rd->Cmd_Dispatch(cmdl, std::max(1u, S_MAX_PARTICLES/groupSize/2), 1, 1);
+			rd->Cmd_Dispatch(cmdl, std::max(1u, S_MAX_PARTICLES / groupSize), 1, 1);
 		});
 }
 
@@ -434,7 +434,7 @@ void ParticleEffect::AddGlobal(RenderGraph& renderGraph, u32 groupSize)
 
 				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
 
-				rd->Cmd_Dispatch(cmdl, S_MAX_PARTICLES / S_SORT_COMPUTE_GROUP, 1, 1);
+				rd->Cmd_Dispatch(cmdl, S_MAX_PARTICLES / S_SORT_COMPUTE_GROUP / 2, 1, 1);
 			});
 	}
 
@@ -464,7 +464,7 @@ void ParticleEffect::AddGlobal(RenderGraph& renderGraph, u32 groupSize)
 
 			rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, shaderArgs);
 
-			rd->Cmd_Dispatch(cmdl, S_MAX_PARTICLES / S_SORT_COMPUTE_GROUP, 1, 1);
+			rd->Cmd_Dispatch(cmdl, S_MAX_PARTICLES / S_SORT_COMPUTE_GROUP / 2, 1, 1);
 		});
 }
 

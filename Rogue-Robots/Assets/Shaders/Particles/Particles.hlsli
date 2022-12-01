@@ -1,6 +1,6 @@
 #pragma once
 
-#define MAX_PARTICLES_ALIVE (512)
+#define MAX_PARTICLES_ALIVE (128*1024)
 static const float PI = 3.14159265758979323846f;
 static const float PIDIV2 = PI / 2.f;
 static const float TWOPI = 2 * PI;
