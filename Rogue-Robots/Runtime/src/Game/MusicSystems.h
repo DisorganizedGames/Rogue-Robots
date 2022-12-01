@@ -7,9 +7,12 @@ class PlayMusicSystem : public DOG::ISystem
 private:
 	u32 m_ambienceSong;
 	u32 m_actionSong;
-	static constexpr f32 WAIT_TIME_FOR_AMBIENT_MUSIC = 90.0f;
+	static constexpr f32 WAIT_TIME_FOR_AMBIENT_MUSIC = 65.0f;
 	f32 m_timerForAmbientMusicToStart;
 	bool playAmbience = true;
+
+	static constexpr f32 TIME_FOR_AFTER_AGGRO = 5.0f;
+	f32 m_timerForActionToContinue;
 
 public:
 	PlayMusicSystem();

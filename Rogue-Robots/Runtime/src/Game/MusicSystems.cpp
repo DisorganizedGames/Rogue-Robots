@@ -20,6 +20,7 @@ void PlayMusicSystem::OnUpdate(MusicPlayer&, DOG::AudioComponent& audio)
 	EntityManager::Get().Collect<AgentAggroComponent>().Do([&](AgentAggroComponent) {
 		foundAggro = true;
 		audio.volume = 1.0f;
+		m_timerForActionToContinue = -1.0f;
 		});
 
 	if (foundAggro && (!audio.playing || audio.assetID == m_ambienceSong))
@@ -27,20 +28,29 @@ void PlayMusicSystem::OnUpdate(MusicPlayer&, DOG::AudioComponent& audio)
 		audio.assetID = m_actionSong;
 		audio.shouldPlay = true;
 		audio.volume = 1.0f;
+
+		m_timerForActionToContinue = -1.0f;
 	}
-	else if (audio.playing && audio.assetID == m_actionSong && !foundAggro)
+	else if (audio.playing && audio.assetID == m_actionSong && !foundAggro && m_timerForActionToContinue < Time::ElapsedTime())
 	{
-		audio.volume -= 0.15f * Time::DeltaTime();
+		if (m_timerForActionToContinue < 0.0f)
+		{
+			m_timerForActionToContinue = TIME_FOR_AFTER_AGGRO + Time::ElapsedTime();
+			return;
+		}
+
+		audio.volume -= 0.2f * Time::DeltaTime();
 		if (audio.volume <= 0.0f)
 		{
 			audio.volume = 0.0f;
 			audio.shouldStop = true;
+
 			playAmbience = false;
 		}
 	}
 	else if (!audio.playing && m_timerForAmbientMusicToStart < Time::ElapsedTime())
 	{
-		if (audio.assetID == m_ambienceSong && !playAmbience)
+		if (!playAmbience)
 		{
 			m_timerForAmbientMusicToStart = Time::ElapsedTime() + WAIT_TIME_FOR_AMBIENT_MUSIC;
 			playAmbience = true;
@@ -53,6 +63,4 @@ void PlayMusicSystem::OnUpdate(MusicPlayer&, DOG::AudioComponent& audio)
 			playAmbience = false;
 		}
 	}
-	std::cout << "Timer: " << m_timerForAmbientMusicToStart << "\n";
-	std::cout << "Elapsed Time: " << Time::ElapsedTime() << "\n";
 }
