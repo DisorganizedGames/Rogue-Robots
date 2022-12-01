@@ -399,9 +399,9 @@ public:
 	PlayerMovementSystem();
 
 	SYSTEM_CLASS(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController, AnimationComponent);
-	ON_EARLY_UPDATE_ID(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController, AnimationComponent);
+	ON_EARLY_UPDATE_ID(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController);
 
-	void OnEarlyUpdate(Entity, PlayerControllerComponent&, PlayerStatsComponent&, TransformComponent&, RigidbodyComponent&, InputController&, AnimationComponent&);
+	void OnEarlyUpdate(Entity, PlayerControllerComponent&, PlayerStatsComponent&, TransformComponent&, RigidbodyComponent&, InputController&);
 
 private:
 	inline static constexpr Vector3 s_globUp = Vector3(0, 1, 0);
@@ -422,7 +422,7 @@ private:
 
 	void MoveDebugCamera(Entity e, Vector3 moveTowards, Vector3 forward, Vector3 right, f32 speed, const InputController& input) noexcept;
 	
-	void ApplyAnimations(const InputController& input, AnimationComponent& ac);
+	void ApplyAnimations(Entity e, const InputController& input);
 
 	void MovePlayer(Entity e, PlayerControllerComponent& player, Vector3 moveTowards, Vector3 forward,
 		RigidbodyComponent& rb, f32 speed, f32 jumpSpeed, InputController& input);

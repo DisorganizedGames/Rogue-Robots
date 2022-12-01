@@ -19,6 +19,7 @@ namespace DOG
 		ResetPrio = 1 << 3,
 		SimpleAdd = 1 << 4,
 		Interrupt = 1 << 5,
+		ForceRestart = 1 << 6,
 	};
 	DEFINE_ENUM_FLAG_OPERATORS(AnimationFlag)
 	

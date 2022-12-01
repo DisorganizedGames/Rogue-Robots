@@ -24,8 +24,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	PlayerStatsComponent& playerStats,
 	TransformComponent& transform,
 	RigidbodyComponent& rigidbody,
-	InputController& input,
-	AnimationComponent& ac)
+	InputController& input)
 {
 	auto& mgr = EntityManager::Get();
 
@@ -76,6 +75,7 @@ void PlayerMovementSystem::OnEarlyUpdate(
 		if (player.moveView && isThisPlayer)
 		{
 			forward = GetNewForward(player);
+			input.polarAngle = player.polar;
 		}
 		right = s_globUp.Cross(forward);
 
@@ -85,12 +85,13 @@ void PlayerMovementSystem::OnEarlyUpdate(
 		if (player.debugCamera != DOG::NULL_ENTITY && isThisPlayer)
 		{
 			camera.isMainCamera = false;
-			MoveDebugCamera(player.debugCamera, moveTowards, forward, right, 10.f, input);
+			if(player.moveView)
+				MoveDebugCamera(player.debugCamera, moveTowards, forward, right, 10.f, input);
 			return;
 		}
 
 		MovePlayer(e, player, moveTowards, forward, rigidbody, playerStats.speed, playerStats.jumpSpeed, input);
-		ApplyAnimations(input, ac);
+		ApplyAnimations(e, input);
 
 		f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
 		camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 1600.f, 0.1f);
@@ -308,6 +309,13 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 				comp.shouldPlay = true;
 			}
 		}
+
+		AnimationComponent& ac = EntityManager::Get().GetComponent<AnimationComponent>(e);
+		const auto setterIdx = ac.addedSetters;
+		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::JumpForward));
+		auto& s = ac.animSetters[setterIdx];
+		s.transitionLength = 0.2f;
+		s.playbackRate = 1.1f;
 	}
 
 	if (!player.jumping && moveTowards != Vector3::Zero && !comp.playing && m_timeBeteenTimer < Time::ElapsedTime())
@@ -330,8 +338,9 @@ void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& playe
 	}
 }
 
-void PlayerMovementSystem::ApplyAnimations(const InputController& input, AnimationComponent& ac)
+void PlayerMovementSystem::ApplyAnimations(Entity e, const InputController& input)
 {
+	AnimationComponent& ac = EntityManager::Get().GetComponent<AnimationComponent>(e);
 	auto addedAnims = 0;
 	auto& setter = ac.animSetters[ac.addedSetters];
 	setter.group = ac.FULL_BODY;
@@ -348,7 +357,7 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 	}
 	if (leftRight)
 	{
-		const auto animation = input.left ? MixamoAnimations::StrafeLeft : MixamoAnimations::StrafeRight;
+		const auto animation = input.left ? MixamoAnimations::StrafeLeftFast : MixamoAnimations::StrafeRightFast;
 
 		// Backwards + strafe_right makes leg clip through each other if equal weights
 		auto weight = (forwardBack && input.backwards && input.right) ? 0.7f : 0.5f;
@@ -370,7 +379,23 @@ void PlayerMovementSystem::ApplyAnimations(const InputController& input, Animati
 		setter.transitionLength = 0.1f;
 		++ac.addedSetters;
 	}
-	
+
+	// Simple aiming animation
+	{
+		auto aimAnimation = input.polarAngle < DirectX::XM_PIDIV2 ? MixamoAnimations::IdleHigh : MixamoAnimations::IdleLow;
+		
+		auto& s = ac.animSetters[ac.addedSetters++];
+		s.group = ac.UPPER_BODY;
+		s.flag = AnimationFlag::Looping;
+		s.animationIDs[0] = static_cast<i8>(MixamoAnimations::Idle);
+		s.animationIDs[1] = static_cast<i8>(aimAnimation);
+
+		auto weight = abs(input.polarAngle - DirectX::XM_PIDIV2) / DirectX::XM_PIDIV2;
+		s.targetWeights[0] = 1.f - weight;
+		s.targetWeights[1] = weight;
+		s.transitionLength = 0.f;
+		s.playbackRate = 1.f;
+	}
 }
 
 #pragma endregion

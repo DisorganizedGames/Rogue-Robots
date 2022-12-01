@@ -104,6 +104,7 @@ struct InputController
 	bool flashlight = true;
 	bool revive = false;
 	bool throwGlowStick = false;
+	float polarAngle = 0.f;
 };
 
 struct DoorComponent
