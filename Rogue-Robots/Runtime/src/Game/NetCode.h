@@ -38,7 +38,6 @@ private:
 
 	NetCode() noexcept;
 	~NetCode() noexcept;
-	//DELETE_COPY_MOVE_CONSTRUCTOR(NetCode);
 
 public:
 	void OnUpdate();

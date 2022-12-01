@@ -29,6 +29,7 @@ Server::Server()
 	{
 		std::cout << "Server: Failed to start WSA on server, ErrorCode: " << check << std::endl;
 	}
+	m_reciveConnections = true;
 }
 
 Server::~Server()
@@ -36,6 +37,7 @@ Server::~Server()
 	if (m_gameAlive)
 	{
 		m_gameAlive = false;
+		m_reciveConnections = false;
 		Sleep(1000);
 		if (m_loopTcp.joinable())
 			m_loopTcp.join();
@@ -144,7 +146,7 @@ void Server::ServerReciveConnectionsTCP(SOCKET listenSocket)
 		//Check if server full
 		if (clientSocket != INVALID_SOCKET)
 		{
-			if (m_playerIds.empty())
+			if (m_playerIds.empty() || !m_reciveConnections)
 			{
 				sprintf_s(inputSend, sizeof(int), "%d", -1);
 				send(clientSocket, inputSend, sizeof(int), 0);
@@ -377,6 +379,11 @@ void Server::ServerPollTCP()
 void Server::CloseSocketTCP(int socketIndex)
 {
 	std::cout << "Server: Closes socket for player" << m_holdPlayerIds.at(socketIndex) + 1 << std::endl;
+	DOG::EntityManager::Get().Collect<DOG::NetworkPlayerComponent>().Do([&](DOG::entity id, DOG::NetworkPlayerComponent& networkC)
+		{
+			if(networkC.playerId == m_holdPlayerIds.at(socketIndex))
+				DOG::EntityManager::Get().DeferredEntityDestruction(id);
+		});
 	m_playerIds.push_back(m_holdPlayerIds.at(socketIndex));
 	m_holdPlayerIds.erase(m_holdPlayerIds.begin() + socketIndex);
 	m_clientsSocketsTcp.erase(m_clientsSocketsTcp.begin() + socketIndex);
@@ -562,4 +569,9 @@ INT8 Server::GetNrOfConnectedPlayers()
 void Server::SetMulticastAdress(const char* adress)
 {
 	memcpy(m_multicastAdress, adress, 16);
+}
+
+void Server::StopReceiving()
+{
+	m_reciveConnections = false;
 }

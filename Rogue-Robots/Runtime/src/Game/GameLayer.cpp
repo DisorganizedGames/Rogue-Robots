@@ -787,19 +787,12 @@ void HostButtonFunc(void)
 		auto text3 = DOG::UI::Get()->GetUI<UILabel>(l2ID);
 		text3->SetText(std::wstring(L"Ip: ") + std::wstring(ip.begin(), ip.end()));
 	}
-	//Back knapp
-	//Visa anatal spelare connectade
 }
 
 
 void JoinButton(void)
 {
 	DOG::UI::Get()->ChangeUIscene(joinID);
-	// show 10 join room buttons
-	// Efter att ha joinade ett rum
-		// visa antal spelare connectade
-		// Ett meddelande att man v�ntar p� att hosten ska starta
-		// En disconect knapp
 }
 
 void BackFromHost(void)

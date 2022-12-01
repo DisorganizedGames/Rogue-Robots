@@ -123,7 +123,8 @@ void NetCode::OnStartup()
 				m_entityManager.RemoveComponent<OnlinePlayer>(id);
 			}
 		});
-
+	if (m_inputTcp.playerId == 0)
+		m_serverHost->StopReceiving();
 }
 
 void NetCode::OnUpdate()

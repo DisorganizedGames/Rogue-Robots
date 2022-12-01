@@ -67,13 +67,15 @@ public:
 
 	void OnUpdate(DOG::SpotLightComponent& slc, DOG::CameraComponent& cc, DOG::TransformComponent& stc)
 	{
-		if (slc.owningPlayer != DOG::NULL_ENTITY)
+		if (slc.owningPlayer != DOG::NULL_ENTITY && DOG::EntityManager::Get().Exists(slc.owningPlayer))
 		{
 			slc.dirty = true;
 
 			auto up = stc.worldMatrix.Up();
 			up.Normalize();
 			
+			if (!DOG::EntityManager::Get().HasComponent<PlayerControllerComponent>(slc.owningPlayer))
+				return;
 			auto& pcc = DOG::EntityManager::Get().GetComponent<PlayerControllerComponent>(slc.owningPlayer);
 			if (pcc.cameraEntity == DOG::NULL_ENTITY) 
 				return;
@@ -467,7 +469,7 @@ public:
 	void OnUpdate(DOG::SpotLightComponent& slc)
 	{
 		auto player = slc.owningPlayer;
-		if (player == DOG::NULL_ENTITY)
+		if (player == DOG::NULL_ENTITY || !DOG::EntityManager::Get().Exists(slc.owningPlayer))
 			return;
 
 		auto flashlightIsTurnedOn = DOG::EntityManager::Get().GetComponent<InputController>(player).flashlight;
