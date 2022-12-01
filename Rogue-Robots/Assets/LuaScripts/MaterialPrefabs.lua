@@ -18,5 +18,5 @@ function MaterialPrefabs:OnStart()
 	materials["BulletMaterial"] = Render:CreateMaterial({ 0.2, 0.6, 0.8 }, 0.0, 0.0, { 2.0, 6.0, 8.0 })
 	materials["FireMaterial"] = Render:CreateMaterial({ 1.0, 0.165, 0.016 }, 0.0, 0.0, { 0.0, 0.0, 0.0 })
 	materials["FireExplosionMaterial"] = Render:CreateMaterial({ 1.0, 0.1, 0.02 }, 0.0, 0.0, { 10.0, 1.0, 0.2 })
-
+	materials["NormalExplosionMaterial"] = Render:CreateMaterial({ 1.0, 0.1, 0.1 }, 0.0, 0.0, { 6.0, 2.0, 2.0 })
 end
