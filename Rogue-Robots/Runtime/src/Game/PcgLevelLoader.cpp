@@ -59,7 +59,7 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 						Vector3 scale = Vector3(1.0f, 1.0f, 1.0f);
 
 						entity blockEntity = levelBlocks.emplace_back(em.CreateEntity());
-						em.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".gltf", (DOG::AssetLoadFlag)((DOG::AssetLoadFlag::Async) | (DOG::AssetLoadFlag)(DOG::AssetLoadFlag::CPUMemory | DOG::AssetLoadFlag::GPUMemory))));
+						em.AddComponent<ModelComponent>(blockEntity, aManager.LoadModelAsset("Assets/Models/ModularBlocks/" + blockName + ".gltf"));
 						em.AddComponent<TransformComponent>(blockEntity,
 							Vector3(x * blockDim, y * blockDim, z * blockDim),
 							Vector3(0.0f, -blockRot * piDiv2, 0.0f),
