@@ -77,7 +77,6 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PickupLerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PickupItemInteractionSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<PlayerMovementSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerJumpRefreshSystem>());
 
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
@@ -477,6 +476,9 @@ void GameLayer::KillPlayer(DOG::entity e)
 
 void GameLayer::UpdateGame()
 {
+	m_playerMovementSystem.CollectAndUpdate();
+
+
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
 
