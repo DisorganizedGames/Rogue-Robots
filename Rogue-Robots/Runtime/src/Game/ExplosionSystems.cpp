@@ -81,6 +81,10 @@ void ExplosionEffectSystem::AddEffectsToExplosion(DOG::entity parentEntity, DOG:
 	{
 		materialName = "FireExplosionMaterial";
 	}
+	else
+	{
+		materialName = "NormalExplosionMaterial";
+	}
 
 	if (!materialName.empty() && EntityManager::Get().HasComponent<ModelComponent>(explosionEntity))
 	{

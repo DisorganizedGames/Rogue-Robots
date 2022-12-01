@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -22,26 +22,71 @@
         {
             "doubleSided" : true,
             "emissiveFactor" : [
-                1,
-                1,
-                1
+                2,
+                2,
+                2
             ],
             "emissiveTexture" : {
                 "index" : 0
             },
-            "name" : "PP_Standard_Material.028",
+            "name" : "Ground",
+            "normalTexture" : {
+                "index" : 1,
+                "scale" : 10
+            },
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
-                    "index" : 1
+                    "index" : 2
                 },
                 "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
+                "roughnessFactor" : 0.6863636374473572
+            }
+        },
+        {
+            "doubleSided" : true,
+            "emissiveFactor" : [
+                2,
+                2,
+                2
+            ],
+            "emissiveTexture" : {
+                "index" : 3
+            },
+            "name" : "Emissive",
+            "normalTexture" : {
+                "index" : 4,
+                "scale" : 10
+            },
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 5
+                },
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.5
+            }
+        },
+        {
+            "doubleSided" : true,
+            "emissiveFactor" : [
+                2,
+                2,
+                2
+            ],
+            "emissiveTexture" : {
+                "index" : 6
+            },
+            "name" : "Simple_Chrome_metal",
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 7
+                },
+                "metallicFactor" : 0
             }
         }
     ],
     "meshes" : [
         {
-            "name" : "Scene.047",
+            "name" : "Scene.098",
             "primitives" : [
                 {
                     "attributes" : {
@@ -52,6 +97,26 @@
                     },
                     "indices" : 4,
                     "material" : 0
+                },
+                {
+                    "attributes" : {
+                        "POSITION" : 5,
+                        "NORMAL" : 6,
+                        "TEXCOORD_0" : 7,
+                        "TEXCOORD_1" : 8
+                    },
+                    "indices" : 9,
+                    "material" : 1
+                },
+                {
+                    "attributes" : {
+                        "POSITION" : 10,
+                        "NORMAL" : 11,
+                        "TEXCOORD_0" : 12,
+                        "TEXCOORD_1" : 13
+                    },
+                    "indices" : 14,
+                    "material" : 2
                 }
             ]
         }
@@ -64,87 +129,261 @@
         {
             "sampler" : 0,
             "source" : 1
+        },
+        {
+            "sampler" : 0,
+            "source" : 2
+        },
+        {
+            "sampler" : 0,
+            "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 1
+        },
+        {
+            "sampler" : 0,
+            "source" : 2
+        },
+        {
+            "sampler" : 0,
+            "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 2
         }
     ],
     "images" : [
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette_Emmissive",
-            "uri" : "Textures/PP_Color_Palette_Emmissive.png"
+            "name" : "EmissiveExitBlock",
+            "uri" : "Textures/EmissiveExitBlock.png"
         },
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
+            "name" : "NormalExitBlock",
+            "uri" : "Textures/NormalExitBlock.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "DiffuseExitBlock",
+            "uri" : "Textures/DiffuseExitBlock.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 2244,
+            "count" : 4030,
             "max" : [
-                2.5,
-                5,
-                2.500000238418579
+                2.500000476837158,
+                4.999999523162842,
+                2.5
             ],
             "min" : [
-                -0.4694071412086487,
-                1.2481119632720947,
-                -2.5
+                -2.5,
+                -0.5332996845245361,
+                -2.5000007152557373
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 2244,
+            "count" : 4030,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 2244,
+            "count" : 4030,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 2244,
+            "count" : 4030,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 2244,
+            "count" : 4185,
+            "type" : "SCALAR"
+        },
+        {
+            "bufferView" : 5,
+            "componentType" : 5126,
+            "count" : 354,
+            "max" : [
+                2.3218016624450684,
+                4.922886371612549,
+                -0.8642734289169312
+            ],
+            "min" : [
+                -2.3374695777893066,
+                -0.07870522141456604,
+                -2.5000007152557373
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 6,
+            "componentType" : 5126,
+            "count" : 354,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 7,
+            "componentType" : 5126,
+            "count" : 354,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 8,
+            "componentType" : 5126,
+            "count" : 354,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 9,
+            "componentType" : 5123,
+            "count" : 354,
+            "type" : "SCALAR"
+        },
+        {
+            "bufferView" : 10,
+            "componentType" : 5126,
+            "count" : 88,
+            "max" : [
+                1.9446024894714355,
+                4.424802780151367,
+                -2.1008777618408203
+            ],
+            "min" : [
+                -1.9446024894714355,
+                0.535597562789917,
+                -2.4533309936523438
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 11,
+            "componentType" : 5126,
+            "count" : 88,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 12,
+            "componentType" : 5126,
+            "count" : 88,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 13,
+            "componentType" : 5126,
+            "count" : 88,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 14,
+            "componentType" : 5123,
+            "count" : 132,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 26928,
-            "byteOffset" : 0
+            "byteLength" : 48360,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 26928,
-            "byteOffset" : 26928
+            "byteLength" : 48360,
+            "byteOffset" : 48360,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 17952,
-            "byteOffset" : 53856
+            "byteLength" : 32240,
+            "byteOffset" : 96720,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 17952,
-            "byteOffset" : 71808
+            "byteLength" : 32240,
+            "byteOffset" : 128960,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 4488,
-            "byteOffset" : 89760
+            "byteLength" : 8370,
+            "byteOffset" : 161200,
+            "target" : 34963
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 4248,
+            "byteOffset" : 169572,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 4248,
+            "byteOffset" : 173820,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 2832,
+            "byteOffset" : 178068,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 2832,
+            "byteOffset" : 180900,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 708,
+            "byteOffset" : 183732,
+            "target" : 34963
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1056,
+            "byteOffset" : 184440,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1056,
+            "byteOffset" : 185496,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 704,
+            "byteOffset" : 186552,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 704,
+            "byteOffset" : 187256,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 264,
+            "byteOffset" : 187960,
+            "target" : 34963
         }
     ],
     "samplers" : [
@@ -155,7 +394,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 94248,
+            "byteLength" : 188224,
             "uri" : "Exit1.bin"
         }
     ]

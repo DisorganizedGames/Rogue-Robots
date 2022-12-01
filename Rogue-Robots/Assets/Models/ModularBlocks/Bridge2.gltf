@@ -15,23 +15,7 @@
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "Bridge2",
-            "rotation" : [
-                0,
-                0,
-                -0.7071066498756409,
-                0.70710688829422
-            ],
-            "scale" : [
-                0.44031867384910583,
-                0.036105815321207047,
-                0.08672605454921722
-            ],
-            "translation" : [
-                0.7323179244995117,
-                1.8953837156295776,
-                2.2811832427978516
-            ]
+            "name" : "Bridge2"
         }
     ],
     "materials" : [
@@ -93,29 +77,29 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 5449,
+            "count" : 5486,
             "max" : [
-                1.4486277103424072,
-                51.958797454833984,
-                3.7722291946411133
+                2.6083333492279053,
+                2.213423013687134,
+                2.6083343029022217
             ],
             "min" : [
-                -0.7222950458526611,
-                -92.52392578125,
-                -56.378868103027344
+                -2.6083333492279053,
+                1.2575260400772095,
+                -2.6083340644836426
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 5449,
+            "count" : 5486,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 5449,
+            "count" : 5486,
             "type" : "VEC2"
         },
         {
@@ -128,26 +112,26 @@
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 65388,
+            "byteLength" : 65832,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 65388,
-            "byteOffset" : 65388,
+            "byteLength" : 65832,
+            "byteOffset" : 65832,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 43592,
-            "byteOffset" : 130776,
+            "byteLength" : 43888,
+            "byteOffset" : 131664,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 17688,
-            "byteOffset" : 174368,
+            "byteOffset" : 175552,
             "target" : 34963
         }
     ],
@@ -159,7 +143,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 192056,
+            "byteLength" : 193240,
             "uri" : "Bridge2.bin"
         }
     ]
