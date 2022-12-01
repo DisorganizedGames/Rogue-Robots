@@ -18,25 +18,31 @@ function OnUpdate()
 		return
 	end
 
+	-- Happens first time to store Lua copy
 	if not originalPlayerStats then
 		originalPlayerStats = Entity:GetPlayerStats(EntityID)
 	end
-	
+
+	-- Keep grabbing latest stats, for health, since that is dynamic
+	-- The rest of the stats can use the old system --> Using OriginalPlayerStats and stacking it every frame..
+	local currPlayerStats = Entity:GetPlayerStats(EntityID)
+	originalPlayerStats.health = currPlayerStats["health"]
+
+	-- Stores local copy to be updated
 	local stats = {}
 	for k, v in pairs(originalPlayerStats) do
 		stats[k] = v
 	end
-	
-	local hp = Entity:GetPlayerStat(EntityID, "health")
-	
+
+	-- Use effects to affect stats (this happens every frame!)
 	for key, item in pairs(passiveItems) do
 		stats = item[1]:affect(item[2], stats)
 	end
-	
-	stats.health = hp
+
 	Entity:SetPlayerStats(EntityID, stats)
 
 	itemsDirty = false
+
 end
 
 function OnPickup(pickup)
