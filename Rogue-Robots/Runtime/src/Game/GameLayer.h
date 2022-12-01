@@ -5,7 +5,7 @@
 #include "GameComponent.h"
 #include "GameSystems.h"
 #include "Scene.h"
-
+#include "PlayerMovement.h"
 
 enum class GameState
 {
@@ -90,6 +90,8 @@ private:
 	std::array<u32, 4> m_playerModels;
 	INT8 m_nrOfPlayers;
 	ImFont* m_imguiFont = nullptr;
+	PlayerMovementSystem m_playerMovementSystem;
+
 
 	// Temp container for keybindings, just strings to visualize them in the menu
 	std::vector<std::pair<std::string, std::string>> m_keyBindingDescriptions;
