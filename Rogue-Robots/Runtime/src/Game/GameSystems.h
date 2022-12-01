@@ -139,7 +139,7 @@ public:
 		auto cameraForward = mgr.GetComponent<DOG::TransformComponent>(pcc.cameraEntity).GetForward();
 
 		// Camera offset
-		const auto cOffset = Vector3(0, 0.7f, 0);
+		const auto cOffset = Vector3(0, 0.1f, 0);
 
 		Vector3 pickUpToPlayerDirection = (playerPosition+cOffset) - tc.GetPosition();
 		pickUpToPlayerDirection.Normalize();
