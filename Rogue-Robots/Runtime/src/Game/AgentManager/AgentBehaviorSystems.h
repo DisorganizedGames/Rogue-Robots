@@ -81,6 +81,14 @@ public:
 	void OnUpdate(DOG::entity e, AgentMovementComponent& movement, FrostEffectComponent& frostEffect);
 };
 
+class AgentFireTimerSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(AgentHPComponent, FireEffectComponent);
+	ON_UPDATE_ID(AgentHPComponent, FireEffectComponent);
+	void OnUpdate(DOG::entity e, AgentHPComponent& hpComponent, FireEffectComponent& fireEffect);
+};
+
 
 /**************************************************
 *			Late Update Systems

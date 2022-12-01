@@ -4,7 +4,7 @@
 #include "Game/PlayerManager/PlayerManager.h"
 
 using namespace DOG;
-
+using namespace DirectX::SimpleMath;
 
 /**************************************************
 *			Early Update Systems
@@ -226,6 +226,34 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 			}
 			break;
 		}
+		if (EntityManager::Get().HasComponent<FireEffectComponent>(hit.hits[i].hitByEntity))
+		{
+			auto& fecBullet = EntityManager::Get().GetComponent<FireEffectComponent>(hit.hits[i].hitByEntity);
+
+			if (EntityManager::Get().HasComponent<FireEffectComponent>(e))
+			{
+				EntityManager::Get().GetComponent<FireEffectComponent>(e).fireTimer = fecBullet.fireTimer;
+			}
+			else
+			{
+				FireEffectComponent& fire = EntityManager::Get().AddComponent<FireEffectComponent>(e, fecBullet.fireTimer, fecBullet.fireDamagePerSecond);
+
+				fire.particleEntity = EntityManager::Get().CreateEntity();
+
+				EntityManager::Get().AddComponent<TransformComponent>(fire.particleEntity);
+				EntityManager::Get().AddComponent<ChildComponent>(fire.particleEntity).parent = e;
+				EntityManager::Get().AddComponent<ConeSpawnComponent>(fire.particleEntity) = { .angle = DirectX::XM_PI / 8.0f, .speed = 5.f };
+				EntityManager::Get().AddComponent<ParticleEmitterComponent>(fire.particleEntity) = {
+					.spawnRate = 200,
+					.particleSize = 0.08f,
+					.particleLifetime = 0.6f,
+					.startColor = Vector4(1.0f, 0.0f, 0.0f, 0.8f),
+					.endColor = Vector4(1.0f, 69.f / 255.0f, 0.0f, 0.0f),
+				};
+			}
+
+			break;
+		}
 	}
 
 	/* Signal to player that their bullet hit an enemy */
@@ -359,3 +387,19 @@ void LateAgentDestructCleanupSystem::OnLateUpdate(AgentIdComponent& agent, Defer
 	AgentManager::Get().CountAgentKilled(agent.id);
 };
 
+void AgentFireTimerSystem::OnUpdate(DOG::entity e, AgentHPComponent& hpComponent, FireEffectComponent& fireEffect)
+{
+	f32 deltaTime = (f32)Time::DeltaTime();
+
+	fireEffect.fireTimer -= deltaTime;
+	if (fireEffect.fireTimer > 0.0f)
+	{
+		hpComponent.hp -= fireEffect.fireDamagePerSecond * deltaTime;
+		hpComponent.damageThisFrame = true;
+	}
+	else
+	{
+		EntityManager::Get().DeferredEntityDestruction(fireEffect.particleEntity);
+		EntityManager::Get().RemoveComponent<FireEffectComponent>(e);
+	}
+}

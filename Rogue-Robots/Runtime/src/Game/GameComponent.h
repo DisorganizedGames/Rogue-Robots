@@ -164,7 +164,7 @@ struct BarrelComponent
 
 struct MagazineModificationComponent
 {
-	enum class Type { None = 0, Frost = 1 };
+	enum class Type { None = 0, Frost = 1, Fire = 2 };
 
 	Type type;
 };
@@ -194,6 +194,13 @@ struct FrostEffectComponent
 {
 	//??
 	f32 frostTimer = 0.0f;
+};
+
+struct FireEffectComponent
+{
+	f32 fireTimer = 0.0f;
+	f32 fireDamagePerSecond = 0.0f;
+	DOG::entity particleEntity = DOG::NULL_ENTITY;
 };
 
 struct ExplosionComponent

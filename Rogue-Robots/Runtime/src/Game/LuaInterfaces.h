@@ -193,6 +193,8 @@ private:
 
 	void AddGoalRadarComponent(DOG::LuaContext* context, DOG::entity e);
 
+	void AddFireEffectComponent(DOG::LuaContext* context, DOG::entity e);
+
 
 };
 

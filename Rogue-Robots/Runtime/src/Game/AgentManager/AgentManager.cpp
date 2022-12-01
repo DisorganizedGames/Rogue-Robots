@@ -126,6 +126,7 @@ void AgentManager::Initialize()
 	em.RegisterSystem(std::make_unique<AgentHitSystem>());
 	em.RegisterSystem(std::make_unique<AgentAggroSystem>());
 	em.RegisterSystem(std::make_unique<AgentFrostTimerSystem>());
+	em.RegisterSystem(std::make_unique<AgentFireTimerSystem>());
 	em.RegisterSystem(std::make_unique<AgentDestructSystem>());
 
 	// Register shadow agent systems
@@ -231,4 +232,9 @@ void AgentManager::DestroyLocalAgent(entity e)
 		ItemManager::Get().CreateItemHost( EntityTypes(((u32)Time::ElapsedTime()+agent.id) % u32(EntityTypes::Default)), agentTrans.GetPosition());
 
 	em.DeferredEntityDestruction(e);
+
+	if (EntityManager::Get().HasComponent<FireEffectComponent>(e))
+	{
+		EntityManager::Get().DeferredEntityDestruction(EntityManager::Get().GetComponent<FireEffectComponent>(e).particleEntity);
+	}
 }

@@ -39,6 +39,9 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 	case EntityTypes::FrostMagazineModification:
 		return CreateFrostModificationPickup(position, id);
 		break;
+	case EntityTypes::FireMagazineModification:
+		return CreateFireModificationPickup(position, id);
+		break;
 	case EntityTypes::FullAutoMisc:
 		return CreateFullAutoPickup(position, id);
 		break;
@@ -273,7 +276,7 @@ u32 ItemManager::CreateFrostModificationPickup(DirectX::SimpleMath::Vector3 posi
 {
 	static u32 frostModNetworkID = 0u;
 
-	u32 frostModID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/blue_cube.glb");
+	u32 frostModID = AssetManager::Get().LoadModelAsset("Assets/Models/ModularRifle/Frost.gltf");
 
 	entity frostModEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<MagazineModificationComponent>(frostModEntity).type = MagazineModificationComponent::Type::Frost;
@@ -295,6 +298,37 @@ u32 ItemManager::CreateFrostModificationPickup(DirectX::SimpleMath::Vector3 posi
 
 	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(frostModEntity);
 	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(frostModEntity).GetPosition().y;
+	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
+	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
+	return ni.id;
+}
+
+u32 ItemManager::CreateFireModificationPickup(DirectX::SimpleMath::Vector3 position, u32 id)
+{
+	static u32 fireModNetworkID = 0u;
+
+	u32 fireModID = AssetManager::Get().LoadModelAsset("Assets/Models/ModularRifle/Fire.gltf");
+
+	entity fireModEntity = s_entityManager.CreateEntity();
+	s_entityManager.AddComponent<MagazineModificationComponent>(fireModEntity).type = MagazineModificationComponent::Type::Frost;
+	s_entityManager.AddComponent<PickupComponent>(fireModEntity).itemName = "Fire modification";
+	s_entityManager.AddComponent<ModelComponent>(fireModEntity, fireModID);
+	s_entityManager.AddComponent<TransformComponent>(fireModEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
+	s_entityManager.AddComponent<ShadowReceiverComponent>(fireModEntity);
+	auto& ni = s_entityManager.AddComponent<NetworkId>(fireModEntity);
+	ni.entityTypeId = EntityTypes::FireMagazineModification;
+	if (id == 0)
+		ni.id = ++fireModNetworkID;
+	else
+	{
+		ni.id = id;
+		fireModNetworkID = id;
+	}
+
+	LuaMain::GetScriptManager()->AddScript(fireModEntity, "Pickupable.lua");
+
+	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(fireModEntity);
+	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(fireModEntity).GetPosition().y;
 	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
 	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
 	return ni.id;

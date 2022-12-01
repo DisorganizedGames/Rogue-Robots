@@ -17,14 +17,6 @@ function MagazineComponents:BasicEffect()
 	}
 end
 
-function MagazineComponents:FireEffect()
-	return
-	{
-		Update = function(self)
-		end
-	}
-end
-
 function MagazineComponents:FrostEffect()
 	return
 	{
@@ -36,6 +28,20 @@ function MagazineComponents:FrostEffect()
 
 		GetECSType = function(self)
 			return 1
+		end,
+	}
+end
+
+function MagazineComponents:FireEffect()
+	return
+	{
+		Update = function(self, bullet)
+			Entity:AddComponent(bullet.entity, "FireEffect", 4.0, 50.0)
+			Entity:AddComponent(bullet.entity, "SubMeshRender", MaterialPrefabs:GetMaterial("FireMaterial"))
+		end,
+
+		GetECSType = function(self)
+			return 2
 		end,
 	}
 end

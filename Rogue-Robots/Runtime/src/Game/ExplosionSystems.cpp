@@ -76,7 +76,10 @@ void ExplosionEffectSystem::AddEffectsToExplosion(DOG::entity parentEntity, DOG:
 	if (EntityManager::Get().HasComponent<FrostEffectComponent>(parentEntity))
 	{	
 		materialName = "FrostExplosionMaterial";
-		color = { 0.2f, 0.6f, 0.8f };
+	}
+	else if (EntityManager::Get().HasComponent<FireEffectComponent>(parentEntity))
+	{
+		materialName = "FireExplosionMaterial";
 	}
 
 	if (!materialName.empty() && EntityManager::Get().HasComponent<ModelComponent>(explosionEntity))
@@ -99,8 +102,10 @@ void ExplosionEffectSystem::AddEffectsToExplosion(DOG::entity parentEntity, DOG:
 
 			LuaTable albedoFactor = materialTable.GetTableFromTable("albedoFactor");
 
+			color = { albedoFactor.GetFloatFromTable("x"), albedoFactor.GetFloatFromTable("y"), albedoFactor.GetFloatFromTable("z") };
+
 			MaterialDesc materialDesc{};
-			materialDesc.albedoFactor = { albedoFactor.GetFloatFromTable("x"), albedoFactor.GetFloatFromTable("y"), albedoFactor.GetFloatFromTable("z") };
+			materialDesc.albedoFactor = { albedoFactor.GetFloatFromTable("x"), albedoFactor.GetFloatFromTable("y"), albedoFactor.GetFloatFromTable("z"), 1.0f };
 			materialDesc.roughnessFactor = (float)materialTable.GetDoubleFromTable("roughnessFactor");
 			materialDesc.metallicFactor = (float)materialTable.GetDoubleFromTable("metallicFactor");
 

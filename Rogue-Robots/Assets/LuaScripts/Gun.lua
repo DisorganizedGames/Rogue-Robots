@@ -140,6 +140,8 @@ function OnUpdate()
 		local color = Vector3.New(1.5, 0.1, 0.1) * 7
 		if magazineComponent:GetECSType() == 1 then
 			color = Vector3.New(0.188, 0.835, 0.784) * 7 -- Blue color for FrostEffect
+		elseif magazineComponent:GetECSType() == 2 then
+			color = MaterialPrefabs:GetMaterial("FireExplosionMaterial")["emissiveFactor"]
 		end
 
 		local isOutOfAmmo = Entity:ModifyComponent(EntityID, "LaserBarrel", EntityID, 80.0, 700.0, shoot, laserStart, dir, color)
@@ -359,7 +361,7 @@ function OnPickup(pickup)
 			
 			hasBasicBarrelEquipped = false
 		end
-	elseif pickupTypeString == "FrostMagazineModification" then
+	elseif pickupTypeString == "FrostMagazineModification" or pickupTypeString == "FireMagazineModification" then
 		--Magazine modification component
 		local currentModificationType = Entity:GetModificationType(playerID)
 		if pickupTypeString ~= currentModificationType then
@@ -373,6 +375,9 @@ function OnPickup(pickup)
 			if pickupTypeString == "FrostMagazineModification" then
 				magazineComponent = MagazineManager.FrostEffect()
 				Entity:AddComponent(magazineEntityID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Frost.gltf"))
+			elseif pickupTypeString == "FireMagazineModification" then
+				magazineComponent = MagazineManager.FireEffect()
+				Entity:AddComponent(magazineEntityID, "Model", Asset:LoadModel("Assets/Models/ModularRifle/Fire.gltf"))
 			end
 			Entity:AddComponent(playerID, "MagazineModificationComponent", magazineComponent:GetECSType())
 		end	
