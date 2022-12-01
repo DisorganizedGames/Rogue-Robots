@@ -306,7 +306,7 @@ namespace DOG::gfx
 		ComPtr<ID3D12Device5> m_device;
 		bool m_debugOn{ false };
 
-		std::unique_ptr<DX12Queue> m_directQueue, m_copyQueue, m_computeQueue;
+		std::unique_ptr<DX12Queue> m_directQueue, m_copyQueue;
 		ComPtr<D3D12MA::Allocator> m_dma;
 
 #ifdef GPU_VALIDATION_ON

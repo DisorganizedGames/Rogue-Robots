@@ -1270,7 +1270,6 @@ namespace DOG::gfx
 	{
 		m_directQueue = std::make_unique<DX12Queue>(m_device.Get(), D3D12_COMMAND_LIST_TYPE_DIRECT);
 		m_copyQueue = std::make_unique<DX12Queue>(m_device.Get(), D3D12_COMMAND_LIST_TYPE_COPY);
-		//m_computeQueue = std::make_unique<DX12Queue>(m_device.Get(), D3D12_COMMAND_LIST_TYPE_COMPUTE);
 	}
 
 	void RenderDevice_DX12::InitDMA(IDXGIAdapter* adapter)
@@ -1468,7 +1467,8 @@ namespace DOG::gfx
 			curr_queue = m_directQueue.get();
 			break;
 		case QueueType::Compute:
-			curr_queue = m_computeQueue.get();
+			assert(false);
+			//curr_queue = m_computeQueue.get();
 			break;
 		case QueueType::Copy:
 			curr_queue = m_copyQueue.get();

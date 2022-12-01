@@ -81,7 +81,7 @@ namespace DOG::gfx
 		m_bin = std::make_unique<GPUGarbageBin>(S_MAX_FIF);
 		m_uploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeDefault, S_MAX_FIF);
 		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeTextures);
-		m_meshUploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeDefault);
+		m_meshUploadCtx = std::make_unique<UploadContext>(m_rd, 10'000'000);
 
 		// For internal per frame management
 		const u32 maxUploadPerFrame = 256'000;
