@@ -37,14 +37,14 @@ void ParticleScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 		AddComponent<TransformComponent>(m_particleSystem, Vector3(0, 0, 0));
 		auto& em = AddComponent<ParticleEmitterComponent>(m_particleSystem);
 		em = {
-			.spawnRate = 64.f,
+			.spawnRate = 2048.f,
 			.particleSize = 0.1f,
 			.particleLifetime = 0.5f,
-			.startColor = Vector4(1, 0, 0, 1),
-			.endColor = Vector4(0, 0, 1, 1),
+			.startColor = Vector4(1, 0, 0, 0.5),
+			.endColor = Vector4(0, 0, 1, 0.5),
 		};
 
-		AddComponent<ConeSpawnComponent>(m_particleSystem) = { 
+		AddComponent<ConeSpawnComponent>(m_particleSystem) = {
 			.angle = XM_PIDIV4,
 			.speed = 10.f,
 		};

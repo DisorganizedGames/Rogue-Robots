@@ -123,6 +123,7 @@ void SpawnParticle(in uint emitterHandle, inout Particle p, in float totTime, in
 	
 	p.size = g_emitter.size;
 	p.age = 0;
+	p.alive = 1;
 }
 
 void SpawnCone(inout Particle p, in Texture1D noiseTex, in float seed)
