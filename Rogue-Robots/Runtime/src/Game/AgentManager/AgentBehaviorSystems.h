@@ -19,18 +19,6 @@ public:
 };
 
 
-
-class AgentPlanningSystem : public DOG::ISystem
-{
-	using Vector3 = DirectX::SimpleMath::Vector3;
-	using Matrix = DirectX::SimpleMath::Matrix;
-public:
-	SYSTEM_CLASS(PathfinderWalkComponent, AgentSeekPlayerComponent);
-	ON_EARLY_UPDATE(PathfinderWalkComponent, AgentSeekPlayerComponent);
-	void OnEarlyUpdate(PathfinderWalkComponent& pfc, AgentSeekPlayerComponent& seek);
-};
-
-
 /**************************************************
 *				Regular Systems
 ***************************************************/

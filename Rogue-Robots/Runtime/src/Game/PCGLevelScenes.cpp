@@ -2,6 +2,7 @@
 #include "PrefabInstantiatorFunctions.h"
 #include "PcgLevelLoader.h"
 #include "ItemManager/ItemManager.h"
+#include "Pathfinder/Pathfinder.h"
 using namespace DOG;
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
@@ -18,6 +19,10 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 		AddEntities(func());
 
 	AddEntities(LoadLevel(m_levelName));
+
+	// Prepare Pathfinder
+	Pathfinder::Get().BuildNavScene(m_sceneType);
+
 
 	//Identify spawnblock.
 	Vector3 spawnblockPos = Vector3(20.0f, 20.0f, 20.0f);

@@ -11,8 +11,21 @@ private:
 	bool m_visualizePaths;
 	bool m_vizNavMeshes;
 	bool m_vizPortals;
+	bool m_vizOutlines;
+
+	static constexpr DOG::Shape NAVMESH_SHAPE = DOG::Shape::sphere;
+	static constexpr u32 NAVMESH_TESS = 8;
+	static constexpr Vector3 NAVMESH_SCALE = Vector3(1.5f, 1.5f, 1.5f);
+	static constexpr Vector3 NAVMESH_COLOR = Vector3(0.f, 0.3f, 0.7f);
+
+	static constexpr DOG::Shape PORTAL_SHAPE = DOG::Shape::prism;
+	static constexpr u32 PORTAL_TESS = 4;
+	static constexpr Vector3 PORTAL_SCALE = Vector3(0.1f, 0.1f, 0.1f);
+	static constexpr Vector3 PORTAL_COLOR = Vector3(.3f, 0.6f, 0.3f);
 
 public:
+	enum class Viz { Paths, Outlines };
+
 	using NavMeshID = DOG::entity;
 	using PortalID = DOG::entity;
 
@@ -29,12 +42,18 @@ public:
 	std::vector<Vector3> Checkpoints(Vector3 start, Vector3 goal);
 	void Checkpoints(Vector3 start, PathfinderWalkComponent& pfc);
 
-	bool DrawPaths();
+	bool Visualize(Viz type);
 
 private:
 	struct Step
 	{
 		char x, y, z;
+		Step Positive() { return Step{ static_cast<char>(x * x), static_cast<char>(y * y), static_cast<char>(z * z) }; }
+		Step operator-() { return Step{ static_cast<char>(-x), static_cast<char>(-y), static_cast<char>(-z) }; }
+		Step operator-(const Step o) { return Step{ static_cast<char>(x - o.x), static_cast<char>(y - o.y), static_cast<char>(z - o.z) }; }
+		Step operator+(const Step o) { return Step{ static_cast<char>(x + o.x), static_cast<char>(y + o.y), static_cast<char>(z + o.z) }; }
+		Step InversePositive() { return Step{ 1, 1, 1 } - Positive(); }
+		Vector3 Vec3() { return Vector3{ static_cast<float>(x), static_cast<float>(y), static_cast<float>(z) }; }
 	};
 	const struct Dir
 	{

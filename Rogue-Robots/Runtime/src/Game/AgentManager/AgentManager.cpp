@@ -24,6 +24,7 @@ entity AgentManager::CreateAgent(EntityTypes type, u32 groupID, const Vector3& p
 	em.AddComponent<SceneComponent>(e, scene);
 	em.AddComponent<AgentSeekPlayerComponent>(e);
 	em.AddComponent<NetworkAgentStats>(e);
+
 	// Add CreateAndDestroyEntityComponent to ECS
 	if (GameLayer::GetNetworkStatus() == NetworkStatus::Hosting)
 	{
@@ -119,7 +120,6 @@ void AgentManager::Initialize()
 	// Register agent systems
 	EntityManager& em = EntityManager::Get();
 	em.RegisterSystem(std::make_unique<AgentSeekPlayerSystem>());
-	em.RegisterSystem(std::make_unique<AgentPlanningSystem>());
 	em.RegisterSystem(std::make_unique<AgentMovementSystem>());
 	em.RegisterSystem(std::make_unique<AgentAttackSystem>());
 	em.RegisterSystem(std::make_unique<AgentHitDetectionSystem>());
@@ -172,8 +172,6 @@ entity AgentManager::CreateAgentCore(u32 model, u32 groupID, const Vector3& pos,
 			}
 		});
 
-	em.AddComponent<PathfinderWalkComponent>(e);
-
 	em.AddComponent<AgentHPComponent>(e);
 
 	// Add networking components
@@ -201,8 +199,6 @@ u32 AgentManager::GetModel(CreateAndDestroyEntityComponent& entityDesc)
 
 Vector3 AgentManager::GenerateRandomVector3(u32 seed, f32 max, f32 min)
 {
-	//static std::random_device rdev;
-	//static std::mt19937 gen(rdev());
 	static std::mt19937 gen(seed);
 	static std::uniform_real_distribution<f32> udis(min, max);
 	return Vector3(udis(gen), udis(gen), udis(gen));

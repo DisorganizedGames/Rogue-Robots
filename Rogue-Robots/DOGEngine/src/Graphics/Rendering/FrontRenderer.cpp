@@ -131,6 +131,8 @@ namespace DOG::gfx
 			{
 				ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
 
+				bool skipNormalRendering = false;
+
 				// Non culled
 				if (model && model->gfxModel)
 				{
@@ -148,13 +150,17 @@ namespace DOG::gfx
 							}
 
 							const auto& oc = mgr.GetComponent<OutlineComponent>(e);
+							if (oc.onlyOutline)
+								skipNormalRendering = true;
+
 							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
 								m_renderer->SubmitOutlinedMesh(model->gfxModel->mesh.mesh, i, oc.color, transformC, animated, jointOffset);
 						}
-
 					}
 				}
 
+				if (skipNormalRendering)
+					return;
 
 				// Culled
 				TransformComponent camTransform;
@@ -174,8 +180,6 @@ namespace DOG::gfx
 
 				if (model && model->gfxModel)
 				{
-
-
 					// Shadow submission:
 					if (mgr.HasComponent<ShadowReceiverComponent>(e))
 					{

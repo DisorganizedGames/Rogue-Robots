@@ -192,6 +192,7 @@ namespace DOG
 	struct OutlineComponent
 	{
 		DirectX::SimpleMath::Vector3 color;
+		bool onlyOutline{ false };
 	};
 
 	struct PointLightComponent
@@ -366,7 +367,9 @@ namespace DOG
 		DirectX::BoundingBox aabb;
 		BoundingBoxComponent(Vector3 center, Vector3 extents);
 		Vector3 Center();
+		void Center(Vector3 c);
 		Vector3 Extents();
+		void Extents(Vector3 ext);
 	};
 
 #pragma endregion

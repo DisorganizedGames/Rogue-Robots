@@ -168,5 +168,15 @@ namespace DOG
 	{
 		return Vector3(aabb.Extents);
 	}
+
+	void BoundingBoxComponent::Center(Vector3 c)
+	{
+		aabb.Center = c;
+	}
+
+	void BoundingBoxComponent::Extents(Vector3 ext)
+	{
+		aabb.Extents = ext;
+	}
 }
 
