@@ -11,12 +11,27 @@ struct VillainComponent
 	//ID
 };
 
-struct DetectPlayerComponent
+struct BTDetectPlayerComponent
 {
 	//ID
 };
 
-struct SignalGroupComponent
+struct BTSignalGroupComponent
+{
+	//ID
+};
+
+struct BTAttackComponent
+{
+	//ID
+};
+
+struct BTMoveToPlayerComponent
+{
+	//ID
+};
+
+struct BTPatrolComponent
 {
 	//ID
 };
@@ -83,6 +98,7 @@ public:
 	[[nodiscard]] constexpr const DecoratorType GetDecoratorType() const noexcept { return m_decoratorType; }
 	[[nodiscard]] constexpr const std::shared_ptr<Node>& GetChild() const noexcept { return m_child; }
 	void AddChild(std::shared_ptr<Node>&& pNode) noexcept;
+	bool processed = false;
 protected:
 	DecoratorType m_decoratorType;
 private:
@@ -129,6 +145,8 @@ public:
 	virtual void Process(DOG::entity agent) noexcept override = 0;
 	virtual void Succeed(DOG::entity agent) noexcept = 0;
 	virtual void Fail(DOG::entity agent) noexcept = 0;
+	void ForceSucceed(DOG::entity agent) noexcept;
+	void ForceFail(DOG::entity agent) noexcept;
 };
 
 class DetectPlayerNode : public Leaf
@@ -151,7 +169,37 @@ public:
 	virtual void Fail(DOG::entity agent) noexcept override final;
 };
 
-struct BehaviourTreeComponent
+class AttackNode : public Leaf
+{
+public:
+	AttackNode(const std::string& name) noexcept;
+	virtual ~AttackNode() noexcept override final = default;
+	virtual void Process(DOG::entity agent) noexcept override final;
+	virtual void Succeed(DOG::entity agent) noexcept override final;
+	virtual void Fail(DOG::entity agent) noexcept override final;
+};
+
+class MoveToPlayerNode : public Leaf
+{
+public:
+	MoveToPlayerNode(const std::string& name) noexcept;
+	virtual ~MoveToPlayerNode() noexcept override final = default;
+	virtual void Process(DOG::entity agent) noexcept override final;
+	virtual void Succeed(DOG::entity agent) noexcept override final;
+	virtual void Fail(DOG::entity agent) noexcept override final;
+};
+
+class PatrolNode : public Leaf
+{
+public:
+	PatrolNode(const std::string& name) noexcept;
+	virtual ~PatrolNode() noexcept override final = default;
+	virtual void Process(DOG::entity agent) noexcept override final;
+	virtual void Succeed(DOG::entity agent) noexcept override final;
+	virtual void Fail(DOG::entity agent) noexcept override final;
+};
+
+struct BehaviorTreeComponent
 {
 	std::unique_ptr<Root> rootNode{ nullptr };
 	Node* currentRunningNode{ nullptr };

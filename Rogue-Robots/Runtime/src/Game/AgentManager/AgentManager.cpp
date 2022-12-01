@@ -135,47 +135,136 @@ void AgentManager::Initialize()
 	// Register late update agent systems
 	em.RegisterSystem(std::make_unique<LateAgentDestructCleanupSystem>());
 
-	entity hero = em.CreateEntity();
-	em.AddComponent<HeroComponent>(hero);
-	em.AddComponent<TransformComponent>(hero).SetPosition({ 10.0f, 0.0f, 0.0f });
+	//entity hero = em.CreateEntity();
+	//em.AddComponent<HeroComponent>(hero);
+	//em.AddComponent<TransformComponent>(hero).SetPosition({ 14.0f, 0.0f, 0.0f });
+	//
+	//CreateVillain({ 15.0f, 0.0f, 0.0f });
+	//CreateVillain({ 17.0f, 0.0f, 0.0f });
+	//CreateVillain({ 20.0f, 0.0f, 0.0f });
+	//CreateVillain({ 25.0f, 0.0f, 0.0f });
+	//
+	////InitialBehaviourTreeSystem:
+	//EntityManager::Get().Collect<VillainComponent, BehaviorTreeComponent>().Do([](entity villain, VillainComponent&, BehaviorTreeComponent& btc)
+	//	{
+	//		btc.currentRunningNode->Process(villain);
+	//	});
+	//
+	//while (true)
+	//{
+	//	//DetectPlayerSystem:
+	//	EntityManager::Get().Collect<VillainComponent, BTDetectPlayerComponent, TransformComponent>().Do([&](entity villain, VillainComponent&, BTDetectPlayerComponent&, TransformComponent& vtc)
+	//		{
+	//			bool detectedHero = false;
+	//			EntityManager::Get().Collect<HeroComponent, TransformComponent>().Do([&](HeroComponent&, TransformComponent& htc)
+	//				{
+	//					bool isWithinNineMetresOfPlayer = Vector3::Distance(htc.GetPosition(), vtc.GetPosition()) <= 10.0f;
+	//					if (isWithinNineMetresOfPlayer)
+	//					{
+	//						detectedHero = true;
+	//					}
+	//				});
+	//
+	//			auto& btc = EntityManager::Get().GetComponent<BehaviorTreeComponent>(villain);
+	//			if (detectedHero)
+	//				LEAF(btc.currentRunningNode)->Succeed(villain);
+	//			else
+	//				LEAF(btc.currentRunningNode)->Fail(villain);
+	//		});
+	//
+	//	//SignalGroupSystem:
+	//	EntityManager::Get().Collect<VillainComponent, BTSignalGroupComponent, TransformComponent>().Do([&](entity villain, VillainComponent&, BTSignalGroupComponent&, TransformComponent& tc)
+	//		{
+	//			bool signaledAnyAgentInGroup = false;
+	//			EntityManager::Get().Collect<VillainComponent, TransformComponent>().Do([&](entity otherVillain, VillainComponent&, TransformComponent& otc)
+	//				{
+	//					if (villain == otherVillain)
+	//						return;
+	//
+	//					//We must not signal an agent that already has the SignalGroupComponent (Remember BT setups...):
+	//					if (EntityManager::Get().HasComponent<BTSignalGroupComponent>(otherVillain))
+	//						return;
+	//
+	//					const float distanceBetweenAgents = Vector3::Distance(tc.GetPosition(), otc.GetPosition());
+	//					bool agentIsInRangeOfOtherAgent = (distanceBetweenAgents <= 5.0f);
+	//					if (agentIsInRangeOfOtherAgent)
+	//					{
+	//
+	//						if (!EntityManager::Get().HasComponent<BTAttackComponent>(otherVillain))
+	//						{
+	//							signaledAnyAgentInGroup = true;
+	//							EntityManager::Get().AddComponent<BTAttackComponent>(otherVillain);
+	//							auto& btc = EntityManager::Get().GetComponent<BehaviorTreeComponent>(otherVillain);
+	//							LEAF(btc.currentRunningNode)->Fail(otherVillain);
+	//						}
+	//					}
+	//				});
+	//
+	//			auto& btc = EntityManager::Get().GetComponent<BehaviorTreeComponent>(villain);
+	//			if (signaledAnyAgentInGroup)
+	//				LEAF(btc.currentRunningNode)->Succeed(villain);
+	//			else
+	//				LEAF(btc.currentRunningNode)->Fail(villain);
+	//		});
+	//
+	//	//AttackSystem:
+	//	EntityManager::Get().Collect<VillainComponent, BTAttackComponent, TransformComponent>().Do([&](entity villain, VillainComponent&, BTAttackComponent&, TransformComponent& tc)
+	//		{
+	//			EntityManager::Get().Collect<HeroComponent, TransformComponent>().Do([&](HeroComponent&, TransformComponent& htc)
+	//				{
+	//					//(We only have 1 hero...)
+	//					const bool agentIsInAttackDistance = (Vector3::Distance(tc.GetPosition(), htc.GetPosition()) <= 1.0f);
+	//					auto& btc = EntityManager::Get().GetComponent<BehaviorTreeComponent>(villain);
+	//					if (agentIsInAttackDistance)
+	//					{
+	//						//Success! Deal damage!
+	//						//...
+	//						LEAF(btc.currentRunningNode)->Succeed(villain);
+	//					}
+	//					else
+	//					{
+	//						//Fail! The hero is out of reach!!
+	//						LEAF(btc.currentRunningNode)->Fail(villain);
+	//					}
+	//				});
+	//		});
+	//
+	//	//MoveToPlayerSystem:
+	//	EntityManager::Get().Collect<VillainComponent, BTMoveToPlayerComponent, TransformComponent>().Do([&](entity villain, VillainComponent&, BTMoveToPlayerComponent&, TransformComponent& tc)
+	//		{
+	//			Vector3 heroPosition;
+	//			EntityManager::Get().Collect<HeroComponent, TransformComponent>().Do([&heroPosition](HeroComponent&, TransformComponent& htc)
+	//				{
+	//					//We only have 1 hero:
+	//					heroPosition = htc.GetPosition();
+	//				});
+	//			//They are lined up only on the x-axis:
+	//			if (heroPosition.x > tc.GetPosition().x)
+	//				tc.SetPosition({ tc.GetPosition().x + 1, tc.GetPosition().y, tc.GetPosition().z });
+	//			else
+	//				tc.SetPosition({ tc.GetPosition().x - 1, tc.GetPosition().y, tc.GetPosition().z });
+	//
+	//			//Obviously, if NO PATH can be found to the player/hero, this would fail (even before the calculations above).
+	//			//Now we can just assume it always succeeds:
+	//			auto& btc = EntityManager::Get().GetComponent<BehaviorTreeComponent>(villain);
+	//			LEAF(btc.currentRunningNode)->Succeed(villain);
+	//
+	//		});
+	//
+	//	//PatrolSystem:
+	//	EntityManager::Get().Collect<VillainComponent, BTPatrolComponent, TransformComponent>().Do([&](entity villain, VillainComponent&, BTPatrolComponent&, TransformComponent& tc)
+	//		{
+	//			//How would this even fail? If enemy somehow is stuck?
+	//			//Trivial example: move X-component of vector, will always walk in +X-direction:
+	//			float xOffset = (((float)rand() / (float)RAND_MAX) + 1.0f);
+	//			xOffset >= 1.5f ? xOffset = 2.0f : xOffset = 1.0f;
+	//			tc.SetPosition({ tc.GetPosition().x + xOffset, tc.GetPosition().y, tc.GetPosition().z });
+	//
+	//			auto& btc = EntityManager::Get().GetComponent<BehaviorTreeComponent>(villain);
+	//			LEAF(btc.currentRunningNode)->Succeed(villain);
+	//		});
+	//}
 	
-	CreateVillain({ 15.0f, 0.0f, 0.0f });
-	CreateVillain({ 17.0f, 0.0f, 0.0f });
-	CreateVillain({ 20.0f, 0.0f, 0.0f });
-	CreateVillain({ 24.0f, 0.0f, 0.0f });
-
-	em.Collect<VillainComponent, BehaviourTreeComponent>().Do([](entity villain, VillainComponent&, BehaviourTreeComponent& btc)
-		{
-			btc.currentRunningNode->Process(villain);
-		});
-
-	em.Collect<VillainComponent, DetectPlayerComponent, TransformComponent>().Do([&](entity villain, VillainComponent&, DetectPlayerComponent&, TransformComponent& vtc)
-		{
-			em.Collect<HeroComponent, TransformComponent>().Do([&](HeroComponent&, TransformComponent& htc)
-				{
-					if (Vector3::Distance(htc.GetPosition(), vtc.GetPosition()) <= 10.0f)
-					{
-						auto& btc = em.GetComponent<BehaviourTreeComponent>(villain);
-						LEAF(btc.currentRunningNode)->Succeed(villain);
-					}
-				});
-		});
-
-	em.Collect<VillainComponent, SignalGroupComponent, TransformComponent>().Do([&](entity villain, VillainComponent&, SignalGroupComponent&, TransformComponent& tc)
-		{
-			em.Collect<VillainComponent, TransformComponent>().Do([&](entity otherVillain, VillainComponent&, TransformComponent& otc)
-				{
-					if (villain == otherVillain)
-						return;
-
-					if (Vector3::Distance(tc.GetPosition(), otc.GetPosition()) <= 10.0f)
-					{
-						//blabla
-					}
-				});
-			auto& btc = em.GetComponent<BehaviourTreeComponent>(villain);
-			LEAF(btc.currentRunningNode)->Succeed(villain);
-		});
 
 
 	// Set status to initialized
@@ -293,27 +382,33 @@ void AgentManager::DestroyLocalAgent(entity e, bool local)
 
 void AgentManager::CreateVillain(const Vector3& position)
 {
-	auto& em = DOG::EntityManager::Get();
-	DOG::entity villain = em.CreateEntity();
-	em.AddComponent<VillainComponent>(villain);
-	em.AddComponent<TransformComponent>(villain).SetPosition(position);
+	
+	DOG::entity villain = EntityManager::Get().CreateEntity();
+	EntityManager::Get().AddComponent<VillainComponent>(villain);
+	EntityManager::Get().AddComponent<TransformComponent>(villain).SetPosition(position);
 	CreateScorpioBehaviourTree(villain);
 }
 
 void AgentManager::CreateScorpioBehaviourTree(DOG::entity agent) noexcept
 {
-	std::shared_ptr<Selector> rootSelector = std::make_shared<Selector>("RootSelector");
-	std::shared_ptr<Selector> attackOrMoveToPlayerSelector = std::make_shared<Selector>("attackOrMoveToPlayerSelector");
+	std::shared_ptr<Selector> rootSelector = std::move(std::make_shared<Selector>("RootSelector"));
+	std::shared_ptr<Selector> attackOrMoveToPlayerSelector = std::move(std::make_shared<Selector>("attackOrMoveToPlayerSelector"));
 	attackOrMoveToPlayerSelector->AddChild(std::make_shared<AttackNode>("AttackNode"));
+	attackOrMoveToPlayerSelector->AddChild(std::make_shared<MoveToPlayerNode>("MoveToPlayerNode"));
 
-	std::shared_ptr<Sequence> seekAndDestroySequence = std::make_shared<Sequence>("SeekAndDestroySequence");
+	std::shared_ptr<Sequence> seekAndDestroySequence = std::move(std::make_shared<Sequence>("SeekAndDestroySequence"));
+	std::shared_ptr<Succeeder> seekAndDestroySucceeder = std::move(std::make_shared<Succeeder>("SeekAndDestroySucceeder"));
+	seekAndDestroySucceeder->AddChild(std::make_shared<SignalGroupNode>("SignalGroupNode"));
+
 	rootSelector->AddChild(seekAndDestroySequence);
+	rootSelector->AddChild(std::make_shared<PatrolNode>("PatrolNode"));
 	seekAndDestroySequence->AddChild(std::make_shared<DetectPlayerNode>("DetectPlayerNode"));
-	seekAndDestroySequence->AddChild(std::make_shared<SignalGroupNode>("SignalGroupNode"));
-	seekAndDestroySequence->AddChild(attackOrMoveToPlayerSelector);
+	seekAndDestroySequence->AddChild(std::move(seekAndDestroySucceeder));
 
-	auto& btc = DOG::EntityManager::Get().AddComponent<BehaviourTreeComponent>(agent);
-	btc.rootNode = std::make_unique<Root>("ScorpioRootNode");
-	btc.rootNode->AddChild(rootSelector);
+	seekAndDestroySequence->AddChild(std::move(attackOrMoveToPlayerSelector));
+
+	auto& btc = DOG::EntityManager::Get().AddComponent<BehaviorTreeComponent>(agent);
+	btc.rootNode = std::move(std::make_unique<Root>("ScorpioRootNode"));
+	btc.rootNode->AddChild(std::move(rootSelector));
 	btc.currentRunningNode = btc.rootNode.get();
 }
