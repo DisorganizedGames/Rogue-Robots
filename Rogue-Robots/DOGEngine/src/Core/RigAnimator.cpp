@@ -408,10 +408,11 @@ namespace DOG
 		auto& bs = groups[setter.group].blend;
 		if (!HasLooping(setter.flag)) // more logic needed here
 		{
-			if (!HasPersist(setter.flag))
-			{
+			if (HasPersist(setter.flag))
+				bs.durationLeft = 0.f;
+			else
 				bs.durationLeft = groups[setter.group].action.clips[0].duration / setter.playbackRate;
-			}
+			
 			bs.startWeight = bs.currentWeight;
 			bs.targetWeight = TARGET_ACTION;
 			bs.transitionStart = globalTime;
