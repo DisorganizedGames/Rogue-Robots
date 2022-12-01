@@ -13,8 +13,6 @@ function OnStart()
 	EventSystem:Register("BulletEnemyHit" .. EntityID, OnBulletHit)
 end
 
-local iter = 0
-
 function OnUpdate()
 	if not itemsDirty then
 		return
@@ -34,7 +32,6 @@ function OnUpdate()
 	local stats = {}
 	for k, v in pairs(originalPlayerStats) do
 		stats[k] = v
-		print(k, v)
 	end
 
 	-- Use effects to affect stats (this happens every frame!)
