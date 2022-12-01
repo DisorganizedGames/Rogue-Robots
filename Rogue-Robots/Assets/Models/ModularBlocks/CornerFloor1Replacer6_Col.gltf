@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -20,7 +20,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.023",
+            "name" : "Scene.127",
             "primitives" : [
                 {
                     "attributes" : {
@@ -38,74 +38,79 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 278,
+            "count" : 828,
             "max" : [
-                2.5000340938568115,
-                5.000003814697266,
-                2.500000238418579
+                2.993939161300659,
+                5.086136817932129,
+                2.8753745555877686
             ],
             "min" : [
-                -2.499999761581421,
-                0.48491621017456055,
-                -2.499999523162842
+                -2.5,
+                0.08324289321899414,
+                -2.499999761581421
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 278,
+            "count" : 828,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 278,
+            "count" : 828,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 278,
+            "count" : 828,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 609,
+            "count" : 831,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 3336,
-            "byteOffset" : 0
+            "byteLength" : 9936,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 3336,
-            "byteOffset" : 3336
+            "byteLength" : 9936,
+            "byteOffset" : 9936,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2224,
-            "byteOffset" : 6672
+            "byteLength" : 6624,
+            "byteOffset" : 19872,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2224,
-            "byteOffset" : 8896
+            "byteLength" : 6624,
+            "byteOffset" : 26496,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1218,
-            "byteOffset" : 11120
+            "byteLength" : 1662,
+            "byteOffset" : 33120,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 12340,
+            "byteLength" : 34784,
             "uri" : "CornerFloor1Replacer6_Col.bin"
         }
     ]

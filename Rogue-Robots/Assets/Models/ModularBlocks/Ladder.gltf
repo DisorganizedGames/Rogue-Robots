@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -15,19 +15,14 @@
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "SM_Stairs_01"
+            "name" : "Ladder"
         }
     ],
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "T_Generic_Colors",
-            "pbrMetallicRoughness" : {
-                "baseColorTexture" : {
-                    "index" : 0
-                },
-                "roughnessFactor" : 0.858578622341156
-            }
+            "name" : "Simple_Chrome_metal",
+            "pbrMetallicRoughness" : {}
         }
     ],
     "meshes" : [
@@ -47,31 +42,18 @@
             ]
         }
     ],
-    "textures" : [
-        {
-            "sampler" : 0,
-            "source" : 0
-        }
-    ],
-    "images" : [
-        {
-            "mimeType" : "image/png",
-            "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
-        }
-    ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 452,
+            "count" : 483,
             "max" : [
-                0.3967558443546295,
+                0.3967558741569519,
                 2.8041720390319824,
                 0.05397351086139679
             ],
             "min" : [
-                -0.3973051607608795,
+                -0.3973051905632019,
                 0.020886341109871864,
                 -0.5259901881217957
             ],
@@ -80,19 +62,19 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 452,
+            "count" : 483,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 452,
+            "count" : 483,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 452,
+            "count" : 483,
             "type" : "VEC2"
         },
         {
@@ -105,39 +87,38 @@
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 5424,
-            "byteOffset" : 0
+            "byteLength" : 5796,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 5424,
-            "byteOffset" : 5424
+            "byteLength" : 5796,
+            "byteOffset" : 5796,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 3616,
-            "byteOffset" : 10848
+            "byteLength" : 3864,
+            "byteOffset" : 11592,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 3616,
-            "byteOffset" : 14464
+            "byteLength" : 3864,
+            "byteOffset" : 15456,
+            "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 984,
-            "byteOffset" : 18080
-        }
-    ],
-    "samplers" : [
-        {
-            "magFilter" : 9729,
-            "minFilter" : 9987
+            "byteOffset" : 19320,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 19064,
+            "byteLength" : 20304,
             "uri" : "Ladder.bin"
         }
     ]

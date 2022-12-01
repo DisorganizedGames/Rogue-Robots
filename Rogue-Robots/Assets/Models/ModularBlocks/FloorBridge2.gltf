@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -21,19 +21,38 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.018",
+            "name" : "Ground",
+            "normalTexture" : {
+                "index" : 0,
+                "scale" : 10
+            },
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
-                    "index" : 0
+                    "index" : 1
                 },
                 "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
+                "roughnessFactor" : 0.6863636374473572
+            }
+        },
+        {
+            "doubleSided" : true,
+            "name" : "Harbour_pellars_01",
+            "normalTexture" : {
+                "index" : 2,
+                "scale" : 10
+            },
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 3
+                },
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.5
             }
         }
     ],
     "meshes" : [
         {
-            "name" : "Scene.007",
+            "name" : "Scene.013",
             "primitives" : [
                 {
                     "attributes" : {
@@ -44,6 +63,16 @@
                     },
                     "indices" : 4,
                     "material" : 0
+                },
+                {
+                    "attributes" : {
+                        "POSITION" : 5,
+                        "NORMAL" : 6,
+                        "TEXCOORD_0" : 7,
+                        "TEXCOORD_1" : 8
+                    },
+                    "indices" : 9,
+                    "material" : 1
                 }
             ]
         }
@@ -52,28 +81,45 @@
         {
             "sampler" : 0,
             "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 1
+        },
+        {
+            "sampler" : 0,
+            "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 1
         }
     ],
     "images" : [
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
+            "name" : "NormalGroup14",
+            "uri" : "Textures/NormalGroup14.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "DiffuseGroup14",
+            "uri" : "Textures/DiffuseGroup14.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 2077,
+            "count" : 297,
             "max" : [
-                2.556191921234131,
-                2.2126314640045166,
+                0.14228397607803345,
+                0.7507533431053162,
                 2.5
             ],
             "min" : [
-                -2.5864431858062744,
-                0,
+                -2.5,
+                -0.5959891676902771,
                 -2.5
             ],
             "type" : "VEC3"
@@ -81,53 +127,128 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 2077,
+            "count" : 297,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 2077,
+            "count" : 297,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 2077,
+            "count" : 297,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 4029,
+            "count" : 420,
+            "type" : "SCALAR"
+        },
+        {
+            "bufferView" : 5,
+            "componentType" : 5126,
+            "count" : 3213,
+            "max" : [
+                2.556191921234131,
+                2.2126317024230957,
+                0.862797200679779
+            ],
+            "min" : [
+                -2.5864434242248535,
+                1.2562166452407837,
+                -0.8118232488632202
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 6,
+            "componentType" : 5126,
+            "count" : 3213,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 7,
+            "componentType" : 5126,
+            "count" : 3213,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 8,
+            "componentType" : 5126,
+            "count" : 3213,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 9,
+            "componentType" : 5123,
+            "count" : 3285,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 24924,
-            "byteOffset" : 0
+            "byteLength" : 3564,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 24924,
-            "byteOffset" : 24924
+            "byteLength" : 3564,
+            "byteOffset" : 3564,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 16616,
-            "byteOffset" : 49848
+            "byteLength" : 2376,
+            "byteOffset" : 7128,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 16616,
-            "byteOffset" : 66464
+            "byteLength" : 2376,
+            "byteOffset" : 9504,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 8058,
-            "byteOffset" : 83080
+            "byteLength" : 840,
+            "byteOffset" : 11880,
+            "target" : 34963
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 38556,
+            "byteOffset" : 12720,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 38556,
+            "byteOffset" : 51276,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 25704,
+            "byteOffset" : 89832,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 25704,
+            "byteOffset" : 115536,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 6570,
+            "byteOffset" : 141240,
+            "target" : 34963
         }
     ],
     "samplers" : [
@@ -138,7 +259,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 91140,
+            "byteLength" : 147812,
             "uri" : "FloorBridge2.bin"
         }
     ]

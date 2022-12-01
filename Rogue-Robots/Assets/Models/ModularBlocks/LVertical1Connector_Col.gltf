@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -20,16 +20,18 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.007",
+            "name" : "Scene.144",
             "primitives" : [
                 {
                     "attributes" : {
                         "POSITION" : 0,
                         "NORMAL" : 1,
                         "TEXCOORD_0" : 2,
-                        "TEXCOORD_1" : 3
+                        "TEXCOORD_1" : 3,
+                        "TEXCOORD_2" : 4,
+                        "TEXCOORD_3" : 5
                     },
-                    "indices" : 4
+                    "indices" : 6
                 }
             ]
         }
@@ -38,15 +40,15 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 3551,
+            "count" : 3611,
             "max" : [
-                2.4279561042785645,
+                2.4279558658599854,
                 5.202034950256348,
                 3.1055092811584473
             ],
             "min" : [
                 -2.7928712368011475,
-                0.4032561779022217,
+                0.40325626730918884,
                 -2.5959136486053467
             ],
             "type" : "VEC3"
@@ -54,58 +56,87 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 3551,
+            "count" : 3611,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 3551,
+            "count" : 3611,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 3551,
+            "count" : 3611,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
+            "componentType" : 5126,
+            "count" : 3611,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 5,
+            "componentType" : 5126,
+            "count" : 3611,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 6,
             "componentType" : 5123,
-            "count" : 3567,
+            "count" : 3627,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 42612,
-            "byteOffset" : 0
+            "byteLength" : 43332,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 42612,
-            "byteOffset" : 42612
+            "byteLength" : 43332,
+            "byteOffset" : 43332,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 28408,
-            "byteOffset" : 85224
+            "byteLength" : 28888,
+            "byteOffset" : 86664,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 28408,
-            "byteOffset" : 113632
+            "byteLength" : 28888,
+            "byteOffset" : 115552,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 7134,
-            "byteOffset" : 142040
+            "byteLength" : 28888,
+            "byteOffset" : 144440,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 28888,
+            "byteOffset" : 173328,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 7254,
+            "byteOffset" : 202216,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 149176,
+            "byteLength" : 209472,
             "uri" : "LVertical1Connector_Col.bin"
         }
     ]

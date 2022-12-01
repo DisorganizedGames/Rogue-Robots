@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -20,15 +20,16 @@
     ],
     "meshes" : [
         {
-            "name" : "Plane",
+            "name" : "Scene.087",
             "primitives" : [
                 {
                     "attributes" : {
                         "POSITION" : 0,
                         "NORMAL" : 1,
-                        "TEXCOORD_0" : 2
+                        "TEXCOORD_0" : 2,
+                        "TEXCOORD_1" : 3
                     },
-                    "indices" : 3
+                    "indices" : 4
                 }
             ]
         }
@@ -37,63 +38,79 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 12,
+            "count" : 828,
             "max" : [
-                2.5083422660827637,
-                5.017725944519043,
-                -1.4921706914901733
+                2.5668766498565674,
+                5,
+                -1.2812330722808838
             ],
             "min" : [
-                1.3684923648834229,
-                0.0032432079315185547,
-                -2.495159387588501
+                1.3815165758132935,
+                -0.005234479904174805,
+                -2.548187017440796
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 12,
+            "count" : 828,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 12,
+            "count" : 828,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
+            "componentType" : 5126,
+            "count" : 828,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 18,
+            "count" : 828,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 144,
-            "byteOffset" : 0
+            "byteLength" : 9936,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 144,
-            "byteOffset" : 144
+            "byteLength" : 9936,
+            "byteOffset" : 9936,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 96,
-            "byteOffset" : 288
+            "byteLength" : 6624,
+            "byteOffset" : 19872,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 36,
-            "byteOffset" : 384
+            "byteLength" : 6624,
+            "byteOffset" : 26496,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1656,
+            "byteOffset" : 33120,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 420,
+            "byteLength" : 34776,
             "uri" : "WallInnerCorner_Col.bin"
         }
     ]

@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -20,7 +20,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.067",
+            "name" : "Scene.073",
             "primitives" : [
                 {
                     "attributes" : {
@@ -38,7 +38,7 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 250,
+            "count" : 2430,
             "max" : [
                 2.500013828277588,
                 4.999999523162842,
@@ -46,66 +46,71 @@
             ],
             "min" : [
                 -2.500000238418579,
-                0.3060626983642578,
-                -1.7958651781082153
+                -0.4666578471660614,
+                -2.508253812789917
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 250,
+            "count" : 2430,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 250,
+            "count" : 2430,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 250,
+            "count" : 2430,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 360,
+            "count" : 2655,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 3000,
-            "byteOffset" : 0
+            "byteLength" : 29160,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 3000,
-            "byteOffset" : 3000
+            "byteLength" : 29160,
+            "byteOffset" : 29160,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2000,
-            "byteOffset" : 6000
+            "byteLength" : 19440,
+            "byteOffset" : 58320,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2000,
-            "byteOffset" : 8000
+            "byteLength" : 19440,
+            "byteOffset" : 77760,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 720,
-            "byteOffset" : 10000
+            "byteLength" : 5310,
+            "byteOffset" : 97200,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 10720,
+            "byteLength" : 102512,
             "uri" : "WallFloor1_Col.bin"
         }
     ]

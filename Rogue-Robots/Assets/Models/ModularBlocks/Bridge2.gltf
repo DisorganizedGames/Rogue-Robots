@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -18,37 +18,50 @@
             "name" : "Bridge2",
             "rotation" : [
                 0,
-                0.7071068286895752,
                 0,
-                0.7071067094802856
+                -0.7071066498756409,
+                0.70710688829422
+            ],
+            "scale" : [
+                0.44031867384910583,
+                0.036105815321207047,
+                0.08672605454921722
+            ],
+            "translation" : [
+                0.7323179244995117,
+                1.8953837156295776,
+                2.2811832427978516
             ]
         }
     ],
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.051",
+            "name" : "Harbour_pellars_01",
+            "normalTexture" : {
+                "index" : 0,
+                "scale" : 10
+            },
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
-                    "index" : 0
+                    "index" : 1
                 },
                 "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
+                "roughnessFactor" : 0.5
             }
         }
     ],
     "meshes" : [
         {
-            "name" : "Scene.097",
+            "name" : "Cube.016",
             "primitives" : [
                 {
                     "attributes" : {
                         "POSITION" : 0,
                         "NORMAL" : 1,
-                        "TEXCOORD_0" : 2,
-                        "TEXCOORD_1" : 3
+                        "TEXCOORD_0" : 2
                     },
-                    "indices" : 4,
+                    "indices" : 3,
                     "material" : 0
                 }
             ]
@@ -58,82 +71,84 @@
         {
             "sampler" : 0,
             "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 1
         }
     ],
     "images" : [
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
+            "name" : "NormalGroup14",
+            "uri" : "Textures/NormalGroup14.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "DiffuseGroup14",
+            "uri" : "Textures/DiffuseGroup14.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 3390,
+            "count" : 5449,
             "max" : [
-                2.5864431858062744,
-                2.2126314640045166,
-                2.5864431858062744
+                1.4486277103424072,
+                51.958797454833984,
+                3.7722291946411133
             ],
             "min" : [
-                -2.556191921234131,
-                1.2562166452407837,
-                -2.556191921234131
+                -0.7222950458526611,
+                -92.52392578125,
+                -56.378868103027344
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 3390,
+            "count" : 5449,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 3390,
+            "count" : 5449,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
-            "componentType" : 5126,
-            "count" : 3390,
-            "type" : "VEC2"
-        },
-        {
-            "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 5805,
+            "count" : 8844,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 40680,
-            "byteOffset" : 0
+            "byteLength" : 65388,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 40680,
-            "byteOffset" : 40680
+            "byteLength" : 65388,
+            "byteOffset" : 65388,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 27120,
-            "byteOffset" : 81360
+            "byteLength" : 43592,
+            "byteOffset" : 130776,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 27120,
-            "byteOffset" : 108480
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 11610,
-            "byteOffset" : 135600
+            "byteLength" : 17688,
+            "byteOffset" : 174368,
+            "target" : 34963
         }
     ],
     "samplers" : [
@@ -144,7 +159,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 147212,
+            "byteLength" : 192056,
             "uri" : "Bridge2.bin"
         }
     ]

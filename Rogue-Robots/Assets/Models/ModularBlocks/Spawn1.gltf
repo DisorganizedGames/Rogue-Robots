@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -21,27 +21,23 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "emissiveFactor" : [
-                1,
-                1,
-                1
-            ],
-            "emissiveTexture" : {
-                "index" : 0
+            "name" : "Ground",
+            "normalTexture" : {
+                "index" : 0,
+                "scale" : 10
             },
-            "name" : "PP_Standard_Material.017",
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 1
                 },
                 "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
+                "roughnessFactor" : 0.6863636374473572
             }
         }
     ],
     "meshes" : [
         {
-            "name" : "Scene.044",
+            "name" : "Scene.2735",
             "primitives" : [
                 {
                     "attributes" : {
@@ -69,28 +65,28 @@
     "images" : [
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette_Emmissive",
-            "uri" : "Textures/PP_Color_Palette_Emmissive.png"
+            "name" : "NormalGroundGroup1",
+            "uri" : "Textures/NormalGroundGroup1.png"
         },
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
+            "name" : "DiffuseGroundGroup1",
+            "uri" : "Textures/DiffuseGroundGroup1.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 657,
+            "count" : 1044,
             "max" : [
-                2.5,
-                1.4930627346038818,
-                2.5
+                2.5082509517669678,
+                0.9787489771842957,
+                2.5072803497314453
             ],
             "min" : [
                 -2.5,
-                0.9369878768920898,
+                -0.3426874279975891,
                 -2.5
             ],
             "type" : "VEC3"
@@ -98,53 +94,58 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 657,
+            "count" : 1044,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 657,
+            "count" : 1044,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 657,
+            "count" : 1044,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 816,
+            "count" : 1044,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 7884,
-            "byteOffset" : 0
+            "byteLength" : 12528,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 7884,
-            "byteOffset" : 7884
+            "byteLength" : 12528,
+            "byteOffset" : 12528,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 5256,
-            "byteOffset" : 15768
+            "byteLength" : 8352,
+            "byteOffset" : 25056,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 5256,
-            "byteOffset" : 21024
+            "byteLength" : 8352,
+            "byteOffset" : 33408,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1632,
-            "byteOffset" : 26280
+            "byteLength" : 2088,
+            "byteOffset" : 41760,
+            "target" : 34963
         }
     ],
     "samplers" : [
@@ -155,7 +156,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 27912,
+            "byteLength" : 43848,
             "uri" : "Spawn1.bin"
         }
     ]

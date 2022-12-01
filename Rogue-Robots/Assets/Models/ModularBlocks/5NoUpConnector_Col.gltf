@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -20,7 +20,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Scene.005",
+            "name" : "Scene.091",
             "primitives" : [
                 {
                     "attributes" : {
@@ -38,74 +38,79 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 969,
+            "count" : 1714,
             "max" : [
-                2.500000476837158,
-                4.406264781951904,
-                2.500000476837158
+                2.5000007152557373,
+                4.8361687660217285,
+                2.9904067516326904
             ],
             "min" : [
-                -2.500002145767212,
-                -2.537086629672558e-06,
-                -2.500002145767212
+                -2.6992998123168945,
+                -3.148788891849108e-06,
+                -2.500002384185791
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 969,
+            "count" : 1714,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 969,
+            "count" : 1714,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 969,
+            "count" : 1714,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 1086,
+            "count" : 1746,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 11628,
-            "byteOffset" : 0
+            "byteLength" : 20568,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 11628,
-            "byteOffset" : 11628
+            "byteLength" : 20568,
+            "byteOffset" : 20568,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 7752,
-            "byteOffset" : 23256
+            "byteLength" : 13712,
+            "byteOffset" : 41136,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 7752,
-            "byteOffset" : 31008
+            "byteLength" : 13712,
+            "byteOffset" : 54848,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2172,
-            "byteOffset" : 38760
+            "byteLength" : 3492,
+            "byteOffset" : 68560,
+            "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 40932,
+            "byteLength" : 72052,
             "uri" : "5NoUpConnector_Col.bin"
         }
     ]

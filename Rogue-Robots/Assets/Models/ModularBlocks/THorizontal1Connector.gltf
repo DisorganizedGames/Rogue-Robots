@@ -1,14 +1,38 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v3.2.43",
+        "generator" : "Khronos glTF Blender I/O v3.3.32",
         "version" : "2.0"
+    },
+    "extensionsUsed" : [
+        "KHR_lights_punctual"
+    ],
+    "extensionsRequired" : [
+        "KHR_lights_punctual"
+    ],
+    "extensions" : {
+        "KHR_lights_punctual" : {
+            "lights" : [
+                {
+                    "color" : [
+                        1,
+                        0.7634416222572327,
+                        0.16504213213920593
+                    ],
+                    "intensity" : 0.1,
+                    "type" : "point",
+                    "name" : "Point.038"
+                }
+            ]
+        }
     },
     "scene" : 0,
     "scenes" : [
         {
             "name" : "Scene",
             "nodes" : [
-                0
+                0,
+                1,
+                2
             ]
         }
     ],
@@ -16,35 +40,70 @@
         {
             "mesh" : 0,
             "name" : "THorizontal1Connector"
+        },
+        {
+            "extensions" : {
+                "KHR_lights_punctual" : {
+                    "light" : 0
+                }
+            },
+            "name" : "Point.038",
+            "rotation" : [
+                -0.7071068286895752,
+                0,
+                0,
+                0.7071068286895752
+            ],
+            "translation" : [
+                1.3385041952133179,
+                2.3767333030700684,
+                0
+            ]
+        },
+        {
+            "mesh" : 1,
+            "name" : "TunnelLight.012"
         }
     ],
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "PP_Standard_Material.042",
-            "pbrMetallicRoughness" : {
-                "baseColorTexture" : {
-                    "index" : 0
-                },
-                "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
-            }
-        },
-        {
-            "doubleSided" : true,
-            "name" : "PP_Standard_Material.043",
+            "name" : "Ground",
+            "normalTexture" : {
+                "index" : 0,
+                "scale" : 10
+            },
             "pbrMetallicRoughness" : {
                 "baseColorTexture" : {
                     "index" : 1
                 },
                 "metallicFactor" : 0,
-                "roughnessFactor" : 0.5527864098548889
+                "roughnessFactor" : 0.6863636374473572
+            }
+        },
+        {
+            "doubleSided" : true,
+            "emissiveFactor" : [
+                2,
+                2,
+                2
+            ],
+            "emissiveTexture" : {
+                "index" : 2
+            },
+            "name" : "TunnelLight",
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 3
+                },
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.4000000059604645
             }
         }
     ],
     "meshes" : [
         {
-            "name" : "Scene.046",
+            "name" : "Scene.041",
             "primitives" : [
                 {
                     "attributes" : {
@@ -55,15 +114,19 @@
                     },
                     "indices" : 4,
                     "material" : 0
-                },
+                }
+            ]
+        },
+        {
+            "name" : "Cylinder.029",
+            "primitives" : [
                 {
                     "attributes" : {
                         "POSITION" : 5,
                         "NORMAL" : 6,
-                        "TEXCOORD_0" : 7,
-                        "TEXCOORD_1" : 8
+                        "TEXCOORD_0" : 7
                     },
-                    "indices" : 9,
+                    "indices" : 8,
                     "material" : 1
                 }
             ]
@@ -76,29 +139,52 @@
         },
         {
             "sampler" : 0,
-            "source" : 0
+            "source" : 1
+        },
+        {
+            "sampler" : 0,
+            "source" : 2
+        },
+        {
+            "sampler" : 0,
+            "source" : 3
         }
     ],
     "images" : [
         {
             "mimeType" : "image/png",
-            "name" : "PP_Color_Palette",
-            "uri" : "Textures/PP_Color_Palette.png"
+            "name" : "NormalGroundGroup6",
+            "uri" : "Textures/NormalGroundGroup6.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "DiffuseGroundGroup6",
+            "uri" : "Textures/DiffuseGroundGroup6.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "TunnelLightEmission",
+            "uri" : "Textures/TunnelLightEmission.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "TunnelLightDiffuse",
+            "uri" : "Textures/TunnelLightDiffuse.png"
         }
     ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 255,
+            "count" : 1169,
             "max" : [
-                2.3966012001037598,
-                4.715345859527588,
-                0.15091891586780548
+                2.4836394786834717,
+                4.820676326751709,
+                2.5000007152557373
             ],
             "min" : [
-                -2.1883585453033447,
-                0.4274948835372925,
+                -2.500000476837158,
+                0.31998395919799805,
                 -2.50000262260437
             ],
             "type" : "VEC3"
@@ -106,118 +192,116 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 255,
+            "count" : 1169,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 255,
+            "count" : 1169,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 255,
+            "count" : 1169,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 261,
+            "count" : 1182,
             "type" : "SCALAR"
         },
         {
             "bufferView" : 5,
             "componentType" : 5126,
-            "count" : 898,
+            "count" : 285,
             "max" : [
-                2.4836394786834717,
-                4.820676326751709,
-                2.5000007152557373
+                1.6397199630737305,
+                2.476733446121216,
+                0.15000005066394806
             ],
             "min" : [
-                -2.500000238418579,
-                0.31998395919799805,
-                -2.500001907348633
+                1.539720058441162,
+                2.276733160018921,
+                -0.15000005066394806
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 6,
             "componentType" : 5126,
-            "count" : 898,
+            "count" : 285,
             "type" : "VEC3"
         },
         {
             "bufferView" : 7,
             "componentType" : 5126,
-            "count" : 898,
+            "count" : 285,
             "type" : "VEC2"
         },
         {
             "bufferView" : 8,
-            "componentType" : 5126,
-            "count" : 898,
-            "type" : "VEC2"
-        },
-        {
-            "bufferView" : 9,
             "componentType" : 5123,
-            "count" : 921,
+            "count" : 372,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 3060,
-            "byteOffset" : 0
+            "byteLength" : 14028,
+            "byteOffset" : 0,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 3060,
-            "byteOffset" : 3060
+            "byteLength" : 14028,
+            "byteOffset" : 14028,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2040,
-            "byteOffset" : 6120
+            "byteLength" : 9352,
+            "byteOffset" : 28056,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 2040,
-            "byteOffset" : 8160
+            "byteLength" : 9352,
+            "byteOffset" : 37408,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 522,
-            "byteOffset" : 10200
+            "byteLength" : 2364,
+            "byteOffset" : 46760,
+            "target" : 34963
         },
         {
             "buffer" : 0,
-            "byteLength" : 10776,
-            "byteOffset" : 10724
+            "byteLength" : 3420,
+            "byteOffset" : 49124,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 10776,
-            "byteOffset" : 21500
+            "byteLength" : 3420,
+            "byteOffset" : 52544,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 7184,
-            "byteOffset" : 32276
+            "byteLength" : 2280,
+            "byteOffset" : 55964,
+            "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 7184,
-            "byteOffset" : 39460
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 1842,
-            "byteOffset" : 46644
+            "byteLength" : 744,
+            "byteOffset" : 58244,
+            "target" : 34963
         }
     ],
     "samplers" : [
@@ -228,7 +312,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 48488,
+            "byteLength" : 58988,
             "uri" : "THorizontal1Connector.bin"
         }
     ]
