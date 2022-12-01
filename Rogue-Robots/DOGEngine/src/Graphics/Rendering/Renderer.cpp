@@ -80,19 +80,16 @@ namespace DOG::gfx
 
 		m_bin = std::make_unique<GPUGarbageBin>(S_MAX_FIF);
 		m_uploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeDefault, S_MAX_FIF);
-		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeTextures, S_MAX_FIF);
-		m_meshUploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeDefault, S_MAX_FIF);
+		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeTextures);
+		m_meshUploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeDefault);
 
 		// For internal per frame management
-		const u32 maxUploadPerFrame = 512'000;
+		const u32 maxUploadPerFrame = 256'000;
 		m_perFrameUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadPerFrame, S_MAX_FIF, QueueType::Copy);
 
-
-
-		const u32 maxConstantsPerFrame = 150'000;
+		const u32 maxConstantsPerFrame = 50'000;
 		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), maxConstantsPerFrame);
 		m_dynConstantsTemp = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 3 * 4 * 24);
-
 
 		// multiple of curr loaded mixamo skeleton
 		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * S_MAX_FIF);
@@ -122,6 +119,12 @@ namespace DOG::gfx
 		lightStorageSpec.spotLightSpec.maxStatics = m_graphicsSettings.maxStaticSpotLights;
 		lightStorageSpec.spotLightSpec.maxDynamic = m_graphicsSettings.maxDynamicSpotLights;
 		lightStorageSpec.spotLightSpec.maxSometimes = m_graphicsSettings.maxSometimesSpotLights;
+
+		// Not used
+		lightStorageSpec.areaLightSpec.maxDynamic = 1;
+		lightStorageSpec.areaLightSpec.maxSometimes = 1;
+		lightStorageSpec.areaLightSpec.maxStatics = 1;
+
 		m_globalLightTable = std::make_unique<LightTable>(m_rd, m_bin.get(), lightStorageSpec, false);
 
 
@@ -1707,6 +1710,16 @@ namespace DOG::gfx
 			if (ImGui::Begin("GPU Memory Statistics: Total", &open))
 			{
 				auto& info = m_rd->GetTotalMemoryInfo().heap[0];
+				ImGui::Text("Used allocations: %f (Mb)", info.allocationBytes / 1048576.f);
+				ImGui::Text("Memory allocated: %f (Mb)", info.blockBytes / 1048576.f);
+				ImGui::Text("Smallest allocation: %f (Mb)", info.smallestAllocation / 1048576.f);
+				ImGui::Text("Largest allocation: %f (Mb)", info.largestAllocation / 1048576.f);
+			}
+			ImGui::End();
+
+			if (ImGui::Begin("GPU Memory Statistic (Upload Heap): Total", &open))
+			{
+				auto& info = m_rd->GetTotalMemoryInfo().heap[1];
 				ImGui::Text("Used allocations: %f (Mb)", info.allocationBytes / 1048576.f);
 				ImGui::Text("Memory allocated: %f (Mb)", info.blockBytes / 1048576.f);
 				ImGui::Text("Smallest allocation: %f (Mb)", info.smallestAllocation / 1048576.f);
