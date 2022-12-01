@@ -17,6 +17,7 @@ Client::~Client()
 	m_reciveTrue = false;
 	closesocket(m_connectSocket);
 	Sleep(1000);
+	WSACleanup();
 }
 
 INT8 Client::ConnectTcpServer(std::string ipAdress)

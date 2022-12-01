@@ -35,23 +35,26 @@ Server::~Server()
 {
 	if (m_gameAlive)
 	{
-		m_gameAlive = FALSE;
-		if(m_loopTcp.joinable())
+		m_gameAlive = false;
+		Sleep(1000);
+		if (m_loopTcp.joinable())
 			m_loopTcp.join();
-		if(m_reciveConnectionsTcp.joinable())
+		if (m_reciveConnectionsTcp.joinable())
 			m_reciveConnectionsTcp.join();
-		if(m_loopUdp.joinable())
+		if (m_loopUdp.joinable())
 			m_loopUdp.join();
-		if(m_reciveLoopUdp.joinable())
+		if (m_reciveLoopUdp.joinable())
 			m_reciveLoopUdp.join();
+
+		for (UINT8 socketIndex = 0; socketIndex < m_holdPlayerIds.size(); socketIndex++)
+		{
+			std::cout << "Server: Closes socket for player" << m_holdPlayerIds.at(socketIndex) + 1 << std::endl;
+			m_playerIds.push_back(m_holdPlayerIds.at(socketIndex));
+			m_holdPlayerIds.erase(m_holdPlayerIds.begin() + socketIndex);
+			m_clientsSocketsTcp.erase(m_clientsSocketsTcp.begin() + socketIndex);
+		}
 	}
-	for (UINT8 socketIndex = 0; socketIndex < m_holdPlayerIds.size(); socketIndex++)
-	{
-		std::cout << "Server: Closes socket for player" << m_holdPlayerIds.at(socketIndex) + 1 << std::endl;
-		m_playerIds.push_back(m_holdPlayerIds.at(socketIndex));
-		m_holdPlayerIds.erase(m_holdPlayerIds.begin() + socketIndex);
-		m_clientsSocketsTcp.erase(m_clientsSocketsTcp.begin() + socketIndex);
-	}
+	
 	WSACleanup();
 }
 
@@ -110,7 +113,7 @@ bool Server::StartTcpServer()
 		return FALSE;
 	}
 
-	m_gameAlive = TRUE;
+	m_gameAlive = true;
 	//Thread to handle new connections
 	m_reciveConnectionsTcp = std::thread(&Server::ServerReciveConnectionsTCP, this, listenSocket);
 	m_reciveConnectionsTcp.detach();
