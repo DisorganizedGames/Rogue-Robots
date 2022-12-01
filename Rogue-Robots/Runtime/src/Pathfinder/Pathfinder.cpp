@@ -15,8 +15,8 @@ bool Pathfinder::m_initialized = false;
 Pathfinder::Pathfinder() noexcept
 {
 #ifdef _DEBUG
-	m_visualizePaths = true;
-	m_vizPortals = true;
+	m_visualizePaths = false;
+	m_vizPortals = false;
 	m_vizNavMeshes = false;
 	m_vizOutlines = true;
 #else
