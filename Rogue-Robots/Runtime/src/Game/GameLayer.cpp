@@ -17,6 +17,7 @@
 #include "HeartbeatTrackerSystem.h"
 #include "InGameMenu.h"
 #include "GoalRadarSystem.h"
+#include "MusicSystems.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -100,6 +101,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<RemoveBulletComponentSystem>());
 
 	m_entityManager.RegisterSystem(std::make_unique<WeaponPointLightSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<PlayMusicSystem>());
 
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
@@ -155,6 +157,7 @@ void GameLayer::OnUpdate()
 		case GameState::None:
 			break;
 		case GameState::MainMenu:
+			m_entityManager.Collect<MusicPlayer>().Do([&](MusicPlayer& musicPlayer) {musicPlayer.inMainMenu = true; });
 			break;
 		case GameState::Initializing:
 			m_gameState = GameState::MainMenu;
