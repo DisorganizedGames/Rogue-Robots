@@ -122,7 +122,7 @@ void AgentDetectPlayerSystem::OnEarlyUpdate(entity e, BTDetectPlayerComponent&, 
 void AgentAttackSystem::OnUpdate(entity e, BTAttackComponent&, BehaviorTreeComponent& btc, 
 	AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
 {
-	if (seek.squaredDistance <= attack.radiusSquared && attack.Ready())
+	if (seek.HasTarget() && seek.squaredDistance <= attack.radiusSquared && attack.Ready())
 	{
 		PlayerManager::Get().HurtIfThisPlayer(seek.entityID, attack.damage);
 

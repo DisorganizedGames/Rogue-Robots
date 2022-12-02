@@ -3,3 +3,4 @@ imgui.ini
 /.vs
 .vscode
 /Runtime/Settings.lua
+*.dot
