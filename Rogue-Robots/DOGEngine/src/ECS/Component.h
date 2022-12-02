@@ -385,11 +385,13 @@ namespace DOG
 	struct GravityPointBehaviorComponent
 	{
 		DirectX::SimpleMath::Vector3 point = { 0.f, 0.f, 0.f };
+		f32 gravity = 9.82f;
 	};
 
 	struct GravityDirectionBehaviorComponent
 	{
 		DirectX::SimpleMath::Vector3 direction = { 0.f, -1.f, 0.f }; // Will be normalized
+		f32 gravity = 9.82f;
 	};
 
 	struct ConstVelocityBehaviorComponent

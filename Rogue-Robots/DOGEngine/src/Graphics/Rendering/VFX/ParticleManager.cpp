@@ -116,6 +116,7 @@ void ParticleManager::SetBehaviorProperties(entity e, ParticleEmitter& emitter)
 		emitter.bopt1 = opt->get().point.x;
 		emitter.bopt2 = opt->get().point.y;
 		emitter.bopt3 = opt->get().point.z;
+		emitter.bopt4 = opt->get().gravity;
 		return;
 	}
 	if (auto opt = entityManager.TryGetComponent<GravityDirectionBehaviorComponent>(e))
@@ -124,6 +125,7 @@ void ParticleManager::SetBehaviorProperties(entity e, ParticleEmitter& emitter)
 		emitter.bopt1 = opt->get().direction.x;
 		emitter.bopt2 = opt->get().direction.y;
 		emitter.bopt3 = opt->get().direction.z;
+		emitter.bopt4 = opt->get().gravity;
 		return;
 	}
 	if (auto opt = entityManager.TryGetComponent<ConstVelocityBehaviorComponent>(e))

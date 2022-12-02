@@ -60,9 +60,9 @@ struct Emitter
 	float4 endColor;
 	
 	uint behavior;
-	float bopt1, bopt2, bopt3;
+	float bopt1, bopt2, bopt3, bopt4;
 	
-	uint2 pad;
+	uint pad;
 };
 
 struct PS_IN

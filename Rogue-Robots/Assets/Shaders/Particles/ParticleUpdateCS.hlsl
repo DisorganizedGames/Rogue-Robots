@@ -17,7 +17,6 @@ struct PushConstantElement
 CONSTANTS(g_constants, PushConstantElement)
 
 void GravityBehavior(inout Particle p, in Emitter e, in float deltaTime);
-void NoGravityBehavior(inout Particle p, in Emitter e, in float deltaTime);
 void GravityPointBehavior(inout Particle p, in Emitter e, in float deltaTime);
 void GravityDirectionBehavior(inout Particle p, in Emitter e, in float deltaTime);
 void ConstVelocityBehavior(inout Particle p, in Emitter e, in float deltaTime);
@@ -51,7 +50,6 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 		GravityBehavior(p, e, perFrame.deltaTime);
 		break;
 	case BEHAVIOR_NO_GRAVITY:
-		NoGravityBehavior(p, e, perFrame.deltaTime);
 		break;
 	case BEHAVIOR_GRAVITY_POINT:
 		GravityPointBehavior(p, e, perFrame.deltaTime);
@@ -68,6 +66,7 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 		break;
 	}
 	
+	p.pos += p.vel * perFrame.deltaTime;
 	
 	particleBuffer[globalID] = p;
 }
@@ -76,18 +75,24 @@ void GravityBehavior(inout Particle p, in Emitter e, in float deltaTime)
 {
 	float gravity = e.bopt1;
 	
-	p.pos += p.vel * deltaTime;
 	p.vel -= float3(0, gravity * deltaTime, 0);
 }
-void NoGravityBehavior(inout Particle p, in Emitter e, in float deltaTime)
-{
-}
+
 void GravityPointBehavior(inout Particle p, in Emitter e, in float deltaTime)
 {
+	float x = e.bopt1;
+	float y = e.bopt2;
+	float z = e.bopt3;
+	float gravity = e.bopt4;
+	
+	float3 dir = normalize(float3(x, y, z) - p.pos);
+	p.vel += dir * gravity * deltaTime;
 }
+
 void GravityDirectionBehavior(inout Particle p, in Emitter e, in float deltaTime)
 {
 }
+
 void ConstVelocityBehavior(inout Particle p, in Emitter e, in float deltaTime)
 {
 }

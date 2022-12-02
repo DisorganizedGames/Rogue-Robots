@@ -50,8 +50,9 @@ namespace DOG::gfx
 		f32 bopt1 = 0;
 		f32 bopt2 = 0;
 		f32 bopt3 = 0;
+		f32 bopt4 = 0;
 
-		u32 pad[2] = {0};
+		u32 pad[1] = { 0 };
 	};
 	
 	class ParticleBackend
