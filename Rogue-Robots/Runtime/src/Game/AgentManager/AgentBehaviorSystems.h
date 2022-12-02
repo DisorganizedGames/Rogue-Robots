@@ -56,9 +56,9 @@ class AgentHitDetectionSystem : public DOG::ISystem
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
 public:
-	SYSTEM_CLASS(DOG::HasEnteredCollisionComponent, AgentSeekPlayerComponent);
-	ON_UPDATE_ID(DOG::HasEnteredCollisionComponent, AgentSeekPlayerComponent);
-	void OnUpdate(DOG::entity me, DOG::HasEnteredCollisionComponent& collision, AgentSeekPlayerComponent& seek);
+	SYSTEM_CLASS(/*BTHitDetectComponent, */DOG::HasEnteredCollisionComponent, AgentSeekPlayerComponent);
+	ON_UPDATE_ID(/*BTHitDetectComponent, */DOG::HasEnteredCollisionComponent, AgentSeekPlayerComponent);
+	void OnUpdate(DOG::entity me, /*BTHitDetectComponent&,*/ DOG::HasEnteredCollisionComponent& collision, AgentSeekPlayerComponent& seek);
 };
 
 class AgentHitSystem : public DOG::ISystem

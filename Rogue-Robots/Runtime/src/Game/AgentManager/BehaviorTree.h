@@ -26,6 +26,11 @@ struct BTPatrolComponent
 	//ID
 };
 
+struct BTHitDetectComponent
+{
+	//ID
+};
+
 enum class NodeType : uint8_t { Sequence = 0, Selector, Decorator, Leaf };
 enum class DecoratorType : uint8_t { Inverter = 0, Succeeder, Failer, Root };
 
@@ -149,6 +154,16 @@ public:
 	virtual void Fail(DOG::entity agent) noexcept override final;
 };
 
+class DetectHitNode : public Leaf 
+{
+public:
+	DetectHitNode(const std::string& name) noexcept;
+	virtual ~DetectHitNode() noexcept = default;
+	virtual void Process(DOG::entity agent) noexcept override final;
+	virtual void Succeed(DOG::entity agent) noexcept override final;
+	virtual void Fail(DOG::entity agent) noexcept override final;
+};
+
 class SignalGroupNode : public Leaf
 {
 public:
@@ -178,6 +193,14 @@ public:
 	virtual void Succeed(DOG::entity agent) noexcept override final;
 	virtual void Fail(DOG::entity agent) noexcept override final;
 };
+
+
+
+
+
+
+
+
 
 class PatrolNode : public Leaf
 {

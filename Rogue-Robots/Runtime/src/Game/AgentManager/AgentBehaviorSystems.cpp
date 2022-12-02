@@ -146,14 +146,18 @@ void AgentAttackSystem::OnUpdate(entity e, BTAttackComponent&, BehaviorTreeCompo
 		LEAF(btc.currentRunningNode)->Fail(e);
 }
 
-void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& collision, AgentSeekPlayerComponent& seek)
+void AgentHitDetectionSystem::OnUpdate(entity e, /*BTHitDetectComponent&,*/ HasEnteredCollisionComponent& collision, AgentSeekPlayerComponent& seek)
 {
 	EntityManager& eMan = EntityManager::Get();
-	AgentHitComponent* hit;
-	if (!eMan.HasComponent<AgentHitComponent>(e))
-		hit = &eMan.AddComponent<AgentHitComponent>(e);
-	else
-		hit = &eMan.GetComponent<AgentHitComponent>(e);
+
+	auto& hit = eMan.AddOrGetComponent<AgentHitComponent>(e);
+	//AgentHitComponent* hit;
+	//if (!eMan.HasComponent<AgentHitComponent>(e))
+	//	hit = &eMan.AddComponent<AgentHitComponent>(e);
+	//else
+	//	hit = &eMan.GetComponent<AgentHitComponent>(e);
+
+	bool hitByPlayer = false;
 	for (u32 i = 0; i < collision.entitiesCount; ++i)
 	{
 		if (eMan.HasComponent<BulletComponent>(collision.entities[i]))
@@ -162,7 +166,7 @@ void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& c
 
 			BulletComponent& bullet = eMan.GetComponent<BulletComponent>(bulletEntity);
 			seek.entityID = bullet.playerEntityID;
-			(*hit).HitBy(bulletEntity, bullet.playerEntityID, bullet.damage);
+			hit.HitBy(bulletEntity, bullet.playerEntityID, bullet.damage);
 			if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
 			{
 				EntityManager::Get().AddComponent<AgentAggroComponent>(e);
@@ -194,8 +198,15 @@ void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& c
 			};
 			eMan.AddComponent<ConeSpawnComponent>(hitParticleEffect) = { .angle = DirectX::XM_PI/3, .speed = 2.f };
 			
+			hitByPlayer = true;
 		}
 	}
+
+	auto& btc = eMan.GetComponent<BehaviorTreeComponent>(e);
+	if (hitByPlayer)
+		LEAF(btc.currentRunningNode)->Succeed(e);
+	else
+		LEAF(btc.currentRunningNode)->Fail(e);
 }
 
 void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent& hp)

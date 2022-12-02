@@ -236,16 +236,16 @@ DetectPlayerNode::DetectPlayerNode(const std::string& name) noexcept
 
 void DetectPlayerNode::Process(DOG::entity agent) noexcept
 {
-	bool forceSucced = DOG::EntityManager::Get().HasComponent<BTAttackComponent>(agent) || DOG::EntityManager::Get().HasComponent<AgentAggroComponent>(agent);
+	//bool forceSucced = DOG::EntityManager::Get().HasComponent<BTAttackComponent>(agent) || DOG::EntityManager::Get().HasComponent<AgentAggroComponent>(agent);
 
-	if (forceSucced)
-	{
-		ForceSucceed(agent);
-	}
-	else
+	if (!DOG::EntityManager::Get().HasComponent<BTAttackComponent>(agent))
 	{
 		DOG::EntityManager::Get().AddComponent<BTDetectPlayerComponent>(agent);
 		DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
+	}
+	else
+	{
+		ForceSucceed(agent);
 	}
 }
 
@@ -263,6 +263,41 @@ void DetectPlayerNode::Fail(DOG::entity agent) noexcept
 {
 	SetSucceededAs(false);
 	DOG::EntityManager::Get().RemoveComponent<BTDetectPlayerComponent>(agent);
+	DOG::EntityManager::Get().RemoveComponentIfExists<AgentAggroComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+DetectHitNode::DetectHitNode(const std::string& name) noexcept
+	: Leaf{ name }
+{}
+
+void DetectHitNode::Process(DOG::entity agent) noexcept
+{
+	if (DOG::EntityManager::Get().HasComponent<DOG::HasEnteredCollisionComponent>(agent))
+	{
+		DOG::EntityManager::Get().AddComponent<BTHitDetectComponent>(agent);
+		DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
+	}
+	else
+	{
+		ForceFail(agent); // Go to next node of SELECTOR, which is DetectPlayer as of now.
+	}
+}
+
+void DetectHitNode::Succeed(DOG::entity agent) noexcept
+{
+	SetSucceededAs(true);
+	DOG::EntityManager::Get().RemoveComponent<BTHitDetectComponent>(agent);
+	if (!DOG::EntityManager::Get().HasComponent<AgentAggroComponent>(agent))
+		DOG::EntityManager::Get().AddComponent<AgentAggroComponent>(agent);
+
+	GetParent()->Process(agent);
+}
+
+void DetectHitNode::Fail(DOG::entity agent) noexcept
+{
+	SetSucceededAs(false);
+	DOG::EntityManager::Get().RemoveComponent<BTHitDetectComponent>(agent);
 	DOG::EntityManager::Get().RemoveComponentIfExists<AgentAggroComponent>(agent);
 	GetParent()->Process(agent);
 }
