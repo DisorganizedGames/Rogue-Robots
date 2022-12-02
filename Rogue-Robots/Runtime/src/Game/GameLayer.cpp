@@ -674,11 +674,11 @@ void GameLayer::KillPlayer(DOG::entity e)
 
 void GameLayer::UpdateGame()
 {
-	LuaMain::GetScriptManager()->UpdateScripts();
-	LuaMain::GetScriptManager()->ReloadScripts();
-
 	if (s_networkStatus != NetworkStatus::Offline)
 		NetCode::Get().OnUpdate();
+
+	LuaMain::GetScriptManager()->UpdateScripts();
+	LuaMain::GetScriptManager()->ReloadScripts();
 
 	HandleCheats();
 	HpBarMVP();
