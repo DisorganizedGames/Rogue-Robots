@@ -246,6 +246,18 @@ end
 function CreateBulletEntity(bullet, transformEntity)
 	bullet.entity = Scene:CreateEntity(EntityID)
 
+	-- test shoot anim --
+	--local fireRate = 1.0
+	local animID = 16
+	local arms = 3
+	local flags = 32; --Force restart--
+	local priority = 0;
+	local playbackRate = 10.5
+	local transitionLen = 0.05
+	Entity:ModifyAnimationComponent(EntityID, animID, arms, priority, flags, playbackRate, transitionLen)
+	--Entity:ModifyAnimationComponent(EntityID, animID, upperBody, 0.1, 1.0, false)
+
+
 	table.insert(bullets, bullet)
 
 	size = Vector3.New(1.0, 1.0, 1.0)
