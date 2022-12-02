@@ -222,6 +222,13 @@ struct ExplosionComponent
 //You do not have control over the entity! The system does!
 struct ExplosionEffectComponent
 {
+	enum class ExplosionSound
+	{
+		Explosion1 = 0,
+		Explosion2,
+		None,
+	};
+
 	ExplosionEffectComponent(float explosionEffectRadius) noexcept
 	{
 		radius = explosionEffectRadius;
@@ -229,6 +236,8 @@ struct ExplosionEffectComponent
 	float radius;
 	float growTime = -1.0f; 
 	float shrinkTime = -1.0f;
+	ExplosionSound explosionSound = ExplosionSound::None;
+	float audioVolume = 10.0f;
 };
 
 struct InteractionQueryComponent
