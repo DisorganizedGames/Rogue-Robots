@@ -73,12 +73,13 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 			ImGui::SameLine();
 			ImGui::Text(std::to_string(toggled).c_str());
 
-			if (!toggled) {
+			if (!toggled)
+			{
 				ImGui::End();
 				return;
 			}
 			auto& emitter = EntityManager::Get().GetComponent<ParticleEmitterComponent>(m_particleSystem);
-			
+
 
 			// Spawn rate setting
 			static float rate = emitter.spawnRate;
@@ -106,16 +107,16 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 			{
 				switch (spawnType)
 				{
-				case 0: 
+				case 0:
 					SwitchToComponent<nullptr_t>();
 					break;
-				case 1: 
+				case 1:
 					SwitchToComponent<ConeSpawnComponent>();
 					break;
-				case 2: 
+				case 2:
 					SwitchToComponent<CylinderSpawnComponent>();
 					break;
-				case 3: 
+				case 3:
 					SwitchToComponent<BoxSpawnComponent>();
 					break;
 				}
@@ -172,6 +173,31 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 				emitter.textureSegmentsX = x;
 				emitter.textureSegmentsY = y;
 			}
+
+			static int behavior = 0;
+			constexpr const char* behaviors[] = { "Default", "Gravity", "No Gravity", "Gravity Point", "Gravity Direction", "Constant Velocity" };
+			ImGui::NewLine();
+			ImGui::LabelText("", "Behavior");
+			bool switched = ImGui::Combo("", &behavior, behaviors, _countof(behaviors), -1);
+			if (switched)
+			{
+				switch (behavior)
+				{
+				case 0: SwitchToBehaviorComponent<nullptr_t>(); break;
+				case 1: SwitchToBehaviorComponent<GravityBehaviorComponent>(); break;
+				case 2: SwitchToBehaviorComponent<NoGravityBehaviorComponent>(); break;
+				case 3: SwitchToBehaviorComponent<GravityPointBehaviorComponent>(); break;
+				case 4: SwitchToBehaviorComponent<GravityDirectionBehaviorComponent>(); break;
+				case 5: SwitchToBehaviorComponent<ConstVelocityBehaviorComponent>(); break;
+				}
+			}
+			switch (behavior)
+			{
+			case 1: GravityOptions(); break;
+			case 3: GravityPointOptions(); break;
+			case 4: GravityDirectionOptions(); break;
+			case 5: ConstVelocityOptions(); break;
+			}
 		}
 
 		ImGui::End();
@@ -196,10 +222,6 @@ void ParticleScene::SpawnParticleSystem()
 		.angle = XM_PIDIV4,
 		.speed = 10.f,
 	};
-
-	AddComponent<ConstVelocityBehaviorComponent>(m_particleSystem) = {
-		.velocity = { -10, 0, 0 },
-	};
 }
 
 void ParticleScene::ConeSettings()
@@ -222,5 +244,29 @@ void ParticleScene::BoxSettings()
 	ImGui::InputFloat("X", &box.x);
 	ImGui::InputFloat("Y", &box.y);
 	ImGui::InputFloat("Z", &box.z);
+}
+
+void ParticleScene::GravityOptions()
+{
+	auto& gravityBehavior = EntityManager::Get().GetComponent<GravityBehaviorComponent>(m_particleSystem);
+	ImGui::InputFloat("Gravity", &gravityBehavior.gravity);
+}
+void ParticleScene::GravityPointOptions()
+{
+	auto& pointBehavior = EntityManager::Get().GetComponent<GravityPointBehaviorComponent>(m_particleSystem);
+	ImGui::InputFloat("Gravity", &pointBehavior.gravity);
+	ImGui::InputFloat3("Point", (float*)&pointBehavior.point);
+
+}
+void ParticleScene::GravityDirectionOptions()
+{
+	auto& dirBehavior = EntityManager::Get().GetComponent<GravityDirectionBehaviorComponent>(m_particleSystem);
+	ImGui::InputFloat("Gravity", &dirBehavior.gravity);
+	ImGui::InputFloat3("Direction", (float*)&dirBehavior.direction);
+}
+void ParticleScene::ConstVelocityOptions()
+{
+	auto& velBehavior = EntityManager::Get().GetComponent<ConstVelocityBehaviorComponent>(m_particleSystem);
+	ImGui::InputFloat3("Velocity", (float*)&velBehavior.velocity);
 }
 
