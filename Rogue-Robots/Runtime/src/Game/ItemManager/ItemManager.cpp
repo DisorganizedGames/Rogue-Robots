@@ -123,7 +123,7 @@ void ItemManager::Initialize()
 
 u32 ItemManager::CreateTrampolinePickup(Vector3 position, u32 id)
 {
-	u32 trampolineID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Trampoline.glb");
+	u32 trampolineID = AssetManager::Get().LoadModelAsset("Assets/Models/Pickups/Trampoline.glb");
 
 	entity trampolineEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<ActiveItemComponent>(trampolineEntity).type = ActiveItemComponent::Type::Trampoline;
@@ -238,7 +238,7 @@ u32 ItemManager::CreateGrenadePickup(DirectX::SimpleMath::Vector3 position, u32 
 
 u32 ItemManager::CreateMaxHealthBoostPickup(DirectX::SimpleMath::Vector3 position, u32 id )
 {
-	u32 healthBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Medkit.glb");
+	u32 healthBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Pickups/Medkit.glb");
 
 	entity healthBoostEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<PassiveItemComponent>(healthBoostEntity).type = PassiveItemComponent::Type::MaxHealthBoost;
@@ -322,8 +322,8 @@ u32 ItemManager::CreateFireModificationPickup(DirectX::SimpleMath::Vector3 posit
 
 u32 ItemManager::CreateTurretPickup(Vector3 position, u32 id)
 {
-	u32 turretBaseModelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/turretBase.glb");
-	u32 turretHeadModelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/turret2.glb");
+	u32 turretBaseModelID = AssetManager::Get().LoadModelAsset("Assets/Models/Pickups/turretBase.glb");
+	u32 turretHeadModelID = AssetManager::Get().LoadModelAsset("Assets/Models/Pickups/turret2.glb");
 
 	entity turretPickUpEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<ActiveItemComponent>(turretPickUpEntity).type = ActiveItemComponent::Type::Turret;
@@ -359,7 +359,7 @@ u32 ItemManager::CreateTurretPickup(Vector3 position, u32 id)
 
 u32 ItemManager::CreateSpeedBoostPickup(DirectX::SimpleMath::Vector3 position, u32 id)
 {
-	u32 speedBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/speedPassive.glb");
+	u32 speedBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Pickups/speedPassive.glb");
 
 	entity speedBoostEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<PassiveItemComponent>(speedBoostEntity).type = PassiveItemComponent::Type::SpeedBoost;
@@ -388,7 +388,7 @@ u32 ItemManager::CreateSpeedBoostPickup(DirectX::SimpleMath::Vector3 position, u
 u32 ItemManager::CreateSpeedBoost2Pickup(DirectX::SimpleMath::Vector3 position, u32 id)
 {
 
-	u32 speedBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/speedPassive2.glb");
+	u32 speedBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Pickups/speedPassive2.glb");
 
 	entity speedBoostEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<PassiveItemComponent>(speedBoostEntity).type = PassiveItemComponent::Type::SpeedBoost2;
@@ -414,39 +414,9 @@ u32 ItemManager::CreateSpeedBoost2Pickup(DirectX::SimpleMath::Vector3 position, 
 	return ni.id;
 }
 
-
-//Placeholder
-//u32 ItemManager::CreateHealthPickup(DirectX::SimpleMath::Vector3 position, u32 id)
-//{
-//	static u32 healthNetworkdID = 0u;
-//
-//	u32 healthBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Health.glb");
-//
-//	entity healthBoostEntity = s_entityManager.CreateEntity();
-//	s_entityManager.AddComponent<PassiveItemComponent>(healthBoostEntity).type = PassiveItemComponent::Type::Template;
-//	s_entityManager.AddComponent<PickupComponent>(healthBoostEntity).itemName = "Heal";
-//	s_entityManager.AddComponent<ModelComponent>(healthBoostEntity, healthBoostID);
-//	s_entityManager.AddComponent<TransformComponent>(healthBoostEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
-//	s_entityManager.AddComponent<ShadowReceiverComponent>(healthBoostEntity);
-//	auto& ni = s_entityManager.AddComponent<NetworkId>(healthBoostEntity);
-//	ni.entityTypeId = EntityTypes::Health;
-//	if (id == 0)
-//		ni.id = ++healthNetworkdID;
-//	else
-//		ni.id = id;
-//
-//	LuaMain::GetScriptManager()->AddScript(healthBoostEntity, "Pickupable.lua");
-//
-//	auto& lerpAnimator = s_entityManager.AddComponent<PickupLerpAnimateComponent>(healthBoostEntity);
-//	lerpAnimator.baseOrigin = s_entityManager.GetComponent<TransformComponent>(healthBoostEntity).GetPosition().y;
-//	lerpAnimator.baseTarget = lerpAnimator.baseOrigin + 2.0f;
-//	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
-//	return ni.id;
-//}
-
 u32 ItemManager::CreateJumpBoost(DirectX::SimpleMath::Vector3 position, u32 id)
 {
-	u32 jumpBoostId = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/TempJumBoostglb.glb");
+	u32 jumpBoostId = AssetManager::Get().LoadModelAsset("Assets/Models/Pickups/JumpBoost.glb");
 
 	entity pEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<PassiveItemComponent>(pEntity).type = PassiveItemComponent::Type::JumpBoost;
@@ -530,7 +500,7 @@ u32 ItemManager::CreateChargeShotPickup(Vector3 position, u32 id)
 
 u32 ItemManager::CreateReviverPickup(Vector3 position, u32 id)
 {
-	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/magenta_cube.glb");
+	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/Pickups/Reviver.glb");
 
 	entity reviverEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<ActiveItemComponent>(reviverEntity).type = ActiveItemComponent::Type::Reviver;
@@ -585,7 +555,7 @@ u32 ItemManager::CreateGoalRadarPickup(Vector3 position, u32 id)
 
 u32 ItemManager::CreateSyringePickup(Vector3 position, u32 id)
 {
-	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/health.glb");
+	u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/Pickups/Syringe.glb");
 
 	entity entity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<ActiveItemComponent>(entity).type = ActiveItemComponent::Type::Syringe;

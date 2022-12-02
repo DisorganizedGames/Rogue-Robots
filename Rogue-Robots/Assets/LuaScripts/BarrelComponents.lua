@@ -80,7 +80,7 @@ function BarrelComponents:Grenade()
 	return 
 	{
 		bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Grenade/Grenade.glb"),
-		explosionModel = Asset:LoadModel("Assets/Models/Temporary_Assets/Explosion.glb"),
+		explosionModel = Asset:LoadModel("Assets/Models/Ammunition/Explosion.glb"),
 		gunShotSound = Asset:LoadAudio("Assets/Audio/GunSounds/grenade launcher pe23-4__R.wav"),
 		grenadeSpeed = 9.2,
 		upSpeed = 5.0,

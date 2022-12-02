@@ -304,7 +304,7 @@ void TestScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity>()>
 void TestScene::CreateTrampolinePickup(DirectX::SimpleMath::Vector3 position)
 {
 	static u32 trampolineNetworkID = 0u;
-	u32 trampolineID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Trampoline.glb");
+	u32 trampolineID = AssetManager::Get().LoadModelAsset("Assets/Models/Pickups/Trampoline.glb");
 
 	entity trampolineEntity = CreateEntity();
 	AddComponent<ActiveItemComponent>(trampolineEntity).type = ActiveItemComponent::Type::Trampoline;
@@ -381,7 +381,7 @@ void TestScene::CreateMaxHealthBoostPickup(DirectX::SimpleMath::Vector3 position
 {
 	static u32 healtBoostNetworkdID = 0u;
 
-	u32 healthBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Medkit.glb");
+	u32 healthBoostID = AssetManager::Get().LoadModelAsset("Assets/Models/Pickups/Medkit.glb");
 
 	entity healthBoostEntity = CreateEntity();
 	AddComponent<PassiveItemComponent>(healthBoostEntity).type = PassiveItemComponent::Type::MaxHealthBoost;

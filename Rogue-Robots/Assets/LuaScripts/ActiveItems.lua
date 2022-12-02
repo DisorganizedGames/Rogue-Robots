@@ -3,7 +3,7 @@ local ActiveItems = {}
 local goalRadarMaxTimeSeconds = 30.0
 
 ActiveItems.trampoline = {
-	trampolineModel = Asset:LoadModel("Assets/Models/Temporary_Assets/Trampoline.glb"),
+	trampolineModel = Asset:LoadModel("Assets/Models/Pickups/Trampoline.glb"),
 
 	activate = function(self, playerEntity)
 		local trampolineEntity = Scene:CreateEntity(playerEntity)
@@ -34,8 +34,8 @@ ActiveItems.trampoline = {
 
 
 ActiveItems.turret = {
-	turretBaseModelID = Asset:LoadModel("Assets/Models/Temporary_Assets/turretBase.glb"),
-	turrtHeadModelID = Asset:LoadModel("Assets/Models/Temporary_Assets/turret2.glb"),
+	turretBaseModelID = Asset:LoadModel("Assets/Models/Pickups/turretBase.glb"),
+	turrtHeadModelID = Asset:LoadModel("Assets/Models/Pickups/turret2.glb"),
 
 	activate = function(self, playerEntity)
 		-- The Base has the root transform and will need to be placed at ground level and in the right direction

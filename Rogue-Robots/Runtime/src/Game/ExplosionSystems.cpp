@@ -32,7 +32,7 @@ void ExplosionSystem::OnUpdate(entity e, TransformComponent& explosionTransform,
 }
 
 u32 ExplosionEffectSystem::explosionEffectModelID = 0;
-const char* ExplosionEffectSystem::explosionEffectModelPath = "Assets/Models/Temporary_Assets/Explosion.glb";
+const char* ExplosionEffectSystem::explosionEffectModelPath = "Assets/Models/Ammunition/Explosion.glb";
 ExplosionEffectSystem::ExplosionEffectSystem()
 {
 	explosionEffectModelID = AssetManager::Get().LoadModelAsset(explosionEffectModelPath);
