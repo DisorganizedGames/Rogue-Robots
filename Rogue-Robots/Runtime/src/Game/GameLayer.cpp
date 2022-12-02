@@ -172,13 +172,25 @@ void GameLayer::OnUpdate()
 			UpdateGame();
 			break;
 		case GameState::Won:
-			if (s_networkStatus != NetworkStatus::Offline)
-				NetCode::Get().OnUpdate();
-			UI::Get()->ChangeUIscene(GameOverID);
+		{
+			//if (s_networkStatus != NetworkStatus::Offline)
+				//NetCode::Get().OnUpdate();
+
+			UpdateGame();
+
+			auto winText = DOG::UI::Get()->GetUI<UILabel>(lWinTextID);
+			winText->SetText(std::wstring(L"Congratulations!\nYou escaped!"));
+
 			m_nrOfFramesToWait--;
-			if(m_nrOfFramesToWait <= 0)
+			if (m_nrOfFramesToWait <= 0)
+			{
 				m_gameState = GameState::ExitingToMainMenu;
+				winText->SetText(std::wstring(L""));
+				UI::Get()->ChangeUIscene(WinScreenID);
+			}
+
 			break;
+		}
 		case GameState::Lost:
 			if (s_networkStatus != NetworkStatus::Offline)
 				NetCode::Get().OnUpdate();
@@ -191,7 +203,7 @@ void GameLayer::OnUpdate()
 			CloseMainScene();
 			break;
 		case GameState::ExitingToMainMenu:
-			m_nrOfFramesToWait = 120;
+			m_nrOfFramesToWait = 300;
 			NetCode::Get().Reset();
 			m_gameState = GameState::MainMenu;
 			UI::Get()->ChangeUIscene(menuID);
@@ -312,7 +324,7 @@ void GameLayer::EvaluateWinCondition()
 		}
 
 		auto playersAtExitText = DOG::UI::Get()->GetUI<UILabel>(l5ID);
-		if (playersAtExit > 0)
+		if (playersAtExit > 0 && m_gameState != GameState::Won)
 		{
 			//Show UI that tells how many are at exit.
 			playersAtExitText->SetText(std::wstring(L"Players at exit: ") + std::to_wstring(playersAtExit) + std::wstring(L"/") + std::to_wstring(playersAlive));
