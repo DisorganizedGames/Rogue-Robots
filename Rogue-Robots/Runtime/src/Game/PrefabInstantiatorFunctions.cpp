@@ -107,6 +107,8 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		{
 			em.AddComponent<OnlinePlayer>(playerI);
 		}
+		// Always add outline component
+		em.AddComponent<OutlineComponent>(playerI, playerOutlineColors[i]);
 
 		scriptManager->AddScript(playerI, "Gun.lua");
 		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");

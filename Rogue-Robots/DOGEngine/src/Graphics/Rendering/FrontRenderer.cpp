@@ -137,7 +137,7 @@ namespace DOG::gfx
 				if (model && model->gfxModel)
 				{
 					// Outline submission
-					if (mgr.HasComponent<OutlineComponent>(e))
+					if (mgr.HasComponent<OutlineComponent>(e) && !mgr.HasComponent<ThisPlayerWeapon>(e))
 					{
 						if (!mgr.HasComponent<DontDraw>(e))
 						{

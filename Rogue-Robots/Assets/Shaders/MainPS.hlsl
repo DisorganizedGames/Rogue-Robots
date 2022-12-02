@@ -6,6 +6,7 @@
 #include "PBRHelpers.hlsli"
 
 
+
 struct VS_OUT
 {
     float4 pos : SV_POSITION;
@@ -488,6 +489,10 @@ PS_OUT main(VS_OUT input)
     if (g_constants.debugSettingsFlag & DEBUG_SETTING_LIGHT_CULLING_VISUALIZATION && g_constants.debugSettingsFlag & DEBUG_SETTING_LIGHT_CULLING)
     {
         output.color.xyz = lerp(output.color.xyz, lightHeatMapValue, 0.5f);
+    }
+    if (g_constants.isWeapon)
+    {
+        output.color.a = MAGIC_WEAPON_ALPHA_TAG;      // Magic number
     }
     
     return output;

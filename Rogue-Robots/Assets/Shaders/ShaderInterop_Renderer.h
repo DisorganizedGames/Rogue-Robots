@@ -7,6 +7,8 @@
 #define DEBUG_SETTING_LIGHT_CULLING 2
 #define DEBUG_SETTING_LIGHT_CULLING_VISUALIZATION 4
 
+#define MAGIC_WEAPON_ALPHA_TAG 10.f
+
 /*
     For non-changing structures derived on renderer startup
 */
