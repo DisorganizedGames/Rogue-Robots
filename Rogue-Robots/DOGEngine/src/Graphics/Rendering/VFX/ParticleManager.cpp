@@ -29,6 +29,7 @@ const std::vector<ParticleEmitter>& ParticleManager::GatherEmitters()
 				em.size = emitter.particleSize;
 
 				SetSpawnProperties(e, em);
+				SetBehaviorProperties(e, em);
 
 				em.rotationMatrix = transform.GetRotation();
 
@@ -92,5 +93,50 @@ void ParticleManager::SetSpawnProperties(entity e, ParticleEmitter& emitter)
 	}
 	
 	emitter.spawnType = (u32)ParticleSpawnType::Default;
+}
+
+void ParticleManager::SetBehaviorProperties(entity e, ParticleEmitter& emitter)
+{
+	auto& entityManager = EntityManager::Get();
+
+	if (auto opt = entityManager.TryGetComponent<GravityBehaviorComponent>(e))
+	{
+		emitter.behavior = (u32)ParticleBehaviorType::Gravity;
+		emitter.bopt1 = opt->get().gravity;
+		return;
+	}
+	if (auto opt = entityManager.TryGetComponent<NoGravityBehaviorComponent>(e))
+	{
+		emitter.behavior = (u32)ParticleBehaviorType::NoGravity;
+		return;
+	}
+	if (auto opt = entityManager.TryGetComponent<GravityPointBehaviorComponent>(e))
+	{
+		emitter.behavior = (u32)ParticleBehaviorType::GravityPoint;
+		emitter.bopt1 = opt->get().point.x;
+		emitter.bopt2 = opt->get().point.y;
+		emitter.bopt3 = opt->get().point.z;
+		emitter.bopt4 = opt->get().gravity;
+		return;
+	}
+	if (auto opt = entityManager.TryGetComponent<GravityDirectionBehaviorComponent>(e))
+	{
+		emitter.behavior = (u32)ParticleBehaviorType::GravityDirection;
+		emitter.bopt1 = opt->get().direction.x;
+		emitter.bopt2 = opt->get().direction.y;
+		emitter.bopt3 = opt->get().direction.z;
+		emitter.bopt4 = opt->get().gravity;
+		return;
+	}
+	if (auto opt = entityManager.TryGetComponent<ConstVelocityBehaviorComponent>(e))
+	{
+		emitter.behavior = (u32)ParticleBehaviorType::ConstVelocity;
+		emitter.bopt1 = opt->get().velocity.x;
+		emitter.bopt2 = opt->get().velocity.y;
+		emitter.bopt3 = opt->get().velocity.z;
+		return;
+	}
+
+	emitter.behavior = (u32)ParticleBehaviorType::Default;
 }
 

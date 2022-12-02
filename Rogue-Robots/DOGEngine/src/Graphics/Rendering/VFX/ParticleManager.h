@@ -37,6 +37,7 @@ namespace DOG::gfx
 
 		
 		void SetSpawnProperties(DOG::entity e, ParticleEmitter& emitter);
+		void SetBehaviorProperties(DOG::entity e, ParticleEmitter& emitter);
 
 	};
 

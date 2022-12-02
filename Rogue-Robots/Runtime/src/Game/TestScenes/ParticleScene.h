@@ -18,13 +18,22 @@ private:
 
 private:
 	void ParticleSystemMenu(bool& open);
+	void SpawnParticleSystem();
 
 	template<class T>
 	inline void SwitchToComponent();
 
+	template<class T>
+	inline void SwitchToBehaviorComponent();
+
 	void ConeSettings();
 	void CylinderSettings();
 	void BoxSettings();
+
+	void GravityOptions();
+	void GravityPointOptions();
+	void GravityDirectionOptions();
+	void ConstVelocityOptions();
 };
 
 // Template specialization to switch back to default
@@ -44,6 +53,30 @@ inline void ParticleScene::SwitchToComponent()
 	em.RemoveComponentIfExists<ConeSpawnComponent>(m_particleSystem);
 	em.RemoveComponentIfExists<CylinderSpawnComponent>(m_particleSystem);
 	em.RemoveComponentIfExists<BoxSpawnComponent>(m_particleSystem);
+
+	AddComponent<T>(m_particleSystem);
+}
+
+template<>
+inline void ParticleScene::SwitchToBehaviorComponent<nullptr_t>()
+{
+	auto& em = DOG::EntityManager::Get();
+	em.RemoveComponentIfExists<DOG::GravityBehaviorComponent>(m_particleSystem);
+	em.RemoveComponentIfExists<DOG::NoGravityBehaviorComponent>(m_particleSystem);
+	em.RemoveComponentIfExists<DOG::GravityPointBehaviorComponent>(m_particleSystem);
+	em.RemoveComponentIfExists<DOG::GravityDirectionBehaviorComponent>(m_particleSystem);
+	em.RemoveComponentIfExists<DOG::ConstVelocityBehaviorComponent>(m_particleSystem);
+}
+
+template<class T>
+inline void ParticleScene::SwitchToBehaviorComponent()
+{
+	auto& em = DOG::EntityManager::Get();
+	em.RemoveComponentIfExists<DOG::GravityBehaviorComponent>(m_particleSystem);
+	em.RemoveComponentIfExists<DOG::NoGravityBehaviorComponent>(m_particleSystem);
+	em.RemoveComponentIfExists<DOG::GravityPointBehaviorComponent>(m_particleSystem);
+	em.RemoveComponentIfExists<DOG::GravityDirectionBehaviorComponent>(m_particleSystem);
+	em.RemoveComponentIfExists<DOG::ConstVelocityBehaviorComponent>(m_particleSystem);
 
 	AddComponent<T>(m_particleSystem);
 }

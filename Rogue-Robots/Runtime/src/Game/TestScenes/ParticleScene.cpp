@@ -32,23 +32,7 @@ void ParticleScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 	}
 
 	//Particle system
-	{ 
-		m_particleSystem = CreateEntity();
-		AddComponent<TransformComponent>(m_particleSystem, Vector3(0, 0, 0));
-		auto& em = AddComponent<ParticleEmitterComponent>(m_particleSystem);
-		em = {
-			.spawnRate = 2048.f,
-			.particleSize = 0.1f,
-			.particleLifetime = 0.5f,
-			.startColor = Vector4(1, 0, 0, 0.5),
-			.endColor = Vector4(0, 0, 1, 0.5),
-		};
-
-		AddComponent<ConeSpawnComponent>(m_particleSystem) = {
-			.angle = XM_PIDIV4,
-			.speed = 10.f,
-		};
-	}
+	SpawnParticleSystem();
 
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("ParticleSystemMenu", [this](bool& open) { ParticleSystemMenu(open); });
 }
@@ -79,21 +63,7 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 				toggled = !toggled;
 				if (toggled)
 				{
-					m_particleSystem = CreateEntity();
-					AddComponent<TransformComponent>(m_particleSystem, Vector3(0, 0, 0));
-					auto& em = AddComponent<ParticleEmitterComponent>(m_particleSystem);
-					em = {
-						.spawnRate = 64.f,
-						.particleSize = 0.1f,
-						.particleLifetime = 0.5f,
-						.startColor = Vector4(1, 0, 0, 1),
-						.endColor = Vector4(0, 0, 1, 1),
-					};
-
-						AddComponent<ConeSpawnComponent>(m_particleSystem) = {
-						.angle = XM_PIDIV4,
-						.speed = 10.f,
-					};
+					SpawnParticleSystem();
 				}
 				else
 				{
@@ -103,12 +73,13 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 			ImGui::SameLine();
 			ImGui::Text(std::to_string(toggled).c_str());
 
-			if (!toggled) {
+			if (!toggled)
+			{
 				ImGui::End();
 				return;
 			}
 			auto& emitter = EntityManager::Get().GetComponent<ParticleEmitterComponent>(m_particleSystem);
-			
+
 
 			// Spawn rate setting
 			static float rate = emitter.spawnRate;
@@ -136,16 +107,16 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 			{
 				switch (spawnType)
 				{
-				case 0: 
+				case 0:
 					SwitchToComponent<nullptr_t>();
 					break;
-				case 1: 
+				case 1:
 					SwitchToComponent<ConeSpawnComponent>();
 					break;
-				case 2: 
+				case 2:
 					SwitchToComponent<CylinderSpawnComponent>();
 					break;
-				case 3: 
+				case 3:
 					SwitchToComponent<BoxSpawnComponent>();
 					break;
 				}
@@ -202,11 +173,55 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 				emitter.textureSegmentsX = x;
 				emitter.textureSegmentsY = y;
 			}
+
+			static int behavior = 0;
+			constexpr const char* behaviors[] = { "Default", "Gravity", "No Gravity", "Gravity Point", "Gravity Direction", "Constant Velocity" };
+			ImGui::NewLine();
+			ImGui::LabelText("", "Behavior");
+			bool switched = ImGui::Combo("", &behavior, behaviors, _countof(behaviors), -1);
+			if (switched)
+			{
+				switch (behavior)
+				{
+				case 0: SwitchToBehaviorComponent<nullptr_t>(); break;
+				case 1: SwitchToBehaviorComponent<GravityBehaviorComponent>(); break;
+				case 2: SwitchToBehaviorComponent<NoGravityBehaviorComponent>(); break;
+				case 3: SwitchToBehaviorComponent<GravityPointBehaviorComponent>(); break;
+				case 4: SwitchToBehaviorComponent<GravityDirectionBehaviorComponent>(); break;
+				case 5: SwitchToBehaviorComponent<ConstVelocityBehaviorComponent>(); break;
+				}
+			}
+			switch (behavior)
+			{
+			case 1: GravityOptions(); break;
+			case 3: GravityPointOptions(); break;
+			case 4: GravityDirectionOptions(); break;
+			case 5: ConstVelocityOptions(); break;
+			}
 		}
 
 		ImGui::End();
 	}
 
+}
+
+void ParticleScene::SpawnParticleSystem()
+{
+	m_particleSystem = CreateEntity();
+	AddComponent<TransformComponent>(m_particleSystem, Vector3(0, 0, 0));
+	auto& em = AddComponent<ParticleEmitterComponent>(m_particleSystem);
+	em = {
+		.spawnRate = 2048.f,
+		.particleSize = 0.1f,
+		.particleLifetime = 0.5f,
+		.startColor = Vector4(1, 0, 0, 0.5),
+		.endColor = Vector4(0, 0, 1, 0.5),
+	};
+
+	AddComponent<ConeSpawnComponent>(m_particleSystem) = {
+		.angle = XM_PIDIV4,
+		.speed = 10.f,
+	};
 }
 
 void ParticleScene::ConeSettings()
@@ -229,5 +244,29 @@ void ParticleScene::BoxSettings()
 	ImGui::InputFloat("X", &box.x);
 	ImGui::InputFloat("Y", &box.y);
 	ImGui::InputFloat("Z", &box.z);
+}
+
+void ParticleScene::GravityOptions()
+{
+	auto& gravityBehavior = EntityManager::Get().GetComponent<GravityBehaviorComponent>(m_particleSystem);
+	ImGui::InputFloat("Gravity", &gravityBehavior.gravity);
+}
+void ParticleScene::GravityPointOptions()
+{
+	auto& pointBehavior = EntityManager::Get().GetComponent<GravityPointBehaviorComponent>(m_particleSystem);
+	ImGui::InputFloat("Gravity", &pointBehavior.gravity);
+	ImGui::InputFloat3("Point", (float*)&pointBehavior.point);
+
+}
+void ParticleScene::GravityDirectionOptions()
+{
+	auto& dirBehavior = EntityManager::Get().GetComponent<GravityDirectionBehaviorComponent>(m_particleSystem);
+	ImGui::InputFloat("Gravity", &dirBehavior.gravity);
+	ImGui::InputFloat3("Direction", (float*)&dirBehavior.direction);
+}
+void ParticleScene::ConstVelocityOptions()
+{
+	auto& velBehavior = EntityManager::Get().GetComponent<ConstVelocityBehaviorComponent>(m_particleSystem);
+	ImGui::InputFloat3("Velocity", (float*)&velBehavior.velocity);
 }
 
