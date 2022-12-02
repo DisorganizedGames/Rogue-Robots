@@ -703,3 +703,11 @@ public:
 	void OnUpdate(WeaponLightComponent&, DOG::PointLightComponent& pointLight, ChildComponent&);
 };
 
+class RemoveBulletComponentSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(BulletComponent, DOG::HasEnteredCollisionComponent);
+	ON_LATE_UPDATE_ID(BulletComponent, DOG::HasEnteredCollisionComponent);
+	void OnLateUpdate(DOG::entity e, BulletComponent&, DOG::HasEnteredCollisionComponent&);
+};
+

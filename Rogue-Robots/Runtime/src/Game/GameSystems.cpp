@@ -1184,6 +1184,11 @@ void SetFlashLightToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& ch
 void WeaponPointLightSystem::OnUpdate(WeaponLightComponent&, DOG::PointLightComponent& pointLight, ChildComponent&)
 {
 	pointLight.dirty = true;
+} 
+
+void RemoveBulletComponentSystem::OnLateUpdate(DOG::entity e, BulletComponent&, DOG::HasEnteredCollisionComponent&)
+{
+	EntityManager::Get().RemoveComponent<BulletComponent>(e);
 }
 
 #pragma endregion
