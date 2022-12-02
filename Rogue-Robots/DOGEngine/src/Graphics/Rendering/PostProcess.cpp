@@ -39,9 +39,11 @@ namespace DOG::gfx
 	
 		for (auto& ddd : m_damageDiskDatas)
 		{
+			static constexpr f32 intensityDiff = 0.35f;
+
 			f32 localElapsed = m_elapsedTime - ddd.currElapsed;
 			f32 normalizedTime = std::clamp(localElapsed / ddd.timeDelta, 0.f, 1.f);
-			f32 targetIntensity = std::clamp(ddd.startIntensity - 0.5f, 0.f, 1.f);
+			f32 targetIntensity = std::clamp(ddd.startIntensity - intensityDiff, 0.f, 1.f);
 			ddd.currIntensity = ddd.startIntensity * (1.f - normalizedTime) + targetIntensity * normalizedTime;
 			ddd.visibility = 1.f - normalizedTime;
 
@@ -70,7 +72,7 @@ namespace DOG::gfx
 		ddd.dir2D = dir;
 		ddd.initDir2D = dir;
 		ddd.timeDelta = timeToDisappear;
-		ddd.startIntensity = startIntensity;
+		ddd.startIntensity = startIntensity + 2.5f;
 		ddd.visibility = 1.f;
 
 		while (!(m_damageDiskDatas[m_nextDisk].visibility < 0.01f))
