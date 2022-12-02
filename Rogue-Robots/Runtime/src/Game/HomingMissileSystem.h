@@ -9,8 +9,14 @@ public:
 	SYSTEM_CLASS(HomingMissileComponent, DOG::TransformComponent, DOG::RigidbodyComponent);
 	ON_UPDATE_ID(HomingMissileComponent, DOG::TransformComponent, DOG::RigidbodyComponent);
 	void OnUpdate(DOG::entity e, HomingMissileComponent& missile, DOG::TransformComponent& transform, DOG::RigidbodyComponent& rigidBody);
+
+	HomingMissileSystem();
+
 private:
-	static void StartMissileEngine(DOG::entity e, HomingMissileComponent& missile);
+	void StartMissileEngine(DOG::entity e, HomingMissileComponent& missile) const;
+
+	u32 m_smokeTexureAssetID{ 0 };
+	u32 m_missileJetModelAssetID{ 0 };
 };
 
 class HomingMissileImpacteSystem : public DOG::ISystem
