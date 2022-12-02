@@ -31,14 +31,14 @@ void OldDefaultScene::SetUpScene(std::vector<std::function<std::vector<DOG::enti
 
 	entity turretBase = CreateEntity();
 	AddComponent<TransformComponent>(turretBase, Vector3(45, 5.5f, 20));
-	AddComponent<ModelComponent>(turretBase).id = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/turretBase.glb");
+	AddComponent<ModelComponent>(turretBase).id = AssetManager::Get().LoadModelAsset("Assets/Models/Pickups/turretBase.glb");
 
 	entity turretHead = CreateEntity();
 	AddComponent<TransformComponent>(turretHead);
 	auto& tr = AddComponent<ChildComponent>(turretHead);
 	tr.parent = turretBase;
 	tr.localTransform.SetPosition({ 0, 1, 0 });
-	AddComponent<ModelComponent>(turretHead).id = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/turret2.glb");
+	AddComponent<ModelComponent>(turretHead).id = AssetManager::Get().LoadModelAsset("Assets/Models/Pickups/turret2.glb");
 	AddComponent<TurretTargetingComponent>(turretHead);
 	AddComponent<TurretBasicShootingComponent>(turretHead).owningPlayer = GetPlayer();
 }

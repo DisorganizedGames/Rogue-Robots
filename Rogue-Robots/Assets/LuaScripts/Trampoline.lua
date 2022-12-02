@@ -8,9 +8,11 @@ deathTime = 7.36
 
 deathTimer = deathTime + ElapsedTime
 
+power = 22.0
+
 function OnUpdate()
 	for i = #tempAddVelocity, 1, -1 do
-		Physics:RBSetVelocity(tempAddVelocity[i], Vector3.New(0.0, 15.0, 0.0))
+		Physics:RBSetVelocity(tempAddVelocity[i], Vector3.New(0.0, power, 0.0))
 		table.remove(tempAddVelocity, i)
 	end
 
