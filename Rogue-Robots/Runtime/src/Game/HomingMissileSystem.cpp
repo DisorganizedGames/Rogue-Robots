@@ -68,6 +68,11 @@ void HomingMissileSystem::OnUpdate(entity e, HomingMissileComponent& missile, DO
 			}
 		}
 		missile.flightTime += dt;
+
+		if (missile.engineIsIgnited)
+		{
+			EntityManager::Get().GetComponent<PointLightComponent>(missile.jet).dirty = true;
+		}
 	}
 	else if (missile.engineIsIgnited)
 	{
@@ -101,6 +106,10 @@ void HomingMissileSystem::StartMissileEngine(entity e, HomingMissileComponent& m
 	localTransform.localTransform.SetPosition({ 0,0, -0.7f }).SetRotation({ -DirectX::XM_PIDIV2, 0, 0 }).SetScale({ 1.3f, 1.3f, 1.3f });
 	em.AddComponent<ModelComponent>(missile.jet, m_missileJetModelAssetID);
 	missile.engineIsIgnited = true;
+
+
+	LightHandle pointLight = LightManager::Get().AddPointLight(PointLightDesc(), LightUpdateFrequency::PerFrame);
+	em.AddComponent<PointLightComponent>(missile.jet, pointLight, Vector3(1.0f, 0.6f, 0.1f), 30.f, 50.0f);
 
 	entity jetParticleEmitter = em.CreateEntity();
 	if (auto scene = em.TryGetComponent<SceneComponent>(e))
