@@ -270,15 +270,15 @@ void Server::ServerPollTCP()
 							for (u32 j = 0; j < holdClientsData.nrOfChangedAgentsHp; ++j)
 							{
 								bool alreadyIn = false;
-								NetworkAgentStats test;
-								memcpy(&test, reciveBuffer + bufferReciveSize, sizeof(NetworkAgentStats));
+								NetworkAgentStats temp;
+								memcpy(&temp, reciveBuffer + bufferReciveSize, sizeof(NetworkAgentStats));
 								for (size_t k = 0; k < statsChanged.size(); k++)
 								{
-									if (statsChanged[k].objectId == test.objectId)
+									if (statsChanged[k].objectId == temp.objectId)
 									{
-										if (statsChanged[k].hp.hp < test.hp.hp)
+										if (statsChanged[k].hp.hp > temp.hp.hp)
 										{
-											statsChanged[k].hp = test.hp;
+											statsChanged[k].hp = temp.hp;
 										}
 										alreadyIn = true;
 										break;
@@ -288,7 +288,7 @@ void Server::ServerPollTCP()
 								if (!alreadyIn)
 								{
 									sendHeader.nrOfChangedAgentsHp++;
-									statsChanged.push_back(test);
+									statsChanged.push_back(temp);
 								}
 								bufferReciveSize += sizeof(NetworkAgentStats);
 							}
