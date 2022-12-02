@@ -396,7 +396,7 @@ namespace DOG
 
 	struct ConstVelocityBehaviorComponent
 	{
-		DirectX::SimpleMath::Vector3 direction = { 0.f, 1.f, 0.f }; // Will be normalized
+		DirectX::SimpleMath::Vector3 velocity = { 0.f, 1.f, 0.f };
 	};
 
 #pragma endregion

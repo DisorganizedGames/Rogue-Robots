@@ -131,9 +131,9 @@ void ParticleManager::SetBehaviorProperties(entity e, ParticleEmitter& emitter)
 	if (auto opt = entityManager.TryGetComponent<ConstVelocityBehaviorComponent>(e))
 	{
 		emitter.behavior = (u32)ParticleBehaviorType::ConstVelocity;
-		emitter.bopt1 = opt->get().direction.x;
-		emitter.bopt2 = opt->get().direction.y;
-		emitter.bopt3 = opt->get().direction.z;
+		emitter.bopt1 = opt->get().velocity.x;
+		emitter.bopt2 = opt->get().velocity.y;
+		emitter.bopt3 = opt->get().velocity.z;
 		return;
 	}
 

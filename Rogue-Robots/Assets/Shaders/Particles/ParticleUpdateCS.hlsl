@@ -91,9 +91,21 @@ void GravityPointBehavior(inout Particle p, in Emitter e, in float deltaTime)
 
 void GravityDirectionBehavior(inout Particle p, in Emitter e, in float deltaTime)
 {
+	float x = e.bopt1;
+	float y = e.bopt2;
+	float z = e.bopt3;
+	float gravity = e.bopt4;
+	
+	float3 dir = float3(x, y, z);
+	p.vel += dir * gravity * deltaTime;
 }
 
 void ConstVelocityBehavior(inout Particle p, in Emitter e, in float deltaTime)
 {
+	float x = e.bopt1;
+	float y = e.bopt2;
+	float z = e.bopt3;
+	
+	p.vel = float3(x, y, z);
 }
 

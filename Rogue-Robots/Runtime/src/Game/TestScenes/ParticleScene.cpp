@@ -197,8 +197,8 @@ void ParticleScene::SpawnParticleSystem()
 		.speed = 10.f,
 	};
 
-	AddComponent<GravityPointBehaviorComponent>(m_particleSystem) = {
-		.point = { 0, 5, 0 },
+	AddComponent<ConstVelocityBehaviorComponent>(m_particleSystem) = {
+		.velocity = { -10, 0, 0 },
 	};
 }
 
