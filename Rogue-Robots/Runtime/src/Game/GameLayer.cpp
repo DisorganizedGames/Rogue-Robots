@@ -18,6 +18,7 @@
 #include "InGameMenu.h"
 #include "GoalRadarSystem.h"
 #include "MusicSystems.h"
+#include "SpectatorCopyCamera.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -484,6 +485,8 @@ void GameLayer::UpdateGame()
 
 	if (s_networkStatus != NetworkStatus::Offline)
 		NetCode::Get().OnUpdate();
+
+	SpectatorCopyCamera::CollectAndUpdate();
 
 	HandleCheats();
 	HpBarMVP();
