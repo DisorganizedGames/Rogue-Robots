@@ -357,6 +357,7 @@ struct LaserBeamVFXComponent
 	DirectX::SimpleMath::Vector3 startPos;
 	DirectX::SimpleMath::Vector3 endPos;
 	DirectX::SimpleMath::Vector3 color;
+	DOG::entity particleEmitter = DOG::NULL_ENTITY;
 };
 
 struct LaserBeamComponent
