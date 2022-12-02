@@ -158,12 +158,13 @@ void HomingMissileSystem::StartMissileEngine(entity e, HomingMissileComponent& m
 
 void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& missile, DOG::HasEnteredCollisionComponent& collision, DOG::TransformComponent& transform)
 {
+	auto& em = EntityManager::Get();
 	if (missile.launched && collision.entitiesCount > 0)
 	{
 		// Instantly arm the missile if directly hit an enemy
 		for (u32 i = 0; i < collision.entitiesCount; i++)
 		{
-			if (EntityManager::Get().Exists(collision.entities[i]) && EntityManager::Get().HasComponent<AgentIdComponent>(collision.entities[i]))
+			if (em.Exists(collision.entities[i]) && em.HasComponent<AgentIdComponent>(collision.entities[i]))
 			{
 				missile.armed = true;
 				break;
@@ -173,22 +174,22 @@ void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& miss
 
 		if (missile.armed || missile.hit > 3)
 		{
-			EntityManager::Get().Collect<AgentIdComponent, DOG::TransformComponent>().Do([&](entity agent, AgentIdComponent&, DOG::TransformComponent& tr)
+			em.Collect<AgentIdComponent, DOG::TransformComponent>().Do([&](entity agent, AgentIdComponent&, DOG::TransformComponent& tr)
 				{
 					float distSquared = Vector3::DistanceSquared(transform.GetPosition(), tr.GetPosition());
 					if (distSquared < missile.explosionRadius * missile.explosionRadius)
 					{
 						AgentHitComponent* hit;
-						if (EntityManager::Get().HasComponent<AgentHitComponent>(agent))
-							hit = &EntityManager::Get().GetComponent<AgentHitComponent>(agent);
+						if (em.HasComponent<AgentHitComponent>(agent))
+							hit = &em.GetComponent<AgentHitComponent>(agent);
 						else
-							hit = &EntityManager::Get().AddComponent<AgentHitComponent>(agent);
+							hit = &em.AddComponent<AgentHitComponent>(agent);
 						hit->HitBy({ e, missile.playerEntityID , missile.dmg / (1.0f + distSquared) });
 					}
 				});
 
 			// Friendly fire
-			EntityManager::Get().Collect<PlayerStatsComponent, DOG::TransformComponent, PlayerAliveComponent, ThisPlayer>().Do([&](entity player, PlayerStatsComponent& stats, DOG::TransformComponent& playerTransform, PlayerAliveComponent&, ThisPlayer&)
+			em.Collect<PlayerStatsComponent, DOG::TransformComponent, PlayerAliveComponent, ThisPlayer>().Do([&](entity player, PlayerStatsComponent& stats, DOG::TransformComponent& playerTransform, PlayerAliveComponent&, ThisPlayer&)
 				{
 					float distSquared = Vector3::DistanceSquared(transform.GetPosition(), playerTransform.GetPosition());
 					if (distSquared < missile.explosionRadius * missile.explosionRadius)
@@ -197,9 +198,59 @@ void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& miss
 					}
 				});
 
-			EntityManager::Get().AddComponent<ExplosionEffectComponent>(e, 0.8f * missile.explosionRadius);
-			EntityManager::Get().AddComponent<ExplosionComponent>(e, 2 * missile.explosionRadius, 0.8f * missile.explosionRadius);
-			EntityManager::Get().DeferredEntityDestruction(e);
+			em.AddComponent<ExplosionEffectComponent>(e, 0.8f * missile.explosionRadius);
+			em.AddComponent<ExplosionComponent>(e, 2 * missile.explosionRadius, 0.8f * missile.explosionRadius);
+			em.DeferredEntityDestruction(e);
+
+			if (s_useSmokeExplosion)
+			{
+				entity topEmitter = em.CreateEntity();
+				entity bottomEmitter = em.CreateEntity();
+				if (auto scene = em.TryGetComponent<SceneComponent>(e))
+				{
+					em.AddComponent<SceneComponent>(topEmitter, scene->get().scene);
+					em.AddComponent<SceneComponent>(bottomEmitter, scene->get().scene);
+				}
+
+				auto& tr = em.AddComponent<TransformComponent>(topEmitter, transform.GetPosition());
+				em.AddComponent<TransformComponent>(bottomEmitter) = tr;
+
+
+				em.AddComponent<LifetimeComponent>(topEmitter, 0.5f);
+				em.AddComponent<LifetimeComponent>(bottomEmitter, 0.7f);
+
+
+				auto texture = AssetManager::Get().GetAsset<TextureAsset>(m_smokeTexureAssetID);
+				if (texture)
+				{
+					em.AddComponent<CylinderSpawnComponent>(topEmitter, 5, 5);
+					em.AddComponent<GravityPointBehaviorComponent>(topEmitter, transform.GetPosition(), -4);
+					em.AddComponent<ParticleEmitterComponent>(topEmitter) = {
+						.spawnRate = 1200,
+						.particleSize = 0.2f,
+						.particleLifetime = 0.8f,
+						.textureHandle = texture->textureViewRawHandle,
+						.textureSegmentsX = 4,
+						.textureSegmentsY = 4,
+						.startColor = {1, 0.4f, 0.2f, 1},
+						.endColor = {0.8, 0.3f, 0.1f, 0},
+					};
+
+
+					em.AddComponent<CylinderSpawnComponent>(bottomEmitter, 5, 1.2);
+					em.AddComponent<GravityPointBehaviorComponent>(bottomEmitter, transform.GetPosition(), -70);
+					em.AddComponent<ParticleEmitterComponent>(bottomEmitter) = {
+						.spawnRate = 2000,
+						.particleSize = 0.2f,
+						.particleLifetime = 0.6f,
+						.textureHandle = texture->textureViewRawHandle,
+						.textureSegmentsX = 4,
+						.textureSegmentsY = 4,
+						.startColor = {0.8, 0.3f, 0.15f, 1},
+						.endColor = {0.6, 0.2f, 0.1f, 0},
+					};
+				}
+			}
 		}
 		else
 		{
@@ -207,6 +258,17 @@ void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& miss
 		}
 		missile.hit++;
 	}
+}
+
+HomingMissileImpacteSystem::HomingMissileImpacteSystem()
+{
+	// Load the dds textur if it exists
+	AssetLoadFlag textureFlag = AssetLoadFlag::Srgb;
+	textureFlag |= AssetLoadFlag::GPUMemory;
+	if (std::filesystem::exists("Assets/Textures/Flipbook/smoke_4x4.dds"))
+		m_smokeTexureAssetID = AssetManager::Get().LoadTexture("Assets/Textures/Flipbook/smoke_4x4.dds", textureFlag);
+	else
+		m_smokeTexureAssetID = AssetManager::Get().LoadTexture("Assets/Textures/Flipbook/smoke_4x4.png", textureFlag);
 }
 
 void HomingMissileTargetingSystem::OnUpdate(HomingMissileComponent& missile, DOG::TransformComponent& transform)
