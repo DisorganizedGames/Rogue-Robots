@@ -477,16 +477,14 @@ void GameLayer::KillPlayer(DOG::entity e)
 
 void GameLayer::UpdateGame()
 {
-	m_playerMovementSystem.CollectAndUpdate();
-
-
-	LuaMain::GetScriptManager()->UpdateScripts();
-	LuaMain::GetScriptManager()->ReloadScripts();
-
 	if (s_networkStatus != NetworkStatus::Offline)
 		NetCode::Get().OnUpdate();
 
+	m_playerMovementSystem.CollectAndUpdate();
 	SpectatorCopyCamera::CollectAndUpdate();
+
+	LuaMain::GetScriptManager()->UpdateScripts();
+	LuaMain::GetScriptManager()->ReloadScripts();
 
 	HandleCheats();
 	HpBarMVP();
