@@ -173,9 +173,10 @@ void GameLayer::OnUpdate()
 			break;
 		case GameState::Won:
 		{
-			//if (s_networkStatus != NetworkStatus::Offline)
-				//NetCode::Get().OnUpdate();
-
+			EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
+				{
+					inputC.winStatus = true;
+				});
 			UpdateGame();
 
 			auto winText = DOG::UI::Get()->GetUI<UILabel>(lWinTextID);
@@ -335,7 +336,9 @@ void GameLayer::EvaluateWinCondition()
 		}
 	}
 	
-
+	EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
+		{
+		});
 
 	if (freeRoamTimeAfterWin)
 	{
