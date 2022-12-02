@@ -10,14 +10,19 @@ using namespace DirectX::SimpleMath;
 *			Early Update Systems
 ***************************************************/
 
+void AgentBehaviorTreeSystem::OnEarlyUpdate(DOG::entity agent, AgentIdComponent&, BehaviorTreeComponent& btc)
+{
+	ASSERT(btc.currentRunningNode, "Current running node is nullptr!");
 
+	btc.currentRunningNode->Process(agent);
+}
 
-void AgentSeekPlayerSystem::OnEarlyUpdate(entity e, AgentSeekPlayerComponent& seek, AgentIdComponent& agent, TransformComponent& transform)
+void AgentDetectPlayerSystem::OnEarlyUpdate(entity e, BTDetectPlayerComponent&, AgentSeekPlayerComponent& seek, AgentIdComponent& agent, TransformComponent& transform)
 {
 	constexpr f32 SEEK_RADIUS_METERS = 5.0f;
 	constexpr f32 SEEK_RADIUS_SQUARED = SEEK_RADIUS_METERS * SEEK_RADIUS_METERS;
 	EntityManager& eMan = EntityManager::Get();
-	struct PlayerDist
+	struct PlayerData
 	{ 
 		entity entityID = NULL_ENTITY;
 		i8 id = 0;
@@ -25,36 +30,39 @@ void AgentSeekPlayerSystem::OnEarlyUpdate(entity e, AgentSeekPlayerComponent& se
 		Vector3 pos{ 0,0,0 };
 	};
 
-	PlayerDist player;
-	Vector3 agentPos(transform.GetPosition());
+	PlayerData playerData;
+	const Vector3 agentPos(transform.GetPosition());
 
 	eMan.Collect<PlayerAliveComponent, TransformComponent, NetworkPlayerComponent>().Do(
-		[&](entity id,PlayerAliveComponent&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) {
-			f32 sqDist = Vector3::DistanceSquared(transC.GetPosition(), agentPos);
-			if (sqDist < player.sqDist)
+		[&](entity id,PlayerAliveComponent&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) 
+		{
+			const f32 sqDist = Vector3::DistanceSquared(transC.GetPosition(), agentPos);
+			if (sqDist < playerData.sqDist)
 			{
-				player.entityID = id;
-				player.id = netPlayer.playerId;
-				player.pos = transC.GetPosition();
-				player.sqDist = sqDist;
+				playerData.entityID = id;
+				playerData.id = netPlayer.playerId;
+				playerData.pos = transC.GetPosition();
+				playerData.sqDist = sqDist;
 			}
 		});
 
-	bool aggro = eMan.HasComponent<AgentAggroComponent>(e);
+	const bool agentAlreadyHasAggro = eMan.HasComponent<AgentAggroComponent>(e);
+	const bool playerIsWithinAggroRange = (playerData.sqDist < SEEK_RADIUS_SQUARED);
+	const bool agentDetectsPlayer = (agentAlreadyHasAggro || playerIsWithinAggroRange);
 
-	if (aggro || player.sqDist < SEEK_RADIUS_SQUARED)
+	auto& btc = eMan.GetComponent<BehaviorTreeComponent>(e);
+	if (agentDetectsPlayer)
 	{
-		if (!aggro)
-			eMan.AddComponent<AgentAggroComponent>(e);
-
+		//if (!agentAlreadyHasAggro)
+		//	eMan.AddComponent<AgentAggroComponent>(e);
 
 		// update target
-		bool newTarget = player.entityID != seek.entityID;
+		bool newTarget = playerData.entityID != seek.entityID;
 
-		seek.entityID = player.entityID;
-		seek.direction = player.pos - agentPos;
+		seek.entityID = playerData.entityID;
+		seek.direction = playerData.pos - agentPos;
 		seek.direction.Normalize();
-		seek.squaredDistance = player.sqDist;
+		seek.squaredDistance = playerData.sqDist;
 
 		if (seek.entityID != NULL_ENTITY)
 		{
@@ -74,9 +82,11 @@ void AgentSeekPlayerSystem::OnEarlyUpdate(entity e, AgentSeekPlayerComponent& se
 			else
 				netSeek = &eMan.GetComponent<NetworkAgentSeekPlayer>(e);
 
-			netSeek->playerID = player.id;
+			netSeek->playerID = playerData.id;
 			netSeek->agentID = agent.id;
 		}
+
+		LEAF(btc.currentRunningNode)->Succeed(e);
 	}
 	else
 	{
@@ -93,9 +103,10 @@ void AgentSeekPlayerSystem::OnEarlyUpdate(entity e, AgentSeekPlayerComponent& se
 		if (eMan.HasComponent<PathfinderWalkComponent>(e))
 			eMan.RemoveComponent<PathfinderWalkComponent>(e);
 
-
 		netSeek->playerID = -1;
 		netSeek->agentID = agent.id;
+
+		LEAF(btc.currentRunningNode)->Fail(e);
 	}
 }
 
@@ -295,7 +306,7 @@ void AgentFrostTimerSystem::OnUpdate(DOG::entity e, AgentMovementComponent& move
 	}
 }
 
-void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, AgentIdComponent& agent)
+void AgentAggroSystem::OnUpdate(DOG::entity e, BTAggroComponent&, AgentAggroComponent& aggro, AgentIdComponent& agent)
 {
 	constexpr float minutes = 1.3f;
 	constexpr f64 maxAggroTime = minutes * 60.0;
@@ -305,10 +316,12 @@ void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, Agent
 
 	u32 myGroup = am.GroupID(agent.id);
 
+	auto& btc = em.GetComponent<BehaviorTreeComponent>(e);
 	if ((DOG::Time::ElapsedTime() - aggro.timeTriggered) > maxAggroTime)
 	{
 		em.RemoveComponent<AgentAggroComponent>(e);
 		em.RemoveComponentIfExists<AgentAttackComponent>(e);
+		LEAF(btc.currentRunningNode)->Fail(e);
 	}
 	else
 	{
@@ -316,14 +329,24 @@ void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, Agent
 		if (!em.HasComponent<AgentAttackComponent>(e))
 			em.AddComponent<AgentAttackComponent>(e);
 
+		bool signaledAnotherAgent = false;
 		em.Collect<AgentIdComponent>().Do(
 			[&](entity o, AgentIdComponent& other)
 			{
 				u32 otherGroup = am.GroupID(other.id);
 				if (myGroup == otherGroup && !em.HasComponent<AgentAggroComponent>(o))
+				{
 					em.AddComponent<AgentAggroComponent>(o);
+					signaledAnotherAgent = true;
+				}
 			}
 		);
+		if (signaledAnotherAgent)
+		{
+			LEAF(btc.currentRunningNode)->Succeed(e);
+		}
+		else
+			LEAF(btc.currentRunningNode)->Fail(e);
 	}
 }
 

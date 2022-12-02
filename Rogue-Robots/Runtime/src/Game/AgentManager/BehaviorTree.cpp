@@ -1,4 +1,5 @@
-#include "BehaviourTree.h"
+#include "BehaviorTree.h"
+#include "AgentComponents.h"
 
 Node::Node(const std::string& name, NodeType type) noexcept
 	: m_name{ name },
@@ -241,6 +242,9 @@ void DetectPlayerNode::Succeed(DOG::entity agent) noexcept
 {
 	SetSucceededAs(true);
 	DOG::EntityManager::Get().RemoveComponent<BTDetectPlayerComponent>(agent);
+	if (!DOG::EntityManager::Get().HasComponent<AgentAggroComponent>(agent))
+		DOG::EntityManager::Get().AddComponent<AgentAggroComponent>(agent);
+
 	GetParent()->Process(agent);
 }
 
@@ -248,6 +252,7 @@ void DetectPlayerNode::Fail(DOG::entity agent) noexcept
 {
 	SetSucceededAs(false);
 	DOG::EntityManager::Get().RemoveComponent<BTDetectPlayerComponent>(agent);
+	DOG::EntityManager::Get().RemoveComponentIfExists<AgentAggroComponent>(agent);
 	GetParent()->Process(agent);
 }
 
@@ -259,7 +264,7 @@ void SignalGroupNode::Process(DOG::entity agent) noexcept
 {
 	if (!DOG::EntityManager::Get().HasComponent<BTAttackComponent>(agent))
 	{
-		DOG::EntityManager::Get().AddComponent<BTSignalGroupComponent>(agent);
+		DOG::EntityManager::Get().AddComponent<BTAggroComponent>(agent);
 		DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
 	}
 	else
@@ -271,14 +276,14 @@ void SignalGroupNode::Process(DOG::entity agent) noexcept
 void SignalGroupNode::Succeed(DOG::entity agent) noexcept
 {
 	SetSucceededAs(true);
-	DOG::EntityManager::Get().RemoveComponent<BTSignalGroupComponent>(agent);
+	DOG::EntityManager::Get().RemoveComponent<BTAggroComponent>(agent);
 	GetParent()->Process(agent);
 }
 
 void SignalGroupNode::Fail(DOG::entity agent) noexcept
 {
 	SetSucceededAs(false);
-	DOG::EntityManager::Get().RemoveComponent<BTSignalGroupComponent>(agent);
+	DOG::EntityManager::Get().RemoveComponent<BTAggroComponent>(agent);
 	GetParent()->Process(agent);
 }
 

@@ -1,21 +1,28 @@
 #pragma once
 #include <DOGEngine.h>
 #include "Game/GameComponent.h"
-
+#include "BehaviorTree.h"
 
 /**************************************************
 *			Early Update Systems
 ***************************************************/
 
+class AgentBehaviorTreeSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(AgentIdComponent, BehaviorTreeComponent);
+	ON_EARLY_UPDATE_ID(AgentIdComponent, BehaviorTreeComponent);
+	void OnEarlyUpdate(DOG::entity agent, AgentIdComponent&, BehaviorTreeComponent& btc);
+};
 
-class AgentSeekPlayerSystem: public DOG::ISystem
+class AgentDetectPlayerSystem: public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
 public:
-	SYSTEM_CLASS(AgentSeekPlayerComponent, AgentIdComponent, DOG::TransformComponent);
-	ON_EARLY_UPDATE_ID(AgentSeekPlayerComponent, AgentIdComponent, DOG::TransformComponent);
-	void OnEarlyUpdate(DOG::entity e, AgentSeekPlayerComponent& seek, AgentIdComponent& agent, DOG::TransformComponent& transform);
+	SYSTEM_CLASS(BTDetectPlayerComponent, AgentSeekPlayerComponent, AgentIdComponent, DOG::TransformComponent);
+	ON_EARLY_UPDATE_ID(BTDetectPlayerComponent, AgentSeekPlayerComponent, AgentIdComponent, DOG::TransformComponent);
+	void OnEarlyUpdate(DOG::entity e, BTDetectPlayerComponent&, AgentSeekPlayerComponent& seek, AgentIdComponent& agent, DOG::TransformComponent& transform);
 };
 
 
@@ -38,9 +45,9 @@ class AgentAggroSystem : public DOG::ISystem
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
 public:
-	SYSTEM_CLASS(AgentAggroComponent, AgentIdComponent);
-	ON_UPDATE_ID(AgentAggroComponent, AgentIdComponent);
-	void OnUpdate(DOG::entity e, AgentAggroComponent& aggro, AgentIdComponent& agent);
+	SYSTEM_CLASS(BTAggroComponent, AgentAggroComponent, AgentIdComponent);
+	ON_UPDATE_ID(BTAggroComponent, AgentAggroComponent, AgentIdComponent);
+	void OnUpdate(DOG::entity e, BTAggroComponent&, AgentAggroComponent& aggro, AgentIdComponent& agent);
 };
 
 class AgentHitDetectionSystem : public DOG::ISystem
