@@ -4,34 +4,59 @@ using namespace DOG;
 
 PlayMusicSystem::PlayMusicSystem()
 {
-	entity e = EntityManager::Get().CreateEntity();
-	EntityManager::Get().AddComponent<MusicPlayer>(e);
-	EntityManager::Get().AddComponent<AudioComponent>(e);
-
 	m_ambienceSong = AssetManager::Get().LoadAudio("Assets/Audio/Music/RogueRobotsAmbience.wav");
 	m_actionSong = AssetManager::Get().LoadAudio("Assets/Audio/Music/RogueRobotsAction.wav");
 
-	m_timerForAmbientMusicToStart = 0.0f;
+	entity e = EntityManager::Get().CreateEntity();
+	EntityManager::Get().AddComponent<MusicPlayer>(e);
+
+	m_ambienceMusicEntity = EntityManager::Get().CreateEntity();
+	AudioComponent& ambienceAudioComponent = EntityManager::Get().AddComponent<AudioComponent>(m_ambienceMusicEntity);
+	ambienceAudioComponent.assetID = m_ambienceSong;
+	ambienceAudioComponent.shouldPlay = true;
+	ambienceAudioComponent.volume = 1.0f;
+	ambienceAudioComponent.loopStart = 0.0f;
+	ambienceAudioComponent.loopEnd = -1.0f;
+	ambienceAudioComponent.loop = true;
+
+	m_actionMusicEntity = EntityManager::Get().CreateEntity();
+	AudioComponent& actionAudioComponent = EntityManager::Get().AddComponent<AudioComponent>(m_actionMusicEntity);
+	actionAudioComponent.assetID = m_actionSong;
+	actionAudioComponent.shouldPlay = true;
+	actionAudioComponent.volume = 0.0f;
+	actionAudioComponent.loopStart = 0.0f;
+	actionAudioComponent.loopEnd = -1.0f;
+	actionAudioComponent.loop = true;
+
+	m_timerForAmbientMusic = 0.0f;
+
+	playAmbience = true;
+	shouldPlayAction = false;
 }
 
-void PlayMusicSystem::OnUpdate(MusicPlayer&, DOG::AudioComponent& audio)
+void PlayMusicSystem::OnUpdate(MusicPlayer&)
 {
+	AudioComponent& actionAudioComponent = EntityManager::Get().GetComponent<AudioComponent>(m_actionMusicEntity);
+	AudioComponent& ambienceAudioComponent = EntityManager::Get().GetComponent<AudioComponent>(m_ambienceMusicEntity);
+
 	bool foundAggro = false;
 	EntityManager::Get().Collect<AgentAggroComponent>().Do([&](AgentAggroComponent) {
 		foundAggro = true;
-		audio.volume = 1.0f;
+		actionAudioComponent.volume = 1.0f;
+		ambienceAudioComponent.volume = 0.0f;
 		m_timerForActionToContinue = -1.0f;
 		});
 
-	if (foundAggro && (!audio.playing || audio.assetID == m_ambienceSong))
+	if (foundAggro)
 	{
-		audio.assetID = m_actionSong;
-		audio.shouldPlay = true;
-		audio.volume = 1.0f;
+		actionAudioComponent.volume = 1.0f;
+		ambienceAudioComponent.volume = 0.0f;
 
 		m_timerForActionToContinue = -1.0f;
+
+		shouldPlayAction = true;
 	}
-	else if (audio.playing && audio.assetID == m_actionSong && !foundAggro && m_timerForActionToContinue < Time::ElapsedTime())
+	else if (!foundAggro && m_timerForActionToContinue <= Time::ElapsedTime() && shouldPlayAction)
 	{
 		if (m_timerForActionToContinue < 0.0f)
 		{
@@ -39,28 +64,49 @@ void PlayMusicSystem::OnUpdate(MusicPlayer&, DOG::AudioComponent& audio)
 			return;
 		}
 
-		audio.volume -= 0.2f * Time::DeltaTime();
-		if (audio.volume <= 0.0f)
+		actionAudioComponent.volume -= 0.2f * Time::DeltaTime();
+		if (actionAudioComponent.volume <= 0.0f)
 		{
-			audio.volume = 0.0f;
-			audio.shouldStop = true;
-
+			actionAudioComponent.volume = 0.0f;
+			m_timerForAmbientMusic = -1.0f;
 			playAmbience = false;
+			shouldPlayAction = false;
 		}
 	}
-	else if (!audio.playing && m_timerForAmbientMusicToStart < Time::ElapsedTime())
+	else if (m_timerForAmbientMusic <= Time::ElapsedTime())
 	{
 		if (!playAmbience)
 		{
-			m_timerForAmbientMusicToStart = Time::ElapsedTime() + WAIT_TIME_FOR_AMBIENT_MUSIC;
+			m_timerForAmbientMusic = Time::ElapsedTime() + WAIT_TIME_FOR_AMBIENT_MUSIC;
+			ambienceAudioComponent.volume = 0.0f;
 			playAmbience = true;
 		}
 		else
 		{
-			audio.assetID = m_ambienceSong;
-			audio.shouldPlay = true;
-			audio.volume = 1.0f;
+			m_timerForAmbientMusic = Time::ElapsedTime() + PLAY_TIME_FOR_AMBIENT_MUSIC;
+			ambienceAudioComponent.volume = 0.0f;
 			playAmbience = false;
+		}
+	}
+	else if (!shouldPlayAction)
+	{
+		const float lerpValue = 5.0f;
+
+		if (!playAmbience && m_timerForAmbientMusic - Time::ElapsedTime() <= lerpValue)
+		{
+			ambienceAudioComponent.volume = (m_timerForAmbientMusic - Time::ElapsedTime()) / lerpValue;
+		}
+		else if (!playAmbience && m_timerForAmbientMusic - Time::ElapsedTime() > PLAY_TIME_FOR_AMBIENT_MUSIC - lerpValue)
+		{
+			ambienceAudioComponent.volume = 1.0f - (m_timerForAmbientMusic - Time::ElapsedTime() - (PLAY_TIME_FOR_AMBIENT_MUSIC - lerpValue)) / lerpValue;
+		}
+		else if (!playAmbience)
+		{
+			ambienceAudioComponent.volume = 1.0f;
+		}
+		else
+		{
+			ambienceAudioComponent.volume = 0.0f;
 		}
 	}
 }
