@@ -107,14 +107,34 @@ void HomingMissileSystem::StartMissileEngine(entity e, HomingMissileComponent& m
 		em.AddComponent<SceneComponent>(jetParticleEmitter, scene->get().scene);
 
 	em.AddComponent<TransformComponent>(jetParticleEmitter);
-	auto& tr = em.AddComponent<ChildComponent>(jetParticleEmitter);
-	tr.parent = missile.jet;
-	tr.localTransform.SetPosition({ 0, 0, 0 });
+	auto& jtr = em.AddComponent<ChildComponent>(jetParticleEmitter);
+	jtr.parent = missile.jet;
+	jtr.localTransform.SetPosition({ 0, 0, 0 });
+
+	em.AddComponent<ConeSpawnComponent>(jetParticleEmitter) = { .angle = DirectX::XM_PI / 6, .speed = 5.f };
+	em.AddComponent<NoGravityBehaviorComponent>(jetParticleEmitter);
+	em.AddComponent<ParticleEmitterComponent>(jetParticleEmitter) = {
+		.spawnRate = 160,
+		.particleSize = 0.08f,
+		.particleLifetime = 0.09f,
+		.startColor = {4, 1.2f, 0.4f, 1},
+		.endColor = {2, 0.8f, 0.2f, 0}
+	};
+
+	entity smokeParticleEmitter = em.CreateEntity();
+	if (auto scene = em.TryGetComponent<SceneComponent>(e))
+		em.AddComponent<SceneComponent>(smokeParticleEmitter, scene->get().scene);
+
+	em.AddComponent<TransformComponent>(smokeParticleEmitter);
+	auto& str = em.AddComponent<ChildComponent>(smokeParticleEmitter);
+	str.parent = missile.jet;
+	str.localTransform.SetPosition({ 0, 0, 0 });
 
 	auto texture = AssetManager::Get().GetAsset<TextureAsset>(m_smokeTexureAssetID);
 	if (texture == nullptr) return;
-	em.AddComponent<ConeSpawnComponent>(jetParticleEmitter) = { .angle = DirectX::XM_PI / 8, .speed = 1.f };
-	em.AddComponent<ParticleEmitterComponent>(jetParticleEmitter) = {
+	em.AddComponent<ConeSpawnComponent>(smokeParticleEmitter) = { .angle = DirectX::XM_PI / 8, .speed = 1.f };
+	em.AddComponent<NoGravityBehaviorComponent>(smokeParticleEmitter);
+	em.AddComponent<ParticleEmitterComponent>(smokeParticleEmitter) = {
 		.spawnRate = 128,
 		.particleSize = 0.25f,
 		.particleLifetime = 1.2f,
