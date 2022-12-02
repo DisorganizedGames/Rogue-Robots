@@ -14,6 +14,7 @@ namespace DOG
 		std::optional<DXGI_MODE_DESC> displayMode = std::nullopt;
 		bool vSync = false;
 		bool bloom = true;
+		float bloomStrength = 1.0f;
 		float bloomThreshold = 1.0f;
 		float gamma = 2.22f;
 		bool lightCulling = true;
