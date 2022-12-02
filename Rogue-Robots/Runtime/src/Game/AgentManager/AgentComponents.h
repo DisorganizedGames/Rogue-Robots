@@ -40,14 +40,14 @@ struct AgentAttackComponent
 	f32 damage = 10.0f;
 	f32 coolDown = 1.0f;
 	f64 timeOfLast = 0;
-	bool Ready() { return coolDown <= Time::ElapsedTime() - timeOfLast; }
+	bool Ready() { return coolDown <= DOG::Time::ElapsedTime() - timeOfLast; }
 };
 
 struct AgentSeekPlayerComponent
 {
 	DOG::entity entityID = DOG::NULL_ENTITY;
 	DirectX::SimpleMath::Vector3 direction;
-	f32 squaredDistance = 0.0f;
+	f32 squaredDistance = std::numeric_limits<float>::max();
 };
 
 struct AgentAggroComponent

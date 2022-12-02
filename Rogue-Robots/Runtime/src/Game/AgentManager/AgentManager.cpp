@@ -121,13 +121,15 @@ void AgentManager::Initialize()
 	// Register agent systems
 	EntityManager& em = EntityManager::Get();
 	em.RegisterSystem(std::make_unique<AgentBehaviorTreeSystem>());
+	
 	em.RegisterSystem(std::make_unique<AgentDetectPlayerSystem>());
 	em.RegisterSystem(std::make_unique<AgentAggroSystem>());
 	em.RegisterSystem(std::make_unique<AgentAttackSystem>());
-
-	em.RegisterSystem(std::make_unique<AgentMovementSystem>()); //Is LATE System
+	
 	em.RegisterSystem(std::make_unique<AgentHitDetectionSystem>());
 	em.RegisterSystem(std::make_unique<AgentHitSystem>());
+
+	em.RegisterSystem(std::make_unique<AgentMovementSystem>()); //Is LATE System
 	em.RegisterSystem(std::make_unique<AgentFrostTimerSystem>());
 	em.RegisterSystem(std::make_unique<AgentFireTimerSystem>());
 	em.RegisterSystem(std::make_unique<AgentDestructSystem>());
@@ -404,14 +406,6 @@ void AgentManager::DestroyLocalAgent(entity e, bool local)
 	}
 }
 
-void AgentManager::CreateVillain(const Vector3& position)
-{
-	
-	DOG::entity villain = EntityManager::Get().CreateEntity();
-	EntityManager::Get().AddComponent<VillainComponent>(villain);
-	EntityManager::Get().AddComponent<TransformComponent>(villain).SetPosition(position);
-	CreateScorpioBehaviourTree(villain);
-}
 
 void AgentManager::CreateScorpioBehaviourTree(DOG::entity agent) noexcept
 {
@@ -425,7 +419,7 @@ void AgentManager::CreateScorpioBehaviourTree(DOG::entity agent) noexcept
 	seekAndDestroySucceeder->AddChild(std::make_shared<SignalGroupNode>("SignalGroupNode"));
 
 	rootSelector->AddChild(seekAndDestroySequence);
-	rootSelector->AddChild(std::make_shared<PatrolNode>("PatrolNode"));
+	//rootSelector->AddChild(std::make_shared<PatrolNode>("PatrolNode"));
 	seekAndDestroySequence->AddChild(std::make_shared<DetectPlayerNode>("DetectPlayerNode"));
 	seekAndDestroySequence->AddChild(std::move(seekAndDestroySucceeder));
 

@@ -200,9 +200,9 @@ void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& c
 
 void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent& hp)
 {
+	bool hitByPlayer = false;
 	for (i8 i = 0; i < hit.count; ++i)
 	{
-
 		if (EntityManager::Get().HasComponent<ThisPlayer>(hit.hits[i].playerEntity))
 		{
 			hp.hp -= hit.hits[i].damage;
@@ -212,7 +212,11 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 				{
 					inputC.damageDoneToEnemies += hit.hits[i].damage;
 				});
+			hitByPlayer = true;
 		}
+	}
+	if (hitByPlayer)
+	{
 		if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
 		{
 			EntityManager::Get().AddComponent<AgentAggroComponent>(e);
@@ -220,7 +224,7 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 			EntityManager::Get().GetComponent<PathFindingSync>(e).id.id = EntityManager::Get().GetComponent<PathFindingSync>(e).id.id | AGGRO_BIT;
 		}
 	}
-	
+
 	/*Frost status*/
 	for (i8 i = 0; i < hit.count; ++i)
 	{

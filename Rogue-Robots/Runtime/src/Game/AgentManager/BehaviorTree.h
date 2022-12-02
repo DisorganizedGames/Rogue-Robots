@@ -1,16 +1,6 @@
 #pragma once
 #include <DOGEngine.h>
 
-struct HeroComponent
-{
-	//ID
-};
-
-struct VillainComponent
-{
-	//ID
-};
-
 struct BTDetectPlayerComponent
 {
 	//ID
