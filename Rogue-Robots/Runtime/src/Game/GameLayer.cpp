@@ -150,7 +150,12 @@ void GameLayer::OnDetach()
 
 void GameLayer::OnUpdate()
 {
-	MINIPROFILE
+	MINIPROFILE;
+
+	LuaGlobal* global = LuaMain::GetGlobal();
+	global->SetNumber("DeltaTime", Time::DeltaTime());
+	global->SetNumber("ElapsedTime", Time::ElapsedTime());
+
 		switch (m_gameState)
 		{
 		case GameState::None:
@@ -199,11 +204,6 @@ void GameLayer::OnUpdate()
 		default:
 			break;
 		}
-
-	
-	LuaGlobal* global = LuaMain::GetGlobal();
-	global->SetNumber("DeltaTime", Time::DeltaTime());
-	global->SetNumber("ElapsedTime", Time::ElapsedTime());
 
 	KeyBindingDisplayMenu();
 }
