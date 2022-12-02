@@ -186,7 +186,19 @@ void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& miss
 						hit->HitBy({ e, missile.playerEntityID , missile.dmg / (1.0f + distSquared) });
 					}
 				});
+
+			// Friendly fire
+			EntityManager::Get().Collect<PlayerStatsComponent, DOG::TransformComponent, PlayerAliveComponent, ThisPlayer>().Do([&](entity player, PlayerStatsComponent& stats, DOG::TransformComponent& playerTransform, PlayerAliveComponent&, ThisPlayer&)
+				{
+					float distSquared = Vector3::DistanceSquared(transform.GetPosition(), playerTransform.GetPosition());
+					if (distSquared < missile.explosionRadius * missile.explosionRadius)
+					{
+						stats.health -= (missile.dmg / (1.0f + distSquared)) / 10.0f;
+					}
+				});
+
 			EntityManager::Get().AddComponent<ExplosionEffectComponent>(e, 0.8f * missile.explosionRadius);
+			EntityManager::Get().AddComponent<ExplosionComponent>(e, 2 * missile.explosionRadius, 0.8f * missile.explosionRadius);
 			EntityManager::Get().DeferredEntityDestruction(e);
 		}
 		else
