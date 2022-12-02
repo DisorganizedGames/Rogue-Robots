@@ -189,7 +189,7 @@ void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& miss
 				});
 
 			// Friendly fire
-			em.Collect<PlayerStatsComponent, DOG::TransformComponent, PlayerAliveComponent, ThisPlayer>().Do([&](entity player, PlayerStatsComponent& stats, DOG::TransformComponent& playerTransform, PlayerAliveComponent&, ThisPlayer&)
+			em.Collect<PlayerStatsComponent, DOG::TransformComponent, PlayerAliveComponent, ThisPlayer>().Do([&](PlayerStatsComponent& stats, DOG::TransformComponent& playerTransform, PlayerAliveComponent&, ThisPlayer&)
 				{
 					float distSquared = Vector3::DistanceSquared(transform.GetPosition(), playerTransform.GetPosition());
 					if (distSquared < missile.explosionRadius * missile.explosionRadius)
@@ -225,8 +225,8 @@ void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& miss
 				auto texture = AssetManager::Get().GetAsset<TextureAsset>(m_smokeTexureAssetID);
 				if (texture)
 				{
-					em.AddComponent<CylinderSpawnComponent>(topEmitter, 5, 5);
-					em.AddComponent<GravityPointBehaviorComponent>(topEmitter, transform.GetPosition(), -4);
+					em.AddComponent<CylinderSpawnComponent>(topEmitter, 5.0f, 5.0f);
+					em.AddComponent<GravityPointBehaviorComponent>(topEmitter, transform.GetPosition(), -4.0f);
 					em.AddComponent<ParticleEmitterComponent>(topEmitter) = {
 						.spawnRate = 1200,
 						.particleSize = 0.2f,
@@ -235,12 +235,12 @@ void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& miss
 						.textureSegmentsX = 4,
 						.textureSegmentsY = 4,
 						.startColor = {1, 0.4f, 0.2f, 1},
-						.endColor = {0.8, 0.3f, 0.1f, 0},
+						.endColor = {0.8f, 0.3f, 0.1f, 0},
 					};
 
 
-					em.AddComponent<CylinderSpawnComponent>(bottomEmitter, 5, 1.2);
-					em.AddComponent<GravityPointBehaviorComponent>(bottomEmitter, transform.GetPosition(), -70);
+					em.AddComponent<CylinderSpawnComponent>(bottomEmitter, 5.0f, 1.2f);
+					em.AddComponent<GravityPointBehaviorComponent>(bottomEmitter, transform.GetPosition(), -70.0f);
 					em.AddComponent<ParticleEmitterComponent>(bottomEmitter) = {
 						.spawnRate = 2000,
 						.particleSize = 0.2f,
@@ -248,8 +248,8 @@ void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& miss
 						.textureHandle = texture->textureViewRawHandle,
 						.textureSegmentsX = 4,
 						.textureSegmentsY = 4,
-						.startColor = {0.8, 0.3f, 0.15f, 1},
-						.endColor = {0.6, 0.2f, 0.1f, 0},
+						.startColor = {0.8f, 0.3f, 0.15f, 1},
+						.endColor = {0.6f, 0.2f, 0.1f, 0},
 					};
 				}
 			}
