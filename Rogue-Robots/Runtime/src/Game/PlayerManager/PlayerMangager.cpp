@@ -33,11 +33,21 @@ u8 PlayerManager::GetNrOfPlayers()
 	return nrOfPlayers;
 }
 
+void PlayerManager::HurtPlayer(entity player, f32 damage)
+{
+	s_entityManager.GetComponent<PlayerStatsComponent>(player).health -= damage;
+}
+
 void PlayerManager::HurtThisPlayer(f32 damage)
 {
-	s_entityManager.GetComponent<PlayerStatsComponent>(GetThisPlayer()).health -= damage;
-
+	HurtPlayer(GetThisPlayer(), damage);
 	PlayHurtAudio(GetThisPlayer());
+}
+
+void PlayerManager::HurtIfThisPlayer(entity player, f32 damage)
+{
+	if (s_entityManager.HasComponent<ThisPlayer>(player))
+		HurtPlayer(player, damage);
 }
 
 bool PlayerManager::IsThisPlayerHost()

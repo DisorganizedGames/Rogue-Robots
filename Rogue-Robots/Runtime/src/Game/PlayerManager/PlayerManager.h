@@ -13,7 +13,9 @@ public:
 			Initialize();
 		return s_amInstance;
 	}
+	void HurtPlayer(entity player, f32 damage);
 	void HurtThisPlayer(f32 damage);
+	void HurtIfThisPlayer(entity player, f32 damage);
 	DOG::entity GetThisPlayer();
 	u8 GetNrOfPlayers();
 	bool IsThisPlayerHost();

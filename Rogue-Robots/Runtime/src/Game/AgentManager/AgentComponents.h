@@ -39,7 +39,8 @@ struct AgentAttackComponent
 	f32 radiusSquared = 1.5f;
 	f32 damage = 10.0f;
 	f32 coolDown = 1.0f;
-	f32 elapsedTime = coolDown;
+	f64 timeOfLast = 0;
+	bool Ready() { return coolDown <= Time::ElapsedTime() - timeOfLast; }
 };
 
 struct AgentSeekPlayerComponent

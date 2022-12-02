@@ -35,9 +35,10 @@ class AgentAttackSystem : public DOG::ISystem
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
 public:
-	SYSTEM_CLASS(AgentAttackComponent, AgentSeekPlayerComponent);
-	ON_UPDATE_ID(AgentAttackComponent, AgentSeekPlayerComponent);
-	void OnUpdate(DOG::entity e, AgentAttackComponent& attack, AgentSeekPlayerComponent& seek);
+	SYSTEM_CLASS(BTAttackComponent, BehaviorTreeComponent, AgentAttackComponent, AgentSeekPlayerComponent);
+	ON_UPDATE_ID(BTAttackComponent, BehaviorTreeComponent, AgentAttackComponent, AgentSeekPlayerComponent);
+	void OnUpdate(DOG::entity e, BTAttackComponent&, BehaviorTreeComponent& btc, 
+		AgentAttackComponent& attack, AgentSeekPlayerComponent& seek);
 };
 
 class AgentAggroSystem : public DOG::ISystem
@@ -107,9 +108,10 @@ class AgentMovementSystem : public DOG::ISystem
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
 public:
-	SYSTEM_CLASS(AgentMovementComponent, PathfinderWalkComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
-	ON_LATE_UPDATE(AgentMovementComponent, PathfinderWalkComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
-	void OnLateUpdate(AgentMovementComponent& movement, PathfinderWalkComponent& pfc,
+	SYSTEM_CLASS(BTMoveToPlayerComponent, BehaviorTreeComponent, AgentMovementComponent, PathfinderWalkComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
+	ON_LATE_UPDATE_ID(BTMoveToPlayerComponent, BehaviorTreeComponent, AgentMovementComponent, PathfinderWalkComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
+	void OnLateUpdate(entity e, BTMoveToPlayerComponent&, BehaviorTreeComponent& btc, 
+		AgentMovementComponent& movement, PathfinderWalkComponent& pfc,
 		DOG::RigidbodyComponent& rb, DOG::TransformComponent& trans);
 };
 
