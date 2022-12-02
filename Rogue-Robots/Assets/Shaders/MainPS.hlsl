@@ -6,6 +6,7 @@
 #include "PBRHelpers.hlsli"
 
 
+
 struct VS_OUT
 {
     float4 pos : SV_POSITION;
@@ -491,7 +492,7 @@ PS_OUT main(VS_OUT input)
     }
     if (g_constants.isWeapon)
     {
-        output.color.a = 10.f;      // Magic number
+        output.color.a = MAGIC_WEAPON_ALPHA_TAG;      // Magic number
     }
     
     return output;

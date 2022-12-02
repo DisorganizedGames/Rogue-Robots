@@ -1,5 +1,6 @@
 #include "ShaderInterop_Base.h"
 #include "ShaderInterop_Samplers.hlsli"
+#include "ShaderInterop_Renderer.h"
 #include "AcesTonemapping.hlsli"
 
 struct VS_OUT
@@ -19,7 +20,6 @@ struct PushConstantElement
     float bloomStrength;
 };
 CONSTANTS(g_constants, PushConstantElement)
-
 
 float4 main(VS_OUT input) : SV_TARGET
 {
@@ -62,7 +62,7 @@ float4 main(VS_OUT input) : SV_TARGET
     hdr += g_constants.bloomStrength * bloom.rgb;
     
     // Magic number
-    if (hdrAlpha < 9.f)
+    if (hdrAlpha < MAGIC_WEAPON_ALPHA_TAG)
         hdr += outline;
     
     float3 ldr = reinhard_jodie(hdr); // tone mapping
