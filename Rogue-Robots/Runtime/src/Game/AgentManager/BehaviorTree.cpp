@@ -202,7 +202,16 @@ Root::Root(const std::string& name) noexcept
 
 void Root::Process(DOG::entity agent) noexcept
 {
-	GetChild()->Process(agent);
+	if (!processed)
+	{
+		processed = true;
+		GetChild()->Process(agent);
+	}
+	else
+	{
+		processed = false;
+		DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
+	}
 }
 
 Leaf::Leaf(const std::string& name) noexcept
@@ -227,14 +236,16 @@ DetectPlayerNode::DetectPlayerNode(const std::string& name) noexcept
 
 void DetectPlayerNode::Process(DOG::entity agent) noexcept
 {
-	if (!DOG::EntityManager::Get().HasComponent<BTAttackComponent>(agent))
+	bool forceSucced = DOG::EntityManager::Get().HasComponent<BTAttackComponent>(agent) || DOG::EntityManager::Get().HasComponent<AgentAggroComponent>(agent);
+
+	if (forceSucced)
 	{
-		DOG::EntityManager::Get().AddComponent<BTDetectPlayerComponent>(agent);
-		DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
+		ForceSucceed(agent);
 	}
 	else
 	{
-		ForceSucceed(agent);
+		DOG::EntityManager::Get().AddComponent<BTDetectPlayerComponent>(agent);
+		DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
 	}
 }
 

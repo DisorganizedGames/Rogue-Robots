@@ -110,7 +110,7 @@ class AgentMovementSystem : public DOG::ISystem
 public:
 	SYSTEM_CLASS(BTMoveToPlayerComponent, BehaviorTreeComponent, AgentMovementComponent, PathfinderWalkComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
 	ON_LATE_UPDATE_ID(BTMoveToPlayerComponent, BehaviorTreeComponent, AgentMovementComponent, PathfinderWalkComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
-	void OnLateUpdate(entity e, BTMoveToPlayerComponent&, BehaviorTreeComponent& btc, 
+	void OnLateUpdate(DOG::entity e, BTMoveToPlayerComponent&, BehaviorTreeComponent& btc, 
 		AgentMovementComponent& movement, PathfinderWalkComponent& pfc,
 		DOG::RigidbodyComponent& rb, DOG::TransformComponent& trans);
 };
