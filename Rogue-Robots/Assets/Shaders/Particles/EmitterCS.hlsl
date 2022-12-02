@@ -80,6 +80,10 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 				InterlockedAdd(g_spawned, 1);
 
 			}
+			else
+			{
+				break;
+			}
 		}
 	}
 

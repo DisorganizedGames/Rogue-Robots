@@ -36,7 +36,9 @@ PS_IN main(uint vID: SV_VertexID, uint iID: SV_InstanceID)
 	
 	output.particleID = iID;
 
-	if (iID >= aliveCounter[0])
+	Particle p = particleBuffer[iID];
+
+	if (p.alive == 0)
 	{
 		output.pos = float4(0, 0, 0, 1);
 		output.tex = float2(0, 0);
@@ -47,7 +49,6 @@ PS_IN main(uint vID: SV_VertexID, uint iID: SV_InstanceID)
 	float3 camRight = viewMatrix[0].xyz;
 	float3 camUp = viewMatrix[1].xyz;
 
-	Particle p = particleBuffer[iID];
 	output.pos = float4(p.pos, 1);
 
 	float4 rightOffset = float4(camRight, 0) * p.size;

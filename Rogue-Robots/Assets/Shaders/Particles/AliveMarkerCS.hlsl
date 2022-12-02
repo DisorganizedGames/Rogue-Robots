@@ -24,7 +24,7 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 
 	uint emitterIndex = particleBuffer[globalID].emitterHandle + g_constants.localEmitterTableOffset;
 	
-	if (particleBuffer[globalID].age >= emitterBuffer[emitterIndex].lifetime || globalID >= aliveCounter[0])
+	if (globalID >= aliveCounter[0] /*|| particleBuffer[globalID].age >= emitterBuffer[emitterIndex].lifetime*/)
 	{
 		particleBuffer[globalID].alive = 0;
 	}

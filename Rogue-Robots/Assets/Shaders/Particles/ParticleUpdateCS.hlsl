@@ -36,10 +36,11 @@ void main(uint globalID : SV_DispatchThreadID, uint3 threadID : SV_GroupThreadID
 	
 	uint alive = aliveCounter[0];
 	
-    if (globalID >= alive)
-        return;
-	
 	Particle p = particleBuffer[globalID];
+	
+	if (p.alive == 0)
+		return;
+	
 	Emitter e = emitterBuffer[p.emitterHandle + g_constants.localEmitterTableOffset];
 	
 	p.age += perFrame.deltaTime;
