@@ -149,15 +149,6 @@ void PlayerMovementSystem::OnEarlyUpdate(
 			spectatorCameraTransform.worldMatrix = spectatedCameraTransform.worldMatrix;
 
 			spectatorCameraComponent.isMainCamera = true;
-			Vector3 pos = {};
-			if (mgr.HasComponent<MixamoHeadJointTF>(playerBeingSpectated))
-			{
-				auto offset = DirectX::XMMatrixTranslation(0.f, -5.f, 0.f);
-				auto headTF = Matrix(offset) * mgr.GetComponent<MixamoHeadJointTF>(e).transform;
-				pos = { headTF(3, 0), headTF(3, 1), headTF(3, 2) };
-				pos += Vector3(0.f, -0.5f, 0.f);
-			}
-			spectatorCameraTransform.SetPosition(pos);
 			mgr.GetComponent<CameraComponent>(player.cameraEntity).isMainCamera = false;
 			if (mgr.Exists(player.debugCamera))
 			{
