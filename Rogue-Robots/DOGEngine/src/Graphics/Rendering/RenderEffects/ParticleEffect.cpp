@@ -29,7 +29,7 @@ ParticleEffect::ParticleEffect(GlobalEffectData& globalEffectData, RGResourceMan
 	auto aliveMarkerShader = shaderCompiler->CompileFromFile("Particles/AliveMarkerCS.hlsl", ShaderType::Compute);
 	m_aliveMarkerPipeline = device->CreateComputePipeline(ComputePipelineDesc(aliveMarkerShader.get()));
 
-	auto updateShader = shaderCompiler->CompileFromFile("Particles/BasicUpdateCS.hlsl", ShaderType::Compute);
+	auto updateShader = shaderCompiler->CompileFromFile("Particles/ParticleUpdateCS.hlsl", ShaderType::Compute);
 	m_updatePipeline = device->CreateComputePipeline(ComputePipelineDesc(updateShader.get())); 
 	
 	auto sortShader = shaderCompiler->CompileFromFile("Particles/ParticleSortCS.hlsl", ShaderType::Compute);

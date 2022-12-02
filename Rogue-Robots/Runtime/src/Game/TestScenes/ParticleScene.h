@@ -18,6 +18,7 @@ private:
 
 private:
 	void ParticleSystemMenu(bool& open);
+	void SpawnParticleSystem();
 
 	template<class T>
 	inline void SwitchToComponent();

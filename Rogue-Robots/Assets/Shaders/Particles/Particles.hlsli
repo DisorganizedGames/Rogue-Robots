@@ -24,6 +24,7 @@ enum class ParticleSpawnType : u8
 #define BEHAVIOR_GRAVITY_POINT		2
 #define BEHAVIOR_GRAVITY_DIRECTION	3
 #define BEHAVIOR_CONST_VELOCITY		4
+#define BEHAVIOR_DEFAULT			0xFF
 
 struct Particle
 {

@@ -32,23 +32,7 @@ void ParticleScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 	}
 
 	//Particle system
-	{ 
-		m_particleSystem = CreateEntity();
-		AddComponent<TransformComponent>(m_particleSystem, Vector3(0, 0, 0));
-		auto& em = AddComponent<ParticleEmitterComponent>(m_particleSystem);
-		em = {
-			.spawnRate = 2048.f,
-			.particleSize = 0.1f,
-			.particleLifetime = 0.5f,
-			.startColor = Vector4(1, 0, 0, 0.5),
-			.endColor = Vector4(0, 0, 1, 0.5),
-		};
-
-		AddComponent<ConeSpawnComponent>(m_particleSystem) = {
-			.angle = XM_PIDIV4,
-			.speed = 10.f,
-		};
-	}
+	SpawnParticleSystem();
 
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("ParticleSystemMenu", [this](bool& open) { ParticleSystemMenu(open); });
 }
@@ -79,21 +63,7 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 				toggled = !toggled;
 				if (toggled)
 				{
-					m_particleSystem = CreateEntity();
-					AddComponent<TransformComponent>(m_particleSystem, Vector3(0, 0, 0));
-					auto& em = AddComponent<ParticleEmitterComponent>(m_particleSystem);
-					em = {
-						.spawnRate = 64.f,
-						.particleSize = 0.1f,
-						.particleLifetime = 0.5f,
-						.startColor = Vector4(1, 0, 0, 1),
-						.endColor = Vector4(0, 0, 1, 1),
-					};
-
-						AddComponent<ConeSpawnComponent>(m_particleSystem) = {
-						.angle = XM_PIDIV4,
-						.speed = 10.f,
-					};
+					SpawnParticleSystem();
 				}
 				else
 				{
@@ -207,6 +177,29 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 		ImGui::End();
 	}
 
+}
+
+void ParticleScene::SpawnParticleSystem()
+{
+	m_particleSystem = CreateEntity();
+	AddComponent<TransformComponent>(m_particleSystem, Vector3(0, 0, 0));
+	auto& em = AddComponent<ParticleEmitterComponent>(m_particleSystem);
+	em = {
+		.spawnRate = 2048.f,
+		.particleSize = 0.1f,
+		.particleLifetime = 0.5f,
+		.startColor = Vector4(1, 0, 0, 0.5),
+		.endColor = Vector4(0, 0, 1, 0.5),
+	};
+
+	AddComponent<ConeSpawnComponent>(m_particleSystem) = {
+		.angle = XM_PIDIV4,
+		.speed = 10.f,
+	};
+
+	AddComponent<GravityBehaviorComponent>(m_particleSystem) = {
+		.gravity = -1.f,
+	};
 }
 
 void ParticleScene::ConeSettings()
