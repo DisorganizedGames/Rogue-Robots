@@ -14,7 +14,7 @@ PlayMusicSystem::PlayMusicSystem()
 	AudioComponent& ambienceAudioComponent = EntityManager::Get().AddComponent<AudioComponent>(m_ambienceMusicEntity);
 	ambienceAudioComponent.assetID = m_ambienceSong;
 	ambienceAudioComponent.shouldPlay = true;
-	ambienceAudioComponent.volume = 1.0f;
+	ambienceAudioComponent.volume = AMBIENT_MUSIC_VOLUME;
 	ambienceAudioComponent.loopStart = 0.0f;
 	ambienceAudioComponent.loopEnd = -1.0f;
 	ambienceAudioComponent.loop = true;
@@ -42,7 +42,7 @@ void PlayMusicSystem::OnUpdate(MusicPlayer& musicPlayer)
 	bool foundAggro = false;
 	EntityManager::Get().Collect<AgentAggroComponent>().Do([&](AgentAggroComponent) {
 		foundAggro = true;
-		actionAudioComponent.volume = 1.0f;
+		actionAudioComponent.volume = ACTION_MUSIC_VOLUME;
 		ambienceAudioComponent.volume = 0.0f;
 		m_timerForActionToContinue = -1.0f;
 		});
@@ -57,22 +57,22 @@ void PlayMusicSystem::OnUpdate(MusicPlayer& musicPlayer)
 
 	if (foundAggro)
 	{
-		actionAudioComponent.volume = 1.0f;
+		actionAudioComponent.volume = ACTION_MUSIC_VOLUME;
 		ambienceAudioComponent.volume = 0.0f;
 
 		m_timerForActionToContinue = -1.0f;
 
 		shouldPlayAction = true;
 	}
-	else if (!foundAggro && m_timerForActionToContinue <= Time::ElapsedTime() && shouldPlayAction)
+	else if (!foundAggro && m_timerForActionToContinue <= (f32)Time::ElapsedTime() && shouldPlayAction)
 	{
 		if (m_timerForActionToContinue < 0.0f)
 		{
-			m_timerForActionToContinue = TIME_FOR_AFTER_AGGRO + Time::ElapsedTime();
+			m_timerForActionToContinue = TIME_FOR_AFTER_AGGRO + (f32)Time::ElapsedTime();
 			return;
 		}
 
-		actionAudioComponent.volume -= 0.2f * Time::DeltaTime();
+		actionAudioComponent.volume -= 0.2f * (f32)Time::DeltaTime();
 		if (actionAudioComponent.volume <= 0.0f)
 		{
 			actionAudioComponent.volume = 0.0f;
@@ -81,18 +81,17 @@ void PlayMusicSystem::OnUpdate(MusicPlayer& musicPlayer)
 			shouldPlayAction = false;
 		}
 	}
-	else if (m_timerForAmbientMusic <= Time::ElapsedTime())
+	else if (m_timerForAmbientMusic <= (f32)Time::ElapsedTime())
 	{
+		ambienceAudioComponent.volume = 0.0f;
 		if (!playAmbience)
 		{
-			m_timerForAmbientMusic = Time::ElapsedTime() + WAIT_TIME_FOR_AMBIENT_MUSIC;
-			ambienceAudioComponent.volume = 0.0f;
+			m_timerForAmbientMusic = (f32)Time::ElapsedTime() + WAIT_TIME_FOR_AMBIENT_MUSIC;
 			playAmbience = true;
 		}
 		else
 		{
-			m_timerForAmbientMusic = Time::ElapsedTime() + PLAY_TIME_FOR_AMBIENT_MUSIC;
-			ambienceAudioComponent.volume = 0.0f;
+			m_timerForAmbientMusic = (f32)Time::ElapsedTime() + PLAY_TIME_FOR_AMBIENT_MUSIC;
 			playAmbience = false;
 		}
 	}
@@ -100,17 +99,17 @@ void PlayMusicSystem::OnUpdate(MusicPlayer& musicPlayer)
 	{
 		const float lerpValue = 5.0f;
 
-		if (!playAmbience && m_timerForAmbientMusic - Time::ElapsedTime() <= lerpValue)
+		if (!playAmbience && m_timerForAmbientMusic - (f32)Time::ElapsedTime() <= lerpValue)
 		{
-			ambienceAudioComponent.volume = (m_timerForAmbientMusic - Time::ElapsedTime()) / lerpValue;
+			ambienceAudioComponent.volume = AMBIENT_MUSIC_VOLUME * (m_timerForAmbientMusic - (f32)Time::ElapsedTime()) / lerpValue;
 		}
-		else if (!playAmbience && m_timerForAmbientMusic - Time::ElapsedTime() > PLAY_TIME_FOR_AMBIENT_MUSIC - lerpValue)
+		else if (!playAmbience && m_timerForAmbientMusic - (f32)Time::ElapsedTime() > PLAY_TIME_FOR_AMBIENT_MUSIC - lerpValue)
 		{
-			ambienceAudioComponent.volume = 1.0f - (m_timerForAmbientMusic - Time::ElapsedTime() - (PLAY_TIME_FOR_AMBIENT_MUSIC - lerpValue)) / lerpValue;
+			ambienceAudioComponent.volume = AMBIENT_MUSIC_VOLUME * (1.0f - (m_timerForAmbientMusic - (f32)Time::ElapsedTime() - (PLAY_TIME_FOR_AMBIENT_MUSIC - lerpValue)) / lerpValue);
 		}
 		else if (!playAmbience)
 		{
-			ambienceAudioComponent.volume = 1.0f;
+			ambienceAudioComponent.volume = AMBIENT_MUSIC_VOLUME;
 		}
 		else
 		{

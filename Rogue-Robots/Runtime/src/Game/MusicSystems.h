@@ -16,6 +16,9 @@ private:
 	f32 m_timerForActionToContinue;
 	bool shouldPlayAction = false;
 
+	static constexpr f32 AMBIENT_MUSIC_VOLUME = 0.7f;
+	static constexpr f32 ACTION_MUSIC_VOLUME = 0.7f;
+
 	DOG::entity m_ambienceMusicEntity;
 	DOG::entity m_actionMusicEntity;
 

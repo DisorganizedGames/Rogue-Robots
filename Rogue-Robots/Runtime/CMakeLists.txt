@@ -45,7 +45,8 @@ set(SourceFiles
 	"src/Game/PlayerEquipmentFunctions.h" "src/Game/PlayerEquipmentFunctions.cpp"
 	"src/Game/GoalRadarSystem.h" "src/Game/GoalRadarSystem.cpp"
 	"src/Game/InGameMenu.h" "src/Game/InGameMenu.cpp"
-	 "src/Game/MusicSystems.h" "src/Game/MusicSystems.cpp")
+	"src/Game/MusicSystems.h" "src/Game/MusicSystems.cpp"
+)
 
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")
