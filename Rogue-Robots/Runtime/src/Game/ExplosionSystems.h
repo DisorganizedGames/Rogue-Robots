@@ -12,7 +12,6 @@ public:
 
 class ExplosionEffectSystem : public DOG::ISystem
 {
-
 public:
 	
 	ExplosionEffectSystem();
