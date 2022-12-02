@@ -120,12 +120,14 @@ void AgentManager::Initialize()
 
 	// Register agent systems
 	EntityManager& em = EntityManager::Get();
-	em.RegisterSystem(std::make_unique<AgentSeekPlayerSystem>());
-	em.RegisterSystem(std::make_unique<AgentMovementSystem>());
+	em.RegisterSystem(std::make_unique<AgentBehaviorTreeSystem>());
+	em.RegisterSystem(std::make_unique<AgentDetectPlayerSystem>());
+	em.RegisterSystem(std::make_unique<AgentAggroSystem>());
 	em.RegisterSystem(std::make_unique<AgentAttackSystem>());
+
+	em.RegisterSystem(std::make_unique<AgentMovementSystem>()); //Is LATE System
 	em.RegisterSystem(std::make_unique<AgentHitDetectionSystem>());
 	em.RegisterSystem(std::make_unique<AgentHitSystem>());
-	em.RegisterSystem(std::make_unique<AgentAggroSystem>());
 	em.RegisterSystem(std::make_unique<AgentFrostTimerSystem>());
 	em.RegisterSystem(std::make_unique<AgentFireTimerSystem>());
 	em.RegisterSystem(std::make_unique<AgentDestructSystem>());
@@ -267,7 +269,6 @@ void AgentManager::Initialize()
 	//}
 	
 
-
 	// Set status to initialized
 	s_notInitialized = false;
 }
@@ -317,6 +318,13 @@ entity AgentManager::CreateAgentCore(u32 model, u32 groupID, const Vector3& pos,
 	// Should this component exist on ALL agents or is it only related to networking?
 	if (!em.HasComponent<ShadowReceiverComponent>(e))
 		em.AddComponent<ShadowReceiverComponent>(e);
+
+	switch (type)
+	{
+	case EntityTypes::Scorpio:
+		CreateScorpioBehaviourTree(e);
+		break;
+	}
 
 	return e;
 }

@@ -16,7 +16,7 @@ struct BTDetectPlayerComponent
 	//ID
 };
 
-struct BTSignalGroupComponent
+struct BTAggroComponent
 {
 	//ID
 };
