@@ -1055,7 +1055,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(lobbyID, std::move(hostBack));
    instance->AddUIElementToScene(WaitingForHostID, std::move(clientBack));
    instance->AddUIElementToScene(WaitingForHostID, std::move(l4));
-   instance->AddUIElementToScene(WaitingForHostID, std::move(l5));
+   instance->AddUIElementToScene(gameID, std::move(l5));
    instance->AddUIElementToScene(WaitingForHostID, std::move(l6));
 
    //Splash screen
