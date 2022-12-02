@@ -338,6 +338,8 @@ namespace DOG
 		u32 emitterIndex{ static_cast<u32>(-1) }; // DO NOT TOUCH (used internally)
 	};
 
+	// --- SPAWN TYPES ---
+
 	// Tells particles to spawn in a Cone with its tip on the entity's transform
 	struct ConeSpawnComponent
 	{
@@ -370,6 +372,29 @@ namespace DOG
 		void Center(Vector3 c);
 		Vector3 Extents();
 		void Extents(Vector3 ext);
+	};
+
+	// --- BEHAVIOR TYPES ---
+	struct GravityBehaviorComponent
+	{
+		f32 gravity = 9.82f;
+	};
+
+	struct NoGravityBehaviorComponent {};
+
+	struct GravityPointBehaviorComponent
+	{
+		DirectX::SimpleMath::Vector3 point = { 0.f, 0.f, 0.f };
+	};
+
+	struct GravityDirectionBehaviorComponent
+	{
+		DirectX::SimpleMath::Vector3 direction = { 0.f, -1.f, 0.f }; // Will be normalized
+	};
+
+	struct ConstVelocityBehaviorComponent
+	{
+		DirectX::SimpleMath::Vector3 direction = { 0.f, 1.f, 0.f }; // Will be normalized
 	};
 
 #pragma endregion

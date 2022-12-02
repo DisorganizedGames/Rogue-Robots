@@ -19,6 +19,12 @@ enum class ParticleSpawnType : u8
 #define PARTICLE_SPAWN_AABB 2
 #define PARTICLE_SPAWN_DEFAULT 255
 
+#define BEHAVIOR_GRAVITY			0
+#define BEHAVIOR_NO_GRAVITY			1
+#define BEHAVIOR_GRAVITY_POINT		2
+#define BEHAVIOR_GRAVITY_DIRECTION	3
+#define BEHAVIOR_CONST_VELOCITY		4
+
 struct Particle
 {
 	uint emitterHandle;
@@ -51,6 +57,9 @@ struct Emitter
 	
 	float4 startColor;
 	float4 endColor;
+	
+	uint behavior;
+	float bopt1, bopt2, bopt3;
 	
 	uint2 pad;
 };

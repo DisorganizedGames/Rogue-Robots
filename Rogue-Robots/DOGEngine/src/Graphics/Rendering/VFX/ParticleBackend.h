@@ -12,6 +12,17 @@ namespace DOG::gfx
 
 		Default = 0xFF,
 	};
+	
+	enum class ParticleBehaviorType : u8
+	{
+		Gravity = 0,
+		NoGravity = 1,
+		GravityPoint = 2,
+		GravityDirection = 3,
+		ConstVelocity = 4,
+
+		Default = 0xFF,
+	};
 
 	struct ParticleEmitter
 	{
@@ -35,7 +46,12 @@ namespace DOG::gfx
 		DirectX::SimpleMath::Vector4 startColor;
 		DirectX::SimpleMath::Vector4 endColor;
 
-		u32 pad[2] = { 0 };
+		u32 behavior = 0;
+		f32 bopt1 = 0;
+		f32 bopt2 = 0;
+		f32 bopt3 = 0;
+
+		u32 pad[2] = {0};
 	};
 	
 	class ParticleBackend
