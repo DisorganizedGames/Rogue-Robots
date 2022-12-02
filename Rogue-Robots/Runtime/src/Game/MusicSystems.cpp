@@ -49,10 +49,13 @@ void PlayMusicSystem::OnUpdate(MusicPlayer& musicPlayer)
 
 	if (musicPlayer.inMainMenu)
 	{
-		playAmbience = false;
-		m_timerForAmbientMusic = PLAY_TIME_FOR_AMBIENT_MUSIC / 2.0f;
+		playAmbience = true;
+		m_timerForAmbientMusic = 0.0f;
 		actionAudioComponent.volume = 0.0f;
+		ambienceAudioComponent.volume = AMBIENT_MUSIC_VOLUME;
+		musicPlayer.inMainMenu = false;
 		shouldPlayAction = false;
+		return;
 	}
 
 	if (foundAggro)
@@ -116,6 +119,4 @@ void PlayMusicSystem::OnUpdate(MusicPlayer& musicPlayer)
 			ambienceAudioComponent.volume = 0.0f;
 		}
 	}
-
-	musicPlayer.inMainMenu = false;
 }
