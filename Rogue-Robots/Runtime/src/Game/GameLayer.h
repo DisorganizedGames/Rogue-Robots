@@ -100,7 +100,7 @@ private:
 	//Win condition
 	DirectX::SimpleMath::Vector3 m_exitPosition = DirectX::SimpleMath::Vector3(-1.0f, -1.0f, -1.0f);
 
-	bool m_imguiRenderPlayer = false;
+	bool m_imguiRenderPlayer = true;
 	bool m_syncFrame = false;
 	int m_nrOfFramesToWait = 300;
 

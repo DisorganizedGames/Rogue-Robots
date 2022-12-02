@@ -42,7 +42,9 @@ namespace DOG
 	{
 		static constexpr i32 NOT_FOUND = -1;
 		f32 startingTime = set.nTotalClips && looping ? set.clips[0].normalizedTime : 0.f;
-
+		if (!HasLooping(setter.flag) && HasInterrupt(setter.flag))
+			set.nTargets = set.nTotalClips = 0;
+		
 		for (u32 i = 0; i < clipCount; ++i)
 		{
 			const auto clipIdx = GetClipIndex(set, setter.animationIDs[i]);

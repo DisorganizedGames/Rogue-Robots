@@ -141,18 +141,18 @@ namespace DOG
 
 		return *this;
 	}
-	void AnimationComponent::SimpleAdd(i8 animationId, AnimationFlag flags, u32 priority)
+	void AnimationComponent::SimpleAdd(i8 animationId, AnimationFlag flags, u32 priority, u32 group, f32 playbackRate, f32 transitionLen)
 	{
 		if (addedSetters < MAX_SETTERS)
 		{
 			auto& setter = animSetters[addedSetters++];
 			setter.animationIDs[0] = animationId;
-			setter.group = 0;
+			setter.group = static_cast<u8>(group);
 			setter.targetWeights[0] = 1.f;
-			setter.playbackRate = 1.f;
+			setter.playbackRate = playbackRate;
 			setter.priority = static_cast<u8>(priority);
 			setter.flag = flags | AnimationFlag::SimpleAdd;
-			setter.transitionLength = 0.5f;
+			setter.transitionLength = transitionLen;
 		}
 	}
 
