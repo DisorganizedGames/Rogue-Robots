@@ -36,6 +36,13 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 	playerModels[2] = am.LoadModelAsset("Assets/Models/P2/Green/player_green.gltf");
 	playerModels[3] = am.LoadModelAsset("Assets/Models/P2/Yellow/player_yellow.gltf");
 	*/
+
+	std::array<u32, 4> playerGunModels = {};
+	playerGunModels[0] = am.LoadModelAsset("Assets/Models/ModularRifle/Maingun.gltf");
+	playerGunModels[1] = am.LoadModelAsset("Assets/Models/ModularRifle/Maingun.gltf");
+	/*playerGunModels[2] = am.LoadModelAsset("Assets/Models/ModularRifle/Maingun.gltf");
+	playerGunModels[3] = am.LoadModelAsset("Assets/Models/ModularRifle/Maingun.gltf");*/
+
 	std::array<DirectX::SimpleMath::Vector3, 4> playerOutlineColors
 	{
 		DirectX::SimpleMath::Vector3{ 1.f, 0.f, 0.f },
@@ -74,6 +81,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		em.AddComponent<AnimationComponent>(playerI);
 		em.AddComponent<AudioComponent>(playerI);
 		em.AddComponent<MixamoHeadJointTF>(playerI);
+		em.AddComponent<MixamoImguiJointTF>(playerI);
 
 		auto& ac = em.GetComponent<AnimationComponent>(playerI);
 		ac.animatorID = static_cast<i8>(i);
@@ -88,25 +96,32 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		em.AddComponent<MagazineModificationComponent>(playerI).type = MagazineModificationComponent::Type::None;
 		em.AddComponent<MiscComponent>(playerI).type = MiscComponent::Type::Basic;
 
-		entity modelEntity = em.CreateEntity();
+		entity playerModelEntity = em.CreateEntity();
 
-		em.AddComponent<TransformComponent>(modelEntity);
-		em.AddComponent<ModelComponent>(modelEntity, playerModels[i]);
-		em.AddComponent<RigDataComponent>(modelEntity);
-		em.AddComponent<ShadowReceiverComponent>(modelEntity);
-		em.AddComponent<OutlineComponent>(modelEntity, playerOutlineColors[i]);
+		em.AddComponent<TransformComponent>(playerModelEntity);
+		em.AddComponent<ModelComponent>(playerModelEntity, playerModels[i]);
+		em.AddComponent<RigDataComponent>(playerModelEntity);
+		em.AddComponent<ShadowReceiverComponent>(playerModelEntity);
+		em.AddComponent<OutlineComponent>(playerModelEntity, playerOutlineColors[i]);
 
 
-		auto& rc = em.GetComponent<RigDataComponent>(modelEntity);
+		auto& rc = em.GetComponent<RigDataComponent>(playerModelEntity);
 		rc.offset = i * MIXAMO_RIG.nJoints;
 
-		auto& t = em.AddComponent<ChildComponent>(modelEntity);
+		auto& t = em.AddComponent<ChildComponent>(playerModelEntity);
 		t.parent = playerI;
 		t.localTransform.SetPosition({0.0f, -0.5f, 0.0f});
 
+		/*entity gunModelEntity = em.CreateEntity();
+		em.AddComponent<TransformComponent>(gunModelEntity);
+		em.AddComponent<ModelComponent>(gunModelEntity, playerGunModels[i]);
+		em.AddComponent<ShadowReceiverComponent>(playerModelEntity);
+		em.AddComponent<OutlineComponent>(gunModelEntity, playerOutlineColors[i]);*/
+
 		if (i == 0) // Only for this player
 		{
-			em.AddComponent<DontDraw>(modelEntity);
+			//em.AddComponent<DontDraw>(gunModelEntity);
+			em.AddComponent<DontDraw>(playerModelEntity);
 			em.AddComponent<ThisPlayer>(playerI);
 			em.AddComponent<AudioListenerComponent>(playerI);
 		}
@@ -183,6 +198,33 @@ std::vector<entity> AddFlashlightsToPlayers(const std::vector<entity>& players)
 		flashlights.push_back(flashLightEntity);
 	}
 	return flashlights;
+}
+
+std::vector<entity> AddGunsToPlayers(const std::vector<entity>& players)
+{
+	auto& em = EntityManager::Get();
+	auto& am = AssetManager::Get();
+
+	std::vector<entity> guns;
+	for (auto i = 0; i < players.size(); ++i)
+	{
+		entity gunEntity = em.CreateEntity();
+
+		em.AddComponent<DOG::TransformComponent>(gunEntity);
+		em.AddComponent<ModelComponent>(gunEntity, am.LoadModelAsset("Assets/Models/ModularRifle/Maingun.gltf"));
+		em.AddComponent<ShadowReceiverComponent>(gunEntity);
+
+		ChildToBoneComponent& childComponent = em.AddComponent<ChildToBoneComponent>(gunEntity);
+		childComponent.boneParent = players[i];
+
+		auto objTra = XMMatrixTranslation(73, 117, -45);
+		auto objRot = XMMatrixRotationRollPitchYaw(4 * XM_PI/180.f, 190 * XM_PI / 180.f, 91 * XM_PI / 180.f);
+		auto objSca = XMMatrixScaling(200, 120.f, 145.f);
+		auto gunBoneSpaceOffset = objSca * objRot * objTra;
+		childComponent.localTransform.worldMatrix = Matrix(gunBoneSpaceOffset);
+		guns.push_back(gunEntity);
+	}
+	return guns;
 }
 
 entity SpawnTurretProjectile(const DirectX::SimpleMath::Matrix& transform, float speed, float dmg, float lifeTime, DOG::entity turret, DOG::entity owner)

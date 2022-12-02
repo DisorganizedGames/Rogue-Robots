@@ -104,8 +104,8 @@ void PlayerMovementSystem::OnEarlyUpdate(
 		Vector3 pos = {};
 		if (mgr.HasComponent<MixamoHeadJointTF>(e))
 		{
-			auto offset = DirectX::XMMatrixTranslation(0.f, -5.f, 0.f);
-			auto headTF = Matrix(offset) * mgr.GetComponent<MixamoHeadJointTF>(e).transform;
+			auto offset = DirectX::XMMatrixTranslation(0.f, 0.f, 0.f);
+			auto headTF = Matrix(offset) * mgr.GetComponent<MixamoHeadJointTF>(e).transform * mgr.GetComponent<TransformComponent>(e).worldMatrix;
 			pos = { headTF(3, 0), headTF(3, 1), headTF(3, 2) };
 			pos += Vector3(0.f, -0.5f, 0.f);
 		}
@@ -149,15 +149,6 @@ void PlayerMovementSystem::OnEarlyUpdate(
 			spectatorCameraTransform.worldMatrix = spectatedCameraTransform.worldMatrix;
 
 			spectatorCameraComponent.isMainCamera = true;
-			Vector3 pos = {};
-			if (mgr.HasComponent<MixamoHeadJointTF>(playerBeingSpectated))
-			{
-				auto offset = DirectX::XMMatrixTranslation(0.f, -5.f, 0.f);
-				auto headTF = Matrix(offset) * mgr.GetComponent<MixamoHeadJointTF>(e).transform;
-				pos = { headTF(3, 0), headTF(3, 1), headTF(3, 2) };
-				pos += Vector3(0.f, -0.5f, 0.f);
-			}
-			spectatorCameraTransform.SetPosition(pos);
 			mgr.GetComponent<CameraComponent>(player.cameraEntity).isMainCamera = false;
 			if (mgr.Exists(player.debugCamera))
 			{
@@ -1354,10 +1345,24 @@ void SetFlashLightToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& ch
 	auto& em = EntityManager::Get();
 	if (em.Exists(child.boneParent))
 	{
-		auto offset = DirectX::XMMatrixTranslationFromVector({ -8.f, -7.5f, -0.1f });
-		auto& boneHeadWorld = em.GetComponent<MixamoHeadJointTF>(child.boneParent);
-		world.worldMatrix = Matrix(offset) * boneHeadWorld.transform;
+		auto offset = DirectX::XMMatrixTranslationFromVector({ 90.f, 130.f, -45.f });
+		auto& boneHeadModel = em.GetComponent<MixamoHeadJointTF>(child.boneParent);
+		world.worldMatrix = Matrix(offset) * boneHeadModel.transform * em.GetComponent<TransformComponent>(child.boneParent).worldMatrix;
 		world.SetPosition(world.GetPosition() + Vector3(0.f, -0.5f, 0.f));
+	}
+	else
+	{
+		em.DeferredEntityDestruction(e);
+	}
+}
+
+void SetGunToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& child, DOG::TransformComponent& world)
+{
+	auto& em = EntityManager::Get();
+	if (em.Exists(child.boneParent))
+	{
+		world.worldMatrix = child.localTransform * em.GetComponent<MixamoImguiJointTF>(child.boneParent).transform * em.GetComponent<TransformComponent>(child.boneParent).worldMatrix;
+		world.SetPosition(world.GetPosition() + Vector3(0.f, -0.5f, 0.f)); // account for model capsule offset
 	}
 	else
 	{
