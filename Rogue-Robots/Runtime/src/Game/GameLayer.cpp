@@ -97,6 +97,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<DeferredSetIgnoreCollisionCheckSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerUseEquipmentSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<GoalRadarSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<RemoveBulletComponentSystem>());
 
 	m_entityManager.RegisterSystem(std::make_unique<WeaponPointLightSystem>());
 
