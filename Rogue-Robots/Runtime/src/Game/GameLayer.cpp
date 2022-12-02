@@ -157,6 +157,7 @@ void GameLayer::OnUpdate()
 		case GameState::None:
 			break;
 		case GameState::MainMenu:
+			m_entityManager.Collect<MusicPlayer>().Do([&](MusicPlayer& musicPlayer) {musicPlayer.inMainMenu = true; });
 			break;
 		case GameState::Initializing:
 			m_gameState = GameState::MainMenu;

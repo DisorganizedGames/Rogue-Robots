@@ -399,5 +399,5 @@ struct DeferredSetIgnoreCollisionCheckComponent
 
 struct MusicPlayer
 {
-
+	bool inMainMenu = true;
 };

@@ -34,7 +34,7 @@ PlayMusicSystem::PlayMusicSystem()
 	shouldPlayAction = false;
 }
 
-void PlayMusicSystem::OnUpdate(MusicPlayer&)
+void PlayMusicSystem::OnUpdate(MusicPlayer& musicPlayer)
 {
 	AudioComponent& actionAudioComponent = EntityManager::Get().GetComponent<AudioComponent>(m_actionMusicEntity);
 	AudioComponent& ambienceAudioComponent = EntityManager::Get().GetComponent<AudioComponent>(m_ambienceMusicEntity);
@@ -46,6 +46,14 @@ void PlayMusicSystem::OnUpdate(MusicPlayer&)
 		ambienceAudioComponent.volume = 0.0f;
 		m_timerForActionToContinue = -1.0f;
 		});
+
+	if (musicPlayer.inMainMenu)
+	{
+		playAmbience = false;
+		m_timerForAmbientMusic = PLAY_TIME_FOR_AMBIENT_MUSIC / 2.0f;
+		actionAudioComponent.volume = 0.0f;
+		shouldPlayAction = false;
+	}
 
 	if (foundAggro)
 	{
@@ -109,4 +117,6 @@ void PlayMusicSystem::OnUpdate(MusicPlayer&)
 			ambienceAudioComponent.volume = 0.0f;
 		}
 	}
+
+	musicPlayer.inMainMenu = false;
 }
