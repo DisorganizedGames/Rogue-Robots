@@ -80,7 +80,10 @@ function OnStart()
 	Entity:AddComponent(magazineEntityID, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
 	Entity:AddComponent(magazineEntityID, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
 
+	local outlineColor = Entity:GetOutlineColor(EntityID)
+	-- Add shit
 	if (Entity:HasComponent(EntityID, "ThisPlayer")) then
+
 		Entity:AddComponent(gunID, "ThisPlayerWeapon")
 		--To be fixed later hopefully
 		Entity:AddComponent(barrelEntityID, "ThisPlayerWeapon")
@@ -88,6 +91,11 @@ function OnStart()
 		Entity:AddComponent(magazineEntityID, "ThisPlayerWeapon")
 		CreateWeaponLights()
 	end
+
+	Entity:AddComponent(gunID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
+	Entity:AddComponent(barrelEntityID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
+	Entity:AddComponent(miscEntityID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
+	Entity:AddComponent(magazineEntityID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
 
 	-- Initialize base components
 	miscComponent = MiscComponent.BasicShot()

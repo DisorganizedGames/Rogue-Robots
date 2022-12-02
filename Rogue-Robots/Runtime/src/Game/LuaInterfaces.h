@@ -129,6 +129,8 @@ public:
 
 	void SpawnActiveItem(DOG::LuaContext* context);
 
+	void GetOutlineColor(DOG::LuaContext* context);
+
 private:
 	void AddModel(DOG::LuaContext* context, DOG::entity e);
 
@@ -194,6 +196,8 @@ private:
 	void AddGoalRadarComponent(DOG::LuaContext* context, DOG::entity e);
 
 	void AddFireEffectComponent(DOG::LuaContext* context, DOG::entity e);
+
+	void AddOutlineComponent(DOG::LuaContext* context, DOG::entity e);
 
 
 };

@@ -169,6 +169,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddGoalRadarComponent(context, e);
 	}
+	else if (compType == "OutlineComponent")
+	{
+		AddOutlineComponent(context, e);
+	}
 	//Add more component types here.
 	else
 	{
@@ -760,6 +764,17 @@ void EntityInterface::SpawnActiveItem(DOG::LuaContext* context)
 		ItemManager::Get().CreateItem(EntityTypes::Syringe, EntityManager::Get().GetComponent<TransformComponent>(playerId).GetPosition());
 }
 
+void EntityInterface::GetOutlineColor(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	OutlineComponent& oc = EntityManager::Get().GetComponent<OutlineComponent>(e);
+	LuaTable t;
+	t.AddDoubleToTable("r", oc.color.x);
+	t.AddDoubleToTable("g", oc.color.y);
+	t.AddDoubleToTable("b", oc.color.z);
+	context->ReturnTable(t);
+}
+
 void EntityInterface::AddAudio(LuaContext* context, entity e)
 {
 	auto assetID = context->GetInteger();
@@ -1235,6 +1250,15 @@ void EntityInterface::AddFireEffectComponent(DOG::LuaContext* context, DOG::enti
 	EntityManager::Get().AddComponent<FireEffectComponent>(e, fireEffectTime, damagePerTick).playerEntityID = EntityManager::Get().GetComponent<BulletComponent>(e).playerEntityID;
 	
 }
+
+void EntityInterface::AddOutlineComponent(DOG::LuaContext* context, DOG::entity e)
+{
+	f32 r = (f32)context->GetDouble();
+	f32 g = (f32)context->GetDouble();
+	f32 b = (f32)context->GetDouble();
+	EntityManager::Get().AddComponent<OutlineComponent>(e).color = { r, g, b };
+}
+
 
 
 void EntityInterface::UpdateMagazine(DOG::LuaContext* context)

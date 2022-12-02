@@ -29,7 +29,10 @@ float4 main(VS_OUT input) : SV_TARGET
     
     
     Texture2D finalTex = ResourceDescriptorHeap[g_constants.finalTexID];
-    float3 hdr = finalTex.Sample(g_bilinear_clamp_samp, input.uv);
+    float4 hdr4 = finalTex.Sample(g_bilinear_clamp_samp, input.uv);
+    float3 hdr = hdr4.rgb;
+    float hdrAlpha = hdr4.a;
+    
     
     float4 ssaoColor = 1.f.rrrr;
     float ssaoContrib = 1.f;
@@ -58,8 +61,9 @@ float4 main(VS_OUT input) : SV_TARGET
     hdr *= ssaoContrib;
     hdr += g_constants.bloomStrength * bloom.rgb;
     
-    
-    hdr += outline;
+    // Magic number
+    if (hdrAlpha < 9.f)
+        hdr += outline;
     
     float3 ldr = reinhard_jodie(hdr); // tone mapping
     //float3 ldr = aces_fitted(hdr); // tone mapping

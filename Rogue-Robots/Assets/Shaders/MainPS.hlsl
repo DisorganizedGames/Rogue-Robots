@@ -489,6 +489,10 @@ PS_OUT main(VS_OUT input)
     {
         output.color.xyz = lerp(output.color.xyz, lightHeatMapValue, 0.5f);
     }
+    if (g_constants.isWeapon)
+    {
+        output.color.a = 10.f;      // Magic number
+    }
     
     return output;
 }
