@@ -322,6 +322,8 @@ entity AgentManager::CreateAgentCore(u32 model, u32 groupID, const Vector3& pos,
 	case EntityTypes::Scorpio:
 		CreateScorpioBehaviourTree(e);
 		break;
+	default:
+		break;
 	}
 
 	return e;

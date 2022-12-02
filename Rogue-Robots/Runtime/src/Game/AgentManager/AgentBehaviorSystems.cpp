@@ -116,41 +116,31 @@ void AgentDetectPlayerSystem::OnEarlyUpdate(entity e, BTDetectPlayerComponent&, 
 ***************************************************/
 
 
-void AgentAttackSystem::OnUpdate(entity e, AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
+void AgentAttackSystem::OnUpdate(entity e, BTAttackComponent&, BehaviorTreeComponent& btc, 
+	AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
 {
-	if (seek.entityID != DOG::NULL_ENTITY && EntityManager::Get().HasComponent<ThisPlayer>(seek.entityID))
+	if (seek.squaredDistance <= attack.radiusSquared && attack.Ready())
 	{
-		if (seek.entityID == DOG::NULL_ENTITY)
-		{
-			EntityManager::Get().RemoveComponent<AgentAttackComponent>(e);
-		}
-		else if (attack.coolDown <= attack.elapsedTime)
-		{
-			// TODO: update a PlayerHitComponent instead and let a PlayerManager handle HP adjustments for players
-			if (seek.squaredDistance < attack.radiusSquared)
-			{ 
-				PlayerStatsComponent& player = EntityManager::Get().GetComponent<PlayerStatsComponent>(seek.entityID);
-				player.health -= attack.damage;
-				attack.elapsedTime = 0.0f;
+		PlayerManager::Get().HurtIfThisPlayer(seek.entityID, attack.damage);
 
+		// Reset cooldown
+		attack.timeOfLast = Time::ElapsedTime();
 
-				if (EntityManager::Get().HasComponent<PlayerAliveComponent>(seek.entityID))
-				{
-					// Add visual effect
-					const auto& pos1 = EntityManager::Get().GetComponent<TransformComponent>(seek.entityID).GetPosition();
-					const auto& pos2 = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
-					auto dir = pos2 - pos1;
-					dir.Normalize();
-
-					DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 2.f, 1.5f);
-				}
-			}
-		}
-		else
+		if (EntityManager::Get().HasComponent<PlayerAliveComponent>(seek.entityID))
 		{
-			attack.elapsedTime = static_cast<f32>(attack.elapsedTime + Time::DeltaTime());
+			// Add visual effect
+			const auto& pos1 = EntityManager::Get().GetComponent<TransformComponent>(seek.entityID).GetPosition();
+			const auto& pos2 = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
+			auto dir = pos2 - pos1;
+			dir.Normalize();
+
+			DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 2.f, 1.5f);
 		}
+
+		LEAF(btc.currentRunningNode)->Succeed(e);
 	}
+	else
+		LEAF(btc.currentRunningNode)->Fail(e);
 }
 
 void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& collision, AgentSeekPlayerComponent& seek)
@@ -356,14 +346,16 @@ void AgentAggroSystem::OnUpdate(DOG::entity e, BTAggroComponent&, AgentAggroComp
 ***************************************************/
 
 
-void AgentMovementSystem::OnLateUpdate(AgentMovementComponent& movement, PathfinderWalkComponent& pfc, RigidbodyComponent& rb, TransformComponent& trans)
+void AgentMovementSystem::OnLateUpdate(entity e, BTMoveToPlayerComponent&, BehaviorTreeComponent& btc, 
+	AgentMovementComponent& movement, PathfinderWalkComponent& pfc, 
+	RigidbodyComponent& rb, TransformComponent& trans)
 {
-
-	if (pfc.path.size() != 0)
+	if (pfc.path.size() == 0)
+		LEAF(btc.currentRunningNode)->Fail(e);
+	else
 	{
 		movement.forward = pfc.path[0] - trans.GetPosition();
 		movement.forward.y = 0.0f;
-
 
 		trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pfc.path[0], Vector3::Up).Invert();
 		movement.forward.Normalize();
@@ -375,6 +367,8 @@ void AgentMovementSystem::OnLateUpdate(AgentMovementComponent& movement, Pathfin
 		movement.forward *= movement.currentSpeed;
 		rb.linearVelocity.x = movement.forward.x;
 		rb.linearVelocity.z = movement.forward.z;
+
+		LEAF(btc.currentRunningNode)->Succeed(e);
 	}
 }
 
