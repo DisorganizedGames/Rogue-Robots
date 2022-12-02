@@ -1,0 +1,42 @@
+--Delete file to reset all options to default (don't run with an empty file, it will not work)
+--Delete rows to reset them to default
+Settings =
+{
+	fullscreen = 0,
+	clientWidth = 1920,
+	clientHeight = 1017,
+	renderResolutionWidth = 2038,
+	renderResolutionHeight = 1080,
+	vsync = false,
+	ssao = true,
+	shadowMapping = true,
+	shadowMapCapacity = 4,
+	bloom = true,
+	bloomTreshold = 1,
+	bloomStrength = 1,
+	lit = true,
+	gamma = 2.22,
+
+	--DXGI_MODE_DESC
+	displayWidth = 1920,
+	displayHeight = 1080,
+	refreshRateNumerator = 60000,
+	refreshRateDenominator = 1000,
+	format = 28,
+	scanLine = 1,
+	scaling = 0,
+
+	--Rendering limits
+	maxStaticPointLights = 512,
+	maxDynamicPointLights = 512,
+	maxSometimesPointLights = 12,
+	maxStaticSpotLights = 12,
+	maxDynamicSpotLights = 12,
+	maxSometimesSpotLights = 12,
+	maxMaterialArgs = 1000,
+	maxTotalSubmeshes = 500,
+	maxNumberOfIndices = 1000000,
+	maxBytesPerAttribute = 4000000,
+	maxHeapUploadSizeDefault = 5000000,
+	maxHeapUploadSizeTextures = 6000000
+}
