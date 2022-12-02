@@ -31,13 +31,19 @@ void ExplosionSystem::OnUpdate(entity e, TransformComponent& explosionTransform,
 	EntityManager::Get().RemoveComponent<ExplosionComponent>(e);
 }
 
-u32 ExplosionEffectSystem::explosionEffectModelID = 0; 
+u32 ExplosionEffectSystem::explosionEffectModelID = 0;
+const char* ExplosionEffectSystem::explosionEffectModelPath = "Assets/Models/Temporary_Assets/Explosion.glb";
+ExplosionEffectSystem::ExplosionEffectSystem()
+{
+	explosionEffectModelID = AssetManager::Get().LoadModelAsset(explosionEffectModelPath);
+}
+
 entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float radius, float growTime, float shrinkTime)
 {
 	if (explosionEffectModelID == 0)
 	{
-		constexpr const char* modelName = "Assets/Models/Temporary_Assets/Explosion.glb";
-		explosionEffectModelID = AssetManager::Get().LoadModelAsset(modelName);
+		// This is a static function and if the constructor has not loaded the asset we will need to do it.
+		explosionEffectModelID = AssetManager::Get().LoadModelAsset(explosionEffectModelPath);
 	}
 
 	entity newEntity = EntityManager::Get().CreateEntity();
