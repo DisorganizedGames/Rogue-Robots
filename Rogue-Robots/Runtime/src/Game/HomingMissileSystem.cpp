@@ -206,13 +206,16 @@ void HomingMissileTargetingSystem::OnUpdate(HomingMissileComponent& missile, DOG
 
 	if (missile.homingTarget == NULL_ENTITY)
 	{
-		EntityManager::Get().Collect<AgentHPComponent, DOG::TransformComponent>().Do([&](entity e, AgentHPComponent&, DOG::TransformComponent& tr)
+		EntityManager::Get().Collect<AgentHPComponent, DOG::TransformComponent>().Do([&](entity e, AgentHPComponent&, DOG::TransformComponent& agentTransform)
 			{
-				float distSquared = Vector3::DistanceSquared(tr.GetPosition(), transform.GetPosition());
+				float distSquared = Vector3::DistanceSquared(agentTransform.GetPosition(), transform.GetPosition());
 				if (distSquared < minDistSquared)
 				{
-					minDistSquared = distSquared;
-					target = e;
+					if (auto hit = PhysicsEngine::RayCast(transform.GetPosition(), agentTransform.GetPosition()); hit && hit->entityHit == e)
+					{
+						minDistSquared = distSquared;
+						target = e;
+					}
 				}
 			});
 		missile.homingTarget = target;
