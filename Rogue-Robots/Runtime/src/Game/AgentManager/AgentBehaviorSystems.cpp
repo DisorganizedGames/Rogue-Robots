@@ -237,6 +237,7 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 			else
 			{
 				FireEffectComponent& fire = EntityManager::Get().AddComponent<FireEffectComponent>(e, fecBullet.fireTimer, fecBullet.fireDamagePerSecond);
+				fire.playerEntityID = fecBullet.playerEntityID;
 
 				fire.particleEntity = EntityManager::Get().CreateEntity();
 
@@ -392,7 +393,7 @@ void AgentFireTimerSystem::OnUpdate(DOG::entity e, AgentHPComponent& hpComponent
 	f32 deltaTime = (f32)Time::DeltaTime();
 
 	fireEffect.fireTimer -= deltaTime;
-	if (fireEffect.fireTimer > 0.0f)
+	if (fireEffect.fireTimer > 0.0f && PlayerManager::Get().GetThisPlayer() == fireEffect.playerEntityID)
 	{
 		hpComponent.hp -= fireEffect.fireDamagePerSecond * deltaTime;
 		hpComponent.damageThisFrame = true;
