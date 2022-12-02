@@ -501,7 +501,7 @@ void GameLayer::UpdateGame()
 		EntityManager::Get().Collect<InputController, AnimationComponent>().Do([&](InputController&, AnimationComponent& ac)
 			{
 				ac.SimpleAdd(static_cast<i8>(MixamoAnimations::BindPose),  AnimationFlag::Interrupt | AnimationFlag::ResetPrio);
-				ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping);
+				ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping | AnimationFlag::Interrupt | AnimationFlag::ResetPrio | AnimationFlag::ForceRestart);
 			});
 		m_syncFrame = false;
 	}

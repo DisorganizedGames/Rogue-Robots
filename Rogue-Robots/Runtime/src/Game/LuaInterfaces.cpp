@@ -718,22 +718,19 @@ void EntityInterface::AddAgentStats(LuaContext* context, entity e)
 void EntityInterface::ModifyAnimationComponent(DOG::LuaContext* context)
 {
 	entity e = context->GetInteger();
-
-	int animID = context->GetInteger();
-	int group = context->GetInteger();
-	float transitionLength = static_cast<f32>(context->GetDouble());
-	float playbackRate = static_cast<f32>(context->GetDouble());
+	i32 animID = context->GetInteger();
+	i32 group = context->GetInteger();
+	i32 priority = context->GetInteger();
+	i32 flags = context->GetInteger();
+	f32 playbackRate = static_cast<f32>(context->GetDouble());
+	f32 transitionLen = static_cast<f32>(context->GetDouble());
 
 	if (!EntityManager::Get().HasComponent<AnimationComponent>(e))
 		return;
 
 	auto& aComp = EntityManager::Get().GetComponent<AnimationComponent>(e);
 
-	auto& setter = aComp.animSetters[aComp.addedSetters++];
-	setter.animationIDs[0] = static_cast<i8>(animID);
-	setter.group = static_cast<u8>(group);
-	setter.transitionLength = transitionLength;
-	setter.playbackRate = playbackRate;
+	aComp.SimpleAdd(static_cast<i8>(animID), static_cast<AnimationFlag>(flags), priority, group, playbackRate, transitionLen);
 }
 
 void EntityInterface::SpawnActiveItem(DOG::LuaContext* context)

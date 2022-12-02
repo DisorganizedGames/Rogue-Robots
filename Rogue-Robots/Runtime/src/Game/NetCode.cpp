@@ -114,10 +114,14 @@ void NetCode::OnUpdate()
 				transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerTransform;
 				inputC = m_outputUdp.m_holdplayersUdp[networkC.playerId].actions;
 				statsC = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat;
-				if (statsC.health > 0 && !m_entityManager.HasComponent<PlayerAliveComponent>(id))
+				if (statsC.health > 0 && !(m_entityManager.HasComponent<PlayerAliveComponent>(id)))
 				{
-					m_entityManager.AddComponent<PlayerAliveComponent>(id);
-					aC.SimpleAdd(static_cast<i8>(MixamoAnimations::JazzDance), AnimationFlag::Looping | AnimationFlag::ResetPrio); // No dedicated revive animation for now
+					m_entityManager.AddComponent<PlayerAliveComponent>(id).timer = 2.5f;
+					aC.SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio);
+				}
+				else if(m_entityManager.HasComponent<PlayerAliveComponent>(id) && m_entityManager.GetComponent<PlayerAliveComponent>(id).timer > 0.f)
+				{
+					m_entityManager.GetComponent<PlayerAliveComponent>(id).timer -= (f32)Time::DeltaTime();
 				}
 
 				if ((pC.cameraEntity != DOG::NULL_ENTITY) && (m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform.Determinant() != 0)) {

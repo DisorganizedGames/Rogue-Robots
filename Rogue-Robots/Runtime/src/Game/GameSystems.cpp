@@ -28,6 +28,9 @@ void PlayerMovementSystem::OnEarlyUpdate(
 {
 	auto& mgr = EntityManager::Get();
 
+	auto IsAlive = [&mgr](Entity e) {
+		return mgr.HasComponent<PlayerAliveComponent>(e) && mgr.GetComponent<PlayerAliveComponent>(e).timer < 0.f; };
+
 	if (input.toggleMoveView)
 	{
 		input.toggleMoveView = false;
@@ -49,9 +52,11 @@ void PlayerMovementSystem::OnEarlyUpdate(
 	{
 		isThisPlayer = true;
 		camera.isMainCamera = true;
+		if (mgr.HasComponent<PlayerAliveComponent>(e) && mgr.GetComponent<PlayerAliveComponent>(e).timer > 0.f)
+			mgr.GetComponent<PlayerAliveComponent>(e).timer -= (f32)Time::DeltaTime();
 	}
-
-	if (input.toggleDebug && mgr.HasComponent<PlayerAliveComponent>(e))
+	
+	if (input.toggleDebug && IsAlive(e))
 	{
 		input.toggleDebug = false;
 		if (player.debugCamera == DOG::NULL_ENTITY)
@@ -67,7 +72,8 @@ void PlayerMovementSystem::OnEarlyUpdate(
 			player.debugCamera = DOG::NULL_ENTITY;
 		}
 	}
-	if (mgr.HasComponent<PlayerAliveComponent>(e))
+
+	if (IsAlive(e))
 	{
 		// Rotate player
 		Vector3 forward = cameraTransform.GetForward();
@@ -92,12 +98,23 @@ void PlayerMovementSystem::OnEarlyUpdate(
 
 		MovePlayer(e, player, moveTowards, forward, rigidbody, playerStats.speed, playerStats.jumpSpeed, input);
 		ApplyAnimations(e, input);
-
 		f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
 		camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 1600.f, 0.1f);
 
-		// Place camera 0.4 units above the player transform
-		auto pos = transform.GetPosition() + Vector3(0, 0.7f, 0);
+		Vector3 pos = {};
+		if (mgr.HasComponent<MixamoHeadJointTF>(e))
+		{
+			auto offset = DirectX::XMMatrixTranslation(0.f, -5.f, 0.f);
+			auto headTF = Matrix(offset) * mgr.GetComponent<MixamoHeadJointTF>(e).transform;
+			pos = { headTF(3, 0), headTF(3, 1), headTF(3, 2) };
+			pos += Vector3(0.f, -0.5f, 0.f);
+		}
+		else
+		{
+			// Place camera 0.4 units above the player transform
+			pos = transform.GetPosition() + Vector3(0, 0.7f, 0);
+		}
+		pos = transform.GetPosition() + Vector3(0, 0.7f, 0);
 		camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
 		cameraTransform.worldMatrix = camera.viewMatrix.Invert();
 
@@ -672,7 +689,7 @@ void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity p
 void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerAliveComponent&, DOG::TransformComponent& tc)
 {
 	DOG::EntityManager& mgr = DOG::EntityManager::Get();
-
+	
 	//If the player that wants to perform a revive does not have a reviver active item, we ofc return:
 	auto optionalItem = mgr.TryGetComponent<ActiveItemComponent>(player);
 	if (!optionalItem)
@@ -835,13 +852,6 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 	const bool revivalCompleted = (progress >= 1.0f);
 	if (revivalCompleted)
 	{
-		// Apply Revive Animation
-		{
-			static constexpr u8 REVIVE_ANIMATION = 0; // No dedicated animation yet, transition to idle for now
-			auto& ac = mgr.GetComponent<AnimationComponent>(closestDeadPlayer);
-			ac.SimpleAdd(REVIVE_ANIMATION, AnimationFlag::Looping | AnimationFlag::ResetPrio);
-		}
-
 		if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))
 		{
 			auto spectatedPlayer = mgr.GetComponent<SpectatorComponent>(closestDeadPlayer).playerBeingSpectated;
@@ -893,7 +903,8 @@ void ReviveSystem::RevivePlayer(DOG::entity player)
 	pcc.spectatorCamera = NULL_ENTITY;
 	mgr.GetComponent<CameraComponent>(pcc.cameraEntity).isMainCamera = true;
 
-	mgr.AddComponent<PlayerAliveComponent>(player);
+	mgr.GetComponent<AnimationComponent>(player).SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio);
+	mgr.AddComponent<PlayerAliveComponent>(player).timer = 2.5f;
 	LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
 	LuaMain::GetScriptManager()->AddScript(player, "PassiveItemSystem.lua");
 	LuaMain::GetScriptManager()->AddScript(player, "ActiveItemSystem.lua");

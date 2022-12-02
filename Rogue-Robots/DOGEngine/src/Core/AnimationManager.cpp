@@ -15,7 +15,7 @@ namespace DOG
 		m_imguiRot.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_vsJoints.assign(300, {});
 
-		DOG::ImGuiMenuLayer::RegisterDebugWindow("RigJourno", std::bind(&AnimationManager::SpawnControlWindow, this, std::placeholders::_1), false, std::make_pair(DOG::Key::LCtrl, DOG::Key::A));
+		DOG::ImGuiMenuLayer::RegisterDebugWindow("RigJourno", std::bind(&AnimationManager::SpawnControlWindow, this, std::placeholders::_1), false, std::make_pair(DOG::Key::LCtrl, DOG::Key::N));
 		m_ta.Update(0.4f);
 	};
 
@@ -38,11 +38,11 @@ namespace DOG
 		using namespace DirectX;
 		auto deltaTime = (f32)Time::DeltaTime();
 
-#ifdef _DEBUG
-		deltaTime = m_imguiDeltaTime;
-		//test(deltaTime);
-#endif
-
+		if (m_imguiUseDiscreteTimeStep)
+		{
+			deltaTime = m_imguiDeltaTime;
+		}
+		
 		if (!m_rigs.size()) {
 			EntityManager::Get().Collect<ModelComponent, RigDataComponent>().Do([&](ModelComponent& modelC, RigDataComponent& rC)
 				{
@@ -91,7 +91,7 @@ namespace DOG
 
 		if (ImGui::BeginMenu("View"))
 		{
-			if (ImGui::MenuItem("RigJourno", "Ctrl+A"))
+			if (ImGui::MenuItem("RigJourno", "Ctrl+N"))
 				open ^= true;
 			ImGui::EndMenu(); // "View"
 		}
@@ -143,17 +143,18 @@ namespace DOG
 				//ImGuiTimeLine();
 
 				// joint Transform component
-				if (ImGui::BeginCombo("joint", m_rigs[0]->nodes[m_imguiJoint].name.c_str()))
 				{
-					for (i32 i = 1; i < std::size(m_rigs[0]->nodes); i++)
-						if (ImGui::Selectable((m_rigs[0]->nodes[i].name).c_str(), (i == m_imguiJoint)))
-							m_imguiJoint = i;
-					ImGui::EndCombo();
+					if (ImGui::BeginCombo("joint", m_rigs[0]->nodes[m_imguiJoint].name.c_str()))
+					{
+						for (i32 i = 0; i < std::size(m_rigs[0]->nodes); i++)
+							if (ImGui::Selectable((m_rigs[0]->nodes[i].name + " i: " + std::to_string(i)).c_str(), (i == m_imguiJoint)))
+								m_imguiJoint = i;
+						ImGui::EndCombo();
+					}
 				}
 				static bool addClips = false;
-#ifdef _DEBUG
-				ImGui::SliderFloat("deltaT", &m_imguiDeltaTime, 0.001f, 0.1f, "%.3f");
-#endif
+				ImGui::Checkbox("Discrete Dt", &m_imguiUseDiscreteTimeStep);
+				ImGui::SameLine();  ImGui::SliderFloat("deltaT", &m_imguiDeltaTime, 0.001f, 0.1f, "%.3f");
 				addClips ^= ImGui::Button("Add Clips");
 				if (addClips)
 				{
@@ -162,11 +163,11 @@ namespace DOG
 					ImGui::Combo("n target clips", &targets, nTargets, IM_ARRAYSIZE(nTargets));
 
 					static auto group = 0;
-					static const char* grpNames[]{ "FullBody", "LowerBody", "UpperBody" };
+					static const char* grpNames[]{ "FullBody", "LowerBody", "UpperBody", "UpperSpine"};
 					ImGui::Combo("target group", &group, grpNames, IM_ARRAYSIZE(grpNames));
 
 					static auto playbackRate = 1.f, transitionLen = 0.f;
-					ImGui::SliderFloat("playbackRate", &playbackRate, -1.f, 1.f, "%.2f");
+					ImGui::SliderFloat("playbackRate", &playbackRate, -1.f, 5.f, "%.1f");
 					ImGui::SliderFloat("transitionLen", &transitionLen, 0.f, 1.f, "%.2f");
 
 					static auto priority = static_cast<i32>(BASE_PRIORITY);
@@ -174,6 +175,8 @@ namespace DOG
 
 					static bool loopingFlag = false;
 					ImGui::Checkbox("LoopingFlag", &loopingFlag);
+					static bool forceRestartFlag = false;
+					ImGui::SameLine(); ImGui::Checkbox("ForceRestartFlag", &forceRestartFlag);
 					static bool interruptFlag = false;
 					ImGui::Checkbox("InterruptFlag", &interruptFlag);
 					static bool persistFlag = false;
@@ -190,7 +193,7 @@ namespace DOG
 						if (ImGui::BeginCombo(("Clip#" + std::to_string(c)).c_str(), anims[*a].name.c_str()))
 						{
 							for (i32 i = 0; i < std::size(rig->animations); ++i)
-								if (ImGui::Selectable(rig->animations[i].name.c_str(), (i == *a)))
+								if (ImGui::Selectable((rig->animations[i].name + "  id: " + std::to_string(i)).c_str(), (i == *a)))
 									*a = i;
 							ImGui::EndCombo();
 						}
@@ -214,6 +217,8 @@ namespace DOG
 										s.flag = s.flag | AnimationFlag::ResetPrio;
 									if (interruptFlag)
 										s.flag = s.flag | AnimationFlag::Interrupt;
+									if (forceRestartFlag)
+										s.flag = s.flag | AnimationFlag::ForceRestart;
 									s.priority = static_cast<u8>(priority);
 									s.group = static_cast<u8>(group);
 									s.transitionLength = transitionLen;
@@ -593,6 +598,7 @@ namespace DOG
 			m_playerRigAnimators[i].ProcessAnimationComponent(baseAc);
 			for (u32 j = 0; j < N_GROUPS; j++)
 				m_playerRigAnimators[i].groups[j].parent = j == 0 ? -1 : 0;
+			m_playerRigAnimators[i].groups[N_GROUPS - 1].parent = 2;
 		}
 	}
 
