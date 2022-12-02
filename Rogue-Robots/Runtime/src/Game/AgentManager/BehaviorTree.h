@@ -219,3 +219,9 @@ struct BehaviorTreeComponent
 };
 
 #define LEAF(x) static_cast<Leaf*>(x)
+
+namespace BehaviorTree
+{
+	void ToGraphViz(Node* root, std::string filename);
+	void ToGraphVizHelper(Node* node, std::ofstream& outstream);
+}

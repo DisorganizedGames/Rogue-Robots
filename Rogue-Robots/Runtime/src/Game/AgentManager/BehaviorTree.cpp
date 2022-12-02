@@ -404,3 +404,79 @@ void PatrolNode::Fail(DOG::entity agent) noexcept
 	DOG::EntityManager::Get().RemoveComponent<BTPatrolComponent>(agent);
 	GetParent()->Process(agent);
 }
+
+void BehaviorTree::ToGraphViz(Node* root)
+{
+	std::ofstream outStream;
+	outStream.open("BehaviorTree.dot");
+
+	outStream << "digraph {" << std::endl;
+	ToGraphVizHelper(root, outStream);
+	outStream << "}" << std::endl;
+	outStream.close();
+}
+
+void BehaviorTree::ToGraphVizHelper(Node* node, std::ofstream& outstream)
+{
+	outstream << node->GetName() << " [label=\"" << node->GetName() << "\\n";
+
+	switch (node->GetNodeType())
+	{
+	case NodeType::Sequence:
+		outstream << "[Sequence]\" shape=box";
+		break;
+	case NodeType::Selector:
+		outstream << "[Selector]\" shape=box";
+		break;
+	case NodeType::Decorator:
+	{
+		switch (static_cast<Decorator*>(node)->GetDecoratorType())
+		{
+		case DecoratorType::Inverter:
+			outstream << "[Inverter]\" shape=box";
+			break;
+		case DecoratorType::Succeeder:
+			outstream << "[Succeeder]\" shape=box";
+			break;
+		case DecoratorType::Failer:
+			outstream << "[Failer]\" shape=box";
+			break;
+		case DecoratorType::Root:
+			outstream << "[Root]\" shape=invhouse";
+			break;
+		default:
+			outstream << "[undefined]\"";
+			break;
+		}
+	}
+		break;
+	case NodeType::Leaf:
+		outstream << "[Leaf]\"";
+		break;
+	default:
+		break;
+	}
+
+	outstream << "];" << std::endl;
+
+	switch (node->GetNodeType())
+	{
+	case NodeType::Sequence:
+	case NodeType::Selector:
+		for (auto& child : static_cast<Composite*>(node)->GetChildren())
+		{
+			ToGraphVizHelper(child.get(), outstream);
+			outstream << node->GetName() << " -> " << child->GetName() << ";" << std::endl;
+		}
+		break;
+	case NodeType::Decorator:
+		{
+			Node* child = static_cast<Decorator*>(node)->GetChild().get();
+			ToGraphVizHelper(child, outstream);
+			outstream << node->GetName() << " -> " << child->GetName() << ";" << std::endl;
+		}
+		break;
+	default:
+		break;
+	}
+}

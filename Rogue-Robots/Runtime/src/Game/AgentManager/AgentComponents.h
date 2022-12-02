@@ -48,6 +48,7 @@ struct AgentSeekPlayerComponent
 	DOG::entity entityID = DOG::NULL_ENTITY;
 	DirectX::SimpleMath::Vector3 direction;
 	f32 squaredDistance = std::numeric_limits<float>::max();
+	bool HasTarget() { return entityID != DOG::NULL_ENTITY; }
 };
 
 struct AgentAggroComponent
