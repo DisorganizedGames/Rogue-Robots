@@ -1232,7 +1232,8 @@ void EntityInterface::AddFireEffectComponent(DOG::LuaContext* context, DOG::enti
 {
 	f32 fireEffectTime = (f32)context->GetDouble();
 	f32 damagePerTick = (f32)context->GetDouble();
-	EntityManager::Get().AddComponent<FireEffectComponent>(e, fireEffectTime, damagePerTick);
+	EntityManager::Get().AddComponent<FireEffectComponent>(e, fireEffectTime, damagePerTick).playerEntityID = EntityManager::Get().GetComponent<BulletComponent>(e).playerEntityID;
+	
 }
 
 

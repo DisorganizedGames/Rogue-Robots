@@ -201,6 +201,7 @@ struct FireEffectComponent
 	f32 fireTimer = 0.0f;
 	f32 fireDamagePerSecond = 0.0f;
 	DOG::entity particleEntity = DOG::NULL_ENTITY;
+	DOG::entity playerEntityID;
 };
 
 struct ExplosionComponent
