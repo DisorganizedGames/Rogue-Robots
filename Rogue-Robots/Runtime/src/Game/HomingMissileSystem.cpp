@@ -77,7 +77,20 @@ void HomingMissileSystem::OnUpdate(entity e, HomingMissileComponent& missile, DO
 	}
 }
 
-void HomingMissileSystem::StartMissileEngine(entity e, HomingMissileComponent& missile)
+HomingMissileSystem::HomingMissileSystem()
+{
+	// Load the dds textur if it exists
+	AssetLoadFlag textureFlag = AssetLoadFlag::Srgb;
+	textureFlag |= AssetLoadFlag::GPUMemory;
+	if (std::filesystem::exists("Assets/Textures/Flipbook/smoke_4x4.dds"))
+		m_smokeTexureAssetID = AssetManager::Get().LoadTexture("Assets/Textures/Flipbook/smoke_4x4.dds", textureFlag);
+	else
+		m_smokeTexureAssetID = AssetManager::Get().LoadTexture("Assets/Textures/Flipbook/smoke_4x4.png", textureFlag);
+
+	m_missileJetModelAssetID = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/Missile/jet.gltf");
+}
+
+void HomingMissileSystem::StartMissileEngine(entity e, HomingMissileComponent& missile) const
 {
 	auto& em = EntityManager::Get();
 
@@ -86,16 +99,8 @@ void HomingMissileSystem::StartMissileEngine(entity e, HomingMissileComponent& m
 	auto& localTransform = em.AddComponent<ChildComponent>(missile.jet);
 	localTransform.parent = e;
 	localTransform.localTransform.SetPosition({ 0,0, -0.7f }).SetRotation({ -DirectX::XM_PIDIV2, 0, 0 }).SetScale({ 1.3f, 1.3f, 1.3f });
-	em.AddComponent<ModelComponent>(missile.jet).id = AssetManager::Get().LoadModelAsset("Assets/Models/Ammunition/Missile/jet.gltf");
+	em.AddComponent<ModelComponent>(missile.jet, m_missileJetModelAssetID);
 	missile.engineIsIgnited = true;
-
-
-	// Load the dds textur if it exists
-	u32 texID{};
-	if (std::filesystem::exists("Assets/Textures/Flipbook/smoke_4x4.dds"))
-		texID = AssetManager::Get().LoadTexture("Assets/Textures/Flipbook/smoke_4x4.dds", AssetLoadFlag::GPUMemory);
-	else
-		texID = AssetManager::Get().LoadTexture("Assets/Textures/Flipbook/smoke_4x4.png", AssetLoadFlag::GPUMemory);
 
 	entity jetParticleEmitter = em.CreateEntity();
 	if (auto scene = em.TryGetComponent<SceneComponent>(e))
@@ -106,7 +111,7 @@ void HomingMissileSystem::StartMissileEngine(entity e, HomingMissileComponent& m
 	tr.parent = missile.jet;
 	tr.localTransform.SetPosition({ 0, 0, 0 });
 
-	auto texture = AssetManager::Get().GetAsset<TextureAsset>(texID);
+	auto texture = AssetManager::Get().GetAsset<TextureAsset>(m_smokeTexureAssetID);
 	if (texture == nullptr) return;
 	em.AddComponent<ConeSpawnComponent>(jetParticleEmitter) = { .angle = DirectX::XM_PI / 8, .speed = 1.f };
 	em.AddComponent<ParticleEmitterComponent>(jetParticleEmitter) = {
