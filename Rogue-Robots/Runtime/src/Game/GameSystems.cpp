@@ -562,10 +562,13 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 	{
 		ImGui::PushFont(DOG::Window::GetFont());
 		ImGui::SetWindowFontScale(2.0f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 75));
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
 		auto windowWidth = ImGui::GetWindowSize().x;
+		auto windowHeight = ImGui::GetWindowSize().y;
 		auto textWidth = ImGui::CalcTextSize("You Are Dead").x;
+		auto textHeight = ImGui::CalcTextSize("You Are Dead").y;
 		ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+		ImGui::SetCursorPosY((windowHeight - textHeight) * 0.5f);
 		ImGui::Text("You Are Dead");
 		ImGui::PopFont();
 		ImGui::PopStyleColor(1);
@@ -575,16 +578,16 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 
 	ImVec4 playerColor;
 	if (strcmp(sc.playerName, "Blue") == 0)
-		playerColor = ImVec4(0, 0, 255, 75);
+		playerColor = ImVec4(0, 0, 255, 200);
 	else if (strcmp(sc.playerName, "Red") == 0)
-		playerColor = ImVec4(255, 0, 0, 75);
+		playerColor = ImVec4(255, 0, 0, 200);
 	else if (strcmp(sc.playerName, "Green") == 0)
-		playerColor = ImVec4(0, 255, 0, 75);
+		playerColor = ImVec4(0, 255, 0, 200);
 	else
-		playerColor = ImVec4(255, 255, 0, 75);
+		playerColor = ImVec4(255, 255, 0, 200);
 
-	const float additionalXOffset = (centerXOfScreen / 2);
-	const float additionalYOffset = -70.0f;
+	const float additionalXOffset = -100.0f;
+	const float additionalYOffset = -270.0f;
 
 	pos.x = r.left + centerXOfScreen + additionalXOffset;
 	pos.y = r.bottom - yOffset + additionalYOffset;
@@ -596,7 +599,7 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 	{
 		ImGui::PushFont(DOG::Window::GetFont());
 		ImGui::SetWindowFontScale(2.0f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 75));
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
 		ImGui::Text("Spectating ");
 		ImGui::PopStyleColor(1);
 		ImGui::SameLine();
@@ -604,11 +607,11 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 		ImGui::Text(sc.playerName);
 		ImGui::PopStyleColor(1);
 
-		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 75));
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
 		ImGui::Text("[E] ");
 		ImGui::PopStyleColor(1);
 		ImGui::SameLine();
-		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 75));
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
 		ImGui::Text("Toggle Player");
 		ImGui::PopStyleColor(1);
 		ImGui::PopFont();

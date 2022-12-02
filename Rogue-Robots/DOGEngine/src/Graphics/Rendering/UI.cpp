@@ -989,7 +989,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto gameOver = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Game Over"));
    instance->AddUIElementToScene(GameOverID, std::move(gameOver));
 
-   auto winText = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"You won!"));
+   auto winText = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth + 80.0f, (FLOAT)clientHeight, std::wstring(L"You won!"));
    instance->AddUIElementToScene(WinScreenID, std::move(winText));
 
    //Menu buttons
@@ -1026,7 +1026,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto l5 = instance->Create<DOG::UILabel>(l5ID, std::wstring(L" "), (FLOAT)clientWidth / 2.f - 80.0f, (FLOAT)clientHeight / 2.f - 350.f, 500.f, 60.f, 40.f);
    auto l6 = instance->Create<DOG::UILabel>(l6ID, std::wstring(L"Nr of players: "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 250.f, 500.f, 60.f, 40.f);
 
-   auto lWinText = instance->Create<DOG::UILabel>(lWinTextID, std::wstring(L" "), (FLOAT)clientWidth / 2.f - 80.0f, (FLOAT)clientHeight / 2.f - 150.f, 500.f, 60.f, 40.f);
+   auto lWinText = instance->Create<DOG::UILabel>(lWinTextID, std::wstring(L" "), (FLOAT)clientWidth / 2.f - 180.0f, (FLOAT)clientHeight / 2.f - 150.f, 500.f, 60.f, 40.f);
 
    std::vector<std::wstring> vec;
    vec.push_back(L"Assets/Sprites/test.bmp");
