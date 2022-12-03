@@ -276,14 +276,7 @@ void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComp
 	
 	if (hp.hp <= 0 || trans.GetPosition().y < -10.0f)
 	{
-		// Send network signal to destroy agents
-		if (PlayerManager::Get().IsThisMultiplayer())
-		{
-			if (!hp.damageThisFrame)
-				AgentManager::Get().DestroyLocalAgent(e);
-		}
-		else
-			AgentManager::Get().DestroyLocalAgent(e);
+		AgentManager::Get().DestroyLocalAgent(e);
 	}
 }
 

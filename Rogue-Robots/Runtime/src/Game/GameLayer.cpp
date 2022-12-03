@@ -193,13 +193,39 @@ void GameLayer::OnUpdate()
 			break;
 		}
 		case GameState::Lost:
+		{
 			if (s_networkStatus != NetworkStatus::Offline)
 				NetCode::Get().OnUpdate();
 			UI::Get()->ChangeUIscene(GameOverID);
+			EntityManager::Get().Collect<InputController, NetworkPlayerComponent>().Do([&](InputController& inputC, NetworkPlayerComponent& nPC)
+				{
+					if (nPC.playerId == 0)
+					{
+						auto redPlayer = DOG::UI::Get()->GetUI<UILabel>(lredScoreID);
+						redPlayer->SetText(std::wstring(L"Red player kill score: ") + std::to_wstring(inputC.killScore));
+					}
+					else if (nPC.playerId == 1)
+					{
+						auto bluePlayer = DOG::UI::Get()->GetUI<UILabel>(lblueScoreID);
+						bluePlayer->SetText(std::wstring(L"Blue player kill score: ") + std::to_wstring(inputC.killScore));
+					}
+					else if (nPC.playerId == 2)
+					{
+						auto greenPlayer = DOG::UI::Get()->GetUI<UILabel>(lgreenScoreID);
+						greenPlayer->SetText(std::wstring(L"Green player kill score: ") + std::to_wstring(inputC.killScore));
+					}
+					else if (nPC.playerId == 3)
+					{
+						auto yellowPlayer = DOG::UI::Get()->GetUI<UILabel>(lyellowScoreID);
+						yellowPlayer->SetText(std::wstring(L"Yellow player kill score: ") + std::to_wstring(inputC.killScore));
+					}
+				});
+			
 			m_nrOfFramesToWait--;
 			if (m_nrOfFramesToWait <= 0)
 				m_gameState = GameState::ExitingToMainMenu;
 			break;
+		}
 		case GameState::Exiting:
 			CloseMainScene();
 			break;

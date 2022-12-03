@@ -12,7 +12,7 @@ DOG::UI* DOG::UI::s_instance = nullptr;
 
 UINT menuID, gameID, optionsID, multiID, lobbyID, joinID, WaitingForHostID, GameOverID, WinScreenID;
 UINT menuBackID, optionsBackID, multiBackID, hostBackID;
-UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID, lWinTextID;
+UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID, lredScoreID, lblueScoreID, lgreenScoreID, lyellowScoreID;
 UINT cID, tID, hID, playerlistID;
 
 
@@ -1027,6 +1027,11 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto l6 = instance->Create<DOG::UILabel>(l6ID, std::wstring(L"Nr of players: "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 250.f, 500.f, 60.f, 40.f);
 
    auto lWinText = instance->Create<DOG::UILabel>(lWinTextID, std::wstring(L" "), (FLOAT)clientWidth / 2.f - 180.0f, (FLOAT)clientHeight / 2.f - 150.f, 500.f, 60.f, 40.f);
+   auto lredScore = instance->Create<DOG::UILabel>(lredScoreID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 150.f, (FLOAT)clientHeight / 2.f - 250.f, 500.f, 60.f, 40.f);
+   auto lblueScore = instance->Create<DOG::UILabel>(lblueScoreID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 150.f, (FLOAT)clientHeight / 2.f - 150.f, 500.f, 60.f, 40.f);
+   auto lgreenScore = instance->Create<DOG::UILabel>(lgreenScoreID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 150.f, (FLOAT)clientHeight / 2.f - 50.f, 500.f, 60.f, 40.f);
+   auto lyellowScore = instance->Create<DOG::UILabel>(lyellowScoreID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 150.f, (FLOAT)clientHeight / 2.f + 50.f, 500.f, 60.f, 40.f);
+
 
    std::vector<std::wstring> vec;
    vec.push_back(L"Assets/Sprites/test.bmp");
@@ -1063,6 +1068,11 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(gameID, std::move(l5));
    instance->AddUIElementToScene(WaitingForHostID, std::move(l6));
    instance->AddUIElementToScene(gameID, std::move(lWinText));
+   instance->AddUIElementToScene(GameOverID, std::move(lredScore));
+   instance->AddUIElementToScene(GameOverID, std::move(lblueScore));
+   instance->AddUIElementToScene(GameOverID, std::move(lgreenScore));
+   instance->AddUIElementToScene(GameOverID, std::move(lyellowScore));
+
    //Splash screen
    // UINT sID;
    // auto s = DOG::UI::Get().Create<DOG::UISplashScreen, float, float>(sID, (float)clientWidth, (float)clientHeight);

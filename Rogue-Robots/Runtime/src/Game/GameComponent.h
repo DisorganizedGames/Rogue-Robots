@@ -106,6 +106,7 @@ struct InputController
 	bool throwGlowStick = false;
 	float polarAngle = 0.f;
 	bool winStatus = false;
+	u8 killScore = 0;
 };
 
 struct DoorComponent
