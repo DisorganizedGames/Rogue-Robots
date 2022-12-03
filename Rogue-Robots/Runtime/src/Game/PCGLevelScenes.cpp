@@ -38,6 +38,7 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 	std::vector<entity> players = SpawnPlayers(spawnblockPos, m_nrOfPlayers, 5.f);
 	AddEntities(players);
 	AddEntities(AddFlashlightsToPlayers(players));
+	AddEntities(AddGunsToPlayers(players));
 
 	//Spawn enemies and items
 	uint32_t enemySpawnRarity = static_cast<uint32_t>(std::ceil(5.0f / m_nrOfPlayers)); //Spawns enemies once every X blocks.
@@ -70,6 +71,12 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 					}
 				}
 			}
+
+			entity turretHead = CreateEntity();
+			AddComponent<TransformComponent>(turretHead, Vector3(0, 0, 0));
+			AddComponent<ModelComponent>(turretHead).id = AssetManager::Get().LoadModelAsset("Assets/Models/ModularRifle/Maingun.gltf");
+			AddComponent<TmpComponent>(turretHead);
+
 			//Spawn items
 			ItemManager::Get().CreateItem(EntityTypes::Reviver, Vector3(pos.x, pos.y + 1.0f, pos.z));
 			++enemyCounter;

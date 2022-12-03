@@ -61,7 +61,7 @@ namespace DOG
 			return;
 		}
 
-		EntityManager::Get().Collect<AnimationComponent, MixamoHeadJointTF, TransformComponent>().Do([&](AnimationComponent& aC, MixamoHeadJointTF& jtf, TransformComponent& tf)
+		EntityManager::Get().Collect<AnimationComponent, MixamoImguiJointTF, MixamoHeadJointTF, TransformComponent>().Do([&](AnimationComponent& aC, MixamoImguiJointTF& itf, MixamoHeadJointTF& jtf, TransformComponent& tf)
 			{
 				if (aC.animatorID != -1)
 				{
@@ -70,8 +70,15 @@ namespace DOG
 					a.Update(deltaTime);
 					a.ProcessAnimationComponent(aC);
 					UpdateSkeleton(a, offset);
-					jtf.transform = SimpleMath::Matrix(XMMatrixTranslationFromVector(XMLoadFloat3(&m_headOffset)) *
-						XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[offset + MIXAMO_RIG.headJoint]))) * tf.worldMatrix;
+					const auto headJointBindPose = XMMatrixTranspose(XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_rigs[MIXAMO_RIG_ID]->jointOffsets[MIXAMO_RIG.headJoint])));
+					const auto vsHeadJointTf = XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[offset + MIXAMO_RIG.headJoint]));
+					jtf.transform = headJointBindPose * vsHeadJointTf;
+
+					const auto imguiJointBindPose = XMMatrixTranspose(XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_rigs[MIXAMO_RIG_ID]->jointOffsets[m_imguiJoint])));
+					const auto vsImguiJointTf = XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[offset + m_imguiJoint]));
+					itf.transform = imguiJointBindPose * vsImguiJointTf;
+					/*jtf.transform = SimpleMath::Matrix(XMMatrixTranslationFromVector(XMLoadFloat3(&m_headOffset)) *
+						XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[offset + MIXAMO_RIG.headJoint]))) * tf.worldMatrix;*/
 				}
 			});
 	}
@@ -144,11 +151,11 @@ namespace DOG
 
 				// joint Transform component
 				{
-					if (ImGui::BeginCombo("joint", m_rigs[0]->nodes[m_imguiJoint].name.c_str()))
+					if (ImGui::BeginCombo("joint", m_rigs[0]->nodes[m_imguiNode].name.c_str()))
 					{
 						for (i32 i = 0; i < std::size(m_rigs[0]->nodes); i++)
-							if (ImGui::Selectable((m_rigs[0]->nodes[i].name + " i: " + std::to_string(i)).c_str(), (i == m_imguiJoint)))
-								m_imguiJoint = i;
+							if (ImGui::Selectable((m_rigs[0]->nodes[i].name + " i: " + std::to_string(i)).c_str(), (i == m_imguiNode)))
+								m_imguiNode = i;
 						ImGui::EndCombo();
 					}
 				}
@@ -433,6 +440,10 @@ namespace DOG
 			auto joint = rig->nodes[n].jointIdx;
 			if (HasBone(joint))
 			{
+				if (n == m_imguiNode)
+				{
+					m_imguiJoint = rig->nodes[n].jointIdx;
+				}
 				XMStoreFloat4x4(&m_vsJoints[offset + joint],
 					rootTF * hereditaryTFs[n] * XMLoadFloat4x4(&rig->jointOffsets[joint]));
 			}

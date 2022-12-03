@@ -100,6 +100,15 @@ private:
 	//Win condition
 	DirectX::SimpleMath::Vector3 m_exitPosition = DirectX::SimpleMath::Vector3(-1.0f, -1.0f, -1.0f);
 
+	f32 m_imguiObjPosX = 0.f;
+	f32 m_imguiObjPosY = 0.f;
+	f32 m_imguiObjPosZ = 0.f;
+	f32 m_imguiObjRoll = 0.f;
+	f32 m_imguiObjPitch = 0.f;
+	f32 m_imguiObjYaw = 0.f;
+	f32 m_imguiObjScale = 1.f;
+	DirectX::SimpleMath::Vector3 m_imguiObjectPos = DirectX::SimpleMath::Vector3( 0.f, 0.f, 0.f );
+
 	bool m_imguiRenderPlayer = true;
 	bool m_syncFrame = false;
 	int m_nrOfFramesToWait = 300;

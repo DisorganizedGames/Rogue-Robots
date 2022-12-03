@@ -66,6 +66,7 @@ namespace DOG
 		bool m_imguiUseDiscreteTimeStep = false;
 		f32 m_imguiDeltaTime = 0.05f;
 		bool m_imguiApplyRootTranslation = true;
+		i32 m_imguiNode = 5;
 		i32 m_imguiJoint = 5;
 		i32 m_imguiSelectedJoint = 0;
 		DirectX::FXMMATRIX ImguiTransform(i32 joint);
