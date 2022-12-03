@@ -56,6 +56,11 @@ bool PlayerManager::IsThisMultiplayer()
 	return nStatus;
 }
 
+void PlayerManager::HurtOnlinePlayers(entity player)
+{
+
+}
+
 /*******************************
 		Private Methods
 *******************************/
