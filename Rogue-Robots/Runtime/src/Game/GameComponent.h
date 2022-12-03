@@ -422,3 +422,9 @@ struct MusicPlayer
 {
 	bool inMainMenu = true;
 };
+
+struct FlashlightSoundEffectComponent
+{
+	bool flashlightIsTurnedOn = true;
+	DOG::entity flashlightAudioEntity;
+};

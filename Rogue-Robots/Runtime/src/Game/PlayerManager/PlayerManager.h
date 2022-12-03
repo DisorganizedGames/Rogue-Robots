@@ -30,6 +30,8 @@ private:
 	~PlayerManager() noexcept = default;
 	DELETE_COPY_MOVE_CONSTRUCTOR(PlayerManager);
 	static void Initialize();
+
+	void PlayHurtAudio();
 };
 
 class PlayerHit : public DOG::ISystem

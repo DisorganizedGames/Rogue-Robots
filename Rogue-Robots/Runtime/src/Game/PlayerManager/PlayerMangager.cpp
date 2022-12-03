@@ -36,6 +36,8 @@ u8 PlayerManager::GetNrOfPlayers()
 void PlayerManager::HurtThisPlayer(f32 damage)
 {
 	s_entityManager.GetComponent<PlayerStatsComponent>(GetThisPlayer()).health -= damage;
+
+	PlayHurtAudio();
 }
 
 bool PlayerManager::IsThisPlayerHost()
@@ -58,7 +60,7 @@ bool PlayerManager::IsThisMultiplayer()
 
 void PlayerManager::HurtOnlinePlayers(entity player)
 {
-	std::cout << u32(player) << std::endl; //removes warning, is being used in another branch, remove this line when function is used
+	PlayHurtAudio();
 }
 
 i8 PlayerManager::GetPlayerId(entity player)
@@ -77,11 +79,15 @@ PlayerManager::PlayerManager() noexcept
 
 }
 
-
 void PlayerManager::Initialize()
 {
 	// Set status to initialized
 	s_notInitialized = false;
+}
+
+void PlayerManager::PlayHurtAudio()
+{
+
 }
 
 #pragma warning( disable : 4100 )
