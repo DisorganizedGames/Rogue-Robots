@@ -172,12 +172,29 @@ void GameLayer::OnUpdate()
 			UpdateGame();
 			break;
 		case GameState::Won:
-			UI::Get()->ChangeUIscene(GameOverID);
+		{
+			EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
+				{
+					inputC.winStatus = true;
+				});
+			UpdateGame();
+
+			auto winText = DOG::UI::Get()->GetUI<UILabel>(lWinTextID);
+			winText->SetText(std::wstring(L"Congratulations!\nYou escaped!"));
+
 			m_nrOfFramesToWait--;
-			if(m_nrOfFramesToWait <= 0)
+			if (m_nrOfFramesToWait <= 0)
+			{
 				m_gameState = GameState::ExitingToMainMenu;
+				winText->SetText(std::wstring(L""));
+				UI::Get()->ChangeUIscene(WinScreenID);
+			}
+
 			break;
+		}
 		case GameState::Lost:
+			if (s_networkStatus != NetworkStatus::Offline)
+				NetCode::Get().OnUpdate();
 			UI::Get()->ChangeUIscene(GameOverID);
 			m_nrOfFramesToWait--;
 			if (m_nrOfFramesToWait <= 0)
@@ -187,7 +204,7 @@ void GameLayer::OnUpdate()
 			CloseMainScene();
 			break;
 		case GameState::ExitingToMainMenu:
-			m_nrOfFramesToWait = 120;
+			m_nrOfFramesToWait = 300;
 			NetCode::Get().Reset();
 			m_gameState = GameState::MainMenu;
 			UI::Get()->ChangeUIscene(menuID);
@@ -290,23 +307,34 @@ void GameLayer::EvaluateWinCondition()
 	}
 	else
 	{
-		bool playerAtExit = false;
+		uint32_t playersAtExit = 0u;
+		uint32_t playersAlive = 0u;
 		EntityManager::Get().Collect<PlayerAliveComponent>().Do([&](entity e, PlayerAliveComponent&)
+		{
+			++playersAlive;
+			Vector3 pos = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
+			if (pos.x > m_exitPosition.x - 2.5f && pos.y > m_exitPosition.y - 2.5f && pos.z > m_exitPosition.z - 2.5f &&
+				pos.x < m_exitPosition.x + 2.5f && pos.y < m_exitPosition.y + 2.5f && pos.z < m_exitPosition.z + 2.5f)
 			{
-				Vector3 pos = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
-				if (pos.x > m_exitPosition.x && pos.y > m_exitPosition.y && pos.z > m_exitPosition.z &&
-					pos.x < m_exitPosition.x + 5.0f && pos.y < m_exitPosition.y + 5.0f && pos.z < m_exitPosition.z + 5.0f)
-				{
-					playerAtExit = true;
-				}
-			});
-		if (playerAtExit)
+				++playersAtExit;
+			}
+		});
+		if (playersAtExit == playersAlive)
 		{
 			m_gameState = GameState::Won;
 		}
-	}
-	
 
+		auto playersAtExitText = DOG::UI::Get()->GetUI<UILabel>(l5ID);
+		if (playersAtExit > 0 && m_gameState != GameState::Won)
+		{
+			//Show UI that tells how many are at exit.
+			playersAtExitText->SetText(std::wstring(L"Players at exit: ") + std::to_wstring(playersAtExit) + std::wstring(L"/") + std::to_wstring(playersAlive));
+		}
+		else
+		{
+			playersAtExitText->SetText(std::wstring(L""));
+		}
+	}
 
 	if (freeRoamTimeAfterWin)
 	{

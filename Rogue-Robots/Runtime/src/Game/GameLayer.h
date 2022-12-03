@@ -108,5 +108,5 @@ private:
 
 	bool m_imguiRenderPlayer = false;
 	bool m_syncFrame = false;
-	int m_nrOfFramesToWait = 120;
+	int m_nrOfFramesToWait = 300;
 };

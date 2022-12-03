@@ -543,29 +543,31 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 	if (sc.playerSpectatorQueue.empty())
 		return;
 
-	constexpr ImVec2 size{ 350, 100 };
+	constexpr ImVec2 size{ 350, 120 };
 
 	auto r = DOG::Window::GetWindowRect();
 	const float centerXOfScreen = (float)(abs(r.right - r.left)) * 0.5f;
-	constexpr const float yOffset = 50.0f;
-	constexpr const float xOffset = -(size.x / 2);
+	const float centerYOfScreen = (float)(abs(r.bottom - r.top)) * 0.5f;
 
 	ImVec2 pos;
-	pos.x = r.left + centerXOfScreen;
-	pos.x += xOffset;
-	pos.y = r.top + yOffset;
+	pos.x = r.left + centerXOfScreen - size.x / 2.0f;
+	pos.y = r.top + centerYOfScreen - (centerYOfScreen / 2.5f);
 
 	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+
 	ImGui::SetNextWindowPos(pos);
 	ImGui::SetNextWindowSize(size);
 	if (ImGui::Begin("Spectate text", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
 	{
 		ImGui::PushFont(DOG::Window::GetFont());
 		ImGui::SetWindowFontScale(2.0f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 75));
-		auto windowWidth = ImGui::GetWindowSize().x;
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
 		auto textWidth = ImGui::CalcTextSize("You Are Dead").x;
+		auto textHeight = ImGui::CalcTextSize("You Are Dead").y;
+		const float windowWidth = ImGui::GetWindowSize().x;
+		const float windowHeight = ImGui::GetWindowSize().y;
 		ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+		ImGui::SetCursorPosY((windowHeight - textHeight) * 0.5f);
 		ImGui::Text("You Are Dead");
 		ImGui::PopFont();
 		ImGui::PopStyleColor(1);
@@ -575,19 +577,16 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 
 	ImVec4 playerColor;
 	if (strcmp(sc.playerName, "Blue") == 0)
-		playerColor = ImVec4(0, 0, 255, 75);
+		playerColor = ImVec4(0, 0, 255, 200);
 	else if (strcmp(sc.playerName, "Red") == 0)
-		playerColor = ImVec4(255, 0, 0, 75);
+		playerColor = ImVec4(255, 0, 0, 200);
 	else if (strcmp(sc.playerName, "Green") == 0)
-		playerColor = ImVec4(0, 255, 0, 75);
+		playerColor = ImVec4(0, 255, 0, 200);
 	else
-		playerColor = ImVec4(255, 255, 0, 75);
+		playerColor = ImVec4(255, 255, 0, 200);
 
-	const float additionalXOffset = (centerXOfScreen / 2);
-	const float additionalYOffset = -70.0f;
-
-	pos.x = r.left + centerXOfScreen + additionalXOffset;
-	pos.y = r.bottom - yOffset + additionalYOffset;
+	pos.x = r.left + centerXOfScreen - size.x / 2.0f;
+	pos.y = r.top + centerYOfScreen + (centerYOfScreen / 10.0f);
 
 	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 	ImGui::SetNextWindowPos(pos);
@@ -596,7 +595,17 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 	{
 		ImGui::PushFont(DOG::Window::GetFont());
 		ImGui::SetWindowFontScale(2.0f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 75));
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
+		//const char* text = std::string("Spectating " + std::string(sc.playerName)).c_str();
+		std::string text = "Spectating ";
+		text += std::string(sc.playerName);
+
+		auto textWidth = ImGui::CalcTextSize(text.c_str()).x;
+		auto textHeight = ImGui::CalcTextSize(text.c_str()).y;
+		const float windowWidth = ImGui::GetWindowSize().x;
+		const float windowHeight = ImGui::GetWindowSize().y;
+		ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+		ImGui::SetCursorPosY((windowHeight - textHeight) * 0.0f);
 		ImGui::Text("Spectating ");
 		ImGui::PopStyleColor(1);
 		ImGui::SameLine();
@@ -604,11 +613,15 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 		ImGui::Text(sc.playerName);
 		ImGui::PopStyleColor(1);
 
-		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 75));
+		text = "[E] Toggle Player";
+		textWidth = ImGui::CalcTextSize(text.c_str()).x;
+		textHeight = ImGui::CalcTextSize(text.c_str()).y;
+		ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
 		ImGui::Text("[E] ");
 		ImGui::PopStyleColor(1);
 		ImGui::SameLine();
-		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 75));
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
 		ImGui::Text("Toggle Player");
 		ImGui::PopStyleColor(1);
 		ImGui::PopFont();
