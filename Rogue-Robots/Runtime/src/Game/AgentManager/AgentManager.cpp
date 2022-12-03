@@ -232,7 +232,6 @@ void AgentManager::DestroyLocalAgent(entity e, bool local)
 				inputC.killScore++;
 
 			});
-		std::cout << "Agent died\n";
 		kill.position = agentTrans.GetPosition();
 
 		//Only host can spawn in items

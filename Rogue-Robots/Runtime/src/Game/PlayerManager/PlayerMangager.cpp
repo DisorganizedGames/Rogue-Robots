@@ -87,8 +87,12 @@ void PlayerHit::OnUpdate(entity e, HasEnteredCollisionComponent& collision, This
 		{
 			if (eMan.GetComponent<BulletComponent>(collision.entities[i]).playerEntityID != PlayerManager::Get().GetThisPlayer())
 			{
-				PlayerManager::Get().HurtThisPlayer(eMan.GetComponent<BulletComponent>( collision.entities[i]).damage/9.0f); // change this to change team damage
-
+				PlayerManager::Get().HurtThisPlayer(eMan.GetComponent<BulletComponent>( collision.entities[i]).damage/TEAM_DAMAGE_MODIFIER); 
+				EntityManager::Get().Collect<ThisPlayer, InputController>().Do(
+					[&](ThisPlayer&, InputController& inputC)
+					{
+						inputC.teamDamageTaken += eMan.GetComponent<BulletComponent>(collision.entities[i]).damage / TEAM_DAMAGE_MODIFIER;
+					});
 
 				if (EntityManager::Get().HasComponent<PlayerAliveComponent>(e))
 				{

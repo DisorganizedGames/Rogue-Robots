@@ -10,6 +10,8 @@ constexpr int PORTNUMBER_OUT_INT = 50006;
 constexpr int PORTNUMBER_IN_INT = 50004;
 constexpr const char* MULTICAST_ADRESS = "239.255.255.0";
 constexpr u32 AGGRO_BIT = 2147483648;
+constexpr f32 TEAM_DAMAGE_MODIFIER = 9.0f; //At 1.0f it does orginal damage, higher value deal less damage
+
 
 struct PlayerNetworkComponentUdp
 {

@@ -188,6 +188,33 @@ void GameLayer::OnUpdate()
 				m_gameState = GameState::ExitingToMainMenu;
 				winText->SetText(std::wstring(L""));
 				UI::Get()->ChangeUIscene(WinScreenID);
+				EntityManager::Get().Collect<InputController, NetworkPlayerComponent>().Do([&](InputController& inputC, NetworkPlayerComponent& nPC)
+					{
+						if (nPC.playerId == 0)
+						{
+							auto redPlayer = DOG::UI::Get()->GetUI<UILabel>(lredScoreWinID);
+							redPlayer->SetText(std::wstring(L"Red player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring(inputC.damageDoneToEnemies)
+								+ std::wstring(L"\nTeam Damage taken: ") + std::to_wstring(inputC.teamDamageTaken));
+						}
+						else if (nPC.playerId == 1)
+						{
+							auto bluePlayer = DOG::UI::Get()->GetUI<UILabel>(lblueScoreWinID);
+							bluePlayer->SetText(std::wstring(L"Blue player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring(inputC.damageDoneToEnemies)
+								+ std::wstring(L"\nTeam Damage taken: ") + std::to_wstring(inputC.teamDamageTaken));
+						}
+						else if (nPC.playerId == 2)
+						{
+							auto greenPlayer = DOG::UI::Get()->GetUI<UILabel>(lgreenScoreWinID);
+							greenPlayer->SetText(std::wstring(L"Green player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring(inputC.damageDoneToEnemies)
+								+ std::wstring(L"\nTeam Damage taken: ") + std::to_wstring(inputC.teamDamageTaken));
+						}
+						else if (nPC.playerId == 3)
+						{
+							auto yellowPlayer = DOG::UI::Get()->GetUI<UILabel>(lyellowScoreWinID);
+							yellowPlayer->SetText(std::wstring(L"Yellow player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring(inputC.damageDoneToEnemies)
+								+ std::wstring(L"\nTeam Damage taken: ") + std::to_wstring(inputC.teamDamageTaken));
+						}
+					});
 			}
 
 			break;
@@ -202,22 +229,26 @@ void GameLayer::OnUpdate()
 					if (nPC.playerId == 0)
 					{
 						auto redPlayer = DOG::UI::Get()->GetUI<UILabel>(lredScoreID);
-						redPlayer->SetText(std::wstring(L"Red player kill score: ") + std::to_wstring(inputC.killScore));
+						redPlayer->SetText(std::wstring(L"Red player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring(inputC.damageDoneToEnemies)
+						+ std::wstring(L"\nTeam Damage taken: ") + std::to_wstring(inputC.teamDamageTaken));
 					}
 					else if (nPC.playerId == 1)
 					{
 						auto bluePlayer = DOG::UI::Get()->GetUI<UILabel>(lblueScoreID);
-						bluePlayer->SetText(std::wstring(L"Blue player kill score: ") + std::to_wstring(inputC.killScore));
+						bluePlayer->SetText(std::wstring(L"Blue player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring(inputC.damageDoneToEnemies)
+							+ std::wstring(L"\nTeam Damage taken: ") + std::to_wstring(inputC.teamDamageTaken));
 					}
 					else if (nPC.playerId == 2)
 					{
 						auto greenPlayer = DOG::UI::Get()->GetUI<UILabel>(lgreenScoreID);
-						greenPlayer->SetText(std::wstring(L"Green player kill score: ") + std::to_wstring(inputC.killScore));
+						greenPlayer->SetText(std::wstring(L"Green player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring(inputC.damageDoneToEnemies)
+							+ std::wstring(L"\nTeam Damage taken: ") + std::to_wstring(inputC.teamDamageTaken));
 					}
 					else if (nPC.playerId == 3)
 					{
 						auto yellowPlayer = DOG::UI::Get()->GetUI<UILabel>(lyellowScoreID);
-						yellowPlayer->SetText(std::wstring(L"Yellow player kill score: ") + std::to_wstring(inputC.killScore));
+						yellowPlayer->SetText(std::wstring(L"Yellow player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring(inputC.damageDoneToEnemies)
+							+ std::wstring(L"\nTeam Damage taken: ") + std::to_wstring(inputC.teamDamageTaken));
 					}
 				});
 			
