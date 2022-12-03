@@ -335,10 +335,6 @@ void GameLayer::EvaluateWinCondition()
 			playersAtExitText->SetText(std::wstring(L""));
 		}
 	}
-	
-	EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
-		{
-		});
 
 	if (freeRoamTimeAfterWin)
 	{
