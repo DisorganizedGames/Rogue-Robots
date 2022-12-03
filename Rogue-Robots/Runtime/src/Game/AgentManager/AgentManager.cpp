@@ -59,7 +59,7 @@ void AgentManager::CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& e
 				if (agent.id == entityDesc.id)
 				{
 					trans.SetPosition(entityDesc.position);
-					DestroyLocalAgent(e);
+					DestroyLocalAgent(e, false);
 				}
 			}
 		);
@@ -205,7 +205,7 @@ Vector3 AgentManager::GenerateRandomVector3(u32 seed, f32 max, f32 min)
 	return Vector3(udis(gen), udis(gen), udis(gen));
 }
 
-void AgentManager::DestroyLocalAgent(entity e)
+void AgentManager::DestroyLocalAgent(entity e, bool local)
 {
 	EntityManager& em = EntityManager::Get();
 
@@ -219,17 +219,26 @@ void AgentManager::DestroyLocalAgent(entity e)
 	em.AddComponent<AgentCorpse>(corpse);
 	em.AddComponent<SceneComponent>(corpse, scene);
 
-	CreateAndDestroyEntityComponent& kill = em.AddComponent<CreateAndDestroyEntityComponent>(corpse);
-	kill.alive = false;
-	kill.entityTypeId = agent.type;
-	kill.id = agent.id;
-	em.Collect<ThisPlayer, NetworkPlayerComponent>().Do(
-		[&](ThisPlayer&, NetworkPlayerComponent& net) { kill.playerId = net.playerId; });
-	kill.position = agentTrans.GetPosition();
-	
-	//Only host can spawn in items
-	if (kill.playerId == 0)
-		ItemManager::Get().CreateItemHost( EntityTypes(((u32)Time::ElapsedTime()+agent.id) % u32(EntityTypes::Default)), agentTrans.GetPosition());
+	if (local)
+	{
+		CreateAndDestroyEntityComponent& kill = em.AddComponent<CreateAndDestroyEntityComponent>(corpse);
+		kill.alive = false;
+		kill.entityTypeId = agent.type;
+		kill.id = agent.id;
+		em.Collect<ThisPlayer, NetworkPlayerComponent, InputController>().Do(
+			[&](ThisPlayer&, NetworkPlayerComponent& net, InputController& inputC)
+			{ 
+				kill.playerId = net.playerId; 
+				inputC.killScore++;
+
+			});
+		kill.position = agentTrans.GetPosition();
+
+		//Only host can spawn in items
+		if (kill.playerId == 0)
+			ItemManager::Get().CreateItemHost(EntityTypes(((u32)Time::ElapsedTime() + agent.id) % u32(EntityTypes::Default)), agentTrans.GetPosition());
+	}
+
 
 	em.DeferredEntityDestruction(e);
 

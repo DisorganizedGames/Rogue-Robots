@@ -200,6 +200,11 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 		{
 			hp.hp -= hit.hits[i].damage;
 			hp.damageThisFrame = true;
+			EntityManager::Get().Collect<ThisPlayer, InputController>().Do(
+				[&](ThisPlayer&, InputController& inputC)
+				{
+					inputC.damageDoneToEnemies += hit.hits[i].damage;
+				});
 		}
 		if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
 			EntityManager::Get().AddComponent<AgentAggroComponent>(e);
@@ -276,14 +281,7 @@ void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComp
 	
 	if (hp.hp <= 0 || trans.GetPosition().y < -10.0f)
 	{
-		// Send network signal to destroy agents
-		if (PlayerManager::Get().IsThisMultiplayer())
-		{
-			if (!hp.damageThisFrame)
-				AgentManager::Get().DestroyLocalAgent(e);
-		}
-		else
-			AgentManager::Get().DestroyLocalAgent(e);
+		AgentManager::Get().DestroyLocalAgent(e);
 	}
 }
 
@@ -396,7 +394,13 @@ void AgentFireTimerSystem::OnUpdate(DOG::entity e, AgentHPComponent& hpComponent
 	if (fireEffect.fireTimer > 0.0f && PlayerManager::Get().GetThisPlayer() == fireEffect.playerEntityID)
 	{
 		hpComponent.hp -= fireEffect.fireDamagePerSecond * deltaTime;
+		EntityManager::Get().Collect<ThisPlayer, InputController>().Do(
+			[&](ThisPlayer&, InputController& inputC)
+			{
+				inputC.damageDoneToEnemies += fireEffect.fireDamagePerSecond * deltaTime;
+			});
 		hpComponent.damageThisFrame = true;
+
 	}
 	else
 	{

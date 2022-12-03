@@ -332,7 +332,7 @@ void NetCode::OnUpdate()
 						delete tempCreate;
 
 					}
-					
+
 					if (header.nrOfPathFindingSync > 0)
 					{
 						PathFindingSync* tempCreate = new PathFindingSync;

@@ -25,7 +25,7 @@ public:
 	DOG::entity CreateAgent(EntityTypes type, u32 groupID, const Vector3& pos, SceneComponent::Type scene);
 	void CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& entityDesc);
 	static Vector3 GenerateRandomVector3(u32 seed, f32 max = 1.0f, f32 min = 0.0f);
-	void DestroyLocalAgent(DOG::entity e);
+	void DestroyLocalAgent(DOG::entity e, bool local = true);
 
 	u32 GenAgentID(u32 groupID);
 	void CountAgentKilled(u32 agentID);
