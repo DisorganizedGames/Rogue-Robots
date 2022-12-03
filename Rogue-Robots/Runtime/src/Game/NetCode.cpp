@@ -1,5 +1,6 @@
 #include "NetCode.h"
 #include "ItemManager/ItemManager.h"
+#include "PlayerManager/PlayerManager.h"
 
 using namespace DOG;
 
@@ -141,6 +142,8 @@ void NetCode::OnUpdate()
 			{
 				transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerTransform;
 				inputC = m_outputUdp.m_holdplayersUdp[networkC.playerId].actions;
+				if (statsC.health > m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat.health)
+					PlayerManager::Get().HurtOnlinePlayers(id);
 				statsC = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat;
 				if (statsC.health > 0 && !m_entityManager.HasComponent<PlayerAliveComponent>(id))
 				{

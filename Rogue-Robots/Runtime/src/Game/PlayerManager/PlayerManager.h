@@ -18,6 +18,7 @@ public:
 	u8 GetNrOfPlayers();
 	bool IsThisPlayerHost();
 	bool IsThisMultiplayer();
+	void HurtOnlinePlayers(DOG::entity player);
 private:
 	// singelton instance
 	static PlayerManager s_amInstance;
