@@ -33,7 +33,7 @@ set(SourceFiles
 	"src/Game/OldDefaultScene.h" "src/Game/OldDefaultScene.cpp"
 
 	"src/Game/ItemManager/ItemManager.h" "src/Game/ItemManager/ItemManager.cpp"
-	"src/Game/PlayerManager/PlayerManager.h" "src/Game/PlayerManager/PlayerMangager.cpp"
+	"src/Game/PlayerManager/PlayerManager.h" "src/Game/PlayerManager/PlayerManager.cpp"
 	"src/Core/QueryHelpers.h" "src/Core/QueryHelpers.cpp"
 
 	"src/Pathfinder/Pathfinder.h" "src/Pathfinder/Pathfinder.cpp"
