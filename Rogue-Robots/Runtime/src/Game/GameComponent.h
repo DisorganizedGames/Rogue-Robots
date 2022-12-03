@@ -428,3 +428,8 @@ struct FlashlightSoundEffectComponent
 	bool flashlightIsTurnedOn = true;
 	DOG::entity flashlightAudioEntity;
 };
+
+struct PlayerHurtSoundEffectComponent
+{
+	DOG::entity hurtAudioEntity;
+};

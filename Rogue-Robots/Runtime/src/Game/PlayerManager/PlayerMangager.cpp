@@ -37,7 +37,7 @@ void PlayerManager::HurtThisPlayer(f32 damage)
 {
 	s_entityManager.GetComponent<PlayerStatsComponent>(GetThisPlayer()).health -= damage;
 
-	PlayHurtAudio();
+	PlayHurtAudio(GetThisPlayer());
 }
 
 bool PlayerManager::IsThisPlayerHost()
@@ -60,7 +60,7 @@ bool PlayerManager::IsThisMultiplayer()
 
 void PlayerManager::HurtOnlinePlayers(entity player)
 {
-	PlayHurtAudio();
+	PlayHurtAudio(player);
 }
 
 i8 PlayerManager::GetPlayerId(entity player)
@@ -85,9 +85,40 @@ void PlayerManager::Initialize()
 	s_notInitialized = false;
 }
 
-void PlayerManager::PlayHurtAudio()
+void PlayerManager::PlayHurtAudio(entity player)
 {
+	EntityManager& eMan = EntityManager::Get();
+	if (!eMan.HasComponent<PlayerHurtSoundEffectComponent>(player))
+	{
+		PlayerHurtSoundEffectComponent& playerHurtSoundEffectComponent = eMan.AddComponent<PlayerHurtSoundEffectComponent>(player);
 
+		playerHurtSoundEffectComponent.hurtAudioEntity = DOG::EntityManager::Get().CreateEntity();
+		eMan.AddComponent<TransformComponent>(playerHurtSoundEffectComponent.hurtAudioEntity);
+		eMan.AddComponent<AudioComponent>(playerHurtSoundEffectComponent.hurtAudioEntity).is3D = true;
+		eMan.AddComponent<ChildComponent>(playerHurtSoundEffectComponent.hurtAudioEntity).parent = player;
+
+		/*m_playerHurtAudio = AssetManager::Get().LoadAudio("Assets/Audio/PlayerHurt/Damage.wav");*/
+		m_playerHurtAudio = AssetManager::Get().LoadAudio("Assets/Audio/PlayerHurt/Damage_Fixed.wav");
+		m_playerDeathAudio = AssetManager::Get().LoadAudio("Assets/Audio/PlayerHurt/Death_Fixed.wav");
+	}
+	PlayerHurtSoundEffectComponent& playerHurtSoundEffectComponent = eMan.GetComponent<PlayerHurtSoundEffectComponent>(player);
+	AudioComponent& audio = eMan.GetComponent<AudioComponent>(playerHurtSoundEffectComponent.hurtAudioEntity);
+
+	if (eMan.GetComponent<PlayerStatsComponent>(player).health > 0.0f)
+	{
+		audio.assetID = m_playerHurtAudio;
+		audio.volume = 0.7f;
+		audio.is3D = true;
+		if (!audio.playing)
+			audio.shouldPlay = true;
+	}
+	else
+	{
+		audio.assetID = m_playerDeathAudio;
+		audio.shouldPlay = true;
+		audio.volume = 1.0f;
+		audio.is3D = false;
+	}
 }
 
 #pragma warning( disable : 4100 )
