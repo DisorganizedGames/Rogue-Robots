@@ -477,12 +477,32 @@ void GameLayer::KillPlayer(DOG::entity e)
 
 void GameLayer::UpdateGame()
 {
+	// Note that UpdateGame executes before all the normal ecs systems.
+
+	// CollectAndUpdate: update input, move players. apply animations, and setup cameras.
+	// The online players get their animations applied with old data as this function is called before NetCode update.
+	// This function should be split up to smaller functions.
+	m_playerMovementSystem.CollectAndUpdate();
+
+
+	// Multiplayer sync
 	if (s_networkStatus != NetworkStatus::Offline)
 		NetCode::Get().OnUpdate();
 
-	m_playerMovementSystem.CollectAndUpdate();
+	// The players camera transforms are synced so we set their viewMatrices.
+	EntityManager::Get().Collect<PlayerControllerComponent, OnlinePlayer>().Do([](PlayerControllerComponent& p, OnlinePlayer&)
+		{
+			if (EntityManager::Get().Exists(p.cameraEntity))
+			{
+				auto& camera = EntityManager::Get().GetComponent<CameraComponent>(p.cameraEntity);
+				auto& tr = EntityManager::Get().GetComponent<TransformComponent>(p.cameraEntity);
+				camera.viewMatrix = tr.worldMatrix.Invert();
+			}
+		});
+
 	SpectatorCopyCamera::CollectAndUpdate();
 
+	// Lua scripts are updated, the weapon gets its position set in once of the scripts => this needs to happen after the camera has gotten its final position.
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
 
