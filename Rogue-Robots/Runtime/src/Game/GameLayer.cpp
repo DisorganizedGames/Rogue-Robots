@@ -1784,6 +1784,73 @@ void GameLayer::CheatSettingsImGuiMenu()
 	{
 		m_gameState = GameState::Won;
 	}
+	if (ImGui::Button("SpawnItems"))
+	{
+		constexpr float offset = 1.5f;
+		Vector3 itemBaseSpawnPos = EntityManager::Get().GetComponent<TransformComponent>(GetPlayer()).GetPosition();
+		itemBaseSpawnPos.y -= 0.4f;
+		itemBaseSpawnPos.x -= 5;
+		itemBaseSpawnPos.z -= 5.0f * offset / 2.0f;
+		Vector3 pos = itemBaseSpawnPos;
+
+		for (int i = (int)EntityTypes::PickupsBegin; i < (int)EntityTypes::Pickups; i++)
+		{
+			ItemManager::Get().CreateItem((EntityTypes)i, Vector3(pos));
+			pos.x += offset;
+			ItemManager::Get().CreateItem((EntityTypes)i, Vector3(pos));
+			pos.x += offset;
+		}
+
+		itemBaseSpawnPos.z += offset;
+		pos = itemBaseSpawnPos;
+		for (int i = (int)EntityTypes::PassiveItemsBegin + 1; i < (int)EntityTypes::PassiveItems; i++)
+		{
+			ItemManager::Get().CreateItem((EntityTypes)i, Vector3(pos));
+			pos.x += offset;
+			ItemManager::Get().CreateItem((EntityTypes)i, Vector3(pos));
+			pos.x += offset;
+		}
+
+		itemBaseSpawnPos.z += offset;
+		pos = itemBaseSpawnPos;
+		for (int i = (int)EntityTypes::ActiveItemsBegin + 1; i < (int)EntityTypes::ActiveItems; i++)
+		{
+			ItemManager::Get().CreateItem((EntityTypes)i, Vector3(pos));
+			pos.x += offset;
+			ItemManager::Get().CreateItem((EntityTypes)i, Vector3(pos));
+			pos.x += offset;
+		}
+
+		itemBaseSpawnPos.z += offset;
+		pos = itemBaseSpawnPos;
+		for (int i = (int)EntityTypes::BarrelItemsBegin + 1; i < (int)EntityTypes::Barrels; i++)
+		{
+			ItemManager::Get().CreateItem((EntityTypes)i, Vector3(pos));
+			pos.x += offset;
+			ItemManager::Get().CreateItem((EntityTypes)i, Vector3(pos));
+			pos.x += offset;
+		}
+
+		itemBaseSpawnPos.z += offset;
+		pos = itemBaseSpawnPos;
+		for (int i = (int)EntityTypes::MagazineModificationItemsBegin + 1; i < (int)EntityTypes::Magazines; i++)
+		{
+			ItemManager::Get().CreateItem((EntityTypes)i, Vector3(pos));
+			pos.x += offset;
+			ItemManager::Get().CreateItem((EntityTypes)i, Vector3(pos));
+			pos.x += offset;
+		}
+
+		itemBaseSpawnPos.z += offset;
+		pos = itemBaseSpawnPos;
+		for (int i = (int)EntityTypes::MiscItemsBegin; i < (int)EntityTypes::Miscs; i++)
+		{
+			ItemManager::Get().CreateItem((EntityTypes)i, Vector3(pos));
+			pos.x += offset;
+			ItemManager::Get().CreateItem((EntityTypes)i, Vector3(pos));
+			pos.x += offset;
+		}
+	}
 	if (ImGui::Button("Respawn"))
 	{
 		RespawnDeadPlayer(GetPlayer());
