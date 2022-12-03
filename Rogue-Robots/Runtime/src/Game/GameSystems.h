@@ -462,7 +462,27 @@ public:
 //Quick and dirty flashlight toggle system for MVP
 class MVPFlashlightStateSystem : public DOG::ISystem
 {
+private:
+	bool m_flashlightIsTurnedOn = true;
+	DOG::entity m_flashlightAudioEntity;
+	u32 m_flashlightTurnOnSound;
+	u32 m_flashlightTurnOffSound;
+
 public:
+
+	MVPFlashlightStateSystem()
+	{
+		m_flashlightAudioEntity = DOG::EntityManager::Get().CreateEntity();
+
+		DOG::EntityManager::Get().AddComponent<DOG::TransformComponent>(m_flashlightAudioEntity);
+
+		DOG::AudioComponent& audio = DOG::EntityManager::Get().AddComponent<DOG::AudioComponent>(m_flashlightAudioEntity);
+		audio.is3D = true;
+
+		m_flashlightTurnOnSound = DOG::AssetManager::Get().LoadAudio("Assets/Audio/Flashlight/Flashlight_On.wav");
+		m_flashlightTurnOffSound = DOG::AssetManager::Get().LoadAudio("Assets/Audio/Flashlight/Flashlight_Off.wav");
+	};
+
 	SYSTEM_CLASS(DOG::SpotLightComponent);
 	ON_UPDATE(DOG::SpotLightComponent);
 
@@ -473,6 +493,30 @@ public:
 			return;
 
 		auto flashlightIsTurnedOn = DOG::EntityManager::Get().GetComponent<InputController>(player).flashlight;
+
+		if (m_flashlightIsTurnedOn != flashlightIsTurnedOn)
+		{
+			if (!DOG::EntityManager::Get().HasComponent<ChildComponent>(m_flashlightAudioEntity))
+			{
+				DOG::EntityManager::Get().Collect<DOG::ThisPlayer>().Do([&](DOG::entity e, DOG::ThisPlayer&)
+					{
+						DOG::EntityManager::Get().AddComponent<ChildComponent>(m_flashlightAudioEntity).parent = e;
+					});
+			}
+
+			DOG::AudioComponent& audio = DOG::EntityManager::Get().GetComponent<DOG::AudioComponent>(m_flashlightAudioEntity);
+			if (flashlightIsTurnedOn)
+			{
+				audio.assetID = m_flashlightTurnOnSound;
+			}
+			else
+			{
+				audio.assetID = m_flashlightTurnOffSound;
+			}
+			audio.shouldPlay = true;
+
+			m_flashlightIsTurnedOn = flashlightIsTurnedOn;
+		}
 
 		if (flashlightIsTurnedOn)
 			slc.strength = 0.6f;
