@@ -190,12 +190,25 @@ void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& miss
 				});
 
 			// Friendly fire
-			em.Collect<DOG::TransformComponent, PlayerAliveComponent, ThisPlayer>().Do([&](DOG::TransformComponent& playerTransform, PlayerAliveComponent&, ThisPlayer&)
+			em.Collect<DOG::TransformComponent, PlayerAliveComponent, ThisPlayer>().Do([&](entity player, DOG::TransformComponent& playerTransform, PlayerAliveComponent&, ThisPlayer&)
 				{
 					float distSquared = Vector3::DistanceSquared(transform.GetPosition(), playerTransform.GetPosition());
 					if (distSquared < missile.explosionRadius * missile.explosionRadius)
 					{
-						PlayerManager::Get().HurtThisPlayer((missile.dmg / (1.0f + distSquared)) / 10.0f);
+						auto& fakeHit = em.AddOrGetComponent<HasEnteredCollisionComponent>(player);
+						if (fakeHit.entitiesCount < fakeHit.maxCount)
+						{
+							fakeHit.entities[fakeHit.entitiesCount] = e;
+							Vector3 n = playerTransform.GetPosition() - transform.GetPosition();
+							n.Normalize();
+							fakeHit.normal[fakeHit.entitiesCount] = n;
+							fakeHit.entitiesCount++;
+
+							assert(!em.HasComponent<TeamDamageDealerComponent>(e));
+							auto& damageDealer = em.AddComponent<TeamDamageDealerComponent>(e);
+							damageDealer.playerEntityID = missile.playerEntityID;
+							damageDealer.damage = missile.dmg / (1.0f + distSquared);
+						}
 					}
 				});
 

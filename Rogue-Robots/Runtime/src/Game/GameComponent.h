@@ -63,6 +63,13 @@ struct BulletComponent
 	f32 damage;
 };
 
+struct TeamDamageDealerComponent
+{
+	DOG::entity playerEntityID = DOG::NULL_ENTITY;
+	f32 damage{ 0 };
+	bool canDamageSelf = true;
+};
+
 struct HomingMissileComponent
 {
 	float startMotorSpeed = 5.0f;
