@@ -1112,7 +1112,9 @@ void LaserBulletCollisionSystem::OnUpdate(DOG::entity e, LaserBulletComponent& l
 
 
 	Vector4 startColor = 2.5f * Vector4(laserBullet.color.x, 1.6f * laserBullet.color.y, laserBullet.color.z, 1);
+	startColor.w = 1;
 	Vector4 endColor = 0.3f * Vector4(0.3f * laserBullet.color.x, 0.8f * laserBullet.color.y, laserBullet.color.z, 1);
+	endColor.w = 0.3f;
 
 
 	em.AddComponent<ConeSpawnComponent>(reflectedParticles) = { .angle = DirectX::XM_PI / 5, .speed = 8.f };
