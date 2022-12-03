@@ -1,5 +1,6 @@
 #include "HomingMissileSystem.h"
 #include "AgentManager\AgentComponents.h"
+#include "PlayerManager\PlayerManager.h"
 using namespace DOG;
 using namespace DirectX::SimpleMath;
 
@@ -189,12 +190,12 @@ void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& miss
 				});
 
 			// Friendly fire
-			em.Collect<PlayerStatsComponent, DOG::TransformComponent, PlayerAliveComponent, ThisPlayer>().Do([&](PlayerStatsComponent& stats, DOG::TransformComponent& playerTransform, PlayerAliveComponent&, ThisPlayer&)
+			em.Collect<DOG::TransformComponent, PlayerAliveComponent, ThisPlayer>().Do([&](DOG::TransformComponent& playerTransform, PlayerAliveComponent&, ThisPlayer&)
 				{
 					float distSquared = Vector3::DistanceSquared(transform.GetPosition(), playerTransform.GetPosition());
 					if (distSquared < missile.explosionRadius * missile.explosionRadius)
 					{
-						stats.health -= (missile.dmg / (1.0f + distSquared)) / 10.0f;
+						PlayerManager::Get().HurtThisPlayer((missile.dmg / (1.0f + distSquared)) / 10.0f);
 					}
 				});
 
