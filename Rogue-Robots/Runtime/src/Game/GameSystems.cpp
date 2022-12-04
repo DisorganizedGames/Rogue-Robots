@@ -1102,11 +1102,28 @@ void LaserBeamSystem::OnUpdate(entity e, LaserBeamComponent& laserBeam, LaserBea
 		particleEmitter.particleLifetime = 0.14f;
 		particleEmitter.startColor = { laserBeam.color.x, laserBeam.color.y, laserBeam.color.z, 1 };
 		particleEmitter.endColor = { laserBeam.color.x, 1.5f * laserBeam.color.y, laserBeam.color.z, 0 };
+
+
+		if (!em.HasComponent<AudioComponent>(laserBeamVfx.particleEmitter))
+		{
+			auto& audio = em.AddComponent<AudioComponent>(laserBeamVfx.particleEmitter);
+			audio.assetID = m_audioAssetID;
+			audio.loop = true;
+			audio.shouldPlay = true;
+			audio.loopStart = 0;
+			audio.loopEnd = -1;
+			audio.volume = 1;
+		}
 	}
 
 	laserBeamVfx.startPos = laserBeam.startPos;
 	laserBeamVfx.endPos = target;
 	laserBeamVfx.color = laserBeam.color;
+}
+
+LaserBeamSystem::LaserBeamSystem()
+{
+	m_audioAssetID = AssetManager::Get().LoadAudio("Assets/Audio/GunSounds/LaserBeam.wav");
 }
 
 void LaserBeamVFXSystem::OnUpdate(LaserBeamVFXComponent& laserBeam)
