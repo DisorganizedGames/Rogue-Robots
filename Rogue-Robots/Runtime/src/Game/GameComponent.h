@@ -205,7 +205,7 @@ struct FireEffectComponent
 	f32 fireTimer = 0.0f;
 	f32 fireDamagePerSecond = 0.0f;
 	DOG::entity particleEntity = DOG::NULL_ENTITY;
-	DOG::entity playerEntityID;
+	DOG::entity playerEntityID = DOG::NULL_ENTITY;
 };
 
 struct ExplosionComponent
@@ -357,6 +357,7 @@ struct LaserBeamVFXComponent
 	DirectX::SimpleMath::Vector3 startPos;
 	DirectX::SimpleMath::Vector3 endPos;
 	DirectX::SimpleMath::Vector3 color;
+	DOG::entity particleEmitter = DOG::NULL_ENTITY;
 };
 
 struct LaserBeamComponent
@@ -365,7 +366,7 @@ struct LaserBeamComponent
 	DirectX::SimpleMath::Vector3 direction;
 	f32 maxRange = 100;
 	DirectX::SimpleMath::Vector3 color;
-	f32 damage;
+	f32 damage = 0;
 	DOG::entity owningPlayer = DOG::NULL_ENTITY;
 };
 

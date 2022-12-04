@@ -194,7 +194,14 @@ void EntityInterface::RemoveComponent(DOG::LuaContext* context)
 		EntityManager::Get().RemoveComponent<BarrelComponent>(e);
 		EntityManager::Get().RemoveComponentIfExists<LaserBarrelComponent>(e);
 		EntityManager::Get().RemoveComponentIfExists<LaserBeamComponent>(e);
-		EntityManager::Get().RemoveComponentIfExists<LaserBeamVFXComponent>(e);
+		if (auto vfxLaser = EntityManager::Get().TryGetComponent<LaserBeamVFXComponent>(e))
+		{
+			if (EntityManager::Get().Exists(vfxLaser->get().particleEmitter))
+			{
+				EntityManager::Get().DeferredEntityDestruction(vfxLaser->get().particleEmitter);
+			}
+			EntityManager::Get().RemoveComponent<LaserBeamVFXComponent>(e);
+		}
 		return;
 	}
 	else if (compType == "MagazineModificationComponent")
@@ -1144,7 +1151,7 @@ void EntityInterface::ModifyLaserBarrel(DOG::LuaContext* context, DOG::entity e)
 		}
 		if (mag->get().type == MagazineModificationComponent::Type::Fire)
 		{
-			em.AddOrReplaceComponent<FireEffectComponent>(e, 4.0f, 50.0f);
+			em.AddOrReplaceComponent<FireEffectComponent>(e, 1.0f, 15.0f, NULL_ENTITY, e);
 		}
 		else if (mag->get().type != MagazineModificationComponent::Type::Fire)
 		{

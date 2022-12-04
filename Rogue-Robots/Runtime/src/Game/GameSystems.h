@@ -645,6 +645,10 @@ public:
 	ON_UPDATE_ID(LaserBeamComponent, LaserBeamVFXComponent);
 
 	void OnUpdate(DOG::entity e, LaserBeamComponent& laserBeam, LaserBeamVFXComponent& laserBeamVfx);
+
+	LaserBeamSystem();
+private:
+	u32 m_audioAssetID{ 0 };
 };
 
 

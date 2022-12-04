@@ -1016,48 +1016,142 @@ void PlayerLaserShootSystem::OnUpdate(entity e, LaserBarrelComponent& barrel, In
 
 void LaserShootSystem::OnUpdate(entity e, LaserBarrelComponent& barrel)
 {
+	auto& em = EntityManager::Get();
+	
 	f32 dt = static_cast<f32>(Time::DeltaTime());
 
 	if (barrel.shoot && barrel.ammo > 0)
 	{
 		barrel.ammo -= dt;
 		f32 dmg = barrel.damagePerSecond * (dt + std::min(0.0f, barrel.ammo));
-		EntityManager::Get().AddOrReplaceComponent<LaserBeamComponent>(e, barrel.laserToShoot).damage = dmg;
-		EntityManager::Get().AddOrReplaceComponent<LaserBeamVFXComponent>(e);
+		em.AddOrReplaceComponent<LaserBeamComponent>(e, barrel.laserToShoot).damage = dmg;
+		if(!em.HasComponent<LaserBeamVFXComponent>(e)) em.AddComponent<LaserBeamVFXComponent>(e);
 		barrel.shoot = false;
 	}
 	else
 	{
-		EntityManager::Get().RemoveComponentIfExists<LaserBeamComponent>(e);
-		EntityManager::Get().RemoveComponentIfExists<LaserBeamVFXComponent>(e);
+		em.RemoveComponentIfExists<LaserBeamComponent>(e);
+		if (auto vfxLaser = em.TryGetComponent<LaserBeamVFXComponent>(e))
+		{
+			if (em.Exists(vfxLaser->get().particleEmitter))
+			{
+				em.DeferredEntityDestruction(vfxLaser->get().particleEmitter);
+			}
+			em.RemoveComponent<LaserBeamVFXComponent>(e);
+		}
 	}
 }
 
 void LaserShootSystem::OnLateUpdate(DOG::entity e, LaserBarrelComponent&)
 {
-	if (EntityManager::Get().HasComponent<DOG::DeferredDeletionComponent>(e))
+	auto& em = EntityManager::Get();
+	if (em.HasComponent<DOG::DeferredDeletionComponent>(e))
 	{
-		EntityManager::Get().RemoveComponentIfExists<LaserBeamComponent>(e);
-		EntityManager::Get().RemoveComponentIfExists<LaserBeamVFXComponent>(e);
+		em.RemoveComponentIfExists<LaserBeamComponent>(e);
+		if (auto vfxLaser = em.TryGetComponent<LaserBeamVFXComponent>(e))
+		{
+			if (em.Exists(vfxLaser->get().particleEmitter))
+			{
+				em.DeferredEntityDestruction(vfxLaser->get().particleEmitter);
+			}
+			em.RemoveComponent<LaserBeamVFXComponent>(e);
+		}
 	}
 }
 
 void LaserBeamSystem::OnUpdate(entity e, LaserBeamComponent& laserBeam, LaserBeamVFXComponent& laserBeamVfx)
 {
+	auto& em = EntityManager::Get();
 	Vector3 target = laserBeam.startPos + laserBeam.maxRange * laserBeam.direction;
 	if (auto hit = PhysicsEngine::RayCast(laserBeam.startPos, target); hit)
 	{
 		target = hit->hitPosition;
 
-		if (EntityManager::Get().Exists(hit->entityHit) && EntityManager::Get().HasComponent<AgentIdComponent>(hit->entityHit))
+		if (em.Exists(hit->entityHit) && em.HasComponent<AgentIdComponent>(hit->entityHit))
 		{
-			EntityManager::Get().AddOrGetComponent<AgentHitComponent>(hit->entityHit).HitBy(e, laserBeam.owningPlayer, laserBeam.damage);
+			em.AddOrGetComponent<AgentHitComponent>(hit->entityHit).HitBy(e, laserBeam.owningPlayer, laserBeam.damage);
+		}
+
+		if (!em.Exists(laserBeamVfx.particleEmitter))
+		{
+			laserBeamVfx.particleEmitter = em.CreateEntity();
+
+			if (auto scene = em.TryGetComponent<SceneComponent>(e))
+			{
+				em.AddComponent<SceneComponent>(laserBeamVfx.particleEmitter, scene->get().scene);
+			}
+		}
+
+		auto& emitterTransform = em.AddOrGetComponent<TransformComponent>(laserBeamVfx.particleEmitter);
+
+		Vector3 i = -laserBeam.direction;
+		i.Normalize();
+		Vector3 r = Vector3::Lerp(i, Vector3::Reflect(i, hit->hitNormal), 0.5f);
+
+		emitterTransform.worldMatrix = DirectX::SimpleMath::Matrix::CreateLookAt(target, target + r, Vector3::Up).Invert();
+		emitterTransform.RotateL({ DirectX::XM_PIDIV2, 0, 0 });
+
+		auto& coneEmitter = em.AddOrGetComponent<ConeSpawnComponent>(laserBeamVfx.particleEmitter);
+		coneEmitter.speed = 3;
+
+
+
+		auto& particleEmitter = em.AddOrGetComponent<ParticleEmitterComponent>(laserBeamVfx.particleEmitter);
+		particleEmitter.particleSize = 0.07f;
+		particleEmitter.spawnRate = 80.0f;
+		particleEmitter.particleLifetime = 0.14f;
+		particleEmitter.startColor = { laserBeam.color.x, laserBeam.color.y, laserBeam.color.z, 1 };
+		particleEmitter.endColor = { laserBeam.color.x, 1.5f * laserBeam.color.y, laserBeam.color.z, 0 };
+
+
+		if (!em.HasComponent<PointLightComponent>(laserBeamVfx.particleEmitter))
+		{
+			auto& p = em.AddComponent<PointLightComponent>(laserBeamVfx.particleEmitter);
+			p.radius = 3;
+			p.strength = 1;
+			p.color = laserBeam.color;
+			p.handle = LightManager::Get().AddPointLight(
+				PointLightDesc
+				{
+					.position = target,
+					.radius = p.radius,
+					.color = p.color,
+					.strength = p.strength
+				},
+				LightUpdateFrequency::PerFrame
+			);
+		}
+		else
+		{
+			auto& p = em.GetComponent<PointLightComponent>(laserBeamVfx.particleEmitter);
+			p.color = laserBeam.color;
+			// Note that we do not only set dirty to true because of the color change.
+			// The primary reason is to get the position to get updated later on.
+			p.dirty = true; 
+		}
+
+
+
+		if (!em.HasComponent<AudioComponent>(laserBeamVfx.particleEmitter))
+		{
+			auto& audio = em.AddComponent<AudioComponent>(laserBeamVfx.particleEmitter);
+			audio.assetID = m_audioAssetID;
+			audio.loop = true;
+			audio.shouldPlay = true;
+			audio.loopStart = 0;
+			audio.loopEnd = -1;
+			audio.volume = 1;
 		}
 	}
 
 	laserBeamVfx.startPos = laserBeam.startPos;
 	laserBeamVfx.endPos = target;
 	laserBeamVfx.color = laserBeam.color;
+}
+
+LaserBeamSystem::LaserBeamSystem()
+{
+	m_audioAssetID = AssetManager::Get().LoadAudio("Assets/Audio/GunSounds/LaserBeam.wav");
 }
 
 void LaserBeamVFXSystem::OnUpdate(LaserBeamVFXComponent& laserBeam)
