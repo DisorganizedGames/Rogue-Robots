@@ -241,6 +241,7 @@ namespace DOG
          std::vector<ComPtr<ID2D1Bitmap>> m_bitmaps;
          std::vector<D2D1_RECT_F> m_rects;
          ComPtr<ID2D1SolidColorBrush> m_borderBrush;
+         ComPtr<IDWriteTextFormat> m_textFormat;
          UINT m_buffs;
    };
 
