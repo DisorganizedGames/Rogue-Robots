@@ -222,6 +222,6 @@ struct BehaviorTreeComponent
 
 namespace BehaviorTree
 {
-	void ToGraphViz(Node* root, std::string filename);
+	void ToGraphViz(Node* root);
 	void ToGraphVizHelper(Node* node, std::ofstream& outstream);
 }
