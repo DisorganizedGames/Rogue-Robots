@@ -19,6 +19,7 @@ UINT cID, tID, hID, playerlistID;
 
 
 std::vector<bool> buffsVisible;
+std::vector<UINT> m_stacks;
 
 
 void PlayButtonFunc(void);
@@ -47,7 +48,7 @@ void HostLaunch(void);
 
 void ToMenuButtonFunc(void)
 {
-    DOG::UI::Get()->ChangeUIscene(menuID);
+   DOG::UI::Get()->ChangeUIscene(menuID);
 }
 
 void JoinButton(void);
@@ -64,7 +65,7 @@ void Room10Button(void);
 
 void ExitButtonFunc(void)
 {
-    DOG::Window::CloseWindow();
+   DOG::Window::CloseWindow();
 }
 
 DOG::UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight) : m_visible(true), Layer("UILayer")
@@ -142,18 +143,18 @@ void DOG::UI::Destroy()
 
 std::vector<std::function<void(u32, u32)>>& DOG::UI::GetExternalUI()
 {
-    return m_externUI;
+   return m_externUI;
 }
 
 void DOG::UI::AddExternalUI(std::function<void(u32, u32)>&& createFunc)
 {
-    m_externUI.emplace_back(createFunc)(m_width, m_height);
+   m_externUI.emplace_back(createFunc)(m_width, m_height);
 }
 
 
 UINT DOG::UI::GetActiveUIScene() const
 {
-    return m_currsceneID;
+   return m_currsceneID;
 }
 
 /// @brief Generates a unique ID
@@ -752,9 +753,25 @@ DOG::UIBuffTracker::UIBuffTracker(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::
       buffsVisible.push_back(false);
       m_animate.push_back(false);
       m_opacity.push_back(1.0f);
+      m_stacks.push_back(0u);
       m_buffs++;
    }
-   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), m_borderBrush.GetAddressOf());
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Indigo, 1.0f), m_borderBrush.GetAddressOf());
+   HR_VFY(hr);
+   hr = d2d.GetDWriteFactory()->CreateTextFormat(
+      L"Robot Radicals",
+      NULL,
+      DWRITE_FONT_WEIGHT_NORMAL,
+      DWRITE_FONT_STYLE_NORMAL,
+      DWRITE_FONT_STRETCH_NORMAL,
+      14,
+      L"en-us",
+      &m_textFormat
+   );
+   HR_VFY(hr);
+   hr = m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+   HR_VFY(hr);
+   hr = m_textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
    HR_VFY(hr);
 }
 
@@ -766,6 +783,8 @@ void DOG::UIBuffTracker::Draw(DOG::gfx::D2DBackend_DX12& d2d)
       {
          d2d.Get2DDeviceContext()->DrawBitmap(m_bitmaps[i].Get(), m_rects[i], m_opacity[i]);
          d2d.Get2DDeviceContext()->DrawRectangle(m_rects[i], m_borderBrush.Get());
+         if(m_stacks[i] > 1)
+            d2d.Get2DDeviceContext()->DrawTextW(std::to_wstring(m_stacks[i]).c_str(), (UINT32)std::to_wstring(m_stacks[i]).length(), m_textFormat.Get(), &m_rects[i], m_borderBrush.Get());
       }
    }
 
@@ -808,20 +827,27 @@ void DOG::UIBuffTracker::AnimateUp(UINT index)
       m_opacity[index] += 6.0f * (float)DOG::Time::DeltaTime();
 
    if (m_rects[index].top <= 50.f and m_opacity[index] >= 1.0f)
+   {
+      m_rects[index].top = 50.f;
+      m_rects[index].bottom = 100.f;
+      m_opacity[index] = 1.0f;
       m_animate[index] = false;
+   }
 }
 
 void DOG::UIBuffTracker::ActivateIcon(UINT index)
 {
-   if (buffsVisible[index])
-      return;
-   buffsVisible[index] = true;
-   size_t activeBuffs = std::count(buffsVisible.begin(), buffsVisible.end(), true);
-   float x = 50.f + 60.f * activeBuffs;
-   float y = 50.f + 30.f;
-   m_rects[index] = D2D1::RectF(x, y, x + 50.f, y + 50.f);
-   m_opacity[index] = 0.01f;
-   m_animate[index] = true;
+   if (m_stacks[index] == 0)
+   {
+      buffsVisible[index] = true;
+      size_t activeBuffs = std::count(buffsVisible.begin(), buffsVisible.end(), true);
+      float x = 50.f + 60.f * activeBuffs;
+      float y = 50.f + 30.f;
+      m_rects[index] = D2D1::RectF(x, y, x + 50.f, y + 50.f);
+      m_opacity[index] = 0.01f;
+      m_animate[index] = true;
+   }
+   m_stacks[index]++;
 }
 
 void DOG::UIBuffTracker::DeactivateIcon(UINT index)
@@ -835,6 +861,7 @@ void DOG::UIBuffTracker::DeactivateIcon(UINT index)
          m_rects[i].right -= 60.f;
       }
    }
+   m_stacks[index]--;
 }
 
 DOG::UIPlayerList::UIPlayerList(DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
@@ -944,12 +971,12 @@ void DOG::UILabel::Update(DOG::gfx::D2DBackend_DX12& d2d)
 
 void DOG::UILabel::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-    d2d.Get2DDeviceContext()->DrawTextW(
-         m_text.c_str(),
-         (UINT32)m_text.length(),
-         m_textFormat.Get(),
-         &m_rect,
-         m_textBrush.Get());
+   d2d.Get2DDeviceContext()->DrawTextW(
+      m_text.c_str(),
+      (UINT32)m_text.length(),
+      m_textFormat.Get(),
+      &m_rect,
+      m_textBrush.Get());
 }
 DOG::UILabel::~UILabel()
 {
@@ -1107,14 +1134,14 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto r1 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r1ID, (FLOAT)clientWidth / 2.f - 1000.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 1"), std::function<void()>(Room1Button));
    auto r2 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r2ID, (FLOAT)clientWidth / 2.f - 1000.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 2"), std::function<void()>(Room2Button));
    auto r3 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r3ID, (FLOAT)clientWidth / 2.f - 500.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 3"), std::function<void()>(Room3Button));
-   auto r4 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r4ID, (FLOAT)clientWidth / 2.f , (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 4"), std::function<void()>(Room4Button));
+   auto r4 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r4ID, (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 4"), std::function<void()>(Room4Button));
    auto r5 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r5ID, (FLOAT)clientWidth / 2.f + 500.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 5"), std::function<void()>(Room5Button));
    auto r6 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r6ID, (FLOAT)clientWidth / 2.f + 980.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 6"), std::function<void()>(Room6Button));
    auto r7 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r7ID, (FLOAT)clientWidth / 2.f + 980.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 7"), std::function<void()>(Room7Button));
    auto r8 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r8ID, (FLOAT)clientWidth / 2.f - 500.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 8"), std::function<void()>(Room8Button));
-   auto r9 = instance->Create<DOG::UIButton>(r9ID, (FLOAT)clientWidth / 2.f , (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 9"), std::function<void()>(Room9Button));
+   auto r9 = instance->Create<DOG::UIButton>(r9ID, (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 9"), std::function<void()>(Room9Button));
    auto r10 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r10ID, (FLOAT)clientWidth / 2.f + 500.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 10"), std::function<void()>(Room10Button));
-  
+
    //Labels
    auto l1 = instance->Create<DOG::UILabel>(l1ID, std::wstring(L"Room "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 450.f, 500.f, 60.f, 40.f);
    auto l2 = instance->Create<DOG::UILabel>(l2ID, std::wstring(L"Ip: "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 350.f, 500.f, 60.f, 40.f);
@@ -1126,7 +1153,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto l6 = instance->Create<DOG::UILabel>(l6ID, std::wstring(L"Nr of players: "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 250.f, 500.f, 60.f, 40.f);
 
    auto lWinText = instance->Create<DOG::UILabel>(lWinTextID, std::wstring(L" "), (FLOAT)clientWidth / 2.f - 180.0f, (FLOAT)clientHeight / 2.f - 150.f, 500.f, 60.f, 40.f);
-   auto lredScore = instance->Create<DOG::UILabel>(lredScoreID, std::wstring(L" "),  50.f, (FLOAT)clientHeight / 2.f - 250.f, 800.f, 160.f, 40.f);
+   auto lredScore = instance->Create<DOG::UILabel>(lredScoreID, std::wstring(L" "), 50.f, (FLOAT)clientHeight / 2.f - 250.f, 800.f, 160.f, 40.f);
    auto lblueScore = instance->Create<DOG::UILabel>(lblueScoreID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 50.f, (FLOAT)clientHeight / 2.f - 250.f, 800.f, 160.f, 40.f);
    auto lgreenScore = instance->Create<DOG::UILabel>(lgreenScoreID, std::wstring(L" "), 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
    auto lyellowScore = instance->Create<DOG::UILabel>(lyellowScoreID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
@@ -1198,7 +1225,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto& externalUI = instance->GetExternalUI();
    for (auto& e : externalUI)
    {
-       e(clientWidth, clientHeight);
+      e(clientWidth, clientHeight);
    }
 }
 
