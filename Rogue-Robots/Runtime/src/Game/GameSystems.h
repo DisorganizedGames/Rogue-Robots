@@ -302,6 +302,18 @@ private:
 	}
 };
 
+class RenderWeaponComponentUI : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(BarrelComponent, MagazineModificationComponent, MiscComponent);
+	ON_UPDATE(BarrelComponent, MagazineModificationComponent, MiscComponent);
+
+	void OnUpdate(BarrelComponent& bc, MagazineModificationComponent& mgc, MiscComponent& mc)
+	{
+		return;
+	}
+};
+
 class CleanupItemInteractionSystem : public DOG::ISystem
 {
 public:
