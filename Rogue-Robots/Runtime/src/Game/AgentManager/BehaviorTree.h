@@ -31,6 +31,16 @@ struct BTHitDetectComponent
 	//ID
 };
 
+struct BTDistanceToPlayerComponent
+{
+	//ID
+};
+
+struct BTLineOfSightToPlayerComponent
+{
+	//ID
+};
+
 enum class NodeType : uint8_t { Sequence = 0, Selector, Decorator, Leaf };
 enum class DecoratorType : uint8_t { Inverter = 0, Succeeder, Failer, Root };
 
@@ -194,6 +204,25 @@ public:
 	virtual void Fail(DOG::entity agent) noexcept override final;
 };
 
+class DistanceToPlayerNode : public Leaf 
+{
+public:
+	DistanceToPlayerNode(const std::string& name) noexcept;
+	virtual ~DistanceToPlayerNode() noexcept override final = default;
+	virtual void Process(DOG::entity agent) noexcept override final;
+	virtual void Succeed(DOG::entity agent) noexcept override final;
+	virtual void Fail(DOG::entity agent) noexcept override final;
+};
+
+class LineOfSightToPlayerNode : public Leaf
+{
+public:
+	LineOfSightToPlayerNode(const std::string& name) noexcept;
+	virtual ~LineOfSightToPlayerNode() noexcept override final = default;
+	virtual void Process(DOG::entity agent) noexcept override final;
+	virtual void Succeed(DOG::entity agent) noexcept override final;
+	virtual void Fail(DOG::entity agent) noexcept override final;
+};
 
 
 

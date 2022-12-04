@@ -17,97 +17,213 @@ void AgentBehaviorTreeSystem::OnEarlyUpdate(DOG::entity agent, AgentIdComponent&
 	btc.currentRunningNode->Process(agent);
 }
 
-void AgentDetectPlayerSystem::OnEarlyUpdate(entity e, BTDetectPlayerComponent&, AgentSeekPlayerComponent& seek, AgentIdComponent& agent, TransformComponent& transform)
+void AgentDistanceToPlayersSystem::OnEarlyUpdate(DOG::entity agent, BTDetectPlayerComponent&, AgentTargetMetricsComponent& atmc, 
+	DOG::TransformComponent& tc, BehaviorTreeComponent& btc)
 {
-	constexpr f32 SEEK_RADIUS_METERS = 5.0f;
-	constexpr f32 SEEK_RADIUS_SQUARED = SEEK_RADIUS_METERS * SEEK_RADIUS_METERS;
-	EntityManager& eMan = EntityManager::Get();
-	struct PlayerData
-	{ 
-		entity entityID = NULL_ENTITY;
-		i8 id = 0;
-		f32 sqDist = std::numeric_limits<f32>::max();
-		Vector3 pos{ 0,0,0 };
-	};
+	//System checks the (non-squared) distance to every living player.
+	//Also resets the currently held player data since it is no longer up to date (This system is the first system to run every frame for agents except the BT-system):
+	for (auto& playerData : atmc.playerData)
+		playerData = {};
 
-	PlayerData playerData;
-	const Vector3 agentPos(transform.GetPosition());
-
-	eMan.Collect<PlayerAliveComponent, TransformComponent, NetworkPlayerComponent>().Do(
-		[&](entity id,PlayerAliveComponent&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) 
+	u8 playerIndex = 0u;
+	DOG::EntityManager::Get().Collect<PlayerAliveComponent, DOG::TransformComponent>().Do([&](DOG::entity playerID, PlayerAliveComponent, DOG::TransformComponent& ptc)
 		{
-			const f32 sqDist = Vector3::DistanceSquared(transC.GetPosition(), agentPos);
-			if (sqDist < playerData.sqDist)
-			{
-				playerData.entityID = id;
-				playerData.id = netPlayer.playerId;
-				playerData.pos = transC.GetPosition();
-				playerData.sqDist = sqDist;
-			}
+			auto& playerData = atmc.playerData[playerIndex++];
+			playerData.playerID = playerID;
+			playerData.position = ptc.GetPosition();
+			playerData.distanceFromAgent = Vector3::Distance(tc.GetPosition(), ptc.GetPosition());
 		});
+	atmc.nrOfPlayersAlive = playerIndex;
 
-	const bool agentAlreadyHasAggro = eMan.HasComponent<AgentAggroComponent>(e);
-	const bool playerIsWithinAggroRange = (playerData.sqDist < SEEK_RADIUS_SQUARED);
-	const bool agentDetectsPlayer = (agentAlreadyHasAggro || playerIsWithinAggroRange);
+	LEAF(btc.currentRunningNode)->Succeed(agent);
+}
 
-	auto& btc = eMan.GetComponent<BehaviorTreeComponent>(e);
-	if (agentDetectsPlayer)
+void AgentLineOfSightToPlayerSystem::OnEarlyUpdate(DOG::entity agent, BTLineOfSightToPlayerComponent&, AgentTargetMetricsComponent& atmc,
+	DOG::TransformComponent& tc, BehaviorTreeComponent& btc)
+{
+	//This system checks for line of sight to every player. We are still in the gather-data-phase, so all players are analyzed:
+	for (u8 i{ 0u }; i < atmc.nrOfPlayersAlive; ++i)
 	{
-		//if (!agentAlreadyHasAggro)
-		//	eMan.AddComponent<AgentAggroComponent>(e);
+		auto rayCastResult = PhysicsEngine::RayCast(tc.GetPosition(), atmc.playerData[i].position);
+		//Nothing was hit at all:
+		if (!rayCastResult)
+			continue;
+		bool thisPlayerHit = (rayCastResult->entityHit == atmc.playerData[i].playerID);
+		//The player in question was not hit (line-of-sight does not exist):
+		if (!thisPlayerHit)
+			continue;
 
-		// update target
-		bool newTarget = playerData.entityID != seek.entityID;
+		//We are in line-of-sight, POSSIBLY. What remains is to check the dot product between the agent forward vector and 
+		//the vector direction from the agent to the player, since the player could still, e.g., be behind the back:
+		Vector3 vectorFromAgentToPlayer = (atmc.playerData[i].position - tc.GetPosition());
+		vectorFromAgentToPlayer.Normalize();
+		const float dot = tc.GetForward().Dot(vectorFromAgentToPlayer);
 
-		seek.entityID = playerData.entityID;
-		seek.direction = playerData.pos - agentPos;
-		seek.direction.Normalize();
-		seek.squaredDistance = playerData.sqDist;
-
-		if (seek.entityID != NULL_ENTITY)
-		{
-			// add or update PathfinderWalkComponent
-			if (eMan.HasComponent<PathfinderWalkComponent>(e))
-				eMan.GetComponent<PathfinderWalkComponent>(e).goal = eMan.GetComponent<TransformComponent>(seek.entityID).GetPosition();
-			else
-				eMan.AddComponent<PathfinderWalkComponent>(e).goal = eMan.GetComponent<TransformComponent>(seek.entityID).GetPosition();
-		}
-
-		// add network signal
-		if (newTarget)
-		{
-			NetworkAgentSeekPlayer* netSeek;
-			if (!eMan.HasComponent<NetworkAgentSeekPlayer>(e))
-				netSeek = &eMan.AddComponent<NetworkAgentSeekPlayer>(e);
-			else
-				netSeek = &eMan.GetComponent<NetworkAgentSeekPlayer>(e);
-
-			netSeek->playerID = playerData.id;
-			netSeek->agentID = agent.id;
-		}
-
-		LEAF(btc.currentRunningNode)->Succeed(e);
-	}
-	else
-	{
-		// Lost target
-		seek.entityID = DOG::NULL_ENTITY;
-		// add network signal
-		NetworkAgentSeekPlayer* netSeek;
-		if (!eMan.HasComponent<NetworkAgentSeekPlayer>(e))
-			netSeek = &eMan.AddComponent<NetworkAgentSeekPlayer>(e);
+		constexpr const float minimumDotValue = 0.35f; //Range is from 0.35 -> 1.0
+		if (dot > minimumDotValue)
+			atmc.playerData[i].lineOfSight = AgentTargetMetricsComponent::LineOfSight::Full;
 		else
-			netSeek = &eMan.GetComponent<NetworkAgentSeekPlayer>(e);
-
-		// remove PathfinderWalkComponent
-		if (eMan.HasComponent<PathfinderWalkComponent>(e))
-			eMan.RemoveComponent<PathfinderWalkComponent>(e);
-
-		netSeek->playerID = -1;
-		netSeek->agentID = agent.id;
-
-		LEAF(btc.currentRunningNode)->Fail(e);
+			atmc.playerData[i].lineOfSight = AgentTargetMetricsComponent::LineOfSight::Partial;
 	}
+	LEAF(btc.currentRunningNode)->Succeed(agent);
+}	
+
+void AgentDetectPlayerSystem::OnEarlyUpdate(entity agentID, BTDetectPlayerComponent&, AgentSeekPlayerComponent& seek, 
+	AgentIdComponent& agent, TransformComponent& transform, AgentTargetMetricsComponent& atmc, BehaviorTreeComponent& btc)
+{
+	/*This system will determine the aggro focus, if any, of the agent.
+	   The rules are as follow:
+	 - If a player is in FULL line of sight and within (inclusive) 8 metres it is a potential target.
+	 - If a player is in PARTIAL line of sight and within (inclusive) 3 metres it is a potential target.
+	 - Otherwise, the player is not a potential target.
+
+	 The resulting target is, as of now, the potential target that is closest, since the agent has a better chance of
+	 reaching that player at all before dying.
+
+	 The corresponding BT-node fails if no players are potential targets.
+	 */
+
+	constexpr const f32 MINIMUM_AGGRO_DISTANCE = 8.0f; //Not taking into account distance from being shot.
+	constexpr const f32 DIRECT_AGGRO_DISTANCE = 3.0f;
+	EntityManager& eMan = EntityManager::Get();
+	
+	//Let's early out if all players are outside of minimum aggro distance (This will be true for a majority of agents):
+	if (std::all_of(atmc.playerData.begin(), atmc.playerData.end(), 
+		[&](const AgentTargetMetricsComponent::PlayerData& playerData)
+		{ return playerData.distanceFromAgent > MINIMUM_AGGRO_DISTANCE; }))
+	{
+		LEAF(btc.currentRunningNode)->Fail(agentID);
+		return;
+	}
+
+	//Find all potential targets (std::array to avoid heap from vector):
+	u8 nrOfPotentialTargets = 0u;
+	constexpr const u8 MAX_PLAYER_COUNT = 4u;
+	std::array<AgentTargetMetricsComponent::PlayerData*, MAX_PLAYER_COUNT> potentialtargets;
+	for (u8 i{0u}; i < atmc.nrOfPlayersAlive; ++i)
+	{
+		if (IsPotentialTarget(atmc.playerData[i]))
+			potentialtargets[nrOfPotentialTargets++] = &atmc.playerData[i];
+	}
+
+	//No potential targets exist, even though some player(s) is/are within minimum range:
+	if (nrOfPotentialTargets == 0u)
+	{
+		LEAF(btc.currentRunningNode)->Fail(agentID);
+		return;
+	}
+
+	//We now find the final target:
+	auto finalTarget = *std::min_element(potentialtargets.begin(), potentialtargets.end(), 
+		[](const AgentTargetMetricsComponent::PlayerData* pLHS, const AgentTargetMetricsComponent::PlayerData* pRHS)
+		{ return pLHS->distanceFromAgent < pRHS->distanceFromAgent; });
+
+	
+	
+
+
+
+	//constexpr f32 SEEK_RADIUS_METERS = 5.0f;
+	//constexpr f32 SEEK_RADIUS_SQUARED = SEEK_RADIUS_METERS * SEEK_RADIUS_METERS;
+	//EntityManager& eMan = EntityManager::Get();
+	//
+	//AgentTargetMetricsComponent::PlayerData playerData;
+	//const Vector3 agentPos(transform.GetPosition());
+	//
+	//eMan.Collect<PlayerAliveComponent, TransformComponent, NetworkPlayerComponent>().Do(
+	//	[&](entity id,PlayerAliveComponent&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) 
+	//	{
+	//		const f32 sqDist = Vector3::DistanceSquared(transC.GetPosition(), agentPos);
+	//		if (sqDist < playerData.sqDist)
+	//		{
+	//			playerData.entityID = id;
+	//			playerData.id = netPlayer.playerId;
+	//			playerData.pos = transC.GetPosition();
+	//			playerData.sqDist = sqDist;
+	//		}
+	//	});
+	//
+	//const bool agentAlreadyHasAggro = eMan.HasComponent<AgentAggroComponent>(e);
+	//const bool playerIsWithinAggroRange = (playerData.sqDist < SEEK_RADIUS_SQUARED);
+	//const bool agentDetectsPlayer = (agentAlreadyHasAggro || playerIsWithinAggroRange);
+	//
+	//auto& btc = eMan.GetComponent<BehaviorTreeComponent>(e);
+	//if (agentDetectsPlayer)
+	//{
+	//	//if (!agentAlreadyHasAggro)
+	//	//	eMan.AddComponent<AgentAggroComponent>(e);
+	//
+	//	// update target
+	//	bool newTarget = playerData.entityID != seek.entityID;
+	//
+	//	seek.entityID = playerData.entityID;
+	//	seek.direction = playerData.pos - agentPos;
+	//	seek.direction.Normalize();
+	//	seek.squaredDistance = playerData.sqDist;
+	//
+	//	if (seek.entityID != NULL_ENTITY)
+	//	{
+	//		// add or update PathfinderWalkComponent
+	//		if (eMan.HasComponent<PathfinderWalkComponent>(e))
+	//			eMan.GetComponent<PathfinderWalkComponent>(e).goal = eMan.GetComponent<TransformComponent>(seek.entityID).GetPosition();
+	//		else
+	//			eMan.AddComponent<PathfinderWalkComponent>(e).goal = eMan.GetComponent<TransformComponent>(seek.entityID).GetPosition();
+	//	}
+	//
+	//	// add network signal
+	//	if (newTarget)
+	//	{
+	//		NetworkAgentSeekPlayer* netSeek;
+	//		if (!eMan.HasComponent<NetworkAgentSeekPlayer>(e))
+	//			netSeek = &eMan.AddComponent<NetworkAgentSeekPlayer>(e);
+	//		else
+	//			netSeek = &eMan.GetComponent<NetworkAgentSeekPlayer>(e);
+	//
+	//		netSeek->playerID = playerData.id;
+	//		netSeek->agentID = agent.id;
+	//	}
+	//
+	//	LEAF(btc.currentRunningNode)->Succeed(e);
+	//}
+	//else
+	//{
+	//	// Lost target
+	//	seek.entityID = DOG::NULL_ENTITY;
+	//	// add network signal
+	//	NetworkAgentSeekPlayer* netSeek;
+	//	if (!eMan.HasComponent<NetworkAgentSeekPlayer>(e))
+	//		netSeek = &eMan.AddComponent<NetworkAgentSeekPlayer>(e);
+	//	else
+	//		netSeek = &eMan.GetComponent<NetworkAgentSeekPlayer>(e);
+	//
+	//	// remove PathfinderWalkComponent
+	//	if (eMan.HasComponent<PathfinderWalkComponent>(e))
+	//		eMan.RemoveComponent<PathfinderWalkComponent>(e);
+	//
+	//	netSeek->playerID = -1;
+	//	netSeek->agentID = agent.id;
+	//
+	//	LEAF(btc.currentRunningNode)->Fail(e);
+	//}
+}
+
+const bool AgentDetectPlayerSystem::IsPotentialTarget(const AgentTargetMetricsComponent::PlayerData& playerData) noexcept
+{
+	constexpr const f32 MINIMUM_AGGRO_DISTANCE = 8.0f;
+	constexpr const f32 FORCED_AGGRO_DISTANCE = 3.0f;
+
+	const bool playerIsWithinMinimumRange = (playerData.distanceFromAgent <= MINIMUM_AGGRO_DISTANCE);
+	const bool playerIsWithinForcedAggroRange = (playerData.distanceFromAgent <= FORCED_AGGRO_DISTANCE);
+	const bool playerIsInFullLOS = (playerData.lineOfSight == AgentTargetMetricsComponent::LineOfSight::Full);
+	const bool playerIsInPartialLOS = (playerData.lineOfSight == AgentTargetMetricsComponent::LineOfSight::Partial);
+
+	const bool validAggro1 = (playerIsWithinMinimumRange && playerIsInFullLOS);
+	const bool validAggro2 = (playerIsWithinForcedAggroRange && playerIsInPartialLOS);
+
+	if (validAggro1 || validAggro2)
+		return true;
+	else
+		return false;
 }
 
 

@@ -43,6 +43,21 @@ struct AgentAttackComponent
 	bool Ready() { return coolDown <= DOG::Time::ElapsedTime() - timeOfLast; }
 };
 
+struct AgentTargetMetricsComponent
+{
+	enum class LineOfSight { None = 0u, Partial, Full };
+	struct PlayerData
+	{
+		DOG::entity playerID = DOG::NULL_ENTITY;
+		i8 id = 0;
+		f32 distanceFromAgent = std::numeric_limits<f32>::max();
+		DirectX::SimpleMath::Vector3 position{ 0,0,0 };
+		LineOfSight lineOfSight{ LineOfSight::None };
+	};
+	std::array<PlayerData, 4u> playerData;
+	u8 nrOfPlayersAlive = 0u;
+};
+
 struct AgentSeekPlayerComponent
 {
 	DOG::entity entityID = DOG::NULL_ENTITY;
