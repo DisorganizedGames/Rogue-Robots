@@ -279,4 +279,20 @@ namespace DOG
          ComPtr<ID2D1SolidColorBrush> m_textBrush;
    };
 
+   class UIIcon : public UIElement
+   {
+      public:
+         UIIcon(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring filePath, float x, float y, float width, float height, float r, float g, float b);
+         ~UIIcon();
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+      private:
+         float m_opacity;
+         bool m_show;
+         ComPtr<ID2D1Bitmap> m_bitmap;
+         D2D1_RECT_F m_rect;
+         ComPtr<ID2D1SolidColorBrush> m_borderBrush;
+         ComPtr<IDWriteTextFormat> m_textFormat;
+   };
+
 }

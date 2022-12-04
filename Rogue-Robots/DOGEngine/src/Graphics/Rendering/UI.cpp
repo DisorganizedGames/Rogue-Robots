@@ -783,7 +783,7 @@ void DOG::UIBuffTracker::Draw(DOG::gfx::D2DBackend_DX12& d2d)
       {
          d2d.Get2DDeviceContext()->DrawBitmap(m_bitmaps[i].Get(), m_rects[i], m_opacity[i]);
          d2d.Get2DDeviceContext()->DrawRectangle(m_rects[i], m_borderBrush.Get());
-         if(m_stacks[i] > 1)
+         if (m_stacks[i] > 1)
             d2d.Get2DDeviceContext()->DrawTextW(std::to_wstring(m_stacks[i]).c_str(), (UINT32)std::to_wstring(m_stacks[i]).length(), m_textFormat.Get(), &m_rects[i], m_borderBrush.Get());
       }
    }
@@ -987,6 +987,60 @@ void DOG::UILabel::SetText(std::wstring text)
    m_text = text;
 }
 
+DOG::UIIcon::UIIcon(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring filePath, float x, float y, float width, float height, float r, float g, float b) : UIElement(id)
+{
+   UNREFERENCED_PARAMETER(d2d);
+   ComPtr<IWICBitmapDecoder> m_decoder;
+   ComPtr<IWICImagingFactory> m_imagingFactory;
+   ComPtr<IWICBitmapFrameDecode> m_frame;
+   ComPtr<IWICFormatConverter> m_converter;
+   HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (LPVOID*)m_imagingFactory.GetAddressOf());
+   HR_VFY(hr);
+
+   hr = m_imagingFactory->CreateDecoderFromFilename(
+      filePath.c_str(),                            // Image to be decoded
+      NULL,                            // Do not prefer a particular vendor
+      GENERIC_READ,                    // Desired read access to the file
+      WICDecodeMetadataCacheOnDemand,  // Cache metadata when needed
+      m_decoder.GetAddressOf()                 // Pointer to the decoder
+   );
+   HR_VFY(hr);
+   hr = m_decoder->GetFrame(0, m_frame.GetAddressOf());
+   HR_VFY(hr);
+   hr = m_imagingFactory->CreateFormatConverter(m_converter.GetAddressOf());
+   HR_VFY(hr);
+   hr = m_converter->Initialize(
+      m_frame.Get(),                   // Input bitmap to convert
+      GUID_WICPixelFormat32bppPBGRA,   // Destination pixel format
+      WICBitmapDitherTypeNone,         // Specified dither pattern
+      NULL,                            // Specify a particular palette
+      0.f,                             // Alpha threshold
+      WICBitmapPaletteTypeCustom       // Palette translation type
+   );
+   HR_VFY(hr);
+   hr = d2d.Get2DDeviceContext()->CreateBitmapFromWicBitmap(m_converter.Get(), NULL, m_bitmap.GetAddressOf());
+   HR_VFY(hr);
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(r, g, b, 0.7f), m_borderBrush.GetAddressOf());
+   HR_VFY(hr);
+   m_rect = D2D1::RectF(x, y, x + width, y + height);
+   m_opacity = 1.0f;
+}
+DOG::UIIcon::~UIIcon()
+{
+
+}
+
+void DOG::UIIcon::Draw(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   if (m_show)
+      d2d.Get2DDeviceContext()->DrawBitmap(m_bitmap.Get(), &m_rect, m_opacity);
+   d2d.Get2DDeviceContext()->DrawRectangle(&m_rect, m_borderBrush.Get());
+}
+void DOG::UIIcon::Update(DOG::gfx::D2DBackend_DX12& d2d)
+{
+
+}
+
 void UIRebuild(UINT clientHeight, UINT clientWidth)
 {
    auto instance = DOG::UI::Get();
@@ -998,6 +1052,9 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    //Crosshair
    auto c = instance->Create<DOG::UICrosshair>(cID);
    instance->AddUIElementToScene(gameID, std::move(c));
+   UINT iconID;
+   auto icon = instance->Create<DOG::UIIcon>(iconID, std::wstring(L"Assets/Sprites/test.bmp"), 400.f, 400.f, 50.f, 50.f, 1.f, 1.f, 1.f);
+   instance->AddUIElementToScene(gameID, std::move(icon));
 
 
    //Menu backgrounds
