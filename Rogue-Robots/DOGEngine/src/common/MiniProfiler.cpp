@@ -1,4 +1,5 @@
 #include "MiniProfiler.h"
+#include "../Core/Window.h"
 #include "ImGUI\imgui.h"
 
 namespace DOG
@@ -34,11 +35,13 @@ namespace DOG
 	void MiniProfiler::DrawResultWithImGui(bool& open)
 	{
 		static bool allowMove = false;
+		static bool lockTopLeft = true;
 		static int textOpacity = 180;
 		if (ImGui::BeginMenu("MiniProfiler"))
 		{
 			ImGui::MenuItem("Active", nullptr, &open);
 			ImGui::MenuItem("Unlock", nullptr, &allowMove);
+			ImGui::MenuItem("LockTopLeft", nullptr, &lockTopLeft);
 			ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.8f);
 			ImGui::SliderInt("##1", &textOpacity, 70, 255, "Opacity");
 			ImGui::EndMenu(); // "MiniProfiler"
@@ -47,6 +50,14 @@ namespace DOG
 
 		if (open)
 		{
+			if (lockTopLeft)
+			{
+				auto r = Window::GetWindowRect();
+				ImVec2 pos;
+				pos.x = r.left + 30.0f;
+				pos.y = r.top + 50.0f;
+				ImGui::SetNextWindowPos(pos);
+			}
 			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 			if (ImGui::Begin("MiniProfiler", &open, (allowMove ? ImGuiWindowFlags_None : ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground)))
 			{
