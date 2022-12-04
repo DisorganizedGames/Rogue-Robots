@@ -1104,6 +1104,34 @@ void LaserBeamSystem::OnUpdate(entity e, LaserBeamComponent& laserBeam, LaserBea
 		particleEmitter.endColor = { laserBeam.color.x, 1.5f * laserBeam.color.y, laserBeam.color.z, 0 };
 
 
+		if (!em.HasComponent<PointLightComponent>(laserBeamVfx.particleEmitter))
+		{
+			auto& p = em.AddComponent<PointLightComponent>(laserBeamVfx.particleEmitter);
+			p.radius = 3;
+			p.strength = 1;
+			p.color = laserBeam.color;
+			p.handle = LightManager::Get().AddPointLight(
+				PointLightDesc
+				{
+					.position = target,
+					.radius = p.radius,
+					.color = p.color,
+					.strength = p.strength
+				},
+				LightUpdateFrequency::PerFrame
+			);
+		}
+		else
+		{
+			auto& p = em.GetComponent<PointLightComponent>(laserBeamVfx.particleEmitter);
+			p.color = laserBeam.color;
+			// Note that we do not only set dirty to true because of the color change.
+			// The primary reason is to get the position to get updated later on.
+			p.dirty = true; 
+		}
+
+
+
 		if (!em.HasComponent<AudioComponent>(laserBeamVfx.particleEmitter))
 		{
 			auto& audio = em.AddComponent<AudioComponent>(laserBeamVfx.particleEmitter);
