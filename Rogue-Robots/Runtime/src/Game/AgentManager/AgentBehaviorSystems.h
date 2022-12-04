@@ -15,16 +15,33 @@ public:
 	void OnEarlyUpdate(DOG::entity agent, AgentIdComponent&, BehaviorTreeComponent& btc);
 };
 
+class AgentDistanceToPlayersSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(BTDetectPlayerComponent, AgentTargetMetricsComponent, DOG::TransformComponent, BehaviorTreeComponent);
+	ON_EARLY_UPDATE_ID(BTDetectPlayerComponent, AgentTargetMetricsComponent, DOG::TransformComponent, BehaviorTreeComponent);
+	void OnEarlyUpdate(DOG::entity e, BTDetectPlayerComponent&, AgentTargetMetricsComponent& atmc, DOG::TransformComponent& tc, BehaviorTreeComponent& btc);
+};
+
+class AgentLineOfSightToPlayerSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(BTLineOfSightToPlayerComponent, AgentTargetMetricsComponent, DOG::TransformComponent, BehaviorTreeComponent);
+	ON_EARLY_UPDATE_ID(BTLineOfSightToPlayerComponent, AgentTargetMetricsComponent, DOG::TransformComponent, BehaviorTreeComponent);
+	void OnEarlyUpdate(DOG::entity e, BTLineOfSightToPlayerComponent&, AgentTargetMetricsComponent& atmc, DOG::TransformComponent& tc, BehaviorTreeComponent& btc);
+};
+
 class AgentDetectPlayerSystem: public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
 public:
-	SYSTEM_CLASS(BTDetectPlayerComponent, AgentSeekPlayerComponent, AgentIdComponent, DOG::TransformComponent);
-	ON_EARLY_UPDATE_ID(BTDetectPlayerComponent, AgentSeekPlayerComponent, AgentIdComponent, DOG::TransformComponent);
-	void OnEarlyUpdate(DOG::entity e, BTDetectPlayerComponent&, AgentSeekPlayerComponent& seek, AgentIdComponent& agent, DOG::TransformComponent& transform);
+	SYSTEM_CLASS(BTDetectPlayerComponent, AgentSeekPlayerComponent, AgentIdComponent, DOG::TransformComponent, AgentTargetMetricsComponent, BehaviorTreeComponent);
+	ON_EARLY_UPDATE_ID(BTDetectPlayerComponent, AgentSeekPlayerComponent, AgentIdComponent, DOG::TransformComponent, AgentTargetMetricsComponent, BehaviorTreeComponent);
+	void OnEarlyUpdate(DOG::entity e, BTDetectPlayerComponent&, AgentSeekPlayerComponent& seek, 
+		AgentIdComponent& agent, DOG::TransformComponent& transform, AgentTargetMetricsComponent& atmc, BehaviorTreeComponent& btc);
+	[[nodiscard]] const bool IsPotentialTarget(const AgentTargetMetricsComponent::PlayerData& playerData) noexcept;
 };
-
 
 /**************************************************
 *				Regular Systems

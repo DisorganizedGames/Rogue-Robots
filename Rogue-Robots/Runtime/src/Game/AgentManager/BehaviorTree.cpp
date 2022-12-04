@@ -381,6 +381,54 @@ void MoveToPlayerNode::Fail(DOG::entity agent) noexcept
 	GetParent()->Process(agent);
 }
 
+DistanceToPlayerNode::DistanceToPlayerNode(const std::string& name) noexcept
+	: Leaf{ name }
+{}
+
+void DistanceToPlayerNode::Process(DOG::entity agent) noexcept
+{
+	DOG::EntityManager::Get().AddComponent<BTDistanceToPlayerComponent>(agent);
+	DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
+}
+
+void DistanceToPlayerNode::Succeed(DOG::entity agent) noexcept
+{
+	SetSucceededAs(true);
+	DOG::EntityManager::Get().RemoveComponent<BTDistanceToPlayerComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+void DistanceToPlayerNode::Fail(DOG::entity agent) noexcept
+{
+	SetSucceededAs(false);
+	DOG::EntityManager::Get().RemoveComponent<BTDistanceToPlayerComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+LineOfSightToPlayerNode::LineOfSightToPlayerNode(const std::string& name) noexcept
+	: Leaf{ name }
+{}
+
+void LineOfSightToPlayerNode::Process(DOG::entity agent) noexcept
+{
+	DOG::EntityManager::Get().AddComponent<BTLineOfSightToPlayerComponent>(agent);
+	DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
+}
+
+void LineOfSightToPlayerNode::Succeed(DOG::entity agent) noexcept
+{
+	SetSucceededAs(true);
+	DOG::EntityManager::Get().RemoveComponent<BTLineOfSightToPlayerComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+void LineOfSightToPlayerNode::Fail(DOG::entity agent) noexcept
+{
+	SetSucceededAs(false);
+	DOG::EntityManager::Get().RemoveComponent<BTLineOfSightToPlayerComponent>(agent);
+	GetParent()->Process(agent);
+}
+
 PatrolNode::PatrolNode(const std::string& name) noexcept
 	: Leaf{ name }
 {}
@@ -404,6 +452,8 @@ void PatrolNode::Fail(DOG::entity agent) noexcept
 	DOG::EntityManager::Get().RemoveComponent<BTPatrolComponent>(agent);
 	GetParent()->Process(agent);
 }
+
+
 
 void BehaviorTree::ToGraphViz(Node* root)
 {
