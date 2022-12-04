@@ -146,7 +146,7 @@ void AgentAttackSystem::OnUpdate(entity e, BTAttackComponent&, BehaviorTreeCompo
 		LEAF(btc.currentRunningNode)->Fail(e);
 }
 
-void AgentHitDetectionSystem::OnUpdate(entity e, /*BTHitDetectComponent&,*/ HasEnteredCollisionComponent& collision, AgentSeekPlayerComponent& seek)
+void AgentHitDetectionSystem::OnUpdate(entity e, BTHitDetectComponent&, HasEnteredCollisionComponent& collision, AgentSeekPlayerComponent& seek)
 {
 	EntityManager& eMan = EntityManager::Get();
 

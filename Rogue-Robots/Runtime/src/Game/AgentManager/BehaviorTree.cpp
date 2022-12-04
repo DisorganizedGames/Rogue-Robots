@@ -411,7 +411,7 @@ void BehaviorTree::ToGraphViz(Node* root)
 	outStream.open("BehaviorTree.dot");
 
 	outStream << "digraph {" << std::endl;
-	ToGraphVizHelper(root, outStream);
+	BehaviorTree::ToGraphVizHelper(root, outStream);
 	outStream << "}" << std::endl;
 	outStream.close();
 }
