@@ -1151,7 +1151,7 @@ void EntityInterface::ModifyLaserBarrel(DOG::LuaContext* context, DOG::entity e)
 		}
 		if (mag->get().type == MagazineModificationComponent::Type::Fire)
 		{
-			em.AddOrReplaceComponent<FireEffectComponent>(e, 4.0f, 50.0f);
+			em.AddOrReplaceComponent<FireEffectComponent>(e, 1.0f, 15.0f, NULL_ENTITY, e);
 		}
 		else if (mag->get().type != MagazineModificationComponent::Type::Fire)
 		{
