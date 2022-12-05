@@ -342,6 +342,7 @@ bool SourceVoice::HasFinished()
 
 	if (m_stopped)
 	{
+		std::scoped_lock lk(m_stopMutex);
 		Stop();
 		for (auto& buf: m_bufferRing) buf.resize(0);
 	}
@@ -377,8 +378,9 @@ void SourceVoice::QueueNext()
 	XAUDIO2_VOICE_STATE state;
 	m_source->GetState(&state, XAUDIO2_VOICE_NOSAMPLESPLAYED);
 
-	while (state.BuffersQueued < m_bufferRing.size())
+	while (state.BuffersQueued < m_bufferRing.size() && !m_stopped)
 	{
+		std::scoped_lock lk(m_stopMutex);
 		auto it = m_externalBuffer.begin() + m_idx;
 
 		auto& curBuffer = m_bufferRing[m_ringIdx++];
@@ -421,8 +423,9 @@ void SourceVoice::QueueNextAsync()
 	m_source->GetState(&state, XAUDIO2_VOICE_NOSAMPLESPLAYED);
 	const auto bufferRingSize = m_bufferRing.size();
 
-	while (state.BuffersQueued < bufferRingSize)
+	while (state.BuffersQueued < bufferRingSize && !m_stopped)
 	{
+		std::scoped_lock lk(m_stopMutex);
 		auto& curBuffer = m_bufferRing[m_ringIdx++];
 
 		curBuffer = m_asyncWFR.ReadDataChunk(CHUNK_SIZE);
