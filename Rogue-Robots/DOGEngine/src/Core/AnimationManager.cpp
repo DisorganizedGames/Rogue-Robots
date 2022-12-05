@@ -61,7 +61,7 @@ namespace DOG
 			return;
 		}
 
-		EntityManager::Get().Collect<AnimationComponent, MixamoImguiJointTF, MixamoHeadJointTF>().Do([&](AnimationComponent& aC, MixamoImguiJointTF& itf, MixamoHeadJointTF& jtf)
+		EntityManager::Get().Collect<AnimationComponent, MixamoRightHandJointTF, MixamoHeadJointTF>().Do([&](AnimationComponent& aC, MixamoRightHandJointTF& rightHandTf, MixamoHeadJointTF& headTf)
 			{
 				if (aC.animatorID != -1)
 				{
@@ -72,11 +72,11 @@ namespace DOG
 					UpdateSkeleton(a, offset);
 					const auto headJointBindPose = XMMatrixTranspose(XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_rigs[MIXAMO_RIG_ID]->jointOffsets[MIXAMO_RIG.headJoint])));
 					const auto vsHeadJointTf = XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[offset + MIXAMO_RIG.headJoint]));
-					jtf.transform = headJointBindPose * vsHeadJointTf;
+					headTf.transform = headJointBindPose * vsHeadJointTf;
 
-					const auto imguiJointBindPose = XMMatrixTranspose(XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_rigs[MIXAMO_RIG_ID]->jointOffsets[MIXAMO_RIG.rightHandJoint])));
-					const auto vsImguiJointTf = XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[offset + MIXAMO_RIG.rightHandJoint]));
-					itf.transform = imguiJointBindPose * vsImguiJointTf;
+					const auto rightHandJointBindPose = XMMatrixTranspose(XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_rigs[MIXAMO_RIG_ID]->jointOffsets[MIXAMO_RIG.rightHandJoint])));
+					const auto rightHandJointTf = XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[offset + MIXAMO_RIG.rightHandJoint]));
+					rightHandTf.transform = rightHandJointBindPose * rightHandJointTf;
 				}
 			});
 	}
