@@ -357,10 +357,11 @@ PS_OUT main(VS_OUT input)
     Texture2DArray shadowMaps = ResourceDescriptorHeap[shadowMapArrayStruct.shadowMapArray[0][0]];
     
     /* VARIABLES NEEDED FOR VOLUMETRIC SCATTERING */
-    uint nrOfSteps = 100;
+    uint nrOfSteps = 70;
     float3 worldPosition = input.wsPos;
-    float3 startPosition = pfData.camPos.xyz;
-    float3 rayVector = worldPosition - startPosition;
+    //float3 startPosition = pfData.camPos.xyz;
+    float3 startPosition = worldPosition;
+    float3 rayVector = pfData.camPos.xyz - worldPosition;
     float rayLength = length(rayVector);
     float3 rayDirection = rayVector / rayLength;
     float stepLength = rayLength / nrOfSteps;
@@ -429,24 +430,36 @@ PS_OUT main(VS_OUT input)
         
         float shadowFactor = perSpotlightData.spotlightArray[k].isShadowCaster ? CalculateShadowFactor(shadowMaps, k, input.wsPos, N, -lightToPosDir, viewMatrix, projectionMatrix) : 1.0f;
         
+        Lo += ((kD * albedoInput / 3.1415 + specular) * radiance * NdotL * contrib * shadowFactor);
+       
         float3 currentposition = startPosition;
         float3 accumulatedMedia = 0.0f.xxx;
-      //Ray march from pixel pos from the POV of the LIGHT CAMERA, NOT MAIN CAM!
+        
         for (uint j = 0u; j < nrOfSteps; j++)
         {
-            float4 worldInShadowSpace = mul(projectionMatrix, mul(viewMatrix, float4(currentposition, 1.f)));
-            float3 positionLightSS = worldInShadowSpace.xyz / worldInShadowSpace.w;
-            float2 shadowMapTextureCoords = float2(0.5f * positionLightSS.x + 0.5f, -0.5f * positionLightSS.y + 0.5f);
-            float shadowMapValue = shadowMaps.Sample(g_point_samp ,float3(shadowMapTextureCoords, k)).r;
-            if (shadowMapValue < positionLightSS.z)
+            float3 lightToCurrentPosition = currentposition - perSpotlightData.spotlightArray[k].worldPosition.xyz;
+            float3 lightToCurrentPositionDirection = normalize(lightToCurrentPosition);
+            float theta = dot(normalize(perSpotlightData.spotlightArray[k].direction), lightToCurrentPositionDirection);
+            if (acos(theta) <= cutoffAngleRad)
             {
-                accumulatedMedia += CalculateVolumetricScattering(dot(rayDirection, -lightToPosDir), 0.0f).xxx * perSpotlightData.spotlightArray[k].color;
+                float4 worldInShadowSpace = mul(projectionMatrix, mul(viewMatrix, float4(currentposition, 1.f)));
+                float3 positionLightSS = worldInShadowSpace.xyz / worldInShadowSpace.w;
+                float2 shadowMapTextureCoords = float2(0.5f * positionLightSS.x + 0.5f, -0.5f * positionLightSS.y + 0.5f);
+                float shadowMapValue = shadowMaps.Sample(g_point_samp, float3(shadowMapTextureCoords, k)).r;
+            
+                if (shadowMapValue < positionLightSS.z)
+                {
+                    float contrib = smoothstep(0.0, 1.0, pow(saturate(abs(cutoffAngleRad - acos(theta))), 0.35));
+                    float distanceFallOffFactor = (1.f - clamp(length(lightToCurrentPosition), 0.f, SPOTLIGHT_DISTANCE) / SPOTLIGHT_DISTANCE);
+                    distanceFallOffFactor *= distanceFallOffFactor; // quadratic falloff ( just like real light :) )
+                    contrib *= distanceFallOffFactor;
+                    
+                    accumulatedMedia += (CalculateVolumetricScattering(dot(rayDirection, -lightToCurrentPositionDirection), 0.0f).xxx * perSpotlightData.spotlightArray[k].color) * contrib * perSpotlightData.spotlightArray[k].strength;
+                }
             }
             currentposition += step;
         }
         accumulatedMedia /= nrOfSteps;
-        
-        Lo += ((kD * albedoInput / 3.1415 + specular) * radiance * NdotL * contrib * shadowFactor);
         Lo += (accumulatedMedia);
     }
     
