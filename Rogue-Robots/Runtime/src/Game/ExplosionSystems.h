@@ -18,7 +18,7 @@ public:
 	ExplosionEffectSystem();
 
 	//You do not have control over the entity! The system does!
-	static DOG::entity CreateExplosionEffect(DOG::entity parentEntity, float radius, float growTime = -1.0f, float shrinkTime = -1.0f, float audioVolume = 10, ExplosionEffectComponent::ExplosionSound explosionSound = ExplosionEffectComponent::ExplosionSound::None);
+	static DOG::entity CreateExplosionEffect(DOG::entity parentEntity, float radius, float growTime = -1.0f, float shrinkTime = -1.0f, float audioVolume = 10, ExplosionEffectComponent::ExplosionSound explosionSound = ExplosionEffectComponent::ExplosionSound::Explosion2);
 	static void AddEffectsToExplosion(DOG::entity parentEntity, DOG::entity explosionEntity);
 
 	SYSTEM_CLASS(ExplosionEffectComponent);
