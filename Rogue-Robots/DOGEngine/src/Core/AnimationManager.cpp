@@ -61,7 +61,7 @@ namespace DOG
 			return;
 		}
 
-		EntityManager::Get().Collect<AnimationComponent, MixamoImguiJointTF, MixamoHeadJointTF, TransformComponent>().Do([&](AnimationComponent& aC, MixamoImguiJointTF& itf, MixamoHeadJointTF& jtf, TransformComponent& tf)
+		EntityManager::Get().Collect<AnimationComponent, MixamoImguiJointTF, MixamoHeadJointTF>().Do([&](AnimationComponent& aC, MixamoImguiJointTF& itf, MixamoHeadJointTF& jtf)
 			{
 				if (aC.animatorID != -1)
 				{
@@ -74,8 +74,8 @@ namespace DOG
 					const auto vsHeadJointTf = XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[offset + MIXAMO_RIG.headJoint]));
 					jtf.transform = headJointBindPose * vsHeadJointTf;
 
-					const auto imguiJointBindPose = XMMatrixTranspose(XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_rigs[MIXAMO_RIG_ID]->jointOffsets[m_imguiJoint])));
-					const auto vsImguiJointTf = XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[offset + m_imguiJoint]));
+					const auto imguiJointBindPose = XMMatrixTranspose(XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_rigs[MIXAMO_RIG_ID]->jointOffsets[MIXAMO_RIG.rightHandJoint])));
+					const auto vsImguiJointTf = XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[offset + MIXAMO_RIG.rightHandJoint]));
 					itf.transform = imguiJointBindPose * vsImguiJointTf;
 				}
 			});
