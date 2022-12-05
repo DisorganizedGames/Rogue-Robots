@@ -20,9 +20,12 @@ end
 function MagazineComponents:FrostEffect()
 	return
 	{
+		frostEffectSound = Asset:LoadAudio("Assets/Audio/GunSounds/Frost.wav"),
+
 		Update = function(self, bullet, playerEntityID, magazineAudioEntity)
 			Entity:AddComponent(bullet.entity, "FrostEffect", 4.0)
 			Entity:AddComponent(bullet.entity, "SubMeshRender", MaterialPrefabs:GetMaterial("FrostMaterial"))
+			Entity:PlayAudio(magazineAudioEntity, self.frostEffectSound, true)
 		end,
 
 		GetECSType = function(self)
