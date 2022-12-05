@@ -92,7 +92,7 @@ namespace DOG
 	{
 		DirectX::SimpleMath::Matrix transform = DirectX::SimpleMath::Matrix::Identity;
 	};
-	struct MixamoImguiJointTF
+	struct MixamoRightHandJointTF
 	{
 		DirectX::SimpleMath::Matrix transform = DirectX::SimpleMath::Matrix::Identity;
 	};

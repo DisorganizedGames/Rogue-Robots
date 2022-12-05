@@ -1859,7 +1859,7 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 					m_lightScene = nullptr;
 				}
 			}
-			
+			ImGui::Checkbox("RenderPlayer", &m_imguiRenderPlayer);
 			if (ImGui::RadioButton("PCGLevel", (int*)&m_selectedScene, (int)SceneComponent::Type::PCGLevelScene)) m_gameState = GameState::Restart;
 
 			if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;

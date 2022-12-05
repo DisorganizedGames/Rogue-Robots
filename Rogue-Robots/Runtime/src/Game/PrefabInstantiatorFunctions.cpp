@@ -8,7 +8,7 @@ using namespace DirectX::SimpleMath;
 std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 {
 	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
-	
+	playerCount = 2;
 	auto* scriptManager = LuaMain::GetScriptManager();
 	//// Add persistent material prefab lua
 	//{
@@ -81,7 +81,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		em.AddComponent<AnimationComponent>(playerI);
 		em.AddComponent<AudioComponent>(playerI);
 		em.AddComponent<MixamoHeadJointTF>(playerI);
-		em.AddComponent<MixamoImguiJointTF>(playerI);
+		em.AddComponent<MixamoRightHandJointTF>(playerI);
 
 		auto& ac = em.GetComponent<AnimationComponent>(playerI);
 		ac.animatorID = static_cast<i8>(i);
@@ -112,15 +112,8 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		t.parent = playerI;
 		t.localTransform.SetPosition({0.0f, -0.5f, 0.0f});
 
-		/*entity gunModelEntity = em.CreateEntity();
-		em.AddComponent<TransformComponent>(gunModelEntity);
-		em.AddComponent<ModelComponent>(gunModelEntity, playerGunModels[i]);
-		em.AddComponent<ShadowReceiverComponent>(playerModelEntity);
-		em.AddComponent<OutlineComponent>(gunModelEntity, playerOutlineColors[i]);*/
-
 		if (i == 0) // Only for this player
 		{
-			//em.AddComponent<DontDraw>(gunModelEntity);
 			em.AddComponent<DontDraw>(playerModelEntity);
 			em.AddComponent<ThisPlayer>(playerI);
 			em.AddComponent<AudioListenerComponent>(playerI);
@@ -136,6 +129,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
 		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");
 	}
+
 	return players;
 }
 
@@ -152,7 +146,7 @@ std::vector<entity> AddFlashlightsToPlayers(const std::vector<entity>& players)
 
 		ChildToBoneComponent& childComponent = em.AddComponent<ChildToBoneComponent>(flashLightEntity);
 		childComponent.boneParent = players[i];
-		childComponent.localTransform.SetPosition(Vector3(0.0f, 0.0f, 0.0f));
+		childComponent.localTransform.SetPosition(Vector3(-200.f, -300.f, 0.f));
 
 		auto& tc = childComponent.localTransform;
 
@@ -204,6 +198,14 @@ std::vector<entity> AddGunsToPlayers(const std::vector<entity>& players)
 {
 	auto& em = EntityManager::Get();
 	auto& am = AssetManager::Get();
+	
+	const std::array<DirectX::SimpleMath::Vector3, 4> playerOutlineColors
+	{
+		DirectX::SimpleMath::Vector3{ 1.f, 0.f, 0.f },
+		DirectX::SimpleMath::Vector3{ 0.f, 0.f, 1.f},
+		DirectX::SimpleMath::Vector3{ 0.f, 1.f, 0.f},
+		DirectX::SimpleMath::Vector3{ 1.f, 1.f, 0.f},
+	};
 
 	std::vector<entity> guns;
 	for (auto i = 0; i < players.size(); ++i)
@@ -223,6 +225,12 @@ std::vector<entity> AddGunsToPlayers(const std::vector<entity>& players)
 		const auto gunBoneSpaceOffset = scaling * rotation * translation;
 		childComponent.localTransform.worldMatrix = Matrix(gunBoneSpaceOffset);
 		guns.push_back(gunEntity);
+		em.AddComponent<OutlineComponent>(gunEntity, playerOutlineColors[i]);
+
+		if (em.HasComponent<ThisPlayer>(childComponent.boneParent))
+		{
+			em.AddComponent<DontDraw>(gunEntity);
+		}
 	}
 	return guns;
 }

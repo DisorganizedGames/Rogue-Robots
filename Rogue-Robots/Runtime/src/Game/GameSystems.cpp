@@ -1345,9 +1345,8 @@ void SetFlashLightToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& ch
 	auto& em = EntityManager::Get();
 	if (em.Exists(child.boneParent))
 	{
-		auto offset = DirectX::XMMatrixTranslationFromVector({ 90.f, 130.f, -45.f });
 		auto& boneHeadModel = em.GetComponent<MixamoHeadJointTF>(child.boneParent);
-		world.worldMatrix = Matrix(offset) * boneHeadModel.transform * em.GetComponent<TransformComponent>(child.boneParent).worldMatrix;
+		world.worldMatrix = child.localTransform * boneHeadModel.transform * em.GetComponent<TransformComponent>(child.boneParent).worldMatrix;
 		world.SetPosition(world.GetPosition() + Vector3(0.f, -0.5f, 0.f));
 	}
 	else
@@ -1361,7 +1360,7 @@ void SetGunToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& child, DO
 	auto& em = EntityManager::Get();
 	if (em.Exists(child.boneParent))
 	{
-		world.worldMatrix = child.localTransform * em.GetComponent<MixamoImguiJointTF>(child.boneParent).transform * em.GetComponent<TransformComponent>(child.boneParent).worldMatrix;
+		world.worldMatrix = child.localTransform * em.GetComponent<MixamoRightHandJointTF>(child.boneParent).transform * em.GetComponent<TransformComponent>(child.boneParent).worldMatrix;
 		world.SetPosition(world.GetPosition() + Vector3(0.f, -0.5f, 0.f)); // account for model capsule offset
 	}
 	else
