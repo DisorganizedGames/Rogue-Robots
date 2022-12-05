@@ -169,7 +169,7 @@ namespace DOG
    class UIHealthBar : public UIElement
    {
       public:
-         UIHealthBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height);
+         UIHealthBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float textSize);
          ~UIHealthBar();
 
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;

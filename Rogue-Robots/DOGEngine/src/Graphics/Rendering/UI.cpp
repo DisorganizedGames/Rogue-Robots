@@ -449,7 +449,7 @@ DOG::UISplashScreen::~UISplashScreen()
 }
 
 
-DOG::UIHealthBar::UIHealthBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height) : UIElement(id)
+DOG::UIHealthBar::UIHealthBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float textSize) : UIElement(id)
 {
    m_text = L"100%";
    m_value = m_test = 1.0f;
@@ -466,7 +466,7 @@ DOG::UIHealthBar::UIHealthBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, 
       DWRITE_FONT_WEIGHT_NORMAL,
       DWRITE_FONT_STYLE_NORMAL,
       DWRITE_FONT_STRETCH_NORMAL,
-      12,
+      textSize,
       L"en-us",
       &m_textFormat
    );
@@ -799,12 +799,8 @@ void DOG::UIBuffTracker::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
    UNREFERENCED_PARAMETER(d2d);
    for (UINT i = 0; i < m_buffs; i++)
-   {
       if (m_animate[i])
-      {
          AnimateUp(i);
-      }
-   }
 
 }
 
@@ -1069,7 +1065,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    //HealthBar
    float healthBarWidth = 300.f;
    float healthBarHeight = 50.f;
-   auto h = instance->Create<DOG::UIHealthBar, float, float, float, float>(hID, (clientWidth - healthBarWidth) * 0.5f, clientHeight - 145.f, healthBarWidth, healthBarHeight);
+   auto h = instance->Create<DOG::UIHealthBar, float, float, float, float, float>(hID, (clientWidth - healthBarWidth) * 0.5f, clientHeight - 145.f, healthBarWidth, healthBarHeight, 20.f);
    instance->AddUIElementToScene(gameID, std::move(h));
 
    //Crosshair
