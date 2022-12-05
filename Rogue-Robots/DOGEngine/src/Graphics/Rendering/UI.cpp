@@ -784,10 +784,12 @@ void DOG::UIBuffTracker::Draw(DOG::gfx::D2DBackend_DX12& d2d)
       {
          d2d.Get2DDeviceContext()->DrawBitmap(m_bitmaps[i].Get(), m_rects[i], m_opacity[i]);
          d2d.Get2DDeviceContext()->DrawRectangle(m_rects[i], m_borderBrush.Get());
-         if (m_stacks[i] > 0)
+         if (m_stacks[i] > 0u)
          {
-             D2D1_RECT_F textRect = m_rects[i];
-             d2d.Get2DDeviceContext()->DrawTextW(std::wstring(std::to_wstring(m_stacks[i]) + L'x').c_str(), (UINT32)std::to_wstring(m_stacks[i]).length() + 1u, m_textFormat.Get(), textRect, m_borderBrush.Get());
+            D2D1_RECT_F textRect = m_rects[i];
+            textRect.top += 40.f;
+            textRect.bottom += 40.f;
+            d2d.Get2DDeviceContext()->DrawTextW(std::wstring(std::to_wstring(m_stacks[i]) + L'x').c_str(), (UINT32)std::to_wstring(m_stacks[i]).length() + 1u, m_textFormat.Get(), textRect, m_borderBrush.Get());
          }
       }
    }
@@ -1073,7 +1075,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    //Crosshair
    auto c = instance->Create<DOG::UICrosshair>(cID);
    instance->AddUIElementToScene(gameID, std::move(c));
-   
+
    //Misc components
    std::vector<std::wstring> paths = { L"Assets/Sprites/FullAuto.bmp", L"Assets/Sprites/ChargeShot.bmp" };
    float xPos = 100.0f;
@@ -1118,8 +1120,8 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    icon->Show(0u);
    instance->AddUIElementToScene(gameID, std::move(icon));
 
-   
-   
+
+
    //Menu backgrounds
    auto menuBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Rogue Robots"));
    instance->AddUIElementToScene(menuID, std::move(menuBack));
@@ -1285,7 +1287,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
    UINT lActiveItemTextID;
    auto labelButtonTextActiveItem = instance->Create<DOG::UILabel>(lActiveItemTextID, std::wstring(L"G"), 400.0f, (FLOAT)clientHeight - 100.0f, 50.f, 50.f, 40.f);
-   
+
    std::vector<std::wstring> vec = { L"Assets/Sprites/MaxHP.bmp" , L"Assets/Sprites/MoveSpeed.bmp" , L"Assets/Sprites/JumpBoost.bmp" };
    auto pic = instance->Create<DOG::UIBuffTracker, std::vector<std::wstring>>(buffID, vec);
    instance->AddUIElementToScene(gameID, std::move(pic));
