@@ -313,7 +313,7 @@ end
 function NormalBulletUpdate()
 	for i = #bullets, 1, -1 do -- Iterate through bullets backwards to make removal of elements safe
 		bullets[i].lifetime = bullets[i].lifetime + DeltaTime
-		if bullets[i].lifetime > 5.0 then
+		if bullets[i].lifetime > bullets[i].barrel:DestroyTime() then
 			bullets[i].barrel:Destroy(bullets[i], EntityID)
 			Entity:DestroyEntity(bullets[i].entity)
 			table.remove(bullets, i)
