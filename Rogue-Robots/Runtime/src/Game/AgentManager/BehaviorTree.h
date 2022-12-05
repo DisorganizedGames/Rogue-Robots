@@ -41,6 +41,11 @@ struct BTLineOfSightToPlayerComponent
 	//ID
 };
 
+struct BTGetPathComponent
+{
+	//ID
+};
+
 enum class NodeType : uint8_t { Sequence = 0, Selector, Decorator, Leaf };
 enum class DecoratorType : uint8_t { Inverter = 0, Succeeder, Failer, Root };
 
@@ -224,6 +229,16 @@ public:
 	virtual void Fail(DOG::entity agent) noexcept override final;
 };
 
+class GetPathNode : public Leaf
+{
+public:
+	GetPathNode(const std::string& name) noexcept;
+	virtual ~GetPathNode() noexcept override final = default;
+	virtual void Process(DOG::entity agent) noexcept override final;
+	virtual void Succeed(DOG::entity agent) noexcept override final;
+	virtual void Fail(DOG::entity agent) noexcept override final;
+};
+
 
 
 
@@ -251,6 +266,6 @@ struct BehaviorTreeComponent
 
 namespace BehaviorTree
 {
-	void ToGraphViz(Node* root);
+	void ToGraphViz(Node* root, const std::string filename);
 	void ToGraphVizHelper(Node* node, std::ofstream& outstream);
 }

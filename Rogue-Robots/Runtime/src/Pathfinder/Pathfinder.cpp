@@ -363,7 +363,7 @@ void Pathfinder::Checkpoints(Vector3 start, PathfinderWalkComponent& pfc)
 		{
 			if (NavMeshID startMesh = navScene.At(start); startMesh != NULL_ENTITY)
 			{
-				if (NavMeshID terminalNavMesh = navScene.At(pfc.goal); terminalNavMesh != NULL_ENTITY)
+				if (NavMeshID terminalMesh = navScene.At(pfc.goal); terminalMesh != NULL_ENTITY)
 				{
 					// Recalculate each frame...
 					EntityManager& em = EntityManager::Get();
@@ -371,7 +371,8 @@ void Pathfinder::Checkpoints(Vector3 start, PathfinderWalkComponent& pfc)
 					for (PortalID id : Astar(start, pfc.goal, heuristicStraightLine))
 						pfc.path.push_back(em.GetComponent<PortalComponent>(id).portal);
 
-					pfc.path.push_back(pfc.goal);
+					if (!pfc.path.empty() || startMesh == terminalMesh)
+						pfc.path.push_back(pfc.goal);
 
 					// remove the first checkpoint if entity is close enough
 					constexpr float THRESHOLD = .05f;
