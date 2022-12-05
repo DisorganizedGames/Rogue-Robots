@@ -8,10 +8,19 @@ constexpr const char* PORTNUMBER_OUT = "50005";
 constexpr const char* PORTNUMBER_IN = "50004";
 constexpr int PORTNUMBER_OUT_INT = 50006;
 constexpr int PORTNUMBER_IN_INT = 50004;
-constexpr const char* MULTICAST_ADRESS = "239.255.255.0";
+constexpr const char* MULTICAST_ADRESS = "239.255.255.0"; //Default multicast
 constexpr u32 AGGRO_BIT = 2147483648;
 constexpr f32 TEAM_DAMAGE_MODIFIER = 9.0f; //At 1.0f it does orginal damage, higher value deal less damage
 constexpr int HARD_SYNC_FRAME = 60;
+const std::string ROOM_1_IP = "192.168.1.55";
+const std::string ROOM_2_IP = "192.168.1.72";
+const std::string ROOM_3_IP = "192.168.1.73";
+const std::string ROOM_4_IP = "192.168.1.67";
+const std::string ROOM_5_IP = "192.168.1.26";
+const std::string ROOM_6_IP = "192.168.1.254";
+const std::string ROOM_7_IP = "192.168.1.70";
+const std::string ROOM_8_IP = "192.168.1.76";
+const std::string ROOM_9_IP = "192.168.1.8";
 
 struct PlayerNetworkComponentUdp
 {

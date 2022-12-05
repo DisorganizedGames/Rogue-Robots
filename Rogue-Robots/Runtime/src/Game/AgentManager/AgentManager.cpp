@@ -3,6 +3,7 @@
 #include "Game/GameLayer.h"
 #include "../LoadSplitModels.h"
 #include "../ItemManager/ItemManager.h"
+#include "../PlayerManager/PlayerManager.h"
 
 using namespace DOG;
 using namespace DirectX::SimpleMath;
@@ -236,7 +237,20 @@ void AgentManager::DestroyLocalAgent(entity e, bool local)
 
 		//Only host can spawn in items
 		if (kill.playerId == 0)
-			ItemManager::Get().CreateItemHost(EntityTypes(((u32)Time::ElapsedTime() + agent.id) % u32(EntityTypes::Default)), agentTrans.GetPosition());
+		{
+
+			if ((u32)Time::ElapsedTime() % 5 == 0)
+			{
+				//can spawn non ammo
+				ItemManager::Get().CreateItemHost(EntityTypes(((u32)Time::ElapsedTime() + agent.id) % u32(EntityTypes::Default)), agentTrans.GetPosition());
+			}
+			else if ((u32)Time::ElapsedTime() % (1 + MAX_PLAYER_COUNT - PlayerManager::Get().GetNrOfPlayers()) == 0)
+			{
+				ItemManager::Get().CreateItemHost(EntityTypes(((u32)Time::ElapsedTime() + agent.id) % (u32(EntityTypes::Barrels) - u32(EntityTypes::BarrelItemsBegin) + 1) + (u32)EntityTypes::BarrelItemsBegin), 
+					agentTrans.GetPosition());
+			}
+				
+		}
 	}
 
 

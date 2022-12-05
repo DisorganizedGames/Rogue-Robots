@@ -61,6 +61,13 @@ void PlayerManager::HurtOnlinePlayers(entity player)
 	std::cout << u32(player) << std::endl; //removes warning, is being used in another branch, remove this line when function is used
 }
 
+i8 PlayerManager::GetPlayerId(entity player)
+{
+	if(s_entityManager.HasComponent<NetworkPlayerComponent>(player))
+		return s_entityManager.GetComponent<NetworkPlayerComponent>(player).playerId;
+	return -1; // did not recive player entity
+}
+
 /*******************************
 		Private Methods
 *******************************/

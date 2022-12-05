@@ -13,7 +13,7 @@
 void UIRebuild(UINT clientHeight, UINT clientWidth);
 void AddScenes();
 
-extern UINT menuID, gameID, optionsID, multiID, joinID, WaitingForHostID, GameOverID, WinScreenID;
+extern UINT menuID, gameID, optionsID, multiID, joinID, WaitingForHostID, GameOverID, WinScreenID, LoadingID;
 extern UINT menuBackID, optionsBackID, multiBackID, lobbyID, hostBackID;
 extern UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID, lWinTextID, lredScoreID, lblueScoreID, lgreenScoreID, lyellowScoreID, lredScoreWinID, lblueScoreWinID, lgreenScoreWinID, lyellowScoreWinID;
 extern UINT cID, tID, hID, playerlistID;

@@ -19,6 +19,7 @@ public:
 	bool IsThisPlayerHost();
 	bool IsThisMultiplayer();
 	void HurtOnlinePlayers(DOG::entity player);
+	i8 GetPlayerId(DOG::entity player);
 private:
 	// singelton instance
 	static PlayerManager s_amInstance;
