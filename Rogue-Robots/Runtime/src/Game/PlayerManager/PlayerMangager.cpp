@@ -97,7 +97,6 @@ void PlayerManager::PlayHurtAudio(entity player)
 		eMan.AddComponent<AudioComponent>(playerHurtSoundEffectComponent.hurtAudioEntity).is3D = true;
 		eMan.AddComponent<ChildComponent>(playerHurtSoundEffectComponent.hurtAudioEntity).parent = player;
 
-		/*m_playerHurtAudio = AssetManager::Get().LoadAudio("Assets/Audio/PlayerHurt/Damage.wav");*/
 		m_playerHurtAudio = AssetManager::Get().LoadAudio("Assets/Audio/PlayerHurt/Damage_Fixed.wav");
 		m_playerDeathAudio = AssetManager::Get().LoadAudio("Assets/Audio/PlayerHurt/Death_Fixed.wav");
 	}
