@@ -92,7 +92,7 @@ private:
 	LARGE_INTEGER m_clockFrequency;
 	UINT m_sleepGranularityMs;
 	
-	
+	u64 m_syncCounter;
 };
 
 class DeleteNetworkSync : public DOG::ISystem

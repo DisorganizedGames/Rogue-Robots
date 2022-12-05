@@ -58,7 +58,7 @@ bool PlayerManager::IsThisMultiplayer()
 
 void PlayerManager::HurtOnlinePlayers(entity player)
 {
-
+	std::cout << u32(player) << std::endl; //removes warning, is being used in another branch, remove this line when function is used
 }
 
 /*******************************

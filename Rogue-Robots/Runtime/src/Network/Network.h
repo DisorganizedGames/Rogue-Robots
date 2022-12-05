@@ -11,7 +11,7 @@ constexpr int PORTNUMBER_IN_INT = 50004;
 constexpr const char* MULTICAST_ADRESS = "239.255.255.0";
 constexpr u32 AGGRO_BIT = 2147483648;
 constexpr f32 TEAM_DAMAGE_MODIFIER = 9.0f; //At 1.0f it does orginal damage, higher value deal less damage
-
+constexpr int HARD_SYNC_FRAME = 60;
 
 struct PlayerNetworkComponentUdp
 {
@@ -43,9 +43,8 @@ struct TcpHeader
 	u16 nrOfNetTransform = 0;
 	u16 nrOfChangedAgentsHp = 0;
 	u16 nrOfCreateAndDestroy = 0;
-	u16 nrOfPathFindingSync = 0;
 	bool lobbyAlive = true;
-
+	u16 nrOfPathFindingSync = 0;
 };
 
 struct NetworkId

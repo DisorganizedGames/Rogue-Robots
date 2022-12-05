@@ -340,7 +340,9 @@ void Server::ServerPollTCP()
 
 			if (pathfinders.size() > 0)
 				memcpy(sendBuffer + bufferSendSize, (char*)pathfinders.data(), pathfinders.size() * sizeof(PathFindingSync));
+
 			bufferSendSize += (u16)pathfinders.size() * sizeof(PathFindingSync);
+
 
 			sendHeader.nrOfPlayersConnected = (i8)m_holdPlayerIds.size();
 			sendHeader.sizeOfPayload = bufferSendSize;
@@ -357,6 +359,7 @@ void Server::ServerPollTCP()
 		transforms.clear();
 		statsChanged.clear();
 		createAndDestroy.clear();
+		pathfinders.clear();
 
 		//wait untill tick is done 
 		float timeTakenS = TickTimeLeftTCP(tickStartTime, clockFrequency);
