@@ -103,6 +103,29 @@ u32 AgentManager::GroupID(u32 agentID)
 	return agentID & MASK;
 }
 
+AgentManager::AgentStats AgentManager::GetAgentStats(EntityTypes type)
+{
+	ASSERT(type < EntityTypes::Agents, "Invalid agent type!");
+
+	switch (type)
+	{
+	case EntityTypes::Scorpio:
+	{
+		AgentStats scorpio{};
+		scorpio.visionDistance = 8.0;
+		scorpio.visionConeDotValue = 0.35f;
+		scorpio.lidarDistance = 3.0f;
+		scorpio.baseSpeed = 10.0f;
+		return scorpio;
+	}
+		break;
+	default:
+		break;
+	}
+
+	return {};
+}
+
 /*******************************
 		Private Methods
 *******************************/
@@ -118,19 +141,24 @@ void AgentManager::Initialize()
 	// Load (all) agent model asset(s)
 	s_amInstance.m_models.push_back(AssetManager::Get().LoadModelAsset("Assets/Models/Enemies/enemy1.gltf"));
 
-	// Register agent systems
+	// Register early agent systems
 	EntityManager& em = EntityManager::Get();
 	em.RegisterSystem(std::make_unique<AgentBehaviorTreeSystem>());
 	
+	em.RegisterSystem(std::make_unique<AgentDistanceToPlayersSystem>());
+	em.RegisterSystem(std::make_unique<AgentLineOfSightToPlayerSystem>());
+	em.RegisterSystem(std::make_unique<AgentDetectHitSystem>());
 	em.RegisterSystem(std::make_unique<AgentDetectPlayerSystem>());
-	em.RegisterSystem(std::make_unique<AgentHitDetectionSystem>());
+	
+	em.RegisterSystem(std::make_unique<AgentGetPathSystem>());
 
+	// Register agent systems
+	em.RegisterSystem(std::make_unique<AgentHitDetectionSystem>());
 	em.RegisterSystem(std::make_unique<AgentAggroSystem>());
 	em.RegisterSystem(std::make_unique<AgentAttackSystem>());
 	
 	em.RegisterSystem(std::make_unique<AgentHitSystem>());
 
-	em.RegisterSystem(std::make_unique<AgentMovementSystem>()); //Is LATE System
 	em.RegisterSystem(std::make_unique<AgentFrostTimerSystem>());
 	em.RegisterSystem(std::make_unique<AgentFireTimerSystem>());
 	em.RegisterSystem(std::make_unique<AgentDestructSystem>());
@@ -139,6 +167,7 @@ void AgentManager::Initialize()
 	em.RegisterSystem(std::make_unique<ShadowAgentSeekPlayerSystem>());
 
 	// Register late update agent systems
+	em.RegisterSystem(std::make_unique<AgentMovementSystem>());
 	em.RegisterSystem(std::make_unique<LateAgentDestructCleanupSystem>());
 
 	// Set status to initialized
@@ -173,6 +202,7 @@ entity AgentManager::CreateAgentCore(u32 model, u32 groupID, const Vector3& pos,
 			if (player.playerId == 0)
 			{
 				AgentMovementComponent& move = em.AddComponent<AgentMovementComponent>(e);
+				move.currentSpeed = GetAgentStats(type).baseSpeed;
 				move.station = pos + GenerateRandomVector3(agent.id);
 				move.forward = move.station - pos;
 				move.forward.Normalize();
@@ -180,6 +210,8 @@ entity AgentManager::CreateAgentCore(u32 model, u32 groupID, const Vector3& pos,
 		});
 
 	em.AddComponent<AgentHPComponent>(e);
+
+	em.AddComponent<AgentTargetMetricsComponent>(e);
 
 	// Add networking components
 	if (GameLayer::GetNetworkStatus() != NetworkStatus::Offline)
@@ -287,12 +319,25 @@ void AgentManager::CreateScorpioBehaviourTree(DOG::entity agent) noexcept
 	std::shared_ptr<Succeeder> seekAndDestroySucceeder = std::move(std::make_shared<Succeeder>("SeekAndDestroySucceeder"));
 	seekAndDestroySucceeder->AddChild(std::make_shared<SignalGroupNode>("SignalGroupNode"));
 
-	std::shared_ptr<Selector> detectHitOrPlayerSelector = std::make_shared<Selector>("detectHitOrPlayerSelector");
-	detectHitOrPlayerSelector->AddChild(std::make_shared<DetectPlayerNode>("DetectPlayerNode"));
+	std::shared_ptr<Selector> detectHitOrPlayerSelector = std::move(std::make_shared<Selector>("detectHitOrPlayerSelector"));
+	std::shared_ptr<Sequence> detectPlayerSequence = std::move(std::make_shared<Sequence>("DetectPlayerSequence"));
+
+	std::shared_ptr<Succeeder> distanceToPlayerSucceeder = std::move(std::make_shared<Succeeder>("DistanceToPlayerSucceeder"));
+	std::shared_ptr<Succeeder> lineOfSightToPlayerSucceeder = std::move(std::make_shared<Succeeder>("LineOfSightToPlayerSucceeder"));
+
+	distanceToPlayerSucceeder->AddChild(std::make_shared<DistanceToPlayerNode>("DistanceToPlayerNode"));
+	lineOfSightToPlayerSucceeder->AddChild(std::make_shared<LineOfSightToPlayerNode>("LineOfSightToPlayerNode"));
+	detectPlayerSequence->AddChild(std::move(distanceToPlayerSucceeder));
+	detectPlayerSequence->AddChild(std::move(lineOfSightToPlayerSucceeder));
+
+
 	detectHitOrPlayerSelector->AddChild(std::make_shared<DetectHitNode>("DetectHitNode"));
+	detectHitOrPlayerSelector->AddChild(std::make_shared<DetectPlayerNode>("DetectPlayerNode"));
+	detectPlayerSequence->AddChild(std::move(detectHitOrPlayerSelector));
 
 	rootSelector->AddChild(seekAndDestroySequence);
-	seekAndDestroySequence->AddChild(std::move(detectHitOrPlayerSelector));
+	seekAndDestroySequence->AddChild(std::move(detectPlayerSequence));
+	seekAndDestroySequence->AddChild(std::make_shared<GetPathNode>("GetPathNode"));
 	seekAndDestroySequence->AddChild(std::move(seekAndDestroySucceeder));
 
 	seekAndDestroySequence->AddChild(std::move(attackOrMoveToPlayerSelector));
@@ -301,4 +346,6 @@ void AgentManager::CreateScorpioBehaviourTree(DOG::entity agent) noexcept
 	btc.rootNode = std::move(std::make_unique<Root>("ScorpioRootNode"));
 	btc.rootNode->AddChild(std::move(rootSelector));
 	btc.currentRunningNode = btc.rootNode.get();
+
+	//BehaviorTree::ToGraphViz(btc.rootNode.get(), "BehaviorTree_Scorpio.dot");
 }

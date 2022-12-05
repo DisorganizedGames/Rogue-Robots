@@ -2,6 +2,7 @@
 #include <DOGEngine.h>
 #include "Game/GameComponent.h"
 #include "BehaviorTree.h"
+#include "AgentManager.h"
 
 /**************************************************
 *			Early Update Systems
@@ -18,17 +19,17 @@ public:
 class AgentDistanceToPlayersSystem : public DOG::ISystem
 {
 public:
-	SYSTEM_CLASS(BTDetectPlayerComponent, AgentTargetMetricsComponent, DOG::TransformComponent, BehaviorTreeComponent);
-	ON_EARLY_UPDATE_ID(BTDetectPlayerComponent, AgentTargetMetricsComponent, DOG::TransformComponent, BehaviorTreeComponent);
-	void OnEarlyUpdate(DOG::entity e, BTDetectPlayerComponent&, AgentTargetMetricsComponent& atmc, DOG::TransformComponent& tc, BehaviorTreeComponent& btc);
+	SYSTEM_CLASS(BTDistanceToPlayerComponent, AgentTargetMetricsComponent, AgentIdComponent, DOG::TransformComponent, BehaviorTreeComponent);
+	ON_EARLY_UPDATE_ID(BTDistanceToPlayerComponent, AgentTargetMetricsComponent, AgentIdComponent, DOG::TransformComponent, BehaviorTreeComponent);
+	void OnEarlyUpdate(DOG::entity e, BTDistanceToPlayerComponent&, AgentTargetMetricsComponent& atmc, AgentIdComponent& aidc, DOG::TransformComponent& tc, BehaviorTreeComponent& btc);
 };
 
 class AgentLineOfSightToPlayerSystem : public DOG::ISystem
 {
 public:
-	SYSTEM_CLASS(BTLineOfSightToPlayerComponent, AgentTargetMetricsComponent, DOG::TransformComponent, BehaviorTreeComponent);
-	ON_EARLY_UPDATE_ID(BTLineOfSightToPlayerComponent, AgentTargetMetricsComponent, DOG::TransformComponent, BehaviorTreeComponent);
-	void OnEarlyUpdate(DOG::entity e, BTLineOfSightToPlayerComponent&, AgentTargetMetricsComponent& atmc, DOG::TransformComponent& tc, BehaviorTreeComponent& btc);
+	SYSTEM_CLASS(BTLineOfSightToPlayerComponent, AgentTargetMetricsComponent, AgentIdComponent, DOG::TransformComponent, BehaviorTreeComponent);
+	ON_EARLY_UPDATE_ID(BTLineOfSightToPlayerComponent, AgentTargetMetricsComponent, AgentIdComponent, DOG::TransformComponent, BehaviorTreeComponent);
+	void OnEarlyUpdate(DOG::entity e, BTLineOfSightToPlayerComponent&, AgentTargetMetricsComponent& atmc, AgentIdComponent& aidc, DOG::TransformComponent& tc, BehaviorTreeComponent& btc);
 };
 
 class AgentDetectPlayerSystem: public DOG::ISystem
@@ -40,8 +41,26 @@ public:
 	ON_EARLY_UPDATE_ID(BTDetectPlayerComponent, AgentSeekPlayerComponent, AgentIdComponent, DOG::TransformComponent, AgentTargetMetricsComponent, BehaviorTreeComponent);
 	void OnEarlyUpdate(DOG::entity e, BTDetectPlayerComponent&, AgentSeekPlayerComponent& seek, 
 		AgentIdComponent& agent, DOG::TransformComponent& transform, AgentTargetMetricsComponent& atmc, BehaviorTreeComponent& btc);
-	[[nodiscard]] const bool IsPotentialTarget(const AgentTargetMetricsComponent::PlayerData& playerData) noexcept;
+	[[nodiscard]] const bool IsPotentialTarget(const AgentTargetMetricsComponent::PlayerData& playerData, const AgentManager::AgentStats& stats) noexcept;
 };
+
+class AgentDetectHitSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(BTHitDetectComponent, AgentSeekPlayerComponent, AgentIdComponent, DOG::TransformComponent, AgentTargetMetricsComponent, BehaviorTreeComponent);
+	ON_EARLY_UPDATE_ID(BTHitDetectComponent, AgentSeekPlayerComponent, AgentIdComponent, DOG::TransformComponent, AgentTargetMetricsComponent, BehaviorTreeComponent);
+	void OnEarlyUpdate(DOG::entity agentID, BTHitDetectComponent&, AgentSeekPlayerComponent& seek,
+		AgentIdComponent& agent, DOG::TransformComponent& transform, AgentTargetMetricsComponent& atmc, BehaviorTreeComponent& btc);
+};
+
+class AgentGetPathSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(BTGetPathComponent, AgentSeekPlayerComponent, BehaviorTreeComponent);
+	ON_EARLY_UPDATE_ID(BTGetPathComponent, AgentSeekPlayerComponent, BehaviorTreeComponent);
+	void OnEarlyUpdate(DOG::entity e, BTGetPathComponent&, AgentSeekPlayerComponent& seek, BehaviorTreeComponent& btc);
+};
+
 
 /**************************************************
 *				Regular Systems
@@ -73,9 +92,9 @@ class AgentHitDetectionSystem : public DOG::ISystem
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
 public:
-	SYSTEM_CLASS(BTHitDetectComponent, DOG::HasEnteredCollisionComponent, AgentSeekPlayerComponent);
-	ON_UPDATE_ID(BTHitDetectComponent, DOG::HasEnteredCollisionComponent, AgentSeekPlayerComponent);
-	void OnUpdate(DOG::entity me, BTHitDetectComponent&, DOG::HasEnteredCollisionComponent& collision, AgentSeekPlayerComponent& seek);
+	SYSTEM_CLASS(DOG::HasEnteredCollisionComponent, AgentSeekPlayerComponent);
+	ON_UPDATE_ID(DOG::HasEnteredCollisionComponent, AgentSeekPlayerComponent);
+	void OnUpdate(DOG::entity me, DOG::HasEnteredCollisionComponent& collision, AgentSeekPlayerComponent& seek);
 };
 
 class AgentHitSystem : public DOG::ISystem
@@ -101,9 +120,9 @@ public:
 class AgentFrostTimerSystem : public DOG::ISystem
 {
 public:
-	SYSTEM_CLASS(AgentMovementComponent, FrostEffectComponent);
-	ON_UPDATE_ID(AgentMovementComponent, FrostEffectComponent);
-	void OnUpdate(DOG::entity e, AgentMovementComponent& movement, FrostEffectComponent& frostEffect);
+	SYSTEM_CLASS(AgentMovementComponent, FrostEffectComponent, AgentIdComponent);
+	ON_UPDATE_ID(AgentMovementComponent, FrostEffectComponent, AgentIdComponent);
+	void OnUpdate(DOG::entity e, AgentMovementComponent& movement, FrostEffectComponent& frostEffect, AgentIdComponent& idc);
 };
 
 class AgentFireTimerSystem : public DOG::ISystem

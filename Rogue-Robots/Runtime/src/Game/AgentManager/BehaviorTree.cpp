@@ -236,17 +236,8 @@ DetectPlayerNode::DetectPlayerNode(const std::string& name) noexcept
 
 void DetectPlayerNode::Process(DOG::entity agent) noexcept
 {
-	//bool forceSucced = DOG::EntityManager::Get().HasComponent<BTAttackComponent>(agent) || DOG::EntityManager::Get().HasComponent<AgentAggroComponent>(agent);
-
-	if (!DOG::EntityManager::Get().HasComponent<BTAttackComponent>(agent))
-	{
-		DOG::EntityManager::Get().AddComponent<BTDetectPlayerComponent>(agent);
-		DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
-	}
-	else
-	{
-		ForceSucceed(agent);
-	}
+	DOG::EntityManager::Get().AddComponent<BTDetectPlayerComponent>(agent);
+	DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
 }
 
 void DetectPlayerNode::Succeed(DOG::entity agent) noexcept
@@ -273,7 +264,7 @@ DetectHitNode::DetectHitNode(const std::string& name) noexcept
 
 void DetectHitNode::Process(DOG::entity agent) noexcept
 {
-	if (DOG::EntityManager::Get().HasComponent<DOG::HasEnteredCollisionComponent>(agent))
+	if (DOG::EntityManager::Get().HasComponent<AgentAlertComponent>(agent))
 	{
 		DOG::EntityManager::Get().AddComponent<BTHitDetectComponent>(agent);
 		DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
@@ -363,7 +354,7 @@ MoveToPlayerNode::MoveToPlayerNode(const std::string& name) noexcept
 
 void MoveToPlayerNode::Process(DOG::entity agent) noexcept
 {
-	DOG::EntityManager::Get().AddComponent<BTMoveToPlayerComponent>(agent);
+	DOG::EntityManager::Get().AddOrReplaceComponent<BTMoveToPlayerComponent>(agent);
 	DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
 }
 
@@ -429,6 +420,30 @@ void LineOfSightToPlayerNode::Fail(DOG::entity agent) noexcept
 	GetParent()->Process(agent);
 }
 
+GetPathNode::GetPathNode(const std::string& name) noexcept
+	: Leaf{ name }
+{}
+
+void GetPathNode::Process(DOG::entity agent) noexcept
+{
+	DOG::EntityManager::Get().AddComponent<BTGetPathComponent>(agent);
+	DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
+}
+
+void GetPathNode::Succeed(DOG::entity agent) noexcept
+{
+	SetSucceededAs(true);
+	DOG::EntityManager::Get().RemoveComponent<BTGetPathComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+void GetPathNode::Fail(DOG::entity agent) noexcept
+{
+	SetSucceededAs(false);
+	DOG::EntityManager::Get().RemoveComponent<BTGetPathComponent>(agent);
+	GetParent()->Process(agent);
+}
+
 PatrolNode::PatrolNode(const std::string& name) noexcept
 	: Leaf{ name }
 {}
@@ -455,10 +470,10 @@ void PatrolNode::Fail(DOG::entity agent) noexcept
 
 
 
-void BehaviorTree::ToGraphViz(Node* root)
+void BehaviorTree::ToGraphViz(Node* root, const std::string filename)
 {
 	std::ofstream outStream;
-	outStream.open("BehaviorTree.dot");
+	outStream.open(filename);
 
 	outStream << "digraph {" << std::endl;
 	BehaviorTree::ToGraphVizHelper(root, outStream);
