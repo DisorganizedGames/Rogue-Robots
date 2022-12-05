@@ -64,6 +64,8 @@ local outOfAmmoAudioEntity = 0
 local outOfAmmoSound = 0
 local soonOutOfAmmoSound = 0
 
+local magazineAudioEntity = 0
+
 function OnStart()
 	gunModel = Asset:LoadModel("Assets/Models/ModularRifle/Maingun.gltf")
 	bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Bullet/556x45_bullet.fbx")
@@ -118,10 +120,15 @@ function OnStart()
 	
 	outOfAmmoSound = Asset:LoadAudio("Assets/Audio/GunSounds/switch5.wav")
 	soonOutOfAmmoSound = Asset:LoadAudio("Assets/Audio/GunSounds/switch5.wav")
-	outOfAmmoAudioEntity = Scene:CreateEntity(EntityID)
+	outOfAmmoAudioEntity = Scene:CreateEntity(gunID)
 	Entity:AddComponent(outOfAmmoAudioEntity, "Audio", outOfAmmoSound, false, true)
 	Entity:AddComponent(outOfAmmoAudioEntity, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
 	Entity:AddComponent(outOfAmmoAudioEntity, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
+
+	magazineAudioEntity = Scene:CreateEntity(gunID)
+	Entity:AddComponent(magazineAudioEntity, "Audio", outOfAmmoSound, false, true)
+	Entity:AddComponent(magazineAudioEntity, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
+	Entity:AddComponent(magazineAudioEntity, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
 
 	EventSystem:Register("ItemPickup" .. EntityID, OnPickup)
 end
@@ -208,7 +215,7 @@ function OnUpdate()
 				barrelComponent:Update(gunEntity, EntityID, newBullets[i], miscComponent, cameraEntity)
 				--Keep track of which barrel created the bullet
 				newBullets[i].barrel = barrelComponent
-				magazineComponent:Update(newBullets[i], EntityID)
+				magazineComponent:Update(newBullets[i], EntityID, magazineAudioEntity)
 				
 				currentAmmoCount = currentAmmoCount - 1
 				if currentAmmoCount == 0 and not hasBasicBarrelEquipped then

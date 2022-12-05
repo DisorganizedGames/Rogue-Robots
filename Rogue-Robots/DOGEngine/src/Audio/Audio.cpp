@@ -268,23 +268,23 @@ void SourceVoice::Play(std::span<u8> data)
 {
 	m_externalBuffer = data;
 	m_idx = 0;
+	m_stopped = false;
 
 	QueueNext();
 
 	m_source->SetVolume(2.0f);
 	m_source->Start(0, 0);
-	m_stopped = false;
 }
 
 void SourceVoice::PlayAsync()
 {
 	m_async = true;
+	m_stopped = false;
 
 	QueueNextAsync();
 
 	m_source->SetVolume(2.0f);
 	m_source->Start(0, 0);
-	m_stopped = false;
 }
 
 void SourceVoice::Stop()
