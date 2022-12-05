@@ -811,7 +811,7 @@ DOG::UIBuffTracker::~UIBuffTracker()
 
 void DOG::UIBuffTracker::AnimateUp(UINT index)
 {
-   if (m_rects[index].top >= 50.f)
+   if (m_rects[index].top >= 20.f)
    {
       m_rects[index].top -= 100.0f * (float)DOG::Time::DeltaTime();
       m_rects[index].bottom -= 100.0f * (float)DOG::Time::DeltaTime();
@@ -819,10 +819,10 @@ void DOG::UIBuffTracker::AnimateUp(UINT index)
    if (m_opacity[index] <= 1.f)
       m_opacity[index] += 6.0f * (float)DOG::Time::DeltaTime();
 
-   if (m_rects[index].top <= 50.f and m_opacity[index] >= 1.0f)
+   if (m_rects[index].top <= 20.f and m_opacity[index] >= 1.0f)
    {
-      m_rects[index].top = 50.f;
-      m_rects[index].bottom = 100.f;
+      m_rects[index].top = 20.f;
+      m_rects[index].bottom = m_rects[index].top + 50.0f;
       m_opacity[index] = 1.0f;
       m_animate[index] = false;
    }
@@ -834,7 +834,7 @@ void DOG::UIBuffTracker::ActivateIcon(UINT index)
    {
       buffsVisible[index] = true;
       size_t activeBuffs = std::count(buffsVisible.begin(), buffsVisible.end(), true);
-      float x = 50.f + 60.f * activeBuffs;
+      float x = 20.f + 80.f * (activeBuffs - 1);
       float y = 50.f + 30.f;
       m_rects[index] = D2D1::RectF(x, y, x + 50.f, y + 50.f);
       m_opacity[index] = 0.01f;
