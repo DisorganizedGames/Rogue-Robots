@@ -73,6 +73,10 @@ function BarrelComponents:BasicBarrel()
 		GetECSType = function(self)
 			return 0
 		end,
+
+		DestroyTime = function(self)
+			return 5.0
+		end,
 	}
 end
 
@@ -155,6 +159,10 @@ function BarrelComponents:Grenade()
 		GetReloadTime = function(self)
 			return 1.9
 		end,
+
+		DestroyTime = function(self)
+			return 2.0
+		end,
 	}
 end
 
@@ -215,6 +223,10 @@ function BarrelComponents:Missile()
 		GetReloadTime = function(self)
 			return 3.0
 		end,
+
+		DestroyTime = function(self)
+			return 5.0
+		end,
 	}
 end
 
@@ -265,6 +277,10 @@ function BarrelComponents:Laser()
 
 		GetReloadTime = function(self)
 			return 1.0
+		end,
+
+		DestroyTime = function(self)
+			return 5.0
 		end,
 	}
 end
