@@ -184,7 +184,7 @@ function OnUpdate()
 				barrelComponent:Update(gunEntity, EntityID, newBullets[i], miscComponent, cameraEntity)
 				--Keep track of which barrel created the bullet
 				newBullets[i].barrel = barrelComponent
-				magazineComponent:Update(newBullets[i])
+				magazineComponent:Update(newBullets[i], EntityID)
 				
 				currentAmmoCount = currentAmmoCount - 1
 				if currentAmmoCount == 0 and not hasBasicBarrelEquipped then
