@@ -108,7 +108,6 @@ void PlayerManager::PlayHurtAudio(entity player)
 	{
 		audio.assetID = m_playerHurtAudio;
 		audio.volume = 0.7f;
-		audio.is3D = true;
 		if (!audio.playing)
 			audio.shouldPlay = true;
 	}
@@ -117,7 +116,6 @@ void PlayerManager::PlayHurtAudio(entity player)
 		audio.assetID = m_playerDeathAudio;
 		audio.shouldPlay = true;
 		audio.volume = 1.0f;
-		audio.is3D = false;
 	}
 }
 
