@@ -279,7 +279,7 @@ void NetCode::OnUpdate()
 					if (header.nrOfChangedAgentsHp > 0)
 					{
 						NetworkAgentStats* tempStats = new NetworkAgentStats;
-						EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](entity e, NetworkAgentStats&, AgentHPComponent& Agent, AgentIdComponent& idC)
+						EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](NetworkAgentStats&, AgentHPComponent& Agent, AgentIdComponent& idC)
 							{
 								for (u32 i = 0; i < header.nrOfChangedAgentsHp; ++i)
 								{
