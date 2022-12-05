@@ -302,18 +302,6 @@ private:
 	}
 };
 
-class RenderWeaponComponentUI : public DOG::ISystem
-{
-public:
-	SYSTEM_CLASS(BarrelComponent, MagazineModificationComponent, MiscComponent);
-	ON_UPDATE(BarrelComponent, MagazineModificationComponent, MiscComponent);
-
-	void OnUpdate(BarrelComponent& bc, MagazineModificationComponent& mgc, MiscComponent& mc)
-	{
-		return;
-	}
-};
-
 class CleanupItemInteractionSystem : public DOG::ISystem
 {
 public:
@@ -350,7 +338,7 @@ public:
 
 	void OnUpdate(DOG::entity player, DOG::ThisPlayer, BarrelComponent& bc)
 	{
-		std::string barrelType;
+		/*std::string barrelType;
 
 		if (DOG::EntityManager::Get().HasComponent<MagazineModificationComponent>(player))
 		{
@@ -395,6 +383,7 @@ public:
 		}
 		if (barrelType.empty())
 			return;
+		*/
 
 		std::string ammoText = std::to_string(bc.currentAmmoCount) + std::string(" / "); 
 		bc.maximumAmmoCapacityForType == INFINITY_EQUIVALENT ? ammoText += "INF." : ammoText += std::to_string(bc.maximumAmmoCapacityForType);
@@ -405,9 +394,9 @@ public:
 
 		auto r = DOG::Window::GetWindowRect();
 		ImVec2 pos;
-		constexpr float xOffset = -60.0f;
-		constexpr float yOffset = -170.0f;
-		pos.x = r.right - size.x + xOffset;
+		constexpr float xOffset = 200.0f;
+		constexpr float yOffset = -150.0f;
+		pos.x = r.left + size.x + xOffset;
 		pos.y = r.bottom + yOffset;
 
 		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
@@ -418,8 +407,8 @@ public:
 			ImGui::PushFont(DOG::Window::GetFont());
 			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
 			ImGui::SetWindowFontScale(2.0f);
-			ImGui::Text(barrelType.c_str());
-			ImGui::Separator();
+			//ImGui::Text(barrelType.c_str());
+			//ImGui::Separator();
 			ImGui::Text(ammoText.c_str());
 			ImGui::PopStyleColor(1);
 			ImGui::PopFont();
@@ -429,60 +418,61 @@ public:
 	}
 };
 
-class RenderMiscComponentText : public DOG::ISystem
-{
-public:
-	SYSTEM_CLASS(DOG::ThisPlayer, MiscComponent);
-	ON_UPDATE_ID(DOG::ThisPlayer, MiscComponent);
+//class RenderMiscComponentText : public DOG::ISystem
+//{
+//public:
+//	SYSTEM_CLASS(DOG::ThisPlayer, MiscComponent);
+//	ON_UPDATE_ID(DOG::ThisPlayer, MiscComponent);
+//
+//	void OnUpdate(DOG::entity, DOG::ThisPlayer, MiscComponent& mc)
+//	{
+//		std::string miscType = "";
+//		switch (mc.type)
+//		{
+//		case MiscComponent::Type::Basic:
+//			miscType = "Basic";
+//			break;
+//		case MiscComponent::Type::FullAuto:
+//			miscType = "Full Auto";
+//			break;
+//		case MiscComponent::Type::ChargeShot:
+//			miscType = "Charge Shot";
+//			break;
+//		default:
+//			miscType = "Faulty";
+//			break;
+//		}
+//
+//		ImVec2 size;
+//		size.x = 280;
+//		size.y = 100;
+//
+//		auto r = DOG::Window::GetWindowRect();
+//		ImVec2 pos;
+//		float xOffset = -60.0f - size.x;
+//		constexpr float yOffset = -170.0f;
+//		pos.x = r.right - size.x + xOffset;
+//		pos.y = r.bottom + yOffset;
+//
+//		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+//		ImGui::SetNextWindowPos(pos);
+//		ImGui::SetNextWindowSize(size);
+//		if (ImGui::Begin("MiscComponent", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+//		{
+//			ImGui::PushFont(DOG::Window::GetFont());
+//			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
+//			ImGui::SetWindowFontScale(2.0f);
+//			ImGui::Text("Fire Mode");
+//			ImGui::Separator();
+//			ImGui::Text(miscType.c_str());
+//			ImGui::PopStyleColor(1);
+//			ImGui::PopFont();
+//		}
+//		ImGui::End();
+//		ImGui::PopStyleColor();
+//	}
+//};
 
-	void OnUpdate(DOG::entity, DOG::ThisPlayer, MiscComponent& mc)
-	{
-		std::string miscType = "";
-		switch (mc.type)
-		{
-		case MiscComponent::Type::Basic:
-			miscType = "Basic";
-			break;
-		case MiscComponent::Type::FullAuto:
-			miscType = "Full Auto";
-			break;
-		case MiscComponent::Type::ChargeShot:
-			miscType = "Charge Shot";
-			break;
-		default:
-			miscType = "Faulty";
-			break;
-		}
-
-		ImVec2 size;
-		size.x = 280;
-		size.y = 100;
-
-		auto r = DOG::Window::GetWindowRect();
-		ImVec2 pos;
-		float xOffset = -60.0f - size.x;
-		constexpr float yOffset = -170.0f;
-		pos.x = r.right - size.x + xOffset;
-		pos.y = r.bottom + yOffset;
-
-		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-		ImGui::SetNextWindowPos(pos);
-		ImGui::SetNextWindowSize(size);
-		if (ImGui::Begin("MiscComponent", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
-		{
-			ImGui::PushFont(DOG::Window::GetFont());
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
-			ImGui::SetWindowFontScale(2.0f);
-			ImGui::Text("Fire Mode");
-			ImGui::Separator();
-			ImGui::Text(miscType.c_str());
-			ImGui::PopStyleColor(1);
-			ImGui::PopFont();
-		}
-		ImGui::End();
-		ImGui::PopStyleColor();
-	}
-};
 
 class PlayerMovementSystem : public DOG::ISystem
 {

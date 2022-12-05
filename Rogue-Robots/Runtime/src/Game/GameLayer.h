@@ -64,14 +64,12 @@ private:
 	void RegisterLuaInterfaces();
 	void Input(DOG::Key key);
 	void Release(DOG::Key key);
-	void CameraUpdate();
 	std::vector<DOG::entity> SpawnAgents(const EntityTypes type, SceneComponent::Type scene, const DirectX::SimpleMath::Vector3& pos, u8 agentCount, f32 spread = 10.f);
 	void ToggleFlashlight();
 
 	void HandleCheats();
 
 	void HpBarMVP();
-	void KeyBindingDisplayMenu();
 	void GameLayerDebugMenu(bool& open);
 	void CheatSettingsImGuiMenu();
 	void CheatDebugMenu(bool& open);
@@ -89,11 +87,6 @@ private:
 	std::array<u32, 4> m_playerModels;
 	INT8 m_nrOfPlayers;
 	ImFont* m_imguiFont = nullptr;
-
-	// Temp container for keybindings, just strings to visualize them in the menu
-	std::vector<std::pair<std::string, std::string>> m_keyBindingDescriptions;
-	bool m_displayKeyBindings = true;
-
 
 	// Cheats
 	bool m_isCheating = false;

@@ -19,6 +19,8 @@ extern UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID
 extern UINT lNamesCreditsID, lTheTeamID, lFiverrArtistsID, lFiverrArtistsTextID, lIconsCreditsID, lIconsCreditsTextID, lMusicID, lMusicTextID;
 extern UINT bcID, credbackID;
 extern UINT cID, tID, hID, playerlistID;
+extern UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID;
+extern UINT buffID;
 
 namespace DOG
 {

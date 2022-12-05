@@ -862,7 +862,10 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 			RevivePlayer(closestDeadPlayer);
 		}
 		if (mgr.HasComponent<ThisPlayer>(player))
+		{
 			mgr.RemoveComponent<ActiveItemComponent>(player);
+			DOG::UI::Get()->GetUI<UIIcon>(iconActiveID)->Hide();
+		}
 	}
 }
 

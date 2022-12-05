@@ -187,6 +187,11 @@ void EntityInterface::RemoveComponent(DOG::LuaContext* context)
 	if (compType == "ActiveItem")
 	{
 		EntityManager::Get().RemoveComponent<ActiveItemComponent>(e);
+
+		if (EntityManager::Get().HasComponent<ThisPlayer>(e))
+		{
+			DOG::UI::Get()->GetUI<UIIcon>(iconActiveID)->Hide();
+		}
 		return;
 	}
 	else if (compType == "BarrelComponent")
@@ -1032,6 +1037,12 @@ void EntityInterface::AddActiveItem(DOG::LuaContext* context, DOG::entity e)
 {
 	ActiveItemComponent::Type type = (ActiveItemComponent::Type)context->GetInteger();
 	EntityManager::Get().AddComponent<ActiveItemComponent>(e).type = type;
+
+	//Switch to correct UI icon.
+	if (EntityManager::Get().HasComponent<ThisPlayer>(e))
+	{
+		DOG::UI::Get()->GetUI<UIIcon>(iconActiveID)->Show((UINT)type);
+	}
 }
 
 void EntityInterface::AddBarrelComponent(DOG::LuaContext* context, DOG::entity e)
@@ -1051,6 +1062,20 @@ void EntityInterface::AddBarrelComponent(DOG::LuaContext* context, DOG::entity e
 		assert(!EntityManager::Get().HasComponent<LaserBarrelComponent>(e));
 		EntityManager::Get().AddComponent<LaserBarrelComponent>(e).ammo = static_cast<f32>(currentAmmo);
 	}
+
+	//Switch to correct UI icon.
+	if (EntityManager::Get().HasComponent<ThisPlayer>(e))
+	{
+		if ((UINT)type != 0)
+		{
+			DOG::UI::Get()->GetUI<UIIcon>(icon2ID)->Show((UINT)type - 1u);
+		}
+		else
+		{
+			DOG::UI::Get()->GetUI<UIIcon>(icon2ID)->Hide();
+		}
+	}
+	
 }
 
 void EntityInterface::AddMagazineModificationComponent(DOG::LuaContext* context, DOG::entity e)
@@ -1059,6 +1084,19 @@ void EntityInterface::AddMagazineModificationComponent(DOG::LuaContext* context,
 
 	auto& mc = EntityManager::Get().AddComponent<MagazineModificationComponent>(e);
 	mc.type = type;
+
+	//Switch to correct UI icon.
+	if (EntityManager::Get().HasComponent<ThisPlayer>(e))
+	{
+		if ((UINT)type != 0)
+		{
+			DOG::UI::Get()->GetUI<UIIcon>(icon3ID)->Show((UINT)type - 1u);
+		}
+		else
+		{
+			DOG::UI::Get()->GetUI<UIIcon>(icon3ID)->Hide();
+		}
+	}
 }
 
 void EntityInterface::AddMiscComponent(DOG::LuaContext* context, DOG::entity e)
@@ -1067,6 +1105,19 @@ void EntityInterface::AddMiscComponent(DOG::LuaContext* context, DOG::entity e)
 
 	auto& mmc = EntityManager::Get().AddComponent<MiscComponent>(e);
 	mmc.type = type;
+
+	//Switch to correct UI icon.
+	if (EntityManager::Get().HasComponent<ThisPlayer>(e))
+	{
+		if ((UINT)type != 0)
+		{
+			DOG::UI::Get()->GetUI<UIIcon>(iconID)->Show((UINT)type - 1u);
+		}
+		else
+		{
+			DOG::UI::Get()->GetUI<UIIcon>(iconID)->Hide();
+		}
+	}
 }
 
 void EntityInterface::AddThisPlayerWeapon(DOG::LuaContext* context, DOG::entity e)

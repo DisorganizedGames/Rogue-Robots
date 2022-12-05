@@ -16,7 +16,8 @@ UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID,
 UINT lNamesCreditsID, lTheTeamID, lFiverrArtistsID, lFiverrArtistsTextID, lIconsCreditsID, lIconsCreditsTextID, lMusicID, lMusicTextID;
 UINT bcID, credbackID;
 UINT cID, tID, hID, playerlistID;
-
+UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID; //Icons.
+UINT buffID;
 
 std::vector<bool> buffsVisible;
 std::vector<UINT> m_stacks;
@@ -756,7 +757,7 @@ DOG::UIBuffTracker::UIBuffTracker(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::
       m_stacks.push_back(0u);
       m_buffs++;
    }
-   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Indigo, 1.0f), m_borderBrush.GetAddressOf());
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), m_borderBrush.GetAddressOf());
    HR_VFY(hr);
    hr = d2d.GetDWriteFactory()->CreateTextFormat(
       L"Robot Radicals",
@@ -783,8 +784,11 @@ void DOG::UIBuffTracker::Draw(DOG::gfx::D2DBackend_DX12& d2d)
       {
          d2d.Get2DDeviceContext()->DrawBitmap(m_bitmaps[i].Get(), m_rects[i], m_opacity[i]);
          d2d.Get2DDeviceContext()->DrawRectangle(m_rects[i], m_borderBrush.Get());
-         if (m_stacks[i] > 1)
-            d2d.Get2DDeviceContext()->DrawTextW(std::to_wstring(m_stacks[i]).c_str() + L'x', (UINT32)std::to_wstring(m_stacks[i]).length(), m_textFormat.Get(), &m_rects[i], m_borderBrush.Get());
+         if (m_stacks[i] > 0)
+         {
+             D2D1_RECT_F textRect = m_rects[i];
+             d2d.Get2DDeviceContext()->DrawTextW(std::wstring(std::to_wstring(m_stacks[i]) + L'x').c_str(), (UINT32)std::to_wstring(m_stacks[i]).length() + 1u, m_textFormat.Get(), textRect, m_borderBrush.Get());
+         }
       }
    }
 
@@ -792,15 +796,6 @@ void DOG::UIBuffTracker::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 void DOG::UIBuffTracker::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
    UNREFERENCED_PARAMETER(d2d);
-   if (DOG::Keyboard::IsKeyPressed(DOG::Key::G))
-      ActivateIcon(0u);
-   if (DOG::Keyboard::IsKeyPressed(DOG::Key::H))
-      ActivateIcon(1u);
-
-   if (DOG::Keyboard::IsKeyPressed(DOG::Key::J))
-      DeactivateIcon(0u);
-   if (DOG::Keyboard::IsKeyPressed(DOG::Key::K))
-      DeactivateIcon(1u);
    for (UINT i = 0; i < m_buffs; i++)
    {
       if (m_animate[i])
@@ -861,7 +856,7 @@ void DOG::UIBuffTracker::DeactivateIcon(UINT index)
          m_rects[i].right -= 60.f;
       }
    }
-   m_stacks[index]--;
+   m_stacks[index] = 0;
 }
 
 DOG::UIPlayerList::UIPlayerList(DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
@@ -1030,7 +1025,7 @@ DOG::UIIcon::UIIcon(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector<std::ws
    HR_VFY(hr);
    m_rect = D2D1::RectF(x, y, x + width, y + height);
    m_opacity = 1.0f;
-   m_show = true;
+   m_show = false;
    m_index = 0u;
    m_border = border;
 }
@@ -1070,30 +1065,61 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto instance = DOG::UI::Get();
 
    //HealthBar
-   auto h = instance->Create<DOG::UIHealthBar, float, float, float, float>(hID, 40.f, clientHeight - 60.f, 250.f, 30.f);
+   float healthBarWidth = 300.f;
+   float healthBarHeight = 50.f;
+   auto h = instance->Create<DOG::UIHealthBar, float, float, float, float>(hID, (clientWidth - healthBarWidth) * 0.5f, clientHeight - 145.f, healthBarWidth, healthBarHeight);
    instance->AddUIElementToScene(gameID, std::move(h));
 
    //Crosshair
    auto c = instance->Create<DOG::UICrosshair>(cID);
    instance->AddUIElementToScene(gameID, std::move(c));
-   UINT iconID, icon2ID, icon3ID, iconGun;
-   std::vector<std::wstring> paths = { L"Assets/Sprites/Fire.bmp", L"Assets/Sprites/Laser.bmp", L"Assets/Sprites/Frost.bmp" };
-   auto icon = instance->Create<DOG::UIIcon>(iconID, paths, 200.f, (FLOAT)clientHeight - 350.f, 35.f, 35.f, 1.f, 1.f, 1.f, true);
-   icon->Hide();
-   icon->Show(1u);
+   
+   //Misc components
+   std::vector<std::wstring> paths = { L"Assets/Sprites/FullAuto.bmp", L"Assets/Sprites/ChargeShot.bmp" };
+   float xPos = 100.0f;
+   float yPos = (FLOAT)clientHeight - 220.f;
+   auto icon = instance->Create<DOG::UIIcon>(iconID, paths, xPos, yPos, 50.f, 50.f, 1.f, 1.f, 1.f, true);
    instance->AddUIElementToScene(gameID, std::move(icon));
-   icon = instance->Create<DOG::UIIcon>(icon2ID, paths, 200.f, (FLOAT)clientHeight - 125.f, 35.f, 35.f, 1.f, 1.f, 1.f, true);
-   icon->Hide();
+
+   //Barrel components
+   paths = { L"Assets/Sprites/Grenade.bmp", L"Assets/Sprites/Missile.bmp", L"Assets/Sprites/Laser.bmp" };
+   xPos -= 75.0f;
+   yPos += 75.0f;
+   icon = instance->Create<DOG::UIIcon>(icon2ID, paths, xPos, yPos, 50.f, 50.f, 1.f, 1.f, 1.f, true);
    instance->AddUIElementToScene(gameID, std::move(icon));
-   icon = instance->Create<DOG::UIIcon>(icon3ID, paths, 50.f, (FLOAT)clientHeight - 250.f, 35.f, 35.f, 1.f, 1.f, 1.f, true);
-   icon->Hide();
+
+   //Magazine components
+   paths = { L"Assets/Sprites/Frost.bmp", L"Assets/Sprites/Fire.bmp" };
+   xPos += 75.0f;
+   yPos += 75.0f;
+   icon = instance->Create<DOG::UIIcon>(icon3ID, paths, xPos, yPos, 50.f, 50.f, 1.f, 1.f, 1.f, true);
    instance->AddUIElementToScene(gameID, std::move(icon));
+
+   //Active Item
+   paths = { L"Assets/Sprites/TrampolineIcon.bmp", L"Assets/Sprites/TurretIcon.bmp", L"Assets/Sprites/ReviverIcon.bmp", L"Assets/Sprites/RadarIcon.bmp", L"Assets/Sprites/SyringeIcon.bmp" };
+   icon = instance->Create<DOG::UIIcon>(iconActiveID, paths, 350.f, (FLOAT)clientHeight - 155.f, 75.f, 75.f, 1.f, 1.f, 1.f, true);
+   instance->AddUIElementToScene(gameID, std::move(icon));
+
+   //Weapon
    paths = { L"Assets/Sprites/WeaponSillhouette.bmp" };
-   icon = instance->Create<DOG::UIIcon>(iconGun, paths, 200.f, (FLOAT)clientHeight - 125.f, 766.f * 0.3f, 373.f * 0.3f, 0.f, 0.f, 0.f, false);
+   icon = instance->Create<DOG::UIIcon>(iconGun, paths, 90.f, (FLOAT)clientHeight - 155.f, 766.f * 0.3f, 373.f * 0.3f, 0.f, 0.f, 0.f, false);
+   icon->Show(0u);
    instance->AddUIElementToScene(gameID, std::move(icon));
 
+   //Flashlight & Glowstick icon
+   paths = { L"Assets/Sprites/FlashlightIcon.bmp" };
+   UINT flashlightID;
+   icon = instance->Create<DOG::UIIcon>(flashlightID, paths, 165.f, (FLOAT)clientHeight - 220.f, 81.f * 0.8f, 70.f * 0.8f, 0.f, 0.f, 0.f, false);
+   icon->Show(0u);
+   instance->AddUIElementToScene(gameID, std::move(icon));
+   paths = { L"Assets/Sprites/Glowstick.bmp" };
+   UINT glowstickID;
+   icon = instance->Create<DOG::UIIcon>(glowstickID, paths, 245.f, (FLOAT)clientHeight - 212.f, 78.f * 0.8f, 72.f * 0.8f, 0.f, 0.f, 0.f, false);
+   icon->Show(0u);
+   instance->AddUIElementToScene(gameID, std::move(icon));
 
-
+   
+   
    //Menu backgrounds
    auto menuBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Rogue Robots"));
    instance->AddUIElementToScene(menuID, std::move(menuBack));
@@ -1257,11 +1283,11 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto lgreenScoreWin = instance->Create<DOG::UILabel>(lgreenScoreWinID, std::wstring(L" "), 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
    auto lyellowScoreWin = instance->Create<DOG::UILabel>(lyellowScoreWinID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
 
-   std::vector<std::wstring> vec;
-   vec.push_back(L"Assets/Sprites/test.bmp");
-   vec.push_back(L"Assets/Sprites/test2.bmp");
-   UINT picID;
-   auto pic = instance->Create<DOG::UIBuffTracker, std::vector<std::wstring>>(picID, vec);
+   UINT lActiveItemTextID;
+   auto labelButtonTextActiveItem = instance->Create<DOG::UILabel>(lActiveItemTextID, std::wstring(L"G"), 400.0f, (FLOAT)clientHeight - 100.0f, 50.f, 50.f, 40.f);
+   
+   std::vector<std::wstring> vec = { L"Assets/Sprites/MaxHP.bmp" , L"Assets/Sprites/MoveSpeed.bmp" , L"Assets/Sprites/JumpBoost.bmp" };
+   auto pic = instance->Create<DOG::UIBuffTracker, std::vector<std::wstring>>(buffID, vec);
    instance->AddUIElementToScene(gameID, std::move(pic));
 
    instance->AddUIElementToScene(menuID, std::move(bp));
@@ -1310,6 +1336,8 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(WinScreenID, std::move(lblueScoreWin));
    instance->AddUIElementToScene(WinScreenID, std::move(lgreenScoreWin));
    instance->AddUIElementToScene(WinScreenID, std::move(lyellowScoreWin));
+
+   instance->AddUIElementToScene(gameID, std::move(labelButtonTextActiveItem));
 
    //Splash screen
    // UINT sID;

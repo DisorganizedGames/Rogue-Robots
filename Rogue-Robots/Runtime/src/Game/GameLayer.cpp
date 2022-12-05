@@ -85,7 +85,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<PickUpTranslateToPlayerSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderAmmunitionTextSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderReloadHintTextSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<RenderMiscComponentText>());
+	//m_entityManager.RegisterSystem(std::make_unique<RenderMiscComponentText>());
 	m_entityManager.RegisterSystem(std::make_unique<CleanupItemInteractionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<CleanupPlayerStateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerHit>());
@@ -105,19 +105,6 @@ GameLayer::GameLayer() noexcept
 
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
-
-	m_keyBindingDescriptions.emplace_back("wasd", "walk");
-	m_keyBindingDescriptions.emplace_back("space", "jump");
-	m_keyBindingDescriptions.emplace_back("lmb", "shoot");
-	m_keyBindingDescriptions.emplace_back("r", "reload");
-	m_keyBindingDescriptions.emplace_back("g", "active item");
-	m_keyBindingDescriptions.emplace_back("f", "flash light");
-	m_keyBindingDescriptions.emplace_back("m", "gun effect");
-	m_keyBindingDescriptions.emplace_back("e", "interact");
-	m_keyBindingDescriptions.emplace_back("q", "full auto");
-	m_keyBindingDescriptions.emplace_back("alt + enter", "fullscreen");
-	m_keyBindingDescriptions.emplace_back("h", "debug camera");
-	m_keyBindingDescriptions.emplace_back("f1", "debug menu");
 
 	assert(std::filesystem::exists(("Assets/Fonts/Robot Radicals.ttf")));
 	ImGui::GetIO().Fonts->AddFontDefault();
@@ -298,8 +285,6 @@ void GameLayer::OnUpdate()
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
 	global->SetNumber("ElapsedTime", Time::ElapsedTime());
-
-	KeyBindingDisplayMenu();
 }
 
 void GameLayer::StartMainScene()
@@ -506,11 +491,24 @@ void GameLayer::KillPlayer(DOG::entity e)
 
 		LuaMain::GetScriptManager()->RemoveScript(localPlayer, "Gun.lua");
 		LuaMain::GetScriptManager()->RemoveScript(localPlayer, "PassiveItemSystem.lua");
+		//Remove UI icon bufftracker stacks.
+		auto UIInstance = UI::Get();
+		UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(0);
+		UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(1);
+		UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(2);
+
 		LuaMain::GetScriptManager()->RemoveScript(localPlayer, "ActiveItemSystem.lua");
+		//Remove UI icon for active item.
+		UIInstance->GetUI<UIIcon>(iconActiveID)->Hide();
+
 		std::string luaEventName = std::string("ItemPickup") + std::to_string(localPlayer);
 		m_entityManager.RemoveComponent<ScriptComponent>(localPlayer);
 		m_entityManager.RemoveComponent<BarrelComponent>(localPlayer);
 		m_entityManager.RemoveComponent<MiscComponent>(localPlayer);
+		//Remove UI icon for weapon components.
+		UIInstance->GetUI<UIIcon>(iconID)->Hide();
+		UIInstance->GetUI<UIIcon>(icon2ID)->Hide();
+		UIInstance->GetUI<UIIcon>(icon3ID)->Hide();
 
 		RigidbodyComponent& rb = m_entityManager.GetComponent<RigidbodyComponent>(e);
 		rb.ConstrainPosition(true, true, true);
@@ -1432,8 +1430,8 @@ void GameLayer::Input(DOG::Key key)
 				inputC.down = true;
 			if (key == DOG::Key::Spacebar)
 				inputC.up = true;
-			if (key == DOG::Key::Q)
-				inputC.switchComp = true;
+			//if (key == DOG::Key::Q)
+				//inputC.switchComp = true;
 			if (key == DOG::Key::T)
 				inputC.switchBarrelComp = true;
 			if (key == DOG::Key::M)
@@ -1450,7 +1448,7 @@ void GameLayer::Input(DOG::Key key)
 				inputC.flashlight = !inputC.flashlight;
 			if (key == DOG::Key::E)
 				inputC.revive = true;
-			if (key == DOG::Key::One)
+			if (key == DOG::Key::Q)
 				inputC.throwGlowStick = true;
 		});
 }
@@ -1471,8 +1469,8 @@ void GameLayer::Release(DOG::Key key)
 				inputC.down = false;
 			if (key == DOG::Key::Spacebar)
 				inputC.up = false;
-			if (key == DOG::Key::Q)
-				inputC.switchComp = false;
+			//if (key == DOG::Key::Q)
+				//inputC.switchComp = false;
 			if (key == DOG::Key::T)
 				inputC.switchBarrelComp = false;
 			if (key == DOG::Key::M)
@@ -1487,7 +1485,7 @@ void GameLayer::Release(DOG::Key key)
 				inputC.toggleMoveView = false;
 			if (key == DOG::Key::E)
 				inputC.revive = false;
-			if (key == DOG::Key::One)
+			if (key == DOG::Key::Q)
 				inputC.throwGlowStick = false;
 
 		});
@@ -1562,45 +1560,6 @@ void GameLayer::HpBarMVP()
 		{
 			hbar->SetBarValue(stats.health, stats.maxHealth);
 		});
-}
-
-void GameLayer::KeyBindingDisplayMenu()
-{
-	if (!m_displayKeyBindings) return;
-	ImVec2 size;
-	size.x = 280;
-	size.y = 300;
-
-	auto r = Window::GetWindowRect();
-	ImVec2 pos;
-	pos.x = r.right - size.x - 20.0f;
-	pos.y = r.top + 50.0f;
-
-	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-	ImGui::SetNextWindowPos(pos);
-	ImGui::SetNextWindowSize(size);
-	if (ImGui::Begin("KeyBindings", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground))
-	{
-		if (ImGui::BeginTable("KeyBindings", 2))
-		{
-			ImGui::PushFont(m_imguiFont);
-			for (auto& [key, action] : m_keyBindingDescriptions)
-			{
-				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
-				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
-				ImGui::Text(action.c_str());
-				ImGui::TableSetColumnIndex(1);
-				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
-				ImGui::Text(key.c_str());
-				ImGui::PopStyleColor(2);
-			}
-			ImGui::PopFont();
-			ImGui::EndTable();
-		}
-	}
-	ImGui::End();
-	ImGui::PopStyleColor();
 }
 
 void GameLayer::GameLayerDebugMenu(bool& open)
@@ -1703,8 +1662,6 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 				}
 				ImGui::EndTable();
 			}
-
-			ImGui::Checkbox("View KeyBindings", &m_displayKeyBindings);
 		}
 		ImGui::End(); // "GameManager"
 	}
