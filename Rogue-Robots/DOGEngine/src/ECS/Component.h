@@ -320,6 +320,18 @@ namespace DOG
 		
 	};
 
+	struct BoundingBoxComponent
+	{
+		using Vector3 = DirectX::SimpleMath::Vector3;
+
+		DirectX::BoundingBox aabb;
+		BoundingBoxComponent(Vector3 center, Vector3 extents);
+		Vector3 Center();
+		void Center(Vector3 c);
+		Vector3 Extents();
+		void Extents(Vector3 ext);
+	};
+
 #pragma region Particle System
 
 	struct ParticleEmitterComponent
@@ -362,17 +374,6 @@ namespace DOG
 		f32 z = 1.f;
 	};
 
-	struct BoundingBoxComponent
-	{
-		using Vector3 = DirectX::SimpleMath::Vector3;
-
-		DirectX::BoundingBox aabb;
-		BoundingBoxComponent(Vector3 center, Vector3 extents);
-		Vector3 Center();
-		void Center(Vector3 c);
-		Vector3 Extents();
-		void Extents(Vector3 ext);
-	};
 
 	// --- BEHAVIOR TYPES ---
 	struct GravityBehaviorComponent
