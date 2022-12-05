@@ -96,9 +96,37 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 			ImGui::SliderFloat("Size", &size, 0.f, 1.f);
 			emitter.particleSize = size;
 
+			// Color settings
+			static char startColorBuf[9];
+			static char endColorBuf[9];
+
+			ImGui::Text("  Start Color");
+			ImGui::SameLine();
+			ImGui::Text("   End Color");
+
+			ImGui::Text("#");
+			ImGui::SameLine();
+			ImGui::PushItemWidth(80.f);
+			ImGui::InputText("##Start Color", startColorBuf, 9, ImGuiInputTextFlags_CharsHexadecimal);
+
+			ImGui::SameLine();
+			ImGui::Text("#");
+			ImGui::SameLine();
+			ImGui::InputText("##End Color", endColorBuf, 9, ImGuiInputTextFlags_CharsHexadecimal);
+			ImGui::PopItemWidth();
+
+
+			if (strlen(startColorBuf) == 8)
+				emitter.startColor = CharsToColor(startColorBuf);
+
+			if (strlen(endColorBuf) == 8)
+				emitter.endColor = CharsToColor(endColorBuf);
+
 			// Spawn type settings
 			static int spawnType = 0;
 			bool clicked = false;
+
+			ImGui::NewLine();
 			clicked |= ImGui::RadioButton("Default", &spawnType, 0);
 			clicked |= ImGui::RadioButton("Cone", &spawnType, 1);
 			clicked |= ImGui::RadioButton("Cylinder", &spawnType, 2);
@@ -137,9 +165,10 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 			// Texture Settings
 			static bool enableTexture = false;
 
-			static char buf[256] = "Assets/Models/Rifle/textures/Base_baseColor.png";
+			static char buf[256] = "Assets/Models/Textures/Flipbook/smoke_4x4.png";
 			static std::string currentTexture(buf);
-
+			
+			ImGui::NewLine();
 			ImGui::Checkbox("Use texture", &enableTexture);
 			if (!enableTexture)
 			{
@@ -214,14 +243,23 @@ void ParticleScene::SpawnParticleSystem()
 		.spawnRate = 2048.f,
 		.particleSize = 0.1f,
 		.particleLifetime = 0.5f,
-		.startColor = Vector4(1, 0, 0, 0.5),
-		.endColor = Vector4(0, 0, 1, 0.5),
+		.startColor = Vector4(1, 0, 0, 1),
+		.endColor = Vector4(0, 0, 1, 1),
 	};
 
 	AddComponent<ConeSpawnComponent>(m_particleSystem) = {
 		.angle = XM_PIDIV4,
 		.speed = 10.f,
 	};
+}
+
+Vector4 ParticleScene::CharsToColor(const char* color)
+{
+	f32 r = ((color[0]-'0')*16.f) + (color[1]-'0');
+	f32 g = ((color[2]-'0')*16.f) + (color[3]-'0');
+	f32 b = ((color[4]-'0')*16.f) + (color[5]-'0');
+	f32 a = ((color[6]-'0')*16.f) + (color[7]-'0');
+	return Vector4(r, g, b, a) / 255.f;
 }
 
 void ParticleScene::ConeSettings()

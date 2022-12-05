@@ -19,6 +19,7 @@ private:
 private:
 	void ParticleSystemMenu(bool& open);
 	void SpawnParticleSystem();
+	DirectX::SimpleMath::Vector4 CharsToColor(const char *color);
 
 	template<class T>
 	inline void SwitchToComponent();
