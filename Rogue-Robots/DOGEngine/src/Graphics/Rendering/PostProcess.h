@@ -22,6 +22,8 @@ namespace DOG::gfx
 
 			f32 currIntensity{ 0.f };
 			f32 visibility{ 0.f };
+
+			DirectX::SimpleMath::Vector3 color;
 		};
 
 		struct LaserBeamData
@@ -50,7 +52,7 @@ namespace DOG::gfx
 		void SetViewMat(const DirectX::SimpleMath::Matrix& viewMat);
 
 		// Damage bow
-		void InstantiateDamageDisk(const DirectX::SimpleMath::Vector2& dir, f32 startIntensity, f32 timeToDisappear);
+		void InstantiateDamageDisk(const DirectX::SimpleMath::Vector2& dir, f32 startIntensity, f32 timeToDisappear, const DirectX::SimpleMath::Vector3& color = { 1.f, 0.f, 0.f });
 		void InstantiateLaserBeam(DirectX::SimpleMath::Vector3 startPos, DirectX::SimpleMath::Vector3 endPos, DirectX::SimpleMath::Vector3 up, DirectX::SimpleMath::Vector3 color);
 
 		// Heartbeat	

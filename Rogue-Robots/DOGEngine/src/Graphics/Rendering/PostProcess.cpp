@@ -64,7 +64,7 @@ namespace DOG::gfx
 	}
 
 
-	void PostProcess::InstantiateDamageDisk(const DirectX::SimpleMath::Vector2& dir, f32 startIntensity, f32 timeToDisappear)
+	void PostProcess::InstantiateDamageDisk(const DirectX::SimpleMath::Vector2& dir, f32 startIntensity, f32 timeToDisappear, const DirectX::SimpleMath::Vector3& color)
 	{
 		DamageDiskData ddd;
 
@@ -74,6 +74,7 @@ namespace DOG::gfx
 		ddd.timeDelta = timeToDisappear;
 		ddd.startIntensity = startIntensity + 2.5f;
 		ddd.visibility = 1.f;
+		ddd.color = color;
 
 		while (!(m_damageDiskDatas[m_nextDisk].visibility < 0.01f))
 			m_nextDisk = (m_nextDisk + 1) % 50;

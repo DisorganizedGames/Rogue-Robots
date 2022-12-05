@@ -102,7 +102,7 @@ void PlayerHit::OnUpdate(entity e, HasEnteredCollisionComponent& collision, This
 					auto dir = pos1 - pos2;
 					dir.Normalize();
 
-					DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 2.f, 1.5f);
+					DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 2.f, 1.5f, { 1.f, 0.135f, 0.f });
 				}
 			}
 		}
