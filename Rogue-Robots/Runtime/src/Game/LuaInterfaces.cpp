@@ -1252,10 +1252,11 @@ void EntityInterface::AddGoalRadarComponent(DOG::LuaContext* context, DOG::entit
 
 void EntityInterface::AddFireEffectComponent(DOG::LuaContext* context, DOG::entity e)
 {
+	entity player = context->GetInteger();
 	f32 fireEffectTime = (f32)context->GetDouble();
 	f32 damagePerTick = (f32)context->GetDouble();
-	EntityManager::Get().AddComponent<FireEffectComponent>(e, fireEffectTime, damagePerTick).playerEntityID = EntityManager::Get().GetComponent<BulletComponent>(e).playerEntityID;
-	
+
+	EntityManager::Get().AddComponent<FireEffectComponent>(e, fireEffectTime, damagePerTick).playerEntityID = player;
 }
 
 void EntityInterface::AddOutlineComponent(DOG::LuaContext* context, DOG::entity e)

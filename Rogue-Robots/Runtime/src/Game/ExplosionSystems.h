@@ -12,17 +12,21 @@ public:
 
 class ExplosionEffectSystem : public DOG::ISystem
 {
-private:
-	static u32 explosionEffectModelID;
-	static const char* explosionEffectModelPath;
+
 public:
+	
 	ExplosionEffectSystem();
 
 	//You do not have control over the entity! The system does!
-	static DOG::entity CreateExplosionEffect(DOG::entity parentEntity, float radius, float growTime = -1.0f, float shrinkTime = -1.0f);
+	static DOG::entity CreateExplosionEffect(DOG::entity parentEntity, float radius, float growTime = -1.0f, float shrinkTime = -1.0f, float audioVolume = 10, ExplosionEffectComponent::ExplosionSound explosionSound = ExplosionEffectComponent::ExplosionSound::Explosion2);
 	static void AddEffectsToExplosion(DOG::entity parentEntity, DOG::entity explosionEntity);
 
 	SYSTEM_CLASS(ExplosionEffectComponent);
 	ON_UPDATE_ID(ExplosionEffectComponent);
 	void OnUpdate(DOG::entity e, ExplosionEffectComponent& explosionInfo);
+
+private:
+	static u32 s_explosionEffectModelID;
+	static u32 s_explosionAudioID[static_cast<size_t>(ExplosionEffectComponent::ExplosionSound::None)];
+	static const char* s_explosionEffectModelPath;
 };

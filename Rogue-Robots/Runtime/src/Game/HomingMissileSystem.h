@@ -25,6 +25,11 @@ public:
 	SYSTEM_CLASS(HomingMissileComponent, DOG::HasEnteredCollisionComponent, DOG::TransformComponent);
 	ON_UPDATE_ID(HomingMissileComponent, DOG::HasEnteredCollisionComponent, DOG::TransformComponent);
 	void OnUpdate(DOG::entity e, HomingMissileComponent& missile, DOG::HasEnteredCollisionComponent& collision, DOG::TransformComponent& transform);
+
+	HomingMissileImpacteSystem();
+	inline static bool s_useSmokeExplosion = true;
+private:
+	u32 m_smokeTexureAssetID{ 0 };
 };
 
 class HomingMissileTargetingSystem : public DOG::ISystem

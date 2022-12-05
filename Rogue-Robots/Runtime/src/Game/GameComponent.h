@@ -63,6 +63,13 @@ struct BulletComponent
 	f32 damage;
 };
 
+struct TeamDamageDealerComponent
+{
+	DOG::entity playerEntityID = DOG::NULL_ENTITY;
+	f32 damage{ 0 };
+	bool canDamageSelf = true;
+};
+
 struct HomingMissileComponent
 {
 	float startMotorSpeed = 5.0f;
@@ -222,6 +229,13 @@ struct ExplosionComponent
 //You do not have control over the entity! The system does!
 struct ExplosionEffectComponent
 {
+	enum class ExplosionSound
+	{
+		Explosion1 = 0,
+		Explosion2,
+		None,
+	};
+
 	ExplosionEffectComponent(float explosionEffectRadius) noexcept
 	{
 		radius = explosionEffectRadius;
@@ -229,6 +243,8 @@ struct ExplosionEffectComponent
 	float radius;
 	float growTime = -1.0f; 
 	float shrinkTime = -1.0f;
+	ExplosionSound explosionSound = ExplosionSound::None;
+	float audioVolume = 10.0f;
 };
 
 struct InteractionQueryComponent

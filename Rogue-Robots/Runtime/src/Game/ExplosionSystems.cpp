@@ -31,19 +31,22 @@ void ExplosionSystem::OnUpdate(entity e, TransformComponent& explosionTransform,
 	EntityManager::Get().RemoveComponent<ExplosionComponent>(e);
 }
 
-u32 ExplosionEffectSystem::explosionEffectModelID = 0;
-const char* ExplosionEffectSystem::explosionEffectModelPath = "Assets/Models/Ammunition/Explosion.glb";
+u32 ExplosionEffectSystem::s_explosionEffectModelID = 0;
+u32 ExplosionEffectSystem::s_explosionAudioID[static_cast<size_t>(ExplosionEffectComponent::ExplosionSound::None)] = {};
+const char* ExplosionEffectSystem::s_explosionEffectModelPath = "Assets/Models/Ammunition/Explosion.glb";
 ExplosionEffectSystem::ExplosionEffectSystem()
 {
-	explosionEffectModelID = AssetManager::Get().LoadModelAsset(explosionEffectModelPath);
+	s_explosionEffectModelID = AssetManager::Get().LoadModelAsset(s_explosionEffectModelPath);
+	s_explosionAudioID[static_cast<size_t>(ExplosionEffectComponent::ExplosionSound::Explosion1)] = AssetManager::Get().LoadAudio("Assets/Audio/GunSounds/Explosion 08a (grenade).wav");
+	s_explosionAudioID[static_cast<size_t>(ExplosionEffectComponent::ExplosionSound::Explosion2)] = AssetManager::Get().LoadAudio("Assets/Audio/GunSounds/Explosion 03b.wav");
 }
 
-entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float radius, float growTime, float shrinkTime)
+entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float radius, float growTime, float shrinkTime, float audioVolume, ExplosionEffectComponent::ExplosionSound explosionSound)
 {
-	if (explosionEffectModelID == 0)
+	if (s_explosionEffectModelID == 0)
 	{
 		// This is a static function and if the constructor has not loaded the asset we will need to do it.
-		explosionEffectModelID = AssetManager::Get().LoadModelAsset(explosionEffectModelPath);
+		s_explosionEffectModelID = AssetManager::Get().LoadModelAsset(s_explosionEffectModelPath);
 	}
 
 	entity newEntity = EntityManager::Get().CreateEntity();
@@ -53,7 +56,7 @@ entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float r
 	Vector3 parentPosition = EntityManager::Get().GetComponent<TransformComponent>(parentEntity).GetPosition();
 
 	EntityManager::Get().AddComponent<TransformComponent>(newEntity, parentPosition, Vector3(.0f, .0f, .0f), Vector3(radius, radius, radius));
-	EntityManager::Get().AddComponent<ModelComponent>(newEntity, explosionEffectModelID);
+	EntityManager::Get().AddComponent<ModelComponent>(newEntity, s_explosionEffectModelID);
 
 	//Set values for explosions on the script
 	LuaMain::GetScriptManager()->AddScript(newEntity, "ExplosionEffect.lua");
@@ -66,6 +69,20 @@ entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float r
 			scriptTable.AddFloatToTable("growTime", growTime);
 		if (shrinkTime != -1.0f)
 			scriptTable.AddFloatToTable("shrinkTime", shrinkTime);
+	}
+
+	if (explosionSound != ExplosionEffectComponent::ExplosionSound::None)
+	{
+		entity audioEntity = EntityManager::Get().CreateEntity();
+		if (auto scene = EntityManager::Get().TryGetComponent<SceneComponent>(parentEntity))
+			EntityManager::Get().AddComponent<SceneComponent>(audioEntity, scene->get().scene);
+		EntityManager::Get().AddComponent<TransformComponent>(audioEntity, parentPosition);
+		auto& audio = EntityManager::Get().AddComponent<AudioComponent>(audioEntity);
+		audio.assetID = s_explosionAudioID[static_cast<size_t>(explosionSound)];
+		audio.is3D = true;
+		audio.shouldPlay = true;
+		audio.volume = audioVolume;
+		EntityManager::Get().AddComponent<LifetimeComponent>(audioEntity, 5.0f); // Hope that the explosion sound is shorter then 5 seconds.
 	}
 
 	AddEffectsToExplosion(parentEntity, newEntity);
@@ -138,7 +155,7 @@ void ExplosionEffectSystem::AddEffectsToExplosion(DOG::entity parentEntity, DOG:
 
 void ExplosionEffectSystem::OnUpdate(DOG::entity e, ExplosionEffectComponent& explosionInfo)
 {
-	CreateExplosionEffect(e, explosionInfo.radius, explosionInfo.growTime, explosionInfo.shrinkTime);
+	CreateExplosionEffect(e, explosionInfo.radius, explosionInfo.growTime, explosionInfo.shrinkTime, explosionInfo.audioVolume, explosionInfo.explosionSound);
 
 	EntityManager::Get().RemoveComponent<ExplosionEffectComponent>(e);
 }

@@ -106,5 +106,26 @@ void PlayerHit::OnUpdate(entity e, HasEnteredCollisionComponent& collision, This
 				}
 			}
 		}
+
+		if (auto dmgDealer = eMan.TryGetComponent<TeamDamageDealerComponent>(collision.entities[i]))
+		{
+			if (dmgDealer->get().canDamageSelf || dmgDealer->get().playerEntityID != PlayerManager::Get().GetThisPlayer())
+			{
+				float dmg = dmgDealer->get().damage / TEAM_DAMAGE_MODIFIER;
+				PlayerManager::Get().HurtThisPlayer(dmg);
+				eMan.GetComponent<InputController>(e).teamDamageTaken += dmg;
+
+				if (EntityManager::Get().HasComponent<PlayerAliveComponent>(e))
+				{
+					// Add visual effect
+					const auto& pos1 = eMan.GetComponent<TransformComponent>(collision.entities[i]).GetPosition();
+					const auto& pos2 = eMan.GetComponent<TransformComponent>(e).GetPosition();
+					auto dir = pos1 - pos2;
+					dir.Normalize();
+
+					DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 2.f, 1.5f);
+				}
+			}
+		}
 	}
 }
