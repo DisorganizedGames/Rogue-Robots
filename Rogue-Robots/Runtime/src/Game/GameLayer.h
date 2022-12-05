@@ -29,8 +29,7 @@ enum class NetworkStatus
 	HostLobby,
 	Hosting,
 	JoinLobby,
-	Joining
-
+	Joining,
 };
 
 class GameLayer : public DOG::Layer
