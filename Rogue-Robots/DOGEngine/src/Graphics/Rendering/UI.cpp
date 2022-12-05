@@ -784,7 +784,7 @@ void DOG::UIBuffTracker::Draw(DOG::gfx::D2DBackend_DX12& d2d)
       {
          d2d.Get2DDeviceContext()->DrawBitmap(m_bitmaps[i].Get(), m_rects[i], m_opacity[i]);
          d2d.Get2DDeviceContext()->DrawRectangle(m_rects[i], m_borderBrush.Get());
-         if (m_stacks[i] > 0u)
+         if (m_stacks[i] > 1u)
          {
             D2D1_RECT_F textRect = m_rects[i];
             textRect.top += 40.f;
