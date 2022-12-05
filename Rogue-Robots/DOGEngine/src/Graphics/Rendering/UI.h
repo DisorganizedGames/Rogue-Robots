@@ -282,16 +282,20 @@ namespace DOG
    class UIIcon : public UIElement
    {
       public:
-         UIIcon(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring filePath, float x, float y, float width, float height, float r, float g, float b);
+         UIIcon(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector<std::wstring> filePaths, float x, float y, float width, float height, float r, float g, float b, bool border);
          ~UIIcon();
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Hide();
+         void Show(UINT index);
       private:
          float m_opacity;
-         bool m_show;
-         ComPtr<ID2D1Bitmap> m_bitmap;
+         bool m_show, m_border;
+         UINT m_index;
+         std::vector<ComPtr<ID2D1Bitmap>> m_bitmaps;
          D2D1_RECT_F m_rect;
          ComPtr<ID2D1SolidColorBrush> m_borderBrush;
+         ComPtr<ID2D1SolidColorBrush> m_backBrush;
          ComPtr<IDWriteTextFormat> m_textFormat;
    };
 
