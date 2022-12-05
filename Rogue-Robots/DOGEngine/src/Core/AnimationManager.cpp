@@ -15,7 +15,7 @@ namespace DOG
 		m_imguiRot.assign(150, { 0.0f, 0.0f, 0.0f });
 		m_vsJoints.assign(300, {});
 
-		DOG::ImGuiMenuLayer::RegisterDebugWindow("RigJourno", std::bind(&AnimationManager::SpawnControlWindow, this, std::placeholders::_1), false, std::make_pair(DOG::Key::LCtrl, DOG::Key::N));
+		DOG::ImGuiMenuLayer::RegisterDebugWindow("RigJourno", std::bind(&AnimationManager::SpawnControlWindow, this, std::placeholders::_1), false, std::make_pair(DOG::Key::LCtrl, DOG::Key::Q));
 		m_ta.Update(0.4f);
 	};
 
@@ -77,8 +77,6 @@ namespace DOG
 					const auto imguiJointBindPose = XMMatrixTranspose(XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_rigs[MIXAMO_RIG_ID]->jointOffsets[m_imguiJoint])));
 					const auto vsImguiJointTf = XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[offset + m_imguiJoint]));
 					itf.transform = imguiJointBindPose * vsImguiJointTf;
-					/*jtf.transform = SimpleMath::Matrix(XMMatrixTranslationFromVector(XMLoadFloat3(&m_headOffset)) *
-						XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[offset + MIXAMO_RIG.headJoint]))) * tf.worldMatrix;*/
 				}
 			});
 	}

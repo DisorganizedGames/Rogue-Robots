@@ -56,6 +56,7 @@ GameLayer::GameLayer() noexcept
 
 	m_entityManager.RegisterSystem(std::make_unique<ScuffedSceneGraphSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<SetFlashLightToBoneSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<SetGunToBoneSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
@@ -688,7 +689,7 @@ void GameLayer::UpdateGame()
 
 	auto objTra = XMMatrixTranslation( m_imguiObjPosX, m_imguiObjPosY, m_imguiObjPosZ );
 	auto objRot = XMMatrixRotationRollPitchYaw( m_imguiObjRoll, m_imguiObjPitch, m_imguiObjYaw );
-	auto objSca = XMMatrixScaling(1.f, 1.f, 1.f);
+	auto objSca = XMMatrixScaling(m_imguiObjScaleX, m_imguiObjScaleY, m_imguiObjScaleZ);
 	auto objTF = objSca * objRot * objTra;
 	
 	auto jointWorldTF = Matrix::Identity;
@@ -700,7 +701,7 @@ void GameLayer::UpdateGame()
 		{
 			turret.worldMatrix = Matrix::Identity;
 			turret.worldMatrix = SimpleMath::Matrix(objTF) * jointWorldTF;
-			turret.SetScale(Vector3(m_imguiObjScale, m_imguiObjScale, m_imguiObjScale));
+			//turret.SetScale(Vector3(m_imguiObjScale, m_imguiObjScale, m_imguiObjScale));
 			turret.SetPosition(turret.GetPosition() + Vector3(0.f, -.5f, 0.f)); // capsule offset
 			m_imguiObjectPos = turret.GetPosition();
 		});
@@ -1889,7 +1890,9 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 			ImGui::SliderAngle("roll", &m_imguiObjRoll);
 			ImGui::SliderAngle("pitch", &m_imguiObjPitch);
 			ImGui::SliderAngle("yaw", &m_imguiObjYaw);
-			ImGui::SliderFloat("objScale", &m_imguiObjScale, 0.1f, 20.f, "%.5f");
+			ImGui::SliderFloat("objScaleX", &m_imguiObjScaleX, 0.1f, 200.f, "%.5f");
+			ImGui::SliderFloat("objScaleY", &m_imguiObjScaleY, 0.1f, 200.f, "%.5f");
+			ImGui::SliderFloat("objScaleZ", &m_imguiObjScaleZ, 0.1f, 200.f, "%.5f");
 			ImGui::Text(("TurretHead pos: X:" + std::to_string(m_imguiObjectPos.x) + " Y: " + std::to_string(m_imguiObjectPos.y) + " Z:" + std::to_string(m_imguiObjectPos.z)).c_str());
 
 			std::vector<entity> players;

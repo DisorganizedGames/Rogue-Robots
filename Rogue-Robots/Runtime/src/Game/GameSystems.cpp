@@ -1361,14 +1361,8 @@ void SetGunToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& child, DO
 	auto& em = EntityManager::Get();
 	if (em.Exists(child.boneParent))
 	{
-		auto objTra = XMMatrixTranslation(73, 140, -54);
-		auto objRot = XMMatrixRotationRollPitchYaw(20, 190, 77);
-		auto objSca = XMMatrixScaling(1.f, 1.f, 1.f);
-		auto objOffset = objSca * objRot * objTra;
-
-		auto& boneModel = em.GetComponent<MixamoImguiJointTF>(child.boneParent);
-		world.worldMatrix = Matrix(objOffset) * boneModel.transform * em.GetComponent<TransformComponent>(child.boneParent).worldMatrix;
-		world.SetPosition(world.GetPosition() + Vector3(0.f, -0.5f, 0.f));
+		world.worldMatrix = child.localTransform * em.GetComponent<MixamoImguiJointTF>(child.boneParent).transform * em.GetComponent<TransformComponent>(child.boneParent).worldMatrix;
+		world.SetPosition(world.GetPosition() + Vector3(0.f, -0.5f, 0.f)); // account for model capsule offset
 	}
 	else
 	{

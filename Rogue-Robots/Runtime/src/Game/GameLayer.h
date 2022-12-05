@@ -97,16 +97,18 @@ private:
 	bool m_noClipCheat = false;
 	bool m_noWinLose = false;
 
-	//Win condition
+	// Win condition
 	DirectX::SimpleMath::Vector3 m_exitPosition = DirectX::SimpleMath::Vector3(-1.0f, -1.0f, -1.0f);
 
-	f32 m_imguiObjPosX = 0.f;
-	f32 m_imguiObjPosY = 0.f;
-	f32 m_imguiObjPosZ = 0.f;
-	f32 m_imguiObjRoll = 0.f;
-	f32 m_imguiObjPitch = 0.f;
-	f32 m_imguiObjYaw = 0.f;
-	f32 m_imguiObjScale = 1.f;
+	f32 m_imguiObjPosX = 73.f;
+	f32 m_imguiObjPosY = 117.f;
+	f32 m_imguiObjPosZ = -45.f;
+	f32 m_imguiObjRoll = 4.f * DirectX::XM_PI / 180.f;
+	f32 m_imguiObjPitch = 190.f * DirectX::XM_PI / 180.f;
+	f32 m_imguiObjYaw = 91.f * DirectX::XM_PI / 180.f;
+	f32 m_imguiObjScaleX = 200.f;
+	f32 m_imguiObjScaleY = 120.f;
+	f32 m_imguiObjScaleZ = 145.f;
 	DirectX::SimpleMath::Vector3 m_imguiObjectPos = DirectX::SimpleMath::Vector3( 0.f, 0.f, 0.f );
 
 	bool m_imguiRenderPlayer = true;

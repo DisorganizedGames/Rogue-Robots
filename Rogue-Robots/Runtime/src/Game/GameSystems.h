@@ -616,6 +616,15 @@ public:
 	void OnUpdate(DOG::entity e, ChildToBoneComponent& child, DOG::TransformComponent& world);
 };
 
+class SetGunToBoneSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(ChildToBoneComponent, DOG::TransformComponent);
+
+	ON_UPDATE_ID(ChildToBoneComponent, DOG::TransformComponent);
+	void OnUpdate(DOG::entity e, ChildToBoneComponent& child, DOG::TransformComponent& world);
+};
+
 class PlaceHolderDeathUISystem : public DOG::ISystem
 {
 public:

@@ -78,7 +78,7 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 			AddComponent<TmpComponent>(turretHead);
 
 			//Spawn items
-			ItemManager::Get().CreateItem(EntityTypes::Reviver, Vector3(pos.x, pos.y + 1.0f, pos.z));
+			ItemManager::Get().CreateItem(EntityTypes::FullAutoMisc, Vector3(pos.x, pos.y + 1.0f, pos.z));
 			++enemyCounter;
 			++itemCounter;
 		});
