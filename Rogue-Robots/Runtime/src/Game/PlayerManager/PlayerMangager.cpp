@@ -56,7 +56,7 @@ bool PlayerManager::IsThisMultiplayer()
 	return nStatus;
 }
 
-void PlayerManager::HurtOnlinePlayers(entity player)
+void PlayerManager::HurtOnlinePlayers(entity)
 {
 	std::cout << u32(player) << std::endl; //removes warning, is being used in another branch, remove this line when function is used
 }
@@ -102,7 +102,7 @@ void PlayerHit::OnUpdate(entity e, HasEnteredCollisionComponent& collision, This
 					auto dir = pos1 - pos2;
 					dir.Normalize();
 
-					DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 2.f, 1.5f);
+					DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 2.f, 1.5f, { 1.f, 0.135f, 0.f });
 				}
 			}
 		}

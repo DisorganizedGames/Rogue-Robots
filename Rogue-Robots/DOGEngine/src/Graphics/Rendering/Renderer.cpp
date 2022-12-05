@@ -1676,6 +1676,7 @@ namespace DOG::gfx
 
 
 	static float s_dir[2] = { 0.f, 1.f };
+	static float s_color[3] = { 1.f, 1.f, 0.f };
 	static float s_intensity = 2.f;
 	static float s_time = 2.f;
 
@@ -1734,13 +1735,13 @@ namespace DOG::gfx
 			if (ImGui::Begin("Damage Disk Settings"))
 			{
 				ImGui::SliderFloat2("Direction", s_dir, -1.f, 1.f);
+				ImGui::SliderFloat3("Color", s_color, 0.f, 1.f);
 				ImGui::SliderFloat("Intensity", &s_intensity, 0.f, 3.f);
 				ImGui::SliderFloat("Time", &s_time, 0.f, 5.f);
 
 				if (ImGui::Button("Instantiate damage disk"))
 				{
-					PostProcess::Get().InstantiateDamageDisk({ s_dir[0], s_dir[1] }, s_intensity, s_time);
-
+					PostProcess::Get().InstantiateDamageDisk({ s_dir[0], s_dir[1] }, s_intensity, s_time, { s_color[0], s_color[1], s_color[2] });
 				}
 
 			}

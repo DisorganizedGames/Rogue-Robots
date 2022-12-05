@@ -126,7 +126,10 @@ namespace DOG::gfx
 						.AppendConstant(xDir)
 						.AppendConstant(yDir)
 						.AppendConstant(intensity)
-						.AppendConstant(vis);
+						.AppendConstant(vis)
+						.AppendConstant(std::bit_cast<u32>(ddData.color.x))
+						.AppendConstant(std::bit_cast<u32>(ddData.color.y))
+						.AppendConstant(std::bit_cast<u32>(ddData.color.z));
 
 					//std::cout << *(float*)&vis << "\n";
 

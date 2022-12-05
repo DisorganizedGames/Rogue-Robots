@@ -10,6 +10,9 @@ struct PushConstantElement
     float directionY;        // Reinterpret this as float
     float intensity;
     float visibility;        // Reinterpret this as float
+    float colorR;
+    float colorG;
+    float colorB;
 };
 
 ConstantBuffer<PushConstantElement> g_constants : register(b0, space0);
@@ -71,11 +74,13 @@ float4 main(PS_IN input) : SV_TARGET0
                         lenToEllipse < bowOffset + bowThickness;
     
     
+    float3 color = float3(g_constants.colorR, g_constants.colorG, g_constants.colorB) * g_constants.intensity;
+    float vis = visibility <= 0.6f ? 0.f : visibility;
     // Opacity below 0.5 seems to just make it disappear, so we disappear early at 0.6
     if (onEllipse && onBow)
-        return float4(1.f * g_constants.intensity, 0.f, 0.f, visibility <= 0.6f ? 0.f : visibility);
+        return float4(color, vis);
     else if (onMidEllipse && onBow && lenFromCenter < 0.1f)
-        return float4(1.f * g_constants.intensity, 0.f, 0.f, visibility <= 0.6f ? 0.f : visibility);
+        return float4(color, vis);
     else
         return float4(0.f.rrr, 0.f);
 }
