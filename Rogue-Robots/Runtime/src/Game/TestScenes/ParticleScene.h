@@ -15,11 +15,16 @@ public:
 
 private:
 	DOG::entity m_particleSystem = DOG::NULL_ENTITY;
+	std::string m_texturePath;
 
 private:
 	void ParticleSystemMenu(bool& open);
 	void SpawnParticleSystem();
 	DirectX::SimpleMath::Vector4 CharsToColor(const char *color);
+	void BakeSystemToFile(const std::filesystem::path& path);
+	void UnbakeSystemFromFile(const std::filesystem::path& path);
+	void WriteSpawnTable(std::ofstream& file);
+	void WriteBehaviorTable(std::ofstream& file);
 
 	template<class T>
 	inline void SwitchToComponent();

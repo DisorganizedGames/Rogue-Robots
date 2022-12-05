@@ -1,0 +1,31 @@
+system={
+	rate=2048,
+	lifetime=0.756,
+	size=0.277,
+	texture="Assets/Textures/Flipbook/smoke_4x4.png",
+	textureSegmentsX=4,
+	textureSegmentsY=4,
+	startColor={
+		r=1,
+		g=1,
+		b=1,
+		a=1
+	},
+	endColor={
+		r=0,
+		g=0,
+		b=0,
+		a=0
+	},
+	spawn={
+		type="cylinder",
+		angle=1,
+		speed=1
+	},
+	behavior={
+		type="gravityPoint",
+		x=0,
+		y=4,
+		z=0
+	},
+}
