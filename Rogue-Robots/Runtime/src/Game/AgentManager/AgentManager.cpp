@@ -150,7 +150,7 @@ entity AgentManager::CreateAgentCore(u32 model, u32 groupID, const Vector3& pos,
 
 	em.AddComponent<ModelComponent>(e, model);
 
-	em.AddComponent<CapsuleColliderComponent>(e, e, 0.25f, 0.25f, true, 50.0f);
+	em.AddComponent<CapsuleColliderComponent>(e, e, 0.4f, 0.25f, true, 50.0f);
 	
 	RigidbodyComponent& rb = em.AddComponent<RigidbodyComponent>(e, e);
 	rb.ConstrainRotation(true, true, true);
