@@ -217,10 +217,10 @@ std::vector<entity> AddGunsToPlayers(const std::vector<entity>& players)
 		ChildToBoneComponent& childComponent = em.AddComponent<ChildToBoneComponent>(gunEntity);
 		childComponent.boneParent = players[i];
 
-		auto objTra = XMMatrixTranslation(73, 117, -45);
-		auto objRot = XMMatrixRotationRollPitchYaw(4 * XM_PI/180.f, 190 * XM_PI / 180.f, 91 * XM_PI / 180.f);
-		auto objSca = XMMatrixScaling(200, 120.f, 145.f);
-		auto gunBoneSpaceOffset = objSca * objRot * objTra;
+		const auto translation = XMMatrixTranslation(73, 117, -45);
+		const auto rotation = XMMatrixRotationRollPitchYaw(4.f * XM_PI/180.f, 190.f * XM_PI / 180.f, 91.f * XM_PI / 180.f);
+		const auto scaling = XMMatrixScaling(200, 120.f, 145.f);
+		const auto gunBoneSpaceOffset = scaling * rotation * translation;
 		childComponent.localTransform.worldMatrix = Matrix(gunBoneSpaceOffset);
 		guns.push_back(gunEntity);
 	}

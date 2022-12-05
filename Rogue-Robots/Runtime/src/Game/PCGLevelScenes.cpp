@@ -72,11 +72,6 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 				}
 			}
 
-			entity turretHead = CreateEntity();
-			AddComponent<TransformComponent>(turretHead, Vector3(0, 0, 0));
-			AddComponent<ModelComponent>(turretHead).id = AssetManager::Get().LoadModelAsset("Assets/Models/ModularRifle/Maingun.gltf");
-			AddComponent<TmpComponent>(turretHead);
-
 			//Spawn items
 			ItemManager::Get().CreateItem(EntityTypes::FullAutoMisc, Vector3(pos.x, pos.y + 1.0f, pos.z));
 			++enemyCounter;

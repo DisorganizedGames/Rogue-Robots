@@ -688,24 +688,6 @@ void GameLayer::UpdateGame()
 	EvaluateWinCondition();
 	EvaluateLoseCondition();
 
-	auto objTra = XMMatrixTranslation( m_imguiObjPosX, m_imguiObjPosY, m_imguiObjPosZ );
-	auto objRot = XMMatrixRotationRollPitchYaw( m_imguiObjRoll, m_imguiObjPitch, m_imguiObjYaw );
-	auto objSca = XMMatrixScaling(m_imguiObjScaleX, m_imguiObjScaleY, m_imguiObjScaleZ);
-	auto objTF = objSca * objRot * objTra;
-	
-	auto jointWorldTF = Matrix::Identity;
-	EntityManager::Get().Collect<MixamoImguiJointTF, TransformComponent>().Do([&](MixamoImguiJointTF& joint, TransformComponent& model)
-		{
-			jointWorldTF = joint.transform * model.worldMatrix;
-		});
-	EntityManager::Get().Collect<TmpComponent, TransformComponent>().Do([&](TmpComponent&, TransformComponent& turret)
-		{
-			turret.worldMatrix = Matrix::Identity;
-			turret.worldMatrix = SimpleMath::Matrix(objTF) * jointWorldTF;
-			//turret.SetScale(Vector3(m_imguiObjScale, m_imguiObjScale, m_imguiObjScale));
-			turret.SetPosition(turret.GetPosition() + Vector3(0.f, -.5f, 0.f)); // capsule offset
-			m_imguiObjectPos = turret.GetPosition();
-		});
 	// Render this player or not
 	EntityManager::Get().Collect<DontDraw>().Do([&](DontDraw& dd)
 		{
@@ -1893,18 +1875,6 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 
 			if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;
 			if (ImGui::RadioButton("Particle", (int*)&m_selectedScene, (int)SceneComponent::Type::ParticleScene)) m_gameState = GameState::Restart;
-			
-			ImGui::Checkbox("RenderPlayer", &m_imguiRenderPlayer);
-			ImGui::SliderFloat("posX", &m_imguiObjPosX, -500.f, 500.f, "%.f");
-			ImGui::SliderFloat("posY", &m_imguiObjPosY, -500.f, 500.f, "%.f");
-			ImGui::SliderFloat("posZ", &m_imguiObjPosZ, -500.f, 500.f, "%.f");
-			ImGui::SliderAngle("roll", &m_imguiObjRoll);
-			ImGui::SliderAngle("pitch", &m_imguiObjPitch);
-			ImGui::SliderAngle("yaw", &m_imguiObjYaw);
-			ImGui::SliderFloat("objScaleX", &m_imguiObjScaleX, 0.1f, 200.f, "%.5f");
-			ImGui::SliderFloat("objScaleY", &m_imguiObjScaleY, 0.1f, 200.f, "%.5f");
-			ImGui::SliderFloat("objScaleZ", &m_imguiObjScaleZ, 0.1f, 200.f, "%.5f");
-			ImGui::Text(("TurretHead pos: X:" + std::to_string(m_imguiObjectPos.x) + " Y: " + std::to_string(m_imguiObjectPos.y) + " Z:" + std::to_string(m_imguiObjectPos.z)).c_str());
 
 			std::vector<entity> players;
 			EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](entity e, PlayerStatsComponent&)
