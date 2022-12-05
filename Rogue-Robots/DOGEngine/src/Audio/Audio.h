@@ -30,6 +30,7 @@ namespace DOG
 		u64 m_samplesPlayed = 0;
 
 		std::mutex m_loopMutex;
+		std::mutex m_stopMutex;
 
 		static constexpr u64 CHUNK_SIZE = 1024;
 		static constexpr f32 BASE_VOLUME = 2.0f;
