@@ -75,7 +75,7 @@ function OnStart()
 	gunID = Scene:CreateEntity(EntityID)
 	gunEntity.entityID = gunID
 	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.35,y=.35,z=.35})
-	--Entity:AddComponent(gunID, "Model", gunModel)
+	Entity:AddComponent(gunID, "Model", gunModel)
 	Entity:AddComponent(gunID, "Audio", gunShotSound, false, true)
 
 	barrelEntityID = Scene:CreateEntity(gunID)
@@ -87,23 +87,24 @@ function OnStart()
 	magazineEntityID = Scene:CreateEntity(gunID)
 	Entity:AddComponent(magazineEntityID, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
 	Entity:AddComponent(magazineEntityID, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
+	Entity:RemoveComponent(gunID, "ShadowReceiverComponent")
 
 	local outlineColor = Entity:GetOutlineColor(EntityID)
 	-- Add shit
 	if (Entity:HasComponent(EntityID, "ThisPlayer")) then
-
 		Entity:AddComponent(gunID, "ThisPlayerWeapon")
 		--To be fixed later hopefully
-		--Entity:AddComponent(barrelEntityID, "ThisPlayerWeapon")
-		--Entity:AddComponent(miscEntityID, "ThisPlayerWeapon")
+		Entity:AddComponent(barrelEntityID, "ThisPlayerWeapon")
+		Entity:AddComponent(miscEntityID, "ThisPlayerWeapon")
 		Entity:AddComponent(magazineEntityID, "ThisPlayerWeapon")
 		CreateWeaponLights()
 	end
+	
 
-	Entity:AddComponent(gunID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
-	Entity:AddComponent(barrelEntityID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
-	Entity:AddComponent(miscEntityID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
-	Entity:AddComponent(magazineEntityID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
+	--Entity:AddComponent(gunID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
+	--Entity:AddComponent(barrelEntityID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
+	--Entity:AddComponent(miscEntityID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
+	--Entity:AddComponent(magazineEntityID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
 
 	-- Initialize base components
 	miscComponent = MiscComponent.BasicShot()
@@ -159,6 +160,13 @@ function OnUpdate()
 
 	if hasBasicBarrelEquipped then
 		if (ReloadSystem()) then
+			local animID = 28
+			local arms = 3
+			local flags = 0; --No flag
+			local priority = 0;
+			local playbackRate = 1.2
+			local transitionLen = 0.25
+			Entity:ModifyAnimationComponent(EntityID, animID, arms, priority, flags, playbackRate, transitionLen)
 			return
 		end
 	end

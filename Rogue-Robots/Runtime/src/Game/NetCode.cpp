@@ -65,7 +65,6 @@ void NetCode::OnStartup()
 				m_entityManager.AddComponent<OnlinePlayer>(id);
 				m_entityManager.RemoveComponent<ThisPlayer>(id);
 
-
 				//LuaMain::GetScriptManager()->RemoveScript(id, "Gun.lua");
 				auto scriptData = LuaMain::GetScriptManager()->GetScript(id, "Gun.lua");
 				LuaTable tab(scriptData.scriptTable, true);
@@ -90,6 +89,7 @@ void NetCode::OnStartup()
 							m_entityManager.RemoveComponent<DontDraw>(subEntity);
 						}
 					});
+				
 				m_entityManager.RemoveComponent<AudioListenerComponent>(id);
 			}
 
@@ -102,11 +102,10 @@ void NetCode::OnStartup()
 					{
 						if (parentC.parent == id)
 						{
-							m_entityManager.AddComponent<DontDraw>(subEntity);
+							m_entityManager.AddComponent<DontDraw>(subEntity); // Dont draw player model
 						}
 					});
 				m_entityManager.AddComponent<ThisPlayer>(id);
-
 
 				//LuaMain::GetScriptManager()->AddScript(id, "Gun.lua");
 				auto scriptData = LuaMain::GetScriptManager()->GetScript(id, "Gun.lua");
@@ -128,6 +127,36 @@ void NetCode::OnStartup()
 				m_entityManager.RemoveComponent<OnlinePlayer>(id);
 			}
 		});
+
+	EntityManager::Get().Collect<NetworkPlayerComponent>().Do([&](entity id, NetworkPlayerComponent& networkC)
+		{;
+			if (networkC.playerId == m_inputTcp.playerId)
+			{
+				EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity e, ModelComponent&, ChildToBoneComponent& childToBone)
+					{
+						if (EntityManager::Get().HasComponent<ThisPlayer>(childToBone.boneParent))
+							m_entityManager.AddOrReplaceComponent<DontDraw>(e);
+						else
+							m_entityManager.RemoveComponentIfExists<DontDraw>(e);
+					});
+			}
+			else
+			{
+				auto scriptData = LuaMain::GetScriptManager()->GetScript(id, "Gun.lua");
+				LuaTable tab(scriptData.scriptTable, true);
+				auto ge = tab.GetTableFromTable("gunEntity");
+
+				int gunID = ge.GetIntFromTable("entityID");
+				m_entityManager.AddOrReplaceComponent<DontDraw>(gunID);
+				int barrelID = tab.GetIntFromTable("barrelEntityID");
+				m_entityManager.AddOrReplaceComponent<DontDraw>(barrelID);
+				int miscID = tab.GetIntFromTable("miscEntityID");
+				m_entityManager.AddOrReplaceComponent<DontDraw>(miscID);
+				int magazineID = tab.GetIntFromTable("magazineEntityID");
+				m_entityManager.AddOrReplaceComponent<DontDraw>(magazineID);
+			}
+		});
+	
 	if (m_inputTcp.playerId == 0)
 		m_serverHost->StopReceiving();
 }

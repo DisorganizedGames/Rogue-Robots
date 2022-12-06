@@ -31,6 +31,7 @@ enum class MixamoAnimations : int8_t
 	JumpDown,
 	JumpLoop,
 	JumpUp,
+	ReloadOld,
 	Reload,
 	StandUp,
 	ChickenDance,

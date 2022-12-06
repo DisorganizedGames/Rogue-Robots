@@ -8,7 +8,7 @@ using namespace DirectX::SimpleMath;
 std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 {
 	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
-	playerCount = 2;
+	
 	auto* scriptManager = LuaMain::GetScriptManager();
 	//// Add persistent material prefab lua
 	//{
@@ -26,6 +26,8 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 	std::array<u32, 4> playerModels = {};
 	playerModels[0] = am.LoadModelAsset("Assets/Models/P2/Aim/testAim.gltf");
 	playerModels[1] = am.LoadModelAsset("Assets/Models/P2/Aim/testAim.gltf");
+	playerModels[2] = am.LoadModelAsset("Assets/Models/P2/Aim/testAim.gltf");
+	playerModels[3] = am.LoadModelAsset("Assets/Models/P2/Aim/testAim.gltf");
 	//playerModels[0] = am.LoadModelAsset("Assets/Models/P2/Red/player_red.gltf");
 	//playerModels[1] = am.LoadModelAsset("Assets/Models/P2/Red/player_red.gltf");
 	/*playerModels[1] = am.LoadModelAsset("Assets/Models/P2/Aim/testAim.gltf");
@@ -36,12 +38,6 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 	playerModels[2] = am.LoadModelAsset("Assets/Models/P2/Green/player_green.gltf");
 	playerModels[3] = am.LoadModelAsset("Assets/Models/P2/Yellow/player_yellow.gltf");
 	*/
-
-	std::array<u32, 4> playerGunModels = {};
-	playerGunModels[0] = am.LoadModelAsset("Assets/Models/ModularRifle/Maingun.gltf");
-	playerGunModels[1] = am.LoadModelAsset("Assets/Models/ModularRifle/Maingun.gltf");
-	/*playerGunModels[2] = am.LoadModelAsset("Assets/Models/ModularRifle/Maingun.gltf");
-	playerGunModels[3] = am.LoadModelAsset("Assets/Models/ModularRifle/Maingun.gltf");*/
 
 	std::array<DirectX::SimpleMath::Vector3, 4> playerOutlineColors
 	{
@@ -85,7 +81,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 
 		auto& ac = em.GetComponent<AnimationComponent>(playerI);
 		ac.animatorID = static_cast<i8>(i);
-		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping | AnimationFlag::ResetPrio);
+		/*ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping | AnimationFlag::ResetPrio);*/
 
 		auto& bc = em.AddComponent<BarrelComponent>(playerI);
 		bc.type = BarrelComponent::Type::Bullet;
@@ -146,8 +142,8 @@ std::vector<entity> AddFlashlightsToPlayers(const std::vector<entity>& players)
 
 		ChildToBoneComponent& childComponent = em.AddComponent<ChildToBoneComponent>(flashLightEntity);
 		childComponent.boneParent = players[i];
-		childComponent.localTransform.SetPosition(Vector3(-200.f, -300.f, 0.f));
-
+		childComponent.localTransform.SetPosition(Vector3(90.f, 130.f, -45.f));
+			
 		auto& tc = childComponent.localTransform;
 
 		auto up = tc.worldMatrix.Up();
@@ -215,22 +211,24 @@ std::vector<entity> AddGunsToPlayers(const std::vector<entity>& players)
 		em.AddComponent<DOG::TransformComponent>(gunEntity);
 		em.AddComponent<ModelComponent>(gunEntity, am.LoadModelAsset("Assets/Models/ModularRifle/Maingun.gltf"));
 		em.AddComponent<ShadowReceiverComponent>(gunEntity);
+		em.AddComponent<OutlineComponent>(gunEntity, playerOutlineColors[i]);
 
-		ChildToBoneComponent& childComponent = em.AddComponent<ChildToBoneComponent>(gunEntity);
+		auto& childComponent = em.AddComponent<ChildToBoneComponent>(gunEntity);
 		childComponent.boneParent = players[i];
 
 		const auto translation = XMMatrixTranslation(73, 117, -45);
 		const auto rotation = XMMatrixRotationRollPitchYaw(4.f * XM_PI/180.f, 190.f * XM_PI / 180.f, 91.f * XM_PI / 180.f);
 		const auto scaling = XMMatrixScaling(200, 120.f, 145.f);
 		const auto gunBoneSpaceOffset = scaling * rotation * translation;
+
 		childComponent.localTransform.worldMatrix = Matrix(gunBoneSpaceOffset);
-		guns.push_back(gunEntity);
-		em.AddComponent<OutlineComponent>(gunEntity, playerOutlineColors[i]);
 
 		if (em.HasComponent<ThisPlayer>(childComponent.boneParent))
 		{
 			em.AddComponent<DontDraw>(gunEntity);
 		}
+
+		guns.push_back(gunEntity);
 	}
 	return guns;
 }

@@ -177,6 +177,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddLifetimeComponent(context, e);
 	}
+	else if (compType == "DontDraw")
+	{
+		AddDontDrawComponent(context, e);
+	}
 	//Add more component types here.
 	else
 	{
@@ -226,6 +230,11 @@ void EntityInterface::RemoveComponent(DOG::LuaContext* context)
 	else if (compType == "Model")
 	{
 		EntityManager::Get().RemoveComponent<ModelComponent>(e);
+		EntityManager::Get().RemoveComponent<ShadowReceiverComponent>(e);
+		return;
+	}
+	else if (compType == "ShadowReceiverComponent")
+	{
 		EntityManager::Get().RemoveComponent<ShadowReceiverComponent>(e);
 		return;
 	}
@@ -1355,6 +1364,10 @@ void EntityInterface::AddOutlineComponent(DOG::LuaContext* context, DOG::entity 
 	EntityManager::Get().AddComponent<OutlineComponent>(e).color = { r, g, b };
 }
 
+void EntityInterface::AddDontDrawComponent(DOG::LuaContext* context, DOG::entity e)
+{
+	EntityManager::Get().AddComponent<DontDraw>(e).dontDraw = true;
+}
 
 
 void EntityInterface::UpdateMagazine(DOG::LuaContext* context)
