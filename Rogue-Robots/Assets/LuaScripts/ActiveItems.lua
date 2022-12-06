@@ -66,6 +66,7 @@ ActiveItems.turret = {
 		-- playerWhoOwns the turret, ammoCount, projectileSpeed, timeStep for fireRate, damage
 		Entity:AddComponent(turretHead, "TurretBasicShooting", playerEntity, 200, 100.0, 0.2, 50.0, 1.6)
 
+		Entity:AddComponent(turretHead, "Audio", 0, false, true)
 
 		return turretBase
 	end,
