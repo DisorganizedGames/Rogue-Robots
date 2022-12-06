@@ -45,34 +45,50 @@ void AgentDistanceToPlayersSystem::OnEarlyUpdate(DOG::entity agent, BTDistanceTo
 void AgentLineOfSightToPlayerSystem::OnEarlyUpdate(DOG::entity agent, BTLineOfSightToPlayerComponent&, AgentTargetMetricsComponent& atmc,
 	AgentIdComponent& aidc, DOG::TransformComponent& tc, BehaviorTreeComponent& btc)
 {
-	const float minimumDotValue = AgentManager::Get().GetAgentStats(aidc.type).visionConeDotValue;
+	const AgentManager::AgentStats stats = AgentManager::Get().GetAgentStats(aidc.type);
 	
 	bool atLeastOneHasLineOfSight = false;
 
 	//This system checks for line of sight to every player. We are still in the gather-data-phase, so all players are analyzed:
 	for (auto& pd : atmc.playerData)
 	{
-		auto rayCastResult = PhysicsEngine::RayCast(tc.GetPosition(), pd.position);
-		//Nothing was hit at all:
-		if (!rayCastResult)
-			continue;
-		bool hitIsPlayer = (rayCastResult->entityHit == pd.playerID);
-		//The player in question was not hit (line-of-sight does not exist):
-		if (!hitIsPlayer)
-			continue;
+		if (pd.distanceFromAgent <= stats.lidarDistance)
+		{
+			auto rayCastResult = PhysicsEngine::RayCast(tc.GetPosition(), pd.position);
+			//Nothing was hit at all:
+			if (!rayCastResult)
+				continue;
+			bool hitIsPlayer = (rayCastResult->entityHit == pd.playerID);
+			//The player in question was not hit (line-of-sight does not exist):
+			if (!hitIsPlayer)
+				continue;
 
-		//We are in line-of-sight, POSSIBLY. What remains is to check the dot product between the agent forward vector and 
-		//the vector direction from the agent to the player, since the player could still, e.g., be behind the back:
-		Vector3 vectorFromAgentToPlayer = (pd.position - tc.GetPosition());
-		vectorFromAgentToPlayer.Normalize();
-		const float dot = tc.GetForward().Dot(vectorFromAgentToPlayer);
-
-		if (dot > minimumDotValue)
-			pd.lineOfSight = AgentTargetMetricsComponent::LineOfSight::Full;
-		else
 			pd.lineOfSight = AgentTargetMetricsComponent::LineOfSight::Partial;
+			atLeastOneHasLineOfSight = true;
+		}
+		else if (pd.distanceFromAgent <= stats.visionDistance)
+		{
+			//We are in line-of-sight, POSSIBLY. What remains is to check the dot product between the agent forward vector and 
+			//the vector direction from the agent to the player, since the player could still, e.g., be behind the back:
+			Vector3 vectorFromAgentToPlayer = (pd.position - tc.GetPosition());
+			vectorFromAgentToPlayer.Normalize();
+			const float dot = tc.GetForward().Dot(vectorFromAgentToPlayer);
 
-		atLeastOneHasLineOfSight = true;
+			if (dot > stats.visionConeDotValue)
+			{
+				auto rayCastResult = PhysicsEngine::RayCast(tc.GetPosition(), pd.position);
+				//Nothing was hit at all:
+				if (!rayCastResult)
+					continue;
+				bool hitIsPlayer = (rayCastResult->entityHit == pd.playerID);
+				//The player in question was not hit (line-of-sight does not exist):
+				if (!hitIsPlayer)
+					continue;
+
+				pd.lineOfSight = AgentTargetMetricsComponent::LineOfSight::Full;
+				atLeastOneHasLineOfSight = true;
+			}
+		}
 	}
 
 	if (atLeastOneHasLineOfSight)
