@@ -155,6 +155,9 @@ struct PickupComponent
 
 	enum class Type{ ActiveItem = 0, PassiveItem, BarrelItem, MagazineModificationItem, MiscItem };
 
+	PickupComponent(PickupComponent::Type pickupType) : type(pickupType) {};
+	PickupComponent(){};
+
 	Type type;
 };
 
