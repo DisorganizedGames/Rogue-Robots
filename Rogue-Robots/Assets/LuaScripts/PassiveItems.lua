@@ -32,8 +32,12 @@ local maxHealthBoost = {
 		newStats.maxHealth = newStats.maxHealth + self.boost * stackCount
 
 		-- This acts as the "OnPickup for passive items"
-		-- If more stack has been attained --> Up the HP
-		local shouldIncreaseHP = stackCount > currMaxHealthStackCount
+		-- If any stack change has been attained --> Up the HP
+		-- No way to decrease stack, so when it does happen to decrease, game session has likely restarted
+		local shouldIncreaseHP = stackCount ~= currMaxHealthStackCount
+		if (stackCount == 0) then
+			shouldIncreaseHP = false
+		end
 		if (shouldIncreaseHP) then
 			newStats.health = stats.health + self.boost
 		end
