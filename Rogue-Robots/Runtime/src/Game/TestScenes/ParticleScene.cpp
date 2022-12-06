@@ -82,19 +82,13 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 
 
 			// Spawn rate setting
-			static float rate = emitter.spawnRate;
-			ImGui::InputFloat("Rate", &rate);
-			emitter.spawnRate = rate;
+			ImGui::InputFloat("Rate", &emitter.spawnRate);
 
 			// Particle lifetime slider
-			static float lifetime = emitter.particleLifetime;
-			ImGui::SliderFloat("Lifetime", &lifetime, 0.f, 5.f);
-			emitter.particleLifetime = lifetime;
+			ImGui::SliderFloat("Lifetime", &emitter.particleLifetime, 0.f, 5.f);
 
 			// Particle size slider
-			static float size = emitter.particleSize;
-			ImGui::SliderFloat("Size", &size, 0.f, 1.f);
-			emitter.particleSize = size;
+			ImGui::SliderFloat("Size", &emitter.particleSize, 0.f, 1.f);
 
 			// Color settings
 			static char startColorBuf[9];
@@ -163,9 +157,7 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 			}
 
 			// Texture Settings
-			static bool enableTexture = false;
-
-			static char buf[256] = "Assets/Textures/Flipbook/smoke_4x4.png";
+			bool enableTexture = (emitter.textureHandle != 0);
 			
 			ImGui::NewLine();
 			ImGui::Checkbox("Use texture", &enableTexture);
@@ -176,7 +168,9 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 			}
 			else
 			{
-				ImGui::InputText("Texture Path", buf, 256);
+				std::string buf = "Assets/Textures/Flipbook/smoke_4x4.png";
+				buf.resize(256);
+				ImGui::InputText("Texture Path", buf.data(), 256);
 				std::string newTexture(buf);
 				if (std::filesystem::is_regular_file(newTexture))
 				{
@@ -188,7 +182,7 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 					}
 				}
 
-				static int x = 1, y = 1;
+				int x = emitter.textureSegmentsX, y = emitter.textureSegmentsY;
 				ImGui::SetNextItemWidth(80.f);
 				ImGui::InputInt("x", &x);
 				ImGui::SameLine();
@@ -205,8 +199,8 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 			static int behavior = 0;
 			constexpr const char* behaviors[] = { "Default", "Gravity", "No Gravity", "Gravity Point", "Gravity Direction", "Constant Velocity" };
 			ImGui::NewLine();
-			ImGui::LabelText("", "Behavior");
-			bool switched = ImGui::Combo("", &behavior, behaviors, _countof(behaviors), -1);
+			ImGui::Text("Behavior");
+			bool switched = ImGui::Combo("##Behavior", &behavior, behaviors, 6);
 			if (switched)
 			{
 				switch (behavior)
@@ -322,7 +316,11 @@ void ParticleScene::BakeSystemToFile(const std::filesystem::path& path)
 
 void ParticleScene::UnbakeSystemFromFile(const std::filesystem::path& path)
 {
-	
+	AddComponent<DeferredDeletionComponent>(m_particleSystem);
+	m_particleSystem = CreateEntity();
+	AddComponent<TransformComponent>(m_particleSystem, Vector3(0, 0, 0));
+	ParticleSystemFromFile(m_particleSystem, path);
+	auto stop = 0;
 }
 
 void ParticleScene::WriteSpawnTable(std::ofstream& file)
@@ -342,8 +340,8 @@ void ParticleScene::WriteSpawnTable(std::ofstream& file)
 	{
 		auto& comp = opt.value().get();
 		file << "\t\ttype=\"cylinder\",\n";
-		file << "\t\tangle=" << comp.radius <<",\n";
-		file << "\t\tspeed=" << comp.height <<"\n\t},\n";
+		file << "\t\tradius=" << comp.radius <<",\n";
+		file << "\t\theight=" << comp.height <<"\n\t},\n";
 		return;
 	}
 	if (auto opt = entityManager.TryGetComponent<BoxSpawnComponent>(m_particleSystem))

@@ -400,5 +400,8 @@ namespace DOG
 		DirectX::SimpleMath::Vector3 velocity = { 0.f, 1.f, 0.f };
 	};
 
+
+	void ParticleSystemFromFile(entity e, const std::filesystem::path& path);
+
 #pragma endregion
 }

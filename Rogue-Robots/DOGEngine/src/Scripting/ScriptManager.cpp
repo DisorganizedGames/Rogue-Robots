@@ -241,7 +241,14 @@ namespace DOG
 
 	void ScriptManager::RunLuaFile(const std::string& luaFileName)
 	{
-		m_luaW->RunScript(c_pathToScripts + luaFileName);
+		if (std::filesystem::exists(c_pathToScripts + luaFileName))
+		{
+			m_luaW->RunScript(c_pathToScripts + luaFileName);
+		}
+		else
+		{
+			m_luaW->RunScript(luaFileName);
+		}
 	}
 
 	//Creates a script and runs it
