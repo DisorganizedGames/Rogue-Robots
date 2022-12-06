@@ -468,6 +468,78 @@ void GetPathNode::Fail(DOG::entity agent) noexcept
 	GetParent()->Process(agent);
 }
 
+JumpAtPlayerNode::JumpAtPlayerNode(const std::string& name) noexcept
+	: Leaf{ name }
+{}
+
+void JumpAtPlayerNode::Process(DOG::entity agent) noexcept
+{
+	DOG::EntityManager::Get().AddComponent<BTJumpAtPlayerComponent>(agent);
+	DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
+}
+
+void JumpAtPlayerNode::Succeed(DOG::entity agent) noexcept
+{
+	SetSucceededAs(true);
+	DOG::EntityManager::Get().RemoveComponent<BTJumpAtPlayerComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+void JumpAtPlayerNode::Fail(DOG::entity agent) noexcept
+{
+	SetSucceededAs(false);
+	DOG::EntityManager::Get().RemoveComponent<BTJumpAtPlayerComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+PullBackNode::PullBackNode(const std::string& name) noexcept
+	: Leaf{ name }
+{}
+
+void PullBackNode::Process(DOG::entity agent) noexcept
+{
+	DOG::EntityManager::Get().AddComponent<BTPullBackComponent>(agent);
+	DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
+}
+
+void PullBackNode::Succeed(DOG::entity agent) noexcept
+{
+	SetSucceededAs(true);
+	DOG::EntityManager::Get().RemoveComponent<BTPullBackComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+void PullBackNode::Fail(DOG::entity agent) noexcept
+{
+	SetSucceededAs(false);
+	DOG::EntityManager::Get().RemoveComponent<BTPullBackComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+DodgeNode::DodgeNode(const std::string& name) noexcept
+	: Leaf{ name }
+{}
+
+void DodgeNode::Process(DOG::entity agent) noexcept
+{
+	DOG::EntityManager::Get().AddComponent<BTDodgeComponent>(agent);
+	DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
+}
+
+void DodgeNode::Succeed(DOG::entity agent) noexcept
+{
+	SetSucceededAs(true);
+	DOG::EntityManager::Get().RemoveComponent<BTDodgeComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+void DodgeNode::Fail(DOG::entity agent) noexcept
+{
+	SetSucceededAs(false);
+	DOG::EntityManager::Get().RemoveComponent<BTDodgeComponent>(agent);
+	GetParent()->Process(agent);
+}
+
 PatrolNode::PatrolNode(const std::string& name) noexcept
 	: Leaf{ name }
 {}

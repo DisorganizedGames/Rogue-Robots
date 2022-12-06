@@ -222,10 +222,61 @@ void AgentGetPathSystem::OnEarlyUpdate(entity e, BTGetPathComponent&, AgentSeekP
 *				Regular Systems
 ***************************************************/
 
+void AgentJumpAtPlayerSystem::OnUpdate(entity e, BTJumpAtPlayerComponent&, BehaviorTreeComponent& btc,
+	AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
+{
+	std::cout << "J";
+	//if (seek.HasTarget() && seek.distanceToPlayer <= attack.radius && attack.Ready())
+	if (false)
+	{
+		PlayerManager::Get().HurtIfThisPlayer(seek.entityID, attack.damage, e);
+
+		// Reset cooldown
+		attack.timeOfLast = Time::ElapsedTime();
+
+		LEAF(btc.currentRunningNode)->Succeed(e);
+	}
+	else
+		LEAF(btc.currentRunningNode)->Fail(e);
+}
 
 void AgentAttackSystem::OnUpdate(entity e, BTAttackComponent&, BehaviorTreeComponent& btc, 
 	AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
 {
+	if (seek.HasTarget() && seek.distanceToPlayer <= attack.radius && attack.Ready())
+	{
+		PlayerManager::Get().HurtIfThisPlayer(seek.entityID, attack.damage, e);
+
+		// Reset cooldown
+		attack.timeOfLast = Time::ElapsedTime();
+
+		LEAF(btc.currentRunningNode)->Succeed(e);
+	}
+	else
+		LEAF(btc.currentRunningNode)->Fail(e);
+}
+
+void AgentPullBackSystem::OnUpdate(entity e, BTPullBackComponent&, BehaviorTreeComponent& btc,
+	AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
+{
+	if (seek.HasTarget() && seek.distanceToPlayer <= attack.radius && attack.Ready())
+	if (seek.HasTarget() && seek.distanceToPlayer <= attack.radius && attack.Ready())
+	{
+		PlayerManager::Get().HurtIfThisPlayer(seek.entityID, attack.damage, e);
+
+		// Reset cooldown
+		attack.timeOfLast = Time::ElapsedTime();
+
+		LEAF(btc.currentRunningNode)->Succeed(e);
+	}
+	else
+		LEAF(btc.currentRunningNode)->Fail(e);
+}
+
+void AgentDodgeSystem::OnUpdate(entity e, BTDodgeComponent&, BehaviorTreeComponent& btc,
+	AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
+{
+	if (seek.HasTarget() && seek.distanceToPlayer <= attack.radius && attack.Ready())
 	if (seek.HasTarget() && seek.distanceToPlayer <= attack.radius && attack.Ready())
 	{
 		PlayerManager::Get().HurtIfThisPlayer(seek.entityID, attack.damage, e);

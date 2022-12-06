@@ -112,9 +112,9 @@ AgentManager::AgentStats AgentManager::GetAgentStats(EntityTypes type)
 	case EntityTypes::Scorpio:
 	{
 		AgentStats scorpio{};
-		scorpio.visionDistance = 8.0;
+		scorpio.visionDistance = 15.0;
 		scorpio.visionConeDotValue = 0.35f;
-		scorpio.lidarDistance = 3.0f;
+		scorpio.lidarDistance = 5.0f;
 		scorpio.baseSpeed = 10.0f;
 		return scorpio;
 	}
@@ -155,7 +155,11 @@ void AgentManager::Initialize()
 	// Register agent systems
 	em.RegisterSystem(std::make_unique<AgentHitDetectionSystem>());
 	em.RegisterSystem(std::make_unique<AgentAggroSystem>());
+
+	em.RegisterSystem(std::make_unique<AgentJumpAtPlayerSystem>());
 	em.RegisterSystem(std::make_unique<AgentAttackSystem>());
+	em.RegisterSystem(std::make_unique<AgentPullBackSystem>());
+	em.RegisterSystem(std::make_unique<AgentDodgeSystem>());
 	
 	em.RegisterSystem(std::make_unique<AgentHitSystem>());
 
