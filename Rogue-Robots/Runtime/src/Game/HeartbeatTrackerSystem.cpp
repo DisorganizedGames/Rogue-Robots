@@ -31,6 +31,9 @@ void HeartbeatTrackerSystem::OnUpdate(DOG::entity e, DOG::ThisPlayer& tp, Player
 		return;
 	}
 
+	if (!EntityManager::Get().Exists(m_heartbeatAudioEntity))
+		return;
+
 	AudioComponent& healthAudioComponent = EntityManager::Get().GetComponent<AudioComponent>(m_heartbeatAudioEntity);
 	if (psc.health <= m_healthThreshold)
 	{
