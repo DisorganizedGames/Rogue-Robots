@@ -992,6 +992,103 @@ void DOG::UILabel::SetText(std::wstring text)
    m_text = text;
 }
 
+DOG::UICarousel::UICarousel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector<std::wstring> labels, float x, float y, float width, float height, float fontSize) : UIElement(id)
+{
+   m_rect = D2D1::RectF(x, y, x + width, y + height);
+   m_bright = D2D1::RectF(x + width + 10.f, y, x + width + 40.f, y + height);
+   m_bleft = D2D1::RectF(x - 40.f, y, x - 10.f, y + height);
+   HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.5f), &m_rborderBrush);
+   HR_VFY(hr);
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.5f), &m_lborderBrush);
+   HR_VFY(hr);
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.5f), &m_borderBrush);
+   HR_VFY(hr);
+   hr = d2d.GetDWriteFactory()->CreateTextFormat(
+      L"Robot Radicals",
+      NULL,
+      DWRITE_FONT_WEIGHT_ULTRA_LIGHT,
+      DWRITE_FONT_STYLE_NORMAL,
+      DWRITE_FONT_STRETCH_NORMAL,
+      fontSize,
+      L"en-us",
+      &m_textFormat
+   );
+   HR_VFY(hr);
+   hr = m_textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+   HR_VFY(hr);
+   hr = m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+   HR_VFY(hr);
+   m_labels = labels;
+   m_index = 0;
+
+}
+DOG::UICarousel::~UICarousel()
+{
+
+}
+void DOG::UICarousel::Draw(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   d2d.Get2DDeviceContext()->DrawRectangle(m_rect, m_borderBrush.Get());
+   d2d.Get2DDeviceContext()->DrawRectangle(m_bright, m_rborderBrush.Get());
+   d2d.Get2DDeviceContext()->DrawRectangle(m_bleft, m_lborderBrush.Get());
+   d2d.Get2DDeviceContext()->DrawTextW(
+      m_labels[m_index].c_str(),
+      (UINT32)m_labels[m_index].length(),
+      m_textFormat.Get(),
+      &m_rect,
+      m_borderBrush.Get());
+}
+void DOG::UICarousel::Update(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   UNREFERENCED_PARAMETER(d2d);
+}
+
+void DOG::UICarousel::OnEvent(IEvent& event)
+{
+   using namespace DOG;
+   if (event.GetEventCategory() == EventCategory::MouseEventCategory)
+   {
+      if (event.GetEventType() == EventType::LeftMouseButtonPressedEvent)
+      {
+         auto mevent = EVENT(DOG::LeftMouseButtonPressedEvent);
+         auto mpos = mevent.coordinates;
+         if (mpos.x >= m_bright.left && mpos.x <= m_bright.right && mpos.y >= m_bright.top && mpos.y <= m_bright.bottom)
+         {
+            if (m_index == m_labels.size() - 1)
+               m_index = 0;
+            else
+               m_index++;
+         }
+         if (mpos.x >= m_bleft.left && mpos.x <= m_bleft.right && mpos.y >= m_bleft.top && mpos.y <= m_bleft.bottom)
+         {
+            if (m_index == 0)
+               m_index = (UINT)m_labels.size() - 1;
+            else
+               m_index--;
+         }
+      }
+      else if (event.GetEventType() == EventType::MouseMovedEvent)
+      {
+         auto mevent = EVENT(DOG::MouseMovedEvent);
+         auto mpos = mevent.coordinates;
+         if (!(mpos.x >= m_bright.left && mpos.x <= m_bright.right && mpos.y >= m_bright.top && mpos.y <= m_bright.bottom))
+            m_rborderBrush.Get()->SetOpacity(0.5f);
+         else
+            m_rborderBrush.Get()->SetOpacity(1.0f);
+         if (!(mpos.x >= m_bleft.left && mpos.x <= m_bleft.right && mpos.y >= m_bleft.top && mpos.y <= m_bleft.bottom))
+            m_lborderBrush.Get()->SetOpacity(0.5f);
+         else
+            m_lborderBrush.Get()->SetOpacity(1.0f);
+
+      }
+   }
+}
+
+std::wstring DOG::UICarousel::GetText(void)
+{
+   return m_labels[m_index];
+}
+
 DOG::UIIcon::UIIcon(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector<std::wstring> filePaths, float x, float y, float width, float height, float r, float g, float b, bool border) : UIElement(id)
 {
    ComPtr<IWICBitmapDecoder> m_decoder;
@@ -1293,8 +1390,8 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto l5 = instance->Create<DOG::UILabel>(l5ID, std::wstring(L""), (FLOAT)clientWidth / 2.f - 250.0f, (FLOAT)clientHeight / 2.f - 350.f, 500.f, 60.f, 40.f);
    auto l6 = instance->Create<DOG::UILabel>(l6ID, std::wstring(L""), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 250.f, 500.f, 60.f, 40.f);
 
-   auto lWinText = instance->Create<DOG::UILabel>(lWinTextID, std::wstring(L" "), (FLOAT)clientWidth / 2.f - 240.0f, (FLOAT)clientHeight / 2.f - 150.f, 500.f, 60.f, 40.f);
-   auto lredScore = instance->Create<DOG::UILabel>(lredScoreID, std::wstring(L" "), 50.f, (FLOAT)clientHeight / 2.f - 255.f, 800.f, 160.f, 40.f);
+   auto lWinText = instance->Create<DOG::UILabel>(lWinTextID, std::wstring(L" "), (FLOAT)clientWidth / 2.f - 180.0f, (FLOAT)clientHeight / 2.f - 150.f, 500.f, 60.f, 40.f);
+   auto lredScore = instance->Create<DOG::UILabel>(lredScoreID, std::wstring(L" "), 50.f, (FLOAT)clientHeight / 2.f - 250.f, 800.f, 160.f, 40.f);
    auto lblueScore = instance->Create<DOG::UILabel>(lblueScoreID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 50.f, (FLOAT)clientHeight / 2.f - 250.f, 800.f, 160.f, 40.f);
    auto lgreenScore = instance->Create<DOG::UILabel>(lgreenScoreID, std::wstring(L" "), 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
    auto lyellowScore = instance->Create<DOG::UILabel>(lyellowScoreID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
