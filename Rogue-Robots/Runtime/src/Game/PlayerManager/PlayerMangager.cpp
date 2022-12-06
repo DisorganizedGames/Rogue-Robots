@@ -44,10 +44,22 @@ void PlayerManager::HurtThisPlayer(f32 damage)
 	PlayHurtAudio(GetThisPlayer());
 }
 
-void PlayerManager::HurtIfThisPlayer(entity player, f32 damage)
+void PlayerManager::HurtIfThisPlayer(entity player, f32 damage, entity byWho)
 {
 	if (s_entityManager.HasComponent<ThisPlayer>(player))
+	{
+		if (EntityManager::Get().HasComponent<PlayerAliveComponent>(player))
+		{
+			// Add visual effect
+			const auto& pos1 = EntityManager::Get().GetComponent<TransformComponent>(player).GetPosition();
+			const auto& pos2 = EntityManager::Get().GetComponent<TransformComponent>(byWho).GetPosition();
+			auto dir = pos2 - pos1;
+			dir.Normalize();
+
+			DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 2.f, 1.5f);
+		}
 		HurtPlayer(player, damage);
+	}
 }
 
 bool PlayerManager::IsThisPlayerHost()

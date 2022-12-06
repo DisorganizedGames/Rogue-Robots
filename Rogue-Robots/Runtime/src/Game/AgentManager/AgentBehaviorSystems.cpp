@@ -215,21 +215,10 @@ void AgentAttackSystem::OnUpdate(entity e, BTAttackComponent&, BehaviorTreeCompo
 {
 	if (seek.HasTarget() && seek.distanceToPlayer <= attack.radius && attack.Ready())
 	{
-		PlayerManager::Get().HurtIfThisPlayer(seek.entityID, attack.damage);
+		PlayerManager::Get().HurtIfThisPlayer(seek.entityID, attack.damage, e);
 
 		// Reset cooldown
 		attack.timeOfLast = Time::ElapsedTime();
-
-		if (EntityManager::Get().HasComponent<PlayerAliveComponent>(seek.entityID))
-		{
-			// Add visual effect
-			const auto& pos1 = EntityManager::Get().GetComponent<TransformComponent>(seek.entityID).GetPosition();
-			const auto& pos2 = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
-			auto dir = pos2 - pos1;
-			dir.Normalize();
-
-			DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 2.f, 1.5f);
-		}
 
 		LEAF(btc.currentRunningNode)->Succeed(e);
 	}

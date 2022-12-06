@@ -15,7 +15,7 @@ public:
 	}
 	void HurtPlayer(DOG::entity player, f32 damage);
 	void HurtThisPlayer(f32 damage);
-	void HurtIfThisPlayer(DOG::entity player, f32 damage);
+	void HurtIfThisPlayer(DOG::entity player, f32 damage, DOG::entity byWho);
 	DOG::entity GetThisPlayer();
 	u8 GetNrOfPlayers();
 	bool IsThisPlayerHost();
