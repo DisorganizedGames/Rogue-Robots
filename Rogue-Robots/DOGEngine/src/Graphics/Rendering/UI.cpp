@@ -15,7 +15,7 @@ UINT menuBackID, optionsBackID, multiBackID, hostBackID, creditsBackID;
 UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID, lWinTextID, lredScoreID, lblueScoreID, lgreenScoreID, lyellowScoreID, lredScoreWinID, lblueScoreWinID, lgreenScoreWinID, lyellowScoreWinID;
 UINT lNamesCreditsID, lTheTeamID, lFiverrArtistsID, lFiverrArtistsTextID, lIconsCreditsID, lIconsCreditsTextID, lMusicID, lMusicTextID;
 UINT bcID, credbackID;
-UINT cID, tID, hID;
+UINT cID, tID, hID, carouselID;
 UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID, lActiveItemTextID, flashlightID, glowstickID; //Icons.
 UINT buffID;
 UINT playerListID, playerListJoinID;
@@ -561,7 +561,7 @@ DOG::UICrosshair::UICrosshair(DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIEleme
    HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.3f), &m_brush);
    HR_VFY(hr);
    hr = d2d.GetDWriteFactory()->CreateTextFormat(
-      L"Arial",
+      L"Robot Radicals",
       NULL,
       DWRITE_FONT_WEIGHT_ULTRA_LIGHT,
       DWRITE_FONT_STYLE_NORMAL,
@@ -1169,6 +1169,9 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto loading = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"\n\nTrying to connect...\n\n\n\n\n\n\n\n\nPro Tip: Shooting teammates is fun "));
    instance->AddUIElementToScene(LoadingID, std::move(loading));
 
+   auto carousel = instance->Create<DOG::UICarousel, std::vector<std::wstring>, float, float, float, float, float>(carouselID, { L"Map 1", L"Map 2", L"Map 3", L"Test map" }, 100.f, 100.f, 200.f, 75.f, 25.f);
+   instance->AddUIElementToScene(optionsID, std::move(carousel));
+
    //Credit text
    //Music
    auto lMusic = instance->Create<DOG::UILabel>(
@@ -1183,7 +1186,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
    auto lMusicText = instance->Create<DOG::UILabel>(
        lMusicTextID,
-       std::wstring(L"Douglas Runebjörk"),
+       std::wstring(L"Douglas Runebjï¿½rk"),
        (FLOAT)clientWidth / 2.0f - 850.0f,
        210.0f,
        500.f,
@@ -1225,7 +1228,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto lNamesCredits = instance->Create<DOG::UILabel>(
        lNamesCreditsID,
        std::wstring(
-           L"Sam Axelsson\nGunnar Cerne\nFilip Eriksson\nEmil Fransson\nNadhif Ginola\nJonatan Hermansson\nEmil Högstedt\nAxel Lundberg\nOscar Milstein\nOve Ødegård"),
+           L"Sam Axelsson\nGunnar Cerne\nFilip Eriksson\nEmil Fransson\nNadhif Ginola\nJonatan Hermansson\nEmil Hï¿½gstedt\nAxel Lundberg\nOscar Milstein\nOve ï¿½degï¿½rd"),
        (FLOAT)clientWidth / 2.0f - 350.0f,
        (FLOAT)clientHeight / 2.f - 270.0f,
        700.0f,

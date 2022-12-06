@@ -307,4 +307,25 @@ namespace DOG
          ComPtr<IDWriteTextFormat> m_textFormat;
    };
 
+   class UICarousel: public UIElement
+   {
+      public:
+         UICarousel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector<std::wstring> labels, float x, float y, float width, float height, float fontSize);
+         ~UICarousel();
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void OnEvent(IEvent& event) override final;
+         std::wstring GetText(void);
+      private:
+         float m_opacity;
+         bool m_border;
+         UINT m_index;
+         std::vector<std::wstring> m_labels;
+         D2D1_RECT_F m_rect, m_bright, m_bleft;
+         ComPtr<ID2D1SolidColorBrush> m_rborderBrush;
+         ComPtr<ID2D1SolidColorBrush> m_lborderBrush;
+         ComPtr<ID2D1SolidColorBrush> m_borderBrush;
+         ComPtr<IDWriteTextFormat> m_textFormat;
+   };
+
 }
