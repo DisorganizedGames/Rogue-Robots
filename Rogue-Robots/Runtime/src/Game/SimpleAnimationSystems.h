@@ -92,26 +92,26 @@ public:
 			//Update the passive item UI buff tracker.
 			if (mgr.HasComponent<PassiveItemComponent>(pickup) && mgr.HasComponent<DOG::ThisPlayer>(ltpc.player))
 			{
-				u32 type = (u32)mgr.GetComponent<PassiveItemComponent>(pickup).type;
+				PassiveItemComponent::Type type = mgr.GetComponent<PassiveItemComponent>(pickup).type;
 				switch (type)
 				{
-				case 1:
+				case PassiveItemComponent::Type::MaxHealthBoost:
 				{
 					DOG::UI::Get()->GetUI<DOG::UIBuffTracker>(buffID)->ActivateIcon(0u);
 					break;
 				}
-				case 2:
+				case PassiveItemComponent::Type::SpeedBoost:
 				{
 					DOG::UI::Get()->GetUI<DOG::UIBuffTracker>(buffID)->ActivateIcon(1u);
 					break;
 				}
-				case 4:
+				case PassiveItemComponent::Type::SpeedBoost2:
 				{
 					DOG::UI::Get()->GetUI<DOG::UIBuffTracker>(buffID)->ActivateIcon(1u);
 					DOG::UI::Get()->GetUI<DOG::UIBuffTracker>(buffID)->ActivateIcon(1u);
 					break;
 				}
-				case 5:
+				case PassiveItemComponent::Type::JumpBoost:
 				{
 					DOG::UI::Get()->GetUI<DOG::UIBuffTracker>(buffID)->ActivateIcon(2u);
 					break;

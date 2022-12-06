@@ -1479,8 +1479,6 @@ void GameLayer::Input(DOG::Key key)
 				inputC.down = true;
 			if (key == DOG::Key::Spacebar)
 				inputC.up = true;
-			//if (key == DOG::Key::Q)
-				//inputC.switchComp = true;
 			if (key == DOG::Key::T)
 				inputC.switchBarrelComp = true;
 			if (key == DOG::Key::M)
@@ -1518,8 +1516,6 @@ void GameLayer::Release(DOG::Key key)
 				inputC.down = false;
 			if (key == DOG::Key::Spacebar)
 				inputC.up = false;
-			//if (key == DOG::Key::Q)
-				//inputC.switchComp = false;
 			if (key == DOG::Key::T)
 				inputC.switchBarrelComp = false;
 			if (key == DOG::Key::M)
