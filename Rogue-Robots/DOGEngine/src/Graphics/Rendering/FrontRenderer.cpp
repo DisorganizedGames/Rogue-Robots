@@ -164,8 +164,6 @@ namespace DOG::gfx
 					return;
 
 				// Culled
-				//TransformComponent camTransform;
-				//camTransform.worldMatrix = ((DirectX::SimpleMath::Matrix)m_viewMat).Invert();
 				auto&& cull = [&](const DirectX::SimpleMath::Matrix& viewMat, DirectX::SimpleMath::Vector3 p)
 				{
 					TransformComponent tc{};
