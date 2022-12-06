@@ -322,15 +322,14 @@ void AgentManager::CreateScorpioBehaviourTree(DOG::entity agent) noexcept
 	std::shared_ptr<Selector> detectHitOrPlayerSelector = std::move(std::make_shared<Selector>("detectHitOrPlayerSelector"));
 	std::shared_ptr<Sequence> detectPlayerSequence = std::move(std::make_shared<Sequence>("DetectPlayerSequence"));
 
-	std::shared_ptr<Selector> losIfDistanceSelector = std::move(std::make_shared<Selector>("LOSifDistanceSelector"));
-	std::shared_ptr<Inverter> distanceToPlayerInverter = std::move(std::make_shared<Inverter>("DistanceToPlayerInverter"));
+	std::shared_ptr<Selector> detectOrAlertSelector = std::move(std::make_shared<Selector>("DetectOrAlertSelector"));
 	std::shared_ptr<Succeeder> lineOfSightToPlayerSucceeder = std::move(std::make_shared<Succeeder>("LineOfSightToPlayerSucceeder"));
 
-	distanceToPlayerInverter->AddChild(std::make_shared<DistanceToPlayerNode>("DistanceToPlayerNode"));
+	detectOrAlertSelector->AddChild(std::make_shared<DistanceToPlayerNode>("DistanceToPlayerNode"));
+	detectOrAlertSelector->AddChild(std::make_shared<IsAlertNode>("IsAlertNode"));
 	lineOfSightToPlayerSucceeder->AddChild(std::make_shared<LineOfSightToPlayerNode>("LineOfSightToPlayerNode"));
-	losIfDistanceSelector->AddChild(std::move(distanceToPlayerInverter));
-	losIfDistanceSelector->AddChild(std::move(lineOfSightToPlayerSucceeder));
-	detectPlayerSequence->AddChild(std::move(losIfDistanceSelector));
+	detectPlayerSequence->AddChild(std::move(detectOrAlertSelector));
+	detectPlayerSequence->AddChild(std::move(lineOfSightToPlayerSucceeder));
 
 
 	detectHitOrPlayerSelector->AddChild(std::make_shared<DetectHitNode>("DetectHitNode"));
@@ -349,5 +348,5 @@ void AgentManager::CreateScorpioBehaviourTree(DOG::entity agent) noexcept
 	btc.rootNode->AddChild(std::move(rootSelector));
 	btc.currentRunningNode = btc.rootNode.get();
 
-	//BehaviorTree::ToGraphViz(btc.rootNode.get(), "BehaviorTree_Scorpio.dot");
+	BehaviorTree::ToGraphViz(btc.rootNode.get(), "BehaviorTree_Scorpio.dot");
 }

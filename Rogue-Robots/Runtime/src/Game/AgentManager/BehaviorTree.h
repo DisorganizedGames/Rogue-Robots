@@ -219,6 +219,16 @@ public:
 	virtual void Fail(DOG::entity agent) noexcept override final;
 };
 
+class IsAlertNode : public Leaf 
+{
+public:
+	IsAlertNode(const std::string& name) noexcept;
+	virtual ~IsAlertNode() noexcept override final = default;
+	virtual void Process(DOG::entity agent) noexcept override final;
+	virtual void Succeed(DOG::entity agent) noexcept override final;
+	virtual void Fail(DOG::entity agent) noexcept override final;
+};
+
 class LineOfSightToPlayerNode : public Leaf
 {
 public:
