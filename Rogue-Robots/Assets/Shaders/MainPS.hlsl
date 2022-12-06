@@ -486,7 +486,7 @@ PS_OUT main(VS_OUT input)
         
         uint nrOfSteps;
         if (perSpotlightData.spotlightArray[k].isPlayer)
-            nrOfSteps = 40.0f;
+            nrOfSteps = 20.0f;
         else
             nrOfSteps = 70.0f;
         float stepLength = rayLength / nrOfSteps;
