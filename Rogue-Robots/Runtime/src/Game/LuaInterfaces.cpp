@@ -505,6 +505,21 @@ void EntityInterface::PlayAudio(DOG::LuaContext* context)
 	comp.shouldPlay = true;
 }
 
+void EntityInterface::StopAudio(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+
+	auto& comp = EntityManager::Get().GetComponent<AudioComponent>(e);
+	comp.shouldStop = true;
+}
+
+void EntityInterface::IsPlayingAudio(DOG::LuaContext* context)
+{
+	entity e = context->GetInteger();
+	auto& comp = EntityManager::Get().GetComponent<AudioComponent>(e);
+	context->ReturnBoolean(comp.playing);
+}
+
 const std::unordered_map<PassiveItemComponent::Type, std::string> passiveTypeMap = {
 	{ PassiveItemComponent::Type::Template, "Template" },
 	{ PassiveItemComponent::Type::MaxHealthBoost, "MaxHealthBoost" },
