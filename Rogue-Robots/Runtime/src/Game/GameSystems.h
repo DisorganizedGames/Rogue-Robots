@@ -207,17 +207,98 @@ public:
 			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
 			ImGui::Text("[E]");
 			ImGui::PopStyleColor(1);
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 255));
 			ImGui::SameLine();
 			ImGui::Text("Pick up");
 			ImGui::Separator();
 			ImGui::SetWindowFontScale(1.7f);
 			ImGui::Text(pc.itemName);
 			ImGui::PopStyleColor(1);
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
+			ImGui::SetWindowFontScale(1.2f);
+			ImGui::TextWrapped(GetDescriptiveText(pc.itemName).c_str());
+			//ImGui::Text(GetDescriptiveText(pc.itemName).c_str());
+			ImGui::PopStyleColor(1);
 			ImGui::PopFont();
 		}
 		ImGui::End();
 		ImGui::PopStyleColor();
+	}
+
+private:
+	std::string GetDescriptiveText(std::string item)
+	{
+		//Active items
+		if (item == "Reviver")
+		{
+			return "Use to revive a teammate.";
+		}
+		else if (item == "Syringe")
+		{
+			return "Use to restore HP.";
+		}
+		else if (item == "Goal Radar")
+		{
+			return "Use to see the exit for a short while.";
+		}
+		else if (item == "Trampoline")
+		{
+			return "Use this to be the life of the party!";
+		}
+		else if (item == "Turret")
+		{
+			return "A trusty friend for when your teammates are not.";
+		}
+		//Passive items
+		else if (item == "JumpBoost")
+		{
+			return "Increases jump height.";
+		}
+		else if (item == "Speed Boost")
+		{
+			return "Increases move speed.";
+		}
+		else if (item == "Speed Boost X2")
+		{
+			return "WROOOOOM!";
+		}
+		else if (item == "Max HP boost")
+		{
+			return "Increases max health.";
+		}
+		//Components
+		else if (item == "Homing missile")
+		{
+			return "Shoot rockets!";
+		}
+		else if (item == "Grenade")
+		{
+			return "Shoot grenades!";
+		}
+		else if (item == "Laser")
+		{
+			return "Zap zap!";
+		}
+		else if (item == "Frost modification")
+		{
+			return "Makes enemies slower.";
+		}
+		else if (item == "Fire modification")
+		{
+			return "Burn baby burn!";
+		}
+		else if (item == "Full Auto")
+		{
+			return "So anyway I started blasting.";
+		}
+		else if (item == "Charge Shot")
+		{
+			return "Hold to supercharge!";
+		}
+		else
+		{
+			return "";
+		}
 	}
 };
 
