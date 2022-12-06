@@ -111,6 +111,17 @@ GameLayer::GameLayer() noexcept
 	ImGui::GetIO().Fonts->AddFontDefault();
 	m_imguiFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Assets/Fonts/Robot Radicals.ttf", 18.0f);
 	Window::SetFont(m_imguiFont);
+	std::vector<std::wstring> filenames;
+	wchar_t dst[64];
+	for (size_t i = 0; i < pcgLevelNames::nrLevels; i++)
+	{
+		std::mbstowcs(dst, pcgLevelNames::pcgLevels[i], 64);
+		filenames.push_back(dst);
+	}
+	
+	auto instance = DOG::UI::Get();
+	auto carousel = instance->Create<DOG::UICarousel, std::vector<std::wstring>, float, float, float, float, float>(carouselID, filenames, 100.f, 100.f, 300.f, 75.f, 25.f);
+   instance->AddUIElementToScene(optionsID, std::move(carousel));
 }
 
 GameLayer::~GameLayer()
@@ -145,7 +156,11 @@ void GameLayer::OnUpdate()
 		case GameState::None:
 			break;
 		case GameState::MainMenu:
+		{
+			
 			m_entityManager.Collect<MusicPlayer>().Do([&](MusicPlayer& musicPlayer) {musicPlayer.inMainMenu = true; });
+
+		}
 			break;
 		case GameState::Initializing:
 			m_gameState = GameState::MainMenu;

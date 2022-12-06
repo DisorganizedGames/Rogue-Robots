@@ -1001,6 +1001,8 @@ DOG::UICarousel::UICarousel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector
    HR_VFY(hr);
    hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.5f), &m_lborderBrush);
    HR_VFY(hr);
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &m_textBrush);
+   HR_VFY(hr);
    hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.5f), &m_borderBrush);
    HR_VFY(hr);
    hr = d2d.GetDWriteFactory()->CreateTextFormat(
@@ -1018,6 +1020,7 @@ DOG::UICarousel::UICarousel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector
    HR_VFY(hr);
    hr = m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
    HR_VFY(hr);
+   
    m_labels = labels;
    m_index = 0;
 
@@ -1033,10 +1036,10 @@ void DOG::UICarousel::Draw(DOG::gfx::D2DBackend_DX12& d2d)
    d2d.Get2DDeviceContext()->DrawRectangle(m_bleft, m_lborderBrush.Get());
    d2d.Get2DDeviceContext()->DrawTextW(
       m_labels[m_index].c_str(),
-      (UINT32)m_labels[m_index].length(),
+      (UINT32)m_labels[m_index].length() - 4,
       m_textFormat.Get(),
       &m_rect,
-      m_borderBrush.Get());
+      m_textBrush.Get());
 }
 void DOG::UICarousel::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
@@ -1266,8 +1269,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto loading = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"\n\nTrying to connect...\n\n\n\n\n\n\n\n\nPro Tip: Shooting teammates is fun "));
    instance->AddUIElementToScene(LoadingID, std::move(loading));
 
-   auto carousel = instance->Create<DOG::UICarousel, std::vector<std::wstring>, float, float, float, float, float>(carouselID, { L"Map 1", L"Map 2", L"Map 3", L"Test map" }, 100.f, 100.f, 200.f, 75.f, 25.f);
-   instance->AddUIElementToScene(optionsID, std::move(carousel));
+   
 
    //Credit text
    //Music

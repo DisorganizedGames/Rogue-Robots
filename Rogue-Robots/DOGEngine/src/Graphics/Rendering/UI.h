@@ -17,7 +17,7 @@ extern UINT menuID, gameID, optionsID, multiID, joinID, WaitingForHostID, GameOv
 extern UINT menuBackID, optionsBackID, multiBackID, lobbyID, hostBackID;
 extern UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID, lWinTextID, lredScoreID, lblueScoreID, lgreenScoreID, lyellowScoreID, lredScoreWinID, lblueScoreWinID, lgreenScoreWinID, lyellowScoreWinID;
 extern UINT lNamesCreditsID, lTheTeamID, lFiverrArtistsID, lFiverrArtistsTextID, lIconsCreditsID, lIconsCreditsTextID, lMusicID, lMusicTextID;
-extern UINT bcID, credbackID;
+extern UINT bcID, credbackID, carouselID;
 extern UINT cID, tID, hID;
 extern UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID, lActiveItemTextID, flashlightID, glowstickID;
 extern UINT buffID;
@@ -322,9 +322,7 @@ namespace DOG
          UINT m_index;
          std::vector<std::wstring> m_labels;
          D2D1_RECT_F m_rect, m_bright, m_bleft;
-         ComPtr<ID2D1SolidColorBrush> m_rborderBrush;
-         ComPtr<ID2D1SolidColorBrush> m_lborderBrush;
-         ComPtr<ID2D1SolidColorBrush> m_borderBrush;
+         ComPtr<ID2D1SolidColorBrush> m_rborderBrush, m_lborderBrush, m_borderBrush, m_textBrush;
          ComPtr<IDWriteTextFormat> m_textFormat;
    };
 
