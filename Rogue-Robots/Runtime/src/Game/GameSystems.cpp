@@ -799,6 +799,7 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 		ImGui::PopStyleColor();
 	}
 
+	//Add revive sound effect
 	if (!mgr.HasComponent<ReviveSoundEffectComponent>(player))
 	{
 		auto& reviveComponent = mgr.AddComponent<ReviveSoundEffectComponent>(player);
@@ -823,6 +824,7 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 		return;
 	}
 
+	//Play if reviving
 	if (!reviveAudioComponent.playing)
 	{
 		reviveAudioComponent.assetID = m_reviveSound;
