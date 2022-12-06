@@ -13,6 +13,11 @@ struct AgentStatsComponent
 	u32 roomId;
 };
 
+struct AgentAlertComponent
+{
+	//ID
+};
+
 struct AgentIdComponent
 {
 	u32 id;
@@ -21,8 +26,7 @@ struct AgentIdComponent
 
 struct AgentMovementComponent
 {
-	f32 baseSpeed = 10.0f;		// TODO: make "global" based on type
-	f32 currentSpeed = baseSpeed;
+	f32 currentSpeed;
 	DirectX::SimpleMath::Vector3 forward{1, 0, 0};
 	DirectX::SimpleMath::Vector3 station{0, 0, 0};
 };
@@ -36,17 +40,38 @@ struct AgentHPComponent
 
 struct AgentAttackComponent
 {
-	f32 radiusSquared = 1.5f;
+	f32 radius = 1.5f;
 	f32 damage = 10.0f;
 	f32 coolDown = 1.0f;
-	f32 elapsedTime = coolDown;
+	f64 timeOfLast = 0;
+	bool Ready() { return coolDown <= DOG::Time::ElapsedTime() - timeOfLast; }
+};
+
+struct AgentTargetMetricsComponent
+{
+	enum class LineOfSight { Full = 0u, Partial, None };
+	struct PlayerData
+	{
+		DOG::entity playerID = DOG::NULL_ENTITY;
+		f32 distanceFromAgent = std::numeric_limits<f32>::max();
+		DirectX::SimpleMath::Vector3 position{ 0,0,0 };
+		LineOfSight lineOfSight{ LineOfSight::None };
+		bool operator<(const PlayerData& other) 
+		{ 
+			return lineOfSight < other.lineOfSight
+				|| lineOfSight == other.lineOfSight && distanceFromAgent < other.distanceFromAgent;
+		}
+		bool operator<=(const f32 dist) { return distanceFromAgent <= dist; }
+	};
+	std::vector<PlayerData> playerData;
 };
 
 struct AgentSeekPlayerComponent
 {
 	DOG::entity entityID = DOG::NULL_ENTITY;
 	DirectX::SimpleMath::Vector3 direction;
-	f32 squaredDistance = 0.0f;
+	f32 distanceToPlayer = std::numeric_limits<float>::max();
+	bool HasTarget() { return entityID != DOG::NULL_ENTITY; }
 };
 
 struct AgentAggroComponent

@@ -308,7 +308,7 @@ void Server::ServerPollTCP()
 							sendHeader.nrOfPathFindingSync += holdClientsData.nrOfPathFindingSync;
 							for (u32 j = 0; j < holdClientsData.nrOfPathFindingSync; ++j)
 							{
-
+								std::cout << "server received\n";
 								PathFindingSync temp;
 								memcpy(&temp, reciveBuffer + bufferReciveSize, sizeof(PathFindingSync));
 								pathfinders.push_back(temp);
@@ -339,7 +339,10 @@ void Server::ServerPollTCP()
 			bufferSendSize += (u16)createAndDestroy.size() * sizeof(CreateAndDestroyEntityComponent);
 
 			if (pathfinders.size() > 0)
+			{
+				std::cout << "server sending\n";
 				memcpy(sendBuffer + bufferSendSize, (char*)pathfinders.data(), pathfinders.size() * sizeof(PathFindingSync));
+			}
 
 			bufferSendSize += (u16)pathfinders.size() * sizeof(PathFindingSync);
 

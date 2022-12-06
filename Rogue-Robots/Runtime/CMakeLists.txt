@@ -46,7 +46,8 @@ set(SourceFiles
 	"src/Game/GoalRadarSystem.h" "src/Game/GoalRadarSystem.cpp"
 	"src/Game/InGameMenu.h" "src/Game/InGameMenu.cpp"
 	"src/Game/MusicSystems.h" "src/Game/MusicSystems.cpp"
-)
+	"src/Game/AgentManager/BehaviorTree.h" "src/Game/AgentManager/BehaviorTree.cpp"
+	)
 
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")

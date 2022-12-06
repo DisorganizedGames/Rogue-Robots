@@ -11,10 +11,18 @@ private:
 	static constexpr u32 GROUP_BITS = 7;
 	static constexpr u32 GROUP_RANGE = 1 << GROUP_BITS;
 	static constexpr u32 MASK = GROUP_RANGE - 1;
-	static constexpr u32 NULL_AGENT = u32(-1);
 
 public:
+	static constexpr u32 NULL_AGENT = u32(-1);
 	static constexpr u32 GROUP_SIZE = NULL_AGENT >> GROUP_BITS;	// max agents in a group
+
+	struct AgentStats
+	{
+		f32 visionDistance;
+		float visionConeDotValue;
+		f32 lidarDistance;
+		f32 baseSpeed;
+	};
 
 	[[nodiscard]] static constexpr AgentManager& Get() noexcept
 	{
@@ -26,10 +34,13 @@ public:
 	void CreateOrDestroyShadowAgent(CreateAndDestroyEntityComponent& entityDesc);
 	static Vector3 GenerateRandomVector3(u32 seed, f32 max = 1.0f, f32 min = 0.0f);
 	void DestroyLocalAgent(DOG::entity e, bool local = true);
+	static void CreateVillain(const Vector3& position);
+	static void CreateScorpioBehaviourTree(DOG::entity agent) noexcept;
 
 	u32 GenAgentID(u32 groupID);
 	void CountAgentKilled(u32 agentID);
 	u32 GroupID(u32 agentID = NULL_AGENT);
+	AgentStats GetAgentStats(EntityTypes type);
 
 private:
 	// singleton instance

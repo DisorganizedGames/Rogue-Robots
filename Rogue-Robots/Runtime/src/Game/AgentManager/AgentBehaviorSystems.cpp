@@ -1,5 +1,4 @@
 #include "AgentBehaviorSystems.h"
-#include "AgentManager.h"
 #include "../DOGEngine/src/Graphics/Rendering/PostProcess.h"
 #include "Game/PlayerManager/PlayerManager.h"
 #include "Network/Network.h"
@@ -10,95 +9,198 @@ using namespace DirectX::SimpleMath;
 *			Early Update Systems
 ***************************************************/
 
-
-
-void AgentSeekPlayerSystem::OnEarlyUpdate(entity e, AgentSeekPlayerComponent& seek, AgentIdComponent& agent, TransformComponent& transform)
+void AgentBehaviorTreeSystem::OnEarlyUpdate(DOG::entity agent, AgentIdComponent&, BehaviorTreeComponent& btc)
 {
-	constexpr f32 SEEK_RADIUS_METERS = 5.0f;
-	constexpr f32 SEEK_RADIUS_SQUARED = SEEK_RADIUS_METERS * SEEK_RADIUS_METERS;
-	EntityManager& eMan = EntityManager::Get();
-	struct PlayerDist
-	{ 
-		entity entityID = NULL_ENTITY;
-		i8 id = 0;
-		f32 sqDist = std::numeric_limits<f32>::max();
-		Vector3 pos{ 0,0,0 };
-	};
+	ASSERT(btc.currentRunningNode, "Current running node is nullptr!");
 
-	PlayerDist player;
-	Vector3 agentPos(transform.GetPosition());
+	btc.currentRunningNode->Process(agent);
+}
 
-	eMan.Collect<PlayerAliveComponent, TransformComponent, NetworkPlayerComponent>().Do(
-		[&](entity id,PlayerAliveComponent&, TransformComponent& transC, NetworkPlayerComponent& netPlayer) {
-			f32 sqDist = Vector3::DistanceSquared(transC.GetPosition(), agentPos);
-			if (sqDist < player.sqDist)
-			{
-				player.entityID = id;
-				player.id = netPlayer.playerId;
-				player.pos = transC.GetPosition();
-				player.sqDist = sqDist;
-			}
+void AgentDistanceToPlayersSystem::OnEarlyUpdate(DOG::entity agent, BTDistanceToPlayerComponent&, AgentTargetMetricsComponent& atmc,
+	AgentIdComponent& aidc, DOG::TransformComponent& tc, BehaviorTreeComponent& btc)
+{
+	//System checks the (non-squared) distance to every living player.
+	//Also resets the currently held player data since it is no longer up to date (This system is the first system to run every frame for agents except the BT-system):
+	atmc.playerData.clear();
+	atmc.playerData.reserve(PlayerManager::Get().GetNrOfPlayers());
+
+	f32 maxVision = AgentManager::Get().GetAgentStats(aidc.type).visionDistance;
+	bool atLeastOneWithinRange = false;
+	DOG::EntityManager::Get().Collect<PlayerAliveComponent, DOG::TransformComponent>().Do([&](DOG::entity playerID, PlayerAliveComponent, DOG::TransformComponent& ptc)
+		{
+			atmc.playerData.emplace_back(
+				playerID, 
+				Vector3::Distance(tc.GetPosition(), ptc.GetPosition()),
+				ptc.GetPosition()
+			);
+			atLeastOneWithinRange = atLeastOneWithinRange || (atmc.playerData.back().distanceFromAgent <= maxVision);
 		});
 
-	bool aggro = eMan.HasComponent<AgentAggroComponent>(e);
-
-	if (aggro || player.sqDist < SEEK_RADIUS_SQUARED)
-	{
-		if (!aggro)
-		{
-			eMan.AddComponent<AgentAggroComponent>(e);
- 			eMan.AddComponent<PathFindingSync>(e).id = EntityManager::Get().GetComponent<AgentIdComponent>(e);
-			eMan.GetComponent<PathFindingSync>(e).id.id = EntityManager::Get().GetComponent<PathFindingSync>(e).id.id | AGGRO_BIT;
-		}
-		// update target
-		bool newTarget = player.entityID != seek.entityID;
-
-		seek.entityID = player.entityID;
-		seek.direction = player.pos - agentPos;
-		seek.direction.Normalize();
-		seek.squaredDistance = player.sqDist;
-
-		if (seek.entityID != NULL_ENTITY)
-		{
-			// add or update PathfinderWalkComponent
-			if (eMan.HasComponent<PathfinderWalkComponent>(e))
-				eMan.GetComponent<PathfinderWalkComponent>(e).goal = eMan.GetComponent<TransformComponent>(seek.entityID).GetPosition();
-			else
-				eMan.AddComponent<PathfinderWalkComponent>(e).goal = eMan.GetComponent<TransformComponent>(seek.entityID).GetPosition();
-		}
-
-		// add network signal
-		if (newTarget)
-		{
-			NetworkAgentSeekPlayer* netSeek;
-			if (!eMan.HasComponent<NetworkAgentSeekPlayer>(e))
-				netSeek = &eMan.AddComponent<NetworkAgentSeekPlayer>(e);
-			else
-				netSeek = &eMan.GetComponent<NetworkAgentSeekPlayer>(e);
-
-			netSeek->playerID = player.id;
-			netSeek->agentID = agent.id;
-		}
-	}
+	if (atLeastOneWithinRange)
+		LEAF(btc.currentRunningNode)->Succeed(agent);
 	else
+		LEAF(btc.currentRunningNode)->Fail(agent);
+}
+
+void AgentLineOfSightToPlayerSystem::OnEarlyUpdate(DOG::entity agent, BTLineOfSightToPlayerComponent&, AgentTargetMetricsComponent& atmc,
+	AgentIdComponent& aidc, DOG::TransformComponent& tc, BehaviorTreeComponent& btc)
+{
+	const float minimumDotValue = AgentManager::Get().GetAgentStats(aidc.type).visionConeDotValue;
+	
+	bool atLeastOneHasLineOfSight = false;
+
+	//This system checks for line of sight to every player. We are still in the gather-data-phase, so all players are analyzed:
+	for (auto& pd : atmc.playerData)
 	{
-		// Lost target
-		seek.entityID = DOG::NULL_ENTITY;
-		// add network signal
-		NetworkAgentSeekPlayer* netSeek;
-		if (!eMan.HasComponent<NetworkAgentSeekPlayer>(e))
-			netSeek = &eMan.AddComponent<NetworkAgentSeekPlayer>(e);
+		auto rayCastResult = PhysicsEngine::RayCast(tc.GetPosition(), pd.position);
+		//Nothing was hit at all:
+		if (!rayCastResult)
+			continue;
+		bool hitIsPlayer = (rayCastResult->entityHit == pd.playerID);
+		//The player in question was not hit (line-of-sight does not exist):
+		if (!hitIsPlayer)
+			continue;
+
+		//We are in line-of-sight, POSSIBLY. What remains is to check the dot product between the agent forward vector and 
+		//the vector direction from the agent to the player, since the player could still, e.g., be behind the back:
+		Vector3 vectorFromAgentToPlayer = (pd.position - tc.GetPosition());
+		vectorFromAgentToPlayer.Normalize();
+		const float dot = tc.GetForward().Dot(vectorFromAgentToPlayer);
+
+		if (dot > minimumDotValue)
+			pd.lineOfSight = AgentTargetMetricsComponent::LineOfSight::Full;
 		else
-			netSeek = &eMan.GetComponent<NetworkAgentSeekPlayer>(e);
+			pd.lineOfSight = AgentTargetMetricsComponent::LineOfSight::Partial;
 
-		// remove PathfinderWalkComponent
-		if (eMan.HasComponent<PathfinderWalkComponent>(e))
-			eMan.RemoveComponent<PathfinderWalkComponent>(e);
-
-
-		netSeek->playerID = -1;
-		netSeek->agentID = agent.id;
+		atLeastOneHasLineOfSight = true;
 	}
+
+	if (atLeastOneHasLineOfSight)
+		LEAF(btc.currentRunningNode)->Succeed(agent);
+	else
+		LEAF(btc.currentRunningNode)->Fail(agent);
+}	
+
+void AgentDetectPlayerSystem::OnEarlyUpdate(entity agentID, BTDetectPlayerComponent&, AgentSeekPlayerComponent& seek, 
+	AgentIdComponent& agent, TransformComponent& transform, AgentTargetMetricsComponent& atmc, BehaviorTreeComponent& btc)
+{
+	/*This system will determine the aggro focus, if any, of the agent.
+	   The rules are as follow:
+	 - If a player is in FULL line of sight and within (inclusive) 8 metres it is a potential target.
+	 - If a player is in PARTIAL line of sight and within (inclusive) 3 metres it is a potential target.
+	 - Otherwise, the player is not a potential target.
+
+	 The resulting target is, as of now, the potential target that is closest, since the agent has a better chance of
+	 reaching that player at all before dying.
+
+	 The corresponding BT-node fails if no players are potential targets.
+		*/
+
+	const AgentManager::AgentStats stats = AgentManager::Get().GetAgentStats(agent.type);
+
+	//Find all potential targets:
+	std::vector<AgentTargetMetricsComponent::PlayerData> potentialTargets;
+	for (auto& pd : atmc.playerData)
+	{
+		if (IsPotentialTarget(pd, stats))
+			potentialTargets.push_back(pd);
+	}
+
+	//No potential targets exist, even though some player(s) is/are within minimum range:
+	if (potentialTargets.empty())
+	{
+		seek.entityID = NULL_ENTITY;
+		LEAF(btc.currentRunningNode)->Fail(agentID);
+		return;
+	}
+
+	//We now find the final target:
+	AgentTargetMetricsComponent::PlayerData finalTarget = *std::min_element(potentialTargets.begin(), potentialTargets.end());
+
+	seek.entityID = finalTarget.playerID;
+	seek.distanceToPlayer = finalTarget.distanceFromAgent;
+	seek.direction = transform.GetPosition() - finalTarget.position;
+
+	LEAF(btc.currentRunningNode)->Succeed(agentID);
+}
+
+const bool AgentDetectPlayerSystem::IsPotentialTarget(const AgentTargetMetricsComponent::PlayerData& playerData, const AgentManager::AgentStats& stats) noexcept
+{
+	const bool playerIsWithinMinimumRange = (playerData.distanceFromAgent <= stats.visionConeDotValue);
+	const bool playerIsWithinForcedAggroRange = (playerData.distanceFromAgent <= stats.lidarDistance);
+	const bool playerIsInFullLOS = (playerData.lineOfSight == AgentTargetMetricsComponent::LineOfSight::Full);
+	const bool playerIsInPartialLOS = (playerData.lineOfSight == AgentTargetMetricsComponent::LineOfSight::Partial);
+
+	const bool validAggro1 = (playerIsWithinMinimumRange && playerIsInFullLOS);
+	const bool validAggro2 = (playerIsWithinForcedAggroRange && playerIsInPartialLOS);
+
+	if (validAggro1 || validAggro2)
+		return true;
+	else
+		return false;
+}
+
+void AgentDetectHitSystem::OnEarlyUpdate(entity agentID, BTHitDetectComponent&, AgentSeekPlayerComponent& seek,
+	AgentIdComponent& agent, TransformComponent& transform, AgentTargetMetricsComponent& atmc, BehaviorTreeComponent& btc)
+{
+	/*This system will determine the aggro focus, if any, of the agent.
+	   The rules are as follow:
+	 - If a player is in FULL line of sight and within (inclusive) 8 metres it is a potential target.
+	 - If a player is in PARTIAL line of sight and within (inclusive) 3 metres it is a potential target.
+	 - Otherwise, the player is not a potential target.
+
+	 The resulting target is, as of now, the potential target that is closest, since the agent has a better chance of
+	 reaching that player at all before dying.
+
+	 The corresponding BT-node fails if no players are potential targets.
+		*/
+
+	const AgentManager::AgentStats stats = AgentManager::Get().GetAgentStats(agent.type);
+
+	//Find all potential targets:
+	std::vector<AgentTargetMetricsComponent::PlayerData> potentialTargets;
+	for (auto& pd : atmc.playerData)
+	{
+		if (pd.lineOfSight != AgentTargetMetricsComponent::LineOfSight::None)
+			potentialTargets.push_back(pd);
+	}
+
+	//No potential targets exist, even though some player(s) is/are within minimum range:
+	if (potentialTargets.empty())
+	{
+		seek.entityID = NULL_ENTITY;
+		LEAF(btc.currentRunningNode)->Fail(agentID);
+		return;
+	}
+
+	//We now find the final target:
+	AgentTargetMetricsComponent::PlayerData finalTarget = *std::min_element(potentialTargets.begin(), potentialTargets.end());
+
+	seek.entityID = finalTarget.playerID;
+	seek.distanceToPlayer = finalTarget.distanceFromAgent;
+	seek.direction = transform.GetPosition() - finalTarget.position;
+
+	EntityManager& em = EntityManager::Get();
+
+	if (!em.HasComponent<AgentAggroComponent>(agentID))
+	{
+		std::cout << "agent " << agent.id << " sent PathFindingSync packet!\n";
+		em.AddComponent<AgentAggroComponent>(agentID);
+		if (!em.HasComponent<PathFindingSync>(agentID))
+		{
+			em.AddComponent<PathFindingSync>(agentID).id = em.GetComponent<AgentIdComponent>(agentID);
+			em.GetComponent<PathFindingSync>(agentID).id.id = em.GetComponent<PathFindingSync>(agentID).id.id | AGGRO_BIT;
+		}
+	}
+	LEAF(btc.currentRunningNode)->Succeed(agentID);
+}
+
+void AgentGetPathSystem::OnEarlyUpdate(DOG::entity e, BTGetPathComponent&, AgentSeekPlayerComponent& seek, BehaviorTreeComponent& btc)
+{
+	EntityManager& em = EntityManager::Get();
+	em.AddOrGetComponent<PathfinderWalkComponent>(e).goal = em.GetComponent<TransformComponent>(seek.entityID).GetPosition();
+	
+	LEAF(btc.currentRunningNode)->Succeed(e);
 }
 
 
@@ -107,50 +209,30 @@ void AgentSeekPlayerSystem::OnEarlyUpdate(entity e, AgentSeekPlayerComponent& se
 ***************************************************/
 
 
-void AgentAttackSystem::OnUpdate(entity e, AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
+void AgentAttackSystem::OnUpdate(entity e, BTAttackComponent&, BehaviorTreeComponent& btc, 
+	AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
 {
-	if (seek.entityID != DOG::NULL_ENTITY && EntityManager::Get().HasComponent<ThisPlayer>(seek.entityID))
+	if (seek.HasTarget() && seek.distanceToPlayer <= attack.radius && attack.Ready())
 	{
-		if (seek.entityID == DOG::NULL_ENTITY)
-		{
-			EntityManager::Get().RemoveComponent<AgentAttackComponent>(e);
-		}
-		else if (attack.coolDown <= attack.elapsedTime)
-		{
-			// TODO: update a PlayerHitComponent instead and let a PlayerManager handle HP adjustments for players
-			if (seek.squaredDistance < attack.radiusSquared)
-			{ 
-				PlayerManager::Get().HurtThisPlayer(attack.damage);
-				attack.elapsedTime = 0.0f;
+		PlayerManager::Get().HurtIfThisPlayer(seek.entityID, attack.damage, e);
 
+		// Reset cooldown
+		attack.timeOfLast = Time::ElapsedTime();
 
-				if (EntityManager::Get().HasComponent<PlayerAliveComponent>(seek.entityID))
-				{
-					// Add visual effect
-					const auto& pos1 = EntityManager::Get().GetComponent<TransformComponent>(seek.entityID).GetPosition();
-					const auto& pos2 = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
-					auto dir = pos2 - pos1;
-					dir.Normalize();
-
-					DOG::gfx::PostProcess::Get().InstantiateDamageDisk({ dir.x, dir.z }, 2.f, 1.5f);
-				}
-			}
-		}
-		else
-		{
-			attack.elapsedTime = static_cast<f32>(attack.elapsedTime + Time::DeltaTime());
-		}
+		LEAF(btc.currentRunningNode)->Succeed(e);
 	}
+	else
+		LEAF(btc.currentRunningNode)->Fail(e);
 }
 
 void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& collision, AgentSeekPlayerComponent& seek)
 {
 	EntityManager& eMan = EntityManager::Get();
-	AgentHitComponent* hit;
-	if (!eMan.HasComponent<AgentHitComponent>(e))
-		hit = &eMan.AddComponent<AgentHitComponent>(e);
-	else
-		hit = &eMan.GetComponent<AgentHitComponent>(e);
+
+	auto& hit = eMan.AddOrGetComponent<AgentHitComponent>(e);
+
+
+	bool hitByPlayer = false;
 	for (u32 i = 0; i < collision.entitiesCount; ++i)
 	{
 		if (eMan.HasComponent<BulletComponent>(collision.entities[i]))
@@ -159,13 +241,8 @@ void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& c
 
 			BulletComponent& bullet = eMan.GetComponent<BulletComponent>(bulletEntity);
 			seek.entityID = bullet.playerEntityID;
-			(*hit).HitBy(bulletEntity, bullet.playerEntityID, bullet.damage);
-			if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
-			{
-				EntityManager::Get().AddComponent<AgentAggroComponent>(e);
-				EntityManager::Get().AddComponent<PathFindingSync>(e).id = EntityManager::Get().GetComponent<AgentIdComponent>(e);
-				EntityManager::Get().GetComponent<PathFindingSync>(e).id.id = EntityManager::Get().GetComponent<PathFindingSync>(e).id.id | AGGRO_BIT;
-			}
+			hit.HitBy(bulletEntity, bullet.playerEntityID, bullet.damage);
+
 			// Create a particle emitter for bullet hit effect
 			auto& bulletTransform = eMan.GetComponent<TransformComponent>(bulletEntity);
 			auto bulletPos = bulletTransform.GetPosition();
@@ -191,15 +268,16 @@ void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& c
 			};
 			eMan.AddComponent<ConeSpawnComponent>(hitParticleEffect) = { .angle = DirectX::XM_PI/3, .speed = 2.f };
 			
+			hitByPlayer = true;
 		}
 	}
 }
 
 void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent& hp)
 {
+	bool hitByPlayer = false;
 	for (i8 i = 0; i < hit.count; ++i)
 	{
-
 		if (EntityManager::Get().HasComponent<ThisPlayer>(hit.hits[i].playerEntity))
 		{
 			hp.hp -= hit.hits[i].damage;
@@ -209,15 +287,15 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 				{
 					inputC.damageDoneToEnemies += hit.hits[i].damage;
 				});
-		}
-		if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
-		{
-			EntityManager::Get().AddComponent<AgentAggroComponent>(e);
-			EntityManager::Get().AddComponent<PathFindingSync>(e).id = EntityManager::Get().GetComponent<AgentIdComponent>(e);
-			EntityManager::Get().GetComponent<PathFindingSync>(e).id.id = EntityManager::Get().GetComponent<PathFindingSync>(e).id.id | AGGRO_BIT;
+			hitByPlayer = true;
 		}
 	}
-	
+	if (hitByPlayer)
+	{
+		if (!EntityManager::Get().HasComponent<AgentAlertComponent>(e))
+			EntityManager::Get().AddComponent<AgentAlertComponent>(e);
+	}
+
 	/*Frost status*/
 	for (i8 i = 0; i < hit.count; ++i)
 	{
@@ -286,24 +364,23 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 
 void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComponent& trans)
 {
-	
 	if (hp.hp <= 0 || trans.GetPosition().y < -10.0f)
 	{
 		AgentManager::Get().DestroyLocalAgent(e);
 	}
 }
 
-void AgentFrostTimerSystem::OnUpdate(DOG::entity e, AgentMovementComponent& movement, FrostEffectComponent& frostEffect)
+void AgentFrostTimerSystem::OnUpdate(DOG::entity e, AgentMovementComponent& movement, FrostEffectComponent& frostEffect, AgentIdComponent& idc)
 {
 	frostEffect.frostTimer -= (float)Time::DeltaTime();
 	if (frostEffect.frostTimer <= 0.0f)
 	{
-		movement.currentSpeed = movement.baseSpeed;
+		movement.currentSpeed = AgentManager::Get().GetAgentStats(idc.type).baseSpeed;
 		EntityManager::Get().RemoveComponent<FrostEffectComponent>(e);
 	}
 }
 
-void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, AgentIdComponent& agent)
+void AgentAggroSystem::OnUpdate(DOG::entity e, BTAggroComponent&, AgentAggroComponent& aggro, AgentIdComponent& agent)
 {
 	constexpr float minutes = 1.3f;
 	constexpr f64 maxAggroTime = minutes * 60.0;
@@ -311,12 +388,25 @@ void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, Agent
 	EntityManager& em = EntityManager::Get();
 	AgentManager& am = AgentManager::Get();
 
+	if (!em.HasComponent<AgentAlertComponent>(e))
+	{
+		std::cout << "agent " << agent.id << " alert\n";
+		em.AddComponent<AgentAlertComponent>(e);
+	}
+
 	u32 myGroup = am.GroupID(agent.id);
 
+	auto& btc = em.GetComponent<BehaviorTreeComponent>(e);
 	if ((DOG::Time::ElapsedTime() - aggro.timeTriggered) > maxAggroTime)
 	{
 		em.RemoveComponent<AgentAggroComponent>(e);
+		if (!em.HasComponent<PathFindingSync>(e))
+		{
+			em.AddComponent<PathFindingSync>(e).id = em.GetComponent<AgentIdComponent>(e);
+			em.GetComponent<PathFindingSync>(e).id.id = em.GetComponent<PathFindingSync>(e).id.id | AGGRO_BIT;
+		}
 		em.RemoveComponentIfExists<AgentAttackComponent>(e);
+		LEAF(btc.currentRunningNode)->Fail(e);
 	}
 	else
 	{
@@ -325,6 +415,7 @@ void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, Agent
 			em.AddComponent<AgentAttackComponent>(e);
 
 		// Give aggro component to the group
+		bool signaledAnotherAgent = false;
 		em.Collect<AgentIdComponent>().Do(
 			[&](entity o, AgentIdComponent& other)
 			{
@@ -337,9 +428,16 @@ void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, Agent
 						em.AddComponent<PathFindingSync>(o).id = EntityManager::Get().GetComponent<AgentIdComponent>(o);
 						em.GetComponent<PathFindingSync>(o).id.id = EntityManager::Get().GetComponent<PathFindingSync>(o).id.id | AGGRO_BIT;
 					}
+					signaledAnotherAgent = true;
 				}
 			}
 		);
+		if (signaledAnotherAgent)
+		{
+			LEAF(btc.currentRunningNode)->Succeed(e);
+		}
+		else
+			LEAF(btc.currentRunningNode)->Fail(e);
 	}
 }
 
@@ -349,14 +447,16 @@ void AgentAggroSystem::OnUpdate(DOG::entity e, AgentAggroComponent& aggro, Agent
 ***************************************************/
 
 
-void AgentMovementSystem::OnLateUpdate(AgentMovementComponent& movement, PathfinderWalkComponent& pfc, RigidbodyComponent& rb, TransformComponent& trans)
+void AgentMovementSystem::OnLateUpdate(entity e, BTMoveToPlayerComponent&, BehaviorTreeComponent& btc, 
+	AgentMovementComponent& movement, PathfinderWalkComponent& pfc, 
+	RigidbodyComponent& rb, TransformComponent& trans)
 {
-
-	if (pfc.path.size() != 0)
+	if (pfc.path.size() == 0)
+		LEAF(btc.currentRunningNode)->Fail(e);
+	else
 	{
 		movement.forward = pfc.path[0] - trans.GetPosition();
 		movement.forward.y = 0.0f;
-
 
 		trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pfc.path[0], Vector3::Up).Invert();
 		movement.forward.Normalize();
@@ -368,6 +468,8 @@ void AgentMovementSystem::OnLateUpdate(AgentMovementComponent& movement, Pathfin
 		movement.forward *= movement.currentSpeed;
 		rb.linearVelocity.x = movement.forward.x;
 		rb.linearVelocity.z = movement.forward.z;
+
+		LEAF(btc.currentRunningNode)->Succeed(e);
 	}
 }
 
