@@ -934,6 +934,7 @@ void DOG::UIPlayerList::RemovePlayer(const std::wstring name)
 
 DOG::UILabel::UILabel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring text, float x, float y, float width, float height, float size) : UIElement(id)
 {
+   m_draw = true;
    UNREFERENCED_PARAMETER(d2d);
    m_text = text;
    m_rect = D2D1::RectF(x, y, x + width, y + height);
@@ -962,8 +963,15 @@ void DOG::UILabel::Update(DOG::gfx::D2DBackend_DX12& d2d)
    return;
 }
 
+void DOG::UILabel::SetDraw(bool draw)
+{
+    m_draw = draw;
+}
+
 void DOG::UILabel::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
+   if (!m_draw)
+      return;
    d2d.Get2DDeviceContext()->DrawTextW(
       m_text.c_str(),
       (UINT32)m_text.length(),

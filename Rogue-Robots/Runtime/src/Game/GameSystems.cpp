@@ -858,7 +858,7 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 		//Active item
 		UIInstance->GetUI<UIIcon>(iconActiveID)->Hide();
 		UIInstance->GetUI<UIIcon>(iconActiveID)->ActivateBorder();
-		UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetText(L"G");
+		UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetDraw(true);
 
 		//Components
 		UIInstance->GetUI<UIIcon>(iconID)->Hide();

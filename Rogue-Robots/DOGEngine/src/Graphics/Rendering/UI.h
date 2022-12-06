@@ -274,7 +274,9 @@ namespace DOG
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void SetText(std::wstring text);
+         void SetDraw(bool draw);
       private:
+         bool m_draw;
          D2D_RECT_F m_rect;
          std::wstring m_text;
          ComPtr<IDWriteTextFormat> m_textFormat;

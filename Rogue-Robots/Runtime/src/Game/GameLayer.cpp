@@ -164,7 +164,7 @@ void GameLayer::OnUpdate()
 			//Active item
 			UIInstance->GetUI<UIIcon>(iconActiveID)->Hide();
 			UIInstance->GetUI<UIIcon>(iconActiveID)->ActivateBorder();
-			UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetText(L"G");
+			UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetDraw(true);
 
 			//Components
 			UIInstance->GetUI<UIIcon>(iconID)->Hide();
@@ -541,7 +541,7 @@ void GameLayer::KillPlayer(DOG::entity e)
 		//Remove UI icon for active item.
 		UIInstance->GetUI<UIIcon>(iconActiveID)->Hide();
 		UIInstance->GetUI<UIIcon>(iconActiveID)->DeactivateBorder();
-		UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetText(L"");
+		UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetDraw(false);
 
 		std::string luaEventName = std::string("ItemPickup") + std::to_string(localPlayer);
 		m_entityManager.RemoveComponent<ScriptComponent>(localPlayer);
