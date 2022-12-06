@@ -187,8 +187,11 @@ void AgentDetectHitSystem::OnEarlyUpdate(entity agentID, BTHitDetectComponent&, 
 	{
 		std::cout << "agent " << agent.id << " sent PathFindingSync packet!\n";
 		em.AddComponent<AgentAggroComponent>(agentID);
-		em.AddComponent<PathFindingSync>(agentID).id = em.GetComponent<AgentIdComponent>(agentID);
-		em.GetComponent<PathFindingSync>(agentID).id.id = em.GetComponent<PathFindingSync>(agentID).id.id | AGGRO_BIT;
+		if (!em.HasComponent<PathFindingSync>(agentID))
+		{
+			em.AddComponent<PathFindingSync>(agentID).id = em.GetComponent<AgentIdComponent>(agentID);
+			em.GetComponent<PathFindingSync>(agentID).id.id = em.GetComponent<PathFindingSync>(agentID).id.id | AGGRO_BIT;
+		}
 	}
 	LEAF(btc.currentRunningNode)->Succeed(agentID);
 }
@@ -420,6 +423,11 @@ void AgentAggroSystem::OnUpdate(DOG::entity e, BTAggroComponent&, AgentAggroComp
 	if ((DOG::Time::ElapsedTime() - aggro.timeTriggered) > maxAggroTime)
 	{
 		em.RemoveComponent<AgentAggroComponent>(e);
+		if (!em.HasComponent<PathFindingSync>(e))
+		{
+			em.AddComponent<PathFindingSync>(e).id = em.GetComponent<AgentIdComponent>(e);
+			em.GetComponent<PathFindingSync>(e).id.id = em.GetComponent<PathFindingSync>(e).id.id | AGGRO_BIT;
+		}
 		em.RemoveComponentIfExists<AgentAttackComponent>(e);
 		LEAF(btc.currentRunningNode)->Fail(e);
 	}

@@ -136,6 +136,7 @@ void NetCode::OnUpdate()
 
 	if (m_active)
 	{
+		m_syncCounter++;
 		DOG::EntityManager& m_entityManager = DOG::EntityManager::Get();
 		//UDP /////////////////////////////////////////////////////////////////////
 		//Update the others players
@@ -169,10 +170,11 @@ void NetCode::OnUpdate()
 				//sync all transforms Host only
 				if (m_inputTcp.playerId == 0)
 				{
-					m_syncCounter++;
+					
 					//sync all transforms Host only
-					if (m_inputTcp.playerId == 0 && m_syncCounter%HARD_SYNC_FRAME == 0)
+					if (m_inputTcp.playerId == 0 && m_syncCounter>= HARD_SYNC_FRAME)
 					{
+						m_syncCounter = 0;
 						EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent>().Do([&](NetworkTransform& netC, TransformComponent& transC, AgentIdComponent agentId)
 							{
 								netC.objectId = agentId.id;
@@ -346,11 +348,8 @@ void NetCode::OnUpdate()
 					if (header.nrOfPathFindingSync > 0)
 					{
 						PathFindingSync* tempCreate = new PathFindingSync;
-						if (m_inputTcp.playerId > 0)
-						{
 							for (u32 i = 0; i < header.nrOfPathFindingSync; ++i)
 							{
-								std::cout << "received PF sync\n";
 								memcpy(tempCreate, m_receiveBuffer + m_bufferReceiveSize + sizeof(PathFindingSync) * i, sizeof(PathFindingSync));
 								bool aggro = (AGGRO_BIT & tempCreate->id.id); //bit mask 31st bit
 								if(aggro)
@@ -359,16 +358,21 @@ void NetCode::OnUpdate()
 								{
 										if (aIC.id == tempCreate->id.id && aIC.type == tempCreate->id.type && aggro)
 										{
-											std::cout << "   -> applied!\n";
-											EntityManager::Get().AddComponent<AgentAggroComponent>(e);
+											if (!EntityManager::Get().HasComponent<AgentAlertComponent>(e))
+											{
+												EntityManager::Get().AddComponent<AgentAlertComponent>(e);
+											}
 										}
 										else if (aIC.id == tempCreate->id.id && aIC.type == tempCreate->id.type && !aggro)
 										{
-											EntityManager::Get().RemoveComponent<AgentAggroComponent>(e);
+											
+											if (EntityManager::Get().HasComponent<AgentAlertComponent>(e))
+											{
+												EntityManager::Get().RemoveComponent<AgentAlertComponent>(e);
+											}
 										}
 								});
 							}
-						}
 						m_bufferReceiveSize += sizeof(PathFindingSync) * header.nrOfPathFindingSync;
 						delete tempCreate;
 					}
