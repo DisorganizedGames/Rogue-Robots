@@ -20,10 +20,12 @@ end
 function MagazineComponents:FrostEffect()
 	return
 	{
-		--frostMaterial = Render:CreateMaterial({x=0.188, y=0.835, z=0.784}, 0.0, 0.0, { 0.0, 0.0, 0.0 }),
-		Update = function(self, bullet, playerEntityID)
+		frostEffectSound = Asset:LoadAudio("Assets/Audio/GunSounds/Frost.wav"),
+
+		Update = function(self, bullet, playerEntityID, magazineAudioEntity)
 			Entity:AddComponent(bullet.entity, "FrostEffect", 4.0)
 			Entity:AddComponent(bullet.entity, "SubMeshRender", MaterialPrefabs:GetMaterial("FrostMaterial"))
+			Entity:PlayAudio(magazineAudioEntity, self.frostEffectSound, true)
 		end,
 
 		GetECSType = function(self)
@@ -35,9 +37,12 @@ end
 function MagazineComponents:FireEffect()
 	return
 	{
-		Update = function(self, bullet, playerEntityID)
+		fireEffectSound = Asset:LoadAudio("Assets/Audio/GunSounds/FlameWhoosh6.wav"),
+
+		Update = function(self, bullet, playerEntityID, magazineAudioEntity)
 			Entity:AddComponent(bullet.entity, "FireEffect", playerEntityID, 4.0, 50.0)
 			Entity:AddComponent(bullet.entity, "SubMeshRender", MaterialPrefabs:GetMaterial("FireMaterial"))
+			Entity:PlayAudio(magazineAudioEntity, self.fireEffectSound, true)
 		end,
 
 		GetECSType = function(self)

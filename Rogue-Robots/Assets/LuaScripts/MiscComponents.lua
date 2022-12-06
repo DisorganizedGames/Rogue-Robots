@@ -103,18 +103,33 @@ function MiscComponent:ChargeShot()
 		chargeSpeed = 10.0,
 		pressing = false,
 
+		chargeShotAudioEntity = -1,
+		chargeShotSound = Asset:LoadAudio("Assets/Audio/GunSounds/ChargeShot.wav"),
+
 		Update = function(self, parentEntity, transformEntity)
 			
+			if self.chargeShotAudioEntity == -1 then
+				self.chargeShotAudioEntity = Scene:CreateEntity(parentEntity)
+				Entity:AddComponent(self.chargeShotAudioEntity, "Audio", self.chargeShotSound, false, true)
+				Entity:AddComponent(self.chargeShotAudioEntity, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
+				Entity:AddComponent(self.chargeShotAudioEntity, "Child", parentEntity, Vector3.Zero(), Vector3.Zero(), Vector3.One())
+			end
+
 			if Entity:GetAction(parentEntity, "Shoot") then
 				self.pressing = true
 				self.shotPower = self.shotPower + self.chargeSpeed * DeltaTime
+
 				if self.maxShotPower < self.shotPower then
 					self.shotPower = self.maxShotPower
+				elseif not Entity:IsPlayingAudio(self.chargeShotAudioEntity) then
+					Entity:PlayAudio(self.chargeShotAudioEntity, self.chargeShotSound, true)
 				end
 
 			elseif self.pressing then
 				self.pressing = false
 				
+				Entity:StopAudio(self.chargeShotAudioEntity)
+
 				local pos = Vector3.FromTable(Entity:GetTransformPosData(transformEntity))
 				local forward = Vector3.FromTable(Entity:GetForward(transformEntity))
 				local up = Vector3.FromTable(Entity:GetUp(transformEntity))

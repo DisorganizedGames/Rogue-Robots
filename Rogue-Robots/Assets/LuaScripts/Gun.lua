@@ -60,6 +60,11 @@ local reloadAngle = 0.0
 
 local reloadAudioEntity = 0
 local reloadSound = 0
+local outOfAmmoAudioEntity = 0
+local outOfAmmoSound = 0
+local soonOutOfAmmoSound = 0
+
+local magazineAudioEntity = 0
 
 function OnStart()
 	gunModel = Asset:LoadModel("Assets/Models/ModularRifle/Maingun.gltf")
@@ -112,6 +117,18 @@ function OnStart()
 	Entity:AddComponent(reloadAudioEntity, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
 	Entity:AddComponent(reloadAudioEntity, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
 	Entity:AddComponent(reloadAudioEntity, "Audio", reloadSound, false, true)
+	
+	outOfAmmoSound = Asset:LoadAudio("Assets/Audio/GunSounds/switch5.wav")
+	soonOutOfAmmoSound = Asset:LoadAudio("Assets/Audio/GunSounds/switch5.wav")
+	outOfAmmoAudioEntity = Scene:CreateEntity(gunID)
+	Entity:AddComponent(outOfAmmoAudioEntity, "Audio", outOfAmmoSound, false, true)
+	Entity:AddComponent(outOfAmmoAudioEntity, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
+	Entity:AddComponent(outOfAmmoAudioEntity, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
+
+	magazineAudioEntity = Scene:CreateEntity(gunID)
+	Entity:AddComponent(magazineAudioEntity, "Audio", outOfAmmoSound, false, true)
+	Entity:AddComponent(magazineAudioEntity, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
+	Entity:AddComponent(magazineAudioEntity, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
 
 	EventSystem:Register("ItemPickup" .. EntityID, OnPickup)
 end
@@ -187,13 +204,18 @@ function OnUpdate()
 
 				if hasBasicBarrelEquipped then
 					currentAmmo = currentAmmo - 1
+
+					if currentAmmo < 5 then
+						Entity:PlayAudio(outOfAmmoAudioEntity, soonOutOfAmmoSound, true)
+					end
+
 				end
 
 				CreateBulletEntity(newBullets[i], cameraEntity)
 				barrelComponent:Update(gunEntity, EntityID, newBullets[i], miscComponent, cameraEntity)
 				--Keep track of which barrel created the bullet
 				newBullets[i].barrel = barrelComponent
-				magazineComponent:Update(newBullets[i], EntityID)
+				magazineComponent:Update(newBullets[i], EntityID, magazineAudioEntity)
 				
 				currentAmmoCount = currentAmmoCount - 1
 				if currentAmmoCount == 0 and not hasBasicBarrelEquipped then
@@ -205,6 +227,8 @@ function OnUpdate()
 					hasBasicBarrelEquipped = true
 				end
 				Entity:UpdateMagazine(EntityID, currentAmmoCount)
+			elseif currentAmmo <= 0 then
+				Entity:PlayAudio(outOfAmmoAudioEntity, outOfAmmoSound, true)
 			end
 		end
 	end

@@ -101,6 +101,10 @@ public:
 
 	void PlayAudio(DOG::LuaContext* context);
 
+	void StopAudio(DOG::LuaContext* context);
+
+	void IsPlayingAudio(DOG::LuaContext* context);
+
 	void GetPassiveType(DOG::LuaContext* context);
 
 	void GetActiveType(DOG::LuaContext* context);
