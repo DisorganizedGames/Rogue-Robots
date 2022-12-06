@@ -42,9 +42,6 @@ local maxHealthBoost = {
 			newStats.health = stats.health + self.boost
 		end
 
-		print("Curr stack: ", currMaxHealthStackCount)
-		print("Stack: ", stackCount)
-
 		currMaxHealthStackCount = stackCount
 		return newStats
 	end
