@@ -548,7 +548,7 @@ void GameLayer::KillPlayer(DOG::entity e)
 					if (cc.parent == localPlayer)
 					{
 						//This means that playerModel is the mesh model (suit), and it should be drawing for the main player again:
-						m_entityManager.RemoveComponent<DontDraw>(playerModel);
+						m_entityManager.RemoveComponentIfExists<DontDraw>(playerModel);
 					}
 					else if (cc.parent == playerToSpectate)
 					{
