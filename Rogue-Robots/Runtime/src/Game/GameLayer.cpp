@@ -476,6 +476,7 @@ void GameLayer::CheckIfPlayersIAreDead()
 		{
 			if (stats.health <= 0.0f)
 			{
+				stats.health = 0.0f;
 				// Player died
 				KillPlayer(e);
 			}
