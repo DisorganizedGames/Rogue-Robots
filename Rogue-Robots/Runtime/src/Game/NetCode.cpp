@@ -212,6 +212,7 @@ void NetCode::OnUpdate()
 
 				EntityManager::Get().Collect<PathFindingSync>().Do([&](entity id, PathFindingSync& pFS)
 					{
+						std::cout << "sent PF sync\n";
 						memcpy(m_sendBuffer + m_bufferSize, &pFS, sizeof(PathFindingSync));
 						m_bufferSize += sizeof(PathFindingSync);
 						m_entityManager.RemoveComponent<PathFindingSync>(id);
@@ -347,8 +348,9 @@ void NetCode::OnUpdate()
 						PathFindingSync* tempCreate = new PathFindingSync;
 						if (m_inputTcp.playerId > 0)
 						{
-							for (u32 i = 0; i < header.nrOfCreateAndDestroy; ++i)
+							for (u32 i = 0; i < header.nrOfPathFindingSync; ++i)
 							{
+								std::cout << "received PF sync\n";
 								memcpy(tempCreate, m_receiveBuffer + m_bufferReceiveSize + sizeof(PathFindingSync) * i, sizeof(PathFindingSync));
 								bool aggro = (AGGRO_BIT & tempCreate->id.id); //bit mask 31st bit
 								if(aggro)
@@ -357,6 +359,7 @@ void NetCode::OnUpdate()
 								{
 										if (aIC.id == tempCreate->id.id && aIC.type == tempCreate->id.type && aggro)
 										{
+											std::cout << "   -> applied!\n";
 											EntityManager::Get().AddComponent<AgentAggroComponent>(e);
 										}
 										else if (aIC.id == tempCreate->id.id && aIC.type == tempCreate->id.type && !aggro)

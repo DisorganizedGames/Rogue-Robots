@@ -181,9 +181,15 @@ void AgentDetectHitSystem::OnEarlyUpdate(entity agentID, BTHitDetectComponent&, 
 	seek.direction = transform.GetPosition() - finalTarget.position;
 
 	EntityManager& em = EntityManager::Get();
+	//if (!em.HasComponent<AgentAggroComponent>(agentID))
+	//	em.AddComponent<AgentAggroComponent>(agentID);
 	if (!em.HasComponent<AgentAggroComponent>(agentID))
+	{
+		std::cout << "agent " << agent.id << " sent PathFindingSync packet!\n";
 		em.AddComponent<AgentAggroComponent>(agentID);
-
+		em.AddComponent<PathFindingSync>(agentID).id = em.GetComponent<AgentIdComponent>(agentID);
+		em.GetComponent<PathFindingSync>(agentID).id.id = em.GetComponent<PathFindingSync>(agentID).id.id | AGGRO_BIT;
+	}
 	LEAF(btc.currentRunningNode)->Succeed(agentID);
 }
 
@@ -249,12 +255,7 @@ void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& c
 			BulletComponent& bullet = eMan.GetComponent<BulletComponent>(bulletEntity);
 			seek.entityID = bullet.playerEntityID;
 			hit.HitBy(bulletEntity, bullet.playerEntityID, bullet.damage);
-			if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
-			{
-				EntityManager::Get().AddComponent<AgentAggroComponent>(e);
-				EntityManager::Get().AddComponent<PathFindingSync>(e).id = EntityManager::Get().GetComponent<AgentIdComponent>(e);
-				EntityManager::Get().GetComponent<PathFindingSync>(e).id.id = EntityManager::Get().GetComponent<PathFindingSync>(e).id.id | AGGRO_BIT;
-			}
+
 			// Create a particle emitter for bullet hit effect
 			auto& bulletTransform = eMan.GetComponent<TransformComponent>(bulletEntity);
 			auto bulletPos = bulletTransform.GetPosition();
@@ -406,6 +407,12 @@ void AgentAggroSystem::OnUpdate(DOG::entity e, BTAggroComponent&, AgentAggroComp
 
 	EntityManager& em = EntityManager::Get();
 	AgentManager& am = AgentManager::Get();
+
+	if (!em.HasComponent<AgentAlertComponent>(e))
+	{
+		std::cout << "agent " << agent.id << " alert\n";
+		em.AddComponent<AgentAlertComponent>(e);
+	}
 
 	u32 myGroup = am.GroupID(agent.id);
 
