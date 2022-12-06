@@ -155,7 +155,6 @@ public:
 		// If below a distance threshold --> Ignore look angle
 		if (pickUpToPlayer.Length() < LENGTH_THRESHOLD_TO_AVOID_ANGLE)
 		{
-			std::cout << "Close enough\n";
 			isLookingAtItem = true;
 		}
 
