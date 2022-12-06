@@ -19,7 +19,7 @@ extern UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID
 extern UINT lNamesCreditsID, lTheTeamID, lFiverrArtistsID, lFiverrArtistsTextID, lIconsCreditsID, lIconsCreditsTextID, lMusicID, lMusicTextID;
 extern UINT bcID, credbackID;
 extern UINT cID, tID, hID, playerlistID;
-extern UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID;
+extern UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID, lActiveItemTextID, flashlightID, glowstickID;
 extern UINT buffID;
 
 namespace DOG
@@ -289,6 +289,8 @@ namespace DOG
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void Hide();
+         void DeactivateBorder();
+         void ActivateBorder();
          void Show(UINT index);
       private:
          float m_opacity;

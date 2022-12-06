@@ -16,7 +16,7 @@ UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID,
 UINT lNamesCreditsID, lTheTeamID, lFiverrArtistsID, lFiverrArtistsTextID, lIconsCreditsID, lIconsCreditsTextID, lMusicID, lMusicTextID;
 UINT bcID, credbackID;
 UINT cID, tID, hID, playerlistID;
-UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID; //Icons.
+UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID, lActiveItemTextID, flashlightID, glowstickID; //Icons.
 UINT buffID;
 
 std::vector<bool> buffsVisible;
@@ -1052,6 +1052,16 @@ void DOG::UIIcon::Hide()
    m_show = false;
 }
 
+void DOG::UIIcon::DeactivateBorder()
+{
+    m_border = false;
+}
+
+void DOG::UIIcon::ActivateBorder()
+{
+    m_border = true;
+}
+
 void DOG::UIIcon::Show(UINT index)
 {
    m_show = true;
@@ -1065,7 +1075,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    //HealthBar
    float healthBarWidth = 300.f;
    float healthBarHeight = 50.f;
-   auto h = instance->Create<DOG::UIHealthBar, float, float, float, float, float>(hID, (clientWidth - healthBarWidth) * 0.5f, clientHeight - 145.f, healthBarWidth, healthBarHeight, 20.f);
+   auto h = instance->Create<DOG::UIHealthBar, float, float, float, float, float>(hID, (clientWidth - healthBarWidth) * 0.5f, clientHeight - 100.f, healthBarWidth, healthBarHeight, 20.f);
    instance->AddUIElementToScene(gameID, std::move(h));
 
    //Crosshair
@@ -1076,43 +1086,41 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    std::vector<std::wstring> paths = { L"Assets/Sprites/FullAuto.bmp", L"Assets/Sprites/ChargeShot.bmp" };
    float xPos = 100.0f;
    float yPos = (FLOAT)clientHeight - 220.f;
-   auto icon = instance->Create<DOG::UIIcon>(iconID, paths, xPos, yPos, 50.f, 50.f, 1.f, 1.f, 1.f, true);
+   auto icon = instance->Create<DOG::UIIcon>(iconID, paths, xPos, yPos, 45.f, 45.f, 1.f, 1.f, 1.f, true);
    instance->AddUIElementToScene(gameID, std::move(icon));
 
    //Barrel components
    paths = { L"Assets/Sprites/Grenade.bmp", L"Assets/Sprites/Missile.bmp", L"Assets/Sprites/Laser.bmp" };
    xPos -= 75.0f;
    yPos += 75.0f;
-   icon = instance->Create<DOG::UIIcon>(icon2ID, paths, xPos, yPos, 50.f, 50.f, 1.f, 1.f, 1.f, true);
+   icon = instance->Create<DOG::UIIcon>(icon2ID, paths, xPos, yPos, 45.f, 45.f, 1.f, 1.f, 1.f, true);
    instance->AddUIElementToScene(gameID, std::move(icon));
 
    //Magazine components
    paths = { L"Assets/Sprites/Frost.bmp", L"Assets/Sprites/Fire.bmp" };
    xPos += 75.0f;
    yPos += 75.0f;
-   icon = instance->Create<DOG::UIIcon>(icon3ID, paths, xPos, yPos, 50.f, 50.f, 1.f, 1.f, 1.f, true);
+   icon = instance->Create<DOG::UIIcon>(icon3ID, paths, xPos, yPos, 45.f, 45.f, 1.f, 1.f, 1.f, true);
    instance->AddUIElementToScene(gameID, std::move(icon));
 
    //Active Item
    paths = { L"Assets/Sprites/TrampolineIcon.bmp", L"Assets/Sprites/TurretIcon.bmp", L"Assets/Sprites/ReviverIcon.bmp", L"Assets/Sprites/RadarIcon.bmp", L"Assets/Sprites/SyringeIcon.bmp" };
-   icon = instance->Create<DOG::UIIcon>(iconActiveID, paths, 350.f, (FLOAT)clientHeight - 155.f, 75.f, 75.f, 1.f, 1.f, 1.f, true);
+   icon = instance->Create<DOG::UIIcon>(iconActiveID, paths, 310.f, (FLOAT)clientHeight - 150.f, 75.f * 0.8f, 75.f * 0.8f, 1.f, 1.f, 1.f, true);
    instance->AddUIElementToScene(gameID, std::move(icon));
 
    //Weapon
    paths = { L"Assets/Sprites/WeaponSillhouette.bmp" };
-   icon = instance->Create<DOG::UIIcon>(iconGun, paths, 90.f, (FLOAT)clientHeight - 155.f, 766.f * 0.3f, 373.f * 0.3f, 0.f, 0.f, 0.f, false);
+   icon = instance->Create<DOG::UIIcon>(iconGun, paths, 90.f, (FLOAT)clientHeight - 145.f, 766.f * 0.2f, 373.f * 0.2f, 0.f, 0.f, 0.f, false);
    icon->Show(0u);
    instance->AddUIElementToScene(gameID, std::move(icon));
 
    //Flashlight & Glowstick icon
    paths = { L"Assets/Sprites/FlashlightIcon.bmp" };
-   UINT flashlightID;
-   icon = instance->Create<DOG::UIIcon>(flashlightID, paths, 165.f, (FLOAT)clientHeight - 220.f, 81.f * 0.8f, 70.f * 0.8f, 0.f, 0.f, 0.f, false);
+   icon = instance->Create<DOG::UIIcon>(flashlightID, paths, 165.f, (FLOAT)clientHeight - 220.f, 81.f * 0.6f, 70.f * 0.6f, 0.f, 0.f, 0.f, false);
    icon->Show(0u);
    instance->AddUIElementToScene(gameID, std::move(icon));
    paths = { L"Assets/Sprites/Glowstick.bmp" };
-   UINT glowstickID;
-   icon = instance->Create<DOG::UIIcon>(glowstickID, paths, 245.f, (FLOAT)clientHeight - 212.f, 78.f * 0.8f, 72.f * 0.8f, 0.f, 0.f, 0.f, false);
+   icon = instance->Create<DOG::UIIcon>(glowstickID, paths, 230.f, (FLOAT)clientHeight - 212.f, 78.f * 0.6f, 72.f * 0.6f, 0.f, 0.f, 0.f, false);
    icon->Show(0u);
    instance->AddUIElementToScene(gameID, std::move(icon));
 
@@ -1281,8 +1289,8 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto lgreenScoreWin = instance->Create<DOG::UILabel>(lgreenScoreWinID, std::wstring(L" "), 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
    auto lyellowScoreWin = instance->Create<DOG::UILabel>(lyellowScoreWinID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
 
-   UINT lActiveItemTextID;
-   auto labelButtonTextActiveItem = instance->Create<DOG::UILabel>(lActiveItemTextID, std::wstring(L"G"), 400.0f, (FLOAT)clientHeight - 100.0f, 50.f, 50.f, 40.f);
+   
+   auto labelButtonTextActiveItem = instance->Create<DOG::UILabel>(lActiveItemTextID, std::wstring(L"G"), 315.0f, (FLOAT)clientHeight - 90.0f, 50.f, 50.f, 40.f);
 
    std::vector<std::wstring> vec = { L"Assets/Sprites/MaxHP.bmp" , L"Assets/Sprites/MoveSpeed.bmp" , L"Assets/Sprites/JumpBoost.bmp" };
    auto pic = instance->Create<DOG::UIBuffTracker, std::vector<std::wstring>>(buffID, vec);

@@ -153,8 +153,35 @@ void GameLayer::OnUpdate()
 			UpdateLobby();
 			break;
 		case GameState::StartPlaying:
+		{
+			//Reset UI.
+			auto UIInstance = DOG::UI::Get();
+			//Passive items
+			UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(0);
+			UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(1);
+			UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(2);
+
+			//Active item
+			UIInstance->GetUI<UIIcon>(iconActiveID)->Hide();
+			UIInstance->GetUI<UIIcon>(iconActiveID)->ActivateBorder();
+			UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetText(L"G");
+
+			//Components
+			UIInstance->GetUI<UIIcon>(iconID)->Hide();
+			UIInstance->GetUI<UIIcon>(iconID)->ActivateBorder();
+			UIInstance->GetUI<UIIcon>(icon2ID)->Hide();
+			UIInstance->GetUI<UIIcon>(icon2ID)->ActivateBorder();
+			UIInstance->GetUI<UIIcon>(icon3ID)->Hide();
+			UIInstance->GetUI<UIIcon>(icon3ID)->ActivateBorder();
+
+			//Weaponicon
+			UIInstance->GetUI<UIIcon>(iconGun)->Show(0);
+			UIInstance->GetUI<UIIcon>(glowstickID)->Show(0);
+			UIInstance->GetUI<UIIcon>(flashlightID)->Show(0);
+
 			StartMainScene();
 			break;
+		}
 		case GameState::Playing:
 			UpdateGame();
 			break;
@@ -244,32 +271,45 @@ void GameLayer::OnUpdate()
 				m_gameState = GameState::ExitingToMainMenu;
 			break;
 		}
-		case GameState::Exiting:
+		case GameState::Exiting: //Not used?
 			CloseMainScene();
 			break;
 		case GameState::ExitingToMainMenu:
 		{
+			//Reset the UI.
+			auto uiInstance = UI::Get();
+			//Active item
+			uiInstance->GetUI<UIIcon>(iconActiveID)->Hide();
+			//Weapon components
+			uiInstance->GetUI<UIIcon>(iconID)->Hide();
+			uiInstance->GetUI<UIIcon>(icon2ID)->Hide();
+			uiInstance->GetUI<UIIcon>(icon3ID)->Hide();
+			//Passive items
+			uiInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(0);
+			uiInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(1);
+			uiInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(2);
+
 			m_nrOfFramesToWait = 300;
 			NetCode::Get().Reset();
 			m_gameState = GameState::MainMenu;
-			UI::Get()->ChangeUIscene(menuID);
+			uiInstance->ChangeUIscene(menuID);
 			CloseMainScene();
 			//Reset ui labels
-			auto redPlayer = DOG::UI::Get()->GetUI<UILabel>(lredScoreID);
+			auto redPlayer = uiInstance->GetUI<UILabel>(lredScoreID);
 			redPlayer->SetText(L" ");
-			auto bluePlayer = DOG::UI::Get()->GetUI<UILabel>(lblueScoreID);
+			auto bluePlayer = uiInstance->GetUI<UILabel>(lblueScoreID);
 			bluePlayer->SetText(L" ");
-			auto greenPlayer = DOG::UI::Get()->GetUI<UILabel>(lgreenScoreID);
+			auto greenPlayer = uiInstance->GetUI<UILabel>(lgreenScoreID);
 			greenPlayer->SetText(L" ");
-			auto yellowPlayer = DOG::UI::Get()->GetUI<UILabel>(lyellowScoreID);
+			auto yellowPlayer = uiInstance->GetUI<UILabel>(lyellowScoreID);
 			yellowPlayer->SetText(L" ");
-			auto redPlayerWin = DOG::UI::Get()->GetUI<UILabel>(lredScoreWinID);
+			auto redPlayerWin = uiInstance->GetUI<UILabel>(lredScoreWinID);
 			redPlayerWin->SetText(L" ");
-			auto bluePlayerWin = DOG::UI::Get()->GetUI<UILabel>(lblueScoreWinID);
+			auto bluePlayerWin = uiInstance->GetUI<UILabel>(lblueScoreWinID);
 			bluePlayerWin->SetText(L" ");
-			auto greenPlayerWin = DOG::UI::Get()->GetUI<UILabel>(lgreenScoreWinID);
+			auto greenPlayerWin = uiInstance->GetUI<UILabel>(lgreenScoreWinID);
 			greenPlayerWin->SetText(L" ");
-			auto yellowPlayerWin = DOG::UI::Get()->GetUI<UILabel>(lyellowScoreWinID);
+			auto yellowPlayerWin = uiInstance->GetUI<UILabel>(lyellowScoreWinID);
 			yellowPlayerWin->SetText(L" ");
 			break;
 		}
@@ -500,6 +540,8 @@ void GameLayer::KillPlayer(DOG::entity e)
 		LuaMain::GetScriptManager()->RemoveScript(localPlayer, "ActiveItemSystem.lua");
 		//Remove UI icon for active item.
 		UIInstance->GetUI<UIIcon>(iconActiveID)->Hide();
+		UIInstance->GetUI<UIIcon>(iconActiveID)->DeactivateBorder();
+		UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetText(L"");
 
 		std::string luaEventName = std::string("ItemPickup") + std::to_string(localPlayer);
 		m_entityManager.RemoveComponent<ScriptComponent>(localPlayer);
@@ -507,8 +549,15 @@ void GameLayer::KillPlayer(DOG::entity e)
 		m_entityManager.RemoveComponent<MiscComponent>(localPlayer);
 		//Remove UI icon for weapon components.
 		UIInstance->GetUI<UIIcon>(iconID)->Hide();
+		UIInstance->GetUI<UIIcon>(iconID)->DeactivateBorder();
 		UIInstance->GetUI<UIIcon>(icon2ID)->Hide();
+		UIInstance->GetUI<UIIcon>(icon2ID)->DeactivateBorder();
 		UIInstance->GetUI<UIIcon>(icon3ID)->Hide();
+		UIInstance->GetUI<UIIcon>(icon3ID)->DeactivateBorder();
+
+		UIInstance->GetUI<UIIcon>(iconGun)->Hide();
+		UIInstance->GetUI<UIIcon>(glowstickID)->Hide();
+		UIInstance->GetUI<UIIcon>(flashlightID)->Hide();
 
 		RigidbodyComponent& rb = m_entityManager.GetComponent<RigidbodyComponent>(e);
 		rb.ConstrainPosition(true, true, true);

@@ -8,8 +8,9 @@ public:
 	static void Open();
 	static void Close();
 	static bool IsOpen();
-private:
+
 	static inline u32 s_sceneID;
+private:
 	static inline u32 s_backgroundID;
 	static inline u32 s_resumeButtonID;
 	static inline u32 s_exitToMainMenuButtonID;

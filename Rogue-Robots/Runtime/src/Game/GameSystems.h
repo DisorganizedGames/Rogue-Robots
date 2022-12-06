@@ -1,6 +1,7 @@
 #pragma once
 #include <DOGEngine.h>
 #include "GameComponent.h"
+#include "InGameMenu.h"
 
 class DoorOpeningSystem : public DOG::ISystem
 {
@@ -338,6 +339,10 @@ public:
 
 	void OnUpdate(DOG::entity, DOG::ThisPlayer, BarrelComponent& bc)
 	{
+		if (DOG::UI::Get()->GetActiveUIScene() == InGameMenu::s_sceneID)
+		{
+			return;
+		}
 		std::string ammoText = std::to_string(bc.currentAmmoCount) + std::string(" / "); 
 		bc.maximumAmmoCapacityForType == INFINITY_EQUIVALENT ? ammoText += "INF." : ammoText += std::to_string(bc.maximumAmmoCapacityForType);
 
@@ -347,8 +352,8 @@ public:
 
 		auto r = DOG::Window::GetWindowRect();
 		ImVec2 pos;
-		constexpr float xOffset = 200.0f;
-		constexpr float yOffset = -150.0f;
+		constexpr float xOffset = 150.0f;
+		constexpr float yOffset = -148.0f;
 		pos.x = r.left + size.x + xOffset;
 		pos.y = r.bottom + yOffset;
 
@@ -359,7 +364,7 @@ public:
 		{
 			ImGui::PushFont(DOG::Window::GetFont());
 			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
-			ImGui::SetWindowFontScale(2.0f);
+			ImGui::SetWindowFontScale(1.6f);
 			ImGui::Text(ammoText.c_str());
 			ImGui::PopStyleColor(1);
 			ImGui::PopFont();
