@@ -592,9 +592,9 @@ void GameLayer::KillPlayer(DOG::entity e)
 		UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetDraw(false);
 
 		std::string luaEventName = std::string("ItemPickup") + std::to_string(localPlayer);
-		m_entityManager.RemoveComponent<ScriptComponent>(localPlayer);
-		m_entityManager.RemoveComponent<BarrelComponent>(localPlayer);
-		m_entityManager.RemoveComponent<MiscComponent>(localPlayer);
+		m_entityManager.RemoveComponentIfExists<ScriptComponent>(localPlayer);
+		m_entityManager.RemoveComponentIfExists<BarrelComponent>(localPlayer);
+		m_entityManager.RemoveComponentIfExists<MiscComponent>(localPlayer);
 		//Remove UI icon for weapon components.
 		UIInstance->GetUI<UIIcon>(iconID)->Hide();
 		UIInstance->GetUI<UIIcon>(iconID)->DeactivateBorder();

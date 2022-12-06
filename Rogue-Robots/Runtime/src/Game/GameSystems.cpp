@@ -835,7 +835,7 @@ void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity p
 void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerAliveComponent&, DOG::TransformComponent& tc)
 {
 	DOG::EntityManager& mgr = DOG::EntityManager::Get();
-	if (mgr.HasComponent<PlayerAliveComponent>(player) && mgr.GetComponent<PlayerAliveComponent>(player).timer > 0.f)
+	if (mgr.HasComponent<ThisPlayer>(player) && mgr.HasComponent<PlayerAliveComponent>(player) && mgr.GetComponent<PlayerAliveComponent>(player).timer > 0.f)
 		mgr.GetComponent<PlayerAliveComponent>(player).timer -= (f32)Time::DeltaTime();
 	//If the player that wants to perform a revive does not have a reviver active item, we ofc return:
 	auto optionalItem = mgr.TryGetComponent<ActiveItemComponent>(player);
@@ -1101,9 +1101,9 @@ void ReviveSystem::RevivePlayer(DOG::entity player)
 	pcc.spectatorCamera = NULL_ENTITY;
 	mgr.GetComponent<CameraComponent>(pcc.cameraEntity).isMainCamera = true;
 
-	auto& ac = mgr.GetComponent<AnimationComponent>(player);
-	ac.SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio, ac.BASE_PRIORITY, ac.FULL_BODY, 1.5f, 0.5f);
-	mgr.AddComponent<PlayerAliveComponent>(player).timer = 1.f;
+	/*auto& ac = mgr.GetComponent<AnimationComponent>(player);
+	ac.SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio, ac.BASE_PRIORITY, ac.FULL_BODY, 1.5f, 0.5f);*/
+	mgr.AddComponent<PlayerAliveComponent>(player).timer = 2.f;
 
 	LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
 	LuaMain::GetScriptManager()->AddScript(player, "PassiveItemSystem.lua");
