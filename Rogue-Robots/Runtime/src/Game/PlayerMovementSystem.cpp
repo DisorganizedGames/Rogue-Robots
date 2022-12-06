@@ -62,9 +62,13 @@ void PlayerMovementSystem::OnUpdate(
 	{
 		isThisPlayer = true;
 		camera.isMainCamera = true;
+		/*if (mgr.HasComponent<PlayerAliveComponent>(e) && mgr.GetComponent<PlayerAliveComponent>(e).timer > 0.f)
+				mgr.GetComponent<PlayerAliveComponent>(e).timer -= (f32)Time::DeltaTime();*/
 	}
+	auto IsAlive = [&mgr](Entity e) {
+		return mgr.HasComponent<PlayerAliveComponent>(e) && mgr.GetComponent<PlayerAliveComponent>(e).timer < 0.f; };
 
-	if (input.toggleDebug && mgr.HasComponent<PlayerAliveComponent>(e))
+	if (input.toggleDebug && IsAlive(e))
 	{
 		input.toggleDebug = false;
 		if (player.debugCamera == DOG::NULL_ENTITY)
@@ -80,7 +84,7 @@ void PlayerMovementSystem::OnUpdate(
 			player.debugCamera = DOG::NULL_ENTITY;
 		}
 	}
-	if (mgr.HasComponent<PlayerAliveComponent>(e))
+	if (IsAlive(e))
 	{
 		// Rotate player
 		Vector3 forward = cameraTransform.GetForward();

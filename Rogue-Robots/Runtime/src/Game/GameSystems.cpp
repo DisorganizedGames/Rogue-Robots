@@ -634,7 +634,7 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 		});
 	if (changeGunDrawLogic)
 	{
-		std::cout << " Change gun Draw logic " << changeGunDrawLogic << std::endl;
+		//std::cout << " Change gun Draw logic " << changeGunDrawLogic << std::endl;
 		ChangeGunDrawLogic(sc.playerBeingSpectated, true, false);
 	}
 	
@@ -758,7 +758,6 @@ u32 SpectateSystem::GetQueueIndexForSpectatedPlayer(DOG::entity player, const st
 
 void SpectateSystem::ChangeGunDrawLogic(DOG::entity player, bool drawFirstPersonViewGun, bool drawModelGun)
 {
-	std::cout << "\nChangeGunDrawLogic " << player << std::endl;
 	auto& em = DOG::EntityManager::Get();
 	
 	// Draw Logic FirstPersonView Gun
@@ -775,7 +774,6 @@ void SpectateSystem::ChangeGunDrawLogic(DOG::entity player, bool drawFirstPerson
 
 		if (drawFirstPersonViewGun)
 		{
-			std::cout << "DRAW FPS GUN" << player << std::endl;
 			em.RemoveComponentIfExists<DontDraw>(gunID);
 			em.RemoveComponentIfExists<DontDraw>(barrelID);
 			em.RemoveComponentIfExists<DontDraw>(miscID);
@@ -783,7 +781,6 @@ void SpectateSystem::ChangeGunDrawLogic(DOG::entity player, bool drawFirstPerson
 		}
 		else
 		{
-			std::cout << "DONT DRAW FPS GUN" << player << std::endl;
 			em.AddOrReplaceComponent<DontDraw>(gunID);
 			em.AddOrReplaceComponent<DontDraw>(barrelID);
 			em.AddOrReplaceComponent<DontDraw>(miscID);
@@ -795,7 +792,6 @@ void SpectateSystem::ChangeGunDrawLogic(DOG::entity player, bool drawFirstPerson
 	{
 		EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
 			{
-				std::cout << std::endl << "boneParent" << bone.boneParent << std::endl;
 				if (bone.boneParent == player)
 					if (drawModelGun)
 						DOG::EntityManager::Get().RemoveComponentIfExists<DOG::DontDraw>(modelGun);
@@ -803,7 +799,6 @@ void SpectateSystem::ChangeGunDrawLogic(DOG::entity player, bool drawFirstPerson
 						DOG::EntityManager::Get().AddOrReplaceComponent<DOG::DontDraw>(modelGun);
 			});
 	}
-	std::cout << "\nEndOF ChangeGunDrawLogic " << player << std::endl;
 }
 
 void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw)
@@ -840,7 +835,8 @@ void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity p
 void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerAliveComponent&, DOG::TransformComponent& tc)
 {
 	DOG::EntityManager& mgr = DOG::EntityManager::Get();
-	
+	if (mgr.HasComponent<ThisPlayer>(player) && mgr.HasComponent<PlayerAliveComponent>(player) && mgr.GetComponent<PlayerAliveComponent>(player).timer > 0.f)
+		mgr.GetComponent<PlayerAliveComponent>(player).timer -= (f32)Time::DeltaTime();
 	//If the player that wants to perform a revive does not have a reviver active item, we ofc return:
 	auto optionalItem = mgr.TryGetComponent<ActiveItemComponent>(player);
 	if (!optionalItem)
@@ -1105,8 +1101,8 @@ void ReviveSystem::RevivePlayer(DOG::entity player)
 	pcc.spectatorCamera = NULL_ENTITY;
 	mgr.GetComponent<CameraComponent>(pcc.cameraEntity).isMainCamera = true;
 
-	auto& ac = mgr.GetComponent<AnimationComponent>(player);
-	ac.SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio, ac.BASE_PRIORITY, ac.FULL_BODY, 1.5f, 0.5f);
+	/*auto& ac = mgr.GetComponent<AnimationComponent>(player);
+	ac.SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio, ac.BASE_PRIORITY, ac.FULL_BODY, 1.5f, 0.5f);*/
 	mgr.AddComponent<PlayerAliveComponent>(player).timer = 2.f;
 
 	LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
@@ -1140,7 +1136,7 @@ void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity pla
 			auto& em = DOG::EntityManager::Get();
 			if (cc.parent == playerToDraw)
 			{
-				std::cout << "deadPlayer" << playerToDraw << std::endl;
+				//std::cout << "deadPlayer" << playerToDraw << std::endl;
 				
 				//This means that playerModel is the mesh model (suit), and it should be rendered again:
 				em.RemoveComponent<DOG::DontDraw>(playerModel);
@@ -1149,12 +1145,12 @@ void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity pla
 				#endif
 				EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
 					{
-						std::cout << "boneParent" << bone.boneParent << std::endl;
+						//std::cout << "boneParent" << bone.boneParent << std::endl;
 						if (bone.boneParent == playerToDraw)
 							em.RemoveComponentIfExists<DOG::DontDraw>(modelGun);
 					});
 
-				std::cout << "ChangeSuitDrawLogic  playerToDraw  BeforeAddOrReplaceScript"<< std::endl;
+				//std::cout << "ChangeSuitDrawLogic  playerToDraw  BeforeAddOrReplaceScript"<< std::endl;
 				auto scriptData = LuaMain::GetScriptManager()->GetScript(playerToDraw, "Gun.lua");
 				LuaTable tab(scriptData.scriptTable, true);
 				auto ge = tab.GetTableFromTable("gunEntity");
@@ -1169,21 +1165,21 @@ void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity pla
 			}
 			else if (cc.parent == playerToNotDraw)
 			{
-				std::cout << "ChangeSuitDrawLogic Before player NOT to draw" << std::endl;
+				//std::cout << "ChangeSuitDrawLogic Before player NOT to draw" << std::endl;
 				//This means that playerModel is the spectated players' armor/suit, and it should not be eligible for rendering anymore:
 				DOG::EntityManager::Get().AddComponent<DOG::DontDraw>(playerModel);
 				#if defined _DEBUG
 				removedSuitFromRendering = true;
 				#endif
-				std::cout << std::endl << "playerToDraw" << playerToDraw << std::endl;
+				//std::cout << std::endl << "playerToDraw" << playerToDraw << std::endl;
 				EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
 					{
-						std::cout << std::endl << "boneParent" << bone.boneParent << std::endl;
+						//std::cout << std::endl << "boneParent" << bone.boneParent << std::endl;
 						if (bone.boneParent == playerToNotDraw)
 							DOG::EntityManager::Get().AddOrReplaceComponent<DOG::DontDraw>(modelGun);
 					});
 
-				std::cout << "ChangeSuitDrawLogic  playerNotToDraw  BeforeRemoveIfExistsScript" << std::endl;
+				//std::cout << "ChangeSuitDrawLogic  playerNotToDraw  BeforeRemoveIfExistsScript" << std::endl;
 			}
 		});
 		#if defined _DEBUG

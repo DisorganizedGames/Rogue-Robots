@@ -81,7 +81,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 
 		auto& ac = em.GetComponent<AnimationComponent>(playerI);
 		ac.animatorID = static_cast<i8>(i);
-		/*ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping | AnimationFlag::ResetPrio);*/
+		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping | AnimationFlag::ResetPrio);
 
 		auto& bc = em.AddComponent<BarrelComponent>(playerI);
 		bc.type = BarrelComponent::Type::Bullet;
