@@ -10,9 +10,11 @@
 
 DOG::UI* DOG::UI::s_instance = nullptr;
 
-UINT menuID, gameID, optionsID, multiID, lobbyID, joinID, WaitingForHostID, GameOverID, WinScreenID, LoadingID;
-UINT menuBackID, optionsBackID, multiBackID, hostBackID;
+UINT menuID, gameID, optionsID, multiID, lobbyID, joinID, WaitingForHostID, GameOverID, WinScreenID, LoadingID, creditsID;
+UINT menuBackID, optionsBackID, multiBackID, hostBackID, creditsBackID;
 UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID, lWinTextID, lredScoreID, lblueScoreID, lgreenScoreID, lyellowScoreID, lredScoreWinID, lblueScoreWinID, lgreenScoreWinID, lyellowScoreWinID;
+UINT lNamesCreditsID, lTheTeamID, lFiverrArtistsID, lFiverrArtistsTextID, lIconsCreditsID, lIconsCreditsTextID, lMusicID, lMusicTextID;
+UINT bcID, credbackID;
 UINT cID, tID, hID, playerlistID;
 
 
@@ -25,6 +27,11 @@ void PlayButtonFunc(void);
 void OptionsButtonFunc(void)
 {
    DOG::UI::Get()->ChangeUIscene(optionsID);
+}
+
+void CreditsButtonFunc(void)
+{
+    DOG::UI::Get()->ChangeUIscene(creditsID);
 }
 
 void MultiplayerButtonFunc(void)
@@ -971,6 +978,8 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(menuID, std::move(menuBack));
    auto optionsBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(optionsBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Options"));
    instance->AddUIElementToScene(optionsID, std::move(optionsBack));
+   auto creditsBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(creditsBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L""));
+   instance->AddUIElementToScene(creditsID, std::move(creditsBack));
    auto multiBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(multiBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Multiplayer"));
    instance->AddUIElementToScene(multiID, std::move(multiBack));
 
@@ -995,12 +1004,99 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto loading = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"\n\nTrying to connect...\n\n\n\n\n\n\n\n\nPro Tip: Shooting teammates is fun "));
    instance->AddUIElementToScene(LoadingID, std::move(loading));
 
+   //Credit text
+   //Music
+   auto lMusic = instance->Create<DOG::UILabel>(
+       lMusicID,
+       std::wstring(L"Music"),
+       (FLOAT)clientWidth / 2.0f - 850.0f,
+       150.0f,
+       500.f,
+       200.f,
+       45.0f
+       );
+
+   auto lMusicText = instance->Create<DOG::UILabel>(
+       lMusicTextID,
+       std::wstring(L"Douglas Runebjörk"),
+       (FLOAT)clientWidth / 2.0f - 850.0f,
+       210.0f,
+       500.f,
+       200.f,
+       25.0f
+       );
+
+   //Fiverr artists
+   auto lFiverrArtists = instance->Create<DOG::UILabel>(
+       lFiverrArtistsID,
+       std::wstring(L"Fiverr Artists"),
+       (FLOAT)clientWidth / 2.0f - 850.0f,
+       350.0f,
+       500.f,
+       200.f,
+       45.0f
+       );
+
+   auto lFiverrArtistsText = instance->Create<DOG::UILabel>(
+       lFiverrArtistsTextID,
+       std::wstring(L"The Weapon & Component Models - francisle997\nThe Player Models - frein4"),
+       (FLOAT)clientWidth / 2.0f - 850.0f,
+       440.0f,
+       500.f,
+       200.f,
+       25.0f
+       );
+
+   //The team
+   auto lTheTeam = instance->Create<DOG::UILabel>(
+       lTheTeamID,
+       std::wstring(L"The Team"),
+       (FLOAT)clientWidth / 2.0f - 150.0f,
+       20.0f,
+       300.f,
+       100.f,
+       60.0f
+       );
+   auto lNamesCredits = instance->Create<DOG::UILabel>(
+       lNamesCreditsID,
+       std::wstring(
+           L"Sam Axelsson\nGunnar Cerne\nFilip Eriksson\nEmil Fransson\nNadhif Ginola\nJonatan Hermansson\nEmil Högstedt\nAxel Lundberg\nOscar Milstein\nOve Ødegård"),
+       (FLOAT)clientWidth / 2.0f - 350.0f,
+       (FLOAT)clientHeight / 2.f - 270.0f,
+       700.0f,
+       200.0f,
+       40.f
+       );
+
+   //Fiverr artists
+   auto lIconsCredits = instance->Create<DOG::UILabel>(
+       lIconsCreditsID,
+       std::wstring(L"Icons"),
+       (FLOAT)clientWidth / 2.0f + 350.0f,
+       150.0f,
+       500.f,
+       200.f,
+       45.0f
+       );
+
+   auto lIconsCreditsText = instance->Create<DOG::UILabel>(
+       lIconsCreditsTextID,
+       std::wstring(L"All icons got from 'game-icons.net'\nJump across icon - Delapouite\nCrosshair icon - Delapouite\nFlamer icon - sbed\nHealth increase icon - sbed\nSprint icon - Lorc\nSnowflake 2 icon - Lorc\nRay gun icon - Lorc\nGrenade icon - Lorc\nBullets icon - Lorc\nRocket icon - Lorc"),
+       (FLOAT)clientWidth / 2.0f + 250.0f,
+       350.0f,
+       700.f,
+       200.f,
+       25.0f
+       );
+
    //Menu buttons
    auto bp = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Play"), std::function<void()>(PlayButtonFunc));
    auto bm = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bmID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
    auto bo = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
-   auto be = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(beID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
+   auto bc = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bcID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Credits"), std::function<void()>(CreditsButtonFunc));
+   auto be = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(beID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 280.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
    auto optback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(optbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
+   auto credback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(credbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
    auto mulback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 200.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
    auto hostBack = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Disconnect"), std::function<void()>(BackFromHost));
    auto bh = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bhID, (FLOAT)clientWidth / 2.f - 75.f - 100.f, (FLOAT)clientHeight / 2.f + 120.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Host"), std::function<void()>(HostButtonFunc));
@@ -1040,7 +1136,6 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto lgreenScoreWin = instance->Create<DOG::UILabel>(lgreenScoreWinID, std::wstring(L" "), 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
    auto lyellowScoreWin = instance->Create<DOG::UILabel>(lyellowScoreWinID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
 
-
    std::vector<std::wstring> vec;
    vec.push_back(L"Assets/Sprites/test.bmp");
    vec.push_back(L"Assets/Sprites/test2.bmp");
@@ -1051,8 +1146,18 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(menuID, std::move(bp));
    instance->AddUIElementToScene(menuID, std::move(bm));
    instance->AddUIElementToScene(menuID, std::move(bo));
+   instance->AddUIElementToScene(menuID, std::move(bc));
    instance->AddUIElementToScene(menuID, std::move(be));
    instance->AddUIElementToScene(optionsID, std::move(optback));
+   instance->AddUIElementToScene(creditsID, std::move(credback));
+   instance->AddUIElementToScene(creditsID, std::move(lFiverrArtists));
+   instance->AddUIElementToScene(creditsID, std::move(lFiverrArtistsText));
+   instance->AddUIElementToScene(creditsID, std::move(lNamesCredits));
+   instance->AddUIElementToScene(creditsID, std::move(lTheTeam));
+   instance->AddUIElementToScene(creditsID, std::move(lIconsCredits));
+   instance->AddUIElementToScene(creditsID, std::move(lIconsCreditsText));
+   instance->AddUIElementToScene(creditsID, std::move(lMusic));
+   instance->AddUIElementToScene(creditsID, std::move(lMusicText));
    instance->AddUIElementToScene(multiID, std::move(mulback));
    instance->AddUIElementToScene(multiID, std::move(bh));
    instance->AddUIElementToScene(multiID, std::move(bj));
@@ -1111,4 +1216,5 @@ void AddScenes()
    GameOverID = instance->AddScene();
    WinScreenID = instance->AddScene();
    LoadingID = instance->AddScene();
+   creditsID = instance->AddScene();
 }
