@@ -93,11 +93,14 @@ void TurretShootingSystem::OnUpdate(entity e, TurretTargetingComponent& targeter
 	{
 		while (turretShooter.lastDischargeTimer > turretShooter.timeStep)
 		{
-			AudioComponent& audio = EntityManager::Get().GetComponent<AudioComponent>(e);
-			if (!audio.playing)
+			if (EntityManager::Get().HasComponent<AudioComponent>(e))
 			{
-				audio.assetID = m_turretShootSound;
-				audio.shouldPlay = true;
+				AudioComponent& audio = EntityManager::Get().GetComponent<AudioComponent>(e);
+				if (!audio.playing)
+				{
+					audio.assetID = m_turretShootSound;
+					audio.shouldPlay = true;
+				}
 			}
 
 			SpawnTurretProjectile(transform, turretShooter.projectileSpeed, turretShooter.damage, turretShooter.projectileLifeTime, e, turretShooter.owningPlayer);
