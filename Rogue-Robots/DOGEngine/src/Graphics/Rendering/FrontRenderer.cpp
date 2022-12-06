@@ -126,6 +126,7 @@ namespace DOG::gfx
 				m_renderer->SubmitMesh(sr.mesh, 0, sr.material, tr);
 			});
 
+
 		// We need to bucket in a better way..
 		mgr.Bundle<TransformComponent, ModelComponent>().Do([&](entity e, TransformComponent& transformC, ModelComponent& modelC)
 			{
@@ -163,10 +164,15 @@ namespace DOG::gfx
 					return;
 
 				// Culled
-				TransformComponent camTransform;
-				camTransform.worldMatrix = ((DirectX::SimpleMath::Matrix)m_viewMat).Invert();
-				auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p)
+				//TransformComponent camTransform;
+				//camTransform.worldMatrix = ((DirectX::SimpleMath::Matrix)m_viewMat).Invert();
+				auto&& cull = [&](const DirectX::SimpleMath::Matrix& viewMat, DirectX::SimpleMath::Vector3 p)
 				{
+					TransformComponent tc{};
+					tc.worldMatrix = viewMat.Invert();
+					auto camForward = tc.GetForward();
+					auto camPos = tc.GetPosition();
+
 					auto d = p - camPos;
 					auto lenSq = d.LengthSquared();
 					if (lenSq < 64) return false;
@@ -175,8 +181,13 @@ namespace DOG::gfx
 					return camForward.Dot(d) < 0.2f;
 				};
 
-				if (cull({ transformC.worldMatrix(3, 0), transformC.worldMatrix(3, 1), transformC.worldMatrix(3, 2) }))
-					return;
+
+				bool renderToShadow = false;
+				for (const auto& pview : m_playerViews)
+				{
+					bool insideFrustum = !cull(pview, { transformC.worldMatrix(3, 0), transformC.worldMatrix(3, 1), transformC.worldMatrix(3, 2) });
+					renderToShadow |= insideFrustum;	// If inside any of players view --> Render to shadow
+				}
 
 				if (model && model->gfxModel)
 				{
@@ -193,6 +204,11 @@ namespace DOG::gfx
 								m_singleSidedShadowed.push_back({ model->gfxModel->mesh.mesh, i, transformC });
 						}
 					}
+
+					// Skip main view rendering
+					if (cull(m_viewMat, { transformC.worldMatrix(3, 0), transformC.worldMatrix(3, 1), transformC.worldMatrix(3, 2) }))
+						return;
+
 
 					if (mgr.HasComponent<ModularBlockComponent>(e))
 					{
@@ -267,6 +283,7 @@ namespace DOG::gfx
 	{
 		// Collect this frames spotlight shadow casters
 		m_activeSpotlightShadowCasters.clear();
+		m_playerViews.clear();
 		EntityManager::Get().Collect</*ShadowCasterComponent, */SpotLightComponent, CameraComponent, TransformComponent>().Do([&](
 			entity spotlightEntity, /*ShadowCasterComponent&, */ SpotLightComponent& slc, CameraComponent& cc, TransformComponent& tc)
 			{
@@ -284,6 +301,7 @@ namespace DOG::gfx
 				{
 					spotData.shadow = Renderer::ShadowCaster();
 					spotData.shadow->viewMat = cc.viewMatrix;
+					m_playerViews.push_back(cc.viewMatrix);
 					spotData.shadow->projMat = cc.projMatrix;
 					u32 shadowID = *m_renderer->RegisterSpotlight(spotData);
 					m_activeSpotlightShadowCasters.push_back({ spotlightEntity, shadowID });

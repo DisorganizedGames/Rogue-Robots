@@ -65,6 +65,7 @@ namespace DOG::gfx
 
 		std::vector<ShadowSubmission> m_singleSidedShadowed;
 		std::vector<ShadowSubmission> m_doubleSidedShadowed;
+		std::vector<DirectX::SimpleMath::Matrix> m_playerViews;
 
 	};
 
