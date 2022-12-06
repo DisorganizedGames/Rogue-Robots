@@ -433,3 +433,12 @@ struct PlayerHurtSoundEffectComponent
 {
 	DOG::entity hurtAudioEntity;
 };
+
+struct AmbientSoundComponent
+{
+	float repeatTime = 0;
+	float meanRepeatTime = 60;
+	float stdDiv = 15;
+	float singleTimeStartOffsetTime = 0;
+	bool startup = true;
+};

@@ -75,4 +75,25 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 			++enemyCounter;
 			++itemCounter;
 		});
+
+
+
+	auto&& createAmbient = [&](const std::string& fileName, float startOffset, float mean, float stdDiv, float volume) {
+		entity e = CreateEntity();
+		auto& audio = AddComponent<AudioComponent>(e);
+		audio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Ambient/" + fileName);
+		audio.volume = volume;
+
+		auto& ambientSound = AddComponent<AmbientSoundComponent>(e);
+		ambientSound.singleTimeStartOffsetTime = startOffset;
+		ambientSound.meanRepeatTime = mean;
+		ambientSound.stdDiv = stdDiv;
+	};
+
+	createAmbient("CreepyAmbience.wav", 60, 45, 7, 0.7f);
+	createAmbient("CreepyAmbience2.wav", 10, 40, 8, 0.9f);
+	createAmbient("CreepyAmbience3.wav", 0, 60, 15, 0.4f);
+	createAmbient("CreepyAmbience4.wav", 50, 100, 15, 0.8f);
+	createAmbient("AmbienceLong.wav", -119, 120, 1, 0.5f);
+	createAmbient("AmbienceLong3.wav", 120, 120, 1, 0.5f);
 }

@@ -30,3 +30,12 @@ public:
 
 	void OnUpdate(MusicPlayer& musicPlayer);
 };
+
+
+class AmbientSoundSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(AmbientSoundComponent, DOG::AudioComponent);
+	ON_UPDATE(AmbientSoundComponent, DOG::AudioComponent);
+	void OnUpdate(AmbientSoundComponent& ambientSound, DOG::AudioComponent& audioPlayer);
+};
