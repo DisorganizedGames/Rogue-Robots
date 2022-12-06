@@ -609,6 +609,10 @@ class ReviveSystem : public DOG::ISystem
 {
 #define MAXIMUM_DISTANCE_DELTA 1.3f
 #define MINIMUM_DOT_DELTA 0.85f
+
+private:
+	u32 m_reviveSound;
+
 public:
 	SYSTEM_CLASS(InputController, PlayerAliveComponent, DOG::TransformComponent);
 	ON_UPDATE_ID(InputController, PlayerAliveComponent, DOG::TransformComponent);

@@ -799,13 +799,34 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 		ImGui::PopStyleColor();
 	}
 
+	if (!mgr.HasComponent<ReviveSoundEffectComponent>(player))
+	{
+		auto& reviveComponent = mgr.AddComponent<ReviveSoundEffectComponent>(player);
+		reviveComponent.reviveAudioEntity = mgr.CreateEntity();
+		mgr.AddComponent<SceneComponent>(reviveComponent.reviveAudioEntity, mgr.GetComponent<SceneComponent>(player).scene);
+
+		mgr.AddComponent<DOG::AudioComponent>(reviveComponent.reviveAudioEntity).is3D = true;
+		mgr.AddComponent<DOG::TransformComponent>(reviveComponent.reviveAudioEntity);
+		mgr.AddComponent<ChildComponent>(reviveComponent.reviveAudioEntity).parent = player;
+
+		m_reviveSound = AssetManager::Get().LoadAudio("Assets/Audio/Items/Revive.wav");
+	}
+	auto& reviveAudioComponent = mgr.GetComponent<DOG::AudioComponent>(mgr.GetComponent<ReviveSoundEffectComponent>(player).reviveAudioEntity);
+
 	//Next up is the revival progress. Holding E adds to the progress bar.
 	//Perhaps the player is not trying to revive:
 	if (!inputC.revive)
 	{
 		mgr.RemoveComponentIfExists<ReviveTimerComponent>(player);
 		mgr.RemoveComponentIfExists<ReviveTimerComponent>(closestDeadPlayer);
+		reviveAudioComponent.shouldStop = true;
 		return;
+	}
+
+	if (!reviveAudioComponent.playing)
+	{
+		reviveAudioComponent.assetID = m_reviveSound;
+		reviveAudioComponent.shouldPlay = true;
 	}
 	
 	if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))

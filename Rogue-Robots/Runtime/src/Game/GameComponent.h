@@ -429,6 +429,11 @@ struct FlashlightSoundEffectComponent
 	DOG::entity flashlightAudioEntity;
 };
 
+struct ReviveSoundEffectComponent
+{
+	DOG::entity reviveAudioEntity;
+};
+
 struct PlayerHurtSoundEffectComponent
 {
 	DOG::entity hurtAudioEntity;
