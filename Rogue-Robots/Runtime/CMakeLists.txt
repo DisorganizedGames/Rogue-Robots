@@ -47,6 +47,9 @@ set(SourceFiles
 	"src/Game/InGameMenu.h" "src/Game/InGameMenu.cpp"
 	"src/Game/MusicSystems.h" "src/Game/MusicSystems.cpp"
 	"src/Game/AgentManager/BehaviorTree.h" "src/Game/AgentManager/BehaviorTree.cpp"
+	
+	"src/Game/PlayerMovementSystem.cpp" "src/Game/SpectatorCopyCamera.h"
+	"src/Game/PlayerMovementSystem.h" "src/Game/SpectatorCopyCamera.cpp"
 	)
 
 set(ExecutableName "Runtime")

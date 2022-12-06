@@ -602,7 +602,7 @@ namespace DOG
 
 		for (size_t i = 0; i < m_playerRigAnimators.size(); ++i)
 		{
-			baseAc.SimpleAdd(idleIdx, AnimationFlag::Looping | AnimationFlag::ResetPrio | AnimationFlag::Interrupt);
+			baseAc.SimpleAdd(idleIdx, AnimationFlag::Looping | AnimationFlag::ResetPrio | AnimationFlag::Interrupt | AnimationFlag::ForceRestart);
 			m_playerRigAnimators[i].rigData = m_rigs[MIXAMO_RIG_ID];
 			m_playerRigAnimators[i].ProcessAnimationComponent(baseAc);
 			for (u32 j = 0; j < N_GROUPS; j++)

@@ -6,416 +6,482 @@ using namespace DOG;
 using namespace DirectX;
 using namespace SimpleMath;
 
-#pragma region PlayerMovementSystem
-
-PlayerMovementSystem::PlayerMovementSystem()
-{
-	m_jumpSound = AssetManager::Get().LoadAudio("Assets/Audio/Jump/PlayerJumpSound.wav");
-
-	m_footstepSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep04.wav"));
-	m_footstepSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep05.wav"));
-	m_footstepSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep06.wav"));
-	m_footstepSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep09.wav"));
-}
-
-void PlayerMovementSystem::OnEarlyUpdate(
-	Entity e,
-	PlayerControllerComponent& player,
-	PlayerStatsComponent& playerStats,
-	TransformComponent& transform,
-	RigidbodyComponent& rigidbody,
-	InputController& input)
-{
-	auto& mgr = EntityManager::Get();
-
-	auto IsAlive = [&mgr](Entity e) {
-		return mgr.HasComponent<PlayerAliveComponent>(e) && mgr.GetComponent<PlayerAliveComponent>(e).timer < 0.f; };
-
-	if (input.toggleMoveView)
-	{
-		input.toggleMoveView = false;
-		player.moveView = !player.moveView;
-	}
-
-	// Create a new camera entity for this player
-	if (player.cameraEntity == DOG::NULL_ENTITY)
-	{
-		player.cameraEntity = CreatePlayerCameraEntity(e);
-	}
-
-	CameraComponent& camera = mgr.GetComponent<CameraComponent>(player.cameraEntity);
-	TransformComponent& cameraTransform = mgr.GetComponent<TransformComponent>(player.cameraEntity);
-
-	// Set the main camera to be ThisPlayer's camera
-	bool isThisPlayer = false;
-	if (mgr.HasComponent<ThisPlayer>(e))
-	{
-		isThisPlayer = true;
-		camera.isMainCamera = true;
-		if (mgr.HasComponent<PlayerAliveComponent>(e) && mgr.GetComponent<PlayerAliveComponent>(e).timer > 0.f)
-			mgr.GetComponent<PlayerAliveComponent>(e).timer -= (f32)Time::DeltaTime();
-	}
-	
-	if (input.toggleDebug && IsAlive(e))
-	{
-		input.toggleDebug = false;
-		if (player.debugCamera == DOG::NULL_ENTITY)
-		{
-			player.debugCamera = CreateDebugCamera(e);
-			mgr.GetComponent<TransformComponent>(player.debugCamera).worldMatrix = cameraTransform;
-			auto& debugCamera = mgr.GetComponent<CameraComponent>(player.debugCamera);
-			debugCamera.isMainCamera = true;
-		}
-		else
-		{
-			mgr.DeferredEntityDestruction(player.debugCamera);
-			player.debugCamera = DOG::NULL_ENTITY;
-		}
-	}
-
-	if (IsAlive(e))
-	{
-		// Rotate player
-		Vector3 forward = cameraTransform.GetForward();
-		Vector3 right(1, 0, 0);
-		if (player.moveView && isThisPlayer)
-		{
-			forward = GetNewForward(player);
-			input.polarAngle = player.polar;
-		}
-		right = s_globUp.Cross(forward);
-
-		// Move player
-		auto moveTowards = GetMoveTowards(input, forward, right);
-
-		if (player.debugCamera != DOG::NULL_ENTITY && isThisPlayer)
-		{
-			camera.isMainCamera = false;
-			if(player.moveView)
-				MoveDebugCamera(player.debugCamera, moveTowards, forward, right, 10.f, input);
-			return;
-		}
-
-		MovePlayer(e, player, moveTowards, forward, rigidbody, playerStats.speed, playerStats.jumpSpeed, input);
-		ApplyAnimations(e, input);
-		f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
-		camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 1600.f, 0.1f);
-
-		Vector3 pos = {};
-		if (mgr.HasComponent<MixamoHeadJointTF>(e))
-		{
-			auto offset = DirectX::XMMatrixTranslation(0.f, 0.f, 0.f);
-			auto headTF = Matrix(offset) * mgr.GetComponent<MixamoHeadJointTF>(e).transform * mgr.GetComponent<TransformComponent>(e).worldMatrix;
-			pos = { headTF(3, 0), headTF(3, 1), headTF(3, 2) };
-			pos += Vector3(0.f, -0.5f, 0.f);
-		}
-		else
-		{
-			// Place camera 0.4 units above the player transform
-			pos = transform.GetPosition() + Vector3(0, 0.7f, 0);
-		}
-		//pos = transform.GetPosition() + Vector3(0, 0.7f, 0);
-		camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
-		cameraTransform.worldMatrix = camera.viewMatrix.Invert();
-
-		// Update the player transform rotation around the Y-axis to match the camera's
-		auto camForward = cameraTransform.GetForward();
-		camForward.y = 0;
-		camForward.Normalize();
-
-		auto prevScale = transform.GetScale();
-		transform.worldMatrix = XMMatrixLookToLH(transform.GetPosition(), camForward, s_globUp);
-		transform.worldMatrix = transform.worldMatrix.Invert();
-		transform.SetScale(prevScale);
-	}
-	else 
-	{
-		// The player might be spectating, and if so the camera should be updated based on the spectated players' camera stats.
-		if (mgr.HasComponent<SpectatorComponent>(e))
-		{
-			entity playerBeingSpectated = mgr.GetComponent<SpectatorComponent>(e).playerBeingSpectated;
-			auto& spectatedPlayerControllerComponent = mgr.GetComponent<PlayerControllerComponent>(playerBeingSpectated);
-			auto& spectatedCameraComponent = mgr.GetComponent<CameraComponent>(spectatedPlayerControllerComponent.cameraEntity);
-			auto& spectatedCameraTransform = mgr.GetComponent<TransformComponent>(spectatedPlayerControllerComponent.cameraEntity);
-
-			//The player is dead and so MUST have a debug camera (should be spectator camera) assigned, so:
-			entity spectatorCamera = player.spectatorCamera;
-			auto& spectatorCameraComponent = mgr.GetComponent<CameraComponent>(spectatorCamera);
-			auto& spectatorCameraTransform = mgr.GetComponent<TransformComponent>(spectatorCamera);
-
-			//We now simply set them equal:
-			spectatorCameraComponent.viewMatrix = spectatedCameraComponent.viewMatrix;
-			spectatorCameraComponent.projMatrix = spectatedCameraComponent.projMatrix;
-			spectatorCameraTransform.worldMatrix = spectatedCameraTransform.worldMatrix;
-
-			spectatorCameraComponent.isMainCamera = true;
-			mgr.GetComponent<CameraComponent>(player.cameraEntity).isMainCamera = false;
-			if (mgr.Exists(player.debugCamera))
-			{
-				mgr.GetComponent<CameraComponent>(player.debugCamera).isMainCamera = false;
-			}
-		}
-	}
-}
-
-PlayerMovementSystem::Entity PlayerMovementSystem::CreateDebugCamera(Entity e) noexcept
-{
-	Entity debugCamera = EntityManager::Get().CreateEntity();
-	if (EntityManager::Get().HasComponent<SceneComponent>(e))
-	{
-		EntityManager::Get().AddComponent<SceneComponent>(debugCamera,
-			EntityManager::Get().GetComponent<SceneComponent>(e).scene);
-	}
-
-	EntityManager::Get().AddComponent<TransformComponent>(debugCamera);
-	EntityManager::Get().AddComponent<CameraComponent>(debugCamera);
-
-	return debugCamera;
-}
-
-PlayerMovementSystem::Entity PlayerMovementSystem::CreatePlayerCameraEntity(Entity player) noexcept
-{
-	Entity playerCamera = EntityManager::Get().CreateEntity();
-	if (EntityManager::Get().HasComponent<SceneComponent>(player))
-	{
-		EntityManager::Get().AddComponent<SceneComponent>(playerCamera,
-			EntityManager::Get().GetComponent<SceneComponent>(player).scene);
-	}
-
-	EntityManager::Get().AddComponent<TransformComponent>(playerCamera).SetScale(Vector3(1, 1, 1));
-	EntityManager::Get().AddComponent<CameraComponent>(playerCamera);
-
-	return playerCamera;
-}
-
-Vector3 PlayerMovementSystem::GetNewForward(PlayerControllerComponent& player) const noexcept
-{
-	auto [mouseX, mouseY] = DOG::Mouse::GetDeltaCoordinates();
-
-	player.azimuthal -= mouseX * player.mouseSensitivity * XM_2PI;
-	player.polar += mouseY * player.mouseSensitivity * XM_2PI;
-
-	player.polar = std::clamp(player.polar, 0.0001f, XM_PI - 0.0001f);
-	Vector3 forward = XMVectorSet(
-		std::cos(player.azimuthal) * std::sin(player.polar),
-		std::cos(player.polar),
-		std::sin(player.azimuthal) * std::sin(player.polar),
-		0
-	);
-
-	return forward;
-}
-
-Vector3 PlayerMovementSystem::GetMoveTowards(const InputController& input, Vector3 forward, Vector3 right) const noexcept
-{
-	Vector3 xzForward = forward;
-	xzForward.y = 0;
-	xzForward.Normalize();
-
-	Vector3 moveTowards = Vector3(0, 0, 0);
-
-	auto forwardBack = input.forward - input.backwards;
-	auto leftRight = input.right - input.left;
-
-	moveTowards = (f32)forwardBack * xzForward + (f32)leftRight * right;
-
-	moveTowards.Normalize();
-
-	return moveTowards;
-}
-
-void PlayerMovementSystem::MoveDebugCamera(Entity e, Vector3 moveTowards, Vector3 forward, Vector3 right, f32 speed, const InputController& input) noexcept
-{
-	auto& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
-	auto& camera = EntityManager::Get().GetComponent<CameraComponent>(e);
-	camera.isMainCamera = true;
-
-	transform.SetPosition((transform.GetPosition() += moveTowards * speed * (f32)Time::DeltaTime()));
-
-	if (input.up)
-		transform.SetPosition(transform.GetPosition() += s_globUp * speed * (f32)Time::DeltaTime());
-
-	if (input.down)
-		transform.SetPosition(transform.GetPosition() -= s_globUp * speed * (f32)Time::DeltaTime());
-
-	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
-	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 1600.f, 0.1f);
-
-	auto pos = transform.GetPosition();
-	camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
-}
-
-void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& player, Vector3 moveTowards, Vector3 forward,
-	RigidbodyComponent& rb, f32 speed, f32 jumpSpeed, InputController& input)
-{	
-	auto forwardDisparity = moveTowards.Dot(forward);
-	speed = forwardDisparity < -0.01f ? speed / 2.f : speed;
-
-	rb.linearVelocity = Vector3(
-		moveTowards.x * speed,
-		rb.linearVelocity.y,
-		moveTowards.z * speed
-	);
-
-	TransformComponent& playerTransform = EntityManager::Get().GetComponent<TransformComponent>(e);
-	CapsuleColliderComponent& capsuleCollider = EntityManager::Get().GetComponent<CapsuleColliderComponent>(e);
-	auto& comp = EntityManager::Get().GetComponent<AudioComponent>(e);
-
-	Vector3 velocityDirection = rb.linearVelocity;
-	velocityDirection.y = 0.0f;
-	Vector3 oldVelocity = velocityDirection;
-	velocityDirection.Normalize();
-
-	//This check is here because otherwise bullet will crash in debug
-	if (velocityDirection != Vector3::Zero)
-	{
-		auto rayHit = PhysicsEngine::RayCast(playerTransform.GetPosition(), playerTransform.GetPosition() + velocityDirection * capsuleCollider.capsuleRadius * 2.5f);
-		if (rayHit != std::nullopt)
-		{
-			auto rayHitInfo = *rayHit;
-
-			Vector3 beforeChange = oldVelocity;
-			oldVelocity += rayHitInfo.hitNormal * oldVelocity.Length();
-
-			//This section is for checking if the velocity has flipped signed value, and if it has then we want to set the velocity to zero
-			const i32 getSign = 0x80000000;
-			//Float hacks
-			i32 beforeChangeX = std::bit_cast<i32>(beforeChange.x);
-			i32 beforeChangeZ = std::bit_cast<i32>(beforeChange.z);
-			i32 oldVX = std::bit_cast<i32>(oldVelocity.x);
-			i32 oldVZ = std::bit_cast<i32>(oldVelocity.z);
-
-			//Get the signed value from the floats
-			bool bX = (beforeChangeX & getSign);
-			bool oX = (oldVX & getSign);
-			bool bZ = (beforeChangeZ & getSign);
-			bool oZ = (oldVZ & getSign);
-
-			//Check if they differ, and if they do then we set to zero
-			if (bX ^ oX)
-				oldVelocity.x = 0.0f;
-			if (bZ ^ oZ)
-				oldVelocity.z = 0.0f;
-
-			rb.linearVelocity.x = oldVelocity.x;
-			rb.linearVelocity.z = oldVelocity.z;
-		}
-	}
-
-	if (input.up && !player.jumping)
-	{
-		const f32 heightChange = 1.2f;
-		const f32 normalDirectionDifference = 0.5f;
-
-		//Shoot a ray cast down, will miss sometimes
-		auto rayHit = PhysicsEngine::RayCast(playerTransform.GetPosition(), playerTransform.GetPosition() - playerTransform.GetUp() * capsuleCollider.capsuleHeight / heightChange);
-
-		if (rayHit != std::nullopt)
-		{
-			auto rayHitInfo = *rayHit;
-			if (rayHitInfo.hitNormal.Dot(playerTransform.GetUp()) > normalDirectionDifference)
-			{
-				const f32 jumpVolume = 0.24f;
-
-				player.jumping = true;
-				rb.linearVelocity.y = jumpSpeed;
-
-				comp.volume = jumpVolume;
-				comp.assetID = m_jumpSound;
-				comp.is3D = true;
-				comp.shouldPlay = true;
-			}
-		}
-
-		AnimationComponent& ac = EntityManager::Get().GetComponent<AnimationComponent>(e);
-		const auto setterIdx = ac.addedSetters;
-		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::JumpForward));
-		auto& s = ac.animSetters[setterIdx];
-		s.transitionLength = 0.2f;
-		s.playbackRate = 1.1f;
-	}
-
-	if (!player.jumping && moveTowards != Vector3::Zero && !comp.playing && m_timeBeteenTimer < Time::ElapsedTime())
-	{
-		const f32 footstepVolume = 0.1f;
-
-		comp.volume = footstepVolume;
-		comp.assetID = m_footstepSounds[m_changeSound];
-		comp.is3D = true;
-		comp.shouldPlay = true;
-
-		m_timeBeteenTimer = m_timeBetween + (f32)Time::ElapsedTime();
-		srand((unsigned)time(NULL));
-		u32 oldChangeSound = m_changeSound;
-		m_changeSound = rand() % m_footstepSounds.size();
-		if (m_changeSound == oldChangeSound)
-		{
-			m_changeSound = ++oldChangeSound % m_footstepSounds.size();
-		}
-	}
-}
-
-void PlayerMovementSystem::ApplyAnimations(Entity e, const InputController& input)
-{
-	AnimationComponent& ac = EntityManager::Get().GetComponent<AnimationComponent>(e);
-	auto addedAnims = 0;
-	auto& setter = ac.animSetters[ac.addedSetters];
-	setter.group = ac.FULL_BODY;
-
-	auto forwardBack = input.forward - input.backwards;
-	auto leftRight = input.right - input.left;
-	if (forwardBack)
-	{
-		const auto animation = input.forward ? MixamoAnimations::Run : MixamoAnimations::WalkBackwards;
-		const auto weight = 0.5f;
-
-		setter.animationIDs[addedAnims] = static_cast<i8>(animation);
-		setter.targetWeights[addedAnims++] = weight;
-	}
-	if (leftRight)
-	{
-		const auto animation = input.left ? MixamoAnimations::StrafeLeftFast : MixamoAnimations::StrafeRightFast;
-
-		// Backwards + strafe_right makes leg clip through each other if equal weights
-		auto weight = (forwardBack && input.backwards && input.right) ? 0.7f : 0.5f;
-
-		setter.animationIDs[addedAnims] = static_cast<i8>(animation);
-		setter.targetWeights[addedAnims++] = weight;
-	}
-
-	// if no movement apply idle animation
-	if (!addedAnims)
-	{
-		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping);
-	}
-	else
-	{
-		setter.flag = AnimationFlag::Looping;
-		// misc variables
-		setter.playbackRate = 1.25f;
-		setter.transitionLength = 0.1f;
-		++ac.addedSetters;
-	}
-
-	// Simple aiming animation
-	{
-		auto aimAnimation = input.polarAngle < DirectX::XM_PIDIV2 ? MixamoAnimations::IdleHigh : MixamoAnimations::IdleLow;
-		
-		auto& s = ac.animSetters[ac.addedSetters++];
-		s.group = ac.UPPER_BODY;
-		s.flag = AnimationFlag::Looping;
-		s.animationIDs[0] = static_cast<i8>(MixamoAnimations::Idle);
-		s.animationIDs[1] = static_cast<i8>(aimAnimation);
-
-		auto weight = abs(input.polarAngle - DirectX::XM_PIDIV2) / DirectX::XM_PIDIV2;
-		s.targetWeights[0] = 1.f - weight;
-		s.targetWeights[1] = weight;
-		s.transitionLength = 0.f;
-		s.playbackRate = 1.f;
-	}
-}
-
-#pragma endregion
+//#pragma region PlayerMovementSystem
+//
+//PlayerMovementSystem::PlayerMovementSystem()
+//{
+//	m_jumpSound = AssetManager::Get().LoadAudio("Assets/Audio/Jump/PlayerJumpSound.wav");
+//
+//	m_footstepSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep04.wav"));
+//	m_footstepSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep05.wav"));
+//	m_footstepSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep06.wav"));
+//	m_footstepSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Footsteps/footstep09.wav"));
+//}
+//
+//void PlayerMovementSystem::OnEarlyUpdate(
+//	Entity e,
+//	PlayerControllerComponent& player,
+//	PlayerStatsComponent& playerStats,
+//	TransformComponent& transform,
+//	RigidbodyComponent& rigidbody,
+//	InputController& input)
+//{
+//	auto& mgr = EntityManager::Get();
+//
+//	auto IsAlive = [&mgr](Entity e) {
+//		return mgr.HasComponent<PlayerAliveComponent>(e) && mgr.GetComponent<PlayerAliveComponent>(e).timer < 0.f; };
+//
+//	if (input.toggleMoveView)
+//	{
+//		input.toggleMoveView = false;
+//		player.moveView = !player.moveView;
+//	}
+//
+//	// Create a new camera entity for this player
+//	if (player.cameraEntity == DOG::NULL_ENTITY)
+//	{
+//		player.cameraEntity = CreatePlayerCameraEntity(e);
+//	}
+//
+//	CameraComponent& camera = mgr.GetComponent<CameraComponent>(player.cameraEntity);
+//	TransformComponent& cameraTransform = mgr.GetComponent<TransformComponent>(player.cameraEntity);
+//
+//	// Set the main camera to be ThisPlayer's camera
+//	bool isThisPlayer = false;
+//	if (mgr.HasComponent<ThisPlayer>(e))
+//	{
+//		isThisPlayer = true;
+//		camera.isMainCamera = true;
+//		if (mgr.HasComponent<PlayerAliveComponent>(e) && mgr.GetComponent<PlayerAliveComponent>(e).timer > 0.f)
+//			mgr.GetComponent<PlayerAliveComponent>(e).timer -= (f32)Time::DeltaTime();
+//	}
+//	
+//	if (input.toggleDebug && IsAlive(e))
+//	{
+//		input.toggleDebug = false;
+//		if (player.debugCamera == DOG::NULL_ENTITY)
+//		{
+//			player.debugCamera = CreateDebugCamera(e);
+//			mgr.GetComponent<TransformComponent>(player.debugCamera).worldMatrix = cameraTransform;
+//			auto& debugCamera = mgr.GetComponent<CameraComponent>(player.debugCamera);
+//			debugCamera.isMainCamera = true;
+//		}
+//		else
+//		{
+//			mgr.DeferredEntityDestruction(player.debugCamera);
+//			player.debugCamera = DOG::NULL_ENTITY;
+//		}
+//	}
+//
+//	if (IsAlive(e))
+//	{
+//		// Rotate player
+//		Vector3 forward = cameraTransform.GetForward();
+//		Vector3 right(1, 0, 0);
+//		if (player.moveView && isThisPlayer)
+//		{
+//			forward = GetNewForward(player);
+//			input.polarAngle = player.polar;
+//		}
+//		right = s_globUp.Cross(forward);
+//
+//		// Move player
+//		auto moveTowards = GetMoveTowards(input, forward, right);
+//
+//		if (player.debugCamera != DOG::NULL_ENTITY && isThisPlayer)
+//		{
+//			camera.isMainCamera = false;
+//			if(player.moveView)
+//				MoveDebugCamera(player.debugCamera, moveTowards, forward, right, 10.f, input);
+//			return;
+//		}
+//
+//		MovePlayer(e, player, moveTowards, forward, rigidbody, playerStats.speed, playerStats.jumpSpeed, input);
+//		ApplyAnimations(e, input);
+//		f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
+//		camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 1600.f, 0.1f);
+//
+//		Vector3 pos = {};
+//		if (mgr.HasComponent<MixamoHeadJointTF>(e))
+//		{
+//			auto offset = DirectX::XMMatrixTranslation(0.f, 0.f, 0.f);
+//			auto headTF = Matrix(offset) * mgr.GetComponent<MixamoHeadJointTF>(e).transform * mgr.GetComponent<TransformComponent>(e).worldMatrix;
+//			pos = { headTF(3, 0), headTF(3, 1), headTF(3, 2) };
+//			pos += Vector3(0.f, -0.5f, 0.f);
+//		}
+//		else
+//		{
+//			// Place camera 0.4 units above the player transform
+//			pos = transform.GetPosition() + Vector3(0, 0.7f, 0);
+//		}
+//		//pos = transform.GetPosition() + Vector3(0, 0.7f, 0);
+//		camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
+//		cameraTransform.worldMatrix = camera.viewMatrix.Invert();
+//
+//		// Update the player transform rotation around the Y-axis to match the camera's
+//		auto camForward = cameraTransform.GetForward();
+//		camForward.y = 0;
+//		camForward.Normalize();
+//
+//		auto prevScale = transform.GetScale();
+//		transform.worldMatrix = XMMatrixLookToLH(transform.GetPosition(), camForward, s_globUp);
+//		transform.worldMatrix = transform.worldMatrix.Invert();
+//		transform.SetScale(prevScale);
+//	}
+//	else 
+//	{
+//		// The player might be spectating, and if so the camera should be updated based on the spectated players' camera stats.
+//		if (mgr.HasComponent<SpectatorComponent>(e))
+//		{
+//			entity playerBeingSpectated = mgr.GetComponent<SpectatorComponent>(e).playerBeingSpectated;
+//			auto& spectatedPlayerControllerComponent = mgr.GetComponent<PlayerControllerComponent>(playerBeingSpectated);
+//			auto& spectatedCameraComponent = mgr.GetComponent<CameraComponent>(spectatedPlayerControllerComponent.cameraEntity);
+//			auto& spectatedCameraTransform = mgr.GetComponent<TransformComponent>(spectatedPlayerControllerComponent.cameraEntity);
+//
+//			//The player is dead and so MUST have a debug camera (should be spectator camera) assigned, so:
+//			entity spectatorCamera = player.spectatorCamera;
+//			auto& spectatorCameraComponent = mgr.GetComponent<CameraComponent>(spectatorCamera);
+//			auto& spectatorCameraTransform = mgr.GetComponent<TransformComponent>(spectatorCamera);
+//
+//			//We now simply set them equal:
+//			spectatorCameraComponent.viewMatrix = spectatedCameraComponent.viewMatrix;
+//			spectatorCameraComponent.projMatrix = spectatedCameraComponent.projMatrix;
+//			spectatorCameraTransform.worldMatrix = spectatedCameraTransform.worldMatrix;
+//
+//			spectatorCameraComponent.isMainCamera = true;
+//			mgr.GetComponent<CameraComponent>(player.cameraEntity).isMainCamera = false;
+//			if (mgr.Exists(player.debugCamera))
+//			{
+//				mgr.GetComponent<CameraComponent>(player.debugCamera).isMainCamera = false;
+//			}
+//			bool changeGunDrawLogic = false;
+//			DOG::EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity gunModelNotFPS, ModelComponent&, ChildToBoneComponent& childToBone)
+//				{
+//					if (childToBone.boneParent == playerBeingSpectated)
+//					{
+//						std::cout << " childToBone.boneParent == playerBeingSpectated " << playerBeingSpectated << std::endl;
+//						if (EntityManager::Get().HasComponent<PlayerAliveComponent>(playerBeingSpectated))
+//						{
+//							std::cout << " playerBeingSpectated is alive " << playerBeingSpectated << std::endl;
+//							if (EntityManager::Get().HasComponent<DontDraw>(gunModelNotFPS))
+//							{
+//								std::cout << " GunModel has DontDraw " << playerBeingSpectated << std::endl;
+//								if (EntityManager::Get().HasComponent<ScriptComponent>(playerBeingSpectated))
+//								{
+//									std::cout << " spectatedPlayer has script " << playerBeingSpectated << std::endl;
+//									auto scriptData = LuaMain::GetScriptManager()->GetScript(playerBeingSpectated, "Gun.lua");
+//									LuaTable tab(scriptData.scriptTable, true);
+//									auto ge = tab.GetTableFromTable("gunEntity");
+//
+//									int gunID = ge.GetIntFromTable("entityID");
+//									int barrelID = tab.GetIntFromTable("barrelEntityID");
+//									int miscID = tab.GetIntFromTable("miscEntityID");
+//									int magazineID = tab.GetIntFromTable("magazineEntityID");
+//
+//									std::cout << "DRAW FPS GUN" << playerBeingSpectated << std::endl;
+//									EntityManager::Get().RemoveComponentIfExists<DontDraw>(gunID);
+//									EntityManager::Get().RemoveComponentIfExists<DontDraw>(barrelID);
+//									EntityManager::Get().RemoveComponentIfExists<DontDraw>(miscID);
+//									EntityManager::Get().RemoveComponentIfExists<DontDraw>(magazineID);
+//								}
+//							}
+//						}
+//					}
+//					changeGunDrawLogic = (childToBone.boneParent == playerBeingSpectated && !EntityManager::Get().HasComponent<DontDraw>(gunModelNotFPS));
+//				});
+//			if (changeGunDrawLogic && EntityManager::Get().HasComponent<PlayerAliveComponent>(playerBeingSpectated))
+//			{
+//				std::cout << " Change gun Draw logic " << changeGunDrawLogic << std::endl;
+//				auto& em = EntityManager::Get();
+//				// Draw Logic FirstPersonView Gun
+//				if (em.HasComponent<ScriptComponent>(playerBeingSpectated))
+//				{
+//					auto scriptData = LuaMain::GetScriptManager()->GetScript(playerBeingSpectated, "Gun.lua");
+//					LuaTable tab(scriptData.scriptTable, true);
+//					auto ge = tab.GetTableFromTable("gunEntity");
+//
+//					int gunID = ge.GetIntFromTable("entityID");
+//					int barrelID = tab.GetIntFromTable("barrelEntityID");
+//					int miscID = tab.GetIntFromTable("miscEntityID");
+//					int magazineID = tab.GetIntFromTable("magazineEntityID");
+//
+//					std::cout << "DRAW FPS GUN" << playerBeingSpectated << std::endl;
+//					em.RemoveComponentIfExists<DontDraw>(gunID);
+//					em.RemoveComponentIfExists<DontDraw>(barrelID);
+//					em.RemoveComponentIfExists<DontDraw>(miscID);
+//					em.RemoveComponentIfExists<DontDraw>(magazineID);
+//					/*else
+//					{
+//						std::cout << "DONT DRAW FPS GUN" << player << std::endl;
+//						em.AddOrReplaceComponent<DontDraw>(gunID);
+//						em.AddOrReplaceComponent<DontDraw>(barrelID);
+//						em.AddOrReplaceComponent<DontDraw>(miscID);
+//						em.AddOrReplaceComponent<DontDraw>(magazineID);
+//					}*/
+//				}
+//			}
+//		}
+//	}
+//}
+//
+//PlayerMovementSystem::Entity PlayerMovementSystem::CreateDebugCamera(Entity e) noexcept
+//{
+//	Entity debugCamera = EntityManager::Get().CreateEntity();
+//	if (EntityManager::Get().HasComponent<SceneComponent>(e))
+//	{
+//		EntityManager::Get().AddComponent<SceneComponent>(debugCamera,
+//			EntityManager::Get().GetComponent<SceneComponent>(e).scene);
+//	}
+//
+//	EntityManager::Get().AddComponent<TransformComponent>(debugCamera);
+//	EntityManager::Get().AddComponent<CameraComponent>(debugCamera);
+//
+//	return debugCamera;
+//}
+//
+//PlayerMovementSystem::Entity PlayerMovementSystem::CreatePlayerCameraEntity(Entity player) noexcept
+//{
+//	Entity playerCamera = EntityManager::Get().CreateEntity();
+//	if (EntityManager::Get().HasComponent<SceneComponent>(player))
+//	{
+//		EntityManager::Get().AddComponent<SceneComponent>(playerCamera,
+//			EntityManager::Get().GetComponent<SceneComponent>(player).scene);
+//	}
+//
+//	EntityManager::Get().AddComponent<TransformComponent>(playerCamera).SetScale(Vector3(1, 1, 1));
+//	EntityManager::Get().AddComponent<CameraComponent>(playerCamera);
+//
+//	return playerCamera;
+//}
+//
+//Vector3 PlayerMovementSystem::GetNewForward(PlayerControllerComponent& player) const noexcept
+//{
+//	auto [mouseX, mouseY] = DOG::Mouse::GetDeltaCoordinates();
+//
+//	player.azimuthal -= mouseX * player.mouseSensitivity * XM_2PI;
+//	player.polar += mouseY * player.mouseSensitivity * XM_2PI;
+//
+//	player.polar = std::clamp(player.polar, 0.0001f, XM_PI - 0.0001f);
+//	Vector3 forward = XMVectorSet(
+//		std::cos(player.azimuthal) * std::sin(player.polar),
+//		std::cos(player.polar),
+//		std::sin(player.azimuthal) * std::sin(player.polar),
+//		0
+//	);
+//
+//	return forward;
+//}
+//
+//Vector3 PlayerMovementSystem::GetMoveTowards(const InputController& input, Vector3 forward, Vector3 right) const noexcept
+//{
+//	Vector3 xzForward = forward;
+//	xzForward.y = 0;
+//	xzForward.Normalize();
+//
+//	Vector3 moveTowards = Vector3(0, 0, 0);
+//
+//	auto forwardBack = input.forward - input.backwards;
+//	auto leftRight = input.right - input.left;
+//
+//	moveTowards = (f32)forwardBack * xzForward + (f32)leftRight * right;
+//
+//	moveTowards.Normalize();
+//
+//	return moveTowards;
+//}
+//
+//void PlayerMovementSystem::MoveDebugCamera(Entity e, Vector3 moveTowards, Vector3 forward, Vector3 right, f32 speed, const InputController& input) noexcept
+//{
+//	auto& transform = EntityManager::Get().GetComponent<TransformComponent>(e);
+//	auto& camera = EntityManager::Get().GetComponent<CameraComponent>(e);
+//	camera.isMainCamera = true;
+//
+//	transform.SetPosition((transform.GetPosition() += moveTowards * speed * (f32)Time::DeltaTime()));
+//
+//	if (input.up)
+//		transform.SetPosition(transform.GetPosition() += s_globUp * speed * (f32)Time::DeltaTime());
+//
+//	if (input.down)
+//		transform.SetPosition(transform.GetPosition() -= s_globUp * speed * (f32)Time::DeltaTime());
+//
+//	f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
+//	camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 1600.f, 0.1f);
+//
+//	auto pos = transform.GetPosition();
+//	camera.viewMatrix = XMMatrixLookToLH(pos, forward, forward.Cross(right));
+//}
+//
+//void PlayerMovementSystem::MovePlayer(Entity e, PlayerControllerComponent& player, Vector3 moveTowards, Vector3 forward,
+//	RigidbodyComponent& rb, f32 speed, f32 jumpSpeed, InputController& input)
+//{	
+//	auto forwardDisparity = moveTowards.Dot(forward);
+//	speed = forwardDisparity < -0.01f ? speed / 2.f : speed;
+//
+//	rb.linearVelocity = Vector3(
+//		moveTowards.x * speed,
+//		rb.linearVelocity.y,
+//		moveTowards.z * speed
+//	);
+//
+//	TransformComponent& playerTransform = EntityManager::Get().GetComponent<TransformComponent>(e);
+//	CapsuleColliderComponent& capsuleCollider = EntityManager::Get().GetComponent<CapsuleColliderComponent>(e);
+//	auto& comp = EntityManager::Get().GetComponent<AudioComponent>(e);
+//
+//	Vector3 velocityDirection = rb.linearVelocity;
+//	velocityDirection.y = 0.0f;
+//	Vector3 oldVelocity = velocityDirection;
+//	velocityDirection.Normalize();
+//
+//	//This check is here because otherwise bullet will crash in debug
+//	if (velocityDirection != Vector3::Zero)
+//	{
+//		auto rayHit = PhysicsEngine::RayCast(playerTransform.GetPosition(), playerTransform.GetPosition() + velocityDirection * capsuleCollider.capsuleRadius * 2.5f);
+//		if (rayHit != std::nullopt)
+//		{
+//			auto rayHitInfo = *rayHit;
+//
+//			Vector3 beforeChange = oldVelocity;
+//			oldVelocity += rayHitInfo.hitNormal * oldVelocity.Length();
+//
+//			//This section is for checking if the velocity has flipped signed value, and if it has then we want to set the velocity to zero
+//			const i32 getSign = 0x80000000;
+//			//Float hacks
+//			i32 beforeChangeX = std::bit_cast<i32>(beforeChange.x);
+//			i32 beforeChangeZ = std::bit_cast<i32>(beforeChange.z);
+//			i32 oldVX = std::bit_cast<i32>(oldVelocity.x);
+//			i32 oldVZ = std::bit_cast<i32>(oldVelocity.z);
+//
+//			//Get the signed value from the floats
+//			bool bX = (beforeChangeX & getSign);
+//			bool oX = (oldVX & getSign);
+//			bool bZ = (beforeChangeZ & getSign);
+//			bool oZ = (oldVZ & getSign);
+//
+//			//Check if they differ, and if they do then we set to zero
+//			if (bX ^ oX)
+//				oldVelocity.x = 0.0f;
+//			if (bZ ^ oZ)
+//				oldVelocity.z = 0.0f;
+//
+//			rb.linearVelocity.x = oldVelocity.x;
+//			rb.linearVelocity.z = oldVelocity.z;
+//		}
+//	}
+//
+//	if (input.up && !player.jumping)
+//	{
+//		const f32 heightChange = 1.2f;
+//		const f32 normalDirectionDifference = 0.5f;
+//
+//		//Shoot a ray cast down, will miss sometimes
+//		auto rayHit = PhysicsEngine::RayCast(playerTransform.GetPosition(), playerTransform.GetPosition() - playerTransform.GetUp() * capsuleCollider.capsuleHeight / heightChange);
+//
+//		if (rayHit != std::nullopt)
+//		{
+//			auto rayHitInfo = *rayHit;
+//			if (rayHitInfo.hitNormal.Dot(playerTransform.GetUp()) > normalDirectionDifference)
+//			{
+//				const f32 jumpVolume = 0.24f;
+//
+//				player.jumping = true;
+//				rb.linearVelocity.y = jumpSpeed;
+//
+//				comp.volume = jumpVolume;
+//				comp.assetID = m_jumpSound;
+//				comp.is3D = true;
+//				comp.shouldPlay = true;
+//			}
+//		}
+//
+//		AnimationComponent& ac = EntityManager::Get().GetComponent<AnimationComponent>(e);
+//		const auto setterIdx = ac.addedSetters;
+//		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::JumpForward));
+//		auto& s = ac.animSetters[setterIdx];
+//		s.transitionLength = 0.2f;
+//		s.playbackRate = 1.1f;
+//	}
+//
+//	if (!player.jumping && moveTowards != Vector3::Zero && !comp.playing && m_timeBeteenTimer < Time::ElapsedTime())
+//	{
+//		const f32 footstepVolume = 0.1f;
+//
+//		comp.volume = footstepVolume;
+//		comp.assetID = m_footstepSounds[m_changeSound];
+//		comp.is3D = true;
+//		comp.shouldPlay = true;
+//
+//		m_timeBeteenTimer = m_timeBetween + (f32)Time::ElapsedTime();
+//		srand((unsigned)time(NULL));
+//		u32 oldChangeSound = m_changeSound;
+//		m_changeSound = rand() % m_footstepSounds.size();
+//		if (m_changeSound == oldChangeSound)
+//		{
+//			m_changeSound = ++oldChangeSound % m_footstepSounds.size();
+//		}
+//	}
+//}
+//
+//void PlayerMovementSystem::ApplyAnimations(Entity e, const InputController& input)
+//{
+//	AnimationComponent& ac = EntityManager::Get().GetComponent<AnimationComponent>(e);
+//	auto addedAnims = 0;
+//	auto& setter = ac.animSetters[ac.addedSetters];
+//	setter.group = ac.FULL_BODY;
+//
+//	auto forwardBack = input.forward - input.backwards;
+//	auto leftRight = input.right - input.left;
+//	if (forwardBack)
+//	{
+//		const auto animation = input.forward ? MixamoAnimations::Run : MixamoAnimations::WalkBackwards;
+//		const auto weight = 0.5f;
+//
+//		setter.animationIDs[addedAnims] = static_cast<i8>(animation);
+//		setter.targetWeights[addedAnims++] = weight;
+//	}
+//	if (leftRight)
+//	{
+//		const auto animation = input.left ? MixamoAnimations::StrafeLeftFast : MixamoAnimations::StrafeRightFast;
+//
+//		// Backwards + strafe_right makes leg clip through each other if equal weights
+//		auto weight = (forwardBack && input.backwards && input.right) ? 0.7f : 0.5f;
+//
+//		setter.animationIDs[addedAnims] = static_cast<i8>(animation);
+//		setter.targetWeights[addedAnims++] = weight;
+//	}
+//
+//	// if no movement apply idle animation
+//	if (!addedAnims)
+//	{
+//		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping);
+//	}
+//	else
+//	{
+//		setter.flag = AnimationFlag::Looping;
+//		// misc variables
+//		setter.playbackRate = 1.25f;
+//		setter.transitionLength = 0.1f;
+//		++ac.addedSetters;
+//	}
+//
+//	// Simple aiming animation
+//	{
+//		auto aimAnimation = input.polarAngle < DirectX::XM_PIDIV2 ? MixamoAnimations::IdleHigh : MixamoAnimations::IdleLow;
+//		
+//		auto& s = ac.animSetters[ac.addedSetters++];
+//		s.group = ac.UPPER_BODY;
+//		s.flag = AnimationFlag::Looping;
+//		s.animationIDs[0] = static_cast<i8>(MixamoAnimations::Idle);
+//		s.animationIDs[1] = static_cast<i8>(aimAnimation);
+//
+//		auto weight = abs(input.polarAngle - DirectX::XM_PIDIV2) / DirectX::XM_PIDIV2;
+//		s.targetWeights[0] = 1.f - weight;
+//		s.targetWeights[1] = weight;
+//		s.transitionLength = 0.f;
+//		s.playbackRate = 1.f;
+//	}
+//}
+//
+//#pragma endregion
 
 
 
@@ -540,14 +606,17 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 	{
 		if (!DOG::EntityManager::Get().HasComponent<PlayerAliveComponent>(sc.playerSpectatorQueue[i]))
 		{
-			if (sc.playerBeingSpectated == sc.playerSpectatorQueue[i])
+			const bool spectatedPlayerIsDead = sc.playerBeingSpectated == sc.playerSpectatorQueue[i];
+			if (spectatedPlayerIsDead)
 			{
 				//Not eligible for spectating anymore, since that player has died:
 				const u32 index = GetQueueIndexForSpectatedPlayer(sc.playerBeingSpectated, sc.playerSpectatorQueue);
 				const u32 nextIndex = (index + 1) % sc.playerSpectatorQueue.size();
 				bool isSameEntity = index == nextIndex;
-				if (!isSameEntity)
+				if (!isSameEntity) 
 				{
+					ChangeGunDrawLogic(sc.playerBeingSpectated, true, false);
+					ChangeGunDrawLogic(sc.playerSpectatorQueue[nextIndex], false, true);
 					ChangeSuitDrawLogic(sc.playerBeingSpectated, sc.playerSpectatorQueue[nextIndex]);
 				}
 				sc.playerBeingSpectated = sc.playerSpectatorQueue[nextIndex];
@@ -557,6 +626,19 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 			sc.playerSpectatorQueue.pop_back();
 		}
 	}
+
+	bool changeGunDrawLogic = false;
+	DOG::EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity gunModelNotFPS, ModelComponent&, ChildToBoneComponent& childToBone)
+		{
+			changeGunDrawLogic = (childToBone.boneParent == sc.playerBeingSpectated && !EntityManager::Get().HasComponent<DontDraw>(gunModelNotFPS));
+		});
+	if (changeGunDrawLogic)
+	{
+		std::cout << " Change gun Draw logic " << changeGunDrawLogic << std::endl;
+		ChangeGunDrawLogic(sc.playerBeingSpectated, true, false);
+	}
+	
+
 	if (sc.playerSpectatorQueue.empty())
 		return;
 
@@ -657,6 +739,8 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 	{
 		DOG::EntityManager::Get().RemoveComponent<AudioListenerComponent>(sc.playerBeingSpectated);
 
+		ChangeGunDrawLogic(sc.playerBeingSpectated, false, true);
+		ChangeGunDrawLogic(sc.playerSpectatorQueue[nextIndex], true, false);
 		ChangeSuitDrawLogic(sc.playerBeingSpectated, sc.playerSpectatorQueue[nextIndex]);
 		sc.playerName = DOG::EntityManager::Get().GetComponent<DOG::NetworkPlayerComponent>(sc.playerSpectatorQueue[nextIndex]).playerName;
 		sc.playerBeingSpectated = sc.playerSpectatorQueue[nextIndex];
@@ -670,6 +754,56 @@ u32 SpectateSystem::GetQueueIndexForSpectatedPlayer(DOG::entity player, const st
 	auto it = std::find(players.begin(), players.end(), player);
 	ASSERT(it != players.end(), "Couldn't find player in spectator queue.");
 	return (u32)(it - players.begin());
+}
+
+void SpectateSystem::ChangeGunDrawLogic(DOG::entity player, bool drawFirstPersonViewGun, bool drawModelGun)
+{
+	std::cout << "\nChangeGunDrawLogic " << player << std::endl;
+	auto& em = DOG::EntityManager::Get();
+	
+	// Draw Logic FirstPersonView Gun
+	if(em.HasComponent<ScriptComponent>(player))
+	{
+		auto scriptData = LuaMain::GetScriptManager()->GetScript(player, "Gun.lua");
+		LuaTable tab(scriptData.scriptTable, true);
+		auto ge = tab.GetTableFromTable("gunEntity");
+
+		int gunID = ge.GetIntFromTable("entityID");
+		int barrelID = tab.GetIntFromTable("barrelEntityID");
+		int miscID = tab.GetIntFromTable("miscEntityID");
+		int magazineID = tab.GetIntFromTable("magazineEntityID");
+
+		if (drawFirstPersonViewGun)
+		{
+			std::cout << "DRAW FPS GUN" << player << std::endl;
+			em.RemoveComponentIfExists<DontDraw>(gunID);
+			em.RemoveComponentIfExists<DontDraw>(barrelID);
+			em.RemoveComponentIfExists<DontDraw>(miscID);
+			em.RemoveComponentIfExists<DontDraw>(magazineID);
+		}
+		else
+		{
+			std::cout << "DONT DRAW FPS GUN" << player << std::endl;
+			em.AddOrReplaceComponent<DontDraw>(gunID);
+			em.AddOrReplaceComponent<DontDraw>(barrelID);
+			em.AddOrReplaceComponent<DontDraw>(miscID);
+			em.AddOrReplaceComponent<DontDraw>(magazineID);
+		}
+	}
+
+	// Draw Logic FirstPersonView Gun
+	{
+		EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
+			{
+				std::cout << std::endl << "boneParent" << bone.boneParent << std::endl;
+				if (bone.boneParent == player)
+					if (drawModelGun)
+						DOG::EntityManager::Get().RemoveComponentIfExists<DOG::DontDraw>(modelGun);
+					else
+						DOG::EntityManager::Get().AddOrReplaceComponent<DOG::DontDraw>(modelGun);
+			});
+	}
+	std::cout << "\nEndOF ChangeGunDrawLogic " << player << std::endl;
 }
 
 void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw)
@@ -971,8 +1105,10 @@ void ReviveSystem::RevivePlayer(DOG::entity player)
 	pcc.spectatorCamera = NULL_ENTITY;
 	mgr.GetComponent<CameraComponent>(pcc.cameraEntity).isMainCamera = true;
 
-	mgr.GetComponent<AnimationComponent>(player).SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio);
-	mgr.AddComponent<PlayerAliveComponent>(player).timer = 2.5f;
+	auto& ac = mgr.GetComponent<AnimationComponent>(player);
+	ac.SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio, ac.BASE_PRIORITY, ac.FULL_BODY, 1.5f, 0.5f);
+	mgr.AddComponent<PlayerAliveComponent>(player).timer = 2.f;
+
 	LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
 	LuaMain::GetScriptManager()->AddScript(player, "PassiveItemSystem.lua");
 	LuaMain::GetScriptManager()->AddScript(player, "ActiveItemSystem.lua");
@@ -1001,21 +1137,53 @@ void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity pla
 
 	DOG::EntityManager::Get().Collect<ChildComponent>().Do([&](DOG::entity playerModel, ChildComponent& cc)
 		{
+			auto& em = DOG::EntityManager::Get();
 			if (cc.parent == playerToDraw)
 			{
+				std::cout << "deadPlayer" << playerToDraw << std::endl;
+				
 				//This means that playerModel is the mesh model (suit), and it should be rendered again:
-				DOG::EntityManager::Get().RemoveComponent<DOG::DontDraw>(playerModel);
+				em.RemoveComponent<DOG::DontDraw>(playerModel);
 				#if defined _DEBUG
 				addedSuitToRendering = true;
 				#endif
+				EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
+					{
+						std::cout << "boneParent" << bone.boneParent << std::endl;
+						if (bone.boneParent == playerToDraw)
+							em.RemoveComponentIfExists<DOG::DontDraw>(modelGun);
+					});
+
+				std::cout << "ChangeSuitDrawLogic  playerToDraw  BeforeAddOrReplaceScript"<< std::endl;
+				auto scriptData = LuaMain::GetScriptManager()->GetScript(playerToDraw, "Gun.lua");
+				LuaTable tab(scriptData.scriptTable, true);
+				auto ge = tab.GetTableFromTable("gunEntity");
+				int gunID = ge.GetIntFromTable("entityID");
+				em.AddOrReplaceComponent<DontDraw>(gunID);
+				int barrelID = tab.GetIntFromTable("barrelEntityID");
+				em.AddOrReplaceComponent<DontDraw>(barrelID);
+				int miscID = tab.GetIntFromTable("miscEntityID");
+				em.AddOrReplaceComponent<DontDraw>(miscID);
+				int magazineID = tab.GetIntFromTable("magazineEntityID");
+				em.AddOrReplaceComponent<DontDraw>(magazineID);
 			}
 			else if (cc.parent == playerToNotDraw)
 			{
+				std::cout << "ChangeSuitDrawLogic Before player NOT to draw" << std::endl;
 				//This means that playerModel is the spectated players' armor/suit, and it should not be eligible for rendering anymore:
 				DOG::EntityManager::Get().AddComponent<DOG::DontDraw>(playerModel);
 				#if defined _DEBUG
 				removedSuitFromRendering = true;
 				#endif
+				std::cout << std::endl << "playerToDraw" << playerToDraw << std::endl;
+				EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
+					{
+						std::cout << std::endl << "boneParent" << bone.boneParent << std::endl;
+						if (bone.boneParent == playerToNotDraw)
+							DOG::EntityManager::Get().AddOrReplaceComponent<DOG::DontDraw>(modelGun);
+					});
+
+				std::cout << "ChangeSuitDrawLogic  playerNotToDraw  BeforeRemoveIfExistsScript" << std::endl;
 			}
 		});
 		#if defined _DEBUG
@@ -1345,9 +1513,14 @@ void SetFlashLightToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& ch
 	auto& em = EntityManager::Get();
 	if (em.Exists(child.boneParent))
 	{
-		auto& boneHeadModel = em.GetComponent<MixamoHeadJointTF>(child.boneParent);
-		world.worldMatrix = child.localTransform * boneHeadModel.transform * em.GetComponent<TransformComponent>(child.boneParent).worldMatrix;
-		world.SetPosition(world.GetPosition() + Vector3(0.f, -0.5f, 0.f));
+		if (!em.HasComponent<ModelComponent>(e))
+		{
+			world.worldMatrix = child.localTransform *
+				em.GetComponent<MixamoHeadJointTF>(child.boneParent).transform *
+				em.GetComponent<TransformComponent>(child.boneParent).worldMatrix;
+
+			world.SetPosition(world.GetPosition() + Vector3(0.f, -0.5f, 0.f)); // Account for capsule offset
+		}
 	}
 	else
 	{
@@ -1360,8 +1533,14 @@ void SetGunToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& child, DO
 	auto& em = EntityManager::Get();
 	if (em.Exists(child.boneParent))
 	{
-		world.worldMatrix = child.localTransform * em.GetComponent<MixamoRightHandJointTF>(child.boneParent).transform * em.GetComponent<TransformComponent>(child.boneParent).worldMatrix;
-		world.SetPosition(world.GetPosition() + Vector3(0.f, -0.5f, 0.f)); // account for model capsule offset
+		if (em.HasComponent<ModelComponent>(e))
+		{
+			world.worldMatrix = child.localTransform *
+				em.GetComponent<MixamoRightHandJointTF>(child.boneParent).transform *
+				em.GetComponent<TransformComponent>(child.boneParent).worldMatrix;
+
+			world.SetPosition(world.GetPosition() + Vector3(0.f, -0.5f, 0.f)); // Account for model capsule offset
+		}
 	}
 	else
 	{
