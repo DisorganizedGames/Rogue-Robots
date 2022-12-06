@@ -3,6 +3,20 @@
 #include "../DOGEngine/src/Core/Time.h" 
 #include "GameComponent.h"
 
+using namespace DOG;
+
+HeartbeatTrackerSystem::HeartbeatTrackerSystem()
+{
+	m_heartbeatAudioEntity = EntityManager::Get().CreateEntity();
+	AudioComponent& comp = EntityManager::Get().AddComponent<AudioComponent>(m_heartbeatAudioEntity);
+	comp.loopStart = 0.0f;
+	comp.loopEnd = -1.0f;
+	comp.loop = true;
+	comp.volume = 0.3f,
+
+	m_heartbeatSound = AssetManager::Get().LoadAudio("Assets/Audio/PlayerHurt/LowHealth__L_Fixed.wav");
+}
+
 void HeartbeatTrackerSystem::OnUpdate(DOG::entity e, DOG::ThisPlayer& tp, PlayerStatsComponent& psc)
 {
 	UNREFERENCED_PARAMETER(e);
@@ -17,8 +31,16 @@ void HeartbeatTrackerSystem::OnUpdate(DOG::entity e, DOG::ThisPlayer& tp, Player
 		return;
 	}
 
+	AudioComponent& healthAudioComponent = EntityManager::Get().GetComponent<AudioComponent>(m_heartbeatAudioEntity);
 	if (psc.health <= m_healthThreshold)
 	{
+		if (!healthAudioComponent.playing)
+		{
+			healthAudioComponent.assetID = m_heartbeatSound;
+			healthAudioComponent.shouldPlay = true;
+		}
+		healthAudioComponent.volume = 0.3f;
+
 		if (!m_justImpact)
 		{
 			m_justImpact = true;
@@ -36,5 +58,6 @@ void HeartbeatTrackerSystem::OnUpdate(DOG::entity e, DOG::ThisPlayer& tp, Player
 	{
 		m_justImpact = false;
 		DOG::gfx::PostProcess::Get().SetHeartbeatFactor(0.f);
+		healthAudioComponent.volume = 0.0f;
 	}
 }

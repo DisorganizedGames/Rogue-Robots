@@ -36,6 +36,8 @@ u8 PlayerManager::GetNrOfPlayers()
 void PlayerManager::HurtThisPlayer(f32 damage)
 {
 	s_entityManager.GetComponent<PlayerStatsComponent>(GetThisPlayer()).health -= damage;
+
+	PlayHurtAudio(GetThisPlayer());
 }
 
 bool PlayerManager::IsThisPlayerHost()
@@ -58,7 +60,7 @@ bool PlayerManager::IsThisMultiplayer()
 
 void PlayerManager::HurtOnlinePlayers(entity player)
 {
-	std::cout << u32(player) << std::endl; //removes warning, is being used in another branch, remove this line when function is used
+	PlayHurtAudio(player);
 }
 
 i8 PlayerManager::GetPlayerId(entity player)
@@ -77,11 +79,43 @@ PlayerManager::PlayerManager() noexcept
 
 }
 
-
 void PlayerManager::Initialize()
 {
 	// Set status to initialized
 	s_notInitialized = false;
+}
+
+void PlayerManager::PlayHurtAudio(entity player)
+{
+	EntityManager& eMan = EntityManager::Get();
+	if (!eMan.HasComponent<PlayerHurtSoundEffectComponent>(player))
+	{
+		PlayerHurtSoundEffectComponent& playerHurtSoundEffectComponent = eMan.AddComponent<PlayerHurtSoundEffectComponent>(player);
+
+		playerHurtSoundEffectComponent.hurtAudioEntity = DOG::EntityManager::Get().CreateEntity();
+		eMan.AddComponent<TransformComponent>(playerHurtSoundEffectComponent.hurtAudioEntity);
+		eMan.AddComponent<AudioComponent>(playerHurtSoundEffectComponent.hurtAudioEntity).is3D = true;
+		eMan.AddComponent<ChildComponent>(playerHurtSoundEffectComponent.hurtAudioEntity).parent = player;
+
+		m_playerHurtAudio = AssetManager::Get().LoadAudio("Assets/Audio/PlayerHurt/Damage_Fixed.wav");
+		m_playerDeathAudio = AssetManager::Get().LoadAudio("Assets/Audio/PlayerHurt/Death_Fixed.wav");
+	}
+	PlayerHurtSoundEffectComponent& playerHurtSoundEffectComponent = eMan.GetComponent<PlayerHurtSoundEffectComponent>(player);
+	AudioComponent& audio = eMan.GetComponent<AudioComponent>(playerHurtSoundEffectComponent.hurtAudioEntity);
+
+	if (eMan.GetComponent<PlayerStatsComponent>(player).health > 0.0f)
+	{
+		audio.assetID = m_playerHurtAudio;
+		audio.volume = 0.7f;
+		if (!audio.playing)
+			audio.shouldPlay = true;
+	}
+	else
+	{
+		audio.assetID = m_playerDeathAudio;
+		audio.shouldPlay = true;
+		audio.volume = 1.0f;
+	}
 }
 
 #pragma warning( disable : 4100 )

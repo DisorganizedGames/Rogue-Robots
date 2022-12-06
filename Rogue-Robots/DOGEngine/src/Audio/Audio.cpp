@@ -239,8 +239,8 @@ void AudioDevice::Handle3DComponent(SourceVoice* source, entity e)
 				listenersExist = true;
 				std::vector<f32> matrix(dspSettings.DstChannelCount * dspSettings.SrcChannelCount);
 				X3DAUDIO_LISTENER ls = {
-					.OrientFront = transform.worldMatrix.Forward(),
-					.OrientTop = transform.worldMatrix.Up(),
+					.OrientFront = transform.GetForward(),
+					.OrientTop = transform.GetUp(),
 					.Position = transform.GetPosition(),
 					.Velocity = {}, // For doppler effect
 					.pCone = nullptr, // Cones not supported yet

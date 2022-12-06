@@ -462,7 +462,18 @@ public:
 //Quick and dirty flashlight toggle system for MVP
 class MVPFlashlightStateSystem : public DOG::ISystem
 {
+private:
+	u32 m_flashlightTurnOnSound;
+	u32 m_flashlightTurnOffSound;
+
 public:
+
+	MVPFlashlightStateSystem()
+	{
+		m_flashlightTurnOnSound = DOG::AssetManager::Get().LoadAudio("Assets/Audio/Flashlight/Flashlight_On.wav");
+		m_flashlightTurnOffSound = DOG::AssetManager::Get().LoadAudio("Assets/Audio/Flashlight/Flashlight_Off.wav");
+	};
+
 	SYSTEM_CLASS(DOG::SpotLightComponent);
 	ON_UPDATE(DOG::SpotLightComponent);
 
@@ -473,6 +484,34 @@ public:
 			return;
 
 		auto flashlightIsTurnedOn = DOG::EntityManager::Get().GetComponent<InputController>(player).flashlight;
+
+		if (!DOG::EntityManager::Get().HasComponent<FlashlightSoundEffectComponent>(player))
+		{
+			FlashlightSoundEffectComponent& flashlightSoundEffectComponent = DOG::EntityManager::Get().AddComponent<FlashlightSoundEffectComponent>(player);
+
+			flashlightSoundEffectComponent.flashlightAudioEntity = DOG::EntityManager::Get().CreateEntity();
+			DOG::EntityManager::Get().AddComponent<DOG::TransformComponent>(flashlightSoundEffectComponent.flashlightAudioEntity);
+			DOG::EntityManager::Get().AddComponent<DOG::AudioComponent>(flashlightSoundEffectComponent.flashlightAudioEntity).is3D = true;
+			DOG::EntityManager::Get().AddComponent<ChildComponent>(flashlightSoundEffectComponent.flashlightAudioEntity).parent = player;
+		}
+
+		FlashlightSoundEffectComponent& flashlightSoundEffectComponent = DOG::EntityManager::Get().GetComponent<FlashlightSoundEffectComponent>(player);
+
+		if (flashlightSoundEffectComponent.flashlightIsTurnedOn != flashlightIsTurnedOn)
+		{
+			DOG::AudioComponent& audio = DOG::EntityManager::Get().GetComponent<DOG::AudioComponent>(flashlightSoundEffectComponent.flashlightAudioEntity);
+			if (flashlightIsTurnedOn)
+			{
+				audio.assetID = m_flashlightTurnOnSound;
+			}
+			else
+			{
+				audio.assetID = m_flashlightTurnOffSound;
+			}
+			audio.shouldPlay = true;
+
+			flashlightSoundEffectComponent.flashlightIsTurnedOn = flashlightIsTurnedOn;
+		}
 
 		if (flashlightIsTurnedOn)
 			slc.strength = 0.6f;

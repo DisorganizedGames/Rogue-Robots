@@ -58,6 +58,9 @@ local reloadTimer = 0.0
 local reloading = false
 local reloadAngle = 0.0
 
+local reloadAudioEntity = 0
+local reloadSound = 0
+
 function OnStart()
 	gunModel = Asset:LoadModel("Assets/Models/ModularRifle/Maingun.gltf")
 	bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Bullet/556x45_bullet.fbx")
@@ -103,6 +106,12 @@ function OnStart()
 	magazineComponent = MagazineManager.BasicEffect() --ObjectManager:CreateObject()
 
 	currentAmmoCount = barrelComponent:GetMaxAmmo()
+
+	reloadSound = Asset:LoadAudio("Assets/Audio/GunSounds/Reload2.wav")
+	reloadAudioEntity = Scene:CreateEntity(gunID)
+	Entity:AddComponent(reloadAudioEntity, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
+	Entity:AddComponent(reloadAudioEntity, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
+	Entity:AddComponent(reloadAudioEntity, "Audio", reloadSound, false, true)
 
 	EventSystem:Register("ItemPickup" .. EntityID, OnPickup)
 end
@@ -275,6 +284,7 @@ function ReloadSystem()
 	if Entity:GetAction(EntityID, "Reload") and currentAmmo < maxAmmo and (ammoLeft > 0 or ammoLeft == -1) then
 		reloadTimer = barrelComponent:GetReloadTime() + ElapsedTime
 		reloading = true
+		Entity:PlayAudio(reloadAudioEntity, reloadSound, true)
 		return true
 	end
 

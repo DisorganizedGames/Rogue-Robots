@@ -5,6 +5,8 @@
 class HeartbeatTrackerSystem : public DOG::ISystem
 {
 public:
+	HeartbeatTrackerSystem();
+
 	SYSTEM_CLASS(DOG::ThisPlayer, PlayerStatsComponent);
 	ON_UPDATE_ID(DOG::ThisPlayer, PlayerStatsComponent);
 	void OnUpdate(DOG::entity e, DOG::ThisPlayer& tp, PlayerStatsComponent& psc);
@@ -22,4 +24,7 @@ private:
 
 	bool m_justImpact{ false };
 	f32 m_impactTime{ 0.f };
+
+	u32 m_heartbeatAudioEntity;
+	u32 m_heartbeatSound;
 };
