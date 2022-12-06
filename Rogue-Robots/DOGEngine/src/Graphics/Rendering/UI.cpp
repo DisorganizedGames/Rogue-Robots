@@ -18,6 +18,7 @@ UINT bcID, credbackID;
 UINT cID, tID, hID, playerlistID;
 UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID, lActiveItemTextID, flashlightID, glowstickID; //Icons.
 UINT buffID;
+UINT playerListID;
 
 std::vector<bool> buffsVisible;
 std::vector<UINT> m_stacks;
@@ -1299,6 +1300,8 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
    
    auto labelButtonTextActiveItem = instance->Create<DOG::UILabel>(lActiveItemTextID, std::wstring(L"G"), 315.0f, (FLOAT)clientHeight - 90.0f, 50.f, 50.f, 40.f);
+   //player list
+   auto playerList = instance->Create<DOG::UIPlayerList>(playerListID);
 
    std::vector<std::wstring> vec = { L"Assets/Sprites/MaxHP.bmp" , L"Assets/Sprites/MoveSpeed.bmp" , L"Assets/Sprites/JumpBoost.bmp" };
    auto pic = instance->Create<DOG::UIBuffTracker, std::vector<std::wstring>>(buffID, vec);
@@ -1350,6 +1353,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(WinScreenID, std::move(lblueScoreWin));
    instance->AddUIElementToScene(WinScreenID, std::move(lgreenScoreWin));
    instance->AddUIElementToScene(WinScreenID, std::move(lyellowScoreWin));
+   instance->AddUIElementToScene(lobbyID, std::move(playerList));
 
    instance->AddUIElementToScene(gameID, std::move(labelButtonTextActiveItem));
 
