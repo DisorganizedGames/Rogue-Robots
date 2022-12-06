@@ -160,7 +160,8 @@ void PlayerHit::OnUpdate(entity e, HasEnteredCollisionComponent& collision, This
 				if (EntityManager::Get().HasComponent<PlayerAliveComponent>(e))
 				{
 					// Add visual effect
-					const auto& pos1 = eMan.GetComponent<TransformComponent>(collision.entities[i]).GetPosition();
+					auto playerThatShot = eMan.GetComponent<BulletComponent>(collision.entities[i]).playerEntityID;
+					const auto& pos1 = eMan.GetComponent<TransformComponent>(playerThatShot).GetPosition();
 					const auto& pos2 = eMan.GetComponent<TransformComponent>(e).GetPosition();
 					auto dir = pos1 - pos2;
 					dir.Normalize();
@@ -181,7 +182,8 @@ void PlayerHit::OnUpdate(entity e, HasEnteredCollisionComponent& collision, This
 				if (EntityManager::Get().HasComponent<PlayerAliveComponent>(e))
 				{
 					// Add visual effect
-					const auto& pos1 = eMan.GetComponent<TransformComponent>(collision.entities[i]).GetPosition();
+					auto playerThatShot = eMan.GetComponent<BulletComponent>(collision.entities[i]).playerEntityID;
+					const auto& pos1 = eMan.GetComponent<TransformComponent>(playerThatShot).GetPosition();
 					const auto& pos2 = eMan.GetComponent<TransformComponent>(e).GetPosition();
 					auto dir = pos1 - pos2;
 					dir.Normalize();
