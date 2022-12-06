@@ -181,8 +181,7 @@ void AgentDetectHitSystem::OnEarlyUpdate(entity agentID, BTHitDetectComponent&, 
 	seek.direction = transform.GetPosition() - finalTarget.position;
 
 	EntityManager& em = EntityManager::Get();
-	//if (!em.HasComponent<AgentAggroComponent>(agentID))
-	//	em.AddComponent<AgentAggroComponent>(agentID);
+
 	if (!em.HasComponent<AgentAggroComponent>(agentID))
 	{
 		std::cout << "agent " << agent.id << " sent PathFindingSync packet!\n";
@@ -231,11 +230,7 @@ void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& c
 	EntityManager& eMan = EntityManager::Get();
 
 	auto& hit = eMan.AddOrGetComponent<AgentHitComponent>(e);
-	//AgentHitComponent* hit;
-	//if (!eMan.HasComponent<AgentHitComponent>(e))
-	//	hit = &eMan.AddComponent<AgentHitComponent>(e);
-	//else
-	//	hit = &eMan.GetComponent<AgentHitComponent>(e);
+
 
 	bool hitByPlayer = false;
 	for (u32 i = 0; i < collision.entitiesCount; ++i)
@@ -299,13 +294,6 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 	{
 		if (!EntityManager::Get().HasComponent<AgentAlertComponent>(e))
 			EntityManager::Get().AddComponent<AgentAlertComponent>(e);
-		//if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
-		//{
-		//	EntityManager::Get().AddComponent<AgentAggroComponent>(e);
-		//	EntityManager::Get().AddComponent<PathFindingSync>(e).id = EntityManager::Get().GetComponent<AgentIdComponent>(e);
-		//	EntityManager::Get().GetComponent<PathFindingSync>(e).id.id = EntityManager::Get().GetComponent<PathFindingSync>(e).id.id | AGGRO_BIT;
-		//}
-
 	}
 
 	/*Frost status*/
