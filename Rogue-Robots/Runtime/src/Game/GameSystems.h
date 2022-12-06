@@ -621,11 +621,12 @@ public:
 
 		auto r = DOG::Window::GetWindowRect();
 		ImVec2 pos;
-		constexpr const float xOffset = 50.0f;
+		constexpr const float xOffset = 0.0f;
+		constexpr const float yOffset = -80.0f;
 		const float centerXOfScreen = (float)(abs(r.right - r.left)) * 0.5f;
 		const float centerYOfScreen = (float)(abs(r.bottom - r.top)) * 0.5f;
 		pos.x = r.left + centerXOfScreen + xOffset;
-		pos.y = r.top + centerYOfScreen;
+		pos.y = r.top + centerYOfScreen + yOffset;
 
 		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 		ImGui::SetNextWindowPos(pos);
@@ -634,7 +635,7 @@ public:
 		{
 			ImGui::PushFont(DOG::Window::GetFont());
 			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
-			ImGui::SetWindowFontScale(1.4f);
+			ImGui::SetWindowFontScale(2.0f);
 			ImGui::Text("[R] Reload");
 			ImGui::PopStyleColor(1);
 			ImGui::PopFont();
