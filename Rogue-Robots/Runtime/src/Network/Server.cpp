@@ -1,5 +1,5 @@
 #include "Server.h"
-
+#include "..\Game\NetCode.h"
 
 Server::Server()
 {
@@ -163,6 +163,7 @@ void Server::ServerReciveConnectionsTCP(SOCKET listenSocket)
 					//give connections a player id
 					UINT8 playerId = m_playerIds.front();
 					input.playerId = playerId;
+					m_lobbyData.playersSlotConnected[playerId] = true;
 					m_holdPlayerIds.push_back(playerId);
 					sprintf_s(inputSend, sizeof(int), "%d", playerId);
 					send(clientSocket, inputSend, sizeof(int), 0);
@@ -252,6 +253,7 @@ void Server::ServerPollTCP()
 						{
 							memcpy(&holdClientsData, reciveBuffer + bufferReciveSize, sizeof(TcpHeader));
 							bufferReciveSize += sizeof(TcpHeader);
+
 							if (holdClientsData.playerId == 0)
 							{
 								m_lobbyStatus = holdClientsData.lobbyAlive;
@@ -346,10 +348,15 @@ void Server::ServerPollTCP()
 
 			bufferSendSize += (u16)pathfinders.size() * sizeof(PathFindingSync);
 
-
-			sendHeader.nrOfPlayersConnected = (i8)m_holdPlayerIds.size();
+			if (m_lobbyStatus)
+			{
+				m_lobbyData.nrOfPlayersConnected = (i8)m_holdPlayerIds.size();
+				memcpy(sendBuffer + bufferSendSize, (char*)&m_lobbyData, sizeof(LobbyData));
+				bufferSendSize += sizeof(LobbyData);
+			}
 			sendHeader.sizeOfPayload = bufferSendSize;
 			sendHeader.lobbyAlive = m_lobbyStatus;
+
 			memcpy(sendBuffer, (char*)&sendHeader, sizeof(TcpHeader));
 			for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
 			{
@@ -384,6 +391,7 @@ void Server::ServerPollTCP()
 
 void Server::CloseSocketTCP(int socketIndex)
 {
+	m_lobbyData.playersSlotConnected[socketIndex] = false;
 	std::cout << "Server: Closes socket for player" << m_holdPlayerIds.at(socketIndex) + 1 << std::endl;
 	DOG::EntityManager::Get().Collect<DOG::NetworkPlayerComponent>().Do([&](DOG::entity id, DOG::NetworkPlayerComponent& networkC)
 		{
@@ -580,4 +588,9 @@ void Server::SetMulticastAdress(const char* adress)
 void Server::StopReceiving()
 {
 	m_reciveConnections = false;
+}
+
+void Server::SetLevelIndex(u16 levelIndex)
+{
+	m_lobbyData.levelIndex = levelIndex;
 }

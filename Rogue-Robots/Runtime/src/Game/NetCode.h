@@ -50,7 +50,8 @@ public:
 	bool IsLobbyAlive();
 	void SetMulticastAdress(const char* adress);
 	void SetLobbyStatus(bool lobbyStatus);
-
+	LobbyData GetLobbyData();
+	u16 GetLevelIndex();
 private:
 	static void Initialize();
 
@@ -58,6 +59,10 @@ private:
 	void ReceiveUdp();
 	
 	void UpdateSendUdp();
+	void ReceiveDataUdp();
+	void UpdateSendTcp();
+	void ReceiveDataTcp();
+
 	void AddMatrixUdp(DirectX::XMMATRIX input);
 
 	TcpHeader m_inputTcp;
@@ -93,6 +98,8 @@ private:
 	UINT m_sleepGranularityMs;
 	
 	u64 m_syncCounter;
+
+	LobbyData m_lobbyData;
 };
 
 class DeleteNetworkSync : public DOG::ISystem
