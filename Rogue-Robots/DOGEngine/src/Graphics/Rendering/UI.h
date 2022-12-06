@@ -19,6 +19,8 @@ extern UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID
 extern UINT lNamesCreditsID, lTheTeamID, lFiverrArtistsID, lFiverrArtistsTextID, lIconsCreditsID, lIconsCreditsTextID, lMusicID, lMusicTextID;
 extern UINT bcID, credbackID;
 extern UINT cID, tID, hID, playerlistID;
+extern UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID, lActiveItemTextID, flashlightID, glowstickID;
+extern UINT buffID;
 
 namespace DOG
 {
@@ -167,7 +169,7 @@ namespace DOG
    class UIHealthBar : public UIElement
    {
       public:
-         UIHealthBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height);
+         UIHealthBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float textSize);
          ~UIHealthBar();
 
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
@@ -243,6 +245,7 @@ namespace DOG
          std::vector<ComPtr<ID2D1Bitmap>> m_bitmaps;
          std::vector<D2D1_RECT_F> m_rects;
          ComPtr<ID2D1SolidColorBrush> m_borderBrush;
+         ComPtr<IDWriteTextFormat> m_textFormat;
          UINT m_buffs;
    };
 
@@ -271,11 +274,35 @@ namespace DOG
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void SetText(std::wstring text);
+         void SetDraw(bool draw);
       private:
+         bool m_draw;
          D2D_RECT_F m_rect;
          std::wstring m_text;
          ComPtr<IDWriteTextFormat> m_textFormat;
          ComPtr<ID2D1SolidColorBrush> m_textBrush;
+   };
+
+   class UIIcon : public UIElement
+   {
+      public:
+         UIIcon(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector<std::wstring> filePaths, float x, float y, float width, float height, float r, float g, float b, bool border);
+         ~UIIcon();
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Hide();
+         void DeactivateBorder();
+         void ActivateBorder();
+         void Show(UINT index);
+      private:
+         float m_opacity;
+         bool m_show, m_border;
+         UINT m_index;
+         std::vector<ComPtr<ID2D1Bitmap>> m_bitmaps;
+         D2D1_RECT_F m_rect;
+         ComPtr<ID2D1SolidColorBrush> m_borderBrush;
+         ComPtr<ID2D1SolidColorBrush> m_backBrush;
+         ComPtr<IDWriteTextFormat> m_textFormat;
    };
 
 }

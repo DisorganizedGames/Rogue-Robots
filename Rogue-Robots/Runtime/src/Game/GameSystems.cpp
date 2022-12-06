@@ -848,6 +848,31 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 	const bool revivalCompleted = (progress >= 1.0f);
 	if (revivalCompleted)
 	{
+		//Reset UI.
+		auto UIInstance = DOG::UI::Get();
+		//Passive items
+		UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(0);
+		UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(1);
+		UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(2);
+
+		//Active item
+		UIInstance->GetUI<UIIcon>(iconActiveID)->Hide();
+		UIInstance->GetUI<UIIcon>(iconActiveID)->ActivateBorder();
+		UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetDraw(true);
+
+		//Components
+		UIInstance->GetUI<UIIcon>(iconID)->Hide();
+		UIInstance->GetUI<UIIcon>(iconID)->ActivateBorder();
+		UIInstance->GetUI<UIIcon>(icon2ID)->Hide();
+		UIInstance->GetUI<UIIcon>(icon2ID)->ActivateBorder();
+		UIInstance->GetUI<UIIcon>(icon3ID)->Hide();
+		UIInstance->GetUI<UIIcon>(icon3ID)->ActivateBorder();
+
+		//Weaponicon
+		UIInstance->GetUI<UIIcon>(iconGun)->Show(0);
+		UIInstance->GetUI<UIIcon>(glowstickID)->Show(0);
+		UIInstance->GetUI<UIIcon>(flashlightID)->Show(0);
+
 		// Apply Revive Animation
 		{
 			static constexpr u8 REVIVE_ANIMATION = 0; // No dedicated animation yet, transition to idle for now
@@ -862,7 +887,10 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 			RevivePlayer(closestDeadPlayer);
 		}
 		if (mgr.HasComponent<ThisPlayer>(player))
+		{
 			mgr.RemoveComponent<ActiveItemComponent>(player);
+			DOG::UI::Get()->GetUI<UIIcon>(iconActiveID)->Hide();
+		}
 	}
 }
 

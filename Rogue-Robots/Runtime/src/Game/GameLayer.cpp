@@ -85,7 +85,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<PickUpTranslateToPlayerSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderAmmunitionTextSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderReloadHintTextSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<RenderMiscComponentText>());
+	//m_entityManager.RegisterSystem(std::make_unique<RenderMiscComponentText>());
 	m_entityManager.RegisterSystem(std::make_unique<CleanupItemInteractionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<CleanupPlayerStateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerHit>());
@@ -105,19 +105,6 @@ GameLayer::GameLayer() noexcept
 
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
-
-	m_keyBindingDescriptions.emplace_back("wasd", "walk");
-	m_keyBindingDescriptions.emplace_back("space", "jump");
-	m_keyBindingDescriptions.emplace_back("lmb", "shoot");
-	m_keyBindingDescriptions.emplace_back("r", "reload");
-	m_keyBindingDescriptions.emplace_back("g", "active item");
-	m_keyBindingDescriptions.emplace_back("f", "flash light");
-	m_keyBindingDescriptions.emplace_back("m", "gun effect");
-	m_keyBindingDescriptions.emplace_back("e", "interact");
-	m_keyBindingDescriptions.emplace_back("q", "full auto");
-	m_keyBindingDescriptions.emplace_back("alt + enter", "fullscreen");
-	m_keyBindingDescriptions.emplace_back("h", "debug camera");
-	m_keyBindingDescriptions.emplace_back("f1", "debug menu");
 
 	assert(std::filesystem::exists(("Assets/Fonts/Robot Radicals.ttf")));
 	ImGui::GetIO().Fonts->AddFontDefault();
@@ -166,8 +153,35 @@ void GameLayer::OnUpdate()
 			UpdateLobby();
 			break;
 		case GameState::StartPlaying:
+		{
+			//Reset UI.
+			auto UIInstance = DOG::UI::Get();
+			//Passive items
+			UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(0);
+			UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(1);
+			UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(2);
+
+			//Active item
+			UIInstance->GetUI<UIIcon>(iconActiveID)->Hide();
+			UIInstance->GetUI<UIIcon>(iconActiveID)->ActivateBorder();
+			UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetDraw(true);
+
+			//Components
+			UIInstance->GetUI<UIIcon>(iconID)->Hide();
+			UIInstance->GetUI<UIIcon>(iconID)->ActivateBorder();
+			UIInstance->GetUI<UIIcon>(icon2ID)->Hide();
+			UIInstance->GetUI<UIIcon>(icon2ID)->ActivateBorder();
+			UIInstance->GetUI<UIIcon>(icon3ID)->Hide();
+			UIInstance->GetUI<UIIcon>(icon3ID)->ActivateBorder();
+
+			//Weaponicon
+			UIInstance->GetUI<UIIcon>(iconGun)->Show(0);
+			UIInstance->GetUI<UIIcon>(glowstickID)->Show(0);
+			UIInstance->GetUI<UIIcon>(flashlightID)->Show(0);
+
 			StartMainScene();
 			break;
+		}
 		case GameState::Playing:
 			UpdateGame();
 			break;
@@ -194,25 +208,25 @@ void GameLayer::OnUpdate()
 						{
 							auto redPlayer = DOG::UI::Get()->GetUI<UILabel>(lredScoreWinID);
 							redPlayer->SetText(std::wstring(L"Red player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring((int)inputC.damageDoneToEnemies)
-								+ std::wstring(L"\nTeam Damage taken: ") + std::to_wstring((int)inputC.teamDamageTaken));
+								+ std::wstring(L"\nTeam Damage done: ") + std::to_wstring((int)inputC.teamDamageTaken));
 						}
 						else if (nPC.playerId == 1)
 						{
 							auto bluePlayer = DOG::UI::Get()->GetUI<UILabel>(lblueScoreWinID);
 							bluePlayer->SetText(std::wstring(L"Blue player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring((int)inputC.damageDoneToEnemies)
-								+ std::wstring(L"\nTeam Damage taken: ") + std::to_wstring((int)inputC.teamDamageTaken));
+								+ std::wstring(L"\nTeam Damage done: ") + std::to_wstring((int)inputC.teamDamageTaken));
 						}
 						else if (nPC.playerId == 2)
 						{
 							auto greenPlayer = DOG::UI::Get()->GetUI<UILabel>(lgreenScoreWinID);
 							greenPlayer->SetText(std::wstring(L"Green player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring((int)inputC.damageDoneToEnemies)
-								+ std::wstring(L"\nTeam Damage taken: ") + std::to_wstring((int)inputC.teamDamageTaken));
+								+ std::wstring(L"\nTeam Damage done: ") + std::to_wstring((int)inputC.teamDamageTaken));
 						}
 						else if (nPC.playerId == 3)
 						{
 							auto yellowPlayer = DOG::UI::Get()->GetUI<UILabel>(lyellowScoreWinID);
 							yellowPlayer->SetText(std::wstring(L"Yellow player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring((int)inputC.damageDoneToEnemies)
-								+ std::wstring(L"\nTeam Damage taken: ") + std::to_wstring((int)inputC.teamDamageTaken));
+								+ std::wstring(L"\nTeam Damage done: ") + std::to_wstring((int)inputC.teamDamageTaken));
 						}
 					});
 			}
@@ -230,25 +244,25 @@ void GameLayer::OnUpdate()
 					{
 						auto redPlayer = DOG::UI::Get()->GetUI<UILabel>(lredScoreID);
 						redPlayer->SetText(std::wstring(L"Red player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring((int)inputC.damageDoneToEnemies)
-						+ std::wstring(L"\nTeam Damage taken: ") + std::to_wstring((int)inputC.teamDamageTaken));
+						+ std::wstring(L"\nTeam Damage done: ") + std::to_wstring((int)inputC.teamDamageTaken));
 					}
 					else if (nPC.playerId == 1)
 					{
 						auto bluePlayer = DOG::UI::Get()->GetUI<UILabel>(lblueScoreID);
 						bluePlayer->SetText(std::wstring(L"Blue player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring((int)inputC.damageDoneToEnemies)
-							+ std::wstring(L"\nTeam Damage taken: ") + std::to_wstring((int)inputC.teamDamageTaken));
+							+ std::wstring(L"\nTeam Damage done: ") + std::to_wstring((int)inputC.teamDamageTaken));
 					}
 					else if (nPC.playerId == 2)
 					{
 						auto greenPlayer = DOG::UI::Get()->GetUI<UILabel>(lgreenScoreID);
 						greenPlayer->SetText(std::wstring(L"Green player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring((int)inputC.damageDoneToEnemies)
-							+ std::wstring(L"\nTeam Damage taken: ") + std::to_wstring((int)inputC.teamDamageTaken));
+							+ std::wstring(L"\nTeam Damage done: ") + std::to_wstring((int)inputC.teamDamageTaken));
 					}
 					else if (nPC.playerId == 3)
 					{
 						auto yellowPlayer = DOG::UI::Get()->GetUI<UILabel>(lyellowScoreID);
 						yellowPlayer->SetText(std::wstring(L"Yellow player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring((int)inputC.damageDoneToEnemies)
-							+ std::wstring(L"\nTeam Damage taken: ") + std::to_wstring((int)inputC.teamDamageTaken));
+							+ std::wstring(L"\nTeam Damage done: ") + std::to_wstring((int)inputC.teamDamageTaken));
 					}
 				});
 			
@@ -257,32 +271,45 @@ void GameLayer::OnUpdate()
 				m_gameState = GameState::ExitingToMainMenu;
 			break;
 		}
-		case GameState::Exiting:
+		case GameState::Exiting: //Not used?
 			CloseMainScene();
 			break;
 		case GameState::ExitingToMainMenu:
 		{
+			//Reset the UI.
+			auto uiInstance = UI::Get();
+			//Active item
+			uiInstance->GetUI<UIIcon>(iconActiveID)->Hide();
+			//Weapon components
+			uiInstance->GetUI<UIIcon>(iconID)->Hide();
+			uiInstance->GetUI<UIIcon>(icon2ID)->Hide();
+			uiInstance->GetUI<UIIcon>(icon3ID)->Hide();
+			//Passive items
+			uiInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(0);
+			uiInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(1);
+			uiInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(2);
+
 			m_nrOfFramesToWait = 300;
 			NetCode::Get().Reset();
 			m_gameState = GameState::MainMenu;
-			UI::Get()->ChangeUIscene(menuID);
+			uiInstance->ChangeUIscene(menuID);
 			CloseMainScene();
 			//Reset ui labels
-			auto redPlayer = DOG::UI::Get()->GetUI<UILabel>(lredScoreID);
+			auto redPlayer = uiInstance->GetUI<UILabel>(lredScoreID);
 			redPlayer->SetText(L" ");
-			auto bluePlayer = DOG::UI::Get()->GetUI<UILabel>(lblueScoreID);
+			auto bluePlayer = uiInstance->GetUI<UILabel>(lblueScoreID);
 			bluePlayer->SetText(L" ");
-			auto greenPlayer = DOG::UI::Get()->GetUI<UILabel>(lgreenScoreID);
+			auto greenPlayer = uiInstance->GetUI<UILabel>(lgreenScoreID);
 			greenPlayer->SetText(L" ");
-			auto yellowPlayer = DOG::UI::Get()->GetUI<UILabel>(lyellowScoreID);
+			auto yellowPlayer = uiInstance->GetUI<UILabel>(lyellowScoreID);
 			yellowPlayer->SetText(L" ");
-			auto redPlayerWin = DOG::UI::Get()->GetUI<UILabel>(lredScoreWinID);
+			auto redPlayerWin = uiInstance->GetUI<UILabel>(lredScoreWinID);
 			redPlayerWin->SetText(L" ");
-			auto bluePlayerWin = DOG::UI::Get()->GetUI<UILabel>(lblueScoreWinID);
+			auto bluePlayerWin = uiInstance->GetUI<UILabel>(lblueScoreWinID);
 			bluePlayerWin->SetText(L" ");
-			auto greenPlayerWin = DOG::UI::Get()->GetUI<UILabel>(lgreenScoreWinID);
+			auto greenPlayerWin = uiInstance->GetUI<UILabel>(lgreenScoreWinID);
 			greenPlayerWin->SetText(L" ");
-			auto yellowPlayerWin = DOG::UI::Get()->GetUI<UILabel>(lyellowScoreWinID);
+			auto yellowPlayerWin = uiInstance->GetUI<UILabel>(lyellowScoreWinID);
 			yellowPlayerWin->SetText(L" ");
 			break;
 		}
@@ -298,8 +325,6 @@ void GameLayer::OnUpdate()
 	LuaGlobal* global = LuaMain::GetGlobal();
 	global->SetNumber("DeltaTime", Time::DeltaTime());
 	global->SetNumber("ElapsedTime", Time::ElapsedTime());
-
-	KeyBindingDisplayMenu();
 }
 
 void GameLayer::StartMainScene()
@@ -506,11 +531,33 @@ void GameLayer::KillPlayer(DOG::entity e)
 
 		LuaMain::GetScriptManager()->RemoveScript(localPlayer, "Gun.lua");
 		LuaMain::GetScriptManager()->RemoveScript(localPlayer, "PassiveItemSystem.lua");
+		//Remove UI icon bufftracker stacks.
+		auto UIInstance = UI::Get();
+		UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(0);
+		UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(1);
+		UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(2);
+
 		LuaMain::GetScriptManager()->RemoveScript(localPlayer, "ActiveItemSystem.lua");
+		//Remove UI icon for active item.
+		UIInstance->GetUI<UIIcon>(iconActiveID)->Hide();
+		UIInstance->GetUI<UIIcon>(iconActiveID)->DeactivateBorder();
+		UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetDraw(false);
+
 		std::string luaEventName = std::string("ItemPickup") + std::to_string(localPlayer);
 		m_entityManager.RemoveComponent<ScriptComponent>(localPlayer);
 		m_entityManager.RemoveComponent<BarrelComponent>(localPlayer);
 		m_entityManager.RemoveComponent<MiscComponent>(localPlayer);
+		//Remove UI icon for weapon components.
+		UIInstance->GetUI<UIIcon>(iconID)->Hide();
+		UIInstance->GetUI<UIIcon>(iconID)->DeactivateBorder();
+		UIInstance->GetUI<UIIcon>(icon2ID)->Hide();
+		UIInstance->GetUI<UIIcon>(icon2ID)->DeactivateBorder();
+		UIInstance->GetUI<UIIcon>(icon3ID)->Hide();
+		UIInstance->GetUI<UIIcon>(icon3ID)->DeactivateBorder();
+
+		UIInstance->GetUI<UIIcon>(iconGun)->Hide();
+		UIInstance->GetUI<UIIcon>(glowstickID)->Hide();
+		UIInstance->GetUI<UIIcon>(flashlightID)->Hide();
 
 		RigidbodyComponent& rb = m_entityManager.GetComponent<RigidbodyComponent>(e);
 		rb.ConstrainPosition(true, true, true);
@@ -1432,8 +1479,6 @@ void GameLayer::Input(DOG::Key key)
 				inputC.down = true;
 			if (key == DOG::Key::Spacebar)
 				inputC.up = true;
-			if (key == DOG::Key::Q)
-				inputC.switchComp = true;
 			if (key == DOG::Key::T)
 				inputC.switchBarrelComp = true;
 			if (key == DOG::Key::M)
@@ -1450,7 +1495,7 @@ void GameLayer::Input(DOG::Key key)
 				inputC.flashlight = !inputC.flashlight;
 			if (key == DOG::Key::E)
 				inputC.revive = true;
-			if (key == DOG::Key::One)
+			if (key == DOG::Key::Q)
 				inputC.throwGlowStick = true;
 		});
 }
@@ -1471,8 +1516,6 @@ void GameLayer::Release(DOG::Key key)
 				inputC.down = false;
 			if (key == DOG::Key::Spacebar)
 				inputC.up = false;
-			if (key == DOG::Key::Q)
-				inputC.switchComp = false;
 			if (key == DOG::Key::T)
 				inputC.switchBarrelComp = false;
 			if (key == DOG::Key::M)
@@ -1487,7 +1530,7 @@ void GameLayer::Release(DOG::Key key)
 				inputC.toggleMoveView = false;
 			if (key == DOG::Key::E)
 				inputC.revive = false;
-			if (key == DOG::Key::One)
+			if (key == DOG::Key::Q)
 				inputC.throwGlowStick = false;
 
 		});
@@ -1562,45 +1605,6 @@ void GameLayer::HpBarMVP()
 		{
 			hbar->SetBarValue(stats.health, stats.maxHealth);
 		});
-}
-
-void GameLayer::KeyBindingDisplayMenu()
-{
-	if (!m_displayKeyBindings) return;
-	ImVec2 size;
-	size.x = 280;
-	size.y = 300;
-
-	auto r = Window::GetWindowRect();
-	ImVec2 pos;
-	pos.x = r.right - size.x - 20.0f;
-	pos.y = r.top + 50.0f;
-
-	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-	ImGui::SetNextWindowPos(pos);
-	ImGui::SetNextWindowSize(size);
-	if (ImGui::Begin("KeyBindings", nullptr, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground))
-	{
-		if (ImGui::BeginTable("KeyBindings", 2))
-		{
-			ImGui::PushFont(m_imguiFont);
-			for (auto& [key, action] : m_keyBindingDescriptions)
-			{
-				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
-				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
-				ImGui::Text(action.c_str());
-				ImGui::TableSetColumnIndex(1);
-				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
-				ImGui::Text(key.c_str());
-				ImGui::PopStyleColor(2);
-			}
-			ImGui::PopFont();
-			ImGui::EndTable();
-		}
-	}
-	ImGui::End();
-	ImGui::PopStyleColor();
 }
 
 void GameLayer::GameLayerDebugMenu(bool& open)
@@ -1703,8 +1707,6 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 				}
 				ImGui::EndTable();
 			}
-
-			ImGui::Checkbox("View KeyBindings", &m_displayKeyBindings);
 		}
 		ImGui::End(); // "GameManager"
 	}

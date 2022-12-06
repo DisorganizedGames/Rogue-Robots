@@ -16,9 +16,11 @@ UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID,
 UINT lNamesCreditsID, lTheTeamID, lFiverrArtistsID, lFiverrArtistsTextID, lIconsCreditsID, lIconsCreditsTextID, lMusicID, lMusicTextID;
 UINT bcID, credbackID;
 UINT cID, tID, hID, playerlistID;
-
+UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID, lActiveItemTextID, flashlightID, glowstickID; //Icons.
+UINT buffID;
 
 std::vector<bool> buffsVisible;
+std::vector<UINT> m_stacks;
 
 
 void PlayButtonFunc(void);
@@ -47,7 +49,7 @@ void HostLaunch(void);
 
 void ToMenuButtonFunc(void)
 {
-    DOG::UI::Get()->ChangeUIscene(menuID);
+   DOG::UI::Get()->ChangeUIscene(menuID);
 }
 
 void JoinButton(void);
@@ -64,7 +66,7 @@ void Room10Button(void);
 
 void ExitButtonFunc(void)
 {
-    DOG::Window::CloseWindow();
+   DOG::Window::CloseWindow();
 }
 
 DOG::UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight) : m_visible(true), Layer("UILayer")
@@ -142,18 +144,18 @@ void DOG::UI::Destroy()
 
 std::vector<std::function<void(u32, u32)>>& DOG::UI::GetExternalUI()
 {
-    return m_externUI;
+   return m_externUI;
 }
 
 void DOG::UI::AddExternalUI(std::function<void(u32, u32)>&& createFunc)
 {
-    m_externUI.emplace_back(createFunc)(m_width, m_height);
+   m_externUI.emplace_back(createFunc)(m_width, m_height);
 }
 
 
 UINT DOG::UI::GetActiveUIScene() const
 {
-    return m_currsceneID;
+   return m_currsceneID;
 }
 
 /// @brief Generates a unique ID
@@ -447,7 +449,7 @@ DOG::UISplashScreen::~UISplashScreen()
 }
 
 
-DOG::UIHealthBar::UIHealthBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height) : UIElement(id)
+DOG::UIHealthBar::UIHealthBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float textSize) : UIElement(id)
 {
    m_text = L"100%";
    m_value = m_test = 1.0f;
@@ -464,7 +466,7 @@ DOG::UIHealthBar::UIHealthBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, 
       DWRITE_FONT_WEIGHT_NORMAL,
       DWRITE_FONT_STYLE_NORMAL,
       DWRITE_FONT_STRETCH_NORMAL,
-      12,
+      textSize,
       L"en-us",
       &m_textFormat
    );
@@ -752,9 +754,25 @@ DOG::UIBuffTracker::UIBuffTracker(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::
       buffsVisible.push_back(false);
       m_animate.push_back(false);
       m_opacity.push_back(1.0f);
+      m_stacks.push_back(0u);
       m_buffs++;
    }
    hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), m_borderBrush.GetAddressOf());
+   HR_VFY(hr);
+   hr = d2d.GetDWriteFactory()->CreateTextFormat(
+      L"Robot Radicals",
+      NULL,
+      DWRITE_FONT_WEIGHT_NORMAL,
+      DWRITE_FONT_STYLE_NORMAL,
+      DWRITE_FONT_STRETCH_NORMAL,
+      14,
+      L"en-us",
+      &m_textFormat
+   );
+   HR_VFY(hr);
+   hr = m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+   HR_VFY(hr);
+   hr = m_textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
    HR_VFY(hr);
 }
 
@@ -766,6 +784,13 @@ void DOG::UIBuffTracker::Draw(DOG::gfx::D2DBackend_DX12& d2d)
       {
          d2d.Get2DDeviceContext()->DrawBitmap(m_bitmaps[i].Get(), m_rects[i], m_opacity[i]);
          d2d.Get2DDeviceContext()->DrawRectangle(m_rects[i], m_borderBrush.Get());
+         if (m_stacks[i] > 1u)
+         {
+            D2D1_RECT_F textRect = m_rects[i];
+            textRect.top += 40.f;
+            textRect.bottom += 40.f;
+            d2d.Get2DDeviceContext()->DrawTextW(std::wstring(std::to_wstring(m_stacks[i]) + L'x').c_str(), (UINT32)std::to_wstring(m_stacks[i]).length() + 1u, m_textFormat.Get(), textRect, m_borderBrush.Get());
+         }
       }
    }
 
@@ -773,22 +798,9 @@ void DOG::UIBuffTracker::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 void DOG::UIBuffTracker::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
    UNREFERENCED_PARAMETER(d2d);
-   if (DOG::Keyboard::IsKeyPressed(DOG::Key::G))
-      ActivateIcon(0u);
-   if (DOG::Keyboard::IsKeyPressed(DOG::Key::H))
-      ActivateIcon(1u);
-
-   if (DOG::Keyboard::IsKeyPressed(DOG::Key::J))
-      DeactivateIcon(0u);
-   if (DOG::Keyboard::IsKeyPressed(DOG::Key::K))
-      DeactivateIcon(1u);
    for (UINT i = 0; i < m_buffs; i++)
-   {
       if (m_animate[i])
-      {
          AnimateUp(i);
-      }
-   }
 
 }
 
@@ -799,7 +811,7 @@ DOG::UIBuffTracker::~UIBuffTracker()
 
 void DOG::UIBuffTracker::AnimateUp(UINT index)
 {
-   if (m_rects[index].top >= 50.f)
+   if (m_rects[index].top >= 20.f)
    {
       m_rects[index].top -= 100.0f * (float)DOG::Time::DeltaTime();
       m_rects[index].bottom -= 100.0f * (float)DOG::Time::DeltaTime();
@@ -807,21 +819,28 @@ void DOG::UIBuffTracker::AnimateUp(UINT index)
    if (m_opacity[index] <= 1.f)
       m_opacity[index] += 6.0f * (float)DOG::Time::DeltaTime();
 
-   if (m_rects[index].top <= 50.f and m_opacity[index] >= 1.0f)
+   if (m_rects[index].top <= 20.f and m_opacity[index] >= 1.0f)
+   {
+      m_rects[index].top = 20.f;
+      m_rects[index].bottom = m_rects[index].top + 50.0f;
+      m_opacity[index] = 1.0f;
       m_animate[index] = false;
+   }
 }
 
 void DOG::UIBuffTracker::ActivateIcon(UINT index)
 {
-   if (buffsVisible[index])
-      return;
-   buffsVisible[index] = true;
-   size_t activeBuffs = std::count(buffsVisible.begin(), buffsVisible.end(), true);
-   float x = 50.f + 60.f * activeBuffs;
-   float y = 50.f + 30.f;
-   m_rects[index] = D2D1::RectF(x, y, x + 50.f, y + 50.f);
-   m_opacity[index] = 0.01f;
-   m_animate[index] = true;
+   if (m_stacks[index] == 0)
+   {
+      buffsVisible[index] = true;
+      size_t activeBuffs = std::count(buffsVisible.begin(), buffsVisible.end(), true);
+      float x = 20.f + 80.f * (activeBuffs - 1);
+      float y = 50.f + 30.f;
+      m_rects[index] = D2D1::RectF(x, y, x + 50.f, y + 50.f);
+      m_opacity[index] = 0.01f;
+      m_animate[index] = true;
+   }
+   m_stacks[index]++;
 }
 
 void DOG::UIBuffTracker::DeactivateIcon(UINT index)
@@ -835,6 +854,7 @@ void DOG::UIBuffTracker::DeactivateIcon(UINT index)
          m_rects[i].right -= 60.f;
       }
    }
+   m_stacks[index] = 0;
 }
 
 DOG::UIPlayerList::UIPlayerList(DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
@@ -914,6 +934,7 @@ void DOG::UIPlayerList::RemovePlayer(const std::wstring name)
 
 DOG::UILabel::UILabel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring text, float x, float y, float width, float height, float size) : UIElement(id)
 {
+   m_draw = true;
    UNREFERENCED_PARAMETER(d2d);
    m_text = text;
    m_rect = D2D1::RectF(x, y, x + width, y + height);
@@ -942,14 +963,21 @@ void DOG::UILabel::Update(DOG::gfx::D2DBackend_DX12& d2d)
    return;
 }
 
+void DOG::UILabel::SetDraw(bool draw)
+{
+    m_draw = draw;
+}
+
 void DOG::UILabel::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-    d2d.Get2DDeviceContext()->DrawTextW(
-         m_text.c_str(),
-         (UINT32)m_text.length(),
-         m_textFormat.Get(),
-         &m_rect,
-         m_textBrush.Get());
+   if (!m_draw)
+      return;
+   d2d.Get2DDeviceContext()->DrawTextW(
+      m_text.c_str(),
+      (UINT32)m_text.length(),
+      m_textFormat.Get(),
+      &m_rect,
+      m_textBrush.Get());
 }
 DOG::UILabel::~UILabel()
 {
@@ -960,17 +988,150 @@ void DOG::UILabel::SetText(std::wstring text)
    m_text = text;
 }
 
+DOG::UIIcon::UIIcon(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector<std::wstring> filePaths, float x, float y, float width, float height, float r, float g, float b, bool border) : UIElement(id)
+{
+   ComPtr<IWICBitmapDecoder> m_decoder;
+   ComPtr<IWICImagingFactory> m_imagingFactory;
+   ComPtr<IWICBitmapFrameDecode> m_frame;
+   ComPtr<IWICFormatConverter> m_converter;
+   HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (LPVOID*)m_imagingFactory.GetAddressOf());
+   HR_VFY(hr);
+   for (auto&& path : filePaths)
+   {
+      hr = m_imagingFactory->CreateDecoderFromFilename(
+         path.c_str(),                            // Image to be decoded
+         NULL,                            // Do not prefer a particular vendor
+         GENERIC_READ,                    // Desired read access to the file
+         WICDecodeMetadataCacheOnDemand,  // Cache metadata when needed
+         m_decoder.GetAddressOf()                        // Pointer to the decoder
+      );
+      HR_VFY(hr);
+      hr = m_decoder->GetFrame(0, m_frame.GetAddressOf());
+      HR_VFY(hr);
+      hr = m_imagingFactory->CreateFormatConverter(m_converter.GetAddressOf());
+      HR_VFY(hr);
+      hr = m_converter->Initialize(
+         m_frame.Get(),                   // Input bitmap to convert
+         GUID_WICPixelFormat32bppPBGRA,   // Destination pixel format
+         WICBitmapDitherTypeNone,         // Specified dither pattern
+         NULL,                            // Specify a particular palette
+         0.f,                             // Alpha threshold
+         WICBitmapPaletteTypeCustom       // Palette translation type
+      );
+      HR_VFY(hr);
+      ComPtr<ID2D1Bitmap> bitmap;
+      hr = d2d.Get2DDeviceContext()->CreateBitmapFromWicBitmap(m_converter.Get(), NULL, bitmap.GetAddressOf());
+      HR_VFY(hr);
+      m_bitmaps.push_back(bitmap);
+   }
+   HR_VFY(hr);
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(r, g, b, 1.0f), m_borderBrush.GetAddressOf());
+   HR_VFY(hr);
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(0.f, 0.f, 0.f, 1.0f), m_backBrush.GetAddressOf());
+   HR_VFY(hr);
+   m_rect = D2D1::RectF(x, y, x + width, y + height);
+   m_opacity = 1.0f;
+   m_show = false;
+   m_index = 0u;
+   m_border = border;
+}
+DOG::UIIcon::~UIIcon()
+{
+
+}
+
+void DOG::UIIcon::Draw(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   if (m_border)
+   {
+      d2d.Get2DDeviceContext()->DrawRectangle(&m_rect, m_borderBrush.Get(), 4.f);
+      d2d.Get2DDeviceContext()->FillRectangle(&m_rect, m_backBrush.Get());
+   }
+   if (m_show)
+      d2d.Get2DDeviceContext()->DrawBitmap(m_bitmaps[m_index].Get(), &m_rect, m_opacity);
+}
+void DOG::UIIcon::Update(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   UNREFERENCED_PARAMETER(d2d);
+}
+
+void DOG::UIIcon::Hide()
+{
+   m_show = false;
+}
+
+void DOG::UIIcon::DeactivateBorder()
+{
+    m_border = false;
+}
+
+void DOG::UIIcon::ActivateBorder()
+{
+    m_border = true;
+}
+
+void DOG::UIIcon::Show(UINT index)
+{
+   m_show = true;
+   m_index = index;
+}
+
 void UIRebuild(UINT clientHeight, UINT clientWidth)
 {
    auto instance = DOG::UI::Get();
 
    //HealthBar
-   auto h = instance->Create<DOG::UIHealthBar, float, float, float, float>(hID, 40.f, clientHeight - 60.f, 250.f, 30.f);
+   float healthBarWidth = 300.f;
+   float healthBarHeight = 50.f;
+   auto h = instance->Create<DOG::UIHealthBar, float, float, float, float, float>(hID, (clientWidth - healthBarWidth) * 0.5f, clientHeight - 100.f, healthBarWidth, healthBarHeight, 20.f);
    instance->AddUIElementToScene(gameID, std::move(h));
 
    //Crosshair
    auto c = instance->Create<DOG::UICrosshair>(cID);
    instance->AddUIElementToScene(gameID, std::move(c));
+
+   //Misc components
+   std::vector<std::wstring> paths = { L"Assets/Sprites/FullAuto.bmp", L"Assets/Sprites/ChargeShot.bmp" };
+   float xPos = 100.0f;
+   float yPos = (FLOAT)clientHeight - 220.f;
+   auto icon = instance->Create<DOG::UIIcon>(iconID, paths, xPos, yPos, 45.f, 45.f, 1.f, 1.f, 1.f, true);
+   instance->AddUIElementToScene(gameID, std::move(icon));
+
+   //Barrel components
+   paths = { L"Assets/Sprites/Grenade.bmp", L"Assets/Sprites/Missile.bmp", L"Assets/Sprites/Laser.bmp" };
+   xPos -= 75.0f;
+   yPos += 75.0f;
+   icon = instance->Create<DOG::UIIcon>(icon2ID, paths, xPos, yPos, 45.f, 45.f, 1.f, 1.f, 1.f, true);
+   instance->AddUIElementToScene(gameID, std::move(icon));
+
+   //Magazine components
+   paths = { L"Assets/Sprites/Frost.bmp", L"Assets/Sprites/Fire.bmp" };
+   xPos += 75.0f;
+   yPos += 75.0f;
+   icon = instance->Create<DOG::UIIcon>(icon3ID, paths, xPos, yPos, 45.f, 45.f, 1.f, 1.f, 1.f, true);
+   instance->AddUIElementToScene(gameID, std::move(icon));
+
+   //Active Item
+   paths = { L"Assets/Sprites/TrampolineIcon.bmp", L"Assets/Sprites/TurretIcon.bmp", L"Assets/Sprites/ReviverIcon.bmp", L"Assets/Sprites/RadarIcon.bmp", L"Assets/Sprites/SyringeIcon.bmp" };
+   icon = instance->Create<DOG::UIIcon>(iconActiveID, paths, 310.f, (FLOAT)clientHeight - 150.f, 75.f * 0.8f, 75.f * 0.8f, 1.f, 1.f, 1.f, true);
+   instance->AddUIElementToScene(gameID, std::move(icon));
+
+   //Weapon
+   paths = { L"Assets/Sprites/WeaponSillhouette.bmp" };
+   icon = instance->Create<DOG::UIIcon>(iconGun, paths, 90.f, (FLOAT)clientHeight - 145.f, 766.f * 0.2f, 373.f * 0.2f, 0.f, 0.f, 0.f, false);
+   icon->Show(0u);
+   instance->AddUIElementToScene(gameID, std::move(icon));
+
+   //Flashlight & Glowstick icon
+   paths = { L"Assets/Sprites/FlashlightIcon.bmp" };
+   icon = instance->Create<DOG::UIIcon>(flashlightID, paths, 165.f, (FLOAT)clientHeight - 220.f, 81.f * 0.6f, 70.f * 0.6f, 0.f, 0.f, 0.f, false);
+   icon->Show(0u);
+   instance->AddUIElementToScene(gameID, std::move(icon));
+   paths = { L"Assets/Sprites/Glowstick.bmp" };
+   icon = instance->Create<DOG::UIIcon>(glowstickID, paths, 230.f, (FLOAT)clientHeight - 212.f, 78.f * 0.6f, 72.f * 0.6f, 0.f, 0.f, 0.f, false);
+   icon->Show(0u);
+   instance->AddUIElementToScene(gameID, std::move(icon));
+
 
 
    //Menu backgrounds
@@ -1107,14 +1268,14 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto r1 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r1ID, (FLOAT)clientWidth / 2.f - 1000.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 1"), std::function<void()>(Room1Button));
    auto r2 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r2ID, (FLOAT)clientWidth / 2.f - 1000.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 2"), std::function<void()>(Room2Button));
    auto r3 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r3ID, (FLOAT)clientWidth / 2.f - 500.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 3"), std::function<void()>(Room3Button));
-   auto r4 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r4ID, (FLOAT)clientWidth / 2.f , (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 4"), std::function<void()>(Room4Button));
+   auto r4 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r4ID, (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 4"), std::function<void()>(Room4Button));
    auto r5 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r5ID, (FLOAT)clientWidth / 2.f + 500.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 5"), std::function<void()>(Room5Button));
    auto r6 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r6ID, (FLOAT)clientWidth / 2.f + 980.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 6"), std::function<void()>(Room6Button));
    auto r7 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r7ID, (FLOAT)clientWidth / 2.f + 980.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 7"), std::function<void()>(Room7Button));
    auto r8 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r8ID, (FLOAT)clientWidth / 2.f - 500.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 8"), std::function<void()>(Room8Button));
-   auto r9 = instance->Create<DOG::UIButton>(r9ID, (FLOAT)clientWidth / 2.f , (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 9"), std::function<void()>(Room9Button));
+   auto r9 = instance->Create<DOG::UIButton>(r9ID, (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 9"), std::function<void()>(Room9Button));
    auto r10 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r10ID, (FLOAT)clientWidth / 2.f + 500.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 10"), std::function<void()>(Room10Button));
-  
+
    //Labels
    auto l1 = instance->Create<DOG::UILabel>(l1ID, std::wstring(L"Room "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 450.f, 500.f, 60.f, 40.f);
    auto l2 = instance->Create<DOG::UILabel>(l2ID, std::wstring(L"Ip: "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 350.f, 500.f, 60.f, 40.f);
@@ -1122,11 +1283,11 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
    //Client
    auto l4 = instance->Create<DOG::UILabel>(l4ID, std::wstring(L"Room "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 450.f, 500.f, 60.f, 40.f);
-   auto l5 = instance->Create<DOG::UILabel>(l5ID, std::wstring(L" "), (FLOAT)clientWidth / 2.f - 80.0f, (FLOAT)clientHeight / 2.f - 350.f, 500.f, 60.f, 40.f);
+   auto l5 = instance->Create<DOG::UILabel>(l5ID, std::wstring(L" "), (FLOAT)clientWidth / 2.f - 250.0f, (FLOAT)clientHeight / 2.f - 350.f, 500.f, 60.f, 40.f);
    auto l6 = instance->Create<DOG::UILabel>(l6ID, std::wstring(L"Nr of players: "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 250.f, 500.f, 60.f, 40.f);
 
-   auto lWinText = instance->Create<DOG::UILabel>(lWinTextID, std::wstring(L" "), (FLOAT)clientWidth / 2.f - 180.0f, (FLOAT)clientHeight / 2.f - 150.f, 500.f, 60.f, 40.f);
-   auto lredScore = instance->Create<DOG::UILabel>(lredScoreID, std::wstring(L" "),  50.f, (FLOAT)clientHeight / 2.f - 250.f, 800.f, 160.f, 40.f);
+   auto lWinText = instance->Create<DOG::UILabel>(lWinTextID, std::wstring(L" "), (FLOAT)clientWidth / 2.f - 240.0f, (FLOAT)clientHeight / 2.f - 150.f, 500.f, 60.f, 40.f);
+   auto lredScore = instance->Create<DOG::UILabel>(lredScoreID, std::wstring(L" "), 50.f, (FLOAT)clientHeight / 2.f - 255.f, 800.f, 160.f, 40.f);
    auto lblueScore = instance->Create<DOG::UILabel>(lblueScoreID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 50.f, (FLOAT)clientHeight / 2.f - 250.f, 800.f, 160.f, 40.f);
    auto lgreenScore = instance->Create<DOG::UILabel>(lgreenScoreID, std::wstring(L" "), 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
    auto lyellowScore = instance->Create<DOG::UILabel>(lyellowScoreID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
@@ -1136,11 +1297,11 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto lgreenScoreWin = instance->Create<DOG::UILabel>(lgreenScoreWinID, std::wstring(L" "), 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
    auto lyellowScoreWin = instance->Create<DOG::UILabel>(lyellowScoreWinID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
 
-   std::vector<std::wstring> vec;
-   vec.push_back(L"Assets/Sprites/test.bmp");
-   vec.push_back(L"Assets/Sprites/test2.bmp");
-   UINT picID;
-   auto pic = instance->Create<DOG::UIBuffTracker, std::vector<std::wstring>>(picID, vec);
+   
+   auto labelButtonTextActiveItem = instance->Create<DOG::UILabel>(lActiveItemTextID, std::wstring(L"G"), 315.0f, (FLOAT)clientHeight - 90.0f, 50.f, 50.f, 40.f);
+
+   std::vector<std::wstring> vec = { L"Assets/Sprites/MaxHP.bmp" , L"Assets/Sprites/MoveSpeed.bmp" , L"Assets/Sprites/JumpBoost.bmp" };
+   auto pic = instance->Create<DOG::UIBuffTracker, std::vector<std::wstring>>(buffID, vec);
    instance->AddUIElementToScene(gameID, std::move(pic));
 
    instance->AddUIElementToScene(menuID, std::move(bp));
@@ -1190,6 +1351,8 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(WinScreenID, std::move(lgreenScoreWin));
    instance->AddUIElementToScene(WinScreenID, std::move(lyellowScoreWin));
 
+   instance->AddUIElementToScene(gameID, std::move(labelButtonTextActiveItem));
+
    //Splash screen
    // UINT sID;
    // auto s = DOG::UI::Get().Create<DOG::UISplashScreen, float, float>(sID, (float)clientWidth, (float)clientHeight);
@@ -1198,7 +1361,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto& externalUI = instance->GetExternalUI();
    for (auto& e : externalUI)
    {
-       e(clientWidth, clientHeight);
+      e(clientWidth, clientHeight);
    }
 }
 

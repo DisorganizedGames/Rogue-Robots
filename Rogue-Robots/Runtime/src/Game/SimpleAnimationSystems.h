@@ -89,6 +89,40 @@ public:
 		plac.target = { ptc.GetPosition().x, ptc.GetPosition().y - PICKUP_Y_OFFSET, ptc.GetPosition().z };
 		if (Vector3::Distance(tc.GetPosition(), ptc.GetPosition()) < PICKUP_RADIUS)
 		{
+			//Update the passive item UI buff tracker.
+			if (mgr.HasComponent<PassiveItemComponent>(pickup) && mgr.HasComponent<DOG::ThisPlayer>(ltpc.player))
+			{
+				PassiveItemComponent::Type type = mgr.GetComponent<PassiveItemComponent>(pickup).type;
+				switch (type)
+				{
+				case PassiveItemComponent::Type::MaxHealthBoost:
+				{
+					DOG::UI::Get()->GetUI<DOG::UIBuffTracker>(buffID)->ActivateIcon(0u);
+					break;
+				}
+				case PassiveItemComponent::Type::SpeedBoost:
+				{
+					DOG::UI::Get()->GetUI<DOG::UIBuffTracker>(buffID)->ActivateIcon(1u);
+					break;
+				}
+				case PassiveItemComponent::Type::SpeedBoost2:
+				{
+					DOG::UI::Get()->GetUI<DOG::UIBuffTracker>(buffID)->ActivateIcon(1u);
+					DOG::UI::Get()->GetUI<DOG::UIBuffTracker>(buffID)->ActivateIcon(1u);
+					break;
+				}
+				case PassiveItemComponent::Type::JumpBoost:
+				{
+					DOG::UI::Get()->GetUI<DOG::UIBuffTracker>(buffID)->ActivateIcon(2u);
+					break;
+				}
+				default:
+				{
+					break;
+				}
+				}
+			}
+
 			std::string luaEventName = std::string("ItemPickup") + std::to_string(ltpc.player);
 			EntityTypes entityType = mgr.GetComponent<NetworkId>(pickup).entityTypeId;
 			DOG::LuaMain::GetEventSystem()->InvokeEvent(luaEventName, (u32)entityType);
