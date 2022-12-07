@@ -483,7 +483,7 @@ bool WFC::GenerateLevel(uint32_t nrOfRooms, uint32_t maxWidth, uint32_t maxHeigh
 			Door& doorToUse = roomToUse.doors[doorIndex];
 			doorToUse.placed = false; //Mark as not placed so that it does not get connected later on.
 			uint32_t idStart = (roomToUse.globalPos[0]) + (roomToUse.globalPos[1] * m_width) + (roomToUse.globalPos[2] * m_width * m_height);
-			m_generatedLevel[idStart + doorToUse.pos[0] + (doorToUse.pos[1] * m_width) + (doorToUse.pos[2] * m_width * m_height)] = "Exit1_r0_f";
+			m_generatedLevel[idStart + doorToUse.pos[0] + (doorToUse.pos[1] * m_width) + (doorToUse.pos[2] * m_width * m_height)] = "Exit1_r" + std::to_string(doorToUse.rot) + "_f";
 		}
 		
 		//Connect all the doors.
