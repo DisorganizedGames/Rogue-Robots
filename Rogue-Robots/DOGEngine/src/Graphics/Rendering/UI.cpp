@@ -39,7 +39,7 @@ void LevelSelectMultButtonFunc(void)
 
 void PlayButtonFunc(void);
 
-void SliderFunc(void)
+void SliderFunc(float value)
 {
    return;
 }
@@ -1225,7 +1225,7 @@ DOG::UISlider::UISlider(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float 
    m_callback = callback;
    m_value = 0;
    m_width = width;
-
+   m_normwidth = 1.f / width;
 }
 DOG::UISlider::~UISlider()
 {
@@ -1238,12 +1238,11 @@ void DOG::UISlider::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 }
 void DOG::UISlider::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
-
+   UNREFERENCED_PARAMETER(d2d);
 }
 
 void DOG::UISlider::OnEvent(IEvent& event)
 {
-
    using namespace DOG;
    if (event.GetEventCategory() == EventCategory::MouseEventCategory)
    {
@@ -1256,26 +1255,19 @@ void DOG::UISlider::OnEvent(IEvent& event)
             m_sliderBrush.Get()->SetOpacity(1.0f);
             if (Mouse::IsButtonPressed(Button::Left) && (mpos.x >= m_bar.left && mpos.x <= m_bar.right))
             {
-               auto delta = Mouse::GetDeltaCoordinates();
                m_slider.left = (float)mpos.x - 10.f;
                m_slider.right = m_slider.left + 20.f;
-               
+               m_value = (m_slider.right - 10.f) - m_bar.left * m_normwidth;
             }
          }
          else
-         {
             m_sliderBrush.Get()->SetOpacity(0.5f);
-         }
       }
    }
 }
 float DOG::UISlider::GetValue()
 {
    return m_value;
-}
-void DOG::UISlider::SetValue(float value)
-{
-   m_value = value;
 }
 
 DOG::UIVertStatBar::UIVertStatBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, float r, float g, float b): UIElement(id)
@@ -1657,7 +1649,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto lyellowScoreWin = instance->Create<DOG::UILabel>(lyellowScoreWinID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
 
    UINT sliderID;
-   auto slider = instance->Create<DOG::UISlider, float, float, float, float>(sliderID, 100.f, 100.f, 250.f, 30.f, std::function<void()>(SliderFunc));
+   auto slider = instance->Create<DOG::UISlider, float, float, float, float>(sliderID, 100.f, 100.f, 250.f, 30.f, std::function<void(float)>(SliderFunc));
    instance->AddUIElementToScene(optionsID, std::move(slider));
    
    auto labelButtonTextActiveItem = instance->Create<DOG::UILabel>(lActiveItemTextID, std::wstring(L"G"), 315.0f, (FLOAT)clientHeight - 90.0f, 50.f, 50.f, 40.f);
