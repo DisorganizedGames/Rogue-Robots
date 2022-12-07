@@ -214,7 +214,6 @@ void NetCode::OnUpdate()
 
 				EntityManager::Get().Collect<PathFindingSync>().Do([&](entity id, PathFindingSync& pFS)
 					{
-						std::cout << "sent PF sync\n";
 						memcpy(m_sendBuffer + m_bufferSize, &pFS, sizeof(PathFindingSync));
 						m_bufferSize += sizeof(PathFindingSync);
 						m_entityManager.RemoveComponent<PathFindingSync>(id);
