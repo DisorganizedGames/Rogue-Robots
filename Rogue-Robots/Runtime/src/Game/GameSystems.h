@@ -798,3 +798,12 @@ public:
 	ON_UPDATE(DOG::PointLightComponent, SetPointLightDirtyComponent);
 	void OnUpdate(DOG::PointLightComponent& light, SetPointLightDirtyComponent&);
 };
+
+class SetOutlineOnNearbyPickupsSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(DOG::PickupLerpAnimateComponent, DOG::TransformComponent);
+	ON_UPDATE_ID(DOG::PickupLerpAnimateComponent, DOG::TransformComponent);
+	void OnUpdate(DOG::entity e, DOG::PickupLerpAnimateComponent& animator, DOG::TransformComponent& transform);
+};
+

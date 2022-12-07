@@ -1360,4 +1360,61 @@ void SetPointLightDirtySystem::OnUpdate(DOG::PointLightComponent& light, SetPoin
 	light.dirty = true;
 }
 
+void SetOutlineOnNearbyPickupsSystem::OnUpdate(DOG::entity e, DOG::PickupLerpAnimateComponent&, DOG::TransformComponent& transform)
+{
+#define PICKUP_OUTLINE_UNIT_THRESHOLD 20.f
+#define PICKUP_OUTLINE_MAX_INTENSITY 1.f
+#define PICKUP_OUTLINE_MIN_INTENSITY 0.1f
+
+	MINIPROFILE
+	auto& em = EntityManager::Get();
+
+	const auto& pickupPos = transform.GetPosition();
+	em.Collect<ThisPlayer, TransformComponent>().Do([&](DOG::entity, DOG::ThisPlayer&, DOG::TransformComponent& tfc)
+		{
+			const auto& selfPos = tfc.GetPosition();
+			const auto lenToPickup = (pickupPos - selfPos).Length();
+
+			// [0, 1]
+			float intensity = lenToPickup / PICKUP_OUTLINE_UNIT_THRESHOLD;
+			// [0, MAX_INTENSITY - 1]
+			intensity *= (PICKUP_OUTLINE_MAX_INTENSITY - PICKUP_OUTLINE_MIN_INTENSITY);
+			// [1, MAX_INTENSITY]
+			intensity += PICKUP_OUTLINE_MIN_INTENSITY;
+
+			if (lenToPickup <= PICKUP_OUTLINE_UNIT_THRESHOLD)
+			{
+				if (!em.HasComponent<OutlineComponent>(e))
+				{
+					DirectX::SimpleMath::Vector3 color{};
+					if (em.HasComponent<PassiveItemComponent>(e))
+						color = { 0.f, 1.f, 0.f };
+					else if (em.HasComponent<ActiveItemComponent>(e))
+						color = { 1.f, 1.f, 0.f };
+					else if (em.HasComponent<MagazineModificationComponent>(e))
+						color = { 0.35f, 0.35f, 1.f };
+					else if (em.HasComponent<BarrelComponent>(e))
+						color = { 1.f, 0.f, 0.f };
+					else if (em.HasComponent<MiscComponent>(e))
+						color = { 0.1f, 0.4f, 1.f };
+
+					if (em.HasComponent<OutlineBabyComponent>(e))
+					{
+						auto& childEntity = em.GetComponent<OutlineBabyComponent>(e).child;
+						if (!em.HasComponent<OutlineComponent>(childEntity))
+							em.AddComponent<OutlineComponent>(childEntity).color = color * intensity;
+					}
+
+					em.AddComponent<OutlineComponent>(e).color = color * intensity;
+				}
+			}
+			else
+			{
+				if (em.HasComponent<OutlineComponent>(e))
+					em.RemoveComponentIfExists<OutlineComponent>(e);
+			}
+		});
+
+}
+
 #pragma endregion

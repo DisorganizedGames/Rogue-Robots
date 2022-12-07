@@ -100,6 +100,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<PlayerUseEquipmentSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<GoalRadarSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<RemoveBulletComponentSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<SetOutlineOnNearbyPickupsSystem>());
 
 	m_entityManager.RegisterSystem(std::make_unique<WeaponPointLightSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayMusicSystem>());
