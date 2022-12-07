@@ -318,7 +318,7 @@ namespace DOG
          void OnEvent(IEvent& event) override final;
          std::wstring GetText(void);
          UINT GetIndex();
-         void SendStrings(std::vector<std::wstring> filenames);
+         void SendStrings(const std::vector<std::wstring>& filenames);
       private:
          float m_opacity;
          bool m_border;

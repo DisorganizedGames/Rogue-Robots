@@ -1106,7 +1106,7 @@ UINT DOG::UICarousel::GetIndex()
     return m_index;
 }
 
-void DOG::UICarousel::SendStrings(std::vector<std::wstring> filenames)
+void DOG::UICarousel::SendStrings(const std::vector<std::wstring>& filenames)
 {
     m_labels = filenames;
 }
@@ -1437,11 +1437,11 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto playerListJoin = instance->Create<DOG::UIPlayerList>(playerListJoinID);
 
    //Singleplayer UI carousel
-   auto carouselSolo = instance->Create<DOG::UICarousel, std::vector<std::wstring>, float, float, float, float, float>(carouselSoloID, {L""}, (FLOAT)clientWidth / 2.f - 200.f, (FLOAT)clientHeight / 2.f + 100.f, 300.f, 75.f, 25.f);
+   auto carouselSolo = instance->Create<DOG::UICarousel, std::vector<std::wstring>, float, float, float, float, float>(carouselSoloID, {L""}, (FLOAT)clientWidth / 2.f - 150.f, (FLOAT)clientHeight / 2.f + 100.f, 300.f, 75.f, 25.f);
    instance->AddUIElementToScene(levelSelectSoloID, std::move(carouselSolo));
 
    //Multiplayer UI carousel
-   auto carouselMult = instance->Create<DOG::UICarousel, std::vector<std::wstring>, float, float, float, float, float>(carouselMultID, {L""}, (FLOAT)clientWidth / 2.f - 200.f, (FLOAT)clientHeight / 2.f + 100.f, 300.f, 75.f, 25.f);
+   auto carouselMult = instance->Create<DOG::UICarousel, std::vector<std::wstring>, float, float, float, float, float>(carouselMultID, {L""}, (FLOAT)clientWidth / 2.f - 150.f, (FLOAT)clientHeight / 2.f + 100.f, 300.f, 75.f, 25.f);
    instance->AddUIElementToScene(levelSelectMultID, std::move(carouselMult));
 
    std::vector<std::wstring> vec = { L"Assets/Sprites/MaxHP.bmp" , L"Assets/Sprites/MoveSpeed.bmp" , L"Assets/Sprites/JumpBoost.bmp" };
