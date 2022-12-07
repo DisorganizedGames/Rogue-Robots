@@ -660,7 +660,7 @@ void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity pla
 				//std::cout << "deadPlayer" << playerToDraw << std::endl;
 				
 				//This means that playerModel is the mesh model (suit), and it should be rendered again:
-				em.RemoveComponent<DOG::DontDraw>(playerModel);
+				em.RemoveComponentIfExist<DOG::DontDraw>(playerModel);
 				#if defined _DEBUG
 				addedSuitToRendering = true;
 				#endif
@@ -688,7 +688,7 @@ void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity pla
 			{
 				//std::cout << "ChangeSuitDrawLogic Before player NOT to draw" << std::endl;
 				//This means that playerModel is the spectated players' armor/suit, and it should not be eligible for rendering anymore:
-				DOG::EntityManager::Get().AddComponent<DOG::DontDraw>(playerModel);
+				DOG::EntityManager::Get().AddOrReplaceComponent<DOG::DontDraw>(playerModel);
 				#if defined _DEBUG
 				removedSuitFromRendering = true;
 				#endif
