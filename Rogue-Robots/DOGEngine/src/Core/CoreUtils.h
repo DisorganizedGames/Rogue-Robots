@@ -42,7 +42,7 @@ namespace DOG
 
 		// Limits for LightTable
 		u32 maxStaticPointLights = 512;
-		u32 maxDynamicPointLights = 512;
+		u32 maxDynamicPointLights = 1024;
 		u32 maxSometimesPointLights = 12;
 		u32 maxStaticSpotLights = 12;
 		u32 maxDynamicSpotLights = 12;

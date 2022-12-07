@@ -33,6 +33,18 @@ void AgentDistanceToPlayersSystem::OnEarlyUpdate(entity agent, BTDistanceToPlaye
 				Vector3::Distance(tc.GetPosition(), ptc.GetPosition()),
 				ptc.GetPosition()
 			);
+			if (EntityManager::Get().HasComponent<ThisPlayer>(playerID))
+			{
+				//auto rayCastResult = PhysicsEngine::RayCast(tc.GetPosition(), ptc.GetPosition());
+
+				//bool hitIsPlayer = (rayCastResult->entityHit == playerID);
+				//if (hitIsPlayer)
+				//{
+				if (atmc.playerData.back().distanceFromAgent < 50.0f)
+				{
+					EntityManager::Get().GetComponent<PointLightComponent>(agent).dirty = true;
+				}
+			}
 			atLeastOneWithinRange = atLeastOneWithinRange || (atmc.playerData.back().distanceFromAgent <= maxVision);
 		});
 

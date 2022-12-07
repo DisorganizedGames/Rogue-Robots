@@ -183,6 +183,17 @@ entity AgentManager::CreateAgentCore(u32 model, u32 groupID, const Vector3& pos,
 	EntityManager& em = EntityManager::Get();
 	entity e = em.CreateEntity();
 
+	//Create a point light on the enemy.
+	auto pdesc = PointLightDesc();
+	pdesc.color = Vector3(1.0f, 0.2f, 0.2f);
+	pdesc.strength = 1.f;
+	pdesc.radius = 2.f;
+	auto& plc = EntityManager::Get().AddComponent<PointLightComponent>(e);
+	plc.handle = LightManager::Get().AddPointLight(pdesc, LightUpdateFrequency::PerFrame);
+	plc.color = pdesc.color;
+	plc.strength = pdesc.strength;
+	plc.radius = pdesc.radius;
+
 	// Set default components
 	TransformComponent& trans = em.AddComponent<TransformComponent>(e);
 	trans.SetPosition(pos);

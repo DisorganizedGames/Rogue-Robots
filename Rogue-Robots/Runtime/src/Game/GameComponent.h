@@ -405,7 +405,7 @@ struct LaserBarrelComponent
 
 struct GlowStickComponent
 {
-	static constexpr u32 globalGlowStickLimit = 100;
+	static constexpr u32 globalGlowStickLimit = 256;
 	f32 spawnTime = 0;
 };
 
