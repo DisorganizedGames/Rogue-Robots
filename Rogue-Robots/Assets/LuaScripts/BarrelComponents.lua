@@ -44,7 +44,8 @@ function BarrelComponents:BasicBarrel()
 			local boxColliderSize = bullet.size * 0.005 + Vector3.New(.1, .1, .1)
 			Entity:ModifyComponent(bullet.entity, "Transform", bullet.size + self.size, 3)
 
-			SetPosition(bullet, transformEntity, -0.06, 0.29, 0.9)
+			--SetPosition(bullet, transformEntity, -0.06, 0.29, 0.9)
+			SetPosition(bullet, transformEntity, -0.12, 0.18, 0.9)
 			local gunForward = Vector3.FromTable(Entity:GetRight(gunEntity.entityID))
 			gunForward = Norm(gunForward)
 
@@ -100,7 +101,8 @@ function BarrelComponents:Grenade()
 
 			local grenadeUp = Vector3.FromTable(Entity:GetUp(parentEntityID))
 
-			SetPosition(bullet, transformEntity, -0.12, 0.29, 1.0)
+			--SetPosition(bullet, transformEntity, -0.12, 0.29, 1.0)
+			SetPosition(bullet, transformEntity, -0.18, 0.18, 1.0)
 
 			local gunForward = Vector3.FromTable(Entity:GetRight(gunEntity.entityID))
 			gunForward = Norm(gunForward)
@@ -193,7 +195,8 @@ function BarrelComponents:Missile()
 				homingMissileInfo["homing"] = false
 			end
 
-			SetPosition(bullet, transformEntity, -0.12, 0.29, 1.0)
+			--SetPosition(bullet, transformEntity, -0.12, 0.29, 1.0)
+			SetPosition(bullet, transformEntity, -0.18, 0.18, 1.0)
 
 			Entity:AddComponent(bullet.entity, "HomingMissileComponent", parentEntityID, gunEntity.entityID, homingMissileInfo)
 			Entity:PlayAudio(gunEntity.entityID, self.gunShotMissileSound, true)
@@ -243,7 +246,8 @@ function BarrelComponents:Laser()
 			local boxColliderSize = bullet.size * 0.005 + Vector3.New(.1, .1, .1)
 			Entity:ModifyComponent(bullet.entity, "Transform", bullet.size + self.size, 3)
 
-			SetPosition(bullet, transformEntity, -0.12, 0.29, 1.5)
+			--SetPosition(bullet, transformEntity, -0.12, 0.29, 1.5)
+			SetPosition(bullet, transformEntity, -0.18, 0.18, 1.5)
 
 			local gunForward = Vector3.FromTable(Entity:GetRight(gunEntity.entityID))
 			gunForward = Norm(gunForward)

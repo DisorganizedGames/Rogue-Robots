@@ -74,7 +74,7 @@ function OnStart()
 	-- Initialize the gun view model entity
 	gunID = Scene:CreateEntity(EntityID)
 	gunEntity.entityID = gunID
-	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.35,y=.35,z=.35})
+	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.55 ,y=.35,z=.35})
 	Entity:AddComponent(gunID, "Model", gunModel)
 	Entity:AddComponent(gunID, "Audio", gunShotSound, false, true)
 
@@ -146,7 +146,7 @@ function OnUpdate()
 	local playerRight = Vector3.FromTable(Entity:GetRight(cameraEntity))
 
 	-- Move gun down and to the right 
-	gunEntity.position = gunEntity.position + playerRight * 0.3 - playerUp * 0.15 + playerForward * 0.4
+	gunEntity.position = gunEntity.position + playerRight * 0.2 - playerUp * 0.18 + playerForward * 0.28
 
 	-- Rotate the weapon by 90 degrees pitch
 	local angle = math.pi / 2 + math.pi / 150.0 
@@ -177,7 +177,8 @@ function OnUpdate()
 		local shoot = Entity:GetAction(EntityID, "Shoot")
 		local dir = Vector3.FromTable(Entity:GetRight(gunEntity.entityID))
 		dir = Norm(dir)
-		local laserStart = GetPositionToSpawn(cameraEntity, -0.175, 0.31, 0.05)
+		local laserStart = GetPositionToSpawn(cameraEntity, -0.2, 0.2, 0.05)
+		--local laserStart = GetPositionToSpawn(cameraEntity, -0.175, 0.31, 0.05)
 		laserStart = laserStart + dir * 0.8
 		local color = Vector3.New(1.5, 0.1, 0.1) * 7
 		if magazineComponent:GetECSType() == 1 then
