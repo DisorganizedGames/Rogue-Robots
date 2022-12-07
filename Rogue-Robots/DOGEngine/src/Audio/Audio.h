@@ -78,7 +78,7 @@ namespace DOG
 
 		X3DAUDIO_HANDLE m_x3daudio = {};
 
-		std::array<std::unique_ptr<SourceVoice>, 64> m_sources = { nullptr };
+		std::array<std::unique_ptr<SourceVoice>, 128> m_sources = { nullptr };
 
 		std::atomic_bool m_threadShouldDie = false;
 		std::thread m_audioThread;

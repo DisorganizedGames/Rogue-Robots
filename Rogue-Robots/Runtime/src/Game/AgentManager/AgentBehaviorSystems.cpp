@@ -624,6 +624,21 @@ void AgentAggroSystem::OnUpdate(entity e, BTAggroComponent&, AgentAggroComponent
 		}
 		else
 			LEAF(btc.currentRunningNode)->Fail(e);
+
+		if (!EntityManager::Get().HasComponent<AgentAggroAudioComponent>(e))
+		{
+			auto& aggroAudioComponent = EntityManager::Get().AddComponent<AgentAggroAudioComponent>(e);
+			aggroAudioComponent.agentAggroAudioEntity = EntityManager::Get().CreateEntity();
+
+			entity aggroAudioEntity = aggroAudioComponent.agentAggroAudioEntity;
+			EntityManager::Get().AddComponent<TransformComponent>(aggroAudioEntity);
+			EntityManager::Get().AddComponent<ChildComponent>(aggroAudioEntity).parent = e;
+			EntityManager::Get().AddComponent<LifetimeComponent>(aggroAudioEntity, 5.0f);
+			auto& aggroAudio = EntityManager::Get().AddComponent<DOG::AudioComponent>(aggroAudioEntity);
+			aggroAudio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Aggro.wav");
+			aggroAudio.shouldPlay = true;
+			aggroAudio.volume = 0.6f;
+		}
 	}
 }
 
@@ -692,7 +707,7 @@ void AgentMovementSystem::OnLateUpdate(entity e, BTMoveToPlayerComponent&, Behav
 			int walkingSoundIndex = rand() % m_walkingSounds.size();
 			audio.assetID = m_walkingSounds[walkingSoundIndex];
 			audio.shouldPlay = true;
-			audio.volume = 0.15;
+			audio.volume = 0.15f;
 		}
 	}
 	else
