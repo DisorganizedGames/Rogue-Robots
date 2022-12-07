@@ -1318,6 +1318,21 @@ void EntityInterface::AddLaserBullet(DOG::LuaContext* context, DOG::entity e)
 	}
 
 	em.AddComponent<LaserBulletComponent>(e).color = color;
+
+	auto& light = em.AddComponent<PointLightComponent>(e);
+	light.color = color;
+	light.radius = 7;
+	light.strength = 2;
+	light.handle = LightManager::Get().AddPointLight(
+		PointLightDesc
+		{
+			.position = em.GetComponent<TransformComponent>(e).GetPosition(),
+			.radius = light.radius,
+			.color = light.color,
+			.strength = light.strength
+		},
+		LightUpdateFrequency::PerFrame);
+	em.AddComponent<SetPointLightDirtyComponent>(e);
 }
 
 void EntityInterface::AddGoalRadarComponent(DOG::LuaContext* context, DOG::entity e)

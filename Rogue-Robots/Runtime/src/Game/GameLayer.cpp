@@ -104,6 +104,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<WeaponPointLightSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayMusicSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<AmbientSoundSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<SetPointLightDirtySystem>());
 
 	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
