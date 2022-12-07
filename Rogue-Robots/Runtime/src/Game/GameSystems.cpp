@@ -387,10 +387,12 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 		return;
 	}
 
-	//Any player not part of the reviving/being revived "cooperation" should return:
+	//Any player not part of the reviving/being revived "cooperation" should be singled out for ease of handling:
+	DOG::entity nonParticipatingPlayer = DOG::NULL_ENTITY;
 	const bool isNonParticipatingPlayer = (!mgr.HasComponent<ThisPlayer>(player) && !mgr.HasComponent<ThisPlayer>(closestDeadPlayer));
 	if (isNonParticipatingPlayer)
-		return;
+		nonParticipatingPlayer = player;
+
 
 	//Likewise, if we are not close enough to a dead player, then this system should not continue:
 	if (distanceToClosestDeadPlayer > MAXIMUM_DISTANCE_DELTA)
@@ -401,14 +403,18 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 	}
 
 	//The last test is checking whether the player is also looking at the dead player. If not, return:
-	auto deadPlayerPos = mgr.GetComponent<DOG::TransformComponent>(closestDeadPlayer).GetPosition();
-	auto cam = mgr.GetComponent<PlayerControllerComponent>(player).cameraEntity;
-	auto& playerCamera = mgr.GetComponent<DOG::TransformComponent>(cam);
-	auto playerCameraPosition = playerCamera.GetPosition();
-	auto playerCameraForward = playerCamera.GetForward();
-	auto directionFromDeadToLivePlayer = deadPlayerPos - playerCameraPosition;
-	directionFromDeadToLivePlayer.Normalize();
-	float dot = directionFromDeadToLivePlayer.Dot(playerCameraForward);
+	float dot = std::numeric_limits<float>::max();
+	if (!isNonParticipatingPlayer)
+	{
+		auto deadPlayerPos = mgr.GetComponent<DOG::TransformComponent>(closestDeadPlayer).GetPosition();
+		auto cam = mgr.GetComponent<PlayerControllerComponent>(player).cameraEntity;
+		auto& playerCamera = mgr.GetComponent<DOG::TransformComponent>(cam);
+		auto playerCameraPosition = playerCamera.GetPosition();
+		auto playerCameraForward = playerCamera.GetForward();
+		auto directionFromDeadToLivePlayer = deadPlayerPos - playerCameraPosition;
+		directionFromDeadToLivePlayer.Normalize();
+		dot = directionFromDeadToLivePlayer.Dot(playerCameraForward);
+	}
 	if (dot < MINIMUM_DOT_DELTA)
 	{
 		mgr.RemoveComponentIfExists<ReviveTimerComponent>(player);
@@ -430,74 +436,86 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 	pos.x -= xOffset;
 	pos.y -= yOffset;
 
-	if (mgr.HasComponent<ThisPlayer>(player))
+	if (!isNonParticipatingPlayer)
 	{
-		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-		ImGui::SetNextWindowSize(size);
-		ImGui::SetNextWindowPos(pos);
-		if (ImGui::Begin("Revive text 1", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+		if (mgr.HasComponent<ThisPlayer>(player))
 		{
-			ImGui::PushFont(DOG::Window::GetFont());
-			ImGui::SetWindowFontScale(1.75f);
-			auto windowWidth = ImGui::GetWindowSize().x;
-			auto& npc = mgr.GetComponent<NetworkPlayerComponent>(closestDeadPlayer);
+			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+			ImGui::SetNextWindowSize(size);
+			ImGui::SetNextWindowPos(pos);
+			if (ImGui::Begin("Revive text 1", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+			{
+				ImGui::PushFont(DOG::Window::GetFont());
+				ImGui::SetWindowFontScale(1.75f);
+				auto windowWidth = ImGui::GetWindowSize().x;
+				auto& npc = mgr.GetComponent<NetworkPlayerComponent>(closestDeadPlayer);
 
-			std::string text0 = inputC.revive ? "" : "[E] ";
-			std::string text1 = inputC.revive ? std::string("Reviving ") : std::string("Revive ");
-			std::string text2 = std::string(npc.playerName);
-			auto textWidth = ImGui::CalcTextSize((text0 + text1 + text2).c_str()).x;
+				std::string text0 = inputC.revive ? "" : "[E] ";
+				std::string text1 = inputC.revive ? std::string("Reviving ") : std::string("Revive ");
+				std::string text2 = std::string(npc.playerName);
+				auto textWidth = ImGui::CalcTextSize((text0 + text1 + text2).c_str()).x;
 
-			ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 175));
-			ImGui::Text(text0.c_str());
-			ImGui::PopStyleColor(1);
+				ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 175));
+				ImGui::Text(text0.c_str());
+				ImGui::PopStyleColor(1);
 
-			ImGui::SameLine();
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 175));
-			ImGui::Text(text1.c_str());
-			ImGui::PopStyleColor(1);
+				ImGui::SameLine();
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 175));
+				ImGui::Text(text1.c_str());
+				ImGui::PopStyleColor(1);
 
-			ImGui::PushStyleColor(ImGuiCol_Text, DeterminePlayerColor(npc.playerName));
-			ImGui::SameLine();
-			ImGui::Text(text2.c_str());
+				ImGui::PushStyleColor(ImGuiCol_Text, DeterminePlayerColor(npc.playerName));
+				ImGui::SameLine();
+				ImGui::Text(text2.c_str());
 
-			ImGui::PopStyleColor(1);
-			ImGui::PopFont();
+				ImGui::PopStyleColor(1);
+				ImGui::PopFont();
+			}
+			ImGui::End();
+			ImGui::PopStyleColor();
 		}
-		ImGui::End();
-		ImGui::PopStyleColor();
 	}
 
-	//Add revive sound effect
-	if (!mgr.HasComponent<ReviveSoundEffectComponent>(player))
+	if (!isNonParticipatingPlayer)
 	{
-		auto& reviveComponent = mgr.AddComponent<ReviveSoundEffectComponent>(player);
-		reviveComponent.reviveAudioEntity = mgr.CreateEntity();
-		mgr.AddComponent<SceneComponent>(reviveComponent.reviveAudioEntity, mgr.GetComponent<SceneComponent>(player).scene);
+		//Add revive sound effect
+		if (!mgr.HasComponent<ReviveSoundEffectComponent>(player))
+		{
+			auto& reviveComponent = mgr.AddComponent<ReviveSoundEffectComponent>(player);
+			reviveComponent.reviveAudioEntity = mgr.CreateEntity();
+			mgr.AddComponent<SceneComponent>(reviveComponent.reviveAudioEntity, mgr.GetComponent<SceneComponent>(player).scene);
 
-		mgr.AddComponent<DOG::AudioComponent>(reviveComponent.reviveAudioEntity).is3D = true;
-		mgr.AddComponent<DOG::TransformComponent>(reviveComponent.reviveAudioEntity);
-		mgr.AddComponent<ChildComponent>(reviveComponent.reviveAudioEntity).parent = player;
+			mgr.AddComponent<DOG::AudioComponent>(reviveComponent.reviveAudioEntity).is3D = true;
+			mgr.AddComponent<DOG::TransformComponent>(reviveComponent.reviveAudioEntity);
+			mgr.AddComponent<ChildComponent>(reviveComponent.reviveAudioEntity).parent = player;
 
-		m_reviveSound = AssetManager::Get().LoadAudio("Assets/Audio/Items/Revive.wav");
+			m_reviveSound = AssetManager::Get().LoadAudio("Assets/Audio/Items/Revive.wav");
+		}
 	}
-	auto& reviveAudioComponent = mgr.GetComponent<DOG::AudioComponent>(mgr.GetComponent<ReviveSoundEffectComponent>(player).reviveAudioEntity);
 
+	DOG::AudioComponent reviveAudioComponent{};
+	if (!isNonParticipatingPlayer)
+		reviveAudioComponent = mgr.GetComponent<DOG::AudioComponent>(mgr.GetComponent<ReviveSoundEffectComponent>(player).reviveAudioEntity);
 	//Next up is the revival progress. Holding E adds to the progress bar.
 	//Perhaps the player is not trying to revive:
 	if (!inputC.revive)
 	{
 		mgr.RemoveComponentIfExists<ReviveTimerComponent>(player);
 		mgr.RemoveComponentIfExists<ReviveTimerComponent>(closestDeadPlayer);
-		reviveAudioComponent.shouldStop = true;
+		if (!isNonParticipatingPlayer)
+			reviveAudioComponent.shouldStop = true;
 		return;
 	}
 
 	//Play if reviving
-	if (!reviveAudioComponent.playing)
+	if (!isNonParticipatingPlayer)
 	{
-		reviveAudioComponent.assetID = m_reviveSound;
-		reviveAudioComponent.shouldPlay = true;
+		if (!reviveAudioComponent.playing)
+		{
+			reviveAudioComponent.assetID = m_reviveSound;
+			reviveAudioComponent.shouldPlay = true;
+		}
 	}
 	
 	if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))
@@ -536,45 +554,60 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 	reviveComponent.timeLeft -= (float)DOG::Time::DeltaTime();
 	reviveComponent.timeLeft = std::clamp(reviveComponent.timeLeft, 0.0f, reviveComponent.duration);
 
-	DrawProgressBar(progress);
+	if (!isNonParticipatingPlayer)
+		DrawProgressBar(progress);
 	const bool revivalCompleted = (progress >= 1.0f);
 	if (revivalCompleted)
 	{
-		//Reset UI.
-		auto UIInstance = DOG::UI::Get();
-		//Passive items
-		UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(0);
-		UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(1);
-		UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(2);
+		if (!isNonParticipatingPlayer)
+		{
+			//Reset UI.
+			auto UIInstance = DOG::UI::Get();
+			//Passive items
+			UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(0);
+			UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(1);
+			UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(2);
 
-		//Active item
-		UIInstance->GetUI<UIIcon>(iconActiveID)->Hide();
-		UIInstance->GetUI<UIIcon>(iconActiveID)->ActivateBorder();
-		UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetDraw(true);
+			//Active item
+			UIInstance->GetUI<UIIcon>(iconActiveID)->Hide();
+			UIInstance->GetUI<UIIcon>(iconActiveID)->ActivateBorder();
+			UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetDraw(true);
 
-		//Components
-		UIInstance->GetUI<UIIcon>(iconID)->Hide();
-		UIInstance->GetUI<UIIcon>(iconID)->ActivateBorder();
-		UIInstance->GetUI<UIIcon>(icon2ID)->Hide();
-		UIInstance->GetUI<UIIcon>(icon2ID)->ActivateBorder();
-		UIInstance->GetUI<UIIcon>(icon3ID)->Hide();
-		UIInstance->GetUI<UIIcon>(icon3ID)->ActivateBorder();
+			//Components
+			UIInstance->GetUI<UIIcon>(iconID)->Hide();
+			UIInstance->GetUI<UIIcon>(iconID)->ActivateBorder();
+			UIInstance->GetUI<UIIcon>(icon2ID)->Hide();
+			UIInstance->GetUI<UIIcon>(icon2ID)->ActivateBorder();
+			UIInstance->GetUI<UIIcon>(icon3ID)->Hide();
+			UIInstance->GetUI<UIIcon>(icon3ID)->ActivateBorder();
 
-		//Weaponicon
-		UIInstance->GetUI<UIIcon>(iconGun)->Show(0);
-		UIInstance->GetUI<UIIcon>(glowstickID)->Show(0);
-		UIInstance->GetUI<UIIcon>(flashlightID)->Show(0);
+			//Weaponicon
+			UIInstance->GetUI<UIIcon>(iconGun)->Show(0);
+			UIInstance->GetUI<UIIcon>(glowstickID)->Show(0);
+			UIInstance->GetUI<UIIcon>(flashlightID)->Show(0);
+		}
+		// Apply Revive Animation
+		//{
+		//	static constexpr u8 REVIVE_ANIMATION = 0; // No dedicated animation yet, transition to idle for now
+		//	auto& ac = mgr.GetComponent<AnimationComponent>(closestDeadPlayer);
+		//	ac.SimpleAdd(REVIVE_ANIMATION, AnimationFlag::Looping | AnimationFlag::ResetPrio);
+		//}
 
 		if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))
 		{
 			auto spectatedPlayer = mgr.GetComponent<SpectatorComponent>(closestDeadPlayer).playerBeingSpectated;
 			mgr.RemoveComponent<AudioListenerComponent>(spectatedPlayer);
 			ChangeSuitDrawLogic(spectatedPlayer, closestDeadPlayer);
-			RevivePlayer(closestDeadPlayer);
 		}
+		RevivePlayer(closestDeadPlayer);
 		mgr.RemoveComponent<ActiveItemComponent>(player);
+
+		if (!isNonParticipatingPlayer)
+			return;
+
 		if (mgr.HasComponent<ThisPlayer>(player))
 		{
+			//REMEMBER TO REMOVE!
 			DOG::UI::Get()->GetUI<UIIcon>(iconActiveID)->Hide();
 		}
 	}
@@ -613,26 +646,37 @@ void ReviveSystem::RevivePlayer(DOG::entity player)
 	auto& psc = mgr.GetComponent<PlayerStatsComponent>(player);
 	psc.health = psc.maxHealth / 2.0f;
 
-	mgr.RemoveComponent<SpectatorComponent>(player);
+	if (mgr.HasComponent<ThisPlayer>(player))
+		mgr.RemoveComponent<SpectatorComponent>(player);
 
-	auto& pcc = mgr.GetComponent<PlayerControllerComponent>(player);
-	mgr.DestroyEntity(pcc.spectatorCamera);
-	pcc.spectatorCamera = NULL_ENTITY;
-	mgr.GetComponent<CameraComponent>(pcc.cameraEntity).isMainCamera = true;
+	if (mgr.HasComponent<ThisPlayer>(player))
+	{
+		auto& pcc = mgr.GetComponent<PlayerControllerComponent>(player);
+		mgr.DestroyEntity(pcc.spectatorCamera);
+		pcc.spectatorCamera = NULL_ENTITY;
+		mgr.GetComponent<CameraComponent>(pcc.cameraEntity).isMainCamera = true;
+	}
 
-	/*auto& ac = mgr.GetComponent<AnimationComponent>(player);
-	ac.SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio, ac.BASE_PRIORITY, ac.FULL_BODY, 1.5f, 0.5f);*/
 	mgr.AddComponent<PlayerAliveComponent>(player).timer = 2.f;
 
-	LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
-	LuaMain::GetScriptManager()->AddScript(player, "PassiveItemSystem.lua");
-	LuaMain::GetScriptManager()->AddScript(player, "ActiveItemSystem.lua");
-
-	auto& bc = mgr.AddComponent<BarrelComponent>(player);
+	if (mgr.HasComponent<ThisPlayer>(player))
+	{
+		LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
+		LuaMain::GetScriptManager()->AddScript(player, "PassiveItemSystem.lua");
+		LuaMain::GetScriptManager()->AddScript(player, "ActiveItemSystem.lua");
+		mgr.AddOrReplaceComponent<ScriptComponent>(player, player);
+	}
+	auto& bc = mgr.AddOrReplaceComponent<BarrelComponent>(player);
 	bc.type = BarrelComponent::Type::Bullet;
 	bc.maximumAmmoCapacityForType = 999'999;
 	bc.ammoPerPickup = 30;
 	bc.currentAmmoCount = 30;
+
+	auto& mmc = mgr.AddOrReplaceComponent<MagazineModificationComponent>(player);
+	mmc.type = MagazineModificationComponent::Type::None;
+
+	auto& mc = mgr.AddOrReplaceComponent<MiscComponent>(player);
+	mc.type = MiscComponent::Type::Basic;
 
 	auto& rb = mgr.GetComponent<RigidbodyComponent>(player);
 	rb.ConstrainRotation(true, true, true);
@@ -642,7 +686,7 @@ void ReviveSystem::RevivePlayer(DOG::entity player)
 	rb.setGravityForRigidbody = true;
 	rb.gravityForRigidbody = Vector3(0.0f, -25.0f, 0.0f);
 
-	mgr.AddComponent<AudioListenerComponent>(player);
+	mgr.AddOrReplaceComponent<AudioListenerComponent>(player);
 }
 
 void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw)

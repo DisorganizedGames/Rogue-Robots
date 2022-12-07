@@ -569,28 +569,36 @@ void GameLayer::KillPlayer(DOG::entity e)
 		auto& ac = m_entityManager.GetComponent<AnimationComponent>(e);
 		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::DeathAnimation), AnimationFlag::Persist, 1u, ac.FULL_BODY, 1.f, 0.5f);
 	}
+
+	//ALL players should react to this:
+	m_entityManager.RemoveComponentIfExists<MiscComponent>(e);
+	m_entityManager.RemoveComponentIfExists<AudioListenerComponent>(e);
+	m_entityManager.RemoveComponentIfExists<MiscComponent>(e);
+	m_entityManager.RemoveComponentIfExists<MagazineModificationComponent>(e);
+
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
 		entity localPlayer = e;
+		m_entityManager.RemoveComponentIfExists<BarrelComponent>(localPlayer);
 
-		LuaMain::GetScriptManager()->RemoveScript(localPlayer, "Gun.lua");
-		LuaMain::GetScriptManager()->RemoveScript(localPlayer, "PassiveItemSystem.lua");
+
 		//Remove UI icon bufftracker stacks.
 		auto UIInstance = UI::Get();
 		UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(0);
 		UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(1);
 		UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(2);
 
-		LuaMain::GetScriptManager()->RemoveScript(localPlayer, "ActiveItemSystem.lua");
 		//Remove UI icon for active item.
 		UIInstance->GetUI<UIIcon>(iconActiveID)->Hide();
 		UIInstance->GetUI<UIIcon>(iconActiveID)->DeactivateBorder();
 		UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetDraw(false);
 
+		LuaMain::GetScriptManager()->RemoveScript(e, "Gun.lua");
+		LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
+		LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
+		m_entityManager.RemoveComponentIfExists<ScriptComponent>(e);
+
 		std::string luaEventName = std::string("ItemPickup") + std::to_string(localPlayer);
-		m_entityManager.RemoveComponent<ScriptComponent>(localPlayer);
-		m_entityManager.RemoveComponent<BarrelComponent>(localPlayer);
-		m_entityManager.RemoveComponentIfExists<MiscComponent>(localPlayer);
 		//Remove UI icon for weapon components.
 		UIInstance->GetUI<UIIcon>(iconID)->Hide();
 		UIInstance->GetUI<UIIcon>(iconID)->DeactivateBorder();
@@ -603,7 +611,6 @@ void GameLayer::KillPlayer(DOG::entity e)
 		UIInstance->GetUI<UIIcon>(glowstickID)->Hide();
 		UIInstance->GetUI<UIIcon>(flashlightID)->Hide();
 
-		m_entityManager.RemoveComponentIfExists<AudioListenerComponent>(localPlayer);
 
 		RigidbodyComponent& rb = m_entityManager.GetComponent<RigidbodyComponent>(e);
 		rb.ConstrainPosition(true, true, true);
