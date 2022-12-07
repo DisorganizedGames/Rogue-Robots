@@ -74,7 +74,7 @@ function OnStart()
 	-- Initialize the gun view model entity
 	gunID = Scene:CreateEntity(EntityID)
 	gunEntity.entityID = gunID
-	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.55 ,y=.35,z=.35})
+	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.35 ,y=.35,z=.35})
 	Entity:AddComponent(gunID, "Model", gunModel)
 	Entity:AddComponent(gunID, "Audio", gunShotSound, false, true)
 
@@ -99,12 +99,6 @@ function OnStart()
 		Entity:AddComponent(magazineEntityID, "ThisPlayerWeapon")
 		CreateWeaponLights()
 	end
-	
-
-	--Entity:AddComponent(gunID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
-	--Entity:AddComponent(barrelEntityID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
-	--Entity:AddComponent(miscEntityID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
-	--Entity:AddComponent(magazineEntityID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
 
 	-- Initialize base components
 	miscComponent = MiscComponent.BasicShot()
@@ -146,7 +140,7 @@ function OnUpdate()
 	local playerRight = Vector3.FromTable(Entity:GetRight(cameraEntity))
 
 	-- Move gun down and to the right 
-	gunEntity.position = gunEntity.position + playerRight * 0.2 - playerUp * 0.18 + playerForward * 0.28
+	gunEntity.position = gunEntity.position + playerRight * 0.3 - playerUp * 0.15 + playerForward * 0.4
 
 	-- Rotate the weapon by 90 degrees pitch
 	local angle = math.pi / 2 + math.pi / 150.0 

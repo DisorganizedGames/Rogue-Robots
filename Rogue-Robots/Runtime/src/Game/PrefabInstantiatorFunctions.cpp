@@ -8,7 +8,7 @@ using namespace DirectX::SimpleMath;
 std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 {
 	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
-	
+
 	auto* scriptManager = LuaMain::GetScriptManager();
 	//// Add persistent material prefab lua
 	//{
@@ -24,20 +24,10 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 	auto& am = AssetManager::Get();
 	auto& em = EntityManager::Get();
 	std::array<u32, 4> playerModels = {};
-	playerModels[0] = am.LoadModelAsset("Assets/Models/P2/Aim/testAim.gltf");
-	playerModels[1] = am.LoadModelAsset("Assets/Models/P2/Aim/testAim.gltf");
-	playerModels[2] = am.LoadModelAsset("Assets/Models/P2/Aim/testAim.gltf");
+	playerModels[0] = am.LoadModelAsset("Assets/Models/P2/Red/red_player.gltf");
+	playerModels[1] = am.LoadModelAsset("Assets/Models/P2/Blue/blue_player.gltf");
+	playerModels[2] = am.LoadModelAsset("Assets/Models/P2/Green/green_player.gltf");
 	playerModels[3] = am.LoadModelAsset("Assets/Models/P2/Aim/testAim.gltf");
-	//playerModels[0] = am.LoadModelAsset("Assets/Models/P2/Red/player_red.gltf");
-	//playerModels[1] = am.LoadModelAsset("Assets/Models/P2/Red/player_red.gltf");
-	/*playerModels[1] = am.LoadModelAsset("Assets/Models/P2/Aim/testAim.gltf");
-	playerModels[2] = am.LoadModelAsset("Assets/Models/P2/Aim/testAim.gltf");
-	playerModels[3] = am.LoadModelAsset("Assets/Models/P2/Aim/testAim.gltf");
-	playerModels[0] = am.LoadModelAsset("Assets/Models/P2/Red/player_red.gltf");
-	playerModels[1] = am.LoadModelAsset("Assets/Models/P2/Blue/player_blue.gltf");
-	playerModels[2] = am.LoadModelAsset("Assets/Models/P2/Green/player_green.gltf");
-	playerModels[3] = am.LoadModelAsset("Assets/Models/P2/Yellow/player_yellow.gltf");
-	*/
 
 	std::array<DirectX::SimpleMath::Vector3, 4> playerOutlineColors
 	{
