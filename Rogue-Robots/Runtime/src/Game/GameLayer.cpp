@@ -160,19 +160,21 @@ void GameLayer::OnUpdate()
 			break;
 		case GameState::MainMenu:
 		{
-			
+			Window::SetCursorMode(CursorMode::Visible);
 			m_entityManager.Collect<MusicPlayer>().Do([&](MusicPlayer& musicPlayer) {musicPlayer.inMainMenu = true; });
-
-		}
 			break;
+		}
 		case GameState::Initializing:
 			m_gameState = GameState::MainMenu;
 			break;
 		case GameState::Lobby:
+			Window::SetCursorMode(CursorMode::Visible);
 			UpdateLobby();
 			break;
 		case GameState::StartPlaying:
 		{
+			Window::SetCursorMode(CursorMode::Confined);
+
 			//Reset UI.
 			auto UIInstance = DOG::UI::Get();
 			//Passive items
@@ -1666,9 +1668,9 @@ void GameLayer::Input(DOG::Key key)
 				inputC.activateActiveItem = true;
 			if (key == DOG::Key::R)
 				inputC.reload = true;
-			if (key == DOG::Key::H)
+			if (key == DOG::Key::F4)
 				inputC.toggleDebug = true;
-			if (key == DOG::Key::C)
+			if (key == DOG::Key::F3)
 				inputC.toggleMoveView = true;
 			if (key == DOG::Key::F)
 				inputC.flashlight = !inputC.flashlight;
@@ -1703,9 +1705,9 @@ void GameLayer::Release(DOG::Key key)
 				inputC.activateActiveItem = false;
 			if (key == DOG::Key::R)
 				inputC.reload = false;
-			if (key == DOG::Key::H)
+			if (key == DOG::Key::F4)
 				inputC.toggleDebug = false;
-			if (key == DOG::Key::C)
+			if (key == DOG::Key::F3)
 				inputC.toggleMoveView = false;
 			if (key == DOG::Key::E)
 				inputC.revive = false;

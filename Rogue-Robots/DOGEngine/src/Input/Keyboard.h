@@ -13,7 +13,7 @@ namespace DOG
 		LeftArrow = 37, UpArrow, RightArrow, DownArrow,
 		Zero = 48, One, Two, Three, Four, Five, Six, Seven, Eight, Nine,
 		A = 65, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
-		F1 = 112, F2, F3,
+		F1 = 112, F2, F3, F4,
 		LShift = 160, RShift, LCtrl, RCtrl,
 		Period = 190//� = 192,
 		// � = 221,
