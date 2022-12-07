@@ -336,6 +336,23 @@ void AgentDodgeSystem::OnUpdate(entity e, BTDodgeComponent&, BehaviorTreeCompone
 	{
 		PlayerManager::Get().HurtIfThisPlayer(seek.entityID, attack.damage, e);
 
+		if (!EntityManager::Get().HasComponent<AgentAttackAudioComponent>(e))
+		{
+			auto& attackAudio = EntityManager::Get().AddComponent<AgentAttackAudioComponent>(e);
+			attackAudio.agentAttackAudioComponent = EntityManager::Get().CreateEntity();
+			
+			EntityManager::Get().AddComponent<TransformComponent>(attackAudio.agentAttackAudioComponent);
+			EntityManager::Get().AddComponent<ChildComponent>(attackAudio.agentAttackAudioComponent).parent = e;
+
+			EntityManager::Get().AddComponent<DOG::AudioComponent>(attackAudio.agentAttackAudioComponent);
+		}
+
+		auto& attackAudio = EntityManager::Get().GetComponent<AgentAttackAudioComponent>(e);
+		auto& audio = EntityManager::Get().GetComponent<DOG::AudioComponent>(attackAudio.agentAttackAudioComponent);
+		audio.shouldPlay = true;
+		audio.is3D = true;
+		audio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Attack.wav");
+
 		// Reset cooldown
 		attack.timeOfLast = Time::ElapsedTime();
 

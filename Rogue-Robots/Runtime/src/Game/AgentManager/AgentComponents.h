@@ -104,6 +104,11 @@ struct AgentHitAudioComponent
 	DOG::entity agentHitAudioEntity = DOG::NULL_ENTITY;
 };
 
+struct AgentAttackAudioComponent
+{
+	DOG::entity agentAttackAudioComponent = DOG::NULL_ENTITY;
+};
+
 /*******************************************
 
 			Shadow Agent Components
