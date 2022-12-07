@@ -25,7 +25,7 @@ using namespace DirectX::SimpleMath;
 
 NetworkStatus GameLayer::s_networkStatus = NetworkStatus::Offline;
 GameState GameLayer::m_gameState = GameState::Initializing;
-
+bool GameLayer::m_connectedPlayersLobby[MAX_PLAYER_COUNT] = { false, false, false, false };
 
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
@@ -797,7 +797,8 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 
 //Lobby
 void HostButtonFunc(void)
-{	
+{
+	GameLayer::ResetConnectedPlayers();
 	UI::Get()->GetUI<DOG::UIPlayerList>(playerListID)->Reset();
 
 	bool succes = true;
@@ -943,15 +944,20 @@ void HostButtonFunc(void)
 		DOG::UI::Get()->ChangeUIscene(lobbyID);
 		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l1ID);
 		text2->SetText(std::wstring(L"Room ") + std::to_wstring(roomId));
+
+#if defined(_DEBUG)
 		auto text3 = DOG::UI::Get()->GetUI<UILabel>(l2ID);
 		text3->SetText(std::wstring(L"Ip: ") + std::wstring(ip.begin(), ip.end()));
+#endif
 	}
 }
 
 
 void JoinButton(void)
 {
-	UI::Get()->GetUI<DOG::UIPlayerList>(playerListJoinID)->Reset();
+	GameLayer::ResetConnectedPlayers();
+	UI::Get()->GetUI<UIPlayerList>(playerListJoinID)->Reset();
+
 	DOG::UI::Get()->ChangeUIscene(joinID);
 }
 
@@ -1334,10 +1340,14 @@ void GameLayer::UpdateLobby()
 
 			char ip[64];
 			strcpy_s(ip, NetCode::Get().GetIpAdress().c_str());
+
+#if defined(_DEBUG)
 			ImGui::Text("Nr of players connected: %d", NetCode::Get().GetNrOfPlayers());
 			auto text3 = DOG::UI::Get()->GetUI<UILabel>(l3ID);
 			text3->SetText(std::wstring(L"Nr of players connected ") + std::to_wstring(NetCode::Get().GetNrOfPlayers()));
 			ImGui::Text("Youre ip adress: %s", ip);
+#endif
+
 			if (ImGui::Button("Play"))
 			{
 				m_nrOfPlayers = NetCode::Get().Play();
@@ -1408,10 +1418,13 @@ void GameLayer::UpdateLobby()
 				}
 			}
 
+#if defined(_DEBUG)
 			auto text2 = DOG::UI::Get()->GetUI<UILabel>(l6ID);
 			text2->SetText(std::wstring(L"Nr of players connected: ") + std::to_wstring(NetCode::Get().GetNrOfPlayers()));
 			m_nrOfPlayers = NetCode::Get().GetNrOfPlayers();
 			ImGui::Text("Nr of players connected: %d", NetCode::Get().GetNrOfPlayers());
+#endif
+
 			ImGui::Text("Waiting for Host to press Play...");
 			inLobby = NetCode::Get().IsLobbyAlive();
 			break;
@@ -1973,4 +1986,12 @@ void GameLayer::ChangeGameState(GameState state)
 void GameLayer::ChangeNetworkState(NetworkStatus state)
 {
 	s_networkStatus = state;
+}
+
+void GameLayer::ResetConnectedPlayers()
+{
+	for (uint32_t i{ 0u }; i < MAX_PLAYER_COUNT; ++i)
+	{
+		m_connectedPlayersLobby[i] = false;
+	}
 }

@@ -1151,7 +1151,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto lobbyBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(multiBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Lobby"));
    instance->AddUIElementToScene(lobbyID, std::move(lobbyBack));
 
-   auto bplaylobby = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 150.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Play"), std::function<void()>(HostLaunch));
+   auto bplaylobby = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Play"), std::function<void()>(HostLaunch));
    instance->AddUIElementToScene(lobbyID, std::move(bplaylobby));
 
    auto joinback = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Join Room"));
@@ -1263,7 +1263,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto optback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(optbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
    auto credback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(credbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
    auto mulback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 200.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
-   auto hostBack = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Disconnect"), std::function<void()>(BackFromHost));
+   auto hostBack = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 350.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Disconnect"), std::function<void()>(BackFromHost));
    auto bh = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bhID, (FLOAT)clientWidth / 2.f - 75.f - 100.f, (FLOAT)clientHeight / 2.f + 120.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Host"), std::function<void()>(HostButtonFunc));
    auto bj = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bjID, (FLOAT)clientWidth / 2.f - 75.f + 100.f, (FLOAT)clientHeight / 2.f + 120.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Join"), std::function<void()>(JoinButton));
    auto clientBack = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Disconnect"), std::function<void()>(BackFromHost));
@@ -1281,14 +1281,14 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto r10 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r10ID, (FLOAT)clientWidth / 2.f + 500.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 10"), std::function<void()>(Room10Button));
 
    //Labels
-   auto l1 = instance->Create<DOG::UILabel>(l1ID, std::wstring(L"Room "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 450.f, 500.f, 60.f, 40.f);
-   auto l2 = instance->Create<DOG::UILabel>(l2ID, std::wstring(L"Ip: "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 350.f, 500.f, 60.f, 40.f);
-   auto l3 = instance->Create<DOG::UILabel>(l3ID, std::wstring(L"Nr of players: "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 250.f, 500.f, 60.f, 40.f);
+   auto l1 = instance->Create<DOG::UILabel>(l1ID, std::wstring(L""), (FLOAT)clientWidth / 2.f - 250.0f, (FLOAT)clientHeight / 2.f - 450.f, 500.f, 60.f, 40.f);
+   auto l2 = instance->Create<DOG::UILabel>(l2ID, std::wstring(L""), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 350.f, 500.f, 60.f, 40.f);
+   auto l3 = instance->Create<DOG::UILabel>(l3ID, std::wstring(L""), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 250.f, 500.f, 60.f, 40.f);
 
    //Client
-   auto l4 = instance->Create<DOG::UILabel>(l4ID, std::wstring(L"Room "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 450.f, 500.f, 60.f, 40.f);
-   auto l5 = instance->Create<DOG::UILabel>(l5ID, std::wstring(L" "), (FLOAT)clientWidth / 2.f - 250.0f, (FLOAT)clientHeight / 2.f - 350.f, 500.f, 60.f, 40.f);
-   auto l6 = instance->Create<DOG::UILabel>(l6ID, std::wstring(L"Nr of players: "), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 250.f, 500.f, 60.f, 40.f);
+   auto l4 = instance->Create<DOG::UILabel>(l4ID, std::wstring(L""), (FLOAT)clientWidth / 2.f - 250.0f, (FLOAT)clientHeight / 2.f - 450.f, 500.f, 60.f, 40.f);
+   auto l5 = instance->Create<DOG::UILabel>(l5ID, std::wstring(L""), (FLOAT)clientWidth / 2.f - 250.0f, (FLOAT)clientHeight / 2.f - 350.f, 500.f, 60.f, 40.f);
+   auto l6 = instance->Create<DOG::UILabel>(l6ID, std::wstring(L""), (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f - 250.f, 500.f, 60.f, 40.f);
 
    auto lWinText = instance->Create<DOG::UILabel>(lWinTextID, std::wstring(L" "), (FLOAT)clientWidth / 2.f - 240.0f, (FLOAT)clientHeight / 2.f - 150.f, 500.f, 60.f, 40.f);
    auto lredScore = instance->Create<DOG::UILabel>(lredScoreID, std::wstring(L" "), 50.f, (FLOAT)clientHeight / 2.f - 255.f, 800.f, 160.f, 40.f);

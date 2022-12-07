@@ -391,7 +391,7 @@ void Server::ServerPollTCP()
 
 void Server::CloseSocketTCP(int socketIndex)
 {
-	m_lobbyData.playersSlotConnected[socketIndex] = false;
+	m_lobbyData.playersSlotConnected[m_holdPlayerIds.at(socketIndex)] = false;
 	std::cout << "Server: Closes socket for player" << m_holdPlayerIds.at(socketIndex) + 1 << std::endl;
 	DOG::EntityManager::Get().Collect<DOG::NetworkPlayerComponent>().Do([&](DOG::entity id, DOG::NetworkPlayerComponent& networkC)
 		{

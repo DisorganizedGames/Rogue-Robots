@@ -46,6 +46,7 @@ public:
 	
 	static void ChangeGameState(GameState state);
 	static void ChangeNetworkState(NetworkStatus);
+	static void ResetConnectedPlayers();
 
 	static GameState GetGameStatus() { return m_gameState; };
 	static NetworkStatus GetNetworkStatus() { return s_networkStatus; }
@@ -102,5 +103,5 @@ private:
 	bool m_syncFrame = false;
 	int m_nrOfFramesToWait = 300;
 
-	bool m_connectedPlayersLobby[MAX_PLAYER_COUNT] = { false, false, false, false };
+	static bool m_connectedPlayersLobby[MAX_PLAYER_COUNT];
 };
