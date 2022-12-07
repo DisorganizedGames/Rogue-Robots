@@ -160,19 +160,21 @@ void GameLayer::OnUpdate()
 			break;
 		case GameState::MainMenu:
 		{
-			
+			Window::SetCursorMode(CursorMode::Visible);
 			m_entityManager.Collect<MusicPlayer>().Do([&](MusicPlayer& musicPlayer) {musicPlayer.inMainMenu = true; });
-
-		}
 			break;
+		}
 		case GameState::Initializing:
 			m_gameState = GameState::MainMenu;
 			break;
 		case GameState::Lobby:
+			Window::SetCursorMode(CursorMode::Visible);
 			UpdateLobby();
 			break;
 		case GameState::StartPlaying:
 		{
+			Window::SetCursorMode(CursorMode::Confined);
+
 			//Reset UI.
 			auto UIInstance = DOG::UI::Get();
 			//Passive items
