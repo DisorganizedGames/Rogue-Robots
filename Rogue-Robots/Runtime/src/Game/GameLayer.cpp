@@ -561,6 +561,8 @@ void GameLayer::KillPlayer(DOG::entity e)
 		UIInstance->GetUI<UIIcon>(glowstickID)->Hide();
 		UIInstance->GetUI<UIIcon>(flashlightID)->Hide();
 
+		m_entityManager.RemoveComponent<AudioListenerComponent>(localPlayer);
+
 		RigidbodyComponent& rb = m_entityManager.GetComponent<RigidbodyComponent>(e);
 		rb.ConstrainPosition(true, true, true);
 		rb.ClearPhysics();
@@ -614,6 +616,8 @@ void GameLayer::KillPlayer(DOG::entity e)
 			auto& timer = m_entityManager.AddComponent<DeathUITimerComponent>(localPlayer);
 			timer.duration = 4.0f;
 			timer.timeLeft = timer.duration;
+
+			m_entityManager.AddComponent<AudioListenerComponent>(playerToSpectate);
 		}
 		else // Of course, if all players are dead, this else will fire, but then the game would restart, so probably unnecessary.
 		{
