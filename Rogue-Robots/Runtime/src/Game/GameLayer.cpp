@@ -116,7 +116,10 @@ GameLayer::GameLayer() noexcept
 	for (size_t i = 0; i < pcgLevelNames::nrLevels; i++)
 	{
 		std::mbstowcs(dst, pcgLevelNames::pcgLevels[i], 64);
-		filenames.push_back(dst);
+		std::wstring string(dst);
+		for (size_t j = 0; j < 4; j++)
+			string.pop_back();
+		filenames.push_back(string);
 	}
 	
 	auto instance = DOG::UI::Get();

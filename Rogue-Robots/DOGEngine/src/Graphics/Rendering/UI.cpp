@@ -1036,7 +1036,7 @@ void DOG::UICarousel::Draw(DOG::gfx::D2DBackend_DX12& d2d)
    d2d.Get2DDeviceContext()->DrawRectangle(m_bleft, m_lborderBrush.Get());
    d2d.Get2DDeviceContext()->DrawTextW(
       m_labels[m_index].c_str(),
-      (UINT32)m_labels[m_index].length() - 4,
+      (UINT32)m_labels[m_index].length(),
       m_textFormat.Get(),
       &m_rect,
       m_textBrush.Get());
