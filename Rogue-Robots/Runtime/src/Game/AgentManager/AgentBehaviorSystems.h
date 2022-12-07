@@ -134,7 +134,13 @@ class AgentHitSystem : public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
+
+private:
+	std::vector<u32> m_hitSounds;
+
 public:
+	AgentHitSystem();
+
 	SYSTEM_CLASS(AgentHitComponent, AgentHPComponent);
 	ON_UPDATE_ID(AgentHitComponent, AgentHPComponent);
 	void OnUpdate(DOG::entity e, AgentHitComponent& hit, AgentHPComponent& hp);

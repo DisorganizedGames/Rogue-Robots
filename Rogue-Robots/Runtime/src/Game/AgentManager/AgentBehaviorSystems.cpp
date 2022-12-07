@@ -393,11 +393,39 @@ void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& c
 	}
 }
 
+AgentHitSystem::AgentHitSystem()
+{
+	m_hitSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Damage1.wav"));
+	m_hitSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Damage2.wav"));
+	m_hitSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Damage4.wav"));
+}
+
 void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent& hp)
 {
 	bool hitByPlayer = false;
 	for (i8 i = 0; i < hit.count; ++i)
 	{
+		if (!EntityManager::Get().HasComponent<AgentHitAudioComponent>(e) || !EntityManager::Get().Exists(EntityManager::Get().GetComponent<AgentHitAudioComponent>(e).agentHitAudioEntity))
+		{
+			auto& hitAudio = EntityManager::Get().AddOrReplaceComponent<AgentHitAudioComponent>(e);
+			hitAudio.agentHitAudioEntity = EntityManager::Get().CreateEntity();
+			EntityManager::Get().AddComponent<TransformComponent>(hitAudio.agentHitAudioEntity);
+			EntityManager::Get().AddComponent<ChildComponent>(hitAudio.agentHitAudioEntity).parent = e;
+
+			EntityManager::Get().AddComponent<DOG::AudioComponent>(hitAudio.agentHitAudioEntity);
+		}
+
+		auto& hitAudio = EntityManager::Get().GetComponent<AgentHitAudioComponent>(e);
+		auto& audio = EntityManager::Get().GetComponent<DOG::AudioComponent>(hitAudio.agentHitAudioEntity);
+		if (!audio.playing)
+		{
+			audio.shouldPlay = true;
+			audio.assetID = m_hitSounds[rand() % m_hitSounds.size()];
+			audio.is3D = true;
+			audio.volume = 1.0f;
+			EntityManager::Get().AddOrReplaceComponent<LifetimeComponent>(hitAudio.agentHitAudioEntity, 10.0f);
+		}
+
 		if (EntityManager::Get().HasComponent<ThisPlayer>(hit.hits[i].playerEntity))
 		{
 			hp.hp -= hit.hits[i].damage;
@@ -408,6 +436,12 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 					inputC.damageDoneToEnemies += hit.hits[i].damage;
 				});
 			hitByPlayer = true;
+
+			if (!audio.playing)
+			{
+				audio.is3D = false;
+				audio.volume = 0.25f;
+			}
 		}
 	}
 	if (hitByPlayer)
