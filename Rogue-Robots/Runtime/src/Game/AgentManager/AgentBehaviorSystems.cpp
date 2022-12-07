@@ -433,7 +433,16 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 			{
 				//Agent speed is set to 1/2 of original for now:
 				EntityManager::Get().GetComponent<AgentMovementComponent>(e).currentSpeed /= 2.0f; 
-				EntityManager::Get().AddComponent<FrostEffectComponent>(e, fecBullet.frostTimer);
+				auto& frostEffect = EntityManager::Get().AddComponent<FrostEffectComponent>(e, fecBullet.frostTimer);
+				frostEffect.frostAudioEntity = EntityManager::Get().CreateEntity();
+				EntityManager::Get().AddComponent<TransformComponent>(frostEffect.frostAudioEntity);
+				EntityManager::Get().AddComponent<ChildComponent>(frostEffect.frostAudioEntity).parent = e;
+				auto& audio = EntityManager::Get().AddComponent<DOG::AudioComponent>(frostEffect.frostAudioEntity);
+				audio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Frost.wav");
+				audio.is3D = true;
+				audio.loop = true;
+				audio.shouldPlay = true;
+				audio.volume = 2.5f;
 			}
 			break;
 		}
@@ -467,7 +476,7 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 				audio.is3D = true;
 				audio.loop = true;
 				audio.shouldPlay = true;
-				audio.volume = 1.5f;
+				audio.volume = 1.8f;
 			}
 
 			break;
@@ -502,6 +511,7 @@ void AgentFrostTimerSystem::OnUpdate(entity e, AgentMovementComponent& movement,
 	if (frostEffect.frostTimer <= 0.0f)
 	{
 		movement.currentSpeed = AgentManager::Get().GetAgentStats(idc.type).baseSpeed;
+		EntityManager::Get().DeferredEntityDestruction(frostEffect.frostAudioEntity);
 		EntityManager::Get().RemoveComponent<FrostEffectComponent>(e);
 	}
 }
