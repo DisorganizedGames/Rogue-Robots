@@ -62,8 +62,6 @@ void PlayerMovementSystem::OnUpdate(
 	{
 		isThisPlayer = true;
 		camera.isMainCamera = true;
-		/*if (mgr.HasComponent<PlayerAliveComponent>(e) && mgr.GetComponent<PlayerAliveComponent>(e).timer > 0.f)
-				mgr.GetComponent<PlayerAliveComponent>(e).timer -= (f32)Time::DeltaTime();*/
 	}
 	auto IsAlive = [&mgr](Entity e) {
 		return mgr.HasComponent<PlayerAliveComponent>(e) && mgr.GetComponent<PlayerAliveComponent>(e).timer < 0.f; };
