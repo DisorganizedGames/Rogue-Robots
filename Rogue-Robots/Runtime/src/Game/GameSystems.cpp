@@ -638,9 +638,13 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 	const bool isSamePlayer = (sc.playerBeingSpectated == sc.playerSpectatorQueue[nextIndex]);
 	if (!isSamePlayer)
 	{
+		DOG::EntityManager::Get().RemoveComponent<AudioListenerComponent>(sc.playerBeingSpectated);
+
 		ChangeSuitDrawLogic(sc.playerBeingSpectated, sc.playerSpectatorQueue[nextIndex]);
 		sc.playerName = DOG::EntityManager::Get().GetComponent<DOG::NetworkPlayerComponent>(sc.playerSpectatorQueue[nextIndex]).playerName;
 		sc.playerBeingSpectated = sc.playerSpectatorQueue[nextIndex];
+
+		DOG::EntityManager::Get().AddComponent<AudioListenerComponent>(sc.playerBeingSpectated);
 	}
 }
 
