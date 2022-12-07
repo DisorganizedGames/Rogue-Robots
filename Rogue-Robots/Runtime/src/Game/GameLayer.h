@@ -50,7 +50,7 @@ public:
 
 	static GameState GetGameStatus() { return m_gameState; };
 	static NetworkStatus GetNetworkStatus() { return s_networkStatus; }
-	static uint32_t s_levelIndex;
+	static u16 s_levelIndex;
 private:
 	void UpdateLobby();
 	void UpdateGame();

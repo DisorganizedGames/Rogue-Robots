@@ -26,7 +26,7 @@ using namespace DirectX::SimpleMath;
 NetworkStatus GameLayer::s_networkStatus = NetworkStatus::Offline;
 GameState GameLayer::m_gameState = GameState::Initializing;
 bool GameLayer::s_connectedPlayersLobby[MAX_PLAYER_COUNT] = { false, false, false, false };
-uint32_t GameLayer::s_levelIndex = 0;
+u16 GameLayer::s_levelIndex = 0;
 
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
@@ -116,7 +116,7 @@ GameLayer::GameLayer() noexcept
 	wchar_t dst[64];
 	for (size_t i = 0; i < pcgLevelNames::nrLevels; i++)
 	{
-		std::mbstowcs(dst, pcgLevelNames::pcgLevels[i], 64);
+		mbstowcs_s(nullptr, dst, 64, pcgLevelNames::pcgLevels[i], 64);
 		std::wstring string(dst);
 		for (size_t j = 0; j < 4; j++)
 			string.pop_back();
@@ -311,7 +311,8 @@ void GameLayer::OnUpdate()
 			uiInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(2);
 
 			m_nrOfFramesToWait = 300;
-			NetCode::Get().Reset();
+			auto& netcodeInstance = NetCode::Get();
+			netcodeInstance.Reset();
 			m_gameState = GameState::MainMenu;
 			uiInstance->ChangeUIscene(menuID);
 			CloseMainScene();
@@ -838,7 +839,7 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 void HostButtonFunc(void)
 {
 	//Sync the level index.
-	GameLayer::s_levelIndex = DOG::UI::Get()->GetUI<DOG::UICarousel>(carouselMultID)->GetIndex();
+	GameLayer::s_levelIndex = (u16)DOG::UI::Get()->GetUI<DOG::UICarousel>(carouselMultID)->GetIndex();
 	NetCode::Get().SetLevelIndex(GameLayer::s_levelIndex);
 
 	//Reset player list.
@@ -1008,7 +1009,8 @@ void JoinButton(void)
 void BackFromHost(void)
 {
 	DOG::UI::Get()->ChangeUIscene(multiID);
-	NetCode::Get().Reset();
+	auto& netcodeInstance = NetCode::Get();
+	netcodeInstance.Reset();
 	GameLayer::ChangeNetworkState(NetworkStatus::Offline);
 }
 
@@ -1022,7 +1024,7 @@ void HostLaunch(void)
 
 void PlayButtonFunc(void)
 {
-	GameLayer::s_levelIndex = DOG::UI::Get()->GetUI<DOG::UICarousel>(carouselSoloID)->GetIndex();
+	GameLayer::s_levelIndex = (u16)DOG::UI::Get()->GetUI<DOG::UICarousel>(carouselSoloID)->GetIndex();
 
 	if(GameLayer::GetGameStatus() != GameState::Playing)
 		GameLayer::ChangeGameState(GameState::StartPlaying);
