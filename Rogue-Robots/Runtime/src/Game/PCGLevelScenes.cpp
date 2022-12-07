@@ -90,10 +90,10 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 		ambientSound.stdDiv = stdDiv;
 	};
 
-	createAmbient("CreepyAmbience.wav", 60, 45, 7, 0.7f);
-	createAmbient("CreepyAmbience2.wav", 10, 40, 8, 0.9f);
-	createAmbient("CreepyAmbience3.wav", 0, 60, 15, 0.4f);
-	createAmbient("CreepyAmbience4.wav", 50, 100, 15, 0.8f);
+	createAmbient("CreepyAmbience.wav", 60, 65, 30, 0.6f);
+	createAmbient("CreepyAmbience2.wav", 10, 63, 40, 0.6f);
+	createAmbient("CreepyAmbience3.wav", 0, 70, 20, 0.4f);
+	createAmbient("CreepyAmbience4.wav", 50, 80, 30, 0.7f);
 	createAmbient("AmbienceLong.wav", -119, 120, 1, 0.5f);
 	createAmbient("AmbienceLong3.wav", 120, 120, 1, 0.5f);
 }
