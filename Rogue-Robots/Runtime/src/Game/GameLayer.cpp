@@ -209,7 +209,7 @@ void GameLayer::OnUpdate()
 		case GameState::Playing:
 			if (m_timeSpent >= 0.0f)
 			{
-				m_timeSpent += Time::DeltaTime();
+				m_timeSpent += Time::DeltaTime<TimeType::Seconds, float>();
 				if (m_timeSpent >= 10.0f)
 				{
 					UI::Get()->GetUI<DOG::UILabel>(lStartTextID)->SetText(L"Use Glowsticks to mark your way if needed. (Q)");
