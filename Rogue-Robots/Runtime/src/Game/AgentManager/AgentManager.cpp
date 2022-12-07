@@ -225,7 +225,7 @@ entity AgentManager::CreateAgentCore(u32 model, u32 groupID, const Vector3& pos,
 		});
 
 	AgentHPComponent& hpComp = em.AddComponent<AgentHPComponent>(e);
-	float increaseScale = 3.0f; //Lower this to increase health on enemies. 1.0f means the enemies HP increases linearly with the number of players.
+	float increaseScale = 4.0f; //Lower this to increase health on enemies. 1.0f means the enemies HP increases linearly with the number of players.
 	hpComp.maxHP *= 1.0f + ((PlayerManager::Get().GetNrOfPlayers() - 1u) / increaseScale);
 	hpComp.hp = hpComp.maxHP;
 
