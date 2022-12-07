@@ -61,28 +61,25 @@ void RuntimeApplication::OnEvent(IEvent& event) noexcept
 						PopOverlay(&m_imGuiMenuLayer);
 					}
 				}
-				break;
-
-			}
-		case EventType::RightMouseButtonPressedEvent:
-			{
-				static bool lockMouse = false;
-				if (lockMouse)
+				if (EVENT(KeyPressedEvent).key == Key::F2)
 				{
-					Window::SetCursorMode(CursorMode::Confined);
-					if (m_showImGuiMenu) m_imGuiMenuLayer.RemoveFocus();
-				}
-				else
-				{
-					Window::SetCursorMode(CursorMode::Visible);
-				}
+					static bool lockMouse = false;
+					if (lockMouse)
+					{
+						Window::SetCursorMode(CursorMode::Confined);
+						if (m_showImGuiMenu) m_imGuiMenuLayer.RemoveFocus();
+					}
+					else
+					{
+						Window::SetCursorMode(CursorMode::Visible);
+					}
 
-				lockMouse = !lockMouse;
-				event.StopPropagation();
+					lockMouse = !lockMouse;
+					event.StopPropagation();
+				}
 				break;
 			}
 		}
-
 	}
 	Application::OnEvent(event);
 }
