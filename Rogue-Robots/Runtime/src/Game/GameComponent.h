@@ -450,3 +450,8 @@ struct AmbientSoundComponent
 	float singleTimeStartOffsetTime = 0;
 	bool startup = true;
 };
+
+struct SetPointLightDirtComponent
+{
+
+};

@@ -790,3 +790,11 @@ public:
 	void OnLateUpdate(DOG::entity e, BulletComponent&, DOG::HasEnteredCollisionComponent&);
 };
 
+class SetPointLightDirtySystem : public DOG::ISystem
+{
+	// Use this to mark a pointLight as to be set to dirty every frame
+public:
+	SYSTEM_CLASS(DOG::PointLightComponent, SetPointLightDirtComponent);
+	ON_UPDATE(DOG::PointLightComponent, SetPointLightDirtComponent);
+	void OnUpdate(DOG::PointLightComponent& light, SetPointLightDirtComponent&);
+};
