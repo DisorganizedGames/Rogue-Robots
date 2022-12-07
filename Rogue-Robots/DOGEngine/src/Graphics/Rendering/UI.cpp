@@ -15,6 +15,7 @@ UINT menuBackID, optionsBackID, multiBackID, hostBackID, creditsBackID, levelSel
 UINT bStartLevelSelectorSoloID, bStartLevelSelectorMultID, bGoBackLevelSelectorSoloID, bGoBackLevelSelectorMultID;
 UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID, lWinTextID, lredScoreID, lblueScoreID, lgreenScoreID, lyellowScoreID, lredScoreWinID, lblueScoreWinID, lgreenScoreWinID, lyellowScoreWinID;
 UINT lNamesCreditsID, lTheTeamID, lFiverrArtistsID, lFiverrArtistsTextID, lIconsCreditsID, lIconsCreditsTextID, lMusicID, lMusicTextID;
+UINT lStartTextID;
 UINT bcID, credbackID;
 UINT cID, tID, hID, carouselSoloID, carouselMultID;
 UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID, lActiveItemTextID, flashlightID, glowstickID; //Icons.
@@ -1430,8 +1431,10 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto lgreenScoreWin = instance->Create<DOG::UILabel>(lgreenScoreWinID, std::wstring(L" "), 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
    auto lyellowScoreWin = instance->Create<DOG::UILabel>(lyellowScoreWinID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
 
-   
    auto labelButtonTextActiveItem = instance->Create<DOG::UILabel>(lActiveItemTextID, std::wstring(L"G"), 315.0f, (FLOAT)clientHeight - 90.0f, 50.f, 50.f, 40.f);
+   
+   auto lStartText = instance->Create<DOG::UILabel>(lStartTextID, std::wstring(L""), (FLOAT)clientWidth / 2.f - 350.f, (FLOAT)clientHeight / 2.f - 400.f, 700.f, 300.f, 60.f);
+
    //player list
    auto playerList = instance->Create<DOG::UIPlayerList>(playerListID);
    auto playerListJoin = instance->Create<DOG::UIPlayerList>(playerListJoinID);
@@ -1486,6 +1489,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(gameID, std::move(l5));
    instance->AddUIElementToScene(WaitingForHostID, std::move(l6));
    instance->AddUIElementToScene(gameID, std::move(lWinText));
+   instance->AddUIElementToScene(gameID, std::move(lStartText));
    instance->AddUIElementToScene(GameOverID, std::move(lredScore));
    instance->AddUIElementToScene(GameOverID, std::move(lblueScore));
    instance->AddUIElementToScene(GameOverID, std::move(lgreenScore));

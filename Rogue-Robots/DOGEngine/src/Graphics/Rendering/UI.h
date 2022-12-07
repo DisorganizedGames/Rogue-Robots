@@ -18,8 +18,9 @@ extern UINT menuBackID, optionsBackID, multiBackID, lobbyID, hostBackID, levelSe
 extern UINT bStartLevelSelectorSoloID, bStartLevelSelectorMultID, bGoBackLevelSelectorSoloID, bGoBackLevelSelectorMultID;
 extern UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID, lWinTextID, lredScoreID, lblueScoreID, lgreenScoreID, lyellowScoreID, lredScoreWinID, lblueScoreWinID, lgreenScoreWinID, lyellowScoreWinID;
 extern UINT lNamesCreditsID, lTheTeamID, lFiverrArtistsID, lFiverrArtistsTextID, lIconsCreditsID, lIconsCreditsTextID, lMusicID, lMusicTextID;
-extern UINT bcID, credbackID, carouselSoloID, carouselMultID;
-extern UINT cID, tID, hID;
+extern UINT lStartTextID;
+extern UINT bcID, credbackID;
+extern UINT cID, tID, hID, carouselSoloID, carouselMultID;
 extern UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID, lActiveItemTextID, flashlightID, glowstickID;
 extern UINT buffID;
 extern UINT playerListID, playerListJoinID;
