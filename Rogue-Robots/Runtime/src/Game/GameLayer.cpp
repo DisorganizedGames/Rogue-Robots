@@ -26,6 +26,22 @@ using namespace DirectX::SimpleMath;
 NetworkStatus GameLayer::s_networkStatus = NetworkStatus::Offline;
 GameState GameLayer::m_gameState = GameState::Initializing;
 bool GameLayer::s_connectedPlayersLobby[MAX_PLAYER_COUNT] = { false, false, false, false };
+uint32_t GameLayer::s_levelIndex = 0;
+
+void CreateCarousels(std::vector<std::string> filenames)
+{
+	auto instance = DOG::UI::Get();
+	u32 width = DOG::Window::GetWidth();
+	u32 height = DOG::Window::GetHeight();
+
+	//Singleplayer UI carousel
+	auto carouselSolo = instance->Create<DOG::UICarousel, std::vector<std::wstring>, float, float, float, float, float>(carouselSoloID, filenames, width / 2.f - 100.f, height / 2.f + 100.f, 300.f, 75.f, 25.f);
+	instance->AddUIElementToScene(levelSelectSoloID, std::move(carouselSolo));
+
+	//Multiplayer UI carousel
+	auto carouselMult = instance->Create<DOG::UICarousel, std::vector<std::wstring>, float, float, float, float, float>(carouselMultID, filenames, width / 2.f - 100.f, height / 2.f + 100.f, 300.f, 75.f, 25.f);
+	instance->AddUIElementToScene(levelSelectMultID, std::move(carouselMult));
+}
 
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
@@ -122,9 +138,7 @@ GameLayer::GameLayer() noexcept
 		filenames.push_back(string);
 	}
 	
-	auto instance = DOG::UI::Get();
-	auto carousel = instance->Create<DOG::UICarousel, std::vector<std::wstring>, float, float, float, float, float>(carouselID, filenames, 100.f, 100.f, 300.f, 75.f, 25.f);
-   instance->AddUIElementToScene(optionsID, std::move(carousel));
+	CreateCarousels(filenames);
 }
 
 GameLayer::~GameLayer()
@@ -351,11 +365,12 @@ void GameLayer::StartMainScene()
 	assert(m_mainScene == nullptr);
 
 	//Change the index to change level. 
-	uint32_t levelIndex = 4;
+	uint32_t levelIndex = GameLayer::s_levelIndex;
 	if (levelIndex >= pcgLevelNames::nrLevels)
 	{
 		levelIndex = 0;
 	}
+
 	if (s_networkStatus == NetworkStatus::Offline)
 		m_nrOfPlayers = 1;
 	switch (m_selectedScene)
@@ -820,6 +835,11 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 //Lobby
 void HostButtonFunc(void)
 {
+	//Sync the level index.
+	GameLayer::s_levelIndex = DOG::UI::Get()->GetUI<DOG::UICarousel>(carouselMultID)->GetIndex();
+	NetCode::Get().SetLevelIndex(GameLayer::s_levelIndex);
+
+	//Reset player list.
 	GameLayer::ResetConnectedPlayers();
 	UI::Get()->GetUI<DOG::UIPlayerList>(playerListID)->Reset();
 
@@ -1000,6 +1020,8 @@ void HostLaunch(void)
 
 void PlayButtonFunc(void)
 {
+	GameLayer::s_levelIndex = DOG::UI::Get()->GetUI<DOG::UICarousel>(carouselSoloID)->GetIndex();
+
 	if(GameLayer::GetGameStatus() != GameState::Playing)
 		GameLayer::ChangeGameState(GameState::StartPlaying);
 	GameLayer::ChangeNetworkState(NetworkStatus::Offline);
@@ -1445,9 +1467,11 @@ void GameLayer::UpdateLobby()
 			text2->SetText(std::wstring(L"Nr of players connected: ") + std::to_wstring(NetCode::Get().GetNrOfPlayers()));
 			m_nrOfPlayers = NetCode::Get().GetNrOfPlayers();
 			ImGui::Text("Nr of players connected: %d", NetCode::Get().GetNrOfPlayers());
-#endif
-
 			ImGui::Text("Waiting for Host to press Play...");
+
+#endif
+			GameLayer::s_levelIndex = NetCode::Get().GetLevelIndex();
+
 			inLobby = NetCode::Get().IsLobbyAlive();
 			break;
 		}

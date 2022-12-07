@@ -52,6 +52,7 @@ public:
 	void SetLobbyStatus(bool lobbyStatus);
 	LobbyData GetLobbyData();
 	u16 GetLevelIndex();
+	void SetLevelIndex(u16 levelIndex);
 private:
 	static void Initialize();
 

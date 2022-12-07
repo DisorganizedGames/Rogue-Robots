@@ -10,12 +10,13 @@
 
 DOG::UI* DOG::UI::s_instance = nullptr;
 
-UINT menuID, gameID, optionsID, multiID, lobbyID, joinID, WaitingForHostID, GameOverID, WinScreenID, LoadingID, creditsID;
-UINT menuBackID, optionsBackID, multiBackID, hostBackID, creditsBackID;
+UINT menuID, gameID, optionsID, multiID, lobbyID, joinID, WaitingForHostID, GameOverID, WinScreenID, LoadingID, creditsID, levelSelectSoloID, levelSelectMultID;
+UINT menuBackID, optionsBackID, multiBackID, hostBackID, creditsBackID, levelSelectSoloBackID, levelSelectMultBackID;
+UINT bStartLevelSelectorSoloID, bStartLevelSelectorMultID, bGoBackLevelSelectorSoloID, bGoBackLevelSelectorMultID;
 UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID, lWinTextID, lredScoreID, lblueScoreID, lgreenScoreID, lyellowScoreID, lredScoreWinID, lblueScoreWinID, lgreenScoreWinID, lyellowScoreWinID;
 UINT lNamesCreditsID, lTheTeamID, lFiverrArtistsID, lFiverrArtistsTextID, lIconsCreditsID, lIconsCreditsTextID, lMusicID, lMusicTextID;
 UINT bcID, credbackID;
-UINT cID, tID, hID, carouselID;
+UINT cID, tID, hID, carouselSoloID, carouselMultID;
 UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID, lActiveItemTextID, flashlightID, glowstickID; //Icons.
 UINT buffID;
 UINT playerListID, playerListJoinID;
@@ -23,9 +24,19 @@ UINT playerListID, playerListJoinID;
 std::vector<bool> buffsVisible;
 std::vector<UINT> m_stacks;
 
+void LevelSelectSoloButtonFunc(void)
+{
+    DOG::UI::Get()->ChangeUIscene(levelSelectSoloID);
+}
+
+void LevelSelectMultButtonFunc(void)
+{
+    DOG::UI::Get()->ChangeUIscene(levelSelectMultID);
+}
 
 void PlayButtonFunc(void);
 
+void CreateCarousels(std::vector<std::string> filenames);
 
 void OptionsButtonFunc(void)
 {
@@ -1092,6 +1103,11 @@ std::wstring DOG::UICarousel::GetText(void)
    return m_labels[m_index];
 }
 
+UINT DOG::UICarousel::GetIndex()
+{
+    return m_index;
+}
+
 DOG::UIIcon::UIIcon(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector<std::wstring> filePaths, float x, float y, float width, float height, float r, float g, float b, bool border) : UIElement(id)
 {
    ComPtr<IWICBitmapDecoder> m_decoder;
@@ -1247,7 +1263,10 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(creditsID, std::move(creditsBack));
    auto multiBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(multiBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Multiplayer"));
    instance->AddUIElementToScene(multiID, std::move(multiBack));
-
+   auto levelSelectSoloBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(levelSelectSoloBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L""));
+   instance->AddUIElementToScene(levelSelectSoloID, std::move(levelSelectSoloBack));
+   auto levelSelectMultBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(levelSelectMultBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L""));
+   instance->AddUIElementToScene(levelSelectMultID, std::move(levelSelectMultBack));
    auto lobbyBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(multiBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Lobby"));
    instance->AddUIElementToScene(lobbyID, std::move(lobbyBack));
 
@@ -1268,8 +1287,6 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
    auto loading = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"\n\nTrying to connect...\n\n\n\n\n\n\n\n\nPro Tip: Shooting teammates is fun "));
    instance->AddUIElementToScene(LoadingID, std::move(loading));
-
-   
 
    //Credit text
    //Music
@@ -1357,7 +1374,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
        );
 
    //Menu buttons
-   auto bp = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Play"), std::function<void()>(PlayButtonFunc));
+   auto bp = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Play"), std::function<void()>(LevelSelectSoloButtonFunc));
    auto bm = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bmID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
    auto bo = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
    auto bc = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bcID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Credits"), std::function<void()>(CreditsButtonFunc));
@@ -1366,10 +1383,17 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto credback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(credbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
    auto mulback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 200.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
    auto hostBack = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 350.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Disconnect"), std::function<void()>(BackFromHost));
-   auto bh = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bhID, (FLOAT)clientWidth / 2.f - 75.f - 100.f, (FLOAT)clientHeight / 2.f + 120.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Host"), std::function<void()>(HostButtonFunc));
+   auto bh = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bhID, (FLOAT)clientWidth / 2.f - 75.f - 100.f, (FLOAT)clientHeight / 2.f + 120.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Host"), std::function<void()>(LevelSelectMultButtonFunc));
    auto bj = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bjID, (FLOAT)clientWidth / 2.f - 75.f + 100.f, (FLOAT)clientHeight / 2.f + 120.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Join"), std::function<void()>(JoinButton));
    auto clientBack = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Disconnect"), std::function<void()>(BackFromHost));
    auto bjj = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bjjID, (FLOAT)clientWidth / 2.f - 75.f + 100.f, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(MultiplayerButtonFunc));
+   
+   //Level selector.
+   auto bStartLevelSelectorSolo = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bStartLevelSelectorSoloID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 200.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Start"), std::function<void()>(PlayButtonFunc));
+   auto bGoBackLevelSelectorSolo = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bGoBackLevelSelectorSoloID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 300.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
+   auto bStartLevelSelectorMult = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bStartLevelSelectorMultID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 200.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Start Hosting"), std::function<void()>(HostButtonFunc));
+   auto bGoBackLevelSelectorMult = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bGoBackLevelSelectorMultID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 300.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
+   
    //Room Join buttons
    auto r1 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r1ID, (FLOAT)clientWidth / 2.f - 1000.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 1"), std::function<void()>(Room1Button));
    auto r2 = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(r2ID, (FLOAT)clientWidth / 2.f - 1000.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join Room 2"), std::function<void()>(Room2Button));
@@ -1462,6 +1486,10 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(lobbyID, std::move(playerList));
    instance->AddUIElementToScene(WaitingForHostID, std::move(playerListJoin));
    instance->AddUIElementToScene(gameID, std::move(labelButtonTextActiveItem));
+   instance->AddUIElementToScene(levelSelectSoloID, std::move(bStartLevelSelectorSolo));
+   instance->AddUIElementToScene(levelSelectSoloID, std::move(bGoBackLevelSelectorSolo));
+   instance->AddUIElementToScene(levelSelectMultID, std::move(bStartLevelSelectorMult));
+   instance->AddUIElementToScene(levelSelectMultID, std::move(bGoBackLevelSelectorMult));
 
    //Splash screen
    // UINT sID;
@@ -1490,4 +1518,6 @@ void AddScenes()
    WinScreenID = instance->AddScene();
    LoadingID = instance->AddScene();
    creditsID = instance->AddScene();
+   levelSelectSoloID = instance->AddScene();
+   levelSelectMultID = instance->AddScene();
 }

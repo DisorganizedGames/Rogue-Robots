@@ -13,11 +13,12 @@
 void UIRebuild(UINT clientHeight, UINT clientWidth);
 void AddScenes();
 
-extern UINT menuID, gameID, optionsID, multiID, joinID, WaitingForHostID, GameOverID, WinScreenID, LoadingID, creditsID;
-extern UINT menuBackID, optionsBackID, multiBackID, lobbyID, hostBackID;
+extern UINT menuID, gameID, optionsID, multiID, joinID, WaitingForHostID, GameOverID, WinScreenID, LoadingID, creditsID, levelSelectSoloID, levelSelectMultID;
+extern UINT menuBackID, optionsBackID, multiBackID, lobbyID, hostBackID, levelSelectSoloBackID, levelSelectMultBackID;
+extern UINT bStartLevelSelectorSoloID, bStartLevelSelectorMultID, bGoBackLevelSelectorSoloID, bGoBackLevelSelectorMultID;
 extern UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID, lWinTextID, lredScoreID, lblueScoreID, lgreenScoreID, lyellowScoreID, lredScoreWinID, lblueScoreWinID, lgreenScoreWinID, lyellowScoreWinID;
 extern UINT lNamesCreditsID, lTheTeamID, lFiverrArtistsID, lFiverrArtistsTextID, lIconsCreditsID, lIconsCreditsTextID, lMusicID, lMusicTextID;
-extern UINT bcID, credbackID, carouselID;
+extern UINT bcID, credbackID, carouselSoloID, carouselMultID;
 extern UINT cID, tID, hID;
 extern UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID, lActiveItemTextID, flashlightID, glowstickID;
 extern UINT buffID;
@@ -316,6 +317,7 @@ namespace DOG
          void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void OnEvent(IEvent& event) override final;
          std::wstring GetText(void);
+         UINT GetIndex();
       private:
          float m_opacity;
          bool m_border;
