@@ -182,7 +182,7 @@ void PlayerHit::OnUpdate(entity e, HasEnteredCollisionComponent& collision, This
 				if (EntityManager::Get().HasComponent<PlayerAliveComponent>(e))
 				{
 					// Add visual effect
-					auto playerThatShot = eMan.GetComponent<BulletComponent>(collision.entities[i]).playerEntityID;
+					auto playerThatShot = dmgDealer->get().playerEntityID;
 					const auto& pos1 = eMan.GetComponent<TransformComponent>(playerThatShot).GetPosition();
 					const auto& pos2 = eMan.GetComponent<TransformComponent>(e).GetPosition();
 					auto dir = pos1 - pos2;

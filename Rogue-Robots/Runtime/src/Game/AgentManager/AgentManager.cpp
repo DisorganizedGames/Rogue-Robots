@@ -285,12 +285,12 @@ void AgentManager::DestroyLocalAgent(entity e, bool local)
 		if (kill.playerId == 0)
 		{
 
-			if ((u32)Time::ElapsedTime() % 5 == 0)
+			if ((u32)Time::ElapsedTime() % 3 == 0)
 			{
 				//can spawn non ammo
 				ItemManager::Get().CreateItemHost(EntityTypes(((u32)Time::ElapsedTime() + agent.id) % u32(EntityTypes::Default)), agentTrans.GetPosition());
 			}
-			else if ((u32)Time::ElapsedTime() % (1 + MAX_PLAYER_COUNT - PlayerManager::Get().GetNrOfPlayers()) == 0)
+			else if ((u32)Time::ElapsedTime() % 1 == 0)
 			{
 				ItemManager::Get().CreateItemHost(EntityTypes(((u32)Time::ElapsedTime() + agent.id) % (u32(EntityTypes::Barrels) - u32(EntityTypes::BarrelItemsBegin) + 1) + (u32)EntityTypes::BarrelItemsBegin), 
 					agentTrans.GetPosition());
