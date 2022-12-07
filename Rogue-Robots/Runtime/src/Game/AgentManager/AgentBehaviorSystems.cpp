@@ -21,6 +21,9 @@ void AgentDistanceToPlayersSystem::OnEarlyUpdate(entity agent, BTDistanceToPlaye
 {
 	//System checks the (non-squared) distance to every living player.
 	//Also resets the currently held player data since it is no longer up to date (This system is the first system to run every frame for agents except the BT-system):
+	const f32 AUDIO_RANGE = 15.0f;
+	bool atLeastOneWithinAudioRange = false;
+	
 	atmc.playerData.clear();
 	atmc.playerData.reserve(PlayerManager::Get().GetNrOfPlayers());
 
@@ -46,7 +49,68 @@ void AgentDistanceToPlayersSystem::OnEarlyUpdate(entity agent, BTDistanceToPlaye
 				}
 			}
 			atLeastOneWithinRange = atLeastOneWithinRange || (atmc.playerData.back().distanceFromAgent <= maxVision);
+
+			atLeastOneWithinAudioRange = atLeastOneWithinAudioRange || (atmc.playerData.back().distanceFromAgent <= AUDIO_RANGE);
 		});
+
+	//Only one per group is played
+	EntityManager::Get().Collect<AgentOnStandbyAudioComponent, AgentIdComponent>().Do([&](AgentOnStandbyAudioComponent, AgentIdComponent agentId)
+		{
+			AgentManager& am = AgentManager::Get();
+			u32 myGroup = am.GroupID(agentId.id);
+			u32 agentGroup = am.GroupID(aidc.id);
+
+			atLeastOneWithinAudioRange = (aidc.id != agentGroup) && atLeastOneWithinAudioRange;
+		});
+
+	//Add audiocomponent if wihtin range or else remove it
+	entity e = agent;
+	if (atLeastOneWithinAudioRange)
+	{
+		if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
+		{
+			if (!EntityManager::Get().HasComponent<AgentOnStandbyAudioComponent>(e))
+			{
+				auto& agentOnStandbyComponent = EntityManager::Get().AddComponent<AgentOnStandbyAudioComponent>(e);
+				agentOnStandbyComponent.agentOnStandbyAudioEntity = EntityManager::Get().CreateEntity();
+
+				entity audioEntity = agentOnStandbyComponent.agentOnStandbyAudioEntity;
+				EntityManager::Get().AddComponent<TransformComponent>(audioEntity);
+				EntityManager::Get().AddComponent<ChildComponent>(audioEntity).parent = e;
+				EntityManager::Get().AddComponent<SceneComponent>(audioEntity, EntityManager::Get().GetComponent<SceneComponent>(e).scene);
+				EntityManager::Get().AddComponent<DOG::AudioComponent>(audioEntity);
+			}
+
+			auto& onStandbyAudio = EntityManager::Get().GetComponent<DOG::AudioComponent>(EntityManager::Get().GetComponent<AgentOnStandbyAudioComponent>(e).agentOnStandbyAudioEntity);
+			if (!onStandbyAudio.playing)
+			{
+				onStandbyAudio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Enemy/OnStandby.wav");
+				onStandbyAudio.shouldPlay = true;
+				onStandbyAudio.volume = 0.4f;
+				onStandbyAudio.is3D = true;
+				onStandbyAudio.loop = true;
+			}
+		}
+		else
+		{
+			if (EntityManager::Get().HasComponent<AgentOnStandbyAudioComponent>(e))
+			{
+				auto& onStandbyAudio = EntityManager::Get().GetComponent<DOG::AudioComponent>(EntityManager::Get().GetComponent<AgentOnStandbyAudioComponent>(e).agentOnStandbyAudioEntity);
+				onStandbyAudio.shouldStop = true;
+			}
+		}
+	}
+	else
+	{
+		if (EntityManager::Get().HasComponent<AgentOnStandbyAudioComponent>(e))
+		{
+			auto& agentOnStandbyComponent = EntityManager::Get().GetComponent<AgentOnStandbyAudioComponent>(e);
+
+			EntityManager::Get().DeferredEntityDestruction(agentOnStandbyComponent.agentOnStandbyAudioEntity);
+
+			EntityManager::Get().RemoveComponent<AgentOnStandbyAudioComponent>(e);
+		}
+	}
 
 	if (atLeastOneWithinRange)
 		LEAF(btc.currentRunningNode)->Succeed(agent);
@@ -584,6 +648,7 @@ void AgentAggroSystem::OnUpdate(entity e, BTAggroComponent&, AgentAggroComponent
 	if ((Time::ElapsedTime() - aggro.timeTriggered) > maxAggroTime)
 	{
 		em.RemoveComponent<AgentAggroComponent>(e);
+		em.RemoveComponentIfExists<AgentAggroAudioComponent>(e);
 		if (!em.HasComponent<PathFindingSync>(e))
 		{
 			em.AddComponent<PathFindingSync>(e).id = em.GetComponent<AgentIdComponent>(e);

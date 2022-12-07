@@ -172,7 +172,6 @@ public:
 	void OnUpdate(DOG::entity e, AgentHPComponent& hpComponent, FireEffectComponent& fireEffect);
 };
 
-
 /**************************************************
 *			Late Update Systems
 ***************************************************/
