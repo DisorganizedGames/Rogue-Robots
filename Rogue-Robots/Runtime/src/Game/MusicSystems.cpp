@@ -120,3 +120,24 @@ void PlayMusicSystem::OnUpdate(MusicPlayer& musicPlayer)
 		}
 	}
 }
+
+void AmbientSoundSystem::OnUpdate(AmbientSoundComponent& ambientSound, DOG::AudioComponent& audioPlayer)
+{
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	if (ambientSound.startup || (audioPlayer.playing && ambientSound.repeatTime < 0))
+	{
+		std::normal_distribution<float> nd(ambientSound.meanRepeatTime, ambientSound.stdDiv);
+		ambientSound.repeatTime = nd(gen) + ambientSound.singleTimeStartOffsetTime;
+		ambientSound.singleTimeStartOffsetTime = 0;
+		ambientSound.startup = false;
+	}
+	else if (!audioPlayer.playing && ambientSound.repeatTime >= 0)
+	{
+		ambientSound.repeatTime -= Time::DeltaTime<TimeType::Seconds, f32>();
+	}
+	else if (ambientSound.repeatTime < 0)
+	{
+		audioPlayer.shouldPlay = true;
+	}
+}
