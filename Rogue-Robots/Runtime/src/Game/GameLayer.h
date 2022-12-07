@@ -103,5 +103,5 @@ private:
 	bool m_syncFrame = false;
 	int m_nrOfFramesToWait = 300;
 
-	static bool m_connectedPlayersLobby[MAX_PLAYER_COUNT];
+	static bool s_connectedPlayersLobby[MAX_PLAYER_COUNT];
 };

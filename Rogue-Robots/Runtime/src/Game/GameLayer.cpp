@@ -25,7 +25,7 @@ using namespace DirectX::SimpleMath;
 
 NetworkStatus GameLayer::s_networkStatus = NetworkStatus::Offline;
 GameState GameLayer::m_gameState = GameState::Initializing;
-bool GameLayer::m_connectedPlayersLobby[MAX_PLAYER_COUNT] = { false, false, false, false };
+bool GameLayer::s_connectedPlayersLobby[MAX_PLAYER_COUNT] = { false, false, false, false };
 
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
@@ -1286,7 +1286,7 @@ void GameLayer::UpdateLobby()
 			for (uint32_t i{ 0u }; i < MAX_PLAYER_COUNT; ++i)
 			{
 				//If the player's connection status is not the same as last frame.
-				if (lobbyData.playersSlotConnected[i] != m_connectedPlayersLobby[i])
+				if (lobbyData.playersSlotConnected[i] != s_connectedPlayersLobby[i])
 				{
 					if (lobbyData.playersSlotConnected[i]) //If the player connected.
 					{
@@ -1334,7 +1334,7 @@ void GameLayer::UpdateLobby()
 						UI::Get()->GetUI<DOG::UIPlayerList>(playerListID)->RemovePlayer(std::wstring(L"Player " + std::to_wstring(i + 1u)));
 					}
 
-					m_connectedPlayersLobby[i] = lobbyData.playersSlotConnected[i];
+					s_connectedPlayersLobby[i] = lobbyData.playersSlotConnected[i];
 				}
 			}
 
@@ -1366,7 +1366,7 @@ void GameLayer::UpdateLobby()
 			for (uint32_t i{ 0u }; i < MAX_PLAYER_COUNT; ++i)
 			{
 				//If the player's connection status is not the same as last frame.
-				if (lobbyData.playersSlotConnected[i] != m_connectedPlayersLobby[i])
+				if (lobbyData.playersSlotConnected[i] != s_connectedPlayersLobby[i])
 				{
 					if (lobbyData.playersSlotConnected[i]) //If the player connected.
 					{
@@ -1414,7 +1414,7 @@ void GameLayer::UpdateLobby()
 						UI::Get()->GetUI<DOG::UIPlayerList>(playerListJoinID)->RemovePlayer(std::wstring(L"Player " + std::to_wstring(i + 1u)));
 					}
 
-					m_connectedPlayersLobby[i] = lobbyData.playersSlotConnected[i];
+					s_connectedPlayersLobby[i] = lobbyData.playersSlotConnected[i];
 				}
 			}
 
@@ -1992,6 +1992,6 @@ void GameLayer::ResetConnectedPlayers()
 {
 	for (uint32_t i{ 0u }; i < MAX_PLAYER_COUNT; ++i)
 	{
-		m_connectedPlayersLobby[i] = false;
+		s_connectedPlayersLobby[i] = false;
 	}
 }
