@@ -69,6 +69,8 @@ static const uint NO_TEXTURE = 0xffffffff;
 
 #define IS_ON 1
 
+
+
 float CalculateShadowFactor(Texture2DArray shadowMaps, uint idx, float3 worldPosition, float3 worldNormal, float3 surfaceToLightDirection, matrix viewMatrix, matrix projectionMatrix)
 {
     float shadowmapTexelSize = 2.0f / 1024.0f; //Adjusted from (1 / 1024) -> (2 / 1024)
@@ -150,6 +152,18 @@ float3 CalculatePointLightContribution(float3 N, float3 V, float3 pos, float3 F0
     return (kD * albedoInput / 3.1415f + specular) * radiance * NdotL;
 }
 
+//We are keeping it isotropic (direction-independent) as opposed to anisotropic (direction-dependent)
+//in order to save some performance of an already expensive technique. This collapses the equation a lot.
+//The parts of the code that could be slotted in for the "complete algorithm" has been commented out.
+//Feel free to test different values at your own leisure (and keep the code as comments so others can see the full implementation!!)
+//In other words, do not remove it as part of a code review!
+float CalculateVolumetricScattering(/*float lightDotView, float G*/)
+{
+    float toReturn = 1.0f /*- (G * G)*/;
+    toReturn /= (4.0f * 3.1415f /** pow(1.0f + G * G - (2.0f * G) * lightDotView, 1.5f)*/);
+    return toReturn;
+}
+
 struct PS_OUT
 {
     float4 color : SV_TARGET0;
@@ -158,6 +172,11 @@ struct PS_OUT
     float4 normals : SV_TARGET1;
 #endif
 };
+
+float4x4 ditherPattern = {{ 0.0f, 0.5f, 0.125f, 0.625f},
+{ 0.75f, 0.22f, 0.875f, 0.375f},
+{ 0.1875f, 0.6875f, 0.0625f, 0.5625},
+{ 0.9375f, 0.4375f, 0.8125f, 0.3125}};
 
 PS_OUT main(VS_OUT input)
 {
@@ -383,11 +402,20 @@ PS_OUT main(VS_OUT input)
     //    Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL * (contrib);
     //}
     
+    
+    /* VARIABLES NEEDED FOR VOLUMETRIC SCATTERING */
+    float3 startPosition = input.wsPos;
+    float3 rayVector = pfData.camPos.xyz - startPosition;
+    float rayLength = length(rayVector);
+    float3 rayDirection = rayVector / rayLength;
+    /* ------------------------------------------ */
+    
     //calculate dynamic spot lights
     ConstantBuffer<SpotlightMetaData> perSpotlightData = ResourceDescriptorHeap[g_constants.spotlightArrayStructureIndex];
     ConstantBuffer<Shadow> shadowMapArrayStruct = ResourceDescriptorHeap[g_constants.shadowMapDepthIndex];
     // Always 0
     Texture2DArray shadowMaps = ResourceDescriptorHeap[shadowMapArrayStruct.shadowMapArray[0][0]];
+    
     for (int k = 0; k < perSpotlightData.currentNrOfSpotlights; ++k)
     {    
         if (perSpotlightData.spotlightArray[k].strength == 0)
@@ -401,7 +429,8 @@ PS_OUT main(VS_OUT input)
     
         float contrib = 0.f;
         float cutoffAngleRad = perSpotlightData.spotlightArray[k].cutoffAngle * 3.1415f / 180.f;
-                
+        float dotCutOffAngleRad = cos(cutoffAngleRad);
+        
         //contrib = lerp(0.0, 1.0, saturate(cutoffAngleRad / acos(theta)));
         
         
@@ -419,7 +448,6 @@ PS_OUT main(VS_OUT input)
         distanceFallOffFactor *= distanceFallOffFactor; // quadratic falloff ( just like real light :) )
         contrib *= distanceFallOffFactor;
             
-        
         
         // calculate per-light radiance
         float3 L = normalize(perSpotlightData.spotlightArray[k].worldPosition.xyz - input.wsPos);
@@ -449,11 +477,63 @@ PS_OUT main(VS_OUT input)
         
         float shadowFactor = perSpotlightData.spotlightArray[k].isShadowCaster ? CalculateShadowFactor(shadowMaps, k, input.wsPos, N, -lightToPosDir, perSpotlightData.spotlightArray[k].viewMatrix, perSpotlightData.spotlightArray[k].projectionMatrix) : 1.0f;
         
-        
         if (perSpotlightData.spotlightArray[k].isPlayer && g_constants.isWeapon == 1)
             shadowFactor = 1.f;
         
         Lo += (kD * albedoInput / 3.1415 + specular) * radiance * NdotL * contrib * shadowFactor;
+        
+        //After a brief talk it was decided that volumetric lighting for the
+        //player spotlight corresponding to "ThisPlayer" did next to nothing for the visual appearance.
+        //Instead what's important is the other players' volumetric lighting.
+        //This decision will ofc improve performance.
+        if (!perSpotlightData.spotlightArray[k].isPlayer)
+        {
+            float4x4 viewMatrix = perSpotlightData.spotlightArray[k].viewMatrix;
+            float4x4 projectionMatrix = perSpotlightData.spotlightArray[k].projectionMatrix;
+            float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
+        
+            float3 currentposition = startPosition;
+            float3 accumulatedMedia = 0.0f.xxx;
+            uint nrOfSteps = 70.0f;
+            float stepLength = rayLength / nrOfSteps;
+            float3 step = rayDirection * stepLength;
+        
+            //It was requested to bring down the effect of the accumulated media a bit
+            //since the amount of dust "particles" giving rise to the volumetric effect 
+            //can make the color feel a bit washed out with current flash light colors.
+            //The color of the struck "particles" is simply set to the flash light color.
+            //Could be tweaked of course to something more earthy, or a blend of dust colors.
+            float volumetricStrength = perSpotlightData.spotlightArray[k].strength * 0.80f;
+        
+            for (uint j = 0u; j < nrOfSteps; j++)
+            {
+                float3 lightToCurrentPosition = currentposition - perSpotlightData.spotlightArray[k].worldPosition.xyz;
+                float3 lightToCurrentPositionDirection = normalize(lightToCurrentPosition);
+                float theta = dot(normalize(perSpotlightData.spotlightArray[k].direction), lightToCurrentPositionDirection);
+                if (theta >= dotCutOffAngleRad)
+                {
+                    float4 worldInShadowSpace = mul(viewProjectionMatrix, float4(currentposition, 1.f));
+                    float3 positionLightSS = worldInShadowSpace.xyz / worldInShadowSpace.w;
+                    float2 shadowMapTextureCoords = float2(0.5f * positionLightSS.x + 0.5f, -0.5f * positionLightSS.y + 0.5f);
+                    float shadowMapValue = shadowMaps.Sample(g_point_samp, float3(shadowMapTextureCoords, k)).r;
+    
+                    if (shadowMapValue < positionLightSS.z)
+                    {
+                        float contrib = smoothstep(0.0, 1.0, pow(saturate(abs(cutoffAngleRad - acos(theta))), 0.35));
+                        float distanceFallOffFactor = (1.f - clamp(length(lightToCurrentPosition), 0.f, SPOTLIGHT_DISTANCE) / SPOTLIGHT_DISTANCE);
+                        distanceFallOffFactor *= distanceFallOffFactor;
+                        contrib *= distanceFallOffFactor;
+            
+                        //Keep the commented out code as is for the sake of algorithm completion.
+                        //Read more above the function definition to find out more.
+                        accumulatedMedia += (CalculateVolumetricScattering( /*dot(rayDirection, -lightToCurrentPositionDirection), 0.0f*/).xxx * perSpotlightData.spotlightArray[k].color * contrib * volumetricStrength);
+                    }
+                }
+                currentposition += step;
+            }
+            accumulatedMedia /= nrOfSteps;
+            Lo += accumulatedMedia;
+        }
     }
     
     // add temp directional light

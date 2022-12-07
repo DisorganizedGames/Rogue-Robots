@@ -42,7 +42,7 @@ namespace DOG::gfx
 		Pipeline m_sortPipeline;
 		Pipeline m_drawPipeline;
 
-		static constexpr u32 S_MAX_PARTICLES = 128*1024;
+		static constexpr u32 S_MAX_PARTICLES = 32*1024;
 		static constexpr u32 S_COUNTERS = 2;
 		static constexpr u32 S_SORT_COMPUTE_GROUP = 256;
 	
