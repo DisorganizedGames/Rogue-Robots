@@ -9,15 +9,15 @@ using namespace DirectX::SimpleMath;
 *			Early Update Systems
 ***************************************************/
 
-void AgentBehaviorTreeSystem::OnEarlyUpdate(DOG::entity agent, AgentIdComponent&, BehaviorTreeComponent& btc)
+void AgentBehaviorTreeSystem::OnEarlyUpdate(entity agent, AgentIdComponent&, BehaviorTreeComponent& btc)
 {
 	ASSERT(btc.currentRunningNode, "Current running node is nullptr!");
 
 	btc.currentRunningNode->Process(agent);
 }
 
-void AgentDistanceToPlayersSystem::OnEarlyUpdate(DOG::entity agent, BTDistanceToPlayerComponent&, AgentTargetMetricsComponent& atmc,
-	AgentIdComponent& aidc, DOG::TransformComponent& tc, BehaviorTreeComponent& btc)
+void AgentDistanceToPlayersSystem::OnEarlyUpdate(entity agent, BTDistanceToPlayerComponent&, AgentTargetMetricsComponent& atmc,
+	AgentIdComponent& aidc, TransformComponent& tc, BehaviorTreeComponent& btc)
 {
 	//System checks the (non-squared) distance to every living player.
 	//Also resets the currently held player data since it is no longer up to date (This system is the first system to run every frame for agents except the BT-system):
@@ -26,7 +26,7 @@ void AgentDistanceToPlayersSystem::OnEarlyUpdate(DOG::entity agent, BTDistanceTo
 
 	f32 maxVision = AgentManager::Get().GetAgentStats(aidc.type).visionDistance;
 	bool atLeastOneWithinRange = false;
-	DOG::EntityManager::Get().Collect<PlayerAliveComponent, DOG::TransformComponent>().Do([&](DOG::entity playerID, PlayerAliveComponent, DOG::TransformComponent& ptc)
+	EntityManager::Get().Collect<PlayerAliveComponent, TransformComponent>().Do([&](entity playerID, PlayerAliveComponent, TransformComponent& ptc)
 		{
 			atmc.playerData.emplace_back(
 				playerID, 
@@ -42,37 +42,52 @@ void AgentDistanceToPlayersSystem::OnEarlyUpdate(DOG::entity agent, BTDistanceTo
 		LEAF(btc.currentRunningNode)->Fail(agent);
 }
 
-void AgentLineOfSightToPlayerSystem::OnEarlyUpdate(DOG::entity agent, BTLineOfSightToPlayerComponent&, AgentTargetMetricsComponent& atmc,
-	AgentIdComponent& aidc, DOG::TransformComponent& tc, BehaviorTreeComponent& btc)
+void AgentLineOfSightToPlayerSystem::OnEarlyUpdate(entity agent, BTLineOfSightToPlayerComponent&, AgentTargetMetricsComponent& atmc,
+	AgentIdComponent& aidc, TransformComponent& tc, BehaviorTreeComponent& btc)
 {
-	const float minimumDotValue = AgentManager::Get().GetAgentStats(aidc.type).visionConeDotValue;
+	const AgentManager::AgentStats stats = AgentManager::Get().GetAgentStats(aidc.type);
 	
 	bool atLeastOneHasLineOfSight = false;
-
 	//This system checks for line of sight to every player. We are still in the gather-data-phase, so all players are analyzed:
 	for (auto& pd : atmc.playerData)
 	{
-		auto rayCastResult = PhysicsEngine::RayCast(tc.GetPosition(), pd.position);
-		//Nothing was hit at all:
-		if (!rayCastResult)
-			continue;
-		bool hitIsPlayer = (rayCastResult->entityHit == pd.playerID);
-		//The player in question was not hit (line-of-sight does not exist):
-		if (!hitIsPlayer)
-			continue;
+		if (pd.distanceFromAgent <= stats.lidarDistance)
+		{
+			auto rayCastResult = PhysicsEngine::RayCast(tc.GetPosition(), pd.position);
+			//Nothing was hit at all:
+			if (!rayCastResult)
+				continue;
+			bool hitIsPlayer = (rayCastResult->entityHit == pd.playerID);
+			//The player in question was not hit (line-of-sight does not exist):
+			if (!hitIsPlayer)
+				continue;
 
-		//We are in line-of-sight, POSSIBLY. What remains is to check the dot product between the agent forward vector and 
-		//the vector direction from the agent to the player, since the player could still, e.g., be behind the back:
-		Vector3 vectorFromAgentToPlayer = (pd.position - tc.GetPosition());
-		vectorFromAgentToPlayer.Normalize();
-		const float dot = tc.GetForward().Dot(vectorFromAgentToPlayer);
-
-		if (dot > minimumDotValue)
-			pd.lineOfSight = AgentTargetMetricsComponent::LineOfSight::Full;
-		else
 			pd.lineOfSight = AgentTargetMetricsComponent::LineOfSight::Partial;
+			atLeastOneHasLineOfSight = true;
+		}
+		else if (pd.distanceFromAgent <= stats.visionDistance || EntityManager::Get().HasComponent<AgentAlertComponent>(agent))
+		{
+			//We are in line-of-sight, POSSIBLY. What remains is to check the dot product between the agent forward vector and 
+			//the vector direction from the agent to the player, since the player could still, e.g., be behind the back:
+			Vector3 vectorFromAgentToPlayer = (pd.position - tc.GetPosition());
+			vectorFromAgentToPlayer.Normalize();
+			const float dot = tc.GetForward().Dot(vectorFromAgentToPlayer);
 
-		atLeastOneHasLineOfSight = true;
+			if (dot > stats.visionConeDotValue)
+			{
+				auto rayCastResult = PhysicsEngine::RayCast(tc.GetPosition(), pd.position);
+				//Nothing was hit at all:
+				if (!rayCastResult)
+					continue;
+				bool hitIsPlayer = (rayCastResult->entityHit == pd.playerID);
+				//The player in question was not hit (line-of-sight does not exist):
+				if (!hitIsPlayer)
+					continue;
+
+				pd.lineOfSight = AgentTargetMetricsComponent::LineOfSight::Full;
+				atLeastOneHasLineOfSight = true;
+			}
+		}
 	}
 
 	if (atLeastOneHasLineOfSight)
@@ -184,7 +199,6 @@ void AgentDetectHitSystem::OnEarlyUpdate(entity agentID, BTHitDetectComponent&, 
 
 	if (!em.HasComponent<AgentAggroComponent>(agentID))
 	{
-		std::cout << "agent " << agent.id << " sent PathFindingSync packet!\n";
 		em.AddComponent<AgentAggroComponent>(agentID);
 		if (!em.HasComponent<PathFindingSync>(agentID))
 		{
@@ -195,7 +209,7 @@ void AgentDetectHitSystem::OnEarlyUpdate(entity agentID, BTHitDetectComponent&, 
 	LEAF(btc.currentRunningNode)->Succeed(agentID);
 }
 
-void AgentGetPathSystem::OnEarlyUpdate(DOG::entity e, BTGetPathComponent&, AgentSeekPlayerComponent& seek, BehaviorTreeComponent& btc)
+void AgentGetPathSystem::OnEarlyUpdate(entity e, BTGetPathComponent&, AgentSeekPlayerComponent& seek, BehaviorTreeComponent& btc)
 {
 	EntityManager& em = EntityManager::Get();
 	em.AddOrGetComponent<PathfinderWalkComponent>(e).goal = em.GetComponent<TransformComponent>(seek.entityID).GetPosition();
@@ -370,7 +384,7 @@ void AgentDestructSystem::OnUpdate(entity e, AgentHPComponent& hp, TransformComp
 	}
 }
 
-void AgentFrostTimerSystem::OnUpdate(DOG::entity e, AgentMovementComponent& movement, FrostEffectComponent& frostEffect, AgentIdComponent& idc)
+void AgentFrostTimerSystem::OnUpdate(entity e, AgentMovementComponent& movement, FrostEffectComponent& frostEffect, AgentIdComponent& idc)
 {
 	frostEffect.frostTimer -= (float)Time::DeltaTime();
 	if (frostEffect.frostTimer <= 0.0f)
@@ -380,7 +394,7 @@ void AgentFrostTimerSystem::OnUpdate(DOG::entity e, AgentMovementComponent& move
 	}
 }
 
-void AgentAggroSystem::OnUpdate(DOG::entity e, BTAggroComponent&, AgentAggroComponent& aggro, AgentIdComponent& agent)
+void AgentAggroSystem::OnUpdate(entity e, BTAggroComponent&, AgentAggroComponent& aggro, AgentIdComponent& agent)
 {
 	constexpr float minutes = 1.3f;
 	constexpr f64 maxAggroTime = minutes * 60.0;
@@ -389,15 +403,12 @@ void AgentAggroSystem::OnUpdate(DOG::entity e, BTAggroComponent&, AgentAggroComp
 	AgentManager& am = AgentManager::Get();
 
 	if (!em.HasComponent<AgentAlertComponent>(e))
-	{
-		std::cout << "agent " << agent.id << " alert\n";
 		em.AddComponent<AgentAlertComponent>(e);
-	}
 
 	u32 myGroup = am.GroupID(agent.id);
 
 	auto& btc = em.GetComponent<BehaviorTreeComponent>(e);
-	if ((DOG::Time::ElapsedTime() - aggro.timeTriggered) > maxAggroTime)
+	if ((Time::ElapsedTime() - aggro.timeTriggered) > maxAggroTime)
 	{
 		em.RemoveComponent<AgentAggroComponent>(e);
 		if (!em.HasComponent<PathFindingSync>(e))
@@ -457,9 +468,23 @@ void AgentMovementSystem::OnLateUpdate(entity e, BTMoveToPlayerComponent&, Behav
 	{
 		movement.forward = pfc.path[0] - trans.GetPosition();
 		movement.forward.y = 0.0f;
-
-		trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pfc.path[0], Vector3::Up).Invert();
 		movement.forward.Normalize();
+
+		// Old solution was to make view matrix and then invert it.
+		//trans.worldMatrix = DirectX::XMMatrixLookAtLH(trans.GetPosition(), pfc.path[0], Vector3::Up);
+		//trans.worldMatrix = trans.worldMatrix.Invert();		// could find a better solution...
+
+		Vector3 up = Vector3::Up;
+		Vector3 right = up.Cross(movement.forward);
+		
+		// The forward vector has y = 0. => the up vector will always be {0, 1, 0}, so we can skipp the last cross product.
+		//right.Normalize();
+		//up = forward.Cross(right);
+
+		DirectX::SimpleMath::Matrix r(right, up, movement.forward);
+		trans.SetRotation(r);
+
+		
 		constexpr f32 SKID_FACTOR = 0.1f;
 		movement.forward.x += rb.linearVelocity.x * SKID_FACTOR;
 		movement.forward.y = 0.0f;
@@ -483,11 +508,10 @@ void AgentMovementSystem::OnLateUpdate(entity e, BTMoveToPlayerComponent&, Behav
 void ShadowAgentSeekPlayerSystem::OnUpdate(ShadowAgentSeekPlayerComponent& seek)
 {
 	if (seek.playerID == -1)
-		seek.entityID = DOG::NULL_ENTITY;
+		seek.entityID = NULL_ENTITY;
 	else
 		EntityManager::Get().Collect<NetworkPlayerComponent>().Do([&](entity e, NetworkPlayerComponent& net)
 			{
-				std::cout << e << " " << (int)net.playerId << " -?-> " << (int)seek.playerID << std::endl;
 				if (net.playerId == seek.playerID)
 					seek.entityID = e;
 			});
@@ -504,7 +528,7 @@ void LateAgentDestructCleanupSystem::OnLateUpdate(AgentIdComponent& agent, Defer
 	AgentManager::Get().CountAgentKilled(agent.id);
 };
 
-void AgentFireTimerSystem::OnUpdate(DOG::entity e, AgentHPComponent& hpComponent, FireEffectComponent& fireEffect)
+void AgentFireTimerSystem::OnUpdate(entity e, AgentHPComponent& hpComponent, FireEffectComponent& fireEffect)
 {
 	f32 deltaTime = (f32)Time::DeltaTime();
 

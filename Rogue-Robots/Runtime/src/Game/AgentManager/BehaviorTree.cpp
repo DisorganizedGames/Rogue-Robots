@@ -396,6 +396,30 @@ void DistanceToPlayerNode::Fail(DOG::entity agent) noexcept
 	GetParent()->Process(agent);
 }
 
+IsAlertNode::IsAlertNode(const std::string& name) noexcept
+	: Leaf{ name }
+{}
+
+void IsAlertNode::Process(DOG::entity agent) noexcept
+{
+	if (DOG::EntityManager::Get().HasComponent<AgentAlertComponent>(agent))
+		ForceSucceed(agent);
+	else
+		ForceFail(agent);
+}
+
+void IsAlertNode::Succeed(DOG::entity agent) noexcept
+{
+	SetSucceededAs(true);
+	GetParent()->Process(agent);
+}
+
+void IsAlertNode::Fail(DOG::entity agent) noexcept
+{
+	SetSucceededAs(false);
+	GetParent()->Process(agent);
+}
+
 LineOfSightToPlayerNode::LineOfSightToPlayerNode(const std::string& name) noexcept
 	: Leaf{ name }
 {}

@@ -322,12 +322,13 @@ void AgentManager::CreateScorpioBehaviourTree(DOG::entity agent) noexcept
 	std::shared_ptr<Selector> detectHitOrPlayerSelector = std::move(std::make_shared<Selector>("detectHitOrPlayerSelector"));
 	std::shared_ptr<Sequence> detectPlayerSequence = std::move(std::make_shared<Sequence>("DetectPlayerSequence"));
 
-	std::shared_ptr<Succeeder> distanceToPlayerSucceeder = std::move(std::make_shared<Succeeder>("DistanceToPlayerSucceeder"));
+	std::shared_ptr<Selector> detectOrAlertSelector = std::move(std::make_shared<Selector>("DetectOrAlertSelector"));
 	std::shared_ptr<Succeeder> lineOfSightToPlayerSucceeder = std::move(std::make_shared<Succeeder>("LineOfSightToPlayerSucceeder"));
 
-	distanceToPlayerSucceeder->AddChild(std::make_shared<DistanceToPlayerNode>("DistanceToPlayerNode"));
+	detectOrAlertSelector->AddChild(std::make_shared<DistanceToPlayerNode>("DistanceToPlayerNode"));
+	detectOrAlertSelector->AddChild(std::make_shared<IsAlertNode>("IsAlertNode"));
 	lineOfSightToPlayerSucceeder->AddChild(std::make_shared<LineOfSightToPlayerNode>("LineOfSightToPlayerNode"));
-	detectPlayerSequence->AddChild(std::move(distanceToPlayerSucceeder));
+	detectPlayerSequence->AddChild(std::move(detectOrAlertSelector));
 	detectPlayerSequence->AddChild(std::move(lineOfSightToPlayerSucceeder));
 
 
