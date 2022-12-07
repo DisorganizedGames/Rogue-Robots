@@ -106,6 +106,7 @@ class PickupItemInteractionSystem : public DOG::ISystem
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	#define REQUIRED_DISTANCE_DELTA 2.0f
 	#define REQUIRED_DOT_DELTA -0.90f
+	#define LENGTH_THRESHOLD_TO_AVOID_ANGLE 1.f
 public:
 	SYSTEM_CLASS(DOG::ThisPlayer, PlayerAliveComponent, DOG::TransformComponent, PlayerControllerComponent);
 	ON_EARLY_UPDATE_ID(DOG::ThisPlayer, PlayerAliveComponent, DOG::TransformComponent, PlayerControllerComponent);
@@ -144,11 +145,18 @@ public:
 		// Camera offset
 		const auto cOffset = Vector3(0, 0.1f, 0);
 
-		Vector3 pickUpToPlayerDirection = (playerPosition+cOffset) - tc.GetPosition();
+		const Vector3 pickUpToPlayer = (playerPosition + cOffset) - tc.GetPosition();
+		Vector3 pickUpToPlayerDirection = pickUpToPlayer;
 		pickUpToPlayerDirection.Normalize();
 
 		float dot = cameraForward.Dot(pickUpToPlayerDirection);
 		bool isLookingAtItem = dot < REQUIRED_DOT_DELTA;
+
+		// If below a distance threshold --> Ignore look angle
+		if (pickUpToPlayer.Length() < LENGTH_THRESHOLD_TO_AVOID_ANGLE)
+		{
+			isLookingAtItem = true;
+		}
 
 		if (!isLookingAtItem)
 			return;
