@@ -81,6 +81,11 @@ void TurretTargetingSystem::OnUpdate(TurretTargetingComponent& targeter, ChildCo
 
 
 
+TurretShootingSystem::TurretShootingSystem()
+{
+	m_turretShootSound = AssetManager::Get().LoadAudio("Assets/Audio/Items/TurretShoot.wav");
+}
+
 void TurretShootingSystem::OnUpdate(entity e, TurretTargetingComponent& targeter, TurretBasicShootingComponent& turretShooter, DOG::TransformComponent& transform)
 {
 	f64 dt = Time::DeltaTime();
@@ -88,6 +93,15 @@ void TurretShootingSystem::OnUpdate(entity e, TurretTargetingComponent& targeter
 	{
 		while (turretShooter.lastDischargeTimer > turretShooter.timeStep)
 		{
+			if (EntityManager::Get().HasComponent<AudioComponent>(e))
+			{
+				AudioComponent& audio = EntityManager::Get().GetComponent<AudioComponent>(e);
+				if (!audio.playing)
+				{
+					audio.assetID = m_turretShootSound;
+					audio.shouldPlay = true;
+				}
+			}
 
 			SpawnTurretProjectile(transform, turretShooter.projectileSpeed, turretShooter.damage, turretShooter.projectileLifeTime, e, turretShooter.owningPlayer);
 			turretShooter.lastDischargeTimer -= turretShooter.timeStep;

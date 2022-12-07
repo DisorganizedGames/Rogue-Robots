@@ -108,6 +108,14 @@ class PickupItemInteractionSystem : public DOG::ISystem
 	#define REQUIRED_DOT_DELTA -0.90f
 	#define LENGTH_THRESHOLD_TO_AVOID_ANGLE 1.f
 public:
+	PickupItemInteractionSystem()
+	{
+		m_basePickUpSound = DOG::AssetManager::Get().LoadAudio("Assets/Audio/Items/Pickup.wav");
+		m_baseBuffPickUpSound = DOG::AssetManager::Get().LoadAudio("Assets/Audio/Items/Buff.wav");
+		m_healthPickUpSound = DOG::AssetManager::Get().LoadAudio("Assets/Audio/Items/Health_Pickup.wav");
+		m_weaponPickUpSound = DOG::AssetManager::Get().LoadAudio("Assets/Audio/Items/Weapon_Pickup.wav");
+	}
+
 	SYSTEM_CLASS(DOG::ThisPlayer, PlayerAliveComponent, DOG::TransformComponent, PlayerControllerComponent);
 	ON_EARLY_UPDATE_ID(DOG::ThisPlayer, PlayerAliveComponent, DOG::TransformComponent, PlayerControllerComponent);
 
@@ -179,8 +187,40 @@ public:
 				plac.origin = tc.GetPosition();
 				plac.target = playerPosition;
 			}
+
+			DOG::entity pickupAudioEntity = mgr.CreateEntity();
+
+			mgr.AddComponent<DOG::TransformComponent>(pickupAudioEntity).worldMatrix = mgr.GetComponent<DOG::TransformComponent>(player).worldMatrix;
+			auto& audio = mgr.AddComponent<DOG::AudioComponent>(pickupAudioEntity);
+			audio.is3D = true;
+			audio.shouldPlay = true;
+			audio.assetID = m_basePickUpSound;
+			mgr.AddComponent<LifetimeComponent>(pickupAudioEntity, 5.0f);
+
+			if (mgr.HasComponent<PickupComponent>(closestPickup))
+			{
+				auto& pickup = mgr.GetComponent<PickupComponent>(closestPickup);
+				if (pickup.type == PickupComponent::Type::PassiveItem)
+				{
+					audio.assetID = m_baseBuffPickUpSound;
+
+					if (mgr.HasComponent<PassiveItemComponent>(closestPickup) && mgr.GetComponent<PassiveItemComponent>(closestPickup).type == PassiveItemComponent::Type::MaxHealthBoost)
+					{
+						audio.assetID = m_healthPickUpSound;
+					}
+				}
+				else if (pickup.type == PickupComponent::Type::BarrelItem || pickup.type == PickupComponent::Type::MagazineModificationItem || pickup.type == PickupComponent::Type::MiscItem)
+				{
+					audio.assetID = m_weaponPickUpSound;
+				}
+			}
 		}
 	}
+private:
+	u32 m_basePickUpSound;
+	u32 m_baseBuffPickUpSound;
+	u32 m_healthPickUpSound;
+	u32 m_weaponPickUpSound;
 };
 
 class MVPRenderPickupItemUIText : public DOG::ISystem
@@ -609,6 +649,10 @@ class ReviveSystem : public DOG::ISystem
 {
 #define MAXIMUM_DISTANCE_DELTA 1.3f
 #define MINIMUM_DOT_DELTA 0.85f
+
+private:
+	u32 m_reviveSound;
+
 public:
 	SYSTEM_CLASS(InputController, PlayerAliveComponent, DOG::TransformComponent);
 	ON_UPDATE_ID(InputController, PlayerAliveComponent, DOG::TransformComponent);

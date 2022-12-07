@@ -21,6 +21,7 @@ void GoalRadarSystem::OnUpdate(DOG::entity e, GoalRadarComponent& grc)
 
 		// Disable goal radar
 		em.RemoveComponent<GoalRadarComponent>(e);
+		em.DeferredEntityDestruction(e);
 		return;
 	}
 

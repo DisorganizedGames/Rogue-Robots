@@ -157,7 +157,7 @@ u32 ItemManager::CreateMissilePickup(DirectX::SimpleMath::Vector3 position,  u32
 	bc.type = BarrelComponent::Type::Missile;
 	bc.maximumAmmoCapacityForType = 10;
 	bc.ammoPerPickup = 1;
-	s_entityManager.AddComponent<PickupComponent>(missileEntity).itemName = "Homing missile";
+	s_entityManager.AddComponent<PickupComponent>(missileEntity, PickupComponent::Type::BarrelItem).itemName = "Homing missile";
 	s_entityManager.AddComponent<ModelComponent>(missileEntity, missileID);
 	s_entityManager.AddComponent<TransformComponent>(missileEntity, position).SetScale({ 0.8f, 0.8f, 0.8f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(missileEntity);
@@ -186,7 +186,7 @@ u32 ItemManager::CreateLaserPickup(Vector3 position, u32 id)
 	bc.type = BarrelComponent::Type::Laser;
 	bc.maximumAmmoCapacityForType = 80;
 	bc.ammoPerPickup = 20;
-	s_entityManager.AddComponent<PickupComponent>(laserEntity).itemName = "Laser";
+	s_entityManager.AddComponent<PickupComponent>(laserEntity, PickupComponent::Type::BarrelItem).itemName = "Laser";
 	auto& ni = s_entityManager.AddComponent<NetworkId>(laserEntity);
 	ni.entityTypeId = EntityTypes::LaserBarrel;
 	if (id == 0)
@@ -215,7 +215,7 @@ u32 ItemManager::CreateGrenadePickup(DirectX::SimpleMath::Vector3 position, u32 
 	bc.type = BarrelComponent::Type::Grenade;
 	bc.maximumAmmoCapacityForType = 20;
 	bc.ammoPerPickup = 2;
-	s_entityManager.AddComponent<PickupComponent>(grenadeEntity).itemName = "Grenade";
+	s_entityManager.AddComponent<PickupComponent>(grenadeEntity, PickupComponent::Type::BarrelItem).itemName = "Grenade";
 	s_entityManager.AddComponent<ModelComponent>(grenadeEntity, grenadeID);
 	s_entityManager.AddComponent<TransformComponent>(grenadeEntity, position).SetScale({ 0.5f, 0.5f, 0.5f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(grenadeEntity);
@@ -242,7 +242,7 @@ u32 ItemManager::CreateMaxHealthBoostPickup(DirectX::SimpleMath::Vector3 positio
 
 	entity healthBoostEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<PassiveItemComponent>(healthBoostEntity).type = PassiveItemComponent::Type::MaxHealthBoost;
-	s_entityManager.AddComponent<PickupComponent>(healthBoostEntity).itemName = "Max HP boost";
+	s_entityManager.AddComponent<PickupComponent>(healthBoostEntity, PickupComponent::Type::PassiveItem).itemName = "Max HP boost";
 	s_entityManager.AddComponent<ModelComponent>(healthBoostEntity, healthBoostID);
 	s_entityManager.AddComponent<TransformComponent>(healthBoostEntity, position).SetScale({ 0.8f, 0.8f, 0.8f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(healthBoostEntity);
@@ -270,7 +270,7 @@ u32 ItemManager::CreateFrostModificationPickup(DirectX::SimpleMath::Vector3 posi
 
 	entity frostModEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<MagazineModificationComponent>(frostModEntity).type = MagazineModificationComponent::Type::Frost;
-	s_entityManager.AddComponent<PickupComponent>(frostModEntity).itemName = "Frost modification";
+	s_entityManager.AddComponent<PickupComponent>(frostModEntity, PickupComponent::Type::MagazineModificationItem).itemName = "Frost modification";
 	s_entityManager.AddComponent<ModelComponent>(frostModEntity, frostModID);
 	s_entityManager.AddComponent<TransformComponent>(frostModEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(frostModEntity);
@@ -298,7 +298,7 @@ u32 ItemManager::CreateFireModificationPickup(DirectX::SimpleMath::Vector3 posit
 
 	entity fireModEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<MagazineModificationComponent>(fireModEntity).type = MagazineModificationComponent::Type::Frost;
-	s_entityManager.AddComponent<PickupComponent>(fireModEntity).itemName = "Fire modification";
+	s_entityManager.AddComponent<PickupComponent>(fireModEntity, PickupComponent::Type::MagazineModificationItem).itemName = "Fire modification";
 	s_entityManager.AddComponent<ModelComponent>(fireModEntity, fireModID);
 	s_entityManager.AddComponent<TransformComponent>(fireModEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(fireModEntity);
@@ -327,7 +327,7 @@ u32 ItemManager::CreateTurretPickup(Vector3 position, u32 id)
 
 	entity turretPickUpEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<ActiveItemComponent>(turretPickUpEntity).type = ActiveItemComponent::Type::Turret;
-	s_entityManager.AddComponent<PickupComponent>(turretPickUpEntity).itemName = "Turret";
+	s_entityManager.AddComponent<PickupComponent>(turretPickUpEntity, PickupComponent::Type::ActiveItem).itemName = "Turret";
 	s_entityManager.AddComponent<ModelComponent>(turretPickUpEntity, turretBaseModelID);
 	s_entityManager.AddComponent<TransformComponent>(turretPickUpEntity, position).SetScale({ 0.4f, 0.4f, 0.4f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(turretPickUpEntity);
@@ -363,7 +363,7 @@ u32 ItemManager::CreateSpeedBoostPickup(DirectX::SimpleMath::Vector3 position, u
 
 	entity speedBoostEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<PassiveItemComponent>(speedBoostEntity).type = PassiveItemComponent::Type::SpeedBoost;
-	s_entityManager.AddComponent<PickupComponent>(speedBoostEntity).itemName = "Speed Boost";
+	s_entityManager.AddComponent<PickupComponent>(speedBoostEntity, PickupComponent::Type::PassiveItem).itemName = "Speed Boost";
 	s_entityManager.AddComponent<ModelComponent>(speedBoostEntity, speedBoostID);
 	s_entityManager.AddComponent<TransformComponent>(speedBoostEntity, position).SetScale({ 0.5f, 0.5f, 0.5f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(speedBoostEntity);
@@ -392,7 +392,7 @@ u32 ItemManager::CreateSpeedBoost2Pickup(DirectX::SimpleMath::Vector3 position, 
 
 	entity speedBoostEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<PassiveItemComponent>(speedBoostEntity).type = PassiveItemComponent::Type::SpeedBoost2;
-	s_entityManager.AddComponent<PickupComponent>(speedBoostEntity).itemName = "Speed Boost X2";
+	s_entityManager.AddComponent<PickupComponent>(speedBoostEntity, PickupComponent::Type::PassiveItem).itemName = "Speed Boost X2";
 	s_entityManager.AddComponent<ModelComponent>(speedBoostEntity, speedBoostID);
 	s_entityManager.AddComponent<TransformComponent>(speedBoostEntity, position).SetScale({ 0.5f, 0.5f, 0.5f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(speedBoostEntity);
@@ -420,7 +420,7 @@ u32 ItemManager::CreateJumpBoost(DirectX::SimpleMath::Vector3 position, u32 id)
 
 	entity pEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<PassiveItemComponent>(pEntity).type = PassiveItemComponent::Type::JumpBoost;
-	s_entityManager.AddComponent<PickupComponent>(pEntity).itemName = "JumpBoost";
+	s_entityManager.AddComponent<PickupComponent>(pEntity, PickupComponent::Type::PassiveItem).itemName = "JumpBoost";
 	s_entityManager.AddComponent<ModelComponent>(pEntity, jumpBoostId);
 	s_entityManager.AddComponent<TransformComponent>(pEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(pEntity);
@@ -448,7 +448,7 @@ u32 ItemManager::CreateFullAutoPickup(Vector3 position, u32 id)
 
 	entity fullAutoEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<MiscComponent>(fullAutoEntity).type = MiscComponent::Type::FullAuto;
-	s_entityManager.AddComponent<PickupComponent>(fullAutoEntity).itemName = "Full Auto";
+	s_entityManager.AddComponent<PickupComponent>(fullAutoEntity, PickupComponent::Type::MiscItem).itemName = "Full Auto";
 	s_entityManager.AddComponent<ModelComponent>(fullAutoEntity, modelID);
 	s_entityManager.AddComponent<TransformComponent>(fullAutoEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(fullAutoEntity);
@@ -476,7 +476,7 @@ u32 ItemManager::CreateChargeShotPickup(Vector3 position, u32 id)
 
 	entity chargeShotEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<MiscComponent>(chargeShotEntity).type = MiscComponent::Type::ChargeShot;
-	s_entityManager.AddComponent<PickupComponent>(chargeShotEntity).itemName = "Charge Shot";
+	s_entityManager.AddComponent<PickupComponent>(chargeShotEntity, PickupComponent::Type::MiscItem).itemName = "Charge Shot";
 	s_entityManager.AddComponent<ModelComponent>(chargeShotEntity, modelID);
 	s_entityManager.AddComponent<TransformComponent>(chargeShotEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(chargeShotEntity);
@@ -504,7 +504,7 @@ u32 ItemManager::CreateReviverPickup(Vector3 position, u32 id)
 
 	entity reviverEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<ActiveItemComponent>(reviverEntity).type = ActiveItemComponent::Type::Reviver;
-	s_entityManager.AddComponent<PickupComponent>(reviverEntity).itemName = "Reviver";
+	s_entityManager.AddComponent<PickupComponent>(reviverEntity, PickupComponent::Type::ActiveItem).itemName = "Reviver";
 	s_entityManager.AddComponent<ModelComponent>(reviverEntity, modelID);
 	s_entityManager.AddComponent<TransformComponent>(reviverEntity, position).SetScale({ 0.3f, 0.3f, 0.3f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(reviverEntity);
@@ -532,7 +532,7 @@ u32 ItemManager::CreateGoalRadarPickup(Vector3 position, u32 id)
 
 	entity goalRadarEntity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<ActiveItemComponent>(goalRadarEntity).type = ActiveItemComponent::Type::GoalRadar;
-	s_entityManager.AddComponent<PickupComponent>(goalRadarEntity).itemName = "Goal Radar";
+	s_entityManager.AddComponent<PickupComponent>(goalRadarEntity, PickupComponent::Type::ActiveItem).itemName = "Goal Radar";
 	s_entityManager.AddComponent<ModelComponent>(goalRadarEntity, goalRadarID);
 	s_entityManager.AddComponent<TransformComponent>(goalRadarEntity, position).SetScale({ 1.f, 1.f, 1.f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(goalRadarEntity);
@@ -559,7 +559,7 @@ u32 ItemManager::CreateSyringePickup(Vector3 position, u32 id)
 
 	entity entity = s_entityManager.CreateEntity();
 	s_entityManager.AddComponent<ActiveItemComponent>(entity).type = ActiveItemComponent::Type::Syringe;
-	s_entityManager.AddComponent<PickupComponent>(entity).itemName = "Syringe";
+	s_entityManager.AddComponent<PickupComponent>(entity, PickupComponent::Type::ActiveItem).itemName = "Syringe";
 	s_entityManager.AddComponent<ModelComponent>(entity, modelID);
 	s_entityManager.AddComponent<TransformComponent>(entity, position).SetScale({ 0.2f, 0.2f, 0.2f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(entity);

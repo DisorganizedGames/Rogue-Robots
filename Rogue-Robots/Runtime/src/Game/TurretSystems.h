@@ -16,10 +16,12 @@ private:
 class TurretShootingSystem : public DOG::ISystem
 {
 public:
+	TurretShootingSystem();
 	SYSTEM_CLASS(TurretTargetingComponent, TurretBasicShootingComponent, DOG::TransformComponent);
 	ON_UPDATE_ID(TurretTargetingComponent, TurretBasicShootingComponent, DOG::TransformComponent);
 	void OnUpdate(DOG::entity e, TurretTargetingComponent& targeter, TurretBasicShootingComponent& ammo, DOG::TransformComponent& transform);
 private:
+	u32 m_turretShootSound;
 };
 
 class TurretProjectileSystem : public DOG::ISystem
