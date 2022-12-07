@@ -288,6 +288,25 @@ namespace DOG
          ComPtr<ID2D1SolidColorBrush> m_textBrush;
    };
 
+   class UISlider: public UIElement
+   {
+      public:
+         UISlider(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, std::function<void(void)> callback);
+         ~UISlider();
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void OnEvent(IEvent& event) override final;
+         float GetValue();
+         void SetValue(float value);
+      private:
+         float m_value;
+         float m_width;
+         std::function<void(void)> m_callback;
+         D2D_RECT_F m_bar, m_slider;
+         std::wstring m_text;
+         ComPtr<ID2D1SolidColorBrush> m_barBrush, m_sliderBrush;
+   };
+
    class UIIcon : public UIElement
    {
       public:

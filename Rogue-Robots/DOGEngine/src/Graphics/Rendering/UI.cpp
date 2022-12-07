@@ -39,6 +39,12 @@ void LevelSelectMultButtonFunc(void)
 
 void PlayButtonFunc(void);
 
+void SliderFunc(void)
+{
+   return;
+}
+
+
 void OptionsButtonFunc(void)
 {
    DOG::UI::Get()->ChangeUIscene(optionsID);
@@ -1208,6 +1214,70 @@ void DOG::UIIcon::Show(UINT index)
    m_index = index;
 }
 
+DOG::UISlider::UISlider(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, std::function<void(void)> callback): UIElement(id)
+{
+   HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.3f), &m_barBrush);
+   HR_VFY(hr);
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.5f), &m_sliderBrush);
+   HR_VFY(hr);
+   m_slider = D2D1::RectF(x, y, x + 20.f, y + height);
+   m_bar = D2D1::RectF(x + 10.f, y + height / 2.f - 1.f, x + width - 10.f, y + height / 2.f + 1.f);
+   m_callback = callback;
+   m_value = 0;
+   m_width = width;
+
+}
+DOG::UISlider::~UISlider()
+{
+
+}
+void DOG::UISlider::Draw(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   d2d.Get2DDeviceContext()->FillRectangle(m_bar, m_barBrush.Get());
+   d2d.Get2DDeviceContext()->FillRectangle(m_slider, m_sliderBrush.Get());
+}
+void DOG::UISlider::Update(DOG::gfx::D2DBackend_DX12& d2d)
+{
+
+}
+
+void DOG::UISlider::OnEvent(IEvent& event)
+{
+
+   using namespace DOG;
+   if (event.GetEventCategory() == EventCategory::MouseEventCategory)
+   {
+      if (event.GetEventType() == EventType::MouseMovedEvent)
+      {
+         auto mevent = EVENT(DOG::MouseMovedEvent);
+         auto mpos = mevent.coordinates;
+         if ((mpos.x >= m_slider.left && mpos.x <= m_slider.right && mpos.y >= m_slider.top && mpos.y <= m_slider.bottom))
+         {
+            m_sliderBrush.Get()->SetOpacity(1.0f);
+            if (Mouse::IsButtonPressed(Button::Left) && (mpos.x >= m_bar.left && mpos.x <= m_bar.right))
+            {
+               auto delta = Mouse::GetDeltaCoordinates();
+               m_slider.left = (float)mpos.x - 10.f;
+               m_slider.right = m_slider.left + 20.f;
+               
+            }
+         }
+         else
+         {
+            m_sliderBrush.Get()->SetOpacity(0.5f);
+         }
+      }
+   }
+}
+float DOG::UISlider::GetValue()
+{
+   return m_value;
+}
+void DOG::UISlider::SetValue(float value)
+{
+   m_value = value;
+}
+
 DOG::UIVertStatBar::UIVertStatBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, float r, float g, float b): UIElement(id)
 {
    HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(r, g, b, 0.3f), m_borderBrush.GetAddressOf());
@@ -1586,6 +1656,10 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto lgreenScoreWin = instance->Create<DOG::UILabel>(lgreenScoreWinID, std::wstring(L" "), 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
    auto lyellowScoreWin = instance->Create<DOG::UILabel>(lyellowScoreWinID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
 
+   UINT sliderID;
+   auto slider = instance->Create<DOG::UISlider, float, float, float, float>(sliderID, 100.f, 100.f, 250.f, 30.f, std::function<void()>(SliderFunc));
+   instance->AddUIElementToScene(optionsID, std::move(slider));
+   
    auto labelButtonTextActiveItem = instance->Create<DOG::UILabel>(lActiveItemTextID, std::wstring(L"G"), 315.0f, (FLOAT)clientHeight - 90.0f, 50.f, 50.f, 40.f);
 
    auto lStartText = instance->Create<DOG::UILabel>(lStartTextID, std::wstring(L""), (FLOAT)clientWidth / 2.f - 350.f, (FLOAT)clientHeight / 2.f - 400.f, 700.f, 300.f, 60.f);
