@@ -16,6 +16,7 @@
 		void SetMulticastAdress(const char* adress);
 		static float TickTimeLeftTCP(LARGE_INTEGER t, LARGE_INTEGER frequency);
 		void StopReceiving();
+		void SetLevelIndex(u16 levelIndex);
 	private:
 		void ServerReciveConnectionsTCP(SOCKET listenSocket);
 		void ServerPollTCP();
@@ -44,4 +45,5 @@
 		char m_multicastAdress[16];
 		bool m_lobbyStatus;
 		bool m_reciveConnections;
+		LobbyData m_lobbyData;
 	};

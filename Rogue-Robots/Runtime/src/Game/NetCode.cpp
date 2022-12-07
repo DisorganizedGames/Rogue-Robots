@@ -42,6 +42,8 @@ NetCode::NetCode() noexcept
 	m_serverHost = new Server;
 
 	m_syncCounter = 0;
+	m_lobbyData.nrOfPlayersConnected = 1;
+	m_lobbyData.playersSlotConnected[0] = true;
 }
 
 NetCode::~NetCode() noexcept
@@ -136,253 +138,9 @@ void NetCode::OnUpdate()
 
 	if (m_active)
 	{
-		m_syncCounter++;
-		DOG::EntityManager& m_entityManager = DOG::EntityManager::Get();
-		//UDP /////////////////////////////////////////////////////////////////////
-		//Update the others players
-		EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent, InputController, OnlinePlayer, PlayerStatsComponent, PlayerControllerComponent, AnimationComponent
-		>().Do([&](entity id, TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&, PlayerStatsComponent& statsC, PlayerControllerComponent& pC, AnimationComponent& aC)
-			{
-				transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerTransform;
-				inputC = m_outputUdp.m_holdplayersUdp[networkC.playerId].actions;
-				if (statsC.health > m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat.health)
-					PlayerManager::Get().HurtOnlinePlayers(id);
-				statsC = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat;
-				if (statsC.health > 0 && !m_entityManager.HasComponent<PlayerAliveComponent>(id))
-				{
-					m_entityManager.AddComponent<PlayerAliveComponent>(id);
-					aC.SimpleAdd(static_cast<i8>(MixamoAnimations::JazzDance), AnimationFlag::Looping | AnimationFlag::ResetPrio); // No dedicated revive animation for now
-				}
-				if ((pC.cameraEntity != DOG::NULL_ENTITY) && (m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform.Determinant() != 0)) {
-					m_entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform;
-				}
-			});
-		//Tcp////////////////////////////////////////////////////////////////////////
-			// Collect data to send
-
-
-		
-		//check if player has valid id
-		if (m_inputTcp.playerId > -1)
-		{
-			if (Server::TickTimeLeftTCP(m_tickStartTime, m_clockFrequency) > (1.0f / 60.0f))
-			{
-				//sync all transforms Host only
-				if (m_inputTcp.playerId == 0)
-				{
-					
-					//sync all transforms Host only
-					if (m_inputTcp.playerId == 0 && m_syncCounter>= HARD_SYNC_FRAME)
-					{
-						m_syncCounter = 0;
-						EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent>().Do([&](NetworkTransform& netC, TransformComponent& transC, AgentIdComponent agentId)
-							{
-								netC.objectId = agentId.id;
-								netC.position = transC.GetPosition();
-								memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkTransform));
-								m_inputTcp.nrOfNetTransform++;
-								m_bufferSize += sizeof(NetworkTransform);
-
-							});
-					}
-
-		
-				}
-
-				EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](NetworkAgentStats& netC, AgentHPComponent& agentS, AgentIdComponent& idC)
-					{
-						if (agentS.damageThisFrame)
-						{
-							agentS.damageThisFrame = false;
-							netC.playerId = m_inputTcp.playerId;
-							netC.objectId = idC.id;
-							netC.hp = agentS;
-							memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkAgentStats));
-							m_inputTcp.nrOfChangedAgentsHp++;
-							m_bufferSize += sizeof(NetworkAgentStats);
-						}
-					});
-
-				EntityManager::Get().Collect<CreateAndDestroyEntityComponent>().Do([&](entity id, CreateAndDestroyEntityComponent& cdC)
-					{
-						cdC.playerId = m_inputTcp.playerId;
-						memcpy(m_sendBuffer + m_bufferSize, &cdC, sizeof(CreateAndDestroyEntityComponent));
-						m_bufferSize += sizeof(CreateAndDestroyEntityComponent);
-						m_entityManager.RemoveComponent<CreateAndDestroyEntityComponent>(id);
-						m_inputTcp.nrOfCreateAndDestroy++;
-					});
-
-				EntityManager::Get().Collect<PathFindingSync>().Do([&](entity id, PathFindingSync& pFS)
-					{
-						memcpy(m_sendBuffer + m_bufferSize, &pFS, sizeof(PathFindingSync));
-						m_bufferSize += sizeof(PathFindingSync);
-						m_entityManager.RemoveComponent<PathFindingSync>(id);
-						m_inputTcp.nrOfPathFindingSync++;
-					});
-
-				m_inputTcp.sizeOfPayload = m_bufferSize;
-				memcpy(m_sendBuffer, (char*)&m_inputTcp, sizeof(TcpHeader));
-				m_client->SendChararrayTcp(m_sendBuffer, m_inputTcp.sizeOfPayload);
-				m_bufferSize = sizeof(TcpHeader);
-				m_inputTcp.nrOfNetTransform = 0;
-				m_inputTcp.nrOfChangedAgentsHp = 0;
-				m_inputTcp.nrOfCreateAndDestroy = 0;
-				m_inputTcp.nrOfPathFindingSync = 0;
-				QueryPerformanceCounter(&m_tickStartTime);
-			}
-			// Recived data
-			while (m_numberOfPackets > 0 && m_dataIsReadyToBeReceivedTcp)
-			{
-				//Get the header
-				TcpHeader header;
-				memcpy(&header, m_receiveBuffer + m_bufferReceiveSize, sizeof(TcpHeader));
-				m_bufferReceiveSize += sizeof(TcpHeader);
-				if (header.playerId > MAX_PLAYER_COUNT || header.playerId < 0)
-				{
-
-					std::cout << "Error: header is corrupt, Nr of packets left: "<< m_numberOfPackets << std::endl;
-					m_numberOfPackets = 0;
-					m_dataIsReadyToBeReceivedTcp = false;
-				}
-				else
-				{
-					//update
-					m_inputTcp.nrOfPlayersConnected = header.nrOfPlayersConnected;
-					if (m_inputTcp.playerId > 0)
-						m_inputTcp.lobbyAlive = header.lobbyAlive;
-
-
-					if (header.nrOfNetTransform > 0 && header.playerId < MAX_PLAYER_COUNT)
-					{
-						//Update the transfroms, Only none hosts
-						if (m_inputTcp.playerId > 0)
-						{
-							NetworkTransform* tempTransfrom = new NetworkTransform;
-							EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent, CapsuleColliderComponent>().Do([&](NetworkTransform&, TransformComponent& transC, AgentIdComponent& idC, CapsuleColliderComponent& rC)
-								{
-									for (u32 i = 0; i < header.nrOfNetTransform; ++i)
-									{
-										//todo make better
-										memcpy(tempTransfrom, m_receiveBuffer + m_bufferReceiveSize + sizeof(NetworkTransform) * i, sizeof(NetworkTransform));
-										if (idC.id == tempTransfrom->objectId)
-										{
-											if( DirectX::SimpleMath::Vector3(transC.GetPosition() - tempTransfrom->position).Length()/rC.capsuleRadius > rC.capsuleRadius)
-												transC.SetPosition(tempTransfrom->position);
-										}
-
-									}
-
-								});
-							delete tempTransfrom;
-						}
-						m_bufferReceiveSize += header.nrOfNetTransform * sizeof(NetworkTransform);
-					}
-
-					if (header.nrOfChangedAgentsHp > 0)
-					{
-						NetworkAgentStats* tempStats = new NetworkAgentStats;
-						EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](NetworkAgentStats&, AgentHPComponent& Agent, AgentIdComponent& idC)
-							{
-								for (u32 i = 0; i < header.nrOfChangedAgentsHp; ++i)
-								{
-									memcpy(tempStats, m_receiveBuffer + m_bufferReceiveSize + sizeof(NetworkAgentStats) * i, sizeof(NetworkAgentStats));
-									if (idC.id == tempStats->objectId && tempStats->hp.hp < Agent.hp)
-									{
-										Agent = tempStats->hp;
-
-									}
-
-								}
-							});
-						m_bufferReceiveSize += sizeof(NetworkAgentStats) * header.nrOfChangedAgentsHp;
-						delete tempStats;
-					}
-
-					if (header.nrOfCreateAndDestroy > 0)
-					{
-						CreateAndDestroyEntityComponent* tempCreate = new CreateAndDestroyEntityComponent;
-						for (u32 i = 0; i < header.nrOfCreateAndDestroy; ++i)
-						{
-							memcpy(tempCreate, m_receiveBuffer + m_bufferReceiveSize + sizeof(CreateAndDestroyEntityComponent) * i, sizeof(CreateAndDestroyEntityComponent));
-							if (tempCreate->playerId != m_inputTcp.playerId)
-							{
-
-								if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Agents && !tempCreate->alive)
-								{
-									AgentManager::Get().CreateOrDestroyShadowAgent(*tempCreate);
-								}
-								else if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Default && (u32)tempCreate->entityTypeId >(u32)EntityTypes::Agents && !tempCreate->alive)
-								{
-									EntityManager::Get().Collect<NetworkPlayerComponent, PlayerAliveComponent>().Do([&](entity id, NetworkPlayerComponent& playerC, PlayerAliveComponent&)
-										{
-											if (playerC.playerId == tempCreate->playerId)
-											{
-												EntityManager::Get().Collect<NetworkId>().Do([&](entity e, NetworkId& nIdC)
-													{
-														if (nIdC.entityTypeId == tempCreate->entityTypeId && nIdC.id == tempCreate->id)
-														{
-															std::string luaEventName = std::string("ItemPickup") + std::to_string(id);
-															DOG::LuaMain::GetEventSystem()->InvokeEvent(luaEventName, (u32)tempCreate->entityTypeId);
-															m_entityManager.RemoveComponent<NetworkId>(e);
-															m_entityManager.DeferredEntityDestruction(e);
-
-														}
-													});
-											}
-										});
-
-								}
-								//Create pickups
-								else if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Default && tempCreate->alive && (u32)tempCreate->entityTypeId >(u32)EntityTypes::Agents)
-								{
-									ItemManager::Get().CreateItemClient(*tempCreate);
-								}
-							}
-						}
-						m_bufferReceiveSize += sizeof(CreateAndDestroyEntityComponent) * header.nrOfCreateAndDestroy;
-						delete tempCreate;
-
-					}
-
-					if (header.nrOfPathFindingSync > 0)
-					{
-						PathFindingSync* tempCreate = new PathFindingSync;
-							for (u32 i = 0; i < header.nrOfPathFindingSync; ++i)
-							{
-								memcpy(tempCreate, m_receiveBuffer + m_bufferReceiveSize + sizeof(PathFindingSync) * i, sizeof(PathFindingSync));
-								bool aggro = (AGGRO_BIT & tempCreate->id.id); //bit mask 31st bit
-								if(aggro)
-									tempCreate->id.id = tempCreate->id.id & (~AGGRO_BIT);
-								EntityManager::Get().Collect<AgentIdComponent>().Do([&](entity e, AgentIdComponent& aIC)
-								{
-										if (aIC.id == tempCreate->id.id && aIC.type == tempCreate->id.type && aggro)
-										{
-											if (!EntityManager::Get().HasComponent<AgentAlertComponent>(e))
-											{
-												EntityManager::Get().AddComponent<AgentAlertComponent>(e);
-											}
-										}
-										else if (aIC.id == tempCreate->id.id && aIC.type == tempCreate->id.type && !aggro)
-										{
-											
-											if (EntityManager::Get().HasComponent<AgentAlertComponent>(e))
-											{
-												EntityManager::Get().RemoveComponent<AgentAlertComponent>(e);
-											}
-										}
-								});
-							}
-						m_bufferReceiveSize += sizeof(PathFindingSync) * header.nrOfPathFindingSync;
-						delete tempCreate;
-					}
-				}
-				m_numberOfPackets--;
-
-			}
-			//reset recived bufferSize
-			m_bufferReceiveSize = 0;
-			m_dataIsReadyToBeReceivedTcp = false;
-		}
+		ReceiveDataUdp();
+		UpdateSendTcp();
+		ReceiveDataTcp();
 	}
 }
 
@@ -539,7 +297,7 @@ INT8 NetCode::Play()
 
 u8 NetCode::GetNrOfPlayers()
 {
-	return m_inputTcp.nrOfPlayersConnected;
+	return m_lobbyData.nrOfPlayersConnected;
 }
 
 //host only
@@ -562,6 +320,265 @@ void NetCode::SetMulticastAdress(const char* adress)
 {
 	m_client->SetMulticastAdress(adress);
 	m_serverHost->SetMulticastAdress(adress);
+}
+
+void NetCode::ReceiveDataUdp()
+{
+	EntityManager::Get().Collect<TransformComponent, NetworkPlayerComponent, InputController, OnlinePlayer, PlayerStatsComponent, PlayerControllerComponent, AnimationComponent
+	>().Do([&](entity id, TransformComponent& transformC, NetworkPlayerComponent& networkC, InputController& inputC, OnlinePlayer&, PlayerStatsComponent& statsC, PlayerControllerComponent& pC, AnimationComponent& aC)
+		{
+			transformC.worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerTransform;
+			inputC = m_outputUdp.m_holdplayersUdp[networkC.playerId].actions;
+			if (statsC.health > m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat.health)
+				PlayerManager::Get().HurtOnlinePlayers(id);
+			statsC = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat;
+			if (statsC.health > 0 && !s_entityManager.HasComponent<PlayerAliveComponent>(id))
+			{
+				s_entityManager.AddComponent<PlayerAliveComponent>(id);
+				aC.SimpleAdd(static_cast<i8>(MixamoAnimations::JazzDance), AnimationFlag::Looping | AnimationFlag::ResetPrio); // No dedicated revive animation for now
+			}
+			if ((pC.cameraEntity != DOG::NULL_ENTITY) && (m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform.Determinant() != 0)) {
+				s_entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform;
+			}
+		});
+}
+
+void NetCode::UpdateSendTcp()
+{
+	if (Server::TickTimeLeftTCP(m_tickStartTime, m_clockFrequency) > (1.0f / 60.0f))
+	{
+		//sync all transforms Host only
+		if (m_inputTcp.playerId == 0)
+		{
+			m_syncCounter++;
+			//sync all transforms Host only
+			if (m_inputTcp.playerId == 0 && m_syncCounter % HARD_SYNC_FRAME == 0)
+			{
+				EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent>().Do([&](NetworkTransform& netC, TransformComponent& transC, AgentIdComponent agentId)
+					{
+						netC.objectId = agentId.id;
+						netC.position = transC.GetPosition();
+						memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkTransform));
+						m_inputTcp.nrOfNetTransform++;
+						m_bufferSize += sizeof(NetworkTransform);
+
+					});
+			}
+		}
+
+		EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](NetworkAgentStats& netC, AgentHPComponent& agentS, AgentIdComponent& idC)
+			{
+				if (agentS.damageThisFrame)
+				{
+					agentS.damageThisFrame = false;
+					netC.playerId = m_inputTcp.playerId;
+					netC.objectId = idC.id;
+					netC.hp = agentS;
+					memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkAgentStats));
+					m_inputTcp.nrOfChangedAgentsHp++;
+					m_bufferSize += sizeof(NetworkAgentStats);
+				}
+			});
+
+		EntityManager::Get().Collect<CreateAndDestroyEntityComponent>().Do([&](entity id, CreateAndDestroyEntityComponent& cdC)
+			{
+				cdC.playerId = m_inputTcp.playerId;
+				memcpy(m_sendBuffer + m_bufferSize, &cdC, sizeof(CreateAndDestroyEntityComponent));
+				m_bufferSize += sizeof(CreateAndDestroyEntityComponent);
+				s_entityManager.RemoveComponent<CreateAndDestroyEntityComponent>(id);
+				m_inputTcp.nrOfCreateAndDestroy++;
+			});
+
+		EntityManager::Get().Collect<PathFindingSync>().Do([&](entity id, PathFindingSync& pFS)
+			{
+				memcpy(m_sendBuffer + m_bufferSize, &pFS, sizeof(PathFindingSync));
+				m_bufferSize += sizeof(PathFindingSync);
+				s_entityManager.RemoveComponent<PathFindingSync>(id);
+				m_inputTcp.nrOfPathFindingSync++;
+			});
+
+		m_inputTcp.sizeOfPayload = m_bufferSize;
+		memcpy(m_sendBuffer, (char*)&m_inputTcp, sizeof(TcpHeader));
+		m_client->SendChararrayTcp(m_sendBuffer, m_inputTcp.sizeOfPayload);
+		m_bufferSize = sizeof(TcpHeader);
+		m_inputTcp.nrOfNetTransform = 0;
+		m_inputTcp.nrOfChangedAgentsHp = 0;
+		m_inputTcp.nrOfCreateAndDestroy = 0;
+		m_inputTcp.nrOfPathFindingSync = 0;
+		QueryPerformanceCounter(&m_tickStartTime);
+	}
+}
+
+void NetCode::ReceiveDataTcp()
+{
+	// Recived data
+	while (m_numberOfPackets > 0 && m_dataIsReadyToBeReceivedTcp)
+	{
+		//Get the header
+		TcpHeader header;
+		memcpy(&header, m_receiveBuffer + m_bufferReceiveSize, sizeof(TcpHeader));
+		m_bufferReceiveSize += sizeof(TcpHeader);
+		if (header.playerId > MAX_PLAYER_COUNT || header.playerId < 0)
+		{
+
+			std::cout << "Error: header is corrupt, Nr of packets left: " << m_numberOfPackets << std::endl;
+			m_numberOfPackets = 0;
+			m_dataIsReadyToBeReceivedTcp = false;
+		}
+		else
+		{
+			//update
+			if (m_inputTcp.playerId > 0)
+				m_inputTcp.lobbyAlive = header.lobbyAlive;
+
+
+			if (header.nrOfNetTransform > 0 && header.playerId < MAX_PLAYER_COUNT)
+			{
+				//Update the transfroms, Only none hosts
+				if (m_inputTcp.playerId > 0)
+				{
+					NetworkTransform* tempTransfrom = new NetworkTransform;
+					EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent, CapsuleColliderComponent>().Do([&](NetworkTransform&, TransformComponent& transC, AgentIdComponent& idC, CapsuleColliderComponent& rC)
+						{
+							for (u32 i = 0; i < header.nrOfNetTransform; ++i)
+							{
+								//todo make better
+								memcpy(tempTransfrom, m_receiveBuffer + m_bufferReceiveSize + sizeof(NetworkTransform) * i, sizeof(NetworkTransform));
+								if (idC.id == tempTransfrom->objectId)
+								{
+									if (DirectX::SimpleMath::Vector3(transC.GetPosition() - tempTransfrom->position).Length() / rC.capsuleRadius > rC.capsuleRadius)
+										transC.SetPosition(tempTransfrom->position);
+								}
+
+							}
+
+						});
+					delete tempTransfrom;
+				}
+				m_bufferReceiveSize += header.nrOfNetTransform * sizeof(NetworkTransform);
+			}
+
+			if (header.nrOfChangedAgentsHp > 0)
+			{
+				NetworkAgentStats* tempStats = new NetworkAgentStats;
+				EntityManager::Get().Collect<NetworkAgentStats, AgentHPComponent, AgentIdComponent>().Do([&](NetworkAgentStats&, AgentHPComponent& Agent, AgentIdComponent& idC)
+					{
+						for (u32 i = 0; i < header.nrOfChangedAgentsHp; ++i)
+						{
+							memcpy(tempStats, m_receiveBuffer + m_bufferReceiveSize + sizeof(NetworkAgentStats) * i, sizeof(NetworkAgentStats));
+							if (idC.id == tempStats->objectId && tempStats->hp.hp < Agent.hp)
+							{
+								Agent = tempStats->hp;
+
+							}
+
+						}
+					});
+				m_bufferReceiveSize += sizeof(NetworkAgentStats) * header.nrOfChangedAgentsHp;
+				delete tempStats;
+			}
+
+			if (header.nrOfCreateAndDestroy > 0)
+			{
+				CreateAndDestroyEntityComponent* tempCreate = new CreateAndDestroyEntityComponent;
+				for (u32 i = 0; i < header.nrOfCreateAndDestroy; ++i)
+				{
+					memcpy(tempCreate, m_receiveBuffer + m_bufferReceiveSize + sizeof(CreateAndDestroyEntityComponent) * i, sizeof(CreateAndDestroyEntityComponent));
+					if (tempCreate->playerId != m_inputTcp.playerId)
+					{
+
+						if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Agents && !tempCreate->alive)
+						{
+							AgentManager::Get().CreateOrDestroyShadowAgent(*tempCreate);
+						}
+						else if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Default && (u32)tempCreate->entityTypeId >(u32)EntityTypes::Agents && !tempCreate->alive)
+						{
+							EntityManager::Get().Collect<NetworkPlayerComponent, PlayerAliveComponent>().Do([&](entity id, NetworkPlayerComponent& playerC, PlayerAliveComponent&)
+								{
+									if (playerC.playerId == tempCreate->playerId)
+									{
+										EntityManager::Get().Collect<NetworkId>().Do([&](entity e, NetworkId& nIdC)
+											{
+												if (nIdC.entityTypeId == tempCreate->entityTypeId && nIdC.id == tempCreate->id)
+												{
+													std::string luaEventName = std::string("ItemPickup") + std::to_string(id);
+													DOG::LuaMain::GetEventSystem()->InvokeEvent(luaEventName, (u32)tempCreate->entityTypeId);
+													s_entityManager.RemoveComponent<NetworkId>(e);
+													s_entityManager.DeferredEntityDestruction(e);
+
+												}
+											});
+									}
+								});
+
+						}
+						//Create pickups
+						else if ((u32)tempCreate->entityTypeId < (u32)EntityTypes::Default && tempCreate->alive && (u32)tempCreate->entityTypeId >(u32)EntityTypes::Agents)
+						{
+							ItemManager::Get().CreateItemClient(*tempCreate);
+						}
+					}
+				}
+				m_bufferReceiveSize += sizeof(CreateAndDestroyEntityComponent) * header.nrOfCreateAndDestroy;
+				delete tempCreate;
+
+			}
+
+			if (header.nrOfPathFindingSync > 0)
+			{
+				PathFindingSync* tempCreate = new PathFindingSync;
+				for (u32 i = 0; i < header.nrOfPathFindingSync; ++i)
+				{
+					memcpy(tempCreate, m_receiveBuffer + m_bufferReceiveSize + sizeof(PathFindingSync) * i, sizeof(PathFindingSync));
+					bool aggro = (AGGRO_BIT & tempCreate->id.id); //bit mask 31st bit
+					if (aggro)
+						tempCreate->id.id = tempCreate->id.id & (~AGGRO_BIT);
+					EntityManager::Get().Collect<AgentIdComponent>().Do([&](entity e, AgentIdComponent& aIC)
+						{
+							if (aIC.id == tempCreate->id.id && aIC.type == tempCreate->id.type && aggro)
+							{
+								if (!EntityManager::Get().HasComponent<AgentAlertComponent>(e))
+								{
+									EntityManager::Get().AddComponent<AgentAlertComponent>(e);
+								}
+							}
+							else if (aIC.id == tempCreate->id.id && aIC.type == tempCreate->id.type && !aggro)
+							{
+
+								if (EntityManager::Get().HasComponent<AgentAlertComponent>(e))
+								{
+									EntityManager::Get().RemoveComponent<AgentAlertComponent>(e);
+								}
+							}
+						});
+				}
+				m_bufferReceiveSize += sizeof(PathFindingSync) * header.nrOfPathFindingSync;
+				delete tempCreate;
+			}
+
+			if (header.lobbyAlive)
+			{
+				memcpy(&m_lobbyData, m_receiveBuffer + m_bufferReceiveSize, sizeof(LobbyData));
+				m_bufferReceiveSize += sizeof(LobbyData);
+			}
+		}
+		m_numberOfPackets--;
+
+	}
+	//reset recived bufferSize
+	m_bufferReceiveSize = 0;
+	m_dataIsReadyToBeReceivedTcp = false;
+}
+
+
+LobbyData NetCode::GetLobbyData()
+{
+	return m_lobbyData;
+}
+
+u16 NetCode::GetLevelIndex()
+{
+	return m_lobbyData.levelIndex;
 }
 
 void DeleteNetworkSync::OnLateUpdate(DOG::entity e, DeferredDeletionComponent&, NetworkId& netId, TransformComponent& transC)

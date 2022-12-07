@@ -47,7 +47,6 @@ struct UdpReturnData
 struct TcpHeader
 {
 	i8 playerId = 0;
-	u8 nrOfPlayersConnected = 0;
 	u16 sizeOfPayload = 0;
 	u16 nrOfNetTransform = 0;
 	u16 nrOfChangedAgentsHp = 0;
@@ -65,4 +64,11 @@ struct NetworkId
 struct PathFindingSync
 {
 	AgentIdComponent id = { 0, EntityTypes::Default};
+};
+
+struct LobbyData
+{
+	u8 nrOfPlayersConnected = 1;
+	bool playersSlotConnected[MAX_PLAYER_COUNT] = {true, false, false, false};
+	u16 levelIndex = 4;
 };
