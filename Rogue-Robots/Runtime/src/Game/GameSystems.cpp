@@ -568,12 +568,13 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 		if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))
 		{
 			auto spectatedPlayer = mgr.GetComponent<SpectatorComponent>(closestDeadPlayer).playerBeingSpectated;
+			mgr.RemoveComponent<AudioListenerComponent>(spectatedPlayer);
 			ChangeSuitDrawLogic(spectatedPlayer, closestDeadPlayer);
 			RevivePlayer(closestDeadPlayer);
 		}
+		mgr.RemoveComponent<ActiveItemComponent>(player);
 		if (mgr.HasComponent<ThisPlayer>(player))
 		{
-			mgr.RemoveComponent<ActiveItemComponent>(player);
 			DOG::UI::Get()->GetUI<UIIcon>(iconActiveID)->Hide();
 		}
 	}
@@ -640,6 +641,8 @@ void ReviveSystem::RevivePlayer(DOG::entity player)
 	rb.getControlOfTransform = true;
 	rb.setGravityForRigidbody = true;
 	rb.gravityForRigidbody = Vector3(0.0f, -25.0f, 0.0f);
+
+	mgr.AddComponent<AudioListenerComponent>(player);
 }
 
 void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw)
@@ -657,7 +660,7 @@ void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity pla
 				//std::cout << "deadPlayer" << playerToDraw << std::endl;
 				
 				//This means that playerModel is the mesh model (suit), and it should be rendered again:
-				em.RemoveComponentIfExists<DOG::DontDraw>(playerModel);
+				DOG::EntityManager::Get().RemoveComponentIfExists<DOG::DontDraw>(playerModel);
 				#if defined _DEBUG
 				addedSuitToRendering = true;
 				#endif
