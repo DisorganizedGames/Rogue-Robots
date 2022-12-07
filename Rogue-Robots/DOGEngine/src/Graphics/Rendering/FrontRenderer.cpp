@@ -124,6 +124,16 @@ namespace DOG::gfx
 				if (sr.dirty)
 					CustomMaterialManager::Get().UpdateMaterial(sr.material, sr.materialDesc);
 				m_renderer->SubmitMesh(sr.mesh, 0, sr.material, tr);
+
+				// Outline submission
+				if (mgr.HasComponent<OutlineComponent>(e) && !mgr.HasComponent<ThisPlayerWeapon>(e))
+				{
+					if (!mgr.HasComponent<DontDraw>(e))
+					{
+						const auto& oc = mgr.GetComponent<OutlineComponent>(e);
+						m_renderer->SubmitOutlinedMesh(sr.mesh, 0, oc.color, tr, false, 0);
+					}
+				}
 			});
 
 
