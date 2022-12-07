@@ -1214,7 +1214,7 @@ void DOG::UIIcon::Show(UINT index)
    m_index = index;
 }
 
-DOG::UISlider::UISlider(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, std::function<void(void)> callback): UIElement(id)
+DOG::UISlider::UISlider(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, std::function<void(float)> callback): UIElement(id)
 {
    HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.3f), &m_barBrush);
    HR_VFY(hr);
