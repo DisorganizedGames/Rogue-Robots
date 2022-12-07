@@ -1332,7 +1332,7 @@ void EntityInterface::AddLaserBullet(DOG::LuaContext* context, DOG::entity e)
 			.strength = light.strength
 		},
 		LightUpdateFrequency::PerFrame);
-	em.AddComponent<SetPointLightDirtComponent>(e);
+	em.AddComponent<SetPointLightDirtyComponent>(e);
 }
 
 void EntityInterface::AddGoalRadarComponent(DOG::LuaContext* context, DOG::entity e)

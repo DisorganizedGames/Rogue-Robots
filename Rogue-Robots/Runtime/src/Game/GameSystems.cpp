@@ -1355,7 +1355,7 @@ void RemoveBulletComponentSystem::OnLateUpdate(DOG::entity e, BulletComponent&, 
 	EntityManager::Get().RemoveComponent<BulletComponent>(e);
 }
 
-void SetPointLightDirtySystem::OnUpdate(DOG::PointLightComponent& light, SetPointLightDirtComponent&)
+void SetPointLightDirtySystem::OnUpdate(DOG::PointLightComponent& light, SetPointLightDirtyComponent&)
 {
 	light.dirty = true;
 }

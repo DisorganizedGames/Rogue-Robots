@@ -451,7 +451,7 @@ struct AmbientSoundComponent
 	bool startup = true;
 };
 
-struct SetPointLightDirtComponent
+struct SetPointLightDirtyComponent
 {
 
 };

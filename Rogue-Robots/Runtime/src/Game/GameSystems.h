@@ -794,7 +794,7 @@ class SetPointLightDirtySystem : public DOG::ISystem
 {
 	// Use this to mark a pointLight as to be set to dirty every frame
 public:
-	SYSTEM_CLASS(DOG::PointLightComponent, SetPointLightDirtComponent);
-	ON_UPDATE(DOG::PointLightComponent, SetPointLightDirtComponent);
-	void OnUpdate(DOG::PointLightComponent& light, SetPointLightDirtComponent&);
+	SYSTEM_CLASS(DOG::PointLightComponent, SetPointLightDirtyComponent);
+	ON_UPDATE(DOG::PointLightComponent, SetPointLightDirtyComponent);
+	void OnUpdate(DOG::PointLightComponent& light, SetPointLightDirtyComponent&);
 };
