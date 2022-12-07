@@ -82,23 +82,45 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 
 
 			// Spawn rate setting
-			static float rate = emitter.spawnRate;
-			ImGui::InputFloat("Rate", &rate);
-			emitter.spawnRate = rate;
+			ImGui::InputFloat("Rate", &emitter.spawnRate);
 
 			// Particle lifetime slider
-			static float lifetime = emitter.particleLifetime;
-			ImGui::SliderFloat("Lifetime", &lifetime, 0.f, 5.f);
-			emitter.particleLifetime = lifetime;
+			ImGui::SliderFloat("Lifetime", &emitter.particleLifetime, 0.f, 5.f);
 
 			// Particle size slider
-			static float size = emitter.particleSize;
-			ImGui::SliderFloat("Size", &size, 0.f, 1.f);
-			emitter.particleSize = size;
+			ImGui::SliderFloat("Size", &emitter.particleSize, 0.f, 1.f);
+
+			// Color settings
+			static char startColorBuf[9];
+			static char endColorBuf[9];
+
+			ImGui::Text("  Start Color");
+			ImGui::SameLine();
+			ImGui::Text("   End Color");
+
+			ImGui::Text("#");
+			ImGui::SameLine();
+			ImGui::PushItemWidth(80.f);
+			ImGui::InputText("##Start Color", startColorBuf, 9, ImGuiInputTextFlags_CharsHexadecimal);
+
+			ImGui::SameLine();
+			ImGui::Text("#");
+			ImGui::SameLine();
+			ImGui::InputText("##End Color", endColorBuf, 9, ImGuiInputTextFlags_CharsHexadecimal);
+			ImGui::PopItemWidth();
+
+
+			if (strlen(startColorBuf) == 8)
+				emitter.startColor = CharsToColor(startColorBuf);
+
+			if (strlen(endColorBuf) == 8)
+				emitter.endColor = CharsToColor(endColorBuf);
 
 			// Spawn type settings
 			static int spawnType = 0;
 			bool clicked = false;
+
+			ImGui::NewLine();
 			clicked |= ImGui::RadioButton("Default", &spawnType, 0);
 			clicked |= ImGui::RadioButton("Cone", &spawnType, 1);
 			clicked |= ImGui::RadioButton("Cylinder", &spawnType, 2);
@@ -135,32 +157,32 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 			}
 
 			// Texture Settings
-			static bool enableTexture = false;
-
-			static char buf[256] = "Assets/Models/Rifle/textures/Base_baseColor.png";
-			static std::string currentTexture(buf);
-
+			bool enableTexture = (emitter.textureHandle != 0);
+			
+			ImGui::NewLine();
 			ImGui::Checkbox("Use texture", &enableTexture);
 			if (!enableTexture)
 			{
 				emitter.textureHandle = 0;
-				currentTexture = "";
+				m_texturePath = "";
 			}
 			else
 			{
-				ImGui::InputText("Texture path", buf, 256);
+				std::string buf = "Assets/Textures/Flipbook/smoke_4x4.png";
+				buf.resize(256);
+				ImGui::InputText("Texture Path", buf.data(), 256);
 				std::string newTexture(buf);
 				if (std::filesystem::is_regular_file(newTexture))
 				{
-					if (newTexture != currentTexture)
+					if (newTexture != m_texturePath)
 					{
 						auto textureAsset = AssetManager::Get().LoadTexture(newTexture, AssetLoadFlag::GPUMemory);
 						emitter.textureHandle = AssetManager::Get().GetAsset<TextureAsset>(textureAsset)->textureViewRawHandle;
-						currentTexture = newTexture;
+						m_texturePath = newTexture;
 					}
 				}
 
-				static int x = 1, y = 1;
+				int x = emitter.textureSegmentsX, y = emitter.textureSegmentsY;
 				ImGui::SetNextItemWidth(80.f);
 				ImGui::InputInt("x", &x);
 				ImGui::SameLine();
@@ -177,8 +199,8 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 			static int behavior = 0;
 			constexpr const char* behaviors[] = { "Default", "Gravity", "No Gravity", "Gravity Point", "Gravity Direction", "Constant Velocity" };
 			ImGui::NewLine();
-			ImGui::LabelText("", "Behavior");
-			bool switched = ImGui::Combo("", &behavior, behaviors, _countof(behaviors), -1);
+			ImGui::Text("Behavior");
+			bool switched = ImGui::Combo("##Behavior", &behavior, behaviors, 6);
 			if (switched)
 			{
 				switch (behavior)
@@ -198,6 +220,19 @@ void ParticleScene::ParticleSystemMenu(bool& open)
 			case 4: GravityDirectionOptions(); break;
 			case 5: ConstVelocityOptions(); break;
 			}
+			
+			// Baking
+			static char bakePath[255] = { 0 };
+			ImGui::NewLine();
+			ImGui::InputText("System Path", bakePath, 255);
+			if (ImGui::Button("Bake To File"))
+			{
+				BakeSystemToFile(bakePath);
+			}
+			if (ImGui::Button("Load From File"))
+			{
+				UnbakeSystemFromFile(bakePath);
+			}
 		}
 
 		ImGui::End();
@@ -214,14 +249,159 @@ void ParticleScene::SpawnParticleSystem()
 		.spawnRate = 2048.f,
 		.particleSize = 0.1f,
 		.particleLifetime = 0.5f,
-		.startColor = Vector4(1, 0, 0, 0.5),
-		.endColor = Vector4(0, 0, 1, 0.5),
+		.startColor = Vector4(1, 0, 0, 1),
+		.endColor = Vector4(0, 0, 1, 1),
 	};
 
 	AddComponent<ConeSpawnComponent>(m_particleSystem) = {
 		.angle = XM_PIDIV4,
 		.speed = 10.f,
 	};
+}
+
+Vector4 ParticleScene::CharsToColor(const char* color)
+{
+	f32 colorOut[4];
+	for (int i = 0; i < 8; i += 2)
+	{
+		colorOut[i/2] = color[i] < 'A'
+			? 16.f * (color[i]-'0')
+			: (color[i] < 'a')
+			? 16.f * (color[i]-'A'+10)
+			: 16.f * (color[i]-'a'+10);
+
+		colorOut[i/2] += color[i+1] < 'A'
+			? (color[i+1]-'0')
+			: (color[i+1] < 'a')
+			? (color[i+1]-'A'+10)
+			: (color[i+1]-'a'+10);
+	}
+	return Vector4(colorOut) / 255.f;
+}
+
+void ParticleScene::BakeSystemToFile(const std::filesystem::path& path)
+{
+	auto& emitter = EntityManager::Get().GetComponent<ParticleEmitterComponent>(m_particleSystem);
+	LuaTable system;
+	LuaTable startColor;
+	LuaTable endColor;
+
+	std::ofstream bakeFile(path);
+	ASSERT(bakeFile, "Failed to open file for baking particle system");
+	bakeFile << "system={\n";
+	bakeFile << "\trate=" << emitter.spawnRate << ",\n";
+	bakeFile << "\tlifetime=" << emitter.particleLifetime << ",\n";
+	bakeFile << "\tsize=" << emitter.particleSize << ",\n";
+	bakeFile << "\ttexture=\"" << m_texturePath << "\",\n";
+	bakeFile << "\ttextureSegmentsX=" << emitter.textureSegmentsX << ",\n";
+	bakeFile << "\ttextureSegmentsY=" << emitter.textureSegmentsY << ",\n";
+	bakeFile << "\tstartColor={\n";
+	bakeFile << "\t\tr=" << emitter.startColor.x << ",\n";
+	bakeFile << "\t\tg=" << emitter.startColor.y << ",\n";
+	bakeFile << "\t\tb=" << emitter.startColor.z << ",\n";
+	bakeFile << "\t\ta=" << emitter.startColor.w << "\n";
+	bakeFile << "\t},\n";
+	bakeFile << "\tendColor={\n";
+	bakeFile << "\t\tr=" << emitter.endColor.x << ",\n";
+	bakeFile << "\t\tg=" << emitter.endColor.y << ",\n";
+	bakeFile << "\t\tb=" << emitter.endColor.z << ",\n";
+	bakeFile << "\t\ta=" << emitter.endColor.w << "\n";
+	bakeFile << "\t},\n";
+
+	WriteSpawnTable(bakeFile);
+	WriteBehaviorTable(bakeFile);
+
+	bakeFile << "}\n";
+}
+
+void ParticleScene::UnbakeSystemFromFile(const std::filesystem::path& path)
+{
+	AddComponent<DeferredDeletionComponent>(m_particleSystem);
+	m_particleSystem = CreateEntity();
+	AddComponent<TransformComponent>(m_particleSystem, Vector3(0, 0, 0));
+	ParticleSystemFromFile(m_particleSystem, path);
+}
+
+void ParticleScene::WriteSpawnTable(std::ofstream& file)
+{
+	auto& entityManager = EntityManager::Get();
+
+	file << "\tspawn={\n";
+	if (auto opt = entityManager.TryGetComponent<ConeSpawnComponent>(m_particleSystem))
+	{
+		auto& comp = opt.value().get();
+		file << "\t\ttype=\"cone\",\n";
+		file << "\t\tangle=" << comp.angle <<",\n";
+		file << "\t\tspeed=" << comp.speed <<"\n\t},\n";
+		return;
+	}
+	if (auto opt = entityManager.TryGetComponent<CylinderSpawnComponent>(m_particleSystem))
+	{
+		auto& comp = opt.value().get();
+		file << "\t\ttype=\"cylinder\",\n";
+		file << "\t\tradius=" << comp.radius <<",\n";
+		file << "\t\theight=" << comp.height <<"\n\t},\n";
+		return;
+	}
+	if (auto opt = entityManager.TryGetComponent<BoxSpawnComponent>(m_particleSystem))
+	{
+		auto& comp = opt.value().get();
+		file << "\t\ttype=\"box\",\n";
+		file << "\t\tx=" << comp.x <<",\n";
+		file << "\t\ty=" << comp.y <<",\n";
+		file << "\t\tz=" << comp.z <<"\n\t},\n";
+		return;
+	}
+
+	file << "\t\ttype=\"default\"\n},\n";
+}
+void ParticleScene::WriteBehaviorTable(std::ofstream& file)
+{
+	auto& entityManager = EntityManager::Get();
+
+	file << "\tbehavior={\n";
+
+	if (auto opt = entityManager.TryGetComponent<GravityBehaviorComponent>(m_particleSystem))
+	{
+		auto& comp = opt.value().get();
+		file << "\t\ttype=\"gravity\",\n";
+		file << "\t\tg=" << comp.gravity<<"\n\t},\n";
+		return;
+	}
+	if (auto opt = entityManager.TryGetComponent<NoGravityBehaviorComponent>(m_particleSystem))
+	{
+		file << "\t\ttype=\"noGravity\"\n\t},\n";
+		return;
+	}
+	if (auto opt = entityManager.TryGetComponent<GravityDirectionBehaviorComponent>(m_particleSystem))
+	{
+		auto& comp = opt.value().get();
+		file << "\t\ttype=\"gravityDirection\",\n";
+		file << "\t\tx=" << comp.direction.x <<",\n";
+		file << "\t\ty=" << comp.direction.y <<",\n";
+		file << "\t\tz=" << comp.direction.z <<"\n\t},\n";
+		return;
+	}
+	if (auto opt = entityManager.TryGetComponent<GravityPointBehaviorComponent>(m_particleSystem))
+	{
+		auto& comp = opt.value().get();
+		file << "\t\ttype=\"gravityPoint\",\n";
+		file << "\t\tx=" << comp.point.x <<",\n";
+		file << "\t\ty=" << comp.point.y <<",\n";
+		file << "\t\tz=" << comp.point.z <<"\n\t},\n";
+		return;
+	}
+	if (auto opt = entityManager.TryGetComponent<ConstVelocityBehaviorComponent>(m_particleSystem))
+	{
+		auto& comp = opt.value().get();
+		file << "\t\ttype=\"constVelocity\",\n";
+		file << "\t\tx=" << comp.velocity.x <<",\n";
+		file << "\t\ty=" << comp.velocity.y <<",\n";
+		file << "\t\tz=" << comp.velocity.z <<"\n\t},\n";
+		return;
+	}
+	
+	file << "\t\ttype=\"default\"\n\t},\n";
 }
 
 void ParticleScene::ConeSettings()
