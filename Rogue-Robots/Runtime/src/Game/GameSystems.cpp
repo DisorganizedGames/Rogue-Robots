@@ -136,8 +136,8 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 				bool isSameEntity = index == nextIndex;
 				if (!isSameEntity) 
 				{
-					ChangeGunDrawLogic(sc.playerBeingSpectated, true, false);
-					ChangeGunDrawLogic(sc.playerSpectatorQueue[nextIndex], false, true);
+					ChangeGunDrawLogic(sc.playerBeingSpectated, false, true);
+					ChangeGunDrawLogic(sc.playerSpectatorQueue[nextIndex], true, false);
 					ChangeSuitDrawLogic(sc.playerBeingSpectated, sc.playerSpectatorQueue[nextIndex]);
 				}
 				sc.playerBeingSpectated = sc.playerSpectatorQueue[nextIndex];
@@ -147,18 +147,6 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 			sc.playerSpectatorQueue.pop_back();
 		}
 	}
-
-	bool changeGunDrawLogic = false;
-	DOG::EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity gunModelNotFPS, ModelComponent&, ChildToBoneComponent& childToBone)
-		{
-			changeGunDrawLogic = (childToBone.boneParent == sc.playerBeingSpectated && !EntityManager::Get().HasComponent<DontDraw>(gunModelNotFPS));
-		});
-	if (changeGunDrawLogic)
-	{
-		//std::cout << " Change gun Draw logic " << changeGunDrawLogic << std::endl;
-		ChangeGunDrawLogic(sc.playerBeingSpectated, true, false);
-	}
-	
 
 	if (sc.playerSpectatorQueue.empty())
 		return;
@@ -258,7 +246,7 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 	const bool isSamePlayer = (sc.playerBeingSpectated == sc.playerSpectatorQueue[nextIndex]);
 	if (!isSamePlayer)
 	{
-		DOG::EntityManager::Get().RemoveComponent<AudioListenerComponent>(sc.playerBeingSpectated);
+		DOG::EntityManager::Get().RemoveComponentIfExists<AudioListenerComponent>(sc.playerBeingSpectated);
 
 		ChangeGunDrawLogic(sc.playerBeingSpectated, false, true);
 		ChangeGunDrawLogic(sc.playerSpectatorQueue[nextIndex], true, false);
@@ -266,8 +254,17 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 		sc.playerName = DOG::EntityManager::Get().GetComponent<DOG::NetworkPlayerComponent>(sc.playerSpectatorQueue[nextIndex]).playerName;
 		sc.playerBeingSpectated = sc.playerSpectatorQueue[nextIndex];
 
-		DOG::EntityManager::Get().AddComponent<AudioListenerComponent>(sc.playerBeingSpectated);
+		DOG::EntityManager::Get().AddOrReplaceComponent<AudioListenerComponent>(sc.playerBeingSpectated);
 	}
+
+	bool changeGunDrawLogic = false;
+	DOG::EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity gunModelNotFPS, ModelComponent&, ChildToBoneComponent& childToBone)
+		{
+			if (!changeGunDrawLogic)
+				changeGunDrawLogic = (childToBone.boneParent == sc.playerBeingSpectated && !EntityManager::Get().HasComponent<DontDraw>(gunModelNotFPS));
+		});
+	if (changeGunDrawLogic)
+		ChangeGunDrawLogic(sc.playerBeingSpectated, true, false);
 }
 
 u32 SpectateSystem::GetQueueIndexForSpectatedPlayer(DOG::entity player, const std::vector<DOG::entity>& players)
@@ -334,7 +331,7 @@ void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity p
 			if (cc.parent == playerToDraw)
 			{
 				//This means that playerModel is the mesh model (suit), and it should be rendered again:
-				DOG::EntityManager::Get().RemoveComponent<DOG::DontDraw>(playerModel);
+				DOG::EntityManager::Get().RemoveComponentIfExists<DOG::DontDraw>(playerModel);
 				#if defined _DEBUG
 				addedSuitToRendering = true;
 				#endif
@@ -342,7 +339,7 @@ void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity p
 			else if (cc.parent == playerToNotDraw)
 			{
 				//This means that playerModel is the spectated players' armor/suit, and it should not be eligible for rendering anymore:
-				DOG::EntityManager::Get().AddComponent<DOG::DontDraw>(playerModel);
+				DOG::EntityManager::Get().AddOrReplaceComponent<DOG::DontDraw>(playerModel);
 				#if defined _DEBUG
 				removedSuitFromRendering = true;
 				#endif
