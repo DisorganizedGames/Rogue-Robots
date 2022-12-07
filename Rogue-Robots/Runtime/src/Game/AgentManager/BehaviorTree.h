@@ -36,7 +36,12 @@ struct BTMoveToPlayerComponent
 	//ID
 };
 
-struct BTPatrolComponent
+struct BTCreatePatrolComponent
+{
+	//ID
+};
+
+struct BTExecutePatrolComponent
 {
 	//ID
 };
@@ -302,11 +307,21 @@ public:
 
 
 
-class PatrolNode : public Leaf
+class CreatePatrolNode : public Leaf
 {
 public:
-	PatrolNode(const std::string& name) noexcept;
-	virtual ~PatrolNode() noexcept override final = default;
+	CreatePatrolNode(const std::string& name) noexcept;
+	virtual ~CreatePatrolNode() noexcept override final = default;
+	virtual void Process(DOG::entity agent) noexcept override final;
+	virtual void Succeed(DOG::entity agent) noexcept override final;
+	virtual void Fail(DOG::entity agent) noexcept override final;
+};
+
+class ExecutePatrolNode : public Leaf
+{
+public:
+	ExecutePatrolNode(const std::string& name) noexcept;
+	virtual ~ExecutePatrolNode() noexcept override final = default;
 	virtual void Process(DOG::entity agent) noexcept override final;
 	virtual void Succeed(DOG::entity agent) noexcept override final;
 	virtual void Fail(DOG::entity agent) noexcept override final;

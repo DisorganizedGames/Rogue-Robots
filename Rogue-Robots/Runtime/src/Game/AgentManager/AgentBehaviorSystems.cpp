@@ -2,6 +2,7 @@
 #include "../DOGEngine/src/Graphics/Rendering/PostProcess.h"
 #include "Game/PlayerManager/PlayerManager.h"
 #include "Network/Network.h"
+
 using namespace DOG;
 using namespace DirectX::SimpleMath;
 
@@ -303,6 +304,26 @@ void AgentGetPathSystem::OnEarlyUpdate(entity e, BTGetPathComponent&, AgentSeekP
 	em.AddOrGetComponent<PathfinderWalkComponent>(e).goal = em.GetComponent<TransformComponent>(seek.entityID).GetPosition();
 	
 	LEAF(btc.currentRunningNode)->Succeed(e);
+}
+
+void AgentCreatePatrolSystem::OnEarlyUpdate(entity e, BTCreatePatrolComponent&, TransformComponent& trans, BehaviorTreeComponent& btc)
+{
+	EntityManager& em = EntityManager::Get();
+
+	if (em.HasComponent<AgentPatrolComponent>(e))
+		LEAF(btc.currentRunningNode)->Fail(e);
+	else
+	{
+		AgentPatrolComponent& patrol = em.AddComponent<AgentPatrolComponent>(e);
+		patrol.timer = Time::ElapsedTime();
+		size_t agentID = em.GetComponent<AgentIdComponent>(e).id;
+		i32 dir = 1 - (2 * (agentID % 2));  // 1 or -1
+		i32 range = agentID % 300 + 1;
+		patrol.turnSpeed = static_cast<f32>(range / 300.f) * static_cast<f32>(dir) * 2 * 3.1415; 			
+		patrol.orientation = patrol.turnSpeed;
+
+		LEAF(btc.currentRunningNode)->Succeed(e);
+	}
 }
 
 
@@ -801,6 +822,26 @@ void AgentMovementSystem::OnLateUpdate(entity e, BTMoveToPlayerComponent&, Behav
 			rb.linearVelocity *= DEACCELERATE;
 	}
 }
+
+void AgentExecutePatrolSystem::OnLateUpdate(entity agentID, BTExecutePatrolComponent&, 
+	AgentPatrolComponent& patrol, BehaviorTreeComponent& btc, AgentMovementComponent& movement,
+	DOG::RigidbodyComponent& rb, DOG::TransformComponent& trans)
+{
+	f64 elapsedTime = Time::ElapsedTime() - patrol.timer;
+	if (elapsedTime < 1.7)
+	{
+		patrol.orientation += patrol.turnSpeed * Time::DeltaTime();
+		trans.SetRotation(trans.GetRotation().CreateRotationY(patrol.orientation));
+	}
+	else if (2.9 < elapsedTime)
+	{
+		patrol.timer = Time::ElapsedTime();
+	}
+
+	LEAF(btc.currentRunningNode)->Succeed(agentID);
+}
+
+
 
 /***********************************************
 

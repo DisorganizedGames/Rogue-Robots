@@ -330,6 +330,8 @@ AttackNode::AttackNode(const std::string& name) noexcept
 
 void AttackNode::Process(DOG::entity agent) noexcept
 {
+	DOG::EntityManager::Get().RemoveComponentIfExists<AgentPatrolComponent>(agent);
+
 	DOG::EntityManager::Get().AddOrReplaceComponent<BTAttackComponent>(agent);
 	DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
 }
@@ -540,27 +542,59 @@ void DodgeNode::Fail(DOG::entity agent) noexcept
 	GetParent()->Process(agent);
 }
 
-PatrolNode::PatrolNode(const std::string& name) noexcept
+CreatePatrolNode::CreatePatrolNode(const std::string& name) noexcept
 	: Leaf{ name }
 {}
 
-void PatrolNode::Process(DOG::entity agent) noexcept
+void CreatePatrolNode::Process(DOG::entity agent) noexcept
 {
-	DOG::EntityManager::Get().AddComponent<BTPatrolComponent>(agent);
+	DOG::EntityManager::Get().AddComponent<BTCreatePatrolComponent>(agent);
 	DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
 }
 
-void PatrolNode::Succeed(DOG::entity agent) noexcept
+void CreatePatrolNode::Succeed(DOG::entity agent) noexcept
 {
 	SetSucceededAs(true);
-	DOG::EntityManager::Get().RemoveComponent<BTPatrolComponent>(agent);
+	DOG::EntityManager::Get().RemoveComponent<BTCreatePatrolComponent>(agent);
 	GetParent()->Process(agent);
 }
 
-void PatrolNode::Fail(DOG::entity agent) noexcept
+void CreatePatrolNode::Fail(DOG::entity agent) noexcept
 {
 	SetSucceededAs(false);
-	DOG::EntityManager::Get().RemoveComponent<BTPatrolComponent>(agent);
+	DOG::EntityManager::Get().RemoveComponent<BTCreatePatrolComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+ExecutePatrolNode::ExecutePatrolNode(const std::string& name) noexcept
+	: Leaf{ name }
+{}
+
+void ExecutePatrolNode::Process(DOG::entity agent) noexcept
+{
+	if (DOG::EntityManager::Get().HasComponent<AgentPatrolComponent>(agent))
+	{
+		DOG::EntityManager::Get().AddOrReplaceComponent<BTExecutePatrolComponent>(agent);
+		DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
+	}
+	else
+	{
+		DOG::EntityManager::Get().RemoveComponentIfExists<BTExecutePatrolComponent>(agent);
+		ForceFail(agent);
+	}
+}
+
+void ExecutePatrolNode::Succeed(DOG::entity agent) noexcept
+{
+	SetSucceededAs(true);
+	DOG::EntityManager::Get().RemoveComponent<BTExecutePatrolComponent>(agent);
+	GetParent()->Process(agent);
+}
+
+void ExecutePatrolNode::Fail(DOG::entity agent) noexcept
+{
+	SetSucceededAs(false);
+	DOG::EntityManager::Get().RemoveComponent<BTExecutePatrolComponent>(agent);
 	GetParent()->Process(agent);
 }
 

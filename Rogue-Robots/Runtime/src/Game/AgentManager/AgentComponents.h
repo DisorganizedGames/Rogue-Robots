@@ -119,6 +119,15 @@ struct AgentOnStandbyAudioComponent
 	DOG::entity agentOnStandbyAudioEntity = DOG::NULL_ENTITY;
 };
 
+struct AgentPatrolComponent
+{
+	f64 timer;
+	bool successfullyCreated = true;
+	f32 turnSpeed;
+	f32 orientation;
+};
+
+
 /*******************************************
 
 			Shadow Agent Components
