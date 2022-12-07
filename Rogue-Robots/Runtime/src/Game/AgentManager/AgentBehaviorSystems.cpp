@@ -462,6 +462,12 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 					.startColor = Vector4(1.0f, 0.0f, 0.0f, 0.8f),
 					.endColor = Vector4(1.0f, 69.f / 255.0f, 0.0f, 0.0f),
 				};
+				auto& audio = EntityManager::Get().AddComponent<DOG::AudioComponent>(fire.particleEntity);
+				audio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Fire.wav");
+				audio.is3D = true;
+				audio.loop = true;
+				audio.shouldPlay = true;
+				audio.volume = 1.5f;
 			}
 
 			break;
