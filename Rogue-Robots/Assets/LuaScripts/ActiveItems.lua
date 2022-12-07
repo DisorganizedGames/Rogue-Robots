@@ -92,7 +92,10 @@ ActiveItems.goalRadar = {
 	activate = function(self, playerEntity)
 		local goalRadarEntity = Scene:CreateEntity(playerEntity)
 		Entity:AddComponent(goalRadarEntity, "GoalRadarComponent", goalRadarMaxTimeSeconds)
-
+		local goalRadarSound = Asset:LoadAudio("Assets/Audio/Items/Goal.wav")
+		Entity:AddComponent(goalRadarEntity, "Audio", goalRadarSound, true, true)
+		local playerPos = Vector3.FromTable(Entity:GetTransformPosData(playerEntity))
+		Entity:AddComponent(goalRadarEntity, "Transform", playerPos, Vector3.Zero(), Vector3.One())
 		end,
 
 	GetECSType = function(self)
@@ -120,6 +123,13 @@ ActiveItems.syringe = {
 
 		stats.health = hp
 		Entity:SetPlayerStats(playerEntity, stats)
+
+		local syringeAudioEntity = Scene:CreateEntity(playerEntity)
+		local syringeSound = Asset:LoadAudio("Assets/Audio/Items/Syringe.wav")
+		Entity:AddComponent(syringeAudioEntity, "Audio", syringeSound, true, true)
+		local playerPos = Vector3.FromTable(Entity:GetTransformPosData(playerEntity))
+		Entity:AddComponent(syringeAudioEntity, "Transform", playerPos, Vector3.Zero(), Vector3.One())
+		Entity:AddComponent(syringeAudioEntity, "LifetimeComponent", 5.0)
 
 		return playerEntity
 	end,

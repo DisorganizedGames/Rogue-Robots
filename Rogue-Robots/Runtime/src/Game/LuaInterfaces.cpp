@@ -173,6 +173,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddOutlineComponent(context, e);
 	}
+	else if (compType == "LifetimeComponent")
+	{
+		AddLifetimeComponent(context, e);
+	}
 	//Add more component types here.
 	else
 	{
@@ -928,6 +932,12 @@ void EntityInterface::AddPointLight(DOG::LuaContext* context, DOG::entity e)
 void EntityInterface::AddWeaponLightComponent(DOG::LuaContext*, DOG::entity e)
 {
 	EntityManager::Get().AddComponent<WeaponLightComponent>(e);
+}
+
+void EntityInterface::AddLifetimeComponent(DOG::LuaContext* context, DOG::entity e)
+{
+	float lifetime = (float)context->GetDouble();
+	EntityManager::Get().AddComponent<LifetimeComponent>(e, lifetime);
 }
 
 void EntityInterface::AddHomingMissile(DOG::LuaContext* context, DOG::entity e)

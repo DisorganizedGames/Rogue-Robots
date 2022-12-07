@@ -166,6 +166,8 @@ private:
 
 	void AddWeaponLightComponent(DOG::LuaContext* context, DOG::entity e);
 
+	void AddLifetimeComponent(DOG::LuaContext* context, DOG::entity e);
+
 
 	void AddHomingMissile(DOG::LuaContext* context, DOG::entity e);
 
