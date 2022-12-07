@@ -19,7 +19,6 @@ end
 function OnUpdate()
 	if #tempAddVelocity > 0 then
 		math.randomseed(os.time())
-		print(math.random(1, #trampolineSounds))
 		Entity:PlayAudio(EntityID, trampolineSounds[math.random(1, #trampolineSounds)], true)
 	end
 
