@@ -160,6 +160,14 @@ namespace DOG
 					m_specification.windowDimensions = e.dimensions;
 
 				m_renderer->OnResize(e.dimensions.x, e.dimensions.y);
+
+				// If mouse is confined we need to re confine it to the new window size
+				if ((Window::GetCursorMode() & CursorMode::Confined) == CursorMode::Confined)
+				{
+					// This will make the free the cursor and then lock it to the new rectangle.
+					Window::SetCursorMode(~Window::GetCursorMode());
+					Window::SetCursorMode(~Window::GetCursorMode());
+				}
 				Window::PublishEvent<WindowPostResizedEvent>();
 			}
 			break;
