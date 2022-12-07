@@ -509,7 +509,7 @@ void DOG::UIHealthBar::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
    UNREFERENCED_PARAMETER(d2d);
    m_bar.right = (m_value / m_maxValue) * m_barWidth + m_bar.left - 2.0f;
-   m_text = std::to_wstring((UINT)(m_value));
+   m_text = std::to_wstring((UINT)(m_value*(m_value>=0)));
    m_text += L"/";
    m_text += std::to_wstring((UINT)(m_maxValue));
    m_text += L" HP";
