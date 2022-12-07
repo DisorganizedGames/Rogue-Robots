@@ -14,9 +14,8 @@ project("Rogue-Robots")
 set(CMAKE_CXX_STANDARD "20")
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O2" "-g" "-DNDEBUG")
 
 add_subdirectory("DOGEngine")
 add_subdirectory("Runtime")
-
-
 

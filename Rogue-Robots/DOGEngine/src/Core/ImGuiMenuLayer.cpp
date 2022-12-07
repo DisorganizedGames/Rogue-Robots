@@ -15,7 +15,7 @@ namespace DOG
     {
         RegisterDebugWindow("Demo window", DemoWindow);
         RegisterDebugWindow("Model spawner", ModelSpawner);
-#if defined _DEBUG
+#if defined _DEBUG | defined RELWITHDEBUGINFO
         RegisterDebugWindow("ECS Debug Panel", ECSPanel);
 #endif
     }
@@ -192,7 +192,7 @@ namespace DOG
         }
     }
 
-#if defined _DEBUG
+#if defined _DEBUG | defined RELWITHDEBUGINFO
     void ImGuiMenuLayer::ECSPanel(bool& open)
     {
 		if (ImGui::BeginMenu("View"))

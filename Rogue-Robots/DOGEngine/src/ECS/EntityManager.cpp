@@ -12,7 +12,7 @@ namespace DOG
 
 	entity EntityManager::CreateEntity() noexcept
 	{
-		ASSERT(!m_freeList.empty(), "Entity capacity reached!");
+		ECS_ASSERT(!m_freeList.empty(), "Entity capacity reached!");
 		u32 indexToInsert = m_freeList.front();
 		m_entities[indexToInsert] = indexToInsert;
 		m_freeList.pop();
@@ -24,7 +24,7 @@ namespace DOG
 
 	void EntityManager::DestroyEntity(const entity entityID) noexcept
 	{
-		ASSERT(Exists(entityID), "Entity is invalid.");
+		ECS_ASSERT(Exists(entityID), "Entity is invalid.");
 
 		for (auto& [componentPoolIndex, componentPool] : m_components)
 		{
@@ -127,7 +127,7 @@ namespace DOG
 
 	void EntityManager::RegisterSystem(std::unique_ptr<ISystem>&& pSystem) noexcept
 	{
-		ECS_DEBUG_OP([&]() { for (auto& system : m_systems) ASSERT(typeid(*system) != typeid(*pSystem), "System already exists."); })
+		ECS_DEBUG_OP([&]() { for (auto& system : m_systems) ECS_ASSERT(typeid(*system) != typeid(*pSystem), "System already exists."); })
 		pSystem->Create();
 		m_systems.emplace_back(std::move(pSystem));
 	}

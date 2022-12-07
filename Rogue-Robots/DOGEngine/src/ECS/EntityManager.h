@@ -6,22 +6,37 @@
 #include <StaticTypeInfo/type_name.h>
 #define set(ID) (static_cast<SparseSet<ComponentType>*>(m_components.at(ID).get()))
 
+#if defined RELWITHDEBUGINFO
+	#undef NDEBUG
+	#include <assert.h>
+#endif
+
 namespace DOG
 {
-#if defined _DEBUG
+#if defined RELWITHDEBUGINFO | defined _DEBUG
+
 	#ifndef ECS_DEBUG_OP
 		#define ECS_DEBUG_OP(lambda) lambda();
 	#endif
 	#ifndef ECS_DEBUG_EXPR
 		#define ECS_DEBUG_EXPR(expr) expr
 	#endif
+
+	#ifndef ECS_ASSERT
+		#define ECS_ASSERT(expression, errorString) assert(expression && errorString)
+	#endif
+
 #else
+	#ifndef ECS_ASSERT
+		#define ECS_ASSERT(a, b)
+	#endif
+
 	#ifndef ECS_DEBUG_OP
 		#define ECS_DEBUG_OP(lambda) 
 	#endif
-	#ifndef ECS_DEBUG_EXPR
-		#define ECS_DEBUG_EXPR(expr)
-	#endif
+		#ifndef ECS_DEBUG_EXPR
+	#define ECS_DEBUG_EXPR(expr)
+		#endif
 #endif
 
 	#define sti static_type_info
@@ -45,7 +60,7 @@ namespace DOG
 		virtual ~SparseSetBase() noexcept = default;
 		virtual void DestroyInternal(const entity entityID) noexcept = 0;
 
-#if defined _DEBUG
+#if defined _DEBUG | defined RELWITHDEBUGINFO
 		virtual std::pair<std::vector<entity>&, std::string_view> ReportUsage() noexcept = 0;
 #endif
 		std::vector<entity> sparseArray;
@@ -59,7 +74,7 @@ namespace DOG
 		SparseSet() noexcept = default;
 		virtual ~SparseSet() noexcept override final = default;
 
-#if defined _DEBUG
+#if defined _DEBUG | defined RELWITHDEBUGINFO
 		virtual std::pair<std::vector<entity>&, std::string_view> ReportUsage() noexcept override final
 		{
 			constexpr std::string_view s = sti::getTypeName<ComponentType>();
@@ -194,7 +209,7 @@ namespace DOG
 		{
 			std::tuple<SparseSet<ComponentType>*...> pools = { (ExpandAsTupleArguments<ComponentType>()) ...};
 
-			ECS_DEBUG_EXPR(std::apply([](const auto&... pool) {(ASSERT((pool != nullptr) && pool->bundle == nullptr, "Bundle creation failed."), ...); }, pools););
+			ECS_DEBUG_EXPR(std::apply([](const auto&... pool) {(ECS_ASSERT((pool != nullptr) && pool->bundle == nullptr, "Bundle creation failed."), ...); }, pools););
 			std::apply([&minComponentID](const auto... pool) {((pool->bundle = (sti::TypeIndex)minComponentID), ...); }, pools);
 			
 			m_bundles[minComponentID] = (std::unique_ptr<BundleImpl<ComponentType...>>(new BundleImpl<ComponentType...>(this, std::move(pools))));
@@ -207,8 +222,8 @@ namespace DOG
 	{
 		static constexpr auto ComponentID = sti::getTypeIndex<ComponentType>();
 
-		ASSERT(Exists(entityID), "Entity is invalid");
-		ASSERT(!HasComponent<ComponentType>(entityID), "Entity already has component!");
+		ECS_ASSERT(Exists(entityID), "Entity is invalid");
+		ECS_ASSERT(!HasComponent<ComponentType>(entityID), "Entity already has component!");
 
 		ValidateComponentPool<ComponentType>();
 
@@ -233,7 +248,7 @@ namespace DOG
 	{
 		static constexpr auto ComponentID = sti::getTypeIndex<ComponentType>();
 
-		ASSERT(Exists(entityID), "Entity is invalid");
+		ECS_ASSERT(Exists(entityID), "Entity is invalid");
 		if (HasComponent<ComponentType>(entityID))
 		{
 			return set(ComponentID)->components[set(ComponentID)->sparseArray[entityID]];
@@ -262,7 +277,7 @@ namespace DOG
 	{
 		static constexpr auto ComponentID = sti::getTypeIndex<ComponentType>();
 
-		ASSERT(Exists(entityID), "Entity is invalid");
+		ECS_ASSERT(Exists(entityID), "Entity is invalid");
 		if (HasComponent<ComponentType>(entityID))
 		{
 			set(ComponentID)->components[set(ComponentID)->sparseArray[entityID]] = ComponentType(std::forward<Args>(args)...);
@@ -292,8 +307,8 @@ namespace DOG
 	{
 		static auto constexpr componentID = sti::getTypeIndex<ComponentType>();
 
-		ASSERT(Exists(entityID), "Entity is invalid");
-		ASSERT(HasComponent<ComponentType>(entityID), "Entity does not have that component.");
+		ECS_ASSERT(Exists(entityID), "Entity is invalid");
+		ECS_ASSERT(HasComponent<ComponentType>(entityID), "Entity does not have that component.");
 
 		if (set(componentID)->bundle != nullptr)
 		{
@@ -314,7 +329,7 @@ namespace DOG
 	{
 		static auto constexpr componentID = sti::getTypeIndex<ComponentType>();
 
-		ASSERT(Exists(entityID), "Entity is invalid");
+		ECS_ASSERT(Exists(entityID), "Entity is invalid");
 
 		if (HasComponent<ComponentType>(entityID))
 		{
@@ -337,8 +352,8 @@ namespace DOG
 	ComponentType& EntityManager::GetComponent(const entity entityID) const noexcept
 	{
 		static auto constexpr componentID = sti::getTypeIndex<ComponentType>();
-		ASSERT(Exists(entityID), "Entity is invalid");
-		ASSERT(HasComponent<ComponentType>(entityID), "Entity does not have that component.");
+		ECS_ASSERT(Exists(entityID), "Entity is invalid");
+		ECS_ASSERT(HasComponent<ComponentType>(entityID), "Entity does not have that component.");
 
 		return set(componentID)->components[set(componentID)->sparseArray[entityID]];
 	}
@@ -347,7 +362,7 @@ namespace DOG
 	[[nodiscard]] std::optional<std::reference_wrapper<ComponentType>> EntityManager::TryGetComponent(const entity entityID) const noexcept
 	{
 		static auto constexpr componentID = sti::getTypeIndex<ComponentType>();
-		ASSERT(Exists(entityID), "Entity is invalid");
+		ECS_ASSERT(Exists(entityID), "Entity is invalid");
 
 		if (HasComponent<ComponentType>(entityID))
 		{
@@ -369,7 +384,7 @@ namespace DOG
 	bool EntityManager::HasComponent(const entity entityID) const noexcept
 	{
 		static auto constexpr componentID = sti::getTypeIndex<ComponentType>();
-		ASSERT(Exists(entityID), "Entity is invalid");
+		ECS_ASSERT(Exists(entityID), "Entity is invalid");
 		return 
 			(
 			m_components.contains(componentID)
@@ -382,7 +397,7 @@ namespace DOG
 	template<typename... ComponentType>
 	bool EntityManager::HasAllOf(const entity entityID) const noexcept
 	{
-		ASSERT(Exists(entityID), "Entity is invalid");
+		ECS_ASSERT(Exists(entityID), "Entity is invalid");
 
 		return (EntityManager::HasComponent<ComponentType>(entityID) && ...);
 	}
@@ -390,7 +405,7 @@ namespace DOG
 	template<typename... ComponentType>
 	bool EntityManager::HasAnyOf(const entity entityID) const noexcept
 	{
-		ASSERT(Exists(entityID), "Entity is invalid");
+		ECS_ASSERT(Exists(entityID), "Entity is invalid");
 
 		return (EntityManager::HasComponent<ComponentType>(entityID) || ...);
 	}
@@ -444,7 +459,7 @@ namespace DOG
 	Collection<ComponentType...>::Collection(EntityManager* mgr, const std::tuple<SparseSet<ComponentType>*...>& pools) noexcept
 		: m_mgr{ mgr }, m_pools(std::move(pools))
 	{
-		ECS_DEBUG_EXPR(std::apply([](const auto... pool) {(ASSERT(pool, "Component type does not exist."), ...); }, m_pools););
+		ECS_DEBUG_EXPR(std::apply([](const auto... pool) {(ECS_ASSERT(pool, "Component type does not exist."), ...); }, m_pools););
 	}
 
 	template<typename... ComponentType>
@@ -525,7 +540,7 @@ namespace DOG
 	BundleImpl<ComponentType...>::BundleImpl(EntityManager* mgr, const std::tuple<SparseSet<ComponentType>*...>& pools) noexcept
 		: m_mgr{ mgr }, m_pools{ std::move(pools) }, m_bundleStart{ -1 }, ePointer{ nullptr }
 	{
-		ECS_DEBUG_EXPR(std::apply([](const auto... pool) {(ASSERT(pool, "Component type does not exist."), ...); }, m_pools);)
+		ECS_DEBUG_EXPR(std::apply([](const auto... pool) {(ECS_ASSERT(pool, "Component type does not exist."), ...); }, m_pools);)
 		
 		ePointer = &(get<0>(m_pools)->denseArray);
 		std::apply([&](const auto... pool)
@@ -615,8 +630,6 @@ namespace DOG
 			m_bundleStart--;
 		}
 	}
-
-	
 }
 
 //##################### SYSTEMS #####################
@@ -659,8 +672,8 @@ namespace DOG
 		const int* m_bundleStart;
 	};
 
-#if defined _DEBUG																													
-#define SYSTEM_CLASS(...)																								\
+#if defined _DEBUG | defined RELWITHDEBUGINFO																												
+#define SYSTEM_CLASS(...)																										\
 public:																															\
 		SystemHelper<__VA_ARGS__> m_systemHelper;																				\
 		[[nodiscard]] virtual std::string_view GetName() const override															\
@@ -673,15 +686,15 @@ public:																															\
 		}																														\
 		[[nodiscard]] virtual DOG::SystemType GetType() const noexcept															\
 		{																														\
-			return DOG::SystemType::Standard;																						\
+			return DOG::SystemType::Standard;																					\
 		}																														
 #else																															
-#define SYSTEM_CLASS(...)																									\
+#define SYSTEM_CLASS(...)																										\
 	SystemHelper<__VA_ARGS__> m_systemHelper;
 #endif																															
 
 
-#if defined _DEBUG																													
+#if defined _DEBUG | defined RELWITHDEBUGINFO																								
 #define SYSTEM_CLASS_CRITICAL(...)																								\
 		CriticalSystemHelper<__VA_ARGS__> m_systemHelper;																		\
 		[[nodiscard]] virtual std::string_view GetName() const override															\
@@ -1011,4 +1024,8 @@ public:																															\
 			OnLateUpdate((*m_systemHelper.m_ePointer)[i], m_systemHelper.m_mgr.GetComponent<ComponentType>((*m_systemHelper.m_ePointer)[i])...);			\
 		}																													\
 	}
+#endif
+
+#if defined RELWITHDEBUGINFO
+	#define NDEBUG
 #endif

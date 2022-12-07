@@ -27,7 +27,7 @@ namespace DOG
 	private:
 		static void ModelSpawner(bool& open);
 		static void DemoWindow(bool& open);
-#if defined _DEBUG
+#if defined _DEBUG | defined RELWITHDEBUGINFO
 		static void ECSPanel(bool& open);
 #endif
 	private:
