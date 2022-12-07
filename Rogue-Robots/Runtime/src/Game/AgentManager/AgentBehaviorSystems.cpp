@@ -475,7 +475,8 @@ void AgentMovementSystem::OnLateUpdate(entity e, BTMoveToPlayerComponent&, Behav
 		movement.forward = pfc.path[0] - trans.GetPosition();
 		movement.forward.y = 0.0f;
 
-		trans.worldMatrix = Matrix::CreateLookAt(trans.GetPosition(), pfc.path[0], Vector3::Up).Invert();
+		trans.worldMatrix = DirectX::XMMatrixLookAtLH(trans.GetPosition(), pfc.path[0], Vector3::Up);
+		trans.worldMatrix = trans.worldMatrix.Invert();		// could find a better solution...
 		movement.forward.Normalize();
 		constexpr f32 SKID_FACTOR = 0.1f;
 		movement.forward.x += rb.linearVelocity.x * SKID_FACTOR;
