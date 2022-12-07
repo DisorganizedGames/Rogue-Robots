@@ -320,7 +320,6 @@ void ParticleScene::UnbakeSystemFromFile(const std::filesystem::path& path)
 	m_particleSystem = CreateEntity();
 	AddComponent<TransformComponent>(m_particleSystem, Vector3(0, 0, 0));
 	ParticleSystemFromFile(m_particleSystem, path);
-	auto stop = 0;
 }
 
 void ParticleScene::WriteSpawnTable(std::ofstream& file)
