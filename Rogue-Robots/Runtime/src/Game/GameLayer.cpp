@@ -28,21 +28,6 @@ GameState GameLayer::m_gameState = GameState::Initializing;
 bool GameLayer::s_connectedPlayersLobby[MAX_PLAYER_COUNT] = { false, false, false, false };
 uint32_t GameLayer::s_levelIndex = 0;
 
-void CreateCarousels(std::vector<std::string> filenames)
-{
-	auto instance = DOG::UI::Get();
-	u32 width = DOG::Window::GetWidth();
-	u32 height = DOG::Window::GetHeight();
-
-	//Singleplayer UI carousel
-	auto carouselSolo = instance->Create<DOG::UICarousel, std::vector<std::wstring>, float, float, float, float, float>(carouselSoloID, filenames, width / 2.f - 100.f, height / 2.f + 100.f, 300.f, 75.f, 25.f);
-	instance->AddUIElementToScene(levelSelectSoloID, std::move(carouselSolo));
-
-	//Multiplayer UI carousel
-	auto carouselMult = instance->Create<DOG::UICarousel, std::vector<std::wstring>, float, float, float, float, float>(carouselMultID, filenames, width / 2.f - 100.f, height / 2.f + 100.f, 300.f, 75.f, 25.f);
-	instance->AddUIElementToScene(levelSelectMultID, std::move(carouselMult));
-}
-
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
 {
@@ -127,7 +112,7 @@ GameLayer::GameLayer() noexcept
 	ImGui::GetIO().Fonts->AddFontDefault();
 	m_imguiFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Assets/Fonts/Robot Radicals.ttf", 18.0f);
 	Window::SetFont(m_imguiFont);
-	std::vector<std::wstring> filenames;
+
 	wchar_t dst[64];
 	for (size_t i = 0; i < pcgLevelNames::nrLevels; i++)
 	{
@@ -135,10 +120,11 @@ GameLayer::GameLayer() noexcept
 		std::wstring string(dst);
 		for (size_t j = 0; j < 4; j++)
 			string.pop_back();
-		filenames.push_back(string);
+		m_filenames.push_back(string);
 	}
 	
-	CreateCarousels(filenames);
+	DOG::UI::Get()->GetUI<UICarousel>(carouselSoloID)->SendStrings(m_filenames);
+	DOG::UI::Get()->GetUI<UICarousel>(carouselMultID)->SendStrings(m_filenames);
 }
 
 GameLayer::~GameLayer()
@@ -778,6 +764,20 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	using namespace DOG;
 	switch (event.GetEventType())
 	{
+	case EventType::WindowPostResizedEvent:
+	{
+		//Re-send info to carousels
+		DOG::UI::Get()->GetUI<UICarousel>(carouselSoloID)->SendStrings(m_filenames);
+		DOG::UI::Get()->GetUI<UICarousel>(carouselMultID)->SendStrings(m_filenames);
+		break;
+	}
+	case EventType::WindowPostPosChangingEvent:
+	{
+		//Re-send info to carousels
+		DOG::UI::Get()->GetUI<UICarousel>(carouselSoloID)->SendStrings(m_filenames);
+		DOG::UI::Get()->GetUI<UICarousel>(carouselMultID)->SendStrings(m_filenames);
+		break;
+	}
 	case EventType::LeftMouseButtonPressedEvent:
 	{
 		EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)

@@ -36,8 +36,6 @@ void LevelSelectMultButtonFunc(void)
 
 void PlayButtonFunc(void);
 
-void CreateCarousels(std::vector<std::string> filenames);
-
 void OptionsButtonFunc(void)
 {
    DOG::UI::Get()->ChangeUIscene(optionsID);
@@ -1108,6 +1106,11 @@ UINT DOG::UICarousel::GetIndex()
     return m_index;
 }
 
+void DOG::UICarousel::SendStrings(std::vector<std::wstring> filenames)
+{
+    m_labels = filenames;
+}
+
 DOG::UIIcon::UIIcon(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector<std::wstring> filePaths, float x, float y, float width, float height, float r, float g, float b, bool border) : UIElement(id)
 {
    ComPtr<IWICBitmapDecoder> m_decoder;
@@ -1432,6 +1435,14 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    //player list
    auto playerList = instance->Create<DOG::UIPlayerList>(playerListID);
    auto playerListJoin = instance->Create<DOG::UIPlayerList>(playerListJoinID);
+
+   //Singleplayer UI carousel
+   auto carouselSolo = instance->Create<DOG::UICarousel, std::vector<std::wstring>, float, float, float, float, float>(carouselSoloID, {L""}, (FLOAT)clientWidth / 2.f - 200.f, (FLOAT)clientHeight / 2.f + 100.f, 300.f, 75.f, 25.f);
+   instance->AddUIElementToScene(levelSelectSoloID, std::move(carouselSolo));
+
+   //Multiplayer UI carousel
+   auto carouselMult = instance->Create<DOG::UICarousel, std::vector<std::wstring>, float, float, float, float, float>(carouselMultID, {L""}, (FLOAT)clientWidth / 2.f - 200.f, (FLOAT)clientHeight / 2.f + 100.f, 300.f, 75.f, 25.f);
+   instance->AddUIElementToScene(levelSelectMultID, std::move(carouselMult));
 
    std::vector<std::wstring> vec = { L"Assets/Sprites/MaxHP.bmp" , L"Assets/Sprites/MoveSpeed.bmp" , L"Assets/Sprites/JumpBoost.bmp" };
    auto pic = instance->Create<DOG::UIBuffTracker, std::vector<std::wstring>>(buffID, vec);

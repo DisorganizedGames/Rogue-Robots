@@ -105,4 +105,6 @@ private:
 	int m_nrOfFramesToWait = 300;
 
 	static bool s_connectedPlayersLobby[MAX_PLAYER_COUNT];
+
+	std::vector<std::wstring> m_filenames;
 };
