@@ -75,7 +75,6 @@ void AgentLineOfSightToPlayerSystem::OnEarlyUpdate(entity agent, BTLineOfSightTo
 
 			if (dot > stats.visionConeDotValue)
 			{
-				std::cout << ".";
 				auto rayCastResult = PhysicsEngine::RayCast(tc.GetPosition(), pd.position);
 				//Nothing was hit at all:
 				if (!rayCastResult)
@@ -91,8 +90,6 @@ void AgentLineOfSightToPlayerSystem::OnEarlyUpdate(entity agent, BTLineOfSightTo
 		}
 	}
 
-	if (atLeastOneHasLineOfSight)
-		std::cout << ":";
 	if (atLeastOneHasLineOfSight)
 		LEAF(btc.currentRunningNode)->Succeed(agent);
 	else
@@ -406,10 +403,7 @@ void AgentAggroSystem::OnUpdate(entity e, BTAggroComponent&, AgentAggroComponent
 	AgentManager& am = AgentManager::Get();
 
 	if (!em.HasComponent<AgentAlertComponent>(e))
-	{
-		std::cout << "agent " << agent.id << " alert\n";
 		em.AddComponent<AgentAlertComponent>(e);
-	}
 
 	u32 myGroup = am.GroupID(agent.id);
 
@@ -505,7 +499,6 @@ void ShadowAgentSeekPlayerSystem::OnUpdate(ShadowAgentSeekPlayerComponent& seek)
 	else
 		EntityManager::Get().Collect<NetworkPlayerComponent>().Do([&](entity e, NetworkPlayerComponent& net)
 			{
-				std::cout << e << " " << (int)net.playerId << " -?-> " << (int)seek.playerID << std::endl;
 				if (net.playerId == seek.playerID)
 					seek.entityID = e;
 			});
