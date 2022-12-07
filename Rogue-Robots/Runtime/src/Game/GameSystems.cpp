@@ -353,7 +353,8 @@ void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity p
 void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerAliveComponent&, DOG::TransformComponent& tc)
 {
 	DOG::EntityManager& mgr = DOG::EntityManager::Get();
-	
+	if (mgr.HasComponent<ThisPlayer>(player) && mgr.HasComponent<PlayerAliveComponent>(player) && mgr.GetComponent<PlayerAliveComponent>(player).timer > 0.f)
+		mgr.GetComponent<PlayerAliveComponent>(player).timer -= (f32)Time::DeltaTime();
 	//If the player that wants to perform a revive does not have a reviver active item, we ofc return:
 	auto optionalItem = mgr.TryGetComponent<ActiveItemComponent>(player);
 	if (!optionalItem)
@@ -506,6 +507,7 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 		ImGui::SetNextWindowSize(size);
 		if (ImGui::Begin("Revive text 2", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
 		{
+
 			ImGui::PushFont(DOG::Window::GetFont());
 			ImGui::SetWindowFontScale(1.75f);
 			auto windowWidth = ImGui::GetWindowSize().x;
@@ -564,8 +566,10 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 		UIInstance->GetUI<UIIcon>(glowstickID)->Show(0);
 		UIInstance->GetUI<UIIcon>(flashlightID)->Show(0);
 
-		if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer) && mgr.HasComponent<SpectatorComponent>(closestDeadPlayer))
+		if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))
 		{
+			mgr.GetComponent<AnimationComponent>(closestDeadPlayer).SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping | AnimationFlag::ResetPrio); // No dedicated revive animation for now
+			mgr.GetComponent<AnimationComponent>(closestDeadPlayer).SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio);
 			auto spectatedPlayer = mgr.GetComponent<SpectatorComponent>(closestDeadPlayer).playerBeingSpectated;
 			ChangeSuitDrawLogic(spectatedPlayer, closestDeadPlayer);
 			RevivePlayer(closestDeadPlayer);
@@ -620,7 +624,7 @@ void ReviveSystem::RevivePlayer(DOG::entity player)
 
 	/*auto& ac = mgr.GetComponent<AnimationComponent>(player);
 	ac.SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio, ac.BASE_PRIORITY, ac.FULL_BODY, 1.5f, 0.5f);*/
-	//mgr.AddComponent<PlayerAliveComponent>(player).timer = 2.f;
+	mgr.AddComponent<PlayerAliveComponent>(player).timer = 1.f;
 
 	LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
 	LuaMain::GetScriptManager()->AddScript(player, "PassiveItemSystem.lua");

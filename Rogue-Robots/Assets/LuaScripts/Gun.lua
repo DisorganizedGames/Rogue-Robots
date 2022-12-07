@@ -91,14 +91,14 @@ function OnStart()
 
 	local outlineColor = Entity:GetOutlineColor(EntityID)
 	-- Add shit
-	if (Entity:HasComponent(EntityID, "ThisPlayer")) then
-		Entity:AddComponent(gunID, "ThisPlayerWeapon")
-		--To be fixed later hopefully
-		Entity:AddComponent(barrelEntityID, "ThisPlayerWeapon")
-		Entity:AddComponent(miscEntityID, "ThisPlayerWeapon")
-		Entity:AddComponent(magazineEntityID, "ThisPlayerWeapon")
-		CreateWeaponLights()
-	end
+	--if (Entity:HasComponent(EntityID, "ThisPlayer")) then
+	Entity:AddComponent(gunID, "ThisPlayerWeapon")
+	--To be fixed later hopefully
+	Entity:AddComponent(barrelEntityID, "ThisPlayerWeapon")
+	Entity:AddComponent(miscEntityID, "ThisPlayerWeapon")
+	Entity:AddComponent(magazineEntityID, "ThisPlayerWeapon")
+	CreateWeaponLights()
+	--end
 
 	-- Initialize base components
 	miscComponent = MiscComponent.BasicShot()
