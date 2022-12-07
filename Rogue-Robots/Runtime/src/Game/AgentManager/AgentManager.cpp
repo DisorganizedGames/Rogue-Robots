@@ -348,5 +348,5 @@ void AgentManager::CreateScorpioBehaviourTree(DOG::entity agent) noexcept
 	btc.rootNode->AddChild(std::move(rootSelector));
 	btc.currentRunningNode = btc.rootNode.get();
 
-	BehaviorTree::ToGraphViz(btc.rootNode.get(), "BehaviorTree_Scorpio.dot");
+	//BehaviorTree::ToGraphViz(btc.rootNode.get(), "BehaviorTree_Scorpio.dot");
 }

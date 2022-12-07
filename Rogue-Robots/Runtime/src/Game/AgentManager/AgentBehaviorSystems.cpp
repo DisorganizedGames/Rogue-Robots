@@ -468,10 +468,23 @@ void AgentMovementSystem::OnLateUpdate(entity e, BTMoveToPlayerComponent&, Behav
 	{
 		movement.forward = pfc.path[0] - trans.GetPosition();
 		movement.forward.y = 0.0f;
-
-		trans.worldMatrix = DirectX::XMMatrixLookAtLH(trans.GetPosition(), pfc.path[0], Vector3::Up);
-		trans.worldMatrix = trans.worldMatrix.Invert();		// could find a better solution...
 		movement.forward.Normalize();
+
+		// Old solution was to make view matrix and then invert it.
+		//trans.worldMatrix = DirectX::XMMatrixLookAtLH(trans.GetPosition(), pfc.path[0], Vector3::Up);
+		//trans.worldMatrix = trans.worldMatrix.Invert();		// could find a better solution...
+
+		Vector3 up = Vector3::Up;
+		Vector3 right = up.Cross(movement.forward);
+		
+		// The forward vector has y = 0. => the up vector will always be {0, 1, 0}, so we can skipp the last cross product.
+		//right.Normalize();
+		//up = forward.Cross(right);
+
+		DirectX::SimpleMath::Matrix r(right, up, movement.forward);
+		trans.SetRotation(r);
+
+		
 		constexpr f32 SKID_FACTOR = 0.1f;
 		movement.forward.x += rb.linearVelocity.x * SKID_FACTOR;
 		movement.forward.y = 0.0f;
