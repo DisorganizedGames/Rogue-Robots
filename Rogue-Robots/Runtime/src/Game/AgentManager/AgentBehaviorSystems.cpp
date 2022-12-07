@@ -60,7 +60,10 @@ void AgentDistanceToPlayersSystem::OnEarlyUpdate(entity agent, BTDistanceToPlaye
 			u32 myGroup = am.GroupID(agentId.id);
 			u32 agentGroup = am.GroupID(aidc.id);
 
-			atLeastOneWithinAudioRange = (aidc.id != agentGroup) && atLeastOneWithinAudioRange;
+			if (agentId.id == aidc.id)
+				return;
+
+			atLeastOneWithinAudioRange = (myGroup != agentGroup) && atLeastOneWithinAudioRange;
 		});
 
 	//Add audiocomponent if wihtin range or else remove it
@@ -86,7 +89,7 @@ void AgentDistanceToPlayersSystem::OnEarlyUpdate(entity agent, BTDistanceToPlaye
 			{
 				onStandbyAudio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Enemy/OnStandby.wav");
 				onStandbyAudio.shouldPlay = true;
-				onStandbyAudio.volume = 0.4f;
+				onStandbyAudio.volume = 1.0f;
 				onStandbyAudio.is3D = true;
 				onStandbyAudio.loop = true;
 			}
@@ -306,6 +309,23 @@ void AgentAttackSystem::OnUpdate(entity e, BTAttackComponent&, BehaviorTreeCompo
 	{
 		PlayerManager::Get().HurtIfThisPlayer(seek.entityID, attack.damage, e);
 
+		if (!EntityManager::Get().HasComponent<AgentAttackAudioComponent>(e))
+		{
+			auto& attackAudio = EntityManager::Get().AddComponent<AgentAttackAudioComponent>(e);
+			attackAudio.agentAttackAudioComponent = EntityManager::Get().CreateEntity();
+
+			EntityManager::Get().AddComponent<TransformComponent>(attackAudio.agentAttackAudioComponent);
+			EntityManager::Get().AddComponent<ChildComponent>(attackAudio.agentAttackAudioComponent).parent = e;
+
+			EntityManager::Get().AddComponent<DOG::AudioComponent>(attackAudio.agentAttackAudioComponent);
+		}
+
+		auto& attackAudio = EntityManager::Get().GetComponent<AgentAttackAudioComponent>(e);
+		auto& audio = EntityManager::Get().GetComponent<DOG::AudioComponent>(attackAudio.agentAttackAudioComponent);
+		audio.shouldPlay = true;
+		audio.is3D = true;
+		audio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Attack.wav");
+
 		// Reset cooldown
 		attack.timeOfLast = Time::ElapsedTime();
 
@@ -396,26 +416,8 @@ void AgentDodgeSystem::OnUpdate(entity e, BTDodgeComponent&, BehaviorTreeCompone
 	AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
 {
 	if (seek.HasTarget() && seek.distanceToPlayer <= attack.radius && attack.Ready())
-	if (seek.HasTarget() && seek.distanceToPlayer <= attack.radius && attack.Ready())
 	{
 		PlayerManager::Get().HurtIfThisPlayer(seek.entityID, attack.damage, e);
-
-		if (!EntityManager::Get().HasComponent<AgentAttackAudioComponent>(e))
-		{
-			auto& attackAudio = EntityManager::Get().AddComponent<AgentAttackAudioComponent>(e);
-			attackAudio.agentAttackAudioComponent = EntityManager::Get().CreateEntity();
-			
-			EntityManager::Get().AddComponent<TransformComponent>(attackAudio.agentAttackAudioComponent);
-			EntityManager::Get().AddComponent<ChildComponent>(attackAudio.agentAttackAudioComponent).parent = e;
-
-			EntityManager::Get().AddComponent<DOG::AudioComponent>(attackAudio.agentAttackAudioComponent);
-		}
-
-		auto& attackAudio = EntityManager::Get().GetComponent<AgentAttackAudioComponent>(e);
-		auto& audio = EntityManager::Get().GetComponent<DOG::AudioComponent>(attackAudio.agentAttackAudioComponent);
-		audio.shouldPlay = true;
-		audio.is3D = true;
-		audio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Attack.wav");
 
 		// Reset cooldown
 		attack.timeOfLast = Time::ElapsedTime();
@@ -772,7 +774,7 @@ void AgentMovementSystem::OnLateUpdate(entity e, BTMoveToPlayerComponent&, Behav
 			int walkingSoundIndex = rand() % m_walkingSounds.size();
 			audio.assetID = m_walkingSounds[walkingSoundIndex];
 			audio.shouldPlay = true;
-			audio.volume = 0.15f;
+			audio.volume = 0.5f;
 		}
 	}
 	else
