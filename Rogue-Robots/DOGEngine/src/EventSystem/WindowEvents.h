@@ -13,12 +13,31 @@ namespace DOG
 		Vector2u dimensions;
 	};
 
+	class WindowPostResizedEvent : public IEvent
+	{
+	public:
+		explicit WindowPostResizedEvent() noexcept = default;
+		virtual ~WindowPostResizedEvent() noexcept override final = default;
+		[[nodiscard]] virtual constexpr const EventType GetEventType() const noexcept override final { return EventType::WindowPostResizedEvent; }
+		[[nodiscard]] virtual constexpr const EventCategory GetEventCategory() const { return EventCategory::WindowEventCategory; }
+	public:
+	};
+
 	class WindowPosChangingEvent : public IEvent
 	{
 	public:
 		explicit WindowPosChangingEvent() noexcept = default;
 		virtual ~WindowPosChangingEvent() noexcept override final = default;
 		[[nodiscard]] virtual constexpr const EventType GetEventType() const noexcept override final { return EventType::WindowPosChangingEvent; }
+		[[nodiscard]] virtual constexpr const EventCategory GetEventCategory() const { return EventCategory::WindowEventCategory; }
+	};
+
+	class WindowPostPosChangingEvent : public IEvent
+	{
+	public:
+		explicit WindowPostPosChangingEvent() noexcept = default;
+		virtual ~WindowPostPosChangingEvent() noexcept override final = default;
+		[[nodiscard]] virtual constexpr const EventType GetEventType() const noexcept override final { return EventType::WindowPostPosChangingEvent; }
 		[[nodiscard]] virtual constexpr const EventCategory GetEventCategory() const { return EventCategory::WindowEventCategory; }
 	};
 

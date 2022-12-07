@@ -13,11 +13,12 @@
 void UIRebuild(UINT clientHeight, UINT clientWidth);
 void AddScenes();
 
-extern UINT menuID, gameID, optionsID, multiID, joinID, WaitingForHostID, GameOverID, WinScreenID, LoadingID, creditsID;
-extern UINT menuBackID, optionsBackID, multiBackID, lobbyID, hostBackID;
+extern UINT menuID, gameID, optionsID, multiID, joinID, WaitingForHostID, GameOverID, WinScreenID, LoadingID, creditsID, levelSelectSoloID, levelSelectMultID;
+extern UINT menuBackID, optionsBackID, multiBackID, lobbyID, hostBackID, levelSelectSoloBackID, levelSelectMultBackID;
+extern UINT bStartLevelSelectorSoloID, bStartLevelSelectorMultID, bGoBackLevelSelectorSoloID, bGoBackLevelSelectorMultID;
 extern UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID, lWinTextID, lredScoreID, lblueScoreID, lgreenScoreID, lyellowScoreID, lredScoreWinID, lblueScoreWinID, lgreenScoreWinID, lyellowScoreWinID;
 extern UINT lNamesCreditsID, lTheTeamID, lFiverrArtistsID, lFiverrArtistsTextID, lIconsCreditsID, lIconsCreditsTextID, lMusicID, lMusicTextID;
-extern UINT bcID, credbackID;
+extern UINT bcID, credbackID, carouselSoloID, carouselMultID;
 extern UINT cID, tID, hID;
 extern UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID, lActiveItemTextID, flashlightID, glowstickID;
 extern UINT buffID;
@@ -304,6 +305,27 @@ namespace DOG
          D2D1_RECT_F m_rect;
          ComPtr<ID2D1SolidColorBrush> m_borderBrush;
          ComPtr<ID2D1SolidColorBrush> m_backBrush;
+         ComPtr<IDWriteTextFormat> m_textFormat;
+   };
+
+   class UICarousel: public UIElement
+   {
+      public:
+         UICarousel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector<std::wstring> labels, float x, float y, float width, float height, float fontSize);
+         ~UICarousel();
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void OnEvent(IEvent& event) override final;
+         std::wstring GetText(void);
+         UINT GetIndex();
+         void SendStrings(const std::vector<std::wstring>& filenames);
+      private:
+         float m_opacity;
+         bool m_border;
+         UINT m_index;
+         std::vector<std::wstring> m_labels;
+         D2D1_RECT_F m_rect, m_bright, m_bleft;
+         ComPtr<ID2D1SolidColorBrush> m_rborderBrush, m_lborderBrush, m_borderBrush, m_textBrush;
          ComPtr<IDWriteTextFormat> m_textFormat;
    };
 

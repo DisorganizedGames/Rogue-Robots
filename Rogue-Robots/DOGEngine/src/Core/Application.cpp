@@ -147,6 +147,7 @@ namespace DOG
 			{
 				prevFullScreenState = currentFullscreenState;
 				m_renderer->OnResize(0, 0); // forece the backbuffers to resize
+				Window::PublishEvent<WindowPostPosChangingEvent>();
 			}
 			break;
 		}
@@ -159,6 +160,7 @@ namespace DOG
 					m_specification.windowDimensions = e.dimensions;
 
 				m_renderer->OnResize(e.dimensions.x, e.dimensions.y);
+				Window::PublishEvent<WindowPostResizedEvent>();
 			}
 			break;
 		}

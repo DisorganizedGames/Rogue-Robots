@@ -7,7 +7,8 @@ namespace DOG
 		WindowResizedEvent = 0u, WindowPosChangingEvent, WindowClosedEvent, WindowActiveEvent, WindowHitBorderEvent, WindowAltEnterEvent,
 		LeftMouseButtonPressedEvent, LeftMouseButtonReleasedEvent, RightMouseButtonPressedEvent, RightMouseButtonReleasedEvent, MiddleMouseButtonPressedEvent, MiddleMouseButtonReleasedEvent,
 		MouseMovedEvent,
-		KeyPressedEvent, KeyReleasedEvent
+		KeyPressedEvent, KeyReleasedEvent,
+		WindowPostResizedEvent, WindowPostPosChangingEvent
 	};
 
 	class IEvent

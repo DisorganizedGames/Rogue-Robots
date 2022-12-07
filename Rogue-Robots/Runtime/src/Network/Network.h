@@ -70,5 +70,5 @@ struct LobbyData
 {
 	u8 nrOfPlayersConnected = 1;
 	bool playersSlotConnected[MAX_PLAYER_COUNT] = {true, false, false, false};
-	u16 levelIndex = 4;
+	u16 levelIndex = 0;
 };

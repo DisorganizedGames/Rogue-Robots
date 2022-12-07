@@ -581,6 +581,11 @@ u16 NetCode::GetLevelIndex()
 	return m_lobbyData.levelIndex;
 }
 
+void NetCode::SetLevelIndex(u16 levelIndex)
+{
+	m_serverHost->SetLevelIndex(levelIndex);
+}
+
 void DeleteNetworkSync::OnLateUpdate(DOG::entity e, DeferredDeletionComponent&, NetworkId& netId, TransformComponent& transC)
 {
 	DOG::EntityManager& m_entityManager = DOG::EntityManager::Get();
