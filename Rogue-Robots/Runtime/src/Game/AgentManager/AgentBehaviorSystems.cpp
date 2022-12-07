@@ -566,6 +566,16 @@ void AgentAggroSystem::OnUpdate(entity e, BTAggroComponent&, AgentAggroComponent
 ***************************************************/
 
 
+AgentMovementSystem::AgentMovementSystem()
+{
+	m_walkingSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Walking_1.wav"));
+	m_walkingSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Walking_2.wav"));
+	m_walkingSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Walking_3.wav"));
+	m_walkingSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Walking_4.wav"));
+	m_walkingSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Walking_5.wav"));
+	m_walkingSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Walking_6.wav"));
+}
+
 void AgentMovementSystem::OnLateUpdate(entity e, BTMoveToPlayerComponent&, BehaviorTreeComponent& btc, 
 	AgentMovementComponent& movement, AgentSeekPlayerComponent& seek, PathfinderWalkComponent& pfc, 
 	RigidbodyComponent& rb, TransformComponent& trans)
@@ -603,6 +613,20 @@ void AgentMovementSystem::OnLateUpdate(entity e, BTMoveToPlayerComponent&, Behav
 		rb.linearVelocity.z = movement.forward.z;
 
 		LEAF(btc.currentRunningNode)->Succeed(e);
+
+		if (!EntityManager::Get().HasComponent<DOG::AudioComponent>(e))
+		{
+			EntityManager::Get().AddComponent<DOG::AudioComponent>(e).is3D = true;
+		}
+		
+		auto& audio = EntityManager::Get().GetComponent<DOG::AudioComponent>(e);
+		if (!audio.playing)
+		{
+			int walkingSoundIndex = rand() % m_walkingSounds.size();
+			audio.assetID = m_walkingSounds[walkingSoundIndex];
+			audio.shouldPlay = true;
+			audio.volume = 0.15;
+		}
 	}
 	else
 	{

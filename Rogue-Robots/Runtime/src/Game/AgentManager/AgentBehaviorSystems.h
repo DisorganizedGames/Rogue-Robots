@@ -176,7 +176,12 @@ class AgentMovementSystem : public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
+private:
+	std::vector<u32> m_walkingSounds;
+
 public:
+	AgentMovementSystem();
+	
 	SYSTEM_CLASS(BTMoveToPlayerComponent, BehaviorTreeComponent, AgentMovementComponent, AgentSeekPlayerComponent, PathfinderWalkComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
 	ON_LATE_UPDATE_ID(BTMoveToPlayerComponent, BehaviorTreeComponent, AgentMovementComponent, AgentSeekPlayerComponent, PathfinderWalkComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
 	void OnLateUpdate(DOG::entity e, BTMoveToPlayerComponent&, BehaviorTreeComponent& btc, 
