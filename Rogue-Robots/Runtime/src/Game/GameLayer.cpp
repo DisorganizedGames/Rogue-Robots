@@ -201,10 +201,26 @@ void GameLayer::OnUpdate()
 			UIInstance->GetUI<UIIcon>(glowstickID)->Show(0);
 			UIInstance->GetUI<UIIcon>(flashlightID)->Show(0);
 
+			m_timeSpent = 0.0f;
+			UI::Get()->GetUI<DOG::UILabel>(lStartTextID)->SetText(L"Find the Exit!");
 			StartMainScene();
 			break;
 		}
 		case GameState::Playing:
+			if (m_timeSpent >= 0.0f)
+			{
+				m_timeSpent += Time::DeltaTime();
+				if (m_timeSpent >= 10.0f)
+				{
+					UI::Get()->GetUI<DOG::UILabel>(lStartTextID)->SetText(L"Use Glowsticks to mark your way if needed. (Q)");
+				}
+				if (m_timeSpent >= 20.0f)
+				{
+					UI::Get()->GetUI<DOG::UILabel>(lStartTextID)->SetText(L"");
+					m_timeSpent = -1.0f;
+				}
+			}
+
 			UpdateGame();
 			break;
 		case GameState::Won:

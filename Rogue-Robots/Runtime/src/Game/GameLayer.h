@@ -107,4 +107,6 @@ private:
 	static bool s_connectedPlayersLobby[MAX_PLAYER_COUNT];
 
 	std::vector<std::wstring> m_filenames;
+
+	float m_timeSpent = -1.f;
 };
