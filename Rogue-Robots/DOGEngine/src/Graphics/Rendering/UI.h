@@ -331,4 +331,21 @@ namespace DOG
          ComPtr<IDWriteTextFormat> m_textFormat;
    };
 
+   class UIVertStatBar: public UIElement
+   {
+      public:
+         UIVertStatBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, float r, float g, float b);
+         ~UIVertStatBar();
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void SetBarValue(float value, float maxValue);
+      private:
+         std::wstring m_text;
+         float m_value, m_maxValue, m_barHeight;
+         D2D1_RECT_F m_border, m_bar;
+         ComPtr<ID2D1SolidColorBrush> m_borderBrush, m_barBrush, m_textBrush;
+         ComPtr<IDWriteTextFormat> m_textFormat;
+         ComPtr<IDWriteTextLayout> m_textLayout;
+   };
+
 }
