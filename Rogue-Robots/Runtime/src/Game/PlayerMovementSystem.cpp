@@ -62,11 +62,9 @@ void PlayerMovementSystem::OnUpdate(
 	{
 		isThisPlayer = true;
 		camera.isMainCamera = true;
-		/*if (mgr.HasComponent<PlayerAliveComponent>(e) && mgr.GetComponent<PlayerAliveComponent>(e).timer > 0.f)
-				mgr.GetComponent<PlayerAliveComponent>(e).timer -= (f32)Time::DeltaTime();*/
 	}
 	auto IsAlive = [&mgr](Entity e) {
-		return mgr.HasComponent<PlayerAliveComponent>(e) && mgr.GetComponent<PlayerAliveComponent>(e).timer < 0.f; };
+		return mgr.HasComponent<PlayerAliveComponent>(e); };
 
 	if (input.toggleDebug && IsAlive(e))
 	{
@@ -108,7 +106,8 @@ void PlayerMovementSystem::OnUpdate(
 		}
 
 		MovePlayer(e, player, moveTowards, forward, rigidbody, playerStats.speed, playerStats.jumpSpeed, input);
-		ApplyAnimations(e, input);
+		if (playerStats.health)
+			ApplyAnimations(e, input);
 
 		f32 aspectRatio = (f32)Window::GetWidth() / Window::GetHeight();
 		camera.projMatrix = XMMatrixPerspectiveFovLH(80.f * XM_PI / 180.f, aspectRatio, 1600.f, 0.1f);

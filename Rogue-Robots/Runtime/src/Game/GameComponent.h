@@ -39,7 +39,6 @@ struct PlayerStatsComponent
 
 struct PlayerAliveComponent
 {
-	f32 timer = -1.f;
 };
 
 struct SceneComponent

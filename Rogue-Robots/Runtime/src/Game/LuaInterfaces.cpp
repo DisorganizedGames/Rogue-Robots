@@ -1364,7 +1364,7 @@ void EntityInterface::AddOutlineComponent(DOG::LuaContext* context, DOG::entity 
 	EntityManager::Get().AddComponent<OutlineComponent>(e).color = { r, g, b };
 }
 
-void EntityInterface::AddDontDrawComponent(DOG::LuaContext* context, DOG::entity e)
+void EntityInterface::AddDontDrawComponent(DOG::LuaContext*, DOG::entity e)
 {
 	EntityManager::Get().AddComponent<DontDraw>(e).dontDraw = true;
 }
