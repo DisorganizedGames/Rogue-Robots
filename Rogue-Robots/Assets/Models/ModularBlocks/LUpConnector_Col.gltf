@@ -38,15 +38,15 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 1456,
+            "count" : 1463,
             "max" : [
-                2.441279411315918,
+                2.483710765838623,
                 5.000000953674316,
                 2.807866096496582
             ],
             "min" : [
                 -2.592118978500366,
-                0.4777059555053711,
+                0.12492632865905762,
                 -2.519420623779297
             ],
             "type" : "VEC3"
@@ -54,63 +54,63 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 1456,
+            "count" : 1463,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 1456,
+            "count" : 1463,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 1456,
+            "count" : 1463,
             "type" : "VEC2"
         },
         {
             "bufferView" : 4,
             "componentType" : 5123,
-            "count" : 1506,
+            "count" : 1509,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 17472,
+            "byteLength" : 17556,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 17472,
-            "byteOffset" : 17472,
+            "byteLength" : 17556,
+            "byteOffset" : 17556,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 11648,
-            "byteOffset" : 34944,
+            "byteLength" : 11704,
+            "byteOffset" : 35112,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 11648,
-            "byteOffset" : 46592,
+            "byteLength" : 11704,
+            "byteOffset" : 46816,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 3012,
-            "byteOffset" : 58240,
+            "byteLength" : 3018,
+            "byteOffset" : 58520,
             "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 61252,
+            "byteLength" : 61540,
             "uri" : "LUpConnector_Col.bin"
         }
     ]
