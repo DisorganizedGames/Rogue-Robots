@@ -90,6 +90,8 @@ target_compile_options("${LibraryName}" PRIVATE "/W4")
 set_target_properties("${LibraryName}" PROPERTIES LINKER_LANGUAGE "CXX")
 target_link_libraries("${LibraryName}" PRIVATE "xaudio2" "ole32" "d3d12" "d3d11" "D2d1" "Dwrite" "dxgi" "dxguid" "dxcompiler" "Ws2_32" "winmm" "Windowscodecs")
 
+target_compile_definitions("${LibraryName}" PUBLIC $<$<CONFIG:RelWithDebInfo>:RELWITHDEBUGINFO>)
+
 target_precompile_headers("${LibraryName}" PUBLIC "src/pch.h")
 
 ##### Section for linking external libraries #####

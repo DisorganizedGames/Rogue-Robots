@@ -12,7 +12,7 @@ namespace DOG
 		virtual void EarlyUpdate() noexcept {}
 		virtual void Update() noexcept {}
 		virtual void LateUpdate() noexcept {}
-#if defined _DEBUG
+#if defined _DEBUG | defined RELWITHDEBUGINFO
 		[[nodiscard]] virtual std::string_view GetName() const = 0;
 		[[nodiscard]] virtual SystemType GetType() const noexcept = 0;
 #endif
