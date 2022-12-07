@@ -241,6 +241,17 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 	{
 		SaveRuntimeSettings(appSpec, path);
 	}
+
+
+		// For extern test we force vsync and fullscreen at startup
+		appSpec.graphicsSettings.vSync = true;
+#ifndef RELWITHDEBUGINFO
+	#ifdef NDEBUG
+		appSpec.graphicsSettings.windowMode = WindowMode::FullScreen;
+	#endif
+#endif // !RELWITHDEBUGINFO
+
+
 	return appSpec;
 }
 
