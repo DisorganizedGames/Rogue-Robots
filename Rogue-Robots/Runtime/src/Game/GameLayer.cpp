@@ -367,10 +367,6 @@ void GameLayer::OnUpdate()
 			break;
 		}
 
-	
-	LuaGlobal* global = LuaMain::GetGlobal();
-	global->SetNumber("DeltaTime", Time::DeltaTime());
-	global->SetNumber("ElapsedTime", Time::ElapsedTime());
 }
 
 void GameLayer::StartMainScene()
