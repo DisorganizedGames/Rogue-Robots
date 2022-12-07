@@ -222,10 +222,104 @@ void AgentGetPathSystem::OnEarlyUpdate(entity e, BTGetPathComponent&, AgentSeekP
 *				Regular Systems
 ***************************************************/
 
-
 void AgentAttackSystem::OnUpdate(entity e, BTAttackComponent&, BehaviorTreeComponent& btc, 
 	AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
 {
+	if (seek.HasTarget() && attack.Ready()
+		&& seek.distanceToPlayer <= 1.5f)	// TODO: hard coded - change to dynamic
+	{
+		PlayerManager::Get().HurtIfThisPlayer(seek.entityID, attack.damage, e);
+
+		// Reset cooldown
+		attack.timeOfLast = Time::ElapsedTime();
+
+		LEAF(btc.currentRunningNode)->Succeed(e);
+	}
+	else
+		LEAF(btc.currentRunningNode)->Fail(e);
+}
+
+void AgentJumpAtPlayerSystem::OnUpdate(entity e, BTJumpAtPlayerComponent&, BehaviorTreeComponent& btc,
+	AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
+{
+	if (seek.HasTarget() && attack.Ready()
+		&& 1.5f < seek.distanceToPlayer && seek.distanceToPlayer < 7.f)  // TODO: hard coded - change to dynamic
+	{
+		EntityManager& em = EntityManager::Get();
+		AgentMovementComponent& movement = em.GetComponent<AgentMovementComponent>(e);
+		RigidbodyComponent& rb = em.GetComponent<RigidbodyComponent>(e);
+		TransformComponent& trans = em.GetComponent<TransformComponent>(e);
+		Vector3 agentPos = trans.GetPosition();
+		Vector3 playerPos = em.GetComponent<TransformComponent>(seek.entityID).GetPosition();
+		movement.forward = playerPos - agentPos;
+		movement.forward.Normalize();
+
+		Vector3 up = Vector3::Up;
+		Vector3 right = up.Cross(movement.forward);
+
+		right.Normalize();
+		up = movement.forward.Cross(right);
+
+		DirectX::SimpleMath::Matrix r(right, up, movement.forward);
+		trans.SetRotation(r);
+
+
+		constexpr f32 SKID_FACTOR = 0.1f;
+		movement.forward += rb.linearVelocity * SKID_FACTOR;
+		movement.forward.Normalize();
+		movement.forward *= movement.currentSpeed;
+		rb.linearVelocity = movement.forward;
+
+		LEAF(btc.currentRunningNode)->Succeed(e);
+	}
+	else
+		LEAF(btc.currentRunningNode)->Fail(e);
+}
+
+void AgentPullBackSystem::OnUpdate(entity e, BTPullBackComponent&, BehaviorTreeComponent& btc,
+	AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
+{
+	if (seek.HasTarget() && !attack.Ready()
+		&& seek.distanceToPlayer < 7.f)  // TODO: hard coded - change to dynamic
+	{
+		EntityManager& em = EntityManager::Get();
+		AgentMovementComponent& movement = em.GetComponent<AgentMovementComponent>(e);
+		RigidbodyComponent& rb = em.GetComponent<RigidbodyComponent>(e);
+		TransformComponent& trans = em.GetComponent<TransformComponent>(e);
+		Vector3 agentPos = trans.GetPosition();
+		Vector3 playerPos = em.GetComponent<TransformComponent>(seek.entityID).GetPosition();
+		movement.forward = playerPos - agentPos;
+		movement.forward.Normalize();
+
+		Vector3 up = Vector3::Up;
+		Vector3 right = up.Cross(movement.forward);
+
+		right.Normalize();
+		up = movement.forward.Cross(right);
+
+		DirectX::SimpleMath::Matrix r(right, up, movement.forward);
+		trans.SetRotation(r);
+
+
+		constexpr f32 SKID_FACTOR = 0.1f;
+		movement.forward += rb.linearVelocity * SKID_FACTOR;
+		movement.forward.Normalize();
+		movement.forward *= movement.currentSpeed;
+		Vector3 back = movement.forward;
+		back.x *= -1;
+		back.z *= -1;
+		rb.linearVelocity = back;
+
+		LEAF(btc.currentRunningNode)->Succeed(e);
+	}
+	else
+		LEAF(btc.currentRunningNode)->Fail(e);
+}
+
+void AgentDodgeSystem::OnUpdate(entity e, BTDodgeComponent&, BehaviorTreeComponent& btc,
+	AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
+{
+	if (seek.HasTarget() && seek.distanceToPlayer <= attack.radius && attack.Ready())
 	if (seek.HasTarget() && seek.distanceToPlayer <= attack.radius && attack.Ready())
 	{
 		PlayerManager::Get().HurtIfThisPlayer(seek.entityID, attack.damage, e);
@@ -431,9 +525,11 @@ void AgentAggroSystem::OnUpdate(entity e, BTAggroComponent&, AgentAggroComponent
 			[&](entity o, AgentIdComponent& other)
 			{
 				u32 otherGroup = am.GroupID(other.id);
-				if (myGroup == otherGroup && !em.HasComponent<AgentAggroComponent>(o))
+				if (myGroup == otherGroup && !em.HasComponent<AgentAlertComponent>(o))
 				{
-					em.AddComponent<AgentAggroComponent>(o);
+					em.AddComponent<AgentAlertComponent>(o);
+					if (!em.HasComponent<AgentAggroComponent>(o))
+						em.AddComponent<AgentAggroComponent>(o);
 					if (!em.HasComponent<PathFindingSync>(o))
 					{
 						em.AddComponent<PathFindingSync>(o).id = EntityManager::Get().GetComponent<AgentIdComponent>(o);
@@ -459,12 +555,12 @@ void AgentAggroSystem::OnUpdate(entity e, BTAggroComponent&, AgentAggroComponent
 
 
 void AgentMovementSystem::OnLateUpdate(entity e, BTMoveToPlayerComponent&, BehaviorTreeComponent& btc, 
-	AgentMovementComponent& movement, PathfinderWalkComponent& pfc, 
+	AgentMovementComponent& movement, AgentSeekPlayerComponent& seek, PathfinderWalkComponent& pfc, 
 	RigidbodyComponent& rb, TransformComponent& trans)
 {
 	if (pfc.path.size() == 0)
 		LEAF(btc.currentRunningNode)->Fail(e);
-	else
+	else if (seek.entityID != NULL_ENTITY && 5.0f < seek.distanceToPlayer)	// TODO: hardcoded 5 for now - change to dynamic value
 	{
 		movement.forward = pfc.path[0] - trans.GetPosition();
 		movement.forward.y = 0.0f;
@@ -495,6 +591,20 @@ void AgentMovementSystem::OnLateUpdate(entity e, BTMoveToPlayerComponent&, Behav
 		rb.linearVelocity.z = movement.forward.z;
 
 		LEAF(btc.currentRunningNode)->Succeed(e);
+	}
+	else
+	{
+		constexpr Vector3 DEACCELERATE{ .3f, 1.f, .3f };
+		constexpr f32 THRESHOLD = 0.3f;
+
+		// stop or reduce speed
+		if (rb.linearVelocity.x + rb.linearVelocity.z < THRESHOLD)
+		{
+			rb.linearVelocity.x = 0;
+			rb.linearVelocity.z = 0;
+		}
+		else
+			rb.linearVelocity *= DEACCELERATE;
 	}
 }
 

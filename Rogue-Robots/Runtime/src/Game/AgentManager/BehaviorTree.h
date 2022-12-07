@@ -16,6 +16,21 @@ struct BTAttackComponent
 	//ID
 };
 
+struct BTJumpAtPlayerComponent
+{
+	//ID
+};
+
+struct BTPullBackComponent
+{
+	//ID
+};
+
+struct BTDodgeComponent
+{
+	//ID
+};
+
 struct BTMoveToPlayerComponent
 {
 	//ID
@@ -244,6 +259,37 @@ class GetPathNode : public Leaf
 public:
 	GetPathNode(const std::string& name) noexcept;
 	virtual ~GetPathNode() noexcept override final = default;
+	virtual void Process(DOG::entity agent) noexcept override final;
+	virtual void Succeed(DOG::entity agent) noexcept override final;
+	virtual void Fail(DOG::entity agent) noexcept override final;
+};
+
+
+class JumpAtPlayerNode : public Leaf
+{
+public:
+	JumpAtPlayerNode(const std::string& name) noexcept;
+	virtual ~JumpAtPlayerNode() noexcept override final = default;
+	virtual void Process(DOG::entity agent) noexcept override final;
+	virtual void Succeed(DOG::entity agent) noexcept override final;
+	virtual void Fail(DOG::entity agent) noexcept override final;
+};
+
+class PullBackNode : public Leaf
+{
+public:
+	PullBackNode(const std::string& name) noexcept;
+	virtual ~PullBackNode() noexcept override final = default;
+	virtual void Process(DOG::entity agent) noexcept override final;
+	virtual void Succeed(DOG::entity agent) noexcept override final;
+	virtual void Fail(DOG::entity agent) noexcept override final;
+};
+
+class DodgeNode : public Leaf
+{
+public:
+	DodgeNode(const std::string& name) noexcept;
+	virtual ~DodgeNode() noexcept override final = default;
 	virtual void Process(DOG::entity agent) noexcept override final;
 	virtual void Succeed(DOG::entity agent) noexcept override final;
 	virtual void Fail(DOG::entity agent) noexcept override final;

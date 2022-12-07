@@ -112,9 +112,9 @@ AgentManager::AgentStats AgentManager::GetAgentStats(EntityTypes type)
 	case EntityTypes::Scorpio:
 	{
 		AgentStats scorpio{};
-		scorpio.visionDistance = 8.0;
+		scorpio.visionDistance = 15.0;
 		scorpio.visionConeDotValue = 0.35f;
-		scorpio.lidarDistance = 3.0f;
+		scorpio.lidarDistance = 5.0f;
 		scorpio.baseSpeed = 10.0f;
 		return scorpio;
 	}
@@ -155,7 +155,11 @@ void AgentManager::Initialize()
 	// Register agent systems
 	em.RegisterSystem(std::make_unique<AgentHitDetectionSystem>());
 	em.RegisterSystem(std::make_unique<AgentAggroSystem>());
+
 	em.RegisterSystem(std::make_unique<AgentAttackSystem>());
+	em.RegisterSystem(std::make_unique<AgentJumpAtPlayerSystem>());
+	em.RegisterSystem(std::make_unique<AgentPullBackSystem>());
+	em.RegisterSystem(std::make_unique<AgentDodgeSystem>());
 	
 	em.RegisterSystem(std::make_unique<AgentHitSystem>());
 
@@ -310,27 +314,40 @@ void AgentManager::DestroyLocalAgent(entity e, bool local)
 
 void AgentManager::CreateScorpioBehaviourTree(DOG::entity agent) noexcept
 {
+	// BehaviorTree root
 	std::shared_ptr<Selector> rootSelector = std::move(std::make_shared<Selector>("RootSelector"));
+
+	// Attack or move towards player
+	std::shared_ptr<Sequence> seekAndDestroySequence = std::move(std::make_shared<Sequence>("SeekAndDestroySequence"));
 	std::shared_ptr<Selector> attackOrMoveToPlayerSelector = std::move(std::make_shared<Selector>("attackOrMoveToPlayerSelector"));
-	attackOrMoveToPlayerSelector->AddChild(std::make_shared<AttackNode>("AttackNode"));
+
+	// Attack behavior
+	std::shared_ptr<Selector> attackSelector = std::move(std::make_shared<Selector>("AttackSelector"));
+	attackSelector->AddChild(std::make_shared<AttackNode>("AttackNode"));
+	attackSelector->AddChild(std::make_shared<JumpAtPlayerNode>("JumpAtPlayerNode"));
+	attackSelector->AddChild(std::make_shared<PullBackNode>("PullBackNode"));
+	attackOrMoveToPlayerSelector->AddChild(std::move(attackSelector));
+
+	// Move towards player
 	attackOrMoveToPlayerSelector->AddChild(std::make_shared<MoveToPlayerNode>("MoveToPlayerNode"));
 
-	std::shared_ptr<Sequence> seekAndDestroySequence = std::move(std::make_shared<Sequence>("SeekAndDestroySequence"));
-	std::shared_ptr<Succeeder> seekAndDestroySucceeder = std::move(std::make_shared<Succeeder>("SeekAndDestroySucceeder"));
-	seekAndDestroySucceeder->AddChild(std::make_shared<SignalGroupNode>("SignalGroupNode"));
+	// Alert group
+	std::shared_ptr<Succeeder> signalGroupSucceeder = std::move(std::make_shared<Succeeder>("SignalGroupSucceeder"));
+	signalGroupSucceeder->AddChild(std::make_shared<SignalGroupNode>("SignalGroupNode"));
 
+	// Detection phase (more aggressive if alert)
 	std::shared_ptr<Selector> detectHitOrPlayerSelector = std::move(std::make_shared<Selector>("detectHitOrPlayerSelector"));
 	std::shared_ptr<Sequence> detectPlayerSequence = std::move(std::make_shared<Sequence>("DetectPlayerSequence"));
-
 	std::shared_ptr<Selector> detectOrAlertSelector = std::move(std::make_shared<Selector>("DetectOrAlertSelector"));
 	std::shared_ptr<Succeeder> lineOfSightToPlayerSucceeder = std::move(std::make_shared<Succeeder>("LineOfSightToPlayerSucceeder"));
-
+	// Check distance to each player
 	detectOrAlertSelector->AddChild(std::make_shared<DistanceToPlayerNode>("DistanceToPlayerNode"));
+	// More aggressive detection if alert
 	detectOrAlertSelector->AddChild(std::make_shared<IsAlertNode>("IsAlertNode"));
+	// Check line of sight to relevant players
 	lineOfSightToPlayerSucceeder->AddChild(std::make_shared<LineOfSightToPlayerNode>("LineOfSightToPlayerNode"));
 	detectPlayerSequence->AddChild(std::move(detectOrAlertSelector));
 	detectPlayerSequence->AddChild(std::move(lineOfSightToPlayerSucceeder));
-
 
 	detectHitOrPlayerSelector->AddChild(std::make_shared<DetectHitNode>("DetectHitNode"));
 	detectHitOrPlayerSelector->AddChild(std::make_shared<DetectPlayerNode>("DetectPlayerNode"));
@@ -338,15 +355,22 @@ void AgentManager::CreateScorpioBehaviourTree(DOG::entity agent) noexcept
 
 	rootSelector->AddChild(seekAndDestroySequence);
 	seekAndDestroySequence->AddChild(std::move(detectPlayerSequence));
+
+	// Get path from Pathfinder
 	seekAndDestroySequence->AddChild(std::make_shared<GetPathNode>("GetPathNode"));
-	seekAndDestroySequence->AddChild(std::move(seekAndDestroySucceeder));
+
+	seekAndDestroySequence->AddChild(std::move(signalGroupSucceeder));
+
+
 
 	seekAndDestroySequence->AddChild(std::move(attackOrMoveToPlayerSelector));
 
+	// Add tree to component
 	auto& btc = DOG::EntityManager::Get().AddComponent<BehaviorTreeComponent>(agent);
 	btc.rootNode = std::move(std::make_unique<Root>("ScorpioRootNode"));
 	btc.rootNode->AddChild(std::move(rootSelector));
 	btc.currentRunningNode = btc.rootNode.get();
 
-	//BehaviorTree::ToGraphViz(btc.rootNode.get(), "BehaviorTree_Scorpio.dot");
+	// Write tree to file
+	BehaviorTree::ToGraphViz(btc.rootNode.get(), "BehaviorTree_Scorpio.dot");
 }

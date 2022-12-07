@@ -77,6 +77,39 @@ public:
 		AgentAttackComponent& attack, AgentSeekPlayerComponent& seek);
 };
 
+class AgentJumpAtPlayerSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	using Matrix = DirectX::SimpleMath::Matrix;
+public:
+	SYSTEM_CLASS(BTJumpAtPlayerComponent, BehaviorTreeComponent, AgentAttackComponent, AgentSeekPlayerComponent);
+	ON_UPDATE_ID(BTJumpAtPlayerComponent, BehaviorTreeComponent, AgentAttackComponent, AgentSeekPlayerComponent);
+	void OnUpdate(DOG::entity e, BTJumpAtPlayerComponent&, BehaviorTreeComponent& btc,
+		AgentAttackComponent& attack, AgentSeekPlayerComponent& seek);
+};
+
+class AgentPullBackSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	using Matrix = DirectX::SimpleMath::Matrix;
+public:
+	SYSTEM_CLASS(BTPullBackComponent, BehaviorTreeComponent, AgentAttackComponent, AgentSeekPlayerComponent);
+	ON_UPDATE_ID(BTPullBackComponent, BehaviorTreeComponent, AgentAttackComponent, AgentSeekPlayerComponent);
+	void OnUpdate(DOG::entity e, BTPullBackComponent&, BehaviorTreeComponent& btc,
+		AgentAttackComponent& attack, AgentSeekPlayerComponent& seek);
+};
+
+class AgentDodgeSystem : public DOG::ISystem
+{
+	using Vector3 = DirectX::SimpleMath::Vector3;
+	using Matrix = DirectX::SimpleMath::Matrix;
+public:
+	SYSTEM_CLASS(BTDodgeComponent, BehaviorTreeComponent, AgentAttackComponent, AgentSeekPlayerComponent);
+	ON_UPDATE_ID(BTDodgeComponent, BehaviorTreeComponent, AgentAttackComponent, AgentSeekPlayerComponent);
+	void OnUpdate(DOG::entity e, BTDodgeComponent&, BehaviorTreeComponent& btc,
+		AgentAttackComponent& attack, AgentSeekPlayerComponent& seek);
+};
+
 class AgentAggroSystem : public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
@@ -144,10 +177,10 @@ class AgentMovementSystem : public DOG::ISystem
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
 public:
-	SYSTEM_CLASS(BTMoveToPlayerComponent, BehaviorTreeComponent, AgentMovementComponent, PathfinderWalkComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
-	ON_LATE_UPDATE_ID(BTMoveToPlayerComponent, BehaviorTreeComponent, AgentMovementComponent, PathfinderWalkComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
+	SYSTEM_CLASS(BTMoveToPlayerComponent, BehaviorTreeComponent, AgentMovementComponent, AgentSeekPlayerComponent, PathfinderWalkComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
+	ON_LATE_UPDATE_ID(BTMoveToPlayerComponent, BehaviorTreeComponent, AgentMovementComponent, AgentSeekPlayerComponent, PathfinderWalkComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
 	void OnLateUpdate(DOG::entity e, BTMoveToPlayerComponent&, BehaviorTreeComponent& btc, 
-		AgentMovementComponent& movement, PathfinderWalkComponent& pfc,
+		AgentMovementComponent& movement, AgentSeekPlayerComponent& seek, PathfinderWalkComponent& pfc,
 		DOG::RigidbodyComponent& rb, DOG::TransformComponent& trans);
 };
 
