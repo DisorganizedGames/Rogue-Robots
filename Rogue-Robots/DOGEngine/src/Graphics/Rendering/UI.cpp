@@ -15,10 +15,10 @@ UINT menuBackID, optionsBackID, multiBackID, hostBackID, creditsBackID;
 UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID, lWinTextID, lredScoreID, lblueScoreID, lgreenScoreID, lyellowScoreID, lredScoreWinID, lblueScoreWinID, lgreenScoreWinID, lyellowScoreWinID;
 UINT lNamesCreditsID, lTheTeamID, lFiverrArtistsID, lFiverrArtistsTextID, lIconsCreditsID, lIconsCreditsTextID, lMusicID, lMusicTextID;
 UINT bcID, credbackID;
-UINT cID, tID, hID, playerlistID;
+UINT cID, tID, hID;
 UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID, lActiveItemTextID, flashlightID, glowstickID; //Icons.
 UINT buffID;
-UINT playerListID;
+UINT playerListID, playerListJoinID;
 
 std::vector<bool> buffsVisible;
 std::vector<UINT> m_stacks;
@@ -860,10 +860,6 @@ void DOG::UIBuffTracker::DeactivateIcon(UINT index)
 
 DOG::UIPlayerList::UIPlayerList(DOG::gfx::D2DBackend_DX12& d2d, UINT id) : UIElement(id)
 {
-   m_players.push_back(L"player 1");
-
-   m_playerColours.push_back(D2D1::ColorF(D2D1::ColorF::Red, 0.3f));
-
    m_screensize = d2d.GetRTPixelSize();
    HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.3f), &m_rectBrush);
    HR_VFY(hr);
@@ -931,6 +927,13 @@ void DOG::UIPlayerList::RemovePlayer(const std::wstring name)
          return;
       }
    }
+}
+
+void DOG::UIPlayerList::Reset()
+{
+    m_players.clear();
+    m_playerColours.clear();
+    return;
 }
 
 DOG::UILabel::UILabel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring text, float x, float y, float width, float height, float size) : UIElement(id)
@@ -1302,6 +1305,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto labelButtonTextActiveItem = instance->Create<DOG::UILabel>(lActiveItemTextID, std::wstring(L"G"), 315.0f, (FLOAT)clientHeight - 90.0f, 50.f, 50.f, 40.f);
    //player list
    auto playerList = instance->Create<DOG::UIPlayerList>(playerListID);
+   auto playerListJoin = instance->Create<DOG::UIPlayerList>(playerListJoinID);
 
    std::vector<std::wstring> vec = { L"Assets/Sprites/MaxHP.bmp" , L"Assets/Sprites/MoveSpeed.bmp" , L"Assets/Sprites/JumpBoost.bmp" };
    auto pic = instance->Create<DOG::UIBuffTracker, std::vector<std::wstring>>(buffID, vec);
@@ -1354,7 +1358,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(WinScreenID, std::move(lgreenScoreWin));
    instance->AddUIElementToScene(WinScreenID, std::move(lyellowScoreWin));
    instance->AddUIElementToScene(lobbyID, std::move(playerList));
-
+   instance->AddUIElementToScene(WaitingForHostID, std::move(playerListJoin));
    instance->AddUIElementToScene(gameID, std::move(labelButtonTextActiveItem));
 
    //Splash screen

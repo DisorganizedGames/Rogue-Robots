@@ -798,6 +798,8 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 //Lobby
 void HostButtonFunc(void)
 {	
+	UI::Get()->GetUI<DOG::UIPlayerList>(playerListID)->Reset();
+
 	bool succes = true;
 	int roomId = 0;
 	
@@ -949,6 +951,7 @@ void HostButtonFunc(void)
 
 void JoinButton(void)
 {
+	UI::Get()->GetUI<DOG::UIPlayerList>(playerListJoinID)->Reset();
 	DOG::UI::Get()->ChangeUIscene(joinID);
 }
 
@@ -1271,6 +1274,64 @@ void GameLayer::UpdateLobby()
 		case NetworkStatus::Hosting:
 		{
 			NetCode::Get().SetLobbyStatus(true);
+
+			//Go through the players and see if they are connected or not to update the playerlist UI.
+			LobbyData lobbyData = NetCode::Get().GetLobbyData();
+			for (uint32_t i{ 0u }; i < MAX_PLAYER_COUNT; ++i)
+			{
+				//If the player's connection status is not the same as last frame.
+				if (lobbyData.playersSlotConnected[i] != m_connectedPlayersLobby[i])
+				{
+					if (lobbyData.playersSlotConnected[i]) //If the player connected.
+					{
+						float color[3] = { 0.0f, 0.0f, 0.0f };
+						switch (i)
+						{
+						case 0:
+						{
+							color[0] = 1.0f;
+							color[1] = 0.0f;
+							color[2] = 0.0f;
+							break;
+						}
+						case 1:
+						{
+							color[0] = 0.0f;
+							color[1] = 0.0f;
+							color[2] = 1.0f;
+							break;
+						}
+						case 2:
+						{
+							color[0] = 0.0f;
+							color[1] = 1.0f;
+							color[2] = 0.0f;
+							break;
+						}
+						case 3:
+						{
+							color[0] = 1.0f;
+							color[1] = 1.0f;
+							color[2] = 0.0f;
+							break;
+						}
+						default:
+						{
+							break;
+						}
+						}
+
+						UI::Get()->GetUI<DOG::UIPlayerList>(playerListID)->AddPlayer(color[0], color[1], color[2], std::wstring(L"Player " + std::to_wstring(i + 1u)));
+					}
+					else //If the player disconnected.
+					{
+						UI::Get()->GetUI<DOG::UIPlayerList>(playerListID)->RemovePlayer(std::wstring(L"Player " + std::to_wstring(i + 1u)));
+					}
+
+					m_connectedPlayersLobby[i] = lobbyData.playersSlotConnected[i];
+				}
+			}
+
 			char ip[64];
 			strcpy_s(ip, NetCode::Get().GetIpAdress().c_str());
 			ImGui::Text("Nr of players connected: %d", NetCode::Get().GetNrOfPlayers());
@@ -1290,6 +1351,63 @@ void GameLayer::UpdateLobby()
 		}
 		case NetworkStatus::Joining:
 		{
+			//Go through the players and see if they are connected or not to update the playerlist UI.
+			LobbyData lobbyData = NetCode::Get().GetLobbyData();
+			for (uint32_t i{ 0u }; i < MAX_PLAYER_COUNT; ++i)
+			{
+				//If the player's connection status is not the same as last frame.
+				if (lobbyData.playersSlotConnected[i] != m_connectedPlayersLobby[i])
+				{
+					if (lobbyData.playersSlotConnected[i]) //If the player connected.
+					{
+						float color[3] = { 0.0f, 0.0f, 0.0f };
+						switch (i)
+						{
+						case 0:
+						{
+							color[0] = 1.0f;
+							color[1] = 0.0f;
+							color[2] = 0.0f;
+							break;
+						}
+						case 1:
+						{
+							color[0] = 0.0f;
+							color[1] = 0.0f;
+							color[2] = 1.0f;
+							break;
+						}
+						case 2:
+						{
+							color[0] = 0.0f;
+							color[1] = 1.0f;
+							color[2] = 0.0f;
+							break;
+						}
+						case 3:
+						{
+							color[0] = 1.0f;
+							color[1] = 1.0f;
+							color[2] = 0.0f;
+							break;
+						}
+						default:
+						{
+							break;
+						}
+						}
+
+						UI::Get()->GetUI<DOG::UIPlayerList>(playerListJoinID)->AddPlayer(color[0], color[1], color[2], std::wstring(L"Player " + std::to_wstring(i + 1u)));
+					}
+					else //If the player disconnected.
+					{
+						UI::Get()->GetUI<DOG::UIPlayerList>(playerListJoinID)->RemovePlayer(std::wstring(L"Player " + std::to_wstring(i + 1u)));
+					}
+
+					m_connectedPlayersLobby[i] = lobbyData.playersSlotConnected[i];
+				}
+			}
+
 			auto text2 = DOG::UI::Get()->GetUI<UILabel>(l6ID);
 			text2->SetText(std::wstring(L"Nr of players connected: ") + std::to_wstring(NetCode::Get().GetNrOfPlayers()));
 			m_nrOfPlayers = NetCode::Get().GetNrOfPlayers();
