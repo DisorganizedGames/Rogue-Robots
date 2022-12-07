@@ -40,9 +40,9 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 	AddEntities(AddFlashlightsToPlayers(players));
 
 	//Spawn enemies and items
-	uint32_t enemySpawnRarity = std::ceil(5.0f / m_nrOfPlayers); //Spawns enemies once every X blocks.
+	uint32_t enemySpawnRarity = static_cast<uint32_t>(std::ceil(5.0f / m_nrOfPlayers)); //Spawns enemies once every X blocks.
 	uint32_t maxEnemiesPerSpawn = 3u; //Max amount of enemies per spawn.
-	uint32_t itemSpawnModifier = std::ceil(4.0f / m_nrOfPlayers); //Increase this to lower spawnrate of items.
+	uint32_t itemSpawnModifier = static_cast<uint32_t>(std::ceil(4.0f / m_nrOfPlayers)); //Increase this to lower spawnrate of items.
 
 	//Collect all floor blocks.
 	uint32_t enemyCounter = 0u;
