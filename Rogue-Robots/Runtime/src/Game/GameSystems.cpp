@@ -660,7 +660,7 @@ void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity pla
 				//std::cout << "deadPlayer" << playerToDraw << std::endl;
 				
 				//This means that playerModel is the mesh model (suit), and it should be rendered again:
-				em.RemoveComponentIfExist<DOG::DontDraw>(playerModel);
+				em.RemoveComponentIfExists<DOG::DontDraw>(playerModel);
 				#if defined _DEBUG
 				addedSuitToRendering = true;
 				#endif
