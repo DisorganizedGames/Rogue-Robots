@@ -446,7 +446,7 @@ void NetCode::ReceiveDataTcp()
 								memcpy(tempTransfrom, m_receiveBuffer + m_bufferReceiveSize + sizeof(NetworkTransform) * i, sizeof(NetworkTransform));
 								if (idC.id == tempTransfrom->objectId)
 								{
-									if (DirectX::SimpleMath::Vector3(transC.GetPosition() - tempTransfrom->position).Length() / rC.capsuleRadius > rC.capsuleRadius)
+									if (DirectX::SimpleMath::Vector3(transC.GetPosition() - tempTransfrom->position).Length() / rC.capsuleRadius > (rC.capsuleRadius*2))
 										transC.SetPosition(tempTransfrom->position);
 								}
 
