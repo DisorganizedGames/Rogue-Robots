@@ -278,6 +278,11 @@ namespace DOG
 		entity entities[maxCount] = { NULL_ENTITY };
 		DirectX::SimpleMath::Vector3 normal[maxCount]{};
 	};
+
+	struct OutlineBabyComponent
+	{
+		entity child{ 0 };
+	};
 	
 	struct ShadowReceiverComponent
 	{

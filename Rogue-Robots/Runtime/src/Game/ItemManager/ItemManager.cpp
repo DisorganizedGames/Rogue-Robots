@@ -331,6 +331,7 @@ u32 ItemManager::CreateTurretPickup(Vector3 position, u32 id)
 	s_entityManager.AddComponent<ModelComponent>(turretPickUpEntity, turretBaseModelID);
 	s_entityManager.AddComponent<TransformComponent>(turretPickUpEntity, position).SetScale({ 0.4f, 0.4f, 0.4f });
 	s_entityManager.AddComponent<ShadowReceiverComponent>(turretPickUpEntity);
+	
 	auto& ni = s_entityManager.AddComponent<NetworkId>(turretPickUpEntity);
 	ni.entityTypeId = EntityTypes::Turret;
 	if (id == 0)
@@ -348,6 +349,9 @@ u32 ItemManager::CreateTurretPickup(Vector3 position, u32 id)
 	lerpAnimator.currentOrigin = lerpAnimator.baseOrigin;
 
 	entity turretHeadpEntity = s_entityManager.CreateEntity();
+
+	s_entityManager.AddComponent<OutlineBabyComponent>(turretPickUpEntity).child = turretHeadpEntity;
+
 	s_entityManager.AddComponent<ModelComponent>(turretHeadpEntity, turretHeadModelID);
 	s_entityManager.AddComponent<TransformComponent>(turretHeadpEntity);
 	s_entityManager.AddComponent<ShadowReceiverComponent>(turretHeadpEntity);
