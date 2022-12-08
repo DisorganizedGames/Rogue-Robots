@@ -39,6 +39,8 @@ namespace DOG::gfx
 		GPUDynamicConstant ret{};
 		ret.memory = mem;
 
+		assert(mem != nullptr);
+
 
 		// Allocate rest
 		u8* valid{ nullptr };
