@@ -84,10 +84,7 @@ namespace DOG
 	{
 		bool dontDraw = true;
 	};
-	struct TmpComponent
-	{
-
-	};
+	
 	struct MixamoHeadJointTF
 	{
 		DirectX::SimpleMath::Matrix transform = DirectX::SimpleMath::Matrix::Identity;

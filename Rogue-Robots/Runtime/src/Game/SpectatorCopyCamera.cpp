@@ -25,32 +25,23 @@ void SpectatorCopyCamera::OnUpdate(entity e, PlayerControllerComponent& player)
 		{
 			if (childToBone.boneParent == playerBeingSpectated)
 			{
-				//std::cout << " childToBone.boneParent == playerBeingSpectated " << playerBeingSpectated << std::endl;
-				if (EntityManager::Get().HasComponent<PlayerAliveComponent>(playerBeingSpectated))
+				if (EntityManager::Get().HasComponent<PlayerAliveComponent>(playerBeingSpectated) &&
+					EntityManager::Get().HasComponent<DontDraw>(gunModelNotFPS) &&
+					EntityManager::Get().HasComponent<ScriptComponent>(playerBeingSpectated))
 				{
-					//std::cout << " playerBeingSpectated is alive " << playerBeingSpectated << std::endl;
-					if (EntityManager::Get().HasComponent<DontDraw>(gunModelNotFPS))
-					{
-						//std::cout << " GunModel has DontDraw " << playerBeingSpectated << std::endl;
-						if (EntityManager::Get().HasComponent<ScriptComponent>(playerBeingSpectated))
-						{
-							//std::cout << " spectatedPlayer has script " << playerBeingSpectated << std::endl;
-							auto scriptData = LuaMain::GetScriptManager()->GetScript(playerBeingSpectated, "Gun.lua");
-							LuaTable tab(scriptData.scriptTable, true);
-							auto ge = tab.GetTableFromTable("gunEntity");
+					auto scriptData = LuaMain::GetScriptManager()->GetScript(playerBeingSpectated, "Gun.lua");
+					LuaTable tab(scriptData.scriptTable, true);
+					auto ge = tab.GetTableFromTable("gunEntity");
 		
-							int gunID = ge.GetIntFromTable("entityID");
-							int barrelID = tab.GetIntFromTable("barrelEntityID");
-							int miscID = tab.GetIntFromTable("miscEntityID");
-							int magazineID = tab.GetIntFromTable("magazineEntityID");
+					int gunID = ge.GetIntFromTable("entityID");
+					int barrelID = tab.GetIntFromTable("barrelEntityID");
+					int miscID = tab.GetIntFromTable("miscEntityID");
+					int magazineID = tab.GetIntFromTable("magazineEntityID");
 		
-							//std::cout << "DRAW FPS GUN" << playerBeingSpectated << std::endl;
-							EntityManager::Get().RemoveComponentIfExists<DontDraw>(gunID);
-							EntityManager::Get().RemoveComponentIfExists<DontDraw>(barrelID);
-							EntityManager::Get().RemoveComponentIfExists<DontDraw>(miscID);
-							EntityManager::Get().RemoveComponentIfExists<DontDraw>(magazineID);
-						}
-					}
+					EntityManager::Get().RemoveComponentIfExists<DontDraw>(gunID);
+					EntityManager::Get().RemoveComponentIfExists<DontDraw>(barrelID);
+					EntityManager::Get().RemoveComponentIfExists<DontDraw>(miscID);
+					EntityManager::Get().RemoveComponentIfExists<DontDraw>(magazineID);
 				}
 			}
 		});

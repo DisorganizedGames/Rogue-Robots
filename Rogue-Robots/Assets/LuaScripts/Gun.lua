@@ -171,8 +171,8 @@ function OnUpdate()
 		local shoot = Entity:GetAction(EntityID, "Shoot")
 		local dir = Vector3.FromTable(Entity:GetRight(gunEntity.entityID))
 		dir = Norm(dir)
-		local laserStart = GetPositionToSpawn(cameraEntity, -0.2, 0.2, 0.05)
-		--local laserStart = GetPositionToSpawn(cameraEntity, -0.175, 0.31, 0.05)
+
+		local laserStart = GetPositionToSpawn(cameraEntity, -0.175, 0.31, 0.05)
 		laserStart = laserStart + dir * 0.8
 		local color = Vector3.New(1.5, 0.1, 0.1) * 7
 		if magazineComponent:GetECSType() == 1 then

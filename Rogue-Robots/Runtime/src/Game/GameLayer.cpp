@@ -80,7 +80,6 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PickupLerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PickupItemInteractionSystem>());
-	//m_entityManager.RegisterSystem(std::make_unique<PlayerMovementSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerJumpRefreshSystem>());
 
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
@@ -88,7 +87,6 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<PickUpTranslateToPlayerSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderAmmunitionTextSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderReloadHintTextSystem>());
-	//m_entityManager.RegisterSystem(std::make_unique<RenderMiscComponentText>());
 	m_entityManager.RegisterSystem(std::make_unique<CleanupItemInteractionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<CleanupPlayerStateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerHit>());
@@ -552,8 +550,6 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 		auto& stats = m_entityManager.GetComponent<PlayerStatsComponent>(e);
 		stats.health = stats.maxHealth;
 	}
-
-	//m_entityManager.GetComponent<AnimationComponent>(e).SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::Looping | AnimationFlag::ResetPrio | AnimationFlag::Interrupt, BASE_PRIORITY, fullBodyGroup, 1.5f, 0.25f);
 
 	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
 	m_entityManager.DeferredEntityDestruction(controller.debugCamera);

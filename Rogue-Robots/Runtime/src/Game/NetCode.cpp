@@ -65,23 +65,6 @@ void NetCode::OnStartup()
 				m_entityManager.AddComponent<OnlinePlayer>(id);
 				m_entityManager.RemoveComponent<ThisPlayer>(id);
 
-				//LuaMain::GetScriptManager()->RemoveScript(id, "Gun.lua");
-				/*auto scriptData = LuaMain::GetScriptManager()->GetScript(id, "Gun.lua");
-				LuaTable tab(scriptData.scriptTable, true);
-			
-				auto ge = tab.GetTableFromTable("gunEntity");
-				int gunID = ge.GetIntFromTable("entityID");
-				m_entityManager.RemoveComponent<ThisPlayerWeapon>(gunID);
-
-				int barrelID = tab.GetIntFromTable("barrelEntityID");
-				m_entityManager.RemoveComponent<ThisPlayerWeapon>(barrelID);
-				int miscID = tab.GetIntFromTable("miscEntityID");
-				m_entityManager.RemoveComponent<ThisPlayerWeapon>(miscID);
-				int magazineID = tab.GetIntFromTable("magazineEntityID");
-				m_entityManager.RemoveComponent<ThisPlayerWeapon>(magazineID);
-
-				tab.CallFunctionOnTable("DestroyWeaponLights");*/
-
 				EntityManager::Get().Collect<DontDraw, ChildComponent>().Do([&](entity subEntity, DontDraw&, ChildComponent& parentCompany)
 					{
 						if (parentCompany.parent == id)
