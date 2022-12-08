@@ -614,9 +614,11 @@ void ReviveSystem::RevivePlayer(DOG::entity player)
 
 	auto& psc = mgr.GetComponent<PlayerStatsComponent>(player);
 	psc.health = psc.maxHealth / 2.0f;
-
-	auto& sC = mgr.GetComponent<SpectatorComponent>(player);
-	mgr.RemoveComponentIfExists<AudioListenerComponent>(sC.playerBeingSpectated);
+	if(mgr.HasComponent<SpectatorComponent>(player))
+	{
+		auto& sC = mgr.GetComponent<SpectatorComponent>(player);
+		mgr.RemoveComponentIfExists<AudioListenerComponent>(sC.playerBeingSpectated);
+	}
 	mgr.RemoveComponent<SpectatorComponent>(player);
 	mgr.AddOrReplaceComponent<AudioListenerComponent>(player);
 
