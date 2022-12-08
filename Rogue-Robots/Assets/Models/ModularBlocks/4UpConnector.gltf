@@ -303,7 +303,7 @@
         {
             "bufferView" : 5,
             "componentType" : 5126,
-            "count" : 1532,
+            "count" : 1536,
             "max" : [
                 2.500000238418579,
                 5.000000476837158,
@@ -311,7 +311,7 @@
             ],
             "min" : [
                 -2.6376991271972656,
-                0.07857757806777954,
+                0.040093302726745605,
                 -2.500002384185791
             ],
             "type" : "VEC3"
@@ -319,19 +319,19 @@
         {
             "bufferView" : 6,
             "componentType" : 5126,
-            "count" : 1532,
+            "count" : 1536,
             "type" : "VEC3"
         },
         {
             "bufferView" : 7,
             "componentType" : 5126,
-            "count" : 1532,
+            "count" : 1536,
             "type" : "VEC2"
         },
         {
             "bufferView" : 8,
             "componentType" : 5126,
-            "count" : 1532,
+            "count" : 1536,
             "type" : "VEC2"
         },
         {
@@ -442,80 +442,80 @@
         },
         {
             "buffer" : 0,
-            "byteLength" : 18384,
+            "byteLength" : 18432,
             "byteOffset" : 43552,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 18384,
-            "byteOffset" : 61936,
+            "byteLength" : 18432,
+            "byteOffset" : 61984,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 12256,
-            "byteOffset" : 80320,
+            "byteLength" : 12288,
+            "byteOffset" : 80416,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 12256,
-            "byteOffset" : 92576,
+            "byteLength" : 12288,
+            "byteOffset" : 92704,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 3132,
-            "byteOffset" : 104832,
+            "byteOffset" : 104992,
             "target" : 34963
         },
         {
             "buffer" : 0,
             "byteLength" : 13632,
-            "byteOffset" : 107964,
+            "byteOffset" : 108124,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 13632,
-            "byteOffset" : 121596,
+            "byteOffset" : 121756,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 9088,
-            "byteOffset" : 135228,
+            "byteOffset" : 135388,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 2280,
-            "byteOffset" : 144316,
+            "byteOffset" : 144476,
             "target" : 34963
         },
         {
             "buffer" : 0,
             "byteLength" : 13644,
-            "byteOffset" : 146596,
+            "byteOffset" : 146756,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 13644,
-            "byteOffset" : 160240,
+            "byteOffset" : 160400,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 9096,
-            "byteOffset" : 173884,
+            "byteOffset" : 174044,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 2280,
-            "byteOffset" : 182980,
+            "byteOffset" : 183140,
             "target" : 34963
         }
     ],
@@ -527,7 +527,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 185260,
+            "byteLength" : 185420,
             "uri" : "4UpConnector.bin"
         }
     ]
