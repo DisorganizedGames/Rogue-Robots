@@ -393,6 +393,18 @@ void NetCode::ReceiveDataUdp()
 					LuaMain::GetScriptManager()->AddScript(id, "Gun.lua");
 					LuaMain::GetScriptManager()->AddScript(id, "PassiveItemSystem.lua");
 					LuaMain::GetScriptManager()->AddScript(id, "ActiveItemSystem.lua");
+
+					auto scriptData = LuaMain::GetScriptManager()->GetScript(id, "Gun.lua");
+					LuaTable tab(scriptData.scriptTable, true);
+					auto ge = tab.GetTableFromTable("gunEntity");
+					int gunID = ge.GetIntFromTable("entityID");
+					s_entityManager.AddComponent<DontDraw>(gunID);
+					int barrelID = tab.GetIntFromTable("barrelEntityID");
+					s_entityManager.AddComponent<DontDraw>(barrelID);
+					int miscID = tab.GetIntFromTable("miscEntityID");
+					s_entityManager.AddComponent<DontDraw>(miscID);
+					int magazineID = tab.GetIntFromTable("magazineEntityID");
+					s_entityManager.AddComponent<DontDraw>(magazineID);
 				}
 			}
 			if ((pC.cameraEntity != DOG::NULL_ENTITY) && (m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform.Determinant() != 0)) {

@@ -589,8 +589,8 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 
 		if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))
 			RevivePlayer(closestDeadPlayer);
-		else
-			ChangeGunDrawLogic(closestDeadPlayer);
+		//else
+		//	ChangeGunDrawLogic(closestDeadPlayer);
 
 		mgr.RemoveComponent<ActiveItemComponent>(player);
 
