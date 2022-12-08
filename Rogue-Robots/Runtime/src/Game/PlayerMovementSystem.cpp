@@ -64,7 +64,7 @@ void PlayerMovementSystem::OnUpdate(
 		camera.isMainCamera = true;
 	}
 	auto IsAlive = [&mgr](Entity e) {
-		return mgr.HasComponent<PlayerAliveComponent>(e); };
+		return mgr.HasComponent<PlayerAliveComponent>(e) && mgr.GetComponent<PlayerAliveComponent>(e).timer < 0.f; };
 
 	if (input.toggleDebug && IsAlive(e))
 	{
