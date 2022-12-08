@@ -658,9 +658,10 @@ void ReviveSystem::RevivePlayer(DOG::entity playerBeingRevived)
 		rb.gravityForRigidbody = Vector3(0.0f, -25.0f, 0.0f);
 
 		LuaMain::GetScriptManager()->AddScript(playerBeingRevived, "Gun.lua");
+		auto scriptData = LuaMain::GetScriptManager()->GetScript(playerBeingRevived, "Gun.lua");
 		LuaMain::GetScriptManager()->AddScript(playerBeingRevived, "PassiveItemSystem.lua");
 		LuaMain::GetScriptManager()->AddScript(playerBeingRevived, "ActiveItemSystem.lua");
-	}
+	}	
 
 	//Extra update for the player being revived:
 	if (mgr.HasComponent<ThisPlayer>(playerBeingRevived))
@@ -690,17 +691,23 @@ void ReviveSystem::ChangeGunDrawLogic(DOG::entity playerBeingRevived)
 			auto& em = DOG::EntityManager::Get();
 			//if (cc.parent == playerBeingRevived)
 			{
-				auto scriptData = LuaMain::GetScriptManager()->GetScript(playerBeingRevived, "Gun.lua");
-				LuaTable tab(scriptData.scriptTable, true);
-				auto ge = tab.GetTableFromTable("gunEntity");
-				int gunID = ge.GetIntFromTable("entityID");
-				em.AddComponent<DontDraw>(gunID);
-				int barrelID = tab.GetIntFromTable("barrelEntityID");
-				em.AddComponent<DontDraw>(barrelID);
-				int miscID = tab.GetIntFromTable("miscEntityID");
-				em.AddComponent<DontDraw>(miscID);
-				int magazineID = tab.GetIntFromTable("magazineEntityID");
-				em.AddComponent<DontDraw>(magazineID);
+				if (em.HasComponent<ScriptComponent>(playerBeingRevived))
+				{
+					auto scriptData = LuaMain::GetScriptManager()->GetScript(playerBeingRevived, "Gun.lua");
+					if (scriptData.scriptTable.ref != -1)
+					{
+						LuaTable tab(scriptData.scriptTable, true);
+						auto ge = tab.GetTableFromTable("gunEntity");
+						int gunID = ge.GetIntFromTable("entityID");
+						em.AddComponent<DontDraw>(gunID);
+						int barrelID = tab.GetIntFromTable("barrelEntityID");
+						em.AddComponent<DontDraw>(barrelID);
+						int miscID = tab.GetIntFromTable("miscEntityID");
+						em.AddComponent<DontDraw>(miscID);
+						int magazineID = tab.GetIntFromTable("magazineEntityID");
+						em.AddComponent<DontDraw>(magazineID);
+					}
+				}
 			}
 			//});
 }
