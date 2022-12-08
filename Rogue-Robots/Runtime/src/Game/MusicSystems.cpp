@@ -4,11 +4,21 @@ using namespace DOG;
 
 PlayMusicSystem::PlayMusicSystem()
 {
+	m_mainMenuSong = AssetManager::Get().LoadAudio("Assets/Audio/Music/RogueRobotsMainMenu.wav");
 	m_ambienceSong = AssetManager::Get().LoadAudio("Assets/Audio/Music/RogueRobotsAmbience.wav");
 	m_actionSong = AssetManager::Get().LoadAudio("Assets/Audio/Music/RogueRobotsAction.wav");
 
 	entity e = EntityManager::Get().CreateEntity();
 	EntityManager::Get().AddComponent<MusicPlayer>(e);
+
+	m_mainMenuMusicEntity = EntityManager::Get().CreateEntity();
+	AudioComponent& mainMenuAudioComponent = EntityManager::Get().AddComponent<AudioComponent>(m_mainMenuMusicEntity);
+	mainMenuAudioComponent.assetID = m_mainMenuSong;
+	mainMenuAudioComponent.shouldPlay = true;
+	mainMenuAudioComponent.volume = MAINMENU_MUSIC_VOLUME;
+	mainMenuAudioComponent.loopStart = 0.0f;
+	mainMenuAudioComponent.loopEnd = -1.0f;
+	mainMenuAudioComponent.loop = true;
 
 	m_ambienceMusicEntity = EntityManager::Get().CreateEntity();
 	AudioComponent& ambienceAudioComponent = EntityManager::Get().AddComponent<AudioComponent>(m_ambienceMusicEntity);
@@ -30,12 +40,14 @@ PlayMusicSystem::PlayMusicSystem()
 
 	m_timerForAmbientMusic = 0.0f;
 
-	playAmbience = true;
+	playMainMenu = true;
+	playAmbience = false;
 	shouldPlayAction = false;
 }
 
 void PlayMusicSystem::OnUpdate(MusicPlayer& musicPlayer)
 {
+	AudioComponent& mainMenuAudioComponent = EntityManager::Get().GetComponent<AudioComponent>(m_mainMenuMusicEntity);
 	AudioComponent& actionAudioComponent = EntityManager::Get().GetComponent<AudioComponent>(m_actionMusicEntity);
 	AudioComponent& ambienceAudioComponent = EntityManager::Get().GetComponent<AudioComponent>(m_ambienceMusicEntity);
 
@@ -47,15 +59,40 @@ void PlayMusicSystem::OnUpdate(MusicPlayer& musicPlayer)
 		m_timerForActionToContinue = -1.0f;
 		});
 
-	if (musicPlayer.inMainMenu)
+	if (!m_inMainMenuLastFrame && musicPlayer.inMainMenu) //If we were not in main menu last frame but are now. It means we were ingame and went back to main menu.
 	{
-		playAmbience = true;
+		playMainMenu = true;
 		m_timerForAmbientMusic = 0.0f;
+		mainMenuAudioComponent.shouldStop = true;
+		mainMenuAudioComponent.volume = MAINMENU_MUSIC_VOLUME;
 		actionAudioComponent.volume = 0.0f;
-		ambienceAudioComponent.volume = AMBIENT_MUSIC_VOLUME;
+		ambienceAudioComponent.volume = 0.0f;
+
 		musicPlayer.inMainMenu = false;
 		shouldPlayAction = false;
+		m_inMainMenuLastFrame = true;
+	}
+	else if (musicPlayer.inMainMenu)
+	{
+		playMainMenu = true;
+		m_timerForAmbientMusic = 0.0f;
+		if (!mainMenuAudioComponent.playing)
+		{
+			mainMenuAudioComponent.shouldPlay = true;
+		}
+		mainMenuAudioComponent.volume = MAINMENU_MUSIC_VOLUME;
+		actionAudioComponent.volume = 0.0f;
+		ambienceAudioComponent.volume = 0.0f;
+		
+		musicPlayer.inMainMenu = false;
+		shouldPlayAction = false;
+		m_inMainMenuLastFrame = true;
 		return;
+	}
+	else
+	{
+		mainMenuAudioComponent.volume = 0.0f;
+		m_inMainMenuLastFrame = false;
 	}
 
 	if (foundAggro)
