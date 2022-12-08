@@ -66,6 +66,10 @@ local soonOutOfAmmoSound = 0
 
 local magazineAudioEntity = 0
 
+local recoilAngle = 0.0
+local recoilTimerUp = 0.0
+local recoilTime = 0.05
+
 function OnStart()
 	gunModel = Asset:LoadModel("Assets/Models/ModularRifle/Maingun.gltf")
 	bulletModel = Asset:LoadModel("Assets/Models/Ammunition/Bullet/556x45_bullet.fbx")
@@ -150,6 +154,8 @@ function OnUpdate()
 	Entity:SetRotationForwardUp(gunEntity.entityID, gunForward, gunUp)
 	Entity:ModifyComponent(gunEntity.entityID, "Transform", gunEntity.position, 1)
 
+	Recoil(cameraEntity)
+
 	NormalBulletUpdate() -- Should be called something else, but necessary for bullet despawn
 
 	if hasBasicBarrelEquipped then
@@ -213,6 +219,8 @@ function OnUpdate()
 					end
 
 				end
+
+				recoilTimerUp = ElapsedTime + recoilTime
 
 				CreateBulletEntity(newBullets[i], cameraEntity)
 				barrelComponent:Update(gunEntity, EntityID, newBullets[i], miscComponent, cameraEntity)
@@ -486,4 +494,37 @@ function DestroyWeaponLights()
 	if Entity:Exists(lightEntityID) then
 		Entity:DestroyEntity(lightEntityID)
 	end
+end
+
+function Recoil(cameraEntity)
+	local maxRecoilAngle = math.pi / 2.0
+
+	if (recoilTimerUp > ElapsedTime) then
+		recoilAngle = recoilAngle + math.pi / 2.0 * DeltaTime
+	else
+		recoilAngle = recoilAngle - math.pi * DeltaTime
+	end
+
+	if recoilAngle > maxRecoilAngle then
+		recoilAngle = maxRecoilAngle
+	elseif recoilAngle < 0.0 then
+		recoilAngle = 0.0
+	end
+
+	local gunUp = Vector3.FromTable(Entity:GetUp(gunEntity.entityID))
+	local gunForward = Vector3.FromTable(Entity:GetForward(gunEntity.entityID))
+
+	local playerRight = Norm(Vector3.FromTable(Entity:GetRight(cameraEntity)))
+	local playerForward = Norm(Vector3.FromTable(Entity:GetForward(cameraEntity)))
+
+	gunUp = Norm(gunUp)
+	gunForward = Norm(gunForward)
+
+	local newGunForward = RotateAroundAxis(gunForward, playerRight, recoilAngle)
+	local newGunUp = RotateAroundAxis(gunUp, playerRight, recoilAngle)
+
+	local newPosition = Vector3.FromTable(gunEntity.position) - playerForward * (recoilAngle * 0.5)
+
+	Entity:SetRotationForwardUp(gunEntity.entityID, newGunForward, newGunUp)
+	Entity:ModifyComponent(gunEntity.entityID, "Transform", newPosition, 1)
 end
