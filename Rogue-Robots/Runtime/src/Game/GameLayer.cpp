@@ -600,7 +600,11 @@ void GameLayer::KillPlayer(DOG::entity e)
 		UIInstance->GetUI<UIIcon>(glowstickID)->Hide();
 		UIInstance->GetUI<UIIcon>(flashlightID)->Hide();
 
+		//Remove the chargeshot charge bar if it is active.
+		UIInstance->GetUI<UIVertStatBar>(pbarID)->Hide(false);
+
 		m_entityManager.RemoveComponentIfExists<AudioListenerComponent>(localPlayer);
+
 
 		RigidbodyComponent& rb = m_entityManager.GetComponent<RigidbodyComponent>(e);
 		rb.ConstrainPosition(true, false, true);
@@ -827,16 +831,41 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	{
 	case EventType::WindowPostResizedEvent:
 	{
+		auto UIInstance = DOG::UI::Get();
 		//Re-send info to carousels
-		DOG::UI::Get()->GetUI<UICarousel>(carouselSoloID)->SendStrings(m_filenames);
-		DOG::UI::Get()->GetUI<UICarousel>(carouselMultID)->SendStrings(m_filenames);
+		UIInstance->GetUI<UICarousel>(carouselSoloID)->SendStrings(m_filenames);
+		UIInstance->GetUI<UICarousel>(carouselMultID)->SendStrings(m_filenames);
+
+		//See if the charge shot should be set to hidden or not.
+		entity thisPlayer = PlayerManager::Get().GetThisPlayer();
+		if (EntityManager::Get().HasComponent<MiscComponent>(thisPlayer))
+		{
+			if (EntityManager::Get().GetComponent<MiscComponent>(thisPlayer).type == MiscComponent::Type::ChargeShot)
+			{
+				UIInstance->GetUI<DOG::UIVertStatBar>(pbarID)->Hide(true);
+			}
+		}
+		
+
 		break;
 	}
 	case EventType::WindowPostPosChangingEvent:
 	{
+		auto UIInstance = DOG::UI::Get();
+
 		//Re-send info to carousels
-		DOG::UI::Get()->GetUI<UICarousel>(carouselSoloID)->SendStrings(m_filenames);
-		DOG::UI::Get()->GetUI<UICarousel>(carouselMultID)->SendStrings(m_filenames);
+		UIInstance->GetUI<UICarousel>(carouselSoloID)->SendStrings(m_filenames);
+		UIInstance->GetUI<UICarousel>(carouselMultID)->SendStrings(m_filenames);
+
+		//See if the charge shot should be set to hidden or not.
+		entity thisPlayer = PlayerManager::Get().GetThisPlayer();
+		if (EntityManager::Get().HasComponent<MiscComponent>(thisPlayer))
+		{
+			if (EntityManager::Get().GetComponent<MiscComponent>(thisPlayer).type == MiscComponent::Type::ChargeShot)
+			{
+				UIInstance->GetUI<DOG::UIVertStatBar>(pbarID)->Hide(true);
+			}
+		}
 		break;
 	}
 	case EventType::LeftMouseButtonPressedEvent:
@@ -1702,6 +1731,17 @@ void GameLayer::RegisterLuaInterfaces()
 
 	global->SetLuaInterface(luaInterface);
 	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Game", "GameInterface");
+
+	//-----------------------------------------------------------------------------------------------
+	//UI
+	luaInterfaceObject = std::make_shared<UIInterface>();
+	m_luaInterfaces.push_back(luaInterfaceObject);
+
+	luaInterface = global->CreateLuaInterface("UIInterface");
+	luaInterface.AddFunction<UIInterface, &UIInterface::ChangeVertBarValue>("ChangeVertBarValue");
+
+	global->SetLuaInterface(luaInterface);
+	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "UI", "UIInterface");
 }
 
 void GameLayer::Input(DOG::Key key)
