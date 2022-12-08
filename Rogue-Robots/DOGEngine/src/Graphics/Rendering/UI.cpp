@@ -97,11 +97,11 @@ void ExitButtonFunc(void)
 DOG::UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight): m_visible(true), Layer("UILayer")
 {
    srand((UINT)time(NULL));
+   int err = AddFontResource(TEXT("Assets/Fonts/robotaur.ttf"));
+   assert(err);
    m_width = clientWidth;
    m_height = clientHeight;
    m_d2d = std::make_unique<DOG::gfx::D2DBackend_DX12>(rd, sc, numBuffers);
-   int err = AddFontResource(TEXT("Assets/Fonts/robotaur.ttf"));
-   assert(err);
 }
 
 DOG::UI::~UI()
