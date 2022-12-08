@@ -515,15 +515,16 @@ void GameLayer::EvaluateLoseCondition()
 
 void GameLayer::CheckIfPlayersIAreDead()
 {
-	EntityManager::Get().Collect<PlayerStatsComponent, PlayerAliveComponent>().Do([&](entity e, PlayerStatsComponent& stats, PlayerAliveComponent&)
-		{
-			if (stats.health <= 0.0f)
+		EntityManager::Get().Collect<PlayerStatsComponent, PlayerAliveComponent>().Do([&](entity e, PlayerStatsComponent& stats, PlayerAliveComponent&)
 			{
-				stats.health = 0.0f;
-				// Player died
-				KillPlayer(e);
-			}
-		});
+				if (stats.health <= 0.0f)
+				{
+					stats.health = 0.0f;
+					std::cout << __FUNCTION__ << " " << stats.health << "\n";
+					// Player died
+					KillPlayer(e);
+				}
+			});
 }
 
 void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will not be called for online players, this needs to be fixed later on.
@@ -561,27 +562,31 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 	m_entityManager.GetComponent<RigidbodyComponent>(e).ConstrainPosition(false, false, false);
 }
 
-void GameLayer::KillPlayer(DOG::entity e)
+void GameLayer::KillPlayer(DOG::entity killedPlayer)
 {
-	m_entityManager.RemoveComponent<PlayerAliveComponent>(e);
-	if (m_entityManager.HasComponent<AnimationComponent>(e))
+	//ALL players should react to this:
+	m_entityManager.RemoveComponent<PlayerAliveComponent>(killedPlayer);
+	m_entityManager.RemoveComponent<MiscComponent>(killedPlayer);
+	m_entityManager.RemoveComponent<MagazineModificationComponent>(killedPlayer);
+	m_entityManager.RemoveComponent<BarrelComponent>(killedPlayer);
+	m_entityManager.RemoveComponentIfExists<ActiveItemComponent>(killedPlayer);
+	RigidbodyComponent& rb = m_entityManager.GetComponent<RigidbodyComponent>(killedPlayer);
+	rb.ConstrainPosition(true, true, true);
+	rb.ClearPhysics();
+
+	if (m_entityManager.HasComponent<AnimationComponent>(killedPlayer))
 	{
-		auto& ac = m_entityManager.GetComponent<AnimationComponent>(e);
+		auto& ac = m_entityManager.GetComponent<AnimationComponent>(killedPlayer);
 		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::DeathAnimation), AnimationFlag::Persist, 1u, ac.FULL_BODY, 1.f, 0.5f);
 	}
 
-	//ALL players should react to this:
-	m_entityManager.RemoveComponentIfExists<MiscComponent>(e);
-	m_entityManager.RemoveComponentIfExists<AudioListenerComponent>(e);
-	m_entityManager.RemoveComponentIfExists<MiscComponent>(e);
-	m_entityManager.RemoveComponentIfExists<MagazineModificationComponent>(e);
+	LuaMain::GetScriptManager()->RemoveScript(killedPlayer, "Gun.lua");
+	LuaMain::GetScriptManager()->RemoveScript(killedPlayer, "PassiveItemSystem.lua");
+	LuaMain::GetScriptManager()->RemoveScript(killedPlayer, "ActiveItemSystem.lua");
 
-	if (m_entityManager.HasComponent<ThisPlayer>(e))
+	//Only killed player should react to following block:
+	if (m_entityManager.HasComponent<ThisPlayer>(killedPlayer))
 	{
-		entity localPlayer = e;
-		m_entityManager.RemoveComponentIfExists<BarrelComponent>(localPlayer);
-
-
 		//Remove UI icon bufftracker stacks.
 		auto UIInstance = UI::Get();
 		UIInstance->GetUI<UIBuffTracker>(buffID)->DeactivateIcon(0);
@@ -593,12 +598,6 @@ void GameLayer::KillPlayer(DOG::entity e)
 		UIInstance->GetUI<UIIcon>(iconActiveID)->DeactivateBorder();
 		UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetDraw(false);
 
-		LuaMain::GetScriptManager()->RemoveScript(e, "Gun.lua");
-		LuaMain::GetScriptManager()->RemoveScript(e, "PassiveItemSystem.lua");
-		LuaMain::GetScriptManager()->RemoveScript(e, "ActiveItemSystem.lua");
-		m_entityManager.RemoveComponentIfExists<ScriptComponent>(e);
-
-		std::string luaEventName = std::string("ItemPickup") + std::to_string(localPlayer);
 		//Remove UI icon for weapon components.
 		UIInstance->GetUI<UIIcon>(iconID)->Hide();
 		UIInstance->GetUI<UIIcon>(iconID)->DeactivateBorder();
@@ -606,15 +605,9 @@ void GameLayer::KillPlayer(DOG::entity e)
 		UIInstance->GetUI<UIIcon>(icon2ID)->DeactivateBorder();
 		UIInstance->GetUI<UIIcon>(icon3ID)->Hide();
 		UIInstance->GetUI<UIIcon>(icon3ID)->DeactivateBorder();
-
 		UIInstance->GetUI<UIIcon>(iconGun)->Hide();
 		UIInstance->GetUI<UIIcon>(glowstickID)->Hide();
 		UIInstance->GetUI<UIIcon>(flashlightID)->Hide();
-
-
-		RigidbodyComponent& rb = m_entityManager.GetComponent<RigidbodyComponent>(e);
-		rb.ConstrainPosition(true, true, true);
-		rb.ClearPhysics();
 
 		DOG::entity playerToSpectate = DOG::NULL_ENTITY;
 		const char* playerName{ nullptr };
@@ -634,7 +627,7 @@ void GameLayer::KillPlayer(DOG::entity e)
 
 		if (playerToSpectate != NULL_ENTITY) //So, if not all players are dead
 		{
-			auto& pcc = m_entityManager.GetComponent<PlayerControllerComponent>(localPlayer);
+			auto& pcc = m_entityManager.GetComponent<PlayerControllerComponent>(killedPlayer);
 			auto& otherPcc = m_entityManager.GetComponent<PlayerControllerComponent>(playerToSpectate);
 			pcc.spectatorCamera = m_mainScene->CreateEntity();
 
@@ -645,12 +638,12 @@ void GameLayer::KillPlayer(DOG::entity e)
 			
 			m_entityManager.Collect<ChildComponent>().Do([&](DOG::entity playerModel, ChildComponent& cc)
 				{
-					if (cc.parent == localPlayer)
+					if (cc.parent == killedPlayer)
 					{
 						//This means that playerModel is the mesh model (suit), and it should be drawing for the main player again:
 						EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
 							{
-								if (bone.boneParent == localPlayer)
+								if (bone.boneParent == killedPlayer)
 									DOG::EntityManager::Get().RemoveComponentIfExists<DOG::DontDraw>(modelGun);
 							});
 						m_entityManager.RemoveComponentIfExists<DontDraw>(playerModel);
@@ -667,20 +660,21 @@ void GameLayer::KillPlayer(DOG::entity e)
 					}
 				});
 
-			auto& sc = m_entityManager.AddComponent<SpectatorComponent>(localPlayer);
+			auto& sc = m_entityManager.AddComponent<SpectatorComponent>(killedPlayer);
 			sc.playerBeingSpectated = playerToSpectate;
 			sc.playerName = playerName;
 			sc.playerSpectatorQueue = spectatables;
 
-			auto& timer = m_entityManager.AddComponent<DeathUITimerComponent>(localPlayer);
+			auto& timer = m_entityManager.AddComponent<DeathUITimerComponent>(killedPlayer);
 			timer.duration = 4.0f;
 			timer.timeLeft = timer.duration;
 
-			m_entityManager.AddOrReplaceComponent<AudioListenerComponent>(playerToSpectate);
+			m_entityManager.RemoveComponent<AudioListenerComponent>(killedPlayer);
+			m_entityManager.AddComponent<AudioListenerComponent>(playerToSpectate);
 		}
 		else // Of course, if all players are dead, this else will fire, but then the game would restart, so probably unnecessary.
 		{
-			auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(localPlayer);
+			auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(killedPlayer);
 			controller.debugCamera = m_mainScene->CreateEntity();
 
 			m_entityManager.AddComponent<TransformComponent>(controller.debugCamera)
@@ -700,10 +694,12 @@ void GameLayer::UpdateGame()
 	// This function should be split up to smaller functions.
 	m_playerMovementSystem.CollectAndUpdate();
 
+	CheckIfPlayersIAreDead();
 
 	// Multiplayer sync
 	if (s_networkStatus != NetworkStatus::Offline)
 		NetCode::Get().OnUpdate();
+
 
 	// The players camera transforms are synced so we set their viewMatrices.
 	EntityManager::Get().Collect<PlayerControllerComponent, OnlinePlayer>().Do([](PlayerControllerComponent& p, OnlinePlayer&)
@@ -721,12 +717,8 @@ void GameLayer::UpdateGame()
 	LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
 
-	if (s_networkStatus != NetworkStatus::Offline)
-		NetCode::Get().OnUpdate();
-
 	HandleCheats();
 	HpBarMVP();
-	CheckIfPlayersIAreDead();
 
 	EvaluateWinCondition();
 	EvaluateLoseCondition();

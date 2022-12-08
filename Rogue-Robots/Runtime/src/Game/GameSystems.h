@@ -627,8 +627,8 @@ public:
 	ImVec4 DeterminePlayerColor(const char* playerName);
 	void RevivePlayer(DOG::entity player);
 	void ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw);
+	void ChangeGunDrawLogic(DOG::entity player);
 	void DrawProgressBar(const float progress);
-	void UpdateSpectators();
 };
 
 class UpdateSpectatorQueueSystem : public DOG::ISystem

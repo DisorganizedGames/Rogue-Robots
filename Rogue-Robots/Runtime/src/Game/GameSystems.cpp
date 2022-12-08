@@ -586,28 +586,17 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 			UIInstance->GetUI<UIIcon>(glowstickID)->Show(0);
 			UIInstance->GetUI<UIIcon>(flashlightID)->Show(0);
 		}
-		// Apply Revive Animation
-		//{
-		//	static constexpr u8 REVIVE_ANIMATION = 0; // No dedicated animation yet, transition to idle for now
-		//	auto& ac = mgr.GetComponent<AnimationComponent>(closestDeadPlayer);
-		//	ac.SimpleAdd(REVIVE_ANIMATION, AnimationFlag::Looping | AnimationFlag::ResetPrio);
-		//}
 
-		if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))
-		{
-			auto spectatedPlayer = mgr.GetComponent<SpectatorComponent>(closestDeadPlayer).playerBeingSpectated;
-			mgr.RemoveComponent<AudioListenerComponent>(spectatedPlayer);
-			ChangeSuitDrawLogic(spectatedPlayer, closestDeadPlayer);
-		}
 		RevivePlayer(closestDeadPlayer);
 		mgr.RemoveComponent<ActiveItemComponent>(player);
 
-		if (!isNonParticipatingPlayer)
-			return;
+		if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))
+		{
+			mgr.GetComponent<AnimationComponent>(closestDeadPlayer).SimpleAdd(10, AnimationFlag::ResetPrio);
+		}
 
 		if (mgr.HasComponent<ThisPlayer>(player))
 		{
-			//REMEMBER TO REMOVE!
 			DOG::UI::Get()->GetUI<UIIcon>(iconActiveID)->Hide();
 		}
 	}
@@ -639,54 +628,81 @@ ImVec4 ReviveSystem::DeterminePlayerColor(const char* playerName)
 }
 
 //For this function we simply revert all data to an "is-alive-state":
-void ReviveSystem::RevivePlayer(DOG::entity player)
+void ReviveSystem::RevivePlayer(DOG::entity playerBeingRevived)
 {
 	auto& mgr = DOG::EntityManager::Get();
-
-	auto& psc = mgr.GetComponent<PlayerStatsComponent>(player);
-	psc.health = psc.maxHealth / 2.0f;
-
-	if (mgr.HasComponent<ThisPlayer>(player))
-		mgr.RemoveComponent<SpectatorComponent>(player);
-
-	if (mgr.HasComponent<ThisPlayer>(player))
+	
+	//Update for ALL players:
 	{
-		auto& pcc = mgr.GetComponent<PlayerControllerComponent>(player);
+		auto& bc = mgr.AddComponent<BarrelComponent>(playerBeingRevived);
+		bc.type = BarrelComponent::Type::Bullet;
+		bc.maximumAmmoCapacityForType = 999'999;
+		bc.ammoPerPickup = 30;
+		bc.currentAmmoCount = 30;
+
+		mgr.AddComponent<MagazineModificationComponent>(playerBeingRevived).type = MagazineModificationComponent::Type::None;
+		mgr.AddComponent<MiscComponent>(playerBeingRevived).type = MiscComponent::Type::Basic;
+		
+		if (mgr.HasComponent<ThisPlayer>(playerBeingRevived))
+			mgr.AddComponent<PlayerAliveComponent>(playerBeingRevived).timer = 2.f;
+
+		auto& psc = mgr.GetComponent<PlayerStatsComponent>(playerBeingRevived);
+		psc.health = psc.maxHealth / 2.0f;
+
+		auto& rb = mgr.GetComponent<RigidbodyComponent>(playerBeingRevived);
+		rb.ConstrainRotation(true, true, true);
+		rb.ConstrainPosition(false, false, false);
+		rb.disableDeactivation = true;
+		rb.getControlOfTransform = true;
+		rb.setGravityForRigidbody = true;
+		rb.gravityForRigidbody = Vector3(0.0f, -25.0f, 0.0f);
+
+		LuaMain::GetScriptManager()->AddScript(playerBeingRevived, "Gun.lua");
+		LuaMain::GetScriptManager()->AddScript(playerBeingRevived, "PassiveItemSystem.lua");
+		LuaMain::GetScriptManager()->AddScript(playerBeingRevived, "ActiveItemSystem.lua");
+	}
+
+	//Extra update for the player being revived:
+	if (mgr.HasComponent<ThisPlayer>(playerBeingRevived))
+	{
+		auto spectatedPlayer = mgr.GetComponent<SpectatorComponent>(playerBeingRevived).playerBeingSpectated;
+		auto& pcc = mgr.GetComponent<PlayerControllerComponent>(playerBeingRevived);
 		mgr.DestroyEntity(pcc.spectatorCamera);
 		pcc.spectatorCamera = NULL_ENTITY;
 		mgr.GetComponent<CameraComponent>(pcc.cameraEntity).isMainCamera = true;
+
+		//auto spectatedPlayer = mgr.GetComponent<SpectatorComponent>(player).playerBeingSpectated;
+		mgr.RemoveComponent<AudioListenerComponent>(spectatedPlayer);
+		mgr.AddComponent<AudioListenerComponent>(playerBeingRevived);
+		mgr.RemoveComponent<SpectatorComponent>(playerBeingRevived);
+		ChangeSuitDrawLogic(spectatedPlayer, playerBeingRevived);
 	}
-
-	mgr.AddComponent<PlayerAliveComponent>(player).timer = 2.f;
-
-	if (mgr.HasComponent<ThisPlayer>(player))
+	else
 	{
-		LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
-		LuaMain::GetScriptManager()->AddScript(player, "PassiveItemSystem.lua");
-		LuaMain::GetScriptManager()->AddScript(player, "ActiveItemSystem.lua");
-		mgr.AddOrReplaceComponent<ScriptComponent>(player, player);
+		ChangeGunDrawLogic(playerBeingRevived);
 	}
-	auto& bc = mgr.AddOrReplaceComponent<BarrelComponent>(player);
-	bc.type = BarrelComponent::Type::Bullet;
-	bc.maximumAmmoCapacityForType = 999'999;
-	bc.ammoPerPickup = 30;
-	bc.currentAmmoCount = 30;
+}
 
-	auto& mmc = mgr.AddOrReplaceComponent<MagazineModificationComponent>(player);
-	mmc.type = MagazineModificationComponent::Type::None;
-
-	auto& mc = mgr.AddOrReplaceComponent<MiscComponent>(player);
-	mc.type = MiscComponent::Type::Basic;
-
-	auto& rb = mgr.GetComponent<RigidbodyComponent>(player);
-	rb.ConstrainRotation(true, true, true);
-	rb.ConstrainPosition(false, false, false);
-	rb.disableDeactivation = true;
-	rb.getControlOfTransform = true;
-	rb.setGravityForRigidbody = true;
-	rb.gravityForRigidbody = Vector3(0.0f, -25.0f, 0.0f);
-
-	mgr.AddOrReplaceComponent<AudioListenerComponent>(player);
+void ReviveSystem::ChangeGunDrawLogic(DOG::entity playerBeingRevived)
+{
+	//DOG::EntityManager::Get().Collect<ChildComponent>().Do([&](DOG::entity playerModel, ChildComponent& cc)
+	//	{
+			auto& em = DOG::EntityManager::Get();
+			//if (cc.parent == playerBeingRevived)
+			{
+				auto scriptData = LuaMain::GetScriptManager()->GetScript(playerBeingRevived, "Gun.lua");
+				LuaTable tab(scriptData.scriptTable, true);
+				auto ge = tab.GetTableFromTable("gunEntity");
+				int gunID = ge.GetIntFromTable("entityID");
+				em.AddComponent<DontDraw>(gunID);
+				int barrelID = tab.GetIntFromTable("barrelEntityID");
+				em.AddComponent<DontDraw>(barrelID);
+				int miscID = tab.GetIntFromTable("miscEntityID");
+				em.AddComponent<DontDraw>(miscID);
+				int magazineID = tab.GetIntFromTable("magazineEntityID");
+				em.AddComponent<DontDraw>(magazineID);
+			}
+			//});
 }
 
 void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw)
@@ -701,8 +717,6 @@ void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity pla
 			auto& em = DOG::EntityManager::Get();
 			if (cc.parent == playerToDraw)
 			{
-				//std::cout << "deadPlayer" << playerToDraw << std::endl;
-				
 				//This means that playerModel is the mesh model (suit), and it should be rendered again:
 				DOG::EntityManager::Get().RemoveComponentIfExists<DOG::DontDraw>(playerModel);
 				#if defined _DEBUG
@@ -710,12 +724,10 @@ void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity pla
 				#endif
 				EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
 					{
-						//std::cout << "boneParent" << bone.boneParent << std::endl;
 						if (bone.boneParent == playerToDraw)
 							em.RemoveComponentIfExists<DOG::DontDraw>(modelGun);
 					});
 
-				//std::cout << "ChangeSuitDrawLogic  playerToDraw  BeforeAddOrReplaceScript"<< std::endl;
 				auto scriptData = LuaMain::GetScriptManager()->GetScript(playerToDraw, "Gun.lua");
 				LuaTable tab(scriptData.scriptTable, true);
 				auto ge = tab.GetTableFromTable("gunEntity");
@@ -730,21 +742,17 @@ void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity pla
 			}
 			else if (cc.parent == playerToNotDraw)
 			{
-				//std::cout << "ChangeSuitDrawLogic Before player NOT to draw" << std::endl;
 				//This means that playerModel is the spectated players' armor/suit, and it should not be eligible for rendering anymore:
 				DOG::EntityManager::Get().AddOrReplaceComponent<DOG::DontDraw>(playerModel);
 				#if defined _DEBUG
 				removedSuitFromRendering = true;
 				#endif
-				//std::cout << std::endl << "playerToDraw" << playerToDraw << std::endl;
 				EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
 					{
-						//std::cout << std::endl << "boneParent" << bone.boneParent << std::endl;
 						if (bone.boneParent == playerToNotDraw)
 							DOG::EntityManager::Get().AddOrReplaceComponent<DOG::DontDraw>(modelGun);
 					});
 
-				//std::cout << "ChangeSuitDrawLogic  playerNotToDraw  BeforeRemoveIfExistsScript" << std::endl;
 			}
 		});
 		#if defined _DEBUG
