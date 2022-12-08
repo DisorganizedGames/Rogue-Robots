@@ -1275,7 +1275,8 @@ void DOG::UIVertStatBar::SetBarValue(float value, float maxValue)
 
 DOG::UICheckBox::UICheckBox(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float r, float g, float b, std::function<void(bool)> callback) : UIElement(id)
 {
-   HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(r, g, b, 0.7f), m_borderBrush.GetAddressOf());
+   HRESULT hr;
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(r, g, b, 0.7f), m_borderBrush.GetAddressOf());
    HR_VFY(hr);
    m_value = false;
    m_border = D2D1::RectF(x,y,x+width, y+height);
