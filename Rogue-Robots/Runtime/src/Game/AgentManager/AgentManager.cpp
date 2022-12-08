@@ -112,9 +112,17 @@ AgentManager::AgentStats AgentManager::GetAgentStats(EntityTypes type)
 	case EntityTypes::Scorpio:
 	{
 		AgentStats scorpio{};
-		scorpio.visionDistance = 15.0;
 		scorpio.visionConeDotValue = 0.35f;
-		scorpio.lidarDistance = 5.0f;
+		if ((Time::ElapsedTime() - m_timer) < 20.)
+		{
+			scorpio.visionDistance = 0.0f;
+			scorpio.lidarDistance = 0.0f;
+		}
+		else
+		{
+			scorpio.visionDistance = 30.0f;
+			scorpio.lidarDistance = 5.0f;
+		}
 		scorpio.baseSpeed = 10.0f;
 		return scorpio;
 	}
@@ -126,6 +134,10 @@ AgentManager::AgentStats AgentManager::GetAgentStats(EntityTypes type)
 	return {};
 }
 
+void AgentManager::SceneBegins()
+{
+	m_timer = Time::ElapsedTime();
+}
 /*******************************
 		Private Methods
 *******************************/
@@ -152,6 +164,8 @@ void AgentManager::Initialize()
 	
 	em.RegisterSystem(std::make_unique<AgentGetPathSystem>());
 
+	em.RegisterSystem(std::make_unique<AgentCreatePatrolSystem>());
+
 	// Register agent systems
 	em.RegisterSystem(std::make_unique<AgentHitDetectionSystem>());
 	em.RegisterSystem(std::make_unique<AgentAggroSystem>());
@@ -172,6 +186,8 @@ void AgentManager::Initialize()
 
 	// Register late update agent systems
 	em.RegisterSystem(std::make_unique<AgentMovementSystem>());
+	em.RegisterSystem(std::make_unique<AgentExecutePatrolSystem>());
+
 	em.RegisterSystem(std::make_unique<LateAgentDestructCleanupSystem>());
 
 	// Set status to initialized
@@ -385,6 +401,11 @@ void AgentManager::CreateScorpioBehaviourTree(DOG::entity agent) noexcept
 
 	seekAndDestroySequence->AddChild(std::move(signalGroupSucceeder));
 
+	// Patrol subtree
+	std::shared_ptr<Selector> patrolSelector = std::move(std::make_shared<Selector>("PatrolSelector"));
+	patrolSelector->AddChild(std::make_shared<CreatePatrolNode>("CreatePatrolNode"));
+	patrolSelector->AddChild(std::make_shared<ExecutePatrolNode>("ExecutePatrolNode"));
+	rootSelector->AddChild(patrolSelector);
 
 
 	seekAndDestroySequence->AddChild(std::move(attackOrMoveToPlayerSelector));

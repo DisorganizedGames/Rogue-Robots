@@ -61,7 +61,6 @@ DOG::entity NavSceneComponent::At(Vector3 pos)
 	int y = static_cast<int>(pos.y / pcgBlock::DIMENSION);
 	int z = static_cast<int>(pos.z / pcgBlock::DIMENSION);
 	NavMeshID id = At(x, y, z);
-	//std::cout << "[" << id << "] (" << x << ", " << y << ", " << z << ")" << std::endl;
 	return id;
 }
 

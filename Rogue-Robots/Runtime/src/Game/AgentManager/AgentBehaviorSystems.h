@@ -61,6 +61,14 @@ public:
 	void OnEarlyUpdate(DOG::entity e, BTGetPathComponent&, AgentSeekPlayerComponent& seek, BehaviorTreeComponent& btc);
 };
 
+class AgentCreatePatrolSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(BTCreatePatrolComponent, BehaviorTreeComponent);
+	ON_EARLY_UPDATE_ID(BTCreatePatrolComponent, BehaviorTreeComponent);
+	void OnEarlyUpdate(DOG::entity e, BTCreatePatrolComponent&, BehaviorTreeComponent& btc);
+};
+
 
 /**************************************************
 *				Regular Systems
@@ -175,6 +183,16 @@ public:
 /**************************************************
 *			Late Update Systems
 ***************************************************/
+
+class AgentExecutePatrolSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(BTExecutePatrolComponent, AgentPatrolComponent, BehaviorTreeComponent, AgentMovementComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
+	ON_LATE_UPDATE_ID(BTExecutePatrolComponent, AgentPatrolComponent, BehaviorTreeComponent, AgentMovementComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
+	void OnLateUpdate(DOG::entity e, BTExecutePatrolComponent&, AgentPatrolComponent& patrol, 
+		BehaviorTreeComponent& btc, AgentMovementComponent& movement,
+		DOG::RigidbodyComponent& rb, DOG::TransformComponent& trans);
+};
 
 
 class AgentMovementSystem : public DOG::ISystem
