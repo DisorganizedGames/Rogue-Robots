@@ -208,6 +208,7 @@ struct FrostEffectComponent
 {
 	//??
 	f32 frostTimer = 0.0f;
+	DOG::entity frostAudioEntity = DOG::NULL_ENTITY;
 };
 
 struct FireEffectComponent

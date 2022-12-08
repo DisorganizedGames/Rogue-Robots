@@ -21,6 +21,9 @@ void AgentDistanceToPlayersSystem::OnEarlyUpdate(entity agent, BTDistanceToPlaye
 {
 	//System checks the (non-squared) distance to every living player.
 	//Also resets the currently held player data since it is no longer up to date (This system is the first system to run every frame for agents except the BT-system):
+	const f32 AUDIO_RANGE = 15.0f;
+	bool atLeastOneWithinAudioRange = false;
+	
 	atmc.playerData.clear();
 	atmc.playerData.reserve(PlayerManager::Get().GetNrOfPlayers());
 
@@ -46,7 +49,71 @@ void AgentDistanceToPlayersSystem::OnEarlyUpdate(entity agent, BTDistanceToPlaye
 				}
 			}
 			atLeastOneWithinRange = atLeastOneWithinRange || (atmc.playerData.back().distanceFromAgent <= maxVision);
+
+			atLeastOneWithinAudioRange = atLeastOneWithinAudioRange || (atmc.playerData.back().distanceFromAgent <= AUDIO_RANGE);
 		});
+
+	//Only one per group is played
+	EntityManager::Get().Collect<AgentOnStandbyAudioComponent, AgentIdComponent>().Do([&](AgentOnStandbyAudioComponent, AgentIdComponent agentId)
+		{
+			AgentManager& am = AgentManager::Get();
+			u32 myGroup = am.GroupID(agentId.id);
+			u32 agentGroup = am.GroupID(aidc.id);
+
+			if (agentId.id == aidc.id)
+				return;
+
+			atLeastOneWithinAudioRange = (myGroup != agentGroup) && atLeastOneWithinAudioRange;
+		});
+
+	//Add audiocomponent if wihtin range or else remove it
+	entity e = agent;
+	if (atLeastOneWithinAudioRange)
+	{
+		if (!EntityManager::Get().HasComponent<AgentAggroComponent>(e))
+		{
+			if (!EntityManager::Get().HasComponent<AgentOnStandbyAudioComponent>(e))
+			{
+				auto& agentOnStandbyComponent = EntityManager::Get().AddComponent<AgentOnStandbyAudioComponent>(e);
+				agentOnStandbyComponent.agentOnStandbyAudioEntity = EntityManager::Get().CreateEntity();
+
+				entity audioEntity = agentOnStandbyComponent.agentOnStandbyAudioEntity;
+				EntityManager::Get().AddComponent<TransformComponent>(audioEntity);
+				EntityManager::Get().AddComponent<ChildComponent>(audioEntity).parent = e;
+				EntityManager::Get().AddComponent<SceneComponent>(audioEntity, EntityManager::Get().GetComponent<SceneComponent>(e).scene);
+				EntityManager::Get().AddComponent<DOG::AudioComponent>(audioEntity);
+			}
+
+			auto& onStandbyAudio = EntityManager::Get().GetComponent<DOG::AudioComponent>(EntityManager::Get().GetComponent<AgentOnStandbyAudioComponent>(e).agentOnStandbyAudioEntity);
+			if (!onStandbyAudio.playing)
+			{
+				onStandbyAudio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Enemy/OnStandby.wav");
+				onStandbyAudio.shouldPlay = true;
+				onStandbyAudio.volume = 1.0f;
+				onStandbyAudio.is3D = true;
+				onStandbyAudio.loop = true;
+			}
+		}
+		else
+		{
+			if (EntityManager::Get().HasComponent<AgentOnStandbyAudioComponent>(e))
+			{
+				auto& onStandbyAudio = EntityManager::Get().GetComponent<DOG::AudioComponent>(EntityManager::Get().GetComponent<AgentOnStandbyAudioComponent>(e).agentOnStandbyAudioEntity);
+				onStandbyAudio.shouldStop = true;
+			}
+		}
+	}
+	else
+	{
+		if (EntityManager::Get().HasComponent<AgentOnStandbyAudioComponent>(e))
+		{
+			auto& agentOnStandbyComponent = EntityManager::Get().GetComponent<AgentOnStandbyAudioComponent>(e);
+
+			EntityManager::Get().DeferredEntityDestruction(agentOnStandbyComponent.agentOnStandbyAudioEntity);
+
+			EntityManager::Get().RemoveComponent<AgentOnStandbyAudioComponent>(e);
+		}
+	}
 
 	if (atLeastOneWithinRange)
 		LEAF(btc.currentRunningNode)->Succeed(agent);
@@ -242,6 +309,23 @@ void AgentAttackSystem::OnUpdate(entity e, BTAttackComponent&, BehaviorTreeCompo
 	{
 		PlayerManager::Get().HurtIfThisPlayer(seek.entityID, attack.damage, e);
 
+		if (!EntityManager::Get().HasComponent<AgentAttackAudioComponent>(e))
+		{
+			auto& attackAudio = EntityManager::Get().AddComponent<AgentAttackAudioComponent>(e);
+			attackAudio.agentAttackAudioComponent = EntityManager::Get().CreateEntity();
+
+			EntityManager::Get().AddComponent<TransformComponent>(attackAudio.agentAttackAudioComponent);
+			EntityManager::Get().AddComponent<ChildComponent>(attackAudio.agentAttackAudioComponent).parent = e;
+
+			EntityManager::Get().AddComponent<DOG::AudioComponent>(attackAudio.agentAttackAudioComponent);
+		}
+
+		auto& attackAudio = EntityManager::Get().GetComponent<AgentAttackAudioComponent>(e);
+		auto& audio = EntityManager::Get().GetComponent<DOG::AudioComponent>(attackAudio.agentAttackAudioComponent);
+		audio.shouldPlay = true;
+		audio.is3D = true;
+		audio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Attack.wav");
+
 		// Reset cooldown
 		attack.timeOfLast = Time::ElapsedTime();
 
@@ -332,7 +416,6 @@ void AgentDodgeSystem::OnUpdate(entity e, BTDodgeComponent&, BehaviorTreeCompone
 	AgentAttackComponent& attack, AgentSeekPlayerComponent& seek)
 {
 	if (seek.HasTarget() && seek.distanceToPlayer <= attack.radius && attack.Ready())
-	if (seek.HasTarget() && seek.distanceToPlayer <= attack.radius && attack.Ready())
 	{
 		PlayerManager::Get().HurtIfThisPlayer(seek.entityID, attack.damage, e);
 
@@ -393,11 +476,39 @@ void AgentHitDetectionSystem::OnUpdate(entity e, HasEnteredCollisionComponent& c
 	}
 }
 
+AgentHitSystem::AgentHitSystem()
+{
+	m_hitSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Damage1.wav"));
+	m_hitSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Damage2.wav"));
+	m_hitSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Damage4.wav"));
+}
+
 void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent& hp)
 {
 	bool hitByPlayer = false;
 	for (i8 i = 0; i < hit.count; ++i)
 	{
+		if (!EntityManager::Get().HasComponent<AgentHitAudioComponent>(e) || !EntityManager::Get().Exists(EntityManager::Get().GetComponent<AgentHitAudioComponent>(e).agentHitAudioEntity))
+		{
+			auto& hitAudio = EntityManager::Get().AddOrReplaceComponent<AgentHitAudioComponent>(e);
+			hitAudio.agentHitAudioEntity = EntityManager::Get().CreateEntity();
+			EntityManager::Get().AddComponent<TransformComponent>(hitAudio.agentHitAudioEntity);
+			EntityManager::Get().AddComponent<ChildComponent>(hitAudio.agentHitAudioEntity).parent = e;
+
+			EntityManager::Get().AddComponent<DOG::AudioComponent>(hitAudio.agentHitAudioEntity);
+		}
+
+		auto& hitAudio = EntityManager::Get().GetComponent<AgentHitAudioComponent>(e);
+		auto& audio = EntityManager::Get().GetComponent<DOG::AudioComponent>(hitAudio.agentHitAudioEntity);
+		if (!audio.playing)
+		{
+			audio.shouldPlay = true;
+			audio.assetID = m_hitSounds[rand() % m_hitSounds.size()];
+			audio.is3D = true;
+			audio.volume = 1.0f;
+			EntityManager::Get().AddOrReplaceComponent<LifetimeComponent>(hitAudio.agentHitAudioEntity, 10.0f);
+		}
+
 		if (EntityManager::Get().HasComponent<ThisPlayer>(hit.hits[i].playerEntity))
 		{
 			hp.hp -= hit.hits[i].damage;
@@ -408,6 +519,12 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 					inputC.damageDoneToEnemies += hit.hits[i].damage;
 				});
 			hitByPlayer = true;
+
+			if (!audio.playing)
+			{
+				audio.is3D = false;
+				audio.volume = 0.25f;
+			}
 		}
 	}
 	if (hitByPlayer)
@@ -433,7 +550,16 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 			{
 				//Agent speed is set to 1/2 of original for now:
 				EntityManager::Get().GetComponent<AgentMovementComponent>(e).currentSpeed /= 2.0f; 
-				EntityManager::Get().AddComponent<FrostEffectComponent>(e, fecBullet.frostTimer);
+				auto& frostEffect = EntityManager::Get().AddComponent<FrostEffectComponent>(e, fecBullet.frostTimer);
+				frostEffect.frostAudioEntity = EntityManager::Get().CreateEntity();
+				EntityManager::Get().AddComponent<TransformComponent>(frostEffect.frostAudioEntity);
+				EntityManager::Get().AddComponent<ChildComponent>(frostEffect.frostAudioEntity).parent = e;
+				auto& audio = EntityManager::Get().AddComponent<DOG::AudioComponent>(frostEffect.frostAudioEntity);
+				audio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Frost.wav");
+				audio.is3D = true;
+				audio.loop = true;
+				audio.shouldPlay = true;
+				audio.volume = 2.5f;
 			}
 			break;
 		}
@@ -462,6 +588,12 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 					.startColor = Vector4(1.0f, 0.0f, 0.0f, 0.8f),
 					.endColor = Vector4(1.0f, 69.f / 255.0f, 0.0f, 0.0f),
 				};
+				auto& audio = EntityManager::Get().AddComponent<DOG::AudioComponent>(fire.particleEntity);
+				audio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Fire.wav");
+				audio.is3D = true;
+				audio.loop = true;
+				audio.shouldPlay = true;
+				audio.volume = 1.8f;
 			}
 
 			break;
@@ -496,6 +628,7 @@ void AgentFrostTimerSystem::OnUpdate(entity e, AgentMovementComponent& movement,
 	if (frostEffect.frostTimer <= 0.0f)
 	{
 		movement.currentSpeed = AgentManager::Get().GetAgentStats(idc.type).baseSpeed;
+		EntityManager::Get().DeferredEntityDestruction(frostEffect.frostAudioEntity);
 		EntityManager::Get().RemoveComponent<FrostEffectComponent>(e);
 	}
 }
@@ -517,6 +650,7 @@ void AgentAggroSystem::OnUpdate(entity e, BTAggroComponent&, AgentAggroComponent
 	if ((Time::ElapsedTime() - aggro.timeTriggered) > maxAggroTime)
 	{
 		em.RemoveComponent<AgentAggroComponent>(e);
+		em.RemoveComponentIfExists<AgentAggroAudioComponent>(e);
 		if (!em.HasComponent<PathFindingSync>(e))
 		{
 			em.AddComponent<PathFindingSync>(e).id = em.GetComponent<AgentIdComponent>(e);
@@ -557,6 +691,21 @@ void AgentAggroSystem::OnUpdate(entity e, BTAggroComponent&, AgentAggroComponent
 		}
 		else
 			LEAF(btc.currentRunningNode)->Fail(e);
+
+		if (!EntityManager::Get().HasComponent<AgentAggroAudioComponent>(e))
+		{
+			auto& aggroAudioComponent = EntityManager::Get().AddComponent<AgentAggroAudioComponent>(e);
+			aggroAudioComponent.agentAggroAudioEntity = EntityManager::Get().CreateEntity();
+
+			entity aggroAudioEntity = aggroAudioComponent.agentAggroAudioEntity;
+			EntityManager::Get().AddComponent<TransformComponent>(aggroAudioEntity);
+			EntityManager::Get().AddComponent<ChildComponent>(aggroAudioEntity).parent = e;
+			EntityManager::Get().AddComponent<LifetimeComponent>(aggroAudioEntity, 5.0f);
+			auto& aggroAudio = EntityManager::Get().AddComponent<DOG::AudioComponent>(aggroAudioEntity);
+			aggroAudio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Aggro.wav");
+			aggroAudio.shouldPlay = true;
+			aggroAudio.volume = 0.6f;
+		}
 	}
 }
 
@@ -565,6 +714,16 @@ void AgentAggroSystem::OnUpdate(entity e, BTAggroComponent&, AgentAggroComponent
 *			Late Update Systems
 ***************************************************/
 
+
+AgentMovementSystem::AgentMovementSystem()
+{
+	m_walkingSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Walking_1.wav"));
+	m_walkingSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Walking_2.wav"));
+	m_walkingSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Walking_3.wav"));
+	m_walkingSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Walking_4.wav"));
+	m_walkingSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Walking_5.wav"));
+	m_walkingSounds.push_back(AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Walking_6.wav"));
+}
 
 void AgentMovementSystem::OnLateUpdate(entity e, BTMoveToPlayerComponent&, BehaviorTreeComponent& btc, 
 	AgentMovementComponent& movement, AgentSeekPlayerComponent& seek, PathfinderWalkComponent& pfc, 
@@ -603,6 +762,20 @@ void AgentMovementSystem::OnLateUpdate(entity e, BTMoveToPlayerComponent&, Behav
 		rb.linearVelocity.z = movement.forward.z;
 
 		LEAF(btc.currentRunningNode)->Succeed(e);
+
+		if (!EntityManager::Get().HasComponent<DOG::AudioComponent>(e))
+		{
+			EntityManager::Get().AddComponent<DOG::AudioComponent>(e).is3D = true;
+		}
+		
+		auto& audio = EntityManager::Get().GetComponent<DOG::AudioComponent>(e);
+		if (!audio.playing)
+		{
+			int walkingSoundIndex = rand() % m_walkingSounds.size();
+			audio.assetID = m_walkingSounds[walkingSoundIndex];
+			audio.shouldPlay = true;
+			audio.volume = 0.5f;
+		}
 	}
 	else
 	{

@@ -284,6 +284,14 @@ void AgentManager::DestroyLocalAgent(entity e, bool local)
 	em.AddComponent<AgentCorpse>(corpse);
 	em.AddComponent<SceneComponent>(corpse, scene);
 
+	entity deathAudioEntity = EntityManager::Get().CreateEntity();
+	EntityManager::Get().AddComponent<TransformComponent>(deathAudioEntity).worldMatrix = agentTrans.worldMatrix;
+	EntityManager::Get().AddComponent<LifetimeComponent>(deathAudioEntity, 5.0f);
+	auto& deathAudio = EntityManager::Get().AddComponent<AudioComponent>(deathAudioEntity);
+	deathAudio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Death.wav");
+	deathAudio.shouldPlay = true;
+	deathAudio.is3D = true;
+
 	if (local)
 	{
 		CreateAndDestroyEntityComponent& kill = em.AddComponent<CreateAndDestroyEntityComponent>(corpse);
@@ -313,8 +321,10 @@ void AgentManager::DestroyLocalAgent(entity e, bool local)
 				ItemManager::Get().CreateItemHost(EntityTypes(((u32)Time::ElapsedTime() + agent.id) % (u32(EntityTypes::Barrels) - u32(EntityTypes::BarrelItemsBegin) + 1) + (u32)EntityTypes::BarrelItemsBegin), 
 					agentTrans.GetPosition());
 			}
-				
+			
 		}
+
+		deathAudio.is3D = false;
 	}
 
 

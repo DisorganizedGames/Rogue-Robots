@@ -134,7 +134,13 @@ class AgentHitSystem : public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
+
+private:
+	std::vector<u32> m_hitSounds;
+
 public:
+	AgentHitSystem();
+
 	SYSTEM_CLASS(AgentHitComponent, AgentHPComponent);
 	ON_UPDATE_ID(AgentHitComponent, AgentHPComponent);
 	void OnUpdate(DOG::entity e, AgentHitComponent& hit, AgentHPComponent& hp);
@@ -166,7 +172,6 @@ public:
 	void OnUpdate(DOG::entity e, AgentHPComponent& hpComponent, FireEffectComponent& fireEffect);
 };
 
-
 /**************************************************
 *			Late Update Systems
 ***************************************************/
@@ -176,7 +181,12 @@ class AgentMovementSystem : public DOG::ISystem
 {
 	using Vector3 = DirectX::SimpleMath::Vector3;
 	using Matrix = DirectX::SimpleMath::Matrix;
+private:
+	std::vector<u32> m_walkingSounds;
+
 public:
+	AgentMovementSystem();
+	
 	SYSTEM_CLASS(BTMoveToPlayerComponent, BehaviorTreeComponent, AgentMovementComponent, AgentSeekPlayerComponent, PathfinderWalkComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
 	ON_LATE_UPDATE_ID(BTMoveToPlayerComponent, BehaviorTreeComponent, AgentMovementComponent, AgentSeekPlayerComponent, PathfinderWalkComponent, DOG::RigidbodyComponent, DOG::TransformComponent);
 	void OnLateUpdate(DOG::entity e, BTMoveToPlayerComponent&, BehaviorTreeComponent& btc, 
