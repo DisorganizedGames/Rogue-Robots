@@ -65,6 +65,11 @@ void ToMenuButtonFunc(void)
    DOG::UI::Get()->ChangeUIscene(menuID);
 }
 
+void CheckBoxFunc(bool value)
+{
+   UNREFERENCED_PARAMETER(value);
+}
+
 void JoinButton(void);
 void Room1Button(void);
 void Room2Button(void);
@@ -1268,6 +1273,62 @@ void DOG::UIVertStatBar::SetBarValue(float value, float maxValue)
    m_maxValue = maxValue;
 }
 
+DOG::UICheckBox::UICheckBox(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float r, float g, float b, std::function<void(bool)> callback) : UIElement(id)
+{
+   HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(r, g, b, 0.7f), m_borderBrush.GetAddressOf());
+   HR_VFY(hr);
+   m_value = false;
+   m_border = D2D1::RectF(x,y,x+width, y+height);
+   m_callback = callback;
+}
+DOG::UICheckBox::~UICheckBox()
+{
+
+}
+void DOG::UICheckBox::Draw(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   if(m_value)
+      d2d.Get2DDeviceContext()->FillRectangle(m_border, m_borderBrush.Get());
+   else
+      d2d.Get2DDeviceContext()->DrawRectangle(m_border, m_borderBrush.Get());
+
+}
+void DOG::UICheckBox::Update(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   UNREFERENCED_PARAMETER(d2d);
+}
+bool DOG::UICheckBox::GetValue()
+{
+   return m_value;
+}
+
+void DOG::UICheckBox::OnEvent(IEvent& event)
+{
+   using namespace DOG;
+   if (event.GetEventCategory() == EventCategory::MouseEventCategory)
+   {
+      if (event.GetEventType() == EventType::LeftMouseButtonPressedEvent)
+      {
+         auto mevent = EVENT(DOG::LeftMouseButtonPressedEvent);
+         auto mpos = mevent.coordinates;
+         if (mpos.x >= m_border.left && mpos.x <= m_border.right && mpos.y >= m_border.top && mpos.y <= m_border.bottom)
+         {
+            m_value = m_value ? false : true;
+            m_callback(m_value);
+         }
+      }
+      else if (event.GetEventType() == EventType::MouseMovedEvent)
+      {
+         auto mevent = EVENT(DOG::MouseMovedEvent);
+         auto mpos = mevent.coordinates;
+         if (mpos.x >= m_border.left && mpos.x <= m_border.right && mpos.y >= m_border.top && mpos.y <= m_border.bottom)
+            m_borderBrush.Get()->SetOpacity(1.0f);
+         else
+            m_borderBrush.Get()->SetOpacity(0.7f);
+      }
+   }
+}  
+
 void DOG::UIVertStatBar::Hide(bool show)
 {
    m_visible = show;
@@ -1546,6 +1607,10 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
    auto pbar = instance->Create<DOG::UIVertStatBar, float, float, float, float, float, float, float, float>(pbarID, 27.f, (FLOAT)clientHeight - 425.f, 40.f, 250.f, 25.f, 0.34f, 0.69f, 0.99f);
    instance->AddUIElementToScene(gameID, std::move(pbar));
+
+   UINT cboxID;
+   auto checkbox = instance->Create<DOG::UICheckBox, float, float, float, float, float, float, float>(cboxID, 300.f, (FLOAT)clientHeight - 425.f, 25.f, 25.f, 1.0f, 1.0f, 1.0f, std::function<void(bool)>(CheckBoxFunc));
+   instance->AddUIElementToScene(optionsID, std::move(checkbox));
 
    instance->AddUIElementToScene(menuID, std::move(bp));
    instance->AddUIElementToScene(menuID, std::move(bm));
