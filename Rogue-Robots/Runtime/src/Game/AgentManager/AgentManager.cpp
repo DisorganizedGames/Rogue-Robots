@@ -112,9 +112,17 @@ AgentManager::AgentStats AgentManager::GetAgentStats(EntityTypes type)
 	case EntityTypes::Scorpio:
 	{
 		AgentStats scorpio{};
-		scorpio.visionDistance = 30.0;
 		scorpio.visionConeDotValue = 0.35f;
-		scorpio.lidarDistance = 5.0f;
+		if ((Time::ElapsedTime() - m_timer) < 20.)
+		{
+			scorpio.visionDistance = 0.0f;
+			scorpio.lidarDistance = 0.0f;
+		}
+		else
+		{
+			scorpio.visionDistance = 30.0f;
+			scorpio.lidarDistance = 5.0f;
+		}
 		scorpio.baseSpeed = 10.0f;
 		return scorpio;
 	}
@@ -126,6 +134,10 @@ AgentManager::AgentStats AgentManager::GetAgentStats(EntityTypes type)
 	return {};
 }
 
+void AgentManager::SceneBegins()
+{
+	m_timer = Time::ElapsedTime();
+}
 /*******************************
 		Private Methods
 *******************************/

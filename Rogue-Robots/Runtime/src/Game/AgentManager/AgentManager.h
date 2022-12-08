@@ -37,6 +37,8 @@ public:
 	static void CreateVillain(const Vector3& position);
 	static void CreateScorpioBehaviourTree(DOG::entity agent) noexcept;
 
+	void SceneBegins();
+
 	u32 GenAgentID(u32 groupID);
 	void CountAgentKilled(u32 agentID);
 	u32 GroupID(u32 agentID = NULL_AGENT);
@@ -46,6 +48,7 @@ private:
 	// singleton instance
 	static AgentManager s_amInstance;
 	static bool s_notInitialized;
+	f64 m_timer;
 
 	std::vector<u32> m_models;
 	std::array<u32, GROUP_RANGE> m_agentIdCounter{ 0 };

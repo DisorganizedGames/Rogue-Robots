@@ -1,10 +1,14 @@
 #include "Scene.h"
+#include "AgentManager/AgentManager.h"
 
 using namespace DOG;
 
 EntityManager& Scene::s_entityManager = EntityManager::Get();
 
-Scene::Scene(SceneComponent::Type scene) : m_sceneType(scene) {}
+Scene::Scene(SceneComponent::Type scene) : m_sceneType(scene)
+{
+	AgentManager::Get().SceneBegins();
+}
 
 Scene::~Scene()
 {
