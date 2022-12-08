@@ -41,6 +41,7 @@ void PlayButtonFunc(void);
 
 void SliderFunc(float value)
 {
+   UNREFERENCED_PARAMETER(value);
    return;
 }
 
@@ -95,16 +96,18 @@ void ExitButtonFunc(void)
 
 DOG::UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight): m_visible(true), Layer("UILayer")
 {
-   srand((UINT)time(NULL));
+   //srand((UINT)time(NULL));
+   int err = AddFontResource(TEXT("Assets/Fonts/robotaur.ttf"));
+   Sleep(1000);
+   assert(err);
    m_width = clientWidth;
    m_height = clientHeight;
    m_d2d = std::make_unique<DOG::gfx::D2DBackend_DX12>(rd, sc, numBuffers);
-   AddFontResource(TEXT("Assets/Fonts/Robot Radicals.ttf"));
 }
 
 DOG::UI::~UI()
 {
-
+   RemoveFontResource(TEXT("Assets/Fonts/robotaur.ttf"));
 }
 
 DOG::gfx::D2DBackend_DX12* DOG::UI::GetBackend()
@@ -156,6 +159,8 @@ void DOG::UI::Initialize(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UI
 {
    if (!s_instance)
       s_instance = new UI(rd, sc, numBuffers, clientWidth, clientHeight);
+
+   //UIRebuild(clientWidth, clientHeight);
 }
 
 void DOG::UI::Destroy()
@@ -165,6 +170,7 @@ void DOG::UI::Destroy()
       delete s_instance;
       s_instance = nullptr;
    }
+   RemoveFontResource(TEXT("Assets/Fonts/robotaur.ttf"));
 }
 
 std::vector<std::function<void(u32, u32)>>& DOG::UI::GetExternalUI()
@@ -347,7 +353,7 @@ DOG::UIButton::UIButton(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float 
    HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(r, g, b, 1.0f), &m_brush);
    HR_VFY(hr);
    hr = d2d.GetDWriteFactory()->CreateTextFormat(
-      L"Robot Radicals",
+      L"robotaur",
       NULL,
       DWRITE_FONT_WEIGHT_NORMAL,
       DWRITE_FONT_STYLE_NORMAL,
@@ -424,7 +430,7 @@ DOG::UISplashScreen::UISplashScreen(DOG::gfx::D2DBackend_DX12& d2d, UINT id, flo
    hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &m_textBrush);
    HR_VFY(hr);
    hr = d2d.GetDWriteFactory()->CreateTextFormat(
-      L"Robot Radicals",
+      L"robotaur",
       NULL,
       DWRITE_FONT_WEIGHT_NORMAL,
       DWRITE_FONT_STYLE_NORMAL,
@@ -486,7 +492,7 @@ DOG::UIHealthBar::UIHealthBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, 
    hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::GreenYellow, 0.5f), &m_barBrush);
    HR_VFY(hr);
    hr = d2d.GetDWriteFactory()->CreateTextFormat(
-      L"Robot Radicals",
+      L"robotaur",
       NULL,
       DWRITE_FONT_WEIGHT_NORMAL,
       DWRITE_FONT_STYLE_NORMAL,
@@ -539,13 +545,13 @@ DOG::UIBackground::UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float w
 {
    m_title = title;
    m_background = D2D1::RectF(left, top, left + width, top + heigt);
-   m_textRect = D2D1::RectF(width / 2 - 350.f / 2, heigt / 2 - 200.f, width / 2 + 300.f, heigt / 2 - 50.f);
+   m_textRect = D2D1::RectF(width / 2 - 600.f, heigt / 2 - 200.f, width / 2 + 600.f, heigt / 2 - 50.f);
    HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_textBrush);
    HR_VFY(hr);
    hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_backBrush);
    HR_VFY(hr);
    hr = d2d.GetDWriteFactory()->CreateTextFormat(
-      L"Robot Radicals",
+      L"robotaur",
       NULL,
       DWRITE_FONT_WEIGHT_NORMAL,
       DWRITE_FONT_STYLE_NORMAL,
@@ -554,6 +560,8 @@ DOG::UIBackground::UIBackground(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float w
       L"en-us",
       &m_textFormat
    );
+   HR_VFY(hr);
+   hr = m_textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
    HR_VFY(hr);
    hr = m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
    HR_VFY(hr);
@@ -585,7 +593,7 @@ DOG::UICrosshair::UICrosshair(DOG::gfx::D2DBackend_DX12& d2d, UINT id): UIElemen
    HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.3f), &m_brush);
    HR_VFY(hr);
    hr = d2d.GetDWriteFactory()->CreateTextFormat(
-      L"Robot Radicals",
+      L"robotaur",
       NULL,
       DWRITE_FONT_WEIGHT_ULTRA_LIGHT,
       DWRITE_FONT_STYLE_NORMAL,
@@ -632,7 +640,7 @@ DOG::UITextField::UITextField(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, 
    hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::GhostWhite, 0.7f), &m_textBrush);
    HR_VFY(hr);
    hr = d2d.GetDWriteFactory()->CreateTextFormat(
-      L"Robot Radicals",
+      L"robotaur",
       NULL,
       DWRITE_FONT_WEIGHT_NORMAL,
       DWRITE_FONT_STYLE_NORMAL,
@@ -785,7 +793,7 @@ DOG::UIBuffTracker::UIBuffTracker(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::
    hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), m_borderBrush.GetAddressOf());
    HR_VFY(hr);
    hr = d2d.GetDWriteFactory()->CreateTextFormat(
-      L"Robot Radicals",
+      L"robotaur",
       NULL,
       DWRITE_FONT_WEIGHT_NORMAL,
       DWRITE_FONT_STYLE_NORMAL,
@@ -888,7 +896,7 @@ DOG::UIPlayerList::UIPlayerList(DOG::gfx::D2DBackend_DX12& d2d, UINT id): UIElem
    HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.3f), &m_rectBrush);
    HR_VFY(hr);
    hr = d2d.GetDWriteFactory()->CreateTextFormat(
-      L"Robot Radicals",
+      L"robotaur",
       NULL,
       DWRITE_FONT_WEIGHT_NORMAL,
       DWRITE_FONT_STYLE_NORMAL,
@@ -969,7 +977,7 @@ DOG::UILabel::UILabel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring text
    HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.7f), &m_textBrush);
    HR_VFY(hr);
    hr = d2d.GetDWriteFactory()->CreateTextFormat(
-      L"Robot Radicals",
+      L"robotaur",
       NULL,
       DWRITE_FONT_WEIGHT_NORMAL,
       DWRITE_FONT_STYLE_NORMAL,
@@ -1030,7 +1038,7 @@ DOG::UICarousel::UICarousel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector
    hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.5f), &m_borderBrush);
    HR_VFY(hr);
    hr = d2d.GetDWriteFactory()->CreateTextFormat(
-      L"Robot Radicals",
+      L"robotaur",
       NULL,
       DWRITE_FONT_WEIGHT_ULTRA_LIGHT,
       DWRITE_FONT_STYLE_NORMAL,
@@ -1274,7 +1282,7 @@ DOG::UIVertStatBar::UIVertStatBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float
    hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.7f), m_textBrush.GetAddressOf());
    HR_VFY(hr);
    hr = d2d.GetDWriteFactory()->CreateTextFormat(
-      L"Robot Radicals",
+      L"robotaur",
       NULL,
       DWRITE_FONT_WEIGHT_ULTRA_LIGHT,
       DWRITE_FONT_STYLE_NORMAL,
@@ -1497,14 +1505,14 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
       );
 
    auto lMusicText = instance->Create<DOG::UILabel>(
-       lMusicTextID,
-       std::wstring(L"Douglas Runebjörk"),
-       (FLOAT)clientWidth / 2.0f - 850.0f,
-       210.0f,
-       500.f,
-       200.f,
-       25.0f
-       );
+      lMusicTextID,
+      std::wstring(L"Douglas Runebj") + wchar_t(214) + L"rk",
+      (FLOAT)clientWidth / 2.0f - 850.0f,
+      210.0f,
+      500.f,
+      200.f,
+      25.0f
+      );
 
    //Fiverr artists
    auto lFiverrArtists = instance->Create<DOG::UILabel>(
@@ -1531,22 +1539,22 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto lTheTeam = instance->Create<DOG::UILabel>(
       lTheTeamID,
       std::wstring(L"The Team"),
-      (FLOAT)clientWidth / 2.0f - 150.0f,
+      (FLOAT)clientWidth / 2.0f - 250.0f,
       20.0f,
-      300.f,
+      500.f,
       100.f,
       60.0f
       );
    auto lNamesCredits = instance->Create<DOG::UILabel>(
-       lNamesCreditsID,
-       std::wstring(
-           L"Sam Axelsson\nGunnar Cerne\nFilip Eriksson\nEmil Fransson\nNadhif Ginola\nJonatan Hermansson\nEmil Högstedt\nAxel Lundberg\nOscar Milstein\nOve Ødegård"),
-       (FLOAT)clientWidth / 2.0f - 350.0f,
-       (FLOAT)clientHeight / 2.f - 270.0f,
-       700.0f,
-       200.0f,
-       40.f
-       );
+      lNamesCreditsID,
+      std::wstring(
+         L"Sam Axelsson\nGunnar Cerne\nFilip Eriksson\nEmil Fransson\nNadhif Ginola\nJonatan Hermansson\nEmil H") + wchar_t(214) + L"gstedt\nAxel Lundberg\nOscar Milstein\nOve " + wchar_t(216) + L"deg" + wchar_t(229) + L"rd",
+      (FLOAT)clientWidth / 2.0f - 350.0f,
+      (FLOAT)clientHeight / 2.f - 270.0f,
+      700.0f,
+      200.0f,
+      40.f
+      );
 
    //Fiverr artists
    auto lIconsCredits = instance->Create<DOG::UILabel>(
@@ -1570,32 +1578,32 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
       );
 
    auto lAcknowledgements = instance->Create<DOG::UILabel>(
-       lAcknowledgementsID,
-       std::wstring(L"Acknowledgements"),
-       (FLOAT)clientWidth / 2.0f - 250.0f,
-       (FLOAT)clientHeight - 400.f,
-       500.f,
-       100.f,
-       45.0f
-       );
+      lAcknowledgementsID,
+      std::wstring(L"Acknowledgements"),
+      (FLOAT)clientWidth / 2.0f - 350.0f,
+      (FLOAT)clientHeight - 400.f,
+      700.f,
+      100.f,
+      45.0f
+      );
 
    auto lAcknowledgementsText = instance->Create<DOG::UILabel>(
-       lAcknowledgementsTextID,
-       std::wstring(L"We want to thank all of our teachers for mentoring us through this project.\nA special thanks to Blackdrop Interactive for sponsoring us with money to be able to commission assets.\nA very special thanks to Pascal Deraed for teaching us so much about Blender and spending his free time to help us."),
-       (FLOAT)clientWidth / 2.0f - 400.0f,
-       (FLOAT)clientHeight - 350.f,
-       800.f,
-       300.f,
-       25.0f
-       );
+      lAcknowledgementsTextID,
+      std::wstring(L"We want to thank all of our teachers for mentoring us through this project.\nA special thanks to Blackdrop Interactive for sponsoring us with money to be able to commission assets.\nA very special thanks to Pascal Deraed for teaching us so much about Blender and spending his free time to help us."),
+      (FLOAT)clientWidth / 2.0f - 400.0f,
+      (FLOAT)clientHeight - 350.f,
+      800.f,
+      300.f,
+      25.0f
+      );
 
    //Menu buttons
-   auto bp = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Play"), std::function<void()>(LevelSelectSoloButtonFunc));
-   auto bm = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bmID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
+   auto bp = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 200.f / 2, (FLOAT)clientHeight / 2.f, 200.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Play"), std::function<void()>(LevelSelectSoloButtonFunc));
+   auto bm = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bmID, (FLOAT)clientWidth / 2.f - 200.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 200.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
    //Options menu is not used atm.
    //auto bo = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
-   auto bc = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bcID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Credits"), std::function<void()>(CreditsButtonFunc));
-   auto be = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(beID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 280.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
+   auto bc = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bcID, (FLOAT)clientWidth / 2.f - 200.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 200.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Credits"), std::function<void()>(CreditsButtonFunc));
+   auto be = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(beID, (FLOAT)clientWidth / 2.f - 200.f / 2, (FLOAT)clientHeight / 2.f + 280.f, 200.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
    auto optback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(optbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
    auto credback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(credbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight - 80.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
    auto mulback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 200.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
