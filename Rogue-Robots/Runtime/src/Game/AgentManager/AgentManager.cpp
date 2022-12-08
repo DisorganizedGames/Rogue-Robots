@@ -112,7 +112,7 @@ AgentManager::AgentStats AgentManager::GetAgentStats(EntityTypes type)
 	case EntityTypes::Scorpio:
 	{
 		AgentStats scorpio{};
-		scorpio.visionDistance = 15.0;
+		scorpio.visionDistance = 30.0;
 		scorpio.visionConeDotValue = 0.35f;
 		scorpio.lidarDistance = 5.0f;
 		scorpio.baseSpeed = 10.0f;

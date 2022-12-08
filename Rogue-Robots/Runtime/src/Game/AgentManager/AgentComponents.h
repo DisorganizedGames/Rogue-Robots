@@ -123,6 +123,7 @@ struct AgentPatrolComponent
 {
 	f64 timer;
 	bool successfullyCreated = true;
+	f32 ratio;
 	f32 turnSpeed;
 	f32 orientation;
 };

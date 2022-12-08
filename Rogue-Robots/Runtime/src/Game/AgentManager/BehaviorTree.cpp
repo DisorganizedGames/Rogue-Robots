@@ -548,7 +548,7 @@ CreatePatrolNode::CreatePatrolNode(const std::string& name) noexcept
 
 void CreatePatrolNode::Process(DOG::entity agent) noexcept
 {
-	DOG::EntityManager::Get().AddComponent<BTCreatePatrolComponent>(agent);
+	DOG::EntityManager::Get().AddOrReplaceComponent<BTCreatePatrolComponent>(agent);
 	DOG::EntityManager::Get().GetComponent<BehaviorTreeComponent>(agent).currentRunningNode = this;
 }
 

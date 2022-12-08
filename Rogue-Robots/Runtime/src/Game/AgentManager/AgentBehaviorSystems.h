@@ -64,9 +64,9 @@ public:
 class AgentCreatePatrolSystem : public DOG::ISystem
 {
 public:
-	SYSTEM_CLASS(BTCreatePatrolComponent, DOG::TransformComponent, BehaviorTreeComponent);
-	ON_EARLY_UPDATE_ID(BTCreatePatrolComponent, DOG::TransformComponent, BehaviorTreeComponent);
-	void OnEarlyUpdate(DOG::entity e, BTCreatePatrolComponent&, DOG::TransformComponent& trans, BehaviorTreeComponent& btc);
+	SYSTEM_CLASS(BTCreatePatrolComponent, BehaviorTreeComponent);
+	ON_EARLY_UPDATE_ID(BTCreatePatrolComponent, BehaviorTreeComponent);
+	void OnEarlyUpdate(DOG::entity e, BTCreatePatrolComponent&, BehaviorTreeComponent& btc);
 };
 
 

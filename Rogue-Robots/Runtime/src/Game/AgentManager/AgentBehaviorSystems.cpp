@@ -39,11 +39,6 @@ void AgentDistanceToPlayersSystem::OnEarlyUpdate(entity agent, BTDistanceToPlaye
 			);
 			if (EntityManager::Get().HasComponent<ThisPlayer>(playerID))
 			{
-				//auto rayCastResult = PhysicsEngine::RayCast(tc.GetPosition(), ptc.GetPosition());
-
-				//bool hitIsPlayer = (rayCastResult->entityHit == playerID);
-				//if (hitIsPlayer)
-				//{
 				if (atmc.playerData.back().distanceFromAgent < 50.0f)
 				{
 					EntityManager::Get().GetComponent<PointLightComponent>(agent).dirty = true;
@@ -172,7 +167,7 @@ void AgentLineOfSightToPlayerSystem::OnEarlyUpdate(entity agent, BTLineOfSightTo
 				//The player in question was not hit (line-of-sight does not exist):
 				if (!hitIsPlayer)
 					continue;
-
+				
 				pd.lineOfSight = AgentTargetMetricsComponent::LineOfSight::Full;
 				atLeastOneHasLineOfSight = true;
 			}
@@ -230,13 +225,13 @@ void AgentDetectPlayerSystem::OnEarlyUpdate(entity agentID, BTDetectPlayerCompon
 
 const bool AgentDetectPlayerSystem::IsPotentialTarget(const AgentTargetMetricsComponent::PlayerData& playerData, const AgentManager::AgentStats& stats) noexcept
 {
-	const bool playerIsWithinMinimumRange = (playerData.distanceFromAgent <= stats.visionConeDotValue);
+	const bool playerIsWithinMinimumRange = (playerData.distanceFromAgent <= stats.visionDistance);
 	const bool playerIsWithinForcedAggroRange = (playerData.distanceFromAgent <= stats.lidarDistance);
 	const bool playerIsInFullLOS = (playerData.lineOfSight == AgentTargetMetricsComponent::LineOfSight::Full);
 	const bool playerIsInPartialLOS = (playerData.lineOfSight == AgentTargetMetricsComponent::LineOfSight::Partial);
 
 	const bool validAggro1 = (playerIsWithinMinimumRange && playerIsInFullLOS);
-	const bool validAggro2 = (playerIsWithinForcedAggroRange && playerIsInPartialLOS);
+	const bool validAggro2 = (playerIsWithinForcedAggroRange && (playerIsInPartialLOS || playerIsInFullLOS));
 
 	if (validAggro1 || validAggro2)
 		return true;
@@ -306,7 +301,7 @@ void AgentGetPathSystem::OnEarlyUpdate(entity e, BTGetPathComponent&, AgentSeekP
 	LEAF(btc.currentRunningNode)->Succeed(e);
 }
 
-void AgentCreatePatrolSystem::OnEarlyUpdate(entity e, BTCreatePatrolComponent&, TransformComponent& trans, BehaviorTreeComponent& btc)
+void AgentCreatePatrolSystem::OnEarlyUpdate(entity e, BTCreatePatrolComponent&, BehaviorTreeComponent& btc)
 {
 	EntityManager& em = EntityManager::Get();
 
@@ -318,8 +313,9 @@ void AgentCreatePatrolSystem::OnEarlyUpdate(entity e, BTCreatePatrolComponent&, 
 		patrol.timer = Time::ElapsedTime();
 		size_t agentID = em.GetComponent<AgentIdComponent>(e).id;
 		i32 dir = 1 - (2 * (agentID % 2));  // 1 or -1
-		i32 range = agentID % 300 + 1;
-		patrol.turnSpeed = static_cast<f32>(range / 300.f) * static_cast<f32>(dir) * 2 * 3.1415; 			
+		i32 range = agentID % 225 + 76;
+		patrol.ratio = static_cast<f32>(range / 300.f);
+		patrol.turnSpeed = patrol.ratio * static_cast<f32>(dir) * 3.1415f;
 		patrol.orientation = patrol.turnSpeed;
 
 		LEAF(btc.currentRunningNode)->Succeed(e);
@@ -828,13 +824,18 @@ void AgentExecutePatrolSystem::OnLateUpdate(entity agentID, BTExecutePatrolCompo
 	DOG::RigidbodyComponent& rb, DOG::TransformComponent& trans)
 {
 	f64 elapsedTime = Time::ElapsedTime() - patrol.timer;
-	if (elapsedTime < 1.7)
+	if (elapsedTime < (1. * patrol.ratio))
 	{
-		patrol.orientation += patrol.turnSpeed * Time::DeltaTime();
+		patrol.orientation += static_cast<f32>(patrol.turnSpeed * Time::DeltaTime());
 		trans.SetRotation(trans.GetRotation().CreateRotationY(patrol.orientation));
 	}
-	else if (2.9 < elapsedTime)
+	else if ((2. * patrol.ratio) < elapsedTime)
 	{
+		constexpr f32 ARC_LIMIT = 2.5f;
+		if (!(-ARC_LIMIT < patrol.orientation && patrol.orientation < ARC_LIMIT))
+			patrol.turnSpeed *= -1.f;
+		movement.forward = trans.GetForward();
+		rb.linearVelocity = movement.forward * 1.3f * static_cast<f32>(Time::DeltaTime());
 		patrol.timer = Time::ElapsedTime();
 	}
 
