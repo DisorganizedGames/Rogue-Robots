@@ -84,7 +84,12 @@ namespace DOG
 	{
 		bool dontDraw = true;
 	};
+	
 	struct MixamoHeadJointTF
+	{
+		DirectX::SimpleMath::Matrix transform = DirectX::SimpleMath::Matrix::Identity;
+	};
+	struct MixamoRightHandJointTF
 	{
 		DirectX::SimpleMath::Matrix transform = DirectX::SimpleMath::Matrix::Identity;
 	};
@@ -117,7 +122,7 @@ namespace DOG
 			f32 targetWeights[MAX_TARGET_ANIMS] = { 1.f, 1.f, 1.f };
 		};
 		std::array<Setter, MAX_SETTERS> animSetters;
-		void SimpleAdd(i8 animationId, AnimationFlag flags = AnimationFlag::None, u32 priority = BASE_PRIORITY);
+		void SimpleAdd(i8 animationId, AnimationFlag flags = AnimationFlag::None, u32 priority = BASE_PRIORITY, u32 group = FULL_BODY, f32 playbackRate = 1.f, f32 transitionLen = .1f);
 	};
 	static_assert(std::is_trivially_copyable_v<AnimationComponent>);
 

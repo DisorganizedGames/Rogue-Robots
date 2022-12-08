@@ -422,50 +422,6 @@ public:
 	}
 };
 
-class PlayerMovementSystem : public DOG::ISystem
-{
-	using TransformComponent = DOG::TransformComponent;
-	using CameraComponent = DOG::CameraComponent;
-	using RigidbodyComponent = DOG::RigidbodyComponent;
-	using Entity = DOG::entity;
-	using AnimationComponent = DOG::AnimationComponent;
-
-	using Vector3 = DirectX::SimpleMath::Vector3;
-	using Matrix = DirectX::SimpleMath::Matrix;
-
-public:
-	PlayerMovementSystem();
-
-	SYSTEM_CLASS(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController, AnimationComponent);
-	ON_EARLY_UPDATE_ID(PlayerControllerComponent, PlayerStatsComponent, TransformComponent, RigidbodyComponent, InputController);
-
-	void OnEarlyUpdate(Entity, PlayerControllerComponent&, PlayerStatsComponent&, TransformComponent&, RigidbodyComponent&, InputController&);
-
-private:
-	inline static constexpr Vector3 s_globUp = Vector3(0, 1, 0);
-	u32 m_changeSound = 0;
-	f32 m_timeBetween = 0.3f;
-	f32 m_timeBeteenTimer = 0.0f;
-	std::vector<u32> m_footstepSounds;
-	u32 m_jumpSound;
-
-private:
-
-	Entity CreateDebugCamera(Entity e) noexcept;
-	Entity CreatePlayerCameraEntity(Entity player) noexcept;
-
-	Vector3 GetNewForward(PlayerControllerComponent& player)  const noexcept;
-
-	Vector3 GetMoveTowards(const InputController& input, Vector3 forward, Vector3 right) const noexcept;
-
-	void MoveDebugCamera(Entity e, Vector3 moveTowards, Vector3 forward, Vector3 right, f32 speed, const InputController& input) noexcept;
-	
-	void ApplyAnimations(Entity e, const InputController& input);
-
-	void MovePlayer(Entity e, PlayerControllerComponent& player, Vector3 moveTowards, Vector3 forward,
-		RigidbodyComponent& rb, f32 speed, f32 jumpSpeed, InputController& input);
-};
-
 class PlayerJumpRefreshSystem : public DOG::ISystem
 {
 	using HasEnteredCollisionComponent = DOG::HasEnteredCollisionComponent;
@@ -616,6 +572,15 @@ public:
 	void OnUpdate(DOG::entity e, ChildToBoneComponent& child, DOG::TransformComponent& world);
 };
 
+class SetGunToBoneSystem : public DOG::ISystem
+{
+public:
+	SYSTEM_CLASS(ChildToBoneComponent, DOG::TransformComponent);
+
+	ON_UPDATE_ID(ChildToBoneComponent, DOG::TransformComponent);
+	void OnUpdate(DOG::entity e, ChildToBoneComponent& child, DOG::TransformComponent& world);
+};
+
 class PlaceHolderDeathUISystem : public DOG::ISystem
 {
 public:
@@ -643,6 +608,7 @@ public:
 	void OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorComponent& sc);
 	DOG::entity GetQueueIndexForSpectatedPlayer(DOG::entity player, const std::vector<DOG::entity>& players);
 	void ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw);
+	void ChangeGunDrawLogic(DOG::entity player, bool drawFirstPersonViewGun, bool drawModelGun);
 };
 
 class ReviveSystem : public DOG::ISystem

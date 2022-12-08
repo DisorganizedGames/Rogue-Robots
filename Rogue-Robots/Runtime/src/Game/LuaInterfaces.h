@@ -205,6 +205,7 @@ private:
 
 	void AddOutlineComponent(DOG::LuaContext* context, DOG::entity e);
 
+	void AddDontDrawComponent(DOG::LuaContext* context, DOG::entity e);
 
 };
 

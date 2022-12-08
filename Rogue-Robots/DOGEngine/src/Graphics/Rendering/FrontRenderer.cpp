@@ -253,15 +253,16 @@ namespace DOG::gfx
 								m_renderer->SubmitMeshWireframe(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
 						}
 						// Special case for weapon draws
-						else if (mgr.HasComponent<ThisPlayerWeapon>(e))
+						else if (mgr.HasComponent<ThisPlayerWeapon>(e) && (!mgr.HasComponent<DontDraw>(e) || !mgr.GetComponent<DontDraw>(e).dontDraw))
 						{
 							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
 								m_renderer->SubmitMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC, true);
 						}
 						else
 						{
-							for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
-								m_renderer->SubmitMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
+							if (!mgr.HasComponent<DontDraw>(e) || !mgr.GetComponent<DontDraw>(e).dontDraw)
+								for (u32 i = 0; i < model->gfxModel->mesh.numSubmeshes; ++i)
+									m_renderer->SubmitMesh(model->gfxModel->mesh.mesh, i, model->gfxModel->mats[i], transformC);
 						}
 					}
 				}

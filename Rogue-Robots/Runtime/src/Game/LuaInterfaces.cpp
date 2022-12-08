@@ -177,6 +177,10 @@ void EntityInterface::AddComponent(LuaContext* context)
 	{
 		AddLifetimeComponent(context, e);
 	}
+	else if (compType == "DontDraw")
+	{
+		AddDontDrawComponent(context, e);
+	}
 	//Add more component types here.
 	else
 	{
@@ -226,6 +230,11 @@ void EntityInterface::RemoveComponent(DOG::LuaContext* context)
 	else if (compType == "Model")
 	{
 		EntityManager::Get().RemoveComponent<ModelComponent>(e);
+		EntityManager::Get().RemoveComponent<ShadowReceiverComponent>(e);
+		return;
+	}
+	else if (compType == "ShadowReceiverComponent")
+	{
 		EntityManager::Get().RemoveComponent<ShadowReceiverComponent>(e);
 		return;
 	}
@@ -761,22 +770,19 @@ void EntityInterface::AddAgentStats(LuaContext* context, entity e)
 void EntityInterface::ModifyAnimationComponent(DOG::LuaContext* context)
 {
 	entity e = context->GetInteger();
-
-	int animID = context->GetInteger();
-	int group = context->GetInteger();
-	float transitionLength = static_cast<f32>(context->GetDouble());
-	float playbackRate = static_cast<f32>(context->GetDouble());
+	i32 animID = context->GetInteger();
+	i32 group = context->GetInteger();
+	i32 priority = context->GetInteger();
+	i32 flags = context->GetInteger();
+	f32 playbackRate = static_cast<f32>(context->GetDouble());
+	f32 transitionLen = static_cast<f32>(context->GetDouble());
 
 	if (!EntityManager::Get().HasComponent<AnimationComponent>(e))
 		return;
 
 	auto& aComp = EntityManager::Get().GetComponent<AnimationComponent>(e);
 
-	auto& setter = aComp.animSetters[aComp.addedSetters++];
-	setter.animationIDs[0] = static_cast<i8>(animID);
-	setter.group = static_cast<u8>(group);
-	setter.transitionLength = transitionLength;
-	setter.playbackRate = playbackRate;
+	aComp.SimpleAdd(static_cast<i8>(animID), static_cast<AnimationFlag>(flags), priority, group, playbackRate, transitionLen);
 }
 
 void EntityInterface::SpawnActiveItem(DOG::LuaContext* context)
@@ -1358,6 +1364,10 @@ void EntityInterface::AddOutlineComponent(DOG::LuaContext* context, DOG::entity 
 	EntityManager::Get().AddComponent<OutlineComponent>(e).color = { r, g, b };
 }
 
+void EntityInterface::AddDontDrawComponent(DOG::LuaContext*, DOG::entity e)
+{
+	EntityManager::Get().AddComponent<DontDraw>(e).dontDraw = true;
+}
 
 
 void EntityInterface::UpdateMagazine(DOG::LuaContext* context)

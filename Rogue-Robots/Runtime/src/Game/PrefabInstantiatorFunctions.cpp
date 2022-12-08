@@ -8,7 +8,7 @@ using namespace DirectX::SimpleMath;
 std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 {
 	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
-	
+
 	auto* scriptManager = LuaMain::GetScriptManager();
 	//// Add persistent material prefab lua
 	//{
@@ -23,11 +23,11 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 
 	auto& am = AssetManager::Get();
 	auto& em = EntityManager::Get();
-	std::array<u32, 4> playerModels;
-	playerModels[0] = am.LoadModelAsset("Assets/Models/P2/Red/player_red.gltf");
-	playerModels[1] = am.LoadModelAsset("Assets/Models/P2/Blue/player_blue.gltf");
-	playerModels[2] = am.LoadModelAsset("Assets/Models/P2/Green/player_green.gltf");
-	playerModels[3] = am.LoadModelAsset("Assets/Models/P2/Yellow/player_yellow.gltf");
+	std::array<u32, 4> playerModels = {};
+	playerModels[0] = am.LoadModelAsset("Assets/Models/P2/Red/red_player.gltf");
+	playerModels[1] = am.LoadModelAsset("Assets/Models/P2/Blue/blue_player.gltf");
+	playerModels[2] = am.LoadModelAsset("Assets/Models/P2/Green/green_player.gltf");
+	playerModels[3] = am.LoadModelAsset("Assets/Models/P2/Yellow/yellow_player.gltf");
 
 	std::array<DirectX::SimpleMath::Vector3, 4> playerOutlineColors
 	{
@@ -67,6 +67,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		em.AddComponent<AnimationComponent>(playerI);
 		em.AddComponent<AudioComponent>(playerI);
 		em.AddComponent<MixamoHeadJointTF>(playerI);
+		em.AddComponent<MixamoRightHandJointTF>(playerI);
 
 		auto& ac = em.GetComponent<AnimationComponent>(playerI);
 		ac.animatorID = static_cast<i8>(i);
@@ -81,25 +82,25 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		em.AddComponent<MagazineModificationComponent>(playerI).type = MagazineModificationComponent::Type::None;
 		em.AddComponent<MiscComponent>(playerI).type = MiscComponent::Type::Basic;
 
-		entity modelEntity = em.CreateEntity();
+		entity playerModelEntity = em.CreateEntity();
 
-		em.AddComponent<TransformComponent>(modelEntity);
-		em.AddComponent<ModelComponent>(modelEntity, playerModels[i]);
-		em.AddComponent<RigDataComponent>(modelEntity);
-		em.AddComponent<ShadowReceiverComponent>(modelEntity);
-		em.AddComponent<OutlineComponent>(modelEntity, playerOutlineColors[i]);
+		em.AddComponent<TransformComponent>(playerModelEntity);
+		em.AddComponent<ModelComponent>(playerModelEntity, playerModels[i]);
+		em.AddComponent<RigDataComponent>(playerModelEntity);
+		em.AddComponent<ShadowReceiverComponent>(playerModelEntity);
+		em.AddComponent<OutlineComponent>(playerModelEntity, playerOutlineColors[i]);
 
 
-		auto& rc = em.GetComponent<RigDataComponent>(modelEntity);
+		auto& rc = em.GetComponent<RigDataComponent>(playerModelEntity);
 		rc.offset = i * MIXAMO_RIG.nJoints;
 
-		auto& t = em.AddComponent<ChildComponent>(modelEntity);
+		auto& t = em.AddComponent<ChildComponent>(playerModelEntity);
 		t.parent = playerI;
 		t.localTransform.SetPosition({0.0f, -0.5f, 0.0f});
 
 		if (i == 0) // Only for this player
 		{
-			em.AddComponent<DontDraw>(modelEntity);
+			em.AddComponent<DontDraw>(playerModelEntity);
 			em.AddComponent<ThisPlayer>(playerI);
 			em.AddComponent<AudioListenerComponent>(playerI);
 		}
@@ -114,6 +115,7 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		scriptManager->AddScript(playerI, "PassiveItemSystem.lua");
 		scriptManager->AddScript(playerI, "ActiveItemSystem.lua");
 	}
+
 	return players;
 }
 
@@ -130,8 +132,8 @@ std::vector<entity> AddFlashlightsToPlayers(const std::vector<entity>& players)
 
 		ChildToBoneComponent& childComponent = em.AddComponent<ChildToBoneComponent>(flashLightEntity);
 		childComponent.boneParent = players[i];
-		childComponent.localTransform.SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-
+		childComponent.localTransform.SetPosition(Vector3(90.f, 130.f, -45.f));
+			
 		auto& tc = childComponent.localTransform;
 
 		auto up = tc.worldMatrix.Up();
@@ -176,6 +178,49 @@ std::vector<entity> AddFlashlightsToPlayers(const std::vector<entity>& players)
 		flashlights.push_back(flashLightEntity);
 	}
 	return flashlights;
+}
+
+std::vector<entity> AddGunsToPlayers(const std::vector<entity>& players)
+{
+	auto& em = EntityManager::Get();
+	auto& am = AssetManager::Get();
+	
+	const std::array<DirectX::SimpleMath::Vector3, 4> playerOutlineColors
+	{
+		DirectX::SimpleMath::Vector3{ 1.f, 0.f, 0.f },
+		DirectX::SimpleMath::Vector3{ 0.f, 0.f, 1.f},
+		DirectX::SimpleMath::Vector3{ 0.f, 1.f, 0.f},
+		DirectX::SimpleMath::Vector3{ 1.f, 1.f, 0.f},
+	};
+
+	std::vector<entity> guns;
+	for (auto i = 0; i < players.size(); ++i)
+	{
+		entity gunEntity = em.CreateEntity();
+
+		em.AddComponent<DOG::TransformComponent>(gunEntity);
+		em.AddComponent<ModelComponent>(gunEntity, am.LoadModelAsset("Assets/Models/ModularRifle/Maingun.gltf"));
+		em.AddComponent<ShadowReceiverComponent>(gunEntity);
+		em.AddComponent<OutlineComponent>(gunEntity, playerOutlineColors[i]);
+
+		auto& childComponent = em.AddComponent<ChildToBoneComponent>(gunEntity);
+		childComponent.boneParent = players[i];
+
+		const auto translation = XMMatrixTranslation(73, 117, -45);
+		const auto rotation = XMMatrixRotationRollPitchYaw(4.f * XM_PI/180.f, 190.f * XM_PI / 180.f, 91.f * XM_PI / 180.f);
+		const auto scaling = XMMatrixScaling(200, 120.f, 145.f);
+		const auto gunBoneSpaceOffset = scaling * rotation * translation;
+
+		childComponent.localTransform.worldMatrix = Matrix(gunBoneSpaceOffset);
+
+		if (em.HasComponent<ThisPlayer>(childComponent.boneParent))
+		{
+			em.AddComponent<DontDraw>(gunEntity);
+		}
+
+		guns.push_back(gunEntity);
+	}
+	return guns;
 }
 
 entity SpawnTurretProjectile(const DirectX::SimpleMath::Matrix& transform, float speed, float dmg, float lifeTime, DOG::entity turret, DOG::entity owner)

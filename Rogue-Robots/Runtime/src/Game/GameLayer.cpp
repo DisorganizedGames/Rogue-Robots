@@ -18,6 +18,7 @@
 #include "InGameMenu.h"
 #include "GoalRadarSystem.h"
 #include "MusicSystems.h"
+#include "SpectatorCopyCamera.h"
 
 using namespace DOG;
 using namespace DirectX;
@@ -56,6 +57,7 @@ GameLayer::GameLayer() noexcept
 
 	m_entityManager.RegisterSystem(std::make_unique<ScuffedSceneGraphSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<SetFlashLightToBoneSystem>());
+	m_entityManager.RegisterSystem(std::make_unique<SetGunToBoneSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
@@ -78,7 +80,6 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PickupLerpAnimationSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PickupItemInteractionSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<PlayerMovementSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerJumpRefreshSystem>());
 
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
@@ -86,7 +87,6 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<PickUpTranslateToPlayerSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderAmmunitionTextSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderReloadHintTextSystem>());
-	//m_entityManager.RegisterSystem(std::make_unique<RenderMiscComponentText>());
 	m_entityManager.RegisterSystem(std::make_unique<CleanupItemInteractionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<CleanupPlayerStateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<PlayerHit>());
@@ -155,8 +155,13 @@ void GameLayer::OnDetach()
 
 void GameLayer::OnUpdate()
 {
-	MINIPROFILE
-		switch (m_gameState)
+	MINIPROFILE;
+
+	LuaGlobal* global = LuaMain::GetGlobal();
+	global->SetNumber("DeltaTime", Time::DeltaTime());
+	global->SetNumber("ElapsedTime", Time::ElapsedTime());
+
+	switch (m_gameState)
 		{
 		case GameState::None:
 			break;
@@ -361,10 +366,6 @@ void GameLayer::OnUpdate()
 			break;
 		}
 
-	
-	LuaGlobal* global = LuaMain::GetGlobal();
-	global->SetNumber("DeltaTime", Time::DeltaTime());
-	global->SetNumber("ElapsedTime", Time::ElapsedTime());
 }
 
 void GameLayer::StartMainScene()
@@ -417,7 +418,7 @@ void GameLayer::StartMainScene()
 	if (s_networkStatus != NetworkStatus::Offline)
 		NetCode::Get().OnStartup();
 	m_gameState = GameState::Playing;
-
+	m_syncFrame = true;
 }
 
 void GameLayer::CloseMainScene()
@@ -550,8 +551,6 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 		stats.health = stats.maxHealth;
 	}
 
-	m_entityManager.GetComponent<AnimationComponent>(e).SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping | AnimationFlag::ResetPrio);
-
 	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
 	m_entityManager.DeferredEntityDestruction(controller.debugCamera);
 	controller.debugCamera = DOG::NULL_ENTITY;
@@ -565,7 +564,7 @@ void GameLayer::KillPlayer(DOG::entity e)
 	if (m_entityManager.HasComponent<AnimationComponent>(e))
 	{
 		auto& ac = m_entityManager.GetComponent<AnimationComponent>(e);
-		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::DeathAnimation), AnimationFlag::Persist, 1u);
+		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::DeathAnimation), AnimationFlag::Persist, 1u, ac.FULL_BODY, 1.f, 0.5f);
 	}
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
@@ -586,9 +585,9 @@ void GameLayer::KillPlayer(DOG::entity e)
 		UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetDraw(false);
 
 		std::string luaEventName = std::string("ItemPickup") + std::to_string(localPlayer);
-		m_entityManager.RemoveComponent<ScriptComponent>(localPlayer);
-		m_entityManager.RemoveComponent<BarrelComponent>(localPlayer);
-		m_entityManager.RemoveComponent<MiscComponent>(localPlayer);
+		m_entityManager.RemoveComponentIfExists<ScriptComponent>(localPlayer);
+		m_entityManager.RemoveComponentIfExists<BarrelComponent>(localPlayer);
+		m_entityManager.RemoveComponentIfExists<MiscComponent>(localPlayer);
 		//Remove UI icon for weapon components.
 		UIInstance->GetUI<UIIcon>(iconID)->Hide();
 		UIInstance->GetUI<UIIcon>(iconID)->DeactivateBorder();
@@ -601,10 +600,10 @@ void GameLayer::KillPlayer(DOG::entity e)
 		UIInstance->GetUI<UIIcon>(glowstickID)->Hide();
 		UIInstance->GetUI<UIIcon>(flashlightID)->Hide();
 
-		m_entityManager.RemoveComponent<AudioListenerComponent>(localPlayer);
+		m_entityManager.RemoveComponentIfExists<AudioListenerComponent>(localPlayer);
 
 		RigidbodyComponent& rb = m_entityManager.GetComponent<RigidbodyComponent>(e);
-		rb.ConstrainPosition(true, true, true);
+		rb.ConstrainPosition(true, false, true);
 		rb.ClearPhysics();
 
 		DOG::entity playerToSpectate = DOG::NULL_ENTITY;
@@ -639,12 +638,22 @@ void GameLayer::KillPlayer(DOG::entity e)
 					if (cc.parent == localPlayer)
 					{
 						//This means that playerModel is the mesh model (suit), and it should be drawing for the main player again:
+						EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
+							{
+								if (bone.boneParent == localPlayer)
+									DOG::EntityManager::Get().RemoveComponentIfExists<DOG::DontDraw>(modelGun);
+							});
 						m_entityManager.RemoveComponentIfExists<DontDraw>(playerModel);
 					}
 					else if (cc.parent == playerToSpectate)
 					{
+						EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
+							{
+								if (bone.boneParent == playerToSpectate)
+									DOG::EntityManager::Get().AddOrReplaceComponent<DOG::DontDraw>(modelGun);
+							});
 						//This means that playerModel is the spectated players' armor/suit, and it should not be eligible for drawing anymore:
-						m_entityManager.AddComponent<DontDraw>(playerModel);
+						m_entityManager.AddOrReplaceComponent<DontDraw>(playerModel);
 					}
 				});
 
@@ -657,7 +666,7 @@ void GameLayer::KillPlayer(DOG::entity e)
 			timer.duration = 4.0f;
 			timer.timeLeft = timer.duration;
 
-			m_entityManager.AddComponent<AudioListenerComponent>(playerToSpectate);
+			m_entityManager.AddOrReplaceComponent<AudioListenerComponent>(playerToSpectate);
 		}
 		else // Of course, if all players are dead, this else will fire, but then the game would restart, so probably unnecessary.
 		{
@@ -674,11 +683,33 @@ void GameLayer::KillPlayer(DOG::entity e)
 
 void GameLayer::UpdateGame()
 {
-	LuaMain::GetScriptManager()->UpdateScripts();
-	LuaMain::GetScriptManager()->ReloadScripts();
+	// Note that UpdateGame executes before all the normal ecs systems.
 
+	// CollectAndUpdate: update input, move players. apply animations, and setup cameras.
+	// The online players get their animations applied with old data as this function is called before NetCode update.
+	// This function should be split up to smaller functions.
+	m_playerMovementSystem.CollectAndUpdate();
+
+
+	// Multiplayer sync
 	if (s_networkStatus != NetworkStatus::Offline)
 		NetCode::Get().OnUpdate();
+
+	// The players camera transforms are synced so we set their viewMatrices.
+	EntityManager::Get().Collect<PlayerControllerComponent, OnlinePlayer>().Do([](PlayerControllerComponent& p, OnlinePlayer&)
+		{
+			if (EntityManager::Get().Exists(p.cameraEntity))
+			{
+				auto& camera = EntityManager::Get().GetComponent<CameraComponent>(p.cameraEntity);
+				auto& tr = EntityManager::Get().GetComponent<TransformComponent>(p.cameraEntity);
+				camera.viewMatrix = tr.worldMatrix.Invert();
+			}
+		});
+
+	SpectatorCopyCamera::CollectAndUpdate();
+
+	LuaMain::GetScriptManager()->UpdateScripts();
+	LuaMain::GetScriptManager()->ReloadScripts();
 
 	HandleCheats();
 	HpBarMVP();
@@ -698,8 +729,7 @@ void GameLayer::UpdateGame()
 		// Reset animations
 		EntityManager::Get().Collect<InputController, AnimationComponent>().Do([&](InputController&, AnimationComponent& ac)
 			{
-				ac.SimpleAdd(static_cast<i8>(MixamoAnimations::BindPose),  AnimationFlag::Interrupt | AnimationFlag::ResetPrio);
-				ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping);
+				ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping | AnimationFlag::Interrupt | AnimationFlag::ResetPrio | AnimationFlag::ForceRestart);
 			});
 		m_syncFrame = false;
 	}
@@ -1869,13 +1899,11 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 					m_lightScene = nullptr;
 				}
 			}
-			
+			ImGui::Checkbox("RenderPlayer", &m_imguiRenderPlayer);
 			if (ImGui::RadioButton("PCGLevel", (int*)&m_selectedScene, (int)SceneComponent::Type::PCGLevelScene)) m_gameState = GameState::Restart;
 
 			if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;
 			if (ImGui::RadioButton("Particle", (int*)&m_selectedScene, (int)SceneComponent::Type::ParticleScene)) m_gameState = GameState::Restart;
-			
-			ImGui::Checkbox("RenderPlayer", &m_imguiRenderPlayer);
 
 			std::vector<entity> players;
 			EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](entity e, PlayerStatsComponent&)

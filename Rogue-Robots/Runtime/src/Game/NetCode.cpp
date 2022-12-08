@@ -65,24 +65,6 @@ void NetCode::OnStartup()
 				m_entityManager.AddComponent<OnlinePlayer>(id);
 				m_entityManager.RemoveComponent<ThisPlayer>(id);
 
-
-				//LuaMain::GetScriptManager()->RemoveScript(id, "Gun.lua");
-				auto scriptData = LuaMain::GetScriptManager()->GetScript(id, "Gun.lua");
-				LuaTable tab(scriptData.scriptTable, true);
-			
-				auto ge = tab.GetTableFromTable("gunEntity");
-				int gunID = ge.GetIntFromTable("entityID");
-				m_entityManager.RemoveComponent<ThisPlayerWeapon>(gunID);
-
-				int barrelID = tab.GetIntFromTable("barrelEntityID");
-				m_entityManager.RemoveComponent<ThisPlayerWeapon>(barrelID);
-				int miscID = tab.GetIntFromTable("miscEntityID");
-				m_entityManager.RemoveComponent<ThisPlayerWeapon>(miscID);
-				int magazineID = tab.GetIntFromTable("magazineEntityID");
-				m_entityManager.RemoveComponent<ThisPlayerWeapon>(magazineID);
-
-				tab.CallFunctionOnTable("DestroyWeaponLights");
-
 				EntityManager::Get().Collect<DontDraw, ChildComponent>().Do([&](entity subEntity, DontDraw&, ChildComponent& parentCompany)
 					{
 						if (parentCompany.parent == id)
@@ -90,6 +72,7 @@ void NetCode::OnStartup()
 							m_entityManager.RemoveComponent<DontDraw>(subEntity);
 						}
 					});
+				
 				m_entityManager.RemoveComponent<AudioListenerComponent>(id);
 			}
 
@@ -102,25 +85,24 @@ void NetCode::OnStartup()
 					{
 						if (parentC.parent == id)
 						{
-							m_entityManager.AddComponent<DontDraw>(subEntity);
+							m_entityManager.AddComponent<DontDraw>(subEntity); // Dont draw player model
 						}
 					});
 				m_entityManager.AddComponent<ThisPlayer>(id);
-
 
 				//LuaMain::GetScriptManager()->AddScript(id, "Gun.lua");
 				auto scriptData = LuaMain::GetScriptManager()->GetScript(id, "Gun.lua");
 				LuaTable tab(scriptData.scriptTable, true);
 				auto ge = tab.GetTableFromTable("gunEntity");
 				int gunID = ge.GetIntFromTable("entityID");
-				m_entityManager.AddComponent<ThisPlayerWeapon>(gunID);
+				m_entityManager.AddOrReplaceComponent<ThisPlayerWeapon>(gunID);
 
 				int barrelID = tab.GetIntFromTable("barrelEntityID");
-				m_entityManager.AddComponent<ThisPlayerWeapon>(barrelID);
+				m_entityManager.AddOrReplaceComponent<ThisPlayerWeapon>(barrelID);
 				int miscID = tab.GetIntFromTable("miscEntityID");
-				m_entityManager.AddComponent<ThisPlayerWeapon>(miscID);
+				m_entityManager.AddOrReplaceComponent<ThisPlayerWeapon>(miscID);
 				int magazineID = tab.GetIntFromTable("magazineEntityID");
-				m_entityManager.AddComponent<ThisPlayerWeapon>(magazineID);
+				m_entityManager.AddOrReplaceComponent<ThisPlayerWeapon>(magazineID);
 
 				tab.CallFunctionOnTable("CreateWeaponLights");
 
@@ -128,6 +110,36 @@ void NetCode::OnStartup()
 				m_entityManager.RemoveComponent<OnlinePlayer>(id);
 			}
 		});
+
+	EntityManager::Get().Collect<NetworkPlayerComponent>().Do([&](entity id, NetworkPlayerComponent& networkC)
+		{;
+			if (networkC.playerId == m_inputTcp.playerId)
+			{
+				EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity e, ModelComponent&, ChildToBoneComponent& childToBone)
+					{
+						if (EntityManager::Get().HasComponent<ThisPlayer>(childToBone.boneParent))
+							m_entityManager.AddOrReplaceComponent<DontDraw>(e);
+						else
+							m_entityManager.RemoveComponentIfExists<DontDraw>(e);
+					});
+			}
+			else
+			{
+				auto scriptData = LuaMain::GetScriptManager()->GetScript(id, "Gun.lua");
+				LuaTable tab(scriptData.scriptTable, true);
+				auto ge = tab.GetTableFromTable("gunEntity");
+
+				int gunID = ge.GetIntFromTable("entityID");
+				m_entityManager.AddOrReplaceComponent<DontDraw>(gunID);
+				int barrelID = tab.GetIntFromTable("barrelEntityID");
+				m_entityManager.AddOrReplaceComponent<DontDraw>(barrelID);
+				int miscID = tab.GetIntFromTable("miscEntityID");
+				m_entityManager.AddOrReplaceComponent<DontDraw>(miscID);
+				int magazineID = tab.GetIntFromTable("magazineEntityID");
+				m_entityManager.AddOrReplaceComponent<DontDraw>(magazineID);
+			}
+		});
+	
 	if (m_inputTcp.playerId == 0)
 		m_serverHost->StopReceiving();
 }

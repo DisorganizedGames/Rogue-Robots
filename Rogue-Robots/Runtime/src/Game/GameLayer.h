@@ -5,7 +5,7 @@
 #include "GameComponent.h"
 #include "GameSystems.h"
 #include "Scene.h"
-
+#include "PlayerMovementSystem.h"
 
 enum class GameState
 {
@@ -89,6 +89,7 @@ private:
 	std::array<u32, 4> m_playerModels;
 	INT8 m_nrOfPlayers;
 	ImFont* m_imguiFont = nullptr;
+	PlayerMovementSystem m_playerMovementSystem;
 
 	// Cheats
 	bool m_isCheating = false;
@@ -97,11 +98,11 @@ private:
 	bool m_noClipCheat = false;
 	bool m_noWinLose = false;
 
-	//Win condition
+	// Win condition
 	DirectX::SimpleMath::Vector3 m_exitPosition = DirectX::SimpleMath::Vector3(-1.0f, -1.0f, -1.0f);
 
 	bool m_imguiRenderPlayer = false;
-	bool m_syncFrame = false;
+	bool m_syncFrame = true;
 	int m_nrOfFramesToWait = 300;
 
 	static bool s_connectedPlayersLobby[MAX_PLAYER_COUNT];

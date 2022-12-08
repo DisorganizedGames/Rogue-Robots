@@ -74,7 +74,7 @@ function OnStart()
 	-- Initialize the gun view model entity
 	gunID = Scene:CreateEntity(EntityID)
 	gunEntity.entityID = gunID
-	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.35,y=.35,z=.35})
+	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.35 ,y=.35,z=.35})
 	Entity:AddComponent(gunID, "Model", gunModel)
 	Entity:AddComponent(gunID, "Audio", gunShotSound, false, true)
 
@@ -87,23 +87,18 @@ function OnStart()
 	magazineEntityID = Scene:CreateEntity(gunID)
 	Entity:AddComponent(magazineEntityID, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
 	Entity:AddComponent(magazineEntityID, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
+	Entity:RemoveComponent(gunID, "ShadowReceiverComponent")
 
 	local outlineColor = Entity:GetOutlineColor(EntityID)
 	-- Add shit
-	if (Entity:HasComponent(EntityID, "ThisPlayer")) then
-
-		Entity:AddComponent(gunID, "ThisPlayerWeapon")
-		--To be fixed later hopefully
-		Entity:AddComponent(barrelEntityID, "ThisPlayerWeapon")
-		Entity:AddComponent(miscEntityID, "ThisPlayerWeapon")
-		Entity:AddComponent(magazineEntityID, "ThisPlayerWeapon")
-		CreateWeaponLights()
-	end
-
-	Entity:AddComponent(gunID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
-	Entity:AddComponent(barrelEntityID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
-	Entity:AddComponent(miscEntityID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
-	Entity:AddComponent(magazineEntityID, "OutlineComponent", outlineColor.r, outlineColor.g, outlineColor.b)
+	--if (Entity:HasComponent(EntityID, "ThisPlayer")) then
+	Entity:AddComponent(gunID, "ThisPlayerWeapon")
+	--To be fixed later hopefully
+	Entity:AddComponent(barrelEntityID, "ThisPlayerWeapon")
+	Entity:AddComponent(miscEntityID, "ThisPlayerWeapon")
+	Entity:AddComponent(magazineEntityID, "ThisPlayerWeapon")
+	CreateWeaponLights()
+	--end
 
 	-- Initialize base components
 	miscComponent = MiscComponent.BasicShot()
@@ -159,6 +154,13 @@ function OnUpdate()
 
 	if hasBasicBarrelEquipped then
 		if (ReloadSystem()) then
+			local animID = 28
+			local arms = 3
+			local flags = 0; --No flag
+			local priority = 0;
+			local playbackRate = 1.2
+			local transitionLen = 0.25
+			Entity:ModifyAnimationComponent(EntityID, animID, arms, priority, flags, playbackRate, transitionLen)
 			return
 		end
 	end
@@ -169,6 +171,7 @@ function OnUpdate()
 		local shoot = Entity:GetAction(EntityID, "Shoot")
 		local dir = Vector3.FromTable(Entity:GetRight(gunEntity.entityID))
 		dir = Norm(dir)
+
 		local laserStart = GetPositionToSpawn(cameraEntity, -0.175, 0.31, 0.05)
 		laserStart = laserStart + dir * 0.8
 		local color = Vector3.New(1.5, 0.1, 0.1) * 7
@@ -245,6 +248,18 @@ end
 
 function CreateBulletEntity(bullet, transformEntity)
 	bullet.entity = Scene:CreateEntity(EntityID)
+
+	-- test shoot anim --
+	--local fireRate = 1.0
+	local animID = 16
+	local arms = 3
+	local flags = 32; --Force restart--
+	local priority = 0;
+	local playbackRate = 10.5
+	local transitionLen = 0.05
+	Entity:ModifyAnimationComponent(EntityID, animID, arms, priority, flags, playbackRate, transitionLen)
+	--Entity:ModifyAnimationComponent(EntityID, animID, upperBody, 0.1, 1.0, false)
+
 
 	table.insert(bullets, bullet)
 
