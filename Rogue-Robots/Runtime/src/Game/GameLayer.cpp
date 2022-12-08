@@ -216,11 +216,15 @@ void GameLayer::OnUpdate()
 			if (m_timeSpent >= 0.0f)
 			{
 				m_timeSpent += Time::DeltaTime<TimeType::Seconds, float>();
-				if (m_timeSpent >= 10.0f)
+				if (m_timeSpent >= 8.0f)
 				{
-					UI::Get()->GetUI<DOG::UILabel>(lStartTextID)->SetText(L"Use Glowsticks to mark places you have visited, to not lose your way. (Q)");
+					UI::Get()->GetUI<DOG::UILabel>(lStartTextID)->SetText(L"Use Glowsticks to not lose your way. (Q)");
 				}
-				if (m_timeSpent >= 20.0f)
+				if (m_timeSpent >= 16.0f)
+				{
+					UI::Get()->GetUI<DOG::UILabel>(lStartTextID)->SetText(L"If a friend dies, find a Reviver item!");
+				}
+				if (m_timeSpent >= 24.0f)
 				{
 					UI::Get()->GetUI<DOG::UILabel>(lStartTextID)->SetText(L"");
 					m_timeSpent = -1.0f;

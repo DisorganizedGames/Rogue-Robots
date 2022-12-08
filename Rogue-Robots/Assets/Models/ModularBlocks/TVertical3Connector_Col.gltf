@@ -38,11 +38,11 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 1409,
+            "count" : 1407,
             "max" : [
                 2.536268711090088,
                 5.000000953674316,
-                2.889352798461914
+                3.0512471199035645
             ],
             "min" : [
                 -2.606898069381714,
@@ -54,19 +54,19 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 1409,
+            "count" : 1407,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 1409,
+            "count" : 1407,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 1409,
+            "count" : 1407,
             "type" : "VEC2"
         },
         {
@@ -79,38 +79,38 @@
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 16908,
+            "byteLength" : 16884,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 16908,
-            "byteOffset" : 16908,
+            "byteLength" : 16884,
+            "byteOffset" : 16884,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 11272,
-            "byteOffset" : 33816,
+            "byteLength" : 11256,
+            "byteOffset" : 33768,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 11272,
-            "byteOffset" : 45088,
+            "byteLength" : 11256,
+            "byteOffset" : 45024,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 2928,
-            "byteOffset" : 56360,
+            "byteOffset" : 56280,
             "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 59288,
+            "byteLength" : 59208,
             "uri" : "TVertical3Connector_Col.bin"
         }
     ]

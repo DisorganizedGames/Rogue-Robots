@@ -214,11 +214,11 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 1293,
+            "count" : 1294,
             "max" : [
-                2.536268711090088,
+                2.5913918018341064,
                 5.000000953674316,
-                2.889352798461914
+                3.0619733333587646
             ],
             "min" : [
                 -2.606898069381714,
@@ -230,19 +230,19 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 1293,
+            "count" : 1294,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 1293,
+            "count" : 1294,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 1293,
+            "count" : 1294,
             "type" : "VEC2"
         },
         {
@@ -329,86 +329,86 @@
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 15516,
+            "byteLength" : 15528,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 15516,
-            "byteOffset" : 15516,
+            "byteLength" : 15528,
+            "byteOffset" : 15528,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 10344,
-            "byteOffset" : 31032,
+            "byteLength" : 10352,
+            "byteOffset" : 31056,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 10344,
-            "byteOffset" : 41376,
+            "byteLength" : 10352,
+            "byteOffset" : 41408,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 2640,
-            "byteOffset" : 51720,
+            "byteOffset" : 51760,
             "target" : 34963
         },
         {
             "buffer" : 0,
             "byteLength" : 11280,
-            "byteOffset" : 54360,
+            "byteOffset" : 54400,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 11280,
-            "byteOffset" : 65640,
+            "byteOffset" : 65680,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 7520,
-            "byteOffset" : 76920,
+            "byteOffset" : 76960,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 7520,
-            "byteOffset" : 84440,
+            "byteOffset" : 84480,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 1920,
-            "byteOffset" : 91960,
+            "byteOffset" : 92000,
             "target" : 34963
         },
         {
             "buffer" : 0,
             "byteLength" : 13644,
-            "byteOffset" : 93880,
+            "byteOffset" : 93920,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 13644,
-            "byteOffset" : 107524,
+            "byteOffset" : 107564,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 9096,
-            "byteOffset" : 121168,
+            "byteOffset" : 121208,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 2280,
-            "byteOffset" : 130264,
+            "byteOffset" : 130304,
             "target" : 34963
         }
     ],
@@ -420,7 +420,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 132544,
+            "byteLength" : 132584,
             "uri" : "TVertical3Connector.bin"
         }
     ]

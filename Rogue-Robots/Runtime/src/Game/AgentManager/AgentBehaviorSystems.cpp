@@ -730,6 +730,7 @@ void AgentAggroSystem::OnUpdate(entity e, BTAggroComponent&, AgentAggroComponent
 			auto& aggroAudio = EntityManager::Get().AddComponent<DOG::AudioComponent>(aggroAudioEntity);
 			aggroAudio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Aggro.wav");
 			aggroAudio.shouldPlay = true;
+			aggroAudio.is3D = true;
 			aggroAudio.volume = 0.6f;
 		}
 	}
