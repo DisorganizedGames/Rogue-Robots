@@ -466,8 +466,6 @@ void NetCode::ReceiveDataTcp()
 
 									if (compare.Length() > (capsuleThreshold))
 									{
-										std::cout << compare.Length() << " of " <<
-											capsuleThreshold << "\n";
 										transC.SetPosition(tempTransfrom->position);
 									}
 								}
