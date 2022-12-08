@@ -703,12 +703,22 @@ void GameLayer::UpdateGame()
 		m_syncFrame = false;
 	}
 
-	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([](TransformComponent& transform, RigidbodyComponent&)
+	EntityManager::Get().Collect<TransformComponent, RigidbodyComponent>().Do([&](entity e, TransformComponent& transform, RigidbodyComponent&)
 		{
-			if (Vector3 pos = transform.GetPosition(); pos.y < -20.0f)
+			Vector3 pos = transform.GetPosition();
+			if (pos.y < -20.0f)
 			{
-				pos.y = 10;
-				transform.SetPosition(pos);
+				if (EntityManager::Get().HasComponent<ThisPlayer>(e))
+				{
+					const Vector3& spawnblockPos = reinterpret_cast<PCGLevelScene*>(m_mainScene.get())->GetSpawnblock();
+					pos = spawnblockPos;
+					transform.SetPosition(pos);
+				}
+				else
+				{
+					pos.y = 10;
+					transform.SetPosition(pos);
+				}
 			}
 		});
 
