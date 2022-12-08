@@ -216,7 +216,7 @@ function BarrelComponents:Missile()
 		end,
 
 		GetAmmoPerPickup = function(self)
-			return 1
+			return 2
 		end,
 
 		GetECSType = function(self)
