@@ -33,15 +33,15 @@ struct AgentMovementComponent
 
 struct AgentHPComponent
 {
-	f32 hp = 200.0f;
-	f32 maxHP = 200.0f;
+	f32 hp = 175.0f;
+	f32 maxHP = 175.0f;
 	bool damageThisFrame = false;
 };
 
 struct AgentAttackComponent
 {
 	f32 radius = 1.5f;
-	f32 damage = 10.0f;
+	f32 damage = 2.5f;
 	f32 coolDown = 1.0f;
 	f64 timeOfLast = 0;
 	bool Ready() { return coolDown <= DOG::Time::ElapsedTime() - timeOfLast; }
