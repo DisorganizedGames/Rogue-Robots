@@ -603,7 +603,7 @@ void GameLayer::KillPlayer(DOG::entity e)
 		m_entityManager.RemoveComponentIfExists<AudioListenerComponent>(localPlayer);
 
 		RigidbodyComponent& rb = m_entityManager.GetComponent<RigidbodyComponent>(e);
-		rb.ConstrainPosition(true, true, true);
+		rb.ConstrainPosition(true, false, true);
 		rb.ClearPhysics();
 
 		DOG::entity playerToSpectate = DOG::NULL_ENTITY;
