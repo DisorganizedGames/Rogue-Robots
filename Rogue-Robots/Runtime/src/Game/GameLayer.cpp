@@ -583,6 +583,7 @@ void GameLayer::KillPlayer(DOG::entity killedPlayer)
 	LuaMain::GetScriptManager()->RemoveScript(killedPlayer, "Gun.lua");
 	LuaMain::GetScriptManager()->RemoveScript(killedPlayer, "PassiveItemSystem.lua");
 	LuaMain::GetScriptManager()->RemoveScript(killedPlayer, "ActiveItemSystem.lua");
+	m_entityManager.RemoveComponent<ScriptComponent>(killedPlayer);
 
 	//Only killed player should react to following block:
 	if (m_entityManager.HasComponent<ThisPlayer>(killedPlayer))
