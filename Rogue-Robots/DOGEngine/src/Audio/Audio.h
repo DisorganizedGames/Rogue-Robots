@@ -89,6 +89,7 @@ namespace DOG
 
 		void HandleComponent(AudioComponent& comp, entity e);
 		void Commit();
+		void SetMasterVolume(f32 volume) noexcept { m_master->SetVolume(volume); };
 
 	private:
 		void AudioThreadRoutine();
