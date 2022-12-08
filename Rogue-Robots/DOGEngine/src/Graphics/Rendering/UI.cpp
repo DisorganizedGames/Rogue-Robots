@@ -39,6 +39,12 @@ void LevelSelectMultButtonFunc(void)
 
 void PlayButtonFunc(void);
 
+void SliderFunc(float value)
+{
+   return;
+}
+
+
 void OptionsButtonFunc(void)
 {
    DOG::UI::Get()->ChangeUIscene(optionsID);
@@ -1208,6 +1214,57 @@ void DOG::UIIcon::Show(UINT index)
    m_index = index;
 }
 
+DOG::UISlider::UISlider(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, std::function<void(float)> callback): UIElement(id)
+{
+   HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.3f), &m_barBrush);
+   HR_VFY(hr);
+   hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.5f), &m_sliderBrush);
+   HR_VFY(hr);
+   m_slider = D2D1::RectF(x, y, x + 20.f, y + height);
+   m_bar = D2D1::RectF(x + 10.f, y + height / 2.f - 1.f, x + width - 10.f, y + height / 2.f + 1.f);
+   m_callback = callback;
+   m_value = 0;
+   m_width = width;
+   m_normwidth = 1.f / width;
+}
+DOG::UISlider::~UISlider()
+{
+
+}
+void DOG::UISlider::Draw(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   d2d.Get2DDeviceContext()->FillRectangle(m_bar, m_barBrush.Get());
+   d2d.Get2DDeviceContext()->FillRectangle(m_slider, m_sliderBrush.Get());
+}
+void DOG::UISlider::Update(DOG::gfx::D2DBackend_DX12& d2d)
+{
+   UNREFERENCED_PARAMETER(d2d);
+}
+
+void DOG::UISlider::OnEvent(IEvent& event)
+{
+   using namespace DOG;
+   if (event.GetEventCategory() == EventCategory::MouseEventCategory)
+   {
+      auto mevent = EVENT(DOG::MouseMovedEvent);
+      auto mpos = mevent.coordinates;
+      if (mpos.x >= m_bar.left && mpos.x <= m_bar.right && mpos.y >= m_slider.top && mpos.y <= m_slider.bottom && Mouse::IsButtonPressed(Button::Left))
+      {
+         m_slider.left = (float)mpos.x - 10.f;
+         m_slider.right = m_slider.left + 20.f;
+         m_value = (m_slider.right - 10.f) - m_bar.left * m_normwidth;
+      }
+      if (mpos.x >= m_slider.left && mpos.x <= m_slider.right && mpos.y >= m_slider.top && mpos.y <= m_slider.bottom)
+         m_sliderBrush.Get()->SetOpacity(1.0f);
+      else
+         m_sliderBrush.Get()->SetOpacity(0.5f);
+   }
+}
+float DOG::UISlider::GetValue()
+{
+   return m_value;
+}
+
 DOG::UIVertStatBar::UIVertStatBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, float r, float g, float b): UIElement(id)
 {
    HRESULT hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(r, g, b, 0.3f), m_borderBrush.GetAddressOf());
@@ -1535,7 +1592,8 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    //Menu buttons
    auto bp = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Play"), std::function<void()>(LevelSelectSoloButtonFunc));
    auto bm = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bmID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
-   auto bo = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
+   //Options menu is not used atm.
+   //auto bo = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
    auto bc = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bcID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Credits"), std::function<void()>(CreditsButtonFunc));
    auto be = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(beID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 280.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
    auto optback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(optbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
@@ -1586,6 +1644,10 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto lgreenScoreWin = instance->Create<DOG::UILabel>(lgreenScoreWinID, std::wstring(L" "), 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
    auto lyellowScoreWin = instance->Create<DOG::UILabel>(lyellowScoreWinID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
 
+   UINT sliderID;
+   auto slider = instance->Create<DOG::UISlider, float, float, float, float>(sliderID, 100.f, 100.f, 250.f, 30.f, std::function<void(float)>(SliderFunc));
+   instance->AddUIElementToScene(optionsID, std::move(slider));
+
    auto labelButtonTextActiveItem = instance->Create<DOG::UILabel>(lActiveItemTextID, std::wstring(L"G"), 315.0f, (FLOAT)clientHeight - 90.0f, 50.f, 50.f, 40.f);
 
    auto lStartText = instance->Create<DOG::UILabel>(lStartTextID, std::wstring(L""), (FLOAT)clientWidth / 2.f - 350.f, (FLOAT)clientHeight / 2.f - 400.f, 700.f, 300.f, 60.f);
@@ -1615,7 +1677,8 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
    instance->AddUIElementToScene(menuID, std::move(bp));
    instance->AddUIElementToScene(menuID, std::move(bm));
-   instance->AddUIElementToScene(menuID, std::move(bo));
+   //Options menu is not used atm.
+   //instance->AddUIElementToScene(menuID, std::move(bo));
    instance->AddUIElementToScene(menuID, std::move(bc));
    instance->AddUIElementToScene(menuID, std::move(be));
    instance->AddUIElementToScene(optionsID, std::move(optback));
