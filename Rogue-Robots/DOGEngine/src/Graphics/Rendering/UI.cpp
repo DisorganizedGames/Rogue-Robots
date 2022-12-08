@@ -1226,13 +1226,15 @@ DOG::UIVertStatBar::UIVertStatBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float
    HR_VFY(hr);
    hr = m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
    HR_VFY(hr);
-   hr = m_textFormat->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_UNIFORM, 28.f,20.f);
+   hr = m_textFormat->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_UNIFORM, 28.f, 20.f);
    HR_VFY(hr);
    m_border = D2D1::RectF(x, y, x + width, y + height);
    m_bar = D2D1::RectF(x + 2.0f, y + 2.0f, x + width - 2.f, y + height - 2.f);
    m_barHeight = height;
-   m_value = m_maxValue = 1.f;
-   m_text = L"P\no\nw\ne\nr";
+   m_value = 0.6f;
+   m_maxValue = 1.f;
+   m_text = L"C\nh\na\nr\ng\ne";
+   m_visible = true;
 
 }
 DOG::UIVertStatBar::~UIVertStatBar()
@@ -1241,15 +1243,18 @@ DOG::UIVertStatBar::~UIVertStatBar()
 }
 void DOG::UIVertStatBar::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   if (m_value > 0.0f)
-      d2d.Get2DDeviceContext()->FillRectangle(m_bar, m_barBrush.Get());
-   d2d.Get2DDeviceContext()->DrawRectangle(m_border, m_barBrush.Get());
-   d2d.Get2DDeviceContext()->DrawTextW(
-      m_text.c_str(),
-      (UINT32)m_text.length(),
-      m_textFormat.Get(),
-      &m_border,
-      m_textBrush.Get());
+   if (m_visible)
+   {
+      if (m_value > 0.0f)
+         d2d.Get2DDeviceContext()->FillRectangle(m_bar, m_barBrush.Get());
+      d2d.Get2DDeviceContext()->DrawRectangle(m_border, m_barBrush.Get());
+      d2d.Get2DDeviceContext()->DrawTextW(
+         m_text.c_str(),
+         (UINT32)m_text.length(),
+         m_textFormat.Get(),
+         &m_border,
+         m_textBrush.Get());
+   }
 }
 void DOG::UIVertStatBar::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
@@ -1261,6 +1266,11 @@ void DOG::UIVertStatBar::SetBarValue(float value, float maxValue)
 {
    m_value = value;
    m_maxValue = maxValue;
+}
+
+void DOG::UIVertStatBar::Hide(bool show)
+{
+   m_visible = show;
 }
 
 void UIRebuild(UINT clientHeight, UINT clientWidth)
@@ -1515,7 +1525,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto lyellowScoreWin = instance->Create<DOG::UILabel>(lyellowScoreWinID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
 
    auto labelButtonTextActiveItem = instance->Create<DOG::UILabel>(lActiveItemTextID, std::wstring(L"G"), 315.0f, (FLOAT)clientHeight - 90.0f, 50.f, 50.f, 40.f);
-   
+
    auto lStartText = instance->Create<DOG::UILabel>(lStartTextID, std::wstring(L""), (FLOAT)clientWidth / 2.f - 350.f, (FLOAT)clientHeight / 2.f - 400.f, 700.f, 300.f, 60.f);
 
    //player list
