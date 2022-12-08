@@ -246,7 +246,7 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 	const bool isSamePlayer = (sc.playerBeingSpectated == sc.playerSpectatorQueue[nextIndex]);
 	if (!isSamePlayer)
 	{
-		DOG::EntityManager::Get().RemoveComponentIfExists<AudioListenerComponent>(sc.playerBeingSpectated);
+		DOG::EntityManager::Get().RemoveComponent<AudioListenerComponent>(sc.playerBeingSpectated);
 
 		ChangeGunDrawLogic(sc.playerBeingSpectated, false, true);
 		ChangeGunDrawLogic(sc.playerSpectatorQueue[nextIndex], true, false);
@@ -254,7 +254,7 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 		sc.playerName = DOG::EntityManager::Get().GetComponent<DOG::NetworkPlayerComponent>(sc.playerSpectatorQueue[nextIndex]).playerName;
 		sc.playerBeingSpectated = sc.playerSpectatorQueue[nextIndex];
 
-		DOG::EntityManager::Get().AddOrReplaceComponent<AudioListenerComponent>(sc.playerBeingSpectated);
+		DOG::EntityManager::Get().AddComponent<AudioListenerComponent>(sc.playerBeingSpectated);
 	}
 
 	bool changeGunDrawLogic = false;
