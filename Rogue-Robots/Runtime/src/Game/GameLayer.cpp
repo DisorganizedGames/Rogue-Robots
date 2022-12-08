@@ -610,6 +610,9 @@ void GameLayer::KillPlayer(DOG::entity e)
 		m_entityManager.RemoveComponentIfExists<AudioListenerComponent>(localPlayer);
 
 
+		auto dustEmitter = m_entityManager.GetComponent<DustComponent>(localPlayer).emitterEntity;
+		m_entityManager.AddComponent<DeferredDeletionComponent>(dustEmitter);
+
 		RigidbodyComponent& rb = m_entityManager.GetComponent<RigidbodyComponent>(e);
 		rb.ConstrainPosition(true, false, true);
 		rb.ClearPhysics();

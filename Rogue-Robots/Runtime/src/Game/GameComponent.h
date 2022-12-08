@@ -457,3 +457,9 @@ struct SetPointLightDirtyComponent
 {
 
 };
+
+struct DustComponent
+{
+	DOG::entity emitterEntity;
+};
+

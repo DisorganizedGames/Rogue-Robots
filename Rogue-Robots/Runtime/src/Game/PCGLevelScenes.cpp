@@ -40,6 +40,15 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 	AddEntities(AddFlashlightsToPlayers(players));
 	AddEntities(AddGunsToPlayers(players));
 
+	// Add Dust particle effect
+	auto& dustComp = EntityManager::Get().AddComponent<DustComponent>(players[0]);
+	dustComp.emitterEntity = CreateEntity();
+	auto dustEmitter = dustComp.emitterEntity;
+	EntityManager::Get().AddComponent<TransformComponent>(dustEmitter);
+	EntityManager::Get().AddComponent<ChildComponent>(dustEmitter).parent = players[0];
+
+	ParticleSystemFromFile(dustEmitter, "Assets/ParticleSystems/Dust.lua");
+
 	//Spawn enemies and items
 	uint32_t enemySpawnRarity = static_cast<uint32_t>(std::ceil(6.0f / m_nrOfPlayers)); //Spawns enemies once every X blocks.
 	uint32_t maxEnemiesPerSpawn = 3u; //Max amount of enemies per spawn.
