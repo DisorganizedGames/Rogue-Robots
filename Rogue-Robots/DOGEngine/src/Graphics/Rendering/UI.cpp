@@ -169,6 +169,7 @@ void DOG::UI::Destroy()
       delete s_instance;
       s_instance = nullptr;
    }
+   RemoveFontResource(TEXT("Assets/Fonts/robotaur.ttf"));
 }
 
 std::vector<std::function<void(u32, u32)>>& DOG::UI::GetExternalUI()
@@ -1299,7 +1300,7 @@ DOG::UIVertStatBar::UIVertStatBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float
    m_border = D2D1::RectF(x, y, x + width, y + height);
    m_bar = D2D1::RectF(x + 2.0f, y + 2.0f, x + width - 2.f, y + height - 2.f);
    m_barHeight = height;
-   m_value = 0.6f;
+   m_value = 0.0f;
    m_maxValue = 1.f;
    m_text = L"C\nh\na\nr\ng\ne";
    m_visible = true;
@@ -1676,6 +1677,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
    auto pbar = instance->Create<DOG::UIVertStatBar, float, float, float, float, float, float, float, float>(pbarID, 27.f, (FLOAT)clientHeight - 425.f, 40.f, 250.f, 25.f, 0.34f, 0.69f, 0.99f);
    instance->AddUIElementToScene(gameID, std::move(pbar));
+   DOG::UI::Get()->GetUI<DOG::UIVertStatBar>(pbarID)->Hide(false);
 
    UINT cboxID;
    auto checkbox = instance->Create<DOG::UICheckBox, float, float, float, float, float, float, float>(cboxID, 300.f, (FLOAT)clientHeight - 425.f, 25.f, 25.f, 1.0f, 1.0f, 1.0f, std::function<void(bool)>(CheckBoxFunc));

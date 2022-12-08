@@ -99,7 +99,7 @@ function MiscComponent:ChargeShot()
 		miscName = "ChargeShot",
 
 		shotPower = 0.0,
-		maxShotPower = 30.0,
+		maxShotPower = 35.0,
 		chargeSpeed = 10.0,
 		pressing = false,
 
@@ -118,6 +118,7 @@ function MiscComponent:ChargeShot()
 			if Entity:GetAction(parentEntity, "Shoot") then
 				self.pressing = true
 				self.shotPower = self.shotPower + self.chargeSpeed * DeltaTime
+				UI:ChangeVertBarValue("pbarID", self.shotPower / self.maxShotPower, 1.0)
 
 				if self.maxShotPower < self.shotPower then
 					self.shotPower = self.maxShotPower
@@ -145,11 +146,12 @@ function MiscComponent:ChargeShot()
 					speed = 0.0,
 					--speed = 75.0,
 					--size = Vector3.New(10, 10, 10) + Vector3.New(self.shotPower, self.shotPower, self.shotPower),
-					size = Vector3.New(self.shotPower, self.shotPower, self.shotPower),
+					size = Vector3.New(self.shotPower / 2.0, self.shotPower / 2.0, self.shotPower / 2.0),
 					lifetime = 0
 				}
 
 				self.shotPower = 0.0
+				UI:ChangeVertBarValue("pbarID", 0.0, 1.0)
 
 				return {bullet}
 
