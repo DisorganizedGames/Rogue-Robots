@@ -282,27 +282,30 @@ void SpectateSystem::ChangeGunDrawLogic(DOG::entity player, bool drawFirstPerson
 	if(em.HasComponent<ScriptComponent>(player))
 	{
 		auto scriptData = LuaMain::GetScriptManager()->GetScript(player, "Gun.lua");
-		LuaTable tab(scriptData.scriptTable, true);
-		auto ge = tab.GetTableFromTable("gunEntity");
-
-		int gunID = ge.GetIntFromTable("entityID");
-		int barrelID = tab.GetIntFromTable("barrelEntityID");
-		int miscID = tab.GetIntFromTable("miscEntityID");
-		int magazineID = tab.GetIntFromTable("magazineEntityID");
-
-		if (drawFirstPersonViewGun)
+		if (scriptData.scriptTable.ref != -1)
 		{
-			em.RemoveComponentIfExists<DontDraw>(gunID);
-			em.RemoveComponentIfExists<DontDraw>(barrelID);
-			em.RemoveComponentIfExists<DontDraw>(miscID);
-			em.RemoveComponentIfExists<DontDraw>(magazineID);
-		}
-		else
-		{
-			em.AddOrReplaceComponent<DontDraw>(gunID);
-			em.AddOrReplaceComponent<DontDraw>(barrelID);
-			em.AddOrReplaceComponent<DontDraw>(miscID);
-			em.AddOrReplaceComponent<DontDraw>(magazineID);
+			LuaTable tab(scriptData.scriptTable, true);
+			auto ge = tab.GetTableFromTable("gunEntity");
+
+			int gunID = ge.GetIntFromTable("entityID");
+			int barrelID = tab.GetIntFromTable("barrelEntityID");
+			int miscID = tab.GetIntFromTable("miscEntityID");
+			int magazineID = tab.GetIntFromTable("magazineEntityID");
+
+			if (drawFirstPersonViewGun)
+			{
+				em.RemoveComponentIfExists<DontDraw>(gunID);
+				em.RemoveComponentIfExists<DontDraw>(barrelID);
+				em.RemoveComponentIfExists<DontDraw>(miscID);
+				em.RemoveComponentIfExists<DontDraw>(magazineID);
+			}
+			else
+			{
+				em.AddOrReplaceComponent<DontDraw>(gunID);
+				em.AddOrReplaceComponent<DontDraw>(barrelID);
+				em.AddOrReplaceComponent<DontDraw>(miscID);
+				em.AddOrReplaceComponent<DontDraw>(magazineID);
+			}
 		}
 	}
 
@@ -673,7 +676,7 @@ void ReviveSystem::RevivePlayer(DOG::entity playerBeingRevived)
 		mgr.GetComponent<CameraComponent>(pcc.cameraEntity).isMainCamera = true;
 
 		//auto spectatedPlayer = mgr.GetComponent<SpectatorComponent>(player).playerBeingSpectated;
-		mgr.RemoveComponent<AudioListenerComponent>(spectatedPlayer);
+		mgr.RemoveComponentIfExists<AudioListenerComponent>(spectatedPlayer);
 		mgr.AddComponent<AudioListenerComponent>(playerBeingRevived);
 		mgr.RemoveComponent<SpectatorComponent>(playerBeingRevived);
 		ChangeSuitDrawLogic(spectatedPlayer, playerBeingRevived);

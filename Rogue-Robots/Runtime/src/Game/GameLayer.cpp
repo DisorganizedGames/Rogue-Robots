@@ -671,7 +671,7 @@ void GameLayer::KillPlayer(DOG::entity killedPlayer)
 			timer.timeLeft = timer.duration;
 
 			m_entityManager.RemoveComponent<AudioListenerComponent>(killedPlayer);
-			m_entityManager.AddComponent<AudioListenerComponent>(playerToSpectate);
+			m_entityManager.AddOrReplaceComponent<AudioListenerComponent>(playerToSpectate);
 		}
 		else // Of course, if all players are dead, this else will fire, but then the game would restart, so probably unnecessary.
 		{
