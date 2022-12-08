@@ -1246,23 +1246,18 @@ void DOG::UISlider::OnEvent(IEvent& event)
    using namespace DOG;
    if (event.GetEventCategory() == EventCategory::MouseEventCategory)
    {
-      if (event.GetEventType() == EventType::MouseMovedEvent)
+      auto mevent = EVENT(DOG::MouseMovedEvent);
+      auto mpos = mevent.coordinates;
+      if (mpos.x >= m_bar.left && mpos.x <= m_bar.right && mpos.y >= m_slider.top && mpos.y <= m_slider.bottom && Mouse::IsButtonPressed(Button::Left))
       {
-         auto mevent = EVENT(DOG::MouseMovedEvent);
-         auto mpos = mevent.coordinates;
-         if ((mpos.x >= m_slider.left && mpos.x <= m_slider.right && mpos.y >= m_slider.top && mpos.y <= m_slider.bottom))
-         {
-            m_sliderBrush.Get()->SetOpacity(1.0f);
-            if (Mouse::IsButtonPressed(Button::Left) && (mpos.x >= m_bar.left && mpos.x <= m_bar.right))
-            {
-               m_slider.left = (float)mpos.x - 10.f;
-               m_slider.right = m_slider.left + 20.f;
-               m_value = (m_slider.right - 10.f) - m_bar.left * m_normwidth;
-            }
-         }
-         else
-            m_sliderBrush.Get()->SetOpacity(0.5f);
+         m_slider.left = (float)mpos.x - 10.f;
+         m_slider.right = m_slider.left + 20.f;
+         m_value = (m_slider.right - 10.f) - m_bar.left * m_normwidth;
       }
+      if (mpos.x >= m_slider.left && mpos.x <= m_slider.right && mpos.y >= m_slider.top && mpos.y <= m_slider.bottom)
+         m_sliderBrush.Get()->SetOpacity(1.0f);
+      else
+         m_sliderBrush.Get()->SetOpacity(0.5f);
    }
 }
 float DOG::UISlider::GetValue()
@@ -1651,7 +1646,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    UINT sliderID;
    auto slider = instance->Create<DOG::UISlider, float, float, float, float>(sliderID, 100.f, 100.f, 250.f, 30.f, std::function<void(float)>(SliderFunc));
    instance->AddUIElementToScene(optionsID, std::move(slider));
-   
+
    auto labelButtonTextActiveItem = instance->Create<DOG::UILabel>(lActiveItemTextID, std::wstring(L"G"), 315.0f, (FLOAT)clientHeight - 90.0f, 50.f, 50.f, 40.f);
 
    auto lStartText = instance->Create<DOG::UILabel>(lStartTextID, std::wstring(L""), (FLOAT)clientWidth / 2.f - 350.f, (FLOAT)clientHeight / 2.f - 400.f, 700.f, 300.f, 60.f);
