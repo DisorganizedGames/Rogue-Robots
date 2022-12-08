@@ -38,7 +38,7 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 1930,
+            "count" : 1934,
             "max" : [
                 2.528604507446289,
                 5.000000953674316,
@@ -54,19 +54,19 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 1930,
+            "count" : 1934,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 1930,
+            "count" : 1934,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 1930,
+            "count" : 1934,
             "type" : "VEC2"
         },
         {
@@ -79,38 +79,38 @@
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 23160,
+            "byteLength" : 23208,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 23160,
-            "byteOffset" : 23160,
+            "byteLength" : 23208,
+            "byteOffset" : 23208,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 15440,
-            "byteOffset" : 46320,
+            "byteLength" : 15472,
+            "byteOffset" : 46416,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 15440,
-            "byteOffset" : 61760,
+            "byteLength" : 15472,
+            "byteOffset" : 61888,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 3930,
-            "byteOffset" : 77200,
+            "byteOffset" : 77360,
             "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 81132,
+            "byteLength" : 81292,
             "uri" : "5NoSideConnector_Col.bin"
         }
     ]

@@ -30,7 +30,8 @@
                 "baseColorTexture" : {
                     "index" : 1
                 },
-                "metallicFactor" : 0
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.6863636374473572
             }
         }
     ],
@@ -77,7 +78,7 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 1444,
+            "count" : 1443,
             "max" : [
                 2.544839859008789,
                 4.999999523162842,
@@ -93,19 +94,19 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 1444,
+            "count" : 1443,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 1444,
+            "count" : 1443,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5126,
-            "count" : 1444,
+            "count" : 1443,
             "type" : "VEC2"
         },
         {
@@ -118,32 +119,32 @@
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 17328,
+            "byteLength" : 17316,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 17328,
-            "byteOffset" : 17328,
+            "byteLength" : 17316,
+            "byteOffset" : 17316,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 11552,
-            "byteOffset" : 34656,
+            "byteLength" : 11544,
+            "byteOffset" : 34632,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 11552,
-            "byteOffset" : 46208,
+            "byteLength" : 11544,
+            "byteOffset" : 46176,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 3036,
-            "byteOffset" : 57760,
+            "byteOffset" : 57720,
             "target" : 34963
         }
     ],
@@ -155,7 +156,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 60796,
+            "byteLength" : 60756,
             "uri" : "WallFloorTunnelEntrance3.bin"
         }
     ]
