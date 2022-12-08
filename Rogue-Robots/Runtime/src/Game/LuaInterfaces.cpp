@@ -1122,9 +1122,9 @@ void EntityInterface::AddMiscComponent(DOG::LuaContext* context, DOG::entity e)
 	auto& mmc = EntityManager::Get().AddComponent<MiscComponent>(e);
 	mmc.type = type;
 
-	//Switch to correct UI icon.
 	if (EntityManager::Get().HasComponent<ThisPlayer>(e))
 	{
+		//Switch to correct UI icon.
 		if ((UINT)type != 0)
 		{
 			DOG::UI::Get()->GetUI<UIIcon>(iconID)->Show((UINT)type - 1u);
@@ -1132,6 +1132,16 @@ void EntityInterface::AddMiscComponent(DOG::LuaContext* context, DOG::entity e)
 		else
 		{
 			DOG::UI::Get()->GetUI<UIIcon>(iconID)->Hide();
+		}
+
+		//See if it is the chargeshot that was equipped.
+		if (type == MiscComponent::Type::ChargeShot)
+		{
+			DOG::UI::Get()->GetUI<UIVertStatBar>(pbarID)->Hide(true);
+		}
+		else
+		{
+			DOG::UI::Get()->GetUI<UIVertStatBar>(pbarID)->Hide(false);
 		}
 	}
 }
@@ -1668,4 +1678,16 @@ void GameInterface::GetPlayerName(DOG::LuaContext* context)
 	entity player = context->GetInteger();
 	assert(em.Exists(player) && em.HasComponent<NetworkPlayerComponent>(player));
 	context->ReturnString(em.GetComponent<NetworkPlayerComponent>(player).playerName);
+}
+
+void UIInterface::ChangeVertBarValue(DOG::LuaContext* context)
+{
+	std::string id = context->GetString();
+	float shotPower = static_cast<float>(context->GetDouble());
+	float maxShotPower = static_cast<float>(context->GetDouble());
+
+	if (id == "pbarID")
+	{
+		DOG::UI::Get()->GetUI<UIVertStatBar>(pbarID)->SetBarValue(shotPower, maxShotPower);
+	}
 }

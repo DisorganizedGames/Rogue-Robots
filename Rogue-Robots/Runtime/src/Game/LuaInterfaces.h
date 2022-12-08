@@ -283,3 +283,12 @@ public:
 	static void LuaPickUpMoreLaserAmmoCallback(DOG::LuaContext*);
 	void GetPlayerName(DOG::LuaContext* context);
 };
+
+class UIInterface : public LuaInterface
+{
+public:
+	UIInterface() noexcept {};
+	~UIInterface() noexcept {};
+
+	void ChangeVertBarValue(DOG::LuaContext* context);
+};
