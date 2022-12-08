@@ -158,6 +158,8 @@ void DOG::UI::Initialize(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UI
 {
    if (!s_instance)
       s_instance = new UI(rd, sc, numBuffers, clientWidth, clientHeight);
+    
+   UIRebuild(clientHeight, clientWidth);
 }
 
 void DOG::UI::Destroy()
@@ -167,6 +169,7 @@ void DOG::UI::Destroy()
       delete s_instance;
       s_instance = nullptr;
    }
+   RemoveFontResource(TEXT("Assets/Fonts/robotaur.ttf"));
 }
 
 std::vector<std::function<void(u32, u32)>>& DOG::UI::GetExternalUI()
