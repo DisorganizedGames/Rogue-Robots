@@ -350,4 +350,19 @@ namespace DOG
          ComPtr<IDWriteTextLayout> m_textLayout;
    };
 
+   class UICheckBox: public UIElement
+   {
+      public:
+         UICheckBox(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float r, float g, float b, std::function<void(bool)> callback);
+         ~UICheckBox();
+         void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
+         void OnEvent(IEvent& event) override final;
+         bool GetValue();
+      private:
+         std::function<void(bool)> m_callback;
+         bool m_value;
+         D2D1_RECT_F m_border;
+         ComPtr<ID2D1SolidColorBrush> m_borderBrush;
+   };
 }
