@@ -1131,7 +1131,14 @@ void SetOutlineOnNearbyPickupsSystem::OnUpdate(DOG::entity e, DOG::PickupLerpAni
 			else
 			{
 				if (em.HasComponent<OutlineComponent>(e))
+				{
 					em.RemoveComponentIfExists<OutlineComponent>(e);
+					if (em.HasComponent<OutlineBabyComponent>(e))
+					{
+						auto& childEntity = em.GetComponent<OutlineBabyComponent>(e).child;
+						em.RemoveComponentIfExists<OutlineComponent>(childEntity);
+					}
+				}
 			}
 		});
 
