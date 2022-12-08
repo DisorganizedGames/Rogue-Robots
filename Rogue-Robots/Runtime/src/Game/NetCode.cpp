@@ -363,8 +363,37 @@ void NetCode::ReceiveDataUdp()
 			statsC = m_outputUdp.m_holdplayersUdp[networkC.playerId].playerStat;
 			if (statsC.health > 0 && !s_entityManager.HasComponent<PlayerAliveComponent>(id))
 			{
-				s_entityManager.AddComponent<PlayerAliveComponent>(id);
+				s_entityManager.AddComponent<PlayerAliveComponent>(id).timer = 2.f;
 				aC.SimpleAdd(static_cast<i8>(MixamoAnimations::JazzDance), AnimationFlag::Looping | AnimationFlag::ResetPrio); // No dedicated revive animation for now
+
+				{
+					auto& bc = s_entityManager.AddComponent<BarrelComponent>(id);
+					bc.type = BarrelComponent::Type::Bullet;
+					bc.maximumAmmoCapacityForType = 999'999;
+					bc.ammoPerPickup = 30;
+					bc.currentAmmoCount = 30;
+
+					s_entityManager.AddComponent<MagazineModificationComponent>(id).type = MagazineModificationComponent::Type::None;
+					s_entityManager.AddComponent<MiscComponent>(id).type = MiscComponent::Type::Basic;
+
+					//if (s_entityManager.HasComponent<ThisPlayer>(playerBeingRevived))
+					//	s_entityManager.AddComponent<PlayerAliveComponent>(playerBeingRevived).timer = 2.f;
+
+					//auto& psc = s_entityManager.GetComponent<PlayerStatsComponent>(playerBeingRevived);
+					//psc.health = psc.maxHealth / 2.0f;
+
+					auto& rb = s_entityManager.GetComponent<RigidbodyComponent>(id);
+					rb.ConstrainRotation(true, true, true);
+					rb.ConstrainPosition(false, false, false);
+					rb.disableDeactivation = true;
+					rb.getControlOfTransform = true;
+					rb.setGravityForRigidbody = true;
+					rb.gravityForRigidbody = DirectX::SimpleMath::Vector3(0.0f, -25.0f, 0.0f);
+
+					LuaMain::GetScriptManager()->AddScript(id, "Gun.lua");
+					LuaMain::GetScriptManager()->AddScript(id, "PassiveItemSystem.lua");
+					LuaMain::GetScriptManager()->AddScript(id, "ActiveItemSystem.lua");
+				}
 			}
 			if ((pC.cameraEntity != DOG::NULL_ENTITY) && (m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform.Determinant() != 0)) {
 				s_entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform;

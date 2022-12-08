@@ -587,7 +587,11 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 			UIInstance->GetUI<UIIcon>(flashlightID)->Show(0);
 		}
 
-		RevivePlayer(closestDeadPlayer);
+		if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))
+			RevivePlayer(closestDeadPlayer);
+		else
+			ChangeGunDrawLogic(closestDeadPlayer);
+
 		mgr.RemoveComponent<ActiveItemComponent>(player);
 
 		if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))
