@@ -79,6 +79,7 @@ namespace DOG
 	{
 		u32 objectId = 0;
 		DirectX::SimpleMath::Vector3 position;
+		DirectX::SimpleMath::Matrix rotation;
 	};
 	struct DontDraw
 	{

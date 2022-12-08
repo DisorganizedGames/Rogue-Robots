@@ -370,6 +370,7 @@ void NetCode::UpdateSendTcp()
 					{
 						netC.objectId = agentId.id;
 						netC.position = transC.GetPosition();
+						netC.rotation = transC.GetRotation();
 						memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkTransform));
 						m_inputTcp.nrOfNetTransform++;
 						m_bufferSize += sizeof(NetworkTransform);
@@ -458,8 +459,15 @@ void NetCode::ReceiveDataTcp()
 								memcpy(tempTransfrom, m_receiveBuffer + m_bufferReceiveSize + sizeof(NetworkTransform) * i, sizeof(NetworkTransform));
 								if (idC.id == tempTransfrom->objectId)
 								{
-									if (DirectX::SimpleMath::Vector3(transC.GetPosition() - tempTransfrom->position).Length() / rC.capsuleRadius > rC.capsuleRadius)
+									float capsuleThreshold = rC.capsuleRadius * 20;
+									DirectX::SimpleMath::Vector3 compare = transC.GetPosition() - tempTransfrom->position;
+									compare.y = 0;
+									transC.SetRotation(tempTransfrom->rotation);
+
+									if (compare.Length() > (capsuleThreshold))
+									{
 										transC.SetPosition(tempTransfrom->position);
+									}
 								}
 
 							}
