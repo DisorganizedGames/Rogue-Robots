@@ -98,6 +98,7 @@ DOG::UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers
 {
    //srand((UINT)time(NULL));
    int err = AddFontResource(TEXT("Assets/Fonts/robotaur.ttf"));
+   Sleep(1000);
    assert(err);
    m_width = clientWidth;
    m_height = clientHeight;
@@ -159,7 +160,7 @@ void DOG::UI::Initialize(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UI
    if (!s_instance)
       s_instance = new UI(rd, sc, numBuffers, clientWidth, clientHeight);
 
-   UIRebuild(clientWidth, clientHeight);
+   //UIRebuild(clientWidth, clientHeight);
 }
 
 void DOG::UI::Destroy()
