@@ -142,7 +142,10 @@ void AgentLineOfSightToPlayerSystem::OnEarlyUpdate(entity agent, BTLineOfSightTo
 			if (!hitIsPlayer)
 				continue;
 
-			pd.lineOfSight = AgentTargetMetricsComponent::LineOfSight::Partial;
+			if (isAlert)
+				pd.lineOfSight = AgentTargetMetricsComponent::LineOfSight::Full;
+			else
+				pd.lineOfSight = AgentTargetMetricsComponent::LineOfSight::Partial;
 			atLeastOneHasLineOfSight = true;
 		}
 		else if (pd.distanceFromAgent <= stats.visionDistance || isAlert)
