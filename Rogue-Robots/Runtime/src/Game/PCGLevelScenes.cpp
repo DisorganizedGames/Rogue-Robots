@@ -25,17 +25,17 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 
 
 	//Identify spawnblock.
-	Vector3 spawnblockPos = Vector3(20.0f, 20.0f, 20.0f);
+	m_spawnblockPos = Vector3(20.0f, 20.0f, 20.0f);
 	EntityManager::Get().Collect<SpawnBlockComponent>().Do([&](entity e, SpawnBlockComponent&)
 		{
-			spawnblockPos = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
+			m_spawnblockPos = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
 		});
-	spawnblockPos.x += 2.5f;
-	spawnblockPos.y += 11.0f;
-	spawnblockPos.z += 2.5f;
+	m_spawnblockPos.x += 2.5f;
+	m_spawnblockPos.y += 7.0f;
+	m_spawnblockPos.z += 2.5f;
 
 	//Spawn players
-	std::vector<entity> players = SpawnPlayers(spawnblockPos, m_nrOfPlayers, 5.f);
+	std::vector<entity> players = SpawnPlayers(m_spawnblockPos, m_nrOfPlayers, 5.f);
 	AddEntities(players);
 	AddEntities(AddFlashlightsToPlayers(players));
 
@@ -57,7 +57,7 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 			Vector3 pos = EntityManager::Get().GetComponent<TransformComponent>(e).GetPosition();
 			if (enemyCounter % enemySpawnRarity == 0)
 			{
-				Vector3 diff = pos - spawnblockPos;
+				Vector3 diff = pos - m_spawnblockPos;
 				float dist = sqrt(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z);
 				if (dist > safeZone)
 				{
@@ -96,4 +96,9 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 	createAmbient("CreepyAmbience4.wav", 50, 80, 30, 0.7f);
 	createAmbient("AmbienceLong.wav", -119, 120, 1, 0.5f);
 	createAmbient("AmbienceLong3.wav", 120, 120, 1, 0.5f);
+}
+
+const DirectX::SimpleMath::Vector3& PCGLevelScene::GetSpawnblock()
+{
+	return m_spawnblockPos;
 }
