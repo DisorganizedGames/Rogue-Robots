@@ -96,7 +96,7 @@ void ExitButtonFunc(void)
 
 DOG::UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers, UINT clientWidth, UINT clientHeight): m_visible(true), Layer("UILayer")
 {
-   srand((UINT)time(NULL));
+   //srand((UINT)time(NULL));
    int err = AddFontResource(TEXT("Assets/Fonts/robotaur.ttf"));
    assert(err);
    m_width = clientWidth;
@@ -158,6 +158,8 @@ void DOG::UI::Initialize(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UI
 {
    if (!s_instance)
       s_instance = new UI(rd, sc, numBuffers, clientWidth, clientHeight);
+
+   UIRebuild(clientWidth, clientHeight);
 }
 
 void DOG::UI::Destroy()
