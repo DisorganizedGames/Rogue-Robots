@@ -42,7 +42,6 @@ void PlayButtonFunc(void);
 void SliderFunc(float value)
 {
    UNREFERENCED_PARAMETER(value);
-   UNREFERENCED_PARAMETER(value);
    return;
 }
 

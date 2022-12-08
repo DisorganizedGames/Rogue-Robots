@@ -396,7 +396,7 @@ namespace DOG::gfx
 		{
 			EntityManager::Get().Collect<SpotLightComponent>().Do([](entity spotlight, SpotLightComponent&)
 				{
-					EntityManager::Get().AddComponent<ShadowCasterComponent>(spotlight);
+					EntityManager::Get().AddOrReplaceComponent<ShadowCasterComponent>(spotlight);
 				});
 		}
 		else
