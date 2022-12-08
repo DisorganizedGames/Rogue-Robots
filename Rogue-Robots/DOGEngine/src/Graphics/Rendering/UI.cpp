@@ -1592,7 +1592,8 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    //Menu buttons
    auto bp = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Play"), std::function<void()>(LevelSelectSoloButtonFunc));
    auto bm = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bmID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
-   auto bo = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
+   //Options menu is not used atm.
+   //auto bo = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
    auto bc = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bcID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Credits"), std::function<void()>(CreditsButtonFunc));
    auto be = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(beID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 280.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
    auto optback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(optbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
@@ -1676,7 +1677,8 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
 
    instance->AddUIElementToScene(menuID, std::move(bp));
    instance->AddUIElementToScene(menuID, std::move(bm));
-   instance->AddUIElementToScene(menuID, std::move(bo));
+   //Options menu is not used atm.
+   //instance->AddUIElementToScene(menuID, std::move(bo));
    instance->AddUIElementToScene(menuID, std::move(bc));
    instance->AddUIElementToScene(menuID, std::move(be));
    instance->AddUIElementToScene(optionsID, std::move(optback));
