@@ -1394,7 +1394,7 @@ void SetOutlineOnNearbyPickupsSystem::OnUpdate(DOG::entity e, DOG::PickupLerpAni
 					else if (em.HasComponent<MagazineModificationComponent>(e))
 						color = { 0.35f, 0.35f, 1.f };
 					else if (em.HasComponent<BarrelComponent>(e))
-						color = { 1.f, 0.f, 0.f };
+						color = { 0.f, 0.f, 1.f };
 					else if (em.HasComponent<MiscComponent>(e))
 						color = { 0.1f, 0.4f, 1.f };
 
