@@ -64,6 +64,12 @@ namespace DOG::gfx
 	}
 
 
+	void PostProcess::SetProjMat(const DirectX::SimpleMath::Matrix& projMat)
+	{
+		m_projwMat = projMat;
+	}
+
+
 	void PostProcess::InstantiateDamageDisk(const DirectX::SimpleMath::Vector2& dir, f32 startIntensity, f32 timeToDisappear, const DirectX::SimpleMath::Vector3& color)
 	{
 		DamageDiskData ddd;
@@ -89,4 +95,9 @@ namespace DOG::gfx
 		m_laserBeams.emplace_back(m, color, DirectX::SimpleMath::Vector3::Distance(startPos, endPos));
 	}
 
+
+	void PostProcess::InstantiateShockWave(DirectX::SimpleMath::Vector3 position, DirectX::SimpleMath::Vector3 args, f32 lifeTIme)
+	{
+		m_shockWaves.emplace_back(position, args, lifeTIme, 0);
+	}
 }

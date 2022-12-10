@@ -4,6 +4,7 @@
 #include "../../../Core/Time.h"
 #include "../../RHI/RenderDevice.h"
 #include "../../RHI/ShaderCompilerDXC.h"
+#include "../PostProcess.h"
 #include "ImGUI/imgui.h"
 
 using namespace DirectX;
@@ -35,29 +36,64 @@ void RippleEffect::Add(RenderGraph& rg)
 		},
 		[&](const PassData& passData, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources& resources)		// Execute
 		{
-			m_time += static_cast<f32>(Time::DeltaTime());
-			if (m_time > 1)
-				m_time = 0;
-
-
-			static float waveParams[3] = {10, 0.8f, 0.03f};
-
-			ImGui::DragFloat3("waveParams", waveParams, 0.05f);
-
+			auto& shockWaves = PostProcess::Get().GetShockWaves();
+			if (shockWaves.empty())
+				return;
 			rd->Cmd_SetPipeline(cmdl, m_computePipe);
-			ShaderArgs args = ShaderArgs()
-				.AppendConstant(resources.GetView(passData.litHDRView))
-				.AppendConstant(m_renderWidth)
-				.AppendConstant(m_renderHeight)
-				.AppendConstant(std::bit_cast<u32>(waveParams[0]))
-				.AppendConstant(std::bit_cast<u32>(waveParams[1]))
-				.AppendConstant(std::bit_cast<u32>(waveParams[2]))
-				.AppendConstant(std::bit_cast<u32>(m_time))
-				.AppendConstant(std::bit_cast<u32>(0.5f))
-				.AppendConstant(std::bit_cast<u32>(0.5f));
-			rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
-			u32 gCountX = (m_renderWidth + 15) / 16;
-			u32 gCountY = (m_renderHeight + 15) / 16;
-			rd->Cmd_Dispatch(cmdl, gCountX, gCountY, 1);
+			int deadCount = 0;
+			for (auto& sw : shockWaves)
+			{
+				if (sw.currentTime >= sw.lifeTime)
+				{
+					deadCount++;
+				}
+				sw.currentTime += static_cast<f32>(Time::DeltaTime());
+
+				Vector4 pos;
+				pos.x = sw.position.x;
+				pos.y = sw.position.y;
+				pos.z = sw.position.z;
+				pos.w = 1;
+
+				Matrix vp = PostProcess::Get().GetViewMatrix() * PostProcess::Get().GetProjMatrix();
+
+				pos = DirectX::XMVector4Transform(pos, vp);
+
+				pos.x /= pos.w;
+				pos.y /= pos.w;
+				pos.z /= pos.w;
+
+				pos.x += 0.5f;
+				pos.y += 0.5f;
+
+				ShaderArgs args = ShaderArgs()
+					.AppendConstant(resources.GetView(passData.litHDRView))
+					.AppendConstant(m_renderWidth)
+					.AppendConstant(m_renderHeight)
+					.AppendConstant(std::bit_cast<u32>(sw.args.x))
+					.AppendConstant(std::bit_cast<u32>(sw.args.y))
+					.AppendConstant(std::bit_cast<u32>(sw.args.z))
+					.AppendConstant(std::bit_cast<u32>(sw.currentTime))
+					.AppendConstant(std::bit_cast<u32>(pos.x))
+					.AppendConstant(std::bit_cast<u32>(pos.y));
+				rd->Cmd_UpdateShaderArgs(cmdl, QueueType::Compute, args);
+
+				u32 gCountX = (m_renderWidth + 15) / 16;
+				u32 gCountY = (m_renderHeight + 15) / 16;
+				rd->Cmd_Dispatch(cmdl, gCountX, gCountY, 1);
+			}
+
+			std::sort(shockWaves.begin(), shockWaves.end(), [](auto& a, auto& b) { return a.currentTime < b.lifeTime; });
+			for (int i = 0; i < deadCount; i++)
+			{
+				shockWaves.pop_back();
+			}
+				
 		});
+}
+
+void DOG::gfx::RippleEffect::SetGraphicsSettings(const GraphicsSettings& settings)
+{
+	m_renderWidth = settings.renderResolution.x;
+	m_renderHeight = settings.renderResolution.y;
 }

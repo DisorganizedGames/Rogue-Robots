@@ -33,15 +33,20 @@ namespace DOG::gfx
 			f32 length;
 		};
 
+		struct ShockWaveData
+		{
+			DirectX::SimpleMath::Vector3 position;
+			DirectX::SimpleMath::Vector3 args;
+			f32 lifeTime;
+			f32 currentTime;
+		};
+
 	private:
 		PostProcess();
 
 		void Update(f32 dt);
 		void Clear();
 		friend class Renderer;
-
-		// Accessible directly by Effects
-		std::vector<LaserBeamData> m_laserBeams;
 
 
 	public:
@@ -50,10 +55,12 @@ namespace DOG::gfx
 		static PostProcess& Get();
 
 		void SetViewMat(const DirectX::SimpleMath::Matrix& viewMat);
+		void SetProjMat(const DirectX::SimpleMath::Matrix& projMat);
 
 		// Damage bow
 		void InstantiateDamageDisk(const DirectX::SimpleMath::Vector2& dir, f32 startIntensity, f32 timeToDisappear, const DirectX::SimpleMath::Vector3& color = { 1.f, 0.f, 0.f });
 		void InstantiateLaserBeam(DirectX::SimpleMath::Vector3 startPos, DirectX::SimpleMath::Vector3 endPos, DirectX::SimpleMath::Vector3 up, DirectX::SimpleMath::Vector3 color);
+		void InstantiateShockWave(DirectX::SimpleMath::Vector3 position, DirectX::SimpleMath::Vector3 args, f32 lifeTIme);
 
 		// Heartbeat	
 		void SetHeartbeatFactor(f32 factor) { m_heartbeatFactor = factor; }
@@ -64,11 +71,27 @@ namespace DOG::gfx
 		f32 GetHeartbeatIntensity() const { return m_heartbeatIntensity; }
 		f32 GetHeartbeatTransitionFactor() const { return m_heartbeatTransitionFactor; }
 		std::vector<LaserBeamData>& GetLaserBeams() { return m_laserBeams; }
+		std::vector<ShockWaveData>& GetShockWaves() { return m_shockWaves; }
+
+		DirectX::SimpleMath::Matrix GetViewMatrix() const
+		{
+			return m_viewMat;
+		}
+
+		DirectX::SimpleMath::Matrix GetProjMatrix() const
+		{
+			return m_projwMat;
+		}
 
 	private:
 		f32 m_elapsedTime{ 0.f };
 		static PostProcess* s_instance;
 		DirectX::SimpleMath::Matrix m_viewMat;
+		DirectX::SimpleMath::Matrix m_projwMat;
+
+		// Accessible directly by Effects
+		std::vector<LaserBeamData> m_laserBeams;
+		std::vector<ShockWaveData> m_shockWaves;
 
 		// Naive ring
 		std::vector<DamageDiskData> m_damageDiskDatas;

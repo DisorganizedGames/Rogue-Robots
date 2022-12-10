@@ -16,7 +16,7 @@ namespace DOG::gfx
 		RippleEffect(GlobalEffectData& globalEffectData, u32 width, u32 height);
 
 		void Add(RenderGraph& rg);
-
+		void SetGraphicsSettings(const GraphicsSettings& settings) override;
 	private:
 		Pipeline m_computePipe;
 		u32 m_renderWidth;

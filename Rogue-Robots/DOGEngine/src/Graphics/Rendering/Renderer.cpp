@@ -666,6 +666,7 @@ namespace DOG::gfx
 		}
 
 		PostProcess::Get().SetViewMat(m_pfData.viewMatrix);
+		PostProcess::Get().SetViewMat(m_pfData.viewMatrix);
 
 
 
@@ -1599,6 +1600,7 @@ namespace DOG::gfx
 		}
 		if (m_bloomEffect) m_bloomEffect->SetGraphicsSettings(requestedSettings);
 		if (m_tiledLightCuller) m_tiledLightCuller->SetGraphicsSettings(requestedSettings);
+		if (m_rippleEffect) m_rippleEffect->SetGraphicsSettings(requestedSettings);
 		m_renderWidth = requestedSettings.renderResolution.x;
 		m_renderHeight = requestedSettings.renderResolution.y;
 		m_globalEffectData.defRenderScissors = ScissorRects().Append(0, 0, m_renderWidth, m_renderHeight);
