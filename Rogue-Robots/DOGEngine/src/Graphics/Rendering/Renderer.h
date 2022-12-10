@@ -312,6 +312,7 @@ namespace DOG::gfx
 		std::unique_ptr<RenderEffect> m_heartbeatEffect;
 		std::unique_ptr<RenderEffect> m_bloodViewEffect;
 		std::unique_ptr<RenderEffect> m_laserBeamEffect;
+		std::unique_ptr<RenderEffect> m_rippleEffect;
 
 
 

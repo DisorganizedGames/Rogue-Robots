@@ -72,6 +72,7 @@ set(SourceFiles
 	"src/Graphics/Rendering/RenderEffects/LaserEffect.h" "src/Graphics/Rendering/RenderEffects/LaserEffect.cpp"
 	"src/ECS/EntityTypedef.h"
 	"src/Core/SimpleModelCreator.h" "src/Core/SimpleModelCreator.cpp"
+	"src/Graphics/Rendering/RenderEffects/RippleEffect.h" "src/Graphics/Rendering/RenderEffects/RippleEffect.cpp"
 	)
 
 file(GLOB_RECURSE TempGraphics "src/Graphics/*.cpp")

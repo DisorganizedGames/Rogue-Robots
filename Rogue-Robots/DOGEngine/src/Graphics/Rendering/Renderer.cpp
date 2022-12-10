@@ -36,6 +36,7 @@
 #include "RenderEffects/DamageDiskEffect.h"
 #include "RenderEffects/HeartbeatEffect.h"
 #include "RenderEffects/LaserEffect.h"
+#include "RenderEffects/RippleEffect.h"
 
 #include "ImGUI/imgui.h"
 #include "../../Core/ImGuiMenuLayer.h"
@@ -370,6 +371,7 @@ namespace DOG::gfx
 		m_heartbeatEffect = std::make_unique<HeartbeatEffect>(m_globalEffectData);
 		m_damageDiskEffect = std::make_unique<DamageDiskEffect>(m_globalEffectData);
 		m_laserBeamEffect = std::make_unique<LaserEffect>(m_globalEffectData, m_dynConstants.get());
+		m_rippleEffect = std::make_unique<RippleEffect>(m_globalEffectData, m_renderWidth, m_renderHeight);
 	
 		{
 			// Create 4x4 SSAO noise
@@ -1475,6 +1477,8 @@ namespace DOG::gfx
 
 
 		m_particleBackend->AddEffect(*m_rg);
+
+		m_rippleEffect->Add(rg);
 
 		m_heartbeatEffect->Add(rg);
 		m_damageDiskEffect->Add(rg);
