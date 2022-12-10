@@ -915,6 +915,13 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 		{
 			Interact();
 		}
+
+		if (EVENT(KeyPressedEvent).key == DOG::Key::Two)
+		{
+			auto& tr = EntityManager::Get().GetComponent<TransformComponent>(GetCamera());
+			Vector3 pos = tr.GetPosition() + 5 * tr.GetForward();
+			gfx::PostProcess::Get().InstantiateShockWave(pos, Vector3(10, 0.8f, 0.1f), 1);
+		}
 		
 		Input(EVENT(KeyPressedEvent).key);
 		break;

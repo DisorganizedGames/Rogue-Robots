@@ -87,6 +87,8 @@ entity ExplosionEffectSystem::CreateExplosionEffect(entity parentEntity, float r
 
 	AddEffectsToExplosion(parentEntity, newEntity);
 
+	gfx::PostProcess::Get().InstantiateShockWave(parentPosition, Vector3(10, 0.8f, 0.1f), 1);
+
 	return newEntity;
 }
 
