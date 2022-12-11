@@ -60,17 +60,14 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
     StructuredBuffer<ShaderInterop_LightsMetadata> lightsMDs = ResourceDescriptorHeap[gd.lightTableMD];
     ShaderInterop_LightsMetadata lightsMD = lightsMDs[0];
 
-    float2 scale = 0.5f * numTiles;
-    float2 bias = scale - float2(groupID.xy);
+    float2 scale = numTiles;
+    float2 bias = scale - 2 * float2(groupID.xy) - 1.xx;
 
     float p11 = pfData.projMatrix._11;
     float p22 = pfData.projMatrix._22;
 
-    float4 col1 = float4(p11 * scale.x * 2, 0, 2 * bias.x - 1, 0);
-    float4 col2 = float4(0, -p22 * scale.y * 2, 2 * bias.y - 1, 0);
-
-    //float4 col1 = float4(p11 * scale.x, 0, bias.x, 0);
-    //float4 col2 = float4(0, -p22 * scale.y, bias.y, 0);
+    float4 col1 = float4(p11 * scale.x, 0, bias.x, 0);
+    float4 col2 = float4(0, -p22 * scale.y, bias.y, 0);
 
     float4 col4 = float4(0, 0, 1, 0);
     float4 frustum[6];
