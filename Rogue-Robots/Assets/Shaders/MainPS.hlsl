@@ -310,18 +310,29 @@ PS_OUT main(VS_OUT input)
         uint2 tileCoord = input.pos.xy / TILED_GROUP_SIZE;
         uint tileIndex = tileCoord.x + (g_constants.width + TILED_GROUP_SIZE - 1) / TILED_GROUP_SIZE * tileCoord.y;
         StructuredBuffer<ShaderInterop_LocalLightBuffer> localLightBuffers = ResourceDescriptorHeap[g_constants.localLightBuffersIndex];
-        if (localLightBuffers[tileIndex].count == 1)
+        if (localLightBuffers[tileIndex].count > 120)
         {
-            lightHeatMapValue = float3(0, 0, 1);
-
+            lightHeatMapValue = float3(1, 0, 0);
         }
-        else if (localLightBuffers[tileIndex].count == 2)
+        else if (localLightBuffers[tileIndex].count > 80)
+        {
+            lightHeatMapValue = float3(1, 0.5f, 0);
+        }
+        else if (localLightBuffers[tileIndex].count > 30)
         {
             lightHeatMapValue = float3(1, 1, 0);
         }
-        else if (localLightBuffers[tileIndex].count > 2)
+        else if (localLightBuffers[tileIndex].count > 15)
         {
-            lightHeatMapValue = float3(1, 0, 0);
+            lightHeatMapValue = float3(0, 1, 0);
+        }
+        else if (localLightBuffers[tileIndex].count > 5)
+        {
+            lightHeatMapValue = float3(0, 0, 1);
+        }
+        else if (localLightBuffers[tileIndex].count > 0)
+        {
+            lightHeatMapValue = float3(0, 0.7f, 1);
         }
     
         // calculate static and dynamic point lights
