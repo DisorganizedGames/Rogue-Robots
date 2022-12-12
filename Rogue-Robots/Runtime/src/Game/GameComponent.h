@@ -82,6 +82,7 @@ struct HomingMissileComponent
 	float lifeTime = attackFlightPhaseStartTime + 2.0f;
 	float explosionRadius = 10.0f;
 	float dmg = 500.0f;
+	float maxTargetingAngle = DirectX::XM_PIDIV4;
 	bool armed = false;
 	bool homing = true;
 	int hit = 0;

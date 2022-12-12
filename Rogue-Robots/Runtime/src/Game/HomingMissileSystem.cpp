@@ -289,7 +289,7 @@ HomingMissileImpacteSystem::HomingMissileImpacteSystem()
 
 void HomingMissileTargetingSystem::OnUpdate(HomingMissileComponent& missile, DOG::TransformComponent& transform)
 {
-	float minDistSquared = 1000000;
+	float minDistSquared = 10000;
 	entity target = NULL_ENTITY;
 	if (!missile.homing)
 		return;
@@ -301,10 +301,17 @@ void HomingMissileTargetingSystem::OnUpdate(HomingMissileComponent& missile, DOG
 				float distSquared = Vector3::DistanceSquared(agentTransform.GetPosition(), transform.GetPosition());
 				if (distSquared < minDistSquared)
 				{
-					if (auto hit = PhysicsEngine::RayCast(transform.GetPosition(), agentTransform.GetPosition()); hit && hit->entityHit == e)
+					Vector3 dir = agentTransform.GetPosition() - transform.GetPosition();
+					dir.Normalize();
+					Vector3 frw = transform.GetForward();
+					frw.Normalize();
+					if (acos(dir.Dot(frw)) <= missile.maxTargetingAngle)
 					{
-						minDistSquared = distSquared;
-						target = e;
+						if (auto hit = PhysicsEngine::RayCast(transform.GetPosition(), agentTransform.GetPosition()); hit && hit->entityHit == e)
+						{
+							minDistSquared = distSquared;
+							target = e;
+						}
 					}
 				}
 			});
