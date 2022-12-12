@@ -246,15 +246,27 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 	const bool isSamePlayer = (sc.playerBeingSpectated == sc.playerSpectatorQueue[nextIndex]);
 	if (!isSamePlayer)
 	{
+		// Pre-switch
 		DOG::EntityManager::Get().RemoveComponentIfExists<AudioListenerComponent>(sc.playerBeingSpectated);
+
+		auto& prevDustEmitter = DOG::EntityManager::Get().GetComponent<DustComponent>(sc.playerBeingSpectated).emitterEntity;
+		DOG::EntityManager::Get().DeferredEntityDestruction(prevDustEmitter);
+		prevDustEmitter = NULL_ENTITY;
 
 		ChangeGunDrawLogic(sc.playerBeingSpectated, false, true);
 		ChangeGunDrawLogic(sc.playerSpectatorQueue[nextIndex], true, false);
 		ChangeSuitDrawLogic(sc.playerBeingSpectated, sc.playerSpectatorQueue[nextIndex]);
 		sc.playerName = DOG::EntityManager::Get().GetComponent<DOG::NetworkPlayerComponent>(sc.playerSpectatorQueue[nextIndex]).playerName;
 		sc.playerBeingSpectated = sc.playerSpectatorQueue[nextIndex];
-
+		
+		// Post-switch
 		DOG::EntityManager::Get().AddOrReplaceComponent<AudioListenerComponent>(sc.playerBeingSpectated);
+		
+		auto& newDustEmitter = DOG::EntityManager::Get().GetComponent<DustComponent>(sc.playerBeingSpectated).emitterEntity;
+		auto scene = EntityManager::Get().GetComponent<SceneComponent>(sc.playerBeingSpectated).scene;  
+		newDustEmitter = EntityManager::Get().CreateEntity();
+		EntityManager::Get().AddComponent<SceneComponent>(newDustEmitter, scene);
+		ParticleSystemFromFile(newDustEmitter, "Assets/ParticleSystems/Dust.lua");
 	}
 
 	bool changeGunDrawLogic = false;

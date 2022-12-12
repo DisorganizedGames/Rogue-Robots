@@ -608,10 +608,10 @@ void GameLayer::KillPlayer(DOG::entity e)
 		UIInstance->GetUI<UIVertStatBar>(pbarID)->Hide(false);
 
 		m_entityManager.RemoveComponentIfExists<AudioListenerComponent>(localPlayer);
-
-
-		auto dustEmitter = m_entityManager.GetComponent<DustComponent>(localPlayer).emitterEntity;
-		m_entityManager.AddComponent<DeferredDeletionComponent>(dustEmitter);
+		
+		auto& dustEmitter = m_entityManager.GetComponent<DustComponent>(localPlayer).emitterEntity;
+		m_entityManager.DeferredEntityDestruction(dustEmitter);
+		dustEmitter = NULL_ENTITY;
 
 		RigidbodyComponent& rb = m_entityManager.GetComponent<RigidbodyComponent>(e);
 		rb.ConstrainPosition(true, false, true);
@@ -678,6 +678,13 @@ void GameLayer::KillPlayer(DOG::entity e)
 			timer.timeLeft = timer.duration;
 
 			m_entityManager.AddOrReplaceComponent<AudioListenerComponent>(playerToSpectate);
+
+			auto& spectateDustEmitter = m_entityManager.GetComponent<DustComponent>(playerToSpectate).emitterEntity;
+			auto scene = EntityManager::Get().GetComponent<SceneComponent>(playerToSpectate).scene;
+			spectateDustEmitter = EntityManager::Get().CreateEntity();
+			EntityManager::Get().AddComponent<SceneComponent>(playerToSpectate, scene);
+			ParticleSystemFromFile(spectateDustEmitter, "Assets/ParticleSystems/Dust.lua");
+
 		}
 		else // Of course, if all players are dead, this else will fire, but then the game would restart, so probably unnecessary.
 		{
