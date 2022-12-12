@@ -160,7 +160,7 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 			else if ((bytesRecived - processedBytes) < packet.sizeOfPayload)
 			{
 				std::cout << "Client: Only part of the packet arrived: " << bytesRecived << " header payload: " << packet.sizeOfPayload << " Header payload in big endian: "
-					<< htons(packet.sizeOfPayload) << " Header payload in little endian: " << ntohs(packet.sizeOfPayload) << std::endl;
+					<< ntohs(packet.sizeOfPayload) << " Header payload in little endian: " << htons(packet.sizeOfPayload) << std::endl;
 				processedBytes += bytesRecived;
 			}
 			else

@@ -357,7 +357,7 @@ void NetCode::UpdateSendTcp()
 					{
 						netC.objectId = agentId.id;
 						netC.position = transC.GetPosition();
-						netC.rotation = transC.GetRotation();
+						//netC.rotation = transC.GetRotation(); might enabel agian 
 						memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkTransform));
 						m_inputTcp.nrOfNetTransform++;
 						m_bufferSize += sizeof(NetworkTransform);
@@ -438,7 +438,7 @@ void NetCode::ReceiveDataTcp()
 				if (m_inputTcp.playerId > 0)
 				{
 					NetworkTransform* tempTransfrom = new NetworkTransform;
-					EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent, CapsuleColliderComponent>().Do([&](NetworkTransform&, TransformComponent& transC, AgentIdComponent& idC, CapsuleColliderComponent& rC)
+					EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent, CapsuleColliderComponent, AgentAggroComponent>().Do([&](NetworkTransform&, TransformComponent& transC, AgentIdComponent& idC, CapsuleColliderComponent& rC, AgentAggroComponent&)
 						{
 							for (u32 i = 0; i < header.nrOfNetTransform; ++i)
 							{
@@ -449,7 +449,7 @@ void NetCode::ReceiveDataTcp()
 									float capsuleThreshold = rC.capsuleRadius * 20;
 									DirectX::SimpleMath::Vector3 compare = transC.GetPosition() - tempTransfrom->position;
 									compare.y = 0;
-									transC.SetRotation(tempTransfrom->rotation);
+									//transC.SetRotation(tempTransfrom->rotation); might enable again
 
 									if (compare.Length() > (capsuleThreshold))
 									{
