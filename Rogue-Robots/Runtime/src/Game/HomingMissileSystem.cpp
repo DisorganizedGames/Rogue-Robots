@@ -213,7 +213,7 @@ void HomingMissileImpacteSystem::OnUpdate(entity e, HomingMissileComponent& miss
 				});
 
 			auto& expEffect = em.AddComponent<ExplosionEffectComponent>(e, 0.8f * missile.explosionRadius);
-			expEffect.audioVolume = 100;
+			expEffect.audioVolume = 20;
 			expEffect.explosionSound = ExplosionEffectComponent::ExplosionSound::Explosion1;
 			em.AddComponent<ExplosionComponent>(e, 2 * missile.explosionRadius, 0.8f * missile.explosionRadius);
 			em.DeferredEntityDestruction(e);
