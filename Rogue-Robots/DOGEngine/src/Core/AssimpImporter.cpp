@@ -248,25 +248,20 @@ namespace DOG
 
 				std::vector<AnimationKey> posKeys;
 				std::vector<AnimationKey> rotKeys;
-				std::vector<AnimationKey> scaKeys;
+				//std::vector<AnimationKey> scaKeys;
 				posKeys.reserve(channel->mNumPositionKeys);
 				rotKeys.reserve(channel->mNumRotationKeys);
-				scaKeys.reserve(channel->mNumScalingKeys);
+				//scaKeys.reserve(channel->mNumScalingKeys);
 
 				for (u32 k = 0; k < posKeys.capacity(); k++)
 				{
 					const auto aiKey = channel->mPositionKeys[k];
-					posKeys.push_back({channel->mNodeName.C_Str(), (f32)aiKey.mTime, {aiKey.mValue.x, aiKey.mValue.y, aiKey.mValue.z, 0.0f} });
-				}
-				for (size_t k = 0; k < scaKeys.capacity(); k++)
-				{
-					const auto aiKey = channel->mScalingKeys[k];
-					scaKeys.push_back({ channel->mNodeName.C_Str(), (f32)aiKey.mTime, {aiKey.mValue.x, aiKey.mValue.y, aiKey.mValue.z, 0.0f} });
+					posKeys.push_back({(f32)aiKey.mTime, {aiKey.mValue.x, aiKey.mValue.y, aiKey.mValue.z, 0.0f} });
 				}
 				for (size_t k = 0; k < rotKeys.capacity(); k++)
 				{
 					const auto aiKey = channel->mRotationKeys[k];
-					rotKeys.push_back({ channel->mNodeName.C_Str(), (f32)aiKey.mTime, {aiKey.mValue.x, aiKey.mValue.y, aiKey.mValue.z, aiKey.mValue.w} });
+					rotKeys.push_back({(f32)aiKey.mTime, {aiKey.mValue.x, aiKey.mValue.y, aiKey.mValue.z, aiKey.mValue.w} });
 				}
 
 				std::string nodeName = channel->mNodeName.C_Str();
@@ -288,7 +283,7 @@ namespace DOG
 				}
 				
 				i32 nodeID = nameToNodeIdx.at(nodeName);
-				importedAnim.animations.back().scaKeys.insert({nodeID, scaKeys});
+				//importedAnim.animations.back().scaKeys.insert({nodeID, scaKeys});
 				importedAnim.animations.back().rotKeys.insert({nodeID, rotKeys});
 				importedAnim.animations.back().posKeys.insert({nodeID, posKeys});
 			}

@@ -515,24 +515,24 @@ namespace DOG
 				auto rigNode = startNode + node;
 
 				// Get corresponding key values
-				const AnimationKeys* keys = {};
-				switch (key)
+				if (key != KeyType::Scale)
 				{
-				case KeyType::Scale:
-					keys = &animation.scaKeys;
-					break;
-				case KeyType::Rotation:
-					keys = &animation.rotKeys;
-					break;
-				case KeyType::Translation:
-					keys = &animation.posKeys;
-					break;
-				}
-				// Keyframe influence exist, store it
-				if (keys->find(rigNode) != keys->end())
-				{
-					auto keyVal = GetKeyValue(keys->at(rigNode), key, tick);
-					keyValues[keyIdx] = key != KeyType::Rotation ? weight * keyVal : keyVal;
+					const AnimationKeys* keys = {};
+					switch (key)
+					{
+					case KeyType::Rotation:
+						keys = &animation.rotKeys;
+						break;
+					case KeyType::Translation:
+						keys = &animation.posKeys;
+						break;
+					}
+					// Keyframe influence exist, store it
+					if (keys->find(rigNode) != keys->end())
+					{
+						auto keyVal = GetKeyValue(keys->at(rigNode), key, tick);
+						keyValues[keyIdx] = key != KeyType::Rotation ? weight * keyVal : keyVal;
+					}
 				}
 			}
 		}
@@ -544,8 +544,11 @@ namespace DOG
 		{
 			// index to first clip influencing bone
 			auto clipIdx = i * nClips;
-
-			if (key != KeyType::Rotation)
+			if (key == KeyType::Scale)
+			{
+				storeSRT[i] = XMLoadFloat3(&m_baseScale);
+			}
+			else if (key != KeyType::Rotation)
 			{	// Sum clip key values for weighted average
 				for (u32 j = 0; j < nClips; ++j, ++clipIdx)
 					storeSRT[i] += keyValues[clipIdx];
@@ -553,7 +556,7 @@ namespace DOG
 				const bool rootDefault = key == KeyType::Translation && i == ROOT_JOINT && !m_imguiApplyRootTranslation;
 				// if no keyframe scaling/translation influence set base value
 				if (XMComparisonAllTrue(XMVector3EqualR(storeSRT[i], {})) || rootDefault)
-					storeSRT[i] = key == KeyType::Scale ? XMLoadFloat3(&m_baseScale) : XMLoadFloat3(&m_baseTranslation);
+					storeSRT[i] = /*key == KeyType::Scale ? XMLoadFloat3(&m_baseScale) :*/ XMLoadFloat3(&m_baseTranslation);
 			}
 			else if (keyValues.size())
 			{	// Different formula for rotation quaternions
