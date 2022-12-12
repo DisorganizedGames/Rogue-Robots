@@ -59,7 +59,7 @@ private:
 	std::string ReplaceBlock(std::string& prevBlock, std::string& currentBlock, std::string& nextBlock, int prevDir, int nextDir, bool prevWasVoid, bool doorConnected);
 private:
 	uint32_t m_totalCount = 0u; //Total number of blocks read during input.
-	std::unordered_map<std::string, Block> m_blockPossibilities; //The possibilities for each block-id.
+	std::unordered_map<unsigned int, Block> m_blockPossibilities; //The possibilities for each block-id.
 	std::vector<std::string> m_spawnBlocks;
 	std::vector<std::string> m_doorBlocks;
 	std::vector<std::string> m_connectorBlocks;
@@ -80,4 +80,8 @@ private:
 	PriorityQueue* m_priorityQueue = nullptr; //Used for prioritizing entropy.
 
 	std::queue<uint32_t> m_recursiveStack; //Used to circumvent recursiveness. Saves us from stack overflows.
+
+	unsigned int m_uniqueIdCounter = 0u;
+	std::unordered_map<unsigned int, std::string> m_idToStringMap;
+	std::unordered_map<std::string, unsigned int> m_stringToIdMap;
 };

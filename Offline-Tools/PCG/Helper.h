@@ -10,21 +10,22 @@
 #include <memory>
 #include <cstdlib>
 #include <limits>
+#include <thread>
 
 //Used to save data read from the input.
 struct Block
 {
-	std::string id = "";
+	//std::string id = "";
 	uint32_t count = 0u;
 	float frequency = 0.0;
-	std::vector<std::string> dirPossibilities[6];
+	std::vector<unsigned int> dirPossibilities[6];
 };
 
 //Id is the index in the 1D-array and possibilities is the possibilities that are left for this cell.
 struct EntropyBlock
 {
 	uint32_t id = -1;
-	std::vector<std::string> possibilities;
+	std::vector<unsigned int> possibilities;
 };
 
 //Used in the PriorityQueue. Points to an entryblock and has a calculated Shannon Entropy.

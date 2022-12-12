@@ -5,14 +5,14 @@ bool WFC::EdgeConstrain(uint32_t cellIndex, uint32_t dir, Room& room)
 	bool removed = false;
 	for (uint32_t j{ 0u }; j < m_entropy[cellIndex].possibilities.size(); ++j) //Go through all the current possibilities in the cell
 	{
-		std::string possibility = m_entropy[cellIndex].possibilities[j];
-		if (possibility.find("Door") != std::string::npos)
+		unsigned int possibility = m_entropy[cellIndex].possibilities[j];
+		if (m_idToStringMap[possibility].find("Door") != std::string::npos)
 		{
 			continue;
 		}
 		//Check if the possibility cannot have a boundary in the direction.
-		if (!std::count(m_blockPossibilities[possibility].dirPossibilities[dir].begin(), m_blockPossibilities[possibility].dirPossibilities[dir].end(), "Edge") &&
-			!std::count(m_blockPossibilities[possibility].dirPossibilities[dir].begin(), m_blockPossibilities[possibility].dirPossibilities[dir].end(), "Void")) //This has to be tested. Might fuck everything
+		if (!std::count(m_blockPossibilities[possibility].dirPossibilities[dir].begin(), m_blockPossibilities[possibility].dirPossibilities[dir].end(), m_stringToIdMap["Edge"]) &&
+			!std::count(m_blockPossibilities[possibility].dirPossibilities[dir].begin(), m_blockPossibilities[possibility].dirPossibilities[dir].end(), m_stringToIdMap["Void"])) //This has to be tested. Might fuck everything
 		{
 			if (m_entropy[cellIndex].possibilities.size() == 1)
 			{
@@ -54,10 +54,10 @@ bool WFC::IntroduceConstraints(Room& room)
 {
 	//First we set up the entropy.
 	//A vector with all unique id's.
-	std::vector<std::string> allBlocks;
+	std::vector<unsigned int> allBlocks;
 	for (auto& possibility : m_blockPossibilities)
 	{
-		if (possibility.first.find("Door") == std::string::npos && possibility.first.find("Spawn") == std::string::npos) //Dont add special blocks.
+		if (m_idToStringMap[possibility.first].find("Door") == std::string::npos && m_idToStringMap[possibility.first].find("Spawn") == std::string::npos) //Dont add special blocks.
 		{
 			allBlocks.push_back(possibility.first);
 		}
@@ -99,7 +99,7 @@ bool WFC::IntroduceConstraints(Room& room)
 				uint32_t index = x + y * room.width + z * room.width * room.height;
 				m_entropy[index].possibilities.clear();
 				std::string spawnBlock = m_spawnBlocks[distSpawn(gen)];
-				m_entropy[index].possibilities.push_back(spawnBlock);
+				m_entropy[index].possibilities.push_back(m_stringToIdMap[spawnBlock]);
 
 				//Push the index onto the stack and then loop through the stack until it is empty.
 				//(A call to Propogate can put more information on the stack.)
@@ -178,7 +178,7 @@ bool WFC::IntroduceConstraints(Room& room)
 			size_t startFlip = doorBlock.find("_", doorBlock.find("_") + 1);
 			std::string doorFlip = doorBlock.substr(startFlip + 1u, doorBlock.size() - startFlip);
 			std::string doorCorrectRotation = name + "_r" + std::to_string(room.doors[chosenDoor].rot) + "_" + doorFlip;
-			m_entropy[index].possibilities.push_back(doorCorrectRotation);
+			m_entropy[index].possibilities.push_back(m_stringToIdMap[doorCorrectRotation]);
 			
 			//Push the index onto the stack and then loop through the stack until it is empty.
 			//(A call to Propogate can put more information on the stack.)
@@ -260,7 +260,7 @@ bool WFC::IntroduceConstraints(Room& room)
 						size_t startFlip = doorBlock.find("_", doorBlock.find("_") + 1);
 						std::string doorFlip = doorBlock.substr(startFlip + 1u, doorBlock.size() - startFlip);
 						std::string doorCorrectRotation = name + "_r" + std::to_string(room.doors[chosenDoor].rot) + "_" + doorFlip;
-						m_entropy[index].possibilities.push_back(doorCorrectRotation);
+						m_entropy[index].possibilities.push_back(m_stringToIdMap[doorCorrectRotation]);
 
 						//Push the index onto the stack and then loop through the stack until it is empty.
 						//(A call to Propogate can put more information on the stack.)
@@ -339,7 +339,12 @@ bool WFC::IntroduceConstraints(Room& room)
 
 	return true;
 }
+/*
+void threadFunc(unsigned int indexOffset)
+{
 
+}
+*/
 bool WFC::GenerateLevel(uint32_t nrOfRooms, uint32_t maxWidth, uint32_t maxHeight, uint32_t maxDepth)
 {
 	m_generatedLevel.assign(m_width * m_height * m_depth, "Void");
@@ -373,6 +378,13 @@ bool WFC::GenerateLevel(uint32_t nrOfRooms, uint32_t maxWidth, uint32_t maxHeigh
 	std::cout << "Will generate " << nrOfRooms << " rooms." << std::endl;
 
 	//For each room to generate.
+	/*
+	std::vector<std::thread> threads;
+	for (uint32_t i{ 0u }; i < nrOfRooms; i++)
+	{
+		threads.push_back(std::thread(threadFunc, i));
+	}
+	*/
 	for (uint32_t i{ 0u }; i < nrOfRooms; i++)
 	{
 		//Now we need to choose nrOfRooms from the viable rooms.
@@ -430,6 +442,12 @@ bool WFC::GenerateLevel(uint32_t nrOfRooms, uint32_t maxWidth, uint32_t maxHeigh
 		m_generatedRooms.push_back(newRoom);
 	}
 
+	/*
+	for (uint32_t i{ 0u }; i < nrOfRooms; i++)
+	{
+		threads[i].join();
+	}
+	*/
 	for (Room& room : m_generatedRooms) //For each generated room.
 	{
 		//Go through and put the room in the final generated level.
@@ -625,8 +643,8 @@ bool WFC::GenerateRoom(Room& room)
 	//Firstly we go through all the blocks with just 1 possibility.
 	while (m_currentEntropy[index].possibilities.size() == 1)
 	{
-		std::string possibility = m_currentEntropy[index].possibilities[0]; //It only has 1 possibility.
-		room.generatedRoom[index] = possibility; //Put the block in the generated room.
+		unsigned int possibility = m_currentEntropy[index].possibilities[0]; //It only has 1 possibility.
+		room.generatedRoom[index] = m_idToStringMap[possibility]; //Put the block in the generated room.
 		room.generationSuccess = true;
 
 		index = m_priorityQueue->Pop();
@@ -666,7 +684,7 @@ bool WFC::GenerateRoom(Room& room)
 		std::uniform_real_distribution<float> dist(0.0f, total);
 		float val = dist(gen);
 
-		std::string chosenBlock = "";
+		unsigned int chosenBlock = 0u;
 		float count = 0.0f;
 		//Go through all possibilities and if the generated value is less than the frequency counter that possibility is chosen.
 		for (auto& current : m_currentEntropy[index].possibilities)
@@ -683,7 +701,7 @@ bool WFC::GenerateRoom(Room& room)
 		bool removed = false;
 		for (uint32_t i{ 0u }; i < m_currentEntropy[index].possibilities.size(); ++i)
 		{
-			std::string current = m_currentEntropy[index].possibilities[i];
+			unsigned int current = m_currentEntropy[index].possibilities[i];
 			if (current != chosenBlock)
 			{
 				if (m_currentEntropy[index].possibilities.size() == 1)
@@ -731,7 +749,7 @@ bool WFC::GenerateRoom(Room& room)
 			}
 		}
 		//We then set the chosen value in the generated level.
-		room.generatedRoom[index] = chosenBlock;
+		room.generatedRoom[index] = m_idToStringMap[chosenBlock];
 		room.generationSuccess = true;
 
 		index = m_priorityQueue->Pop();
@@ -962,6 +980,7 @@ bool WFC::GenerateRoom(Room& room)
 									prevWasVoid = false;
 								}
 								room.generatedRoom[path[i].first] = replacer;
+								//std::cout << replacer << std::endl;
 								prevDir = nextDir;
 							}
 						}
@@ -2173,6 +2192,7 @@ std::string WFC::ReplaceBlock(std::string& prevBlock, std::string& currentBlock,
 	{
 		replacer = "Cube_r0_f";
 	}
+
 	return replacer;
 }
 
@@ -2205,6 +2225,7 @@ bool WFC::ReadInput(std::string input)
 
 	if (inputFile.is_open())
 	{
+		m_uniqueIdCounter = 0u;
 		//For each unique block.
 		while (std::getline(inputFile, line))
 		{
@@ -2220,10 +2241,20 @@ bool WFC::ReadInput(std::string input)
 				m_spawnBlocks.push_back(id);
 			}
 
-			m_blockPossibilities[id].id = id;
+			//Check if the block is already in the map.
+			if (m_stringToIdMap.find(id) == m_stringToIdMap.end())
+			{
+				m_stringToIdMap[id] = m_uniqueIdCounter;
+				m_idToStringMap[m_uniqueIdCounter] = id;
+
+				++m_uniqueIdCounter;
+			}
+
+			//m_blockPossibilities[id].id = id;
 			//Put the count in the frequency and increment the totalcount.
-			m_blockPossibilities[id].count = std::stoi(line.substr(delim + 1, line.size()));
-			m_totalCount += m_blockPossibilities[id].count;
+			unsigned int uid = m_stringToIdMap[id];
+			m_blockPossibilities[uid].count = std::stoi(line.substr(delim + 1, line.size()));
+			m_totalCount += m_blockPossibilities[uid].count;
 
 			//For each direction.
 			for (uint32_t i{ 0u }; i < 6; ++i)
@@ -2234,7 +2265,19 @@ bool WFC::ReadInput(std::string input)
 				{
 					delim = line.find(',');
 					std::string possibility = line.substr(0, delim);
-					m_blockPossibilities[id].dirPossibilities[i].push_back(possibility);
+
+					//Check if the block is already in the map.
+					if (m_stringToIdMap.find(possibility) == m_stringToIdMap.end())
+					{
+						m_stringToIdMap[possibility] = m_uniqueIdCounter;
+						m_idToStringMap[m_uniqueIdCounter] = possibility;
+
+						++m_uniqueIdCounter;
+					}
+
+					unsigned int uidDir = m_stringToIdMap[possibility];
+
+					m_blockPossibilities[uid].dirPossibilities[i].push_back(uidDir);
 					line.erase(line.begin(), line.begin() + delim + 1);
 				}
 			}
@@ -2302,7 +2345,7 @@ void WFC::CheckForPropogation(uint32_t currentIndex, uint32_t neighborIndex, uns
 	bool removed = false;
 	for (uint32_t i{ 0u }; i < m_currentEntropy[neighborIndex].possibilities.size(); ++i) //For every possibility in the neighbor cell
 	{
-		std::string& neighborPossibility = m_currentEntropy[neighborIndex].possibilities[i];
+		unsigned int& neighborPossibility = m_currentEntropy[neighborIndex].possibilities[i];
 		bool matched = false;
 		
 		for (auto& possibility : m_currentEntropy[currentIndex].possibilities) //Check every possibility still left in the current cell and make sure "r" matches with atleast one of them.
@@ -2388,7 +2431,7 @@ void WFC::CheckForPropogationConstrain(uint32_t currentIndex, uint32_t neighborI
 	bool removed = false;
 	for (uint32_t i{ 0u }; i < m_entropy[neighborIndex].possibilities.size(); ++i) //For every possibility in the neighbor cell
 	{
-		std::string& neighborPossibility = m_entropy[neighborIndex].possibilities[i];
+		unsigned int& neighborPossibility = m_entropy[neighborIndex].possibilities[i];
 		bool matched = false;
 
 		for (auto& possibility : m_entropy[currentIndex].possibilities) //Check every possibility still left in the current cell and make sure "r" matches with atleast one of them.

@@ -6,7 +6,7 @@ class PriorityQueue
 public:
 	PriorityQueue() noexcept = delete;
 
-	PriorityQueue(std::vector<EntropyBlock>& blockList, std::unordered_map<std::string, Block>& blockPossibilities, uint32_t width, uint32_t height, uint32_t depth) noexcept
+	PriorityQueue(std::vector<EntropyBlock>& blockList, std::unordered_map<unsigned int, Block>& blockPossibilities, uint32_t width, uint32_t height, uint32_t depth) noexcept
 	{
 		m_first = std::make_shared<QueueBlock>();
 		//m_first = new QueueBlock();
@@ -74,11 +74,11 @@ public:
 	int Pop();
 
 	//Is called everytime the entropy for a block is reduced, goes to the item in question and rearrages it in the PQ.
-	bool Rearrange(uint32_t index, std::unordered_map<std::string, Block>& blockPossibilities);
+	bool Rearrange(uint32_t index, std::unordered_map<unsigned int, Block>& blockPossibilities);
 
 private:
 	//Calculates the Shannon entropy of the block. Used as prio.
-	float CalculateEntropy(std::vector<std::string>& currentPossibilities, std::unordered_map<std::string, Block>& blockPossibilities);
+	float CalculateEntropy(std::vector<unsigned int>& currentPossibilities, std::unordered_map<unsigned int, Block>& blockPossibilities);
 
 	std::shared_ptr<QueueBlock> m_first = nullptr;
 };
