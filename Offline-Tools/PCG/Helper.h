@@ -169,6 +169,7 @@ struct Door
 
 struct Room
 {
+	unsigned int i = 0;
 	uint32_t globalPos[3] = {0u, 0u, 0u};
 	uint32_t width = 0;
 	uint32_t height = 0;
