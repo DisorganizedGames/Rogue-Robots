@@ -44,6 +44,7 @@ namespace DOG
 		bool dynamic = false;
 		entity rigidbodyEntity = 0;
 		DirectX::SimpleMath::Vector3 rigidbodyScale;
+		bool removed = false;
 	};
 
 	struct RigidbodyCollisionData
@@ -61,6 +62,7 @@ namespace DOG
 		btPairCachingGhostObject* ghostObject = nullptr;
 		CollisionShapeHandle collisionShapeHandle;
 		entity ghostObjectEntity = 0;
+		bool removed = false;
 	};
 
 	struct BoxColliderComponent
@@ -140,6 +142,15 @@ namespace DOG
 		friend PhysicsRigidbody;
 
 	private:
+		struct DeferredCollisionObjectDestruction
+		{
+			bool ghost = false;
+			u64 collisionObjectHandle;
+			bool removeCollisionShape = false;
+			f32 timeToBeDeleted;
+		};
+
+	private:
 		//Order of unique ptrs matter for the destruction of the unique ptrs
 		std::unique_ptr<btDefaultCollisionConfiguration> m_collisionConfiguration;
 		std::unique_ptr<btCollisionDispatcher> m_collisionDispatcher;
@@ -166,9 +177,15 @@ namespace DOG
 		//Ghost objects (ghost objects are triggers)
 		std::vector<GhostObjectData> m_ghostObjectDatas;
 
+		//Deferred deletion of physics objects 
+		std::vector<DeferredCollisionObjectDestruction> m_collisionObjectToBeDeleted;
+
 		static constexpr u64 RESIZE_RIGIDBODY_SIZE = 1000;
 		static constexpr u64 RESIZE_COLLISIONSHAPE_SIZE = 1000;
 		static constexpr u64 RESIZE_GHOST_OBJECT_SIZE = 1000;
+
+		static constexpr f32 INTERNAL_TIME_STEP = 1.f / 60.f;
+		static constexpr i32 REMOVED_PHYSICS_OBJECT = -1;
 
 	private:
 		PhysicsEngine();
@@ -188,8 +205,15 @@ namespace DOG
 		void FreeRigidbodyData(const RigidbodyHandle& rigidbodyHandle, bool freeCollisionShape);
 		void FreeCollisionShape(const CollisionShapeHandle& collisionShapeHandle);
 		void FreeGhostObjectData(const GhostObjectHandle& ghostObjectHandle);
+		void RemoveRigidbodyFromPhysics(RigidbodyHandle rigidbodyHandle, bool removeCollisionShape);
+		void RemoveGhostFromPhysics(GhostObjectHandle rigidbodyHandle);
+
 		void CheckRigidbodyCollisions();
 		void RemoveCollisionObject(const RigidbodyHandle& collisionObjectHandle);
+
+		void DeleteDeferredCollisionObjects();
+
+		void AddCollisionObjectToBeDeferredDestroid(bool ghost, u64 collisionObjectHandle, bool removeCollisionShape);
 
 	public:
 		static constexpr float standardGravity = 9.80665f;

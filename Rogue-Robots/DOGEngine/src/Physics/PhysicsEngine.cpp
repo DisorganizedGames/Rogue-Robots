@@ -7,6 +7,7 @@
 #include "../Scripting/LuaMain.h"
 #include "PhysicsRigidbody.h"
 #include "../common/MiniProfiler.h"
+#include "../Core/Time.h"
 
 using namespace DirectX::SimpleMath;
 
@@ -214,7 +215,7 @@ namespace DOG
 				});
 		}
 
-		s_physicsEngine.GetDynamicsWorld()->stepSimulation(deltaTime, 10);
+		s_physicsEngine.GetDynamicsWorld()->stepSimulation(deltaTime, 10, INTERNAL_TIME_STEP);
 
 		EntityManager::Get().Collect<TransformComponent, BoxColliderComponent>().Do([&](TransformComponent& transform, BoxColliderComponent& collider)
 			{
@@ -339,10 +340,11 @@ namespace DOG
 							//On exit collision
 							if (!it->second.activeCollision)
 							{
-								LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0Entity, "OnCollisionExit", obj1Entity);
+								if (!rigidBody->removed)
+									LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj0Entity, "OnCollisionExit", obj1Entity);
 
 								//Call OnCollisionExit for both entities if it has an rigidbody and a script
-								if (EntityManager::Get().HasComponent<RigidbodyComponent>(obj1Entity) && EntityManager::Get().HasComponent<ScriptComponent>(obj1Entity))
+								if (EntityManager::Get().Exists(obj1Entity) && EntityManager::Get().HasComponent<RigidbodyComponent>(obj1Entity) && EntityManager::Get().HasComponent<ScriptComponent>(obj1Entity))
 								{
 									LuaMain::GetScriptManager()->CallFunctionOnAllEntityScripts(obj1Entity, "OnCollisionExit", obj0Entity);
 								}
@@ -372,32 +374,32 @@ namespace DOG
 		if (EntityManager::Get().HasComponent<BoxColliderComponent>(entity))
 		{
 			BoxColliderComponent& colliderComponent = EntityManager::Get().GetComponent<BoxColliderComponent>(entity);
-			s_physicsEngine.FreeRigidbodyData(colliderComponent.rigidbodyHandle, true);
+			s_physicsEngine.RemoveRigidbodyFromPhysics(colliderComponent.rigidbodyHandle, true);
 		}
 		if (EntityManager::Get().HasComponent<SphereColliderComponent>(entity))
 		{
 			SphereColliderComponent& colliderComponent = EntityManager::Get().GetComponent<SphereColliderComponent>(entity);
-			s_physicsEngine.FreeRigidbodyData(colliderComponent.rigidbodyHandle, true);
+			s_physicsEngine.RemoveRigidbodyFromPhysics(colliderComponent.rigidbodyHandle, true);
 		}
 		if (EntityManager::Get().HasComponent<CapsuleColliderComponent>(entity))
 		{
 			CapsuleColliderComponent& colliderComponent = EntityManager::Get().GetComponent<CapsuleColliderComponent>(entity);
-			s_physicsEngine.FreeRigidbodyData(colliderComponent.rigidbodyHandle, true);
+			s_physicsEngine.RemoveRigidbodyFromPhysics(colliderComponent.rigidbodyHandle, true);
 		}
 		if (EntityManager::Get().HasComponent<MeshColliderComponent>(entity))
 		{
 			MeshColliderComponent& colliderComponent = EntityManager::Get().GetComponent<MeshColliderComponent>(entity);
-			s_physicsEngine.FreeRigidbodyData(colliderComponent.rigidbodyHandle, false);
+			s_physicsEngine.RemoveRigidbodyFromPhysics(colliderComponent.rigidbodyHandle, false);
 		}
 		if (EntityManager::Get().HasComponent<BoxTriggerComponent>(entity))
 		{
 			BoxTriggerComponent& colliderComponent = EntityManager::Get().GetComponent<BoxTriggerComponent>(entity);
-			s_physicsEngine.FreeGhostObjectData(colliderComponent.ghostObjectHandle);
+			s_physicsEngine.RemoveGhostFromPhysics(colliderComponent.ghostObjectHandle);
 		}
 		if (EntityManager::Get().HasComponent<SphereTriggerComponent>(entity))
 		{
 			SphereTriggerComponent& colliderComponent = EntityManager::Get().GetComponent<SphereTriggerComponent>(entity);
-			s_physicsEngine.FreeGhostObjectData(colliderComponent.ghostObjectHandle);
+			s_physicsEngine.RemoveGhostFromPhysics(colliderComponent.ghostObjectHandle);
 		}
 		if (EntityManager::Get().HasComponent<RigidbodyComponent>(entity))
 		{
@@ -669,7 +671,6 @@ namespace DOG
 			rigidbodyColliderData->motionState = nullptr;
 		}
 
-		m_dynamicsWorld->removeRigidBody(rigidbodyColliderData->rigidBody);
 		delete rigidbodyColliderData->rigidBody;
 		rigidbodyColliderData->rigidBody = nullptr;
 
@@ -702,13 +703,30 @@ namespace DOG
 
 		GhostObjectData* ghostObjectData = GetGhostObjectData(ghostObjectHandle);
 
-		m_dynamicsWorld->removeCollisionObject(ghostObjectData->ghostObject);
 		delete ghostObjectData->ghostObject;
 		ghostObjectData->ghostObject = nullptr;
 
 		FreeCollisionShape(ghostObjectData->collisionShapeHandle);
 
 		m_handleAllocator.Free(ghostObjectHandle);
+	}
+
+	void PhysicsEngine::RemoveRigidbodyFromPhysics(RigidbodyHandle rigidbodyHandle, bool removeCollisionShape)
+	{
+		RigidbodyColliderData* rigidbodyColliderData = GetRigidbodyColliderData(rigidbodyHandle);
+		rigidbodyColliderData->rigidBody->setUserIndex3(REMOVED_PHYSICS_OBJECT);
+		rigidbodyColliderData->removed = true;
+		m_dynamicsWorld->removeRigidBody(rigidbodyColliderData->rigidBody);
+		AddCollisionObjectToBeDeferredDestroid(false, rigidbodyHandle.handle, removeCollisionShape);
+	}
+
+	void PhysicsEngine::RemoveGhostFromPhysics(GhostObjectHandle ghostObjectHandle)
+	{
+		GhostObjectData* ghostObjectData = GetGhostObjectData(ghostObjectHandle);
+		ghostObjectData->ghostObject->setUserIndex3(REMOVED_PHYSICS_OBJECT);
+		ghostObjectData->removed = true;
+		m_dynamicsWorld->removeCollisionObject(ghostObjectData->ghostObject);
+		AddCollisionObjectToBeDeferredDestroid(true, ghostObjectHandle.handle, true);
 	}
 
 	void PhysicsEngine::CheckRigidbodyCollisions()
@@ -727,6 +745,12 @@ namespace DOG
 #ifdef _DEBUG
 				std::cout << "Physics Error: CollisionObject is destroyed but tries to access it anyways (bullets fault)!\n";
 #endif // _DEBUG
+				continue;
+			}
+
+			//Check if one of the objects have been removed from the physics and is going to be deleted later
+			if (obj0->getUserIndex3() == REMOVED_PHYSICS_OBJECT || obj1->getUserIndex3() == REMOVED_PHYSICS_OBJECT)
+			{
 				continue;
 			}
 
@@ -800,6 +824,30 @@ namespace DOG
 				collisions->second.erase(foundCollisionObject->first);
 			}
 		}
+	}
+
+	void PhysicsEngine::DeleteDeferredCollisionObjects()
+	{
+		for (u64 i = 0; i < m_collisionObjectToBeDeleted.size(); ++i)
+		{
+			if (m_collisionObjectToBeDeleted[i].timeToBeDeleted < Time::ElapsedTime())
+			{
+				if (m_collisionObjectToBeDeleted[i].ghost)
+					FreeGhostObjectData((GhostObjectHandle)m_collisionObjectToBeDeleted[i].collisionObjectHandle);
+				else
+					FreeRigidbodyData((RigidbodyHandle)m_collisionObjectToBeDeleted[i].collisionObjectHandle, m_collisionObjectToBeDeleted[i].removeCollisionShape);
+			}
+		}
+	}
+
+	void PhysicsEngine::AddCollisionObjectToBeDeferredDestroid(bool ghost, u64 collisionObjectHandle, bool removeCollisionShape)
+	{
+		DeferredCollisionObjectDestruction collisionObjectToBeDeleted = {};
+		collisionObjectToBeDeleted.ghost = ghost;
+		collisionObjectToBeDeleted.removeCollisionShape = removeCollisionShape;
+		collisionObjectToBeDeleted.collisionObjectHandle = collisionObjectHandle;
+		collisionObjectToBeDeleted.timeToBeDeleted = INTERNAL_TIME_STEP + (f32)Time::ElapsedTime();
+		m_collisionObjectToBeDeleted.push_back(collisionObjectToBeDeleted);
 	}
 
 	BoxColliderComponent::BoxColliderComponent(entity entity, const Vector3& boxColliderSize, bool dynamic, float mass) noexcept
