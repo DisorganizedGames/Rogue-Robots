@@ -316,15 +316,15 @@ void AgentManager::DestroyLocalAgent(entity e, bool local)
 		kill.id = agent.id;
 		em.Collect<ThisPlayer, NetworkPlayerComponent, InputController>().Do(
 			[&](ThisPlayer&, NetworkPlayerComponent& net, InputController& inputC)
-			{ 
-				kill.playerId = net.playerId; 
+			{
+				kill.playerId = net.playerId;
 				inputC.killScore++;
 
 			});
 		kill.position = agentTrans.GetPosition();
-
+	}
 		//Only host can spawn in items
-		if (kill.playerId == 0)
+		if (PlayerManager::Get().IsThisPlayerHost())
 		{
 
 			if ((u32)Time::ElapsedTime() % 3 == 0)
@@ -341,7 +341,6 @@ void AgentManager::DestroyLocalAgent(entity e, bool local)
 		}
 
 		deathAudio.is3D = false;
-	}
 
 
 	em.DeferredEntityDestruction(e);
