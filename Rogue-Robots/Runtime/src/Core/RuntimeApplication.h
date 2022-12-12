@@ -16,6 +16,7 @@ public:
 private:
 	void IssueDebugFunctionality() noexcept;
 private:
+	void SettingDebugMenu(bool& open);
 	bool m_showImGuiMenu = false;
 	GameLayer m_gameLayer;
 	DOG::ImGuiMenuLayer m_imGuiMenuLayer;

@@ -22,6 +22,8 @@ namespace DOG
 		void Run() noexcept;
 		virtual void OnRestart() noexcept;
 		virtual void OnEvent(IEvent& event) noexcept;
+		void SetGraphicsSettings(const GraphicsSettings& settings) noexcept;
+		GraphicsSettings GetGraphicsSettings() const noexcept;
 	protected:
 		virtual void OnStartUp() noexcept;
 		virtual void OnShutDown() noexcept;
