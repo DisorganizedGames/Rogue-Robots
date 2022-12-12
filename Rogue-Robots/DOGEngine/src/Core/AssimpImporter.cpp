@@ -120,6 +120,19 @@ namespace DOG
 		std::vector<JointNode>& nodeArray = importedAnim.nodes;
 		std::vector<dxf4x4>& boneArray = importedAnim.jointOffsets;
 
+		// Guard to avoid storing multiples of the mixamo rig
+		static bool mixamoRigLoaded = false;
+		const std::string mxamo = "mixamo";
+		std::string str = std::string(scene->mMeshes[0]->mBones[0]->mName.C_Str()).substr(0, 6);
+		if (!str.compare(mxamo))
+		{
+			// If rig has already been loaded we return
+			if (mixamoRigLoaded)
+				return importedAnim;
+
+			mixamoRigLoaded = true;
+		}
+
 		// Add all bones to bone map
 		for (u32 i = 0; i < scene->mNumMeshes; i++)
 			for (u32 j = 0; j < scene->mMeshes[i]->mNumBones; j++)

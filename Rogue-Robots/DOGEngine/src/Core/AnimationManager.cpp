@@ -47,7 +47,7 @@ namespace DOG
 			EntityManager::Get().Collect<ModelComponent, RigDataComponent>().Do([&](ModelComponent& modelC, RigDataComponent& rC)
 				{
 					ModelAsset* model = AssetManager::Get().GetAsset<ModelAsset>(modelC);
-					if (!m_rigs.size() && model && rC.rigID == MIXAMO_RIG_ID)
+					if (!m_rigs.size() && model && rC.rigID == MIXAMO_RIG_ID && model->animation.animations.size())
 					{
 						m_rigs.push_back(&model->animation);
 						SetPlayerBaseStates();
