@@ -274,34 +274,9 @@ bool NetCode::Host()
 	return server;
 }
 
-bool NetCode::Join(char* inputString)
+bool NetCode::Join(std::string inputString)
 {
-	if (inputString[0] == 'a')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_1_IP); //sam
-	else if(inputString[0] == 'b')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_2_IP); // filip
-	else if (inputString[0] == 'c')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_3_IP); // nad
-	else if (inputString[0] == 'd')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_4_IP); // axel
-	else if (inputString[0] == 'e')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_5_IP); //ove
-	else if (inputString[0] == 'f')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_6_IP); //gunnar
-	else if (inputString[0] == 'g')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_7_IP); // Emil F
-	else if (inputString[0] == 'h')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_8_IP); // Jonatan
-	else if (inputString[0] == 'i')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_9_IP); // Emil h
-	else if (inputString[0] == 'u')
-	{
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_1_IP); //192.168.1.55 || 192.168.50.214
-	}
-	else
-	{
-		m_inputTcp.playerId = m_client->ConnectTcpServer(inputString);
-	}
+	m_inputTcp.playerId = m_client->ConnectTcpServer(inputString);
 
 	if (m_inputTcp.playerId > -1)
 	{
