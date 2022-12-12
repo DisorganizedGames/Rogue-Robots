@@ -253,6 +253,7 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 		DOG::EntityManager::Get().DeferredEntityDestruction(prevDustEmitter);
 		prevDustEmitter = NULL_ENTITY;
 
+		// Switch
 		ChangeGunDrawLogic(sc.playerBeingSpectated, false, true);
 		ChangeGunDrawLogic(sc.playerSpectatorQueue[nextIndex], true, false);
 		ChangeSuitDrawLogic(sc.playerBeingSpectated, sc.playerSpectatorQueue[nextIndex]);
@@ -266,6 +267,8 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 		auto scene = EntityManager::Get().GetComponent<SceneComponent>(sc.playerBeingSpectated).scene;  
 		newDustEmitter = EntityManager::Get().CreateEntity();
 		EntityManager::Get().AddComponent<SceneComponent>(newDustEmitter, scene);
+		EntityManager::Get().AddComponent<TransformComponent>(newDustEmitter);
+		EntityManager::Get().AddComponent<ChildComponent>(newDustEmitter).parent = sc.playerBeingSpectated;
 		ParticleSystemFromFile(newDustEmitter, "Assets/ParticleSystems/Dust.lua");
 	}
 
@@ -584,6 +587,11 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 			mgr.GetComponent<AnimationComponent>(closestDeadPlayer).SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio);
 			auto spectatedPlayer = mgr.GetComponent<SpectatorComponent>(closestDeadPlayer).playerBeingSpectated;
 			ChangeSuitDrawLogic(spectatedPlayer, closestDeadPlayer);
+
+			auto& dustEmitter = mgr.GetComponent<DustComponent>(spectatedPlayer).emitterEntity;
+			mgr.DeferredEntityDestruction(dustEmitter);
+			dustEmitter = NULL_ENTITY;
+
 			RevivePlayer(closestDeadPlayer);
 		}
 		if (mgr.HasComponent<ThisPlayer>(player))
@@ -646,6 +654,15 @@ void ReviveSystem::RevivePlayer(DOG::entity player)
 	LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
 	LuaMain::GetScriptManager()->AddScript(player, "PassiveItemSystem.lua");
 	LuaMain::GetScriptManager()->AddScript(player, "ActiveItemSystem.lua");
+
+	// Dust particle effect
+	auto& dustEmitter = mgr.GetComponent<DustComponent>(player).emitterEntity;
+	auto scene = EntityManager::Get().GetComponent<SceneComponent>(player).scene;
+	dustEmitter = EntityManager::Get().CreateEntity();
+	EntityManager::Get().AddComponent<SceneComponent>(dustEmitter, scene);
+	EntityManager::Get().AddComponent<TransformComponent>(dustEmitter);
+	EntityManager::Get().AddComponent<ChildComponent>(dustEmitter).parent = player;
+	ParticleSystemFromFile(dustEmitter, "Assets/ParticleSystems/Dust.lua");
 
 	auto& bc = mgr.AddComponent<BarrelComponent>(player);
 	bc.type = BarrelComponent::Type::Bullet;

@@ -682,7 +682,9 @@ void GameLayer::KillPlayer(DOG::entity e)
 			auto& spectateDustEmitter = m_entityManager.GetComponent<DustComponent>(playerToSpectate).emitterEntity;
 			auto scene = EntityManager::Get().GetComponent<SceneComponent>(playerToSpectate).scene;
 			spectateDustEmitter = EntityManager::Get().CreateEntity();
-			EntityManager::Get().AddComponent<SceneComponent>(playerToSpectate, scene);
+			EntityManager::Get().AddComponent<SceneComponent>(spectateDustEmitter, scene);
+			EntityManager::Get().AddComponent<TransformComponent>(spectateDustEmitter); 
+			EntityManager::Get().AddComponent<ChildComponent>(spectateDustEmitter).parent = playerToSpectate;
 			ParticleSystemFromFile(spectateDustEmitter, "Assets/ParticleSystems/Dust.lua");
 
 		}

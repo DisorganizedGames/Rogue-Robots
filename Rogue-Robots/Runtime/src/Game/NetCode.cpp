@@ -74,6 +74,10 @@ void NetCode::OnStartup()
 					});
 				
 				m_entityManager.RemoveComponent<AudioListenerComponent>(id);
+
+				auto& prevDustEmitter = DOG::EntityManager::Get().GetComponent<DustComponent>(id).emitterEntity;
+				DOG::EntityManager::Get().DeferredEntityDestruction(prevDustEmitter);
+				prevDustEmitter = NULL_ENTITY;
 			}
 
 		});
@@ -108,6 +112,14 @@ void NetCode::OnStartup()
 
 				m_entityManager.AddComponent<AudioListenerComponent>(id);
 				m_entityManager.RemoveComponent<OnlinePlayer>(id);
+
+				auto& dustEmitter = DOG::EntityManager::Get().GetComponent<DustComponent>(id).emitterEntity;
+				auto scene = EntityManager::Get().GetComponent<SceneComponent>(id).scene;
+				dustEmitter = EntityManager::Get().CreateEntity();
+				EntityManager::Get().AddComponent<SceneComponent>(dustEmitter, scene);
+				EntityManager::Get().AddComponent<TransformComponent>(dustEmitter);
+				EntityManager::Get().AddComponent<ChildComponent>(dustEmitter).parent = id;
+				ParticleSystemFromFile(dustEmitter, "Assets/ParticleSystems/Dust.lua");
 			}
 		});
 
