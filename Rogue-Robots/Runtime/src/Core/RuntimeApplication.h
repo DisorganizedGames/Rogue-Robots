@@ -1,6 +1,7 @@
 #pragma once
 #include <DOGEngine.h>
 #include "../Game/GameLayer.h"
+#include "../UI/SettingsMenu.h"
 #include "../Game/EmilFDebugLayer.h"
 #include "../Pathfinder/PathfinderDebugLayer.h"
 #include "../../../DOGEngine/src/Graphics/Rendering/UI.h"

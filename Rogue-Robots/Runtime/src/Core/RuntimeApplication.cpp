@@ -24,6 +24,17 @@ void RuntimeApplication::OnStartUp() noexcept
 	//PushLayer(&m_PathfinderDebugLayer);
 	ImGuiMenuLayer::RegisterDebugWindow("GraphicsSetting", [this](bool& open) { SettingDebugMenu(open); }, false, std::make_pair(Key::LCtrl, Key::V));
 
+
+	SettingsMenu::Initialize(
+		[this](auto settings) {
+			SetGraphicsSettings(settings);
+		},
+		[this]() {
+			return GetGraphicsSettings();
+		}
+	);
+
+
 	#if defined _DEBUG
 	IssueDebugFunctionality();
 	#endif
@@ -82,6 +93,11 @@ void RuntimeApplication::OnEvent(IEvent& event) noexcept
 				break;
 			}
 		}
+	}
+
+	if (event.GetEventType() == EventType::WindowPostResizedEvent)
+	{
+		SettingsMenu::SettGraphicsSettings(GetGraphicsSettings());
 	}
 	Application::OnEvent(event);
 }
@@ -444,7 +460,10 @@ void RuntimeApplication::SettingDebugMenu(bool& open)
 				gfxChanged = true;
 
 			if (gfxChanged)
+			{
 				SetGraphicsSettings(graphicsSettings);
+				SettingsMenu::SettGraphicsSettings(GetGraphicsSettings());
+			}
 
 			firstTime = false;
 

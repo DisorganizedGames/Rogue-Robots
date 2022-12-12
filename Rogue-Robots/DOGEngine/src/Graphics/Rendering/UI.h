@@ -278,7 +278,7 @@ namespace DOG
    class UILabel: public UIElement
    {
       public:
-         UILabel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring text, float x, float y, float width, float height, float size);
+         UILabel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring text, float x, float y, float width, float height, float size, DWRITE_TEXT_ALIGNMENT alignment = DWRITE_TEXT_ALIGNMENT_CENTER);
          ~UILabel();
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
@@ -380,6 +380,7 @@ namespace DOG
          void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void OnEvent(IEvent& event) override final;
          bool GetValue();
+         void SetValue(bool value);
       private:
          std::function<void(bool)> m_callback;
          bool m_value;

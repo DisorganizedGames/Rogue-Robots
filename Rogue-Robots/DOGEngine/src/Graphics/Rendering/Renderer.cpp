@@ -1609,7 +1609,7 @@ namespace DOG::gfx
 		m_graphicsSettings = requestedSettings;
 	}
 
-	GraphicsSettings DOG::gfx::Renderer::GetGraphicsSettings()
+	const GraphicsSettings& DOG::gfx::Renderer::GetGraphicsSettings()
 	{
 		return m_graphicsSettings;
 	}

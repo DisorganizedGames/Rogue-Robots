@@ -1,6 +1,7 @@
 #pragma once
 #include "../EventSystem/LayerStack.h"
 #include "CoreUtils.h"
+#include "../Graphics/RHI/Types/HardwareTypes.h"
 namespace DOG
 {
 	namespace gfx { class Renderer; class FrontRenderer; }
@@ -24,6 +25,7 @@ namespace DOG
 		virtual void OnEvent(IEvent& event) noexcept;
 		void SetGraphicsSettings(const GraphicsSettings& settings) noexcept;
 		GraphicsSettings GetGraphicsSettings() const noexcept;
+		gfx::Monitor GetMonitor() const noexcept;
 	protected:
 		virtual void OnStartUp() noexcept;
 		virtual void OnShutDown() noexcept;
@@ -34,8 +36,6 @@ namespace DOG
 		const ApplicationSpecification& GetApplicationSpecification() const noexcept;
 		Vector2u GetAspectRatio() const noexcept;
 		void ApplyGraphicsSettings() noexcept;
-	private:
-		void ApplicationSettingDebugMenu(bool& open);
 	private:
 		DELETE_COPY_MOVE_CONSTRUCTOR(Application);
 		ApplicationSpecification m_specification;

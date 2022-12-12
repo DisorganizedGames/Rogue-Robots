@@ -981,7 +981,7 @@ void DOG::UIPlayerList::Reset()
    return;
 }
 
-DOG::UILabel::UILabel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring text, float x, float y, float width, float height, float size): UIElement(id)
+DOG::UILabel::UILabel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring text, float x, float y, float width, float height, float size, DWRITE_TEXT_ALIGNMENT alignment): UIElement(id)
 {
    m_draw = true;
    UNREFERENCED_PARAMETER(d2d);
@@ -1000,7 +1000,7 @@ DOG::UILabel::UILabel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring text
       &m_textFormat
    );
    HR_VFY(hr);
-   hr = m_textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+   hr = m_textFormat->SetTextAlignment(alignment);
    HR_VFY(hr);
    hr = m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
@@ -1381,6 +1381,11 @@ bool DOG::UICheckBox::GetValue()
    return m_value;
 }
 
+void DOG::UICheckBox::SetValue(bool value)
+{
+    m_value = value;
+}
+
 void DOG::UICheckBox::OnEvent(IEvent& event)
 {
    using namespace DOG;
@@ -1614,7 +1619,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto bp = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 200.f / 2, (FLOAT)clientHeight / 2.f, 200.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Play"), std::function<void()>(LevelSelectSoloButtonFunc));
    auto bm = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bmID, (FLOAT)clientWidth / 2.f - 200.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 200.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
    //Options menu is not used atm.
-   //auto bo = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
+   auto bo = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
    auto bc = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bcID, (FLOAT)clientWidth / 2.f - 200.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 200.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Credits"), std::function<void()>(CreditsButtonFunc));
    auto be = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(beID, (FLOAT)clientWidth / 2.f - 200.f / 2, (FLOAT)clientHeight / 2.f + 280.f, 200.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
    auto optback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(optbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
@@ -1657,9 +1662,9 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto lgreenScoreWin = instance->Create<DOG::UILabel>(lgreenScoreWinID, std::wstring(L" "), 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
    auto lyellowScoreWin = instance->Create<DOG::UILabel>(lyellowScoreWinID, std::wstring(L" "), (FLOAT)clientWidth / 2.f + 50.f, (FLOAT)clientHeight / 2.f + 50.f, 800.f, 160.f, 40.f);
 
-   UINT sliderID;
+  /* UINT sliderID;
    auto slider = instance->Create<DOG::UISlider, float, float, float, float>(sliderID, 100.f, 100.f, 250.f, 30.f, std::function<void(float)>(SliderFunc));
-   instance->AddUIElementToScene(optionsID, std::move(slider));
+   instance->AddUIElementToScene(optionsID, std::move(slider));*/
 
    auto labelButtonTextActiveItem = instance->Create<DOG::UILabel>(lActiveItemTextID, std::wstring(L"G"), 315.0f, (FLOAT)clientHeight - 90.0f, 50.f, 50.f, 40.f);
 
@@ -1685,14 +1690,14 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(gameID, std::move(pbar));
    DOG::UI::Get()->GetUI<DOG::UIVertStatBar>(pbarID)->Hide(false);
 
-   UINT cboxID;
+   /*UINT cboxID;
    auto checkbox = instance->Create<DOG::UICheckBox, float, float, float, float, float, float, float>(cboxID, 300.f, (FLOAT)clientHeight - 425.f, 25.f, 25.f, 1.0f, 1.0f, 1.0f, std::function<void(bool)>(CheckBoxFunc));
-   instance->AddUIElementToScene(optionsID, std::move(checkbox));
+   instance->AddUIElementToScene(optionsID, std::move(checkbox));*/
 
    instance->AddUIElementToScene(menuID, std::move(bp));
    instance->AddUIElementToScene(menuID, std::move(bm));
    //Options menu is not used atm.
-   //instance->AddUIElementToScene(menuID, std::move(bo));
+   instance->AddUIElementToScene(menuID, std::move(bo));
    instance->AddUIElementToScene(menuID, std::move(bc));
    instance->AddUIElementToScene(menuID, std::move(be));
    instance->AddUIElementToScene(optionsID, std::move(optback));

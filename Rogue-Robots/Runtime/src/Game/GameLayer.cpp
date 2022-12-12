@@ -15,7 +15,7 @@
 #include "PlayerManager/PlayerManager.h"
 #include "Pathfinder/Pathfinder.h"
 #include "HeartbeatTrackerSystem.h"
-#include "InGameMenu.h"
+#include "../UI/InGameMenu.h"
 #include "GoalRadarSystem.h"
 #include "MusicSystems.h"
 #include "SpectatorCopyCamera.h"
