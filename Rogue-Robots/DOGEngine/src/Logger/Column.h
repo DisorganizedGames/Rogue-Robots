@@ -16,6 +16,7 @@ namespace DOG
 		void Add(i8				value) { m_values.push_back(std::to_string(static_cast<i32>(value))); }
 		void Add(f64			value) { m_values.push_back(std::to_string(value)); }
 		void Add(f32			value) { m_values.push_back(std::to_string(value)); }
+		void Add(bool			value) { m_values.push_back(std::to_string(value)); }
 		
 		size_t size() { return m_values.size(); }
 
