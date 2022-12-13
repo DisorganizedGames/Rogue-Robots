@@ -1622,8 +1622,8 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto bGoBackLevelSelectorMult = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bGoBackLevelSelectorMultID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 300.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
 
    //Room Join buttons
-   auto ipBar = instance->Create<DOG::UITextField>(ipBarID, (FLOAT)clientWidth / 2.f, (FLOAT)clientHeight / 2.f, 200, 50);
-   auto r1 = instance->Create<DOG::UIButton>(r1ID, (FLOAT)clientWidth / 2.f - 1000.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join"), std::function<void()>(Room1Button));
+   auto ipBar = instance->Create<DOG::UITextField>(ipBarID, (FLOAT)clientWidth / 2.f - 125.f, (FLOAT)clientHeight / 2.f, 200, 50);
+   auto r1 = instance->Create<DOG::UIButton>(r1ID, (FLOAT)clientWidth / 2.f - 500.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Join"), std::function<void()>(Room1Button));
    
    //Labels
    auto l1 = instance->Create<DOG::UILabel>(l1ID, std::wstring(L""), (FLOAT)clientWidth / 2.f - 250.0f, (FLOAT)clientHeight / 2.f - 450.f, 500.f, 60.f, 40.f);
