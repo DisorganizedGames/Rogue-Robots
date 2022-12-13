@@ -354,7 +354,6 @@ void Server::ServerPollTCP()
 			}
 			sendHeader.sizeOfPayload = bufferSendSize;
 			sendHeader.lobbyAlive = m_lobbyStatus;
-
 			memcpy(sendBuffer, (char*)&sendHeader, sizeof(TcpHeader));
 			for (int i = 0; i < m_holdSocketsTcp.size(); ++i)
 			{

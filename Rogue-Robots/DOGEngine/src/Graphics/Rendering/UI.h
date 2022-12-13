@@ -25,6 +25,7 @@ extern UINT iconID, icon2ID, icon3ID, iconGun, iconActiveID, lActiveItemTextID, 
 extern UINT buffID;
 extern UINT playerListID, playerListJoinID;
 extern UINT lAcknowledgementsID, lAcknowledgementsTextID;
+extern UINT ipBarID;
 
 namespace DOG
 {

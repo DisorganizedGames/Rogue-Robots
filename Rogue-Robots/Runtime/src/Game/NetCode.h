@@ -43,7 +43,7 @@ public:
 	void OnUpdate();
 	void OnStartup();
 	bool Host();
-	bool Join(char* input);
+	bool Join(std::string);
 	i8 Play();
 	u8 GetNrOfPlayers();
 	std::string GetIpAdress();

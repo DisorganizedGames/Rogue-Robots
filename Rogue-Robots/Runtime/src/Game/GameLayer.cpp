@@ -949,154 +949,29 @@ void HostButtonFunc(void)
 	GameLayer::ResetConnectedPlayers();
 	UI::Get()->GetUI<DOG::UIPlayerList>(playerListID)->Reset();
 
-	bool succes = true;
-	int roomId = 0;
-	
+	//Set Multicast Adress based on ip adress
 	std::string ip = NetCode::Get().GetIpAdress();
+	std::string multiAdress = "239.255.255";
+	size_t lastNumbers = 0;
+	for (int i = 0; i < 3; ++i)
+	{
+		lastNumbers = ip.find(".", lastNumbers+1);
+	}
+	multiAdress = multiAdress + ip.substr(lastNumbers, ip.size());
 
-	if (ip == ROOM_1_IP) // Sam
-	{
-	 	roomId = 1;
-		NetCode::Get().SetMulticastAdress("239.255.255.1");
-	 	
-		if (NetCode::Get().Host())
-		{
-			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
-		}
-		else
-		{
-			succes = false;
-		}
-	}
-	else if (ip == ROOM_2_IP) //Filip
-	{
-	 	roomId = 2;
-		NetCode::Get().SetMulticastAdress("239.255.255.2");
-		if (NetCode::Get().Host())
-		{
-			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
-		}
-		else
-		{
-			succes = false;
-		}
-	}
-	else if (ip == ROOM_3_IP) //Nad
-	{
-	 	roomId = 3;
-		NetCode::Get().SetMulticastAdress("239.255.255.3");
-		if (NetCode::Get().Host())
-		{
-			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
-		}
-		else
-		{
-			succes = false;
-		}
-	}
-	else if (ip == ROOM_4_IP) //Axel
-	{
-	 	roomId = 4;
-		NetCode::Get().SetMulticastAdress("239.255.255.4");
-		if (NetCode::Get().Host())
-		{
-			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
-		}
-		else
-		{
-			succes = false;
-		}
-	}
-	else if (ip == ROOM_5_IP) //Ove
-	{
-	 	roomId = 5;
-		NetCode::Get().SetMulticastAdress("239.255.255.5");
-		if (NetCode::Get().Host())
-		{
-			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
-		}
-		else
-		{
-			succes = false;
-		}
-	}
-	else if (ip == ROOM_6_IP) //Gunnar
-	{
-	 	roomId = 6;
-		NetCode::Get().SetMulticastAdress("239.255.255.6");
-		if (NetCode::Get().Host())
-		{
-			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
-		}
-		else
-		{
-			succes = false;
-		}
-	}
-	else if (ip == ROOM_7_IP) //Emil F
-	{
-	 	roomId = 7;
-		NetCode::Get().SetMulticastAdress("239.255.255.7");
-		if (NetCode::Get().Host())
-		{
-			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
-		}
-		else
-		{
-			succes = false;
-		}
-	}
-	else if (ip == ROOM_8_IP) //Jonatan
-	{
-	 	roomId = 8;
-		NetCode::Get().SetMulticastAdress("239.255.255.8");
-		if (NetCode::Get().Host())
-		{
-			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
-		}
-		else
-		{
-			succes = false;
-		}
-	}
-	else if (ip == ROOM_9_IP) //Emil H
-	{
-	 	roomId = 9;
-		NetCode::Get().SetMulticastAdress("239.255.255.9");
-		if (NetCode::Get().Host())
-		{
-			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
-		}
-		else
-		{
-			succes = false;
-		}
-	}
-	else
-	{
-	 	roomId = 10;
-		NetCode::Get().SetMulticastAdress("239.255.255.0");
-		if (NetCode::Get().Host())
-		{
-			GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
-		}
-		else
-		{
-			succes = false;
-		}
-	}
+	NetCode::Get().SetMulticastAdress(multiAdress.c_str());
 
-	if (succes)
+	if (NetCode::Get().Host())
 	{
+		GameLayer::ChangeNetworkState(NetworkStatus::Hosting);
 		GameLayer::ChangeGameState(GameState::Lobby);
 		DOG::UI::Get()->ChangeUIscene(lobbyID);
 		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l1ID);
-		text2->SetText(std::wstring(L"Room ") + std::to_wstring(roomId));
-
-#if defined(_DEBUG)
-		auto text3 = DOG::UI::Get()->GetUI<UILabel>(l2ID);
-		text3->SetText(std::wstring(L"Ip: ") + std::wstring(ip.begin(), ip.end()));
-#endif
+		text2->SetText(std::wstring(L"Ip: ") + std::wstring(ip.begin(), ip.end()));
+	}
+	else
+	{
+		DOG::UI::Get()->ChangeUIscene(mulbackID);
 	}
 }
 
@@ -1138,187 +1013,36 @@ void PlayButtonFunc(void)
 
 void Room1Button(void)
 {
-	NetCode::Get().SetMulticastAdress("239.255.255.1");
-	static char input[8]{};
-	input[0] = 'a';
-	if (NetCode::Get().Join(input))
-	{
-		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
-		text2->SetText(std::wstring(L"Room 1"));
-		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
-		GameLayer::ChangeGameState(GameState::Lobby);
-		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
-	}
-	else
-	{
-		DOG::UI::Get()->ChangeUIscene(multiID);
-	}
-}
+	//Set Multicast Adress based on ip adress based on input
+	std::wstring ip = DOG::UI::Get()->GetUI<UITextField>(ipBarID)->GetText();
 
-void Room2Button(void)
-{
-	NetCode::Get().SetMulticastAdress("239.255.255.2");
-	static char input[8]{};
-	input[0] = 'b';
-	if (NetCode::Get().Join(input))
+	std::wstring multiAdress = L"239.255.255";
+	size_t lastNumbers = 0;
+	for (int i = 0; i < 3; ++i)
 	{
-		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
-		text2->SetText(std::wstring(L"Room 2"));
-		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
-		GameLayer::ChangeGameState(GameState::Lobby);
-		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
+		lastNumbers = ip.find(L".", lastNumbers + 1);
 	}
-	else
+	if (lastNumbers > 0 && 32 > lastNumbers)
 	{
-		DOG::UI::Get()->ChangeUIscene(multiID);
-	}
-}
+		multiAdress = multiAdress + ip.substr(lastNumbers, ip.size());
 
-void Room3Button(void)
-{
-	NetCode::Get().SetMulticastAdress("239.255.255.3");
-	static char input[8]{};
-	input[0] = 'c';
-	if (NetCode::Get().Join(input))
-	{
-		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
-		text2->SetText(std::wstring(L"Room 3"));
-		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
-		GameLayer::ChangeGameState(GameState::Lobby);
-		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
-	}
-	else
-	{
-		DOG::UI::Get()->ChangeUIscene(multiID);
-	}
-}
-void Room4Button(void)
-{
-	NetCode::Get().SetMulticastAdress("239.255.255.4");
-	static char input[8]{};
-	input[0] = 'd';
-	if (NetCode::Get().Join(input))
-	{
-		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
-		text2->SetText(std::wstring(L"Room 4"));
-		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
-		GameLayer::ChangeGameState(GameState::Lobby);
-		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
-	}
-	else
-	{
-		DOG::UI::Get()->ChangeUIscene(multiID);
-	}
-}
-void Room5Button(void)
-{
-	NetCode::Get().SetMulticastAdress("239.255.255.5");
-	static char input[8]{};
-	input[0] = 'e';
-	if (NetCode::Get().Join(input))
-	{
-		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
-		text2->SetText(std::wstring(L"Room 5"));
-		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
-		GameLayer::ChangeGameState(GameState::Lobby);
-		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
-	}
-	else
-	{
-		DOG::UI::Get()->ChangeUIscene(multiID);
-	}
-}
-void Room6Button(void)
-{
-	NetCode::Get().SetMulticastAdress("239.255.255.6");
-	static char input[8]{};
-	input[0] = 'f';
-	if (NetCode::Get().Join(input))
-	{
-		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
-		text2->SetText(std::wstring(L"Room 6"));
-		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
-		GameLayer::ChangeGameState(GameState::Lobby);
-		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
-	}
-	else
-	{
-		DOG::UI::Get()->ChangeUIscene(multiID);
-	}
-}
-void Room7Button(void)
-{
-	NetCode::Get().SetMulticastAdress("239.255.255.7");
-	static char input[8]{};
-	input[0] = 'g';
-	if (NetCode::Get().Join(input))
-	{
-		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
-		text2->SetText(std::wstring(L"Room 7"));
-		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
-		GameLayer::ChangeGameState(GameState::Lobby);
-		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
-	}
-	else
-	{
-		DOG::UI::Get()->ChangeUIscene(multiID);
-	}
-}
-void Room8Button(void)
-{
-	NetCode::Get().SetMulticastAdress("239.255.255.8");
-	static char input[8]{};
-	input[0] = 'h';
-	if (NetCode::Get().Join(input))
-	{
-		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
-		text2->SetText(std::wstring(L"Room 8"));
-		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
-		GameLayer::ChangeGameState(GameState::Lobby);
-		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
-	}
-	else
-	{
-		DOG::UI::Get()->ChangeUIscene(multiID);
-	}
-}
+		NetCode::Get().SetMulticastAdress(std::string(multiAdress.begin(), multiAdress.end()).c_str());
 
-void Room9Button(void)
-{
-	NetCode::Get().SetMulticastAdress("239.255.255.9");
-	static char input[8]{};
-	input[0] = 'i';
-	if (NetCode::Get().Join(input))
-	{
-		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
-		text2->SetText(std::wstring(L"Room 9"));
-		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
-		GameLayer::ChangeGameState(GameState::Lobby);
-		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
-	}
-	else
-	{
-		DOG::UI::Get()->ChangeUIscene(multiID);
-	}
-}
+		if (NetCode::Get().Join(std::string(ip.begin(), ip.end())))
+		{
+			auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
+			text2->SetText(std::wstring(L"Room 1"));
+			GameLayer::ChangeNetworkState(NetworkStatus::Joining);
+			GameLayer::ChangeGameState(GameState::Lobby);
+			DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
 
-void Room10Button(void)
-{
-	NetCode::Get().SetMulticastAdress("239.255.255.0");
-	static char input[8]{};
-	input[0] = 'u';
-	if (NetCode::Get().Join(input))
-	{
-		GameLayer::ChangeNetworkState(NetworkStatus::Joining);
-		GameLayer::ChangeGameState(GameState::Lobby);
-		auto text2 = DOG::UI::Get()->GetUI<UILabel>(l4ID);
-		text2->SetText(std::wstring(L"Room 10"));
-		DOG::UI::Get()->ChangeUIscene(WaitingForHostID);
+		}
+		else
+		{
+			DOG::UI::Get()->ChangeUIscene(multiID);
+		}
 	}
-	else
-	{
-		DOG::UI::Get()->ChangeUIscene(multiID);
-	}
+
 }
 
 

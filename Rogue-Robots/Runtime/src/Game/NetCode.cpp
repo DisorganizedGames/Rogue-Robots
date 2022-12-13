@@ -274,34 +274,9 @@ bool NetCode::Host()
 	return server;
 }
 
-bool NetCode::Join(char* inputString)
+bool NetCode::Join(std::string inputString)
 {
-	if (inputString[0] == 'a')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_1_IP); //sam
-	else if(inputString[0] == 'b')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_2_IP); // filip
-	else if (inputString[0] == 'c')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_3_IP); // nad
-	else if (inputString[0] == 'd')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_4_IP); // axel
-	else if (inputString[0] == 'e')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_5_IP); //ove
-	else if (inputString[0] == 'f')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_6_IP); //gunnar
-	else if (inputString[0] == 'g')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_7_IP); // Emil F
-	else if (inputString[0] == 'h')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_8_IP); // Jonatan
-	else if (inputString[0] == 'i')
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_9_IP); // Emil h
-	else if (inputString[0] == 'u')
-	{
-		m_inputTcp.playerId = m_client->ConnectTcpServer(ROOM_1_IP); //192.168.1.55 || 192.168.50.214
-	}
-	else
-	{
-		m_inputTcp.playerId = m_client->ConnectTcpServer(inputString);
-	}
+	m_inputTcp.playerId = m_client->ConnectTcpServer(inputString);
 
 	if (m_inputTcp.playerId > -1)
 	{
@@ -378,11 +353,11 @@ void NetCode::UpdateSendTcp()
 			//sync all transforms Host only
 			if (m_inputTcp.playerId == 0 && m_syncCounter % HARD_SYNC_FRAME == 0)
 			{
-				EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent>().Do([&](NetworkTransform& netC, TransformComponent& transC, AgentIdComponent agentId)
+				EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent, AgentAggroComponent>().Do([&](NetworkTransform& netC, TransformComponent& transC, AgentIdComponent agentId, AgentAggroComponent&)
 					{
 						netC.objectId = agentId.id;
 						netC.position = transC.GetPosition();
-						netC.rotation = transC.GetRotation();
+						//netC.rotation = transC.GetRotation(); might enabel agian 
 						memcpy(m_sendBuffer + m_bufferSize, &netC, sizeof(NetworkTransform));
 						m_inputTcp.nrOfNetTransform++;
 						m_bufferSize += sizeof(NetworkTransform);
@@ -474,7 +449,7 @@ void NetCode::ReceiveDataTcp()
 									float capsuleThreshold = rC.capsuleRadius * 20;
 									DirectX::SimpleMath::Vector3 compare = transC.GetPosition() - tempTransfrom->position;
 									compare.y = 0;
-									transC.SetRotation(tempTransfrom->rotation);
+									//transC.SetRotation(tempTransfrom->rotation); might enable again
 
 									if (compare.Length() > (capsuleThreshold))
 									{
