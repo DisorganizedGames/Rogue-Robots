@@ -27,12 +27,13 @@ namespace DOG
 
 
 		// Rendering limits, restart is required
+		u32 maxConstantsPerFrame = 150'000;
 
 		// Limits for uploadHeaps
-		u32 maxHeapUploadSizeDefault = 40'000'000;
-		u32 maxHeapUploadSizeTextures = 400'000'000;
+		u32 maxHeapUploadSizeDefault = 4'000'000;
+		u32 maxHeapUploadSizeTextures = 5'000'000;
 
-		// Limits for MeshTable
+		// Limits for MeshTable	
 		u32 maxBytesPerAttribute = 4'000'000;
 		u32 maxNumberOfIndices = 1'000'000;
 		u32 maxTotalSubmeshes = 500;

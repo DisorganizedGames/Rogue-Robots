@@ -162,7 +162,8 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 	outFile << ",\n\t" << "maxBytesPerAttribute = " << spec.graphicsSettings.maxBytesPerAttribute;
 	outFile << ",\n\t" << "maxHeapUploadSizeDefault = " << spec.graphicsSettings.maxHeapUploadSizeDefault;
 	outFile << ",\n\t" << "maxHeapUploadSizeTextures = " << spec.graphicsSettings.maxHeapUploadSizeTextures;
-
+	outFile << ",\n\t" << "maxConstantsPerFrame = " << spec.graphicsSettings.maxConstantsPerFrame;
+	
 	outFile << "\n}\n";
 }
 
@@ -214,6 +215,7 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 		err |= !tryGetSpec("maxBytesPerAttribute", appSpec.graphicsSettings.maxBytesPerAttribute);
 		err |= !tryGetSpec("maxHeapUploadSizeDefault", appSpec.graphicsSettings.maxHeapUploadSizeDefault);
 		err |= !tryGetSpec("maxHeapUploadSizeTextures", appSpec.graphicsSettings.maxHeapUploadSizeTextures);
+		err |= !tryGetSpec("maxConstantsPerFrame", appSpec.graphicsSettings.maxConstantsPerFrame);
 
 		bool modeErr = false;
 		appSpec.graphicsSettings.displayMode = DXGI_MODE_DESC{};

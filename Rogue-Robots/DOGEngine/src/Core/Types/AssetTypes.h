@@ -49,7 +49,6 @@ namespace DOG
 
 	struct AnimationKey
 	{
-		std::string name; // tmp for debugging
 		f32 time;
 		DirectX::XMFLOAT4 value;
 	};
@@ -75,7 +74,7 @@ namespace DOG
 		f32 ticks;
 		f32 ticksPerSec;
 		// following can and should be concatenated once we have final model(s)
-		std::unordered_map<i32, std::vector<AnimationKey>> scaKeys;
+		//std::unordered_map<i32, std::vector<AnimationKey>> scaKeys;
 		std::unordered_map<i32, std::vector<AnimationKey>> rotKeys;
 		std::unordered_map<i32, std::vector<AnimationKey>> posKeys;
 	};

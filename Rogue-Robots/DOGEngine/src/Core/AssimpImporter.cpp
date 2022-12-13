@@ -120,6 +120,19 @@ namespace DOG
 		std::vector<JointNode>& nodeArray = importedAnim.nodes;
 		std::vector<dxf4x4>& boneArray = importedAnim.jointOffsets;
 
+		// Guard to avoid storing multiples of the mixamo rig
+		static bool mixamoRigLoaded = false;
+		const std::string mxamo = "mixamo";
+		std::string str = std::string(scene->mMeshes[0]->mBones[0]->mName.C_Str()).substr(0, 6);
+		if (!str.compare(mxamo))
+		{
+			// If rig has already been loaded we return
+			if (mixamoRigLoaded)
+				return importedAnim;
+
+			mixamoRigLoaded = true;
+		}
+
 		// Add all bones to bone map
 		for (u32 i = 0; i < scene->mNumMeshes; i++)
 			for (u32 j = 0; j < scene->mMeshes[i]->mNumBones; j++)
@@ -248,25 +261,20 @@ namespace DOG
 
 				std::vector<AnimationKey> posKeys;
 				std::vector<AnimationKey> rotKeys;
-				std::vector<AnimationKey> scaKeys;
+				//std::vector<AnimationKey> scaKeys;
 				posKeys.reserve(channel->mNumPositionKeys);
 				rotKeys.reserve(channel->mNumRotationKeys);
-				scaKeys.reserve(channel->mNumScalingKeys);
+				//scaKeys.reserve(channel->mNumScalingKeys);
 
 				for (u32 k = 0; k < posKeys.capacity(); k++)
 				{
 					const auto aiKey = channel->mPositionKeys[k];
-					posKeys.push_back({channel->mNodeName.C_Str(), (f32)aiKey.mTime, {aiKey.mValue.x, aiKey.mValue.y, aiKey.mValue.z, 0.0f} });
-				}
-				for (size_t k = 0; k < scaKeys.capacity(); k++)
-				{
-					const auto aiKey = channel->mScalingKeys[k];
-					scaKeys.push_back({ channel->mNodeName.C_Str(), (f32)aiKey.mTime, {aiKey.mValue.x, aiKey.mValue.y, aiKey.mValue.z, 0.0f} });
+					posKeys.push_back({(f32)aiKey.mTime, {aiKey.mValue.x, aiKey.mValue.y, aiKey.mValue.z, 0.0f} });
 				}
 				for (size_t k = 0; k < rotKeys.capacity(); k++)
 				{
 					const auto aiKey = channel->mRotationKeys[k];
-					rotKeys.push_back({ channel->mNodeName.C_Str(), (f32)aiKey.mTime, {aiKey.mValue.x, aiKey.mValue.y, aiKey.mValue.z, aiKey.mValue.w} });
+					rotKeys.push_back({(f32)aiKey.mTime, {aiKey.mValue.x, aiKey.mValue.y, aiKey.mValue.z, aiKey.mValue.w} });
 				}
 
 				std::string nodeName = channel->mNodeName.C_Str();
@@ -288,7 +296,7 @@ namespace DOG
 				}
 				
 				i32 nodeID = nameToNodeIdx.at(nodeName);
-				importedAnim.animations.back().scaKeys.insert({nodeID, scaKeys});
+				//importedAnim.animations.back().scaKeys.insert({nodeID, scaKeys});
 				importedAnim.animations.back().rotKeys.insert({nodeID, rotKeys});
 				importedAnim.animations.back().posKeys.insert({nodeID, posKeys});
 			}

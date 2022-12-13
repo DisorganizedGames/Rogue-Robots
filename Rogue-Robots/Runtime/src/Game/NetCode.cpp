@@ -334,7 +334,7 @@ void NetCode::ReceiveDataUdp()
 			if (statsC.health > 0 && !s_entityManager.HasComponent<PlayerAliveComponent>(id))
 			{
 				s_entityManager.AddComponent<PlayerAliveComponent>(id);
-				aC.SimpleAdd(static_cast<i8>(MixamoAnimations::JazzDance), AnimationFlag::Looping | AnimationFlag::ResetPrio); // No dedicated revive animation for now
+				aC.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping | AnimationFlag::ResetPrio); // No dedicated revive animation for now
 			}
 			if ((pC.cameraEntity != DOG::NULL_ENTITY) && (m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform.Determinant() != 0)) {
 				s_entityManager.GetComponent<TransformComponent>(pC.cameraEntity).worldMatrix = m_outputUdp.m_holdplayersUdp[networkC.playerId].cameraTransform;

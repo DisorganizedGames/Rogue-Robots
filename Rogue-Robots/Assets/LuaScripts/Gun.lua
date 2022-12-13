@@ -160,7 +160,7 @@ function OnUpdate()
 
 	if hasBasicBarrelEquipped then
 		if (ReloadSystem()) then
-			local animID = 28
+			local animID = 12
 			local arms = 3
 			local flags = 0; --No flag
 			local priority = 0;
@@ -258,8 +258,7 @@ function CreateBulletEntity(bullet, transformEntity)
 	bullet.entity = Scene:CreateEntity(EntityID)
 
 	-- test shoot anim --
-	--local fireRate = 1.0
-	local animID = 16
+	local animID = 9
 	local arms = 3
 	local flags = 32; --Force restart--
 	local priority = 0;
