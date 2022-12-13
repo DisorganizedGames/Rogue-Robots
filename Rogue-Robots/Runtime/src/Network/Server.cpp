@@ -214,6 +214,8 @@ void Server::ServerPollTCP()
 	u16 bufferReciveSize = 0;
 	char sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
 	char reciveBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
+	if (m_lobbyData.levelIndex == 0)
+		ReadInGeneratedLevel();
 
 	do {
 		QueryPerformanceCounter(&tickStartTime);
@@ -349,7 +351,13 @@ void Server::ServerPollTCP()
 			if (m_lobbyStatus)
 			{
 				m_lobbyData.nrOfPlayersConnected = (i8)m_holdPlayerIds.size();
+				if (m_lobbyData.levelSize < m_lobbyData.levelDataIndex)
+					m_lobbyData.levelDataIndex = 0;
+				memset(m_lobbyData.data, '\0', 4096);
+				memcpy(&m_lobbyData.data, m_level + m_lobbyData.levelDataIndex, 4096);
+				
 				memcpy(sendBuffer + bufferSendSize, (char*)&m_lobbyData, sizeof(LobbyData));
+				m_lobbyData.levelDataIndex += 4096;
 				bufferSendSize += sizeof(LobbyData);
 			}
 			sendHeader.sizeOfPayload = bufferSendSize;
@@ -590,4 +598,21 @@ void Server::StopReceiving()
 void Server::SetLevelIndex(u16 levelIndex)
 {
 	m_lobbyData.levelIndex = levelIndex;
+}
+
+void Server::ReadInGeneratedLevel()
+{
+	std::string line;
+	std::ifstream inputFile("..\\Offline-Tools\\PCG\\Generate.txt");
+
+	
+	if (inputFile.is_open())
+	{
+		std::getline(inputFile, line, '\0');
+		memset(m_level, '\0', 4096);
+		memcpy(m_level, line.c_str(), line.length());
+		m_lobbyData.levelSize = line.length();
+		//FILE* file = std::fopen("..\\Offline-Tools\\PCG\\exampleOut.txt", "w");
+		//fwrite(m_lobbyData.data, sizeof(char), 204800, file);
+	}
 }

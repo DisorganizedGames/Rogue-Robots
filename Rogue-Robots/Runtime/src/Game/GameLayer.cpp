@@ -28,6 +28,7 @@ NetworkStatus GameLayer::s_networkStatus = NetworkStatus::Offline;
 GameState GameLayer::m_gameState = GameState::Initializing;
 bool GameLayer::s_connectedPlayersLobby[MAX_PLAYER_COUNT] = { false, false, false, false };
 u16 GameLayer::s_levelIndex = 0;
+std::unique_ptr<WFC> GameLayer::s_WFC = nullptr;
 
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
@@ -138,10 +139,10 @@ GameLayer::GameLayer() noexcept
 	std::string input = "..\\Offline-Tools\\PCG\\largerTest1Output_Floors";
 
 	//Create a WFC interface and send the input.
-	m_WFC = std::make_unique<WFC>(w, h, d);
+	s_WFC = std::make_unique<WFC>(w, h, d);
 
 	//Set input for the level generation.
-	m_WFC->SetInput(input + ".txt");
+	s_WFC->SetInput(input + ".txt");
 }
 
 GameLayer::~GameLayer()
@@ -399,7 +400,7 @@ void GameLayer::GenerateLevel()
 
 	//The generation has a certain amount of chances to succeed.
 	unsigned chances = 100;
-	while (!m_WFC->GenerateLevel(nrOfRooms, minWidth, minHeight, minDepth) && chances > 0)
+	while (!s_WFC->GenerateLevel(nrOfRooms, minWidth, minHeight, minDepth) && chances > 0)
 	{
 		chances--;
 		std::cout << chances << std::endl;
@@ -407,8 +408,8 @@ void GameLayer::GenerateLevel()
 	if (chances != 0)
 	{
 		//Output the generated level to a textfile.
-		std::vector<std::string> generatedLevel = m_WFC->GetGeneratedLevel();
-		std::vector<Room> generatedRooms = m_WFC->GetGeneratedRoomsData();
+		std::vector<std::string> generatedLevel = s_WFC->GetGeneratedLevel();
+		std::vector<Room> generatedRooms = s_WFC->GetGeneratedRoomsData();
 
 		std::ofstream output;
 		output.open("..\\Offline-Tools\\PCG\\Generate.txt");
@@ -422,9 +423,9 @@ void GameLayer::GenerateLevel()
 		output << "\n";
 
 		//Write the level data.
-		uint32_t d = m_WFC->GetDepth();
-		uint32_t h = m_WFC->GetHeight();
-		uint32_t w = m_WFC->GetWidth();
+		uint32_t d = s_WFC->GetDepth();
+		uint32_t h = s_WFC->GetHeight();
+		uint32_t w = s_WFC->GetWidth();
 
 		for (uint32_t i{ 0u }; i < d; ++i)
 		{
@@ -455,15 +456,6 @@ void GameLayer::StartMainScene()
 	if (levelIndex >= pcgLevelNames::nrLevels)
 	{
 		levelIndex = 0;
-	}
-
-	if (levelIndex == 0/* && PlayerManager::Get().IsThisPlayerHost()*/) //If generate level and host
-	{
-		GenerateLevel();
-	}
-	else if (levelIndex == 0) //If we are a client and use generated level
-	{
-		//TODO
 	}
 
 	if (s_networkStatus == NetworkStatus::Offline)
@@ -1028,6 +1020,11 @@ void HostButtonFunc(void)
 	GameLayer::s_levelIndex = (u16)DOG::UI::Get()->GetUI<DOG::UICarousel>(carouselMultID)->GetIndex();
 	NetCode::Get().SetLevelIndex(GameLayer::s_levelIndex);
 
+	if (GameLayer::s_levelIndex == 0) //If generate level
+	{
+		GameLayer::GenerateLevel();
+	}
+
 	//Reset player list.
 	GameLayer::ResetConnectedPlayers();
 	UI::Get()->GetUI<DOG::UIPlayerList>(playerListID)->Reset();
@@ -1086,6 +1083,11 @@ void HostLaunch(void)
 void PlayButtonFunc(void)
 {
 	GameLayer::s_levelIndex = (u16)DOG::UI::Get()->GetUI<DOG::UICarousel>(carouselSoloID)->GetIndex();
+
+	if (GameLayer::s_levelIndex == 0) //If generate level
+	{
+		GameLayer::GenerateLevel();
+	}
 
 	if(GameLayer::GetGameStatus() != GameState::Playing)
 		GameLayer::ChangeGameState(GameState::StartPlaying);

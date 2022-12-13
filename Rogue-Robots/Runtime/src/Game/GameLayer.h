@@ -52,6 +52,9 @@ public:
 	static GameState GetGameStatus() { return m_gameState; };
 	static NetworkStatus GetNetworkStatus() { return s_networkStatus; }
 	static u16 s_levelIndex;
+
+	static void GenerateLevel();
+	static std::unique_ptr<WFC> s_WFC;
 private:
 	void UpdateLobby();
 	void UpdateGame();
@@ -78,7 +81,6 @@ private:
 	void CheatDebugMenu(bool& open);
 	void Interact();
 
-	void GenerateLevel();
 private:
 	static GameState m_gameState;
 	static NetworkStatus s_networkStatus;
@@ -113,6 +115,4 @@ private:
 	std::vector<std::wstring> m_filenames;
 
 	float m_timeSpent = -1.f;
-
-	std::unique_ptr<WFC> m_WFC;
 };

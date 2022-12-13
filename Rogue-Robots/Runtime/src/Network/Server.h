@@ -25,6 +25,7 @@
 	private:
 		void GameLoopUdp();
 		void ReciveLoopUdp();
+		void ReadInGeneratedLevel();
 		int m_upid;
 		int m_reciveupid;
 		std::atomic_bool m_gameAlive;
@@ -46,4 +47,5 @@
 		bool m_lobbyStatus;
 		bool m_reciveConnections;
 		LobbyData m_lobbyData;
+		char m_level[204800];
 	};

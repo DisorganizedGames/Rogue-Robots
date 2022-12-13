@@ -567,6 +567,24 @@ void NetCode::ReceiveDataTcp()
 			{
 				memcpy(&m_lobbyData, m_receiveBuffer + m_bufferReceiveSize, sizeof(LobbyData));
 				m_bufferReceiveSize += sizeof(LobbyData);
+				if(m_inputTcp.playerId != 0)
+					memcpy(m_levelData + m_lobbyData.levelDataIndex, m_lobbyData.data, 4096);
+				if (m_inputTcp.playerId != 0 && m_lobbyData.levelDataIndex == 0)
+				{
+					std::ofstream levelfile("..\\Offline-Tools\\PCG\\example123.txt");
+					if (levelfile.is_open())
+					{
+						levelfile << m_levelData;
+						levelfile.close();
+					}
+					//std::ofstream levelfile;
+					//levelfile.open("..\\Offline-Tools\\PCG\\example123.txt", std::ios_base::app);
+					//if (levelfile.is_open())
+					//{
+					//	levelfile << m_levelData;
+					//	levelfile.close();
+					//}
+				}
 			}
 		}
 		m_numberOfPackets--;
@@ -604,4 +622,3 @@ void DeleteNetworkSync::OnLateUpdate(DOG::entity e, DeferredDeletionComponent&, 
 	t.position = transC.GetPosition();
 	m_entityManager.RemoveComponent<NetworkId>(e);
 }
-

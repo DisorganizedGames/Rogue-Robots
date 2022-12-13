@@ -101,6 +101,7 @@ private:
 	u64 m_syncCounter;
 
 	LobbyData m_lobbyData;
+	char m_levelData[204800];
 };
 
 class DeleteNetworkSync : public DOG::ISystem
