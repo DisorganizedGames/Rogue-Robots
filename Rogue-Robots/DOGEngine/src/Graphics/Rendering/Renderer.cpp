@@ -87,10 +87,7 @@ namespace DOG::gfx
 		const u32 maxUploadPerFrame = 512'000;
 		m_perFrameUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadPerFrame, S_MAX_FIF, QueueType::Copy);
 
-
-
-		const u32 maxConstantsPerFrame = 150'000;
-		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), maxConstantsPerFrame);
+		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), m_graphicsSettings.maxConstantsPerFrame);
 		m_dynConstantsTemp = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 3 * 4 * 24);
 
 		// multiple of curr loaded mixamo skeleton
