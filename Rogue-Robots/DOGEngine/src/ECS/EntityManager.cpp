@@ -12,7 +12,8 @@ namespace DOG
 
 	entity EntityManager::CreateEntity() noexcept
 	{
-		ECS_ASSERT(!m_freeList.empty(), "Entity capacity reached!");
+		VerifyEntityCapacity();
+		
 		u32 indexToInsert = m_freeList.front();
 		m_entities[indexToInsert] = indexToInsert;
 		m_freeList.pop();
@@ -33,7 +34,7 @@ namespace DOG
 				DestroyComponentInternal(componentPoolIndex, entityID);
 			}
 		}
-		m_entities[entityID] = MAX_ENTITIES;
+		m_entities[entityID] = NULL_ENTITY;
 		m_freeList.push(entityID);
 		
 		ECS_DEBUG_OP([&](){
@@ -90,17 +91,25 @@ namespace DOG
 
 	void EntityManager::Initialize() noexcept
 	{
-		m_entities.reserve(MAX_ENTITIES);
-		for (u32 i{ 0u }; i < MAX_ENTITIES; i++)
-		{
-			m_entities.emplace_back(MAX_ENTITIES);
-		}
+		m_entities.resize(INITIAL_ENTITY_CAPACITY, NULL_ENTITY);
 
-		for (u32 entityId{ 0u }; entityId < MAX_ENTITIES; entityId++)
+		for (u32 entityId{ 0u }; entityId < INITIAL_ENTITY_CAPACITY; entityId++)
 			m_freeList.push(entityId);
 
 		m_systems.reserve(INITIAL_SYSTEM_CAPACITY);
-		ECS_DEBUG_OP([&]() { m_aliveEntities.reserve(MAX_ENTITIES); });
+
+		ECS_DEBUG_OP([&]() { m_aliveEntities.reserve(INITIAL_ENTITY_CAPACITY); });
+	}
+
+	void EntityManager::VerifyEntityCapacity() noexcept
+	{
+		if (m_freeList.empty())
+		{
+			size_t size = m_entities.size();
+			m_entities.resize(m_entities.size() * 2, NULL_ENTITY);
+			for (size_t entityId{ size }; entityId < m_entities.capacity(); entityId++)
+				m_freeList.push((entity)entityId);
+		}
 	}
 
 	[[nodiscard]] bool EntityManager::HasComponentInternal(const sti::TypeIndex componentPoolIndex, const entity entityID) const noexcept

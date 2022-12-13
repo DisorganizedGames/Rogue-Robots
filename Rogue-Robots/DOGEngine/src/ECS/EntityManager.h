@@ -59,6 +59,10 @@ namespace DOG
 		SparseSetBase() noexcept = default;
 		virtual ~SparseSetBase() noexcept = default;
 		virtual void DestroyInternal(const entity entityID) noexcept = 0;
+		void Reserve(const uint32_t newCapacity) noexcept
+		{
+			sparseArray.resize(newCapacity, NULL_ENTITY);
+		}
 
 #if defined _DEBUG | defined RELWITHDEBUGINFO
 		virtual std::pair<std::vector<entity>&, std::string_view> ReportUsage() noexcept = 0;
@@ -106,7 +110,8 @@ namespace DOG
 		void DeferredEntityDestruction(const entity entityID) noexcept;
 		void DestroyDeferredEntities() noexcept;
 		[[nodiscard]] const std::vector<entity>& GetAllEntities() const noexcept;
-		[[nodiscard]] u32 GetNrOfEntities() const noexcept { return MAX_ENTITIES - (u32)m_freeList.size(); }
+		//[[nodiscard]] u32 GetNrOfEntities() const noexcept { return MAX_ENTITIES - (u32)m_freeList.size(); }
+		[[nodiscard]] u32 GetNrOfEntities() const noexcept { return (u32)m_entities.capacity() - (u32)m_freeList.size(); }
 		void Reset() noexcept;
 		[[nodiscard]] bool Exists(const entity entityID) const noexcept;
 		[[nodiscard]] const std::unordered_map<sti::TypeIndex, ComponentPool>& GetAllComponentPools() const noexcept { return m_components; }
@@ -165,8 +170,13 @@ namespace DOG
 		[[nodiscard]] bool HasComponentInternal(const sti::TypeIndex componentPoolIndex, const entity entityID) const noexcept;
 		void DestroyComponentInternal(const sti::TypeIndex componentPoolIndex, const entity entityID) noexcept;
 
+		void VerifyEntityCapacity() noexcept;
+
 		template<typename ComponentType>
 		void ValidateComponentPool() noexcept;
+
+		template<typename ComponentType>
+		void ValidateSparseArray(const entity entityID) noexcept;
 
 		template<typename ComponentType> 
 		void AddSparseSet() noexcept;
@@ -226,6 +236,7 @@ namespace DOG
 		ECS_ASSERT(!HasComponent<ComponentType>(entityID), "Entity already has component!");
 
 		ValidateComponentPool<ComponentType>();
+		ValidateSparseArray<ComponentType>(entityID);
 
 		const size_t position = set(ComponentID)->denseArray.size();
 		set(ComponentID)->denseArray.emplace_back(entityID);
@@ -255,6 +266,7 @@ namespace DOG
 		}
 
 		ValidateComponentPool<ComponentType>();
+		ValidateSparseArray<ComponentType>(entityID);
 
 		const size_t position = set(ComponentID)->denseArray.size();
 		set(ComponentID)->denseArray.emplace_back(entityID);
@@ -285,6 +297,7 @@ namespace DOG
 		}
 
 		ValidateComponentPool<ComponentType>();
+		ValidateSparseArray<ComponentType>(entityID);
 
 		const size_t position = set(ComponentID)->denseArray.size();
 		set(ComponentID)->denseArray.emplace_back(entityID);
@@ -420,20 +433,25 @@ namespace DOG
 		}
 	}
 
+	template<typename ComponentType>
+	void EntityManager::ValidateSparseArray(const entity entityID) noexcept
+	{
+		static constexpr auto ComponentID = sti::getTypeIndex<ComponentType>();
+		if (entityID >= set(ComponentID)->sparseArray.size())
+		{
+			set(ComponentID)->Reserve(entityID * 2);
+		}
+	}
+
 	template<typename ComponentType> 
 	void EntityManager::AddSparseSet() noexcept
 	{
 		static constexpr auto ComponentID = sti::getTypeIndex<ComponentType>();
 		m_components[ComponentID] = std::move(std::make_unique<SparseSet<ComponentType>>());
 
-		set(ComponentID)->sparseArray.reserve(MAX_ENTITIES);
-		for (u32 i{ 0u }; i < MAX_ENTITIES; i++)
-		{
-			set(ComponentID)->sparseArray.push_back(NULL_ENTITY);
-		}
-
-		set(ComponentID)->denseArray.reserve(MAX_ENTITIES);
-		set(ComponentID)->components.reserve(MAX_ENTITIES);
+		set(ComponentID)->sparseArray.resize(INITIAL_ENTITY_CAPACITY, NULL_ENTITY);
+		set(ComponentID)->denseArray.reserve(INITIAL_ENTITY_CAPACITY);
+		set(ComponentID)->components.reserve(INITIAL_COMPONENT_CAPACITY);
 	}
 
 	//##################### COLLECTIONS #####################
