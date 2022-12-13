@@ -6,6 +6,7 @@
 #include "GameSystems.h"
 #include "Scene.h"
 #include "PlayerMovementSystem.h"
+#include "PCG/WFC.h"
 
 enum class GameState
 {
@@ -76,6 +77,8 @@ private:
 	void CheatSettingsImGuiMenu();
 	void CheatDebugMenu(bool& open);
 	void Interact();
+
+	void GenerateLevel();
 private:
 	static GameState m_gameState;
 	static NetworkStatus s_networkStatus;
@@ -110,4 +113,6 @@ private:
 	std::vector<std::wstring> m_filenames;
 
 	float m_timeSpent = -1.f;
+
+	std::unique_ptr<WFC> m_WFC;
 };

@@ -1,7 +1,7 @@
 #include "PCGLevelScenes.h"
-#include "PrefabInstantiatorFunctions.h"
+#include "../PrefabInstantiatorFunctions.h"
 #include "PcgLevelLoader.h"
-#include "ItemManager/ItemManager.h"
+#include "../ItemManager/ItemManager.h"
 #include "Pathfinder/Pathfinder.h"
 using namespace DOG;
 using namespace DirectX;

@@ -1,6 +1,6 @@
 #include "PcgLevelLoader.h"
 #include <DOGEngine.h>
-#include "GameComponent.h"
+#include "../GameComponent.h"
 using namespace DOG;
 using namespace DirectX::SimpleMath;
 

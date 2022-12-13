@@ -1,5 +1,5 @@
 #include "PathfinderComponents.h"
-#include "Game/PcgLevelLoader.h"
+#include "Game/PCG/PcgLevelLoader.h"
 
 using namespace DOG;
 using Vector3 = DirectX::SimpleMath::Vector3;

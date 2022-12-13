@@ -25,8 +25,8 @@ set(SourceFiles
 	"src/Game/TurretSystems.h" "src/Game/TurretSystems.cpp"
 	"src/Game/HeartbeatTrackerSystem.h" "src/Game/HeartbeatTrackerSystem.cpp"
 
-	"src/Game/Scene.h" "src/Game/Scene.cpp" "src/Game/PcgLevelLoader.h" "src/Game/PcgLevelLoader.cpp"
-	"src/Game/PCGLevelScenes.h" "src/Game/PCGLevelScenes.cpp"
+	"src/Game/Scene.h" "src/Game/Scene.cpp" "src/Game/PCG/PcgLevelLoader.h" "src/Game/PCG/PcgLevelLoader.cpp"
+	"src/Game/PCG/PCGLevelScenes.h" "src/Game/PCG/PCGLevelScenes.cpp"
 	"src/Game/LightScene.h" "src/Game/LightScene.cpp"
 	"src/Game/TestScene.h" "src/Game/TestScene.cpp"  
 	"src/Game/TestScenes/ParticleScene.h" "src/Game/TestScenes/ParticleScene.cpp"
@@ -50,7 +50,7 @@ set(SourceFiles
 	
 	"src/Game/PlayerMovementSystem.cpp" "src/Game/SpectatorCopyCamera.h"
 	"src/Game/PlayerMovementSystem.h" "src/Game/SpectatorCopyCamera.cpp"
-	)
+	 "src/Game/PCG/PCGHelper.cpp" "src/Game/PCG/PCGHelper.h" "src/Game/PCG/PQ.h" "src/Game/PCG/PQ.cpp" "src/Game/PCG/WFC.h" "src/Game/PCG/WFC.cpp")
 
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")
