@@ -2,9 +2,6 @@
 
 using namespace DOG;
 
-Log::Log() : m_logfile("")
-{}
-
 Column& Log::operator[](std::string column)
 { 
 	Column& col = m_columns[column];
@@ -13,11 +10,10 @@ Column& Log::operator[](std::string column)
 	return col;
 }
 
-
-Log::~Log()
+void Log::SaveLogFile(std::string filename)
 {
 	std::ofstream file;
-	file.open(m_logfile);
+	file.open(filename);
 
 	// write headers to file
 	size_t h = 0;
@@ -49,10 +45,4 @@ Log::~Log()
 	}
 
 	file.close();
-}
-
-Log& Log::CreateLogFile(std::string filename)
-{
-	m_logfile = filename;
-	return *this;
 }

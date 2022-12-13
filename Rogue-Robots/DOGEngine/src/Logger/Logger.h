@@ -14,6 +14,6 @@ namespace DOG
 		std::unordered_map<std::string, Log> m_logs;
 
 		Logger() = default;
-		~Logger() = default;
+		~Logger();
 	};
 }
