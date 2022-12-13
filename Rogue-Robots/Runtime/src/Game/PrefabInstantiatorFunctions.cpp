@@ -7,6 +7,7 @@ using namespace DirectX::SimpleMath;
 
 std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 {
+	playerCount = 4;
 	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
 
 	auto* scriptManager = LuaMain::GetScriptManager();

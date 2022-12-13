@@ -43,6 +43,13 @@
 
 #include "PostProcess.h"
 
+
+void thread_sleep_temp(const std::string& text, u8 seconds)
+{
+	//std::this_thread::sleep_for(std::chrono::seconds(seconds));
+	std::cout << text << "\n";
+}
+
 namespace DOG::gfx
 {
 	Renderer::Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug, GraphicsSettings& settings)
@@ -51,6 +58,8 @@ namespace DOG::gfx
 		m_backend = std::make_unique<gfx::RenderBackend_DX12>(debug);
 		m_rd = m_backend->CreateDevice(S_NUM_BACKBUFFERS);
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
+
+		thread_sleep_temp("Core things up", 5);
 
 		// Swapchain is created -> we can check if settings verify settings against it.
 		VerifyAndSanitizeGraphicsSettings(settings, clientWidth, clientHeight);
@@ -78,22 +87,35 @@ namespace DOG::gfx
 			return WinProc(hwnd, uMsg, wParam, lParam);
 		};
 
+
+		thread_sleep_temp("Core database begin", 5);
+
 		m_bin = std::make_unique<GPUGarbageBin>(S_MAX_FIF);
 		m_uploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeDefault, S_MAX_FIF);
-		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeTextures, S_MAX_FIF);
-		m_meshUploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeDefault, S_MAX_FIF);
+		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeTextures, 1);
+		m_meshUploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeDefault, 1);
+
+		thread_sleep_temp("Core database begin 2", 5);
+
 
 		// For internal per frame management
 		const u32 maxUploadPerFrame = 512'000;
 		m_perFrameUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadPerFrame, S_MAX_FIF, QueueType::Copy);
 
-		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), m_graphicsSettings.maxConstantsPerFrame);
+		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), m_graphicsSettings.maxConstantsPerFrame, "Main Dyn Constants");
 		m_dynConstantsTemp = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 3 * 4 * 24);
 
+
+		thread_sleep_temp("Core database begin 3", 5);
+
+
 		// multiple of curr loaded mixamo skeleton
-		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * 2 * S_MAX_FIF);
-		m_dynConstantsAnimatedShadows = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * 2 * m_shadowMapCapacity * S_MAX_FIF);
+		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * 2);
+		m_dynConstantsAnimatedShadows = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * m_shadowMapCapacity * 2);
 		m_cmdl = m_rd->AllocateCommandList();
+
+
+		thread_sleep_temp("Core database final up", 5);
 
 		// Startup
 		MeshTable::MemorySpecification spec{};
@@ -112,6 +134,9 @@ namespace DOG::gfx
 
 		// Default storage
 		auto lightStorageSpec = LightTable::StorageSpecification();
+		lightStorageSpec.areaLightSpec.maxStatics = 1;
+		lightStorageSpec.areaLightSpec.maxDynamic = 1;
+		lightStorageSpec.areaLightSpec.maxSometimes = 1;
 		lightStorageSpec.pointLightSpec.maxStatics = m_graphicsSettings.maxStaticPointLights;
 		lightStorageSpec.pointLightSpec.maxDynamic = m_graphicsSettings.maxDynamicPointLights;
 		lightStorageSpec.pointLightSpec.maxSometimes = m_graphicsSettings.maxSometimesPointLights;
@@ -120,6 +145,7 @@ namespace DOG::gfx
 		lightStorageSpec.spotLightSpec.maxSometimes = m_graphicsSettings.maxSometimesSpotLights;
 		m_globalLightTable = std::make_unique<LightTable>(m_rd, m_bin.get(), lightStorageSpec, false);
 
+		thread_sleep_temp("Mesh and light tables up", 5);
 
 
 		// Create builder for users to create graphical objects supported by the renderer
@@ -294,7 +320,7 @@ namespace DOG::gfx
 		auto boxBlurCS = m_sclr->CompileFromFile("BoxBlurCS.hlsl", ShaderType::Compute);
 		m_boxBlurPipe = m_rd->CreateComputePipeline(ComputePipelineDesc(boxBlurCS.get()));
 
-
+		thread_sleep_temp("Pipes up", 5);
 
 
 
@@ -428,7 +454,9 @@ namespace DOG::gfx
 
 		m_rgResMan->ImportTexture(RG_RESOURCE(NoiseSSAO), m_ssaoNoise, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
 		m_rgResMan->ImportBuffer(RG_RESOURCE(SamplesSSAO), m_ssaoSamples, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
-	}
+	
+		thread_sleep_temp("Rend is up", 5);
+}
 
 	Renderer::~Renderer()
 	{
