@@ -34,7 +34,7 @@ void Log::SaveLogFile(std::string filename)
 		while (j < m_columns.size())
 		{
 			auto& header = m_headers[j];
-			if (j < m_columns[header].size())
+			if (i < m_columns[header].size())
 				file << m_columns[header][i];
 			else
 				file << "";
