@@ -4,9 +4,10 @@
 
 namespace DOG::gfx
 {
-	GPUDynamicConstants::GPUDynamicConstants(RenderDevice* rd, GPUGarbageBin* bin, u32 maxTotalElements) :
+	GPUDynamicConstants::GPUDynamicConstants(RenderDevice* rd, GPUGarbageBin* bin, u32 maxTotalElements, const std::string& debugName) :
 		m_rd(rd),
-		m_bin(bin)
+		m_bin(bin),
+		m_debugName(debugName)
 	{
 		m_buffer = m_rd->CreateBuffer(BufferDesc(MemoryType::Upload, ELEMENTSIZE * maxTotalElements * bin->GetMaxVersions()));
 		m_ator = RingBuffer(ELEMENTSIZE, maxTotalElements, m_rd->Map(m_buffer));
@@ -23,6 +24,10 @@ namespace DOG::gfx
 
 	void GPUDynamicConstants::Tick()
 	{
+		if (!m_debugName.empty())
+			std::cout << "Allocs (" << m_debugName << "): " << m_allocCount << "\n";
+		m_allocCount = 0;
+
 		for (u32 i = 0; i < m_numToPop; ++i)
 			m_ator.Pop();
 		m_numToPop = 0;
@@ -77,6 +82,11 @@ namespace DOG::gfx
 
 		ret.buffer = m_buffer;
 		ret.bufferOffset = (u32)offset;
+
+		if (!m_debugName.empty() && ret.memory)
+		{
+			m_allocCount += count;
+		}
 
 
 		return ret;
