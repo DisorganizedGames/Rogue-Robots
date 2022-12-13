@@ -2,8 +2,17 @@
 
 using namespace DOG;
 
-Log::Log() : m_logfile(""), m_rowCount(0)
+Log::Log() : m_logfile("")
 {}
+
+Column& Log::operator[](std::string column)
+{ 
+	Column& col = m_columns[column];
+	if (m_headers.size() < m_columns.size())
+		m_headers.push_back(column);
+	return col;
+}
+
 
 Log::~Log()
 {
@@ -12,21 +21,27 @@ Log::~Log()
 
 	// write headers to file
 	size_t h = 0;
-	while (h < m_columns.size())
+	size_t rowCount = 0;
+	while (h < m_headers.size())
 	{
-		file << m_columns[h].Header();
-		if (++h < m_columns.size())
+		rowCount = std::max(rowCount, m_columns[m_headers[h]].size());
+		file << m_headers[h];
+		if (++h < m_headers.size())
 			file << ",";
 	}
 	file << "\n";
 
 	// write rows to file
-	for (size_t i = 0; i < m_rowCount; ++i)
+	for (size_t i = 0; i < rowCount; ++i)
 	{
 		size_t j = 0;
 		while (j < m_columns.size())
 		{
-			file << m_columns[j][i];
+			auto& header = m_headers[j];
+			if (j < m_columns[header].size())
+				file << m_columns[header][i];
+			else
+				file << "";
 			if (++j < m_columns.size())
 				file << ",";
 		}
@@ -36,27 +51,8 @@ Log::~Log()
 	file.close();
 }
 
-Log& Log::SetLogFile(std::string filename)
+Log& Log::CreateLogFile(std::string filename)
 {
 	m_logfile = filename;
-	return *this;
-}
-
-Log& Log::DefineColumns(std::vector<std::string> headers)
-{
-	for (std::string h : headers)
-	{
-		m_columns.emplace_back(Column(h));
-	}
-	return *this;
-}
-
-Log& Log::NewRow()
-{
-	++m_rowCount;
-	for (Column& col : m_columns)
-	{
-		col.NewRow();
-	}
 	return *this;
 }

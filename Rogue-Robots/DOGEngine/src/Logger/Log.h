@@ -6,17 +6,15 @@ namespace DOG
 	class Log
 	{
 	public:
-		Log& SetLogFile(std::string filename);
-		Log& DefineColumns(std::vector<std::string> headers);
-		Column& operator[](size_t columnID) { return m_columns[columnID]; }
-		Log& NewRow();
+		Log& CreateLogFile(std::string filename);
+		Column& operator[](std::string column);
 
 		Log();
 		~Log();
 
 	private:
 		std::string m_logfile;
-		size_t m_rowCount;
-		std::vector<Column> m_columns;
+		std::vector<std::string> m_headers;
+		std::unordered_map<std::string, Column> m_columns;
 	};
 }
