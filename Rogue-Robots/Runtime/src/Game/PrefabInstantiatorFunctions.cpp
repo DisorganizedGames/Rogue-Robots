@@ -132,8 +132,8 @@ std::vector<entity> AddFlashlightsToPlayers(const std::vector<entity>& players)
 
 		ChildToBoneComponent& childComponent = em.AddComponent<ChildToBoneComponent>(flashLightEntity);
 		childComponent.boneParent = players[i];
-		childComponent.localTransform.SetPosition(Vector3(90.f, 130.f, -45.f));
-			
+		childComponent.localTransform.SetPosition(Vector3(200.f, -200.f, 100.f));
+
 		auto& tc = childComponent.localTransform;
 
 		auto up = tc.worldMatrix.Up();
