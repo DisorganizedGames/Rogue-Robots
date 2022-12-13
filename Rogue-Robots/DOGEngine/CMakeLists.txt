@@ -72,7 +72,8 @@ set(SourceFiles
 	"src/Graphics/Rendering/RenderEffects/LaserEffect.h" "src/Graphics/Rendering/RenderEffects/LaserEffect.cpp"
 	"src/ECS/EntityTypedef.h"
 	"src/Core/SimpleModelCreator.h" "src/Core/SimpleModelCreator.cpp"
-	 "src/Logger/Logger.h" "src/Logger/Log.h" "src/Logger/Column.h" "src/Logger/Log.cpp" "src/Logger/Logger.cpp")
+	 "src/Logger/Logger.h" "src/Logger/Log.h" "src/Logger/Column.h" "src/Logger/Log.cpp" "src/Logger/Logger.cpp"
+)
 
 file(GLOB_RECURSE TempGraphics "src/Graphics/*.cpp")
 
