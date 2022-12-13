@@ -10,21 +10,21 @@
 #include <memory>
 #include <cstdlib>
 #include <limits>
+#include <thread>
 
 //Used to save data read from the input.
 struct Block
 {
-	std::string id = "";
 	uint32_t count = 0u;
 	float frequency = 0.0;
-	std::vector<std::string> dirPossibilities[6];
+	std::vector<unsigned int> dirPossibilities[6];
 };
 
 //Id is the index in the 1D-array and possibilities is the possibilities that are left for this cell.
 struct EntropyBlock
 {
 	uint32_t id = -1;
-	std::vector<std::string> possibilities;
+	std::vector<unsigned int> possibilities;
 };
 
 //Used in the PriorityQueue. Points to an entryblock and has a calculated Shannon Entropy.
@@ -41,42 +41,40 @@ struct Box
 	{
 		min = minIn;
 		max = maxIn;
-
-		//area = (max[0] - min[0]) * (max[1] - min[1]) * (max[2] - min[2]);
 	}
 
 	//Returns true if the Box it was called on is to be put in viable. If false then the childs "viable" is to be taken instead.
 	bool Divide(const uint32_t& maxWidth, const uint32_t& maxHeight, const uint32_t& maxDepth, std::default_random_engine& gen)
 	{
 		uint32_t diffX = max[0] - min[0];
-		uint32_t diffToMaxX = diffX - maxWidth;
 		uint32_t diffY = max[1] - min[1];
-		uint32_t diffToMaxY = diffY - maxHeight;
 		uint32_t diffZ = max[2] - min[2];
-		uint32_t diffToMaxZ = diffZ - maxDepth;
+
+		uint32_t volume = maxWidth * maxHeight * maxDepth;
+		float leanientVal = 0.8f;
+
+		if (static_cast<float>(diffX * diffY * diffZ / 2.0f) < (static_cast<float>(volume) * leanientVal))
+		{
+			return true;
+		}
 
 		uint32_t highestDiff = 0;
 		uint32_t maxDimension = 0;
 		std::vector<uint32_t> newMax;
 		std::vector<uint32_t> newMin;
-		if (std::max(std::max(diffToMaxX, diffToMaxY), diffToMaxZ) == diffToMaxX) //If X is the highest value.
-		{
-			highestDiff = diffX;
-			maxDimension = maxWidth;
 
+		if (std::max(std::max(diffX, diffY), diffZ) == diffX && static_cast<float>(diffX) / 2 > maxWidth * leanientVal) //If X is the highest value.
+		{
 			newMax.push_back(max[0] - static_cast<uint32_t>(std::floor(static_cast<float>(max[0] - min[0]) / 2.0f)) - 1);
-			newMax.push_back(max[1] - 1);
+			newMax.push_back(max[1]);
 			newMax.push_back(max[2] - 1);
 
 			newMin.push_back(min[0] + static_cast<uint32_t>(std::ceil(static_cast<float>(max[0] - min[0]) / 2.0f)) + 1);
-			newMin.push_back(min[1] + 1);
+			newMin.push_back(min[1]);
 			newMin.push_back(min[2] + 1);
 		}
-		else if (std::max(std::max(diffToMaxX, diffToMaxY), diffToMaxZ) == diffToMaxY) //If Y is the highest value.
+		else if (std::max(std::max(diffX, diffY), diffZ) == diffY && static_cast<float>(diffY) / 2 > maxHeight) //If Y is the highest value.
 		{
-			highestDiff = diffY;
-			maxDimension = maxHeight;
-
 			newMax.push_back(max[0] - 1);
 			newMax.push_back(max[1] - static_cast<uint32_t>(std::floor(static_cast<float>(max[1] - min[1]) / 2.0f)) - 1);
 			newMax.push_back(max[2] - 1);
@@ -85,29 +83,21 @@ struct Box
 			newMin.push_back(min[1] + static_cast<uint32_t>(std::ceil(static_cast<float>(max[1] - min[1]) / 2.0f)) + 1);
 			newMin.push_back(min[2] + 1);
 		}
-		else //If Z is the highest value.
+		else if (static_cast<float>(diffZ) / 2 > maxDepth * leanientVal)//If Z is the highest value.
 		{
-			highestDiff = diffZ;
-			maxDimension = maxDepth;
-
 			newMax.push_back(max[0] - 1);
-			newMax.push_back(max[1] - 1);
+			newMax.push_back(max[1]);
 			newMax.push_back(max[2] - static_cast<uint32_t>(std::floor(static_cast<float>(max[2] - min[2]) / 2.0f)) - 1);
 
 			newMin.push_back(min[0] + 1);
-			newMin.push_back(min[1] + 1);
+			newMin.push_back(min[1]);
 			newMin.push_back(min[2] + static_cast<uint32_t>(std::ceil(static_cast<float>(max[2] - min[2]) / 2.0f)) + 1);
 		}
-
-		//reduce min to get more bigger rooms
-		//Increase max to get more smaller rooms
-		std::uniform_real_distribution<float> dist(1.0f, 1.0f);
-		float val = dist(gen);
-		//Check if the highest difference in dimension is lower than that dimensions maxvalue.
-		if (static_cast<float>(highestDiff) / 2.0f < (static_cast<float>(maxDimension) * val))
+		else
 		{
 			return true;
 		}
+
 		//Calculate a new max point for the smaller box that has the same min point.
 		std::shared_ptr<Box> child1 = std::make_shared<Box>(min, newMax);
 		if (child1->Divide(maxWidth, maxHeight, maxDepth, gen))
@@ -151,7 +141,6 @@ struct Box
 		return false;
 	}
 
-	//uint32_t area;
 	std::vector<uint32_t> min;
 	std::vector<uint32_t> max;
 
@@ -168,6 +157,7 @@ struct Door
 
 struct Room
 {
+	unsigned int i = 0;
 	uint32_t globalPos[3] = {0u, 0u, 0u};
 	uint32_t width = 0;
 	uint32_t height = 0;

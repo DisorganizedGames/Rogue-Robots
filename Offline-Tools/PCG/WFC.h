@@ -52,19 +52,22 @@ private:
 	void PropogateConstrain(uint32_t index, Room& room);
 
 	//Helper function
-	void CheckForPropogation(uint32_t currentIndex, uint32_t neighborIndex, unsigned dir);
-	void CheckForPropogationConstrain(uint32_t currentIndex, uint32_t neighborIndex, unsigned dir);
+	void CheckForPropogation(uint32_t currentIndex, uint32_t neighborIndex, unsigned dir, unsigned int roomi);
+	void CheckForPropogationConstrain(uint32_t currentIndex, uint32_t neighborIndex, unsigned dir, unsigned int roomi);
 
 	//Post processing functions.
 	std::string ReplaceBlock(std::string& prevBlock, std::string& currentBlock, std::string& nextBlock, int prevDir, int nextDir, bool prevWasVoid, bool doorConnected);
 private:
+	void t_GenerateRoom(unsigned int i, std::shared_ptr<Box> chosenBox);
+
 	uint32_t m_totalCount = 0u; //Total number of blocks read during input.
-	std::unordered_map<std::string, Block> m_blockPossibilities; //The possibilities for each block-id.
+	std::unordered_map<unsigned int, Block> m_blockPossibilities; //The possibilities for each block-id.
 	std::vector<std::string> m_spawnBlocks;
+	unsigned int m_spawnBlocksSize = 0u;
 	std::vector<std::string> m_doorBlocks;
 	std::vector<std::string> m_connectorBlocks;
 
-	bool m_failed = false; //If the generation fails.
+	std::vector<bool> m_failed; //If the generation fails.
 
 	//Dimensions of the output level.
 	uint32_t m_width = 0;
@@ -74,10 +77,14 @@ private:
 	uint32_t m_spawnCoords[3] = {0u, 0u, 0u};
 	std::vector<Room> m_generatedRooms; //The generated rooms. Rooms are placed here before the level is generated 
 	std::vector<std::string> m_generatedLevel; //The final level that is being generated.
-	std::vector<EntropyBlock> m_entropy; //The initial entropy. After the constraints.
-	std::vector<EntropyBlock> m_currentEntropy; //The current entropy of the generation.
+	std::vector<std::vector<EntropyBlock>> m_entropy; //The initial entropy. After the constraints.
+	std::vector<std::vector<EntropyBlock>> m_currentEntropy; //The current entropy of the generation.
 
-	PriorityQueue* m_priorityQueue = nullptr; //Used for prioritizing entropy.
+	std::vector<PriorityQueue*> m_priorityQueue; //Used for prioritizing entropy.
 
-	std::queue<uint32_t> m_recursiveStack; //Used to circumvent recursiveness. Saves us from stack overflows.
+	std::vector<std::queue<uint32_t>> m_recursiveStack; //Used to circumvent recursiveness. Saves us from stack overflows.
+
+	unsigned int m_uniqueIdCounter = 0u;
+	std::unordered_map<unsigned int, std::string> m_idToStringMap;
+	std::unordered_map<std::string, unsigned int> m_stringToIdMap;
 };

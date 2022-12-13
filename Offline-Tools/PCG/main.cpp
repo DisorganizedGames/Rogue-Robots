@@ -3,17 +3,17 @@
 int main()
 {
     //Dimensions for the whole level.
-    uint32_t w = 50;
-    uint32_t h = 10;
-    uint32_t d = 50;
+    uint32_t w = 30;
+    uint32_t h = 7;
+    uint32_t d = 40;
 
     //Number of levels to generate.
     uint32_t nrOfRooms = 4;
 
     //The generated space converges around these sizes. Per room.
-    uint32_t maxWidth = 11;
-    uint32_t maxHeight = 4;
-    uint32_t maxDepth = 11;
+    uint32_t maxWidth = 13;
+    uint32_t maxHeight = 5;
+    uint32_t maxDepth = 13;
 
     std::string input = "largerTest1Output_Floors";
 

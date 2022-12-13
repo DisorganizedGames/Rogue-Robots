@@ -82,7 +82,7 @@ int PriorityQueue::Pop()
 	}
 }
 
-bool PriorityQueue::Rearrange(uint32_t index, std::unordered_map<std::string, Block>& blockPossibilities)
+bool PriorityQueue::Rearrange(uint32_t index, std::unordered_map<unsigned int, Block>& blockPossibilities)
 {
 	std::shared_ptr<QueueBlock> current = m_first;
 	std::shared_ptr<QueueBlock> prev = nullptr;
@@ -144,7 +144,7 @@ bool PriorityQueue::Rearrange(uint32_t index, std::unordered_map<std::string, Bl
 	}
 }
 
-float PriorityQueue::CalculateEntropy(std::vector<std::string>& currentPossibilities, std::unordered_map<std::string, Block>& blockPossibilities)
+float PriorityQueue::CalculateEntropy(std::vector<unsigned int>& currentPossibilities, std::unordered_map<unsigned int, Block>& blockPossibilities)
 {
 	//Shannon entropy.
 	
