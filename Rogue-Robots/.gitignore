@@ -4,3 +4,4 @@ imgui.ini
 .vscode
 /Runtime/Settings.lua
 *.dot
+*.csv

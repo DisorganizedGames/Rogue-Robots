@@ -35,3 +35,5 @@
 #include "src/Graphics/Rendering/PostProcess.h"
 
 #include "vendor/includes/ImGUI/imgui.h"
+
+#include "src/Logger/Logger.h"
