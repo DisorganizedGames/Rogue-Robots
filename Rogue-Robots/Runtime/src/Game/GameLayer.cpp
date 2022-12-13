@@ -949,8 +949,6 @@ void HostButtonFunc(void)
 	GameLayer::ResetConnectedPlayers();
 	UI::Get()->GetUI<DOG::UIPlayerList>(playerListID)->Reset();
 
-	bool succes = true;
-
 	//Set Multicast Adress based on ip adress
 	std::string ip = NetCode::Get().GetIpAdress();
 	std::string multiAdress = "239.255.255";

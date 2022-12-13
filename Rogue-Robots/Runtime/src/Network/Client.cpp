@@ -118,15 +118,17 @@ void Client::SendChararrayTcp(char* input, int size)
 	return;
 }
 
+#pragma warning (disable : 4389)
+#pragma warning (disable : 4018)
 u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 {
 	TcpHeader packet;
-	int bytesRecived, processedBytes = 0;
+	int bytesRecived, processedBytes = 0, bytesRecievedPast = 0;
 	bool isItFirstTime = true;
 	u8 nrOfPackets = 0;
 	while (m_reciveTrue)
 	{
-		bytesRecived = recv(m_connectSocket, reciveBuffer + processedBytes, SEND_AND_RECIVE_BUFFER_SIZE - processedBytes, 0);
+		bytesRecived = recv(m_connectSocket, reciveBuffer + bytesRecievedPast, SEND_AND_RECIVE_BUFFER_SIZE - bytesRecievedPast, 0);
 		if (bytesRecived > 0)
 		{
 			//read in header
@@ -136,32 +138,54 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 				memcpy(&packet, reciveBuffer, sizeof(TcpHeader));
 				if (packet.sizeOfPayload == 0)
 					return 0;
+
+				//if correct return the packet
+				if (bytesRecived + processedBytes == packet.sizeOfPayload)
+				{
+					return 1;
+				}
 			}
-			//if correct return the packet
-			if (bytesRecived + processedBytes == packet.sizeOfPayload)
+			
+			if (packet.sizeOfPayload <= (bytesRecived + bytesRecievedPast - processedBytes)) // a complete packet detected
 			{
-				return 1;
+				processedBytes += packet.sizeOfPayload;
+				nrOfPackets++;
+				if ((bytesRecived + bytesRecievedPast - processedBytes) == 0)
+					return nrOfPackets;
+				else if ((bytesRecived + bytesRecievedPast - processedBytes) >= sizeof(TcpHeader))
+					memcpy(&packet, reciveBuffer + processedBytes, sizeof(TcpHeader));
+				else
+				{
+					bytesRecievedPast += bytesRecived;
+					continue;
+				}
+					
 			}
-			//multiple packets detected
-			else if ((bytesRecived - processedBytes) > packet.sizeOfPayload)
+
+			//process the rest
+			if ((bytesRecived + bytesRecievedPast - processedBytes) >= packet.sizeOfPayload)
 			{
-				while ((bytesRecived - processedBytes) > 0 && (bytesRecived - processedBytes) >= packet.sizeOfPayload)
+				while ((bytesRecived + bytesRecievedPast - processedBytes) > 0 && (bytesRecived + bytesRecievedPast - processedBytes) >= packet.sizeOfPayload)
 				{
 					processedBytes += packet.sizeOfPayload;
 					nrOfPackets++;
-					memcpy(&packet, reciveBuffer + processedBytes, sizeof(TcpHeader));
-					if (packet.sizeOfPayload == 0)
+					if ((bytesRecived + bytesRecievedPast - processedBytes) == 0)
 						return nrOfPackets;
+					else if ((bytesRecived + bytesRecievedPast - processedBytes) >= sizeof(TcpHeader))
+						memcpy(&packet, reciveBuffer + processedBytes, sizeof(TcpHeader));
+					else
+					{
+						bytesRecievedPast += bytesRecived;
+						continue;
+					}
 				}
-				if((bytesRecived - processedBytes) == 0)
-					return nrOfPackets;
+
 			}
 			// only part of  the packet arrived
-			else if ((bytesRecived - processedBytes) < packet.sizeOfPayload)
+			else if ((bytesRecived + bytesRecievedPast - processedBytes) < packet.sizeOfPayload)
 			{
-				std::cout << "Client: Only part of the packet arrived: " << bytesRecived << " header payload: " << packet.sizeOfPayload << " Header payload in big endian: "
-					<< ntohs(packet.sizeOfPayload) << " Header payload in little endian: " << htons(packet.sizeOfPayload) << std::endl;
-				processedBytes += bytesRecived;
+				std::cout << "Client: Only part of the packet arrived: " << bytesRecived << " header payload: " << packet.sizeOfPayload << std::endl;
+				bytesRecievedPast += bytesRecived;
 			}
 			else
 			{

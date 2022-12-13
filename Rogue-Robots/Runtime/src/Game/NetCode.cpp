@@ -438,7 +438,7 @@ void NetCode::ReceiveDataTcp()
 				if (m_inputTcp.playerId > 0)
 				{
 					NetworkTransform* tempTransfrom = new NetworkTransform;
-					EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent, CapsuleColliderComponent, AgentAggroComponent>().Do([&](NetworkTransform&, TransformComponent& transC, AgentIdComponent& idC, CapsuleColliderComponent& rC, AgentAggroComponent&)
+					EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent, CapsuleColliderComponent>().Do([&](NetworkTransform&, TransformComponent& transC, AgentIdComponent& idC, CapsuleColliderComponent& rC)
 						{
 							for (u32 i = 0; i < header.nrOfNetTransform; ++i)
 							{
