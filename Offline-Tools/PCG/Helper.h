@@ -15,7 +15,6 @@
 //Used to save data read from the input.
 struct Block
 {
-	//std::string id = "";
 	uint32_t count = 0u;
 	float frequency = 0.0;
 	std::vector<unsigned int> dirPossibilities[6];

@@ -990,7 +990,6 @@ bool WFC::GenerateRoom(Room& room)
 									prevWasVoid = false;
 								}
 								room.generatedRoom[path[i].first] = replacer;
-								//std::cout << replacer << std::endl;
 								prevDir = nextDir;
 							}
 						}
@@ -2261,7 +2260,6 @@ bool WFC::ReadInput(std::string input)
 				++m_uniqueIdCounter;
 			}
 
-			//m_blockPossibilities[id].id = id;
 			//Put the count in the frequency and increment the totalcount.
 			unsigned int uid = m_stringToIdMap[id];
 			m_blockPossibilities[uid].count = std::stoi(line.substr(delim + 1, line.size()));
