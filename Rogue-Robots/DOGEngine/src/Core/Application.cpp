@@ -232,7 +232,7 @@ namespace DOG
 		// If SetGraphicsSettings is called from inside the Renderers constructor we get strange result.
 		m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
 		assert(m_specification.graphicsSettings.windowMode == m_renderer->GetFullscreenState());
-
+		Window::MemoryUsage();
 		Window::SetWMHook(m_renderer->GetWMCallback());
 		m_frontRenderer = std::make_unique<gfx::FrontRenderer>(m_renderer.get());
 

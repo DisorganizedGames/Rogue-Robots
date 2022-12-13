@@ -23,6 +23,7 @@ namespace DOG
 		static ImFont* GetFont() noexcept;
 		static void SetFont(ImFont* pFont) noexcept;
 		static void CloseWindow() noexcept;
+		static u32 MemoryUsage() noexcept;
 
 		// Reserved for renderer until further notice (no functionality for WM callbacks is implemented for Window otherwise)
 		static void SetWMHook(const std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> func);

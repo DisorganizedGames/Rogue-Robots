@@ -710,7 +710,7 @@ void GameLayer::UpdateGame()
 	// This function should be split up to smaller functions.
 	m_playerMovementSystem.CollectAndUpdate();
 
-
+	ImGui::Text("memory working set: %u", Window::MemoryUsage() / 1000000);
 	// Multiplayer sync
 	if (s_networkStatus != NetworkStatus::Offline)
 		NetCode::Get().OnUpdate();

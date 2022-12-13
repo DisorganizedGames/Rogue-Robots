@@ -4,6 +4,7 @@
 #include "../Input/Mouse.h"
 #include "../EventSystem/WindowEvents.h"
 #include <ImGUI/imgui.h>
+#include <psapi.h>
 namespace DOG
 {
 	void MapLeftRightShiftAndControl(WPARAM& wParam, LPARAM lParam);
@@ -345,6 +346,37 @@ namespace DOG
 	void Window::CloseWindow() noexcept
 	{
 		PublishEvent<WindowClosedEvent>();
+	}
+
+
+	u32 Window::MemoryUsage() noexcept
+	{
+		DWORD processID = GetCurrentProcessId();
+		// open the process with PROCESS_QUERY_INFORMATION rights
+		HANDLE process = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, processID);
+
+		if (process != NULL)
+		{
+			// variable to hold the memory information
+			PROCESS_MEMORY_COUNTERS_EX pmc{};
+			pmc.cb = sizeof(pmc);
+			u32 workingSet = 0;
+			// get the memory information
+			if (GetProcessMemoryInfo(process, (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc)))
+			{
+				// print the memory usage information
+				/*std::cout << "Memory usage for process ID " << processID << ":" << std::endl;
+				std::cout << "  Working Set: " << pmc.WorkingSetSize << " bytes" << std::endl;
+				std::cout << "  Private Usage: " << pmc.PrivateUsage << " bytes" << std::endl;
+				std::cout << "  Peak Working Set: " << pmc.PeakWorkingSetSize << " bytes" << std::endl;*/
+				workingSet = pmc.WorkingSetSize;
+			}
+
+			// close the process handle
+			CloseHandle(process);
+			return workingSet;
+		}
+		return 0;
 	}
 
 	ImFont* Window::GetFont() noexcept
