@@ -344,6 +344,7 @@ void AgentAttackSystem::OnUpdate(entity e, BTAttackComponent&, BehaviorTreeCompo
 			EntityManager::Get().AddComponent<ChildComponent>(attackAudio.agentAttackAudioComponent).parent = e;
 
 			EntityManager::Get().AddComponent<DOG::AudioComponent>(attackAudio.agentAttackAudioComponent);
+			EntityManager::Get().AddComponent<SceneComponent>(attackAudio.agentAttackAudioComponent, EntityManager::Get().GetComponent<SceneComponent>(e).scene);
 		}
 
 		auto& attackAudio = EntityManager::Get().GetComponent<AgentAttackAudioComponent>(e);
@@ -522,6 +523,8 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 			EntityManager::Get().AddComponent<ChildComponent>(hitAudio.agentHitAudioEntity).parent = e;
 
 			EntityManager::Get().AddComponent<DOG::AudioComponent>(hitAudio.agentHitAudioEntity);
+
+			EntityManager::Get().AddComponent<SceneComponent>(hitAudio.agentHitAudioEntity, EntityManager::Get().GetComponent<SceneComponent>(e).scene);
 		}
 
 		auto& hitAudio = EntityManager::Get().GetComponent<AgentHitAudioComponent>(e);
@@ -570,6 +573,8 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 			if (EntityManager::Get().HasComponent<FrostEffectComponent>(e))
 			{
 				auto& fecAgent = EntityManager::Get().GetComponent<FrostEffectComponent>(e);
+				auto& frostEffect = EntityManager::Get().GetComponent<FrostEffectComponent>(e);
+				EntityManager::Get().GetComponent<LifetimeComponent>(frostEffect.frostAudioEntity).lifetime = fecBullet.frostTimer;
 				fecAgent.frostTimer = fecBullet.frostTimer;
 			}
 			else
@@ -580,6 +585,7 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 				frostEffect.frostAudioEntity = EntityManager::Get().CreateEntity();
 				EntityManager::Get().AddComponent<TransformComponent>(frostEffect.frostAudioEntity);
 				EntityManager::Get().AddComponent<ChildComponent>(frostEffect.frostAudioEntity).parent = e;
+				EntityManager::Get().AddComponent<LifetimeComponent>(frostEffect.frostAudioEntity, fecBullet.frostTimer);
 				auto& audio = EntityManager::Get().AddComponent<DOG::AudioComponent>(frostEffect.frostAudioEntity);
 				audio.assetID = AssetManager::Get().LoadAudio("Assets/Audio/Enemy/Frost.wav");
 				audio.is3D = true;
@@ -596,6 +602,9 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 			if (EntityManager::Get().HasComponent<FireEffectComponent>(e))
 			{
 				EntityManager::Get().GetComponent<FireEffectComponent>(e).fireTimer = fecBullet.fireTimer;
+
+				auto& fireEffect = EntityManager::Get().GetComponent<FireEffectComponent>(e);
+				EntityManager::Get().GetComponent<LifetimeComponent>(fireEffect.particleEntity).lifetime = fecBullet.fireTimer;
 			}
 			else
 			{
@@ -620,6 +629,7 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 				audio.loop = true;
 				audio.shouldPlay = true;
 				audio.volume = 1.8f;
+				EntityManager::Get().AddComponent<LifetimeComponent>(fire.particleEntity, fecBullet.fireTimer);
 			}
 
 			break;
@@ -732,6 +742,8 @@ void AgentAggroSystem::OnUpdate(entity e, BTAggroComponent&, AgentAggroComponent
 			aggroAudio.shouldPlay = true;
 			aggroAudio.is3D = true;
 			aggroAudio.volume = 0.6f;
+
+			EntityManager::Get().AddComponent<SceneComponent>(aggroAudioEntity, EntityManager::Get().GetComponent<SceneComponent>(e).scene);
 		}
 	}
 }
