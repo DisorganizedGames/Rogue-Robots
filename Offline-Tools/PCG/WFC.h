@@ -63,6 +63,7 @@ private:
 	uint32_t m_totalCount = 0u; //Total number of blocks read during input.
 	std::unordered_map<unsigned int, Block> m_blockPossibilities; //The possibilities for each block-id.
 	std::vector<std::string> m_spawnBlocks;
+	unsigned int m_spawnBlocksSize = 0u;
 	std::vector<std::string> m_doorBlocks;
 	std::vector<std::string> m_connectorBlocks;
 

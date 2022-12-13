@@ -84,7 +84,7 @@ bool WFC::IntroduceConstraints(Room& room)
 				std::uniform_int_distribution<uint32_t> distWidth(2u, room.width - 3u);
 				std::uniform_int_distribution<uint32_t> distDepth(2u, room.depth - 3u);
 
-				std::uniform_int_distribution<size_t> distSpawn(0u, m_spawnBlocks.size() - 1u);
+				std::uniform_int_distribution<size_t> distSpawn(0u, m_spawnBlocksSize - 1u);
 
 				uint32_t x = distWidth(gen);
 				uint32_t y = 1u;
@@ -2249,6 +2249,7 @@ bool WFC::ReadInput(std::string input)
 			else if (id.find("Spawn") != std::string::npos)
 			{
 				m_spawnBlocks.push_back(id);
+				++m_spawnBlocksSize;
 			}
 
 			//Check if the block is already in the map.
