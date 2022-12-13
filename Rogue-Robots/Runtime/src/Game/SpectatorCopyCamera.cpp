@@ -17,6 +17,7 @@ void SpectatorCopyCamera::OnUpdate(entity e, PlayerControllerComponent& player)
 	// The player might be spectating, and if so the camera should be updated based on the spectated players' camera stats.
 	assert(mgr.HasComponent<SpectatorComponent>(e));
 	assert(!mgr.HasComponent<PlayerAliveComponent>(e));
+
 	entity playerBeingSpectated = mgr.GetComponent<SpectatorComponent>(e).playerBeingSpectated;
 	auto& spectatedPlayerControllerComponent = mgr.GetComponent<PlayerControllerComponent>(playerBeingSpectated);
 	auto& spectatedCameraComponent = mgr.GetComponent<CameraComponent>(spectatedPlayerControllerComponent.cameraEntity);

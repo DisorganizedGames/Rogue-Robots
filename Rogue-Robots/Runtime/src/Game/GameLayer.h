@@ -61,7 +61,13 @@ private:
 	void EvaluateLoseCondition();
 	void CheckIfPlayersIAreDead();
 	void RespawnDeadPlayer(DOG::entity e);
-	void KillPlayer(DOG::entity e);
+	void KillLocalPlayer(DOG::entity e);
+	void KillOtherPlayer(DOG::entity e);
+	void RenderPlayer(DOG::entity e, bool firstPersonView);
+	void RevivePlayer(DOG::entity player);
+
+	void StopSpectatingPlayer(DOG::entity localPlayer, DOG::entity SpectatedPlayer);
+	void StartSpectatingPlayer(DOG::entity localPlayer, DOG::entity playerToSpectate);
 
 	void RegisterLuaInterfaces();
 	void Input(DOG::Key key);

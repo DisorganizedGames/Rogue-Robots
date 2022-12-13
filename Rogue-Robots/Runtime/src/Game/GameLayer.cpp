@@ -518,14 +518,21 @@ void GameLayer::EvaluateLoseCondition()
 
 void GameLayer::CheckIfPlayersIAreDead()
 {
-	EntityManager::Get().Collect<PlayerStatsComponent, PlayerAliveComponent>().Do([&](entity e, PlayerStatsComponent& stats, PlayerAliveComponent&)
+	// Check network players first
+	EntityManager::Get().Collect<PlayerStatsComponent, PlayerAliveComponent, NetworkPlayerComponent>().Do([&](entity e, PlayerStatsComponent& stats, PlayerAliveComponent& paC, NetworkPlayerComponent&)
 		{
 			if (stats.health <= 0.0f)
-			{
-				stats.health = 0.0f;
-				// Player died
-				KillPlayer(e);
-			}
+				KillOtherPlayer(e);
+			else if (paC.revived)
+				RevivePlayer(e);
+		});
+	// Local players after
+	EntityManager::Get().Collect<PlayerStatsComponent, ThisPlayer>().Do([&](entity e, PlayerStatsComponent& stats, ThisPlayer&)
+		{
+			if (stats.health <= 0.0f && EntityManager::Get().HasComponent<PlayerAliveComponent>(e))
+				KillLocalPlayer(e);
+			else if (stats.health > 0.f && !EntityManager::Get().HasComponent<PlayerAliveComponent>(e))
+				RevivePlayer(e);
 		});
 }
 
@@ -533,7 +540,12 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 {
 	if (m_entityManager.HasComponent<PlayerAliveComponent>(e))
 	{
-		KillPlayer(e);
+		const bool isLocalPlayer = EntityManager::Get().HasComponent<ThisPlayer>(e);
+
+		if (isLocalPlayer)
+			KillLocalPlayer(e);
+		else
+			KillOtherPlayer(e);
 	}
 
 	auto& bc = m_entityManager.AddComponent<BarrelComponent>(e);
@@ -562,18 +574,49 @@ void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will 
 	m_entityManager.GetComponent<RigidbodyComponent>(e).ConstrainPosition(false, false, false);
 }
 
-void GameLayer::KillPlayer(DOG::entity e)
+void GameLayer::KillOtherPlayer(DOG::entity player)
 {
-	m_entityManager.RemoveComponent<PlayerAliveComponent>(e);
-	if (m_entityManager.HasComponent<AnimationComponent>(e))
+	m_entityManager.RemoveComponent<PlayerAliveComponent>(player);
+
+	// Check if local player was spectating the deadPlayer
+	DOG::entity localPlayer = DOG::NULL_ENTITY;
+	m_entityManager.Collect<ThisPlayer>().Do([&](DOG::entity e, ThisPlayer&)
+		{
+			localPlayer = e;
+		});
+	// Check if local player is spectating the player that died
+	if (m_entityManager.Get().HasComponent<SpectatorComponent>(localPlayer))
 	{
-		auto& ac = m_entityManager.GetComponent<AnimationComponent>(e);
+		auto playerBeingSpectated = m_entityManager.Get().GetComponent<SpectatorComponent>(localPlayer).playerBeingSpectated;
+
+		const bool isSamePlayer = playerBeingSpectated == player;
+		if (isSamePlayer)
+		{
+			m_entityManager.Get().RemoveComponent<AudioListenerComponent>(player);
+			// Do we need to do something here??
+			// Do we need to do something here??
+			// Do we need to do something here??
+			// Do we need to do something here??
+			// Do we need to do something here??
+		}
+	}
+
+}
+
+void GameLayer::KillLocalPlayer(DOG::entity localPlayer)
+{
+	m_entityManager.RemoveComponent<PlayerAliveComponent>(localPlayer);
+	m_entityManager.RemoveComponent<AudioListenerComponent>(localPlayer);
+
+	// Apply death animation
+	if (m_entityManager.HasComponent<AnimationComponent>(localPlayer))
+	{
+		auto& ac = m_entityManager.GetComponent<AnimationComponent>(localPlayer);
 		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::DeathAnimation), AnimationFlag::Persist, 1u, ac.FULL_BODY, 1.f, 0.5f);
 	}
-	if (m_entityManager.HasComponent<ThisPlayer>(e))
-	{
-		entity localPlayer = e;
 
+	// Remove Scripts and ui from player
+	{
 		LuaMain::GetScriptManager()->RemoveScript(localPlayer, "Gun.lua");
 		LuaMain::GetScriptManager()->RemoveScript(localPlayer, "PassiveItemSystem.lua");
 		//Remove UI icon bufftracker stacks.
@@ -606,19 +649,16 @@ void GameLayer::KillPlayer(DOG::entity e)
 
 		//Remove the chargeshot charge bar if it is active.
 		UIInstance->GetUI<UIVertStatBar>(pbarID)->Hide(false);
+	}
 
-		m_entityManager.RemoveComponentIfExists<AudioListenerComponent>(localPlayer);
+	RigidbodyComponent& rb = m_entityManager.GetComponent<RigidbodyComponent>(localPlayer);
+	rb.ConstrainPosition(true, false, true);
+	rb.ClearPhysics();
 
-
-		RigidbodyComponent& rb = m_entityManager.GetComponent<RigidbodyComponent>(e);
-		rb.ConstrainPosition(true, false, true);
-		rb.ClearPhysics();
-
-		DOG::entity playerToSpectate = DOG::NULL_ENTITY;
-		const char* playerName{ nullptr };
+	// Start spectating process
+	{
 		std::vector<DOG::entity> spectatables;
-		
-		//Get hold of another living player entity:
+		// Get hold of living players viable for spectating:
 		m_entityManager.Collect<NetworkPlayerComponent, PlayerAliveComponent>().Do([&](DOG::entity otherPlayer, NetworkPlayerComponent, PlayerAliveComponent&)
 			{
 				spectatables.push_back(otherPlayer);
@@ -626,55 +666,20 @@ void GameLayer::KillPlayer(DOG::entity e)
 
 		if (!spectatables.empty())
 		{
-			playerToSpectate = spectatables[0];
-			playerName = m_entityManager.GetComponent<NetworkPlayerComponent>(spectatables[0]).playerName;
-		}
+			auto& localPcc = m_entityManager.GetComponent<PlayerControllerComponent>(localPlayer);
 
-		if (playerToSpectate != NULL_ENTITY) //So, if not all players are dead
-		{
-			auto& pcc = m_entityManager.GetComponent<PlayerControllerComponent>(localPlayer);
-			auto& otherPcc = m_entityManager.GetComponent<PlayerControllerComponent>(playerToSpectate);
-			pcc.spectatorCamera = m_mainScene->CreateEntity();
-
-			m_entityManager.AddComponent<TransformComponent>(pcc.spectatorCamera)
-				.worldMatrix = m_entityManager.GetComponent<TransformComponent>(otherPcc.cameraEntity).worldMatrix;
-			
-			m_entityManager.AddComponent<CameraComponent>(pcc.spectatorCamera).isMainCamera = true;
-			
-			m_entityManager.Collect<ChildComponent>().Do([&](DOG::entity playerModel, ChildComponent& cc)
-				{
-					if (cc.parent == localPlayer)
-					{
-						//This means that playerModel is the mesh model (suit), and it should be drawing for the main player again:
-						EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
-							{
-								if (bone.boneParent == localPlayer)
-									DOG::EntityManager::Get().RemoveComponentIfExists<DOG::DontDraw>(modelGun);
-							});
-						m_entityManager.RemoveComponentIfExists<DontDraw>(playerModel);
-					}
-					else if (cc.parent == playerToSpectate)
-					{
-						EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
-							{
-								if (bone.boneParent == playerToSpectate)
-									DOG::EntityManager::Get().AddOrReplaceComponent<DOG::DontDraw>(modelGun);
-							});
-						//This means that playerModel is the spectated players' armor/suit, and it should not be eligible for drawing anymore:
-						m_entityManager.AddOrReplaceComponent<DontDraw>(playerModel);
-					}
-				});
-
-			auto& sc = m_entityManager.AddComponent<SpectatorComponent>(localPlayer);
-			sc.playerBeingSpectated = playerToSpectate;
-			sc.playerName = playerName;
-			sc.playerSpectatorQueue = spectatables;
+			// ----NEED TO REMOVE THESE IN REVIVE
+			localPcc.spectatorCamera = m_mainScene->CreateEntity();
+			m_entityManager.AddComponent<TransformComponent>(localPcc.spectatorCamera);
+			m_entityManager.AddComponent<CameraComponent>(localPcc.spectatorCamera);
+			// ------
 
 			auto& timer = m_entityManager.AddComponent<DeathUITimerComponent>(localPlayer);
-			timer.duration = 4.0f;
-			timer.timeLeft = timer.duration;
+			timer.duration = timer.timeLeft = 4.0f;
 
-			m_entityManager.AddOrReplaceComponent<AudioListenerComponent>(playerToSpectate);
+			auto& specC = m_entityManager.AddComponent<SpectatorComponent>(localPlayer);
+			specC.playerSpectatorQueue = spectatables;
+			StartSpectatingPlayer(localPlayer, spectatables[0]);
 		}
 		else // Of course, if all players are dead, this else will fire, but then the game would restart, so probably unnecessary.
 		{
@@ -687,6 +692,150 @@ void GameLayer::KillPlayer(DOG::entity e)
 			m_entityManager.AddComponent<CameraComponent>(controller.debugCamera).isMainCamera = true;
 		}
 	}
+}
+
+void GameLayer::StopSpectatingPlayer(DOG::entity localPlayer, DOG::entity spectatedPlayer)
+{
+	auto& mgr = DOG::EntityManager::Get();
+	
+	mgr.RemoveComponent<AudioListenerComponent>(spectatedPlayer);
+
+	// Change rendering logic of previously spectated player
+	RenderPlayer(spectatedPlayer, false);
+}
+
+void GameLayer::RenderPlayer(DOG::entity player, bool firstPersonView)
+{
+	auto& mgr = DOG::EntityManager::Get();
+	// Draw logic First Person gun of the player to spectate
+	{
+		auto scriptData = LuaMain::GetScriptManager()->GetScript(player, "Gun.lua");
+		LuaTable tab(scriptData.scriptTable, true);
+		auto ge = tab.GetTableFromTable("gunEntity");
+		int gunID = ge.GetIntFromTable("entityID");
+		int barrelID = tab.GetIntFromTable("barrelEntityID");
+		int miscID = tab.GetIntFromTable("miscEntityID");
+		int magazineID = tab.GetIntFromTable("magazineEntityID");
+		if (firstPersonView)
+		{
+			mgr.RemoveComponent<DontDraw>(gunID);
+			mgr.RemoveComponent<DontDraw>(barrelID);
+			mgr.RemoveComponent<DontDraw>(miscID);
+			mgr.RemoveComponent<DontDraw>(magazineID);
+		}
+		else
+		{
+			mgr.AddComponent<DontDraw>(gunID);
+			mgr.AddComponent<DontDraw>(barrelID);
+			mgr.AddComponent<DontDraw>(miscID);
+			mgr.AddComponent<DontDraw>(magazineID);
+		}
+	}
+
+	// Draw logic model and model gun of the player
+	{
+		mgr.Collect<ChildComponent>().Do([&](DOG::entity playerModel, ChildComponent& cc)
+			{
+				if (cc.parent == player)
+				{	
+					if (firstPersonView)
+						mgr.AddComponent<DontDraw>(playerModel);
+					else
+						mgr.RemoveComponent<DontDraw>(playerModel);
+				}
+			});
+		EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
+			{
+				if (bone.boneParent == player)
+				{
+					if (firstPersonView)
+						mgr.AddComponent<DontDraw>(modelGun);
+					else
+						mgr.RemoveComponent<DontDraw>(modelGun);
+				}
+			});
+	}
+}
+
+void GameLayer::StartSpectatingPlayer(DOG::entity localPlayer, DOG::entity playerToSpectate)
+{
+	auto& mgr = DOG::EntityManager::Get();
+
+	const char* spectatedPlayerName{ nullptr };
+	spectatedPlayerName = mgr.GetComponent<NetworkPlayerComponent>(playerToSpectate).playerName;
+
+	auto& localPcc = mgr.GetComponent<PlayerControllerComponent>(localPlayer);
+	auto& otherPcc = mgr.GetComponent<PlayerControllerComponent>(playerToSpectate);
+
+	mgr.GetComponent<TransformComponent>(localPcc.spectatorCamera)
+		.worldMatrix = mgr.GetComponent<TransformComponent>(otherPcc.cameraEntity).worldMatrix;
+	mgr.GetComponent<CameraComponent>(localPcc.spectatorCamera).isMainCamera = true;
+
+	auto& specC = mgr.GetComponent<SpectatorComponent>(localPlayer);
+	specC.playerBeingSpectated = playerToSpectate;
+	specC.playerName = spectatedPlayerName;
+
+	// Add a audio listener device to player to spectate
+	mgr.AddComponent<AudioListenerComponent>(playerToSpectate);
+
+	// Change rendering logic to first person view of spectated player
+	const bool firstPersonView = true;
+	RenderPlayer(playerToSpectate, firstPersonView);
+}
+
+//For this function we simply revert all data to an "is-alive-state":
+void GameLayer::RevivePlayer(DOG::entity player)
+{
+	auto& mgr = DOG::EntityManager::Get();
+
+	DOG::entity localPlayer = DOG::NULL_ENTITY;
+	mgr.Collect<ThisPlayer>().Do([&](DOG::entity e, ThisPlayer&)
+		{
+			localPlayer = e;
+		});
+
+	const bool isLocalPlayer = localPlayer == player;
+
+	// If localPlayer was revived and was spectating, we need to remove certain components of the spectated player and add components to the player
+	if (isLocalPlayer && mgr.HasComponent<SpectatorComponent>(player))
+	{
+		mgr.AddComponent<PlayerAliveComponent>(player).timer = 1.f;
+		auto& sC = mgr.GetComponent<SpectatorComponent>(player);
+		mgr.RemoveComponent<AudioListenerComponent>(sC.playerBeingSpectated);
+		mgr.AddComponent<AudioListenerComponent>(player);
+		// The player and player that was spectated should be rendered differently
+		const bool firstPersonView = true;
+		RenderPlayer(player, firstPersonView);
+		RenderPlayer(sC.playerBeingSpectated, !firstPersonView);
+		
+		auto& pcc = mgr.GetComponent<PlayerControllerComponent>(player);
+		mgr.RemoveComponent<TransformComponent>(pcc.spectatorCamera);
+		mgr.RemoveComponent<CameraComponent>(pcc.spectatorCamera);
+		mgr.DestroyEntity(pcc.spectatorCamera);
+		pcc.spectatorCamera = NULL_ENTITY;
+
+		mgr.RemoveComponent<SpectatorComponent>(player);
+		mgr.GetComponent<CameraComponent>(pcc.cameraEntity).isMainCamera = true;
+
+		LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
+		LuaMain::GetScriptManager()->AddScript(player, "PassiveItemSystem.lua");
+		LuaMain::GetScriptManager()->AddScript(player, "ActiveItemSystem.lua");
+
+		auto& bc = mgr.AddComponent<BarrelComponent>(player);
+		bc.type = BarrelComponent::Type::Bullet;
+		bc.maximumAmmoCapacityForType = 999'999;
+		bc.ammoPerPickup = 30;
+		bc.currentAmmoCount = 30;
+
+		auto& rb = mgr.GetComponent<RigidbodyComponent>(player);
+		rb.ConstrainRotation(true, true, true);
+		rb.ConstrainPosition(false, false, false);
+		rb.disableDeactivation = true;
+		rb.getControlOfTransform = true;
+		rb.setGravityForRigidbody = true;
+		rb.gravityForRigidbody = Vector3(0.0f, -25.0f, 0.0f);
+	}
+
 }
 
 void GameLayer::UpdateGame()

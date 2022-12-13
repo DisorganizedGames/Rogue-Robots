@@ -130,6 +130,7 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 			const bool spectatedPlayerIsDead = sc.playerBeingSpectated == sc.playerSpectatorQueue[i];
 			if (spectatedPlayerIsDead)
 			{
+				DOG::EntityManager::Get().RemoveComponent<AudioListenerComponent>(sc.playerBeingSpectated);
 				//Not eligible for spectating anymore, since that player has died:
 				const u32 index = GetQueueIndexForSpectatedPlayer(sc.playerBeingSpectated, sc.playerSpectatorQueue);
 				const u32 nextIndex = (index + 1) % sc.playerSpectatorQueue.size();
@@ -139,6 +140,7 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 					ChangeGunDrawLogic(sc.playerBeingSpectated, false, true);
 					ChangeGunDrawLogic(sc.playerSpectatorQueue[nextIndex], true, false);
 					ChangeSuitDrawLogic(sc.playerBeingSpectated, sc.playerSpectatorQueue[nextIndex]);
+					DOG::EntityManager::Get().AddComponent<AudioListenerComponent>(sc.playerSpectatorQueue[nextIndex]);
 				}
 				sc.playerBeingSpectated = sc.playerSpectatorQueue[nextIndex];
 				sc.playerName = DOG::EntityManager::Get().GetComponent<DOG::NetworkPlayerComponent>(sc.playerSpectatorQueue[nextIndex]).playerName;
@@ -195,47 +197,49 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 
 	pos.x = r.left + centerXOfScreen - size.x / 2.0f;
 	pos.y = r.top + centerYOfScreen + (centerYOfScreen / 10.0f);
-
-	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-	ImGui::SetNextWindowPos(pos);
-	ImGui::SetNextWindowSize(size);
-	if (ImGui::Begin("Spectate text 2", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+	// Imgui Text
 	{
-		ImGui::PushFont(DOG::Window::GetFont());
-		ImGui::SetWindowFontScale(2.0f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
-		//const char* text = std::string("Spectating " + std::string(sc.playerName)).c_str();
-		std::string text = "Spectating ";
-		text += std::string(sc.playerName);
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+		ImGui::SetNextWindowPos(pos);
+		ImGui::SetNextWindowSize(size);
+		if (ImGui::Begin("Spectate text 2", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+		{
+			ImGui::PushFont(DOG::Window::GetFont());
+			ImGui::SetWindowFontScale(2.0f);
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
+			//const char* text = std::string("Spectating " + std::string(sc.playerName)).c_str();
+			std::string text = "Spectating ";
+			text += std::string(sc.playerName);
 
-		auto textWidth = ImGui::CalcTextSize(text.c_str()).x;
-		auto textHeight = ImGui::CalcTextSize(text.c_str()).y;
-		const float windowWidth = ImGui::GetWindowSize().x;
-		const float windowHeight = ImGui::GetWindowSize().y;
-		ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
-		ImGui::SetCursorPosY((windowHeight - textHeight) * 0.0f);
-		ImGui::Text("Spectating ");
-		ImGui::PopStyleColor(1);
-		ImGui::SameLine();
-		ImGui::PushStyleColor(ImGuiCol_Text, playerColor);
-		ImGui::Text(sc.playerName);
-		ImGui::PopStyleColor(1);
+			auto textWidth = ImGui::CalcTextSize(text.c_str()).x;
+			auto textHeight = ImGui::CalcTextSize(text.c_str()).y;
+			const float windowWidth = ImGui::GetWindowSize().x;
+			const float windowHeight = ImGui::GetWindowSize().y;
+			ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+			ImGui::SetCursorPosY((windowHeight - textHeight) * 0.0f);
+			ImGui::Text("Spectating ");
+			ImGui::PopStyleColor(1);
+			ImGui::SameLine();
+			ImGui::PushStyleColor(ImGuiCol_Text, playerColor);
+			ImGui::Text(sc.playerName);
+			ImGui::PopStyleColor(1);
 
-		text = "[E] Toggle Player";
-		textWidth = ImGui::CalcTextSize(text.c_str()).x;
-		textHeight = ImGui::CalcTextSize(text.c_str()).y;
-		ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
-		ImGui::Text("[E] ");
-		ImGui::PopStyleColor(1);
-		ImGui::SameLine();
-		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
-		ImGui::Text("Toggle Player");
-		ImGui::PopStyleColor(1);
-		ImGui::PopFont();
+			text = "[E] Toggle Player";
+			textWidth = ImGui::CalcTextSize(text.c_str()).x;
+			textHeight = ImGui::CalcTextSize(text.c_str()).y;
+			ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 200));
+			ImGui::Text("[E] ");
+			ImGui::PopStyleColor(1);
+			ImGui::SameLine();
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 200));
+			ImGui::Text("Toggle Player");
+			ImGui::PopStyleColor(1);
+			ImGui::PopFont();
+		}
+		ImGui::End();
+		ImGui::PopStyleColor();
 	}
-	ImGui::End();
-	ImGui::PopStyleColor();
 
 	//Let's check for player toggle query: 
 	if (!DOG::EntityManager::Get().HasComponent<InteractionQueryComponent>(player))
@@ -246,7 +250,7 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 	const bool isSamePlayer = (sc.playerBeingSpectated == sc.playerSpectatorQueue[nextIndex]);
 	if (!isSamePlayer)
 	{
-		DOG::EntityManager::Get().RemoveComponentIfExists<AudioListenerComponent>(sc.playerBeingSpectated);
+		DOG::EntityManager::Get().RemoveComponent<AudioListenerComponent>(sc.playerBeingSpectated);
 
 		ChangeGunDrawLogic(sc.playerBeingSpectated, false, true);
 		ChangeGunDrawLogic(sc.playerSpectatorQueue[nextIndex], true, false);
@@ -254,17 +258,8 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 		sc.playerName = DOG::EntityManager::Get().GetComponent<DOG::NetworkPlayerComponent>(sc.playerSpectatorQueue[nextIndex]).playerName;
 		sc.playerBeingSpectated = sc.playerSpectatorQueue[nextIndex];
 
-		DOG::EntityManager::Get().AddOrReplaceComponent<AudioListenerComponent>(sc.playerBeingSpectated);
+		DOG::EntityManager::Get().AddComponent<AudioListenerComponent>(sc.playerBeingSpectated);
 	}
-
-	bool changeGunDrawLogic = false;
-	DOG::EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity gunModelNotFPS, ModelComponent&, ChildToBoneComponent& childToBone)
-		{
-			if (!changeGunDrawLogic)
-				changeGunDrawLogic = (childToBone.boneParent == sc.playerBeingSpectated && !EntityManager::Get().HasComponent<DontDraw>(gunModelNotFPS));
-		});
-	if (changeGunDrawLogic)
-		ChangeGunDrawLogic(sc.playerBeingSpectated, true, false);
 }
 
 u32 SpectateSystem::GetQueueIndexForSpectatedPlayer(DOG::entity player, const std::vector<DOG::entity>& players)
@@ -292,17 +287,17 @@ void SpectateSystem::ChangeGunDrawLogic(DOG::entity player, bool drawFirstPerson
 
 		if (drawFirstPersonViewGun)
 		{
-			em.RemoveComponentIfExists<DontDraw>(gunID);
-			em.RemoveComponentIfExists<DontDraw>(barrelID);
-			em.RemoveComponentIfExists<DontDraw>(miscID);
-			em.RemoveComponentIfExists<DontDraw>(magazineID);
+			em.RemoveComponent<DontDraw>(gunID);
+			em.RemoveComponent<DontDraw>(barrelID);
+			em.RemoveComponent<DontDraw>(miscID);
+			em.RemoveComponent<DontDraw>(magazineID);
 		}
 		else
 		{
-			em.AddOrReplaceComponent<DontDraw>(gunID);
-			em.AddOrReplaceComponent<DontDraw>(barrelID);
-			em.AddOrReplaceComponent<DontDraw>(miscID);
-			em.AddOrReplaceComponent<DontDraw>(magazineID);
+			em.AddComponent<DontDraw>(gunID);
+			em.AddComponent<DontDraw>(barrelID);
+			em.AddComponent<DontDraw>(miscID);
+			em.AddComponent<DontDraw>(magazineID);
 		}
 	}
 
@@ -312,9 +307,9 @@ void SpectateSystem::ChangeGunDrawLogic(DOG::entity player, bool drawFirstPerson
 			{
 				if (bone.boneParent == player)
 					if (drawModelGun)
-						DOG::EntityManager::Get().RemoveComponentIfExists<DOG::DontDraw>(modelGun);
+						DOG::EntityManager::Get().RemoveComponent<DOG::DontDraw>(modelGun);
 					else
-						DOG::EntityManager::Get().AddOrReplaceComponent<DOG::DontDraw>(modelGun);
+						DOG::EntityManager::Get().AddComponent<DOG::DontDraw>(modelGun);
 			});
 	}
 }
@@ -331,7 +326,7 @@ void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity p
 			if (cc.parent == playerToDraw)
 			{
 				//This means that playerModel is the mesh model (suit), and it should be rendered again:
-				DOG::EntityManager::Get().RemoveComponentIfExists<DOG::DontDraw>(playerModel);
+				DOG::EntityManager::Get().RemoveComponent<DOG::DontDraw>(playerModel);
 				#if defined _DEBUG
 				addedSuitToRendering = true;
 				#endif
@@ -339,7 +334,7 @@ void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity p
 			else if (cc.parent == playerToNotDraw)
 			{
 				//This means that playerModel is the spectated players' armor/suit, and it should not be eligible for rendering anymore:
-				DOG::EntityManager::Get().AddOrReplaceComponent<DOG::DontDraw>(playerModel);
+				DOG::EntityManager::Get().AddComponent<DOG::DontDraw>(playerModel);
 				#if defined _DEBUG
 				removedSuitFromRendering = true;
 				#endif
@@ -355,6 +350,7 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 	DOG::EntityManager& mgr = DOG::EntityManager::Get();
 	if (mgr.HasComponent<ThisPlayer>(player) && mgr.HasComponent<PlayerAliveComponent>(player) && mgr.GetComponent<PlayerAliveComponent>(player).timer > 0.f)
 		mgr.GetComponent<PlayerAliveComponent>(player).timer -= (f32)Time::DeltaTime();
+	
 	//If the player that wants to perform a revive does not have a reviver active item, we ofc return:
 	auto optionalItem = mgr.TryGetComponent<ActiveItemComponent>(player);
 	if (!optionalItem)
@@ -365,9 +361,9 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 	DOG::entity closestDeadPlayer{ NULL_ENTITY };
 	float distanceToClosestDeadPlayer{ FLT_MAX };
 
-	mgr.Collect<NetworkPlayerComponent, DOG::TransformComponent>().Do([&](DOG::entity player, NetworkPlayerComponent&, DOG::TransformComponent& otc)
+	mgr.Collect<NetworkPlayerComponent, DOG::TransformComponent>().Do([&](DOG::entity networkPlayer, NetworkPlayerComponent&, DOG::TransformComponent& otc)
 		{
-			if (mgr.HasComponent<PlayerAliveComponent>(player))
+			if (mgr.HasComponent<PlayerAliveComponent>(networkPlayer))
 				return;
 
 			//This player does not live, since it passed the guard clause:
@@ -375,7 +371,7 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 			if (distanceToDeadPlayer < distanceToClosestDeadPlayer)
 			{
 				distanceToClosestDeadPlayer = distanceToDeadPlayer;
-				closestDeadPlayer = player;
+				closestDeadPlayer = networkPlayer;
 			}
 		});
 
@@ -429,43 +425,45 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 
 	pos.x -= xOffset;
 	pos.y -= yOffset;
-
-	if (mgr.HasComponent<ThisPlayer>(player))
+	// Imgui Text
 	{
-		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-		ImGui::SetNextWindowSize(size);
-		ImGui::SetNextWindowPos(pos);
-		if (ImGui::Begin("Revive text 1", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+		if (mgr.HasComponent<ThisPlayer>(player))
 		{
-			ImGui::PushFont(DOG::Window::GetFont());
-			ImGui::SetWindowFontScale(1.75f);
-			auto windowWidth = ImGui::GetWindowSize().x;
-			auto& npc = mgr.GetComponent<NetworkPlayerComponent>(closestDeadPlayer);
+			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+			ImGui::SetNextWindowSize(size);
+			ImGui::SetNextWindowPos(pos);
+			if (ImGui::Begin("Revive text 1", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+			{
+				ImGui::PushFont(DOG::Window::GetFont());
+				ImGui::SetWindowFontScale(1.75f);
+				auto windowWidth = ImGui::GetWindowSize().x;
+				auto& npc = mgr.GetComponent<NetworkPlayerComponent>(closestDeadPlayer);
 
-			std::string text0 = inputC.revive ? "" : "[E] ";
-			std::string text1 = inputC.revive ? std::string("Reviving ") : std::string("Revive ");
-			std::string text2 = std::string(npc.playerName);
-			auto textWidth = ImGui::CalcTextSize((text0 + text1 + text2).c_str()).x;
+				std::string text0 = inputC.revive ? "" : "[E] ";
+				std::string text1 = inputC.revive ? std::string("Reviving ") : std::string("Revive ");
+				std::string text2 = std::string(npc.playerName);
+				auto textWidth = ImGui::CalcTextSize((text0 + text1 + text2).c_str()).x;
 
-			ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 175));
-			ImGui::Text(text0.c_str());
-			ImGui::PopStyleColor(1);
+				ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 175));
+				ImGui::Text(text0.c_str());
+				ImGui::PopStyleColor(1);
 
-			ImGui::SameLine();
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 175));
-			ImGui::Text(text1.c_str());
-			ImGui::PopStyleColor(1);
+				ImGui::SameLine();
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 175));
+				ImGui::Text(text1.c_str());
+				ImGui::PopStyleColor(1);
 
-			ImGui::PushStyleColor(ImGuiCol_Text, DeterminePlayerColor(npc.playerName));
-			ImGui::SameLine();
-			ImGui::Text(text2.c_str());
+				ImGui::PushStyleColor(ImGuiCol_Text, DeterminePlayerColor(npc.playerName));
+				ImGui::SameLine();
+				ImGui::Text(text2.c_str());
 
-			ImGui::PopStyleColor(1);
-			ImGui::PopFont();
+				ImGui::PopStyleColor(1);
+				ImGui::PopFont();
+			}
+			ImGui::End();
+			ImGui::PopStyleColor();
 		}
-		ImGui::End();
-		ImGui::PopStyleColor();
 	}
 
 	//Add revive sound effect
@@ -499,32 +497,34 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 		reviveAudioComponent.assetID = m_reviveSound;
 		reviveAudioComponent.shouldPlay = true;
 	}
-	
-	if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))
+	// Imgui Text
 	{
-		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-		ImGui::SetNextWindowPos(pos);
-		ImGui::SetNextWindowSize(size);
-		if (ImGui::Begin("Revive text 2", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+		if (mgr.HasComponent<ThisPlayer>(closestDeadPlayer))
 		{
+			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+			ImGui::SetNextWindowPos(pos);
+			ImGui::SetNextWindowSize(size);
+			if (ImGui::Begin("Revive text 2", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing))
+			{
 
-			ImGui::PushFont(DOG::Window::GetFont());
-			ImGui::SetWindowFontScale(1.75f);
-			auto windowWidth = ImGui::GetWindowSize().x;
-			auto textWidth = ImGui::CalcTextSize("You are being revived by ").x;
-			ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 175));
-			ImGui::Text("You are being revived by ");
-			ImGui::PopStyleColor(1);
-			const char* revivingPlayerName = mgr.GetComponent<NetworkPlayerComponent>(player).playerName;
-			ImGui::PushStyleColor(ImGuiCol_Text, DeterminePlayerColor(revivingPlayerName));
-			ImGui::SameLine();
-			ImGui::Text(revivingPlayerName);
-			ImGui::PopStyleColor(1);
-			ImGui::PopFont();
+				ImGui::PushFont(DOG::Window::GetFont());
+				ImGui::SetWindowFontScale(1.75f);
+				auto windowWidth = ImGui::GetWindowSize().x;
+				auto textWidth = ImGui::CalcTextSize("You are being revived by ").x;
+				ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 175));
+				ImGui::Text("You are being revived by ");
+				ImGui::PopStyleColor(1);
+				const char* revivingPlayerName = mgr.GetComponent<NetworkPlayerComponent>(player).playerName;
+				ImGui::PushStyleColor(ImGuiCol_Text, DeterminePlayerColor(revivingPlayerName));
+				ImGui::SameLine();
+				ImGui::Text(revivingPlayerName);
+				ImGui::PopStyleColor(1);
+				ImGui::PopFont();
+			}
+			ImGui::End();
+			ImGui::PopStyleColor();
 		}
-		ImGui::End();
-		ImGui::PopStyleColor();
 	}
 
 	constexpr const float timerEnd = 0.0f;
@@ -570,8 +570,8 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 		{
 			mgr.GetComponent<AnimationComponent>(closestDeadPlayer).SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping | AnimationFlag::ResetPrio); // No dedicated revive animation for now
 			mgr.GetComponent<AnimationComponent>(closestDeadPlayer).SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio);
-			auto spectatedPlayer = mgr.GetComponent<SpectatorComponent>(closestDeadPlayer).playerBeingSpectated;
-			ChangeSuitDrawLogic(spectatedPlayer, closestDeadPlayer);
+			//auto spectatedPlayer = mgr.GetComponent<SpectatorComponent>(closestDeadPlayer).playerBeingSpectated;
+			//ChangeSuitDrawLogic(spectatedPlayer, closestDeadPlayer);
 			RevivePlayer(closestDeadPlayer);
 		}
 		if (mgr.HasComponent<ThisPlayer>(player))
@@ -614,40 +614,40 @@ void ReviveSystem::RevivePlayer(DOG::entity player)
 
 	auto& psc = mgr.GetComponent<PlayerStatsComponent>(player);
 	psc.health = psc.maxHealth / 2.0f;
-	if(mgr.HasComponent<SpectatorComponent>(player))
-	{
-		auto& sC = mgr.GetComponent<SpectatorComponent>(player);
-		mgr.RemoveComponentIfExists<AudioListenerComponent>(sC.playerBeingSpectated);
-	}
-	mgr.RemoveComponent<SpectatorComponent>(player);
-	mgr.AddOrReplaceComponent<AudioListenerComponent>(player);
+	//if(mgr.HasComponent<SpectatorComponent>(player))
+	//{
+	//	auto& sC = mgr.GetComponent<SpectatorComponent>(player);
+	//	mgr.RemoveComponentIfExists<AudioListenerComponent>(sC.playerBeingSpectated);
+	//}
+	//mgr.RemoveComponent<SpectatorComponent>(player);
+	//mgr.AddOrReplaceComponent<AudioListenerComponent>(player);
 
-	auto& pcc = mgr.GetComponent<PlayerControllerComponent>(player);
-	mgr.DestroyEntity(pcc.spectatorCamera);
-	pcc.spectatorCamera = NULL_ENTITY;
-	mgr.GetComponent<CameraComponent>(pcc.cameraEntity).isMainCamera = true;
+	//auto& pcc = mgr.GetComponent<PlayerControllerComponent>(player);
+	//mgr.DestroyEntity(pcc.spectatorCamera);
+	//pcc.spectatorCamera = NULL_ENTITY;
+	//mgr.GetComponent<CameraComponent>(pcc.cameraEntity).isMainCamera = true;
 
-	/*auto& ac = mgr.GetComponent<AnimationComponent>(player);
-	ac.SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio, ac.BASE_PRIORITY, ac.FULL_BODY, 1.5f, 0.5f);*/
-	mgr.AddComponent<PlayerAliveComponent>(player).timer = 1.f;
+	///*auto& ac = mgr.GetComponent<AnimationComponent>(player);
+	//ac.SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio, ac.BASE_PRIORITY, ac.FULL_BODY, 1.5f, 0.5f);*/
+	//mgr.AddComponent<PlayerAliveComponent>(player).timer = 1.f;
 
-	LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
-	LuaMain::GetScriptManager()->AddScript(player, "PassiveItemSystem.lua");
-	LuaMain::GetScriptManager()->AddScript(player, "ActiveItemSystem.lua");
+	//LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
+	//LuaMain::GetScriptManager()->AddScript(player, "PassiveItemSystem.lua");
+	//LuaMain::GetScriptManager()->AddScript(player, "ActiveItemSystem.lua");
 
-	auto& bc = mgr.AddComponent<BarrelComponent>(player);
-	bc.type = BarrelComponent::Type::Bullet;
-	bc.maximumAmmoCapacityForType = 999'999;
-	bc.ammoPerPickup = 30;
-	bc.currentAmmoCount = 30;
+	//auto& bc = mgr.AddComponent<BarrelComponent>(player);
+	//bc.type = BarrelComponent::Type::Bullet;
+	//bc.maximumAmmoCapacityForType = 999'999;
+	//bc.ammoPerPickup = 30;
+	//bc.currentAmmoCount = 30;
 
-	auto& rb = mgr.GetComponent<RigidbodyComponent>(player);
-	rb.ConstrainRotation(true, true, true);
-	rb.ConstrainPosition(false, false, false);
-	rb.disableDeactivation = true;
-	rb.getControlOfTransform = true;
-	rb.setGravityForRigidbody = true;
-	rb.gravityForRigidbody = Vector3(0.0f, -25.0f, 0.0f);
+	//auto& rb = mgr.GetComponent<RigidbodyComponent>(player);
+	//rb.ConstrainRotation(true, true, true);
+	//rb.ConstrainPosition(false, false, false);
+	//rb.disableDeactivation = true;
+	//rb.getControlOfTransform = true;
+	//rb.setGravityForRigidbody = true;
+	//rb.gravityForRigidbody = Vector3(0.0f, -25.0f, 0.0f);
 }
 
 void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw)

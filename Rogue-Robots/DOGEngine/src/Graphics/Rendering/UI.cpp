@@ -1260,7 +1260,7 @@ void DOG::UISlider::OnEvent(IEvent& event)
       {
          m_slider.left = (float)mpos.x - 10.f;
          m_slider.right = m_slider.left + 20.f;
-         m_value = (m_slider.right - 10.f) - m_bar.left * m_normwidth;
+         m_value = ((m_slider.right - 10.f) - m_bar.left) * m_normwidth;
       }
       if (mpos.x >= m_slider.left && mpos.x <= m_slider.right && mpos.y >= m_slider.top && mpos.y <= m_slider.bottom)
          m_sliderBrush.Get()->SetOpacity(1.0f);

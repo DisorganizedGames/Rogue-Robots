@@ -29,7 +29,7 @@ struct GunComponent
 
 struct PlayerStatsComponent
 {
-	f32 maxHealth = 100.f;
+	f32 maxHealth = 6.f;
 	f32 health = maxHealth;
 	f32 speed = 5.5f;
 	f32 lifeSteal = 0.f;
@@ -39,6 +39,7 @@ struct PlayerStatsComponent
 
 struct PlayerAliveComponent
 {
+	bool revived = false;
 	f32 timer = -1.f;
 };
 
