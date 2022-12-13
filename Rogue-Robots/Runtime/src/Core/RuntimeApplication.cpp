@@ -31,6 +31,9 @@ void RuntimeApplication::OnStartUp() noexcept
 		},
 		[this]() {
 			return GetGraphicsSettings();
+		},
+		[this]() {
+			return GetAspectRatio();
 		}
 	);
 

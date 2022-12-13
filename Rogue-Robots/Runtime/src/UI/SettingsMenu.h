@@ -5,15 +5,22 @@ class SettingsMenu
 public:
 	static void Initialize(
 		std::function<void(const DOG::GraphicsSettings&)> setGraphicsSettings,
-		std::function<DOG::GraphicsSettings(void)> getGraphicsSettings
+		std::function<DOG::GraphicsSettings(void)> getGraphicsSettings,
+		std::function<Vector2u(void)> getAspectRatio
 );
 	static void SettGraphicsSettings(const DOG::GraphicsSettings& settings);
 private:
+
+	static void UpdateResolutions();
+
 	static std::function<void(const DOG::GraphicsSettings&)> s_setGraphicsSettings;
 	static std::function<DOG::GraphicsSettings(void)> s_getGraphicsSettings;
+	static std::function<Vector2u(void)> s_getAspectRatio;
 
 
 	static DOG::GraphicsSettings s_graphicsSettings;
+	static std::vector<Vector2u> s_renderResolution;
+	static std::vector<u32> s_renderResolutionHeightPreset;
 	static inline u32 s_backgroundID;
 	static inline u32 s_backButtonID;
 	static inline u32 s_exitToMainMenuButtonID;
@@ -38,4 +45,7 @@ private:
 
 	static inline u32 s_bloomSliderLabelID;
 	static inline u32 s_bloomSliderID;
+
+	static inline u32 s_renderResCarouselLabelID;
+	static inline u32 s_renderResCarouselID;
 };

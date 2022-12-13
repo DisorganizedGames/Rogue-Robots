@@ -6,14 +6,19 @@ DOG::GraphicsSettings SettingsMenu::s_graphicsSettings;
 
 std::function<void(const GraphicsSettings&)> SettingsMenu::s_setGraphicsSettings;
 std::function<GraphicsSettings(void)> SettingsMenu::s_getGraphicsSettings;
+std::function<Vector2u(void)> SettingsMenu::s_getAspectRatio;
+std::vector<Vector2u> SettingsMenu::s_renderResolution;
+std::vector<u32> SettingsMenu::s_renderResolutionHeightPreset = { 360, 720, 1080, 1440 };
 
 void SettingsMenu::Initialize(
 	std::function<void(const GraphicsSettings&)> setGraphicsSettings,
-	std::function<GraphicsSettings(void)> getGraphicsSettings
+	std::function<GraphicsSettings(void)> getGraphicsSettings,
+	std::function<Vector2u(void)> getAspectRatio
 )
 {
 	s_setGraphicsSettings = setGraphicsSettings;
 	s_getGraphicsSettings = getGraphicsSettings;
+	s_getAspectRatio = getAspectRatio;
 	s_graphicsSettings = s_getGraphicsSettings();
 
 
@@ -33,8 +38,10 @@ void SettingsMenu::Initialize(
 		float checkBoxSize = 0.016f * 1920;
 		float buttonWidth = 0.12f * 1920;
 		float buttonHeight = 0.08f * 1080;
-		float sliderWidth = 0.08f * 1920;
+		float sliderWidth = 0.1f * 1920;
 		float sliderHeight = 0.02f * 1080;
+		float carouseWidth = 0.1f * 1920;
+		float carouseHeight = 0.02f * 1080;
 
 		float paddingY = 0.01f * 1080;
 		float x = leftStart;
@@ -88,7 +95,7 @@ void SettingsMenu::Initialize(
 
 		y += checkBoxSize + paddingY;
 
-		auto bloomCheckBoxLabel = instance->Create<DOG::UILabel>(s_bloomLabelID, std::wstring(L"bloom"), x + 2 * checkBoxSize, y, 4 * textSize, textSize, 20.f, DWRITE_TEXT_ALIGNMENT_LEADING);
+		auto bloomCheckBoxLabel = instance->Create<DOG::UILabel>(s_bloomLabelID, std::wstring(L"bloom"), x + 2 * checkBoxSize, y, 10 * textSize, textSize, 20.f, DWRITE_TEXT_ALIGNMENT_LEADING);
 		auto bloomCheckBox = instance->Create<DOG::UICheckBox>(s_bloomCheckBoxID,
 			x, y, checkBoxSize, checkBoxSize, color.x, color.y, color.z,
 			[](bool checked) { s_graphicsSettings.bloom = checked; s_setGraphicsSettings(s_graphicsSettings); });
@@ -97,18 +104,45 @@ void SettingsMenu::Initialize(
 
 		y += checkBoxSize + paddingY;
 
-		auto bloomSliderLabel = instance->Create<DOG::UILabel>(s_bloomSliderLabelID, std::wstring(L"bloom strength"), x + sliderWidth, y, 13 * textSize, textSize, 20.f, DWRITE_TEXT_ALIGNMENT_LEADING);
+		auto bloomSliderLabel = instance->Create<DOG::UILabel>(s_bloomSliderLabelID, std::wstring(L"bloom strength"), x, y, 13 * textSize, textSize, 20.f, DWRITE_TEXT_ALIGNMENT_LEADING);
 		auto bloomSlider = instance->Create<DOG::UISlider>(s_bloomSliderID,
-			x, y, sliderWidth, sliderHeight,
-			[](float value) { s_graphicsSettings.bloomStrength = value; s_setGraphicsSettings(s_graphicsSettings); });
+			x + 13 * textSize, y, sliderWidth, sliderHeight, [](float) {});
 		instance->AddUIElementToScene(optionsID, std::move(bloomSliderLabel));
 		instance->AddUIElementToScene(optionsID, std::move(bloomSlider));
 
-		y += sliderHeight + 2 * paddingY;
+		y += sliderHeight + paddingY;
+
+
+		// Render resolution
+		auto renderResCarouselLabel = instance->Create<DOG::UILabel>(s_renderResCarouselLabelID, std::wstring(L"render resolution"), x, y, 13 * textSize, textSize, 20.f, DWRITE_TEXT_ALIGNMENT_LEADING);
+
+
+		UpdateResolutions();
+		std::vector<std::wstring> resStr;
+		for (auto& res : s_renderResolution)
+		{
+			resStr.emplace_back(std::to_wstring(res.x) + L" x " + std::to_wstring(res.y));
+		}
+		auto renderResCarousel = instance->Create<DOG::UICarousel, std::vector<std::wstring>>(s_renderResCarouselID, resStr,
+			x + 13 * textSize, y, carouseWidth, carouseHeight, 20.f);
+		instance->AddUIElementToScene(optionsID, std::move(renderResCarouselLabel));
+		instance->AddUIElementToScene(optionsID, std::move(renderResCarousel));
+
+		y += carouseHeight + 2 * paddingY;
+
+
+		// Back button
 
 		auto backButton = instance->Create<DOG::UIButton>(SettingsMenu::s_backButtonID,
 			x, y, buttonWidth, buttonHeight, 20.f, color.x, color.y, color.z,
-			std::wstring(L"Back"), []() { UI::Get()->ChangeUIscene(menuID); });
+			std::wstring(L"Back"), []() 
+			{
+				s_graphicsSettings.bloomStrength = UI::Get()->GetUI<UISlider>(s_bloomSliderID)->GetValue();
+
+				s_graphicsSettings.renderResolution = s_renderResolution[UI::Get()->GetUI<UICarousel>(s_renderResCarouselID)->GetIndex()];
+				s_setGraphicsSettings(s_graphicsSettings);
+				UI::Get()->ChangeUIscene(menuID); 
+			});
 		y += buttonHeight + paddingY;
 		
 
@@ -127,4 +161,42 @@ void SettingsMenu::SettGraphicsSettings(const DOG::GraphicsSettings& settings)
 	UI::Get()->GetUI<UICheckBox>(s_ssaoCheckBoxID)->SetValue(s_graphicsSettings.ssao);
 	UI::Get()->GetUI<UICheckBox>(s_bloomCheckBoxID)->SetValue(s_graphicsSettings.bloom);
 	UI::Get()->GetUI<UICheckBox>(s_shadowMappingCheckBoxID)->SetValue(s_graphicsSettings.shadowMapping);
+	UI::Get()->GetUI<UISlider>(s_bloomSliderID)->SetValue(s_graphicsSettings.bloomStrength);
+
+	UpdateResolutions();
+	int index = -1;
+	for (int i = 0; i < s_renderResolution.size(); i++)
+	{
+		if (s_renderResolution[i].x == s_graphicsSettings.renderResolution.x && s_renderResolution[i].y == s_graphicsSettings.renderResolution.y)
+			index = i;
+	}
+	if (index == -1)
+	{
+		s_renderResolution.push_back(s_graphicsSettings.renderResolution);
+		index = static_cast<int>(s_renderResolution.size() - 1);
+	}
+	std::vector<std::wstring> resStr;
+	for (auto& res : s_renderResolution)
+	{
+		resStr.emplace_back(std::to_wstring(res.x) + L" x " + std::to_wstring(res.y));
+	}
+
+	UI::Get()->GetUI<UICarousel>(s_renderResCarouselID)->SendStrings(resStr);
+	UI::Get()->GetUI<UICarousel>(s_renderResCarouselID)->SetIndex(static_cast<UINT>(index));
+}
+
+void SettingsMenu::UpdateResolutions()
+{
+	s_renderResolution.clear();
+	Vector2u ratio = s_getAspectRatio();
+	auto&& resHeightToRes = [&](int index)
+	{
+		Vector2u res{ s_renderResolutionHeightPreset[index] * ratio.x / ratio.y, s_renderResolutionHeightPreset[index] };
+		return res;
+	};
+
+	for (int i = 0; i < s_renderResolutionHeightPreset.size(); i++)
+	{
+		s_renderResolution.emplace_back(resHeightToRes(i));
+	}
 }

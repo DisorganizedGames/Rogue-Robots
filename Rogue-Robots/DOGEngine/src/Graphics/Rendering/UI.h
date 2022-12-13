@@ -301,6 +301,7 @@ namespace DOG
          void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void OnEvent(IEvent& event) override final;
          float GetValue();
+         void SetValue(float value);
       private:
          float m_value, m_width, m_normwidth;
          std::function<void(float)> m_callback;
@@ -341,6 +342,7 @@ namespace DOG
          void OnEvent(IEvent& event) override final;
          std::wstring GetText(void);
          UINT GetIndex();
+         void SetIndex(UINT index);
          void SendStrings(const std::vector<std::wstring>& filenames);
       private:
          float m_opacity;

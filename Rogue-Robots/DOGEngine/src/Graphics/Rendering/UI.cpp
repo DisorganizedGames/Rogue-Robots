@@ -1142,6 +1142,11 @@ UINT DOG::UICarousel::GetIndex()
    return m_index;
 }
 
+void DOG::UICarousel::SetIndex(UINT index)
+{
+    m_index = index;
+}
+
 void DOG::UICarousel::SendStrings(const std::vector<std::wstring>& filenames)
 {
    m_labels = filenames;
@@ -1273,7 +1278,8 @@ void DOG::UISlider::OnEvent(IEvent& event)
       {
          m_slider.left = (float)mpos.x - 10.f;
          m_slider.right = m_slider.left + 20.f;
-         m_value = (m_slider.right - 10.f) - m_bar.left * m_normwidth;
+         float s = 0.5f * (m_slider.left + m_slider.right);
+         m_value = Remap(m_bar.left, m_bar.right, 0, 1, s);
       }
       if (mpos.x >= m_slider.left && mpos.x <= m_slider.right && mpos.y >= m_slider.top && mpos.y <= m_slider.bottom)
          m_sliderBrush.Get()->SetOpacity(1.0f);
@@ -1284,6 +1290,13 @@ void DOG::UISlider::OnEvent(IEvent& event)
 float DOG::UISlider::GetValue()
 {
    return m_value;
+}
+
+void DOG::UISlider::SetValue(float value)
+{
+    m_value = std::clamp(value, 0.0f, 1.0f);
+    m_slider.left = std::lerp(m_bar.left, m_bar.right, m_value) - 10.0f;
+    m_slider.right = m_slider.left + 20.f;
 }
 
 DOG::UIVertStatBar::UIVertStatBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, float r, float g, float b): UIElement(id)
