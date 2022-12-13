@@ -353,7 +353,7 @@ void NetCode::UpdateSendTcp()
 			//sync all transforms Host only
 			if (m_inputTcp.playerId == 0 && m_syncCounter % HARD_SYNC_FRAME == 0)
 			{
-				EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent>().Do([&](NetworkTransform& netC, TransformComponent& transC, AgentIdComponent agentId)
+				EntityManager::Get().Collect<NetworkTransform, TransformComponent, AgentIdComponent, AgentAggroComponent>().Do([&](NetworkTransform& netC, TransformComponent& transC, AgentIdComponent agentId, AgentAggroComponent&)
 					{
 						netC.objectId = agentId.id;
 						netC.position = transC.GetPosition();
