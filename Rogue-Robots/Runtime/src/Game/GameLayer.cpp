@@ -273,24 +273,45 @@ void GameLayer::OnUpdate()
 							auto redPlayer = DOG::UI::Get()->GetUI<UILabel>(lredScoreWinID);
 							redPlayer->SetText(std::wstring(L"Red player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring((int)inputC.damageDoneToEnemies)
 								+ std::wstring(L"\nTeam Damage done: ") + std::to_wstring((int)inputC.teamDamageTaken));
+							Log& log = Logger::Get()["Network survey 2 " + std::to_string(TICKRATE)];
+							log["Player Number"].Add(nPC.playerId);
+							log["Damage Done"].Add((int)inputC.damageDoneToEnemies);
+							log["Agents Killed"].Add(inputC.killScore);
+							log["Team Damage Done"].Add((int)inputC.teamDamageTaken);
+
 						}
 						else if (nPC.playerId == 1)
 						{
 							auto bluePlayer = DOG::UI::Get()->GetUI<UILabel>(lblueScoreWinID);
 							bluePlayer->SetText(std::wstring(L"Blue player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring((int)inputC.damageDoneToEnemies)
 								+ std::wstring(L"\nTeam Damage done: ") + std::to_wstring((int)inputC.teamDamageTaken));
+							Log& log = Logger::Get()["Network survey 2 " + std::to_string(TICKRATE)];
+							log["Player Number"].Add(nPC.playerId);
+							log["Damage Done"].Add((int)inputC.damageDoneToEnemies);
+							log["Agents Killed"].Add(inputC.killScore);
+							log["Team Damage Done"].Add((int)inputC.teamDamageTaken);
 						}
 						else if (nPC.playerId == 2)
 						{
 							auto greenPlayer = DOG::UI::Get()->GetUI<UILabel>(lgreenScoreWinID);
 							greenPlayer->SetText(std::wstring(L"Green player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring((int)inputC.damageDoneToEnemies)
 								+ std::wstring(L"\nTeam Damage done: ") + std::to_wstring((int)inputC.teamDamageTaken));
+							Log& log = Logger::Get()["Network survey 2 " + std::to_string(TICKRATE)];
+							log["Player Number"].Add(nPC.playerId);
+							log["Damage Done"].Add((int)inputC.damageDoneToEnemies);
+							log["Agents Killed"].Add(inputC.killScore);
+							log["Team Damage Done"].Add((int)inputC.teamDamageTaken);
 						}
 						else if (nPC.playerId == 3)
 						{
 							auto yellowPlayer = DOG::UI::Get()->GetUI<UILabel>(lyellowScoreWinID);
 							yellowPlayer->SetText(std::wstring(L"Yellow player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring((int)inputC.damageDoneToEnemies)
 								+ std::wstring(L"\nTeam Damage done: ") + std::to_wstring((int)inputC.teamDamageTaken));
+							Log& log = Logger::Get()["Network survey 2 " + std::to_string(TICKRATE)];
+							log["Player Number"].Add(nPC.playerId);
+							log["Damage Done"].Add((int)inputC.damageDoneToEnemies);
+							log["Agents Killed"].Add(inputC.killScore);
+							log["Team Damage Done"].Add((int)inputC.teamDamageTaken);
 						}
 					});
 			}
@@ -309,24 +330,44 @@ void GameLayer::OnUpdate()
 						auto redPlayer = DOG::UI::Get()->GetUI<UILabel>(lredScoreID);
 						redPlayer->SetText(std::wstring(L"Red player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring((int)inputC.damageDoneToEnemies)
 						+ std::wstring(L"\nTeam Damage done: ") + std::to_wstring((int)inputC.teamDamageTaken));
+						Log& log = Logger::Get()["Network survey 2 " + std::to_string(TICKRATE)];
+						log["Player Number"].Add(nPC.playerId);
+						log["Damage Done"].Add((int)inputC.damageDoneToEnemies);
+						log["Agents Killed"].Add(inputC.killScore);
+						log["Team Damage Done"].Add((int)inputC.teamDamageTaken);
 					}
 					else if (nPC.playerId == 1)
 					{
 						auto bluePlayer = DOG::UI::Get()->GetUI<UILabel>(lblueScoreID);
 						bluePlayer->SetText(std::wstring(L"Blue player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring((int)inputC.damageDoneToEnemies)
 							+ std::wstring(L"\nTeam Damage done: ") + std::to_wstring((int)inputC.teamDamageTaken));
+						Log& log = Logger::Get()["Network survey 2 " + std::to_string(TICKRATE)];
+						log["Player Number"].Add(nPC.playerId);
+						log["Damage Done"].Add((int)inputC.damageDoneToEnemies);
+						log["Agents Killed"].Add(inputC.killScore);
+						log["Team Damage Done"].Add((int)inputC.teamDamageTaken);
 					}
 					else if (nPC.playerId == 2)
 					{
 						auto greenPlayer = DOG::UI::Get()->GetUI<UILabel>(lgreenScoreID);
 						greenPlayer->SetText(std::wstring(L"Green player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring((int)inputC.damageDoneToEnemies)
 							+ std::wstring(L"\nTeam Damage done: ") + std::to_wstring((int)inputC.teamDamageTaken));
+						Log& log = Logger::Get()["Network survey 2 " + std::to_string(TICKRATE)];
+						log["Player Number"].Add(nPC.playerId);
+						log["Damage Done"].Add((int)inputC.damageDoneToEnemies);
+						log["Agents Killed"].Add(inputC.killScore);
+						log["Team Damage Done"].Add((int)inputC.teamDamageTaken);
 					}
 					else if (nPC.playerId == 3)
 					{
 						auto yellowPlayer = DOG::UI::Get()->GetUI<UILabel>(lyellowScoreID);
 						yellowPlayer->SetText(std::wstring(L"Yellow player kill score: ") + std::to_wstring(inputC.killScore) + std::wstring(L"\nDamage done: ") + std::to_wstring((int)inputC.damageDoneToEnemies)
 							+ std::wstring(L"\nTeam Damage done: ") + std::to_wstring((int)inputC.teamDamageTaken));
+						Log& log = Logger::Get()["Network survey 2 " + std::to_string(TICKRATE)];
+						log["Player Number"].Add(nPC.playerId);
+						log["Damage Done"].Add((int)inputC.damageDoneToEnemies);
+						log["Agents Killed"].Add(inputC.killScore);
+						log["Team Damage Done"].Add((int)inputC.teamDamageTaken);
 					}
 				});
 			
