@@ -480,7 +480,7 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 		}
 	}
 	
-	auto& reviveAudioComponent = mgr.GetComponent<DOG::AudioComponent>(mgr.GetComponent<ReviveSoundEffectComponent>(player).reviveAudioEntity);
+	DOG::AudioComponent reviveAudioComponent{};
 	if (!isNonParticipatingPlayer)
 		reviveAudioComponent = mgr.GetComponent<DOG::AudioComponent>(mgr.GetComponent<ReviveSoundEffectComponent>(player).reviveAudioEntity);
 	//Next up is the revival progress. Holding E adds to the progress bar.
