@@ -101,7 +101,7 @@ namespace DOG
 
 		// if assetIDOut == 0 then the component needs needs to be added to m_assets
 		bool ShapeAssetNeedsToBeLoaded(const std::string& path, AssetLoadFlag loadFlag, u32& assetIDOut);
-		bool AssetNeedsToBeLoaded(const std::string& path, AssetLoadFlag flag, u32& assetIDOut);
+		bool AssetNeedsToBeLoaded(std::string path, AssetLoadFlag flag, u32& assetIDOut);
 
 		gfx::GraphicsBuilder& GetGraphicsBuilder();
 
