@@ -36,19 +36,22 @@ void SpectatorCopyCamera::OnUpdate(entity e, PlayerControllerComponent& player)
 						{
 							//std::cout << " spectatedPlayer has script " << playerBeingSpectated << std::endl;
 							auto scriptData = LuaMain::GetScriptManager()->GetScript(playerBeingSpectated, "Gun.lua");
-							LuaTable tab(scriptData.scriptTable, true);
-							auto ge = tab.GetTableFromTable("gunEntity");
-		
-							int gunID = ge.GetIntFromTable("entityID");
-							int barrelID = tab.GetIntFromTable("barrelEntityID");
-							int miscID = tab.GetIntFromTable("miscEntityID");
-							int magazineID = tab.GetIntFromTable("magazineEntityID");
-		
-							//std::cout << "DRAW FPS GUN" << playerBeingSpectated << std::endl;
-							EntityManager::Get().RemoveComponentIfExists<DontDraw>(gunID);
-							EntityManager::Get().RemoveComponentIfExists<DontDraw>(barrelID);
-							EntityManager::Get().RemoveComponentIfExists<DontDraw>(miscID);
-							EntityManager::Get().RemoveComponentIfExists<DontDraw>(magazineID);
+							if (scriptData.scriptTable.ref != -1)
+							{
+								LuaTable tab(scriptData.scriptTable, true);
+								auto ge = tab.GetTableFromTable("gunEntity");
+
+								int gunID = ge.GetIntFromTable("entityID");
+								int barrelID = tab.GetIntFromTable("barrelEntityID");
+								int miscID = tab.GetIntFromTable("miscEntityID");
+								int magazineID = tab.GetIntFromTable("magazineEntityID");
+
+								//std::cout << "DRAW FPS GUN" << playerBeingSpectated << std::endl;
+								EntityManager::Get().RemoveComponentIfExists<DontDraw>(gunID);
+								EntityManager::Get().RemoveComponentIfExists<DontDraw>(barrelID);
+								EntityManager::Get().RemoveComponentIfExists<DontDraw>(miscID);
+								EntityManager::Get().RemoveComponentIfExists<DontDraw>(magazineID);
+							}
 						}
 					}
 				}
