@@ -579,6 +579,8 @@ void GameLayer::KillOtherPlayer(DOG::entity player)
 	m_entityManager.RemoveComponent<PlayerAliveComponent>(player);
 	auto& ac = m_entityManager.GetComponent<AnimationComponent>(player);
 	ac.SimpleAdd(static_cast<i8>(MixamoAnimations::DeathAnimation), AnimationFlag::Persist, 1u, ac.FULL_BODY, 1.f, 0.5f);
+	LuaMain::GetScriptManager()->RemoveScript(player, "Gun.lua");
+
 	// Check if local player was spectating the deadPlayer
 	DOG::entity localPlayer = DOG::NULL_ENTITY;
 	m_entityManager.Collect<ThisPlayer>().Do([&](DOG::entity e, ThisPlayer&)
@@ -693,21 +695,9 @@ void GameLayer::KillLocalPlayer(DOG::entity localPlayer)
 	}
 }
 
-void GameLayer::StopSpectatingPlayer(DOG::entity localPlayer, DOG::entity spectatedPlayer)
-{
-	auto& mgr = DOG::EntityManager::Get();
-	
-	mgr.RemoveComponent<AudioListenerComponent>(spectatedPlayer);
-
-	// Change rendering logic of previously spectated player
-	RenderPlayer(spectatedPlayer, false);
-}
 
 void GameLayer::RenderPlayer(DOG::entity player, bool firstPersonView)
 {
-	
-	std::cout << "renderPlayer\n" << std::endl;
-	
 	auto& mgr = DOG::EntityManager::Get();
 	// Draw logic First Person gun of the player to spectate
 	if (!mgr.HasComponent<ThisPlayer>(player))
@@ -842,6 +832,18 @@ void GameLayer::RevivePlayer(DOG::entity player)
 	}
 	if (!mgr.HasComponent<ThisPlayer>(player))
 	{
+		LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
+		auto scriptData = LuaMain::GetScriptManager()->GetScript(player, "Gun.lua");
+		LuaTable tab(scriptData.scriptTable, true);
+		auto ge = tab.GetTableFromTable("gunEntity");
+		int gunID = ge.GetIntFromTable("entityID");
+		int barrelID = tab.GetIntFromTable("barrelEntityID");
+		int miscID = tab.GetIntFromTable("miscEntityID");
+		int magazineID = tab.GetIntFromTable("magazineEntityID");
+		mgr.AddComponent<DontDraw>(gunID);
+		mgr.AddComponent<DontDraw>(barrelID);
+		mgr.AddComponent<DontDraw>(miscID);
+		mgr.AddComponent<DontDraw>(magazineID);
 		// Here we should reset barrel/misc components to base case
 		auto& bc = mgr.GetComponent<BarrelComponent>(player);
 		bc.type = BarrelComponent::Type::Bullet;

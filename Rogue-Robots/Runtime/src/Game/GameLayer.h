@@ -66,7 +66,6 @@ private:
 	void RenderPlayer(DOG::entity e, bool firstPersonView);
 	void RevivePlayer(DOG::entity player);
 
-	void StopSpectatingPlayer(DOG::entity localPlayer, DOG::entity SpectatedPlayer);
 	void StartSpectatingPlayer(DOG::entity localPlayer, DOG::entity playerToSpectate);
 
 	void RegisterLuaInterfaces();

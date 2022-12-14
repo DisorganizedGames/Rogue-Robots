@@ -138,7 +138,7 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 				bool isSameEntity = index == nextIndex;
 				if (!isSameEntity) 
 				{
-					ChangeSuitDrawLogic(sc.playerBeingSpectated, sc.playerSpectatorQueue[nextIndex]);
+					ChangeSuitDrawLogic(sc.playerBeingSpectated, sc.playerSpectatorQueue[nextIndex], true);
 					DOG::EntityManager::Get().AddComponent<AudioListenerComponent>(sc.playerSpectatorQueue[nextIndex]);
 				}
 				sc.playerBeingSpectated = sc.playerSpectatorQueue[nextIndex];
@@ -251,7 +251,7 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 	{
 		DOG::EntityManager::Get().RemoveComponent<AudioListenerComponent>(sc.playerBeingSpectated);
 
-		ChangeSuitDrawLogic(sc.playerBeingSpectated, sc.playerSpectatorQueue[nextIndex]);
+		ChangeSuitDrawLogic(sc.playerBeingSpectated, sc.playerSpectatorQueue[nextIndex], false);
 		sc.playerName = DOG::EntityManager::Get().GetComponent<DOG::NetworkPlayerComponent>(sc.playerSpectatorQueue[nextIndex]).playerName;
 		sc.playerBeingSpectated = sc.playerSpectatorQueue[nextIndex];
 
@@ -293,7 +293,7 @@ void SpectateSystem::ChangeGunDrawLogic(DOG::entity player, bool drawFirstPerson
 	}
 }
 
-void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw)
+void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw, bool fromDeath)
 {
 	#if defined _DEBUG
 	bool removedSuitFromRendering = false;
@@ -329,7 +329,10 @@ void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity p
 		});
 	// Change first person view gun draw logic
 	ChangeGunDrawLogic(playerToDraw, false);
-	ChangeGunDrawLogic(playerToNotDraw, true);
+	if (!fromDeath)
+	{
+		ChangeGunDrawLogic(playerToNotDraw, true);
+	}
 
 	#if defined _DEBUG
 	ASSERT(removedSuitFromRendering && addedSuitToRendering, "Suits were not updated correctly for rendering.");
