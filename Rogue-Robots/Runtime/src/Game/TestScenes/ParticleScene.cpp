@@ -32,9 +32,9 @@ void ParticleScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 	}
 
 	//Particle system
-	SpawnParticleSystem();
+	//SpawnParticleSystem();
 
-	DOG::ImGuiMenuLayer::RegisterDebugWindow("ParticleSystemMenu", [this](bool& open) { ParticleSystemMenu(open); });
+	//DOG::ImGuiMenuLayer::RegisterDebugWindow("ParticleSystemMenu", [this](bool& open) { ParticleSystemMenu(open); });
 }
 
 ParticleScene::~ParticleScene()

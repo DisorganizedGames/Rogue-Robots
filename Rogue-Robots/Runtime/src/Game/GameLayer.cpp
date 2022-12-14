@@ -55,59 +55,59 @@ GameLayer::GameLayer() noexcept
 		}
 	);
 
-	m_entityManager.RegisterSystem(std::make_unique<ScuffedSceneGraphSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<SetFlashLightToBoneSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<SetGunToBoneSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightMoveSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<HomingMissileTargetingSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<HomingMissileSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<HomingMissileImpacteSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<TurretTargetingSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<TurretShootingSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<TurretProjectileSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<TurretProjectileHitSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<LaserShootSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<LaserBeamSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<LaserBeamVFXSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<LaserBulletCollisionSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<ScuffedSceneGraphSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<SetFlashLightToBoneSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<SetGunToBoneSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightMoveSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<HomingMissileTargetingSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<HomingMissileSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<HomingMissileImpacteSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<TurretTargetingSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<TurretShootingSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<TurretProjectileSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<TurretProjectileHitSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<LaserShootSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<LaserBeamSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<LaserBeamVFXSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<LaserBulletCollisionSystem>());
 
-	m_entityManager.RegisterSystem(std::make_unique<DespawnSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<TimedDestructionSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<PickupLerpAnimationSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<PickupItemInteractionSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<PlayerJumpRefreshSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<DespawnSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<TimedDestructionSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<PickupLerpAnimationSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<PickupItemInteractionSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<PlayerJumpRefreshSystem>());
 
-	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<MVPRenderPickupItemUIText>());
-	m_entityManager.RegisterSystem(std::make_unique<PickUpTranslateToPlayerSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<MVPRenderAmmunitionTextSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<MVPRenderReloadHintTextSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<CleanupItemInteractionSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<CleanupPlayerStateSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<PlayerHit>());
-	m_entityManager.RegisterSystem(std::make_unique<PlaceHolderDeathUISystem>());
-	m_entityManager.RegisterSystem(std::make_unique<SpectateSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<HeartbeatTrackerSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<ReviveSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<UpdateSpectatorQueueSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<GlowStickSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<DeferredSetIgnoreCollisionCheckSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<PlayerUseEquipmentSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<GoalRadarSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<RemoveBulletComponentSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<SetOutlineOnNearbyPickupsSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<MVPRenderPickupItemUIText>());
+	//m_entityManager.RegisterSystem(std::make_unique<PickUpTranslateToPlayerSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<MVPRenderAmmunitionTextSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<MVPRenderReloadHintTextSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<CleanupItemInteractionSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<CleanupPlayerStateSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<PlayerHit>());
+	//m_entityManager.RegisterSystem(std::make_unique<PlaceHolderDeathUISystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<SpectateSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<HeartbeatTrackerSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<ReviveSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<UpdateSpectatorQueueSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<GlowStickSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<DeferredSetIgnoreCollisionCheckSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<PlayerUseEquipmentSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<GoalRadarSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<RemoveBulletComponentSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<SetOutlineOnNearbyPickupsSystem>());
 
-	m_entityManager.RegisterSystem(std::make_unique<WeaponPointLightSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<PlayMusicSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<AmbientSoundSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<SetPointLightDirtySystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<WeaponPointLightSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<PlayMusicSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<AmbientSoundSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<SetPointLightDirtySystem>());
 
-	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
+	//m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
 	m_nrOfPlayers = 1;
 
 	assert(std::filesystem::exists(("Assets/Fonts/Robot Radicals.ttf")));
@@ -207,13 +207,13 @@ void GameLayer::OnUpdate()
 			UIInstance->GetUI<UIIcon>(glowstickID)->Show(0);
 			UIInstance->GetUI<UIIcon>(flashlightID)->Show(0);
 
-			m_timeSpent = 0.0f;
-			UI::Get()->GetUI<DOG::UILabel>(lStartTextID)->SetText(L"Find the Exit!");
+			//m_timeSpent = 0.0f;
+			//UI::Get()->GetUI<DOG::UILabel>(lStartTextID)->SetText(L"Find the Exit!");
 			StartMainScene();
 			break;
 		}
 		case GameState::Playing:
-			if (m_timeSpent >= 0.0f)
+			/*if (m_timeSpent >= 0.0f)
 			{
 				m_timeSpent += Time::DeltaTime<TimeType::Seconds, float>();
 				if (m_timeSpent >= 8.0f)
@@ -229,7 +229,7 @@ void GameLayer::OnUpdate()
 					UI::Get()->GetUI<DOG::UILabel>(lStartTextID)->SetText(L"");
 					m_timeSpent = -1.0f;
 				}
-			}
+			}*/
 
 			UpdateGame();
 			break;

@@ -58,6 +58,10 @@ namespace DOG::gfx
 	class ParticleBackend
 	{
 		struct EmitterTableHandle { u64 handle{ 0 }; };
+
+	public:
+		constexpr static inline u32 S_MAX_EMITTERS = 1024;
+
 	public:
 		ParticleBackend() = delete;
 		ParticleBackend(RenderDevice* rd, GPUGarbageBin* bin, u32 framesInFlight, GlobalEffectData& globEffectData, RGResourceManager* resourceManager, UploadContext* upCtx);
@@ -73,7 +77,6 @@ namespace DOG::gfx
 		void FreeCurrentFrameTable() { m_emitterTable->Free(m_currentTableHandle); };
 
 	private:
-		constexpr static inline u32 S_MAX_EMITTERS = 128;
 
 		std::unique_ptr<GPUTableHostVisible<EmitterTableHandle>> m_emitterTable;
 		EmitterTableHandle m_currentTableHandle;

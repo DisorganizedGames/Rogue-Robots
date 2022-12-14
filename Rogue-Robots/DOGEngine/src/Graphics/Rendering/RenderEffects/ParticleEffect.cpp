@@ -286,7 +286,7 @@ void ParticleEffect::Add(RenderGraph& renderGraph)
 		});	
 
 	// Add Z sorting passes for the particles
-	AddSortPasses(renderGraph);
+	//AddSortPasses(renderGraph);
 
 	renderGraph.AddPass<PassData>("Particle Draw Pass",
 		[this](PassData& passData, RenderGraph::PassBuilder& builder) // Build

@@ -26,8 +26,6 @@ namespace DOG::gfx
 		void DeferredDeletion();
 
 	private:
-		constexpr static inline u32 S_MAX_EMITTERS = 128;
-
 		u32 m_lastEmitter = 0;
 		std::vector<ParticleEmitter> m_emitters;
 

@@ -51,6 +51,7 @@ namespace DOG
 	{
 		while (m_isRunning)
 		{
+			m_particleMeasuring.Tick();
 			Time::Start();
 			MiniProfiler::Update();
 			MINIPROFILE
@@ -112,7 +113,7 @@ namespace DOG
 			LuaMain::GetScriptManager()->RemoveScriptsFromDeferredEntities();
 			m_frontRenderer->PerformDeferredDeletion();
 			PhysicsEngine::FreePhysicsFromDeferredEntities();
-			AudioManager::StopAudioOnDeferredEntities();
+			//AudioManager::StopAudioOnDeferredEntities();
 			EntityManager::Get().DestroyDeferredEntities();
 
 			Time::End();
@@ -237,9 +238,10 @@ namespace DOG
 		m_frontRenderer = std::make_unique<gfx::FrontRenderer>(m_renderer.get());
 
 		AssetManager::Initialize(m_renderer.get());
-		AudioManager::Initialize();
+		//AudioManager::Initialize();
 		PhysicsEngine::Initialize();
 		LuaMain::Initialize();
+		m_particleMeasuring.Initialize();
 
 
 		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); }, false, std::make_pair(Key::LCtrl, Key::V));
@@ -251,7 +253,7 @@ namespace DOG
 		ImGuiMenuLayer::UnRegisterDebugWindow("MiniProfiler");
 		ImGuiMenuLayer::UnRegisterDebugWindow("ApplicationSetting");
 		AssetManager::Destroy();
-		AudioManager::Destroy();
+		//AudioManager::Destroy();
 		
 		::DestroyWindow(Window::GetHandle());
 		//...

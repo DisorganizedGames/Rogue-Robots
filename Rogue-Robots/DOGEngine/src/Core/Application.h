@@ -1,8 +1,11 @@
 #pragma once
 #include "../EventSystem/LayerStack.h"
 #include "CoreUtils.h"
+#include "../Testing/ParticleMeasuring.h"
+
 namespace DOG
 {
+
 	namespace gfx { class Renderer; class FrontRenderer; }
 
 	class ApplicationManager
@@ -44,6 +47,8 @@ namespace DOG
 
 		std::unique_ptr<gfx::Renderer> m_renderer;
 		std::unique_ptr<gfx::FrontRenderer> m_frontRenderer;
+
+		ParticleMeasuring m_particleMeasuring;
 	};
 }
 

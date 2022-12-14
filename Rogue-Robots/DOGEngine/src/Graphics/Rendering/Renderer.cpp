@@ -1473,7 +1473,7 @@ namespace DOG::gfx
 
 
 
-
+		
 		m_particleBackend->AddEffect(*m_rg);
 
 		m_heartbeatEffect->Add(rg);

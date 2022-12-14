@@ -8,7 +8,7 @@ using namespace gfx;
 
 ParticleManager::ParticleManager()
 {
-	m_emitters.resize(S_MAX_EMITTERS);
+	m_emitters.resize(ParticleBackend::S_MAX_EMITTERS);
 }
 
 const std::vector<ParticleEmitter>& ParticleManager::GatherEmitters()
@@ -60,7 +60,7 @@ void ParticleManager::DeferredDeletion()
 u32 ParticleManager::GetFreeEmitter() noexcept
 {
 	auto idx = m_lastEmitter++;
-	m_lastEmitter = m_lastEmitter % S_MAX_EMITTERS;
+	m_lastEmitter = m_lastEmitter % ParticleBackend::S_MAX_EMITTERS;
 	return idx;
 }
 
