@@ -608,7 +608,7 @@ public:
 	void OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorComponent& sc);
 	DOG::entity GetQueueIndexForSpectatedPlayer(DOG::entity player, const std::vector<DOG::entity>& players);
 	void ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity playerToNotDraw);
-	void ChangeGunDrawLogic(DOG::entity player, bool drawFirstPersonViewGun, bool drawModelGun);
+	void ChangeGunDrawLogic(DOG::entity player, bool drawFirstPersonViewGun);
 };
 
 class ReviveSystem : public DOG::ISystem

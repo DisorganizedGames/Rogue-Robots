@@ -63,7 +63,7 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 				if (dist > safeZone)
 				{
 					//Spawn enemies
-					m_spawnAgents(EntityTypes::Scorpio, m_sceneType, Vector3(pos.x, pos.y + 2.5f, pos.z), (u8)(enemyNrCounter), 0.5f);
+					//m_spawnAgents(EntityTypes::Scorpio, m_sceneType, Vector3(pos.x, pos.y + 2.5f, pos.z), (u8)(enemyNrCounter), 0.5f);
 					++enemyNrCounter;
 					if (enemyNrCounter > maxEnemiesPerSpawn)
 					{
@@ -73,7 +73,7 @@ void PCGLevelScene::SetUpScene(std::vector<std::function<std::vector<DOG::entity
 			}
 
 			//Spawn items
-			ItemManager::Get().CreateItem(EntityTypes(((u32)itemCounter) % (u32(EntityTypes::Default) * itemSpawnModifier)), Vector3(pos.x, pos.y + 1.0f, pos.z));
+			ItemManager::Get().CreateItem(EntityTypes::Reviver, Vector3(pos.x, pos.y + 1.0f, pos.z));
 			++enemyCounter;
 			++itemCounter;
 		});

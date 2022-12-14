@@ -64,30 +64,13 @@ void NetCode::OnStartup()
 			{
 				m_entityManager.AddComponent<OnlinePlayer>(id);
 				m_entityManager.RemoveComponent<ThisPlayer>(id);
-
-				EntityManager::Get().Collect<DontDraw, ChildComponent>().Do([&](entity subEntity, DontDraw&, ChildComponent& parentCompany)
-					{
-						if (parentCompany.parent == id)
-						{
-							m_entityManager.RemoveComponent<DontDraw>(subEntity);
-						}
-					});
-				
 				m_entityManager.RemoveComponent<AudioListenerComponent>(id);
 			}
-
 		});
 	EntityManager::Get().Collect<NetworkPlayerComponent, TransformComponent, OnlinePlayer>().Do([&](entity id, NetworkPlayerComponent& networkC, TransformComponent&, OnlinePlayer&)
 		{
 			if (networkC.playerId == m_inputTcp.playerId)
 			{
-				EntityManager::Get().Collect<ChildComponent>().Do([&](entity subEntity, ChildComponent& parentC)
-					{
-						if (parentC.parent == id)
-						{
-							m_entityManager.AddComponent<DontDraw>(subEntity); // Dont draw player model
-						}
-					});
 				m_entityManager.AddComponent<ThisPlayer>(id);
 
 				//LuaMain::GetScriptManager()->AddScript(id, "Gun.lua");
@@ -95,8 +78,8 @@ void NetCode::OnStartup()
 				LuaTable tab(scriptData.scriptTable, true);
 				auto ge = tab.GetTableFromTable("gunEntity");
 				int gunID = ge.GetIntFromTable("entityID");
-				m_entityManager.AddOrReplaceComponent<ThisPlayerWeapon>(gunID);
 
+				m_entityManager.AddOrReplaceComponent<ThisPlayerWeapon>(gunID);
 				int barrelID = tab.GetIntFromTable("barrelEntityID");
 				m_entityManager.AddOrReplaceComponent<ThisPlayerWeapon>(barrelID);
 				int miscID = tab.GetIntFromTable("miscEntityID");
@@ -111,32 +94,42 @@ void NetCode::OnStartup()
 			}
 		});
 
-	EntityManager::Get().Collect<NetworkPlayerComponent>().Do([&](entity id, NetworkPlayerComponent& networkC)
-		{;
-			if (networkC.playerId == m_inputTcp.playerId)
+	// Render logic for LocalPlayer
+	{
+		EntityManager::Get().Collect<ChildToBoneComponent, ModelComponent>().Do([&](entity gunModel, ChildToBoneComponent& childToBone, ModelComponent&)
 			{
-				EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity e, ModelComponent&, ChildToBoneComponent& childToBone)
-					{
-						if (EntityManager::Get().HasComponent<ThisPlayer>(childToBone.boneParent))
-							m_entityManager.AddOrReplaceComponent<DontDraw>(e);
-						else
-							m_entityManager.RemoveComponentIfExists<DontDraw>(e);
-					});
-			}
-			else
+				if (EntityManager::Get().HasComponent<ThisPlayer>(childToBone.boneParent))
+					m_entityManager.AddOrReplaceComponent<DontDraw>(gunModel);
+				else
+					m_entityManager.RemoveComponentIfExists<DontDraw>(gunModel);
+			});
+
+		EntityManager::Get().Collect<ChildComponent, ModelComponent>().Do([&](entity playerModel, ChildComponent& cc, ModelComponent&)
+			{
+				if (EntityManager::Get().HasComponent<ThisPlayer>(cc.parent))
+					m_entityManager.AddOrReplaceComponent<DontDraw>(playerModel);
+				else
+					m_entityManager.RemoveComponentIfExists<DontDraw>(playerModel);
+			});
+	}
+
+	// Render logic for Online players first person view gun
+	EntityManager::Get().Collect<NetworkPlayerComponent>().Do([&](entity id, NetworkPlayerComponent&)
+		{
+			if (!EntityManager::Get().HasComponent<ThisPlayer>(id))
 			{
 				auto scriptData = LuaMain::GetScriptManager()->GetScript(id, "Gun.lua");
 				LuaTable tab(scriptData.scriptTable, true);
 				auto ge = tab.GetTableFromTable("gunEntity");
 
 				int gunID = ge.GetIntFromTable("entityID");
-				m_entityManager.AddOrReplaceComponent<DontDraw>(gunID);
+				m_entityManager.AddComponent<DontDraw>(gunID);
 				int barrelID = tab.GetIntFromTable("barrelEntityID");
-				m_entityManager.AddOrReplaceComponent<DontDraw>(barrelID);
+				m_entityManager.AddComponent<DontDraw>(barrelID);
 				int miscID = tab.GetIntFromTable("miscEntityID");
-				m_entityManager.AddOrReplaceComponent<DontDraw>(miscID);
+				m_entityManager.AddComponent<DontDraw>(miscID);
 				int magazineID = tab.GetIntFromTable("magazineEntityID");
-				m_entityManager.AddOrReplaceComponent<DontDraw>(magazineID);
+				m_entityManager.AddComponent<DontDraw>(magazineID);
 			}
 		});
 	

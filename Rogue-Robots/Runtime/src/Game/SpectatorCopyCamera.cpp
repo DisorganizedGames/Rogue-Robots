@@ -22,7 +22,7 @@ void SpectatorCopyCamera::OnUpdate(entity e, PlayerControllerComponent& player)
 	auto& spectatedPlayerControllerComponent = mgr.GetComponent<PlayerControllerComponent>(playerBeingSpectated);
 	auto& spectatedCameraComponent = mgr.GetComponent<CameraComponent>(spectatedPlayerControllerComponent.cameraEntity);
 	auto& spectatedCameraTransform = mgr.GetComponent<TransformComponent>(spectatedPlayerControllerComponent.cameraEntity);
-	DOG::EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity gunModelNotFPS, ModelComponent&, ChildToBoneComponent& childToBone)
+	/*DOG::EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity gunModelNotFPS, ModelComponent&, ChildToBoneComponent& childToBone)
 		{
 			if (childToBone.boneParent == playerBeingSpectated)
 			{
@@ -45,7 +45,7 @@ void SpectatorCopyCamera::OnUpdate(entity e, PlayerControllerComponent& player)
 					EntityManager::Get().RemoveComponentIfExists<DontDraw>(magazineID);
 				}
 			}
-		});
+		});*/
 	//The player is dead and so MUST have a debug camera (should be spectator camera) assigned, so:
 	entity spectatorCamera = player.spectatorCamera;
 	auto& spectatorCameraComponent = mgr.GetComponent<CameraComponent>(spectatorCamera);

@@ -130,15 +130,14 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 			const bool spectatedPlayerIsDead = sc.playerBeingSpectated == sc.playerSpectatorQueue[i];
 			if (spectatedPlayerIsDead)
 			{
-				DOG::EntityManager::Get().RemoveComponent<AudioListenerComponent>(sc.playerBeingSpectated);
 				//Not eligible for spectating anymore, since that player has died:
+				DOG::EntityManager::Get().RemoveComponent<AudioListenerComponent>(sc.playerBeingSpectated);
+
 				const u32 index = GetQueueIndexForSpectatedPlayer(sc.playerBeingSpectated, sc.playerSpectatorQueue);
 				const u32 nextIndex = (index + 1) % sc.playerSpectatorQueue.size();
 				bool isSameEntity = index == nextIndex;
 				if (!isSameEntity) 
 				{
-					ChangeGunDrawLogic(sc.playerBeingSpectated, false, true);
-					ChangeGunDrawLogic(sc.playerSpectatorQueue[nextIndex], true, false);
 					ChangeSuitDrawLogic(sc.playerBeingSpectated, sc.playerSpectatorQueue[nextIndex]);
 					DOG::EntityManager::Get().AddComponent<AudioListenerComponent>(sc.playerSpectatorQueue[nextIndex]);
 				}
@@ -252,8 +251,6 @@ void SpectateSystem::OnUpdate(DOG::entity player, DOG::ThisPlayer&, SpectatorCom
 	{
 		DOG::EntityManager::Get().RemoveComponent<AudioListenerComponent>(sc.playerBeingSpectated);
 
-		ChangeGunDrawLogic(sc.playerBeingSpectated, false, true);
-		ChangeGunDrawLogic(sc.playerSpectatorQueue[nextIndex], true, false);
 		ChangeSuitDrawLogic(sc.playerBeingSpectated, sc.playerSpectatorQueue[nextIndex]);
 		sc.playerName = DOG::EntityManager::Get().GetComponent<DOG::NetworkPlayerComponent>(sc.playerSpectatorQueue[nextIndex]).playerName;
 		sc.playerBeingSpectated = sc.playerSpectatorQueue[nextIndex];
@@ -269,48 +266,30 @@ u32 SpectateSystem::GetQueueIndexForSpectatedPlayer(DOG::entity player, const st
 	return (u32)(it - players.begin());
 }
 
-void SpectateSystem::ChangeGunDrawLogic(DOG::entity player, bool drawFirstPersonViewGun, bool drawModelGun)
+void SpectateSystem::ChangeGunDrawLogic(DOG::entity player, bool drawFirstPersonViewGun)
 {
-	auto& em = DOG::EntityManager::Get();
-	
-	// Draw Logic FirstPersonView Gun
-	if(em.HasComponent<ScriptComponent>(player))
+	auto scriptData = LuaMain::GetScriptManager()->GetScript(player, "Gun.lua");
+	LuaTable tab(scriptData.scriptTable, true);
+	auto ge = tab.GetTableFromTable("gunEntity");
+
+	int gunID = ge.GetIntFromTable("entityID");
+	int barrelID = tab.GetIntFromTable("barrelEntityID");
+	int miscID = tab.GetIntFromTable("miscEntityID");
+	int magazineID = tab.GetIntFromTable("magazineEntityID");
+
+	if (drawFirstPersonViewGun)
 	{
-		auto scriptData = LuaMain::GetScriptManager()->GetScript(player, "Gun.lua");
-		LuaTable tab(scriptData.scriptTable, true);
-		auto ge = tab.GetTableFromTable("gunEntity");
-
-		int gunID = ge.GetIntFromTable("entityID");
-		int barrelID = tab.GetIntFromTable("barrelEntityID");
-		int miscID = tab.GetIntFromTable("miscEntityID");
-		int magazineID = tab.GetIntFromTable("magazineEntityID");
-
-		if (drawFirstPersonViewGun)
-		{
-			em.RemoveComponent<DontDraw>(gunID);
-			em.RemoveComponent<DontDraw>(barrelID);
-			em.RemoveComponent<DontDraw>(miscID);
-			em.RemoveComponent<DontDraw>(magazineID);
-		}
-		else
-		{
-			em.AddComponent<DontDraw>(gunID);
-			em.AddComponent<DontDraw>(barrelID);
-			em.AddComponent<DontDraw>(miscID);
-			em.AddComponent<DontDraw>(magazineID);
-		}
+		DOG::EntityManager::Get().RemoveComponent<DontDraw>(gunID);
+		DOG::EntityManager::Get().RemoveComponent<DontDraw>(barrelID);
+		DOG::EntityManager::Get().RemoveComponent<DontDraw>(miscID);
+		DOG::EntityManager::Get().RemoveComponent<DontDraw>(magazineID);
 	}
-
-	// Draw Logic FirstPersonView Gun
+	else
 	{
-		EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
-			{
-				if (bone.boneParent == player)
-					if (drawModelGun)
-						DOG::EntityManager::Get().RemoveComponent<DOG::DontDraw>(modelGun);
-					else
-						DOG::EntityManager::Get().AddComponent<DOG::DontDraw>(modelGun);
-			});
+		DOG::EntityManager::Get().AddComponent<DontDraw>(gunID);
+		DOG::EntityManager::Get().AddComponent<DontDraw>(barrelID);
+		DOG::EntityManager::Get().AddComponent<DontDraw>(miscID);
+		DOG::EntityManager::Get().AddComponent<DontDraw>(magazineID);
 	}
 }
 
@@ -320,8 +299,7 @@ void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity p
 	bool removedSuitFromRendering = false;
 	bool addedSuitToRendering = false;
 	#endif
-
-	DOG::EntityManager::Get().Collect<ChildComponent>().Do([&](DOG::entity playerModel, ChildComponent& cc)
+	DOG::EntityManager::Get().Collect<ChildComponent, ModelComponent>().Do([&](DOG::entity playerModel, ChildComponent& cc, ModelComponent&)
 		{
 			if (cc.parent == playerToDraw)
 			{
@@ -340,6 +318,19 @@ void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity p
 				#endif
 			}
 		});
+
+	// Change gun draw logic
+	DOG::EntityManager::Get().Collect<ChildToBoneComponent, ModelComponent>().Do([&](entity modelGun, ChildToBoneComponent& bone, ModelComponent&)
+		{
+			if (bone.boneParent == playerToDraw)
+				DOG::EntityManager::Get().RemoveComponent<DOG::DontDraw>(modelGun);
+			else if (bone.boneParent == playerToNotDraw)
+				DOG::EntityManager::Get().AddComponent<DOG::DontDraw>(modelGun);
+		});
+	// Change first person view gun draw logic
+	ChangeGunDrawLogic(playerToDraw, false);
+	ChangeGunDrawLogic(playerToNotDraw, true);
+
 	#if defined _DEBUG
 	ASSERT(removedSuitFromRendering && addedSuitToRendering, "Suits were not updated correctly for rendering.");
 	#endif
@@ -570,8 +561,7 @@ void ReviveSystem::OnUpdate(DOG::entity player, InputController& inputC, PlayerA
 		{
 			mgr.GetComponent<AnimationComponent>(closestDeadPlayer).SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping | AnimationFlag::ResetPrio); // No dedicated revive animation for now
 			mgr.GetComponent<AnimationComponent>(closestDeadPlayer).SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio);
-			//auto spectatedPlayer = mgr.GetComponent<SpectatorComponent>(closestDeadPlayer).playerBeingSpectated;
-			//ChangeSuitDrawLogic(spectatedPlayer, closestDeadPlayer);
+			
 			RevivePlayer(closestDeadPlayer);
 		}
 		if (mgr.HasComponent<ThisPlayer>(player))
@@ -657,55 +647,37 @@ void ReviveSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity pla
 	bool addedSuitToRendering = false;
 	#endif
 
-	DOG::EntityManager::Get().Collect<ChildComponent>().Do([&](DOG::entity playerModel, ChildComponent& cc)
+	DOG::EntityManager::Get().Collect<ChildComponent, ModelComponent>().Do([&](DOG::entity playerModel, ChildComponent& cc, ModelComponent&)
 		{
-			auto& em = DOG::EntityManager::Get();
 			if (cc.parent == playerToDraw)
 			{
-				//std::cout << "deadPlayer" << playerToDraw << std::endl;
-				
-				//This means that playerModel is the mesh model (suit), and it should be rendered again:
-				em.RemoveComponentIfExists<DOG::DontDraw>(playerModel);
 				#if defined _DEBUG
 				addedSuitToRendering = true;
 				#endif
-				EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
+				//This means that playerModel is the mesh model (suit), and it should be rendered again:
+				DOG::EntityManager::Get().RemoveComponent<DOG::DontDraw>(playerModel);
+				DOG::EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
 					{
-						//std::cout << "boneParent" << bone.boneParent << std::endl;
 						if (bone.boneParent == playerToDraw)
-							em.RemoveComponentIfExists<DOG::DontDraw>(modelGun);
+							DOG::EntityManager::Get().RemoveComponent<DOG::DontDraw>(modelGun);
 					});
-
-				//std::cout << "ChangeSuitDrawLogic  playerToDraw  BeforeAddOrReplaceScript"<< std::endl;
-				auto scriptData = LuaMain::GetScriptManager()->GetScript(playerToDraw, "Gun.lua");
-				LuaTable tab(scriptData.scriptTable, true);
-				auto ge = tab.GetTableFromTable("gunEntity");
-				int gunID = ge.GetIntFromTable("entityID");
-				em.AddOrReplaceComponent<DontDraw>(gunID);
-				int barrelID = tab.GetIntFromTable("barrelEntityID");
-				em.AddOrReplaceComponent<DontDraw>(barrelID);
-				int miscID = tab.GetIntFromTable("miscEntityID");
-				em.AddOrReplaceComponent<DontDraw>(miscID);
-				int magazineID = tab.GetIntFromTable("magazineEntityID");
-				em.AddOrReplaceComponent<DontDraw>(magazineID);
 			}
 			else if (cc.parent == playerToNotDraw)
 			{
 				//std::cout << "ChangeSuitDrawLogic Before player NOT to draw" << std::endl;
 				//This means that playerModel is the spectated players' armor/suit, and it should not be eligible for rendering anymore:
-				DOG::EntityManager::Get().AddOrReplaceComponent<DOG::DontDraw>(playerModel);
 				#if defined _DEBUG
 				removedSuitFromRendering = true;
 				#endif
+				DOG::EntityManager::Get().AddComponent<DOG::DontDraw>(playerModel);
 				//std::cout << std::endl << "playerToDraw" << playerToDraw << std::endl;
-				EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
+				DOG::EntityManager::Get().Collect<ModelComponent, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, ChildToBoneComponent& bone)
 					{
 						//std::cout << std::endl << "boneParent" << bone.boneParent << std::endl;
 						if (bone.boneParent == playerToNotDraw)
-							DOG::EntityManager::Get().AddOrReplaceComponent<DOG::DontDraw>(modelGun);
+							DOG::EntityManager::Get().AddComponent<DOG::DontDraw>(modelGun);
 					});
 
-				//std::cout << "ChangeSuitDrawLogic  playerNotToDraw  BeforeRemoveIfExistsScript" << std::endl;
 			}
 		});
 		#if defined _DEBUG
