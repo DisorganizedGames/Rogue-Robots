@@ -9,6 +9,8 @@ public:
 		std::function<Vector2u(void)> getAspectRatio
 );
 	static void SettGraphicsSettings(const DOG::GraphicsSettings& settings);
+	static bool IsOpen();
+	static void Close();
 private:
 
 	static void UpdateResolutions();

@@ -67,7 +67,7 @@ void SettingsMenu::Initialize(
 		auto vsyncCheckBoxLabel = instance->Create<DOG::UILabel>(s_vsyncLabelID, std::wstring(L"v-sync"), x + 2 * checkBoxSize, y, 6 * textSize, textSize, 20.f, DWRITE_TEXT_ALIGNMENT_LEADING);
 		auto vsyncCheckBox = instance->Create<DOG::UICheckBox>(s_vsyncCheckBoxID,
 			x, y, checkBoxSize, checkBoxSize, color.x, color.y, color.z,
-			[](bool checked) { s_graphicsSettings.vSync = checked; s_setGraphicsSettings(s_graphicsSettings); });
+			[](bool checked) { s_graphicsSettings.vSync = checked; });
 		instance->AddUIElementToScene(optionsID, std::move(vsyncCheckBoxLabel));
 		instance->AddUIElementToScene(optionsID, std::move(vsyncCheckBox));
 
@@ -80,7 +80,7 @@ void SettingsMenu::Initialize(
 		auto shadowMappingCheckBoxLabel = instance->Create<DOG::UILabel>(s_shadowMappingLabelID, std::wstring(L"shadow mapping"), x + 2 * checkBoxSize, y, 13 * textSize, textSize, 20.f, DWRITE_TEXT_ALIGNMENT_LEADING);
 		auto shadowMappingCheckBox = instance->Create<DOG::UICheckBox>(s_shadowMappingCheckBoxID,
 			x, y, checkBoxSize, checkBoxSize, color.x, color.y, color.z,
-			[](bool checked) { s_graphicsSettings.shadowMapping = checked; s_setGraphicsSettings(s_graphicsSettings); });
+			[](bool checked) { s_graphicsSettings.shadowMapping = checked; });
 		instance->AddUIElementToScene(optionsID, std::move(shadowMappingCheckBoxLabel));
 		instance->AddUIElementToScene(optionsID, std::move(shadowMappingCheckBox));
 
@@ -89,7 +89,7 @@ void SettingsMenu::Initialize(
 		auto ssaoCheckBoxLabel = instance->Create<DOG::UILabel>(s_ssaoLabelID, std::wstring(L"ssao"), x + 2 * checkBoxSize, y, 4 * textSize, textSize, 20.f, DWRITE_TEXT_ALIGNMENT_LEADING);
 		auto ssaoCheckBox = instance->Create<DOG::UICheckBox>(s_ssaoCheckBoxID,
 			x, y, checkBoxSize, checkBoxSize, color.x, color.y, color.z,
-			[](bool checked) { s_graphicsSettings.ssao = checked; s_setGraphicsSettings(s_graphicsSettings); });
+			[](bool checked) { s_graphicsSettings.ssao = checked; });
 		instance->AddUIElementToScene(optionsID, std::move(ssaoCheckBoxLabel));
 		instance->AddUIElementToScene(optionsID, std::move(ssaoCheckBox));
 
@@ -98,7 +98,7 @@ void SettingsMenu::Initialize(
 		auto bloomCheckBoxLabel = instance->Create<DOG::UILabel>(s_bloomLabelID, std::wstring(L"bloom"), x + 2 * checkBoxSize, y, 10 * textSize, textSize, 20.f, DWRITE_TEXT_ALIGNMENT_LEADING);
 		auto bloomCheckBox = instance->Create<DOG::UICheckBox>(s_bloomCheckBoxID,
 			x, y, checkBoxSize, checkBoxSize, color.x, color.y, color.z,
-			[](bool checked) { s_graphicsSettings.bloom = checked; s_setGraphicsSettings(s_graphicsSettings); });
+			[](bool checked) { s_graphicsSettings.bloom = checked; });
 		instance->AddUIElementToScene(optionsID, std::move(bloomCheckBoxLabel));
 		instance->AddUIElementToScene(optionsID, std::move(bloomCheckBox));
 
@@ -205,6 +205,17 @@ void SettingsMenu::SettGraphicsSettings(const DOG::GraphicsSettings& settings)
 
 	UI::Get()->GetUI<UICarousel>(s_renderResCarouselID)->SendStrings(resStr);
 	UI::Get()->GetUI<UICarousel>(s_renderResCarouselID)->SetIndex(static_cast<UINT>(index));
+}
+
+bool SettingsMenu::IsOpen()
+{
+	return UI::Get()->GetActiveUIScene() == optionsID;
+}
+
+void SettingsMenu::Close()
+{
+	s_setGraphicsSettings(s_graphicsSettings);
+	UI::Get()->ChangeUIscene(menuID);
 }
 
 void SettingsMenu::UpdateResolutions()

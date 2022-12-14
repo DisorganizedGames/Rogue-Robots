@@ -93,6 +93,14 @@ void RuntimeApplication::OnEvent(IEvent& event) noexcept
 					lockMouse = !lockMouse;
 					event.StopPropagation();
 				}
+				if (EVENT(KeyPressedEvent).key == Key::Esc)
+				{
+					if (SettingsMenu::IsOpen())
+					{
+						SettingsMenu::Close();
+						event.StopPropagation();
+					}
+				}
 				break;
 			}
 		}
