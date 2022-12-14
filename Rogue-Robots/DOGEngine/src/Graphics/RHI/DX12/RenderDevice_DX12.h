@@ -341,6 +341,9 @@ namespace DOG::gfx
 		//Ui
 		std::optional<DX12DescriptorChunk> m_d2dReservedDescriptor;
 		GPUTotalMemoryInfo m_totalMemoryInfo;
+
+		MemoryPool m_compactUploadPool;
+
 	};
 }
 

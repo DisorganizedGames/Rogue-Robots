@@ -60,6 +60,14 @@ namespace DOG::gfx
 		InitRootsig();
 
 		InitializeD11(m_device.Get(), GetQueue(QueueType::Graphics));
+
+		MemoryPoolDesc mpd{};
+		mpd.heapType = D3D12_HEAP_TYPE_UPLOAD;
+		mpd.heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
+		mpd.size = 100'000'000;
+		mpd.minBlocks = 1;
+		mpd.maxBlocks = 1;
+		m_compactUploadPool = CreateMemoryPool(mpd);
 	}
 
 	RenderDevice_DX12::~RenderDevice_DX12()
@@ -84,12 +92,12 @@ namespace DOG::gfx
 			}
 		}
 
-
 		if (m_reservedDescriptor)
 			m_descriptorMgr->free(&(*m_reservedDescriptor));
 		
 		if (m_d2dReservedDescriptor)
 			m_descriptorMgr->free(&(*m_d2dReservedDescriptor));
+
 
 		DestroyD11();
 	}
@@ -152,6 +160,14 @@ namespace DOG::gfx
 
 	Buffer RenderDevice_DX12::CreateBuffer(const BufferDesc& desc, MemoryPool pool)
 	{
+		// Override with compact upload pool
+		bool usingCompact{ false };
+		if (desc.memType == MemoryType::Upload)
+		{
+			pool = m_compactUploadPool;
+			usingCompact = true;
+		}
+
 		HRESULT hr{ S_OK };
 
 		D3D12MA::ALLOCATION_DESC ad{};
@@ -161,6 +177,8 @@ namespace DOG::gfx
 			auto poolStorage = HandleAllocator::TryGet(m_memoryPools, HandleAllocator::GetSlot(pool.handle));
 			ad.CustomPool = poolStorage.pool.Get();
 			ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT;
+			if (usingCompact)
+				ad.Flags |= D3D12MA::ALLOCATION_FLAG_NEVER_ALLOCATE;
 			//ad.Flags |= D3D12MA::ALLOCATION_FLAG_NEVER_ALLOCATE;		// If we want tighter constraints, we can enable this
 			assert(ad.HeapType == poolStorage.desc.heapType);
 		}
@@ -523,6 +541,8 @@ namespace DOG::gfx
 		pd.HeapFlags = desc.heapFlags;
 		pd.HeapProperties.Type = desc.heapType;
 		pd.BlockSize = desc.size;
+		pd.MaxBlockCount = desc.minBlocks;
+		pd.MinBlockCount = desc.maxBlocks;
 		HRESULT hr{ S_OK };
 		hr = m_dma->CreatePool(&pd, pool.GetAddressOf());
 		HR_VFY(hr);

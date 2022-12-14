@@ -116,6 +116,7 @@ namespace DOG::gfx
 
 		// multiple of curr loaded mixamo skeleton
 		m_dynConstantsAnimated = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * 2);
+		assert(m_shadowMapCapacity == 4);
 		m_dynConstantsAnimatedShadows = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * m_shadowMapCapacity * 2);
 		m_cmdl = m_rd->AllocateCommandList();
 
@@ -1636,7 +1637,7 @@ namespace DOG::gfx
 		m_singleSidedShadowDraws.resize(requestedSettings.shadowMapCapacity);
 		m_doubleSidedShadowDraws.resize(requestedSettings.shadowMapCapacity);
 
-		m_dynConstantsAnimatedShadows = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * m_shadowMapCapacity * S_MAX_FIF);
+		//m_dynConstantsAnimatedShadows = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * m_shadowMapCapacity * S_MAX_FIF);
 
 
 		m_graphicsSettings = requestedSettings;
@@ -1736,7 +1737,7 @@ namespace DOG::gfx
 
 			if (ImGui::Begin("GPU Memory Statistics: Total", &open))
 			{
-				auto& info = m_rd->GetTotalMemoryInfo().heap[1];
+				auto& info = m_rd->GetTotalMemoryInfo().heap[0];
 				ImGui::Text("Used allocations: %f (Mb)", info.allocationBytes / 1048576.f);
 				ImGui::Text("Memory allocated: %f (Mb)", info.blockBytes / 1048576.f);
 				ImGui::Text("Smallest allocation: %f (Mb)", info.smallestAllocation / 1048576.f);
