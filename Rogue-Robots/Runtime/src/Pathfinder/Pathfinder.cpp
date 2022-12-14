@@ -1,7 +1,7 @@
 #include "Pathfinder.h"
 #include <limits>
 #include <unordered_map>
-#include "Game/PcgLevelLoader.h"
+#include "Game/PCG/PcgLevelLoader.h"
 #include "PathfinderSystems.h"
 #include "Game/AgentManager/AgentManager.h"
 

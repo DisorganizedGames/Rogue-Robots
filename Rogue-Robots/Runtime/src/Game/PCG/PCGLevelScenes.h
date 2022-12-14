@@ -1,6 +1,6 @@
 #pragma once
 #include <DOGEngine.h>
-#include "Scene.h"
+#include "../Scene.h"
 
 class PCGLevelScene : public Scene
 {

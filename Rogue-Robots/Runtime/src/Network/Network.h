@@ -47,7 +47,7 @@ struct UdpReturnData
 struct TcpHeader
 {
 	i8 playerId = 0;
-	u32 sizeOfPayload = 0;
+	u16 sizeOfPayload = 0;
 	u16 nrOfNetTransform = 0;
 	u16 nrOfChangedAgentsHp = 0;
 	u16 nrOfCreateAndDestroy = 0;
@@ -71,4 +71,7 @@ struct LobbyData
 	u8 nrOfPlayersConnected = 1;
 	bool playersSlotConnected[MAX_PLAYER_COUNT] = {true, false, false, false};
 	u16 levelIndex = 0;
+	char data[4096];
+	u32 levelSize = 0;
+	u32 levelDataIndex = 0;
 };

@@ -6,10 +6,11 @@ namespace pcgBlock
 }
 namespace pcgLevelNames
 {
-	constexpr const char* oldDefault = "..\\Offline-Tools\\PCG\\showOff_generatedLevel.txt";
-	constexpr const char* tunnels = "..\\Offline-Tools\\PCG\\Tunnels_generatedLevel.txt";
-	constexpr const uint32_t nrLevels = 9;
+	constexpr const char* oldDefault = "Assets\\Levels\\showOff_generatedLevel.txt";
+	constexpr const char* tunnels = "Assets\\Levels\\Tunnels_generatedLevel.txt";
+	constexpr const uint32_t nrLevels = 10;
 	constexpr const char pcgLevels[nrLevels][128] = {
+		"Generate.txt",
 		"Cave.txt",
 		"Bridge.txt",
 		"Tunnels.txt",

@@ -26,6 +26,7 @@ extern UINT buffID;
 extern UINT playerListID, playerListJoinID;
 extern UINT lAcknowledgementsID, lAcknowledgementsTextID;
 extern UINT ipBarID;
+extern UINT bpLobbyID;
 
 namespace DOG
 {
@@ -142,6 +143,7 @@ namespace DOG
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
          //void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void OnEvent(IEvent& event) override final;
+         void Show(bool mode);
          ~UIButton();
       private:
          D2D_POINT_2F m_pos;
@@ -151,6 +153,7 @@ namespace DOG
          std::function<void(void)> m_callback;
          ComPtr<IDWriteTextFormat> m_format;
          ComPtr<ID2D1SolidColorBrush> m_brush;
+         bool m_show;
    };
 
    

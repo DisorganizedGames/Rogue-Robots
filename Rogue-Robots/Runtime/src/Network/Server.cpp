@@ -30,6 +30,7 @@ Server::Server()
 		std::cout << "Server: Failed to start WSA on server, ErrorCode: " << check << std::endl;
 	}
 	m_reciveConnections = true;
+	m_enablePlay = 0;
 }
 
 Server::~Server()
@@ -169,6 +170,9 @@ void Server::ServerReciveConnectionsTCP(SOCKET listenSocket)
 					send(clientSocket, inputSend, sizeof(int), 0);
 					m_playerIds.erase(m_playerIds.begin());
 
+					m_enablePlay = 2;
+					DOG::UI::Get()->GetUI<DOG::UIButton>(bpLobbyID)->Show(false);
+
 					//store client socket
 					clientPoll.fd = clientSocket;
 					clientPoll.events = POLLRDNORM;
@@ -214,6 +218,8 @@ void Server::ServerPollTCP()
 	u16 bufferReciveSize = 0;
 	char sendBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
 	char reciveBuffer[SEND_AND_RECIVE_BUFFER_SIZE];
+	if (m_lobbyData.levelIndex == 0)
+		ReadInGeneratedLevel();
 
 	do {
 		QueryPerformanceCounter(&tickStartTime);
@@ -349,7 +355,19 @@ void Server::ServerPollTCP()
 			if (m_lobbyStatus)
 			{
 				m_lobbyData.nrOfPlayersConnected = (i8)m_holdPlayerIds.size();
+				if (m_lobbyData.levelSize < m_lobbyData.levelDataIndex)
+				{
+					if (m_enablePlay > 0)
+						m_enablePlay--;
+					if(m_enablePlay == 0)
+						DOG::UI::Get()->GetUI<DOG::UIButton>(bpLobbyID)->Show(true);
+					m_lobbyData.levelDataIndex = 0;
+				}
+				memset(m_lobbyData.data, '\0', 4096);
+				memcpy(&m_lobbyData.data, m_level + m_lobbyData.levelDataIndex, 4096);
+				
 				memcpy(sendBuffer + bufferSendSize, (char*)&m_lobbyData, sizeof(LobbyData));
+				m_lobbyData.levelDataIndex += 4096;
 				bufferSendSize += sizeof(LobbyData);
 			}
 			sendHeader.sizeOfPayload = bufferSendSize;
@@ -590,4 +608,19 @@ void Server::StopReceiving()
 void Server::SetLevelIndex(u16 levelIndex)
 {
 	m_lobbyData.levelIndex = levelIndex;
+}
+
+void Server::ReadInGeneratedLevel()
+{
+	std::string line;
+	std::ifstream inputFile("Assets\\Levels\\Generate.txt");
+
+	
+	if (inputFile.is_open())
+	{
+		std::getline(inputFile, line, '\0');
+		memset(m_level, '\0', 4096);
+		memcpy(m_level, line.c_str(), line.length());
+		m_lobbyData.levelSize = (u32)line.length();
+	}
 }

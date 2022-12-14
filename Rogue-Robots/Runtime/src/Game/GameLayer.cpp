@@ -2,13 +2,13 @@
 #include "GameLayer.h"
 #include "TestScene.h"
 #include "OldDefaultScene.h"
-#include "PCGLevelScenes.h"
+#include "PCG/PCGLevelScenes.h"
 #include "LightScene.h"
 #include "SimpleAnimationSystems.h"
 #include "ExplosionSystems.h"
 #include "TurretSystems.h"
 #include "HomingMissileSystem.h"
-#include "PcgLevelLoader.h"
+#include "PCG/PcgLevelLoader.h"
 #include "PrefabInstantiatorFunctions.h"
 #include "ItemManager/ItemManager.h"
 #include "TestScenes/ParticleScene.h"
@@ -28,6 +28,7 @@ NetworkStatus GameLayer::s_networkStatus = NetworkStatus::Offline;
 GameState GameLayer::m_gameState = GameState::Initializing;
 bool GameLayer::s_connectedPlayersLobby[MAX_PLAYER_COUNT] = { false, false, false, false };
 u16 GameLayer::s_levelIndex = 0;
+std::unique_ptr<WFC> GameLayer::s_WFC = nullptr;
 
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }
@@ -127,6 +128,21 @@ GameLayer::GameLayer() noexcept
 	
 	DOG::UI::Get()->GetUI<UICarousel>(carouselSoloID)->SendStrings(m_filenames);
 	DOG::UI::Get()->GetUI<UICarousel>(carouselMultID)->SendStrings(m_filenames);
+
+	//PCG------------------------------------
+	
+	//Dimensions for the whole PCG level.
+	uint32_t w = 30;
+	uint32_t h = 7;
+	uint32_t d = 40;
+
+	std::string input = "Assets\\Levels\\largerTest1Output_Floors";
+
+	//Create a WFC interface and send the input.
+	s_WFC = std::make_unique<WFC>(w, h, d);
+
+	//Set input for the level generation.
+	s_WFC->SetInput(input + ".txt");
 }
 
 GameLayer::~GameLayer()
@@ -372,6 +388,64 @@ void GameLayer::OnUpdate()
 
 }
 
+void GameLayer::GenerateLevel()
+{
+	//Number of rooms to generate.
+	uint32_t nrOfRooms = 4;
+
+	//Minimum dimensions for a room
+	uint32_t minWidth = 13;
+	uint32_t minHeight = 5;
+	uint32_t minDepth = 13;
+
+	//The generation has a certain amount of chances to succeed.
+	unsigned chances = 100;
+	while (!s_WFC->GenerateLevel(nrOfRooms, minWidth, minHeight, minDepth) && chances > 0)
+	{
+		chances--;
+		std::cout << chances << std::endl;
+	}
+	if (chances != 0)
+	{
+		//Output the generated level to a textfile.
+		std::vector<std::string> generatedLevel = s_WFC->GetGeneratedLevel();
+		std::vector<Room> generatedRooms = s_WFC->GetGeneratedRoomsData();
+
+		std::ofstream output("Assets\\Levels\\Generate.txt");
+
+		//Write the data about the rooms
+		for (auto& r : generatedRooms)
+		{
+			output << r.globalPos[0] << "," << r.globalPos[1] << "," << r.globalPos[2] << "," << r.width << "," << r.height << "," << r.depth << "\n";
+		}
+
+		output << "\n";
+
+		//Write the level data.
+		uint32_t d = s_WFC->GetDepth();
+		uint32_t h = s_WFC->GetHeight();
+		uint32_t w = s_WFC->GetWidth();
+
+		for (uint32_t i{ 0u }; i < d; ++i)
+		{
+			for (uint32_t j{ 0u }; j < h; ++j)
+			{
+				for (uint32_t k{ 0u }; k < w; ++k)
+				{
+					output << generatedLevel[i * h * w + j * w + k] << " ";
+				}
+				output << "\n";
+			}
+			output << "-\n";
+		}
+		output.close();
+	}
+	else
+	{
+		std::cout << "OUT OF TRIES!" << std::endl;
+	}
+}
+
 void GameLayer::StartMainScene()
 {
 	assert(m_mainScene == nullptr);
@@ -394,7 +468,7 @@ void GameLayer::StartMainScene()
 			(
 				m_nrOfPlayers,
 				std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5),
-				"..\\Offline-Tools\\PCG\\" + levelName
+				"Assets\\Levels\\" + levelName
 				);
 		m_mainScene->SetUpScene();
 		break;
@@ -945,6 +1019,11 @@ void HostButtonFunc(void)
 	GameLayer::s_levelIndex = (u16)DOG::UI::Get()->GetUI<DOG::UICarousel>(carouselMultID)->GetIndex();
 	NetCode::Get().SetLevelIndex(GameLayer::s_levelIndex);
 
+	if (GameLayer::s_levelIndex == 0) //If generate level
+	{
+		GameLayer::GenerateLevel();
+	}
+
 	//Reset player list.
 	GameLayer::ResetConnectedPlayers();
 	UI::Get()->GetUI<DOG::UIPlayerList>(playerListID)->Reset();
@@ -1004,11 +1083,15 @@ void PlayButtonFunc(void)
 {
 	GameLayer::s_levelIndex = (u16)DOG::UI::Get()->GetUI<DOG::UICarousel>(carouselSoloID)->GetIndex();
 
+	if (GameLayer::s_levelIndex == 0) //If generate level
+	{
+		GameLayer::GenerateLevel();
+	}
+
 	if(GameLayer::GetGameStatus() != GameState::Playing)
 		GameLayer::ChangeGameState(GameState::StartPlaying);
 	GameLayer::ChangeNetworkState(NetworkStatus::Offline);
 	DOG::UI::Get()->ChangeUIscene(gameID);
-
 }
 
 void Room1Button(void)
