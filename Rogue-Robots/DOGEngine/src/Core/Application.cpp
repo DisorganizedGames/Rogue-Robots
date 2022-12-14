@@ -229,6 +229,17 @@ namespace DOG
 		return m_specification.graphicsSettings;
 	}
 
+	void Application::SetAudioSettings(const AudioSettings& settings) noexcept
+	{
+		m_specification.audioSettings = settings;
+		m_specification.audioSettings.masterVolume = std::clamp(m_specification.audioSettings.masterVolume, 0.0f, 1.0f);
+		AudioManager::SetMasterVolume(m_specification.audioSettings.masterVolume);
+	}
+	AudioSettings Application::GetAudioSettings() const noexcept
+	{
+		return m_specification.audioSettings;
+	}
+
 	gfx::Monitor Application::GetMonitor() const noexcept
 	{
 		return m_renderer->GetMonitor();
@@ -254,6 +265,7 @@ namespace DOG
 
 		AssetManager::Initialize(m_renderer.get());
 		AudioManager::Initialize();
+		SetAudioSettings(m_specification.audioSettings);
 		PhysicsEngine::Initialize();
 		LuaMain::Initialize();
 

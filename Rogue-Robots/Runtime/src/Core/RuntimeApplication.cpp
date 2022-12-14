@@ -34,6 +34,12 @@ void RuntimeApplication::OnStartUp() noexcept
 		},
 		[this]() {
 			return GetAspectRatio();
+		},
+		[this](auto settings) {
+			SetAudioSettings(settings);
+		},
+		[this]() {
+			return GetAudioSettings();
 		}
 	);
 
@@ -108,7 +114,7 @@ void RuntimeApplication::OnEvent(IEvent& event) noexcept
 
 	if (event.GetEventType() == EventType::WindowPostResizedEvent)
 	{
-		SettingsMenu::SettGraphicsSettings(GetGraphicsSettings());
+		SettingsMenu::SetGraphicsSettings(GetGraphicsSettings());
 	}
 	Application::OnEvent(event);
 }
@@ -150,7 +156,8 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 	outFile << "\n--Delete rows to reset them to default";
 	outFile << "\nSettings =\n{";
 
-	outFile << "\n\t" << "fullscreen = " << static_cast<int>(spec.graphicsSettings.windowMode);
+	outFile << "\n\t" << "masterVolume = " << spec.audioSettings.masterVolume;
+	outFile << ",\n\t" << "fullscreen = " << static_cast<int>(spec.graphicsSettings.windowMode);
 	outFile << ",\n\t" << "clientWidth = " << spec.windowDimensions.x;
 	outFile << ",\n\t" << "clientHeight = " << spec.windowDimensions.y;
 	outFile << ",\n\t" << "renderResolutionWidth = " << spec.graphicsSettings.renderResolution.x;
@@ -217,6 +224,8 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 		};
 
 		bool err = false;
+		err |= !tryGetSpec("masterVolume", appSpec.audioSettings.masterVolume);
+		appSpec.audioSettings.masterVolume = std::clamp(appSpec.audioSettings.masterVolume, 0.0f, 1.0f);
 		err |= !tryGetSpec("clientWidth", appSpec.windowDimensions.x);
 		err |= !tryGetSpec("clientHeight", appSpec.windowDimensions.y);
 		err |= !tryGetSpec("renderResolutionWidth", appSpec.graphicsSettings.renderResolution.x);
@@ -473,7 +482,7 @@ void RuntimeApplication::SettingDebugMenu(bool& open)
 			if (gfxChanged)
 			{
 				SetGraphicsSettings(graphicsSettings);
-				SettingsMenu::SettGraphicsSettings(GetGraphicsSettings());
+				SettingsMenu::SetGraphicsSettings(GetGraphicsSettings());
 			}
 
 			firstTime = false;

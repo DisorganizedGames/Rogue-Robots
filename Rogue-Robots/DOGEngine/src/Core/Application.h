@@ -25,6 +25,8 @@ namespace DOG
 		virtual void OnEvent(IEvent& event) noexcept;
 		void SetGraphicsSettings(const GraphicsSettings& settings) noexcept;
 		GraphicsSettings GetGraphicsSettings() const noexcept;
+		void SetAudioSettings(const AudioSettings& settings) noexcept;
+		AudioSettings GetAudioSettings() const noexcept;
 		gfx::Monitor GetMonitor() const noexcept;
 	protected:
 		virtual void OnStartUp() noexcept;

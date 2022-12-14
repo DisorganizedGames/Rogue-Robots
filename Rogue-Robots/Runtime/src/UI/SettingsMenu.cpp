@@ -3,23 +3,31 @@
 using namespace DOG;
 
 DOG::GraphicsSettings SettingsMenu::s_graphicsSettings;
+DOG::AudioSettings SettingsMenu::s_audioSettings;
 
 std::function<void(const GraphicsSettings&)> SettingsMenu::s_setGraphicsSettings;
 std::function<GraphicsSettings(void)> SettingsMenu::s_getGraphicsSettings;
 std::function<Vector2u(void)> SettingsMenu::s_getAspectRatio;
+std::function<void(const AudioSettings&)> SettingsMenu::s_setAudioSettings;
+std::function<AudioSettings(void)> SettingsMenu::s_getAudioSettings;
 std::vector<Vector2u> SettingsMenu::s_renderResolution;
 std::vector<u32> SettingsMenu::s_renderResolutionHeightPreset = { 360, 720, 1080, 1440 };
 
 void SettingsMenu::Initialize(
 	std::function<void(const GraphicsSettings&)> setGraphicsSettings,
 	std::function<GraphicsSettings(void)> getGraphicsSettings,
-	std::function<Vector2u(void)> getAspectRatio
+	std::function<Vector2u(void)> getAspectRatio,
+	std::function<void(const AudioSettings&)> setAudioSettings,
+	std::function<AudioSettings(void)> getAudioSettings
 )
 {
 	s_setGraphicsSettings = setGraphicsSettings;
 	s_getGraphicsSettings = getGraphicsSettings;
+	s_setAudioSettings = setAudioSettings;
+	s_getAudioSettings = getAudioSettings;
 	s_getAspectRatio = getAspectRatio;
 	s_graphicsSettings = s_getGraphicsSettings();
+	s_audioSettings = s_getAudioSettings();
 
 
 
@@ -137,7 +145,7 @@ void SettingsMenu::Initialize(
 
 		auto audioVolumeSliderLabel = instance->Create<DOG::UILabel>(s_audioVolumeSliderLabelID, std::wstring(L"volume"), x, y, 13 * textSize, textSize, 20.f, DWRITE_TEXT_ALIGNMENT_LEADING);
 		auto audioVolumeSlider = instance->Create<DOG::UISlider>(s_audioVolumeSliderID,
-			x + 13 * textSize, y, sliderWidth, sliderHeight, [](float value) { AudioManager::SetMasterVolume(std::clamp(value, 0.0f, 1.0f)); });
+			x + 13 * textSize, y, sliderWidth, sliderHeight, [](float value) { s_audioSettings.masterVolume = std::clamp(value, 0.0f, 1.0f); s_setAudioSettings(s_audioSettings); });
 		instance->AddUIElementToScene(optionsID, std::move(audioVolumeSliderLabel));
 		instance->AddUIElementToScene(optionsID, std::move(audioVolumeSlider));
 
@@ -172,10 +180,11 @@ void SettingsMenu::Initialize(
 	};
 	UI::Get()->AddExternalUI(settingsMenu);
 
-	SettGraphicsSettings(s_graphicsSettings);
+	SetGraphicsSettings(s_graphicsSettings);
+	SetAudioSettings(s_audioSettings);
 }
 
-void SettingsMenu::SettGraphicsSettings(const DOG::GraphicsSettings& settings)
+void SettingsMenu::SetGraphicsSettings(const DOG::GraphicsSettings& settings)
 {
 	s_graphicsSettings = settings;
 	UI::Get()->GetUI<UICheckBox>(s_fullscreenCheckBoxID)->SetValue(s_graphicsSettings.windowMode == WindowMode::FullScreen);
@@ -205,6 +214,12 @@ void SettingsMenu::SettGraphicsSettings(const DOG::GraphicsSettings& settings)
 
 	UI::Get()->GetUI<UICarousel>(s_renderResCarouselID)->SendStrings(resStr);
 	UI::Get()->GetUI<UICarousel>(s_renderResCarouselID)->SetIndex(static_cast<UINT>(index));
+}
+
+void SettingsMenu::SetAudioSettings(const DOG::AudioSettings& settings)
+{
+	s_audioSettings = settings;
+	UI::Get()->GetUI<UISlider>(s_audioVolumeSliderID)->SetValue(s_audioSettings.masterVolume);
 }
 
 bool SettingsMenu::IsOpen()
