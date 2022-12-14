@@ -328,11 +328,12 @@ void SpectateSystem::ChangeSuitDrawLogic(DOG::entity playerToDraw, DOG::entity p
 				DOG::EntityManager::Get().AddComponent<DOG::DontDraw>(modelGun);
 		});
 	// Change first person view gun draw logic
-	ChangeGunDrawLogic(playerToDraw, false);
 	if (!fromDeath)
 	{
-		ChangeGunDrawLogic(playerToNotDraw, true);
+		ChangeGunDrawLogic(playerToDraw, false);
 	}
+
+	ChangeGunDrawLogic(playerToNotDraw, true);
 
 	#if defined _DEBUG
 	ASSERT(removedSuitFromRendering && addedSuitToRendering, "Suits were not updated correctly for rendering.");
