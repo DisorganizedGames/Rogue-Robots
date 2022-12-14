@@ -117,7 +117,7 @@ bool WFC::IntroduceConstraints(Room& room)
 			uint32_t doors = 0; //Doors to generate.
 
 			std::default_random_engine gen;
-			gen.seed(static_cast<unsigned int>(time(NULL)));
+			gen.seed(static_cast<unsigned int>(time(NULL)) * (room.i + 1u));
 			std::uniform_int_distribution<uint32_t> dist(0u, 3u);
 
 			std::uniform_int_distribution<uint32_t> widthDist(1u, room.width - 2u);
@@ -341,7 +341,7 @@ bool WFC::IntroduceConstraints(Room& room)
 void WFC::t_GenerateRoom(unsigned int i, std::shared_ptr<Box> chosenBox)
 {
 	std::default_random_engine gen;
-	gen.seed(static_cast<unsigned int>(time(NULL)));
+	gen.seed(static_cast<unsigned int>(time(NULL)) * (i + 1u));
 
 	Room newRoom;
 	newRoom.i = i;
@@ -678,7 +678,7 @@ bool WFC::GenerateRoom(Room& room)
 
 	//Here we only have blocks with a possibility count of 2 or higher left.
 	std::default_random_engine gen;
-	gen.seed(static_cast<unsigned int>(time(NULL)));
+	gen.seed(static_cast<unsigned int>(time(NULL)) * (room.i + 1u));
 
 	//While blocks exist within the PQ and the count of possibilities is not 0.
 	while (index != -1 && m_currentEntropy[room.i][index].possibilities.size() != 0)
