@@ -265,8 +265,7 @@ namespace DOG
          void RemovePlayer(const std::wstring name);
          void Reset();
       private:
-         std::vector<std::wstring> m_players;
-         std::vector<D2D1::ColorF> m_playerColours;
+         
          D2D1_SIZE_U m_screensize;
          ComPtr<ID2D1SolidColorBrush> m_rectBrush;
          ComPtr<IDWriteTextFormat> m_textFormat;
@@ -299,7 +298,8 @@ namespace DOG
          void OnEvent(IEvent& event) override final;
          float GetValue();
       private:
-         float m_value, m_width, m_normwidth;
+         UINT m_valueIndex;
+         float m_width, m_normwidth;
          std::function<void(float)> m_callback;
          D2D_RECT_F m_bar, m_slider;
          std::wstring m_text;
@@ -342,7 +342,7 @@ namespace DOG
       private:
          float m_opacity;
          bool m_border;
-         UINT m_index;
+         UINT m_indexValue;
          std::vector<std::wstring> m_labels;
          D2D1_RECT_F m_rect, m_bright, m_bleft;
          ComPtr<ID2D1SolidColorBrush> m_rborderBrush, m_lborderBrush, m_borderBrush, m_textBrush;
@@ -379,7 +379,7 @@ namespace DOG
          bool GetValue();
       private:
          std::function<void(bool)> m_callback;
-         bool m_value;
+         UINT m_indexValue;
          D2D1_RECT_F m_border;
          ComPtr<ID2D1SolidColorBrush> m_borderBrush;
    };

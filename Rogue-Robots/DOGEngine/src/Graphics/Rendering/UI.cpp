@@ -25,8 +25,18 @@ UINT playerListID, playerListJoinID;
 UINT lAcknowledgementsID, lAcknowledgementsTextID;
 UINT ipBarID;
 
+UINT sliderValueIndex = 0u;
+UINT checkBoxCount = 0u;
+UINT carouselCount = 0u;
+
 std::vector<bool> buffsVisible;
 std::vector<UINT> m_stacks;
+std::array<float, 20u> sliderValues;
+std::array<D2D1_RECT_F, 20u> sliderRects;
+std::array<bool, 20u> checkBoxValues;
+std::array<UINT, 20u> carouselIndices;
+std::vector<std::wstring> m_players;
+std::vector<D2D1::ColorF> m_playerColours;
 
 void LevelSelectSoloButtonFunc(void)
 {
@@ -75,6 +85,7 @@ void ToMenuButtonFunc(void)
 
 void CheckBoxFunc(bool value)
 {
+   
    UNREFERENCED_PARAMETER(value);
 }
 
@@ -105,6 +116,7 @@ DOG::UI::UI(DOG::gfx::RenderDevice* rd, DOG::gfx::Swapchain* sc, UINT numBuffers
    m_width = clientWidth;
    m_height = clientHeight;
    m_d2d = std::make_unique<DOG::gfx::D2DBackend_DX12>(rd, sc, numBuffers);
+   sliderValues.fill(0.f);
 }
 
 DOG::UI::~UI()
@@ -138,6 +150,7 @@ void DOG::UI::OnEvent(IEvent& event)
 
 void DOG::UI::Resize(UINT clientWidth, UINT clientHeight)
 {
+   sliderValueIndex = 0u;
    m_width = clientWidth;
    m_height = clientHeight;
    m_d2d->OnResize();
@@ -786,7 +799,7 @@ DOG::UIBuffTracker::UIBuffTracker(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::
       m_rects.push_back(rect);
       rect.left += 60.f;
       rect.right += 60.f;
-      buffsVisible.push_back(false);
+      //buffsVisible.push_back(false);
       m_animate.push_back(false);
       m_opacity.push_back(1.0f);
       m_stacks.push_back(0u);
@@ -1056,12 +1069,12 @@ DOG::UICarousel::UICarousel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::vector
    HR_VFY(hr);
 
    m_labels = labels;
-   m_index = 0;
+   m_indexValue = carouselCount++;
 
 }
 DOG::UICarousel::~UICarousel()
 {
-
+   carouselCount--;
 }
 void DOG::UICarousel::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
@@ -1069,8 +1082,8 @@ void DOG::UICarousel::Draw(DOG::gfx::D2DBackend_DX12& d2d)
    d2d.Get2DDeviceContext()->DrawRectangle(m_bright, m_rborderBrush.Get());
    d2d.Get2DDeviceContext()->DrawRectangle(m_bleft, m_lborderBrush.Get());
    d2d.Get2DDeviceContext()->DrawTextW(
-      m_labels[m_index].c_str(),
-      (UINT32)m_labels[m_index].length(),
+      m_labels[carouselIndices[m_indexValue]].c_str(),
+      (UINT32)m_labels[carouselIndices[m_indexValue]].length(),
       m_textFormat.Get(),
       &m_rect,
       m_textBrush.Get());
@@ -1091,17 +1104,17 @@ void DOG::UICarousel::OnEvent(IEvent& event)
          auto mpos = mevent.coordinates;
          if (mpos.x >= m_bright.left && mpos.x <= m_bright.right && mpos.y >= m_bright.top && mpos.y <= m_bright.bottom)
          {
-            if (m_index == m_labels.size() - 1)
-               m_index = 0;
+            if (carouselIndices[m_indexValue] == m_labels.size() - 1)
+               carouselIndices[m_indexValue] = 0;
             else
-               m_index++;
+               carouselIndices[m_indexValue]++;
          }
          if (mpos.x >= m_bleft.left && mpos.x <= m_bleft.right && mpos.y >= m_bleft.top && mpos.y <= m_bleft.bottom)
          {
-            if (m_index == 0)
-               m_index = (UINT)m_labels.size() - 1;
+            if (carouselIndices[m_indexValue] == 0)
+               carouselIndices[m_indexValue] = (UINT)m_labels.size() - 1;
             else
-               m_index--;
+               carouselIndices[m_indexValue]--;
          }
       }
       else if (event.GetEventType() == EventType::MouseMovedEvent)
@@ -1123,12 +1136,12 @@ void DOG::UICarousel::OnEvent(IEvent& event)
 
 std::wstring DOG::UICarousel::GetText(void)
 {
-   return m_labels[m_index];
+   return m_labels[carouselIndices[m_indexValue]];
 }
 
 UINT DOG::UICarousel::GetIndex()
 {
-   return m_index;
+   return carouselIndices[m_indexValue];
 }
 
 void DOG::UICarousel::SendStrings(const std::vector<std::wstring>& filenames)
@@ -1230,12 +1243,16 @@ DOG::UISlider::UISlider(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float 
    HR_VFY(hr);
    hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.5f), &m_sliderBrush);
    HR_VFY(hr);
-   m_slider = D2D1::RectF(x, y, x + 20.f, y + height);
+   if (sliderRects[sliderValueIndex].right == 0.0f)
+   {
+      sliderRects[sliderValueIndex] = D2D1::RectF(x, y, x + 20.f, y + height);
+      sliderValues[sliderValueIndex] = 0.f;
+   }
    m_bar = D2D1::RectF(x + 10.f, y + height / 2.f - 1.f, x + width - 10.f, y + height / 2.f + 1.f);
    m_callback = callback;
-   m_value = 0;
    m_width = width;
    m_normwidth = 1.f / width;
+   m_valueIndex = sliderValueIndex++;
 }
 DOG::UISlider::~UISlider()
 {
@@ -1244,7 +1261,7 @@ DOG::UISlider::~UISlider()
 void DOG::UISlider::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
    d2d.Get2DDeviceContext()->FillRectangle(m_bar, m_barBrush.Get());
-   d2d.Get2DDeviceContext()->FillRectangle(m_slider, m_sliderBrush.Get());
+   d2d.Get2DDeviceContext()->FillRectangle(sliderRects[m_valueIndex], m_sliderBrush.Get());
 }
 void DOG::UISlider::Update(DOG::gfx::D2DBackend_DX12& d2d)
 {
@@ -1258,13 +1275,13 @@ void DOG::UISlider::OnEvent(IEvent& event)
    {
       auto mevent = EVENT(DOG::MouseMovedEvent);
       auto mpos = mevent.coordinates;
-      if (mpos.x >= m_bar.left && mpos.x <= m_bar.right && mpos.y >= m_slider.top && mpos.y <= m_slider.bottom && Mouse::IsButtonPressed(Button::Left))
+      if (mpos.x >= m_bar.left && mpos.x <= m_bar.right && mpos.y >= sliderRects[m_valueIndex].top && mpos.y <= sliderRects[m_valueIndex].bottom && Mouse::IsButtonPressed(Button::Left))
       {
-         m_slider.left = (float)mpos.x - 10.f;
-         m_slider.right = m_slider.left + 20.f;
-         m_value = (m_slider.right - 10.f) - m_bar.left * m_normwidth;
+         sliderRects[m_valueIndex].left = (float)mpos.x - 10.f;
+         sliderRects[m_valueIndex].right = sliderRects[m_valueIndex].left + 20.f;
+         sliderValues[m_valueIndex] = ((sliderRects[m_valueIndex].right - 10.f) - m_bar.left) * m_normwidth;
       }
-      if (mpos.x >= m_slider.left && mpos.x <= m_slider.right && mpos.y >= m_slider.top && mpos.y <= m_slider.bottom)
+      if (mpos.x >= sliderRects[m_valueIndex].left && mpos.x <= sliderRects[m_valueIndex].right && mpos.y >= sliderRects[m_valueIndex].top && mpos.y <= sliderRects[m_valueIndex].bottom)
          m_sliderBrush.Get()->SetOpacity(1.0f);
       else
          m_sliderBrush.Get()->SetOpacity(0.5f);
@@ -1272,7 +1289,7 @@ void DOG::UISlider::OnEvent(IEvent& event)
 }
 float DOG::UISlider::GetValue()
 {
-   return m_value;
+   return sliderValues[m_valueIndex];
 }
 
 DOG::UIVertStatBar::UIVertStatBar(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, float r, float g, float b): UIElement(id)
@@ -1340,22 +1357,22 @@ void DOG::UIVertStatBar::SetBarValue(float value, float maxValue)
    m_maxValue = maxValue;
 }
 
-DOG::UICheckBox::UICheckBox(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float r, float g, float b, std::function<void(bool)> callback) : UIElement(id)
+DOG::UICheckBox::UICheckBox(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float r, float g, float b, std::function<void(bool)> callback): UIElement(id)
 {
    HRESULT hr;
    hr = d2d.Get2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(r, g, b, 0.7f), m_borderBrush.GetAddressOf());
    HR_VFY(hr);
-   m_value = false;
-   m_border = D2D1::RectF(x,y,x+width, y+height);
+   m_indexValue = checkBoxCount++;
+   m_border = D2D1::RectF(x, y, x + width, y + height);
    m_callback = callback;
 }
 DOG::UICheckBox::~UICheckBox()
 {
-
+   checkBoxCount--;
 }
 void DOG::UICheckBox::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   if(m_value)
+   if (checkBoxValues[m_indexValue])
       d2d.Get2DDeviceContext()->FillRectangle(m_border, m_borderBrush.Get());
    else
       d2d.Get2DDeviceContext()->DrawRectangle(m_border, m_borderBrush.Get());
@@ -1367,7 +1384,7 @@ void DOG::UICheckBox::Update(DOG::gfx::D2DBackend_DX12& d2d)
 }
 bool DOG::UICheckBox::GetValue()
 {
-   return m_value;
+   return checkBoxValues[m_indexValue];
 }
 
 void DOG::UICheckBox::OnEvent(IEvent& event)
@@ -1381,8 +1398,8 @@ void DOG::UICheckBox::OnEvent(IEvent& event)
          auto mpos = mevent.coordinates;
          if (mpos.x >= m_border.left && mpos.x <= m_border.right && mpos.y >= m_border.top && mpos.y <= m_border.bottom)
          {
-            m_value = m_value ? false : true;
-            m_callback(m_value);
+            checkBoxValues[m_indexValue] = checkBoxValues[m_indexValue] ? false : true;
+            m_callback(checkBoxValues[m_indexValue]);
          }
       }
       else if (event.GetEventType() == EventType::MouseMovedEvent)
@@ -1395,7 +1412,7 @@ void DOG::UICheckBox::OnEvent(IEvent& event)
             m_borderBrush.Get()->SetOpacity(0.7f);
       }
    }
-}  
+}
 
 void DOG::UIVertStatBar::Hide(bool show)
 {
@@ -1603,7 +1620,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto bp = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 200.f / 2, (FLOAT)clientHeight / 2.f, 200.f, 60.f, 20.f, 0.0f, 1.0f, 0.0f, std::wstring(L"Play"), std::function<void()>(LevelSelectSoloButtonFunc));
    auto bm = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bmID, (FLOAT)clientWidth / 2.f - 200.f / 2, (FLOAT)clientHeight / 2.f + 70.f, 200.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Multiplayer"), std::function<void()>(MultiplayerButtonFunc));
    //Options menu is not used atm.
-   //auto bo = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
+   auto bo = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
    auto bc = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bcID, (FLOAT)clientWidth / 2.f - 200.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 200.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Credits"), std::function<void()>(CreditsButtonFunc));
    auto be = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(beID, (FLOAT)clientWidth / 2.f - 200.f / 2, (FLOAT)clientHeight / 2.f + 280.f, 200.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
    auto optback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(optbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
@@ -1649,6 +1666,9 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    UINT sliderID;
    auto slider = instance->Create<DOG::UISlider, float, float, float, float>(sliderID, 100.f, 100.f, 250.f, 30.f, std::function<void(float)>(SliderFunc));
    instance->AddUIElementToScene(optionsID, std::move(slider));
+   UINT sliderID2;
+   auto slider2 = instance->Create<DOG::UISlider, float, float, float, float>(sliderID2, 100.f, 300.f, 250.f, 30.f, std::function<void(float)>(SliderFunc));
+   instance->AddUIElementToScene(optionsID, std::move(slider2));
 
    auto labelButtonTextActiveItem = instance->Create<DOG::UILabel>(lActiveItemTextID, std::wstring(L"G"), 315.0f, (FLOAT)clientHeight - 90.0f, 50.f, 50.f, 40.f);
 
@@ -1677,11 +1697,17 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    UINT cboxID;
    auto checkbox = instance->Create<DOG::UICheckBox, float, float, float, float, float, float, float>(cboxID, 300.f, (FLOAT)clientHeight - 425.f, 25.f, 25.f, 1.0f, 1.0f, 1.0f, std::function<void(bool)>(CheckBoxFunc));
    instance->AddUIElementToScene(optionsID, std::move(checkbox));
+   UINT cboxID2;
+   auto checkbox2 = instance->Create<DOG::UICheckBox, float, float, float, float, float, float, float>(cboxID2, 400.f, (FLOAT)clientHeight - 425.f, 25.f, 25.f, 1.0f, 1.0f, 1.0f, std::function<void(bool)>(CheckBoxFunc));
+   instance->AddUIElementToScene(optionsID, std::move(checkbox2));
+   UINT cboxID3;
+   auto checkbox3 = instance->Create<DOG::UICheckBox, float, float, float, float, float, float, float>(cboxID3, 500.f, (FLOAT)clientHeight - 425.f, 25.f, 25.f, 1.0f, 1.0f, 1.0f, std::function<void(bool)>(CheckBoxFunc));
+   instance->AddUIElementToScene(optionsID, std::move(checkbox3));
 
    instance->AddUIElementToScene(menuID, std::move(bp));
    instance->AddUIElementToScene(menuID, std::move(bm));
    //Options menu is not used atm.
-   //instance->AddUIElementToScene(menuID, std::move(bo));
+   instance->AddUIElementToScene(menuID, std::move(bo));
    instance->AddUIElementToScene(menuID, std::move(bc));
    instance->AddUIElementToScene(menuID, std::move(be));
    instance->AddUIElementToScene(optionsID, std::move(optback));
