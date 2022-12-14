@@ -8,12 +8,13 @@
 class RuntimeApplication : public DOG::Application
 {
 public:
-	explicit RuntimeApplication(const DOG::ApplicationSpecification& spec) noexcept;
+	explicit RuntimeApplication(const DOG::ApplicationSpecification& spec, const GameSettings& gameSettings) noexcept;
 	virtual ~RuntimeApplication() noexcept override final;
 	virtual void OnStartUp() noexcept override final;
 	virtual void OnShutDown() noexcept override final;
 	virtual void OnRestart() noexcept override final;
 	virtual void OnEvent(DOG::IEvent& event) noexcept final;
+	const GameSettings& GetGameSettings() const noexcept;
 private:
 	void IssueDebugFunctionality() noexcept;
 private:

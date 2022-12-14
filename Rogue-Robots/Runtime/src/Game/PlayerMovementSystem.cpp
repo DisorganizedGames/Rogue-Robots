@@ -31,6 +31,11 @@ void PlayerMovementSystem::CollectAndUpdate()
 		});
 }
 
+void PlayerMovementSystem::SetPlayerAimSpeed(f32 speed)
+{
+	m_playerAimSpeed = speed * s_baseAimSpeed;
+}
+
 void PlayerMovementSystem::OnUpdate(
 	Entity e,
 	PlayerControllerComponent& player,
@@ -163,8 +168,8 @@ Vector3 PlayerMovementSystem::GetNewForward(PlayerControllerComponent& player) c
 {
 	auto [mouseX, mouseY] = DOG::Mouse::GetDeltaCoordinates();
 
-	player.azimuthal -= mouseX * player.mouseSensitivity * XM_2PI;
-	player.polar += mouseY * player.mouseSensitivity * XM_2PI;
+	player.azimuthal -= mouseX * m_playerAimSpeed * XM_2PI;
+	player.polar += mouseY * m_playerAimSpeed * XM_2PI;
 
 	player.polar = std::clamp(player.polar, 0.0001f, XM_PI - 0.0001f);
 	Vector3 forward = XMVectorSet(

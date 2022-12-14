@@ -52,6 +52,7 @@ set(SourceFiles
 	"src/Game/PlayerMovementSystem.h" "src/Game/SpectatorCopyCamera.cpp"
 	"src/Game/PCG/PCGHelper.cpp" "src/Game/PCG/PCGHelper.h" "src/Game/PCG/PQ.h" "src/Game/PCG/PQ.cpp" "src/Game/PCG/WFC.h" "src/Game/PCG/WFC.cpp"
 	"src/UI/SettingsMenu.h" "src/UI/SettingsMenu.cpp"
+	"src/Core/GameSettings.h"
 	)
 
 set(ExecutableName "Runtime")

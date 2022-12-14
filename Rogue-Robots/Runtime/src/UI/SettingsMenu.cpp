@@ -4,12 +4,16 @@ using namespace DOG;
 
 DOG::GraphicsSettings SettingsMenu::s_graphicsSettings;
 DOG::AudioSettings SettingsMenu::s_audioSettings;
+GameSettings SettingsMenu::s_gameSettings;
 
 std::function<void(const GraphicsSettings&)> SettingsMenu::s_setGraphicsSettings;
 std::function<GraphicsSettings(void)> SettingsMenu::s_getGraphicsSettings;
 std::function<Vector2u(void)> SettingsMenu::s_getAspectRatio;
 std::function<void(const AudioSettings&)> SettingsMenu::s_setAudioSettings;
 std::function<AudioSettings(void)> SettingsMenu::s_getAudioSettings;
+std::function<void(const GameSettings&)> SettingsMenu::s_setGameSettings;
+std::function<GameSettings(void)> SettingsMenu::s_getGameSettings;
+
 std::vector<Vector2u> SettingsMenu::s_renderResolution;
 std::vector<u32> SettingsMenu::s_renderResolutionHeightPreset = { 360, 720, 1080, 1440 };
 
@@ -18,16 +22,22 @@ void SettingsMenu::Initialize(
 	std::function<GraphicsSettings(void)> getGraphicsSettings,
 	std::function<Vector2u(void)> getAspectRatio,
 	std::function<void(const AudioSettings&)> setAudioSettings,
-	std::function<AudioSettings(void)> getAudioSettings
+	std::function<AudioSettings(void)> getAudioSettings,
+	std::function<void(const GameSettings&)> setGameSettings,
+	std::function<GameSettings(void)> getGameSettings
 )
 {
 	s_setGraphicsSettings = setGraphicsSettings;
 	s_getGraphicsSettings = getGraphicsSettings;
+	s_getAspectRatio = getAspectRatio;
 	s_setAudioSettings = setAudioSettings;
 	s_getAudioSettings = getAudioSettings;
-	s_getAspectRatio = getAspectRatio;
+	s_setGameSettings = setGameSettings;
+	s_getGameSettings = getGameSettings;
+
 	s_graphicsSettings = s_getGraphicsSettings();
 	s_audioSettings = s_getAudioSettings();
+	s_gameSettings = s_getGameSettings();
 
 
 
@@ -157,7 +167,7 @@ void SettingsMenu::Initialize(
 
 		auto mouseSensitivitySliderLabel = instance->Create<DOG::UILabel>(s_mouseSensitivitySliderLabelID, std::wstring(L"mouse sensitivity"), x, y, 13 * textSize, textSize, 20.f, DWRITE_TEXT_ALIGNMENT_LEADING);
 		auto mouseSensitivitySlider = instance->Create<DOG::UISlider>(s_mouseSensitivitySliderID,
-			x + 13 * textSize, y, sliderWidth, sliderHeight, [](float) {});
+			x + 13 * textSize, y, sliderWidth, sliderHeight, [](float value) { s_gameSettings.mouseSensitivity = std::lerp(0.0f, GameSettings::maxMouseSensitivity, value); });
 		instance->AddUIElementToScene(optionsID, std::move(mouseSensitivitySliderLabel));
 		instance->AddUIElementToScene(optionsID, std::move(mouseSensitivitySlider));
 
@@ -169,9 +179,7 @@ void SettingsMenu::Initialize(
 			x, y, buttonWidth, buttonHeight, 20.f, color.x, color.y, color.z,
 			std::wstring(L"Back"), []() 
 			{
-				s_graphicsSettings.renderResolution = s_renderResolution[UI::Get()->GetUI<UICarousel>(s_renderResCarouselID)->GetIndex()];
-				s_setGraphicsSettings(s_graphicsSettings);
-				UI::Get()->ChangeUIscene(menuID); 
+				SettingsMenu::Close();
 			});
 		y += buttonHeight + paddingY;
 		
@@ -180,8 +188,10 @@ void SettingsMenu::Initialize(
 	};
 	UI::Get()->AddExternalUI(settingsMenu);
 
+	// So that the menu can be updated from outside
 	SetGraphicsSettings(s_graphicsSettings);
 	SetAudioSettings(s_audioSettings);
+	SetGameSettings(s_gameSettings);
 }
 
 void SettingsMenu::SetGraphicsSettings(const DOG::GraphicsSettings& settings)
@@ -222,6 +232,12 @@ void SettingsMenu::SetAudioSettings(const DOG::AudioSettings& settings)
 	UI::Get()->GetUI<UISlider>(s_audioVolumeSliderID)->SetValue(s_audioSettings.masterVolume);
 }
 
+void SettingsMenu::SetGameSettings(const GameSettings& settings)
+{
+	s_gameSettings = settings;
+	UI::Get()->GetUI<UISlider>(s_mouseSensitivitySliderID)->SetValue(InverseLerp(0, GameSettings::maxMouseSensitivity, s_gameSettings.mouseSensitivity));
+}
+
 bool SettingsMenu::IsOpen()
 {
 	return UI::Get()->GetActiveUIScene() == optionsID;
@@ -229,7 +245,9 @@ bool SettingsMenu::IsOpen()
 
 void SettingsMenu::Close()
 {
+	s_graphicsSettings.renderResolution = s_renderResolution[UI::Get()->GetUI<UICarousel>(s_renderResCarouselID)->GetIndex()];
 	s_setGraphicsSettings(s_graphicsSettings);
+	s_setGameSettings(s_gameSettings);
 	UI::Get()->ChangeUIscene(menuID);
 }
 

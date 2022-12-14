@@ -11,8 +11,6 @@ struct PlayerControllerComponent
 	f32 azimuthal = DirectX::XM_PIDIV2;
 	f32 polar = DirectX::XM_PIDIV2;
 
-	f32 mouseSensitivity = 1 / 2000.f;
-
 	DOG::entity cameraEntity = DOG::NULL_ENTITY;
 	DOG::entity debugCamera = DOG::NULL_ENTITY;
 	DOG::entity spectatorCamera = DOG::NULL_ENTITY;

@@ -1012,6 +1012,17 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	}
 }
 
+const GameSettings& GameLayer::GetGameSettings() const noexcept
+{
+	return m_gameSettings;
+}
+
+void GameLayer::SetGameSettings(const GameSettings& settings) noexcept
+{
+	m_gameSettings = settings;
+	m_playerMovementSystem.SetPlayerAimSpeed(m_gameSettings.mouseSensitivity);
+}
+
 //Lobby
 void HostButtonFunc(void)
 {

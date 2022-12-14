@@ -1,13 +1,14 @@
 #include "RuntimeApplication.h"
 #include <EntryPoint.h>
 using namespace DOG;
-void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string& path) noexcept;
+void SaveRuntimeSettings(const ApplicationSpecification& spec, const GameSettings& gameSettings, const std::string& path) noexcept;
 std::string GetWorkingDirectory();
 
 
-RuntimeApplication::RuntimeApplication(const DOG::ApplicationSpecification& spec) noexcept
+RuntimeApplication::RuntimeApplication(const DOG::ApplicationSpecification& spec, const GameSettings& gameSettings) noexcept
 	: DOG::Application{ spec }
 {
+	m_gameLayer.SetGameSettings(gameSettings);
 	OnStartUp();
 }
 
@@ -40,6 +41,12 @@ void RuntimeApplication::OnStartUp() noexcept
 		},
 		[this]() {
 			return GetAudioSettings();
+		},
+		[this](auto settings) {
+			m_gameLayer.SetGameSettings(settings);
+		},
+		[this]() {
+			return m_gameLayer.GetGameSettings();
 		}
 	);
 
@@ -53,7 +60,7 @@ void RuntimeApplication::OnShutDown() noexcept
 {
 	//SaveRuntimeSettings();
 	ImGuiMenuLayer::UnRegisterDebugWindow("GraphicsSetting");
-	SaveRuntimeSettings(GetApplicationSpecification(), "Runtime/Settings.lua");
+	SaveRuntimeSettings(GetApplicationSpecification(), m_gameLayer.GetGameSettings(), "Runtime/Settings.lua");
 }
 
 void RuntimeApplication::OnRestart() noexcept
@@ -115,8 +122,15 @@ void RuntimeApplication::OnEvent(IEvent& event) noexcept
 	if (event.GetEventType() == EventType::WindowPostResizedEvent)
 	{
 		SettingsMenu::SetGraphicsSettings(GetGraphicsSettings());
+		SettingsMenu::SetAudioSettings(GetAudioSettings());
+		SettingsMenu::SetGameSettings(m_gameLayer.GetGameSettings());
 	}
 	Application::OnEvent(event);
+}
+
+const GameSettings& RuntimeApplication::GetGameSettings() const noexcept
+{
+	return m_gameLayer.GetGameSettings();
 }
 
 void RuntimeApplication::IssueDebugFunctionality() noexcept
@@ -149,7 +163,7 @@ std::string GetWorkingDirectory()
 	}
 }
 
-void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string& path) noexcept
+void SaveRuntimeSettings(const ApplicationSpecification& spec, const GameSettings& gameSettings, const std::string& path) noexcept
 {
 	std::ofstream outFile(path);
 	outFile << "--Delete file to reset all options to default (don't run with an empty file, it will not work)";
@@ -157,6 +171,7 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 	outFile << "\nSettings =\n{";
 
 	outFile << "\n\t" << "masterVolume = " << spec.audioSettings.masterVolume;
+	outFile << ",\n\t" << "mouseSensitivity = " << gameSettings.mouseSensitivity;
 	outFile << ",\n\t" << "fullscreen = " << static_cast<int>(spec.graphicsSettings.windowMode);
 	outFile << ",\n\t" << "clientWidth = " << spec.windowDimensions.x;
 	outFile << ",\n\t" << "clientHeight = " << spec.windowDimensions.y;
@@ -203,12 +218,13 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 	outFile << "\n}\n";
 }
 
-[[nodiscard]] ApplicationSpecification LoadRuntimeSettings(const std::string& path) noexcept
+[[nodiscard]] std::pair<ApplicationSpecification, GameSettings> LoadRuntimeSettings(const std::string& path) noexcept
 {
 	ApplicationSpecification appSpec;
+	GameSettings gameSettings;
 	if (!std::filesystem::exists(path))
 	{
-		SaveRuntimeSettings(appSpec, path);
+		SaveRuntimeSettings(appSpec, gameSettings, path);
 	}
 
 	LuaTable table;
@@ -226,6 +242,7 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 		bool err = false;
 		err |= !tryGetSpec("masterVolume", appSpec.audioSettings.masterVolume);
 		appSpec.audioSettings.masterVolume = std::clamp(appSpec.audioSettings.masterVolume, 0.0f, 1.0f);
+		err |= !tryGetSpec("mouseSensitivity", gameSettings.mouseSensitivity);
 		err |= !tryGetSpec("clientWidth", appSpec.windowDimensions.x);
 		err |= !tryGetSpec("clientHeight", appSpec.windowDimensions.y);
 		err |= !tryGetSpec("renderResolutionWidth", appSpec.graphicsSettings.renderResolution.x);
@@ -274,15 +291,15 @@ void SaveRuntimeSettings(const ApplicationSpecification& spec, const std::string
 		if (err || modeErr)
 		{
 			std::cout << path << " is missing some values, they will be replaced with defaults" << std::endl;
-			SaveRuntimeSettings(appSpec, path);
+			SaveRuntimeSettings(appSpec, gameSettings, path);
 		}
 	}
 	else
 	{
-		SaveRuntimeSettings(appSpec, path);
+		SaveRuntimeSettings(appSpec, gameSettings, path);
 	}
 
-	return appSpec;
+	return { appSpec, gameSettings };
 }
 
 void RuntimeApplication::SettingDebugMenu(bool& open)
@@ -495,8 +512,10 @@ void RuntimeApplication::SettingDebugMenu(bool& open)
 
 std::unique_ptr<DOG::Application> CreateApplication() noexcept
 {
-	ApplicationSpecification spec = LoadRuntimeSettings(RUNTIME_DIR + std::string("Settings.lua"));
+	ApplicationSpecification spec;
+	GameSettings gameSettings;
+	std::tie(spec, gameSettings) = LoadRuntimeSettings(RUNTIME_DIR + std::string("Settings.lua"));
 	spec.name = "Rogue Robots";
 	spec.workingDir = GetWorkingDirectory();
-	return std::make_unique<RuntimeApplication>(spec);
+	return std::make_unique<RuntimeApplication>(spec, gameSettings);
 }
