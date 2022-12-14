@@ -44,12 +44,6 @@
 #include "PostProcess.h"
 
 
-void thread_sleep_temp(const std::string& text, u8 seconds)
-{
-	//std::this_thread::sleep_for(std::chrono::seconds(seconds));
-	std::cout << text << "\n";
-}
-
 namespace DOG::gfx
 {
 	Renderer::Renderer(HWND hwnd, u32 clientWidth, u32 clientHeight, bool debug, GraphicsSettings& settings)
@@ -58,8 +52,6 @@ namespace DOG::gfx
 		m_backend = std::make_unique<gfx::RenderBackend_DX12>(debug);
 		m_rd = m_backend->CreateDevice(S_NUM_BACKBUFFERS);
 		m_sc = m_rd->CreateSwapchain(hwnd, (u8)S_NUM_BACKBUFFERS);
-
-		thread_sleep_temp("Core things up", 5);
 
 		// Swapchain is created -> we can check if settings verify settings against it.
 		VerifyAndSanitizeGraphicsSettings(settings, clientWidth, clientHeight);
@@ -76,7 +68,7 @@ namespace DOG::gfx
 		m_doubleSidedShadowDraws.resize(12);
 
 		AddScenes();
-		UIRebuild(clientHeight, clientWidth);	
+		UIRebuild(clientHeight, clientWidth);
 
 		m_imgui = std::make_unique<gfx::ImGUIBackend_DX12>(m_rd, m_sc, S_MAX_FIF);
 
@@ -87,31 +79,19 @@ namespace DOG::gfx
 			return WinProc(hwnd, uMsg, wParam, lParam);
 		};
 
-
-		thread_sleep_temp("Core database begin", 5);
-
 		m_bin = std::make_unique<GPUGarbageBin>(S_MAX_FIF);
 		m_uploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeDefault, S_MAX_FIF);
 		m_texUploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeTextures, 1);
 		m_meshUploadCtx = std::make_unique<UploadContext>(m_rd, m_graphicsSettings.maxHeapUploadSizeDefault, 1);
 
-		thread_sleep_temp("Core database begin 2", 5);
-
-
 		// For internal per frame management
 		const u32 maxUploadPerFrame = 512'000;
 		m_perFrameUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadPerFrame, S_MAX_FIF, QueueType::Copy);
 
-		thread_sleep_temp("Core database begin 2.1", 5);
-		
-		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), m_graphicsSettings.maxConstantsPerFrame, "Main Dyn Constants");
-
-		thread_sleep_temp("Core database begin 2.2", 5);
+		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), m_graphicsSettings.maxConstantsPerFrame);
 
 		m_dynConstantsTemp = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 3 * 4 * 24);
 
-
-		thread_sleep_temp("Core database begin 3", 5);
 
 
 		// multiple of curr loaded mixamo skeleton
@@ -120,8 +100,6 @@ namespace DOG::gfx
 		m_dynConstantsAnimatedShadows = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 75 * 100 * m_shadowMapCapacity * 2);
 		m_cmdl = m_rd->AllocateCommandList();
 
-
-		thread_sleep_temp("Core database final up", 5);
 
 		// Startup
 		MeshTable::MemorySpecification spec{};
@@ -150,8 +128,6 @@ namespace DOG::gfx
 		lightStorageSpec.spotLightSpec.maxDynamic = m_graphicsSettings.maxDynamicSpotLights;
 		lightStorageSpec.spotLightSpec.maxSometimes = m_graphicsSettings.maxSometimesSpotLights;
 		m_globalLightTable = std::make_unique<LightTable>(m_rd, m_bin.get(), lightStorageSpec, false);
-
-		thread_sleep_temp("Mesh and light tables up", 5);
 
 
 		// Create builder for users to create graphical objects supported by the renderer
@@ -326,8 +302,6 @@ namespace DOG::gfx
 		auto boxBlurCS = m_sclr->CompileFromFile("BoxBlurCS.hlsl", ShaderType::Compute);
 		m_boxBlurPipe = m_rd->CreateComputePipeline(ComputePipelineDesc(boxBlurCS.get()));
 
-		thread_sleep_temp("Pipes up", 5);
-
 
 
 		m_rgResMan = std::make_unique<RGResourceManager>(m_rd, m_bin.get());
@@ -372,7 +346,7 @@ namespace DOG::gfx
 		// Setup blackboard for potential Effect-intercom
 		m_rgBlackboard = std::make_unique<RGBlackboard>();
 
-		
+
 		m_particleBackend = std::make_unique<ParticleBackend>(m_rd, m_bin.get(), S_MAX_FIF, m_globalEffectData, m_rgResMan.get(), m_perFrameUploadCtx.get());
 
 
@@ -399,7 +373,7 @@ namespace DOG::gfx
 		m_heartbeatEffect = std::make_unique<HeartbeatEffect>(m_globalEffectData);
 		m_damageDiskEffect = std::make_unique<DamageDiskEffect>(m_globalEffectData);
 		m_laserBeamEffect = std::make_unique<LaserEffect>(m_globalEffectData, m_dynConstants.get());
-	
+
 		{
 			// Create 4x4 SSAO noise
 			std::random_device rd;  // Will be used to obtain a seed for the random number engine
@@ -460,9 +434,8 @@ namespace DOG::gfx
 
 		m_rgResMan->ImportTexture(RG_RESOURCE(NoiseSSAO), m_ssaoNoise, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
 		m_rgResMan->ImportBuffer(RG_RESOURCE(SamplesSSAO), m_ssaoSamples, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
-	
-		thread_sleep_temp("Rend is up", 15);
-}
+
+	}
 
 	Renderer::~Renderer()
 	{
@@ -1735,9 +1708,19 @@ namespace DOG::gfx
 			//ImGui::End();
 
 
-			if (ImGui::Begin("GPU Memory Statistics: Total", &open))
+			if (ImGui::Begin("GPU Memory Statistics: VRAM", &open))
 			{
 				auto& info = m_rd->GetTotalMemoryInfo().heap[0];
+				ImGui::Text("Used allocations: %f (Mb)", info.allocationBytes / 1048576.f);
+				ImGui::Text("Memory allocated: %f (Mb)", info.blockBytes / 1048576.f);
+				ImGui::Text("Smallest allocation: %f (Mb)", info.smallestAllocation / 1048576.f);
+				ImGui::Text("Largest allocation: %f (Mb)", info.largestAllocation / 1048576.f);
+			}
+			ImGui::End();
+
+			if (ImGui::Begin("GPU Memory Statistics: RAM", &open))
+			{
+				auto& info = m_rd->GetTotalMemoryInfo().heap[1];
 				ImGui::Text("Used allocations: %f (Mb)", info.allocationBytes / 1048576.f);
 				ImGui::Text("Memory allocated: %f (Mb)", info.blockBytes / 1048576.f);
 				ImGui::Text("Smallest allocation: %f (Mb)", info.smallestAllocation / 1048576.f);
