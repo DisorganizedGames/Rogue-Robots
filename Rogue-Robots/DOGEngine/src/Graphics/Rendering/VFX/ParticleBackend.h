@@ -60,7 +60,7 @@ namespace DOG::gfx
 		struct EmitterTableHandle { u64 handle{ 0 }; };
 
 	public:
-		constexpr static inline u32 S_MAX_EMITTERS = 1024;
+		constexpr static inline u32 S_MAX_EMITTERS = 65536;
 
 	public:
 		ParticleBackend() = delete;
