@@ -411,8 +411,7 @@ void GameLayer::GenerateLevel()
 		std::vector<std::string> generatedLevel = s_WFC->GetGeneratedLevel();
 		std::vector<Room> generatedRooms = s_WFC->GetGeneratedRoomsData();
 
-		std::ofstream output;
-		output.open("Assets\\Levels\\Generate.txt");
+		std::ofstream output("Assets\\Levels\\Generate.txt");
 
 		//Write the data about the rooms
 		for (auto& r : generatedRooms)

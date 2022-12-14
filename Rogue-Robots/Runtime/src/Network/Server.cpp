@@ -621,6 +621,6 @@ void Server::ReadInGeneratedLevel()
 		std::getline(inputFile, line, '\0');
 		memset(m_level, '\0', 4096);
 		memcpy(m_level, line.c_str(), line.length());
-		m_lobbyData.levelSize = line.length();
+		m_lobbyData.levelSize = (u32)line.length();
 	}
 }
