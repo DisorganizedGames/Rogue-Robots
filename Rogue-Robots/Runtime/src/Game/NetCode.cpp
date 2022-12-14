@@ -49,7 +49,7 @@ NetCode::NetCode() noexcept
 NetCode::~NetCode() noexcept
 {
 	m_netCodeAlive = false;
-	Sleep(6000);
+	Sleep(3000);
 	delete m_client;
 	delete m_serverHost;
 }
@@ -344,7 +344,7 @@ void NetCode::ReceiveDataUdp()
 
 void NetCode::UpdateSendTcp()
 {
-	if (Server::TickTimeLeftTCP(m_tickStartTime, m_clockFrequency) > (1.0f / 60.0f))
+	if (Server::TickTimeLeftTCP(m_tickStartTime, m_clockFrequency) > TICKRATE)
 	{
 		//sync all transforms Host only
 		if (m_inputTcp.playerId == 0)

@@ -14,9 +14,6 @@ Server::Server()
 		m_playerIds.at(i) = i;
 	}
 
-	//Change denominator to set tick rate
-	m_tickrateTcp = 1.0f / 60.0f;
-	m_tickrateUdp = 1.0f / 60.0f;
 	m_upid = 0;
 	m_reciveupid = 0;
 	m_clientsSocketsTcp.clear();
@@ -389,9 +386,9 @@ void Server::ServerPollTCP()
 		//wait untill tick is done 
 		float timeTakenS = TickTimeLeftTCP(tickStartTime, clockFrequency);
 
-		while (timeTakenS < m_tickrateTcp)
+		while (timeTakenS < TICKRATE)
 		{
-			float timeToWaitMs = (m_tickrateTcp - timeTakenS) * 1000;
+			float timeToWaitMs = (TICKRATE - timeTakenS) * 1000;
 
 			if (timeToWaitMs > 0)
 			{
@@ -505,9 +502,9 @@ void Server::GameLoopUdp()
 		//wait untill tick is done 
 		float timeTakenS = TickTimeLeftTCP(tickStartTime, clockFrequency);
 
-		while (timeTakenS < m_tickrateUdp)
+		while (timeTakenS < TICKRATE)
 		{
-			float timeToWaitMs = (m_tickrateUdp - timeTakenS) * 1000;
+			float timeToWaitMs = (TICKRATE - timeTakenS) * 1000;
 			if (timeToWaitMs > 0)
 			{
 				Sleep((u32)timeToWaitMs);
