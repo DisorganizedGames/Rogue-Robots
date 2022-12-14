@@ -453,6 +453,8 @@ void NetCode::ReceiveDataTcp()
 
 									if (compare.Length() > (capsuleThreshold))
 									{
+										Log& log = Logger::Get()["Network Survey"];
+										log["times telported"].Add(1);
 										transC.SetPosition(tempTransfrom->position);
 									}
 								}
