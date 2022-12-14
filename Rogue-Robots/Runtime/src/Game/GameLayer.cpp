@@ -136,7 +136,7 @@ GameLayer::GameLayer() noexcept
 	uint32_t h = 7;
 	uint32_t d = 40;
 
-	std::string input = "..\\Offline-Tools\\PCG\\largerTest1Output_Floors";
+	std::string input = "Assets\\Levels\\largerTest1Output_Floors";
 
 	//Create a WFC interface and send the input.
 	s_WFC = std::make_unique<WFC>(w, h, d);
@@ -412,7 +412,7 @@ void GameLayer::GenerateLevel()
 		std::vector<Room> generatedRooms = s_WFC->GetGeneratedRoomsData();
 
 		std::ofstream output;
-		output.open("..\\Offline-Tools\\PCG\\Generate.txt");
+		output.open("Assets\\Levels\\Generate.txt");
 
 		//Write the data about the rooms
 		for (auto& r : generatedRooms)
@@ -469,7 +469,7 @@ void GameLayer::StartMainScene()
 			(
 				m_nrOfPlayers,
 				std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5),
-				"..\\Offline-Tools\\PCG\\" + levelName
+				"Assets\\Levels\\" + levelName
 				);
 		m_mainScene->SetUpScene();
 		break;

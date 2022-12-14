@@ -613,7 +613,7 @@ void Server::SetLevelIndex(u16 levelIndex)
 void Server::ReadInGeneratedLevel()
 {
 	std::string line;
-	std::ifstream inputFile("..\\Offline-Tools\\PCG\\Generate.txt");
+	std::ifstream inputFile("Assets\\Levels\\Generate.txt");
 
 	
 	if (inputFile.is_open())
@@ -622,7 +622,5 @@ void Server::ReadInGeneratedLevel()
 		memset(m_level, '\0', 4096);
 		memcpy(m_level, line.c_str(), line.length());
 		m_lobbyData.levelSize = line.length();
-		//FILE* file = std::fopen("..\\Offline-Tools\\PCG\\exampleOut.txt", "w");
-		//fwrite(m_lobbyData.data, sizeof(char), 204800, file);
 	}
 }

@@ -571,19 +571,12 @@ void NetCode::ReceiveDataTcp()
 					memcpy(m_levelData + m_lobbyData.levelDataIndex, m_lobbyData.data, 4096);
 				if (m_inputTcp.playerId != 0 && m_lobbyData.levelDataIndex == 0)
 				{
-					std::ofstream levelfile("..\\Offline-Tools\\PCG\\Generate.txt");
+					std::ofstream levelfile("Assets\\Levels\\Generate.txt");
 					if (levelfile.is_open())
 					{
 						levelfile << m_levelData;
 						levelfile.close();
 					}
-					//std::ofstream levelfile;
-					//levelfile.open("..\\Offline-Tools\\PCG\\example123.txt", std::ios_base::app);
-					//if (levelfile.is_open())
-					//{
-					//	levelfile << m_levelData;
-					//	levelfile.close();
-					//}
 				}
 			}
 		}
