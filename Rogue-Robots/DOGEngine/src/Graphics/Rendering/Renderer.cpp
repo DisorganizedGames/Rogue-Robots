@@ -102,7 +102,12 @@ namespace DOG::gfx
 		const u32 maxUploadPerFrame = 512'000;
 		m_perFrameUploadCtx = std::make_unique<UploadContext>(m_rd, maxUploadPerFrame, S_MAX_FIF, QueueType::Copy);
 
+		thread_sleep_temp("Core database begin 2.1", 5);
+		
 		m_dynConstants = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), m_graphicsSettings.maxConstantsPerFrame, "Main Dyn Constants");
+
+		thread_sleep_temp("Core database begin 2.2", 5);
+
 		m_dynConstantsTemp = std::make_unique<GPUDynamicConstants>(m_rd, m_bin.get(), 3 * 4 * 24);
 
 
@@ -455,7 +460,7 @@ namespace DOG::gfx
 		m_rgResMan->ImportTexture(RG_RESOURCE(NoiseSSAO), m_ssaoNoise, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
 		m_rgResMan->ImportBuffer(RG_RESOURCE(SamplesSSAO), m_ssaoSamples, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_DEST);
 	
-		thread_sleep_temp("Rend is up", 5);
+		thread_sleep_temp("Rend is up", 15);
 }
 
 	Renderer::~Renderer()
@@ -1731,7 +1736,7 @@ namespace DOG::gfx
 
 			if (ImGui::Begin("GPU Memory Statistics: Total", &open))
 			{
-				auto& info = m_rd->GetTotalMemoryInfo().heap[0];
+				auto& info = m_rd->GetTotalMemoryInfo().heap[1];
 				ImGui::Text("Used allocations: %f (Mb)", info.allocationBytes / 1048576.f);
 				ImGui::Text("Memory allocated: %f (Mb)", info.blockBytes / 1048576.f);
 				ImGui::Text("Smallest allocation: %f (Mb)", info.smallestAllocation / 1048576.f);
