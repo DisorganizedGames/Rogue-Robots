@@ -747,25 +747,21 @@ namespace DOG
 		assert(loadFlag & AssetLoadFlag::GPUMemory || loadFlag & AssetLoadFlag::CPUMemory);
 		std::filesystem::path newPath{ path };
 		auto oldExtension = newPath.extension();
-		if (oldExtension == ".jpg" || oldExtension == ".png")
-		{
-			newPath.replace_extension(".dds");
-			path = newPath.string();
-		}
 
 		if (!std::filesystem::exists(path))
 		{
-			// assert wont catch if we have wrong path only in release mode
-			std::cout << "AssetManager::AssetShouldBeLoaded throw. " + path + " does not exist" << std::endl;
-			throw std::runtime_error(path + " does not exist");
+			if (oldExtension == ".jpg" || oldExtension == ".png")
+			{
+				newPath.replace_extension(".dds");
+				path = newPath.string();
+			}
+			else
+			{
+				// assert wont catch if we have wrong path only in release mode
+				std::cout << "AssetManager::AssetShouldBeLoaded throw. " + path + " does not exist" << std::endl;
+				throw std::runtime_error(path + " does not exist");
+			}
 		}
-		else
-		{
-			// Put back old extension
-			newPath.replace_extension(oldExtension);
-			path = newPath.string();
-		}
-
 
 		u32 id = 0;
 		bool assetNeedsToBeLoaded = true;
