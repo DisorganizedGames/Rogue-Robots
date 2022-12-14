@@ -2,6 +2,7 @@
 #include <DOGEngine.h>
 #include "../Game/GameLayer.h"
 #include "../Game/EmilFDebugLayer.h"
+#include "../Game/LuaLayer.h"
 #include "../../../DOGEngine/src/Graphics/Rendering/UI.h"
 
 
@@ -19,6 +20,7 @@ private:
 private:
 	bool m_showImGuiMenu = false;
 	GameLayer m_gameLayer;
+	LuaLayer m_luaLayer;
 	DOG::ImGuiMenuLayer m_imGuiMenuLayer;
 	//EmilFDebugLayer m_EmilFDebugLayer;
 };

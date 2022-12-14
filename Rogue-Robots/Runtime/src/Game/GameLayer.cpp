@@ -21,57 +21,57 @@ NetworkStatus GameLayer::s_networkStatus = NetworkStatus::Offline;
 GameLayer::GameLayer() noexcept
 	: Layer("Game layer"), m_entityManager{ DOG::EntityManager::Get() }, m_gameState(GameState::Initializing)
 {
-	LuaMain::GetScriptManager()->SortOrderScripts();
-	//Do startup of lua
-	LuaMain::GetScriptManager()->RunLuaFile("LuaStartUp.lua");
-	//Register Lua interfaces
-	RegisterLuaInterfaces();
-	
-	m_entityManager.RegisterSystem(std::make_unique<ScuffedSceneGraphSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightMoveSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<HomingMissileTargetingSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<HomingMissileSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<HomingMissileImpacteSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<TurretTargetingSystem>());
+	//LuaMain::GetScriptManager()->SortOrderScripts();
+	////Do startup of lua
+	//LuaMain::GetScriptManager()->RunLuaFile("LuaStartUp.lua");
+	////Register Lua interfaces
+	//RegisterLuaInterfaces();
+	//
+	//m_entityManager.RegisterSystem(std::make_unique<ScuffedSceneGraphSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<DoorOpeningSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<LerpAnimationSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<LerpColorSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightMoveSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<HomingMissileTargetingSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<HomingMissileSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<HomingMissileImpacteSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<TurretTargetingSystem>());
 
-	m_entityManager.RegisterSystem(std::make_unique<DespawnSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<PickupLerpAnimationSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<PickupItemInteractionSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<PlayerMovementSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<PlayerJumpRefreshSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<DespawnSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<ExplosionSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<ExplosionEffectSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<PickupLerpAnimationSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<PickupItemInteractionSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<PlayerMovementSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<PlayerJumpRefreshSystem>());
 
-	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<MVPRenderPickupItemUIText>());
-	m_entityManager.RegisterSystem(std::make_unique<PickUpTranslateToPlayerSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<MVPRenderAmmunitionTextSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<MVPRenderReloadHintTextSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<CleanupItemInteractionSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<CleanupPlayerStateSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
-	m_nrOfPlayers = 1;
+	//m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<MVPRenderPickupItemUIText>());
+	//m_entityManager.RegisterSystem(std::make_unique<PickUpTranslateToPlayerSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<MVPRenderAmmunitionTextSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<MVPRenderReloadHintTextSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<CleanupItemInteractionSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<CleanupPlayerStateSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<DeleteNetworkSync>());
+	//m_nrOfPlayers = 1;
 
-	m_keyBindingDescriptions.emplace_back("wasd", "walk");
-	m_keyBindingDescriptions.emplace_back("space", "jump");
-	m_keyBindingDescriptions.emplace_back("lmb", "shoot");
-	m_keyBindingDescriptions.emplace_back("r", "reload");
-	m_keyBindingDescriptions.emplace_back("g", "active item");
-	m_keyBindingDescriptions.emplace_back("f", "flash light");
-	m_keyBindingDescriptions.emplace_back("m", "gun effect");
-	m_keyBindingDescriptions.emplace_back("e", "interact");
-	m_keyBindingDescriptions.emplace_back("q", "full auto");
-	m_keyBindingDescriptions.emplace_back("alt + enter", "fullscreen");
-	m_keyBindingDescriptions.emplace_back("h", "debug camera");
-	m_keyBindingDescriptions.emplace_back("f1", "debug menu");
+	//m_keyBindingDescriptions.emplace_back("wasd", "walk");
+	//m_keyBindingDescriptions.emplace_back("space", "jump");
+	//m_keyBindingDescriptions.emplace_back("lmb", "shoot");
+	//m_keyBindingDescriptions.emplace_back("r", "reload");
+	//m_keyBindingDescriptions.emplace_back("g", "active item");
+	//m_keyBindingDescriptions.emplace_back("f", "flash light");
+	//m_keyBindingDescriptions.emplace_back("m", "gun effect");
+	//m_keyBindingDescriptions.emplace_back("e", "interact");
+	//m_keyBindingDescriptions.emplace_back("q", "full auto");
+	//m_keyBindingDescriptions.emplace_back("alt + enter", "fullscreen");
+	//m_keyBindingDescriptions.emplace_back("h", "debug camera");
+	//m_keyBindingDescriptions.emplace_back("f1", "debug menu");
 
-	assert(std::filesystem::exists(("Assets/Fonts/Robot Radicals.ttf")));
-	ImGui::GetIO().Fonts->AddFontDefault();
-	m_imguiFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Assets/Fonts/Robot Radicals.ttf", 18.0f);
-	Window::SetFont(m_imguiFont);
+	//assert(std::filesystem::exists(("Assets/Fonts/Robot Radicals.ttf")));
+	//ImGui::GetIO().Fonts->AddFontDefault();
+	//m_imguiFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Assets/Fonts/Robot Radicals.ttf", 18.0f);
+	//Window::SetFont(m_imguiFont);
 }
 
 GameLayer::~GameLayer()
@@ -80,30 +80,30 @@ GameLayer::~GameLayer()
 
 void GameLayer::OnAttach()
 {
-	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameManager", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1), true, std::make_pair(DOG::Key::LCtrl, DOG::Key::G));
-	DOG::ImGuiMenuLayer::RegisterDebugWindow("Cheats", std::bind(&GameLayer::CheatDebugMenu, this, std::placeholders::_1));
+	//DOG::ImGuiMenuLayer::RegisterDebugWindow("GameManager", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1), true, std::make_pair(DOG::Key::LCtrl, DOG::Key::G));
+	//DOG::ImGuiMenuLayer::RegisterDebugWindow("Cheats", std::bind(&GameLayer::CheatDebugMenu, this, std::placeholders::_1));
 
-	//m_testScene = std::make_unique<TestScene>();
-	//m_testScene->SetUpScene();
+	////m_testScene = std::make_unique<TestScene>();
+	////m_testScene->SetUpScene();
 }
 
 void GameLayer::OnDetach()
 {
-	DOG::ImGuiMenuLayer::UnRegisterDebugWindow("GameManager");
-	DOG::ImGuiMenuLayer::UnRegisterDebugWindow("Cheats");
-	m_testScene.reset();
-	m_testScene = nullptr;
+	//DOG::ImGuiMenuLayer::UnRegisterDebugWindow("GameManager");
+	//DOG::ImGuiMenuLayer::UnRegisterDebugWindow("Cheats");
+	//m_testScene.reset();
+	//m_testScene = nullptr;
 
-	m_lightScene.reset();
-	m_lightScene = nullptr;
+	//m_lightScene.reset();
+	//m_lightScene = nullptr;
 
-	m_mainScene.reset();
-	m_mainScene = nullptr;
+	//m_mainScene.reset();
+	//m_mainScene = nullptr;
 }
 
 void GameLayer::OnUpdate()
 {
-	MINIPROFILE
+	/*MINIPROFILE
 		switch (m_gameState)
 		{
 		case GameState::None:
@@ -145,59 +145,59 @@ void GameLayer::OnUpdate()
 	global->SetNumber("DeltaTime", Time::DeltaTime());
 	global->SetNumber("ElapsedTime", Time::ElapsedTime());
 
-	KeyBindingDisplayMenu();
+	KeyBindingDisplayMenu();*/
 }
 
 void GameLayer::StartMainScene()
 {
-	assert(m_mainScene == nullptr);
+	//assert(m_mainScene == nullptr);
 
-	switch (m_selectedScene)
-	{
-	case SceneComponent::Type::TunnelRoom0Scene:
-		/************************** tunnel scene *********************************/
-		m_mainScene = std::make_unique<TunnelRoom0Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-		m_mainScene->SetUpScene();
-		break;
-	case SceneComponent::Type::TunnelRoom1Scene:
-		/************************** tunnel scene *********************************/
-		m_mainScene = std::make_unique<TunnelRoom1Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-		m_mainScene->SetUpScene();
-		break;
-	case SceneComponent::Type::TunnelRoom2Scene:
-		/************************** tunnel scene *********************************/
-		m_mainScene = std::make_unique<TunnelRoom2Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-		m_mainScene->SetUpScene();
-		break;
-	case SceneComponent::Type::TunnelRoom3Scene:
-		/************************** tunnel scene *********************************/
-		m_mainScene = std::make_unique<TunnelRoom3Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-		m_mainScene->SetUpScene();
-		break;
-	case SceneComponent::Type::OldDefaultScene:
-		/************************** old default scene *********************************/
-		m_mainScene = std::make_unique<OldDefaultScene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-		m_mainScene->SetUpScene();
-		break;
-	default:
-		break;
-	}
+	//switch (m_selectedScene)
+	//{
+	//case SceneComponent::Type::TunnelRoom0Scene:
+	//	/************************** tunnel scene *********************************/
+	//	m_mainScene = std::make_unique<TunnelRoom0Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+	//	m_mainScene->SetUpScene();
+	//	break;
+	//case SceneComponent::Type::TunnelRoom1Scene:
+	//	/************************** tunnel scene *********************************/
+	//	m_mainScene = std::make_unique<TunnelRoom1Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+	//	m_mainScene->SetUpScene();
+	//	break;
+	//case SceneComponent::Type::TunnelRoom2Scene:
+	//	/************************** tunnel scene *********************************/
+	//	m_mainScene = std::make_unique<TunnelRoom2Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+	//	m_mainScene->SetUpScene();
+	//	break;
+	//case SceneComponent::Type::TunnelRoom3Scene:
+	//	/************************** tunnel scene *********************************/
+	//	m_mainScene = std::make_unique<TunnelRoom3Scene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+	//	m_mainScene->SetUpScene();
+	//	break;
+	//case SceneComponent::Type::OldDefaultScene:
+	//	/************************** old default scene *********************************/
+	//	m_mainScene = std::make_unique<OldDefaultScene>(m_nrOfPlayers, std::bind(&GameLayer::SpawnAgents, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+	//	m_mainScene->SetUpScene();
+	//	break;
+	//default:
+	//	break;
+	//}
 
-	LuaMain::GetScriptManager()->StartScripts();
-	if (s_networkStatus != NetworkStatus::Offline)
-		m_netCode.OnStartup();
-	m_gameState = GameState::Playing;
+	//LuaMain::GetScriptManager()->StartScripts();
+	//if (s_networkStatus != NetworkStatus::Offline)
+	//	m_netCode.OnStartup();
+	//m_gameState = GameState::Playing;
 }
 
 void GameLayer::CloseMainScene()
 {
-	ItemManager::Get().DestroyAllItems();
-	m_mainScene.reset();
+	//ItemManager::Get().DestroyAllItems();
+	//m_mainScene.reset();
 }
 
 void GameLayer::EvaluateWinCondition()
 {
-	if (m_noWinLose) return;
+	/*if (m_noWinLose) return;
 	bool agentsAlive = false;
 	EntityManager::Get().Collect<AgentIdComponent>().Do([&agentsAlive](AgentIdComponent&) { agentsAlive = true; });
 
@@ -229,63 +229,63 @@ void GameLayer::EvaluateWinCondition()
 			ImGui::PopFont();
 		}
 		ImGui::End();
-	}
+	}*/
 }
 
 void GameLayer::EvaluateLoseCondition()
 {
-	if (m_noWinLose) return;
+	/*if (m_noWinLose) return;
 	bool playersAlive = false;
 	EntityManager::Get().Collect<PlayerAliveComponent>().Do([&playersAlive](PlayerAliveComponent&) { playersAlive = true; });
-	if (!playersAlive) m_gameState = GameState::Lost;
+	if (!playersAlive) m_gameState = GameState::Lost;*/
 }
 
 void GameLayer::CheckIfPlayersIAreDead()
 {
-	EntityManager::Get().Collect<PlayerStatsComponent, PlayerAliveComponent>().Do([&](entity e, PlayerStatsComponent& stats, PlayerAliveComponent&)
-		{
-			if (stats.health <= 0.0f)
-			{
-				// Player died
-				KillPlayer(e);
-			}
-		});
+	//EntityManager::Get().Collect<PlayerStatsComponent, PlayerAliveComponent>().Do([&](entity e, PlayerStatsComponent& stats, PlayerAliveComponent&)
+	//	{
+	//		if (stats.health <= 0.0f)
+	//		{
+	//			// Player died
+	//			KillPlayer(e);
+	//		}
+	//	});
 }
 
 void GameLayer::RespawnDeadPlayer(DOG::entity e) // TODO RespawnDeadPlayer will not be called for online players, this needs to be fixed later on.
 {
-	if (m_entityManager.HasComponent<PlayerAliveComponent>(e))
-	{
-		KillPlayer(e);
-	}
+	//if (m_entityManager.HasComponent<PlayerAliveComponent>(e))
+	//{
+	//	KillPlayer(e);
+	//}
 
-	auto& bc = m_entityManager.AddComponent<BarrelComponent>(e);
-	bc.type = BarrelComponent::Type::Bullet;
-	bc.currentAmmoCount = 30;
-	bc.maximumAmmoCapacityForType = 999'999; // Representing infinity...?? (Emil F)
+	//auto& bc = m_entityManager.AddComponent<BarrelComponent>(e);
+	//bc.type = BarrelComponent::Type::Bullet;
+	//bc.currentAmmoCount = 30;
+	//bc.maximumAmmoCapacityForType = 999'999; // Representing infinity...?? (Emil F)
 
-	m_entityManager.AddComponent<PlayerAliveComponent>(e);
+	//m_entityManager.AddComponent<PlayerAliveComponent>(e);
 
-	LuaMain::GetScriptManager()->AddScript(e, "Gun.lua");
+	//LuaMain::GetScriptManager()->AddScript(e, "Gun.lua");
 
-	LuaMain::GetScriptManager()->AddScript(e, "PassiveItemSystem.lua");
+	//LuaMain::GetScriptManager()->AddScript(e, "PassiveItemSystem.lua");
 
-	LuaMain::GetScriptManager()->AddScript(e, "ActiveItemSystem.lua");
+	//LuaMain::GetScriptManager()->AddScript(e, "ActiveItemSystem.lua");
 
-	if (m_entityManager.HasComponent<ThisPlayer>(e))
-	{
-		auto& stats = m_entityManager.GetComponent<PlayerStatsComponent>(e);
-		stats.health = stats.maxHealth;
-	}
+	//if (m_entityManager.HasComponent<ThisPlayer>(e))
+	//{
+	//	auto& stats = m_entityManager.GetComponent<PlayerStatsComponent>(e);
+	//	stats.health = stats.maxHealth;
+	//}
 
-	auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
-	m_entityManager.DeferredEntityDestruction(controller.debugCamera);
-	controller.debugCamera = DOG::NULL_ENTITY;
+	//auto& controller = m_entityManager.GetComponent<PlayerControllerComponent>(e);
+	//m_entityManager.DeferredEntityDestruction(controller.debugCamera);
+	//controller.debugCamera = DOG::NULL_ENTITY;
 }
 
 void GameLayer::KillPlayer(DOG::entity e)
 {
-	m_entityManager.RemoveComponent<PlayerAliveComponent>(e);
+	/*m_entityManager.RemoveComponent<PlayerAliveComponent>(e);
 
 	if (m_entityManager.HasComponent<ThisPlayer>(e))
 	{
@@ -305,12 +305,12 @@ void GameLayer::KillPlayer(DOG::entity e)
 			.worldMatrix = m_entityManager.GetComponent<TransformComponent>(controller.cameraEntity);
 
 		m_entityManager.AddComponent<CameraComponent>(controller.debugCamera).isMainCamera = true;
-	}
+	}*/
 }
 
 void GameLayer::UpdateGame()
 {
-	LuaMain::GetScriptManager()->UpdateScripts();
+	/*LuaMain::GetScriptManager()->UpdateScripts();
 	LuaMain::GetScriptManager()->ReloadScripts();
 
 	if (s_networkStatus != NetworkStatus::Offline)
@@ -331,7 +331,7 @@ void GameLayer::UpdateGame()
 				pos.y = 10;
 				transform.SetPosition(pos);
 			}
-		});
+		});*/
 }
 
 void GameLayer::OnRender()
@@ -347,7 +347,7 @@ void GameLayer::OnImGuiRender()
 
 void GameLayer::ToggleFlashlight()
 {
-	m_entityManager.Collect<DOG::SpotLightComponent>().Do([](DOG::SpotLightComponent& slc)
+	/*m_entityManager.Collect<DOG::SpotLightComponent>().Do([](DOG::SpotLightComponent& slc)
 		{
 			if (slc.isMainPlayerSpotlight)
 			{
@@ -356,12 +356,12 @@ void GameLayer::ToggleFlashlight()
 				else
 					slc.strength = 0.6f;
 			}
-		});
+		});*/
 }
 
 void GameLayer::OnEvent(DOG::IEvent& event)
 {
-	using namespace DOG;
+	/*using namespace DOG;
 	switch (event.GetEventType())
 	{
 	case EventType::LeftMouseButtonPressedEvent:
@@ -394,12 +394,12 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	{
 		Release(EVENT(KeyReleasedEvent).key);
 	}
-	}
+	}*/
 }
 
 void GameLayer::UpdateLobby()
 {
-	if (s_networkStatus != NetworkStatus::Offline)
+	/*if (s_networkStatus != NetworkStatus::Offline)
 		m_netCode.OnUpdate();
 	bool inLobby = m_gameState == GameState::Lobby;
 	if (ImGui::Begin("Lobby", &inLobby))
@@ -616,154 +616,154 @@ void GameLayer::UpdateLobby()
 		if (!inLobby)
 			m_gameState = GameState::StartPlaying;
 	}
-	ImGui::End();
+	ImGui::End();*/
 }
 
 void GameLayer::RegisterLuaInterfaces()
 {
-	LuaGlobal* global = LuaMain::GetGlobal();
+	//LuaGlobal* global = LuaMain::GetGlobal();
 
-	global->SetNumber("DeltaTime", Time::DeltaTime());
+	//global->SetNumber("DeltaTime", Time::DeltaTime());
 
-	//-----------------------------------------------------------------------------------------------
-	//Input
-	//Create a luaInterface variable that holds the interface object (is reused for all interfaces)
-	std::shared_ptr<LuaInterface> luaInterfaceObject = std::make_shared<InputInterface>();
-	m_luaInterfaces.push_back(luaInterfaceObject); //Add it to the gamelayer's interfaces.
+	////-----------------------------------------------------------------------------------------------
+	////Input
+	////Create a luaInterface variable that holds the interface object (is reused for all interfaces)
+	//std::shared_ptr<LuaInterface> luaInterfaceObject = std::make_shared<InputInterface>();
+	//m_luaInterfaces.push_back(luaInterfaceObject); //Add it to the gamelayer's interfaces.
 
-	auto luaInterface = global->CreateLuaInterface("InputInterface"); //Register a new interface in lua.
-	//Add all functions that are needed from the interface class.
-	luaInterface.AddFunction<InputInterface, &InputInterface::IsLeftPressed>("IsLeftPressed");
-	luaInterface.AddFunction<InputInterface, &InputInterface::IsRightPressed>("IsRightPressed");
-	luaInterface.AddFunction<InputInterface, &InputInterface::IsKeyPressed>("IsKeyPressed");
-	luaInterface.AddFunction<InputInterface, &InputInterface::GetMouseDelta>("MouseDelta");
-	global->SetLuaInterface(luaInterface);
-	//Make the object accessible from lua. Is used by: Input.FunctionName()
-	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Input", "InputInterface");
+	//auto luaInterface = global->CreateLuaInterface("InputInterface"); //Register a new interface in lua.
+	////Add all functions that are needed from the interface class.
+	//luaInterface.AddFunction<InputInterface, &InputInterface::IsLeftPressed>("IsLeftPressed");
+	//luaInterface.AddFunction<InputInterface, &InputInterface::IsRightPressed>("IsRightPressed");
+	//luaInterface.AddFunction<InputInterface, &InputInterface::IsKeyPressed>("IsKeyPressed");
+	//luaInterface.AddFunction<InputInterface, &InputInterface::GetMouseDelta>("MouseDelta");
+	//global->SetLuaInterface(luaInterface);
+	////Make the object accessible from lua. Is used by: Input.FunctionName()
+	//global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Input", "InputInterface");
 
-	//-----------------------------------------------------------------------------------------------
-	//Entities
-	luaInterfaceObject = std::make_shared<EntityInterface>();
-	m_luaInterfaces.push_back(luaInterfaceObject);
+	////-----------------------------------------------------------------------------------------------
+	////Entities
+	//luaInterfaceObject = std::make_shared<EntityInterface>();
+	//m_luaInterfaces.push_back(luaInterfaceObject);
 
-	luaInterface = global->CreateLuaInterface("EntityInterface");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::CreateEntity>("CreateEntity");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::DestroyEntity>("DestroyEntity");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::AddComponent>("AddComponent");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::RemoveComponent>("RemoveComponent");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::ModifyComponent>("ModifyComponent");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetTransformPosData>("GetTransformPosData");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetTransformScaleData>("GetTransformScaleData");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetRotationForwardUp>("SetRotationForwardUp");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPlayerStats>("GetPlayerStats");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPlayerStat>("GetPlayerStat");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetPlayerStats>("SetPlayerStats");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetPlayerStat>("SetPlayerStat");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetUp>("GetUp");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetForward>("GetForward");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetRight>("GetRight");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPlayerControllerCamera>("GetPlayerControllerCamera");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAction>("GetAction");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::SetAction>("SetAction");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::HasComponent>("HasComponent");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::PlayAudio>("PlayAudio");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPassiveType>("GetPassiveType");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetActiveType>("GetActiveType");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetBarrelType>("GetBarrelType");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetModificationType>("GetModificationType");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAmmoCapacityForBarrelType>("GetAmmoCapacityForBarrelType");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAmmoCountPerPickup>("GetAmmoCountPerPickup");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::UpdateMagazine>("UpdateMagazine");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::IsBulletLocal>("IsBulletLocal");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::Exists>("Exists");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::GetEntityTypeAsString>("GetEntityTypeAsString");
-	
-	//luaInterface.AddFunction<EntityInterface, &EntityInterface::AgentHit>("AgentHit");
-	luaInterface.AddFunction<EntityInterface, &EntityInterface::ModifyAnimationComponent>("ModifyAnimationComponent");
+	//luaInterface = global->CreateLuaInterface("EntityInterface");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::CreateEntity>("CreateEntity");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::DestroyEntity>("DestroyEntity");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::AddComponent>("AddComponent");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::RemoveComponent>("RemoveComponent");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::ModifyComponent>("ModifyComponent");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::GetTransformPosData>("GetTransformPosData");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::GetTransformScaleData>("GetTransformScaleData");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::SetRotationForwardUp>("SetRotationForwardUp");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPlayerStats>("GetPlayerStats");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPlayerStat>("GetPlayerStat");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::SetPlayerStats>("SetPlayerStats");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::SetPlayerStat>("SetPlayerStat");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::GetUp>("GetUp");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::GetForward>("GetForward");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::GetRight>("GetRight");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPlayerControllerCamera>("GetPlayerControllerCamera");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAction>("GetAction");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::SetAction>("SetAction");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::HasComponent>("HasComponent");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::PlayAudio>("PlayAudio");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::GetPassiveType>("GetPassiveType");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::GetActiveType>("GetActiveType");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::GetBarrelType>("GetBarrelType");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::GetModificationType>("GetModificationType");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAmmoCapacityForBarrelType>("GetAmmoCapacityForBarrelType");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::GetAmmoCountPerPickup>("GetAmmoCountPerPickup");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::UpdateMagazine>("UpdateMagazine");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::IsBulletLocal>("IsBulletLocal");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::Exists>("Exists");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::GetEntityTypeAsString>("GetEntityTypeAsString");
+	//
+	////luaInterface.AddFunction<EntityInterface, &EntityInterface::AgentHit>("AgentHit");
+	//luaInterface.AddFunction<EntityInterface, &EntityInterface::ModifyAnimationComponent>("ModifyAnimationComponent");
 
-	global->SetLuaInterface(luaInterface);
+	//global->SetLuaInterface(luaInterface);
 
-	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Entity", "EntityInterface");
-
-
-	//-----------------------------------------------------------------------------------------------
-	//Scene
-	luaInterfaceObject = std::make_shared<SceneInterface>();
-	m_luaInterfaces.push_back(luaInterfaceObject);
-
-	luaInterface = global->CreateLuaInterface("SceneInterface");
-
-	luaInterface.AddFunction<SceneInterface, &SceneInterface::CreateEntity>("CreateEntity");
-
-	global->SetLuaInterface(luaInterface);
-	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Scene", "SceneInterface");
+	//global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Entity", "EntityInterface");
 
 
-	//-----------------------------------------------------------------------------------------------
-	//Assets
-	luaInterfaceObject = std::make_shared<AssetInterface>();
-	m_luaInterfaces.push_back(luaInterfaceObject);
+	////-----------------------------------------------------------------------------------------------
+	////Scene
+	//luaInterfaceObject = std::make_shared<SceneInterface>();
+	//m_luaInterfaces.push_back(luaInterfaceObject);
 
-	luaInterface = global->CreateLuaInterface("AssetInterface");
-	luaInterface.AddFunction<AssetInterface, &AssetInterface::LoadModel>("LoadModel");
-	luaInterface.AddFunction<AssetInterface, &AssetInterface::LoadAudio>("LoadAudio");
-	global->SetLuaInterface(luaInterface);
+	//luaInterface = global->CreateLuaInterface("SceneInterface");
 
-	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Asset", "AssetInterface");
+	//luaInterface.AddFunction<SceneInterface, &SceneInterface::CreateEntity>("CreateEntity");
 
-	//-----------------------------------------------------------------------------------------------
-	//Host
+	//global->SetLuaInterface(luaInterface);
+	//global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Scene", "SceneInterface");
 
-	luaInterfaceObject = std::make_shared<HostInterface>();
-	m_luaInterfaces.push_back(luaInterfaceObject);
 
-	luaInterface = global->CreateLuaInterface("HostInterface");
-	luaInterface.AddFunction<HostInterface, &HostInterface::DistanceToPlayers>("DistanceToPlayers");
-	global->SetLuaInterface(luaInterface);
+	////-----------------------------------------------------------------------------------------------
+	////Assets
+	//luaInterfaceObject = std::make_shared<AssetInterface>();
+	//m_luaInterfaces.push_back(luaInterfaceObject);
 
-	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Host", "HostInterface");
+	//luaInterface = global->CreateLuaInterface("AssetInterface");
+	//luaInterface.AddFunction<AssetInterface, &AssetInterface::LoadModel>("LoadModel");
+	//luaInterface.AddFunction<AssetInterface, &AssetInterface::LoadAudio>("LoadAudio");
+	//global->SetLuaInterface(luaInterface);
 
-	//-----------------------------------------------------------------------------------------------
-	//Physics
-	luaInterfaceObject = std::make_shared<PhysicsInterface>();
-	m_luaInterfaces.push_back(luaInterfaceObject);
+	//global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Asset", "AssetInterface");
 
-	luaInterface = global->CreateLuaInterface("PhysicsInterface");
-	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBSetVelocity>("RBSetVelocity");
-	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::Explosion>("Explosion");
-	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBConstrainRotation>("RBConstrainRotation");
-	luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBConstrainPosition>("RBConstrainPosition");
+	////-----------------------------------------------------------------------------------------------
+	////Host
 
-	global->SetLuaInterface(luaInterface);
-	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Physics", "PhysicsInterface");
+	//luaInterfaceObject = std::make_shared<HostInterface>();
+	//m_luaInterfaces.push_back(luaInterfaceObject);
 
-	//-----------------------------------------------------------------------------------------------
-	//Render
-	luaInterfaceObject = std::make_shared<RenderInterface>();
-	m_luaInterfaces.push_back(luaInterfaceObject);
+	//luaInterface = global->CreateLuaInterface("HostInterface");
+	//luaInterface.AddFunction<HostInterface, &HostInterface::DistanceToPlayers>("DistanceToPlayers");
+	//global->SetLuaInterface(luaInterface);
 
-	luaInterface = global->CreateLuaInterface("RenderInterface");
-	luaInterface.AddFunction<RenderInterface, &RenderInterface::CreateMaterial>("CreateMaterial");
+	//global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Host", "HostInterface");
 
-	global->SetLuaInterface(luaInterface);
-	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Render", "RenderInterface");
+	////-----------------------------------------------------------------------------------------------
+	////Physics
+	//luaInterfaceObject = std::make_shared<PhysicsInterface>();
+	//m_luaInterfaces.push_back(luaInterfaceObject);
 
-	//-----------------------------------------------------------------------------------------------
-	//Game
-	luaInterfaceObject = std::make_shared<GameInterface>();
-	m_luaInterfaces.push_back(luaInterfaceObject);
+	//luaInterface = global->CreateLuaInterface("PhysicsInterface");
+	//luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBSetVelocity>("RBSetVelocity");
+	//luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::Explosion>("Explosion");
+	//luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBConstrainRotation>("RBConstrainRotation");
+	//luaInterface.AddFunction<PhysicsInterface, &PhysicsInterface::RBConstrainPosition>("RBConstrainPosition");
 
-	luaInterface = global->CreateLuaInterface("GameInterface");
-	luaInterface.AddFunction<GameInterface, &GameInterface::ExplosionEffect>("ExplosionEffect");
-	luaInterface.AddFunction<GameInterface, &GameInterface::AmmoUI>("AmmoUI");
+	//global->SetLuaInterface(luaInterface);
+	//global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Physics", "PhysicsInterface");
 
-	global->SetLuaInterface(luaInterface);
-	global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Game", "GameInterface");
+	////-----------------------------------------------------------------------------------------------
+	////Render
+	//luaInterfaceObject = std::make_shared<RenderInterface>();
+	//m_luaInterfaces.push_back(luaInterfaceObject);
+
+	//luaInterface = global->CreateLuaInterface("RenderInterface");
+	//luaInterface.AddFunction<RenderInterface, &RenderInterface::CreateMaterial>("CreateMaterial");
+
+	//global->SetLuaInterface(luaInterface);
+	//global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Render", "RenderInterface");
+
+	////-----------------------------------------------------------------------------------------------
+	////Game
+	//luaInterfaceObject = std::make_shared<GameInterface>();
+	//m_luaInterfaces.push_back(luaInterfaceObject);
+
+	//luaInterface = global->CreateLuaInterface("GameInterface");
+	//luaInterface.AddFunction<GameInterface, &GameInterface::ExplosionEffect>("ExplosionEffect");
+	//luaInterface.AddFunction<GameInterface, &GameInterface::AmmoUI>("AmmoUI");
+
+	//global->SetLuaInterface(luaInterface);
+	//global->SetUserData<LuaInterface>(luaInterfaceObject.get(), "Game", "GameInterface");
 }
 
 void GameLayer::Input(DOG::Key key)
 {
-	EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
+	/*EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
 		{
 			if (key == DOG::Key::W)
 				inputC.forward = true;
@@ -793,12 +793,12 @@ void GameLayer::Input(DOG::Key key)
 				inputC.toggleMoveView = true;
 			if (key == DOG::Key::F)
 				inputC.flashlight = !inputC.flashlight;
-		});
+		});*/
 }
 
 void GameLayer::Release(DOG::Key key)
 {
-	EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
+	/*EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
 		{
 			if (key == DOG::Key::W)
 				inputC.forward = false;
@@ -826,7 +826,7 @@ void GameLayer::Release(DOG::Key key)
 				inputC.toggleDebug = false;
 			if (key == DOG::Key::C)
 				inputC.toggleMoveView = false;
-		});
+		});*/
 }
 
 std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3& pos, u8 agentCount, f32 spread)
@@ -851,7 +851,7 @@ std::vector<entity> GameLayer::SpawnAgents(const EntityTypes type, const Vector3
 
 void GameLayer::HandleCheats()
 {
-	entity player = GetPlayer();
+	/*entity player = GetPlayer();
 	if (player == NULL_ENTITY || !EntityManager::Get().Exists(player)) return;
 
 	m_isCheating = m_godModeCheat || m_unlimitedAmmoCheat || m_noClipCheat || m_noWinLose;
@@ -886,23 +886,23 @@ void GameLayer::HandleCheats()
 	}
 
 	assert(EntityManager::Get().HasComponent<RigidbodyComponent>(player));
-	m_entityManager.GetComponent<RigidbodyComponent>(player).noCollisionResponse = m_noClipCheat;
+	m_entityManager.GetComponent<RigidbodyComponent>(player).noCollisionResponse = m_noClipCheat;*/
 }
 
 void GameLayer::HpBarMVP()
 {
-	auto ui = UI::Get();
-	auto hbar = ui->GetUI<UIHealthBar>(hID);
-	EntityManager& em = EntityManager::Get();
-	em.Collect<PlayerStatsComponent, ThisPlayer>().Do([&](PlayerStatsComponent& stats, ThisPlayer&)
-		{
-			hbar->SetBarValue(stats.health / stats.maxHealth);
-		});
+	//auto ui = UI::Get();
+	//auto hbar = ui->GetUI<UIHealthBar>(hID);
+	//EntityManager& em = EntityManager::Get();
+	//em.Collect<PlayerStatsComponent, ThisPlayer>().Do([&](PlayerStatsComponent& stats, ThisPlayer&)
+	//	{
+	//		hbar->SetBarValue(stats.health / stats.maxHealth);
+	//	});
 }
 
 void GameLayer::KeyBindingDisplayMenu()
 {
-	if (!m_displayKeyBindings) return;
+	/*if (!m_displayKeyBindings) return;
 	ImVec2 size;
 	size.x = 280;
 	size.y = 300;
@@ -936,118 +936,118 @@ void GameLayer::KeyBindingDisplayMenu()
 		}
 	}
 	ImGui::End();
-	ImGui::PopStyleColor();
+	ImGui::PopStyleColor();*/
 }
 
 void GameLayer::GameLayerDebugMenu(bool& open)
 {
-	if (ImGui::BeginMenu("View"))
-	{
-		if (ImGui::MenuItem("GameManager", "Ctrl+G"))
-		{
-			open = true;
-		}
-		ImGui::EndMenu(); // "View"
-	}
+	//if (ImGui::BeginMenu("View"))
+	//{
+	//	if (ImGui::MenuItem("GameManager", "Ctrl+G"))
+	//	{
+	//		open = true;
+	//	}
+	//	ImGui::EndMenu(); // "View"
+	//}
 
-	if (open)
-	{
-		if (ImGui::Begin("GameManager", &open))
-		{
-			if (ImGui::Button("Lobby"))
-			{
-				CloseMainScene();
-				m_gameState = GameState::Lobby;
-			}
+	//if (open)
+	//{
+	//	if (ImGui::Begin("GameManager", &open))
+	//	{
+	//		if (ImGui::Button("Lobby"))
+	//		{
+	//			CloseMainScene();
+	//			m_gameState = GameState::Lobby;
+	//		}
 
 
-			bool checkboxTestScene = m_testScene != nullptr;
-			if (ImGui::Checkbox("TestScene", &checkboxTestScene))
-			{
-				if (checkboxTestScene)
-				{
-					m_testScene = std::make_unique<TestScene>();
-					m_testScene->SetUpScene();
-				}
-				else
-				{
-					m_testScene.reset();
-					m_testScene = nullptr;
-				}
-			}
+	//		bool checkboxTestScene = m_testScene != nullptr;
+	//		if (ImGui::Checkbox("TestScene", &checkboxTestScene))
+	//		{
+	//			if (checkboxTestScene)
+	//			{
+	//				m_testScene = std::make_unique<TestScene>();
+	//				m_testScene->SetUpScene();
+	//			}
+	//			else
+	//			{
+	//				m_testScene.reset();
+	//				m_testScene = nullptr;
+	//			}
+	//		}
 
-			bool checkboxLightScene = m_lightScene != nullptr;
-			if (ImGui::Checkbox("LightScene", &checkboxLightScene))
-			{
-				if (checkboxLightScene)
-				{
-					m_lightScene = std::make_unique<LightScene>();
-					m_lightScene->SetUpScene();
-				}
-				else
-				{
-					m_lightScene.reset();
-					m_lightScene = nullptr;
-				}
-			}
+	//		bool checkboxLightScene = m_lightScene != nullptr;
+	//		if (ImGui::Checkbox("LightScene", &checkboxLightScene))
+	//		{
+	//			if (checkboxLightScene)
+	//			{
+	//				m_lightScene = std::make_unique<LightScene>();
+	//				m_lightScene->SetUpScene();
+	//			}
+	//			else
+	//			{
+	//				m_lightScene.reset();
+	//				m_lightScene = nullptr;
+	//			}
+	//		}
 
-			if (ImGui::RadioButton("Room0", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom0Scene)) m_gameState = GameState::Restart;
-			if (ImGui::RadioButton("Room1", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom1Scene)) m_gameState = GameState::Restart;
-			if (ImGui::RadioButton("Room2", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom2Scene)) m_gameState = GameState::Restart;
-			if (ImGui::RadioButton("Room3", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom3Scene)) m_gameState = GameState::Restart;
-			if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;
+	//		if (ImGui::RadioButton("Room0", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom0Scene)) m_gameState = GameState::Restart;
+	//		if (ImGui::RadioButton("Room1", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom1Scene)) m_gameState = GameState::Restart;
+	//		if (ImGui::RadioButton("Room2", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom2Scene)) m_gameState = GameState::Restart;
+	//		if (ImGui::RadioButton("Room3", (int*)&m_selectedScene, (int)SceneComponent::Type::TunnelRoom3Scene)) m_gameState = GameState::Restart;
+	//		if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;
 
-			std::vector<entity> players;
-			EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](entity e, PlayerStatsComponent&)
-				{
-					players.push_back(e);
-				});
+	//		std::vector<entity> players;
+	//		EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](entity e, PlayerStatsComponent&)
+	//			{
+	//				players.push_back(e);
+	//			});
 
-			auto&& playerToString = [&](entity e) -> std::pair<std::string, std::string>
-			{
-				auto& stats = EntityManager::Get().GetComponent<PlayerStatsComponent>(e);
-				std::string str2 = "hp: " + std::to_string(stats.health);
-				std::string str1;
-				if (EntityManager::Get().HasComponent<NetworkPlayerComponent>(e))
-					str1 = "Player: " + std::to_string(EntityManager::Get().GetComponent<NetworkPlayerComponent>(e).playerId);
-				return std::make_pair(str1, str2);
-			};
+	//		auto&& playerToString = [&](entity e) -> std::pair<std::string, std::string>
+	//		{
+	//			auto& stats = EntityManager::Get().GetComponent<PlayerStatsComponent>(e);
+	//			std::string str2 = "hp: " + std::to_string(stats.health);
+	//			std::string str1;
+	//			if (EntityManager::Get().HasComponent<NetworkPlayerComponent>(e))
+	//				str1 = "Player: " + std::to_string(EntityManager::Get().GetComponent<NetworkPlayerComponent>(e).playerId);
+	//			return std::make_pair(str1, str2);
+	//		};
 
-			if (ImGui::BeginTable("Players", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV))
-			{
-				for (int i = 0; i < players.size(); i++)
-				{
-					auto row = playerToString(players[i]);
-					ImGui::TableNextRow();
-					ImGui::TableSetColumnIndex(0);
-					ImGui::Selectable((row.first + "##" + std::to_string(i)).c_str(), false, ImGuiSelectableFlags_SpanAllColumns);
-					if (ImGui::BeginPopupContextItem())
-					{
-						if (ImGui::Button("Kill player"))
-						{
-							EntityManager::Get().GetComponent<PlayerStatsComponent>(players[i]).health = 0;
-							ImGui::CloseCurrentPopup();
-						}
-						ImGui::EndPopup();
-					}
-					ImGui::TableSetColumnIndex(1);
-					ImGui::Text(row.second.c_str());
-					Vector3 v = EntityManager::Get().GetComponent<TransformComponent>(players[i]).GetPosition();
-					std::string s = "x:" + std::to_string(v.x) + " y:" + std::to_string(v.y) + " z:" + std::to_string(v.z);
-					ImGui::Text(s.c_str());
-				}
-				ImGui::EndTable();
-			}
+	//		if (ImGui::BeginTable("Players", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV))
+	//		{
+	//			for (int i = 0; i < players.size(); i++)
+	//			{
+	//				auto row = playerToString(players[i]);
+	//				ImGui::TableNextRow();
+	//				ImGui::TableSetColumnIndex(0);
+	//				ImGui::Selectable((row.first + "##" + std::to_string(i)).c_str(), false, ImGuiSelectableFlags_SpanAllColumns);
+	//				if (ImGui::BeginPopupContextItem())
+	//				{
+	//					if (ImGui::Button("Kill player"))
+	//					{
+	//						EntityManager::Get().GetComponent<PlayerStatsComponent>(players[i]).health = 0;
+	//						ImGui::CloseCurrentPopup();
+	//					}
+	//					ImGui::EndPopup();
+	//				}
+	//				ImGui::TableSetColumnIndex(1);
+	//				ImGui::Text(row.second.c_str());
+	//				Vector3 v = EntityManager::Get().GetComponent<TransformComponent>(players[i]).GetPosition();
+	//				std::string s = "x:" + std::to_string(v.x) + " y:" + std::to_string(v.y) + " z:" + std::to_string(v.z);
+	//				ImGui::Text(s.c_str());
+	//			}
+	//			ImGui::EndTable();
+	//		}
 
-			ImGui::Checkbox("View KeyBindings", &m_displayKeyBindings);
-		}
-		ImGui::End(); // "GameManager"
-	}
+	//		ImGui::Checkbox("View KeyBindings", &m_displayKeyBindings);
+	//	}
+	//	ImGui::End(); // "GameManager"
+	//}
 }
 
 void GameLayer::CheatSettingsImGuiMenu()
 {
-	ImGui::Checkbox("God mode", &m_godModeCheat);
+	/*ImGui::Checkbox("God mode", &m_godModeCheat);
 	ImGui::Checkbox("Unlimited ammo", &m_unlimitedAmmoCheat);
 	ImGui::Checkbox("No clip", &m_noClipCheat);
 	ImGui::Checkbox("No win or lose", &m_noWinLose);
@@ -1079,33 +1079,33 @@ void GameLayer::CheatSettingsImGuiMenu()
 			LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
 			isLegacy = !isLegacy;
 		}
-	}
+	}*/
 }
 
 void GameLayer::CheatDebugMenu(bool&)
 {
-	bool beginMenuCheats;
-	if (m_isCheating)
-	{
-		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
-		beginMenuCheats = ImGui::BeginMenu("Cheats");
-		ImGui::PopStyleColor();
-	}
-	else
-	{
-		beginMenuCheats = ImGui::BeginMenu("Cheats");
-	}
+	//bool beginMenuCheats;
+	//if (m_isCheating)
+	//{
+	//	ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
+	//	beginMenuCheats = ImGui::BeginMenu("Cheats");
+	//	ImGui::PopStyleColor();
+	//}
+	//else
+	//{
+	//	beginMenuCheats = ImGui::BeginMenu("Cheats");
+	//}
 
-	if (beginMenuCheats)
-	{
-		CheatSettingsImGuiMenu();
-		ImGui::EndMenu(); // "Cheats"
-	}
+	//if (beginMenuCheats)
+	//{
+	//	CheatSettingsImGuiMenu();
+	//	ImGui::EndMenu(); // "Cheats"
+	//}
 }
 
 void GameLayer::Interact()
 {
-	auto player = GetPlayer();
-	if (!m_entityManager.HasComponent<InteractionQueryComponent>(player))
-		m_entityManager.AddComponent<InteractionQueryComponent>(player);
+	//auto player = GetPlayer();
+	//if (!m_entityManager.HasComponent<InteractionQueryComponent>(player))
+	//	m_entityManager.AddComponent<InteractionQueryComponent>(player);
 }

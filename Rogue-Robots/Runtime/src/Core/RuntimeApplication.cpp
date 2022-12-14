@@ -20,6 +20,7 @@ void RuntimeApplication::OnStartUp() noexcept
 {
 	PushLayer(&m_gameLayer);
 	PushOverlay(DOG::UI::Get());
+	PushLayer(&m_luaLayer);
 	//PushLayer(&m_EmilFDebugLayer);
 
 	#if defined _DEBUG
