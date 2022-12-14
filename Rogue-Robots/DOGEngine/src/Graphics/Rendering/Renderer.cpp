@@ -1543,15 +1543,18 @@ namespace DOG::gfx
 		m_imGUIEffect->Add(rg);
 
 		{
-			ZoneNamedN(RGBuildScope, "RG Building", true);
+			ZoneNamedN(RGBuildScope, "-- RG Building --", true);
 			//rg.Build();
 			rg.TryBuild();
 		}
 
 		{
-			ZoneNamedN(RGExecuteScope, "RG Execution", true);
+			ZoneNamedN(RGExecuteScope, "-- RG Execution --", true);
 			m_frameSyncs[m_currFrameIdx] = rg.Execute(m_frameCopyReceipt, true);
 		}
+
+		//s_donez = false;
+
 		auto instance = DOG::UI::Get();
 		instance->GetBackend()->BeginFrame();
 		instance->DrawUI();

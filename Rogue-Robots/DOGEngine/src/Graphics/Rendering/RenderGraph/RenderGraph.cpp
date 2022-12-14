@@ -162,7 +162,6 @@ namespace DOG::gfx
 	std::optional<SyncReceipt> RenderGraph::Execute(std::optional<SyncReceipt> incomingSync, bool generateSync)
 	{
 		assert(!m_dirty);
-
 		{
 			ZoneNamedN(RGSetupMetadata, "RG Exec: Setup Metadata", true);
 
@@ -223,44 +222,56 @@ namespace DOG::gfx
 
 		m_cmdl = m_rd->AllocateCommandList();
 
+		ZoneNamedN(RGGraphPrePass, "RG Exec: Graph PrePass", true);
 		for (auto& pass : m_sortedPasses)
 		{
 			if (pass->preGraphExecute)
 				(*pass->preGraphExecute)();
 		}
 
+
+
 		u32 currDep = 0;
-		for (auto& depLevel : m_dependencyLevels)
 		{
-			m_resMan->ResolveMemoryAliases(m_cmdl, currDep);
-			depLevel.Execute(m_rd, m_cmdl);
+			ZoneNamedN(RGDepLevelExec, "RG Exec: All Depth Execute", true);
+			for (auto& depLevel : m_dependencyLevels)
+			{
+				m_resMan->ResolveMemoryAliases(m_cmdl, currDep);
+				depLevel.Execute(m_rd, m_cmdl);
 
-			++currDep;
+				++currDep;
+			}
 		}
 
 
-		m_resMan->ImportedResourceExitTransition(m_cmdl);
-		m_resMan->DeclaredResourceTransitionToInit(m_cmdl);
-
-		m_resMan->ResolveMemoryAliasesWrap(m_cmdl);
-
-		auto outgoingSync = m_rd->SubmitCommandList(m_cmdl, QueueType::Graphics, incomingSync, generateSync);
-
-
-		for (auto& pass : m_sortedPasses)
+		std::optional<SyncReceipt> outgoingSync;
 		{
-			if (pass->postGraphExecute)
-				(*pass->postGraphExecute)();
+			ZoneNamedN(RGExecCleanUp, "RG Exec: End Cleanup", true);
+
+			m_resMan->ImportedResourceExitTransition(m_cmdl);
+			m_resMan->DeclaredResourceTransitionToInit(m_cmdl);
+
+			m_resMan->ResolveMemoryAliasesWrap(m_cmdl);
+
+			outgoingSync = m_rd->SubmitCommandList(m_cmdl, QueueType::Graphics, incomingSync, generateSync);
+
+			for (auto& pass : m_sortedPasses)
+			{
+				if (pass->postGraphExecute)
+					(*pass->postGraphExecute)();
+			}
+
+
+			// Clean up command list
+			auto delFunc = [rd = m_rd, cmdl = m_cmdl]()
+			{
+				rd->RecycleCommandList(cmdl);
+			};
+			m_bin->PushDeferredDeletion(delFunc);
+
+			m_passDataAllocator->Clear();
+
 		}
-
-		// Clean up command list
-		auto delFunc = [rd = m_rd, cmdl = m_cmdl]()
-		{
-			rd->RecycleCommandList(cmdl);
-		};
-		m_bin->PushDeferredDeletion(delFunc);
-
-		m_passDataAllocator->Clear();
 
 		return outgoingSync;
 	}
