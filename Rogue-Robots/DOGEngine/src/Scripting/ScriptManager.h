@@ -100,7 +100,7 @@ namespace DOG
 		//Call start on the scripts which has one
 		void StartScripts();
 		//Call update on the scripts which has one
-		void UpdateScripts();
+		void UpdateScripts(bool updateWithCoroutines);
 		//Order Script
 		void OrderScript(const std::string& luaFileName, int sortOrder);
 		//Sort the ordered scripts

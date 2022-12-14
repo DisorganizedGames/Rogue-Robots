@@ -429,7 +429,7 @@ namespace DOG
 		}
 	}
 
-	void ScriptManager::UpdateScripts()
+	void ScriptManager::UpdateScripts(bool updateWithCoroutines)
 	{
 		MINIPROFILE
 		//Run the scripts which should happen first!
@@ -438,7 +438,12 @@ namespace DOG
 			for (auto& scriptData : m_sortedScripts[index])
 			{
 				if (scriptData.onUpdateFunction.ref != -1)
-					CallOnUpdateCoroutine(scriptData);
+				{
+					if (updateWithCoroutines)
+						CallOnUpdateCoroutine(scriptData);
+					else
+						m_luaW->CallTableLuaFunction(scriptData.scriptTable, scriptData.onUpdateFunction);
+				}
 			}
 		}
 		//Run the scripts which does not have an order!
@@ -447,7 +452,12 @@ namespace DOG
 			for (auto& scriptData : m_unsortedScripts[index])
 			{
 				if (scriptData.onUpdateFunction.ref != -1)
-					CallOnUpdateCoroutine(scriptData);
+				{
+					if (updateWithCoroutines)
+						CallOnUpdateCoroutine(scriptData);
+					else
+						m_luaW->CallTableLuaFunction(scriptData.scriptTable, scriptData.onUpdateFunction);
+				}
 			}
 		}
 		//Run the scripts which should happen last!
@@ -456,7 +466,12 @@ namespace DOG
 			for (auto& scriptData : m_sortedScripts[index])
 			{
 				if (scriptData.onUpdateFunction.ref != -1)
-					CallOnUpdateCoroutine(scriptData);
+				{
+					if (updateWithCoroutines)
+						CallOnUpdateCoroutine(scriptData);
+					else
+						m_luaW->CallTableLuaFunction(scriptData.scriptTable, scriptData.onUpdateFunction);
+				}
 			}
 		}
 	}

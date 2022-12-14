@@ -12,6 +12,7 @@ std::vector<entity> scriptEntities;
 f32 cppTimer = 0;
 
 i32 index = 0;
+i32 scriptTypeIndex = 0;
 
 int fake = 0;
 
@@ -53,6 +54,8 @@ LuaLayer::LuaLayer() noexcept
 	LuaMain::GetScriptManager()->RunLuaFile("LuaStartUp.lua");
 
 	LuaMain::GetGlobal()->SetFunction<LuaToCppEmptyFunction>("LuaToCppEmptyFunction");
+
+	LuaMain::GetScriptManager()->RunLuaFile("ProfileGlobalLua.lua");
 }
 
 LuaLayer::~LuaLayer()
@@ -75,17 +78,59 @@ void LuaLayer::OnDetach()
 
 void LuaLayer::OnUpdate()
 {
+	if (scriptTypeIndex == 3)
+		return;
+
 	++frames;
 
 	//MINIPROFILE
 	std::chrono::steady_clock::time_point m_startTime;
 	std::chrono::steady_clock::time_point m_endTime;
 
-	m_startTime = std::chrono::steady_clock::now();
+	if (scriptTypeIndex > 0)
+	{
+		m_startTime = std::chrono::steady_clock::now();
 
-	LuaMain::GetScriptManager()->UpdateScripts();
+		LuaMain::GetScriptManager()->UpdateScripts(scriptTypeIndex == 2);
 
-	m_endTime = std::chrono::steady_clock::now();
+		m_endTime = std::chrono::steady_clock::now();
+	}
+	else
+	{
+		if (index == 0)
+		{
+			m_startTime = std::chrono::steady_clock::now();
+
+			for (int i = 0; i < totalScripts; ++i)
+			{
+				LuaMain::GetGlobal()->CallGlobalFunction("EmptyFunction");
+			}
+
+			m_endTime = std::chrono::steady_clock::now();
+		}
+		else if (index == 1)
+		{
+			m_startTime = std::chrono::steady_clock::now();
+
+			for (int i = 0; i < totalScripts; ++i)
+			{
+				LuaMain::GetGlobal()->CallGlobalFunction("CallCppFunction");
+			}
+
+			m_endTime = std::chrono::steady_clock::now();
+		}
+		else if (index == 2)
+		{
+			m_startTime = std::chrono::steady_clock::now();
+
+			for (int i = 0; i < totalScripts; ++i)
+			{
+				LuaMain::GetGlobal()->CallGlobalFunction("ForLoopAdd");
+			}
+
+			m_endTime = std::chrono::steady_clock::now();
+		}
+	}
 
 	timer += std::chrono::duration_cast<std::chrono::microseconds>(m_endTime - m_startTime).count();
 
@@ -137,6 +182,13 @@ void LuaLayer::OnUpdate()
 		else if (index == 2)
 			std::cout << "\n\nTesting for loop" << "\n";
 
+		if (scriptTypeIndex == 0)
+			std::cout << "\n\nRun straight in lua file" << "\n";
+		else if (scriptTypeIndex == 1)
+			std::cout << "\n\nScript with environment" << "\n";
+		else if (scriptTypeIndex == 2)
+			std::cout << "\n\nScript with environment with coroutine" << "\n";
+
 		f32 avgFrameTime = timer / (f32)maxFrames;
 		f32 avgTimeForUpdatingOneScript = avgFrameTime / totalScripts;
 
@@ -166,11 +218,16 @@ void LuaLayer::OnUpdate()
 		}
 		scriptEntities.clear();
 
-		if (totalScripts == 100'000)
+		if (totalScripts == 100'00)
 		{
 			totalScripts = 0.1f;
 			++index;
 			std::cout << "Change\n";
+			if (index == 3)
+			{
+				++scriptTypeIndex;
+				index = 0;
+			}
 		}
 		totalScripts *= 10.0f;
 		for (int i = 0; i < totalScripts; ++i)
