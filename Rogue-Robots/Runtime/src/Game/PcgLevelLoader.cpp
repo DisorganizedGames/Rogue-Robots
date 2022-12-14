@@ -44,7 +44,7 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 					line.erase(0, delimPos + 1);
 					if (block == "Empty")
 					{
-						entity blockEntity = em.CreateEntity();
+						entity blockEntity = levelBlocks.emplace_back(em.CreateEntity());
 						em.AddComponent<EmptySpaceComponent>(blockEntity, Vector3(x * blockDim, y * blockDim, z * blockDim));
 						// Add BoundingBox to modular block
 						em.AddComponent<BoundingBoxComponent>(blockEntity,
@@ -106,5 +106,6 @@ std::vector<DOG::entity> LoadLevel(std::string file)
 			}
 		}
 	}
+
 	return levelBlocks;
 }
