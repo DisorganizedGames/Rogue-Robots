@@ -70,6 +70,7 @@ namespace DOG
 
 	void ScriptManager::RemoveReferences(ScriptData& scriptData)
 	{
+		scriptData.entity = NULL_ENTITY;
 		m_luaW->RemoveReferenceToTable(scriptData.scriptTable);
 		m_luaW->RemoveReferenceToFunction(scriptData.onStartFunction);
 		m_luaW->RemoveReferenceToFunction(scriptData.onUpdateFunction);
