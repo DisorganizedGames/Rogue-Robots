@@ -170,8 +170,8 @@ void Server::ServerReciveConnectionsTCP(SOCKET listenSocket)
 					send(clientSocket, inputSend, sizeof(int), 0);
 					m_playerIds.erase(m_playerIds.begin());
 
-					DOG::UI::Get()->GetUI<DOG::UIButton>(bpID)->Show(false);
 					m_enablePlay = 2;
+					DOG::UI::Get()->GetUI<DOG::UIButton>(bpLobbyID)->Show(false);
 
 					//store client socket
 					clientPoll.fd = clientSocket;
@@ -360,7 +360,7 @@ void Server::ServerPollTCP()
 					if (m_enablePlay > 0)
 						m_enablePlay--;
 					if(m_enablePlay == 0)
-						DOG::UI::Get()->GetUI<DOG::UIButton>(bpID)->Show(true);
+						DOG::UI::Get()->GetUI<DOG::UIButton>(bpLobbyID)->Show(true);
 					m_lobbyData.levelDataIndex = 0;
 				}
 				memset(m_lobbyData.data, '\0', 4096);

@@ -26,6 +26,7 @@ extern UINT buffID;
 extern UINT playerListID, playerListJoinID;
 extern UINT lAcknowledgementsID, lAcknowledgementsTextID;
 extern UINT ipBarID;
+extern UINT bpLobbyID;
 
 namespace DOG
 {

@@ -24,6 +24,7 @@ UINT buffID;
 UINT playerListID, playerListJoinID;
 UINT lAcknowledgementsID, lAcknowledgementsTextID;
 UINT ipBarID;
+UINT bpLobbyID;
 
 std::vector<bool> buffsVisible;
 std::vector<UINT> m_stacks;
@@ -349,6 +350,8 @@ void DOG::UIElement::OnEvent(IEvent& event)
 
 DOG::UIButton::UIButton(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float y, float width, float height, float fontSize, float r, float g, float b, const std::wstring& text, std::function<void(void)> callback): pressed(false), m_callback(callback), UIElement(id)
 {
+   m_show = true;
+
    this->m_size = D2D1::Vector2F(width, height);
    m_textRect = D2D1::RectF(x, y, x + width, y + height);
    this->m_text = text;
@@ -369,8 +372,6 @@ DOG::UIButton::UIButton(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float 
    HR_VFY(hr);
    hr = m_format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
    HR_VFY(hr);
-
-   m_show = true;
 }
 
 DOG::UIButton::~UIButton()
@@ -380,17 +381,14 @@ DOG::UIButton::~UIButton()
 
 void DOG::UIButton::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-    if (m_show)
-    {
-        d2d.Get2DDeviceContext()->DrawRectangle(m_textRect, m_brush.Get());
-        d2d.Get2DDeviceContext()->DrawTextW(
-            m_text.c_str(),
-            (UINT32)m_text.length(),
-            m_format.Get(),
-            &m_textRect,
-            m_brush.Get()
-        );
-    }
+    d2d.Get2DDeviceContext()->DrawRectangle(m_textRect, m_brush.Get());
+    d2d.Get2DDeviceContext()->DrawTextW(
+        m_text.c_str(),
+        (UINT32)m_text.length(),
+        m_format.Get(),
+        &m_textRect,
+        m_brush.Get()
+    );
 }
 
 void DOG::UIButton::OnEvent(IEvent& event)
@@ -1489,7 +1487,7 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto lobbyBack = instance->Create<DOG::UIBackground, float, float, std::wstring>(multiBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Lobby"));
    instance->AddUIElementToScene(lobbyID, std::move(lobbyBack));
 
-   auto bplaylobby = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Play"), std::function<void()>(HostLaunch));
+   auto bplaylobby = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bpLobbyID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 250.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Play"), std::function<void()>(HostLaunch));
    instance->AddUIElementToScene(lobbyID, std::move(bplaylobby));
 
    auto joinback = instance->Create<DOG::UIBackground, float, float, std::wstring>(menuBackID, (FLOAT)clientWidth, (FLOAT)clientHeight, std::wstring(L"Join Room"));
