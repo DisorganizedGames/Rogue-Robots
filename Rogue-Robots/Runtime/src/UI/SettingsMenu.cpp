@@ -32,7 +32,7 @@ void SettingsMenu::Initialize(
 		float backHeight = static_cast<float>(clientHeight);
 
 		float leftStart = backWidth / 3;
-		float topStart = backHeight / 4;
+		float topStart = backHeight / 6;
 
 		float textSize = 0.016f * 1920;
 		float checkBoxSize = 0.016f * 1920;
@@ -53,7 +53,7 @@ void SettingsMenu::Initialize(
 
 		auto displaySettingsLabel = instance->Create<DOG::UILabel>(s_displaySettingsLabelID, std::wstring(L"display settings"), x, y, 16 * textSize, textSize, 30.f, DWRITE_TEXT_ALIGNMENT_LEADING);
 		instance->AddUIElementToScene(optionsID, std::move(displaySettingsLabel));
-		y += checkBoxSize + paddingY;
+		y += textSize + paddingY;
 
 		auto fullscreenCheckBoxLabel = instance->Create<DOG::UILabel>(s_fullscreenLabelID, std::wstring(L"fullscreen"), x + 2 * checkBoxSize, y, 10 * textSize, textSize, 20.f, DWRITE_TEXT_ALIGNMENT_LEADING);
 		auto fullscreenCheckBox = instance->Create<DOG::UICheckBox>(s_fullscreenCheckBoxID,
@@ -71,11 +71,11 @@ void SettingsMenu::Initialize(
 		instance->AddUIElementToScene(optionsID, std::move(vsyncCheckBoxLabel));
 		instance->AddUIElementToScene(optionsID, std::move(vsyncCheckBox));
 
-		y += 1.5f * checkBoxSize + paddingY;
+		y += checkBoxSize + 4.0f * paddingY;
 
 		auto graphicsSettingsLabel = instance->Create<DOG::UILabel>(s_graphicsSettingsLabelID, std::wstring(L"graphics settings"), x, y, 16 * textSize, textSize, 30.f, DWRITE_TEXT_ALIGNMENT_LEADING);
 		instance->AddUIElementToScene(optionsID, std::move(graphicsSettingsLabel));
-		y += checkBoxSize + paddingY;
+		y += textSize + paddingY;
 
 		auto shadowMappingCheckBoxLabel = instance->Create<DOG::UILabel>(s_shadowMappingLabelID, std::wstring(L"shadow mapping"), x + 2 * checkBoxSize, y, 13 * textSize, textSize, 20.f, DWRITE_TEXT_ALIGNMENT_LEADING);
 		auto shadowMappingCheckBox = instance->Create<DOG::UICheckBox>(s_shadowMappingCheckBoxID,
@@ -106,7 +106,7 @@ void SettingsMenu::Initialize(
 
 		auto bloomSliderLabel = instance->Create<DOG::UILabel>(s_bloomSliderLabelID, std::wstring(L"bloom strength"), x, y, 13 * textSize, textSize, 20.f, DWRITE_TEXT_ALIGNMENT_LEADING);
 		auto bloomSlider = instance->Create<DOG::UISlider>(s_bloomSliderID,
-			x + 13 * textSize, y, sliderWidth, sliderHeight, [](float) {});
+			x + 13 * textSize, y, sliderWidth, sliderHeight, [](float value) { s_graphicsSettings.bloomStrength = value; });
 		instance->AddUIElementToScene(optionsID, std::move(bloomSliderLabel));
 		instance->AddUIElementToScene(optionsID, std::move(bloomSlider));
 
@@ -128,8 +128,32 @@ void SettingsMenu::Initialize(
 		instance->AddUIElementToScene(optionsID, std::move(renderResCarouselLabel));
 		instance->AddUIElementToScene(optionsID, std::move(renderResCarousel));
 
-		y += carouseHeight + 2 * paddingY;
+		y += carouseHeight + 4.0f * paddingY;
 
+
+		auto audioSettingsLabel = instance->Create<DOG::UILabel>(s_audioSettingsLabelID, std::wstring(L"audio settings"), x, y, 16 * textSize, textSize, 30.f, DWRITE_TEXT_ALIGNMENT_LEADING);
+		instance->AddUIElementToScene(optionsID, std::move(audioSettingsLabel));
+		y += textSize + paddingY;
+
+		auto audioVolumeSliderLabel = instance->Create<DOG::UILabel>(s_audioVolumeSliderLabelID, std::wstring(L"volume"), x, y, 13 * textSize, textSize, 20.f, DWRITE_TEXT_ALIGNMENT_LEADING);
+		auto audioVolumeSlider = instance->Create<DOG::UISlider>(s_audioVolumeSliderID,
+			x + 13 * textSize, y, sliderWidth, sliderHeight, [](float value) { AudioManager::SetMasterVolume(std::clamp(value, 0.0f, 1.0f)); });
+		instance->AddUIElementToScene(optionsID, std::move(audioVolumeSliderLabel));
+		instance->AddUIElementToScene(optionsID, std::move(audioVolumeSlider));
+
+		y += sliderHeight + 4.0f * paddingY;
+
+		auto inputSettingsLabel = instance->Create<DOG::UILabel>(s_inputSettingLabelID, std::wstring(L"input settings"), x, y, 16 * textSize, textSize, 30.f, DWRITE_TEXT_ALIGNMENT_LEADING);
+		instance->AddUIElementToScene(optionsID, std::move(inputSettingsLabel));
+		y += textSize + paddingY;
+
+		auto mouseSensitivitySliderLabel = instance->Create<DOG::UILabel>(s_mouseSensitivitySliderLabelID, std::wstring(L"mouse sensitivity"), x, y, 13 * textSize, textSize, 20.f, DWRITE_TEXT_ALIGNMENT_LEADING);
+		auto mouseSensitivitySlider = instance->Create<DOG::UISlider>(s_mouseSensitivitySliderID,
+			x + 13 * textSize, y, sliderWidth, sliderHeight, [](float) {});
+		instance->AddUIElementToScene(optionsID, std::move(mouseSensitivitySliderLabel));
+		instance->AddUIElementToScene(optionsID, std::move(mouseSensitivitySlider));
+
+		y += sliderHeight + 4.0f * paddingY;
 
 		// Back button
 
@@ -137,8 +161,6 @@ void SettingsMenu::Initialize(
 			x, y, buttonWidth, buttonHeight, 20.f, color.x, color.y, color.z,
 			std::wstring(L"Back"), []() 
 			{
-				s_graphicsSettings.bloomStrength = UI::Get()->GetUI<UISlider>(s_bloomSliderID)->GetValue();
-
 				s_graphicsSettings.renderResolution = s_renderResolution[UI::Get()->GetUI<UICarousel>(s_renderResCarouselID)->GetIndex()];
 				s_setGraphicsSettings(s_graphicsSettings);
 				UI::Get()->ChangeUIscene(menuID); 

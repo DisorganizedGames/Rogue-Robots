@@ -304,6 +304,7 @@ namespace DOG
          void SetValue(float value);
       private:
          float m_value, m_width, m_normwidth;
+         bool m_isSliding = false;
          std::function<void(float)> m_callback;
          D2D_RECT_F m_bar, m_slider;
          std::wstring m_text;

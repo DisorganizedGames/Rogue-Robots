@@ -13,7 +13,7 @@ DOG::UI* DOG::UI::s_instance = nullptr;
 UINT menuID, gameID, optionsID, multiID, lobbyID, joinID, WaitingForHostID, GameOverID, WinScreenID, LoadingID, creditsID, levelSelectSoloID, levelSelectMultID;
 UINT menuBackID, optionsBackID, multiBackID, hostBackID, creditsBackID, levelSelectSoloBackID, levelSelectMultBackID;
 UINT bStartLevelSelectorSoloID, bStartLevelSelectorMultID, bGoBackLevelSelectorSoloID, bGoBackLevelSelectorMultID;
-UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID,
+UINT bpID, bmID, boID, beID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID,
 lWinTextID, lredScoreID, lblueScoreID, lgreenScoreID, lyellowScoreID, lredScoreWinID, lblueScoreWinID, lgreenScoreWinID, lyellowScoreWinID, pbarID;
 UINT lNamesCreditsID, lTheTeamID, lFiverrArtistsID, lFiverrArtistsTextID, lIconsCreditsID, lIconsCreditsTextID, lMusicID, lMusicTextID;
 UINT lStartTextID;
@@ -1274,17 +1274,28 @@ void DOG::UISlider::OnEvent(IEvent& event)
    {
       auto mevent = EVENT(DOG::MouseMovedEvent);
       auto mpos = mevent.coordinates;
+      bool prevIsSliding = m_isSliding;
       if (mpos.x >= m_bar.left && mpos.x <= m_bar.right && mpos.y >= m_slider.top && mpos.y <= m_slider.bottom && Mouse::IsButtonPressed(Button::Left))
       {
          m_slider.left = (float)mpos.x - 10.f;
          m_slider.right = m_slider.left + 20.f;
          float s = 0.5f * (m_slider.left + m_slider.right);
          m_value = Remap(m_bar.left, m_bar.right, 0, 1, s);
+         m_isSliding = true;
       }
+      else if(prevIsSliding)
+      {
+          m_isSliding = false;
+          m_callback(m_value);
+      }
+
+
       if (mpos.x >= m_slider.left && mpos.x <= m_slider.right && mpos.y >= m_slider.top && mpos.y <= m_slider.bottom)
          m_sliderBrush.Get()->SetOpacity(1.0f);
       else
-         m_sliderBrush.Get()->SetOpacity(0.5f);
+      {
+        m_sliderBrush.Get()->SetOpacity(0.5f);
+      }
    }
 }
 float DOG::UISlider::GetValue()
@@ -1635,7 +1646,6 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    auto bo = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(boID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 140.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Options"), std::function<void()>(OptionsButtonFunc));
    auto bc = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(bcID, (FLOAT)clientWidth / 2.f - 200.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 200.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Credits"), std::function<void()>(CreditsButtonFunc));
    auto be = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(beID, (FLOAT)clientWidth / 2.f - 200.f / 2, (FLOAT)clientHeight / 2.f + 280.f, 200.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Exit"), std::function<void()>(ExitButtonFunc));
-   auto optback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(optbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 210.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
    auto credback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(credbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight - 80.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
    auto mulback = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 150.f / 2, (FLOAT)clientHeight / 2.f + 200.f, 150.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Back"), std::function<void()>(ToMenuButtonFunc));
    auto hostBack = instance->Create<DOG::UIButton, float, float, float, float, float, float, float, float, std::wstring>(mulbackID, (FLOAT)clientWidth / 2.f - 200.f / 2, (FLOAT)clientHeight / 2.f + 350.f, 200.f, 60.f, 20.f, 1.0f, 1.0f, 1.0f, std::wstring(L"Disconnect"), std::function<void()>(BackFromHost));
@@ -1713,7 +1723,6 @@ void UIRebuild(UINT clientHeight, UINT clientWidth)
    instance->AddUIElementToScene(menuID, std::move(bo));
    instance->AddUIElementToScene(menuID, std::move(bc));
    instance->AddUIElementToScene(menuID, std::move(be));
-   instance->AddUIElementToScene(optionsID, std::move(optback));
    instance->AddUIElementToScene(creditsID, std::move(credback));
    instance->AddUIElementToScene(creditsID, std::move(lFiverrArtists));
    instance->AddUIElementToScene(creditsID, std::move(lFiverrArtistsText));

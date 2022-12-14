@@ -48,4 +48,14 @@ private:
 
 	static inline u32 s_renderResCarouselLabelID;
 	static inline u32 s_renderResCarouselID;
+
+
+	static inline u32 s_audioSettingsLabelID;
+	static inline u32 s_audioVolumeSliderLabelID;
+	static inline u32 s_audioVolumeSliderID;
+
+	static inline u32 s_inputSettingLabelID;
+	static inline u32 s_mouseSensitivitySliderLabelID;
+	static inline u32 s_mouseSensitivitySliderID;
+	
 };
