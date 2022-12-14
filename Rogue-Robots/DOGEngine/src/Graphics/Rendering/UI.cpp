@@ -369,6 +369,8 @@ DOG::UIButton::UIButton(DOG::gfx::D2DBackend_DX12& d2d, UINT id, float x, float 
    HR_VFY(hr);
    hr = m_format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
    HR_VFY(hr);
+
+   m_show = true;
 }
 
 DOG::UIButton::~UIButton()
@@ -378,40 +380,51 @@ DOG::UIButton::~UIButton()
 
 void DOG::UIButton::Draw(DOG::gfx::D2DBackend_DX12& d2d)
 {
-   d2d.Get2DDeviceContext()->DrawRectangle(m_textRect, m_brush.Get());
-   d2d.Get2DDeviceContext()->DrawTextW(
-      m_text.c_str(),
-      (UINT32)m_text.length(),
-      m_format.Get(),
-      &m_textRect,
-      m_brush.Get()
-   );
+    if (m_show)
+    {
+        d2d.Get2DDeviceContext()->DrawRectangle(m_textRect, m_brush.Get());
+        d2d.Get2DDeviceContext()->DrawTextW(
+            m_text.c_str(),
+            (UINT32)m_text.length(),
+            m_format.Get(),
+            &m_textRect,
+            m_brush.Get()
+        );
+    }
 }
 
 void DOG::UIButton::OnEvent(IEvent& event)
 {
    using namespace DOG;
-   if (event.GetEventCategory() == EventCategory::MouseEventCategory)
+   if (m_show)
    {
-      if (event.GetEventType() == EventType::LeftMouseButtonPressedEvent)
-      {
-         auto mevent = EVENT(DOG::LeftMouseButtonPressedEvent);
-         auto mpos = mevent.coordinates;
-         if (mpos.x >= m_textRect.left && mpos.x <= m_textRect.right && mpos.y >= m_textRect.top && mpos.y <= m_textRect.bottom)
-         {
-            m_callback();
-         }
-      }
-      else if (event.GetEventType() == EventType::MouseMovedEvent)
-      {
-         auto mevent = EVENT(DOG::MouseMovedEvent);
-         auto mpos = mevent.coordinates;
-         if (!(mpos.x >= m_textRect.left && mpos.x <= m_textRect.right && mpos.y >= m_textRect.top && mpos.y <= m_textRect.bottom))
-            m_brush.Get()->SetOpacity(0.5f);
-         else
-            m_brush.Get()->SetOpacity(1.0f);
-      }
+       if (event.GetEventCategory() == EventCategory::MouseEventCategory)
+       {
+           if (event.GetEventType() == EventType::LeftMouseButtonPressedEvent)
+           {
+               auto mevent = EVENT(DOG::LeftMouseButtonPressedEvent);
+               auto mpos = mevent.coordinates;
+               if (mpos.x >= m_textRect.left && mpos.x <= m_textRect.right && mpos.y >= m_textRect.top && mpos.y <= m_textRect.bottom)
+               {
+                   m_callback();
+               }
+           }
+           else if (event.GetEventType() == EventType::MouseMovedEvent)
+           {
+               auto mevent = EVENT(DOG::MouseMovedEvent);
+               auto mpos = mevent.coordinates;
+               if (!(mpos.x >= m_textRect.left && mpos.x <= m_textRect.right && mpos.y >= m_textRect.top && mpos.y <= m_textRect.bottom))
+                   m_brush.Get()->SetOpacity(0.5f);
+               else
+                   m_brush.Get()->SetOpacity(1.0f);
+           }
+       }
    }
+}
+
+void DOG::UIButton::Show(bool mode)
+{
+    m_show = mode;
 }
 
 DOG::UIScene::UIScene(UINT id): m_ID(id)
