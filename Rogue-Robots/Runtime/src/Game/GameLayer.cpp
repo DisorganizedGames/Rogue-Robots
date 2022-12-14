@@ -611,11 +611,8 @@ void GameLayer::KillLocalPlayer(DOG::entity localPlayer)
 	m_entityManager.RemoveComponent<AudioListenerComponent>(localPlayer);
 
 	// Apply death animation
-	if (m_entityManager.HasComponent<AnimationComponent>(localPlayer))
-	{
-		auto& ac = m_entityManager.GetComponent<AnimationComponent>(localPlayer);
-		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::DeathAnimation), AnimationFlag::Persist, 1u, ac.FULL_BODY, 1.f, 0.5f);
-	}
+	auto& ac = m_entityManager.GetComponent<AnimationComponent>(localPlayer);
+	ac.SimpleAdd(static_cast<i8>(MixamoAnimations::DeathAnimation), AnimationFlag::Persist, 1u, ac.FULL_BODY, 1.f, 0.5f);
 
 	// Remove ui from player
 	{
@@ -630,10 +627,9 @@ void GameLayer::KillLocalPlayer(DOG::entity localPlayer)
 		UIInstance->GetUI<UIIcon>(iconActiveID)->DeactivateBorder();
 		UIInstance->GetUI<UILabel>(lActiveItemTextID)->SetDraw(false);
 
-		std::string luaEventName = std::string("ItemPickup") + std::to_string(localPlayer);
-		m_entityManager.RemoveComponentIfExists<ScriptComponent>(localPlayer);
-		m_entityManager.RemoveComponentIfExists<BarrelComponent>(localPlayer);
-		m_entityManager.RemoveComponentIfExists<MiscComponent>(localPlayer);
+		m_entityManager.RemoveComponent<ScriptComponent>(localPlayer);
+		m_entityManager.RemoveComponent<BarrelComponent>(localPlayer);
+		m_entityManager.RemoveComponent<MiscComponent>(localPlayer);
 		//Remove UI icon for weapon components.
 		UIInstance->GetUI<UIIcon>(iconID)->Hide();
 		UIInstance->GetUI<UIIcon>(iconID)->DeactivateBorder();
@@ -667,11 +663,9 @@ void GameLayer::KillLocalPlayer(DOG::entity localPlayer)
 		{
 			auto& localPcc = m_entityManager.GetComponent<PlayerControllerComponent>(localPlayer);
 
-			// ----NEED TO REMOVE THESE IN REVIVE
 			localPcc.spectatorCamera = m_mainScene->CreateEntity();
 			m_entityManager.AddComponent<TransformComponent>(localPcc.spectatorCamera);
 			m_entityManager.AddComponent<CameraComponent>(localPcc.spectatorCamera);
-			// ------
 
 			auto& timer = m_entityManager.AddComponent<DeathUITimerComponent>(localPlayer);
 			timer.duration = timer.timeLeft = 4.0f;
@@ -742,12 +736,11 @@ void GameLayer::RenderPlayer(DOG::entity player, bool firstPersonView)
 	}
 	
 	// Draw logic model and model gun of the player
-	{int count = 0;
+	{
 		mgr.Collect<ChildComponent, ModelComponent>().Do([&](DOG::entity playerModel, ChildComponent& cc, ModelComponent&)
 			{
 				if (cc.parent == player)
 				{	
-					std::cout << "count: " << ++count << std::endl;
 					if (firstPersonView)
 						mgr.AddComponent<DontDraw>(playerModel);
 					else
@@ -791,7 +784,6 @@ void GameLayer::StartSpectatingPlayer(DOG::entity localPlayer, DOG::entity playe
 	// Change rendering logic to first person view of spectated player
 	const bool firstPersonView = true;
 	RenderPlayer(localPlayer, !firstPersonView);
-	std::cout << "adbafjh\n" << std::endl;
 	RenderPlayer(playerToSpectate, firstPersonView);
 }
 
@@ -803,27 +795,18 @@ void GameLayer::RevivePlayer(DOG::entity player)
 	auto& ac = m_entityManager.GetComponent<AnimationComponent>(player);
 	ac.SimpleAdd(static_cast<i8>(MixamoAnimations::StandUp), AnimationFlag::ResetPrio, 0u, ac.FULL_BODY, 1.f, 0.15f);
 
-	DOG::entity localPlayer = DOG::NULL_ENTITY;
-	mgr.Collect<ThisPlayer>().Do([&](DOG::entity e, ThisPlayer&)
-		{
-			localPlayer = e;
-		});
-
-	const bool isLocalPlayer = localPlayer == player;
-	if (isLocalPlayer)
-	{
+	if (mgr.HasComponent<ThisPlayer>(player))
 		mgr.AddComponent<PlayerAliveComponent>(player).timer = 1.f;
-	}
 	else
-	{
 		mgr.GetComponent<PlayerAliveComponent>(player).revived = false;
-	}
+
 	// If localPlayer was revived and was spectating, we need to remove certain components of the spectated player and add components to the player
-	if (isLocalPlayer && mgr.HasComponent<SpectatorComponent>(player))
+	if (mgr.HasComponent<ThisPlayer>(player) && mgr.HasComponent<SpectatorComponent>(player))
 	{
 		auto& sC = mgr.GetComponent<SpectatorComponent>(player);
 		mgr.RemoveComponent<AudioListenerComponent>(sC.playerBeingSpectated);
 		mgr.AddComponent<AudioListenerComponent>(player);
+		mgr.AddComponent<MiscComponent>(player).type = MiscComponent::Type::Basic;
 
 		LuaMain::GetScriptManager()->AddScript(player, "Gun.lua");
 		LuaMain::GetScriptManager()->AddScript(player, "PassiveItemSystem.lua");
@@ -857,7 +840,7 @@ void GameLayer::RevivePlayer(DOG::entity player)
 		rb.setGravityForRigidbody = true;
 		rb.gravityForRigidbody = Vector3(0.0f, -25.0f, 0.0f);
 	}
-	if (!isLocalPlayer)
+	if (!mgr.HasComponent<ThisPlayer>(player))
 	{
 		// Here we should reset barrel/misc components to base case
 		auto& bc = mgr.GetComponent<BarrelComponent>(player);
