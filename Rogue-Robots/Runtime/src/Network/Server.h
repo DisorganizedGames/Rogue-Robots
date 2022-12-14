@@ -48,4 +48,5 @@
 		bool m_reciveConnections;
 		LobbyData m_lobbyData;
 		char m_level[204800];
+		u8 m_enablePlay;
 	};

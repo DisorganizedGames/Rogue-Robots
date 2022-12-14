@@ -30,6 +30,7 @@ Server::Server()
 		std::cout << "Server: Failed to start WSA on server, ErrorCode: " << check << std::endl;
 	}
 	m_reciveConnections = true;
+	m_enablePlay = 0;
 }
 
 Server::~Server()
@@ -168,6 +169,9 @@ void Server::ServerReciveConnectionsTCP(SOCKET listenSocket)
 					sprintf_s(inputSend, sizeof(int), "%d", playerId);
 					send(clientSocket, inputSend, sizeof(int), 0);
 					m_playerIds.erase(m_playerIds.begin());
+
+					DOG::UI::Get()->GetUI<DOG::UIButton>(bpID)->Show(false);
+					m_enablePlay = 2;
 
 					//store client socket
 					clientPoll.fd = clientSocket;
@@ -352,7 +356,13 @@ void Server::ServerPollTCP()
 			{
 				m_lobbyData.nrOfPlayersConnected = (i8)m_holdPlayerIds.size();
 				if (m_lobbyData.levelSize < m_lobbyData.levelDataIndex)
+				{
+					if (m_enablePlay > 0)
+						m_enablePlay--;
+					if(m_enablePlay == 0)
+						DOG::UI::Get()->GetUI<DOG::UIButton>(bpID)->Show(true);
 					m_lobbyData.levelDataIndex = 0;
+				}
 				memset(m_lobbyData.data, '\0', 4096);
 				memcpy(&m_lobbyData.data, m_level + m_lobbyData.levelDataIndex, 4096);
 				
