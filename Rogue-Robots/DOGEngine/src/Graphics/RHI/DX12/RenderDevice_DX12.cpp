@@ -33,6 +33,42 @@ namespace DOG::gfx
 		return info;
 	};
 
+	DXGI_QUERY_VIDEO_MEMORY_INFO GetVramInfo(ComPtr<ID3D12Device5> device)
+	{
+		HRESULT hr = S_OK;
+		DXGI_QUERY_VIDEO_MEMORY_INFO dxgiMemInfo{};
+
+		// Create a DXGI factory
+		ComPtr<IDXGIFactory4> factory4 = nullptr;
+		hr = CreateDXGIFactory1(IID_PPV_ARGS(&factory4));
+		HR_VFY(hr);
+
+		LUID targetAdapterLuid = device->GetAdapterLuid();
+
+		// Enumerate the adapters in the system
+		ComPtr<IDXGIAdapter> adapter = nullptr;
+		for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != factory4->EnumAdapters(adapterIndex, &adapter); ++adapterIndex)
+		{
+			DXGI_ADAPTER_DESC3 desc;
+			ComPtr<IDXGIAdapter4> adapter4 = nullptr;
+			hr = adapter.As(&adapter4);
+			HR_VFY(hr);
+			hr = adapter4->GetDesc3(&desc);
+			HR_VFY(hr);
+
+			// Check if this is the adapter we are looking for by comparing its LUID
+			if (desc.AdapterLuid.LowPart == targetAdapterLuid.LowPart && desc.AdapterLuid.HighPart == targetAdapterLuid.HighPart)
+			{
+				hr = adapter4->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP::DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &dxgiMemInfo);
+				HR_VFY(hr);
+				break;
+			}
+		}
+
+		return dxgiMemInfo;
+	}
+
+
 
 	RenderDevice_DX12::RenderDevice_DX12(ComPtr<ID3D12Device5> device, IDXGIAdapter* adapter, bool debug, UINT numBackBuffers) :
 		m_device(device),
@@ -136,6 +172,7 @@ namespace DOG::gfx
 			m_totalMemoryInfo.heap[i] = ToMemoryInfo(stats.HeapType[i]);
 		m_totalMemoryInfo.total = ToMemoryInfo(stats.Total);
 
+		m_totalMemoryInfo.videoMemoryInfo = GetVramInfo(m_device);
 		return m_totalMemoryInfo;
 	}
 

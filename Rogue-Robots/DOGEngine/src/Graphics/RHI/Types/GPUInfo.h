@@ -52,6 +52,7 @@ namespace DOG::gfx
 		// DEFAULT, UPLOAD, READBACK, CUSTOM
 		GPUPoolMemoryInfo heap[4];
 		GPUPoolMemoryInfo total;
+		DXGI_QUERY_VIDEO_MEMORY_INFO videoMemoryInfo;
 	};
 
 

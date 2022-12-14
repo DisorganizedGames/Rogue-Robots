@@ -1707,6 +1707,15 @@ namespace DOG::gfx
 			//}
 			//ImGui::End();
 
+			if (ImGui::Begin("DXGI_QUERY_VIDEO_MEMORY_INFO", &open))
+			{
+				auto& info = m_rd->GetTotalMemoryInfo().videoMemoryInfo;
+				ImGui::Text("AvailableForReservation: %f (Mb)", info.AvailableForReservation / 1048576.f);
+				ImGui::Text("Budget: %f (Mb)", info.Budget / 1048576.f);
+				ImGui::Text("CurrentReservation: %f (Mb)", info.CurrentReservation / 1048576.f);
+				ImGui::Text("CurrentUsage: %f (Mb)", info.CurrentUsage / 1048576.f);
+			}
+			ImGui::End();
 
 			if (ImGui::Begin("GPU Memory Statistics: VRAM", &open))
 			{
