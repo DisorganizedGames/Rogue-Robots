@@ -86,7 +86,7 @@ INT8 Client::ConnectTcpServer(std::string ipAdress)
 	}
 
 	//set socket to tcp_nodelay
-	DWORD ttl = 5020;
+	DWORD ttl = 2000;
 	check = setsockopt(m_connectSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&ttl, sizeof(DWORD));
 	if (check == SOCKET_ERROR)
 	{
@@ -210,7 +210,7 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 void Client::SetUpUdp()
 {
 	int check = 0;
-	DWORD ttl = 5020;
+	DWORD ttl = 2000;
 	m_udpSendSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (m_udpSendSocket == INVALID_SOCKET)
 	{

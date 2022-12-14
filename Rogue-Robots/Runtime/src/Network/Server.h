@@ -39,8 +39,6 @@
 		std::vector<u8>		m_holdPlayerIds;
 		std::vector<WSAPOLLFD>	m_clientsSocketsTcp;
 		std::vector<WSAPOLLFD>	m_holdSocketsTcp;
-		float m_tickrateTcp;
-		float m_tickrateUdp;
 		std::mutex m_mut;
 		PlayerNetworkComponentUdp m_holdPlayersUdp[MAX_PLAYER_COUNT];
 		char m_multicastAdress[16];
