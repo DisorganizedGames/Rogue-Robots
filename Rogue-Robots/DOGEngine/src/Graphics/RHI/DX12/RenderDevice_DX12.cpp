@@ -64,7 +64,7 @@ namespace DOG::gfx
 		MemoryPoolDesc mpd{};
 		mpd.heapType = D3D12_HEAP_TYPE_UPLOAD;
 		mpd.heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
-		mpd.size = 100'000'000;
+		mpd.size = 90'000'000;
 		mpd.minBlocks = 1;
 		mpd.maxBlocks = 1;
 		m_compactUploadPool = CreateMemoryPool(mpd);
