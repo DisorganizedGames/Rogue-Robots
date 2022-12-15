@@ -893,6 +893,29 @@ namespace DOG::gfx
 			}
 		};
 
+		struct MyPassData
+		{
+			u32 var1;
+			u32 var2;
+		};
+		rg.AddPass<MyPassData>("My Pass",
+			[&](MyPassData& passData, RenderGraph::PassBuilder& builder)
+			{
+				// Build Pass
+			},
+			[&](const MyPassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&)
+			{
+				// Execution pass
+			},
+			[&](MyPassData& passData)
+			{
+				// Pre-exec
+			},
+			[&](MyPassData& passData)
+			{
+				// Post-exec
+			});
+
 
 		// Forward pass to HDR
 		{
