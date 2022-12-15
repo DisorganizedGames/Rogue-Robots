@@ -453,7 +453,7 @@ void NetCode::ReceiveDataTcp()
 
 									if (compare.Length() > (capsuleThreshold))
 									{
-										Log& log = Logger::Get()["Network Survey"];
+										Log& log = Logger::Get()["Network Survey " + std::to_string(TICKRATE)];
 										log["times telported"].Add(1);
 										transC.SetPosition(tempTransfrom->position);
 									}
