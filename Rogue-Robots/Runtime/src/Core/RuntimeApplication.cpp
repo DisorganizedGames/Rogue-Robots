@@ -60,7 +60,7 @@ void RuntimeApplication::OnShutDown() noexcept
 {
 	//SaveRuntimeSettings();
 	ImGuiMenuLayer::UnRegisterDebugWindow("GraphicsSetting");
-	SaveRuntimeSettings(GetApplicationSpecification(), m_gameLayer.GetGameSettings(), "Runtime/Settings.lua");
+	SaveRuntimeSettings(GetApplicationSpecification(), m_gameLayer.GetGameSettings(), "Settings.lua");
 }
 
 void RuntimeApplication::OnRestart() noexcept
@@ -163,8 +163,13 @@ std::string GetWorkingDirectory()
 	}
 }
 
+
+static std::string oldWorkDir = "";
 void SaveRuntimeSettings(const ApplicationSpecification& spec, const GameSettings& gameSettings, const std::string& path) noexcept
 {
+	// This funtion will need revert our working directory.
+	if(oldWorkDir != "") std::filesystem::current_path(oldWorkDir);
+
 	std::ofstream outFile(path);
 	outFile << "--Delete file to reset all options to default (don't run with an empty file, it will not work)";
 	outFile << "\n--Delete rows to reset them to default";
@@ -514,8 +519,9 @@ std::unique_ptr<DOG::Application> CreateApplication() noexcept
 {
 	ApplicationSpecification spec;
 	GameSettings gameSettings;
-	std::tie(spec, gameSettings) = LoadRuntimeSettings(RUNTIME_DIR + std::string("Settings.lua"));
+	std::tie(spec, gameSettings) = LoadRuntimeSettings(std::string("Settings.lua"));
 	spec.name = "Rogue Robots";
 	spec.workingDir = GetWorkingDirectory();
+	oldWorkDir = std::filesystem::absolute(std::filesystem::current_path()).string();
 	return std::make_unique<RuntimeApplication>(spec, gameSettings);
 }
