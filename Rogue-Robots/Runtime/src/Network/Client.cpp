@@ -184,7 +184,6 @@ u8 Client::ReceiveCharArrayTcp(char* reciveBuffer)
 			// only part of  the packet arrived
 			else if ((bytesRecived + bytesRecievedPast - processedBytes) < packet.sizeOfPayload)
 			{
-				std::cout << "Client: Only part of the packet arrived: " << bytesRecived << " header payload: " << packet.sizeOfPayload << std::endl;
 				bytesRecievedPast += bytesRecived;
 			}
 			else
