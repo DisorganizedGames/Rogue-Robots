@@ -1,7 +1,7 @@
 #pragma once
 #include <DOGEngine.h>
 #include "..\Game\GameComponent.h"
-constexpr float TICKRATE = 1.0f / 24.0f;
+constexpr float TICKRATE = 1.0f / 120.0f;
 constexpr int SEND_AND_RECIVE_BUFFER_SIZE = 262144;
 constexpr int MAX_PLAYER_COUNT = 4;
 constexpr const char* PORTNUMBER_OUT = "50005";
