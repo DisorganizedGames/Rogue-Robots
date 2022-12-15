@@ -22,7 +22,7 @@ namespace DOG::gfx
 	private:
 		static constexpr u16 ELEMENTSIZE = 256;
 	public:
-		GPUDynamicConstants(RenderDevice* rd, GPUGarbageBin* bin, u32 maxTotalElements);
+		GPUDynamicConstants(RenderDevice* rd, GPUGarbageBin* bin, u32 maxTotalElements, const std::string& debugName = "");
 		~GPUDynamicConstants();
 
 		void Tick();
@@ -33,6 +33,8 @@ namespace DOG::gfx
 	private:
 		RenderDevice* m_rd{ nullptr };
 		GPUGarbageBin* m_bin{ nullptr };
+		std::string m_debugName;
+		u32 m_allocCount{ 0 };
 
 		Buffer m_buffer;
 		RingBuffer m_ator;

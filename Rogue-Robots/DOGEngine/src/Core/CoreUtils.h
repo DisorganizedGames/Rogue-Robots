@@ -27,7 +27,7 @@ namespace DOG
 
 
 		// Rendering limits, restart is required
-		u32 maxConstantsPerFrame = 150'000;
+		u32 maxConstantsPerFrame = 50'000;
 
 		// Limits for uploadHeaps
 		u32 maxHeapUploadSizeDefault = 4'000'000;

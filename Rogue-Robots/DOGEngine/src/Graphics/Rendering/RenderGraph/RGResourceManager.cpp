@@ -12,21 +12,21 @@ namespace DOG::gfx
 	{
 		{
 			MemoryPoolDesc d{};
-			d.size = 100'000'000;
+			d.size = 18'000'000;
 			d.heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
 			m_rtDsTextureMemPool = m_rd->CreateMemoryPool(d);
 		}
 
 		{
 			MemoryPoolDesc d{};
-			d.size = 50'000'000;
+			d.size = 20'000'000;
 			d.heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES;
 			m_nonRtDsTextureMemPool = m_rd->CreateMemoryPool(d);
 		}
 
 		{
 			MemoryPoolDesc d{};
-			d.size = 25'000'000;
+			d.size = 10'000'000;
 			d.heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
 			m_bufferMemPool = m_rd->CreateMemoryPool(d);
 		}
@@ -182,7 +182,7 @@ namespace DOG::gfx
 
 
 
-	void RGResourceManager::ClearDeclaredResources()
+	void RGResourceManager::ClearDeclaredResources(bool immediate)
 	{
 		for (const auto& [name, resource] : m_resources)
 		{
@@ -200,7 +200,10 @@ namespace DOG::gfx
 				{
 					rd->FreeTexture(Texture(gpuResource));
 				};
-				m_bin->PushDeferredDeletion(delFunc);
+				if (immediate)
+					delFunc();
+				else
+					m_bin->PushDeferredDeletion(delFunc);
 			}
 			else
 			{
@@ -208,7 +211,11 @@ namespace DOG::gfx
 				{
 					rd->FreeBuffer(Buffer(gpuResource));
 				};
-				m_bin->PushDeferredDeletion(delFunc);
+				if (immediate)
+					delFunc();
+				else
+					m_bin->PushDeferredDeletion(delFunc);
+
 			}
 		}
 

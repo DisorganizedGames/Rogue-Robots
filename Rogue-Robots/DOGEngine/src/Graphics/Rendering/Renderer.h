@@ -315,7 +315,7 @@ namespace DOG::gfx
 
 
 
-		u32 m_shadowMapCapacity{ 1 };
+		u32 m_shadowMapCapacity{ 4 };
 
 		
 		u32 m_currFrameIdx{ 0 };

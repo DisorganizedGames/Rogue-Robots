@@ -33,6 +33,42 @@ namespace DOG::gfx
 		return info;
 	};
 
+	DXGI_QUERY_VIDEO_MEMORY_INFO GetVramInfo(ComPtr<ID3D12Device5> device)
+	{
+		HRESULT hr = S_OK;
+		DXGI_QUERY_VIDEO_MEMORY_INFO dxgiMemInfo{};
+
+		// Create a DXGI factory
+		ComPtr<IDXGIFactory4> factory4 = nullptr;
+		hr = CreateDXGIFactory1(IID_PPV_ARGS(&factory4));
+		HR_VFY(hr);
+
+		LUID targetAdapterLuid = device->GetAdapterLuid();
+
+		// Enumerate the adapters in the system
+		ComPtr<IDXGIAdapter> adapter = nullptr;
+		for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != factory4->EnumAdapters(adapterIndex, &adapter); ++adapterIndex)
+		{
+			DXGI_ADAPTER_DESC3 desc;
+			ComPtr<IDXGIAdapter4> adapter4 = nullptr;
+			hr = adapter.As(&adapter4);
+			HR_VFY(hr);
+			hr = adapter4->GetDesc3(&desc);
+			HR_VFY(hr);
+
+			// Check if this is the adapter we are looking for by comparing its LUID
+			if (desc.AdapterLuid.LowPart == targetAdapterLuid.LowPart && desc.AdapterLuid.HighPart == targetAdapterLuid.HighPart)
+			{
+				hr = adapter4->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP::DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &dxgiMemInfo);
+				HR_VFY(hr);
+				break;
+			}
+		}
+
+		return dxgiMemInfo;
+	}
+
+
 
 	RenderDevice_DX12::RenderDevice_DX12(ComPtr<ID3D12Device5> device, IDXGIAdapter* adapter, bool debug, UINT numBackBuffers) :
 		m_device(device),
@@ -60,6 +96,14 @@ namespace DOG::gfx
 		InitRootsig();
 
 		InitializeD11(m_device.Get(), GetQueue(QueueType::Graphics));
+
+		MemoryPoolDesc mpd{};
+		mpd.heapType = D3D12_HEAP_TYPE_UPLOAD;
+		mpd.heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
+		mpd.size = 90'000'000;
+		mpd.minBlocks = 1;
+		mpd.maxBlocks = 1;
+		m_compactUploadPool = CreateMemoryPool(mpd);
 	}
 
 	RenderDevice_DX12::~RenderDevice_DX12()
@@ -84,12 +128,12 @@ namespace DOG::gfx
 			}
 		}
 
-
 		if (m_reservedDescriptor)
 			m_descriptorMgr->free(&(*m_reservedDescriptor));
 		
 		if (m_d2dReservedDescriptor)
 			m_descriptorMgr->free(&(*m_d2dReservedDescriptor));
+
 
 		DestroyD11();
 	}
@@ -128,6 +172,7 @@ namespace DOG::gfx
 			m_totalMemoryInfo.heap[i] = ToMemoryInfo(stats.HeapType[i]);
 		m_totalMemoryInfo.total = ToMemoryInfo(stats.Total);
 
+		m_totalMemoryInfo.videoMemoryInfo = GetVramInfo(m_device);
 		return m_totalMemoryInfo;
 	}
 
@@ -152,6 +197,14 @@ namespace DOG::gfx
 
 	Buffer RenderDevice_DX12::CreateBuffer(const BufferDesc& desc, MemoryPool pool)
 	{
+		// Override with compact upload pool
+		bool usingCompact{ false };
+		if (desc.memType == MemoryType::Upload)
+		{
+			pool = m_compactUploadPool;
+			usingCompact = true;
+		}
+
 		HRESULT hr{ S_OK };
 
 		D3D12MA::ALLOCATION_DESC ad{};
@@ -161,6 +214,8 @@ namespace DOG::gfx
 			auto poolStorage = HandleAllocator::TryGet(m_memoryPools, HandleAllocator::GetSlot(pool.handle));
 			ad.CustomPool = poolStorage.pool.Get();
 			ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT;
+			if (usingCompact)
+				ad.Flags |= D3D12MA::ALLOCATION_FLAG_NEVER_ALLOCATE;
 			//ad.Flags |= D3D12MA::ALLOCATION_FLAG_NEVER_ALLOCATE;		// If we want tighter constraints, we can enable this
 			assert(ad.HeapType == poolStorage.desc.heapType);
 		}
@@ -206,7 +261,7 @@ namespace DOG::gfx
 			auto poolStorage = HandleAllocator::TryGet(m_memoryPools, HandleAllocator::GetSlot(pool.handle));
 			ad.CustomPool = poolStorage.pool.Get();
 			ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT;
-			//ad.Flags |= D3D12MA::ALLOCATION_FLAG_NEVER_ALLOCATE;		// If we want tighter constraints, we can enable this
+			ad.Flags |= D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET;		// If we want tighter constraints, we can enable this
 			assert(ad.HeapType == poolStorage.desc.heapType);
 		}
 
@@ -523,6 +578,8 @@ namespace DOG::gfx
 		pd.HeapFlags = desc.heapFlags;
 		pd.HeapProperties.Type = desc.heapType;
 		pd.BlockSize = desc.size;
+		pd.MaxBlockCount = desc.minBlocks;
+		pd.MinBlockCount = desc.maxBlocks;
 		HRESULT hr{ S_OK };
 		hr = m_dma->CreatePool(&pd, pool.GetAddressOf());
 		HR_VFY(hr);
@@ -642,6 +699,7 @@ namespace DOG::gfx
 
 			++i;
 		}
+		
 
 		return texturesToRet;
 	}

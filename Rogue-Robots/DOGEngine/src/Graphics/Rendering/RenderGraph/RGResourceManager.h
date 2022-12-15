@@ -19,7 +19,7 @@ namespace DOG::gfx
 		const GPUPoolMemoryInfo& GetMemoryInfo();
 
 		// Discards the resources stored safely and clears map for re-use.
-		void ClearDeclaredResources();
+		void ClearDeclaredResources(bool immediate = false);
 
 		void ImportTexture(RGResourceID id, Texture texture, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);
 		void ImportBuffer(RGResourceID id, Buffer buffer, D3D12_RESOURCE_STATES entryState, D3D12_RESOURCE_STATES exitState);

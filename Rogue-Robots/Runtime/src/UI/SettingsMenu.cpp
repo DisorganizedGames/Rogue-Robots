@@ -15,7 +15,7 @@ std::function<void(const GameSettings&)> SettingsMenu::s_setGameSettings;
 std::function<GameSettings(void)> SettingsMenu::s_getGameSettings;
 
 std::vector<Vector2u> SettingsMenu::s_renderResolution;
-std::vector<u32> SettingsMenu::s_renderResolutionHeightPreset = { 360, 720, 1080, 1440 };
+std::vector<u32> SettingsMenu::s_renderResolutionHeightPreset = { 360, 720, 1080 };
 
 void SettingsMenu::Initialize(
 	std::function<void(const GraphicsSettings&)> setGraphicsSettings,
@@ -257,7 +257,8 @@ void SettingsMenu::UpdateResolutions()
 	Vector2u ratio = s_getAspectRatio();
 	auto&& resHeightToRes = [&](int index)
 	{
-		Vector2u res{ s_renderResolutionHeightPreset[index] * ratio.x / ratio.y, s_renderResolutionHeightPreset[index] };
+		u32 w = std::min(s_renderResolutionHeightPreset[index] * ratio.x / ratio.y, 1920u); // remove min later
+		Vector2u res{ w ,  s_renderResolutionHeightPreset[index] };
 		return res;
 	};
 
