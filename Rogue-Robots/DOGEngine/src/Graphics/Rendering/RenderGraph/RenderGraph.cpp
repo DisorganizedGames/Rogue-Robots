@@ -22,7 +22,7 @@ namespace DOG::gfx
 		m_passDataAllocator = std::make_unique<BumpAllocator>(131'072);	// 128 Kb
 	}
 
-	void RenderGraph::Clear()
+	void RenderGraph::Clear(bool immediate)
 	{
 		m_dirty = true;
 
@@ -41,7 +41,10 @@ namespace DOG::gfx
 					for (const auto& view : views)
 						rd->FreeView(view);
 				};
-				m_bin->PushDeferredDeletion(df);
+				if (immediate)
+					df();
+				else
+					m_bin->PushDeferredDeletion(df);
 			}
 
 			{
@@ -50,7 +53,10 @@ namespace DOG::gfx
 					for (const auto& view : views)
 						rd->FreeView(view);
 				};
-				m_bin->PushDeferredDeletion(df);
+				if (immediate)
+					df();
+				else
+					m_bin->PushDeferredDeletion(df);
 			}
 
 			if (pass->rp)
@@ -59,7 +65,10 @@ namespace DOG::gfx
 				{
 					rd->FreeRenderPass(rp);
 				};
-				m_bin->PushDeferredDeletion(df);
+				if (immediate)
+					df();
+				else
+					m_bin->PushDeferredDeletion(df);
 			}
 
 			pass->passResources = {};
@@ -68,7 +77,7 @@ namespace DOG::gfx
 
 
 		// Clear resources declared by this graph
-		m_resMan->ClearDeclaredResources();
+		m_resMan->ClearDeclaredResources(immediate);
 
 		// Clear cached local graph data
 		m_passBuilderGlobalData = {};

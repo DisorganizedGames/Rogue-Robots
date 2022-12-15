@@ -261,7 +261,7 @@ namespace DOG::gfx
 			auto poolStorage = HandleAllocator::TryGet(m_memoryPools, HandleAllocator::GetSlot(pool.handle));
 			ad.CustomPool = poolStorage.pool.Get();
 			ad.Flags = D3D12MA::ALLOCATION_FLAG_STRATEGY_BEST_FIT;
-			//ad.Flags |= D3D12MA::ALLOCATION_FLAG_NEVER_ALLOCATE;		// If we want tighter constraints, we can enable this
+			ad.Flags |= D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET;		// If we want tighter constraints, we can enable this
 			assert(ad.HeapType == poolStorage.desc.heapType);
 		}
 
@@ -699,6 +699,7 @@ namespace DOG::gfx
 
 			++i;
 		}
+		
 
 		return texturesToRet;
 	}

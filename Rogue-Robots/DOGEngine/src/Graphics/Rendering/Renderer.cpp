@@ -692,9 +692,10 @@ namespace DOG::gfx
 
 		auto& rg = *m_rg;
 
+		// Assuming flush --> Immediate clear
 		if (!s_donez)
 		{
-			rg.Clear();
+			rg.Clear(true);
 			s_donez = true;
 		}
 

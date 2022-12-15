@@ -229,7 +229,7 @@ namespace DOG::gfx
 				});
 		}
 
-		void Clear();
+		void Clear(bool immediate = false);
 		void TryBuild();
 		void Build();
 
