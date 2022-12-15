@@ -3,7 +3,7 @@
 using namespace DOG;
 
 f32 frames = 0;
-f32 maxFrames = 5'0;
+f32 maxFrames = 100;
 
 f32 timer = 0;
 f32 totalScripts = 1;
@@ -41,9 +41,49 @@ int ForLoopFunction()
 	/*std::cout << sum << "\n";*/
 }
 
+struct SendData
+{
+	int integer;
+	double number;
+	bool boolean;
+	std::string string;
+};
+
+void SendBackDataCpp(SendData& data)
+{
+	++data.integer;
+	data.number += 0.5f;
+	data.boolean = !data.boolean;
+	data.string += " Hello There!\n";
+}
+
+int SendDataToCpp()
+{
+	SendData data;
+	data.integer = 2;
+	data.number = 1.3f;
+	data.boolean = true;
+	data.string = "Hello I am a nice guy!";
+	SendBackDataCpp(data);
+	return data.integer + data.number + data.string.size();
+}
+
 void LuaToCppEmptyFunction(LuaContext*)
 {
 
+}
+
+void LuaSendData(LuaContext* context)
+{
+	int integer = context->GetInteger();
+	double number = context->GetDouble() + 0.5f;
+	bool boolean = !context->GetBoolean();
+	std::string string = context->GetString() + " Hello There!\n";
+
+	context->ReturnInteger(++integer);
+	context->ReturnDouble(number);
+	context->ReturnBoolean(boolean);
+	context->ReturnString(string);
 }
 
 LuaLayer::LuaLayer() noexcept
@@ -54,6 +94,8 @@ LuaLayer::LuaLayer() noexcept
 	LuaMain::GetScriptManager()->RunLuaFile("LuaStartUp.lua");
 
 	LuaMain::GetGlobal()->SetFunction<LuaToCppEmptyFunction>("LuaToCppEmptyFunction");
+
+	LuaMain::GetGlobal()->SetFunction<LuaSendData>("LuaSendData");
 
 	LuaMain::GetScriptManager()->RunLuaFile("ProfileGlobalLua.lua");
 }
@@ -130,6 +172,17 @@ void LuaLayer::OnUpdate()
 
 			m_endTime = std::chrono::steady_clock::now();
 		}
+		else if (index == 3)
+		{
+			m_startTime = std::chrono::steady_clock::now();
+
+			for (int i = 0; i < totalScripts; ++i)
+			{
+				LuaMain::GetGlobal()->CallGlobalFunction("SendData");
+			}
+
+			m_endTime = std::chrono::steady_clock::now();
+		}
 	}
 
 	timer += std::chrono::duration_cast<std::chrono::microseconds>(m_endTime - m_startTime).count();
@@ -170,6 +223,18 @@ void LuaLayer::OnUpdate()
 
 		m_endTime = std::chrono::steady_clock::now();
 	}
+	else if (index == 3)
+	{
+		m_startTime = std::chrono::steady_clock::now();
+
+		for (int i = 0; i < totalScripts; ++i)
+		{
+			//For the function not to be optimized away
+			fake = SendDataToCpp();
+		}
+
+		m_endTime = std::chrono::steady_clock::now();
+	}
 
 	cppTimer += std::chrono::duration_cast<std::chrono::microseconds>(m_endTime - m_startTime).count();
 
@@ -181,6 +246,8 @@ void LuaLayer::OnUpdate()
 			std::cout << "\n\nTesting lua to cpp and cpp to cpp functions" << "\n";
 		else if (index == 2)
 			std::cout << "\n\nTesting for loop" << "\n";
+		else if (index == 3)
+			std::cout << "\n\nTesting sending data" << "\n";
 
 		if (scriptTypeIndex == 0)
 			std::cout << "\n\nRun straight in lua file" << "\n";
@@ -223,7 +290,7 @@ void LuaLayer::OnUpdate()
 			totalScripts = 0.1f;
 			++index;
 			std::cout << "Change\n";
-			if (index == 3)
+			if (index == 4)
 			{
 				++scriptTypeIndex;
 				index = 0;
@@ -240,6 +307,8 @@ void LuaLayer::OnUpdate()
 				LuaMain::GetScriptManager()->AddScript(e, "ProfilingLua_CallCPPFunction.lua");
 			else if (index == 2)
 				LuaMain::GetScriptManager()->AddScript(e, "ProfilingLua_ForLoopAdd.lua");
+			else if (index == 3)
+				LuaMain::GetScriptManager()->AddScript(e, "ProfilingLua_SendData.lua");
 		}
 	}
 }
