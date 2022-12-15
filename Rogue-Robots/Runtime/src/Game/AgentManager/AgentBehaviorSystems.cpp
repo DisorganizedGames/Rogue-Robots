@@ -574,7 +574,10 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 			{
 				auto& fecAgent = EntityManager::Get().GetComponent<FrostEffectComponent>(e);
 				auto& frostEffect = EntityManager::Get().GetComponent<FrostEffectComponent>(e);
-				EntityManager::Get().GetComponent<LifetimeComponent>(frostEffect.frostAudioEntity).lifetime = fecBullet.frostTimer;
+				if (EntityManager::Get().Exists(frostEffect.frostAudioEntity))
+				{
+					EntityManager::Get().GetComponent<LifetimeComponent>(frostEffect.frostAudioEntity).lifetime = fecBullet.frostTimer;
+				}
 				fecAgent.frostTimer = fecBullet.frostTimer;
 			}
 			else
@@ -604,7 +607,10 @@ void AgentHitSystem::OnUpdate(entity e, AgentHitComponent& hit, AgentHPComponent
 				EntityManager::Get().GetComponent<FireEffectComponent>(e).fireTimer = fecBullet.fireTimer;
 
 				auto& fireEffect = EntityManager::Get().GetComponent<FireEffectComponent>(e);
-				EntityManager::Get().GetComponent<LifetimeComponent>(fireEffect.particleEntity).lifetime = fecBullet.fireTimer;
+				if (EntityManager::Get().Exists(fireEffect.particleEntity))
+				{
+					EntityManager::Get().GetComponent<LifetimeComponent>(fireEffect.particleEntity).lifetime = fecBullet.fireTimer;
+				}
 			}
 			else
 			{
