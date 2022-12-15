@@ -60,8 +60,8 @@ u32 ItemManager::CreateItem(EntityTypes itemType, Vector3 position, u32 id)
 		//break;
 	case EntityTypes::JumpBoost:
 		return CreateJumpBoost(position, id);
-	case EntityTypes::Reviver:
-		return CreateReviverPickup(position, id);
+	//case EntityTypes::Reviver:
+	//	return CreateReviverPickup(position, id);
 	case EntityTypes::GoalRadar:
 		return CreateGoalRadarPickup(position, id);
 	case EntityTypes::Syringe:
