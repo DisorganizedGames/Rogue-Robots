@@ -218,6 +218,33 @@ namespace DOG
 	}
 	}
 
+	void Application::SetGraphicsSettings(const GraphicsSettings& settings) noexcept
+	{
+		m_specification.graphicsSettings = settings;
+		ApplyGraphicsSettings();
+	}
+
+	GraphicsSettings Application::GetGraphicsSettings() const noexcept
+	{
+		return m_specification.graphicsSettings;
+	}
+
+	void Application::SetAudioSettings(const AudioSettings& settings) noexcept
+	{
+		m_specification.audioSettings = settings;
+		m_specification.audioSettings.masterVolume = std::clamp(m_specification.audioSettings.masterVolume, 0.0f, 1.0f);
+		AudioManager::SetMasterVolume(m_specification.audioSettings.masterVolume);
+	}
+	AudioSettings Application::GetAudioSettings() const noexcept
+	{
+		return m_specification.audioSettings;
+	}
+
+	gfx::Monitor Application::GetMonitor() const noexcept
+	{
+		return m_renderer->GetMonitor();
+	}
+
 	void Application::OnStartUp() noexcept
 	{
 		std::filesystem::current_path(m_specification.workingDir);
@@ -238,18 +265,17 @@ namespace DOG
 
 		AssetManager::Initialize(m_renderer.get());
 		AudioManager::Initialize();
+		SetAudioSettings(m_specification.audioSettings);
 		PhysicsEngine::Initialize();
 		LuaMain::Initialize();
 
 
-		ImGuiMenuLayer::RegisterDebugWindow("ApplicationSetting", [this](bool& open) { ApplicationSettingDebugMenu(open); }, false, std::make_pair(Key::LCtrl, Key::V));
 		ImGuiMenuLayer::RegisterDebugWindow("MiniProfiler", [](bool& open) { MiniProfiler::DrawResultWithImGui(open); }, true);
 	}
 
 	void Application::OnShutDown() noexcept
 	{
 		ImGuiMenuLayer::UnRegisterDebugWindow("MiniProfiler");
-		ImGuiMenuLayer::UnRegisterDebugWindow("ApplicationSetting");
 		AssetManager::Destroy();
 		AudioManager::Destroy();
 		
@@ -286,213 +312,13 @@ namespace DOG
 	{
 		m_renderer->VerifyAndSanitizeGraphicsSettings(m_specification.graphicsSettings, Window::GetWidth(), Window::GetHeight());
 
+		m_frontRenderer->ToggleShadowMapping(m_specification.graphicsSettings.shadowMapping);
+
 		m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
 
 		m_specification.graphicsSettings.windowMode = m_renderer->GetFullscreenState();
 	}
 
-	void Application::ApplicationSettingDebugMenu(bool& open)
-	{
-		if (ImGui::BeginMenu("View"))
-		{
-			if (ImGui::MenuItem("Application settings", "Ctrl + V"))
-			{
-				open = true;
-			}
-			ImGui::EndMenu(); // "View"
-		}
-
-		if (open)
-		{
-			if (ImGui::Begin("Application settings", &open, ImGuiWindowFlags_NoFocusOnAppearing))
-			{
-				gfx::Monitor monitor = m_renderer->GetMonitor();
-
-				ImGui::Text("Display settings");
-				ImGui::Text(std::filesystem::path(monitor.output.DeviceName).string().c_str());
-
-				int left = monitor.output.DesktopCoordinates.left;
-				int right = monitor.output.DesktopCoordinates.right;
-				int top = monitor.output.DesktopCoordinates.top;
-				int bottom = monitor.output.DesktopCoordinates.bottom;
-
-				std::string rectX = "left: " + std::to_string(left) + ", right: " + std::to_string(right);
-				std::string rectY = "top: " + std::to_string(top) + ", bottom : " + std::to_string(bottom);
-				ImGui::Text("Rect");
-				ImGui::Text(rectX.c_str());
-				ImGui::Text(rectY.c_str());
-
-
-				auto&& modeElementToString = [&monitor](i64 index) -> std::string
-				{
-					std::string str = "resolution: " + std::to_string(monitor.modes[index].Width) + "x" + std::to_string(monitor.modes[index].Height);
-					str += ", hz: " + std::to_string(static_cast<float>(monitor.modes[index].RefreshRate.Numerator) / monitor.modes[index].RefreshRate.Denominator);
-					str += ", Format: " + std::to_string(monitor.modes[index].Format);
-					str += ", scanline: " + std::to_string(monitor.modes[index].ScanlineOrdering);
-					str += ", scaling: " + std::to_string(monitor.modes[index].Scaling);
-
-					UINT c = std::gcd(monitor.modes[index].Width, monitor.modes[index].Height);
-					UINT w = monitor.modes[index].Width / c;
-					UINT h = monitor.modes[index].Height / c;
-					str += ", aspect ratio: " + std::to_string(w) + "/" + std::to_string(h);
-					
-					return str;
-				};
-
-				static i64 selectedModeIndex = std::ssize(monitor.modes) - 1;
-				selectedModeIndex = std::min(selectedModeIndex, static_cast<i64>(std::ssize(monitor.modes) - 1));
-
-
-				static bool firstTime = true;
-				if (firstTime)
-				{
-					selectedModeIndex = [&]()->i64 {
-						for (int i = 1; i < monitor.modes.size() - 1; i++)
-						{
-							auto& other = monitor.modes[i];
-							auto& current = *m_specification.graphicsSettings.displayMode;
-
-							if (current.Format == other.Format && current.RefreshRate.Denominator == other.RefreshRate.Denominator
-								&& current.RefreshRate.Numerator == other.RefreshRate.Numerator && current.Height == other.Height
-								&& current.Width == other.Width && current.Scaling == other.Scaling && current.ScanlineOrdering == other.ScanlineOrdering)
-							{
-								return i;
-							}
-						}
-						return selectedModeIndex;
-					}();
-				}
-
-				if (ImGui::BeginCombo("modes", modeElementToString(selectedModeIndex).c_str()))
-				{
-					for (i64 i = std::ssize(monitor.modes) - 1; i >= 0; i--)
-					{
-						if (ImGui::Selectable(modeElementToString(i).c_str(), selectedModeIndex == i))
-						{
-							selectedModeIndex = i;
-							m_specification.graphicsSettings.displayMode = monitor.modes[selectedModeIndex];
-							m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
-						}
-					}
-					ImGui::EndCombo();
-				}
-
-				static int selectedFullscreenStateIndex = 0;
-				selectedFullscreenStateIndex = static_cast<int>(m_renderer->GetFullscreenState());
-				std::array<const char*, 2> fullscreenCombo = { "Windowed", "Fullscreen" };
-				if (ImGui::Combo("Fullscreen mode", &selectedFullscreenStateIndex, fullscreenCombo.data(), static_cast<int>(fullscreenCombo.size())))
-				{
-					m_specification.graphicsSettings.windowMode = static_cast<WindowMode>(selectedFullscreenStateIndex);
-					m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
-				}
-
-				bool gfxChanged{ false };
-				if (ImGui::Checkbox("Vsync", &m_specification.graphicsSettings.vSync))
-					gfxChanged = true;
-
-				ImGui::Separator();
-
-				ImGui::Text("Graphics settings");
-
-
-
-				
-				static std::vector<std::string> res =
-				{
-					"144",
-					"360",
-					"720",
-					"1080",
-					"1440",
-					"2160",
-				};
-				static int resIndex = 3;
-
-				if (firstTime)
-				{
-					resIndex = [&]()->int {
-						for (int i = 1; i < res.size() - 1; i++)
-							if (m_specification.graphicsSettings.renderResolution.y == static_cast<u32>(std::stoi(res[i]))) return i;
-
-						res.push_back(std::to_string(m_specification.graphicsSettings.renderResolution.y));
-						return static_cast<int>(res.size() - 1);
-					}();
-					
-				}
-
-
-				ImGui::Text("resolution");
-				ImGui::SameLine();
-
-				Vector2u resolutionRatio = GetAspectRatio();
-				auto&& resToString = [&](int index) -> std::string
-				{
-					std::string resX = std::to_string(std::stoi(res[index]) * resolutionRatio.x / resolutionRatio.y);
-					return resX + "x" + res[index];
-				};
-
-				if (ImGui::BeginCombo("res", resToString(resIndex).c_str()))
-				{
-					for (int i = 0; i < std::size(res); i++)
-					{
-						if (ImGui::Selectable(resToString(i).c_str(), resIndex == i))
-						{
-							resIndex = i;
-							m_specification.graphicsSettings.renderResolution.y = std::stoi(res[resIndex]);
-							m_specification.graphicsSettings.renderResolution.x = m_specification.graphicsSettings.renderResolution.y * resolutionRatio.x / resolutionRatio.y;
-							m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
-						}
-					}
-					ImGui::EndCombo();
-				}
-
-				if (ImGui::Checkbox("Bloom", &m_specification.graphicsSettings.bloom))
-					gfxChanged = true;
-
-				if (ImGui::SliderFloat("BloomThreshold", &m_specification.graphicsSettings.bloomThreshold, 0.1f, 3))
-					gfxChanged = true;
-
-				if (ImGui::SliderFloat("BloomStrength", &m_specification.graphicsSettings.bloomStrength, 0.0f, 2))
-					gfxChanged = true;
-
-				if (ImGui::Checkbox("SSAO", &m_specification.graphicsSettings.ssao))
-					gfxChanged = true;
-
-				if (ImGui::Checkbox("Shadow Mapping", &m_specification.graphicsSettings.shadowMapping))
-				{
-					m_frontRenderer->ToggleShadowMapping(m_specification.graphicsSettings.shadowMapping);
-					gfxChanged = true;
-				}
-
-				if (ImGui::SliderFloat("Gamma", &m_specification.graphicsSettings.gamma, 1.0f, 5.0f))
-					gfxChanged = true;
-
-				ImGui::SameLine();
-				if (ImGui::Button("Default"))
-				{
-					m_specification.graphicsSettings.gamma = 2.22f;
-					gfxChanged = true;
-				}
-
-				if (ImGui::Checkbox("Lit", &m_specification.graphicsSettings.lit))
-					gfxChanged = true;
-
-				if (ImGui::Checkbox("Light culling", &m_specification.graphicsSettings.lightCulling))
-					gfxChanged = true;
-
-				if (ImGui::Checkbox("Visualize light culling", &m_specification.graphicsSettings.visualizeLightCulling))
-					gfxChanged = true;
-
-				if (gfxChanged)
-					m_renderer->SetGraphicsSettings(m_specification.graphicsSettings);
-
-				firstTime = false;
-
-				//--------------
-			}
-			ImGui::End(); // "Application settings"
-		}
-	}
 	Vector2u Application::GetAspectRatio()  const noexcept
 	{
 		Vector2u aspectRatio;

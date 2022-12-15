@@ -7,6 +7,7 @@
 #include "Scene.h"
 #include "PlayerMovementSystem.h"
 #include "PCG/WFC.h"
+#include "../Core/GameSettings.h"
 
 enum class GameState
 {
@@ -44,6 +45,9 @@ public:
 	virtual void OnRender() override final;
 	virtual void OnImGuiRender() override final;
 	virtual void OnEvent(DOG::IEvent& event) override final;
+	
+	const GameSettings& GetGameSettings() const noexcept;
+	void SetGameSettings(const GameSettings& settings) noexcept;
 	
 	static void ChangeGameState(GameState state);
 	static void ChangeNetworkState(NetworkStatus);
@@ -95,6 +99,7 @@ private:
 	INT8 m_nrOfPlayers;
 	ImFont* m_imguiFont = nullptr;
 	PlayerMovementSystem m_playerMovementSystem;
+	GameSettings m_gameSettings;
 
 	// Cheats
 	bool m_isCheating = false;

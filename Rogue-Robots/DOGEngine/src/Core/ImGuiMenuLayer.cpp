@@ -4,6 +4,7 @@
 #include "../EventSystem/KeyboardEvents.h"
 #include "../Input/Keyboard.h"
 #include "ImGUI/imgui.h"
+#include "../Graphics/Rendering/UI.h"
 
 namespace DOG
 {
@@ -94,9 +95,12 @@ namespace DOG
 
         if (event.GetEventCategory() == EventCategory::MouseEventCategory)
         {
-            if (ImGui::GetIO().WantCaptureMouse)
+            if (gameID == UI::Get()->GetActiveUIScene()) // The games UI will always render above imgui, so we only stop StopPropagation in the game, else we run the risk of blocking input to UI that hides imgui
             {
-                event.StopPropagation();
+                if (ImGui::GetIO().WantCaptureMouse)
+                {
+                    event.StopPropagation();
+                }
             }
         }
     }

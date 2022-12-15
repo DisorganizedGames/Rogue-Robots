@@ -51,6 +51,10 @@ namespace DOG
 
 	};
 
+	struct AudioSettings
+	{
+		f32 masterVolume = 1.0f;
+	};
 
 	struct ApplicationSpecification
 	{
@@ -59,6 +63,7 @@ namespace DOG
 		WindowMode initialWindowMode;
 		std::string workingDir;
 		GraphicsSettings graphicsSettings;
+		AudioSettings audioSettings;
 	};
 
 	enum class CursorMode

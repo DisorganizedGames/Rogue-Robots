@@ -1,6 +1,7 @@
 #pragma once
 #include <DOGEngine.h>
 #include "GameComponent.h"
+#include "Core/GameSettings.h"
 
 class PlayerMovementSystem
 {
@@ -16,7 +17,7 @@ class PlayerMovementSystem
 public:
 	PlayerMovementSystem();
 	void CollectAndUpdate();
-
+	void SetPlayerAimSpeed(f32 speed);
 private:
 	void OnUpdate(Entity, PlayerControllerComponent&, PlayerStatsComponent&, TransformComponent&, RigidbodyComponent&, InputController&);
 	inline static constexpr Vector3 s_globUp = Vector3(0, 1, 0);
@@ -25,6 +26,9 @@ private:
 	f32 m_timeBeteenTimer = 0.0f;
 	std::vector<u32> m_footstepSounds;
 	u32 m_jumpSound;
+	static constexpr float s_baseAimSpeed = 1.0f / 2000.0f;
+	f32 m_playerAimSpeed = s_baseAimSpeed;
+
 
 private:
 

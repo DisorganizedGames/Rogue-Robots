@@ -44,13 +44,16 @@ set(SourceFiles
 	"src/Game/AnimationIDs.h"
 	"src/Game/PlayerEquipmentFunctions.h" "src/Game/PlayerEquipmentFunctions.cpp"
 	"src/Game/GoalRadarSystem.h" "src/Game/GoalRadarSystem.cpp"
-	"src/Game/InGameMenu.h" "src/Game/InGameMenu.cpp"
+	"src/UI/InGameMenu.h" "src/UI/InGameMenu.cpp"
 	"src/Game/MusicSystems.h" "src/Game/MusicSystems.cpp"
 	"src/Game/AgentManager/BehaviorTree.h" "src/Game/AgentManager/BehaviorTree.cpp"
 	
 	"src/Game/PlayerMovementSystem.cpp" "src/Game/SpectatorCopyCamera.h"
 	"src/Game/PlayerMovementSystem.h" "src/Game/SpectatorCopyCamera.cpp"
-	 "src/Game/PCG/PCGHelper.cpp" "src/Game/PCG/PCGHelper.h" "src/Game/PCG/PQ.h" "src/Game/PCG/PQ.cpp" "src/Game/PCG/WFC.h" "src/Game/PCG/WFC.cpp")
+	"src/Game/PCG/PCGHelper.cpp" "src/Game/PCG/PCGHelper.h" "src/Game/PCG/PQ.h" "src/Game/PCG/PQ.cpp" "src/Game/PCG/WFC.h" "src/Game/PCG/WFC.cpp"
+	"src/UI/SettingsMenu.h" "src/UI/SettingsMenu.cpp"
+	"src/Core/GameSettings.h"
+	)
 
 set(ExecutableName "Runtime")
 set (ExternalIncludePath "${CMAKE_SOURCE_DIR}/Runtime/vendor/includes/")

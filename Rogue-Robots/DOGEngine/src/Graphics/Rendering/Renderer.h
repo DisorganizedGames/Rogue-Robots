@@ -111,7 +111,7 @@ namespace DOG::gfx
 
 		void OnResize(u32 clientWidth, u32 clientHeight);
 		void SetGraphicsSettings(GraphicsSettings requestedSettings);
-		GraphicsSettings GetGraphicsSettings();
+		const GraphicsSettings& GetGraphicsSettings();
 		WindowMode GetFullscreenState() const;
 
 		void BeginFrame_GPU();

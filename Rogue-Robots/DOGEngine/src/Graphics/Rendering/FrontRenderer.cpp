@@ -293,6 +293,8 @@ namespace DOG::gfx
 		// Collect this frames spotlight shadow casters
 		m_activeSpotlightShadowCasters.clear();
 		m_playerViews.clear();
+		const bool shadowsMapping = m_renderer->GetGraphicsSettings().shadowMapping;
+
 		EntityManager::Get().Collect</*ShadowCasterComponent, */SpotLightComponent, CameraComponent, TransformComponent>().Do([&](
 			entity spotlightEntity, /*ShadowCasterComponent&, */ SpotLightComponent& slc, CameraComponent& cc, TransformComponent& tc)
 			{
@@ -306,7 +308,7 @@ namespace DOG::gfx
 				spotData.strength = slc.strength;
 				spotData.isPlayerLight = slc.isMainPlayerSpotlight;
 
-				if (EntityManager::Get().HasComponent<ShadowCasterComponent>(spotlightEntity))
+				if (EntityManager::Get().HasComponent<ShadowCasterComponent>(spotlightEntity) && shadowsMapping)
 				{
 					spotData.shadow = Renderer::ShadowCaster();
 					spotData.shadow->viewMat = cc.viewMatrix;

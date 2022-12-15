@@ -278,7 +278,7 @@ namespace DOG
    class UILabel: public UIElement
    {
       public:
-         UILabel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring text, float x, float y, float width, float height, float size);
+         UILabel(DOG::gfx::D2DBackend_DX12& d2d, UINT id, std::wstring text, float x, float y, float width, float height, float size, DWRITE_TEXT_ALIGNMENT alignment = DWRITE_TEXT_ALIGNMENT_CENTER);
          ~UILabel();
          void Draw(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
@@ -301,8 +301,10 @@ namespace DOG
          void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void OnEvent(IEvent& event) override final;
          float GetValue();
+         void SetValue(float value);
       private:
          float m_value, m_width, m_normwidth;
+         bool m_isSliding = false;
          std::function<void(float)> m_callback;
          D2D_RECT_F m_bar, m_slider;
          std::wstring m_text;
@@ -341,6 +343,7 @@ namespace DOG
          void OnEvent(IEvent& event) override final;
          std::wstring GetText(void);
          UINT GetIndex();
+         void SetIndex(UINT index);
          void SendStrings(const std::vector<std::wstring>& filenames);
       private:
          float m_opacity;
@@ -380,6 +383,7 @@ namespace DOG
          void Update(DOG::gfx::D2DBackend_DX12& d2d) override final;
          void OnEvent(IEvent& event) override final;
          bool GetValue();
+         void SetValue(bool value);
       private:
          std::function<void(bool)> m_callback;
          bool m_value;

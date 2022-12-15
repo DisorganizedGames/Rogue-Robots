@@ -1,7 +1,7 @@
 #pragma once
 #include <DOGEngine.h>
 #include "GameComponent.h"
-#include "InGameMenu.h"
+#include "../UI/InGameMenu.h"
 
 class DoorOpeningSystem : public DOG::ISystem
 {

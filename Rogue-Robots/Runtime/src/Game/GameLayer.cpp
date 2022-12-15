@@ -15,7 +15,7 @@
 #include "PlayerManager/PlayerManager.h"
 #include "Pathfinder/Pathfinder.h"
 #include "HeartbeatTrackerSystem.h"
-#include "InGameMenu.h"
+#include "../UI/InGameMenu.h"
 #include "GoalRadarSystem.h"
 #include "MusicSystems.h"
 #include "SpectatorCopyCamera.h"
@@ -1010,6 +1010,17 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 		Release(EVENT(KeyReleasedEvent).key);
 	}
 	}
+}
+
+const GameSettings& GameLayer::GetGameSettings() const noexcept
+{
+	return m_gameSettings;
+}
+
+void GameLayer::SetGameSettings(const GameSettings& settings) noexcept
+{
+	m_gameSettings = settings;
+	m_playerMovementSystem.SetPlayerAimSpeed(m_gameSettings.mouseSensitivity);
 }
 
 //Lobby
