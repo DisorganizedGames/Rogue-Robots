@@ -307,8 +307,8 @@ PS_OUT main(VS_OUT input)
     
     if (g_constants.debugSettingsFlag & DEBUG_SETTING_LIGHT_CULLING)
     {
-        uint2 tileCoord = input.pos.xy / TILED_GROUP_SIZE;
-        uint tileIndex = tileCoord.x + (g_constants.width + TILED_GROUP_SIZE - 1) / TILED_GROUP_SIZE * tileCoord.y;
+        uint2 tileCoord = input.pos.xy / TILED_GROUP_DIM;
+        uint tileIndex = tileCoord.x + (g_constants.width + TILED_GROUP_DIM - 1) / TILED_GROUP_DIM * tileCoord.y;
         StructuredBuffer<ShaderInterop_LocalLightBuffer> localLightBuffers = ResourceDescriptorHeap[g_constants.localLightBuffersIndex];
         if (localLightBuffers[tileIndex].count > 120)
         {

@@ -24,11 +24,11 @@ float ConvertDepthToViewSpace(matrix projInv, float depth)
     return depth;
 }
 
-[numthreads(TILED_GROUP_SIZE, TILED_GROUP_SIZE, 1)]
+[numthreads(TILED_GROUP_DIM, TILED_GROUP_DIM, 1)]
 void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadID, uint3 groupID : SV_GroupID, uint groupIndex : SV_GroupIndex)
 {
-    uint tid = threadId.x + TILED_GROUP_SIZE * threadId.y;
-    uint2 numTiles = uint2(g_constants.width + TILED_GROUP_SIZE - 1, g_constants.height + TILED_GROUP_SIZE - 1) / TILED_GROUP_SIZE;
+    uint tid = threadId.x + TILED_GROUP_DIM * threadId.y;
+    uint2 numTiles = uint2(g_constants.width + TILED_GROUP_DIM - 1, g_constants.height + TILED_GROUP_DIM - 1) / TILED_GROUP_DIM;
     uint tileIndex = groupID.x + numTiles.x * groupID.y;
     if (tid == 0)
     {
@@ -63,19 +63,16 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
     float2 scale = numTiles;
     float2 bias = scale - 2 * float2(groupID.xy) - 1.xx;
 
-    float p11 = pfData.projMatrix._11;
-    float p22 = pfData.projMatrix._22;
-
-    float4 col1 = float4(p11 * scale.x, 0, bias.x, 0);
-    float4 col2 = float4(0, -p22 * scale.y, bias.y, 0);
+    float4 col1 = float4(pfData.projMatrix._11 * scale.x, 0, bias.x, 0);
+    float4 col2 = float4(0, -pfData.projMatrix._22 * scale.y, bias.y, 0);
 
     float4 col4 = float4(0, 0, 1, 0);
     float4 frustum[6];
 
-    frustum[0] = col4 + col1;
-    frustum[1] = col4 - col1;
-    frustum[2] = col4 + col2;
-    frustum[3] = col4 - col2;
+    frustum[0] = col4 + col1; // left
+    frustum[1] = col4 - col1; // right
+    frustum[2] = col4 + col2; // bottom
+    frustum[3] = col4 - col2; // top
 
     bool useDepth = true; // Add option to toggle later
     if (useDepth)
@@ -111,7 +108,7 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
     StructuredBuffer<ShaderInterop_PointLight> pointLights = ResourceDescriptorHeap[gd.pointLightTable];
 
 
-    for (int i = tid; i < lightsMD.dynPointLightRange.count; i += TILED_GROUP_SIZE * TILED_GROUP_SIZE)
+    for (int i = tid; i < lightsMD.dynPointLightRange.count; i += TILED_GROUP_DIM * TILED_GROUP_DIM)
     {
         uint globalIndex = pfData.pointLightOffsets.dynOffset + i;
         ShaderInterop_PointLight pointLight = pointLights[globalIndex];
@@ -132,7 +129,7 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
     }
 
 
-    for (int i = tid; i < lightsMD.staticPointLightRange.count; i += TILED_GROUP_SIZE * TILED_GROUP_SIZE)
+    for (int i = tid; i < lightsMD.staticPointLightRange.count; i += TILED_GROUP_DIM * TILED_GROUP_DIM)
     {
         uint globalIndex = pfData.pointLightOffsets.staticOffset + i;
         ShaderInterop_PointLight pointLight = pointLights[globalIndex];
