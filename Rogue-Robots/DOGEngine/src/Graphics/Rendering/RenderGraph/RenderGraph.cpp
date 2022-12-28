@@ -7,6 +7,9 @@
 
 #include "Tracy/Tracy.hpp"
 
+#define GENERATE_GRAPHVIZ
+
+
 namespace DOG::gfx
 {
 	RenderGraph::RenderGraph(RenderDevice* rd, RGResourceManager* resMan, GPUGarbageBin* bin) :
