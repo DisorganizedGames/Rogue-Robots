@@ -34,7 +34,7 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
     {
         sLightCounter = 0;
         sharedUintMaxZ = 0;
-        sharedUintMinZ = 0x7f7fffff;
+        sharedUintMinZ = 0x7f7fffff; // Max float value as uint
     }
     GroupMemoryBarrierWithGroupSync();
 
@@ -135,7 +135,7 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
         ShaderInterop_PointLight pointLight = pointLights[globalIndex];
         bool culled = false;
 
-        for (int j = 0; j < 6; j++)
+        for (int j = 0; j < 6; j++) // frustum[6] contains the 6 planes of the frustum
         {
             float d = dot(float4(pointLight.position, 1), frustum[j]);
             culled |= d < -pointLight.radius;
