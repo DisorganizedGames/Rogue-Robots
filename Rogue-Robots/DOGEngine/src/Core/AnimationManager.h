@@ -43,6 +43,8 @@ namespace DOG
 		void ExtractClipNodeInfluences(const ClipData* pcData, const std::vector<AnimationData>& anims, const KeyType key, const u8 nClips, const u8 rigID, const u8 group);
 		void CalculateSRT(RigAnimator& ac, const u8 rigID);
 		void ExtractClipNodeInfluences(RigAnimator& animator, const KeyType key, const u32 group, const u32 rigID);
+
+		void PlayQueue(f32 deltaTime);
 	private:
 		RigAnimator m_ta;
 		std::vector<ImportedRig*> m_rigs;
@@ -69,6 +71,12 @@ namespace DOG
 		std::vector<DirectX::XMFLOAT3> m_imguiSca;
 		std::vector<DirectX::XMFLOAT3> m_imguiRot;
 		std::vector<DirectX::XMFLOAT3> m_imguiPos;
+
+
+		i32 m_targetPlayer = 0;
+		f32 queueTimer = 0.f;
+		bool startQueue = false;
+		std::array<std::queue<std::pair<f32, AnimationComponent::Setter>>, 4> animationQueues;
 	public:
 		void SpawnControlWindow(bool& open);
 	};

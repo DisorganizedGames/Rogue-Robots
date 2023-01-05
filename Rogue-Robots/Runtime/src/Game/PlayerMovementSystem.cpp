@@ -100,8 +100,13 @@ void PlayerMovementSystem::OnUpdate(
 		if (player.debugCamera != DOG::NULL_ENTITY && isThisPlayer)
 		{
 			camera.isMainCamera = false;
+			f32 moveSpeed = 10.f;
+			if (mgr.HasComponent<ImguiVariables>(e))
+			{
+				moveSpeed = mgr.GetComponent<ImguiVariables>(e).debugCamSpeed;
+			}
 			if (player.moveView)
-				MoveDebugCamera(player.debugCamera, moveTowards, forward, right, 10.f, input);
+				MoveDebugCamera(player.debugCamera, moveTowards, forward, right, moveSpeed, input);
 			return;
 		}
 

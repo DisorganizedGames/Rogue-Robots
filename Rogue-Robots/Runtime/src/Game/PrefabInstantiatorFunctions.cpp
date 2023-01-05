@@ -8,7 +8,7 @@ using namespace DirectX::SimpleMath;
 std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 spread)
 {
 	ASSERT(playerCount > 0, "Need to at least spawn ThisPlayer. I.e. playerCount has to exceed 0");
-
+	playerCount = 4;
 	auto* scriptManager = LuaMain::GetScriptManager();
 	//// Add persistent material prefab lua
 	//{
@@ -24,10 +24,10 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 	auto& am = AssetManager::Get();
 	auto& em = EntityManager::Get();
 	std::array<u32, 4> playerModels = {};
-	playerModels[0] = am.LoadModelAsset("Assets/Models/P2/Red/reduced.gltf", AssetLoadFlag::GPUMemory);
-	playerModels[1] = am.LoadModelAsset("Assets/Models/P2/Blue/reduced.gltf", AssetLoadFlag::GPUMemory);
-	playerModels[2] = am.LoadModelAsset("Assets/Models/P2/Green/reduced.gltf", AssetLoadFlag::GPUMemory);
-	playerModels[3] = am.LoadModelAsset("Assets/Models/P2/Yellow/reduced.gltf", AssetLoadFlag::GPUMemory);
+	playerModels[0] = am.LoadModelAsset("Assets/Models/P2/Red/testAim.gltf", AssetLoadFlag::GPUMemory);
+	playerModels[1] = am.LoadModelAsset("Assets/Models/P2/Blue/testAim.gltf", AssetLoadFlag::GPUMemory);
+	playerModels[2] = am.LoadModelAsset("Assets/Models/P2/Green/testAim.gltf", AssetLoadFlag::GPUMemory);
+	playerModels[3] = am.LoadModelAsset("Assets/Models/P2/Yellow/testAim.gltf", AssetLoadFlag::GPUMemory);
 
 	std::array<DirectX::SimpleMath::Vector3, 4> playerOutlineColors
 	{
@@ -69,6 +69,9 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 		em.AddComponent<MixamoHeadJointTF>(playerI);
 		em.AddComponent<MixamoRightHandJointTF>(playerI);
 
+		em.AddComponent<ImguiVariables>(playerI);
+		em.AddComponent<PlayerID>(playerI).id = i;
+
 		auto& ac = em.GetComponent<AnimationComponent>(playerI);
 		ac.animatorID = static_cast<i8>(i);
 		ac.SimpleAdd(static_cast<i8>(MixamoAnimations::Idle), AnimationFlag::Looping | AnimationFlag::ResetPrio);
@@ -84,6 +87,8 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 
 		entity playerModelEntity = em.CreateEntity();
 
+
+		em.AddComponent<PlayerModel>(playerModelEntity);
 		em.AddComponent<TransformComponent>(playerModelEntity);
 		em.AddComponent<ModelComponent>(playerModelEntity, playerModels[i]);
 		em.AddComponent<RigDataComponent>(playerModelEntity);
@@ -96,16 +101,17 @@ std::vector<DOG::entity> SpawnPlayers(const Vector3& pos, u8 playerCount, f32 sp
 
 		auto& t = em.AddComponent<ChildComponent>(playerModelEntity);
 		t.parent = playerI;
-		t.localTransform.SetPosition({0.0f, -0.5f, 0.0f});
+		t.localTransform.SetPosition({0.0f, -1.f, 0.0f});
 
 		if (i == 0) // Only for this player
 		{
-			em.AddComponent<DontDraw>(playerModelEntity);
+			em.AddComponent<DontDraw>(playerModelEntity).dontDraw = true;
 			em.AddComponent<ThisPlayer>(playerI);
 			em.AddComponent<AudioListenerComponent>(playerI);
 		}
 		else
 		{
+			em.AddComponent<DontDraw>(playerModelEntity).dontDraw = false;
 			em.AddComponent<OnlinePlayer>(playerI);
 		}
 		// Always add outline component
@@ -202,6 +208,7 @@ std::vector<entity> AddGunsToPlayers(const std::vector<entity>& players)
 		em.AddComponent<ModelComponent>(gunEntity, am.LoadModelAsset("Assets/Models/ModularRifle/Maingun.gltf"));
 		em.AddComponent<ShadowReceiverComponent>(gunEntity);
 		em.AddComponent<OutlineComponent>(gunEntity, playerOutlineColors[i]);
+		em.AddComponent<GunModel>(gunEntity);
 
 		auto& childComponent = em.AddComponent<ChildToBoneComponent>(gunEntity);
 		childComponent.boneParent = players[i];
@@ -215,7 +222,11 @@ std::vector<entity> AddGunsToPlayers(const std::vector<entity>& players)
 
 		if (em.HasComponent<ThisPlayer>(childComponent.boneParent))
 		{
-			em.AddComponent<DontDraw>(gunEntity);
+			em.AddComponent<DontDraw>(gunEntity).dontDraw = true;
+		}
+		else
+		{
+			em.AddComponent<DontDraw>(gunEntity).dontDraw = false;
 		}
 
 		guns.push_back(gunEntity);

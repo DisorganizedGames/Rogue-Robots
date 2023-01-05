@@ -813,10 +813,79 @@ void GameLayer::UpdateGame()
 	EvaluateLoseCondition();
 
 	// Render this player or not
-	EntityManager::Get().Collect<DontDraw>().Do([&](DontDraw& dd)
+	/*EntityManager::Get().Collect<DontDraw>().Do([&](DontDraw& dd)
 		{
 			dd.dontDraw = !m_imguiRenderPlayer;
+		});*/
+	auto& mgr = DOG::EntityManager::Get();
+
+	EntityManager::Get().Collect<PlayerID>().Do([&](entity e, PlayerID& pID)
+		{
+			if (pID.id != m_imguiThisPlayer && mgr.HasComponent<ThisPlayer>(e))
+				mgr.RemoveComponent<ThisPlayer>(e);
+			else if (pID.id == m_imguiThisPlayer && !mgr.HasComponent<ThisPlayer>(e))
+				mgr.AddComponent<ThisPlayer>(e);
 		});
+
+	EntityManager::Get().Collect<PlayerID>().Do([&](entity p, PlayerID& pid)
+		{
+			auto scriptData = LuaMain::GetScriptManager()->GetScript(p, "Gun.lua");
+			LuaTable tab(scriptData.scriptTable, true);
+			auto ge = tab.GetTableFromTable("gunEntity");
+
+			int gunID = ge.GetIntFromTable("entityID");
+			int barrelID = tab.GetIntFromTable("barrelEntityID");
+			int miscID = tab.GetIntFromTable("miscEntityID");
+			int magazineID = tab.GetIntFromTable("magazineEntityID");
+			mgr.AddOrReplaceComponent<DontDraw>(gunID).dontDraw;
+			mgr.AddOrReplaceComponent<DontDraw>(barrelID).dontDraw;
+			mgr.AddOrReplaceComponent<DontDraw>(miscID).dontDraw;
+			mgr.AddOrReplaceComponent<DontDraw>(magazineID).dontDraw;
+			mgr.GetComponent<DontDraw>(gunID).dontDraw = pid.id == m_imguiThisPlayer ? true : true;
+			mgr.GetComponent<DontDraw>(barrelID).dontDraw = pid.id == m_imguiThisPlayer ? true : true;
+			mgr.GetComponent<DontDraw>(miscID).dontDraw = pid.id == m_imguiThisPlayer ? true : true;
+			mgr.GetComponent<DontDraw>(magazineID).dontDraw = pid.id == m_imguiThisPlayer ? true : true;
+		});
+
+
+	EntityManager::Get().Collect<ModelComponent, GunModel, ChildToBoneComponent>().Do([&](entity modelGun, ModelComponent&, GunModel&, ChildToBoneComponent& bone)
+		{
+			if (mgr.HasComponent<ThisPlayer>(bone.boneParent) && mgr.HasComponent<DOG::DontDraw>(modelGun))
+				DOG::EntityManager::Get().GetComponent<DOG::DontDraw>(modelGun).dontDraw = m_imguiRenderThisPlayer;
+			else if (mgr.HasComponent<DOG::DontDraw>(modelGun))
+				DOG::EntityManager::Get().GetComponent<DOG::DontDraw>(modelGun).dontDraw = m_imguiRenderPlayer;
+		});
+
+	DOG::EntityManager::Get().Collect<ChildComponent, PlayerModel, ModelComponent>().Do([&](DOG::entity playerModel, ChildComponent& cc, PlayerModel, ModelComponent&)
+		{
+			if (mgr.HasComponent<DontDraw>(playerModel))
+			{
+				auto& dd = mgr.GetComponent<DontDraw>(playerModel);
+				dd.dontDraw = m_imguiRenderPlayer;
+				if (mgr.HasComponent<ThisPlayer>(cc.parent))
+				{
+					dd.dontDraw = m_imguiRenderThisPlayer;
+				}
+				if (mgr.HasComponent<PlayerID>(cc.parent) && mgr.GetComponent<PlayerID>(cc.parent).id == m_imguiThisPlayerTF)
+				{
+					cc.localTransform.SetPosition( { m_imguiTFPos.x, m_imguiTFPos.y, m_imguiTFPos.z });
+					cc.localTransform.SetRotation({ m_imguiTFRot.x, m_imguiTFRot.y, m_imguiTFRot.z });
+				}
+			}
+		});
+
+	EntityManager::Get().Collect<ImguiVariables, ThisPlayer>().Do([&](ImguiVariables& img, ThisPlayer&)
+		{
+			img.debugCamSpeed = m_imguiDebugCamSpeed;
+		});
+
+	//if (!mgr.HasComponent<LerpToPlayerComponent>(closestPickup))
+	DOG::entity localPlayer = {};
+	DOG::EntityManager::Get().Collect<ThisPlayer>().Do([&](DOG::entity player, ThisPlayer&)
+		{
+			localPlayer = player;
+		});
+
 
 	if (m_syncFrame)
 	{
@@ -1762,7 +1831,27 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 					m_lightScene = nullptr;
 				}
 			}
+			
+			ImGui::Text("TranslationPTF");
+			ImGui::SliderFloat("posX", &m_imguiTFPos.x, -10.f, 10.f, "%.3f");
+			ImGui::SliderFloat("posY", &m_imguiTFPos.y, -10.f, 10.f, "%.3f");
+			ImGui::SliderFloat("posZ", &m_imguiTFPos.z, -10.f, 10.f, "%.3f");
+			ImGui::Text("TranslationPTF");
+			ImGui::SliderAngle("rotX", &m_imguiTFRot.x);
+			ImGui::SliderAngle("rotY", &m_imguiTFRot.y);
+			ImGui::SliderAngle("rotZ", &m_imguiTFRot.z);
+			static const char* playerNamesArr[]{ "Red", "Blue", "Green", "Yellow", "All" };
+			ImGui::Combo("target player", &m_imguiThisPlayer, playerNamesArr, IM_ARRAYSIZE(playerNamesArr));
+
+			static const char* playerNamesArr1[]{ "Red", "Blue", "Green", "Yellow"};
+			ImGui::Combo("tf this player", &m_imguiThisPlayerTF, playerNamesArr1, IM_ARRAYSIZE(playerNamesArr1));
+
+			ImGui::SliderFloat("debugCamSpeed", &m_imguiDebugCamSpeed, 0.f, 10.f, "%.1f");
+
 			ImGui::Checkbox("RenderPlayer", &m_imguiRenderPlayer);
+			ImGui::Checkbox("RenderThisPlayer", &m_imguiRenderThisPlayer);
+
+
 			if (ImGui::RadioButton("PCGLevel", (int*)&m_selectedScene, (int)SceneComponent::Type::PCGLevelScene)) m_gameState = GameState::Restart;
 
 			if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;

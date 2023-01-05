@@ -8,6 +8,7 @@
 #include "PlayerMovementSystem.h"
 #include "PCG/WFC.h"
 
+
 enum class GameState
 {
 	None = 0,
@@ -106,6 +107,7 @@ private:
 	// Win condition
 	DirectX::SimpleMath::Vector3 m_exitPosition = DirectX::SimpleMath::Vector3(-1.0f, -1.0f, -1.0f);
 
+	bool m_imguiRenderThisPlayer = true;
 	bool m_imguiRenderPlayer = false;
 	bool m_syncFrame = true;
 	int m_nrOfFramesToWait = 300;
@@ -115,4 +117,12 @@ private:
 	std::vector<std::wstring> m_filenames;
 
 	float m_timeSpent = -1.f;
+
+	f32 m_imguiDebugCamSpeed = 10.f;
+	i32 m_imguiThisPlayer = 0;
+	i32 m_imguiThisPlayerTF = 0;
+
+	DirectX::XMFLOAT3 m_imguiTFPos = {0.f, -1.0f, 0.f};
+	DirectX::XMFLOAT3 m_imguiTFRot = { 0.f, 0.f, 0.f };
+
 };

@@ -222,6 +222,24 @@ namespace DOG
 		i32 loops{ 1 };
 	};
 
+	struct ImguiVariables
+	{
+		f32 debugCamSpeed = 10.f;
+		i32 thisPlayer = 0;
+	};
+	struct PlayerID
+	{
+		i32 id = {};
+	};
+	struct PlayerModel
+	{
+
+	};
+	struct GunModel
+	{
+
+	};
+
 	struct PickupLerpAnimateComponent
 	{
 		float baseOrigin{ 5.0f };

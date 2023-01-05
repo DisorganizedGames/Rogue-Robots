@@ -24,6 +24,25 @@ namespace DOG
 		ImGuiMenuLayer::UnRegisterDebugWindow("RigJourno");
 	};
 
+	void AnimationManager::PlayQueue(f32 deltaTime)
+	{
+		queueTimer += deltaTime;
+		
+		EntityManager::Get().Collect<AnimationComponent, MixamoRightHandJointTF, MixamoHeadJointTF>().Do([&](AnimationComponent& aC, MixamoRightHandJointTF& rightHandTf, MixamoHeadJointTF& headTf)
+			{
+				if (aC.animatorID != -1 && !animationQueues[aC.animatorID].empty())
+				{
+					auto& queue = animationQueues[aC.animatorID];
+					if (queue.front().first <= queueTimer)
+					{
+						aC.animSetters[aC.addedSetters++] = queue.front().second;
+						queue.pop();
+					}
+				}
+			});
+	}
+
+
 	void AnimationManager::ResetAnimationComponent(DOG::AnimationComponent& ac)
 	{
 		for (i32 i = 0; i < ac.addedSetters; ++i)
@@ -61,6 +80,11 @@ namespace DOG
 			return;
 		}
 
+		if (startQueue)
+			PlayQueue(deltaTime);
+		else
+			queueTimer = 0.f;
+
 		EntityManager::Get().Collect<AnimationComponent, MixamoRightHandJointTF, MixamoHeadJointTF>().Do([&](AnimationComponent& aC, MixamoRightHandJointTF& rightHandTf, MixamoHeadJointTF& headTf)
 			{
 				if (aC.animatorID != -1)
@@ -77,6 +101,8 @@ namespace DOG
 					const auto rightHandJointBindPose = XMMatrixTranspose(XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_rigs[MIXAMO_RIG_ID]->jointOffsets[MIXAMO_RIG.rightHandJoint])));
 					const auto rightHandJointTf = XMMatrixTranspose(XMLoadFloat4x4(&m_vsJoints[offset + MIXAMO_RIG.rightHandJoint]));
 					rightHandTf.transform = rightHandJointBindPose * rightHandJointTf;
+					//rightHandTf.transform *= XMMatrixTranslation(1000.f, 10000.f, 1000.f);
+
 				}
 			});
 	}
@@ -144,8 +170,12 @@ namespace DOG
 					}
 				}
 
-				// attempting to create timeline WIP
-				//ImGuiTimeLine();
+				
+				static const char* players[]{ "Red", "Blue", "Green", "Yellow", "All" };
+				ImGui::Combo("target player", &m_targetPlayer, players, IM_ARRAYSIZE(players));
+				static f32 startTime = 0.f;
+				ImGui::SliderFloat("QueueDelay", &startTime, 0.f, 100.f, "%.3f");
+				ImGui::Checkbox("PlayQueues", &startQueue);
 
 				// joint Transform component
 				{
@@ -210,7 +240,7 @@ namespace DOG
 					{
 						EntityManager::Get().Collect<ThisPlayer, AnimationComponent>().Do([&](ThisPlayer&, AnimationComponent& rAC)
 							{
-								if (rAC.animatorID == 0)
+								if (rAC.animatorID == m_targetPlayer)
 								{
 									auto& s = rAC.animSetters[rAC.addedSetters++];
 									s.playbackRate = playbackRate;
@@ -233,15 +263,43 @@ namespace DOG
 										s.targetWeights[i] = weights[i];
 									}
 								}
-
 							});
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Queue clip(s)"))
+					{
+						DOG::AnimationComponent::Setter s = {};
+						s.playbackRate = playbackRate;
+						if (persistFlag)
+							s.flag = s.flag | AnimationFlag::Persist;
+						if (loopingFlag)
+							s.flag = s.flag | AnimationFlag::Looping;
+						if (resetPrioFlag)
+							s.flag = s.flag | AnimationFlag::ResetPrio;
+						if (interruptFlag)
+							s.flag = s.flag | AnimationFlag::Interrupt;
+						if (forceRestartFlag)
+							s.flag = s.flag | AnimationFlag::ForceRestart;
+						s.priority = static_cast<u8>(priority);
+						s.group = static_cast<u8>(group);
+						s.transitionLength = transitionLen;
+						for (i32 i = 0; i < targets + 1; ++i)
+						{
+							s.animationIDs[i] = static_cast<i8>(chosenAnims[i]);
+							s.targetWeights[i] = weights[i];
+						}
+						if (m_targetPlayer != 4)
+							animationQueues[m_targetPlayer].push({ startTime, s });
+						else
+							for (size_t i = 0; i < 4; i++)
+								animationQueues[i].push({ startTime, s });	
 					}
 					ImGui::SameLine();
 					if (ImGui::Button("SimpleAdd"))
 					{
 						EntityManager::Get().Collect<ThisPlayer, AnimationComponent>().Do([&](ThisPlayer&, AnimationComponent& rAC)
 							{
-								if (rAC.animatorID == 0)
+								if (rAC.animatorID == m_targetPlayer)
 								{
 									AnimationFlag flg = AnimationFlag::None;
 									if (persistFlag) flg = flg | AnimationFlag::Persist;
@@ -279,6 +337,7 @@ namespace DOG
 					ImGui::SliderFloat("X", &m_imguiSca[selectedBone].x, imguiJointScaMin, imguiJointScaMax, "%.1f");
 					ImGui::SliderFloat("Y", &m_imguiSca[selectedBone].y, imguiJointScaMin, imguiJointScaMax, "%.1f");
 					ImGui::SliderFloat("Z", &m_imguiSca[selectedBone].z, imguiJointScaMin, imguiJointScaMax, "%.1f");
+
 				}
 			}
 			ImGui::End();
@@ -423,7 +482,8 @@ namespace DOG
 			);
 
 			// apply addition imgui bone influence
-			ntf *= ImguiTransform(i);
+			if (offset/MIXAMO_RIG.nJoints == m_targetPlayer || m_targetPlayer == 4)
+				ntf *= ImguiTransform(i);
 
 			hereditaryTFs.push_back(ntf);
 		}

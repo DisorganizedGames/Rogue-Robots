@@ -1070,7 +1070,7 @@ void SetFlashLightToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& ch
 				em.GetComponent<MixamoHeadJointTF>(child.boneParent).transform *
 				em.GetComponent<TransformComponent>(child.boneParent).worldMatrix;
 
-			world.SetPosition(world.GetPosition() + Vector3(0.f, -0.5f, 0.f)); // Account for capsule offset
+			world.SetPosition(world.GetPosition() + Vector3(0.f, -0.f, 0.f)); // Account for capsule offset
 		}
 	}
 	else
@@ -1090,7 +1090,7 @@ void SetGunToBoneSystem::OnUpdate(DOG::entity e, ChildToBoneComponent& child, DO
 				em.GetComponent<MixamoRightHandJointTF>(child.boneParent).transform *
 				em.GetComponent<TransformComponent>(child.boneParent).worldMatrix;
 
-			world.SetPosition(world.GetPosition() + Vector3(0.f, -0.5f, 0.f)); // Account for model capsule offset
+			world.SetPosition(world.GetPosition() + Vector3(0.f, -1.f, 0.f)); // Account for model capsule offset
 		}
 	}
 	else

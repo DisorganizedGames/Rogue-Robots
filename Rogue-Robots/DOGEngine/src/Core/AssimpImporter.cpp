@@ -281,19 +281,19 @@ namespace DOG
 				if (nameToNodeIdx.find(nodeName) == nameToNodeIdx.end())
 					nameToNodeIdx.insert({ nodeName, -1 });
 				// temporary code for modifying root translation
-				constexpr u32 gltf_rootIdx = 2;
-				if (nameToNodeIdx.find(nodeName) != nameToNodeIdx.end() && nameToNodeIdx.at(nodeName) == gltf_rootIdx)
-				{
-					auto rootV = XMLoadFloat4(&posKeys[0].value);
-					auto lastV = XMLoadFloat4(&posKeys.rbegin()[0].value);
-					for (i32 k = 0; k < posKeys.size(); ++k)
-					{
-						auto value = XMLoadFloat4(&posKeys.rbegin()[k].value);
-						// (hacky fix for grounding model)
-						posKeys.rbegin()[k].value = {0.f, XMVectorGetY(value)-250.f, 0.f, 0.f};
-					}
-					//if(posKeys.size() > 1)posKeys[0].value = posKeys[1].value;
-				}
+				//constexpr u32 gltf_rootIdx = 2;
+				//if (nameToNodeIdx.find(nodeName) != nameToNodeIdx.end() && nameToNodeIdx.at(nodeName) == gltf_rootIdx)
+				//{
+				//	auto rootV = XMLoadFloat4(&posKeys[0].value);
+				//	auto lastV = XMLoadFloat4(&posKeys.rbegin()[0].value);
+				//	for (i32 k = 0; k < posKeys.size(); ++k)
+				//	{
+				//		auto value = XMLoadFloat4(&posKeys.rbegin()[k].value);
+				//		// (hacky fix for grounding model)
+				//		posKeys.rbegin()[k].value = {0.f, XMVectorGetY(value)-250.f, 0.f, 0.f};
+				//	}
+				//	//if(posKeys.size() > 1)posKeys[0].value = posKeys[1].value;
+				//}
 				
 				i32 nodeID = nameToNodeIdx.at(nodeName);
 				//importedAnim.animations.back().scaKeys.insert({nodeID, scaKeys});
