@@ -174,7 +174,7 @@ namespace DOG::gfx
 					return;
 
 				// Culled
-				auto&& cull = [&](const DirectX::SimpleMath::Matrix& viewMat, DirectX::SimpleMath::Vector3 p)
+				/*auto&& cull = [&](const DirectX::SimpleMath::Matrix& viewMat, DirectX::SimpleMath::Vector3 p)
 				{
 					TransformComponent tc{};
 					tc.worldMatrix = viewMat.Invert();
@@ -187,15 +187,16 @@ namespace DOG::gfx
 					if (lenSq > 80 * 80) return true;
 					d.Normalize();
 					return camForward.Dot(d) < 0.2f;
-				};
+				};*/
 
 
-				bool renderToShadow = false;
-				for (const auto& pview : m_playerViews)
-				{
-					bool insideFrustum = !cull(pview, { transformC.worldMatrix(3, 0), transformC.worldMatrix(3, 1), transformC.worldMatrix(3, 2) });
-					renderToShadow |= insideFrustum;	// If inside any of players view --> Render to shadow
-				}
+				bool renderToShadow = true;
+				//bool renderToShadow = false;
+				//for (const auto& pview : m_playerViews)
+				//{
+				//	bool insideFrustum = !cull(pview, { transformC.worldMatrix(3, 0), transformC.worldMatrix(3, 1), transformC.worldMatrix(3, 2) });
+				//	renderToShadow |= insideFrustum;	// If inside any of players view --> Render to shadow
+				//}
 
 				if (model && model->gfxModel)
 				{
@@ -213,9 +214,9 @@ namespace DOG::gfx
 						}
 					}
 
-					// Skip main view rendering
-					if (cull(m_viewMat, { transformC.worldMatrix(3, 0), transformC.worldMatrix(3, 1), transformC.worldMatrix(3, 2) }))
-						return;
+					//// Skip main view rendering
+					//if (cull(m_viewMat, { transformC.worldMatrix(3, 0), transformC.worldMatrix(3, 1), transformC.worldMatrix(3, 2) }))
+					//	return;
 
 
 					if (mgr.HasComponent<ModularBlockComponent>(e))
@@ -347,19 +348,19 @@ namespace DOG::gfx
 			auto& cc = EntityManager::Get().GetComponent<CameraComponent>(caster);
 			TransformComponent camTransform;
 			camTransform.worldMatrix = ((DirectX::SimpleMath::Matrix)cc.viewMatrix).Invert();
-			auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p)
+			/*auto&& cull = [camForward = camTransform.GetForward(), camPos = camTransform.GetPosition()](DirectX::SimpleMath::Vector3 p)
 			{
 				auto d = p - camPos;
 				if (d.LengthSquared() < 64) return false;
 				if (d.LengthSquared() > 80 * 80) return true;
 				d.Normalize();
 				return camForward.Dot(d) < 0.2f;
-			};
+			};*/
 
 			for (const auto& sub : m_singleSidedShadowed)
 			{
-				if (cull({ sub.tc.worldMatrix(3, 0), sub.tc.worldMatrix(3, 1), sub.tc.worldMatrix(3, 2) }))
-					continue;
+				/*if (cull({ sub.tc.worldMatrix(3, 0), sub.tc.worldMatrix(3, 1), sub.tc.worldMatrix(3, 2) }))
+					continue;*/
 				if (sub.animated)
 					m_renderer->SubmitSingleSidedShadowMesh(shadowID, sub.mesh, sub.submesh, sub.tc, true, sub.jointOffset);
 				else
@@ -368,8 +369,8 @@ namespace DOG::gfx
 
 			for (const auto& sub : m_doubleSidedShadowed)
 			{
-				if (cull({ sub.tc.worldMatrix(3, 0), sub.tc.worldMatrix(3, 1), sub.tc.worldMatrix(3, 2) }))
-					continue;
+				/*if (cull({ sub.tc.worldMatrix(3, 0), sub.tc.worldMatrix(3, 1), sub.tc.worldMatrix(3, 2) }))
+					continue;*/
 				if (sub.animated)
 					m_renderer->SubmitDoubleSidedShadowMesh(shadowID, sub.mesh, sub.submesh, sub.tc, true, sub.jointOffset);
 				else
