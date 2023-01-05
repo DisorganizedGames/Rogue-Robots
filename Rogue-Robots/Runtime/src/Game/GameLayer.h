@@ -79,7 +79,8 @@ private:
 private:
 	static GameState m_gameState;
 	static NetworkStatus s_networkStatus;
-	SceneComponent::Type m_selectedScene = SceneComponent::Type::PCGLevelScene;
+	//SceneComponent::Type m_selectedScene = SceneComponent::Type::PCGLevelScene;
+	SceneComponent::Type m_selectedScene = SceneComponent::Type::TiledProfilingScene;
 	std::unique_ptr<Scene> m_testScene;
 	std::unique_ptr<Scene> m_mainScene;
 	std::unique_ptr<Scene> m_lightScene;

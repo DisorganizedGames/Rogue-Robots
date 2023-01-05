@@ -12,6 +12,7 @@
 #include "PrefabInstantiatorFunctions.h"
 #include "ItemManager/ItemManager.h"
 #include "TestScenes/ParticleScene.h"
+#include "TestScenes/TiledProfilingScene.h"
 #include "PlayerManager/PlayerManager.h"
 #include "Pathfinder/Pathfinder.h"
 #include "HeartbeatTrackerSystem.h"
@@ -406,6 +407,10 @@ void GameLayer::StartMainScene()
 		break;
 	case SceneComponent::Type::ParticleScene:
 		m_mainScene = std::make_unique<ParticleScene>();
+		m_mainScene->SetUpScene();
+		break;
+	case SceneComponent::Type::TiledProfilingScene:
+		m_mainScene = std::make_unique<TiledProfilingScene>();
 		m_mainScene->SetUpScene();
 		break;
 	default:
@@ -1684,6 +1689,7 @@ void GameLayer::GameLayerDebugMenu(bool& open)
 
 			if (ImGui::RadioButton("OldBox", (int*)&m_selectedScene, (int)SceneComponent::Type::OldDefaultScene)) m_gameState = GameState::Restart;
 			if (ImGui::RadioButton("Particle", (int*)&m_selectedScene, (int)SceneComponent::Type::ParticleScene)) m_gameState = GameState::Restart;
+			if (ImGui::RadioButton("TiledProfiling", (int*)&m_selectedScene, (int)SceneComponent::Type::TiledProfilingScene)) m_gameState = GameState::Restart;
 
 			std::vector<entity> players;
 			EntityManager::Get().Collect<PlayerStatsComponent>().Do([&](entity e, PlayerStatsComponent&)

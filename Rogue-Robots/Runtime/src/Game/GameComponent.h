@@ -51,6 +51,7 @@ struct SceneComponent
 		OldDefaultScene,
 		LightScene,
 		ParticleScene,
+		TiledProfilingScene,
 		PCGLevelScene,
 	};
 	SceneComponent(Type scene) : scene(scene) {}

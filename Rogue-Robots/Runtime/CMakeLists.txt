@@ -50,6 +50,7 @@ set(SourceFiles
 	
 	"src/Game/PlayerMovementSystem.cpp" "src/Game/SpectatorCopyCamera.h"
 	"src/Game/PlayerMovementSystem.h" "src/Game/SpectatorCopyCamera.cpp"
+	"src/Game/TestScenes/TiledProfilingScene.h" "src/Game/TestScenes/TiledProfilingScene.cpp"
 	)
 
 set(ExecutableName "Runtime")
