@@ -74,20 +74,11 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
     frustum[2] = col4 + col2; // bottom
     frustum[3] = col4 - col2; // top
 
-    bool useDepth = true; // Add option to toggle later
-    if (useDepth)
-    {
-        float near = asfloat(sharedUintMinZ);
-        float far = asfloat(sharedUintMaxZ);
-        frustum[4] = float4(0, 0, 1, -near);
-        frustum[5] = float4(0, 0, -1, far);
-    }
-    else
-    {
-        frustum[4] = float4(0, 0, 1, -pfData.nearClip);
-        frustum[5] = float4(0, 0, -1, pfData.farClip);
-    }
 
+    float near = asfloat(sharedUintMinZ);
+    float far = asfloat(sharedUintMaxZ);
+    frustum[4] = float4(0, 0, 1, -near);
+    frustum[5] = float4(0, 0, -1, far);
 
     frustum[0] *= rcp(length(frustum[0].xyz));
     frustum[1] *= rcp(length(frustum[1].xyz));
@@ -122,9 +113,9 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
 
         if (!culled && pointLight.strength)
         {
-            uint locallIndex;
-            InterlockedAdd(sLightCounter, 1, locallIndex);
-            localLightBuffers[tileIndex].lightIndices[locallIndex] = globalIndex;
+            uint localIndex;
+            InterlockedAdd(sLightCounter, 1, localIndex);
+            localLightBuffers[tileIndex].lightIndices[localIndex] = globalIndex;
         }
     }
 
@@ -143,9 +134,9 @@ void main(uint3 globalId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadI
 
         if (!culled && pointLight.strength)
         {
-            uint locallIndex;
-            InterlockedAdd(sLightCounter, 1, locallIndex);
-            localLightBuffers[tileIndex].lightIndices[locallIndex] = globalIndex;
+            uint localIndex;
+            InterlockedAdd(sLightCounter, 1, localIndex);
+            localLightBuffers[tileIndex].lightIndices[localIndex] = globalIndex;
         }
     }
 
