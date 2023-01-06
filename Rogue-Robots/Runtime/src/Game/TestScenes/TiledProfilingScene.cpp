@@ -117,15 +117,15 @@ void TiledProfilingScene::TiledProfilingMenu(bool& open)
 			auto& camTr = em.GetComponent<TransformComponent>(camera);
 			ImGui::Text(std::format("camera pos: {}", Vec3ToStr(camTr.GetPosition())).c_str());
 
-			static int gridSize = 1024;
-			static float lightRadius = 4.0f;
+			static int gridSize = 4096;
+			static float lightRadius = 3.8f;
 			ImGui::SliderInt("Grid size", &gridSize, 0, 4096);
 			ImGui::SliderFloat("Light raduis", &lightRadius, 0.1f, 10.0f);
 			if (ImGui::Button("Spawn Grid"))
 			{
 				u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/red_cube.glb");
 
-				auto points = GetGridPointsInAABB(Vector3(-33, 0, -20), Vector3(33, 24, 22), gridSize);
+				auto points = GetGridPointsInAABB(Vector3(-33, 0, -20), Vector3(33, 25, 22), gridSize);
 				for (auto& p : points)
 				{
 					entity e = CreateEntity();
@@ -152,6 +152,16 @@ void TiledProfilingScene::TiledProfilingMenu(bool& open)
 					{
 						em.DeferredEntityDestruction(e);
 					});
+			}
+
+			if (ImGui::Button("Set camera"))
+			{
+				entity camera = GetCamera();
+				auto& camTr = em.GetComponent<TransformComponent>(camera);
+				auto& camCa = em.GetComponent<CameraComponent>(camera);
+				camTr.SetPosition(Vector3(-27, 1.8, -2.6));
+				camTr.SetRotation(Vector3(0, XMConvertToRadians(80), 0));
+				camCa.viewMatrix = camTr.worldMatrix.Invert();
 			}
 		}
 
