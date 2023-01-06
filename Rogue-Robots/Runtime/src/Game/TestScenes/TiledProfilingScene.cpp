@@ -30,7 +30,7 @@ void TiledProfilingScene::SetUpScene(std::vector<std::function<std::vector<DOG::
 		u32 sponzaID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/Sponza_gltf/glTF/Sponza.gltf");
 
 		entity sponza = CreateEntity();
-		AddComponent<TransformComponent>(sponza, Vector3(0, -2.f, 0), Vector3::Zero, Vector3(0.05f, 0.05f, 0.05f));
+		AddComponent<TransformComponent>(sponza, Vector3(0, -2.f, 0), Vector3::Zero, Vector3(0.02f, 0.02f, 0.02f));
 		AddComponent<ModelComponent>(sponza, sponzaID);
 
 		// A hack to not instantly win the game

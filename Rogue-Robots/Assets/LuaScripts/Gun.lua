@@ -79,7 +79,7 @@ function OnStart()
 	gunID = Scene:CreateEntity(EntityID)
 	gunEntity.entityID = gunID
 	Entity:AddComponent(gunID, "Transform", gunEntity.position, gunEntity.rotation, {x=.35 ,y=.35,z=.35})
-	Entity:AddComponent(gunID, "Model", gunModel)
+	--Entity:AddComponent(gunID, "Model", gunModel)
 	Entity:AddComponent(gunID, "Audio", gunShotSound, false, true)
 
 	barrelEntityID = Scene:CreateEntity(gunID)
@@ -91,7 +91,7 @@ function OnStart()
 	magazineEntityID = Scene:CreateEntity(gunID)
 	Entity:AddComponent(magazineEntityID, "Transform", Vector3:Zero(), Vector3:Zero(), Vector3:One())
 	Entity:AddComponent(magazineEntityID, "Child", gunID, Vector3.Zero(), Vector3.Zero(), Vector3.One())
-	Entity:RemoveComponent(gunID, "ShadowReceiverComponent")
+	--Entity:RemoveComponent(gunID, "ShadowReceiverComponent")
 
 	local outlineColor = Entity:GetOutlineColor(EntityID)
 	-- Add shit
@@ -101,7 +101,7 @@ function OnStart()
 	Entity:AddComponent(barrelEntityID, "ThisPlayerWeapon")
 	Entity:AddComponent(miscEntityID, "ThisPlayerWeapon")
 	Entity:AddComponent(magazineEntityID, "ThisPlayerWeapon")
-	CreateWeaponLights()
+	--CreateWeaponLights()
 	--end
 
 	-- Initialize base components

@@ -10,7 +10,7 @@
 
 DOG::UI* DOG::UI::s_instance = nullptr;
 
-UINT menuID, gameID, optionsID, multiID, lobbyID, joinID, WaitingForHostID, GameOverID, WinScreenID, LoadingID, creditsID, levelSelectSoloID, levelSelectMultID;
+UINT menuID, gameID, emptyID, optionsID, multiID, lobbyID, joinID, WaitingForHostID, GameOverID, WinScreenID, LoadingID, creditsID, levelSelectSoloID, levelSelectMultID;
 UINT menuBackID, optionsBackID, multiBackID, hostBackID, creditsBackID, levelSelectSoloBackID, levelSelectMultBackID;
 UINT bStartLevelSelectorSoloID, bStartLevelSelectorMultID, bGoBackLevelSelectorSoloID, bGoBackLevelSelectorMultID;
 UINT bpID, bmID, boID, beID, optbackID, mulbackID, bhID, bjID, r1ID, r2ID, r3ID, r4ID, r5ID, r6ID, r7ID, r8ID, r9ID, r10ID, l1ID, l2ID, l3ID, l4ID, l5ID, l6ID, bjjID,
@@ -1745,6 +1745,7 @@ void AddScenes()
    auto instance = DOG::UI::Get();
    menuID = instance->AddScene();
    gameID = instance->AddScene();
+   emptyID = instance->AddScene();
    multiID = instance->AddScene();
    optionsID = instance->AddScene();
    lobbyID = instance->AddScene();

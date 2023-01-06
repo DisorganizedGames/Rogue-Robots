@@ -53,7 +53,8 @@ void InGameMenu::Open()
 
 void InGameMenu::Close()
 {
-	UI::Get()->ChangeUIscene(gameID);
+	//UI::Get()->ChangeUIscene(gameID);
+	UI::Get()->ChangeUIscene(emptyID);
 }
 
 bool InGameMenu::IsOpen()

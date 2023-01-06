@@ -86,7 +86,7 @@ GameLayer::GameLayer() noexcept
 	m_entityManager.RegisterSystem(std::make_unique<MVPFlashlightStateSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderPickupItemUIText>());
 	m_entityManager.RegisterSystem(std::make_unique<PickUpTranslateToPlayerSystem>());
-	m_entityManager.RegisterSystem(std::make_unique<MVPRenderAmmunitionTextSystem>());
+	//m_entityManager.RegisterSystem(std::make_unique<MVPRenderAmmunitionTextSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<MVPRenderReloadHintTextSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<CleanupItemInteractionSystem>());
 	m_entityManager.RegisterSystem(std::make_unique<CleanupPlayerStateSystem>());
@@ -1002,7 +1002,8 @@ void HostLaunch(void)
 	NetCode::Get().Play();
 	
 	GameLayer::ChangeGameState(GameState::StartPlaying);
-	DOG::UI::Get()->ChangeUIscene(gameID);
+	//DOG::UI::Get()->ChangeUIscene(gameID);
+	DOG::UI::Get()->ChangeUIscene(emptyID);
 }
 
 void PlayButtonFunc(void)
@@ -1012,7 +1013,8 @@ void PlayButtonFunc(void)
 	if(GameLayer::GetGameStatus() != GameState::Playing)
 		GameLayer::ChangeGameState(GameState::StartPlaying);
 	GameLayer::ChangeNetworkState(NetworkStatus::Offline);
-	DOG::UI::Get()->ChangeUIscene(gameID);
+	//DOG::UI::Get()->ChangeUIscene(gameID);
+	DOG::UI::Get()->ChangeUIscene(emptyID);
 
 }
 
@@ -1316,7 +1318,8 @@ void GameLayer::UpdateLobby()
 		}
 		if (!inLobby && s_networkStatus == NetworkStatus::Joining)
 		{
-			DOG::UI::Get()->ChangeUIscene(gameID);
+			//DOG::UI::Get()->ChangeUIscene(gameID);
+			DOG::UI::Get()->ChangeUIscene(emptyID);
 			m_gameState = GameState::StartPlaying;
 			m_nrOfPlayers = NetCode::Get().GetNrOfPlayers();
 		}
