@@ -136,7 +136,7 @@ GameLayer::~GameLayer()
 
 void GameLayer::OnAttach()
 {
-	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameManager", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1), true, std::make_pair(DOG::Key::LCtrl, DOG::Key::G));
+	DOG::ImGuiMenuLayer::RegisterDebugWindow("GameManager", std::bind(&GameLayer::GameLayerDebugMenu, this, std::placeholders::_1), false, std::make_pair(DOG::Key::LCtrl, DOG::Key::G));
 	DOG::ImGuiMenuLayer::RegisterDebugWindow("Cheats", std::bind(&GameLayer::CheatDebugMenu, this, std::placeholders::_1));
 }
 
@@ -893,7 +893,7 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	{
 		EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
 			{
-				inputC.shoot = true;
+				//inputC.shoot = true;
 			});
 		break;
 	}
@@ -901,7 +901,7 @@ void GameLayer::OnEvent(DOG::IEvent& event)
 	{
 		EntityManager::Get().Collect<InputController, ThisPlayer>().Do([&](InputController& inputC, ThisPlayer&)
 			{
-				inputC.shoot = false;
+				//inputC.shoot = false;
 			});
 		break;
 	}
@@ -1522,10 +1522,10 @@ void GameLayer::Input(DOG::Key key)
 				inputC.toggleMoveView = true;
 			if (key == DOG::Key::F)
 				inputC.flashlight = !inputC.flashlight;
-			if (key == DOG::Key::E)
+			/*if (key == DOG::Key::E)
 				inputC.revive = true;
 			if (key == DOG::Key::Q)
-				inputC.throwGlowStick = true;
+				inputC.throwGlowStick = true;*/
 		});
 }
 
@@ -1557,10 +1557,10 @@ void GameLayer::Release(DOG::Key key)
 				inputC.toggleDebug = false;
 			if (key == DOG::Key::F3)
 				inputC.toggleMoveView = false;
-			if (key == DOG::Key::E)
+			/*if (key == DOG::Key::E)
 				inputC.revive = false;
 			if (key == DOG::Key::Q)
-				inputC.throwGlowStick = false;
+				inputC.throwGlowStick = false;*/
 
 		});
 }

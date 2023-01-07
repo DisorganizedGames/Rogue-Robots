@@ -21,7 +21,7 @@ void TiledProfilingScene::SetUpScene(std::vector<std::function<std::vector<DOG::
 
 		std::vector<entity> players = SpawnPlayers(Vector3(0.0f, 0.0f, -3.f), 1, 0.f);
 		AddEntities(players);
-		AddEntities(AddFlashlightsToPlayers(players));
+		//AddEntities(AddFlashlightsToPlayers(players));
 		entity ground = CreateEntity();
 		AddComponent<TransformComponent>(ground, Vector3(0, -2.f, 0), Vector3::Zero, Vector3(5, 1, 5));
 		AddComponent<BoxColliderComponent>(ground, ground, Vector3(5.f, 1.f, 5.f), false);
@@ -191,7 +191,7 @@ void TiledProfilingScene::TiledProfilingMenu(bool& open)
 			{
 				std::chrono::duration<double> el = std::chrono::high_resolution_clock::now() - t1;
 				ImGui::Text(std::format("Total Time: {:.4f}", el.count()).c_str());
-				ImGui::Text(std::format("Frame time: {:.4f}, (current: {:.4f})", el.count() / (Time::FrameCount() - frameCounter), Time::DeltaTime()).c_str());
+				ImGui::Text(std::format("Frame time: {:.4f}", el.count() / (Time::FrameCount() - frameCounter)).c_str());
 			}
 			else
 			{

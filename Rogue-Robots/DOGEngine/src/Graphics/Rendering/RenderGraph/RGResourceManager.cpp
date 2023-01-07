@@ -12,21 +12,21 @@ namespace DOG::gfx
 	{
 		{
 			MemoryPoolDesc d{};
-			d.size = 100'000'000;
+			d.size = 200'000'000;
 			d.heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
 			m_rtDsTextureMemPool = m_rd->CreateMemoryPool(d);
 		}
 
 		{
 			MemoryPoolDesc d{};
-			d.size = 50'000'000;
+			d.size = 100'000'000;
 			d.heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES;
 			m_nonRtDsTextureMemPool = m_rd->CreateMemoryPool(d);
 		}
 
 		{
 			MemoryPoolDesc d{};
-			d.size = 25'000'000;
+			d.size = 40'000'000;
 			d.heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
 			m_bufferMemPool = m_rd->CreateMemoryPool(d);
 		}
