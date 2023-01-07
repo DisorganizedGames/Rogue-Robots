@@ -56,6 +56,9 @@ namespace DOG::gfx
 		hr = D3D12CreateDevice(m_adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(dev.GetAddressOf()));
 		HR_VFY(hr);
 
+		hr = dev->SetStablePowerState(true);
+		HR_VFY(hr);
+
 		auto render_device = std::make_unique<RenderDevice_DX12>(dev, m_adapter.Get(), m_debug_on, numBackBuffers);
 		auto ret = render_device.get();
 
