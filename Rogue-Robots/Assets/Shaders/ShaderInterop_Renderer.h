@@ -1,7 +1,7 @@
 #pragma once
 #include "ShaderInterop_Base.h"
 
-#define TILED_GROUP_DIM 32
+#define TILED_GROUP_DIM 16
 
 #define DEBUG_SETTING_LIT 1
 #define DEBUG_SETTING_LIGHT_CULLING 2
