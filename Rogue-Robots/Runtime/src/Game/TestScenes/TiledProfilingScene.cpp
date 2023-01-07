@@ -195,8 +195,8 @@ void TiledProfilingScene::TiledProfilingMenu(bool& open)
 			}
 			else
 			{
-				ImGui::Text(std::format("Total Time: {:.7f}", time).c_str());
-				ImGui::Text(std::format("Frame time: {:.7f}", avgDelta).c_str());
+				ImGui::Text(std::format("Total Time: {:.5f}", time).c_str());
+				ImGui::Text(std::format("Frame time: {:.5f} (fps: {:.0f})", avgDelta, 1.0 / avgDelta).c_str());
 			}
 		}
 
