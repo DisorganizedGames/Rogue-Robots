@@ -51,19 +51,19 @@ TiledProfilingScene::~TiledProfilingScene()
 std::vector<Vector3> GetGridPointsInAABB(Vector3 minAABB, Vector3 maxAABB, int numPoints)
 {
 	std::vector<Vector3> points;
-	int n = std::ceil(std::cbrt(numPoints));
+	int n = (int)std::ceil(std::cbrt(numPoints));
 
 	for (int i = 0; i < n; i++)
 	{
-		float y = DOG::Remap(0, n - 1, minAABB.y, maxAABB.y, i);
+		float y = DOG::Remap(0.0f, (float)(n - 1), minAABB.y, maxAABB.y, (float)i);
 		for (int j = 0; j < n; j++)
 		{
-			float x = DOG::Remap(0, n - 1, minAABB.x, maxAABB.x, j);
+			float x = DOG::Remap(0.0f, (float)(n - 1), minAABB.x, maxAABB.x, (float)j);
 			for (int k = 0; k < n; k++)
 			{
 				if (points.size() < numPoints)
 				{
-					float z = DOG::Remap(0, n - 1, minAABB.z, maxAABB.z, k);
+					float z = DOG::Remap(0.0f, (float)(n - 1), minAABB.z, maxAABB.z, (float)k);
 					points.emplace_back(x, y, z);
 				}
 				else
@@ -86,7 +86,7 @@ struct GridLight
 
 void TiledProfilingScene::TiledProfilingMenu(bool& open)
 {
-	auto&& Vec3ToStr= [](Vector3 v)
+	[[maybe_unused]]auto&& Vec3ToStr= [](Vector3 v)
 	{
 		std::string str;
 		str += std::format("{:.1f}", v.x) + ", ";
@@ -112,25 +112,17 @@ void TiledProfilingScene::TiledProfilingMenu(bool& open)
 
 		if (ImGui::Begin("Tiled Profiling", &open, ImGuiWindowFlags_NoFocusOnAppearing))
 		{
-
-			entity camera = GetCamera();
-			auto& camTr = em.GetComponent<TransformComponent>(camera);
-			ImGui::Text(std::format("camera pos: {}", Vec3ToStr(camTr.GetPosition())).c_str());
-
 			static int gridSize = 4096;
 			static float lightRadius = 3.8f;
 			ImGui::SliderInt("Grid size", &gridSize, 0, 4096);
 			ImGui::SliderFloat("Light raduis", &lightRadius, 0.1f, 10.0f);
 			if (ImGui::Button("Spawn Grid"))
 			{
-				u32 modelID = AssetManager::Get().LoadModelAsset("Assets/Models/Temporary_Assets/red_cube.glb");
-
 				auto points = GetGridPointsInAABB(Vector3(-33, 0, -20), Vector3(33, 25, 22), gridSize);
 				for (auto& p : points)
 				{
 					entity e = CreateEntity();
 					AddComponent<TransformComponent>(e, p, Vector3::Zero, 0.2f * Vector3::One);
-					//AddComponent<ModelComponent>(e, modelID);
 					AddComponent<GridLight>(e);
 
 					auto& pl = AddComponent<PointLightComponent>(e);
@@ -159,9 +151,52 @@ void TiledProfilingScene::TiledProfilingMenu(bool& open)
 				entity camera = GetCamera();
 				auto& camTr = em.GetComponent<TransformComponent>(camera);
 				auto& camCa = em.GetComponent<CameraComponent>(camera);
-				camTr.SetPosition(Vector3(-27, 1.8, -2.6));
+				camTr.SetPosition(Vector3(-27, 1.8f, -2.6f));
 				camTr.SetRotation(Vector3(0, XMConvertToRadians(80), 0));
 				camCa.viewMatrix = camTr.worldMatrix.Invert();
+			}
+
+			ImGui::Separator();
+
+			static double time = 0;
+			static double avgDelta = 0;
+			static u32 frameCounter = 1;
+			static bool profiling = false;
+			static std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+			if (ImGui::Button("Start timer"))
+			{
+				if (!profiling)
+				{
+					t1 = std::chrono::high_resolution_clock::now();
+					frameCounter = Time::FrameCount();
+					time = 0;
+					profiling = true;
+				}
+			}
+
+			if (ImGui::Button("Stop timer"))
+			{
+				if (profiling)
+				{
+					frameCounter = Time::FrameCount() - frameCounter;
+					std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+					std::chrono::duration<double> elapsed_time = t2 - t1;
+					time = elapsed_time.count();
+					avgDelta = time / frameCounter;
+					profiling = false;
+				}
+			}
+
+			if (profiling)
+			{
+				std::chrono::duration<double> el = std::chrono::high_resolution_clock::now() - t1;
+				ImGui::Text(std::format("Total Time: {:.4f}", el.count()).c_str());
+				ImGui::Text(std::format("Frame time: {:.4f}, (current: {:.4f})", el.count() / (Time::FrameCount() - frameCounter), Time::DeltaTime()).c_str());
+			}
+			else
+			{
+				ImGui::Text(std::format("Total Time: {:.7f}", time).c_str());
+				ImGui::Text(std::format("Frame time: {:.7f}", avgDelta).c_str());
 			}
 		}
 

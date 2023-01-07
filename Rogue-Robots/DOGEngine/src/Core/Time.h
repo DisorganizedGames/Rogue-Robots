@@ -45,6 +45,7 @@ namespace DOG
 		static inline Timer s_timer;
 		static inline u64 s_deltaTime = 0;
 		static inline f64 s_elapsedTime = 0;
+		static inline u32 s_frameCounter = 0;
 
 	public:
 		template<TimeType type = TimeType::Seconds, typename T = f64>
@@ -58,6 +59,11 @@ namespace DOG
 			return s_elapsedTime;
 		}
 
+		static u32 FrameCount()
+		{
+			return s_frameCounter;
+		}
+
 		static void Start()
 		{
 			s_timer.Start();
@@ -68,6 +74,7 @@ namespace DOG
 			s_deltaTime = s_timer.Stop();
 
 			s_elapsedTime += DeltaTime();
+			s_frameCounter++;
 		}
 	};
 }
