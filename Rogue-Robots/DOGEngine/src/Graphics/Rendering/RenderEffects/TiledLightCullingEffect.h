@@ -27,7 +27,7 @@ namespace DOG::gfx
 		Vector2u GetGroupCount() const;
 
 	private:
-		static constexpr u32 computeGroupSize = 16;
+		static constexpr u32 computeGroupSize = 32;
 
 		u32 m_threadGroupCountX;
 		u32 m_threadGroupCountY;
