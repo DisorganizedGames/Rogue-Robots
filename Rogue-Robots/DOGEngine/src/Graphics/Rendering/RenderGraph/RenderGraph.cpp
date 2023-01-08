@@ -7,7 +7,7 @@
 
 #include "Tracy/Tracy.hpp"
 
-#define GENERATE_GRAPHVIZ
+//#define GENERATE_GRAPHVIZ
 
 
 namespace DOG::gfx
@@ -22,7 +22,7 @@ namespace DOG::gfx
 		m_passes.reserve(PASS_RESERVED);
 		m_sortedPasses.reserve(PASS_RESERVED);
 		m_dependencyLevels.reserve(DEP_LEVELS_RESERVED);
-		m_passDataAllocator = std::make_unique<BumpAllocator>(131'072);	// 128 Kb
+		m_passDataAllocator = std::make_unique<BumpAllocator>(512'000'072);	// 128 Kb
 	}
 
 	void RenderGraph::Clear(bool immediate)
@@ -225,12 +225,15 @@ namespace DOG::gfx
 
 		m_cmdl = m_rd->AllocateCommandList();
 
-		ZoneNamedN(RGGraphPrePass, "RG Exec: Graph PrePass", true);
-		for (auto& pass : m_sortedPasses)
 		{
-			if (pass->preGraphExecute)
-				(*pass->preGraphExecute)();
+			ZoneNamedN(RGGraphPrePass, "RG Exec: Graph PrePass", true);
+			for (auto& pass : m_sortedPasses)
+			{
+				if (pass->preGraphExecute)
+					(*pass->preGraphExecute)();
+			}
 		}
+
 
 
 
@@ -245,6 +248,16 @@ namespace DOG::gfx
 				++currDep;
 			}
 		}
+
+		{
+			ZoneNamedN(RGGraphPostPass, "RG Exec: Graph PostPass", true);
+			for (auto& pass : m_sortedPasses)
+			{
+				if (pass->postGraphExecute)
+					(*pass->postGraphExecute)();
+			}
+		}
+
 
 
 		std::optional<SyncReceipt> outgoingSync;
@@ -1157,7 +1170,8 @@ namespace DOG::gfx
 
 		for (const auto& pass : m_passes)
 		{
-			ZoneTransientN(Zone1, pass->name.c_str(), true);
+			//ZoneTransientN(Zone1, pass->name.c_str(), true);
+			ZoneNamedN(RGBuildScope, "-- Per Pass Overhead --", true);
 
 			if (pass->rp)
 			{

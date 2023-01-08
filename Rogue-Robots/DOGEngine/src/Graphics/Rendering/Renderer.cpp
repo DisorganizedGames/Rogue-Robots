@@ -600,7 +600,7 @@ namespace DOG::gfx
 
 	void DOG::gfx::Renderer::SubmitEmitters(const std::vector<ParticleEmitter>& emitters)
 	{
-		m_particleBackend->UploadEmitters(emitters);
+		//m_particleBackend->UploadEmitters(emitters);
 	}
 
 	std::optional<u32> DOG::gfx::Renderer::RegisterSpotlight(const ActiveSpotlight& data)
@@ -619,6 +619,8 @@ namespace DOG::gfx
 
 	void Renderer::Update(f32 dt)
 	{
+		return;
+
 		m_jointMan->UpdateJoints();
 		m_globalLightTable->FinalizeUpdates();
 
@@ -684,6 +686,138 @@ namespace DOG::gfx
 		}
 	}
 
+	
+
+
+	void AddCustomPass(RenderGraph::PassBuilder& builder, std::optional<std::string> passName, std::optional<std::string> prevPass = {})
+	{
+		// connect to prev pass
+		if (prevPass)
+		{
+			builder.ReadResource(prevPass.value() + "Resource1", D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+				TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+
+			//builder.ReadResource(prevPass.value() + "Resource2", D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			//	TextureViewDesc(ViewType::ShaderResource, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+		}
+
+		if (passName)
+		{
+			builder.DeclareTexture(passName.value() +"Resource1", RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R8G8B8A8_UNORM, 10, 10));
+			builder.WriteRenderTarget(passName.value() + "Resource1", RenderPassAccessType::ClearPreserve,
+				TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+
+			//builder.DeclareTexture(passName.value() + "Resource2", RGTextureDesc::RenderTarget2D(DXGI_FORMAT_R8G8B8A8_UNORM, 10, 10));
+			//builder.WriteRenderTarget(passName.value() + "Resource2", RenderPassAccessType::ClearPreserve,
+			//	TextureViewDesc(ViewType::RenderTarget, TextureViewDimension::Texture2D, DXGI_FORMAT_R8G8B8A8_UNORM));
+		}
+	}
+
+	void TestRG_Wideboi(RenderGraph& rg, u32 width)
+	{
+		struct PassData {};
+
+		for (u32 i = 0; i < width; ++i)
+		{
+			auto passName = "Pass" + std::to_string(i);
+
+			rg.AddPass<PassData>(passName,
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					AddCustomPass(builder, passName);
+				},
+				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&) mutable
+				{
+
+				});
+		}
+
+		// Connect to single
+		rg.AddPass<PassData>("Final",
+			[&](PassData&, RenderGraph::PassBuilder& builder)
+			{
+
+				for (u32 i = 0; i < width; ++i)
+				{
+					auto passName = "Pass" + std::to_string(i);
+					AddCustomPass(builder, {}, passName);
+				}
+			},
+			[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&) mutable
+			{
+
+			});
+	}
+
+	void TestRG_Longboi(RenderGraph& rg, u32 width)
+	{
+		struct PassData {};
+
+		for (i32 i = 0; i < width; ++i)
+		{
+			auto prevPassName = "Pass" + std::to_string(i - 1);
+			auto passName = "Pass" + std::to_string(i);
+
+			rg.AddPass<PassData>(passName,
+				[&](PassData&, RenderGraph::PassBuilder& builder)
+				{
+					if (i == 0)
+						AddCustomPass(builder, passName);
+					else
+						AddCustomPass(builder, passName, prevPassName);
+				},
+				[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&) mutable
+				{
+
+				});
+		}
+
+	}
+
+	void TestRG_Longwideboi(RenderGraph& rg, u32 width, u32 height)
+	{
+		struct PassData {};
+
+
+		for (u32 x = 0; x < height; ++x)
+		{
+			for (i32 i = 0; i < width; ++i)
+			{
+				auto prevPassName = "Pass" + std::to_string(x) + std::string(",") + std::to_string(i - 1);
+				auto passName = "Pass" + std::to_string(x) + std::string(",") + std::to_string(i);
+
+				rg.AddPass<PassData>(passName,
+					[&](PassData&, RenderGraph::PassBuilder& builder)
+					{
+						if (i == 0)
+							AddCustomPass(builder, passName);
+						else
+							AddCustomPass(builder, passName, prevPassName);
+					},
+					[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&) mutable
+					{
+
+					});
+			}
+		}
+
+		// Connect to single
+		rg.AddPass<PassData>("Final",
+			[&](PassData&, RenderGraph::PassBuilder& builder)
+			{
+				for (u32 x = 0; x < height; ++x)
+				{
+					auto prevPassName = "Pass" + std::to_string(x) + std::string(",") + std::to_string(width - 1);		// Get last
+					AddCustomPass(builder, {}, prevPassName);
+				}
+			},
+			[&](const PassData&, RenderDevice* rd, CommandList cmdl, RenderGraph::PassResources&) mutable
+			{
+
+			});
+
+	}
+
 	static bool s_donez = false;
 	void Renderer::Render(f32)
 	{
@@ -698,6 +832,61 @@ namespace DOG::gfx
 			rg.Clear(true);
 			s_donez = true;
 		}
+
+		{
+			ZoneNamedN(RGBuildScope, "-- RG Pass Submission --", true);
+
+			//TestRG_Longwideboi(rg, 1, 16);
+			//TestRG_Longwideboi(rg, 1, 64);
+			//TestRG_Longwideboi(rg, 1, 256);
+			//TestRG_Longwideboi(rg, 1, 1024);
+
+			//TestRG_Longwideboi(rg, 16, 1);
+			//TestRG_Longwideboi(rg, 64, 1);
+			//TestRG_Longwideboi(rg, 256, 1);
+			//TestRG_Longwideboi(rg, 1024, 1);
+
+			//TestRG_Longwideboi(rg, 8, 64);
+			//TestRG_Longwideboi(rg, 16, 32);
+			//TestRG_Longwideboi(rg, 32, 16);
+			//TestRG_Longwideboi(rg, 64, 8);
+
+
+			std::cout << "Done submitting\n";
+		}
+
+		{
+			ZoneNamedN(RGBuildScope, "-- RG Building --", true);
+			rg.TryBuild();
+			std::cout << "Done building\n";
+		}
+
+		{
+			ZoneNamedN(RGExecuteScope, "-- RG Execution --", true);
+			m_frameSyncs[m_currFrameIdx] = rg.Execute(m_frameCopyReceipt, true);
+		}
+
+		// Always rebuild
+		s_donez = false;
+
+		Flush();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		return;
+
+
 
 		// Change backbuffer resource for this frame
 		m_rgResMan->ChangeImportedTexture(RG_RESOURCE(Backbuffer), m_sc->GetNextDrawSurface());
@@ -1660,9 +1849,11 @@ namespace DOG::gfx
 			v.clear();
 		m_nextSingleSidedShadowBucket = m_nextDoubleSidedShadowBucket = 0;
 
-		m_sc->Present(m_graphicsSettings.vSync);
+		//m_sc->Present(m_graphicsSettings.vSync);
 
 		m_currFrameIdx = (m_currFrameIdx + 1) % S_MAX_FIF;
+
+		Flush();
 	}
 
 	void Renderer::Flush()
@@ -1673,12 +1864,12 @@ namespace DOG::gfx
 
 	void Renderer::BeginGUI()
 	{
-		m_imgui->BeginFrame();
+		//m_imgui->BeginFrame();
 	}
 
 	void Renderer::EndGUI()
 	{
-		m_imgui->EndFrame();
+		//m_imgui->EndFrame();
 	}
 
 
