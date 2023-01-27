@@ -15,6 +15,7 @@ i32 index = 0;
 i32 scriptTypeIndex = 0;
 
 int fake = 0;
+int remove_opt = 0;
 
 int EmptyFunction()
 {
@@ -38,7 +39,6 @@ int ForLoopFunction()
 	}
 
 	return sum;
-	/*std::cout << sum << "\n";*/
 }
 
 struct SendData
@@ -84,6 +84,34 @@ void LuaSendData(LuaContext* context)
 	context->ReturnDouble(number);
 	context->ReturnBoolean(boolean);
 	context->ReturnString(string);
+}
+
+int Fact(int n)
+{
+	if (n == 0)
+		return 1;
+	else
+		return remove_opt * n * Fact(n-1);
+}
+
+int BubbleSort()
+{
+	int val = 0;
+	const int len = 11;
+	int a[len] = { 10, 5, 7, 6, 2, 1, 15, 3, 4, 6, 20 };
+	for (int i = 0; i < len; i++) 
+	{
+		for (int j = i + 1; j < len; j++)
+		{
+			if (a[j] < a[i]) {
+				int temp = a[i];
+				a[i] = a[j];
+				a[j] = temp;
+			}
+			val += i % j;
+		}
+	}
+	return val;
 }
 
 LuaLayer::LuaLayer() noexcept
@@ -183,6 +211,28 @@ void LuaLayer::OnUpdate()
 
 			m_endTime = std::chrono::steady_clock::now();
 		}
+		else if (index == 4)
+		{
+			m_startTime = std::chrono::steady_clock::now();
+
+			for (int i = 0; i < totalScripts; ++i)
+			{
+				LuaMain::GetGlobal()->CallGlobalFunction("FactFunction");
+			}
+
+			m_endTime = std::chrono::steady_clock::now();
+		}
+		else if (index == 5)
+		{
+			m_startTime = std::chrono::steady_clock::now();
+
+			for (int i = 0; i < totalScripts; ++i)
+			{
+				LuaMain::GetGlobal()->CallGlobalFunction("BubbleSort");
+			}
+
+			m_endTime = std::chrono::steady_clock::now();
+		}
 	}
 
 	timer += std::chrono::duration_cast<std::chrono::microseconds>(m_endTime - m_startTime).count();
@@ -235,8 +285,34 @@ void LuaLayer::OnUpdate()
 
 		m_endTime = std::chrono::steady_clock::now();
 	}
+	else if (index == 4)
+	{
+		m_startTime = std::chrono::steady_clock::now();
 
-	cppTimer += std::chrono::duration_cast<std::chrono::microseconds>(m_endTime - m_startTime).count();
+		for (int i = 0; i < totalScripts; ++i)
+		{
+			//For the function not to be optimized away
+			++remove_opt;
+			fake = Fact(100);
+		}
+
+		m_endTime = std::chrono::steady_clock::now();
+	}
+	else if (index == 5)
+	{
+		m_startTime = std::chrono::steady_clock::now();
+
+		for (int i = 0; i < totalScripts; ++i)
+		{
+			//For the function not to be optimized away
+			fake = BubbleSort();
+		}
+
+		m_endTime = std::chrono::steady_clock::now();
+	}
+
+	if (scriptTypeIndex == 0)
+		cppTimer += std::chrono::duration_cast<std::chrono::microseconds>(m_endTime - m_startTime).count();
 
 	if (frames == maxFrames)
 	{
@@ -248,6 +324,10 @@ void LuaLayer::OnUpdate()
 			std::cout << "\n\nTesting for loop" << "\n";
 		else if (index == 3)
 			std::cout << "\n\nTesting sending data" << "\n";
+		else if (index == 4)
+			std::cout << "\n\Testing factorial function" << "\n";
+		else if (index == 5)
+			std::cout << "\n\Testing bubble sort" << "\n";
 
 		if (scriptTypeIndex == 0)
 			std::cout << "\n\nRun straight in lua file" << "\n";
@@ -259,7 +339,7 @@ void LuaLayer::OnUpdate()
 		f32 avgFrameTime = timer / (f32)maxFrames;
 		f32 avgTimeForUpdatingOneScript = avgFrameTime / totalScripts;
 
-		f32 avgCppFrameTime = cppTimer / maxFrames;
+		f32 avgCppFrameTime = cppTimer / (f32)maxFrames;
 		f32 avgCppTimeForOneFunctionCall = avgCppFrameTime / totalScripts;
 
 		std::cout << "Scripts Running OnUpdate: " << totalScripts << "\n";
@@ -283,6 +363,7 @@ void LuaLayer::OnUpdate()
 			LuaMain::GetScriptManager()->RemoveAllEntityScripts(scriptEntities[i]);
 			EntityManager::Get().DestroyEntity(scriptEntities[i]);
 		}
+		LuaMain::GetScriptManager()->ClearAll();
 		scriptEntities.clear();
 
 		if (totalScripts == 100'00)
@@ -290,7 +371,7 @@ void LuaLayer::OnUpdate()
 			totalScripts = 0.1f;
 			++index;
 			std::cout << "Change\n";
-			if (index == 4)
+			if (index == 6)
 			{
 				++scriptTypeIndex;
 				index = 0;
@@ -309,6 +390,10 @@ void LuaLayer::OnUpdate()
 				LuaMain::GetScriptManager()->AddScript(e, "ProfilingLua_ForLoopAdd.lua");
 			else if (index == 3)
 				LuaMain::GetScriptManager()->AddScript(e, "ProfilingLua_SendData.lua");
+			else if (index == 4)
+				LuaMain::GetScriptManager()->AddScript(e, "ProfilingLua_Fact.lua");
+			else if (index == 5)
+				LuaMain::GetScriptManager()->AddScript(e, "ProfilingLua_BubbleSort.lua");
 		}
 	}
 }

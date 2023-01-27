@@ -75,6 +75,8 @@ namespace DOG
 
 	void ScriptManager::RemoveReferences(ScriptData& scriptData)
 	{
+		scriptData.entity = DOG::NULL_ENTITY;
+
 		m_luaW->RemoveReferenceToTable(scriptData.scriptTable);
 		m_luaW->RemoveReferenceToFunction(scriptData.onStartFunction);
 		m_luaW->RemoveReferenceToFunction(scriptData.onUpdateFunction);
@@ -520,5 +522,21 @@ namespace DOG
 			{
 				RemoveAllEntityScripts(entity);
 			});
+	}
+
+	void ScriptManager::ClearAll()
+	{
+		//std::unordered_map<std::string, GetScriptData> m_scriptToVector;
+		//std::vector<std::vector<ScriptData>> m_unsortedScripts;
+		//std::vector<std::vector<ScriptData>> m_sortedScripts;
+
+		////When removing script, resue the old position for a new script later
+		//std::vector<StoredScriptData> m_freeScriptPositions;
+
+		for (int i = 0; i < m_unsortedScripts.size(); ++i)
+		{
+			m_unsortedScripts[i].clear();
+		}
+		m_freeScriptPositions.clear();
 	}
 }
